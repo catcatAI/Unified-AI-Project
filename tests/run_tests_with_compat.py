@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding, utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 运行测试脚本(兼容性版本)
 

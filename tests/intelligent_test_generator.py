@@ -21,7 +21,7 @@ class TestType(Enum):
 
 
 @dataclass
-class TestParameter,
+class TestParameter:
     """测试参数"""
     name, str
     type_hint, str
@@ -30,7 +30,7 @@ class TestParameter,
 
 
 @dataclass
-class TestCase,
+class TestCase:
     """测试用例"""
     name, str
     description, str
@@ -42,7 +42,7 @@ class TestCase,
     priority, int = 1  # 1-5, 5为最高优先级
 
 
-class CodeAnalyzer,
+class CodeAnalyzer:
     """代码分析器"""
 
     def __init__(self) -> None,
@@ -212,7 +212,7 @@ class CodeAnalyzer,
             return getattr(decorator_node, 'id', 'unknown')
         elif isinstance(decorator_node, ast.Attribute())::
             # 修复, 确保ast.Attribute节点的value有id属性()
-            value_id == getattr(decorator_node.value(), 'id', 'unknown') if hasattr(decorator_node.value(), 'id') else 'unknown':::
+            value_id = getattr(decorator_node.value(), 'id', 'unknown') if hasattr(decorator_node.value(), 'id') else 'unknown':::
                 eturn f"{value_id}.{decorator_node.attr}"
         elif isinstance(decorator_node, ast.Call())::
             if isinstance(decorator_node.func(), ast.Name())::
@@ -220,7 +220,7 @@ class CodeAnalyzer,
                 return getattr(decorator_node.func(), 'id', 'unknown')
             elif isinstance(decorator_node.func(), ast.Attribute())::
                 # 修复, 确保ast.Attribute节点的value有id属性()
-                value_id == getattr(decorator_node.func.value(), 'id', 'unknown') if hasattr(decorator_node.func.value(), 'id') else 'unknown':::
+                value_id = getattr(decorator_node.func.value(), 'id', 'unknown') if hasattr(decorator_node.func.value(), 'id') else 'unknown':::
                     eturn f"{value_id}.{decorator_node.func.attr}"
         return "unknown"
 
@@ -231,12 +231,12 @@ class CodeAnalyzer,
             return getattr(base_node, 'id', 'object')
         elif isinstance(base_node, ast.Attribute())::
             # 修复, 确保ast.Attribute节点的value有id属性()
-            value_id == getattr(base_node.value(), 'id', 'unknown') if hasattr(base_node.value(), 'id') else 'unknown':::
+            value_id = getattr(base_node.value(), 'id', 'unknown') if hasattr(base_node.value(), 'id') else 'unknown':::
                 eturn f"{value_id}.{base_node.attr}"
         return "object"
 
 
-class TestPatternAnalyzer,
+class TestPatternAnalyzer:
     """测试模式分析器"""
 
     def __init__(self) -> None,
@@ -265,7 +265,7 @@ class TestPatternAnalyzer,
 
         # 根据参数识别模式
         params = function_info.get("parameters", [])
-        param_names == [p["name"].lower() for p in params]::
+        param_names = [p["name"].lower() for p in params]::
             f "password" in param_names or "token" in param_names,
             patterns.append("authentication")
 
@@ -278,7 +278,7 @@ class TestPatternAnalyzer,
         return list(set(patterns))  # 去重
 
 
-class IntelligentTestGenerator,
+class IntelligentTestGenerator:
     """智能化测试用例生成器"""
 
     def __init__(self) -> None,
@@ -356,18 +356,18 @@ class IntelligentTestGenerator,
         # 创建测试参数
         test_params = []
         for param in parameters,::
-            test_param == TestParameter(
+            test_param = TestParameter(
                 name=param["name"],
     type_hint=param.get("type_annotation", "Any"),
                 default_value=param.get("default"),
-                description == f"Parameter for {func_name}":::
+                description = f"Parameter for {func_name}":::
             test_params.append(test_param)
 
         # 创建测试用例
-        test_case == TestCase(
+        test_case = TestCase(
             name=f"test_{func_name}_basic",
-            description == f"Basic test for {func_name}",:::,
-    est_type == TestType.UNIT_TEST(),
+            description = f"Basic test for {func_name}",:::,
+    est_type = TestType.UNIT_TEST(),
             function_name=func_name,
             parameters=test_params,
             expected_behavior=f"Function {func_name} executes without errors",
@@ -384,23 +384,23 @@ class IntelligentTestGenerator,
 
         if pattern == "validation":::
             # 验证函数测试
-            invalid_test == TestCase(
+            invalid_test = TestCase(
                 name=f"test_{func_name}_invalid_input",
-                description == f"Test {func_name} with invalid input",:,
-    est_type == TestType.UNIT_TEST(),
+                description = f"Test {func_name} with invalid input",:,
+    est_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
-                expected_behavior == f"Function {func_name} raises appropriate exception for invalid input",:::
+                expected_behavior = f"Function {func_name} raises appropriate exception for invalid input",:::
                     riority=4
             )
             test_cases.append(invalid_test)
 
         elif pattern == "calculation":::
             # 计算函数测试
-            edge_case_test == TestCase(
+            edge_case_test = TestCase(
                 name=f"test_{func_name}_edge_cases",
-                description == f"Test {func_name} with edge cases",:,
-    est_type == TestType.UNIT_TEST(),
+                description = f"Test {func_name} with edge cases",:,
+    est_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
                 expected_behavior=f"Function {func_name} handles edge cases correctly",
@@ -410,10 +410,10 @@ class IntelligentTestGenerator,
 
         elif pattern == "file_operations":::
             # 文件操作测试
-            file_not_found_test == TestCase(
+            file_not_found_test = TestCase(
                 name=f"test_{func_name}_file_not_found",
                 description=f"Test {func_name} when file does not exist",,
-    test_type == TestType.UNIT_TEST(),
+    test_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
                 expected_behavior=f"Function {func_name} handles file not found gracefully",
@@ -432,10 +432,10 @@ class IntelligentTestGenerator,
 
         # 为空参数生成测试
         if parameters,::
-            empty_params_test == TestCase(
+            empty_params_test = TestCase(
                 name=f"test_{func_name}_empty_parameters",
-                description == f"Test {func_name} with empty parameters",:,
-    est_type == TestType.UNIT_TEST(),
+                description = f"Test {func_name} with empty parameters",:,
+    est_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
                 expected_behavior=f"Function {func_name} handles empty parameters gracefully",
@@ -452,10 +452,10 @@ class IntelligentTestGenerator,
         func_name=func_info["name"]
 
         # 通用错误处理测试
-        error_test == TestCase(
+        error_test = TestCase(
                 name=f"test_{func_name}_error_handling",
                 description=f"Test error handling in {func_name}",,
-    test_type == TestType.UNIT_TEST(),
+    test_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
                 expected_behavior=f"Function {func_name} handles errors appropriately",
@@ -540,7 +540,7 @@ def {test_case.name}() -> None,
 # 使用示例
 if __name"__main__":::
     # 创建测试生成器
-    generator == IntelligentTestGenerator()
+    generator = IntelligentTestGenerator()
     
     # 为指定文件生成测试用例
     # test_cases = generator.generate_tests_for_file("example_module.py")

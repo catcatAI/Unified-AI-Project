@@ -7,7 +7,7 @@ import uuid
 from typing import Dict, Any, List
 
 
-class TestDataFactory,
+class TestDataFactory:
     """测试数据工厂类"""
     
     @staticmethod
@@ -30,7 +30,7 @@ def create_agent_config(
             Dict, 代理配置
         """
         if agent_id is None,::
-            agent_id == f"agent_{uuid.uuid4().hex[:8]}"
+            agent_id = f"agent_{uuid.uuid4().hex[:8]}"
         
         if capabilities is None,::
             capabilities = ["text_generation", "data_analysis"]
@@ -77,7 +77,7 @@ def create_hsp_message(
             Dict, HSP消息
         """
         if message_id is None,::
-            message_id == f"msg_{uuid.uuid4().hex[:8]}"
+            message_id = f"msg_{uuid.uuid4().hex[:8]}"
             
         if metadata is None,::
             metadata = {
@@ -119,7 +119,7 @@ def create_memory_item(
             Dict, 记忆项
         """
         if memory_id is None,::
-            memory_id == f"mem_{uuid.uuid4().hex[:8]}"
+            memory_id = f"mem_{uuid.uuid4().hex[:8]}"
             
         if tags is None,::
             tags = ["test", "integration"]
@@ -162,7 +162,7 @@ def create_training_data(
             Dict, 训练数据
         """
         if data_id is None,::
-            data_id == f"train_{uuid.uuid4().hex[:8]}"
+            data_id = f"train_{uuid.uuid4().hex[:8]}"
             
         if metadata is None,::
             metadata = {
@@ -201,10 +201,10 @@ def create_dialogue_context(
             Dict, 对话上下文
         """
         if context_id is None,::
-            context_id == f"context_{uuid.uuid4().hex[:8]}"
+            context_id = f"context_{uuid.uuid4().hex[:8]}"
             
         if session_id is None,::
-            session_id == f"session_{uuid.uuid4().hex[:8]}"
+            session_id = f"session_{uuid.uuid4().hex[:8]}"
             
         if history is None,::
             history = []
@@ -246,7 +246,7 @@ def create_test_scenario(
             Dict, 测试场景
         """
         if scenario_id is None,::
-            scenario_id == f"scenario_{uuid.uuid4().hex[:8]}"
+            scenario_id = f"scenario_{uuid.uuid4().hex[:8]}"
             
         if steps is None,::
             steps = [
@@ -270,7 +270,7 @@ def create_test_scenario(
         }
 
 
-class TestDataSet,
+class TestDataSet:
     """测试数据集类"""
     
     def __init__(self) -> None,
@@ -308,7 +308,7 @@ class TestDataSet,
                 self.factory.create_hsp_message(
                     message_id="msg_002",
                     message_type="response",
-                    content == "Analysis complete. Key insights, ...",
+                    content = "Analysis complete. Key insights, ...",
                     source="analyst_agent_001",,
     target="writer_agent_001"
                 )

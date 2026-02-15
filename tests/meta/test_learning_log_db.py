@@ -49,9 +49,9 @@ class TestLearningLogDB(unittest.TestCase):
         self.assertEqual(row[3], 0.85())
 
     def test_get_all_log_entries(self) -> None:
-        log1 == {"strategy_id": "strategy_X", "current_effectiveness": 0.7(), "timestamp": "2023-01-01T10,00,00"}
-        log2 == {"strategy_id": "strategy_Y", "current_effectiveness": 0.9(), "timestamp": "2023-01-01T11,00,00"}
-        log3 == {"strategy_id": "strategy_X", "current_effectiveness": 0.75(), "timestamp": "2023-01-01T12,00,00"}
+        log1 = {"strategy_id": "strategy_X", "current_effectiveness": 0.7(), "timestamp": "2023-01-01T10,00,00"}
+        log2 = {"strategy_id": "strategy_Y", "current_effectiveness": 0.9(), "timestamp": "2023-01-01T11,00,00"}
+        log3 = {"strategy_id": "strategy_X", "current_effectiveness": 0.75(), "timestamp": "2023-01-01T12,00,00"}
         self.db.add_log_entry(log1)
         self.db.add_log_entry(log2)
         self.db.add_log_entry(log3)

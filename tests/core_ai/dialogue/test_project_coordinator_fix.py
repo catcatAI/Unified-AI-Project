@@ -28,13 +28,13 @@ def test_project_coordinator_decomposition() -> None:
     print("Testing ProjectCoordinator decomposition...")
     
     # Create mock dependencies
-    mock_llm_interface == AsyncMock()
-    mock_service_discovery == AsyncMock()
-    mock_hsp_connector == MagicMock()
-    mock_agent_manager == MagicMock()
-    mock_memory_manager == MagicMock()
-    mock_learning_manager == AsyncMock()
-    mock_personality_manager == MagicMock()
+    mock_llm_interface = AsyncMock()
+    mock_service_discovery = AsyncMock()
+    mock_hsp_connector = MagicMock()
+    mock_agent_manager = MagicMock()
+    mock_memory_manager = MagicMock()
+    mock_learning_manager = AsyncMock()
+    mock_personality_manager = MagicMock()
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
     
     # Mock config
@@ -43,7 +43,7 @@ def test_project_coordinator_decomposition() -> None:
     }
     
     # Create ProjectCoordinator instance
-    pc == ProjectCoordinator(
+    pc = ProjectCoordinator(
         llm_interface=mock_llm_interface,
         service_discovery=mock_service_discovery,
         hsp_connector=mock_hsp_connector,

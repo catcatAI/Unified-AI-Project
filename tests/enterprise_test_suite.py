@@ -15,10 +15,10 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 # 添加项目路径
-project_root == Path(__file__).parent.parent()
+project_root = Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-class EnterpriseTestSuite,
+class EnterpriseTestSuite:
     """企业级测试套件管理器"""
     
     def __init__(self):
@@ -54,7 +54,7 @@ class EnterpriseTestSuite,
             self.test_security_endpoints()
         ]
         
-        results == {"passed": 0, "total": len(backend_tests), "details": []}
+        results = {"passed": 0, "total": len(backend_tests), "details": []}
         
         for test in backend_tests,::
             try:
@@ -83,7 +83,7 @@ class EnterpriseTestSuite,
             from apps.backend.main import create_app
             
             app = create_app()
-            client == TestClient(app)
+            client = TestClient(app)
             
             # 测试健康检查
             response = client.get("/health")
@@ -111,15 +111,15 @@ class EnterpriseTestSuite,
             from ai.agents.web_search_agent import WebSearchAgent
             
             # 测试基础代理
-            base_agent == BaseAgent("test_agent", "test")
+            base_agent = BaseAgent("test_agent", "test")
             assert base_agent.agent_id == "test_agent"
             
             # 测试创意写作代理
-            creative_agent == CreativeWritingAgent()
+            creative_agent = CreativeWritingAgent()
             assert creative_agent.agent_type == "creative_writing"
             
             # 测试网络搜索代理
-            search_agent == WebSearchAgent()
+            search_agent = WebSearchAgent()
             assert search_agent.agent_type == "web_search"
             
             print("✓ AI代理测试通过")
@@ -134,7 +134,7 @@ class EnterpriseTestSuite,
             from core.data.data_network_manager import DataNetworkManager
             
             # 测试数据网络管理器
-            manager == DataNetworkManager()
+            manager = DataNetworkManager()
             assert manager is not None
             
             # 测试网络创建
@@ -154,7 +154,7 @@ class EnterpriseTestSuite,
             from core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
             
             # 测试知识图谱
-            kg == UnifiedKnowledgeGraph({})
+            kg = UnifiedKnowledgeGraph({})
             await kg.initialize()
             
             # 测试添加节点
@@ -172,7 +172,7 @@ class EnterpriseTestSuite,
             from core.hsp.hsp_protocol import HSProtocol
             
             # 测试HSP协议
-            hsp == HSProtocol()
+            hsp = HSProtocol()
             assert hsp is not None
             
             print("✓ HSP协议测试通过")
@@ -187,7 +187,7 @@ class EnterpriseTestSuite,
             from core.managers.system_manager import SystemManager
             
             # 测试系统管理器
-            manager == SystemManager()
+            manager = SystemManager()
             await manager.initialize()
             
             print("✓ 系统管理器测试通过")
@@ -202,7 +202,7 @@ class EnterpriseTestSuite,
             from ai.memory.ham_memory_manager import HAMMemoryManager
             
             # 测试HAM记忆管理器
-            memory_manager == HAMMemoryManager()
+            memory_manager = HAMMemoryManager()
             await memory_manager.initialize()
             
             # 测试存储和检索
@@ -222,7 +222,7 @@ class EnterpriseTestSuite,
             from ai.multimodal.multimodal_processor import MultimodalProcessor
             
             # 测试多模态处理器
-            processor == MultimodalProcessor()
+            processor = MultimodalProcessor()
             await processor.initialize()
             
             # 测试处理统计
@@ -241,7 +241,7 @@ class EnterpriseTestSuite,
             from integrations.atlassian_bridge import AtlassianBridge
             
             # 测试Atlassian桥接器
-            bridge == AtlassianBridge()
+            bridge = AtlassianBridge()
             status = await bridge.get_status()
             
             print("✓ Atlassian集成测试通过")
@@ -260,7 +260,7 @@ class EnterpriseTestSuite,
             from core.security.encryption import EncryptionUtils
             
             # 测试加密解密
-            utils == EncryptionUtils()
+            utils = EncryptionUtils()
             encrypted = utils.encrypt("test_data")
             decrypted = utils.decrypt(encrypted)
             assert decrypted == "test_data"
@@ -282,7 +282,7 @@ class EnterpriseTestSuite,
             self.test_ui_components()
         ]
         
-        results == {"passed": 0, "total": len(frontend_tests), "details": []}
+        results = {"passed": 0, "total": len(frontend_tests), "details": []}
         
         for test in frontend_tests,::
             try:
@@ -407,7 +407,7 @@ class EnterpriseTestSuite,
             self.test_file_operations()
         ]
         
-        results == {"passed": 0, "total": len(desktop_tests), "details": []}
+        results = {"passed": 0, "total": len(desktop_tests), "details": []}
         
         for test in desktop_tests,::
             try:
@@ -520,7 +520,7 @@ class EnterpriseTestSuite,
             self.test_end_to_end_workflow()
         ]
         
-        results == {"passed": 0, "total": len(integration_tests), "details": []}
+        results = {"passed": 0, "total": len(integration_tests), "details": []}
         
         for test in integration_tests,::
             try:
@@ -626,13 +626,13 @@ class EnterpriseTestSuite,
         self.test_report["coverage"] = self.calculate_coverage()
         
         # 计算总体覆盖率
-        total_passed == sum(r["passed"] for r in self.test_results.values())::
-        total_tests == sum(r["total"] for r in self.test_results.values())::
-        overall_coverage == (total_passed / total_tests * 100) if total_tests > 0 else 0,:
+        total_passed = sum(r["passed"] for r in self.test_results.values())::
+        total_tests = sum(r["total"] for r in self.test_results.values())::
+        overall_coverage = (total_passed / total_tests * 100) if total_tests > 0 else 0,:
         self.test_report["overall_coverage"] = overall_coverage
         
         # 检查企业标准,
-        enterprise_standards == {:
+        enterprise_standards = {:
             "backend": {"target": 90, "achieved": self.test_results["backend"]["passed"] / self.test_results["backend"]["total"] * 100 if self.test_results["backend"]["total"] > 0 else 0}:
             "frontend": {"target": 80, "achieved": self.test_results["frontend"]["passed"] / self.test_results["frontend"]["total"] * 100 if self.test_results["frontend"]["total"] > 0 else 0}:
             "desktop": {"target": 70, "achieved": self.test_results["desktop"]["passed"] / self.test_results["desktop"]["total"] * 100 if self.test_results["desktop"]["total"] > 0 else 0}:
@@ -670,14 +670,14 @@ class EnterpriseTestSuite,
         
         print("\n📈 各组件覆盖率,")
         for component, coverage in report['coverage'].items():::
-            status == "✅" if coverage >= 70 else "⚠️" if coverage >= 50 else "❌":::
+            status = "✅" if coverage >= 70 else "⚠️" if coverage >= 50 else "❌":::
             print(f"  {status} {component.capitalize()} {"coverage":.1f}%")
         
         print("\n🎯 企业标准达成情况,")
         for component, standard in report['enterprise_standards'].items():::
             achieved = standard['achieved']
             target = standard['target']
-            status == "✅" if achieved >= target else "❌":::
+            status = "✅" if achieved >= target else "❌":::
             print(f"  {status} {component.capitalize()} {"achieved":.1f}% (目标, {target}%)")
         
         print("\n📋 详细结果,")
@@ -685,7 +685,7 @@ class EnterpriseTestSuite,
             print(f"\n{component.upper()}")
             print(f"  通过, {results['passed']}/{results['total']}")
             for detail in results['details']::
-                status_icon == "✅" if detail['status'] == 'PASS' else "❌":::
+                status_icon = "✅" if detail['status'] == 'PASS' else "❌":::
                 print(f"  {status_icon} {detail['test']} {detail['status']}")
                 if 'error' in detail,::
                     print(f"    错误, {detail['error']}")
@@ -694,7 +694,7 @@ class EnterpriseTestSuite,
 
 async def main():
     """主函数"""
-    suite == EnterpriseTestSuite()
+    suite = EnterpriseTestSuite()
     report = await suite.run_all_tests()
     
     # 保存报告

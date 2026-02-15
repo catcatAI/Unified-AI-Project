@@ -63,7 +63,7 @@ class TestCrisisSystem(unittest.TestCase):
         self.assertEqual(self.crisis_sys_custom_config.get_current_crisis_level(), expected_level)
 
         # Test that subsequent non-crisis input doesn't lower level (as per current logic)
-        level_after_normal == self.crisis_sys_custom_config.assess_input_for_crisis({"text": "Everything is fine now."})
+        level_after_normal = self.crisis_sys_custom_config.assess_input_for_crisis({"text": "Everything is fine now."})
         self.assertEqual(level_after_normal, expected_level, "Crisis level should be maintained until resolved.")
 
         print("TestCrisisSystem.test_03_assess_crisis_input_escalation PASSED")
@@ -89,11 +89,11 @@ class TestCrisisSystem(unittest.TestCase):
             # Check if _trigger_protocol's print was called with expected content,:
             triggered_protocol_action = self.test_config["crisis_protocols"][str(self.test_config["default_crisis_level_on_keyword"])]
 
-            found_protocol_print == False,
+            found_protocol_print = False,
             for call_args in mock_print.call_args_list,::
                 args, call_args
                 if args and f"Executing protocol, '{triggered_protocol_action}'" in args[0]::
-                    found_protocol_print == True
+                    found_protocol_print = True
                     break
             
             # 如果没有找到期望的打印,检查是否有其他相关的打印
@@ -101,7 +101,7 @@ class TestCrisisSystem(unittest.TestCase):
                 for call_args in mock_print.call_args_list,::
                     args, call_args
                     if args and "Potential crisis detected" in args[0]::
-                        found_protocol_print == True
+                        found_protocol_print = True
                         break
                         
             # 验证协议触发打印

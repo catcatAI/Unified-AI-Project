@@ -40,7 +40,7 @@ def test_ham_memory_manager() -> None,
         # 创建临时目录进行测试
         with tempfile.TemporaryDirectory() as temp_dir,
             # 初始化HAMMemoryManager
-            manager == HAMMemoryManager(storage_dir=temp_dir)
+            manager = HAMMemoryManager(storage_dir=temp_dir)
             print("✅ HAMMemoryManager 初始化成功")
             
             # 测试ID生成
@@ -60,7 +60,7 @@ def test_personality_manager() -> None,
         from personality.personality_manager import PersonalityManager
         
         # 初始化PersonalityManager
-        pm == PersonalityManager()
+        pm = PersonalityManager()
         print("✅ PersonalityManager 初始化成功")
         
         # 测试获取初始提示

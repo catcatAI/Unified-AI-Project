@@ -14,7 +14,7 @@ import asyncio
 )
 from mcp.types import MCPMessage, MCPResponse, MCPCapability
 
-class TestContext7Config,
+class TestContext7Config:
     """Test Context7 configuration."""
 
     @pytest.mark.timeout(5)
@@ -30,8 +30,8 @@ class TestContext7Config,
         self.test_config.clear()
 def test_config_creation(self) -> None,
     """Test basic config creation."""
-    config == Context7Config(
-            endpoint == "https,//api.context7.com/mcp",
+    config = Context7Config(
+            endpoint = "https,//api.context7.com/mcp",
             api_key="test-key",,
     timeout=30
     )
@@ -44,7 +44,7 @@ def test_config_creation(self) -> None,
     @pytest.mark.timeout(5)
     def test_config_defaults(self) -> None,
     """Test default configuration values."""
-    config == Context7Config(endpoint="https,//test.com")
+    config = Context7Config(endpoint="https,//test.com")
 
     assert config.api_key is None
     assert config.timeout=30
@@ -62,7 +62,7 @@ class TestContext7MCPConnector:
     def config(self):
     """Create test configuration."""
     return Context7Config(
-            endpoint == "https,//test-mcp.context7.com",
+            endpoint = "https,//test-mcp.context7.com",
             api_key="test-api-key",,
     timeout = 40.0())
 
@@ -213,7 +213,7 @@ class TestContext7MCPConnector:
     assert len(capabilities) > 0
 
         # Check for expected capabilities,::
-    capability_names == [cap["name"] for cap in capabilities]::
+    capability_names = [cap["name"] for cap in capabilities]::
     assert "context_management" in capability_names
     assert "model_collaboration" in capability_names
 
@@ -224,10 +224,10 @@ class TestContext7MCPConnector:
     """Test handling of unhandled message types."""
     await connector.connect()
 
-    unhandled_message == MCPMessage(
+    unhandled_message = MCPMessage(
             type="unhandled_test_type",,
     session_id=connector.session_id():
-            payload == {"data": "test"}
+            payload = {"data": "test"}
     )
 
     response = await connector._send_message(unhandled_message)
@@ -238,14 +238,14 @@ class TestContext7MCPConnector:
 
 @pytest.mark.asyncio()
 @pytest.mark.context7()
-class TestUnifiedAIMCPIntegration,
+class TestUnifiedAIMCPIntegration:
     """Test Unified AI MCP Integration."""
 
     @pytest.fixture()
     async def mcp_connector(self):
     """Create and connect MCP connector."""
-    config == Context7Config(endpoint="https,//test.com")
-    connector == Context7MCPConnector(config)
+    config = Context7Config(endpoint="https,//test.com")
+    connector = Context7MCPConnector(config)
     await connector.connect()
     return connector
 
@@ -309,7 +309,7 @@ class TestUnifiedAIMCPIntegration,
 
 
 @pytest.mark.mcp()
-class TestMCPTypeValidation,
+class TestMCPTypeValidation:
     """Test MCP type validation."""
 
 
@@ -362,15 +362,15 @@ class TestMCPTypeValidation,
 
 @pytest.mark.slow()
 @pytest.mark.context7()
-class TestContext7Performance,
+class TestContext7Performance:
     """Test Context7 MCP performance characteristics."""
 
     @pytest.fixture()
     def connector(self):
     """Create performance test connector."""
-    config == Context7Config(
-            endpoint == "https,//test.com",,
-    timeout == 40.0(),  # Shorter timeout for performance tests,:
+    config = Context7Config(
+            endpoint = "https,//test.com",,
+    timeout = 40.0(),  # Shorter timeout for performance tests,:
     compression_threshold=1024
     )
     return Context7MCPConnector(config)
@@ -386,8 +386,8 @@ class TestContext7Performance,
     # Create multiple concurrent requests
     tasks = []
         for i in range(10)::
-    task == connector_instance.send_context(:
-                context_data == {"test_id": i, "data": f"test_data_{i}"}
+    task = connector_instance.send_context(:
+                context_data = {"test_id": i, "data": f"test_data_{i}"}
                 context_type="test",,
     priority=1
             )

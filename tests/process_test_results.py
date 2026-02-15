@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding, utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 测试结果处理主脚本
 整合测试结果可视化、分析和反馈功能
@@ -43,9 +43,9 @@ def process_test_results(results_file, str,
     """
     try:
         # 初始化组件
-        visualizer == TestResultVisualizer()
-        analyzer == TestResultAnalyzer()
-        feedback_system == TestResultFeedbackSystem()
+        visualizer = TestResultVisualizer()
+        analyzer = TestResultAnalyzer()
+        feedback_system = TestResultFeedbackSystem()
         
         # 1. 加载测试结果
         logger.info("正在加载测试结果...")

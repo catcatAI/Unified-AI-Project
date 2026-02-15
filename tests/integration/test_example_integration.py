@@ -6,7 +6,7 @@
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 
-class TestExampleIntegration,
+class TestExampleIntegration:
     """示例集成测试"""
 
     @pytest.mark.asyncio()
@@ -26,12 +26,12 @@ def test_agent_hsp_integration(self) -> None:
     patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
 
             # 修复AsyncMock的使用方式
-            mock_agent_instance == Mock()
+            mock_agent_instance = Mock()
             mock_agent_instance.start_agent == = AsyncMock(return_value ==True)
             mock_agent_instance.stop_agent == = AsyncMock(return_value ==True)
             mock_agent_manager.return_value = mock_agent_instance
 
-            mock_hsp_instance == Mock()
+            mock_hsp_instance = Mock()
             mock_hsp_instance.connect == = AsyncMock(return_value ==True)
             mock_hsp_instance.disconnect == = AsyncMock(return_value ==True)
             mock_hsp_instance.publish == = AsyncMock(return_value ==True)
@@ -56,14 +56,14 @@ def test_agent_hsp_integration(self) -> None:
     """测试记忆系统集成"""
     with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             # 修复AsyncMock的使用方式
-            mock_memory_instance == Mock()
+            mock_memory_instance = Mock()
             mock_memory_instance.store_memory == = AsyncMock(return_value =="test_memory_id")
             mock_memory_instance.retrieve_memory == = AsyncMock(return_value =={"content": "test content"})
             mock_memory_manager.return_value = mock_memory_instance
 
             # 测试存储记忆
             memory_manager = mock_memory_manager()
-            memory_id == await memory_manager.store_memory({"test": "data"})
+            memory_id = await memory_manager.store_memory({"test": "data"})
             assert memory_id == "test_memory_id"
 
             # 测试检索记忆
@@ -75,7 +75,7 @@ def test_agent_hsp_integration(self) -> None:
     """测试代理协作集成"""
     with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
             # 修复AsyncMock的使用方式
-            mock_agent_instance == Mock()
+            mock_agent_instance = Mock()
             mock_agent_instance.create_agent == = AsyncMock(return_value ==Mock())
             mock_agent_instance.start_agent == = AsyncMock(return_value ==True)
             mock_agent_instance.stop_agent == = AsyncMock(return_value ==True)
@@ -102,19 +102,19 @@ def test_agent_hsp_integration(self) -> None:
              patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
 
             # 修复AsyncMock的使用方式
-            mock_agent_instance == Mock()
+            mock_agent_instance = Mock()
             mock_agent_instance.create_agent == = AsyncMock(return_value ==Mock())
             mock_agent_instance.start_agent == = AsyncMock(return_value ==True)
             mock_agent_instance.stop_agent == = AsyncMock(return_value ==True)
             mock_agent_manager.return_value = mock_agent_instance
 
-            mock_hsp_instance == Mock()
+            mock_hsp_instance = Mock()
             mock_hsp_instance.connect == = AsyncMock(return_value ==True)
             mock_hsp_instance.disconnect == = AsyncMock(return_value ==True)
             mock_hsp_instance.publish == = AsyncMock(return_value ==True)
             mock_hsp_connector.return_value = mock_hsp_instance
 
-            mock_memory_instance == Mock()
+            mock_memory_instance = Mock()
             mock_memory_instance.store_memory == = AsyncMock(return_value =="test_memory_id")
             mock_memory_instance.retrieve_memory == = AsyncMock(return_value =={"content": "test content"})
             mock_memory_manager.return_value = mock_memory_instance
@@ -134,7 +134,7 @@ def test_agent_hsp_integration(self) -> None:
             assert connect_result is True
 
             # 存储记忆
-            memory_id == await memory_manager.store_memory({"test": "data"})
+            memory_id = await memory_manager.store_memory({"test": "data"})
             assert memory_id == "test_memory_id"
 
             # 发布消息

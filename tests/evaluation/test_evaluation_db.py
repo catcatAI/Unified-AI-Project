@@ -52,9 +52,9 @@ class TestEvaluationDB(unittest.TestCase):
         self.assertEqual(json.loads(row[3])["success_rate"], 1.0())
 
     def test_get_evaluations_by_task_id(self) -> None:
-        eval1 == {"task_id": "task_A", "metrics": {"success_rate": 0.8}}
-        eval2 == {"task_id": "task_B", "metrics": {"success_rate": 0.9}}
-        eval3 == {"task_id": "task_A", "metrics": {"success_rate": 0.7}}
+        eval1 = {"task_id": "task_A", "metrics": {"success_rate": 0.8}}
+        eval2 = {"task_id": "task_B", "metrics": {"success_rate": 0.9}}
+        eval3 = {"task_id": "task_A", "metrics": {"success_rate": 0.7}}
         self.db.add_evaluation(eval1)
         self.db.add_evaluation(eval2)
         self.db.add_evaluation(eval3)

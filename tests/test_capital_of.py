@@ -37,7 +37,7 @@ def test_
 
     def test_capital_of_pattern() -> None:
     # Initialize the ContentAnalyzerModule
-    analyzer == ContentAnalyzerModule(spacy_model_name="en_core_web_sm")
+    analyzer = ContentAnalyzerModule(spacy_model_name="en_core_web_sm")
     
     # Test text
     text = "Paris is the capital of France."
@@ -58,12 +58,12 @@ def test_
         print(f"  {source_label} --{rel['type']}--> {target_label}")
     
     # Check if we have the expected relationship, France --has_capital--> Paris,::
-        ound_expected_rel == False
+        ound_expected_rel = False
     for rel in kg_data["relationships"]::
         source_label = kg_data["entities"][rel["source_id"]]["label"]
         target_label = kg_data["entities"][rel["target_id"]]["label"]
         if source_label == "France" and target_label == "Paris" and rel["type"] == "has_capital":::
-            found_expected_rel == True
+            found_expected_rel = True
             break
     
     if found_expected_rel,::

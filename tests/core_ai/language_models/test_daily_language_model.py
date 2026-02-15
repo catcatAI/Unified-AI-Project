@@ -11,16 +11,16 @@ from language_models.daily_language_model import DailyLanguageModel
 from core.services.multi_llm_service import MultiLLMService, ModelProvider
 from datetime import datetime
 
-class TestDailyLanguageModel,
+class TestDailyLanguageModel:
 
     @pytest.fixture(autouse == True)
     def setup_dlm(self):
         # Create a mock for MultiLLMService,:
-    mock_llm_service == AsyncMock(spec == MultiLLMService)
+    mock_llm_service = AsyncMock(spec == MultiLLMService)
 
     # Define the behavior of the mocked chat_completion,
         async def mock_chat_completion_behavior(messages, model_id == None, **kwargs):
-    prompt == messages[0].content # Assuming single user message for prompt,::
+    prompt = messages[0].content # Assuming single user message for prompt,::
     if "calculate" in prompt.lower() and "User Query, "calculate 2 + 2\"" in prompt,::
     return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "2 + 2", "original_query": "calculate 2 + 2"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
             if "calculate" in prompt.lower() and "User Query, "what is 10 * 5\"" in prompt,::

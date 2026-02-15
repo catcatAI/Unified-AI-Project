@@ -32,8 +32,8 @@ ry,
             command,
             cwd=cwd,
             capture_output=capture_output,
-            text == True,,
-    check == False
+            text = True,,
+    check = False
         )
 
         if result.stdout,::
@@ -157,7 +157,7 @@ def generate_test_report(test_results, output_dir == "test_reports") -> None,
         }
     }
     
-    report_file == Path(output_dir) / f"integration_test_report_{int(time.time())}.json"
+    report_file = Path(output_dir) / f"integration_test_report_{int(time.time())}.json"
     with open(report_file, "w", encoding == "utf-8") as f,
         json.dump(report_data, f, indent=2, ensure_ascii == False)
     
@@ -175,7 +175,7 @@ def generate_test_report(test_results, output_dir == "test_reports") -> None,
 
 def main() -> None,
     """主函数"""
-    parser == argparse.ArgumentParser(description="Run integration tests for Unified AI Project"):::
+    parser = argparse.ArgumentParser(description="Run integration tests for Unified AI Project"):::
         arser.add_argument(
         "--type",
         choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"]

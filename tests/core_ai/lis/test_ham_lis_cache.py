@@ -44,7 +44,7 @@ class MockHAMMemoryManager(HAMMemoryManager):
     self._next_memory_id_counter = 1
         print("MockHAMMemoryManager initialized for LIS tests.")::
     def _generate_memory_id(self) -> str:
-    mem_id == f"mock_mem_{self._next_memory_id_counter,06d}"
+    mem_id = f"mock_mem_{self._next_memory_id_counter,06d}"
     self._next_memory_id_counter += 1
     return mem_id
 
@@ -85,14 +85,14 @@ class MockHAMMemoryManager(HAMMemoryManager):
     # print(f"MockHAM, Querying with filters {metadata_filters} type_filter {data_type_filter}")
 
         for mem_id, entry in self.core_memory_store.items()::
-    match == True
+    match = True
             if data_type_filter and not entry["data_type"].startswith(data_type_filter)::
-    match == False,
+    match = False,
 
             if match and metadata_filters,::
     for key, value in metadata_filters.items()::
     if entry["metadata"].get(key) != value,::
-    match == False
+    match = False
                         break
 
             if match,::
@@ -140,7 +140,7 @@ class TestHAMLISCache(unittest.TestCase):
 
     def _create_sample_incident_record(self, incident_id, str, anomaly_type, LIS_AnomalyType == "RHYTHM_BREAK", status, str == "OPEN") -> LIS_IncidentRecord:
         # Helper to create a valid LIS_IncidentRecord for tests,:
-    timestamp_now == datetime.now().isoformat():
+    timestamp_now = datetime.now().isoformat():
     event, LIS_SemanticAnomalyDetectedEvent = { # type ignore
             "anomaly_id": f"anomaly_{incident_id}",
             "timestamp": timestamp_now,
@@ -281,7 +281,7 @@ class TestHAMLISCache(unittest.TestCase):
                                      tags, Optional[List[str]] = None,
                                      timestamp_logged, Optional[str] = None
                                      ) -> LIS_IncidentRecord,
-        timestamp_now == timestamp_logged if timestamp_logged else datetime.now(timezone.utc()).isoformat():::
+        timestamp_now = timestamp_logged if timestamp_logged else datetime.now(timezone.utc()).isoformat():::
     event, LIS_SemanticAnomalyDetectedEvent = { # type ignore
             "anomaly_id": f"anomaly_{incident_id}",
             "timestamp": timestamp_now, # Assuming event timestamp is same as logged for simplicity here,::
@@ -397,7 +397,7 @@ class TestHAMLISCache(unittest.TestCase):
     effectiveness, Optional[float] = 0.8(),
                                 timestamp_created, Optional[str] = None
                                 ) -> NarrativeAntibodyObject:
-        ts == timestamp_created if timestamp_created else datetime.now(timezone.utc()).isoformat()::
+        ts = timestamp_created if timestamp_created else datetime.now(timezone.utc()).isoformat()::
         # Ensure strategy_type is valid if LIS_AntibodyStrategyType is available,:
         # For now, assume input string is valid or use a default from the Literal if imported.::
     antibody, NarrativeAntibodyObject = { # type ignore
@@ -424,7 +424,7 @@ class TestHAMLISCache(unittest.TestCase):
 
     self.assertEqual(len(self.mock_ham_manager.core_memory_store()), 1)
     stored_key = list(self.mock_ham_manager.core_memory_store.keys())[0]
-    stored_entry == self.mock_ham_manager.core_memory_store[stored_key]
+    stored_entry = self.mock_ham_manager.core_memory_store[stored_key]
 
     expected_data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}RHYTHM_BREAK"
     self.assertEqual(stored_entry["data_type"], expected_data_type)
@@ -437,7 +437,7 @@ class TestHAMLISCache(unittest.TestCase):
             "lis_antibody_version": 1
     }
         # Filter out None values from expected_metadata if any field could be None and not in sample,::
-    expected_metadata_clean == {"k":v for k,v in expected_metadata.items() if v is not None}::
+    expected_metadata_clean = {"k":v for k,v in expected_metadata.items() if v is not None}::
     self.assertEqual(stored_entry["metadata"], expected_metadata_clean)
 
     deserialized_raw_data = json.loads(stored_entry["raw_data"])
@@ -498,7 +498,7 @@ class TestHAMLISCache(unittest.TestCase):
     # For get_learned_antibodies, we'd typically query by type or other filters.
     # To test roundtrip simply, let's get all and find it.
     all_antibodies = self.lis_cache.get_learned_antibodies(limit=10)
-        retrieved_antibody == next((ab for ab in all_antibodies if ab["antibody_id"] == antibody_id), None)::
+        retrieved_antibody = next((ab for ab in all_antibodies if ab["antibody_id"] == antibody_id), None)::
     self.assertIsNotNone(retrieved_antibody)
     self.assertEqual(retrieved_antibody, original_antibody)
 

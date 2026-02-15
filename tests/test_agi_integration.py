@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 # 导入核心组件
 try:
     # 尝试创建统一控制中心的模拟实现
-    class UnifiedControlCenter,
+    class UnifiedControlCenter:
     """统一控制中心模拟实现"""
 
         def __init__(self, config) -> None:
@@ -34,12 +34,12 @@ try:
             self.initialized == False
 
         async def initialize_system(self):
-            wait asyncio.sleep(0.1())
+            await asyncio.sleep(0.1())
             self.initialized == True
             print("Unified Control Center initialized (mock)")
 
         async def process_complex_task(self, task):
-            wait asyncio.sleep(0.2())
+            await asyncio.sleep(0.2())
             return {
                 'status': 'success',
                 'task_id': task.get('id'),
@@ -67,7 +67,7 @@ logging.basicConfig(,
 )
 logger = logging.getLogger(__name__)
 
-class TestAGIIntegration,
+class TestAGIIntegration:
     """AGI系统整合测试类"""
 
     def __init__(self):
@@ -143,26 +143,26 @@ def test_unified_control_center(self) -> None:
 
         try:
             # 测试视觉服务
-            vision_service == VisionService()
+            vision_service = VisionService()
             dummy_image = b'dummy_image_data_for_testing'
 
             vision_result = await vision_service.analyze_image(
                 dummy_image,
                 features=['captioning', 'object_detection', 'ocr'],
-    context == {'text_context': 'testing context'}
+    context = {'text_context': 'testing context'}
             )
 
             assert 'processing_id' in vision_result, "Vision service missing processing ID"
             assert 'caption' in vision_result, "Vision service missing caption"
 
             # 测试音频服务
-            audio_service == AudioService()
+            audio_service = AudioService()
             dummy_audio = b'dummy_audio_data_for_testing'
 
             audio_result = await audio_service.speech_to_text(
                 dummy_audio,
                 language='en-US',,
-    enhanced_features == True
+    enhanced_features = True
             )
 
             assert 'processing_id' in audio_result, "Audio service missing processing ID"
@@ -189,7 +189,7 @@ def test_unified_control_center(self) -> None:
     logger.info("🔍 Testing Vector Storage System...")
 
         try:
-            vector_store == VectorMemoryStore(persist_directory="./test_vector_store")
+            vector_store = VectorMemoryStore(persist_directory="./test_vector_store")
 
             # 检查向量存储是否正确初始化
             if not vector_store.collection,::
@@ -220,8 +220,8 @@ def test_unified_control_center(self) -> None:
             # 测试语义搜索
             search_result = await vector_store.semantic_search("artificial intelligence", n_results=5)
             # 检查搜索结果是否包含预期字段
-            has_documents == 'documents' in search_result if search_result else False,::
-                as_ids == 'ids' in search_result if search_result else False,::
+            has_documents = 'documents' in search_result if search_result else False,::
+                as_ids = 'ids' in search_result if search_result else False,::
 ssert has_documents or has_ids, "Search result missing expected fields"
 
             # 测试统计信息
@@ -250,7 +250,7 @@ ssert has_documents or has_ids, "Search result missing expected fields"
     logger.info("🔗 Testing Causal Reasoning Engine...")
 
         try:
-            causal_engine == CausalReasoningEngine(config={'causality_threshold': 0.5})
+            causal_engine = CausalReasoningEngine(config={'causality_threshold': 0.5})
 
             # 测试因果关系学习
             test_observations = [
@@ -277,14 +277,14 @@ ssert has_documents or has_ids, "Search result missing expected fields"
                 'outcome': 'low_productivity',
                 'outcome_variable': 'productivity'
             }
-            intervention == {'variable': 'temperature', 'value': 22}
+            intervention = {'variable': 'temperature', 'value': 22}
 
             counterfactual_result = await causal_engine.perform_counterfactual_reasoning(scenario, intervention)
             assert 'counterfactual_outcome' in counterfactual_result, "Missing counterfactual outcome"
 
             # 测试干预规划
-            desired_outcome == {'variable': 'productivity', 'value': 9}
-            current_state == {'temperature': 30, 'mood': 'stressed'}
+            desired_outcome = {'variable': 'productivity', 'value': 9}
+            current_state = {'temperature': 30, 'mood': 'stressed'}
 
             intervention_plan = await causal_engine.plan_intervention(desired_outcome, current_state)
             assert isinstance(intervention_plan, dict), "Intervention plan should be a dictionary"

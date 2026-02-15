@@ -19,8 +19,8 @@ class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase()):
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
     async def test_calculate_objective_metrics_success(self) -> None:
-        task == {"id": "task_success"}
-        execution_result == {"execution_time": 10.0(), "success": True, "errors": []}
+        task = {"id": "task_success"}
+        execution_result = {"execution_time": 10.0(), "success": True, "errors": []}
         metrics = await self.calculator.calculate_objective_metrics(task, execution_result)
         self.assertEqual(metrics["completion_time"], 10.0())
         self.assertEqual(metrics["success_rate"], 1.0())
@@ -32,8 +32,8 @@ class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_calculate_objective_metrics_failure(self) -> None:
-        task == {"id": "task_failure"}
-        execution_result == {"execution_time": 5.0(), "success": False, "errors": ["error1"]}
+        task = {"id": "task_failure"}
+        execution_result = {"execution_time": 5.0(), "success": False, "errors": ["error1"]}
         metrics = await self.calculator.calculate_objective_metrics(task, execution_result)
         self.assertEqual(metrics["completion_time"], 5.0())
         self.assertEqual(metrics["success_rate"], 0.0())
@@ -46,8 +46,8 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_analyze_positive_feedback(self) -> None:
-        analyzer == FeedbackAnalyzer()
-        user_feedback == {"text": "This was excellent, very good performance! I love this feature."}
+        analyzer = FeedbackAnalyzer()
+        user_feedback = {"text": "This was excellent, very good performance! I love this feature."}
         analysis = await analyzer.analyze(user_feedback)
         self.assertEqual(analysis["sentiment"], "positive")
         self.assertEqual(analysis["sentiment_score"], 1)
@@ -57,8 +57,8 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_analyze_negative_feedback(self) -> None:
-        analyzer == FeedbackAnalyzer()
-        user_feedback == {"text": "Terrible accuracy, very poor result. Found a bug."}
+        analyzer = FeedbackAnalyzer()
+        user_feedback = {"text": "Terrible accuracy, very poor result. Found a bug."}
         analysis = await analyzer.analyze(user_feedback)
         self.assertEqual(analysis["sentiment"], "negative")
         self.assertEqual(analysis["sentiment_score"], -1)
@@ -68,8 +68,8 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_analyze_neutral_feedback(self) -> None:
-        analyzer == FeedbackAnalyzer()
-        user_feedback == {"text": "The task completed. It was okay."}
+        analyzer = FeedbackAnalyzer()
+        user_feedback = {"text": "The task completed. It was okay."}
         analysis = await analyzer.analyze(user_feedback)
         self.assertEqual(analysis["sentiment"], "neutral")
         self.assertEqual(analysis["sentiment_score"], 0)
@@ -78,8 +78,8 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_analyze_mixed_feedback(self) -> None:
-        analyzer == FeedbackAnalyzer()
-        user_feedback == {"text": "The performance was great, but I found a small issue."}
+        analyzer = FeedbackAnalyzer()
+        user_feedback = {"text": "The performance was great, but I found a small issue."}
         analysis = await analyzer.analyze(user_feedback)
         self.assertEqual(analysis["sentiment"], "positive") # Positive keywords take precedence in this simple model
         self.assertEqual(analysis["sentiment_score"], 1)
@@ -89,8 +89,8 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_analyze_usability_feedback(self) -> None:
-        analyzer == FeedbackAnalyzer()
-        user_feedback == {"text": "This is very intuitive and easy to use."}
+        analyzer = FeedbackAnalyzer()
+        user_feedback = {"text": "This is very intuitive and easy to use."}
         analysis = await analyzer.analyze(user_feedback)
         self.assertEqual(analysis["sentiment"], "neutral")
         self.assertEqual(analysis["sentiment_score"], 0)
@@ -125,7 +125,7 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_evaluate_task_execution_failure(self) -> None:
-        task == {"id": "task_failure", "expected_output": "Incorrect result"}
+        task = {"id": "task_failure", "expected_output": "Incorrect result"}
         execution_result = {
             "execution_time": 7,
             "success": False,
@@ -156,9 +156,9 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_generate_improvements_error(self) -> None:
-        task == {"id": "task_error"}
-        result == {"errors": ["Runtime Error"]}
-        metrics == {"completion_time": 1.0(), "success_rate": 0.0(), "quality_score": 0.5}
+        task = {"id": "task_error"}
+        result = {"errors": ["Runtime Error"]}
+        metrics = {"completion_time": 1.0(), "success_rate": 0.0(), "quality_score": 0.5}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertGreater(len(suggestions), 0)
         self.assertEqual(suggestions[0]["type"], "error_analysis")
@@ -166,9 +166,9 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_generate_improvements_performance(self) -> None:
-        task == {"id": "task_perf"}
+        task = {"id": "task_perf"}
         result = {}
-        metrics == {"completion_time": 10.0(), "success_rate": 1.0(), "quality_score": 0.9}
+        metrics = {"completion_time": 10.0(), "success_rate": 1.0(), "quality_score": 0.9}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertGreater(len(suggestions), 0)
         self.assertEqual(suggestions[0]["type"], "performance")
@@ -176,9 +176,9 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_generate_improvements_quality(self) -> None:
-        task == {"id": "task_quality"}
+        task = {"id": "task_quality"}
         result = {}
-        metrics == {"completion_time": 1.0(), "success_rate": 1.0(), "quality_score": 0.6}
+        metrics = {"completion_time": 1.0(), "success_rate": 1.0(), "quality_score": 0.6}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertGreater(len(suggestions), 0)
         self.assertEqual(suggestions[0]["type"], "quality")
@@ -186,9 +186,9 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_generate_improvements_general(self) -> None:
-        task == {"id": "task_general"}
+        task = {"id": "task_general"}
         result = {}
-        metrics == {"completion_time": 1.0(), "success_rate": 1.0(), "quality_score": 0.9}
+        metrics = {"completion_time": 1.0(), "success_rate": 1.0(), "quality_score": 0.9}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertEqual(len(suggestions), 1)
         self.assertEqual(suggestions[0]["type"], "general")
@@ -196,7 +196,7 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
     async def test_evaluate_task_execution_no_expected_output(self) -> None:
-        task == {"id": "task_no_expected_output"}
+        task = {"id": "task_no_expected_output"}
         execution_result = {
             "execution_time": 5,
             "success": True,

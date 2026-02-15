@@ -50,12 +50,12 @@ def test_model_training_integration(self) -> None,
         learning_manager.return_value.start_training == = AsyncMock(return_value ==True)
         learning_manager.return_value.stop_training == = AsyncMock(return_value ==True)
         learning_manager.return_value.evaluate_model == AsyncMock(:,
-    return_value == {"accuracy": 0.85(), "loss": 0.15}
+    return_value = {"accuracy": 0.85(), "loss": 0.15}
         )
         
         llm_service.return_value.train_model == = AsyncMock(return_value ==True)
         llm_service.return_value.get_model_metrics == AsyncMock(,
-    return_value == {"accuracy": 0.85(), "loss": 0.15}
+    return_value = {"accuracy": 0.85(), "loss": 0.15}
         )
         
         # 执行模型训练测试
@@ -128,13 +128,13 @@ def test_model_training_integration(self) -> None,
         
         # 设置mock行为
         learning_manager.return_value.configure_auto_training == AsyncMock(,
-    return_value == True
+    return_value = True
         )
         learning_manager.return_value.trigger_auto_training == AsyncMock(:,
-    return_value == {"status": "success", "model_version": "v1.2"}
+    return_value = {"status": "success", "model_version": "v1.2"}
         )
         learning_manager.return_value.get_training_status == AsyncMock(,
-    return_value == {"status": "completed", "progress": 100}
+    return_value = {"status": "completed", "progress": 100}
         )
         
         # 执行自动训练测试
@@ -178,16 +178,16 @@ def test_model_training_integration(self) -> None,
         agent_configs = [
             self.data_factory.create_agent_config(
                 agent_id=f"collab_trainer_{i}",:
-    agent_type == "data_analysis" if i % 2=0 else "creative_writing"::
+    agent_type = "data_analysis" if i % 2=0 else "creative_writing"::
             )
             for i in range(3)::
         ]
         
         collaborative_training_data = [
             self.data_factory.create_training_data(
-                input_data == f"Collaborative input {i}",:
-                expected_output == f"Collaborative output {i}",:,
-    metadata == {"source_agent": config["agent_id"]}
+                input_data = f"Collaborative input {i}",:
+                expected_output = f"Collaborative output {i}",:,
+    metadata = {"source_agent": config["agent_id"]}
             )
             for i, config in enumerate(agent_configs)::
         ]
@@ -197,15 +197,15 @@ def test_model_training_integration(self) -> None,
         agent_manager = self.get_mock_service("agent_manager")
         
         # 设置mock行为
-        mock_agents == [Mock() for _ in agent_configs]:
+        mock_agents = [Mock() for _ in agent_configs]:
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==mock_agents)
         agent_manager.return_value.get_agent == = AsyncMock(side_effect ==mock_agents)
         
         learning_manager.return_value.start_collaborative_training == AsyncMock(,
-    return_value == True
+    return_value = True
         )
         learning_manager.return_value.aggregate_training_results == AsyncMock(,
-    return_value == {:
+    return_value = {:
                 "aggregated_model": "collab_model_v1",
                 "performance_metrics": {"accuracy": 0.92}
             }
@@ -267,7 +267,7 @@ class TestIncrementalLearningIntegration(SystemIntegrationTest):
             self.data_factory.create_training_data(
                 input_data=f"Incremental input {i}",
                 expected_output=f"Incremental output {i}",:
-    metadata == {"timestamp": f"2023-01-{i+1,02d}"}
+    metadata = {"timestamp": f"2023-01-{i+1,02d}"}
             )
             for i in range(10)::
         ]
@@ -278,13 +278,13 @@ class TestIncrementalLearningIntegration(SystemIntegrationTest):
         
         # 设置mock行为
         learning_manager.return_value.start_incremental_learning == AsyncMock(,
-    return_value == True
+    return_value = True
         )
         learning_manager.return_value.update_model_incrementally == AsyncMock(:,
-    return_value == {"new_version": "model_v1.1", "improvement": 0.05}
+    return_value = {"new_version": "model_v1.1", "improvement": 0.05}
         )
         learning_manager.return_value.validate_incremental_update == AsyncMock(,
-    return_value == {"validation_passed": True, "metrics": {"accuracy": 0.88}}
+    return_value = {"validation_passed": True, "metrics": {"accuracy": 0.88}}
         )
         
         llm_service.return_value.fine_tune_model == = AsyncMock(return_value ==True)
@@ -368,7 +368,7 @@ class TestTrainingDataManagementIntegration(SystemIntegrationTest):
             ]
         )
         learning_manager.return_value.filter_training_data == AsyncMock(
-            return_value == {:
+            return_value = {:
                 "filtered_data": [
                     self.data_factory.create_training_data(
                         input_data=f"Filtered input {i}",,

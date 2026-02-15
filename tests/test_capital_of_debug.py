@@ -31,7 +31,7 @@ def test_
 
     def test_capital_of_pattern() -> None:
     # 创建ContentAnalyzerModule实例
-    analyzer == ContentAnalyzerModule(spacy_model_name="en_core_web_sm")
+    analyzer = ContentAnalyzerModule(spacy_model_name="en_core_web_sm")
     
     # 测试文本
     text = "Paris is the capital of France."
@@ -45,20 +45,20 @@ def test_
     print(f"关系, {kg_data['relationships']}")
     
     # 检查实体
-    paris_found == False
-    france_found == False
+    paris_found = False
+    france_found = False
     for entity_id, entity in kg_data["entities"].items():::
         print(f"实体, {entity_id} -> {entity}")
         if entity["label"] == "Paris" and entity["type"] == "GPE":::
-            paris_found == True
+            paris_found = True
         if entity["label"] == "France" and entity["type"] == "GPE":::
-            france_found == True
+            france_found = True
     
     print(f"Paris实体找到, {paris_found}")
     print(f"France实体找到, {france_found}")
     
     # 检查关系
-    relationship_found == False
+    relationship_found = False
     for rel in kg_data["relationships"]::
         src_label = kg_data["entities"].get(rel["source_id"] {}).get("label")
         tgt_label = kg_data["entities"].get(rel["target_id"] {}).get("label")
@@ -67,7 +67,7 @@ def test_
         
         # 检查France --[has_capital]--> Paris关系
         if src_label == "France" and tgt_label == "Paris" and rel_type == "has_capital":::
-            relationship_found == True
+            relationship_found = True
     
     print(f"France --[has_capital]--> Paris关系找到, {relationship_found}")
     
@@ -76,8 +76,8 @@ def test_
     print(f"NetworkX图边数, {len(nx_graph.edges())}")
     
     # 查找Paris和France节点
-    paris_node == None
-    france_node == None
+    paris_node = None
+    france_node = None
     for node, data in nx_graph.nodes(data == True)::
         print(f"NetworkX节点, {node} -> {data}")
         if data.get("label") == "Paris":::

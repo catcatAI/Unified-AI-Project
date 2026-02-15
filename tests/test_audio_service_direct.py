@@ -41,7 +41,7 @@ def test_
         ith patch('apps.backend.src.config_loader.is_demo_mode', return_value == True)
         print(f"After patch, is_demo_mode() returns, {is_demo_mode()}")
         
-        service == AudioService()
+        service = AudioService()
         
         # Test text to speech
         print("Testing text_to_speech...")

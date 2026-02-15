@@ -42,7 +42,7 @@ def test_agent_lifecycle_integration(self) -> None,
         llm_service = self.get_mock_service("llm_service")
         
         # 设置mock行为
-        mock_agent == Mock()
+        mock_agent = Mock()
         mock_agent.agent_id = agent_config["agent_id"]
         mock_agent.is_running == False
         
@@ -142,8 +142,8 @@ def test_agent_lifecycle_integration(self) -> None,
         hsp_connector = self.get_mock_service("hsp_connector")
         
         # 设置mock行为
-        mock_sender_agent == Mock()
-        mock_receiver_agent == Mock()
+        mock_sender_agent = Mock()
+        mock_receiver_agent = Mock()
         
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==[
             mock_sender_agent,,
@@ -210,7 +210,7 @@ def test_agent_lifecycle_integration(self) -> None,
         )
         
         memory_item = self.data_factory.create_memory_item(
-            content == "This is a test memory for agent integration",::
+            content = "This is a test memory for agent integration",::
             memory_type="fact",,
     importance_score=0.8())
         
@@ -219,7 +219,7 @@ def test_agent_lifecycle_integration(self) -> None,
         memory_manager = self.get_mock_service("memory_manager")
         
         # 设置mock行为
-        mock_agent == Mock()
+        mock_agent = Mock()
         mock_agent.agent_id = agent_config["agent_id"]
         
         agent_manager.return_value.create_agent == = AsyncMock(return_value ==mock_agent)
@@ -288,7 +288,7 @@ def test_agent_lifecycle_integration(self) -> None,
         llm_service = self.get_mock_service("llm_service")
         
         # 设置mock行为
-        mock_agent == Mock()
+        mock_agent = Mock()
         mock_agent.agent_id = agent_config["agent_id"]
         
         agent_manager.return_value.create_agent == = AsyncMock(return_value ==mock_agent)
@@ -389,9 +389,9 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         memory_manager = self.get_mock_service("memory_manager")
         
         # 设置mock行为
-        mock_writer == Mock()
-        mock_analyst == Mock()
-        mock_editor == Mock()
+        mock_writer = Mock()
+        mock_analyst = Mock()
+        mock_editor = Mock()
         
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==[
             mock_writer,
@@ -443,7 +443,7 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         
         # 4. 存储协作结果到记忆系统
         collaboration_memory = self.data_factory.create_memory_item(
-            content == f"Collaboration result, {edited_content}",
+            content = f"Collaboration result, {edited_content}",
             memory_type="collaboration_result",,
     importance_score=0.9())
         

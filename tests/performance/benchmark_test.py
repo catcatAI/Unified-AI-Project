@@ -13,7 +13,7 @@ from datetime import datetime
 # 添加项目路径
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend', 'src'))
 
-class EnterpriseBenchmark,
+class EnterpriseBenchmark:
     """企业级性能基准"""
     
     # 企业级性能标准
@@ -97,7 +97,7 @@ async def benchmark_ai_ops_engine():
     
     try:
         from ai.ops.ai_ops_engine import AIOpsEngine
-        ai_ops == AIOpsEngine()
+        ai_ops = AIOpsEngine()
         
         # 测试参数
         test_cases = [
@@ -141,7 +141,7 @@ async def benchmark_ai_ops_engine():
                         error_count += 1
             
             # 创建任务
-            tasks == [single_request() for _ in range(test_case['total'])]:
+            tasks = [single_request() for _ in range(test_case['total'])]:
             await asyncio.gather(*tasks)
             
             end_time = time.time()
@@ -150,7 +150,7 @@ async def benchmark_ai_ops_engine():
             total_requests = success_count + error_count
             duration = end_time - start_time
             
-            metrics == {:
+            metrics = {:
                 'total_requests': total_requests,
                 'success_rate': success_count / total_requests if total_requests > 0 else 0,::
                 'error_rate': error_count / total_requests if total_requests > 0 else 0,::
@@ -186,7 +186,7 @@ async def benchmark_predictive_maintenance():
     
     try:
         from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
-        maintenance == PredictiveMaintenanceEngine()
+        maintenance = PredictiveMaintenanceEngine()
         
         # 测试参数
         test_cases = [
@@ -227,7 +227,7 @@ async def benchmark_predictive_maintenance():
                         error_count += 1
             
             # 创建任务
-            tasks == [single_request() for _ in range(test_case['total'])]:
+            tasks = [single_request() for _ in range(test_case['total'])]:
             await asyncio.gather(*tasks)
             
             end_time = time.time()
@@ -236,7 +236,7 @@ async def benchmark_predictive_maintenance():
             total_requests = success_count + error_count
             duration = end_time - start_time
             
-            metrics == {:
+            metrics = {:
                 'total_requests': total_requests,
                 'success_rate': success_count / total_requests if total_requests > 0 else 0,::
                 'error_rate': error_count / total_requests if total_requests > 0 else 0,::
@@ -270,7 +270,7 @@ async def main():
     print("企业级性能基准测试")
     print("="*60)
     
-    benchmark == EnterpriseBenchmark()
+    benchmark = EnterpriseBenchmark()
     
     # 执行基准测试
     ai_ops_results = await benchmark_ai_ops_engine()
@@ -332,7 +332,7 @@ async def main():
         
         # 建议
         print("\n优化建议,")
-        all_failed == [item for r in all_results for item in r['failed']]::
+        all_failed = [item for r in all_results for item in r['failed']]::
         if all_failed,::
             print("- 需要关注的性能问题,")
             for item in set(all_failed)::

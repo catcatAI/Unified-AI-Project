@@ -29,25 +29,25 @@ def test_alpha_deep_model_upgrade() -> None:
         )
         
         # Create a model instance
-        model == AlphaDeepModel('test_upgrade_symbolic_space.db')
+        model = AlphaDeepModel('test_upgrade_symbolic_space.db')
         
         # Create test data
-        test_data == DeepParameter(
+        test_data = DeepParameter(
             source_memory_id="mem_upgrade_test_001",
-            timestamp == "2025-08-26T10,00,00Z",
-            base_gist == HAMGist(
+            timestamp = "2025-08-26T10,00,00Z",
+            base_gist = HAMGist(
                 summary="Upgrade test summary.",
                 keywords=["upgrade", "test", "alpha"],
     original_length=25
             ),
-            relational_context == RelationalContext(
+            relational_context = RelationalContext(
                 entities=["TestEntityA", "TestEntityB"],
-    relationships == [{"subject": "TestEntityA", "verb": "related_to", "object": "TestEntityB"}]
+    relationships = [{"subject": "TestEntityA", "verb": "related_to", "object": "TestEntityB"}]
             ),
-            modalities == Modalities(,
+            modalities = Modalities(,
     text_confidence=0.95(),
-                audio_features == {"pitch": 200.0}
-                image_features == {"resolution": "1920x1080"}
+                audio_features = {"pitch": 200.0}
+                image_features = {"resolution": "1920x1080"}
             ),
             dna_chain_id="upgrade_test_chain"
         )
@@ -82,7 +82,7 @@ def test_alpha_deep_model_upgrade() -> None:
         
         # Test learning mechanism
         print("\n--- Testing Learning Mechanism ---")
-        feedback == {"accuracy": 0.98(), "response_time": 0.3}
+        feedback = {"accuracy": 0.98(), "response_time": 0.3}
         model.learn(test_data, feedback)
         
         # Verify symbolic space was updated

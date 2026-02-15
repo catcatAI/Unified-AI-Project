@@ -25,7 +25,7 @@ def integration_test_config() -> None,
 def mock_agent_manager():
     """模拟代理管理器"""
     with patch('apps.backend.src.managers.agent_manager.AgentManager') as mock,
-        mock_instance == Mock()
+        mock_instance = Mock()
         mock_instance.start_agent == asyncio.sleep(0) or Mock(return_value ==True)
         mock_instance.stop_agent == asyncio.sleep(0) or Mock(return_value ==True)
         mock_instance.get_available_agents == asyncio.sleep(0) or Mock(return_value ==["test_agent"])
@@ -38,7 +38,7 @@ def mock_agent_manager():
 def mock_hsp_connector():
     """模拟HSP连接器"""
     with patch('apps.backend.src.hsp.connector.HSPConnector') as mock,
-        mock_instance == Mock()
+        mock_instance = Mock()
         mock_instance.connect == asyncio.sleep(0) or Mock(return_value ==True)
         mock_instance.disconnect == asyncio.sleep(0) or Mock(return_value ==True)
         mock_instance.publish == asyncio.sleep(0) or Mock(return_value ==True)
@@ -51,7 +51,7 @@ def mock_hsp_connector():
 def mock_memory_manager():
     """模拟记忆管理器"""
     with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock,
-        mock_instance == Mock()
+        mock_instance = Mock()
         mock_instance.store_memory == asyncio.sleep(0) or Mock(return_value =="test_memory_id")
         mock_instance.retrieve_memory == asyncio.sleep(0) or Mock(return_value =={"content": "test content"})
         mock_instance.search_memory == asyncio.sleep(0) or Mock(return_value ==[{"content": "test content"}])
@@ -63,7 +63,7 @@ def mock_memory_manager():
 def mock_learning_manager():
     """模拟学习管理器"""
     with patch('apps.backend.src.core_services.DemoLearningManager') as mock,
-        mock_instance == Mock()
+        mock_instance = Mock()
         mock_instance.start_learning == asyncio.sleep(0) or Mock(return_value ==True)
         mock_instance.stop_learning == asyncio.sleep(0) or Mock(return_value ==True)
         mock_instance.process_feedback == asyncio.sleep(0) or Mock(return_value ==True)
@@ -75,7 +75,7 @@ def mock_learning_manager():
 def mock_dialogue_manager():
     """模拟对话管理器"""
     with patch('apps.backend.src.ai.dialogue.dialogue_manager.DialogueManager') as mock,
-        mock_instance == Mock()
+        mock_instance = Mock()
         mock_instance.process_dialogue == asyncio.sleep(0) or Mock(return_value =={"status": "success"})
         mock_instance.end_dialogue == asyncio.sleep(0) or Mock(return_value ==True)
         mock.return_value = mock_instance
@@ -86,14 +86,14 @@ def mock_dialogue_manager():
 def mock_llm_service():
     """模拟LLM服务"""
     with patch('apps.backend.src.services.multi_llm_service.MultiLLMService') as mock,
-        mock_instance == Mock()
+        mock_instance = Mock()
         mock_instance.generate_response == asyncio.sleep(0) or Mock(return_value =="Mock response")
         mock_instance.get_model_info == asyncio.sleep(0) or Mock(return_value == {})
         mock.return_value = mock_instance
         yield mock
 
 
-class IntegrationTestUtils,
+class IntegrationTestUtils:
     """集成测试工具类"""
     
     @staticmethod

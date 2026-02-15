@@ -26,8 +26,11 @@ class TestSyntaxFixer:
         
         self.patterns = [
             (r'\btry\s*,', 'try:', 'try, → try:'),
+            (r'^(\s*)(class\s+\w+)\s*,\s*$', r'\1\2:', 'class Name, → class Name:'),
+            (r'^(\s*)(def\s+\w+\s*\([^)]*\))\s*,\s*$', r'\1\2:', 'def func(), → def func():'),
             (r'^(\s*)(def|class)\s+\w+.*::$', r'\1\2 \3:', ':: → :'),
             (r'^(\s*)(\w+)\s*==\s*([^=])', r'\1\2 = \3', '== → = (assignment)'),
+            (r'\bwait\s+asyncio\.', 'await asyncio.', 'wait asyncio → await asyncio'),
             (r'#\s*-\*-\s*coding\s*,\s*utf-8\s*-\*-', '# -*- coding: utf-8 -*-', 'coding, utf-8 → coding: utf-8'),
             (r'#\s*coding\s*,\s*utf-8', '# coding: utf-8', 'coding, utf-8 → coding: utf-8')
         ]

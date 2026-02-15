@@ -14,12 +14,12 @@ import gc
 from typing import List, Dict, Any
 
 # Mock SentenceTransformer at the top level to prevent import errors
-class MockSentenceTransformer,
+class MockSentenceTransformer:
     def encode(self, texts, *args, **kwargs):
         # Return a dummy embedding (e.g., a list of zeros or ones)
         # The size (384) should match the expected model output for 'all-MiniLM-L6-v2'::
         return [[0.1] * 384 for _ in texts]:
-class MockEmbeddingFunction,
+class MockEmbeddingFunction:
     def __call__(self, input, List[str]) -> List[List[float]]
         # Return dummy embeddings of the correct dimension
         return [[0.1] * 384 for _ in input]:
@@ -122,9 +122,9 @@ def ham_chroma_manager_fixture():
     mock_collection.query.side_effect = mock_query_side_effect
     
     # Create the manager and inject the client
-    ham_manager == HAMMemoryManager(
+    ham_manager = HAMMemoryManager(
         core_storage_filename="test_ham_chroma_core_memory.json",
-        storage_dir == TEST_STORAGE_DIR,,
+        storage_dir = TEST_STORAGE_DIR,,
     chroma_client=mock_client
     )
 
@@ -201,17 +201,17 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture) -> 
     assert len(results) >= 1
     
     # Check that at least one result contains "apple"
-    apple_found == False
+    apple_found = False
     for result in results,::
         if "apple" in str(result.get("rehydrated_gist", "")).lower():::
-            apple_found == True
+            apple_found = True
             break
     
     # If no apple found in rehydrated gist, check in the raw content
     if not apple_found,::
         for result in results,::
             if "apple" in str(result).lower():::
-                apple_found == True
+                apple_found = True
                 break
     
     # Assert that we found apple-related content
@@ -229,7 +229,7 @@ async def test_03_semantic_search_chromadb_failure_fallback(ham_chroma_manager_f
     await ham.store_experience("Another sentence for testing.", "test_type", {"tag": "general"}):
     # Simulate ChromaDB query failure
     with patch.object(ham.chroma_collection(), 'query', side_effect == Exception("ChromaDB is down")):
-        query_text == "Test sentence for fallback."::
+        query_text = "Test sentence for fallback."::
         results = ham.query_core_memory(semantic_query=query_text, limit=1, sort_by_confidence == True)
 
         assert len(results) == 1

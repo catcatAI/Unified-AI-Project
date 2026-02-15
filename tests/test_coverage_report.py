@@ -107,14 +107,14 @@ def analyze_test_coverage():
 
 def generate_missing_tests(coverage_report):
     """生成缺失的测试文件"""
-    project_root == Path(__file__).parent.parent()
+    project_root = Path(__file__).parent.parent()
     for component, data in coverage_report.items():::
         print(f"\n🔧 生成 {component} 缺失的测试文件...")
         
         for file_info in data["files"]::
             if not file_info["tested"]::
                 original_file = project_root / file_info["file"]
-                test_file == project_root / "tests" / component.lower() / f"{original_file.stem}.test.{original_file.suffix[1,]}"
+                test_file = project_root / "tests" / component.lower() / f"{original_file.stem}.test.{original_file.suffix[1,]}"
                 
                 # 确保测试目录存在
                 test_file.parent.mkdir(parents == True, exist_ok == True)
@@ -139,14 +139,14 @@ import sys
 from pathlib import Path
 
 # 添加项目路径
-project_root == Path(__file__).parent.parent.parent()
+project_root = Path(__file__).parent.parent.parent()
 sys.path.insert(0, str(project_root))
 
 def test_import():
     """测试模块导入"""
     try:
         module_path = str(original_file).replace('/', '.').replace('.py', '')
-        module == __import__(module_path, fromlist=['*'])
+        module = __import__(module_path, fromlist=['*'])
         assert module is not None
         print(f"✅ {original_file.name} 导入成功")
     except Exception as e,::
@@ -220,7 +220,7 @@ def main():
         print(f"  覆盖率, {data['coverage'].1f}%")
         
         # 显示未测试的文件
-        untested == [f for f in data["files"] if not f["tested"]]::
+        untested = [f for f in data["files"] if not f["tested"]]::
         if untested,::
             print(f"  未测试文件 ({len(untested)})")
             for file in untested[:5]  # 只显示前5个,:
@@ -233,7 +233,7 @@ def main():
     generate_missing_tests(coverage_report)
     
     # 保存报告
-    report_path == Path(__file__).parent / "coverage_report.json"
+    report_path = Path(__file__).parent / "coverage_report.json"
     with open(report_path, 'w', encoding == 'utf-8') as f:
         json.dump(coverage_report, f, ensure_ascii == False, indent=2)
     

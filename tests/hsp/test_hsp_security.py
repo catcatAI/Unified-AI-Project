@@ -12,7 +12,7 @@ from core.hsp.security import HSPSecurityManager, HSPSecurityContext
 from core.hsp.connector import HSPConnector
 from core.hsp.types import HSPFactPayload
 
-class TestHSPSecurity,
+class TestHSPSecurity:
     """HSP协议安全功能测试"""
     
     @pytest.fixture()
@@ -32,11 +32,11 @@ class TestHSPSecurity,
         """创建HSP连接器实例"""
         # 在测试环境中设置测试模式
         os.environ['TESTING_MODE'] = 'true'
-        connector == HSPConnector(
+        connector = HSPConnector(
             ai_id="test_ai",
             broker_address="localhost",
             broker_port=1883,,
-    mock_mode == True
+    mock_mode = True
         )
         # 注入安全管理器和上下文
         connector.security_manager = security_manager
@@ -68,7 +68,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
             "message_type": "HSP,TestMessage_v0.1",
             "payload": {"content": "test content"}
         }
-        sender_id == "did,hsp,test_ai_001"
+        sender_id = "did,hsp,test_ai_001"
         
         # 生成签名
         signature = security_manager.sign_message(message, sender_id)
@@ -97,7 +97,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
     
     def test_sender_authentication(self, security_manager) -> None,
         """测试发送者身份验证"""
-        sender_id == "did,hsp,test_ai_001"
+        sender_id = "did,hsp,test_ai_001"
         
         # 生成认证令牌
         auth_token = security_manager.generate_auth_token(sender_id)
@@ -151,21 +151,21 @@ def test_security_manager_initialization(self, security_manager) -> None,
     async def test_hsp_connector_secure_message_creation(self, hsp_connector) -> None,
         """测试HSP连接器安全消息创建"""
         # 创建测试载荷
-        fact_payload == HSPFactPayload(
+        fact_payload = HSPFactPayload(
             id="fact_001",
             statement_type="natural_language",
             statement_nl="Test fact",
             source_ai_id="test_ai",
-            timestamp_created == "2023-01-01T00,00,00Z",,
+            timestamp_created = "2023-01-01T00,00,00Z",,
     confidence_score=1.0(),
             tags=["test"]
         )
         
         # 创建消息信封
         envelope = hsp_connector._create_envelope(
-            message_type == "HSP,Fact_v0.1",
+            message_type = "HSP,Fact_v0.1",
             payload=fact_payload,,
-    recipient_ai_id == "did,hsp,test_ai_002"
+    recipient_ai_id = "did,hsp,test_ai_002"
         )
         
         # 验证安全参数已添加
@@ -201,7 +201,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         secured_message = hsp_connector.security_context.secure_message(message, message["sender_ai_id"])
         
         # 模拟回调函数
-        callback == AsyncMock()
+        callback = AsyncMock()
         hsp_connector._fact_callbacks.append(callback)
         
         # 分发消息

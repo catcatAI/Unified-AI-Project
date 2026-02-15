@@ -23,7 +23,7 @@ class TestVisionService(unittest.TestCase):
         self.test_config.clear()
 def test_01_initialization(self) -> None,
         """Test Vision service initialization."""
-        service == VisionService()
+        service = VisionService()
         self.assertIsNotNone(service)
         # Check that service has required attributes
         self.assertTrue(hasattr(service, 'config'))
@@ -34,7 +34,7 @@ def test_01_initialization(self) -> None,
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     async def test_02_analyze_image(self) -> None:
         """Test image analysis."""
-        service == VisionService()
+        service = VisionService()
         dummy_image = b"dummy_image_bytes"
         features = ["captioning", "object_detection", "ocr"]
         # Fix, properly await the coroutine
@@ -56,7 +56,7 @@ def test_01_initialization(self) -> None,
     @pytest.mark.timeout(15)
     async def test_03_compare_images(self) -> None:
         """Test image comparison."""
-        service == VisionService()
+        service = VisionService()
         dummy_image1 = b"dummy1"
         dummy_image2 = b"dummy2"
 

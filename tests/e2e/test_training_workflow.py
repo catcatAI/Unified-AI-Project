@@ -9,19 +9,19 @@ from unittest.mock import Mock, patch, AsyncMock
 from demo_learning_manager import DemoLearningManager
 from execution_manager import ExecutionManager
 
-class TestTrainingWorkflowE2E,
+class TestTrainingWorkflowE2E:
     """端到端训练工作流程测试"""
     
     @pytest.fixture()
     def demo_learning_manager(self):
         """创建演示学习管理器实例"""
-        manager == DemoLearningManager()
+        manager = DemoLearningManager()
         return manager
     
     @pytest.fixture()
     def execution_manager(self):
         """创建执行管理器实例"""
-        manager == ExecutionManager()
+        manager = ExecutionManager()
         return manager
     
     @pytest.mark.asyncio()
@@ -135,7 +135,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
             mock_agent_manager_instance.get_agent == = Mock(return_value ==Mock())
             
             # 创建模拟代理
-            mock_agent == Mock()
+            mock_agent = Mock()
             mock_agent.agent_id = "training_coordinator_agent"
             mock_agent.process_training_request == = AsyncMock(return_value =={
                 "status": "accepted",
@@ -200,7 +200,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
             assert opinion_result is True
             mock_hsp_instance.publish_opinion.assert_called_once_with(training_recommendation_opinion, "hsp/knowledge/opinions/training")
 
-class TestMultiSystemIntegrationE2E,
+class TestMultiSystemIntegrationE2E:
     """多系统集成端到端测试"""
     
     @pytest.mark.asyncio()
@@ -222,7 +222,7 @@ class TestMultiSystemIntegrationE2E,
             mock_manager.get_agent == = Mock(return_value ==Mock())
             
             # 模拟主代理
-            mock_main_agent == Mock()
+            mock_main_agent = Mock()
             mock_main_agent.agent_id = "main_coordinator_agent"
             mock_main_agent.decompose_task == = Mock(return_value ==[
                 {"task_id": "subtask_1", "task_type": "data_collection"}
@@ -238,9 +238,9 @@ class TestMultiSystemIntegrationE2E,
             assert len(subtasks) == 4
             assert all("task_id" in subtask for subtask in subtasks)::
             # 3. 多代理协作执行子任务
-            mock_specialized_agents == []
+            mock_specialized_agents = []
             for i in range(4)::
-                mock_agent == Mock()
+                mock_agent = Mock()
                 mock_agent.agent_id = f"specialized_agent_{i}"
                 mock_agent.execute_task == = AsyncMock(return_value =={
                     "status": "completed",

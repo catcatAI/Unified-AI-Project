@@ -33,7 +33,7 @@ class DetectionType(Enum):
 
 
 @dataclass
-class DetectionResult,
+class DetectionResult:
     """檢測結果"""
     detection_type, DetectionType
     detected, bool
@@ -43,7 +43,7 @@ class DetectionResult,
     resource_info, Optional[Dict] = None
 
 
-class DeadlockDetector,
+class DeadlockDetector:
     """死鎖檢測器"""
 
     def __init__(self, check_interval, float == 1.0(), max_detection_time, float == 30.0()) -> None,
@@ -62,7 +62,7 @@ class DeadlockDetector,
     self.detection_active == True
     self._detection_thread = threading.Thread(,
     target=self._detection_loop(),
-            daemon == True
+            daemon = True
     )
     self._detection_thread.start()
     logger.debug("Deadlock detection started")
@@ -131,7 +131,7 @@ class DeadlockDetector,
     logger.error(f"Deadlock detected in thread {thread.name}\n{stack_trace}")
 
 
-class LoopDetector,
+class LoopDetector:
     """循環檢測器"""
 
     def __init__(self, max_iterations, int == 10000, check_interval, int == 100) -> None,
@@ -158,7 +158,7 @@ class LoopDetector,
     def reset(self):
         ""重置計數器"""
     self.iteration_counts.clear()
-class ResourceLeakDetector,
+class ResourceLeakDetector:
     """資源洩漏檢測器"""
 
     def __init__(self) -> None,
@@ -186,10 +186,10 @@ class ResourceLeakDetector,
     current_thread_count = threading.active_count()
         if current_thread_count > self.initial_thread_count + 2,  # 允許一些容差,::
             esults.append(DetectionResult(,
-    detection_type == DetectionType.THREAD_LEAK(),
-                detected == True,
-                details == f"Thread leak detected, {current_thread_count} vs {self.initial_thread_count}",
-                thread_info == {'current': current_thread_count, 'initial': self.initial_thread_count}
+    detection_type = DetectionType.THREAD_LEAK(),
+                detected = True,
+                details = f"Thread leak detected, {current_thread_count} vs {self.initial_thread_count}",
+                thread_info = {'current': current_thread_count, 'initial': self.initial_thread_count}
             ))
 
     # 檢查文件描述符洩漏
@@ -197,13 +197,13 @@ class ResourceLeakDetector,
 
             import psutil
             process = psutil.Process()
-            current_fds == process.num_fds if hasattr(process, 'num_fds') else 0,::
+            current_fds = process.num_fds if hasattr(process, 'num_fds') else 0,::
     if current_fds > self.initial_file_descriptors + 10,  # 允許一些容差,::
         esults.append(DetectionResult(,
-    detection_type == DetectionType.RESOURCE_LEAK(),
-                    detected == True,
-                    details == f"File descriptor leak detected, {current_fds} vs {self.initial_file_descriptors}",
-                    resource_info == {'current_fds': current_fds, 'initial_fds': self.initial_file_descriptors}
+    detection_type = DetectionType.RESOURCE_LEAK(),
+                    detected = True,
+                    details = f"File descriptor leak detected, {current_fds} vs {self.initial_file_descriptors}",
+                    resource_info = {'current_fds': current_fds, 'initial_fds': self.initial_file_descriptors}
                 ))
         except ImportError as e:
             pass
@@ -211,7 +211,7 @@ class ResourceLeakDetector,
     return results
 
 
-class AsyncLoopDetector,
+class AsyncLoopDetector:
     """異步循環檢測器"""
 
     def __init__(self, max_pending_tasks, int == 100) -> None,
@@ -229,17 +229,17 @@ class AsyncLoopDetector,
 
     def check_async_leaks(self) -> List[DetectionResult]
     """檢查異步洩漏"""
-    results == try:
+    results = try:
 
 
             loop = asyncio.get_running_loop()
-            current_tasks == [task for task in asyncio.all_tasks(loop) if not task.done]::
+            current_tasks = [task for task in asyncio.all_tasks(loop) if not task.done]::
     if len(current_tasks) > self.max_pending_tasks,::
     results.append(DetectionResult(,
-    detection_type == DetectionType.ASYNC_LEAK(),
-                    detected == True,
-                    details == f"Too many pending async tasks, {len(current_tasks)}",
-                    resource_info == {'pending_tasks': len(current_tasks), 'max_allowed': self.max_pending_tasks}
+    detection_type = DetectionType.ASYNC_LEAK(),
+                    detected = True,
+                    details = f"Too many pending async tasks, {len(current_tasks)}",
+                    resource_info = {'pending_tasks': len(current_tasks), 'max_allowed': self.max_pending_tasks}
                 ))
 
         except RuntimeError as e:
@@ -251,9 +251,9 @@ class AsyncLoopDetector,
 @contextmanager
 def deadlock_detection(timeout, float == 30.0(), check_interval, float == 1.0()):
 ""死鎖檢測上下文管理器"""
-    detector == DeadlockDetector(check_interval=check_interval, max_detection_time=timeout)
-    resource_detector == ResourceLeakDetector
-    async_detector == AsyncLoopDetector
+    detector = DeadlockDetector(check_interval=check_interval, max_detection_time=timeout)
+    resource_detector = ResourceLeakDetector
+    async_detector = AsyncLoopDetector
 
     try:
 
@@ -277,7 +277,7 @@ def loop_detection(max_iterations, int == 10000):
     def decorator(func):
         functools.wraps(func)
         def wrapper(*args, **kwargs):
-            etector == LoopDetector(max_iterations=max_iterations)
+            etector = LoopDetector(max_iterations=max_iterations)
 
             # 如果是異步函數
             if inspect.iscoroutinefunction(func)::

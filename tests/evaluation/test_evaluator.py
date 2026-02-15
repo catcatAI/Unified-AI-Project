@@ -28,13 +28,13 @@ def test_evaluate(self) -> None,
         """
         Tests the evaluate method.
         """
-        evaluator == Evaluator()
+        evaluator = Evaluator()
 
         class DummyModel:
             def evaluate(self, input):
                 return input
 
-        model == DummyModel()
+        model = DummyModel()
         dataset = [(1, 1), (2, 2), (3, 3), (4, 5)]
         evaluation = evaluator.evaluate(model, dataset)
 

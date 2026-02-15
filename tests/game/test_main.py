@@ -23,7 +23,7 @@ def test_game_initialization() -> None,
     # Mock the DialogueManager to avoid initializing the full AI stack
     with pytest.MonkeyPatch.context() as m:
         m.setattr("src.game.angela.DialogueManager", MagicMock())
-        game == Game()
+        game = Game()
         assert game is not None
         assert game.is_running is True
         assert game.screen_width=960

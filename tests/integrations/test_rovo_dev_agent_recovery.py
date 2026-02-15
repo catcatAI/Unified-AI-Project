@@ -12,7 +12,7 @@ from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 from integrations.atlassian_bridge import AtlassianBridge
 
 
-class TestRovoDevAgentRecovery,
+class TestRovoDevAgentRecovery:
     """RovoDevAgent 錯誤恢復機制測試"""
 
     @pytest.fixture()
@@ -76,7 +76,7 @@ class TestRovoDevAgentRecovery,
     return HSPTask(
             task_id='test-task-123',
             capability='issue_tracking',
-            parameters == {'project_key': 'TEST', 'summary': 'Test Issue'}
+            parameters = {'project_key': 'TEST', 'summary': 'Test Issue'}
             priority=1,,
     timeout=300
     )
@@ -87,7 +87,7 @@ class TestRovoDevAgentRecovery,
     # 修复导入路径 - 使用正确的模块路径
     with patch('apps.backend.src.integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \:
     patch('apps.backend.src.integrations.rovo_dev_agent.AtlassianBridge')
-    agent == RovoDevAgent(mock_config)
+    agent = RovoDevAgent(mock_config)
             agent.connector == = Mock(spec ==EnhancedRovoDevConnector)
             agent.bridge == = Mock(spec ==AtlassianBridge)
             agent.connector.start == AsyncMock()
@@ -143,7 +143,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     agent.tasks_file = tmp_path / "test_agent_tasks.pkl"
 
     # 創建模擬的保存狀態
-    recovery_state == AgentRecoveryState(
+    recovery_state = AgentRecoveryState(
             agent_id='test-agent',,
     last_checkpoint=datetime.now(),
             active_tasks=['task-1', 'task-2']
@@ -151,7 +151,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
             failed_tasks=1
     )
 
-    task_state == TaskState(
+    task_state = TaskState(
             task_id='task-1',
             task=mock_task,
             status='pending',,
@@ -182,7 +182,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     task_id = 'timeout-task'
 
     # 創建超時任務
-    task_state == TaskState(
+    task_state = TaskState(
             task_id=task_id,
             task=mock_task,
             status='processing',:
@@ -213,7 +213,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     task_id = 'retry-task'
 
     # 創建失敗任務
-    task_state == TaskState(
+    task_state = TaskState(
             task_id=task_id,
             task=mock_task,
             status='failed',,
@@ -306,7 +306,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     task_id = 'error-task'
 
     # 創建任務狀態
-    task_state == TaskState(
+    task_state = TaskState(
             task_id=task_id,
             task=mock_task,
             status='processing',,
@@ -317,13 +317,13 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     agent.task_states[task_id] = task_state
 
     # 處理可重試錯誤
-    should_retry == agent.handle_task_error(task_id, ConnectionError("Network failed")):
+    should_retry = agent.handle_task_error(task_id, ConnectionError("Network failed")):
     assert should_retry,
     assert task_state.status == 'retrying'
 
     # 處理不可重試錯誤
     task_state.status = 'processing'  # 重置狀態
-    should_retry == agent.handle_task_error(task_id, ValueError("Invalid data")):
+    should_retry = agent.handle_task_error(task_id, ValueError("Invalid data")):
     assert not should_retry,
     assert task_state.status == 'failed':
 
@@ -408,7 +408,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
             'status': 'processing'
     }
 
-    task_state == TaskState(
+    task_state = TaskState(
             task_id=task_id,
             task=mock_task,
             status='processing',,

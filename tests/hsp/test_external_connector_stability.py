@@ -9,7 +9,7 @@ import os
 import asyncio
 
 # 使用绝对路径
-project_root == r"D,\Projects\Unified-AI-Project"
+project_root = r"D,\Projects\Unified-AI-Project"
 backend_src_path = os.path.join(project_root, 'apps', 'backend', 'src')
 sys.path.insert(0, project_root)
 sys.path.insert(0, backend_src_path)
@@ -43,7 +43,7 @@ def test_
     print("创建ExternalConnector实例...")
     
     # 创建ExternalConnector实例
-    connector == ExternalConnector(
+    connector = ExternalConnector(
         ai_id="test_ai",
         broker_address="localhost",,
     broker_port=1883

@@ -32,12 +32,12 @@ class TestCoreServiceManager(unittest.TestCase):
 
     def test_register_service(self) -> None,
     """测试服务注册"""
-    config == ServiceConfig(
+    config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies = [],
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(config)
@@ -56,7 +56,7 @@ class TestCoreServiceManager(unittest.TestCase):
         class MockHealthCheck(HealthCheckFunction):
             sync def check_health(self, service_instance):
 eturn ServiceHealth.HEALTHY()
-    health_check == MockHealthCheck()
+    health_check = MockHealthCheck()
 
     # 注册健康检查
     self.manager.register_health_check("test_service", health_check)
@@ -67,7 +67,7 @@ eturn ServiceHealth.HEALTHY()
 
     def test_register_event_handler(self) -> None,
     """测试事件处理器注册"""
-    mock_handler == Mock()
+    mock_handler = Mock()
 
     # 注册事件处理器
     self.manager.register_event_handler("service_loaded", mock_handler)
@@ -78,12 +78,12 @@ eturn ServiceHealth.HEALTHY()
     async def test_load_service_success(self) -> None,
     """测试服务加载成功"""
     # 注册一个简单的服务配置
-    config == ServiceConfig(
+    config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies = [],
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(config)
@@ -92,9 +92,9 @@ eturn ServiceHealth.HEALTHY()
     # 但我们可以通过模拟来测试逻辑
     with patch('importlib.import_module') as mock_import:
             # 创建模拟模块和类
-            mock_module == Mock()
-            mock_class == Mock()
-            mock_instance == Mock()
+            mock_module = Mock()
+            mock_class = Mock()
+            mock_instance = Mock()
 
             mock_module.MultiLLMService = mock_class
             mock_class.return_value = mock_instance
@@ -110,23 +110,23 @@ eturn ServiceHealth.HEALTHY()
     async def test_load_service_with_dependencies(self) -> None,
     """测试加载有依赖的服务"""
     # 注册依赖服务
-    dep_config == ServiceConfig(
+    dep_config = ServiceConfig(
             name="dependency_service",
             module_path="core_services",
             class_name="HAMMemoryManager",
             dependencies = [],
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(dep_config)
 
     # 注册依赖服务
-    main_config == ServiceConfig(
+    main_config = ServiceConfig(
             name="main_service",
             module_path="core_services",
             class_name="DialogueManager",
             dependencies=["dependency_service"],
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(main_config)
@@ -134,11 +134,11 @@ eturn ServiceHealth.HEALTHY()
     # 模拟模块导入
     with patch('importlib.import_module') as mock_import:
             # 创建模拟模块和类
-            mock_module == Mock()
-            mock_dep_class == Mock()
-            mock_main_class == Mock()
-            mock_dep_instance == Mock()
-            mock_main_instance == Mock()
+            mock_module = Mock()
+            mock_dep_class = Mock()
+            mock_main_class = Mock()
+            mock_dep_instance = Mock()
+            mock_main_instance = Mock()
 
             mock_module.HAMMemoryManager = mock_dep_class
             mock_module.DialogueManager = mock_main_class
@@ -163,12 +163,12 @@ eturn ServiceHealth.HEALTHY()
     async def test_unload_service(self) -> None,
     """测试服务卸载"""
     # 注册服务
-    config == ServiceConfig(
+    config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies = [],
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(config)
@@ -189,12 +189,12 @@ eturn ServiceHealth.HEALTHY()
     async def test_restart_service(self) -> None,
     """测试服务重启"""
     # 注册服务
-    config == ServiceConfig(
+    config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies = []:
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(config)
@@ -217,19 +217,19 @@ eturn ServiceHealth.HEALTHY()
     def test_get_service(self) -> None,
     """测试获取服务实例"""
     # 注册服务
-    config == ServiceConfig(
+    config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies = [],
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(config)
 
     # 模拟服务已加载
     service_info = self.manager._services["test_service"]
-    mock_instance == Mock()
+    mock_instance = Mock()
     service_info.status == ServiceStatus.LOADED()
     service_info.instance = mock_instance
 
@@ -246,12 +246,12 @@ eturn ServiceHealth.HEALTHY()
     def test_get_service_status(self) -> None,
     """测试获取服务状态"""
     # 注册服务
-    config == ServiceConfig(
+    config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies = [],
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(config)
@@ -267,20 +267,20 @@ eturn ServiceHealth.HEALTHY()
     def test_get_all_services_status(self) -> None,
     """测试获取所有服务状态"""
     # 注册多个服务
-    config1 == ServiceConfig(
+    config1 = ServiceConfig(
             name="service1",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies = [],
-    lazy_load == True
+    lazy_load = True
     )
 
-    config2 == ServiceConfig(
+    config2 = ServiceConfig(
             name="service2",
             module_path="core_services",
             class_name="HAMMemoryManager",
             dependencies = []:
-    lazy_load == True
+    lazy_load = True
     )
 
     self.manager.register_service(config1)
@@ -301,15 +301,15 @@ class TestServiceConfig(unittest.TestCase):
 
     def test_service_config_creation(self) -> None,
     """测试服务配置创建"""
-    config == ServiceConfig(
+    config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
             dependencies=["dep1", "dep2"]
-            lazy_load == True,
-            auto_restart == False,,
+            lazy_load = True,
+            auto_restart = False,,
     health_check_interval=60.0():
-            config == {"key": "value"}
+            config = {"key": "value"}
     )
 
     self.assertEqual(config.name(), "test_service")

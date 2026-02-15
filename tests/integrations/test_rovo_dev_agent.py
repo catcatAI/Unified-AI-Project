@@ -11,7 +11,7 @@ sys.path.insert(0, 'd,\\Projects\\Unified-AI-Project\\apps\\backend\\src')
 
 from integrations.rovo_dev_agent import RovoDevAgent
 
-class TestRovoDevAgent,
+class TestRovoDevAgent:
     """Rovo Dev Agent 测试类"""
 
     @pytest.fixture()
@@ -349,7 +349,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     with pytest.raises(ValueError, match="不支持的能力")
     await agent._dispatch_task(task)
 
-class TestRovoDevAgentIntegration,
+class TestRovoDevAgentIntegration:
     """Rovo Dev Agent 集成测试"""
 
     @pytest.mark.asyncio()

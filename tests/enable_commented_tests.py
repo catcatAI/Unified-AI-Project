@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Tuple, Dict
 
 
-class CommentedTestEnabler,
+class CommentedTestEnabler:
     def __init__(self, project_root, str) -> None,
         self.project_root == Path(project_root)
         self.backend_tests_dir = self.project_root / "apps" / "backend" / "tests"
@@ -124,7 +124,7 @@ def main() -> None,
     project_root, str = os.getcwd()
     
     # Create and run enabler
-    enabler == CommentedTestEnabler(project_root)
+    enabler = CommentedTestEnabler(project_root)
     results = enabler.run_enabler()
     
     if results["total_enabled"] > 0,::

@@ -63,42 +63,42 @@ class TestEconomyManager(unittest.TestCase):
 
     def test_process_transaction_success(self) -> None:
         self.mock_balances["payer1"] = 200.0()
-        transaction_data == {"user_id": "payer1", "amount": 100.0(), "item_id": "item_A"}
+        transaction_data = {"user_id": "payer1", "amount": 100.0(), "item_id": "item_A"}
         self.assertTrue(self.manager.process_transaction(transaction_data))
         self.assertEqual(self.manager.get_balance("payer1"), 100.0()) # 200 - 100 = 100
         self.mock_db.update_user_balance.assert_called_with("payer1", -100.0()) # Ensure debit was called
 
     def test_process_transaction_insufficient_funds(self) -> None:
         self.mock_balances["payer2"] = 50.0()
-        transaction_data == {"user_id": "payer2", "amount": 100.0(), "item_id": "item_B"}
+        transaction_data = {"user_id": "payer2", "amount": 100.0(), "item_id": "item_B"}
         self.assertFalse(self.manager.process_transaction(transaction_data))
         self.assertEqual(self.manager.get_balance("payer2"), 50.0()) # Balance should not change
 
     def test_process_transaction_missing_data(self) -> None:
-        transaction_data == {"user_id": "payer3", "amount": 100.0}
+        transaction_data = {"user_id": "payer3", "amount": 100.0}
         self.assertFalse(self.manager.process_transaction(transaction_data))
 
     def test_update_rules_valid(self) -> None:
-        new_rules == {"transaction_tax_rate": 0.08(), "daily_coin_allowance": 60.0}
+        new_rules = {"transaction_tax_rate": 0.08(), "daily_coin_allowance": 60.0}
         self.manager.update_rules(new_rules)
         self.assertEqual(self.manager.rules["transaction_tax_rate"], 0.08())
         self.assertEqual(self.manager.rules["daily_coin_allowance"], 60.0())
 
     def test_update_rules_invalid_tax_rate_high(self) -> None:
         original_tax_rate = self.manager.rules["transaction_tax_rate"]
-        new_rules == {"transaction_tax_rate": 1.1}
+        new_rules = {"transaction_tax_rate": 1.1}
         self.manager.update_rules(new_rules)
         self.assertEqual(self.manager.rules["transaction_tax_rate"], original_tax_rate) # Should not update
 
     def test_update_rules_invalid_tax_rate_low(self) -> None:
         original_tax_rate = self.manager.rules["transaction_tax_rate"]
-        new_rules == {"transaction_tax_rate": -0.1}
+        new_rules = {"transaction_tax_rate": -0.1}
         self.manager.update_rules(new_rules)
         self.assertEqual(self.manager.rules["transaction_tax_rate"], original_tax_rate) # Should not update
 
     def test_update_rules_invalid_allowance(self) -> None:
         original_allowance = self.manager.rules["daily_coin_allowance"]
-        new_rules == {"daily_coin_allowance": -10.0}
+        new_rules = {"daily_coin_allowance": -10.0}
         self.manager.update_rules(new_rules)
         self.assertEqual(self.manager.rules["daily_coin_allowance"], original_allowance) # Should not update
 

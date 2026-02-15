@@ -17,7 +17,7 @@ from typing import List, Dict
 from collections import defaultdict
 
 
-class TestSuiteOptimizer,
+class TestSuiteOptimizer:
     def __init__(self, project_root, str) -> None,
         self.project_root == Path(project_root)
         self.tests_dir = self.project_root / "apps" / "backend" / "tests"
@@ -49,7 +49,7 @@ ry,
                     # Get function code
                     lines = content.split('\n')
                     func_lines = []
-                    indent_level == None
+                    indent_level = None
 
                     for i in range(line_no - 1, len(lines))::
                         line = lines[i]
@@ -147,8 +147,8 @@ ry,
         
         # Check if they have similar structure (count of certain keywords)::
             eywords = ['assert', 'mock', 'patch', 'async']
-        count1 == sum(1 for kw in keywords if kw in code1.lower()):::
-            ount2 == sum(1 for kw in keywords if kw in code2.lower()):::
+        count1 = sum(1 for kw in keywords if kw in code1.lower()):::
+            ount2 = sum(1 for kw in keywords if kw in code2.lower()):::
 f abs(count1 - count2) <= 1 and count1 > 0 and count2 > 0,
             return True
         
@@ -169,9 +169,9 @@ f abs(count1 - count2) <= 1 and count1 > 0 and count2 > 0,
             total_tests += len(tests)
         
         # Find files with too many or too few tests,
-            vg_tests == total_tests / len(test_files) if test_files else 0,::
-igh_density_files == {"f": c for f, c in tests_per_file.items() if c > avg_tests * 2}::
-ow_density_files == {"f": c for f, c in tests_per_file.items() if c < avg_tests / 2 and c > 0}::
+            vg_tests = total_tests / len(test_files) if test_files else 0,::
+igh_density_files = {"f": c for f, c in tests_per_file.items() if c > avg_tests * 2}::
+ow_density_files = {"f": c for f, c in tests_per_file.items() if c < avg_tests / 2 and c > 0}::
 eturn {
             "total_test_files": len(test_files),
             "total_tests": total_tests,
@@ -263,7 +263,7 @@ def main() -> None,
     project_root, str = os.getcwd()
     
     # Create and run optimizer
-    optimizer == TestSuiteOptimizer(project_root)
+    optimizer = TestSuiteOptimizer(project_root)
     results = optimizer.run_optimizer()
     
     print("\n✅ Test suite optimizer completed successfully")

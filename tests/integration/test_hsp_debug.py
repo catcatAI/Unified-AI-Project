@@ -25,7 +25,7 @@ def test_hsp_debug() -> None,
     """HSP调试测试"""
     # 创建真实的HSP连接器用于测试
     # 创建模拟的MQTT客户端
-    mock_mqtt_client == Mock()
+    mock_mqtt_client = Mock()
     mock_mqtt_client.connect == AsyncMock()
     mock_mqtt_client.disconnect == AsyncMock()
     mock_mqtt_client.publish == = AsyncMock(return_value ==True)
@@ -35,28 +35,28 @@ def test_hsp_debug() -> None,
     mock_mqtt_client.on_message_callback == None
 
     # 创建内部总线和消息桥接器
-    internal_bus == InternalBus()
+    internal_bus = InternalBus()
     
     # 创建模拟外部连接器
-    mock_external_connector == Mock()
+    mock_external_connector = Mock()
     mock_external_connector.connect == = AsyncMock(return_value ==True)
     mock_external_connector.disconnect == = AsyncMock(return_value ==True)
     mock_external_connector.publish == = AsyncMock(return_value ==True)
     mock_external_connector.subscribe == = AsyncMock(return_value ==True)
     
     # 创建模拟数据对齐器
-    mock_data_aligner == Mock()
+    mock_data_aligner = Mock()
     mock_data_aligner.align_message == = Mock(return_value ==({} None))
     
     # 创建消息桥接器
-    message_bridge == MessageBridge(mock_external_connector, internal_bus, mock_data_aligner)
+    message_bridge = MessageBridge(mock_external_connector, internal_bus, mock_data_aligner)
 
     # 创建HSP连接器
-    connector == HSPConnector(
+    connector = HSPConnector(
         ai_id="test_ai",
         broker_address="localhost",
         broker_port=1883,
-        mock_mode == True,
+        mock_mode = True,
         mock_mqtt_client=mock_mqtt_client,
         internal_bus=internal_bus,:
     message_bridge=message_bridge

@@ -37,19 +37,19 @@ class TestEmotionSystem(unittest.TestCase):
     @pytest.mark.timeout(5)
     def test_02_update_emotion_based_on_input(self) -> None:
         # Test sad input
-        sad_input == {"text": "I am so sad today."}
+        sad_input = {"text": "I am so sad today."}
         new_emotion = self.emotion_sys.update_emotion_based_on_input(sad_input)
         self.assertEqual(new_emotion, "empathetic")
         self.assertEqual(self.emotion_sys.current_emotion(), "empathetic")
 
         # Test happy input
-        happy_input == {"text": "This is great and I am happy!"}
+        happy_input = {"text": "This is great and I am happy!"}
         new_emotion = self.emotion_sys.update_emotion_based_on_input(happy_input)
         self.assertEqual(new_emotion, "playful")
         self.assertEqual(self.emotion_sys.current_emotion(), "playful")
 
         # Test neutral input (should revert to default from personality if different)::
-        neutral_input == {"text": "The sky is blue."}
+        neutral_input = {"text": "The sky is blue."}
         default_personality_tone = self.emotion_sys.personality.get("communication_style", {}).get("default_tone", "neutral")
         new_emotion = self.emotion_sys.update_emotion_based_on_input(neutral_input)
         self.assertEqual(new_emotion, default_personality_tone)

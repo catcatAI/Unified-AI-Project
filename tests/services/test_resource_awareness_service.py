@@ -15,8 +15,8 @@ SimulatedCPUConfig,
 SimulatedRAMConfig)
 
 # Determine project root for test file paths,:
-TEST_PROJECT_ROOT == Path(__file__).resolve().parent.parent.parent()
-TEST_CONFIGS_DIR == TEST_PROJECT_ROOT / "tests" / "test_data" / "resource_awareness_configs"
+TEST_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent()
+TEST_CONFIGS_DIR = TEST_PROJECT_ROOT / "tests" / "test_data" / "resource_awareness_configs"
 
 class TestResourceAwarenessService(unittest.TestCase):
     def setUp(self):
@@ -70,7 +70,7 @@ self.non_existent_config_path == TEST_CONFIGS_DIR / "i_do_not_exist.yaml"
             pass # Ignore if dir removal fails (e.g. other test files present)::
     @pytest.mark.timeout(15)
     def test_load_valid_config(self) -> None,
-        service == ResourceAwarenessService(config_filepath=str(self.valid_config_path()))
+        service = ResourceAwarenessService(config_filepath=str(self.valid_config_path()))
 self.assertIsNotNone(service.profile())
 self.assertEqual(service.profile.get("profile_name"), "TestProfile_Valid")
 
@@ -97,7 +97,7 @@ self.assertTrue(service.profile.get("gpu_available"))
         # If that default file exists, this test might not reflect a true "file not found" for *that* path.::
     # However, the constructor is passed a specific non-existent path here.
 
-service == ResourceAwarenessService(config_filepath=str(self.non_existent_config_path()))
+service = ResourceAwarenessService(config_filepath=str(self.non_existent_config_path()))
 self.assertIsNotNone(service.profile())
 self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading")
 disk_config = service.get_simulated_disk_config()
@@ -106,14 +106,14 @@ self.assertEqual(disk_config.get("space_gb"), 1.0()) # Check against safe defaul
 
     @pytest.mark.timeout(15)
     def test_load_malformed_yaml_falls_back_to_default(self) -> None,
-        service == ResourceAwarenessService(config_filepath=str(self.malformed_config_path()))
+        service = ResourceAwarenessService(config_filepath=str(self.malformed_config_path()))
 self.assertIsNotNone(service.profile())
 self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading")
 
     @pytest.mark.timeout(15)
     def test_load_incomplete_yaml_falls_back_to_default(self) -> None:
         # Tests if the profile data is missing required keys after YAML parsing.::
-service == ResourceAwarenessService(config_filepath=str(self.incomplete_config_path()))
+service = ResourceAwarenessService(config_filepath=str(self.incomplete_config_path()))
 self.assertIsNotNone(service.profile())
 self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading",:
 f"Profile loaded, {service.profile}")
@@ -125,10 +125,10 @@ f"Profile loaded, {service.profile}")
     # For controlled testing, we can create a dummy default file.
 
         # Path relative to project root for DEFAULT_CONFIG_PATH,:
-    default_path_abs == TEST_PROJECT_ROOT / DEFAULT_CONFIG_PATH
+    default_path_abs = TEST_PROJECT_ROOT / DEFAULT_CONFIG_PATH
     default_path_abs.parent.mkdir(parents == True, exist_ok == True) # Ensure dir exists
 
-original_content == None
+original_content = None
         if default_path_abs.exists():::
     with open(default_path_abs, 'r') as f_orig:
         original_content = f_orig.read()
@@ -143,7 +143,7 @@ temp_default_profile_data = {
     with open(default_path_abs, 'w', encoding == 'utf-8') as f:
         yaml.dump({"simulated_hardware_profile": temp_default_profile_data} f)
 
-service == ResourceAwarenessService() # Initialize with no path, should use default
+service = ResourceAwarenessService() # Initialize with no path, should use default
 self.assertIsNotNone(service.profile())
 self.assertEqual(service.profile.get("profile_name"), "TemporaryDefaultTestProfile")
 

@@ -30,17 +30,17 @@ class HSPOpinionPayload(TypedDict, total == False):
     reasoning_chain, Optional[List[str]]
     tags, Optional[List[str]]
 
-class TestHSPConnector,
+class TestHSPConnector:
     """HSPConnector单元测试"""
 
     @pytest.fixture()
     def hsp_connector(self):
     """创建HSPConnector实例"""
-    connector == HSPConnector(
+    connector = HSPConnector(
             ai_id="test_ai",
             broker_address="localhost",
             broker_port=1883,,
-    mock_mode == True
+    mock_mode = True
     )
     return connector
 
@@ -82,12 +82,12 @@ def test_init(self, hsp_connector):
     async def test_publish_fact(self, hsp_connector):
     """测试发布事实"""
     # 创建测试事实载荷
-    fact_payload == HSPFactPayload(
+    fact_payload = HSPFactPayload(
             id="fact_001",
             statement_type="natural_language",
             statement_nl="Test fact",
             source_ai_id="test_ai",
-            timestamp_created == "2023-01-01T00,00,00Z",,
+            timestamp_created = "2023-01-01T00,00,00Z",,
     confidence_score=1.0(),
             tags=["test"]
     )
@@ -101,12 +101,12 @@ def test_init(self, hsp_connector):
     async def test_publish_opinion(self, hsp_connector):
     """测试发布观点"""
     # 创建测试观点载荷
-    opinion_payload == HSPOpinionPayload(
+    opinion_payload = HSPOpinionPayload(
             id="opinion_001",
             statement_type="natural_language",
             statement_nl="Test opinion",
             source_ai_id="test_ai",
-            timestamp_created == "2023-01-01T00,00,00Z",,
+            timestamp_created = "2023-01-01T00,00,00Z",,
     confidence_score=0.8(),
             reasoning_chain=["fact_001"]
             tags=["test"]
@@ -120,7 +120,7 @@ def test_init(self, hsp_connector):
     @pytest.mark.asyncio()
     async def test_subscribe_to_facts(self, hsp_connector):
     """测试订阅事实"""
-    callback == AsyncMock()
+    callback = AsyncMock()
     result = await hsp_connector.subscribe_to_facts(callback)
     assert result is None  # subscribe_to_facts方法不返回值
     # 验证register_on_fact_callback被调用
@@ -129,7 +129,7 @@ def test_init(self, hsp_connector):
     @pytest.mark.asyncio()
     async def test_subscribe_to_opinions(self, hsp_connector):
     """测试订阅观点"""
-    callback == AsyncMock()
+    callback = AsyncMock()
     result = await hsp_connector.subscribe_to_opinions(callback)
     assert result is None  # subscribe_to_opinions方法不返回值
     # 验证register_on_fact_callback被调用(因为观点被视为事实)

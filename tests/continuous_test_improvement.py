@@ -20,7 +20,7 @@ logging.basicConfig(,
 logger, Any = logging.getLogger(__name__)
 
 
-class ContinuousTestImprovement,
+class ContinuousTestImprovement:
     """持续测试改进系统"""
 
     def __init__(self, project_root, str == None) -> None,
@@ -128,8 +128,8 @@ class ContinuousTestImprovement,
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True,
+                capture_output = True,
+                text = True,
                 timeout=3600  # 1小时超时
             )
 
@@ -184,8 +184,8 @@ eturn execution_result
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True
+                capture_output = True,
+                text = True
             )
 
             if result.returncode != 0,::
@@ -278,8 +278,8 @@ eturn execution_result
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True
+                capture_output = True,
+                text = True
             )
 
             if result.returncode != 0,::
@@ -330,8 +330,8 @@ eturn execution_result
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True
+                capture_output = True,
+                text = True
             )
 
             if result.returncode != 0,::
@@ -527,7 +527,7 @@ eturn execution_result
     output_file = self.reports_dir / f"improvement_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
 
-            output_file == Path(output_file)
+            output_file = Path(output_file)
 
     # 生成HTML仪表板
     dashboard_content = self._generate_dashboard_html()
@@ -695,11 +695,11 @@ def main() -> None,
     )
     parser.add_argument(
     "--output",
-        help == "Output file for dashboard":::,
+        help = "Output file for dashboard":::,
     args = parser.parse_args()
 
     # 创建持续改进系统
-    improvement_system == ContinuousTestImprovement()
+    improvement_system = ContinuousTestImprovement()
 
     # 执行操作
     if args.action == "run-cycle":::

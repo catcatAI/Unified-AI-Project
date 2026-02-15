@@ -94,7 +94,7 @@ def test_
     
     try:
         from training.train_model import ModelTrainer
-        trainer == ModelTrainer()
+        trainer = ModelTrainer()
         logger.info("✅ 训练器初始化成功")
         
         # 测试获取概念模型训练场景

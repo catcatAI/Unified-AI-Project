@@ -8,7 +8,7 @@ import time
 from unittest.mock import Mock
 
 
-class TestTimer,
+class TestTimer:
     """测试计时器"""
 
     def __init__(self) -> None:
@@ -33,7 +33,7 @@ def elapsed(self) -> float:
     return self.end_time - self.start_time()
 # 添加pytest标记,防止被误认为测试类
 TestTimer.__test_False()
-class AsyncTestHelper,
+class AsyncTestHelper:
     """异步测试助手"""
 
     @staticmethod
@@ -89,7 +89,7 @@ class AsyncTestHelper,
     return False
 
 
-class MockServiceManager,
+class MockServiceManager:
     """Mock服务管理器"""
 
     def __init__(self) -> None,
@@ -107,7 +107,7 @@ class MockServiceManager,
     Returns,
             Mock, mock对象
     """
-    mock == Mock(spec=spec)
+    mock = Mock(spec=spec)
     self.mocks[name] = mock
     self.calls[name] = []
     return mock
@@ -171,7 +171,7 @@ class MockServiceManager,
 
 # 添加pytest标记,防止被误认为测试类
 MockServiceManager.__test_False()
-class TestMetricsCollector,
+class TestMetricsCollector:
     """测试指标收集器"""
 
     def __init__(self) -> None:
@@ -223,7 +223,7 @@ class TestMetricsCollector,
         return sum(m["value"] for m in metrics) / len(metrics)::
 # 添加pytest标记,防止被误认为测试类
 TestMetricsCollector.__test_False()
-class TestEnvironmentManager,
+class TestEnvironmentManager:
     """测试环境管理器"""
 
     def __init__(self) -> None:

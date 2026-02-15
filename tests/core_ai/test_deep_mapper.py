@@ -42,8 +42,8 @@ def test_map(self) -> None:
                 }
             }
         }
-        mdo == MappableDataObject(data=source_data)
-        mapper == DeepMapper(mapping_rules=mapping_rules)
+        mdo = MappableDataObject(data=source_data)
+        mapper = DeepMapper(mapping_rules=mapping_rules)
 
         # Act
         mapped_mdo = mapper.map(mdo)
@@ -84,8 +84,8 @@ def test_map(self) -> None:
                 }
             }
         }
-        mdo == MappableDataObject(data=source_data)
-        mapper == DeepMapper(mapping_rules=mapping_rules)
+        mdo = MappableDataObject(data=source_data)
+        mapper = DeepMapper(mapping_rules=mapping_rules)
 
         # Act
         reverse_mapped_mdo = mapper.reverse_map(mdo)

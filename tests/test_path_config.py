@@ -97,7 +97,7 @@ class TestPathConfig(unittest.TestCase):
         resolved = resolve_path(rel_path)
         
         # Should return a path relative to PROJECT_ROOT
-        expected == PROJECT_ROOT / rel_path
+        expected = PROJECT_ROOT / rel_path
         self.assertEqual(resolved, expected)
 
     def test_directories_exist(self) -> None:

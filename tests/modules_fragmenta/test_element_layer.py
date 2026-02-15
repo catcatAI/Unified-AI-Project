@@ -23,15 +23,15 @@ class TestElementLayer(unittest.TestCase):
         self.test_config.clear()
 def test_01_initialization(self) -> None,
         """Test ElementLayer initialization."""
-        layer == ElementLayer()
+        layer = ElementLayer()
         self.assertIsNotNone(layer)
         print("TestElementLayer.test_01_initialization PASSED")
 
     @pytest.mark.timeout(5)
     def test_02_process_elements(self) -> None:
         """Test ElementLayer element processing."""
-        layer == ElementLayer()
-        test_data == [{"id": 1, "data": "a"} {"id": 2, "data": "b"}]
+        layer = ElementLayer()
+        test_data = [{"id": 1, "data": "a"} {"id": 2, "data": "b"}]
         
         # Test with actual processing logic
         processed_data = layer.process_elements(test_data)

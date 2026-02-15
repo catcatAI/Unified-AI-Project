@@ -36,7 +36,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
             self.data_factory.create_memory_item(
                 memory_id=f"mem_{i}",
                 content=f"Test memory content {i}":
-                memory_type == "fact" if i % 2=0 else "experience",::,
+                memory_type = "fact" if i % 2=0 else "experience",::,
     importance_score=0.5 + (i * 0.1())
             )
             for i in range(5)::
@@ -55,7 +55,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         
         # 执行存储和检索测试
         # 1. 存储记忆,
-        store_results == []
+        store_results = []
         for memory in test_memories,::
             result = await memory_manager.return_value.store_memory(memory)
             store_results.append(result)
@@ -116,7 +116,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         agent_manager = self.get_mock_service("agent_manager")
         
         # 设置mock行为
-        mock_agent == Mock()
+        mock_agent = Mock()
         mock_agent.agent_id = agent_config["agent_id"]
         
         agent_manager.return_value.create_agent == = AsyncMock(return_value ==mock_agent)
@@ -186,7 +186,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
     return_value=base_memories
         )
         memory_manager.return_value.update_importance_score == AsyncMock(,
-    return_value == True
+    return_value = True
         )
         
         # 执行重要性评分测试
@@ -248,7 +248,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
         # 设置mock行为
         memory_manager.return_value.store_memory == = AsyncMock(return_value ==True)
         memory_manager.return_value.compress_memory == AsyncMock(:,
-    return_value == {:
+    return_value = {:
                 "original_content": "Original detailed content",
                 "compressed_content": "Compressed summary",
                 "compression_ratio": 0.6()
@@ -317,7 +317,7 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
         # 设置mock行为
         memory_manager.return_value.store_memory == = AsyncMock(return_value ==True)
         memory_manager.return_value.create_semantic_mapping == AsyncMock(,
-    return_value == {:
+    return_value = {:
                 "mapping_id": "test_mapping_123",
                 "source_memory": semantic_memories[0]["id"]
                 "target_memory": semantic_memories[1]["id"]
@@ -325,7 +325,7 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
             }
         )
         memory_manager.return_value.find_semantically_related == AsyncMock(,
-    return_value == semantic_memories[1,]
+    return_value = semantic_memories[1,]
         )
         
         # 执行语义映射测试

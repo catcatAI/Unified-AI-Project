@@ -15,14 +15,14 @@ from core.hsp.bridge.data_aligner import DataAligner
 
 @pytest.fixture()
 def mock_external_connector():
-    mock == AsyncMock(spec == ExternalConnector)
+    mock = AsyncMock(spec == ExternalConnector)
     mock.ai_id = "test_ai"
     mock.publish == AsyncMock()
     return mock
 
 @pytest.fixture()
 def mock_internal_bus():
-    mock == MagicMock(spec == InternalBus)
+    mock = MagicMock(spec == InternalBus)
     mock.publish == MagicMock()
     mock.publish_async == AsyncMock()
     mock.subscribe == MagicMock()
@@ -30,7 +30,7 @@ def mock_internal_bus():
 
 @pytest.fixture()
 def mock_data_aligner():
-    mock == MagicMock(spec == DataAligner)
+    mock = MagicMock(spec == DataAligner)
     # Default mock for align_message to return a valid aligned message,:
     mock.align_message.return_value = ({} None)
     return mock
@@ -52,7 +52,7 @@ async
         self.test_data.clear()
         self.test_config.clear()
 def test_message_bridge_initialization(mock_external_connector, mock_internal_bus, mock_data_aligner) -> None,
-    bridge == MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
+    bridge = MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
     
     # Verify external_connector's on_message_callback is set to bridge's handle_external_message
     assert mock_external_connector.on_message_callback=bridge.handle_external_message()
@@ -64,7 +64,7 @@ def test_message_bridge_initialization(mock_external_connector, mock_internal_bu
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_valid_fact(message_bridge, mock_data_aligner, mock_internal_bus) -> None:
     topic = "hsp/fact/some_id"
-    message_payload == {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
+    message_payload = {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
     message_str = json.dumps(message_payload)
 
     mock_data_aligner.align_message.return_value = (message_payload, None)
@@ -91,7 +91,7 @@ async def test_handle_external_message_invalid_json(message_bridge, capsys) -> N
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_data_alignment_error(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None:
     topic = "hsp/fact/some_id"
-    message_payload == {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
+    message_payload = {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
     message_str = json.dumps(message_payload)
 
     mock_data_aligner.align_message.return_value = (None, "alignment error")
@@ -107,7 +107,7 @@ async def test_handle_external_message_data_alignment_error(message_bridge, mock
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_unknown_message_type(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None:
     topic = "hsp/fact/some_id"
-    message_payload == {"message_type": "UNKNOWN_TYPE", "payload": {"id": "fact123", "content": "test fact"}}
+    message_payload = {"message_type": "UNKNOWN_TYPE", "payload": {"id": "fact123", "content": "test fact"}}
     message_str = json.dumps(message_payload)
 
     mock_data_aligner.align_message.return_value = (message_payload, None)
@@ -149,7 +149,7 @@ async def test_handle_internal_message_payload_types(message_bridge, mock_extern
     mock_external_connector.publish.reset_mock()
 
     # Test with non-serializable payload (should fall back to str()):
-    class NonSerializable,
+    class NonSerializable:
         def __str__(self) -> None, return "non_serializable_obj"
     
     await message_bridge.handle_internal_message({"topic": "test/obj", "payload": NonSerializable(), "qos": 2})
@@ -165,7 +165,7 @@ async def test_handle_external_message_no_publish_async_on_bus(message_bridge, m
     mock_internal_bus.publish == MagicMock() # Ensure publish is still there
 
     topic = "hsp/fact/some_id"
-    message_payload == {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
+    message_payload = {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
     message_str = json.dumps(message_payload)
 
     mock_data_aligner.align_message.return_value = (message_payload, None)

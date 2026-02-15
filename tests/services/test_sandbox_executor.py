@@ -30,7 +30,7 @@ self.executor == = SandboxExecutor(timeout_seconds ==30) # 从2秒增加到30秒
     # --- Setup Mocks ---
     # 使用适合当前操作系统的临时目录路径
 mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir"
-mock_temp_dir_context_manager == MagicMock()
+mock_temp_dir_context_manager = MagicMock()
 mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
 mock_temp_dir_context_manager.__exit__.return_value == None
 mock_temp_dir.return_value = mock_temp_dir_context_manager
@@ -43,17 +43,17 @@ tool_module_filepath = os.path.normpath(original_os_path_join(mock_temp_dir_path
 runner_script_filepath = os.path.normpath(original_os_path_join(mock_temp_dir_path, "_sandbox_runner.py"))
 
     # Mock subprocess.run result
-mock_process_result == MagicMock(spec=subprocess.CompletedProcess())
+mock_process_result = MagicMock(spec=subprocess.CompletedProcess())
 mock_process_result.stdout == json.dumps({"result": "success_output", "error": None, "traceback": None})
 mock_process_result.stderr = ""
 mock_process_result.returncode = 0
 mock_subprocess_run.return_value = mock_process_result
 
     # --- Test Call ---
-code_string == "class TestTool, def test_method(self) -> None, return 'success_output'"
+code_string = "class TestTool, def test_method(self) -> None, return 'success_output'"
     class_name = "TestTool"
 method_name = "test_method"
-method_params == {"param1": "value1"}
+method_params = {"param1": "value1"}
 
 result, error = self.executor.run(code_string, class_name, method_name, method_params)
 
@@ -77,7 +77,7 @@ expected_params_json = json.dumps(method_params)
 python_exe = sys.executable or 'python'
 mock_subprocess_run.assert_called_once_with(
 [python_exe, '-u', runner_script_filepath, tool_module_filepath, class_name, method_name, expected_params_json],
-    capture_output == True, text == True, cwd=mock_temp_dir_path, timeout=self.executor.timeout_seconds(), check == False
+    capture_output = True, text == True, cwd=mock_temp_dir_path, timeout=self.executor.timeout_seconds(), check == False
 )
 
     @patch('tempfile.TemporaryDirectory')
@@ -88,14 +88,14 @@ mock_subprocess_run.assert_called_once_with(
     def test_run_execution_error_in_tool(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
     # 使用适合当前操作系统的临时目录路径
 mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_error"
-mock_temp_dir_context_manager == MagicMock()
+mock_temp_dir_context_manager = MagicMock()
 mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
 mock_temp_dir_context_manager.__exit__.return_value == None
 mock_temp_dir.return_value = mock_temp_dir_context_manager
 mock_os_join.side_effect == lambda *args, os.path.normpath(original_os_path_join(*args))
 
-error_details == {"error": "TestException", "traceback": "Traceback here..."}
-mock_process_result == MagicMock(spec=subprocess.CompletedProcess())
+error_details = {"error": "TestException", "traceback": "Traceback here..."}
+mock_process_result = MagicMock(spec=subprocess.CompletedProcess())
 mock_process_result.stdout = json.dumps(error_details)
 mock_process_result.stderr = ""
 mock_process_result.returncode == 0 # Runner script itself might exit 0 even if tool erred,:
@@ -115,7 +115,7 @@ self.assertIn("\nTraceback,\nTraceback here...", error)
     def test_run_timeout_expired(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None,
     # 使用适合当前操作系统的临时目录路径
 mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_timeout"
-mock_temp_dir_context_manager == MagicMock()
+mock_temp_dir_context_manager = MagicMock()
 mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
 mock_temp_dir_context_manager.__exit__.return_value == None
 mock_temp_dir.return_value = mock_temp_dir_context_manager
@@ -136,13 +136,13 @@ self.assertIn(f"Sandbox execution timed out after {self.executor.timeout_seconds
     def test_run_non_json_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None,
     # 使用适合当前操作系统的临时目录路径
 mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_nonjson"
-mock_temp_dir_context_manager == MagicMock()
+mock_temp_dir_context_manager = MagicMock()
 mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
 mock_temp_dir_context_manager.__exit__.return_value == None
 mock_temp_dir.return_value = mock_temp_dir_context_manager
 mock_os_join.side_effect == lambda *args, os.path.normpath(original_os_path_join(*args))
 
-mock_process_result == MagicMock(spec=subprocess.CompletedProcess())
+mock_process_result = MagicMock(spec=subprocess.CompletedProcess())
 mock_process_result.stdout = "This is not JSON"
 mock_process_result.stderr = ""
 mock_process_result.returncode = 0
@@ -161,13 +161,13 @@ self.assertIn("Sandbox execution produced non-JSON output, This is not JSON", er
     def test_run_stderr_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
     # 使用适合当前操作系统的临时目录路径
 mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_stderr"
-mock_temp_dir_context_manager == MagicMock()
+mock_temp_dir_context_manager = MagicMock()
 mock_temp_dir_context_manager.__enter__.return_value = mock_temp_dir_path
 mock_temp_dir_context_manager.__exit__.return_value == None
 mock_temp_dir.return_value = mock_temp_dir_context_manager
 mock_os_join.side_effect == lambda *args, os.path.normpath(original_os_path_join(*args))
 
-mock_process_result == MagicMock(spec=subprocess.CompletedProcess())
+mock_process_result = MagicMock(spec=subprocess.CompletedProcess())
 mock_process_result.stdout = "" # No stdout
 mock_process_result.stderr = "Critical Python interpreter error"
 mock_process_result.returncode = 1 # Non-zero exit

@@ -17,7 +17,7 @@ logger, Any = logging.getLogger(__name__)
 @pytest.fixture()
 def mock_mqtt_client():
     """Fixture to provide a MagicMock for gmqtt.Client."""::
-    mock == MagicMock()
+    mock = MagicMock()
     mock.connect == AsyncMock()
     mock.disconnect == AsyncMock()
     mock.subscribe == AsyncMock()
@@ -27,7 +27,7 @@ def mock_mqtt_client():
 @pytest.fixture()
 def mock_fallback_manager():
     """Fixture to provide a MagicMock for FallbackManager."""::
-    mock == MagicMock()
+    mock = MagicMock()
     mock.send_message == = AsyncMock(return_value ==True)
     mock.initialize == = AsyncMock(return_value ==True)
     mock.start == AsyncMock()
@@ -38,13 +38,13 @@ def mock_fallback_manager():
 @pytest.fixture()
 def hsp_connector_instance(mock_mqtt_client, mock_fallback_manager):
     """Fixture to provide an HSPConnector instance in mock mode."""
-    connector == HSPConnector(
+    connector = HSPConnector(
         ai_id="test_ai",
         broker_address="localhost",
         broker_port=1883,
-        mock_mode == True, # Enable mock mode for testing without a real broker,:
+        mock_mode = True, # Enable mock mode for testing without a real broker,:
         mock_mqtt_client=mock_mqtt_client,,
-    enable_fallback == True # Ensure fallback is enabled for testing,:
+    enable_fallback = True # Ensure fallback is enabled for testing,:
     )
     # Manually set the mock fallback manager
     connector.fallback_manager = mock_fallback_manager
@@ -143,7 +143,7 @@ async def test_scenario_2_delayed_ack(hsp_connector_instance, mock_mqtt_client) 
     envelope = create_ack_required_envelope(msg_id, corr_id)
 
     # Simulate ACK after first retry,
-    publish_call_count == 0,
+    publish_call_count = 0,
     async def mock_publish_side_effect(*args, **kwargs):
         nonlocal publish_call_count
         publish_call_count += 1
@@ -200,7 +200,7 @@ async def test_scenario_4_hsp_unavailable_fallback_success(hsp_connector_instanc
     connector = hsp_connector_instance
     msg_id = "msg4"
     corr_id = "corr4"
-    envelope == create_ack_required_envelope(msg_id, corr_id) # ACK required for full test,:
+    envelope = create_ack_required_envelope(msg_id, corr_id) # ACK required for full test,:
     # Simulate HSP publish failure
     mock_mqtt_client.publish.side_effect == Exception("HSP connection error")
     connector.hsp_available == True # Start as available, but it will fail
@@ -232,7 +232,7 @@ async def test_scenario_5_hsp_unavailable_fallback_failure(hsp_connector_instanc
 
     # Fallback manager also fails
     # Track fallback calls to simulate failures on first call and success on retry,
-    fallback_call_count == 0,
+    fallback_call_count = 0,
     async def mock_fallback_side_effect(*args, **kwargs):
         nonlocal fallback_call_count
         fallback_call_count += 1

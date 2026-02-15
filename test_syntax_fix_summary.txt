@@ -1,0 +1,11 @@
+Total test files processed: 283  
+Files modified in first pass: 118  
+Files modified in second pass: 52  
+  
+Remaining syntax errors: 143  
+  
+Errors fixed:  
+- Fixed == to = in assignments: ~800 instances  
+- Fixed class Name, to class Name colon: ~100 instances  
+- Fixed wait asyncio to await asyncio: ~5 instances  
+- Fixed coding comma utf-8 to coding colon utf-8: ~3 instances  

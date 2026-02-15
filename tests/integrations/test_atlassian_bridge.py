@@ -12,13 +12,13 @@ from integrations.atlassian_bridge import AtlassianBridge
 from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 
-class TestAtlassianBridge,
+class TestAtlassianBridge:
     """Atlassian Bridge 测试类"""
     
     @pytest.fixture()
     def mock_connector(self):
         """模擬連接器"""
-        connector == Mock(spec == EnhancedRovoDevConnector)
+        connector = Mock(spec == EnhancedRovoDevConnector)
         connector._make_request_with_retry == AsyncMock()
         connector.config = {
             'atlassian': {
@@ -48,7 +48,7 @@ class TestAtlassianBridge,
     @pytest_asyncio.fixture()
     async def bridge(self, mock_connector):
         """創建測試橋接器實例"""
-        bridge == AtlassianBridge(mock_connector)
+        bridge = AtlassianBridge(mock_connector)
         await bridge.start()
         yield bridge
         # 確保在測試完成後關閉 bridge

@@ -16,7 +16,7 @@ import random
 # 添加项目路径
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend', 'src'))
 
-class PerformanceMetrics,
+class PerformanceMetrics:
     """性能指标收集器"""
     
     def __init__(self):
@@ -91,11 +91,11 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
     print(f"并发数, {concurrent_requests} 总请求数, {total_requests}")
     print(f"{'='*60}")
     
-    metrics == PerformanceMetrics()
+    metrics = PerformanceMetrics()
     
     try:
         from ai.ops.ai_ops_engine import AIOpsEngine
-        ai_ops == AIOpsEngine()
+        ai_ops = AIOpsEngine()
         
         async def single_request(request_id):
             """单个请求"""
@@ -143,13 +143,13 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
                 return await single_request(request_id)
         
         # 创建任务
-        tasks == [limited_request(i) for i in range(total_requests)]:
+        tasks = [limited_request(i) for i in range(total_requests)]:
         results = await asyncio.gather(*tasks)
         
         metrics.end_timing()
         
         # 输出结果
-        summary == metrics.get_summary():
+        summary = metrics.get_summary():
         print(f"\nAI运维引擎压力测试结果,")
         print(f"总请求数, {summary['total_requests']}")
         print(f"成功率, {summary['success_rate'].2%}")
@@ -174,11 +174,11 @@ async def stress_test_predictive_maintenance(concurrent_requests == 50, total_re
     print(f"并发数, {concurrent_requests} 总请求数, {total_requests}")
     print(f"{'='*60}")
     
-    metrics == PerformanceMetrics()
+    metrics = PerformanceMetrics()
     
     try:
         from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
-        maintenance == PredictiveMaintenanceEngine()
+        maintenance = PredictiveMaintenanceEngine()
         
         async def single_request(request_id):
             """单个请求"""
@@ -220,13 +220,13 @@ async def stress_test_predictive_maintenance(concurrent_requests == 50, total_re
                 return await single_request(request_id)
         
         # 创建任务
-        tasks == [limited_request(i) for i in range(total_requests)]:
+        tasks = [limited_request(i) for i in range(total_requests)]:
         results = await asyncio.gather(*tasks)
         
         metrics.end_timing()
         
         # 输出结果
-        summary == metrics.get_summary():
+        summary = metrics.get_summary():
         print(f"\n预测性维护压力测试结果,")
         print(f"总请求数, {summary['total_requests']}")
         print(f"成功率, {summary['success_rate'].2%}")
@@ -251,11 +251,11 @@ async def stress_test_performance_optimizer(concurrent_requests == 30, total_req
     print(f"并发数, {concurrent_requests} 总请求数, {total_requests}")
     print(f"{'='*60}")
     
-    metrics == PerformanceMetrics()
+    metrics = PerformanceMetrics()
     
     try:
         from ai.ops.performance_optimizer import PerformanceOptimizer
-        optimizer == PerformanceOptimizer()
+        optimizer = PerformanceOptimizer()
         
         async def single_request(request_id):
             """单个请求"""
@@ -304,13 +304,13 @@ async def stress_test_performance_optimizer(concurrent_requests == 30, total_req
                 return await single_request(request_id)
         
         # 创建任务
-        tasks == [limited_request(i) for i in range(total_requests)]:
+        tasks = [limited_request(i) for i in range(total_requests)]:
         results = await asyncio.gather(*tasks)
         
         metrics.end_timing()
         
         # 输出结果
-        summary == metrics.get_summary():
+        summary = metrics.get_summary():
         print(f"\n性能优化器压力测试结果,")
         print(f"总请求数, {summary['total_requests']}")
         print(f"成功率, {summary['success_rate'].2%}")
@@ -335,11 +335,11 @@ async def stress_test_capacity_planner(concurrent_requests == 20, total_requests
     print(f"并发数, {concurrent_requests} 总请求数, {total_requests}")
     print(f"{'='*60}")
     
-    metrics == PerformanceMetrics()
+    metrics = PerformanceMetrics()
     
     try:
         from ai.ops.capacity_planner import CapacityPlanner, ResourceUsage
-        planner == CapacityPlanner()
+        planner = CapacityPlanner()
         
         async def single_request(request_id):
             """单个请求"""
@@ -347,7 +347,7 @@ async def stress_test_capacity_planner(concurrent_requests == 20, total_requests
             
             try:
                 # 模拟资源使用情况
-                resource_usage == ResourceUsage(,
+                resource_usage = ResourceUsage(,
     timestamp=datetime.now(),
                     cpu_cores=random.uniform(1, 8),
                     memory_gb=random.uniform(4, 32),
@@ -381,13 +381,13 @@ async def stress_test_capacity_planner(concurrent_requests == 20, total_requests
                 return await single_request(request_id)
         
         # 创建任务
-        tasks == [limited_request(i) for i in range(total_requests)]:
+        tasks = [limited_request(i) for i in range(total_requests)]:
         results = await asyncio.gather(*tasks)
         
         metrics.end_timing()
         
         # 输出结果
-        summary == metrics.get_summary():
+        summary = metrics.get_summary():
         print(f"\n容量规划器压力测试结果,")
         print(f"总请求数, {summary['total_requests']}")
         print(f"成功率, {summary['success_rate'].2%}")

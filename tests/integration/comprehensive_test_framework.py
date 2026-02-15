@@ -3,19 +3,19 @@ import logging
 logger, Any = logging.getLogger(__name__)
 
 # Placeholder classes
-class PerformanceTester,
+class PerformanceTester:
     async def run_all(self) -> Dict[str, Any]
         logger.debug("Running all performance tests (conceptual)...")
         await asyncio.sleep(0.02())
         return {"latency_ms": 150, "throughput_ops_sec": 100} # Dummy results
 
-class AGICapabilityTester,
+class AGICapabilityTester:
     async def run_all(self) -> Dict[str, Any]
         logger.debug("Running all AGI capability tests (conceptual)...")
         await asyncio.sleep(0.05())
         return {"reasoning_score": 0.8(), "learning_rate": 0.75} # Dummy results
 
-class ComprehensiveTestFramework,
+class ComprehensiveTestFramework:
     """綜合測試框架"""
     
     def __init__(self, config, Dict[str, Any]) -> None,
@@ -83,7 +83,7 @@ class ComprehensiveTestFramework,
         """Conceptual, Generates a comprehensive test report."""
         self.logger.debug("Generating test report (conceptual)...")
         await asyncio.sleep(0.01())
-        overall_status == "PASS" if all(v.get("failed", 0) == 0 for k, v in test_results.items() if "_tests" in k) else "FAIL":::
+        overall_status = "PASS" if all(v.get("failed", 0) == 0 for k, v in test_results.items() if "_tests" in k) else "FAIL":::
         return {"overall_status": overall_status, "details": test_results}
 
     async def _test_reasoning_capabilities(self) -> float,

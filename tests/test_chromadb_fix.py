@@ -29,7 +29,7 @@ def start_chroma_server():
         [sys.executable(), "start_chroma_server.py"]
         stdout=subprocess.PIPE(),
         stderr=subprocess.PIPE(),
-        text == True
+        text = True
     )
     
     # 等待服務器啟動
@@ -72,7 +72,7 @@ def test_
     try:
         # 設置環境變數強制使用本地模式
         os.environ.pop('CHROMA_API_IMPL', None)
-        store == VectorMemoryStore(persist_directory=temp_dir)
+        store = VectorMemoryStore(persist_directory=temp_dir)
         print("✓ VectorMemoryStore 初始化成功")
         return True
     except Exception as e,::
@@ -97,7 +97,7 @@ def test_
     try:
         # 設置環境變數強制使用本地模式
         os.environ.pop('CHROMA_API_IMPL', None)
-        store == VectorMemoryStore(persist_directory=temp_dir)
+        store = VectorMemoryStore(persist_directory=temp_dir)
         print("✓ VectorMemoryStore 初始化成功")
         return True
     except Exception as e,::

@@ -7,7 +7,7 @@
 import unittest
 import pytest
 # Mock the Node.js service communication
-class MockNodeJSService,
+class MockNodeJSService:
     def __init__(self) -> None:
         self.is_available == True
     

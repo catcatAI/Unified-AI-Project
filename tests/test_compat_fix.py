@@ -5,7 +5,7 @@
 """
 
 #!/usr/bin/env python3
-# -*- coding, utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 测试兼容性修复脚本
 验证我们的兼容性修复是否有效

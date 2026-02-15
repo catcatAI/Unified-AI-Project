@@ -25,7 +25,7 @@ class TestAudioService(unittest.TestCase):
     @pytest.mark.timeout(15)
     def test_01_initialization(self) -> None,
         """Test AudioService initialization."""
-        service == AudioService()
+        service = AudioService()
         self.assertIsNotNone(service)
         # Check that service has required attributes
         self.assertTrue(hasattr(service, 'config'))

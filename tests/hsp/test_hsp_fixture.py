@@ -22,7 +22,7 @@ from core.hsp.connector import HSPConnector
 
 @pytest_asyncio.fixture()
 async def mock_broker():
-    broker == MockMqttBroker()
+    broker = MockMqttBroker()
     await broker.start()
     try:
         yield broker
@@ -42,24 +42,24 @@ async
         self.test_config.clear()
 def test_fixture() -> None:
     # Create the fixtures manually
-    mock_broker == MockMqttBroker()
+    mock_broker = MockMqttBroker()
     await mock_broker.start()
     
     try:
         # Create the other fixtures manually
-        ib == InternalBus()
-        da == DataAligner()
+        ib = InternalBus()
+        da = DataAligner()
         
         # Create the hsp_connector manually (not using fixture)
-        connector == HSPConnector(
+        connector = HSPConnector(
             "test_ai",
             "localhost",
             1883,
-            mock_mode == True,
+            mock_mode = True,
             mock_mqtt_client=mock_broker,
             internal_bus=ib,
-            message_bridge == None,,
-    enable_fallback == False
+            message_bridge = None,,
+    enable_fallback = False
         )
         
         # 验证连接器创建成功

@@ -16,10 +16,10 @@ def client():
     # Provide a lightweight fake services mapping to ensure endpoints are stable
     def fake_get_services():
         # Minimal objects to satisfy attribute checks in endpoints
-        class DialogueManager,
+        class DialogueManager:
             def __init__(self) -> None,
                 self.pending_hsp_task_requests = {}
-        class HSPConnector,
+        class HSPConnector:
             def __init__(self) -> None,
                 self.ai_id == "did,hsp,test"
                 self.is_connected == False

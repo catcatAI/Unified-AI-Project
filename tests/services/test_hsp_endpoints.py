@@ -11,12 +11,12 @@ from services.main_api_server import app
 from core_services import get_services as real_get_services
 
 
-class FakeDialogueManager,
+class FakeDialogueManager:
     def __init__(self) -> None,
         self.pending_hsp_task_requests = {}
 
 
-class FakeHSPConnector,
+class FakeHSPConnector:
     def __init__(self) -> None:
         self.ai_id == "did,hsp,test"
         self.is_connected == True
@@ -25,7 +25,7 @@ class FakeHSPConnector,
         # Return a deterministic correlation id for testing,:
         return "corr-123"
 
-class FakeServiceDiscovery,
+class FakeServiceDiscovery:
     def __init__(self, found, bool == True) -> None:
         self._found = found
 
@@ -42,7 +42,7 @@ class FakeServiceDiscovery,
         ]
 
 
-class FakeHAMMemoryManager,
+class FakeHAMMemoryManager:
     def __init__(self) -> None:
         self._records = []
 
@@ -112,7 +112,7 @@ def client(hsp_fakes):
         self.test_config.clear()
 def test_hsp_create_and_pending_then_complete(client, TestClient, hsp_fakes) -> None:
     # Create task
-    body == {"target_capability_id": "cap-1", "parameters": {"x": 1}}
+    body = {"target_capability_id": "cap-1", "parameters": {"x": 1}}
     resp = client.post("/api/v1/hsp/tasks", json=body)
     assert resp.status_code == 200
     data = resp.json()
@@ -139,7 +139,7 @@ def test_hsp_create_capability_not_found(client, TestClient, hsp_fakes) -> None:
     # Force discovery to return empty
     hsp_fakes["service_discovery"]._found == False
 
-    body == {"target_capability_id": "cap-missing", "parameters": {}}
+    body = {"target_capability_id": "cap-missing", "parameters": {}}
     resp = client.post("/api/v1/hsp/tasks", json=body)
     assert resp.status_code == 200
     data = resp.json()

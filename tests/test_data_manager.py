@@ -5,7 +5,7 @@
 """
 
 #!/usr/bin/env python3
-# -*- coding, utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 测试数据管理器
 用于管理测试数据的生成、存储和检索
@@ -110,7 +110,7 @@ class TestDataManager:
 TestDataManager.__test_False()
 def main() -> None:
     """主函数"""
-    data_manager == TestDataManager()
+    data_manager = TestDataManager()
     
     # 示例使用方式
     # 生成用户测试数据

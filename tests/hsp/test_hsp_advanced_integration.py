@@ -14,7 +14,7 @@ from .mock_mqtt_broker import MockMqttBroker
 
 @pytest_asyncio.fixture(scope="function")
 async def mock_broker():
-    broker == MockMqttBroker()
+    broker = MockMqttBroker()
     await broker.start()
     try:
 
@@ -24,11 +24,11 @@ async def mock_broker():
 
 @pytest_asyncio.fixture(scope="function")
 async def hsp_connector_fixture(mock_broker):
-    connector == HSPConnector(
+    connector = HSPConnector(
     ai_id="test_ai_advanced",
     broker_address="localhost",
     broker_port=1883,
-    mock_mode == True,,
+    mock_mode = True,,
     mock_mqtt_client=mock_broker
     )
     await connector.connect()
@@ -38,7 +38,7 @@ async def hsp_connector_fixture(mock_broker):
     finally:
     await connector.disconnect()
 
-class TestHSPAdvancedIntegration,
+class TestHSPAdvancedIntegration:
     """Advanced HSP integration tests with complex scenarios and edge cases."""
 
     @pytest.mark.asyncio()
@@ -74,7 +74,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     tasks = []
         for i in range(10)::
             # Create a proper HSP task request payload with message envelope,
-    payload == {:
+    payload = {:
                 "request_id": f"task_{i}",
                 "requester_ai_id": "test_requester",
                 "target_ai_id": connector.ai_id(),
@@ -132,7 +132,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     connector.register_on_fact_callback(fact_callback)
 
     # Send facts with different metadata
-    facts == [:
+    facts = [:
             {"id": "fact1", "content": "public info", "metadata": {"visibility": "public", "category": "general"}}
             {"id": "fact2", "content": "private info", "metadata": {"visibility": "private", "category": "sensitive"}}
             {"id": "fact3", "content": "business info", "metadata": {"visibility": "public", "category": "business"}}
@@ -143,7 +143,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     payload = fact
 
             # Create a proper HSP message envelope
-            envelope == {:
+            envelope = {:
                 "hsp_envelope_version": "0.1",
                 "message_id": fact["id"]
                 "correlation_id": None,
@@ -171,7 +171,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     assert len(received_facts) == 3
 
     # Test filtering by sending a fact with specific metadata
-    filtered_facts == []
+    filtered_facts = []
         def filtered_callback(payload, sender, envelope):
     if payload.get("metadata", {}).get("visibility") == "public":::
     filtered_facts.append(payload)
@@ -180,14 +180,14 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     connector.register_on_fact_callback(filtered_callback)
 
     # Send another fact
-    public_fact == {:
+    public_fact = {:
             "id": "fact4",
             "content": "another public fact",
             "metadata": {"visibility": "public", "category": "news"}
     }
 
         # Create envelope for public fact,:
-    envelope == {:
+    envelope = {:
             "hsp_envelope_version": "0.1",
             "message_id": "fact4",
             "correlation_id": None,
@@ -312,7 +312,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
         # Try to send a message while broker is down,::
     try:
             # Create a proper HSP fact payload with message envelope
-    payload == {:
+    payload = {:
                 "id": "retry_test",  # Changed from fact_id to id
                 "content": "test retry",
                 "metadata": {"type": "test"}
@@ -349,7 +349,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     # Send message after recovery
     # Create a proper HSP fact payload with message envelope
-    payload == {:
+    payload = {:
             "id": "retry_success",  # Changed from fact_id to id
             "content": "retry_success",
             "metadata": {"type": "test"}
@@ -400,7 +400,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     # Send a fact that should trigger memory operations
     # Create a proper HSP fact payload with message envelope
-    payload == {:
+    payload = {:
             "id": "memory_test_fact",
             "content": "This is a test fact for memory integration",:::
             "metadata": {"type": "test", "priority": "high"}
@@ -451,7 +451,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     # Send a message with security metadata
     # Create a proper HSP fact payload with message envelope
-    payload == {:
+    payload = {:
             "id": "secure_fact",
             "content": "This is a secure fact",
             "metadata": {

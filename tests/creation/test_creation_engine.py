@@ -28,7 +28,7 @@ def test_create_model(self) -> None,
         """
         Tests the create_model method.
         """
-        creation_engine == CreationEngine()
+        creation_engine = CreationEngine()
         model_code = creation_engine.create("create MyModel model")
         self.assertIn("class MyModel,", model_code)
 
@@ -37,7 +37,7 @@ def test_create_model(self) -> None,
         """
         Tests the create_tool method.
         """
-        creation_engine == CreationEngine()
+        creation_engine = CreationEngine()
         tool_code = creation_engine.create("create my_tool tool")
         self.assertIn("def my_tool(input)", tool_code)
 

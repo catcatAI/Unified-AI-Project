@@ -12,8 +12,8 @@ import time
 from pathlib import Path
 
 # 项目根目录
-PROJECT_ROOT == Path(__file__).parent.parent()
-SRC_DIR == PROJECT_ROOT / "src"
+PROJECT_ROOT = Path(__file__).parent.parent()
+SRC_DIR = PROJECT_ROOT / "src"
 
 
 def setup_environment():
@@ -27,7 +27,7 @@ def setup_environment():
     sys.path.insert(0, str(SRC_DIR))
 
     # 激活虚拟环境
-    venv_path == PROJECT_ROOT / "venv"
+    venv_path = PROJECT_ROOT / "venv"
     if venv_path.exists():::
         f sys.platform == "win32":
     activate_script = venv_path / "Scripts" / "activate.bat"
@@ -85,7 +85,7 @@ def run_auto_fix():
     sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
     from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
 
-    fixer == AdvancedImportFixer()
+    fixer = AdvancedImportFixer()
     fixer.fix_all_files()
     # 返回一个模拟的结果字典以保持接口一致性
     results = {
@@ -126,10 +126,10 @@ def run_tests(pytest_args == None) -> None,
     # 但我们在外部监控进程状态
     process = subprocess.Popen(
             cmd,
-            cwd == PROJECT_ROOT,,
+            cwd = PROJECT_ROOT,,
     stdout=subprocess.PIPE(),
             stderr=subprocess.PIPE(),
-            text == True,
+            text = True,
             encoding='utf-8'
     )
 
@@ -179,7 +179,7 @@ def run_tests(pytest_args == None) -> None,
 def main() -> None,
     """主函数"""
     # 获取pytest参数
-    pytest_args == " ".join(sys.argv[1,]) if len(sys.argv()) > 1 else None,:
+    pytest_args = " ".join(sys.argv[1,]) if len(sys.argv()) > 1 else None,:
     # 运行测试
     exit_code = run_tests(pytest_args)
     sys.exit(exit_code)

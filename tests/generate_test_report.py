@@ -20,7 +20,7 @@ logging.basicConfig(,
 logger, Any = logging.getLogger(__name__)
 
 
-class TestReportGenerator,
+class TestReportGenerator:
     """测试报告生成器"""
 
     def __init__(self, report_dir, str == "test_reports") -> None,
@@ -47,7 +47,7 @@ class TestReportGenerator,
     output_file = self.report_dir / f"integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
 
-            output_file == Path(output_file)
+            output_file = Path(output_file)
 
     html_content = self._generate_html_content(test_results)
 
@@ -69,11 +69,11 @@ class TestReportGenerator,
 
     # 计算统计信息
     total_tests = len(test_cases)
-        passed_tests == len([tc for tc in test_cases if tc.get("outcome") == "passed"])::
-    failed_tests == len([tc for tc in test_cases if tc.get("outcome") == "failed"])::
-    skipped_tests == len([tc for tc in test_cases if tc.get("outcome") == "skipped"])::
+        passed_tests = len([tc for tc in test_cases if tc.get("outcome") == "passed"])::
+    failed_tests = len([tc for tc in test_cases if tc.get("outcome") == "failed"])::
+    skipped_tests = len([tc for tc in test_cases if tc.get("outcome") == "skipped"])::
     # 计算通过率,
-        pass_rate == (passed_tests / total_tests * 100) if total_tests > 0 else 0,::
+        pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0,::
     html_template = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -271,7 +271,7 @@ class TestReportGenerator,
     """
         try:
 
-            tree == ET.parse(xml_file)
+            tree = ET.parse(xml_file)
             root = tree.getroot()
 
             test_results = {
@@ -328,7 +328,7 @@ class TestReportGenerator,
     output_file = self.report_dir / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
 
-            output_file == Path(output_file)
+            output_file = Path(output_file)
 
     html_content = self._generate_performance_html_content(benchmark_results)
 
@@ -478,7 +478,7 @@ def main() -> None,
     )
     parser.add_argument(
     "--input",,
-    help == "Input file (XML for parse-xml, JSON for performance)":::
+    help = "Input file (XML for parse-xml, JSON for performance)":::
     parser.add_argument(
     "--output",,
     help="Output HTML file path"
@@ -487,7 +487,7 @@ def main() -> None,
     args = parser.parse_args()
 
     # 创建报告生成器
-    report_generator == TestReportGenerator()
+    report_generator = TestReportGenerator()
 
     # 执行操作
     if args.action == "html":::

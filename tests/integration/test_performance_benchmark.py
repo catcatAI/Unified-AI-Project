@@ -7,7 +7,7 @@
 import pytest
 import asyncio
 
-class TestPerformanceBenchmark,
+class TestPerformanceBenchmark:
     """性能基准测试"""
     
     @pytest.mark.performance()
@@ -25,7 +25,7 @@ class TestPerformanceBenchmark,
 def test_hsp_message_publish_performance(self, benchmark) -> None,
         """测试HSP消息发布性能"""
         with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
-            mock_hsp_instance == Mock()
+            mock_hsp_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_publish(topic, message):
                 return True
@@ -45,7 +45,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
     async def test_memory_store_performance(self, benchmark) -> None,
         """测试记忆存储性能"""
         with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
-            mock_memory_instance == Mock()
+            mock_memory_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_store_memory(data):
                 return "test_memory_id"
@@ -65,7 +65,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
     async def test_concurrent_agent_operations_performance(self, benchmark) -> None,
         """测试并发代理操作性能"""
         with patch('apps.backend.src.core.managers.agent_manager.AgentManager') as mock_agent_manager:
-            mock_agent_instance == Mock()
+            mock_agent_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_start_agent(agent_id):
                 return True
@@ -89,7 +89,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
     async def test_memory_retrieval_performance(self, benchmark) -> None,
         """测试记忆检索性能"""
         with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
-            mock_memory_instance == Mock()
+            mock_memory_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_retrieve_memory(memory_id):
                 return {"content": "test content", "metadata": {}}
@@ -104,7 +104,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
             result = await benchmark.pedantic(retrieve_memory, iterations=10, rounds=5)
             assert result["content"] == "test content"
 
-class TestSystemLoadBenchmark,
+class TestSystemLoadBenchmark:
     """系统负载基准测试"""
     
     @pytest.mark.performance()
@@ -112,7 +112,7 @@ class TestSystemLoadBenchmark,
     async def test_high_load_agent_management(self, benchmark) -> None,
         """测试高负载下的代理管理"""
         with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
-            mock_agent_instance == Mock()
+            mock_agent_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_create_agent(agent_id, agent_name):
                 return Mock()
@@ -134,9 +134,9 @@ class TestSystemLoadBenchmark,
                     agent = await agent_manager.create_agent(f"agent_{i}", f"Agent {i}")
                     agents.append(agent)
                 # 启动所有代理
-                start_results == await asyncio.gather(*[agent_manager.start_agent(f"agent_{i}") for i in range(100)])::
+                start_results = await asyncio.gather(*[agent_manager.start_agent(f"agent_{i}") for i in range(100)])::
                 # 停止所有代理
-                stop_results == await asyncio.gather(*[agent_manager.stop_agent(f"agent_{i}") for i in range(100)])::
+                stop_results = await asyncio.gather(*[agent_manager.stop_agent(f"agent_{i}") for i in range(100)])::
                 return len([r for r in start_results if r]), len([r for r in stop_results if r]):
             # 使用benchmark.pedantic来正确处理异步函数()
             start_count, stop_count = await benchmark.pedantic(high_load_operations, iterations=1, rounds=2)
@@ -148,7 +148,7 @@ class TestSystemLoadBenchmark,
     async def test_concurrent_hsp_message_processing(self, benchmark) -> None,
         """测试并发HSP消息处理"""
         with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
-            mock_hsp_instance == Mock()
+            mock_hsp_instance = Mock()
             # 修复AsyncMock的使用方式
             async def mock_publish(topic, message):
                 return True

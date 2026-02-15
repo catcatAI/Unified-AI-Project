@@ -10,7 +10,7 @@ import sys
 import tempfile
 from src.ai.memory.ham_memory_manager import HAMMemoryManager
 
-class TestHAMMemoryManager,
+class TestHAMMemoryManager:
     """HAMMemoryManager测试类"""
     
     def setup_method(self):
@@ -42,7 +42,7 @@ class TestHAMMemoryManager,
 def test_ham_memory_manager_initialization(self) -> None,
         """测试HAMMemoryManager初始化"""
         # 创建HAMMemoryManager实例
-        ham_manager == HAMMemoryManager(,
+        ham_manager = HAMMemoryManager(,
     core_storage_filename=self.core_filename(),
             storage_dir=self.test_dir())
         
@@ -54,14 +54,14 @@ def test_ham_memory_manager_initialization(self) -> None,
     @pytest.mark.asyncio()
     async def test_store_and_recall_experience(self) -> None,
         """测试存储和回忆经验"""
-        ham_manager == HAMMemoryManager(,
+        ham_manager = HAMMemoryManager(,
     core_storage_filename=self.core_filename():
             storage_dir=self.test_dir())
         
         # 存储经验
         test_data = "This is a test experience"
         test_data_type = "test_experience"
-        test_metadata == {"source": "unit_test", "importance": 0.5}
+        test_metadata = {"source": "unit_test", "importance": 0.5}
         
         memory_id = await ham_manager.store_experience(
             raw_data=test_data,
@@ -76,32 +76,32 @@ def test_ham_memory_manager_initialization(self) -> None,
         
         # 回忆经验
         results = ham_manager.query_core_memory(
-            metadata_filters == {"source": "unit_test"},
+            metadata_filters = {"source": "unit_test"},
     data_type_filter="test_experience"
         )
         
         # 验证返回结果
         assert len(results) >= 1
         # 检查是否包含我们存储的经验
-        found == False
+        found = False
         for result in results,::
             # 注意：result是一个HAMRecallResult字典,使用字典访问方式
             if result["id"] == memory_id,::
-                found == True
+                found = True
                 break
         assert found, "未能找到存储的经验"
         
     @pytest.mark.asyncio()
     async def test_query_core_memory(self) -> None,
         """测试查询核心内存"""
-        ham_manager == HAMMemoryManager(,
+        ham_manager = HAMMemoryManager(,
     core_storage_filename=self.core_filename():
             storage_dir=self.test_dir())
         
         # 存储一些测试数据
         test_data = "Query test data"
         test_data_type = "query_test"
-        test_metadata == {"category": "test", "tags": ["query", "test"]}
+        test_metadata = {"category": "test", "tags": ["query", "test"]}
         
         memory_id = await ham_manager.store_experience(
             raw_data=test_data,
@@ -111,7 +111,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         
         # 使用元数据过滤器查询
         results = ham_manager.query_core_memory(,
-    metadata_filters == {"category": "test"}
+    metadata_filters = {"category": "test"}
         )
         
         # 验证查询结果
@@ -120,7 +120,7 @@ def test_ham_memory_manager_initialization(self) -> None,
     @pytest.mark.asyncio()
     async def test_manual_delete_experience(self) -> None,
         """测试手动删除经验"""
-        ham_manager == HAMMemoryManager(,
+        ham_manager = HAMMemoryManager(,
     core_storage_filename=self.core_filename(),
             storage_dir=self.test_dir())
         
@@ -135,7 +135,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         
         # 验证经验已存储
         results = ham_manager.query_core_memory(,
-    metadata_filters == None
+    metadata_filters = None
         )
         assert len(results) >= 1
         
@@ -145,17 +145,17 @@ def test_ham_memory_manager_initialization(self) -> None,
         assert memory_id not in ham_manager.core_memory_store()
         # 验证经验已被删除
         results = ham_manager.query_core_memory(:
-    metadata_filters == None
+    metadata_filters = None
         )
         # 检查被删除的经验是否还在结果中
-        found == any(result["id"] == memory_id for result in results)::
+        found = any(result["id"] == memory_id for result in results)::
         assert not found, "经验未被成功删除"
         
     @pytest.mark.asyncio()
     async def test_save_and_load_core_memory(self) -> None,
         """测试核心内存的保存和加载"""
         # 第一次创建并存储数据
-        ham_manager1 == HAMMemoryManager(,
+        ham_manager1 = HAMMemoryManager(,
     core_storage_filename=self.core_filename(),
             storage_dir=self.test_dir())
         
@@ -172,7 +172,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         ham_manager1._save_core_memory_to_file()
         
         # 创建新的实例来加载数据
-        ham_manager2 == HAMMemoryManager(,
+        ham_manager2 = HAMMemoryManager(,
     core_storage_filename=self.core_filename():
             storage_dir=self.test_dir())
         

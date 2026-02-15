@@ -22,7 +22,7 @@ class TestDependencyManager:
         self.test_config.clear()
 def test_import_name_mapping(self) -> None,
         """测试导入名称映射"""
-        dm == DependencyManager()
+        dm = DependencyManager()
         
         # 测试已移除,因为DependencyManager现在不包含_get_import_name方法
         # 跳过此测试
@@ -30,14 +30,14 @@ def test_import_name_mapping(self) -> None,
     
     def test_primary_dependency_available(self) -> None,
         """测试主依赖可用"""
-        dm == DependencyManager()
+        dm = DependencyManager()
         
         # 直接修改依赖管理器的内部状态来模拟依赖可用
         from ai.dependency_manager import DependencyInfo
         dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
-            is_available == True,,
-    fallback_available == False
+            is_available = True,,
+    fallback_available = False
         )
         
         result = dm.is_available("test_dep")
@@ -45,14 +45,14 @@ def test_import_name_mapping(self) -> None,
     
     def test_all_dependencies_unavailable(self) -> None,
         """测试所有依赖都不可用"""
-        dm == DependencyManager()
+        dm = DependencyManager()
         
         # 直接修改依赖管理器的内部状态来模拟依赖不可用
         from ai.dependency_manager import DependencyInfo
         dm._dependencies["nonexistent_package"] = DependencyInfo(
             name="nonexistent_package",
-            is_available == False,,
-    fallback_available == False
+            is_available = False,,
+    fallback_available = False
         )
         
         result = dm.is_available("nonexistent_package")
@@ -62,21 +62,21 @@ def test_import_name_mapping(self) -> None,
         """测试配置文件未找到"""
         # 使用patch来模拟文件不存在的情况
         with patch('pathlib.Path.exists', return_value == False)
-            dm == DependencyManager("nonexistent_config.yaml")
+            dm = DependencyManager("nonexistent_config.yaml")
             
             # 应该使用默认配置
             assert isinstance(dm._config(), dict)
             assert "dependencies" in dm._config()
     def test_dependency_report_generation(self) -> None,
         """测试依赖报告生成"""
-        dm == DependencyManager()
+        dm = DependencyManager()
         
         # 模拟依赖检查结果
         from ai.dependency_manager import DependencyInfo
         dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
-            is_available == True,,
-    fallback_available == False
+            is_available = True,,
+    fallback_available = False
         )
         
         report = dm.get_dependency_report()
@@ -88,7 +88,7 @@ def test_import_name_mapping(self) -> None,
     
     def test_fallback_dependency_used(self) -> None,
         """测试使用备用依赖"""
-        dm == DependencyManager()
+        dm = DependencyManager()
         
         # 测试已移除,因为DependencyManager现在不包含_check_dependency_with_fallback方法
         # 跳过此测试
@@ -99,7 +99,7 @@ def test_import_name_mapping(self) -> None,
         # 设置生产环境
         os.environ['UNIFIED_AI_ENV'] = 'production'
         
-        dm == DependencyManager()
+        dm = DependencyManager()
         
         # 测试已移除,因为DependencyManager现在不包含_check_dependency_with_fallback方法
         # 跳过此测试

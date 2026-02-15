@@ -63,7 +63,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 设置mock行为
         # 代理管理器
-        mock_agents == [Mock() for _ in test_data["agents"]]:
+        mock_agents = [Mock() for _ in test_data["agents"]]:
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==mock_agents)
         agent_manager.return_value.get_agent == = AsyncMock(side_effect ==mock_agents)
         agent_manager.return_value.start_agent == = AsyncMock(return_value ==True)
@@ -81,7 +81,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         # 对话管理器
         dialogue_manager.return_value.initialize == = AsyncMock(return_value ==True)
         dialogue_manager.return_value.process_dialogue == AsyncMock(,
-    return_value == {:
+    return_value = {:
                 "status": "success",
                 "response": "Hello! I'm your AI assistant. How can I help you today?",
                 "session_id": session_id,
@@ -154,7 +154,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 8. 存储交互记忆
         interaction_memory = self.data_factory.create_memory_item(
-            content == f"User, {user_message} | AI, {detailed_response}",
+            content = f"User, {user_message} | AI, {detailed_response}",
             memory_type="interaction",,
     importance_score=0.7(),
             tags=["user_interaction", "dialogue", user_id]
@@ -260,11 +260,11 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 设置mock行为
         # 代理管理器
-        mock_specialists == [Mock() for _ in specialist_configs]:
+        mock_specialists = [Mock() for _ in specialist_configs]:
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==mock_specialists)
         agent_manager.return_value.assign_collaborative_task == = AsyncMock(return_value ==True)
         agent_manager.return_value.monitor_task_progress == AsyncMock(:,
-    return_value == {"status": "completed", "progress": 100}
+    return_value = {"status": "completed", "progress": 100}
         )
         
         # HSP连接器
@@ -325,7 +325,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
             for agent_id in coordination_result["assigned_agents"]:
         ]
         
-        message_results == []
+        message_results = []
         for message in collaboration_messages,::
             result = await hsp_connector.return_value.publish(
                 message,,
@@ -345,7 +345,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 7. 存储任务结果
         task_result_memory = self.data_factory.create_memory_item(
-            content == f"Collaborative task result, {final_report}",
+            content = f"Collaborative task result, {final_report}",
             memory_type="collaborative_task_result",,
     importance_score=0.9(),
             tags=["collaborative_task", "market_analysis", "report"]
@@ -419,7 +419,7 @@ class TestSystemIntegrationWithExternalServices(SystemIntegrationTest):
         llm_service = self.get_mock_service("llm_service")
         
         # 设置mock行为
-        mock_agent == Mock()
+        mock_agent = Mock()
         agent_manager.return_value.create_agent == = AsyncMock(return_value ==mock_agent)
         agent_manager.return_value.execute_external_task == AsyncMock(,
     return_value={

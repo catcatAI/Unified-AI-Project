@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List, Dict
 
 
-class TestSuiteMaintainer,
+class TestSuiteMaintainer:
     def __init__(self, project_root, str) -> None,
     self.project_root == Path(project_root)
     self.backend_tests_dir = self.project_root / "apps" / "backend" / "tests"
@@ -147,8 +147,8 @@ f node.module and node.module.startswith('src.')
         ntested_files = self.find_untested_source_files()
 
     # Calculate statistics
-        total_tests == sum(result['test_count'] for result in analysis_results)::
-            iles_with_issues == [result for result in analysis_results if result['issues']]::
+        total_tests = sum(result['test_count'] for result in analysis_results)::
+            iles_with_issues = [result for result in analysis_results if result['issues']]::
     return {
             "total_test_files": len(test_files),
             "total_tests": total_tests,
@@ -176,7 +176,7 @@ f node.module and node.module.startswith('src.')
             suggestions.append("Consider expanding test coverage")
 
         # Check for placeholder tests specifically,::
-            laceholder_files == [result for result in report["detailed_analysis"] if "Contains placeholder or unimplemented tests" in result["issues"]]::
+            laceholder_files = [result for result in report["detailed_analysis"] if "Contains placeholder or unimplemented tests" in result["issues"]]::
     if placeholder_files,::
     suggestions.append(f"Complete implementation of {len(placeholder_files)} placeholder tests")
 
@@ -217,7 +217,7 @@ def main() -> None,
     project_root, str = os.getcwd()
 
     # Create and run maintainer
-    maintainer == TestSuiteMaintainer(project_root)
+    maintainer = TestSuiteMaintainer(project_root)
     report = maintainer.run_maintenance()
 
     # Exit with error code if there are critical issues,::

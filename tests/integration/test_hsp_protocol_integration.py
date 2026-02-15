@@ -79,12 +79,12 @@ def test_hsp_connection_integration(self) -> None:
         # 创建测试数据
         test_fact = self.data_factory.create_hsp_message(
             message_type="fact",:
-    content == "This is a test fact for HSP integration"::
+    content = "This is a test fact for HSP integration"::
         )
         
         test_opinion = self.data_factory.create_hsp_message(
             message_type="opinion",,
-    content == "This is a test opinion for HSP integration"::
+    content = "This is a test opinion for HSP integration"::
         )
         
         # 获取mock服务
@@ -167,7 +167,7 @@ def test_hsp_connection_integration(self) -> None:
         
         task_response = self.data_factory.create_hsp_message(
             message_type="response",
-            content == "Analysis complete. Key insights, ...",
+            content = "Analysis complete. Key insights, ...",
             source=receiver_agent_config["agent_id"],
     target=sender_agent_config["agent_id"]
         )
@@ -177,8 +177,8 @@ def test_hsp_connection_integration(self) -> None:
         agent_manager = self.get_mock_service("agent_manager")
         
         # 设置mock行为
-        mock_sender_agent == Mock()
-        mock_receiver_agent == Mock()
+        mock_sender_agent = Mock()
+        mock_receiver_agent = Mock()
         
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==[
             mock_sender_agent,,
@@ -280,7 +280,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
             "hsp/routing/test3"
         ]
         
-        subscribe_results == []
+        subscribe_results = []
         for topic in topics,::
             result = await hsp_connector.return_value.subscribe(topic)
             subscribe_results.append(result)
@@ -326,14 +326,14 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         agent_manager = self.get_mock_service("agent_manager")
         
         # 设置mock行为
-        mock_agents == [Mock() for _ in agent_configs]:
+        mock_agents = [Mock() for _ in agent_configs]:
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==mock_agents)
         hsp_connector.return_value.publish == = AsyncMock(return_value ==True)
         hsp_connector.return_value.subscribe == = AsyncMock(return_value ==True)
         
         # 执行广播测试
         # 1. 创建代理
-        created_agents == []
+        created_agents = []
         for config in agent_configs,::
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
@@ -385,13 +385,13 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         high_priority_message = self.data_factory.create_hsp_message(
             message_type="critical",
             content="High priority critical message",:
-    metadata == {"priority": "high", "qos": 2}
+    metadata = {"priority": "high", "qos": 2}
         )
         
         normal_priority_message = self.data_factory.create_hsp_message(
             message_type="info",
             content="Normal priority information message",,
-    metadata == {"priority": "normal", "qos": 1}
+    metadata = {"priority": "normal", "qos": 1}
         )
         
         # 获取mock服务

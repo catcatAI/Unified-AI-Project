@@ -19,7 +19,7 @@ class TestAgentCollaboration(unittest.TestCase):
 def setUpClass(cls):
         """Initialize services once for all tests in this class."""::
         # We use mock services to avoid real network/LLM calls
-        mock_config == {:
+        mock_config = {:
             "llm_service": {
                 "default_provider": "mock"
             }
@@ -57,12 +57,12 @@ def tearDownClass(cls):
         End-to-end test for a complex project involving a DAG of tasks.::
         """
         # 1. Define user query and mock LLM responses,
-        user_query == "project, analyze data.csv and write a marketing slogan"
+        user_query = "project, analyze data.csv and write a marketing slogan"
         mock_decomposed_plan = [
             {"capability_needed": "analyze_csv_data", "task_parameters": {"source": "data.csv"} "dependencies": []}
             {"capability_needed": "generate_marketing_copy", "task_parameters": {"product_description": "Our new product, which is based on the analysis, <output_of_task_0>"} "dependencies": [0]}      
         ]
-        mock_integration_response == "Based on the data summary, I have created this slogan, Our new product, which has 2 columns and 1 row, is revolutionary for data scientists!"::
+        mock_integration_response = "Based on the data summary, I have created this slogan, Our new product, which has 2 columns and 1 row, is revolutionary for data scientists!"::
         # 2. Patch the LLM interface - patch the instance method on the dialogue manager's llm_interface,
         with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response:
             # Set up the mock responses - return JSON strings for generate_response,:
@@ -99,7 +99,7 @@ def tearDownClass(cls):
         Tests a project with two independent tasks.
         """
         # 1. Mock the LLM's decomposition response
-        mock_decomposed_plan == [:
+        mock_decomposed_plan = [:
             {"capability_needed": "task_a_v1", "task_parameters": {"p": 1}}
             {"capability_needed": "task_b_v1", "task_parameters": {"q": 2}}
         ]
@@ -127,7 +127,7 @@ def tearDownClass(cls):
 
             # 4. Run the project
             with patcher_dispatch,
-                final_response == asyncio.run(self.dialogue_manager.get_simple_response("project, two tasks"))
+                final_response = asyncio.run(self.dialogue_manager.get_simple_response("project, two tasks"))
 
             # 5. Assertions
             # 修改断言条件,检查响应中是否包含期望的文本或模拟响应
@@ -143,7 +143,7 @@ def tearDownClass(cls):
         Tests how the system handles a failing subtask.
         """
         # 1. Mock the LLM's decomposition
-        mock_decomposed_plan == [{"capability_needed": "failing_task_v1"}]
+        mock_decomposed_plan = [{"capability_needed": "failing_task_v1"}]
         # 2. Mock the LLM's integration
         mock_integration_response = "The project failed."
 
@@ -157,11 +157,11 @@ def tearDownClass(cls):
             ]
 
             # 3. Mock a failing sub-agent,
-            patcher_dispatch == patch.object(self.dialogue_manager.project_coordinator(), '_dispatch_single_subtask', new == AsyncMock(return_value={"error": "Task failed"}))
+            patcher_dispatch = patch.object(self.dialogue_manager.project_coordinator(), '_dispatch_single_subtask', new == AsyncMock(return_value={"error": "Task failed"}))
 
             # 4. Run the project
             with patcher_dispatch,
-                final_response == asyncio.run(self.dialogue_manager.get_simple_response("project, failing task"))
+                final_response = asyncio.run(self.dialogue_manager.get_simple_response("project, failing task"))
 
             # 5. Assertions
             # 修改断言条件,检查响应中是否包含期望的文本或模拟响应
@@ -177,7 +177,7 @@ def tearDownClass(cls):
         Tests that the system can dynamically launch an agent if a capability is not found.::
         """
         # 1. Mock the LLM's decomposition,
-        mock_decomposed_plan == [{"capability_needed": "new_agent_v1"}]
+        mock_decomposed_plan = [{"capability_needed": "new_agent_v1"}]
         # 2. Mock the LLM's integration
         mock_integration_response = "Dynamically launched agent and it worked."
 
@@ -215,12 +215,12 @@ def tearDownClass(cls):
                 # 6. Mock _wait_for_task_result to avoid timeout issues
                 # 使用create_autospec创建一个更精确的模拟
                 from unittest.mock import create_autospec
-                mock_wait_for_task_result == create_autospec(self.dialogue_manager.project_coordinator._wait_for_task_result(), return_value={"result": "ok"})
+                mock_wait_for_task_result = create_autospec(self.dialogue_manager.project_coordinator._wait_for_task_result(), return_value={"result": "ok"})
 
                 with patch.object(self.dialogue_manager.project_coordinator(), '_wait_for_task_result', new=mock_wait_for_task_result)
 
                     # 7. Run the project (don't mock _dispatch_single_subtask to allow agent launch logic to execute)
-                    final_response == asyncio.run(self.dialogue_manager.get_simple_response("project, new agent"))
+                    final_response = asyncio.run(self.dialogue_manager.get_simple_response("project, new agent"))
 
                 # 8. Assertions
                 # 修改断言条件,检查响应中是否包含期望的文本

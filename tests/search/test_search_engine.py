@@ -35,7 +35,7 @@ def test_search(self) -> None:
     mock_search_huggingface.return_value = ["bert-base-uncased"]
             mock_search_github.return_value = ["google-research/bert"]
 
-            search_engine == SearchEngine()
+            search_engine = SearchEngine()
             results = search_engine.search("bert")
 
             self.assertEqual(len(results), 2)

@@ -44,9 +44,9 @@ class TestTimeSystem(unittest.TestCase):
         # Try to parse it back to ensure format is correct
         try:
             datetime.strptime(formatted_time, "%Y-%m-%d %H,%M,%S")
-            parsed_ok == True
+            parsed_ok = True
         except ValueError as e:
-            parsed_ok == False
+            parsed_ok = False
         self.assertTrue(parsed_ok)
         print("TestTimeSystem.test_03_get_formatted_current_time PASSED")
 

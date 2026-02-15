@@ -74,7 +74,7 @@ def test_
     """Test that ExternalConnector can be instantiated."""
     try:
         from core.hsp.external.external_connector import ExternalConnector  # type, ignore
-        connector == ExternalConnector(
+        connector = ExternalConnector(
             ai_id="test_ai",
             broker_address="localhost",,
     broker_port=1883
@@ -89,7 +89,7 @@ def test_
 if __name"__main__":::
     print("Testing gmqtt and ExternalConnector functionality...")
     
-    success == True
+    success = True
     success &= test_gmqtt_import()
     success &= test_external_connector_import()
     success &= test_external_connector_creation()

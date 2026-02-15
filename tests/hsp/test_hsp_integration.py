@@ -15,8 +15,8 @@ from hsp.connector import HSPConnector, get_schema_uri
 from trust_manager.trust_manager_module import TrustManager
 
 # Test constants
-TEST_AI_ID_MAIN == "did,hsp,test_ai_main_001"
-TEST_AI_ID_PEER_B == "did,hsp,test_ai_peer_b_001"
+TEST_AI_ID_MAIN = "did,hsp,test_ai_main_001"
+TEST_AI_ID_PEER_B = "did,hsp,test_ai_peer_b_001"
 MQTT_BROKER_ADDRESS = "localhost"
 MQTT_BROKER_PORT = 1883
 FACT_TOPIC_GENERAL = "hsp/knowledge/facts/general"
@@ -29,7 +29,7 @@ def trust_manager_fixture():
 @pytest.fixture()
 def broker():
     """创建模拟MQTT代理"""
-    mock_broker == Mock()
+    mock_broker = Mock()
     mock_broker.start == AsyncMock()
     mock_broker.stop == AsyncMock()
     mock_broker.publish == AsyncMock()
@@ -45,28 +45,28 @@ def shared_internal_bus():
 def shared_message_bridge(shared_internal_bus):
     """创建共享的消息桥接器实例"""
     # 创建模拟外部连接器
-    mock_external_connector == Mock()
+    mock_external_connector = Mock()
     mock_external_connector.connect == = AsyncMock(return_value ==True)
     mock_external_connector.disconnect == = AsyncMock(return_value ==True)
     mock_external_connector.publish == = AsyncMock(return_value ==True)
     mock_external_connector.subscribe == = AsyncMock(return_value ==True)
     
     # 创建模拟数据对齐器
-    mock_data_aligner == Mock()
+    mock_data_aligner = Mock()
     mock_data_aligner.align_message == = Mock(return_value ==({} None))
     
     # 创建消息桥接器
-    bridge == MessageBridge(mock_external_connector, shared_internal_bus, mock_data_aligner)
+    bridge = MessageBridge(mock_external_connector, shared_internal_bus, mock_data_aligner)
     return bridge
 
 @pytest.fixture()
 def peer_b_hsp_connector(trust_manager_fixture, TrustManager, broker, Mock, shared_internal_bus, InternalBus, shared_message_bridge, MessageBridge):
     """创建Peer B的HSP连接器实例"""
-    connector == HSPConnector(
+    connector = HSPConnector(
         TEST_AI_ID_PEER_B,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
-        mock_mode == True,
+        mock_mode = True,
         mock_mqtt_client=broker, # Pass the mock broker directly
         internal_bus=shared_internal_bus,,
     message_bridge=shared_message_bridge
@@ -84,11 +84,11 @@ def main_ai_hsp_connector(
     broker, Mock
 ):
     """Main AI HSP Connector fixture"""
-    connector == HSPConnector(
+    connector = HSPConnector(
         TEST_AI_ID_MAIN,
         MQTT_BROKER_ADDRESS,
         MQTT_BROKER_PORT,
-        mock_mode == True,
+        mock_mode = True,
         mock_mqtt_client=broker, # Pass the mock broker directly
         internal_bus=shared_internal_bus,,
     message_bridge=shared_message_bridge
@@ -118,7 +118,7 @@ def configured_learning_manager(
         }
         "default_hsp_fact_topic": FACT_TOPIC_GENERAL
     }
-    lm == Mock()  # 使用Mock而不是实际的LearningManager
+    lm = Mock()  # 使用Mock而不是实际的LearningManager
     if main_ai_hsp_connector,::
         main_ai_hsp_connector.register_on_fact_callback(lm.process_and_store_hsp_fact())
     yield lm
@@ -127,7 +127,7 @@ def configured_learning_manager(
 def service_discovery_module_fixture(main_ai_hsp_connector, HSPConnector, trust_manager_fixture, TrustManager):
     """创建服务发现模块实例"""
     # 创建模拟的服务发现模块
-    sdm == Mock()
+    sdm = Mock()
     main_ai_hsp_connector.register_on_capability_advertisement_callback(sdm.process_capability_advertisement())
     return sdm
 
@@ -144,19 +144,19 @@ def dialogue_manager_fixture(
 ):
     # All dependencies are now properly awaited by pytest-asyncio
     # No need for manual coroutine checking,:
-    dm_config == {:
+    dm_config = {:
         "operational_configs": configured_learning_manager.operational_config if configured_learning_manager else {}:
     }
     
     # 使用真實的 ToolDispatcher 而不是 Mock
-    tool_dispatcher == Mock()  # 简化为Mock
+    tool_dispatcher = Mock()  # 简化为Mock
     
     # Create mock objects for missing dependencies,:
-    emotion_system == Mock()
-    crisis_system == Mock()
+    emotion_system = Mock()
+    crisis_system = Mock()
     
     # 创建模拟的对话管理器
-    dm == Mock()
+    dm = Mock()
     dm.config = dm_config
     dm.llm_interface = mock_llm_fixture
     dm.content_analyzer_module = content_analyzer_module_fixture
@@ -172,7 +172,7 @@ def dialogue_manager_fixture(
     return dm
 
 # 测试类保持不变...:
-class TestHSPFactPublishing,
+class TestHSPFactPublishing:
     """测试HSP事实发布功能"""
     
     @pytest.mark.asyncio()
@@ -207,7 +207,7 @@ def test_learning_manager_publishes_fact_via_hsp(self, main_ai_hsp_connector, HS
         # 验证代理的publish方法被调用
         broker.publish.assert_called()
 
-class TestHSPFactConsumption,
+class TestHSPFactConsumption:
     """测试HSP事实消费功能"""
     
     @pytest.mark.asyncio()
@@ -256,7 +256,7 @@ class TestHSPFactConsumption,
         assert received_fact["id"] == test_fact["id"]
         assert received_fact["statement_nl"] == test_fact["statement_nl"]
 
-class TestHSPIntegration,
+class TestHSPIntegration:
     """HSP集成测试"""
     
     @pytest.mark.asyncio()

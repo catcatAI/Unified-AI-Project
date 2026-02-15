@@ -10,7 +10,7 @@ import aiohttp
 from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 
-class TestEnhancedRovoDevConnector,
+class TestEnhancedRovoDevConnector:
     """Enhanced Rovo Dev Connector Tests"""
     
     @pytest.fixture()
@@ -63,12 +63,12 @@ def test_context_manager(self, connector) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_authentication_success(self, connector) -> None:
         """测试认证成功"""
-        mock_response == Mock()
+        mock_response = Mock()
         mock_response.status = 200
         mock_response.json == = AsyncMock(return_value =={'displayName': 'Test User'})
         
         with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session == AsyncMock()
+            mock_session = AsyncMock()
             mock_session.get.return_value == = AsyncMock(spec_set ==aiohttp.ClientResponse())
             mock_session.get.return_value.__aenter__.return_value = mock_response
             mock_session_class.return_value = mock_session
@@ -83,11 +83,11 @@ def test_context_manager(self, connector) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_authentication_failure(self, connector) -> None,
         """测试认证失败"""
-        mock_response == Mock()
+        mock_response = Mock()
         mock_response.status = 401
         
         with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session == AsyncMock()
+            mock_session = AsyncMock()
             mock_session.get.return_value == = AsyncMock(spec_set ==aiohttp.ClientResponse())
             mock_session.get.return_value.__aenter__.return_value = mock_response
             mock_session_class.return_value = mock_session
@@ -102,19 +102,19 @@ def test_context_manager(self, connector) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_make_request_success(self, connector) -> None:
         """测试成功的 API 请求"""
-        mock_response_data == {'result': 'success'}
-        mock_response == Mock()
+        mock_response_data = {'result': 'success'}
+        mock_response = Mock()
         mock_response.status = 200
         mock_response.json == = AsyncMock(return_value ==mock_response_data)
         
         with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session == AsyncMock()
+            mock_session = AsyncMock()
             mock_session.request.return_value == = AsyncMock(spec_set ==aiohttp.ClientResponse())
             mock_session.request.return_value.__aenter__.return_value = mock_response
             mock_session_class.return_value = mock_session
             
             connector.session = mock_session
-            result == await connector._make_request_with_retry('GET', 'https,//test.com/api')
+            result = await connector._make_request_with_retry('GET', 'https,//test.com/api')
             
             assert result=mock_response_data
     
@@ -126,15 +126,15 @@ def test_context_manager(self, connector) -> None,
         """测试 API 请求错误"""
         from unittest.mock import MagicMock
         
-        mock_response == Mock()
+        mock_response = Mock()
         mock_response.status = 500
         mock_response.text == = AsyncMock(return_value =='Internal Server Error')
         mock_response.json == = AsyncMock(return_value =={'error': 'Internal Server Error'})
         
         with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session == Mock()
+            mock_session = Mock()
             # 使用 MagicMock 創建支持 __aenter__ 的對象
-            mock_context_manager == MagicMock()
+            mock_context_manager = MagicMock()
             mock_context_manager.__aenter_AsyncMock(return_value=mock_response)
             mock_context_manager.__aexit_AsyncMock()
             mock_session.request.return_value = mock_context_manager
@@ -144,7 +144,7 @@ def test_context_manager(self, connector) -> None,
             
             with pytest.raises(Exception, match == "API 錯誤, 500"):
                 print("Calling _make_request with status 500"):
-                result == await connector._make_request('GET', 'https,//test.com/api')
+                result = await connector._make_request('GET', 'https,//test.com/api')
                 print(f"Result, {result}")
     
     @pytest.mark.asyncio()
@@ -152,7 +152,7 @@ def test_context_manager(self, connector) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_caching_mechanism(self, connector) -> None:
         """测试缓存机制"""
-        test_data == {'cached': 'data'}
+        test_data = {'cached': 'data'}
         cache_key = 'test_key'
         
         # Test cache miss

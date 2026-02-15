@@ -14,7 +14,7 @@ if len(stdout_content) > 4000,::
     print(f"\n... (还有{len(stdout_content) - 4000}个字符)")
 
 # 查找所有ERROR行
-error_lines == [line for line in stdout_content.split('\n') if 'ERROR' in line]::
+error_lines = [line for line in stdout_content.split('\n') if 'ERROR' in line]::
 f error_lines,
     print("\n发现的ERROR行,")
     for line in error_lines,::

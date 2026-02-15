@@ -21,7 +21,7 @@ async
 def test_simple_hsp_flow() -> None,
     """简单的HSP流程测试"""
     with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
-        mock_hsp_instance == Mock()
+        mock_hsp_instance = Mock()
         mock_hsp_instance.ai_id = "test_ai"
         mock_hsp_instance.is_connected == True
         

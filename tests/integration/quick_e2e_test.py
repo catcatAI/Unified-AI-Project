@@ -62,10 +62,10 @@ async def test_component_interaction():
         from ai.ops.capacity_planner import CapacityPlanner
         
         # 创建组件实例
-        ai_ops == AIOpsEngine()
-        maintenance == PredictiveMaintenanceEngine()
-        optimizer == PerformanceOptimizer()
-        planner == CapacityPlanner()
+        ai_ops = AIOpsEngine()
+        maintenance = PredictiveMaintenanceEngine()
+        optimizer = PerformanceOptimizer()
+        planner = CapacityPlanner()
         
         # 测试异常检测
         anomalies = await ai_ops.detect_anomalies(
@@ -201,8 +201,8 @@ async def main():
     total = len(results)
     
     for test_name, result in results,::
-        status == "通过" if result else "失败"::
-        symbol == "✓" if result else "✗":::
+        status = "通过" if result else "失败"::
+        symbol = "✓" if result else "✗":::
         print(f"{symbol} {test_name} {status}")
         if result,::
             passed += 1

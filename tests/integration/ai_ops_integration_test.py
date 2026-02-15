@@ -25,7 +25,7 @@ from ai.ops.capacity_planner import get_capacity_planner
 logging.basicConfig(level=logging.INFO())
 logger = logging.getLogger(__name__)
 
-class AIOpsIntegrationTest,
+class AIOpsIntegrationTest:
     """AI运维系统集成测试"""
     
     def __init__(self):
@@ -369,7 +369,7 @@ class AIOpsIntegrationTest,
             insights = await self.ops_manager.get_insights(limit=20)
             
             # 验证洞察类型多样性
-            insight_types == set(insight.insight_type for insight in insights)::
+            insight_types = set(insight.insight_type for insight in insights)::
             success = len(insights) >= 3 and len(insight_types) >= 2
             
             self.test_results["intelligent_insights"] = {:
@@ -453,7 +453,7 @@ class AIOpsIntegrationTest,
                 "auto_actions_24h", "total_insights", "last_update"
             ]
             
-            has_all_fields == all(field in dashboard_data for field in required_fields)::
+            has_all_fields = all(field in dashboard_data for field in required_fields)::
             success = has_all_fields and dashboard_data["total_insights"] >= 0
             
             self.test_results["dashboard_data"] = {:
@@ -496,14 +496,14 @@ class AIOpsIntegrationTest,
             self.test_dashboard_data()
         ]
         
-        results == await asyncio.gather(*tests, return_exceptions == True)::
+        results = await asyncio.gather(*tests, return_exceptions == True)::
         end_time = time.time()
         
         # 统计结果
-        passed == sum(1 for result in results if result is True)::
+        passed = sum(1 for result in results if result is True)::
         total = len(results)
 
-        summary == {:
+        summary = {:
             "test_summary": {
                 "total_tests": total,
                 "passed": passed,
@@ -527,7 +527,7 @@ class AIOpsIntegrationTest,
 
 async def main():
     """主测试函数"""
-    test == AIOpsIntegrationTest()
+    test = AIOpsIntegrationTest()
     
     try:
         # 设置测试环境
@@ -553,7 +553,7 @@ async def main():
         print("\n详细结果,")
         for test_name, result in results["detailed_results"].items():::
             status = result["status"]
-            status_symbol == "✓" if status == "PASS" else "✗":::
+            status_symbol = "✓" if status == "PASS" else "✗":::
             print(f"  {status_symbol} {test_name} {status}")
             if status == "FAIL" and "error" in result,::
                 print(f"    错误, {result['error']}")

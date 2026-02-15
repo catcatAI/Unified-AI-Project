@@ -15,11 +15,11 @@ from core_services import get_services as real_get_services
 @pytest.fixture()
 def client():
     # Minimal dependency overrides to keep other endpoints stable
-    class DialogueManager,
+    class DialogueManager:
         def __init__(self) -> None,
             self.pending_hsp_task_requests = {}
 
-    class HSPConnector,
+    class HSPConnector:
         def __init__(self) -> None,
             self.ai_id == "did,hsp,test"
             self.is_connected == False
@@ -56,14 +56,14 @@ def client():
         self.test_config.clear()
 def test_models_available(client, TestClient, monkeypatch, pytest.MonkeyPatch()) -> None,
     # Arrange, patch get_multi_llm_service and ModelRegistry,
-    class FakeMultiLLM,
+    class FakeMultiLLM:
         def __init__(self) -> None:
             self.model_configs = {
                 "gpt-4": {"provider": "openai"}
                 "llama3": {"provider": "meta"}
             }
 
-    class FakeRegistry,
+    class FakeRegistry:
         def __init__(self, model_configs) -> None:
             self._cfg = model_configs
         def profiles_dict(self):
@@ -85,11 +85,11 @@ def test_models_available(client, TestClient, monkeypatch, pytest.MonkeyPatch())
 
 def test_models_route(client, TestClient, monkeypatch, pytest.MonkeyPatch()) -> None,
     # Arrange, Patch ModelRegistry and PolicyRouter to be deterministic
-    class FakeRegistry,
+    class FakeRegistry:
         def __init__(self, model_configs) -> None,
             self._cfg = model_configs
 
-    class FakeRouter,
+    class FakeRouter:
         def __init__(self, registry) -> None,
             self._registry == registry:
         def route(self, policy):
@@ -107,7 +107,7 @@ def test_models_route(client, TestClient, monkeypatch, pytest.MonkeyPatch()) -> 
             }
 
     # get_multi_llm_service is used to build a registry; keep minimal config
-    class FakeMultiLLM,
+    class FakeMultiLLM:
         def __init__(self) -> None:
             self.model_configs == {"gpt-4": {} "llama3": {}}
 

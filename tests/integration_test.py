@@ -12,7 +12,7 @@ from .alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, Relational
 logger, Any = logging.getLogger(__name__)
 
 
-class ConceptModelIntegrationTest,
+class ConceptModelIntegrationTest:
     """概念模型集成测试"""
 
     def __init__(self) -> None,
@@ -26,7 +26,7 @@ class ConceptModelIntegrationTest,
         print("=== 测试环境模拟器与因果推理引擎的集成 ===")
 
         # 创建初始状态
-        initial_state == State(
+        initial_state = State(
             time_step=0,,
     variables={
                 "temperature": 22.0(),
@@ -36,9 +36,9 @@ class ConceptModelIntegrationTest,
         )
 
         # 创建动作
-        action == Action(
+        action = Action(
             name="increase_temperature",,
-    parameters == {"amount": 2.0}
+    parameters = {"amount": 2.0}
         )
 
         # 使用环境模拟器模拟动作后果
@@ -51,7 +51,7 @@ class ConceptModelIntegrationTest,
         print(f"预期奖励, {simulation_result['expected_reward'].2f}")
 
         # 创建观察数据用于因果推理
-        observation == Observation(
+        observation = Observation(
             id="obs_1",,
     variables={
                 "temperature": 22.0(),
@@ -75,7 +75,7 @@ class ConceptModelIntegrationTest,
         print("\n=测试因果推理引擎与自适应学习控制器的集成 ===")
 
         # 创建任务上下文
-        task_context == TaskContext(
+        task_context = TaskContext(
             task_id="comfort_optimization",,
     complexity_level=0.6(),
             domain="environment_control",
@@ -84,7 +84,7 @@ class ConceptModelIntegrationTest,
 
         # 记录一些性能数据
         for i in range(5)::
-            record == PerformanceRecord(,
+            record = PerformanceRecord(,
     timestamp=datetime.now.timestamp - (5 - i) * 60,
                 task_id="comfort_optimization",
                 success_rate=0.7 + i * 0.05(),
@@ -124,30 +124,30 @@ class ConceptModelIntegrationTest,
         print("\n=测试Alpha深度模型与统一符号空间的集成 ===")
 
         # 创建深度参数
-        deep_param == DeepParameter(
+        deep_param = DeepParameter(
             source_memory_id="mem_000123",,
     timestamp=datetime.now.isoformat(),
-            base_gist == HAMGist(
+            base_gist = HAMGist(
                 summary="User asked about weather",
                 keywords=["weather", "temperature", "forecast"],
     original_length=150
             ),
-            relational_context == RelationalContext(
+            relational_context = RelationalContext(
                 entities=["User", "Weather", "Temperature"],
     relationships=[
                     {"subject": "User", "verb": "asked_about", "object": "Weather"}
                     {"subject": "Weather", "verb": "has_property", "object": "Temperature"}
                 ]
             ),
-            modalities == Modalities(,
+            modalities = Modalities(,
     text_confidence=0.95(),
-                audio_features == {"pitch": 120, "volume": 0.8}
+                audio_features = {"pitch": 120, "volume": 0.8}
             ),
-            action_feedback == {"response_time": 0.5(), "accuracy": 0.9}
+            action_feedback = {"response_time": 0.5(), "accuracy": 0.9}
         )
 
         # 使用Alpha深度模型学习
-        feedback_symbol == await self.alpha_deep_model.learn(deep_param, {"accuracy": 0.95(), "response_time": 0.5})
+        feedback_symbol = await self.alpha_deep_model.learn(deep_param, {"accuracy": 0.95(), "response_time": 0.5})
 
         print(f"反馈符号, {feedback_symbol}")
 
@@ -162,7 +162,7 @@ class ConceptModelIntegrationTest,
         # 验证符号空间中的数据
         memory_symbol = await self.symbolic_space.get_symbol_by_name("mem_000123")
         gist_symbol = await self.symbolic_space.get_symbol_by_name("User asked about weather")
-        relationships == await self.symbolic_space.get_relationships_by_symbol(memory_symbol.id if memory_symbol else 0)::
+        relationships = await self.symbolic_space.get_relationships_by_symbol(memory_symbol.id if memory_symbol else 0)::
 rint(f"内存符号, {memory_symbol is not None}")
         print(f"摘要符号, {gist_symbol is not None}")
         print(f"关系数量, {len(relationships)}")
@@ -178,7 +178,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         print("\n=测试完整的概念模型集成管道 ===")
         
         # 1. 使用环境模拟器模拟环境状态
-        initial_state == State(
+        initial_state = State(
             time_step=0,,
     variables={
                 "temperature": 22.0(),
@@ -187,9 +187,9 @@ rint(f"内存符号, {memory_symbol is not None}")
             }
         )
         
-        action == Action(
+        action = Action(
             name="increase_temperature",,
-    parameters == {"amount": 2.0}
+    parameters = {"amount": 2.0}
         )
         
         simulation_result = await self.environment_simulator.simulate_action_consequences(,
@@ -197,7 +197,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         )
         
         # 2. 将模拟结果转换为观察数据
-        observation == Observation(
+        observation = Observation(
             id="pipeline_obs_1",,
     variables={
                 "temperature": simulation_result['predicted_state'].variables.get("temperature", 0),
@@ -212,7 +212,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         relationships = await self.causal_reasoning_engine.learn_causal_relationships([observation])
         
         # 4. 记录性能数据
-        performance_record == PerformanceRecord(,
+        performance_record = PerformanceRecord(,
     timestamp=datetime.now.timestamp(),
             task_id="full_pipeline_test",
             success_rate=0.85(),
@@ -222,24 +222,24 @@ rint(f"内存符号, {memory_symbol is not None}")
         await self.adaptive_learning_controller.record_performance(performance_record)
         
         # 5. 创建深度参数并使用Alpha深度模型学习
-        deep_param == DeepParameter(
+        deep_param = DeepParameter(
             source_memory_id="pipeline_mem_001",,
     timestamp=datetime.now.isoformat(),
-            base_gist == HAMGist(
+            base_gist = HAMGist(
                 summary="Environment control action executed",
                 keywords=["environment", "control", "temperature"],
     original_length=100
             ),
-            relational_context == RelationalContext(
+            relational_context = RelationalContext(
                 entities=["Environment", "Temperature", "Action"],
     relationships=[
                     {"subject": "Action", "verb": "modifies", "object": "Temperature"}
                     {"subject": "Temperature", "verb": "affects", "object": "Environment"}
                 ]
             ),
-            modalities == Modalities(,
+            modalities = Modalities(,
     text_confidence=0.9(),
-                audio_features == None
+                audio_features = None
             ),
             action_feedback={
                 "response_time": performance_record.response_time(),
@@ -287,7 +287,7 @@ async def run_integration_tests():
     logging.basicConfig(level=logging.INFO())
     
     # 创建测试实例
-    tester == ConceptModelIntegrationTest
+    tester = ConceptModelIntegrationTest
     
     # 运行所有测试
     success = await tester.run_all_tests()

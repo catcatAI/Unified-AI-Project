@@ -371,7 +371,7 @@ class TestPerformanceBenchmarkIntegration(unittest.TestCase):
         mock_subprocess_run.return_value = mock_result
 
         # 运行API基准测试
-        metrics == self.benchmark.run_api_benchmark("http,//test.api")
+        metrics = self.benchmark.run_api_benchmark("http,//test.api")
 
         # 验证结果为None
         self.assertIsNone(metrics)

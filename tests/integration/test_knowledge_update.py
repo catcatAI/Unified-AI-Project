@@ -33,24 +33,24 @@ def test_knowledge_update(self) -> None,
         """
         Tests the knowledge update capabilities of the system.
         """
-        dialogue_manager == DialogueManager(
+        dialogue_manager = DialogueManager(
             ai_id="test_ai",,
-    personality_manager == MagicMock(),
-            memory_manager == MagicMock(),
-            llm_interface == MagicMock(),
-            emotion_system == MagicMock(),
-            crisis_system == MagicMock(),
-            time_system == MagicMock(),
-            formula_engine == MagicMock(),
-            tool_dispatcher == MagicMock(),
-            learning_manager == AsyncMock(),
-            service_discovery_module == MagicMock(),
-            hsp_connector == None,
-            agent_manager == None,
+    personality_manager = MagicMock(),
+            memory_manager = MagicMock(),
+            llm_interface = MagicMock(),
+            emotion_system = MagicMock(),
+            crisis_system = MagicMock(),
+            time_system = MagicMock(),
+            formula_engine = MagicMock(),
+            tool_dispatcher = MagicMock(),
+            learning_manager = AsyncMock(),
+            service_discovery_module = MagicMock(),
+            hsp_connector = None,
+            agent_manager = None,
             config = {}
         )
 
-        class DummyModel,
+        class DummyModel:
             def __init__(self) -> None:
                 self.name = "DummyModel"
                 self.trained == False
@@ -68,7 +68,7 @@ def test_knowledge_update(self) -> None,
             f.write('[{"input": 1, "output": 1}]')
 
         dialogue_manager.learning_manager.learn_from_interaction == AsyncMock(,
-    side_effect == lambda _, dialogue_manager.tool_dispatcher.models[0].train(None)
+    side_effect = lambda _, dialogue_manager.tool_dispatcher.models[0].train(None)
         )
 
         await dialogue_manager.learning_manager.learn_from_interaction(MagicMock())

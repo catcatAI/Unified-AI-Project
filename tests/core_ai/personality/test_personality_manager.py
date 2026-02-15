@@ -20,7 +20,7 @@ CONFIGS_DIR = os.path.join(PROJECT_ROOT, "configs") # For accessing personality 
 # We need a unique path for this test module to avoid conflicts if tests are run together.::
 # However, for pytest discovery, this __main__ block might not be the best place.::
 # Let's ensure TEST_OUTPUT_DIR is defined before setUpClass.
-TEST_OUTPUT_DIR == os.path.join(PROJECT_ROOT, "apps", "backend", "tests", "test_output_data", "personality_manager_files"):
+TEST_OUTPUT_DIR = os.path.join(PROJECT_ROOT, "apps", "backend", "tests", "test_output_data", "personality_manager_files"):
 
 if SRC_DIR not in sys.path,::
     sys.path.insert(0, SRC_DIR)
@@ -81,7 +81,7 @@ def tearDownClass(cls):
         # Current logic, if default ('miko_base') not found, it tries to load it anyway (and fails silently or logs).::
         # Then current_personality would be None.
         # Let's ensure it loads the dummy if we explicitly tell it to.::
-        pm_specific_dummy == PersonalityManager(,
+        pm_specific_dummy = PersonalityManager(,
     personality_profiles_dir=str(self.test_profiles_dir()),
             default_profile_name="dummy_test_profile"
         )

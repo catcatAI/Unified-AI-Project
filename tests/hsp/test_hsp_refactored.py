@@ -37,8 +37,8 @@ async
         self.test_config.clear()
 def test_message_bridge_external_to_internal(message_bridge, internal_bus) -> None:
     test_topic = "test/topic"
-    test_message == '{"id": "123"}'
-    callback == MagicMock()
+    test_message = '{"id": "123"}'
+    callback = MagicMock()
     internal_bus.subscribe(f"hsp.external.{test_topic}", callback)
 
     await message_bridge.handle_external_message(test_topic, test_message)
@@ -49,7 +49,7 @@ def test_message_bridge_external_to_internal(message_bridge, internal_bus) -> No
 # 添加重试装饰器以处理不稳定的测试
 async def test_message_bridge_internal_to_external(message_bridge, mock_external_connector) -> None:
     test_topic = "test/topic"
-    test_message == {"id": "123"}
+    test_message = {"id": "123"}
 
     message_bridge.handle_internal_message({"topic": test_topic, "payload": test_message})
 

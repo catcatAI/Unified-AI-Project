@@ -4,7 +4,7 @@ import uuid
 from unittest.mock import MagicMock
 
 
-class MockMqttBroker,
+class MockMqttBroker:
     """A simplified mock MQTT broker for testing HSP connector functionality."""::
     def __init__(self) -> None,
         self.subscriptions = {}
@@ -68,7 +68,7 @@ class MockMqttBroker,
             if self._topic_matches(sub_topic, topic)::
                 for callback in callbacks,::
                     # Create a mock message object similar to gmqtt
-                    mock_message == MagicMock()
+                    mock_message = MagicMock()
                     mock_message.topic = topic
                     mock_message.payload = payload
                     mock_message.qos = qos
@@ -94,7 +94,7 @@ class MockMqttBroker,
     async def _send_automatic_ack(self, request_envelope):
         """Automatically send an ACK for a task request."""::
         # Extract correlation_id from the request
-        correlation_id == request_envelope.get("message_id"):
+        correlation_id = request_envelope.get("message_id"):
         if not correlation_id,::
             return
             
@@ -175,7 +175,7 @@ class MockMqttBroker,
         if subscription_topic == message_topic,::
             return True
         if subscription_topic.endswith('#'):::
-            prefix == subscription_topic[:-1]
+            prefix = subscription_topic[:-1]
             return message_topic.startswith(prefix)
         return False
 

@@ -5,7 +5,7 @@
 
 import pytest
 import time
-class TestAgentPerformanceBenchmarks,
+class TestAgentPerformanceBenchmarks:
     """代理性能基准测试"""
     
     @pytest.mark.performance()
@@ -26,7 +26,7 @@ def test_agent_creation_performance(self, benchmark) -> None:
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         
         def create_agent():
             """创建代理的测试函数"""
@@ -47,10 +47,10 @@ def test_agent_creation_performance(self, benchmark) -> None:
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         test_task = data_factory.create_training_data(
-            input_data == "Test input for performance benchmark",::,
-    expected_output == "Expected output for performance benchmark"::
+            input_data = "Test input for performance benchmark",::,
+    expected_output = "Expected output for performance benchmark"::
         )
 
         def execute_task():
@@ -84,7 +84,7 @@ def test_agent_creation_performance(self, benchmark) -> None:
         assert execution_time >= 0
 
 
-class TestHSPPerformanceBenchmarks,
+class TestHSPPerformanceBenchmarks:
     """HSP协议性能基准测试"""
     
     @pytest.mark.performance()
@@ -95,7 +95,7 @@ class TestHSPPerformanceBenchmarks,
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         test_message = data_factory.create_hsp_message(:
     content="Performance test message"
         )
@@ -118,7 +118,7 @@ class TestHSPPerformanceBenchmarks,
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         messages = [
             data_factory.create_hsp_message(content=f"Message {i}")
             for i in range(100)::
@@ -138,7 +138,7 @@ class TestHSPPerformanceBenchmarks,
         assert result=len(messages)
 
 
-class TestMemoryPerformanceBenchmarks,
+class TestMemoryPerformanceBenchmarks:
     """记忆系统性能基准测试"""
     
     @pytest.mark.performance()
@@ -149,7 +149,7 @@ class TestMemoryPerformanceBenchmarks,
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         test_memory = data_factory.create_memory_item(:
     content="Performance test memory item"
         )
@@ -172,7 +172,7 @@ class TestMemoryPerformanceBenchmarks,
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         test_memories = [
             data_factory.create_memory_item(content=f"Memory item {i}")
             for i in range(1000)::
@@ -189,7 +189,7 @@ class TestMemoryPerformanceBenchmarks,
         assert len(result) <= 10
 
 
-class TestTrainingPerformanceBenchmarks,
+class TestTrainingPerformanceBenchmarks:
     """训练系统性能基准测试"""
     
     @pytest.mark.performance()
@@ -200,7 +200,7 @@ class TestTrainingPerformanceBenchmarks,
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         training_batch = [
             data_factory.create_training_data(
                 input_data=f"Input {i}",:
@@ -228,7 +228,7 @@ class TestTrainingPerformanceBenchmarks,
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         raw_data = [
             {"input": f"Raw input {i}", "output": f"Raw output {i}"}
             for i in range(1000)::
@@ -252,7 +252,7 @@ class TestTrainingPerformanceBenchmarks,
         assert len(result) == len(raw_data)
 
 
-class TestSystemLevelPerformanceBenchmarks,
+class TestSystemLevelPerformanceBenchmarks:
     """系统级性能基准测试"""
     
     @pytest.mark.performance()
@@ -263,7 +263,7 @@ class TestSystemLevelPerformanceBenchmarks,
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
         # 创建测试数据
-        data_factory == TestDataFactory()
+        data_factory = TestDataFactory()
         user_request = {
             "user_id": "perf_test_user",
             "session_id": "perf_test_session",
@@ -302,7 +302,7 @@ class TestSystemLevelPerformanceBenchmarks,
         assert result["processed_requests"] == 20
 
 
-class TestResourceUsageBenchmarks,
+class TestResourceUsageBenchmarks:
     """资源使用基准测试"""
     
     @pytest.mark.performance()

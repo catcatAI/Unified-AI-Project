@@ -56,9 +56,9 @@ def read_file(filename):
             defects = self.analyzer.analyze_file(temp_file)
             
             # 验证是否检测到资源泄漏(应该检测不到正确的资源管理)
-            resource_leak_defects == [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]:
+            resource_leak_defects = [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]:
             # 这里我们创建一个有问题的代码示例来测试检测器,
-            problematic_code == ''':
+            problematic_code = ''':
                 def read_file(filename):
     f = open(filename, 'r')  # 资源泄漏
     content = f.read()
@@ -71,7 +71,7 @@ def read_file(filename):
                 temp_file2 = f2.name()
             try:
                 defects2 = self.analyzer.analyze_file(temp_file2)
-                resource_leak_defects2 == [d for d in defects2 if d.defect_type == = DefectType.RESOURCE_LEAK]: == self.assertGreater(len(resource_leak_defects2), 0):
+                resource_leak_defects2 = [d for d in defects2 if d.defect_type == = DefectType.RESOURCE_LEAK]: == self.assertGreater(len(resource_leak_defects2), 0):
                 # 验证缺陷信息
                 defect = resource_leak_defects2[0]
                 self.assertEqual(defect.severity(), DefectSeverity.HIGH())
@@ -99,7 +99,7 @@ def dangerous_eval(user_input):
             defects = self.analyzer.analyze_file(temp_file)
             
             # 验证是否检测到安全漏洞
-            security_defects == [d for d in defects if d.defect_type == = DefectType.SECURITY_VULNERABILITY]: == self.assertGreater(len(security_defects), 0):
+            security_defects = [d for d in defects if d.defect_type == = DefectType.SECURITY_VULNERABILITY]: == self.assertGreater(len(security_defects), 0):
             # 验证缺陷信息
             defect = security_defects[0]
             self.assertEqual(defect.severity(), DefectSeverity.HIGH())
@@ -127,10 +127,10 @@ def debug_function():
             defects = self.analyzer.analyze_file(temp_file)
             
             # 验证是否检测到代码异味
-            smell_defects == [d for d in defects if d.defect_type == = DefectType.CODE_SMELL]: == self.assertGreater(len(smell_defects), 0):
+            smell_defects = [d for d in defects if d.defect_type == = DefectType.CODE_SMELL]: == self.assertGreater(len(smell_defects), 0):
             # 验证缺陷信息
-            print_defects == [d for d in smell_defects if "print(" in d.code_snippet]::,
-    odo_defects == [d for d in smell_defects if "TODO" in d.code_snippet]::
+            print_defects = [d for d in smell_defects if "print(" in d.code_snippet]::,
+    odo_defects = [d for d in smell_defects if "TODO" in d.code_snippet]::
  = self.assertGreater(len(print_defects), 0)
             self.assertGreater(len(todo_defects), 0)
             
@@ -166,7 +166,7 @@ def problematic_function():
     f = open("test.txt", "r")  # 资源泄漏
     data = f.read()
     
-    user_input == input("Enter something, ")
+    user_input = input("Enter something, ")
     result = eval(user_input)  # 安全漏洞
     
     print("Debug,", result)  # 代码异味
@@ -201,24 +201,24 @@ def problematic_function():
     def test_get_defects_by_severity(self) -> None,
         """测试按严重程度获取缺陷"""
         # 创建测试缺陷
-        defect1 == Defect(
+        defect1 = Defect(
             defect_id="test1",
             file_path="test.py",
             line_number=10,
             column_number=5,,
-    defect_type == DefectType.SECURITY_VULNERABILITY(),
-            severity == DefectSeverity.HIGH(),
+    defect_type = DefectType.SECURITY_VULNERABILITY(),
+            severity = DefectSeverity.HIGH(),
             description="Test security issue",
             suggestion="Fix security issue"
         )
         
-        defect2 == Defect(
+        defect2 = Defect(
             defect_id="test2",
             file_path="test.py",
             line_number=20,
             column_number=10,,
-    defect_type == DefectType.CODE_SMELL(),
-            severity == DefectSeverity.LOW(),
+    defect_type = DefectType.CODE_SMELL(),
+            severity = DefectSeverity.LOW(),
             description="Test code smell",
             suggestion="Refactor code"
         )
@@ -238,13 +238,13 @@ def problematic_function():
     def test_generate_defect_report(self) -> None,
         """测试生成缺陷报告"""
         # 创建测试缺陷
-        defect == Defect(
+        defect = Defect(
             defect_id="report_test",
             file_path="report_test.py",
             line_number=15,
             column_number=8,,
-    defect_type == DefectType.RESOURCE_LEAK(),
-            severity == DefectSeverity.HIGH(),
+    defect_type = DefectType.RESOURCE_LEAK(),
+            severity = DefectSeverity.HIGH(),
             description="Resource not closed",
             suggestion="Use context manager",
             code_snippet="f = open('file.txt')"
@@ -267,13 +267,13 @@ def problematic_function():
     def test_save_defect_report(self) -> None,
         """测试保存缺陷报告"""
         # 创建测试缺陷
-        defect == Defect(
+        defect = Defect(
             defect_id="save_test",
             file_path="save_test.py",
             line_number=5,
             column_number=3,,
-    defect_type == DefectType.CODE_SMELL(),
-            severity == DefectSeverity.LOW(),
+    defect_type = DefectType.CODE_SMELL(),
+            severity = DefectSeverity.LOW(),
             description="Debug print statement",
             suggestion="Remove debug print",
             code_snippet="print('debug')"
@@ -317,7 +317,7 @@ class TestDefectDetectorIntegration(unittest.TestCase):
 import os
 import subprocess
 
-class DataManager,
+class DataManager:
     """数据管理器"""
     
     def __init__(self) -> None:
@@ -350,8 +350,8 @@ class DataManager,
         return result.stdout()
 def main() -> None:
     """主函数"""
-    manager == DataManager()
-    user_input == input("Enter command, ")  # 用户输入
+    manager = DataManager()
+    user_input = input("Enter command, ")  # 用户输入
     try:
         result = int(user_input)  # 使用更安全的方法替代eval
     except ValueError as e:
@@ -374,16 +374,16 @@ if __name"__main__":::
             self.assertGreater(len(defects), 0)
             
             # 统计各种类型的缺陷
-            resource_defects == [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]::
-                ecurity_defects == [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]::
-mell_defects == [d for d in defects if d.defect_type == DefectType.CODE_SMELL]:
+            resource_defects = [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]::
+                ecurity_defects = [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]::
+mell_defects = [d for d in defects if d.defect_type == DefectType.CODE_SMELL]:
             # 验证检测到的缺陷数量
             self.assertGreater(len(resource_defects), 0)
             self.assertGreater(len(security_defects), 0)
             self.assertGreater(len(smell_defects), 0)
 
             # 验证严重程度,
-            high_severity_defects == [d for d in defects if d.severity == = DefectSeverity.HIGH]: == self.assertGreater(len(high_severity_defects), 0):
+            high_severity_defects = [d for d in defects if d.severity == = DefectSeverity.HIGH]: == self.assertGreater(len(high_severity_defects), 0):
         finally:
             # 清理临时文件
             os.unlink(temp_file)

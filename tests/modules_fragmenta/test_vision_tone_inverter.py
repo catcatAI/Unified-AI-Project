@@ -23,15 +23,15 @@ class TestVisionToneInverter(unittest.TestCase):
         self.test_config.clear()
 def test_01_initialization(self) -> None,
         """Test VisionToneInverter initialization."""
-        inverter == VisionToneInverter()
+        inverter = VisionToneInverter()
         self.assertIsNotNone(inverter)
         print("TestVisionToneInverter.test_01_initialization PASSED")
 
     @pytest.mark.timeout(5)
     def test_02_invert_visual_tone(self) -> None:
         """Test visual tone inversion."""
-        inverter == VisionToneInverter()
-        sample_visuals == {"color": "blue", "brightness": 0.5}
+        inverter = VisionToneInverter()
+        sample_visuals = {"color": "blue", "brightness": 0.5}
         target_tone = "brighter"
 
         adjusted_visuals = inverter.invert_visual_tone(sample_visuals, target_tone)

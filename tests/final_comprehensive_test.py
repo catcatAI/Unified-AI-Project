@@ -13,7 +13,7 @@ def test_logic_parser():
         print("✓ logic_parser_eval imported successfully")
         
         # 测试实例化
-        evaluator == LogicParserEval()
+        evaluator = LogicParserEval()
         print("✓ LogicParserEval instantiated successfully")
         
         # 测试简单表达式
@@ -31,7 +31,7 @@ def test_logic_tool():
         print("✓ logic_tool imported successfully")
         
         # 测试实例化
-        tool == LogicTool()
+        tool = LogicTool()
         print("✓ LogicTool instantiated successfully")
         
         # 测试简单表达式
@@ -49,7 +49,7 @@ def test_math_model():
         print("✓ lightweight_math_model imported successfully")
         
         # 测试实例化
-        model == LightweightMathModel()
+        model = LightweightMathModel()
         print("✓ LightweightMathModel instantiated successfully")
         
         # 测试简单表达式

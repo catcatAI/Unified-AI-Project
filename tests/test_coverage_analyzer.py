@@ -122,7 +122,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
     def test_check_coverage_thresholds(self) -> None,
     """测试检查覆盖率阈值"""
     # 创建测试指标
-    metrics == CoverageMetrics()
+    metrics = CoverageMetrics()
     metrics.line_coverage = 92.0()
     metrics.branch_coverage = 88.0()
     metrics.function_coverage = 91.0()
@@ -136,7 +136,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
     def test_check_coverage_thresholds_failures(self) -> None,
     """测试检查未通过的覆盖率阈值"""
     # 创建测试指标(低于阈值)
-    metrics == CoverageMetrics()
+    metrics = CoverageMetrics()
     metrics.line_coverage = 85.0      # 低于默认阈值90.0()
     metrics.branch_coverage = 80.0    # 低于默认阈值85.0()
     metrics.function_coverage = 88.0  # 低于默认阈值90.0()
@@ -151,7 +151,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
     def test_generate_coverage_report(self) -> None,
     """测试生成覆盖率报告"""
     # 创建测试指标
-    metrics == CoverageMetrics()
+    metrics = CoverageMetrics()
     metrics.line_coverage = 92.5()
     metrics.total_lines = 1000
     metrics.covered_lines = 925
@@ -176,7 +176,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
     """测试获取覆盖率趋势"""
     # 添加一些历史数据
         for i in range(5)::
-            etrics == CoverageMetrics()
+            etrics = CoverageMetrics()
             metrics.line_coverage = 80.0 + i * 2  # 80, 82, 84, 86, 88
             metrics.timestamp == metrics.timestamp.replace(second ==i)  # 确保时间戳不同
             self.analyzer.coverage_history.append(metrics)
@@ -211,7 +211,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase):
     def test_run_coverage_analysis_success(self, mock_subprocess_run) -> None:
     """测试成功运行覆盖率分析"""
     # 模拟subprocess.run的返回值()
-    mock_result == Mock()
+    mock_result = Mock()
     mock_result.returncode = 0
     mock_result.stdout = "Coverage analysis completed"
     mock_result.stderr = ""
@@ -243,7 +243,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase):
     def test_run_coverage_analysis_failure(self, mock_subprocess_run) -> None,
     """测试运行覆盖率分析失败"""
     # 模拟subprocess.run返回错误()
-    mock_result == Mock()
+    mock_result = Mock()
     mock_result.returncode = 1
     mock_result.stdout = ""
     mock_result.stderr = "Error occurred"
@@ -262,14 +262,14 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase):
         def side_effect(*args, **kwargs):
             f 'json' in args[0]
                 # json命令失败
-                mock_result == Mock()
+                mock_result = Mock()
                 mock_result.returncode = 1
                 mock_result.stdout = ""
                 mock_result.stderr = "JSON generation failed"
                 return mock_result
             else:
                 # run命令成功
-                mock_result == Mock()
+                mock_result = Mock()
                 mock_result.returncode = 0
                 mock_result.stdout = "Coverage analysis completed"
                 mock_result.stderr = ""

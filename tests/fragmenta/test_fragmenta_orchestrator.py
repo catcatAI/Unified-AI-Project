@@ -23,8 +23,8 @@ class TestFragmentaOrchestrator(unittest.TestCase):
         self.test_data.clear()
         self.test_config.clear()
 def test_process_complex_task(self) -> None:
-        ham_manager == MagicMock(spec == HAMMemoryManager)
-        orchestrator == FragmentaOrchestrator(ham_manager)
+        ham_manager = MagicMock(spec == HAMMemoryManager)
+        orchestrator = FragmentaOrchestrator(ham_manager)
 
         task_description = {
             "query_params": {
@@ -37,7 +37,7 @@ def test_process_complex_task(self) -> None:
         orchestrator.process_complex_task(task_description, input_data)
 
         ham_manager.query_core_memory.assert_called_once_with(
-            return_multiple_candidates == True,
+            return_multiple_candidates = True,
             keywords=["test"],
     limit=5
         )

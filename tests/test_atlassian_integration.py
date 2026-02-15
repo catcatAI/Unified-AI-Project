@@ -42,10 +42,10 @@ class TestAtlassianIntegration(unittest.TestCase):
 
     def test_confluence_integration_initialization(self) -> None:
     """Test Confluence integration initialization"""
-    mock_connector_instance == Mock()
+    mock_connector_instance = Mock()
     mock_connector_instance.base_urls == {'confluence': 'https,//test-domain.atlassian.net/wiki/rest/api'}
 
-    integration == ConfluenceIntegration(mock_connector_instance)
+    integration = ConfluenceIntegration(mock_connector_instance)
 
     self.assertEqual(integration.connector(), mock_connector_instance)
     # 检查base_url是否包含正确的域名,而不是字面的'confluence'
@@ -53,10 +53,10 @@ class TestAtlassianIntegration(unittest.TestCase):
 
     def test_jira_integration_initialization(self) -> None:
     """Test Jira integration initialization"""
-    mock_connector_instance == Mock()
+    mock_connector_instance = Mock()
     mock_connector_instance.base_urls == {'jira': 'https,//test-domain.atlassian.net/rest/api/3'}
 
-    integration == JiraIntegration(mock_connector_instance)
+    integration = JiraIntegration(mock_connector_instance)
 
     self.assertEqual(integration.connector(), mock_connector_instance)
     # 检查base_url是否包含正确的域名,而不是字面的'jira'
@@ -67,14 +67,14 @@ class TestAtlassianIntegration(unittest.TestCase):
     with patch('integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \:
     patch('integrations.rovo_dev_agent.AtlassianBridge'), \
              patch('integrations.rovo_dev_agent.HSPConnector')
-    agent == RovoDevAgent(self.mock_config())
+    agent = RovoDevAgent(self.mock_config())
 
             self.assertEqual(agent.agent_id(), "rovo-dev-agent")
             self.assertFalse(agent.is_active())
 
     def test_enhanced_connector_initialization(self) -> None,
     """Test Enhanced Rovo Dev connector initialization"""
-    connector == EnhancedRovoDevConnector(self.mock_config())
+    connector = EnhancedRovoDevConnector(self.mock_config())
 
     self.assertEqual(connector.api_token(), "test-token")
     self.assertEqual(connector.cloud_id(), "test-cloud-id")
@@ -84,10 +84,10 @@ class TestAtlassianIntegration(unittest.TestCase):
 
     def test_confluence_space_retrieval(self) -> None:
     """Test Confluence space retrieval"""
-    mock_connector_instance == Mock()
+    mock_connector_instance = Mock()
     mock_connector_instance.base_urls == {'confluence': 'https,//test-domain.atlassian.net/wiki/rest/api'}
 
-    integration == ConfluenceIntegration(mock_connector_instance)
+    integration = ConfluenceIntegration(mock_connector_instance)
 
     # Mock the async method
     with patch.object(integration, 'get_spaces', new_callable == AsyncMock) as mock_get_spaces:
@@ -107,10 +107,10 @@ class TestAtlassianIntegration(unittest.TestCase):
 
     def test_jira_project_retrieval(self) -> None:
     """Test Jira project retrieval"""
-    mock_connector_instance == Mock()
+    mock_connector_instance = Mock()
     mock_connector_instance.base_urls == {'jira': 'https,//test-domain.atlassian.net/rest/api/3'}
 
-    integration == JiraIntegration(mock_connector_instance)
+    integration = JiraIntegration(mock_connector_instance)
 
     # Mock the async method
     with patch.object(integration, 'get_projects', new_callable == AsyncMock) as mock_get_projects:

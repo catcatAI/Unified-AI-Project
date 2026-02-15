@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class AutomatedIntegrationTestPipeline,
+class AutomatedIntegrationTestPipeline:
     """自动化集成测试流水线"""
 
 
@@ -165,8 +165,8 @@ class AutomatedIntegrationTestPipeline,
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True,
+                capture_output = True,
+                text = True,
                 timeout=self.pipeline_config["environment"]["setup_timeout"]
             )
 
@@ -220,8 +220,8 @@ self.pipeline_config["data"]["dataset_size"]
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True,
+                capture_output = True,
+                text = True,
                 timeout=self.pipeline_config["data"]["generation_timeout"]
             )
 
@@ -282,8 +282,8 @@ self.pipeline_config["data"]["dataset_size"]
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True,
+                capture_output = True,
+                text = True,
                 timeout=self.pipeline_config["testing"]["execution_timeout"]
             )
 
@@ -330,7 +330,7 @@ self.pipeline_config["data"]["dataset_size"]
         try:
 
 
-            success == True
+            success = True
 
             # 生成HTML报告
             if self.pipeline_config["reporting"]["generate_html"]::
@@ -347,14 +347,14 @@ self.pipeline_config["data"]["dataset_size"]
                     result = subprocess.run(
                             cmd,,
     cwd=self.project_root(),
-                            capture_output == True,
-                            text == True
+                            capture_output = True,
+                            text = True
                     )
 
                     if result.returncode != 0,::
                         logger.error(f"HTML report generation failed, {result.stderr}")
 
-                        success == False
+                        success = False
                     else:
                         logger.info("HTML report generated successfully")
                 else:
@@ -383,13 +383,13 @@ self.pipeline_config["data"]["dataset_size"]
                     result = subprocess.run(
                         cmd,,
     cwd=self.project_root(),
-                        capture_output == True,
-                        text == True
+                        capture_output = True,
+                        text = True
                     )
 
                     if result.returncode != 0,::
                         logger.error(f"XML parsing failed, {result.stderr}")
-                        success == False
+                        success = False
                     else:
                         logger.info("JUnit XML parsed successfully")
 
@@ -430,8 +430,8 @@ self.pipeline_config["data"]["dataset_size"]
             result = subprocess.run(
                 cmd,,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True,
+                capture_output = True,
+                text = True,
                 timeout=120  # 2分钟超时
             )
 
@@ -542,7 +542,7 @@ def main() -> None,
             sys.exit(1)
 
     # 创建并运行流水线
-    pipeline == AutomatedIntegrationTestPipeline()
+    pipeline = AutomatedIntegrationTestPipeline()
     success = pipeline.run_pipeline(pipeline_config)
 
     sys.exit(0 if success else 1)::

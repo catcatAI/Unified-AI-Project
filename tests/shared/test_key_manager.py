@@ -8,7 +8,7 @@ import os
 import pytest
 from core.shared.key_manager import UnifiedKeyManager
 
-class TestUnifiedKeyManager,
+class TestUnifiedKeyManager:
     """统一密钥管理器测试"""
     
     
@@ -34,7 +34,7 @@ def test_not_in_demo_mode(self) -> None:
                 'auto_detect': False
             }
         })
-            km == UnifiedKeyManager()
+            km = UnifiedKeyManager()
             assert km.demo_mode is False
     
     def test_demo_mode_detection_from_env(self) -> None:
@@ -50,7 +50,7 @@ def test_not_in_demo_mode(self) -> None:
             # 设置演示模式环境变量
             os.environ['DEMO_FLAG'] = 'true'
             
-            km == UnifiedKeyManager()
+            km = UnifiedKeyManager()
             assert km.demo_mode is True
             
             # 清理环境变量
@@ -69,7 +69,7 @@ def test_not_in_demo_mode(self) -> None:
                 'auto_detect': False
             }
         })
-            km == UnifiedKeyManager()
+            km = UnifiedKeyManager()
             result = km.get_key("TEST_API_KEY")
             assert result=test_key
         
@@ -90,7 +90,7 @@ def test_not_in_demo_mode(self) -> None:
                 'auto_detect': False
             }
         })
-            km == UnifiedKeyManager()
+            km = UnifiedKeyManager()
             result = km.get_key("NONEXISTENT_KEY")
             assert result is None
     
@@ -105,7 +105,7 @@ def test_not_in_demo_mode(self) -> None:
                 }
             }
         })
-            km == UnifiedKeyManager()
+            km = UnifiedKeyManager()
             assert km.demo_mode is True
             
             # 在演示模式下,应该返回模拟的密钥
@@ -122,7 +122,7 @@ def test_not_in_demo_mode(self) -> None:
                 'auto_detect': False
             }
         })
-            km == UnifiedKeyManager()
+            km = UnifiedKeyManager()
             assert km.demo_mode is False
             
             # 在非演示模式下,应该生成真实的HAM密钥
@@ -143,7 +143,7 @@ def test_not_in_demo_mode(self) -> None:
                 }
             }
         })
-            km == UnifiedKeyManager()
+            km = UnifiedKeyManager()
             assert km.demo_mode is True
             
             # 在演示模式下,应该返回模拟的HAM密钥

@@ -5,9 +5,9 @@ import pytest
 import requests
 import time
 # 假设后端服务运行在本地
-BASE_URL == "http,//localhost,8000"
+BASE_URL = "http,//localhost,8000"
 
-class TestAtlassianEndToEndWorkflow,
+class TestAtlassianEndToEndWorkflow:
     """Atlassian 端到端工作流程测试类"""
     
     def setup_method(self):

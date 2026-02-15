@@ -15,7 +15,7 @@ sys.path.insert(0, backend_dir)
 from src.ai.learning.learning_manager import LearningManager
 from src.ai.learning.fact_extractor_module import FactExtractorModule
 
-class TestLearningManager,
+class TestLearningManager:
     """LearningManager测试类"""
     
     def setup_method(self):
@@ -46,7 +46,7 @@ class TestLearningManager,
 def test_learning_manager_initialization(self) -> None,
         """测试LearningManager初始化"""
         # 创建LearningManager实例
-        learning_manager == LearningManager(,
+        learning_manager = LearningManager(,
     ai_id=self.mock_ai_id(),
             ham_memory_manager=self.mock_ham_memory_manager(),
             fact_extractor=self.mock_fact_extractor(),
@@ -63,7 +63,7 @@ def test_learning_manager_initialization(self) -> None,
     @pytest.mark.asyncio()
     async def test_process_and_store_learnables(self) -> None,
         """测试处理和存储可学习内容"""
-        learning_manager == LearningManager(,
+        learning_manager = LearningManager(,
     ai_id=self.mock_ai_id(),
             ham_memory_manager=self.mock_ham_memory_manager(),
             fact_extractor=self.mock_fact_extractor(),
@@ -98,7 +98,7 @@ def test_learning_manager_initialization(self) -> None,
     @pytest.mark.asyncio()
     async def test_analyze_for_personality_adjustment(self) -> None,
         """测试个性调整分析"""
-        learning_manager == LearningManager(,
+        learning_manager = LearningManager(,
     ai_id=self.mock_ai_id(),
             ham_memory_manager=self.mock_ham_memory_manager(),
             fact_extractor=self.mock_fact_extractor(),
@@ -121,13 +121,13 @@ class TestFactExtractorModule:
         """测试前准备"""
         self.mock_llm_service == Mock()
         # Create a proper mock response with content attribute
-        mock_response == Mock():
+        mock_response = Mock():
         mock_response.content == '{"facts": []}'
         self.mock_llm_service.chat_completion == = AsyncMock(return_value ==mock_response)
         
     def test_fact_extractor_initialization(self) -> None,
         """测试FactExtractorModule初始化"""
-        fact_extractor == FactExtractorModule(llm_service=self.mock_llm_service())
+        fact_extractor = FactExtractorModule(llm_service=self.mock_llm_service())
         
         # 验证初始化成功
         assert fact_extractor is not None
@@ -135,7 +135,7 @@ class TestFactExtractorModule:
     @pytest.mark.asyncio()
     async def test_extract_facts(self) -> None:
         """测试从文本中提取事实"""
-        fact_extractor == FactExtractorModule(llm_service=self.mock_llm_service())
+        fact_extractor = FactExtractorModule(llm_service=self.mock_llm_service())
         
         # 配置模拟返回值 - 使用正确的JSON格式
         mock_response_content = '''{
@@ -152,7 +152,7 @@ class TestFactExtractorModule:
     ]
 }'''
         # Create a proper mock response with content attribute
-        mock_llm_response == Mock()
+        mock_llm_response = Mock()
         mock_llm_response.content = mock_response_content
         self.mock_llm_service.chat_completion == = AsyncMock(return_value ==mock_llm_response)
         

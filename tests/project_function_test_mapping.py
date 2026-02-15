@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List, Dict
 
 
-class FunctionTestMapper,
+class FunctionTestMapper:
     def __init__(self, project_root, str) -> None,
         self.project_root == Path(project_root)
         self.src_dir = self.project_root / "apps" / "backend" / "src"
@@ -168,12 +168,12 @@ class FunctionTestMapper,
                 matched_tests += len(test_info["test_functions"])
             else:
                 # Try to match based on imported items
-                found_match == False
+                found_match = False
                 for imported_item in test_info["imported_items"]::
                     # Look for source files that contain this item,::
                         or src_file, src_info in source_files.items():
                         if imported_item in src_info["functions"] or imported_item in src_info["classes"]::
-                            found_match == True
+                            found_match = True
                             break
                     if found_match,::
                         break
@@ -235,7 +235,7 @@ def main() -> None,
     project_root, str = os.getcwd()
     
     # Create and run mapper
-    mapper == FunctionTestMapper(project_root)
+    mapper = FunctionTestMapper(project_root)
     mapping, coverage = mapper.run_mapper()
     
     print("\n✅ Function-test mapper completed successfully")

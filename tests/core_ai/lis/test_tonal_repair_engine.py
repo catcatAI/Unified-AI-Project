@@ -21,7 +21,7 @@ class TestTonalRepairEngine(unittest.TestCase):
         self.test_data.clear()
         self.test_config.clear()
 def test_repair_output(self) -> None:
-        engine == TonalRepairEngine()
+        engine = TonalRepairEngine()
         original_text = "This is a test."
         issues = ["This is a test issue."]
         repaired_text = engine.repair_output(original_text, issues)

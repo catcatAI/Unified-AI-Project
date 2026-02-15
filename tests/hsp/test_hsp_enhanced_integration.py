@@ -14,7 +14,7 @@ import time
 
 @pytest_asyncio.fixture(scope="function")
 async def mock_broker():
-    broker == MockMqttBroker()
+    broker = MockMqttBroker()
     await broker.start()
     try:
 
@@ -24,11 +24,11 @@ async def mock_broker():
 
 @pytest_asyncio.fixture(scope="function")
 async def hsp_connector_fixture(mock_broker):
-    connector == HSPConnector(
+    connector = HSPConnector(
     ai_id="test_ai_enhanced",
     broker_address="localhost",
     broker_port=1883,
-    mock_mode == True,,
+    mock_mode = True,,
     mock_mqtt_client=mock_broker
     )
     await connector.connect()
@@ -38,7 +38,7 @@ async def hsp_connector_fixture(mock_broker):
     finally:
     await connector.disconnect()
 
-class TestHSPEnhancedIntegration,
+class TestHSPEnhancedIntegration:
     """Enhanced HSP integration tests with additional scenarios and boundary conditions."""
 
     @pytest.mark.asyncio()
@@ -68,7 +68,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     tasks = []
         for i in range(50)  # Send 50 messages,:
             # Create a proper HSP fact payload with message envelope,
-    payload == {:
+    payload = {:
                 "id": f"fact_{i}",
                 "content": f"Test message {i}",
                 "metadata": {"test": "queue_overflow"}
@@ -149,7 +149,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     # Create a large message payload
     large_content = "A" * 10000  # 10KB of data
     # Create a proper HSP fact payload with message envelope
-    payload == {:
+    payload = {:
             "id": "large_fact",
             "content": large_content,
             "metadata": {"test": "large_message", "size": len(large_content)}
@@ -210,7 +210,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     # Send facts
         for i in range(5)::
             # Create a proper HSP fact payload with message envelope,
-    payload == {:
+    payload = {:
                 "id": f"fact_{i}",
                 "content": f"Fact {i}",
                 "metadata": {"type": "fact"}
@@ -243,7 +243,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     # Send opinions
         for i in range(5)::
             # Create a proper HSP opinion payload with message envelope,
-    payload == {:
+    payload = {:
                 "id": f"opinion_{i}",
                 "content": f"Opinion {i}",
                 "confidence": 0.8(),
@@ -290,7 +290,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     connector = hsp_connector_fixture
 
     # Track received messages with timestamps
-    received_messages == []
+    received_messages = []
         def message_callback(payload, sender, envelope):
     received_messages.append((payload, sender, envelope))
 
@@ -299,7 +299,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     # Send messages in sequence with small delays
     message_ids = []
         for i in range(10)::
-    payload == {:
+    payload = {:
                 "id": f"ordered_fact_{i}",
                 "content": f"Ordered message {i}",
                 "metadata": {"sequence": i}
@@ -357,7 +357,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     connector.register_on_fact_callback(fact_callback)
 
     # Send a malformed message
-    malformed_payload == b'{"invalid": json}'  # Invalid JSON
+    malformed_payload = b'{"invalid": json}'  # Invalid JSON
     await mock_broker.publish(
             "hsp/knowledge/facts/test",,
     malformed_payload
@@ -365,7 +365,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     # Send a valid message
     # Create a proper HSP fact payload with message envelope
-    payload == {:
+    payload = {:
             "id": "valid_fact",
             "content": "Valid fact",
             "metadata": {"test": "error_handling"}

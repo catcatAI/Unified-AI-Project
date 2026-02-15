@@ -8,7 +8,7 @@ import aiohttp
 
 
 
-class TestAtlassianBridgeFallback,
+class TestAtlassianBridgeFallback:
     """AtlassianBridge 備用機制測試"""
 
     @pytest.fixture()
@@ -51,7 +51,7 @@ class TestAtlassianBridgeFallback,
     @pytest.fixture()
     def mock_connector(self, mock_config):
     """模擬連接器"""
-    connector == Mock(spec == EnhancedRovoDevConnector)
+    connector = Mock(spec == EnhancedRovoDevConnector)
     connector.config = mock_config
     connector._make_request_with_retry == AsyncMock()
     return connector
@@ -59,7 +59,7 @@ class TestAtlassianBridgeFallback,
     @pytest_asyncio.fixture()
     async def bridge(self, mock_connector):
     """創建 AtlassianBridge 實例"""
-    bridge == AtlassianBridge(mock_connector)
+    bridge = AtlassianBridge(mock_connector)
     # 手動設置配置以避免異步初始化問題
     bridge.config = mock_connector.config.get('atlassian', {})
     bridge.fallback_config = bridge.config.get('rovo_dev', {}).get('fallback', {})
@@ -96,7 +96,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_successful_primary_endpoint(self, monkeypatch, bridge) -> None:
     """測試主端點成功請求"""
-    expected_result == {'id': '123', 'title': 'Test Page'}
+    expected_result = {'id': '123', 'title': 'Test Page'}
 
     # 清空緩存,確保測試從乾淨狀態開始
     bridge.cache = {}
@@ -123,7 +123,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_fallback_to_backup_endpoint(self, monkeypatch, bridge) -> None:
     """測試備用端點切換"""
-    expected_result == {'id': '123', 'title': 'Test Page'}
+    expected_result = {'id': '123', 'title': 'Test Page'}
 
     # 清空緩存,確保測試從乾淨狀態開始
     bridge.cache = {}
@@ -190,7 +190,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_cache_functionality(self, bridge) -> None:
     """測試緩存功能"""
-    test_data == {'id': '123', 'title': 'Cached Page'}
+    test_data = {'id': '123', 'title': 'Cached Page'}
     cache_key = 'test_key'
 
     # 保存到緩存
@@ -205,7 +205,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_expired_cache(self, bridge) -> None:
     """測試過期緩存"""
-    test_data == {'id': '123', 'title': 'Expired Page'}
+    test_data = {'id': '123', 'title': 'Expired Page'}
     cache_key = 'test_key'
 
     # 保存到緩存,設置很短的TTL
@@ -277,7 +277,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     await bridge._check_endpoint_health('confluence', 'https,//test.atlassian.net')
 
     # 檢查健康狀態
-    health_key == 'confluence_https,//test.atlassian.net'
+    health_key = 'confluence_https,//test.atlassian.net'
     assert health_key in bridge.endpoint_health()
     assert bridge.endpoint_health[health_key]['status'] == 'healthy'
 
@@ -311,7 +311,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_confluence_operations_with_fallback(self, bridge) -> None:
     """測試 Confluence 操作使用備用機制"""
-    expected_result == {'id': '123', 'title': 'Test Page'}
+    expected_result = {'id': '123', 'title': 'Test Page'}
     bridge.connector._make_request_with_retry.return_value = expected_result
 
     # 測試創建頁面
@@ -326,7 +326,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_jira_operations_with_fallback(self, bridge) -> None:
     """測試 Jira 操作使用備用機制"""
-    expected_result == {'id': '10001', 'key': 'TEST-1'}
+    expected_result = {'id': '10001', 'key': 'TEST-1'}
 
     # 模擬備用機制：主端點失敗,備用端點成功
     bridge.connector._make_request_with_retry.side_effect = [
@@ -346,8 +346,8 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_cache_with_get_requests(self, monkeypatch, bridge) -> None:
     """測試GET請求的緩存機制"""
-    cached_data == {'id': '123', 'title': 'Cached Page'}
-    test_data == {'id': '123', 'title': 'Test Page'}
+    cached_data = {'id': '123', 'title': 'Cached Page'}
+    test_data = {'id': '123', 'title': 'Test Page'}
 
     # 清空緩存,確保測試從乾淨狀態開始
     bridge.cache = {}
@@ -390,7 +390,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
     # 添加重试装饰器以处理不稳定的测试
     async def test_offline_mode_with_expired_cache(self, monkeypatch, bridge) -> None:
     """測試離線模式下使用過期緩存"""
-    test_data == {'id': '123', 'title': 'Offline Page'}
+    test_data = {'id': '123', 'title': 'Offline Page'}
 
     # 獲取完整的緩存鍵
     endpoint = 'rest/api/content/123'

@@ -88,7 +88,7 @@ def test_service_initialization_integration(self) -> None:
         llm_service = self.get_mock_service("llm_service")
         
         # 设置mock行为
-        mock_agent == Mock()
+        mock_agent = Mock()
         mock_agent.agent_id = agent_config["agent_id"]
         
         agent_manager.return_value.create_agent == = AsyncMock(return_value ==mock_agent)
@@ -105,7 +105,7 @@ def test_service_initialization_integration(self) -> None:
         memory_manager.return_value.retrieve_memory == AsyncMock(
             return_value=[
                 self.data_factory.create_memory_item(,
-    content == "User preference, concise responses"
+    content = "User preference, concise responses"
                 )
             ]
         )
@@ -247,7 +247,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         agent_configs = [
             self.data_factory.create_agent_config(
                 agent_id=f"specialist_{i}",,
-    agent_type == "data_analysis" if i=0 else "creative_writing" if i=1 else "text_editing"::
+    agent_type = "data_analysis" if i=0 else "creative_writing" if i=1 else "text_editing"::
             )
             for i in range(3)::
         ]
@@ -260,13 +260,13 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         llm_service = self.get_mock_service("llm_service")
         
         # 设置mock行为
-        mock_agents == [Mock() for _ in agent_configs]:
+        mock_agents = [Mock() for _ in agent_configs]:
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==mock_agents)
         agent_manager.return_value.get_agent == = AsyncMock(side_effect ==mock_agents)
         agent_manager.return_value.assign_task == = AsyncMock(return_value ==True)
         
         dialogue_manager.return_value.process_complex_request == AsyncMock(:,
-    return_value == {:
+    return_value = {:
                 "status": "processing",
                 "task_id": "complex_task_123",
                 "assigned_agents": [config["agent_id"] for config in agent_configs]:
@@ -283,7 +283,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         )
         
         learning_manager.return_value.analyze_task_complexity == AsyncMock(:,
-    return_value == {"complexity_score": 0.8(), "estimated_time": 300}
+    return_value = {"complexity_score": 0.8(), "estimated_time": 300}
         )
         
         llm_service.return_value.generate_response == AsyncMock(,
@@ -335,7 +335,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         
         # 7. 存储结果到记忆
         result_memory = self.data_factory.create_memory_item(
-            content == f"Task result, {final_response}",
+            content = f"Task result, {final_response}",
             memory_type="task_result",,
     importance_score=0.9())
         store_result = await memory_manager.return_value.store_memory(result_memory)

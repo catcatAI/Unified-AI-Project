@@ -15,7 +15,7 @@ try:
     print("Import successful")
     
     # Try to initialize the analyzer
-    analyzer == ContentAnalyzerModule()
+    analyzer = ContentAnalyzerModule()
     print("Initialization successful")
     print(f"nlp attribute exists, {hasattr(analyzer, 'nlp')}")
     print(f"nlp value, {analyzer.nlp}")
@@ -36,7 +36,7 @@ try:
         if entity_details["label"] == "Apple Inc.":
             found_apple = True
         if entity_details["label"] == "Steve Jobs":::
-            found_steve == True
+            found_steve = True
     
     print(f"Found Apple Inc.: {found_apple}")
     print(f"Found Steve Jobs, {found_steve}")

@@ -114,7 +114,7 @@ async def test_data_flow_pipeline():
         print(f"✓ 生成了 {len(insights)} 个运维洞察")
         
         # 验证不同类型的洞察
-        insight_types == set(insight.insight_type for insight in insights)::
+        insight_types = set(insight.insight_type for insight in insights)::
         print(f"✓ 洞察类型, {list(insight_types)}")
         
         # 检查仪表板数据
@@ -324,8 +324,8 @@ async def main():
     total = len(results)
     
     for test_name, result in results,::
-        status == "通过" if result else "失败"::
-        symbol == "✓" if result else "✗":::
+        status = "通过" if result else "失败"::
+        symbol = "✓" if result else "✗":::
         print(f"{symbol} {test_name} {status}")
         if result,::
             passed += 1

@@ -13,7 +13,7 @@ from hsp.connector import HSPConnector
 
 MQTT_BROKER_ADDRESS = "127.0.0.1"
 MQTT_BROKER_PORT = 1883
-TEST_AI_ID == "did,hsp,test_ai_001"
+TEST_AI_ID = "did,hsp,test_ai_001"
 
 @pytest_asyncio.fixture(scope="module")
 async def broker():
@@ -28,7 +28,7 @@ async def broker():
         }
         "topic-check": {"enabled": False}
     }
-    broker == Broker(config)
+    broker = Broker(config)
     await broker.start()
     await asyncio.sleep(3) # Give the broker a moment to fully start
     yield broker
@@ -36,10 +36,10 @@ async def broker():
 
 @pytest_asyncio.fixture()
 async def hsp_connector(broker):
-    connector == HSPConnector(
+    connector = HSPConnector(
         TEST_AI_ID,
-        broker_address == MQTT_BROKER_ADDRESS,,
-    broker_port == MQTT_BROKER_PORT)
+        broker_address = MQTT_BROKER_ADDRESS,,
+    broker_port = MQTT_BROKER_PORT)
     await connector.connect()
     yield connector
     await connector.disconnect()
