@@ -114,5 +114,19 @@ class SyncManager:
                 logger.error(f"廣播事件失敗: {e}")
 
 
-# 全局同步管理器實例
-sync_manager = SyncManager()
+# Lazy singleton pattern to avoid blocking on import
+_sync_manager = None
+
+def get_sync_manager() -> SyncManager:
+    """Get or create the sync manager singleton"""
+    global _sync_manager
+    if _sync_manager is None:
+        _sync_manager = SyncManager()
+    return _sync_manager
+
+# Backward compatibility: access via attribute
+class _LazySyncManagerProxy:
+    def __getattr__(self, name):
+        return getattr(get_sync_manager(), name)
+
+sync_manager = _LazySyncManagerProxy()

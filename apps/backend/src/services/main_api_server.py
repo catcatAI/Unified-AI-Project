@@ -305,21 +305,110 @@ app = FastAPI(
     version="6.0.4",
 )
 
-# Initialize Core Services
-desktop_interaction = DesktopInteraction()
-action_executor = ActionExecutor()
-vision_service = VisionService()
-audio_service = AudioService()
-tactile_service = TactileService()
-abc_key_manager = ABCKeyManager()
-digital_life = DigitalLifeIntegrator()
-economy_manager = EconomyManager({})
-brain_bridge = BrainBridgeService(digital_life)
+# ========== Lazy Loading: Service Initialization ==========
+# Services are initialized on first access to avoid blocking imports
+_desktop_interaction = None
+_action_executor = None
+_vision_service = None
+_audio_service = None
+_tactile_service = None
+_abc_key_manager = None
+_digital_life = None
+_economy_manager = None
+_brain_bridge = None
 
-# Link components
-pet.set_biological_integrator(digital_life.biological_integrator)
-pet.set_economy_manager(economy_manager)
-economy.set_economy_manager(economy_manager)
+
+def get_desktop_interaction() -> DesktopInteraction:
+    global _desktop_interaction
+    if _desktop_interaction is None:
+        _desktop_interaction = DesktopInteraction()
+    return _desktop_interaction
+
+
+def get_action_executor() -> ActionExecutor:
+    global _action_executor
+    if _action_executor is None:
+        _action_executor = ActionExecutor()
+    return _action_executor
+
+
+def get_vision_service() -> VisionService:
+    global _vision_service
+    if _vision_service is None:
+        _vision_service = VisionService()
+    return _vision_service
+
+
+def get_audio_service() -> AudioService:
+    global _audio_service
+    if _audio_service is None:
+        _audio_service = AudioService()
+    return _audio_service
+
+
+def get_tactile_service() -> TactileService:
+    global _tactile_service
+    if _tactile_service is None:
+        _tactile_service = TactileService()
+    return _tactile_service
+
+
+def get_abc_key_manager() -> ABCKeyManager:
+    global _abc_key_manager
+    if _abc_key_manager is None:
+        _abc_key_manager = ABCKeyManager()
+    return _abc_key_manager
+
+
+def get_digital_life() -> DigitalLifeIntegrator:
+    global _digital_life
+    if _digital_life is None:
+        _digital_life = DigitalLifeIntegrator()
+    return _digital_life
+
+
+def get_economy_manager() -> EconomyManager:
+    global _economy_manager
+    if _economy_manager is None:
+        _economy_manager = EconomyManager({})
+    return _economy_manager
+
+
+def get_brain_bridge() -> BrainBridgeService:
+    global _brain_bridge
+    if _brain_bridge is None:
+        _brain_bridge = BrainBridgeService(get_digital_life())
+    return _brain_bridge
+
+
+# Initialize services and link components during startup
+def _initialize_all_services():
+    desktop_interaction = get_desktop_interaction()
+    action_executor = get_action_executor()
+    vision_service = get_vision_service()
+    audio_service = get_audio_service()
+    tactile_service = get_tactile_service()
+    abc_key_manager = get_abc_key_manager()
+    digital_life = get_digital_life()
+    economy_manager = get_economy_manager()
+    brain_bridge = get_brain_bridge()
+    
+    # Link components
+    pet.set_biological_integrator(digital_life.biological_integrator)
+    pet.set_economy_manager(economy_manager)
+    economy.set_economy_manager(economy_manager)
+    
+    return (
+        desktop_interaction,
+        action_executor,
+        vision_service,
+        audio_service,
+        tactile_service,
+        abc_key_manager,
+        digital_life,
+        economy_manager,
+        brain_bridge,
+    )
 
 
 def _validate_environment_variables():
@@ -440,6 +529,19 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"[STARTUP] Failed to create log directory: {e}")
 
+    # Initialize all services (lazy loading triggers here)
+    (
+        desktop_interaction,
+        action_executor,
+        vision_service,
+        audio_service,
+        tactile_service,
+        abc_key_manager,
+        digital_life,
+        economy_manager,
+        brain_bridge,
+    ) = _initialize_all_services()
+
     await desktop_interaction.initialize()
     await action_executor.initialize()
     await digital_life.initialize()
@@ -469,10 +571,14 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await desktop_interaction.shutdown()
-    await action_executor.shutdown()
-    await brain_bridge.stop()
-    await digital_life.shutdown()
+    if _desktop_interaction:
+        await _desktop_interaction.shutdown()
+    if _action_executor:
+        await _action_executor.shutdown()
+    if _brain_bridge:
+        await _brain_bridge.stop()
+    if _digital_life:
+        await _digital_life.shutdown()
 
 
 app.add_middleware(
@@ -515,6 +621,9 @@ async def system_status():
     """
     try:
         # 獲取服務狀態
+        digital_life = get_digital_life()
+        brain_bridge = get_brain_bridge()
+        
         services_status = {
             "llm_service": _llm_service.is_available if _llm_service else False,
             "digital_life": digital_life.is_initialized
@@ -523,9 +632,7 @@ async def system_status():
             "brain_bridge": brain_bridge.is_running
             if hasattr(brain_bridge, "is_running")
             else False,
-            "economy": economy_manager is not None
-            if "economy_manager" in globals()
-            else False,
+            "economy": _economy_manager is not None,
         }
 
         # ========== 修复：使用统一的系统指标管理器 ==========
@@ -548,6 +655,7 @@ async def system_status():
 @router.get("/api/v1/security/sync-key-c")
 async def sync_key_c():
     """Get Key C for desktop app synchronization"""
+    abc_key_manager = get_abc_key_manager()
     key_c = abc_key_manager.get_key("KeyC")
     if not key_c:
         raise HTTPException(status_code=500, detail="Security keys not initialized")
@@ -641,6 +749,7 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
 @router.get("/api/v1/desktop/state")
 async def get_desktop_state():
     """Get current desktop state"""
+    desktop_interaction = get_desktop_interaction()
     state = desktop_interaction.get_desktop_state()
     return {
         "total_files": state.total_files,
@@ -659,6 +768,7 @@ async def get_desktop_state():
 async def organize_desktop(background_tasks: BackgroundTasks):
     """Trigger desktop organization"""
     # Background task for long running operation
+    desktop_interaction = get_desktop_interaction()
     operations = await desktop_interaction.organize_desktop()
     return {"status": "success", "operations_count": len(operations)}
 
@@ -666,6 +776,7 @@ async def organize_desktop(background_tasks: BackgroundTasks):
 @router.post("/api/v1/desktop/cleanup")
 async def cleanup_desktop(days_old: int = 30):
     """Trigger desktop cleanup"""
+    desktop_interaction = get_desktop_interaction()
     operations = await desktop_interaction.cleanup_desktop(days_old=days_old)
     return {"status": "success", "operations_count": len(operations)}
 
@@ -676,6 +787,7 @@ async def cleanup_desktop(days_old: int = 30):
 @router.get("/api/v1/actions/status")
 async def get_actions_status():
     """Get action executor status"""
+    action_executor = get_action_executor()
     return action_executor.queue.get_queue_status()
 
 
@@ -702,6 +814,7 @@ async def execute_action(action_data: Dict[str, Any]):
             parameters=action_data.get("parameters", {}),
         )
 
+        action_executor = get_action_executor()
         result = await action_executor.submit_and_execute(action)
         return {
             "success": result.success,
@@ -728,6 +841,7 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
     distribution = params.get("distribution", "GAUSSIAN")
 
     try:
+        vision_service = get_vision_service()
         result = await vision_service.get_sampling_analysis(
             center=(center[0], center[1]),
             scale=scale,
@@ -746,6 +860,7 @@ async def vision_perceive(image_data: bytes = Body(...)):
     Simulate Discover-Focus-Memory cycle
     """
     try:
+        vision_service = get_vision_service()
         result = await vision_service.perceive_and_focus(image_data)
         return result
     except Exception as e:
@@ -759,6 +874,7 @@ async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
     Simulate cocktail party effect: listen, identify, and focus
     """
     try:
+        audio_service = get_audio_service()
         result = await audio_service.scan_and_identify(audio_data, duration)
         return result
     except Exception as e:
@@ -772,6 +888,7 @@ async def audio_register_user(audio_data: bytes = Body(...)):
     Register user voiceprint
     """
     try:
+        audio_service = get_audio_service()
         result = await audio_service.register_user_voice(audio_data)
         return result
     except Exception as e:
@@ -785,6 +902,7 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
     Model tactile properties from visual data (texture, light, etc.)
     """
     try:
+        tactile_service = get_tactile_service()
         result = await tactile_service.model_object_tactile(visual_data)
         return result
     except Exception as e:
@@ -800,6 +918,7 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
     try:
         object_id = request.get("object_id")
         contact_point = request.get("contact_point", {})
+        tactile_service = get_tactile_service()
         result = await tactile_service.simulate_touch(object_id, contact_point)
         return result
     except Exception as e:
@@ -810,12 +929,14 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
 @router.post("/api/v1/brain/metrics")
 async def get_brain_metrics():
     """Get theoretical AGI metrics (L_s, A_c, etc.)"""
+    brain_bridge = get_brain_bridge()
     return brain_bridge.get_current_status()
 
 
 @router.post("/api/v1/brain/dividend")
 async def get_brain_dividend():
     """Get CDM Economic Model data"""
+    digital_life = get_digital_life()
     summary = digital_life.get_formula_metrics()
     if summary and "formula_status" in summary:
         return summary["formula_status"].get("cdm", {})
@@ -997,6 +1118,7 @@ async def broadcast_state_updates():
     while True:
         try:
             # Get current state from brain bridge
+            brain_bridge = get_brain_bridge()
             state_data = {
                 "alpha": {
                     "energy": brain_bridge.get_energy_level()

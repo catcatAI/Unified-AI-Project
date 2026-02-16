@@ -503,5 +503,19 @@ class ClusterManager:
         self.workers[worker_id] = connection_info
         logger.info(f"已添加分機節點: {worker_id}")
 
-# 單例模式方便調用
-cluster_manager = ClusterManager()
+# Lazy singleton pattern to avoid blocking on import
+_cluster_manager = None
+
+def get_cluster_manager() -> ClusterManager:
+    """Get or create the cluster manager singleton"""
+    global _cluster_manager
+    if _cluster_manager is None:
+        _cluster_manager = ClusterManager()
+    return _cluster_manager
+
+# Backward compatibility: access via attribute
+class _LazyClusterManagerProxy:
+    def __getattr__(self, name):
+        return getattr(get_cluster_manager(), name)
+
+cluster_manager = _LazyClusterManagerProxy()

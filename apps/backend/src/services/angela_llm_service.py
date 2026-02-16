@@ -25,35 +25,86 @@ import httpx
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("angela_llm")
 
-# 记忆增强系统导入
-try:
-    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-    from ai.memory.memory_template import AngelaState, UserImpression, MemoryTemplate
-    from ai.memory.precompute_service import PrecomputeService, PrecomputeTask
-    from ai.memory.template_library import get_template_library
-    from ai.memory.task_generator import TaskGenerator
+# Lazy import for memory enhancement system - deferred until first use
+_memory_modules_loaded = False
+_MEMORY_ENHANCED = None
+HAMMemoryManager = None
+AngelaState = None
+UserImpression = None
+MemoryTemplate = None
+PrecomputeService = None
+PrecomputeTask = None
+get_template_library = None
+TaskGenerator = None
 
-    MEMORY_ENHANCED = True
-    logger.info("Memory enhancement modules loaded successfully")
-except ImportError as e:
-    # 尝试相对导入
+def _load_memory_modules():
+    """Lazy load memory enhancement modules on first access"""
+    global _memory_modules_loaded, _MEMORY_ENHANCED
+    global HAMMemoryManager, AngelaState, UserImpression, MemoryTemplate
+    global PrecomputeService, PrecomputeTask, get_template_library, TaskGenerator
+    
+    if _memory_modules_loaded:
+        return _MEMORY_ENHANCED
+    
+    _memory_modules_loaded = True
+    
     try:
-        from ..ai.memory.ham_memory.ham_manager import HAMMemoryManager
-        from ..ai.memory.memory_template import (
-            AngelaState,
-            UserImpression,
-            MemoryTemplate,
-        )
-        from ..ai.memory.precompute_service import PrecomputeService, PrecomputeTask
-        from ..ai.memory.template_library import get_template_library
-        from ..ai.memory.task_generator import TaskGenerator
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager as _HAM
+        from ai.memory.memory_template import AngelaState as _AS, UserImpression as _UI, MemoryTemplate as _MT
+        from ai.memory.precompute_service import PrecomputeService as _PS, PrecomputeTask as _PT
+        from ai.memory.template_library import get_template_library as _GTL
+        from ai.memory.task_generator import TaskGenerator as _TG
+        
+        HAMMemoryManager = _HAM
+        AngelaState = _AS
+        UserImpression = _UI
+        MemoryTemplate = _MT
+        PrecomputeService = _PS
+        PrecomputeTask = _PT
+        get_template_library = _GTL
+        TaskGenerator = _TG
+        
+        _MEMORY_ENHANCED = True
+        logger.info("Memory enhancement modules loaded successfully")
+    except ImportError as e:
+        # Try relative import
+        try:
+            from ..ai.memory.ham_memory.ham_manager import HAMMemoryManager as _HAM
+            from ..ai.memory.memory_template import (
+                AngelaState as _AS,
+                UserImpression as _UI,
+                MemoryTemplate as _MT,
+            )
+            from ..ai.memory.precompute_service import PrecomputeService as _PS, PrecomputeTask as _PT
+            from ..ai.memory.template_library import get_template_library as _GTL
+            from ..ai.memory.task_generator import TaskGenerator as _TG
+            
+            HAMMemoryManager = _HAM
+            AngelaState = _AS
+            UserImpression = _UI
+            MemoryTemplate = _MT
+            PrecomputeService = _PS
+            PrecomputeTask = _PT
+            get_template_library = _GTL
+            TaskGenerator = _TG
+            
+            _MEMORY_ENHANCED = True
+            logger.info("Memory enhancement modules loaded (relative import)")
+        except ImportError as e2:
+            logger.warning(f"Memory enhancement modules not available: {e2}")
+            logger.info("Running without memory enhancement (LLM will be called directly)")
+            _MEMORY_ENHANCED = False
+    
+    return _MEMORY_ENHANCED
 
-        MEMORY_ENHANCED = True
-        logger.info("Memory enhancement modules loaded (relative import)")
-    except ImportError as e2:
-        logger.warning(f"Memory enhancement modules not available: {e2}")
-        logger.info("Running without memory enhancement (LLM will be called directly)")
-        MEMORY_ENHANCED = False
+def is_memory_enhanced():
+    """Lazy check if memory enhancement is available"""
+    if _MEMORY_ENHANCED is None:
+        _load_memory_modules()
+    return _MEMORY_ENHANCED
+
+# For backward compatibility with code that checks MEMORY_ENHANCED
+MEMORY_ENHANCED = lambda: is_memory_enhanced()
 
 
 class LLMBackend(Enum):
@@ -340,7 +391,7 @@ class AngelaLLMService:
         self._init_emotion_recognition()
 
         # ========== 记忆增强系统初始化 ==========
-        if MEMORY_ENHANCED:
+        if is_memory_enhanced():
             try:
                 # 初始化记忆管理器
                 self.memory_manager = HAMMemoryManager()
