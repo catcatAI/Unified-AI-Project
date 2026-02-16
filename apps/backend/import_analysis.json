@@ -1,0 +1,549 @@
+{
+  "total_time_seconds": 36.197076,
+  "top_30_slowest": [
+    {
+      "self_us": 391509,
+      "cumulative_us": 36197076,
+      "self_ms": 391.509,
+      "cumulative_ms": 36197.076,
+      "self_sec": 0.391509,
+      "cumulative_sec": 36.197076,
+      "module": "src.services.main_api_server"
+    },
+    {
+      "self_us": 145385,
+      "cumulative_us": 16187921,
+      "self_ms": 145.385,
+      "cumulative_ms": 16187.921,
+      "self_sec": 0.145385,
+      "cumulative_sec": 16.187921,
+      "module": "api.router"
+    },
+    {
+      "self_us": 26987,
+      "cumulative_us": 15782265,
+      "self_ms": 26.987,
+      "cumulative_ms": 15782.265,
+      "self_sec": 0.026987,
+      "cumulative_sec": 15.782265,
+      "module": "api.routes.ops_routes"
+    },
+    {
+      "self_us": 14621,
+      "cumulative_us": 15754014,
+      "self_ms": 14.621,
+      "cumulative_ms": 15754.014,
+      "self_sec": 0.014621,
+      "cumulative_sec": 15.754014,
+      "module": "ai.ops.intelligent_ops_manager"
+    },
+    {
+      "self_us": 7070,
+      "cumulative_us": 15739394,
+      "self_ms": 7.07,
+      "cumulative_ms": 15739.394,
+      "self_sec": 0.00707,
+      "cumulative_sec": 15.739394,
+      "module": "ai.ops"
+    },
+    {
+      "self_us": 16417,
+      "cumulative_us": 15715580,
+      "self_ms": 16.417,
+      "cumulative_ms": 15715.58,
+      "self_sec": 0.016417,
+      "cumulative_sec": 15.71558,
+      "module": "ai.ops.capacity_planner"
+    },
+    {
+      "self_us": 5602,
+      "cumulative_us": 15298500,
+      "self_ms": 5.602,
+      "cumulative_ms": 15298.5,
+      "self_sec": 0.005602,
+      "cumulative_sec": 15.2985,
+      "module": "sklearn.linear_model"
+    },
+    {
+      "self_us": 8029,
+      "cumulative_us": 14328700,
+      "self_ms": 8.029,
+      "cumulative_ms": 14328.7,
+      "self_sec": 0.008029,
+      "cumulative_sec": 14.3287,
+      "module": "sklearn"
+    },
+    {
+      "self_us": 9395,
+      "cumulative_us": 14277579,
+      "self_ms": 9.395,
+      "cumulative_ms": 14277.579,
+      "self_sec": 0.009395,
+      "cumulative_sec": 14.277579,
+      "module": "sklearn.base"
+    },
+    {
+      "self_us": 284,
+      "cumulative_us": 14234154,
+      "self_ms": 0.284,
+      "cumulative_ms": 14234.154,
+      "self_sec": 0.000284,
+      "cumulative_sec": 14.234154,
+      "module": "sklearn.utils._metadata_requests"
+    },
+    {
+      "self_us": 7614,
+      "cumulative_us": 14233871,
+      "self_ms": 7.614,
+      "cumulative_ms": 14233.871,
+      "self_sec": 0.007614,
+      "cumulative_sec": 14.233871,
+      "module": "sklearn.utils"
+    },
+    {
+      "self_us": 3629,
+      "cumulative_us": 14120445,
+      "self_ms": 3.629,
+      "cumulative_ms": 14120.445,
+      "self_sec": 0.003629,
+      "cumulative_sec": 14.120445,
+      "module": "sklearn.utils._chunking"
+    },
+    {
+      "self_us": 6937,
+      "cumulative_us": 14116816,
+      "self_ms": 6.937,
+      "cumulative_ms": 14116.816,
+      "self_sec": 0.006937,
+      "cumulative_sec": 14.116816,
+      "module": "sklearn.utils._param_validation"
+    },
+    {
+      "self_us": 17493,
+      "cumulative_us": 13331579,
+      "self_ms": 17.493,
+      "cumulative_ms": 13331.579,
+      "self_sec": 0.017493,
+      "cumulative_sec": 13.331579,
+      "module": "sklearn.utils.validation"
+    },
+    {
+      "self_us": 8348,
+      "cumulative_us": 12797608,
+      "self_ms": 8.348,
+      "cumulative_ms": 12797.608,
+      "self_sec": 0.008348,
+      "cumulative_sec": 12.797608,
+      "module": "sklearn.utils._array_api"
+    },
+    {
+      "self_us": 15239,
+      "cumulative_us": 11677667,
+      "self_ms": 15.239,
+      "cumulative_ms": 11677.667,
+      "self_sec": 0.015239,
+      "cumulative_sec": 11.677667,
+      "module": "sklearn.utils.fixes"
+    },
+    {
+      "self_us": 15070,
+      "cumulative_us": 7609643,
+      "self_ms": 15.07,
+      "cumulative_ms": 7609.643,
+      "self_sec": 0.01507,
+      "cumulative_sec": 7.609643,
+      "module": "scipy.stats"
+    },
+    {
+      "self_us": 1122501,
+      "cumulative_us": 5757315,
+      "self_ms": 1122.501,
+      "cumulative_ms": 5757.315,
+      "self_sec": 1.122501,
+      "cumulative_sec": 5.757315,
+      "module": "scipy.stats._stats_py"
+    },
+    {
+      "self_us": 12499,
+      "cumulative_us": 5520320,
+      "self_ms": 12.499,
+      "cumulative_ms": 5520.32,
+      "self_sec": 0.012499,
+      "cumulative_sec": 5.52032,
+      "module": "fastapi"
+    },
+    {
+      "self_us": 33801,
+      "cumulative_us": 5483823,
+      "self_ms": 33.801,
+      "cumulative_ms": 5483.823,
+      "self_sec": 0.033801,
+      "cumulative_sec": 5.483823,
+      "module": "fastapi.applications"
+    },
+    {
+      "self_us": 12332,
+      "cumulative_us": 5310631,
+      "self_ms": 12.332,
+      "cumulative_ms": 5310.631,
+      "self_sec": 0.012332,
+      "cumulative_sec": 5.310631,
+      "module": "services.angela_llm_service"
+    },
+    {
+      "self_us": 7136,
+      "cumulative_us": 5253103,
+      "self_ms": 7.136,
+      "cumulative_ms": 5253.103,
+      "self_sec": 0.007136,
+      "cumulative_sec": 5.253103,
+      "module": "ai.memory.ham_memory.ham_manager"
+    },
+    {
+      "self_us": 37525,
+      "cumulative_us": 5241652,
+      "self_ms": 37.525,
+      "cumulative_ms": 5241.652,
+      "self_sec": 0.037525,
+      "cumulative_sec": 5.241652,
+      "module": "fastapi.routing"
+    },
+    {
+      "self_us": 202,
+      "cumulative_us": 5085598,
+      "self_ms": 0.202,
+      "cumulative_ms": 5085.598,
+      "self_sec": 0.000202,
+      "cumulative_sec": 5.085598,
+      "module": "core.autonomous.desktop_interaction"
+    },
+    {
+      "self_us": 146,
+      "cumulative_us": 5085396,
+      "self_ms": 0.146,
+      "cumulative_ms": 5085.396,
+      "self_sec": 0.000146,
+      "cumulative_sec": 5.085396,
+      "module": "core.autonomous"
+    },
+    {
+      "self_us": 17824,
+      "cumulative_us": 5085250,
+      "self_ms": 17.824,
+      "cumulative_ms": 5085.25,
+      "self_sec": 0.017824,
+      "cumulative_sec": 5.08525,
+      "module": "core"
+    },
+    {
+      "self_us": 9833,
+      "cumulative_us": 5065519,
+      "self_ms": 9.833,
+      "cumulative_ms": 5065.519,
+      "self_sec": 0.009833,
+      "cumulative_sec": 5.065519,
+      "module": "ai.memory.ham_memory.ham_vector_store_manager"
+    },
+    {
+      "self_us": 4757,
+      "cumulative_us": 5055686,
+      "self_ms": 4.757,
+      "cumulative_ms": 5055.686,
+      "self_sec": 0.004757,
+      "cumulative_sec": 5.055686,
+      "module": "ai.memory.vector_store"
+    },
+    {
+      "self_us": 14157,
+      "cumulative_us": 5050929,
+      "self_ms": 14.157,
+      "cumulative_ms": 5050.929,
+      "self_sec": 0.014157,
+      "cumulative_sec": 5.050929,
+      "module": "chromadb"
+    },
+    {
+      "self_us": 38753,
+      "cumulative_us": 4751027,
+      "self_ms": 38.753,
+      "cumulative_ms": 4751.027,
+      "self_sec": 0.038753,
+      "cumulative_sec": 4.751027,
+      "module": "fastapi.params"
+    }
+  ],
+  "blocking_third_party": [
+    {
+      "self_us": 145385,
+      "cumulative_us": 16187921,
+      "self_ms": 145.385,
+      "cumulative_ms": 16187.921,
+      "self_sec": 0.145385,
+      "cumulative_sec": 16.187921,
+      "module": "api.router"
+    },
+    {
+      "self_us": 26987,
+      "cumulative_us": 15782265,
+      "self_ms": 26.987,
+      "cumulative_ms": 15782.265,
+      "self_sec": 0.026987,
+      "cumulative_sec": 15.782265,
+      "module": "api.routes.ops_routes"
+    },
+    {
+      "self_us": 14621,
+      "cumulative_us": 15754014,
+      "self_ms": 14.621,
+      "cumulative_ms": 15754.014,
+      "self_sec": 0.014621,
+      "cumulative_sec": 15.754014,
+      "module": "ai.ops.intelligent_ops_manager"
+    },
+    {
+      "self_us": 7070,
+      "cumulative_us": 15739394,
+      "self_ms": 7.07,
+      "cumulative_ms": 15739.394,
+      "self_sec": 0.00707,
+      "cumulative_sec": 15.739394,
+      "module": "ai.ops"
+    },
+    {
+      "self_us": 16417,
+      "cumulative_us": 15715580,
+      "self_ms": 16.417,
+      "cumulative_ms": 15715.58,
+      "self_sec": 0.016417,
+      "cumulative_sec": 15.71558,
+      "module": "ai.ops.capacity_planner"
+    },
+    {
+      "self_us": 5602,
+      "cumulative_us": 15298500,
+      "self_ms": 5.602,
+      "cumulative_ms": 15298.5,
+      "self_sec": 0.005602,
+      "cumulative_sec": 15.2985,
+      "module": "sklearn.linear_model"
+    },
+    {
+      "self_us": 8029,
+      "cumulative_us": 14328700,
+      "self_ms": 8.029,
+      "cumulative_ms": 14328.7,
+      "self_sec": 0.008029,
+      "cumulative_sec": 14.3287,
+      "module": "sklearn"
+    },
+    {
+      "self_us": 9395,
+      "cumulative_us": 14277579,
+      "self_ms": 9.395,
+      "cumulative_ms": 14277.579,
+      "self_sec": 0.009395,
+      "cumulative_sec": 14.277579,
+      "module": "sklearn.base"
+    },
+    {
+      "self_us": 284,
+      "cumulative_us": 14234154,
+      "self_ms": 0.284,
+      "cumulative_ms": 14234.154,
+      "self_sec": 0.000284,
+      "cumulative_sec": 14.234154,
+      "module": "sklearn.utils._metadata_requests"
+    },
+    {
+      "self_us": 7614,
+      "cumulative_us": 14233871,
+      "self_ms": 7.614,
+      "cumulative_ms": 14233.871,
+      "self_sec": 0.007614,
+      "cumulative_sec": 14.233871,
+      "module": "sklearn.utils"
+    },
+    {
+      "self_us": 3629,
+      "cumulative_us": 14120445,
+      "self_ms": 3.629,
+      "cumulative_ms": 14120.445,
+      "self_sec": 0.003629,
+      "cumulative_sec": 14.120445,
+      "module": "sklearn.utils._chunking"
+    },
+    {
+      "self_us": 6937,
+      "cumulative_us": 14116816,
+      "self_ms": 6.937,
+      "cumulative_ms": 14116.816,
+      "self_sec": 0.006937,
+      "cumulative_sec": 14.116816,
+      "module": "sklearn.utils._param_validation"
+    },
+    {
+      "self_us": 17493,
+      "cumulative_us": 13331579,
+      "self_ms": 17.493,
+      "cumulative_ms": 13331.579,
+      "self_sec": 0.017493,
+      "cumulative_sec": 13.331579,
+      "module": "sklearn.utils.validation"
+    },
+    {
+      "self_us": 8348,
+      "cumulative_us": 12797608,
+      "self_ms": 8.348,
+      "cumulative_ms": 12797.608,
+      "self_sec": 0.008348,
+      "cumulative_sec": 12.797608,
+      "module": "sklearn.utils._array_api"
+    },
+    {
+      "self_us": 15239,
+      "cumulative_us": 11677667,
+      "self_ms": 15.239,
+      "cumulative_ms": 11677.667,
+      "self_sec": 0.015239,
+      "cumulative_sec": 11.677667,
+      "module": "sklearn.utils.fixes"
+    },
+    {
+      "self_us": 15070,
+      "cumulative_us": 7609643,
+      "self_ms": 15.07,
+      "cumulative_ms": 7609.643,
+      "self_sec": 0.01507,
+      "cumulative_sec": 7.609643,
+      "module": "scipy.stats"
+    },
+    {
+      "self_us": 1122501,
+      "cumulative_us": 5757315,
+      "self_ms": 1122.501,
+      "cumulative_ms": 5757.315,
+      "self_sec": 1.122501,
+      "cumulative_sec": 5.757315,
+      "module": "scipy.stats._stats_py"
+    },
+    {
+      "self_us": 12499,
+      "cumulative_us": 5520320,
+      "self_ms": 12.499,
+      "cumulative_ms": 5520.32,
+      "self_sec": 0.012499,
+      "cumulative_sec": 5.52032,
+      "module": "fastapi"
+    },
+    {
+      "self_us": 33801,
+      "cumulative_us": 5483823,
+      "self_ms": 33.801,
+      "cumulative_ms": 5483.823,
+      "self_sec": 0.033801,
+      "cumulative_sec": 5.483823,
+      "module": "fastapi.applications"
+    },
+    {
+      "self_us": 12332,
+      "cumulative_us": 5310631,
+      "self_ms": 12.332,
+      "cumulative_ms": 5310.631,
+      "self_sec": 0.012332,
+      "cumulative_sec": 5.310631,
+      "module": "services.angela_llm_service"
+    }
+  ],
+  "slow_project_modules": [
+    {
+      "self_us": 391509,
+      "cumulative_us": 36197076,
+      "self_ms": 391.509,
+      "cumulative_ms": 36197.076,
+      "self_sec": 0.391509,
+      "cumulative_sec": 36.197076,
+      "module": "src.services.main_api_server"
+    },
+    {
+      "self_us": 145385,
+      "cumulative_us": 16187921,
+      "self_ms": 145.385,
+      "cumulative_ms": 16187.921,
+      "self_sec": 0.145385,
+      "cumulative_sec": 16.187921,
+      "module": "api.router"
+    },
+    {
+      "self_us": 26987,
+      "cumulative_us": 15782265,
+      "self_ms": 26.987,
+      "cumulative_ms": 15782.265,
+      "self_sec": 0.026987,
+      "cumulative_sec": 15.782265,
+      "module": "api.routes.ops_routes"
+    },
+    {
+      "self_us": 14621,
+      "cumulative_us": 15754014,
+      "self_ms": 14.621,
+      "cumulative_ms": 15754.014,
+      "self_sec": 0.014621,
+      "cumulative_sec": 15.754014,
+      "module": "ai.ops.intelligent_ops_manager"
+    },
+    {
+      "self_us": 7070,
+      "cumulative_us": 15739394,
+      "self_ms": 7.07,
+      "cumulative_ms": 15739.394,
+      "self_sec": 0.00707,
+      "cumulative_sec": 15.739394,
+      "module": "ai.ops"
+    },
+    {
+      "self_us": 16417,
+      "cumulative_us": 15715580,
+      "self_ms": 16.417,
+      "cumulative_ms": 15715.58,
+      "self_sec": 0.016417,
+      "cumulative_sec": 15.71558,
+      "module": "ai.ops.capacity_planner"
+    },
+    {
+      "self_us": 12332,
+      "cumulative_us": 5310631,
+      "self_ms": 12.332,
+      "cumulative_ms": 5310.631,
+      "self_sec": 0.012332,
+      "cumulative_sec": 5.310631,
+      "module": "services.angela_llm_service"
+    },
+    {
+      "self_us": 7136,
+      "cumulative_us": 5253103,
+      "self_ms": 7.136,
+      "cumulative_ms": 5253.103,
+      "self_sec": 0.007136,
+      "cumulative_sec": 5.253103,
+      "module": "ai.memory.ham_memory.ham_manager"
+    },
+    {
+      "self_us": 9833,
+      "cumulative_us": 5065519,
+      "self_ms": 9.833,
+      "cumulative_ms": 5065.519,
+      "self_sec": 0.009833,
+      "cumulative_sec": 5.065519,
+      "module": "ai.memory.ham_memory.ham_vector_store_manager"
+    },
+    {
+      "self_us": 4757,
+      "cumulative_us": 5055686,
+      "self_ms": 4.757,
+      "cumulative_ms": 5055.686,
+      "self_sec": 0.004757,
+      "cumulative_sec": 5.055686,
+      "module": "ai.memory.vector_store"
+    }
+  ]
+}
