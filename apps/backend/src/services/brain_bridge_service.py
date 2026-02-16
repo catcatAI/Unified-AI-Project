@@ -15,11 +15,15 @@ from system.hardware_probe import HardwareProbe
 
 logger = logging.getLogger(__name__)
 
+
 class BrainBridgeService:
     """
     Bridges the gap between internal AGI formulas and observable metrics.
     """
-    def __init__(self, digital_life: DigitalLifeIntegrator, metrics_path: str = "metrics.md"):
+
+    def __init__(
+        self, digital_life: DigitalLifeIntegrator, metrics_path: str = "metrics.md"
+    ):
         self.digital_life = digital_life
         self.metrics_path = Path(metrics_path)
         self.hardware_probe = HardwareProbe()
@@ -62,11 +66,21 @@ class BrainBridgeService:
         # Prepare metrics record
         metrics_data = {
             "timestamp": datetime.now().isoformat(),
-            "life_intensity": brain_summary.get("current_metrics", {}).get("life_intensity", 0.0),
-            "active_cognition": brain_summary.get("current_metrics", {}).get("a_c", 0.0),
-            "cognitive_gap": brain_summary.get("current_metrics", {}).get("cognitive_gap", 0.0),
-            "coexistence_active": brain_summary.get("current_metrics", {}).get("coexistence_active", False),
-            "hormonal_balance": self.digital_life.biological_integrator.get_biological_state().get("hormonal_effects", {})
+            "life_intensity": brain_summary.get("current_metrics", {}).get(
+                "life_intensity", 0.0
+            ),
+            "active_cognition": brain_summary.get("current_metrics", {}).get(
+                "a_c", 0.0
+            ),
+            "cognitive_gap": brain_summary.get("current_metrics", {}).get(
+                "cognitive_gap", 0.0
+            ),
+            "coexistence_active": brain_summary.get("current_metrics", {}).get(
+                "coexistence_active", False
+            ),
+            "hormonal_balance": self.digital_life.biological_integrator.get_biological_state().get(
+                "hormonal_effects", {}
+            ),
         }
 
         # In a real implementation, we would parse metrics.md and update the table.
@@ -77,15 +91,17 @@ class BrainBridgeService:
         with open(status_file, "w", encoding="utf-8") as f:
             json.dump(metrics_data, f, indent=4)
 
-        logger.info(f"Brain Metrics Synced: L_s={metrics_data['life_intensity']:.4f}, A_c={metrics_data['active_cognition']:.4f}")
+        logger.info(
+            f"Brain Metrics Synced: L_s={metrics_data['life_intensity']:.4f}, A_c={metrics_data['active_cognition']:.4f}"
+        )
 
     def get_current_status(self) -> Dict[str, Any]:
         """Return the bridged metrics for API consumption"""
         brain_summary = self.digital_life.get_formula_metrics()
         bio_state = self.digital_life.biological_integrator.get_biological_state()
-        
+
         return {
             "brain": brain_summary,
             "biological": bio_state,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }

@@ -1,6 +1,8 @@
 from typing import TypedDict, Required, Optional, List, Dict, Any, Literal
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 # Virtual Input types
 class VirtualInputElementDescription(TypedDict, total=False):
@@ -12,20 +14,27 @@ class VirtualInputElementDescription(TypedDict, total=False):
     is_enabled: Optional[bool]
     is_visible: Optional[bool]
     attributes: Optional[Dict[str, Any]]
-    children: Optional[List['VirtualInputElementDescription']]
+    children: Optional[List["VirtualInputElementDescription"]]
+
 
 VirtualInputPermissionLevel = Literal[
-    "simulation_only",
-    "requires_user_confirmation",
-    "full_control_trusted"
+    "simulation_only", "requires_user_confirmation", "full_control_trusted"
 ]
 
 VirtualMouseEventType = Literal[
-    "move_relative_to_window", "move_to_element", "click", "double_click",
-    "right_click", "hover", "drag_start", "drag_end", "scroll"
+    "move_relative_to_window",
+    "move_to_element",
+    "click",
+    "double_click",
+    "right_click",
+    "hover",
+    "drag_start",
+    "drag_end",
+    "scroll",
 ]
 
-class VirtualMouseCommand(TypedDict, total = False):
+
+class VirtualMouseCommand(TypedDict, total=False):
     action_type: Required[VirtualMouseEventType]
     target_element_id: Optional[str]
     relative_x: Optional[float]
@@ -38,15 +47,18 @@ class VirtualMouseCommand(TypedDict, total = False):
     drag_target_x: Optional[float]
     drag_target_y: Optional[float]
 
+
 VirtualKeyboardActionType = Literal[
     "type_string", "press_keys", "release_keys", "special_key"
 ]
 
-class VirtualKeyboardCommand(TypedDict, total = False):
+
+class VirtualKeyboardCommand(TypedDict, total=False):
     action_type: Required[VirtualKeyboardActionType]
     target_element_id: Optional[str]
     text_to_type: Optional[str]
     keys: Optional[List[str]]
+
 
 # Simulated Resource Types
 class SimulatedDiskConfig(TypedDict, total=False):
@@ -56,11 +68,14 @@ class SimulatedDiskConfig(TypedDict, total=False):
     lag_factor_warning: Required[float]
     lag_factor_critical: Required[float]
 
+
 class SimulatedCPUConfig(TypedDict):
     cores: Required[int]
 
+
 class SimulatedRAMConfig(TypedDict):
     ram_gb: Required[float]
+
 
 class SimulatedHardwareProfile(TypedDict):
     profile_name: Required[str]
@@ -68,6 +83,7 @@ class SimulatedHardwareProfile(TypedDict):
     cpu: Required[SimulatedCPUConfig]
     ram: Required[SimulatedRAMConfig]
     gpu_available: Required[bool]
+
 
 class SimulatedResourcesRoot(TypedDict):
     simulated_hardware_profile: Required[SimulatedHardwareProfile]

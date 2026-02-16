@@ -1,22 +1,156 @@
 """Angela Chat Service - 智能對話生成"""
+
 import random
 from typing import Tuple
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 # 情感與語義分析
 EMOTION_PATTERNS = {
-    "positive": ["開心", "高興", "棒", "好", "爽", "萬歲", "great", "good", "happy", ":-)", "😊", "太棒了", "完美", "厲害", "贏了", "成功"],
-    "negative": ["難過", "傷心", "不爽", "壞", "糟糕", "鬱悶", "sad", "bad", ":-(", "😢", "痛苦", "討厭", "失望", "崩潰", "壓力"],
-    "question": ["?", "？", "什麼", "為什麼", "如何", "怎麼", "who", "what", "why", "how", "能否", "可以", "哪裡", "幾點", "多少"],
-    "greeting": ["你好", "嗨", "hello", "hi", "早安", "晚安", "在嗎", "喵", "哈囉", "嘿", "見面", "好久不見", "回來了"],
-    "thanks": ["謝謝", "感謝", "thanks", "thank", "多謝", "不錯", "感謝你", "謝啦", "多謝你", "gracias"],
-    "goodbye": ["再見", "拜拜", "bye", "晚安", "走了", "要去", "離開", "先走", "下次見", "回頭見"],
-    "compliment": ["棒", "厲害", "讚", "強", "厲害", "美", "帥", "聰明", "好", "不錯", "amazing", "awesome", "perfect"],
-    "empathy": ["懂", "理解", "明白", "同情", "心疼", "擔心", "關心", "體會", "感同身受", "理解你"],
-    "curiosity": ["什麼", "怎麼", "為什麼", "哪裡", "幾點", "誰", "多少", "好奇", "想知道", "怎樣"],
-    "encouragement": ["加油", "努力", "堅持", "不放棄", "一定行", "相信", "支持", "你可以", "別放棄", "繼續"]
+    "positive": [
+        "開心",
+        "高興",
+        "棒",
+        "好",
+        "爽",
+        "萬歲",
+        "great",
+        "good",
+        "happy",
+        ":-)",
+        "😊",
+        "太棒了",
+        "完美",
+        "厲害",
+        "贏了",
+        "成功",
+    ],
+    "negative": [
+        "難過",
+        "傷心",
+        "不爽",
+        "壞",
+        "糟糕",
+        "鬱悶",
+        "sad",
+        "bad",
+        ":-(",
+        "😢",
+        "痛苦",
+        "討厭",
+        "失望",
+        "崩潰",
+        "壓力",
+    ],
+    "question": [
+        "?",
+        "？",
+        "什麼",
+        "為什麼",
+        "如何",
+        "怎麼",
+        "who",
+        "what",
+        "why",
+        "how",
+        "能否",
+        "可以",
+        "哪裡",
+        "幾點",
+        "多少",
+    ],
+    "greeting": [
+        "你好",
+        "嗨",
+        "hello",
+        "hi",
+        "早安",
+        "晚安",
+        "在嗎",
+        "喵",
+        "哈囉",
+        "嘿",
+        "見面",
+        "好久不見",
+        "回來了",
+    ],
+    "thanks": [
+        "謝謝",
+        "感謝",
+        "thanks",
+        "thank",
+        "多謝",
+        "不錯",
+        "感謝你",
+        "謝啦",
+        "多謝你",
+        "gracias",
+    ],
+    "goodbye": [
+        "再見",
+        "拜拜",
+        "bye",
+        "晚安",
+        "走了",
+        "要去",
+        "離開",
+        "先走",
+        "下次見",
+        "回頭見",
+    ],
+    "compliment": [
+        "棒",
+        "厲害",
+        "讚",
+        "強",
+        "厲害",
+        "美",
+        "帥",
+        "聰明",
+        "好",
+        "不錯",
+        "amazing",
+        "awesome",
+        "perfect",
+    ],
+    "empathy": [
+        "懂",
+        "理解",
+        "明白",
+        "同情",
+        "心疼",
+        "擔心",
+        "關心",
+        "體會",
+        "感同身受",
+        "理解你",
+    ],
+    "curiosity": [
+        "什麼",
+        "怎麼",
+        "為什麼",
+        "哪裡",
+        "幾點",
+        "誰",
+        "多少",
+        "好奇",
+        "想知道",
+        "怎樣",
+    ],
+    "encouragement": [
+        "加油",
+        "努力",
+        "堅持",
+        "不放棄",
+        "一定行",
+        "相信",
+        "支持",
+        "你可以",
+        "別放棄",
+        "繼續",
+    ],
 }
 
 
@@ -66,7 +200,11 @@ def analyze_intent(user_message: str) -> Tuple[str, str, float]:
     # 檢查鼓勵
     encouragement_count = sum(1 for w in EMOTION_PATTERNS["encouragement"] if w in msg)
     if encouragement_count > 0:
-        return ("encouragement", "encouragement", min(0.5 + encouragement_count * 0.15, 0.85))
+        return (
+            "encouragement",
+            "encouragement",
+            min(0.5 + encouragement_count * 0.15, 0.85),
+        )
 
     # 檢查同理心
     empathy_count = sum(1 for w in EMOTION_PATTERNS["empathy"] if w in msg)
@@ -95,7 +233,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "早安/晚安！一切都好嗎？",
             "你好！有什麼新鮮事嗎？",
             "嗨嗨！今天想聊什麼呢？",
-            "哈囉哈囉！期待我們的對話~"
+            "哈囉哈囉！期待我們的對話~",
         ],
         "positive": [
             "聽起來很棒呢！",
@@ -107,7 +245,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "看來你今天心情不錯~",
             "繼續保持這種狀態！",
             "你的努力一定會有回報的！",
-            "這真是太令人振奮了！"
+            "這真是太令人振奮了！",
         ],
         "negative": [
             "我理解你的感受。",
@@ -119,7 +257,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "想說什麼都可以，我會一直聽著。",
             "給自己一些時間，沒關係的。",
             "如果需要幫助，隨時告訴我。",
-            "我會一直支持你的。"
+            "我會一直支持你的。",
         ],
         "question": [
             "這是個有趣的想法，讓我思考一下...",
@@ -131,7 +269,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "讓我好好思考一下你的問題。",
             "這個問題值得深入探討！",
             "我需要一些時間來思考這個問題。",
-            "好問題！讓我們一起來解決。"
+            "好問題！讓我們一起來解決。",
         ],
         "thanks": [
             "不客氣！能幫到你我很開心~",
@@ -143,7 +281,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "這是我應該做的~",
             "別客氣，我們是朋友嘛！",
             "能幫到你真好！",
-            "隨時歡迎你來找我！"
+            "隨時歡迎你來找我！",
         ],
         "goodbye": [
             "再見！期待下次見面~",
@@ -155,7 +293,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "再見，期待我們的下次對話！",
             "拜拜，一切都順利！",
             "下次見，加油哦！",
-            "再見！心情愉快！"
+            "再見！心情愉快！",
         ],
         "compliment": [
             "謝謝你的誇獎！我好開心~",
@@ -167,7 +305,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "能被你稱讚是我的榮幸！",
             "我們一起變得更好吧！",
             "你的眼光真好！",
-            "謝謝！你讓我更有信心了！"
+            "謝謝！你讓我更有信心了！",
         ],
         "statement": {
             "complex": [
@@ -180,7 +318,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
                 "我理解你的意思了。",
                 "這說明什麼呢？讓我分析一下...",
                 "你的想法很有見地！",
-                "這個角度我沒想到，謝謝分享！"
+                "這個角度我沒想到，謝謝分享！",
             ],
             "simple": [
                 "我聽到了！",
@@ -192,7 +330,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
                 "好的好的~",
                 "我明白了！",
                 "喔喔！",
-                "這樣啊~"
+                "這樣啊~",
             ],
             "minimal": [
                 "好的。",
@@ -204,7 +342,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
                 "好喔。",
                 "收到。",
                 "嗯~",
-                "OK~"
+                "OK~",
             ],
         },
         "empathy": [
@@ -217,7 +355,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "我會一直支持你的。",
             "慢慢來，不急於一時。",
             "你已經盡力了，這就足夠了。",
-            "別擔心，有我在呢。"
+            "別擔心，有我在呢。",
         ],
         "curiosity": [
             "真的嗎？再多告訴我一些！",
@@ -229,7 +367,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "這還蠻新鮮的！",
             "原來如此！還有嗎？",
             "太神奇了！怎麼做到的？",
-            "我聽得很認真呢！"
+            "我聽得很認真呢！",
         ],
         "encouragement": [
             "你可以的！加油！",
@@ -241,13 +379,15 @@ def generate_response_template(intent: str, user_message: str) -> str:
             "這只是個小挑戰，你一定可以！",
             "堅持就是勝利！",
             "你有這個能力的！",
-            "讓我們一起努力！"
-        ]
+            "讓我們一起努力！",
+        ],
     }
 
     if intent == "statement":
         subtype = "complex" if templates["statement"].get("complex", []) else "simple"
-        return random.choice(templates["statement"].get(subtype, templates["statement"]["simple"]))
+        return random.choice(
+            templates["statement"].get(subtype, templates["statement"]["simple"])
+        )
 
     return random.choice(templates.get(intent, templates["statement"]["simple"]))
 
@@ -255,35 +395,35 @@ def generate_response_template(intent: str, user_message: str) -> str:
 def personalize_response(response: str, user_name: str, user_message: str) -> str:
     """個性化回應"""
     msg_lower = user_message.lower()
-    
+
     # 根據用戶消息內容動態擴展
     if any(word in msg_lower for word in ["工作", "上班", "job", "work"]):
         if "工作" not in response and random.random() > 0.5:
             response += " 工作方面還順利嗎？"
-    
+
     if any(word in msg_lower for word in ["睡覺", "睡", "sleep", "累"]):
         if "累" not in response and random.random() > 0.5:
             response += " 要注意休息哦！"
-    
+
     if any(word in msg_lower for word in ["吃", "food", "餓"]):
         if "吃" not in response and random.random() > 0.5:
             response += " 記得要吃飽飽的~"
-    
+
     return response
 
 
 def generate_angela_response(user_message: str, user_name: str = "朋友") -> str:
     """生成 Angela 智能回應 - 動態生成"""
-    
+
     # 1. 分析用戶意圖
     intent, keyword, confidence = analyze_intent(user_message)
-    
+
     # 2. 根據意圖生成基礎回應
     base_response = generate_response_template(intent, user_message)
-    
+
     # 3. 個性化回應
     final_response = personalize_response(base_response, user_name, user_message)
-    
+
     # 4. 添加變化
     variations = ["✨", "😊", "🌟", "💫", "⭐"]
     if random.random() > 0.7:
@@ -291,5 +431,5 @@ def generate_angela_response(user_message: str, user_name: str = "朋友") -> st
         if final_response[-1] in "。！？":
             final_response = final_response[:-1]
         final_response += f" {random.choice(variations)}"
-    
+
     return final_response

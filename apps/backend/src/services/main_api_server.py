@@ -392,12 +392,12 @@ def _initialize_all_services():
     digital_life = get_digital_life()
     economy_manager = get_economy_manager()
     brain_bridge = get_brain_bridge()
-    
+
     # Link components
     pet.set_biological_integrator(digital_life.biological_integrator)
     pet.set_economy_manager(economy_manager)
     economy.set_economy_manager(economy_manager)
-    
+
     return (
         desktop_interaction,
         action_executor,
@@ -623,15 +623,19 @@ async def system_status():
         # 獲取服務狀態
         digital_life = get_digital_life()
         brain_bridge = get_brain_bridge()
-        
+
         services_status = {
             "llm_service": _llm_service.is_available if _llm_service else False,
-            "digital_life": digital_life.is_initialized
-            if hasattr(digital_life, "is_initialized")
-            else False,
-            "brain_bridge": brain_bridge.is_running
-            if hasattr(brain_bridge, "is_running")
-            else False,
+            "digital_life": (
+                digital_life.is_initialized
+                if hasattr(digital_life, "is_initialized")
+                else False
+            ),
+            "brain_bridge": (
+                brain_bridge.is_running
+                if hasattr(brain_bridge, "is_running")
+                else False
+            ),
             "economy": _economy_manager is not None,
         }
 
@@ -758,9 +762,9 @@ async def get_desktop_state():
         "files_by_category": {
             cat.name: count for cat, count in state.files_by_category.items()
         },
-        "last_organized": state.last_organized.isoformat()
-        if state.last_organized
-        else None,
+        "last_organized": (
+            state.last_organized.isoformat() if state.last_organized else None
+        ),
     }
 
 
@@ -1099,9 +1103,11 @@ class ConnectionManager:
                 {
                     "client_id": info.get("client_id", "unknown"),
                     "connected_at": info.get("connected_at", "unknown"),
-                    "last_heartbeat": info.get("last_heartbeat").isoformat()
-                    if info.get("last_heartbeat")
-                    else "unknown",
+                    "last_heartbeat": (
+                        info.get("last_heartbeat").isoformat()
+                        if info.get("last_heartbeat")
+                        else "unknown"
+                    ),
                     "heartbeat_missed": info.get("heartbeat_missed", 0),
                 }
                 for info in self.connection_info.values()
@@ -1121,9 +1127,11 @@ async def broadcast_state_updates():
             brain_bridge = get_brain_bridge()
             state_data = {
                 "alpha": {
-                    "energy": brain_bridge.get_energy_level()
-                    if hasattr(brain_bridge, "get_energy_level")
-                    else 0.5,
+                    "energy": (
+                        brain_bridge.get_energy_level()
+                        if hasattr(brain_bridge, "get_energy_level")
+                        else 0.5
+                    ),
                     "comfort": 0.5,
                     "arousal": 0.5,
                 },
@@ -1181,9 +1189,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 # 更新心跳时间
                 if websocket in manager.connection_info:
-                    manager.connection_info[websocket]["last_heartbeat"] = (
-                        datetime.now()
-                    )
+                    manager.connection_info[websocket][
+                        "last_heartbeat"
+                    ] = datetime.now()
                     manager.connection_info[websocket]["heartbeat_missed"] = 0
 
                 # Handle different message types
@@ -1191,9 +1199,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     # 心跳响应
                     await websocket.send_json(
                         {
-                            "type": "heartbeat_ack"
-                            if data.get("type") == "heartbeat"
-                            else "echo",
+                            "type": (
+                                "heartbeat_ack"
+                                if data.get("type") == "heartbeat"
+                                else "echo"
+                            ),
                             "timestamp": datetime.now().isoformat(),
                         }
                     )

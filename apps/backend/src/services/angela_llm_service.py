@@ -37,24 +37,32 @@ PrecomputeTask = None
 get_template_library = None
 TaskGenerator = None
 
+
 def _load_memory_modules():
     """Lazy load memory enhancement modules on first access"""
     global _memory_modules_loaded, _MEMORY_ENHANCED
     global HAMMemoryManager, AngelaState, UserImpression, MemoryTemplate
     global PrecomputeService, PrecomputeTask, get_template_library, TaskGenerator
-    
+
     if _memory_modules_loaded:
         return _MEMORY_ENHANCED
-    
+
     _memory_modules_loaded = True
-    
+
     try:
         from ai.memory.ham_memory.ham_manager import HAMMemoryManager as _HAM
-        from ai.memory.memory_template import AngelaState as _AS, UserImpression as _UI, MemoryTemplate as _MT
-        from ai.memory.precompute_service import PrecomputeService as _PS, PrecomputeTask as _PT
+        from ai.memory.memory_template import (
+            AngelaState as _AS,
+            UserImpression as _UI,
+            MemoryTemplate as _MT,
+        )
+        from ai.memory.precompute_service import (
+            PrecomputeService as _PS,
+            PrecomputeTask as _PT,
+        )
         from ai.memory.template_library import get_template_library as _GTL
         from ai.memory.task_generator import TaskGenerator as _TG
-        
+
         HAMMemoryManager = _HAM
         AngelaState = _AS
         UserImpression = _UI
@@ -63,7 +71,7 @@ def _load_memory_modules():
         PrecomputeTask = _PT
         get_template_library = _GTL
         TaskGenerator = _TG
-        
+
         _MEMORY_ENHANCED = True
         logger.info("Memory enhancement modules loaded successfully")
     except ImportError as e:
@@ -75,10 +83,13 @@ def _load_memory_modules():
                 UserImpression as _UI,
                 MemoryTemplate as _MT,
             )
-            from ..ai.memory.precompute_service import PrecomputeService as _PS, PrecomputeTask as _PT
+            from ..ai.memory.precompute_service import (
+                PrecomputeService as _PS,
+                PrecomputeTask as _PT,
+            )
             from ..ai.memory.template_library import get_template_library as _GTL
             from ..ai.memory.task_generator import TaskGenerator as _TG
-            
+
             HAMMemoryManager = _HAM
             AngelaState = _AS
             UserImpression = _UI
@@ -87,21 +98,25 @@ def _load_memory_modules():
             PrecomputeTask = _PT
             get_template_library = _GTL
             TaskGenerator = _TG
-            
+
             _MEMORY_ENHANCED = True
             logger.info("Memory enhancement modules loaded (relative import)")
         except ImportError as e2:
             logger.warning(f"Memory enhancement modules not available: {e2}")
-            logger.info("Running without memory enhancement (LLM will be called directly)")
+            logger.info(
+                "Running without memory enhancement (LLM will be called directly)"
+            )
             _MEMORY_ENHANCED = False
-    
+
     return _MEMORY_ENHANCED
+
 
 def is_memory_enhanced():
     """Lazy check if memory enhancement is available"""
     if _MEMORY_ENHANCED is None:
         _load_memory_modules()
     return _MEMORY_ENHANCED
+
 
 # For backward compatibility with code that checks MEMORY_ENHANCED
 MEMORY_ENHANCED = lambda: is_memory_enhanced()
