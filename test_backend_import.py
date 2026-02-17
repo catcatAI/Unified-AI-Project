@@ -4,8 +4,9 @@
 import sys
 import os
 
-# Change to backend directory
-os.chdir('apps/backend')
+# Add apps/backend to path
+backend_path = os.path.join(os.path.dirname(__file__), 'apps', 'backend')
+sys.path.insert(0, backend_path)
 
 print("Testing backend import...")
 try:

@@ -10,7 +10,7 @@ import logging
 import copy  # type: ignore
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any, Tuple, Literal
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 
 logger = logging.getLogger(__name__)
 

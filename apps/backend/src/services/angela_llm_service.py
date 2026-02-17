@@ -1122,8 +1122,8 @@ class AngelaLLMService:
 
     def get_status(self) -> Dict[str, Any]:
         """獲取服務狀態"""
-        active_backend_name = getattr(self, "active_backend_type", None)
-        if active_backend_name and self.active_backend:
+        active_backend_type = getattr(self, "active_backend_type", None)
+        if active_backend_type and self.active_backend:
             active_backend_name = active_backend_type.value
         else:
             active_backend_name = None
