@@ -276,6 +276,9 @@ class ConfigValidator:
                     key, value = line.split('=', 1)
                     key = key.strip()
                     value = value.strip()
+                    # Remove inline comments
+                    if '#' in value:
+                        value = value.split('#')[0].strip()
                     os.environ[key] = value
     
     def validate(self) -> ValidationResult:
@@ -294,42 +297,42 @@ class ConfigValidator:
     
     def print_report(self) -> None:
         """打印验证报告"""
-        logger.info("=" * 60)
-        logger.info("Angela AI - 环境配置验证报告")
-        logger.info("=" * 60)
+        print("=" * 60)
+        print("Angela AI - 环境配置验证报告")
+        print("=" * 60)
         
         if self.result.valid:
-            logger.info("✓ 配置验证通过")
+            print("✓ 配置验证通过")
         else:
-            logger.info("✗ 配置验证失败")
+            print("✗ 配置验证失败")
         
-        logger.info()
+        print()
         
         # 打印错误
         if self.result.errors:
-            logger.error(f"错误 ({len(self.result.errors)}):")
-            logger.info("-" * 60)
+            print(f"错误 ({len(self.result.errors)}):")
+            print("-" * 60)
             for error in self.result.errors:
-                logger.error(f"  ❌ {error}")
-            logger.info()
+                print(f"  ❌ {error}")
+            print()
         
         # 打印警告
         if self.result.warnings:
-            logger.warning(f"警告 ({len(self.result.warnings)}):")
-            logger.info("-" * 60)
+            print(f"警告 ({len(self.result.warnings)}):")
+            print("-" * 60)
             for warning in self.result.warnings:
-                logger.warning(f"  ⚠️  {warning}")
-            logger.info()
+                print(f"  ⚠️  {warning}")
+            print()
         
         # 打印信息
         if self.result.info:
-            logger.info(f"信息 ({len(self.result.info)}):")
-            logger.info("-" * 60)
+            print(f"信息 ({len(self.result.info)}):")
+            print("-" * 60)
             for info in self.result.info:
-                logger.info(f"  ℹ️  {info}")
-            logger.info()
+                print(f"  ℹ️  {info}")
+            print()
         
-        logger.info("=" * 60)
+        print("=" * 60)
         
         # 返回退出码
         sys.exit(0 if self.result.valid else 1)
