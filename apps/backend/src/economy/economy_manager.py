@@ -37,9 +37,21 @@ class EconomyManager:
         """
         DEPRECATED: Use add_transaction instead.
         Processes a transaction, updating balances and logging the event.
+        
+        This method now delegates to add_transaction for backward compatibility.
         """
-        logger.warning("Call to deprecated method process_transaction. Logic is incomplete.")
-        return False
+        logger.warning(
+            "DEPRECATED: process_transaction() is deprecated. "
+            "Use add_transaction(user_id, amount, description) instead."
+        )
+        
+        # Extract parameters from transaction_data
+        user_id = transaction_data.get("user_id", "")
+        amount = transaction_data.get("amount", 0.0)
+        description = transaction_data.get("description", "Legacy transaction")
+        
+        # Delegate to new method
+        return self.add_transaction(user_id, amount, description)
 
     def purchase_item(self, user_id: str, item_id: str) -> Dict[str, Any]:
         """Allows Angela to purchase an item from the registry."""
