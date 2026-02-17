@@ -458,6 +458,7 @@ cd apps/desktop-app/electron_app && pnpm lint:js
 ---
 
 ### [ ] Step: Verify Backend Functionality
+<!-- chat-id: 5173dc6c-2e2e-492b-856b-d7f3daa8777b -->
 
 Comprehensive backend testing and verification.
 
