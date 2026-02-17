@@ -369,7 +369,8 @@ findstr /S /N /I "TODO FIXME HACK BUG" apps\backend\src\*.py > technical_debt_sc
 
 ---
 
-### [ ] Step: Review Deprecated Code (P2-2)
+### [x] Step: Review Deprecated Code (P2-2)
+<!-- chat-id: 88b19cc8-b728-4282-9909-ace50bd9bcc1 -->
 
 Review 3 files with deprecation warnings and create update plan.
 
