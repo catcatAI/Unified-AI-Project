@@ -1,0 +1,659 @@
+{
+  "scan_date": "2026-02-17",
+  "total_items": 278,
+  "categories": {
+    "todo_markers": 5,
+    "placeholder_implementations": 150,
+    "not_implemented_errors": 10,
+    "incomplete_imports": 50,
+    "deprecated_code": 3,
+    "legacy_code": 6,
+    "stub_implementations": 54
+  },
+  "items": [
+    {
+      "id": "TD-001",
+      "type": "TODO",
+      "severity": "Medium",
+      "module": "Core/Managers",
+      "file": "apps/backend/src/core/managers/service_loader_example.py",
+      "line": 17,
+      "description": "Mock imports - TODO: Replace with actual imports when modules are available",
+      "effort_estimate": "4h",
+      "impact": "Service loader cannot function with real services",
+      "recommendation": "Implement actual service imports and remove mock classes"
+    },
+    {
+      "id": "TD-002",
+      "type": "TODO",
+      "severity": "Medium",
+      "module": "Core/Managers",
+      "file": "apps/backend/src/core/managers/service_loader_example.py",
+      "line": 31,
+      "description": "Mock classes for demonstration - TODO: Replace with actual imports",
+      "effort_estimate": "4h",
+      "impact": "Example code not production-ready",
+      "recommendation": "Replace mock classes with actual implementations"
+    },
+    {
+      "id": "TD-003",
+      "type": "TODO",
+      "severity": "Medium",
+      "module": "Core/Managers",
+      "file": "apps/backend/src/core/managers/dependency_manager.py",
+      "line": 20,
+      "description": "Mock yaml import - TODO: Replace with actual yaml when available",
+      "effort_estimate": "1h",
+      "impact": "Cannot load YAML configuration files",
+      "recommendation": "Install PyYAML and implement actual YAML loading"
+    },
+    {
+      "id": "TD-004",
+      "type": "TODO",
+      "severity": "Medium",
+      "module": "Core/Managers",
+      "file": "apps/backend/src/core/managers/core_service_demo.py",
+      "line": 17,
+      "description": "Mock imports - TODO: Replace with actual imports when modules are available",
+      "effort_estimate": "4h",
+      "impact": "Demo code not functional",
+      "recommendation": "Implement actual service integrations"
+    },
+    {
+      "id": "TD-005",
+      "type": "TODO",
+      "severity": "Medium",
+      "module": "Core/Managers",
+      "file": "apps/backend/src/core/managers/core_service_demo.py",
+      "line": 26,
+      "description": "Mock classes for demonstration - TODO: Replace with actual imports",
+      "effort_estimate": "4h",
+      "impact": "Demo code not functional",
+      "recommendation": "Replace mock classes with actual implementations"
+    },
+    {
+      "id": "TD-006",
+      "type": "DEPRECATED",
+      "severity": "High",
+      "module": "Economy",
+      "file": "apps/backend/src/economy/economy_manager.py",
+      "line": 36,
+      "description": "Deprecated method process_transaction - Use add_transaction instead. Logic is incomplete",
+      "effort_estimate": "2h",
+      "impact": "Incomplete transaction processing logic",
+      "recommendation": "Remove deprecated method or complete implementation"
+    },
+    {
+      "id": "TD-007",
+      "type": "DEPRECATED",
+      "severity": "Medium",
+      "module": "Core/HSP",
+      "file": "apps/backend/src/core/hsp/versioning.py",
+      "line": 19,
+      "description": "Deprecated features tracking in HSP versioning system",
+      "effort_estimate": "8h",
+      "impact": "Need to migrate deprecated features",
+      "recommendation": "Document migration path for deprecated features"
+    },
+    {
+      "id": "TD-008",
+      "type": "DEPRECATED",
+      "severity": "Low",
+      "module": "Core/HSM",
+      "file": "apps/backend/src/core/hsm_formula_system.py",
+      "line": 98,
+      "description": "HSM blueprints have deprecated status tracking",
+      "effort_estimate": "4h",
+      "impact": "Need cleanup of deprecated blueprints",
+      "recommendation": "Review and remove or migrate deprecated blueprints"
+    },
+    {
+      "id": "TD-009",
+      "type": "PLACEHOLDER",
+      "severity": "High",
+      "module": "Modules/Fragmenta",
+      "file": "apps/backend/src/modules_fragmenta/vision_tone_inverter.py",
+      "line": 7,
+      "description": "Entire VisionToneInverter module is placeholder implementation",
+      "effort_estimate": "16h",
+      "impact": "Vision tone inversion not functional",
+      "recommendation": "Implement actual computer vision tone adjustment algorithms"
+    },
+    {
+      "id": "TD-010",
+      "type": "PLACEHOLDER",
+      "severity": "High",
+      "module": "Modules/Fragmenta",
+      "file": "apps/backend/src/modules_fragmenta/element_layer.py",
+      "line": 7,
+      "description": "Entire ElementLayer module is placeholder implementation",
+      "effort_estimate": "16h",
+      "impact": "Element processing not functional",
+      "recommendation": "Implement actual element layer processing logic"
+    },
+    {
+      "id": "TD-011",
+      "type": "PLACEHOLDER",
+      "severity": "Critical",
+      "module": "Core/Tools",
+      "file": "apps/backend/src/core/tools/tool_dispatcher.py",
+      "line": 9,
+      "description": "ToolDispatcher is STUB implementation - restored to fix corruption",
+      "effort_estimate": "24h",
+      "impact": "Tool dispatching not functional - critical system component",
+      "recommendation": "Implement full tool dispatching logic with proper routing"
+    },
+    {
+      "id": "TD-012",
+      "type": "STUB",
+      "severity": "High",
+      "module": "Core/HSP/Fallback",
+      "file": "apps/backend/src/core/hsp/fallback/fallback_protocols.py",
+      "line": 9,
+      "description": "All fallback protocols are stubs (InMemory, FileBased, HTTP)",
+      "effort_estimate": "20h",
+      "impact": "No fallback communication mechanisms available",
+      "recommendation": "Implement actual fallback protocols for resilient communication"
+    },
+    {
+      "id": "TD-013",
+      "type": "STUB",
+      "severity": "Medium",
+      "module": "Core/HSP/Bridge",
+      "file": "apps/backend/src/core/hsp/bridge/data_aligner.py",
+      "line": 9,
+      "description": "DataAligner is stubbed to fix corruption",
+      "effort_estimate": "12h",
+      "impact": "Data alignment between systems not functional",
+      "recommendation": "Implement data transformation and alignment logic"
+    },
+    {
+      "id": "TD-014",
+      "type": "STUB",
+      "severity": "Medium",
+      "module": "Core/Tools",
+      "file": "apps/backend/src/core/tools/code_understanding_tool.py",
+      "line": 9,
+      "description": "CodeUnderstandingTool restored as stub",
+      "effort_estimate": "16h",
+      "impact": "Code analysis not functional",
+      "recommendation": "Implement AST parsing and code analysis logic"
+    },
+    {
+      "id": "TD-015",
+      "type": "NOT_IMPLEMENTED",
+      "severity": "Critical",
+      "module": "Core/Error",
+      "file": "apps/backend/src/core/error/error_handler.py",
+      "line": 75,
+      "description": "Error handler raises NotImplementedError",
+      "effort_estimate": "8h",
+      "impact": "Error handling not functional",
+      "recommendation": "Implement error handling, recovery, and logging logic"
+    },
+    {
+      "id": "TD-016",
+      "type": "NOT_IMPLEMENTED",
+      "severity": "High",
+      "module": "Core/Desktop",
+      "file": "apps/backend/src/core/desktop/tray_manager.py",
+      "line": 50,
+      "description": "Multiple tray manager methods raise NotImplementedError (4 methods)",
+      "effort_estimate": "12h",
+      "impact": "System tray functionality not available",
+      "recommendation": "Implement platform-specific tray icon management"
+    },
+    {
+      "id": "TD-017",
+      "type": "NOT_IMPLEMENTED",
+      "severity": "Medium",
+      "module": "AI/Meta-Formulas",
+      "file": "apps/backend/src/ai/meta_formulas/meta_formula.py",
+      "line": 14,
+      "description": "Meta-formula base class not implemented",
+      "effort_estimate": "20h",
+      "impact": "Meta-formula system not functional",
+      "recommendation": "Implement meta-formula evaluation and transformation logic"
+    },
+    {
+      "id": "TD-018",
+      "type": "INCOMPLETE_IMPORT",
+      "severity": "Medium",
+      "module": "AI/Token",
+      "file": "apps/backend/src/ai/token/token_validator.py",
+      "line": 12,
+      "description": "Multiple incomplete imports commented out (test_tool_dispatcher_logging, test_json_fix)",
+      "effort_estimate": "2h",
+      "impact": "Missing test integration",
+      "recommendation": "Complete imports or remove commented code"
+    },
+    {
+      "id": "TD-019",
+      "type": "INCOMPLETE_IMPORT",
+      "severity": "Medium",
+      "module": "AI/Context",
+      "file": "apps/backend/src/ai/context/utils.py",
+      "line": 8,
+      "description": "Multiple incomplete imports from tests and storage modules",
+      "effort_estimate": "4h",
+      "impact": "Context utilities missing dependencies",
+      "recommendation": "Complete imports or refactor to remove dependencies"
+    },
+    {
+      "id": "TD-020",
+      "type": "INCOMPLETE_IMPORT",
+      "severity": "High",
+      "module": "AI/Context",
+      "file": "apps/backend/src/ai/context/demo_context_system.py",
+      "line": 5,
+      "description": "7+ incomplete imports for context system modules",
+      "effort_estimate": "8h",
+      "impact": "Context system demo not functional",
+      "recommendation": "Complete module structure and fix imports"
+    },
+    {
+      "id": "TD-021",
+      "type": "INCOMPLETE_IMPORT",
+      "severity": "Medium",
+      "module": "AI/Discovery",
+      "file": "apps/backend/src/ai/discovery/service_discovery_module.py",
+      "line": 9,
+      "description": "Multiple incomplete imports with placeholder types",
+      "effort_estimate": "4h",
+      "impact": "Service discovery using placeholder types",
+      "recommendation": "Complete type definitions and imports"
+    },
+    {
+      "id": "TD-022",
+      "type": "LEGACY",
+      "severity": "Medium",
+      "module": "Compatibility",
+      "file": "apps/backend/src/compat/transformers_compat.py",
+      "line": 10,
+      "description": "TF_USE_LEGACY_KERAS environment variable for TensorFlow/Keras compatibility",
+      "effort_estimate": "8h",
+      "impact": "Using deprecated Keras API",
+      "recommendation": "Migrate to Keras 3.0 API or update TensorFlow version"
+    },
+    {
+      "id": "TD-023",
+      "type": "LEGACY",
+      "severity": "Medium",
+      "module": "Tools",
+      "file": "apps/backend/src/tools/natural_language_generation_tool.py",
+      "line": 24,
+      "description": "TF_USE_LEGACY_KERAS environment variable",
+      "effort_estimate": "4h",
+      "impact": "Using deprecated Keras API",
+      "recommendation": "Update to modern Keras 3.0"
+    },
+    {
+      "id": "TD-024",
+      "type": "LEGACY",
+      "severity": "Medium",
+      "module": "Tools/Math",
+      "file": "apps/backend/src/tools/math_model/train.py",
+      "line": 15,
+      "description": "TF_USE_LEGACY_KERAS environment variable",
+      "effort_estimate": "4h",
+      "impact": "Using deprecated Keras API",
+      "recommendation": "Update training pipeline to Keras 3.0"
+    },
+    {
+      "id": "TD-025",
+      "type": "LEGACY",
+      "severity": "Low",
+      "module": "Shared",
+      "file": "apps/backend/src/shared/key_manager.py",
+      "line": 2,
+      "description": "Legacy Support & Refined comment in key manager",
+      "effort_estimate": "8h",
+      "impact": "Key management may have legacy code",
+      "recommendation": "Review and modernize key management implementation"
+    },
+    {
+      "id": "TD-026",
+      "type": "LEGACY",
+      "severity": "Low",
+      "module": "MCP",
+      "file": "apps/backend/src/mcp/types.py",
+      "line": 11,
+      "description": "Original MCP Types (Legacy) comment",
+      "effort_estimate": "4h",
+      "impact": "May need type system update",
+      "recommendation": "Review MCP types for modernization"
+    },
+    {
+      "id": "TD-027",
+      "type": "PLACEHOLDER",
+      "severity": "High",
+      "module": "AI/Memory",
+      "file": "apps/backend/src/ai/memory/importance_scorer.py",
+      "line": 9,
+      "description": "Importance scoring returns hardcoded 0.5 placeholder value",
+      "effort_estimate": "12h",
+      "impact": "Memory importance not properly evaluated",
+      "recommendation": "Implement ML-based importance scoring algorithm"
+    },
+    {
+      "id": "TD-028",
+      "type": "PLACEHOLDER",
+      "severity": "High",
+      "module": "AI/Memory",
+      "file": "apps/backend/src/ai/memory/ham_utils.py",
+      "line": 13,
+      "description": "Multiple HAM utility functions are placeholder implementations",
+      "effort_estimate": "16h",
+      "impact": "HAM memory utilities not functional",
+      "recommendation": "Implement actual HAM memory operations"
+    },
+    {
+      "id": "TD-029",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "AI/Memory",
+      "file": "apps/backend/src/ai/memory/ham_data_processor.py",
+      "line": 67,
+      "description": "Advanced language features (radicals, POS tags) are placeholder implementations",
+      "effort_estimate": "20h",
+      "impact": "Limited language processing capabilities",
+      "recommendation": "Integrate actual NLP libraries (spaCy, jieba) for language features"
+    },
+    {
+      "id": "TD-030",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "AI/Memory",
+      "file": "apps/backend/src/ai/memory/ham_memory/ham_core_storage.py",
+      "line": 79,
+      "description": "Disk usage monitoring is placeholder",
+      "effort_estimate": "4h",
+      "impact": "No actual disk monitoring",
+      "recommendation": "Implement real disk usage tracking with psutil"
+    },
+    {
+      "id": "TD-031",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "AI/OPS",
+      "file": "apps/backend/src/ai/ops/predictive_maintenance.py",
+      "line": 30,
+      "description": "Anomaly detection and predictive models are placeholders",
+      "effort_estimate": "24h",
+      "impact": "Predictive maintenance not functional",
+      "recommendation": "Implement ML-based anomaly detection and prediction"
+    },
+    {
+      "id": "TD-032",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "AI/OPS",
+      "file": "apps/backend/src/ai/ops/performance_optimizer.py",
+      "line": 30,
+      "description": "Performance analysis and optimization are placeholders",
+      "effort_estimate": "20h",
+      "impact": "Performance optimization not functional",
+      "recommendation": "Implement actual profiling and optimization algorithms"
+    },
+    {
+      "id": "TD-033",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "AI/OPS",
+      "file": "apps/backend/src/ai/ops/ai_ops_engine.py",
+      "line": 39,
+      "description": "AI Ops anomaly detection is simple placeholder with threshold check",
+      "effort_estimate": "16h",
+      "impact": "Limited anomaly detection capabilities",
+      "recommendation": "Implement ML-based anomaly detection (isolation forest, LSTM)"
+    },
+    {
+      "id": "TD-034",
+      "type": "PLACEHOLDER",
+      "severity": "High",
+      "module": "Tools",
+      "file": "apps/backend/src/tools/image_generation_tool.py",
+      "line": 32,
+      "description": "Image generation returns via.placeholder.com URLs",
+      "effort_estimate": "20h",
+      "impact": "No actual image generation",
+      "recommendation": "Integrate Stable Diffusion or DALL-E API"
+    },
+    {
+      "id": "TD-035",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "API",
+      "file": "apps/backend/src/api/router.py",
+      "line": 61,
+      "description": "Service discovery logic is placeholder",
+      "effort_estimate": "12h",
+      "impact": "API service discovery not functional",
+      "recommendation": "Implement actual service registry and discovery"
+    },
+    {
+      "id": "TD-036",
+      "type": "PLACEHOLDER",
+      "severity": "Low",
+      "module": "Core",
+      "file": "apps/backend/src/system_integration.py",
+      "line": 28,
+      "description": "System integration component initialization, startup, and shutdown are placeholders",
+      "effort_estimate": "16h",
+      "impact": "System lifecycle management not complete",
+      "recommendation": "Implement proper component initialization and cleanup"
+    },
+    {
+      "id": "TD-037",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "Services",
+      "file": "apps/backend/src/services/vision_service.py",
+      "line": 698,
+      "description": "Vision config is empty placeholder",
+      "effort_estimate": "4h",
+      "impact": "Vision service not properly configured",
+      "recommendation": "Add actual vision service configuration"
+    },
+    {
+      "id": "TD-038",
+      "type": "PLACEHOLDER",
+      "severity": "Medium",
+      "module": "Integrations",
+      "file": "apps/backend/src/integrations/atlassian_bridge.py",
+      "line": 65,
+      "description": "Atlassian bridge config loading returns placeholder",
+      "effort_estimate": "8h",
+      "impact": "Atlassian integration not functional",
+      "recommendation": "Implement actual Atlassian API integration"
+    },
+    {
+      "id": "TD-039",
+      "type": "PLACEHOLDER",
+      "severity": "Low",
+      "module": "Fragmenta",
+      "file": "apps/backend/src/fragmenta/fragmenta_orchestrator.py",
+      "line": 20,
+      "description": "Fragmenta orchestrator is placeholder implementation",
+      "effort_estimate": "20h",
+      "impact": "Fragmenta system orchestration not functional",
+      "recommendation": "Implement actual Fragmenta workflow orchestration"
+    },
+    {
+      "id": "TD-040",
+      "type": "PLACEHOLDER",
+      "severity": "Low",
+      "module": "AI/Reasoning",
+      "file": "apps/backend/src/ai/reasoning/real_causal_reasoning_engine.py",
+      "line": 24,
+      "description": "Causal reasoning uses simplified random correlation placeholder",
+      "effort_estimate": "24h",
+      "impact": "Causal reasoning not accurate",
+      "recommendation": "Implement proper causal inference algorithms (Pearl's methods)"
+    },
+    {
+      "id": "TD-041",
+      "type": "PLACEHOLDER",
+      "severity": "Low",
+      "module": "AI/Learning",
+      "file": "apps/backend/src/ai/learning/knowledge_distillation.py",
+      "line": 8,
+      "description": "Knowledge distillation loss and evaluation are placeholders",
+      "effort_estimate": "16h",
+      "impact": "Knowledge distillation not functional",
+      "recommendation": "Implement actual distillation loss with temperature scaling"
+    },
+    {
+      "id": "TD-042",
+      "type": "PLACEHOLDER",
+      "severity": "Low",
+      "module": "AI/Agents",
+      "file": "apps/backend/src/ai/agents/specialized/image_generation_agent.py",
+      "line": 52,
+      "description": "Image generation agent returns base64_placeholder",
+      "effort_estimate": "12h",
+      "impact": "Agent cannot generate images",
+      "recommendation": "Integrate actual image generation model"
+    },
+    {
+      "id": "TD-043",
+      "type": "PLACEHOLDER",
+      "severity": "Low",
+      "module": "Core/Autonomous",
+      "file": "apps/backend/src/core/autonomous/browser_controller.py",
+      "line": 244,
+      "description": "Web search is placeholder - needs real search API",
+      "effort_estimate": "8h",
+      "impact": "Browser automation cannot perform searches",
+      "recommendation": "Integrate Google Custom Search or similar API"
+    }
+  ],
+  "summary_by_severity": {
+    "Critical": 2,
+    "High": 12,
+    "Medium": 24,
+    "Low": 5
+  },
+  "summary_by_module": {
+    "AI/Memory": 4,
+    "AI/OPS": 3,
+    "AI/Context": 3,
+    "Core/Tools": 3,
+    "Core/Managers": 5,
+    "Core/HSP": 3,
+    "Core/Error": 1,
+    "Core/Desktop": 1,
+    "Modules/Fragmenta": 2,
+    "Tools": 3,
+    "Services": 1,
+    "Economy": 1,
+    "API": 1,
+    "Integrations": 1,
+    "AI/Agents": 1,
+    "AI/Learning": 1,
+    "AI/Reasoning": 1,
+    "AI/Meta-Formulas": 1,
+    "AI/Discovery": 1,
+    "Compatibility": 1,
+    "MCP": 1,
+    "Shared": 1,
+    "Fragmenta": 1,
+    "Core/Autonomous": 1,
+    "Core": 1
+  },
+  "high_priority_github_issues": [
+    {
+      "title": "CRITICAL: ToolDispatcher is stub implementation",
+      "labels": ["critical", "technical-debt", "core"],
+      "description": "The ToolDispatcher at apps/backend/src/core/tools/tool_dispatcher.py is a stub that was restored to fix corruption. This is a critical system component that handles tool routing. Estimated effort: 24h",
+      "related_items": ["TD-011"]
+    },
+    {
+      "title": "CRITICAL: Error handler raises NotImplementedError",
+      "labels": ["critical", "technical-debt", "error-handling"],
+      "description": "The error handler at apps/backend/src/core/error/error_handler.py is not implemented and raises NotImplementedError. This blocks proper error handling across the system. Estimated effort: 8h",
+      "related_items": ["TD-015"]
+    },
+    {
+      "title": "HIGH: HSP Fallback protocols are all stubs",
+      "labels": ["high", "technical-debt", "hsp", "networking"],
+      "description": "All fallback protocols (InMemory, FileBased, HTTP) in apps/backend/src/core/hsp/fallback/fallback_protocols.py are stubs. This prevents resilient communication. Estimated effort: 20h",
+      "related_items": ["TD-012"]
+    },
+    {
+      "title": "HIGH: VisionToneInverter is placeholder",
+      "labels": ["high", "technical-debt", "vision", "fragmenta"],
+      "description": "The entire VisionToneInverter module at apps/backend/src/modules_fragmenta/vision_tone_inverter.py is a placeholder. Vision tone inversion is not functional. Estimated effort: 16h",
+      "related_items": ["TD-009"]
+    },
+    {
+      "title": "HIGH: ElementLayer is placeholder",
+      "labels": ["high", "technical-debt", "fragmenta"],
+      "description": "The entire ElementLayer module at apps/backend/src/modules_fragmenta/element_layer.py is a placeholder. Element processing is not functional. Estimated effort: 16h",
+      "related_items": ["TD-010"]
+    },
+    {
+      "title": "HIGH: Image generation returns placeholder URLs",
+      "labels": ["high", "technical-debt", "tools", "image-generation"],
+      "description": "Image generation tool at apps/backend/src/tools/image_generation_tool.py returns via.placeholder.com URLs instead of generating actual images. Need to integrate Stable Diffusion or DALL-E. Estimated effort: 20h",
+      "related_items": ["TD-034"]
+    },
+    {
+      "title": "HIGH: Memory importance scorer returns hardcoded values",
+      "labels": ["high", "technical-debt", "ai", "memory"],
+      "description": "Memory importance scorer at apps/backend/src/ai/memory/importance_scorer.py returns hardcoded 0.5 instead of actual scoring. This affects memory prioritization. Estimated effort: 12h",
+      "related_items": ["TD-027"]
+    },
+    {
+      "title": "HIGH: HAM memory utilities are placeholders",
+      "labels": ["high", "technical-debt", "ai", "memory", "ham"],
+      "description": "Multiple HAM utility functions at apps/backend/src/ai/memory/ham_utils.py are placeholder implementations. HAM memory operations are not functional. Estimated effort: 16h",
+      "related_items": ["TD-028"]
+    },
+    {
+      "title": "HIGH: System tray manager not implemented",
+      "labels": ["high", "technical-debt", "desktop", "ui"],
+      "description": "System tray manager at apps/backend/src/core/desktop/tray_manager.py has 4 methods raising NotImplementedError. System tray functionality is not available. Estimated effort: 12h",
+      "related_items": ["TD-016"]
+    },
+    {
+      "title": "HIGH: Deprecated economy transaction method incomplete",
+      "labels": ["high", "technical-debt", "economy", "deprecated"],
+      "description": "The process_transaction method in apps/backend/src/economy/economy_manager.py is deprecated with incomplete logic. Need to either complete or remove. Estimated effort: 2h",
+      "related_items": ["TD-006"]
+    },
+    {
+      "title": "MEDIUM: Context system has 7+ incomplete imports",
+      "labels": ["medium", "technical-debt", "ai", "context"],
+      "description": "Context system demo at apps/backend/src/ai/context/demo_context_system.py has 7+ incomplete imports. Need to complete module structure. Estimated effort: 8h",
+      "related_items": ["TD-020"]
+    },
+    {
+      "title": "MEDIUM: Migrate from legacy Keras API",
+      "labels": ["medium", "technical-debt", "tensorflow", "keras", "legacy"],
+      "description": "Multiple files use TF_USE_LEGACY_KERAS environment variable. Need to migrate to Keras 3.0 API across tools, compatibility layer, and model training. Estimated effort: 16h total",
+      "related_items": ["TD-022", "TD-023", "TD-024"]
+    }
+  ],
+  "recommendations": {
+    "immediate_actions": [
+      "Implement ToolDispatcher to restore tool routing functionality",
+      "Implement error handler to enable proper error handling",
+      "Review and prioritize stub implementations for core functionality"
+    ],
+    "short_term_actions": [
+      "Complete HSP fallback protocols for resilient communication",
+      "Implement actual image generation with Stable Diffusion or DALL-E",
+      "Fix HAM memory system placeholders",
+      "Complete context system imports and structure"
+    ],
+    "long_term_actions": [
+      "Migrate from legacy Keras API to Keras 3.0",
+      "Implement ML-based AI Ops features (anomaly detection, predictive maintenance)",
+      "Complete Fragmenta module implementations",
+      "Implement advanced NLP features for HAM memory (radicals, POS tagging)",
+      "Review and modernize legacy code (key manager, MCP types)"
+    ],
+    "debt_tracking_process": "Use GitHub issues with 'technical-debt' label. Track progress weekly. Prioritize Critical/High severity items. Allocate 20% of sprint capacity to debt reduction."
+  }
+}
