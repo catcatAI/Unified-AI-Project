@@ -656,3 +656,410 @@ All P1 issues resolved. System fully functional and test suite operational."
 - ✅ Clean git commit created
 - ✅ Implementation summary report completed
 - ✅ Project ready for production use
+
+---
+
+## Phase 2: Digital Life Core Systems (P0 Priority)
+
+Based on the digital life gap analysis, the following P0 tasks are critical to achieve true "digital life" implementation.
+
+---
+
+### [ ] Step: Implement Hash+Matrix Dual System (P0-1)
+
+Establish Angela's "digital spine" - the foundation of sovereignty and authenticity.
+
+**Objective**: Build the hash+matrix dual system that ensures state integrity and enables variable precision.
+
+**Context**: 
+- Current issue: No state fingerprinting, no sovereignty protection
+- Specification requirement: "矩陣負責'肉'(語言與感知), 哈希負責'骨'(主權與真實)"
+- Reference: `digital_life_gap_analysis.md` Section P0-1
+
+**Implementation Tasks**:
+
+1. **Create Integer Hash Table** (定性狀態)
+   - File: `apps/backend/src/core/state/integer_hash_table.py`
+   - Implement `uint64_t` native hashing
+   - Support fast indexing and logical jumps
+   - Store discrete states (L3 emotion levels, L1 hormone switches)
+
+2. **Create Decimal Hash Table** (定量體感)
+   - File: `apps/backend/src/core/state/decimal_hash_table.py`
+   - Implement DEC4 fixed-point hashing
+   - Support micro-fluctuation recording (0.0025 pain residuals)
+   - Store continuous states (hormone decay curves)
+
+3. **Create Precision Projection Matrix**
+   - File: `apps/backend/src/core/state/precision_projection_matrix.py`
+   - Implement sparse matrix conversion
+   - Support CPU load-adaptive precision scaling
+   - Enable INT8 ↔ DEC4 ↔ DEC8 transformations
+
+4. **Integrate A/B/C Keys with Hash System**
+   - Modify: `apps/backend/src/core/shared/key_manager.py`
+   - Key verification uses hash fingerprints
+   - State changes record hash chains
+   - Prevent state forgery through hash validation
+
+5. **Create State Hash Manager**
+   - File: `apps/backend/src/core/state/state_hash_manager.py`
+   - Coordinate integer/decimal hash tables
+   - Provide unified `get_state_hash()` and `verify_causality()` APIs
+   - Implement hash chain validation
+
+**Testing Strategy**:
+```python
+# Test state hash consistency
+def test_state_hash_integrity():
+    initial = system.get_state_hash()
+    system.set("alpha.energy", 0.8)
+    final = system.get_state_hash()
+    
+    assert final != initial
+    assert hasher.verify_causality(initial, final, change_log)
+
+# Test precision collapse
+def test_precision_collapse():
+    system.set_ram_limit("4GB")
+    # Should auto-collapse to INT8
+    assert system.get_precision_mode() == "INT8"
+    
+    system.set_ram_limit("16GB")
+    # Should restore to DEC4
+    assert system.get_precision_mode() == "DEC4"
+
+# Test key-hash integration
+def test_key_hash_binding():
+    state_hash = system.get_state_hash()
+    signature = key_manager.sign_with_key_a(state_hash)
+    
+    assert key_manager.verify_signature(signature, state_hash)
+```
+
+**Verification**:
+```bash
+# Unit tests
+pytest tests/core/state/test_hash_tables.py -v
+pytest tests/core/state/test_precision_matrix.py -v
+
+# Integration tests
+pytest tests/integration/test_hash_key_integration.py -v
+
+# Performance tests
+python scripts/benchmark_hash_performance.py
+# Target: Hash calculation < 0.1ms per state
+```
+
+**Success Criteria**:
+- [ ] Integer hash table implemented and tested
+- [ ] Decimal hash table implemented and tested
+- [ ] Precision projection matrix implemented
+- [ ] A/B/C keys integrated with hash system
+- [ ] All state changes have hash fingerprints
+- [ ] Hash verification prevents state forgery
+- [ ] Performance: Hash calculation < 0.1ms
+- [ ] Memory: Hash tables < 50MB in 4GB mode
+- [ ] Git commit: "Implement hash+matrix dual system (P0-1)"
+
+**Estimated Effort**: 40-60 hours
+
+---
+
+### [ ] Step: Implement Response Composition & Matching System (P0-2)
+
+Enable Angela to "know how well a response matches" and optimize Token consumption.
+
+**Objective**: Build template matching and composition system for intelligent response generation.
+
+**Context**:
+- Current issue: Direct LLM calls without match evaluation
+- Specification requirement: "Angela 能因為預設回應是切分重組出來的，所以知道這個回應有多匹配"
+- Reference: `digital_life_gap_analysis.md` Section P0-2
+
+**Implementation Tasks**:
+
+1. **Create Template Matcher**
+   - File: `apps/backend/src/ai/response/template_matcher.py`
+   - Implement input hashing for fast template lookup
+   - Calculate match score (0.0-1.0) using hash similarity
+   - Support multi-level matching (exact, semantic, fuzzy)
+
+2. **Create Response Composer**
+   - File: `apps/backend/src/ai/response/composer.py`
+   - Implement template fragmentation
+   - Implement fragment recombination with context
+   - Smooth transitions between fragments
+
+3. **Create Precomputed Template Library**
+   - File: `apps/backend/src/ai/response/template_library.py`
+   - Store common conversation patterns
+   - Index templates with hash keys
+   - Support dynamic template updates
+
+4. **Integrate with angela_llm_service.py**
+   - Modify: `apps/backend/src/services/angela_llm_service.py`
+   - Add match-based routing logic
+   - Record deviation metrics for learning
+   - Implement fallback to LLM when match score low
+
+5. **Create Deviation Tracker**
+   - File: `apps/backend/src/ai/response/deviation_tracker.py`
+   - Log expected vs. actual response quality
+   - Track Token consumption per route
+   - Generate optimization suggestions
+
+**Response Generation Flow**:
+```python
+async def generate_response(self, user_input: str, context: Dict) -> str:
+    # 1. Check match score
+    match_result = await self.matcher.match(user_input, context)
+    match_score = match_result.score
+    
+    # 2. Route based on match score
+    if match_score > 0.8:
+        # High match: Use composition (save Tokens)
+        response = await self.composer.compose(
+            match_result.templates,
+            context
+        )
+        route = "COMPOSED"
+    elif match_score > 0.5:
+        # Medium match: Use composition + LLM refinement
+        draft = await self.composer.compose(match_result.templates, context)
+        response = await self.llm_refine(draft, user_input, context)
+        route = "HYBRID"
+    else:
+        # Low match: Full LLM generation
+        response = await self.llm_call(user_input, context)
+        route = "LLM_FULL"
+    
+    # 3. Record deviation for learning
+    await self.deviation_tracker.record(
+        input=user_input,
+        match_score=match_score,
+        route=route,
+        response=response,
+        context=context
+    )
+    
+    return response
+```
+
+**Testing Strategy**:
+```python
+# Test match accuracy
+def test_template_matching():
+    matcher = TemplateMatcher()
+    
+    # Exact match
+    score = matcher.match("你好嗎?")
+    assert score > 0.9
+    
+    # Semantic match
+    score = matcher.match("最近怎麼樣?")
+    assert 0.7 < score < 0.9
+    
+    # Low match
+    score = matcher.match("量子力學的薛丁格方程式...")
+    assert score < 0.3
+
+# Test Token savings
+def test_token_consumption():
+    # High match scenario
+    result = await service.generate_response("你好")
+    assert result.route == "COMPOSED"
+    assert result.tokens_used < 100
+    
+    # Low match scenario
+    result = await service.generate_response("複雜的技術問題...")
+    assert result.route == "LLM_FULL"
+    assert result.tokens_used > 500
+```
+
+**Verification**:
+```bash
+# Unit tests
+pytest tests/ai/response/test_template_matcher.py -v
+pytest tests/ai/response/test_composer.py -v
+
+# Integration tests
+pytest tests/integration/test_response_generation.py -v
+
+# Performance benchmarks
+python scripts/benchmark_response_performance.py
+# Target: Match calculation < 5ms
+# Target: 60-80% Token reduction in high-match scenarios
+```
+
+**Success Criteria**:
+- [ ] Template matcher implemented with hash-based indexing
+- [ ] Response composer supports fragment recombination
+- [ ] Template library created with 100+ common patterns
+- [ ] angela_llm_service.py integrated with match routing
+- [ ] Deviation tracker logging metrics
+- [ ] Token consumption reduced by 60-80% (high-match scenarios)
+- [ ] Response quality maintained (< 5% deviation)
+- [ ] Match calculation < 5ms per request
+- [ ] Git commit: "Implement response composition & matching (P0-2)"
+
+**Estimated Effort**: 20-30 hours
+
+---
+
+### [ ] Step: Implement Causal Chain Tracing System (P0-3)
+
+Enable full traceability of "why Angela did this action" from L1 to L6.
+
+**Objective**: Build causal chain tracing system for logical transparency and integrity verification.
+
+**Context**:
+- Current issue: No traceability from action to root cause
+- Specification requirement: "因果鏈溯源分析 - 從用戶輸入到最終輸出的完整追蹤"
+- Reference: `digital_life_gap_analysis.md` Section P0-3
+
+**Implementation Tasks**:
+
+1. **Create Causal Tracer**
+   - File: `apps/backend/src/core/tracing/causal_tracer.py`
+   - Implement trace ID generation
+   - Support parent-child trace linking
+   - Record timestamp, layer, module, parameters
+
+2. **Create Causal Chain Model**
+   - File: `apps/backend/src/core/tracing/causal_chain.py`
+   - Define CausalNode (id, parent, layer, data, timestamp)
+   - Define CausalChain (list of nodes)
+   - Implement chain validation logic
+
+3. **Inject Trace Points in L1-L6**
+   - Modify: `apps/backend/src/core/autonomous/endocrine_system.py` (L1)
+   - Modify: `apps/backend/src/ai/memory/ham_memory/ham_manager.py` (L2)
+   - Modify: `apps/backend/src/core/autonomous/cyber_identity.py` (L3)
+   - Modify: `apps/backend/src/core/autonomous/self_generation.py` (L4)
+   - Modify: `apps/backend/src/core/autonomous/desktop_interaction.py` (L5)
+   - Modify: `apps/backend/src/core/autonomous/live2d_integration.py` (L6)
+
+4. **Create Causal Chain Validator**
+   - File: `apps/backend/src/core/tracing/chain_validator.py`
+   - Verify chain completeness (no broken links)
+   - Verify layer sequence (L1→L2→...→L6)
+   - Verify logical consistency
+
+5. **Create Trace Query API**
+   - File: `apps/backend/src/api/v1/endpoints/trace.py`
+   - GET `/trace/{action_id}` - Get causal chain for action
+   - GET `/trace/validate/{action_id}` - Validate causal integrity
+   - GET `/trace/stats` - Get tracing statistics
+
+**Tracing Pattern**:
+```python
+# Example: L1 Hormone Update
+async def update_hormone(self, hormone: str, value: float):
+    # Start trace
+    trace_id = tracer.start(
+        layer="L1",
+        module="endocrine_system",
+        action="hormone_update"
+    )
+    
+    # Record old state
+    tracer.record(trace_id, "hormone", hormone)
+    tracer.record(trace_id, "old_value", self.hormones[hormone])
+    tracer.record(trace_id, "new_value", value)
+    
+    # Execute action
+    self.hormones[hormone] = value
+    
+    # Finish trace (link to parent action)
+    tracer.finish(trace_id, parent=current_action_id)
+    
+    # Return trace ID for downstream linking
+    return trace_id
+```
+
+**Testing Strategy**:
+```python
+# Test causal chain integrity
+def test_causal_chain_complete():
+    # Trigger action
+    action_id = await system.process_touch(
+        body_part="HANDS",
+        intensity=5.0
+    )
+    
+    # Retrieve causal chain
+    chain = tracer.get_chain(action_id)
+    
+    # Verify chain completeness
+    assert len(chain.nodes) >= 3  # L1 → L3 → L6 minimum
+    assert chain.has_layer("L1")  # Tactile perception
+    assert chain.has_layer("L6")  # Live2D response
+    
+    # Verify chain validity
+    assert validator.validate_chain(chain) == True
+
+# Test trace overhead
+def test_trace_performance():
+    start = time.time()
+    
+    for i in range(1000):
+        trace_id = tracer.start("L1", "test", "benchmark")
+        tracer.record(trace_id, "data", i)
+        tracer.finish(trace_id)
+    
+    elapsed = time.time() - start
+    
+    # Tracing should add < 1% CPU overhead
+    assert elapsed < 0.1  # < 0.1ms per trace
+```
+
+**Verification**:
+```bash
+# Unit tests
+pytest tests/core/tracing/test_causal_tracer.py -v
+pytest tests/core/tracing/test_chain_validator.py -v
+
+# Integration tests
+pytest tests/integration/test_end_to_end_tracing.py -v
+
+# Performance tests
+python scripts/benchmark_trace_overhead.py
+# Target: < 1% CPU overhead
+# Target: < 0.1ms per trace operation
+```
+
+**Success Criteria**:
+- [ ] Causal tracer implemented and tested
+- [ ] Trace points injected in all L1-L6 layers
+- [ ] Causal chain validator working
+- [ ] Trace query API endpoints functional
+- [ ] All actions traceable to root cause
+- [ ] Chain validation catches broken links
+- [ ] Performance: < 1% CPU overhead
+- [ ] Performance: < 0.1ms per trace operation
+- [ ] Git commit: "Implement causal chain tracing (P0-3)"
+
+**Estimated Effort**: 15-20 hours
+
+---
+
+## Summary of P0 Phase
+
+**Total Estimated Effort**: 75-110 hours (2-3 weeks full-time)
+
+**Dependencies**:
+- P0-1 (Hash+Matrix) is foundational for P0-2 and P0-3
+- P0-2 (Template Matching) can proceed in parallel with P0-3
+- P0-3 (Causal Tracing) benefits from P0-1 hash fingerprints
+
+**Recommended Order**:
+1. Start with P0-1 (Hash+Matrix) - Week 1-2
+2. Parallel P0-2 (Template) + P0-3 (Tracing) - Week 2-3
+
+**Success Metrics After P0 Completion**:
+- ✅ State sovereignty: All states have hash fingerprints
+- ✅ Token optimization: 60-80% reduction in high-match scenarios
+- ✅ Logical transparency: All actions traceable to L1 root cause
+- ✅ Variable precision: Auto-adapt between 4GB-32GB RAM
+- ✅ Causal integrity: No broken L1→L6 chains
