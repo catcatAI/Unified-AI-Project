@@ -226,3 +226,84 @@ class UnifiedKeyManager:
             "rotation_interval_days": self.key_rotation_days,
             "keys_available": list(self.keys_data.get("keys", {}).keys())
         }
+    
+    def sign_with_key_a(self, state_hash: int) -> str:
+        """使用 Key A 簽名狀態哈希
+        
+        Args:
+            state_hash: 狀態哈希值 (uint64)
+            
+        Returns:
+            簽名字符串 (SHA256 hex)
+        """
+        key_a = self.get_security_key("KeyA")
+        if not key_a:
+            raise ValueError("Key A not available")
+        
+        data = f"{state_hash}:{key_a}".encode()
+        signature = hashlib.sha256(data).hexdigest()
+        
+        logger.debug(f"State hash {state_hash} signed with Key A")
+        return signature
+    
+    def verify_signature_with_key_a(self, state_hash: int, signature: str) -> bool:
+        """驗證 Key A 簽名
+        
+        Args:
+            state_hash: 狀態哈希值
+            signature: 簽名字符串
+            
+        Returns:
+            簽名是否有效
+        """
+        try:
+            expected_signature = self.sign_with_key_a(state_hash)
+            is_valid = signature == expected_signature
+            
+            if not is_valid:
+                logger.warning(f"Signature verification failed for state hash {state_hash}")
+            
+            return is_valid
+        except Exception as e:
+            logger.error(f"Signature verification error: {e}")
+            return False
+    
+    def bind_state_hash(self, state_hash: int) -> Dict[str, Any]:
+        """綁定狀態哈希與密鑰
+        
+        創建狀態-密鑰綁定記錄
+        
+        Args:
+            state_hash: 狀態哈希值
+            
+        Returns:
+            綁定記錄字典
+        """
+        signature = self.sign_with_key_a(state_hash)
+        binding = {
+            "state_hash": state_hash,
+            "signature": signature,
+            "timestamp": datetime.now().isoformat(),
+            "key_version": self.keys_data.get("version", "1.0")
+        }
+        
+        logger.info(f"State hash {state_hash} bound to Key A")
+        return binding
+    
+    def verify_state_binding(self, binding: Dict[str, Any]) -> bool:
+        """驗證狀態綁定
+        
+        Args:
+            binding: 綁定記錄字典
+            
+        Returns:
+            綁定是否有效
+        """
+        state_hash = binding.get("state_hash")
+        signature = binding.get("signature")
+        
+        if not state_hash or not signature:
+            logger.warning("Invalid binding record: missing state_hash or signature")
+            return False
+        
+        return self.verify_signature_with_key_a(state_hash, signature)

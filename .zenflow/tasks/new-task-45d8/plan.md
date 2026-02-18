@@ -666,6 +666,7 @@ Based on the digital life gap analysis, the following P0 tasks are critical to a
 ---
 
 ### [ ] Step: Implement Hash+Matrix Dual System (P0-1)
+<!-- chat-id: 84f623db-8f71-4733-b79e-0e3dd4217db0 -->
 
 Establish Angela's "digital spine" - the foundation of sovereignty and authenticity.
 
