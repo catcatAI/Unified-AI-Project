@@ -397,13 +397,60 @@ class AngelaLLMService:
             "memory_hit_rate": 0.0,
             "average_response_time": 0.0,
             "total_response_time": 0.0,
+            "composed_responses": 0,
+            "hybrid_responses": 0,
+            "token_savings_rate": 0.0,
         }
+
+        # ========== P0-2: Response Composition & Matching System ==========
+        self._init_response_system()
 
         # 对话历史（无条件初始化）
         self.conversation_history: List[Dict[str, str]] = []
 
         # ========== 情感识别系统（新增）==========
         self._init_emotion_recognition()
+
+    def _init_response_system(self):
+        """初始化 P0-2 响应组合与匹配系统"""
+        try:
+            from ..ai.response.template_matcher import TemplateMatcher
+            from ..ai.response.composer import ResponseComposer
+            from ..ai.response.deviation_tracker import DeviationTracker, ResponseRoute
+
+            self.template_matcher = TemplateMatcher()
+            self.response_composer = ResponseComposer()
+            self.deviation_tracker = DeviationTracker()
+            self.ResponseRoute = ResponseRoute
+
+            self._load_templates_to_matcher()
+
+            logger.info("P0-2 Response Composition & Matching System initialized")
+        except ImportError as e:
+            logger.warning(f"Failed to initialize P0-2 response system: {e}")
+            self.template_matcher = None
+            self.response_composer = None
+            self.deviation_tracker = None
+
+    def _load_templates_to_matcher(self):
+        """加载模板库到匹配器"""
+        if not hasattr(self, 'template_matcher'):
+            return
+
+        try:
+            if hasattr(self, 'template_library'):
+                templates = self.template_library.get_all_templates()
+                for template in templates:
+                    self.template_matcher.add_template(
+                        template_id=template.id,
+                        content=template.content,
+                        patterns=[template.id],
+                        keywords=template.keywords,
+                        metadata=template.metadata
+                    )
+                logger.info(f"Loaded {len(templates)} templates to matcher")
+        except Exception as e:
+            logger.warning(f"Failed to load templates to matcher: {e}")
 
         # ========== 记忆增强系统初始化 ==========
         if is_memory_enhanced():
@@ -820,6 +867,100 @@ class AngelaLLMService:
             if len(self.conversation_history) > 50:
                 self.conversation_history = self.conversation_history[-50:]
 
+        # ========== P0-2: Template Matching & Routing ==========
+        if hasattr(self, 'template_matcher') and self.template_matcher:
+            try:
+                match_result = self.template_matcher.match(user_message, context)
+                match_score = match_result.score
+
+                if match_score > 0.8:
+                    composed_response = self.response_composer.compose_response(
+                        match_result.template_content,
+                        match_score,
+                        context
+                    )
+
+                    response_time = (time.time() - start_time) * 1000
+                    self.stats["composed_responses"] += 1
+
+                    if hasattr(self, 'deviation_tracker'):
+                        self.deviation_tracker.record(
+                            user_input=user_message,
+                            match_score=match_score,
+                            route=self.ResponseRoute.COMPOSED,
+                            response_text=composed_response.text,
+                            tokens_used=50,
+                            response_time_ms=response_time,
+                            composition_time_ms=composed_response.composition_time_ms,
+                            match_time_ms=match_result.match_time_ms,
+                            quality_score=composed_response.confidence,
+                        )
+
+                    self.template_matcher.record_template_usage(match_result.template_id, True)
+
+                    logger.info(f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}")
+                    
+                    return LLMResponse(
+                        text=composed_response.text,
+                        backend="composed-template",
+                        model="template-based",
+                        tokens_used=50,
+                        response_time_ms=response_time,
+                        confidence=composed_response.confidence,
+                        metadata={
+                            "route": "COMPOSED",
+                            "match_score": match_score,
+                            "template_id": match_result.template_id,
+                        }
+                    )
+
+                elif match_score > 0.5:
+                    composed_response = self.response_composer.compose_response(
+                        match_result.template_content,
+                        match_score,
+                        context
+                    )
+
+                    llm_response = await self._generate_with_llm(user_message, context)
+
+                    if not llm_response.error:
+                        hybrid_text = f"{composed_response.text} {llm_response.text}"
+                    else:
+                        hybrid_text = composed_response.text
+
+                    response_time = (time.time() - start_time) * 1000
+                    self.stats["hybrid_responses"] += 1
+
+                    if hasattr(self, 'deviation_tracker'):
+                        self.deviation_tracker.record(
+                            user_input=user_message,
+                            match_score=match_score,
+                            route=self.ResponseRoute.HYBRID,
+                            response_text=hybrid_text,
+                            tokens_used=200,
+                            response_time_ms=response_time,
+                            composition_time_ms=composed_response.composition_time_ms,
+                            match_time_ms=match_result.match_time_ms,
+                        )
+
+                    logger.info(f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}")
+
+                    return LLMResponse(
+                        text=hybrid_text,
+                        backend="hybrid",
+                        model="template+llm",
+                        tokens_used=200,
+                        response_time_ms=response_time,
+                        confidence=0.85,
+                        metadata={
+                            "route": "HYBRID",
+                            "match_score": match_score,
+                        }
+                    )
+
+            except Exception as e:
+                logger.warning(f"P0-2 template matching failed: {e}")
+
         # ========== 记忆检索（如果启用）==========
         if self.enable_memory_enhancement:
             try:
@@ -872,11 +1013,24 @@ class AngelaLLMService:
                 self.stats["memory_hits"] / self.stats["total_requests"]
             )
 
+            # 记录 LLM_FULL 路由的偏差追踪
+            if hasattr(self, 'deviation_tracker'):
+                self.deviation_tracker.record(
+                    user_input=user_message,
+                    match_score=0.0,
+                    route=self.ResponseRoute.LLM_FULL,
+                    response_text=response.text,
+                    tokens_used=response.tokens_used or 600,
+                    response_time_ms=response_time,
+                    composition_time_ms=0.0,
+                    match_time_ms=0.0,
+                )
+
             # 将新回應存储为模板候选
             if self.enable_memory_enhancement and not response.error:
                 await self._store_response_as_template(user_message, response, context)
 
-            logger.info(f"Angela 回應生成完成 ({response_time:.0f}ms)")
+            logger.info(f"Angela 回應生成完成 (LLM_FULL) ({response_time:.0f}ms)")
             return response
 
         except Exception as e:
@@ -1117,6 +1271,15 @@ class AngelaLLMService:
                         for cat, count in self.template_library.get_category_counts().items()
                     },
                 }
+
+        if hasattr(self, "template_matcher"):
+            stats["template_matcher"] = self.template_matcher.get_stats()
+        
+        if hasattr(self, "response_composer"):
+            stats["response_composer"] = self.response_composer.get_stats()
+        
+        if hasattr(self, "deviation_tracker"):
+            stats["deviation_tracker"] = self.deviation_tracker.get_stats()
 
         return stats
 
