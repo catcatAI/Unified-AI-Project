@@ -1,4 +1,13 @@
 # =============================================================================
+# FILE_HASH: 86744C41
+# FILE_PATH: .gitignore
+# FILE_TYPE: configuration
+# PURPOSE: Git 忽略规则，排除缓存、依赖、敏感数据和临时文件
+# VERSION: 6.2.0
+# STATUS: active
+# LAST_MODIFIED: 2026-02-19
+# =============================================================================
+
 # Angela AI - .gitignore
 # =============================================================================
 
@@ -88,4 +97,22 @@ apps/backend/test_results/
 "更新 文件 (2).txt"
 "更新 文件 (3).txt"
 "更新 文件 (4).txt"
-nul 
+"新增 文字文件.txt"
+nul
+
+# Additional Cache Directories
+context_storage/*.json
+.pytest_cache/
+.ruff_cache/
+data/processed_data/
+data/google_tokens.json
+data/credentials.json
+
+# Project Analysis Tools (生成的文档)
+archive/
+*_analyzer.py
+fix_project_issues.py
+PROJECT_*.md
+PROJECT_*.json
+COMPLETE_FILE_HASH_MAP.md
+IMPLEMENTATION_*.md

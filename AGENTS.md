@@ -1,3 +1,17 @@
+<!--
+  =============================================================================
+  FILE_HASH: 46E0CB0D
+  FILE_PATH: agents.md
+  FILE_TYPE: documentation
+  PURPOSE: Agent 开发指南 - 包含构建、测试、代码规范等命令说明
+  VERSION: 6.2.0
+  STATUS: active
+  LANGUAGE: en
+  LAST_MODIFIED: 2026-02-19
+  AUDIENCE: developers, agents
+  =============================================================================
+-->
+
 # Agent Guidelines for Angela AI
 
 ## Build/Lint/Test Commands

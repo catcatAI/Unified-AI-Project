@@ -1,6 +1,20 @@
+<!--
+  =============================================================================
+  FILE_HASH: A0D35AB2
+  FILE_PATH: project_structure.md
+  FILE_TYPE: documentation
+  PURPOSE: 项目结构说明文档 - 详细的目录组织和文件放置原则
+  VERSION: 6.2.0
+  STATUS: active
+  LANGUAGE: en
+  LAST_MODIFIED: 2026-02-19
+  =============================================================================
+-->
+
 # Angela AI Project Structure
 
-This document provides a comprehensive overview of the Angela AI project structure, directory organization, and file placement principles.
+This document provides a comprehensive overview of the Angela AI project
+structure, directory organization, and file placement principles.
 
 ## 📁 Directory Structure Overview
 
@@ -44,6 +58,7 @@ angela-ai/
 ## 📂 Directory Purposes
 
 ### `/apps/backend/`
+
 Main backend application containing all server-side code.
 
 - **`src/ai/`** - AI systems including:
@@ -69,6 +84,7 @@ Main backend application containing all server-side code.
   - `angela.py` - Angela character definition
 
 ### `/archive/`
+
 Deprecated and archived code that is no longer in use but kept for reference.
 
 - Old versions of systems
@@ -76,6 +92,7 @@ Deprecated and archived code that is no longer in use but kept for reference.
 - Deprecated scripts and tools
 
 ### `/cli/`
+
 Command-line interface implementation.
 
 - `main.py` - CLI entry point
@@ -83,12 +100,14 @@ Command-line interface implementation.
 - `utils/` - CLI utilities
 
 ### `/config/`
+
 Configuration files for the application.
 
 - `angela_config.yaml` - Main configuration
 - Environment-specific configs
 
 ### `/data/`
+
 Runtime data storage.
 
 - **`cache/`** - Temporary cache files
@@ -96,6 +115,7 @@ Runtime data storage.
 - **`models/`** - Trained ML models
 
 ### `/docs/`
+
 Documentation files.
 
 - **`screenshots/`** - Screenshot assets
@@ -103,9 +123,11 @@ Documentation files.
 - Architecture diagrams
 
 ### `/logs/`
+
 Application log files.
 
 ### `/resources/`
+
 Static resource files.
 
 - **`audio/`** - Sound effects, music, voice files
@@ -113,6 +135,7 @@ Static resource files.
 - **`models/`** - Live2D model files
 
 ### `/scripts/`
+
 Utility scripts organized by purpose:
 
 - **`audit/`** - System audit and quality check scripts
@@ -128,6 +151,7 @@ Utility scripts organized by purpose:
   - Diagnostic tools
 
 ### `/tests/`
+
 Test suites.
 
 - **`game/`** - Desktop Pet tests
@@ -137,23 +161,26 @@ Test suites.
 ## 📋 File Organization Principles
 
 ### 1. **Root Directory Cleanliness**
+
 Root directory should only contain:
+
 - Entry point scripts (`run_angela.py`, `setup.py`)
 - Configuration files (`requirements.txt`, `.gitignore`)
 - Documentation (`README.md`, `LICENSE`)
 - No utility scripts - all scripts go to `/scripts/`
 
 ### 2. **Scripts Organization**
+
 All scripts must be categorized and placed in appropriate subdirectories:
 
-| Pattern | Destination | Purpose |
-|---------|-------------|---------|
-| `check_*.py` | `scripts/audit/` | System checks |
+| Pattern              | Destination      | Purpose              |
+| -------------------- | ---------------- | -------------------- |
+| `check_*.py`         | `scripts/audit/` | System checks        |
 | `comprehensive_*.py` | `scripts/audit/` | Comprehensive audits |
-| `fix_*.py` | `scripts/fixes/` | Bug fixes |
-| `debug_*.py` | `scripts/debug/` | Debugging |
-| `*_backup.py` | `archive/` | Backups |
-| `*_temp.py` | `archive/` | Temp files |
+| `fix_*.py`           | `scripts/fixes/` | Bug fixes            |
+| `debug_*.py`         | `scripts/debug/` | Debugging            |
+| `*_backup.py`        | `archive/`       | Backups              |
+| `*_temp.py`          | `archive/`       | Temp files           |
 
 ### 3. **Backend Code Organization**
 
@@ -165,6 +192,7 @@ All scripts must be categorized and placed in appropriate subdirectories:
 ### 4. **Import Paths**
 
 Use relative imports within packages:
+
 ```python
 # Within apps/backend/src/core/autonomous/
 from .live2d_integration import Live2DIntegration
@@ -229,19 +257,18 @@ from apps.backend.src.core.autonomous import DesktopPet
 
 ## 🔍 Quick Reference
 
-| Want to... | Look in... |
-|------------|-----------|
-| Run Angela | `run_angela.py` |
-| Configure | `config/angela_config.yaml` |
-| Fix bugs | `scripts/fixes/` |
-| Debug | `scripts/debug/` |
-| Check system | `scripts/audit/` |
-| View logs | `logs/` |
-| Add Desktop Pet features | `apps/backend/src/game/` |
-| Modify AI systems | `apps/backend/src/ai/` |
-| Update core systems | `apps/backend/src/core/autonomous/` |
+| Want to...               | Look in...                          |
+| ------------------------ | ----------------------------------- |
+| Run Angela               | `run_angela.py`                     |
+| Configure                | `config/angela_config.yaml`         |
+| Fix bugs                 | `scripts/fixes/`                    |
+| Debug                    | `scripts/debug/`                    |
+| Check system             | `scripts/audit/`                    |
+| View logs                | `logs/`                             |
+| Add Desktop Pet features | `apps/backend/src/game/`            |
+| Modify AI systems        | `apps/backend/src/ai/`              |
+| Update core systems      | `apps/backend/src/core/autonomous/` |
 
 ---
 
-Last Updated: 2026-02-02
-Version: 6.0.0
+Last Updated: 2026-02-02 Version: 6.0.0
