@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import logging
+from apps.backend.src.core.tracing import get_tracer
 logger = logging.getLogger(__name__)
 
 # Import theoretical frameworks
@@ -322,59 +323,77 @@ class CyberIdentity:
             new_level: New level (0-1)
             milestone: Optional milestone description
         """
-        if aspect not in self.identity_aspects:
-            return
+        tracer = get_tracer()
+        trace_id = tracer.start(
+            layer="L3",
+            module="cyber_identity",
+            action="record_growth",
+            data={
+                "aspect": aspect.name,
+                "new_level": new_level,
+                "milestone": milestone
+            }
+        )
         
-        growth_record = self.identity_aspects[aspect]
-        
-        # Calculate growth
-        growth_record.previous_level = growth_record.level
-        growth_record.level = max(0.0, min(1.0, new_level))
-        
-        time_diff = (datetime.now() - growth_record.last_updated).total_seconds()
-        if time_diff > 0:
-            growth_record.growth_rate = (
-                (growth_record.level - growth_record.previous_level) /
-                (time_diff / 86400)  # Per day
-            )
-        
-        growth_record.last_updated = datetime.now()
-        
-        # Record milestone
-        if milestone:
-            growth_record.milestones.append(milestone)
+        try:
+            if aspect not in self.identity_aspects:
+                return
             
-            # Notify milestone callbacks
-            for callback in self._milestone_callbacks:
-                try:
-                    callback(milestone)
-                except Exception as e:
-                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
-                    pass
+            growth_record = self.identity_aspects[aspect]
+            
+            # Calculate growth
+            growth_record.previous_level = growth_record.level
+            growth_record.level = max(0.0, min(1.0, new_level))
+            
+            tracer.record(trace_id, "previous_level", growth_record.previous_level)
+            tracer.record(trace_id, "growth_amount", growth_record.level - growth_record.previous_level)
+            
+            time_diff = (datetime.now() - growth_record.last_updated).total_seconds()
+            if time_diff > 0:
+                growth_record.growth_rate = (
+                    (growth_record.level - growth_record.previous_level) /
+                    (time_diff / 86400)  # Per day
+                )
+            
+            growth_record.last_updated = datetime.now()
+            
+            # Record milestone
+            if milestone:
+                growth_record.milestones.append(milestone)
+                
+                # Notify milestone callbacks
+                for callback in self._milestone_callbacks:
+                    try:
+                        callback(milestone)
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                        pass
 
-        
-        # Record in history
-        self.growth_history.append({
-            "timestamp": datetime.now(),
-            "aspect": aspect,
-            "level": growth_record.level,
-            "growth_rate": growth_record.growth_rate,
-            "milestone": milestone,
-        })
-        
-        # Notify callbacks
-        if aspect in self._growth_callbacks:
-            for callback in self._growth_callbacks[aspect]:
-                try:
-                    callback(growth_record.previous_level, growth_record.level)
-                except Exception as e:
-                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
-                    pass
+            
+            # Record in history
+            self.growth_history.append({
+                "timestamp": datetime.now(),
+                "aspect": aspect,
+                "level": growth_record.level,
+                "growth_rate": growth_record.growth_rate,
+                "milestone": milestone,
+            })
+            
+            # Notify callbacks
+            if aspect in self._growth_callbacks:
+                for callback in self._growth_callbacks[aspect]:
+                    try:
+                        callback(growth_record.previous_level, growth_record.level)
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                        pass
 
-        
-        # Update self-description if significant growth
-        if growth_record.level - growth_record.previous_level > 0.1:
-            self._update_self_description()
+            
+            # Update self-description if significant growth
+            if growth_record.level - growth_record.previous_level > 0.1:
+                self._update_self_description()
+        finally:
+            tracer.finish(trace_id)
     
     def form_relationship(
         self,

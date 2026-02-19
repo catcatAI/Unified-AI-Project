@@ -50,6 +50,7 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 import logging
+from apps.backend.src.core.tracing import get_tracer
 logger = logging.getLogger(__name__)
 
 
@@ -327,10 +328,22 @@ class EndocrineSystem:
             emotion: Emotion name (joy, sadness, fear, anger, surprise, disgust)
             intensity: Emotional intensity (0-1)
         """
-        self.emotional_state[emotion] = intensity
+        tracer = get_tracer()
+        trace_id = tracer.start(
+            layer="L1",
+            module="endocrine_system",
+            action="trigger_emotional_response",
+            data={
+                "emotion": emotion,
+                "intensity": intensity
+            }
+        )
         
-        # Define emotion-hormone mappings
-        emotion_effects = {
+        try:
+            self.emotional_state[emotion] = intensity
+            
+            # Define emotion-hormone mappings
+            emotion_effects = {
             "joy": {
                 HormoneType.DOPAMINE: 20.0 * intensity,
                 HormoneType.SEROTONIN: 10.0 * intensity,
@@ -379,10 +392,15 @@ class EndocrineSystem:
                 HormoneType.CORTISOL: -15.0 * intensity,
             },
         }
-        
-        if emotion in emotion_effects:
-            for hormone_type, change in emotion_effects[emotion].items():
-                await self.adjust_hormone(hormone_type, change)
+            
+            if emotion in emotion_effects:
+                hormones_affected = []
+                for hormone_type, change in emotion_effects[emotion].items():
+                    await self.adjust_hormone(hormone_type, change)
+                    hormones_affected.append(hormone_type.en_name)
+                tracer.record(trace_id, "hormones_affected", hormones_affected)
+        finally:
+            tracer.finish(trace_id)
     
     async def trigger_activity_response(self, activity_type: str, intensity: float):
         """
@@ -498,21 +516,38 @@ class EndocrineSystem:
             hormone_type: Type of hormone to adjust
             amount: Amount to add (positive or negative)
         """
-        if hormone_type in self.hormones:
-            hormone = self.hormones[hormone_type]
-            old_level = hormone.current_level
-            hormone.current_level = max(
-                hormone.min_level,
-                min(hormone.max_level, hormone.current_level + amount)
-            )
-            
-            # Notify callbacks
-            for callback in self._callbacks:
-                try:
-                    callback(hormone_type, old_level, hormone.current_level)
-                except Exception as e:
-                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
-                    pass
+        tracer = get_tracer()
+        trace_id = tracer.start(
+            layer="L1",
+            module="endocrine_system",
+            action="adjust_hormone",
+            data={
+                "hormone": hormone_type.en_name,
+                "adjustment": amount
+            }
+        )
+        
+        try:
+            if hormone_type in self.hormones:
+                hormone = self.hormones[hormone_type]
+                old_level = hormone.current_level
+                hormone.current_level = max(
+                    hormone.min_level,
+                    min(hormone.max_level, hormone.current_level + amount)
+                )
+                
+                tracer.record(trace_id, "old_level", old_level)
+                tracer.record(trace_id, "new_level", hormone.current_level)
+                
+                # Notify callbacks
+                for callback in self._callbacks:
+                    try:
+                        callback(hormone_type, old_level, hormone.current_level)
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                        pass
+        finally:
+            tracer.finish(trace_id)
 
     
     def get_hormone_level(self, hormone_type: HormoneType) -> float:

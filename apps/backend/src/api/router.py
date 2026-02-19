@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Body
 from services.chat_service import generate_angela_response
-from api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy
+from api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy, trace
 from api.routes.ops_routes import router as ops_router
 
 router = APIRouter(prefix="/api/v1")
@@ -26,6 +26,7 @@ router.include_router(audio.router)
 router.include_router(tactile.router)
 router.include_router(mobile.router)
 router.include_router(economy.router)
+router.include_router(trace.router)
 router.include_router(ops_router)
 
 
