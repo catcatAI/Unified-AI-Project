@@ -11,6 +11,8 @@
 import os
 import sys
 import subprocess
+import logging
+logger = logging.getLogger(__name__)
 
 def run_tests_with_compat():
     """运行测试并解决兼容性问题"""

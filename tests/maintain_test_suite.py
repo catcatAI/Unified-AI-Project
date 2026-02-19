@@ -14,6 +14,8 @@ import ast
 import json
 from pathlib import Path
 from typing import List, Dict
+import logging
+logger = logging.getLogger(__name__)
 
 
 class TestSuiteMaintainer:

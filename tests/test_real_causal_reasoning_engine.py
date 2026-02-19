@@ -8,6 +8,8 @@ import pytest
 import sys
 import os
 import unittest # Import unittest for TestCase if needed, or remove if not used
+import logging
+logger = logging.getLogger(__name__)
 
 # Add project path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../../'))

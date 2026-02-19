@@ -5,6 +5,8 @@ import sys
 import shutil
 from pathlib import Path
 from typing import Dict, Any, List, Union, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent

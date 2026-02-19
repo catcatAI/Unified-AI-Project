@@ -1,4 +1,6 @@
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 # 读取测试结果文件
 with open('test_results.json', 'r', encoding == 'utf-8') as f,

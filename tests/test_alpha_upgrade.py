@@ -11,6 +11,8 @@ Test script to verify the upgraded AlphaDeepModel functionality
 
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))

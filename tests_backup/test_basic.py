@@ -5,6 +5,8 @@
 import pytest
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 def test_python_version():
     """测试 Python 版本"""

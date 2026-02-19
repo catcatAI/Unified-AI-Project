@@ -5,6 +5,8 @@
 """
 
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 # Print the current sys.path
 print("Current sys.path:")

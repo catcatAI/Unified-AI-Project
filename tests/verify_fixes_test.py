@@ -5,6 +5,8 @@
 import requests
 import json
 from typing import Dict, Tuple
+import logging
+logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"
 

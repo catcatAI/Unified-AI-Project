@@ -10,6 +10,8 @@
 # 测试所有已修复的模块
 import sys
 import traceback
+import logging
+logger = logging.getLogger(__name__)
 
 modules_to_test = [
     "apps.backend.src.tools.logic_model.logic_parser_eval",
@@ -32,7 +34,9 @@ for module_name in modules_to_test:
         successful_modules.append(module_name)
         print(f"✓ {module_name} imported successfully")
     except Exception as e:
+        logger.error(f'Error in test_all_fixed_modules.py: {e}', exc_info=True)
         failed_modules.append((module_name, str(e)))
+
         print(f"✗ {module_name} failed to import: {e}")
 
 print(f"\nSummary:")

@@ -6,6 +6,8 @@ import requests
 import json
 import time
 from typing import Dict, List
+import logging
+logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -51,7 +53,9 @@ class DialogueLLMTester:
             })
             return False
         except Exception as e:
+            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
             self.failed_tests += 1
+
             self.results.append({
                 "test": f"dialogue_{endpoint}",
                 "status": "fail",
@@ -99,7 +103,9 @@ class DialogueLLMTester:
                 })
                 return False
         except Exception as e:
+            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
             self.failed_tests += 1
+
             self.results.append({
                 "test": "multiple_conversations",
                 "status": "fail",
@@ -120,7 +126,9 @@ class DialogueLLMTester:
             else:
                 return False, response.text, "❌"
         except Exception as e:
+            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
             return False, str(e), "❌"
+
 
     def test_emotion_detection(self) -> bool:
         """測試情感識別"""
@@ -155,7 +163,9 @@ class DialogueLLMTester:
             })
             return True
         except Exception as e:
+            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
             self.failed_tests += 1
+
             self.results.append({
                 "test": "emotion_detection",
                 "status": "fail",
@@ -220,7 +230,9 @@ class DialogueLLMTester:
                 })
                 return False
         except Exception as e:
+            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
             self.failed_tests += 1
+
             self.results.append({
                 "test": "response_time",
                 "status": "fail",

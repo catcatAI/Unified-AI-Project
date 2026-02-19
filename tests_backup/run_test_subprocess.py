@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # 设置工作目录
 project_root: str = os.path.join(os.path.dirname(__file__), '..', '..')

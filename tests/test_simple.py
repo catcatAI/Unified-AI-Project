@@ -5,6 +5,8 @@
 """
 
 import pytest
+import logging
+logger = logging.getLogger(__name__)
 
 @pytest.mark.timeout(5)
 

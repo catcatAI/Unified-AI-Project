@@ -8,6 +8,8 @@ import asyncio
 import websockets
 import json
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 WS_URL = "ws://127.0.0.1:8000/ws"
 

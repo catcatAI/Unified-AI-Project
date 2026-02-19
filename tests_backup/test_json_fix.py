@@ -5,6 +5,8 @@
 """
 
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 # Test the JSON serialization that was fixed in the tests
 mock_decomposed_plan = [

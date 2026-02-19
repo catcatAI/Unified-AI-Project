@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 def check_test_collection() -> None:
     """检查测试收集情况"""

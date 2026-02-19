@@ -13,6 +13,8 @@ import traceback
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent()

@@ -8,6 +8,8 @@ import unittest
 import asyncio
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # from core_services import initialize_services, get_services, shutdown_services

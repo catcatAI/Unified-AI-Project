@@ -95,7 +95,9 @@ class TestMemoryEnhancement:
 
             self.record_test("模板创建和序列化", True)
         except Exception as e:
+            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
             self.record_test("模板创建和序列化", False, str(e))
+
 
     def test_2_template_retrieval(self):
         """测试 2: 模板检索功能"""
@@ -120,7 +122,9 @@ class TestMemoryEnhancement:
 
             self.record_test("模板检索功能", True, f"共 {len(all_templates)} 个模板")
         except Exception as e:
+            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
             self.record_test("模板检索功能", False, str(e))
+
 
     def test_3_state_similarity_calculation(self):
         """测试 3: 状态相似度计算"""
@@ -157,7 +161,9 @@ class TestMemoryEnhancement:
 
             self.record_test("状态相似度计算", True)
         except Exception as e:
+            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
             self.record_test("状态相似度计算", False, str(e))
+
 
     def test_4_precompute_service(self):
         """测试 4: 预计算服务"""
@@ -212,7 +218,9 @@ class TestMemoryEnhancement:
 
             self.record_test("预计算服务", True, f"队列大小: {stats['queue_size']}")
         except Exception as e:
+            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
             self.record_test("预计算服务", False, str(e))
+
 
     def test_5_template_library_completeness(self):
         """测试 5: 模板库完整性"""
@@ -239,7 +247,9 @@ class TestMemoryEnhancement:
 
             self.record_test("模板库完整性", True, f"共 {len(all_templates)} 个模板")
         except Exception as e:
+            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
             self.record_test("模板库完整性", False, str(e))
+
 
     def test_6_user_impression_model(self):
         """测试 6: 用户印象模型"""
@@ -263,7 +273,9 @@ class TestMemoryEnhancement:
 
             self.record_test("用户印象模型", True)
         except Exception as e:
+            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
             self.record_test("用户印象模型", False, str(e))
+
 
     async def test_7_end_to_end_dialogue_simulation(self):
         """测试 7: 端到端对话模拟"""
@@ -320,7 +332,9 @@ class TestMemoryEnhancement:
                 f"平均响应时间: {avg_response_time:.0f}ms"
             )
         except Exception as e:
+            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
             self.record_test("端到端对话模拟", False, str(e))
+
 
     def run_all_tests(self):
         """运行所有测试"""

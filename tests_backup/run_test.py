@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # 设置工作目录
 os.chdir(r'D:\Projects\Unified-AI-Project')

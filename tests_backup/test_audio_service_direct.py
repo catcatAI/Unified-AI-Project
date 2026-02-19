@@ -7,6 +7,8 @@
 import sys
 import os
 from unittest.mock import patch
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the backend to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'backend', 'src'))

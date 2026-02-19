@@ -1,4 +1,6 @@
 import glob
+import logging
+logger = logging.getLogger(__name__)
 
 skipped_files = []
 for file in glob.glob('**/*.py', recursive=True):

@@ -1,6 +1,8 @@
 import sys
 import os
 import pytest
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目路径到Python路径
 project_root, str = os.path.join(os.path.dirname(__file__), '..', '..')

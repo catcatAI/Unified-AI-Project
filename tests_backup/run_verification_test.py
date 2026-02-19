@@ -1,6 +1,8 @@
 import sys
 import os
 import pytest
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 project_root, str == r"D,\Projects\Unified-AI-Project"

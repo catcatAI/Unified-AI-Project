@@ -15,6 +15,8 @@ import subprocess
 import time
 import signal
 import atexit
+import logging
+logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # 修正導入路徑 - 使用正確的模塊路徑
@@ -82,7 +84,9 @@ def test_
         try:
             shutil.rmtree(temp_dir)
         except Exception as e:
+            logger.error(f'Error in test_chromadb_fix.py: {e}', exc_info=True)
             pass
+
 
 def test_
         """测试函数 - 自动添加断言"""
@@ -107,7 +111,9 @@ def test_
         try:
             shutil.rmtree(temp_dir)
         except Exception as e:
+            logger.error(f'Error in test_chromadb_fix.py: {e}', exc_info=True)
             pass
+
 
 if __name"__main__"::
     print("測試 ChromaDB 修復...")

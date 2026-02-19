@@ -7,6 +7,8 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 from core.hsp.bridge.message_bridge import MessageBridge
 from ..external.external_connector import ExternalConnector

@@ -11,6 +11,8 @@ import os
 import re
 from pathlib import Path
 from typing import List, Tuple, Dict
+import logging
+logger = logging.getLogger(__name__)
 
 
 class CommentedTestEnabler:

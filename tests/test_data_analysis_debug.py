@@ -8,6 +8,8 @@ import sys
 import os
 import uuid
 import pytest
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the src directory to the path
 sys.path.insert(

@@ -1,6 +1,8 @@
 import pytest
 from ai.trust.trust_manager_module import TrustManager
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+import logging
+logger = logging.getLogger(__name__)
 
 # --- Mock TrustManager ---
 @pytest.fixture

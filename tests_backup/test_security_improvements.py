@@ -6,6 +6,8 @@ import unittest
 import os
 import sys
 from unittest.mock import patch, MagicMock
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend', 'src')))

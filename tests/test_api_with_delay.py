@@ -9,6 +9,8 @@
 
 import requests
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 # 等待服务器启动
 time.sleep(5)

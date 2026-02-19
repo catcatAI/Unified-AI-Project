@@ -6,6 +6,8 @@ This module contains tests for the CoreServiceManager functionality.:::
 
 import asyncio
 import unittest
+import logging
+logger = logging.getLogger(__name__)
 
 # 修复导入路径
 from core.managers.core_service_manager import (

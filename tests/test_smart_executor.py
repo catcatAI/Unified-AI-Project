@@ -8,6 +8,8 @@ import unittest
 import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the src directory to the path
 PROJECT_ROOT = Path(__file__).parent.parent.parent

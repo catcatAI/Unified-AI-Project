@@ -13,6 +13,8 @@
 
 import os
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 project_root, str = os.path.dirname(os.path.abspath(__file__))

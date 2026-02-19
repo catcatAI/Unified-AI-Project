@@ -13,6 +13,8 @@ import unittest
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))

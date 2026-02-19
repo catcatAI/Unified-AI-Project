@@ -12,6 +12,8 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 
 def run_command(command, cwd == None, capture_output == True):

@@ -7,6 +7,8 @@ import os
 import json
 from pathlib import Path
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 def analyze_test_coverage():
     """分析测试覆盖率"""

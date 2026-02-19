@@ -15,6 +15,8 @@ import json
 from pathlib import Path
 from typing import List, Dict
 from collections import defaultdict
+import logging
+logger = logging.getLogger(__name__)
 
 
 class TestSuiteOptimizer:

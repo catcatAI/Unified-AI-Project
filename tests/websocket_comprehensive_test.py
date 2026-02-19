@@ -7,6 +7,8 @@ import websockets
 import json
 import time
 from typing import Dict, List
+import logging
+logger = logging.getLogger(__name__)
 
 class WebSocketTester:
     def __init__(self, uri: str = "ws://127.0.0.1:8000/ws"):

@@ -7,6 +7,8 @@ import asyncio
 import pytest
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../../'))

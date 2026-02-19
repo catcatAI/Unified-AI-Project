@@ -6,6 +6,8 @@ import os
 import asyncio
 import time
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 # Add apps/backend to path
 backend_path = os.path.join(os.path.dirname(__file__), 'apps/backend')

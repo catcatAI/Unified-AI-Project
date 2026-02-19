@@ -6,6 +6,8 @@ import requests
 import json
 import time
 from typing import Dict, List, Tuple
+import logging
+logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -52,8 +54,10 @@ class APITester:
 
             try:
                 result["response"] = response.json()
-            except:
+            except Exception as e:
+                logger.error(f'Unexpected error in comprehensive_api_test.py: {e}', exc_info=True)
                 result["response"] = response.text[:500]
+
 
             self.results.append(result)
             return success, result["response"], status
@@ -81,7 +85,9 @@ class APITester:
             })
             return False, {}, f"❌ FAIL - {error_msg}"
         except Exception as e:
+            logger.error(f'Error in comprehensive_api_test.py: {e}', exc_info=True)
             self.failed_tests += 1
+
             error_msg = str(e)
             self.results.append({
                 "endpoint": endpoint,

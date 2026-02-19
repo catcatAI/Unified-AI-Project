@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 import importlib.util
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the project root to the Python path
 # Assuming the test file is in Unified-AI-Project/tests/
@@ -47,7 +49,9 @@ class TestSmartDevRunner(unittest.TestCase):
             self.smart_dev_runner.setup_environment()
             self.assertTrue(True)
         except Exception as e:
+            logger.error(f'Error in test_smart_dev_runner.py: {e}', exc_info=True)
             self.fail(f"setup_environment raised {type(e).__name__} unexpectedly: {e}")
+
 
     def test_environment_check(self) -> None:
         """Test that environment check function works correctly."""
@@ -56,7 +60,9 @@ class TestSmartDevRunner(unittest.TestCase):
                 self.smart_dev_runner.check_environment()
             self.assertTrue(True)
         except Exception as e:
+            logger.error(f'Error in test_smart_dev_runner.py: {e}', exc_info=True)
             self.fail(f"check_environment raised {type(e).__name__} unexpectedly: {e}")
+
 
     @patch('subprocess.run')
     def test_initialize_core_services(self, mock_subprocess_run) -> None:
@@ -66,14 +72,18 @@ class TestSmartDevRunner(unittest.TestCase):
                 result = self.smart_dev_runner.initialize_core_services()
             self.assertTrue(result is True or result is None)
         except Exception as e:
+            logger.error(f'Error in test_smart_dev_runner.py: {e}', exc_info=True)
             self.fail(f"initialize_core_services raised {type(e).__name__} unexpectedly: {e}")
+
 
     def test_main_function_exists(self) -> None:
         """Test that main function exists and is callable."""
         try:
             self.assertTrue(callable(self.smart_dev_runner.main))
         except Exception as e:
+            logger.error(f'Error in test_smart_dev_runner.py: {e}', exc_info=True)
             self.fail(f"main function check raised {type(e).__name__} unexpectedly: {e}")
+
 
 if __name__ == "__main__":
     unittest.main()

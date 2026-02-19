@@ -6,6 +6,8 @@
 
 import pytest
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 class TestDependencyManager:
     """依赖管理器测试"""

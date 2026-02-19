@@ -13,6 +13,8 @@ import sys
 import os
 from pathlib import Path
 import unittest
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent

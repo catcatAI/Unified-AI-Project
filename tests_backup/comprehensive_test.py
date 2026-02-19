@@ -10,6 +10,8 @@ import json
 import requests
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaTester:
     def __init__(self):
@@ -35,7 +37,9 @@ class AngelaTester:
             })
             print(f"✅ {name}")
         except Exception as e:
+            logger.error(f'Error in comprehensive_test.py: {e}', exc_info=True)
             self.results['failed'] += 1
+
             self.results['tests'].append({
                 'name': name,
                 'status': 'failed',
@@ -161,8 +165,10 @@ class AngelaTester:
                 # Count only main electron processes (not --type=zygote or --type=renderer)
                 if 'electron . --disable-dev-shm-usage --no-sandbox' in cmd:
                     main_processes += 1
-            except:
+            except Exception as e:
+                logger.error(f'Unexpected error in comprehensive_test.py: {e}', exc_info=True)
                 pass
+
         
         # Should have 2 main processes (node wrapper + electron binary), which is normal
         # Single instance protection prevents additional app instances

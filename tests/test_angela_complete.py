@@ -7,6 +7,8 @@ import pytest
 import sys
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加項目路徑
 project_root = Path(__file__).parent.parent

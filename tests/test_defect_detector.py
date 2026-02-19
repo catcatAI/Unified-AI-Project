@@ -5,6 +5,8 @@
 """
 
 from automated_defect_detector import DefectDetector
+import logging
+logger = logging.getLogger(__name__)
 
 # 初始化缺陷检测器
 detector = DefectDetector()

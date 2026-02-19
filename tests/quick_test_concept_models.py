@@ -5,6 +5,8 @@
 import sys
 import os
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 project_root, str = os.path.dirname(__file__)

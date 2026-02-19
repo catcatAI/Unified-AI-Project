@@ -4,6 +4,8 @@
 import unittest
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -38,7 +40,9 @@ class TestMultiLLMImport(unittest.TestCase):
         except ImportError as e:
             self.fail(f"Failed to import MultiLLMService: {e}")
         except Exception as e:
+            logger.error(f'Error in test_multi_llm_import.py: {e}', exc_info=True)
             self.fail(f"Failed to create MultiLLMService: {e}")
+
 
 if __name__ == "__main__":
     unittest.main()

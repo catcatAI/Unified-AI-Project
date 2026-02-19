@@ -4,6 +4,8 @@ Configuration for pytest: Add project source directories to the Python path.
 
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # Correctly identify the project root by navigating up from the conftest.py location
 # Assuming conftest.py is in D:\Projects\Unified-AI-Project\tests

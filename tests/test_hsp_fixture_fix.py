@@ -7,6 +7,8 @@
 import pytest
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend', 'src')))
 from hsp.connector import HSPConnector
 

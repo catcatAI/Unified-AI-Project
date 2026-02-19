@@ -4,6 +4,8 @@ import json
 import time
 import requests
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def test_full_system_flow():
     print("🚀 Starting Final Integration Test...")

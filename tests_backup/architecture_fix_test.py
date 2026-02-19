@@ -15,6 +15,8 @@ import asyncio
 import json
 from datetime import datetime
 from typing import Dict, Any, List
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加項目路徑
 project_root = "/home/cat/桌面/Unified-AI-Project"
@@ -133,7 +135,9 @@ class ArchitectureFixTest:
             ]
             self.log_test("P0-2 生物事件定義", "pass", f"定義了 {len(events)} 種生物事件")
         except Exception as e:
+            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
             self.log_test("P0-2 生物事件定義", "fail", str(e))
+
 
         # 測試生物事件發布器
         try:
@@ -152,7 +156,9 @@ class ArchitectureFixTest:
             else:
                 self.log_test("P0-2 事件發布器", "fail", "事件發布器無法發布事件")
         except Exception as e:
+            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
             self.log_test("P0-2 事件發布器", "fail", str(e))
+
 
         # 檢查前端生物事件監聽
         frontend_file = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/app.js"
@@ -210,7 +216,9 @@ class ArchitectureFixTest:
                 self.log_test("P0-3 失敗結果評估", "fail", "失敗結果未評估緊張影響")
 
         except Exception as e:
+            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
             self.log_test("P0-3 代理結果評估器", "fail", str(e))
+
 
         # 檢查 AgentManager 是否集成了評估器
         agent_manager_file = "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/agents/agent_manager.py"
@@ -264,7 +272,9 @@ class ArchitectureFixTest:
                 self.log_test("P0-4 情感記憶檢索", "fail", "情感記憶檢索失敗")
 
         except Exception as e:
+            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
             self.log_test("P0-4 情感記憶功能", "fail", str(e))
+
 
         # 檢查決策循環是否集成了情感記憶
         llm_file = "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/lifecycle/llm_decision_loop.py"

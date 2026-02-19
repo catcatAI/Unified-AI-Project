@@ -9,6 +9,8 @@ import json
 import time
 from datetime import datetime
 from typing import Dict, List, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # API 基礎配置
 BASE_URL = "http://127.0.0.1:8000"
@@ -45,8 +47,10 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
         # 解析響應
         try:
             response_data = response.json()
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in api_test_report.py: {e}', exc_info=True)
             response_data = response.text[:500] if response.text else ""
+
 
         return {
             "path": path,
@@ -75,7 +79,9 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
             "response_time": time.time() - start_time
         }
     except Exception as e:
+        logger.error(f'Error in api_test_report.py: {e}', exc_info=True)
         return {
+
             "path": path,
             "method": method,
             "status": "EXCEPTION",

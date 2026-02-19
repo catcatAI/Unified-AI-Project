@@ -8,6 +8,8 @@ import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 import tempfile
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 from core.managers.system_manager import SystemManager
 from core.orchestrator import CognitiveOrchestrator

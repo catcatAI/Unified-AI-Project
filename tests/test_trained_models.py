@@ -15,6 +15,8 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch, MagicMock
 from typing import Any
+import logging
+logger = logging.getLogger(__name__)
 
 # Add project root to path to allow absolute imports
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent

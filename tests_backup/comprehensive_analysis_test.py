@@ -13,6 +13,8 @@ import time
 import traceback
 from datetime import datetime
 from typing import Dict, List, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # 測試配置
 BASE_URL = "http://127.0.0.1:8000"
@@ -41,8 +43,10 @@ class SystemAnalyzer:
                     response_time = time.time() - start_time
                     try:
                         response_data = await response.json()
-                    except:
+                    except Exception as e:
+                        logger.error(f'Unexpected error in comprehensive_analysis_test.py: {e}', exc_info=True)
                         response_data = await response.text()
+
 
                     return {
                         "status": "success" if 200 <= status < 300 else "error",
@@ -58,8 +62,10 @@ class SystemAnalyzer:
                     response_time = time.time() - start_time
                     try:
                         response_data = await response.json()
-                    except:
+                    except Exception as e:
+                        logger.error(f'Unexpected error in comprehensive_analysis_test.py: {e}', exc_info=True)
                         response_data = await response.text()
+
 
                     return {
                         "status": "success" if 200 <= status < 300 else "error",
@@ -70,7 +76,9 @@ class SystemAnalyzer:
                     }
 
         except Exception as e:
+            logger.error(f'Error in comprehensive_analysis_test.py: {e}', exc_info=True)
             return {
+
                 "status": "error",
                 "status_code": None,
                 "response_time": round(time.time() - start_time, 3),
