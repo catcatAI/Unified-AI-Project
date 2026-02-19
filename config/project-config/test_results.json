@@ -1,0 +1,222 @@
+{
+  "backend": {
+    "passed": 0,
+    "failed": 1,
+    "tests": [
+      {
+        "status": "FAIL",
+        "message": "Backend test error: Cannot connect to host 127.0.0.1:8000 ssl:default [Connect call failed ('127.0.0",
+        "timestamp": "2026-02-11T18:24:16.262326"
+      }
+    ]
+  },
+  "websocket": {
+    "passed": 0,
+    "failed": 1,
+    "tests": [
+      {
+        "status": "FAIL",
+        "message": "WebSocket test error: Cannot connect to host 127.0.0.1:8000 ssl:default [Connect call failed ('127.0.0",
+        "timestamp": "2026-02-11T18:24:16.262833"
+      }
+    ]
+  },
+  "api": {
+    "passed": 0,
+    "failed": 1,
+    "tests": [
+      {
+        "status": "FAIL",
+        "message": "API test error: Cannot connect to host 127.0.0.1:8000 ssl:default [Connect call failed ('127.0.0",
+        "timestamp": "2026-02-11T18:24:16.263203"
+      }
+    ]
+  },
+  "ui": {
+    "passed": 27,
+    "failed": 1,
+    "tests": [
+      {
+        "status": "PASS",
+        "message": "index.html exists (12942 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263254"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js exists (42673 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263278"
+      },
+      {
+        "status": "PASS",
+        "message": "preload.js exists (4681 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263298"
+      },
+      {
+        "status": "PASS",
+        "message": "js/app.js exists (19617 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263315"
+      },
+      {
+        "status": "PASS",
+        "message": "js/live2d-manager.js exists (18458 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263331"
+      },
+      {
+        "status": "PASS",
+        "message": "js/input-handler.js exists (10426 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263347"
+      },
+      {
+        "status": "PASS",
+        "message": "js/backend-websocket.js exists (12481 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263362"
+      },
+      {
+        "status": "PASS",
+        "message": "js/dialogue-ui.js exists (8863 bytes)",
+        "timestamp": "2026-02-11T18:24:16.263382"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: id=\"live2d-canvas\"",
+        "timestamp": "2026-02-11T18:24:16.263491"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: id=\"click-layer\"",
+        "timestamp": "2026-02-11T18:24:16.263508"
+      },
+      {
+        "status": "FAIL",
+        "message": "Index.html missing: id=\"dialogue-container\"",
+        "timestamp": "2026-02-11T18:24:16.263521"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: id=\"loading-overlay\"",
+        "timestamp": "2026-02-11T18:24:16.263531"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: backend-websocket.js",
+        "timestamp": "2026-02-11T18:24:16.263541"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: dialogue-ui.js",
+        "timestamp": "2026-02-11T18:24:16.263553"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: input-handler.js",
+        "timestamp": "2026-02-11T18:24:16.263565"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: class DialogueUI",
+        "timestamp": "2026-02-11T18:24:16.263645"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: sendMessage",
+        "timestamp": "2026-02-11T18:24:16.263657"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: addMessage",
+        "timestamp": "2026-02-11T18:24:16.263666"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: addSystemMessage",
+        "timestamp": "2026-02-11T18:24:16.263673"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: dialogue-input",
+        "timestamp": "2026-02-11T18:24:16.263678"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: dialogue-messages",
+        "timestamp": "2026-02-11T18:24:16.263683"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: Single instance lock",
+        "timestamp": "2026-02-11T18:24:16.264003"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: WebSocket server/client",
+        "timestamp": "2026-02-11T18:24:16.264019"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: WebSocket connection",
+        "timestamp": "2026-02-11T18:24:16.264028"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: Window creation",
+        "timestamp": "2026-02-11T18:24:16.264039"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: System tray",
+        "timestamp": "2026-02-11T18:24:16.264050"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: IPC handlers",
+        "timestamp": "2026-02-11T18:24:16.264055"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: Live2D model loading",
+        "timestamp": "2026-02-11T18:24:16.264070"
+      }
+    ]
+  },
+  "live2d": {
+    "passed": 6,
+    "failed": 1,
+    "tests": [
+      {
+        "status": "PASS",
+        "message": "Live2D: Live2D Manager class",
+        "timestamp": "2026-02-11T18:24:16.263780"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Model loading",
+        "timestamp": "2026-02-11T18:24:16.263790"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Expression control",
+        "timestamp": "2026-02-11T18:24:16.263803"
+      },
+      {
+        "status": "FAIL",
+        "message": "Live2D missing: Body part touch response",
+        "timestamp": "2026-02-11T18:24:16.263816"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Animation loop",
+        "timestamp": "2026-02-11T18:24:16.263825"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Click regions",
+        "timestamp": "2026-02-11T18:24:16.263831"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Eye tracking",
+        "timestamp": "2026-02-11T18:24:16.263836"
+      }
+    ]
+  }
+}

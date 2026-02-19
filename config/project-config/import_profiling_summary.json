@@ -1,0 +1,150 @@
+{
+  "analysis_date": "2026-02-16T00:10:00+08:00",
+  "status": "CRITICAL",
+  "metrics": {
+    "total_import_time_seconds": 36.2,
+    "target_time_seconds": 2.0,
+    "ratio_vs_target": 18.1,
+    "test_collection_status": "TIMEOUT"
+  },
+  "top_blocking_modules": [
+    {
+      "rank": 1,
+      "module": "sklearn.linear_model",
+      "time_seconds": 15.3,
+      "percentage": 42.3,
+      "loaded_by": "ai.ops.capacity_planner",
+      "priority": "P1",
+      "fix_type": "lazy_loading"
+    },
+    {
+      "rank": 2,
+      "module": "scipy.stats",
+      "time_seconds": 7.61,
+      "percentage": 21.0,
+      "loaded_by": "sklearn dependencies",
+      "priority": "P1",
+      "fix_type": "lazy_loading"
+    },
+    {
+      "rank": 3,
+      "module": "chromadb",
+      "time_seconds": 5.05,
+      "percentage": 13.9,
+      "loaded_by": "ai.memory.vector_store",
+      "priority": "P2",
+      "fix_type": "lazy_loading"
+    },
+    {
+      "rank": 4,
+      "module": "fastapi",
+      "time_seconds": 5.52,
+      "percentage": 15.2,
+      "loaded_by": "main_api_server",
+      "priority": "N/A",
+      "fix_type": "acceptable - core framework"
+    }
+  ],
+  "import_chains": [
+    {
+      "chain_id": 1,
+      "description": "sklearn Loading Chain",
+      "total_time_seconds": 15.72,
+      "path": [
+        "main_api_server.py",
+        "api.router",
+        "api.routes.ops_routes",
+        "ai.ops.intelligent_ops_manager",
+        "ai.ops.capacity_planner",
+        "sklearn.linear_model"
+      ],
+      "blocking_file": "apps/backend/src/ai/ops/capacity_planner.py",
+      "blocking_lines": "24-28"
+    },
+    {
+      "chain_id": 2,
+      "description": "chromadb Loading Chain",
+      "total_time_seconds": 5.31,
+      "path": [
+        "main_api_server.py",
+        "services.angela_llm_service",
+        "ai.memory.ham_memory.ham_manager",
+        "ai.memory.vector_store",
+        "chromadb"
+      ],
+      "blocking_file": "apps/backend/src/ai/memory/vector_store.py",
+      "blocking_lines": "8-9"
+    }
+  ],
+  "files_requiring_fixes": [
+    {
+      "file": "apps/backend/src/ai/ops/capacity_planner.py",
+      "issue": "sklearn imported at module scope",
+      "fix": "Implement lazy loading with _ensure_sklearn()",
+      "expected_improvement_seconds": 15.3,
+      "priority": "P1"
+    },
+    {
+      "file": "apps/backend/src/ai/memory/vector_store.py",
+      "issue": "chromadb imported at module scope",
+      "fix": "Implement lazy loading with _ensure_chromadb()",
+      "expected_improvement_seconds": 5.0,
+      "priority": "P2"
+    },
+    {
+      "file": "apps/backend/src/services/main_api_server.py",
+      "issue": "api.router imported at module scope",
+      "fix": "Defer router registration to startup event",
+      "expected_improvement_seconds": 10.0,
+      "priority": "P2"
+    }
+  ],
+  "additional_sklearn_files": [
+    "core/knowledge/unified_knowledge_graph.py",
+    "core/io/io_intelligence_orchestrator.py",
+    "core/tools/logic_model/evaluate_logic_model.py",
+    "core/fusion/multimodal_fusion_engine.py",
+    "core/evolution/emergence_engine.py",
+    "core/evolution/autonomous_evolution_engine.py",
+    "core/ethics/ethics_manager.py",
+    "core/creativity/creative_breakthrough_engine.py",
+    "core/cognitive/cognitive_constraint_engine.py",
+    "core/metacognition/metacognitive_capabilities_engine.py"
+  ],
+  "refactoring_phases": {
+    "phase_1": {
+      "name": "Quick Wins (P1-2)",
+      "expected_time_seconds": 16.0,
+      "improvements": [
+        "Lazy load sklearn in capacity_planner.py (-15.3s)",
+        "Lazy load chromadb in vector_store.py (-5.0s)"
+      ]
+    },
+    "phase_2": {
+      "name": "Optimization",
+      "expected_time_seconds": 6.0,
+      "improvements": [
+        "Defer router registration (-10s)"
+      ]
+    },
+    "phase_3": {
+      "name": "Polish",
+      "expected_time_seconds": 2.0,
+      "improvements": [
+        "Apply lazy loading to remaining sklearn imports",
+        "Add import time monitoring to CI/CD"
+      ]
+    }
+  },
+  "verification_commands": {
+    "measure_import_time": "cd apps/backend && python -c \"import time; s=time.time(); from src.services.main_api_server import app; print(f'{time.time()-s:.2f}s')\"",
+    "test_collection": "pytest --collect-only --timeout=30",
+    "backend_startup": "cd apps/backend && timeout 10s python -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000"
+  },
+  "artifacts": {
+    "raw_profiling_data": "apps/backend/import_timing.txt",
+    "analysis_json": "apps/backend/import_analysis.json",
+    "analysis_script": "apps/backend/analyze_imports.py",
+    "detailed_report": "import_profiling_report.md"
+  }
+}
