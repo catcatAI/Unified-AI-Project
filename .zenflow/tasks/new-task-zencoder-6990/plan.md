@@ -745,6 +745,7 @@ npm start -- --performance-mode=low
 ---
 
 ### [ ] Task 4.2: Implement Hardware Auto-Detection
+<!-- chat-id: d297d07c-ecb7-41d2-b826-28c8f28e65c2 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.4
