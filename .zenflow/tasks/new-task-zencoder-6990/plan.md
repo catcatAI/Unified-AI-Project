@@ -233,6 +233,7 @@ pre-commit run --all-files
 ### Phase 2: Real AI Engine Integration (2-3 weeks)
 
 ### [ ] Task 2.1: Implement LLM Backend Base Classes
+<!-- chat-id: 883e1601-c707-4019-b291-53c5d031dd2a -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 1 day  
 **References**: spec.md § 2.2.1
