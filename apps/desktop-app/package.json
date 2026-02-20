@@ -22,7 +22,7 @@
     "electron-builder": "^26.7.0"
   },
   "dependencies": {
-    "ws": "^8.14.0"
+    "ws": "^8.19.0"
   },
   "build": {
     "appId": "com.unifiedai.angela",
