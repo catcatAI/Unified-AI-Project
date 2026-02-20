@@ -664,6 +664,7 @@ pytest tests/test_memory_template_library.py -v
 ---
 
 ### [ ] Task 3.4: Optimize Memory Retrieval Performance
+<!-- chat-id: 981e3cd5-bba7-40ee-9d02-204fe9108090 -->
 **Owner**: 3号 (Research/Optimization)  
 **Estimated Time**: 2-3 days  
 **References**: spec.md § 2.3, § 6.4
