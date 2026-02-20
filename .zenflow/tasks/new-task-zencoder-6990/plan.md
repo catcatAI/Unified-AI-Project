@@ -461,6 +461,7 @@ pytest tests/test_semantics/test_intent_recognizer.py::test_accuracy -v
 ---
 
 ### [ ] Task 2.7: Refactor AngelaLLMService - Remove All Hardcoding
+<!-- chat-id: a9fd749b-96d1-46f6-910d-630b245600a1 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 3-4 days  
 **References**: spec.md § 2.2.2
