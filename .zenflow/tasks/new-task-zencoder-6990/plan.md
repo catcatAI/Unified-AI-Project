@@ -509,6 +509,7 @@ flake8 apps/backend/src/services/angela_llm_service.py
 ---
 
 ### [ ] Task 2.8: Create End-to-End Conversation Tests
+<!-- chat-id: d354d48c-a1ea-40dd-b34f-0a2b2802c653 -->
 **Owner**: 4号 (QA/Release Manager)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.2, § 6.1
