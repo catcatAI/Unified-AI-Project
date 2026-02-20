@@ -414,6 +414,7 @@ pytest tests/test_llm_backends/test_load_balancer.py -v
 ---
 
 ### [ ] Task 2.6: Implement Semantic Understanding System
+<!-- chat-id: 0bf50a80-330a-490b-87d4-65e047559789 -->
 **Owner**: 3号 (Research/Optimization)  
 **Estimated Time**: 3-4 days  
 **References**: spec.md § 2.2.2
