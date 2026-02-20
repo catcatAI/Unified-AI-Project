@@ -1056,6 +1056,7 @@ mypy apps/backend/src
 ---
 
 ### [ ] Task 6.2: Sign-Off and Deployment
+<!-- chat-id: 93024baf-7d21-49ab-adb1-640e9403e4a8 -->
 **Owner**: 1号 (Project Lead)  
 **Estimated Time**: 1 day
 
