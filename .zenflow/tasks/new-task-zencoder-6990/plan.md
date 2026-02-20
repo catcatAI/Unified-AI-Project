@@ -57,6 +57,7 @@ Save the PRD to `{@artifacts_path}/requirements.md`.
 - 团队角色分配（1号主导、2号执行、3号思考、4号检查）
 
 ### [ ] Step: Technical Specification
+<!-- chat-id: c217642f-64a9-4336-a39e-3f41d895faf2 -->
 
 Create a technical specification based on the PRD in `{@artifacts_path}/requirements.md`.
 
