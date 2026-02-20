@@ -818,6 +818,7 @@ cd apps/desktop-app/electron_app && npm test -- emotion-system
 ---
 
 ### [ ] Task 4.4: Integrate Emotion System with Live2D
+<!-- chat-id: 98c6a365-7ae4-4ea8-9484-53a3fc345b77 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.4
