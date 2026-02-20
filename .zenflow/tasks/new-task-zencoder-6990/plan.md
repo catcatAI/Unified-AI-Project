@@ -1006,6 +1006,7 @@ Update all documentation to reflect new features and architecture.
 ## Final Verification and Sign-Off
 
 ### [ ] Task 6.1: Full System Integration Test
+<!-- chat-id: b2775c72-e710-4616-93e7-bba3652c5c7a -->
 **Owner**: 4号 (QA/Release Manager)  
 **Estimated Time**: 2 days
 
