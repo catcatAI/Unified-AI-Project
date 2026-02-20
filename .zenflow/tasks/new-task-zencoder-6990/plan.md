@@ -379,6 +379,7 @@ GOOGLE_API_KEY=... pytest tests/integration/test_gemini_live.py -v
 ---
 
 ### [ ] Task 2.5: Implement LLM Load Balancer
+<!-- chat-id: fb252910-cca6-4815-a40c-4f744fa53124 -->
 **Owner**: 3号 (Research/Optimization)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.2.1
