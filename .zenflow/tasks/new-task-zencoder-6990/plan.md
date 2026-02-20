@@ -781,6 +781,7 @@ npm test -- --hardware=16gb
 ---
 
 ### [ ] Task 4.3: Implement Emotion System
+<!-- chat-id: 070905e2-b966-471a-af75-150dd5a13c97 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 3 days  
 **References**: spec.md § 2.4
