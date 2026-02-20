@@ -199,6 +199,7 @@ pytest --cov=apps/backend/src --cov-report=html --cov-report=term-missing
 ---
 
 ### [ ] Task 1.3: Standardize Code Formatting
+<!-- chat-id: 26187ada-ed80-4c36-8208-2493c882d320 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 1 day  
 **References**: spec.md § 2.1, AGENTS.MD
