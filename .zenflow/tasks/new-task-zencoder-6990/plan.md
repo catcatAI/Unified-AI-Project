@@ -855,6 +855,7 @@ npm start
 ### Phase 5: Security & Deployment (1 week)
 
 ### [ ] Task 5.1: Implement Key Rotation Mechanism
+<!-- chat-id: eec1e61d-fad5-4893-ac7f-764d5c3f0716 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.5
