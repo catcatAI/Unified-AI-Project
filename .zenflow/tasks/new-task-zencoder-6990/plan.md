@@ -266,6 +266,7 @@ pytest tests/test_llm_backends/test_base_backend.py -v
 ---
 
 ### [ ] Task 2.2: Implement OpenAI GPT-4 Backend
+<!-- chat-id: df951cac-3598-456b-b289-d3df9d09ba43 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.2.1
