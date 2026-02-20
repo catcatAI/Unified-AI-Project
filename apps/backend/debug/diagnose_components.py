@@ -46,21 +46,21 @@ class ComponentDiagnostic,
             from apps.backend.src.services.audio_service import AudioService
             
             # 創建服務實例
-            audio_service == AudioService()
+audio_service = AudioService()
             logger.info("✅ AudioService 初始化成功")
             
             # 測試基本功能
             dummy_audio = b'\x00\x01\x02\x03\x04\x05'
             result = await audio_service.speech_to_text(dummy_audio, language='en-US')
             
-            if 'error' not in result,::
+            if 'error' not in result:
                 logger.info("✅ AudioService speech_to_text 測試通過")
                 self.test_results['audio_service'] = 'PASSED'
             else,
                 logger.error(f"❌ AudioService speech_to_text 失敗, {result.get('error')}")
                 self.test_results['audio_service'] = 'FAILED'
                 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"❌ AudioService 診斷失敗, {e}")
             self.test_results['audio_service'] = f'ERROR, {e}'
     
@@ -72,21 +72,21 @@ class ComponentDiagnostic,
             from apps.backend.src.services.vision_service import VisionService
             
             # 創建服務實例
-            vision_service == VisionService()
+vision_service = VisionService()
             logger.info("✅ VisionService 初始化成功")
             
             # 測試基本功能
             dummy_image = b'dummy_image_data'
             result = await vision_service.analyze_image(dummy_image)
             
-            if 'error' not in result,::
+            if 'error' not in result:
                 logger.info("✅ VisionService analyze_image 測試通過")
                 self.test_results['vision_service'] = 'PASSED'
             else,
                 logger.error(f"❌ VisionService analyze_image 失敗, {result.get('error')}")
                 self.test_results['vision_service'] = 'FAILED'
                 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"❌ VisionService 診斷失敗, {e}")
             self.test_results['vision_service'] = f'ERROR, {e}'
     
@@ -98,22 +98,22 @@ class ComponentDiagnostic,
             from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
             
             # 創建向量存儲實例
-            vector_store == VectorMemoryStore(persist_directory="./test_vector_db")
+vector_store = VectorMemoryStore(persist_directory="./test_vector_db")
             logger.info("✅ VectorMemoryStore 初始化成功")
             
             # 測試添加記憶
             memory_result = await vector_store.add_memory(
                 'test_memory_001',
-                'This is a test memory for diagnostics',:::
+                'This is a test memory for diagnostics',:
                     'test': True}
             )
             
-            if memory_result.get('status') == 'success':::
+            if memory_result.get('status') == 'success':
                 logger.info("✅ VectorMemoryStore add_memory 測試通過")
                 
                 # 測試統計信息
                 stats = await vector_store.get_memory_statistics()
-                if 'total_memories' in stats,::
+                if 'total_memories' in stats:
                     logger.info("✅ VectorMemoryStore get_memory_statistics 測試通過")
                     self.test_results['vector_store'] = 'PASSED'
                 else,
@@ -123,7 +123,7 @@ class ComponentDiagnostic,
                 logger.error(f"❌ VectorMemoryStore add_memory 失敗, {memory_result}")
                 self.test_results['vector_store'] = 'FAILED'
                 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"❌ VectorMemoryStore 診斷失敗, {e}")
             self.test_results['vector_store'] = f'ERROR, {e}'
     
@@ -135,7 +135,7 @@ class ComponentDiagnostic,
             from apps.backend.src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
             
             # 創建推理引擎實例
-            causal_engine == CausalReasoningEngine(config={'causality_threshold': 0.5})
+causal_engine = CausalReasoningEngine(config={'causality_threshold': 0.5})
             logger.info("✅ CausalReasoningEngine 初始化成功")
             
             # 測試因果關係學習
@@ -157,7 +157,7 @@ class ComponentDiagnostic,
                 logger.error("❌ CausalReasoningEngine learn_causal_relationships 返回類型錯誤")
                 self.test_results['causal_reasoning'] = 'FAILED'
                 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"❌ CausalReasoningEngine 診斷失敗, {e}")
             self.test_results['causal_reasoning'] = f'ERROR, {e}'
     
@@ -167,25 +167,25 @@ class ComponentDiagnostic,
         logger.info("📊 組件診斷報告")
         logger.info("="*60)
         
-        for component, result in self.test_results.items():::
-            status_icon == "✅" if result == 'PASSED' else "❌":::
+        for component, result in self.test_results.items():
+status_icon = "✅" if result == 'PASSED' else "❌":
                 ogger.info(f"{status_icon} {component} {result}")
         
         # 統計結果
-        passed == len([r for r in self.test_results.values() if r == 'PASSED'])::
+passed = len([r for r in self.test_results.values() if r == 'PASSED'])::
             otal = len(self.test_results())
         
         logger.info(f"\n📈 總結, {passed}/{total} 組件通過診斷")
         
-        if passed == total,::
+        if passed == total:
             logger.info("🎉 所有組件診斷通過！")
         else,
             logger.warning("⚠️ 某些組件需要修復")
 
 async def main() -> None,
     """主函數"""
-    diagnostic == ComponentDiagnostic()
+diagnostic = ComponentDiagnostic()
     await diagnostic.diagnose_all_components()
 
-if __name"__main__":::
+if __name"__main__":
     asyncio.run(main())

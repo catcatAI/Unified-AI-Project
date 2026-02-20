@@ -22,7 +22,7 @@ class TestDependencyManager:
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_import_name_mapping(self) -> None,
+def test_import_name_mapping(self) -> None:
     """测试导入名称映射"""
     dm = DependencyManager()
 
@@ -38,7 +38,7 @@ def test_import_name_mapping(self) -> None,
     from ai.dependency_manager import DependencyInfo
     dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
-            is_available = True,,
+            is_available = True,
     fallback_available = False
     )
 
@@ -53,7 +53,7 @@ def test_import_name_mapping(self) -> None,
     from ai.dependency_manager import DependencyInfo
     dm._dependencies["nonexistent_package"] = DependencyInfo(
             name="nonexistent_package",
-            is_available = False,,
+            is_available = False,
     fallback_available = False
     )
 
@@ -77,7 +77,7 @@ def test_import_name_mapping(self) -> None,
     from ai.dependency_manager import DependencyInfo
     dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
-            is_available = True,,
+            is_available = True,
     fallback_available = False
     )
 

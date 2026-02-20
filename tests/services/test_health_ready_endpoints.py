@@ -17,7 +17,7 @@ def client():
     def fake_get_services():
         # Minimal objects to satisfy attribute checks in endpoints
         class DialogueManager:
-            def __init__(self) -> None,
+            def __init__(self) -> None:
                 self.pending_hsp_task_requests = {}
         class HSPConnector:
             def __init__(self) -> None,

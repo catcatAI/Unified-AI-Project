@@ -129,7 +129,7 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
         execution_result = {
             "execution_time": 7,
             "success": False,
-            "errors": ["Timeout"]
+            "errors": ["Timeout"],
             "user_feedback": {"text": "This was terrible."}
             "output": "Partial result"
         }
@@ -200,7 +200,7 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
         execution_result = {
             "execution_time": 5,
             "success": True,
-            "errors": []
+            "errors": [],
             "output": "Some result"
         }
         

@@ -28,7 +28,7 @@ class PerformanceBenchmarkWorkflow,
         Args,
             project_root, 项目根目录
         """
-        self.project_root == Path(project_root) if project_root else Path(__file__).parent.parent,::
+        self.project_root == Path(project_root) if project_root else Path(__file__).parent.parent:
             elf.scripts_dir = self.project_root / "scripts"
         self.benchmarks_dir = self.project_root / "benchmarks"
         self.benchmarks_dir.mkdir(exist_ok == True)
@@ -54,7 +54,7 @@ class PerformanceBenchmarkWorkflow,
             }
         }
 
-    def run_complete_performance_workflow(self, benchmark_suite, str == "all") -> Dict[str, Any]
+    def run_complete_performance_workflow(self, benchmark_suite, str == "all") -> Dict[str, Any],
         """
         运行完整的性能工作流
 
@@ -96,7 +96,7 @@ class PerformanceBenchmarkWorkflow,
 
             logger.info(f"Performance benchmark workflow completed in {workflow_results['duration'].2f} seconds")
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error in performance benchmark workflow, {e}")
             workflow_results["status"] = "failed"
             workflow_results["error"] = str(e)
@@ -106,7 +106,7 @@ class PerformanceBenchmarkWorkflow,
 
         return workflow_results
 
-    def _run_benchmark_suite(self, benchmark_suite, str) -> Dict[str, Any]
+    def _run_benchmark_suite(self, benchmark_suite, str) -> Dict[str, Any],
         """
         运行基准测试套件
 
@@ -132,15 +132,15 @@ class PerformanceBenchmarkWorkflow,
             ]
 
             # 添加基准测试选项
-            if benchmark_suite != "all":::
+            if benchmark_suite != "all":
                 cmd.extend(["-k", benchmark_suite])
 
             # 运行基准测试
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True,
+capture_output = True,
+text = True,
                 timeout=self.workflow_config["benchmark"]["timeout"]
             )
 
@@ -152,17 +152,17 @@ class PerformanceBenchmarkWorkflow,
                 "timestamp": datetime.now().isoformat()
             }
 
-            logger.info(f"Benchmark suite execution {'succeeded' if benchmark_result['success'] else 'failed'}"):::
+            logger.info(f"Benchmark suite execution {'succeeded' if benchmark_result['success'] else 'failed'}"):
                 eturn benchmark_result
 
-        except subprocess.TimeoutExpired,::
+        except subprocess.TimeoutExpired::
             logger.error("Benchmark suite execution timed out")
             return {
                 "success": False,
                 "error": "Benchmark suite execution timed out",
                 "timestamp": datetime.now().isoformat()
             }
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error running benchmark suite, {e}")
             return {
                 "success": False,
@@ -170,7 +170,7 @@ class PerformanceBenchmarkWorkflow,
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _analyze_performance_regressions(self) -> Dict[str, Any]
+    def _analyze_performance_regressions(self) -> Dict[str, Any],
         """
         分析性能回归
 
@@ -182,7 +182,7 @@ class PerformanceBenchmarkWorkflow,
         try,
             # 调用性能回归检测器
             regression_detector_script = self.scripts_dir / "performance_regression_detector.py"
-            if not regression_detector_script.exists():::
+            if not regression_detector_script.exists():
                 logger.warning("Performance regression detector script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
@@ -193,10 +193,10 @@ class PerformanceBenchmarkWorkflow,
             ]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
-                capture_output == True,
-                text == True
+capture_output = True,
+text = True
             )
 
             regression_result = {
@@ -207,10 +207,10 @@ class PerformanceBenchmarkWorkflow,
                 "timestamp": datetime.now().isoformat()
             }
 
-            logger.info(f"Performance regression analysis {'succeeded' if regression_result['success'] else 'failed'}"):::
+            logger.info(f"Performance regression analysis {'succeeded' if regression_result['success'] else 'failed'}"):
                 eturn regression_result
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error analyzing performance regressions, {e}")
             return {
                 "success": False,
@@ -218,8 +218,7 @@ class PerformanceBenchmarkWorkflow,
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _generate_performance_reports(self, benchmark_results, Dict[str, Any] ,
-    regression_results, Dict[str, Any]) -> Dict[str, Any]
+    def _generate_performance_reports(self, benchmark_results, Dict[str, Any], regression_results, Dict[str, Any]) -> Dict[str, Any],
         """
         生成性能报告
 
@@ -277,7 +276,7 @@ class PerformanceBenchmarkWorkflow,
     
     <div class="section">
         <h2>Benchmark Results</h2>
-        <p class == "{'success' if benchmark_results.get('success', False) else 'failure'}">:::
+        <p class == "{'success' if benchmark_results.get('success', False) else 'failure'}">:
             tatus, {benchmark_results.get('status', 'unknown')}
         </p>
         <pre>{benchmark_results.get('stdout', '')}</pre>
@@ -285,7 +284,7 @@ class PerformanceBenchmarkWorkflow,
     
     <div class="section">
         <h2>Regression Analysis</h2>
-        <p class == "{'success' if regression_results.get('success', False) else 'failure'}">:::
+        <p class == "{'success' if regression_results.get('success', False) else 'failure'}">:
             tatus, {regression_results.get('status', 'unknown')}
         </p>
         <pre>{regression_results.get('stdout', '')}</pre>
@@ -306,7 +305,7 @@ class PerformanceBenchmarkWorkflow,
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error generating performance reports, {e}")
             return {
                 "success": False,
@@ -314,7 +313,7 @@ class PerformanceBenchmarkWorkflow,
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _send_regression_alerts(self, regression_results, Dict[str, Any]) -> Dict[str, Any]
+    def _send_regression_alerts(self, regression_results, Dict[str, Any]) -> Dict[str, Any],
         """
         发送回归警报
 
@@ -328,7 +327,7 @@ class PerformanceBenchmarkWorkflow,
 
         try,
             # 检查是否有回归
-            has_regression == False
+has_regression = False
             if regression_results.get("success", False)::
                 # 在实际实现中,这里会解析回归分析结果来确定是否有回归
                 # 简化处理：假设如果有输出就可能有回归
@@ -355,7 +354,7 @@ class PerformanceBenchmarkWorkflow,
                     "timestamp": datetime.now().isoformat()
                 }
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error sending regression alerts, {e}")
             return {
                 "success": False,
@@ -379,18 +378,18 @@ class PerformanceBenchmarkWorkflow,
             
             logger.info(f"Saved workflow results to {results_file}")
             
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error saving workflow results, {e}")
 
 def main() -> None,
     """主函数"""
-    workflow == PerformanceBenchmarkWorkflow()
+workflow = PerformanceBenchmarkWorkflow()
     results = workflow.run_complete_performance_workflow()
     
-    if results["status"] == "completed":::
+    if results["status"] == "completed":
         logger.info("Performance benchmark workflow completed successfully")
     else,
         logger.error(f"Performance benchmark workflow failed, {results.get('error', 'Unknown error')}")
 
-if __name"__main__":::
+if __name"__main__":
     main()

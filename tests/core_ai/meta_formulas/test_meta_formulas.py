@@ -22,7 +22,7 @@ class TestMetaFormulas(unittest.TestCase):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_meta_formula(self) -> None,
+def test_meta_formula(self) -> None:
         meta_formula = MetaFormula("Test Formula", "This is a test formula.")
         with self.assertRaises(NotImplementedError)
             meta_formula.execute()

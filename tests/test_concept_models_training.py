@@ -49,35 +49,35 @@ def test_
     try:
         logger.info("✅ 环境模拟器导入成功")
         return True
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"❌ 环境模拟器导入失败, {e}")
         return False
     
     try:
         logger.info("✅ 因果推理引擎导入成功")
         return True
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"❌ 因果推理引擎导入失败, {e}")
         return False
     
     try:
         logger.info("✅ 自适应学习控制器导入成功")
         return True
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"❌ 自适应学习控制器导入失败, {e}")
         return False
     
     try:
         logger.info("✅ Alpha深度模型导入成功")
         return True
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"❌ Alpha深度模型导入失败, {e}")
         return False
     
     try:
         logger.info("✅ 统一符号空间导入成功")
         return True
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"❌ 统一符号空间导入失败, {e}")
         return False
 
@@ -109,7 +109,7 @@ def test_
             return False
             
         return True
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"❌ 训练配置测试失败, {e}")
         return False
 
@@ -139,7 +139,7 @@ def test_
         else:
             logger.error(f"❌ 文档处理脚本执行失败, {result.stderr}")
             return False
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"❌ 文档处理测试失败, {e}")
         return False
 

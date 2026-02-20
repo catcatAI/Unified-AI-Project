@@ -54,7 +54,7 @@ try:
     from src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
     from src.core.services.vision_service import VisionService
     from src.core.services.audio_service import AudioService
-except ImportError as e,:
+except ImportError as e:
     print(f"Import error, {e}")
     print("Please ensure you're running this from the backend directory")
     # 不退出,而是跳过测试
@@ -131,7 +131,7 @@ def test_unified_control_center(self) -> None:
 
             logger.info("✅ Unified Control Center test passed")
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"❌ Unified Control Center test failed, {e}")
             raise
 
@@ -161,7 +161,7 @@ def test_unified_control_center(self) -> None:
 
             audio_result = await audio_service.speech_to_text(
                 dummy_audio,
-                language='en-US',,
+                language='en-US',
     enhanced_features = True
             )
 
@@ -178,7 +178,7 @@ def test_unified_control_center(self) -> None:
 
             logger.info("✅ Multimodal Processing test passed")
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"❌ Multimodal Processing test failed, {e}")
             raise
 
@@ -209,7 +209,7 @@ def test_unified_control_center(self) -> None:
                 }
             ]
 
-            for memory in test_memories,:
+            for memory in test_memories:
                 add_result = await vector_store.add_memory(
                     memory['id']
                     memory['content'],
@@ -222,7 +222,7 @@ def test_unified_control_center(self) -> None:
             # 检查搜索结果是否包含预期字段
             has_documents = 'documents' in search_result if search_result else False,:
                 as_ids = 'ids' in search_result if search_result else False,:
-ssert has_documents or has_ids, "Search result missing expected fields"
+assert has_documents or has_ids, "Search result missing expected fields"
 
             # 测试统计信息
             stats = await vector_store.get_memory_statistics()
@@ -239,7 +239,7 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
             logger.info("✅ Vector Storage System test passed")
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"❌ Vector Storage System test failed, {e}")
             raise
 
@@ -300,7 +300,7 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
             logger.info("✅ Causal Reasoning Engine test passed")
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"❌ Causal Reasoning Engine test failed, {e}")
             raise
 
@@ -368,6 +368,6 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
             logger.info("✅ End-to-End AGI Workflow test passed")
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"❌ End-to-End AGI Workflow test failed, {e}")
             raise

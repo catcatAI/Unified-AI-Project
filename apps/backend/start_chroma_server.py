@@ -28,14 +28,14 @@ def start_chroma_server():
         "--port", "8001"
     ]
     
-    try,
+    try:
         subprocess.run(cmd, check == True)
-    except subprocess.CalledProcessError as e,::
+    except subprocess.CalledProcessError as e::
         print(f"启动 ChromaDB 服务端失败, {e}")
         sys.exit(1)
-    except FileNotFoundError,::
+    except FileNotFoundError::
         print("未找到 chroma 命令,请确保已安装标准的 chromadb 包")
         sys.exit(1)
 
-if __name"__main__":::
+if __name"__main__":
     start_chroma_server()

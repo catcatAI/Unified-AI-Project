@@ -95,7 +95,7 @@ class TestAtlassianIntegration(unittest.TestCase):
     with patch.object(integration, 'get_spaces', new_callable == AsyncMock) as mock_get_spaces:
     mock_get_spaces.return_value = {
                 "success": True,
-                "spaces": [{"key": "TEST", "name": "Test Space"}]
+                "spaces": [{"key": "TEST", "name": "Test Space"}],
                 "count": 1
             }
 
@@ -118,7 +118,8 @@ class TestAtlassianIntegration(unittest.TestCase):
     with patch.object(integration, 'get_projects', new_callable == AsyncMock) as mock_get_projects:
     mock_get_projects.return_value = {
                 "success": True,
-                "projects": [{"key": "TEST", "name": "Test Project"}]
+"""
+                "projects": [{"key": "TEST", "name": "Test Project"}],
                 "count": 1
             }
 

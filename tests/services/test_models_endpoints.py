@@ -16,7 +16,7 @@ from core_services import get_services as real_get_services
 def client():
     # Minimal dependency overrides to keep other endpoints stable
     class DialogueManager:
-        def __init__(self) -> None,
+        def __init__(self) -> None:
             self.pending_hsp_task_requests = {}
 
     class HSPConnector:
@@ -95,7 +95,7 @@ def test_models_route(client, TestClient, monkeypatch, pytest.MonkeyPatch()) -> 
         def route(self, policy):
             # Echo a simplified routing decision using policy fields
             return {
-                "selected_model": "gpt-4" if getattr(policy, "needs_tools", False) else "llama3",::
+                "selected_model": "gpt-4" if getattr(policy, "needs_tools", False) else "llama3":
                 "policy": {
                     "task_type": getattr(policy, "task_type", None),
                     "input_chars": getattr(policy, "input_chars", None),

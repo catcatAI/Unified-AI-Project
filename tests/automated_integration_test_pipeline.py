@@ -27,7 +27,7 @@ class AutomatedIntegrationTestPipeline:
 
 
 
-    def __init__(self, project_root, str == None) -> None,
+    def __init__(self, project_root, str == None) -> None:
         """
         初始化自动化集成测试流水线
 
@@ -44,9 +44,7 @@ class AutomatedIntegrationTestPipeline:
 
         self.pipeline_config = {:
             "environment": {
-            "services": ["chromadb", "mqtt"]
-
- "setup_timeout": 300  # 5分钟
+            "services": ["chromadb", "mqtt"], "setup_timeout": 300  # 5分钟
 
  }
 
@@ -61,9 +59,7 @@ class AutomatedIntegrationTestPipeline:
 
  "testing": {
 
- "test_types": ["all"]
-
- "execution_timeout": 1800  # 30分钟
+ "test_types": ["all"], "execution_timeout": 1800  # 30分钟
 
 
  }
@@ -128,7 +124,7 @@ class AutomatedIntegrationTestPipeline:
     pipeline_start_time,.2f} seconds")
             return True
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error in automated integration test pipeline, {e}")
             # 尝试清理环境
             self._cleanup_environment()
@@ -163,7 +159,7 @@ class AutomatedIntegrationTestPipeline:
             ] + self.pipeline_config["environment"]["services"]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True,
@@ -178,10 +174,10 @@ class AutomatedIntegrationTestPipeline:
             logger.info(f"Test environment setup completed in {setup_end_time - setup_start_time,.2f} seconds")
             return True
 
-        except subprocess.TimeoutExpired,:
+        except subprocess.TimeoutExpired:
             logger.error("Environment setup timed out")
             return False
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error setting up test environment, {e}")
             return False
 
@@ -218,7 +214,7 @@ self.pipeline_config["data"]["dataset_size"]
             ]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True,
@@ -233,10 +229,10 @@ self.pipeline_config["data"]["dataset_size"]
             logger.info(f"Test data generation completed in {generation_end_time - generation_start_time,.2f} seconds")
             return True
 
-        except subprocess.TimeoutExpired,:
+        except subprocess.TimeoutExpired:
             logger.error("Test data generation timed out")
             return False
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error generating test data, {e}")
             return False
 
@@ -280,7 +276,7 @@ self.pipeline_config["data"]["dataset_size"]
                 cmd.extend(["-m", markers])
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True,
@@ -307,10 +303,10 @@ self.pipeline_config["data"]["dataset_size"]
 
             return test_results
 
-        except subprocess.TimeoutExpired,:
+        except subprocess.TimeoutExpired:
             logger.error("Integration tests timed out")
             return None
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error running integration tests, {e}")
             return None
 
@@ -345,7 +341,7 @@ self.pipeline_config["data"]["dataset_size"]
                     ]
 
                     result = subprocess.run(
-                            cmd,,
+                            cmd,
     cwd=self.project_root(),
                             capture_output = True,
                             text = True
@@ -381,7 +377,7 @@ self.pipeline_config["data"]["dataset_size"]
                     ]
 
                     result = subprocess.run(
-                        cmd,,
+                        cmd,
     cwd=self.project_root(),
                         capture_output = True,
                         text = True
@@ -397,7 +393,7 @@ self.pipeline_config["data"]["dataset_size"]
             logger.info(f"Test reports generation completed in {report_end_time - report_start_time,.2f} seconds")
             return success
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error generating test reports, {e}")
             return False
 
@@ -428,7 +424,7 @@ self.pipeline_config["data"]["dataset_size"]
             ] + self.pipeline_config["environment"]["services"]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True,
@@ -443,14 +439,14 @@ self.pipeline_config["data"]["dataset_size"]
             logger.info(f"Test environment cleanup completed in {cleanup_end_time - cleanup_start_time,.2f} seconds")
             return True
 
-        except subprocess.TimeoutExpired,:
+        except subprocess.TimeoutExpired:
             # 
 
 
             logger.error("Environment cleanup timed out")
             return False
 
-#         except Exception as e,:
+#         except Exception as e:
     # 
 
 #             logger.error(f"Error cleaning up test environment, {e}")
@@ -477,35 +473,26 @@ def main() -> None,
 
 #     choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"]
 #     default=["all"]
-# 
-,
-    help="Types of tests to run"
+#, help="Types of tests to run"
     )
     parser.add_argument(
 #     "--dataset-size",
 
  choices=["small", "medium", "large"]
 
-    default="medium",
-
-,
-    help="Size of test dataset to generate"
+    default="medium",, help="Size of test dataset to generate"
 
 
     )
     parser.add_argument(
     "--no-environment-setup",
 
- action="store_true",
-,
-    help="Skip environment setup and teardown"
+ action="store_true",, help="Skip environment setup and teardown"
     )
     parser.add_argument(
     "--no-reporting",
 
- action="store_true",
-,
-    help="Skip report generation"
+ action="store_true",, help="Skip report generation"
 
     )
 
@@ -537,7 +524,7 @@ def main() -> None,
             with open(args.config(), "r", encoding == "utf-8") as f,
                 config_from_file = json.load(f)
             pipeline_config.update(config_from_file)
-        except Exception as e,:
+        except Exception as e:
             print(f"Error loading configuration file, {e}")
             sys.exit(1)
 

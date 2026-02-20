@@ -16,7 +16,7 @@ class TestAtlassianEndToEndWorkflow:
         try:
             response = requests.get(f"{BASE_URL}/health")
             assert response.status_code == 200
-        except requests.exceptions.ConnectionError,:
+        except requests.exceptions.ConnectionError:
             pytest.skip("后端服务未运行,跳过端到端测试")
     
     

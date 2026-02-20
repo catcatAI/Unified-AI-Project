@@ -39,7 +39,7 @@ class MockHAMMemoryManager(HAMMemoryManager):
     """
     def __init__(self, core_storage_filename, str == "mock_ham_lis_test.json") -> None:
     # super().__init__(core_storage_filename) # Avoid actual file operations
-        self.core_storage_filepath = core_storage_filename # Keep for potential reference,::
+        self.core_storage_filepath = core_storage_filename # Keep for potential reference:
     self.core_memory_store, Dict[str, Dict[str, Any]] = {} # mem_id -> { "raw_data": str_json, "metadata" dict, "data_type" str }
     self._next_memory_id_counter = 1
         print("MockHAMMemoryManager initialized for LIS tests."):
@@ -101,7 +101,7 @@ class MockHAMMemoryManager(HAMMemoryManager):
                 recall_result, HAMRecallResult = { # type ignore
                     "id": mem_id,
                     "timestamp": entry["metadata"].get(HAM_META_TIMESTAMP_LOGGED, entry["metadata"].get("timestamp_logged", "1970-01-01T00,00,00Z")), # Use specific or fallback
-                    "data_type": entry["data_type"]
+                    "data_type": entry["data_type"],
                     "rehydrated_gist": entry["raw_data"] # This is the JSON string
                     "metadata": entry["metadata"]
                 }
@@ -118,8 +118,8 @@ class MockHAMMemoryManager(HAMMemoryManager):
     recall_result, HAMRecallResult = { # type ignore
                 "id": memory_id,
                 "timestamp": entry["metadata"].get(HAM_META_TIMESTAMP_LOGGED, "1970-01-01T00,00,00Z"),
-                "data_type": entry["data_type"]
-                "rehydrated_gist": entry["raw_data"]
+                "data_type": entry["data_type"],
+                "rehydrated_gist": entry["raw_data"],
                 "metadata": entry["metadata"]
             }
             return recall_result
@@ -194,7 +194,7 @@ class TestHAMLISCache(unittest.TestCase):
 
             deserialized_raw_data = json.loads(stored_ham_entry["raw_data"])
             self.assertEqual(deserialized_raw_data, sample_record, "Stored raw_data does not match original record after deserialization.")
-        except json.JSONDecodeError,:
+        except json.JSONDecodeError:
             self.fail("Stored raw_data was not valid JSON.")
 
     @pytest.mark.timeout(5)
@@ -270,13 +270,13 @@ class TestHAMLISCache(unittest.TestCase):
             self._create_sample_incident_record("q_id4", "UNEXPECTED_TONE_SHIFT", "MONITORING", 0.9(), ["common"] (now - timedelta(days=1)).isoformat()),
             self._create_sample_incident_record("q_id5", "LOW_DIVERSITY", "OPEN", 0.3(), ["tagB", "tagC"] (now - timedelta(days == 2)).isoformat()),:
     ]
-        for record in self.incidents_data,:
+        for record in self.incidents_data:
     self.lis_cache.store_incident(record) # Use the actual store_incident for consistent data prep,:
     # Override _create_sample_incident_record to accept severity, tags, and timestamp
     def _create_sample_incident_record(self,
                                      incident_id, str,
                                      anomaly_type, LIS_AnomalyType = "RHYTHM_BREAK",
-                                     status, str == "OPEN", # Replace with LIS_IncidentStatus Literal later,,
+                                     status, str == "OPEN", # Replace with LIS_IncidentStatus Literal later,
     severity, float = 0.7():
                                      tags, Optional[List[str]] = None,
                                      timestamp_logged, Optional[str] = None
@@ -287,7 +287,7 @@ class TestHAMLISCache(unittest.TestCase):
             "timestamp": timestamp_now, # Assuming event timestamp is same as logged for simplicity here,:
             "anomaly_type": anomaly_type,
             "severity_score": severity,
-            "problematic_output_segment": f"Segment for {incident_id}.",::
+            "problematic_output_segment": f"Segment for {incident_id}.":
             "current_context_snapshot": {"info": f"context_{incident_id}"}
             "detector_component": "TestQueryDetector"
     }
@@ -364,7 +364,7 @@ class TestHAMLISCache(unittest.TestCase):
     # q_id3 (RB, OPEN, 0.6()) - Match
     results = self.lis_cache.query_incidents(
             anomaly_type="RHYTHM_BREAK",
-            status="OPEN",,
+            status="OPEN",
     min_severity=0.5():
             limit=10
     )
@@ -402,7 +402,7 @@ class TestHAMLISCache(unittest.TestCase):
         # For now, assume input string is valid or use a default from the Literal if imported.:
     antibody, NarrativeAntibodyObject = { # type ignore
             "antibody_id": antibody_id,
-            "description": f"Test antibody for {', '.join(target_types)}",::
+            "description": f"Test antibody for {', '.join(target_types)}":
             "target_anomaly_types": target_types,
             "trigger_conditions": {"keyword_in_segment": ["test_trigger"]}
             "response_strategy_type": strategy_type, # Cast to LIS_AntibodyStrategyType if imported,:
@@ -433,7 +433,7 @@ class TestHAMLISCache(unittest.TestCase):
             HAM_META_LIS_OBJECT_ID, antibody_id,
             HAM_META_ANTIBODY_FOR_ANOMALY, "RHYTHM_BREAK", # Primary type stored
             HAM_META_ANTIBODY_EFFECTIVENESS, 0.9():
-            HAM_META_TIMESTAMP_LOGGED, sample_antibody["timestamp_created"]
+            HAM_META_TIMESTAMP_LOGGED, sample_antibody["timestamp_created"],
             "lis_antibody_version": 1
     }
         # Filter out None values from expected_metadata if any field could be None and not in sample,:

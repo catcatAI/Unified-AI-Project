@@ -21,7 +21,7 @@ class TestFormulaEngine(unittest.TestCase):
         self.valid_formulas_data, List[FormulaConfigEntry] = [ # type, ignore
             {
                 "name": "greeting_high",
-                "conditions": ["hello", "hi there"]
+                "conditions": ["hello", "hi there"],
                 "action": "greet_user_warmly",
                 "description": "A warm greeting.",
                 "parameters": {"warmth": "high"}
@@ -32,7 +32,7 @@ class TestFormulaEngine(unittest.TestCase):
             }
             {
                 "name": "greeting_low",
-                "conditions": ["hey"]
+                "conditions": ["hey"],
                 "action": "greet_user_casually",
                 "description": "A casual greeting.",
                 "parameters": {"warmth": "low"}
@@ -43,7 +43,7 @@ class TestFormulaEngine(unittest.TestCase):
             }
             {
                 "name": "farewell",
-                "conditions": ["bye", "see you"]
+                "conditions": ["bye", "see you"],
                 "action": "say_goodbye",
                 "description": "Says goodbye.",
                 "parameters": {} # No params for template here,:
@@ -54,7 +54,7 @@ class TestFormulaEngine(unittest.TestCase):
             }
             {
                 "name": "disabled_formula",
-                "conditions": ["secret word"]
+                "conditions": ["secret word"],
                 "action": "do_nothing_secret",
                 "description": "A disabled formula.",
                 "parameters": {}
@@ -170,7 +170,7 @@ class TestFormulaEngine(unittest.TestCase):
         # Find the "farewell" formula which has no explicit parameters in the dummy data
         # Note, The setUp data defines "parameters": {} for "farewell":
         farewell_formula = None,
-        for f_data in self.valid_formulas_data,:
+        for f_data in self.valid_formulas_data:
             if f_data["name"] == "farewell"::
                 farewell_formula = f_data
                 break

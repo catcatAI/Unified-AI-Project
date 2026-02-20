@@ -21,7 +21,7 @@ class TestVisionService(unittest.TestCase):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_01_initialization(self) -> None,
+def test_01_initialization(self) -> None:
         """Test Vision service initialization."""
         service = VisionService()
         self.assertIsNotNone(service)

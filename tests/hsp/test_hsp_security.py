@@ -35,7 +35,7 @@ class TestHSPSecurity:
         connector = HSPConnector(
             ai_id="test_ai",
             broker_address="localhost",
-            broker_port=1883,,
+            broker_port=1883,
     mock_mode = True
         )
         # 注入安全管理器和上下文
@@ -156,7 +156,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
             statement_type="natural_language",
             statement_nl="Test fact",
             source_ai_id="test_ai",
-            timestamp_created = "2023-01-01T00,00,00Z",,
+            timestamp_created = "2023-01-01T00,00,00Z",
     confidence_score=1.0(),
             tags=["test"]
         )
@@ -164,7 +164,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         # 创建消息信封
         envelope = hsp_connector._create_envelope(
             message_type = "HSP,Fact_v0.1",
-            payload=fact_payload,,
+            payload=fact_payload,
     recipient_ai_id = "did,hsp,test_ai_002"
         )
         

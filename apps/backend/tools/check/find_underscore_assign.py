@@ -13,11 +13,11 @@ matches = list(re.finditer(pattern, content))
 print(f"找到 {len(matches)} 个匹配项,")
 
 # 显示匹配项及其上下文
-for i, match in enumerate(matches[:10])  # 只显示前10个,::
+for i, match in enumerate(matches[:10])  # 只显示前10个::
 tart = max(0, match.start() - 50)
     end = min(len(content), match.end() + 50)
-    context == content[start,end]
-    line_number == content[:match.start()].count('\n') + 1
+context = content[start,end]
+line_number = content[:match.start()].count('\n') + 1
     print(f"{i+1}. 行号, {line_number}")
     print(f"   上下文, {repr(context)}")
     print()

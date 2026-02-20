@@ -20,20 +20,20 @@ logger = logging.getLogger(__name__)
 
 
 class TestSuiteOptimizer:
-    def __init__(self, project_root, str) -> None,
+    def __init__(self, project_root, str) -> None:
         self.project_root = Path(project_root)
         self.tests_dir = self.project_root / "apps" / "backend" / "tests"
 
-    def find_test_files(self) -> List[Path]
+    def find_test_files(self) -> List[Path],
         """Find all test files in the project."""
         test_files = []
         for root, dirs, files in os.walk(self.tests_dir()):
-            for file in files,:
+            for file in files:
                 if file.startswith('test_') and file.endswith('.py')::
                     test_files.append(Path(root) / file)
         return test_files
 
-    def extract_test_functions(self, file_path, Path) -> List[Dict]
+    def extract_test_functions(self, file_path, Path) -> List[Dict],
         """Extract test functions from a test file with their details.""":
 
 
@@ -78,7 +78,7 @@ ry,
                     })
 
             return test_functions
-        except Exception as e,:
+        except Exception as e:
             print(f"Error parsing {file_path} {e}")
             return []
     
@@ -88,13 +88,13 @@ ry,
         all_tests = []
         
         # Extract all test functions
-        for test_file in test_files,:
+        for test_file in test_files:
             tests = self.extract_test_functions(test_file)
             all_tests.extend(tests)
         
         # Group tests by name
         tests_by_name = defaultdict(list)
-        for test in all_tests,:
+        for test in all_tests:
             tests_by_name[test["name"]].append(test)
         
         # Find duplicates (same name in different files)
@@ -105,13 +105,13 @@ ry,
         
         return duplicates
     
-    def find_similar_tests(self) -> List[Dict]
+    def find_similar_tests(self) -> List[Dict],
         """Find similar test functions based on code similarity."""
         test_files = self.find_test_files()
         all_tests = []
         
         # Extract all test functions
-        for test_file in test_files,:
+        for test_file in test_files:
             tests = self.extract_test_functions(test_file)
             all_tests.extend(tests)
         
@@ -164,7 +164,7 @@ f abs(count1 - count2) <= 1 and count1 > 0 and count2 > 0,
         tests_per_file = {}
         total_tests = 0
         
-        for test_file in test_files,:
+        for test_file in test_files:
             tests = self.extract_test_functions(test_file)
             relative_path = str(test_file.relative_to(self.tests_dir()))
             tests_per_file[relative_path] = len(tests)
@@ -181,7 +181,7 @@ eturn {
             "high_density_files": high_density_files,
             "low_density_files": low_density_files,
             "files_with_no_tests": [f for f, c in tests_per_file.items() if c == 0]:
-    def suggest_optimizations(self, duplicates, Dict, similar_tests, List[Dict] structure, Dict) -> List[str]
+    def suggest_optimizations(self, duplicates, Dict, similar_tests, List[Dict] structure, Dict) -> List[str],
         """Suggest optimizations based on analysis."""
         suggestions = []
         

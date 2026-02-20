@@ -45,7 +45,7 @@ def test_
         from compat.transformers_compat import KERAS_AVAILABLE
         print(f"✓ Keras可用性检查, {KERAS_AVAILABLE}")
         return KERAS_AVAILABLE
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Keras可用性检查失败, {e}")
         return False
 
@@ -67,7 +67,7 @@ def test_
         print(f"✓ SentenceTransformer安全导入, {success}")
         if success,:
             print(f"  类型, {type(SentenceTransformer)}")
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ SentenceTransformer安全导入测试失败, {e}")
     
     # 测试Transformers pipeline安全导入
@@ -77,7 +77,7 @@ def test_
         print(f"✓ Transformers pipeline安全导入, {success}")
         if success,:
             print(f"  类型, {type(pipeline)}")
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Transformers pipeline安全导入测试失败, {e}")
 
 def test_
@@ -98,7 +98,7 @@ def test_
         # 测试Core AI RAG管理器
         from ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE as core_avail
         print(f"✓ Core AI RAG管理器导入成功, SENTENCE_TRANSFORMERS_AVAILABLE={core_avail}")
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ RAG管理器导入测试失败, {e}")
 
 def test_
@@ -119,7 +119,7 @@ def test_
         # 测试工具
         from tools.natural_language_generation_tool import TRANSFORMERS_AVAILABLE as tools_avail
         print(f"✓ 自然语言生成工具导入成功, TRANSFORMERS_AVAILABLE={tools_avail}")
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ 自然语言生成工具导入测试失败, {e}")
 
 def main() -> None:

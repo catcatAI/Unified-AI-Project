@@ -56,7 +56,7 @@ try:
     else:
         print("Could not load spaCy model")
         
-except Exception as e,:
+except Exception as e:
     print(f"Error, {e}")
     import traceback
     traceback.print_exc()

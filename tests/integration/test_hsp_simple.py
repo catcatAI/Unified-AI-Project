@@ -104,5 +104,5 @@ def test_simple_hsp_flow() -> None,
             received_fact = received_messages[0]["payload"]
             assert received_fact["id"] == test_fact["id"]
             assert received_fact["statement_nl"] == test_fact["statement_nl"]
-        except Exception as e,:
+        except Exception as e:
             pytest.fail(f"Error waiting for fact message, {e}")

@@ -59,9 +59,9 @@ def detect_test_errors(stderr_output, str, stdout_output, str) -> "List[str]":
     r"NameError, name '([^']+)' is not defined",
     ]
 
-    for pattern in import_error_patterns,:
+    for pattern in import_error_patterns:
     matches = re.findall(pattern, full_output)
-        for match in matches,:
+        for match in matches:
     if match not in errors,:
     errors.append(match)
 
@@ -72,7 +72,7 @@ def detect_test_errors(stderr_output, str, stdout_output, str) -> "List[str]":
     r"from \\.\\.core_ai",
     ]
 
-    for pattern in path_error_patterns,:
+    for pattern in path_error_patterns:
     if re.search(pattern, full_output):
         rrors.append("path_error")
 
@@ -102,7 +102,7 @@ def run_auto_fix():
 
             print("⚠️ 未发现需要修复的问题")
             return False
-    except Exception as e,:
+    except Exception as e:
     print(f"❌ 自动修复时出错, {e}")
     return False
 
@@ -128,7 +128,7 @@ def run_tests(pytest_args == None) -> None,
     # 但我们在外部监控进程状态
     process = subprocess.Popen(
             cmd,
-            cwd = PROJECT_ROOT,,
+            cwd = PROJECT_ROOT,
     stdout=subprocess.PIPE(),
             stderr=subprocess.PIPE(),
             text = True,
@@ -156,7 +156,7 @@ def run_tests(pytest_args == None) -> None,
 
                 # 运行自动修复
                 if run_auto_fix()::
-                    rint("🔄 修复完成,重新运行测试...")
+print("🔄 修复完成,重新运行测试...")
                     # 等待一下确保文件系统同步
                     time.sleep(1)
                     # 重新运行测试
@@ -174,7 +174,7 @@ def run_tests(pytest_args == None) -> None,
             print("✅ 所有测试通过")
             return 0
 
-    except Exception as e,:
+    except Exception as e:
     print(f"❌ 运行测试时出错, {e}")
     return 1
 

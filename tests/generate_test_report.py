@@ -57,7 +57,7 @@ class TestReportGenerator:
     f.write(html_content)
             logger.info(f"HTML report generated, {output_file}")
             return str(output_file)
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error generating HTML report, {e}")
             return None
 
@@ -216,7 +216,7 @@ class TestReportGenerator:
 """
 
     # 添加测试用例
-        for test_case in test_cases,:
+        for test_case in test_cases:
     name = test_case.get("name", "Unknown")
             module = test_case.get("module", "Unknown")
             outcome = test_case.get("outcome", "unknown")
@@ -259,7 +259,7 @@ class TestReportGenerator:
 
     return html_template
 
-    def parse_junit_xml(self, xml_file, str) -> Dict[str, Any]
+    def parse_junit_xml(self, xml_file, str) -> Dict[str, Any],
     """
     解析JUnit XML测试结果文件
 
@@ -310,7 +310,7 @@ class TestReportGenerator:
 
             return test_results
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error parsing JUnit XML file {xml_file} {e}")
             return {}
 
@@ -339,7 +339,7 @@ class TestReportGenerator:
     f.write(html_content)
             logger.info(f"Performance report generated, {output_file}")
             return str(output_file)
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error generating performance report, {e}")
             return None
 
@@ -432,7 +432,7 @@ class TestReportGenerator:
 """
 
     # 添加基准测试结果
-        for benchmark in benchmarks,:
+        for benchmark in benchmarks:
     name = benchmark.get("name", "Unknown")
             stats = benchmark.get("stats", {})
 
@@ -477,10 +477,10 @@ def main() -> None,
     help="Action to perform"
     )
     parser.add_argument(
-    "--input",,
+    "--input",
     help = "Input file (XML for parse-xml, JSON for performance)"::
     parser.add_argument(
-    "--output",,
+    "--output",
     help="Output HTML file path"
     )
 
@@ -525,7 +525,7 @@ def main() -> None,
             with open(args.input(), "r", encoding == "utf-8") as f,
     benchmark_results = json.load(f)
             report_generator.generate_performance_report(benchmark_results, args.output())
-        except Exception as e,:
+        except Exception as e:
             print(f"Error reading benchmark results, {e}")
             sys.exit(1)
 
@@ -543,7 +543,7 @@ def main() -> None,
                 with open(output_file, "w", encoding == "utf-8") as f,
     json.dump(test_results, f, indent=2, ensure_ascii == False)
                 print(f"Parsed test results saved to, {output_file}")
-            except Exception as e,:
+            except Exception as e:
                 print(f"Error saving parsed results, {e}")
                 sys.exit(1)
         else:

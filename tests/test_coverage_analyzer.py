@@ -24,7 +24,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
         """测试清理"""
         pass
 
-    def test_init(self) -> None,
+    def test_init(self) -> None:
     """测试初始化"""
     self.assertEqual(self.analyzer.project_root(), ".")
     self.assertEqual(len(self.analyzer.coverage_history()), 0)

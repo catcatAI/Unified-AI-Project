@@ -72,12 +72,12 @@ def test_service_initialization_integration(self) -> None:
         """测试服务依赖集成"""
         # 创建测试数据
         agent_config = self.data_factory.create_agent_config(
-            agent_id="dependency_test_agent",,
+            agent_id="dependency_test_agent",
     agent_type="creative_writing"
         )
         
         dialogue_context = self.data_factory.create_dialogue_context(
-            user_id="test_user_123",,
+            user_id="test_user_123",
     session_id="session_456"
         )
         
@@ -128,7 +128,7 @@ def test_service_initialization_integration(self) -> None:
         
         # 3. 处理对话(依赖代理管理器、记忆管理器、LLM服务)
         dialogue_result = await dialogue_manager.return_value.process_dialogue(
-            dialogue_context,,
+            dialogue_context,
     user_memories
         )
         
@@ -157,7 +157,7 @@ def test_service_initialization_integration(self) -> None:
         )
         
         dialogue_manager.return_value.process_dialogue.assert_called_once_with(
-            dialogue_context,,
+            dialogue_context,
     user_memories
         )
         
@@ -246,7 +246,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         
         agent_configs = [
             self.data_factory.create_agent_config(
-                agent_id=f"specialist_{i}",,
+                agent_id=f"specialist_{i}",
     agent_type = "data_analysis" if i=0 else "creative_writing" if i=1 else "text_editing":
             )
             for i in range(3):
@@ -293,7 +293,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         # 执行多服务协调测试
         # 1. 创建专业代理
         created_agents = []
-        for config in agent_configs,:
+        for config in agent_configs:
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
     config["agent_type"]
@@ -312,7 +312,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         
         # 4. 处理复杂请求
         request_result = await dialogue_manager.return_value.process_complex_request(
-            complex_request,,
+            complex_request,
     user_preferences
         )
         
@@ -322,7 +322,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
             assignment_result = await agent_manager.return_value.assign_task(,
     agent_id,
                 {
-                    "task_type": "analysis" if "analysis" in agent_id else "writing" if "writing" in agent_id else "editing",::
+                    "task_type": "analysis" if "analysis" in agent_id else "writing" if "writing" in agent_id else "editing":
                     "content": complex_request["content"]
                 }
             )
@@ -336,7 +336,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         # 7. 存储结果到记忆
         result_memory = self.data_factory.create_memory_item(
             content = f"Task result, {final_response}",
-            memory_type="task_result",,
+            memory_type="task_result",
     importance_score=0.9())
         store_result = await memory_manager.return_value.store_memory(result_memory)
         
@@ -360,7 +360,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
     f"user,{complex_request['user_id']}preferences"
         )
         dialogue_manager.return_value.process_complex_request.assert_called_once_with(
-            complex_request,,
+            complex_request,
     user_preferences
         )
         assert agent_manager.return_value.assign_task.call_count=len(agent_configs)

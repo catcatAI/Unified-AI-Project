@@ -43,7 +43,7 @@ def test_
         gmqtt  # noqa, F841
         print("✅ gmqtt imported successfully")
         return True
-    except ImportError as e,:
+    except ImportError as e:
         print(f"❌ Failed to import gmqtt, {e}")
         return False
 
@@ -61,7 +61,7 @@ def test_
         ExternalConnector  # noqa, F841
         print("✅ ExternalConnector imported successfully")
         return True
-    except ImportError as e,:
+    except ImportError as e:
         print(f"❌ Failed to import ExternalConnector, {e}")
         return False
 
@@ -78,13 +78,13 @@ def test_
         from core.hsp.external.external_connector import ExternalConnector  # type, ignore
         connector = ExternalConnector(
             ai_id="test_ai",
-            broker_address="localhost",,
+            broker_address="localhost",
     broker_port=1883
         )
         connector  # noqa, F841
         print("✅ ExternalConnector created successfully")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"❌ Failed to create ExternalConnector, {e}")
         return False
 

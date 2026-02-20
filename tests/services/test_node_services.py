@@ -72,7 +72,7 @@ class TestNodeServicesIntegration(unittest.TestCase):
             "users": [
                 {"id": 1, "name": "Alice", "roles": ["admin", "user"]}
                 {"id": 2, "name": "Bob", "roles": ["user"]}
-            ]
+            ],
             "metadata": {
                 "timestamp": "2024-01-01T00,00,00Z",
                 "source": "nodejs-service"

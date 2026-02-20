@@ -21,7 +21,7 @@ class TestVisionToneInverter(unittest.TestCase):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_01_initialization(self) -> None,
+def test_01_initialization(self) -> None:
         """Test VisionToneInverter initialization."""
         inverter = VisionToneInverter()
         self.assertIsNotNone(inverter)

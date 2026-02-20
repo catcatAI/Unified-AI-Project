@@ -24,7 +24,7 @@ class TestCreationEngine(unittest.TestCase):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_create_model(self) -> None,
+def test_create_model(self) -> None:
         """
         Tests the create_model method.
         """

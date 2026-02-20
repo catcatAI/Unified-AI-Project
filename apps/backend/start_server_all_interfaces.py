@@ -4,12 +4,12 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-if __name"__main__":::
-    try,
+if __name__ == "__main__":
+    try:
         uvicorn.run(app, host="0.0.0.0", port=8000)
-    except KeyboardInterrupt,::
+    except KeyboardInterrupt:
         print("Server stopped by user")
         sys.exit(0)
-    except Exception as e,::
-        print(f"Server error, {e}")
+    except Exception as e:
+        print(f"Server error: {e}")
         sys.exit(1)

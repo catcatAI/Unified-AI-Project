@@ -43,7 +43,7 @@ try:
     print(f"Found Apple Inc.: {found_apple}")
     print(f"Found Steve Jobs, {found_steve}")
     
-except Exception as e,:
+except Exception as e:
     print(f"Error, {e}")
     import traceback
     traceback.print_exc()

@@ -20,7 +20,7 @@ def test_logic_parser():
         result = evaluator.evaluate("true AND false")
         print(f"✓ LogicParserEval evaluation result, {result}")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in logic_parser, {e}")
         return False
 
@@ -38,7 +38,7 @@ def test_logic_tool():
         result = tool.evaluate_expression("true AND false")
         print(f"✓ LogicTool evaluation result, {result}")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in logic_tool, {e}")
         return False
 
@@ -56,7 +56,7 @@ def test_math_model():
         result = model.evaluate_expression("5 + 3")
         print(f"✓ LightweightMathModel evaluation result, {result}")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in math_model, {e}")
         return False
 
@@ -70,7 +70,7 @@ def test_math_tool():
         result = calculate("what is 5 + 3?")
         print(f"✓ Math tool calculation result, {result}")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in math_tool, {e}")
         return False
 
@@ -83,7 +83,7 @@ def test_dependency_manager():
         # 测试实例化
         print("✓ DependencyManager instantiated successfully")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in dependency_manager, {e}")
         return False
 
@@ -93,7 +93,7 @@ def test_common_types():
         from core.shared.types.common_types import ToolDispatcherResponse
         print("✓ common_types imported successfully")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in common_types, {e}")
         return False
 
@@ -103,7 +103,7 @@ def test_math_model_module():
         import apps.backend.src.tools.math_model.model()
         print("✓ math_model.model imported successfully")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in math_model.model, {e}")
         return False
 
@@ -113,7 +113,7 @@ def test_alpha_deep_model():
         import apps.backend.src.core_ai.compression.alpha_deep_model()
         print("✓ alpha_deep_model imported successfully")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in alpha_deep_model, {e}")
         return False
 
@@ -123,7 +123,7 @@ def test_unified_symbolic_space():
         import apps.backend.src.core_ai.symbolic_space.unified_symbolic_space()
         print("✓ unified_symbolic_space imported successfully")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ Error in unified_symbolic_space, {e}")
         return False
 
@@ -147,7 +147,7 @@ def main():
     passed = 0
     total = len(tests)
     
-    for test in tests,:
+    for test in tests:
         if test()::
             passed += 1
         print()

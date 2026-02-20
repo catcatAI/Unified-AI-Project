@@ -25,7 +25,7 @@ class ComprehensiveTestFramework:
         self.agi_capability_tester = AGICapabilityTester()
         self.logger = logging.getLogger(__name__)
     
-    async def run_full_system_test(self) -> Dict[str, Any]
+    async def run_full_system_test(self) -> Dict[str, Any],
         """運行完整系統測試"""
         self.logger.info("Running full system test...")
         test_results = {
@@ -57,29 +57,29 @@ class ComprehensiveTestFramework:
         self.logger.info("Full system test complete.")
         return report
     
-    def _initialize_test_suites(self) -> Dict[str, Any]
+    def _initialize_test_suites(self) -> Dict[str, Any],
         """Conceptual, Initializes and returns a dictionary of test suites."""
         return {}
 
-    async def _run_functional_tests(self) -> Dict[str, Any]
+    async def _run_functional_tests(self) -> Dict[str, Any],
         """Conceptual, Runs functional tests."""
         self.logger.debug("Running functional tests (conceptual)...")
         await asyncio.sleep(0.01))
         return {"passed": 10, "failed": 0}
 
-    async def _run_integration_tests(self) -> Dict[str, Any]
+    async def _run_integration_tests(self) -> Dict[str, Any],
         """Conceptual, Runs integration tests."""
         self.logger.debug("Running integration tests (conceptual)...")
         await asyncio.sleep(0.015))
         return {"passed": 5, "failed": 0}
 
-    async def _run_stress_tests(self) -> Dict[str, Any]
+    async def _run_stress_tests(self) -> Dict[str, Any],
         """Conceptual, Runs stress tests."""
         self.logger.debug("Running stress tests (conceptual)...")
         await asyncio.sleep(0.03))
         return {"max_load": 200, "errors": 2}
 
-    async def _generate_test_report(self, test_results, Dict[str, Any]) -> Dict[str, Any]
+    async def _generate_test_report(self, test_results, Dict[str, Any]) -> Dict[str, Any],
         """Conceptual, Generates a comprehensive test report."""
         self.logger.debug("Generating test report (conceptual)...")
         await asyncio.sleep(0.01))

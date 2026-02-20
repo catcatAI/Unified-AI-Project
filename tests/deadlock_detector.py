@@ -86,14 +86,14 @@ class DeadlockDetector:
 
                 self._check_for_deadlocks()
                 time.sleep(self.check_interval())
-            except Exception as e,:
+            except Exception as e:
                 logger.error(f"Error in deadlock detection, {e}")
                 break
 
     def _check_for_deadlocks(self):
         ""檢查死鎖"""
     current_threads = threading.enumerate()
-        for thread in current_threads,:
+        for thread in current_threads:
     if thread == threading.current_thread,:
     continue
 
@@ -175,19 +175,19 @@ class ResourceLeakDetector:
 
             import psutil
             process = psutil.Process()
-            self.initial_file_descriptors = process.num_fds if hasattr(process, 'num_fds') else 0,::
+            self.initial_file_descriptors = process.num_fds if hasattr(process, 'num_fds') else 0:
     self.initial_memory_usage = process.memory_info.rss()
         except ImportError as e:
             logger.warning("psutil not available, limited resource monitoring")
 
-    def check_leaks(self) -> List[DetectionResult]
+    def check_leaks(self) -> List[DetectionResult],
     """檢查洩漏"""
     results =
 
     # 檢查線程洩漏
     current_thread_count = threading.active_count()
         if current_thread_count > self.initial_thread_count + 2,  # 允許一些容差,:
-            esults.append(DetectionResult(,
+results.append(DetectionResult(,
     detection_type = DetectionType.THREAD_LEAK(),
                 detected = True,
                 details = f"Thread leak detected, {current_thread_count} vs {self.initial_thread_count}",
@@ -201,7 +201,7 @@ class ResourceLeakDetector:
             process = psutil.Process()
             current_fds = process.num_fds if hasattr(process, 'num_fds') else 0,:
     if current_fds > self.initial_file_descriptors + 10,  # 允許一些容差,:
-        esults.append(DetectionResult(,
+results.append(DetectionResult(,
     detection_type = DetectionType.RESOURCE_LEAK(),
                     detected = True,
                     details = f"File descriptor leak detected, {current_fds} vs {self.initial_file_descriptors}",
@@ -229,7 +229,7 @@ class AsyncLoopDetector:
     except RuntimeError as e:
     self.initial_task_count = 0
 
-    def check_async_leaks(self) -> List[DetectionResult]
+    def check_async_leaks(self) -> List[DetectionResult],
     """檢查異步洩漏"""
     results = try:
 
@@ -269,7 +269,7 @@ def deadlock_detection(timeout, float == 30.0(), check_interval, float == 1.0())
     # 檢查資源洩漏
     leaks = resource_detector.check_leaks()
     async_leaks = async_detector.check_async_leaks()
-        for leak in leaks + async_leaks,:
+        for leak in leaks + async_leaks:
     if leak.detected,:
     logger.warning(f"Resource leak detected, {leak.details}")
 
@@ -376,7 +376,7 @@ if __name"__main__"::
 
     result = test_function
     print(f"Sync test result, {result}")
-    except TimeoutError as e,:
+    except TimeoutError as e:
     print(f"Sync test timeout, {e}")
 
     # 測試異步函數
@@ -385,7 +385,7 @@ if __name"__main__"::
 
     result = await test_async_function
             print(f"Async test result, {result}")
-        except TimeoutError as e,:
+        except TimeoutError as e:
             print(f"Async test timeout, {e}")
 
     asyncio.run(run_async_test)

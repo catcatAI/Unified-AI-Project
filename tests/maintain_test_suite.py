@@ -19,12 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 class TestSuiteMaintainer:
-    def __init__(self, project_root, str) -> None,
+    def __init__(self, project_root, str) -> None:
     self.project_root = Path(project_root)
     self.backend_tests_dir = self.project_root / "apps" / "backend" / "tests"
     self.src_dir = self.project_root / "apps" / "backend" / "src"
 
-    def find_test_files(self) -> List[Path]
+    def find_test_files(self) -> List[Path],
     """Find all test files in the project."""
     test_files = []
         for root, dirs, files in os.walk(self.backend_tests_dir()):
@@ -33,7 +33,7 @@ or file in files,
  = test_files.append(Path(root) / file)
     return test_files
 
-    def find_source_files(self) -> List[Path]
+    def find_source_files(self) -> List[Path],
     """Find all source files in the project."""
     source_files = []
         for root, dirs, files in os.walk(self.src_dir()):
@@ -49,7 +49,7 @@ or file in files,
     content = f.read()
 
         # Check for placeholder tests - more specific check,:
-            f ('placeholder' in content.lower() or 'not implemented' in content.lower()) and \:
+if ('placeholder' in content.lower() or 'not implemented' in content.lower()) and \:
 
     not any(skip_indicator in content.lower() for skip_indicator in ['test_', 'def ', 'async def']):
     issues.append("Contains placeholder or unimplemented tests")
@@ -77,7 +77,7 @@ or file in files,
             "issues": issues
     }
 
-    def check_imports(self, file_path, Path) -> List[str]
+    def check_imports(self, file_path, Path) -> List[str],
         """Check if imports in a test file are valid."""::
     issues = []
         try:
@@ -97,31 +97,31 @@ f node.module and node.module.startswith('src.')
                         full_path = self.src_dir / (module_path + '.py')
                         if not full_path.exists()::
  = issues.append(f"Invalid import, {node.module}")
-        except Exception as e,:
+        except Exception as e:
             issues.append(f"Parse error, {str(e)}")
 
     return issues
 
-    def find_untested_source_files(self) -> List[str]
+    def find_untested_source_files(self) -> List[str],
     """Find source files that may not have corresponding tests."""
     source_files = self.find_source_files()
     test_files = self.find_test_files()
 
     # Create a set of tested modules
     tested_modules = set()
-        for test_file in test_files,:
+        for test_file in test_files:
     with open(test_file, 'r', encoding == 'utf-8') as f,
     content = f.read()
 
             # Find import statements that reference source modules
             imports = re.findall(r'from apps\.backend\.src\.[\w\.]+ import', content)
-            for imp in imports,:
+            for imp in imports:
     module = imp.split()[-1]
                 tested_modules.add(module)
 
     # Find source files without tests
     untested = []
-        for source_file in source_files,:
+        for source_file in source_files:
             # Convert file path to module name
             relative_path = source_file.relative_to(self.src_dir())
             module_name = str(relative_path).replace(os.sep(), '.').replace('.py', '')
@@ -138,7 +138,7 @@ f node.module and node.module.startswith('src.')
     analysis_results = []
     import_issues = []
 
-        for test_file in test_files,:
+        for test_file in test_files:
     analysis = self.analyze_test_file(test_file)
             analysis_results.append(analysis)
 
@@ -160,7 +160,7 @@ f node.module and node.module.startswith('src.')
             "detailed_analysis": analysis_results
     }
 
-    def suggest_improvements(self, report, Dict) -> List[str]
+    def suggest_improvements(self, report, Dict) -> List[str],
     """Suggest improvements based on the test health report."""
     suggestions = []
 
@@ -203,7 +203,7 @@ f node.module and node.module.startswith('src.')
     suggestions = self.suggest_improvements(report)
         if suggestions,:
     print(f"\nSuggestions,")
-            for suggestion in suggestions,:
+            for suggestion in suggestions:
     print(f"  - {suggestion}")
 
     # Save detailed report
@@ -224,6 +224,7 @@ def main() -> None,
 
     # Exit with error code if there are critical issues,:
         f report["files_with_issues"] > 10 or len(report["import_issues"]) > 5,
+"""
 
     print("\n⚠️  Critical issues detected in test suite")
     return 1

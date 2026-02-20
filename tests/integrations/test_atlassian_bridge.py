@@ -86,7 +86,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None:
         
         result = await bridge_instance.create_confluence_page(
             space_key='TEST',
-            title='Test Page',,
+            title='Test Page',
     content='# Test Content'
         )
         
@@ -143,7 +143,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None:
         result = await bridge.update_confluence_page(
             page_id='123456',
             title='Updated Test Page',
-            content='# Updated Content',,
+            content='# Updated Content',
     version=1
         )
         
@@ -215,7 +215,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None:
         with pytest.raises(Exception, match == "API Error"):
             await bridge.create_confluence_page(
                 space_key='TEST',
-                title='Test Page',,
+                title='Test Page',
     content='Content'
             )
     

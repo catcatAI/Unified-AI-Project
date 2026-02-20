@@ -30,7 +30,7 @@ class PerformanceRegressionDetector,
         Args,
             project_root, 项目根目录
         """
-        self.project_root == Path(project_root) if project_root else Path(__file__).parent.parent,::
+        self.project_root == Path(project_root) if project_root else Path(__file__).parent.parent:
             elf.benchmarks_dir = self.project_root / "benchmarks"
         self.db_path = self.benchmarks_dir / "benchmark_history.db"
 
@@ -43,7 +43,7 @@ class PerformanceRegressionDetector,
             "alert_on_regression": True
         }
 
-    def detect_performance_regressions(self, benchmark_names, Optional[List[str]] = None) -> Dict[str, Any]
+    def detect_performance_regressions(self, benchmark_names, Optional[List[str]] = None) -> Dict[str, Any],
         """
         检测性能回归
 
@@ -61,26 +61,26 @@ class PerformanceRegressionDetector,
             "regressions_found": 0,
             "improvements_found": 0,
             "no_change_benchmarks": 0,
-            "regressions": []
-            "improvements": []
+            "regressions": [],
+            "improvements": [],
             "unchanged": []
         }
 
         try,
             # 获取要分析的基准测试名称
-            if benchmark_names is None,::
+            if benchmark_names is None:
                 benchmark_names = self._get_all_benchmark_names()
 
             detection_results["total_benchmarks_analyzed"] = len(benchmark_names)
 
             # 分析每个基准测试
-            for benchmark_name in benchmark_names,::
+            for benchmark_name in benchmark_names::
                 regression_result = self._analyze_benchmark_regression(benchmark_name)
-                if regression_result,::
-                    if regression_result["status"] == "regression":::
+                if regression_result:
+                    if regression_result["status"] == "regression":
                         detection_results["regressions"].append(regression_result)
                         detection_results["regressions_found"] += 1
-                    elif regression_result["status"] == "improvement":::
+                    elif regression_result["status"] == "improvement":
                         detection_results["improvements"].append(regression_result)
                         detection_results["improvements_found"] += 1
                     else,
@@ -93,13 +93,13 @@ class PerformanceRegressionDetector,
     f"{detection_results['improvements_found']} improvements"
             )
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error detecting performance regressions, {e}")
             detection_results["error"] = str(e)
 
         return detection_results
 
-    def _get_all_benchmark_names(self) -> List[str]
+    def _get_all_benchmark_names(self) -> List[str],
         """
         获取所有基准测试名称
 
@@ -119,7 +119,7 @@ class PerformanceRegressionDetector,
             logger.error(f"Error getting benchmark names, {e}")
             return []
 
-    def _analyze_benchmark_regression(self, benchmark_name, str) -> Optional[Dict[str, Any]]
+    def _analyze_benchmark_regression(self, benchmark_name, str) -> Optional[Dict[str, Any]],
         """
         分析单个基准测试的回归情况
 
@@ -144,11 +144,11 @@ class PerformanceRegressionDetector,
             baseline_start_date = baseline_end_date - timedelta(days=self.regression_config["time_window_days"])
 
             baseline_data = [
-                point for point in historical_data,::
+                point for point in historical_data::
                     f baseline_start_date <= datetime.fromisoformat(point["timestamp"]) <= baseline_end_date,
 
 
-            if len(baseline_data) < 2,::
+            if len(baseline_data) < 2:
                 return {
                     "benchmark_name": benchmark_name,
                     "status": "insufficient_baseline",
@@ -156,7 +156,7 @@ class PerformanceRegressionDetector,
                 }
 
             # 计算基线统计信息
-            baseline_mean_times == [point["mean_time"] for point in baseline_data]::
+baseline_mean_times = [point["mean_time"] for point in baseline_data]::
                 aseline_mean = np.mean(baseline_mean_times)
             baseline_std = np.std(baseline_mean_times)
 
@@ -165,21 +165,21 @@ class PerformanceRegressionDetector,
             latest_mean_time = latest_point["mean_time"]
 
             # 执行统计检验
-            if len(baseline_mean_times) >= 2,::
+            if len(baseline_mean_times) >= 2:
                 # 使用t检验检测显著差异
                 t_stat, p_value = stats.ttest_1samp(baseline_mean_times, latest_mean_time)
                 is_statistically_significant = p_value < self.regression_config["statistical_significance"]
             else,
-                is_statistically_significant == False
+is_statistically_significant = False
 
             # 计算性能变化
             performance_change = (latest_mean_time - baseline_mean) / baseline_mean
             is_performance_change_significant = abs(performance_change) >= self.regression_config["regression_threshold"]
 
             # 确定结果状态
-            if is_performance_change_significant and performance_change > 0,::
+            if is_performance_change_significant and performance_change > 0:
                 status = "regression"
-            elif is_performance_change_significant and performance_change < 0,::
+            elif is_performance_change_significant and performance_change < 0:
                 status = "improvement"
             else,
                 status = "no_change"
@@ -194,23 +194,23 @@ class PerformanceRegressionDetector,
                 }
                 "latest": {
                     "mean_time": latest_mean_time,
-                    "timestamp": latest_point["timestamp"]
+                    "timestamp": latest_point["timestamp"],
                     "ops_per_second": latest_point["ops_per_second"]
                 }
                 "analysis": {
                     "performance_change": float(performance_change),
                     "performance_change_percentage": f"{performance_change * 100,.2f}%",
                     "is_statistically_significant": is_statistically_significant,
-                    "p_value": float(p_value) if 'p_value' in locals() else None,::
+                    "p_value": float(p_value) if 'p_value' in locals() else None:
             }
 
             return result
 
-        except Exception as e,::
-            logger.error(f"Error analyzing benchmark regression for {benchmark_name} {e}"):::
+        except Exception as e::
+            logger.error(f"Error analyzing benchmark regression for {benchmark_name} {e}"):
                 eturn None
 
-    def _get_historical_benchmark_data(self, benchmark_name, str) -> List[Dict[str, Any]]
+    def _get_historical_benchmark_data(self, benchmark_name, str) -> List[Dict[str, Any]],
         """
         获取基准测试的历史数据
 
@@ -227,8 +227,7 @@ class PerformanceRegressionDetector,
             cursor.execute("""
                 SELECT name, timestamp, mean_time, ops_per_second
                 FROM benchmark_history 
-                WHERE name = ? ,
-    ORDER BY timestamp ASC
+                WHERE name = ?, ORDER BY timestamp ASC
             """, (benchmark_name))
 
             rows = cursor.fetchall()
@@ -236,17 +235,17 @@ class PerformanceRegressionDetector,
 
             return [
                 {
-                    "name": row[0]
-                    "timestamp": row[1]
-                    "mean_time": row[2]
+                    "name": row[0],
+                    "timestamp": row[1],
+                    "mean_time": row[2],
                     "ops_per_second": row[3]
                 }
-                for row in rows,::
-        except Exception as e,::
-            logger.error(f"Error getting historical benchmark data for {benchmark_name} {e}"):::
+                for row in rows::
+        except Exception as e::
+            logger.error(f"Error getting historical benchmark data for {benchmark_name} {e}"):
                 eturn []
 
-    def generate_regression_report(self, detection_results, Dict[str, Any]) -> Dict[str, Any]
+    def generate_regression_report(self, detection_results, Dict[str, Any]) -> Dict[str, Any],
         """
         生成回归检测报告
 
@@ -272,7 +271,7 @@ class PerformanceRegressionDetector,
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error generating regression report, {e}")
             return {
                 "success": False,
@@ -280,7 +279,7 @@ class PerformanceRegressionDetector,
                 "timestamp": datetime.now().isoformat()
             }
 
-    def send_regression_alerts(self, regressions, List[Dict[str, Any]]) -> Dict[str, Any]
+    def send_regression_alerts(self, regressions, List[Dict[str, Any]]) -> Dict[str, Any],
         """
         发送回归警报
 
@@ -312,7 +311,7 @@ class PerformanceRegressionDetector,
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"Error sending regression alerts, {e}")
             return {
                 "success": False,
@@ -322,17 +321,17 @@ class PerformanceRegressionDetector,
 
 def main() -> None,
     """主函数"""
-    detector == PerformanceRegressionDetector()
+detector = PerformanceRegressionDetector()
     results = detector.detect_performance_regressions()
     
     # 生成报告
     report_result = detector.generate_regression_report(results)
     
     # 发送警报(如果有回归)
-    if results.get("regressions_found", 0) > 0,::
+    if results.get("regressions_found", 0) > 0:
         detector.send_regression_alerts(results.get("regressions", []))
     
     logger.info("Performance regression detection completed")
 
-if __name"__main__":::
+if __name"__main__":
     main()

@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 # Import the fixed conftest
 import tests.conftest as conftest
 
-async def test_mock_core_services() -> None,
+async def test_mock_core_services() -> None:
     """Test that the mock_core_services fixture works correctly"""
 
 
@@ -34,7 +34,7 @@ async def test_mock_core_services() -> None,
 
     ]
     
-    for service in required_services,:
+    for service in required_services:
         assert service in mock_services, f"Missing service, {service}"
         print(f"✓ {service} is present")
     

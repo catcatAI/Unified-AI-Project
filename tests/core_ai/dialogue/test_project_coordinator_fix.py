@@ -50,7 +50,7 @@ def test_project_coordinator_decomposition() -> None:
         agent_manager=mock_agent_manager,
         memory_manager=mock_memory_manager,
         learning_manager=mock_learning_manager,
-        personality_manager=mock_personality_manager,,
+        personality_manager=mock_personality_manager,
     dialogue_manager_config=mock_config
     )
     

@@ -21,7 +21,7 @@ class TestAtlassianIntegration(unittest.TestCase):
     project_key, str
     space_key, str
     
-    def setUp(self) -> None,
+    def setUp(self) -> None:
         """测试初始化"""
         # 在setUp中初始化实例变量
         self.user_email = TEST_CONFIG["test_users"]["default_email"]

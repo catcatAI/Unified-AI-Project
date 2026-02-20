@@ -30,7 +30,7 @@ def run_tests_with_compat():
     try:
         #         import tensorflow as tf
         print(f"✓ TensorFlow 版本, {tf.__version__}")
-    except ImportError as e,:
+    except ImportError as e:
         print(f"✗ TensorFlow 导入失败, {e}")
     
     # 运行测试
@@ -56,7 +56,7 @@ def run_tests_with_compat():
         result = subprocess.run(cmd, cwd=project_root)
 #         return result.returncode=0
 #         
-    except Exception as e,:
+    except Exception as e:
         print(f"运行测试时出错, {e}")
         return False
 

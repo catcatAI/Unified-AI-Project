@@ -14,9 +14,9 @@ class TestDataFactory:
 def create_agent_config(
         agent_id, str == None,
         agent_type, str = "base_agent",
-        capabilities, List[str] = None,,
+        capabilities, List[str] = None,
     config, Dict[str, Any] = None
-    ) -> Dict[str, Any]
+    ) -> Dict[str, Any],
         """
         创建代理配置数据
         
@@ -59,9 +59,9 @@ def create_hsp_message(
         message_type, str = "fact",
         content, str = "Test message content",
         source, str = "test_source",
-        target, str == None,,
+        target, str == None,
     metadata, Dict[str, Any] = None
-    ) -> Dict[str, Any]
+    ) -> Dict[str, Any],
         """
         创建HSP消息数据
         
@@ -99,11 +99,11 @@ def create_hsp_message(
 def create_memory_item(
         memory_id, str == None,
         content, str = "Test memory content",
-        memory_type, str = "fact",,
+        memory_type, str = "fact",
     importance_score, float = 0.5():
         tags, List[str] = None,
         metadata, Dict[str, Any] = None
-    ) -> Dict[str, Any]
+    ) -> Dict[str, Any],
         """
         创建记忆项数据
         
@@ -145,9 +145,9 @@ def create_training_data(
         data_id, str == None,
         input_data, str = "Test input data",
         expected_output, str = "Test expected output",
-        data_type, str = "text",,
+        data_type, str = "text",
     metadata, Dict[str, Any] = None
-    ) -> Dict[str, Any]
+    ) -> Dict[str, Any],
         """
         创建训练数据
         
@@ -184,9 +184,9 @@ def create_dialogue_context(
         context_id, str == None,
         user_id, str = "test_user",
         session_id, str == None,
-        history, List[Dict] = None,,
+        history, List[Dict] = None,
     metadata, Dict[str, Any] = None
-    ) -> Dict[str, Any]
+    ) -> Dict[str, Any],
         """
         创建对话上下文数据
         
@@ -228,10 +228,10 @@ def create_dialogue_context(
 def create_test_scenario(
         scenario_id, str == None,
         name, str = "Test Scenario",
-        description, str == "Test scenario for integration testing",::
-        steps, List[Dict] = None,,
+        description, str == "Test scenario for integration testing":
+        steps, List[Dict] = None,
     expected_results, List[str] = None
-    ) -> Dict[str, Any]
+    ) -> Dict[str, Any],
         """
         创建测试场景数据
         
@@ -277,7 +277,7 @@ class TestDataSet:
         self.factory = TestDataFactory()
         self.data_sets = {}
     
-    def create_standard_test_data(self) -> Dict[str, Any]
+    def create_standard_test_data(self) -> Dict[str, Any],
         """
         创建标准测试数据集
         
@@ -288,51 +288,51 @@ class TestDataSet:
             "agents": [
                 self.factory.create_agent_config(
                     agent_id="writer_agent_001",
-                    agent_type="creative_writing",,
+                    agent_type="creative_writing",
     capabilities=["text_generation", "story_creation"]
                 ),
                 self.factory.create_agent_config(
                     agent_id="analyst_agent_001",
-                    agent_type="data_analysis",,
+                    agent_type="data_analysis",
     capabilities=["data_processing", "insight_extraction"]
                 )
-            ]
+            ],
             "messages": [
                 self.factory.create_hsp_message(
                     message_id="msg_001",
                     message_type="request",
                     content="Please analyze this dataset",
-                    source="writer_agent_001",,
+                    source="writer_agent_001",
     target="analyst_agent_001"
                 ),
                 self.factory.create_hsp_message(
                     message_id="msg_002",
                     message_type="response",
                     content = "Analysis complete. Key insights, ...",
-                    source="analyst_agent_001",,
+                    source="analyst_agent_001",
     target="writer_agent_001"
                 )
-            ]
+            ],
             "memories": [
                 self.factory.create_memory_item(
                     memory_id="mem_001",
                     content="User prefers concise responses",
-                    memory_type="preference",,
+                    memory_type="preference",
     importance_score=0.8(),
                     tags=["user_preference", "communication_style"]
                 )
-            ]
+            ],
             "training_data": [
                 self.factory.create_training_data(
                     data_id="train_001",
                     input_data="Write a short story about technology",
-                    expected_output="A brief story exploring the impact of technology on society",,
+                    expected_output="A brief story exploring the impact of technology on society",
     data_type="creative_writing"
                 )
             ]
         }
     
-    def get_data_set(self, name, str) -> Dict[str, Any]
+    def get_data_set(self, name, str) -> Dict[str, Any],
         """
         获取指定名称的数据集
         

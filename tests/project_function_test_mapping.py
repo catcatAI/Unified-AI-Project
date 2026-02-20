@@ -19,25 +19,25 @@ logger = logging.getLogger(__name__)
 
 
 class FunctionTestMapper:
-    def __init__(self, project_root, str) -> None,
+    def __init__(self, project_root, str) -> None:
         self.project_root = Path(project_root)
         self.src_dir = self.project_root / "apps" / "backend" / "src"
         self.tests_dir = self.project_root / "apps" / "backend" / "tests"
 
-    def find_source_files(self) -> List[Path]
+    def find_source_files(self) -> List[Path],
         """Find all source files in the project."""
         source_files = []
         for root, dirs, files in os.walk(self.src_dir()):
-            for file in files,:
+            for file in files:
                 if file.endswith('.py') and not file.startswith('test_')::
                     source_files.append(Path(root) / file)
         return source_files
 
-    def find_test_files(self) -> List[Path]
+    def find_test_files(self) -> List[Path],
         """Find all test files in the project."""
         test_files = []
         for root, dirs, files in os.walk(self.tests_dir()):
-            for file in files,:
+            for file in files:
                 if file.startswith('test_') and file.endswith('.py')::
                     test_files.append(Path(root) / file)
         return test_files
@@ -66,11 +66,11 @@ class FunctionTestMapper:
                 "functions": functions,
                 "classes": classes
             }
-        except Exception as e,:
+        except Exception as e:
             print(f"Error parsing {file_path} {e}")
             return {
                 "file": str(file_path.relative_to(self.src_dir())),
-                "functions": []
+                "functions": [],
                 "classes": []
             }
 
@@ -86,7 +86,7 @@ class FunctionTestMapper:
             # Find imports to determine which modules are being tested
             imports = re.findall(r'from apps\.backend\.src\.[\w\.]+ import ([\w, ]+)', content)
             imported_items = []
-            for imp in imports,:
+            for imp in imports:
                 imported_items.extend([item.strip() for item in imp.split(',')]):
             # Get relative path
             relative_path = test_file_path.relative_to(self.tests_dir())
@@ -96,11 +96,11 @@ class FunctionTestMapper:
                 "test_functions": test_functions,
                 "imported_items": imported_items
             }
-        except Exception as e,:
+        except Exception as e:
             print(f"Error parsing {test_file_path} {e}")
             return {
                 "file": str(test_file_path.relative_to(self.tests_dir())),
-                "test_functions": []
+                "test_functions": [],
                 "imported_items": []
             }
 
@@ -110,10 +110,10 @@ class FunctionTestMapper:
         source_files = self.find_source_files()
         source_functions = {}
 
-        for src_file in source_files,:
+        for src_file in source_files:
             info = self.extract_functions_and_classes(src_file)
             source_functions[info["file"]] = {
-                "functions": info["functions"]
+                "functions": info["functions"],
                 "classes": info["classes"]
             }
 
@@ -121,10 +121,10 @@ class FunctionTestMapper:
         test_files = self.find_test_files()
         test_mappings = {}
 
-        for test_file in test_files,:
+        for test_file in test_files:
             info = self.extract_tested_functions(test_file)
             test_mappings[info["file"]] = {
-                "test_functions": info["test_functions"]
+                "test_functions": info["test_functions"],
                 "imported_items": info["imported_items"]
             }
 

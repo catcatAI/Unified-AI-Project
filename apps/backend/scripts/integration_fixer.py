@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # 添加项目根目录到路径
-PROJECT_ROOT == Path(__file__).parent.parent.parent()
+PROJECT_ROOT = Path(__file__).parent.parent.parent()
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # 配置日志
@@ -61,11 +61,11 @@ class IntegrationFixer,
             import shutil
             shutil.copy2(file_path, backup_file_path)
             return backup_file_path
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"备份文件 {file_path} 失败, {e}")
             return None
 
-    def check_hsp_integration(self) -> Dict[str, Any]
+    def check_hsp_integration(self) -> Dict[str, Any],
         """检查HSP集成问题"""
         logger.info("开始检查HSP集成问题...")
         issues = []
@@ -73,12 +73,12 @@ class IntegrationFixer,
         try,
             # 检查HSP连接器文件
             hsp_connector_path = self.project_root / "apps" / "backend" / "src" / "hsp" / "connector.py"
-            if hsp_connector_path.exists():::
+            if hsp_connector_path.exists():
                 with open(hsp_connector_path, 'r', encoding == 'utf-8') as f,
                     content = f.read()
 
                 # 检查协程调用问题
-                if "async def" in content and "await" not in content,::
+                if "async def" in content and "await" not in content:
                     issues.append({
                         "type": "async_warning",
                         "file": str(hsp_connector_path),
@@ -86,7 +86,7 @@ class IntegrationFixer,
                     })
 
                 # 检查MQTT客户端导入
-                if "import paho.mqtt.client" not in content,::
+                if "import paho.mqtt.client" not in content:
                     issues.append({
                         "type": "import_error",
                         "file": str(hsp_connector_path),
@@ -94,7 +94,7 @@ class IntegrationFixer,
                     })
 
                 # 检查HSP协议相关配置
-                if "HSP_PROTOCOL_VERSION" not in content,::
+                if "HSP_PROTOCOL_VERSION" not in content:
                     issues.append({
                         "type": "config_error",
                         "file": str(hsp_connector_path),
@@ -107,7 +107,7 @@ class IntegrationFixer,
                     "description": "HSP连接器文件不存在"
                 })
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"检查HSP集成时出错, {e}")
             issues.append({
                 "type": "check_error",
@@ -121,7 +121,7 @@ class IntegrationFixer,
             "status": "completed"
         }
 
-    def check_atlassian_integration(self) -> Dict[str, Any]
+    def check_atlassian_integration(self) -> Dict[str, Any],
         """检查Atlassian集成问题"""
         logger.info("开始检查Atlassian集成问题...")
         issues = []
@@ -135,14 +135,14 @@ class IntegrationFixer,
                 "apps/backend/src/integrations/enhanced_rovo_dev_connector.py"
             ]
 
-            for file_path in atlassian_files,::
+            for file_path in atlassian_files::
                 full_path = self.project_root / file_path
-                if full_path.exists():::
+                if full_path.exists():
                     with open(full_path, 'r', encoding == 'utf-8') as f,
                         content = f.read()
 
                     # 检查配置导入
-                    if "from config" in content and "from apps.backend.config" not in content,::
+                    if "from config" in content and "from apps.backend.config" not in content:
                         issues.append({
                             "type": "import_error",
                             "file": str(full_path),
@@ -150,7 +150,7 @@ class IntegrationFixer,
                         })
 
                     # 检查认证相关代码
-                    if "api_token" in content and "self.api_token" not in content,::
+                    if "api_token" in content and "self.api_token" not in content:
                         issues.append({
                             "type": "config_error",
                             "file": str(full_path),
@@ -158,7 +158,7 @@ class IntegrationFixer,
                         })
 
                     # 检查Atlassian API连接
-                    if "AtlassianAPI" in content and "initialize_connection" not in content,::
+                    if "AtlassianAPI" in content and "initialize_connection" not in content:
                         issues.append({
                             "type": "connection_error",
                             "file": str(full_path),
@@ -171,7 +171,7 @@ class IntegrationFixer,
                         "description": "Atlassian集成文件不存在"
                     })
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"检查Atlassian集成时出错, {e}")
             issues.append({
                 "type": "check_error",
@@ -185,7 +185,7 @@ class IntegrationFixer,
             "status": "completed"
         }
 
-    def check_content_analysis(self) -> Dict[str, Any]
+    def check_content_analysis(self) -> Dict[str, Any],
         """检查内容分析模块问题"""
         logger.info("开始检查内容分析模块问题...")
         issues = []
@@ -193,14 +193,14 @@ class IntegrationFixer,
         try,
             # 检查内容分析模块文件
             ca_path = self.project_root / "apps" / "backend" / "src" / "core_ai" / "learning" / "content_analyzer_module.py"
-            if ca_path.exists():::
+            if ca_path.exists():
                 with open(ca_path, 'r', encoding == 'utf-8') as f,
                     content = f.read()
 
                 # 检查实体提取相关代码
-                if "nx_graph.number_of_nodes()" in content,::
+                if "nx_graph.number_of_nodes()" in content:
                     # 检查是否有对应的实体计数逻辑
-                    if "len(kg_data["entities\"])" in content,::
+                    if "len(kg_data["entities\"])" in content:
                         # 这可能是一个断言失败的问题
                         issues.append({
                             "type": "logic_error",
@@ -209,7 +209,7 @@ class IntegrationFixer,
                         })
 
                 # 检查关系提取相关代码
-                if "relationship" in content and "found_relationship" in content,::
+                if "relationship" in content and "found_relationship" in content:
                     issues.append({
                         "type": "logic_error",
                         "file": str(ca_path),
@@ -217,7 +217,7 @@ class IntegrationFixer,
                     })
 
                 # 检查内容分析模块的导入问题
-                if "from learning" in content,::
+                if "from learning" in content:
                     issues.append({
                         "type": "import_error",
                         "file": str(ca_path),
@@ -230,7 +230,7 @@ class IntegrationFixer,
                     "description": "内容分析模块文件不存在"
                 })
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"检查内容分析模块时出错, {e}")
             issues.append({
                 "type": "check_error",
@@ -251,7 +251,7 @@ class IntegrationFixer,
 
         try,
             hsp_connector_path = self.project_root / "apps" / "backend" / "src" / "hsp" / "connector.py"
-            if hsp_connector_path.exists():::
+            if hsp_connector_path.exists():
                 # 备份文件
                 self.backup_file(hsp_connector_path)
 
@@ -261,15 +261,15 @@ class IntegrationFixer,
                 original_content = content
 
                 # 修复协程调用问题
-                for issue in issues,::
-                    if issue["type"] == "async_warning":::
+                for issue in issues::
+                    if issue["type"] == "async_warning":
                         # 更精确的修复逻辑
                         # 查找可能需要await的协程调用
                         async_calls = [
                             "publish_fact", "send_ack", "connect_to_broker",
                             "subscribe_to_topic", "unsubscribe_from_topic"
                         ]
-                        for call in async_calls,::
+                        for call in async_calls::
                             pattern = rf"(\b{call}\s*\()"
                             replacement = rf"await \1"
                             content = re.sub(pattern, replacement, content)
@@ -277,12 +277,12 @@ class IntegrationFixer,
                 # 修复导入问题
                 content = re.sub(
                     r"import paho\.mqtt\.client as mqtt",
-                    "import paho.mqtt.client as mqtt  # MQTT客户端",,
+                    "import paho.mqtt.client as mqtt  # MQTT客户端",
     content
                 )
 
                 # 添加HSP协议版本配置
-                if "HSP_PROTOCOL_VERSION" not in content,::
+                if "HSP_PROTOCOL_VERSION" not in content:
                     # 在文件顶部添加配置
                     content = content.replace(
                         '"""',
@@ -290,7 +290,7 @@ class IntegrationFixer,
                     )
 
                 # 如果内容有变化,写入文件
-                if content != original_content,::
+                if content != original_content:
                     with open(hsp_connector_path, 'w', encoding == 'utf-8') as f,
                         f.write(content)
                     fixed_count += 1
@@ -300,7 +300,7 @@ class IntegrationFixer,
             else,
                 logger.warning("✗ HSP连接器文件不存在,无法修复")
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"修复HSP集成问题时出错, {e}")
             return False
 
@@ -320,9 +320,9 @@ class IntegrationFixer,
                 "apps/backend/src/integrations/enhanced_rovo_dev_connector.py"
             ]
 
-            for file_path in atlassian_files,::
+            for file_path in atlassian_files::
                 full_path = self.project_root / file_path
-                if full_path.exists():::
+                if full_path.exists():
                     # 备份文件
                     self.backup_file(full_path)
 
@@ -332,7 +332,7 @@ class IntegrationFixer,
                     original_content = content
 
                     # 修复配置导入问题
-                    for issue in issues,::
+                    for issue in issues::
                         if issue["type"] == "import_error" and issue["file"] == str(full_path)::
                             content = content.replace(
                                 "from config",
@@ -340,16 +340,16 @@ class IntegrationFixer,
                             )
 
                     # 修复API令牌初始化问题
-                    if "self.api_token == None" not in content and "api_token" in content,::
+                    if "self.api_token == None" not in content and "api_token" in content:
                         # 查找API令牌初始化位置
                         content = re.sub(,
     r"def __init__\(self.*?\) -> None,",
-                            "def __init__(self, config == None) -> None,\n        self.api_token == config.get('api_token') if config else None\n        self.domain == config.get('domain') if config else None",:::
+                            "def __init__(self, config == None) -> None,\n        self.api_token == config.get('api_token') if config else None\n        self.domain == config.get('domain') if config else None",:
                                 ontent,
                             flags=re.DOTALL())
 
                     # 如果内容有变化,写入文件
-                    if content != original_content,::
+                    if content != original_content:
                         with open(full_path, 'w', encoding == 'utf-8') as f,
                             f.write(content)
                         fixed_count += 1
@@ -357,7 +357,7 @@ class IntegrationFixer,
                 else,
                     logger.warning(f"✗ {file_path} 不存在,无法修复")
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"修复Atlassian集成问题时出错, {e}")
             return False
 
@@ -371,7 +371,7 @@ class IntegrationFixer,
 
         try,
             ca_path = self.project_root / "apps" / "backend" / "src" / "core_ai" / "learning" / "content_analyzer_module.py"
-            if ca_path.exists():::
+            if ca_path.exists():
                 # 备份文件
                 self.backup_file(ca_path)
 
@@ -381,28 +381,28 @@ class IntegrationFixer,
                 original_content = content
 
                 # 修复逻辑错误
-                for issue in issues,::
-                    if issue["type"] == "logic_error":::
+                for issue in issues::
+                    if issue["type"] == "logic_error":
                         logger.info(f"  发现逻辑问题, {issue['description']}")
                         # 修复实体计数逻辑不一致问题
                         if "实体计数逻辑可能存在不一致" in issue["description"]::
                             # 添加更准确的实体计数逻辑
                             content = re.sub(,
     r"nx_graph\.number_of_nodes\(\)",
-                                "# 获取实体节点数量\nentity_nodes == [n for n, attrs in nx_graph.nodes(data == True) if attrs.get('type') == 'entity']\nlen(entity_nodes)",:::
+                                "# 获取实体节点数量\nentity_nodes == [n for n, attrs in nx_graph.nodes(data == True) if attrs.get('type') == 'entity']\nlen(entity_nodes)":
                                     ontent
                             )
 
                     # 修复导入问题
-                    elif issue["type"] == "import_error":::
+                    elif issue["type"] == "import_error":
                         content = re.sub(
                             r"from apps\.backend\.src\.core_ai\.learning",
-                            "from .",,
+                            "from .",
     content
                         )
 
                 # 如果内容有变化,写入文件
-                if content != original_content,::
+                if content != original_content:
                     with open(ca_path, 'w', encoding == 'utf-8') as f,
                         f.write(content)
                     fixed_count += 1
@@ -412,13 +412,13 @@ class IntegrationFixer,
             else,
                 logger.warning("✗ 内容分析模块文件不存在,无法修复")
 
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"修复内容分析模块问题时出错, {e}")
             return False
 
         return fixed_count > 0
 
-    def check_all_integrations(self) -> List[Dict[str, Any]]
+    def check_all_integrations(self) -> List[Dict[str, Any]],
         """检查所有集成问题"""
         logger.info("开始检查所有集成问题...")
         results = []
@@ -431,7 +431,7 @@ class IntegrationFixer,
         logger.info("所有集成问题检查完成")
         return results
 
-    def fix_all_integrations(self, check_results, List[Dict[str, Any]]) -> Dict[str, bool]
+    def fix_all_integrations(self, check_results, List[Dict[str, Any]]) -> Dict[str, bool],
         """修复所有集成问题"""
         logger.info("开始修复所有集成问题...")
         fix_results = {
@@ -441,15 +441,15 @@ class IntegrationFixer,
         }
 
         # 修复各个集成模块的问题
-        for result in check_results,::
+        for result in check_results::
             module = result["module"]
             issues = result["issues"]
 
-            if module == "hsp":::
+            if module == "hsp":
                 fix_results["hsp"] = self.fix_hsp_integration(issues)
-            elif module == "atlassian":::
+            elif module == "atlassian":
                 fix_results["atlassian"] = self.fix_atlassian_integration(issues)
-            elif module == "content_analysis":::
+            elif module == "content_analysis":
                 fix_results["content_analysis"] = self.fix_content_analysis(issues)
 
         logger.info("所有集成问题修复完成")
@@ -470,7 +470,7 @@ class IntegrationFixer,
                 "--tb=short", "-v", "--disable-warnings"
             ] cwd=self.project_root(), capture_output == True, text == True, timeout=300)
 
-            if result.returncode == 0,::
+            if result.returncode == 0:
                 logger.info("✓ 集成测试通过")
                 return True
             else,
@@ -485,10 +485,10 @@ class IntegrationFixer,
                 logger.info(f"详细测试结果已保存到, {test_result_file}")
                 return False
 
-        except subprocess.TimeoutExpired,::
+        except subprocess.TimeoutExpired::
             logger.error("✗ 集成测试超时")
             return False
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"✗ 验证修复效果时出错, {e}")
             return False
 
@@ -497,7 +497,7 @@ def main() -> None,
     print("=== 集成问题检查和修复工具 ===")
 
     # 创建集成修复器
-    fixer == IntegrationFixer()
+fixer = IntegrationFixer()
 
     # 检查所有集成问题
     print("\n1. 检查所有集成问题...")
@@ -506,26 +506,26 @@ def main() -> None,
     # 显示检查结果
     print("\n2. 检查结果,")
     total_issues = 0
-    for result in check_results,::
+    for result in check_results::
         print(f"  {result['module']} {len(result['issues'])} 个问题")
         total_issues += len(result['issues'])
         for issue in result['issues']::
             print(f"    - {issue['description']}")
 
-    if total_issues > 0,::
+    if total_issues > 0:
         # 修复所有集成问题
         print("\n3. 修复所有集成问题...")
         fix_results = fixer.fix_all_integrations(check_results)
 
         # 显示修复结果
         print("\n4. 修复结果,")
-        for module, fixed in fix_results.items():::
-            status == "✓ 已修复" if fixed else "  无需修复":::
-                rint(f"  {module} {status}")
+        for module, fixed in fix_results.items():
+status = "✓ 已修复" if fixed else "  无需修复":
+print(f"  {module} {status}")
 
         # 验证修复效果
         print("\n5. 验证修复效果...")
-        if fixer.validate_fixes():::
+        if fixer.validate_fixes():
             print("✓ 修复验证通过")
         else,
             print("✗ 修复验证失败")
@@ -534,5 +534,5 @@ def main() -> None,
 
     print("\n=集成问题检查和修复完成 ===")
 
-if __name"__main__":::
+if __name"__main__":
     main()

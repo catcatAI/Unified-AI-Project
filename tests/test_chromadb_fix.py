@@ -77,7 +77,7 @@ def test_
         store = VectorMemoryStore(persist_directory=temp_dir)
         print("✓ VectorMemoryStore 初始化成功")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ VectorMemoryStore 初始化失敗, {e}")
         return False
     finally:
@@ -104,7 +104,7 @@ def test_
         store = VectorMemoryStore(persist_directory=temp_dir)
         print("✓ VectorMemoryStore 初始化成功")
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ VectorMemoryStore 初始化失敗, {e}")
         return False
     finally:

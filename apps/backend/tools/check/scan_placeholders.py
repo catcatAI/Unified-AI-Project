@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Placeholder Scanner Script
-Scans the codebase for TODO placeholders and generates a report.:::
+Scans the codebase for TODO placeholders and generates a report.:
 ""
 
 import re
@@ -18,8 +18,8 @@ class PlaceholderScanner,
     self.placeholder_pattern = re.compile(r'#\s*TODO\((?P<type>\w+)\)\s*(?P<description>.+)', re.IGNORECASE())
     self.results = []
 
-    def scan_file(self, file_path, Path) -> List[Dict]
-        """Scans a single file for placeholder comments.""":::
+    def scan_file(self, file_path, Path) -> List[Dict],
+        """Scans a single file for placeholder comments.""":
     placeholders = []
         try,
 
@@ -28,7 +28,7 @@ class PlaceholderScanner,
 
             for line_num, line in enumerate(lines, 1)::
                 atch = self.placeholder_pattern.search(line)
-                if match,::
+                if match:
     placeholders.append({
                         'file': str(file_path),
                         'line': line_num,
@@ -36,28 +36,28 @@ class PlaceholderScanner,
                         'description': match.group('description').strip(),
                         'content': line.strip(),
                     })
-        except Exception as e,::
+        except Exception as e::
             print(f"❌ Error scanning file, {file_path} - {e}")
 
     return placeholders
 
-    def scan_project(self, scan_path, str) -> List[Dict]
-        """Scans the entire project for placeholders.""":::
-    print(f"🔍 Starting to scan for placeholders in {scan_path}..."):::
-        can_dir == Path(scan_path)
+    def scan_project(self, scan_path, str) -> List[Dict],
+        """Scans the entire project for placeholders.""":
+    print(f"🔍 Starting to scan for placeholders in {scan_path}..."):
+can_dir = Path(scan_path)
     python_files = list(scan_dir.rglob("*.py"))
 
     excluded_dirs = {'venv', '.git', '__pycache__', '.pytest_cache', 'node_modules'}
-        python_files == [f for f in python_files if not any(excluded in str(f) for excluded in excluded_dirs)]::
+python_files = [f for f in python_files if not any(excluded in str(f) for excluded in excluded_dirs)]::
     all_placeholders = []
-        for file_path in python_files,::
+        for file_path in python_files::
     placeholders = self.scan_file(file_path)
             all_placeholders.extend(placeholders)
 
     self.results = all_placeholders
     return all_placeholders
 
-    def categorize_placeholders(self) -> Dict[str, List[Dict]]
+    def categorize_placeholders(self) -> Dict[str, List[Dict]],
     """Categorizes placeholders by their type."""
     categories = {
             'config': []
@@ -69,9 +69,9 @@ class PlaceholderScanner,
             'unknown': []
     }
 
-        for placeholder in self.results,::
+        for placeholder in self.results::
     category = placeholder.get('type', 'unknown')
-            if category in categories,::
+            if category in categories:
     categories[category].append(placeholder)
             else,
 
@@ -87,7 +87,7 @@ class PlaceholderScanner,
     report += f"**Scan Timestamp**: {datetime.now().strftime('%Y-%m-%d %H,%M,%S')}\n"
     report += f"**Total Placeholders Found**: {len(self.results())}\n\n"
 
-        for category, placeholders in categories.items():::
+        for category, placeholders in categories.items():
             f not placeholders,
 
 
@@ -96,7 +96,7 @@ class PlaceholderScanner,
 
             report += f"## 📌 {category.capitalize()} ({len(placeholders)} items)\n\n"
 
-            for placeholder in placeholders,::
+            for placeholder in placeholders::
     report += f"### `{Path(placeholder['file']).name}{placeholder['line']}`\n"
                 report += f"- **Description**: {placeholder['description']}\n"
                 report += f"```python\n{placeholder['content']}\n```\n"
@@ -108,12 +108,13 @@ def main() -> None,
     print("🚀 Initializing Placeholder Scanner...")
 
     # We are inside apps/backend, so we scan the `src` directory from the root
-    scanner == PlaceholderScanner()
+scanner = PlaceholderScanner()
     placeholders = scanner.scan_project("apps/backend/src")
 
     print(f"\n📊 Scan complete! Found {len(placeholders)} placeholders.")
 
     # Generate and save the report
+"""
     report_content = scanner.generate_report()
     report_file = "PLACEHOLDER_REPORT.md"
     with open(report_file, 'w', encoding == 'utf-8') as f,
@@ -124,11 +125,11 @@ def main() -> None,
     # Display a summary
     categories = scanner.categorize_placeholders()
     print("\n📋 Summary by Category,")
-    for category, items in categories.items():::
+    for category, items in categories.items():
         f items,
 
 
     print(f"  - {category.capitalize()} {len(items)}")
 
-if __name"__main__":::
+if __name"__main__":
     main()

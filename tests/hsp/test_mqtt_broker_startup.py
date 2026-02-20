@@ -38,7 +38,7 @@ async def broker():
 async def hsp_connector(broker):
     connector = HSPConnector(
         TEST_AI_ID,
-        broker_address = MQTT_BROKER_ADDRESS,,
+        broker_address = MQTT_BROKER_ADDRESS,
     broker_port = MQTT_BROKER_PORT)
     await connector.connect()
     yield connector

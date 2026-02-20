@@ -30,7 +30,7 @@ class ContinuousTestImprovement:
     Args,
             project_root, 项目根目录
     """
-        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent,::
+        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent:
     self.scripts_dir = self.project_root / "scripts"
     self.reports_dir = self.project_root / "test_reports"
     self.reports_dir.mkdir(exist_ok == True)
@@ -54,7 +54,7 @@ class ContinuousTestImprovement:
             }
     }
 
-    def run_continuous_improvement_cycle(self) -> Dict[str, Any]
+    def run_continuous_improvement_cycle(self) -> Dict[str, Any],
     """
     运行持续改进周期
 
@@ -93,7 +93,7 @@ class ContinuousTestImprovement:
 
             logger.info(f"Continuous test improvement cycle completed in {cycle_results['duration'].2f} seconds")
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error in continuous test improvement cycle, {e}")
             cycle_results["status"] = "failed"
             cycle_results["error"] = str(e)
@@ -103,7 +103,7 @@ class ContinuousTestImprovement:
 
     return cycle_results
 
-    def _run_tests_and_collect_coverage(self) -> Dict[str, Any]
+    def _run_tests_and_collect_coverage(self) -> Dict[str, Any],
     """
     运行测试并收集覆盖率数据
 
@@ -126,7 +126,7 @@ class ContinuousTestImprovement:
             ]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True,
@@ -144,14 +144,14 @@ class ContinuousTestImprovement:
             logger.info(f"Test execution {'succeeded' if execution_result['success'] else 'failed'}")::
 eturn execution_result
 
-        except subprocess.TimeoutExpired,:
+        except subprocess.TimeoutExpired:
             logger.error("Test execution timed out")
             return {
                 "success": False,
                 "error": "Test execution timed out",
                 "timestamp": datetime.now().isoformat()
             }
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error running tests, {e}")
             return {
                 "success": False,
@@ -159,7 +159,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _analyze_test_quality(self) -> Dict[str, Any]
+    def _analyze_test_quality(self) -> Dict[str, Any],
     """
     分析测试质量
 
@@ -182,7 +182,7 @@ eturn execution_result
             ]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True
@@ -206,7 +206,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error analyzing test quality, {e}")
             return {
                 "status": "failed",
@@ -214,7 +214,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _parse_quality_assessment(self) -> Dict[str, Any]
+    def _parse_quality_assessment(self) -> Dict[str, Any],
     """
     解析质量评估结果
 
@@ -250,7 +250,7 @@ eturn execution_result
             }
     }
 
-    def _analyze_test_trends(self) -> Dict[str, Any]
+    def _analyze_test_trends(self) -> Dict[str, Any],
     """
     分析测试趋势
 
@@ -276,7 +276,7 @@ eturn execution_result
             ]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True
@@ -297,7 +297,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error analyzing test trends, {e}")
             return {
                 "status": "failed",
@@ -305,7 +305,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _generate_improvement_recommendations(self) -> Dict[str, Any]
+    def _generate_improvement_recommendations(self) -> Dict[str, Any],
     """
     生成改进建议
 
@@ -328,7 +328,7 @@ eturn execution_result
             ]
 
             result = subprocess.run(
-                cmd,,
+                cmd,
     cwd=self.project_root(),
                 capture_output = True,
                 text = True
@@ -353,7 +353,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error generating improvement recommendations, {e}")
             return {
                 "status": "failed",
@@ -361,7 +361,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _parse_recommendations(self, output, str) -> List[str]
+    def _parse_recommendations(self, output, str) -> List[str],
     """
     解析改进建议输出
 
@@ -379,7 +379,7 @@ eturn execution_result
             "Improve naming of poorly named tests for better readability"::
     return recommendations
 
-    def _implement_automatic_improvements(self, recommendations_result, Dict[...]
+    def _implement_automatic_improvements(self, recommendations_result, Dict[...],
     """
     实施自动改进措施
 
@@ -422,7 +422,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error implementing automatic improvements, {e}")
             return {
                 "status": "failed",
@@ -430,7 +430,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _implement_single_improvement(self, recommendation, str) -> Dict[str, Any]
+    def _implement_single_improvement(self, recommendation, str) -> Dict[str, Any],
     """
     实施单个改进措施
 
@@ -454,14 +454,14 @@ eturn execution_result
         elif "increase line coverage" in recommendation.lower()::
             eturn {
                 "type": "coverage_improvement",
-                "description": "Generated template for missing tests",::
+                "description": "Generated template for missing tests":
                     status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
         elif "optimize slow tests" in recommendation.lower()::
             eturn {
                 "type": "performance_optimization",
-                "description": "Identified candidates for optimization",::
+                "description": "Identified candidates for optimization":
                     status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
@@ -493,7 +493,7 @@ eturn execution_result
 
             logger.info(f"Improvement cycle results saved to, {results_file}")
 
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error saving cycle results, {e}")
 
     def setup_continuous_monitoring(self):
@@ -539,7 +539,7 @@ eturn execution_result
     f.write(dashboard_content)
             logger.info(f"Improvement dashboard generated, {output_file}")
             return str(output_file)
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Error generating improvement dashboard, {e}")
             return ""
 
@@ -735,7 +735,7 @@ def main() -> None,
             if recommendations.get("status") == "completed"::
     print("Improvement Recommendations,")
                 for rec in recommendations.get("recommendations", []):
-                    rint(f"  - {rec}")
+print(f"  - {rec}")
             else:
 
                 print("Failed to generate recommendations")

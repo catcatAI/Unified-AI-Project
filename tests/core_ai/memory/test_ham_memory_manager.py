@@ -39,7 +39,7 @@ class TestHAMMemoryManager:
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_ham_memory_manager_initialization(self) -> None,
+def test_ham_memory_manager_initialization(self) -> None:
         """测试HAMMemoryManager初始化"""
         # 创建HAMMemoryManager实例
         ham_manager = HAMMemoryManager(,
@@ -65,7 +65,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         
         memory_id = await ham_manager.store_experience(
             raw_data=test_data,
-            data_type=test_data_type,,
+            data_type=test_data_type,
     metadata=test_metadata
         )
         
@@ -84,7 +84,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         assert len(results) >= 1
         # 检查是否包含我们存储的经验
         found = False
-        for result in results,:
+        for result in results:
             # 注意：result是一个HAMRecallResult字典,使用字典访问方式
             if result["id"] == memory_id,:
                 found = True
@@ -105,7 +105,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         
         memory_id = await ham_manager.store_experience(
             raw_data=test_data,
-            data_type=test_data_type,,
+            data_type=test_data_type,
     metadata=test_metadata
         )
         
@@ -129,7 +129,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         test_data_type = "delete_test"
         
         memory_id = await ham_manager.store_experience(
-            raw_data=test_data,,
+            raw_data=test_data,
     data_type=test_data_type
         )
         
@@ -164,7 +164,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         test_data_type = "persistence_test"
         
         memory_id = await ham_manager1.store_experience(
-            raw_data=test_data,,
+            raw_data=test_data,
     data_type=test_data_type
         )
         

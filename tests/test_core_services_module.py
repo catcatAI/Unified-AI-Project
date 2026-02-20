@@ -29,14 +29,13 @@ class TestCoreServices(unittest.TestCase):
         try:
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
-                "core_services", ,
-    os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
+                "core_services",, os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
             )
             core_services = importlib.util.module_from_spec(spec)
             # We won't execute the module as it might have side effects
             # spec.loader.exec_module(core_services)
             self.assertTrue(True)
-        except Exception as e,:
+        except Exception as e:
             self.fail(f"core_services import raised {type(e).__name__} unexpectedly, {e}")
 
     def test_core_services_constants(self) -> None:
@@ -44,13 +43,12 @@ class TestCoreServices(unittest.TestCase):
         try:
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
-                "core_services", ,
-    os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
+                "core_services",, os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
             )
             core_services = importlib.util.module_from_spec(spec)
             # Check for some expected attributes,:
                 elf.assertTrue(True)
-        except Exception as e,:
+        except Exception as e:
             self.fail(f"core_services constants check raised {type(e).__name__} unexpectedly, {e}")
 
     @patch('os.path.exists')
@@ -60,13 +58,12 @@ class TestCoreServices(unittest.TestCase):
         try:
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
-                "core_services", ,
-    os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
+                "core_services",, os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
             )
             core_services = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(core_services)
             self.assertTrue(True)
-        except Exception as e,:
+        except Exception as e:
             # This might fail in test environment, which is expected
             self.assertTrue(True)
 

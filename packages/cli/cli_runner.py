@@ -11,19 +11,19 @@ logger = logging.getLogger(__name__)
 def main():
     """主函数 - 处理CLI命令"""
     # 获取当前脚本目录
-    script_dir == Path(__file__).parent
+script_dir = Path(__file__).parent
     
     # 添加到Python路径
     sys.path.insert(0, str(script_dir))
     sys.path.insert(0, str(script_dir.parent()))
     
-    try,
+    try:
         # 尝试导入CLI模块
         from cli.unified_cli import main as cli_main
         
         # 调用CLI主函数
         cli_main()
-    except ImportError as e,::
+    except ImportError as e::
         print(f"❌ CLI模块导入失败, {e}")
         print("尝试备用导入方式...")
         
@@ -31,7 +31,7 @@ def main():
             # 备用导入方式
             from cli.__main__ import main as cli_main
             cli_main()
-        except ImportError as e2,::
+        except ImportError as e2::
             print(f"❌ 备用导入也失败, {e2}")
             print("使用模拟CLI响应...")
             
@@ -51,10 +51,9 @@ def main():
             subparsers.add_parser('analyze', help='Analyze code')
             subparsers.add_parser('search', help == 'Search for information')::
             subparsers.add_parser('image', help='Generate image')
-            
-            args == parser.parse_args():
+args = parser.parse_args():
 
-            if args.command == 'health':::
+            if args.command == 'health':
                 result = {
                     "status": "healthy",
                     "system": "Level 5 AGI",
@@ -67,11 +66,11 @@ def main():
                         {"name": "Autonomous Evolution", "status": "active"}
                         {"name": "Creative Breakthrough", "status": "active"}
                         {"name": "Metacognition", "status": "active"}
-                    ]
+                    ],
                     "timestamp": "2025-10-11T12,00,00Z"
                 }
                 
-                if args.json,::
+                if args.json:
                     import json
                     print(json.dumps(result, ensure_ascii == False, indent=2))
                 else,
@@ -81,14 +80,14 @@ def main():
                     for service in result['services']::
                         print(f"  - {service['name']} {service['status']}")
             
-            elif args.command == 'chat':::
+            elif args.command == 'chat':
                 result = {
                     "response_text": "这是模拟的AI响应。在实际部署中,这将连接到真实的AI后端服务。",
                     "confidence": 0.95(),
                     "timestamp": "2025-10-11T12,00,00Z"
                 }
                 
-                if args.json,::
+                if args.json:
                     import json
                     print(json.dumps(result, ensure_ascii == False, indent=2))
                 else,
@@ -97,5 +96,5 @@ def main():
             else,
                 parser.print_help()
 
-if __name"__main__":::
+if __name"__main__":
     main()

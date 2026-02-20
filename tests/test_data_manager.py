@@ -33,7 +33,7 @@ class TestDataManager:
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok == True)
     
-    def generate_test_data(self, data_type, str, count, int == 10) -> List[Dict[str, Any]]
+    def generate_test_data(self, data_type, str, count, int == 10) -> List[Dict[str, Any]],
         """
         生成测试数据
         
@@ -82,10 +82,10 @@ class TestDataManager:
             with open(self.data_dir / filename, 'w', encoding == 'utf-8') as f:
                 json.dump(data, f, ensure_ascii == False, indent=2)
             logger.info(f"测试数据已保存到, {self.data_dir / filename}")
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"保存测试数据失败, {e}")
     
-    def load_test_data(self, filename, str) -> List[Dict[str, Any]]
+    def load_test_data(self, filename, str) -> List[Dict[str, Any]],
         """
         从文件加载测试数据
         
@@ -101,7 +101,7 @@ class TestDataManager:
         except FileNotFoundError as e:
             logger.error(f"测试数据文件未找到, {filename}")
             return []
-        except json.JSONDecodeError as e,:
+        except json.JSONDecodeError as e:
             logger.error(f"解析测试数据文件失败, {e}")
             return []
 

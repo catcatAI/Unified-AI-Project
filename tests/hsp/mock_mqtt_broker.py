@@ -60,13 +60,13 @@ class MockMqttBroker:
             if envelope.get("message_type") == "HSP,TaskRequest_v0.1"::
                 # Send an automatic ACK
                 await self._send_automatic_ack(envelope)
-        except Exception as e,:
+        except Exception as e:
             pass  # Ignore parsing errors
         
         # Dispatch to subscribers
         for sub_topic, callbacks in self.subscriptions.items()::
             if self._topic_matches(sub_topic, topic):
-                for callback in callbacks,:
+                for callback in callbacks:
                     # Create a mock message object similar to gmqtt
                     mock_message = MagicMock()
                     mock_message.topic = topic
@@ -144,7 +144,7 @@ class MockMqttBroker:
         # We need to dispatch it to the appropriate callbacks,
         for sub_topic, callbacks in self.subscriptions.items()::
             if self._topic_matches(sub_topic, topic):
-                for callback in callbacks,:
+                for callback in callbacks:
                     if asyncio.iscoroutinefunction(callback):
                         # Schedule the coroutine to run
                         asyncio.create_task(callback(client, topic, payload, qos, properties))

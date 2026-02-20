@@ -108,7 +108,7 @@ async def benchmark_ai_ops_engine():
         
         results = []
         
-        for test_case in test_cases,:
+        for test_case in test_cases:
             print(f"\n测试场景, {test_case['name']} (并发, {test_case['concurrent']} 总数, {test_case['total']})")
             
             # 执行测试
@@ -174,7 +174,7 @@ async def benchmark_ai_ops_engine():
         
         return results
         
-    except Exception as e,:
+    except Exception as e:
         print(f"AI运维引擎基准测试失败, {e}")
         return []
 
@@ -197,7 +197,7 @@ async def benchmark_predictive_maintenance():
         
         results = []
         
-        for test_case in test_cases,:
+        for test_case in test_cases:
             print(f"\n测试场景, {test_case['name']} (并发, {test_case['concurrent']} 总数, {test_case['total']})")
             
             # 执行测试
@@ -260,7 +260,7 @@ async def benchmark_predictive_maintenance():
         
         return results
         
-    except Exception as e,:
+    except Exception as e:
         print(f"预测性维护基准测试失败, {e}")
         return []
 
@@ -284,7 +284,7 @@ async def main():
     all_results = []
     
     # 评估AI运维引擎
-    for test_name, metrics in ai_ops_results,:
+    for test_name, metrics in ai_ops_results:
         evaluation = benchmark.evaluate_performance(f"AI运维引擎-{test_name}", metrics)
         all_results.append(evaluation)
         
@@ -300,7 +300,7 @@ async def main():
                 print(f"    - {item}")
     
     # 评估预测性维护
-    for test_name, metrics in maintenance_results,:
+    for test_name, metrics in maintenance_results:
         evaluation = benchmark.evaluate_performance(f"预测性维护-{test_name}", metrics)
         all_results.append(evaluation)
         

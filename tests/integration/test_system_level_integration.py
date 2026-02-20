@@ -12,7 +12,7 @@ class TestSystemLevelIntegration(SystemIntegrationTest):
     """系统级集成测试类"""
     
     @pytest.fixture(autouse == True)
-    def setup_test_data(self, setup_test, mock_external_services) -> None,
+    def setup_test_data(self, setup_test, mock_external_services) -> None:
         """设置测试数据"""
         self.data_factory = TestDataFactory()
         self.test_data_set = TestDataSet()
@@ -103,7 +103,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         # 1. 系统初始化
         system_services = [memory_manager, dialogue_manager, learning_manager, llm_service]
         init_results = []
-        for service in system_services,:
+        for service in system_services:
             result = await service.return_value.initialize()
             init_results.append(result)
         
@@ -126,7 +126,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         user_message = "Hello, I need help with data analysis."
         dialogue_context = self.data_factory.create_dialogue_context(
             user_id=user_id,
-            session_id=session_id,,
+            session_id=session_id,
     history=[
                 {:
                     "role": "user",
@@ -143,7 +143,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 6. 处理对话
         dialogue_response = await dialogue_manager.return_value.process_dialogue(
-            dialogue_context,,
+            dialogue_context,
     user_memories
         )
         
@@ -155,7 +155,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         # 8. 存储交互记忆
         interaction_memory = self.data_factory.create_memory_item(
             content = f"User, {user_message} | AI, {detailed_response}",
-            memory_type="interaction",,
+            memory_type="interaction",
     importance_score=0.7(),
             tags=["user_interaction", "dialogue", user_id]
         )
@@ -185,7 +185,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         assert feedback_result is True
         
         # 验证mock调用,
-        for service in system_services,:
+        for service in system_services:
             service.return_value.initialize.assert_called_once()
         
         hsp_connector.return_value.connect.assert_called_once()
@@ -198,7 +198,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         )
         
         dialogue_manager.return_value.process_dialogue.assert_called_once_with(
-            dialogue_context,,
+            dialogue_context,
     user_memories
         )
         
@@ -231,22 +231,22 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         specialist_configs = [
             self.data_factory.create_agent_config(
                 agent_id="data_analyst_001",
-                agent_type="data_analysis",,
+                agent_type="data_analysis",
     capabilities=["data_processing", "statistical_analysis"]
             ),
             self.data_factory.create_agent_config(
                 agent_id="market_researcher_001",
-                agent_type="research",,
+                agent_type="research",
     capabilities=["market_analysis", "trend_identification"]
             ),
             self.data_factory.create_agent_config(
                 agent_id="report_writer_001",
-                agent_type="creative_writing",,
+                agent_type="creative_writing",
     capabilities=["report_writing", "data_visualization"]
             ),
             self.data_factory.create_agent_config(
                 agent_id="quality_reviewer_001",
-                agent_type="review",,
+                agent_type="review",
     capabilities=["quality_assurance", "fact_checking"]
             )
         ]
@@ -292,7 +292,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         # 执行多代理协作任务测试
         # 1. 创建专业代理
         created_specialists = []
-        for config in specialist_configs,:
+        for config in specialist_configs:
             specialist = await agent_manager.return_value.create_agent(
                 config["agent_id"]
                 config["agent_type"],
@@ -309,7 +309,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         task_assignments = []
         for agent_id in coordination_result["assigned_agents"]:
             assignment_result = await agent_manager.return_value.assign_collaborative_task(
-                agent_id,,
+                agent_id,
     task_request
             )
             task_assignments.append(assignment_result)
@@ -319,16 +319,16 @@ def test_end_to_end_user_interaction_integration(self) -> None:
             self.data_factory.create_hsp_message(
                 message_type="task_update",
                 content=f"Agent {agent_id} completed analysis phase",
-                source=agent_id,,
+                source=agent_id,
     target="coordination_system"
             )
             for agent_id in coordination_result["assigned_agents"]:
         ]
         
         message_results = []
-        for message in collaboration_messages,:
+        for message in collaboration_messages:
             result = await hsp_connector.return_value.publish(
-                message,,
+                message,
     coordination_result["coordination_channel"]
             )
             message_results.append(result)
@@ -346,7 +346,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         # 7. 存储任务结果
         task_result_memory = self.data_factory.create_memory_item(
             content = f"Collaborative task result, {final_report}",
-            memory_type="collaborative_task_result",,
+            memory_type="collaborative_task_result",
     importance_score=0.9(),
             tags=["collaborative_task", "market_analysis", "report"]
         )
@@ -446,7 +446,7 @@ class TestSystemIntegrationWithExternalServices(SystemIntegrationTest):
         
         # 2. 执行外部任务
         external_result = await agent_manager.return_value.execute_external_task(
-            "external_api_agent",,
+            "external_api_agent",
     external_api_request
         )
         
@@ -470,7 +470,7 @@ class TestSystemIntegrationWithExternalServices(SystemIntegrationTest):
         )
         
         agent_manager.return_value.execute_external_task.assert_called_once_with(
-            "external_api_agent",,
+            "external_api_agent",
     external_api_request
         )
         

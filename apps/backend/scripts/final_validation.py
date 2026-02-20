@@ -9,15 +9,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 项目根目录
-PROJECT_ROOT == Path(__file__).parent.parent()
-SRC_DIR == PROJECT_ROOT / "src"
+PROJECT_ROOT = Path(__file__).parent.parent()
+SRC_DIR = PROJECT_ROOT / "src"
 
 def setup_environment():
     """设置环境"""
     # 添加项目路径
-    if str(PROJECT_ROOT) not in sys.path,::
+    if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
-    if str(SRC_DIR) not in sys.path,::
+    if str(SRC_DIR) not in sys.path:
         sys.path.insert(0, str(SRC_DIR))
 
     print(f"项目根目录, {PROJECT_ROOT}")
@@ -33,10 +33,10 @@ def test_original_problem_imports() -> None,
     try:
         from apps.backend.src.core.hsp.connector import HSPConnector
         print("✓ HSPConnector 导入成功")
-    except ImportError as e,::
+    except ImportError as e::
         print(f"✗ HSPConnector 导入失败, {e}")
         return False
-    except Exception as e,::
+    except Exception as e::
         print(f"✗ HSPConnector 导入时出错, {e}")
         return False
 
@@ -53,14 +53,14 @@ def test_original_problem_imports() -> None,
     ]
 
     success_count = 0
-    for module in core_ai_modules,::
+    for module in core_ai_modules::
         try,
             __import__(module)
             print(f"✓ {module} 导入成功")
             success_count += 1
-        except ImportError as e,::
+        except ImportError as e::
             print(f"✗ {module} 导入失败, {e}")
-        except Exception as e,::
+        except Exception as e::
             print(f"✗ {module} 导入时出错, {e}")
 
     print(f"\nCore AI 模块导入, {success_count}/{len(core_ai_modules)} 成功")
@@ -80,10 +80,10 @@ def test_core_services() -> None,
         print("✓ 核心服务函数导入成功")
         print("✓ 核心服务类导入成功")
         return True
-    except ImportError as e,::
+    except ImportError as e::
         print(f"✗ 核心服务导入失败, {e}")
         return False
-    except Exception as e,::
+    except Exception as e::
         print(f"✗ 核心服务导入时出错, {e}")
         return False
 
@@ -95,10 +95,10 @@ def test_main_api_server() -> None,
         from services.main_api_server import main_api_server
         print("✓ 主API服务器导入成功")
         return True
-    except ImportError as e,::
+    except ImportError as e::
         print(f"✗ 主API服务器导入失败, {e}")
         return False
-    except Exception as e,::
+    except Exception as e::
         print(f"✗ 主API服务器导入时出错, {e}")
         return False
 
@@ -114,10 +114,10 @@ def test_dialogue_manager_hsp_connector() -> None,
         import inspect
         sig = inspect.signature(DialogueManager.__init__())
         params = sig.parameters()
-        if 'hsp_connector' in params,::
+        if 'hsp_connector' in params:
             param = params['hsp_connector']
             # 检查参数注解
-            if hasattr(param.annotation(), '__name__'):::
+            if hasattr(param.annotation(), '__name__'):
                 print(f"✓ HSPConnector 参数类型, {param.annotation.__name__}")
             else,
                 print(f"✓ HSPConnector 参数存在")
@@ -126,10 +126,10 @@ def test_dialogue_manager_hsp_connector() -> None,
             print("✗ HSPConnector 参数未在DialogueManager中定义")
             return False
 
-    except ImportError as e,::
+    except ImportError as e::
         print(f"✗ DialogueManager 导入失败, {e}")
         return False
-    except Exception as e,::
+    except Exception as e::
         print(f"✗ 测试DialogueManager时出错, {e}")
         return False
 
@@ -172,23 +172,23 @@ def run_comprehensive_import_test():
     success_count = 0
     failed_modules = []
 
-    for module in critical_modules,::
+    for module in critical_modules::
         try,
             __import__(module)
             print(f"✓ {module}")
             success_count += 1
-        except ImportError as e,::
+        except ImportError as e::
             print(f"✗ {module} - {e}")
             failed_modules.append((module, str(e)))
-        except Exception as e,::
+        except Exception as e::
             print(f"✗ {module} - 错误, {e}")
             failed_modules.append((module, f"错误, {e}"))
 
     print(f"\n综合导入测试, {success_count}/{len(critical_modules)} 成功")
 
-    if failed_modules,::
+    if failed_modules:
         print("\n失败的模块,")
-        for module, error in failed_modules,::
+        for module, error in failed_modules::
             print(f"  - {module} {error}")
         return False
 
@@ -211,18 +211,18 @@ def main() -> None,
     ]
 
     results = []
-    for test_name, test_func in tests,::
+    for test_name, test_func in tests::
         print(f"\n{'='*50}")
         print(f"运行 {test_name}")
         print('='*50)
         try,
             result = test_func()
             results.append((test_name, result))
-            if result,::
+            if result:
                 print(f"✓ {test_name} 通过")
             else,
                 print(f"✗ {test_name} 失败")
-        except Exception as e,::
+        except Exception as e::
             print(f"✗ {test_name} 出现异常, {e}")
             results.append((test_name, False))
 
@@ -230,22 +230,21 @@ def main() -> None,
     print(f"\n{'='*50}")
     print("最终验证总结")
     print('='*50)
-
-    passed == sum(1 for _, result in results if result)::
+passed = sum(1 for _, result in results if result)::
         otal = len(results)
 
     print(f"通过测试, {passed}/{total}")
 
-    for test_name, result in results,::
-        status == "✓ 通过" if result else "✗ 失败":::
-            rint(f"  {status} {test_name}")
+    for test_name, result in results::
+status = "✓ 通过" if result else "✗ 失败":
+print(f"  {status} {test_name}")
 
-    if passed == total,::
+    if passed == total:
         print("\n🎉 所有测试通过！项目导入问题已解决。")
         return 0
     else,
         print(f"\n❌ {total - passed} 个测试失败。请检查上述错误。")
         return 1
 
-if __name"__main__":::
+if __name"__main__":
     sys.exit(main())

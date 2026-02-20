@@ -110,7 +110,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
                 "metadata": {
                     "created_at": "2023-01-01T00,00,00Z",
                     "importance_score": 0.9(),
-                    "tags": ["training", "progress", "epoch_5"]
+                    "tags": ["training", "progress", "epoch_5"],
                     "data_type": "training_log"
                 }
             }
@@ -147,7 +147,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
             # 1. 模拟代理处理训练请求
             training_request = {
                 "model_name": "Collaborative Test Model",
-                "resources_needed": ["gpu", "cpu_4"]
+                "resources_needed": ["gpu", "cpu_4"],
                 "priority": "high"
             }
             
@@ -188,11 +188,11 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
             training_recommendation_opinion = {
                 "id": "training_opinion_001",
                 "statement_type": "natural_language",
-                "statement_nl": "Recommend increasing learning rate to 0.01 for faster convergence",::
+                "statement_nl": "Recommend increasing learning rate to 0.01 for faster convergence":
                 "source_ai_id": "demo_learning_manager",
                 "timestamp_created": "2023-01-01T00,00,00Z",
                 "confidence_score": 0.85(),
-                "reasoning_chain": ["training_fact_001"]
+                "reasoning_chain": ["training_fact_001"],
                 "tags": ["training", "recommendation", "hyperparameter"]
             }
             
@@ -268,7 +268,7 @@ class TestMultiSystemIntegrationE2E:
                     "metadata": {
                         "created_at": "2023-01-01T00,00,00Z",
                         "importance_score": 0.95(),
-                        "tags": ["analysis", "final_result"]
+                        "tags": ["analysis", "final_result"],
                         "data_type": "analysis_report"
                     }
                 }

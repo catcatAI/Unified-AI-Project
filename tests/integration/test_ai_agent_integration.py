@@ -33,7 +33,7 @@ def test_agent_lifecycle_integration(self) -> None,
         """测试代理生命周期管理集成"""
         # 创建测试数据
         agent_config = self.data_factory.create_agent_config(
-            agent_id="lifecycle_test_agent",,
+            agent_id="lifecycle_test_agent",
     agent_type="creative_writing"
         )
         
@@ -121,12 +121,12 @@ def test_agent_lifecycle_integration(self) -> None,
         """测试代理与HSP通信集成"""
         # 创建测试数据
         sender_config = self.data_factory.create_agent_config(
-            agent_id="sender_agent",,
+            agent_id="sender_agent",
     agent_type="creative_writing"
         )
         
         receiver_config = self.data_factory.create_agent_config(
-            agent_id="receiver_agent",,
+            agent_id="receiver_agent",
     agent_type="data_analysis"
         )
         
@@ -146,7 +146,7 @@ def test_agent_lifecycle_integration(self) -> None,
         mock_receiver_agent = Mock()
         
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==[
-            mock_sender_agent,,
+            mock_sender_agent,
     mock_receiver_agent
         ])
         
@@ -171,7 +171,7 @@ def test_agent_lifecycle_integration(self) -> None,
         
         # 3. 发送消息
         publish_result = await hsp_connector.return_value.publish(
-            hsp_message,,
+            hsp_message,
     f"hsp/agents/{receiver_config['agent_id']}/requests"
         )
         
@@ -192,7 +192,7 @@ def test_agent_lifecycle_integration(self) -> None,
         
         hsp_connector.return_value.connect.assert_called_once()
         hsp_connector.return_value.publish.assert_called_once_with(
-            hsp_message,,
+            hsp_message,
     f"hsp/agents/{receiver_config['agent_id']}/requests"
         )
         hsp_connector.return_value.subscribe.assert_called_once_with(,
@@ -211,7 +211,7 @@ def test_agent_lifecycle_integration(self) -> None,
         
         memory_item = self.data_factory.create_memory_item(
             content = "This is a test memory for agent integration",:
-            memory_type="fact",,
+            memory_type="fact",
     importance_score=0.8())
         
         # 获取mock服务
@@ -273,12 +273,12 @@ def test_agent_lifecycle_integration(self) -> None,
         """测试代理与学习系统集成"""
         # 创建测试数据
         agent_config = self.data_factory.create_agent_config(
-            agent_id="learning_test_agent",,
+            agent_id="learning_test_agent",
     agent_type="creative_writing"
         )
         
         training_data = self.data_factory.create_training_data(
-            input_data="Write a story about technology",,
+            input_data="Write a story about technology",
     expected_output="A story exploring the impact of technology"
         )
         
@@ -319,9 +319,9 @@ def test_agent_lifecycle_integration(self) -> None,
         # 4. 处理反馈
         feedback_result = await learning_manager.return_value.process_feedback(
             {
-                "input": training_data["input"]
+                "input": training_data["input"],
                 "output": generated_content,
-                "expected": training_data["expected_output"]
+                "expected": training_data["expected_output"],
                 "score": 0.8()
             }
         )
@@ -361,25 +361,25 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         # 创建测试数据
         writer_config = self.data_factory.create_agent_config(
             agent_id="collab_writer",
-            agent_type="creative_writing",,
+            agent_type="creative_writing",
     capabilities=["text_generation", "story_creation"]
         )
         
         analyst_config = self.data_factory.create_agent_config(
             agent_id="collab_analyst",
-            agent_type="data_analysis",,
+            agent_type="data_analysis",
     capabilities=["data_processing", "insight_extraction"]
         )
         
         editor_config = self.data_factory.create_agent_config(
             agent_id="collab_editor",
-            agent_type="text_editing",,
+            agent_type="text_editing",
     capabilities=["text_review", "grammar_check"]
         )
         
         collaboration_request = self.data_factory.create_hsp_message(
             message_type="request",
-            content="Create and analyze a story about AI development",,
+            content="Create and analyze a story about AI development",
     source=writer_config["agent_id"]
         )
         
@@ -395,7 +395,7 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==[
             mock_writer,
-            mock_analyst,,
+            mock_analyst,
     mock_editor
         ])
         
@@ -433,7 +433,7 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         
         # 分析师代理分析故事
         analysis_result = {
-            "themes": ["technology", "future"]
+            "themes": ["technology", "future"],
             "sentiment": "positive",
             "complexity_score": 0.7()
         }
@@ -444,7 +444,7 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         # 4. 存储协作结果到记忆系统
         collaboration_memory = self.data_factory.create_memory_item(
             content = f"Collaboration result, {edited_content}",
-            memory_type="collaboration_result",,
+            memory_type="collaboration_result",
     importance_score=0.9())
         
         store_result = await memory_manager.return_value.store_memory(,

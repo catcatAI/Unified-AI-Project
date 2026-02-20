@@ -75,7 +75,7 @@ class TestCoreServices(unittest.TestCase):
             "ai_virtual_input_service", "audio_service", "vision_service",
             "resource_awareness_service", "economy_manager", "pet_manager"
         ]
-        for key in expected_keys,:
+        for key in expected_keys:
             self.assertIn(key, services)
 
     def test_shutdown_services(self) -> None:

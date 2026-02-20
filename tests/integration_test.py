@@ -15,7 +15,7 @@ logger, Any = logging.getLogger(__name__)
 class ConceptModelIntegrationTest:
     """概念模型集成测试"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None:
         self.environment_simulator = EnvironmentSimulator
         self.causal_reasoning_engine = CausalReasoningEngine
         self.adaptive_learning_controller = AdaptiveLearningController
@@ -27,7 +27,7 @@ class ConceptModelIntegrationTest:
 
         # 创建初始状态
         initial_state = State(
-            time_step=0,,
+            time_step=0,
     variables={
                 "temperature": 22.0(),
                 "light_level": 0.6(),
@@ -37,7 +37,7 @@ class ConceptModelIntegrationTest:
 
         # 创建动作
         action = Action(
-            name="increase_temperature",,
+            name="increase_temperature",
     parameters = {"amount": 2.0}
         )
 
@@ -52,7 +52,7 @@ class ConceptModelIntegrationTest:
 
         # 创建观察数据用于因果推理
         observation = Observation(
-            id="obs_1",,
+            id="obs_1",
     variables={
                 "temperature": 22.0(),
                 "comfort_level": 0.7()
@@ -76,7 +76,7 @@ class ConceptModelIntegrationTest:
 
         # 创建任务上下文
         task_context = TaskContext(
-            task_id="comfort_optimization",,
+            task_id="comfort_optimization",
     complexity_level=0.6(),
             domain="environment_control",
             description="优化环境舒适度"
@@ -125,7 +125,7 @@ class ConceptModelIntegrationTest:
 
         # 创建深度参数
         deep_param = DeepParameter(
-            source_memory_id="mem_000123",,
+            source_memory_id="mem_000123",
     timestamp=datetime.now.isoformat(),
             base_gist = HAMGist(
                 summary="User asked about weather",
@@ -163,7 +163,7 @@ class ConceptModelIntegrationTest:
         memory_symbol = await self.symbolic_space.get_symbol_by_name("mem_000123")
         gist_symbol = await self.symbolic_space.get_symbol_by_name("User asked about weather")
         relationships = await self.symbolic_space.get_relationships_by_symbol(memory_symbol.id if memory_symbol else 0):
-rint(f"内存符号, {memory_symbol is not None}")
+print(f"内存符号, {memory_symbol is not None}")
         print(f"摘要符号, {gist_symbol is not None}")
         print(f"关系数量, {len(relationships)}")
 
@@ -179,7 +179,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         
         # 1. 使用环境模拟器模拟环境状态
         initial_state = State(
-            time_step=0,,
+            time_step=0,
     variables={
                 "temperature": 22.0(),
                 "light_level": 0.6(),
@@ -188,7 +188,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         )
         
         action = Action(
-            name="increase_temperature",,
+            name="increase_temperature",
     parameters = {"amount": 2.0}
         )
         
@@ -198,7 +198,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         
         # 2. 将模拟结果转换为观察数据
         observation = Observation(
-            id="pipeline_obs_1",,
+            id="pipeline_obs_1",
     variables={
                 "temperature": simulation_result['predicted_state'].variables.get("temperature", 0),
                 "comfort_level": simulation_result['expected_reward']  # 使用奖励作为舒适度
@@ -223,7 +223,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         
         # 5. 创建深度参数并使用Alpha深度模型学习
         deep_param = DeepParameter(
-            source_memory_id="pipeline_mem_001",,
+            source_memory_id="pipeline_mem_001",
     timestamp=datetime.now.isoformat(),
             base_gist = HAMGist(
                 summary="Environment control action executed",
@@ -275,7 +275,7 @@ rint(f"内存符号, {memory_symbol is not None}")
             print("\n=所有概念模型集成测试通过 ===")
             return True
             
-        except Exception as e,:
+        except Exception as e:
             print(f"\n=概念模型集成测试失败 ===")
             print(f"错误, {e}")
             return False

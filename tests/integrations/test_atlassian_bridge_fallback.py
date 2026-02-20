@@ -405,7 +405,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
             urls_to_try = [bridge.endpoints[service].primary_url] + bridge.endpoints[service].backup_urls
 
             # 模擬所有端點失敗
-            for base_url in urls_to_try,:
+            for base_url in urls_to_try:
                 # 更新端點健康狀態
                 bridge.endpoint_health[f"{service}_{base_url}"] = {
                     'status': 'unhealthy',

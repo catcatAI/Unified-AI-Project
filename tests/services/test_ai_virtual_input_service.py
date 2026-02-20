@@ -274,7 +274,7 @@ self.assertEqual(log[0]["command_details"], command)
     def test_process_keyboard_command_press_keys_with_target(self) -> None:
         command, VirtualKeyboardCommand = { # type ignore
 "action_type": "press_keys",
-"keys": ["control", "shift", "escape"]
+"keys": ["control", "shift", "escape"],
 "target_element_id": "press_keys_target"
 }
 response = self.avis.process_keyboard_command(command)
@@ -291,7 +291,7 @@ self.assertEqual(log[0]["command_details"], command)
     def test_process_keyboard_command_special_key_with_target(self) -> None:
         command, VirtualKeyboardCommand = { # type ignore
 "action_type": "special_key",
-"keys": ["enter"] # As per current implementation, special key name is in keys[0]
+"keys": ["enter"] # As per current implementation, special key name is in keys[0],
 "target_element_id": "special_key_target"
 }
 response = self.avis.process_keyboard_command(command)

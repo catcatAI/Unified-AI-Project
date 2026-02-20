@@ -43,7 +43,7 @@ def hsp_connector_instance(mock_mqtt_client, mock_fallback_manager):
         broker_address="localhost",
         broker_port=1883,
         mock_mode = True, # Enable mock mode for testing without a real broker,:
-        mock_mqtt_client=mock_mqtt_client,,
+        mock_mqtt_client=mock_mqtt_client,
     enable_fallback = True # Ensure fallback is enabled for testing,:
     )
     # Manually set the mock fallback manager

@@ -56,7 +56,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         # 执行存储和检索测试
         # 1. 存储记忆,
         store_results = []
-        for memory in test_memories,:
+        for memory in test_memories:
             result = await memory_manager.return_value.store_memory(memory)
             store_results.append(result)
         
@@ -102,13 +102,13 @@ def test_memory_storage_retrieval_integration(self) -> None,
         """测试记忆与代理集成"""
         # 创建测试数据
         agent_config = self.data_factory.create_agent_config(
-            agent_id="memory_agent",,
+            agent_id="memory_agent",
     agent_type="creative_writing"
         )
         
         memory_item = self.data_factory.create_memory_item(
             content="This is a memory created by an agent",
-            memory_type="agent_experience",,
+            memory_type="agent_experience",
     importance_score=0.8())
         
         # 获取mock服务
@@ -191,7 +191,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         
         # 执行重要性评分测试
         # 1. 存储基础记忆,
-        for memory in base_memories,:
+        for memory in base_memories:
             await memory_manager.return_value.store_memory(memory)
         
         # 2. 检索记忆
@@ -201,7 +201,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         
         # 3. 更新重要性评分
         update_results = []
-        for memory in retrieved_memories,:
+        for memory in retrieved_memories:
             new_score = min(1.0(), memory["importance_score"] + 0.2())
             result = await memory_manager.return_value.update_importance_score(
                 memory["id"],
@@ -260,7 +260,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
         
         # 执行记忆压缩测试
         # 1. 存储详细记忆
-        for memory in detailed_memories,:
+        for memory in detailed_memories:
             await memory_manager.return_value.store_memory(memory)
         
         # 2. 检索需要压缩的记忆
@@ -270,7 +270,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
         
         # 3. 压缩记忆
         compression_results = []
-        for memory in memories_to_compress,:
+        for memory in memories_to_compress:
             result = await memory_manager.return_value.compress_memory(,
     memory["id"]
             )
@@ -319,8 +319,8 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
         memory_manager.return_value.create_semantic_mapping == AsyncMock(,
     return_value = {:
                 "mapping_id": "test_mapping_123",
-                "source_memory": semantic_memories[0]["id"]
-                "target_memory": semantic_memories[1]["id"]
+                "source_memory": semantic_memories[0]["id"],
+                "target_memory": semantic_memories[1]["id"],
                 "similarity_score": 0.85()
             }
         )
@@ -330,7 +330,7 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
         
         # 执行语义映射测试
         # 1. 存储语义记忆
-        for memory in semantic_memories,:
+        for memory in semantic_memories:
             await memory_manager.return_value.store_memory(memory)
         
         # 2. 创建语义映射

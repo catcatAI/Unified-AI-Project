@@ -92,7 +92,7 @@ class TestTimeSystem(unittest.TestCase):
             (datetime(2023, 1, 1, 0, 0, 0), "night")     # Midnight
         ]
 
-        for mock_time, expected_segment in test_cases,:
+        for mock_time, expected_segment in test_cases:
             # Patch TimeSystem's get_current_time to control the time it sees
             # Or, if TimeSystem directly calls datetime.datetime.now(), patch that.:
             # TimeSystem.get_current_time() calls datetime.datetime.now() if no override.:

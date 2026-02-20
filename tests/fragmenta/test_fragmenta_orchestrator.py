@@ -28,7 +28,7 @@ def test_process_complex_task(self) -> None:
 
         task_description = {
             "query_params": {
-                "keywords": ["test"]
+                "keywords": ["test"],
                 "limit": 5
             }
         }

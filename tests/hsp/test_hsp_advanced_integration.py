@@ -28,7 +28,7 @@ async def hsp_connector_fixture(mock_broker):
     ai_id="test_ai_advanced",
     broker_address="localhost",
     broker_port=1883,
-    mock_mode = True,,
+    mock_mode = True,
     mock_mqtt_client=mock_broker
     )
     await connector.connect()
@@ -102,7 +102,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
             # Use await when calling mock_broker.publish since it returns a coroutine
             task = await mock_broker.publish(
-                f"hsp/requests/{connector.ai_id}",,
+                f"hsp/requests/{connector.ai_id}",
     json.dumps(envelope).encode('utf-8')
             )
             tasks.append(task)
@@ -138,14 +138,14 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             {"id": "fact3", "content": "business info", "metadata": {"visibility": "public", "category": "business"}}
     ]
 
-        for fact in facts,:
+        for fact in facts:
             # Create a proper HSP fact payload with message envelope
     payload = fact
 
             # Create a proper HSP message envelope
             envelope = {:
                 "hsp_envelope_version": "0.1",
-                "message_id": fact["id"]
+                "message_id": fact["id"],
                 "correlation_id": None,
                 "sender_ai_id": "test_sender",
                 "recipient_ai_id": "all",
@@ -161,7 +161,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             }
 
             await mock_broker.publish(
-                "hsp/knowledge/facts/test",,
+                "hsp/knowledge/facts/test",
     json.dumps(envelope).encode('utf-8')
             )
 
@@ -205,7 +205,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     }
 
     await mock_broker.publish(
-            "hsp/knowledge/facts/test",,
+            "hsp/knowledge/facts/test",
     json.dumps(envelope).encode('utf-8')
     )
 
@@ -238,8 +238,8 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
                 "version": "1.0",
                 "ai_id": connector.ai_id(),
                 "availability_status": "available",
-                "tags": ["nlp", "analysis"]
-                "supported_interfaces": ["hsp_v1"]
+                "tags": ["nlp", "analysis"],
+                "supported_interfaces": ["hsp_v1"],
                 "metadata": {"performance": "high"}
             }
             {
@@ -249,17 +249,17 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
                 "version": "1.0",
                 "ai_id": connector.ai_id(),
                 "availability_status": "available",
-                "tags": ["vision", "processing"]
-                "supported_interfaces": ["hsp_v1"]
+                "tags": ["vision", "processing"],
+                "supported_interfaces": ["hsp_v1"],
                 "metadata": {"performance": "medium"}
             }
     ]
 
-        for capability in capabilities,:
+        for capability in capabilities:
             # Create a proper HSP message envelope
             envelope = {
                 "hsp_envelope_version": "0.1",
-                "message_id": capability["capability_id"]
+                "message_id": capability["capability_id"],
                 "correlation_id": None,
                 "sender_ai_id": connector.ai_id(),
                 "recipient_ai_id": "all",
@@ -275,7 +275,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             }
 
             await mock_broker.publish(
-                f"hsp/capabilities/{connector.ai_id}",,
+                f"hsp/capabilities/{connector.ai_id}",
     json.dumps(envelope).encode('utf-8')
             )
 
@@ -337,7 +337,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             }
 
             await mock_broker.publish(
-                "hsp/test/retry",,
+                "hsp/test/retry",
     json.dumps(envelope).encode('utf-8')
             )
         except Exception as e:
@@ -374,7 +374,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     }
 
     await mock_broker.publish(
-            "hsp/test/retry",,
+            "hsp/test/retry",
     json.dumps(envelope).encode('utf-8')
     )
 
@@ -402,7 +402,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     # Create a proper HSP fact payload with message envelope
     payload = {:
             "id": "memory_test_fact",
-            "content": "This is a test fact for memory integration",::
+            "content": "This is a test fact for memory integration":
             "metadata": {"type": "test", "priority": "high"}
     }
 
@@ -425,7 +425,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     }
 
     await mock_broker.publish(
-            "hsp/knowledge/facts/test_ai_advanced",,
+            "hsp/knowledge/facts/test_ai_advanced",
     json.dumps(envelope).encode('utf-8')
     )
 
@@ -480,7 +480,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     }
 
     await mock_broker.publish(
-            "hsp/knowledge/facts/test_ai_advanced",,
+            "hsp/knowledge/facts/test_ai_advanced",
     json.dumps(envelope).encode('utf-8')
     )
 

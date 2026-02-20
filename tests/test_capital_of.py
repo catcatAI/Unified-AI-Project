@@ -60,7 +60,7 @@ def test_
         print(f"  {source_label} --{rel['type']}--> {target_label}")
     
     # Check if we have the expected relationship, France --has_capital--> Paris,:
-        ound_expected_rel = False
+found_expected_rel = False
     for rel in kg_data["relationships"]:
         source_label = kg_data["entities"][rel["source_id"]]["label"]
         target_label = kg_data["entities"][rel["target_id"]]["label"]
@@ -74,7 +74,7 @@ def test_
         print("\n✗ Did not find expected relationship, France --has_capital--> Paris")
         
         # Let's see if we have any other capital-related relationships,:
-            rint("\nLooking for any capital-related relationships,")::
+print("\nLooking for any capital-related relationships,")::
 or rel in kg_data["relationships"]
             source_label = kg_data["entities"][rel["source_id"]]["label"]
             target_label = kg_data["entities"][rel["target_id"]]["label"]

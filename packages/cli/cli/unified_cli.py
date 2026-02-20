@@ -11,18 +11,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 使用绝对导入而不是相对导入
-try,
+try:
     from cli.client import UnifiedAIClient
-except ImportError,::
+except ImportError::
     # 如果上面的导入失败,尝试相对导入
     try,
         from .client import UnifiedAIClient
-    except ImportError,::
+    except ImportError::
         # 如果相对导入也失败,尝试直接导入
         try,
             import client
             UnifiedAIClient = client.UnifiedAIClient()
-        except ImportError,::
+        except ImportError::
             # 如果所有导入都失败,创建模拟客户端
             class UnifiedAIClient,
                 def __init__(self, *args, **kwargs):
@@ -44,7 +44,7 @@ except ImportError,::
                     return {"prompt": prompt, "style": style, "result": "Mock image generated"}
 
 class LegacyClientShim,
-    pass  # kept for backward-compat if referenced elsewhere,::
+    pass  # kept for backward-compat if referenced elsewhere:
     def __init__(self, base_url == "http,//localhost,8000"):
         self.base_url = base_url
         self.api_version = "v1"
@@ -52,16 +52,16 @@ class LegacyClientShim,
     def _make_request(self, method, endpoint, data == None):
         url = f"{self.base_url}/api/{self.api_version}/{endpoint}"
         try,
-            if method.upper() == "GET":::
+            if method.upper() == "GET":
                 response = requests.get(url)
-            elif method.upper() == "POST":::
-                response == requests.post(url, json=data, headers={"Content-Type": "application/json"})
+            elif method.upper() == "POST":
+response = requests.post(url, json=data, headers={"Content-Type": "application/json"})
             else,
                 raise ValueError(f"Unsupported HTTP method, {method}")
             
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.RequestException as e,::
+        except requests.exceptions.RequestException as e::
             print(f"❌ API Error, {e}")
             return None
     
@@ -84,7 +84,7 @@ class LegacyClientShim,
         return self._make_request("POST", "code", data)
     
     def search(self, query):
-        data == {"query": query}
+data = {"query": query}
         return self._make_request("POST", "search", data)
     
     def generate_image(self, prompt, style == "realistic"):
@@ -101,7 +101,7 @@ class LegacyClientShim,
         return self._make_request("GET", "atlassian/jira/projects")
     
     def get_jira_issues(self, jql == "", limit=50):
-        params == f"?jql={jql}&limit={limit}" if jql else f"?limit={limit}"::
+params = f"?jql={jql}&limit={limit}" if jql else f"?limit={limit}"::
         return self._make_request("GET", f"atlassian/jira/issues{params}")
 
     def create_jira_issue(self, project_key, summary, description == "", issue_type="Task"):
@@ -144,7 +144,7 @@ def main():
     code_parser.add_argument("--language", default="auto", help="Programming language")
     
     # Search command
-    search_parser == subparsers.add_parser("search", help="Search for information")::
+search_parser = subparsers.add_parser("search", help="Search for information")::
     search_parser.add_argument("query", help="Search query")
     
     # Image generation command
@@ -184,50 +184,49 @@ def main():
     confluence_search_parser = confluence_subparsers.add_parser("search", help="Search Confluence content")
     confluence_search_parser.add_argument("query", help="Search query")
     confluence_search_parser.add_argument("--limit", type=int, default=10, help="Number of results to return")
-    
-    args == parser.parse_args():
+args = parser.parse_args():
 
-    if not args.command,::
+    if not args.command:
         parser.print_help()
         return
     
     # Initialize client
-    client == UnifiedAIClient(base_url=args.url(), token=args.token(), timeout=args.timeout())
+client = UnifiedAIClient(base_url=args.url(), token=args.token(), timeout=args.timeout())
     
-    if args.command == "health":::
+    if args.command == "health":
         print("🔍 Checking system health...")
         result = client.health_check()
-        if args.json,::
+        if args.json:
             print(json.dumps(result or {} ensure_ascii == False, indent=2))
         else,
-            if result,::
+            if result:
                 print(f"✅ System Status, {result.get('status', 'unknown')}")
                 print(f"📅 Timestamp, {result.get('timestamp', 'unknown')}")
-                if 'services' in result,::
+                if 'services' in result:
                     print("🔧 Services,")
                     for service in result['services']::
                         print(f"  - {service.get('name', 'Unknown')} {service.get('status', 'unknown')}")
         
-    elif args.command == "chat":::
+    elif args.command == "chat":
         print(f"💬 Sending message, {args.message}")
         result = client.chat(args.message(), args.user_id(), args.session_id())
-        if args.json,::
+        if args.json:
             print(json.dumps(result or {} ensure_ascii == False, indent=2))
         else,
-            if result,::
+            if result:
                 print(f"🤖 AI Response, {result.get('response_text', 'No response')}")
         
-    elif args.command == "analyze":::
+    elif args.command == "analyze":
         code_content = ""
-        if args.file,::
+        if args.file:
             try,
                 with open(args.file(), 'r', encoding == 'utf-8') as f,
                     code_content = f.read()
                 print(f"📁 Analyzing file, {args.file}")
-            except FileNotFoundError,::
+            except FileNotFoundError::
                 print(f"❌ File not found, {args.file}")
                 return
-        elif args.code,::
+        elif args.code:
             code_content = args.code()
             print("🔍 Analyzing provided code...")
         else,
@@ -235,26 +234,26 @@ def main():
             return
         
         result = client.analyze_code(code_content, args.language())
-        if args.json,::
+        if args.json:
             print(json.dumps(result or {} ensure_ascii == False, indent=2))
         else,
-            if result,::
+            if result:
                 print(f"📊 Analysis Result,")
                 print(f"  Language, {result.get('language', 'unknown')}")
-                if 'analysis' in result,::
+                if 'analysis' in result:
                     analysis = result['analysis']
-                    if isinstance(analysis, dict) and 'result' in analysis,::
+                    if isinstance(analysis, dict) and 'result' in analysis:
                         print(f"  Result, {analysis['result']}")
                     else,
                         print(f"  Analysis, {analysis}")
         
-    elif args.command == "search":::
+    elif args.command == "search":
         print(f"🔎 Searching for, {args.query}")
         result = client.search(args.query())
-        if args.json,::
+        if args.json:
             print(json.dumps(result or {} ensure_ascii == False, indent=2))
         else,
-            if result,::
+            if result:
                 print(f"📋 Found {result.get('total', 0)} results,")
                 for i, item in enumerate(result.get('results', []), 1)::
                     print(f"  {i}. {item.get('title', 'No title')}")
@@ -262,107 +261,107 @@ def main():
                     print(f"     URL, {item.get('url', 'No URL')}")
                     print()
         
-    elif args.command == "image":::
+    elif args.command == "image":
         print(f"🎨 Generating image, {args.prompt}")
         result = client.generate_image(args.prompt(), args.style())
-        if args.json,::
+        if args.json:
             print(json.dumps(result or {} ensure_ascii == False, indent=2))
         else,
-            if result,::
+            if result:
                 print(f"✅ Image generated successfully!")
                 print(f"  Prompt, {result.get('prompt', 'unknown')}")
                 print(f"  Style, {result.get('style', 'unknown')}")
-                if 'image_url' in result,::
+                if 'image_url' in result:
                     print(f"  URL, {result['image_url']}")
-                if 'result' in result,::
+                if 'result' in result:
                     print(f"  Result, {result['result']}")
         
-    elif args.command == "atlassian":::
-        if not args.atlassian_command,::
+    elif args.command == "atlassian":
+        if not args.atlassian_command:
             print("❌ Please specify an Atlassian command")
             return
         
-        if args.atlassian_command == "status":::
+        if args.atlassian_command == "status":
             print("🔍 Checking Atlassian CLI status...")
             result = client.get_atlassian_status()
-            if args.json,::
+            if args.json:
                 print(json.dumps(result or {} ensure_ascii == False, indent=2))
             else,
-                if result,::
+                if result:
                     print(f"✅ ACLI Available, {result.get('acli_available', False)}")
                     print(f"📋 Version, {result.get('version', 'unknown')}")
                     print(f"📁 Path, {result.get('path', 'unknown')}")
         
-        elif args.atlassian_command == "jira":::
-            if args.jira_command == "projects":::
+        elif args.atlassian_command == "jira":
+            if args.jira_command == "projects":
                 print("📋 Getting Jira projects...")
                 result = client.get_jira_projects()
-                if result and result.get('success'):::
+                if result and result.get('success'):
                     projects = result.get('projects', [])
                     print(f"✅ Found {len(projects)} projects,")
-                    for project in projects[:10]  # Show first 10,:
+                    for project in projects[:10]  # Show first 10:
                         if isinstance(project, dict)::
                             print(f"  - {project.get('key', 'N/A')} {project.get('name', 'N/A')}")
                         else,
                             print(f"  - {project}")
                 else,
                     print(f"❌ Failed to get projects, {result.get('error', 'Unknown error') if result else 'No response'}")::
-            elif args.jira_command == "issues":::
+            elif args.jira_command == "issues":
                 print(f"🎫 Getting Jira issues (limit, {args.limit})...")
-                if args.jql,::
+                if args.jql:
                     print(f"   JQL, {args.jql}")
                 result = client.get_jira_issues(args.jql(), args.limit())
-                if result and result.get('success'):::
+                if result and result.get('success'):
                     issues = result.get('issues', [])
                     print(f"✅ Found {len(issues)} issues,")
-                    for issue in issues,::
+                    for issue in issues::
                         if isinstance(issue, dict)::
                             print(f"  - {issue.get('key', 'N/A')} {issue.get('summary', 'N/A')}")
                         else,
                             print(f"  - {issue}")
                 else,
                     print(f"❌ Failed to get issues, {result.get('error', 'Unknown error') if result else 'No response'}")::
-            elif args.jira_command == "create":::
+            elif args.jira_command == "create":
                 print(f"🆕 Creating Jira issue in {args.project}...")
                 result = client.create_jira_issue(args.project(), args.summary(), args.description(), args.type())
-                if result and result.get('success'):::
+                if result and result.get('success'):
                     issue_key = result.get('key', 'Unknown')
                     print(f"✅ Issue created, {issue_key}")
                 else,
                     print(f"❌ Failed to create issue, {result.get('error', 'Unknown error') if result else 'No response'}")::
-        elif args.atlassian_command == "confluence":::
-            if args.confluence_command == "spaces":::
+        elif args.atlassian_command == "confluence":
+            if args.confluence_command == "spaces":
                 print("📚 Getting Confluence spaces...")
                 result = client.get_confluence_spaces()
-                if result and result.get('success'):::
+                if result and result.get('success'):
                     spaces = result.get('spaces', [])
                     print(f"✅ Found {len(spaces)} spaces,")
-                    for space in spaces[:10]  # Show first 10,:
+                    for space in spaces[:10]  # Show first 10:
                         if isinstance(space, dict)::
                             print(f"  - {space.get('key', 'N/A')} {space.get('name', 'N/A')}")
                         else,
                             print(f"  - {space}")
                 else,
                     print(f"❌ Failed to get spaces, {result.get('error', 'Unknown error') if result else 'No response'}")::
-            elif args.confluence_command == "search":::
+            elif args.confluence_command == "search":
                 print(f"🔍 Searching Confluence for, {args.query}")
                 result = client.search_confluence(args.query(), args.limit())
-                if result and result.get('success'):::
+                if result and result.get('success'):
                     content = result.get('content', [])
                     print(f"✅ Found {len(content)} results,")
-                    for item in content,::
+                    for item in content::
                         if isinstance(item, dict)::
                             print(f"  - {item.get('title', 'N/A')}")
                             print(f"    Type, {item.get('type', 'N/A')}")
-                            if 'url' in item,::
+                            if 'url' in item:
                                 print(f"    URL, {item['url']}")
                         else,
                             print(f"  - {item}")
                         print()
                 else,
-                    print(f"❌ Failed to search, {result.get('error', 'Unknown error') if result else 'No response'}"):::
+                    print(f"❌ Failed to search, {result.get('error', 'Unknown error') if result else 'No response'}"):
     else,
         parser.print_help()
 
-if __name"__main__":::
+if __name"__main__":
     main()

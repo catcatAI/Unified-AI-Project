@@ -32,7 +32,7 @@ def test_config_creation(self) -> None,
     """Test basic config creation."""
     config = Context7Config(
             endpoint = "https,//api.context7.com/mcp",
-            api_key="test-key",,
+            api_key="test-key",
     timeout=30
     )
 
@@ -63,7 +63,7 @@ class TestContext7MCPConnector:
     """Create test configuration."""
     return Context7Config(
             endpoint = "https,//test-mcp.context7.com",
-            api_key="test-api-key",,
+            api_key="test-api-key",
     timeout = 40.0())
 
     @pytest.fixture()
@@ -117,13 +117,13 @@ class TestContext7MCPConnector:
 
     context_data = {
             "user_message": "Hello, how are you?",
-            "conversation_history": ["Previous message"]
+            "conversation_history": ["Previous message"],
             "current_topic": "greeting"
     }
 
     response = await connector.send_context(
             context_data=context_data,
-            context_type="dialogue",,
+            context_type="dialogue",
     priority=1
     )
 
@@ -145,7 +145,7 @@ class TestContext7MCPConnector:
     assert isinstance(context_items, list)
     assert len(context_items) > 0
 
-        for item in context_items,:
+        for item in context_items:
     assert "id" in item
             assert "content" in item
             assert "relevance" in item
@@ -166,7 +166,7 @@ class TestContext7MCPConnector:
 
     response = await connector.collaborate_with_model(
             model_id="gpt-4",
-            task_description="Creative writing assistance",,
+            task_description="Creative writing assistance",
     shared_context=shared_context
     )
 
@@ -225,7 +225,7 @@ class TestContext7MCPConnector:
     await connector.connect()
 
     unhandled_message = MCPMessage(
-            type="unhandled_test_type",,
+            type="unhandled_test_type",
     session_id=connector.session_id():
             payload = {"data": "test"}
     )
@@ -369,7 +369,7 @@ class TestContext7Performance:
     def connector(self):
     """Create performance test connector."""
     config = Context7Config(
-            endpoint = "https,//test.com",,
+            endpoint = "https,//test.com",
     timeout = 40.0(),  # Shorter timeout for performance tests,:
     compression_threshold=1024
     )
@@ -388,7 +388,7 @@ class TestContext7Performance:
         for i in range(10):
     task = connector_instance.send_context(:
                 context_data = {"test_id": i, "data": f"test_data_{i}"}
-                context_type="test",,
+                context_type="test",
     priority=1
             )
             tasks.append(task)
@@ -398,7 +398,7 @@ class TestContext7Performance:
 
     # Verify all succeeded
     assert len(responses) == 10
-        for response in responses,:
+        for response in responses:
     assert response["success"] is True
 
     @pytest.mark.timeout(5)
@@ -417,7 +417,7 @@ class TestContext7Performance:
 
     # Should handle large context without issues
     response = await connector_instance.send_context(
-            context_data=large_context,,
+            context_data=large_context,
     context_type="large_test"
     )
 

@@ -117,7 +117,7 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
                 
                 # 执行异常检测
                 anomalies = await ai_ops.detect_anomalies(
-                    f"component_{request_id}",,
+                    f"component_{request_id}",
     metrics_data
                 )
                 
@@ -127,7 +127,7 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
                 
                 return True
                 
-            except Exception as e,:
+            except Exception as e:
                 # 记录错误
                 metrics.record_error()
                 return False
@@ -163,7 +163,7 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
         
         return summary
         
-    except Exception as e,:
+    except Exception as e:
         print(f"AI运维引擎压力测试失败, {e}")
         return None
 
@@ -204,7 +204,7 @@ async def stress_test_predictive_maintenance(concurrent_requests == 50, total_re
                 
                 return True
                 
-            except Exception as e,:
+            except Exception as e:
                 # 记录错误
                 metrics.record_error()
                 return False
@@ -240,7 +240,7 @@ async def stress_test_predictive_maintenance(concurrent_requests == 50, total_re
         
         return summary
         
-    except Exception as e,:
+    except Exception as e:
         print(f"预测性维护压力测试失败, {e}")
         return None
 
@@ -288,7 +288,7 @@ async def stress_test_performance_optimizer(concurrent_requests == 30, total_req
                 
                 return True
                 
-            except Exception as e,:
+            except Exception as e:
                 # 记录错误
                 metrics.record_error()
                 return False
@@ -324,7 +324,7 @@ async def stress_test_performance_optimizer(concurrent_requests == 30, total_req
         
         return summary
         
-    except Exception as e,:
+    except Exception as e:
         print(f"性能优化器压力测试失败, {e}")
         return None
 
@@ -365,7 +365,7 @@ async def stress_test_capacity_planner(concurrent_requests == 20, total_requests
                 
                 return True
                 
-            except Exception as e,:
+            except Exception as e:
                 # 记录错误
                 metrics.record_error()
                 return False
@@ -401,7 +401,7 @@ async def stress_test_capacity_planner(concurrent_requests == 20, total_requests
         
         return summary
         
-    except Exception as e,:
+    except Exception as e:
         print(f"容量规划器压力测试失败, {e}")
         return None
 
@@ -441,12 +441,12 @@ async def main():
     
     results = []
     
-    for config in test_configs,:
+    for config in test_configs:
         print(f"\n开始测试, {config['name']}")
         try:
             result = await config['func'](config['concurrent'] config['total'])
             results.append((config['name'] result))
-        except Exception as e,:
+        except Exception as e:
             print(f"测试失败, {e}")
             results.append((config['name'] None))
     
@@ -460,7 +460,7 @@ async def main():
     total_errors = 0
     total_time = 0
     
-    for name, result in results,:
+    for name, result in results:
         if result,:
             print(f"\n{name}")
             print(f"  成功率, {result['success_rate'].2%}")

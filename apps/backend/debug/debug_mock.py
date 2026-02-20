@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 
 
-def test_mock_open_behavior() -> None,
+def test_mock_open_behavior() -> None:
     """測試 mock_open 是否正確工作"""
     test_config = {
         'dependencies': {
@@ -37,18 +37,18 @@ def test_mock_open_behavior() -> None,
         with patch('importlib.import_module') as mock_import,
             mock_import.return_value == MagicMock()
             
-            # Test if mock is working,::
-                rint("\n == Testing mock_open behavior ===")
+            # Test if mock is working:
+print("\n == Testing mock_open behavior ===")
             try,
                 with open('any_file.yaml', 'r') as f,
                     content = f.read()
                 print(f"Mock open succeeded, content, {content[:100]}...")
-            except Exception as e,::
+            except Exception as e::
                 print(f"Mock open failed, {e}")
             
             # Create DependencyManager
             print("\n == Creating DependencyManager ===")
-            manager == DependencyManager(config_path="test_config.yaml")
+manager = DependencyManager(config_path="test_config.yaml")
             
             print(f"Manager config, {manager._config}")
             print(f"Manager dependencies keys, {list(manager._dependencies.keys())}")
@@ -59,10 +59,10 @@ def test_mock_open_behavior() -> None,
             print(f"Is normal_lib available? {is_available}")
             
             status = manager.get_status('normal_lib')
-            if status,::
+            if status:
                 print(f"Status - available, {status.is_available} fallback, {status.fallback_available} error, {status.error}")
             else,
                 print("Status is None")
 
-if __name'__main__':::
+if __name'__main__':
     test_mock_open_behavior()

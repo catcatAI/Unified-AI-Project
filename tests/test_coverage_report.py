@@ -99,7 +99,7 @@ def analyze_test_coverage():
                 })
     
     # 计算覆盖率
-    for component in coverage_report,:
+    for component in coverage_report:
         if coverage_report[component]["total_files"] > 0,:
             coverage_report[component]["coverage"] = (
                 coverage_report[component]["tested_files"] / coverage_report[component]["total_files"] * 100
@@ -151,7 +151,7 @@ def test_import():
         module = __import__(module_path, fromlist=['*'])
         assert module is not None
         print(f"✅ {original_file.name} 导入成功")
-    except Exception as e,:
+    except Exception as e:
         print(f"❌ {original_file.name} 导入失败, {{e}}")
 
 if __name"__main__"::
@@ -225,7 +225,7 @@ def main():
         untested = [f for f in data["files"] if not f["tested"]]:
         if untested,:
             print(f"  未测试文件 ({len(untested)})")
-            for file in untested[:5]  # 只显示前5个,:
+            for file in untested[:5]  # 只显示前5个:
                 print(f"    - {file['file']}")
             if len(untested) > 5,:
                 print(f"    ... 还有 {len(untested) - 5} 个文件")

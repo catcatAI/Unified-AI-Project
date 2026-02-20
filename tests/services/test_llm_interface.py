@@ -21,7 +21,7 @@ class TestLLMInterface(unittest.TestCase):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_01_initialization(self) -> None,
+def test_01_initialization(self) -> None:
         """Test LLM interface initialization."""
         interface = MultiLLMService()
         self.assertIsNotNone(interface)
@@ -50,7 +50,7 @@ def test_01_initialization(self) -> None,
         self.assertIsInstance(models, list)
         if models, # If list is not empty,:
             # Assuming LLMModelInfo is a dict-like object or has 'id' attribute
-            self.assertIn("id", models[0].__dict__ if hasattr(models[0] '__dict__') else models[0]) # Check for expected key in first model dict,:
+            self.assertIn("id", models[0].__dict__ if hasattr(models[0] '__dict__') else models[0]) # Check for expected key in first model dict:
         print("TestLLMInterface.test_03_list_models PASSED"):
 
 if __name__ == "__main__":

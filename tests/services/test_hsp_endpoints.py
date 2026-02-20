@@ -12,7 +12,7 @@ from core_services import get_services as real_get_services
 
 
 class FakeDialogueManager:
-    def __init__(self) -> None,
+    def __init__(self) -> None:
         self.pending_hsp_task_requests = {}
 
 

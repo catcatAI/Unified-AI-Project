@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import logging
 logger = logging.getLogger(__name__)
 
-# Core dependencies - essential for basic functionality,::
+# Core dependencies - essential for basic functionality
 core_requirements = [
     "Flask",
     "numpy",
@@ -16,33 +16,33 @@ core_requirements = [
     "psutil",
 ]
 
-# Optional dependencies for enhanced features,::
+# Optional dependencies for enhanced features
 optional_requirements = {
     "ai": [
         "tensorflow>=2.15.0",
         "spacy>=3.4.0",
         "langchain",
-    ]
+    ],
     "web": [
         "fastapi",
         "uvicorn[standard]",
         "pydantic",
         "httpx",
-    ]
+    ],
     "testing": [
         "pytest-asyncio",
         "pytest>=6.0",
-    ]
+    ],
     "nlp": [
         "spacy>=3.4.0",
         "nltk",
         "textblob",
-    ]
+    ],
     "ml": [
         "tensorflow>=2.15.0",
         "scikit-learn",
         "pandas",
-    ]
+    ],
     "dev": [
         "black",
         "flake8",
@@ -67,22 +67,22 @@ optional_requirements["minimal"] = []  # Only core requirements
 
 setup(
     name="unified-ai-project",
-    version="0.1.0",,
+    version="0.1.0",
     packages=find_packages(),
     install_requires=core_requirements,
     extras_require=optional_requirements,
     python_requires=">=3.8",
     author="Unified AI Project Team",
-    description == "A unified AI project with modular dependencies",:
-        ong_description=open("README.md").read(),
+    description="A unified AI project with modular dependencies",
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     classifiers=[
-        "Development Status, 3 - Alpha",
-        "Intended Audience, Developers",
-        "License, OSI Approved, MIT License",
-        "Programming Language, Python, 3",
-        "Programming Language, Python, 3.8",
-        "Programming Language, Python, 3.9",
-        "Programming Language, Python, 3.10",
-        "Programming Language, Python, 3.11",
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ])

@@ -117,10 +117,10 @@ def test_model_training_integration(self) -> None,
         
         training_samples = [
             self.data_factory.create_training_data(
-                input_data=f"User input {i}",,
+                input_data=f"User input {i}",
     expected_output=f"Expected response {i}"
             )
-            for i in range(150)  # 超过触发阈值,:
+            for i in range(150)  # 超过触发阈值:
         ]
         
         # 获取mock服务
@@ -214,7 +214,7 @@ def test_model_training_integration(self) -> None,
         # 执行协作式训练测试
         # 1. 创建训练代理
         created_agents = []
-        for config in agent_configs,:
+        for config in agent_configs:
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
     config["agent_type"]
@@ -364,28 +364,28 @@ class TestTrainingDataManagementIntegration(SystemIntegrationTest):
                     input_data=sample["user_input"],
     expected_output=sample["system_response"]
                 )
-                for sample in raw_data_samples,:
+                for sample in raw_data_samples:
             ]
         )
         learning_manager.return_value.filter_training_data == AsyncMock(
             return_value = {:
                 "filtered_data": [
                     self.data_factory.create_training_data(
-                        input_data=f"Filtered input {i}",,
+                        input_data=f"Filtered input {i}",
     expected_output=f"Filtered output {i}"
                     )
-                    for i in range(15)  # 过滤后剩余15个样本,:
-                ]
+                    for i in range(15)  # 过滤后剩余15个样本:
+                ],
                 "filtered_count": 5
             }
         )
         learning_manager.return_value.augment_training_data == AsyncMock(
             return_value=[
                 self.data_factory.create_training_data(
-                    input_data=f"Augmented input {i}",,
+                    input_data=f"Augmented input {i}",
     expected_output=f"Augmented output {i}"
                 )
-                for i in range(30)  # 数据增强后30个样本,:
+                for i in range(30)  # 数据增强后30个样本:
             ]
         )
         

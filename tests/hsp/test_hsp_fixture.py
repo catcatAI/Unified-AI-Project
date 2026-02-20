@@ -58,7 +58,7 @@ def test_fixture() -> None:
             mock_mode = True,
             mock_mqtt_client=mock_broker,
             internal_bus=ib,
-            message_bridge = None,,
+            message_bridge = None,
     enable_fallback = False
         )
         

@@ -49,7 +49,7 @@ class CodeAnalyzer:
         self.functions, Dict[str, Dict[str, Any]] = {}
         self.classes, Dict[str, Dict[str, Any]] = {}
 
-    def analyze_file(self, file_path, str) -> Dict[str, Any]
+    def analyze_file(self, file_path, str) -> Dict[str, Any],
         """分析Python文件"""
         try:
             with open(file_path, 'r', encoding == 'utf-8') as f,
@@ -67,11 +67,11 @@ class CodeAnalyzer:
                 "functions": functions,
                 "classes": classes
             }
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Failed to analyze file {file_path} {e}")
             return {}
 
-    def _extract_functions(self, tree, ast.AST()) -> Dict[str, Dict[str, Any]]
+    def _extract_functions(self, tree, ast.AST()) -> Dict[str, Dict[str, Any]],
         """提取函数信息"""
         functions = {}
 
@@ -88,7 +88,7 @@ class CodeAnalyzer:
 
         return functions
 
-    def _extract_classes(self, tree, ast.AST()) -> Dict[str, Dict[str, Any]]
+    def _extract_classes(self, tree, ast.AST()) -> Dict[str, Dict[str, Any]],
         """提取类信息"""
         classes = {}
 
@@ -105,7 +105,7 @@ class CodeAnalyzer:
         return classes
 
     def _extract_parameters(,
-    self, func_node, ast.FunctionDef()) -> List[Dict[str, Any]]
+    self, func_node, ast.FunctionDef()) -> List[Dict[str, Any]],
         """提取函数参数"""
         parameters = []
 
@@ -163,7 +163,7 @@ class CodeAnalyzer:
                     return f"{base}[{getattr(annotation.slice(), 'id', 'Any')}]"
                 elif isinstance(annotation.slice(), ast.Tuple()):
                     slice_items = []
-                    for elt in annotation.slice.elts,:
+                    for elt in annotation.slice.elts:
                         if isinstance(elt, ast.Name()):
                             # 修复, 确保ast.Name节点有id属性()
                             slice_items.append(getattr(elt, 'id', 'Any'))
@@ -190,7 +190,7 @@ class CodeAnalyzer:
             return default_node.s()
         elif isinstance(default_node, ast.List()):
             result = []
-            for elt in default_node.elts,:
+            for elt in default_node.elts:
                 result.append(self._extract_default_value(elt))
             return result
         elif isinstance(default_node, ast.Dict()):
@@ -241,19 +241,19 @@ class TestPatternAnalyzer:
 
     def __init__(self) -> None,
         self.common_patterns = {
-            "validation": ["validate", "check", "verify", "assert"]
-            "calculation": ["calculate", "compute", "sum", "average", "total"]
-            "data_processing": ["process", "transform", "convert", "parse", "format"]
-            "file_operations": ["read", "write", "save", "load", "open", "close"]
-            "network_operations": ["send", "receive", "connect", "disconnect", "fetch"]
-            "error_handling": ["handle", "catch", "raise", "throw"]
-            "database_operations": ["query", "insert", "update", "delete", "find"]
-            "authentication": ["login", "logout", "authenticate", "authorize"]
+            "validation": ["validate", "check", "verify", "assert"],
+            "calculation": ["calculate", "compute", "sum", "average", "total"],
+            "data_processing": ["process", "transform", "convert", "parse", "format"],
+            "file_operations": ["read", "write", "save", "load", "open", "close"],
+            "network_operations": ["send", "receive", "connect", "disconnect", "fetch"],
+            "error_handling": ["handle", "catch", "raise", "throw"],
+            "database_operations": ["query", "insert", "update", "delete", "find"],
+            "authentication": ["login", "logout", "authenticate", "authorize"],
             "encryption": ["encrypt", "decrypt", "hash", "sign"]
         }
 
     def identify_function_patterns(,
-    self, function_info, Dict[str, Any]) -> List[str]
+    self, function_info, Dict[str, Any]) -> List[str],
         """识别函数模式"""
         patterns = []
         func_name = function_info["name"].lower()
@@ -286,7 +286,7 @@ class IntelligentTestGenerator:
         self.pattern_analyzer = TestPatternAnalyzer()
         self.generated_tests, List[TestCase] = []
 
-    def generate_tests_for_file(self, file_path, str) -> List[TestCase]
+    def generate_tests_for_file(self, file_path, str) -> List[TestCase],
         """为文件生成测试用例"""
         try:
             # 分析代码
@@ -313,12 +313,12 @@ class IntelligentTestGenerator:
 
             logger.info(f"Generated {len(test_cases)} test cases for {file_path}")::
                 eturn test_cases
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Failed to generate tests for {file_path} {e}")::
                 eturn[]
 
     def _generate_function_tests(,
-    self, func_info, Dict[str, Any] analysis_result, Dict[str, Any]) -> List[TestCase]
+    self, func_info, Dict[str, Any] analysis_result, Dict[str, Any]) -> List[TestCase],
         """为函数生成测试用例"""
         test_cases = []
         func_name = func_info["name"]
@@ -332,7 +332,7 @@ class IntelligentTestGenerator:
             test_cases.append(basic_test)
 
         # 根据模式生成特定测试
-        for pattern in patterns,:
+        for pattern in patterns:
             pattern_tests = self._create_pattern_specific_tests(,
     func_info, pattern)
             test_cases.extend(pattern_tests)
@@ -348,14 +348,14 @@ class IntelligentTestGenerator:
         return test_cases
 
     def _create_basic_function_test(,
-    self, func_info, Dict[str, Any]) -> Optional[TestCase]
+    self, func_info, Dict[str, Any]) -> Optional[TestCase],
         """创建基本功能测试"""
         func_name = func_info["name"]
         parameters = func_info.get("parameters", [])
 
         # 创建测试参数
         test_params = []
-        for param in parameters,:
+        for param in parameters:
             test_param = TestParameter(
                 name=param["name"],
     type_hint=param.get("type_annotation", "Any"),
@@ -377,7 +377,7 @@ class IntelligentTestGenerator:
         return test_case
 
     def _create_pattern_specific_tests(,
-    self, func_info, Dict[str, Any] pattern, str) -> List[TestCase]
+    self, func_info, Dict[str, Any] pattern, str) -> List[TestCase],
         """创建模式特定测试"""
         test_cases = []
         func_name=func_info["name"]
@@ -390,7 +390,7 @@ class IntelligentTestGenerator:
     est_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
-                expected_behavior = f"Function {func_name} raises appropriate exception for invalid input",::
+                expected_behavior = f"Function {func_name} raises appropriate exception for invalid input":
                     riority=4
             )
             test_cases.append(invalid_test)
@@ -412,7 +412,7 @@ class IntelligentTestGenerator:
             # 文件操作测试
             file_not_found_test = TestCase(
                 name=f"test_{func_name}_file_not_found",
-                description=f"Test {func_name} when file does not exist",,
+                description=f"Test {func_name} when file does not exist",
     test_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
@@ -424,7 +424,7 @@ class IntelligentTestGenerator:
         return test_cases
 
     def _create_boundary_tests(,
-    self, func_info, Dict[str, Any]) -> List[TestCase]
+    self, func_info, Dict[str, Any]) -> List[TestCase],
         """创建边界条件测试"""
         test_cases = []
         func_name=func_info["name"]
@@ -446,7 +446,7 @@ class IntelligentTestGenerator:
         return test_cases
 
     def _create_error_handling_tests(,
-    self, func_info, Dict[str, Any]) -> List[TestCase]
+    self, func_info, Dict[str, Any]) -> List[TestCase],
         """创建错误处理测试"""
         test_cases = []
         func_name=func_info["name"]
@@ -454,7 +454,7 @@ class IntelligentTestGenerator:
         # 通用错误处理测试
         error_test = TestCase(
                 name=f"test_{func_name}_error_handling",
-                description=f"Test error handling in {func_name}",,
+                description=f"Test error handling in {func_name}",
     test_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
@@ -466,7 +466,7 @@ class IntelligentTestGenerator:
         return test_cases
 
     def _generate_class_tests(,
-    self, class_info, Dict[str, Any] analysis_result, Dict[str, Any]) -> List[TestCase]
+    self, class_info, Dict[str, Any] analysis_result, Dict[str, Any]) -> List[TestCase],
         """为类生成测试用例"""
         test_cases = []
         class_name=class_info["name"]
@@ -476,7 +476,7 @@ class IntelligentTestGenerator:
             method_test_cases=self._generate_function_tests(,
     method_info, analysis_result)
             # 为类方法测试添加类前缀
-            for test_case in method_test_cases,:
+            for test_case in method_test_cases:
                 test_case.name=f"test_{class_name}_{method_name}" +
                     test_case.name[len(f"test_{method_name}"):]
             test_cases.extend(method_test_cases)
@@ -506,12 +506,12 @@ def {test_case.name}() -> None,
             return test_code.strip():
                 ""
             return test_code.strip()
-        except Exception as e,:
+        except Exception as e:
             logger.error(,
     f"Failed to generate test code for {test_case.name} {e}"):
             return f"# Failed to generate test code for {test_case.name}":
     def get_generated_tests(:,
-    self, limit, Optional[int] = None) -> List[TestCase]
+    self, limit, Optional[int] = None) -> List[TestCase],
         """获取生成的测试用例"""
         if limit,:
             return self.generated_tests[-limit,]
@@ -522,17 +522,18 @@ def {test_case.name}() -> None,
             with open(output_file, 'w', encoding == 'utf-8') as f,
                 f.write("# Auto-generated test cases\n\n")
                 
-                for test_case in self.generated_tests,:
+                for test_case in self.generated_tests:
                     f.write(f"# {test_case.name}\n")
                     f.write(f"# Description, {test_case.description}\n")
                     f.write(f"# Type, {test_case.test_type.value}\n")
                     f.write(f"# Function, {test_case.function_name}\n")
+"""
                     f.write(f"# Priority, {test_case.priority}\n")
                     f.write(f"{self.generate_test_code(test_case)}\n\n")
                     
             logger.info(f"Saved {len(self.generated_tests())} test cases to {output_file}")
             return True
-        except Exception as e,:
+        except Exception as e:
             logger.error(f"Failed to save test cases to {output_file} {e}")
             return False
 

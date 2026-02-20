@@ -28,7 +28,7 @@ async def hsp_connector_fixture(mock_broker):
     ai_id="test_ai_enhanced",
     broker_address="localhost",
     broker_port=1883,
-    mock_mode = True,,
+    mock_mode = True,
     mock_mqtt_client=mock_broker
     )
     await connector.connect()
@@ -66,7 +66,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     # Send a large number of messages quickly to test queue handling
     tasks = []
-        for i in range(50)  # Send 50 messages,:
+        for i in range(50)  # Send 50 messages:
             # Create a proper HSP fact payload with message envelope,
     payload = {:
                 "id": f"fact_{i}",
@@ -93,7 +93,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
             }
 
             task = mock_broker.publish(
-                "hsp/knowledge/facts/test",,
+                "hsp/knowledge/facts/test",
     json.dumps(envelope).encode('utf-8')
             )
             tasks.append(task)
@@ -174,7 +174,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     }
 
     await mock_broker.publish(
-            "hsp/knowledge/facts/test",,
+            "hsp/knowledge/facts/test",
     json.dumps(envelope).encode('utf-8')
     )
 
@@ -235,7 +235,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
             }
 
             task = mock_broker.publish(
-                "hsp/knowledge/facts/test",,
+                "hsp/knowledge/facts/test",
     json.dumps(envelope).encode('utf-8')
             )
             tasks.append(task)
@@ -269,7 +269,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
             }
 
             task = mock_broker.publish(
-                "hsp/knowledge/opinions/test",,
+                "hsp/knowledge/opinions/test",
     json.dumps(envelope).encode('utf-8')
             )
             tasks.append(task)
@@ -325,7 +325,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
             message_ids.append(f"ordered_fact_{i}")
             await mock_broker.publish(
-                "hsp/knowledge/facts/test",,
+                "hsp/knowledge/facts/test",
     json.dumps(envelope).encode('utf-8')
             )
             await asyncio.sleep(0.1))  # Small delay between messages
@@ -359,7 +359,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     # Send a malformed message
     malformed_payload = b'{"invalid": json}'  # Invalid JSON
     await mock_broker.publish(
-            "hsp/knowledge/facts/test",,
+            "hsp/knowledge/facts/test",
     malformed_payload
     )
 
@@ -390,7 +390,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     }
 
     await mock_broker.publish(
-            "hsp/knowledge/facts/test",,
+            "hsp/knowledge/facts/test",
     json.dumps(envelope).encode('utf-8')
     )
 

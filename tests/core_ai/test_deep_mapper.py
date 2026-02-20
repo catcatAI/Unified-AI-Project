@@ -24,7 +24,7 @@ def test_map(self) -> None:
             "nodes": [
                 {"id": "p1", "type": "person", "name": "Alice"}
                 {"id": "l1", "type": "place", "name": "Park"}
-            ]
+            ],
             "edges": [
                 {"source": "p1", "target": "l1", "type": "located_in"}
             ]
@@ -53,7 +53,7 @@ def test_map(self) -> None:
             "nodes": [
                 {"id": "p1", "type": "character", "name": "Alice"}
                 {"id": "l1", "type": "location", "name": "Park"}
-            ]
+            ],
             "edges": [
                 {"source": "p1", "target": "l1", "type": "is_at"}
             ]
@@ -66,7 +66,7 @@ def test_map(self) -> None:
             "nodes": [
                 {"id": "p1", "type": "character", "name": "Alice"}
                 {"id": "l1", "type": "location", "name": "Park"}
-            ]
+            ],
             "edges": [
                 {"source": "p1", "target": "l1", "type": "is_at"}
             ]
@@ -95,7 +95,7 @@ def test_map(self) -> None:
             "nodes": [
                 {"id": "p1", "type": "person", "name": "Alice"}
                 {"id": "l1", "type": "place", "name": "Park"}
-            ]
+            ],
             "edges": [
                 {"source": "p1", "target": "l1", "type": "located_in"}
             ]

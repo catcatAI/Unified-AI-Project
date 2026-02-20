@@ -1,0 +1,1388 @@
+{
+  "apps\\backend\\simple_verify.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 7)",
+    "line": 7,
+    "offset": 64,
+    "text": "    \"\"\"Verify the logic for test_05_prep_object_relationship\"\"\":::\n"
+  },
+  "apps\\backend\\start_chroma_server.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 33)",
+    "line": 33,
+    "offset": 46,
+    "text": "    except subprocess.CalledProcessError as e,::\n"
+  },
+  "apps\\backend\\chromadb_local\\config.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 2)",
+    "line": 2,
+    "offset": 21,
+    "text": "class ChromaDBConfig,\n"
+  },
+  "apps\\backend\\chromadb_local\\__init__.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 10)",
+    "line": 10,
+    "offset": 18,
+    "text": "class _Collection,\n"
+  },
+  "apps\\backend\\debug\\debug_based_in.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 22)",
+    "line": 22,
+    "offset": 8,
+    "text": "        oc == analyzer.nlp(text) if analyzer.nlp else None:\n"
+  },
+  "apps\\backend\\debug\\debug_content_analyzer.py": {
+    "type": "SyntaxError",
+    "message": "unterminated triple-quoted string literal (detected at line 78) (<unknown>, line 2)",
+    "line": 2,
+    "offset": 1,
+    "text": "\"\"\""
+  },
+  "apps\\backend\\debug\\debug_content_analyzer_detailed.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 20)",
+    "line": 20,
+    "offset": 8,
+    "text": "        oc = analyzer.nlp(text)\n"
+  },
+  "apps\\backend\\debug\\debug_content_analyzer_issues.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 31)",
+    "line": 31,
+    "offset": 56,
+    "text": "    for i, rel in enumerate(kg_data1[\"relationships\"])::\n"
+  },
+  "apps\\backend\\debug\\debug_detailed.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 36,
+    "text": "    for i, token in enumerate(doc)::\n"
+  },
+  "apps\\backend\\debug\\debug_detailed_analysis.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 36,
+    "text": "    for i, token in enumerate(doc)::\n"
+  },
+  "apps\\backend\\debug\\debug_matcher.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 36,
+    "text": "    for i, token in enumerate(doc)::\n"
+  },
+  "apps\\backend\\debug\\debug_matcher_patterns.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 23)",
+    "line": 23,
+    "offset": 8,
+    "text": "        oc == analyzer.nlp(text) if analyzer.nlp else None:\n"
+  },
+  "apps\\backend\\debug\\debug_mock.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 20)",
+    "line": 20,
+    "offset": 53,
+    "text": "                {'name': 'normal_lib', 'fallbacks': ['normal_fallback'] 'essential': False}\n"
+  },
+  "apps\\backend\\debug\\debug_mock_v2.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 17)",
+    "line": 17,
+    "offset": 53,
+    "text": "                {'name': 'normal_lib', 'fallbacks': ['normal_fallback'] 'essential': False}\n"
+  },
+  "apps\\backend\\debug\\debug_person_title.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 52)",
+    "line": 52,
+    "offset": 94,
+    "text": "                rel[\"source_id\"] == steve_jobs_node_id and rel[\"target_id\"] == apple_node_id))"
+  },
+  "apps\\backend\\debug\\debug_person_title_pattern.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 18)",
+    "line": 18,
+    "offset": 8,
+    "text": "        print(\"Matcher patterns,\")\n"
+  },
+  "apps\\backend\\debug\\debug_relationships.py": {
+    "type": "SyntaxError",
+    "message": "unterminated triple-quoted string literal (detected at line 96) (<unknown>, line 76)",
+    "line": 76,
+    "offset": 54,
+    "text": "    \"\"\"Test the 'John Doe works for Acme Corp.' case.\"\"\":"
+  },
+  "apps\\backend\\debug\\debug_relationships_v2.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 31)",
+    "line": 31,
+    "offset": 56,
+    "text": "    for i, rel in enumerate(kg_data1[\"relationships\"])::\n"
+  },
+  "apps\\backend\\debug\\debug_relationship_extraction.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 31)",
+    "line": 31,
+    "offset": 56,
+    "text": "    for i, rel in enumerate(kg_data1[\"relationships\"])::\n"
+  },
+  "apps\\backend\\debug\\debug_simple.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 31)",
+    "line": 31,
+    "offset": 56,
+    "text": "    for i, rel in enumerate(kg_data1[\"relationships\"])::\n"
+  },
+  "apps\\backend\\debug\\debug_spacy.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 23)",
+    "line": 23,
+    "offset": 36,
+    "text": "    for i, token in enumerate(doc)::\n"
+  },
+  "apps\\backend\\debug\\detailed_debug.py": {
+    "type": "SyntaxError",
+    "message": "'[' was never closed (<unknown>, line 16)",
+    "line": 16,
+    "offset": 18,
+    "text": "    test_cases = ["
+  },
+  "apps\\backend\\debug\\diagnose_components.py": {
+    "type": "SyntaxError",
+    "message": "closing parenthesis '}' does not match opening parenthesis '(' on line 105 (<unknown>, line 108)",
+    "line": 108,
+    "offset": 33,
+    "text": "                    'test': True}"
+  },
+  "apps\\backend\\scripts\\analyze_failures.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 6)",
+    "line": 6,
+    "offset": 74,
+    "text": "    with open('latest_test_results.json', 'r', encoding == 'utf-8') as f,\n"
+  },
+  "apps\\backend\\scripts\\cleanup_backup_dirs.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 23)",
+    "line": 23,
+    "offset": 12,
+    "text": "        try,\n"
+  },
+  "apps\\backend\\scripts\\clean_old_backups.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 12)",
+    "line": 12,
+    "offset": 48,
+    "text": "def clean_old_backups(backup_dir, days_to_keep == 30):\n"
+  },
+  "apps\\backend\\scripts\\coverage_analyzer.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 18)",
+    "line": 18,
+    "offset": 21,
+    "text": "logging.basicConfig(,\n"
+  },
+  "apps\\backend\\scripts\\coverage_monitor.py": {
+    "type": "SyntaxError",
+    "message": "unterminated string literal (detected at line 347) (<unknown>, line 347)",
+    "line": 347,
+    "offset": 32,
+    "text": "                        average\": sum(line_rates) / len(line_rates) if line_rates else 0:"
+  },
+  "apps\\backend\\scripts\\execute_smart_fix.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 23)",
+    "line": 23,
+    "offset": 23,
+    "text": "class SmartFixExecutor,\n"
+  },
+  "apps\\backend\\scripts\\final_import_fix.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 25)",
+    "line": 25,
+    "offset": 35,
+    "text": "    if src_dir_str not in sys.path,::\n"
+  },
+  "apps\\backend\\scripts\\final_validation.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 20)",
+    "line": 20,
+    "offset": 36,
+    "text": "    if str(SRC_DIR) not in sys.path,::\n"
+  },
+  "apps\\backend\\scripts\\fix_import_paths.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 15)",
+    "line": 15,
+    "offset": 8,
+    "text": "    try,\n"
+  },
+  "apps\\backend\\scripts\\integration_fixer.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 23,
+    "text": "class IntegrationFixer,\n"
+  },
+  "apps\\backend\\scripts\\manage_backup_dirs.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 14)",
+    "line": 14,
+    "offset": 21,
+    "text": "logging.basicConfig(,\n"
+  },
+  "apps\\backend\\scripts\\performance_benchmark_framework.py": {
+    "type": "SyntaxError",
+    "message": "unterminated string literal (detected at line 234) (<unknown>, line 234)",
+    "line": 234,
+    "offset": 21,
+    "text": "                tags\": tags or []"
+  },
+  "apps\\backend\\scripts\\performance_benchmark_workflow.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 15)",
+    "line": 15,
+    "offset": 21,
+    "text": "logging.basicConfig(,\n"
+  },
+  "apps\\backend\\scripts\\performance_regression_detector.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 17)",
+    "line": 17,
+    "offset": 21,
+    "text": "logging.basicConfig(,\n"
+  },
+  "apps\\backend\\scripts\\smart_dev_runner.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 31)",
+    "line": 31,
+    "offset": 36,
+    "text": "    if str(SRC_DIR) not in sys.path,::\n"
+  },
+  "apps\\backend\\scripts\\smart_executor.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 23)",
+    "line": 23,
+    "offset": 36,
+    "text": "    if str(SRC_DIR) not in sys.path,::\n"
+  },
+  "apps\\backend\\tools\\check\\check_ham_methods.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 9)",
+    "line": 9,
+    "offset": 107,
+    "text": "methods == [name for name, method in inspect.getmembers(HAMMemoryManager, predicate=inspect.isfunction())]::\n"
+  },
+  "apps\\backend\\tools\\check\\check_matcher_patterns.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 18)",
+    "line": 18,
+    "offset": 8,
+    "text": "        f analyzer.nlp is None,\n"
+  },
+  "apps\\backend\\tools\\check\\check_patterns.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 18)",
+    "line": 18,
+    "offset": 8,
+    "text": "        f analyzer.nlp is None,\n"
+  },
+  "apps\\backend\\tools\\check\\check_person_title.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 31)",
+    "line": 31,
+    "offset": 36,
+    "text": "    for i, token in enumerate(doc)::\n"
+  },
+  "apps\\backend\\tools\\check\\check_person_title_v2.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 17)",
+    "line": 17,
+    "offset": 32,
+    "text": "for i, token in enumerate(doc)::\n"
+  },
+  "apps\\backend\\tools\\check\\find_underscore_assign.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 6)",
+    "line": 6,
+    "offset": 111,
+    "text": "with open(r'D,\\Projects\\Unified-AI-Project\\apps\\backend\\src\\hsp\\connector.py', 'r', encoding == 'utf-8') as f,\n"
+  },
+  "apps\\backend\\tools\\check\\scan_placeholders.py": {
+    "type": "SyntaxError",
+    "message": "unterminated triple-quoted string literal (detected at line 134) (<unknown>, line 107)",
+    "line": 107,
+    "offset": 41,
+    "text": "    \"\"\"Main function to run the scanner.\"\"\""
+  },
+  "apps\\backend\\tools\\fix\\fix_hsp_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 21)",
+    "line": 21,
+    "offset": 66,
+    "text": "        with open(connector_path, 'r', encoding == 'utf-8') as f,\n"
+  },
+  "apps\\backend\\tools\\fix\\fix_import_path.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 19)",
+    "line": 19,
+    "offset": 9,
+    "text": "    else,\n"
+  },
+  "packages\\cli\\cli_runner.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 26)",
+    "line": 26,
+    "offset": 28,
+    "text": "    except ImportError as e,::\n"
+  },
+  "packages\\cli\\__init__.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 2)",
+    "line": 2,
+    "offset": 11,
+    "text": "__version_'1.1.0'\n"
+  },
+  "packages\\cli\\cli\\ai_models_cli.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 26)",
+    "line": 26,
+    "offset": 21,
+    "text": "logging.basicConfig(,\n"
+  },
+  "packages\\cli\\cli\\client.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 8)",
+    "line": 8,
+    "offset": 22,
+    "text": "class UnifiedAIClient,\n"
+  },
+  "packages\\cli\\cli\\error_handler.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 18)",
+    "line": 18,
+    "offset": 22,
+    "text": "class CLIErrorHandler,\n"
+  },
+  "packages\\cli\\cli\\main.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 38)",
+    "line": 38,
+    "offset": 24,
+    "text": "except ImportError as e,::\n"
+  },
+  "packages\\cli\\cli\\port_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 18,
+    "text": "class PortManager,\n"
+  },
+  "packages\\cli\\cli\\unified_cli.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 19,
+    "text": "except ImportError,::\n"
+  },
+  "tests\\automated_integration_test_pipeline.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 30)",
+    "line": 30,
+    "offset": 42,
+    "text": "    def __init__(self, project_root, str == None) -> None:\n"
+  },
+  "tests\\check_test_results.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 6)",
+    "line": 6,
+    "offset": 63,
+    "text": "with open('test_results.json', 'r', encoding == 'utf-8') as f,\n"
+  },
+  "tests\\continuous_test_improvement.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 21,
+    "text": "logging.basicConfig(,\n"
+  },
+  "tests\\deadlock_detector.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after class definition on line 28 (<unknown>, line 29)",
+    "line": 29,
+    "offset": 1,
+    "text": "\"\"檢測類型\"\"\"\n"
+  },
+  "tests\\enable_commented_tests.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 23)",
+    "line": 23,
+    "offset": 44,
+    "text": "    def find_test_files(self) -> List[Path],\n"
+  },
+  "tests\\enterprise_test_suite.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 28)",
+    "line": 28,
+    "offset": 24,
+    "text": "            \"backend\": {\"passed\": 0, \"total\": 0, \"coverage\": 0.0}"
+  },
+  "tests\\final_comprehensive_test.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 23)",
+    "line": 23,
+    "offset": 26,
+    "text": "    except Exception as e,:\n"
+  },
+  "tests\\final_test.py": {
+    "type": "SyntaxError",
+    "message": "closing parenthesis ')' does not match opening parenthesis '[' on line 18 (<unknown>, line 22)",
+    "line": 22,
+    "offset": 75,
+    "text": "            \"Steve Jobs was a founder of Apple.\", \"PERSON_IS_TITLE_OF_ORG\"):"
+  },
+  "tests\\generate_test_report.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 21,
+    "text": "logging.basicConfig(,\n"
+  },
+  "tests\\integration_test.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 24)",
+    "line": 24,
+    "offset": 64,
+    "text": "    async def test_environment_causal_integration(self) -> None,\n"
+  },
+  "tests\\intelligent_test_generator.py": {
+    "type": "SyntaxError",
+    "message": "unterminated triple-quoted string literal (detected at line 551) (<unknown>, line 520)",
+    "line": 520,
+    "offset": 24,
+    "text": "        \"\"\"保存生成的测试用例到文件\"\"\""
+  },
+  "tests\\maintain_test_suite.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 22 (<unknown>, line 23)",
+    "line": 23,
+    "offset": 5,
+    "text": "    self.project_root = Path(project_root)\n"
+  },
+  "tests\\optimize_test_suite.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 27)",
+    "line": 27,
+    "offset": 44,
+    "text": "    def find_test_files(self) -> List[Path],\n"
+  },
+  "tests\\process_test_results.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 27)",
+    "line": 27,
+    "offset": 48,
+    "text": "                        baseline_file, Optional[str] = None,\n"
+  },
+  "tests\\project_function_test_mapping.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 27)",
+    "line": 27,
+    "offset": 46,
+    "text": "    def find_source_files(self) -> List[Path],\n"
+  },
+  "tests\\quick_test_concept_models.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 30)",
+    "line": 30,
+    "offset": 26,
+    "text": "    except Exception as e,:\n"
+  },
+  "tests\\run_fixed_tests.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 29)",
+    "line": 29,
+    "offset": 26,
+    "text": "    except Exception as e,:\n"
+  },
+  "tests\\run_hsp_test.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 13)",
+    "line": 13,
+    "offset": 10,
+    "text": "if __name\"__main__\"::\n"
+  },
+  "tests\\run_integration_tests.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 19)",
+    "line": 19,
+    "offset": 30,
+    "text": "def run_command(command, cwd == None, capture_output == True):\n"
+  },
+  "tests\\run_tests_with_compat.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 33)",
+    "line": 33,
+    "offset": 28,
+    "text": "    except ImportError as e,:\n"
+  },
+  "tests\\run_test_direct.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 13)",
+    "line": 13,
+    "offset": 10,
+    "text": "if __name\"__main__\"::\n"
+  },
+  "tests\\run_test_fix.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 43)",
+    "line": 43,
+    "offset": 20,
+    "text": "    assert hasattr(mock_services[\"dialogue_manager\"] \"get_simple_response\")\n"
+  },
+  "tests\\run_verification_test.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 18)",
+    "line": 18,
+    "offset": 10,
+    "text": "if __name\"__main__\"::\n"
+  },
+  "tests\\smart_test_runner.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 21 (<unknown>, line 24)",
+    "line": 24,
+    "offset": 1,
+    "text": "\"\"设置环境\"\"\"\n"
+  },
+  "tests\\test_agi_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 47)",
+    "line": 47,
+    "offset": 36,
+    "text": "                'components_used': ['reasoning_engine', 'memory_manager']"
+  },
+  "tests\\test_alpha_upgrade.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 49)",
+    "line": 49,
+    "offset": 37,
+    "text": "            modalities = Modalities(,\n"
+  },
+  "tests\\test_apple_inc.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 47)",
+    "line": 47,
+    "offset": 70,
+    "text": "        for entity_id, entity_details in kg_data[\"entities\"].items()::\n"
+  },
+  "tests\\test_atlassian_integration.py": {
+    "type": "SyntaxError",
+    "message": "unterminated triple-quoted string literal (detected at line 134) (<unknown>, line 111)",
+    "line": 111,
+    "offset": 35,
+    "text": "    \"\"\"Test Jira project retrieval\"\"\""
+  },
+  "tests\\test_audio_service_direct.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 20)",
+    "line": 20,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\test_automated_defect_detector.py": {
+    "type": "SyntaxError",
+    "message": "positional argument follows keyword argument (<unknown>, line 51)",
+    "line": 51,
+    "offset": 84,
+    "text": "        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f:\n"
+  },
+  "tests\\test_capital_of.py": {
+    "type": "SyntaxError",
+    "message": "expected '(' (<unknown>, line 33)",
+    "line": 33,
+    "offset": 10,
+    "text": "def test_\n"
+  },
+  "tests\\test_capital_of_debug.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 18)",
+    "line": 18,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\test_chromadb_fix.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 31)",
+    "line": 31,
+    "offset": 9,
+    "text": "        [sys.executable(), \"start_chroma_server.py\"]"
+  },
+  "tests\\test_compat_fix.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 25)",
+    "line": 25,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\test_concept_models_training.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 29)",
+    "line": 29,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\test_config_loader.py": {
+    "type": "SyntaxError",
+    "message": "unterminated string literal (detected at line 79) (<unknown>, line 79)",
+    "line": 79,
+    "offset": 24,
+    "text": "    simulated_resources\": {"
+  },
+  "tests\\test_content_analyzer.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 40)",
+    "line": 40,
+    "offset": 52,
+    "text": "        if entity_details[\"label\"] == \"Steve Jobs\"::\n"
+  },
+  "tests\\test_core_services.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 68)",
+    "line": 68,
+    "offset": 12,
+    "text": "            elf.assertIsInstance(services, dict)\n"
+  },
+  "tests\\test_core_services_module.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 32)",
+    "line": 32,
+    "offset": 34,
+    "text": "                \"core_services\", ,\n"
+  },
+  "tests\\test_core_service_manager.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after class definition on line 22 (<unknown>, line 23)",
+    "line": 23,
+    "offset": 1,
+    "text": "\"\"核心服务管理器测试\"\"\"\n"
+  },
+  "tests\\test_coverage_analyzer.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 27 (<unknown>, line 28)",
+    "line": 28,
+    "offset": 5,
+    "text": "    \"\"\"测试初始化\"\"\"\n"
+  },
+  "tests\\test_coverage_report.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 18)",
+    "line": 18,
+    "offset": 20,
+    "text": "        \"backend\": {"
+  },
+  "tests\\test_data_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 36)",
+    "line": 36,
+    "offset": 61,
+    "text": "    def generate_test_data(self, data_type, str, count, int == 10) -> List[Dict[str, Any]],\n"
+  },
+  "tests\\test_dependency_manager.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 33)",
+    "line": 33,
+    "offset": 56,
+    "text": "    def test_primary_dependency_available(self) -> None,\n"
+  },
+  "tests\\test_dependency_manager_backup.py": {
+    "type": "SyntaxError",
+    "message": "unindent does not match any outer indentation level (<unknown>, line 33)",
+    "line": 33,
+    "offset": 57,
+    "text": "    def test_primary_dependency_available(self) -> None,\n"
+  },
+  "tests\\test_gmqtt_import.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 23)",
+    "line": 23,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\test_intelligent_test_generator.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 10)",
+    "line": 10,
+    "offset": 4,
+    "text": "    IntelligentTestGenerator, \n"
+  },
+  "tests\\test_performance_benchmark.py": {
+    "type": "SyntaxError",
+    "message": "unexpected unindent (<unknown>, line 333)",
+    "line": 333,
+    "offset": 4,
+    "text": "    def test_run_api_benchmark_success(self, mock_subprocess_run) -> None:\n"
+  },
+  "tests\\verify_all_agents.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 26)",
+    "line": 26,
+    "offset": 30,
+    "text": "        except Exception as e,:\n"
+  },
+  "tests\\cli\\test_cli.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 40,
+    "text": "         patch('sys.argv', ['main.py']):\n"
+  },
+  "tests\\core_ai\\test_agent_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 20)",
+    "line": 20,
+    "offset": 36,
+    "text": "        \"\"\"Set up for each test.\"\"\"::\n"
+  },
+  "tests\\core_ai\\test_crisis_system.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 17)",
+    "line": 17,
+    "offset": 27,
+    "text": "if SRC_DIR not in sys.path,:\n"
+  },
+  "tests\\core_ai\\test_deep_mapper.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 25)",
+    "line": 25,
+    "offset": 17,
+    "text": "                {\"id\": \"p1\", \"type\": \"person\", \"name\": \"Alice\"}"
+  },
+  "tests\\core_ai\\test_emotion_system.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 27,
+    "text": "if SRC_DIR not in sys.path,:\n"
+  },
+  "tests\\core_ai\\test_time_system.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 17)",
+    "line": 17,
+    "offset": 27,
+    "text": "if SRC_DIR not in sys.path,:\n"
+  },
+  "tests\\core_ai\\dialogue\\test_project_coordinator_fix.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 7,
+    "text": "async \n"
+  },
+  "tests\\core_ai\\formula_engine\\test_formula_engine.py": {
+    "type": "SyntaxError",
+    "message": "trailing comma not allowed without surrounding parentheses (<unknown>, line 14)",
+    "line": 14,
+    "offset": 56,
+    "text": "from ai.formula_engine.types import FormulaConfigEntry,\n"
+  },
+  "tests\\core_ai\\language_models\\test_daily_language_model.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 9)",
+    "line": 9,
+    "offset": 4,
+    "text": "    import json\n"
+  },
+  "tests\\core_ai\\learning\\conftest.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 6)",
+    "line": 6,
+    "offset": 84,
+    "text": "    \"\"\"Create a ContentAnalyzerModule instance once for the entire test session.\"\"\"::\n"
+  },
+  "tests\\core_ai\\learning\\test_learning_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 33)",
+    "line": 33,
+    "offset": 51,
+    "text": "        self.mock_fact_extractor.extract_facts == = AsyncMock(return_value == [])  # Changed to AsyncMock\n"
+  },
+  "tests\\core_ai\\lis\\test_ham_lis_cache.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 40)",
+    "line": 40,
+    "offset": 51,
+    "text": "    def __init__(self, core_storage_filename, str == \"mock_ham_lis_test.json\") -> None:\n"
+  },
+  "tests\\core_ai\\memory\\test_ham_chromadb_integration.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 136)",
+    "line": 136,
+    "offset": 24,
+    "text": "        time.sleep(0.1))"
+  },
+  "tests\\core_ai\\memory\\test_ham_memory_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 45)",
+    "line": 45,
+    "offset": 40,
+    "text": "        ham_manager = HAMMemoryManager(,\n"
+  },
+  "tests\\core_ai\\meta_formulas\\test_meta_formulas.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 27)",
+    "line": 27,
+    "offset": 52,
+    "text": "        with self.assertRaises(NotImplementedError)\n"
+  },
+  "tests\\core_ai\\personality\\test_personality_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 23)",
+    "line": 23,
+    "offset": 122,
+    "text": "TEST_OUTPUT_DIR = os.path.join(PROJECT_ROOT, \"apps\", \"backend\", \"tests\", \"test_output_data\", \"personality_manager_files\"):\n"
+  },
+  "tests\\core_ai\\service_discovery\\test_service_discovery_module.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 41)",
+    "line": 41,
+    "offset": 41,
+    "text": "        assert sdm_default.trust_manager=mock_trust_manager\n"
+  },
+  "tests\\creation\\test_creation_engine.py": {
+    "type": "SyntaxError",
+    "message": "unindent does not match any outer indentation level (<unknown>, line 35)",
+    "line": 35,
+    "offset": 28,
+    "text": "    @pytest.mark.timeout(5)\n"
+  },
+  "tests\\e2e\\test_atlassian_workflow.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 19)",
+    "line": 19,
+    "offset": 51,
+    "text": "        except requests.exceptions.ConnectionError,:\n"
+  },
+  "tests\\e2e\\test_training_workflow.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 28)",
+    "line": 28,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\economy\\test_economy_db.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 15)",
+    "line": 15,
+    "offset": 20,
+    "text": "        self.db =  = EconomyDB(db_path ==self.db_path())\n"
+  },
+  "tests\\economy\\test_economy_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 17)",
+    "line": 17,
+    "offset": 25,
+    "text": "        self.mock_db =  = MagicMock(spec ==EconomyDB)\n"
+  },
+  "tests\\evaluation\\test_evaluation_db.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 17)",
+    "line": 17,
+    "offset": 20,
+    "text": "        self.db =  = EvaluationDB(db_path ==self.db_path())\n"
+  },
+  "tests\\evaluation\\test_evaluator.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 42)",
+    "line": 42,
+    "offset": 33,
+    "text": "        self.assertGreaterEqual(evaluation[\"performance\"] 0)\n"
+  },
+  "tests\\evaluation\\test_task_evaluator.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 103)",
+    "line": 103,
+    "offset": 27,
+    "text": "        self.evaluator =  = TaskExecutionEvaluator(self.config(), storage_path ==\".test_evals\")\n"
+  },
+  "tests\\game\\test_assets.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 19)",
+    "line": 19,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\game\\test_main.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 13)",
+    "line": 13,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\game\\test_npcs.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 19)",
+    "line": 19,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\hsp\\mock_mqtt_broker.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 8)",
+    "line": 8,
+    "offset": 81,
+    "text": "    \"\"\"A simplified mock MQTT broker for testing HSP connector functionality.\"\"\":\n"
+  },
+  "tests\\hsp\\run_hsp_tests.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 10,
+    "text": "if __name\"__main__\"::\n"
+  },
+  "tests\\hsp\\test_basic.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 8)",
+    "line": 8,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\hsp\\test_debug.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 28)",
+    "line": 28,
+    "offset": 29,
+    "text": "    await asyncio.sleep(0.1))"
+  },
+  "tests\\hsp\\test_external_connector_stability.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 20)",
+    "line": 20,
+    "offset": 24,
+    "text": "except ImportError as e,:\n"
+  },
+  "tests\\hsp\\test_hsp_ack_retry.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 19)",
+    "line": 19,
+    "offset": 59,
+    "text": "    \"\"\"Fixture to provide a MagicMock for gmqtt.Client.\"\"\":\n"
+  },
+  "tests\\hsp\\test_hsp_advanced_integration.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 11)",
+    "line": 11,
+    "offset": 4,
+    "text": "    HSPMessageEnvelope\n"
+  },
+  "tests\\hsp\\test_hsp_connector.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 37 (<unknown>, line 38)",
+    "line": 38,
+    "offset": 5,
+    "text": "    \"\"\"创建HSPConnector实例\"\"\"\n"
+  },
+  "tests\\hsp\\test_hsp_enhanced_integration.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 12)",
+    "line": 12,
+    "offset": 4,
+    "text": "    HSPMessageEnvelope\n"
+  },
+  "tests\\hsp\\test_hsp_fixture.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 33)",
+    "line": 33,
+    "offset": 7,
+    "text": "async \n"
+  },
+  "tests\\hsp\\test_hsp_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 49)",
+    "line": 49,
+    "offset": 40,
+    "text": "    mock_external_connector.connect == = AsyncMock(return_value ==True)\n"
+  },
+  "tests\\hsp\\test_hsp_refactored.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 30)",
+    "line": 30,
+    "offset": 12,
+    "text": "        \"\"\"测试前设置\"\"\""
+  },
+  "tests\\hsp\\test_hsp_security.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 56)",
+    "line": 56,
+    "offset": 73,
+    "text": "def test_security_manager_initialization(self, security_manager) -> None,\n"
+  },
+  "tests\\hsp\\test_message_bridge.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 35)",
+    "line": 35,
+    "offset": 40,
+    "text": "    mock.align_message.return_value = ({} None)\n"
+  },
+  "tests\\hsp\\test_mqtt_broker_startup.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 21)",
+    "line": 21,
+    "offset": 20,
+    "text": "        \"default\": {"
+  },
+  "tests\\integration\\ai_ops_integration_test.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 224)",
+    "line": 224,
+    "offset": 41,
+    "text": "                await asyncio.sleep(0.5))"
+  },
+  "tests\\integration\\comprehensive_test_framework.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 9)",
+    "line": 9,
+    "offset": 34,
+    "text": "        await asyncio.sleep(0.02))"
+  },
+  "tests\\integration\\conftest.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 27)",
+    "line": 27,
+    "offset": 80,
+    "text": "    with patch('apps.backend.src.managers.agent_manager.AgentManager') as mock,\n"
+  },
+  "tests\\integration\\end_to_end_test.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 30)",
+    "line": 30,
+    "offset": 13,
+    "text": "            {"
+  },
+  "tests\\integration\\quick_e2e_test.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 50)",
+    "line": 50,
+    "offset": 26,
+    "text": "    except Exception as e,:\n"
+  },
+  "tests\\integration\\test_agent_collaboration.py": {
+    "type": "SyntaxError",
+    "message": "unexpected unindent (<unknown>, line 19)",
+    "line": 19,
+    "offset": 0,
+    "text": "def setUpClass(cls):\n"
+  },
+  "tests\\integration\\test_ai_agent_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\integration\\test_atlassian_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 52)",
+    "line": 52,
+    "offset": 10,
+    "text": "if __name\"__main__\"::\n"
+  },
+  "tests\\integration\\test_core_services_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\integration\\test_data_factory.py": {
+    "type": "SyntaxError",
+    "message": "unexpected unindent (<unknown>, line 14)",
+    "line": 14,
+    "offset": 0,
+    "text": "def create_agent_config(\n"
+  },
+  "tests\\integration\\test_example_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 13)",
+    "line": 13,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\integration\\test_hsp_debug.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 14)",
+    "line": 14,
+    "offset": 7,
+    "text": "async \n"
+  },
+  "tests\\integration\\test_hsp_protocol_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\integration\\test_hsp_simple.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 101)",
+    "line": 101,
+    "offset": 37,
+    "text": "            await asyncio.sleep(0.1))"
+  },
+  "tests\\integration\\test_knowledge_update.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 10,
+    "text": "    async,\n"
+  },
+  "tests\\integration\\test_learning_and_trust.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 23)",
+    "line": 23,
+    "offset": 28,
+    "text": "        self.ham_memory =  = MagicMock(spec ==HAMMemoryManager)\n"
+  },
+  "tests\\integration\\test_memory_system_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\integration\\test_performance_benchmark.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 15)",
+    "line": 15,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\integration\\test_performance_benchmarks.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 35)",
+    "line": 35,
+    "offset": 30,
+    "text": "            time.sleep(0.001))  # 模拟创建延迟"
+  },
+  "tests\\integration\\test_self_improvement.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 10,
+    "text": "    async,\n"
+  },
+  "tests\\integration\\test_system_level_integration.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 22)",
+    "line": 22,
+    "offset": 58,
+    "text": "    def get_mock_service(self, service_name, str) -> Mock,\n"
+  },
+  "tests\\integration\\test_training_system_integration.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 22)",
+    "line": 22,
+    "offset": 11,
+    "text": "    async \n"
+  },
+  "tests\\integration\\test_utils.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 14 (<unknown>, line 15)",
+    "line": 15,
+    "offset": 5,
+    "text": "    self.start_time = None\n"
+  },
+  "tests\\integrations\\test_atlassian_api.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 27)",
+    "line": 27,
+    "offset": 36,
+    "text": "            api_token=\"test_token\",,\n"
+  },
+  "tests\\integrations\\test_atlassian_bridge.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 25)",
+    "line": 25,
+    "offset": 31,
+    "text": "                'confluence': {"
+  },
+  "tests\\integrations\\test_atlassian_bridge_fallback.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 15 (<unknown>, line 16)",
+    "line": 16,
+    "offset": 5,
+    "text": "    \"\"\"模擬配置\"\"\"\n"
+  },
+  "tests\\integrations\\test_rovo_dev_agent.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 18 (<unknown>, line 19)",
+    "line": 19,
+    "offset": 5,
+    "text": "    \"\"\"模拟配置\"\"\"\n"
+  },
+  "tests\\integrations\\test_rovo_dev_agent_recovery.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 19 (<unknown>, line 20)",
+    "line": 20,
+    "offset": 5,
+    "text": "    \"\"\"模擬配置\"\"\"\n"
+  },
+  "tests\\integrations\\test_rovo_dev_connector.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 23)",
+    "line": 23,
+    "offset": 25,
+    "text": "                'jira': {"
+  },
+  "tests\\mcp\\test_context7_connector.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 11)",
+    "line": 11,
+    "offset": 4,
+    "text": "    Context7MCPConnector,\n"
+  },
+  "tests\\mcp\\test_mcp_connector.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 25)",
+    "line": 25,
+    "offset": 7,
+    "text": "async \n"
+  },
+  "tests\\meta\\test_learning_log_db.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 20,
+    "text": "        self.db =  = LearningLogDB(db_path ==self.db_path())\n"
+  },
+  "tests\\modules_fragmenta\\test_element_layer.py": {
+    "type": "SyntaxError",
+    "message": "unindent does not match any outer indentation level (<unknown>, line 30)",
+    "line": 30,
+    "offset": 28,
+    "text": "    @pytest.mark.timeout(5)\n"
+  },
+  "tests\\modules_fragmenta\\test_vision_tone_inverter.py": {
+    "type": "SyntaxError",
+    "message": "unindent does not match any outer indentation level (<unknown>, line 30)",
+    "line": 30,
+    "offset": 28,
+    "text": "    @pytest.mark.timeout(5)\n"
+  },
+  "tests\\performance\\benchmark_test.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 21)",
+    "line": 21,
+    "offset": 26,
+    "text": "        'response_time': {"
+  },
+  "tests\\performance\\stress_test.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax. Perhaps you forgot a comma? (<unknown>, line 24)",
+    "line": 24,
+    "offset": 31,
+    "text": "            'response_times': []"
+  },
+  "tests\\search\\test_search_engine.py": {
+    "type": "SyntaxError",
+    "message": "unexpected character after line continuation character (<unknown>, line 33)",
+    "line": 33,
+    "offset": 119,
+    "text": "    with patch(\"apps.backend.src.search.search_engine.SearchEngine._search_huggingface\") as mock_search_huggingface, \\:\n"
+  },
+  "tests\\services\\test_ai_virtual_input_service.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 12)",
+    "line": 12,
+    "offset": 31,
+    "text": "VirtualInputElementDescription)"
+  },
+  "tests\\services\\test_audio_service.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 36)",
+    "line": 36,
+    "offset": 59,
+    "text": "    async def test_02_speech_to_text_success(self) -> None,\n"
+  },
+  "tests\\services\\test_health_ready_endpoints.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 23)",
+    "line": 23,
+    "offset": 39,
+    "text": "            def __init__(self) -> None,\n"
+  },
+  "tests\\services\\test_hot_endpoints.py": {
+    "type": "SyntaxError",
+    "message": "unexpected indent (<unknown>, line 15)",
+    "line": 15,
+    "offset": 4,
+    "text": "    def setUp(self):\n"
+  },
+  "tests\\services\\test_hsp_endpoints.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 29)",
+    "line": 29,
+    "offset": 36,
+    "text": "    def __init__(self, found, bool == True) -> None:\n"
+  },
+  "tests\\services\\test_llm_interface.py": {
+    "type": "SyntaxError",
+    "message": "unindent does not match any outer indentation level (<unknown>, line 32)",
+    "line": 32,
+    "offset": 27,
+    "text": "    @pytest.mark.asyncio()\n"
+  },
+  "tests\\services\\test_models_endpoints.py": {
+    "type": "SyntaxError",
+    "message": "expected ':' (<unknown>, line 23)",
+    "line": 23,
+    "offset": 35,
+    "text": "        def __init__(self) -> None,\n"
+  },
+  "tests\\services\\test_node_services.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 16)",
+    "line": 16,
+    "offset": 33,
+    "text": "        if not self.is_available,:\n"
+  },
+  "tests\\services\\test_resource_awareness_service.py": {
+    "type": "SyntaxError",
+    "message": "unmatched ')' (<unknown>, line 15)",
+    "line": 15,
+    "offset": 19,
+    "text": "SimulatedRAMConfig)"
+  },
+  "tests\\services\\test_sandbox_executor.py": {
+    "type": "SyntaxError",
+    "message": "expected an indented block after function definition on line 20 (<unknown>, line 22)",
+    "line": 22,
+    "offset": 0,
+    "text": "self.executor =  = SandboxExecutor(timeout_seconds ==30) # 从2秒增加到30秒\n"
+  },
+  "tests\\services\\test_vision_service.py": {
+    "type": "SyntaxError",
+    "message": "unindent does not match any outer indentation level (<unknown>, line 32)",
+    "line": 32,
+    "offset": 27,
+    "text": "    @pytest.mark.asyncio()\n"
+  },
+  "tests\\shared\\test_key_manager.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 27)",
+    "line": 27,
+    "offset": 37,
+    "text": "        if 'DEMO_FLAG' in os.environ,:\n"
+  },
+  "tests\\shared\\utils\\test_cleanup_utils.py": {
+    "type": "SyntaxError",
+    "message": "invalid syntax (<unknown>, line 20)",
+    "line": 20,
+    "offset": 66,
+    "text": "        \"\"\"Set up a temporary directory structure for testing.\"\"\":\n"
+  }
+}

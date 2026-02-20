@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # 添加项目路径
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
-def test_imports() -> None,
+def test_imports() -> None:
     """测试导入是否正常工作"""
     try:
         # 测试HAMMemoryManager导入
@@ -26,7 +26,7 @@ def test_imports() -> None,
         print("✅ PersonalityManager 导入成功")
         
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"❌ 导入失败, {e}")
         return False
 
@@ -52,7 +52,7 @@ def test_ham_memory_manager() -> None,
             print("✅ HAMMemoryManager ID生成正常")
             
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"❌ HAMMemoryManager 测试失败, {e}")
         return False
 
@@ -70,7 +70,7 @@ def test_personality_manager() -> None,
         print(f"✅ PersonalityManager 获取初始提示, {prompt}")
         
         return True
-    except Exception as e,:
+    except Exception as e:
         print(f"❌ PersonalityManager 测试失败, {e}")
         return False
 

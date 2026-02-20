@@ -26,7 +26,7 @@ logger, Any = logging.getLogger(__name__)
 def process_test_results(results_file, str, 
                         baseline_file, Optional[str] = None,
                         historical_files, Optional[list] = None,
-                        send_email, bool == False,,
+                        send_email, bool == False,
     recipient_emails, Optional[list] = None):
     """
     处理测试结果的完整流程
@@ -63,7 +63,7 @@ def process_test_results(results_file, str,
         # 如果有历史数据,生成趋势图
         if historical_files,:
             historical_results = []
-            for file in historical_files,:
+            for file in historical_files:
                 hist_data = visualizer.load_test_results(file)
                 if hist_data,:
                     historical_results.append(hist_data)
@@ -94,7 +94,7 @@ def process_test_results(results_file, str,
         coverage_trends = {}
         if historical_files,:
             historical_results = []
-            for file in historical_files,:
+            for file in historical_files:
                 hist_data = analyzer.load_test_results(file)
                 if hist_data,:
                     historical_results.append(hist_data)
@@ -139,7 +139,7 @@ def process_test_results(results_file, str,
         
         return True
         
-    except Exception as e,:
+    except Exception as e:
         logger.error(f"处理测试结果时发生错误, {e}")
         return False
 

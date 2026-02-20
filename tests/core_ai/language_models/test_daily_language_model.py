@@ -27,7 +27,7 @@ class TestDailyLanguageModel:
                 return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "10 * 5", "original_query": "what is 10 * 5"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
             if "calculate" in prompt.lower() and "User Query, "compute 100 / 20\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "100 / 20", "original_query": "compute 100 / 20"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "calculate" in prompt.lower() and "User Query, "solve for 7 - 3\"" in prompt,:
+            if "calculate" in prompt.lower() and "User Query, "solve for 7 - 3\"" in prompt:
     return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "7 - 3", "original_query": "solve for 7 - 3"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {}):
     if "calculate" in prompt.lower() and "User Query, "3+3\"" in prompt,:
     return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "3+3", "original_query": "3+3"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})

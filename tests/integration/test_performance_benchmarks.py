@@ -127,7 +127,7 @@ class TestHSPPerformanceBenchmarks:
         def process_messages():
             """处理消息的测试函数"""
             processed_count = 0
-            for message in messages,:
+            for message in messages:
                 # 模拟消息处理
                 time.sleep(0.0001))  # 模拟处理延迟
                 processed_count += 1
@@ -206,7 +206,7 @@ class TestTrainingPerformanceBenchmarks:
                 input_data=f"Input {i}",:
     expected_output=f"Output {i}"
             )
-            for i in range(32)  # 批量大小32,:
+            for i in range(32)  # 批量大小32:
         ]
 
         def training_iteration():
@@ -237,7 +237,7 @@ class TestTrainingPerformanceBenchmarks:
         def preprocess_data():
             """预处理数据的测试函数"""
             processed_data = []
-            for item in raw_data,:
+            for item in raw_data:
                 # 模拟数据预处理
                 time.sleep(0.00001))  # 模拟预处理延迟
                 processed_item = {

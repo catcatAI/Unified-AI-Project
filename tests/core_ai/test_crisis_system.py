@@ -90,7 +90,7 @@ class TestCrisisSystem(unittest.TestCase):
             triggered_protocol_action = self.test_config["crisis_protocols"][str(self.test_config["default_crisis_level_on_keyword"])]
 
             found_protocol_print = False,
-            for call_args in mock_print.call_args_list,:
+            for call_args in mock_print.call_args_list:
                 args, call_args
                 if args and f"Executing protocol, '{triggered_protocol_action}'" in args[0]:
                     found_protocol_print = True
@@ -98,7 +98,7 @@ class TestCrisisSystem(unittest.TestCase):
             
             # 如果没有找到期望的打印,检查是否有其他相关的打印
             if not found_protocol_print,:
-                for call_args in mock_print.call_args_list,:
+                for call_args in mock_print.call_args_list:
                     args, call_args
                     if args and "Potential crisis detected" in args[0]:
                         found_protocol_print = True

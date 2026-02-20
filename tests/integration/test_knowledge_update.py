@@ -34,7 +34,7 @@ def test_knowledge_update(self) -> None,
         Tests the knowledge update capabilities of the system.
         """
         dialogue_manager = DialogueManager(
-            ai_id="test_ai",,
+            ai_id="test_ai",
     personality_manager = MagicMock(),
             memory_manager = MagicMock(),
             llm_interface = MagicMock(),

@@ -34,7 +34,7 @@ ry,
             command,
             cwd=cwd,
             capture_output=capture_output,
-            text = True,,
+            text = True,
     check = False
         )
 
@@ -44,7 +44,7 @@ ry,
             print(f"STDERR,\n{result.stderr}")
 
         return result
-    except Exception as e,:
+    except Exception as e:
         print(f"Error executing command, {e}")
         return None
 
@@ -129,7 +129,7 @@ def run_integration_tests(test_type == "all", markers == None, parallel == False
         "success": result is not None and result.returncode=0,
         "return_code": result.returncode if result else -1,:
             execution_time": end_time - start_time,
-        "stdout": result.stdout if result else "",::
+        "stdout": result.stdout if result else "":
             stderr": result.stderr if result else ""::
     return test_result
 
@@ -171,7 +171,7 @@ def generate_test_report(test_results, output_dir == "test_reports") -> None,
     print("="*50)
     print(f"Execution Time, {test_results.get('execution_time', 0).2f} seconds")
     print(f"Status, {'PASSED' if test_results.get('success', False) else 'FAILED'}")::
-        rint(f"Return Code, {test_results.get('return_code', 'N/A')}")
+print(f"Return Code, {test_results.get('return_code', 'N/A')}")
     print("="*50)
 
 
@@ -181,21 +181,21 @@ def main() -> None,
         arser.add_argument(
         "--type",
         choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"]
-        default="all",,
+        default="all",
     help="Type of integration tests to run"
     )
     parser.add_argument(
-        "--markers",,
+        "--markers",
     help="pytest markers to filter tests"
     )
     parser.add_argument(
         "--parallel",
-        action="store_true",,
+        action="store_true",
     help="Run tests in parallel"
     )
     parser.add_argument(
         "--no-setup",
-        action="store_true",,
+        action="store_true",
     help="Skip environment setup"
     )
     

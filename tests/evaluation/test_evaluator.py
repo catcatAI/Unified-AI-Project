@@ -24,7 +24,7 @@ class TestEvaluator(unittest.TestCase):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_evaluate(self) -> None,
+def test_evaluate(self) -> None:
         """
         Tests the evaluate method.
         """

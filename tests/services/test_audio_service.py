@@ -23,7 +23,7 @@ class TestAudioService(unittest.TestCase):
         self.test_text = "Hello, this is a test message."
 
     @pytest.mark.timeout(15)
-    def test_01_initialization(self) -> None,
+    def test_01_initialization(self) -> None:
         """Test AudioService initialization."""
         service = AudioService()
         self.assertIsNotNone(service)

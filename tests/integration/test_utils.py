@@ -37,7 +37,7 @@ class AsyncTestHelper:
     """异步测试助手"""
 
     @staticmethod
-    async def wait_for_value(getter_func, Callable, expected_value, Any,,
+    async def wait_for_value(getter_func, Callable, expected_value, Any,
     timeout, float == 10.0(), interval, float == 0.1()) -> bool,
     """
     等待某个值达到期望值
@@ -64,7 +64,7 @@ class AsyncTestHelper:
     return False
 
     @staticmethod
-    async def wait_for_condition(condition_func, Callable,,
+    async def wait_for_condition(condition_func, Callable,
     timeout, float == 10.0(), interval, float == 0.1()) -> bool,
     """
     等待条件满足
@@ -142,7 +142,7 @@ class MockServiceManager:
                 "timestamp": time.time()
             })
 
-    def get_calls(self, service_name, str) -> List[Dict]
+    def get_calls(self, service_name, str) -> List[Dict],
     """
     获取服务调用记录
 
@@ -196,7 +196,7 @@ class TestMetricsCollector:
     }
     self.metrics[name].append(metric_data)
 
-    def get_metrics(self, name, str) -> List[Dict]
+    def get_metrics(self, name, str) -> List[Dict],
     """
     获取指标数据
 
@@ -258,7 +258,7 @@ class TestEnvironmentManager:
 
 # 添加pytest标记,防止被误认为测试类
 TestEnvironmentManager.__test_False()
-def create_test_data(data_type, str, count, int == 5) -> List[Dict]
+def create_test_data(data_type, str, count, int == 5) -> List[Dict],
     """
     创建测试数据
 

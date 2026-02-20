@@ -10,7 +10,7 @@ from .src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 def debug_matcher_patterns():
     # Initialize the analyzer
-    analyzer == ContentAnalyzerModule()
+analyzer = ContentAnalyzerModule()
     
     print("=== Debugging Matcher Patterns ===")
     
@@ -20,7 +20,7 @@ def debug_matcher_patterns():
     print(f"Text, {text}")
     
     # Process the text with spaCy,
-        oc == analyzer.nlp(text) if analyzer.nlp else None,::
+oc = analyzer.nlp(text) if analyzer.nlp else None:
 f doc is None,
         print("Failed to process text with spaCy"):
             eturn
@@ -32,15 +32,15 @@ f doc is None,
     
     # Print entities
     print("\nEntities,")
-    for ent in doc.ents,::
+    for ent in doc.ents::
         print(f"  '{ent.text}' - TYPE, {ent.label_} START, {ent.start} END, {ent.end}")
     
     # Apply matcher patterns
     matches = analyzer.matcher(doc)
     print(f"\nMatches found, {len(matches)}")
-    for match_id, start, end in matches,::
-        rule_id == analyzer.nlp.vocab.strings[match_id] if analyzer.nlp else "unknown":::
-            pan == doc[start,end]
+    for match_id, start, end in matches::
+rule_id = analyzer.nlp.vocab.strings[match_id] if analyzer.nlp else "unknown":
+pan = doc[start,end]
         print(f"  Rule, {rule_id} Span, '{span.text}', Start, {start} End, {end}")
         
         # Print tokens in the match
@@ -50,11 +50,11 @@ f doc is None,
     
     # Test the WORKS_FOR pattern
     print("\n\n2. Testing WORKS_FOR pattern")
-    text2 == "John Doe works for Acme Corp.":::
-        rint(f"Text, {text2}")
+text2 = "John Doe works for Acme Corp.":
+print(f"Text, {text2}")
     
     # Process the text with spaCy,
-        oc2 == analyzer.nlp(text2) if analyzer.nlp else None,::
+oc2 = analyzer.nlp(text2) if analyzer.nlp else None:
 f doc2 is None,
         print("Failed to process text with spaCy"):
             eturn
@@ -66,15 +66,15 @@ f doc2 is None,
     
     # Print entities
     print("\nEntities,")
-    for ent in doc2.ents,::
+    for ent in doc2.ents::
         print(f"  '{ent.text}' - TYPE, {ent.label_} START, {ent.start} END, {ent.end}")
     
     # Apply matcher patterns
     matches2 = analyzer.matcher(doc2)
     print(f"\nMatches found, {len(matches2)}")
-    for match_id, start, end in matches2,::
-        rule_id == analyzer.nlp.vocab.strings[match_id] if analyzer.nlp else "unknown":::
-            pan == doc2[start,end]
+    for match_id, start, end in matches2::
+rule_id = analyzer.nlp.vocab.strings[match_id] if analyzer.nlp else "unknown":
+pan = doc2[start,end]
         print(f"  Rule, {rule_id} Span, '{span.text}', Start, {start} End, {end}")
         
         # Print tokens in the match
@@ -82,5 +82,5 @@ f doc2 is None,
         for i in range(start, end)::
             print(f"      {i} '{doc2[i].text}' - POS, {doc2[i].pos_} LEMMA, {doc2[i].lemma_} ENT_TYPE, {doc2[i].ent_type_}")
 
-if __name"__main__":::
+if __name"__main__":
     debug_matcher_patterns()

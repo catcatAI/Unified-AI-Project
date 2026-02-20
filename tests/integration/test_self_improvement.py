@@ -34,7 +34,7 @@ def test_self_improvement(self) -> None,
         Tests the self-improvement capabilities of the system.
         """
         dialogue_manager = DialogueManager(
-            ai_id="test_ai",,
+            ai_id="test_ai",
     personality_manager = MagicMock(),
             memory_manager = MagicMock(),
             llm_interface = MagicMock(),

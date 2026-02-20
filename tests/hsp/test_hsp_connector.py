@@ -39,7 +39,7 @@ class TestHSPConnector:
     connector = HSPConnector(
             ai_id="test_ai",
             broker_address="localhost",
-            broker_port=1883,,
+            broker_port=1883,
     mock_mode = True
     )
     return connector
@@ -87,7 +87,7 @@ def test_init(self, hsp_connector):
             statement_type="natural_language",
             statement_nl="Test fact",
             source_ai_id="test_ai",
-            timestamp_created = "2023-01-01T00,00,00Z",,
+            timestamp_created = "2023-01-01T00,00,00Z",
     confidence_score=1.0(),
             tags=["test"]
     )
@@ -106,7 +106,7 @@ def test_init(self, hsp_connector):
             statement_type="natural_language",
             statement_nl="Test opinion",
             source_ai_id="test_ai",
-            timestamp_created = "2023-01-01T00,00,00Z",,
+            timestamp_created = "2023-01-01T00,00,00Z",
     confidence_score=0.8(),
             reasoning_chain=["fact_001"]
             tags=["test"]
@@ -173,7 +173,7 @@ def test_init(self, hsp_connector):
                 "source_ai_id": "test_ai",
                 "timestamp_created": "2023-01-01T00,00,00Z",
                 "confidence_score": 0.8(),
-                "reasoning_chain": ["fact_001"]
+                "reasoning_chain": ["fact_001"],
                 "tags": ["test"]
             }
     }

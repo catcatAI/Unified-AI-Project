@@ -34,7 +34,7 @@ class TestServiceDiscoveryModule:
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
+def test_init(self, mock_trust_manager, MagicMock, caplog) -> None:
         caplog.set_level(logging.INFO())
         # Test with default staleness threshold
         sdm_default = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
@@ -62,7 +62,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
             tags=["t1", "t2"]
             input_schema_uri = None, input_schema_example == None,
             output_schema_uri = None, output_schema_example == None,
-            data_format_preferences = None, hsp_protocol_requirements == None,,
+            data_format_preferences = None, hsp_protocol_requirements == None,
     cost_estimate_template = None, access_policy_id == None
         )
         mock_envelope = MagicMock(spec == HSPMessageEnvelope)
@@ -90,7 +90,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
             version="1.1", availability_status="online", tags=["t1", "t3"]
             input_schema_uri = None, input_schema_example == None,
             output_schema_uri = None, output_schema_example == None,
-            data_format_preferences = None, hsp_protocol_requirements == None,,
+            data_format_preferences = None, hsp_protocol_requirements == None,
     cost_estimate_template = None, access_policy_id == None
         )
         # Add a small sleep to ensure timestamp changes for the update,:
@@ -168,7 +168,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
             {"capability_id":"c4", "ai_id":"ai_high_trust", "name":"CapGamma", "tags":["math"]}
         ]
 
-        for data in caps_data,:
+        for data in caps_data:
             # Construct full payload ensuring all required fields are present
             payload = HSPCapabilityAdvertisementPayload(
                 capability_id=data["capability_id"] ai_id=data["ai_id"] agent_name="test_agent", name=data["name"],
@@ -260,7 +260,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     async def test_find_capabilities_combined_filters_and_sort(self, populated_sdm, ServiceDiscoveryModule, mock_trust_manager, MagicMock) -> None,
         # Find capabilities with name "CapAlpha" AND min trust 0.5(), sorted by trust
         results = await populated_sdm.find_capabilities(
-            capability_name_filter="CapAlpha",,
+            capability_name_filter="CapAlpha",
     min_trust_score=0.5(),
             sort_by_trust = True
         )
@@ -274,7 +274,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     def test_staleness_checks(self, mock_trust_manager, MagicMock) -> None:
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=1)  # 1 second for test,:
         payload = HSPCapabilityAdvertisementPayload(
-            capability_id="stale_test", ai_id="ai_stale", agent_name="test_agent", name="StaleTest", description="d",,
+            capability_id="stale_test", ai_id="ai_stale", agent_name="test_agent", name="StaleTest", description="d",
     version="v", availability_status="online"
         )
         sdm.process_capability_advertisement(payload, "sender", MagicMock(spec == HSPMessageEnvelope))

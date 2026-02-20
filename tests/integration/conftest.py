@@ -9,7 +9,7 @@ sys.path.insert(0, str(project_root))
 
 
 @pytest.fixture(scope="function")
-def integration_test_config() -> None,
+def integration_test_config() -> None:
     """集成测试配置"""
     return {
         "test_mode": "integration",
@@ -112,7 +112,7 @@ def create_test_agent_config(agent_type == "test_agent") -> None,
         return {
             "agent_id": f"test_{agent_type}_{id(object())}",
             "agent_type": agent_type,
-            "capabilities": ["test_capability"]
+            "capabilities": ["test_capability"],
             "config": {
                 "max_concurrent_tasks": 1,
                 "timeout": 30
@@ -159,7 +159,7 @@ def mock_external_services(
     mock_hsp_connector, 
     mock_memory_manager,
     mock_learning_manager,
-    mock_dialogue_manager,,
+    mock_dialogue_manager,
     mock_llm_service
 ):
     """组合所有外部服务mock"""

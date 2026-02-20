@@ -62,8 +62,8 @@ def test_
     # 检查关系
     relationship_found = False
     for rel in kg_data["relationships"]:
-        src_label = kg_data["entities"].get(rel["source_id"] {}).get("label")
-        tgt_label = kg_data["entities"].get(rel["target_id"] {}).get("label")
+        src_label = kg_data["entities"].get(rel["source_id"] = {}).get("label")
+        tgt_label = kg_data["entities"].get(rel["target_id"] = {}).get("label")
         rel_type = rel["type"]
         print(f"关系, {src_label} --[{rel_type}]--> {tgt_label}")
         

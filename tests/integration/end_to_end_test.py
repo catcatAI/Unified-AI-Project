@@ -98,7 +98,7 @@ async def test_data_flow_pipeline():
         ]
         
         # 发送数据到运维管理器
-        for scenario in test_scenarios,:
+        for scenario in test_scenarios:
             await ops_manager.collect_system_metrics(
                 scenario["component_id"]
                 scenario["component_type"],
@@ -124,7 +124,7 @@ async def test_data_flow_pipeline():
         
         return True
         
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ 数据流管道测试失败, {e}")
         import traceback
         traceback.print_exc()
@@ -139,7 +139,7 @@ async def test_hsp_integration():
         print("✓ HSP协议集成测试跳过(需要Redis服务)")
         return True
         
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ HSP集成测试失败, {e}")
         return False
 
@@ -154,7 +154,7 @@ async def test_api_endpoints():
         print("✓ API端点测试跳过(需要运行的服务)")
         return True
         
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ API端点测试失败, {e}")
         return False
 
@@ -195,7 +195,7 @@ async def test_data_synchronization():
         
         return True
         
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ 数据同步测试失败, {e}")
         return False
 
@@ -218,7 +218,7 @@ async def test_error_handling():
                 }
             )
             print("✓ 无效数据处理正常")
-        except Exception as e,:
+        except Exception as e:
             print(f"✓ 错误处理正常, {type(e).__name__}")
         
         # 发送异常数据
@@ -234,12 +234,12 @@ async def test_error_handling():
                 }
             )
             print("✓ 异常数据处理正常")
-        except Exception as e,:
+        except Exception as e:
             print(f"✓ 异常处理正常, {type(e).__name__}")
         
         return True
         
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ 错误处理测试失败, {e}")
         return False
 
@@ -285,7 +285,7 @@ async def test_performance_under_load():
         
         return processing_time < 10  # 10秒内完成
         
-    except Exception as e,:
+    except Exception as e:
         print(f"✗ 负载测试失败, {e}")
         return False
 
@@ -306,12 +306,12 @@ async def main():
     
     results = []
     
-    for test_name, test_func in tests,:
+    for test_name, test_func in tests:
         print(f"\n--- {test_name} ---")
         try:
             result = await test_func()
             results.append((test_name, result))
-        except Exception as e,:
+        except Exception as e:
             print(f"✗ {test_name} 测试异常, {e}")
             results.append((test_name, False))
     
@@ -323,7 +323,7 @@ async def main():
     passed = 0
     total = len(results)
     
-    for test_name, result in results,:
+    for test_name, result in results:
         status = "通过" if result else "失败":
         symbol = "✓" if result else "✗"::
         print(f"{symbol} {test_name} {status}")

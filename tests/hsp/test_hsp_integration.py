@@ -68,7 +68,7 @@ def peer_b_hsp_connector(trust_manager_fixture, TrustManager, broker, Mock, shar
         MQTT_BROKER_PORT,
         mock_mode = True,
         mock_mqtt_client=broker, # Pass the mock broker directly
-        internal_bus=shared_internal_bus,,
+        internal_bus=shared_internal_bus,
     message_bridge=shared_message_bridge
     )
     
@@ -80,7 +80,7 @@ def peer_b_hsp_connector(trust_manager_fixture, TrustManager, broker, Mock, shar
 @pytest.fixture()
 def main_ai_hsp_connector(
     shared_internal_bus, InternalBus,
-    shared_message_bridge, MessageBridge,,
+    shared_message_bridge, MessageBridge,
     broker, Mock
 ):
     """Main AI HSP Connector fixture"""
@@ -90,7 +90,7 @@ def main_ai_hsp_connector(
         MQTT_BROKER_PORT,
         mock_mode = True,
         mock_mqtt_client=broker, # Pass the mock broker directly
-        internal_bus=shared_internal_bus,,
+        internal_bus=shared_internal_bus,
     message_bridge=shared_message_bridge
     )
     
@@ -105,7 +105,7 @@ def configured_learning_manager(
     fact_extractor_fixture, Mock,
     content_analyzer_module_fixture, Mock,
     main_ai_hsp_connector, HSPConnector,
-    trust_manager_fixture, TrustManager,,
+    trust_manager_fixture, TrustManager,
     personality_manager_fixture, Mock
 ):
     # main_ai_hsp_connector is now properly awaited by pytest-asyncio
@@ -139,7 +139,7 @@ def dialogue_manager_fixture(
     main_ai_hsp_connector, HSPConnector,
     mock_llm_fixture, Mock,
     content_analyzer_module_fixture, Mock,
-    trust_manager_fixture, TrustManager,,
+    trust_manager_fixture, TrustManager,
     personality_manager_fixture, Mock
 ):
     # All dependencies are now properly awaited by pytest-asyncio
@@ -280,7 +280,7 @@ class TestHSPIntegration:
             tasks.append(task)
 
         # 等待所有任务完成
-        for task in tasks,:
+        for task in tasks:
             result = await task
             results.append(result)
 
@@ -288,7 +288,7 @@ class TestHSPIntegration:
         assert len(results) == 5
         # 验证所有任务都返回了correlation_id
         assert all(result is not None for result in results):
-    async def _send_simple_task_request(self, connector, HSPConnector, payload, Dict[str, Any] target_ai_id, str) -> Optional[str]
+    async def _send_simple_task_request(self, connector, HSPConnector, payload, Dict[str, Any] target_ai_id, str) -> Optional[str],
         """
         发送简单的任务请求,不等待ACK确认
         """

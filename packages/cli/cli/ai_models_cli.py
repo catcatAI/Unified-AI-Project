@@ -44,13 +44,13 @@ class AIModelsCLI,
 
             self.service == MultiLLMService(self.config_path())
             logger.info("AI 模型服务初始化成功")
-        except Exception as e,::
+        except Exception as e::
             logger.error(f"初始化失败, {e}")
             sys.exit(1)
 
     async def list_models(self, args):
     """列出可用模型"""
-        if not self.service,::
+        if not self.service:
     await self.initialize()
 
     models = self.service.get_available_models()
@@ -58,9 +58,9 @@ class AIModelsCLI,
     print("\n🤖 可用的 AI 模型,")
     print("=" * 50)
 
-        for model_id in models,::
+        for model_id in models::
     info = self.service.get_model_info(model_id)
-            status == "✅ 启用" if info['enabled'] else "❌ 禁用":::
+status = "✅ 启用" if info['enabled'] else "❌ 禁用":
     print(f"\n📋 模型 ID, {model_id}")
             print(f"   提供商, {info['provider']}")
             print(f"   模型名, {info['model_name']}")
@@ -70,7 +70,7 @@ class AIModelsCLI,
             print(f"   成本/1K Token, ${info['cost_per_1k_tokens']}")
 
             stats = info.get('usage_stats', {})
-            if stats.get('total_requests', 0) > 0,::
+            if stats.get('total_requests', 0) > 0:
     print(f"   使用统计,")
                 print(f"     - 总请求, {stats['total_requests']}")
                 print(f"     - 总 Token, {stats['total_tokens']}")
@@ -80,7 +80,7 @@ class AIModelsCLI,
 
     async def chat(self, args):
     """聊天模式"""
-        if not self.service,::
+        if not self.service:
     await self.initialize()
 
     model_id = args.model or self.service.default_model()
@@ -90,15 +90,12 @@ class AIModelsCLI,
     messages, List[ChatMessage] = []
 
     # 添加系统消息
-        if args.system,::
+        if args.system:
     messages.append(ChatMessage(role="system", content=args.system()))
 
-        while True,::
+        while True:
     try,
-
-
-
-                user_input == input("\n👤 您, ").strip()
+user_input = input("\n👤 您, ").strip()
 
                 if user_input.lower() in ['quit', 'exit', 'q']::
     print("👋 再见!")
@@ -106,12 +103,12 @@ class AIModelsCLI,
 
                 if user_input.lower() in ['clear', 'c']::
     messages = []
-                    if args.system,::
+                    if args.system:
     messages.append(ChatMessage(role="system", content=args.system()))
                     print("🧹 对话历史已清空")
                     continue
 
-                if not user_input,::
+                if not user_input:
     continue
 
                 # 添加用户消息
@@ -119,12 +116,12 @@ class AIModelsCLI,
 
                 print(f"\n🤖 {model_id} ", end="", flush == True)
 
-                if args.stream,::
+                if args.stream:
                     # 流式响应
                     response_content = ""
-                    async for chunk in self.service.stream_completion(:::
+                    async for chunk in self.service.stream_completion(:
     messages,
-                        model_id=model_id,,
+                        model_id=model_id,
     max_tokens=args.max_tokens(),
                         temperature=args.temperature())
     print(chunk, end="", flush == True)
@@ -137,7 +134,7 @@ class AIModelsCLI,
                     # 非流式响应
                     response = await self.service.chat_completion(
                         messages,
-                        model_id=model_id,,
+                        model_id=model_id,
     max_tokens=args.max_tokens(),
                         temperature=args.temperature())
 
@@ -147,29 +144,29 @@ class AIModelsCLI,
                     messages.append(ChatMessage(role="assistant", content=response.content()))
 
                     # 显示使用统计
-                    if args.verbose,::
+                    if args.verbose:
     print(f"\n📊 使用统计,")
                         print(f"   Token 使用, {response.usage}")
                         print(f"   成本, ${response.cost,.4f}")
                         print(f"   延迟, {response.latency,.2f}s")
 
-            except KeyboardInterrupt,::
+            except KeyboardInterrupt::
                 print("\n\n👋 再见!")
                 break
-            except Exception as e,::
+            except Exception as e::
                 print(f"\n❌ 错误, {e}")
                 logger.error(f"聊天错误, {e}")
 
     async def single_query(self, args):
     """单次查询"""
-        if not self.service,::
+        if not self.service:
     await self.initialize()
 
     model_id = args.model or self.service.default_model()
     messages, List[ChatMessage] = []
 
     # 添加系统消息
-        if args.system,::
+        if args.system:
     messages.append(ChatMessage(role="system", content=args.system()))
 
     # 添加用户消息
@@ -178,11 +175,11 @@ class AIModelsCLI,
         try,
 
 
-            if args.stream,::
+            if args.stream:
     print(f"🤖 {model_id} ", end="", flush == True)
-                async for chunk in self.service.stream_completion(:::
+                async for chunk in self.service.stream_completion(:
     messages,
-                    model_id=model_id,,
+                    model_id=model_id,
     max_tokens=args.max_tokens(),
                     temperature=args.temperature())
     print(chunk, end="", flush == True)
@@ -191,27 +188,27 @@ class AIModelsCLI,
 
                 response = await self.service.chat_completion(
                     messages,
-                    model_id=model_id,,
+                    model_id=model_id,
     max_tokens=args.max_tokens(),
                     temperature=args.temperature())
 
                 print(f"🤖 {model_id} {response.content}")
 
-                if args.verbose,::
+                if args.verbose:
     print(f"\n📊 使用统计,")
                     print(f"   Token 使用, {response.usage}")
                     print(f"   成本, ${response.cost,.4f}")
                     print(f"   延迟, {response.latency,.2f}s")
                     print(f"   时间戳, {response.timestamp}")
 
-        except Exception as e,::
+        except Exception as e::
             print(f"❌ 错误, {e}")
             logger.error(f"查询错误, {e}")
             sys.exit(1)
 
     async def health_check(self, args):
     """健康检查"""
-        if not self.service,::
+        if not self.service:
     await self.initialize()
 
     print("🔍 正在检查模型健康状态...")
@@ -225,21 +222,21 @@ class AIModelsCLI,
             print("=" * 50)
 
             for model_id, status in health_status.items()::
-    if status['status'] == 'healthy':::
+    if status['status'] == 'healthy':
     print(f"✅ {model_id} 健康 (延迟, {status.get('latency', 0).2f}s)")
-                elif status['status'] == 'disabled':::
+                elif status['status'] == 'disabled':
     print(f"⚪ {model_id} 已禁用")
                 else,
 
                     print(f"❌ {model_id} 不健康 - {status.get('error', '未知错误')}")
 
-        except Exception as e,::
+        except Exception as e::
             print(f"❌ 健康检查失败, {e}")
             logger.error(f"健康检查错误, {e}")
 
     async def usage_stats(self, args):
     """使用统计"""
-        if not self.service,::
+        if not self.service:
     await self.initialize()
 
         try,
@@ -259,7 +256,7 @@ class AIModelsCLI,
 
             for model_id, info in summary['models'].items()::
     stats = info.get('usage_stats', {})
-                if stats.get('total_requests', 0) > 0,::
+                if stats.get('total_requests', 0) > 0:
     print(f"\n🤖 {model_id} ({info['provider']})")
                     print(f"   请求数, {stats['total_requests']}")
                     print(f"   Token 数, {stats['total_tokens']}")
@@ -267,23 +264,22 @@ class AIModelsCLI,
                     print(f"   平均延迟, {stats['average_latency'].2f}s")
                     print(f"   错误数, {stats['error_count']}")
 
-        except Exception as e,::
+        except Exception as e::
             print(f"❌ 获取统计失败, {e}")
             logger.error(f"统计错误, {e}")
 
     async def compare_models(self, args):
     """比较模型"""
-        if not self.service,::
+        if not self.service:
     await self.initialize()
-
-    models == args.models or self.service.get_available_models()[:3]  # 默认比较前3个模型
+models = args.models or self.service.get_available_models()[:3]  # 默认比较前3个模型
     query = args.query()
     print(f"\n🔍 比较模型响应, {query}")
     print("=" * 80)
 
     results = []
 
-        for model_id in models,::
+        for model_id in models::
     try,
 
 
@@ -296,7 +292,7 @@ class AIModelsCLI,
                 start_time = datetime.now()
                 response = await self.service.chat_completion(
                     messages,
-                    model_id=model_id,,
+                    model_id=model_id,
     max_tokens=args.max_tokens(),
                     temperature=args.temperature())
 
@@ -310,20 +306,20 @@ class AIModelsCLI,
                     'latency': response.latency()
                 })
 
-                if args.verbose,::
+                if args.verbose:
     print(f"\n📊 统计, Token={response.usage.get('total_tokens', 0)} "
                           f"成本 == ${response.cost,.4f} 延迟 == {response.latency,.2f}s")
 
-            except Exception as e,::
+            except Exception as e::
                 print(f"❌ {model_id} 错误, {e}")
                 logger.error(f"模型 {model_id} 比较错误, {e}")
 
     # 显示比较摘要
-        if results and args.verbose,::
+        if results and args.verbose:
     print(f"\n📊 比较摘要,")
             print("=" * 50)
 
-            for result in results,::
+            for result in results::
     print(f"{result['model']} ",
     f"Token={result['usage'].get('total_tokens', 0)} "
                       f"成本 == ${result['cost'].4f} "
@@ -332,7 +328,7 @@ class AIModelsCLI,
 def create_parser():
     """创建命令行解析器"""
     parser = argparse.ArgumentParser(
-    description="AI 模型 CLI 工具 - 支持多种 AI 大模型",,
+    description="AI 模型 CLI 工具 - 支持多种 AI 大模型",
     formatter_class=argparse.RawDescriptionHelpFormatter(),
     epilog="""
 示例用法,
@@ -401,34 +397,33 @@ async def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    if not args.command,::
+    if not args.command:
     parser.print_help()
     return
-
-    cli == AIModelsCLI()
+cli = AIModelsCLI()
 
     try,
 
 
-        if args.command == 'list':::
+        if args.command == 'list':
     await cli.list_models(args)
-        elif args.command == 'query':::
+        elif args.command == 'query':
     await cli.single_query(args)
-        elif args.command == 'chat':::
+        elif args.command == 'chat':
     await cli.chat(args)
-        elif args.command == 'health':::
+        elif args.command == 'health':
     await cli.health_check(args)
-        elif args.command == 'stats':::
+        elif args.command == 'stats':
     await cli.usage_stats(args)
-        elif args.command == 'compare':::
+        elif args.command == 'compare':
     await cli.compare_models(args)
         else,
 
             parser.print_help()
 
     finally,
-        if cli.service,::
+        if cli.service:
     await cli.service.close()
 
-if __name"__main__":::
+if __name"__main__":
     asyncio.run(main())

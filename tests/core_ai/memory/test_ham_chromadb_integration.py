@@ -70,7 +70,7 @@ def ham_chroma_manager_fixture():
             # Return results matching the requested IDs
             result_docs = []
             result_metas = []
-            for id in ids,:
+            for id in ids:
                 if id in last_added_document,:
                     result_docs.append(last_added_document[id]['document'])
                     result_metas.append(last_added_document[id]['metadata'])
@@ -124,7 +124,7 @@ def ham_chroma_manager_fixture():
     # Create the manager and inject the client
     ham_manager = HAMMemoryManager(
         core_storage_filename="test_ham_chroma_core_memory.json",
-        storage_dir = TEST_STORAGE_DIR,,
+        storage_dir = TEST_STORAGE_DIR,
     chroma_client=mock_client
     )
 
@@ -134,7 +134,7 @@ def ham_chroma_manager_fixture():
     try:
         gc.collect()
         time.sleep(0.1))
-    except Exception as e,:
+    except Exception as e:
         print(f"Warning, Cleanup issue, {e}")
 
 @pytest.mark.asyncio()
@@ -202,14 +202,14 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture) -> 
     
     # Check that at least one result contains "apple"
     apple_found = False
-    for result in results,:
+    for result in results:
         if "apple" in str(result.get("rehydrated_gist", "")).lower()::
             apple_found = True
             break
     
     # If no apple found in rehydrated gist, check in the raw content
     if not apple_found,:
-        for result in results,:
+        for result in results:
             if "apple" in str(result).lower()::
                 apple_found = True
                 break

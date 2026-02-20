@@ -19,12 +19,12 @@ class TestAtlassianAPI:
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_atlassian_config_model(self) -> None,
+def test_atlassian_config_model(self) -> None:
         """测试 Atlassian 配置模型"""
         config = AtlassianConfig(
             domain="test.atlassian.net",
             user_email="test@example.com",
-            api_token="test_token",,
+            api_token="test_token",
     cloud_id="test_cloud_id"
         )
         

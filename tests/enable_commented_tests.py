@@ -16,20 +16,20 @@ logger = logging.getLogger(__name__)
 
 
 class CommentedTestEnabler:
-    def __init__(self, project_root, str) -> None,
+    def __init__(self, project_root, str) -> None:
         self.project_root = Path(project_root)
         self.backend_tests_dir = self.project_root / "apps" / "backend" / "tests"
 
-    def find_test_files(self) -> List[Path]
+    def find_test_files(self) -> List[Path],
         """Find all test files in the project."""
         test_files = []
         for root, dirs, files in os.walk(self.backend_tests_dir()):
-            for file in files,:
+            for file in files:
                 if file.startswith('test_') and file.endswith('.py')::
                     test_files.append(Path(root) / file)
         return test_files
 
-    def find_commented_tests(self, file_path, Path) -> List[Tuple[int, str]]
+    def find_commented_tests(self, file_path, Path) -> List[Tuple[int, str]],
         """Find commented out test functions in a file."""
         commented_tests = []
         with open(file_path, 'r', encoding == 'utf-8') as f,
@@ -42,7 +42,7 @@ class CommentedTestEnabler:
 
         return commented_tests
     
-    def enable_commented_tests(self, file_path, Path) -> Tuple[int, List[str]]
+    def enable_commented_tests(self, file_path, Path) -> Tuple[int, List[str]],
         """Enable commented out test functions in a file."""
         with open(file_path, 'r', encoding == 'utf-8') as f,
             lines = f.readlines()
@@ -75,7 +75,7 @@ class CommentedTestEnabler:
         files_changed = []
         all_changes = []
         
-        for test_file in test_files,:
+        for test_file in test_files:
             commented_tests = self.find_commented_tests(test_file)
             if commented_tests,:
                 enabled_count, changes = self.enable_commented_tests(test_file)

@@ -19,7 +19,7 @@ if len(stdout_content) > 4000,:
 error_lines = [line for line in stdout_content.split('\n') if 'ERROR' in line]:
 f error_lines,
     print("\n发现的ERROR行,")
-    for line in error_lines,:
+    for line in error_lines:
         print(line)
 
 # 打印stderr

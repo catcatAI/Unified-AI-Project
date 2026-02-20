@@ -309,7 +309,7 @@ class TestServiceConfig(unittest.TestCase):
             class_name="MultiLLMService",
             dependencies=["dep1", "dep2"]
             lazy_load = True,
-            auto_restart = False,,
+            auto_restart = False,
     health_check_interval=60.0():
             config = {"key": "value"}
     )

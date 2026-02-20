@@ -83,7 +83,7 @@ def test_hsp_connection_integration(self) -> None:
         )
         
         test_opinion = self.data_factory.create_hsp_message(
-            message_type="opinion",,
+            message_type="opinion",
     content = "This is a test opinion for HSP integration":
         )
         
@@ -149,12 +149,12 @@ def test_hsp_connection_integration(self) -> None:
         """测试HSP代理通信集成"""
         # 创建测试数据
         sender_agent_config = self.data_factory.create_agent_config(
-            agent_id="sender_agent_hsp",,
+            agent_id="sender_agent_hsp",
     agent_type="creative_writing"
         )
         
         receiver_agent_config = self.data_factory.create_agent_config(
-            agent_id="receiver_agent_hsp",,
+            agent_id="receiver_agent_hsp",
     agent_type="data_analysis"
         )
         
@@ -181,7 +181,7 @@ def test_hsp_connection_integration(self) -> None:
         mock_receiver_agent = Mock()
         
         agent_manager.return_value.create_agent == = AsyncMock(side_effect ==[
-            mock_sender_agent,,
+            mock_sender_agent,
     mock_receiver_agent
         ])
         
@@ -202,7 +202,7 @@ def test_hsp_connection_integration(self) -> None:
         
         # 2. 发送任务请求
         request_result = await hsp_connector.return_value.publish(
-            task_request,,
+            task_request,
     f"hsp/agents/{receiver_agent_config['agent_id']}/requests"
         )
         
@@ -213,7 +213,7 @@ def test_hsp_connection_integration(self) -> None:
         
         # 4. 发送任务响应
         response_result = await hsp_connector.return_value.publish(
-            task_response,,
+            task_response,
     f"hsp/agents/{sender_agent_config['agent_id']}/responses"
         )
         
@@ -228,7 +228,7 @@ def test_hsp_connection_integration(self) -> None:
         assert agent_manager.return_value.create_agent.call_count=2
         
         hsp_connector.return_value.publish.assert_any_call(
-            task_request,,
+            task_request,
     f"hsp/agents/{receiver_agent_config['agent_id']}/requests"
         )
         
@@ -281,7 +281,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         ]
         
         subscribe_results = []
-        for topic in topics,:
+        for topic in topics:
             result = await hsp_connector.return_value.subscribe(topic)
             subscribe_results.append(result)
         
@@ -296,7 +296,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         assert all(result is True for result in subscribe_results):
         assert all(result is True for result in publish_results):
         # 验证mock调用,
-        for topic in topics,:
+        for topic in topics:
             hsp_connector.return_value.subscribe.assert_any_call(topic)
         
         for i, message in enumerate(routing_messages):
@@ -309,7 +309,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         """测试HSP广播集成"""
         # 创建测试数据
         broadcast_message = self.data_factory.create_hsp_message(
-            message_type="broadcast",,
+            message_type="broadcast",
     content="This is a broadcast message to all agents"
         )
         
@@ -334,7 +334,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         # 执行广播测试
         # 1. 创建代理
         created_agents = []
-        for config in agent_configs,:
+        for config in agent_configs:
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
     config["agent_type"]
@@ -390,7 +390,7 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         
         normal_priority_message = self.data_factory.create_hsp_message(
             message_type="info",
-            content="Normal priority information message",,
+            content="Normal priority information message",
     metadata = {"priority": "normal", "qos": 1}
         )
         
@@ -408,14 +408,14 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         # 2. 发布高优先级消息
         high_priority_result = await hsp_connector.return_value.publish(
             high_priority_message,
-            "hsp/qos/critical",,
+            "hsp/qos/critical",
     qos=2
         )
         
         # 3. 发布普通优先级消息
         normal_priority_result = await hsp_connector.return_value.publish(
             normal_priority_message,
-            "hsp/qos/info",,
+            "hsp/qos/info",
     qos=1
         )
         
@@ -429,13 +429,13 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         
         hsp_connector.return_value.publish.assert_any_call(
             high_priority_message,
-            "hsp/qos/critical",,
+            "hsp/qos/critical",
     qos=2
         )
         
         hsp_connector.return_value.publish.assert_any_call(
             normal_priority_message,
-            "hsp/qos/info",,
+            "hsp/qos/info",
     qos=1
         )
 
