@@ -305,6 +305,7 @@ OPENAI_API_KEY=sk-... pytest tests/integration/test_openai_live.py -v
 ---
 
 ### [ ] Task 2.3: Implement Anthropic Claude Backend
+<!-- chat-id: b06df3dd-dd7d-4e93-9b56-61c5c524bad1 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.2.1
