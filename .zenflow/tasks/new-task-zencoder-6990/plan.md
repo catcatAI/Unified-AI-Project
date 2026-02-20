@@ -588,6 +588,7 @@ pytest tests/integration/test_memory_aware_conversation.py -v
 ---
 
 ### [ ] Task 3.2: Implement Automatic Memory Storage
+<!-- chat-id: 5164fa22-afe7-4488-8682-9304435ddc23 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.3
