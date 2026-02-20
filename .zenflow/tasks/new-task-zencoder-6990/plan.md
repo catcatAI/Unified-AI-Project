@@ -342,6 +342,7 @@ ANTHROPIC_API_KEY=sk-ant-... pytest tests/integration/test_anthropic_live.py -v
 ---
 
 ### [ ] Task 2.4: Implement Google Gemini Backend
+<!-- chat-id: 10b5ddcf-dd84-4a1d-baf4-bc9a7f5b75f6 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.2.1
