@@ -627,6 +627,7 @@ python -c "from apps.backend.src.ai.memory.ham_memory.ham_manager import HAMMemo
 ---
 
 ### [ ] Task 3.3: Create Memory Template Library
+<!-- chat-id: 0297fbb6-c144-4401-8f75-676c908bd899 -->
 **Owner**: 3号 (Research/Optimization)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.3
