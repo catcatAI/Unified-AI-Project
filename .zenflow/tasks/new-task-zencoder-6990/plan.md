@@ -704,6 +704,7 @@ python benchmarks/memory_retrieval_benchmark.py
 ### Phase 4: Desktop Application Optimization (1-2 weeks)
 
 ### [ ] Task 4.1: Implement FPS Optimization and Performance Modes
+<!-- chat-id: b8a46e13-53f8-48c5-b070-313a22d2899f -->
 **Owner**: 3号 (Research/Optimization)  
 **Estimated Time**: 3 days  
 **References**: spec.md § 2.4
