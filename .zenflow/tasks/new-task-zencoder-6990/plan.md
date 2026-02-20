@@ -931,6 +931,7 @@ pytest tests/test_device_sync.py -v
 ---
 
 ### [ ] Task 5.3: Security Audit and Vulnerability Fixes
+<!-- chat-id: 2553acca-4ea6-4405-9c1c-49300b9cd2d4 -->
 **Owner**: 4号 (QA/Release Manager)  
 **Estimated Time**: 2-3 days  
 **References**: spec.md § 2.5
