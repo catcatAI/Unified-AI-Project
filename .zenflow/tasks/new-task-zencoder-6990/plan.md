@@ -894,6 +894,7 @@ python -c "from apps.backend.src.security.abc_key_manager_enhanced import ABCKey
 ---
 
 ### [ ] Task 5.2: Enhance Multi-Device Sync
+<!-- chat-id: 94c41c8a-ca34-4dc3-97df-f71f81b90470 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 2.5
