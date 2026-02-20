@@ -551,6 +551,7 @@ pytest tests/integration/test_end_to_end_conversation.py -v --durations=0
 ### Phase 3: HAM Memory System Enhancement (1-2 weeks)
 
 ### [ ] Task 3.1: Integrate Memory Retrieval into LLM Context
+<!-- chat-id: bc6989ca-d326-4de1-ac4e-b0b16aa298dd -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2-3 days  
 **References**: spec.md § 2.3
