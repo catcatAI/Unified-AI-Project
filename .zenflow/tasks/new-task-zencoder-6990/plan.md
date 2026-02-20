@@ -968,6 +968,7 @@ grep -r "API_KEY.*=" apps/
 ---
 
 ### [ ] Task 5.4: Update Documentation and Deployment Guide
+<!-- chat-id: 29b82825-229a-4546-8098-962a58a9892e -->
 **Owner**: 4号 (QA/Release Manager)  
 **Estimated Time**: 2 days  
 **References**: spec.md § 10
