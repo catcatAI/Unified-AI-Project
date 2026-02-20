@@ -168,6 +168,7 @@ python scripts/unified_auto_fixer.py --check
 ---
 
 ### [ ] Task 1.2: Achieve 90% Test Pass Rate
+<!-- chat-id: 044011ea-589d-4850-8a69-ebfb3591b9e0 -->
 **Owner**: 2号 (Implementation Developer)  
 **Estimated Time**: 2-3 days  
 **References**: spec.md § 2.1
