@@ -6,12 +6,23 @@
 
 import json
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Test the JSON serialization that was fixed in the tests
 mock_decomposed_plan = [
-    {"capability_needed": "analyze_csv_data", "task_parameters": {"source": "data.csv"}, "dependencies": []},
-    {"capability_needed": "generate_marketing_copy", "task_parameters": {"product_description": "Our new product, which is based on the analysis: <output_of_task_0>"}, "dependencies": [0]}
+    {
+        "capability_needed": "analyze_csv_data",
+        "task_parameters": {"source": "data.csv"},
+        "dependencies": [],
+    },
+    {
+        "capability_needed": "generate_marketing_copy",
+        "task_parameters": {
+            "product_description": "Our new product, which is based on the analysis: <output_of_task_0>"
+        },
+        "dependencies": [0],
+    },
 ]
 
 # Test serialization

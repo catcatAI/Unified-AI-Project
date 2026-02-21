@@ -20,7 +20,7 @@ import logging
 from datetime import datetime
 
 # 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from apps.backend.src.ai.memory.memory_template import (
     MemoryTemplate,
@@ -28,15 +28,18 @@ from apps.backend.src.ai.memory.memory_template import (
     AngelaState,
     UserImpression,
     generate_template_id,
-    create_template
+    create_template,
 )
-from apps.backend.src.ai.memory.template_library import TemplateLibrary, PredefinedTemplate, get_template_library
+from apps.backend.src.ai.memory.template_library import (
+    TemplateLibrary,
+    PredefinedTemplate,
+    get_template_library,
+)
 from apps.backend.src.ai.memory.precompute_service import PrecomputeService, PrecomputeTask
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -45,20 +48,18 @@ class TestMemoryEnhancement:
     """记忆增强系统测试类"""
 
     def __init__(self):
-        self.results = {
-            "passed": 0,
-            "failed": 0,
-            "tests": []
-        }
+        self.results = {"passed": 0, "failed": 0, "tests": []}
 
     def record_test(self, name: str, passed: bool, details: str = ""):
         """记录测试结果"""
-        self.results["tests"].append({
-            "name": name,
-            "passed": passed,
-            "details": details,
-            "timestamp": datetime.utcnow().isoformat()
-        })
+        self.results["tests"].append(
+            {
+                "name": name,
+                "passed": passed,
+                "details": details,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
 
         if passed:
             self.results["passed"] += 1
@@ -75,7 +76,7 @@ class TestMemoryEnhancement:
                 content="你好！见到你真开心~",
                 category=ResponseCategory.GREETING,
                 keywords=["你好", "开心"],
-                metadata={"test": True}
+                metadata={"test": True},
             )
 
             # 测试序列化
@@ -95,9 +96,8 @@ class TestMemoryEnhancement:
 
             self.record_test("模板创建和序列化", True)
         except Exception as e:
-            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
+            logger.error(f"Error in test_memory_enhancement.py: {e}", exc_info=True)
             self.record_test("模板创建和序列化", False, str(e))
-
 
     def test_2_template_retrieval(self):
         """测试 2: 模板检索功能"""
@@ -122,9 +122,8 @@ class TestMemoryEnhancement:
 
             self.record_test("模板检索功能", True, f"共 {len(all_templates)} 个模板")
         except Exception as e:
-            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
+            logger.error(f"Error in test_memory_enhancement.py: {e}", exc_info=True)
             self.record_test("模板检索功能", False, str(e))
-
 
     def test_3_state_similarity_calculation(self):
         """测试 3: 状态相似度计算"""
@@ -134,14 +133,14 @@ class TestMemoryEnhancement:
                 alpha={"energy": 0.8},
                 beta={"happy": 0.9},
                 gamma={"thinking": 0.3},
-                delta={"tired": 0.2}
+                delta={"tired": 0.2},
             )
 
             state2 = AngelaState(
                 alpha={"energy": 0.7},
                 beta={"happy": 0.8},
                 gamma={"thinking": 0.4},
-                delta={"tired": 0.3}
+                delta={"tired": 0.3},
             )
 
             # 创建两个不同的状态
@@ -149,7 +148,7 @@ class TestMemoryEnhancement:
                 alpha={"energy": 0.2},
                 beta={"sad": 0.9},
                 gamma={"thinking": 0.8},
-                delta={"tired": 0.9}
+                delta={"tired": 0.9},
             )
 
             # 计算相似度（简化版本，实际应该在 QueryEngine 中测试）
@@ -161,9 +160,8 @@ class TestMemoryEnhancement:
 
             self.record_test("状态相似度计算", True)
         except Exception as e:
-            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
+            logger.error(f"Error in test_memory_enhancement.py: {e}", exc_info=True)
             self.record_test("状态相似度计算", False, str(e))
-
 
     def test_4_precompute_service(self):
         """测试 4: 预计算服务"""
@@ -175,11 +173,8 @@ class TestMemoryEnhancement:
             class MockLLMService:
                 async def generate_response(self, query, context):
                     from apps.backend.src.services.angela_llm_service import LLMResponse
-                    return LLMResponse(
-                        text=f"回应: {query}",
-                        backend="mock",
-                        model="test"
-                    )
+
+                    return LLMResponse(text=f"回应: {query}", backend="mock", model="test")
 
             # 创建模拟的记忆管理器
             class MockMemoryManager:
@@ -190,7 +185,7 @@ class TestMemoryEnhancement:
                 llm_service=MockLLMService(),
                 memory_manager=MockMemoryManager(),
                 idle_threshold=1.0,
-                cpu_threshold=90.0
+                cpu_threshold=90.0,
             )
 
             # 启动服务
@@ -203,7 +198,7 @@ class TestMemoryEnhancement:
                 keywords=["测试"],
                 angela_state=AngelaState(),
                 user_impression=UserImpression(),
-                context={}
+                context={},
             )
 
             success = service.add_precompute_task(task)
@@ -218,9 +213,8 @@ class TestMemoryEnhancement:
 
             self.record_test("预计算服务", True, f"队列大小: {stats['queue_size']}")
         except Exception as e:
-            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
+            logger.error(f"Error in test_memory_enhancement.py: {e}", exc_info=True)
             self.record_test("预计算服务", False, str(e))
-
 
     def test_5_template_library_completeness(self):
         """测试 5: 模板库完整性"""
@@ -239,7 +233,7 @@ class TestMemoryEnhancement:
                 ResponseCategory.GREETING,
                 ResponseCategory.FAREWELL,
                 ResponseCategory.EMOTIONAL,
-                ResponseCategory.SMALL_TALK
+                ResponseCategory.SMALL_TALK,
             ]
 
             for category in required_categories:
@@ -247,9 +241,8 @@ class TestMemoryEnhancement:
 
             self.record_test("模板库完整性", True, f"共 {len(all_templates)} 个模板")
         except Exception as e:
-            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
+            logger.error(f"Error in test_memory_enhancement.py: {e}", exc_info=True)
             self.record_test("模板库完整性", False, str(e))
-
 
     def test_6_user_impression_model(self):
         """测试 6: 用户印象模型"""
@@ -258,7 +251,7 @@ class TestMemoryEnhancement:
                 relationship_level=0.7,
                 preferred_style="casual",
                 interaction_count=50,
-                tags=["friendly", "talkative"]
+                tags=["friendly", "talkative"],
             )
 
             # 测试序列化
@@ -273,9 +266,8 @@ class TestMemoryEnhancement:
 
             self.record_test("用户印象模型", True)
         except Exception as e:
-            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
+            logger.error(f"Error in test_memory_enhancement.py: {e}", exc_info=True)
             self.record_test("用户印象模型", False, str(e))
-
 
     async def test_7_end_to_end_dialogue_simulation(self):
         """测试 7: 端到端对话模拟"""
@@ -299,18 +291,13 @@ class TestMemoryEnhancement:
                         text=f"这是对 '{query}' 的回應 #{self.response_count}",
                         backend="mock",
                         model="test",
-                        confidence=0.9
+                        confidence=0.9,
                     )
 
             llm_service = MockLLMService()
 
             # 模拟对话
-            queries = [
-                "你好！",
-                "今天天气怎么样？",
-                "你觉得怎么样？",
-                "再见！"
-            ]
+            queries = ["你好！", "今天天气怎么样？", "你觉得怎么样？", "再见！"]
 
             response_times = []
 
@@ -326,15 +313,10 @@ class TestMemoryEnhancement:
             # 计算平均响应时间
             avg_response_time = sum(response_times) / len(response_times)
 
-            self.record_test(
-                "端到端对话模拟",
-                True,
-                f"平均响应时间: {avg_response_time:.0f}ms"
-            )
+            self.record_test("端到端对话模拟", True, f"平均响应时间: {avg_response_time:.0f}ms")
         except Exception as e:
-            logger.error(f'Error in test_memory_enhancement.py: {e}', exc_info=True)
+            logger.error(f"Error in test_memory_enhancement.py: {e}", exc_info=True)
             self.record_test("端到端对话模拟", False, str(e))
-
 
     def run_all_tests(self):
         """运行所有测试"""
@@ -362,9 +344,8 @@ class TestMemoryEnhancement:
         logger.info(f"总计: {self.results['passed'] + self.results['failed']}")
 
         success_rate = (
-            self.results['passed'] /
-            (self.results['passed'] + self.results['failed'])
-            if (self.results['passed'] + self.results['failed']) > 0
+            self.results["passed"] / (self.results["passed"] + self.results["failed"])
+            if (self.results["passed"] + self.results["failed"]) > 0
             else 0
         )
         logger.info(f"成功率: {success_rate * 100:.1f}%")
@@ -378,7 +359,7 @@ def main():
     results = tester.run_all_tests()
 
     # 返回退出码
-    return 0 if results['failed'] == 0 else 1
+    return 0 if results["failed"] == 0 else 1
 
 
 if __name__ == "__main__":

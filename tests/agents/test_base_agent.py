@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch, AsyncMock
 
 from ai.agents.base.base_agent import BaseAgent
 
+
 @pytest.fixture
 def base_agent():
     """Create a BaseAgent instance for testing."""
@@ -13,10 +14,11 @@ def base_agent():
             "capability_id": "test_capability_1",
             "name": "Test Capability",
             "description": "A test capability",
-            "version": "1.0"
+            "version": "1.0",
         }
     ]
     return BaseAgent(agent_id=agent_id, capabilities=capabilities, agent_name="TestAgent")
+
 
 @pytest.mark.asyncio
 async def test_base_agent_initialization(base_agent) -> None:
@@ -27,6 +29,7 @@ async def test_base_agent_initialization(base_agent) -> None:
     assert base_agent.capabilities[0]["name"] == "Test Capability"
     assert base_agent.hsp_connector is None
     assert base_agent.is_running is False
+
 
 @pytest.mark.asyncio
 async def test_base_agent_start(base_agent) -> None:
@@ -47,11 +50,16 @@ async def test_base_agent_start(base_agent) -> None:
     assert base_agent.is_running is True
     assert base_agent.hsp_connector == mock_hsp_connector
     if base_agent.hsp_connector:
-        base_agent.hsp_connector.register_on_task_request_callback.assert_called_once_with(base_agent.handle_task_request)
+        base_agent.hsp_connector.register_on_task_request_callback.assert_called_once_with(
+            base_agent.handle_task_request
+        )
 
     # Test that capabilities are advertised
     if base_agent.hsp_connector:
-        assert base_agent.hsp_connector.advertise_capability.call_count == len(base_agent.capabilities)
+        assert base_agent.hsp_connector.advertise_capability.call_count == len(
+            base_agent.capabilities
+        )
+
 
 @pytest.mark.asyncio
 async def test_base_agent_stop(base_agent) -> None:
@@ -72,6 +80,7 @@ async def test_base_agent_stop(base_agent) -> None:
     # Verify that the connector's disconnect method was called
     mock_hsp_connector.disconnect.assert_called_once()
 
+
 @pytest.mark.asyncio
 async def test_base_agent_is_healthy(base_agent) -> None:
     """Test BaseAgent health check."""
@@ -84,7 +93,10 @@ async def test_base_agent_is_healthy(base_agent) -> None:
     health_result = base_agent.is_healthy()
     assert health_result is True
 
-@pytest.mark.skip(reason="handle_task_request是异步的，任务会进入队列并异步处理，测试期望同步行为与实际实现不同")
+
+@pytest.mark.skip(
+    reason="handle_task_request是异步的，任务会进入队列并异步处理，测试期望同步行为与实际实现不同"
+)
 @pytest.mark.asyncio
 async def test_base_agent_handle_task_request(base_agent) -> None:
     """Test BaseAgent default task request handler."""
@@ -93,7 +105,7 @@ async def test_base_agent_handle_task_request(base_agent) -> None:
     task_payload = {
         "request_id": "test_request_123",
         "capability_id_filter": "nonexistent_capability",
-        "callback_address": "test/callback/topic"
+        "callback_address": "test/callback/topic",
     }
 
     await base_agent.handle_task_request(task_payload, "sender_456", {})
@@ -106,6 +118,7 @@ async def test_base_agent_handle_task_request(base_agent) -> None:
     assert result_payload["error_details"]["error_code"] == "NOT_IMPLEMENTED"
     assert "not implemented" in result_payload["error_details"]["error_message"].lower()
 
+
 @pytest.mark.skip(reason="send_task_success方法在当前BaseAgent API中不存在，可能是内部方法")
 @pytest.mark.asyncio
 async def test_base_agent_send_task_success(base_agent) -> None:
@@ -116,7 +129,7 @@ async def test_base_agent_send_task_success(base_agent) -> None:
         request_id="test_request_123",
         sender_ai_id="sender_456",
         callback_address="test/callback/topic",
-        payload={"result": "success"}
+        payload={"result": "success"},
     )
 
     base_agent.hsp_connector.send_task_result.assert_called_once()
@@ -126,6 +139,7 @@ async def test_base_agent_send_task_success(base_agent) -> None:
     assert result_payload["status"] == "success"
     assert result_payload["request_id"] == "test_request_123"
     assert result_payload["payload"] == {"result": "success"}
+
 
 @pytest.mark.skip(reason="send_task_failure方法在当前BaseAgent API中不存在，可能是内部方法")
 @pytest.mark.asyncio
@@ -137,7 +151,7 @@ async def test_base_agent_send_task_failure(base_agent) -> None:
         request_id="test_request_123",
         sender_ai_id="sender_456",
         callback_address="test/callback/topic",
-        error_message="Test error message"
+        error_message="Test error message",
     )
 
     base_agent.hsp_connector.send_task_result.assert_called_once()

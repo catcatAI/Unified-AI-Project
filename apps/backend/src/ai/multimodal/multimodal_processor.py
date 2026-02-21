@@ -20,27 +20,16 @@ class MultimodalProcessor:
             "type": "text",
             "content": text,
             "timestamp": datetime.now().isoformat(),
-            "features": {
-                "length": len(text),
-                "word_count": len(text.split())
-            }
+            "features": {"length": len(text), "word_count": len(text.split())},
         }
 
     def process_image(self, image_data: bytes) -> Dict[str, Any]:
         """处理图像"""
-        return {
-            "type": "image",
-            "size": len(image_data),
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"type": "image", "size": len(image_data), "timestamp": datetime.now().isoformat()}
 
     def process_audio(self, audio_data: bytes) -> Dict[str, Any]:
         """处理音频"""
-        return {
-            "type": "audio",
-            "size": len(audio_data),
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"type": "audio", "size": len(audio_data), "timestamp": datetime.now().isoformat()}
 
     def process_multimodal(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理多模态数据"""

@@ -13,6 +13,7 @@ import os
 import sys
 from pathlib import Path
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 添加项目路径
@@ -37,17 +38,20 @@ print(f"\n检查main_api_server.py是否存在: {main_server.exists()}")
 try:
     print("\n尝试导入主要模块...")
     print("✓ FastAPI导入成功")
-    
+
     # 尝试导入主应用
     sys.path.insert(0, str(project_root))
     print("✓ 主应用导入成功")
-    
+
     # 简单测试
     print("\n服务器准备就绪!")
     print("请手动运行以下命令启动服务器:")
-    print(f"cd {project_root} && python -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000")
-    
+    print(
+        f"cd {project_root} && python -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000"
+    )
+
 except Exception as e:
     print(f"✗ 导入失败: {e}")
     import traceback
+
     traceback.print_exc()

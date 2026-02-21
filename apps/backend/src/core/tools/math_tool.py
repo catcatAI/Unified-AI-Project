@@ -10,6 +10,7 @@ from typing import Optional
 # 導入安全求值器
 try:
     from src.core.security.secure_eval import safe_eval_arithmetic, EvalResult
+
     SECURE_EVAL_AVAILABLE = True
 except ImportError:
     SECURE_EVAL_AVAILABLE = False
@@ -19,6 +20,7 @@ logger = logging.getLogger("math_tool")
 # 尝试导入TensorFlow
 try:
     import tensorflow as tf
+
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
@@ -82,6 +84,7 @@ def extract_arithmetic_problem(text: str) -> Optional[str]:
 
 class ToolDispatcherResponse:
     """工具调度器响应"""
+
     def __init__(self, status: str, payload: Any = None, tool_name_attempted: str = ""):
         self.status = status
         self.payload = payload
@@ -99,9 +102,7 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
         if _tensorflow_import_error:
             error_msg += f" 原因: {_tensorflow_import_error}"
         return ToolDispatcherResponse(
-            status="failure_tool_error",
-            payload=None,
-            tool_name_attempted="calculate"
+            status="failure_tool_error", payload=None, tool_name_attempted="calculate"
         )
 
     # 提取算术问题
@@ -111,7 +112,7 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
         return ToolDispatcherResponse(
             status="failure_tool_error",
             payload="无法从输入中提取算术问题",
-            tool_name_attempted="calculate"
+            tool_name_attempted="calculate",
         )
 
     # 計算結果
@@ -124,34 +125,32 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
                 return ToolDispatcherResponse(
                     status="success",
                     payload=str(eval_result.result),
-                    tool_name_attempted="calculate"
+                    tool_name_attempted="calculate",
                 )
             else:
                 return ToolDispatcherResponse(
                     status="failure_tool_error",
                     payload=f"計算錯誤: {eval_result.error}",
-                    tool_name_attempted="calculate"
+                    tool_name_attempted="calculate",
                 )
         else:
             # 備用方案：使用受限的 eval（僅允許數學運算）
             # 注意：這不是完全安全的，僅作為臨時備用
             allowed_names = {
-                'abs': abs,
-                'round': round,
-                'pow': pow,
-                'min': min,
-                'max': max,
+                "abs": abs,
+                "round": round,
+                "pow": pow,
+                "min": min,
+                "max": max,
             }
             result = eval(problem, {"__builtins__": None}, allowed_names)
             return ToolDispatcherResponse(
-                status="success",
-                payload=str(result),
-                tool_name_attempted="calculate"
+                status="success", payload=str(result), tool_name_attempted="calculate"
             )
     except Exception as e:
         logger.error(f"計算錯誤: {e}, 問題: {problem}")
         return ToolDispatcherResponse(
             status="failure_tool_error",
             payload=f"計算錯誤: {str(e)}",
-            tool_name_attempted="calculate"
+            tool_name_attempted="calculate",
         )

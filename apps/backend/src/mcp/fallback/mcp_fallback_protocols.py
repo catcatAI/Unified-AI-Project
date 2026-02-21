@@ -19,23 +19,29 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 class MCPProtocolStatus(Enum):
     """MCP協議狀態枚舉"""
+
     ACTIVE = "active"
     DEGRADED = "degraded"
     FAILED = "failed"
     DISABLED = "disabled"
 
+
 class MCPMessagePriority(Enum):
     """MCP消息優先級"""
+
     LOW = 1
     NORMAL = 2
     HIGH = 3
     CRITICAL = 4
 
+
 @dataclass
 class MCPFallbackMessage:
     """MCP備用協議消息格式"""
+
     id: str
     sender_id: str
     recipient_id: str
@@ -51,14 +57,14 @@ class MCPFallbackMessage:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         data = asdict(self)
-        data['priority'] = self.priority.value
+        data["priority"] = self.priority.value
         return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
         """從字典創建"""
-        if 'priority' in data:
-            data['priority'] = MCPMessagePriority(data['priority'])
+        if "priority" in data:
+            data["priority"] = MCPMessagePriority(data["priority"])
         return cls(**data)
 
     def is_expired(self) -> bool:
@@ -66,6 +72,7 @@ class MCPFallbackMessage:
         if self.ttl is None:
             return False
         return time.time() - self.timestamp > self.ttl
+
 
 class BaseMCPFallbackProtocol(ABC):
     """MCP備用協議基類"""
@@ -75,10 +82,10 @@ class BaseMCPFallbackProtocol(ABC):
         self.status = MCPProtocolStatus.DISABLED
         self.command_handlers: Dict[str, List[Callable[[Dict[str, Any]], Awaitable[None]]]] = {}
         self.stats: Dict[str, Union[int, float]] = {
-            'commands_sent': 0,
-            'commands_received': 0,
-            'errors': 0,
-            'last_activity': 0.0
+            "commands_sent": 0,
+            "commands_received": 0,
+            "errors": 0,
+            "last_activity": 0.0,
         }
 
     @abstractmethod
@@ -106,7 +113,9 @@ class BaseMCPFallbackProtocol(ABC):
         """健康檢查"""
         pass
 
-    def register_command_handler(self, command_name: str, handler: Callable[[Dict[str, Any]], Awaitable[None]]):
+    def register_command_handler(
+        self, command_name: str, handler: Callable[[Dict[str, Any]], Awaitable[None]]
+    ):
         """註冊命令處理器"""
         if command_name not in self.command_handlers:
             self.command_handlers[command_name] = []
@@ -119,8 +128,8 @@ class BaseMCPFallbackProtocol(ABC):
                 logger.warning(f"丟棄過期命令: {message.id}")
                 return
 
-            self.stats['commands_received'] += 1
-            self.stats['last_activity'] = time.time()
+            self.stats["commands_received"] += 1
+            self.stats["last_activity"] = time.time()
 
             handlers = self.command_handlers.get(message.command_name, [])
             for handler in handlers:
@@ -131,11 +140,12 @@ class BaseMCPFallbackProtocol(ABC):
                         handler(message.parameters)
                 except Exception as e:
                     logger.error(f"命令處理器錯誤: {e}")
-                    self.stats['errors'] += 1
+                    self.stats["errors"] += 1
 
         except Exception as e:
             logger.error(f"處理命令失敗: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
+
 
 class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
     """
@@ -163,12 +173,12 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
         """發送命令到內存隊列"""
         try:
             await self.command_queue.put(message)
-            self.stats['commands_sent'] += 1
-            self.stats['last_activity'] = time.time()
+            self.stats["commands_sent"] += 1
+            self.stats["last_activity"] = time.time()
             return True
         except Exception as e:
             logger.error(f"發送MCP命令失敗: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     async def start_listening(self):
@@ -207,6 +217,7 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
         """健康檢查"""
         return self.status == MCPProtocolStatus.ACTIVE
 
+
 class MCPFileProtocol(BaseMCPFallbackProtocol):
     """MCP文件協議 - 跨進程通訊"""
 
@@ -236,16 +247,16 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
         try:
             filename = f"{message.id}_{int(time.time())}.json"
             filepath = self.outbox_path / filename
-            
-            with open(filepath, 'w', encoding='utf-8') as f:
+
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(message.to_dict(), f, ensure_ascii=False, indent=2)
-                
-            self.stats['commands_sent'] += 1
-            self.stats['last_activity'] = time.time()
+
+            self.stats["commands_sent"] += 1
+            self.stats["last_activity"] = time.time()
             return True
         except Exception as e:
             logger.error(f"寫入MCP命令文件失敗: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     async def start_listening(self):
@@ -275,11 +286,11 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
                 files = list(self.inbox_path.glob("*.json"))
                 for filepath in files:
                     try:
-                        with open(filepath, 'r', encoding='utf-8') as f:
+                        with open(filepath, "r", encoding="utf-8") as f:
                             data = json.load(f)
                             message = MCPFallbackMessage.from_dict(data)
                             await self.handle_command(message)
-                        filepath.unlink() # 刪除已處理的文件
+                        filepath.unlink()  # 刪除已處理的文件
                     except Exception as e:
                         logger.error(f"處理MCP文件命令失敗 {filepath}: {e}")
                 await asyncio.sleep(0.5)
@@ -290,6 +301,7 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
     async def health_check(self) -> bool:
         """健康檢查"""
         return self.status == MCPProtocolStatus.ACTIVE and self.inbox_path.exists()
+
 
 class MCPFallbackManager:
     """MCP備用協議管理器"""
@@ -313,7 +325,7 @@ class MCPFallbackManager:
             if await protocol.initialize():
                 await protocol.start_listening()
                 success = True
-        
+
         if success:
             await self._select_active_protocol()
             self.running = True
@@ -353,8 +365,10 @@ class MCPFallbackManager:
         for _, protocol in self.protocols:
             await protocol.stop_listening()
 
+
 # 全局MCP備用協議管理器實例
 _mcp_fallback_manager: Optional[MCPFallbackManager] = None
+
 
 def get_mcp_fallback_manager() -> MCPFallbackManager:
     """獲取全局MCP備用協議管理器實例"""
@@ -363,13 +377,14 @@ def get_mcp_fallback_manager() -> MCPFallbackManager:
         _mcp_fallback_manager = MCPFallbackManager()
     return _mcp_fallback_manager
 
+
 async def initialize_mcp_fallback_protocols() -> bool:
     """初始化MCP備用協議"""
     manager = get_mcp_fallback_manager()
-    
+
     # 默認添加三種常用協議
     manager.add_protocol(MCPInMemoryProtocol(), priority=1)
     manager.add_protocol(MCPFileProtocol(), priority=2)
     # HTTP 協議暫時省略，因為需要 aiohttp 依賴
-    
+
     return await manager.initialize()

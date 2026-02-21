@@ -2,6 +2,7 @@ class UndefinedField:
     """
     Represents an unknown semantic space.
     """
+
     def __init__(self, context: str):
         self.context = context
 

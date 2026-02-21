@@ -32,6 +32,7 @@ logging.basicConfig(level=logging.INFO)
 @dataclass
 class DependencyStatus:
     """Tracks the status of a dependency."""
+
     name: str
     is_available: bool = False
     error: Optional[str] = None
@@ -47,7 +48,7 @@ class DependencyManager:
     def __init__(self, config_path: Optional[str] = None):
         self._dependencies: Dict[str, DependencyStatus] = {}
         self._config: Dict[str, Any] = {}
-        self._environment = os.getenv('UNIFIED_AI_ENV', 'development')
+        self._environment = os.getenv("UNIFIED_AI_ENV", "development")
 
         if config_path is None:
             # Correctly locate the project root and then the config file
@@ -64,11 +65,13 @@ class DependencyManager:
             config_path = Path(config_path)
             if config_path.exists():
                 if yaml is not None:
-                    with open(config_path, 'r', encoding='utf-8') as f:
+                    with open(config_path, "r", encoding="utf-8") as f:
                         self._config = yaml.safe_load(f) or {}
                     logger.info(f"Loaded dependency configuration from {config_path}")
                 else:
-                    logger.warning(f"YAML module not available, skipping config loading from {config_path}")
+                    logger.warning(
+                        f"YAML module not available, skipping config loading from {config_path}"
+                    )
                     self._config = {}
             else:
                 logger.warning(f"Dependency configuration file not found: {config_path}")
@@ -79,7 +82,7 @@ class DependencyManager:
 
     def _setup_dependency_statuses(self):
         """Initialize dependency status tracking from the loaded config."""
-        dependencies = self._config.get('dependencies', {})
+        dependencies = self._config.get("dependencies", {})
         for name, config in dependencies.items():
             self._dependencies[name] = DependencyStatus(name=name)
         logger.info(f"Initialized {len(self._dependencies)} dependencies")
@@ -103,8 +106,8 @@ class DependencyManager:
             dep_status.error = str(e)
             logger.warning(f"Failed to load dependency {name}: {e}")
 
-            config = self._config.get('dependencies', {}).get(name, {})
-            fallback_name = config.get('fallback')
+            config = self._config.get("dependencies", {}).get(name, {})
+            fallback_name = config.get("fallback")
             if fallback_name:
                 try:
                     dep_status.fallback_module = importlib.import_module(fallback_name)
@@ -112,7 +115,9 @@ class DependencyManager:
                     dep_status.fallback_name = fallback_name
                     logger.info(f"Using fallback {fallback_name} for {name}")
                 except ImportError as fallback_error:
-                    logger.error(f"Failed to load fallback {fallback_name} for {name}: {fallback_error}")
+                    logger.error(
+                        f"Failed to load fallback {fallback_name} for {name}: {fallback_error}"
+                    )
                     dep_status.fallback_available = False
                     dep_status.fallback_name = None
 

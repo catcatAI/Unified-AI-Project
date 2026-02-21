@@ -24,6 +24,7 @@ from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessa
 
 logger = logging.getLogger(__name__)
 
+
 class ImageGenerationAgent(BaseAgent):
     """
     A specialized agent for image generation tasks.
@@ -37,16 +38,25 @@ class ImageGenerationAgent(BaseAgent):
                 "description": "Generates images from text prompts.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "prompt", "type": "string", "required": True, "description": "Image prompt"}
+                    {
+                        "name": "prompt",
+                        "type": "string",
+                        "required": True,
+                        "description": "Image prompt",
+                    }
                 ],
-                "returns": {"type": "string", "description": "Base64 encoded image or URL."}
+                "returns": {"type": "string", "description": "Base64 encoded image or URL."},
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities, agent_name="ImageGenerationAgent")
+        super().__init__(
+            agent_id=agent_id, capabilities=capabilities, agent_name="ImageGenerationAgent"
+        )
 
         # Register handlers
         self.register_task_handler(f"{agent_id}_generate_image_v1.0", self._handle_generate_image)
 
-    async def _handle_generate_image(self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope) -> Dict[str, Any]:
+    async def _handle_generate_image(
+        self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
+    ) -> Dict[str, Any]:
         params = payload.get("parameters", {})
         return {"image_data": "base64_placeholder", "prompt": params.get("prompt", "")}

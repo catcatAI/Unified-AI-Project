@@ -4,6 +4,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class AIOpsEngine:
     """
     AI Ops Engine for managing and optimizing AI operations.
@@ -40,7 +41,7 @@ class AIOpsEngine:
         """
         logger.debug(f"Detecting anomaly in data: {data}")
         # Simple placeholder: detect if a 'value' exceeds a threshold
-        if 'value' in data and data['value'] > self.config.get('anomaly_threshold', 100):
+        if "value" in data and data["value"] > self.config.get("anomaly_threshold", 100):
             logger.warning(f"Anomaly detected: value {data['value']} exceeds threshold.")
             return True
         return False
@@ -51,7 +52,10 @@ class AIOpsEngine:
         This is a placeholder for actual automated response logic.
         """
         logger.info(f"Triggering automated response for anomaly: {anomaly_details}")
-        response = {"status": "response_initiated", "details": f"Handled anomaly: {anomaly_details.get('message', 'N/A')}"}
+        response = {
+            "status": "response_initiated",
+            "details": f"Handled anomaly: {anomaly_details.get('message', 'N/A')}",
+        }
         # In a real system, this would involve more complex actions like:
         # - Scaling resources
         # - Restarting services
@@ -63,8 +67,9 @@ class AIOpsEngine:
         return {
             "monitoring_active": self.monitoring_active,
             "config": self.config,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

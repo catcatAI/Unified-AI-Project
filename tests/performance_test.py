@@ -10,6 +10,7 @@ import threading
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import logging
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"
@@ -38,7 +39,7 @@ for method, path in endpoints:
         response_time = time.time() - start_time
         print(f"  {method} {path}: {response_time:.3f}s (狀態: {response.status_code})")
     except Exception as e:
-        logger.error(f'Error in performance_test.py: {e}', exc_info=True)
+        logger.error(f"Error in performance_test.py: {e}", exc_info=True)
         response_time = time.time() - start_time
 
         print(f"  {method} {path}: {response_time:.3f}s (錯誤: {e})")
@@ -66,6 +67,8 @@ print()
 
 # 測試 3: 並發請求
 print("【測試 3: 並發請求】")
+
+
 def make_request(request_id):
     start_time = time.time()
     try:
@@ -73,10 +76,11 @@ def make_request(request_id):
         response_time = time.time() - start_time
         return request_id, response_time, response.status_code, None
     except Exception as e:
-        logger.error(f'Error in performance_test.py: {e}', exc_info=True)
+        logger.error(f"Error in performance_test.py: {e}", exc_info=True)
         response_time = time.time() - start_time
 
         return request_id, response_time, None, str(e)
+
 
 concurrent_levels = [1, 5, 10, 20]
 for concurrent in concurrent_levels:
@@ -103,6 +107,7 @@ print()
 # 測試 4: 資源使用監控
 print("【測試 4: 資源使用監控】")
 import psutil
+
 cpu_before = psutil.cpu_percent(interval=1)
 memory_before = psutil.virtual_memory().percent
 

@@ -9,9 +9,11 @@ import websockets
 import json
 from datetime import datetime
 import logging
+
 logger = logging.getLogger(__name__)
 
 WS_URL = "ws://127.0.0.1:8000/ws"
+
 
 async def test_websocket():
     """測試 WebSocket 連接"""
@@ -30,7 +32,7 @@ async def test_websocket():
             test_message = {
                 "type": "test",
                 "message": "WebSocket 測試",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             print(f"\n發送測試消息: {json.dumps(test_message, ensure_ascii=False)}")
@@ -62,6 +64,7 @@ async def test_websocket():
         print("\n" + "=" * 80)
         print(f"結束時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 80)
+
 
 if __name__ == "__main__":
     try:

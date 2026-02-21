@@ -5,11 +5,13 @@ import uuid
 from typing import Dict, Any, List, Union, Optional
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class DevelopmentTask:
     """开发任务类"""
+
     def __init__(self, task_id: str, title: str, description: str, priority: str) -> None:
         self.id = task_id
         self.title = title
@@ -17,10 +19,16 @@ class DevelopmentTask:
         self.priority = priority
         self.status = "pending"
 
+
 class TestResultFeedbackSystem:
     """测试结果反馈系统"""
 
-    def __init__(self, results_dir: str = "test_results", reports_dir: str = "test_reports", templates_dir: str = "templates") -> None:
+    def __init__(
+        self,
+        results_dir: str = "test_results",
+        reports_dir: str = "test_reports",
+        templates_dir: str = "templates",
+    ) -> None:
         """
         初始化测试结果反馈系统
 
@@ -35,7 +43,9 @@ class TestResultFeedbackSystem:
         self.reports_dir.mkdir(exist_ok=True)
         self.templates_dir.mkdir(exist_ok=True)
 
-    def generate_improvement_suggestions(self, analysis_report: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def generate_improvement_suggestions(
+        self, analysis_report: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """
         根据分析报告生成改进建议
 
@@ -48,43 +58,52 @@ class TestResultFeedbackSystem:
         suggestions: List[Dict[str, Any]] = []
 
         # 分析失败模式建议
-        failure_analysis = analysis_report.get('failure_analysis', [])
+        failure_analysis = analysis_report.get("failure_analysis", [])
         for failure in failure_analysis:
-            suggestions.append({
-                'type': 'failure_pattern',
-                'title': f'处理"{failure["pattern"]}"失败模式',
-                'description': f'检测到{failure["count"]}个"{failure["pattern"]}"相关的失败测试',
-                'priority': 'high' if failure['count'] > 5 else 'medium',
-                'affected_tests': failure['affected_tests']
-            })
+            suggestions.append(
+                {
+                    "type": "failure_pattern",
+                    "title": f'处理"{failure["pattern"]}"失败模式',
+                    "description": f'检测到{failure["count"]}个"{failure["pattern"]}"相关的失败测试',
+                    "priority": "high" if failure["count"] > 5 else "medium",
+                    "affected_tests": failure["affected_tests"],
+                }
+            )
 
         # 性能回归建议
-        performance_regressions = analysis_report.get('performance_regressions', [])
+        performance_regressions = analysis_report.get("performance_regressions", [])
         for regression in performance_regressions:
-            suggestions.append({
-                'type': 'performance_regression',
-                'title': f'优化{regression["test_name"]}性能',
-                'description': f'性能下降{regression["regression_ratio"]*100:.1f}%,当前时间{regression["current_time"]:.4f}s',
-                'priority': 'high' if regression['regression_ratio'] > 0.5 else 'medium',
-                'test_name': regression['test_name']
-            })
+            suggestions.append(
+                {
+                    "type": "performance_regression",
+                    "title": f'优化{regression["test_name"]}性能',
+                    "description": f'性能下降{regression["regression_ratio"]*100:.1f}%,当前时间{regression["current_time"]:.4f}s',
+                    "priority": "high" if regression["regression_ratio"] > 0.5 else "medium",
+                    "test_name": regression["test_name"],
+                }
+            )
 
         # 整体质量建议
-        pass_rate = analysis_report.get('summary', {}).get('pass_rate', 0.0)
+        pass_rate = analysis_report.get("summary", {}).get("pass_rate", 0.0)
         if pass_rate < 0.9:
-            suggestions.append({
-                'type': 'overall_quality',
-                'title': '提高测试通过率',
-                'description': f'当前通过率{pass_rate*100:.1f}%,低于90%的目标',
-                'priority': 'high',
-                'recommendation': '优先修复失败的测试用例'
-            })
+            suggestions.append(
+                {
+                    "type": "overall_quality",
+                    "title": "提高测试通过率",
+                    "description": f"当前通过率{pass_rate*100:.1f}%,低于90%的目标",
+                    "priority": "high",
+                    "recommendation": "优先修复失败的测试用例",
+                }
+            )
 
         return suggestions
 
-    def generate_feedback_report(self, analysis_report: Dict[str, Any],
-                                 suggestions: List[Dict[str, Any]],
-                                 report_file: str = "feedback_report.html") -> Path:
+    def generate_feedback_report(
+        self,
+        analysis_report: Dict[str, Any],
+        suggestions: List[Dict[str, Any]],
+        report_file: str = "feedback_report.html",
+    ) -> Path:
         """
         生成反馈报告
 
@@ -201,7 +220,7 @@ class TestResultFeedbackSystem:
         # 保存报告
         report_path = self.reports_dir / report_file
         try:
-            with open(report_path, 'w', encoding='utf-8') as f:
+            with open(report_path, "w", encoding="utf-8") as f:
                 f.write(html_content)
             logger.info(f"反馈报告已保存到: {report_path}")
         except Exception as e:
@@ -209,7 +228,9 @@ class TestResultFeedbackSystem:
 
         return report_path
 
-    def integrate_with_development_workflow(self, suggestions: List[Dict[str, Any]]) -> List[DevelopmentTask]:
+    def integrate_with_development_workflow(
+        self, suggestions: List[Dict[str, Any]]
+    ) -> List[DevelopmentTask]:
         """
         将建议集成到开发流程中
 
@@ -224,26 +245,26 @@ class TestResultFeedbackSystem:
         for suggestion in suggestions:
             task_id = str(uuid.uuid4())[:8]
 
-            if suggestion['type'] == 'failure_pattern':
+            if suggestion["type"] == "failure_pattern":
                 task = DevelopmentTask(
                     task_id=task_id,
-                    title=suggestion['title'],
-                    description=suggestion['description'],
-                    priority=suggestion['priority']
+                    title=suggestion["title"],
+                    description=suggestion["description"],
+                    priority=suggestion["priority"],
                 )
-            elif suggestion['type'] == 'performance_regression':
+            elif suggestion["type"] == "performance_regression":
                 task = DevelopmentTask(
                     task_id=task_id,
-                    title=suggestion['title'],
-                    description=suggestion['description'],
-                    priority=suggestion['priority']
+                    title=suggestion["title"],
+                    description=suggestion["description"],
+                    priority=suggestion["priority"],
                 )
-            elif suggestion['type'] == 'overall_quality':
+            elif suggestion["type"] == "overall_quality":
                 task = DevelopmentTask(
                     task_id=task_id,
-                    title=suggestion['title'],
-                    description=suggestion['description'],
-                    priority=suggestion['priority']
+                    title=suggestion["title"],
+                    description=suggestion["description"],
+                    priority=suggestion["priority"],
                 )
             else:
                 continue
@@ -267,6 +288,7 @@ def main() -> None:
     # feedback_report = feedback_system.generate_feedback_report(results)
 
     logger.info("测试结果反馈系统已准备就绪")
+
 
 if __name__ == "__main__":
     main()

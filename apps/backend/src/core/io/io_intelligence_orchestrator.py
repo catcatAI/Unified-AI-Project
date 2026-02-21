@@ -23,20 +23,24 @@ from collections import defaultdict, deque
 try:
     from sklearn.cluster import KMeans
     from sklearn.preprocessing import StandardScaler
+
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
 
 try:
     import jieba
+
     JIEBA_AVAILABLE = True
 except ImportError:
     JIEBA_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
+
 class IOFormType(Enum):
     """I / O表单类型"""
+
     TEXT_INPUT = "text_input"
     NUMERIC_INPUT = "numeric_input"
     SELECT = "select"
@@ -45,8 +49,10 @@ class IOFormType(Enum):
     DATE_PICKER = "date_picker"
     CUSTOM = "custom"
 
+
 class IOState(Enum):
     """I / O状态"""
+
     IDLE = "idle"
     ACTIVE = "active"
     PROCESSING = "processing"
@@ -54,9 +60,11 @@ class IOState(Enum):
     ERROR = "error"
     TIMEOUT = "timeout"
 
+
 @dataclass
 class IOFormField:
     """I/O表单字段定义"""
+
     name: str
     field_type: IOFormType
     label: str
@@ -71,9 +79,11 @@ class IOFormField:
         if self.metadata is None:
             self.metadata = {}
 
+
 @dataclass
 class IOFormDefinition:
     """I/O表单定义"""
+
     form_id: str
     name: str
     description: str
@@ -90,9 +100,11 @@ class IOFormDefinition:
         if self.metadata is None:
             self.metadata = {}
 
+
 @dataclass
 class IOStateData:
     """I/O状态数据"""
+
     form_id: str
     instance_id: str
     state: IOState
@@ -109,9 +121,11 @@ class IOStateData:
         if self.performance_metrics is None:
             self.performance_metrics = {}
 
+
 @dataclass
 class IOBehaviorPattern:
     """I/O行为模式"""
+
     pattern_id: str
     form_id: str
     pattern_type: str
@@ -125,9 +139,10 @@ class IOBehaviorPattern:
         if self.metadata is None:
             self.metadata = {}
 
+
 class IOIntelligenceOrchestrator:
     """I/O智能调度管理器 - Level 4+ AGI组件"""
-    
+
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
         self.forms_registry: Dict[str, IOFormDefinition] = {}
@@ -152,13 +167,13 @@ class IOIntelligenceOrchestrator:
         if AI_AVAILABLE:
             try:
                 # 用户行为聚类模型
-                self.ml_models['behavior_clustering'] = KMeans(n_clusters=5, random_state=42)
+                self.ml_models["behavior_clustering"] = KMeans(n_clusters=5, random_state=42)
                 # 性能预测模型
-                self.ml_models['performance_predictor'] = self._create_performance_model()
+                self.ml_models["performance_predictor"] = self._create_performance_model()
                 logger.info("✅ AI模型初始化完成")
             except Exception as e:
                 logger.warning(f"⚠️ AI模型初始化失败, {e}")
-    
+
     def _create_performance_model(self):
         """创建性能预测模型"""
         # 简单的线性模型作为基础
@@ -168,49 +183,50 @@ class IOIntelligenceOrchestrator:
                 return 0.5  # 简化实现
 
         return SimplePerformanceModel()
-    
+
     # = == == == == == == == == == = 表单注册与管理 == =
     async def register_form(self, form_definition: Dict[str, Any]) -> str:
         """注册新的I/O表单"""
         try:
             import time
-            form_id = form_definition.get('form_id') or f"form_{int(time.time() * 1000)}"
+
+            form_id = form_definition.get("form_id") or f"form_{int(time.time() * 1000)}"
 
             # 解析字段定义
             fields = []
-            for field_def in form_definition.get('fields', []):
+            for field_def in form_definition.get("fields", []):
                 field = IOFormField(
-                    name=field_def['name'],
-                    field_type=IOFormType(field_def['field_type']),
-                    label=field_def['label'],
-                    required=field_def.get('required', False),
-                    default_value=field_def.get('default_value'),
-                    validation_rules=field_def.get('validation_rules', []),
-                    metadata=field_def.get('metadata', {})
+                    name=field_def["name"],
+                    field_type=IOFormType(field_def["field_type"]),
+                    label=field_def["label"],
+                    required=field_def.get("required", False),
+                    default_value=field_def.get("default_value"),
+                    validation_rules=field_def.get("validation_rules", []),
+                    metadata=field_def.get("metadata", {}),
                 )
                 fields.append(field)
 
             # 创建表单对象
             form = IOFormDefinition(
                 form_id=form_id,
-                name=form_definition['name'],
-                description=form_definition.get('description', ''),
+                name=form_definition["name"],
+                description=form_definition.get("description", ""),
                 fields=fields,
-                category=form_definition.get('category', 'general'),
+                category=form_definition.get("category", "general"),
                 created_at=datetime.now(),
                 updated_at=datetime.now(),
-                metadata=form_definition.get('metadata', {})
+                metadata=form_definition.get("metadata", {}),
             )
-            
+
             # 注册表单
             self.forms_registry[form_id] = form
 
             # 初始化性能监控
             self.performance_history[form_id] = []
             self.adaptive_thresholds[form_id] = {
-                'completion_time': 30.0,  # 默认30秒完成时间
-                'error_rate': 0.05,       # 默认5%错误率
-                'abandonment_rate': 0.15   # 默认15%放弃率
+                "completion_time": 30.0,  # 默认30秒完成时间
+                "error_rate": 0.05,  # 默认5%错误率
+                "abandonment_rate": 0.15,  # 默认15%放弃率
             }
 
             logger.info(f"✅ 表单注册成功: {form_id} - {form.name}")
@@ -237,34 +253,34 @@ class IOIntelligenceOrchestrator:
             form.average_completion_time = completion_time
         else:
             form.average_completion_time = (
-                (form.average_completion_time * (form.usage_count - 1) + completion_time) /
-                form.usage_count
-            )
+                form.average_completion_time * (form.usage_count - 1) + completion_time
+            ) / form.usage_count
 
         # 更新成功率
         if success:
             form.success_rate = (
-                (form.success_rate * (form.usage_count - 1) + 1.0) / form.usage_count
-            )
+                form.success_rate * (form.usage_count - 1) + 1.0
+            ) / form.usage_count
         else:
-            form.success_rate = (
-                (form.success_rate * (form.usage_count - 1)) / form.usage_count
-            )
+            form.success_rate = (form.success_rate * (form.usage_count - 1)) / form.usage_count
 
         form.updated_at = datetime.now()
 
         # 记录性能历史
-        self.performance_history[form_id].append({
-            'timestamp': datetime.now().isoformat(),
-            'completion_time': completion_time,
-            'success': success,
-            'usage_count': form.usage_count
-        })
+        self.performance_history[form_id].append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "completion_time": completion_time,
+                "success": success,
+                "usage_count": form.usage_count,
+            }
+        )
 
     # = == == == == == == == == == = I / O状态追踪与分析 == =
     async def create_io_instance(self, form_id: str, user_id: str = None) -> str:
         """创建I/O实例"""
         import time
+
         if form_id not in self.forms_registry:
             raise ValueError(f"表单不存在: {form_id}")
 
@@ -278,18 +294,20 @@ class IOIntelligenceOrchestrator:
             last_update=datetime.now(),
             user_interactions=[],
             performance_metrics={
-                'interaction_count': 0,
-                'total_input_time': 0.0,
-                'validation_errors': 0
-            }
+                "interaction_count": 0,
+                "total_input_time": 0.0,
+                "validation_errors": 0,
+            },
         )
 
         self.active_instances[instance_id] = state_data
 
         logger.info(f"📝 创建I/O实例: {instance_id} (表单: {form_id})")
         return instance_id
-    
-    async def update_io_state(self, instance_id: str, new_state: IOState, interaction_data: Dict[str, Any] = None):
+
+    async def update_io_state(
+        self, instance_id: str, new_state: IOState, interaction_data: Dict[str, Any] = None
+    ):
         """更新I/O状态"""
         if instance_id not in self.active_instances:
             raise ValueError(f"I/O实例不存在: {instance_id}")
@@ -301,16 +319,18 @@ class IOIntelligenceOrchestrator:
 
         # 记录用户交互
         if interaction_data:
-            interaction_data['timestamp'] = datetime.now().isoformat()
-            interaction_data['state_transition'] = f"{old_state.value} -> {new_state.value}"
+            interaction_data["timestamp"] = datetime.now().isoformat()
+            interaction_data["state_transition"] = f"{old_state.value} -> {new_state.value}"
             state_data.user_interactions.append(interaction_data)
 
             # 更新性能指标
-            state_data.performance_metrics['interaction_count'] += 1
-            if 'input_duration' in interaction_data:
-                state_data.performance_metrics['total_input_time'] += interaction_data['input_duration']
-            if 'validation_error' in interaction_data:
-                state_data.performance_metrics['validation_errors'] += 1
+            state_data.performance_metrics["interaction_count"] += 1
+            if "input_duration" in interaction_data:
+                state_data.performance_metrics["total_input_time"] += interaction_data[
+                    "input_duration"
+                ]
+            if "validation_error" in interaction_data:
+                state_data.performance_metrics["validation_errors"] += 1
 
         # 状态转换逻辑
         if new_state == IOState.COMPLETED:
@@ -318,25 +338,25 @@ class IOIntelligenceOrchestrator:
 
             # 更新表单指标
             await self.update_form_metrics(
-                state_data.form_id,
-                state_data.completion_time,
-                success=True
+                state_data.form_id, state_data.completion_time, success=True
             )
 
             # 分析行为模式
             await self._analyze_behavior_pattern(instance_id)
 
         elif new_state == IOState.ERROR:
-            state_data.error_info = interaction_data.get('error_info', {}) if interaction_data else {}
+            state_data.error_info = (
+                interaction_data.get("error_info", {}) if interaction_data else {}
+            )
             # 更新表单指标(失败)
             await self.update_form_metrics(
                 state_data.form_id,
                 (datetime.now() - state_data.start_time).total_seconds(),
-                success=False
+                success=False,
             )
 
         logger.debug(f"🔄 I/O状态更新: {instance_id} - {old_state.value} -> {new_state.value}")
-    
+
     async def get_io_state(self, instance_id: str) -> Optional[IOStateData]:
         """获取I/O状态"""
         return self.active_instances.get(instance_id)
@@ -347,7 +367,7 @@ class IOIntelligenceOrchestrator:
         if form_id:
             instances = [inst for inst in instances if inst.form_id == form_id]
         return instances
-    
+
     # = == == == == == == == == == = 动态接口行为调整 = == == == == == == == == == =
 
     async def analyze_user_behavior(self, instance_id: str) -> Dict[str, Any]:
@@ -361,56 +381,63 @@ class IOIntelligenceOrchestrator:
             return {}
 
         analysis = {
-            'total_interactions': len(interactions),
-            'average_interaction_time': 0.0,
-            'field_completion_sequence': [],
-            'hesitation_points': [],
-            'error_patterns': [],
-            'efficiency_score': 0.0
+            "total_interactions": len(interactions),
+            "average_interaction_time": 0.0,
+            "field_completion_sequence": [],
+            "hesitation_points": [],
+            "error_patterns": [],
+            "efficiency_score": 0.0,
         }
 
         # 分析交互时间
         interaction_times = []
         for i, interaction in enumerate(interactions):
-            if 'input_duration' in interaction:
-                interaction_times.append(interaction['input_duration'])
+            if "input_duration" in interaction:
+                interaction_times.append(interaction["input_duration"])
 
             # 字段完成序列
-            if 'field_name' in interaction:
-                analysis['field_completion_sequence'].append(interaction['field_name'])
+            if "field_name" in interaction:
+                analysis["field_completion_sequence"].append(interaction["field_name"])
 
             # 犹豫点检测(输入时间 > 5秒)
-            if interaction.get('input_duration', 0) > 5.0:
-                analysis['hesitation_points'].append({
-                    'field': interaction.get('field_name', 'unknown'),
-                    'duration': interaction['input_duration'],
-                    'timestamp': interaction['timestamp']
-                })
+            if interaction.get("input_duration", 0) > 5.0:
+                analysis["hesitation_points"].append(
+                    {
+                        "field": interaction.get("field_name", "unknown"),
+                        "duration": interaction["input_duration"],
+                        "timestamp": interaction["timestamp"],
+                    }
+                )
 
             # 错误模式
-            if interaction.get('validation_error', False):
-                analysis['error_patterns'].append({
-                    'field': interaction.get('field_name', 'unknown'),
-                    'error_type': interaction.get('error_type', 'unknown'),
-                    'timestamp': interaction['timestamp']
-                })
+            if interaction.get("validation_error", False):
+                analysis["error_patterns"].append(
+                    {
+                        "field": interaction.get("field_name", "unknown"),
+                        "error_type": interaction.get("error_type", "unknown"),
+                        "timestamp": interaction["timestamp"],
+                    }
+                )
 
         if interaction_times:
             try:
                 import numpy as np
-                analysis['average_interaction_time'] = np.mean(interaction_times)
+
+                analysis["average_interaction_time"] = np.mean(interaction_times)
             except (ImportError, ZeroDivisionError, TypeError) as e:
                 logger.debug(f"numpy計算失敗（可忽略）: {e}")
-                analysis['average_interaction_time'] = sum(interaction_times) / len(interaction_times)
+                analysis["average_interaction_time"] = sum(interaction_times) / len(
+                    interaction_times
+                )
 
         # 计算效率分数 (0 - 1)
-        total_errors = len(analysis['error_patterns'])
-        total_hesitations = len(analysis['hesitation_points'])
+        total_errors = len(analysis["error_patterns"])
+        total_hesitations = len(analysis["hesitation_points"])
         efficiency_score = max(0, 1.0 - (total_errors * 0.2 + total_hesitations * 0.1))
-        analysis['efficiency_score'] = efficiency_score
+        analysis["efficiency_score"] = efficiency_score
 
         return analysis
-    
+
     async def suggest_interface_optimization(self, instance_id: str) -> List[Dict[str, Any]]:
         """建议接口优化"""
         behavior_analysis = await self.analyze_user_behavior(instance_id)
@@ -421,36 +448,42 @@ class IOIntelligenceOrchestrator:
         suggestions = []
 
         # 基于犹豫点优化
-        for hesitation in behavior_analysis['hesitation_points']:
-            suggestions.append({
-                'type': 'field_optimization',
-                'field': hesitation['field'],
-                'reason': f"用户在'{hesitation['field']}'字段犹豫{hesitation['duration']:.1f}秒",
-                'suggestion': '考虑添加帮助文本或简化输入要求',
-                'priority': 'medium'
-            })
+        for hesitation in behavior_analysis["hesitation_points"]:
+            suggestions.append(
+                {
+                    "type": "field_optimization",
+                    "field": hesitation["field"],
+                    "reason": f"用户在'{hesitation['field']}'字段犹豫{hesitation['duration']:.1f}秒",
+                    "suggestion": "考虑添加帮助文本或简化输入要求",
+                    "priority": "medium",
+                }
+            )
 
         # 基于错误模式优化
-        for error in behavior_analysis['error_patterns']:
-            suggestions.append({
-                'type': 'validation_optimization',
-                'field': error['field'],
-                'reason': f"字段'{error['field']}'出现{error['error_type']}错误",
-                'suggestion': '优化验证规则或提供更清晰的错误提示',
-                'priority': 'high'
-            })
+        for error in behavior_analysis["error_patterns"]:
+            suggestions.append(
+                {
+                    "type": "validation_optimization",
+                    "field": error["field"],
+                    "reason": f"字段'{error['field']}'出现{error['error_type']}错误",
+                    "suggestion": "优化验证规则或提供更清晰的错误提示",
+                    "priority": "high",
+                }
+            )
 
         # 基于完成序列优化
-        sequence = behavior_analysis['field_completion_sequence']
+        sequence = behavior_analysis["field_completion_sequence"]
         if len(sequence) > 2:
             # 分析是否有可以重新排序的字段
-            suggestions.append({
-                'type': 'sequence_optimization',
-                'reason': f"用户完成字段的顺序: {sequence}",
-                'suggestion': '考虑根据用户自然流程重新排序字段',
-                'priority': 'low'
-            })
-        
+            suggestions.append(
+                {
+                    "type": "sequence_optimization",
+                    "reason": f"用户完成字段的顺序: {sequence}",
+                    "suggestion": "考虑根据用户自然流程重新排序字段",
+                    "priority": "low",
+                }
+            )
+
         return suggestions
 
     async def _analyze_behavior_pattern(self, instance_id: str) -> Dict[str, Any]:
@@ -465,49 +498,48 @@ class IOIntelligenceOrchestrator:
         if behavior_analysis:
             pattern_key = f"{instance_id}_{datetime.now().strftime('%Y%m%d')}"
             self.behavior_patterns[pattern_key] = {
-                'instance_id': instance_id,
-                'analysis': behavior_analysis,
-                'timestamp': datetime.now(),
-                'form_id': self.active_instances[instance_id].form_id
+                "instance_id": instance_id,
+                "analysis": behavior_analysis,
+                "timestamp": datetime.now(),
+                "form_id": self.active_instances[instance_id].form_id,
             }
 
             # 更新表单的行为模式统计
             form_id = self.active_instances[instance_id].form_id
             if form_id not in self.form_behavior_stats:
                 self.form_behavior_stats[form_id] = {
-                    'total_instances': 0,
-                    'average_efficiency': 0.0,
-                    'common_hesitation_fields': [],
-                    'frequent_errors': [],
-                    'completion_patterns': []
+                    "total_instances": 0,
+                    "average_efficiency": 0.0,
+                    "common_hesitation_fields": [],
+                    "frequent_errors": [],
+                    "completion_patterns": [],
                 }
 
             form_stats = self.form_behavior_stats[form_id]
-            form_stats['total_instances'] += 1
+            form_stats["total_instances"] += 1
 
             # 更新平均效率
-            efficiency = behavior_analysis.get('efficiency_score', 0.0)
-            form_stats['average_efficiency'] = (
-                (form_stats['average_efficiency'] * (form_stats['total_instances'] - 1) + efficiency) /
-                form_stats['total_instances']
-            )
+            efficiency = behavior_analysis.get("efficiency_score", 0.0)
+            form_stats["average_efficiency"] = (
+                form_stats["average_efficiency"] * (form_stats["total_instances"] - 1) + efficiency
+            ) / form_stats["total_instances"]
 
             # 记录常见犹豫字段
-            for hesitation in behavior_analysis.get('hesitation_points', []):
-                field = hesitation['field']
-                if field not in form_stats['common_hesitation_fields']:
-                    form_stats['common_hesitation_fields'].append(field)
+            for hesitation in behavior_analysis.get("hesitation_points", []):
+                field = hesitation["field"]
+                if field not in form_stats["common_hesitation_fields"]:
+                    form_stats["common_hesitation_fields"].append(field)
 
             # 记录频繁错误
-            for error in behavior_analysis.get('error_patterns', []):
-                error_type = error['error_type']
-                if error_type not in form_stats['frequent_errors']:
-                    form_stats['frequent_errors'].append(error_type)
+            for error in behavior_analysis.get("error_patterns", []):
+                error_type = error["error_type"]
+                if error_type not in form_stats["frequent_errors"]:
+                    form_stats["frequent_errors"].append(error_type)
 
             # 记录完成模式
-            completion_sequence = behavior_analysis.get('field_completion_sequence', [])
+            completion_sequence = behavior_analysis.get("field_completion_sequence", [])
             if completion_sequence:
-                form_stats['completion_patterns'].append(completion_sequence)
+                form_stats["completion_patterns"].append(completion_sequence)
 
         return behavior_analysis
 
@@ -524,23 +556,24 @@ class IOIntelligenceOrchestrator:
             return {"message": "暂无性能数据用于优化"}
 
         optimization_results = {
-            'form_id': form_id,
-            'optimization_date': datetime.now().isoformat(),
-            'original_metrics': {
-                'average_completion_time': form.average_completion_time,
-                'success_rate': form.success_rate
+            "form_id": form_id,
+            "optimization_date": datetime.now().isoformat(),
+            "original_metrics": {
+                "average_completion_time": form.average_completion_time,
+                "success_rate": form.success_rate,
             },
-            'recommended_changes': [],
-            'expected_improvements': {}
+            "recommended_changes": [],
+            "expected_improvements": {},
         }
 
         # 分析历史数据
-        completion_times = [h['completion_time'] for h in history if h.get('completion_time')]
-        success_rates = [h['success'] for h in history]
+        completion_times = [h["completion_time"] for h in history if h.get("completion_time")]
+        success_rates = [h["success"] for h in history]
 
         if completion_times:
             try:
                 import numpy as np
+
                 avg_time = np.mean(completion_times)
                 std_time = np.std(completion_times)
             except (ImportError, ZeroDivisionError, TypeError) as e:
@@ -549,38 +582,47 @@ class IOIntelligenceOrchestrator:
                 std_time = 0.0
 
             # 识别性能瓶颈(完成时间超过平均值 + 1标准差)
-            slow_instances = [h for h in history if h.get('completion_time', 0) > avg_time + std_time]
+            slow_instances = [
+                h for h in history if h.get("completion_time", 0) > avg_time + std_time
+            ]
             if slow_instances:
-                optimization_results['recommended_changes'].append({
-                    'type': 'performance_bottleneck',
-                    'issue': f"{len(slow_instances)}个实例完成时间超过正常范围",
-                    'recommendation': '分析慢实例的共同特征并针对性优化',
-                    'potential_improvement': f"减少{len(slow_instances) / len(history) * 100:.1f}%的慢实例"
-                })
+                optimization_results["recommended_changes"].append(
+                    {
+                        "type": "performance_bottleneck",
+                        "issue": f"{len(slow_instances)}个实例完成时间超过正常范围",
+                        "recommendation": "分析慢实例的共同特征并针对性优化",
+                        "potential_improvement": f"减少{len(slow_instances) / len(history) * 100:.1f}%的慢实例",
+                    }
+                )
 
         if success_rates:
             try:
                 import numpy as np
+
                 current_success_rate = np.mean(success_rates)
             except (ImportError, ZeroDivisionError, TypeError) as e:
                 logger.debug(f"numpy計算失敗（可忽略）: {e}")
                 current_success_rate = sum(success_rates) / len(success_rates)
             if current_success_rate < 0.95:  # 如果成功率低于95%
-                optimization_results['recommended_changes'].append({
-                    'type': 'success_rate_improvement',
-                    'issue': f"成功率较低: {current_success_rate:.2%}",
-                    'recommendation': '分析失败原因并改进用户引导或验证逻辑',
-                    'potential_improvement': '提升至95%以上'
-                })
+                optimization_results["recommended_changes"].append(
+                    {
+                        "type": "success_rate_improvement",
+                        "issue": f"成功率较低: {current_success_rate:.2%}",
+                        "recommendation": "分析失败原因并改进用户引导或验证逻辑",
+                        "potential_improvement": "提升至95%以上",
+                    }
+                )
 
         # 基于AI的智能优化建议
         if AI_AVAILABLE and len(history) > 50:
             ai_suggestions = await self._generate_ai_optimization_suggestions(form_id, history)
-            optimization_results['recommended_changes'].extend(ai_suggestions)
+            optimization_results["recommended_changes"].extend(ai_suggestions)
 
         return optimization_results
 
-    async def _generate_ai_optimization_suggestions(self, form_id: str, history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _generate_ai_optimization_suggestions(
+        self, form_id: str, history: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """生成AI驱动的优化建议"""
         if not AI_AVAILABLE:
             return []
@@ -594,10 +636,10 @@ class IOIntelligenceOrchestrator:
                 features = []
                 for h in history:
                     feature_vector = [
-                        h.get('completion_time', 30),
-                        1 if h.get('success', False) else 0,
-                        len(h.get('user_interactions', [])),
-                        h.get('validation_errors', 0)
+                        h.get("completion_time", 30),
+                        1 if h.get("success", False) else 0,
+                        len(h.get("user_interactions", [])),
+                        h.get("validation_errors", 0),
                     ]
                     features.append(feature_vector)
 
@@ -619,14 +661,16 @@ class IOIntelligenceOrchestrator:
                                 avg_completion = np.mean([d[0] for d in cluster_data])
                                 success_rate = np.mean([d[1] for d in cluster_data])
                                 if avg_completion > 60:  # 超过60秒的聚类
-                                    suggestions.append({
-                                        'type': 'ai_behavior_clustering',
-                                        'cluster_id': cluster_id,
-                                        'issue': f"聚类{cluster_id}平均完成时间{avg_completion:.1f}秒",
-                                        'recommendation': '该用户群体可能需要更简化的界面或分步引导',
-                                        'potential_improvement': '减少50%完成时间',
-                                        'confidence': 0.8
-                                    })
+                                    suggestions.append(
+                                        {
+                                            "type": "ai_behavior_clustering",
+                                            "cluster_id": cluster_id,
+                                            "issue": f"聚类{cluster_id}平均完成时间{avg_completion:.1f}秒",
+                                            "recommendation": "该用户群体可能需要更简化的界面或分步引导",
+                                            "potential_improvement": "减少50%完成时间",
+                                            "confidence": 0.8,
+                                        }
+                                    )
 
         except Exception as e:
             logger.warning(f"⚠️ AI优化建议生成失败: {e}")
@@ -638,22 +682,22 @@ class IOIntelligenceOrchestrator:
         """预测用户意图"""
         # 基于当前交互预测用户下一步可能的行为
         predictions = {
-            'complete_form': 0.7,
-            'abandon_form': 0.1,
-            'need_help': 0.1,
-            'make_error': 0.1
+            "complete_form": 0.7,
+            "abandon_form": 0.1,
+            "need_help": 0.1,
+            "make_error": 0.1,
         }
 
         # 基于交互特征调整预测
-        if current_interaction.get('hesitation_time', 0) > 10:
-            predictions['need_help'] += 0.3
-            predictions['abandon_form'] += 0.1
-        if current_interaction.get('validation_errors', 0) > 2:
-            predictions['make_error'] += 0.2
-            predictions['abandon_form'] += 0.1
-        if current_interaction.get('progress', 0) > 0.8:
-            predictions['complete_form'] += 0.2
-            predictions['abandon_form'] -= 0.1
+        if current_interaction.get("hesitation_time", 0) > 10:
+            predictions["need_help"] += 0.3
+            predictions["abandon_form"] += 0.1
+        if current_interaction.get("validation_errors", 0) > 2:
+            predictions["make_error"] += 0.2
+            predictions["abandon_form"] += 0.1
+        if current_interaction.get("progress", 0) > 0.8:
+            predictions["complete_form"] += 0.2
+            predictions["abandon_form"] -= 0.1
         return predictions
 
     async def recommend_next_action(self, instance_id: str) -> Dict[str, Any]:
@@ -663,32 +707,35 @@ class IOIntelligenceOrchestrator:
             return {}
 
         behavior_analysis = await self.analyze_user_behavior(instance_id)
-        intent_prediction = await self.predict_user_intent({
-            'hesitation_time': behavior_analysis.get('average_interaction_time', 0),
-            'validation_errors': len(behavior_analysis.get('error_patterns', [])),
-            'progress': len(state_data.user_interactions) / len(self.forms_registry[state_data.form_id].fields)
-        })
+        intent_prediction = await self.predict_user_intent(
+            {
+                "hesitation_time": behavior_analysis.get("average_interaction_time", 0),
+                "validation_errors": len(behavior_analysis.get("error_patterns", [])),
+                "progress": len(state_data.user_interactions)
+                / len(self.forms_registry[state_data.form_id].fields),
+            }
+        )
 
         recommendations = {
-            'suggested_action': 'continue',
-            'confidence': 0.8,
-            'reason': '基于用户行为分析',
-            'alternatives': []
+            "suggested_action": "continue",
+            "confidence": 0.8,
+            "reason": "基于用户行为分析",
+            "alternatives": [],
         }
 
         # 根据预测结果推荐行动
-        if intent_prediction['need_help'] > 0.5:
-            recommendations['suggested_action'] = 'show_help'
-            recommendations['confidence'] = intent_prediction['need_help']
-            recommendations['reason'] = '检测到用户可能需要帮助'
-        elif intent_prediction['abandon_form'] > 0.3:
-            recommendations['suggested_action'] = 'simplify_form'
-            recommendations['confidence'] = intent_prediction['abandon_form']
-            recommendations['reason'] = '预测用户可能放弃表单'
-        elif intent_prediction['complete_form'] > 0.8:
-            recommendations['suggested_action'] = 'encourage_completion'
-            recommendations['confidence'] = intent_prediction['complete_form']
-            recommendations['reason'] = '用户即将完成表单'
+        if intent_prediction["need_help"] > 0.5:
+            recommendations["suggested_action"] = "show_help"
+            recommendations["confidence"] = intent_prediction["need_help"]
+            recommendations["reason"] = "检测到用户可能需要帮助"
+        elif intent_prediction["abandon_form"] > 0.3:
+            recommendations["suggested_action"] = "simplify_form"
+            recommendations["confidence"] = intent_prediction["abandon_form"]
+            recommendations["reason"] = "预测用户可能放弃表单"
+        elif intent_prediction["complete_form"] > 0.8:
+            recommendations["suggested_action"] = "encourage_completion"
+            recommendations["confidence"] = intent_prediction["complete_form"]
+            recommendations["reason"] = "用户即将完成表单"
 
         return recommendations
 
@@ -696,17 +743,14 @@ class IOIntelligenceOrchestrator:
     async def get_system_health(self) -> Dict[str, Any]:
         """获取系统健康状态"""
         health_data = {
-            'timestamp': datetime.now().isoformat(),
-            'total_forms': len(self.forms_registry),
-            'active_instances': len(self.active_instances),
-            'performance_summary': {},
-            'ai_models_status': {
-                'sklearn': AI_AVAILABLE,
-                'jieba': JIEBA_AVAILABLE
-            },
-            'optimization_status': {}
+            "timestamp": datetime.now().isoformat(),
+            "total_forms": len(self.forms_registry),
+            "active_instances": len(self.active_instances),
+            "performance_summary": {},
+            "ai_models_status": {"sklearn": AI_AVAILABLE, "jieba": JIEBA_AVAILABLE},
+            "optimization_status": {},
         }
-        
+
         # 性能汇总
         if self.forms_registry:
             completion_times = []
@@ -718,23 +762,27 @@ class IOIntelligenceOrchestrator:
                     success_rates.append(form.success_rate)
 
             if completion_times:
-                health_data['performance_summary'] = {
-                    'average_completion_time': np.mean(completion_times),
-                    'average_success_rate': np.mean(success_rates),
-                    'total_usage': sum(form.usage_count for form in self.forms_registry.values())
+                health_data["performance_summary"] = {
+                    "average_completion_time": np.mean(completion_times),
+                    "average_success_rate": np.mean(success_rates),
+                    "total_usage": sum(form.usage_count for form in self.forms_registry.values()),
                 }
 
         # AI模型状态
-        health_data['ai_models_status'] = {
-            'behavior_clustering': 'available' if 'behavior_clustering' in self.ml_models else 'unavailable',
-            'performance_prediction': 'available' if 'performance_predictor' in self.ml_models else 'unavailable'
+        health_data["ai_models_status"] = {
+            "behavior_clustering": (
+                "available" if "behavior_clustering" in self.ml_models else "unavailable"
+            ),
+            "performance_prediction": (
+                "available" if "performance_predictor" in self.ml_models else "unavailable"
+            ),
         }
 
         # 优化状态
-        health_data['optimization_status'] = {
-            'adaptive_thresholds_configured': len(self.adaptive_thresholds),
-            'behavior_patterns_detected': len(self.behavior_patterns),
-            'ml_models_active': len([m for m in self.ml_models.values() if m is not None])
+        health_data["optimization_status"] = {
+            "adaptive_thresholds_configured": len(self.adaptive_thresholds),
+            "behavior_patterns_detected": len(self.behavior_patterns),
+            "ml_models_active": len([m for m in self.ml_models.values() if m is not None]),
         }
 
         return health_data
@@ -744,19 +792,19 @@ class IOIntelligenceOrchestrator:
         health_data = await self.get_system_health()
 
         report = {
-            'report_date': datetime.now().isoformat(),
-            'system_overview': health_data,
-            'intelligence_insights': {
-                'form_optimization_opportunities': [],
-                'user_behavior_patterns': [],
-                'performance_recommendations': [],
-                'ai_model_effectiveness': {}
+            "report_date": datetime.now().isoformat(),
+            "system_overview": health_data,
+            "intelligence_insights": {
+                "form_optimization_opportunities": [],
+                "user_behavior_patterns": [],
+                "performance_recommendations": [],
+                "ai_model_effectiveness": {},
             },
-            'future_predictions': {
-                'expected_performance_improvements': {},
-                'user_experience_enhancements': [],
-                'system_scalability_assessment': {}
-            }
+            "future_predictions": {
+                "expected_performance_improvements": {},
+                "user_experience_enhancements": [],
+                "system_scalability_assessment": {},
+            },
         }
 
         # 生成智能洞察
@@ -764,32 +812,41 @@ class IOIntelligenceOrchestrator:
             if form.usage_count > 10:  # 只有使用频率高的表单才分析
                 suggestions = await self.suggest_interface_optimization(form_id)
                 if suggestions:
-                    report['intelligence_insights']['form_optimization_opportunities'].append({
-                        'form_id': form_id,
-                        'form_name': form.name,
-                        'suggestions': suggestions[:3]  # 前3个建议
-                    })
+                    report["intelligence_insights"]["form_optimization_opportunities"].append(
+                        {
+                            "form_id": form_id,
+                            "form_name": form.name,
+                            "suggestions": suggestions[:3],  # 前3个建议
+                        }
+                    )
 
         # 用户行为模式分析
         if self.behavior_patterns:
             for pattern_id, pattern in self.behavior_patterns.items():
-                report['intelligence_insights']['user_behavior_patterns'].append({
-                    'pattern_id': pattern_id,
-                    'pattern_type': pattern.pattern_type,
-                    'confidence': pattern.confidence,
-                    'frequency': pattern.frequency,
-                    'typical_sequence': pattern.typical_sequence[:5]  # 前5个步骤
-                })
+                report["intelligence_insights"]["user_behavior_patterns"].append(
+                    {
+                        "pattern_id": pattern_id,
+                        "pattern_type": pattern.pattern_type,
+                        "confidence": pattern.confidence,
+                        "frequency": pattern.frequency,
+                        "typical_sequence": pattern.typical_sequence[:5],  # 前5个步骤
+                    }
+                )
 
         # AI模型效果评估
         if self.ml_models:
-            report['intelligence_insights']['ai_model_effectiveness'] = {
-                'behavior_clustering': 'active' if 'behavior_clustering' in self.ml_models else 'inactive',
-                'performance_prediction': 'active' if 'performance_predictor' in self.ml_models else 'inactive',
-                'total_patterns_learned': len(self.behavior_patterns)
+            report["intelligence_insights"]["ai_model_effectiveness"] = {
+                "behavior_clustering": (
+                    "active" if "behavior_clustering" in self.ml_models else "inactive"
+                ),
+                "performance_prediction": (
+                    "active" if "performance_predictor" in self.ml_models else "inactive"
+                ),
+                "total_patterns_learned": len(self.behavior_patterns),
             }
 
         return report
+
 
 # 向后兼容的接口
 class IOOrchestrator:
@@ -810,5 +867,6 @@ class IOOrchestrator:
         """获取智能分析报告"""
         return await self.orchestrator.generate_intelligence_report()
 
+
 # 导出主要类
-__all__ = ['IOIntelligenceOrchestrator', 'IOOrchestrator', 'IOForm', 'IOState', 'IOFormType']
+__all__ = ["IOIntelligenceOrchestrator", "IOOrchestrator", "IOForm", "IOState", "IOFormType"]

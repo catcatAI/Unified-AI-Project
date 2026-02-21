@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
 import logging
+
 logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Body
@@ -42,8 +43,9 @@ async def trigger_emergency_mode():
     return {
         "status": "emergency_active",
         "action": "Visual/Audio components suspended",
-        "mode": "text-only"
+        "mode": "text-only",
     }
+
 
 @router.get("/health")
 async def health_check():
@@ -57,8 +59,9 @@ async def get_ai_agents():
     # In a real scenario, this would call AgentManager or HSP Service Discovery
     # For now, we simulate this while keeping the structure ready for integration
     from src.ai.agents.agent_manager import AgentManager
+
     # Note: AgentManager might need a singleton or a global instance
-    
+
     # Placeholder for actual discovery logic
     discovered_agents = [
         {
@@ -67,7 +70,7 @@ async def get_ai_agents():
             "type": "创意写作",
             "status": "idle",
             "capabilities": ["text_generation", "creative_writing"],
-            "last_active": datetime.now().isoformat()
+            "last_active": datetime.now().isoformat(),
         },
         {
             "id": "code-understanding-1",
@@ -75,8 +78,8 @@ async def get_ai_agents():
             "type": "代码理解",
             "status": "active",
             "capabilities": ["analyze_code", "fix_code"],
-            "last_active": datetime.now().isoformat()
-        }
+            "last_active": datetime.now().isoformat(),
+        },
     ]
     return discovered_agents
 
@@ -121,29 +124,25 @@ async def get_detailed_system_metrics():
         "cpu": {
             "value": cpu_usage,
             "max": 100,
-            "status": "normal"
-            if cpu_usage < 70
-            else "warning"
-            if cpu_usage < 90
-            else "critical",
+            "status": "normal" if cpu_usage < 70 else "warning" if cpu_usage < 90 else "critical",
         },
         "memory": {
             "value": memory.percent,
             "max": 100,
-            "status": "normal"
-            if memory.percent < 70
-            else "warning"
-            if memory.percent < 90
-            else "critical",
+            "status": (
+                "normal"
+                if memory.percent < 70
+                else "warning" if memory.percent < 90 else "critical"
+            ),
         },
         "disk": {
             "value": (disk.used / disk.total) * 100,
             "max": 100,
-            "status": "normal"
-            if (disk.used / disk.total) < 0.7
-            else "warning"
-            if (disk.used / disk.total) < 0.9
-            else "critical",
+            "status": (
+                "normal"
+                if (disk.used / disk.total) < 0.7
+                else "warning" if (disk.used / disk.total) < 0.9 else "critical"
+            ),
         },
         "network": {"value": random.uniform(10, 60), "max": 100, "status": "normal"},
         "timestamp": datetime.now().isoformat(),

@@ -144,7 +144,15 @@ except ImportError as e:
     )
 
 try:
-    from fastapi import FastAPI, HTTPException, APIRouter, Body, BackgroundTasks, WebSocket, WebSocketDisconnect
+    from fastapi import (
+        FastAPI,
+        HTTPException,
+        APIRouter,
+        Body,
+        BackgroundTasks,
+        WebSocket,
+        WebSocketDisconnect,
+    )
     from fastapi.middleware.cors import CORSMiddleware
 except ImportError as e:
     raise ImportError(
@@ -213,8 +221,10 @@ except ImportError:
 try:
     from .logger import get_logger
 except ImportError:
+
     def get_logger(name: str):
         return logging.getLogger(name)
+
 
 logger = get_logger(__name__)
 
@@ -230,6 +240,6 @@ OptionalList = Optional[List[Any]]
 # =============================================================================
 # 常量
 # =============================================================================
-DEFAULT_ENCODING = 'utf-8'
+DEFAULT_ENCODING = "utf-8"
 DEFAULT_TIMEOUT = 30
 MAX_RETRIES = 3

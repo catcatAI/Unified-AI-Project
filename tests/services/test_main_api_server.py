@@ -7,27 +7,31 @@
 import pytest
 from fastapi.testclient import TestClient
 from fastapi.testclient import TestClient
+
+
 # Use a pytest fixture to create the TestClient
 @pytest.fixture()
 def client():
     with TestClient(app) as c:
         yield c
 
-
     def setUp(self):
         """测试前设置"""
         self.test_data = {}
         self.test_config = {}
-    
+
     def tearDown(self):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
+
+
 def test_read_main(client, TestClient) -> None:
     """Tests the root endpoint '/'."""
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Welcome to the Unified AI Project API"}
+
 
 def test_get_status(client, TestClient) -> None:
     """Tests the status endpoint '/status'."""

@@ -385,9 +385,7 @@ def generate_response_template(intent: str, user_message: str) -> str:
 
     if intent == "statement":
         subtype = "complex" if templates["statement"].get("complex", []) else "simple"
-        return random.choice(
-            templates["statement"].get(subtype, templates["statement"]["simple"])
-        )
+        return random.choice(templates["statement"].get(subtype, templates["statement"]["simple"]))
 
     return random.choice(templates.get(intent, templates["statement"]["simple"]))
 

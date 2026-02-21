@@ -3,11 +3,13 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class ToolContextManager:
     """
     Placeholder for ToolContextManager.
     Manages the context for various tools used by the AI.
     """
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         logger.info("ToolContextManager initialized (placeholder).")

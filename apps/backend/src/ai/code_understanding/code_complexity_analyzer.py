@@ -1,7 +1,9 @@
 import ast
 from typing import List, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 def calculate_complexity(node: ast.AST) -> float:
     """

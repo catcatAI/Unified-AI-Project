@@ -30,14 +30,18 @@ from typing import Optional, List, Dict, Any, Union
 import yaml
 
 from .execution_monitor import (
-    ExecutionMonitor, ExecutionConfig, ExecutionResult,
-    ExecutionStatus, TerminalStatus
+    ExecutionMonitor,
+    ExecutionConfig,
+    ExecutionResult,
+    ExecutionStatus,
+    TerminalStatus,
 )
 
 
 @dataclass
 class ExecutionManagerConfig:
     """執行管理器配置"""
+
     # 基本配置
     enabled: bool = True
     adaptive_timeout: bool = True
@@ -46,9 +50,9 @@ class ExecutionManagerConfig:
     auto_recovery: bool = True
 
     # 超時配置
-    default_timeout: float = 60.0   # 增加默認超時時間從30秒到60秒
-    max_timeout: float = 600.0      # 增加最大超時時間從300秒到600秒
-    min_timeout: float = 10.0       # 增加最小超時時間從5秒到10秒
+    default_timeout: float = 60.0  # 增加默認超時時間從30秒到60秒
+    max_timeout: float = 600.0  # 增加最大超時時間從300秒到600秒
+    min_timeout: float = 10.0  # 增加最小超時時間從5秒到10秒
 
     # 閾值配置
     cpu_warning: float = 80.0
@@ -66,7 +70,7 @@ class ExecutionManagerConfig:
     cache_size: int = 100
 
     # 恢復策略配置
-    stuck_process_timeout: float = 60.0   # 增加卡住進程檢測超時從30秒到60秒
+    stuck_process_timeout: float = 60.0  # 增加卡住進程檢測超時從30秒到60秒
     max_retry_attempts: int = 3
     retry_delay: float = 5.0
     escalation_enabled: bool = True
@@ -104,19 +108,19 @@ class ExecutionManager:
             enable_terminal_check=self.config.terminal_monitoring,
             enable_process_monitor=self.config.resource_monitoring,
             cpu_threshold=self.config.cpu_critical,
-            memory_threshold=self.config.memory_critical
+            memory_threshold=self.config.memory_critical,
         )
 
         self.monitor = ExecutionMonitor(monitor_config)
 
         # 執行統計
         self.execution_stats = {
-            'total_executions': 0,
-            'successful_executions': 0,
-            'failed_executions': 0,
-            'timeout_executions': 0,
-            'recovered_executions': 0,
-            'average_execution_time': 0.0
+            "total_executions": 0,
+            "successful_executions": 0,
+            "failed_executions": 0,
+            "timeout_executions": 0,
+            "recovered_executions": 0,
+            "average_execution_time": 0.0,
         }
 
         # 問題追蹤
@@ -135,7 +139,7 @@ class ExecutionManager:
             # Try to load from config file
             config_path = Path("configs/system_config.yaml")
             if config_path.exists():
-                with open(config_path, 'r', encoding='utf-8') as f:
+                with open(config_path, "r", encoding="utf-8") as f:
                     system_config = yaml.safe_load(f)
 
             # Using default configuration
@@ -152,9 +156,7 @@ class ExecutionManager:
 
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
@@ -168,8 +170,7 @@ class ExecutionManager:
 
         self._monitoring_active = True
         self._health_check_thread = threading.Thread(
-            target=self._health_monitoring_loop,
-            daemon=True
+            target=self._health_monitoring_loop, daemon=True
         )
         self._health_check_thread.start()
         self.logger.info("Health monitoring started")
@@ -202,42 +203,42 @@ class ExecutionManager:
 
     def _check_resource_thresholds(self, health: Dict[str, Any]):
         """檢查資源閾值"""
-        cpu_percent = health.get('cpu_percent', 0)
-        memory_percent = health.get('memory_percent', 0)
-        disk_percent = health.get('disk_percent', 0)
+        cpu_percent = health.get("cpu_percent", 0)
+        memory_percent = health.get("memory_percent", 0)
+        disk_percent = health.get("disk_percent", 0)
 
         # CPU檢查
         if cpu_percent > self.config.cpu_critical:
-            self._handle_resource_issue('cpu', 'critical', cpu_percent)
+            self._handle_resource_issue("cpu", "critical", cpu_percent)
         elif cpu_percent > self.config.cpu_warning:
-            self._handle_resource_issue('cpu', 'warning', cpu_percent)
+            self._handle_resource_issue("cpu", "warning", cpu_percent)
 
         # 記憶體檢查
         if memory_percent > self.config.memory_critical:
-            self._handle_resource_issue('memory', 'critical', memory_percent)
+            self._handle_resource_issue("memory", "critical", memory_percent)
         elif memory_percent > self.config.memory_warning:
-            self._handle_resource_issue('memory', 'warning', memory_percent)
+            self._handle_resource_issue("memory", "warning", memory_percent)
 
         # 磁碟檢查
         if disk_percent > self.config.disk_critical:
-            self._handle_resource_issue('disk', 'critical', disk_percent)
+            self._handle_resource_issue("disk", "critical", disk_percent)
         elif disk_percent > self.config.disk_warning:
-            self._handle_resource_issue('disk', 'warning', disk_percent)
+            self._handle_resource_issue("disk", "warning", disk_percent)
 
     def _handle_resource_issue(self, resource_type: str, severity: str, value: float):
         """處理資源問題"""
         issue = {
-            'timestamp': time.time(),
-            'type': 'resource_threshold',
-            'resource': resource_type,
-            'severity': severity,
-            'value': value,
-            'threshold': getattr(self.config, f"{resource_type}_{severity}")
+            "timestamp": time.time(),
+            "type": "resource_threshold",
+            "resource": resource_type,
+            "severity": severity,
+            "value": value,
+            "threshold": getattr(self.config, f"{resource_type}_{severity}"),
         }
 
         self.issues_log.append(issue)
 
-        if severity == 'critical':
+        if severity == "critical":
             self.logger.error(f"Critical {resource_type} usage: {value}%")
             if self.config.auto_recovery:
                 self._attempt_resource_recovery(resource_type)
@@ -247,34 +248,34 @@ class ExecutionManager:
     def _attempt_resource_recovery(self, resource_type: str):
         """嘗試資源恢復"""
         recovery_action = {
-            'timestamp': time.time(),
-            'type': 'resource_recovery',
-            'resource': resource_type,
-            'action': 'attempted'
+            "timestamp": time.time(),
+            "type": "resource_recovery",
+            "resource": resource_type,
+            "action": "attempted",
         }
 
         try:
-            if resource_type == 'memory':
+            if resource_type == "memory":
                 # 觸發垃圾回收
                 gc.collect()
-                recovery_action['details'] = 'garbage_collection'
+                recovery_action["details"] = "garbage_collection"
 
-            elif resource_type == 'cpu':
+            elif resource_type == "cpu":
                 # 可以實施CPU降頻或進程優先級調整
-                recovery_action['details'] = 'cpu_throttling_suggested'
+                recovery_action["details"] = "cpu_throttling_suggested"
 
-            elif resource_type == 'disk':
+            elif resource_type == "disk":
                 # 可以清理臨時文件
-                recovery_action['details'] = 'temp_cleanup_suggested'
+                recovery_action["details"] = "temp_cleanup_suggested"
 
-            recovery_action['status'] = 'completed'
+            recovery_action["status"] = "completed"
             self.logger.info(f"Recovery action completed for {resource_type}")
 
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            recovery_action['status'] = 'failed'
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            recovery_action["status"] = "failed"
 
-            recovery_action['error'] = str(e)
+            recovery_action["error"] = str(e)
             self.logger.error(f"Recovery action failed for {resource_type}: {e}")
 
         self.recovery_actions.append(recovery_action)
@@ -284,7 +285,7 @@ class ExecutionManager:
         command: Union[str, List[str]],
         timeout: Optional[float] = None,
         retry_on_failure: bool = True,
-        **kwargs
+        **kwargs,
     ) -> ExecutionResult:
         """
         執行命令並進行智能監控
@@ -302,7 +303,7 @@ class ExecutionManager:
             # 如果監控未啟用, 使用基本執行
             return self.monitor.execute_command(command, timeout, **kwargs)
 
-        self.execution_stats['total_executions'] += 1
+        self.execution_stats["total_executions"] += 1
 
         # 記錄執行詳情
         if self.config.log_execution_details:
@@ -318,12 +319,12 @@ class ExecutionManager:
 
                 # 更新統計
                 if result.status == ExecutionStatus.COMPLETED:
-                    self.execution_stats['successful_executions'] += 1
+                    self.execution_stats["successful_executions"] += 1
                     break
                 elif result.status == ExecutionStatus.TIMEOUT:
-                    self.execution_stats['timeout_executions'] += 1
+                    self.execution_stats["timeout_executions"] += 1
                 else:
-                    self.execution_stats['failed_executions'] += 1
+                    self.execution_stats["failed_executions"] += 1
 
                 # 檢查是否需要重試
                 if retry_count < max_retries and self._should_retry(result):
@@ -341,24 +342,24 @@ class ExecutionManager:
                     time.sleep(self.config.retry_delay)
                     continue
                 else:
-                    result = ExecutionResult(
-                        status=ExecutionStatus.ERROR,
-                        error_message=str(e)
-                    )
+                    result = ExecutionResult(status=ExecutionStatus.ERROR, error_message=str(e))
                     break
 
         # 如果經過重試後成功, 記錄恢復
         if retry_count > 0 and result and result.status == ExecutionStatus.COMPLETED:
-            self.execution_stats['recovered_executions'] += 1
+            self.execution_stats["recovered_executions"] += 1
             self.logger.info(f"Command recovered after {retry_count} retries")
 
         # 更新平均執行時間
         if result and result.execution_time > 0:
-            total_time = (self.execution_stats['average_execution_time'] *
-                        (self.execution_stats['total_executions'] - 1) +
-                        result.execution_time)
-            self.execution_stats['average_execution_time'] = total_time / \
-                self.execution_stats['total_executions']
+            total_time = (
+                self.execution_stats["average_execution_time"]
+                * (self.execution_stats["total_executions"] - 1)
+                + result.execution_time
+            )
+            self.execution_stats["average_execution_time"] = (
+                total_time / self.execution_stats["total_executions"]
+            )
 
         return result
 
@@ -372,17 +373,16 @@ class ExecutionManager:
             return True
 
         # 終端機無響應時重試
-        if (result.terminal_status and
-            result.terminal_status in [TerminalStatus.STUCK, TerminalStatus.UNRESPONSIVE]):
+        if result.terminal_status and result.terminal_status in [
+            TerminalStatus.STUCK,
+            TerminalStatus.UNRESPONSIVE,
+        ]:
             return True
 
         return False
 
     async def execute_async_command(
-        self,
-        command: Union[str, List[str]],
-        timeout: Optional[float] = None,
-        **kwargs
+        self, command: Union[str, List[str]], timeout: Optional[float] = None, **kwargs
     ) -> ExecutionResult:
         """
         異步執行命令
@@ -405,16 +405,16 @@ class ExecutionManager:
         stats = self.execution_stats.copy()
 
         # 計算成功率
-        if stats['total_executions'] > 0:
-            stats['success_rate'] = stats['successful_executions'] / stats['total_executions']
-            stats['failure_rate'] = stats['failed_executions'] / stats['total_executions']
-            stats['timeout_rate'] = stats['timeout_executions'] / stats['total_executions']
-            stats['recovery_rate'] = stats['recovered_executions'] / stats['total_executions']
+        if stats["total_executions"] > 0:
+            stats["success_rate"] = stats["successful_executions"] / stats["total_executions"]
+            stats["failure_rate"] = stats["failed_executions"] / stats["total_executions"]
+            stats["timeout_rate"] = stats["timeout_executions"] / stats["total_executions"]
+            stats["recovery_rate"] = stats["recovered_executions"] / stats["total_executions"]
         else:
-            stats['success_rate'] = 0.0
-            stats['failure_rate'] = 0.0
-            stats['timeout_rate'] = 0.0
-            stats['recovery_rate'] = 0.0
+            stats["success_rate"] = 0.0
+            stats["failure_rate"] = 0.0
+            stats["timeout_rate"] = 0.0
+            stats["recovery_rate"] = 0.0
 
         return stats
 
@@ -423,28 +423,30 @@ class ExecutionManager:
         health = self.monitor.get_system_health()
 
         # 添加問題和恢復記錄
-        recent_issues = [issue for issue in self.issues_log
-                        if time.time() - issue['timestamp'] < 3600]  # 最近1小時
-        recent_recoveries = [action for action in self.recovery_actions
-                            if time.time() - action['timestamp'] < 3600]  # 最近1小時
+        recent_issues = [
+            issue for issue in self.issues_log if time.time() - issue["timestamp"] < 3600
+        ]  # 最近1小時
+        recent_recoveries = [
+            action for action in self.recovery_actions if time.time() - action["timestamp"] < 3600
+        ]  # 最近1小時
 
         return {
-            'system_health': health,
-            'execution_stats': self.get_execution_statistics(),
-            'recent_issues': recent_issues,
-            'recent_recoveries': recent_recoveries,
-            'config': asdict(self.config)
+            "system_health": health,
+            "execution_stats": self.get_execution_statistics(),
+            "recent_issues": recent_issues,
+            "recent_recoveries": recent_recoveries,
+            "config": asdict(self.config),
         }
 
     def reset_statistics(self):
         """重置統計信息"""
         self.execution_stats = {
-            'total_executions': 0,
-            'successful_executions': 0,
-            'failed_executions': 0,
-            'timeout_executions': 0,
-            'recovered_executions': 0,
-            'average_execution_time': 0.0
+            "total_executions": 0,
+            "successful_executions": 0,
+            "failed_executions": 0,
+            "timeout_executions": 0,
+            "recovered_executions": 0,
+            "average_execution_time": 0.0,
         }
         self.issues_log.clear()
         self.recovery_actions.clear()
@@ -481,9 +483,7 @@ def get_execution_manager(config: Optional[ExecutionManagerConfig] = None) -> Ex
 
 
 def execute_with_smart_monitoring(
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    **kwargs
+    command: Union[str, List[str]], timeout: Optional[float] = None, **kwargs
 ) -> ExecutionResult:
     """
     使用智能監控執行命令的便捷函數
@@ -501,9 +501,7 @@ def execute_with_smart_monitoring(
 
 
 async def execute_async_with_smart_monitoring(
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    **kwargs
+    command: Union[str, List[str]], timeout: Optional[float] = None, **kwargs
 ) -> ExecutionResult:
     """
     使用智能監控異步執行命令的便捷函數
@@ -540,9 +538,11 @@ if __name__ == "__main__":
             logger.info(f"CPU: {health_report['system_health'].get('cpu_percent', 'N/A')}%")
             logger.info(f"Memory: {health_report['system_health'].get('memory_percent', 'N/A')}%")
             logger.info(f"Disk: {health_report['system_health'].get('disk_percent', 'N/A')}%")
-            logger.info(f"Terminal Status: {health_report['system_health'].get('terminal_status', 'N/A')}")
+            logger.info(
+                f"Terminal Status: {health_report['system_health'].get('terminal_status', 'N/A')}"
+            )
             logger.info("\nExecution Statistics:")
-            stats = health_report['execution_stats']
+            stats = health_report["execution_stats"]
             logger.info(f"Total Executions: {stats['total_executions']}")
             logger.info(f"Success Rate: {stats['success_rate']:.2%}")
             logger.info(f"Average Execution Time: {stats['average_execution_time']:.2f}s")

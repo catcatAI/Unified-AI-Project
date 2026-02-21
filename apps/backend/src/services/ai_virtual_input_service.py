@@ -104,18 +104,12 @@ class AIVirtualInputService:
         self.action_log.append(log_entry)
 
     def process_mouse_command(self, command: VirtualMouseCommand) -> Dict[str, Any]:
-        self.logger.info(
-            f"AVIS: Processing mouse command (SKELETON): {command.action_type}"
-        )
+        self.logger.info(f"AVIS: Processing mouse command (SKELETON): {command.action_type}")
         self._log_action("mouse", asdict(command), {"status": "simulated"})
         return {"status": "simulated", "action": command.action_type}
 
-    def process_keyboard_command(
-        self, command: VirtualKeyboardCommand
-    ) -> Dict[str, Any]:
-        self.logger.info(
-            f"AVIS: Processing keyboard command (SKELETON): {command.action_type}"
-        )
+    def process_keyboard_command(self, command: VirtualKeyboardCommand) -> Dict[str, Any]:
+        self.logger.info(f"AVIS: Processing keyboard command (SKELETON): {command.action_type}")
         self._log_action("keyboard", asdict(command), {"status": "simulated"})
         return {"status": "simulated", "action": command.action_type}
 

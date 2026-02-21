@@ -6,11 +6,13 @@ import json
 import csv
 from typing import Optional, Tuple, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入TensorFlow
 try:
     import tensorflow as tf
+
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
@@ -25,14 +27,14 @@ CHAR_MAP_LOAD_PATH = "data/models/arithmetic_char_maps.json"
 def load_char_maps(file_path: str) -> Optional[Dict[str, Any]]:
     """从JSON文件加载字符映射"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             char_map_data = json.load(f)
             return {
-                'char_to_token': char_map_data.get('char_to_token', {}),
-                'token_to_char': char_map_data.get('token_to_char', {}),
-                'n_token': char_map_data.get('n_token', 0),
-                'max_encoder_seq_length': char_map_data.get('max_encoder_seq_length', 0),
-                'max_decoder_seq_length': char_map_data.get('max_decoder_seq_length', 0)
+                "char_to_token": char_map_data.get("char_to_token", {}),
+                "token_to_char": char_map_data.get("token_to_char", {}),
+                "n_token": char_map_data.get("n_token", 0),
+                "max_encoder_seq_length": char_map_data.get("max_encoder_seq_length", 0),
+                "max_decoder_seq_length": char_map_data.get("max_decoder_seq_length", 0),
             }
     except FileNotFoundError:
         logger.info(f"错误: 字符映射文件未找到 {file_path}")
@@ -48,11 +50,11 @@ def load_test_dataset_csv(file_path: str) -> Optional[Tuple[list, list]]:
     answers = []
 
     try:
-        with open(file_path, 'r', newline='', encoding='utf-8') as f:
+        with open(file_path, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                problems.append({'problem': row['problem']})
-                answers.append({'answer': row['answer']})
+                problems.append({"problem": row["problem"]})
+                answers.append({"answer": row["answer"]})
         return problems, answers
     except FileNotFoundError:
         logger.info(f"错误: 测试数据集文件未找到 {file_path}")
@@ -69,17 +71,13 @@ def evaluate_model(model, test_problems: list, test_answers: list) -> Dict[str, 
     total = len(test_problems)
 
     for problem, answer in zip(test_problems, test_answers):
-        pred = model.predict(problem['problem'])
-        if str(pred) == str(answer['answer']):
+        pred = model.predict(problem["problem"])
+        if str(pred) == str(answer["answer"]):
             correct += 1
 
     accuracy = correct / total if total > 0 else 0
 
-    return {
-        "total": total,
-        "correct": correct,
-        "accuracy": accuracy
-    }
+    return {"total": total, "correct": correct, "accuracy": accuracy}
 
 
 def main():

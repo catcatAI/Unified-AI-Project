@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class LearningLogDB:
     """
     SQLite database for storing adaptive learning controller logs.
@@ -49,10 +50,13 @@ class LearningLogDB:
         current_effectiveness = log_entry.get("current_effectiveness")
         message = log_entry.get("message")
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO strategy_logs (timestamp, strategy_id, current_effectiveness, message)
             VALUES (?, ?, ?, ?)
-        """, (timestamp, strategy_id, current_effectiveness, message))
+        """,
+            (timestamp, strategy_id, current_effectiveness, message),
+        )
         record_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -63,7 +67,9 @@ class LearningLogDB:
         """Retrieves all log entries, optionally filtered by strategy_id."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        query = "SELECT id, timestamp, strategy_id, current_effectiveness, message FROM strategy_logs"
+        query = (
+            "SELECT id, timestamp, strategy_id, current_effectiveness, message FROM strategy_logs"
+        )
         params = []
         if strategy_id:
             query += " WHERE strategy_id = ?"
@@ -73,16 +79,18 @@ class LearningLogDB:
         cursor.execute(query, tuple(params))
         rows = cursor.fetchall()
         conn.close()
-        
+
         log_entries = []
         for row in rows:
-            log_entries.append({
-                "id": row[0],
-                "timestamp": row[1],
-                "strategy_id": row[2],
-                "current_effectiveness": row[3],
-                "message": row[4]
-            })
+            log_entries.append(
+                {
+                    "id": row[0],
+                    "timestamp": row[1],
+                    "strategy_id": row[2],
+                    "current_effectiveness": row[3],
+                    "message": row[4],
+                }
+            )
         return log_entries
 
     def delete_db_file(self):

@@ -2,14 +2,17 @@
 """
 Angela AI 對話功能和 LLM 集成測試腳本
 """
+
 import requests
 import json
 import time
 from typing import Dict, List
 import logging
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"
+
 
 class DialogueLLMTester:
     def __init__(self):
@@ -23,11 +26,7 @@ class DialogueLLMTester:
         self.total_tests += 1
 
         try:
-            response = requests.post(
-                f"{BASE_URL}{endpoint}",
-                json={"message": message},
-                timeout=10
-            )
+            response = requests.post(f"{BASE_URL}{endpoint}", json={"message": message}, timeout=10)
 
             if response.status_code == 200:
                 data = response.json()
@@ -36,31 +35,33 @@ class DialogueLLMTester:
                     response_text = data.get("response", data.get("response_text", ""))
                     if response_text and len(response_text) > 0:
                         self.passed_tests += 1
-                        self.results.append({
-                            "test": f"dialogue_{endpoint}",
-                            "status": "pass",
-                            "message": f"對話成功: {response_text[:100]}",
-                            "full_response": data
-                        })
+                        self.results.append(
+                            {
+                                "test": f"dialogue_{endpoint}",
+                                "status": "pass",
+                                "message": f"對話成功: {response_text[:100]}",
+                                "full_response": data,
+                            }
+                        )
                         return True
 
             self.failed_tests += 1
-            self.results.append({
-                "test": f"dialogue_{endpoint}",
-                "status": "fail",
-                "message": f"對話失敗: {response.text}",
-                "status_code": response.status_code
-            })
+            self.results.append(
+                {
+                    "test": f"dialogue_{endpoint}",
+                    "status": "fail",
+                    "message": f"對話失敗: {response.text}",
+                    "status_code": response.status_code,
+                }
+            )
             return False
         except Exception as e:
-            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
+            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
             self.failed_tests += 1
 
-            self.results.append({
-                "test": f"dialogue_{endpoint}",
-                "status": "fail",
-                "message": f"對話異常: {str(e)}"
-            })
+            self.results.append(
+                {"test": f"dialogue_{endpoint}", "status": "fail", "message": f"對話異常: {str(e)}"}
+            )
             return False
 
     def test_multiple_conversations(self) -> bool:
@@ -68,13 +69,7 @@ class DialogueLLMTester:
         self.total_tests += 1
 
         try:
-            conversation_history = [
-                "你好",
-                "我很好",
-                "你是誰",
-                "今天天氣如何",
-                "謝謝"
-            ]
+            conversation_history = ["你好", "我很好", "你是誰", "今天天氣如何", "謝謝"]
 
             print("\n【2/4】測試多輪對話")
             print("-" * 80)
@@ -88,47 +83,50 @@ class DialogueLLMTester:
 
             if all_success:
                 self.passed_tests += 1
-                self.results.append({
-                    "test": "multiple_conversations",
-                    "status": "pass",
-                    "message": "多輪對話全部成功"
-                })
+                self.results.append(
+                    {
+                        "test": "multiple_conversations",
+                        "status": "pass",
+                        "message": "多輪對話全部成功",
+                    }
+                )
                 return True
             else:
                 self.failed_tests += 1
-                self.results.append({
-                    "test": "multiple_conversations",
-                    "status": "fail",
-                    "message": "多輪對話部分失敗"
-                })
+                self.results.append(
+                    {
+                        "test": "multiple_conversations",
+                        "status": "fail",
+                        "message": "多輪對話部分失敗",
+                    }
+                )
                 return False
         except Exception as e:
-            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
+            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
             self.failed_tests += 1
 
-            self.results.append({
-                "test": "multiple_conversations",
-                "status": "fail",
-                "message": f"多輪對話異常: {str(e)}"
-            })
+            self.results.append(
+                {
+                    "test": "multiple_conversations",
+                    "status": "fail",
+                    "message": f"多輪對話異常: {str(e)}",
+                }
+            )
             return False
 
     def test_single_request(self, message: str):
         """發送單個對話請求"""
         try:
             response = requests.post(
-                f"{BASE_URL}/angela/chat",
-                json={"message": message},
-                timeout=10
+                f"{BASE_URL}/angela/chat", json={"message": message}, timeout=10
             )
             if response.status_code == 200:
                 return True, response.json(), "✅"
             else:
                 return False, response.text, "❌"
         except Exception as e:
-            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
+            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
             return False, str(e), "❌"
-
 
     def test_emotion_detection(self) -> bool:
         """測試情感識別"""
@@ -143,7 +141,7 @@ class DialogueLLMTester:
                 ("我很難過", "negative"),
                 ("我很平靜", "neutral"),
                 ("我很憤怒", "negative"),
-                ("我很興奮", "positive")
+                ("我很興奮", "positive"),
             ]
 
             detected_emotions = []
@@ -155,22 +153,26 @@ class DialogueLLMTester:
                     print(f"'{message}' -> {emotion}")
 
             self.passed_tests += 1
-            self.results.append({
-                "test": "emotion_detection",
-                "status": "pass",
-                "message": "情感識別測試完成",
-                "emotions": detected_emotions
-            })
+            self.results.append(
+                {
+                    "test": "emotion_detection",
+                    "status": "pass",
+                    "message": "情感識別測試完成",
+                    "emotions": detected_emotions,
+                }
+            )
             return True
         except Exception as e:
-            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
+            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
             self.failed_tests += 1
 
-            self.results.append({
-                "test": "emotion_detection",
-                "status": "fail",
-                "message": f"情感識別異常: {str(e)}"
-            })
+            self.results.append(
+                {
+                    "test": "emotion_detection",
+                    "status": "fail",
+                    "message": f"情感識別異常: {str(e)}",
+                }
+            )
             return False
 
     def test_response_time(self) -> bool:
@@ -185,7 +187,7 @@ class DialogueLLMTester:
                 "你好",
                 "簡單的問題",
                 "這是一個稍微長一點的問題",
-                "這是一個非常長的問題，用來測試系統處理長文本的能力，看看響應時間是否在可接受範圍內"
+                "這是一個非常長的問題，用來測試系統處理長文本的能力，看看響應時間是否在可接受範圍內",
             ]
 
             response_times = []
@@ -205,39 +207,43 @@ class DialogueLLMTester:
 
                 if avg_time < 5.0:
                     self.passed_tests += 1
-                    self.results.append({
-                        "test": "response_time",
-                        "status": "pass",
-                        "message": f"平均響應時間 {avg_time:.2f}秒，在可接受範圍內",
-                        "response_times": response_times
-                    })
+                    self.results.append(
+                        {
+                            "test": "response_time",
+                            "status": "pass",
+                            "message": f"平均響應時間 {avg_time:.2f}秒，在可接受範圍內",
+                            "response_times": response_times,
+                        }
+                    )
                     return True
                 else:
                     self.failed_tests += 1
-                    self.results.append({
-                        "test": "response_time",
-                        "status": "fail",
-                        "message": f"平均響應時間 {avg_time:.2f}秒，超過5秒閾值",
-                        "response_times": response_times
-                    })
+                    self.results.append(
+                        {
+                            "test": "response_time",
+                            "status": "fail",
+                            "message": f"平均響應時間 {avg_time:.2f}秒，超過5秒閾值",
+                            "response_times": response_times,
+                        }
+                    )
                     return False
             else:
                 self.failed_tests += 1
-                self.results.append({
-                    "test": "response_time",
-                    "status": "fail",
-                    "message": "無響應時間數據"
-                })
+                self.results.append(
+                    {"test": "response_time", "status": "fail", "message": "無響應時間數據"}
+                )
                 return False
         except Exception as e:
-            logger.error(f'Error in dialogue_llm_test.py: {e}', exc_info=True)
+            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
             self.failed_tests += 1
 
-            self.results.append({
-                "test": "response_time",
-                "status": "fail",
-                "message": f"響應時間測試異常: {str(e)}"
-            })
+            self.results.append(
+                {
+                    "test": "response_time",
+                    "status": "fail",
+                    "message": f"響應時間測試異常: {str(e)}",
+                }
+            )
             return False
 
     def run_all_tests(self):
@@ -250,11 +256,7 @@ class DialogueLLMTester:
         print("\n【1/4】測試不同的對話端點")
         print("-" * 80)
 
-        endpoints = [
-            "/angela/chat",
-            "/dialogue",
-            "/api/v1/angela/chat"
-        ]
+        endpoints = ["/angela/chat", "/dialogue", "/api/v1/angela/chat"]
 
         for endpoint in endpoints:
             success = self.test_dialogue_endpoint(endpoint, "你好，測試對話功能")
@@ -292,9 +294,12 @@ class DialogueLLMTester:
             "total": self.total_tests,
             "passed": self.passed_tests,
             "failed": self.failed_tests,
-            "success_rate": self.passed_tests / self.total_tests * 100 if self.total_tests > 0 else 0,
-            "results": self.results
+            "success_rate": (
+                self.passed_tests / self.total_tests * 100 if self.total_tests > 0 else 0
+            ),
+            "results": self.results,
         }
+
 
 if __name__ == "__main__":
     tester = DialogueLLMTester()

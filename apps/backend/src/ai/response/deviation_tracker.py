@@ -171,21 +171,17 @@ class DeviationTracker:
         ) / total
 
         self.stats["average_response_time"] = (
-            self.stats["average_response_time"] * (total - 1)
-            + metrics.response_time_ms
+            self.stats["average_response_time"] * (total - 1) + metrics.response_time_ms
         ) / total
 
         if metrics.quality_score > 0:
             self.stats["average_quality_score"] = (
-                self.stats["average_quality_score"] * (total - 1)
-                + metrics.quality_score
+                self.stats["average_quality_score"] * (total - 1) + metrics.quality_score
             ) / total
 
         if self.stats["total_tokens_used"] > 0:
             expected_tokens = total * baseline_tokens
-            self.stats["token_savings_rate"] = (
-                self.stats["total_tokens_saved"] / expected_tokens
-            )
+            self.stats["token_savings_rate"] = self.stats["total_tokens_saved"] / expected_tokens
 
     def record_user_feedback(self, metrics_index: int, positive: bool):
         """
@@ -221,8 +217,7 @@ class DeviationTracker:
         suggestions = []
 
         composed_rate = (
-            self.stats["route_counts"][ResponseRoute.COMPOSED.value]
-            / self.stats["total_responses"]
+            self.stats["route_counts"][ResponseRoute.COMPOSED.value] / self.stats["total_responses"]
             if self.stats["total_responses"] > 0
             else 0.0
         )
@@ -240,19 +235,14 @@ class DeviationTracker:
 
         token_savings = self.stats["token_savings_rate"]
         if token_savings < 0.5:
-            suggestions.append(
-                f"建议: Token 节省率为 {token_savings*100:.1f}%，目标为 60-80%"
-            )
+            suggestions.append(f"建议: Token 节省率为 {token_savings*100:.1f}%，目标为 60-80%")
 
         avg_response_time = self.stats["average_response_time"]
         if avg_response_time > 2000:
-            suggestions.append(
-                f"建议: 平均响应时间为 {avg_response_time:.0f}ms，考虑优化 LLM 调用"
-            )
+            suggestions.append(f"建议: 平均响应时间为 {avg_response_time:.0f}ms，考虑优化 LLM 调用")
 
         llm_full_rate = (
-            self.stats["route_counts"][ResponseRoute.LLM_FULL.value]
-            / self.stats["total_responses"]
+            self.stats["route_counts"][ResponseRoute.LLM_FULL.value] / self.stats["total_responses"]
             if self.stats["total_responses"] > 0
             else 0.0
         )

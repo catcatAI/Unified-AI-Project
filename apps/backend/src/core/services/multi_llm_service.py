@@ -44,8 +44,9 @@ try:
         AcceleratorType,
         PrecisionLevel,
         get_hardware_center,
-        HardwareProfile
+        HardwareProfile,
     )
+
     HARDWARE_CENTER_AVAILABLE = True
 except ImportError:
     HARDWARE_CENTER_AVAILABLE = False
@@ -54,6 +55,7 @@ except ImportError:
 
 class ModelProvider(Enum):
     """支援的 LLM 提供者"""
+
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -66,6 +68,7 @@ class ModelProvider(Enum):
 
 class MessageRole(Enum):
     """消息角色"""
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -74,6 +77,7 @@ class MessageRole(Enum):
 @dataclass
 class ChatMessage:
     """對話消息"""
+
     role: str  # system, user, assistant
     content: str
     name: Optional[str] = None
@@ -84,7 +88,7 @@ class ChatMessage:
             "role": self.role,
             "content": self.content,
             "name": self.name,
-            "timestamp": self.timestamp.isoformat() if self.timestamp else None
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
         }
 
     @classmethod
@@ -93,13 +97,14 @@ class ChatMessage:
             role=data.get("role", "user"),
             content=data.get("content", ""),
             name=data.get("name"),
-            timestamp=datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else None
+            timestamp=datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else None,
         )
 
 
 @dataclass
 class LLMResponse:
     """LLM 回應"""
+
     content: str
     model: str
     provider: str
@@ -116,13 +121,14 @@ class LLMResponse:
             "token_usage": self.token_usage,
             "latency_ms": self.latency_ms,
             "metadata": self.metadata,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
         }
 
 
 @dataclass
 class ModelConfig:
     """模型配置"""
+
     model_id: str
     provider: str
     model_name: str
@@ -147,7 +153,7 @@ class ModelConfig:
             "context_window": self.context_window,
             "cost_per_1k_tokens": self.cost_per_1k_tokens,
             "enabled": self.enabled,
-            "capabilities": self.capabilities
+            "capabilities": self.capabilities,
         }
 
 
@@ -170,7 +176,7 @@ class BaseLLMBackend(ABC):
         model_id: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> LLMResponse:
         """聊天補全"""
         pass
@@ -197,21 +203,21 @@ class OpenAIBackend(BaseLLMBackend):
         model_id: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> LLMResponse:
         start_time = time.time()
 
         url = f"{self.config.base_url or 'https://api.openai.com/v1'}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.config.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         payload = {
             "model": model_id or self.config.model_name,
             "messages": [m.to_dict() for m in messages],
             "temperature": temperature or self.config.temperature,
-            "max_tokens": max_tokens or self.config.max_tokens
+            "max_tokens": max_tokens or self.config.max_tokens,
         }
 
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -228,9 +234,9 @@ class OpenAIBackend(BaseLLMBackend):
             token_usage={
                 "prompt": data["usage"]["prompt_tokens"],
                 "completion": data["usage"]["completion_tokens"],
-                "total": data["usage"]["total_tokens"]
+                "total": data["usage"]["total_tokens"],
             },
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
     async def check_health(self) -> bool:
@@ -240,13 +246,12 @@ class OpenAIBackend(BaseLLMBackend):
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(
                     "https://api.openai.com/v1/models",
-                    headers={"Authorization": f"Bearer {self.config.api_key}"}
+                    headers={"Authorization": f"Bearer {self.config.api_key}"},
                 )
                 return response.status_code == 200
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
-
 
 
 class AnthropicBackend(BaseLLMBackend):
@@ -267,7 +272,7 @@ class AnthropicBackend(BaseLLMBackend):
         model_id: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> LLMResponse:
         start_time = time.time()
 
@@ -275,14 +280,14 @@ class AnthropicBackend(BaseLLMBackend):
         headers = {
             "x-api-key": self.config.api_key,
             "Content-Type": "application/json",
-            "anthropic-version": "2023-06-01"
+            "anthropic-version": "2023-06-01",
         }
 
         payload = {
             "model": model_id or self.config.model_name,
             "messages": [m.to_dict() for m in messages],
             "temperature": temperature or self.config.temperature,
-            "max_tokens": max_tokens or self.config.max_tokens
+            "max_tokens": max_tokens or self.config.max_tokens,
         }
 
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -298,9 +303,9 @@ class AnthropicBackend(BaseLLMBackend):
             provider="anthropic",
             token_usage={
                 "input_tokens": data["usage"]["input_tokens"],
-                "output_tokens": data["usage"]["output_tokens"]
+                "output_tokens": data["usage"]["output_tokens"],
             },
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
     async def check_health(self) -> bool:
@@ -308,14 +313,13 @@ class AnthropicBackend(BaseLLMBackend):
             return False
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(f"{self.ANTHROPIC_URL}/messages", headers={
-                    "x-api-key": self.config.api_key
-                })
+                response = await client.get(
+                    f"{self.ANTHROPIC_URL}/messages", headers={"x-api-key": self.config.api_key}
+                )
                 return response.status_code == 200
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
-
 
 
 class OllamaBackend(BaseLLMBackend):
@@ -331,7 +335,7 @@ class OllamaBackend(BaseLLMBackend):
         model_id: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> LLMResponse:
         start_time = time.time()
 
@@ -344,8 +348,8 @@ class OllamaBackend(BaseLLMBackend):
             "stream": False,
             "options": {
                 "temperature": temperature or self.config.temperature,
-                "num_predict": max_tokens or self.config.max_tokens
-            }
+                "num_predict": max_tokens or self.config.max_tokens,
+            },
         }
 
         async with httpx.AsyncClient(timeout=300.0) as client:
@@ -359,7 +363,7 @@ class OllamaBackend(BaseLLMBackend):
             content=data["message"]["content"],
             model=model,
             provider="ollama",
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
     async def check_health(self) -> bool:
@@ -369,13 +373,12 @@ class OllamaBackend(BaseLLMBackend):
                 response = await client.get(f"{base_url}/api/tags")
                 return response.status_code == 200
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
 
 
-
 class LlamaCppBackend(BaseLLMBackend):
-    """ llama.cpp 伺服器後端 """
+    """llama.cpp 伺服器後端"""
 
     async def initialize(self) -> bool:
         self.is_available = await self.check_health()
@@ -387,7 +390,7 @@ class LlamaCppBackend(BaseLLMBackend):
         model_id: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> LLMResponse:
         start_time = time.time()
 
@@ -399,7 +402,7 @@ class LlamaCppBackend(BaseLLMBackend):
             "messages": [m.to_dict() for m in messages],
             "temperature": temperature or self.config.temperature,
             "max_tokens": max_tokens or self.config.max_tokens,
-            "stream": False
+            "stream": False,
         }
 
         async with httpx.AsyncClient(timeout=300.0) as client:
@@ -414,7 +417,7 @@ class LlamaCppBackend(BaseLLMBackend):
             model=model,
             provider="llama_cpp",
             token_usage=data.get("usage", {}),
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
     async def check_health(self) -> bool:
@@ -424,9 +427,8 @@ class LlamaCppBackend(BaseLLMBackend):
                 response = await client.get(f"{base_url}/v1/models")
                 return response.status_code == 200
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
-
 
 
 class MultiLLMService:
@@ -446,20 +448,23 @@ class MultiLLMService:
         self.model_configs: Dict[str, ModelConfig] = {}
         self.default_model: Optional[str] = None
         self._initialize_lock = asyncio.Lock()
-        
+
         # 硬件檢測結果
         self.hardware_info = None
         self.ollama_settings = {}
-        
+
         # 嘗試舊的硬件檢測作為 fallback (同步版本)
         try:
             from shared.utils.hardware_detector import SystemHardwareProbe
+
             detector = SystemHardwareProbe()
             self.hardware_info = detector.detect()
-            # HardwareAdapter is actually in shared/utils/hardware_detector? 
+            # HardwareAdapter is actually in shared/utils/hardware_detector?
             # (I need to check if I added it there)
             # For now just detecting info.
-            logger.info(f"Hardware detected (fallback): {self.hardware_info.accelerator_type.value}")
+            logger.info(
+                f"Hardware detected (fallback): {self.hardware_info.accelerator_type.value}"
+            )
         except Exception as e:
             logger.warning(f"Hardware detection failed: {e}, using default settings")
 
@@ -473,7 +478,8 @@ class MultiLLMService:
         """從 JSON 配置文件加載配置"""
         try:
             import json
-            with open(config_path, 'r', encoding='utf-8') as f:
+
+            with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
 
             for model_id, model_config in config.get("models", {}).items():
@@ -488,7 +494,7 @@ class MultiLLMService:
                     context_window=model_config.get("context_window", 8192),
                     cost_per_1k_tokens=model_config.get("cost_per_1k_tokens", 0.0),
                     enabled=model_config.get("enabled", True),
-                    capabilities=model_config.get("capabilities", [])
+                    capabilities=model_config.get("capabilities", []),
                 )
 
                 if model_config.get("enabled", True):
@@ -503,9 +509,10 @@ class MultiLLMService:
         """根據硬件自動配置 Ollama 後端"""
         # 檢查 Ollama 是否可用
         ollama_url = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-        
+
         try:
             import httpx
+
             response = httpx.get(f"{ollama_url}/api/version", timeout=5.0)
             if response.status_code == 200:
                 logger.info("Ollama server detected, configuring...")
@@ -515,14 +522,14 @@ class MultiLLMService:
         except Exception:
             logger.warning("Ollama not available")
             return
-        
+
         # 根據硬件推薦選擇模型
         if self.hardware_info:
             recommendations = self.ollama_settings.get("model_recommendations", [])
             if recommendations:
                 recommended_model = recommendations[0]
                 model_name = recommended_model.get("name", "llama3.2:1b")
-                
+
                 # 創建 Ollama 配置
                 ollama_config = ModelConfig(
                     model_id="ollama-local",
@@ -533,15 +540,15 @@ class MultiLLMService:
                     temperature=0.7,
                     context_window=4096,
                     enabled=True,
-                    capabilities=["chat", "reasoning", "code"]
+                    capabilities=["chat", "reasoning", "code"],
                 )
-                
+
                 self.model_configs["ollama-local"] = ollama_config
                 self.default_model = "ollama-local"
-                
+
                 logger.info(f"Auto-configured Ollama with model: {model_name}")
                 logger.info(f"Reason: {recommended_model.get('notes', '')}")
-                
+
                 # 記錄性能備註
                 for note in self.ollama_settings.get("performance_notes", []):
                     logger.info(f"Performance note: {note}")
@@ -556,7 +563,7 @@ class MultiLLMService:
                 temperature=0.7,
                 context_window=4096,
                 enabled=True,
-                capabilities=["chat", "reasoning", "code"]
+                capabilities=["chat", "reasoning", "code"],
             )
             self.model_configs["ollama-local"] = ollama_config
             self.default_model = "ollama-local"
@@ -573,10 +580,12 @@ class MultiLLMService:
                         self.hardware_info = center.hardware_profile
                         accelerator = center.hardware_profile.accelerator
                         if accelerator:
-                            logger.info(f"Hardware detected: {accelerator.type.value} - {accelerator.name}")
+                            logger.info(
+                                f"Hardware detected: {accelerator.type.value} - {accelerator.name}"
+                            )
                 except Exception as e:
                     logger.warning(f"Hardware center init failed: {e}")
-            
+
             # 初始化所有可用的後端
             for model_id, config in self.model_configs.items():
                 if not config.enabled:
@@ -606,10 +615,7 @@ class MultiLLMService:
             return OpenAIBackend(config)
 
     async def chat_completion(
-        self,
-        messages: List[ChatMessage],
-        model_id: Optional[str] = None,
-        **kwargs
+        self, messages: List[ChatMessage], model_id: Optional[str] = None, **kwargs
     ) -> LLMResponse:
         """聊天補全 - 自動選擇可用後端"""
         if not self.backends:

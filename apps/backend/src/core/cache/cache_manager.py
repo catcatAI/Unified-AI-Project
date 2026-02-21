@@ -30,15 +30,19 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class CacheLevel(Enum):
     """缓存级别"""
+
     MEMORY = "memory"
     REDIS = "redis"
     DISTRIBUTED = "distributed"
 
+
 @dataclass
 class CacheConfig:
     """缓存配置"""
+
     default_ttl: int = 3600  # 默认TTL(秒)
     max_memory_size: int = 1000  # 内存缓存最大条目数
     redis_url: str = "redis://localhost:6379"
@@ -46,6 +50,7 @@ class CacheConfig:
     enable_compression: bool = True
     enable_serialization: bool = True
     eviction_policy: str = "lru"  # lru, lfu, ttl
+
 
 class CacheBackend(ABC):
     """缓存后端抽象基类"""
@@ -74,6 +79,7 @@ class CacheBackend(ABC):
     async def exists(self, key: str) -> bool:
         """检查键是否存在"""
         pass
+
 
 class MemoryCache(CacheBackend):
     """内存缓存实现"""
@@ -122,6 +128,7 @@ class MemoryCache(CacheBackend):
     async def exists(self, key: str) -> bool:
         with self.lock:
             return key in self.cache
+
 
 class RedisCache(CacheBackend):
     """Redis缓存实现"""
@@ -200,18 +207,14 @@ class RedisCache(CacheBackend):
             logger.error(f"Redis exists error: {e}")
             return False
 
+
 class CacheManager:
     """多级缓存管理器"""
 
     def __init__(self, config: CacheConfig = None):
         self.config = config or CacheConfig()
         self.backends = {}
-        self.stats = {
-            "hits": 0,
-            "misses": 0,
-            "sets": 0,
-            "deletes": 0
-        }
+        self.stats = {"hits": 0, "misses": 0, "sets": 0, "deletes": 0}
 
         # 初始化缓存后端
         self._init_backends()
@@ -226,8 +229,7 @@ class CacheManager:
         # Redis缓存
         try:
             self.backends[CacheLevel.REDIS] = RedisCache(
-                self.config.redis_url,
-                self.config.redis_db
+                self.config.redis_url, self.config.redis_db
             )
             logger.info("Redis缓存后端初始化成功")
         except Exception as e:
@@ -262,7 +264,9 @@ class CacheManager:
         self.stats["misses"] += 1
         return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None, level: CacheLevel = CacheLevel.MEMORY) -> bool:
+    async def set(
+        self, key: str, value: Any, ttl: Optional[int] = None, level: CacheLevel = CacheLevel.MEMORY
+    ) -> bool:
         """设置缓存值"""
         if level in self.backends:
             success = await self.backends[level].set(key, value, ttl)
@@ -304,25 +308,19 @@ class CacheManager:
         """获取缓存统计"""
         total_requests = self.stats["hits"] + self.stats["misses"]
         hit_rate = (self.stats["hits"] / total_requests * 100) if total_requests > 0 else 0
-        return {
-            **self.stats,
-            "hit_rate": hit_rate,
-            "total_requests": total_requests
-        }
+        return {**self.stats, "hit_rate": hit_rate, "total_requests": total_requests}
 
     def reset_stats(self):
         """重置统计"""
-        self.stats = {
-            "hits": 0,
-            "misses": 0,
-            "sets": 0,
-            "deletes": 0
-        }
+        self.stats = {"hits": 0, "misses": 0, "sets": 0, "deletes": 0}
+
 
 class CacheDecorator:
     """缓存装饰器"""
 
-    def __init__(self, cache_manager: CacheManager, ttl: int = 3600, level: CacheLevel = CacheLevel.MEMORY):
+    def __init__(
+        self, cache_manager: CacheManager, ttl: int = 3600, level: CacheLevel = CacheLevel.MEMORY
+    ):
         self.cache_manager = cache_manager
         self.ttl = ttl
         self.level = level
@@ -348,26 +346,27 @@ class CacheDecorator:
                 await self.cache_manager.set(cache_key, result, self.ttl, self.level)
 
                 return result
+
             return wrapper
+
         return decorator
 
     def _generate_key(self, func_name: str, args: tuple, kwargs: dict) -> str:
         """生成缓存键"""
-        key_data = {
-            "func": func_name,
-            "args": args,
-            "kwargs": kwargs
-        }
+        key_data = {"func": func_name, "args": args, "kwargs": kwargs}
         key_str = json.dumps(key_data, sort_keys=True, default=str)
         return hashlib.md5(key_str.encode()).hexdigest()
 
+
 # 全局缓存管理器
 cache_manager = CacheManager()
+
 
 # 便捷装饰器
 def cached(ttl: int = 3600, level: CacheLevel = CacheLevel.MEMORY, key_func=None):
     """缓存装饰器"""
     return CacheDecorator(cache_manager, ttl, level)(key_func)
+
 
 class CacheWarmer:
     """缓存预热器"""
@@ -402,6 +401,7 @@ class CacheWarmer:
         key_str = json.dumps(key_data, sort_keys=True, default=str)
         return hashlib.md5(key_str.encode()).hexdigest()
 
+
 class CacheInvalidation:
     """缓存失效管理"""
 
@@ -425,12 +425,14 @@ class CacheInvalidation:
         # Redis支持KEYS命令，内存缓存需要遍历
         pass
 
+
 # 使用示例
 @cached(ttl=600, level=CacheLevel.MEMORY)
 async def expensive_computation(x: int, y: int) -> int:
     """耗时计算函数"""
     await asyncio.sleep(1)  # 模拟耗时操作
     return x * y
+
 
 async def main():
     """示例使用"""
@@ -452,6 +454,7 @@ async def main():
     # 查看统计
     stats = cache_manager.get_stats()
     logger.info(f"缓存统计: {stats}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

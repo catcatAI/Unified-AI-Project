@@ -7,15 +7,17 @@ import json
 import os
 from typing import Optional, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入Keras
 try:
-    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    os.environ["TF_USE_LEGACY_KERAS"] = "1"
     from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
     from tensorflow.keras.optimizers import Adam
+
     KERAS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Warning: Could not import keras: {e}")
@@ -43,7 +45,7 @@ VALIDATION_SPLIT = 0.2
 def load_dataset(file_path: str) -> Optional[Dict[str, Any]]:
     """从JSON文件加载数据集"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             dataset = json.load(f)
 
         if not isinstance(dataset, list):
@@ -53,14 +55,10 @@ def load_dataset(file_path: str) -> Optional[Dict[str, Any]]:
             if not isinstance(item, dict) or "problem" not in item or "answer" not in item:
                 raise ValueError("数据集格式不正确")
 
-        problems = [{'problem': item['problem']} for item in dataset]
-        answers = [{'answer': item['answer']} for item in dataset]
+        problems = [{"problem": item["problem"]} for item in dataset]
+        answers = [{"answer": item["answer"]} for item in dataset]
 
-        return {
-            "problems": problems,
-            "answers": answers,
-            "total": len(dataset)
-        }
+        return {"problems": problems, "answers": answers, "total": len(dataset)}
 
     except FileNotFoundError:
         logger.info(f"错误: 数据集文件未找到 {file_path}")
@@ -77,19 +75,17 @@ def build_model(vocab_size: int, max_len: int) -> Optional[Any]:
     if not KERAS_AVAILABLE:
         return None
 
-    model = Sequential([
-        # 简化模型
-        Dense(128, activation='relu', input_dim=vocab_size),
-        Dropout(0.2),
-        Dense(64, activation='relu'),
-        Dense(1, activation='linear')
-    ])
-
-    model.compile(
-        optimizer=Adam(learning_rate=0.001),
-        loss='mse',
-        metrics=['mae']
+    model = Sequential(
+        [
+            # 简化模型
+            Dense(128, activation="relu", input_dim=vocab_size),
+            Dropout(0.2),
+            Dense(64, activation="relu"),
+            Dense(1, activation="linear"),
+        ]
     )
+
+    model.compile(optimizer=Adam(learning_rate=0.001), loss="mse", metrics=["mae"])
 
     return model
 
@@ -109,7 +105,7 @@ def main():
     # 简化实现
     logger.info("训练完成（简化版本）")
 
-    return {"status": "success", "samples": dataset['total']}
+    return {"status": "success", "samples": dataset["total"]}
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ import ast
 import operator
 from typing import Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 operators = {
@@ -26,12 +27,11 @@ def eval_expr(expr: str) -> Any:
     安全地计算数学表达式。
     """
     try:
-        node = ast.parse(expr, mode='eval')
+        node = ast.parse(expr, mode="eval")
         return _eval(node.body)
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
-
 
 
 def _eval(node: ast.AST) -> Any:
@@ -53,13 +53,13 @@ def _eval(node: ast.AST) -> Any:
         if isinstance(node.func, ast.Name):
             func_name = node.func.id
             args = [_eval(a) for a in node.args]
-            if func_name == 'abs':
+            if func_name == "abs":
                 return abs(args[0] if args else 0)
-            elif func_name == 'round':
+            elif func_name == "round":
                 return round(args[0] if args else 0)
-            elif func_name == 'max':
+            elif func_name == "max":
                 return max(args) if args else 0
-            elif func_name == 'min':
+            elif func_name == "min":
                 return min(args) if args else 0
     return None
 
@@ -82,10 +82,10 @@ def demo():
         "abs(-5)",
         "round(3.14159, 2)",
     ]
-    
+
     logger.info("🧮 Calculator Tool Demo")
     logger.info("=" * 40)
-    
+
     for expr in expressions:
         result = calculate(expr)
         logger.info(f"  {expr} = {result}")

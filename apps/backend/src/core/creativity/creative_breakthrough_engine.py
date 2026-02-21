@@ -36,15 +36,18 @@ try:
     from sklearn.metrics.pairwise import cosine_similarity
     from sklearn.decomposition import PCA, LatentDirichletAllocation
     from sklearn.cluster import KMeans, DBSCAN
+
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
 
 logger = logging.getLogger("creative_breakthrough_engine")
 
+
 @dataclass
 class CreativeIdea:
     """创意概念"""
+
     id: str
     description: str
     novelty_score: float
@@ -52,6 +55,7 @@ class CreativeIdea:
     impact_score: float
     source_concepts: List[str]
     created_at: datetime
+
 
 class CreativeBreakthroughEngine:
     """创造性突破引擎"""
@@ -70,15 +74,15 @@ class CreativeBreakthroughEngine:
 
     def _generate_idea_id(self) -> str:
         """生成创意ID"""
-        return hashlib.sha256(str(random.random()).encode('utf-8')).hexdigest()[:16]
+        return hashlib.sha256(str(random.random()).encode("utf-8")).hexdigest()[:16]
 
     def add_concept(self, concept: str, category: str = "general"):
         """添加概念到概念库"""
-        concept_id = hashlib.sha256(concept.encode('utf-8')).hexdigest()
+        concept_id = hashlib.sha256(concept.encode("utf-8")).hexdigest()
         self.concept_bank[concept_id] = {
             "concept": concept,
             "category": category,
-            "added_at": datetime.now()
+            "added_at": datetime.now(),
         }
 
     def generate_innovation(self, seed_concepts: List[str] = None) -> Optional[CreativeIdea]:
@@ -97,7 +101,7 @@ class CreativeBreakthroughEngine:
             feasibility_score=random.random(),
             impact_score=random.random(),
             source_concepts=seed_concepts or [],
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         self.ideas[idea_id] = idea

@@ -7,15 +7,17 @@ import json
 import os
 from typing import Dict, List, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入Keras
 try:
-    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    os.environ["TF_USE_LEGACY_KERAS"] = "1"
     from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
     from tensorflow.keras.optimizers import Adam
+
     KERAS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Warning: Could not import keras: {e}")
@@ -40,7 +42,7 @@ VALIDATION_SPLIT = 0.1
 def load_logic_dataset(file_path: str) -> Optional[List[Dict[str, Any]]]:
     """加载逻辑数据集"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             dataset = json.load(f)
 
         if not isinstance(dataset, list):
@@ -76,18 +78,18 @@ def build_model(vocab_size: int, max_len: int) -> Optional[Any]:
     if not KERAS_AVAILABLE:
         return None
 
-    model = Sequential([
-        # 简化模型
-        Dense(64, activation='relu', input_dim=vocab_size),
-        Dropout(0.2),
-        Dense(32, activation='relu'),
-        Dense(1, activation='sigmoid')
-    ])
+    model = Sequential(
+        [
+            # 简化模型
+            Dense(64, activation="relu", input_dim=vocab_size),
+            Dropout(0.2),
+            Dense(32, activation="relu"),
+            Dense(1, activation="sigmoid"),
+        ]
+    )
 
     model.compile(
-        optimizer=Adam(learning_rate=0.001),
-        loss='binary_crossentropy',
-        metrics=['accuracy']
+        optimizer=Adam(learning_rate=0.001), loss="binary_crossentropy", metrics=["accuracy"]
     )
 
     return model

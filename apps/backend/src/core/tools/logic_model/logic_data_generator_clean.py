@@ -8,6 +8,7 @@ import os
 import random
 from typing import Optional, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 定义输出目录和文件名
@@ -80,12 +81,9 @@ def generate_dataset(num_samples: int = 1000, max_nesting: int = 2) -> list:
         result = evaluate_proposition(proposition)
 
         if result is not None:
-            dataset.append({
-                "id": i,
-                "proposition": proposition,
-                "result": result,
-                "complexity": max_nesting
-            })
+            dataset.append(
+                {"id": i, "proposition": proposition, "result": result, "complexity": max_nesting}
+            )
 
         if i % 100 == 0:
             logger.info(f"生成进度: {i} / {num_samples}")
@@ -97,7 +95,7 @@ def save_dataset(dataset: list, output_file: str):
     """保存数据集"""
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
 
     logger.info(f"保存 {len(dataset)} 个样本到 {output_file}")

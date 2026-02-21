@@ -2,6 +2,7 @@
 import uuid
 import sys
 import logging
+
 logger = logging.getLogger(__name__)
 try:
     from cryptography.fernet import Fernet
@@ -15,7 +16,9 @@ try:
     from secretsharing import SecretSharer
 except ImportError:
     SecretSharer = None
-    logger.warning("Warning: secretsharing module not available. GenesisManager will not work properly.")
+    logger.warning(
+        "Warning: secretsharing module not available. GenesisManager will not work properly."
+    )
 
 # from tests.run_test_subprocess import
 # from system_test import
@@ -40,7 +43,7 @@ class GenesisManager:
             - The UID part of the secret.
         """
         uid = f"uid_{uuid.uuid4().hex}"
-        ham_key = Fernet.generate_key().decode('utf-8')
+        ham_key = Fernet.generate_key().decode("utf-8")
         genesis_secret = f"{uid}:{ham_key}"
         return genesis_secret, uid
 
@@ -59,7 +62,7 @@ class GenesisManager:
             raise RuntimeError("SecretSharer not available. Please install secret-sharing package.")
 
         # The hex format is more robust for copy-pasting and QR codes.
-        secret_hex = secret.encode('utf-8').hex()
+        secret_hex = secret.encode("utf-8").hex()
         return SecretSharer.split_secret(secret_hex, 2, 3)
 
     @staticmethod
@@ -82,7 +85,7 @@ class GenesisManager:
 
         try:
             recovered_hex = SecretSharer.recover_secret(shards[:2])
-            return bytes.fromhex(recovered_hex).decode('utf-8')
+            return bytes.fromhex(recovered_hex).decode("utf-8")
         except Exception as e:
             logger.error(f"[GenesisManager] Error recovering secret: {e}")
             return None
@@ -98,16 +101,18 @@ class GenesisManager:
         Returns:
             A tuple (UID, HAM_KEY), or None if parsing fails.
         """
-        parts = secret.split(':', 1)
+        parts = secret.split(":", 1)
         if len(parts) == 2 and parts[0].startswith("uid_"):
             return parts[0], parts[1]
         return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Check if required modules are available
     if SecretSharer is None:
-        logger.error("Error: secretsharing module not available. Please install it with: pip install secret-sharing")
+        logger.error(
+            "Error: secretsharing module not available. Please install it with: pip install secret-sharing"
+        )
         exit(1)
 
     logger.info("--- GenesisManager Test ---")
@@ -150,7 +155,9 @@ if __name__ == '__main__':
 
     # Combination 5: Only 1 shard (should fail)
     recovered_one = GenesisManager.recover_secret_from_shards([shards[0]])
-    logger.error(f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}")
+    logger.error(
+        f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}"
+    )
     assert recovered_one is None
 
     # 4. Test parsing the recovered secret

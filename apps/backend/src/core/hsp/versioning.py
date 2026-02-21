@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class HSPVersionInfo:
     """HSP版本信息"""
+
     version: str
     release_date: str
     description: str
@@ -24,6 +25,7 @@ class HSPVersionInfo:
 @dataclass
 class HSPVersionCompatibility:
     """HSP版本兼容性信息"""
+
     from_version: str
     to_version: str
     is_compatible: bool
@@ -56,7 +58,7 @@ class HSPVersionManager:
             description="Initial release of HSP protocol",
             compatible_versions=[],
             breaking_changes=[],
-            deprecated_features=[]
+            deprecated_features=[],
         )
         self.version_history.append(version_0_1_0)
 
@@ -64,10 +66,7 @@ class HSPVersionManager:
         """初始化兼容性矩阵"""
         # 版本0.1.0与自身兼容
         compatibility = HSPVersionCompatibility(
-            from_version="0.1.0",
-            to_version="0.1.0",
-            is_compatible=True,
-            conversion_needed=False
+            from_version="0.1.0", to_version="0.1.0", is_compatible=True, conversion_needed=False
         )
         self._set_compatibility(compatibility)
 
@@ -102,7 +101,9 @@ class HSPVersionManager:
 
         self.compatibility_matrix[from_ver][to_ver] = compatibility
 
-    def get_compatibility(self, from_version: str, to_version: str) -> Optional[HSPVersionCompatibility]:
+    def get_compatibility(
+        self, from_version: str, to_version: str
+    ) -> Optional[HSPVersionCompatibility]:
         """获取版本兼容性信息"""
         if from_version in self.compatibility_matrix:
             if to_version in self.compatibility_matrix[from_version]:
@@ -131,7 +132,9 @@ class HSPVersionManager:
         self.version_converters[version_pair] = converter
         logger.debug(f"版本转换器已注册: {version_pair}")
 
-    def convert_message(self, message: Dict[str, Any], from_version: str, to_version: str) -> Dict[str, Any]:
+    def convert_message(
+        self, message: Dict[str, Any], from_version: str, to_version: str
+    ) -> Dict[str, Any]:
         """转换消息版本"""
         # 检查是否需要转换
         compatibility = self.get_compatibility(from_version, to_version)
@@ -233,7 +236,7 @@ class HSPVersionConverter:
             to_version="0.2.0",
             is_compatible=True,
             conversion_needed=True,
-            conversion_handler="0.1.0->0.2.0"
+            conversion_handler="0.1.0->0.2.0",
         )
         self.version_manager._set_compatibility(compatibility_0_1_0_to_0_2_0)
 
@@ -287,8 +290,9 @@ class HSPVersionNegotiator:
     def __init__(self, version_manager: HSPVersionManager) -> None:
         self.version_manager = version_manager
 
-    def negotiate_with_capabilities(self, client_capabilities: List[str],
-                                    server_capabilities: List[str]) -> Optional[str]:
+    def negotiate_with_capabilities(
+        self, client_capabilities: List[str], server_capabilities: List[str]
+    ) -> Optional[str]:
         """基于能力协商版本"""
         # 找到共同支持的版本
         common_versions = set(client_capabilities) & set(server_capabilities)
@@ -300,7 +304,9 @@ class HSPVersionNegotiator:
         # 选择最高版本
         try:
             # 使用semver排序
-            sorted_versions = sorted(common_versions, key=lambda v: semver.VersionInfo.parse(v), reverse=True)
+            sorted_versions = sorted(
+                common_versions, key=lambda v: semver.VersionInfo.parse(v), reverse=True
+            )
             return sorted_versions[0]
         except ValueError:
             # 如果版本号不符合semver格式, 返回第一个共同版本
@@ -313,10 +319,14 @@ class HSPVersionNegotiator:
         try:
             current = semver.VersionInfo.parse(current_version)
             # 找到比当前版本高的最新版本
-            newer_versions = [v for v in supported_versions if semver.VersionInfo.parse(v) > current]
+            newer_versions = [
+                v for v in supported_versions if semver.VersionInfo.parse(v) > current
+            ]
             if newer_versions:
                 # 返回最新的版本
-                sorted_newer = sorted(newer_versions, key=lambda v: semver.VersionInfo.parse(v), reverse=True)
+                sorted_newer = sorted(
+                    newer_versions, key=lambda v: semver.VersionInfo.parse(v), reverse=True
+                )
                 return sorted_newer[0]
         except ValueError:
             pass
@@ -327,7 +337,9 @@ class HSPVersionNegotiator:
 class HSPVersionedMessageHandler:
     """HSP版本化消息处理器"""
 
-    def __init__(self, version_manager: HSPVersionManager, version_converter: HSPVersionConverter) -> None:
+    def __init__(
+        self, version_manager: HSPVersionManager, version_converter: HSPVersionConverter
+    ) -> None:
         self.version_manager = version_manager
         self.version_converter = version_converter
 
@@ -364,7 +376,9 @@ class HSPCompatibilityChecker:
     def __init__(self, version_manager: HSPVersionManager) -> None:
         self.version_manager = version_manager
 
-    def check_message_compatibility(self, message: Dict[str, Any], target_version: str) -> Dict[str, Any]:
+    def check_message_compatibility(
+        self, message: Dict[str, Any], target_version: str
+    ) -> Dict[str, Any]:
         """检查消息与目标版本的兼容性"""
         current_version = message.get("protocol_version", "0.1.0")
 
@@ -374,7 +388,7 @@ class HSPCompatibilityChecker:
             "is_compatible": False,
             "conversion_needed": False,
             "issues": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 检查版本兼容性
@@ -400,7 +414,7 @@ class HSPCompatibilityChecker:
             "versions": versions,
             "compatibility_matrix": {},
             "issues": [],
-            "summary": ""
+            "summary": "",
         }
 
         # 生成兼容性矩阵
@@ -411,19 +425,21 @@ class HSPCompatibilityChecker:
                 if compatibility:
                     report["compatibility_matrix"][from_ver][to_ver] = {
                         "compatible": compatibility.is_compatible,
-                        "conversion_needed": compatibility.conversion_needed
+                        "conversion_needed": compatibility.conversion_needed,
                     }
                 else:
                     report["compatibility_matrix"][from_ver][to_ver] = {
                         "compatible": False,
                         "conversion_needed": False,
-                        "error": "未找到兼容性信息"
+                        "error": "未找到兼容性信息",
                     }
 
         # 生成摘要
         total_pairs = len(versions) * len(versions)
         compatible_pairs = sum(
-            1 for from_ver in versions for to_ver in versions
+            1
+            for from_ver in versions
+            for to_ver in versions
             if report["compatibility_matrix"][from_ver][to_ver].get("compatible", False)
         )
 
@@ -431,7 +447,7 @@ class HSPCompatibilityChecker:
             "total_version_pairs": total_pairs,
             "compatible_pairs": compatible_pairs,
             "compatibility_rate": compatible_pairs / total_pairs if total_pairs > 0 else 0,
-            "supported_versions": self.version_manager.get_supported_versions()
+            "supported_versions": self.version_manager.get_supported_versions(),
         }
 
         return report
@@ -452,7 +468,7 @@ if __name__ == "__main__":
         description="HSP protocol version 0.2.0 with enhanced security",
         compatible_versions=["0.1.0"],
         breaking_changes=["Changed security parameter structure"],
-        deprecated_features=["Old authentication method"]
+        deprecated_features=["Old authentication method"],
     )
     version_manager.register_version(version_0_2_0)
 
@@ -464,8 +480,7 @@ if __name__ == "__main__":
 
     # 测试版本协商
     negotiated_version = version_negotiator.negotiate_with_capabilities(
-        ["0.1.0", "0.2.0"],
-        ["0.1.0", "0.2.0"]
+        ["0.1.0", "0.2.0"], ["0.1.0", "0.2.0"]
     )
     logger.info(f"协商版本: {negotiated_version}")
 
@@ -474,7 +489,7 @@ if __name__ == "__main__":
         "message_id": "test_001",
         "protocol_version": "0.1.0",
         "message_type": "HSP.TestMessage_v0.1",
-        "payload": {"content": "test"}
+        "payload": {"content": "test"},
     }
 
     try:

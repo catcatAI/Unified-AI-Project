@@ -45,14 +45,14 @@ class TaskGenerator:
             "affirmation": ["是的", "对的", "好的", "没问题"],
             "emotion": ["难过", "开心", "累", "烦", "担心"],
             "curiosity": ["想了解", "想知道", "告诉", "说说"],
-            "help": ["帮帮我", "帮助", "帮忙"]
+            "help": ["帮帮我", "帮助", "帮忙"],
         }
 
     def generate_idle_tasks(
         self,
         user_history: List[Dict[str, Any]],
         angela_state: AngelaState,
-        user_impression: UserImpression
+        user_impression: UserImpression,
     ) -> List[PrecomputeTask]:
         """
         根据用户历史和 Angela 状态生成预计算任务
@@ -77,7 +77,7 @@ class TaskGenerator:
         suggested_categories = self._suggest_categories(angela_state)
 
         # 4. 生成任务
-        for i, query in enumerate(predicted_queries[:self.max_tasks]):
+        for i, query in enumerate(predicted_queries[: self.max_tasks]):
             # 为每个查询生成任务
             category = suggested_categories[i % len(suggested_categories)]
 
@@ -91,7 +91,7 @@ class TaskGenerator:
                 angela_state=angela_state,
                 user_impression=user_impression,
                 context={"history": user_history[-3:] if user_history else []},
-                priority=i + 1
+                priority=i + 1,
             )
 
             tasks.append(task)
@@ -114,7 +114,7 @@ class TaskGenerator:
             "preferred_topics": [],
             "interaction_style": "casual",
             "question_frequency": 0.0,
-            "emotional_tone": "neutral"
+            "emotional_tone": "neutral",
         }
 
         if not history:
@@ -147,11 +147,15 @@ class TaskGenerator:
         emotional_words = {
             "positive": ["开心", "高兴", "喜欢", "爱", "棒", "好"],
             "negative": ["难过", "伤心", "讨厌", "烦", "累", "痛"],
-            "neutral": ["嗯", "好的", "可以", "了解"]
+            "neutral": ["嗯", "好的", "可以", "了解"],
         }
 
-        positive_count = sum(1 for msg in user_messages if any(w in msg for w in emotional_words["positive"]))
-        negative_count = sum(1 for msg in user_messages if any(w in msg for w in emotional_words["negative"]))
+        positive_count = sum(
+            1 for msg in user_messages if any(w in msg for w in emotional_words["positive"])
+        )
+        negative_count = sum(
+            1 for msg in user_messages if any(w in msg for w in emotional_words["negative"])
+        )
 
         if positive_count > negative_count:
             patterns["emotional_tone"] = "positive"
@@ -163,9 +167,7 @@ class TaskGenerator:
         return patterns
 
     def _predict_next_queries(
-        self,
-        patterns: Dict[str, Any],
-        history: List[Dict[str, Any]]
+        self, patterns: Dict[str, Any], history: List[Dict[str, Any]]
     ) -> List[str]:
         """
         预测用户可能的下一个问题
@@ -186,36 +188,22 @@ class TaskGenerator:
 
         # 2. 基于常见对话模式
         if patterns.get("question_frequency", 0) > 0.3:
-            queries.extend([
-                "为什么这么说？",
-                "能解释一下吗？",
-                "怎么做到的？"
-            ])
+            queries.extend(["为什么这么说？", "能解释一下吗？", "怎么做到的？"])
 
         # 3. 基于情绪状态
         tone = patterns.get("emotional_tone", "neutral")
         if tone == "positive":
-            queries.extend([
-                "你也觉得很好对吧？",
-                "我们什么时候再聊？"
-            ])
+            queries.extend(["你也觉得很好对吧？", "我们什么时候再聊？"])
         elif tone == "negative":
-            queries.extend([
-                "能安慰我吗？",
-                "你会一直陪着我吗？"
-            ])
+            queries.extend(["能安慰我吗？", "你会一直陪着我吗？"])
 
         # 4. 添加一些通用预测
-        queries.extend([
-            "你在做什么？",
-            "你好吗？",
-            "能帮帮我吗？"
-        ])
+        queries.extend(["你在做什么？", "你好吗？", "能帮帮我吗？"])
 
         # 去重
         unique_queries = list(dict.fromkeys(queries))
 
-        return unique_queries[:self.max_tasks]
+        return unique_queries[: self.max_tasks]
 
     def _suggest_categories(self, angela_state: AngelaState) -> List[ResponseCategory]:
         """
@@ -235,7 +223,7 @@ class TaskGenerator:
             ResponseCategory.QUESTION,
             ResponseCategory.EMOTIONAL,
             ResponseCategory.AFFIRMATION,
-            ResponseCategory.CURIOSITY
+            ResponseCategory.CURIOSITY,
         ]
 
         # 根据状态调整
@@ -256,7 +244,7 @@ class TaskGenerator:
         # 合并并去重
         all_categories = list(set(categories + default_categories))
 
-        return all_categories[:self.max_tasks]
+        return all_categories[: self.max_tasks]
 
     def _extract_keywords(self, query: str) -> List[str]:
         """
@@ -277,10 +265,7 @@ class TaskGenerator:
         return keywords[:5]  # 最多返回 5 个关键词
 
     def generate_task_for_query(
-        self,
-        query: str,
-        angela_state: AngelaState,
-        user_impression: UserImpression
+        self, query: str, angela_state: AngelaState, user_impression: UserImpression
     ) -> PrecomputeTask:
         """
         为单个查询生成预计算任务
@@ -306,7 +291,7 @@ class TaskGenerator:
             angela_state=angela_state,
             user_impression=user_impression,
             context={},
-            priority=1
+            priority=1,
         )
 
         return task

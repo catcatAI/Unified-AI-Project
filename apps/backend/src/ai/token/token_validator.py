@@ -13,17 +13,21 @@ Token级验证系统
 import asyncio
 import logging
 import json
+
 # from tests.test_json_fix import  # Fixed: commented out incomplete import
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+
 # import numpy as np  # Fixed: commented out - module may not be available
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class TokenGenerationInfo:
     """Token生成信息"""
+
     token: str
     position: int
     probability: float
@@ -34,9 +38,11 @@ class TokenGenerationInfo:
     source_model: str = ""
     reasoning_path: List[str] = field(default_factory=list)
 
+
 @dataclass
 class AttentionInfo:
     """注意力机制信息"""
+
     layer: int
     head: int
     # attention_weights: np.ndarray  # Fixed: commented out - requires numpy
@@ -45,9 +51,11 @@ class AttentionInfo:
     value_tokens: List[str] = field(default_factory=list)
     query_tokens: List[str] = field(default_factory=list)
 
+
 @dataclass
 class TokenTraceRecord:
     """Token追踪记录"""
+
     input_text: str
     output_tokens: List[TokenGenerationInfo] = field(default_factory=list)
     total_tokens: int = 0
@@ -56,16 +64,17 @@ class TokenTraceRecord:
     attention_maps: List[AttentionInfo] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 class TokenValidator:
     """Token级验证器"""
 
     def __init__(self):
         self.trace_records: List[TokenTraceRecord] = []
         self.validation_rules = {
-            'min_probability_threshold': 0.01,
-            'max_attention_variance': 10.0,
-            'min_gradient_magnitude': 1e-7,
-            'semantic_coherence_threshold': 0.7
+            "min_probability_threshold": 0.01,
+            "max_attention_variance": 10.0,
+            "min_gradient_magnitude": 1e-7,
+            "semantic_coherence_threshold": 0.7,
         }
 
     async def validate_token_generation(
@@ -74,7 +83,7 @@ class TokenValidator:
         generated_tokens: List[str],
         token_probabilities: List[float],
         attention_weights: Optional[List[Dict[str, float]]] = None,
-        model_name: str = "unknown"
+        model_name: str = "unknown",
     ) -> TokenTraceRecord:
         """
         验证token生成过程
@@ -89,7 +98,9 @@ class TokenValidator:
         Returns:
             TokenTraceRecord: 追踪记录
         """
-        logger.info(f"开始验证token生成过程，输入长度: {len(input_text)} 生成token数: {len(generated_tokens)}")
+        logger.info(
+            f"开始验证token生成过程，输入长度: {len(input_text)} 生成token数: {len(generated_tokens)}"
+        )
 
         start_time = datetime.now()
         output_tokens = []
@@ -97,10 +108,7 @@ class TokenValidator:
         # 为每个token创建生成信息
         for i, (token, prob) in enumerate(zip(generated_tokens, token_probabilities)):
             token_info = TokenGenerationInfo(
-                token=token,
-                position=i,
-                probability=prob,
-                source_model=model_name
+                token=token, position=i, probability=prob, source_model=model_name
             )
 
             # 添加注意力权重信息
@@ -120,12 +128,12 @@ class TokenValidator:
             output_tokens=output_tokens,
             total_tokens=len(generated_tokens),
             generation_time=(datetime.now() - start_time).total_seconds(),
-            model_name=model_name
+            model_name=model_name,
         )
 
         # 验证整体生成质量
         overall_valid = await self._validate_overall_generation(trace_record)
-        trace_record.metadata['overall_valid'] = overall_valid
+        trace_record.metadata["overall_valid"] = overall_valid
 
         # 添加到追踪记录
         self.trace_records.append(trace_record)
@@ -136,7 +144,7 @@ class TokenValidator:
     async def _validate_single_token(self, token_info: TokenGenerationInfo) -> bool:
         """验证单个token的合理性"""
         # 检查概率是否在合理范围内
-        if token_info.probability < self.validation_rules['min_probability_threshold']:
+        if token_info.probability < self.validation_rules["min_probability_threshold"]:
             logger.debug(f"Token '{token_info.token}' 概率过低: {token_info.probability}")
             return False
 
@@ -145,9 +153,13 @@ class TokenValidator:
             weights = list(token_info.attention_weights.values())
             if len(weights) > 0:
                 # weight_variance = np.var(weights)  # Fixed: commented out - requires numpy
-                weight_variance = sum((w - sum(weights)/len(weights))**2 for w in weights) / len(weights)
-                if weight_variance > self.validation_rules['max_attention_variance']:
-                    logger.debug(f"Token '{token_info.token}' 注意力权重方差过大: {weight_variance}")
+                weight_variance = sum(
+                    (w - sum(weights) / len(weights)) ** 2 for w in weights
+                ) / len(weights)
+                if weight_variance > self.validation_rules["max_attention_variance"]:
+                    logger.debug(
+                        f"Token '{token_info.token}' 注意力权重方差过大: {weight_variance}"
+                    )
                     return False
 
         return True
@@ -164,7 +176,7 @@ class TokenValidator:
         attention_valid = await self._validate_attention_patterns(trace_record)
 
         overall_score = (coherence_score + probability_valid + attention_valid) / 3.0
-        return overall_score >= self.validation_rules['semantic_coherence_threshold']
+        return overall_score >= self.validation_rules["semantic_coherence_threshold"]
 
     async def _calculate_semantic_coherence(self, trace_record: TokenTraceRecord) -> float:
         """计算语义连贯性得分"""
@@ -191,7 +203,7 @@ class TokenValidator:
         # prob_mean = np.mean(probabilities)  # Fixed: commented out - requires numpy
         # prob_std = np.std(probabilities)  # Fixed: commented out - requires numpy
         prob_mean = sum(probabilities) / len(probabilities)
-        prob_std = (sum((p - prob_mean)**2 for p in probabilities) / len(probabilities))**0.5
+        prob_std = (sum((p - prob_mean) ** 2 for p in probabilities) / len(probabilities)) ** 0.5
 
         # 合理的概率分布应该有适中的均值和标准差
         if prob_mean < 0.1 or prob_mean > 0.9:
@@ -225,7 +237,11 @@ class TokenValidator:
                     # Simple entropy approximation
                     total = sum(weight_values)
                     if total > 0:
-                        entropy = -sum((w/total) * __import__('math').log(w/total + 1e-10) for w in weight_values if w > 0)
+                        entropy = -sum(
+                            (w / total) * __import__("math").log(w / total + 1e-10)
+                            for w in weight_values
+                            if w > 0
+                        )
                     else:
                         entropy = 0
                 else:
@@ -256,11 +272,13 @@ class TokenValidator:
                 "valid_tokens": 0,
                 "token_validation_rate": 0.0,
                 "recent_records": 0,
-                "error": "没有可用的追踪记录"
+                "error": "没有可用的追踪记录",
             }
 
         total_records = len(self.trace_records)
-        valid_records = sum(1 for record in self.trace_records if record.metadata.get('overall_valid', False))
+        valid_records = sum(
+            1 for record in self.trace_records if record.metadata.get("overall_valid", False)
+        )
         # avg_generation_time = np.mean([record.generation_time for record in self.trace_records])  # Fixed: commented out - requires numpy
         avg_generation_time = sum(r.generation_time for r in self.trace_records) / total_records
         # avg_tokens = np.mean([record.total_tokens for record in self.trace_records])  # Fixed: commented out - requires numpy
@@ -283,7 +301,11 @@ class TokenValidator:
             "total_tokens_analyzed": total_tokens,
             "valid_tokens": valid_tokens,
             "token_validation_rate": valid_tokens / total_tokens if total_tokens > 0 else 0,
-            "recent_records": len(self.trace_records[-10:]) if len(self.trace_records) > 10 else len(self.trace_records)
+            "recent_records": (
+                len(self.trace_records[-10:])
+                if len(self.trace_records) > 10
+                else len(self.trace_records)
+            ),
         }
 
     def export_trace_data(self, filepath: str) -> bool:
@@ -303,14 +325,14 @@ class TokenValidator:
                             "position": token.position,
                             "probability": token.probability,
                             "timestamp": token.timestamp.isoformat(),
-                            "source_model": token.source_model
+                            "source_model": token.source_model,
                         }
                         for token in record.output_tokens
-                    ]
+                    ],
                 }
                 export_data.append(record_dict)
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"追踪数据已导出到: {filepath}")
@@ -363,7 +385,7 @@ class TokenGenerationMonitor:
                 logger.info(f"Token验证监控报告: {json.dumps(report, indent=2)}")
 
                 # 检查验证率是否过低
-                if report['validation_rate'] < 0.5:
+                if report["validation_rate"] < 0.5:
                     logger.warning("Token验证通过率过低，建议检查模型性能")
 
                 await asyncio.sleep(interval)
@@ -379,10 +401,9 @@ class TokenGenerationMonitor:
 token_validator = TokenValidator()
 token_monitor = TokenGenerationMonitor(token_validator)
 
+
 async def validate_token_generation_real(
-    input_text: str,
-    generated_text: str,
-    model_name: str = "unknown"
+    input_text: str, generated_text: str, model_name: str = "unknown"
 ) -> TokenTraceRecord:
     """
     真实的token生成验证函数
@@ -407,5 +428,5 @@ async def validate_token_generation_real(
         generated_tokens=tokens,
         token_probabilities=probabilities,
         attention_weights=attention_weights,
-        model_name=model_name
+        model_name=model_name,
     )

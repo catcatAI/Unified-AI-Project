@@ -5,6 +5,7 @@ from typing import Dict, List, Callable, Any
 
 logger = logging.getLogger(__name__)
 
+
 class InternalBus:
     """
     Simulates an internal message bus for testing and local communication.

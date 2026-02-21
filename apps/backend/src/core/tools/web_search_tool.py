@@ -5,12 +5,14 @@
 import os
 from typing import Optional, Dict, Any, List
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入requests和beautifulsoup4
 try:
     import requests
     from bs4 import BeautifulSoup
+
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
@@ -18,6 +20,7 @@ except ImportError:
 # 尝试导入yaml
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -35,18 +38,13 @@ class WebSearchTool:
 
     def _load_config(self) -> Dict[str, Any]:
         """加载配置"""
-        config_path = os.path.join(
-            os.path.dirname(__file__),
-            '..',
-            'configs',
-            'system_config.yaml'
-        )
+        config_path = os.path.join(os.path.dirname(__file__), "..", "configs", "system_config.yaml")
 
         if YAML_AVAILABLE and os.path.exists(config_path):
             try:
-                with open(config_path, 'r', encoding='utf-8') as f:
+                with open(config_path, "r", encoding="utf-8") as f:
                     all_configs = yaml.safe_load(f)
-                    return all_configs.get('web_search_tool', {})
+                    return all_configs.get("web_search_tool", {})
             except Exception as e:
                 logger.info(f"配置文件加载失败，使用默认值: {e}")
 
@@ -73,18 +71,17 @@ class WebSearchTool:
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
             results = []
 
             # 简化实现：解析搜索结果
-            for result in soup.find_all('a', class_='result__a', limit=num_results):
-                results.append({
-                    "title": result.get_text(strip=True),
-                    "url": result.get('href', '')
-                })
+            for result in soup.find_all("a", class_="result__a", limit=num_results):
+                results.append(
+                    {"title": result.get_text(strip=True), "url": result.get("href", "")}
+                )
 
             return results
 
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return [{"error": str(e)}]

@@ -2,10 +2,13 @@ from typing import TypedDict, Dict, Any, List, Optional
 from typing_extensions import Required
 from enum import Enum
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class AgentStatus(Enum):
     """Enumeration of different agent statuses."""
+
     UNKNOWN = "unknown"
     STARTING = "starting"
     RUNNING = "running"
@@ -14,8 +17,10 @@ class AgentStatus(Enum):
     ERROR = "error"
     DEGRADED = "degraded"
 
+
 class RegisteredAgent(TypedDict):
     """Type definition for a registered AI agent."""
+
     agent_id: Required[str]
     agent_name: Required[str]
     capabilities: Required[List[Dict[str, Any]]]
@@ -24,8 +29,10 @@ class RegisteredAgent(TypedDict):
     status: Required[str]
     metadata: Required[Dict[str, Any]]
 
+
 class CollaborationTask(TypedDict):
     """Type definition for a collaboration task between agents."""
+
     task_id: Required[str]
     requester_agent_id: Required[str]
     target_agent_id: Required[str]
@@ -35,8 +42,10 @@ class CollaborationTask(TypedDict):
     result: Optional[Dict[str, Any]]
     error_message: Optional[str]
 
+
 class AgentHealthReport(TypedDict):
     """Type definition for an agent health report."""
+
     agent_id: Required[str]
     agent_name: Required[str]
     status: Required[AgentStatus]

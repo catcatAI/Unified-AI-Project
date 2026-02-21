@@ -1,12 +1,15 @@
 """对话上下文子系统"""
+
 # Angela Matrix: [L2:MEM] [L4:CTX] Dialogue context subsystem
 
 import logging
 import re
+
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 # from tests.core_ai import  # Commented out - incomplete import
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
 # from .manager import  # Commented out - incomplete import
 # from .storage.base import  # Commented out - incomplete import
 
@@ -34,7 +37,7 @@ class Conversation:
         self.messages: List[Message] = []
         self.start_time = datetime.now()
         self.end_time: Optional[datetime] = None
-        self.context_summary: Optional['ContextSummary'] = None
+        self.context_summary: Optional["ContextSummary"] = None
 
     def add_message(self, message: Message):
         """添加消息"""
@@ -75,7 +78,7 @@ class DialogueContextManager:
                     "conversation_id": conversation_id,
                     "participants": participants,
                     "start_time": conversation.start_time.isoformat(),
-                    "status": "active"
+                    "status": "active",
                 }
             }
 
@@ -86,7 +89,9 @@ class DialogueContextManager:
             logger.error(f"Failed to start conversation {conversation_id}: {e}")
             return False
 
-    def add_message(self, conversation_id: str, sender: str, content: str, message_type: str = "text") -> bool:
+    def add_message(
+        self, conversation_id: str, sender: str, content: str, message_type: str = "text"
+    ) -> bool:
         """添加消息"""
         try:
             if conversation_id not in self.conversations:
@@ -105,7 +110,7 @@ class DialogueContextManager:
                     "sender": sender,
                     "content": content,
                     "timestamp": message.timestamp.isoformat(),
-                    "message_type": message_type
+                    "message_type": message_type,
                 }
             }
 
@@ -120,7 +125,7 @@ class DialogueContextManager:
         """提取关键点"""
         # 简单的关键点提取实现
         # 在实际应用中, 这可能涉及更复杂的NLP处理
-        sentences = re.split(r'[.!?]+\s+', text)
+        sentences = re.split(r"[.!?]+\s+", text)
         key_points = []
         for sentence in sentences:
             sentence = sentence.strip()
@@ -140,15 +145,18 @@ class DialogueContextManager:
 
         # 简单的模式匹配
         # 匹配邮箱
-        emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text)
+        emails = re.findall(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", text)
         entities.extend(emails)
 
         # 匹配URL
-        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
+        urls = re.findall(
+            r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
+            text,
+        )
         entities.extend(urls)
 
         # 匹配日期
-        dates = re.findall(r'\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4}', text)
+        dates = re.findall(r"\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4}", text)
         entities.extend(dates)
 
         return list(set(entities))  # 去重
@@ -157,8 +165,16 @@ class DialogueContextManager:
         """分析情感"""
         # 简单的情感分析实现
         # 在实际应用中, 这可能涉及更复杂的情感分析模型
-        positive_words = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'awesome']
-        negative_words = ['bad', 'terrible', 'awful', 'horrible', 'disgusting', 'pathetic']
+        positive_words = [
+            "good",
+            "great",
+            "excellent",
+            "amazing",
+            "wonderful",
+            "fantastic",
+            "awesome",
+        ]
+        negative_words = ["bad", "terrible", "awful", "horrible", "disgusting", "pathetic"]
 
         text_lower = text.lower()
         positive_count = sum(1 for word in positive_words if word in text_lower)
@@ -210,7 +226,7 @@ class DialogueContextManager:
                     "entities": entities,
                     "sentiment": sentiment,
                     "relevance_score": summary.relevance_score,
-                    "generated_at": datetime.now().isoformat()
+                    "generated_at": datetime.now().isoformat(),
                 }
             }
 
@@ -218,7 +234,9 @@ class DialogueContextManager:
             logger.info(f"Generated context summary for conversation {conversation_id}")
             return summary
         except Exception as e:
-            logger.error(f"Failed to generate context summary for conversation {conversation_id}: {e}")
+            logger.error(
+                f"Failed to generate context summary for conversation {conversation_id}: {e}"
+            )
             return None
 
     def get_conversation_context(self, conversation_id: str) -> Optional[Dict[str, Any]]:
@@ -255,9 +273,7 @@ class DialogueContextManager:
         try:
             # 按开始时间排序对话
             sorted_conversations = sorted(
-                self.conversations.values(),
-                key=lambda c: c.start_time,
-                reverse=True
+                self.conversations.values(), key=lambda c: c.start_time, reverse=True
             )
 
             # 限制返回数量
@@ -270,7 +286,7 @@ class DialogueContextManager:
                     "conversation_id": conv.conversation_id,
                     "participants": conv.participants,
                     "start_time": conv.start_time.isoformat(),
-                    "message_count": len(conv.messages)
+                    "message_count": len(conv.messages),
                 }
 
                 if conv.end_time:
@@ -279,7 +295,7 @@ class DialogueContextManager:
                     conv_info["summary"] = {
                         "key_points_count": len(conv.context_summary.key_points),
                         "entities_count": len(conv.context_summary.entities),
-                        "sentiment": conv.context_summary.sentiment
+                        "sentiment": conv.context_summary.sentiment,
                     }
 
                 result.append(conv_info)
@@ -312,16 +328,20 @@ class DialogueContextManager:
                         "source_conversation_id": source_conversation_id,
                         "target_conversation_id": target_conversation_id,
                         "transfer_time": datetime.now().isoformat(),
-                        "summary_transferred": True
+                        "summary_transferred": True,
                     }
                 }
 
                 # context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)  # Commented - needs proper import
-                logger.info(f"Transferred context from {source_conversation_id} to {target_conversation_id}")
+                logger.info(
+                    f"Transferred context from {source_conversation_id} to {target_conversation_id}"
+                )
                 return True
 
             logger.debug(f"No context summary to transfer from {source_conversation_id}")
             return False
         except Exception as e:
-            logger.error(f"Failed to transfer context from {source_conversation_id} to {target_conversation_id}: {e}")
+            logger.error(
+                f"Failed to transfer context from {source_conversation_id} to {target_conversation_id}: {e}"
+            )
             return False

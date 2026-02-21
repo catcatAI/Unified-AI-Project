@@ -95,9 +95,7 @@ class LogicRule:
             enabled=data.get("enabled", True),
             usage_count=data.get("usage_count", 0),
             created_at=datetime.fromisoformat(data["created_at"]),
-            last_used=datetime.fromisoformat(data["last_used"])
-            if data.get("last_used")
-            else None,
+            last_used=datetime.fromisoformat(data["last_used"]) if data.get("last_used") else None,
             metadata=data.get("metadata", {}),
         )
 
@@ -153,9 +151,7 @@ class LogicUnit:
         try:
             # 检查规则数量限制
             if len(self.rules) >= self.max_rules:
-                logger.warning(
-                    f"Cannot add rule {rule.rule_id}: max_rules limit reached"
-                )
+                logger.warning(f"Cannot add rule {rule.rule_id}: max_rules limit reached")
                 return False
 
             # 检查规则ID是否已存在
@@ -325,9 +321,7 @@ class LogicUnit:
         except Exception as e:
             logger.warning(f"Failed to compile condition for rule {rule_id}: {e}")
 
-    def _check_condition(
-        self, rule_id: str, condition: str, context: Dict[str, Any]
-    ) -> bool:
+    def _check_condition(self, rule_id: str, condition: str, context: Dict[str, Any]) -> bool:
         """检查条件是否满足
 
         支持简单的表达式求值，使用安全的eval环境。
@@ -410,12 +404,14 @@ class LogicUnit:
             "enabled_rules": enabled_count,
             "disabled_rules": disabled_count,
             "total_evaluations": len(self.rule_history),
-            "most_used_rule": {
-                "rule_id": most_used.rule_id,
-                "usage_count": most_used.usage_count,
-            }
-            if most_used
-            else None,
+            "most_used_rule": (
+                {
+                    "rule_id": most_used.rule_id,
+                    "usage_count": most_used.usage_count,
+                }
+                if most_used
+                else None
+            ),
             "priority_distribution": priority_stats,
             "max_rules": self.max_rules,
         }

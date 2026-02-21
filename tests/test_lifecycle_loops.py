@@ -21,34 +21,37 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MockLLMService:
     """Mock LLM 服務"""
+
     async def chat_completion(self, messages):
         @dataclass
         class MockResponse:
-            content: str = json.dumps({
-                "action": "greet",
-                "message": "你好！我在這裡陪你。",
-                "priority": "medium",
-                "reason": "主動問候",
-                "confidence": 0.8
-            })
+            content: str = json.dumps(
+                {
+                    "action": "greet",
+                    "message": "你好！我在這裡陪你。",
+                    "priority": "medium",
+                    "reason": "主動問候",
+                    "confidence": 0.8,
+                }
+            )
+
         return MockResponse()
 
 
 @dataclass
 class MockStateManager:
     """Mock 狀態管理器"""
+
     async def get_state_matrix(self):
-        return {'alpha': 0.6, 'beta': 0.5, 'gamma': 0.7, 'delta': 0.5}
+        return {"alpha": 0.6, "beta": 0.5, "gamma": 0.7, "delta": 0.5}
 
 
 @dataclass
 class MockMemoryManager:
     """Mock 記憶管理器"""
+
     async def get_recent_memories(self, limit=5):
-        return [
-            "用戶剛才問了關於AI的問題",
-            "用戶表示對機器學習感興趣"
-        ]
+        return ["用戶剛才問了關於AI的問題", "用戶表示對機器學習感興趣"]
 
     async def store_experience(self, raw_data, data_type):
         pass
@@ -69,12 +72,14 @@ class MockMemoryManager:
 @dataclass
 class MockLearningEngine:
     """Mock 學習引擎"""
+
     pass
 
 
 # 導入被測試的模塊
 import sys
-sys.path.insert(0, '/home/cat/桌面/Unified-AI-Project/apps/backend')
+
+sys.path.insert(0, "/home/cat/桌面/Unified-AI-Project/apps/backend")
 
 from src.ai.lifecycle.user_monitor import UserMonitor, UserState
 from src.ai.lifecycle.llm_decision_loop import LLMDecisionLoop
@@ -90,10 +95,7 @@ class TestUserMonitor:
     @pytest.fixture
     def user_monitor(self):
         return UserMonitor(
-            user_id="test_user",
-            check_interval=1.0,
-            idle_threshold=10.0,
-            return_threshold=20.0
+            user_id="test_user", check_interval=1.0, idle_threshold=10.0, return_threshold=20.0
         )
 
     @pytest.mark.asyncio
@@ -129,7 +131,7 @@ class TestUserMonitor:
             "我很開心！": "happy",
             "我感到很難過": "sad",
             "這太糟糕了": "frustrated",
-            "我不明白": "confused"
+            "我不明白": "confused",
         }
 
         for text, expected_emotion in emotions.items():
@@ -179,21 +181,21 @@ class TestLLMDecisionLoop:
         user_monitor = UserMonitor(check_interval=1.0)
 
         return {
-            'llm_service': llm_service,
-            'state_manager': state_manager,
-            'memory_manager': memory_manager,
-            'user_monitor': user_monitor
+            "llm_service": llm_service,
+            "state_manager": state_manager,
+            "memory_manager": memory_manager,
+            "user_monitor": user_monitor,
         }
 
     @pytest.mark.asyncio
     async def test_decision_loop_start_stop(self, components):
         """測試啟動和停止"""
         decision_loop = LLMDecisionLoop(
-            llm_service=components['llm_service'],
-            state_manager=components['state_manager'],
-            memory_manager=components['memory_manager'],
-            user_monitor=components['user_monitor'],
-            loop_interval=1.0
+            llm_service=components["llm_service"],
+            state_manager=components["state_manager"],
+            memory_manager=components["memory_manager"],
+            user_monitor=components["user_monitor"],
+            loop_interval=1.0,
         )
 
         assert not decision_loop.is_running
@@ -207,43 +209,43 @@ class TestLLMDecisionLoop:
     @pytest.mark.asyncio
     async def test_decision_loop_execution(self, components):
         """測試決策執行"""
-        await components['user_monitor'].start()
+        await components["user_monitor"].start()
 
         decision_loop = LLMDecisionLoop(
-            llm_service=components['llm_service'],
-            state_manager=components['state_manager'],
-            memory_manager=components['memory_manager'],
-            user_monitor=components['user_monitor'],
-            loop_interval=1.0
+            llm_service=components["llm_service"],
+            state_manager=components["state_manager"],
+            memory_manager=components["memory_manager"],
+            user_monitor=components["user_monitor"],
+            loop_interval=1.0,
         )
 
         await decision_loop.start()
         await asyncio.sleep(5)  # 運行幾次循環
 
         stats = decision_loop.get_stats()
-        assert stats['is_running']
-        assert stats['total_decisions'] > 0
+        assert stats["is_running"]
+        assert stats["total_decisions"] > 0
 
         await decision_loop.stop()
-        await components['user_monitor'].stop()
+        await components["user_monitor"].stop()
 
     @pytest.mark.asyncio
     async def test_decision_loop_fallback(self, components):
         """測試回退決策"""
         decision_loop = LLMDecisionLoop(
-            llm_service=components['llm_service'],
-            state_manager=components['state_manager'],
-            memory_manager=components['memory_manager'],
-            user_monitor=components['user_monitor'],
-            loop_interval=1.0
+            llm_service=components["llm_service"],
+            state_manager=components["state_manager"],
+            memory_manager=components["memory_manager"],
+            user_monitor=components["user_monitor"],
+            loop_interval=1.0,
         )
 
         # 測試回退決策
         fallback_decision = decision_loop._fallback_decision()
 
-        assert 'action' in fallback_decision
-        assert 'message' in fallback_decision
-        assert 'priority' in fallback_decision
+        assert "action" in fallback_decision
+        assert "message" in fallback_decision
+        assert "priority" in fallback_decision
 
 
 class TestProactiveInteractionSystem:
@@ -257,21 +259,21 @@ class TestProactiveInteractionSystem:
         user_monitor = UserMonitor(check_interval=1.0)
 
         return {
-            'llm_service': llm_service,
-            'state_manager': state_manager,
-            'memory_manager': memory_manager,
-            'user_monitor': user_monitor
+            "llm_service": llm_service,
+            "state_manager": state_manager,
+            "memory_manager": memory_manager,
+            "user_monitor": user_monitor,
         }
 
     @pytest.mark.asyncio
     async def test_proactive_system_start_stop(self, components):
         """測試啟動和停止"""
         proactive_system = ProactiveInteractionSystem(
-            llm_service=components['llm_service'],
-            state_manager=components['state_manager'],
-            memory_manager=components['memory_manager'],
-            user_monitor=components['user_monitor'],
-            check_interval=1.0
+            llm_service=components["llm_service"],
+            state_manager=components["state_manager"],
+            memory_manager=components["memory_manager"],
+            user_monitor=components["user_monitor"],
+            check_interval=1.0,
         )
 
         assert not proactive_system.is_running
@@ -285,28 +287,28 @@ class TestProactiveInteractionSystem:
     @pytest.mark.asyncio
     async def test_proactive_system_identify_opportunities(self, components):
         """測試識別交互機會"""
-        await components['user_monitor'].start()
+        await components["user_monitor"].start()
 
         proactive_system = ProactiveInteractionSystem(
-            llm_service=components['llm_service'],
-            state_manager=components['state_manager'],
-            memory_manager=components['memory_manager'],
-            user_monitor=components['user_monitor'],
-            check_interval=1.0
+            llm_service=components["llm_service"],
+            state_manager=components["state_manager"],
+            memory_manager=components["memory_manager"],
+            user_monitor=components["user_monitor"],
+            check_interval=1.0,
         )
 
         await proactive_system.start()
 
         # 模擬用戶輸入以生成機會
-        components['user_monitor'].record_input("我很難過", {"emotion": "sad"})
+        components["user_monitor"].record_input("我很難過", {"emotion": "sad"})
         await asyncio.sleep(3)
 
         stats = proactive_system.get_stats()
-        assert stats['is_running']
-        assert stats['total_opportunities'] >= 0
+        assert stats["is_running"]
+        assert stats["total_opportunities"] >= 0
 
         await proactive_system.stop()
-        await components['user_monitor'].stop()
+        await components["user_monitor"].stop()
 
 
 class TestBehaviorFeedbackLoop:
@@ -319,19 +321,19 @@ class TestBehaviorFeedbackLoop:
         learning_engine = MockLearningEngine()
 
         return {
-            'llm_service': llm_service,
-            'memory_manager': memory_manager,
-            'learning_engine': learning_engine
+            "llm_service": llm_service,
+            "memory_manager": memory_manager,
+            "learning_engine": learning_engine,
         }
 
     @pytest.mark.asyncio
     async def test_feedback_loop_start_stop(self, components):
         """測試啟動和停止"""
         feedback_loop = BehaviorFeedbackLoop(
-            llm_service=components['llm_service'],
-            memory_manager=components['memory_manager'],
-            learning_engine=components['learning_engine'],
-            loop_interval=1.0
+            llm_service=components["llm_service"],
+            memory_manager=components["memory_manager"],
+            learning_engine=components["learning_engine"],
+            loop_interval=1.0,
         )
 
         assert not feedback_loop.is_running
@@ -346,10 +348,10 @@ class TestBehaviorFeedbackLoop:
     async def test_feedback_loop_record_behavior(self, components):
         """測試記錄行為"""
         feedback_loop = BehaviorFeedbackLoop(
-            llm_service=components['llm_service'],
-            memory_manager=components['memory_manager'],
-            learning_engine=components['learning_engine'],
-            loop_interval=1.0
+            llm_service=components["llm_service"],
+            memory_manager=components["memory_manager"],
+            learning_engine=components["learning_engine"],
+            loop_interval=1.0,
         )
 
         # 記錄行為
@@ -358,19 +360,19 @@ class TestBehaviorFeedbackLoop:
             message="你好！",
             priority="medium",
             user_response="你好啊",
-            user_emotion="happy"
+            user_emotion="happy",
         )
 
-        assert feedback_loop.stats['total_behaviors'] == 1
+        assert feedback_loop.stats["total_behaviors"] == 1
 
     @pytest.mark.asyncio
     async def test_feedback_loop_evaluation(self, components):
         """測試行為評估"""
         feedback_loop = BehaviorFeedbackLoop(
-            llm_service=components['llm_service'],
-            memory_manager=components['memory_manager'],
-            learning_engine=components['learning_engine'],
-            loop_interval=1.0
+            llm_service=components["llm_service"],
+            memory_manager=components["memory_manager"],
+            learning_engine=components["learning_engine"],
+            loop_interval=1.0,
         )
 
         # 記錄行為
@@ -379,14 +381,14 @@ class TestBehaviorFeedbackLoop:
             message="你好！",
             priority="medium",
             user_response="你好啊！很高興見到你！",
-            user_emotion="happy"
+            user_emotion="happy",
         )
 
         await feedback_loop.start()
         await asyncio.sleep(3)
 
         stats = feedback_loop.get_stats()
-        assert stats['evaluated_behaviors'] >= 0
+        assert stats["evaluated_behaviors"] >= 0
 
         await feedback_loop.stop()
 
@@ -399,18 +401,15 @@ class TestMemoryIntegrationLoop:
         memory_manager = MockMemoryManager()
         learning_engine = MockLearningEngine()
 
-        return {
-            'memory_manager': memory_manager,
-            'learning_engine': learning_engine
-        }
+        return {"memory_manager": memory_manager, "learning_engine": learning_engine}
 
     @pytest.mark.asyncio
     async def test_integration_loop_start_stop(self, components):
         """測試啟動和停止"""
         integration_loop = MemoryIntegrationLoop(
-            memory_manager=components['memory_manager'],
-            learning_engine=components['learning_engine'],
-            loop_interval=1.0
+            memory_manager=components["memory_manager"],
+            learning_engine=components["learning_engine"],
+            loop_interval=1.0,
         )
 
         assert not integration_loop.is_running
@@ -425,23 +424,23 @@ class TestMemoryIntegrationLoop:
     async def test_integration_loop_add_memory(self, components):
         """測試添加記憶"""
         integration_loop = MemoryIntegrationLoop(
-            memory_manager=components['memory_manager'],
-            learning_engine=components['learning_engine'],
-            loop_interval=1.0
+            memory_manager=components["memory_manager"],
+            learning_engine=components["learning_engine"],
+            loop_interval=1.0,
         )
 
         # 添加記憶
         integration_loop.add_memory("用戶喜歡聽音樂", "interest", 0.8)
 
-        assert integration_loop.stats['total_memories'] == 1
+        assert integration_loop.stats["total_memories"] == 1
 
     @pytest.mark.asyncio
     async def test_integration_loop_pattern_analysis(self, components):
         """測試模式分析"""
         integration_loop = MemoryIntegrationLoop(
-            memory_manager=components['memory_manager'],
-            learning_engine=components['learning_engine'],
-            loop_interval=1.0
+            memory_manager=components["memory_manager"],
+            learning_engine=components["learning_engine"],
+            loop_interval=1.0,
         )
 
         # 添加多個相似記憶
@@ -474,12 +473,12 @@ class TestDigitalLifeIntegrator:
             memory_manager=memory_manager,
             learning_engine=learning_engine,
             config={
-                'user_id': 'test_user',
-                'decision_interval': 1.0,
-                'proactive_interval': 2.0,
-                'feedback_interval': 3.0,
-                'memory_interval': 4.0
-            }
+                "user_id": "test_user",
+                "decision_interval": 1.0,
+                "proactive_interval": 2.0,
+                "feedback_interval": 3.0,
+                "memory_interval": 4.0,
+            },
         )
 
     @pytest.mark.asyncio
@@ -511,7 +510,7 @@ class TestDigitalLifeIntegrator:
             message="別擔心，我陪著你",
             priority="high",
             user_response="謝謝",
-            user_emotion="neutral"
+            user_emotion="neutral",
         )
 
         # 添加記憶
@@ -522,12 +521,12 @@ class TestDigitalLifeIntegrator:
 
         # 檢查統計
         stats = integrator.get_lifecycle_stats()
-        assert stats['is_running']
-        assert stats['duration_seconds'] > 0
+        assert stats["is_running"]
+        assert stats["duration_seconds"] > 0
 
         # 檢查健康狀態
         health = integrator.get_health_status()
-        assert health['status'] in ['healthy', 'degraded']
+        assert health["status"] in ["healthy", "degraded"]
 
         # 檢查活力評分
         vitality = integrator.get_vitality_score()

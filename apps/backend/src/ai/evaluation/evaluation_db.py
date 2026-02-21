@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class EvaluationDB:
     """
     SQLite database for storing task evaluation results.
@@ -51,10 +52,13 @@ class EvaluationDB:
         feedback = json.dumps(evaluation_data.get("feedback"))
         improvement_suggestions = json.dumps(evaluation_data.get("improvement_suggestions"))
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO evaluations (task_id, timestamp, metrics, feedback, improvement_suggestions)
             VALUES (?, ?, ?, ?, ?)
-        """, (task_id, timestamp, metrics, feedback, improvement_suggestions))
+        """,
+            (task_id, timestamp, metrics, feedback, improvement_suggestions),
+        )
         record_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -65,20 +69,24 @@ class EvaluationDB:
         """Retrieves all evaluations for a given task_id."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM evaluations WHERE task_id = ? ORDER BY timestamp DESC", (task_id,))
+        cursor.execute(
+            "SELECT * FROM evaluations WHERE task_id = ? ORDER BY timestamp DESC", (task_id,)
+        )
         rows = cursor.fetchall()
         conn.close()
-        
+
         evaluations = []
         for row in rows:
-            evaluations.append({
-                "id": row[0],
-                "task_id": row[1],
-                "timestamp": row[2],
-                "metrics": json.loads(row[3]),
-                "feedback": json.loads(row[4]) if row[4] else None,
-                "improvement_suggestions": json.loads(row[5]) if row[5] else None
-            })
+            evaluations.append(
+                {
+                    "id": row[0],
+                    "task_id": row[1],
+                    "timestamp": row[2],
+                    "metrics": json.loads(row[3]),
+                    "feedback": json.loads(row[4]) if row[4] else None,
+                    "improvement_suggestions": json.loads(row[5]) if row[5] else None,
+                }
+            )
         return evaluations
 
     def get_average_metrics(self, task_id: Optional[str] = None) -> Dict[str, float]:
@@ -94,7 +102,7 @@ class EvaluationDB:
         cursor.execute(query, params)
         rows = cursor.fetchall()
         conn.close()
-        
+
         total_completion_time = 0.0
         total_success_rate = 0.0
         total_quality_score = 0.0
@@ -113,5 +121,5 @@ class EvaluationDB:
         return {
             "completion_time": total_completion_time / count,
             "success_rate": total_success_rate / count,
-            "quality_score": total_quality_score / count
+            "quality_score": total_quality_score / count,
         }

@@ -33,6 +33,7 @@ logging.basicConfig(level=logging.INFO)
 
 class ServiceStatus(Enum):
     """服务状态枚举"""
+
     UNLOADED = "unloaded"
     LOADING = "loading"
     LOADED = "loaded"
@@ -43,6 +44,7 @@ class ServiceStatus(Enum):
 
 class ServiceHealth(Enum):
     """服务健康状态枚举"""
+
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
     DEGRADED = "degraded"
@@ -52,6 +54,7 @@ class ServiceHealth(Enum):
 @dataclass
 class ServiceConfig:
     """服务配置"""
+
     name: str
     module_path: str
     class_name: str
@@ -65,6 +68,7 @@ class ServiceConfig:
 @dataclass
 class ServiceInfo:
     """服务信息"""
+
     config: ServiceConfig
     instance: Optional[Any] = None
     status: ServiceStatus = ServiceStatus.UNLOADED
@@ -78,6 +82,7 @@ class ServiceInfo:
 
 class HealthCheckFunction(ABC):
     """健康检查函数抽象基类"""
+
     @abstractmethod
     async def check_health(self, service_instance: Any) -> ServiceHealth:
         """检查服务健康状态"""
@@ -87,8 +92,9 @@ class HealthCheckFunction(ABC):
 class CoreServiceManager:
     """核心服务管理器 - 统一管理核心服务的生命周期"""
 
-    def __init__(self, dependency_manager: Optional[Any] = None,
-                 execution_manager: Optional[Any] = None) -> None:
+    def __init__(
+        self, dependency_manager: Optional[Any] = None, execution_manager: Optional[Any] = None
+    ) -> None:
         # Lazy import DependencyManager and ExecutionManager
         # from .dependency_manager import DependencyManager
         # from .execution_manager import ExecutionManager
@@ -99,10 +105,10 @@ class CoreServiceManager:
         self._execution_manager = execution_manager  # or ExecutionManager()
         self._health_check_functions: Dict[str, HealthCheckFunction] = {}
         self._event_handlers: Dict[str, List[Callable]] = {
-            'service_loaded': [],
-            'service_unloaded': [],
-            'service_health_changed': [],
-            'service_error': []
+            "service_loaded": [],
+            "service_unloaded": [],
+            "service_health_changed": [],
+            "service_error": [],
         }
         self._lock = asyncio.Lock()
         self._is_running = False
@@ -136,8 +142,9 @@ class CoreServiceManager:
         else:
             logger.warning(f"Unknown event type: {event_type}")
 
-    async def _emit_event(self, event_type: str, service_name: str,
-                          data: Optional[Dict[str, Any]] = None):
+    async def _emit_event(
+        self, event_type: str, service_name: str, data: Optional[Dict[str, Any]] = None
+    ):
         """触发事件"""
         if event_type in self._event_handlers:
             for handler in self._event_handlers[event_type]:
@@ -175,14 +182,15 @@ class CoreServiceManager:
         config = service_info.config
         try:
             service_info.status = ServiceStatus.LOADING
-            await self._emit_event('service_loading', service_name)
+            await self._emit_event("service_loading", service_name)
 
             if not await self._resolve_dependencies(service_name):
                 if config.dependencies:
                     service_info.status = ServiceStatus.ERROR
                     service_info.error_message = "Dependencies not resolved"
-                    await self._emit_event('service_error', service_name,
-                                          {'error': service_info.error_message})
+                    await self._emit_event(
+                        "service_error", service_name, {"error": service_info.error_message}
+                    )
                     return False
 
             start_time = time.time()
@@ -199,16 +207,18 @@ class CoreServiceManager:
 
             service_info.status = ServiceStatus.LOADED
             service_info.health = ServiceHealth.UNKNOWN
-            await self._emit_event('service_loaded', service_name)
+            await self._emit_event("service_loaded", service_name)
 
-            logger.info(f"Service {service_name} loaded successfully in {service_info.load_time:.2f}s")
+            logger.info(
+                f"Service {service_name} loaded successfully in {service_info.load_time:.2f}s"
+            )
             return True
 
         except Exception as e:
             logger.error(f"Failed to load service {service_name}: {e}")
             service_info.status = ServiceStatus.ERROR
             service_info.error_message = str(e)
-            await self._emit_event('service_error', service_name, {'error': str(e)})
+            await self._emit_event("service_error", service_name, {"error": str(e)})
             return False
 
     async def load_service(self, service_name: str, force: bool = False) -> bool:
@@ -224,7 +234,9 @@ class CoreServiceManager:
                 return True
 
             if service_info.status in [ServiceStatus.LOADING, ServiceStatus.UNLOADING]:
-                logger.warning(f"Service {service_name} is busy ({service_info.status}), cannot load now")
+                logger.warning(
+                    f"Service {service_name} is busy ({service_info.status}), cannot load now"
+                )
                 return False
 
             return await self._load_service_instance(service_name)
@@ -289,12 +301,14 @@ class CoreServiceManager:
 
             dependent_services = self._get_dependent_services(service_name)
             if dependent_services and not force:
-                logger.warning(f"Service {service_name} is depended by {dependent_services}, cannot unload")
+                logger.warning(
+                    f"Service {service_name} is depended by {dependent_services}, cannot unload"
+                )
                 return False
 
             try:
                 service_info.status = ServiceStatus.UNLOADING
-                await self._emit_event('service_unloading', service_name)
+                await self._emit_event("service_unloading", service_name)
 
                 if service_info.health_check_task:
                     service_info.health_check_task.cancel()
@@ -312,14 +326,16 @@ class CoreServiceManager:
                             else:
                                 callback(service_info.instance)
                         except Exception as e:
-                            logger.error(f"Error in resource cleanup callback for {service_name}: {e}")
+                            logger.error(
+                                f"Error in resource cleanup callback for {service_name}: {e}"
+                            )
 
-                if service_info.instance and hasattr(service_info.instance, 'shutdown'):
+                if service_info.instance and hasattr(service_info.instance, "shutdown"):
                     if asyncio.iscoroutinefunction(service_info.instance.shutdown):
                         await service_info.instance.shutdown()
                     else:
                         service_info.instance.shutdown()
-                elif service_info.instance and hasattr(service_info.instance, 'close'):
+                elif service_info.instance and hasattr(service_info.instance, "close"):
                     if asyncio.iscoroutinefunction(service_info.instance.close):
                         await service_info.instance.close()
                     else:
@@ -331,7 +347,7 @@ class CoreServiceManager:
                 service_info.error_message = None
                 service_info.dependencies_resolved = False
 
-                await self._emit_event('service_unloaded', service_name)
+                await self._emit_event("service_unloaded", service_name)
                 logger.info(f"Service {service_name} unloaded successfully")
                 return True
 
@@ -339,7 +355,7 @@ class CoreServiceManager:
                 logger.error(f"Failed to unload service {service_name}: {e}")
                 service_info.status = ServiceStatus.ERROR
                 service_info.error_message = str(e)
-                await self._emit_event('service_error', service_name, {'error': str(e)})
+                await self._emit_event("service_error", service_name, {"error": str(e)})
                 return False
 
     def _get_dependent_services(self, service_name: str) -> List[str]:
@@ -372,14 +388,17 @@ class CoreServiceManager:
             service_info.last_health_check = time.time()
 
             if old_health != health:
-                await self._emit_event('service_health_changed', service_name, {
-                    'old_health': old_health.value,
-                    'new_health': health.value
-                })
+                await self._emit_event(
+                    "service_health_changed",
+                    service_name,
+                    {"old_health": old_health.value, "new_health": health.value},
+                )
 
-            if (health != ServiceHealth.HEALTHY and
-                service_info.config.auto_restart and
-                service_info.status == ServiceStatus.LOADED):
+            if (
+                health != ServiceHealth.HEALTHY
+                and service_info.config.auto_restart
+                and service_info.status == ServiceStatus.LOADED
+            ):
                 logger.warning(f"Service {service_name} is unhealthy, attempting restart")
                 await self.restart_service(service_name)
 
@@ -394,8 +413,10 @@ class CoreServiceManager:
             try:
                 for service_name, service_info in self._services.items():
                     if service_info.status == ServiceStatus.LOADED:
-                        if (time.time() - service_info.last_health_check >
-                            service_info.config.health_check_interval):
+                        if (
+                            time.time() - service_info.last_health_check
+                            > service_info.config.health_check_interval
+                        ):
                             await self._check_service_health(service_name)
 
                 await asyncio.sleep(5.0)
@@ -459,11 +480,11 @@ class CoreServiceManager:
         status_info: Dict[str, Dict[str, Any]] = {}
         for name, service_info in self._services.items():
             status_info[name] = {
-                'status': service_info.status.value,
-                'health': service_info.health.value,
-                'error_message': service_info.error_message,
-                'load_time': service_info.load_time,
-                'last_health_check': service_info.last_health_check
+                "status": service_info.status.value,
+                "health": service_info.health.value,
+                "error_message": service_info.error_message,
+                "load_time": service_info.load_time,
+                "last_health_check": service_info.last_health_check,
             }
         return status_info
 
@@ -494,10 +515,11 @@ def get_core_service_manager() -> CoreServiceManager:
 # 示例健康检查函数
 class DefaultHealthCheck(HealthCheckFunction):
     """示例健康检查函数"""
+
     async def check_health(self, service_instance: Any) -> ServiceHealth:
         """检查服务健康状态"""
         try:
-            if hasattr(service_instance, 'is_healthy'):
+            if hasattr(service_instance, "is_healthy"):
                 if asyncio.iscoroutinefunction(service_instance.is_healthy):
                     is_healthy = await service_instance.is_healthy()
                 else:
@@ -512,6 +534,7 @@ class DefaultHealthCheck(HealthCheckFunction):
 
 
 if __name__ == "__main__":
+
     async def main() -> None:
         manager = CoreServiceManager()
 
@@ -521,7 +544,7 @@ if __name__ == "__main__":
             class_name="MultiLLMService",
             dependencies=[],
             lazy_load=False,
-            auto_restart=True
+            auto_restart=True,
         )
 
         manager.register_service(config)

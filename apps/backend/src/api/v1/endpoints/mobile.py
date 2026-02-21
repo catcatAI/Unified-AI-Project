@@ -7,9 +7,11 @@ from fastapi import APIRouter, Body, Depends
 from typing import Dict, Any
 from datetime import datetime
 import logging
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/mobile", tags=["Mobile"])
+
 
 @router.post("/sync")
 async def mobile_sync(data: Dict[str, Any] = Body(...)):
@@ -18,8 +20,9 @@ async def mobile_sync(data: Dict[str, Any] = Body(...)):
         "status": "synchronized",
         "received_data": data,
         "server_time": datetime.now().isoformat(),
-        "message": "Angela 安全同步已完成"
+        "message": "Angela 安全同步已完成",
     }
+
 
 @router.get("/status")
 async def get_mobile_status_get():
@@ -37,24 +40,21 @@ async def get_mobile_status_get():
             "metrics": {
                 "cpu": f"{cpu_usage}%",
                 "mem": f"{memory.percent}%",
-                "nodes": cluster_status["cluster"]["active_nodes"]
+                "nodes": cluster_status["cluster"]["active_nodes"],
             },
             "backend_version": "6.0.4",
-            "server_time": datetime.now().isoformat()
+            "server_time": datetime.now().isoformat(),
         }
     except ImportError as e:
         logger.error(f"Mobile status import error: {e}")
         return {
             "status": "partial",
-            "metrics": {
-                "cpu": "N/A",
-                "mem": "N/A",
-                "nodes": 0
-            },
+            "metrics": {"cpu": "N/A", "mem": "N/A", "nodes": 0},
             "backend_version": "6.0.4",
             "server_time": datetime.now().isoformat(),
-            "error": "Some modules not available"
+            "error": "Some modules not available",
         }
+
 
 @router.post("/status")
 async def get_mobile_status(data: Dict[str, Any] = Body(...)):
@@ -72,24 +72,21 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)):
             "metrics": {
                 "cpu": f"{cpu_usage}%",
                 "mem": f"{memory.percent}%",
-                "nodes": cluster_status["cluster"]["active_nodes"]
+                "nodes": cluster_status["cluster"]["active_nodes"],
             },
             "backend_version": "6.0.4",
-            "server_time": datetime.now().isoformat()
+            "server_time": datetime.now().isoformat(),
         }
     except ImportError as e:
         logger.error(f"Mobile status import error: {e}")
         return {
             "status": "partial",
-            "metrics": {
-                "cpu": "N/A",
-                "mem": "N/A",
-                "nodes": 0
-            },
+            "metrics": {"cpu": "N/A", "mem": "N/A", "nodes": 0},
             "backend_version": "6.0.4",
             "server_time": datetime.now().isoformat(),
-            "error": "Some modules not available"
+            "error": "Some modules not available",
         }
+
 
 @router.post("/module-control")
 async def mobile_module_control(data: Dict[str, Any] = Body(...)):
@@ -99,14 +96,17 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)):
 
     try:
         from core.sync.realtime_sync import sync_manager, SyncEvent
-        await sync_manager.broadcast_event(SyncEvent(
-            event_type="module_control",
-            data={"module": module, "enabled": enabled},
-            source="mobile_app"
-        ))
+
+        await sync_manager.broadcast_event(
+            SyncEvent(
+                event_type="module_control",
+                data={"module": module, "enabled": enabled},
+                source="mobile_app",
+            )
+        )
         return {"status": "success", "module": module, "enabled": enabled}
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return {"status": "error", "message": str(e)}
 
 
@@ -118,5 +118,5 @@ async def mobile_chat(data: Dict[str, Any] = Body(...)):
     return {
         "status": "success",
         "message": f"Angela 收到你的訊息: {message}",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }

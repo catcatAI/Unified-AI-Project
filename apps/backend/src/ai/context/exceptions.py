@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger(__name__)
 
 """上下文系统异常定义"""
@@ -7,92 +8,111 @@ logger = logging.getLogger(__name__)
 
 class ContextError(Exception):
     """上下文操作基础异常"""
+
     pass
 
 
 class ContextNotFoundError(ContextError):
     """上下文未找到异常"""
+
     pass
 
 
 class ContextCreationError(ContextError):
     """上下文创建失败异常"""
+
     pass
 
 
 class ContextUpdateError(ContextError):
     """上下文更新失败异常"""
+
     pass
 
 
 class ContextStorageError(ContextError):
     """上下文存储失败异常"""
+
     pass
 
 
 class ContextRetrievalError(ContextError):
     """上下文检索失败异常"""
+
     pass
 
 
 class ContextTransferError(ContextError):
     """上下文传递失败异常"""
+
     pass
 
 
 class ContextSerializationError(ContextError):
     """上下文序列化失败异常"""
+
     pass
 
 
 class ContextCompressionError(ContextError):
     """上下文压缩失败异常"""
+
     pass
 
 
 class ContextSecurityError(ContextError):
     """上下文安全相关异常"""
+
     pass
 
 
 class ContextValidationError(ContextError):
     """上下文验证失败异常"""
+
     pass
 
 
 class ToolContextError(ContextError):
     """工具上下文相关异常"""
+
     pass
 
 
 class ModelContextError(ContextError):
     """模型上下文相关异常"""
+
     pass
 
 
 class DialogueContextError(ContextError):
     """对话上下文相关异常"""
+
     pass
 
 
 class MemoryContextError(ContextError):
     """记忆上下文相关异常"""
+
     pass
 
 
 class IntegrationError(ContextError):
     """集成相关异常"""
+
     pass
 
 
 class HAMIntegrationError(IntegrationError):
     """HAM集成异常"""
+
     pass
 
 
 class MCPIntegrationError(IntegrationError):
     """MCP集成异常"""
+
     pass
+
 
 # 异常处理工具函数
 
@@ -118,7 +138,7 @@ def handle_context_exception(exception: Exception, context_id: str = None) -> st
         ContextSerializationError: "上下文序列化失败",
         ContextCompressionError: "上下文压缩失败",
         ContextSecurityError: "上下文安全操作失败",
-        ContextValidationError: "上下文验证失败"
+        ContextValidationError: "上下文验证失败",
     }
 
     # 获取异常类型对应的错误信息

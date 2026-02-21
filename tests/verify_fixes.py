@@ -5,11 +5,13 @@ import sys
 import os
 import asyncio
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Add apps/backend to path
-backend_path = os.path.join(os.path.dirname(__file__), 'apps/backend')
+backend_path = os.path.join(os.path.dirname(__file__), "apps/backend")
 sys.path.insert(0, backend_path)
+
 
 async def test_cluster_manager_fixes():
     """Test ClusterManager fixes"""
@@ -33,7 +35,7 @@ async def test_cluster_manager_fixes():
         print("\n2. Testing get_node_status()...")
         if nodes:
             first_node = nodes[0]
-            status = cluster.get_node_status(first_node['id'])
+            status = cluster.get_node_status(first_node["id"])
             print(f"   Node {first_node['id']}: {status['status']}")
 
         # Test get_node_status with non-existent node
@@ -47,8 +49,10 @@ async def test_cluster_manager_fixes():
     except Exception as e:
         print(f"\n[FAIL] ClusterManager test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def test_memory_enhancement_fix():
     """Test memory enhancement fix"""
@@ -73,8 +77,10 @@ async def test_memory_enhancement_fix():
     except Exception as e:
         print(f"\n[FAIL] Memory enhancement test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def test_live2d_manager_fix():
     """Test Live2D Manager fixes"""
@@ -84,35 +90,37 @@ async def test_live2d_manager_fix():
 
     try:
         # Read the live2d-manager.js file
-        js_path = os.path.join(os.path.dirname(__file__), 'apps/desktop-app/electron_app/js/live2d-manager.js')
+        js_path = os.path.join(
+            os.path.dirname(__file__), "apps/desktop-app/electron_app/js/live2d-manager.js"
+        )
 
-        with open(js_path, 'r', encoding='utf-8') as f:
+        with open(js_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Check for handleTouch method
         print("\n1. Checking handleTouch() method...")
-        if 'handleTouch(x, y, touchType' in content:
+        if "handleTouch(x, y, touchType" in content:
             print("   [PASS] handleTouch() method found")
         else:
             print("   [FAIL] handleTouch() method not found")
 
         # Check for detectTouch method
         print("\n2. Checking detectTouch() method...")
-        if 'detectTouch(x, y)' in content:
+        if "detectTouch(x, y)" in content:
             print("   [PASS] detectTouch() method found")
         else:
             print("   [FAIL] detectTouch() method not found")
 
         # Check for setTouchDetector method
         print("\n3. Checking setTouchDetector() method...")
-        if 'setTouchDetector(touchDetector)' in content:
+        if "setTouchDetector(touchDetector)" in content:
             print("   [PASS] setTouchDetector() method found")
         else:
             print("   [FAIL] setTouchDetector() method not found")
 
         # Check for getTouchDetector method
         print("\n4. Checking getTouchDetector() method...")
-        if 'getTouchDetector()' in content:
+        if "getTouchDetector()" in content:
             print("   [PASS] getTouchDetector() method found")
         else:
             print("   [FAIL] getTouchDetector() method not found")
@@ -123,8 +131,10 @@ async def test_live2d_manager_fix():
     except Exception as e:
         print(f"\n[FAIL] Live2D Manager test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def main():
     print("=" * 60)
@@ -134,7 +144,7 @@ async def main():
     results = {
         "ClusterManager": await test_cluster_manager_fixes(),
         "Memory Enhancement": await test_memory_enhancement_fix(),
-        "Live2D Manager": await test_live2d_manager_fix()
+        "Live2D Manager": await test_live2d_manager_fix(),
     }
 
     print("\n" + "=" * 60)
@@ -153,6 +163,7 @@ async def main():
         print("\n[WARNING] Some fixes failed, please review the errors above")
 
     return all_passed
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

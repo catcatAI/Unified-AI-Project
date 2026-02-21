@@ -24,22 +24,28 @@ logger = logging.getLogger(__name__)
 
 # Optional dependencies for real STT/TTS
 try:
-    import whisper # type: ignore
+    import whisper  # type: ignore
     import tempfile
     import os
+
     WHISPER_AVAILABLE = True
 except ImportError:
     WHISPER_AVAILABLE = False
-    logger.warning("whisper not installed. AudioService will use mock STT. Run `pip install openai-whisper` to enable.")
+    logger.warning(
+        "whisper not installed. AudioService will use mock STT. Run `pip install openai-whisper` to enable."
+    )
 
 try:
-    import edge_tts # type: ignore
+    import edge_tts  # type: ignore
     import tempfile
     import os
+
     EDGE_TTS_AVAILABLE = True
 except ImportError:
     EDGE_TTS_AVAILABLE = False
-    logger.warning("edge-tts not installed. AudioService will use mock TTS. Run `pip install edge-tts` to enable.")
+    logger.warning(
+        "edge-tts not installed. AudioService will use mock TTS. Run `pip install edge-tts` to enable."
+    )
 
 
 class AudioService:
@@ -100,13 +106,9 @@ class AudioService:
 
     def set_peer_services(self, peer_services: Dict[str, Any]):
         self.peer_services = peer_services
-        logger.debug(
-            f"Audio Service connected to peer services: {list(peer_services.keys())}"
-        )
+        logger.debug(f"Audio Service connected to peer services: {list(peer_services.keys())}")
 
-    async def scan_and_identify(
-        self, audio_data: bytes, duration: float = 1.0
-    ) -> Dict[str, Any]:
+    async def scan_and_identify(self, audio_data: bytes, duration: float = 1.0) -> Dict[str, Any]:
         """
         模擬「監聽-識別-聚焦」的聽覺鏈路：
         1. 從音頻流中採樣粒子 (Auditory Particles)
@@ -139,9 +141,7 @@ class AudioService:
             )
 
             task_id = await cluster_manager.distribute_task("Audio", feature_vector)
-            logger.debug(
-                f"Audio Matrix Task distributed: {task_id} (Precision: FP8, Dim: 4x4)"
-            )
+            logger.debug(f"Audio Matrix Task distributed: {task_id} (Precision: FP8, Dim: 4x4)")
 
             profile = self.memory.identify_or_register(
                 p.feature_vector,
@@ -190,9 +190,7 @@ class AudioService:
 
         # 取平均特徵作為用戶聲紋
         avg_embedding = np.mean([p.feature_vector for p in particles], axis=0)
-        profile = self.memory.identify_or_register(
-            avg_embedding, metadata={"is_speech": True}
-        )
+        profile = self.memory.identify_or_register(avg_embedding, metadata={"is_speech": True})
         profile.name = "User"
         profile.label = "user"
 
@@ -217,20 +215,16 @@ class AudioService:
 
     def _generate_processing_id(self, audio_data: bytes) -> str:
         hash_object = hashlib.md5(audio_data if audio_data else b"")
-        return (
-            f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
-        )
+        return f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
 
-    async def _perform_speech_recognition(
-        self, audio_data: bytes, language: str
-    ) -> Dict[str, Any]:
+    async def _perform_speech_recognition(self, audio_data: bytes, language: str) -> Dict[str, Any]:
         if not WHISPER_AVAILABLE:
             await asyncio.sleep(0.1)
             return {"text": "This is a mock transcription (Install whisper).", "confidence": 0.9}
-        
+
         try:
             loop = asyncio.get_running_loop()
-            
+
             # Lazy load model locally
             if self.whisper_model is None:
                 logger.info("Loading Whisper base model...")
@@ -240,19 +234,21 @@ class AudioService:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                 f.write(audio_data)
                 temp_path = f.name
-                
+
             try:
                 # Transcribe
                 def _transcribe():
-                    return self.whisper_model.transcribe(temp_path, language=language.split("-")[0] if language else None)
-                
+                    return self.whisper_model.transcribe(
+                        temp_path, language=language.split("-")[0] if language else None
+                    )
+
                 result = await loop.run_in_executor(None, _transcribe)
                 text = result.get("text", "").strip()
                 return {"text": text, "confidence": 0.95}
             finally:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-            
+
         except Exception as e:
             logger.error(f"Whisper STT failed: {e}")
             return {"text": "STT Error", "confidence": 0.0}
@@ -282,22 +278,20 @@ class AudioService:
             )
         return {"error": "Invalid input format for audio processing"}
 
-    async def text_to_speech(
-        self, text: str, voice: Optional[str] = None
-    ) -> Optional[bytes]:
+    async def text_to_speech(self, text: str, voice: Optional[str] = None) -> Optional[bytes]:
         if text is None:
             text = ""
-            
+
         if not EDGE_TTS_AVAILABLE:
             logger.info(f"Audio Service: Converting text to speech for '{text[:50]}...' (MOCK)")
             return self._generate_demo_speech_audio(text, voice)
-            
+
         logger.info(f"Audio Service (EdgeTTS): Synthesizing '{text[:50]}...'")
         try:
             # Default to a friendly female Chinese voice if not specified.
             active_voice = voice or "zh-CN-XiaoxiaoNeural"
             communicate = edge_tts.Communicate(text, active_voice)
-            
+
             audio_bytes = b""
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
@@ -308,9 +302,7 @@ class AudioService:
             # Fallback
             return self._generate_demo_speech_audio(text, voice)
 
-    def _generate_demo_speech_audio(
-        self, text: str, voice: Optional[str] = None
-    ) -> bytes:
+    def _generate_demo_speech_audio(self, text: str, voice: Optional[str] = None) -> bytes:
         sample_rate = self.audio_config.get("sample_rate", 44100)
         duration = min(len(text) * 0.1, 5.0)
         frequency = 440

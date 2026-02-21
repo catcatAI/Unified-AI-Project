@@ -4,6 +4,7 @@
 
 from typing import Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,12 +17,12 @@ class LightweightMathModel:
     def __init__(self) -> None:
         """初始化"""
         self.operations = {
-            '+': lambda x, y: x + y,
-            '-': lambda x, y: x - y,
-            '*': lambda x, y: x * y,
-            '/': lambda x, y: x / y if y != 0 else float('inf'),
-            '**': lambda x, y: x ** y,
-            '%': lambda x, y: x % y if y != 0 else 0,
+            "+": lambda x, y: x + y,
+            "-": lambda x, y: x - y,
+            "*": lambda x, y: x * y,
+            "/": lambda x, y: x / y if y != 0 else float("inf"),
+            "**": lambda x, y: x**y,
+            "%": lambda x, y: x % y if y != 0 else 0,
         }
 
     def evaluate_expression(self, expression: str) -> Optional[float]:
@@ -41,9 +42,8 @@ class LightweightMathModel:
             result = eval(expression, {"__builtins__": {}})
             return float(result)
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return None
-
 
     def add(self, x: float, y: float) -> float:
         """加法"""

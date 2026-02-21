@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MemoryInfo:
     """記憶信息"""
+
     content: str
     type: str
     timestamp: datetime
@@ -28,18 +29,19 @@ class MemoryInfo:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         return {
-            'content': self.content,
-            'type': self.type,
-            'timestamp': self.timestamp.isoformat(),
-            'importance': self.importance,
-            'structured': self.structured,
-            'integrated': self.integrated
+            "content": self.content,
+            "type": self.type,
+            "timestamp": self.timestamp.isoformat(),
+            "importance": self.importance,
+            "structured": self.structured,
+            "integrated": self.integrated,
         }
 
 
 @dataclass
 class KnowledgePattern:
     """知識模式"""
+
     pattern: str
     frequency: int
     confidence: float
@@ -49,11 +51,11 @@ class KnowledgePattern:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         return {
-            'pattern': self.pattern,
-            'frequency': self.frequency,
-            'confidence': self.confidence,
-            'last_seen': self.last_seen.isoformat(),
-            'examples': self.examples
+            "pattern": self.pattern,
+            "frequency": self.frequency,
+            "confidence": self.confidence,
+            "last_seen": self.last_seen.isoformat(),
+            "examples": self.examples,
         }
 
 
@@ -77,7 +79,7 @@ class MemoryIntegrationLoop:
         learning_engine: Any,
         loop_interval: float = 180.0,  # 整合循環間隔（秒，3分鐘）
         min_loop_interval: float = 120.0,
-        max_loop_interval: float = 300.0
+        max_loop_interval: float = 300.0,
     ):
         self.memory_manager = memory_manager
         self.learning_engine = learning_engine
@@ -101,12 +103,12 @@ class MemoryIntegrationLoop:
 
         # 統計信息
         self.stats = {
-            'total_memories': 0,
-            'structured_memories': 0,
-            'integrated_memories': 0,
-            'patterns_found': 0,
-            'templates_generated': 0,
-            'knowledge_base_updates': 0
+            "total_memories": 0,
+            "structured_memories": 0,
+            "integrated_memories": 0,
+            "patterns_found": 0,
+            "templates_generated": 0,
+            "knowledge_base_updates": 0,
         }
 
         logger.info("MemoryIntegrationLoop initialized")
@@ -191,7 +193,7 @@ class MemoryIntegrationLoop:
         """收集新信息"""
         try:
             # 從記憶管理器獲取最近的記憶
-            if hasattr(self.memory_manager, 'get_recent_memories'):
+            if hasattr(self.memory_manager, "get_recent_memories"):
                 recent_memories = await self.memory_manager.get_recent_memories(limit=20)
 
                 for mem in recent_memories:
@@ -201,15 +203,15 @@ class MemoryIntegrationLoop:
                             content=str(mem),
                             type="conversation",
                             timestamp=datetime.now(),
-                            importance=0.5
+                            importance=0.5,
                         )
                         self.memory_infos.append(info)
                         self.integration_queue.append(info)
-                        self.stats['total_memories'] += 1
+                        self.stats["total_memories"] += 1
 
             # 限制數量
             if len(self.memory_infos) > self.max_infos:
-                self.memory_infos = self.memory_infos[-self.max_infos:]
+                self.memory_infos = self.memory_infos[-self.max_infos :]
 
         except Exception as e:
             logger.warning(f"Error collecting new info: {e}")
@@ -246,9 +248,11 @@ class MemoryIntegrationLoop:
                             frequency=freq,
                             confidence=0.3,
                             last_seen=datetime.now(),
-                            examples=[content for content in content_list if keyword in content][:3]
+                            examples=[content for content in content_list if keyword in content][
+                                :3
+                            ],
                         )
-                        self.stats['patterns_found'] += 1
+                        self.stats["patterns_found"] += 1
 
         except Exception as e:
             logger.warning(f"Error analyzing patterns: {e}")
@@ -262,14 +266,13 @@ class MemoryIntegrationLoop:
                     structured_data = self._simple_structure(info.content)
 
                     # 存儲結構化數據
-                    if hasattr(self.memory_manager, 'store_structured_memory'):
+                    if hasattr(self.memory_manager, "store_structured_memory"):
                         await self.memory_manager.store_structured_memory(
-                            content=info.content,
-                            structured_data=structured_data
+                            content=info.content, structured_data=structured_data
                         )
 
                     info.structured = True
-                    self.stats['structured_memories'] += 1
+                    self.stats["structured_memories"] += 1
 
                 except Exception as e:
                     logger.warning(f"Error structuring memory: {e}")
@@ -278,14 +281,14 @@ class MemoryIntegrationLoop:
         """簡單的記憶結構化"""
         # 提取基本信息
         words = content.split()
-        sentences = content.split('.')
+        sentences = content.split(".")
 
         return {
-            'word_count': len(words),
-            'sentence_count': len(sentences),
-            'keywords': words[:5],  # 前5個詞作為關鍵詞
-            'first_sentence': sentences[0] if sentences else '',
-            'timestamp': datetime.now().isoformat()
+            "word_count": len(words),
+            "sentence_count": len(sentences),
+            "keywords": words[:5],  # 前5個詞作為關鍵詞
+            "first_sentence": sentences[0] if sentences else "",
+            "timestamp": datetime.now().isoformat(),
         }
 
     async def _update_knowledge_base(self):
@@ -295,15 +298,14 @@ class MemoryIntegrationLoop:
             for info in self.integration_queue:
                 if info.structured and not info.integrated:
                     # 存儲到知識庫
-                    if hasattr(self.memory_manager, 'add_to_knowledge_base'):
+                    if hasattr(self.memory_manager, "add_to_knowledge_base"):
                         await self.memory_manager.add_to_knowledge_base(
-                            content=info.content,
-                            importance=info.importance
+                            content=info.content, importance=info.importance
                         )
 
                     info.integrated = True
-                    self.stats['integrated_memories'] += 1
-                    self.stats['knowledge_base_updates'] += 1
+                    self.stats["integrated_memories"] += 1
+                    self.stats["knowledge_base_updates"] += 1
 
             # 清理已整合的
             self.integration_queue = [
@@ -320,21 +322,20 @@ class MemoryIntegrationLoop:
             if len(self.knowledge_patterns) > 5:
                 # 選擇高置信度的模式
                 high_confidence_patterns = [
-                    p for p in self.knowledge_patterns.values()
-                    if p.confidence > 0.6
+                    p for p in self.knowledge_patterns.values() if p.confidence > 0.6
                 ]
 
-                if high_confidence_patterns and hasattr(self.memory_manager, 'generate_template'):
+                if high_confidence_patterns and hasattr(self.memory_manager, "generate_template"):
                     for pattern in high_confidence_patterns[:3]:
                         template = {
-                            'pattern': pattern.pattern,
-                            'examples': pattern.examples,
-                            'frequency': pattern.frequency,
-                            'created_at': datetime.now().isoformat()
+                            "pattern": pattern.pattern,
+                            "examples": pattern.examples,
+                            "frequency": pattern.frequency,
+                            "created_at": datetime.now().isoformat(),
                         }
 
                         await self.memory_manager.generate_template(template)
-                        self.stats['templates_generated'] += 1
+                        self.stats["templates_generated"] += 1
 
         except Exception as e:
             logger.warning(f"Error generating templates: {e}")
@@ -342,15 +343,12 @@ class MemoryIntegrationLoop:
     def add_memory(self, content: str, memory_type: str = "general", importance: float = 0.5):
         """添加記憶"""
         info = MemoryInfo(
-            content=content,
-            type=memory_type,
-            timestamp=datetime.now(),
-            importance=importance
+            content=content, type=memory_type, timestamp=datetime.now(), importance=importance
         )
 
         self.memory_infos.append(info)
         self.integration_queue.append(info)
-        self.stats['total_memories'] += 1
+        self.stats["total_memories"] += 1
 
         logger.debug(f"Added memory: {content[:50]}...")
 
@@ -361,9 +359,7 @@ class MemoryIntegrationLoop:
     def get_patterns(self, limit: int = 10) -> Dict[str, Dict[str, Any]]:
         """獲取知識模式"""
         patterns = sorted(
-            self.knowledge_patterns.items(),
-            key=lambda x: x[1].confidence,
-            reverse=True
+            self.knowledge_patterns.items(), key=lambda x: x[1].confidence, reverse=True
         )[:limit]
 
         return {k: v.to_dict() for k, v in patterns}
@@ -371,16 +367,16 @@ class MemoryIntegrationLoop:
     def get_stats(self) -> Dict[str, Any]:
         """獲取統計信息"""
         return {
-            'is_running': self.is_running,
-            'loop_interval': self.loop_interval,
-            'total_memories': self.stats['total_memories'],
-            'structured_memories': self.stats['structured_memories'],
-            'integrated_memories': self.stats['integrated_memories'],
-            'patterns_found': self.stats['patterns_found'],
-            'templates_generated': self.stats['templates_generated'],
-            'knowledge_base_updates': self.stats['knowledge_base_updates'],
-            'pending_integrations': len(self.integration_queue),
-            'patterns_count': len(self.knowledge_patterns)
+            "is_running": self.is_running,
+            "loop_interval": self.loop_interval,
+            "total_memories": self.stats["total_memories"],
+            "structured_memories": self.stats["structured_memories"],
+            "integrated_memories": self.stats["integrated_memories"],
+            "patterns_found": self.stats["patterns_found"],
+            "templates_generated": self.stats["templates_generated"],
+            "knowledge_base_updates": self.stats["knowledge_base_updates"],
+            "pending_integrations": len(self.integration_queue),
+            "patterns_count": len(self.knowledge_patterns),
         }
 
 
@@ -400,7 +396,7 @@ if __name__ == "__main__":
                     "用戶談到了天氣",
                     "用戶提到了工作",
                     "用戶喜歡聽音樂",
-                    "用戶對機器學習感興趣"
+                    "用戶對機器學習感興趣",
                 ]
 
             async def store_structured_memory(self, content, structured_data):
@@ -421,9 +417,7 @@ if __name__ == "__main__":
 
         # 創建整合循環
         integration_loop = MemoryIntegrationLoop(
-            memory_manager=memory_manager,
-            learning_engine=learning_engine,
-            loop_interval=5.0
+            memory_manager=memory_manager, learning_engine=learning_engine, loop_interval=5.0
         )
 
         # 啟動循環

@@ -1,5 +1,6 @@
 from typing import Callable, Dict, List, Any
 
+
 class MockMessageBus:
     def __init__(self) -> None:
         self.subscriptions: Dict[str, List[Callable]] = {}

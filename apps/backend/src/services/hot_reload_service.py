@@ -135,9 +135,7 @@ class HotReloadService:
             "metrics": metrics,
         }
 
-    async def reload_llm(
-        self, llm_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    async def reload_llm(self, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         async with self._lock:
             old_llm = core_services.llm_interface_instance
             close_ok = True
@@ -183,9 +181,7 @@ class HotReloadService:
 
             return {"reloaded": True, "old_closed": close_ok}
 
-    async def reload_personality(
-        self, profile_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def reload_personality(self, profile_name: Optional[str] = None) -> Dict[str, Any]:
         async with self._lock:
             try:
                 pm = core_services.personality_manager_instance
@@ -257,12 +253,8 @@ class HotReloadService:
                 await new_hsp.subscribe(
                     f"hsp/capabilities/advertisements/general/#", lambda p, s, e: None
                 )
-                await new_hsp.subscribe(
-                    f"hsp/results/{old_hsp.ai_id}/#", lambda p, s, e: None
-                )
-                await new_hsp.subscribe(
-                    f"hsp/knowledge/facts/general/#", lambda p, s, e: None
-                )
+                await new_hsp.subscribe(f"hsp/results/{old_hsp.ai_id}/#", lambda p, s, e: None)
+                await new_hsp.subscribe(f"hsp/knowledge/facts/general/#", lambda p, s, e: None)
 
                 core_services.hsp_connector_instance = new_hsp
 

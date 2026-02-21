@@ -35,7 +35,9 @@ class AgentCollaborationManager:
     def __init__(self, agent_manager: Any, hsp_connector: Optional[HSPConnector] = None) -> None:
         self.agent_manager = agent_manager
         self.hsp_connector = hsp_connector
-        self.collaboration_tasks: Dict[str, Dict[str, Any]] = {}  # Track ongoing collaborative tasks
+        self.collaboration_tasks: Dict[str, Dict[str, Any]] = (
+            {}
+        )  # Track ongoing collaborative tasks
         self.task_results: Dict[str, Any] = {}  # Store results from individual agents
         self.task_dependencies: Dict[str, List[str]] = {}  # Track dependencies between tasks
 
@@ -45,7 +47,9 @@ class AgentCollaborationManager:
 
         logger.info("AgentCollaborationManager initialized")
 
-    async def coordinate_collaborative_task(self, task_id: str, subtasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def coordinate_collaborative_task(
+        self, task_id: str, subtasks: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Coordinates a collaborative task by distributing subtasks to appropriate agents
         and integrating their results.
@@ -57,7 +61,9 @@ class AgentCollaborationManager:
         Returns:
             Dict[str, Any]: Integrated results from all subtasks
         """
-        logger.info(f"[Collaboration] Starting collaborative task {task_id} with {len(subtasks)} subtasks")
+        logger.info(
+            f"[Collaboration] Starting collaborative task {task_id} with {len(subtasks)} subtasks"
+        )
 
         # Initialize task tracking
         self.collaboration_tasks[task_id] = {
@@ -65,7 +71,7 @@ class AgentCollaborationManager:
             "completed_subtasks": 0,
             "total_subtasks": len(subtasks),
             "start_time": datetime.now(),
-            "results": {}
+            "results": {},
         }
 
         # Launch all subtasks
@@ -78,7 +84,7 @@ class AgentCollaborationManager:
         # Wait for all subtasks to complete
         try:
             results = await asyncio.gather(*task_futures, return_exceptions=True)
-            
+
             # Process results
             integrated_results = {}
             for i, result in enumerate(results):
@@ -125,14 +131,14 @@ class AgentCollaborationManager:
                 request_id=subtask_id,
                 capability_id_filter=capability_needed,
                 parameters=task_parameters,
-                callback_address=f"collaboration_manager/results/{subtask_id}"
+                callback_address=f"collaboration_manager/results/{subtask_id}",
             )
         else:
             task_request = {
                 "request_id": subtask_id,
                 "capability_id_filter": capability_needed,
                 "parameters": task_parameters,
-                "callback_address": f"collaboration_manager/results/{subtask_id}"
+                "callback_address": f"collaboration_manager/results/{subtask_id}",
             }
 
         # Send task to appropriate agent
@@ -148,7 +154,7 @@ class AgentCollaborationManager:
                 "subtask_id": subtask_id,
                 "capability": capability_needed,
                 "result": f"Result for {task_description}",
-                "execution_time": f"{datetime.now()}"
+                "execution_time": f"{datetime.now()}",
             }
 
             logger.info(f"[Collaboration] Subtask {subtask_id} completed successfully")
@@ -156,11 +162,7 @@ class AgentCollaborationManager:
 
         except Exception as e:
             logger.error(f"[Collaboration] Subtask {subtask_id} failed: {e}")
-            return {
-                "status": "failure",
-                "subtask_id": subtask_id,
-                "error": str(e)
-            }
+            return {"status": "failure", "subtask_id": subtask_id, "error": str(e)}
 
     def _handle_agent_result(self, result_payload: Any, sender_ai_id: str) -> None:
         """
@@ -173,7 +175,9 @@ class AgentCollaborationManager:
         request_id = result_payload.get("request_id")
         status = result_payload.get("status")
 
-        logger.info(f"[Collaboration] Received result for task {request_id} from agent {sender_ai_id}")
+        logger.info(
+            f"[Collaboration] Received result for task {request_id} from agent {sender_ai_id}"
+        )
         # Store result
         self.task_results[request_id] = result_payload
 
@@ -185,7 +189,9 @@ class AgentCollaborationManager:
 
                 # Check if all subtasks are complete
                 if task_info["completed_subtasks"] >= task_info["total_subtasks"]:
-                    logger.info(f"[Collaboration] All subtasks for collaborative task {task_id} completed")
+                    logger.info(
+                        f"[Collaboration] All subtasks for collaborative task {task_id} completed"
+                    )
                     # In a real implementation, this would trigger result integration
 
     async def get_agent_capabilities(self) -> Dict[str, List[str]]:
@@ -200,7 +206,7 @@ class AgentCollaborationManager:
         capabilities = {}
 
         # Get available agents
-        if hasattr(self.agent_manager, 'get_available_agents'):
+        if hasattr(self.agent_manager, "get_available_agents"):
             available_agents = self.agent_manager.get_available_agents()
         else:
             available_agents = []
@@ -208,29 +214,22 @@ class AgentCollaborationManager:
         # Simulate capabilities for each agent
         for agent in available_agents:
             if "creative_writing" in agent:
-                capabilities[agent] = [
-                    "generate_marketing_copy_v1.0",
-                    "polish_text_v1.0"
-                ]
+                capabilities[agent] = ["generate_marketing_copy_v1.0", "polish_text_v1.0"]
             elif "data_analysis" in agent:
                 capabilities[agent] = [
                     "statistical_analysis_v1.0",
                     "data_summary_v1.0",
-                    "pattern_recognition_v1.0"
+                    "pattern_recognition_v1.0",
                 ]
             elif "image_generation" in agent:
-                capabilities[agent] = [
-                    "generate_image_v1.0"
-                ]
+                capabilities[agent] = ["generate_image_v1.0"]
             elif "web_search" in agent:
-                capabilities[agent] = [
-                    "search_web_v1.0"
-                ]
+                capabilities[agent] = ["search_web_v1.0"]
             elif "knowledge_graph" in agent:
                 capabilities[agent] = [
                     "entity_linking_v1.0",
                     "relationship_extraction_v1.0",
-                    "graph_query_v1.0"
+                    "graph_query_v1.0",
                 ]
             else:
                 capabilities[agent] = ["unknown_capability_v1.0"]
@@ -269,7 +268,9 @@ class AgentCollaborationManager:
             # For now, we'll just return the agent name
             return best_agent
         else:
-            logger.warning(f"[Collaboration] No suitable agent found for capability: {capability_filter}")
+            logger.warning(
+                f"[Collaboration] No suitable agent found for capability: {capability_filter}"
+            )
             return None
 
     def get_collaboration_status(self, task_id: str) -> Optional[Dict[str, Any]]:
@@ -332,18 +333,15 @@ if __name__ == "__main__":
                 "task_parameters": {
                     "product_description": "AI-powered project management tool",
                     "target_audience": "Software developers",
-                    "style": "technical"
+                    "style": "technical",
                 },
-                "task_description": "Generate technical marketing copy for AI project management tool"
+                "task_description": "Generate technical marketing copy for AI project management tool",
             },
             {
                 "capability_needed": "statistical_analysis_v1.0",
-                "task_parameters": {
-                    "data": [10, 20, 30, 40, 50],
-                    "analysis_type": "basic"
-                },
-                "task_description": "Analyze user engagement data"
-            }
+                "task_parameters": {"data": [10, 20, 30, 40, 50], "analysis_type": "basic"},
+                "task_description": "Analyze user engagement data",
+            },
         ]
 
         # Coordinate the collaborative task

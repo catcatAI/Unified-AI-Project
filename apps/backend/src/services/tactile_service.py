@@ -42,9 +42,7 @@ class TactileService:
     async def _init_sync_listener(self):
         """初始化同步監聽器"""
         try:
-            await sync_manager.register_client(
-                "tactile_service", self._handle_sync_event
-            )
+            await sync_manager.register_client("tactile_service", self._handle_sync_event)
             logger.info("Tactile Service registered to sync manager")
         except Exception as e:
             logger.error(f"Failed to register Tactile Service to sync manager: {e}")
@@ -102,9 +100,7 @@ class TactileService:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def simulate_touch(
-        self, object_id: str, contact_point: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def simulate_touch(self, object_id: str, contact_point: Dict[str, Any]) -> Dict[str, Any]:
         """
         模擬觸摸行為並產生精確的反饋
         """
@@ -136,9 +132,7 @@ class TactileService:
         if isinstance(input_data, dict):
             action = input_data.get("action")
             if action == "model":
-                return await self.model_object_tactile(
-                    input_data.get("visual_data", {})
-                )
+                return await self.model_object_tactile(input_data.get("visual_data", {}))
             elif action == "touch":
                 return await self.simulate_touch(
                     input_data.get("object_id"), input_data.get("contact_point", {})
@@ -184,9 +178,7 @@ class TactileService:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def model_tactile_feedback(
-        self, visual_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def model_tactile_feedback(self, visual_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         建模觸覺反饋 (API 兼容方法)
         """

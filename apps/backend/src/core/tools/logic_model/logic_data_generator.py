@@ -7,6 +7,7 @@ import os
 import random
 from typing import Optional, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 定义输出目录
@@ -64,9 +65,8 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
 
         return eval(py_prop_str, {"__builtins__": {}})
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
-
 
 
 def generate_dataset(num_samples: int = 1000, max_nesting: int = 2) -> list:
@@ -78,10 +78,7 @@ def generate_dataset(num_samples: int = 1000, max_nesting: int = 2) -> list:
         answer = evaluate_proposition(proposition)
 
         if answer is not None:
-            dataset.append({
-                "proposition": proposition,
-                "answer": answer
-            })
+            dataset.append({"proposition": proposition, "answer": answer})
 
     return dataset
 
@@ -90,7 +87,7 @@ def save_dataset(dataset: list, output_file: str):
     """保存数据集"""
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
 
     logger.info(f"Saved {len(dataset)} samples to {output_file}")

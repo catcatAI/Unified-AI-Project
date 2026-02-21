@@ -1,7 +1,9 @@
 from typing import Dict, Any, TypedDict
 from datetime import datetime
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HAMDataPackageInternal(TypedDict):
     timestamp: str
@@ -11,11 +13,13 @@ class HAMDataPackageInternal(TypedDict):
     relevance: float
     protected: bool
 
+
 class HAMMemory(TypedDict):
     memory_id: str
     content: str
     metadata: Dict[str, Any]
     relevance: float
+
 
 class HAMRecallResult(TypedDict):
     memory_id: str
@@ -24,6 +28,8 @@ class HAMRecallResult(TypedDict):
     timestamp: datetime
     metadata: Dict[str, Any]
 
+
 class HAMMemoryError(Exception):
     """Custom exception for HAM memory operations."""
+
     pass

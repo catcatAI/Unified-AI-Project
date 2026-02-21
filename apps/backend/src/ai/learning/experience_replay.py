@@ -2,12 +2,14 @@ from datetime import datetime, timezone
 import logging
 import uuid
 from typing import List, Dict, Any, Optional
+
 try:
     import numpy as np
 except ImportError:
     np = None
 
 logger = logging.getLogger(__name__)
+
 
 class ExperienceReplayBuffer:
     """經驗重放緩衝區 (Experience Replay Buffer)"""
@@ -19,16 +21,24 @@ class ExperienceReplayBuffer:
         self.priorities: List[float] = []
         self.position = 0
 
-    def add_experience(self, state: Any, action: Any, reward: float, next_state: Any, done: bool, error: Optional[Any] = None):
+    def add_experience(
+        self,
+        state: Any,
+        action: Any,
+        reward: float,
+        next_state: Any,
+        done: bool,
+        error: Optional[Any] = None,
+    ):
         """添加經驗"""
         experience = {
-            'state': state,
-            'action': action,
-            'reward': reward,
-            'next_state': next_state,
-            'done': done,
-            'timestamp': datetime.now(timezone.utc),
-            'error': error
+            "state": state,
+            "action": action,
+            "reward": reward,
+            "next_state": next_state,
+            "done": done,
+            "timestamp": datetime.now(timezone.utc),
+            "error": error,
         }
 
         # 計算優先級(基於 TD 誤差或重要性)
@@ -46,20 +56,17 @@ class ExperienceReplayBuffer:
         """採樣批次數據"""
         if len(self.buffer) < batch_size:
             return self.buffer
-        
+
         if np is None:
             # Fallback to simple random sampling if numpy is not available
             import random
+
             return random.sample(self.buffer, batch_size)
 
         # 基於優先級採樣
         probabilities = np.array(self.priorities) ** self.priority_alpha
         probabilities /= probabilities.sum()
-        indices = np.random.choice(
-            len(self.buffer), 
-            size=batch_size, 
-            p=probabilities
-        )
+        indices = np.random.choice(len(self.buffer), size=batch_size, p=probabilities)
 
         return [self.buffer[i] for i in indices]
 

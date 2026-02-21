@@ -6,7 +6,7 @@ import random
 from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, project_root)
 
 try:
@@ -18,6 +18,7 @@ except ImportError:
     from src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
+
 
 class RegistryDemoAgent(BaseAgent):
     """
@@ -31,20 +32,21 @@ class RegistryDemoAgent(BaseAgent):
                 "capability_id": "registry_demo_v1",
                 "name": "Registry Demo",
                 "description": "Demonstrates agent registration and discovery features",
-                "version": "1.0"
+                "version": "1.0",
             },
             {
                 "capability_id": "agent_discovery_v1",
                 "name": "Agent Discovery",
                 "description": "Discovers other agents in the system",
-                "version": "1.0"
-            }
+                "version": "1.0",
+            },
         ]
 
         super().__init__(agent_id, capabilities, "RegistryDemoAgent")
 
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload,
-                                  sender_ai_id: str, envelope: HSPMessageEnvelope):
+    async def handle_task_request(
+        self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope
+    ):
         """
         Handle incoming task requests.
         """
@@ -69,25 +71,19 @@ class RegistryDemoAgent(BaseAgent):
                     request_id,
                     sender_ai_id,
                     task_payload.get("callback_address", ""),
-                    f"Unsupported capability: {capability_id}"
+                    f"Unsupported capability: {capability_id}",
                 )
                 return
 
             # Send success response
             await self.send_task_success(
-                request_id,
-                sender_ai_id,
-                task_payload.get("callback_address", ""),
-                result
+                request_id, sender_ai_id, task_payload.get("callback_address", ""), result
             )
 
         except Exception as e:
             logger.error(f"[{self.agent_id}] Error handling task: {e}")
             await self.send_task_failure(
-                request_id,
-                sender_ai_id,
-                task_payload.get("callback_address", ""),
-                str(e)
+                request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e)
             )
 
     async def _handle_registry_demo(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -104,7 +100,7 @@ class RegistryDemoAgent(BaseAgent):
             return {
                 "status": "success",
                 "registry_stats": stats,
-                "message": "Registry statistics retrieved successfully"
+                "message": "Registry statistics retrieved successfully",
             }
 
         elif action == "list_agents":
@@ -114,44 +110,41 @@ class RegistryDemoAgent(BaseAgent):
                 "status": "success",
                 "active_agents": agents,
                 "agent_count": len(agents),
-                "message": "Active agents list retrieved successfully"
+                "message": "Active agents list retrieved successfully",
             }
 
         elif action == "manual_register":
             # Manually register a test agent
             test_agent_id = parameters.get("agent_id", "test_agent_123")
             test_agent_name = parameters.get("agent_name", "TestAgent")
-            test_capabilities = parameters.get("capabilities", [
-                {
-                    "capability_id": "test_capability_v1",
-                    "name": "Test Capability",
-                    "description": "A test capability",
-                    "version": "1.0"
-                }
-            ])
+            test_capabilities = parameters.get(
+                "capabilities",
+                [
+                    {
+                        "capability_id": "test_capability_v1",
+                        "name": "Test Capability",
+                        "description": "A test capability",
+                        "version": "1.0",
+                    }
+                ],
+            )
 
             if self.agent_registry:
                 await self.agent_registry.register_agent_manually(
                     agent_id=test_agent_id,
                     agent_name=test_agent_name,
-                    capabilities=test_capabilities
+                    capabilities=test_capabilities,
                 )
 
                 return {
                     "status": "success",
-                    "message": f"Manually registered agent: {test_agent_name} ({test_agent_id})"
+                    "message": f"Manually registered agent: {test_agent_name} ({test_agent_id})",
                 }
             else:
-                return {
-                    "status": "error",
-                    "message": "Agent registry not available"
-                }
+                return {"status": "error", "message": "Agent registry not available"}
 
         else:
-            return {
-                "status": "error",
-                "message": f"Unknown action: {action}"
-            }
+            return {"status": "error", "message": f"Unknown action: {action}"}
 
     async def _handle_agent_discovery(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -164,10 +157,7 @@ class RegistryDemoAgent(BaseAgent):
         if discovery_type == "capability":
             capability_id = parameters.get("capability_id", "")
             if not capability_id:
-                return {
-                    "status": "error",
-                    "message": "capability_id parameter is required"
-                }
+                return {"status": "error", "message": "capability_id parameter is required"}
 
             # Find agents with the specified capability
             agents = await self.find_agents_by_capability(capability_id)
@@ -176,16 +166,13 @@ class RegistryDemoAgent(BaseAgent):
                 "capability": capability_id,
                 "matching_agents": agents,
                 "agent_count": len(agents),
-                "message": f"Found {len(agents)} agents with capability '{capability_id}'"
+                "message": f"Found {len(agents)} agents with capability '{capability_id}'",
             }
 
         elif discovery_type == "name":
             agent_name = parameters.get("agent_name", "")
             if not agent_name:
-                return {
-                    "status": "error",
-                    "message": "agent_name parameter is required"
-                }
+                return {"status": "error", "message": "agent_name parameter is required"}
 
             # Find agents with matching names
             agents = await self.find_agents_by_name(agent_name)
@@ -194,11 +181,8 @@ class RegistryDemoAgent(BaseAgent):
                 "search_term": agent_name,
                 "matching_agents": agents,
                 "agent_count": len(agents),
-                "message": f"Found {len(agents)} agents matching '{agent_name}'"
+                "message": f"Found {len(agents)} agents matching '{agent_name}'",
             }
 
         else:
-            return {
-                "status": "error",
-                "message": f"Unknown discovery type: {discovery_type}"
-            }
+            return {"status": "error", "message": f"Unknown discovery type: {discovery_type}"}

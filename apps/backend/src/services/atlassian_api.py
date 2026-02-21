@@ -114,9 +114,7 @@ async def configure_atlassian(config: AtlassianConfig):
             "message": "Atlassian integration configured successfully",
         }
     except Exception as e:
-        logger.error(
-            f"Failed to configure Atlassian integration: {e}\n{traceback.format_exc()}"
-        )
+        logger.error(f"Failed to configure Atlassian integration: {e}\n{traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail="An internal error occurred while configuring the integration.",
@@ -152,9 +150,7 @@ async def get_atlassian_status():
 @atlassian_router.get("/health")
 async def get_atlassian_health():
     if not atlassian_bridge:
-        raise HTTPException(
-            status_code=400, detail="Atlassian integration not configured"
-        )
+        raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     try:
         status = atlassian_bridge.get_status()
         return {
@@ -169,9 +165,7 @@ async def get_atlassian_health():
 @atlassian_router.get("/confluence/spaces")
 async def get_confluence_spaces():
     if not atlassian_bridge:
-        raise HTTPException(
-            status_code=400, detail="Atlassian integration not configured"
-        )
+        raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     try:
         result = atlassian_bridge.get_confluence_spaces()
         if result["success"]:
@@ -189,9 +183,7 @@ async def get_confluence_spaces():
 @atlassian_router.post("/confluence/page")
 async def create_confluence_page(page_data: ConfluencePageCreate):
     if not enhanced_bridge:
-        raise HTTPException(
-            status_code=400, detail="Enhanced Atlassian integration not configured"
-        )
+        raise HTTPException(status_code=400, detail="Enhanced Atlassian integration not configured")
     try:
         # Mock success response
         return {
@@ -210,9 +202,7 @@ async def create_confluence_page(page_data: ConfluencePageCreate):
 @atlassian_router.get("/confluence/search")
 async def search_confluence_content(q: str):
     if not atlassian_bridge:
-        raise HTTPException(
-            status_code=400, detail="Atlassian integration not configured"
-        )
+        raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     try:
         result = atlassian_bridge.search_confluence_content(q)
         if result["success"]:
@@ -230,9 +220,7 @@ async def search_confluence_content(q: str):
 @atlassian_router.get("/jira/projects")
 async def get_jira_projects():
     if not atlassian_bridge:
-        raise HTTPException(
-            status_code=400, detail="Atlassian integration not configured"
-        )
+        raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     try:
         result = atlassian_bridge.get_jira_projects()
         if result["success"]:
@@ -250,9 +238,7 @@ async def get_jira_projects():
 @atlassian_router.get("/jira/issues")
 async def get_jira_issues(jql: Optional[str] = None, limit: int = 50):
     if not atlassian_bridge:
-        raise HTTPException(
-            status_code=400, detail="Atlassian integration not configured"
-        )
+        raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     try:
         result = atlassian_bridge.get_jira_issues(jql=jql, limit=limit)
         if result["success"]:
@@ -269,9 +255,7 @@ async def get_jira_issues(jql: Optional[str] = None, limit: int = 50):
 @atlassian_router.post("/jira/issue")
 async def create_jira_issue(issue_data: JiraIssueCreate):
     if not atlassian_bridge:
-        raise HTTPException(
-            status_code=400, detail="Atlassian integration not configured"
-        )
+        raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     try:
         result = atlassian_bridge.create_jira_issue(
             project_key=issue_data.project_key,

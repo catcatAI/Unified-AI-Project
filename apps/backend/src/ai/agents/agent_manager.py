@@ -595,15 +595,13 @@ if __name__ == "__main__":
             if hasattr(agent, "get_status"):
                 return agent.get_status()
             return {
-                "status": "active"
-                if hasattr(agent, "is_running") and agent.is_running
-                else "inactive"
+                "status": (
+                    "active" if hasattr(agent, "is_running") and agent.is_running else "inactive"
+                )
             }
         return None
 
-    def _discover_agent_scripts(
-        self, agents_dir: Optional[str] = None
-    ) -> Dict[str, str]:
+    def _discover_agent_scripts(self, agents_dir: Optional[str] = None) -> Dict[str, str]:
         """
         Discovers available agent scripts in the specified directory.
         Returns a map of agent names to their script paths.
@@ -620,9 +618,7 @@ if __name__ == "__main__":
                     agents_dir = os.path.join(os.path.dirname(__file__), "..", "agents")
 
             if not os.path.isdir(agents_dir):
-                logger.warning(
-                    f"[AgentManager] Agents directory not found: {agents_dir}"
-                )
+                logger.warning(f"[AgentManager] Agents directory not found: {agents_dir}")
                 return agent_map
 
             for filename in os.listdir(agents_dir):
@@ -640,9 +636,7 @@ if __name__ == "__main__":
             logger.error(f"[AgentManager] Error discovering agent scripts: {e}")
             return agent_map
 
-    def launch_agent(
-        self, agent_name: str, args: Optional[List[str]] = None
-    ) -> Optional[str]:
+    def launch_agent(self, agent_name: str, args: Optional[List[str]] = None) -> Optional[str]:
         """
             Launches a sub-agent in a new process.
 
@@ -660,10 +654,7 @@ if __name__ == "__main__":
                 logger.error(f"[AgentManager] Error: Agent '{agent_name}' not found.")
                 return None
 
-            if (
-                agent_name in self.active_agents
-                and self.active_agents[agent_name].poll() is None
-            ):
+            if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
                 logger.info(
                     f"[AgentManager] Info: Agent '{agent_name}' is already running with PID {self.active_agents[agent_name].pid}."
                 )
@@ -693,19 +684,14 @@ if __name__ == "__main__":
                 )
                 return str(process.pid)
             except Exception as e:
-                logger.error(
-                    f"[AgentManager] Failed to launch agent '{agent_name}': {e}"
-                )
+                logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}")
                 return None
 
     def check_agent_health(self, agent_name: str) -> bool:
         """
         Checks if an agent is healthy. This is a placeholder.
         """
-        if (
-            agent_name in self.active_agents
-            and self.active_agents[agent_name].poll() is None
-        ):
+        if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
             return True
         return False
 
@@ -719,14 +705,9 @@ if __name__ == "__main__":
         Returns:
             bool: True if the agent was terminated successfully, False otherwise.
         """
-        if (
-            agent_name in self.active_agents
-            and self.active_agents[agent_name].poll() is None
-        ):
+        if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
             process = self.active_agents[agent_name]
-            logger.info(
-                f"[AgentManager] Shutting down '{agent_name}' (PID: {process.pid})..."
-            )
+            logger.info(f"[AgentManager] Shutting down '{agent_name}' (PID: {process.pid})...")
             process.terminate()  # Sends SIGTERM
             try:
                 process.wait(timeout=5)  # Wait for the process to terminate
@@ -739,9 +720,7 @@ if __name__ == "__main__":
             del self.active_agents[agent_name]
             return True
         else:
-            logger.warning(
-                f"[AgentManager] Agent '{agent_name}' not found or not running."
-            )
+            logger.warning(f"[AgentManager] Agent '{agent_name}' not found or not running.")
             return False
 
     def shutdown_all_agents(self):
@@ -787,9 +766,7 @@ if __name__ == "__main__":
                 "[AgentManager] wait_for_agent_ready is using placeholder sleep as no service_discovery provided."
             )
             await asyncio.sleep(2)
-            logger.info(
-                f"[AgentManager] Assuming agent '{agent_name}' is ready after waiting."
-            )
+            logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after waiting.")
             return
 
         expected_capability_id = "data_analysis_v1"  # Placeholder
@@ -812,9 +789,7 @@ if __name__ == "__main__":
             )
             await asyncio.sleep(0.5)
 
-        logger.warning(
-            f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds."
-        )
+        logger.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.")
 
     def get_available_agents(self) -> List[str]:
         """

@@ -13,13 +13,14 @@ import json
 from typing import Dict, Any, Optional
 from core.shared.types import MappableDataObject
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class DeepMapper:
     """
     A deep mapping engine that can map data between different representations.
-    
+
     This mapper supports:
     - Recursive nested data structure mapping
     - Bidirectional transformation
@@ -43,7 +44,7 @@ class DeepMapper:
         Args:
             filepath (str): The path to the mapping rules file.
         """
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             self.mapping_rules = json.load(f)
 
     def map(self, mdo: MappableDataObject) -> MappableDataObject:
@@ -76,11 +77,11 @@ class DeepMapper:
     def _recursive_map(self, data: Any, rules: Dict[str, Any]) -> Any:
         """
         Recursively maps data according to rules.
-        
+
         Args:
             data: The data to map
             rules: Mapping rules
-            
+
         Returns:
             Mapped data
         """
@@ -103,10 +104,10 @@ class DeepMapper:
     def _invert_mapping_rules(self, rules: Dict[str, Any]) -> Dict[str, Any]:
         """
         Inverts mapping rules for reverse mapping.
-        
+
         Args:
             rules: Original mapping rules
-            
+
         Returns:
             Inverted mapping rules
         """

@@ -4,6 +4,7 @@
 
 from typing import List, Tuple, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,18 +24,18 @@ class LogicParserEval:
         i = 0
 
         while i < len(expression):
-            if expression[i] in ' \t\n':
+            if expression[i] in " \t\n":
                 i += 1
                 continue
 
-            if expression[i] in '()':
+            if expression[i] in "()":
                 tokens.append(expression[i])
                 i += 1
                 continue
 
             # 读取关键字或值
             j = i
-            while j < len(expression) and expression[j] not in '() \t\n':
+            while j < len(expression) and expression[j] not in "() \t\n":
                 j += 1
 
             token = expression[i:j].strip()
@@ -52,9 +53,8 @@ class LogicParserEval:
             result = eval(py_expr, {"__builtins__": {}})
             return bool(result)
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return None
-
 
     def _convert_to_python(self, expression: str) -> str:
         """转换为Python表达式"""

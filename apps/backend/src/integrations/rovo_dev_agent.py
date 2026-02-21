@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class RovoDevAgent:
     """Rovo Dev Agent 主要实现类"""
 
@@ -36,7 +37,7 @@ class RovoDevAgent:
         """处理任务"""
         if not self.is_active:
             raise Exception("Agent 未启动")
-        
+
         # 模拟处理任务
         logger.info(f"处理任务: {task}")
         return {"status": "completed", "result": "任务处理完成"}

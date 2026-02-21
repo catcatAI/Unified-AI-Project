@@ -4,6 +4,7 @@
 
 from typing import Dict, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,5 +33,5 @@ class ImageGenerationTool:
         return {
             "status": "success",
             "result": f"Image would be generated for: {prompt} (style: {style})",
-            "image_url": "https://via.placeholder.com/512"
+            "image_url": "https://via.placeholder.com/512",
         }

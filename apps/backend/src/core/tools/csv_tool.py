@@ -4,10 +4,12 @@ CSV工具 - 用于CSV数据分析
 
 from typing import Dict, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 try:
     import pandas as pd
+
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
@@ -46,10 +48,16 @@ class CsvTool:
             elif "columns" in query:
                 return {"status": "success", "result": ", ".join(df.columns.tolist())}
             elif "shape" in query:
-                return {"status": "success", "result": f"Rows: {df.shape[0]}, Columns: {df.shape[1]}"}
+                return {
+                    "status": "success",
+                    "result": f"Rows: {df.shape[0]}, Columns: {df.shape[1]}",
+                }
             else:
-                return {"status": "failure", "error": f"Unsupported query: '{query}'. Try 'summarize', 'columns', or 'shape'."}
+                return {
+                    "status": "failure",
+                    "error": f"Unsupported query: '{query}'. Try 'summarize', 'columns', or 'shape'.",
+                }
 
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"status": "failure", "error": str(e)}

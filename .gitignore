@@ -92,6 +92,8 @@ scripts/tests/
 game/
 apps/backend/test_results/
 
+test_results/
+
 # Windows temp files
 "我的活動/"
 "更新 文件 (2).txt"

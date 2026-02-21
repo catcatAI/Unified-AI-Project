@@ -1,6 +1,8 @@
 from typing import List, Any, Dict, Optional
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ElementLayer:
     """
@@ -29,14 +31,15 @@ class ElementLayer:
     def _transform_element(self, element: Any, context: Optional[Dict[str, Any]] = None) -> Any:
         """Mock for transforming a single element."""
         if isinstance(element, dict):
-            element['processed_by_element_layer'] = True
+            element["processed_by_element_layer"] = True
         return element
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     layer = ElementLayer()
     sample_data = [
         {"type": "text", "content": "Hello world"},
-        {"type": "emotion_cue", "value": "happy"}
+        {"type": "emotion_cue", "value": "happy"},
     ]
     processed = layer.process_elements(sample_data)
     print(f"Processed elements: {processed}")

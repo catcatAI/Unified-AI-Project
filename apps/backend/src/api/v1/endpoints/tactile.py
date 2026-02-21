@@ -15,6 +15,7 @@ router = APIRouter(prefix="/tactile", tags=["Tactile"])
 # 共享的 TactileService 實例
 _tactile_service = TactileService()
 
+
 @router.post("/model")
 async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
     """基於視覺數據建模觸覺反饋"""
@@ -25,18 +26,16 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
         logger.error(f"Tactile modeling error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/model")
 async def tactile_model_get():
     """獲取觸覺模型狀態（GET 方法支持）"""
     try:
-        return {
-            "status": "active",
-            "model": "tactile_feedback_v1",
-            "enabled": True
-        }
+        return {"status": "active", "model": "tactile_feedback_v1", "enabled": True}
     except Exception as e:
         logger.error(f"Tactile model status error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/trigger")
 async def trigger_tactile(trigger_data: Dict[str, Any] = Body(...)):
@@ -45,12 +44,13 @@ async def trigger_tactile(trigger_data: Dict[str, Any] = Body(...)):
         device_id = trigger_data.get("device_id")
         intensity = trigger_data.get("intensity", 0.5)
         pattern = trigger_data.get("pattern", "default")
-        
+
         result = await _tactile_service.trigger_physical_feedback(device_id, intensity, pattern)
         return result
     except Exception as e:
         logger.error(f"Tactile trigger error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/control")
 async def tactile_control(params: Dict[str, Any] = Body(...)):
@@ -58,12 +58,7 @@ async def tactile_control(params: Dict[str, Any] = Body(...)):
     enabled = params.get("enabled", True)
     try:
         # 簡化實現，不依賴 sync_manager
-        return {
-            "status": "success",
-            "module": "tactile",
-            "enabled": enabled,
-            "mode": "post_method"
-        }
+        return {"status": "success", "module": "tactile", "enabled": enabled, "mode": "post_method"}
     except Exception as e:
         logger.error(f"Tactile control error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

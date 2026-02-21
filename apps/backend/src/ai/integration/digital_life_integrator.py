@@ -51,7 +51,7 @@ class DigitalLifeIntegrator:
         memory_manager: Any,
         learning_engine: Optional[Any] = None,
         config: Optional[Dict[str, Any]] = None,
-        broadcast_callback: Optional[callable] = None
+        broadcast_callback: Optional[callable] = None,
     ):
         self.llm_service = llm_service
         self.state_manager = state_manager
@@ -74,10 +74,10 @@ class DigitalLifeIntegrator:
 
         # 1. 用戶監控系統 - 最基礎的系統
         self.user_monitor = UserMonitor(
-            user_id=self.config.get('user_id', 'default_user'),
-            check_interval=self.config.get('user_monitor_interval', 5.0),
-            idle_threshold=self.config.get('idle_threshold', 300.0),
-            return_threshold=self.config.get('return_threshold', 1800.0)
+            user_id=self.config.get("user_id", "default_user"),
+            check_interval=self.config.get("user_monitor_interval", 5.0),
+            idle_threshold=self.config.get("idle_threshold", 300.0),
+            return_threshold=self.config.get("return_threshold", 1800.0),
         )
 
         # 2. LLM 決策循環 - "大腦"
@@ -86,10 +86,10 @@ class DigitalLifeIntegrator:
             state_manager=self.state_manager,
             memory_manager=self.memory_manager,
             user_monitor=self.user_monitor,
-            loop_interval=self.config.get('decision_interval', 3.0),
+            loop_interval=self.config.get("decision_interval", 3.0),
             min_loop_interval=2.0,
             max_loop_interval=5.0,
-            broadcast_callback=self.broadcast_callback
+            broadcast_callback=self.broadcast_callback,
         )
 
         # 3. 主動交互系統 - 主動社交能力
@@ -98,10 +98,10 @@ class DigitalLifeIntegrator:
             state_manager=self.state_manager,
             memory_manager=self.memory_manager,
             user_monitor=self.user_monitor,
-            check_interval=self.config.get('proactive_interval', 15.0),
+            check_interval=self.config.get("proactive_interval", 15.0),
             min_check_interval=10.0,
             max_check_interval=30.0,
-            broadcast_callback=self.broadcast_callback
+            broadcast_callback=self.broadcast_callback,
         )
 
         # 4. 行為反饋循環 - 學習能力
@@ -109,18 +109,18 @@ class DigitalLifeIntegrator:
             llm_service=self.llm_service,
             memory_manager=self.memory_manager,
             learning_engine=self.learning_engine or self.learning_engine,
-            loop_interval=self.config.get('feedback_interval', 45.0),
+            loop_interval=self.config.get("feedback_interval", 45.0),
             min_loop_interval=30.0,
-            max_loop_interval=60.0
+            max_loop_interval=60.0,
         )
 
         # 5. 記憶整合循環 - 記憶管理
         self.memory_integration = MemoryIntegrationLoop(
             memory_manager=self.memory_manager,
             learning_engine=self.learning_engine or self.learning_engine,
-            loop_interval=self.config.get('memory_interval', 180.0),
+            loop_interval=self.config.get("memory_interval", 180.0),
             min_loop_interval=120.0,
-            max_loop_interval=300.0
+            max_loop_interval=300.0,
         )
 
         logger.info("✅ All lifecycle loops initialized")
@@ -191,23 +191,26 @@ class DigitalLifeIntegrator:
 
     def _setup_loop_coordination(self):
         """設置循環之間的協調"""
+
         # 當用戶輸入時，記錄到行為反饋系統
         def on_user_input(input_text, metadata=None):
             self.user_monitor.record_input(input_text, metadata)
 
         # 協調邏輯：LLM 決策時更新行為反饋
-        if hasattr(self.llm_decision_loop, 'decision_history'):
+        if hasattr(self.llm_decision_loop, "decision_history"):
+
             def on_llm_decision(decision):
                 """當 LLM 做出決策時，記錄到行為反饋系統"""
                 self.behavior_feedback.record_behavior(
                     action=decision.action,
                     message=decision.message,
                     priority=decision.priority,
-                    confidence=decision.confidence
+                    confidence=decision.confidence,
                 )
 
         # 協調邏輯：主動交互執行後評估效果
-        if hasattr(self.proactive_interaction, 'interaction_queue'):
+        if hasattr(self.proactive_interaction, "interaction_queue"):
+
             def on_proactive_action_executed(plan):
                 """當主動交互執行後，評估效果並記錄到記憶"""
                 if plan.executed and plan.execution_result:
@@ -215,19 +218,20 @@ class DigitalLifeIntegrator:
                     self.memory_manager.add_memory(
                         content=f"主動執行 {plan.opportunity}: {plan.message}",
                         importance=0.7,
-                        tags=['proactive', plan.opportunity, plan.action]
+                        tags=["proactive", plan.opportunity, plan.action],
                     )
 
         # 協調邏輯：狀態變化時觸發適應
-        if hasattr(self.state_manager, 'state'):
+        if hasattr(self.state_manager, "state"):
+
             def on_state_change(old_state, new_state):
                 """當狀態發生變化時，觸發適應性調整"""
                 # 如果情緒發生顯著變化，記錄到記憶
-                if old_state.get('emotion') != new_state.get('emotion'):
+                if old_state.get("emotion") != new_state.get("emotion"):
                     self.memory_manager.add_memory(
                         content=f"情緒從 {old_state.get('emotion')} 變為 {new_state.get('emotion')}",
                         importance=0.5,
-                        tags=['emotion', 'state_change']
+                        tags=["emotion", "state_change"],
                     )
 
     def record_user_input(self, input_text: str, metadata: Optional[Dict[str, Any]] = None):
@@ -240,7 +244,7 @@ class DigitalLifeIntegrator:
         message: str,
         priority: str,
         user_response: Optional[str] = None,
-        user_emotion: Optional[str] = None
+        user_emotion: Optional[str] = None,
     ):
         """記錄行為到反饋系統"""
         self.behavior_feedback.record_behavior(
@@ -248,7 +252,7 @@ class DigitalLifeIntegrator:
             message=message,
             priority=priority,
             user_response=user_response,
-            user_emotion=user_emotion
+            user_emotion=user_emotion,
         )
 
     def add_memory(self, content: str, memory_type: str = "general", importance: float = 0.5):
@@ -264,38 +268,38 @@ class DigitalLifeIntegrator:
         duration = (datetime.now() - self.start_time).total_seconds() if self.start_time else 0
 
         return {
-            'is_running': self.is_running,
-            'start_time': self.start_time.isoformat() if self.start_time else None,
-            'duration_seconds': duration,
-            'loops': {
-                'user_monitor': self.user_monitor.get_stats(),
-                'llm_decision': self.llm_decision_loop.get_stats(),
-                'proactive_interaction': self.proactive_interaction.get_stats(),
-                'behavior_feedback': self.behavior_feedback.get_stats(),
-                'memory_integration': self.memory_integration.get_stats()
+            "is_running": self.is_running,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "duration_seconds": duration,
+            "loops": {
+                "user_monitor": self.user_monitor.get_stats(),
+                "llm_decision": self.llm_decision_loop.get_stats(),
+                "proactive_interaction": self.proactive_interaction.get_stats(),
+                "behavior_feedback": self.behavior_feedback.get_stats(),
+                "memory_integration": self.memory_integration.get_stats(),
             },
-            'user_state': self.user_monitor.get_user_state().to_dict(),
-            'behavior_patterns': self.behavior_feedback.get_patterns(),
-            'knowledge_patterns': self.memory_integration.get_patterns()
+            "user_state": self.user_monitor.get_user_state().to_dict(),
+            "behavior_patterns": self.behavior_feedback.get_patterns(),
+            "knowledge_patterns": self.memory_integration.get_patterns(),
         }
 
     def get_health_status(self) -> Dict[str, Any]:
         """獲取健康狀態"""
         loops_status = {
-            'user_monitor': self.user_monitor.is_running,
-            'llm_decision': self.llm_decision_loop.is_running,
-            'proactive_interaction': self.proactive_interaction.is_running,
-            'behavior_feedback': self.behavior_feedback.is_running,
-            'memory_integration': self.memory_integration.is_running
+            "user_monitor": self.user_monitor.is_running,
+            "llm_decision": self.llm_decision_loop.is_running,
+            "proactive_interaction": self.proactive_interaction.is_running,
+            "behavior_feedback": self.behavior_feedback.is_running,
+            "memory_integration": self.memory_integration.is_running,
         }
 
         all_running = all(loops_status.values())
 
         return {
-            'status': 'healthy' if all_running else 'degraded',
-            'all_loops_running': all_running,
-            'loops_status': loops_status,
-            'uptime': (datetime.now() - self.start_time).total_seconds() if self.start_time else 0
+            "status": "healthy" if all_running else "degraded",
+            "all_loops_running": all_running,
+            "loops_status": loops_status,
+            "uptime": (datetime.now() - self.start_time).total_seconds() if self.start_time else 0,
         }
 
     def get_vitality_score(self) -> float:
@@ -311,29 +315,29 @@ class DigitalLifeIntegrator:
 
         # 2. LLM 決策活躍度
         decision_stats = self.llm_decision_loop.get_stats()
-        if decision_stats['total_decisions'] > 0:
-            scores.append(min(1.0, decision_stats['total_decisions'] / 10.0))
+        if decision_stats["total_decisions"] > 0:
+            scores.append(min(1.0, decision_stats["total_decisions"] / 10.0))
         else:
             scores.append(0.0)
 
         # 3. 主動交互活躍度
         proactive_stats = self.proactive_interaction.get_stats()
-        if proactive_stats['executed_actions'] > 0:
-            scores.append(min(1.0, proactive_stats['executed_actions'] / 5.0))
+        if proactive_stats["executed_actions"] > 0:
+            scores.append(min(1.0, proactive_stats["executed_actions"] / 5.0))
         else:
             scores.append(0.5)
 
         # 4. 行為學習進度
         feedback_stats = self.behavior_feedback.get_stats()
-        if feedback_stats['total_behaviors'] > 0:
-            scores.append(min(1.0, feedback_stats['evaluated_behaviors'] / 10.0))
+        if feedback_stats["total_behaviors"] > 0:
+            scores.append(min(1.0, feedback_stats["evaluated_behaviors"] / 10.0))
         else:
             scores.append(0.0)
 
         # 5. 記憶整合進度
         memory_stats = self.memory_integration.get_stats()
-        if memory_stats['total_memories'] > 0:
-            scores.append(min(1.0, memory_stats['integrated_memories'] / 5.0))
+        if memory_stats["total_memories"] > 0:
+            scores.append(min(1.0, memory_stats["integrated_memories"] / 5.0))
         else:
             scores.append(0.0)
 
@@ -356,17 +360,22 @@ if __name__ == "__main__":
                 @dataclass
                 class MockResponse:
                     content: str
-                return MockResponse(content=json.dumps({
-                    "action": "greet",
-                    "message": "你好！我在這裡陪你。",
-                    "priority": "medium",
-                    "reason": "主動問候",
-                    "confidence": 0.8
-                }))
+
+                return MockResponse(
+                    content=json.dumps(
+                        {
+                            "action": "greet",
+                            "message": "你好！我在這裡陪你。",
+                            "priority": "medium",
+                            "reason": "主動問候",
+                            "confidence": 0.8,
+                        }
+                    )
+                )
 
         class MockStateManager:
             async def get_state_matrix(self):
-                return {'alpha': 0.6, 'beta': 0.5, 'gamma': 0.7, 'delta': 0.5}
+                return {"alpha": 0.6, "beta": 0.5, "gamma": 0.7, "delta": 0.5}
 
         class MockMemoryManager:
             async def get_recent_memories(self, limit=5):
@@ -400,12 +409,12 @@ if __name__ == "__main__":
             memory_manager=memory_manager,
             learning_engine=learning_engine,
             config={
-                'user_id': 'test_user',
-                'decision_interval': 2.0,
-                'proactive_interval': 5.0,
-                'feedback_interval': 10.0,
-                'memory_interval': 8.0
-            }
+                "user_id": "test_user",
+                "decision_interval": 2.0,
+                "proactive_interval": 5.0,
+                "feedback_interval": 10.0,
+                "memory_interval": 8.0,
+            },
         )
 
         # 啟動
@@ -426,7 +435,7 @@ if __name__ == "__main__":
             message="別擔心，我陪著你",
             priority="high",
             user_response="謝謝",
-            user_emotion="neutral"
+            user_emotion="neutral",
         )
 
         # 添加記憶

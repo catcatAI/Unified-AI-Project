@@ -73,9 +73,7 @@ class FragmentComposer:
 
     def __init__(self):
         self.fragments: Dict[str, Fragment] = {}
-        self.fragment_index: Dict[FragmentType, List[str]] = {
-            ftype: [] for ftype in FragmentType
-        }
+        self.fragment_index: Dict[FragmentType, List[str]] = {ftype: [] for ftype in FragmentType}
 
         self.stats = {
             "total_compositions": 0,
@@ -228,9 +226,7 @@ class FragmentComposer:
 
         fragments = self._split_template(template_content, context)
 
-        selected_fragments = self._select_fragments(
-            [f.id for f in fragments], context
-        )
+        selected_fragments = self._select_fragments([f.id for f in fragments], context)
 
         response_text = self._assemble_fragments(selected_fragments, context)
 
@@ -251,9 +247,7 @@ class FragmentComposer:
             },
         )
 
-    def _split_template(
-        self, template: str, context: Dict[str, Any]
-    ) -> List[Fragment]:
+    def _split_template(self, template: str, context: Dict[str, Any]) -> List[Fragment]:
         """将模板切分为片段"""
         sentences = []
         current = ""
@@ -283,9 +277,7 @@ class FragmentComposer:
 
         return fragments
 
-    def _infer_fragment_type(
-        self, sentence: str, index: int, total: int
-    ) -> FragmentType:
+    def _infer_fragment_type(self, sentence: str, index: int, total: int) -> FragmentType:
         """推断片段类型"""
         if index == 0:
             if any(word in sentence for word in ["你好", "嗨", "hi", "hello"]):
@@ -327,9 +319,7 @@ class FragmentComposer:
         keywords = [w for w in words if w not in stopwords]
         return keywords
 
-    def _select_fragments(
-        self, fragment_ids: List[str], context: Dict[str, Any]
-    ) -> List[Fragment]:
+    def _select_fragments(self, fragment_ids: List[str], context: Dict[str, Any]) -> List[Fragment]:
         """选择合适的片段"""
         selected = []
         for fid in fragment_ids:
@@ -340,9 +330,7 @@ class FragmentComposer:
         selected.sort(key=lambda f: f.priority, reverse=True)
         return selected
 
-    def _assemble_fragments(
-        self, fragments: List[Fragment], context: Dict[str, Any]
-    ) -> str:
+    def _assemble_fragments(self, fragments: List[Fragment], context: Dict[str, Any]) -> str:
         """组装片段为完整响应"""
         if not fragments:
             return "我不太确定该怎么回答..."
@@ -359,9 +347,7 @@ class FragmentComposer:
 
         return response
 
-    def _calculate_confidence(
-        self, fragments: List[Fragment], context: Dict[str, Any]
-    ) -> float:
+    def _calculate_confidence(self, fragments: List[Fragment], context: Dict[str, Any]) -> float:
         """计算组合置信度"""
         if not fragments:
             return 0.0
@@ -416,9 +402,7 @@ class ResponseComposer:
         Returns:
             ComposedResponse: 组合后的响应
         """
-        return self.fragment_composer.compose_from_template(
-            template_content, match_score, context
-        )
+        return self.fragment_composer.compose_from_template(template_content, match_score, context)
 
     def add_fragment(self, fragment: Fragment):
         """添加自定义片段"""

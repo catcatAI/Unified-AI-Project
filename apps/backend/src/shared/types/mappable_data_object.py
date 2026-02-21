@@ -13,7 +13,9 @@ import json
 import zlib
 from typing import Dict, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class MappableDataObject:
     """
@@ -38,7 +40,7 @@ class MappableDataObject:
         Compresses the data using zlib.
         """
         if self.data is not None:
-            serialized_data = json.dumps(self.data).encode('utf-8')
+            serialized_data = json.dumps(self.data).encode("utf-8")
             self.compressed_data = zlib.compress(serialized_data)
 
     def decompress(self) -> Any:
@@ -47,7 +49,7 @@ class MappableDataObject:
         """
         if self.compressed_data is not None:
             decompressed_data = zlib.decompress(self.compressed_data)
-            return json.loads(decompressed_data.decode('utf-8'))
+            return json.loads(decompressed_data.decode("utf-8"))
         return None
 
     def add_layer(self, layer_name: str, layer_data: Any):
@@ -71,7 +73,7 @@ class MappableDataObject:
             Optional[Any]: The data for the layer, or None if the layer does not exist.
         """
         return self.layers.get(layer_name)
-    
+
     def remove_layer(self, layer_name: str):
         """
         Removes a layer from the data object.
@@ -81,7 +83,7 @@ class MappableDataObject:
         """
         if layer_name in self.layers:
             del self.layers[layer_name]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Converts the object to a dictionary.
@@ -90,14 +92,14 @@ class MappableDataObject:
             Dict[str, Any]: Dictionary representation of the object.
         """
         return {
-            'data': self.data,
-            'metadata': self.metadata,
-            'layers': self.layers,
-            'compressed': self.compressed_data is not None
+            "data": self.data,
+            "metadata": self.metadata,
+            "layers": self.layers,
+            "compressed": self.compressed_data is not None,
         }
-    
+
     @classmethod
-    def from_dict(cls, data_dict: Dict[str, Any]) -> 'MappableDataObject':
+    def from_dict(cls, data_dict: Dict[str, Any]) -> "MappableDataObject":
         """
         Creates a MappableDataObject from a dictionary.
 
@@ -107,8 +109,8 @@ class MappableDataObject:
         Returns:
             MappableDataObject: The created object.
         """
-        obj = cls(data_dict.get('data'), data_dict.get('metadata'))
-        obj.layers = data_dict.get('layers', {})
-        if data_dict.get('compressed'):
-            obj.compressed_data = data_dict.get('compressed_data')
+        obj = cls(data_dict.get("data"), data_dict.get("metadata"))
+        obj.layers = data_dict.get("layers", {})
+        if data_dict.get("compressed"):
+            obj.compressed_data = data_dict.get("compressed_data")
         return obj

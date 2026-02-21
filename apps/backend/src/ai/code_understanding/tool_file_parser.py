@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+
 def extract_method_parameters(method_node: ast.FunctionDef) -> List[Dict[str, Any]]:
     """
     Helper to extract parameter details from an ast.FunctionDef node.
@@ -23,12 +24,16 @@ def extract_method_parameters(method_node: ast.FunctionDef) -> List[Dict[str, An
     for i, arg_node in enumerate(all_args):
         param_info = {"name": arg_node.arg, "annotation": None, "default": None}
         if arg_node.annotation:
-            param_info["annotation"] = ast.unparse(arg_node.annotation) if hasattr(ast, 'unparse') else "TypeHint"
+            param_info["annotation"] = (
+                ast.unparse(arg_node.annotation) if hasattr(ast, "unparse") else "TypeHint"
+            )
         # Determine default value
         if i >= pos_defaults_start_idx and i < num_pos_args:  # Positional/regular arg with default:
             default_val_node = args.defaults[i - pos_defaults_start_idx]
             if default_val_node:  # Can be None if there's a default of None literally:
-                param_info["default"] = ast.unparse(default_val_node) if hasattr(ast, 'unparse') else "DefaultValue"
+                param_info["default"] = (
+                    ast.unparse(default_val_node) if hasattr(ast, "unparse") else "DefaultValue"
+                )
         elif arg_node in args.kwonlyargs:
             # For kwonlyargs, kw_defaults is a list of default values, matching kwonlyargs by position.
             # Some values in kw_defaults can be None (for args without defaults).
@@ -37,7 +42,9 @@ def extract_method_parameters(method_node: ast.FunctionDef) -> List[Dict[str, An
                 if kwonly_idx < len(args.kw_defaults) and args.kw_defaults[kwonly_idx] is not None:
                     default_val_node = args.kw_defaults[kwonly_idx]
                     # type ignore
-                    param_info["default"] = ast.unparse(default_val_node) if hasattr(ast, 'unparse') else "DefaultValue"
+                    param_info["default"] = (
+                        ast.unparse(default_val_node) if hasattr(ast, "unparse") else "DefaultValue"
+                    )
             except ValueError:
                 pass  # Should not happen if arg_node is from args.kwonlyargs
         params_details.append(param_info)
@@ -45,16 +52,21 @@ def extract_method_parameters(method_node: ast.FunctionDef) -> List[Dict[str, An
     if args.vararg:
         vararg_info = {"name": f" * {args.vararg.arg}", "annotation": None, "default": None}
         if args.vararg.annotation:
-            vararg_info["annotation"] = ast.unparse(args.vararg.annotation) if hasattr(ast, 'unparse') else "TypeHint"
+            vararg_info["annotation"] = (
+                ast.unparse(args.vararg.annotation) if hasattr(ast, "unparse") else "TypeHint"
+            )
         params_details.append(vararg_info)
 
     if args.kwarg:
         kwarg_info = {"name": f" * *{args.kwarg.arg}", "annotation": None, "default": None}
         if args.kwarg.annotation:
-            kwarg_info["annotation"] = ast.unparse(args.kwarg.annotation) if hasattr(ast, 'unparse') else "TypeHint"
+            kwarg_info["annotation"] = (
+                ast.unparse(args.kwarg.annotation) if hasattr(ast, "unparse") else "TypeHint"
+            )
         params_details.append(kwarg_info)
 
     return params_details
+
 
 def parse_python_file(filepath: str) -> Optional[Tuple[ast.AST, List[str]]]:
     """

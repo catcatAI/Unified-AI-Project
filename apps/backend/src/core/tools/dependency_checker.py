@@ -17,6 +17,7 @@ from typing import Dict, Any, Optional, Tuple
 
 logger = logging.getLogger("dependency_checker")
 
+
 def check_package(package_name: str) -> Tuple[bool, Optional[str]]:
     """检查包是否可用"""
     try:
@@ -25,6 +26,7 @@ def check_package(package_name: str) -> Tuple[bool, Optional[str]]:
     except ImportError as e:
         return False, str(e)
 
+
 def check_all_packages(packages: Dict[str, str]) -> Dict[str, Tuple[bool, Optional[str]]]:
     """检查所有包"""
     results = {}
@@ -32,17 +34,19 @@ def check_all_packages(packages: Dict[str, str]) -> Dict[str, Tuple[bool, Option
         results[name] = check_package(import_path)
     return results
 
+
 def generate_report(results: Dict[str, Tuple[bool, Optional[str]]]) -> Dict[str, Any]:
     """生成依赖报告"""
     available = sum(1 for available, _ in results.values() if available)
     total = len(results)
 
     return {
-        'total_packages': total,
-        'available_packages': available,
-        'unavailable_packages': total - available,
-        'details': results
+        "total_packages": total,
+        "available_packages": available,
+        "unavailable_packages": total - available,
+        "details": results,
     }
+
 
 def install_missing_packages(results: Dict[str, Tuple[bool, Optional[str]]]) -> List[str]:
     """安装缺失的包"""
@@ -57,14 +61,15 @@ def install_missing_packages(results: Dict[str, Tuple[bool, Optional[str]]]) -> 
 
     return missing
 
+
 # 简化版本，不依赖 dependency_manager
 def main():
     """主函数"""
     packages = {
-        'asyncio': 'asyncio',
-        'fastapi': 'fastapi',
-        'uvicorn': 'uvicorn',
-        'pydantic': 'pydantic'
+        "asyncio": "asyncio",
+        "fastapi": "fastapi",
+        "uvicorn": "uvicorn",
+        "pydantic": "pydantic",
     }
 
     results = check_all_packages(packages)
@@ -75,6 +80,7 @@ def main():
     logger.info(f"Unavailable: {report['unavailable_packages']}")
 
     install_missing_packages(results)
+
 
 if __name__ == "__main__":
     main()

@@ -32,8 +32,9 @@ try:
         start_self_maintenance,
         stop_self_maintenance,
         get_maintenance_status,
-        trigger_emergency_maintenance
+        trigger_emergency_maintenance,
     )
+
     SELF_MAINTENANCE_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Self-maintenance system not available: {e}")
@@ -41,6 +42,7 @@ except ImportError as e:
     SystemSelfMaintenanceManager = None
 
 logger = logging.getLogger(__name__)
+
 
 class UnifiedAISystem:
     """Main integration point for the Unified AI Project with Self-Maintenance capabilities"""
@@ -52,11 +54,11 @@ class UnifiedAISystem:
         self.start_time = None
         self.system_health_score = 1.0
         self._initialize_components()
-        
+
     def _initialize_components(self):
         """Initialize all core components including self-maintenance"""
         logger.info("🚀 Initializing Unified AI System components...")
-        
+
         # Initialize self-maintenance system
         if SELF_MAINTENANCE_AVAILABLE:
             try:
@@ -67,9 +69,9 @@ class UnifiedAISystem:
                 self.maintenance_manager = None
         else:
             logger.warning("⚠️ Self-maintenance system not available")
-        
+
         logger.info("All system components initialized successfully")
-        
+
     def start_system(self, enable_self_maintenance: bool = True, maintenance_mode: str = "full"):
         """Start the unified AI system with optional self-maintenance"""
         logger.info("🚀 Starting Unified AI System...")
@@ -85,14 +87,14 @@ class UnifiedAISystem:
                 logger.info(f"✅ Self-maintenance system started in {maintenance_mode} mode")
             except Exception as e:
                 logger.error(f"Failed to start self-maintenance system: {e}")
-        
+
         logger.info("✅ Unified AI System started successfully")
-        
+
     def stop_system(self):
         """Stop the unified AI system and self-maintenance"""
         logger.info("🛑 Stopping Unified AI System...")
         self.is_running = False
-        
+
         # Stop self-maintenance if running
         if self.maintenance_manager:
             try:
@@ -100,9 +102,9 @@ class UnifiedAISystem:
                 logger.info("✅ Self-maintenance system stopped")
             except Exception as e:
                 logger.error(f"Error stopping self-maintenance system: {e}")
-        
+
         logger.info("✅ Unified AI System stopped successfully")
-        
+
     def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status including self-maintenance"""
         status = {
@@ -112,7 +114,7 @@ class UnifiedAISystem:
             "system_health_score": self.system_health_score,
             "self_maintenance_available": SELF_MAINTENANCE_AVAILABLE,
         }
-        
+
         # Add self-maintenance status if available
         if self.maintenance_manager:
             try:
@@ -121,20 +123,20 @@ class UnifiedAISystem:
             except Exception as e:
                 logger.error(f"Failed to get maintenance status: {e}")
                 status["self_maintenance"] = {"error": str(e)}
-        
+
         return status
-    
+
     def _get_uptime(self) -> str:
         """Calculate system uptime"""
         if not self.start_time:
             return "00:00:00"
-        
+
         uptime = datetime.now() - self.start_time
         hours = uptime.seconds // 3600
         minutes = (uptime.seconds % 3600) // 60
         seconds = uptime.seconds % 60
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-    
+
     def trigger_system_maintenance(self):
         """Manually trigger system maintenance"""
         if self.maintenance_manager:
@@ -147,7 +149,7 @@ class UnifiedAISystem:
                 return {"status": "error", "message": str(e)}
         else:
             return {"status": "error", "message": "Self-maintenance system not available"}
-    
+
     def process_request(self, user_id: str, request: Dict[str, Any]) -> Dict[str, Any]:
         """Process a user request through the unified system"""
         try:
@@ -156,10 +158,7 @@ class UnifiedAISystem:
             request_type = request.get("type", "general")
 
             if request_type == "system_status":
-                return {
-                    "status": "success",
-                    "data": self.get_system_status()
-                }
+                return {"status": "success", "data": self.get_system_status()}
             elif request_type == "trigger_maintenance":
                 return self.trigger_system_maintenance()
             elif request_type == "maintenance_control":
@@ -167,7 +166,10 @@ class UnifiedAISystem:
                 if action == "start":
                     mode = request.get("mode", "full")
                     if start_self_maintenance(mode):
-                        return {"status": "success", "message": f"Self-maintenance started in {mode} mode"}
+                        return {
+                            "status": "success",
+                            "message": f"Self-maintenance started in {mode} mode",
+                        }
                     else:
                         return {"status": "error", "message": "Failed to start self-maintenance"}
                 elif action == "stop":
@@ -182,50 +184,47 @@ class UnifiedAISystem:
                 return {
                     "status": "success",
                     "message": "Request processed successfully",
-                    "system_status": self.get_system_status()
+                    "system_status": self.get_system_status(),
                 }
-                
+
         except Exception as e:
             logger.error(f"Error processing request: {e}")
-            return {
-                "status": "error",
-                "message": f"Error processing request: {str(e)}"
-            }
+            return {"status": "error", "message": f"Error processing request: {str(e)}"}
+
 
 # Example usage and testing
 if __name__ == "__main__":
     # Configure logging
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    
+
     print("🚀 Testing Enhanced Unified AI System with Self-Maintenance...")
-    
+
     # Create and start the enhanced unified AI system
     unified_ai = UnifiedAISystem()
 
     try:
         # Start with full self-maintenance mode
         unified_ai.start_system(enable_self_maintenance=True, maintenance_mode="full")
-        
+
         # Test system status
         print("📊 System Status:")
         status = unified_ai.get_system_status()
         print(json.dumps(status, indent=2, default=str))
-        
+
         # Test different request types
         test_requests = [
             {"type": "system_status"},
             {"type": "trigger_maintenance"},
-            {"type": "maintenance_control", "action": "status"}
+            {"type": "maintenance_control", "action": "status"},
         ]
-        
+
         for request in test_requests:
             print(f"\n🧪 Testing request: {request}")
             result = unified_ai.process_request("test_user", request)
             print(f"Result: {result}")
-        
+
         print("\n🔄 System running with self-maintenance... (Press Ctrl+C to stop)")
         try:
             while True:
@@ -234,7 +233,7 @@ if __name__ == "__main__":
                 print(f"⏰ Uptime: {status['uptime']} Health: {status['system_health_score']}")
         except KeyboardInterrupt:
             print("\n🛑 User interrupted, shutting down...")
-        
+
     except Exception as e:
         print(f"❌ Error during system operation: {e}")
     finally:

@@ -129,9 +129,7 @@ class TemplateMatcher:
 
         logger.debug(f"Added template: {template_id}")
 
-    def match(
-        self, user_input: str, context: Optional[Dict[str, Any]] = None
-    ) -> MatchResult:
+    def match(self, user_input: str, context: Optional[Dict[str, Any]] = None) -> MatchResult:
         """
         匹配用户输入到模板
 
@@ -377,8 +375,8 @@ class TemplateMatcher:
         template.usage_count += 1
 
         alpha = 0.9
-        template.success_rate = (
-            alpha * template.success_rate + (1 - alpha) * (1.0 if success else 0.0)
+        template.success_rate = alpha * template.success_rate + (1 - alpha) * (
+            1.0 if success else 0.0
         )
 
         logger.debug(

@@ -8,6 +8,7 @@ import asyncio
 
 from ai.dialogue.project_coordinator import ProjectCoordinator
 
+
 @pytest.fixture
 def project_coordinator():
     """Provides a ProjectCoordinator instance with mocked dependencies."""
@@ -20,9 +21,7 @@ def project_coordinator():
     mock_personality_manager = MagicMock()
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
 
-    mock_config = {
-        "turn_timeout_seconds": 30
-    }
+    mock_config = {"turn_timeout_seconds": 30}
 
     pc = ProjectCoordinator(
         llm_interface=mock_llm_interface,
@@ -32,9 +31,10 @@ def project_coordinator():
         memory_manager=mock_memory_manager,
         learning_manager=mock_learning_manager,
         personality_manager=mock_personality_manager,
-        dialogue_manager_config=mock_config
+        dialogue_manager_config=mock_config,
     )
     return pc
+
 
 @pytest.mark.asyncio
 async def test_handle_project_happy_path(project_coordinator: ProjectCoordinator):
@@ -42,7 +42,11 @@ async def test_handle_project_happy_path(project_coordinator: ProjectCoordinator
     pc = project_coordinator
     user_query = "Build a website for me."
     decomposed_tasks = [
-        {"capability_needed": "create_files_v1", "task_parameters": {"files": ["index.html"]}, "task_description": "Create a homepage."}
+        {
+            "capability_needed": "create_files_v1",
+            "task_parameters": {"files": ["index.html"]},
+            "task_description": "Create a homepage.",
+        }
     ]
     execution_results = {"0": {"status": "success", "result": "index.html created."}}
     final_integrated_response = "I have successfully created the index.html file for your website."
@@ -50,19 +54,24 @@ async def test_handle_project_happy_path(project_coordinator: ProjectCoordinator
     pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=decomposed_tasks)
     pc._execute_task_graph = AsyncMock(return_value=execution_results)
     pc._integrate_subtask_results = AsyncMock(return_value=final_integrated_response)
-    
+
     available_capabilities = []
     pc.service_discovery.get_all_capabilities_async = AsyncMock(return_value=available_capabilities)
 
     response = await pc.handle_project(user_query, "session123", "user456")
 
-    pc._decompose_user_intent_into_subtasks.assert_awaited_once_with(user_query, available_capabilities)
+    pc._decompose_user_intent_into_subtasks.assert_awaited_once_with(
+        user_query, available_capabilities
+    )
     pc._execute_task_graph.assert_awaited_once_with(decomposed_tasks)
     pc._integrate_subtask_results.assert_awaited_once_with(user_query, execution_results)
     pc.learning_manager.learn_from_project_case.assert_awaited_once()
 
-    expected_response = f"TestAI, Here's the result of your project request,\n\n{final_integrated_response}"
+    expected_response = (
+        f"TestAI, Here's the result of your project request,\n\n{final_integrated_response}"
+    )
     assert response == expected_response
+
 
 @pytest.mark.asyncio
 async def test_handle_project_decomposition_fails(project_coordinator: ProjectCoordinator):
@@ -70,25 +79,31 @@ async def test_handle_project_decomposition_fails(project_coordinator: ProjectCo
     pc = project_coordinator
     pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=[])
 
-    with patch.object(pc, '_execute_task_graph', new_callable=AsyncMock) as mock_execute, \
-         patch.object(pc, '_integrate_subtask_results', new_callable=AsyncMock) as mock_integrate:
+    with patch.object(
+        pc, "_execute_task_graph", new_callable=AsyncMock
+    ) as mock_execute, patch.object(
+        pc, "_integrate_subtask_results", new_callable=AsyncMock
+    ) as mock_integrate:
         response = await pc.handle_project("An impossible task.", "s1", "u1")
         assert response == "TestAI, I couldn't break down your request into a clear plan."
         mock_execute.assert_not_called()
         mock_integrate.assert_not_called()
 
+
 @pytest.mark.asyncio
 async def test_execute_task_graph_with_dependencies(project_coordinator: ProjectCoordinator):
     """Tests that _execute_task_graph correctly handles dependencies between tasks."""
     pc = project_coordinator
-    pc._dispatch_single_subtask = AsyncMock(side_effect=[
-        {"result": "Task 0 was successful"},
-        {"result": "Task 1 was successful"}
-    ])
+    pc._dispatch_single_subtask = AsyncMock(
+        side_effect=[{"result": "Task 0 was successful"}, {"result": "Task 1 was successful"}]
+    )
 
     subtasks = [
         {"capability_needed": "task0_v1", "task_parameters": {"param": "A"}},
-        {"capability_needed": "task1_v1", "task_parameters": {"input_data": "Some static data and <output_of_task_0>"}}
+        {
+            "capability_needed": "task1_v1",
+            "task_parameters": {"input_data": "Some static data and <output_of_task_0>"},
+        },
     ]
 
     results = await pc._execute_task_graph(subtasks)
@@ -97,14 +112,16 @@ async def test_execute_task_graph_with_dependencies(project_coordinator: Project
     assert results[0] == {"result": "Task 0 was successful"}
     assert results[1] == {"result": "Task 1 was successful"}
 
-    expected_call_for_task1 = call({
-        'capability_needed': 'task1_v1',
-        'task_parameters': {'input_data': 'Some static data and {\'result\': \'Task 0 was successful\'} '}
-    })
-    pc._dispatch_single_subtask.assert_has_calls([
-        call(subtasks[0]),
-        expected_call_for_task1
-    ])
+    expected_call_for_task1 = call(
+        {
+            "capability_needed": "task1_v1",
+            "task_parameters": {
+                "input_data": "Some static data and {'result': 'Task 0 was successful'} "
+            },
+        }
+    )
+    pc._dispatch_single_subtask.assert_has_calls([call(subtasks[0]), expected_call_for_task1])
+
 
 @pytest.mark.asyncio
 async def test_dispatch_single_subtask_agent_not_found(project_coordinator: ProjectCoordinator):
@@ -116,10 +133,15 @@ async def test_dispatch_single_subtask_agent_not_found(project_coordinator: Proj
     subtask = {"capability_needed": "non_existent_capability_v1"}
     result = await pc._dispatch_single_subtask(subtask)
 
-    assert result == {"error": "Could not find or launch an agent with capability 'non_existent_capability_v1'."}
+    assert result == {
+        "error": "Could not find or launch an agent with capability 'non_existent_capability_v1'."
+    }
+
 
 @pytest.mark.asyncio
-async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordinator: ProjectCoordinator):
+async def test_dispatch_single_subtask_agent_launch_and_discovery(
+    project_coordinator: ProjectCoordinator,
+):
     """Tests the logic for launching a new agent when a capability is not initially found."""
     pc = project_coordinator
     capability_name = "needed_capability_v1"
@@ -131,10 +153,7 @@ async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordi
         "ai_id": "agent_xyz",
     }
 
-    pc.service_discovery.find_capabilities = AsyncMock(side_effect=[
-        [],
-        [new_capability_payload]
-    ])
+    pc.service_discovery.find_capabilities = AsyncMock(side_effect=[[], [new_capability_payload]])
 
     mock_future = asyncio.Future()
     mock_future.set_result(True)
@@ -146,6 +165,7 @@ async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordi
     result = await pc._dispatch_single_subtask(subtask)
 
     pc.agent_manager.launch_agent.assert_called_once_with(agent_name_to_launch)
+
 
 @pytest.mark.asyncio
 async def test_wait_for_task_result_timeout(project_coordinator: ProjectCoordinator):

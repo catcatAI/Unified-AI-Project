@@ -9,11 +9,13 @@ import base64
 import os
 from typing import List, Tuple, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Optional cryptography import
 try:
     from cryptography.fernet import Fernet
+
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -36,15 +38,15 @@ class GenesisManager:
             - The UID part of the secret.
         """
         uid = f"uid_{uuid.uuid4().hex}"
-        
+
         # Generate a key for HAM encryption
         if HAS_CRYPTO:
-            ham_key = Fernet.generate_key().decode('utf-8')
+            ham_key = Fernet.generate_key().decode("utf-8")
         else:
             # Fallback: generate a random key without cryptography library
             random_bytes = os.urandom(32)
-            ham_key = base64.urlsafe_b64encode(random_bytes).decode('utf-8')
-        
+            ham_key = base64.urlsafe_b64encode(random_bytes).decode("utf-8")
+
         genesis_secret = f"{uid}:{ham_key}"
         return genesis_secret, uid
 
@@ -61,7 +63,7 @@ class GenesisManager:
         """
         # Simplified shard implementation for demonstration
         # In production, use proper secret sharing algorithm
-        secret_hex = secret.encode('utf-8').hex()
+        secret_hex = secret.encode("utf-8").hex()
         shards = []
         for i in range(3):
             shard = f"{i}:{secret_hex}"
@@ -81,44 +83,43 @@ class GenesisManager:
         """
         if len(shards) < 2:
             return None
-        
+
         # Simplified recovery - just use the first shard
         # In production, implement proper threshold cryptography
         try:
             shard = shards[0]
-            parts = shard.split(':', 1)
+            parts = shard.split(":", 1)
             if len(parts) == 2:
                 secret_hex = parts[1]
                 secret_bytes = bytes.fromhex(secret_hex)
-                return secret_bytes.decode('utf-8')
+                return secret_bytes.decode("utf-8")
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
-        
         return None
 
 
 # Test code
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger.info("--- Genesis Manager Test ---")
-    
+
     # Test creating genesis secret
     genesis_secret, uid = GenesisManager.create_genesis_secret()
     logger.info(f"Created secret: {genesis_secret}")
     logger.info(f"UID: {uid}")
-    
+
     # Test splitting
     shards = GenesisManager.split_secret_into_shards(genesis_secret)
     logger.info(f"Created {len(shards)} shards")
-    
+
     # Test recovery
     recovered = GenesisManager.recover_secret_from_shards(shards[:2])
     logger.info(f"Recovered secret: {recovered}")
-    
+
     if recovered == genesis_secret:
         logger.info("✅ Recovery successful!")
     else:
         logger.error("❌ Recovery failed!")
-    
+
     logger.info("--- Test Complete ---")

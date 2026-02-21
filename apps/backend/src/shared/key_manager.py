@@ -23,6 +23,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+
 class UnifiedKeyManager:
     """統一金鑰管理器 (明確區分通訊密鑰與模型金鑰)
 
@@ -32,7 +33,11 @@ class UnifiedKeyManager:
     - 密钥验证
     """
 
-    def __init__(self, config_path: str = "configs/unified_demo_config.yaml", keys_file: str = "data/secure_keys.json") -> None:
+    def __init__(
+        self,
+        config_path: str = "configs/unified_demo_config.yaml",
+        keys_file: str = "data/secure_keys.json",
+    ) -> None:
         self.config_path = Path(config_path)
         self.keys_file = Path(keys_file)
         self.config = self._load_config()
@@ -41,6 +46,7 @@ class UnifiedKeyManager:
         # 用於內部組件、行動端、桌面端的加密與控制
         try:
             from ..system.security_monitor import ABCKeyManager
+
             self.abc_km = ABCKeyManager()
         except ImportError:
             self.abc_km = None
@@ -56,7 +62,7 @@ class UnifiedKeyManager:
         """載入舊有 YAML 配置 (通常包含模型 API Keys)"""
         if self.config_path.exists():
             try:
-                with open(self.config_path, 'r', encoding='utf-8') as f:
+                with open(self.config_path, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
             except Exception as e:
                 logger.error(f"載入配置失敗: {e}")
@@ -69,7 +75,7 @@ class UnifiedKeyManager:
 
         if self.keys_file.exists():
             try:
-                with open(self.keys_file, 'r', encoding='utf-8') as f:
+                with open(self.keys_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"加载密钥文件失败: {e}，将创建新密钥")
@@ -83,12 +89,12 @@ class UnifiedKeyManager:
             "keys": {
                 "KeyA": secrets.token_hex(32),
                 "KeyB": secrets.token_hex(32),
-                "KeyC": secrets.token_hex(32)
+                "KeyC": secrets.token_hex(32),
             },
             "key_hashes": {},
             "created_at": datetime.now().isoformat(),
             "last_rotation": datetime.now().isoformat(),
-            "version": "1.0"
+            "version": "1.0",
         }
 
         # 计算密钥哈希
@@ -108,7 +114,7 @@ class UnifiedKeyManager:
     def _save_keys(self, keys_data: Dict[str, Any]):
         """保存密钥数据"""
         try:
-            with open(self.keys_file, 'w', encoding='utf-8') as f:
+            with open(self.keys_file, "w", encoding="utf-8") as f:
                 json.dump(keys_data, f, indent=2)
             # 设置文件权限（仅所有者可读写）
             os.chmod(self.keys_file, 0o600)
@@ -117,7 +123,9 @@ class UnifiedKeyManager:
 
     def _should_rotate_keys(self) -> bool:
         """检查是否需要轮换密钥"""
-        last_rotation = datetime.fromisoformat(self.keys_data.get("last_rotation", datetime.now().isoformat()))
+        last_rotation = datetime.fromisoformat(
+            self.keys_data.get("last_rotation", datetime.now().isoformat())
+        )
         next_rotation = last_rotation + timedelta(days=self.key_rotation_days)
         return datetime.now() >= next_rotation
 
@@ -221,61 +229,65 @@ class UnifiedKeyManager:
             "version": self.keys_data.get("version", "unknown"),
             "created_at": self.keys_data.get("created_at", "unknown"),
             "last_rotation": self.keys_data.get("last_rotation", "unknown"),
-            "next_rotation": (datetime.fromisoformat(self.keys_data.get("last_rotation", datetime.now().isoformat())) +
-                             timedelta(days=self.key_rotation_days)).isoformat(),
+            "next_rotation": (
+                datetime.fromisoformat(
+                    self.keys_data.get("last_rotation", datetime.now().isoformat())
+                )
+                + timedelta(days=self.key_rotation_days)
+            ).isoformat(),
             "rotation_interval_days": self.key_rotation_days,
-            "keys_available": list(self.keys_data.get("keys", {}).keys())
+            "keys_available": list(self.keys_data.get("keys", {}).keys()),
         }
-    
+
     def sign_with_key_a(self, state_hash: int) -> str:
         """使用 Key A 簽名狀態哈希
-        
+
         Args:
             state_hash: 狀態哈希值 (uint64)
-            
+
         Returns:
             簽名字符串 (SHA256 hex)
         """
         key_a = self.get_security_key("KeyA")
         if not key_a:
             raise ValueError("Key A not available")
-        
+
         data = f"{state_hash}:{key_a}".encode()
         signature = hashlib.sha256(data).hexdigest()
-        
+
         logger.debug(f"State hash {state_hash} signed with Key A")
         return signature
-    
+
     def verify_signature_with_key_a(self, state_hash: int, signature: str) -> bool:
         """驗證 Key A 簽名
-        
+
         Args:
             state_hash: 狀態哈希值
             signature: 簽名字符串
-            
+
         Returns:
             簽名是否有效
         """
         try:
             expected_signature = self.sign_with_key_a(state_hash)
             is_valid = signature == expected_signature
-            
+
             if not is_valid:
                 logger.warning(f"Signature verification failed for state hash {state_hash}")
-            
+
             return is_valid
         except Exception as e:
             logger.error(f"Signature verification error: {e}")
             return False
-    
+
     def bind_state_hash(self, state_hash: int) -> Dict[str, Any]:
         """綁定狀態哈希與密鑰
-        
+
         創建狀態-密鑰綁定記錄
-        
+
         Args:
             state_hash: 狀態哈希值
-            
+
         Returns:
             綁定記錄字典
         """
@@ -284,26 +296,26 @@ class UnifiedKeyManager:
             "state_hash": state_hash,
             "signature": signature,
             "timestamp": datetime.now().isoformat(),
-            "key_version": self.keys_data.get("version", "1.0")
+            "key_version": self.keys_data.get("version", "1.0"),
         }
-        
+
         logger.info(f"State hash {state_hash} bound to Key A")
         return binding
-    
+
     def verify_state_binding(self, binding: Dict[str, Any]) -> bool:
         """驗證狀態綁定
-        
+
         Args:
             binding: 綁定記錄字典
-            
+
         Returns:
             綁定是否有效
         """
         state_hash = binding.get("state_hash")
         signature = binding.get("signature")
-        
+
         if not state_hash or not signature:
             logger.warning("Invalid binding record: missing state_hash or signature")
             return False
-        
+
         return self.verify_signature_with_key_a(state_hash, signature)

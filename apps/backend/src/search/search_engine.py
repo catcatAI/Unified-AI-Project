@@ -1,16 +1,20 @@
 from typing import List, Any, Optional
 from unittest.mock import Mock
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Mock Hugging Face API for syntax validation
 try:
     from huggingface_hub import HfApi
 except ImportError:
+
     class MockHfApi:
-        def list_models(self, search: str): 
+        def list_models(self, search: str):
             return [Mock(id=f"mock-model-{i}") for i in range(3)]
+
     HfApi = MockHfApi
+
 
 class SearchEngine:
     """A class for searching for models and tools."""

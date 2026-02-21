@@ -7,6 +7,7 @@
 import sys
 from pathlib import Path
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Add the src directory to the path so we can import the modules

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConnectionPoolStats:
     """连接池统计信息"""
+
     active_connections: int
     idle_connections: int
     total_connections: int
@@ -31,6 +32,7 @@ class ConnectionPoolStats:
 @dataclass
 class MessageRoutingStats:
     """消息路由统计信息"""
+
     routed_messages: int
     avg_routing_time_ms: float
     cache_hits: int
@@ -100,9 +102,9 @@ class HSPConnectionPool:
         """创建新连接(模拟实现)"""
         self.connection_counter += 1
         connection = {
-            'id': self.connection_counter,
-            'created_at': time.time(),
-            'last_used': time.time()
+            "id": self.connection_counter,
+            "created_at": time.time(),
+            "last_used": time.time(),
         }
         return connection
 
@@ -112,7 +114,7 @@ class HSPConnectionPool:
             return False
 
         # 检查连接是否超时
-        if time.time() - connection.get('last_used', 0) > self.connection_timeout:
+        if time.time() - connection.get("last_used", 0) > self.connection_timeout:
             return False
 
         return True
@@ -134,11 +136,7 @@ class HSPIntelligentCache:
         self.cache: Dict[str, Tuple[Any, float, int]] = {}  # 键 -> (值, 过期时间, 访问计数)
         self.access_order: deque = deque()  # 访问顺序队列(用于LRU)
         self.cache_lock = threading.RLock()
-        self.stats = {
-            'hits': 0,
-            'misses': 0,
-            'evictions': 0
-        }
+        self.stats = {"hits": 0, "misses": 0, "evictions": 0}
 
         logger.info(f"HSP智能缓存初始化, 最大大小: {max_size} TTL: {ttl_seconds}秒")
 
@@ -152,16 +150,16 @@ class HSPIntelligentCache:
                     # 更新访问计数和顺序
                     self.cache[key] = (value, expire_time, access_count + 1)
                     self._update_access_order(key)
-                    self.stats['hits'] += 1
+                    self.stats["hits"] += 1
                     logger.debug(f"缓存命中: {key}")
                     return value
                 else:
                     # 过期, 删除
                     del self.cache[key]
-                    self.stats['evictions'] += 1
+                    self.stats["evictions"] += 1
                     logger.debug(f"缓存项过期并删除: {key}")
 
-            self.stats['misses'] += 1
+            self.stats["misses"] += 1
             logger.debug(f"缓存未命中: {key}")
             return None
 
@@ -184,7 +182,7 @@ class HSPIntelligentCache:
 
         # 找到最少访问的项
         lru_key = None
-        min_access_count = float('inf')
+        min_access_count = float("inf")
 
         # 检查访问顺序中的项
         for key in list(self.access_order):
@@ -203,7 +201,7 @@ class HSPIntelligentCache:
             # 从访问顺序队列中移除
             if lru_key in self.access_order:
                 self.access_order.remove(lru_key)
-            self.stats['evictions'] += 1
+            self.stats["evictions"] += 1
             logger.debug(f"缓存项被淘汰: {lru_key}")
 
     def _update_access_order(self, key: str):
@@ -215,15 +213,15 @@ class HSPIntelligentCache:
     def get_stats(self) -> Dict[str, Any]:
         """获取缓存统计信息"""
         with self.cache_lock:
-            total_requests = self.stats['hits'] + self.stats['misses']
-            hit_rate = self.stats['hits'] / total_requests if total_requests > 0 else 0
+            total_requests = self.stats["hits"] + self.stats["misses"]
+            hit_rate = self.stats["hits"] / total_requests if total_requests > 0 else 0
             return {
-                'size': len(self.cache),
-                'max_size': self.max_size,
-                'hits': self.stats['hits'],
-                'misses': self.stats['misses'],
-                'evictions': self.stats['evictions'],
-                'hit_rate': hit_rate
+                "size": len(self.cache),
+                "max_size": self.max_size,
+                "hits": self.stats["hits"],
+                "misses": self.stats["misses"],
+                "evictions": self.stats["evictions"],
+                "hit_rate": hit_rate,
             }
 
 
@@ -233,12 +231,14 @@ class HSPLoadBalancer:
     def __init__(self, strategy: str = "round_robin") -> None:
         self.strategy = strategy
         self.nodes: Dict[str, Any] = {}  # 节点ID -> 节点信息
-        self.node_stats = defaultdict(lambda: {
-            'request_count': 0,
-            'error_count': 0,
-            'response_time_sum': 0,
-            'response_time_count': 0
-        })
+        self.node_stats = defaultdict(
+            lambda: {
+                "request_count": 0,
+                "error_count": 0,
+                "response_time_sum": 0,
+                "response_time_count": 0,
+            }
+        )
         self.current_index = 0
         self.lb_lock = threading.RLock()
 
@@ -290,13 +290,13 @@ class HSPLoadBalancer:
         # 简化实现, 选择请求计数最少的节点
         if not self.node_stats:
             return list(self.nodes.keys())[0] if self.nodes else None
-        min_requests = float('inf')
+        min_requests = float("inf")
         selected_node = None
 
         for node_id in self.nodes:
             stats = self.node_stats[node_id]
-            if stats['request_count'] < min_requests:
-                min_requests = stats['request_count']
+            if stats["request_count"] < min_requests:
+                min_requests = stats["request_count"]
                 selected_node = node_id
 
         return selected_node
@@ -305,18 +305,18 @@ class HSPLoadBalancer:
         """加权响应时间选择"""
         if not self.node_stats:
             return list(self.nodes.keys())[0] if self.nodes else None
-        best_score = float('inf')
+        best_score = float("inf")
         selected_node = None
 
         for node_id in self.nodes:
             stats = self.node_stats[node_id]
-            if stats['response_time_count'] > 0:
-                avg_response_time = stats['response_time_sum'] / stats['response_time_count']
+            if stats["response_time_count"] > 0:
+                avg_response_time = stats["response_time_sum"] / stats["response_time_count"]
                 # 使用响应时间和错误率计算得分
-                error_rate = stats['error_count'] / (stats['request_count'] + 1)
+                error_rate = stats["error_count"] / (stats["request_count"] + 1)
                 score = avg_response_time * (1 + error_rate)
             else:
-                score = float('inf')  # 没有统计数据的节点优先级较低
+                score = float("inf")  # 没有统计数据的节点优先级较低
 
             if score < best_score:
                 best_score = score
@@ -331,16 +331,16 @@ class HSPLoadBalancer:
     def record_request(self, node_id: str):
         """记录请求"""
         with self.lb_lock:
-            self.node_stats[node_id]['request_count'] += 1
+            self.node_stats[node_id]["request_count"] += 1
 
     def record_response(self, node_id: str, response_time: float, success: bool = True):
         """记录响应"""
         with self.lb_lock:
             stats = self.node_stats[node_id]
-            stats['response_time_sum'] += response_time
-            stats['response_time_count'] += 1
+            stats["response_time_sum"] += response_time
+            stats["response_time_count"] += 1
             if not success:
-                stats['error_count'] += 1
+                stats["error_count"] += 1
 
 
 class HSPAdvancedPerformanceOptimizer:
@@ -351,17 +351,17 @@ class HSPAdvancedPerformanceOptimizer:
 
         # 初始化组件
         self.connection_pool = HSPConnectionPool(
-            max_connections=self.config.get('max_connections', 10),
-            connection_timeout=self.config.get('connection_timeout', 30)
+            max_connections=self.config.get("max_connections", 10),
+            connection_timeout=self.config.get("connection_timeout", 30),
         )
 
         self.intelligent_cache = HSPIntelligentCache(
-            max_size=self.config.get('cache_max_size', 1000),
-            ttl_seconds=self.config.get('cache_ttl', 300)
+            max_size=self.config.get("cache_max_size", 1000),
+            ttl_seconds=self.config.get("cache_ttl", 300),
         )
 
         self.load_balancer = HSPLoadBalancer(
-            strategy=self.config.get('load_balancing_strategy', 'round_robin')
+            strategy=self.config.get("load_balancing_strategy", "round_robin")
         )
 
         # 路由统计
@@ -369,7 +369,7 @@ class HSPAdvancedPerformanceOptimizer:
         self.routing_times = deque(maxlen=1000)  # 存储最近1000次路由时间
 
         # 线程池用于异步处理
-        self.executor = ThreadPoolExecutor(max_workers=self.config.get('thread_pool_size', 4))
+        self.executor = ThreadPoolExecutor(max_workers=self.config.get("thread_pool_size", 4))
 
         logger.info("HSP高级性能优化器初始化完成")
 
@@ -386,7 +386,9 @@ class HSPAdvancedPerformanceOptimizer:
             self.routing_stats.cache_hits += 1
             routing_time = (time.time() - start_time) * 1000
             self.routing_times.append(routing_time)
-            self.routing_stats.avg_routing_time_ms = sum(self.routing_times) / len(self.routing_times)
+            self.routing_stats.avg_routing_time_ms = sum(self.routing_times) / len(
+                self.routing_times
+            )
             logger.debug(f"使用缓存路由结果: {message_key}")
             return cached_result, "cached"
 
@@ -403,10 +405,10 @@ class HSPAdvancedPerformanceOptimizer:
 
         # 6. 构建路由结果
         routing_result = {
-            'message': message,
-            'target_node': target_node,
-            'connection': connection,
-            'routing_timestamp': time.time()
+            "message": message,
+            "target_node": target_node,
+            "connection": connection,
+            "routing_timestamp": time.time(),
         }
 
         # 7. 缓存路由结果
@@ -429,14 +431,16 @@ class HSPAdvancedPerformanceOptimizer:
         """生成消息键用于缓存"""
         # 使用消息的关键属性生成键
         key_data = {
-            'message_type': message.get('message_type', ''),
-            'sender_ai_id': message.get('sender_ai_id', ''),
-            'recipient_ai_id': message.get('recipient_ai_id', ''),
-            'payload_hash': hashlib.md5(json.dumps(message.get('payload', {}), sort_keys=True).encode('utf-8')).hexdigest()
+            "message_type": message.get("message_type", ""),
+            "sender_ai_id": message.get("sender_ai_id", ""),
+            "recipient_ai_id": message.get("recipient_ai_id", ""),
+            "payload_hash": hashlib.md5(
+                json.dumps(message.get("payload", {}), sort_keys=True).encode("utf-8")
+            ).hexdigest(),
         }
 
         key_str = json.dumps(key_data, sort_keys=True)
-        return hashlib.md5(key_str.encode('utf-8')).hexdigest()
+        return hashlib.md5(key_str.encode("utf-8")).hexdigest()
 
     def get_connection(self) -> Optional[Any]:
         """获取连接"""
@@ -449,10 +453,10 @@ class HSPAdvancedPerformanceOptimizer:
     def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息"""
         return {
-            'connection_pool': asdict(self.connection_pool.get_stats()),
-            'cache': self.intelligent_cache.get_stats(),
-            'routing': asdict(self.routing_stats),
-            'timestamp': datetime.now().isoformat()
+            "connection_pool": asdict(self.connection_pool.get_stats()),
+            "cache": self.intelligent_cache.get_stats(),
+            "routing": asdict(self.routing_stats),
+            "timestamp": datetime.now().isoformat(),
         }
 
     def add_node_to_load_balancer(self, node_id: str, node_info: Dict[str, Any]):
@@ -476,6 +480,7 @@ class HSPAdvancedPerformanceEnhancer:
 
     def enhance_publish(self, original_publish_func: Callable):
         """增强发布函数"""
+
         async def enhanced_publish(*args, **kwargs):
             # 记录开始时间
             start_time = time.time()
@@ -487,10 +492,12 @@ class HSPAdvancedPerformanceEnhancer:
                 else:
                     # 对于同步函数, 在线程池中执行
                     loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(self.optimizer.executor, original_publish_func, *args, **kwargs)
+                    result = await loop.run_in_executor(
+                        self.optimizer.executor, original_publish_func, *args, **kwargs
+                    )
                 success = True
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 
                 success = False
@@ -509,6 +516,7 @@ class HSPAdvancedPerformanceEnhancer:
 
     def enhance_receive(self, original_receive_func: Callable):
         """增强接收函数"""
+
         async def enhanced_receive(*args, **kwargs):
             # 记录开始时间
             start_time = time.time()
@@ -520,10 +528,12 @@ class HSPAdvancedPerformanceEnhancer:
                 else:
                     # 对于同步函数, 在线程池中执行
                     loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(self.optimizer.executor, original_receive_func, *args, **kwargs)
+                    result = await loop.run_in_executor(
+                        self.optimizer.executor, original_receive_func, *args, **kwargs
+                    )
                 success = True
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 
                 success = False
@@ -540,6 +550,7 @@ class HSPAdvancedPerformanceEnhancer:
 
         return enhanced_receive
 
+
 # 测试代码
 if __name__ == "__main__":
     # 配置日志
@@ -548,12 +559,12 @@ if __name__ == "__main__":
 
     # 创建高级性能优化器
     config = {
-        'max_connections': 5,
-        'connection_timeout': 60,
-        'cache_max_size': 100,
-        'cache_ttl': 600,
-        'load_balancing_strategy': 'round_robin',
-        'thread_pool_size': 2
+        "max_connections": 5,
+        "connection_timeout": 60,
+        "cache_max_size": 100,
+        "cache_ttl": 600,
+        "load_balancing_strategy": "round_robin",
+        "thread_pool_size": 2,
     }
 
     optimizer = HSPAdvancedPerformanceOptimizer(config)
@@ -571,22 +582,22 @@ if __name__ == "__main__":
             "message_type": "HSP.Fact_v0.1",
             "sender_ai_id": "did:hsp:ai_001",
             "recipient_ai_id": "did:hsp:ai_002",
-            "payload": {"content": "Test fact 1"}
+            "payload": {"content": "Test fact 1"},
         },
         {
             "message_id": "msg_002",
             "message_type": "HSP.Fact_v0.1",
             "sender_ai_id": "did:hsp:ai_001",
             "recipient_ai_id": "did:hsp:ai_002",
-            "payload": {"content": "Test fact 1"}  # 相同内容, 应该缓存命中
+            "payload": {"content": "Test fact 1"},  # 相同内容, 应该缓存命中
         },
         {
             "message_id": "msg_003",
             "message_type": "HSP.TaskRequest_v0.1",
             "sender_ai_id": "did:hsp:ai_002",
             "recipient_ai_id": "did:hsp:ai_003",
-            "payload": {"task": "process_data"}
-        }
+            "payload": {"task": "process_data"},
+        },
     ]
 
     # 测试路由
@@ -598,11 +609,9 @@ if __name__ == "__main__":
             logger.info(f"目标节点: {routing_result.get('target_node')}")
 
             # 模拟响应记录
-            if routing_result.get('target_node'):
+            if routing_result.get("target_node"):
                 optimizer.record_response_stats(
-                    routing_result['target_node'],
-                    response_time=10.5,
-                    success=True
+                    routing_result["target_node"], response_time=10.5, success=True
                 )
 
         # 显示性能统计

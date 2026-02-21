@@ -2,6 +2,7 @@ class MetaFormula:
     """
     Base class for all MetaFormulas.
     """
+
     def __init__(self, name: str, description: str):
         self.name = name
         self.description = description

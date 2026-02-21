@@ -2,13 +2,16 @@
 """
 Angela AI WebSocket 全面測試腳本
 """
+
 import asyncio
 import websockets
 import json
 import time
 from typing import Dict, List
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class WebSocketTester:
     def __init__(self, uri: str = "ws://127.0.0.1:8000/ws"):
@@ -28,20 +31,16 @@ class WebSocketTester:
             async with websockets.connect(self.uri, ping_interval=None) as websocket:
                 print(f"✅ PASS - WebSocket 連接成功")
                 self.passed_tests += 1
-                self.results.append({
-                    "test": "connection",
-                    "status": "pass",
-                    "message": "WebSocket 連接成功"
-                })
+                self.results.append(
+                    {"test": "connection", "status": "pass", "message": "WebSocket 連接成功"}
+                )
                 return True
         except Exception as e:
             print(f"❌ FAIL - WebSocket 連接失敗: {e}")
             self.failed_tests += 1
-            self.results.append({
-                "test": "connection",
-                "status": "fail",
-                "message": f"WebSocket 連接失敗: {str(e)}"
-            })
+            self.results.append(
+                {"test": "connection", "status": "fail", "message": f"WebSocket 連接失敗: {str(e)}"}
+            )
             return False
 
     async def test_message_send_receive(self) -> bool:
@@ -53,11 +52,7 @@ class WebSocketTester:
         try:
             async with websockets.connect(self.uri, ping_interval=None) as websocket:
                 # 發送測試消息
-                test_message = {
-                    "type": "test",
-                    "data": "hello websocket",
-                    "timestamp": time.time()
-                }
+                test_message = {"type": "test", "data": "hello websocket", "timestamp": time.time()}
                 await websocket.send(json.dumps(test_message))
                 print(f"發送消息: {test_message}")
 
@@ -67,29 +62,31 @@ class WebSocketTester:
 
                 print(f"✅ PASS - 消息發送和接收成功")
                 self.passed_tests += 1
-                self.results.append({
-                    "test": "message_send_receive",
-                    "status": "pass",
-                    "message": "消息發送和接收成功"
-                })
+                self.results.append(
+                    {
+                        "test": "message_send_receive",
+                        "status": "pass",
+                        "message": "消息發送和接收成功",
+                    }
+                )
                 return True
         except asyncio.TimeoutError:
             print(f"❌ FAIL - 消息接收超時")
             self.failed_tests += 1
-            self.results.append({
-                "test": "message_send_receive",
-                "status": "fail",
-                "message": "消息接收超時"
-            })
+            self.results.append(
+                {"test": "message_send_receive", "status": "fail", "message": "消息接收超時"}
+            )
             return False
         except Exception as e:
             print(f"❌ FAIL - 消息發送和接收失敗: {e}")
             self.failed_tests += 1
-            self.results.append({
-                "test": "message_send_receive",
-                "status": "fail",
-                "message": f"消息發送和接收失敗: {str(e)}"
-            })
+            self.results.append(
+                {
+                    "test": "message_send_receive",
+                    "status": "fail",
+                    "message": f"消息發送和接收失敗: {str(e)}",
+                }
+            )
             return False
 
     async def test_multiple_messages(self) -> bool:
@@ -105,7 +102,7 @@ class WebSocketTester:
                     {"type": "status", "query": "health"},
                     {"type": "chat", "message": "第二條消息"},
                     {"type": "action", "command": "test"},
-                    {"type": "chat", "message": "第三條消息"}
+                    {"type": "chat", "message": "第三條消息"},
                 ]
 
                 for i, msg in enumerate(messages, 1):
@@ -115,20 +112,24 @@ class WebSocketTester:
 
                 print(f"✅ PASS - 多條消息連續發送成功")
                 self.passed_tests += 1
-                self.results.append({
-                    "test": "multiple_messages",
-                    "status": "pass",
-                    "message": "多條消息連續發送成功"
-                })
+                self.results.append(
+                    {
+                        "test": "multiple_messages",
+                        "status": "pass",
+                        "message": "多條消息連續發送成功",
+                    }
+                )
                 return True
         except Exception as e:
             print(f"❌ FAIL - 多條消息連續發送失敗: {e}")
             self.failed_tests += 1
-            self.results.append({
-                "test": "multiple_messages",
-                "status": "fail",
-                "message": f"多條消息連續發送失敗: {str(e)}"
-            })
+            self.results.append(
+                {
+                    "test": "multiple_messages",
+                    "status": "fail",
+                    "message": f"多條消息連續發送失敗: {str(e)}",
+                }
+            )
             return False
 
     async def test_connection_stability(self) -> bool:
@@ -153,20 +154,24 @@ class WebSocketTester:
 
                 print(f"✅ PASS - 連接穩定，在 10 秒內收到 {messages_received} 條消息")
                 self.passed_tests += 1
-                self.results.append({
-                    "test": "connection_stability",
-                    "status": "pass",
-                    "message": f"連接穩定，在 10 秒內收到 {messages_received} 條消息"
-                })
+                self.results.append(
+                    {
+                        "test": "connection_stability",
+                        "status": "pass",
+                        "message": f"連接穩定，在 10 秒內收到 {messages_received} 條消息",
+                    }
+                )
                 return True
         except Exception as e:
             print(f"❌ FAIL - 連接穩定性測試失敗: {e}")
             self.failed_tests += 1
-            self.results.append({
-                "test": "connection_stability",
-                "status": "fail",
-                "message": f"連接穩定性測試失敗: {str(e)}"
-            })
+            self.results.append(
+                {
+                    "test": "connection_stability",
+                    "status": "fail",
+                    "message": f"連接穩定性測試失敗: {str(e)}",
+                }
+            )
             return False
 
     async def test_reconnection(self) -> bool:
@@ -191,20 +196,16 @@ class WebSocketTester:
 
             print(f"✅ PASS - 重連能力測試成功")
             self.passed_tests += 1
-            self.results.append({
-                "test": "reconnection",
-                "status": "pass",
-                "message": "重連能力測試成功"
-            })
+            self.results.append(
+                {"test": "reconnection", "status": "pass", "message": "重連能力測試成功"}
+            )
             return True
         except Exception as e:
             print(f"❌ FAIL - 重連能力測試失敗: {e}")
             self.failed_tests += 1
-            self.results.append({
-                "test": "reconnection",
-                "status": "fail",
-                "message": f"重連能力測試失敗: {str(e)}"
-            })
+            self.results.append(
+                {"test": "reconnection", "status": "fail", "message": f"重連能力測試失敗: {str(e)}"}
+            )
             return False
 
     async def run_all_tests(self):
@@ -241,19 +242,25 @@ class WebSocketTester:
             "total": self.total_tests,
             "passed": self.passed_tests,
             "failed": self.failed_tests,
-            "success_rate": self.passed_tests / self.total_tests * 100 if self.total_tests > 0 else 0,
-            "results": self.results
+            "success_rate": (
+                self.passed_tests / self.total_tests * 100 if self.total_tests > 0 else 0
+            ),
+            "results": self.results,
         }
+
 
 async def main():
     tester = WebSocketTester()
     results = await tester.run_all_tests()
 
     # 保存結果到 JSON 文件
-    with open("/home/cat/桌面/websocket_comprehensive_test_results.json", "w", encoding="utf-8") as f:
+    with open(
+        "/home/cat/桌面/websocket_comprehensive_test_results.json", "w", encoding="utf-8"
+    ) as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
     print(f"\n詳細結果已保存到: /home/cat/桌面/websocket_comprehensive_test_results.json")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

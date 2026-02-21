@@ -4,8 +4,8 @@ import unittest
 import os
 import json
 import sys
-import shutil # For cleaning up directories
-import pytest # Import pytest
+import shutil  # For cleaning up directories
+import pytest  # Import pytest
 import logging
 
 # 修复导入路径 - 从正确的路径导入模块
@@ -15,13 +15,18 @@ from tools.logic_model.logic_parser_eval import LogicParserEval
 from tools import logic_tool
 from tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
 from tools.tool_dispatcher import ToolDispatcher
-from tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+from tools.logic_model.logic_model_nn import (
+    LogicNNModel,
+    get_logic_char_token_maps,
+    preprocess_logic_data,
+)
 
 logger = logging.getLogger(__name__)
 
 # Define a consistent test output directory for this test suite
 TEST_DATA_GEN_OUTPUT_DIR = "tests/test_output_data/logic_model_data"
 TEST_MODEL_OUTPUT_DIR = "tests/test_output_data/logic_model_files"
+
 
 class TestLogicModelComponents(unittest.TestCase):
     @classmethod
@@ -47,14 +52,11 @@ class TestLogicModelComponents(unittest.TestCase):
     @pytest.mark.timeout(10)
     def test_01_logic_data_generator(self) -> None:
         logger.info("\nRunning test_01_logic_data_generator...")
-        dataset = logic_data_generator.generate_dataset(
-            num_samples=10,
-            max_nesting=1
-        )
+        dataset = logic_data_generator.generate_dataset(num_samples=10, max_nesting=1)
         # Now save the generated dataset to the test-specific path
         logic_data_generator.save_dataset(dataset, self.train_json_file)
         self.assertTrue(os.path.exists(self.train_json_file))
-        with open(self.train_json_file, 'r') as f:
+        with open(self.train_json_file, "r") as f:
             data = json.load(f)
             self.assertEqual(len(data), 10)
             self.assertTrue("proposition" in data[0])
@@ -71,10 +73,15 @@ class TestLogicModelComponents(unittest.TestCase):
         logger.info("\nRunning test_02_logic_parser_eval...")
         evaluator = LogicParserEval()
         test_cases = [
-            ("true AND false", False), ("NOT (true OR false)", False),
-            ("false OR (true AND true)", True), ("(true)", True),
-            ("NOT false", True), ("  true AND ( false OR true ) ", True),
-            ("true AND", None), ("(true OR false", None), ("true XOR false", None)
+            ("true AND false", False),
+            ("NOT (true OR false)", False),
+            ("false OR (true AND true)", True),
+            ("(true)", True),
+            ("NOT false", True),
+            ("  true AND ( false OR true ) ", True),
+            ("true AND", None),
+            ("(true OR false", None),
+            ("true XOR false", None),
         ]
         for expr, expected in test_cases:
             self.assertEqual(evaluator.evaluate(expr), expected, f"Failed for: {expr}")
@@ -87,14 +94,15 @@ class TestLogicModelComponents(unittest.TestCase):
 
         # Check if TensorFlow is available
         from ai.dependency_manager import dependency_manager
-        if not dependency_manager.is_available('tensorflow'):
+
+        if not dependency_manager.is_available("tensorflow"):
             logger.info("TensorFlow not available, skipping NN model tests")
             self.skipTest("TensorFlow not available")
             return
 
         # Create a dummy dataset file for char_map generation
         dummy_data = [{"proposition": "true AND false", "answer": False}]
-        with open(self.train_json_file, 'w') as f: # Use the class defined path
+        with open(self.train_json_file, "w") as f:  # Use the class defined path
             json.dump(dummy_data, f)
 
         # Override CHAR_MAP_SAVE_PATH for logic_model_nn functions for this test
@@ -115,9 +123,9 @@ class TestLogicModelComponents(unittest.TestCase):
         self.assertIn("r", char_to_token)
         self.assertIn("u", char_to_token)
         self.assertIn("e", char_to_token)
-        self.assertIn("a", char_to_token) # from 'false' and 'AND'
-        self.assertIn("N", char_to_token) # from 'AND' (corrected from 'n')
-        self.assertIn("D", char_to_token) # from 'AND' (corrected from 'd')
+        self.assertIn("a", char_to_token)  # from 'false' and 'AND'
+        self.assertIn("N", char_to_token)  # from 'AND' (corrected from 'n')
+        self.assertIn("D", char_to_token)  # from 'AND' (corrected from 'd')
         self.assertIn("f", char_to_token)
         self.assertIn("l", char_to_token)
         self.assertIn("s", char_to_token)
@@ -127,15 +135,17 @@ class TestLogicModelComponents(unittest.TestCase):
         X, y = preprocess_logic_data(self.train_json_file, char_to_token, max_len, num_classes=2)
         self.assertEqual(X.shape[0], len(dummy_data))
         self.assertEqual(y.shape[0], len(dummy_data))
-        self.assertEqual(y.shape[1], 2) # Categorical
+        self.assertEqual(y.shape[1], 2)  # Categorical
 
-        model_instance = LogicNNModel(max_seq_len=max_len, vocab_size=vocab_size, embedding_dim=8, lstm_units=16)
-        model_instance._build_model() # Explicitly build the model
+        model_instance = LogicNNModel(
+            max_seq_len=max_len, vocab_size=vocab_size, embedding_dim=8, lstm_units=16
+        )
+        model_instance._build_model()  # Explicitly build the model
         self.assertIsNotNone(model_instance.model)
 
         # Test predict path (on untrained model)
         pred_result = model_instance.predict("true OR false", char_to_token)
-        self.assertIsInstance(pred_result, bool) # Should return a bool, even if random
+        self.assertIsInstance(pred_result, bool)  # Should return a bool, even if random
         # Test save and load (structural, not functional correctness of loaded model)
         model_instance.save_model(self.model_file_nn)
         self.assertTrue(os.path.exists(self.model_file_nn))
@@ -144,7 +154,7 @@ class TestLogicModelComponents(unittest.TestCase):
         self.assertIsNotNone(loaded_model_instance)
         self.assertIsNotNone(loaded_model_instance.model)
 
-        logic_model_nn.CHAR_MAP_SAVE_PATH = original_char_map_path # Restore
+        logic_model_nn.CHAR_MAP_SAVE_PATH = original_char_map_path  # Restore
         logger.info("test_03_logic_model_nn_structure_and_helpers PASSED")
 
     @pytest.mark.timeout(10)
@@ -152,23 +162,27 @@ class TestLogicModelComponents(unittest.TestCase):
         logger.info("\nRunning test_04_logic_tool_interface...")
         # Parser method (should work)
         result_parser = evaluate_logic_via_tool("evaluate true AND (NOT false)")
-        self.assertEqual(result_parser, True) # "Result: True" string is not correct here, it returns bool
+        self.assertEqual(
+            result_parser, True
+        )  # "Result: True" string is not correct here, it returns bool
 
         # NN method (will likely fail if model not trained/available, or return error string)
         # Ensure CHAR_MAP_SAVE_PATH in logic_tool points to our test one for this test
         original_lt_char_map_path = logic_tool.CHAR_MAP_LOAD_PATH
-        logic_tool.CHAR_MAP_LOAD_PATH = self.char_map_file # From test_03
+        logic_tool.CHAR_MAP_LOAD_PATH = self.char_map_file  # From test_03
 
         # Ensure a dummy char_map exists for the NN path to not fail on file load
         if not os.path.exists(self.char_map_file):
-            char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(self.train_json_file) # uses self.train_json_file()
+            char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(
+                self.train_json_file
+            )  # uses self.train_json_file()
         result_nn = evaluate_logic_via_tool("evaluate true OR false using nn")
         # Expected: "Error: NN model not available..." OR a boolean if dummy model loads
         self.assertTrue(isinstance(result_nn, str) or isinstance(result_nn, bool))
         if isinstance(result_nn, str):
             self.assertIn("Error: NN model not available", result_nn)
 
-        logic_tool.CHAR_MAP_LOAD_PATH = original_lt_char_map_path # Restore
+        logic_tool.CHAR_MAP_LOAD_PATH = original_lt_char_map_path  # Restore
         logger.info("test_04_logic_tool_interface PASSED")
 
     @pytest.mark.timeout(10)
@@ -180,42 +194,51 @@ class TestLogicModelComponents(unittest.TestCase):
 
         # Test parser routing
         result_parser = await dispatcher.dispatch("evaluate true AND false")
-        self.assertEqual(result_parser['payload'], False)
+        self.assertEqual(result_parser["payload"], False)
 
         result_parser_implicit = await dispatcher.dispatch("NOT (true OR false)")
         self.assertIsNotNone(result_parser_implicit)
         # Assuming the dispatcher returns a ToolResponse object or similar
         # Adjust assertions based on the actual structure of dispatcher's return
-        self.assertEqual(result_parser_implicit['payload'], False)
+        self.assertEqual(result_parser_implicit["payload"], False)
 
         # Test NN routing (will also likely hit "NN model not available")
         # Ensure char_map file is available for _get_nn_model_evaluator in logic_tool
         original_lt_char_map_path = logic_tool.CHAR_MAP_LOAD_PATH
         logic_tool.CHAR_MAP_LOAD_PATH = self.char_map_file
-        if not os.path.exists(self.char_map_file): # If test_03 didn't run or cleaned up
-             char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(self.train_json_file)
+        if not os.path.exists(self.char_map_file):  # If test_03 didn't run or cleaned up
+            char_to_token, _, vocab_size, max_len = get_logic_char_token_maps(self.train_json_file)
 
         result_nn = await dispatcher.dispatch("evaluate true OR false using nn")
         # Based on current MultiLLMService mock, "evaluate true OR false using nn"
         # will result in NO_TOOL from DLM, so dispatcher returns None.
         # We expect a ToolResponse object with a failure status due to NN model not being available
         self.assertIsNotNone(result_nn)
-        self.assertEqual(result_nn['status'], "failure_tool_error")
-        self.assertIn("NN model not available", result_nn['error_message'])
+        self.assertEqual(result_nn["status"], "failure_tool_error")
+        self.assertIn("NN model not available", result_nn["error_message"])
 
-        logic_tool.CHAR_MAP_LOAD_PATH = original_lt_char_map_path # Restore
+        logic_tool.CHAR_MAP_LOAD_PATH = original_lt_char_map_path  # Restore
         logger.info("test_05_tool_dispatcher_logic_routing PASSED")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # This allows running tests with `python -m unittest path/to/test_logic_model.py`
     # or directly `python path/to/test_logic_model.py`
 
     # Need to modify logic_data_generator to accept output_dir and filenames for testing
     # Monkey patch generate_dataset for testing if needed, or ensure it handles flexible paths
-    def PatchedGenerateDataset(num_samples: int, max_nesting: int, output_dir_override: str, train_filename_override: str, test_filename_override: str) -> None:
+    def PatchedGenerateDataset(
+        num_samples: int,
+        max_nesting: int,
+        output_dir_override: str,
+        train_filename_override: str,
+        test_filename_override: str,
+    ) -> None:
         # This is a simplified patch for the test.
         # In real scenario, logic_data_generator.py should be importable and its functions callable with parameters.
-        logger.info(f"PatchedGenerateDataset called: num_samples={num_samples} output_dir={output_dir_override}")
+        logger.info(
+            f"PatchedGenerateDataset called: num_samples={num_samples} output_dir={output_dir_override}"
+        )
         train_path = os.path.join(output_dir_override, train_filename_override)
         # test_path = os.path.join(output_dir_override, test_filename_override) # Not used in test_01
 
@@ -227,7 +250,7 @@ if __name__ == '__main__':
                 dataset.append({"proposition": prop, "answer": bool(answer)})
 
         os.makedirs(output_dir_override, exist_ok=True)
-        with open(train_path, 'w') as f:
+        with open(train_path, "w") as f:
             json.dump(dataset, f)
         # with open(test_path, 'w') as f: # If test_logic_test.json is also needed by a test
         #     json.dump(dataset, f)

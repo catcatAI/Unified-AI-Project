@@ -11,6 +11,7 @@
 # =============================================================================
 
 """上下文管理器核心实现 - 修复版本"""
+
 # Angela Matrix: [L2:MEM] [L4:CTX] Context manager - fixed version
 
 import uuid
@@ -38,9 +39,7 @@ class ContextManager:
         # 上下文缓存, 用于快速访问
         self._context_cache: Dict[str, Any] = {}
 
-    def create_context(
-        self, context_type, initial_content: Optional[Dict[str, Any]] = None
-    ) -> str:
+    def create_context(self, context_type, initial_content: Optional[Dict[str, Any]] = None) -> str:
         """创建新的上下文"""
         try:
             # 生成唯一上下文ID
@@ -161,9 +160,7 @@ class ContextManager:
             logger.error(f"Failed to delete context {context_id}: {e}")
             return False
 
-    def search_contexts(
-        self, query: str, context_types: Optional[List[Any]] = None
-    ) -> List[Any]:
+    def search_contexts(self, query: str, context_types: Optional[List[Any]] = None) -> List[Any]:
         """搜索上下文"""
         try:
             results = []
@@ -234,10 +231,7 @@ class ContextManager:
                 # 简单的键值过滤
                 filtered_data = {}
                 for key, value in data_to_transfer.items():
-                    if (
-                        key in filter_criteria
-                        and data_to_transfer[key] == filter_criteria[key]
-                    ):
+                    if key in filter_criteria and data_to_transfer[key] == filter_criteria[key]:
                         filtered_data[key] = value
                     elif key not in filter_criteria:
                         filtered_data[key] = value
@@ -248,15 +242,11 @@ class ContextManager:
 
             # 保存目标上下文
             if not self.memory_storage.save_context(target_context):
-                logger.error(
-                    f"Failed to save target context {target_id} to memory storage"
-                )
+                logger.error(f"Failed to save target context {target_id} to memory storage")
                 return False
 
             if not self.disk_storage.save_context(target_context):
-                logger.error(
-                    f"Failed to save target context {target_id} to disk storage"
-                )
+                logger.error(f"Failed to save target context {target_id} to disk storage")
                 return False
 
             # 更新缓存
@@ -265,9 +255,7 @@ class ContextManager:
             logger.info(f"Transferred context from {source_id} to {target_id}")
             return True
         except Exception as e:
-            logger.error(
-                f"Failed to transfer context from {source_id} to {target_id}: {e}"
-            )
+            logger.error(f"Failed to transfer context from {source_id} to {target_id}: {e}")
             return False
 
     def get_context_summary(self, context_id: str) -> Dict[str, Any]:
@@ -280,14 +268,16 @@ class ContextManager:
 
             summary = {
                 "context_id": context.context_id,
-                "context_type": context.context_type.value
-                if hasattr(context.context_type, "value")
-                else context.context_type,
+                "context_type": (
+                    context.context_type.value
+                    if hasattr(context.context_type, "value")
+                    else context.context_type
+                ),
                 "created_at": context.created_at.isoformat(),
                 "updated_at": context.updated_at.isoformat(),
-                "status": context.status.value
-                if hasattr(context.status, "value")
-                else context.status,
+                "status": (
+                    context.status.value if hasattr(context.status, "value") else context.status
+                ),
                 "version": context.version,
                 "tags": context.tags,
                 "content_keys": list(context.content.keys()),

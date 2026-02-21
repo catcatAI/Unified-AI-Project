@@ -13,14 +13,16 @@ from typing import Any, Dict, Optional, TypeVar, Generic, Union
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class Environment(Enum):
     """运行环境"""
+
     DEVELOPMENT = "development"
     PRODUCTION = "production"
     TESTING = "testing"
@@ -28,6 +30,7 @@ class Environment(Enum):
 
 class PerformanceMode(Enum):
     """性能模式"""
+
     AUTO = "auto"
     LOW = "low"
     MEDIUM = "medium"
@@ -38,10 +41,11 @@ class PerformanceMode(Enum):
 @dataclass
 class BackendConfig:
     """后端配置"""
+
     host: str = "127.0.0.1"
     port: int = 8000
     url: str = "http://127.0.0.1:8000"
-    
+
     def get_base_url(self) -> str:
         return f"http://{self.host}:{self.port}"
 
@@ -49,10 +53,11 @@ class BackendConfig:
 @dataclass
 class SecurityConfig:
     """安全配置"""
+
     key_a: str = ""
     key_b: str = ""
     key_c: str = ""
-    
+
     def validate(self) -> bool:
         """验证密钥配置"""
         return all(len(key) >= 32 for key in [self.key_a, self.key_b, self.key_c])
@@ -61,10 +66,11 @@ class SecurityConfig:
 @dataclass
 class DatabaseConfig:
     """数据库配置"""
+
     url: str = "sqlite:///./angela.db"
     pool_size: int = 10
     max_overflow: int = 20
-    
+
     def get_engine_args(self) -> Dict[str, Any]:
         return {
             "pool_size": self.pool_size,
@@ -75,9 +81,10 @@ class DatabaseConfig:
 @dataclass
 class Live2DConfig:
     """Live2D 配置"""
+
     model_path: Optional[str] = None
     sdk_cdn: str = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
-    
+
     def get_model_path(self) -> Optional[Path]:
         if self.model_path:
             return Path(self.model_path).resolve()
@@ -87,10 +94,11 @@ class Live2DConfig:
 @dataclass
 class PerformanceConfig:
     """性能配置"""
+
     mode: PerformanceMode = PerformanceMode.AUTO
     target_fps: int = 60
     enable_hardware_acceleration: bool = True
-    
+
     def get_fps_settings(self) -> Dict[str, Any]:
         mode_settings = {
             PerformanceMode.LOW: {"target_fps": 30, "effects": "basic"},
@@ -104,11 +112,12 @@ class PerformanceConfig:
 @dataclass
 class LoggingConfig:
     """日志配置"""
+
     level: str = "info"
     file_path: str = "./logs/angela.log"
     max_size: str = "10MB"
     backup_count: int = 5
-    
+
     def get_log_level(self) -> int:
         levels = {"debug": 10, "info": 20, "warning": 30, "error": 40, "critical": 50}
         return levels.get(self.level.lower(), 20)
@@ -117,11 +126,12 @@ class LoggingConfig:
 @dataclass
 class FeatureFlags:
     """功能开关"""
+
     enable_voice_recognition: bool = True
     enable_tts: bool = True
     enable_websocket: bool = True
     enable_mobile_bridge: bool = True
-    
+
     @classmethod
     def from_env(cls) -> "FeatureFlags":
         return cls(
@@ -135,6 +145,7 @@ class FeatureFlags:
 @dataclass
 class Config:
     """主配置类"""
+
     environment: Environment = Environment.DEVELOPMENT
     backend: BackendConfig = field(default_factory=BackendConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
@@ -143,23 +154,23 @@ class Config:
     performance: PerformanceConfig = field(default_factory=PerformanceConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     features: FeatureFlags = field(default_factory=FeatureFlags)
-    
+
     # 调试和开发设置
     debug_mode: bool = True
     hot_reload: bool = True
     enable_cors: bool = True
-    
+
     # 测试配置
     test_mode: bool = False
     mock_external_apis: bool = False
-    
+
     @classmethod
     def load(cls, env_file: Optional[Path] = None) -> "Config":
         """加载配置"""
         # 加载 .env 文件
         if env_file:
             _load_env_file(env_file)
-        
+
         # 创建配置对象
         return cls(
             environment=Environment(_get_str("ANGELA_ENV", "development")),
@@ -180,7 +191,10 @@ class Config:
             ),
             live2d=Live2DConfig(
                 model_path=_get_str("LIVE2D_MODEL_PATH"),
-                sdk_cdn=_get_str("LIVE2D_SDK_CDN", "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"),
+                sdk_cdn=_get_str(
+                    "LIVE2D_SDK_CDN",
+                    "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+                ),
             ),
             performance=PerformanceConfig(
                 mode=PerformanceMode(_get_str("PERFORMANCE_MODE", "auto")),
@@ -200,29 +214,29 @@ class Config:
             test_mode=_get_bool("TEST_MODE", False),
             mock_external_apis=_get_bool("MOCK_EXTERNAL_APIS", False),
         )
-    
+
     def validate(self) -> tuple[bool, list[str]]:
         """验证配置"""
         errors = []
-        
+
         # 验证环境
         if self.environment == Environment.PRODUCTION and self.debug_mode:
             errors.append("生产环境不应启用调试模式")
-        
+
         # 验证安全配置
         if not self.security.validate():
             errors.append("安全密钥配置无效，密钥长度至少需要 32 字符")
-        
+
         # 验证数据库
         if not self.database.url:
             errors.append("数据库 URL 不能为空")
-        
+
         # 验证性能配置
         if self.performance.target_fps < 30 or self.performance.target_fps > 144:
             errors.append(f"目标帧率无效: {self.performance.target_fps}")
-        
+
         return (len(errors) == 0, errors)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
@@ -261,11 +275,11 @@ class Config:
 def _load_env_file(env_file: Path) -> None:
     """加载 .env 文件"""
     if env_file.exists():
-        with open(env_file, 'r', encoding='utf-8') as f:
+        with open(env_file, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
                     os.environ[key.strip()] = value.strip()
 
 
@@ -318,7 +332,7 @@ def init_config(env_file: Optional[Path] = None) -> None:
     """初始化配置"""
     global _config
     _config = Config.load(env_file)
-    
+
     # 验证配置
     valid, errors = _config.validate()
     if not valid:

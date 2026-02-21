@@ -25,6 +25,7 @@ from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessa
 
 logger = logging.getLogger(__name__)
 
+
 class AudioProcessingAgent(BaseAgent):
     """
     A specialized agent for audio processing tasks like speech-to-text.
@@ -38,15 +39,24 @@ class AudioProcessingAgent(BaseAgent):
                 "description": "Converts audio to text.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "audio_data", "type": "string", "required": True, "description": "Base64 audio"}
+                    {
+                        "name": "audio_data",
+                        "type": "string",
+                        "required": True,
+                        "description": "Base64 audio",
+                    }
                 ],
-                "returns": {"type": "string", "description": "Transcribed text."}
+                "returns": {"type": "string", "description": "Transcribed text."},
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities, agent_name="AudioProcessingAgent")
+        super().__init__(
+            agent_id=agent_id, capabilities=capabilities, agent_name="AudioProcessingAgent"
+        )
 
         # Register handlers
         self.register_task_handler(f"{agent_id}_speech_to_text_v1.0", self._handle_stt)
 
-    async def _handle_stt(self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope) -> str:
+    async def _handle_stt(
+        self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
+    ) -> str:
         return "This is a transcribed text placeholder."

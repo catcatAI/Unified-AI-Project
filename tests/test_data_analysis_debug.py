@@ -9,12 +9,11 @@ import os
 import uuid
 import pytest
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Add the src directory to the path
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 from unittest.mock import AsyncMock
 

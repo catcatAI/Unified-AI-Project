@@ -1,7 +1,10 @@
 import pytest
+
+
 class MockGmqttClient:
     def __init__(self) -> None:
         self.publish = AsyncMock()
+
 
 @pytest.mark.asyncio
 async def test_gmqtt_publish_mock() -> None:

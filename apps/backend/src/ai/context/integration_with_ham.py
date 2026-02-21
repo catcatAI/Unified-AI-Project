@@ -1,7 +1,9 @@
 """上下文系统与HAM内存管理系统的集成示例"""
+
 # Angela Matrix: [L2:MEM] [L4:CTX] HAM integration with context system
 
 import logging
+
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -60,7 +62,7 @@ class ContextHAMIntegration:
                 "content": context.content,
                 "metadata": context.metadata,
                 "created_at": context.created_at.isoformat(),
-                "updated_at": context.updated_at.isoformat()
+                "updated_at": context.updated_at.isoformat(),
             }
 
             # 存储到HAM系统
@@ -148,7 +150,7 @@ class ContextHAMIntegration:
                 "ham_memory_id": ham_memory_data.get("id"),
                 "ham_timestamp": ham_memory_data.get("timestamp"),
                 "sync_direction": "ham_to_context",
-                "sync_time": datetime.now().isoformat()
+                "sync_time": datetime.now().isoformat(),
             }
 
             # context_id = self.context_manager.create_context(
@@ -196,7 +198,7 @@ class ContextHAMIntegration:
                 "memory_id": memory_id,
                 "updates": updates,
                 "update_time": datetime.now().isoformat(),
-                "target_system": "ham"
+                "target_system": "ham",
             }
 
             # context_id = self.context_manager.create_context(
@@ -247,7 +249,7 @@ class ContextHAMIntegration:
                 "target_memory_id": "new_memory_id",  # Placeholder
                 "source_type": source_context.context_type.value,
                 "target_type": target_memory_type,
-                "transfer_time": datetime.now().isoformat()
+                "transfer_time": datetime.now().isoformat(),
             }
 
             # transfer_context_id = self.context_manager.create_context(
@@ -255,7 +257,9 @@ class ContextHAMIntegration:
             #     transfer_context
             # )
 
-            logger.info(f"Transferred context memory from {source_context_id} to new_memory_id with context")
+            logger.info(
+                f"Transferred context memory from {source_context_id} to new_memory_id with context"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to transfer context memory from {source_context_id}: {e}")

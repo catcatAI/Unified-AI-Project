@@ -7,6 +7,7 @@ from typing import List, Tuple, Dict, Optional, Any
 # Attempt to import sentence-transformers and faiss
 try:
     from src.compat.transformers_compat import import_sentence_transformers
+
     SentenceTransformer, SENTENCE_TRANSFORMERS_AVAILABLE = import_sentence_transformers()
 except ImportError as e:
     logging.error(f"Could not import transformers_compat: {e}")
@@ -15,6 +16,7 @@ except ImportError as e:
 
 try:
     import faiss
+
     FAISS_AVAILABLE = True
 except ImportError:
     logging.error("faiss module not found. Vector search will be unavailable.")
@@ -22,19 +24,20 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 class RAGManager:
     """
-    Manages Retrieval-Augmented Generation by handling vector embeddings and 
+    Manages Retrieval-Augmented Generation by handling vector embeddings and
     similarity search.
     """
 
-    def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         self.model = None
         self.embedding_dim = 0
         self.index = None
         self.documents: Dict[int, str] = {}
         self.next_doc_id = 0
-        
+
         if SENTENCE_TRANSFORMERS_AVAILABLE and SentenceTransformer:
             try:
                 self.model = SentenceTransformer(model_name)
@@ -88,5 +91,5 @@ class RAGManager:
         except Exception as e:
             logger.error(f"Error during RAG search: {e}")
             return []
-        
+
         return []

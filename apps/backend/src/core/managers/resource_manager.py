@@ -9,6 +9,7 @@ including connection pooling, cache management, and file handle management.
 
 import asyncio
 import logging
+
 # from tests.tools.test_tool_dispatcher_logging import
 # import weakref
 from typing import Dict, List, Optional, Any, Callable
@@ -37,7 +38,9 @@ class ResourceManager:
         # 为服务管理器注册通用的资源清理回调
         pass  # 在具体服务中注册
 
-    def register_service_resource(self, service_name: str, resource: Any, cleanup_func: Optional[Callable] = None):
+    def register_service_resource(
+        self, service_name: str, resource: Any, cleanup_func: Optional[Callable] = None
+    ):
         """注册服务资源"""
         if service_name not in self._resources:
             self._resources[service_name] = []
@@ -127,7 +130,7 @@ class ConnectionPool:
         async with self._lock:
             for conn in self._connections:
                 try:
-                    if hasattr(conn, 'close'):
+                    if hasattr(conn, "close"):
                         if asyncio.iscoroutinefunction(conn.close):
                             await conn.close()
                         else:
@@ -212,7 +215,7 @@ class CacheManager:
             return {
                 "size": len(self._cache),
                 "max_size": self.max_size,
-                "access_times": dict(self._access_times)
+                "access_times": dict(self._access_times),
             }
 
 
@@ -224,7 +227,7 @@ class FileManager:
         self._file_locks: Dict[str, asyncio.Lock] = {}
 
     @asynccontextmanager
-    async def open_file(self, filepath: str, mode: str = 'r'):
+    async def open_file(self, filepath: str, mode: str = "r"):
         """打开文件的上下文管理器"""
         if filepath not in self._file_locks:
             self._file_locks[filepath] = asyncio.Lock()
@@ -251,10 +254,10 @@ async def cleanup_llm_service_resources(service_instance: Any):
     logger.info("Cleaning up LLM service resources")
 
     # 清理连接池
-    if hasattr(service_instance, '_connection_pool'):
+    if hasattr(service_instance, "_connection_pool"):
         await service_instance._connection_pool.close_all_connections()
     # 清理缓存
-    if hasattr(service_instance, '_cache'):
+    if hasattr(service_instance, "_cache"):
         await service_instance._cache.clear()
     # 其他资源清理...
 
@@ -265,13 +268,13 @@ async def cleanup_hsp_connector_resources(service_instance: Any):
     logger.info("Cleaning up HSP connector resources")
 
     # 断开连接
-    if hasattr(service_instance, 'disconnect'):
+    if hasattr(service_instance, "disconnect"):
         if asyncio.iscoroutinefunction(service_instance.disconnect):
             await service_instance.disconnect()
         else:
             service_instance.disconnect()
     # 清理订阅
-    if hasattr(service_instance, '_subscriptions'):
+    if hasattr(service_instance, "_subscriptions"):
         service_instance._subscriptions.clear()
 
 

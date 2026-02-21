@@ -6,6 +6,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, List
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入TensorFlow
@@ -15,6 +16,7 @@ try:
     from tensorflow.keras.layers import LSTM, Dense, Dropout, Input, Embedding
     from tensorflow.keras.preprocessing.sequence import pad_sequences
     from tensorflow.keras.utils import to_categorical
+
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
@@ -23,6 +25,7 @@ except ImportError:
 @dataclass
 class LogicModelResult:
     """逻辑模型结果数据类"""
+
     input_proposition: str
     predicted_result: bool
     confidence: float
@@ -49,21 +52,19 @@ class LogicNNModel:
         if not TF_AVAILABLE:
             return
 
-        self.model = Sequential([
-            Embedding(self.vocab_size, 64, input_length=self.max_len),
-            LSTM(128, return_sequences=True),
-            Dropout(0.2),
-            LSTM(64),
-            Dropout(0.2),
-            Dense(32, activation='relu'),
-            Dense(1, activation='sigmoid')
-        ])
-
-        self.model.compile(
-            optimizer='adam',
-            loss='binary_crossentropy',
-            metrics=['accuracy']
+        self.model = Sequential(
+            [
+                Embedding(self.vocab_size, 64, input_length=self.max_len),
+                LSTM(128, return_sequences=True),
+                Dropout(0.2),
+                LSTM(64),
+                Dropout(0.2),
+                Dense(32, activation="relu"),
+                Dense(1, activation="sigmoid"),
+            ]
         )
+
+        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
     def train(self, x_train, y_train, epochs: int = 10):
         """训练模型"""
@@ -85,7 +86,7 @@ class LogicNNModel:
             predicted_result=predicted_result,
             confidence=0.8,
             processing_time=0.001,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         return result

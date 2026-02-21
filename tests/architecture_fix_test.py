@@ -16,6 +16,7 @@ import json
 from datetime import datetime
 from typing import Dict, Any, List
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 添加項目路徑
@@ -41,8 +42,9 @@ try:
     from core.autonomous.biological_integrator import (
         BiologicalIntegrator,
         BiologicalEvent,
-        BiologicalEventPublisher
+        BiologicalEventPublisher,
     )
+
     print("✅ 成功導入 BiologicalIntegrator")
 
     # 導入代理管理器
@@ -50,12 +52,14 @@ try:
         AgentManager,
         AgentResult,
         StateImpact,
-        DefaultAgentResultEvaluator
+        DefaultAgentResultEvaluator,
     )
+
     print("✅ 成功導入 AgentManager")
 
     # 導入記憶管理器
     from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
     print("✅ 成功導入 HAMMemoryManager")
 
 except ImportError as e:
@@ -76,7 +80,7 @@ class ArchitectureFixTest:
             "test_name": test_name,
             "status": status,  # "pass", "fail", "skip"
             "message": message,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
         status_icon = "✅" if status == "pass" else "❌" if status == "fail" else "⚠️"
@@ -92,7 +96,7 @@ class ArchitectureFixTest:
         # 檢查前端文件是否包含必要的功能
         frontend_files = [
             "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/backend-websocket.js",
-            "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/state-matrix.js"
+            "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/state-matrix.js",
         ]
 
         for file_path in frontend_files:
@@ -100,7 +104,7 @@ class ArchitectureFixTest:
                 self.log_test("P0-1 文件檢查", "fail", f"文件不存在: {file_path}")
                 return
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 檢查關鍵功能
@@ -131,13 +135,12 @@ class ArchitectureFixTest:
                 BiologicalEvent.STRESS_CHANGED,
                 BiologicalEvent.ENERGY_CHANGED,
                 BiologicalEvent.MOOD_CHANGED,
-                BiologicalEvent.AROUSAL_CHANGED
+                BiologicalEvent.AROUSAL_CHANGED,
             ]
             self.log_test("P0-2 生物事件定義", "pass", f"定義了 {len(events)} 種生物事件")
         except Exception as e:
-            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
+            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
             self.log_test("P0-2 生物事件定義", "fail", str(e))
-
 
         # 測試生物事件發布器
         try:
@@ -145,6 +148,7 @@ class ArchitectureFixTest:
 
             # 測試訂閱和發布
             event_received = []
+
             async def callback(event, data):
                 event_received.append((event, data))
 
@@ -156,14 +160,13 @@ class ArchitectureFixTest:
             else:
                 self.log_test("P0-2 事件發布器", "fail", "事件發布器無法發布事件")
         except Exception as e:
-            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
+            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
             self.log_test("P0-2 事件發布器", "fail", str(e))
-
 
         # 檢查前端生物事件監聽
         frontend_file = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/app.js"
         if os.path.exists(frontend_file):
-            with open(frontend_file, 'r', encoding='utf-8') as f:
+            with open(frontend_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "biological_event" in content:
@@ -188,12 +191,12 @@ class ArchitectureFixTest:
                 agent_id="test_agent",
                 success=True,
                 result_data={"output": "test"},
-                execution_time=1.0
+                execution_time=1.0,
             )
 
             impact = await evaluator.evaluate(success_result)
 
-            if impact.gamma.get('creativity', 0) > 0:
+            if impact.gamma.get("creativity", 0) > 0:
                 self.log_test("P0-3 成功結果評估", "pass", "成功結果正確評估創造力影響")
             else:
                 self.log_test("P0-3 成功結果評估", "fail", "成功結果未評估創造力影響")
@@ -205,25 +208,26 @@ class ArchitectureFixTest:
                 success=False,
                 result_data=None,
                 execution_time=1.0,
-                error="Test error"
+                error="Test error",
             )
 
             impact = await evaluator.evaluate(failure_result)
 
-            if impact.alpha.get('tension', 0) > 0:
+            if impact.alpha.get("tension", 0) > 0:
                 self.log_test("P0-3 失敗結果評估", "pass", "失敗結果正確評估緊張影響")
             else:
                 self.log_test("P0-3 失敗結果評估", "fail", "失敗結果未評估緊張影響")
 
         except Exception as e:
-            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
+            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
             self.log_test("P0-3 代理結果評估器", "fail", str(e))
 
-
         # 檢查 AgentManager 是否集成了評估器
-        agent_manager_file = "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/agents/agent_manager.py"
+        agent_manager_file = (
+            "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/agents/agent_manager.py"
+        )
         if os.path.exists(agent_manager_file):
-            with open(agent_manager_file, 'r', encoding='utf-8') as f:
+            with open(agent_manager_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "execute_agent" in content:
@@ -244,14 +248,16 @@ class ArchitectureFixTest:
             temp_dir = "/tmp/test_ham"
             os.makedirs(temp_dir, exist_ok=True)
 
-            ham_manager = HAMMemoryManager(storage_dir=temp_dir, core_storage_filename="test_ham.json")
+            ham_manager = HAMMemoryManager(
+                storage_dir=temp_dir, core_storage_filename="test_ham.json"
+            )
 
             # 存儲情感記憶
             memory_id = await ham_manager.store_emotional_memory(
                 content="這是一個測試情感記憶",
                 emotion="happy",
                 intensity=0.8,
-                context={"reason": "test"}
+                context={"reason": "test"},
             )
 
             if memory_id:
@@ -261,9 +267,7 @@ class ArchitectureFixTest:
 
             # 檢索情感記憶
             memories = await ham_manager.retrieve_emotional_memories(
-                emotion="happy",
-                min_intensity=0.5,
-                limit=5
+                emotion="happy", min_intensity=0.5, limit=5
             )
 
             if len(memories) > 0:
@@ -272,14 +276,15 @@ class ArchitectureFixTest:
                 self.log_test("P0-4 情感記憶檢索", "fail", "情感記憶檢索失敗")
 
         except Exception as e:
-            logger.error(f'Error in architecture_fix_test.py: {e}', exc_info=True)
+            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
             self.log_test("P0-4 情感記憶功能", "fail", str(e))
 
-
         # 檢查決策循環是否集成了情感記憶
-        llm_file = "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/lifecycle/llm_decision_loop.py"
+        llm_file = (
+            "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/lifecycle/llm_decision_loop.py"
+        )
         if os.path.exists(llm_file):
-            with open(llm_file, 'r', encoding='utf-8') as f:
+            with open(llm_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "retrieve_emotional_memories" in content:
@@ -306,12 +311,14 @@ class ArchitectureFixTest:
                 "passed": pass_count,
                 "failed": fail_count,
                 "skipped": skip_count,
-                "success_rate": f"{(pass_count / total_count * 100):.1f}%" if total_count > 0 else "0%",
+                "success_rate": (
+                    f"{(pass_count / total_count * 100):.1f}%" if total_count > 0 else "0%"
+                ),
                 "duration_seconds": duration,
                 "start_time": self.test_start_time.isoformat(),
-                "end_time": test_end_time.isoformat()
+                "end_time": test_end_time.isoformat(),
             },
-            "results": self.test_results
+            "results": self.test_results,
         }
 
         return report
@@ -345,7 +352,7 @@ class ArchitectureFixTest:
 
         # 保存報告
         report_file = "/home/cat/桌面/architecture_fix_test_report.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"\n測試報告已保存到: {report_file}")
@@ -359,7 +366,7 @@ async def main():
     report = await tester.run_all_tests()
 
     # 返回退出代碼
-    if report['summary']['failed'] > 0:
+    if report["summary"]["failed"] > 0:
         sys.exit(1)
     else:
         sys.exit(0)

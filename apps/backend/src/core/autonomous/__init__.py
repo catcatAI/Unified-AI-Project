@@ -13,14 +13,20 @@ Date: 2026-02-02
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Biological Simulation Systems
 try:
     from .physiological_tactile import (
-        PhysiologicalTactileSystem, Receptor, BodyPart,
-        TrajectoryAnalyzer, TrajectoryPoint, TrajectoryAnalysis,
-        AdaptationMechanism, ReceptorAdaptationState
+        PhysiologicalTactileSystem,
+        Receptor,
+        BodyPart,
+        TrajectoryAnalyzer,
+        TrajectoryPoint,
+        TrajectoryAnalysis,
+        AdaptationMechanism,
+        ReceptorAdaptationState,
     )
 except ImportError as e:
     logger.warning(f"Failed to import physiological_tactile: {e}")
@@ -35,9 +41,13 @@ except ImportError as e:
 
 try:
     from .endocrine_system import (
-        EndocrineSystem, Hormone, HormoneType,
-        HormoneKinetics, ReceptorStatus,
-        FeedbackLoop, FeedbackNode
+        EndocrineSystem,
+        Hormone,
+        HormoneType,
+        HormoneKinetics,
+        ReceptorStatus,
+        FeedbackLoop,
+        FeedbackNode,
     )
 except ImportError as e:
     logger.warning(f"Failed to import endocrine_system: {e}")
@@ -59,11 +69,17 @@ except ImportError as e:
 
 try:
     from .neuroplasticity import (
-        NeuroplasticitySystem, MemoryTrace, HebbianRule,
-        SkillAcquisition, SkillTrace,
-        HabitFormation, HabitTrace,
-        TraumaMemorySystem, TraumaMemory,
-        ExplicitImplicitLearning, LearningEvent
+        NeuroplasticitySystem,
+        MemoryTrace,
+        HebbianRule,
+        SkillAcquisition,
+        SkillTrace,
+        HabitFormation,
+        HabitTrace,
+        TraumaMemorySystem,
+        TraumaMemory,
+        ExplicitImplicitLearning,
+        LearningEvent,
     )
 except ImportError as e:
     logger.warning(f"Failed to import neuroplasticity: {e}")
@@ -81,8 +97,11 @@ except ImportError as e:
 
 try:
     from .emotional_blending import (
-        EmotionalBlendingSystem, PADEmotion, EmotionalExpression,
-        MultidimensionalStateMatrix, StateDimension
+        EmotionalBlendingSystem,
+        PADEmotion,
+        EmotionalExpression,
+        MultidimensionalStateMatrix,
+        StateDimension,
     )
 except ImportError as e:
     logger.warning(f"Failed to import emotional_blending: {e}")
@@ -102,8 +121,13 @@ except ImportError as e:
 # Execution Systems
 try:
     from .action_executor import (
-        ActionExecutor, ActionQueue, ActionPriority,
-        Action, ActionResult, ActionStatus, ActionCategory
+        ActionExecutor,
+        ActionQueue,
+        ActionPriority,
+        Action,
+        ActionResult,
+        ActionStatus,
+        ActionCategory,
     )
 except ImportError as e:
     logger.warning(f"Failed to import action_executor: {e}")
@@ -208,9 +232,15 @@ except ImportError as e:
 # Art Learning and Live2D Generation Systems
 try:
     from .art_learning_system import (
-        ArtLearningSystem, ArtKnowledge, ArtDomain,
-        TutorialContent, ImageAnalysis, LearningSession,
-        BodyPartMapping, Live2DParameter, LearningType
+        ArtLearningSystem,
+        ArtKnowledge,
+        ArtDomain,
+        TutorialContent,
+        ImageAnalysis,
+        LearningSession,
+        BodyPartMapping,
+        Live2DParameter,
+        LearningType,
     )
 except ImportError as e:
     logger.warning(f"Failed to import art_learning_system: {e}")
@@ -226,8 +256,12 @@ except ImportError as e:
 
 try:
     from .live2d_avatar_generator import (
-        Live2DAvatarGenerator, GeneratedAvatar, Live2DModelConfig,
-        GenerationStage, ViewAngle, BodyLayer
+        Live2DAvatarGenerator,
+        GeneratedAvatar,
+        Live2DModelConfig,
+        GenerationStage,
+        ViewAngle,
+        BodyLayer,
     )
 except ImportError as e:
     logger.warning(f"Failed to import live2d_avatar_generator: {e}")
@@ -240,9 +274,13 @@ except ImportError as e:
 
 try:
     from .art_learning_workflow import (
-        ArtLearningWorkflow, WorkflowStage, LearningObjective,
-        WorkflowProgress, SkillAssessment, GenerationResult,
-        WorkflowConfig
+        ArtLearningWorkflow,
+        WorkflowStage,
+        LearningObjective,
+        WorkflowProgress,
+        SkillAssessment,
+        GenerationResult,
+        WorkflowConfig,
     )
 except ImportError as e:
     logger.warning(f"Failed to import art_learning_workflow: {e}")
@@ -271,7 +309,6 @@ __all__ = [
     # Version info
     "__version__",
     "__author__",
-    
     # Biological Systems
     "PhysiologicalTactileSystem",
     "EndocrineSystem",
@@ -298,7 +335,6 @@ __all__ = [
     "StateDimension",
     "StateMatrix4D",
     "DimensionState",
-    
     # Execution Systems
     "ActionExecutor",
     "ActionQueue",
@@ -321,7 +357,6 @@ __all__ = [
     "Live2DIntegration",
     "Live2DExpression",
     "Live2DAction",
-    
     # Integration Systems
     "BiologicalIntegrator",
     "SystemInteraction",
@@ -338,13 +373,11 @@ __all__ = [
     "IdentityGrowth",
     "SelfGeneration",
     "AvatarBuilder",
-    
     # Autonomous Life Cycle (Theoretical Frameworks)
     "AutonomousLifeCycle",
     "LifePhase",
     "LifeDecision",
     "FormulaMetrics",
-    
     # Art Learning and Live2D Generation
     "ArtLearningSystem",
     "ArtKnowledge",
@@ -374,10 +407,10 @@ __all__ = [
 def get_system_info() -> dict:
     """
     Get comprehensive information about the autonomous system package.
-    
+
     Returns:
         dict: Package information including version, modules, and capabilities
-    
+
     Example:
         >>> info = get_system_info()
         >>> print(info['version'])
@@ -393,7 +426,7 @@ def get_system_info() -> dict:
                 "autonomic_nervous_system",
                 "neuroplasticity",
                 "emotional_blending",
-                "state_matrix"
+                "state_matrix",
             ],
             "execution": [
                 "action_executor",
@@ -401,7 +434,7 @@ def get_system_info() -> dict:
                 "browser_controller",
                 "audio_system",
                 "desktop_presence",
-                "live2d_integration"
+                "live2d_integration",
             ],
             "integration": [
                 "biological_integrator",
@@ -411,13 +444,13 @@ def get_system_info() -> dict:
                 "multidimensional_trigger",
                 "cyber_identity",
                 "self_generation",
-                "autonomous_life_cycle"
+                "autonomous_life_cycle",
             ],
             "art_learning": [
                 "art_learning_system",
                 "live2d_avatar_generator",
-                "art_learning_workflow"
-            ]
+                "art_learning_workflow",
+            ],
         },
         "capabilities": [
             "biological_simulation",
@@ -457,21 +490,21 @@ def get_system_info() -> dict:
             "body_part_rigging",
             "physiological_live2d_bridge",
             "skill_acquisition_power_law",
-            "implicit_style_learning"
-        ]
+            "implicit_style_learning",
+        ],
     }
 
 
 async def initialize_all_systems() -> dict:
     """
     Initialize all autonomous systems for Angela AI.
-    
+
     This is a convenience function to initialize all systems at once.
     In production, systems should be initialized selectively based on requirements.
-    
+
     Returns:
         dict: Dictionary containing all initialized system instances
-        
+
     Example:
         >>> systems = await initialize_all_systems()
         >>> tactile_system = systems['physiological_tactile']
@@ -496,68 +529,66 @@ async def initialize_all_systems() -> dict:
     from .cyber_identity import CyberIdentity
     from .self_generation import SelfGeneration
     from .autonomous_life_cycle import AutonomousLifeCycle
-    
+
     # Art Learning Systems
     from .art_learning_system import ArtLearningSystem
     from .live2d_avatar_generator import Live2DAvatarGenerator
     from .art_learning_workflow import ArtLearningWorkflow
-    
+
     # Initialize all systems
     systems = {
-        'physiological_tactile': PhysiologicalTactileSystem(),
-        'endocrine_system': EndocrineSystem(),
-        'autonomic_nervous_system': AutonomicNervousSystem(),
-        'neuroplasticity': NeuroplasticitySystem(),
-        'emotional_blending': EmotionalBlendingSystem(),
-        'action_executor': ActionExecutor(),
-        'desktop_interaction': DesktopInteraction(),
-        'browser_controller': BrowserController(),
-        'audio_system': AudioSystem(),
-        'desktop_presence': DesktopPresence(),
-        'live2d_integration': Live2DIntegration(),
-        'biological_integrator': BiologicalIntegrator(),
-        'digital_life_integrator': DigitalLifeIntegrator(),
-        'memory_neuroplasticity_bridge': MemoryNeuroplasticityBridge(),
-        'extended_behavior_library': ExtendedBehaviorLibrary(),
-        'multidimensional_trigger': MultidimensionalTriggerSystem(),
-        'cyber_identity': CyberIdentity(),
-        'self_generation': SelfGeneration(),
-        'autonomous_life_cycle': AutonomousLifeCycle(),
+        "physiological_tactile": PhysiologicalTactileSystem(),
+        "endocrine_system": EndocrineSystem(),
+        "autonomic_nervous_system": AutonomicNervousSystem(),
+        "neuroplasticity": NeuroplasticitySystem(),
+        "emotional_blending": EmotionalBlendingSystem(),
+        "action_executor": ActionExecutor(),
+        "desktop_interaction": DesktopInteraction(),
+        "browser_controller": BrowserController(),
+        "audio_system": AudioSystem(),
+        "desktop_presence": DesktopPresence(),
+        "live2d_integration": Live2DIntegration(),
+        "biological_integrator": BiologicalIntegrator(),
+        "digital_life_integrator": DigitalLifeIntegrator(),
+        "memory_neuroplasticity_bridge": MemoryNeuroplasticityBridge(),
+        "extended_behavior_library": ExtendedBehaviorLibrary(),
+        "multidimensional_trigger": MultidimensionalTriggerSystem(),
+        "cyber_identity": CyberIdentity(),
+        "self_generation": SelfGeneration(),
+        "autonomous_life_cycle": AutonomousLifeCycle(),
     }
-    
+
     # Art Learning Systems (initialized with dependencies)
-    browser = systems.get('browser_controller')
+    browser = systems.get("browser_controller")
     vision = None  # Would be provided externally
-    neuroplasticity = systems.get('neuroplasticity')
-    live2d = systems.get('live2d_integration')
-    tactile = systems.get('physiological_tactile')
-    identity = systems.get('cyber_identity')
-    
+    neuroplasticity = systems.get("neuroplasticity")
+    live2d = systems.get("live2d_integration")
+    tactile = systems.get("physiological_tactile")
+    identity = systems.get("cyber_identity")
+
     if browser:
-        systems['art_learning'] = ArtLearningSystem(
-            browser_controller=browser,
-            vision_service=vision,
-            neuroplasticity=neuroplasticity
+        systems["art_learning"] = ArtLearningSystem(
+            browser_controller=browser, vision_service=vision, neuroplasticity=neuroplasticity
         )
-        
+
         # Create Live2D avatar generator (requires image generator, would be provided externally)
-        systems['live2d_generator'] = Live2DAvatarGenerator(
+        systems["live2d_generator"] = Live2DAvatarGenerator(
             image_generator=None,  # Would be set externally
-            art_learning_system=systems['art_learning']
+            art_learning_system=systems["art_learning"],
         )
-        
+
         # Create learning workflow
-        systems['art_learning_workflow'] = ArtLearningWorkflow(
-            art_learning_system=systems['art_learning'],
-            avatar_generator=systems['live2d_generator'],
+        systems["art_learning_workflow"] = ArtLearningWorkflow(
+            art_learning_system=systems["art_learning"],
+            avatar_generator=systems["live2d_generator"],
             live2d_integration=live2d,
             physiological_tactile=tactile,
-            cyber_identity=identity
+            cyber_identity=identity,
         )
-    
+
     # Initialize each system
     for name, system in systems.items():
-        if hasattr(system, 'initialize'):
+        if hasattr(system, "initialize"):
             await system.initialize()
-    
+
     return systems

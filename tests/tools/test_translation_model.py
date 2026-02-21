@@ -10,12 +10,14 @@ from tools.translation_tool import (
     translate,
     _detect_language,
     _load_dictionary,
-    request_model_upgrade)
+    request_model_upgrade,
+)
 from tools.tool_dispatcher import ToolDispatcher
 
 # Define a consistent test output directory for this test suite
 TEST_DATA_DIR = "tests/test_output_data/translation_model_data"
 DUMMY_DICTIONARY_PATH = os.path.join(TEST_DATA_DIR, "test_translation_dictionary.json")
+
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_and_teardown_class():
@@ -24,49 +26,53 @@ def setup_and_teardown_class():
 
     dummy_dict_content = {
         "zh_to_en": {"你好": "Hello", "世界": "World", "猫": "Cat"},
-        "en_to_zh": {"Hello": "你好", "World": "世界", "Dog": "狗"}
+        "en_to_zh": {"Hello": "你好", "World": "世界", "Dog": "狗"},
     }
-    with open(DUMMY_DICTIONARY_PATH, 'w', encoding='utf-8') as f:
+    with open(DUMMY_DICTIONARY_PATH, "w", encoding="utf-8") as f:
         json.dump(dummy_dict_content, f, indent=2)
 
     # Store original path and override for testing
     original_dictionary_path = translation_tool.DICTIONARY_PATH
     translation_tool.DICTIONARY_PATH = DUMMY_DICTIONARY_PATH
-    translation_tool._translation_dictionary = None # Force reload with dummy
+    translation_tool._translation_dictionary = None  # Force reload with dummy
 
-    yield # Run tests
+    yield  # Run tests
 
     # Teardown
-    translation_tool.DICTIONARY_PATH = original_dictionary_path # Restore
-    translation_tool._translation_dictionary = None # Clear loaded dict
+    translation_tool.DICTIONARY_PATH = original_dictionary_path  # Restore
+    translation_tool._translation_dictionary = None  # Clear loaded dict
     if os.path.exists(TEST_DATA_DIR):
         shutil.rmtree(TEST_DATA_DIR)
+
 
 @pytest.fixture(autouse=True)
 def setup_each_test():
     """Ensure dictionary is reloaded for each test with the dummy one."""
     translation_tool._translation_dictionary = None
-    _load_dictionary() # This will now load DUMMY_DICTIONARY_PATH
+    _load_dictionary()  # This will now load DUMMY_DICTIONARY_PATH
+
 
 @pytest.mark.timeout(5)
 def test_01_load_dictionary():
     print("\nRunning test_01_load_dictionary...")
-    dictionary = _load_dictionary() # Should use the dummy dictionary
+    dictionary = _load_dictionary()  # Should use the dummy dictionary
     assert dictionary is not None
     assert "zh_to_en" in dictionary
     assert "你好" in dictionary["zh_to_en"]
     assert dictionary["zh_to_en"]["你好"] == "Hello"
     print("test_01_load_dictionary PASSED")
 
+
 @pytest.mark.timeout(5)
 def test_02_detect_language():
     print("\nRunning test_02_detect_language...")
     assert _detect_language("你好世界") == "zh"
     assert _detect_language("Hello World") == "en"
-    assert _detect_language("你好 World") == "zh" # Contains Chinese chars
-    assert _detect_language("123 !@#") is None # No clear language
+    assert _detect_language("你好 World") == "zh"  # Contains Chinese chars
+    assert _detect_language("123 !@#") is None  # No clear language
     assert _detect_language("") is None
     print("test_02_detect_language PASSED")
+
 
 @pytest.mark.timeout(5)
 def test_03_translate_function():
@@ -91,6 +97,7 @@ def test_03_translate_function():
     assert translate("你好", "zh") == "你好"
     print("test_03_translate_function PASSED")
 
+
 @pytest.mark.timeout(5)
 def test_04_request_model_upgrade_hook():
     print("\nRunning test_04_request_model_upgrade_hook...")
@@ -102,6 +109,7 @@ def test_04_request_model_upgrade_hook():
     except Exception as e:
         pytest.fail(f"request_model_upgrade raised an exception: {e}")
 
+
 @pytest.mark.asyncio
 @pytest.mark.timeout(5)
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
@@ -112,16 +120,32 @@ async def test_05_tool_dispatcher_translation_routing():
     # Mock the DLM's intent recognition for these tests
     def mock_recognize_intent(query, **kwargs):
         if "你好" in query and "English" in query:
-            return {"tool_name": "translate_text", "parameters": {"text_to_translate": "你好", "target_language": "English"}}
+            return {
+                "tool_name": "translate_text",
+                "parameters": {"text_to_translate": "你好", "target_language": "English"},
+            }
         if "Hello" in query and "Chinese" in query:
-            return {"tool_name": "translate_text", "parameters": {"text_to_translate": "Hello", "target_language": "Chinese"}}
+            return {
+                "tool_name": "translate_text",
+                "parameters": {"text_to_translate": "Hello", "target_language": "Chinese"},
+            }
         if "'Dog' in Chinese" in query:
-            return {"tool_name": "translate_text", "parameters": {"text_to_translate": "Dog", "target_language": "Chinese"}}
+            return {
+                "tool_name": "translate_text",
+                "parameters": {"text_to_translate": "Dog", "target_language": "Chinese"},
+            }
         if "未知词" in query:
-            return {"tool_name": "translate_text", "parameters": {"text_to_translate": "未知词", "target_language": "English"}}
+            return {
+                "tool_name": "translate_text",
+                "parameters": {"text_to_translate": "未知词", "target_language": "English"},
+            }
         if "Spanish" in query:
-            return {"tool_name": "translate_text", "parameters": {"text_to_translate": "你好", "target_language": "Spanish"}}
+            return {
+                "tool_name": "translate_text",
+                "parameters": {"text_to_translate": "你好", "target_language": "Spanish"},
+            }
         return {"tool_name": "NO_TOOL", "parameters": {}}
+
     dispatcher.dlm = MagicMock()
     dispatcher.dlm.recognize_intent = mock_recognize_intent
 
@@ -133,33 +157,38 @@ async def test_05_tool_dispatcher_translation_routing():
     response3 = await dispatcher.dispatch("'Dog' in Chinese")
     assert response3.payload == "狗"
     response4 = await dispatcher.dispatch("translate '未知词' to English")
-    assert response4.status == 'failure_tool_error'
+    assert response4.status == "failure_tool_error"
     assert "not available" in response4.error_message
     response5 = await dispatcher.dispatch("translate '你好' to Spanish")
-    assert response5.status == 'failure_tool_error'
+    assert response5.status == "failure_tool_error"
     assert "not supported" in response5.error_message
 
     # Test explicit call (bypassing DLM)
-    response_explicit = await dispatcher.dispatch("猫", explicit_tool_name="translate_text", target_language="en")
+    response_explicit = await dispatcher.dispatch(
+        "猫", explicit_tool_name="translate_text", target_language="en"
+    )
     assert response_explicit.payload == "Cat"
 
     print("test_05_tool_dispatcher_translation_routing PASSED")
+
 
 @pytest.mark.timeout(5)
 def test_06_dictionary_load_failure():
     print("\nRunning test_06_dictionary_load_failure...")
     original_path = translation_tool.DICTIONARY_PATH
     translation_tool.DICTIONARY_PATH = "non_existent_dictionary.json"
-    translation_tool._translation_dictionary = None # Force reload
+    translation_tool._translation_dictionary = None  # Force reload
 
     dictionary = _load_dictionary()
-    assert dictionary is not None # Should return empty dicts on failure
+    assert dictionary is not None  # Should return empty dicts on failure
     assert dictionary["zh_to_en"] == {}
     assert dictionary["en_to_zh"] == {}
 
     # Test translate function with empty dictionary
     assert "not available" in translate("你好", "en")
 
-    translation_tool.DICTIONARY_PATH = original_path # Restore
-    translation_tool._translation_dictionary = None # Force reload of original for other tests if any
+    translation_tool.DICTIONARY_PATH = original_path  # Restore
+    translation_tool._translation_dictionary = (
+        None  # Force reload of original for other tests if any
+    )
     print("test_06_dictionary_load_failure PASSED")

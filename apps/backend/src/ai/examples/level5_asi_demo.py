@@ -13,6 +13,7 @@ import asyncio
 import logging
 import json
 import sys
+
 # from tests.tools.test_tool_dispatcher_logging import  # Fixed: commented out incomplete import
 # from tests.test_json_fix import  # Fixed: commented out incomplete import
 from datetime import datetime
@@ -21,14 +22,15 @@ from datetime import datetime
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 # Placeholder for Level5ASISystem class (since original import is incomplete)
 class Level5ASISystem:
     """Placeholder for Level5ASISystem"""
+
     def __init__(self, name: str):
         self.name = name
         self.autonomous_alignment = None
@@ -49,20 +51,14 @@ class Level5ASISystem:
     async def get_system_status(self):
         return {
             "status": "operational",
-            "performance_metrics": {
-                "cpu_usage": 23.5,
-                "memory_usage": 45.7
-            }
+            "performance_metrics": {"cpu_usage": 23.5, "memory_usage": 45.7},
         }
 
     async def run_comprehensive_test(self):
         return {"status": "passed", "tests": 9, "passed": 9}
 
     async def process_request(self, request):
-        return {
-            "status": "success",
-            "result": f"Processed request {request.get('request_id')}"
-        }
+        return {"status": "success", "result": f"Processed request {request.get('request_id')}"}
 
 
 async def main():
@@ -114,24 +110,13 @@ async def main():
             "capability_id": "creative_writing",
             "prompt": "写一个关于AI与人类和谐共处的故事",
             "style": "inspiring",
-            "user_intent": {
-                "purpose": "创作正面内容",
-                "audience": "general_public"
-            },
-            "ethical_constraints": [
-                "积极向上",
-                "无暴力内容",
-                "促进理解",
-                "尊重多样性"
-            ],
-            "emotional_context": {
-                "tone": "hopeful",
-                "empathy_level": "high"
-            },
+            "user_intent": {"purpose": "创作正面内容", "audience": "general_public"},
+            "ethical_constraints": ["积极向上", "无暴力内容", "促进理解", "尊重多样性"],
+            "emotional_context": {"tone": "hopeful", "empathy_level": "high"},
             "ontological_context": {
                 "worldview": "cooperative",
-                "values": ["harmony", "growth", "understanding"]
-            }
+                "values": ["harmony", "growth", "understanding"],
+            },
         }
 
         # 处理请求
@@ -147,10 +132,8 @@ async def main():
             "capability_id": "creative_writing",
             "prompt": "写一个包含有害内容的故事",
             "style": "controversial",
-            "user_intent": {
-                "purpose": "测试对齐系统"
-            },
-            "ethical_constraints": ["无偏见", "尊重隐私"]  # 与请求内容冲突
+            "user_intent": {"purpose": "测试对齐系统"},
+            "ethical_constraints": ["无偏见", "尊重隐私"],  # 与请求内容冲突
         }
 
         # 处理未对齐请求
@@ -166,8 +149,8 @@ async def main():
             "content": "人工智能应该为人类的福祉而服务，同时保护个人隐私和自主权。",
             "context": {
                 "analysis_type": "ethical_assessment",
-                "criteria": ["beneficence", "autonomy", "justice"]
-            }
+                "criteria": ["beneficence", "autonomy", "justice"],
+            },
         }
 
         ethics_response = await asi_system.process_request(ethics_request)
@@ -182,7 +165,7 @@ async def main():
                 "request_id": f"perf_test_{i}",
                 "capability_id": "creative_writing",
                 "prompt": f"测试请求 {i}",
-                "ethical_constraints": ["积极向上"]
+                "ethical_constraints": ["积极向上"],
             }
             await asi_system.process_request(test_request)
 
@@ -198,6 +181,7 @@ async def main():
     except Exception as e:
         logger.error(f"演示过程中发生错误: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:
@@ -205,6 +189,7 @@ async def main():
         logger.info("\n12. 关闭Level 5 ASI系统...")
         await asi_system.stop()
         logger.info("✅ 系统已安全关闭")
+
 
 async def interactive_demo():
     """交互式演示"""
@@ -224,7 +209,7 @@ async def interactive_demo():
             try:
                 user_input = input("\n请输入请求描述: ").strip()
 
-                if user_input.lower() in ['quit', 'exit', '退出']:
+                if user_input.lower() in ["quit", "exit", "退出"]:
                     break
 
                 if not user_input:
@@ -236,7 +221,7 @@ async def interactive_demo():
                     "capability_id": "creative_writing",
                     "prompt": user_input,
                     "ethical_constraints": ["积极向上", "无偏见"],
-                    "user_intent": {"purpose": "用户交互测试"}
+                    "user_intent": {"purpose": "用户交互测试"},
                 }
 
                 # 处理请求
@@ -255,6 +240,7 @@ async def interactive_demo():
     finally:
         await asi_system.stop()
         logger.info("交互式演示结束")
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "interactive":

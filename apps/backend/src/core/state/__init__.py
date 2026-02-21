@@ -21,5 +21,5 @@ __all__ = [
     "DecimalHashEntry",
     "PrecisionProjectionMatrix",
     "PrecisionMode",
-    "StateHashManager"
+    "StateHashManager",
 ]

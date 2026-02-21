@@ -18,11 +18,13 @@ import platform
 import cpuinfo
 import psutil
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class ArchitectureType(Enum):
     """处理器架构类型 / Processor Architecture Types"""
+
     X86_64 = "x86_64"
     X86_32 = "x86"
     ARM64 = "arm64"
@@ -37,6 +39,7 @@ class ArchitectureType(Enum):
 
 class InstructionSet(Enum):
     """指令集分类 / Instruction Set Classifications"""
+
     CISC = "cisC"
     RISC = "risc"
     EPIC = "epic"
@@ -46,6 +49,7 @@ class InstructionSet(Enum):
 
 class HardwareVendor(Enum):
     """硬件厂商 / Hardware Vendors"""
+
     INTEL = "Intel"
     AMD = "AMD"
     ARM = "ARM"
@@ -57,6 +61,7 @@ class HardwareVendor(Enum):
 
 class ComputeUnit(Enum):
     """计算单元类型 / Compute Unit Types"""
+
     CPU = "cpu"
     GPU = "gpu"
     TPU = "tpu"
@@ -67,6 +72,7 @@ class ComputeUnit(Enum):
 
 class PrecisionLevel(Enum):
     """数值精度级别 / Numeric Precision Levels"""
+
     FP64 = "fp64"  # 双精度浮点
     FP32 = "fp32"  # 单精度浮点
     FP16 = "fp16"  # 半精度浮点
@@ -79,6 +85,7 @@ class PrecisionLevel(Enum):
 
 class OperatingSystem(Enum):
     """操作系统类型 / Operating System Types"""
+
     WINDOWS = "windows"
     LINUX = "linux"
     MACOS = "macos"
@@ -90,6 +97,7 @@ class OperatingSystem(Enum):
 @dataclass
 class HardwareCapabilities:
     """硬件能力 / Hardware Capabilities"""
+
     architecture: ArchitectureType
     instruction_set: InstructionSet
     vendor: HardwareVendor
@@ -105,7 +113,7 @@ class HardwareCapabilities:
     avx512_support: bool
     neon_support: bool
     sve_support: bool
-    
+
     @property
     def compute_capability(self) -> float:
         """计算能力指数 / Compute capability index"""
@@ -118,6 +126,7 @@ class HardwareCapabilities:
 @dataclass
 class HardwareMetrics:
     """硬件指标 / Hardware Metrics"""
+
     cpu_usage_percent: float
     memory_usage_percent: float
     temperature_celsius: Optional[float]
@@ -128,20 +137,20 @@ class HardwareMetrics:
 
 class HardwareDetector:
     """硬件检测器 / Hardware Detector"""
-    
+
     _capabilities: Optional[HardwareCapabilities] = None
-    
+
     @classmethod
     def detect(cls) -> HardwareCapabilities:
         """检测当前硬件 / Detect current hardware"""
         if cls._capabilities:
             return cls._capabilities
-        
+
         info = cpuinfo.get_cpu_info()
         arch = cls._detect_architecture()
         isa = cls._detect_instruction_set(arch, info)
         vendor = cls._detect_vendor(info)
-        
+
         capabilities = HardwareCapabilities(
             architecture=arch,
             instruction_set=isa,
@@ -163,10 +172,10 @@ class HardwareDetector:
             neon_support="asimd" in info.get("flags", ""),
             sve_support="sve" in info.get("flags", ""),
         )
-        
+
         cls._capabilities = capabilities
         return capabilities
-    
+
     @classmethod
     def _detect_architecture(cls) -> ArchitectureType:
         """检测架构 / Detect architecture"""
@@ -185,16 +194,12 @@ class HardwareDetector:
             return ArchitectureType.POWER64
         else:
             return ArchitectureType.UNKNOWN
-    
+
     @classmethod
-    def _detect_instruction_set(
-        cls,
-        arch: ArchitectureType,
-        info: Dict
-    ) -> InstructionSet:
+    def _detect_instruction_set(cls, arch: ArchitectureType, info: Dict) -> InstructionSet:
         """检测指令集 / Detect instruction set"""
         flags = info.get("flags", [])
-        
+
         if arch in [ArchitectureType.X86_64, ArchitectureType.X86_32]:
             return InstructionSet.CISC
         elif arch in [ArchitectureType.ARM64, ArchitectureType.ARM32]:
@@ -209,7 +214,7 @@ class HardwareDetector:
             return InstructionSet.CISC
         else:
             return InstructionSet.CISC
-    
+
     @classmethod
     def _detect_vendor(cls, info: Dict) -> HardwareVendor:
         """检测厂商 / Detect vendor"""
@@ -225,7 +230,7 @@ class HardwareDetector:
         elif "google" in brand:
             return HardwareVendor.GOOGLE
         return HardwareVendor.UNKNOWN
-    
+
     @classmethod
     def _detect_vector_width(cls, info: Dict) -> int:
         """检测向量宽度 / Detect vector width"""
@@ -238,12 +243,12 @@ class HardwareDetector:
         elif "neon" in info.get("flags", ""):
             return 128
         return 64
-    
+
     @classmethod
     def _has_fp16_support(cls, info: Dict) -> bool:
         """检测FP16支持 / Detect FP16 support"""
         return "f16c" in info.get("flags", "")
-    
+
     @classmethod
     def _has_bf16_support(cls, info: Dict) -> bool:
         """检测BF16支持 / Detect BF16 support"""
@@ -253,24 +258,24 @@ class HardwareDetector:
 class HardwareManager:
     """
     硬件管理器 / Hardware Manager
-    
+
     Manages hardware resources and provides optimized operations.
     管理硬件资源并提供优化操作。
-    
+
     Attributes:
         capabilities: 硬件能力 / Hardware capabilities
         metrics: 当前指标 / Current metrics
     """
-    
+
     def __init__(self):
         self.capabilities = HardwareDetector.detect()
         self.metrics: Optional[HardwareMetrics] = None
         self._compute_units: Dict[str, Any] = {}
-    
+
     def get_capabilities(self) -> HardwareCapabilities:
         """获取硬件能力 / Get hardware capabilities"""
         return self.capabilities
-    
+
     def get_current_metrics(self) -> HardwareMetrics:
         """获取当前指标 / Get current metrics"""
         return HardwareMetrics(
@@ -281,7 +286,7 @@ class HardwareManager:
             gpu_memory_used_mb=None,
             gpu_memory_total_mb=None,
         )
-    
+
     def _get_temperature(self) -> Optional[float]:
         """获取温度 / Get temperature"""
         try:
@@ -296,20 +301,21 @@ class HardwareManager:
             logger.debug(f"溫度探測失敗（可忽略）: {e}")
             pass
         return None
-    
+
     def detect_compute_unit(self) -> List[str]:
         """检测可用的计算单元 / Detect available compute units"""
         units = ["cpu"]
-        
+
         self._detect_gpu()
         self._detect_tpu()
-        
+
         return list(self._compute_units.keys())
-    
+
     def _detect_gpu(self):
         """检测GPU / Detect GPU"""
         try:
             import torch
+
             if torch.cuda.is_available():
                 self._compute_units["gpu"] = {
                     "device_count": torch.cuda.device_count(),
@@ -318,17 +324,18 @@ class HardwareManager:
                 }
         except (ImportError, NameError):
             pass
-    
+
     def _detect_tpu(self):
         """检测TPU / Detect TPU"""
         try:
             import torch_xla
+
             self._compute_units["tpu"] = {
                 "devices": torch_xla._XLAC._xla_num_devices(),
             }
         except (ImportError, AttributeError):
             pass
-    
+
     def get_optimal_precision(self) -> PrecisionLevel:
         """获取最优精度 / Get optimal precision"""
         if self.capabilities.fp16_support and self.capabilities.tensor_cores:
@@ -339,14 +346,22 @@ class HardwareManager:
             return PrecisionLevel.FP16
         else:
             return PrecisionLevel.FP32
-    
+
     def get_system_info(self) -> Dict[str, Any]:
         """获取系统信息 / Get system info"""
         caps = self.capabilities
         return {
-            "architecture": caps.architecture.value if hasattr(caps.architecture, 'value') else str(caps.architecture),
-            "instruction_set": caps.instruction_set.value if hasattr(caps.instruction_set, 'value') else str(caps.instruction_set),
-            "vendor": caps.vendor.value if hasattr(caps.vendor, 'value') else str(caps.vendor),
+            "architecture": (
+                caps.architecture.value
+                if hasattr(caps.architecture, "value")
+                else str(caps.architecture)
+            ),
+            "instruction_set": (
+                caps.instruction_set.value
+                if hasattr(caps.instruction_set, "value")
+                else str(caps.instruction_set)
+            ),
+            "vendor": caps.vendor.value if hasattr(caps.vendor, "value") else str(caps.vendor),
             "cores": caps.cores,
             "threads": caps.threads,
             "clock_ghz": caps.clock_speed_hz / 1e9,
@@ -357,9 +372,9 @@ class HardwareManager:
 
 class HardwareFactory:
     """硬件工厂 / Hardware Factory"""
-    
+
     _instance: Optional[HardwareManager] = None
-    
+
     @classmethod
     def get_manager(cls) -> HardwareManager:
         """获取硬件管理器 / Get hardware manager"""
@@ -377,6 +392,7 @@ def create_hardware_manager() -> HardwareManager:
     """便捷函数：创建硬件管理器"""
     # Use SystemHardwareProbe for underlying detection
     from shared.utils.hardware_detector import SystemHardwareProbe
+
     return HardwareFactory.get_manager()
 
 
@@ -384,10 +400,10 @@ def demo():
     """演示 / Demo"""
     logger.info("🔧 硬件抽象层 (HAL) 演示")
     logger.info("=" * 50)
-    
+
     hw = HardwareManager()
     caps = hw.get_capabilities()
-    
+
     logger.info(f"\n📋 硬件信息:")
     logger.info(f"  架构: {caps.architecture.value}")
     logger.info(f"  指令集: {caps.instruction_set.value}")
@@ -397,27 +413,27 @@ def demo():
     logger.info(f"  主频: {caps.clock_speed_hz / 1e9:.2f} GHz")
     logger.info(f"  内存: {caps.memory_bytes / (1024**3):.1f} GB")
     logger.info(f"  向量宽度: {caps.vector_width} bit")
-    
+
     logger.info(f"\n🔢 特性支持:")
     logger.info(f"  FP16: {caps.fp16_support}")
     logger.info(f"  BF16: {caps.bf16_support}")
     logger.info(f"  AVX512: {caps.avx512_support}")
     logger.info(f"  NEON: {caps.neon_support}")
     logger.info(f"  SVE: {caps.sve_support}")
-    
+
     logger.info(f"\n⚡ 计算能力: {caps.compute_capability:.1f}")
     logger.info(f"  最优精度: {hw.get_optimal_precision().value}")
-    
+
     logger.info(f"\n🖥️ 可用计算单元:")
     units = hw.detect_compute_unit()
     for unit in units:
         logger.info(f"  ✅ {unit.value}")
-    
+
     logger.info(f"\n📊 当前指标:")
     metrics = hw.get_current_metrics()
     logger.info(f"  CPU使用率: {metrics.cpu_usage_percent:.1f}%")
     logger.info(f"  内存使用率: {metrics.memory_usage_percent:.1f}%")
-    
+
     logger.info("\n✅ 演示完成!")
 
 

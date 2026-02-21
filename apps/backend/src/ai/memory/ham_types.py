@@ -7,11 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, TypedDict, Union
 from typing_extensions import NotRequired
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 class HAMDataPackage:
-    def __init__(self, id: str, content: str, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, id: str, content: str, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None
+    ):
         self.id = id
         self.content = content
         self.timestamp = timestamp
@@ -22,21 +25,22 @@ class HAMDataPackage:
             "id": self.id,
             "content": self.content,
             "timestamp": self.timestamp.isoformat(),
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "HAMDataPackage":
         return cls(
-            id = data["id"],
-            content = data["content"],
-            timestamp = datetime.fromisoformat(data["timestamp"]),
-            metadata = data.get("metadata")
+            id=data["id"],
+            content=data["content"],
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            metadata=data.get("metadata"),
         )
 
 
 class HAMDataPackageInternal(TypedDict):
     """Internal representation of a HAM data package with all required fields."""
+
     timestamp: str
     data_type: str
     encrypted_package: bytes
@@ -47,6 +51,7 @@ class HAMDataPackageInternal(TypedDict):
 
 class HAMDataPackageExternal(TypedDict):
     """External representation of a HAM data package with optional fields."""
+
     timestamp: str
     data_type: str
     metadata: NotRequired[Dict[str, Any]]
@@ -56,6 +61,7 @@ class HAMDataPackageExternal(TypedDict):
 
 class HAMMemory(TypedDict):
     """Representation of a HAM memory item."""
+
     id: str
     content: str
     timestamp: datetime
@@ -63,7 +69,14 @@ class HAMMemory(TypedDict):
 
 
 class HAMRecallResult:
-    def __init__(self, memory_id: str, content: str, score: float, timestamp: datetime, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        memory_id: str,
+        content: str,
+        score: float,
+        timestamp: datetime,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
         self.memory_id = memory_id
         self.content = content
         self.score = score
@@ -76,22 +89,29 @@ class HAMRecallResult:
             "content": self.content,
             "score": self.score,
             "timestamp": self.timestamp.isoformat(),
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "HAMRecallResult":
         return cls(
-            memory_id = data["memory_id"],
-            content = data["content"],
-            score = data["score"],
-            timestamp = datetime.fromisoformat(data["timestamp"]),
-            metadata = data.get("metadata")
+            memory_id=data["memory_id"],
+            content=data["content"],
+            score=data["score"],
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            metadata=data.get("metadata"),
         )
 
 
 class MemoryMetadata:
-    def __init__(self, created_at: datetime, updated_at: datetime, importance_score: float, tags: List[str], data_type: str) -> None:
+    def __init__(
+        self,
+        created_at: datetime,
+        updated_at: datetime,
+        importance_score: float,
+        tags: List[str],
+        data_type: str,
+    ) -> None:
         self.created_at = created_at
         self.updated_at = updated_at
         self.importance_score = importance_score
@@ -104,17 +124,17 @@ class MemoryMetadata:
             "updated_at": self.updated_at,
             "importance_score": self.importance_score,
             "tags": self.tags,
-            "data_type": self.data_type
+            "data_type": self.data_type,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MemoryMetadata":
         return cls(
-            created_at = data["created_at"],
-            updated_at = data["updated_at"],
-            importance_score = data["importance_score"],
-            tags = data["tags"],
-            data_type = data["data_type"]
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+            importance_score=data["importance_score"],
+            tags=data["tags"],
+            data_type=data["data_type"],
         )
 
 
@@ -128,38 +148,36 @@ class MemoryItem:
         return {
             "id": self.id,
             "content": self.content,
-            "metadata": self.metadata.to_dict() if self.metadata else None
+            "metadata": self.metadata.to_dict() if self.metadata else None,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MemoryItem":
         metadata = MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") else None
-        return cls(
-            id = data["id"],
-            content = data["content"],
-            metadata = metadata
-        )
+        return cls(id=data["id"], content=data["content"], metadata=metadata)
 
 
 class DialogueMemoryEntryMetadata:
-    def __init__(self,
-                timestamp: datetime,
-                speaker: str,
-                dialogue_id: str,
-                turn_id: int,
-                language: str = "en",
-                sentiment: Optional[str] = None,
-                emotion: Optional[Dict[str, float]] = None,
-                topic: Optional[List[str]] = None,
-                keywords: Optional[List[str]] = None,
-                summary: Optional[str] = None,
-                context_history: Optional[List[str]] = None,
-                action_taken: Optional[str] = None,
-                is_sensitive: bool = False,
-                source_module: Optional[str] = None,
-                external_references: Optional[List[str]] = None,
-                user_feedback: Optional[Dict[str, Any]] = None,
-                **kwargs) -> None:
+    def __init__(
+        self,
+        timestamp: datetime,
+        speaker: str,
+        dialogue_id: str,
+        turn_id: int,
+        language: str = "en",
+        sentiment: Optional[str] = None,
+        emotion: Optional[Dict[str, float]] = None,
+        topic: Optional[List[str]] = None,
+        keywords: Optional[List[str]] = None,
+        summary: Optional[str] = None,
+        context_history: Optional[List[str]] = None,
+        action_taken: Optional[str] = None,
+        is_sensitive: bool = False,
+        source_module: Optional[str] = None,
+        external_references: Optional[List[str]] = None,
+        user_feedback: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> None:
         self.timestamp = timestamp
         self.speaker = speaker
         self.dialogue_id = dialogue_id
@@ -202,29 +220,48 @@ class DialogueMemoryEntryMetadata:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DialogueMemoryEntryMetadata":
-        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else datetime.now()
-        kwargs = {k: v for k, v in data.items() if k not in [
-            "timestamp", "speaker", "dialogue_id", "turn_id", "language",
-            "sentiment", "emotion", "topic", "keywords", "summary",
-            "context_history", "action_taken", "is_sensitive", "source_module",
-            "external_references", "user_feedback"
-        ]}
+        timestamp = (
+            datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else datetime.now()
+        )
+        kwargs = {
+            k: v
+            for k, v in data.items()
+            if k
+            not in [
+                "timestamp",
+                "speaker",
+                "dialogue_id",
+                "turn_id",
+                "language",
+                "sentiment",
+                "emotion",
+                "topic",
+                "keywords",
+                "summary",
+                "context_history",
+                "action_taken",
+                "is_sensitive",
+                "source_module",
+                "external_references",
+                "user_feedback",
+            ]
+        }
         return cls(
-            timestamp = timestamp,
-            speaker = data.get("speaker", ""),
-            dialogue_id = data.get("dialogue_id", ""),
-            turn_id = data.get("turn_id", 0),
-            language = data.get("language", "en"),
-            sentiment = data.get("sentiment"),
-            emotion = data.get("emotion"),
-            topic = data.get("topic"),
-            keywords = data.get("keywords"),
-            summary = data.get("summary"),
-            context_history = data.get("context_history"),
-            action_taken = data.get("action_taken"),
-            is_sensitive = data.get("is_sensitive", False),
-            source_module = data.get("source_module"),
-            external_references = data.get("external_references"),
-            user_feedback = data.get("user_feedback"),
-            **kwargs
+            timestamp=timestamp,
+            speaker=data.get("speaker", ""),
+            dialogue_id=data.get("dialogue_id", ""),
+            turn_id=data.get("turn_id", 0),
+            language=data.get("language", "en"),
+            sentiment=data.get("sentiment"),
+            emotion=data.get("emotion"),
+            topic=data.get("topic"),
+            keywords=data.get("keywords"),
+            summary=data.get("summary"),
+            context_history=data.get("context_history"),
+            action_taken=data.get("action_taken"),
+            is_sensitive=data.get("is_sensitive", False),
+            source_module=data.get("source_module"),
+            external_references=data.get("external_references"),
+            user_feedback=data.get("user_feedback"),
+            **kwargs,
         )

@@ -1,14 +1,17 @@
 """上下文系统实用工具"""
+
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system utilities
 
 import json
 import logging
 import hashlib
 import zlib
+
 # from tests.test_json_fix import  # Commented out - incomplete import
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+
 # from .storage.base import  # Commented out - incomplete import
 
 logger = logging.getLogger(__name__)
@@ -27,18 +30,22 @@ def serialize_context(context) -> bytes:
     try:
         context_dict = {
             "context_id": context.context_id,
-            "context_type": context.context_type.value if hasattr(context.context_type, 'value') else context.context_type,
+            "context_type": (
+                context.context_type.value
+                if hasattr(context.context_type, "value")
+                else context.context_type
+            ),
             "created_at": context.created_at.isoformat(),
             "updated_at": context.updated_at.isoformat(),
-            "status": context.status.value if hasattr(context.status, 'value') else context.status,
+            "status": context.status.value if hasattr(context.status, "value") else context.status,
             "metadata": context.metadata,
             "content": context.content,
             "version": context.version,
-            "tags": context.tags
+            "tags": context.tags,
         }
 
         json_str = json.dumps(context_dict, ensure_ascii=False)
-        return json_str.encode('utf-8')
+        return json_str.encode("utf-8")
     except Exception as e:
         logger.error(f"Failed to serialize context {context.context_id}: {e}")
         raise
@@ -55,7 +62,7 @@ def deserialize_context(data: bytes):
         Context: 反序列化后的上下文对象
     """
     try:
-        json_str = data.decode('utf-8')
+        json_str = data.decode("utf-8")
         context_dict = json.loads(json_str)
 
         # context = Context(  # Commented - needs proper import

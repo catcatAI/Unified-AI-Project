@@ -6,6 +6,7 @@ Angela AI 系統深入分析腳本
 - 測試對話功能
 - 檢查潛在問題
 """
+
 import asyncio
 import aiohttp
 import json
@@ -14,11 +15,13 @@ import traceback
 from datetime import datetime
 from typing import Dict, List, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 測試配置
 BASE_URL = "http://127.0.0.1:8000"
 WS_URL = "ws://127.0.0.1:8000/ws"
+
 
 class SystemAnalyzer:
     def __init__(self):
@@ -28,10 +31,12 @@ class SystemAnalyzer:
             "websocket_test": {},
             "dialogue_tests": {},
             "potential_issues": [],
-            "summary": {}
+            "summary": {},
         }
 
-    async def test_api_endpoint(self, session: aiohttp.ClientSession, endpoint: str, method: str = "GET", data: dict = None) -> Dict[str, Any]:
+    async def test_api_endpoint(
+        self, session: aiohttp.ClientSession, endpoint: str, method: str = "GET", data: dict = None
+    ) -> Dict[str, Any]:
         """測試單個 API 端點"""
         url = f"{BASE_URL}{endpoint}"
         start_time = time.time()
@@ -44,16 +49,18 @@ class SystemAnalyzer:
                     try:
                         response_data = await response.json()
                     except Exception as e:
-                        logger.error(f'Unexpected error in comprehensive_analysis_test.py: {e}', exc_info=True)
+                        logger.error(
+                            f"Unexpected error in comprehensive_analysis_test.py: {e}",
+                            exc_info=True,
+                        )
                         response_data = await response.text()
-
 
                     return {
                         "status": "success" if 200 <= status < 300 else "error",
                         "status_code": status,
                         "response_time": round(response_time, 3),
                         "response": response_data,
-                        "error": None
+                        "error": None,
                     }
 
             elif method == "POST":
@@ -63,34 +70,35 @@ class SystemAnalyzer:
                     try:
                         response_data = await response.json()
                     except Exception as e:
-                        logger.error(f'Unexpected error in comprehensive_analysis_test.py: {e}', exc_info=True)
+                        logger.error(
+                            f"Unexpected error in comprehensive_analysis_test.py: {e}",
+                            exc_info=True,
+                        )
                         response_data = await response.text()
-
 
                     return {
                         "status": "success" if 200 <= status < 300 else "error",
                         "status_code": status,
                         "response_time": round(response_time, 3),
                         "response": response_data,
-                        "error": None
+                        "error": None,
                     }
 
         except Exception as e:
-            logger.error(f'Error in comprehensive_analysis_test.py: {e}', exc_info=True)
+            logger.error(f"Error in comprehensive_analysis_test.py: {e}", exc_info=True)
             return {
-
                 "status": "error",
                 "status_code": None,
                 "response_time": round(time.time() - start_time, 3),
                 "response": None,
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_all_api_endpoints(self):
         """測試所有 API 端點"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("測試所有 API 端點")
-        print("="*60)
+        print("=" * 60)
 
         async with aiohttp.ClientSession() as session:
             # 基礎端點
@@ -138,9 +146,9 @@ class SystemAnalyzer:
 
     async def test_websocket_connection(self):
         """測試 WebSocket 連接"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("測試 WebSocket 連接")
-        print("="*60)
+        print("=" * 60)
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -157,13 +165,13 @@ class SystemAnalyzer:
                             self.results["websocket_test"] = {
                                 "status": "success",
                                 "connected": True,
-                                "server_message": data
+                                "server_message": data,
                             }
                         else:
                             self.results["websocket_test"] = {
                                 "status": "success",
                                 "connected": True,
-                                "server_message": None
+                                "server_message": None,
                             }
                     except asyncio.TimeoutError:
                         print("  ⚠️  5秒內未收到服務器消息")
@@ -171,7 +179,7 @@ class SystemAnalyzer:
                             "status": "success",
                             "connected": True,
                             "server_message": None,
-                            "warning": "No message received within 5 seconds"
+                            "warning": "No message received within 5 seconds",
                         }
 
         except Exception as e:
@@ -179,30 +187,27 @@ class SystemAnalyzer:
             self.results["websocket_test"] = {
                 "status": "error",
                 "connected": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     async def test_dialogue_functionality(self):
         """測試對話功能"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("測試對話功能")
-        print("="*60)
+        print("=" * 60)
 
         async with aiohttp.ClientSession() as session:
             # 測試 /angela/chat 端點
             print("\n測試 /angela/chat 端點")
             result = await self.test_api_endpoint(
-                session,
-                "/angela/chat",
-                "POST",
-                {"message": "你好，請問你叫什麼名字？"}
+                session, "/angela/chat", "POST", {"message": "你好，請問你叫什麼名字？"}
             )
             self.results["dialogue_tests"]["angela_chat"] = result
 
             if result["status"] == "success":
                 print(f"  ✅ 成功 - 響應時間: {result['response_time']}s")
                 if isinstance(result["response"], dict):
-                    response_text = result['response'].get('response', str(result['response']))
+                    response_text = result["response"].get("response", str(result["response"]))
                     if isinstance(response_text, str):
                         print(f"     回應: {response_text[:100]}...")
                     else:
@@ -213,17 +218,14 @@ class SystemAnalyzer:
             # 測試 /dialogue 端點
             print("\n測試 /dialogue 端點")
             result = await self.test_api_endpoint(
-                session,
-                "/dialogue",
-                "POST",
-                {"message": "你好，請問你叫什麼名字？"}
+                session, "/dialogue", "POST", {"message": "你好，請問你叫什麼名字？"}
             )
             self.results["dialogue_tests"]["dialogue"] = result
 
             if result["status"] == "success":
                 print(f"  ✅ 成功 - 響應時間: {result['response_time']}s")
                 if isinstance(result["response"], dict):
-                    response_text = result['response'].get('response', str(result['response']))
+                    response_text = result["response"].get("response", str(result["response"]))
                     if isinstance(response_text, str):
                         print(f"     回應: {response_text[:100]}...")
                     else:
@@ -234,17 +236,14 @@ class SystemAnalyzer:
             # 測試 /api/v1/angela/chat 端點
             print("\n測試 /api/v1/angela/chat 端點")
             result = await self.test_api_endpoint(
-                session,
-                "/api/v1/angela/chat",
-                "POST",
-                {"message": "你好，請問你叫什麼名字？"}
+                session, "/api/v1/angela/chat", "POST", {"message": "你好，請問你叫什麼名字？"}
             )
             self.results["dialogue_tests"]["api_v1_angela_chat"] = result
 
             if result["status"] == "success":
                 print(f"  ✅ 成功 - 響應時間: {result['response_time']}s")
                 if isinstance(result["response"], dict):
-                    response_text = result['response'].get('response', str(result['response']))
+                    response_text = result["response"].get("response", str(result["response"]))
                     if isinstance(response_text, str):
                         print(f"     回應: {response_text[:100]}...")
                     else:
@@ -254,9 +253,9 @@ class SystemAnalyzer:
 
     async def check_potential_issues(self):
         """檢查潛在問題"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("檢查潛在問題")
-        print("="*60)
+        print("=" * 60)
 
         issues = []
 
@@ -265,18 +264,17 @@ class SystemAnalyzer:
         slow_apis = []
         for endpoint, result in self.results["api_tests"].items():
             if result["status"] == "success" and result["response_time"] > 2.0:
-                slow_apis.append({
-                    "endpoint": endpoint,
-                    "response_time": result["response_time"]
-                })
+                slow_apis.append({"endpoint": endpoint, "response_time": result["response_time"]})
 
         if slow_apis:
-            issues.append({
-                "type": "performance",
-                "severity": "warning",
-                "description": "API 響應時間過慢 (>2秒)",
-                "details": slow_apis
-            })
+            issues.append(
+                {
+                    "type": "performance",
+                    "severity": "warning",
+                    "description": "API 響應時間過慢 (>2秒)",
+                    "details": slow_apis,
+                }
+            )
             print(f"  ⚠️  發現 {len(slow_apis)} 個響應時間過慢的 API 端點")
         else:
             print("  ✅ 所有 API 響應時間正常")
@@ -286,19 +284,23 @@ class SystemAnalyzer:
         failed_apis = []
         for endpoint, result in self.results["api_tests"].items():
             if result["status"] == "error":
-                failed_apis.append({
-                    "endpoint": endpoint,
-                    "error": result.get("error", "Unknown error"),
-                    "status_code": result.get("status_code")
-                })
+                failed_apis.append(
+                    {
+                        "endpoint": endpoint,
+                        "error": result.get("error", "Unknown error"),
+                        "status_code": result.get("status_code"),
+                    }
+                )
 
         if failed_apis:
-            issues.append({
-                "type": "functionality",
-                "severity": "error",
-                "description": "API 端點失敗",
-                "details": failed_apis
-            })
+            issues.append(
+                {
+                    "type": "functionality",
+                    "severity": "error",
+                    "description": "API 端點失敗",
+                    "details": failed_apis,
+                }
+            )
             print(f"  ❌ 發現 {len(failed_apis)} 個失敗的 API 端點")
         else:
             print("  ✅ 所有 API 端點正常")
@@ -308,18 +310,19 @@ class SystemAnalyzer:
         failed_dialogues = []
         for endpoint, result in self.results["dialogue_tests"].items():
             if result["status"] == "error":
-                failed_dialogues.append({
-                    "endpoint": endpoint,
-                    "error": result.get("error", "Unknown error")
-                })
+                failed_dialogues.append(
+                    {"endpoint": endpoint, "error": result.get("error", "Unknown error")}
+                )
 
         if failed_dialogues:
-            issues.append({
-                "type": "functionality",
-                "severity": "error",
-                "description": "對話功能失敗",
-                "details": failed_dialogues
-            })
+            issues.append(
+                {
+                    "type": "functionality",
+                    "severity": "error",
+                    "description": "對話功能失敗",
+                    "details": failed_dialogues,
+                }
+            )
             print(f"  ❌ 發現 {len(failed_dialogues)} 個失敗的對話端點")
         else:
             print("  ✅ 對話功能正常")
@@ -327,12 +330,14 @@ class SystemAnalyzer:
         # 檢查 WebSocket 連接
         print("\n檢查 WebSocket 連接...")
         if self.results["websocket_test"].get("status") != "success":
-            issues.append({
-                "type": "connectivity",
-                "severity": "error",
-                "description": "WebSocket 連接失敗",
-                "details": [self.results["websocket_test"]]
-            })
+            issues.append(
+                {
+                    "type": "connectivity",
+                    "severity": "error",
+                    "description": "WebSocket 連接失敗",
+                    "details": [self.results["websocket_test"]],
+                }
+            )
             print("  ❌ WebSocket 連接失敗")
         else:
             print("  ✅ WebSocket 連接正常")
@@ -341,16 +346,20 @@ class SystemAnalyzer:
 
     def generate_summary(self):
         """生成摘要"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("測試摘要")
-        print("="*60)
+        print("=" * 60)
 
         total_apis = len(self.results["api_tests"])
-        successful_apis = sum(1 for r in self.results["api_tests"].values() if r["status"] == "success")
+        successful_apis = sum(
+            1 for r in self.results["api_tests"].values() if r["status"] == "success"
+        )
         failed_apis = total_apis - successful_apis
 
         total_dialogues = len(self.results["dialogue_tests"])
-        successful_dialogues = sum(1 for r in self.results["dialogue_tests"].values() if r["status"] == "success")
+        successful_dialogues = sum(
+            1 for r in self.results["dialogue_tests"].values() if r["status"] == "success"
+        )
         failed_dialogues = total_dialogues - successful_dialogues
 
         websocket_status = self.results["websocket_test"].get("status", "unknown")
@@ -360,26 +369,40 @@ class SystemAnalyzer:
                 "total": total_apis,
                 "successful": successful_apis,
                 "failed": failed_apis,
-                "success_rate": round(successful_apis / total_apis * 100, 2) if total_apis > 0 else 0
+                "success_rate": (
+                    round(successful_apis / total_apis * 100, 2) if total_apis > 0 else 0
+                ),
             },
             "dialogue_tests": {
                 "total": total_dialogues,
                 "successful": successful_dialogues,
                 "failed": failed_dialogues,
-                "success_rate": round(successful_dialogues / total_dialogues * 100, 2) if total_dialogues > 0 else 0
+                "success_rate": (
+                    round(successful_dialogues / total_dialogues * 100, 2)
+                    if total_dialogues > 0
+                    else 0
+                ),
             },
             "websocket_status": websocket_status,
             "total_issues": len(self.results["potential_issues"]),
             "issues_by_severity": {
-                "error": sum(1 for i in self.results["potential_issues"] if i["severity"] == "error"),
-                "warning": sum(1 for i in self.results["potential_issues"] if i["severity"] == "warning")
-            }
+                "error": sum(
+                    1 for i in self.results["potential_issues"] if i["severity"] == "error"
+                ),
+                "warning": sum(
+                    1 for i in self.results["potential_issues"] if i["severity"] == "warning"
+                ),
+            },
         }
 
         self.results["summary"] = summary
 
-        print(f"\nAPI 測試: {successful_apis}/{total_apis} 成功 ({summary['api_tests']['success_rate']}%)")
-        print(f"對話測試: {successful_dialogues}/{total_dialogues} 成功 ({summary['dialogue_tests']['success_rate']}%)")
+        print(
+            f"\nAPI 測試: {successful_apis}/{total_apis} 成功 ({summary['api_tests']['success_rate']}%)"
+        )
+        print(
+            f"對話測試: {successful_dialogues}/{total_dialogues} 成功 ({summary['dialogue_tests']['success_rate']}%)"
+        )
         print(f"WebSocket 連接: {'✅ 成功' if websocket_status == 'success' else '❌ 失敗'}")
         print(f"發現問題: {len(self.results['potential_issues'])} 個")
         print(f"  - 錯誤: {summary['issues_by_severity']['error']} 個")
@@ -387,9 +410,9 @@ class SystemAnalyzer:
 
     async def run(self):
         """運行所有測試"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Angela AI 系統深入分析")
-        print("="*60)
+        print("=" * 60)
         print(f"開始時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         try:
@@ -399,9 +422,9 @@ class SystemAnalyzer:
             await self.check_potential_issues()
             self.generate_summary()
 
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print(f"完成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            print("="*60)
+            print("=" * 60)
 
             # 保存結果
             with open("/tmp/angela_comprehensive_analysis.json", "w") as f:
@@ -416,6 +439,7 @@ class SystemAnalyzer:
             traceback.print_exc()
             return None
 
+
 async def main():
     analyzer = SystemAnalyzer()
     results = await analyzer.run()
@@ -423,6 +447,7 @@ async def main():
     if results:
         print("\n詳細結果:")
         print(json.dumps(results, indent=2, ensure_ascii=False))
+
 
 if __name__ == "__main__":
     asyncio.run(main())

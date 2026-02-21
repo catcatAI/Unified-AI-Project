@@ -31,9 +31,11 @@ from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class QueryPlan:
     """查询计划"""
+
     query: str
     execution_time: float
     rows_examined: int
@@ -41,9 +43,11 @@ class QueryPlan:
     index_used: Optional[str]
     optimization_suggestions: List[str] = field(default_factory=list)
 
+
 @dataclass
 class QueryMetrics:
     """查询指标"""
+
     query_hash: str
     execution_count: int
     total_time: float
@@ -52,6 +56,7 @@ class QueryMetrics:
     max_time: float
     last_executed: datetime
     error_count: int
+
 
 class QueryOptimizer:
     """查询优化器"""
@@ -73,7 +78,7 @@ class QueryOptimizer:
             "cartesian_product": r"FROM\s+\w+\s*,\s+\w+.*WHERE",
             "like_leading_wildcard": r"LIKE\s+'%.*%'",
             "order_by_without_limit": r"ORDER\s+BY.*(?!.*)LIMIT",
-            "missing_index": None  # 需要实际执行计划分析
+            "missing_index": None,  # 需要实际执行计划分析
         }
 
         logger.info("查询优化器初始化完成")
@@ -113,7 +118,7 @@ class QueryOptimizer:
                 return data
 
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
             # 记录错误指标
             execution_time = time.time() - start_time
@@ -123,7 +128,7 @@ class QueryOptimizer:
 
     def _hash_query(self, query: str) -> str:
         """生成查询哈希"""
-        normalized_query = re.sub(r'\s+', ' ', query.strip().upper())
+        normalized_query = re.sub(r"\s+", " ", query.strip().upper())
         return hashlib.md5(normalized_query.encode()).hexdigest()
 
     async def _record_query_metrics(self, query_hash: str, execution_time: float, success: bool):
@@ -134,10 +139,10 @@ class QueryOptimizer:
                 execution_count=0,
                 total_time=0.0,
                 avg_time=0.0,
-                min_time=float('inf'),
+                min_time=float("inf"),
                 max_time=0.0,
                 last_executed=datetime.now(),
-                error_count=0
+                error_count=0,
             )
 
         metrics = self.query_metrics[query_hash]
@@ -166,7 +171,7 @@ class QueryOptimizer:
                 "min_time": metrics.min_time,
                 "max_time": metrics.max_time,
                 "last_executed": metrics.last_executed.isoformat(),
-                "error_count": metrics.error_count
+                "error_count": metrics.error_count,
             }
             # Simplified - actual implementation would use Redis
             # await self.redis.hset(f"query_metrics:{query_hash}", mapping=metrics_data)
@@ -192,7 +197,7 @@ class QueryOptimizer:
             "execution_time": execution_time,
             "issues": issues,
             "suggestions": suggestions,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Simplified - actual implementation would use Redis
@@ -244,7 +249,7 @@ class QueryOptimizer:
                     rows_examined=rows_examined,
                     rows_returned=0,
                     index_used=index_used,
-                    optimization_suggestions=suggestions
+                    optimization_suggestions=suggestions,
                 )
 
         except Exception as e:
@@ -255,26 +260,26 @@ class QueryOptimizer:
                 rows_examined=0,
                 rows_returned=0,
                 index_used=None,
-                optimization_suggestions=["无法获取执行计划"]
+                optimization_suggestions=["无法获取执行计划"],
             )
 
     def _extract_execution_time(self, plan_text: str) -> float:
         """提取执行时间"""
-        match = re.search(r'Execution Time:\s*([\d.]+)\s*ms', plan_text)
+        match = re.search(r"Execution Time:\s*([\d.]+)\s*ms", plan_text)
         if match:
             return float(match.group(1)) / 1000  # 转换为秒
         return 0.0
 
     def _extract_rows_examined(self, plan_text: str) -> int:
         """提取扫描行数"""
-        match = re.search(r'rows=(\d+)', plan_text)
+        match = re.search(r"rows=(\d+)", plan_text)
         if match:
             return int(match.group(1))
         return 0
 
     def _extract_index_used(self, plan_text: str) -> Optional[str]:
         """提取使用的索引"""
-        match = re.search(r'Index\s+Scan\s+using\s+(\w+)', plan_text, re.IGNORECASE)
+        match = re.search(r"Index\s+Scan\s+using\s+(\w+)", plan_text, re.IGNORECASE)
         if match:
             return match.group(1)
         return None
@@ -308,7 +313,9 @@ class QueryOptimizer:
             logger.error(f"获取慢查询失败: {e}")
             return []
 
-    async def get_query_metrics(self, query_hash: str = None) -> Union[QueryMetrics, Dict[str, QueryMetrics]]:
+    async def get_query_metrics(
+        self, query_hash: str = None
+    ) -> Union[QueryMetrics, Dict[str, QueryMetrics]]:
         """获取查询指标"""
         if query_hash:
             return self.query_metrics.get(query_hash)
@@ -316,19 +323,13 @@ class QueryOptimizer:
 
     def get_slowest_queries(self, limit: int = 10) -> List[QueryMetrics]:
         """获取最慢的查询"""
-        sorted_queries = sorted(
-            self.query_metrics.values(),
-            key=lambda x: x.avg_time,
-            reverse=True
-        )
+        sorted_queries = sorted(self.query_metrics.values(), key=lambda x: x.avg_time, reverse=True)
         return sorted_queries[:limit]
 
     def get_most_frequent_queries(self, limit: int = 10) -> List[QueryMetrics]:
         """获取最频繁的查询"""
         sorted_queries = sorted(
-            self.query_metrics.values(),
-            key=lambda x: x.execution_count,
-            reverse=True
+            self.query_metrics.values(), key=lambda x: x.execution_count, reverse=True
         )
         return sorted_queries[:limit]
 
@@ -352,18 +353,16 @@ class QueryOptimizer:
         try:
             async with self.get_session() as session:
                 # Simplified - actual implementation would analyze table performance
-                return {
-                    "table_name": table_name,
-                    "size": "N/A",
-                    "column_stats": []
-                }
+                return {"table_name": table_name, "size": "N/A", "column_stats": []}
 
         except Exception as e:
             logger.error(f"分析表性能失败: {e}")
             return {"error": str(e)}
 
+
 # 全局查询优化器
 query_optimizer = None
+
 
 async def get_query_optimizer() -> QueryOptimizer:
     """获取查询优化器实例"""
@@ -374,16 +373,19 @@ async def get_query_optimizer() -> QueryOptimizer:
         await query_optimizer.initialize()
     return query_optimizer
 
+
 # 便捷函数
 async def execute_optimized_query(query: str, params: Dict = None) -> List[Dict]:
     """执行优化查询"""
     optimizer = await get_query_optimizer()
     return await optimizer.execute_query(query, params)
 
+
 async def get_slow_queries(limit: int = 100) -> List[Dict]:
     """获取慢查询"""
     optimizer = await get_query_optimizer()
     return await optimizer.get_slow_queries(limit)
+
 
 async def analyze_query_performance(query: str) -> QueryPlan:
     """分析查询性能"""

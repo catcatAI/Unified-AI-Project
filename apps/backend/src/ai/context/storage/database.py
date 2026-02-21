@@ -15,6 +15,7 @@ from .base import Context, Storage, ContextType, ContextStatus
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseStorage(Storage):
     """数据库存储实现"""
 
@@ -40,7 +41,7 @@ class DatabaseStorage(Storage):
                     "metadata": context.metadata,
                     "content": context.content,
                     "version": context.version,
-                    "tags": context.tags
+                    "tags": context.tags,
                 }
                 self._db[context.context_id] = context_data
             else:
@@ -64,7 +65,7 @@ class DatabaseStorage(Storage):
                     context_data = self._db[context_id]
                     context = Context(
                         context_id=context_data["context_id"],
-                        context_type=ContextType(context_data["context_type"])
+                        context_type=ContextType(context_data["context_type"]),
                     )
                     context.created_at = datetime.fromisoformat(context_data["created_at"])
                     context.updated_at = datetime.fromisoformat(context_data["updated_at"])
@@ -97,7 +98,9 @@ class DatabaseStorage(Storage):
                     logger.debug(f"Context {context_id} deleted from mock database storage")
                     return True
                 else:
-                    logger.debug(f"Context {context_id} not found in mock database storage for deletion")
+                    logger.debug(
+                        f"Context {context_id} not found in mock database storage for deletion"
+                    )
                     return False
             else:
                 # 实际的数据库删除逻辑
@@ -117,7 +120,8 @@ class DatabaseStorage(Storage):
                     context_ids = list(self._db.keys())
                 else:
                     context_ids = [
-                        context_id for context_id, context_data in self._db.items()
+                        context_id
+                        for context_id, context_data in self._db.items()
                         if context_data["context_type"] == context_type.value
                     ]
                 logger.debug(f"Listed {len(context_ids)} contexts from mock database storage")
@@ -142,7 +146,9 @@ class DatabaseStorage(Storage):
                     logger.debug(f"Context {context_id} metadata updated in mock database storage")
                     return True
                 else:
-                    logger.debug(f"Context {context_id} not found in mock database storage for metadata update")
+                    logger.debug(
+                        f"Context {context_id} not found in mock database storage for metadata update"
+                    )
                     return False
             else:
                 # 实际的数据库更新逻辑
@@ -157,10 +163,7 @@ class DatabaseStorage(Storage):
         try:
             if not self._connected:
                 logger.warning("Database storage not connected, using mock storage")
-                return {
-                    "total_contexts": len(self._db),
-                    "storage_type": "mock_database"
-                }
+                return {"total_contexts": len(self._db), "storage_type": "mock_database"}
             else:
                 # 实际的数据库信息查询
                 # 这里应该查询数据库统计信息

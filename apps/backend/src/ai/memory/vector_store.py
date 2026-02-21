@@ -10,6 +10,7 @@ from chromadb.utils import embedding_functions
 
 logger = logging.getLogger(__name__)
 
+
 class VectorMemoryStore:
 
     def __init__(self, persist_directory: Optional[str] = None) -> None:
@@ -29,8 +30,7 @@ class VectorMemoryStore:
 
             # Create or get the collection
             self.collection = self.client.get_or_create_collection(
-                name="ham_memories",
-                metadata={"hnsw:space": "cosine"}
+                name="ham_memories", metadata={"hnsw:space": "cosine"}
             )
             logger.info("VectorMemoryStore initialized successfully.")
         except Exception as e:
@@ -38,7 +38,9 @@ class VectorMemoryStore:
             self.client = None
             self.collection = None
 
-    async def add_memory(self, memory_id: str, content: str, metadata: Optional[Dict[str, Any]] = None):
+    async def add_memory(
+        self, memory_id: str, content: str, metadata: Optional[Dict[str, Any]] = None
+    ):
         """
         Adds a memory to the vector store.
 
@@ -53,9 +55,7 @@ class VectorMemoryStore:
 
         try:
             self.collection.add(
-                documents=[content],
-                metadatas=[metadata] if metadata else [{}],
-                ids=[memory_id]
+                documents=[content], metadatas=[metadata] if metadata else [{}], ids=[memory_id]
             )
             logger.debug(f"Added memory {memory_id} to vector store.")
         except Exception as e:
@@ -77,10 +77,7 @@ class VectorMemoryStore:
             return {}
 
         try:
-            results = self.collection.query(
-                query_texts=[query],
-                n_results=limit
-            )
+            results = self.collection.query(query_texts=[query], n_results=limit)
             logger.debug(f"Semantic search returned {len(results.get('ids', []))} results.")
             return results
         except Exception as e:

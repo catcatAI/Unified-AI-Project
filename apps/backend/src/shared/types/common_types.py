@@ -13,9 +13,11 @@ from enum import Enum
 from typing import TypedDict, Dict, List, Optional, Any, Required
 from typing_extensions import Literal
 import logging
+
 logger = logging.getLogger(__name__)
 
 print("common_types.py is being imported and defining types...")
+
 
 class ServiceStatus(Enum):
     UNKNOWN = 0
@@ -26,6 +28,7 @@ class ServiceStatus(Enum):
     STOPPED = 5
     DEGRADED = 6
 
+
 class ServiceType(Enum):
     UNKNOWN = "unknown"
     CORE_AI_COMPONENT = "core_ai_component"
@@ -33,6 +36,7 @@ class ServiceType(Enum):
     DATA_STORE = "data_store"
     INTERNAL_TOOL = "internal_tool"
     HSP_NODE = "hsp_node"
+
 
 class ServiceAdvertisement(TypedDict):
     service_id: str
@@ -45,6 +49,7 @@ class ServiceAdvertisement(TypedDict):
     last_seen_timestamp: float
     ttl: int
 
+
 class ServiceQuery(TypedDict, total=False):
     service_type: Optional[ServiceType]
     service_name: Optional[str]
@@ -52,12 +57,14 @@ class ServiceQuery(TypedDict, total=False):
     required_capabilities: Optional[List[str]]
     status_filter: Optional[List[ServiceStatus]]
 
+
 class ServiceInstanceHealth(TypedDict):
     service_id: str
     instance_id: str
     status: ServiceStatus
     last_heartbeat: float
     metrics: Optional[Dict[str, Any]]
+
 
 # ToolDispatcherResponse for ToolDispatcher
 class ToolDispatcherResponse(TypedDict):
@@ -67,12 +74,13 @@ class ToolDispatcherResponse(TypedDict):
         "failure_tool_error",
         "failure_parsing_query",
         "error_dispatcher_issue",
-        "unhandled_by_local_tool"
+        "unhandled_by_local_tool",
     ]
     payload: Optional[Any]
     tool_name_attempted: Optional[str]
     original_query_for_tool: Optional[str]
     error_message: Optional[str]
+
 
 class LLMConfig(TypedDict):
     model_name: str
@@ -81,11 +89,13 @@ class LLMConfig(TypedDict):
     temperature: float
     max_tokens: int
 
+
 class DialogueTurn(TypedDict):
     speaker: Literal["user", "ai", "system"]
     text: str
     timestamp: str
     metadata: Optional[Dict[str, Any]]
+
 
 class PendingHSPTaskInfo(TypedDict):
     user_id: Optional[str]
@@ -97,6 +107,7 @@ class PendingHSPTaskInfo(TypedDict):
     expected_callback_topic: str
     request_type: str
 
+
 class OperationalConfig(TypedDict, total=False):
     timeouts: Optional[Any]
     learning_thresholds: Optional[Any]
@@ -104,10 +115,12 @@ class OperationalConfig(TypedDict, total=False):
     max_dialogue_history: Optional[int]
     operational_configs: Optional[Dict[str, Any]]
 
+
 class CritiqueResult(TypedDict):
     score: float
     reason: Optional[str]
     suggested_alternative: Optional[str]
+
 
 class DialogueMemoryEntryMetadata(TypedDict):
     speaker: str
@@ -118,6 +131,7 @@ class DialogueMemoryEntryMetadata(TypedDict):
     user_feedback_explicit: Optional[str]
     learning_weight: Optional[float]
 
+
 class ParsedToolIODetails(TypedDict, total=False):
     suggested_method_name: Required[str]
     class_docstring_hint: Required[str]
@@ -126,18 +140,22 @@ class ParsedToolIODetails(TypedDict, total=False):
     return_type: Required[str]
     return_description: Required[str]
 
+
 class OverwriteDecision(Enum):
     PREVENT_OVERWRITE = "prevent_overwrite"
     OVERWRITE_EXISTING = "overwrite_existing"
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
 
+
 # LLM Provider Types
 class LLMProviderOllamaConfig(TypedDict):
     base_url: Required[str]
 
+
 class LLMProviderOpenAIConfig(TypedDict):
     api_key: Required[str]
+
 
 class LLMModelInfo(TypedDict, total=False):
     id: Required[str]
@@ -147,19 +165,24 @@ class LLMModelInfo(TypedDict, total=False):
     modified_at: Optional[str]
     size_bytes: Optional[int]
 
+
 # HAM Memory Types
 from dataclasses import dataclass
+
 
 @dataclass
 class HAMRecallResult:
     """HAM記憶回憶結果"""
+
     memories: List[Dict[str, Any]]
     confidence_scores: List[float]
     total_count: int
     query_metadata: Dict[str, Any]
 
+
 class HAMDataPackageInternal(TypedDict):
     """HAM內部數據包"""
+
     package_id: str
     data_type: str
     content: Dict[str, Any]
@@ -167,5 +190,6 @@ class HAMDataPackageInternal(TypedDict):
     timestamp: str
     source_ai_id: str
     confidence_score: float
+
 
 print("common_types.py finished definitions.")

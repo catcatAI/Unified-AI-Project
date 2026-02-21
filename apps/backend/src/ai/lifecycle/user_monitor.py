@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class UserActivityLevel(Enum):
     """用戶活動水平"""
+
     HIGH = "high"  # 高頻活動
     MEDIUM = "medium"  # 中等活動
     LOW = "low"  # 低活動
@@ -26,6 +27,7 @@ class UserActivityLevel(Enum):
 
 class UserEmotion(Enum):
     """用戶情緒"""
+
     HAPPY = "happy"
     SAD = "sad"
     NEUTRAL = "neutral"
@@ -39,6 +41,7 @@ class UserEmotion(Enum):
 @dataclass
 class UserState:
     """用戶狀態"""
+
     user_id: str
     online: bool
     last_activity: datetime
@@ -54,17 +57,17 @@ class UserState:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         return {
-            'user_id': self.user_id,
-            'online': self.online,
-            'last_activity': self.last_activity.isoformat(),
-            'last_input': self.last_input,
-            'emotion': self.emotion,
-            'emotion_intensity': self.emotion_intensity,
-            'activity_level': self.activity_level,
-            'session_duration': self.session_duration,
-            'total_interactions': self.total_interactions,
-            'emotion_history': self.emotion_history[-10:],  # 只保留最近10條
-            'activity_history': self.activity_history[-10:],  # 只保留最近10條
+            "user_id": self.user_id,
+            "online": self.online,
+            "last_activity": self.last_activity.isoformat(),
+            "last_input": self.last_input,
+            "emotion": self.emotion,
+            "emotion_intensity": self.emotion_intensity,
+            "activity_level": self.activity_level,
+            "session_duration": self.session_duration,
+            "total_interactions": self.total_interactions,
+            "emotion_history": self.emotion_history[-10:],  # 只保留最近10條
+            "activity_history": self.activity_history[-10:],  # 只保留最近10條
         }
 
 
@@ -84,18 +87,14 @@ class UserMonitor:
         user_id: str = "default_user",
         check_interval: float = 5.0,
         idle_threshold: float = 300.0,  # 5分鐘
-        return_threshold: float = 1800.0  # 30分鐘
+        return_threshold: float = 1800.0,  # 30分鐘
     ):
         self.user_id = user_id
         self.check_interval = check_interval
         self.idle_threshold = idle_threshold
         self.return_threshold = return_threshold
 
-        self.user_state = UserState(
-            user_id=user_id,
-            online=False,
-            last_activity=datetime.now()
-        )
+        self.user_state = UserState(user_id=user_id, online=False, last_activity=datetime.now())
 
         self.is_running = False
         self._monitor_task: Optional[asyncio.Task] = None
@@ -181,9 +180,9 @@ class UserMonitor:
                 offline_duration = (now - self._offline_since).total_seconds()
                 if offline_duration > self.return_threshold:
                     logger.info(f"User {self.user_id} returned after {offline_duration:.0f}s")
-                    await self._notify_state_change("return", {
-                        "offline_duration": offline_duration
-                    })
+                    await self._notify_state_change(
+                        "return", {"offline_duration": offline_duration}
+                    )
             await self._notify_state_change("online", {})
 
         # 更新會話持續時間
@@ -199,12 +198,14 @@ class UserMonitor:
         await self._update_activity_level()
 
         # 記錄活動歷史
-        self.user_state.activity_history.append({
-            'timestamp': now.isoformat(),
-            'online': self.user_state.online,
-            'activity_level': self.user_state.activity_level,
-            'idle_time': idle_time
-        })
+        self.user_state.activity_history.append(
+            {
+                "timestamp": now.isoformat(),
+                "online": self.user_state.online,
+                "activity_level": self.user_state.activity_level,
+                "idle_time": idle_time,
+            }
+        )
 
         # 保持歷史記錄在合理範圍
         if len(self.user_state.activity_history) > 100:
@@ -216,8 +217,10 @@ class UserMonitor:
 
         # 清理過期的輸入記錄
         self._recent_inputs = [
-            inp for inp in self._recent_inputs
-            if (now - datetime.fromisoformat(inp['timestamp'])).total_seconds() < self._input_rate_window
+            inp
+            for inp in self._recent_inputs
+            if (now - datetime.fromisoformat(inp["timestamp"])).total_seconds()
+            < self._input_rate_window
         ]
 
         # 計算輸入速率
@@ -254,11 +257,9 @@ class UserMonitor:
         self.user_state.total_interactions += 1
 
         # 記錄輸入
-        self._recent_inputs.append({
-            'timestamp': now.isoformat(),
-            'input': input_text,
-            'metadata': metadata or {}
-        })
+        self._recent_inputs.append(
+            {"timestamp": now.isoformat(), "input": input_text, "metadata": metadata or {}}
+        )
 
         # 估計情緒
         emotion, intensity = self._estimate_emotion_from_text(input_text)
@@ -266,12 +267,14 @@ class UserMonitor:
         self.user_state.emotion_intensity = intensity
 
         # 記錄情緒歷史
-        self.user_state.emotion_history.append({
-            'timestamp': now.isoformat(),
-            'emotion': emotion,
-            'intensity': intensity,
-            'input': input_text[:100]  # 限制長度
-        })
+        self.user_state.emotion_history.append(
+            {
+                "timestamp": now.isoformat(),
+                "emotion": emotion,
+                "intensity": intensity,
+                "input": input_text[:100],  # 限制長度
+            }
+        )
 
         # 保持歷史記錄在合理範圍
         if len(self.user_state.emotion_history) > 50:
@@ -288,33 +291,94 @@ class UserMonitor:
         # 簡單情緒關鍵詞匹配
         emotion_keywords = {
             UserEmotion.HAPPY: [
-                '开心', '高兴', '快乐', '棒', '好', '哈哈', '喜欢', '爱',
-                'happy', 'great', 'awesome', 'good', 'love', 'like'
+                "开心",
+                "高兴",
+                "快乐",
+                "棒",
+                "好",
+                "哈哈",
+                "喜欢",
+                "爱",
+                "happy",
+                "great",
+                "awesome",
+                "good",
+                "love",
+                "like",
             ],
             UserEmotion.SAD: [
-                '难过', '悲伤', '难过', '失望', '不好', '哭', '痛苦',
-                'sad', 'bad', 'disappointed', 'cry', 'pain'
+                "难过",
+                "悲伤",
+                "难过",
+                "失望",
+                "不好",
+                "哭",
+                "痛苦",
+                "sad",
+                "bad",
+                "disappointed",
+                "cry",
+                "pain",
             ],
             UserEmotion.FRUSTRATED: [
-                '烦', '生气', '讨厌', '糟糕', '糟糕', '失败',
-                'frustrated', 'annoyed', 'angry', 'hate', 'failed'
+                "烦",
+                "生气",
+                "讨厌",
+                "糟糕",
+                "糟糕",
+                "失败",
+                "frustrated",
+                "annoyed",
+                "angry",
+                "hate",
+                "failed",
             ],
             UserEmotion.EXCITED: [
-                '激动', '兴奋', '期待', '哇', '天啊',
-                'excited', 'wow', 'amazing', 'amazing'
+                "激动",
+                "兴奋",
+                "期待",
+                "哇",
+                "天啊",
+                "excited",
+                "wow",
+                "amazing",
+                "amazing",
             ],
             UserEmotion.ANXIOUS: [
-                '担心', '害怕', '紧张', '焦虑', '害怕',
-                'worried', 'scared', 'nervous', 'anxious', 'afraid'
+                "担心",
+                "害怕",
+                "紧张",
+                "焦虑",
+                "害怕",
+                "worried",
+                "scared",
+                "nervous",
+                "anxious",
+                "afraid",
             ],
             UserEmotion.CONFUSED: [
-                '不懂', '不明白', '困惑', '为什么', '怎么回事',
-                'confused', 'don\'t understand', 'why', 'how'
+                "不懂",
+                "不明白",
+                "困惑",
+                "为什么",
+                "怎么回事",
+                "confused",
+                "don't understand",
+                "why",
+                "how",
             ],
             UserEmotion.RELAXED: [
-                '轻松', '舒服', '休息', '平静', '没事',
-                'relaxed', 'comfortable', 'rest', 'calm', 'okay'
-            ]
+                "轻松",
+                "舒服",
+                "休息",
+                "平静",
+                "没事",
+                "relaxed",
+                "comfortable",
+                "rest",
+                "calm",
+                "okay",
+            ],
         }
 
         # 計算每種情緒的匹配度
@@ -353,9 +417,9 @@ class UserMonitor:
     def detect_return(self) -> bool:
         """檢測用戶是否剛返回"""
         return (
-            self.user_state.online and
-            self._last_online_time is not None and
-            (datetime.now() - self._last_online_time).total_seconds() < 30
+            self.user_state.online
+            and self._last_online_time is not None
+            and (datetime.now() - self._last_online_time).total_seconds() < 30
         )
 
     def get_idle_time(self) -> float:
@@ -365,16 +429,16 @@ class UserMonitor:
     def get_stats(self) -> Dict[str, Any]:
         """獲取統計信息"""
         return {
-            'user_id': self.user_id,
-            'is_running': self.is_running,
-            'online': self.user_state.online,
-            'activity_level': self.user_state.activity_level,
-            'emotion': self.user_state.emotion,
-            'emotion_intensity': self.user_state.emotion_intensity,
-            'idle_time': self.get_idle_time(),
-            'session_duration': self.user_state.session_duration,
-            'total_interactions': self.user_state.total_interactions,
-            'check_interval': self.check_interval
+            "user_id": self.user_id,
+            "is_running": self.is_running,
+            "online": self.user_state.online,
+            "activity_level": self.user_state.activity_level,
+            "emotion": self.user_state.emotion,
+            "emotion_intensity": self.user_state.emotion_intensity,
+            "idle_time": self.get_idle_time(),
+            "session_duration": self.user_state.session_duration,
+            "total_interactions": self.user_state.total_interactions,
+            "check_interval": self.check_interval,
         }
 
 

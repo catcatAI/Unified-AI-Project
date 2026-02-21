@@ -19,14 +19,16 @@ logger = logging.getLogger(__name__)
 
 class ComputeNodeType(Enum):
     """计算节点类型"""
-    LOCAL = "local"           # 本地计算节点
-    SERVER = "server"         # 服务器节点
+
+    LOCAL = "local"  # 本地计算节点
+    SERVER = "server"  # 服务器节点
     DISTRIBUTED = "distributed"  # 分布式节点
-    CLOUD = "cloud"          # 云端节点
+    CLOUD = "cloud"  # 云端节点
 
 
 class TaskStatus(Enum):
     """任务状态"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -37,6 +39,7 @@ class TaskStatus(Enum):
 @dataclass
 class ComputeTask:
     """计算任务数据结构"""
+
     task_id: str
     task_type: str
     parameters: Dict[str, Any]
@@ -53,6 +56,7 @@ class ComputeTask:
 @dataclass
 class ComputeNode:
     """计算节点数据结构"""
+
     node_id: str
     node_type: ComputeNodeType
     address: str
@@ -104,7 +108,7 @@ class DistributedCoordinator:
             "completed_tasks": 0,
             "failed_tasks": 0,
             "average_completion_time": 0.0,
-            "node_utilization": {}
+            "node_utilization": {},
         }
 
         self._running = False
@@ -123,9 +127,7 @@ class DistributedCoordinator:
             await self.local_pool_manager.initialize()
 
             # 初始化服务器桥接
-            self.server_bridge = ServerBridge(
-                coordinator_id=f"{self.coordinator_id}_server_bridge"
-            )
+            self.server_bridge = ServerBridge(coordinator_id=f"{self.coordinator_id}_server_bridge")
             await self.server_bridge.initialize()
 
             # 注册本地计算节点
@@ -236,7 +238,9 @@ class DistributedCoordinator:
             node.last_heartbeat = datetime.now()
             self.compute_nodes[node.node_id] = node
 
-            logger.info(f"[{self.coordinator_id}] 计算节点已注册: {node.node_id} ({node.node_type.value})")
+            logger.info(
+                f"[{self.coordinator_id}] 计算节点已注册: {node.node_id} ({node.node_type.value})"
+            )
 
             # 尝试分配待处理任务
             await self._assign_pending_tasks()
@@ -284,7 +288,7 @@ class DistributedCoordinator:
             "running_tasks": len(self.running_tasks),
             "completed_tasks": len(self.completed_tasks),
             "total_resources": total_resources,
-            "statistics": self.statistics
+            "statistics": self.statistics,
         }
 
     async def _register_local_nodes(self):
@@ -302,7 +306,7 @@ class DistributedCoordinator:
                 address=node_info["address"],
                 port=node_info["port"],
                 available_resources=node_info["resources"],
-                capabilities=node_info.get("capabilities", [])
+                capabilities=node_info.get("capabilities", []),
             )
 
             await self.register_compute_node(node)
@@ -332,7 +336,9 @@ class DistributedCoordinator:
                 if success:
                     tasks_to_remove.append(i)
                     self.running_tasks[task.task_id] = task
-                    logger.info(f"[{self.coordinator_id}] 任务 {task.task_id} 已分配到节点 {suitable_node}")
+                    logger.info(
+                        f"[{self.coordinator_id}] 任务 {task.task_id} 已分配到节点 {suitable_node}"
+                    )
 
         # 从待处理队列中移除已分配的任务
         for i in reversed(tasks_to_remove):
@@ -510,8 +516,7 @@ class DistributedCoordinator:
         """重新分配节点上的任务"""
         # 找到该节点上的所有任务
         node_tasks = [
-            task for task in self.running_tasks.values()
-            if task.assigned_node_id == node_id
+            task for task in self.running_tasks.values() if task.assigned_node_id == node_id
         ]
 
         # 将任务重新加入待处理队列
@@ -524,7 +529,9 @@ class DistributedCoordinator:
             if task.task_id in self.running_tasks:
                 del self.running_tasks[task.task_id]
 
-        logger.info(f"[{self.coordinator_id}] 已重新分配节点 {node_id} 上的 {len(node_tasks)} 个任务")
+        logger.info(
+            f"[{self.coordinator_id}] 已重新分配节点 {node_id} 上的 {len(node_tasks)} 个任务"
+        )
 
     async def _cancel_task_on_node(self, node_id: str, task_id: str):
         """在节点上取消任务"""
@@ -620,7 +627,9 @@ class DistributedCoordinator:
                     completion_times.append(60.0)  # 假设平均60秒
 
             if completion_times:
-                self.statistics["average_completion_time"] = sum(completion_times) / len(completion_times)
+                self.statistics["average_completion_time"] = sum(completion_times) / len(
+                    completion_times
+                )
 
         # 更新节点利用率
         for node_id, node in self.compute_nodes.items():

@@ -44,7 +44,7 @@ class MemoryLearningEngine:
             "successful_templates": defaultdict(int),
             "failed_templates": defaultdict(int),
             "user_preferences": defaultdict(list),
-            "time_patterns": defaultdict(list)
+            "time_patterns": defaultdict(list),
         }
 
         # 学习参数
@@ -56,15 +56,10 @@ class MemoryLearningEngine:
             "total_feedback": 0,
             "positive_feedback": 0,
             "negative_feedback": 0,
-            "templates_optimized": 0
+            "templates_optimized": 0,
         }
 
-    async def record_feedback(
-        self,
-        template_id: str,
-        feedback: bool,
-        context: Dict[str, Any]
-    ):
+    async def record_feedback(self, template_id: str, feedback: bool, context: Dict[str, Any]):
         """
         记录用户反馈
         使用移动平均更新成功率（80% 历史 + 20% 新反馈）
@@ -85,8 +80,7 @@ class MemoryLearningEngine:
             # 2. 更新成功率（移动平均）
             current_success = 1.0 if feedback else 0.0
             new_success_rate = (
-                template.success_rate * self.history_weight +
-                current_success * self.feedback_weight
+                template.success_rate * self.history_weight + current_success * self.feedback_weight
             )
 
             template.success_rate = new_success_rate
@@ -103,7 +97,7 @@ class MemoryLearningEngine:
                 "feedback": feedback,
                 "context": context,
                 "timestamp": datetime.utcnow().isoformat(),
-                "previous_success_rate": template.success_rate
+                "previous_success_rate": template.success_rate,
             }
             self.feedback_history.append(feedback_record)
 
@@ -125,10 +119,7 @@ class MemoryLearningEngine:
             logger.error(f"Error recording feedback: {e}", exc_info=True)
 
     def _analyze_user_preferences(
-        self,
-        template: MemoryTemplate,
-        feedback: bool,
-        context: Dict[str, Any]
+        self, template: MemoryTemplate, feedback: bool, context: Dict[str, Any]
     ):
         """
         分析用户偏好
@@ -146,10 +137,7 @@ class MemoryLearningEngine:
             hour = datetime.utcnow().hour
             self.patterns["time_patterns"][hour].append(feedback)
 
-    async def analyze_successful_responses(
-        self,
-        responses: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def analyze_successful_responses(self, responses: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         分析成功回應模式
 
@@ -163,7 +151,7 @@ class MemoryLearningEngine:
             "common_patterns": [],
             "preferred_categories": defaultdict(int),
             "average_length": 0.0,
-            "emotional_tones": defaultdict(int)
+            "emotional_tones": defaultdict(int),
         }
 
         if not responses:
@@ -193,21 +181,15 @@ class MemoryLearningEngine:
 
         # 找出常见模式
         sorted_categories = sorted(
-            analysis["preferred_categories"].items(),
-            key=lambda x: x[1],
-            reverse=True
+            analysis["preferred_categories"].items(), key=lambda x: x[1], reverse=True
         )
         analysis["common_patterns"] = [
-            {"category": cat, "count": count}
-            for cat, count in sorted_categories[:5]
+            {"category": cat, "count": count} for cat, count in sorted_categories[:5]
         ]
 
         return analysis
 
-    async def suggest_new_templates(
-        self,
-        patterns: Dict[str, Any]
-    ) -> List[MemoryTemplate]:
+    async def suggest_new_templates(self, patterns: Dict[str, Any]) -> List[MemoryTemplate]:
         """
         根据模式建议新模板
 
@@ -227,29 +209,35 @@ class MemoryLearningEngine:
 
             # 根据类别生成建议
             if category == "greeting":
-                suggestions.append(MemoryTemplate(
-                    id="",
-                    category=ResponseCategory.GREETING,
-                    content="你好呀！今天有什么有趣的事吗？",
-                    keywords=["你好", "有趣", "今天"],
-                    metadata={"suggested": True, "based_on": "pattern_analysis"}
-                ))
+                suggestions.append(
+                    MemoryTemplate(
+                        id="",
+                        category=ResponseCategory.GREETING,
+                        content="你好呀！今天有什么有趣的事吗？",
+                        keywords=["你好", "有趣", "今天"],
+                        metadata={"suggested": True, "based_on": "pattern_analysis"},
+                    )
+                )
             elif category == "question":
-                suggestions.append(MemoryTemplate(
-                    id="",
-                    category=ResponseCategory.QUESTION,
-                    content="这是个好问题！让我想想...",
-                    keywords=["问题", "想想"],
-                    metadata={"suggested": True, "based_on": "pattern_analysis"}
-                ))
+                suggestions.append(
+                    MemoryTemplate(
+                        id="",
+                        category=ResponseCategory.QUESTION,
+                        content="这是个好问题！让我想想...",
+                        keywords=["问题", "想想"],
+                        metadata={"suggested": True, "based_on": "pattern_analysis"},
+                    )
+                )
             elif category == "emotional":
-                suggestions.append(MemoryTemplate(
-                    id="",
-                    category=ResponseCategory.EMOTIONAL,
-                    content="我理解你的感受，一直都在这里陪着你~",
-                    keywords=["理解", "感受", "陪伴"],
-                    metadata={"suggested": True, "based_on": "pattern_analysis"}
-                ))
+                suggestions.append(
+                    MemoryTemplate(
+                        id="",
+                        category=ResponseCategory.EMOTIONAL,
+                        content="我理解你的感受，一直都在这里陪着你~",
+                        keywords=["理解", "感受", "陪伴"],
+                        metadata={"suggested": True, "based_on": "pattern_analysis"},
+                    )
+                )
 
         logger.info(f"Suggested {len(suggestions)} new templates")
         return suggestions
@@ -269,7 +257,9 @@ class MemoryLearningEngine:
                 # 检查是否需要优化
                 if template.success_rate < 0.5 and template.usage_count > 5:
                     # 成功率低且使用次数多，考虑降级或删除
-                    logger.warning(f"Template {template.id} has low success rate: {template.success_rate}")
+                    logger.warning(
+                        f"Template {template.id} has low success rate: {template.success_rate}"
+                    )
 
                     # 这里可以添加优化逻辑，例如：
                     # - 调整模板内容
@@ -303,8 +293,8 @@ class MemoryLearningEngine:
             "patterns": {
                 "successful_templates_count": len(self.patterns["successful_templates"]),
                 "failed_templates_count": len(self.patterns["failed_templates"]),
-                "user_preferences_count": len(self.patterns["user_preferences"])
-            }
+                "user_preferences_count": len(self.patterns["user_preferences"]),
+            },
         }
 
     def clear_history(self):

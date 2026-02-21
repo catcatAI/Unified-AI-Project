@@ -15,6 +15,7 @@ router = APIRouter(prefix="/pet", tags=["Desktop Pet"])
 # Lazy initialization of PetManager to avoid blocking on import
 _pet_manager = None
 
+
 def get_pet_manager() -> PetManager:
     """獲取目前的 PetManager 實例（懶加載）"""
     global _pet_manager
@@ -23,10 +24,11 @@ def get_pet_manager() -> PetManager:
             pet_id="angela_v1",
             config={
                 "initial_personality": {"curiosity": 0.8, "playfulness": 0.9},
-                "initial_behaviors": {"on_interaction": "show_happiness"}
-            }
+                "initial_behaviors": {"on_interaction": "show_happiness"},
+            },
         )
     return _pet_manager
+
 
 def set_biological_integrator(integrator):
     """設置生理整合器並同步"""
@@ -34,9 +36,11 @@ def set_biological_integrator(integrator):
     pm.biological_integrator = integrator
     pm.sync_with_biological_state()
 
+
 def set_economy_manager(manager):
     """設置經濟管理器"""
     get_pet_manager().set_economy_manager(manager)
+
 
 @router.get("/status")
 async def get_pet_status():
@@ -47,8 +51,9 @@ async def get_pet_status():
         "pet_id": pm.pet_id,
         "state": pm.get_current_state(),
         "personality": pm.personality,
-        "actions": pm.get_pending_actions()  # 返回並清除待執行動作
+        "actions": pm.get_pending_actions(),  # 返回並清除待執行動作
     }
+
 
 @router.post("/interaction")
 async def handle_interaction(interaction: Dict[str, Any] = Body(...)):
@@ -63,10 +68,8 @@ async def handle_interaction(interaction: Dict[str, Any] = Body(...)):
     pm = get_pet_manager()
     result = await pm.handle_interaction(interaction_data)
 
-    return {
-        "status": "success",
-        "new_state": result["new_state"]
-    }
+    return {"status": "success", "new_state": result["new_state"]}
+
 
 @router.post("/position")
 async def update_position(pos_data: Dict[str, Any] = Body(...)):
@@ -78,6 +81,7 @@ async def update_position(pos_data: Dict[str, Any] = Body(...)):
     pm.update_position(x, y, scale)
     return {"status": "success", "current_position": pm.state["position"]}
 
+
 @router.post("/action/trigger")
 async def trigger_action(action_data: Dict[str, Any] = Body(...)):
     """手動觸發寵物動作 (用於測試或外部調用)"""
@@ -85,6 +89,7 @@ async def trigger_action(action_data: Dict[str, Any] = Body(...)):
     data = action_data.get("data", {})
     get_pet_manager().add_action(action_type, data)
     return {"status": "success", "message": f"Action {action_type} added to queue"}
+
 
 @router.post("/mood/update")
 async def update_mood(mood_data: Dict[str, Any] = Body(...)):
@@ -94,6 +99,7 @@ async def update_mood(mood_data: Dict[str, Any] = Body(...)):
     logger.info(f"Updating pet mood to {mood} with intensity {intensity}")
     return {"status": "success", "current_mood": mood, "intensity": intensity}
 
+
 @router.get("/config")
 async def get_pet_config():
     """獲取寵物配置"""
@@ -101,5 +107,5 @@ async def get_pet_config():
         "name": "Angela",
         "version": "1.0.0",
         "live2d_enabled": True,
-        "model_path": "assets/models/angela/model.json"
+        "model_path": "assets/models/angela/model.json",
     }

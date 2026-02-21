@@ -3,12 +3,14 @@ from unittest.mock import patch, MagicMock
 
 from tools.parameter_extractor.extractor import ParameterExtractor
 
+
 @pytest.fixture
 def extractor():
     """Create a ParameterExtractor instance for testing."""
     return ParameterExtractor(repo_id="bert-base-uncased")
 
-@patch('apps.backend.src.tools.parameter_extractor.extractor.hf_hub_download')
+
+@patch("apps.backend.src.tools.parameter_extractor.extractor.hf_hub_download")
 def test_download_model_parameters(mock_hf_hub_download, extractor) -> None:
     # Arrange
     mock_hf_hub_download.return_value = "/fake/path/pytorch_model.bin"
@@ -20,9 +22,10 @@ def test_download_model_parameters(mock_hf_hub_download, extractor) -> None:
     mock_hf_hub_download.assert_called_once_with(
         repo_id="bert-base-uncased",
         filename="pytorch_model.bin",
-        cache_dir="model_cache"  # Using default value
+        cache_dir="model_cache",  # Using default value
     )
     assert result == "/fake/path/pytorch_model.bin"
+
 
 def test_map_parameters(extractor) -> None:
     # Arrange
@@ -46,6 +49,7 @@ def test_map_parameters(extractor) -> None:
         "pooler.weight": 2,
     }
     assert mapped_params == expected_params
+
 
 def test_load_parameters_to_model(extractor) -> None:
     # Arrange

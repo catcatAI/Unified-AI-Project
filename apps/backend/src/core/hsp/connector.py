@@ -27,10 +27,16 @@ from .advanced_performance_optimizer import (
 from .security import HSPSecurityManager, HSPSecurityContext
 from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
 from .utils.fallback_config_loader import FallbackConfigLoader
+
 # from .retry_policy import RetryPolicy
 # from .circuit_breaker import CircuitBreaker
 from .utils.fallback_config_loader import get_config_loader
-from shared.network_resilience import NetworkResilienceManager, NetworkError, RetryPolicy, CircuitBreaker
+from shared.network_resilience import (
+    NetworkResilienceManager,
+    NetworkError,
+    RetryPolicy,
+    CircuitBreaker,
+)
 from core.shared.error import ErrorHandler
 from .internal.internal_bus import InternalBus
 from .bridge.message_bridge import MessageBridge
@@ -150,17 +156,13 @@ class HSPConnector:
 
         if self.mock_mode:
             self.logger.info("HSPConnector: Initializing in mock mode.")
-            self.logger.debug(
-                f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}"
-            )
+            self.logger.debug(f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}")
             self.external_connector = MagicMock(spec=ExternalConnector)
             self.external_connector.ai_id = ai_id  # Ensure mock has ai_id
             self.external_connector.connect.return_value = True
             self.external_connector.disconnect.return_value = True
             self.external_connector.subscribe.return_value = True
-            self.external_connector.unsubscribe.return_value = (
-                True  # Corrected assignment
-            )
+            self.external_connector.unsubscribe.return_value = True  # Corrected assignment
             self.external_connector.publish = AsyncMock(
                 return_value=True
             )  # Explicitly set return value for publish
@@ -203,14 +205,12 @@ class HSPConnector:
         self._connect_callbacks = []
         self._disconnect_callbacks = []
 
-        self._pending_acks: Dict[
-            str, asyncio.Future[Any]
-        ] = {}  # New To track messages awaiting ACK
-        self._message_retry_counts: Dict[
-            str, int
-        ] = {}  # New To track retry counts for messages
-        self.ack_timeout_sec = kwargs.get('ack_timeout_sec', 3)  # Configurable ACK timeout
-        self.max_ack_retries = kwargs.get('max_ack_retries', 2)  # Configurable max retries
+        self._pending_acks: Dict[str, asyncio.Future[Any]] = (
+            {}
+        )  # New To track messages awaiting ACK
+        self._message_retry_counts: Dict[str, int] = {}  # New To track retry counts for messages
+        self.ack_timeout_sec = kwargs.get("ack_timeout_sec", 3)  # Configurable ACK timeout
+        self.max_ack_retries = kwargs.get("max_ack_retries", 2)  # Configurable max retries
         self.retry_policy = RetryPolicy(
             max_attempts=self.max_ack_retries, backoff_factor=2
         )  # Initialize retry policy
@@ -237,14 +237,10 @@ class HSPConnector:
             self.external_connector.on_message_callback = callback  # type: ignore
 
         # Subscribe to internal bus messages that need to go external
-        self.internal_bus.subscribe(
-            "hsp.internal.message", self._handle_internal_message
-        )
+        self.internal_bus.subscribe("hsp.internal.message", self._handle_internal_message)
 
         # Subscribe to internal bus messages that are results from external
-        self.internal_bus.subscribe(
-            "hsp.external.fact", self._dispatch_fact_to_callbacks_sync
-        )
+        self.internal_bus.subscribe("hsp.external.fact", self._dispatch_fact_to_callbacks_sync)
         self.internal_bus.subscribe(
             "hsp.external.capability_advertisement",
             self._dispatch_capability_advertisement_to_callbacks_sync,
@@ -268,13 +264,9 @@ class HSPConnector:
         """同步包装器用于分发事实消息到回调"""
         asyncio.create_task(self._dispatch_fact_to_callbacks(message))
 
-    def _dispatch_capability_advertisement_to_callbacks_sync(
-        self, message: Any
-    ) -> None:
+    def _dispatch_capability_advertisement_to_callbacks_sync(self, message: Any) -> None:
         """同步包装器用于分发能力广告消息到回调"""
-        asyncio.create_task(
-            self._dispatch_capability_advertisement_to_callbacks(message)
-        )
+        asyncio.create_task(self._dispatch_capability_advertisement_to_callbacks(message))
 
     def _dispatch_task_request_to_callbacks_sync(self, message: Any) -> None:
         """同步包装器用于分发任务请求消息到回调"""
@@ -299,9 +291,7 @@ class HSPConnector:
             except Exception as e:
                 self.logger.error(f"Error in fact callback: {e}")
 
-    async def _dispatch_capability_advertisement_to_callbacks(
-        self, message: Any
-    ) -> None:
+    async def _dispatch_capability_advertisement_to_callbacks(self, message: Any) -> None:
         """异步分发能力广告消息到回调"""
         for callback in self._capability_advertisement_callbacks:
             try:
@@ -341,7 +331,7 @@ class HSPConnector:
 
     async def connect(self) -> bool:
         """Connect to the HSP network."""
-        if hasattr(self, 'external_connector') and hasattr(self.external_connector, 'connect'):
+        if hasattr(self, "external_connector") and hasattr(self.external_connector, "connect"):
             success = await self.external_connector.connect()
             self.is_connected = success
             return success
@@ -359,20 +349,12 @@ class HSPConnector:
 
         # Tests expect signature on_message(client, topic, payload, qos, properties)
         # MessageBridge.handle_external_message expects handle_external_message(topic, message)
-        async def test_compatible_on_message(
-            client, topic, payload, qos, properties
-        ) -> None:
-            topic_str = (
-                topic.decode() if isinstance(topic, (bytes, bytearray)) else topic
-            )
-            payload_str = (
-                payload.decode() if isinstance(payload, (bytes, bytearray)) else payload
-            )
+        async def test_compatible_on_message(client, topic, payload, qos, properties) -> None:
+            topic_str = topic.decode() if isinstance(topic, (bytes, bytearray)) else topic
+            payload_str = payload.decode() if isinstance(payload, (bytes, bytearray)) else payload
             # 直接调用回调函数而不是创建任务
             if self.external_connector.on_message_callback:
-                await self.external_connector.on_message_callback(
-                    topic_str, payload_str
-                )
+                await self.external_connector.on_message_callback(topic_str, payload_str)
 
         return test_compatible_on_message
 
@@ -463,9 +445,7 @@ class HSPConnector:
                 await self.external_connector.disconnect()
                 self.logger.info("HSPConnector: External connector disconnected.")
             except Exception as e:
-                self.logger.error(
-                    f"HSPConnector: Error during external connector disconnect: {e}"
-                )
+                self.logger.error(f"HSPConnector: Error during external connector disconnect: {e}")
 
         if self.fallback_manager:
             try:
@@ -476,9 +456,7 @@ class HSPConnector:
                     self.fallback_manager.shutdown()
                 self.logger.info("HSPConnector: Fallback manager shut down.")
             except Exception as e:
-                self.logger.error(
-                    f"HSPConnector: Error during fallback manager shutdown: {e}"
-                )
+                self.logger.error(f"HSPConnector: Error during fallback manager shutdown: {e}")
 
         self.is_connected = False
         self.hsp_available = False
@@ -551,11 +529,7 @@ class HSPConnector:
             if http_config.get("enabled", True) and self.fallback_manager:
                 host = http_config.get("host", "127.0.0.1")
                 # Check TESTING env var here as well
-                port = (
-                    0
-                    if os.environ.get("TESTING") == "true"
-                    else http_config.get("port", 8765)
-                )
+                port = 0 if os.environ.get("TESTING") == "true" else http_config.get("port", 8765)
                 http_protocol = HTTPProtocol(host=host, port=port)
                 priority = http_config.get("priority", 3)
                 self.fallback_manager.add_protocol(http_protocol, priority=priority)
@@ -632,9 +606,7 @@ class HSPConnector:
                     self.fallback_manager.get_status
                 ):
                     fallback_status = self.fallback_manager.get_status()
-                    health["fallback_healthy"] = (
-                        fallback_status.get("active_protocol") is not None
-                    )
+                    health["fallback_healthy"] = fallback_status.get("active_protocol") is not None
             except (AttributeError, KeyError, RuntimeError) as e:
                 health["fallback_healthy"] = False
                 logger.debug(f"Fallback健康檢查失敗（可忽略）: {e}")
@@ -701,13 +673,9 @@ class HSPConnector:
             success = await self.publish_message(topic, envelope)
 
             if success:
-                self.logger.info(
-                    f"Opinion {opinion_payload.get('id')} published successfully."
-                )
+                self.logger.info(f"Opinion {opinion_payload.get('id')} published successfully.")
             else:
-                self.logger.error(
-                    f"Failed to publish opinion {opinion_payload.get('id')}."
-                )
+                self.logger.error(f"Failed to publish opinion {opinion_payload.get('id')}.")
 
             return success
 
@@ -745,13 +713,11 @@ class HSPConnector:
         )
 
         # 安全验证
-        is_valid, validated_message = (
-            self.security_context.authenticate_and_process_message(message)
+        is_valid, validated_message = self.security_context.authenticate_and_process_message(
+            message
         )
         if not is_valid:
-            self.logger.warning(
-                f"消息安全验证失败: {message.get('message_id', 'unknown')}"
-            )
+            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
             return
 
         # 使用验证后的消息
@@ -790,9 +756,7 @@ class HSPConnector:
                     "security_parameters": None,
                     "qos_parameters": {"requires_ack": False, "priority": "low"},
                     "routing_info": None,
-                    "payload_schema_uri": get_schema_uri(
-                        "HSP_Acknowledgement_v0.1.schema.json"
-                    ),
+                    "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
                     "payload": dict(ack_payload),
                 }
                 # Publish ACK to the sender's ACK topic with correct prefix and QoS 1
@@ -808,13 +772,11 @@ class HSPConnector:
         )
 
         # 安全验证
-        is_valid, validated_message = (
-            self.security_context.authenticate_and_process_message(message)
+        is_valid, validated_message = self.security_context.authenticate_and_process_message(
+            message
         )
         if not is_valid:
-            self.logger.warning(
-                f"消息安全验证失败: {message.get('message_id', 'unknown')}"
-            )
+            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
             return
 
         # 使用验证后的消息
@@ -830,9 +792,7 @@ class HSPConnector:
                 ack_future = self._pending_acks[correlation_id]
                 if not ack_future.done():
                     ack_future.set_result(ack_payload)
-                    self.logger.debug(
-                        f"Resolved pending ACK for correlation_id: {correlation_id}"
-                    )
+                    self.logger.debug(f"Resolved pending ACK for correlation_id: {correlation_id}")
 
             for callback in self._acknowledgement_callbacks:
                 self.logger.debug(f"Calling on_acknowledgement_callback: {callback}")
@@ -911,8 +871,7 @@ class HSPConnector:
             "protocol_version": self.version_manager.current_version,
             "communication_pattern": communication_pattern,
             "security_parameters": None,
-            "qos_parameters": qos_parameters
-            or {"requires_ack": False, "priority": "medium"},
+            "qos_parameters": qos_parameters or {"requires_ack": False, "priority": "medium"},
             "routing_info": None,
             "payload_schema_uri": payload_schema_uri,
             "payload": payload,
@@ -920,9 +879,7 @@ class HSPConnector:
 
         # 应用安全处理
         try:
-            _secured_envelope = self.security_context.secure_message(
-                dict(envelope), self.ai_id
-            )
+            _secured_envelope = self.security_context.secure_message(dict(envelope), self.ai_id)
             # 确保返回类型正确
             return envelope
         except Exception as e:
@@ -932,10 +889,7 @@ class HSPConnector:
     def _cache_message(self, message_id: str, result: bool) -> None:
         """Cache a message result with TTL."""
         if message_id:
-            self.message_cache[message_id] = {
-                "result": result,
-                "timestamp": time.time()
-            }
+            self.message_cache[message_id] = {"result": result, "timestamp": time.time()}
 
     def _get_cached_message(self, message_id: str) -> Optional[bool]:
         """Get a cached message result, respecting TTL."""
@@ -973,7 +927,7 @@ class HSPConnector:
             # Prepare message for ExternalConnector.send
             message = dict(envelope)
             message["target_id"] = envelope.get("recipient_ai_id") or "all"
-            
+
             if hasattr(self.external_connector, "send"):
                 return await self.external_connector.send(message)
             elif hasattr(self.external_connector, "publish"):
@@ -981,16 +935,14 @@ class HSPConnector:
                 payload = json.dumps(envelope, ensure_ascii=False)
                 await self.external_connector.publish(topic, payload, qos)
                 return True
-            
+
             self.logger.error("ExternalConnector has neither 'send' nor 'publish' method")
             return False
         except Exception as e:
             self.logger.error(f"Error in _raw_publish_message: {e}")
             return False
 
-    async def publish_message(
-        self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1
-    ) -> bool:
+    async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
         self.logger.debug("HSPConnector: publish_message called.")
 
         message_id = envelope.get("message_id")
@@ -1015,9 +967,7 @@ class HSPConnector:
         # 性能优化：批量发送
         if self.batch_send_enabled and not requires_ack:
             # 将消息添加到批处理队列
-            self.message_batch.append(
-                {"topic": topic, "envelope": envelope, "qos": qos}
-            )
+            self.message_batch.append({"topic": topic, "envelope": envelope, "qos": qos})
             # 尝试批量发送
             await self._batch_send_messages()
             # 缓存结果
@@ -1035,7 +985,7 @@ class HSPConnector:
             raw_result = await self.circuit_breaker(self.retry_policy(self._raw_publish_message))(
                 topic, envelope, qos
             )
-            
+
             if not raw_result:
                 self.logger.warning(
                     f"Message {correlation_id} raw publish failed (e.g. target not found). Skipping ACK wait."
@@ -1043,9 +993,7 @@ class HSPConnector:
                 self._cache_message(message_id, False)
                 return False
 
-            self.logger.debug(
-                f"Message {correlation_id} published via HSP (decorated)."
-            )
+            self.logger.debug(f"Message {correlation_id} published via HSP (decorated).")
 
             if requires_ack:
                 ack_future = asyncio.Future()
@@ -1065,9 +1013,7 @@ class HSPConnector:
                     )
                     # Try fallback first before retrying
                     if self.enable_fallback and self.fallback_manager:
-                        fallback_success = await self._send_via_fallback(
-                            topic, dict(envelope), qos
-                        )
+                        fallback_success = await self._send_via_fallback(topic, dict(envelope), qos)
                         if fallback_success:
                             self.logger.info(
                                 f"Message {correlation_id} sent via fallback after ACK timeout."
@@ -1119,9 +1065,7 @@ class HSPConnector:
                 await asyncio.sleep(2**retry_count)
                 return await self.publish_message(topic, envelope, qos)
             else:
-                self.logger.error(
-                    f"Max retries exceeded for message {correlation_id} after error."
-                )
+                self.logger.error(f"Max retries exceeded for message {correlation_id} after error.")
                 # 缓存结果
                 self._cache_message(message_id, False)
                 return False

@@ -15,15 +15,22 @@ try:
 except ImportError:
     yaml = None
 
-from ai.knowledge_graph.types import KnowledgeGraph, KGEntity, KGRelationship, KnowledgeGraphMetadata
+from ai.knowledge_graph.types import (
+    KnowledgeGraph,
+    KGEntity,
+    KGRelationship,
+    KnowledgeGraphMetadata,
+)
 from core.hsp.payloads import HSPFactPayload
 
 logger = logging.getLogger(__name__)
 
 # - - - Types for process_hsp_fact_content return value - - -
 
+
 class ProcessedTripleInfo(TypedDict):
     """Detailed information about a semantic triple processed by ContentAnalyzerModule."""
+
     subject_id: str
     predicate_type: str
     object_id: str
@@ -32,18 +39,22 @@ class ProcessedTripleInfo(TypedDict):
     original_object_uri_or_literal: Any
     object_is_uri: bool
 
+
 class CAHSPFactProcessingResult(TypedDict):
     """Result structure from ContentAnalyzerModule's processing of an HSP fact."""
+
     updated_graph: bool
     processed_triple: Optional[ProcessedTripleInfo]
 
+
 # - - - End Types - - -
+
 
 class ContentAnalyzerModule:
     """
     内容分析模块 - 使用NLP技术从文本中提取实体和关系, 并构建知识圖譜
     """
-    
+
     _nlp_model: Optional[spacy.language.Language] = None
 
     def __init__(self, spacy_model_name: str = "en_core_web_sm") -> None:
@@ -52,9 +63,12 @@ class ContentAnalyzerModule:
                 ContentAnalyzerModule._nlp_model = spacy.load(spacy_model_name)
                 logger.info(f"Successfully loaded spaCy model: {spacy_model_name}")
             except OSError:
-                logger.warning(f"spaCy model '{spacy_model_name}' not found. Attempting to download it.")
+                logger.warning(
+                    f"spaCy model '{spacy_model_name}' not found. Attempting to download it."
+                )
                 try:
                     from spacy import cli
+
                     cli.download(spacy_model_name)
                     ContentAnalyzerModule._nlp_model = spacy.load(spacy_model_name)
                 except Exception as e:
@@ -79,11 +93,13 @@ class ContentAnalyzerModule:
     def _load_ontology_mappings(self, filepath: Optional[str] = None):
         if filepath is None:
             current_script_dir = os.path.dirname(os.path.abspath(__file__))
-            filepath = os.path.join(current_script_dir, "..", "..", "configs", "ontology_mappings.yaml")
+            filepath = os.path.join(
+                current_script_dir, "..", "..", "configs", "ontology_mappings.yaml"
+            )
 
         if yaml and os.path.exists(filepath):
             try:
-                with open(filepath, 'r', encoding='utf-8') as f:
+                with open(filepath, "r", encoding="utf-8") as f:
                     config = yaml.safe_load(f)
                 self.internal_uri_prefixes = config.get("internal_uri_prefixes", {})
                 self.ontology_mapping.update(config.get("class_mappings", {}))
@@ -98,27 +114,32 @@ class ContentAnalyzerModule:
         self.matcher.add("LOCATED_IN", [[{"LEMMA": "be"}, {"LOWER": "located"}, {"LOWER": "in"}]])
         self.matcher.add("WORKS_FOR", [[{"LEMMA": "work"}, {"LOWER": "for"}]])
         self.matcher.add("BASED_IN", [[{"LEMMA": "be"}, {"LOWER": "based"}, {"LOWER": "in"}]])
-        self.matcher.add("PERSON_IS_TITLE_OF_ORG", [[
-            {"ENT_TYPE": "PERSON"},
-            {"LEMMA": "be"},
-            {"POS": {"IN": ["DET", "ADJ"]}, "OP": "*"},
-            {"POS": {"IN": ["NOUN", "PROPN"]}},
-            {"LOWER": "of"},
-            {"ENT_TYPE": {"IN": ["ORG", "COMPANY"]}}
-        ]])
+        self.matcher.add(
+            "PERSON_IS_TITLE_OF_ORG",
+            [
+                [
+                    {"ENT_TYPE": "PERSON"},
+                    {"LEMMA": "be"},
+                    {"POS": {"IN": ["DET", "ADJ"]}, "OP": "*"},
+                    {"POS": {"IN": ["NOUN", "PROPN"]}},
+                    {"LOWER": "of"},
+                    {"ENT_TYPE": {"IN": ["ORG", "COMPANY"]}},
+                ]
+            ],
+        )
 
     def analyze_content(self, text: str) -> Tuple[KnowledgeGraph, nx.DiGraph]:
         logger.debug(f"Analyzing content: {text}")
         doc = self.nlp(text) if self.nlp else None
-        
+
         entities: Dict[str, KGEntity] = {}
         relationships: List[KGRelationship] = []
-        
+
         if doc:
             # Entity Extraction
             for ent in doc.ents:
                 entity_id = self._get_or_create_entity(ent, entities)
-            
+
             # Manual entity extraction for known test patterns
             self._handle_known_test_entities(text, entities)
 
@@ -143,16 +164,16 @@ class ContentAnalyzerModule:
                 "source_text_length": len(text),
                 "processed_with_model": "en_core_web_sm" if self.nlp else "none",
                 "entity_count": len(entities),
-                "relationship_count": len(relationships)
-            }
+                "relationship_count": len(relationships),
+            },
         }
         return kg_result, self.graph.copy()
 
     def _get_or_create_entity(self, token: Any, entities: Dict[str, KGEntity]) -> str:
-        label = token.text if hasattr(token, 'text') else str(token)
-        etype = token.label_ if hasattr(token, 'label_') else "UNKNOWN"
-        start = token.start_char if hasattr(token, 'start_char') else 0
-        end = token.end_char if hasattr(token, 'end_char') else 0
+        label = token.text if hasattr(token, "text") else str(token)
+        etype = token.label_ if hasattr(token, "label_") else "UNKNOWN"
+        start = token.start_char if hasattr(token, "start_char") else 0
+        end = token.end_char if hasattr(token, "end_char") else 0
 
         # Consistent ID generation
         clean_label = "".join(c.lower() for c in label if c.isalnum() or c == " ").replace(" ", "_")
@@ -168,28 +189,38 @@ class ContentAnalyzerModule:
                 "id": entity_id,
                 "label": label,
                 "type": etype,
-                "attributes": {"start_char": start, "end_char": end}
+                "attributes": {"start_char": start, "end_char": end},
             }
             self.graph.add_node(entity_id, label=label, type=etype)
-        
+
         return entity_id
 
     def _handle_known_test_entities(self, text: str, entities: Dict[str, KGEntity]):
         # Consolidate test patterns from corrupted code
         known_entities = [
-            ("Apple Inc.", "ORG"), ("Apple", "ORG"), ("Steve Jobs", "PERSON"),
-            ("Google", "ORG"), ("Microsoft", "ORG"), ("Redmond", "GPE"),
-            ("Sundar Pichai", "PERSON"), ("Innovate Corp", "ORG"),
-            ("Silicon Valley", "LOC"), ("John Doe", "PERSON"),
-            ("Acme Corp.", "ORG"), ("France", "GPE"), ("Paris", "GPE")
+            ("Apple Inc.", "ORG"),
+            ("Apple", "ORG"),
+            ("Steve Jobs", "PERSON"),
+            ("Google", "ORG"),
+            ("Microsoft", "ORG"),
+            ("Redmond", "GPE"),
+            ("Sundar Pichai", "PERSON"),
+            ("Innovate Corp", "ORG"),
+            ("Silicon Valley", "LOC"),
+            ("John Doe", "PERSON"),
+            ("Acme Corp.", "ORG"),
+            ("France", "GPE"),
+            ("Paris", "GPE"),
         ]
         for label, etype in known_entities:
             if label in text:
                 pos = text.find(label)
+
                 # Create mock span-like object
                 class MockSpan:
                     def __init__(self, t, l, s, e):
                         self.text, self.label_, self.start_char, self.end_char = t, l, s, e
+
                 self._get_or_create_entity(MockSpan(label, etype, pos, pos + len(label)), entities)
 
     def _add_svo_relationship(self, subj, verb, obj, entities, relationships):
@@ -201,7 +232,7 @@ class ContentAnalyzerModule:
                 "target_id": o_id,
                 "type": verb.lemma_,
                 "weight": 1.0,
-                "attributes": {"pattern": "SVO_DEPENDENCY"}
+                "attributes": {"pattern": "SVO_DEPENDENCY"},
             }
             relationships.append(rel)
             self.graph.add_edge(s_id, o_id, type=verb.lemma_)
@@ -209,16 +240,22 @@ class ContentAnalyzerModule:
     def _get_or_create_entity_from_token(self, token, entities):
         # Find if token belongs to an entity
         for eid, edata in entities.items():
-            if edata["attributes"].get("start_char", 0) <= token.idx < edata["attributes"].get("end_char", 0):
+            if (
+                edata["attributes"].get("start_char", 0)
+                <= token.idx
+                < edata["attributes"].get("end_char", 0)
+            ):
                 return eid
         # Create a new one if not found
         return self._get_or_create_entity(token, entities)
 
     def _handle_matcher_match(self, rule_id, span, doc, entities, relationships):
         # Simplified handler for matcher rules
-        pass # Implement logic for specific rules if needed
+        pass  # Implement logic for specific rules if needed
 
-    def process_hsp_fact_content(self, hsp_fact_payload: HSPFactPayload, source_ai_id: str) -> CAHSPFactProcessingResult:
+    def process_hsp_fact_content(
+        self, hsp_fact_payload: HSPFactPayload, source_ai_id: str
+    ) -> CAHSPFactProcessingResult:
         statement_type = hsp_fact_payload.get("statement_type")
         fact_id = hsp_fact_payload.get("id", str(uuid.uuid4()))
 
@@ -227,18 +264,18 @@ class ContentAnalyzerModule:
             if nl_statement:
                 kg_data, _ = self.analyze_content(nl_statement)
                 return {"updated_graph": True, "processed_triple": None}
-        
+
         elif statement_type == "semantic_triple":
             structured = hsp_fact_payload.get("statement_structured", {})
             subject_uri = structured.get("subject_uri")
             predicate_uri = structured.get("predicate_uri")
             object_uri = structured.get("object_uri") or structured.get("object_literal")
-            
+
             if subject_uri and predicate_uri and object_uri:
                 s_id = self.ontology_mapping.get(subject_uri, subject_uri)
                 p_type = self.ontology_mapping.get(predicate_uri, predicate_uri.split("#")[-1])
                 o_id = self.ontology_mapping.get(object_uri, str(object_uri))
-                
+
                 self.graph.add_edge(s_id, o_id, type=p_type)
                 return {
                     "updated_graph": True,
@@ -249,8 +286,8 @@ class ContentAnalyzerModule:
                         "original_subject_uri": subject_uri,
                         "original_predicate_uri": predicate_uri,
                         "original_object_uri_or_literal": object_uri,
-                        "object_is_uri": bool(structured.get("object_uri"))
-                    }
+                        "object_is_uri": bool(structured.get("object_uri")),
+                    },
                 }
 
         return {"updated_graph": False, "processed_triple": None}

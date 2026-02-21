@@ -28,6 +28,7 @@ class PrecomputeTask:
     """
     预计算任务
     """
+
     query: str
     category: ResponseCategory
     keywords: List[str]
@@ -51,7 +52,7 @@ class PrecomputeService:
         idle_threshold: float = 5.0,
         cpu_threshold: float = 70.0,
         max_queue_size: int = 50,
-        llm_timeout: float = 180.0
+        llm_timeout: float = 180.0,
     ):
         """
         初始化预计算服务
@@ -90,7 +91,7 @@ class PrecomputeService:
             "processed_tasks": 0,
             "failed_tasks": 0,
             "average_processing_time": 0.0,
-            "total_processing_time": 0.0
+            "total_processing_time": 0.0,
         }
 
     async def start(self):
@@ -222,11 +223,7 @@ class PrecomputeService:
             start_time = time.time()
 
             # 调用 LLM 生成回應
-            response = await self._generate_with_timeout(
-                task.query,
-                task.context,
-                self.llm_timeout
-            )
+            response = await self._generate_with_timeout(task.query, task.context, self.llm_timeout)
 
             if response.error:
                 logger.warning(f"LLM generation failed: {response.error}")
@@ -247,8 +244,8 @@ class PrecomputeService:
                     "generated_at": datetime.utcnow().isoformat(),
                     "llm_backend": response.backend,
                     "llm_model": response.model,
-                    "response_time_ms": response.response_time_ms
-                }
+                    "response_time_ms": response.response_time_ms,
+                },
             )
 
             # 存储到记忆系统
@@ -266,8 +263,7 @@ class PrecomputeService:
             processing_time = time.time() - start_time
             self.stats["total_processing_time"] += processing_time
             self.stats["average_processing_time"] = (
-                self.stats["total_processing_time"] /
-                self.stats["processed_tasks"]
+                self.stats["total_processing_time"] / self.stats["processed_tasks"]
                 if self.stats["processed_tasks"] > 0
                 else 0.0
             )
@@ -280,12 +276,7 @@ class PrecomputeService:
             self.failed_count += 1
             self.stats["failed_tasks"] += 1
 
-    async def _generate_with_timeout(
-        self,
-        query: str,
-        context: Dict[str, Any],
-        timeout: float
-    ):
+    async def _generate_with_timeout(self, query: str, context: Dict[str, Any], timeout: float):
         """
         带超时的 LLM 生成
 
@@ -300,28 +291,21 @@ class PrecomputeService:
         try:
             # 使用 asyncio.wait_for 设置超时
             response = await asyncio.wait_for(
-                self.llm_service.generate_response(query, context),
-                timeout=timeout
+                self.llm_service.generate_response(query, context), timeout=timeout
             )
             return response
         except asyncio.TimeoutError:
             logger.warning(f"LLM generation timeout after {timeout}s")
             from ..services.angela_llm_service import LLMResponse
+
             return LLMResponse(
-                text="",
-                backend="timeout",
-                model="",
-                error=f"Timeout after {timeout}s"
+                text="", backend="timeout", model="", error=f"Timeout after {timeout}s"
             )
         except Exception as e:
             logger.error(f"LLM generation error: {e}", exc_info=True)
             from ..services.angela_llm_service import LLMResponse
-            return LLMResponse(
-                text="",
-                backend="error",
-                model="",
-                error=str(e)
-            )
+
+            return LLMResponse(text="", backend="error", model="", error=str(e))
 
     def get_stats(self) -> Dict[str, Any]:
         """
@@ -340,7 +324,7 @@ class PrecomputeService:
             "idle_time": idle_time,
             "cpu_percent": cpu_percent,
             "processed_count": self.processed_count,
-            "failed_count": self.failed_count
+            "failed_count": self.failed_count,
         }
 
     def clear_queue(self):

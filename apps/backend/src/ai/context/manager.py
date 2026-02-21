@@ -1,11 +1,14 @@
 """上下文管理器核心实现"""
+
 # Angela Matrix: [L2:MEM] [L4:CTX] Context manager
 
 import uuid
 import logging
+
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from datetime import datetime
 from typing import Dict, List, Optional, Any
+
 # from .storage.base import  # Commented out - incomplete import
 # from .storage.memory import  # Commented out - incomplete import
 # from .storage.disk import  # Commented out - incomplete import
@@ -49,7 +52,9 @@ class ContextManager:
             # 添加到缓存
             # self._context_cache[context_id] = context
 
-            logger.info(f"Created new context {context_id} of type {context_type.value if hasattr(context_type, 'value') else context_type}")
+            logger.info(
+                f"Created new context {context_id} of type {context_type.value if hasattr(context_type, 'value') else context_type}"
+            )
             return context_id
         except Exception as e:
             logger.error(f"Failed to create context: {e}")
@@ -136,7 +141,9 @@ class ContextManager:
             if success:
                 logger.info(f"Context {context_id} deleted successfully")
             else:
-                logger.warning(f"Failed to delete context {context_id} from one or more storage layers")
+                logger.warning(
+                    f"Failed to delete context {context_id} from one or more storage layers"
+                )
 
             return success
         except Exception as e:
@@ -176,7 +183,10 @@ class ContextManager:
                     content_str = str(context.content)
                     metadata_str = str(context.metadata)
 
-                    if query and (query.lower() in content_str.lower() or query.lower() in metadata_str.lower()):
+                    if query and (
+                        query.lower() in content_str.lower()
+                        or query.lower() in metadata_str.lower()
+                    ):
                         results.append(context)
 
             logger.info(f"Found {len(results)} contexts matching query '{query}'")
@@ -185,7 +195,9 @@ class ContextManager:
             logger.error(f"Failed to search contexts: {e}")
             return []
 
-    def transfer_context(self, source_id: str, target_id: str, filter_criteria: Optional[Dict[str, Any]] = None) -> bool:
+    def transfer_context(
+        self, source_id: str, target_id: str, filter_criteria: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """传递上下文"""
         try:
             # 获取源上下文
@@ -243,14 +255,20 @@ class ContextManager:
 
             summary = {
                 "context_id": context.context_id,
-                "context_type": context.context_type.value if hasattr(context.context_type, 'value') else context.context_type,
+                "context_type": (
+                    context.context_type.value
+                    if hasattr(context.context_type, "value")
+                    else context.context_type
+                ),
                 "created_at": context.created_at.isoformat(),
                 "updated_at": context.updated_at.isoformat(),
-                "status": context.status.value if hasattr(context.status, 'value') else context.status,
+                "status": (
+                    context.status.value if hasattr(context.status, "value") else context.status
+                ),
                 "version": context.version,
                 "tags": context.tags,
                 "content_keys": list(context.content.keys()),
-                "metadata_keys": list(context.metadata.keys())
+                "metadata_keys": list(context.metadata.keys()),
             }
 
             logger.debug(f"Generated summary for context {context_id}")

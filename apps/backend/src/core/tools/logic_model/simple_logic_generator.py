@@ -5,6 +5,7 @@
 import random
 from typing import List, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,11 +63,7 @@ def generate_simple_logic_dataset(num_samples: int = 1000) -> List[Dict[str, Any
             else:
                 answer = first_part or right_val
 
-        dataset.append({
-            "proposition": prop,
-            "answer": answer,
-            "type": prop_type
-        })
+        dataset.append({"proposition": prop, "answer": answer, "type": prop_type})
 
     return dataset
 
@@ -78,7 +75,7 @@ def save_dataset(dataset: List[Dict[str, Any]], output_file: str):
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
 
     logger.info(f"保存 {len(dataset)} 个样本到 {output_file}")

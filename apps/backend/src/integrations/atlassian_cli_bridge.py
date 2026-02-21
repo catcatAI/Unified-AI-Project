@@ -3,6 +3,7 @@ import json
 import logging
 from typing import Dict, List, Optional, Any
 
+
 class AtlassianCLIBridge:
     """A bridge to interact with Atlassian products via a command-line tool (acli)."""
 
@@ -15,7 +16,9 @@ class AtlassianCLIBridge:
     def _check_acli_available(self) -> bool:
         """Checks if the Atlassian CLI tool is available."""
         try:
-            result = subprocess.run([self.acli_path, "--version"], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                [self.acli_path, "--version"], capture_output=True, text=True, timeout=10
+            )
             return result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired) as e:
             self.logger.error(f"ACLI check failed: {e}")
@@ -26,22 +29,25 @@ class AtlassianCLIBridge:
         try:
             full_command = [self.acli_path] + command
             self.logger.info(f"Running ACLI command: {' '.join(full_command)}")
-            result = subprocess.run(full_command, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                full_command, capture_output=True, text=True, timeout=30, check=False
+            )
             return {
                 "success": result.returncode == 0,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
         except subprocess.TimeoutExpired:
             return {
-                "success": False, "error": "Command timeout",
-                "stdout": "", "stderr": "Command timed out after 30 seconds"
+                "success": False,
+                "error": "Command timeout",
+                "stdout": "",
+                "stderr": "Command timed out after 30 seconds",
             }
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"success": False, "error": str(e), "stdout": "", "stderr": str(e)}
-
 
     def get_jira_projects(self) -> Dict[str, Any]:
         """Gets the list of Jira projects."""
@@ -49,11 +55,23 @@ class AtlassianCLIBridge:
         if result["success"]:
             try:
                 projects = json.loads(result["stdout"])
-                return {"success": True, "projects": projects, "count": len(projects) if isinstance(projects, list) else 0}
+                return {
+                    "success": True,
+                    "projects": projects,
+                    "count": len(projects) if isinstance(projects, list) else 0,
+                }
             except json.JSONDecodeError:
-                return {"success": False, "error": "Failed to parse JSON response", "raw_output": result["stdout"]}
+                return {
+                    "success": False,
+                    "error": "Failed to parse JSON response",
+                    "raw_output": result["stdout"],
+                }
         else:
-            return {"success": False, "error": result.get("error", "Unknown error"), "stderr": result["stderr"]}
+            return {
+                "success": False,
+                "error": result.get("error", "Unknown error"),
+                "stderr": result["stderr"],
+            }
 
     def get_jira_issues(self, jql: str = "", limit: int = 50) -> Dict[str, Any]:
         """Gets a list of Jira issues based on a JQL query."""
@@ -65,20 +83,46 @@ class AtlassianCLIBridge:
         if result["success"]:
             try:
                 issues = json.loads(result["stdout"])
-                return {"success": True, "issues": issues, "count": len(issues) if isinstance(issues, list) else 0}
+                return {
+                    "success": True,
+                    "issues": issues,
+                    "count": len(issues) if isinstance(issues, list) else 0,
+                }
             except json.JSONDecodeError:
-                return {"success": False, "error": "Failed to parse JSON response", "raw_output": result["stdout"]}
+                return {
+                    "success": False,
+                    "error": "Failed to parse JSON response",
+                    "raw_output": result["stdout"],
+                }
         else:
-            return {"success": False, "error": result.get("error", "Unknown error"), "stderr": result["stderr"]}
+            return {
+                "success": False,
+                "error": result.get("error", "Unknown error"),
+                "stderr": result["stderr"],
+            }
 
-    def create_jira_issue(self, project_key: str, summary: str, description: str = "", issue_type: str = "Task", priority: Optional[str] = None, labels: Optional[List[str]] = None) -> Dict[str, Any]:
+    def create_jira_issue(
+        self,
+        project_key: str,
+        summary: str,
+        description: str = "",
+        issue_type: str = "Task",
+        priority: Optional[str] = None,
+        labels: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """Creates a new Jira issue."""
         command = [
-            "jira", "issue", "create",
-            "--project", project_key,
-            "--summary", summary,
-            "--type", issue_type,
-            "--output-format", "json"
+            "jira",
+            "issue",
+            "create",
+            "--project",
+            project_key,
+            "--summary",
+            summary,
+            "--type",
+            issue_type,
+            "--output-format",
+            "json",
         ]
         if description:
             command.extend(["--description", description])
@@ -92,11 +136,23 @@ class AtlassianCLIBridge:
         if result["success"]:
             try:
                 issue = json.loads(result["stdout"])
-                return {"success": True, "issue": issue, "key": issue.get("key") if isinstance(issue, dict) else None}
+                return {
+                    "success": True,
+                    "issue": issue,
+                    "key": issue.get("key") if isinstance(issue, dict) else None,
+                }
             except json.JSONDecodeError:
-                return {"success": False, "error": "Failed to parse JSON response", "raw_output": result["stdout"]}
+                return {
+                    "success": False,
+                    "error": "Failed to parse JSON response",
+                    "raw_output": result["stdout"],
+                }
         else:
-            return {"success": False, "error": result.get("error", "Unknown error"), "stderr": result["stderr"]}
+            return {
+                "success": False,
+                "error": result.get("error", "Unknown error"),
+                "stderr": result["stderr"],
+            }
 
     def get_confluence_spaces(self) -> Dict[str, Any]:
         """Gets the list of Confluence spaces."""
@@ -104,29 +160,58 @@ class AtlassianCLIBridge:
         if result["success"]:
             try:
                 spaces = json.loads(result["stdout"])
-                return {"success": True, "spaces": spaces, "count": len(spaces) if isinstance(spaces, list) else 0}
+                return {
+                    "success": True,
+                    "spaces": spaces,
+                    "count": len(spaces) if isinstance(spaces, list) else 0,
+                }
             except json.JSONDecodeError:
-                return {"success": False, "error": "Failed to parse JSON response", "raw_output": result["stdout"]}
+                return {
+                    "success": False,
+                    "error": "Failed to parse JSON response",
+                    "raw_output": result["stdout"],
+                }
         else:
-            return {"success": False, "error": result.get("error", "Unknown error"), "stderr": result["stderr"]}
+            return {
+                "success": False,
+                "error": result.get("error", "Unknown error"),
+                "stderr": result["stderr"],
+            }
 
     def search_confluence_content(self, query: str, limit: int = 25) -> Dict[str, Any]:
         """Searches content in Confluence."""
         command = [
-            "confluence", "content", "search",
-            "--query", query,
-            "--limit", str(limit),
-            "--output-format", "json"
+            "confluence",
+            "content",
+            "search",
+            "--query",
+            query,
+            "--limit",
+            str(limit),
+            "--output-format",
+            "json",
         ]
         result = self._run_acli_command(command)
         if result["success"]:
             try:
                 content = json.loads(result["stdout"])
-                return {"success": True, "content": content, "count": len(content) if isinstance(content, list) else 0}
+                return {
+                    "success": True,
+                    "content": content,
+                    "count": len(content) if isinstance(content, list) else 0,
+                }
             except json.JSONDecodeError:
-                return {"success": False, "error": "Failed to parse JSON response", "raw_output": result["stdout"]}
+                return {
+                    "success": False,
+                    "error": "Failed to parse JSON response",
+                    "raw_output": result["stdout"],
+                }
         else:
-            return {"success": False, "error": result.get("error", "Unknown error"), "stderr": result["stderr"]}
+            return {
+                "success": False,
+                "error": result.get("error", "Unknown error"),
+                "stderr": result["stderr"],
+            }
 
     def get_status(self) -> Dict[str, Any]:
         """Gets the status of the Atlassian CLI bridge."""
@@ -134,5 +219,5 @@ class AtlassianCLIBridge:
         return {
             "acli_available": self._check_acli_available(),
             "version": version_result["stdout"].strip() if version_result["success"] else "Unknown",
-            "path": self.acli_path
+            "path": self.acli_path,
         }

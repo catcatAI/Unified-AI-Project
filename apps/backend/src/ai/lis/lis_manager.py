@@ -7,15 +7,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
-from .types import (
-    LIS_SemanticAnomalyDetectedEvent,
-    LIS_IncidentRecord,
-    LIS_IncidentStatus
-)
+from .types import LIS_SemanticAnomalyDetectedEvent, LIS_IncidentRecord, LIS_IncidentStatus
 from .err_introspector import ERRIntrospector
 from .lis_cache_interface import HAMLISCache
 
 logger = logging.getLogger(__name__)
+
 
 class LISManager:
     """
@@ -29,14 +26,18 @@ class LISManager:
         self.introspector = ERRIntrospector(self.config.get("introspector_config"))
         logger.info("LISManager initialized.")
 
-    async def monitor_output(self, output_text: str, context: Dict[str, Any]) -> List[LIS_SemanticAnomalyDetectedEvent]:
+    async def monitor_output(
+        self, output_text: str, context: Dict[str, Any]
+    ) -> List[LIS_SemanticAnomalyDetectedEvent]:
         """
         Monitors an output string. If anomalies are found, they are logged as incidents.
         """
         anomalies = await self.introspector.analyze_output(output_text, context)
-        
+
         for anomaly in anomalies:
-            logger.warning(f"LIS Anomaly Detected: {anomaly['anomaly_type']} - {anomaly['description']}")
+            logger.warning(
+                f"LIS Anomaly Detected: {anomaly['anomaly_type']} - {anomaly['description']}"
+            )
             # Create an incident record
             incident: LIS_IncidentRecord = {
                 "incident_id": f"inc_{uuid.uuid4().hex[:8]}",
@@ -44,11 +45,11 @@ class LISManager:
                 "anomaly_event": anomaly,
                 "intervention_reports": [],
                 "tags": ["auto_detected", anomaly["anomaly_type"].lower()],
-                "timestamp_logged": datetime.now(timezone.utc).isoformat()
+                "timestamp_logged": datetime.now(timezone.utc).isoformat(),
             }
             # Auto-save to cache
             await self.cache.store_incident(incident)
-            
+
         return anomalies
 
     async def get_system_health(self) -> Dict[str, Any]:
@@ -57,5 +58,5 @@ class LISManager:
         return {
             "status": "HEALTHY" if not recent_incidents else "OBSERVATION",
             "recent_incidents_count": len(recent_incidents),
-            "latest_incidents": recent_incidents
+            "latest_incidents": recent_incidents,
         }

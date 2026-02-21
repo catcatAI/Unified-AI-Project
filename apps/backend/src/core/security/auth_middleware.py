@@ -21,6 +21,7 @@ from typing import Optional, Dict, Any, List
 
 try:
     import jwt
+
     JWT_AVAILABLE = True
 except ImportError:
     JWT_AVAILABLE = False
@@ -28,15 +29,16 @@ except ImportError:
 
 logger = logging.getLogger("auth_middleware")
 
+
 class AuthMiddleware:
     """认证中间件"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        self.secret_key = self.config.get('secret_key', self._generate_secret_key())
-        self.algorithm = self.config.get('algorithm', 'HS256')
-        self.access_token_expire_minutes = self.config.get('access_token_expire_minutes', 30)
-        self.refresh_token_expire_days = self.config.get('refresh_token_expire_days', 7)
+        self.secret_key = self.config.get("secret_key", self._generate_secret_key())
+        self.algorithm = self.config.get("algorithm", "HS256")
+        self.access_token_expire_minutes = self.config.get("access_token_expire_minutes", 30)
+        self.refresh_token_expire_days = self.config.get("refresh_token_expire_days", 7)
         self.api_keys: Dict[str, Dict[str, Any]] = {}
         self.sessions: Dict[str, Dict[str, Any]] = {}
 
@@ -51,10 +53,7 @@ class AuthMiddleware:
 
         expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
         to_encode = data.copy()
-        to_encode.update({
-            'exp': expire,
-            'iat': datetime.utcnow()
-        })
+        to_encode.update({"exp": expire, "iat": datetime.utcnow()})
 
         token = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return token
@@ -66,11 +65,7 @@ class AuthMiddleware:
 
         expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire_days)
         to_encode = data.copy()
-        to_encode.update({
-            'exp': expire,
-            'iat': datetime.utcnow(),
-            'type': 'refresh'
-        })
+        to_encode.update({"exp": expire, "iat": datetime.utcnow(), "type": "refresh"})
 
         token = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return token
@@ -93,15 +88,15 @@ class AuthMiddleware:
     def generate_api_key(self, user_id: str, scopes: List[str] = None) -> str:
         """生成 API 密钥"""
         if scopes is None:
-            scopes = ['read', 'write']
+            scopes = ["read", "write"]
 
         api_key = f"ak_{secrets.token_urlsafe(24)}"
 
         self.api_keys[api_key] = {
-            'user_id': user_id,
-            'scopes': scopes,
-            'created_at': datetime.utcnow().isoformat(),
-            'last_used': None
+            "user_id": user_id,
+            "scopes": scopes,
+            "created_at": datetime.utcnow().isoformat(),
+            "last_used": None,
         }
 
         logger.info(f"Generated API key for user {user_id}")
@@ -113,7 +108,7 @@ class AuthMiddleware:
             return None
 
         key_info = self.api_keys[api_key]
-        key_info['last_used'] = datetime.utcnow().isoformat()
+        key_info["last_used"] = datetime.utcnow().isoformat()
 
         return key_info
 
@@ -122,10 +117,10 @@ class AuthMiddleware:
         session_id = secrets.token_urlsafe(32)
 
         self.sessions[session_id] = {
-            'user_id': user_id,
-            'created_at': datetime.utcnow().isoformat(),
-            'last_activity': datetime.utcnow().isoformat(),
-            'expires_at': (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            "user_id": user_id,
+            "created_at": datetime.utcnow().isoformat(),
+            "last_activity": datetime.utcnow().isoformat(),
+            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat(),
         }
 
         return session_id
@@ -136,10 +131,10 @@ class AuthMiddleware:
             return None
 
         session = self.sessions[session_id]
-        session['last_activity'] = datetime.utcnow().isoformat()
+        session["last_activity"] = datetime.utcnow().isoformat()
 
         # 检查是否过期
-        expires_at = datetime.fromisoformat(session['expires_at'])
+        expires_at = datetime.fromisoformat(session["expires_at"])
         if datetime.utcnow() > expires_at:
             del self.sessions[session_id]
             return None
@@ -163,13 +158,15 @@ class AuthMiddleware:
     def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""
         return {
-            'active_sessions': len(self.sessions),
-            'active_api_keys': len(self.api_keys),
-            'algorithm': self.algorithm
+            "active_sessions": len(self.sessions),
+            "active_api_keys": len(self.api_keys),
+            "algorithm": self.algorithm,
         }
+
 
 # 全局实例
 _auth_middleware: Optional[AuthMiddleware] = None
+
 
 def get_auth_middleware(config: Optional[Dict[str, Any]] = None) -> AuthMiddleware:
     """获取全局认证中间件实例"""

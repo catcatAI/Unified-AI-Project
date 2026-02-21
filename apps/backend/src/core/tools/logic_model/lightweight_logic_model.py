@@ -4,6 +4,7 @@
 
 from typing import Dict, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,23 +16,16 @@ class LightweightLogicModel:
 
     def __init__(self) -> None:
         # 逻辑运算符
-        self.operators = {
-            'AND': 'and',
-            'OR': 'or',
-            'NOT': 'not',
-            '&': 'and',
-            '|': 'or',
-            '!': 'not'
-        }
+        self.operators = {"AND": "and", "OR": "or", "NOT": "not", "&": "and", "|": "or", "!": "not"}
 
         # 布尔值
         self.boolean_values = {
-            'true': True,
-            'false': False,
-            'True': True,
-            'False': False,
-            '1': True,
-            '0': False
+            "true": True,
+            "false": False,
+            "True": True,
+            "False": False,
+            "1": True,
+            "0": False,
         }
 
     def evaluate(self, proposition: str) -> Optional[bool]:
@@ -53,9 +47,8 @@ class LightweightLogicModel:
             result = eval(py_expr, {"__builtins__": {}}, {})
             return bool(result)
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return None
-
 
     def _convert_to_python(self, proposition: str) -> str:
         """转换为Python表达式"""

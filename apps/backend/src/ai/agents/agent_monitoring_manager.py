@@ -45,8 +45,6 @@ class AgentHealthReport:
 
 
 class AgentMonitoringManager:
-
-
     """
 
 
@@ -61,41 +59,27 @@ class AgentMonitoringManager:
 
     """
 
-
-
-
-
     def __init__(self, hsp_connector: HSPConnector) -> None:
-
 
         self.hsp_connector = hsp_connector
 
-
         self.agent_health_reports: Dict[str, AgentHealthReport] = {}
-
 
         self.monitoring_lock = asyncio.Lock()
 
-
         self.monitoring_interval: int = 10  # seconds
-
 
         self.is_monitoring: bool = False
 
-
         self.monitoring_task: Optional[asyncio.Task] = None
-
-
-
-
 
         # Register callbacks for capability advertisements (to track agent capabilities)
 
-
         if self.hsp_connector:
 
-
-            self.hsp_connector.register_on_capability_advertisement_callback(self._handle_capability_advertisement)
+            self.hsp_connector.register_on_capability_advertisement_callback(
+                self._handle_capability_advertisement
+            )
 
     async def start_monitoring(self) -> None:
         """Start the monitoring process."""
@@ -150,14 +134,19 @@ class AgentMonitoringManager:
                         report.task_count += 1
                         # Randomly simulate success or failure
                         if random.random() < 0.95:  # 95% success rate
-                            report.success_rate = (report.success_rate * report.task_count + 1) / (report.task_count + 1)
+                            report.success_rate = (report.success_rate * report.task_count + 1) / (
+                                report.task_count + 1
+                            )
                         else:
-                            report.success_rate = (report.success_rate * report.task_count) / (report.task_count + 1)
+                            report.success_rate = (report.success_rate * report.task_count) / (
+                                report.task_count + 1
+                            )
                             report.error_count += 1
                             report.last_error = "Simulated task failure"
 
                 except Exception as e:
                     logger.error(f"Error collecting metrics for agent {agent_id}: {e}")
+
     async def _check_agent_status(self) -> None:
         """Check and update the status of all agents."""
         async with self.monitoring_lock:
@@ -185,13 +174,16 @@ class AgentMonitoringManager:
                 elif report.status == AgentStatus.UNKNOWN:
                     # If status is unknown but we're getting metrics, assume running
                     report.status = AgentStatus.RUNNING
+
     async def _generate_alerts(self) -> None:
         """Generate alerts for agents with issues."""
         async with self.monitoring_lock:
             for agent_id, report in self.agent_health_reports.items():
                 # Generate alerts for degraded or error status
                 if report.status in [AgentStatus.DEGRADED, AgentStatus.ERROR]:
-                    alert_message = f"Agent {report.agent_name} ({agent_id}) is {report.status.value}"
+                    alert_message = (
+                        f"Agent {report.agent_name} ({agent_id}) is {report.status.value}"
+                    )
                     if report.last_error:
                         alert_message += f": {report.last_error}"
 
@@ -200,8 +192,12 @@ class AgentMonitoringManager:
                     # In a real implementation, we might send this to a monitoring system
                     # or notify administrators
 
-    async def _handle_capability_advertisement(self, capability_payload: HSPCapabilityAdvertisementPayload,
-                                               sender_ai_id: str, envelope: Dict[str, Any]) -> None:
+    async def _handle_capability_advertisement(
+        self,
+        capability_payload: HSPCapabilityAdvertisementPayload,
+        sender_ai_id: str,
+        envelope: Dict[str, Any],
+    ) -> None:
         """Handle capability advertisements to track agent capabilities."""
         async with self.monitoring_lock:
             agent_id = capability_payload.get("ai_id", sender_ai_id)
@@ -220,16 +216,20 @@ class AgentMonitoringManager:
                     capabilities=[],
                     error_count=0,
                     success_rate=1.0,
-                    task_count=0
+                    task_count=0,
                 )
 
             # Add capability if not already present
-            if capability_id and capability_id not in self.agent_health_reports[agent_id].capabilities:
+            if (
+                capability_id
+                and capability_id not in self.agent_health_reports[agent_id].capabilities
+            ):
                 self.agent_health_reports[agent_id].capabilities.append(capability_id)
 
             # If this is the first capability, update status to STARTING
             if len(self.agent_health_reports[agent_id].capabilities) == 1:
                 self.agent_health_reports[agent_id].status = AgentStatus.STARTING
+
     async def register_agent(self, agent_id: str, agent_name: str, capabilities: List[str]) -> None:
         """Register an agent for monitoring."""
         async with self.monitoring_lock:
@@ -244,7 +244,7 @@ class AgentMonitoringManager:
                     capabilities=capabilities,
                     error_count=0,
                     success_rate=1.0,
-                    task_count=0
+                    task_count=0,
                 )
 
     async def report_error(self, agent_id: str, error_message: str) -> None:
@@ -256,7 +256,9 @@ class AgentMonitoringManager:
                 report.last_error = error_message
                 report.status = AgentStatus.ERROR
 
-    async def report_task_result(self, agent_id: str, success: bool, response_time_ms: Optional[float] = None) -> None:
+    async def report_task_result(
+        self, agent_id: str, success: bool, response_time_ms: Optional[float] = None
+    ) -> None:
         """Report the result of a task for an agent."""
         async with self.monitoring_lock:
             if agent_id in self.agent_health_reports:
@@ -266,9 +268,13 @@ class AgentMonitoringManager:
                     report.response_time_ms = response_time_ms
 
                 if success:
-                    report.success_rate = (report.success_rate * (report.task_count - 1) + 1) / report.task_count
+                    report.success_rate = (
+                        report.success_rate * (report.task_count - 1) + 1
+                    ) / report.task_count
                 else:
-                    report.success_rate = (report.success_rate * (report.task_count - 1)) / report.task_count
+                    report.success_rate = (
+                        report.success_rate * (report.task_count - 1)
+                    ) / report.task_count
                     report.error_count += 1
 
     async def get_agent_health_report(self, agent_id: str) -> Optional[AgentHealthReport]:

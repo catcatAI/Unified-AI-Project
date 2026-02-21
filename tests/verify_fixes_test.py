@@ -2,13 +2,16 @@
 """
 驗證修復效果的測試腳本
 """
+
 import requests
 import json
 from typing import Dict, Tuple
 import logging
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"
+
 
 def test_economy_transaction_with_correct_params() -> Tuple[bool, dict]:
     """測試經濟系統交易端點（使用正確的參數）"""
@@ -18,12 +21,8 @@ def test_economy_transaction_with_correct_params() -> Tuple[bool, dict]:
     try:
         response = requests.post(
             f"{BASE_URL}/api/v1/economy/transaction",
-            json={
-                "user_id": "test_user",
-                "amount": 10.0,
-                "description": "測試交易"
-            },
-            timeout=5
+            json={"user_id": "test_user", "amount": 10.0, "description": "測試交易"},
+            timeout=5,
         )
 
         print(f"狀態碼: {response.status_code}")
@@ -36,6 +35,7 @@ def test_economy_transaction_with_correct_params() -> Tuple[bool, dict]:
     except Exception as e:
         print(f"錯誤: {e}")
         return False, {"error": str(e)}
+
 
 def test_mobile_status_get() -> Tuple[bool, dict]:
     """測試移動端狀態端點（GET 方法）"""
@@ -43,10 +43,7 @@ def test_mobile_status_get() -> Tuple[bool, dict]:
     print("-" * 80)
 
     try:
-        response = requests.get(
-            f"{BASE_URL}/api/v1/mobile/status",
-            timeout=5
-        )
+        response = requests.get(f"{BASE_URL}/api/v1/mobile/status", timeout=5)
 
         print(f"狀態碼: {response.status_code}")
         print(f"響應: {json.dumps(response.json(), ensure_ascii=False)}")
@@ -59,16 +56,14 @@ def test_mobile_status_get() -> Tuple[bool, dict]:
         print(f"錯誤: {e}")
         return False, {"error": str(e)}
 
+
 def test_ops_dashboard() -> Tuple[bool, dict]:
     """測試運維儀表板（檢查 timezone 修復）"""
     print("\n測試 3: 運維儀表板（檢查 timezone 修復）")
     print("-" * 80)
 
     try:
-        response = requests.get(
-            f"{BASE_URL}/api/v1/ops/dashboard",
-            timeout=10
-        )
+        response = requests.get(f"{BASE_URL}/api/v1/ops/dashboard", timeout=10)
 
         print(f"狀態碼: {response.status_code}")
 
@@ -90,6 +85,7 @@ def test_ops_dashboard() -> Tuple[bool, dict]:
         print(f"錯誤: {e}")
         return False, {"error": str(e)}
 
+
 def main():
     print("=" * 80)
     print("驗證修復效果測試")
@@ -99,27 +95,17 @@ def main():
 
     # 測試 1: 經濟系統交易端點
     success1, data1 = test_economy_transaction_with_correct_params()
-    results.append({
-        "test": "economy_transaction_correct_params",
-        "success": success1,
-        "data": data1
-    })
+    results.append(
+        {"test": "economy_transaction_correct_params", "success": success1, "data": data1}
+    )
 
     # 測試 2: 移動端狀態端點（GET 方法）
     success2, data2 = test_mobile_status_get()
-    results.append({
-        "test": "mobile_status_get",
-        "success": success2,
-        "data": data2
-    })
+    results.append({"test": "mobile_status_get", "success": success2, "data": data2})
 
     # 測試 3: 運維儀表板
     success3, data3 = test_ops_dashboard()
-    results.append({
-        "test": "ops_dashboard",
-        "success": success3,
-        "data": data3
-    })
+    results.append({"test": "ops_dashboard", "success": success3, "data": data3})
 
     # 總結
     print("\n" + "=" * 80)
@@ -147,7 +133,7 @@ def main():
         "passed": passed,
         "failed": failed,
         "success_rate": passed / total * 100 if total > 0 else 0,
-        "results": results
+        "results": results,
     }
 
     with open("/home/cat/桌面/verify_fixes_results.json", "w", encoding="utf-8") as f:
@@ -156,6 +142,7 @@ def main():
     print(f"\n詳細結果已保存到: /home/cat/桌面/verify_fixes_results.json")
 
     return all(r["success"] for r in results)
+
 
 if __name__ == "__main__":
     success = main()

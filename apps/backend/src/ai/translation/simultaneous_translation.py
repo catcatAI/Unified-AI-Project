@@ -6,6 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class SimultaneousTranslationService:
     """
     Enhanced translation service mockup.
@@ -17,7 +18,9 @@ class SimultaneousTranslationService:
         self.base_latency_ms = base_latency_ms
         self.supported_languages = ["en", "zh", "ja", "ko", "fr", "de"]
 
-    async def translate(self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None) -> Dict[str, Union[str, float, int]]:
+    async def translate(
+        self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None
+    ) -> Dict[str, Union[str, float, int]]:
         """
         Async translation simulation.
         """
@@ -25,7 +28,7 @@ class SimultaneousTranslationService:
             return self._empty_result(source_lang, target_lang)
 
         tgt = target_lang or self.default_target_lang
-        
+
         # Simulate network/processing latency
         latency = self.base_latency_ms + random.randint(50, 200)
         await asyncio.sleep(latency / 1000.0)
@@ -46,23 +49,26 @@ class SimultaneousTranslationService:
             "latency_ms": latency,
         }
 
-    async def stream_translate(self, chunks: Iterator[str], source_lang: str = "auto", target_lang: Optional[str] = None) -> Iterator[Dict[str, Any]]:
+    async def stream_translate(
+        self, chunks: Iterator[str], source_lang: str = "auto", target_lang: Optional[str] = None
+    ) -> Iterator[Dict[str, Any]]:
         """
         Generator for streaming translation results.
         """
         tgt = target_lang or self.default_target_lang
         for idx, chunk in enumerate(chunks):
-            if not chunk: continue
-            
+            if not chunk:
+                continue
+
             latency = (self.base_latency_ms // 2) + random.randint(10, 50)
             await asyncio.sleep(latency / 1000.0)
-            
+
             yield {
                 "index": idx,
                 "source_lang": source_lang,
                 "target_lang": tgt,
                 "original_text": chunk,
-                "translated_text": f"~{chunk}", # Mock stream marker
+                "translated_text": f"~{chunk}",  # Mock stream marker
                 "is_final": False,
                 "confidence": 0.88,
             }
@@ -74,5 +80,5 @@ class SimultaneousTranslationService:
             "original_text": "",
             "translated_text": "",
             "confidence": 0.0,
-            "latency_ms": 0
+            "latency_ms": 0,
         }

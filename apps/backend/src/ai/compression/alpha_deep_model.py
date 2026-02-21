@@ -10,10 +10,11 @@ import bz2
 import lzma
 from datetime import datetime, timezone
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Add project root to path to allow absolute imports
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -23,6 +24,7 @@ from ai.memory.ham_memory.ham_types import HAMDataPackageInternal as HAMGist
 
 class CompressionAlgorithm(Enum):
     """Compression algorithms supported by the model."""
+
     ZLIB = "zlib"
     BZ2 = "bz2"
     LZMA = "lzma"
@@ -32,9 +34,10 @@ class CompressionAlgorithm(Enum):
 @dataclass
 class DNADataChain:
     """Represents the basic abstracted gist from HAM."""
+
     chain_id: str
     nodes: List[str] = field(default_factory=list)  # Memory IDs in the chain
-    branches: Dict[str, 'DNADataChain'] = field(default_factory=dict)
+    branches: Dict[str, "DNADataChain"] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def add_node(self, memory_id: str):
@@ -42,18 +45,18 @@ class DNADataChain:
         if memory_id not in self.nodes:
             self.nodes.append(memory_id)
 
-    def create_branch(self, branch_id: str, from_node: str) -> 'DNADataChain':
+    def create_branch(self, branch_id: str, from_node: str) -> "DNADataChain":
         """Create a branch from a specific node."""
         if from_node not in self.nodes:
             raise ValueError(f"Node {from_node} not found in chain")
 
         branch = DNADataChain(branch_id)
-        branch.metadata['parent_chain'] = self.chain_id
-        branch.metadata['branch_point'] = from_node
+        branch.metadata["parent_chain"] = self.chain_id
+        branch.metadata["branch_point"] = from_node
         self.branches[branch_id] = branch
         return branch
 
-    def merge_chain(self, other_chain: 'DNADataChain', at_node: str) -> bool:
+    def merge_chain(self, other_chain: "DNADataChain", at_node: str) -> bool:
         """Merge another chain at a specific node."""
         if at_node not in self.nodes:
             return False
@@ -71,6 +74,7 @@ class DNADataChain:
 @dataclass
 class RelationalContext:
     """Represents the structured relationships between entities."""
+
     entities: List[str]
     relationships: List[Dict[str, Any]]  # e.g., {"subject": "A", "verb": "likes", "object": "B"}
 
@@ -78,6 +82,7 @@ class RelationalContext:
 @dataclass
 class Modalities:
     """Represents data from different modalities, designed for extensibility."""
+
     text_confidence: float
     audio_features: Optional[Dict[str, Any]] = None
     image_features: Optional[Dict[str, Any]] = None
@@ -87,6 +92,7 @@ class Modalities:
 class DeepParameter:
     """The main input structure for the AlphaDeepModel,
     combining various contexts."""
+
     source_memory_id: str
     timestamp: str
     base_gist: HAMGist
@@ -106,7 +112,7 @@ class AlphaDeepModel:
     Enhanced with DNA衍生数据链技术和更高效的压缩算法.
     """
 
-    def __init__(self, symbolic_space_db: str = 'alpha_deep_model_symbolic_space.db') -> None:
+    def __init__(self, symbolic_space_db: str = "alpha_deep_model_symbolic_space.db") -> None:
         """
         Initializes the AlphaDeepModel.
         """
@@ -114,7 +120,9 @@ class AlphaDeepModel:
         self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
         self.compression_stats: Dict[str, Dict[str, Any]] = {}  # 压缩统计信息
 
-    def learn(self, deep_parameter: DeepParameter, feedback: Optional[Dict[str, Any]] = None) -> Optional[Any]:
+    def learn(
+        self, deep_parameter: DeepParameter, feedback: Optional[Dict[str, Any]] = None
+    ) -> Optional[Any]:
         """
         Enhanced learning mechanism that updates the model's internal state
         based on new DeepParameters and optional feedback.
@@ -127,47 +135,53 @@ class AlphaDeepModel:
         # Ensure the main memory symbol exists or create it
         memory_symbol = self.symbolic_space.get_symbol(deep_parameter.source_memory_id)
         if not memory_symbol:
-            self.symbolic_space.add_symbol(deep_parameter.source_memory_id, 'Memory',
-                                           {'timestamp': deep_parameter.timestamp})
+            self.symbolic_space.add_symbol(
+                deep_parameter.source_memory_id, "Memory", {"timestamp": deep_parameter.timestamp}
+            )
         else:
             self.symbolic_space.update_symbol(
-                deep_parameter.source_memory_id, properties={'timestamp': deep_parameter.timestamp}
+                deep_parameter.source_memory_id, properties={"timestamp": deep_parameter.timestamp}
             )
 
         # Add or update gist as a symbol and relate it to the memory
         gist_symbol_name = deep_parameter.base_gist.summary
-        self.symbolic_space.add_symbol(gist_symbol_name, 'Gist', {})
+        self.symbolic_space.add_symbol(gist_symbol_name, "Gist", {})
 
-        self.symbolic_space.add_relationship(deep_parameter.source_memory_id,
-                                             gist_symbol_name, 'contains_gist')
+        self.symbolic_space.add_relationship(
+            deep_parameter.source_memory_id, gist_symbol_name, "contains_gist"
+        )
 
         # Process relational context
         for entity in deep_parameter.relational_context.entities:
-            self.symbolic_space.add_symbol(entity, 'Entity')  # Ensure entity exists
+            self.symbolic_space.add_symbol(entity, "Entity")  # Ensure entity exists
         for rel in deep_parameter.relational_context.relationships:
             # Ensure subject and object symbols exist before adding relationship
-            self.symbolic_space.add_symbol(rel['subject'], 'Unknown')  # Type can be refined later
-            self.symbolic_space.add_symbol(rel['object'], 'Unknown')  # Type can be refined later
-            self.symbolic_space.add_relationship(rel['subject'], rel['object'], rel['verb'], rel)
+            self.symbolic_space.add_symbol(rel["subject"], "Unknown")  # Type can be refined later
+            self.symbolic_space.add_symbol(rel["object"], "Unknown")  # Type can be refined later
+            self.symbolic_space.add_relationship(rel["subject"], rel["object"], rel["verb"], rel)
 
-        # Process modalities (e.g., 
+        # Process modalities (e.g.,
         #     self.symbolic_space.update_symbol(
         #     deep_parameter.source_memory_id, properties={'timestamp': deep_parameter.timestamp}
         # )
 
-
         # 2. Incorporate action feedback into the symbolic space
         if deep_parameter.action_feedback:
             feedback_id = f"feedback_{deep_parameter.source_memory_id}"
-            self.symbolic_space.add_symbol(feedback_id, 'ActionFeedback', deep_parameter.action_feedback)
+            self.symbolic_space.add_symbol(
+                feedback_id, "ActionFeedback", deep_parameter.action_feedback
+            )
 
-            self.symbolic_space.add_relationship(deep_parameter.source_memory_id,
-                                                 feedback_id, 'has_feedback')
+            self.symbolic_space.add_relationship(
+                deep_parameter.source_memory_id, feedback_id, "has_feedback"
+            )
 
         # 3. Create or update DNA data chain
         if deep_parameter.dna_chain_id:
             if deep_parameter.dna_chain_id not in self.dna_chains:
-                self.dna_chains[deep_parameter.dna_chain_id] = DNADataChain(deep_parameter.dna_chain_id)
+                self.dna_chains[deep_parameter.dna_chain_id] = DNADataChain(
+                    deep_parameter.dna_chain_id
+                )
             self.dna_chains[deep_parameter.dna_chain_id].add_node(deep_parameter.source_memory_id)
 
         # 4. Update learning based on feedback
@@ -177,7 +191,7 @@ class AlphaDeepModel:
             # Ensure feedback symbol is created
             feedback_symbol_name = f"feedback_{deep_parameter.source_memory_id}"
             if not self.symbolic_space.get_symbol(feedback_symbol_name):
-                self.symbolic_space.add_symbol(feedback_symbol_name, 'Feedback', feedback)
+                self.symbolic_space.add_symbol(feedback_symbol_name, "Feedback", feedback)
             # Return the feedback symbol to ensure it's not None
             return self.symbolic_space.get_symbol(feedback_symbol_name)
 
@@ -191,12 +205,13 @@ class AlphaDeepModel:
         feedback_symbol = f"feedback_{deep_parameter.source_memory_id}"
         current_symbol = self.symbolic_space.get_symbol(feedback_symbol)
         if current_symbol:
-            current_props = current_symbol.get('properties')
+            current_props = current_symbol.get("properties")
             current_props.update(feedback)
-            self.symbolic_space.update_symbol(feedback_symbol,
-                                             properties=current_props)
+            self.symbolic_space.update_symbol(feedback_symbol, properties=current_props)
 
-    def compress(self, deep_parameter: Any, algorithm: CompressionAlgorithm = CompressionAlgorithm.ZLIB) -> bytes:
+    def compress(
+        self, deep_parameter: Any, algorithm: CompressionAlgorithm = CompressionAlgorithm.ZLIB
+    ) -> bytes:
         """
         Compresses a deep parameter object into a highly compressed binary format.
         Supports multiple compression algorithms for optimal performance.
@@ -207,13 +222,14 @@ class AlphaDeepModel:
         Returns:
             A byte string representing the compressed data.
         """
-        if hasattr(deep_parameter, 'to_dict'):
+        if hasattr(deep_parameter, "to_dict"):
             param_dict = deep_parameter.to_dict()  # 修复：添加括号调用方法
         elif isinstance(deep_parameter, dict):
             param_dict = deep_parameter
         else:
-            raise TypeError("Input `deep_parameter` must be a dict or "
-                            "a class with a to_dict method.")
+            raise TypeError(
+                "Input `deep_parameter` must be a dict or " "a class with a to_dict method."
+            )
         # 1. Serialize with MessagePack
         packed_data: bytes = msgpack.packb(param_dict, use_bin_type=True)
         original_size: int = len(packed_data)
@@ -234,19 +250,30 @@ class AlphaDeepModel:
         # 3. Update compression stats
         compressed_size: int = len(compressed_data)
         compression_ratio: float = original_size / compressed_size if compressed_size > 0 else 0
-        if not hasattr(self, 'compression_stats'):
+        if not hasattr(self, "compression_stats"):
             self.compression_stats = {}
 
         self.compression_stats[algorithm.value] = {
-            'total_compressions': self.compression_stats.get(algorithm.value, {}).get('total_compressions', 0) + 1,
-            'total_original_size': self.compression_stats.get(algorithm.value, {}).get('total_original_size', 0) + original_size,
-            'total_compressed_size': self.compression_stats.get(algorithm.value, {}).get('total_compressed_size', 0) + compressed_size,
-            'last_compression_ratio': compression_ratio
+            "total_compressions": self.compression_stats.get(algorithm.value, {}).get(
+                "total_compressions", 0
+            )
+            + 1,
+            "total_original_size": self.compression_stats.get(algorithm.value, {}).get(
+                "total_original_size", 0
+            )
+            + original_size,
+            "total_compressed_size": self.compression_stats.get(algorithm.value, {}).get(
+                "total_compressed_size", 0
+            )
+            + compressed_size,
+            "last_compression_ratio": compression_ratio,
         }
 
         return compressed_data
 
-    def decompress(self, compressed_data: bytes, algorithm: CompressionAlgorithm = CompressionAlgorithm.ZLIB) -> Dict[str, Any]:
+    def decompress(
+        self, compressed_data: bytes, algorithm: CompressionAlgorithm = CompressionAlgorithm.ZLIB
+    ) -> Dict[str, Any]:
         """
         Decompresses a binary object back into a deep parameter dictionary.
         This reverses the compression process.
@@ -291,29 +318,29 @@ class AlphaDeepModel:
         return self.dna_chains.get(chain_id)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example Usage demonstrating the new data structures
 
     # 1. Create an instance of the model and example data using the new dataclasses
     # Initialize AlphaDeepModel with a specific symbolic space database
-    model = AlphaDeepModel('test_alpha_deep_model_symbolic_space.db')
+    model = AlphaDeepModel("test_alpha_deep_model_symbolic_space.db")
     example_data = DeepParameter(
         source_memory_id="mem_000456",
         timestamp="2025-08-04T04:00:00Z",
         base_gist=HAMGist(
             summary="Sarah said she likes the new AI assistant.",
             keywords=["sarah", "likes", "ai", "assistant"],
-            original_length=42
+            original_length=42,
         ),
         relational_context=RelationalContext(
             entities=["Sarah", "AI Assistant"],
-            relationships=[{"subject": "Sarah", "verb": "likes", "object": "AI Assistant", "confidence": 0.9}]
+            relationships=[
+                {"subject": "Sarah", "verb": "likes", "object": "AI Assistant", "confidence": 0.9}
+            ],
         ),
-        modalities=Modalities(
-            text_confidence=0.95
-        ),
+        modalities=Modalities(text_confidence=0.95),
         action_feedback={"action": "respond", "success": True, "details": "User happy"},
-        dna_chain_id="chain_001"
+        dna_chain_id="chain_001",
     )
 
     # 2. Compress the data with different algorithms
@@ -350,17 +377,27 @@ if __name__ == '__main__':
     # Verify symbols and relationships in the symbolic space
     logger.info("\n--- Symbolic Space Content ---")
     logger.info(f"Symbol 'mem_000456': {model.symbolic_space.get_symbol('mem_000456')}")
-    logger.info(f"Symbol 'Sarah said she likes the new AI assistant.': {model.symbolic_space.get_symbol('Sarah said she likes the new AI assistant.')}")
+    logger.info(
+        f"Symbol 'Sarah said she likes the new AI assistant.': {model.symbolic_space.get_symbol('Sarah said she likes the new AI assistant.')}"
+    )
     logger.info(f"Relationships for 'Sarah': {model.symbolic_space.get_relationships('Sarah')}")
-    logger.info(f"Relationships for 'AI Assistant': {model.symbolic_space.get_relationships('AI Assistant')}")
+    logger.info(
+        f"Relationships for 'AI Assistant': {model.symbolic_space.get_relationships('AI Assistant')}"
+    )
     # Show compression stats
     logger.info("\n--- Compression Statistics ---")
     stats = model.get_compression_stats()
     for algo, stat in stats.items():
-        avg_ratio = stat['total_original_size'] / stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0
-        logger.info(f"{algo}: {stat['total_compressions']} compressions, avg ratio: {avg_ratio:.2f}")
+        avg_ratio = (
+            stat["total_original_size"] / stat["total_compressed_size"]
+            if stat["total_compressed_size"] > 0
+            else 0
+        )
+        logger.info(
+            f"{algo}: {stat['total_compressions']} compressions, avg ratio: {avg_ratio:.2f}"
+        )
 
     # Clean up test symbolic space database
-    if os.path.exists('test_alpha_deep_model_symbolic_space.db'):
-        os.remove('test_alpha_deep_model_symbolic_space.db')
+    if os.path.exists("test_alpha_deep_model_symbolic_space.db"):
+        os.remove("test_alpha_deep_model_symbolic_space.db")
         logger.info("Cleaned up test_alpha_deep_model_symbolic_space.db")

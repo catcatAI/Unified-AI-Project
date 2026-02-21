@@ -34,15 +34,18 @@ from pathlib import Path
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
 
 logger = logging.getLogger("emergence_engine")
 
+
 @dataclass
 class EmergentBehavior:
     """涌现行为"""
+
     id: str
     description: str
     novelty_score: float
@@ -50,13 +53,16 @@ class EmergentBehavior:
     utility_score: float
     timestamp: datetime
 
+
 @dataclass
 class MutationResult:
     """变异结果"""
+
     original: str
     mutated: str
     mutation_type: str
     success: bool
+
 
 class EmergenceEngine:
     """涌现引擎"""
@@ -82,12 +88,7 @@ class EmergenceEngine:
     def inject_randomness(self, content: str, level: float = 0.1) -> MutationResult:
         """注入随机性"""
         if not content:
-            return MutationResult(
-                original="",
-                mutated="",
-                mutation_type="none",
-                success=False
-            )
+            return MutationResult(original="", mutated="", mutation_type="none", success=False)
 
         # 简化实现：随机字符替换
         chars = list(content)
@@ -95,15 +96,12 @@ class EmergenceEngine:
 
         for _ in range(num_mutations):
             idx = random.randint(0, len(chars) - 1)
-            chars[idx] = random.choice('abcdefghijklmnopqrstuvwxyz')
+            chars[idx] = random.choice("abcdefghijklmnopqrstuvwxyz")
 
-        mutated = ''.join(chars)
+        mutated = "".join(chars)
 
         result = MutationResult(
-            original=content,
-            mutated=mutated,
-            mutation_type="character_substitution",
-            success=True
+            original=content, mutated=mutated, mutation_type="character_substitution", success=True
         )
 
         self.mutation_history.append(result)
@@ -123,7 +121,7 @@ class EmergenceEngine:
             novelty_score=random.random(),
             stability_score=random.random(),
             utility_score=random.random(),
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         if emergent.novelty_score > self.emergence_threshold:
@@ -145,15 +143,12 @@ class EmergenceEngine:
             "total_mutations": total,
             "successful_mutations": successful,
             "success_rate": successful / total if total > 0 else 0,
-            "mutation_types": {}
+            "mutation_types": {},
         }
 
     def filter_behaviors(self, threshold: float = 0.5) -> List[EmergentBehavior]:
         """筛选行为"""
-        return [
-            b for b in self.emergent_behaviors
-            if b.utility_score >= threshold
-        ]
+        return [b for b in self.emergent_behaviors if b.utility_score >= threshold]
 
     async def run_emergence_cycle(self, content: str) -> Dict[str, Any]:
         """运行涌现周期"""
@@ -174,5 +169,5 @@ class EmergenceEngine:
         return {
             "mutation_applied": mutation_result.success,
             "emergent_detected": emergent is not None,
-            "evaluation": evaluation
+            "evaluation": evaluation,
         }

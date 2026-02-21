@@ -60,6 +60,7 @@ If the feature is trivial and doesn't warrant full specification, update this wo
 Save to `{@artifacts_path}/plan.md`.
 
 ### [ ] Step: Phase 1 - Baseline validation and drift discovery
+<!-- chat-id: d4849820-93f9-4ac3-8455-0594ff370299 -->
 - Ensure `.gitignore` covers generated artifacts (node_modules/, dist/, build/, .cache/, *.log)
 - Install workspaces and verify installs
   - JS/TS: `pnpm install`

@@ -10,6 +10,7 @@ import time
 from datetime import datetime
 from typing import Dict, List, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 # API 基礎配置
@@ -18,6 +19,7 @@ TIMEOUT = 30
 
 # 測試結果存儲
 test_results = []
+
 
 def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None) -> Dict[str, Any]:
     """測試單個 API 端點"""
@@ -39,7 +41,7 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
                 "method": method,
                 "status": "ERROR",
                 "error": f"不支持的 HTTP 方法: {method}",
-                "response_time": time.time() - start_time
+                "response_time": time.time() - start_time,
             }
 
         response_time = time.time() - start_time
@@ -48,9 +50,8 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
         try:
             response_data = response.json()
         except Exception as e:
-            logger.error(f'Unexpected error in api_test_report.py: {e}', exc_info=True)
+            logger.error(f"Unexpected error in api_test_report.py: {e}", exc_info=True)
             response_data = response.text[:500] if response.text else ""
-
 
         return {
             "path": path,
@@ -59,7 +60,7 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
             "status": "SUCCESS" if response.status_code < 400 else "ERROR",
             "response_time": round(response_time, 3),
             "response_size": len(response.content),
-            "response_preview": str(response_data)[:300]
+            "response_preview": str(response_data)[:300],
         }
 
     except requests.exceptions.Timeout:
@@ -68,7 +69,7 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
             "method": method,
             "status": "TIMEOUT",
             "error": "請求超時",
-            "response_time": time.time() - start_time
+            "response_time": time.time() - start_time,
         }
     except requests.exceptions.ConnectionError:
         return {
@@ -76,18 +77,18 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
             "method": method,
             "status": "CONNECTION_ERROR",
             "error": "連接失敗",
-            "response_time": time.time() - start_time
+            "response_time": time.time() - start_time,
         }
     except Exception as e:
-        logger.error(f'Error in api_test_report.py: {e}', exc_info=True)
+        logger.error(f"Error in api_test_report.py: {e}", exc_info=True)
         return {
-
             "path": path,
             "method": method,
             "status": "EXCEPTION",
             "error": str(e),
-            "response_time": time.time() - start_time
+            "response_time": time.time() - start_time,
         }
+
 
 def run_tests():
     """運行所有測試"""
@@ -115,7 +116,9 @@ def run_tests():
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
         status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)")
+        print(
+            f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
+        )
 
     # 2. 聊天 API 測試
     print("\n【2. 聊天 API 測試】")
@@ -129,8 +132,10 @@ def run_tests():
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
         status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)")
-        if result.get('status_code') == 200:
+        print(
+            f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
+        )
+        if result.get("status_code") == 200:
             print(f"  響應預覽: {result.get('response_preview', '')[:100]}")
 
     # 3. 代理系統測試
@@ -144,7 +149,9 @@ def run_tests():
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
         status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)")
+        print(
+            f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
+        )
 
     # 4. Pet 系統測試
     print("\n【4. Pet 系統測試】")
@@ -158,7 +165,9 @@ def run_tests():
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
         status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)")
+        print(
+            f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
+        )
 
     # 5. 系統狀態測試
     print("\n【5. 系統狀態測試】")
@@ -173,7 +182,9 @@ def run_tests():
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
         status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)")
+        print(
+            f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
+        )
 
     # 6. 視覺和觸覺測試
     print("\n【6. 視覺和觸覺測試】")
@@ -187,7 +198,9 @@ def run_tests():
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
         status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)")
+        print(
+            f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
+        )
 
     # 7. 其他 API 測試
     print("\n【7. 其他 API 測試】")
@@ -202,7 +215,9 @@ def run_tests():
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
         status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)")
+        print(
+            f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
+        )
 
     # 統計結果
     print("\n" + "=" * 80)
@@ -218,7 +233,7 @@ def run_tests():
     print(f"失敗: {failed} ({failed/total*100:.1f}%)")
 
     # 響應時間統計
-    response_times = [r.get('response_time', 0) for r in test_results if 'response_time' in r]
+    response_times = [r.get("response_time", 0) for r in test_results if "response_time" in r]
     if response_times:
         avg_time = sum(response_times) / len(response_times)
         max_time = max(response_times)
@@ -235,7 +250,7 @@ def run_tests():
             if result["status"] != "SUCCESS":
                 print(f"  ✗ {result['method']} {result['path']}")
                 print(f"    狀態: {result['status']}")
-                if 'error' in result:
+                if "error" in result:
                     print(f"    錯誤: {result['error']}")
 
     print("\n" + "=" * 80)
@@ -243,10 +258,11 @@ def run_tests():
     print("=" * 80)
 
     # 保存詳細結果
-    with open('/home/cat/桌面/api_test_results.json', 'w', encoding='utf-8') as f:
+    with open("/home/cat/桌面/api_test_results.json", "w", encoding="utf-8") as f:
         json.dump(test_results, f, ensure_ascii=False, indent=2)
 
     print(f"\n詳細結果已保存到: /home/cat/桌面/api_test_results.json")
+
 
 if __name__ == "__main__":
     run_tests()

@@ -25,6 +25,7 @@ from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessa
 
 logger = logging.getLogger(__name__)
 
+
 class CreativeWritingAgent(BaseAgent):
     """
     A specialized agent for creative writing tasks.
@@ -38,16 +39,25 @@ class CreativeWritingAgent(BaseAgent):
                 "description": "Writes a story.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "prompt", "type": "string", "required": True, "description": "Story prompt"}
+                    {
+                        "name": "prompt",
+                        "type": "string",
+                        "required": True,
+                        "description": "Story prompt",
+                    }
                 ],
-                "returns": {"type": "string", "description": "Generated story."}
+                "returns": {"type": "string", "description": "Generated story."},
             }
         ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities, agent_name="CreativeWritingAgent")
+        super().__init__(
+            agent_id=agent_id, capabilities=capabilities, agent_name="CreativeWritingAgent"
+        )
 
         # Register handlers
         self.register_task_handler(f"{agent_id}_write_story_v1.0", self._handle_write_story)
 
-    async def _handle_write_story(self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope) -> str:
+    async def _handle_write_story(
+        self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
+    ) -> str:
         params = payload.get("parameters", {})
         return f"Once upon a time, someone asked for {params.get('prompt', 'something')}..."

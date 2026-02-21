@@ -118,9 +118,7 @@ class SystemMetricsManager:
         """检查缓存是否有效"""
         if key not in self._cache_timestamp:
             return False
-        return (
-            datetime.now() - self._cache_timestamp[key]
-        ).total_seconds() < self.cache_ttl
+        return (datetime.now() - self._cache_timestamp[key]).total_seconds() < self.cache_ttl
 
     def _get_cached_or_compute(self, key: str, compute_func) -> Any:
         """获取缓存值或计算新值"""
@@ -200,9 +198,7 @@ class MessageManager:
     def get_next_message_id(self) -> str:
         """获取下一个消息序列号"""
         self.message_counter += 1
-        return (
-            f"msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.message_counter:06d}"
-        )
+        return f"msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.message_counter:06d}"
 
     def is_duplicate_message(self, message_id: str) -> bool:
         """检查消息是否重复"""
@@ -230,11 +226,7 @@ class MessageManager:
         merged = current_state.copy()
 
         for key, value in new_state.items():
-            if (
-                isinstance(value, dict)
-                and key in merged
-                and isinstance(merged[key], dict)
-            ):
+            if isinstance(value, dict) and key in merged and isinstance(merged[key], dict):
                 # 递归合并嵌套字典
                 merged[key] = self.merge_state(merged[key], value)
             else:
@@ -254,9 +246,7 @@ class MessageManager:
 
         # 限制历史记录大小
         if len(self.state_history[state_id]) > self.max_state_history:
-            self.state_history[state_id] = self.state_history[state_id][
-                -self.max_state_history :
-            ]
+            self.state_history[state_id] = self.state_history[state_id][-self.max_state_history :]
 
     def get_state_history(self, state_id: str) -> List[Dict[str, Any]]:
         """获取状态历史"""
@@ -474,9 +464,7 @@ async def _handle_chat_request(
         service = await get_llm_service()
         # 使用 asyncio.wait_for 添加 30 秒超時（增加以適應慢速模型）
         response_text = await asyncio.wait_for(
-            angela_llm_response(
-                user_message=user_message, history=history, user_name=user_name
-            ),
+            angela_llm_response(user_message=user_message, history=history, user_name=user_name),
             timeout=30.0,  # 30 秒超時
         )
         source = "llm" if service and service.is_available else "fallback"
@@ -557,9 +545,7 @@ async def startup_event():
 
     # Initialize Logic Bridge
     if digital_life.autonomous_lifecycle:
-        initialize_cognitive_bridge(
-            digital_life.autonomous_lifecycle.cdm, economy_manager
-        )
+        initialize_cognitive_bridge(digital_life.autonomous_lifecycle.cdm, economy_manager)
 
     await brain_bridge.start()
     # vision_service doesn't have an async initialize yet
@@ -568,9 +554,7 @@ async def startup_event():
     global _llm_service
     try:
         _llm_service = await get_llm_service()
-        logger.info(
-            f"[STARTUP] LLM Service initialized: available={_llm_service.is_available}"
-        )
+        logger.info(f"[STARTUP] LLM Service initialized: available={_llm_service.is_available}")
     except Exception as e:
         logger.error(f"[STARTUP] LLM Service initialization failed: {e}")
 
@@ -638,14 +622,10 @@ async def system_status():
         services_status = {
             "llm_service": _llm_service.is_available if _llm_service else False,
             "digital_life": (
-                digital_life.is_initialized
-                if hasattr(digital_life, "is_initialized")
-                else False
+                digital_life.is_initialized if hasattr(digital_life, "is_initialized") else False
             ),
             "brain_bridge": (
-                brain_bridge.is_running
-                if hasattr(brain_bridge, "is_running")
-                else False
+                brain_bridge.is_running if hasattr(brain_bridge, "is_running") else False
             ),
             "economy": _economy_manager is not None,
         }
@@ -770,12 +750,8 @@ async def get_desktop_state():
         "total_files": state.total_files,
         "total_size": state.total_size,
         "clutter_level": state.clutter_level,
-        "files_by_category": {
-            cat.name: count for cat, count in state.files_by_category.items()
-        },
-        "last_organized": (
-            state.last_organized.isoformat() if state.last_organized else None
-        ),
+        "files_by_category": {cat.name: count for cat, count in state.files_by_category.items()},
+        "last_organized": (state.last_organized.isoformat() if state.last_organized else None),
     }
 
 
@@ -998,9 +974,7 @@ class ConnectionManager:
         # 初始化消息缓冲
         self.message_buffer[websocket] = []
 
-        logger.info(
-            f"WebSocket 连接已建立 (ID: {self.connection_info[websocket]['client_id']})"
-        )
+        logger.info(f"WebSocket 连接已建立 (ID: {self.connection_info[websocket]['client_id']})")
 
         # 启动心跳检测
         asyncio.create_task(self._heartbeat_monitor(websocket))
@@ -1008,9 +982,7 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         """断开连接"""
         if websocket in self.active_connections:
-            client_id = self.connection_info.get(websocket, {}).get(
-                "client_id", "unknown"
-            )
+            client_id = self.connection_info.get(websocket, {}).get("client_id", "unknown")
             self.active_connections.remove(websocket)
             self.connection_info.pop(websocket, None)
             self.message_buffer.pop(websocket, None)
@@ -1200,9 +1172,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 # 更新心跳时间
                 if websocket in manager.connection_info:
-                    manager.connection_info[websocket][
-                        "last_heartbeat"
-                    ] = datetime.now()
+                    manager.connection_info[websocket]["last_heartbeat"] = datetime.now()
                     manager.connection_info[websocket]["heartbeat_missed"] = 0
 
                 # Handle different message types
@@ -1211,9 +1181,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_json(
                         {
                             "type": (
-                                "heartbeat_ack"
-                                if data.get("type") == "heartbeat"
-                                else "echo"
+                                "heartbeat_ack" if data.get("type") == "heartbeat" else "echo"
                             ),
                             "timestamp": datetime.now().isoformat(),
                         }

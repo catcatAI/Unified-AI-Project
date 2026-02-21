@@ -15,13 +15,10 @@ try:
 except ImportError:
     np = None
 
-from .types import (
-    LIS_SemanticAnomalyDetectedEvent,
-    LIS_AnomalyType,
-    LIS_SeverityScore
-)
+from .types import LIS_SemanticAnomalyDetectedEvent, LIS_AnomalyType, LIS_SeverityScore
 
 logger = logging.getLogger(__name__)
+
 
 class ERRIntrospector:
     """
@@ -35,48 +32,67 @@ class ERRIntrospector:
         self.max_history = self.config.get("max_history", 15)
         # Tonal Keywords with weights
         self.sentiment_lexicon = {
-            "pessimistic": {"error": 0.8, "fail": 0.7, "bad": 0.6, "sorry": 0.4, "problem": 0.5, "unfortunate": 0.6},
-            "optimistic": {"success": 0.8, "happy": 0.9, "great": 0.7, "good": 0.5, "excellent": 0.9, "joy": 1.0}
+            "pessimistic": {
+                "error": 0.8,
+                "fail": 0.7,
+                "bad": 0.6,
+                "sorry": 0.4,
+                "problem": 0.5,
+                "unfortunate": 0.6,
+            },
+            "optimistic": {
+                "success": 0.8,
+                "happy": 0.9,
+                "great": 0.7,
+                "good": 0.5,
+                "excellent": 0.9,
+                "joy": 1.0,
+            },
         }
         # Ethics & Legal Guardrails Lexicon
         self.restricted_lexicon = {
-            "harm": 0.9, "illegal": 1.0, "violate": 0.8, "malware": 1.0, 
-            "exploit": 0.9, "dangerous": 0.7, "bypass": 0.6
+            "harm": 0.9,
+            "illegal": 1.0,
+            "violate": 0.8,
+            "malware": 1.0,
+            "exploit": 0.9,
+            "dangerous": 0.7,
+            "bypass": 0.6,
         }
         logger.info("ERR-INTROSPECTOR (Deep Logic) initialized.")
 
-    async def analyze_output(self, output_text: str, context: Dict[str, Any]) -> List[LIS_SemanticAnomalyDetectedEvent]:
+    async def analyze_output(
+        self, output_text: str, context: Dict[str, Any]
+    ) -> List[LIS_SemanticAnomalyDetectedEvent]:
         """Analyzes text for anomalies and returns a list of detected events."""
         anomalies = []
-        
+
         # 1. Vectorize text (Simple TF-IDF / Bag of Words implementation for low-resource AGI)
         current_vector = self._vectorize(output_text)
-        
+
         # 2. Detect Repetition via Semantic Similarity
         # We must detect repetition BEFORE adding to history to avoid matching itself
         repetition_event = self._detect_semantic_repetition(output_text, current_vector)
         if repetition_event:
             anomalies.append(repetition_event)
-            
+
         # 3. Detect Tonal Shift via Weighted Lexicon
         tone_event = self._detect_weighted_tone_shift(output_text, context)
         if tone_event:
             anomalies.append(tone_event)
-            
+
         # 4. Detect Ethical Divergence
         ethical_event = self._detect_ethical_divergence(output_text)
         if ethical_event:
             anomalies.append(ethical_event)
-            
+
         # Update history with meta-data
-        self.output_history.append({
-            "text": output_text,
-            "vector": current_vector,
-            "timestamp": time.time()
-        })
+        self.output_history.append(
+            {"text": output_text, "vector": current_vector, "timestamp": time.time()}
+        )
         if len(self.output_history) > self.max_history:
             self.output_history.pop(0)
-            
+
         return anomalies
 
     def _vectorize(self, text: str) -> Dict[str, float]:
@@ -88,9 +104,9 @@ class ERRIntrospector:
         for word in words:
             if len(word) > 2:  # Ignore very short words
                 vector[word] = vector.get(word, 0) + 1
-        
+
         # Normalize vector
-        total = sum(v*v for v in vector.values())
+        total = sum(v * v for v in vector.values())
         if total > 0:
             mag = math.sqrt(total)
             for word in vector:
@@ -103,13 +119,15 @@ class ERRIntrospector:
         numerator = sum(vec1[x] * vec2[x] for x in intersection)
         return numerator
 
-    def _detect_semantic_repetition(self, text: str, current_vector: Dict[str, float]) -> Optional[LIS_SemanticAnomalyDetectedEvent]:
+    def _detect_semantic_repetition(
+        self, text: str, current_vector: Dict[str, float]
+    ) -> Optional[LIS_SemanticAnomalyDetectedEvent]:
         """Checks if the new output is semantically too similar to recent history."""
         if not self.output_history:
             return None
-            
+
         threshold = self.config.get("repetition_threshold", 0.85)
-        
+
         for record in self.output_history:
             similarity = self._cosine_similarity(current_vector, record["vector"])
             if similarity > threshold:
@@ -120,19 +138,29 @@ class ERRIntrospector:
                     "description": f"Semantic repetition detected (Similarity: {similarity:.2f}).",
                     "context_snippet": text[:100],
                     "timestamp_detected": datetime.now(timezone.utc).isoformat(),
-                    "metadata": {"similarity": similarity, "matched_previous": record["text"][:50]}
+                    "metadata": {"similarity": similarity, "matched_previous": record["text"][:50]},
                 }
         return None
 
-    def _detect_weighted_tone_shift(self, text: str, context: Dict[str, Any]) -> Optional[LIS_SemanticAnomalyDetectedEvent]:
+    def _detect_weighted_tone_shift(
+        self, text: str, context: Dict[str, Any]
+    ) -> Optional[LIS_SemanticAnomalyDetectedEvent]:
         """Detects if the tone mismatch with the expected sentiment using weighted lexicon."""
         expected_sentiment = context.get("expected_sentiment", "neutral")
         if expected_sentiment == "neutral":
             return None
 
         text_lower = text.lower()
-        pessimistic_score = sum(weight for word, weight in self.sentiment_lexicon["pessimistic"].items() if word in text_lower)
-        optimistic_score = sum(weight for word, weight in self.sentiment_lexicon["optimistic"].items() if word in text_lower)
+        pessimistic_score = sum(
+            weight
+            for word, weight in self.sentiment_lexicon["pessimistic"].items()
+            if word in text_lower
+        )
+        optimistic_score = sum(
+            weight
+            for word, weight in self.sentiment_lexicon["optimistic"].items()
+            if word in text_lower
+        )
 
         # Scientific constraint: If joy is expected, but pessimism outweighs optimism
         if expected_sentiment == "joy" and pessimistic_score > optimistic_score:
@@ -144,7 +172,10 @@ class ERRIntrospector:
                 "description": f"Significant tonal misalignment. Expected 'joy' but text is predominantly pessimistic (Score: {pessimistic_score:.2f}).",
                 "context_snippet": text[:100],
                 "timestamp_detected": datetime.now(timezone.utc).isoformat(),
-                "metadata": {"pessimistic_score": pessimistic_score, "optimistic_score": optimistic_score}
+                "metadata": {
+                    "pessimistic_score": pessimistic_score,
+                    "optimistic_score": optimistic_score,
+                },
             }
         return None
 
@@ -167,6 +198,6 @@ class ERRIntrospector:
                 "description": f"Ethical boundary proximity detected. Matched terms: {', '.join(matched_terms)}.",
                 "context_snippet": text[:100],
                 "timestamp_detected": datetime.now(timezone.utc).isoformat(),
-                "metadata": {"matched_terms": matched_terms, "violation_score": violation_score}
+                "metadata": {"matched_terms": matched_terms, "violation_score": violation_score},
             }
         return None

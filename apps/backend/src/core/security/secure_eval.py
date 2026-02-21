@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EvalResult:
     """表達式求值結果"""
+
     success: bool
     result: Any = None
     error: Optional[str] = None
@@ -88,31 +89,31 @@ class SafeEvaluator:
 
     # 允許的函數
     ALLOWED_FUNCTIONS = {
-        'abs': abs,
-        'min': min,
-        'max': max,
-        'round': round,
-        'pow': pow,
-        'len': len,
-        'sum': sum,
-        'sorted': sorted,
-        'any': any,
-        'all': all,
-        'int': int,
-        'float': float,
-        'str': str,
-        'bool': bool,
-        'list': list,
-        'tuple': tuple,
-        'set': set,
-        'dict': dict,
+        "abs": abs,
+        "min": min,
+        "max": max,
+        "round": round,
+        "pow": pow,
+        "len": len,
+        "sum": sum,
+        "sorted": sorted,
+        "any": any,
+        "all": all,
+        "int": int,
+        "float": float,
+        "str": str,
+        "bool": bool,
+        "list": list,
+        "tuple": tuple,
+        "set": set,
+        "dict": dict,
     }
 
     # 允許的常量
     ALLOWED_CONSTANTS = {
-        'True': True,
-        'False': False,
-        'None': None,
+        "True": True,
+        "False": False,
+        "None": None,
     }
 
     # 允許的節點類型
@@ -169,9 +170,7 @@ class SafeEvaluator:
             # 1. 驗證輸入
             if not expression or not isinstance(expression, str):
                 return EvalResult(
-                    success=False,
-                    error="表達式必須是非空字符串",
-                    expression=expression
+                    success=False, error="表達式必須是非空字符串", expression=expression
                 )
 
             # 2. 檢查長度
@@ -179,18 +178,14 @@ class SafeEvaluator:
                 return EvalResult(
                     success=False,
                     error=f"表達式過長 (最大: {self.max_length}, 當前: {len(expression)})",
-                    expression=expression
+                    expression=expression,
                 )
 
             # 3. 解析 AST
             try:
-                tree = ast.parse(expression, mode='eval')
+                tree = ast.parse(expression, mode="eval")
             except SyntaxError as e:
-                return EvalResult(
-                    success=False,
-                    error=f"語法錯誤: {e}",
-                    expression=expression
-                )
+                return EvalResult(success=False, error=f"語法錯誤: {e}", expression=expression)
 
             # 4. 驗證並評估 AST
             result = self._eval_node(tree, context)
@@ -200,29 +195,16 @@ class SafeEvaluator:
                 return EvalResult(
                     success=False,
                     error=f"表達式過於複雜 (最大: {self.max_complexity}, 當前: {self.complexity})",
-                    expression=expression
+                    expression=expression,
                 )
 
-            return EvalResult(
-                success=True,
-                result=result,
-                expression=expression
-            )
+            return EvalResult(success=True, result=result, expression=expression)
 
         except RecursionError:
-            return EvalResult(
-                success=False,
-                error="表達式過深（遞歸限制）",
-                expression=expression
-            )
+            return EvalResult(success=False, error="表達式過深（遞歸限制）", expression=expression)
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            return EvalResult(
-
-                success=False,
-                error=f"評估錯誤: {str(e)}",
-                expression=expression
-            )
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            return EvalResult(success=False, error=f"評估錯誤: {str(e)}", expression=expression)
 
     def _eval_node(self, node: ast.AST, context: Dict[str, Any]) -> Any:
         """
@@ -327,10 +309,7 @@ class SafeEvaluator:
                 raise ValueError(f"不可調用的對象: {func}")
 
             args = [self._eval_node(arg, context) for arg in node.args]
-            kwargs = {
-                kw.arg: self._eval_node(kw.value, context)
-                for kw in node.keywords
-            }
+            kwargs = {kw.arg: self._eval_node(kw.value, context) for kw in node.keywords}
 
             return func(*args, **kwargs)
 
@@ -378,11 +357,11 @@ class SafeEvaluator:
         """
         # 創建受限的上下文，只包含數學函數
         math_context = {
-            'abs': abs,
-            'round': round,
-            'pow': pow,
-            'min': min,
-            'max': max,
+            "abs": abs,
+            "round": round,
+            "pow": pow,
+            "min": min,
+            "max": max,
         }
 
         result = self.evaluate(expression, math_context)
@@ -392,7 +371,7 @@ class SafeEvaluator:
             return EvalResult(
                 success=False,
                 error=f"算術表達式必須返回數值，得到: {type(result.result).__name__}",
-                expression=expression
+                expression=expression,
             )
 
         return result
@@ -454,13 +433,11 @@ if __name__ == "__main__":
         ("2 ** 8", True),
         ("abs(-5)", True),
         ("round(3.14159, 2)", True),
-
         # 邏輯運算
         ("True and False", True),
         ("True or False", True),
         ("not True", True),
         ("1 < 2 and 3 > 4", True),
-
         # 危險操作（應該失敗）
         ("__import__('os')", False),
         ("open('test.txt')", False),

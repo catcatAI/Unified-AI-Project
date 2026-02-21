@@ -1,10 +1,13 @@
 """模型与代理上下文子系统"""
+
 # Angela Matrix: [L2:MEM] [L4:CTX] Model and agent context subsystem
 
 import logging
+
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+
 # from .manager import  # Commented out - incomplete import
 # from .storage.base import  # Commented out - incomplete import
 
@@ -14,7 +17,15 @@ logger = logging.getLogger(__name__)
 class ModelCallRecord:
     """模型调用记录"""
 
-    def __init__(self, caller_model_id: str, callee_model_id: str, parameters: Dict[str, Any], result: Any, duration: float, success: bool):
+    def __init__(
+        self,
+        caller_model_id: str,
+        callee_model_id: str,
+        parameters: Dict[str, Any],
+        result: Any,
+        duration: float,
+        success: bool,
+    ):
         self.record_id = f"call_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
         self.caller_model_id = caller_model_id
         self.callee_model_id = callee_model_id
@@ -32,12 +43,12 @@ class AgentCollaboration:
         self.collaboration_id = f"collab_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
         self.task_id = task_id
         self.participating_agents = participating_agents
-        self.collaboration_steps: List['CollaborationStep'] = []
+        self.collaboration_steps: List["CollaborationStep"] = []
         self.start_time = datetime.now()
         self.end_time: Optional[datetime] = None
         self.status = "active"  # active, completed, failed
 
-    def add_step(self, step: 'CollaborationStep'):
+    def add_step(self, step: "CollaborationStep"):
         """添加协作步骤"""
         self.collaboration_steps.append(step)
 
@@ -86,7 +97,9 @@ class ModelPerformanceMetrics:
             self.success_rate = (self.success_rate * (self.total_calls - 1)) / self.total_calls
 
         # 更新平均执行时间
-        self.average_duration = (self.average_duration * (self.total_calls - 1) + call_record.duration) / self.total_calls
+        self.average_duration = (
+            self.average_duration * (self.total_calls - 1) + call_record.duration
+        ) / self.total_calls
 
 
 class ModelContextManager:
@@ -97,10 +110,20 @@ class ModelContextManager:
         self.model_metrics: Dict[str, ModelPerformanceMetrics] = {}
         self.call_records: List[ModelCallRecord] = []
 
-    def record_model_call(self, caller_model_id: str, callee_model_id: str, parameters: Dict[str, Any], result: Any, duration: float, success: bool) -> bool:
+    def record_model_call(
+        self,
+        caller_model_id: str,
+        callee_model_id: str,
+        parameters: Dict[str, Any],
+        result: Any,
+        duration: float,
+        success: bool,
+    ) -> bool:
         """记录模型调用"""
         try:
-            call_record = ModelCallRecord(caller_model_id, callee_model_id, parameters, result, duration, success)
+            call_record = ModelCallRecord(
+                caller_model_id, callee_model_id, parameters, result, duration, success
+            )
             self.call_records.append(call_record)
 
             # 更新调用者和被调用者的性能指标
@@ -117,24 +140,26 @@ class ModelContextManager:
                     "callee_model_id": callee_model_id,
                     "timestamp": call_record.timestamp.isoformat(),
                     "parameters": parameters,
-                    "result": str(result)[:1000]  # 限制结果长度
+                    "result": str(result)[:1000],  # 限制结果长度
                 },
                 "performance_metrics": {
                     "caller": {
                         "total_calls": self.model_metrics[caller_model_id].total_calls,
                         "success_rate": self.model_metrics[caller_model_id].success_rate,
-                        "average_duration": self.model_metrics[caller_model_id].average_duration
+                        "average_duration": self.model_metrics[caller_model_id].average_duration,
                     },
                     "callee": {
                         "total_calls": self.model_metrics[callee_model_id].total_calls,
                         "success_rate": self.model_metrics[callee_model_id].success_rate,
-                        "average_duration": self.model_metrics[callee_model_id].average_duration
-                    }
-                }
+                        "average_duration": self.model_metrics[callee_model_id].average_duration,
+                    },
+                },
             }
 
             # context_id = self.context_manager.create_context(ContextType.MODEL, context_content)  # Commented - needs proper import
-            logger.info(f"Recorded model call from {caller_model_id} to {callee_model_id} with context")
+            logger.info(
+                f"Recorded model call from {caller_model_id} to {callee_model_id} with context"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to record model call: {e}")
@@ -168,7 +193,8 @@ class ModelContextManager:
         try:
             # 筛选与该模型相关的调用记录
             model_calls = [
-                call for call in self.call_records
+                call
+                for call in self.call_records
                 if call.caller_model_id == model_id or call.callee_model_id == model_id
             ]
 
@@ -181,14 +207,16 @@ class ModelContextManager:
             # 转换为字典格式
             call_history = []
             for call in model_calls:
-                call_history.append({
-                    "record_id": call.record_id,
-                    "caller_model_id": call.caller_model_id,
-                    "callee_model_id": call.callee_model_id,
-                    "timestamp": call.timestamp.isoformat(),
-                    "duration": call.duration,
-                    "success": call.success
-                })
+                call_history.append(
+                    {
+                        "record_id": call.record_id,
+                        "caller_model_id": call.caller_model_id,
+                        "callee_model_id": call.callee_model_id,
+                        "timestamp": call.timestamp.isoformat(),
+                        "duration": call.duration,
+                        "success": call.success,
+                    }
+                )
 
             return call_history
         except Exception as e:
@@ -216,7 +244,7 @@ class AgentContextManager:
                     "task_id": task_id,
                     "participating_agents": participating_agents,
                     "start_time": collaboration.start_time.isoformat(),
-                    "status": collaboration.status
+                    "status": collaboration.status,
                 }
             }
 
@@ -227,7 +255,15 @@ class AgentContextManager:
             logger.error(f"Failed to start collaboration: {e}")
             raise
 
-    def record_collaboration_step(self, collaboration_id: str, agent_id: str, action: str, input_data: Any, output_data: Any, duration: float) -> bool:
+    def record_collaboration_step(
+        self,
+        collaboration_id: str,
+        agent_id: str,
+        action: str,
+        input_data: Any,
+        output_data: Any,
+        duration: float,
+    ) -> bool:
         """记录协作步骤"""
         try:
             if collaboration_id not in self.collaborations:
@@ -249,7 +285,7 @@ class AgentContextManager:
                     "input_data": str(input_data)[:500],  # 限制输入长度
                     "output_data": str(output_data)[:500],  # 限制输出长度
                     "timestamp": step.timestamp.isoformat(),
-                    "duration": duration
+                    "duration": duration,
                 }
             }
 
@@ -274,9 +310,11 @@ class AgentContextManager:
             context_content = {
                 "collaboration_completion": {
                     "collaboration_id": collaboration_id,
-                    "end_time": collaboration.end_time.isoformat() if collaboration.end_time else None,
+                    "end_time": (
+                        collaboration.end_time.isoformat() if collaboration.end_time else None
+                    ),
                     "status": collaboration.status,
-                    "total_steps": len(collaboration.collaboration_steps)
+                    "total_steps": len(collaboration.collaboration_steps),
                 }
             }
 

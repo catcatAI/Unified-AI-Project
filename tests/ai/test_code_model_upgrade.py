@@ -6,14 +6,14 @@ import pytest
 import os
 
 # Assuming the test is run from the project root, so imports should be relative to that.
-from ai.code_understanding.lightweight_code_model import (
-    LightweightCodeModel, CodeAnalysisResult
-)
+from ai.code_understanding.lightweight_code_model import LightweightCodeModel, CodeAnalysisResult
+
 
 @pytest.fixture
 def code_model():
     """Provides a LightweightCodeModel instance."""
     return LightweightCodeModel()
+
 
 @pytest.fixture
 def temp_test_file():
@@ -45,26 +45,28 @@ class TestClass:
 """
     with open(test_file_path, "w") as f:
         f.write(code_content)
-    
+
     yield test_file_path
-    
+
     if os.path.exists(test_file_path):
         os.remove(test_file_path)
+
 
 def test_dna_chain_functionality(code_model: LightweightCodeModel):
     """Test DNA chain creation and retrieval."""
     chain = code_model.create_dna_chain("test_code_chain")
     chain.add_node("test_file_1.py")
     chain.add_node("test_file_2.py")
-    
+
     retrieved_chain = code_model.get_dna_chain("test_code_chain")
     assert retrieved_chain is not None, "Failed to retrieve DNA chain"
     assert len(retrieved_chain.nodes) == 2, "Incorrect number of nodes in chain"
 
+
 def test_code_complexity_calculation(code_model: LightweightCodeModel, temp_test_file: str):
     """Test code complexity calculation and analysis."""
     result = code_model.analyze_tool_file(temp_test_file, dna_chain_id="test_code_chain")
-    
+
     assert result is not None, "Failed to analyze test file"
     assert isinstance(result, CodeAnalysisResult), "Result is not a CodeAnalysisResult instance"
     assert len(result.functions) == 2, "Incorrect number of functions detected"

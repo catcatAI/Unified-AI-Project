@@ -1,4 +1,3 @@
-
 def recognize_speech(audio_file):
     """
     Recognizes speech from an audio file.
@@ -14,6 +13,7 @@ def recognize_speech(audio_file):
         audio = r.record(source)
     return r.recognize_google(audio)
 
+
 def save_model(model, model_path):
     """
     Saves the model to a file.
@@ -24,6 +24,7 @@ def save_model(model, model_path):
     """
     with open(model_path, "wb") as f:
         f.write(model.get_wav_data)
+
 
 def load_model(model_path):
     """

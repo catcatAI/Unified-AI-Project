@@ -15,6 +15,7 @@ router = APIRouter(prefix="/vision", tags=["Vision"])
 # 共享的 VisionService 實例
 _vision_service = VisionService()
 
+
 @router.post("/sampling")
 async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
     """獲取視覺採樣分析"""
@@ -22,18 +23,19 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
     scale = params.get("scale", 1.0)
     deformation = params.get("deformation", 0.0)
     distribution = params.get("distribution", "GAUSSIAN")
-    
+
     try:
         result = await _vision_service.get_sampling_analysis(
             center=(center[0], center[1]),
             scale=scale,
             deformation=deformation,
-            distribution=distribution
+            distribution=distribution,
         )
         return result
     except Exception as e:
         logger.error(f"Vision sampling error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/perceive")
 async def vision_perceive(image_data: bytes = Body(...)):
@@ -45,33 +47,25 @@ async def vision_perceive(image_data: bytes = Body(...)):
         logger.error(f"Vision perceive error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/control")
 async def vision_control(params: Dict[str, Any] = Body(...)):
     """控制視覺模組開關"""
     enabled = params.get("enabled", True)
     try:
         # 簡化實現，不依賴 sync_manager
-        return {
-            "status": "success",
-            "module": "vision",
-            "enabled": enabled,
-            "mode": "post_method"
-        }
+        return {"status": "success", "module": "vision", "enabled": enabled, "mode": "post_method"}
     except Exception as e:
         logger.error(f"Vision control error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/control")
 async def vision_control_get(enabled: bool = True):
     """控制視覺模組開關（GET 方法支持）"""
     try:
         # 返回簡單的狀態，不依賴 sync_manager
-        return {
-            "status": "success",
-            "module": "vision",
-            "enabled": enabled,
-            "mode": "get_method"
-        }
+        return {"status": "success", "module": "vision", "enabled": enabled, "mode": "get_method"}
     except Exception as e:
         logger.error(f"Vision control error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

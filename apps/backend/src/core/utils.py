@@ -20,13 +20,13 @@ from functools import wraps
 from contextlib import contextmanager
 import asyncio
 
-
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 # ============================================
 # 路径和文件操作
 # ============================================
+
 
 def get_project_root() -> Path:
     """获取项目根目录"""
@@ -50,9 +50,8 @@ def safe_read_file(path: Union[str, Path], encoding: str = "utf-8") -> Optional[
     try:
         return Path(path).read_text(encoding=encoding)
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
-
 
 
 def safe_write_file(path: Union[str, Path], content: str, encoding: str = "utf-8") -> bool:
@@ -62,9 +61,8 @@ def safe_write_file(path: Union[str, Path], content: str, encoding: str = "utf-8
         Path(path).write_text(content, encoding=encoding)
         return True
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return False
-
 
 
 def load_json(path: Union[str, Path]) -> Optional[Dict[str, Any]]:
@@ -84,23 +82,21 @@ def save_json(path: Union[str, Path], data: Dict[str, Any], indent: int = 2) -> 
         content = json.dumps(data, indent=indent, ensure_ascii=False)
         return safe_write_file(path, content)
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return False
-
 
 
 def get_file_hash(path: Union[str, Path], algorithm: str = "sha256") -> Optional[str]:
     """获取文件的哈希值"""
     try:
         hasher = hashlib.new(algorithm)
-        with open(path, 'rb') as f:
-            for chunk in iter(lambda: f.read(4096), b''):
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
                 hasher.update(chunk)
         return hasher.hexdigest()
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
-
 
 
 def get_file_size(path: Union[str, Path]) -> int:
@@ -108,14 +104,13 @@ def get_file_size(path: Union[str, Path]) -> int:
     try:
         return Path(path).stat().st_size
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return 0
-
 
 
 def format_file_size(size_bytes: int) -> str:
     """格式化文件大小为可读字符串"""
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size_bytes < 1024:
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024
@@ -125,6 +120,7 @@ def format_file_size(size_bytes: int) -> str:
 # ============================================
 # 字符串操作
 # ============================================
+
 
 def generate_id(prefix: str = "", length: int = 8) -> str:
     """生成唯一 ID"""
@@ -137,27 +133,29 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """截断文本"""
     if len(text) <= max_length:
         return text
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix
 
 
 def slugify(text: str) -> str:
     """将文本转换为 URL 友好的 slug"""
     import re
+
     # 转换为小写
     text = text.lower()
     # 替换空格和特殊字符为连字符
-    text = re.sub(r'[^\w\s-]', '', text)
-    text = re.sub(r'[-\s]+', '-', text)
-    return text.strip('-')
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[-\s]+", "-", text)
+    return text.strip("-")
 
 
 def sanitize_filename(filename: str) -> str:
     """清理文件名，移除不安全字符"""
     import re
+
     # 移除路径遍历字符
-    filename = filename.replace('..', '').replace('/', '').replace('\\', '')
+    filename = filename.replace("..", "").replace("/", "").replace("\\", "")
     # 只保留字母、数字、下划线、连字符和点
-    filename = re.sub(r'[^\w\-\.]', '_', filename)
+    filename = re.sub(r"[^\w\-\.]", "_", filename)
     return filename
 
 
@@ -175,26 +173,28 @@ def parse_timestamp(timestamp: str) -> Optional[datetime]:
     try:
         return datetime.fromisoformat(timestamp)
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
-
 
 
 # ============================================
 # 验证操作
 # ============================================
 
+
 def is_valid_email(email: str) -> bool:
     """验证邮箱地址格式"""
     import re
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+    pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return re.match(pattern, email) is not None
 
 
 def is_valid_url(url: str) -> bool:
     """验证 URL 格式"""
     import re
-    pattern = r'^https?://[^\s/$.?#][^\s]*$'
+
+    pattern = r"^https?://[^\s/$.?#][^\s]*$"
     return re.match(pattern, url) is not None
 
 
@@ -211,13 +211,15 @@ def is_valid_uuid(uuid_str: str) -> bool:
 # 装饰器
 # ============================================
 
+
 def retry(
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
-    exceptions: tuple = (Exception,)
+    exceptions: tuple = (Exception,),
 ) -> Callable:
     """重试装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -230,7 +232,9 @@ def retry(
                         raise
                     time.sleep(current_delay)
                     current_delay *= backoff
+
         return wrapper
+
     return decorator
 
 
@@ -238,9 +242,10 @@ def async_retry(
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
-    exceptions: tuple = (Exception,)
+    exceptions: tuple = (Exception,),
 ) -> Callable:
     """异步重试装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -253,12 +258,15 @@ def async_retry(
                         raise
                     await asyncio.sleep(current_delay)
                     current_delay *= backoff
+
         return wrapper
+
     return decorator
 
 
 def measure_time(func: Callable) -> Callable:
     """测量函数执行时间"""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
@@ -266,11 +274,13 @@ def measure_time(func: Callable) -> Callable:
         elapsed = time.time() - start_time
         logging.debug(f"{func.__name__} executed in {elapsed:.4f} seconds")
         return result
+
     return wrapper
 
 
 def async_measure_time(func: Callable) -> Callable:
     """测量异步函数执行时间"""
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         start_time = time.time()
@@ -278,13 +288,14 @@ def async_measure_time(func: Callable) -> Callable:
         elapsed = time.time() - start_time
         logging.debug(f"{func.__name__} executed in {elapsed:.4f} seconds")
         return result
+
     return wrapper
 
 
 def cache_result(ttl: float = 60.0) -> Callable:
     """缓存结果装饰器"""
     cache: Dict[str, tuple] = {}
-    
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -293,17 +304,20 @@ def cache_result(ttl: float = 60.0) -> Callable:
                 result, timestamp = cache[key]
                 if time.time() - timestamp < ttl:
                     return result
-            
+
             result = func(*args, **kwargs)
             cache[key] = (result, time.time())
             return result
+
         return wrapper
+
     return decorator
 
 
 # ============================================
 # 上下文管理器
 # ============================================
+
 
 @contextmanager
 def timer(description: str = "Operation"):
@@ -337,6 +351,7 @@ def change_dir(path: Union[str, Path]):
 # ============================================
 # 数据转换
 # ============================================
+
 
 def deep_merge_dict(dict1: Dict, dict2: Dict) -> Dict:
     """深度合并字典"""
@@ -383,43 +398,45 @@ def lerp(a: float, b: float, t: float) -> float:
 # 日志工具
 # ============================================
 
+
 def setup_logger(
     name: str,
     level: int = logging.INFO,
     log_file: Optional[Union[str, Path]] = None,
-    format_string: Optional[str] = None
+    format_string: Optional[str] = None,
 ) -> logging.Logger:
     """设置日志记录器"""
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    
+
     # 避免重复添加处理器
     if logger.handlers:
         return logger
-    
+
     # 格式化
     if format_string is None:
         format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     formatter = logging.Formatter(format_string)
-    
+
     # 控制台处理器
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-    
+
     # 文件处理器
     if log_file:
         ensure_dir(Path(log_file).parent)
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-    
+
     return logger
 
 
 # ============================================
 # 异步工具
 # ============================================
+
 
 async def run_sync(func: Callable, *args, **kwargs) -> Any:
     """在异步上下文中运行同步函数"""
@@ -435,7 +452,7 @@ async def gather_with_errors(*coroutines) -> List[Any]:
             result = await coro
             results.append(result)
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results.append(e)
 
     return results
@@ -453,10 +470,12 @@ async def timeout_after(coro: asyncio.coroutine, timeout: float) -> Any:
 # 类和对象工具
 # ============================================
 
+
 class Singleton(type):
     """单例元类"""
+
     _instances = {}
-    
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
@@ -465,11 +484,11 @@ class Singleton(type):
 
 class LazyProperty:
     """懒加载属性描述器"""
-    
+
     def __init__(self, func: Callable):
         self.func = func
         self.name = func.__name__
-    
+
     def __get__(self, obj: Any, type: type = None) -> Any:
         if obj is None:
             return self
@@ -480,14 +499,14 @@ class LazyProperty:
 
 class cached_property:
     """缓存属性描述器（兼容 Python 3.7）"""
-    
+
     def __init__(self, func: Callable):
         self.func = func
         self.attr_name = None
-    
+
     def __set_name__(self, owner, name):
         self.attr_name = name
-    
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
@@ -518,6 +537,7 @@ class cached_property:
 # ============================================
 # 环境工具
 # ============================================
+
 
 def get_env(key: str, default: Optional[str] = None) -> Optional[str]:
     """获取环境变量"""
@@ -567,7 +587,6 @@ __all__ = [
     "get_file_hash",
     "get_file_size",
     "format_file_size",
-    
     # 字符串操作
     "generate_id",
     "truncate_text",
@@ -575,44 +594,36 @@ __all__ = [
     "sanitize_filename",
     "format_timestamp",
     "parse_timestamp",
-    
     # 验证操作
     "is_valid_email",
     "is_valid_url",
     "is_valid_uuid",
-    
     # 装饰器
     "retry",
     "async_retry",
     "measure_time",
     "async_measure_time",
     "cache_result",
-    
     # 上下文管理器
     "timer",
     "suppress_errors",
     "change_dir",
-    
     # 数据转换
     "deep_merge_dict",
     "flatten_dict",
     "safe_cast",
     "clamp",
     "lerp",
-    
     # 日志工具
     "setup_logger",
-    
     # 异步工具
     "run_sync",
     "gather_with_errors",
     "timeout_after",
-    
     # 类和对象工具
     "Singleton",
     "LazyProperty",
     "cached_property",
-    
     # 环境工具
     "get_env",
     "get_env_bool",
@@ -626,7 +637,9 @@ if __name__ == "__main__":
     # 测试工具函数
     logger.info(f"Project root: {get_project_root()}")
     logger.info(f"Generated ID: {generate_id('test')}")
-    logger.info(f"Truncated text: {truncate_text('This is a very long text that should be truncated', 20)}")
+    logger.info(
+        f"Truncated text: {truncate_text('This is a very long text that should be truncated', 20)}"
+    )
     logger.info(f"Slugified: {slugify('Hello World! This is a Test')}")
     logger.info(f"Formatted time: {format_timestamp()}")
     logger.info(f"Clamped value: {clamp(5, 0, 10)}")

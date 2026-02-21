@@ -35,15 +35,18 @@ try:
     from sklearn.metrics.pairwise import cosine_similarity
     from sklearn.cluster import DBSCAN
     from sklearn.preprocessing import StandardScaler
+
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
 
 logger = logging.getLogger("cognitive_constraint_engine")
 
+
 @dataclass
 class CognitiveTarget:
     """认知目标"""
+
     id: str
     description: str
     priority: float
@@ -51,6 +54,7 @@ class CognitiveTarget:
     category: str
     created_at: datetime
     semantic_hash: str
+
 
 class CognitiveConstraintEngine:
     """认知约束引擎"""
@@ -69,7 +73,7 @@ class CognitiveConstraintEngine:
 
     def _compute_semantic_hash(self, description: str) -> str:
         """计算语义哈希"""
-        return hashlib.sha256(description.encode('utf-8')).hexdigest()
+        return hashlib.sha256(description.encode("utf-8")).hexdigest()
 
     def add_target(self, description: str, priority: float = 0.5, category: str = "general") -> str:
         """添加认知目标"""
@@ -82,7 +86,7 @@ class CognitiveConstraintEngine:
             necessity=0.5,
             category=category,
             created_at=datetime.now(),
-            semantic_hash=target_id
+            semantic_hash=target_id,
         )
 
         self.targets[target_id] = target

@@ -26,9 +26,7 @@ class VisionService:
 
         # 初始化視覺組件
         self.sampler = VisualSampler(self.config.get("sampler_config"))
-        self.memory = PerceptualMemory(
-            capacity=self.config.get("memory_capacity", 1000)
-        )
+        self.memory = PerceptualMemory(capacity=self.config.get("memory_capacity", 1000))
         self.attention = AttentionController()
 
         # 初始化視覺模型 / API
@@ -58,9 +56,7 @@ class VisionService:
     async def _init_sync_listener(self):
         """初始化同步監聽器"""
         try:
-            await sync_manager.register_client(
-                "vision_service", self._handle_sync_event
-            )
+            await sync_manager.register_client("vision_service", self._handle_sync_event)
             logger.info("Vision Service registered to sync manager")
         except Exception as e:
             logger.error(f"Failed to register Vision Service to sync manager: {e}")
@@ -77,9 +73,7 @@ class VisionService:
     def set_peer_services(self, peer_services: Dict[str, Any]):
         """設置其他多模態服務的引用"""
         self.peer_services = peer_services
-        logger.debug(
-            f"Vision Service connected to peer services: {list(peer_services.keys())}"
-        )
+        logger.debug(f"Vision Service connected to peer services: {list(peer_services.keys())}")
 
     async def analyze_image(
         self,
@@ -146,8 +140,8 @@ class VisionService:
 
             # 多模態融合：結合文本和音頻上下文
             if context.get("text_context") or context.get("audio_context"):
-                analysis_results["multimodal_insights"] = (
-                    await self._perform_multimodal_analysis(analysis_results, context)
+                analysis_results["multimodal_insights"] = await self._perform_multimodal_analysis(
+                    analysis_results, context
                 )
 
             # 記錄處理歷史
@@ -223,14 +217,14 @@ class VisionService:
             elif comparison_type == "difference":
                 # 差異分析
                 comparison_result["difference_score"] = round(1 - random.random(), 3)
-                comparison_result["difference_areas"] = (
-                    await self._identify_differences(image_data1, image_data2)
+                comparison_result["difference_areas"] = await self._identify_differences(
+                    image_data1, image_data2
                 )
 
             elif comparison_type == "feature_match":
                 # 特徵配對
-                comparison_result["matched_features"] = (
-                    await self._match_image_features(image_data1, image_data2)
+                comparison_result["matched_features"] = await self._match_image_features(
+                    image_data1, image_data2
                 )
                 comparison_result["feature_similarity"] = random.uniform(0.3, 0.9)
 
@@ -402,13 +396,9 @@ class VisionService:
     def _generate_processing_id(self, image_data: bytes) -> str:
         """生成唯一的處理ID"""
         hash_object = hashlib.md5(image_data)
-        return (
-            f"vision_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
-        )
+        return f"vision_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
 
-    async def _generate_image_caption(
-        self, image_data: bytes, context: Dict[str, Any]
-    ) -> str:
+    async def _generate_image_caption(self, image_data: bytes, context: Dict[str, Any]) -> str:
         """生成圖像描述(模擬實現)"""
         await asyncio.sleep(0.1)  # 模擬處理時間
 
@@ -468,16 +458,12 @@ class VisionService:
         ]
 
         # 隨機選擇1 - 4個物體
-        num_objects = random.randint(
-            1, min(4, self.model_config.get("max_objects_per_image", 20))
-        )
+        num_objects = random.randint(1, min(4, self.model_config.get("max_objects_per_image", 20)))
         detected_objects = random.sample(possible_objects, num_objects)
 
         # 過濾低置信度的物體
         threshold = self.model_config.get("detection_confidence_threshold", 0.5)
-        detected_objects = [
-            obj for obj in detected_objects if obj["confidence"] >= threshold
-        ]
+        detected_objects = [obj for obj in detected_objects if obj["confidence"] >= threshold]
         return detected_objects
 
     async def _extract_text_ocr(self, image_data: bytes) -> Dict[str, Any]:
@@ -566,9 +552,7 @@ class VisionService:
 
         return {
             "primary_emotion": detected_emotion,
-            "emotion_scores": {
-                emotion: random.uniform(0.1, 0.9) for emotion in emotions
-            },
+            "emotion_scores": {emotion: random.uniform(0.1, 0.9) for emotion in emotions},
             "confidence": random.uniform(0.7, 0.95),
         }
 
@@ -590,9 +574,7 @@ class VisionService:
 
         return {
             "dominant_colors": dominant_colors,
-            "color_distribution": {
-                color: random.uniform(0.1, 0.4) for color in dominant_colors
-            },
+            "color_distribution": {color: random.uniform(0.1, 0.4) for color in dominant_colors},
             "brightness": random.uniform(0.3, 0.9),
             "contrast": random.uniform(0.4, 0.8),
         }
@@ -659,9 +641,7 @@ class VisionService:
 
         return differences
 
-    async def _match_image_features(
-        self, image_data1: bytes, image_data2: bytes
-    ) -> Dict[str, Any]:
+    async def _match_image_features(self, image_data1: bytes, image_data2: bytes) -> Dict[str, Any]:
         """配對兩張圖像的特徵點"""
         await asyncio.sleep(0.06)
 
@@ -700,9 +680,7 @@ if __name__ == "__main__":
 
         # Test image analysis (with dummy bytes)
         dummy_image = b"\x10\x11\x12\x13\x14\x15"
-        analysis = await service.analyze_image(
-            dummy_image, features=["captioning", "ocr"]
-        )
+        analysis = await service.analyze_image(dummy_image, features=["captioning", "ocr"])
         logger.info(f"Image Analysis: {analysis}")
 
         analysis_default = await service.analyze_image(dummy_image)

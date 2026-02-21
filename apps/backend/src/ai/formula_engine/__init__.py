@@ -9,30 +9,34 @@ from typing import List, Optional, Dict, Any
 from pathlib import Path
 import json
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Consistent import assuming 'src' is in PYTHONPATH,
 # making 'shared' a top-level package.
 # from .types import FormulaEngine,  # Fixed: commented out incomplete import
 
+
 class FormulaEngine:
     """
-Manages loading and matching of predefined formulas based on user input or context.
+    Manages loading and matching of predefined formulas based on user input or context.
     """
 
     def __init__(self, formulas_filepath: Optional[str] = None):
         """
-Initializes the FormulaEngine.
+        Initializes the FormulaEngine.
 
-Args:
-formulas_filepath (Optional[str]): Path to the JSON file containing formula definitions.
-Defaults to "configs/formula_configs/default_formulas.json" relative to project root.
+        Args:
+        formulas_filepath (Optional[str]): Path to the JSON file containing formula definitions.
+        Defaults to "configs/formula_configs/default_formulas.json" relative to project root.
         """
         self.formulas: List[Dict[str, Any]] = []
         self._project_root = self._get_project_root()
 
         if formulas_filepath is None:
-            self.formulas_file_path = self._project_root / "configs" / "formula_configs" / "default_formulas.json"
+            self.formulas_file_path = (
+                self._project_root / "configs" / "formula_configs" / "default_formulas.json"
+            )
         else:
             # If an absolute path is given, use it. Otherwise,
             # assume it's relative to project root.
@@ -43,7 +47,9 @@ Defaults to "configs/formula_configs/default_formulas.json" relative to project 
                 self.formulas_file_path = self._project_root / formulas_filepath
 
         self._load_formulas()
-        logger.info(f"FormulaEngine initialized. Attempted to load formulas from {self.formulas_file_path}. Loaded {len(self.formulas)} formulas.")
+        logger.info(
+            f"FormulaEngine initialized. Attempted to load formulas from {self.formulas_file_path}. Loaded {len(self.formulas)} formulas."
+        )
 
     def _get_project_root(self) -> Path:
         """Determines the project root directory."""
@@ -54,36 +60,46 @@ Defaults to "configs/formula_configs/default_formulas.json" relative to project 
 
     def _load_formulas(self):
         """
-Loads formula definitions from the JSON file specified by self.formulas_file_path.
+        Loads formula definitions from the JSON file specified by self.formulas_file_path.
         """
         try:
             if not self.formulas_file_path.exists():
-                logger.error(f"FormulaEngine: Error - Formulas file not found at {self.formulas_file_path}")
+                logger.error(
+                    f"FormulaEngine: Error - Formulas file not found at {self.formulas_file_path}"
+                )
                 self.formulas = []
                 return
 
-            with open(self.formulas_file_path, 'r', encoding='utf-8') as f:
+            with open(self.formulas_file_path, "r", encoding="utf-8") as f:
                 loaded_data = json.load(f)
 
                 if not isinstance(loaded_data, list):
-                    logger.error(f"FormulaEngine: Error - Formulas file {self.formulas_file_path} does not contain a list.")
+                    logger.error(
+                        f"FormulaEngine: Error - Formulas file {self.formulas_file_path} does not contain a list."
+                    )
                     self.formulas = []
                     return
 
                 active_formulas = []
                 for entry in loaded_data:
                     # Basic structural check
-                    if isinstance(entry, dict) and \
-                        'name' in entry and \
-                        'conditions' in entry and \
-                        'action' in entry:
+                    if (
+                        isinstance(entry, dict)
+                        and "name" in entry
+                        and "conditions" in entry
+                        and "action" in entry
+                    ):
                         # Only add if enabled (defaults to True if 'enabled' key is missing)
                         if entry.get("enabled", True):  # Default to enabled if key missing
                             active_formulas.append(entry)  # type: ignore
                         else:
-                            logger.info(f"FormulaEngine: Skipping disabled formula entry: {entry.get('name')}")
+                            logger.info(
+                                f"FormulaEngine: Skipping disabled formula entry: {entry.get('name')}"
+                            )
                     else:
-                        logger.warning(f"FormulaEngine: Warning - Skipping invalid/incomplete formula entry: {entry}")
+                        logger.warning(
+                            f"FormulaEngine: Warning - Skipping invalid/incomplete formula entry: {entry}"
+                        )
 
                 self.formulas = active_formulas
                 # Sort by priority (lower number means higher priority).
@@ -95,19 +111,21 @@ Loads formula definitions from the JSON file specified by self.formulas_file_pat
             logger.error(f"FormulaEngine: Error decoding JSON from {self.formulas_file_path}: {e}")
             self.formulas = []
         except Exception as e:
-            logger.error(f"FormulaEngine: An unexpected error occurred while loading formulas from {self.formulas_file_path}: {e}")
+            logger.error(
+                f"FormulaEngine: An unexpected error occurred while loading formulas from {self.formulas_file_path}: {e}"
+            )
             self.formulas = []
 
     def match_input(self, text_input: str) -> Optional[Dict[str, Any]]:
         """
-Matches input text against the conditions of loaded formulas.
-Considers 'enabled' status and 'priority' (formulas are pre-sorted by priority).
+        Matches input text against the conditions of loaded formulas.
+        Considers 'enabled' status and 'priority' (formulas are pre-sorted by priority).
 
-Args:
-text_input (str): The user input text (or other relevant text).
+        Args:
+        text_input (str): The user input text (or other relevant text).
 
-Returns:
-Optional[Dict[str, Any]]: The first matched formula or None.
+        Returns:
+        Optional[Dict[str, Any]]: The first matched formula or None.
         """
         if not text_input:
             return None
@@ -135,26 +153,28 @@ Optional[Dict[str, Any]]: The first matched formula or None.
                     return formula  # type: ignore
         return None
 
-    def execute_formula(self, formula: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def execute_formula(
+        self, formula: Dict[str, Any], context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
-"Executes" a matched formula.
-Currently, this returns the action name and parameters.
+        "Executes" a matched formula.
+        Currently, this returns the action name and parameters.
 
-Args:
-formula (Dict[str, Any]): The matched formula.
-context (Optional[Dict[str, Any]]): Additional context for execution.
-Returns: Dict[...] A dictionary containing the action name and parameters.
+        Args:
+        formula (Dict[str, Any]): The matched formula.
+        context (Optional[Dict[str, Any]]): Additional context for execution.
+        Returns: Dict[...] A dictionary containing the action name and parameters.
         """
         logger.info(f"FormulaEngine: Executing formula '{formula.get('name')}'")
         # Potentially use context to fill in parameters if they are dynamic
         # For now, just returning the static parameters from the formula
         return {
             "action_name": formula.get("action"),
-            "action_params": formula.get("parameters", {})  # Default to empty dict if no params
+            "action_params": formula.get("parameters", {}),  # Default to empty dict if no params
         }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger.info("---- FormulaEngine Standalone Test ----")
 
     # Determine project root from this script's location to find test configs
@@ -172,7 +192,7 @@ if __name__ == '__main__':
             "parameters": {"tone": "very_friendly"},
             "priority": 20,  # Higher priority
             "enabled": True,
-            "version": "1.1"
+            "version": "1.1",
         },
         {
             "name": "test_greeting_low_priority",  # Same condition as above but lower priority
@@ -182,7 +202,7 @@ if __name__ == '__main__':
             "parameters": {"tone": "neutral"},
             "priority": 1,  # Lower priority
             "enabled": True,
-            "version": "1.0"
+            "version": "1.0",
         },
         {
             "name": "test_disabled",
@@ -192,7 +212,7 @@ if __name__ == '__main__':
             "parameters": {},
             "priority": 100,
             "enabled": False,
-            "version": "1.0"
+            "version": "1.0",
         },
         {
             "name": "test_question",
@@ -202,16 +222,16 @@ if __name__ == '__main__':
             "parameters": {"detail_level": "medium"},
             "priority": 5,
             "enabled": True,
-            "version": "1.0"
+            "version": "1.0",
         },
         {  # Malformed entry to test robustness
             "name": "malformed_no_conditions",
             "action": "action_x",
-            "enabled": True
-        }
+            "enabled": True,
+        },
     ]
 
-    with open(dummy_formulas_file, 'w', encoding='utf-8') as f:
+    with open(dummy_formulas_file, "w", encoding="utf-8") as f:
         json.dump(dummy_formulas_data, f, indent=2)
 
     engine = FormulaEngine(formulas_filepath=str(dummy_formulas_file))
@@ -219,12 +239,12 @@ if __name__ == '__main__':
 
     test_inputs = {
         "Hello there, Miko!": "test_greeting_high_priority",  # Should match high priority "hello there"
-        "Hi friend": "test_greeting_high_priority",         # Should match "hi"
-        "Hello": "test_greeting_low_priority",              # Should match low priority "hello"
+        "Hi friend": "test_greeting_high_priority",  # Should match "hi"
+        "Hello": "test_greeting_low_priority",  # Should match low priority "hello"
         "How are you today?": "test_question",
         "This input has no formula.": None,
-        "Tell me about hi.": "test_greeting_high_priority", # Should match "hi"
-        "never match this input please": None                # Should not match "test_disabled"
+        "Tell me about hi.": "test_greeting_high_priority",  # Should match "hi"
+        "never match this input please": None,  # Should not match "test_disabled"
     }
 
     for text_in, expected_formula_name in test_inputs.items():
@@ -232,14 +252,16 @@ if __name__ == '__main__':
         matched_formula = engine.match_input(text_in)
         if matched_formula:
             logger.info(f"  Matched Formula: {matched_formula.get('name')}")
-            assert matched_formula.get('name') == expected_formula_name, \
-                f"Expected {expected_formula_name} but got {matched_formula.get('name')}"
+            assert (
+                matched_formula.get("name") == expected_formula_name
+            ), f"Expected {expected_formula_name} but got {matched_formula.get('name')}"
             execution_result = engine.execute_formula(matched_formula)
             logger.info(f"  Execution Result: {execution_result}")
         else:
             logger.info("  No formula matched.")
-            assert expected_formula_name is None, \
-                f"Expected no match but got one for input '{text_in}'"
+            assert (
+                expected_formula_name is None
+            ), f"Expected no match but got one for input '{text_in}'"
 
     logger.info("\n---- Testing with default formulas path (if it exists) ----")
     # This requires Unified-AI-Project/configs/formula_configs/default_formulas.json to exist,

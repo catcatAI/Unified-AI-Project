@@ -1,19 +1,21 @@
 from typing import TypedDict, Optional, List, Literal, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 LIS_AnomalyType = Literal[
-    "RHYTHM_BREAK", 
-    "LOW_DIVERSITY", 
-    "UNEXPECTED_TONE_SHIFT", 
+    "RHYTHM_BREAK",
+    "LOW_DIVERSITY",
+    "UNEXPECTED_TONE_SHIFT",
     "NARRATIVE_DIVERGENCE",
     "INTERNAL_STATE_MISALIGNMENT",
-    "REPETITION_ECHO"
+    "REPETITION_ECHO",
 ]
 
 LIS_SeverityScore = float
 LIS_InterventionOutcome = Literal["SUCCESS", "FAILURE", "PENDING", "PARTIAL"]
 LIS_IncidentStatus = Literal["OPEN", "ANALYZED", "INTERVENED", "CLOSED_RESOLVED", "CLOSED_IGNORED"]
+
 
 class LIS_SemanticAnomalyDetectedEvent(TypedDict):
     anomaly_id: str
@@ -24,12 +26,14 @@ class LIS_SemanticAnomalyDetectedEvent(TypedDict):
     timestamp_detected: str
     metadata: Dict[str, Any]
 
+
 class LIS_InterventionReport(TypedDict):
     report_id: str
     strategy_used: str
     outcome: LIS_InterventionOutcome
     details: str
     timestamp_intervention: str
+
 
 class LIS_IncidentRecord(TypedDict):
     incident_id: str
@@ -38,6 +42,7 @@ class LIS_IncidentRecord(TypedDict):
     intervention_reports: List[LIS_InterventionReport]
     tags: List[str]
     timestamp_logged: str
+
 
 class NarrativeAntibodyObject(TypedDict):
     antibody_id: str

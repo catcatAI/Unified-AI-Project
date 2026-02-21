@@ -13,7 +13,9 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ContextType(Enum):
     TOOL = "tool"
@@ -22,10 +24,12 @@ class ContextType(Enum):
     MEMORY = "memory"
     CUSTOM = "custom"
 
+
 class ContextStatus(Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     ARCHIVED = "archived"
+
 
 class Context:
     """上下文数据结构"""
@@ -56,6 +60,7 @@ class Context:
         """移除标签"""
         if tag in self.tags:
             self.tags.remove(tag)
+
 
 class Storage(ABC):
     """存储接口"""

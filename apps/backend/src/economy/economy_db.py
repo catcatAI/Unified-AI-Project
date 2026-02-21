@@ -1,7 +1,9 @@
 import sqlite3
 from typing import Dict, Optional
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class EconomyDB:
     """
@@ -48,10 +50,13 @@ class EconomyDB:
     def add_balance(self, user_id: str, amount: float) -> None:
         """Adds a specified amount to a user's balance."""
         if self.cursor and self.conn:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 INSERT INTO balances (user_id, balance) VALUES (?, ?)
                 ON CONFLICT(user_id) DO UPDATE SET balance = balance + excluded.balance;
-            """, (user_id, amount))
+            """,
+                (user_id, amount),
+            )
             self.conn.commit()
 
     def get_balance(self, user_id: str) -> float:
@@ -75,12 +80,18 @@ class EconomyDB:
             # Use a transaction
             try:
                 # Debit from sender
-                self.cursor.execute("UPDATE balances SET balance = balance - ? WHERE user_id = ?", (amount, from_user_id))
+                self.cursor.execute(
+                    "UPDATE balances SET balance = balance - ? WHERE user_id = ?",
+                    (amount, from_user_id),
+                )
                 # Credit to receiver
-                self.cursor.execute("""
+                self.cursor.execute(
+                    """
                     INSERT INTO balances (user_id, balance) VALUES (?, ?)
                     ON CONFLICT(user_id) DO UPDATE SET balance = balance + excluded.balance;
-                """, (to_user_id, amount))
+                """,
+                    (to_user_id, amount),
+                )
                 self.conn.commit()
                 return True
             except sqlite3.Error:

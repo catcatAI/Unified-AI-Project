@@ -3,10 +3,12 @@ import os
 import asyncio
 
 # 直接从文件内容测试
-external_connector_path = r"D:\Projects\Unified-AI-Project\apps\backend\src\hsp\external\external_connector.py"
+external_connector_path = (
+    r"D:\Projects\Unified-AI-Project\apps\backend\src\hsp\external\external_connector.py"
+)
 
 # 读取文件内容
-with open(external_connector_path, 'r', encoding='utf-8') as f:
+with open(external_connector_path, "r", encoding="utf-8") as f:
     content = f.read()
 
 print("检查ExternalConnector稳定性修复:")
@@ -29,7 +31,7 @@ for fix_name, is_present in fixes:
 
 # 检查HSPConnector是否正确使用ExternalConnector:
 hsp_connector_path = r"D:\Projects\Unified-AI-Project\apps\backend\src\hsp\connector.py"
-with open(hsp_connector_path, 'r', encoding='utf-8') as f:
+with open(hsp_connector_path, "r", encoding="utf-8") as f:
     hsp_content = f.read()
 
 print(f"\nHSPConnector文件大小: {len(hsp_content)} 字符")

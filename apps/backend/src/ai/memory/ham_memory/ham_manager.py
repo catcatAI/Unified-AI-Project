@@ -20,6 +20,7 @@ from .ham_background_tasks import HAMBackgroundTasks
 
 logger = logging.getLogger(__name__)
 
+
 class HAMMemoryManager:
     """
     Manages the AI's Hierarchical Associative Memory system.
@@ -27,14 +28,16 @@ class HAMMemoryManager:
     and importance scoring.
     """
 
-    BASE_SAVE_DELAY_SECONDS = 0.1 # A small base delay for I/O simulation
+    BASE_SAVE_DELAY_SECONDS = 0.1  # A small base delay for I/O simulation
 
-    def __init__(self,
-                 resource_awareness_service: Optional[Any] = None,
-                 personality_manager: Optional[Any] = None,
-                 storage_dir: Optional[str] = None,
-                 core_storage_filename: str = "core_memory.json",
-                 chroma_client: Optional[Any] = None):
+    def __init__(
+        self,
+        resource_awareness_service: Optional[Any] = None,
+        personality_manager: Optional[Any] = None,
+        storage_dir: Optional[str] = None,
+        core_storage_filename: str = "core_memory.json",
+        chroma_client: Optional[Any] = None,
+    ):
         """
         Initializes the HAMMemoryManager.
 
@@ -53,7 +56,9 @@ class HAMMemoryManager:
             self.storage_dir = storage_dir
         else:
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root: str = os.path.abspath(os.path.join(current_dir, "..", "..", "..", "..")) # Adjusted path
+            project_root: str = os.path.abspath(
+                os.path.join(current_dir, "..", "..", "..", "..")
+            )  # Adjusted path
             self.storage_dir = os.path.join(project_root, "data", "processed_data")
         os.makedirs(self.storage_dir, exist_ok=True)
 
@@ -69,35 +74,60 @@ class HAMMemoryManager:
             try:
                 self.fernet = Fernet(self.fernet_key)
             except Exception as e:
-                logger.critical(f"Failed to initialize Fernet. Provided MIKO_HAM_KEY might be invalid. Error: {e}")
+                logger.critical(
+                    f"Failed to initialize Fernet. Provided MIKO_HAM_KEY might be invalid. Error: {e}"
+                )
                 logger.error("Encryption will be DISABLED for this session.")
                 self.fernet = None
         else:
             logger.critical("MIKO_HAM_KEY environment variable not set.")
-            logger.warning("Encryption / Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
-            logger.warning("DO NOT use this for any real data you want to keep, as it will be lost.")
+            logger.warning(
+                "Encryption / Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only."
+            )
+            logger.warning(
+                "DO NOT use this for any real data you want to keep, as it will be lost."
+            )
             try:
                 self.fernet_key = Fernet.generate_key()
                 self.fernet = Fernet(self.fernet_key)
                 if self.fernet_key:
-                    logger.info(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
+                    logger.info(
+                        f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}"
+                    )
             except Exception as e:
                 logger.error(f"Failed to generate temporary key: {e}")
                 self.fernet = None
 
-        self.core_storage = HAMCoreStorage(self.storage_dir, core_storage_filename, resource_awareness_service)
+        self.core_storage = HAMCoreStorage(
+            self.storage_dir, core_storage_filename, resource_awareness_service
+        )
         self.data_processor = HAMDataProcessor(fernet=self.fernet)
         self.vector_store_manager = HAMVectorStoreManager(self.storage_dir, chroma_client)
         self.importance_scorer = ImportanceScorer()
-        
+
         self.core_memory_store: Dict[str, HAMDataPackageInternal] = {}
         self.next_memory_id: int = 0
-        self.core_memory_store, self.next_memory_id = self.core_storage._load_core_memory_from_file(self.core_memory_store, self.next_memory_id, self.fernet)
-        
-        self.query_engine = HAMQueryEngine(self.core_memory_store, self.vector_store_manager.chroma_collection, self.vector_store_manager, self.data_processor)
-        self.background_tasks = HAMBackgroundTasks(self.core_memory_store, self.core_storage, self.query_engine, self.fernet, self.next_memory_id)
+        self.core_memory_store, self.next_memory_id = self.core_storage._load_core_memory_from_file(
+            self.core_memory_store, self.next_memory_id, self.fernet
+        )
 
-        logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
+        self.query_engine = HAMQueryEngine(
+            self.core_memory_store,
+            self.vector_store_manager.chroma_collection,
+            self.vector_store_manager,
+            self.data_processor,
+        )
+        self.background_tasks = HAMBackgroundTasks(
+            self.core_memory_store,
+            self.core_storage,
+            self.query_engine,
+            self.fernet,
+            self.next_memory_id,
+        )
+
+        logger.info(
+            f"HAMMemoryManager initialized. Core memory file: {self.core_storage.core_storage_filepath}. Encryption enabled: {self.fernet is not None}"
+        )
 
         # Start background cleanup task only if there's a running event loop
         try:
@@ -117,10 +147,10 @@ class HAMMemoryManager:
         """Closes any open connections, e.g., ChromaDB client."""
         self.vector_store_manager.close()
 
-
-    # - - - Public API Methods - - - 
-    async def store_experience(self, raw_data: Any, data_type: str,
-                               metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    # - - - Public API Methods - - -
+    async def store_experience(
+        self, raw_data: Any, data_type: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> Optional[str]:
         """
         Stores a new experience into the HAM.
         The raw_data is processed (abstracted, checksummed, compressed, encrypted)
@@ -147,11 +177,11 @@ class HAMMemoryManager:
         current_metadata: Dict[str, Any] = {}
         if metadata:
             # Handle both DialogueMemoryEntryMetadata objects and dict
-            if hasattr(metadata, 'to_dict') and callable(getattr(metadata, 'to_dict', None)):
+            if hasattr(metadata, "to_dict") and callable(getattr(metadata, "to_dict", None)):
                 try:
                     current_metadata = metadata.to_dict()
                 except Exception as e:
-                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     current_metadata = dict(metadata) if isinstance(metadata, dict) else {}
 
             elif isinstance(metadata, dict):
@@ -167,39 +197,40 @@ class HAMMemoryManager:
         memory_id = self._generate_memory_id()
 
         data_to_process: bytes
-        if "dialogue_text" in data_type: # More inclusive check for user_dialogue_text, ai_dialogue_text:
+        if (
+            "dialogue_text" in data_type
+        ):  # More inclusive check for user_dialogue_text, ai_dialogue_text:
             if not isinstance(raw_data, str):
                 logger.error(f"raw_data for {data_type} must be a string.")
                 return None
             abstracted_gist = self.data_processor._abstract_text(raw_data)
             # Gist itself should be serializable (dict of strings / lists)
-            data_to_process = json.dumps(abstracted_gist).encode('utf-8')
+            data_to_process = json.dumps(abstracted_gist).encode("utf-8")
         else:
             # For other data types, placeholder just try to convert to string and encode
             try:
-                data_to_process = str(raw_data).encode('utf-8')
+                data_to_process = str(raw_data).encode("utf-8")
             except Exception as e:
                 logger.error(f"Error encoding raw_data for type {data_type}: {e}")
                 return None
 
         # Add checksum to metadata BEFORE compression / encryption
         sha256_checksum = hashlib.sha256(data_to_process).hexdigest()
-        current_metadata['sha256_checksum'] = sha256_checksum
+        current_metadata["sha256_checksum"] = sha256_checksum
 
         # Store in vector store as well
         # Calculate importance score if not already set
         if current_metadata.get("importance_score") is None:
             # Assuming raw_data is the content for importance scoring
             current_metadata["importance_score"] = await self.importance_scorer.calculate(
-                raw_data if isinstance(raw_data, str) else json.dumps(raw_data),
-                current_metadata
+                raw_data if isinstance(raw_data, str) else json.dumps(raw_data), current_metadata
             )
 
         # Store in vector / Chroma store if available
         await self.vector_store_manager.add_semantic_vector(
             memory_id=memory_id,
             content=raw_data if isinstance(raw_data, str) else json.dumps(raw_data),
-            metadata=current_metadata
+            metadata=current_metadata,
         )
 
         try:
@@ -213,14 +244,16 @@ class HAMMemoryManager:
         data_package: HAMDataPackageInternal = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "data_type": data_type,
-            "encrypted_package": encrypted_data, # This is bytes
-            "metadata": current_metadata, # Use the processed current_metadata
-            "relevance": 0.5, # Initial relevance score
+            "encrypted_package": encrypted_data,  # This is bytes
+            "metadata": current_metadata,  # Use the processed current_metadata
+            "relevance": 0.5,  # Initial relevance score
             "protected": current_metadata.get("protected", False) if current_metadata else False,
         }
         self.core_memory_store[memory_id] = data_package
 
-        save_successful = self.core_storage._save_core_memory_to_file(self.core_memory_store, self.next_memory_id, self.fernet)
+        save_successful = self.core_storage._save_core_memory_to_file(
+            self.core_memory_store, self.next_memory_id, self.fernet
+        )
 
         if save_successful:
             logger.info(f"HAM: Stored experience {memory_id}")
@@ -228,7 +261,9 @@ class HAMMemoryManager:
         else:
             # If save failed (e.g., simulated disk full), revert adding to in-memory store
             # and potentially log that the experience was not truly stored due to simulated limit.
-            logger.error(f"HAM: Failed to save core memory to file for experience {memory_id}. Reverting in-memory store for this item.")
+            logger.error(
+                f"HAM: Failed to save core memory to file for experience {memory_id}. Reverting in-memory store for this item."
+            )
             if memory_id in self.core_memory_store:
                 del self.core_memory_store[memory_id]
             # Note: self.next_memory_id was already incremented. This could lead to skipped IDs
@@ -238,11 +273,7 @@ class HAMMemoryManager:
 
     # P0-4: 情感记忆存储
     async def store_emotional_memory(
-        self,
-        content: str,
-        emotion: str,
-        intensity: float,
-        context: Optional[Dict[str, Any]] = None
+        self, content: str, emotion: str, intensity: float, context: Optional[Dict[str, Any]] = None
     ) -> Optional[str]:
         """
         存储情感记忆
@@ -277,12 +308,12 @@ class HAMMemoryManager:
 
             # 存储记忆
             memory_id = await self.store_experience(
-                raw_data=content,
-                data_type="emotional_memory",
-                metadata=emotional_metadata
+                raw_data=content, data_type="emotional_memory", metadata=emotional_metadata
             )
 
-            logger.info(f"HAM: Stored emotional memory {memory_id} with emotion {emotion} (intensity={intensity})")
+            logger.info(
+                f"HAM: Stored emotional memory {memory_id} with emotion {emotion} (intensity={intensity})"
+            )
             return memory_id
 
         except Exception as e:
@@ -295,7 +326,7 @@ class HAMMemoryManager:
         emotion: Optional[str] = None,
         min_intensity: float = 0.0,
         limit: int = 10,
-        context_filter: Optional[Dict[str, Any]] = None
+        context_filter: Optional[Dict[str, Any]] = None,
     ) -> List[HAMRecallResult]:
         """
         检索情感记忆
@@ -318,9 +349,7 @@ class HAMMemoryManager:
 
             # 查询记忆
             results = await self.query_engine.query_core_memory(
-                keywords=keywords,
-                data_type_filter="emotional_memory",
-                limit=limit
+                keywords=keywords, data_type_filter="emotional_memory", limit=limit
             )
 
             # 过滤结果（在内存中过滤）
@@ -340,7 +369,9 @@ class HAMMemoryManager:
                     match = True
                     for key, value in context_filter.items():
                         context_key = f"context_{key}"
-                        if context_key not in result.metadata or result.metadata[context_key] != str(value):
+                        if context_key not in result.metadata or result.metadata[
+                            context_key
+                        ] != str(value):
                             match = False
                             break
                     if not match:
@@ -348,13 +379,14 @@ class HAMMemoryManager:
 
                 filtered_results.append(result)
 
-            logger.info(f"HAM: Retrieved {len(filtered_results)} emotional memories for emotion {emotion}")
+            logger.info(
+                f"HAM: Retrieved {len(filtered_results)} emotional memories for emotion {emotion}"
+            )
             return filtered_results
 
         except Exception as e:
             logger.error(f"Error retrieving emotional memories: {e}", exc_info=True)
             return []
-
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """
@@ -385,19 +417,24 @@ class HAMMemoryManager:
                 return None
 
             # Verify checksum AFTER decryption and decompression
-            stored_checksum = data_package.get("metadata", {}).get('sha256_checksum')
+            stored_checksum = data_package.get("metadata", {}).get("sha256_checksum")
             if stored_checksum:
                 current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
                 if current_checksum != stored_checksum:
-                    logger.critical(f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted.")
+                    logger.critical(
+                        f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted."
+                    )
                     # Optionally, could return a specific error or flag instead of proceeding
                     # For now, we'll proceed but the warning is logged.
             else:
                 logger.warning(f"No checksum found in metadata for memory ID {memory_id}.")
-            decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+            decompressed_data_str = decompressed_data_bytes.decode("utf-8")
 
         except Exception as e:
-            logger.error(f"Error during SL retrieval (decrypt / decompress / checksum) for memory_id '%s': {e}", memory_id)
+            logger.error(
+                f"Error during SL retrieval (decrypt / decompress / checksum) for memory_id '%s': {e}",
+                memory_id,
+            )
             return None
 
         rehydrated_content: Any
@@ -406,7 +443,10 @@ class HAMMemoryManager:
                 abstracted_gist = json.loads(decompressed_data_str)
                 rehydrated_content = self.data_processor._rehydrate_text_gist(abstracted_gist)
             except json.JSONDecodeError:
-                logger.error("Could not decode abstracted gist for memory_id '%s'. Data might be corrupted or not text.", memory_id)
+                logger.error(
+                    "Could not decode abstracted gist for memory_id '%s'. Data might be corrupted or not text.",
+                    memory_id,
+                )
                 return None
             except Exception as e:
                 logger.error(f"Error rehydrating text gist for memory_id '%s': {e}", memory_id)
@@ -420,8 +460,14 @@ class HAMMemoryManager:
             memory_id=memory_id,
             content=rehydrated_content,
             score=0.0,  # Default score
-            timestamp=self.query_engine._normalize_date(data_package.get("timestamp", datetime.now(timezone.utc).isoformat())) if hasattr(self.query_engine, '_normalize_date') else datetime.now(timezone.utc),
-            metadata=data_package.get("metadata", {})
+            timestamp=(
+                self.query_engine._normalize_date(
+                    data_package.get("timestamp", datetime.now(timezone.utc).isoformat())
+                )
+                if hasattr(self.query_engine, "_normalize_date")
+                else datetime.now(timezone.utc)
+            ),
+            metadata=data_package.get("metadata", {}),
         )
 
     def recall_raw_gist(self, memory_id: str) -> Optional[Dict[str, Any]]:
@@ -445,18 +491,20 @@ class HAMMemoryManager:
 
         try:
             decrypted_data = self.data_processor._decrypt(data_package["encrypted_package"])
-            if not decrypted_data: 
+            if not decrypted_data:
                 return None
             decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
-            if not decompressed_data_bytes: 
+            if not decompressed_data_bytes:
                 return None
-            stored_checksum = data_package.get("metadata", {}).get('sha256_checksum')
+            stored_checksum = data_package.get("metadata", {}).get("sha256_checksum")
             if stored_checksum:
                 current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
                 if current_checksum != stored_checksum:
-                    logger.critical(f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted.")
-                    return None # Return None on checksum failure for raw recall
-            decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+                    logger.critical(
+                        f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted."
+                    )
+                    return None  # Return None on checksum failure for raw recall
+            decompressed_data_str = decompressed_data_bytes.decode("utf-8")
 
             if "dialogue_text" in data_package["data_type"]:
                 return json.loads(decompressed_data_str)
@@ -466,15 +514,17 @@ class HAMMemoryManager:
                 return {"raw_content": decompressed_data_str}
 
         except Exception as e:
-            logger.error(f"Error during raw gist retrieval for memory_id '%s': {e}", memory_id, exc_info = True)
+            logger.error(
+                f"Error during raw gist retrieval for memory_id '%s': {e}", memory_id, exc_info=True
+            )
             return None
-
 
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         return await self.query_engine.retrieve_relevant_memories(query, limit)
 
-    def increment_metadata_field(self, memory_id: str, field_name: str,
-                                 increment_by: int = 1) -> bool:
+    def increment_metadata_field(
+        self, memory_id: str, field_name: str, increment_by: int = 1
+    ) -> bool:
         """
         Increments a numerical field in the metadata of a specific memory record.
         This is more efficient than recalling, modifying, and re-storing the whole package.
@@ -494,22 +544,29 @@ class HAMMemoryManager:
             current_value = record["metadata"].get(field_name, 0)
             if isinstance(current_value, (int, float)):
                 record["metadata"][field_name] = current_value + increment_by
-                logger.debug(f"HAM: Incremented metadata field '{field_name}' for mem_id '{memory_id}'.")
+                logger.debug(
+                    f"HAM: Incremented metadata field '{field_name}' for mem_id '{memory_id}'."
+                )
                 # For simplicity, we trigger a full save. A more advanced implementation
                 # might use a more granular or delayed save mechanism.
-                return self.core_storage._save_core_memory_to_file(self.core_memory_store, self.next_memory_id, self.fernet)
+                return self.core_storage._save_core_memory_to_file(
+                    self.core_memory_store, self.next_memory_id, self.fernet
+                )
             else:
-                logger.error(f"HAM: Metadata field '{field_name}' for mem_id '{memory_id}' is not a number.")
+                logger.error(
+                    f"HAM: Metadata field '{field_name}' for mem_id '{memory_id}' is not a number."
+                )
                 return False
         else:
             logger.error(f"HAM: Cannot increment metadata for non-existent mem_id '{memory_id}'.")
             return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logger.info("--- HAMMemoryManager Test ---")
     # Ensure a clean state for testing if file exists from previous run
     test_file_name = "ham_test_memory.json"
-    
+
     # Create a temporary instance to get the storage directory
     # temp_ham = HAMMemoryManager(core_storage_filename=test_file_name)
     # storage_dir = temp_ham.storage_dir
@@ -520,7 +577,7 @@ if __name__ == '__main__':
 
     # Test storing experiences
     logger.info("\n--- Storing Experiences ---")
-    ts_now = datetime.now(timezone.utc).isoformat() # Added timezone
+    ts_now = datetime.now(timezone.utc).isoformat()  # Added timezone
     # Provide metadata that aligns better with DialogueMemoryEntryMetadata
     exp1_metadata = {
         "timestamp": datetime.fromisoformat(ts_now) if isinstance(ts_now, str) else ts_now,
@@ -528,27 +585,33 @@ if __name__ == '__main__':
         "dialogue_id": "test_dialogue_1",
         "turn_id": 1,
         "user_id": "test_user",
-        "session_id": "s1"
+        "session_id": "s1",
     }
-    exp1_id = asyncio.run(ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", exp1_metadata))
+    exp1_id = asyncio.run(
+        ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", exp1_metadata)
+    )
 
     exp2_metadata = {
         "timestamp": datetime.fromisoformat(ts_now) if isinstance(ts_now, str) else ts_now,
         "speaker": "system",
         "dialogue_id": "test_dialogue_1",
         "turn_id": 2,
-        "source": "developer_log"
+        "source": "developer_log",
     }
-    exp2_id = asyncio.run(ham.store_experience("Miko learned about HAM today.", "dialogue_text", exp2_metadata))
+    exp2_id = asyncio.run(
+        ham.store_experience("Miko learned about HAM today.", "dialogue_text", exp2_metadata)
+    )
 
     exp3_metadata = {
         "timestamp": datetime.now(timezone.utc),
         "speaker": "system",
         "dialogue_id": "test_dialogue_2",
         "turn_id": 1,
-        "type": "puzzle_solution"
+        "type": "puzzle_solution",
     }
-    exp3_id = asyncio.run(ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", exp3_metadata))
+    exp3_id = asyncio.run(
+        ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", exp3_metadata)
+    )
 
     logger.info(f"Stored IDs: {exp1_id} {exp2_id} {exp3_id}")
 
@@ -556,17 +619,26 @@ if __name__ == '__main__':
     logger.info("\n--- Recalling Gists ---")
     if exp1_id:
         recalled_exp1 = ham.recall_gist(exp1_id)
-        logger.info(f"Recalled exp1: {json.dumps(recalled_exp1, indent=2) if recalled_exp1 else 'None'}")
+        logger.info(
+            f"Recalled exp1: {json.dumps(recalled_exp1, indent=2) if recalled_exp1 else 'None'}"
+        )
     if exp3_id:
         recalled_exp3 = ham.recall_gist(exp3_id)
-        logger.info(f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}")
-    recalled_non_existent = ham.recall_gist('mem_000999')
+        logger.info(
+            f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}"
+        )
+    recalled_non_existent = ham.recall_gist("mem_000999")
     logger.info(f"Recalled non-existent: {recalled_non_existent}")
 
-    async def query_core_memory(self, keywords: Optional[List[str]] = None, data_type_filter: Optional[str] = None, limit: int = 10) -> List[HAMRecallResult]:
+    async def query_core_memory(
+        self,
+        keywords: Optional[List[str]] = None,
+        data_type_filter: Optional[str] = None,
+        limit: int = 10,
+    ) -> List[HAMRecallResult]:
         """
         Query core memory by keywords or data type.
-        
+
         Args:
             keywords: List of keywords to search for
             data_type_filter: Filter by data type
@@ -575,7 +647,7 @@ if __name__ == '__main__':
         Returns:
             List of matching HAMRecallResult objects
         """
-        if self.query_engine and hasattr(self.query_engine, 'query_core_memory'):
+        if self.query_engine and hasattr(self.query_engine, "query_core_memory"):
             return await self.query_engine.query_core_memory(keywords, data_type_filter, limit)
         else:
             logger.warning("Query engine not available")
@@ -608,14 +680,12 @@ if __name__ == '__main__':
                 "keywords": template.keywords,
                 "usage_count": template.usage_count,
                 "success_rate": template.success_rate,
-                "is_template": True
+                "is_template": True,
             }
 
             # 存储到核心记忆
             memory_id = await self.store_experience(
-                content=content,
-                data_type="response_template",
-                metadata=metadata
+                content=content, data_type="response_template", metadata=metadata
             )
 
             if memory_id:
@@ -644,7 +714,7 @@ if __name__ == '__main__':
             results = await self.query_engine.query_core_memory(
                 metadata_filters={"template_id": template_id},
                 data_type_filter="response_template",
-                limit=1
+                limit=1,
             )
 
             if results and len(results) > 0:
@@ -696,7 +766,7 @@ if __name__ == '__main__':
             results = await self.query_engine.query_core_memory(
                 metadata_filters={"template_id": template_id},
                 data_type_filter="response_template",
-                limit=1
+                limit=1,
             )
 
             if results and len(results) > 0:
@@ -723,8 +793,7 @@ if __name__ == '__main__':
         try:
             # 查询所有模板类型的记忆
             results = await self.query_engine.query_core_memory(
-                data_type_filter="response_template",
-                limit=1000
+                data_type_filter="response_template", limit=1000
             )
 
             # 反序列化所有模板
@@ -735,6 +804,7 @@ if __name__ == '__main__':
                     template_json = json.loads(content)
                     # 导入 MemoryTemplate 以避免循环导入
                     from ..memory_template import MemoryTemplate
+
                     template = MemoryTemplate.from_dict(template_json)
                     templates.append(template)
                 except Exception as e:
@@ -747,12 +817,7 @@ if __name__ == '__main__':
             return []
 
     async def retrieve_response_templates(
-        self,
-        query: str,
-        angela_state,
-        user_impression,
-        limit: int = 5,
-        min_score: float = 0.7
+        self, query: str, angela_state, user_impression, limit: int = 5, min_score: float = 0.7
     ):
         """
         检索回應模板（便捷方法）
@@ -772,26 +837,32 @@ if __name__ == '__main__':
             angela_state=angela_state,
             user_impression=user_impression,
             limit=limit,
-            min_score=min_score
+            min_score=min_score,
         )
 
     # Test querying memory
     logger.info("\n--- Querying Memory (keywords in metadata) ---")
-    query_results_kw: List[HAMRecallResult] = asyncio.run(ham.query_core_memory(keywords=["test_user"]))
+    query_results_kw: List[HAMRecallResult] = asyncio.run(
+        ham.query_core_memory(keywords=["test_user"])
+    )
     for res_item in query_results_kw:
-        logger.info(json.dumps(res_item, indent = 2))
+        logger.info(json.dumps(res_item, indent=2))
 
     logger.info("\n--- Querying Memory (data_type) ---")
-    query_results_type: List[HAMRecallResult] = asyncio.run(ham.query_core_memory(data_type_filter="generic_data"))
+    query_results_type: List[HAMRecallResult] = asyncio.run(
+        ham.query_core_memory(data_type_filter="generic_data")
+    )
     for res_item in query_results_type:
-        logger.info(json.dumps(res_item, indent = 2))
+        logger.info(json.dumps(res_item, indent=2))
 
     # Test persistence by reloading
     logger.info("\n--- Testing Persistence ---")
-    del ham # Delete current instance
-    ham_reloaded = HAMMemoryManager(core_storage_filename=test_file_name) # Reload from file
+    del ham  # Delete current instance
+    ham_reloaded = HAMMemoryManager(core_storage_filename=test_file_name)  # Reload from file
 
-    logger.info(f"Recalling exp1 after reload: {ham_reloaded.recall_gist(exp1_id if exp1_id else 'mem_000001')}")
+    logger.info(
+        f"Recalling exp1 after reload: {ham_reloaded.recall_gist(exp1_id if exp1_id else 'mem_000001')}"
+    )
     # Clean up test file
     if os.path.exists(ham_reloaded.core_storage.core_storage_filepath):
         os.remove(ham_reloaded.core_storage.core_storage_filepath)

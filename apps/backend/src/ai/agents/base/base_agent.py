@@ -89,6 +89,7 @@ class BaseAgent:
 
         try:
             from core.hsp.connector import HSPConnector
+
             # Note: These might not exist yet or are incorrectly indexed
             # from ....ai.agent_collaboration_manager import AgentCollaborationManager
             # from ....ai.agent_monitoring_manager import AgentMonitoringManager
@@ -101,9 +102,7 @@ class BaseAgent:
             self._initialized = True
             logger.info(f"[{self.agent_id}] BaseAgent full initialization complete.")
         except Exception as e:
-            logger.warning(
-                f"[{self.agent_id}] Full initialization failed, using basic mode: {e}"
-            )
+            logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}")
             self.initialize_basic()
 
     async def start(self):
@@ -141,9 +140,7 @@ class BaseAgent:
     def is_healthy(self) -> bool:
         """A basic health check for the agent."""
         return (
-            self.is_running
-            and self.hsp_connector is not None
-            and self.hsp_connector.is_connected
+            self.is_running and self.hsp_connector is not None and self.hsp_connector.is_connected
         )
 
     async def handle_task_request(
@@ -253,9 +250,7 @@ class BaseAgent:
     ) -> Dict[str, Any]:
         """Default task handler for unimplemented capabilities."""
         capability_id = task_payload.get("capability_id_filter", "")
-        logger.warning(
-            f"[{self.agent_id}] No specific handler for capability '{capability_id}'"
-        )
+        logger.warning(f"[{self.agent_id}] No specific handler for capability '{capability_id}'")
         return {
             "status": "failure",
             "error_details": {
@@ -299,6 +294,4 @@ class BaseAgent:
     def register_task_handler(self, capability_id: str, handler: Callable):
         """Register a specific handler for a capability."""
         self.task_handlers[capability_id] = handler
-        logger.info(
-            f"[{self.agent_id}] Registered handler for capability '{capability_id}'"
-        )
+        logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_id}'")

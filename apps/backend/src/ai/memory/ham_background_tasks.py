@@ -5,8 +5,16 @@ from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
+
 class HAMBackgroundTasks:
-    def __init__(self, core_memory_store: Dict[str, Any], core_storage: Any, query_engine: Any, fernet: Any, next_memory_id: int):
+    def __init__(
+        self,
+        core_memory_store: Dict[str, Any],
+        core_storage: Any,
+        query_engine: Any,
+        fernet: Any,
+        next_memory_id: int,
+    ):
         self.core_memory_store = core_memory_store
         self.core_storage = core_storage
         self.query_engine = query_engine
@@ -45,17 +53,24 @@ class HAMBackgroundTasks:
                         for mem_id, data_pkg in self.core_memory_store.items()
                         if not data_pkg.get("protected", False)
                     ],
-                    key=lambda item: (item[1].get("relevance", 0.5), self.query_engine._normalize_date(item[1]["timestamp"]))
+                    key=lambda item: (
+                        item[1].get("relevance", 0.5),
+                        self.query_engine._normalize_date(item[1]["timestamp"]),
+                    ),
                 )
 
                 # Delete memories until memory usage is acceptable
                 deleted_count = 0
-                max_deletions_per_check = max(10, len(self.core_memory_store) // 10)  # Limit deletions per check
+                max_deletions_per_check = max(
+                    10, len(self.core_memory_store) // 10
+                )  # Limit deletions per check
 
                 for memory_id, _ in memories_to_consider:
                     # Safety check: don't delete too many memories at once
                     if deleted_count >= max_deletions_per_check:
-                        logger.info(f"Memory deletion limit reached: {deleted_count} memories deleted")
+                        logger.info(
+                            f"Memory deletion limit reached: {deleted_count} memories deleted"
+                        )
                         break
 
                     current_memory = psutil.virtual_memory()
@@ -73,7 +88,9 @@ class HAMBackgroundTasks:
 
                 if deleted_count > 0:
                     # Save the updated memory store to file
-                    self.core_storage._save_core_memory_to_file(self.core_memory_store, self.next_memory_id, self.fernet)
+                    self.core_storage._save_core_memory_to_file(
+                        self.core_memory_store, self.next_memory_id, self.fernet
+                    )
                     logger.info(f"Memory cleanup completed: {deleted_count} memories deleted")
         except Exception as e:
             logger.error(f"Error during deletion check: {e}")

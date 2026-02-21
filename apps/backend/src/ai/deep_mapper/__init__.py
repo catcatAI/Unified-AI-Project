@@ -9,6 +9,7 @@ Provides data transformation and mapping capabilities for Angela AI
 
 from .mapper import DeepMapper
 import logging
+
 logger = logging.getLogger(__name__)
 
-__all__ = ['DeepMapper']
+__all__ = ["DeepMapper"]

@@ -19,32 +19,37 @@ logger = logging.getLogger(__name__)
 # Mock 服務類
 class MockLLMService:
     """Mock LLM 服務"""
+
     async def chat_completion(self, messages):
         @dataclass
         class MockResponse:
             content: str
-        return MockResponse(content=json.dumps({
-            "action": "greet",
-            "message": "你好！我在這裡陪你。",
-            "priority": "medium",
-            "reason": "主動問候",
-            "confidence": 0.8
-        }))
+
+        return MockResponse(
+            content=json.dumps(
+                {
+                    "action": "greet",
+                    "message": "你好！我在這裡陪你。",
+                    "priority": "medium",
+                    "reason": "主動問候",
+                    "confidence": 0.8,
+                }
+            )
+        )
 
 
 class MockStateManager:
     """Mock 狀態管理器"""
+
     async def get_state_matrix(self):
-        return {'alpha': 0.6, 'beta': 0.5, 'gamma': 0.7, 'delta': 0.5}
+        return {"alpha": 0.6, "beta": 0.5, "gamma": 0.7, "delta": 0.5}
 
 
 class MockMemoryManager:
     """Mock 記憶管理器"""
+
     async def get_recent_memories(self, limit=5):
-        return [
-            "用戶剛才問了關於AI的問題",
-            "用戶表示對機器學習感興趣"
-        ]
+        return ["用戶剛才問了關於AI的問題", "用戶表示對機器學習感興趣"]
 
     async def store_experience(self, raw_data, data_type):
         pass
@@ -64,12 +69,14 @@ class MockMemoryManager:
 
 class MockLearningEngine:
     """Mock 學習引擎"""
+
     pass
 
 
 # 導入被測試的模塊
 import sys
-sys.path.insert(0, '/home/cat/桌面/Unified-AI-Project/apps/backend')
+
+sys.path.insert(0, "/home/cat/桌面/Unified-AI-Project/apps/backend")
 
 from src.ai.lifecycle.user_monitor import UserMonitor, UserState
 from src.ai.lifecycle.llm_decision_loop import LLMDecisionLoop
@@ -84,10 +91,7 @@ async def test_user_monitor():
     logger.info("\n=== 測試用戶監控系統 ===")
 
     user_monitor = UserMonitor(
-        user_id="test_user",
-        check_interval=1.0,
-        idle_threshold=5.0,
-        return_threshold=10.0
+        user_id="test_user", check_interval=1.0, idle_threshold=5.0, return_threshold=10.0
     )
 
     # 測試啟動和停止
@@ -106,7 +110,16 @@ async def test_user_monitor():
     emotion, intensity = user_monitor._estimate_emotion_from_text("我很開心！")
     logger.info(f"檢測到情緒: {emotion}, 強度: {intensity}")
     # 只要有返回值就通過
-    assert emotion in ["happy", "neutral", "sad", "frustrated", "excited", "anxious", "confused", "relaxed"]
+    assert emotion in [
+        "happy",
+        "neutral",
+        "sad",
+        "frustrated",
+        "excited",
+        "anxious",
+        "confused",
+        "relaxed",
+    ]
     logger.info("✅ 情緒估計成功")
 
     # 等待閒置檢測
@@ -135,7 +148,7 @@ async def test_llm_decision_loop():
         state_manager=state_manager,
         memory_manager=memory_manager,
         user_monitor=user_monitor,
-        loop_interval=1.0
+        loop_interval=1.0,
     )
 
     # 測試啟動
@@ -148,8 +161,8 @@ async def test_llm_decision_loop():
 
     # 檢查統計
     stats = decision_loop.get_stats()
-    assert stats['is_running']
-    assert stats['total_decisions'] > 0
+    assert stats["is_running"]
+    assert stats["total_decisions"] > 0
     logger.info(f"✅ 決策循環執行成功，總決策數: {stats['total_decisions']}")
 
     await decision_loop.stop()
@@ -173,7 +186,7 @@ async def test_proactive_interaction_system():
         state_manager=state_manager,
         memory_manager=memory_manager,
         user_monitor=user_monitor,
-        check_interval=1.0
+        check_interval=1.0,
     )
 
     # 測試啟動
@@ -187,7 +200,7 @@ async def test_proactive_interaction_system():
 
     # 檢查統計
     stats = proactive_system.get_stats()
-    assert stats['is_running']
+    assert stats["is_running"]
     logger.info(f"✅ 主動交互系統執行成功，機會數: {stats['total_opportunities']}")
 
     await proactive_system.stop()
@@ -207,7 +220,7 @@ async def test_behavior_feedback_loop():
         llm_service=llm_service,
         memory_manager=memory_manager,
         learning_engine=learning_engine,
-        loop_interval=1.0
+        loop_interval=1.0,
     )
 
     # 測試啟動
@@ -221,7 +234,7 @@ async def test_behavior_feedback_loop():
         message="你好！",
         priority="medium",
         user_response="你好啊！很高興見到你！",
-        user_emotion="happy"
+        user_emotion="happy",
     )
     logger.info("✅ 行為記錄成功")
 
@@ -230,8 +243,8 @@ async def test_behavior_feedback_loop():
 
     # 檢查統計
     stats = feedback_loop.get_stats()
-    assert stats['is_running']
-    assert stats['total_behaviors'] >= 1
+    assert stats["is_running"]
+    assert stats["total_behaviors"] >= 1
     logger.info(f"✅ 行為反饋循環執行成功，總行為數: {stats['total_behaviors']}")
 
     await feedback_loop.stop()
@@ -246,9 +259,7 @@ async def test_memory_integration_loop():
     learning_engine = MockLearningEngine()
 
     integration_loop = MemoryIntegrationLoop(
-        memory_manager=memory_manager,
-        learning_engine=learning_engine,
-        loop_interval=1.0
+        memory_manager=memory_manager, learning_engine=learning_engine, loop_interval=1.0
     )
 
     # 測試啟動
@@ -266,8 +277,8 @@ async def test_memory_integration_loop():
 
     # 檢查統計
     stats = integration_loop.get_stats()
-    assert stats['is_running']
-    assert stats['total_memories'] >= 2
+    assert stats["is_running"]
+    assert stats["total_memories"] >= 2
     logger.info(f"✅ 記憶整合循環執行成功，總記憶數: {stats['total_memories']}")
 
     await integration_loop.stop()
@@ -289,12 +300,12 @@ async def test_digital_life_integrator():
         memory_manager=memory_manager,
         learning_engine=learning_engine,
         config={
-            'user_id': 'test_user',
-            'decision_interval': 1.0,
-            'proactive_interval': 2.0,
-            'feedback_interval': 3.0,
-            'memory_interval': 4.0
-        }
+            "user_id": "test_user",
+            "decision_interval": 1.0,
+            "proactive_interval": 2.0,
+            "feedback_interval": 3.0,
+            "memory_interval": 4.0,
+        },
     )
 
     # 測試啟動
@@ -315,7 +326,7 @@ async def test_digital_life_integrator():
         message="別擔心，我陪著你",
         priority="high",
         user_response="謝謝",
-        user_emotion="neutral"
+        user_emotion="neutral",
     )
 
     # 添加記憶
@@ -326,8 +337,8 @@ async def test_digital_life_integrator():
 
     # 檢查統計
     stats = integrator.get_lifecycle_stats()
-    assert stats['is_running']
-    assert stats['duration_seconds'] > 0
+    assert stats["is_running"]
+    assert stats["duration_seconds"] > 0
     logger.info(f"✅ 生命系統運行時間: {stats['duration_seconds']:.1f}秒")
 
     # 檢查健康狀態
@@ -366,15 +377,16 @@ async def run_all_tests():
         # 6. 端到端測試
         await test_digital_life_integrator()
 
-        logger.info("\n" + "="*50)
+        logger.info("\n" + "=" * 50)
         logger.info("✅ 所有測試完成！")
-        logger.info("="*50)
+        logger.info("=" * 50)
 
         return True
 
     except Exception as e:
         logger.error(f"\n❌ 測試失敗: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -37,6 +37,7 @@ import psutil
 
 class ExecutionStatus(Enum):
     """執行狀態枚舉"""
+
     RUNNING = "running"
     COMPLETED = "completed"
     TIMEOUT = "timeout"
@@ -47,6 +48,7 @@ class ExecutionStatus(Enum):
 
 class TerminalStatus(Enum):
     """終端機狀態枚舉"""
+
     RESPONSIVE = "responsive"
     SLOW = "slow"
     STUCK = "stuck"
@@ -56,9 +58,10 @@ class TerminalStatus(Enum):
 @dataclass
 class ExecutionConfig:
     """執行配置"""
+
     default_timeout: float = 60.0  # 增加默認超時時間從30秒到60秒
-    max_timeout: float = 600.0     # 增加最大超時時間從300秒到600秒
-    min_timeout: float = 10.0      # 增加最小超時時間從5秒到10秒
+    max_timeout: float = 600.0  # 增加最大超時時間從300秒到600秒
+    min_timeout: float = 10.0  # 增加最小超時時間從5秒到10秒
     check_interval: float = 1.0
     terminal_check_interval: float = 5.0
     cpu_threshold: float = 90.0
@@ -71,6 +74,7 @@ class ExecutionConfig:
 @dataclass
 class ExecutionResult:
     """執行結果"""
+
     status: ExecutionStatus
     return_code: Optional[int] = None
     stdout: str = ""
@@ -112,15 +116,14 @@ class ExecutionMonitor:
         """設置日誌"""
         if not self.logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO())
 
-    def calculate_adaptive_timeout(self, command: str,
-                                    base_timeout: Optional[float] = None) -> float:
+    def calculate_adaptive_timeout(
+        self, command: str, base_timeout: Optional[float] = None
+    ) -> float:
         """
         計算自適應超時時間
 
@@ -162,8 +165,7 @@ class ExecutionMonitor:
 
         # 限制在合理範圍內
         adaptive_timeout = max(
-            self.config.min_timeout,
-            min(adaptive_timeout, self.config.max_timeout)
+            self.config.min_timeout, min(adaptive_timeout, self.config.max_timeout)
         )
 
         # 緩存結果
@@ -182,19 +184,15 @@ class ExecutionMonitor:
         try:
             # 測試簡單命令的響應時間
             start_time = time.time()
-            if os.name == 'nt':  # Windows
+            if os.name == "nt":  # Windows
                 result = subprocess.run(
-                    ['echo', 'test'],
+                    ["echo", "test"],
                     capture_output=True,
                     timeout=5.0,
-                    creationflags=subprocess.CREATE_NO_WINDOW
+                    creationflags=subprocess.CREATE_NO_WINDOW,
                 )
             else:  # Unix/Linux
-                result = subprocess.run(
-                    ['echo', 'test'],
-                    capture_output=True,
-                    timeout=5.0
-                )
+                result = subprocess.run(["echo", "test"], capture_output=True, timeout=5.0)
 
             response_time = time.time() - start_time
 
@@ -238,14 +236,14 @@ class ExecutionMonitor:
                 disk_percent = (disk_info.used / disk_info.total) * 100
 
                 self._resource_usage = {
-                    'cpu_percent': cpu_percent,
-                    'memory_percent': memory_percent,
-                    'disk_percent': disk_percent,
-                    'memory_used_mb': memory_info.used / (1024 * 1024),
-                    'memory_total_mb': memory_info.total / (1024 * 1024),
-                    'disk_used_gb': disk_info.used / (1024 * 1024 * 1024),
-                    'disk_total_gb': disk_info.total / (1024 * 1024 * 1024),
-                    'timestamp': time.time()
+                    "cpu_percent": cpu_percent,
+                    "memory_percent": memory_percent,
+                    "disk_percent": disk_percent,
+                    "memory_used_mb": memory_info.used / (1024 * 1024),
+                    "memory_total_mb": memory_info.total / (1024 * 1024),
+                    "disk_used_gb": disk_info.used / (1024 * 1024 * 1024),
+                    "disk_total_gb": disk_info.total / (1024 * 1024 * 1024),
+                    "timestamp": time.time(),
                 }
 
                 # 檢查資源警告
@@ -253,10 +251,14 @@ class ExecutionMonitor:
                     self.logger.warning(f"High CPU usage: {cpu_percent:.1f}%")
 
                 if memory_percent > self.config.memory_threshold:
-                    self.logger.warning(f"High memory usage: {memory_percent:.1f}% ({memory_info.used / (1024 * 1024):.0f} MB used)")
+                    self.logger.warning(
+                        f"High memory usage: {memory_percent:.1f}% ({memory_info.used / (1024 * 1024):.0f} MB used)"
+                    )
 
                 if disk_percent > self.config.disk_threshold:
-                    self.logger.warning(f"High disk usage: {disk_percent:.1f}% ({disk_info.used / (1024 * 1024 * 1024):.1f} GB used)")
+                    self.logger.warning(
+                        f"High disk usage: {disk_percent:.1f}% ({disk_info.used / (1024 * 1024 * 1024):.1f} GB used)"
+                    )
 
                 time.sleep(self.config.check_interval)
 
@@ -270,15 +272,13 @@ class ExecutionMonitor:
 
         if self.config.enable_terminal_check:
             self._terminal_check_thread = threading.Thread(
-                target=self._monitor_terminal,
-                daemon=True
+                target=self._monitor_terminal, daemon=True
             )
             self._terminal_check_thread.start()
 
         if self.config.enable_process_monitor:
             self._resource_monitor_thread = threading.Thread(
-                target=self._monitor_resources,
-                daemon=True
+                target=self._monitor_resources, daemon=True
             )
             self._resource_monitor_thread.start()
 
@@ -298,7 +298,7 @@ class ExecutionMonitor:
         timeout: Optional[float] = None,
         cwd: Optional[str] = None,
         env: Optional[Dict[str, str]] = None,
-        shell: bool = True
+        shell: bool = True,
     ) -> ExecutionResult:
         """
         執行命令並監控狀態
@@ -314,10 +314,7 @@ class ExecutionMonitor:
             執行結果
         """
         # 計算自適應超時
-        effective_timeout = self.calculate_adaptive_timeout(
-            str(command),
-            timeout
-        )
+        effective_timeout = self.calculate_adaptive_timeout(str(command), timeout)
 
         self.logger.info(f"Executing command with timeout {effective_timeout}s: {command}")
 
@@ -326,10 +323,7 @@ class ExecutionMonitor:
         self._start_time = time.time()
         self._last_activity = self._start_time
 
-        result = ExecutionResult(
-            status=ExecutionStatus.RUNNING,
-            timeout_used=effective_timeout
-        )
+        result = ExecutionResult(status=ExecutionStatus.RUNNING, timeout_used=effective_timeout)
 
         try:
             # 創建進程
@@ -344,7 +338,7 @@ class ExecutionMonitor:
                 cwd=cwd,
                 env=env,
                 shell=shell,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
             )
 
             # 等待執行完成或超時
@@ -393,7 +387,9 @@ class ExecutionMonitor:
             self._stop_monitoring()
             self._current_process = None
 
-        self.logger.info(f"Command completed: {result.status.value} in {result.execution_time:.2f}s")
+        self.logger.info(
+            f"Command completed: {result.status.value} in {result.execution_time:.2f}s"
+        )
         return result
 
     @contextmanager
@@ -404,18 +400,19 @@ class ExecutionMonitor:
         Args:
             timeout: 超時時間(秒)
         """
+
         def timeout_handler(signum, frame):
             raise TimeoutError(f"Operation timed out after {timeout} seconds")
 
         # 設置信號處理器(僅在Unix系統上)
-        if hasattr(signal, 'SIGALRM'):
+        if hasattr(signal, "SIGALRM"):
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(int(timeout))
 
         try:
             yield
         finally:
-            if hasattr(signal, 'SIGALRM'):
+            if hasattr(signal, "SIGALRM"):
                 signal.alarm(0)
                 signal.signal(signal.SIGALRM, old_handler)
 
@@ -424,7 +421,7 @@ class ExecutionMonitor:
         command: Union[str, List[str]],
         timeout: Optional[float] = None,
         cwd: Optional[str] = None,
-        env: Optional[Dict[str, str]] = None
+        env: Optional[Dict[str, str]] = None,
     ) -> ExecutionResult:
         """
         異步執行命令
@@ -442,10 +439,7 @@ class ExecutionMonitor:
 
         self.logger.info(f"Executing async command with timeout {effective_timeout}s: {command}")
 
-        result = ExecutionResult(
-            status=ExecutionStatus.RUNNING,
-            timeout_used=effective_timeout
-        )
+        result = ExecutionResult(status=ExecutionStatus.RUNNING, timeout_used=effective_timeout)
 
         start_time = time.time()
 
@@ -456,7 +450,7 @@ class ExecutionMonitor:
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     cwd=cwd,
-                    env=env
+                    env=env,
                 )
             else:
                 process = await asyncio.create_subprocess_exec(
@@ -464,14 +458,13 @@ class ExecutionMonitor:
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     cwd=cwd,
-                    env=env
+                    env=env,
                 )
 
             # 等待完成或超時
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=effective_timeout
+                    process.communicate(), timeout=effective_timeout
                 )
 
                 result.status = ExecutionStatus.COMPLETED
@@ -551,23 +544,23 @@ class ExecutionMonitor:
             disk_info = psutil.disk_usage(os.getcwd())
 
             return {
-                'cpu_percent': cpu_percent,
-                'memory_percent': memory_info.percent,
-                'memory_available_gb': memory_info.available / (1024 * 1024 * 1024),
-                'memory_used_gb': memory_info.used / (1024 * 1024 * 1024),
-                'memory_total_gb': memory_info.total / (1024 * 1024 * 1024),
-                'disk_percent': (disk_info.used / disk_info.total) * 100,
-                'disk_free_gb': disk_info.free / (1024 * 1024 * 1024),
-                'disk_used_gb': disk_info.used / (1024 * 1024 * 1024),
-                'disk_total_gb': disk_info.total / (1024 * 1024 * 1024),
-                'terminal_status': self._terminal_status.value,
-                'load_average': os.getloadavg() if hasattr(os, 'getloadavg') else None,
-                'process_count': len(psutil.pids()),
-                'timestamp': time.time()
+                "cpu_percent": cpu_percent,
+                "memory_percent": memory_info.percent,
+                "memory_available_gb": memory_info.available / (1024 * 1024 * 1024),
+                "memory_used_gb": memory_info.used / (1024 * 1024 * 1024),
+                "memory_total_gb": memory_info.total / (1024 * 1024 * 1024),
+                "disk_percent": (disk_info.used / disk_info.total) * 100,
+                "disk_free_gb": disk_info.free / (1024 * 1024 * 1024),
+                "disk_used_gb": disk_info.used / (1024 * 1024 * 1024),
+                "disk_total_gb": disk_info.total / (1024 * 1024 * 1024),
+                "terminal_status": self._terminal_status.value,
+                "load_average": os.getloadavg() if hasattr(os, "getloadavg") else None,
+                "process_count": len(psutil.pids()),
+                "timestamp": time.time(),
             }
         except Exception as e:
             self.logger.error(f"Failed to get system health: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
 
 # 全局執行監控器實例
@@ -591,9 +584,7 @@ def get_execution_monitor(config: Optional[ExecutionConfig] = None) -> Execution
 
 
 def execute_with_monitoring(
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    **kwargs
+    command: Union[str, List[str]], timeout: Optional[float] = None, **kwargs
 ) -> ExecutionResult:
     """
     使用監控執行命令的便捷函數
@@ -611,9 +602,7 @@ def execute_with_monitoring(
 
 
 async def execute_async_with_monitoring(
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    **kwargs
+    command: Union[str, List[str]], timeout: Optional[float] = None, **kwargs
 ) -> ExecutionResult:
     """
     使用監控異步執行命令的便捷函數
@@ -648,7 +637,9 @@ if __name__ == "__main__":
     logger.info(f"Status: {result.status.value}")
     logger.info(f"Return code: {result.return_code}")
     logger.info(f"Execution time: {result.execution_time:.2f}s")
-    logger.info(f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}")
+    logger.info(
+        f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}"
+    )
 
     if result.stdout:
         logger.info(f"STDOUT:\n{result.stdout}")

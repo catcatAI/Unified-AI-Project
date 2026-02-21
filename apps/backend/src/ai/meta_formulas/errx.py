@@ -1,9 +1,11 @@
 # from typing import Any
 
+
 class ErrX:
     """
     Represents a semantic error variable.
     """
+
     def __init__(self, error_type: str, details):
         self.error_type = error_type
         self.details = details

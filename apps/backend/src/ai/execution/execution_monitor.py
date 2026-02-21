@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Union, Any
 
 class ExecutionStatus(Enum):
     """Execution status enumeration"""
+
     RUNNING = "running"
     COMPLETED = "completed"
     TIMEOUT = "timeout"
@@ -32,6 +33,7 @@ class ExecutionStatus(Enum):
 
 class TerminalStatus(Enum):
     """Terminal status enumeration"""
+
     RESPONSIVE = "responsive"
     SLOW = "slow"
     STUCK = "stuck"
@@ -41,9 +43,10 @@ class TerminalStatus(Enum):
 @dataclass
 class ExecutionConfig:
     """Execution configuration"""
+
     default_timeout: float = 60.0  # Increased from 30s to 60s
-    max_timeout: float = 600.0     # Increased from 300s to 600s
-    min_timeout: float = 10.0      # Increased from 5s to 10s
+    max_timeout: float = 600.0  # Increased from 300s to 600s
+    min_timeout: float = 10.0  # Increased from 5s to 10s
     check_interval: float = 1.0
     terminal_check_interval: float = 5.0
     cpu_threshold: float = 90.0
@@ -56,6 +59,7 @@ class ExecutionConfig:
 @dataclass
 class ExecutionResult:
     """Execution result"""
+
     status: ExecutionStatus
     return_code: Optional[int] = None
     stdout: str = ""
@@ -80,7 +84,7 @@ class ExecutionMonitor:
         self._current_process: Optional[subprocess.Popen] = None
         self._start_time: float = 0.0
         self._last_activity: float = 0.0
-        
+
         # Terminal status monitoring
         self._terminal_status = TerminalStatus.RESPONSIVE
         self._terminal_check_thread: Optional[threading.Thread] = None
@@ -97,14 +101,14 @@ class ExecutionMonitor:
         """Setup logging"""
         if not self.logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO)
 
-    def calculate_adaptive_timeout(self, command: str, base_timeout: Optional[float] = None) -> float:
+    def calculate_adaptive_timeout(
+        self, command: str, base_timeout: Optional[float] = None
+    ) -> float:
         """
         Calculate adaptive timeout time
 
@@ -117,7 +121,7 @@ class ExecutionMonitor:
         """
         if not self.config.adaptive_timeout:
             return base_timeout or self.config.default_timeout
-        
+
         # Use command hash as cache key
         cache_key = str(hash(command))
 
@@ -135,7 +139,7 @@ class ExecutionMonitor:
             adaptive_timeout = max(adaptive_timeout, self.config.min_timeout)
         else:
             adaptive_timeout = base_timeout or self.config.default_timeout
-        
+
         # Adjust based on terminal status
         if self._terminal_status == TerminalStatus.SLOW:
             adaptive_timeout *= 1.5
@@ -145,8 +149,9 @@ class ExecutionMonitor:
             adaptive_timeout = self.config.min_timeout  # Fast fail
 
         # Limit to reasonable range
-        adaptive_timeout = max(self.config.min_timeout, 
-                            min(adaptive_timeout, self.config.max_timeout))
+        adaptive_timeout = max(
+            self.config.min_timeout, min(adaptive_timeout, self.config.max_timeout)
+        )
 
         # Cache result
         self._adaptive_timeout_cache[cache_key] = adaptive_timeout
@@ -165,16 +170,16 @@ class ExecutionMonitor:
             # Test simple command response time
             start_time = time.time()
 
-            if os.name == 'nt':  # Windows
-                command = ['cmd', '/c', 'echo test']
-                result = subprocess.run(command,
-                                    capture_output=True,
-                                    timeout=5.0,
-                                    creationflags=subprocess.CREATE_NO_WINDOW)
+            if os.name == "nt":  # Windows
+                command = ["cmd", "/c", "echo test"]
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    timeout=5.0,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
             else:  # Unix/Linux
-                result = subprocess.run(['echo', 'test'],
-                                    capture_output=True,
-                                    timeout=5.0)
+                result = subprocess.run(["echo", "test"], capture_output=True, timeout=5.0)
 
             response_time = time.time() - start_time
 
@@ -213,16 +218,16 @@ class ExecutionMonitor:
                 # Memory usage
                 memory = psutil.virtual_memory()
                 memory_percent = memory.percent
-                
+
                 # Disk usage
-                disk = psutil.disk_usage('/')
+                disk = psutil.disk_usage("/")
                 disk_percent = disk.percent
-                
+
                 self._resource_usage = {
-                    'cpu_percent': cpu_percent,
-                    'memory_percent': memory_percent,
-                    'disk_percent': disk_percent,
-                    'timestamp': time.time()
+                    "cpu_percent": cpu_percent,
+                    "memory_percent": memory_percent,
+                    "disk_percent": disk_percent,
+                    "timestamp": time.time(),
                 }
 
                 # Check resource warnings
@@ -244,15 +249,13 @@ class ExecutionMonitor:
 
         if self.config.enable_terminal_check:
             self._terminal_check_thread = threading.Thread(
-                target=self._monitor_terminal, 
-                daemon=True
+                target=self._monitor_terminal, daemon=True
             )
             self._terminal_check_thread.start()
 
         if self.config.enable_process_monitor:
             self._resource_monitor_thread = threading.Thread(
-                target=self._monitor_resources, 
-                daemon=True
+                target=self._monitor_resources, daemon=True
             )
             self._resource_monitor_thread.start()
 
@@ -272,7 +275,7 @@ class ExecutionMonitor:
         timeout: Optional[float] = None,
         cwd: Optional[str] = None,
         env: Optional[Dict[str, str]] = None,
-        shell: bool = True
+        shell: bool = True,
     ) -> ExecutionResult:
         """
         Execute command and monitor status
@@ -289,9 +292,9 @@ class ExecutionMonitor:
         """
         start_time = time.time()
         adaptive_timeout = timeout or self.calculate_adaptive_timeout(
-            ' '.join(command) if isinstance(command, list) else command
+            " ".join(command) if isinstance(command, list) else command
         )
-        
+
         try:
             # Start monitoring
             self._start_monitoring()
@@ -303,6 +306,7 @@ class ExecutionMonitor:
             # 安全修復：禁用 shell=True 並處理命令列表
             if isinstance(command, str):
                 import shlex
+
                 command_to_run = shlex.split(command)
                 self.logger.info(f"Command split from string: {command_to_run}")
             else:
@@ -311,13 +315,13 @@ class ExecutionMonitor:
             # Windows 特殊處理：當 shell=False 時，有些內建命令（如 echo）需要通過 cmd /c 執行
             # 但 cmd /c 會解析 & > | 等符號，造成注入風險。
             # 我們應該儘量直接執行 .exe 或使用安全的替代方案。
-            if os.name == 'nt' and command_to_run:
+            if os.name == "nt" and command_to_run:
                 cmd_name = command_to_run[0].lower()
-                if cmd_name == 'echo':
+                if cmd_name == "echo":
                     # 對於 echo，我們可以使用一個安全的內部包裝或者直接調用 cmd，但必須對其餘參數進行轉義
                     # 在這裡，我們選擇將除了第一個之外的參數都當作普通字符串處理（不建議用 cmd /c）
                     # 更好的是，如果只是為了測試，可以使用 python -c "print(...)"
-                    pass 
+                    pass
 
             self.logger.info(f"Final safe command to run: {command_to_run}")
 
@@ -330,7 +334,7 @@ class ExecutionMonitor:
                 stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1,
-                universal_newlines=True
+                universal_newlines=True,
             )
 
             self._current_process = process
@@ -353,7 +357,7 @@ class ExecutionMonitor:
                     execution_time=execution_time,
                     timeout_used=adaptive_timeout,
                     terminal_status=self._terminal_status,
-                    resource_usage=self._resource_usage.copy() if self._resource_usage else None
+                    resource_usage=self._resource_usage.copy() if self._resource_usage else None,
                 )
             except subprocess.TimeoutExpired:
                 # Timeout handling
@@ -370,11 +374,11 @@ class ExecutionMonitor:
                     timeout_used=adaptive_timeout,
                     terminal_status=self._terminal_status,
                     resource_usage=self._resource_usage.copy() if self._resource_usage else None,
-                    error_message=f"Command timed out after {adaptive_timeout} seconds"
+                    error_message=f"Command timed out after {adaptive_timeout} seconds",
                 )
 
         except Exception as e:
-            self.logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            self.logger.error(f"Error in {__name__}: {e}", exc_info=True)
             execution_time = time.time() - start_time
 
             return ExecutionResult(
@@ -383,7 +387,7 @@ class ExecutionMonitor:
                 timeout_used=adaptive_timeout,
                 terminal_status=self._terminal_status,
                 resource_usage=self._resource_usage.copy() if self._resource_usage else None,
-                error_message=str(e)
+                error_message=str(e),
             )
         finally:
             # Stop monitoring
@@ -398,10 +402,10 @@ class ExecutionMonitor:
             System health information
         """
         return {
-            'terminal_status': self._terminal_status.value,
-            'resource_usage': self._resource_usage.copy() if self._resource_usage else None,
-            'is_monitoring': self._is_monitoring,
-            'adaptive_timeout_cache_size': len(self._adaptive_timeout_cache)
+            "terminal_status": self._terminal_status.value,
+            "resource_usage": self._resource_usage.copy() if self._resource_usage else None,
+            "is_monitoring": self._is_monitoring,
+            "adaptive_timeout_cache_size": len(self._adaptive_timeout_cache),
         }
 
 
@@ -426,9 +430,7 @@ def get_execution_monitor(config: Optional[ExecutionConfig] = None) -> Execution
 
 
 def execute_with_monitoring(
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    **kwargs
+    command: Union[str, List[str]], timeout: Optional[float] = None, **kwargs
 ) -> ExecutionResult:
     """
     Convenient function to execute command with monitoring
@@ -446,9 +448,7 @@ def execute_with_monitoring(
 
 
 async def execute_async_with_monitoring(
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    **kwargs
+    command: Union[str, List[str]], timeout: Optional[float] = None, **kwargs
 ) -> ExecutionResult:
     """
     Convenient function to asynchronously execute command with monitoring
@@ -465,9 +465,9 @@ async def execute_async_with_monitoring(
     return monitor.execute_command(command, timeout, **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
-    
+
     # Test execution monitor
     parser = argparse.ArgumentParser(description="Execution Monitor Test")
     parser.add_argument("command", help="Command to execute")
@@ -485,8 +485,10 @@ if __name__ == '__main__':
     logger.info(f"Status: {result.status.value}")
     logger.info(f"Return code: {result.return_code}")
     logger.info(f"Execution time: {result.execution_time:.2f}s")
-    logger.info(f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}")
-    
+    logger.info(
+        f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}"
+    )
+
     if result.stdout:
         logger.info(f"STDOUT:\n{result.stdout}")
     if result.stderr:

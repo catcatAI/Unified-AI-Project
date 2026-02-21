@@ -5,11 +5,13 @@ import time
 import requests
 from pathlib import Path
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 def test_full_system_flow():
     print("🚀 Starting Final Integration Test...")
-    
+
     # 1. Check if keys exist
     key_file = Path("apps/backend/data/security/abc_keys.json")
     if not key_file.exists():
@@ -18,24 +20,27 @@ def test_full_system_flow():
 
     with open(key_file, "r") as f:
         keys = json.load(f)
-    
+
     key_b = keys["KeyB"]
     key_c = keys["KeyC"]
     print(f"✅ Loaded Keys: KeyB={key_b[:10]}..., KeyC={key_c[:10]}...")
 
     base_url = "http://localhost:8000"
-    
+
     # 2. Test Mobile Secure Request
     print("\n--- Testing Mobile Secure Request ---")
-    payload = {"message": "Hello Angela, this is a secure mobile test", "timestamp": int(time.time())}
-    payload_str = json.dumps(payload, separators=(',', ':'))
+    payload = {
+        "message": "Hello Angela, this is a secure mobile test",
+        "timestamp": int(time.time()),
+    }
+    payload_str = json.dumps(payload, separators=(",", ":"))
     signature = hmac.new(key_b.encode(), payload_str.encode(), hashlib.sha256).hexdigest()
-    
+
     try:
         resp = requests.post(
             f"{base_url}/api/v1/mobile/test",
             json=payload,
-            headers={"X-Angela-Signature": signature}
+            headers={"X-Angela-Signature": signature},
         )
         print(f"Status: {resp.status_code}")
         print(f"Response: {resp.json()}")
@@ -50,21 +55,21 @@ def test_full_system_flow():
         print(f"Status: {resp.status_code}")
         data = resp.json()
         print(f"Synced Key C matches: {data['key_c'] == key_c}")
-        assert data['key_c'] == key_c
+        assert data["key_c"] == key_c
     except Exception as e:
         print(f"❌ Desktop Sync Failed: {e}")
 
     # 4. Test System Status (Secure)
     print("\n--- Testing Secure System Status ---")
     status_payload = {"action": "get_status", "timestamp": int(time.time())}
-    status_payload_str = json.dumps(status_payload, separators=(',', ':'))
+    status_payload_str = json.dumps(status_payload, separators=(",", ":"))
     status_sig = hmac.new(key_b.encode(), status_payload_str.encode(), hashlib.sha256).hexdigest()
-    
+
     try:
         resp = requests.post(
             f"{base_url}/api/v1/system/status",
             json=status_payload,
-            headers={"X-Angela-Signature": status_sig}
+            headers={"X-Angela-Signature": status_sig},
         )
         print(f"Status: {resp.status_code}")
         data = resp.json()
@@ -74,6 +79,7 @@ def test_full_system_flow():
         print(f"❌ System Status Failed: {e}")
 
     print("\n✅ Final Integration Test Completed Successfully!")
+
 
 if __name__ == "__main__":
     test_full_system_flow()

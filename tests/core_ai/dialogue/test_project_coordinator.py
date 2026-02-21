@@ -18,6 +18,7 @@ sys.path.insert(0, str(backend_path / "src"))
 
 from ai.dialogue.project_coordinator import ProjectCoordinator
 
+
 @pytest.fixture()
 def project_coordinator():
     """Provides a ProjectCoordinator instance with mocked dependencies."""
@@ -32,9 +33,7 @@ def project_coordinator():
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
 
     # Mock the config dictionary
-    mock_config = {
-        "turn_timeout_seconds": 30
-    }
+    mock_config = {"turn_timeout_seconds": 30}
 
     pc = ProjectCoordinator(
         llm_interface=mock_llm_interface,
@@ -44,7 +43,7 @@ def project_coordinator():
         memory_manager=mock_memory_manager,
         learning_manager=mock_learning_manager,
         personality_manager=mock_personality_manager,
-        dialogue_manager_config=mock_config
+        dialogue_manager_config=mock_config,
     )
     return pc
 
@@ -78,8 +77,6 @@ def project_coordinator():
 
     #     pc.service_discovery.get_all_capabilities_async.return_value = []
 
-    
-
     #     # Mock the three main phases of the project
 
     #     pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=decomposed_tasks)
@@ -88,13 +85,9 @@ def project_coordinator():
 
     #     pc._integrate_subtask_results = AsyncMock(return_value=final_integrated_response)
 
-    
-
     #     # Act
 
     #     response = await pc.handle_project(user_query, "session123", "user456")
-
-    
 
     #     # Assert
 
@@ -108,19 +101,16 @@ def project_coordinator():
 
     #     pc._integrate_subtask_results.assert_awaited_once_with(user_query, execution_results)
 
-    
-
     #     # Verify learning manager was called
 
     #     pc.learning_manager.learn_from_project_case.assert_awaited_once()
-
-    
 
     #     # Verify the final response is correctly formatted,
 
     #     expected_response == f"TestAI, Here's the result of your project request,\n\n{final_integrated_response}"
 
     #     assert response == expected_response
+
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试
@@ -132,11 +122,15 @@ async def test_handle_project_decomposition_fails(project_coordinator) -> None:
     pc = project_coordinator
     # 正确模拟 service_discovery.get_all_capabilities_async() 的异步调用
     pc.service_discovery.get_all_capabilities_async.return_value = []
-    pc._decompose_user_intent_into_subtasks = AsyncMock(return_value=[]) # Simulate LLM failing to decompose
+    pc._decompose_user_intent_into_subtasks = AsyncMock(
+        return_value=[]
+    )  # Simulate LLM failing to decompose
 
     # Patch the methods to check they were not called,
-    with patch.object(pc, '_execute_task_graph', new_callable=AsyncMock) as mock_execute:
-        with patch.object(pc, '_integrate_subtask_results', new_callable=AsyncMock) as mock_integrate:
+    with patch.object(pc, "_execute_task_graph", new_callable=AsyncMock) as mock_execute:
+        with patch.object(
+            pc, "_integrate_subtask_results", new_callable=AsyncMock
+        ) as mock_integrate:
             # Act
             response = await pc.handle_project("An impossible task.", "s1", "u1")
 
@@ -144,6 +138,7 @@ async def test_handle_project_decomposition_fails(project_coordinator) -> None:
             assert response == "TestAI, I couldn't break down your request into a clear plan."
             mock_execute.assert_not_called()
             mock_integrate.assert_not_called()
+
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试
@@ -154,12 +149,16 @@ async def test_execute_task_graph_with_dependencies(project_coordinator) -> None
     # Arrange
     pc = project_coordinator
     # Mock the actual dispatching logic
-    pc._dispatch_single_subtask = AsyncMock(side_effect=[
-                {"result": "Task 0 was successful"},        {"result": "Task 1 was successful"}
-    ])
+    pc._dispatch_single_subtask = AsyncMock(
+        side_effect=[{"result": "Task 0 was successful"}, {"result": "Task 1 was successful"}]
+    )
 
     subtasks = [
-                {"capability_needed": "task0_v1", "task_parameters": {"param": "A"}},        {"capability_needed": "task1_v1", "task_parameters": {"input_data": "Some static data and <output_of_task_0>"}}
+        {"capability_needed": "task0_v1", "task_parameters": {"param": "A"}},
+        {
+            "capability_needed": "task1_v1",
+            "task_parameters": {"input_data": "Some static data and <output_of_task_0>"},
+        },
     ]
 
     # Act
@@ -171,14 +170,16 @@ async def test_execute_task_graph_with_dependencies(project_coordinator) -> None
     assert results[1] == {"result": "Task 1 was successful"}
 
     # Verify that the substitution happened correctly before dispatching the second task
-    expected_call_for_task1 = call({
-        'capability_needed': 'task1_v1',
-        'task_parameters': {'input_data': 'Some static data and {"result": "Task 0 was successful"}'}
-    })
-    pc._dispatch_single_subtask.assert_has_calls([
-    call(subtasks[0]),
-        expected_call_for_task1
-    ])
+    expected_call_for_task1 = call(
+        {
+            "capability_needed": "task1_v1",
+            "task_parameters": {
+                "input_data": 'Some static data and {"result": "Task 0 was successful"}'
+            },
+        }
+    )
+    pc._dispatch_single_subtask.assert_has_calls([call(subtasks[0]), expected_call_for_task1])
+
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试
@@ -188,8 +189,10 @@ async def test_dispatch_single_subtask_agent_not_found(project_coordinator) -> N
     """
     # Arrange
     pc = project_coordinator
-    pc.service_discovery.find_capabilities = AsyncMock(return_value=[]) # 修改为AsyncMock并设置返回值
-    pc.agent_manager.launch_agent.return_value = None # Launching fails
+    pc.service_discovery.find_capabilities = AsyncMock(
+        return_value=[]
+    )  # 修改为AsyncMock并设置返回值
+    pc.agent_manager.launch_agent.return_value = None  # Launching fails
 
     subtask = {"capability_needed": "non_existent_capability_v1"}
 
@@ -197,7 +200,10 @@ async def test_dispatch_single_subtask_agent_not_found(project_coordinator) -> N
     result = await pc._dispatch_single_subtask(subtask)
 
     # Assert
-    assert result == {"error": "Could not find or launch an agent with capability 'non_existent_capability_v1'."}
+    assert result == {
+        "error": "Could not find or launch an agent with capability 'non_existent_capability_v1'."
+    }
+
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试,
@@ -219,14 +225,15 @@ async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordi
     }
 
     # Simulate finding no capabilities initially, then finding one after launch
-    pc.service_discovery.find_capabilities = AsyncMock(side_effect=[  # 修改为AsyncMock
-        [] # First call, not found
-        [new_capability_payload] # Second call, found
-    ])
+    pc.service_discovery.find_capabilities = AsyncMock(
+        side_effect=[  # 修改为AsyncMock
+            [][new_capability_payload]  # First call, not found  # Second call, found
+        ]
+    )
 
     # Mock a successful agent launch that returns a future
     mock_future = asyncio.Future()
-    mock_future.set_result(True) # Simulate the agent becoming ready
+    mock_future.set_result(True)  # Simulate the agent becoming ready
     pc.agent_manager.launch_agent.return_value = mock_future
 
     # Mock the downstream HSP request and result waiting
@@ -240,6 +247,7 @@ async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordi
     # Verify agent manager was called to launch the correct agent
     pc.agent_manager.launch_agent.assert_called_once_with(agent_name_to_launch)
 
+
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试
 async def test_wait_for_task_result_timeout(project_coordinator) -> None:
@@ -248,7 +256,7 @@ async def test_wait_for_task_result_timeout(project_coordinator) -> None:
     """
     # Arrange
     pc = project_coordinator
-    pc.turn_timeout_seconds = 0.01 # Set a very short timeout for the test:
+    pc.turn_timeout_seconds = 0.01  # Set a very short timeout for the test:
     # Act
     result = await pc._wait_for_task_result("corr_timeout", "timeout_capability")
 

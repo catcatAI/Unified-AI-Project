@@ -3,6 +3,7 @@ from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 class CodeUnderstandingTool:
     """
     A tool to inspect and understand the structure of other Python tools.

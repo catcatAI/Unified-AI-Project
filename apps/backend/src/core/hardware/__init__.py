@@ -18,6 +18,7 @@ Hardware Module - Angela AI Matrix
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from .unified_hardware_center import (
@@ -36,7 +37,7 @@ from .unified_hardware_center import (
     HardwareProfile,
     ModelRequirement,
     get_hardware_center,
-    create_hardware_center
+    create_hardware_center,
 )
 
 from .gpu_accelerator import (
@@ -47,47 +48,42 @@ from .gpu_accelerator import (
     GPUMetrics,
     get_gpu_service,
     initialize_gpu_service,
-    gpu_available
+    gpu_available,
 )
 
-from .webgl_bridge import (
-    WebGLBridge,
-    WebGLGPUInfo,
-    get_webgl_bridge,
-    handle_gpu_info_message
-)
+from .webgl_bridge import WebGLBridge, WebGLGPUInfo, get_webgl_bridge, handle_gpu_info_message
 
 __all__ = [
     # 類
-    'UnifiedHardwareCenter',
-    'HardwareDetector',
-    'PrecisionManager',
-    'CodeTranspiler',
-    'ModelRepository',
-    'GPUAcceleratorService',
-    'WebGLBridge',
+    "UnifiedHardwareCenter",
+    "HardwareDetector",
+    "PrecisionManager",
+    "CodeTranspiler",
+    "ModelRepository",
+    "GPUAcceleratorService",
+    "WebGLBridge",
     # 枚舉
-    'AcceleratorType',
-    'PrecisionLevel',
-    'PerformanceMode',
-    'GPUPriority',
-    'RenderQuality',
+    "AcceleratorType",
+    "PrecisionLevel",
+    "PerformanceMode",
+    "GPUPriority",
+    "RenderQuality",
     # 數據類
-    'ComputeResource',
-    'CPUInfo',
-    'GPUInfo',
-    'MemoryInfo',
-    'HardwareProfile',
-    'ModelRequirement',
-    'GPUContext',
-    'GPUMetrics',
-    'WebGLGPUInfo',
+    "ComputeResource",
+    "CPUInfo",
+    "GPUInfo",
+    "MemoryInfo",
+    "HardwareProfile",
+    "ModelRequirement",
+    "GPUContext",
+    "GPUMetrics",
+    "WebGLGPUInfo",
     # 函數
-    'get_hardware_center',
-    'create_hardware_center',
-    'get_gpu_service',
-    'initialize_gpu_service',
-    'gpu_available',
-    'get_webgl_bridge',
-    'handle_gpu_info_message'
+    "get_hardware_center",
+    "create_hardware_center",
+    "get_gpu_service",
+    "initialize_gpu_service",
+    "gpu_available",
+    "get_webgl_bridge",
+    "handle_gpu_info_message",
 ]

@@ -5,11 +5,13 @@
 import os
 from typing import Dict, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入huggingface_hub
 try:
     from huggingface_hub import hf_hub_download
+
     HF_HUB_AVAILABLE = True
 except ImportError:
     HF_HUB_AVAILABLE = False
@@ -27,7 +29,9 @@ class ParameterExtractor:
         """
         self.repo_id = repo_id
 
-    def download_model_parameters(self, filename: str, cache_dir: str = "model_cache") -> Optional[str]:
+    def download_model_parameters(
+        self, filename: str, cache_dir: str = "model_cache"
+    ) -> Optional[str]:
         """
         从Hugging Face Hub下载模型参数
 
@@ -46,16 +50,14 @@ class ParameterExtractor:
             os.makedirs(cache_dir)
 
         try:
-            return hf_hub_download(
-                repo_id=self.repo_id,
-                filename=filename,
-                cache_dir=cache_dir
-            )
+            return hf_hub_download(repo_id=self.repo_id, filename=filename, cache_dir=cache_dir)
         except Exception as e:
             logger.info(f"下载失败: {e}")
             return None
 
-    def map_parameters(self, source_params: Dict[str, Any], mapping_rules: Dict[str, str]) -> Dict[str, Any]:
+    def map_parameters(
+        self, source_params: Dict[str, Any], mapping_rules: Dict[str, str]
+    ) -> Dict[str, Any]:
         """
         将源模型参数映射到目标模型
 

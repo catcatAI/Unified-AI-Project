@@ -1,4 +1,3 @@
-
 import hmac
 import hashlib
 import json
@@ -7,6 +6,7 @@ import time
 from pathlib import Path
 import sys
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 將項目路徑加入 sys.path
@@ -16,9 +16,10 @@ sys.path.insert(0, str(project_root))
 from system.security_monitor import ABCKeyManager
 from system.hardware_probe import HardwareProbe
 
+
 def verify_system():
     print("🛡️  Angela AI 全系統就緒度驗證...")
-    
+
     # 1. 密鑰管理器驗證
     print("\n🔑 1. 驗證 A/B/C 密鑰體系...")
     km = ABCKeyManager()
@@ -35,7 +36,9 @@ def verify_system():
     probe = HardwareProbe()
     capability = probe.get_cluster_capability()
     if "preferred_role" in capability and "score" in capability:
-        print(f"✅ 硬體感知正常: 分數={capability['score']}, 建議角色={capability['preferred_role']}")
+        print(
+            f"✅ 硬體感知正常: 分數={capability['score']}, 建議角色={capability['preferred_role']}"
+        )
     else:
         print("❌ 硬體探針輸出格式不正確")
         return
@@ -43,7 +46,7 @@ def verify_system():
     # 3. 後端安全介面驗證 (需要後端運行)
     print("\n🌐 3. 驗證後端安全通訊與同步介面 (需啟動後端)...")
     base_url = "http://localhost:8000"
-    
+
     try:
         # 測試 Key C 同步
         resp_c = requests.get(f"{base_url}/api/v1/security/sync-key-c")
@@ -60,7 +63,7 @@ def verify_system():
         payload = {"test": "data", "timestamp": time.time()}
         body = json.dumps(payload).encode()
         signature = hmac.new(key_b.encode(), body, hashlib.sha256).hexdigest()
-        
+
         headers = {"X-Angela-Signature": signature}
         resp_m = requests.post(f"{base_url}/api/v1/mobile/test", json=payload, headers=headers)
         if resp_m.status_code == 200:
@@ -70,7 +73,9 @@ def verify_system():
 
         # 測試行動端安全請求 (失敗案例 - 錯誤簽名)
         headers_bad = {"X-Angela-Signature": "wrong_signature"}
-        resp_m_bad = requests.post(f"{base_url}/api/v1/mobile/test", json=payload, headers=headers_bad)
+        resp_m_bad = requests.post(
+            f"{base_url}/api/v1/mobile/test", json=payload, headers=headers_bad
+        )
         if resp_m_bad.status_code == 403:
             print("✅ 後端正確攔截了非法簽名請求")
         else:
@@ -80,6 +85,7 @@ def verify_system():
         print("⚠️  後端未運行，跳過網路層驗證。請確保後端已啟動。")
 
     print("\n✨ 驗證總結: 系統核心功能已完成並具備高度可用性。")
+
 
 if __name__ == "__main__":
     verify_system()

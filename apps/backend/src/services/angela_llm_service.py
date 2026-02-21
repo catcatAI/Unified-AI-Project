@@ -103,9 +103,7 @@ def _load_memory_modules():
             logger.info("Memory enhancement modules loaded (relative import)")
         except ImportError as e2:
             logger.warning(f"Memory enhancement modules not available: {e2}")
-            logger.info(
-                "Running without memory enhancement (LLM will be called directly)"
-            )
+            logger.info("Running without memory enhancement (LLM will be called directly)")
             _MEMORY_ENHANCED = False
 
     return _MEMORY_ENHANCED
@@ -227,9 +225,7 @@ class LlamaCppBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            return LLMResponse(
-                text="", backend="llama.cpp", model=self.model, error=str(e)
-            )
+            return LLMResponse(text="", backend="llama.cpp", model=self.model, error=str(e))
 
 
 class OllamaBackend(BaseLLMBackend):
@@ -301,9 +297,7 @@ class OllamaBackend(BaseLLMBackend):
                                             data = json.loads(line)
                                             # 找到最後一個包含 message.content 的完整回應
                                             if data.get("message", {}).get("content"):
-                                                text = data.get("message", {}).get(
-                                                    "content", ""
-                                                )
+                                                text = data.get("message", {}).get("content", "")
                                         except json.JSONDecodeError:
                                             # JSON解析失敗，跳過該行
                                             continue
@@ -313,11 +307,7 @@ class OllamaBackend(BaseLLMBackend):
                                 raise json_error
 
                         if not text:
-                            text = (
-                                data.get("message", {}).get("content", "")
-                                if data
-                                else ""
-                            )
+                            text = data.get("message", {}).get("content", "") if data else ""
                     except Exception as json_error:
                         logger.warning(
                             f"Ollama JSON 解析錯誤: {json_error}, 原始回應: {response.text[:200]}"
@@ -346,9 +336,7 @@ class OllamaBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            return LLMResponse(
-                text="", backend="ollama", model=self.model, error=str(e)
-            )
+            return LLMResponse(text="", backend="ollama", model=self.model, error=str(e))
 
 
 class AngelaLLMService:
@@ -434,11 +422,11 @@ class AngelaLLMService:
 
     def _load_templates_to_matcher(self):
         """加载模板库到匹配器"""
-        if not hasattr(self, 'template_matcher'):
+        if not hasattr(self, "template_matcher"):
             return
 
         try:
-            if hasattr(self, 'template_library'):
+            if hasattr(self, "template_library"):
                 templates = self.template_library.get_all_templates()
                 for template in templates:
                     self.template_matcher.add_template(
@@ -446,7 +434,7 @@ class AngelaLLMService:
                         content=template.content,
                         patterns=[template.id],
                         keywords=template.keywords,
-                        metadata=template.metadata
+                        metadata=template.metadata,
                     )
                 logger.info(f"Loaded {len(templates)} templates to matcher")
         except Exception as e:
@@ -707,9 +695,7 @@ class AngelaLLMService:
         try:
             import os
 
-            config_path = os.environ.get(
-                "MULTI_LLM_CONFIG", "configs/multi_llm_config.json"
-            )
+            config_path = os.environ.get("MULTI_LLM_CONFIG", "configs/multi_llm_config.json")
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
 
@@ -724,13 +710,8 @@ class AngelaLLMService:
                             f"Loaded API key from environment variable {env_var} for {backend_name}"
                         )
                     else:
-                        logger.warning(
-                            f"Environment variable {env_var} not set for {backend_name}"
-                        )
-                elif (
-                    "api_key" in backend_config
-                    and backend_config["api_key"] == "YOUR_API_KEY"
-                ):
+                        logger.warning(f"Environment variable {env_var} not set for {backend_name}")
+                elif "api_key" in backend_config and backend_config["api_key"] == "YOUR_API_KEY":
                     # 移除佔位符 API 密鑰
                     logger.warning(f"Removing placeholder API key for {backend_name}")
                     del backend_config["api_key"]
@@ -794,9 +775,7 @@ class AngelaLLMService:
                     break
 
             self.is_available = True
-            backend_name = (
-                self.active_backend_type.value if self.active_backend_type else "none"
-            )
+            backend_name = self.active_backend_type.value if self.active_backend_type else "none"
             logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
             return True
         else:
@@ -811,6 +790,7 @@ class AngelaLLMService:
         """
         try:
             from pathlib import Path
+
             status_file = Path("apps/backend/data/brain_status.json")
             if not status_file.exists():
                 return ""
@@ -820,29 +800,29 @@ class AngelaLLMService:
 
             # 結構：data -> { "brain": {...}, "biological": {...}, "life_intensity": ... }
             bio = data.get("biological", {})
-            
+
             # 從 BiologicalIntegrator.get_biological_state() 提取指標
             arousal = bio.get("arousal", 0.5)
             stress = bio.get("stress_level", 0.0)
             dom_emotion = bio.get("dominant_emotion", "calm")
-            
+
             # 荷爾蒙效應
             hormonal = bio.get("hormonal_effects", {})
             energy = hormonal.get("energy", 0.8) * 100.0
             # 注意：飢餓感(hunger)目前沒在 get_biological_state 中導出，預設為 0
-            hunger = bio.get("hunger", 0.0) 
-            
+            hunger = bio.get("hunger", 0.0)
+
             intensity = data.get("life_intensity", 0.0)
 
             # 構建描述
             status_parts = []
-            
+
             # 1. 基礎需求
             if energy < 30:
                 status_parts.append("你感到非常疲倦，能量幾乎耗盡。")
             elif energy < 60:
                 status_parts.append("你感到有些累了。")
-            
+
             if hunger > 70:
                 status_parts.append("你覺得肚子很餓，渴望獲得能量補充。")
 
@@ -851,7 +831,7 @@ class AngelaLLMService:
                 status_parts.append("你現在壓力極大，感到非常焦慮和緊繃。")
             elif stress > 0.5:
                 status_parts.append("你感到有些壓力。")
-            
+
             if arousal > 0.8:
                 status_parts.append("你現在處於高度興奮狀態，思緒飛快。")
             elif arousal < 0.2:
@@ -860,11 +840,11 @@ class AngelaLLMService:
             # 3. 情感色彩
             if dom_emotion != "calm" and dom_emotion != "neutral" and dom_emotion != "unknown":
                 status_parts.append(f"你現在的主要情緒是 {dom_emotion}。")
-            
+
             # 4. AGI 指標 (理論框架)
             if intensity > 8.0:
                 status_parts.append("你現在大腦運作非常活躍，充滿了自我進化的衝動。")
-            
+
             return " ".join(status_parts)
         except Exception as e:
             logger.debug(f"Failed to read biological state: {e}")
@@ -879,7 +859,7 @@ class AngelaLLMService:
         """
         # 獲取生理狀態
         bio_status = self._get_biological_state()
-        
+
         # Angela 的系統提示 - 優化為更簡潔的版本
         system_prompt = f"""你是 Angela，一個活潑可愛的 AI 數字生命。
 特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。
@@ -890,9 +870,7 @@ class AngelaLLMService:
         # 添加歷史對話上下文 - 只保留最近 2 輪對話以減少 token 使用
         history = context.get("history", [])
         for h in history[-2:]:  # 只保留最近 2 輪對話
-            messages.append(
-                {"role": h.get("role", "user"), "content": h.get("content", "")}
-            )
+            messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
 
         # 添加當前用戶消息
         messages.append({"role": "user", "content": user_message})
@@ -937,22 +915,20 @@ class AngelaLLMService:
                 self.conversation_history = self.conversation_history[-50:]
 
         # ========== P0-2: Template Matching & Routing ==========
-        if hasattr(self, 'template_matcher') and self.template_matcher:
+        if hasattr(self, "template_matcher") and self.template_matcher:
             try:
                 match_result = self.template_matcher.match(user_message, context)
                 match_score = match_result.score
 
                 if match_score > 0.8:
                     composed_response = self.response_composer.compose_response(
-                        match_result.template_content,
-                        match_score,
-                        context
+                        match_result.template_content, match_score, context
                     )
 
                     response_time = (time.time() - start_time) * 1000
                     self.stats["composed_responses"] += 1
 
-                    if hasattr(self, 'deviation_tracker'):
+                    if hasattr(self, "deviation_tracker"):
                         self.deviation_tracker.record(
                             user_input=user_message,
                             match_score=match_score,
@@ -967,8 +943,10 @@ class AngelaLLMService:
 
                     self.template_matcher.record_template_usage(match_result.template_id, True)
 
-                    logger.info(f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}")
-                    
+                    logger.info(
+                        f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}"
+                    )
+
                     return LLMResponse(
                         text=composed_response.text,
                         backend="composed-template",
@@ -980,14 +958,12 @@ class AngelaLLMService:
                             "route": "COMPOSED",
                             "match_score": match_score,
                             "template_id": match_result.template_id,
-                        }
+                        },
                     )
 
                 elif match_score > 0.5:
                     composed_response = self.response_composer.compose_response(
-                        match_result.template_content,
-                        match_score,
-                        context
+                        match_result.template_content, match_score, context
                     )
 
                     llm_response = await self._generate_with_llm(user_message, context)
@@ -1000,7 +976,7 @@ class AngelaLLMService:
                     response_time = (time.time() - start_time) * 1000
                     self.stats["hybrid_responses"] += 1
 
-                    if hasattr(self, 'deviation_tracker'):
+                    if hasattr(self, "deviation_tracker"):
                         self.deviation_tracker.record(
                             user_input=user_message,
                             match_score=match_score,
@@ -1012,7 +988,9 @@ class AngelaLLMService:
                             match_time_ms=match_result.match_time_ms,
                         )
 
-                    logger.info(f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}")
+                    logger.info(
+                        f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}"
+                    )
 
                     return LLMResponse(
                         text=hybrid_text,
@@ -1024,7 +1002,7 @@ class AngelaLLMService:
                         metadata={
                             "route": "HYBRID",
                             "match_score": match_score,
-                        }
+                        },
                     )
 
             except Exception as e:
@@ -1034,9 +1012,7 @@ class AngelaLLMService:
         if self.enable_memory_enhancement:
             try:
                 # 尝试从记忆检索
-                memory_response = await self._try_memory_retrieval(
-                    user_message, context
-                )
+                memory_response = await self._try_memory_retrieval(user_message, context)
 
                 if memory_response:
                     # 记忆命中
@@ -1067,9 +1043,7 @@ class AngelaLLMService:
 
             # 更新对话历史
             if hasattr(self, "conversation_history"):
-                self.conversation_history.append(
-                    {"role": "assistant", "content": response.text}
-                )
+                self.conversation_history.append({"role": "assistant", "content": response.text})
 
             # 更新统计
             self.stats["llm_calls"] += 1
@@ -1078,12 +1052,10 @@ class AngelaLLMService:
             self.stats["average_response_time"] = (
                 self.stats["total_response_time"] / self.stats["total_requests"]
             )
-            self.stats["memory_hit_rate"] = (
-                self.stats["memory_hits"] / self.stats["total_requests"]
-            )
+            self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
 
             # 记录 LLM_FULL 路由的偏差追踪
-            if hasattr(self, 'deviation_tracker'):
+            if hasattr(self, "deviation_tracker"):
                 self.deviation_tracker.record(
                     user_input=user_message,
                     match_score=0.0,
@@ -1106,9 +1078,7 @@ class AngelaLLMService:
             logger.error(f"生成回應時出錯: {e}")
             return await self._fallback_response(user_message, context)
 
-    async def _fallback_response(
-        self, user_message: str, context: Dict[str, Any]
-    ) -> LLMResponse:
+    async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         備份回應機制
         當沒有可用的 LLM 後端時，使用模板回應
@@ -1200,9 +1170,7 @@ class AngelaLLMService:
             logger.warning(f"Memory retrieval error: {e}")
             return None
 
-    async def _generate_with_llm(
-        self, user_message: str, context: Dict[str, Any]
-    ) -> LLMResponse:
+    async def _generate_with_llm(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         使用 LLM 生成回應
 
@@ -1343,10 +1311,10 @@ class AngelaLLMService:
 
         if hasattr(self, "template_matcher"):
             stats["template_matcher"] = self.template_matcher.get_stats()
-        
+
         if hasattr(self, "response_composer"):
             stats["response_composer"] = self.response_composer.get_stats()
-        
+
         if hasattr(self, "deviation_tracker"):
             stats["deviation_tracker"] = self.deviation_tracker.get_stats()
 
@@ -1418,11 +1386,7 @@ class AngelaLLMService:
                     has_negation = False
                     for neg_word in negation_words:
                         neg_pos = text.find(neg_word)
-                        if (
-                            neg_pos != -1
-                            and neg_pos < keyword_pos
-                            and (keyword_pos - neg_pos) <= 3
-                        ):
+                        if neg_pos != -1 and neg_pos < keyword_pos and (keyword_pos - neg_pos) <= 3:
                             has_negation = True
                             break
 
@@ -1430,11 +1394,7 @@ class AngelaLLMService:
                     has_intensifier = False
                     for int_word in intensifier_words:
                         int_pos = text.find(int_word)
-                        if (
-                            int_pos != -1
-                            and int_pos < keyword_pos
-                            and (keyword_pos - int_pos) <= 3
-                        ):
+                        if int_pos != -1 and int_pos < keyword_pos and (keyword_pos - int_pos) <= 3:
                             has_intensifier = True
                             break
 
@@ -1457,11 +1417,7 @@ class AngelaLLMService:
                     has_negation = False
                     for neg_word in negation_words:
                         neg_pos = text.find(neg_word)
-                        if (
-                            neg_pos != -1
-                            and neg_pos < keyword_pos
-                            and (keyword_pos - neg_pos) <= 3
-                        ):
+                        if neg_pos != -1 and neg_pos < keyword_pos and (keyword_pos - neg_pos) <= 3:
                             has_negation = True
                             break
 
@@ -1469,11 +1425,7 @@ class AngelaLLMService:
                     has_intensifier = False
                     for int_word in intensifier_words:
                         int_pos = text.find(int_word)
-                        if (
-                            int_pos != -1
-                            and int_pos < keyword_pos
-                            and (keyword_pos - int_pos) <= 3
-                        ):
+                        if int_pos != -1 and int_pos < keyword_pos and (keyword_pos - int_pos) <= 3:
                             has_intensifier = True
                             break
 
@@ -1518,9 +1470,7 @@ class AngelaLLMService:
                 "secondary_emotions": [],
             }
 
-        sorted_emotions = sorted(
-            positive_emotions.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_emotions = sorted(positive_emotions.items(), key=lambda x: x[1], reverse=True)
 
         # 主要情感
         primary_emotion, primary_score = sorted_emotions[0]

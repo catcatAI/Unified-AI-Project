@@ -10,8 +10,15 @@ from .memory_template import MemoryTemplate, AngelaState, UserImpression, Respon
 
 logger = logging.getLogger(__name__)
 
+
 class HAMQueryEngine:
-    def __init__(self, core_memory_store: Dict[str, HAMDataPackageInternal], chroma_collection: Optional[Any], vector_store: Optional[VectorMemoryStore], data_processor: Any):
+    def __init__(
+        self,
+        core_memory_store: Dict[str, HAMDataPackageInternal],
+        chroma_collection: Optional[Any],
+        vector_store: Optional[VectorMemoryStore],
+        data_processor: Any,
+    ):
         self.core_memory_store = core_memory_store
         self.chroma_collection = chroma_collection
         self.vector_store = vector_store
@@ -25,7 +32,7 @@ class HAMQueryEngine:
             if date_input.tzinfo is None:
                 return date_input.replace(tzinfo=timezone.utc())
             return date_input.astimezone(timezone.utc())
-        elif isinstance(date_input, (int, float)): # Unix timestamp: 
+        elif isinstance(date_input, (int, float)):  # Unix timestamp:
             return datetime.fromtimestamp(date_input, tz=timezone.utc())
         elif isinstance(date_input, str):
             try:
@@ -40,7 +47,9 @@ class HAMQueryEngine:
         else:
             raise TypeError(f"Unsupported date input type: {type(date_input)}")
 
-    def _deserialize_memory(self, memory_id: str, data_package: HAMDataPackageInternal) -> HAMMemory:
+    def _deserialize_memory(
+        self, memory_id: str, data_package: HAMDataPackageInternal
+    ) -> HAMMemory:
         """反序列化內部數據包為 HAMMemory 物件。"""
         timestamp = data_package.get("timestamp", "")
         data_type = data_package.get("data_type", "")
@@ -50,13 +59,15 @@ class HAMQueryEngine:
         try:
             decrypted_data = self.data_processor._decrypt(encrypted_package)
             decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
-            content = decompressed_data_bytes.decode('utf-8') # Assuming content is text for now
+            content = decompressed_data_bytes.decode("utf-8")  # Assuming content is text for now
             # Verify checksum (similar to recall_gist)
-            stored_checksum = metadata.get('sha256_checksum')
+            stored_checksum = metadata.get("sha256_checksum")
             if stored_checksum:
                 current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
                 if current_checksum != stored_checksum:
-                    logger.critical(f"Checksum mismatch during deserialization for memory ID {memory_id}! Data may be corrupted.")
+                    logger.critical(
+                        f"Checksum mismatch during deserialization for memory ID {memory_id}! Data may be corrupted."
+                    )
             # Convert timestamp to datetime object
             timestamp_obj: datetime
             if isinstance(timestamp, str):
@@ -65,10 +76,7 @@ class HAMQueryEngine:
                 timestamp_obj = timestamp
 
             return HAMMemory(
-                id=memory_id,
-                content=content,
-                timestamp=timestamp_obj,
-                metadata=metadata
+                id=memory_id, content=content, timestamp=timestamp_obj, metadata=metadata
             )
         except Exception as e:
             logger.error(f"Error deserializing memory {memory_id}: {e}")
@@ -91,43 +99,57 @@ class HAMQueryEngine:
                 chroma_results = self.chroma_collection.query(
                     query_texts=[query],
                     n_results=limit * 2,  # Fetch more results from Chroma to allow for filtering
-                    include=['metadatas', 'documents']
+                    include=["metadatas", "documents"],
                 )
                 # Extract memory_ids from Chroma results
-                if chroma_results and chroma_results['ids']:
-                    for i, mem_id in enumerate(chroma_results['ids'][0]):
+                if chroma_results and chroma_results["ids"]:
+                    for i, mem_id in enumerate(chroma_results["ids"][0]):
                         if mem_id in self.core_memory_store:
                             data_package = self.core_memory_store[mem_id]
                             try:
                                 # Use the new _deserialize_memory method
-                                semantic_memories.append(self._deserialize_memory(mem_id, data_package))
+                                semantic_memories.append(
+                                    self._deserialize_memory(mem_id, data_package)
+                                )
                                 semantic_results_ids.add(mem_id)
                             except HAMMemoryError as e:
-                                logger.warning(f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}")
+                                logger.warning(
+                                    f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}"
+                                )
 
-                logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'")
+                logger.debug(
+                    f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'"
+                )
             except Exception as e:
                 logger.error(f"Error during semantic search for query '{query}': {e}")
                 # Fallback if semantic search fails, proceed with only keyword search
                 fallback_semantic = True
         else:
-            logger.info(f"Vector / Chroma store disabled or no query, skipping semantic search for query: '{query}'")
+            logger.info(
+                f"Vector / Chroma store disabled or no query, skipping semantic search for query: '{query}'"
+            )
             fallback_semantic = True
 
         # 2. Perform Keyword Search (and potential metadata filters)
         keyword_memories: List[HAMMemory] = []
         for mem_id, data_package in self.core_memory_store.items():
             if mem_id in semantic_results_ids:
-                continue # Skip memories already found by semantic search
+                continue  # Skip memories already found by semantic search
 
             # Very basic keyword matching for now (e.g., in content or metadata if rehydrated / accessible)
             item_metadata = data_package.get("metadata")
             # A more advanced implementation would rehydrate content for keyword search
-            if any(kw.lower() in str(item_metadata).lower() for kw in query.lower().split() if len(kw) > 2):
+            if any(
+                kw.lower() in str(item_metadata).lower()
+                for kw in query.lower().split()
+                if len(kw) > 2
+            ):
                 try:
                     keyword_memories.append(self._deserialize_memory(mem_id, data_package))
                 except HAMMemoryError as e:
-                    logger.warning(f"Skipping deserialization of memory {mem_id} from keyword search due to error: {e}")
+                    logger.warning(
+                        f"Skipping deserialization of memory {mem_id} from keyword search due to error: {e}"
+                    )
 
         logger.debug(f"Retrieved {len(keyword_memories)} keyword - based memories.")
 
@@ -143,10 +165,14 @@ class HAMQueryEngine:
         # Apply the final limit
         final_results: List[HAMMemory] = combined_results[:limit]
 
-        logger.info(f"Retrieved {len(final_results)} combined relevant memories for query: '{query}'")
+        logger.info(
+            f"Retrieved {len(final_results)} combined relevant memories for query: '{query}'"
+        )
         return final_results
 
-    def query_by_date_range(self, start_date: datetime, end_date: datetime) -> List[HAMRecallResult]:
+    def query_by_date_range(
+        self, start_date: datetime, end_date: datetime
+    ) -> List[HAMRecallResult]:
         """
         Query memories by date range.
 
@@ -173,7 +199,9 @@ class HAMQueryEngine:
                         # and will call this query engine.
                         results.append(self._deserialize_memory(memory_id, data_package))
                 except (ValueError, TypeError) as e:
-                    logger.warning(f"Failed to parse timestamp for memory {memory_id} or date_range {start_date} - {end_date}: {e}. Skipping this memory for date filter.")
+                    logger.warning(
+                        f"Failed to parse timestamp for memory {memory_id} or date_range {start_date} - {end_date}: {e}. Skipping this memory for date filter."
+                    )
                     continue
             return results
         except Exception as e:
@@ -181,65 +209,74 @@ class HAMQueryEngine:
             raise Exception(f"Failed to query date range: {e}")
 
     def query_core_memory(
-                        self,
-                        keywords: Optional[List[str]] = None,
-                        date_range: Optional[Tuple[datetime, datetime]] = None,
-                        data_type_filter: Optional[str] = None,
-                        metadata_filters: Optional[Dict[str, Any]] = None,
-                        user_id_for_facts: Optional[str] = None,
-                        limit: int = 5,
-                        sort_by_confidence: bool = False,
-                        return_multiple_candidates: bool = False,
-                        semantic_query: Optional[str] = None
-                        ) -> List[HAMRecallResult]:
+        self,
+        keywords: Optional[List[str]] = None,
+        date_range: Optional[Tuple[datetime, datetime]] = None,
+        data_type_filter: Optional[str] = None,
+        metadata_filters: Optional[Dict[str, Any]] = None,
+        user_id_for_facts: Optional[str] = None,
+        limit: int = 5,
+        sort_by_confidence: bool = False,
+        return_multiple_candidates: bool = False,
+        semantic_query: Optional[str] = None,
+    ) -> List[HAMRecallResult]:
         """
-        Enhanced query function.
-        Filters by data_type, metadata_filters (exact matches), user_id (for facts),
-    and date_range.
-        Optional keyword search on metadata string.
-        Does NOT search encrypted content for keywords in this version.
+            Enhanced query function.
+            Filters by data_type, metadata_filters (exact matches), user_id (for facts),
+        and date_range.
+            Optional keyword search on metadata string.
+            Does NOT search encrypted content for keywords in this version.
         """
-        logger.debug(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords}, semantic_query: {semantic_query})")
+        logger.debug(
+            f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords}, semantic_query: {semantic_query})"
+        )
 
         candidate_mem_ids: List[str] = []
         fallback_semantic = False
 
         if semantic_query:
             if self.chroma_collection is None:
-                logger.warning("ChromaDB collection not initialized. Cannot perform semantic search.")
+                logger.warning(
+                    "ChromaDB collection not initialized. Cannot perform semantic search."
+                )
                 # Fallback to iterating all memories if semantic search is not available
-                candidate_mem_ids = sorted(list(self.core_memory_store.keys()),
-    reverse = True)
+                candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
                 fallback_semantic = True
             else:
                 try:
                     # Generate embedding for the semantic query using the collection's embedding function
                     chroma_results = self.chroma_collection.query(
                         query_texts=[semantic_query],
-                        n_results=limit * 2,  # Fetch more results from Chroma to allow for filtering
-                        include=['metadatas', 'documents']
+                        n_results=limit
+                        * 2,  # Fetch more results from Chroma to allow for filtering
+                        include=["metadatas", "documents"],
                     )
                     # Extract memory_ids from Chroma results
-                    if chroma_results and chroma_results['ids']:
-                        candidate_mem_ids.extend(chroma_results['ids'][0])
-                    logger.debug(f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query.")
+                    if chroma_results and chroma_results["ids"]:
+                        candidate_mem_ids.extend(chroma_results["ids"][0])
+                    logger.debug(
+                        f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query."
+                    )
                 except Exception as e:
                     logger.error(f"Error querying ChromaDB: {e}")
                     # Fallback to iterating all memories if ChromaDB query fails
-                    candidate_mem_ids = sorted(list(self.core_memory_store.keys()),
-    reverse = True)
+                    candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
                     fallback_semantic = True
         else:
             # If no semantic query, iterate through all memories
-            candidate_mem_ids = [mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None]
-            candidate_mem_ids = sorted(candidate_mem_ids, reverse = True)
+            candidate_mem_ids = [
+                mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None
+            ]
+            candidate_mem_ids = sorted(candidate_mem_ids, reverse=True)
 
         # Candidate selection: Iterate through selected memory IDs
         candidate_items_with_id: List[HAMRecallResult] = []
 
         for mem_id in candidate_mem_ids:
             item = self.core_memory_store.get(mem_id)
-            if not item: # Skip if memory not found in core store (e.g., filtered by Chroma but not in JSON): 
+            if (
+                not item
+            ):  # Skip if memory not found in core store (e.g., filtered by Chroma but not in JSON):
                 continue
 
             item_metadata = item.get("metadata", {})
@@ -259,8 +296,10 @@ class HAMQueryEngine:
                     if not (start_dt_normalized <= item_dt <= end_dt_normalized):
                         match = False
                 except (ValueError, TypeError) as e:
-                    logger.warning(f"Error parsing date for memory {mem_id} or date_range {date_range}: {e}. Skipping this memory for date filter.")
-                    match = False # Treat as non - match if date parsing fails
+                    logger.warning(
+                        f"Error parsing date for memory {mem_id} or date_range {date_range}: {e}. Skipping this memory for date filter."
+                    )
+                    match = False  # Treat as non - match if date parsing fails
 
             if match and metadata_filters:
                 for key, value in metadata_filters.items():
@@ -269,8 +308,12 @@ class HAMQueryEngine:
                         match = False
                         break
 
-            if match and user_id_for_facts and data_type_filter and \
-    data_type_filter.startswith("learned_fact"):
+            if (
+                match
+                and user_id_for_facts
+                and data_type_filter
+                and data_type_filter.startswith("learned_fact")
+            ):
                 if item_metadata.get("user_id") != user_id_for_facts:
                     match = False
 
@@ -286,27 +329,35 @@ class HAMQueryEngine:
                 # The full recall_gist logic will remain in HAMMemoryManager for now
                 # and will call this query engine.
                 recalled_item = self._deserialize_memory(mem_id, item)
-                if recalled_item: # recall_gist now returns Optional[HAMRecallResult]:
+                if recalled_item:  # recall_gist now returns Optional[HAMRecallResult]:
                     # recalled_item already includes metadata if successful
                     candidate_items_with_id.append(recalled_item)
 
         # Apply fallback semantic ranking when needed
         if semantic_query and fallback_semantic and candidate_items_with_id:
+
             def _fallback_score(rec: HAMRecallResult) -> int:
                 text = str(rec.content).lower()
-                gist_tokens = {tok.strip('.,!?') for tok in text.split() if len(tok.strip('., !?')) > 2}
+                gist_tokens = {
+                    tok.strip(".,!?") for tok in text.split() if len(tok.strip("., !?")) > 2
+                }
                 return len(query_tokens.intersection(gist_tokens))
-            query_tokens = {tok.strip('.,!?') for tok in semantic_query.lower().split() if len(tok.strip('., !?')) > 2}
+
+            query_tokens = {
+                tok.strip(".,!?")
+                for tok in semantic_query.lower().split()
+                if len(tok.strip("., !?")) > 2
+            }
             # Sort by score desc, then by timestamp (newest first)
             candidate_items_with_id.sort(
-                key=lambda x: (_fallback_score(x), x.timestamp),
-                reverse=True
+                key=lambda x: (_fallback_score(x), x.timestamp), reverse=True
             )
 
         # Sort by confidence if requested (primarily for facts)
-        if sort_by_confidence and data_type_filter and \
-    data_type_filter.startswith("learned_fact"):
-            candidate_items_with_id.sort(key=lambda x: x.metadata.get("confidence", 0.0), reverse=True)
+        if sort_by_confidence and data_type_filter and data_type_filter.startswith("learned_fact"):
+            candidate_items_with_id.sort(
+                key=lambda x: x.metadata.get("confidence", 0.0), reverse=True
+            )
 
         # Apply limit
         results: List[HAMRecallResult] = candidate_items_with_id[:limit]
@@ -325,7 +376,7 @@ class HAMQueryEngine:
         angela_state: AngelaState,
         user_impression: UserImpression,
         limit: int = 5,
-        min_score: float = 0.7
+        min_score: float = 0.7,
     ) -> List[Tuple[MemoryTemplate, float]]:
         """
         智能检索回應模板
@@ -369,11 +420,7 @@ class HAMQueryEngine:
         logger.info(f"HAM: Retrieved {len(results)} response templates (min_score={min_score})")
         return results
 
-    async def _semantic_template_search(
-        self,
-        query: str,
-        limit: int
-    ) -> List[MemoryTemplate]:
+    async def _semantic_template_search(self, query: str, limit: int) -> List[MemoryTemplate]:
         """
         语义搜索模板
         使用向量嵌入查找相关模板
@@ -385,14 +432,12 @@ class HAMQueryEngine:
             try:
                 # 查询向量数据库
                 chroma_results = self.chroma_collection.query(
-                    query_texts=[query],
-                    n_results=limit,
-                    include=['metadatas', 'documents']
+                    query_texts=[query], n_results=limit, include=["metadatas", "documents"]
                 )
 
                 # 从结果中提取模板
-                if chroma_results and chroma_results['ids']:
-                    for i, mem_id in enumerate(chroma_results['ids'][0]):
+                if chroma_results and chroma_results["ids"]:
+                    for i, mem_id in enumerate(chroma_results["ids"][0]):
                         if mem_id in self.core_memory_store:
                             data_package = self.core_memory_store[mem_id]
 
@@ -416,11 +461,7 @@ class HAMQueryEngine:
 
         return templates
 
-    def _keyword_template_search(
-        self,
-        query: str,
-        limit: int
-    ) -> List[MemoryTemplate]:
+    def _keyword_template_search(self, query: str, limit: int) -> List[MemoryTemplate]:
         """
         关键词搜索模板
         在元数据中搜索匹配的模板
@@ -450,9 +491,7 @@ class HAMQueryEngine:
         return templates
 
     def _deserialize_template(
-        self,
-        memory_id: str,
-        data_package: HAMDataPackageInternal
+        self, memory_id: str, data_package: HAMDataPackageInternal
     ) -> MemoryTemplate:
         """
         反序列化数据包为 MemoryTemplate 对象
@@ -463,10 +502,11 @@ class HAMQueryEngine:
             # 解密和解压
             decrypted_data = self.data_processor._decrypt(encrypted_package)
             decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
-            content = decompressed_data_bytes.decode('utf-8')
+            content = decompressed_data_bytes.decode("utf-8")
 
             # 解析 JSON
             import json
+
             template_data = json.loads(content)
 
             # 创建 MemoryTemplate 对象
@@ -478,9 +518,7 @@ class HAMQueryEngine:
             raise HAMMemoryError(f"Failed to deserialize template {memory_id}: {e}")
 
     def _calculate_state_similarity(
-        self,
-        current_state: AngelaState,
-        template_state: AngelaState
+        self, current_state: AngelaState, template_state: AngelaState
     ) -> float:
         """
         计算状态相似度
@@ -493,34 +531,22 @@ class HAMQueryEngine:
         weight_sum = 0.0
 
         # Alpha (意识水平) - 权重 30%
-        alpha_score = self._calculate_dict_similarity(
-            current_state.alpha,
-            template_state.alpha
-        )
+        alpha_score = self._calculate_dict_similarity(current_state.alpha, template_state.alpha)
         total_score += alpha_score * 0.30
         weight_sum += 0.30
 
         # Beta (情绪状态) - 权重 40%
-        beta_score = self._calculate_dict_similarity(
-            current_state.beta,
-            template_state.beta
-        )
+        beta_score = self._calculate_dict_similarity(current_state.beta, template_state.beta)
         total_score += beta_score * 0.40
         weight_sum += 0.40
 
         # Gamma (认知负荷) - 权重 15%
-        gamma_score = self._calculate_dict_similarity(
-            current_state.gamma,
-            template_state.gamma
-        )
+        gamma_score = self._calculate_dict_similarity(current_state.gamma, template_state.gamma)
         total_score += gamma_score * 0.15
         weight_sum += 0.15
 
         # Delta (生理状态) - 权重 15%
-        delta_score = self._calculate_dict_similarity(
-            current_state.delta,
-            template_state.delta
-        )
+        delta_score = self._calculate_dict_similarity(current_state.delta, template_state.delta)
         total_score += delta_score * 0.15
         weight_sum += 0.15
 
@@ -529,11 +555,7 @@ class HAMQueryEngine:
             return total_score / weight_sum
         return 0.5  # 默认中等相似度
 
-    def _calculate_dict_similarity(
-        self,
-        dict1: Dict[str, float],
-        dict2: Dict[str, float]
-    ) -> float:
+    def _calculate_dict_similarity(self, dict1: Dict[str, float], dict2: Dict[str, float]) -> float:
         """
         计算两个字典的相似度
         使用余弦相似度
@@ -555,8 +577,8 @@ class HAMQueryEngine:
         dot_product = sum(v1 * v2 for v1, v2 in zip(vec1, vec2))
 
         # 计算模
-        norm1 = sum(v ** 2 for v in vec1) ** 0.5
-        norm2 = sum(v ** 2 for v in vec2) ** 0.5
+        norm1 = sum(v**2 for v in vec1) ** 0.5
+        norm2 = sum(v**2 for v in vec2) ** 0.5
 
         # 避免除以零
         if norm1 == 0 or norm2 == 0:

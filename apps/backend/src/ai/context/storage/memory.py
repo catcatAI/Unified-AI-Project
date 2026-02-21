@@ -16,6 +16,7 @@ from .base import Context, Storage, ContextType
 
 logger = logging.getLogger(__name__)
 
+
 class MemoryStorage(Storage):
     """内存存储实现, 使用LRU缓存策略"""
 
@@ -79,7 +80,8 @@ class MemoryStorage(Storage):
                 context_ids = list(self._storage.keys())
             else:
                 context_ids = [
-                    context_id for context_id, context in self._storage.items()
+                    context_id
+                    for context_id, context in self._storage.items()
                     if context.context_type == context_type
                 ]
 
@@ -101,7 +103,9 @@ class MemoryStorage(Storage):
                 logger.debug(f"Context {context_id} metadata updated in memory storage")
                 return True
             else:
-                logger.debug(f"Context {context_id} not found in memory storage for metadata update")
+                logger.debug(
+                    f"Context {context_id} not found in memory storage for metadata update"
+                )
                 return False
         except Exception as e:
             logger.error(f"Failed to update context {context_id} metadata in memory storage, {e}")
@@ -112,5 +116,7 @@ class MemoryStorage(Storage):
         return {
             "total_contexts": len(self._storage),
             "max_size": self.max_size,
-            "usage_percentage": (len(self._storage) / self.max_size) * 100 if self.max_size > 0 else 0
+            "usage_percentage": (
+                (len(self._storage) / self.max_size) * 100 if self.max_size > 0 else 0
+            ),
         }

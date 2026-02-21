@@ -2,14 +2,17 @@
 """
 Angela AI 系統全面 API 測試腳本
 """
+
 import requests
 import json
 import time
 from typing import Dict, List, Tuple
 import logging
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"
+
 
 class APITester:
     def __init__(self):
@@ -18,7 +21,9 @@ class APITester:
         self.passed_tests = 0
         self.failed_tests = 0
 
-    def test_endpoint(self, method: str, endpoint: str, data: dict = None, headers: dict = None) -> Tuple[bool, dict, str]:
+    def test_endpoint(
+        self, method: str, endpoint: str, data: dict = None, headers: dict = None
+    ) -> Tuple[bool, dict, str]:
         """測試單個 API 端點"""
         url = f"{BASE_URL}{endpoint}"
         self.total_tests += 1
@@ -49,15 +54,14 @@ class APITester:
                 "method": method,
                 "status_code": response.status_code,
                 "success": success,
-                "response_time": response.elapsed.total_seconds()
+                "response_time": response.elapsed.total_seconds(),
             }
 
             try:
                 result["response"] = response.json()
             except Exception as e:
-                logger.error(f'Unexpected error in comprehensive_api_test.py: {e}', exc_info=True)
+                logger.error(f"Unexpected error in comprehensive_api_test.py: {e}", exc_info=True)
                 result["response"] = response.text[:500]
-
 
             self.results.append(result)
             return success, result["response"], status
@@ -65,37 +69,43 @@ class APITester:
         except requests.exceptions.Timeout:
             self.failed_tests += 1
             error_msg = "請求超時"
-            self.results.append({
-                "endpoint": endpoint,
-                "method": method,
-                "status_code": None,
-                "success": False,
-                "error": error_msg
-            })
+            self.results.append(
+                {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status_code": None,
+                    "success": False,
+                    "error": error_msg,
+                }
+            )
             return False, {}, f"❌ FAIL - {error_msg}"
         except requests.exceptions.ConnectionError:
             self.failed_tests += 1
             error_msg = "連接失敗"
-            self.results.append({
-                "endpoint": endpoint,
-                "method": method,
-                "status_code": None,
-                "success": False,
-                "error": error_msg
-            })
+            self.results.append(
+                {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status_code": None,
+                    "success": False,
+                    "error": error_msg,
+                }
+            )
             return False, {}, f"❌ FAIL - {error_msg}"
         except Exception as e:
-            logger.error(f'Error in comprehensive_api_test.py: {e}', exc_info=True)
+            logger.error(f"Error in comprehensive_api_test.py: {e}", exc_info=True)
             self.failed_tests += 1
 
             error_msg = str(e)
-            self.results.append({
-                "endpoint": endpoint,
-                "method": method,
-                "status_code": None,
-                "success": False,
-                "error": error_msg
-            })
+            self.results.append(
+                {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status_code": None,
+                    "success": False,
+                    "error": error_msg,
+                }
+            )
             return False, {}, f"❌ FAIL - {error_msg}"
 
     def run_all_tests(self):
@@ -125,7 +135,9 @@ class APITester:
         success, response, status = self.test_endpoint("POST", "/dialogue", {"message": "你好"})
         print(f"POST /dialogue: {status}")
 
-        success, response, status = self.test_endpoint("POST", "/api/v1/angela/chat", {"message": "你好"})
+        success, response, status = self.test_endpoint(
+            "POST", "/api/v1/angela/chat", {"message": "你好"}
+        )
         print(f"POST /api/v1/angela/chat: {status}")
 
         # 3. 寵物管理
@@ -137,7 +149,9 @@ class APITester:
         success, response, status = self.test_endpoint("GET", "/api/v1/pet/config")
         print(f"GET /api/v1/pet/config: {status}")
 
-        success, response, status = self.test_endpoint("POST", "/api/v1/pet/interaction", {"type": "touch", "x": 100, "y": 100})
+        success, response, status = self.test_endpoint(
+            "POST", "/api/v1/pet/interaction", {"type": "touch", "x": 100, "y": 100}
+        )
         print(f"POST /api/v1/pet/interaction: {status}")
 
         # 4. 感官系統
@@ -158,12 +172,11 @@ class APITester:
         success, response, status = self.test_endpoint("GET", "/api/v1/economy/status")
         print(f"GET /api/v1/economy/status: {status}")
 
-        success, response, status = self.test_endpoint("POST", "/api/v1/economy/transaction", {
-            "buyer": "user1",
-            "seller": "user2",
-            "item_id": "item_1",
-            "price": 10.0
-        })
+        success, response, status = self.test_endpoint(
+            "POST",
+            "/api/v1/economy/transaction",
+            {"buyer": "user1", "seller": "user2", "item_id": "item_1", "price": 10.0},
+        )
         print(f"POST /api/v1/economy/transaction: {status}")
 
         # 6. 移動端
@@ -172,7 +185,9 @@ class APITester:
         success, response, status = self.test_endpoint("GET", "/api/v1/mobile/status")
         print(f"GET /api/v1/mobile/status: {status}")
 
-        success, response, status = self.test_endpoint("POST", "/api/v1/mobile/sync", {"data": "test"})
+        success, response, status = self.test_endpoint(
+            "POST", "/api/v1/mobile/sync", {"data": "test"}
+        )
         print(f"POST /api/v1/mobile/sync: {status}")
 
         # 7. AI 代理
@@ -230,9 +245,12 @@ class APITester:
             "total": self.total_tests,
             "passed": self.passed_tests,
             "failed": self.failed_tests,
-            "success_rate": self.passed_tests / self.total_tests * 100 if self.total_tests > 0 else 0,
-            "results": self.results
+            "success_rate": (
+                self.passed_tests / self.total_tests * 100 if self.total_tests > 0 else 0
+            ),
+            "results": self.results,
         }
+
 
 if __name__ == "__main__":
     tester = APITester()

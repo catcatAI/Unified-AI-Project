@@ -47,22 +47,18 @@ class LightweightCodeModel:
 
         # Search for .py files recursively in the tools_directory
         pattern = os.path.join(self.tools_directory, " * *", " * .py")
-        py_files = glob.glob(pattern, recursive = True)
+        py_files = glob.glob(pattern, recursive=True)
 
         excluded_files = ["__init__.py", "tool_dispatcher.py"]  # Basenames to exclude
 
         tool_files = [
-            f_path for f_path in py_files
-            if os.path.basename(f_path) not in excluded_files
+            f_path for f_path in py_files if os.path.basename(f_path) not in excluded_files
         ]
         return tool_files
 
-
-
-
-
-    def analyze_tool_file(self, filepath: str,
-    dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
+    def analyze_tool_file(
+        self, filepath: str, dna_chain_id: Optional[str] = None
+    ) -> Optional[CodeAnalysisResult]:
         """
         Analyzes a single Python tool file to extract its structure and complexity.
         Enhanced with DNA数据链支持.
@@ -81,7 +77,7 @@ class LightweightCodeModel:
         file_structure: Dict[str, Any] = {
             "filepath": filepath,
             "classes": [],
-            "functions": []  # For module - level functions
+            "functions": [],  # For module - level functions
         }
 
         for node in tree.body:
@@ -89,7 +85,7 @@ class LightweightCodeModel:
                 class_info = {
                     "name": node.name,
                     "docstring": ast.get_docstring(node),
-                    "methods": []
+                    "methods": [],
                 }
                 for item in node.body:
                     if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -98,37 +94,45 @@ class LightweightCodeModel:
                             "docstring": ast.get_docstring(item),
                             "parameters": extract_method_parameters(item),
                             "returns": None,
-                            "complexity": calculate_complexity(item)
+                            "complexity": calculate_complexity(item),
                         }
                         # Basic return type hint
                         if item.returns:
-                            method_info["returns"] = ast.unparse(item.returns) if hasattr(ast, 'unparse') else "TypeHint (unparse unavailable)"
+                            method_info["returns"] = (
+                                ast.unparse(item.returns)
+                                if hasattr(ast, "unparse")
+                                else "TypeHint (unparse unavailable)"
+                            )
                         class_info["methods"].append(method_info)
                 file_structure["classes"].append(class_info)
 
-            elif isinstance(node, (ast.FunctionDef,
-    ast.AsyncFunctionDef)):  # Module - level functions:
+            elif isinstance(
+                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+            ):  # Module - level functions:
                 func_info = {
                     "name": node.name,
                     "docstring": ast.get_docstring(node),
                     "parameters": extract_method_parameters(node),
                     "returns": None,
-                    "complexity": calculate_complexity(node)
+                    "complexity": calculate_complexity(node),
                 }
                 if node.returns:
-                    func_info["returns"] = ast.unparse(node.returns) if hasattr(ast,
-    'unparse') else "TypeHint (unparse unavailable)"
+                    func_info["returns"] = (
+                        ast.unparse(node.returns)
+                        if hasattr(ast, "unparse")
+                        else "TypeHint (unparse unavailable)"
+                    )
                 file_structure["functions"].append(func_info)
 
         # Create analysis result
         analysis_result = CodeAnalysisResult(
-            filepath = filepath,
-            analysis_timestamp = datetime.now(),
-            classes = file_structure["classes"],
-            functions = file_structure["functions"],
-            dependencies = list(set(dependencies)),  # Remove duplicates
-            complexity_score = complexity_score,
-            dna_chain_id = dna_chain_id
+            filepath=filepath,
+            analysis_timestamp=datetime.now(),
+            classes=file_structure["classes"],
+            functions=file_structure["functions"],
+            dependencies=list(set(dependencies)),  # Remove duplicates
+            complexity_score=complexity_score,
+            dna_chain_id=dna_chain_id,
         )
 
         # Add to analysis history
@@ -145,8 +149,9 @@ class LightweightCodeModel:
 
         return analysis_result
 
-    def get_tool_structure(self, tool_name_or_filepath: str,
-    dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
+    def get_tool_structure(
+        self, tool_name_or_filepath: str, dna_chain_id: Optional[str] = None
+    ) -> Optional[CodeAnalysisResult]:
         """
         Main interface method to get the structure of a specific tool.
         Enhanced with DNA数据链支持.
@@ -168,8 +173,9 @@ class LightweightCodeModel:
         # If input is a direct path, tools_directory might not be used.
 
         # 2. Determine if input is a path or a name
-        is_potential_path = os.sep in tool_name_or_filepath or \
-                            (os.altsep and os.altsep in tool_name_or_filepath)
+        is_potential_path = os.sep in tool_name_or_filepath or (
+            os.altsep and os.altsep in tool_name_or_filepath
+        )
 
         if is_potential_path:
             if os.path.isfile(tool_name_or_filepath):
@@ -202,8 +208,7 @@ class LightweightCodeModel:
             if not name_to_check_direct.endswith(".py"):
                 name_to_check_direct += ".py"
 
-            potential_path_direct = os.path.join(self.tools_directory,
-    name_to_check_direct)
+            potential_path_direct = os.path.join(self.tools_directory, name_to_check_direct)
             if os.path.isfile(potential_path_direct):
                 resolved_path = potential_path_direct
                 logger.info(f"Tool name '{tool_name_input}' resolved to '{resolved_path}\
@@ -223,11 +228,9 @@ class LightweightCodeModel:
                             continue
 
                         module_part = os.path.splitext(filename)[0]
-                        full_candidate_path = os.path.join(self.tools_directory,
-    filename)
+                        full_candidate_path = os.path.join(self.tools_directory, filename)
 
-                        if module_part == f"tool_{base_name}" or \
-                           module_part == f"{base_name}_tool":
+                        if module_part == f"tool_{base_name}" or module_part == f"{base_name}_tool":
                             found_pattern_matches.append(full_candidate_path)
                 except OSError as e:
                     logger.error(f"Error listing tools directory '{self.tools_directory}\
@@ -235,7 +238,7 @@ class LightweightCodeModel:
     \
     \
     \
-    ': {e}", exc_info = True)
+    ': {e}", exc_info=True)
                     return None
 
                 if len(found_pattern_matches) == 1:
@@ -248,7 +251,9 @@ class LightweightCodeModel:
     \
     solved to '{resolved_path}' by pattern search in {self.tools_directory}.")
                 elif len(found_pattern_matches) > 1:
-                    logger.warning(f"Ambiguous tool name '{tool_name_input}' (base: '{base_name}'). Found multiple pattern matches in {self.tools_directory} {found_pattern_matches}. Please provide a more specific name or direct path.")
+                    logger.warning(
+                        f"Ambiguous tool name '{tool_name_input}' (base: '{base_name}'). Found multiple pattern matches in {self.tools_directory} {found_pattern_matches}. Please provide a more specific name or direct path."
+                    )
                     return None
 
         if resolved_path:
@@ -258,7 +263,9 @@ class LightweightCodeModel:
             else:
                 return self.analyze_tool_file(resolved_path)
         else:
-            logger.warning(f"Could not resolve tool '{tool_name_or_filepath}' to a Python file in '{self.tools_directory}' using supported conventions, nor as a direct path.")
+            logger.warning(
+                f"Could not resolve tool '{tool_name_or_filepath}' to a Python file in '{self.tools_directory}' using supported conventions, nor as a direct path."
+            )
             return None
 
     def get_analysis_history(self) -> List[CodeAnalysisResult]:
@@ -280,7 +287,7 @@ class LightweightCodeModel:
         return self.dna_chains.get(chain_id)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example Usage (for testing during development)
     # Ensure this runs from the project root or PYTHONPATH is set for src.
     # Assuming this file is in src / core_ai / code_understanding/

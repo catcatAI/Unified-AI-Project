@@ -3,11 +3,11 @@ import logging
 import os
 import sys
 import random
-import time # Added missing import
+import time  # Added missing import
 from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, project_root)
 
 try:
@@ -21,6 +21,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 class EnhancedDemoAgent(BaseAgent):
     """
     An enhanced demo agent that showcases all the new features of the BaseAgent class.
@@ -33,20 +34,20 @@ class EnhancedDemoAgent(BaseAgent):
                 "capability_id": "enhanced_demo_v1",
                 "name": "Enhanced Demo",
                 "description": "Demonstrates all enhanced agent features",
-                "version": "1.0"
+                "version": "1.0",
             },
             {
                 "capability_id": "task_processing_v1",
                 "name": "Task Processing",
                 "description": "Processes tasks with priority queuing",
-                "version": "1.0"
+                "version": "1.0",
             },
             {
                 "capability_id": "system_info_v1",
                 "name": "System Information",
                 "description": "Provides system and agent information",
-                "version": "1.0"
-            }
+                "version": "1.0",
+            },
         ]
 
         super().__init__(agent_id, capabilities, "EnhancedDemoAgent")
@@ -55,8 +56,9 @@ class EnhancedDemoAgent(BaseAgent):
         self.register_task_handler("task_processing_v1", self._handle_task_processing)
         self.register_task_handler("system_info_v1", self._handle_system_info)
 
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload,
-                                  sender_ai_id: str, envelope: HSPMessageEnvelope):
+    async def handle_task_request(
+        self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope
+    ):
         """
         Handle incoming task requests.
         """
@@ -68,8 +70,9 @@ class EnhancedDemoAgent(BaseAgent):
         # Use the parent class's queue-based handling
         await super().handle_task_request(task_payload, sender_ai_id, envelope)
 
-    async def _handle_task_processing(self, task_payload: HSPTaskRequestPayload,
-                                      sender_ai_id: str, envelope: HSPMessageEnvelope) -> Dict[str, Any]:
+    async def _handle_task_processing(
+        self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope
+    ) -> Dict[str, Any]:
         """
         Handle task processing requests with priority queuing.
         """
@@ -88,7 +91,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "status": "success",
                 "message": f"Task processed successfully in {duration:.2f} seconds",
                 "duration_seconds": duration,
-                "agent_id": self.agent_id
+                "agent_id": self.agent_id,
             }
 
         elif action == "stress_test":
@@ -101,26 +104,20 @@ class EnhancedDemoAgent(BaseAgent):
                 duration = random.uniform(0.1, 0.5)
                 await asyncio.sleep(duration)
 
-                results.append({
-                    "task_id": i,
-                    "duration": duration,
-                    "status": "completed"
-                })
+                results.append({"task_id": i, "duration": duration, "status": "completed"})
 
             return {
                 "status": "success",
                 "message": f"Processed {task_count} tasks",
-                "results": results
+                "results": results,
             }
 
         else:
-            return {
-                "status": "error",
-                "message": f"Unknown action: {action}"
-            }
+            return {"status": "error", "message": f"Unknown action: {action}"}
 
-    async def _handle_system_info(self, task_payload: HSPTaskRequestPayload,
-                                  sender_ai_id: str, envelope: HSPMessageEnvelope) -> Dict[str, Any]:
+    async def _handle_system_info(
+        self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope
+    ) -> Dict[str, Any]:
         """
         Handle system information requests.
         """
@@ -142,10 +139,10 @@ class EnhancedDemoAgent(BaseAgent):
                     "is_healthy": self.is_healthy,
                     "is_running": self.is_running,
                     "uptime_seconds": health_report.get("uptime_seconds", 0),
-                    "task_count": health_report.get("task_count", 0)
+                    "task_count": health_report.get("task_count", 0),
                 },
                 "queue_status": queue_status,
-                "registry_stats": await self.get_agent_registry_stats()
+                "registry_stats": await self.get_agent_registry_stats(),
             }
 
         elif info_type == "detailed":
@@ -164,19 +161,16 @@ class EnhancedDemoAgent(BaseAgent):
                     "uptime_seconds": health_report.get("uptime_seconds", 0),
                     "task_count": health_report.get("task_count", 0),
                     "error_count": health_report.get("error_count", 0),
-                    "success_rate": health_report.get("success_rate", 1.0)
+                    "success_rate": health_report.get("success_rate", 1.0),
                 },
                 "queue_status": queue_status,
                 "registry_stats": await self.get_agent_registry_stats(),
                 "active_agents": active_agents,
-                "capabilities": [cap.get("capability_id") for cap in self.capabilities]
+                "capabilities": [cap.get("capability_id") for cap in self.capabilities],
             }
 
         else:
-            return {
-                "status": "error",
-                "message": f"Unknown info type: {info_type}"
-            }
+            return {"status": "error", "message": f"Unknown info type: {info_type}"}
 
     async def submit_test_tasks(self, count: int = 5) -> None:
         """
@@ -196,11 +190,8 @@ class EnhancedDemoAgent(BaseAgent):
                 "request_id": f"test_task_{i}_{int(time.time())}",
                 "requester_ai_id": "test_submitter",
                 "capability_id_filter": "task_processing_v1",
-                "parameters": {
-                    "action": "process",
-                    "duration": random.uniform(0.5, 2.0)
-                },
-                "priority": priority.value
+                "parameters": {"action": "process", "duration": random.uniform(0.5, 2.0)},
+                "priority": priority.value,
             }
 
             # Create a mock envelope
@@ -217,7 +208,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "qos_parameters": None,
                 "routing_info": None,
                 "payload_schema_uri": None,
-                "payload": task_payload
+                "payload": task_payload,
             }
 
             # Handle the task (this will add it to the queue)
@@ -225,6 +216,7 @@ class EnhancedDemoAgent(BaseAgent):
 
             # Small delay between submissions
             await asyncio.sleep(0.1)
+
 
 async def main() -> None:
     """
@@ -252,9 +244,11 @@ async def main() -> None:
                 health_report = await agent.get_health_report()
                 queue_status = await agent.get_task_queue_status()
 
-                logger.info(f"[{agent.agent_id}] Status - Uptime: {health_report.get('uptime_seconds', 0):.1f}s, "
-                            f"Tasks: {health_report.get('task_count', 0)} "
-                            f"Queue: {queue_status.get('queue_length', 0)} items")
+                logger.info(
+                    f"[{agent.agent_id}] Status - Uptime: {health_report.get('uptime_seconds', 0):.1f}s, "
+                    f"Tasks: {health_report.get('task_count', 0)} "
+                    f"Queue: {queue_status.get('queue_length', 0)} items"
+                )
 
             # Refresh agent status every 10 seconds
             await agent.refresh_agent_status()
@@ -269,9 +263,12 @@ async def main() -> None:
         await agent.stop()
         logger.info("Enhanced Demo Agent stopped")
 
+
 if __name__ == "__main__":
     # Set up logging
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     # Run the agent
     asyncio.run(main())

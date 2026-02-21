@@ -11,7 +11,9 @@
 
 import os
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 def list_files(path: str) -> list:
     """
@@ -25,6 +27,7 @@ def list_files(path: str) -> list:
     """
     return os.listdir(path)
 
+
 def read_file(path: str) -> str:
     """
     Reads the contents of a file.
@@ -35,8 +38,9 @@ def read_file(path: str) -> str:
     Returns:
         The contents of the file.
     """
-    with open(path, "r", encoding='utf-8') as f:
+    with open(path, "r", encoding="utf-8") as f:
         return f.read()
+
 
 def write_file(path: str, contents: str):
     """
@@ -46,8 +50,9 @@ def write_file(path: str, contents: str):
         path: The path to the file.
         contents: The contents to write.
     """
-    with open(path, "w", encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(contents)
+
 
 def delete_file(path: str):
     """
@@ -58,6 +63,7 @@ def delete_file(path: str):
     """
     os.remove(path)
 
+
 def create_directory(path: str):
     """
     Creates a directory.
@@ -66,6 +72,7 @@ def create_directory(path: str):
         path: The path to the directory.
     """
     os.makedirs(path, exist_ok=True)
+
 
 def file_exists(path: str) -> bool:
     """
@@ -78,6 +85,7 @@ def file_exists(path: str) -> bool:
         True if the file exists, False otherwise.
     """
     return os.path.exists(path)
+
 
 def get_file_size(path: str) -> int:
     """

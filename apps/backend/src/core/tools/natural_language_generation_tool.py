@@ -4,14 +4,16 @@
 
 from typing import Dict, Any, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入transformers
 try:
-    os.environ['TF_USE_LEGACY_KERAS'] = '1'
+    os.environ["TF_USE_LEGACY_KERAS"] = "1"
 
     try:
         from transformers import pipeline
+
         TRANSFORMERS_AVAILABLE = True
     except ImportError:
         logger.warning("Warning: Could not import transformers pipeline")
@@ -43,10 +45,7 @@ class NaturalLanguageGenerationTool:
 
         try:
             result = self.pipeline(prompt, max_length=max_length, num_return_sequences=1)
-            return {
-                "status": "success",
-                "generated_text": result[0]["generated_text"]
-            }
+            return {"status": "success", "generated_text": result[0]["generated_text"]}
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"error": str(e)}

@@ -6,10 +6,12 @@ import json
 import os
 from typing import Dict, Any, List, Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 try:
     from sklearn.metrics import classification_report, accuracy_score
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
@@ -18,7 +20,7 @@ except ImportError:
 def load_logic_test_dataset(file_path: str) -> Optional[List[Dict[str, Any]]]:
     """加载逻辑测试数据集"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             dataset = json.load(f)
 
         if not isinstance(dataset, list):
@@ -53,9 +55,8 @@ def evaluate_logic_model(model, test_data: List[Dict[str, Any]]) -> Dict[str, An
         try:
             prediction = model.evaluate(proposition)
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             prediction = None
-
 
         if prediction is not None:
             predictions.append(prediction)
@@ -70,14 +71,12 @@ def evaluate_logic_model(model, test_data: List[Dict[str, Any]]) -> Dict[str, An
     result = {
         "accuracy": accuracy,
         "total_samples": len(test_data),
-        "valid_predictions": len(predictions)
+        "valid_predictions": len(predictions),
     }
 
     if SKLEARN_AVAILABLE:
         result["classification_report"] = classification_report(
-            ground_truth,
-            predictions,
-            output_dict=True
+            ground_truth, predictions, output_dict=True
         )
 
     return result

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class CrisisSystem:
     """
     Crisis Management System for monitoring and responding to crisis situations.
-    
+
     This system:
     - Monitors user input for crisis indicators
     - Maintains crisis levels
@@ -28,13 +28,16 @@ class CrisisSystem:
     - Logs all crisis events
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None, 
-                 emotion_system_ref=None, 
-                 memory_system_ref=None, 
-                 log_file: str = "crisis_log.txt") -> None:
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        emotion_system_ref=None,
+        memory_system_ref=None,
+        log_file: str = "crisis_log.txt",
+    ) -> None:
         """
         Initialize the CrisisSystem.
-        
+
         Args:
             config: Configuration dictionary with crisis keywords and protocols
             emotion_system_ref: Reference to an EmotionSystem instance
@@ -43,7 +46,7 @@ class CrisisSystem:
         """
         self.config = config or {}
         self.emotion_system = emotion_system_ref  # Reference to an EmotionSystem instance
-        self.memory_system = memory_system_ref   # Reference to a MemoryManager instance
+        self.memory_system = memory_system_ref  # Reference to a MemoryManager instance
         self.crisis_level = 0  # 0 = No crisis, higher numbers indicate severity
         self.log_file = log_file
 
@@ -56,33 +59,34 @@ class CrisisSystem:
         self.negative_words = self.config.get("negative_words", [])
         self.default_crisis_level = self.config.get("default_crisis_level_on_keyword", 1)
         self.crisis_protocols = self.config.get("crisis_protocols", {})
-        
+
         logger.info(f"CrisisSystem initialized. Keywords: {self.crisis_keywords}")
 
-    def assess_input_for_crisis(self, input_data: Dict[str, Any], 
-                                context: Optional[Dict[str, Any]] = None) -> int:
+    def assess_input_for_crisis(
+        self, input_data: Dict[str, Any], context: Optional[Dict[str, Any]] = None
+    ) -> int:
         """
         Assesses input and context for potential crisis indicators.
         Updates self.crisis_level.
         Returns the current crisis level.
-        
+
         Args:
             input_data: Dictionary containing user input
             context: Optional context information
-            
+
         Returns:
             Current crisis level
         """
         if context is None:
             context = {}
-            
+
         text_input = input_data.get("text", "").lower()
 
         # Simple sentiment analysis - count negative words
         sentiment_score = sum([1 for word in self.negative_words if word in text_input.split()])
-        
+
         detected_level = 0
-        
+
         # Convert sentiment score to crisis level
         # If sentiment score > 0, crisis level is 1
         # But only trigger crisis level 1 if sentiment score >= 2
@@ -96,20 +100,30 @@ class CrisisSystem:
 
         if detected_level > 0:
             if detected_level > self.crisis_level:
-                logger.info(f"CrisisSystem: Potential crisis detected or level escalated. New level: {detected_level}.")
+                logger.info(
+                    f"CrisisSystem: Potential crisis detected or level escalated. New level: {detected_level}."
+                )
             elif detected_level < self.crisis_level:
-                logger.info(f"CrisisSystem: Input suggests potential de-escalation, but maintaining current crisis level {self.crisis_level} until resolved.")
+                logger.info(
+                    f"CrisisSystem: Input suggests potential de-escalation, but maintaining current crisis level {self.crisis_level} until resolved."
+                )
                 # For now, crisis level only goes up through assess, and down through resolve_crisis.
                 # More sophisticated logic could allow assess_input to also de-escalate.
                 return self.crisis_level  # Return current higher level
             else:  # detected_level = self.crisis_level and self.crisis_level > 0
-                logger.info(f"CrisisSystem: Input is consistent with ongoing crisis level {self.crisis_level}.")
-            
+                logger.info(
+                    f"CrisisSystem: Input is consistent with ongoing crisis level {self.crisis_level}."
+                )
+
             self.crisis_level = detected_level  # Set or maintain the detected crisis level
-            self._trigger_protocol(self.crisis_level, {"input_text": text_input, "context": context})
+            self._trigger_protocol(
+                self.crisis_level, {"input_text": text_input, "context": context}
+            )
         else:  # No crisis keywords detected in this input
             if self.crisis_level > 0:
-                logger.info(f"CrisisSystem: No crisis keywords in current input, but maintaining ongoing crisis level {self.crisis_level} until explicitly resolved.")
+                logger.info(
+                    f"CrisisSystem: No crisis keywords in current input, but maintaining ongoing crisis level {self.crisis_level} until explicitly resolved."
+                )
             # If self.crisis_level was 0, it remains 0.
 
         return self.crisis_level
@@ -120,22 +134,29 @@ class CrisisSystem:
         Simulates basic actions for now.
         """
         protocol_key = str(level)
-        action_details = self.crisis_protocols.get(protocol_key, 
-                                                   self.crisis_protocols.get("default", "log_only"))
+        action_details = self.crisis_protocols.get(
+            protocol_key, self.crisis_protocols.get("default", "log_only")
+        )
 
-        logging.info(f"CrisisSystem: Level {level} detected. Executing protocol: '{action_details}'. Input details: {details.get('input_text', 'N/A')[:50]}...")
+        logging.info(
+            f"CrisisSystem: Level {level} detected. Executing protocol: '{action_details}'. Input details: {details.get('input_text', 'N/A')[:50]}..."
+        )
 
         if action_details == "log_and_monitor_basic_crisis_response":
             try:
                 with open(self.log_file, "a") as f:
-                    f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
+                    f.write(
+                        f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n"
+                    )
                 logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 logging.error(f"Failed to write to crisis log file: {e}")
 
         elif action_details == "notify_human_moderator":  # Example from previous version
-            logging.critical(f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}")
+            logging.critical(
+                f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}"
+            )
         elif action_details == "log_only":
             logging.info(f"CRISIS_INFO: Level {level} event logged. Details: {details}")
         else:
@@ -143,10 +164,12 @@ class CrisisSystem:
             if level > 0:
                 try:
                     with open(self.log_file, "a") as f:
-                        f.write(f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n")
+                        f.write(
+                            f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n"
+                        )
                     logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
                 except Exception as e:
-                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     logging.error(f"Failed to write to crisis log file: {e}")
 
             logging.info(f"CRISIS_INFO: Protocol '{action_details}' executed for level {level}.")
@@ -157,24 +180,28 @@ class CrisisSystem:
 
     def resolve_crisis(self, resolution_details: str):
         """Manually or automatically resolves/de-escalates a crisis."""
-        logging.info(f"CrisisSystem: Crisis level {self.crisis_level} resolved. Details: {resolution_details}")
+        logging.info(
+            f"CrisisSystem: Crisis level {self.crisis_level} resolved. Details: {resolution_details}"
+        )
         self.crisis_level = 0
 
     def _load_config_from_file(self):
         """Loads configuration from a JSON file."""
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            config_path = os.path.join(current_dir, '..', '..', 'configs', 'crisis_system_config.json')
-            with open(config_path, 'r') as f:
+            config_path = os.path.join(
+                current_dir, "..", "..", "configs", "crisis_system_config.json"
+            )
+            with open(config_path, "r") as f:
                 self.config = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logging.error(f"Error loading crisis system config: {e}")
             self.config = {}
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    
+
     example_config = {
         "crisis_keywords": ["emergency help", "i am scared"],
         "negative_words": ["sad", "angry", "hate", "kill", "depressed"],
@@ -183,10 +210,10 @@ if __name__ == '__main__':
             "1": "monitor_closely",
             "2": "offer_support_resources",
             "3": "notify_human_moderator",
-            "default": "log_and_monitor"
-        }
+            "default": "log_and_monitor",
+        },
     }
-    
+
     crisis_sys = CrisisSystem(config=example_config)
 
     logging.info(f"Initial crisis level: {crisis_sys.get_current_crisis_level()}")

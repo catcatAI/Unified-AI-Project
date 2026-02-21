@@ -10,16 +10,16 @@ import os
 import sys
 import time
 import importlib
-import random # Added missing import
+import random  # Added missing import
 import yaml
-import psutil # Added missing import
+import psutil  # Added missing import
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, project_root)
 
 from core.hsp.types import HSPCapabilityAdvertisementPayload
@@ -32,8 +32,14 @@ logging.basicConfig(level=logging.INFO)
 class DependencyStatus:
     """Tracks the status of a dependency."""
 
-    def __init__(self, name: str, is_available: bool = False, error: Optional[str] = None,
-                 fallback_available: bool = False, fallback_name: Optional[str] = None):
+    def __init__(
+        self,
+        name: str,
+        is_available: bool = False,
+        error: Optional[str] = None,
+        fallback_available: bool = False,
+        fallback_name: Optional[str] = None,
+    ):
         self.name = name
         self.is_available = is_available
         self.error = error
@@ -56,8 +62,7 @@ class DependencyManager:
             current_dir = Path(__file__).parent
             # Adjust path to be relative to the assumed project structure
             project_root = current_dir.parent.parent
-            config_path = os.path.join(project_root, "configs",
-                                     "dependency_config.yaml")
+            config_path = os.path.join(project_root, "configs", "dependency_config.yaml")
 
         self._load_config(config_path)
         self._setup_dependency_statuses()
@@ -65,7 +70,7 @@ class DependencyManager:
     def _load_config(self, config_path: Union[str, Path]):
         """Load dependency configuration from YAML file."""
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 self._config = yaml.safe_load(f)
         except (FileNotFoundError, ImportError) as e:
             logger.warning(
@@ -83,29 +88,30 @@ class DependencyManager:
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration when config file is not available."""
         return {
-            'dependencies': {
-                'core': [
-                    {'name': 'tensorflow', 'fallbacks': ['tf-keras'], 'essential': False},
-                    {'name': 'spacy', 'fallbacks': ['nltk'], 'essential': False}
+            "dependencies": {
+                "core": [
+                    {"name": "tensorflow", "fallbacks": ["tf-keras"], "essential": False},
+                    {"name": "spacy", "fallbacks": ["nltk"], "essential": False},
                 ],
-                'optional': []
+                "optional": [],
             },
-            'environments': {
-                'development': {
-                    'allow_fallbacks': True,
-                    'warn_on_fallback': True,
+            "environments": {
+                "development": {
+                    "allow_fallbacks": True,
+                    "warn_on_fallback": True,
                 }
-            }
+            },
         }
 
     def _setup_dependency_statuses(self):
         """Set up dependency status objects without loading them."""
-        all_deps = self._config.get('dependencies', {}).get('core', []) + \
-                   self._config.get('dependencies', {}).get('optional', [])
+        all_deps = self._config.get("dependencies", {}).get("core", []) + self._config.get(
+            "dependencies", {}
+        ).get("optional", [])
 
         for dep_config in all_deps:
             if isinstance(dep_config, dict):
-                dep_name = dep_config.get('name')
+                dep_name = dep_config.get("name")
                 if dep_name:
                     self._dependencies[dep_name] = DependencyStatus(dep_name)
 
@@ -118,15 +124,15 @@ class DependencyManager:
             return
 
         # OS-specific check for tensorflow
-        if dep_name == 'tensorflow' and os.name == 'nt':
+        if dep_name == "tensorflow" and os.name == "nt":
             logger.warning("Skipping direct import of 'tensorflow' on Windows.")
             status.error = "Direct import skipped on Windows."
         else:
             try:
                 import_name_map = {
-                    'paho-mqtt': 'paho.mqtt.client',
+                    "paho-mqtt": "paho.mqtt.client",
                 }
-                module_to_import = import_name_map.get(dep_name, dep_name.replace('-', '_'))
+                module_to_import = import_name_map.get(dep_name, dep_name.replace("-", "_"))
 
                 logger.debug(f"Lazily importing {module_to_import} for dependency {dep_name}")
                 module = importlib.import_module(module_to_import)
@@ -138,19 +144,19 @@ class DependencyManager:
                 status.error = str(e)
                 logger.warning(f"Primary dependency '{dep_name}' not available: {e}")
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 status.error = f"An unexpected error occurred: {e}"
 
                 logger.error(f"Failed to import '{dep_name}': {e}", exc_info=True)
 
         # Fallback logic
-        env_config = self._config.get('environments', {}).get(self._environment, {})
-        if not env_config.get('allow_fallbacks', True):
+        env_config = self._config.get("environments", {}).get(self._environment, {})
+        if not env_config.get("allow_fallbacks", True):
             return
 
-        for fallback in config.get('fallbacks', []):
+        for fallback in config.get("fallbacks", []):
             try:
-                fallback_module = importlib.import_module(fallback.replace('-', '_'))
+                fallback_module = importlib.import_module(fallback.replace("-", "_"))
                 status.fallback_available = True
                 status.fallback_name = fallback
                 status.fallback_module = fallback_module
@@ -163,9 +169,12 @@ class DependencyManager:
         """Get a dependency module, loading it if it hasn't been loaded yet."""
         if name not in self._dependencies:
             # Try to lazily register this dependency from the config
-            all_deps = self._config.get('dependencies', {}).get('core', []) + \
-                       self._config.get('dependencies', {}).get('optional', [])
-            dep_config = next((c for c in all_deps if isinstance(c, dict) and c.get('name') == name), None)
+            all_deps = self._config.get("dependencies", {}).get("core", []) + self._config.get(
+                "dependencies", {}
+            ).get("optional", [])
+            dep_config = next(
+                (c for c in all_deps if isinstance(c, dict) and c.get("name") == name), None
+            )
             if dep_config:
                 self._dependencies[name] = DependencyStatus(name)
                 self._check_dependency_availability(name, dep_config)
@@ -177,9 +186,12 @@ class DependencyManager:
 
         # If not yet checked, perform the check now
         if not status.is_available and not status.fallback_available and not status.error:
-            all_deps = self._config.get('dependencies', {}).get('core', []) + \
-                       self._config.get('dependencies', {}).get('optional', [])
-            dep_config = next((c for c in all_deps if isinstance(c, dict) and c.get('name') == name), None)
+            all_deps = self._config.get("dependencies", {}).get("core", []) + self._config.get(
+                "dependencies", {}
+            ).get("optional", [])
+            dep_config = next(
+                (c for c in all_deps if isinstance(c, dict) and c.get("name") == name), None
+            )
             if dep_config:
                 self._check_dependency_availability(name, dep_config)
             else:
@@ -193,7 +205,9 @@ class DependencyManager:
             return status.fallback_module
         else:
             if status.error:
-                logger.warning(f"Dependency '{name}' and fallbacks unavailable. Reason: {status.error}")
+                logger.warning(
+                    f"Dependency '{name}' and fallbacks unavailable. Reason: {status.error}"
+                )
             else:
                 logger.warning(f"Dependency '{name}' and fallbacks unavailable.")
             return None
@@ -242,8 +256,10 @@ class DependencyManager:
         report.append("\n" + "=" * 35)
         return "\n".join(report)
 
+
 # Global dependency manager instance
 dependency_manager = DependencyManager()
+
 
 def print_dependency_report():
     """Print the dependency status report."""

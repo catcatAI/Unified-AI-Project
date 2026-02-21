@@ -102,9 +102,7 @@ if __name__ == "__main__":
         disk_conf = service_default.get_simulated_disk_config()
         if disk_conf:
             logger.info(f"  Disk Space (GB): {disk_conf.space_gb}")
-            logger.warning(
-                f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}"
-            )
+            logger.warning(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}")
         else:
             logger.info("  No disk config found in default profile.")
     else:
@@ -117,8 +115,7 @@ if __name__ == "__main__":
     )
     if (
         service_non_existent.profile
-        and service_non_existent.profile.profile_name
-        == "SafeDefaultProfile_ErrorLoading"
+        and service_non_existent.profile.profile_name == "SafeDefaultProfile_ErrorLoading"
     ):
         logger.info(
             f"  Correctly fell back to safe default: {service_non_existent.profile.profile_name}"

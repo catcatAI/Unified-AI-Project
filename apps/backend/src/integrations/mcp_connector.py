@@ -10,6 +10,7 @@ from mcp.fallback.mcp_fallback_protocols import get_mcp_fallback_manager, MCPFal
 
 logger = logging.getLogger(__name__)
 
+
 class MCPConnector:
     """
     Acts as a bridge between the core AI and the Model Context Protocol (MCP).
@@ -31,7 +32,7 @@ class MCPConnector:
         Execute an external tool via MCP.
         """
         logger.info(f"Executing MCP Tool: {tool_name}")
-        
+
         # In a real MCP setup, this would involve routing to specific tool servers.
         # Here we use the fallback manager to demonstrate routing.
         message = MCPFallbackMessage(
@@ -40,9 +41,9 @@ class MCPConnector:
             recipient_id="mcp_registry",
             command_name=tool_name,
             parameters=parameters,
-            timestamp=asyncio.get_event_loop().time()
+            timestamp=asyncio.get_event_loop().time(),
         )
-        
+
         success = await self.manager.send_command(message)
         if success:
             return {"status": "dispatched", "tool": tool_name}

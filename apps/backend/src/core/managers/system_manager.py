@@ -32,7 +32,7 @@ class SystemManager:
         """关闭系统管理器"""
         logger.info("关闭系统管理器...")
         for name, component in self.components.items():
-            if hasattr(component, 'shutdown'):
+            if hasattr(component, "shutdown"):
                 try:
                     await component.shutdown()
                 except Exception as e:
@@ -51,5 +51,5 @@ class SystemManager:
             "initialized": self.initialized,
             "status": "running" if self.initialized else "stopped",
             "components": list(self.components.keys()),
-            "component_count": len(self.components)
+            "component_count": len(self.components),
         }

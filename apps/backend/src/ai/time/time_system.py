@@ -4,7 +4,9 @@
 import datetime
 from typing import List, Dict, Optional, Any
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class TimeSystem:
     """Manages time-related functions for the AI."""
@@ -70,7 +72,8 @@ class TimeSystem:
         else:  # 22:00 to 04:59
             return "night"
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     time_sys = TimeSystem()
 
     current_time_str = time_sys.get_formatted_current_time()

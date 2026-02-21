@@ -21,27 +21,28 @@ logger = logging.getLogger(__name__)
 
 class ResponseCategory(Enum):
     """回應类别枚举"""
+
     # 基础类别
-    GREETING = "greeting"          # 问候
-    FAREWELL = "farewell"          # 告别
-    SMALL_TALK = "small_talk"      # 闲聊
-    QUESTION = "question"          # 问题
-    COMMAND = "command"            # 命令
+    GREETING = "greeting"  # 问候
+    FAREWELL = "farewell"  # 告别
+    SMALL_TALK = "small_talk"  # 闲聊
+    QUESTION = "question"  # 问题
+    COMMAND = "command"  # 命令
 
     # 情绪类别
-    EMOTIONAL = "emotional"        # 情绪化回應
-    CASUAL = "casual"              # 随意对话
+    EMOTIONAL = "emotional"  # 情绪化回應
+    CASUAL = "casual"  # 随意对话
 
     # 高级类别
-    AFFIRMATION = "affirmation"    # 肯定
-    NEGATION = "negation"          # 否定
-    CURIOSITY = "curiosity"        # 好奇
-    INTIMACY = "intimacy"          # 亲密
-    SUPPORT = "support"            # 支持
-    APOLOGY = "apology"            # 道歉
-    GRATITUDE = "gratitude"        # 感谢
-    HELP = "help"                  # 帮助
-    UNKNOWN = "unknown"            # 未知类别
+    AFFIRMATION = "affirmation"  # 肯定
+    NEGATION = "negation"  # 否定
+    CURIOSITY = "curiosity"  # 好奇
+    INTIMACY = "intimacy"  # 亲密
+    SUPPORT = "support"  # 支持
+    APOLOGY = "apology"  # 道歉
+    GRATITUDE = "gratitude"  # 感谢
+    HELP = "help"  # 帮助
+    UNKNOWN = "unknown"  # 未知类别
 
 
 @dataclass
@@ -50,6 +51,7 @@ class AngelaState:
     Angela 的 αβγδ 状态映射
     用于模板匹配时的状态相似度计算
     """
+
     # Alpha (意识水平): 0-1, 高表示清醒活跃
     alpha: Dict[str, float] = field(default_factory=dict)
 
@@ -64,12 +66,7 @@ class AngelaState:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
-            "alpha": self.alpha,
-            "beta": self.beta,
-            "gamma": self.gamma,
-            "delta": self.delta
-        }
+        return {"alpha": self.alpha, "beta": self.beta, "gamma": self.gamma, "delta": self.delta}
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AngelaState":
@@ -78,7 +75,7 @@ class AngelaState:
             alpha=data.get("alpha", {}),
             beta=data.get("beta", {}),
             gamma=data.get("gamma", {}),
-            delta=data.get("delta", {})
+            delta=data.get("delta", {}),
         )
 
 
@@ -88,6 +85,7 @@ class UserImpression:
     用户印象模型
     用于个性化回應模板匹配
     """
+
     # 用户关系度: 0-1, 陌生人到亲密朋友
     relationship_level: float = 0.3
 
@@ -106,7 +104,7 @@ class UserImpression:
             "relationship_level": self.relationship_level,
             "preferred_style": self.preferred_style,
             "interaction_count": self.interaction_count,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
     @classmethod
@@ -116,7 +114,7 @@ class UserImpression:
             relationship_level=data.get("relationship_level", 0.3),
             preferred_style=data.get("preferred_style", "casual"),
             interaction_count=data.get("interaction_count", 0),
-            tags=data.get("tags", [])
+            tags=data.get("tags", []),
         )
 
 
@@ -127,6 +125,7 @@ class MemoryTemplate:
     ===============
     存储预计算的回應模板，用于快速检索和复用
     """
+
     # 基本标识
     id: str
     category: ResponseCategory
@@ -167,7 +166,7 @@ class MemoryTemplate:
             "last_used": self.last_used.isoformat() if self.last_used else None,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -177,8 +176,16 @@ class MemoryTemplate:
         category = ResponseCategory(data.get("category", "unknown"))
 
         # 解析时间戳
-        created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") else datetime.utcnow()
-        updated_at = datetime.fromisoformat(data["updated_at"]) if data.get("updated_at") else datetime.utcnow()
+        created_at = (
+            datetime.fromisoformat(data["created_at"])
+            if data.get("created_at")
+            else datetime.utcnow()
+        )
+        updated_at = (
+            datetime.fromisoformat(data["updated_at"])
+            if data.get("updated_at")
+            else datetime.utcnow()
+        )
         last_used = datetime.fromisoformat(data["last_used"]) if data.get("last_used") else None
 
         return cls(
@@ -193,7 +200,7 @@ class MemoryTemplate:
             last_used=last_used,
             created_at=created_at,
             updated_at=updated_at,
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
         )
 
     def record_usage(self, success: bool = True):
@@ -216,17 +223,14 @@ class MemoryTemplate:
         score = self.calculate_match_score(
             query="",  # 空查詢，僅基於狀態判斷
             angela_state=angela_state,
-            user_impression=user_impression
+            user_impression=user_impression,
         )
 
         # 使用閾值 0.5（50% 匹配度）作為適合與否的標準
         return score >= 0.5
 
     def calculate_match_score(
-        self,
-        query: str,
-        angela_state: AngelaState,
-        user_impression: UserImpression
+        self, query: str, angela_state: AngelaState, user_impression: UserImpression
     ) -> float:
         """
         计算匹配分数
@@ -246,10 +250,10 @@ class MemoryTemplate:
 
         # 综合评分
         total_score = (
-            keyword_score * 0.30 +
-            state_score * 0.40 +
-            impression_score * 0.20 +
-            success_score * 0.10
+            keyword_score * 0.30
+            + state_score * 0.40
+            + impression_score * 0.20
+            + success_score * 0.10
         )
 
         return total_score
@@ -279,6 +283,7 @@ class MemoryTemplate:
 def generate_template_id(content: str) -> str:
     """生成模板 ID"""
     import hashlib
+
     content_hash = hashlib.md5(content.encode()).hexdigest()[:8]
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     return f"tpl_{timestamp}_{content_hash}"
@@ -290,7 +295,7 @@ def create_template(
     keywords: List[str] = None,
     angela_state: AngelaState = None,
     user_impression: UserImpression = None,
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None,
 ) -> MemoryTemplate:
     """
     创建新模板的便捷函数
@@ -302,5 +307,5 @@ def create_template(
         keywords=keywords or [],
         angela_state=angela_state or AngelaState(),
         user_impression=user_impression or UserImpression(),
-        metadata=metadata or {}
+        metadata=metadata or {},
     )

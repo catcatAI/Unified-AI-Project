@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
+
 def cleanup_temp_files(project_root: Path = Path(".")):
     """清除臨時文件"""
     temp_patterns = [
@@ -27,11 +28,11 @@ def cleanup_temp_files(project_root: Path = Path(".")):
         "__pycache__",
         ".pytest_cache",
         "*.log",
-        ".coverage"
+        ".coverage",
     ]
-    
+
     total_deleted = 0
-    
+
     for pattern in temp_patterns:
         for file_path in project_root.rglob(pattern):
             try:
@@ -43,15 +44,16 @@ def cleanup_temp_files(project_root: Path = Path(".")):
                     total_deleted += 1
             except Exception as e:
                 logger.warning(f"Failed to delete {file_path}: {e}")
-    
+
     logger.info(f"Cleaned up {total_deleted} items")
     return total_deleted
+
 
 def cleanup_old_logs(log_dir: Path, days: int = 7):
     """清除旧的日志文件"""
     cutoff = datetime.now() - timedelta(days=days)
     total_deleted = 0
-    
+
     for log_file in log_dir.glob("*.log"):
         try:
             if log_file.stat().st_mtime < cutoff.timestamp():
@@ -59,6 +61,6 @@ def cleanup_old_logs(log_dir: Path, days: int = 7):
                 total_deleted += 1
         except Exception as e:
             logger.warning(f"Failed to delete {log_file}: {e}")
-    
+
     logger.info(f"Cleaned up {total_deleted} old log files")
     return total_deleted

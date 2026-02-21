@@ -1,7 +1,12 @@
-from typing_extensions import TypedDict, Required, NotRequired  # Import TypedDict from typing_extensions
+from typing_extensions import (
+    TypedDict,
+    Required,
+    NotRequired,
+)  # Import TypedDict from typing_extensions
 from typing import Dict, Any, Optional, List, Literal, Union
-import os # Added missing import
+import os  # Added missing import
 import logging
+
 logger = logging.getLogger(__name__)
 
 # For TypedDict, 'Required' is implicitly all keys unless total=False.
@@ -20,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Let's use `total=False` for payloads where many fields are optional, and
 # `total=True` (default) for envelope parts that are mostly required.
+
 
 class HSPMessageEnvelopeBase(TypedDict):
     payload: Dict[str, Any]
@@ -91,12 +97,23 @@ class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are requ
     message_type: str  # e.g., "HSP::Fact_v0.1"
     protocol_version: str  # HSP specification version
     communication_pattern: Literal[
-        "publish", "request", "response",
-        "stream_data", "stream_ack",
-        "acknowledgement", "negative_acknowledgement",
-        "broadcast", "multicast", "unicast",
-        "notification", "event", "command",
-        "query", "reply", "heartbeat", "discovery"
+        "publish",
+        "request",
+        "response",
+        "stream_data",
+        "stream_ack",
+        "acknowledgement",
+        "negative_acknowledgement",
+        "broadcast",
+        "multicast",
+        "unicast",
+        "notification",
+        "event",
+        "command",
+        "query",
+        "reply",
+        "heartbeat",
+        "discovery",
     ]
     security_parameters: Optional[HSPSecurityParameters]
     qos_parameters: Optional[HSPQoSParameters]
@@ -120,7 +137,7 @@ class HSPDiscoveryPayload(TypedDict, total=False):
 
 class HSPAcknowledgementPayload(TypedDict, total=False):
     original_message_id: str  # UUID of the message being acknowledged
-    target_message_id: str    # ID of the message being acknowledged (backward compat)
+    target_message_id: str  # ID of the message being acknowledged (backward compat)
     status: Literal["received", "processed", "failed"]
     details: str  # Optional details about the status
     ack_timestamp: str  # ISO 8601 UTC
@@ -134,6 +151,7 @@ class HSPErrorPayload(TypedDict, total=False):
     timestamp_error: str  # ISO 8601 UTC
     # specific types like HSPFactPayload for actual data
 
+
 # Example of a more specific envelope if needed,
 # though payload typing is usually sufficient:
 # class HSPFactMessage(HSPMessageEnvelope):
@@ -143,6 +161,7 @@ class HSPErrorPayload(TypedDict, total=False):
 # Other payload types from HSP_SPECIFICATION.md would be defined here similarly:
 # HSPBeliefPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, etc.
 # For now, HSPFactPayload is the primary one for Step 1.2.
+
 
 class HSPOpinionPayload(TypedDict, total=False):
     belief_holder_ai_id: str  # Required,
@@ -169,7 +188,9 @@ class HSPCapabilityAdvertisementPayload(TypedDict, total=False):
     input_schema_example: Optional[Dict[str, Any]]
     output_schema_uri: Optional[str]
     output_schema_example: Optional[Dict[str, Any]]
-    data_format_preferences: Optional[List[str]]  # e.g., ["application/json", "image/jpeg", "text/plain"]
+    data_format_preferences: Optional[
+        List[str]
+    ]  # e.g., ["application/json", "image/jpeg", "text/plain"]
     hsp_protocol_requirements: Optional[Dict[str, Any]]  # e.g., {"requires_streaming_input": True}
     cost_estimate_template: Optional[Dict[str, Any]]
     availability_status: Required[Literal["online", "offline", "degraded", "maintenance"]]
@@ -202,7 +223,9 @@ class HSPTaskResultPayload(TypedDict, total=False):
     executing_ai_id: str  # Required, DID or URI
     status: Required[Literal["success", "failure", "in_progress", "queued", "rejected"]]
     payload: Optional[Dict[str, Any]]  # The actual result data if status is "success"
-    output_data_format: Optional[str]  # Confirms the format of the payload, e.g., "application/json", "image/png"
+    output_data_format: Optional[
+        str
+    ]  # Confirms the format of the payload, e.g., "application/json", "image/png"
     error_details: Optional[HSPErrorDetails]  # If status is "failure" or "rejected"
     timestamp_completed: Optional[str]  # ISO 8601 UTC
     execution_metadata: Optional[Dict[str, Any]]  # e.g., {"time_taken_ms": 150}
@@ -226,6 +249,7 @@ class HSPEnvironmentalStatePayload(TypedDict, total=False):  # Also known as Con
     scope_type: Optional[Literal["global", "session", "project", "custom_group"]]
     scope_id: Optional[str]  # Identifier for the scope
     relevance_decay_rate: Optional[float]
+
 
 class HSPAcknowledgementPayload(TypedDict, total=False):
     status: Literal["received", "processed"]  # Example statuses

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BehaviorRecord:
     """行為記錄"""
+
     action: str
     message: str
     priority: str
@@ -30,20 +31,21 @@ class BehaviorRecord:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         return {
-            'action': self.action,
-            'message': self.message,
-            'priority': self.priority,
-            'timestamp': self.timestamp.isoformat(),
-            'user_response': self.user_response,
-            'user_emotion': self.user_emotion,
-            'effectiveness_score': self.effectiveness_score,
-            'outcome': self.outcome
+            "action": self.action,
+            "message": self.message,
+            "priority": self.priority,
+            "timestamp": self.timestamp.isoformat(),
+            "user_response": self.user_response,
+            "user_emotion": self.user_emotion,
+            "effectiveness_score": self.effectiveness_score,
+            "outcome": self.outcome,
         }
 
 
 @dataclass
 class BehaviorPattern:
     """行為模式"""
+
     action: str
     context: str
     success_rate: float
@@ -54,12 +56,12 @@ class BehaviorPattern:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         return {
-            'action': self.action,
-            'context': self.context,
-            'success_rate': self.success_rate,
-            'avg_effectiveness': self.avg_effectiveness,
-            'count': self.count,
-            'last_updated': self.last_updated.isoformat()
+            "action": self.action,
+            "context": self.context,
+            "success_rate": self.success_rate,
+            "avg_effectiveness": self.avg_effectiveness,
+            "count": self.count,
+            "last_updated": self.last_updated.isoformat(),
         }
 
 
@@ -84,7 +86,7 @@ class BehaviorFeedbackLoop:
         learning_engine: Any,
         loop_interval: float = 45.0,  # 反饋循環間隔（秒）
         min_loop_interval: float = 30.0,
-        max_loop_interval: float = 60.0
+        max_loop_interval: float = 60.0,
     ):
         self.llm_service = llm_service
         self.memory_manager = memory_manager
@@ -106,20 +108,20 @@ class BehaviorFeedbackLoop:
 
         # 策略參數
         self.strategy_parameters: Dict[str, float] = {
-            'greet_threshold': 60.0,  # 問候閾值（秒）
-            'comfort_sensitivity': 0.7,  # 安慰敏感度
-            'interaction_frequency': 0.5,  # 交互頻率
-            'priority_weight': {'high': 1.0, 'medium': 0.7, 'low': 0.4}  # 優先級權重
+            "greet_threshold": 60.0,  # 問候閾值（秒）
+            "comfort_sensitivity": 0.7,  # 安慰敏感度
+            "interaction_frequency": 0.5,  # 交互頻率
+            "priority_weight": {"high": 1.0, "medium": 0.7, "low": 0.4},  # 優先級權重
         }
 
         # 統計信息
         self.stats = {
-            'total_behaviors': 0,
-            'evaluated_behaviors': 0,
-            'successful_behaviors': 0,
-            'failed_behaviors': 0,
-            'pattern_updates': 0,
-            'strategy_updates': 0
+            "total_behaviors": 0,
+            "evaluated_behaviors": 0,
+            "successful_behaviors": 0,
+            "failed_behaviors": 0,
+            "pattern_updates": 0,
+            "strategy_updates": 0,
         }
 
         logger.info("BehaviorFeedbackLoop initialized")
@@ -206,7 +208,7 @@ class BehaviorFeedbackLoop:
         message: str,
         priority: str,
         user_response: Optional[str] = None,
-        user_emotion: Optional[str] = None
+        user_emotion: Optional[str] = None,
     ):
         """記錄行為"""
         record = BehaviorRecord(
@@ -215,15 +217,15 @@ class BehaviorFeedbackLoop:
             priority=priority,
             timestamp=datetime.now(),
             user_response=user_response,
-            user_emotion=user_emotion
+            user_emotion=user_emotion,
         )
 
         self.behavior_records.append(record)
-        self.stats['total_behaviors'] += 1
+        self.stats["total_behaviors"] += 1
 
         # 限制記錄數量
         if len(self.behavior_records) > self.max_records:
-            self.behavior_records = self.behavior_records[-self.max_records:]
+            self.behavior_records = self.behavior_records[-self.max_records :]
 
         logger.debug(f"Recorded behavior: {action}")
 
@@ -237,14 +239,14 @@ class BehaviorFeedbackLoop:
                 # 判斷結果
                 if score > 0.7:
                     record.outcome = "success"
-                    self.stats['successful_behaviors'] += 1
+                    self.stats["successful_behaviors"] += 1
                 elif score < 0.3:
                     record.outcome = "failure"
-                    self.stats['failed_behaviors'] += 1
+                    self.stats["failed_behaviors"] += 1
                 else:
                     record.outcome = "neutral"
 
-                self.stats['evaluated_behaviors'] += 1
+                self.stats["evaluated_behaviors"] += 1
 
     async def evaluate_behavior(self, record: BehaviorRecord) -> float:
         """評估單個行為的效果"""
@@ -263,15 +265,15 @@ class BehaviorFeedbackLoop:
 
             # 2. 用戶情緒
             if record.user_emotion:
-                if record.user_emotion in ['happy', 'excited']:
+                if record.user_emotion in ["happy", "excited"]:
                     score += 0.3
-                elif record.user_emotion in ['sad', 'frustrated']:
+                elif record.user_emotion in ["sad", "frustrated"]:
                     score -= 0.2
-                elif record.user_emotion == 'neutral':
+                elif record.user_emotion == "neutral":
                     score += 0.1
 
             # 3. 優先級匹配
-            if record.action == 'greet' and record.priority == 'high':
+            if record.action == "greet" and record.priority == "high":
                 score += 0.1
 
             # 4. 時間因素（越近的記錄權重越高）
@@ -323,10 +325,10 @@ class BehaviorFeedbackLoop:
                     success_rate=success_rate,
                     avg_effectiveness=avg_effectiveness,
                     count=len(records),
-                    last_updated=datetime.now()
+                    last_updated=datetime.now(),
                 )
 
-            self.stats['pattern_updates'] += 1
+            self.stats["pattern_updates"] += 1
 
     async def _update_strategy(self):
         """更新策略參數"""
@@ -337,39 +339,43 @@ class BehaviorFeedbackLoop:
 
             # 如果成功率低，調整策略
             if pattern.success_rate < 0.4 and pattern.count > 5:
-                logger.info(f"Adjusting strategy for {action} (low success rate: {pattern.success_rate:.2f})")
+                logger.info(
+                    f"Adjusting strategy for {action} (low success rate: {pattern.success_rate:.2f})"
+                )
 
-                if action == 'greet':
+                if action == "greet":
                     # 降低問候頻率
-                    self.strategy_parameters['greet_threshold'] *= 1.5
-                elif action == 'comfort':
+                    self.strategy_parameters["greet_threshold"] *= 1.5
+                elif action == "comfort":
                     # 增加安慰敏感度
-                    self.strategy_parameters['comfort_sensitivity'] = min(1.0, pattern.success_rate + 0.2)
+                    self.strategy_parameters["comfort_sensitivity"] = min(
+                        1.0, pattern.success_rate + 0.2
+                    )
 
-                self.stats['strategy_updates'] += 1
+                self.stats["strategy_updates"] += 1
 
             # 如果成功率高，加強策略
             elif pattern.success_rate > 0.8 and pattern.count > 5:
-                if action == 'greet':
+                if action == "greet":
                     # 提高問候頻率
-                    self.strategy_parameters['greet_threshold'] *= 0.9
+                    self.strategy_parameters["greet_threshold"] *= 0.9
 
-                self.stats['strategy_updates'] += 1
+                self.stats["strategy_updates"] += 1
 
     async def _store_learning_results(self):
         """存儲學習結果到記憶"""
         try:
             # 存儲行為模式
-            if hasattr(self.memory_manager, 'store_experience'):
+            if hasattr(self.memory_manager, "store_experience"):
                 patterns_summary = {
-                    'timestamp': datetime.now().isoformat(),
-                    'patterns': [p.to_dict() for p in self.behavior_patterns.values()],
-                    'strategy_parameters': self.strategy_parameters
+                    "timestamp": datetime.now().isoformat(),
+                    "patterns": [p.to_dict() for p in self.behavior_patterns.values()],
+                    "strategy_parameters": self.strategy_parameters,
                 }
 
                 await self.memory_manager.store_experience(
                     raw_data=json.dumps(patterns_summary, ensure_ascii=False),
-                    data_type="behavior_learning"
+                    data_type="behavior_learning",
                 )
 
         except Exception as e:
@@ -390,19 +396,20 @@ class BehaviorFeedbackLoop:
     def get_stats(self) -> Dict[str, Any]:
         """獲取統計信息"""
         return {
-            'is_running': self.is_running,
-            'loop_interval': self.loop_interval,
-            'total_behaviors': self.stats['total_behaviors'],
-            'evaluated_behaviors': self.stats['evaluated_behaviors'],
-            'successful_behaviors': self.stats['successful_behaviors'],
-            'failed_behaviors': self.stats['failed_behaviors'],
-            'pattern_updates': self.stats['pattern_updates'],
-            'strategy_updates': self.stats['strategy_updates'],
-            'success_rate': (
-                self.stats['successful_behaviors'] / self.stats['evaluated_behaviors']
-                if self.stats['evaluated_behaviors'] > 0 else 0.0
+            "is_running": self.is_running,
+            "loop_interval": self.loop_interval,
+            "total_behaviors": self.stats["total_behaviors"],
+            "evaluated_behaviors": self.stats["evaluated_behaviors"],
+            "successful_behaviors": self.stats["successful_behaviors"],
+            "failed_behaviors": self.stats["failed_behaviors"],
+            "pattern_updates": self.stats["pattern_updates"],
+            "strategy_updates": self.stats["strategy_updates"],
+            "success_rate": (
+                self.stats["successful_behaviors"] / self.stats["evaluated_behaviors"]
+                if self.stats["evaluated_behaviors"] > 0
+                else 0.0
             ),
-            'patterns_count': len(self.behavior_patterns)
+            "patterns_count": len(self.behavior_patterns),
         }
 
 
@@ -434,7 +441,7 @@ if __name__ == "__main__":
             llm_service=llm_service,
             memory_manager=memory_manager,
             learning_engine=learning_engine,
-            loop_interval=3.0
+            loop_interval=3.0,
         )
 
         # 啟動循環
@@ -447,7 +454,7 @@ if __name__ == "__main__":
             message="你好！",
             priority="medium",
             user_response="你好啊",
-            user_emotion="happy"
+            user_emotion="happy",
         )
 
         await asyncio.sleep(1)
@@ -457,7 +464,7 @@ if __name__ == "__main__":
             message="你看上去有點難過",
             priority="high",
             user_response="謝謝你的關心",
-            user_emotion="neutral"
+            user_emotion="neutral",
         )
 
         await asyncio.sleep(1)
@@ -467,7 +474,7 @@ if __name__ == "__main__":
             message="嘿，你在做什麼？",
             priority="low",
             user_response=None,
-            user_emotion=None
+            user_emotion=None,
         )
 
         # 運行一段時間
@@ -481,7 +488,9 @@ if __name__ == "__main__":
         logger.info(json.dumps(feedback_loop.get_patterns(), indent=2, ensure_ascii=False))
 
         logger.info(f"\n=== 策略參數 ===")
-        logger.info(json.dumps(feedback_loop.get_strategy_parameters(), indent=2, ensure_ascii=False))
+        logger.info(
+            json.dumps(feedback_loop.get_strategy_parameters(), indent=2, ensure_ascii=False)
+        )
 
         # 停止
         await feedback_loop.stop()

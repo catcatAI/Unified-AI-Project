@@ -170,24 +170,18 @@ class AIEditorService:
         self, data: Union[Dict, List], transformation_rules: Optional[Dict] = None
     ) -> Dict[str, Any]:
         logger.info("Processing structured data (SKELETON)")
-        return self.data_processor.process_data(
-            data, "structured", transformation_rules
-        )
+        return self.data_processor.process_data(data, "structured", transformation_rules)
 
     def execute_data_transformation_script(
         self, script: str, params: Dict[str, Any]
     ) -> Dict[str, Any]:
         logger.info("Executing data transformation script in sandbox (SKELETON)")
-        result, error = self.sandbox_executor.run(
-            script, "DataTransformer", "transform", params
-        )
+        result, error = self.sandbox_executor.run(script, "DataTransformer", "transform", params)
         if error:
             raise Exception(f"Sandbox execution failed: {error}")
         return {"execution_result": result}
 
-    def get_processed_data_from_memory(
-        self, memory_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_processed_data_from_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
         if not self.memory_manager:
             logger.warning("Memory manager not available")
             return None
@@ -200,9 +194,7 @@ if __name__ == "__main__":
 
     sample_text = "This is a sample text for processing. It contains multiple sentences. This is the third sentence."
     text_result = editor.process_text_content(sample_text)
-    logger.info(
-        "Text processing result:", json.dumps(text_result, indent=2, ensure_ascii=False)
-    )
+    logger.info("Text processing result:", json.dumps(text_result, indent=2, ensure_ascii=False))
 
     sample_code = """
 def sample_function():
@@ -214,9 +206,7 @@ class SampleClass:
         self.value = 42
 """
     code_result = editor.process_code_content(sample_code)
-    logger.info(
-        "Code processing result:", json.dumps(code_result, indent=2, ensure_ascii=False)
-    )
+    logger.info("Code processing result:", json.dumps(code_result, indent=2, ensure_ascii=False))
 
     sample_app_data = {
         "ui_elements": [

@@ -8,12 +8,15 @@ import re
 from datetime import datetime
 from typing import Optional
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 定义路径
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-DICTIONARY_PATH = os.path.join(PROJECT_ROOT, "src/tools/translation_model/data/translation_dictionary.json")
+DICTIONARY_PATH = os.path.join(
+    PROJECT_ROOT, "src/tools/translation_model/data/translation_dictionary.json"
+)
 
 _translation_dictionary = None
 
@@ -26,7 +29,7 @@ def _load_dictionary():
         logger.info("加载翻译字典...")
 
         try:
-            with open(DICTIONARY_PATH, 'r', encoding='utf-8') as f:
+            with open(DICTIONARY_PATH, "r", encoding="utf-8") as f:
                 _translation_dictionary = json.load(f)
                 logger.info("翻译字典加载成功")
         except FileNotFoundError:
@@ -47,14 +50,16 @@ def _detect_language(text: str) -> Optional[str]:
     基本语言检测
     返回 'zh' 表示中文，'en' 表示英文
     """
-    if re.search(r'[\u4e00-\u9fff]', text):
-        return 'zh'
-    if re.search(r'[A-Za-z]', text):
-        return 'en'
+    if re.search(r"[\u4e00-\u9fff]", text):
+        return "zh"
+    if re.search(r"[A-Za-z]", text):
+        return "en"
     return None
 
 
-def translate(text: str, target_language: str, source_language: Optional[str] = None, **kwargs) -> str:
+def translate(
+    text: str, target_language: str, source_language: Optional[str] = None, **kwargs
+) -> str:
     """
     使用字典方法翻译文本
 
@@ -68,7 +73,7 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
     """
     dictionary = _load_dictionary()
 
-    text_to_translate = kwargs.get('text_to_translate', text)
+    text_to_translate = kwargs.get("text_to_translate", text)
 
     if source_language is None:
         source_language = _detect_language(text_to_translate)
@@ -81,8 +86,13 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
 
     # 映射常见语言名称到代码
     lang_code_map = {
-        "english": "en", "chinese": "zh", "spanish": "es",
-        "french": "fr", "german": "de", "japanese": "ja", "korean": "ko"
+        "english": "en",
+        "chinese": "zh",
+        "spanish": "es",
+        "french": "fr",
+        "german": "de",
+        "japanese": "ja",
+        "korean": "ko",
     }
 
     source_lang_code = lang_code_map.get(norm_source_language, norm_source_language)
@@ -100,7 +110,7 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
             return translation
         else:
             # 尝试不区分大小写匹配
-            if source_lang_code == 'en':
+            if source_lang_code == "en":
                 for k, v in dictionary[translation_map_key].items():
                     if k.lower() == text_to_translate.lower():
                         return v
@@ -116,7 +126,7 @@ def request_model_upgrade(details: str):
     logger.info(f"[{timestamp}] MODEL_UPGRADE_REQUEST: {details}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger.info("--- Translation Tool Example Usage ---")
 
     # 确保字典已加载

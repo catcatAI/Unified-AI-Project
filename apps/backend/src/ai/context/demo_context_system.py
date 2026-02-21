@@ -1,9 +1,12 @@
 """上下文系统演示脚本"""
+
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system demonstration
 
 import logging
+
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Any
+
 # from .manager import  # Commented out - incomplete import
 # from .storage.base import  # Commented out - incomplete import
 # from .tool_context import  # Commented out - incomplete import
@@ -14,6 +17,7 @@ from typing import Any
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def demo_context_system():
     """演示上下文系统功能"""
@@ -45,6 +49,7 @@ def demo_context_system():
 
     logger.info("=== 上下文系统演示结束 ===")
 
+
 def demo_tool_context(context_manager):
     """演示工具上下文"""
     # tool_manager = ToolContextManager(context_manager)  # Commented - needs proper import
@@ -72,6 +77,7 @@ def demo_tool_context(context_manager):
     #     logger.info(f"工具上下文: {tool_context}")
 
     logger.info("工具上下文演示完成")
+
 
 def demo_model_agent_context(context_manager):
     """演示模型与代理上下文"""
@@ -119,6 +125,7 @@ def demo_model_agent_context(context_manager):
 
     logger.info("模型与代理上下文演示完成")
 
+
 def demo_dialogue_context(context_manager):
     """演示对话上下文"""
     # dialogue_manager = DialogueContextManager(context_manager)  # Commented - needs proper import
@@ -146,6 +153,7 @@ def demo_dialogue_context(context_manager):
     #     logger.info(f"对话上下文: {conv_context}")
 
     logger.info("对话上下文演示完成")
+
 
 def demo_memory_context(context_manager):
     """演示记忆上下文"""
@@ -184,6 +192,7 @@ def demo_memory_context(context_manager):
 
     logger.info("记忆上下文演示完成")
 
+
 def demo_context_retrieval(context_manager):
     """演示上下文检索"""
     # 创建一些测试上下文
@@ -210,6 +219,7 @@ def demo_context_retrieval(context_manager):
     #     logger.info(f"检索到上下文: {context.context_id} 类型: {context.context_type.value}")
 
     logger.info("上下文检索演示完成")
+
 
 if __name__ == "__main__":
     demo_context_system()

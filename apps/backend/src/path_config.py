@@ -5,6 +5,7 @@
 
 from pathlib import Path
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 项目根目录
@@ -25,37 +26,40 @@ CHECKPOINTS_DIR = TRAINING_DIR / "checkpoints"
 # 配置目录
 CONFIGS_DIR = TRAINING_DIR / "configs"
 
+
 def get_data_path(dataset_name: str) -> Path:
     """
     获取数据集路径
-    
+
     Args:
         dataset_name: 数据集名称
-        
+
     Returns:
         Path: 数据集路径
     """
     return DATA_DIR / dataset_name
 
+
 def get_training_config_path(config_name: str) -> Path:
     """
     获取训练配置文件路径
-    
+
     Args:
         config_name: 配置文件名称
-        
+
     Returns:
         Path: 配置文件路径
     """
     return CONFIGS_DIR / config_name
 
+
 def resolve_path(path_str: str) -> Path:
     """
     解析路径字符串, 支持相对路径和绝对路径
-    
+
     Args:
         path_str: 路径字符串
-        
+
     Returns:
         Path: 解析后的路径对象
     """
@@ -65,14 +69,9 @@ def resolve_path(path_str: str) -> Path:
     else:
         return PROJECT_ROOT / path
 
+
 # 确保必要的目录存在
-DIRECTORIES = [
-    DATA_DIR,
-    TRAINING_DIR,
-    MODELS_DIR,
-    CHECKPOINTS_DIR,
-    CONFIGS_DIR
-]
+DIRECTORIES = [DATA_DIR, TRAINING_DIR, MODELS_DIR, CHECKPOINTS_DIR, CONFIGS_DIR]
 
 for directory in DIRECTORIES:
-    directory.mkdir(parents = True, exist_ok = True)
+    directory.mkdir(parents=True, exist_ok=True)

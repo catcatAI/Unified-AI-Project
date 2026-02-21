@@ -17,6 +17,7 @@ from .base import Context, Storage, ContextType
 
 logger = logging.getLogger(__name__)
 
+
 class DiskStorage(Storage):
     """磁盘存储实现"""
 
@@ -41,14 +42,13 @@ class DiskStorage(Storage):
             "metadata": context.metadata,
             "content": context.content,
             "version": context.version,
-            "tags": context.tags
+            "tags": context.tags,
         }
 
     def _dict_to_context(self, data: Dict[str, Any]) -> Context:
         """将字典转换为Context对象"""
         context = Context(
-            context_id=data["context_id"],
-            context_type=ContextType(data["context_type"])
+            context_id=data["context_id"], context_type=ContextType(data["context_type"])
         )
         context.created_at = datetime.fromisoformat(data["created_at"])
         context.updated_at = datetime.fromisoformat(data["updated_at"])
@@ -67,7 +67,7 @@ class DiskStorage(Storage):
             # 将上下文转换为字典并保存为JSON文件
             context_data = self._context_to_dict(context)
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(context_data, f, ensure_ascii=False, indent=2)
 
             logger.debug(f"Context {context.context_id} saved to disk storage at {file_path}")
@@ -85,7 +85,7 @@ class DiskStorage(Storage):
                 logger.debug(f"Context {context_id} not found in disk storage")
                 return None
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 context_data = json.load(f)
 
             context = self._dict_to_context(context_data)
@@ -162,7 +162,7 @@ class DiskStorage(Storage):
             return {
                 "total_contexts": file_count,
                 "total_size_bytes": total_size,
-                "storage_dir": self.storage_dir
+                "storage_dir": self.storage_dir,
             }
         except Exception as e:
             logger.error(f"Failed to get storage info, {e}")

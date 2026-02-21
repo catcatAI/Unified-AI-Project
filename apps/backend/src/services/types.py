@@ -48,9 +48,7 @@ class VirtualMouseCommand(TypedDict, total=False):
     drag_target_y: Optional[float]
 
 
-VirtualKeyboardActionType = Literal[
-    "type_string", "press_keys", "release_keys", "special_key"
-]
+VirtualKeyboardActionType = Literal["type_string", "press_keys", "release_keys", "special_key"]
 
 
 class VirtualKeyboardCommand(TypedDict, total=False):

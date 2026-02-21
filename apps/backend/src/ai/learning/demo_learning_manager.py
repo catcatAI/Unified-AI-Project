@@ -10,7 +10,12 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Any
 # 导入测试所需的类
 from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 from ai.hsp.connector import HSPConnector
-from shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
+from shared.utils.cleanup_utils import (
+    cleanup_temp_files,
+    cleanup_cache_data,
+    cleanup_log_files,
+    cleanup_demo_artifacts,
+)
 
 # 用于类型检查的导入
 if TYPE_CHECKING:
@@ -32,10 +37,10 @@ class DemoLearningManager:
         self.config = self._load_config()
         self.demo_mode = False
         self.learning_data: Dict[str, Any] = {
-            'user_interactions': [],
-            'error_patterns': {},
-            'performance_metrics': [],
-            'system_events': []
+            "user_interactions": [],
+            "error_patterns": {},
+            "performance_metrics": [],
+            "system_events": [],
         }
         self.initialized = False
 
@@ -44,10 +49,12 @@ class DemoLearningManager:
         self.model_registry: Dict[str, Any] = {}
 
         # 學習數據存儲路徑
-        self.storage_path = Path(self.config.get('demo_credentials', {})
-                                    .get('auto_learning', {})
-                                    .get('storage', {})
-                                    .get('path', 'data/demo_learning'))
+        self.storage_path = Path(
+            self.config.get("demo_credentials", {})
+            .get("auto_learning", {})
+            .get("storage", {})
+            .get("path", "data/demo_learning")
+        )
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
         # 添加缺失的属性
@@ -58,7 +65,7 @@ class DemoLearningManager:
     async def start_learning(self, model_id: str, config: Dict[str, Any]) -> Any:
         """開始學習"""
         # 如果有model_trainer, 使用它進行訓練
-        if self.model_trainer and hasattr(self.model_trainer, 'train'):
+        if self.model_trainer and hasattr(self.model_trainer, "train"):
             # 修复类型检查问题：添加类型注解
             train_result = await self.model_trainer.train(model_id, config)  # type: ignore
             return train_result  # type: ignore
@@ -67,14 +74,14 @@ class DemoLearningManager:
         self.model_registry[model_id] = {
             "status": "trained",
             "config": config,
-            "metrics": {"accuracy": 0.95}
+            "metrics": {"accuracy": 0.95},
         }
         return {"status": "completed"}
 
     async def stop_learning(self, model_id: str) -> bool:
         """停止學習"""
         # 如果有model_trainer, 使用它停止訓練
-        if self.model_trainer and hasattr(self.model_trainer, 'stop'):
+        if self.model_trainer and hasattr(self.model_trainer, "stop"):
             # 修复类型检查问题：添加类型注解
             stop_result = await self.model_trainer.stop(model_id)  # type: ignore
             return stop_result  # type: ignore
@@ -97,7 +104,7 @@ class DemoLearningManager:
         """加載配置文件"""
         try:
             if self.config_path.exists():
-                with open(self.config_path, 'r', encoding='utf-8') as f:
+                with open(self.config_path, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
             else:
                 logger.warning(f"配置文件不存在: {self.config_path}")
@@ -114,7 +121,7 @@ class DemoLearningManager:
 
         Returns: bool 是否為演示金鑰
         """
-        demo_patterns = self.config.get('key_detection', {}).get('demo_patterns', [])
+        demo_patterns = self.config.get("key_detection", {}).get("demo_patterns", [])
 
         # 檢查所有認證信息
         for key, value in credentials.items():
@@ -138,11 +145,11 @@ class DemoLearningManager:
         self.demo_mode = True
 
         # 執行演示模式激活步驟
-        actions = self.config.get('key_detection', {}).get('on_demo_key_detected', [])
-        actions.sort(key=lambda x: x.get('priority', 999))
+        actions = self.config.get("key_detection", {}).get("on_demo_key_detected", [])
+        actions.sort(key=lambda x: x.get("priority", 999))
 
         for action in actions:
-            action_name = action.get('action')
+            action_name = action.get("action")
             try:
                 await self._execute_action(action_name)
             except Exception as e:
@@ -171,28 +178,32 @@ class DemoLearningManager:
 
         # 創建演示模式標記文件
         demo_flag = self.storage_path / "demo_mode.flag"
-        with open(demo_flag, 'w') as f:
-            json.dump({
-                'enabled': True,
-                'activated_at': datetime.now().isoformat(),
-                'config': self.config.get('demo_credentials', {}).get('demo_mode', {})
-            }, f, indent=2)
+        with open(demo_flag, "w") as f:
+            json.dump(
+                {
+                    "enabled": True,
+                    "activated_at": datetime.now().isoformat(),
+                    "config": self.config.get("demo_credentials", {}).get("demo_mode", {}),
+                },
+                f,
+                indent=2,
+            )
 
     async def _initialize_learning(self) -> None:
         """初始化學習系統"""
         logger.info("初始化學習系統")
 
-        learning_config = self.config.get('demo_credentials', {}).get('auto_learning', {})
-        if not learning_config.get('enabled', False):
+        learning_config = self.config.get("demo_credentials", {}).get("auto_learning", {})
+        if not learning_config.get("enabled", False):
             return
 
         # 創建學習數據結構
         self.learning_data = {
-            'user_interactions': [],
-            'error_patterns': {},
-            'performance_metrics': [],
-            'system_events': [],
-            'initialized_at': datetime.now().isoformat()
+            "user_interactions": [],
+            "error_patterns": {},
+            "performance_metrics": [],
+            "system_events": [],
+            "initialized_at": datetime.now().isoformat(),
         }
 
         # 保存初始學習數據
@@ -207,13 +218,13 @@ class DemoLearningManager:
         """設置模擬服務"""
         logger.info("設置模擬服務")
 
-        mock_config = self.config.get('mock_services', {})
-        if not mock_config.get('enabled', False):
+        mock_config = self.config.get("mock_services", {})
+        if not mock_config.get("enabled", False):
             return
 
         # 創建模擬服務配置文件
         mock_config_file = self.storage_path / "mock_services.json"
-        with open(mock_config_file, 'w') as f:
+        with open(mock_config_file, "w") as f:
             json.dump(mock_config, f, indent=2)
 
         logger.info("模擬服務設置完成")
@@ -222,8 +233,8 @@ class DemoLearningManager:
         """配置自動清除"""
         logger.info("配置自動清除")
 
-        cleanup_config = self.config.get('demo_credentials', {}).get('auto_cleanup', {})
-        if not cleanup_config.get('enabled', False):
+        cleanup_config = self.config.get("demo_credentials", {}).get("auto_cleanup", {})
+        if not cleanup_config.get("enabled", False):
             return
 
         # 啟動清除監控
@@ -242,7 +253,7 @@ class DemoLearningManager:
 
     async def _cleanup_monitor_loop(self) -> None:
         """清除監控循環"""
-        cleanup_config = self.config.get('demo_credentials', {}).get('auto_cleanup', {})
+        cleanup_config = self.config.get("demo_credentials", {}).get("auto_cleanup", {})
 
         while self.demo_mode:
             try:
@@ -256,22 +267,23 @@ class DemoLearningManager:
         try:
             # 收集系統指標
             system_metrics = {
-                'timestamp': datetime.now().isoformat(),
-                'memory_usage': self._get_memory_usage(),
-                'storage_usage': self._get_storage_usage(),
-                'active_connections': self._get_active_connections()
+                "timestamp": datetime.now().isoformat(),
+                "memory_usage": self._get_memory_usage(),
+                "storage_usage": self._get_storage_usage(),
+                "active_connections": self._get_active_connections(),
             }
 
             # 确保performance_metrics是一个列表
-            if 'performance_metrics' not in self.learning_data:
-                self.learning_data['performance_metrics'] = []
+            if "performance_metrics" not in self.learning_data:
+                self.learning_data["performance_metrics"] = []
 
-            self.learning_data['performance_metrics'].append(system_metrics)
+            self.learning_data["performance_metrics"].append(system_metrics)
 
             # 限制數據大小
-            if len(self.learning_data['performance_metrics']) > 1000:
-                self.learning_data['performance_metrics'] = \
-                    self.learning_data['performance_metrics'][-500:]
+            if len(self.learning_data["performance_metrics"]) > 1000:
+                self.learning_data["performance_metrics"] = self.learning_data[
+                    "performance_metrics"
+                ][-500:]
 
             await self._save_learning_data()
 
@@ -285,18 +297,18 @@ class DemoLearningManager:
                 cleanup_config: 清除配置
         """
         try:
-            targets = cleanup_config.get('cleanup_targets', [])
-            retention = cleanup_config.get('retention', {})
+            targets = cleanup_config.get("cleanup_targets", [])
+            retention = cleanup_config.get("retention", {})
 
             for target in targets:
                 if target == "temporary_files":
                     cleanup_temp_files()
                 elif target == "cache_data":
-                    cleanup_cache_data(retention.get('cache_data', 1))
+                    cleanup_cache_data(retention.get("cache_data", 1))
                 elif target == "log_files":
-                    cleanup_log_files(retention.get('important_logs', 7))
+                    cleanup_log_files(retention.get("important_logs", 7))
                 elif target == "demo_artifacts":
-                    cleanup_demo_artifacts(retention.get('demo_data', 30), self.storage_path)
+                    cleanup_demo_artifacts(retention.get("demo_data", 30), self.storage_path)
 
             logger.info("清除操作完成")
 
@@ -313,13 +325,12 @@ class DemoLearningManager:
             #     'vms': process.memory_info().vms,
             #     'percent': process.memory_percent()
             # }
-            return {'error': 'psutil not available or not implemented'} # Placeholder
+            return {"error": "psutil not available or not implemented"}  # Placeholder
         except ImportError:
-            return {'error': 'psutil not available'}
+            return {"error": "psutil not available"}
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            return {'error': str(e)}
-
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            return {"error": str(e)}
 
     def _get_storage_usage(self) -> Dict[str, Any]:
         """獲取存儲使用情況"""
@@ -332,14 +343,13 @@ class DemoLearningManager:
                     file_count += 1
 
             return {
-                'total_bytes': total_size,
-                'total_mb': total_size / (1024 * 1024),
-                'file_count': file_count
+                "total_bytes": total_size,
+                "total_mb": total_size / (1024 * 1024),
+                "file_count": file_count,
             }
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            return {'error': str(e)}
-
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            return {"error": str(e)}
 
     def _get_active_connections(self) -> int:
         """獲取活躍連接數"""
@@ -350,13 +360,14 @@ class DemoLearningManager:
         """保存學習數據"""
         try:
             learning_file = self.storage_path / "learning_data.json"
-            with open(learning_file, 'w', encoding='utf-8') as f:
+            with open(learning_file, "w", encoding="utf-8") as f:
                 json.dump(self.learning_data, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"保存學習數據失敗: {e}")
 
-    async def record_user_interaction(self, action: str, context: Dict[str, Any],
-                                      result: str, feedback: Optional[str] = None) -> None:
+    async def record_user_interaction(
+        self, action: str, context: Dict[str, Any], result: str, feedback: Optional[str] = None
+    ) -> None:
         """記錄用戶交互
 
         Args:
@@ -369,28 +380,28 @@ class DemoLearningManager:
             return
 
         interaction = {
-            'timestamp': datetime.now().isoformat(),
-            'action': action,
-            'context': context,
-            'result': result,
-            'feedback': feedback
+            "timestamp": datetime.now().isoformat(),
+            "action": action,
+            "context": context,
+            "result": result,
+            "feedback": feedback,
         }
 
         # 确保user_interactions是一个列表
-        if 'user_interactions' not in self.learning_data:
-            self.learning_data['user_interactions'] = []
+        if "user_interactions" not in self.learning_data:
+            self.learning_data["user_interactions"] = []
 
-        self.learning_data['user_interactions'].append(interaction)
+        self.learning_data["user_interactions"].append(interaction)
 
         # 限制數據大小
-        if len(self.learning_data['user_interactions']) > 1000:
-            self.learning_data['user_interactions'] = \
-                self.learning_data['user_interactions'][-500:]
+        if len(self.learning_data["user_interactions"]) > 1000:
+            self.learning_data["user_interactions"] = self.learning_data["user_interactions"][-500:]
 
         await self._save_learning_data()
 
-    async def record_error_pattern(self, error_type: str, error_message: str,
-                                   context: Dict[str, Any], resolution: str) -> None:
+    async def record_error_pattern(
+        self, error_type: str, error_message: str, context: Dict[str, Any], resolution: str
+    ) -> None:
         """記錄錯誤模式
 
         Args:
@@ -403,26 +414,26 @@ class DemoLearningManager:
             return
 
         # 确保error_patterns是一个字典
-        if 'error_patterns' not in self.learning_data:
-            self.learning_data['error_patterns'] = {}
+        if "error_patterns" not in self.learning_data:
+            self.learning_data["error_patterns"] = {}
 
         error_key = f"{error_type}-{error_message}"
 
         # 确保error_patterns[error_key]是一个字典
-        if error_key not in self.learning_data['error_patterns']:
-            self.learning_data['error_patterns'][error_key] = {
-                'error_type': error_type,
-                'error_message': error_message,
-                'context': context,
-                'resolution': resolution,
-                'frequency': 0,
-                'first_seen': datetime.now().isoformat(),
-                'last_seen': datetime.now().isoformat()
+        if error_key not in self.learning_data["error_patterns"]:
+            self.learning_data["error_patterns"][error_key] = {
+                "error_type": error_type,
+                "error_message": error_message,
+                "context": context,
+                "resolution": resolution,
+                "frequency": 0,
+                "first_seen": datetime.now().isoformat(),
+                "last_seen": datetime.now().isoformat(),
             }
 
         # 更新频率和最后看到时间
-        self.learning_data['error_patterns'][error_key]['frequency'] += 1
-        self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.now().isoformat()
+        self.learning_data["error_patterns"][error_key]["frequency"] += 1
+        self.learning_data["error_patterns"][error_key]["last_seen"] = datetime.now().isoformat()
 
         await self._save_learning_data()
 
@@ -446,78 +457,82 @@ class DemoLearningManager:
             performance_analysis = self._analyze_performance()
 
             return {
-                'demo_mode': self.demo_mode,
-                'data_collection_period': self._get_collection_period(),
-                'interactions': interaction_analysis,
-                'errors': error_analysis,
-                'performance': performance_analysis,
-                'recommendations': self._generate_recommendations()
+                "demo_mode": self.demo_mode,
+                "data_collection_period": self._get_collection_period(),
+                "interactions": interaction_analysis,
+                "errors": error_analysis,
+                "performance": performance_analysis,
+                "recommendations": self._generate_recommendations(),
             }
 
         except Exception as e:
             logger.error(f"獲取學習洞察失敗: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _analyze_interactions(self) -> Dict[str, Any]:
         """分析用戶交互"""
-        interactions = self.learning_data.get('user_interactions', [])
+        interactions = self.learning_data.get("user_interactions", [])
 
         if not interactions:
-            return {'total': 0}
+            return {"total": 0}
 
         # 統計動作頻率
         action_counts: Dict[str, int] = {}
         for interaction in interactions:
-            action = interaction.get('action', 'unknown')
+            action = interaction.get("action", "unknown")
             action_counts[action] = action_counts.get(action, 0) + 1
 
         # 計算成功率
-        success_count = sum(1 for i in interactions if i.get('result') == 'success')
+        success_count = sum(1 for i in interactions if i.get("result") == "success")
         success_rate = success_count / len(interactions) if interactions else 0
         return {
-            'total': len(interactions),
-            'success_rate': success_rate,
-            'most_common_actions': sorted(action_counts.items(),
-                                        key=lambda x: x[1], reverse=True)[:5],
-            'recent_activity': interactions[-10:] if len(interactions) > 10 else interactions
+            "total": len(interactions),
+            "success_rate": success_rate,
+            "most_common_actions": sorted(action_counts.items(), key=lambda x: x[1], reverse=True)[
+                :5
+            ],
+            "recent_activity": interactions[-10:] if len(interactions) > 10 else interactions,
         }
 
     def _analyze_errors(self) -> Dict[str, Any]:
         """分析錯誤模式"""
-        errors = self.learning_data.get('error_patterns', {})
+        errors = self.learning_data.get("error_patterns", {})
 
         if not errors:
-            return {'total': 0}
+            return {"total": 0}
 
         # 按頻率排序
-        sorted_errors = sorted(errors.items(),
-                               key=lambda x: x[1].get('frequency', 0), reverse=True)
+        sorted_errors = sorted(errors.items(), key=lambda x: x[1].get("frequency", 0), reverse=True)
 
         return {
-            'total': len(errors),
-            'most_frequent': sorted_errors[:5],
-            'total_occurrences': sum(e[1].get('frequency', 0) for e in errors.values())
+            "total": len(errors),
+            "most_frequent": sorted_errors[:5],
+            "total_occurrences": sum(e[1].get("frequency", 0) for e in errors.values()),
         }
 
     def _analyze_performance(self) -> Dict[str, Any]:
         """分析性能趨勢"""
-        metrics = self.learning_data.get('performance_metrics', [])
+        metrics = self.learning_data.get("performance_metrics", [])
 
         if not metrics:
-            return {'samples': 0}
+            return {"samples": 0}
 
         # 計算平均值
         if metrics:
-            avg_memory = sum(m.get('memory_usage', {}).get('percent', 0) for m in metrics) / len(metrics)
-            avg_storage = sum(m.get('storage_usage', {}).get('total_mb', 0) for m in metrics) / len(metrics)
+            avg_memory = sum(m.get("memory_usage", {}).get("percent", 0) for m in metrics) / len(
+                metrics
+            )
+            avg_storage = sum(m.get("storage_usage", {}).get("total_mb", 0) for m in metrics) / len(
+                metrics
+            )
         else:
             avg_memory = avg_storage = 0
 
         return {
-            'samples': len(metrics),
-            'avg_memory_percent': avg_memory,
-            'avg_storage_mb': avg_storage,
-            'latest_metrics': metrics[-1] if metrics else None
+            "samples": len(metrics),
+            "avg_memory_percent": avg_memory,
+            "avg_storage_mb": avg_storage,
+            "latest_metrics": metrics[-1] if metrics else None,
         }
 
     def _generate_recommendations(self) -> List[str]:
@@ -525,22 +540,22 @@ class DemoLearningManager:
         recommendations = []
 
         # 基於錯誤模式的建議
-        errors = self.learning_data.get('error_patterns', {})
+        errors = self.learning_data.get("error_patterns", {})
         if len(errors) > 5:
             recommendations.append("檢測到多種錯誤模式, 建議檢查系統配置")
 
         # 基於性能的建議
-        metrics = self.learning_data.get('performance_metrics', [])
+        metrics = self.learning_data.get("performance_metrics", [])
         if metrics:
             latest = metrics[-1]
-            memory_percent = latest.get('memory_usage', {}).get('percent', 0)
+            memory_percent = latest.get("memory_usage", {}).get("percent", 0)
             if memory_percent > 80:
                 recommendations.append("內存使用率較高, 建議優化內存使用")
 
         # 基於交互的建議
-        interactions = self.learning_data.get('user_interactions', [])
+        interactions = self.learning_data.get("user_interactions", [])
         if interactions:
-            success_count = sum(1 for i in interactions if i.get('result') == 'success')
+            success_count = sum(1 for i in interactions if i.get("result") == "success")
             success_rate = success_count / len(interactions)
             if success_rate < 0.8:
                 recommendations.append("操作成功率較低, 建議檢查用戶體驗")
@@ -549,16 +564,13 @@ class DemoLearningManager:
 
     def _get_collection_period(self) -> Dict[str, str]:
         """獲取數據收集週期"""
-        interactions = self.learning_data.get('user_interactions', [])
+        interactions = self.learning_data.get("user_interactions", [])
         if not interactions:
             return {}
 
-        timestamps = [i.get('timestamp') for i in interactions if i.get('timestamp')]
+        timestamps = [i.get("timestamp") for i in interactions if i.get("timestamp")]
         if timestamps:
-            return {
-                'start': min(timestamps),
-                'end': max(timestamps)
-            }
+            return {"start": min(timestamps), "end": max(timestamps)}
 
         return {}
 
@@ -568,10 +580,10 @@ class DemoLearningManager:
             logger.info("關閉演示學習管理器")
 
             # 執行最終清除
-            cleanup_config = self.config.get('demo_credentials', {}).get('auto_cleanup', {})
-            if cleanup_config.get('enabled', False):
-                triggers = cleanup_config.get('triggers', [])
-                if 'session_end' in triggers:
+            cleanup_config = self.config.get("demo_credentials", {}).get("auto_cleanup", {})
+            if cleanup_config.get("enabled", False):
+                triggers = cleanup_config.get("triggers", [])
+                if "session_end" in triggers:
                     await self._perform_cleanup(cleanup_config)
 
             # 保存最終學習數據
@@ -579,8 +591,11 @@ class DemoLearningManager:
 
             # 生成學習報告
             insights = await self.get_learning_insights()
-            report_file = self.storage_path / f"learning_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(report_file, 'w', encoding='utf-8') as f:
+            report_file = (
+                self.storage_path
+                / f"learning_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(insights, f, indent=2, ensure_ascii=False)
 
             self.demo_mode = False

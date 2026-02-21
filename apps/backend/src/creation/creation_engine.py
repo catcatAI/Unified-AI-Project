@@ -84,7 +84,7 @@ class CreationEngine:
         tool_name = query.replace("create", "").replace("tool", "").strip()
         if not tool_name:
             tool_name = "my_tool"
-            
+
         tool_template = '''def {tool_name}(input_data):
     """
     A tool for {tool_name}.

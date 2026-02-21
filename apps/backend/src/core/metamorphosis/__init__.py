@@ -11,6 +11,7 @@ Date: 2026-02-04
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from .soul_core import (
@@ -57,7 +58,6 @@ __all__ = [
     "SoulCoreManager",
     "SoulComponent",
     "create_soul_core",
-    
     # Body Adapter
     "BodyAdapter",
     "StateSnapshot",
@@ -67,7 +67,6 @@ __all__ = [
     "CompatibilityLevel",
     "BodyAdapterFactory",
     "create_body_adapter",
-    
     # Transition Animation
     "TransitionAnimator",
     "TransitionManager",

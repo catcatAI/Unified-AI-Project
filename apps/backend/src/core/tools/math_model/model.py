@@ -6,6 +6,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 import logging
+
 logger = logging.getLogger(__name__)
 
 # 尝试导入TensorFlow
@@ -13,6 +14,7 @@ try:
     import tensorflow as tf
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import Dense, Dropout, Input
+
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
@@ -21,6 +23,7 @@ except ImportError:
 @dataclass
 class MathModelResult:
     """数学模型结果数据类"""
+
     input_expression: str
     predicted_result: str
     confidence: float
@@ -45,21 +48,19 @@ class MathModel:
         if not TF_AVAILABLE:
             return
 
-        self.model = Sequential([
-            Input(shape=(self.vocab_size,)),
-            Dense(128, activation='relu'),
-            Dropout(0.2),
-            Dense(64, activation='relu'),
-            Dropout(0.2),
-            Dense(32, activation='relu'),
-            Dense(1, activation='linear')
-        ])
-
-        self.model.compile(
-            optimizer='adam',
-            loss='mse',
-            metrics=['mae']
+        self.model = Sequential(
+            [
+                Input(shape=(self.vocab_size,)),
+                Dense(128, activation="relu"),
+                Dropout(0.2),
+                Dense(64, activation="relu"),
+                Dropout(0.2),
+                Dense(32, activation="relu"),
+                Dense(1, activation="linear"),
+            ]
         )
+
+        self.model.compile(optimizer="adam", loss="mse", metrics=["mae"])
 
     def train(self, x_train, y_train, epochs: int = 10):
         """训练模型"""
@@ -77,16 +78,15 @@ class MathModel:
         try:
             predicted_result = str(eval(expression))
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             predicted_result = "Error"
-
 
         result = MathModelResult(
             input_expression=expression,
             predicted_result=predicted_result,
             confidence=0.8,
             processing_time=0.001,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         return result

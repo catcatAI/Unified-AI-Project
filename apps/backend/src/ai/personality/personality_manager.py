@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class PersonalityManager:
     """
     Manages loading and managing different personality profiles for the AI.
@@ -25,7 +26,7 @@ class PersonalityManager:
         self.default_profile_name = default_profile_name
         self.available_profiles = self._scan_profiles()
         self.current_personality: Optional[Dict[str, Any]] = None
-        
+
         # Try to load the default personality
         self.load_personality(self.default_profile_name)
 
@@ -33,18 +34,20 @@ class PersonalityManager:
         """Scans the profiles directory for available JSON personality files."""
         profiles: Dict[str, Dict[str, str]] = {}
         if not self.profiles_dir.exists():
-            logger.warning(f"PersonalityManager: Profiles directory {self.profiles_dir} does not exist.")
+            logger.warning(
+                f"PersonalityManager: Profiles directory {self.profiles_dir} does not exist."
+            )
             return profiles
 
         for file_path in self.profiles_dir.glob("*.json"):
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     profile_name = data.get("profile_name")
                     if profile_name:
                         profiles[profile_name] = {
                             "path": str(file_path),
-                            "display_name": data.get("display_name", profile_name)
+                            "display_name": data.get("display_name", profile_name),
                         }
             except Exception as e:
                 logger.error(f"PersonalityManager: Error loading profile {file_path.name}: {e}")
@@ -53,22 +56,28 @@ class PersonalityManager:
     def load_personality(self, profile_name: str) -> bool:
         """Loads a specified personality profile."""
         if profile_name not in self.available_profiles:
-            logger.warning(f"PersonalityManager: Profile '{profile_name}' not found. Trying default.")
+            logger.warning(
+                f"PersonalityManager: Profile '{profile_name}' not found. Trying default."
+            )
             if self.default_profile_name in self.available_profiles:
                 profile_name = self.default_profile_name
             else:
-                logger.error(f"PersonalityManager: Default profile '{self.default_profile_name}' also not found.")
+                logger.error(
+                    f"PersonalityManager: Default profile '{self.default_profile_name}' also not found."
+                )
                 self.current_personality = None
                 return False
 
         profile_info = self.available_profiles[profile_name]
         try:
-            with open(profile_info["path"], 'r', encoding='utf-8') as f:
+            with open(profile_info["path"], "r", encoding="utf-8") as f:
                 self.current_personality = json.load(f)
             logger.info(f"PersonalityManager: Successfully loaded personality '{profile_name}'.")
             return True
         except Exception as e:
-            logger.error(f"PersonalityManager: Error loading profile '{profile_name}' from {profile_info['path']}: {e}")
+            logger.error(
+                f"PersonalityManager: Error loading profile '{profile_name}' from {profile_info['path']}: {e}"
+            )
             self.current_personality = None
             return False
 
@@ -76,8 +85,8 @@ class PersonalityManager:
         """Gets a specific trait from the current personality."""
         if not self.current_personality:
             return default_value
-            
-        keys = trait_name.split('.')
+
+        keys = trait_name.split(".")
         value = self.current_personality
         try:
             for key in keys:
@@ -105,7 +114,7 @@ class PersonalityManager:
             return
 
         for key, value in adjustment.items():
-            keys = key.split('.')
+            keys = key.split(".")
             target = self.current_personality
             for k in keys[:-1]:
                 if k not in target:
@@ -114,7 +123,8 @@ class PersonalityManager:
             target[keys[-1]] = value
             logger.info(f"PersonalityManager: Adjusted trait '{key}' to {value}.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     pm = PersonalityManager()
     logger.info(f"Available profiles: {pm.list_available_profiles()}")

@@ -1,27 +1,34 @@
 from typing import List, Dict, Optional, Any, Union, TypedDict
 from typing_extensions import Required
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Fact Extractor Types
+
 
 class UserPreferenceContent(TypedDict, total=False):
     category: Required[str]
     preference: Required[str]
     liked: Optional[bool]
 
+
 class UserStatementContent(TypedDict, total=False):
     attribute: Required[str]
     value: Required[Any]
 
+
 ExtractedFactContent = Union[UserPreferenceContent, UserStatementContent, Dict[str, Any]]
+
 
 class ExtractedFact(TypedDict):
     fact_type: Required[str]
     content: Required[ExtractedFactContent]
     confidence: Required[float]
 
+
 # Learning Manager Types
+
 
 class LearnedFactRecord(TypedDict, total=False):
     record_id: Required[str]

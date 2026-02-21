@@ -20,15 +20,19 @@ from dataclasses import dataclass, field
 
 # from ..logging.enterprise_logger import  # Fixed: commented out incomplete import
 
+
 class ErrorSeverity(Enum):
     """錯誤嚴重程度"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
+
 class ErrorCategory(Enum):
     """錯誤分類"""
+
     SYSTEM = "system"
     NETWORK = "network"
     DATABASE = "database"
@@ -40,9 +44,11 @@ class ErrorCategory(Enum):
     RESOURCE = "resource"
     CONFIGURATION = "configuration"
 
+
 @dataclass
 class ErrorInfo:
     """錯誤信息"""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = field(default_factory=datetime.now)
     category: ErrorCategory = ErrorCategory.SYSTEM
@@ -58,6 +64,7 @@ class ErrorInfo:
     resolution: Optional[str] = None
     recovery_attempts: int = 0
     max_recovery_attempts: int = 3
+
 
 class RecoveryStrategy:
     """恢復策略基類"""
@@ -82,6 +89,7 @@ class RecoveryStrategy:
         """恢復失敗回調"""
         pass
 
+
 class RetryRecoveryStrategy(RecoveryStrategy):
     """重試恢復策略"""
 
@@ -97,10 +105,11 @@ class RetryRecoveryStrategy(RecoveryStrategy):
             await self.retry_func()
             return True
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            error.context['retry_error'] = str(e)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            error.context["retry_error"] = str(e)
 
             return False
+
 
 class FallbackRecoveryStrategy(RecoveryStrategy):
     """後備恢復策略"""
@@ -115,10 +124,11 @@ class FallbackRecoveryStrategy(RecoveryStrategy):
             await self.fallback_func()
             return True
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            error.context['fallback_error'] = str(e)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            error.context["fallback_error"] = str(e)
 
             return False
+
 
 class CircuitBreakerRecoveryStrategy(RecoveryStrategy):
     """斷路器恢復策略"""
@@ -152,7 +162,7 @@ class CircuitBreakerRecoveryStrategy(RecoveryStrategy):
                 self.failure_count = 0
                 return True
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 self.failure_count += 1
 
                 if self.failure_count >= self.failure_threshold:
@@ -162,6 +172,7 @@ class CircuitBreakerRecoveryStrategy(RecoveryStrategy):
 
         return False
 
+
 class EnterpriseErrorHandler:
     """企業級錯誤處理器"""
 
@@ -170,16 +181,16 @@ class EnterpriseErrorHandler:
         self.error_history: List[ErrorInfo] = []
         self.recovery_strategies: Dict[ErrorCategory, List[RecoveryStrategy]] = {}
         self.error_stats = {
-            'total_errors': 0,
-            'by_category': {cat.value: 0 for cat in ErrorCategory},
-            'by_severity': {sev.value: 0 for sev in ErrorSeverity},
-            'resolved_errors': 0,
-            'unresolved_errors': 0
+            "total_errors": 0,
+            "by_category": {cat.value: 0 for cat in ErrorCategory},
+            "by_severity": {sev.value: 0 for sev in ErrorSeverity},
+            "resolved_errors": 0,
+            "unresolved_errors": 0,
         }
         self.alert_thresholds = {
             ErrorSeverity.CRITICAL: 1,
             ErrorSeverity.HIGH: 5,
-            ErrorSeverity.MEDIUM: 20
+            ErrorSeverity.MEDIUM: 20,
         }
 
         # 註冊默認恢復策略
@@ -190,27 +201,19 @@ class EnterpriseErrorHandler:
         # 網絡錯誤使用重試策略
         self.register_strategy(
             ErrorCategory.NETWORK,
-            RetryRecoveryStrategy(
-                retry_func=self._retry_network_operation,
-                max_attempts=3
-            )
+            RetryRecoveryStrategy(retry_func=self._retry_network_operation, max_attempts=3),
         )
 
         # 外部服務使用斷路器
         self.register_strategy(
             ErrorCategory.EXTERNAL_SERVICE,
-            CircuitBreakerRecoveryStrategy(
-                service_name="external_api",
-                failure_threshold=5
-            )
+            CircuitBreakerRecoveryStrategy(service_name="external_api", failure_threshold=5),
         )
 
         # 資源錯誤使用後備策略
         self.register_strategy(
             ErrorCategory.RESOURCE,
-            FallbackRecoveryStrategy(
-                fallback_func=self._use_backup_resource
-            )
+            FallbackRecoveryStrategy(fallback_func=self._use_backup_resource),
         )
 
     async def handle_error(
@@ -221,7 +224,7 @@ class EnterpriseErrorHandler:
         context: Optional[Dict[str, Any]] = None,
         user_id: Optional[str] = None,
         request_id: Optional[str] = None,
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
     ) -> ErrorInfo:
         """處理錯誤"""
         # 創建錯誤信息
@@ -234,7 +237,7 @@ class EnterpriseErrorHandler:
             context=context or {},
             user_id=user_id,
             request_id=request_id,
-            session_id=session_id
+            session_id=session_id,
         )
 
         # 記錄錯誤
@@ -264,31 +267,31 @@ class EnterpriseErrorHandler:
             ErrorSeverity.LOW: logging.WARNING,
             ErrorSeverity.MEDIUM: logging.ERROR,
             ErrorSeverity.HIGH: logging.ERROR,
-            ErrorSeverity.CRITICAL: logging.CRITICAL
+            ErrorSeverity.CRITICAL: logging.CRITICAL,
         }.get(error.severity, logging.ERROR)
 
         self.logger.log(
             log_level,
             f"錯誤處理: {error.message}",
             extra={
-                'error_id': error.id,
-                'category': error.category.value,
-                'severity': error.severity.value,
-                'context': error.context
+                "error_id": error.id,
+                "category": error.category.value,
+                "severity": error.severity.value,
+                "context": error.context,
             },
-            exc_info=error.exception
+            exc_info=error.exception,
         )
 
     def _update_stats(self, error: ErrorInfo):
         """更新錯誤統計"""
-        self.error_stats['total_errors'] += 1
-        self.error_stats['by_category'][error.category.value] += 1
-        self.error_stats['by_severity'][error.severity.value] += 1
+        self.error_stats["total_errors"] += 1
+        self.error_stats["by_category"][error.category.value] += 1
+        self.error_stats["by_severity"][error.severity.value] += 1
 
         if error.resolved:
-            self.error_stats['resolved_errors'] += 1
+            self.error_stats["resolved_errors"] += 1
         else:
-            self.error_stats['unresolved_errors'] += 1
+            self.error_stats["unresolved_errors"] += 1
 
     async def _attempt_recovery(self, error: ErrorInfo):
         """嘗試自動恢復"""
@@ -302,7 +305,7 @@ class EnterpriseErrorHandler:
             try:
                 self.logger.info(
                     f"嘗試恢復策略: {strategy.name}",
-                    extra={'error_id': error.id, 'strategy': strategy.name}
+                    extra={"error_id": error.id, "strategy": strategy.name},
                 )
 
                 success = await strategy.recover(error)
@@ -315,7 +318,7 @@ class EnterpriseErrorHandler:
 
                     self.logger.info(
                         f"錯誤恢復成功: {error.id}",
-                        extra={'error_id': error.id, 'strategy': strategy.name}
+                        extra={"error_id": error.id, "strategy": strategy.name},
                     )
                     break
                 else:
@@ -325,7 +328,7 @@ class EnterpriseErrorHandler:
                 self.logger.error(
                     f"恢復策略執行失敗: {strategy.name}",
                     exc_info=e,
-                    extra={'error_id': error.id, 'strategy': strategy.name}
+                    extra={"error_id": error.id, "strategy": strategy.name},
                 )
 
     async def _check_alert_conditions(self, error: ErrorInfo):
@@ -333,10 +336,7 @@ class EnterpriseErrorHandler:
         # 檢查嚴重程度警報
         if error.severity in self.alert_thresholds:
             threshold = self.alert_thresholds[error.severity]
-            recent_count = self._count_recent_errors(
-                error.severity,
-                timedelta(minutes=10)
-            )
+            recent_count = self._count_recent_errors(error.severity, timedelta(minutes=10))
 
             if recent_count >= threshold:
                 await self._send_alert(error, f"錯誤頻率超過閾值: {recent_count}/{threshold}")
@@ -346,7 +346,9 @@ class EnterpriseErrorHandler:
         if total_recent > 50:
             await self._send_alert(error, f"5分鐘內錯誤數量過多: {total_recent}")
 
-    def _count_recent_errors(self, severity: Optional[ErrorSeverity], time_window: timedelta) -> int:
+    def _count_recent_errors(
+        self, severity: Optional[ErrorSeverity], time_window: timedelta
+    ) -> int:
         """計算時間窗口內的錯誤數量"""
         cutoff = datetime.now() - time_window
         count = 0
@@ -361,12 +363,12 @@ class EnterpriseErrorHandler:
     async def _send_alert(self, error: ErrorInfo, reason: str):
         """發送警報"""
         alert_data = {
-            'error_id': error.id,
-            'severity': error.severity.value,
-            'category': error.category.value,
-            'message': error.message,
-            'reason': reason,
-            'timestamp': datetime.now().isoformat()
+            "error_id": error.id,
+            "severity": error.severity.value,
+            "category": error.category.value,
+            "message": error.message,
+            "reason": reason,
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.logger.critical(f"系統警報: {reason}", extra=alert_data)
@@ -393,14 +395,12 @@ class EnterpriseErrorHandler:
         """獲取錯誤統計"""
         return {
             **self.error_stats,
-            'recovery_rate': (
-                self.error_stats['resolved_errors'] /
-                max(1, self.error_stats['total_errors'])
+            "recovery_rate": (
+                self.error_stats["resolved_errors"] / max(1, self.error_stats["total_errors"])
             ),
-            'active_strategies': {
-                cat.value: len(strategies)
-                for cat, strategies in self.recovery_strategies.items()
-            }
+            "active_strategies": {
+                cat.value: len(strategies) for cat, strategies in self.recovery_strategies.items()
+            },
         }
 
     def get_error_trends(self, hours: int = 24) -> Dict[str, Any]:
@@ -416,11 +416,11 @@ class EnterpriseErrorHandler:
             hourly_counts[hour_key] = hourly_counts.get(hour_key, 0) + 1
 
         return {
-            'time_range_hours': hours,
-            'total_errors': len(recent_errors),
-            'hourly_distribution': hourly_counts,
-            'top_categories': self._get_top_categories(recent_errors),
-            'top_severities': self._get_top_severities(recent_errors)
+            "time_range_hours": hours,
+            "total_errors": len(recent_errors),
+            "hourly_distribution": hourly_counts,
+            "top_categories": self._get_top_categories(recent_errors),
+            "top_severities": self._get_top_severities(recent_errors),
         }
 
     def _get_top_categories(self, errors: List[ErrorInfo], limit: int = 5) -> List[Dict]:
@@ -430,8 +430,10 @@ class EnterpriseErrorHandler:
             category_counts[error.category.value] = category_counts.get(error.category.value, 0) + 1
 
         return [
-            {'category': cat, 'count': count}
-            for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
+            {"category": cat, "count": count}
+            for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True)[
+                :limit
+            ]
         ]
 
     def _get_top_severities(self, errors: List[ErrorInfo], limit: int = 5) -> List[Dict]:
@@ -441,51 +443,62 @@ class EnterpriseErrorHandler:
             severity_counts[error.severity.value] = severity_counts.get(error.severity.value, 0) + 1
 
         return [
-            {'severity': sev, 'count': count}
-            for sev, count in sorted(severity_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
+            {"severity": sev, "count": count}
+            for sev, count in sorted(severity_counts.items(), key=lambda x: x[1], reverse=True)[
+                :limit
+            ]
         ]
+
 
 # 全局錯誤處理器實例
 error_handler = EnterpriseErrorHandler()
+
 
 # 裝飾器用於自動錯誤處理
 def handle_errors(
     category: ErrorCategory = ErrorCategory.SYSTEM,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    reraise: bool = True
+    reraise: bool = True,
 ):
     """裝飾器：自動處理函數錯誤"""
+
     def decorator(func):
         async def async_wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 error = await error_handler.handle_error(
-
-                    e, category, severity,
-                    context={'function': func.__name__, 'args': str(args)[:100]}
+                    e,
+                    category,
+                    severity,
+                    context={"function": func.__name__, "args": str(args)[:100]},
                 )
 
                 if reraise:
                     raise
-                return {'error': error.message, 'error_id': error.id}
+                return {"error": error.message, "error_id": error.id}
 
         def sync_wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                 # 同步函數中的錯誤處理
-                error = asyncio.run(error_handler.handle_error(
-                    e, category, severity,
-                    context={'function': func.__name__, 'args': str(args)[:100]}
-                ))
+                error = asyncio.run(
+                    error_handler.handle_error(
+                        e,
+                        category,
+                        severity,
+                        context={"function": func.__name__, "args": str(args)[:100]},
+                    )
+                )
 
                 if reraise:
                     raise
-                return {'error': error.message, 'error_id': error.id}
+                return {"error": error.message, "error_id": error.id}
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+
     return decorator

@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class InteractionOpportunity(Enum):
     """交互機會類型"""
+
     USER_RETURN = "user_return"  # 用戶返回
     LONG_IDLE = "long_idle"  # 長時間閒置
     EMOTIONAL_CHANGE = "emotional_change"  # 情緒變化
@@ -33,6 +34,7 @@ class InteractionOpportunity(Enum):
 @dataclass
 class InteractionPlan:
     """交互計劃"""
+
     opportunity: str
     action: str
     message: str
@@ -44,13 +46,13 @@ class InteractionPlan:
     def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         return {
-            'opportunity': self.opportunity,
-            'action': self.action,
-            'message': self.message,
-            'priority': self.priority,
-            'scheduled_time': self.scheduled_time.isoformat(),
-            'executed': self.executed,
-            'execution_result': self.execution_result
+            "opportunity": self.opportunity,
+            "action": self.action,
+            "message": self.message,
+            "priority": self.priority,
+            "scheduled_time": self.scheduled_time.isoformat(),
+            "executed": self.executed,
+            "execution_result": self.execution_result,
         }
 
 
@@ -76,7 +78,7 @@ class ProactiveInteractionSystem:
         check_interval: float = 15.0,  # 檢查間隔（秒）
         min_check_interval: float = 10.0,
         max_check_interval: float = 30.0,
-        broadcast_callback: Optional[callable] = None
+        broadcast_callback: Optional[callable] = None,
     ):
         self.llm_service = llm_service
         self.state_manager = state_manager
@@ -97,10 +99,10 @@ class ProactiveInteractionSystem:
 
         # 統計信息
         self.stats = {
-            'total_opportunities': 0,
-            'planned_actions': 0,
-            'executed_actions': 0,
-            'opportunity_counts': {}
+            "total_opportunities": 0,
+            "planned_actions": 0,
+            "executed_actions": 0,
+            "opportunity_counts": {},
         }
 
         # 時間相關的配置
@@ -186,7 +188,7 @@ class ProactiveInteractionSystem:
                 plan = await self._plan_proactive_action(opportunity, user_state)
                 if plan:
                     self.interaction_queue.append(plan)
-                    self.stats['planned_actions'] += 1
+                    self.stats["planned_actions"] += 1
 
             # 4. 執行計劃
             await self._execute_planned_actions()
@@ -202,14 +204,14 @@ class ProactiveInteractionSystem:
         user_state = self.user_monitor.get_user_state()
 
         return {
-            'online': user_state.online,
-            'activity_level': user_state.activity_level,
-            'emotion': user_state.emotion,
-            'emotion_intensity': user_state.emotion_intensity,
-            'idle_time': self.user_monitor.get_idle_time(),
-            'session_duration': user_state.session_duration,
-            'last_activity': user_state.last_activity,
-            'user_return': self.user_monitor.detect_return()
+            "online": user_state.online,
+            "activity_level": user_state.activity_level,
+            "emotion": user_state.emotion,
+            "emotion_intensity": user_state.emotion_intensity,
+            "idle_time": self.user_monitor.get_idle_time(),
+            "session_duration": user_state.session_duration,
+            "last_activity": user_state.last_activity,
+            "user_return": self.user_monitor.detect_return(),
         }
 
     async def _identify_opportunities(self, user_state: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -217,39 +219,41 @@ class ProactiveInteractionSystem:
         opportunities = []
 
         # 1. 用戶返回
-        if user_state.get('user_return'):
-            opportunities.append({
-                'type': InteractionOpportunity.USER_RETURN.value,
-                'priority': 'high',
-                'data': {
-                    'offline_duration': user_state.get('session_duration', 0)
+        if user_state.get("user_return"):
+            opportunities.append(
+                {
+                    "type": InteractionOpportunity.USER_RETURN.value,
+                    "priority": "high",
+                    "data": {"offline_duration": user_state.get("session_duration", 0)},
                 }
-            })
-            self.stats['total_opportunities'] += 1
+            )
+            self.stats["total_opportunities"] += 1
 
         # 2. 長時間閒置
-        if user_state.get('online') and user_state.get('idle_time', 0) > 120:
-            opportunities.append({
-                'type': InteractionOpportunity.LONG_IDLE.value,
-                'priority': 'medium',
-                'data': {
-                    'idle_time': user_state.get('idle_time')
+        if user_state.get("online") and user_state.get("idle_time", 0) > 120:
+            opportunities.append(
+                {
+                    "type": InteractionOpportunity.LONG_IDLE.value,
+                    "priority": "medium",
+                    "data": {"idle_time": user_state.get("idle_time")},
                 }
-            })
-            self.stats['total_opportunities'] += 1
+            )
+            self.stats["total_opportunities"] += 1
 
         # 3. 情緒變化
-        emotion = user_state.get('emotion')
-        if emotion in ['sad', 'frustrated', 'anxious']:
-            opportunities.append({
-                'type': InteractionOpportunity.EMOTIONAL_CHANGE.value,
-                'priority': 'high',
-                'data': {
-                    'emotion': emotion,
-                    'intensity': user_state.get('emotion_intensity', 0)
+        emotion = user_state.get("emotion")
+        if emotion in ["sad", "frustrated", "anxious"]:
+            opportunities.append(
+                {
+                    "type": InteractionOpportunity.EMOTIONAL_CHANGE.value,
+                    "priority": "high",
+                    "data": {
+                        "emotion": emotion,
+                        "intensity": user_state.get("emotion_intensity", 0),
+                    },
                 }
-            })
-            self.stats['total_opportunities'] += 1
+            )
+            self.stats["total_opportunities"] += 1
 
         # 4. 基於時間的機會
         await self._check_time_based_opportunities(opportunities)
@@ -259,10 +263,10 @@ class ProactiveInteractionSystem:
 
         # 更新統計
         for opp in opportunities:
-            opp_type = opp['type']
-            if opp_type not in self.stats['opportunity_counts']:
-                self.stats['opportunity_counts'][opp_type] = 0
-            self.stats['opportunity_counts'][opp_type] += 1
+            opp_type = opp["type"]
+            if opp_type not in self.stats["opportunity_counts"]:
+                self.stats["opportunity_counts"][opp_type] = 0
+            self.stats["opportunity_counts"][opp_type] += 1
 
         return opportunities
 
@@ -272,74 +276,71 @@ class ProactiveInteractionSystem:
 
         # 早上問候
         if now.hour == 8 and now.minute < 10:
-            opportunities.append({
-                'type': InteractionOpportunity.TIME_BASED.value,
-                'priority': 'medium',
-                'data': {
-                    'time_type': 'morning_greeting',
-                    'hour': now.hour
+            opportunities.append(
+                {
+                    "type": InteractionOpportunity.TIME_BASED.value,
+                    "priority": "medium",
+                    "data": {"time_type": "morning_greeting", "hour": now.hour},
                 }
-            })
-            self.stats['total_opportunities'] += 1
+            )
+            self.stats["total_opportunities"] += 1
 
         # 晚上問候
         elif now.hour == 20 and now.minute < 10:
-            opportunities.append({
-                'type': InteractionOpportunity.TIME_BASED.value,
-                'priority': 'medium',
-                'data': {
-                    'time_type': 'evening_greeting',
-                    'hour': now.hour
+            opportunities.append(
+                {
+                    "type": InteractionOpportunity.TIME_BASED.value,
+                    "priority": "medium",
+                    "data": {"time_type": "evening_greeting", "hour": now.hour},
                 }
-            })
-            self.stats['total_opportunities'] += 1
+            )
+            self.stats["total_opportunities"] += 1
 
         # 休息提醒
         elif now.hour >= 23:
-            opportunities.append({
-                'type': InteractionOpportunity.TIME_BASED.value,
-                'priority': 'low',
-                'data': {
-                    'time_type': 'sleep_reminder',
-                    'hour': now.hour
+            opportunities.append(
+                {
+                    "type": InteractionOpportunity.TIME_BASED.value,
+                    "priority": "low",
+                    "data": {"time_type": "sleep_reminder", "hour": now.hour},
                 }
-            })
-            self.stats['total_opportunities'] += 1
+            )
+            self.stats["total_opportunities"] += 1
 
     async def _check_memory_triggers(self, opportunities: List[Dict[str, Any]]):
         """檢查記憶觸發"""
         try:
             # 從記憶中查找重要事件
-            if hasattr(self.memory_manager, 'get_important_events'):
+            if hasattr(self.memory_manager, "get_important_events"):
                 events = await self.memory_manager.get_important_events(limit=3)
                 if events:
-                    opportunities.append({
-                        'type': InteractionOpportunity.MEMORY_TRIGGER.value,
-                        'priority': 'medium',
-                        'data': {
-                            'events': events
+                    opportunities.append(
+                        {
+                            "type": InteractionOpportunity.MEMORY_TRIGGER.value,
+                            "priority": "medium",
+                            "data": {"events": events},
                         }
-                    })
-                    self.stats['total_opportunities'] += 1
+                    )
+                    self.stats["total_opportunities"] += 1
         except Exception as e:
             logger.warning(f"Error checking memory triggers: {e}")
 
     async def _plan_proactive_action(
-        self,
-        opportunity: Dict[str, Any],
-        user_state: Dict[str, Any]
+        self, opportunity: Dict[str, Any], user_state: Dict[str, Any]
     ) -> Optional[InteractionPlan]:
         """計劃主動行動"""
         try:
             # 檢查冷卻時間
             if self.last_interaction_time:
-                cooldown_passed = (datetime.now() - self.last_interaction_time).total_seconds() > self.interaction_cooldown
-                if not cooldown_passed and opportunity.get('priority') != 'high':
+                cooldown_passed = (
+                    datetime.now() - self.last_interaction_time
+                ).total_seconds() > self.interaction_cooldown
+                if not cooldown_passed and opportunity.get("priority") != "high":
                     return None
 
             # 構建計劃
-            opp_type = opportunity['type']
-            priority = opportunity.get('priority', 'medium')
+            opp_type = opportunity["type"]
+            priority = opportunity.get("priority", "medium")
 
             # 根據機會類型生成消息
             if opp_type == InteractionOpportunity.USER_RETURN.value:
@@ -360,7 +361,7 @@ class ProactiveInteractionSystem:
                 action="proactive_message",
                 message=message,
                 priority=priority,
-                scheduled_time=datetime.now()
+                scheduled_time=datetime.now(),
             )
 
             return plan
@@ -375,14 +376,15 @@ class ProactiveInteractionSystem:
             "歡迎回來！我一直在等你。",
             "你回來了！開心見到你。",
             "嘿，你回來了！今天過得怎麼樣？",
-            "歡迎回家！我準備好了，你想聊什麼？"
+            "歡迎回家！我準備好了，你想聊什麼？",
         ]
         import random
+
         return random.choice(messages)
 
     async def _generate_idle_message(self, opportunity: Dict[str, Any]) -> str:
         """生成閒置消息"""
-        idle_time = opportunity.get('data', {}).get('idle_time', 0)
+        idle_time = opportunity.get("data", {}).get("idle_time", 0)
 
         if idle_time > 300:  # 5分鐘
             return "你在忙嗎？需要我幫忙嗎？"
@@ -391,33 +393,33 @@ class ProactiveInteractionSystem:
 
     async def _generate_emotional_message(self, opportunity: Dict[str, Any]) -> str:
         """生成情緒消息"""
-        emotion = opportunity.get('data', {}).get('emotion', 'neutral')
+        emotion = opportunity.get("data", {}).get("emotion", "neutral")
 
-        if emotion == 'sad':
+        if emotion == "sad":
             return "你看上去有點難過，需要我陪陪你嗎？"
-        elif emotion == 'frustrated':
+        elif emotion == "frustrated":
             return "感覺你有點煩惱，想說說嗎？"
-        elif emotion == 'anxious':
+        elif emotion == "anxious":
             return "別擔心，我在這裡陪你。"
         else:
             return "你今天心情怎麼樣？"
 
     async def _generate_time_based_message(self, opportunity: Dict[str, Any]) -> str:
         """生成基於時間的消息"""
-        time_type = opportunity.get('data', {}).get('time_type', '')
+        time_type = opportunity.get("data", {}).get("time_type", "")
 
-        if time_type == 'morning_greeting':
+        if time_type == "morning_greeting":
             return "早上好！新的一天開始了，今天有什麼計劃嗎？"
-        elif time_type == 'evening_greeting':
+        elif time_type == "evening_greeting":
             return "晚上好！今天過得怎麼樣？"
-        elif time_type == 'sleep_reminder':
+        elif time_type == "sleep_reminder":
             return "時間不早了，該休息了嗎？"
         else:
             return "時間過得真快啊。"
 
     async def _generate_memory_message(self, opportunity: Dict[str, Any]) -> str:
         """生成記憶消息"""
-        events = opportunity.get('data', {}).get('events', [])
+        events = opportunity.get("data", {}).get("events", [])
         if events:
             return f"我記得我們之前談過：{events[0][:50]}..."
         return "我想起了我們之前的一些對話。"
@@ -428,10 +430,12 @@ class ProactiveInteractionSystem:
             return
 
         # 按優先級排序
-        self.interaction_queue.sort(key=lambda x: (
-            0 if x.priority == 'high' else 1 if x.priority == 'medium' else 2,
-            x.scheduled_time
-        ))
+        self.interaction_queue.sort(
+            key=lambda x: (
+                0 if x.priority == "high" else 1 if x.priority == "medium" else 2,
+                x.scheduled_time,
+            )
+        )
 
         # 執行第一個優先級高的行動
         for plan in self.interaction_queue[:3]:  # 最多執行3個
@@ -439,7 +443,7 @@ class ProactiveInteractionSystem:
                 result = await self._execute_proactive_action(plan)
                 plan.executed = True
                 plan.execution_result = result
-                self.stats['executed_actions'] += 1
+                self.stats["executed_actions"] += 1
 
                 # 更新最後交互時間
                 self.last_interaction_time = datetime.now()
@@ -455,50 +459,48 @@ class ProactiveInteractionSystem:
             # 實際發送到前端
             if self.broadcast_callback:
                 try:
-                    await self.broadcast_callback({
-                        'type': 'proactive_action',
-                        'opportunity': plan.opportunity,
-                        'action': plan.action,
-                        'message': plan.message,
-                        'priority': plan.priority,
-                        'scheduled_time': plan.scheduled_time.isoformat()
-                    })
+                    await self.broadcast_callback(
+                        {
+                            "type": "proactive_action",
+                            "opportunity": plan.opportunity,
+                            "action": plan.action,
+                            "message": plan.message,
+                            "priority": plan.priority,
+                            "scheduled_time": plan.scheduled_time.isoformat(),
+                        }
+                    )
                     logger.debug(f"Proactive action sent via WebSocket: {plan.opportunity}")
                 except Exception as e:
                     logger.warning(f"Failed to send proactive action via WebSocket: {e}")
 
-            return {
-                'success': True,
-                'sent': True,
-                'message': plan.message
-            }
+            return {"success": True, "sent": True, "message": plan.message}
 
         except Exception as e:
             logger.error(f"Error executing proactive action: {e}")
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def _cleanup_queue(self):
         """清理隊列"""
         # 移除已執行的計劃
-        self.interaction_queue = [
-            p for p in self.interaction_queue if not p.executed
-        ]
+        self.interaction_queue = [p for p in self.interaction_queue if not p.executed]
 
         # 限制隊列大小
         if len(self.interaction_queue) > self.max_queue_size:
-            self.interaction_queue = self.interaction_queue[-self.max_queue_size:]
+            self.interaction_queue = self.interaction_queue[-self.max_queue_size :]
 
     def get_stats(self) -> Dict[str, Any]:
         """獲取統計信息"""
         return {
-            'is_running': self.is_running,
-            'check_interval': self.check_interval,
-            'total_opportunities': self.stats['total_opportunities'],
-            'planned_actions': self.stats['planned_actions'],
-            'executed_actions': self.stats['executed_actions'],
-            'opportunity_counts': self.stats['opportunity_counts'],
-            'queue_size': len(self.interaction_queue),
-            'last_interaction_time': self.last_interaction_time.isoformat() if self.last_interaction_time else None
+            "is_running": self.is_running,
+            "check_interval": self.check_interval,
+            "total_opportunities": self.stats["total_opportunities"],
+            "planned_actions": self.stats["planned_actions"],
+            "executed_actions": self.stats["executed_actions"],
+            "opportunity_counts": self.stats["opportunity_counts"],
+            "queue_size": len(self.interaction_queue),
+            "last_interaction_time": (
+                self.last_interaction_time.isoformat() if self.last_interaction_time else None
+            ),
         }
 
     def get_queue(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -540,7 +542,7 @@ if __name__ == "__main__":
             state_manager=state_manager,
             memory_manager=memory_manager,
             user_monitor=user_monitor,
-            check_interval=3.0
+            check_interval=3.0,
         )
 
         # 啟動系統

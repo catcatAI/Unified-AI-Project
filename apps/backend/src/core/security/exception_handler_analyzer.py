@@ -146,9 +146,7 @@ class ExceptionHandlerAnalyzer:
         # 按嚴重程度分類
         critical = len(self.get_critical_issues())
         high = len(self.get_high_issues())
-        medium = len(
-            [i for r in self.results for i in r.issues if i.severity == "medium"]
-        )
+        medium = len([i for r in self.results for i in r.issues if i.severity == "medium"])
         low = len([i for r in self.results for i in r.issues if i.severity == "low"])
 
         logger.info("問題分類:")
@@ -162,9 +160,7 @@ class ExceptionHandlerAnalyzer:
         problematic_files = [r for r in self.results if len(r.issues) > 0]
         if problematic_files:
             logger.info(f"有問題的文件 ({len(problematic_files)} 個):")
-            for result in sorted(
-                problematic_files, key=lambda r: len(r.issues), reverse=True
-            ):
+            for result in sorted(problematic_files, key=lambda r: len(r.issues), reverse=True):
                 logger.info(f"  - {result.file_path}: {len(result.issues)} 個問題")
             logger.info()
 
@@ -186,9 +182,7 @@ class ExceptionHandlerAnalyzer:
                 continue
 
             logger.info(f"\n文件: {result.file_path}")
-            print(
-                f"  異常塊: {result.total_except_blocks}, 裸異常: {result.bare_exception_blocks}"
-            )
+            print(f"  異常塊: {result.total_except_blocks}, 裸異常: {result.bare_exception_blocks}")
             logger.info(f"  問題數: {len(result.issues)}\n")
 
             for issue in result.issues:
@@ -199,9 +193,7 @@ class ExceptionHandlerAnalyzer:
                     "low": "🟢",
                 }.get(issue.severity, "")
 
-                print(
-                    f"  {severity_icon} 行 {issue.line_number}: {issue.exception_type}"
-                )
+                print(f"  {severity_icon} 行 {issue.line_number}: {issue.exception_type}")
                 logger.info(f"      建議: {issue.suggestion}")
 
                 if not issue.has_logging:
@@ -269,9 +261,7 @@ class ExceptionVisitor(ast.NodeVisitor):
             # except Exception: (高優先級)
             exception_type = "except Exception:"
             severity = "high"
-            suggestion = (
-                "使用更具體的異常類型，如 except (ValueError, KeyError, IOError) as e:"
-            )
+            suggestion = "使用更具體的異常類型，如 except (ValueError, KeyError, IOError) as e:"
         else:
             # 其他異常類型（正常）
             return
@@ -288,9 +278,7 @@ class ExceptionVisitor(ast.NodeVisitor):
         if not has_logging:
             if severity == "high":
                 severity = "critical"
-            suggestion += (
-                " 並添加錯誤日誌，如 logger.error(f'Error: {e}', exc_info=True)"
-            )
+            suggestion += " 並添加錯誤日誌，如 logger.error(f'Error: {e}', exc_info=True)"
 
         # 如果沒有上下文信息，添加建議
         if not has_context:

@@ -1,9 +1,11 @@
 import sqlite3
 import json
 from typing import Dict, Any, List, Optional
-import os # Added missing import
+import os  # Added missing import
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class UnifiedSymbolicSpace:
     """
@@ -11,7 +13,7 @@ class UnifiedSymbolicSpace:
     and relationships within a SQLite database.
     """
 
-    def __init__(self, db_path: str = 'unified_symbolic_space.db'):
+    def __init__(self, db_path: str = "unified_symbolic_space.db"):
         self.db_path = db_path
         self._init_db()
 
@@ -41,13 +43,17 @@ class UnifiedSymbolicSpace:
         conn.commit()
         conn.close()
 
-    def add_symbol(self, symbol_name: str, symbol_type: str, properties: Optional[Dict[str, Any]] = None) -> int:
+    def add_symbol(
+        self, symbol_name: str, symbol_type: str, properties: Optional[Dict[str, Any]] = None
+    ) -> int:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        props_json = json.dumps(properties) if properties else ''
+        props_json = json.dumps(properties) if properties else ""
         try:
-            cursor.execute("INSERT INTO symbols (symbol_name, type, properties) VALUES (?, ?, ?)",
-                           (symbol_name, symbol_type, props_json))
+            cursor.execute(
+                "INSERT INTO symbols (symbol_name, type, properties) VALUES (?, ?, ?)",
+                (symbol_name, symbol_type, props_json),
+            )
             symbol_id = cursor.lastrowid
             conn.commit()
             return symbol_id
@@ -56,11 +62,17 @@ class UnifiedSymbolicSpace:
             # Directly update the symbol to avoid database locking issues
             if properties:
                 current_symbol = self.get_symbol(symbol_name)
-                current_props = current_symbol['properties'] if current_symbol and current_symbol['properties'] else {}
+                current_props = (
+                    current_symbol["properties"]
+                    if current_symbol and current_symbol["properties"]
+                    else {}
+                )
                 current_props.update(properties)
                 props_json = json.dumps(current_props)
-            cursor.execute("UPDATE symbols SET type = ?, properties = ?, last_updated = CURRENT_TIMESTAMP WHERE symbol_name = ?",
-                           (symbol_type, props_json, symbol_name))
+            cursor.execute(
+                "UPDATE symbols SET type = ?, properties = ?, last_updated = CURRENT_TIMESTAMP WHERE symbol_name = ?",
+                (symbol_type, props_json, symbol_name),
+            )
             conn.commit()
             cursor.execute("SELECT id FROM symbols WHERE symbol_name = ?", (symbol_name,))
             result = cursor.fetchone()
@@ -68,30 +80,43 @@ class UnifiedSymbolicSpace:
             conn.close()
             return symbol_id
         finally:
-            if 'conn' in locals() and conn:
+            if "conn" in locals() and conn:
                 conn.close()
 
     def get_symbol(self, symbol_name: str) -> Optional[Dict[str, Any]]:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT id, symbol_name, type, properties FROM symbols WHERE symbol_name = ?", (symbol_name,))
+        cursor.execute(
+            "SELECT id, symbol_name, type, properties FROM symbols WHERE symbol_name = ?",
+            (symbol_name,),
+        )
         row = cursor.fetchone()
         conn.close()
         if row:
             return {
-                'id': row[0],
-                'symbol_name': row[1],
-                'type': row[2],
-                'properties': json.loads(row[3]) if row[3] else {}
+                "id": row[0],
+                "symbol_name": row[1],
+                "type": row[2],
+                "properties": json.loads(row[3]) if row[3] else {},
             }
         return None
 
-    def update_symbol(self, symbol_name: str, new_symbol_name: Optional[str] = None, new_type: Optional[str] = None, properties: Optional[Dict[str, Any]] = None):
+    def update_symbol(
+        self,
+        symbol_name: str,
+        new_symbol_name: Optional[str] = None,
+        new_type: Optional[str] = None,
+        properties: Optional[Dict[str, Any]] = None,
+    ):
         # Get current properties first to avoid connection issues
         current_props = {}
         if properties:
             current_symbol = self.get_symbol(symbol_name)
-            current_props = current_symbol['properties'] if current_symbol and current_symbol['properties'] else {}
+            current_props = (
+                current_symbol["properties"]
+                if current_symbol and current_symbol["properties"]
+                else {}
+            )
             current_props.update(properties)
 
         conn = sqlite3.connect(self.db_path)
@@ -121,20 +146,30 @@ class UnifiedSymbolicSpace:
         conn.close()
         return rows_affected > 0
 
-    def add_relationship(self, source_symbol_name: str, target_symbol_name: str, relationship_type: str, properties: Optional[Dict[str, Any]] = None) -> Optional[int]:
+    def add_relationship(
+        self,
+        source_symbol_name: str,
+        target_symbol_name: str,
+        relationship_type: str,
+        properties: Optional[Dict[str, Any]] = None,
+    ) -> Optional[int]:
         # Get symbols first to avoid connection issues
         source_symbol = self.get_symbol(source_symbol_name)
         target_symbol = self.get_symbol(target_symbol_name)
 
         if not source_symbol or not target_symbol:
-            logger.error(f"Error: Source symbol '{source_symbol_name}' or target symbol '{target_symbol_name}' not found.")
+            logger.error(
+                f"Error: Source symbol '{source_symbol_name}' or target symbol '{target_symbol_name}' not found."
+            )
             return None
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        props_json = json.dumps(properties) if properties else ''
-        cursor.execute("INSERT INTO relationships (source_symbol_id, target_symbol_id, relationship_type, properties) VALUES (?, ?, ?, ?)",
-                       (source_symbol['id'], target_symbol['id'], relationship_type, props_json))
+        props_json = json.dumps(properties) if properties else ""
+        cursor.execute(
+            "INSERT INTO relationships (source_symbol_id, target_symbol_id, relationship_type, properties) VALUES (?, ?, ?, ?)",
+            (source_symbol["id"], target_symbol["id"], relationship_type, props_json),
+        )
         rel_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -148,23 +183,28 @@ class UnifiedSymbolicSpace:
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT r.id, s_src.symbol_name, s_tgt.symbol_name, r.relationship_type, r.properties
             FROM relationships r
             JOIN symbols s_src ON r.source_symbol_id = s_src.id
             JOIN symbols s_tgt ON r.target_symbol_id = s_tgt.id
             WHERE s_src.symbol_name = ? OR s_tgt.symbol_name = ?
-        """, (symbol_name, symbol_name))
+        """,
+            (symbol_name, symbol_name),
+        )
 
         relationships = []
         for row in cursor.fetchall():
-            relationships.append({
-                'id': row[0],
-                'source': row[1],
-                'target': row[2],
-                'type': row[3],
-                'properties': json.loads(row[4]) if row[4] else {}
-            })
+            relationships.append(
+                {
+                    "id": row[0],
+                    "source": row[1],
+                    "target": row[2],
+                    "type": row[3],
+                    "properties": json.loads(row[4]) if row[4] else {},
+                }
+            )
         conn.close()
         return relationships
 
@@ -177,8 +217,11 @@ class UnifiedSymbolicSpace:
             return False
 
         # Delete associated relationships first
-        cursor.execute("DELETE FROM relationships WHERE source_symbol_id = ? OR target_symbol_id = ?", (symbol['id'], symbol['id']))
-        cursor.execute("DELETE FROM symbols WHERE id = ?", (symbol['id'],))
+        cursor.execute(
+            "DELETE FROM relationships WHERE source_symbol_id = ? OR target_symbol_id = ?",
+            (symbol["id"], symbol["id"]),
+        )
+        cursor.execute("DELETE FROM symbols WHERE id = ?", (symbol["id"],))
         conn.commit()
         rows_affected = cursor.rowcount
         conn.close()
@@ -193,46 +236,49 @@ class UnifiedSymbolicSpace:
         conn.close()
         return rows_affected > 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example Usage
-    uss = UnifiedSymbolicSpace('test_symbolic_space.db')
+    uss = UnifiedSymbolicSpace("test_symbolic_space.db")
 
     # Add symbols
-    uss.add_symbol('AI Assistant', 'Agent', {'version': '1.0', 'status': 'active'})
-    uss.add_symbol('Sarah', 'Person', {'age': 30, 'occupation': 'engineer'})
-    uss.add_symbol('Likes', 'Verb')
-    uss.add_symbol('Python', 'ProgrammingLanguage', {'version': '3.9'})
+    uss.add_symbol("AI Assistant", "Agent", {"version": "1.0", "status": "active"})
+    uss.add_symbol("Sarah", "Person", {"age": 30, "occupation": "engineer"})
+    uss.add_symbol("Likes", "Verb")
+    uss.add_symbol("Python", "ProgrammingLanguage", {"version": "3.9"})
 
     # Update symbol properties
-    uss.update_symbol('AI Assistant', properties={'status': 'learning', 'model_type': 'AlphaDeepModel'})
+    uss.update_symbol(
+        "AI Assistant", properties={"status": "learning", "model_type": "AlphaDeepModel"}
+    )
 
     # Add relationships
-    uss.add_relationship('Sarah', 'AI Assistant', 'likes', {'strength': 0.9})
-    uss.add_relationship('AI Assistant', 'Python', 'uses', {'proficiency': 'high'})
+    uss.add_relationship("Sarah", "AI Assistant", "likes", {"strength": 0.9})
+    uss.add_relationship("AI Assistant", "Python", "uses", {"proficiency": "high"})
 
     # Get symbols and relationships
-    ai_assistant_symbol = uss.get_symbol('AI Assistant')
+    ai_assistant_symbol = uss.get_symbol("AI Assistant")
     logger.info(f"\nAI Assistant Symbol: {ai_assistant_symbol}")
 
-    sarah_relationships = uss.get_relationships('Sarah')
+    sarah_relationships = uss.get_relationships("Sarah")
     logger.info(f"Sarah's Relationships: {sarah_relationships}")
 
-    ai_relationships = uss.get_relationships('AI Assistant')
+    ai_relationships = uss.get_relationships("AI Assistant")
     logger.info(f"AI Assistant's Relationships: {ai_relationships}")
 
     # Delete a relationship
     if sarah_relationships:
-        uss.delete_relationship(sarah_relationships[0]['id'])
+        uss.delete_relationship(sarah_relationships[0]["id"])
         logger.info(f"\nDeleted relationship: {sarah_relationships[0]['id']}")
         logger.info(f"Sarah's Relationships after deletion: {uss.get_relationships('Sarah')}")
 
     # Delete a symbol
-    uss.delete_symbol('Likes')
+    uss.delete_symbol("Likes")
     logger.info(f"\nLikes symbol after deletion: {uss.get_symbol('Likes')}")
 
     logger.info("\nUnified Symbolic Space operations completed.")
 
     # Clean up test database
-    if os.path.exists('test_symbolic_space.db'):
-        os.remove('test_symbolic_space.db')
+    if os.path.exists("test_symbolic_space.db"):
+        os.remove("test_symbolic_space.db")
         logger.info("Cleaned up test_symbolic_space.db")

@@ -8,17 +8,20 @@ import sys
 import os
 import asyncio
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 async def main() -> None:
     print("Hello, World!")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
 
 # 添加项目路径到Python路径
-project_root = os.path.join(os.path.dirname(__file__), '..', '..')
-src_path = os.path.join(project_root, 'apps', 'backend', 'src')
+project_root = os.path.join(os.path.dirname(__file__), "..", "..")
+src_path = os.path.join(project_root, "apps", "backend", "src")
 sys.path.insert(0, project_root)
 sys.path.insert(0, src_path)
 
@@ -31,6 +34,7 @@ print(f"Python executable: {sys.executable}")
 
 try:
     import pytest
+
     print(f"Pytest version: {pytest.__version__}")
 except ImportError as e:
     print(f"Failed to import pytest: {e}")

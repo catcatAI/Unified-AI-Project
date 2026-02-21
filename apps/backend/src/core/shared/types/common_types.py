@@ -4,6 +4,7 @@ from enum import Enum
 from typing import TypedDict, Optional, Dict, Any, List, Literal
 from typing_extensions import Required
 import logging
+
 logger = logging.getLogger(__name__)
 
 logger.debug("common_types.py (debug version) is being imported and defining ServiceStatus...")
@@ -40,7 +41,7 @@ class ServiceAdvertisement(TypedDict):
     ttl: int
 
 
-class ServiceQuery(TypedDict, total = False):
+class ServiceQuery(TypedDict, total=False):
     service_type: Optional[ServiceType]
     service_name: Optional[str]
     min_version: Optional[str]
@@ -55,6 +56,7 @@ class ServiceInstanceHealth(TypedDict):
     last_heartbeat: float
     metrics: Optional[Dict[str, Any]]
 
+
 # - - - Minimal other types that might be needed immediately downstream - - -
 # For ToolDispatcherResponse as used by ToolDispatcher, imported by DialogueManager
 
@@ -66,7 +68,7 @@ class ToolDispatcherResponse(TypedDict):
         "failure_tool_error",
         "failure_parsing_query",
         "error_dispatcher_issue",
-        "unhandled_by_local_tool"
+        "unhandled_by_local_tool",
     ]
     payload: Optional[Any]
     tool_name_attempted: Optional[str]
@@ -100,7 +102,7 @@ class PendingHSPTaskInfo(TypedDict):  # For DialogueManager:
     request_type: str
 
 
-class OperationalConfig(TypedDict, total = False):  # For DialogueManager:
+class OperationalConfig(TypedDict, total=False):  # For DialogueManager:
     timeouts: Optional[Any]
     learning_thresholds: Optional[Any]
     default_hsp_fact_topic: Optional[str]
@@ -124,7 +126,7 @@ class DialogueMemoryEntryMetadata(TypedDict):  # For DialogueManager:
     learning_weight: Optional[float]
 
 
-class ParsedToolIODetails(TypedDict, total = False):  # For DialogueManager:
+class ParsedToolIODetails(TypedDict, total=False):  # For DialogueManager:
     suggested_method_name: Required[str]
     class_docstring_hint: Required[str]
     method_docstring_hint: Required[str]
@@ -138,6 +140,7 @@ class OverwriteDecision(Enum):  # For HAMMemoryManager -> DialogueManager:
     OVERWRITE_EXISTING = "overwrite_existing"
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
+
 
 # - - - LLM Interface Types - - -
 
@@ -153,9 +156,9 @@ class LLMProviderOpenAIConfig(TypedDict):
 
 
 class LLMModelInfo(TypedDict, total=False):
-    id: Required[str]           # Model ID, typically how it's called / identified
-    provider: Required[str]     # e.g., "ollama", "openai", "mock"
-    name: Optional[str]         # Human-readable name, might be same as ID or more descriptive
+    id: Required[str]  # Model ID, typically how it's called / identified
+    provider: Required[str]  # e.g., "ollama", "openai", "mock"
+    name: Optional[str]  # Human-readable name, might be same as ID or more descriptive
     description: Optional[str]
     modified_at: Optional[str]  # ISO 8601 timestamp
     size_bytes: Optional[int]
@@ -168,6 +171,7 @@ class LLMModelInfo(TypedDict, total=False):
 @dataclass
 class HAMMemoryResult:
     """HAM記憶回憶結果"""
+
     memories: List[Dict[str, Any]]
     confidence_scores: List[float]
     total_count: int
@@ -176,6 +180,7 @@ class HAMMemoryResult:
 
 class HAMDataPackageInternal(TypedDict):
     """HAM內部數據包"""
+
     package_id: str
     data_type: str
     content: Dict[str, Any]

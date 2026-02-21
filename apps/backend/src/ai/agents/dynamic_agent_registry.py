@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from core.hsp.connector import HSPConnector
 from core.hsp.types import HSPCapabilityAdvertisementPayload
 
+
 @dataclass
 class RegisteredAgent:
     agent_id: str
@@ -18,6 +19,7 @@ class RegisteredAgent:
     last_seen: float
     status: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +91,12 @@ class DynamicAgentRegistry:
                 agent = self.registered_agents[agent_id]
                 logger.info(f"Agent {agent.agent_name} ({agent_id}) marked as inactive")
 
-    async def _handle_capability_advertisement(self, capability_payload: HSPCapabilityAdvertisementPayload,
-                                               sender_ai_id: str, envelope: Dict[str, Any]) -> None:
+    async def _handle_capability_advertisement(
+        self,
+        capability_payload: HSPCapabilityAdvertisementPayload,
+        sender_ai_id: str,
+        envelope: Dict[str, Any],
+    ) -> None:
         """Handle capability advertisements to register agents."""
         async with self.registry_lock:
             agent_id = capability_payload.get("ai_id", sender_ai_id)
@@ -107,12 +113,11 @@ class DynamicAgentRegistry:
                     registration_time=time.time(),
                     last_seen=time.time(),
                     status="active",
-                    metadata={
-                        "first_seen": datetime.now().isoformat(),
-                        "capability_count": 1
-                    }
+                    metadata={"first_seen": datetime.now().isoformat(), "capability_count": 1},
                 )
-                logger.info(f"New agent registered: {agent_name} ({agent_id}) with capability {capability_id}")
+                logger.info(
+                    f"New agent registered: {agent_name} ({agent_id}) with capability {capability_id}"
+                )
 
                 # Notify discovery callbacks
                 for callback in self.discovery_callbacks:
@@ -127,16 +132,24 @@ class DynamicAgentRegistry:
                 agent.status = "active"
 
                 # Check if this is a new capability for this agent
-                existing_capability = any(cap.get("capability_id") == capability_id for cap in agent.capabilities)
+                existing_capability = any(
+                    cap.get("capability_id") == capability_id for cap in agent.capabilities
+                )
 
                 if not existing_capability:
                     agent.capabilities.append(capability_payload)
                     agent.metadata["capability_count"] = len(agent.capabilities)
-                    logger.info(f"Updated agent {agent_name} ({agent_id}) with new capability {capability_id}")
+                    logger.info(
+                        f"Updated agent {agent_name} ({agent_id}) with new capability {capability_id}"
+                    )
 
-    async def register_agent_manually(self, agent_id: str, agent_name: str,
-                                      capabilities: List[Dict[str, Any]],
-                                      metadata: Optional[Dict[str, Any]] = None) -> None:
+    async def register_agent_manually(
+        self,
+        agent_id: str,
+        agent_name: str,
+        capabilities: List[Dict[str, Any]],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Manually register an agent in the registry.
 
@@ -154,7 +167,7 @@ class DynamicAgentRegistry:
                 registration_time=time.time(),
                 last_seen=time.time(),
                 status="active",
-                metadata=metadata or {}
+                metadata=metadata or {},
             )
             logger.info(f"Agent manually registered: {agent_name} ({agent_id})")
 

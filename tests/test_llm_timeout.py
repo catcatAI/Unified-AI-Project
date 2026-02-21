@@ -6,13 +6,15 @@ import asyncio
 import time
 import os
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Add apps/backend to path
-backend_path = os.path.join(os.path.dirname(__file__), 'apps/backend')
+backend_path = os.path.join(os.path.dirname(__file__), "apps/backend")
 sys.path.insert(0, backend_path)
 
 from src.services.angela_llm_service import AngelaLLMService, get_llm_service
+
 
 async def test_llm_timeout():
     """Test LLM service timeout"""
@@ -26,18 +28,14 @@ async def test_llm_timeout():
     # Test 1: Check backend status
     print("\n1. Backend Status:")
     print(f"   Available: {service.is_available}")
-    print(f"   Active Backend: {service.active_backend_type.value if service.active_backend_type else 'None'}")
+    print(
+        f"   Active Backend: {service.active_backend_type.value if service.active_backend_type else 'None'}"
+    )
     print(f"   Available Backends: {list(service.backends.keys())}")
 
     # Test 2: Test response time
     print("\n2. Testing Response Time:")
-    test_messages = [
-        "你好",
-        "今天天气怎么样？",
-        "我有点难过",
-        "我很开心",
-        "你在做什么？"
-    ]
+    test_messages = ["你好", "今天天气怎么样？", "我有点难过", "我很开心", "你在做什么？"]
 
     for msg in test_messages:
         start = time.time()
@@ -79,14 +77,16 @@ async def test_llm_timeout():
         print(f"   Intensity: {result['intensity']:.2f}")
 
         # Check if matches expected
-        emotion_type = expected.split('/')[0]
-        if result['emotion'] == emotion_type:
+        emotion_type = expected.split("/")[0]
+        if result["emotion"] == emotion_type:
             print(f"   ✅ PASS")
         else:
             print(f"   ❌ FAIL")
 
+
 async def main():
     await test_llm_timeout()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

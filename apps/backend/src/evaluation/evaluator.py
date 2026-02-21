@@ -1,7 +1,9 @@
 import time
 from typing import Any, Dict, Iterable, Tuple
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class Evaluator:
     """
@@ -46,10 +48,12 @@ class Evaluator:
             print(f"Input: {input_data}, Output: {output}, Expected: {expected_output}")
             if output == expected_output:
                 correct += 1
-        
+
         return correct / len(dataset_list)
 
-    def _calculate_performance(self, model_or_tool: Any, dataset: Iterable[Tuple[Any, Any]]) -> float:
+    def _calculate_performance(
+        self, model_or_tool: Any, dataset: Iterable[Tuple[Any, Any]]
+    ) -> float:
         """
         Calculates the performance (execution time) of a model or tool on a dataset.
         """
@@ -63,7 +67,9 @@ class Evaluator:
         end_time = time.time()
         return end_time - start_time
 
-    def _calculate_robustness(self, model_or_tool: Any, dataset: Iterable[Tuple[Any, Any]]) -> float:
+    def _calculate_robustness(
+        self, model_or_tool: Any, dataset: Iterable[Tuple[Any, Any]]
+    ) -> float:
         """
         Calculates the robustness of a model or tool on a dataset.
         """
@@ -77,8 +83,7 @@ class Evaluator:
                 model_or_tool.evaluate(input_data)
                 no_exception += 1
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-        
         return no_exception / len(dataset_list)

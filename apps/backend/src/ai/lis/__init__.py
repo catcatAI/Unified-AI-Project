@@ -4,6 +4,7 @@ Responsible for detecting, diagnosing, and responding to semantic anomalies.
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from .lis_manager import LISManager
@@ -13,7 +14,7 @@ from .types import (
     LIS_AnomalyType,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_IncidentRecord,
-    NarrativeAntibodyObject
+    NarrativeAntibodyObject,
 )
 
 VERSION = "0.1.0"
@@ -25,5 +26,5 @@ __all__ = [
     "LIS_AnomalyType",
     "LIS_SemanticAnomalyDetectedEvent",
     "LIS_IncidentRecord",
-    "NarrativeAntibodyObject"
+    "NarrativeAntibodyObject",
 ]

@@ -11,6 +11,7 @@ from .cluster_manager import ClusterManager, NodeType, cluster_manager
 
 logger = logging.getLogger(__name__)
 
+
 class DeploymentMode(Enum):
     MINIMAL = "minimal"
     LITE = "lite"
@@ -19,12 +20,14 @@ class DeploymentMode(Enum):
     EXTREME = "extreme"
     CLUSTER = "cluster"
 
+
 class ModelSize(Enum):
     TINY = "tiny"
     SMALL = "small"
     MEDIUM = "medium"
     LARGE = "large"
     XLARGE = "xlarge"
+
 
 @dataclass
 class ModelConfig:
@@ -36,6 +39,7 @@ class ModelConfig:
     cpu_threads: int
     memory_limit_mb: int
 
+
 @dataclass
 class CompressionConfig:
     compression_level: str
@@ -44,6 +48,7 @@ class CompressionConfig:
     cache_size_mb: int
     use_quantization: bool
 
+
 @dataclass
 class ProcessingConfig:
     enable_multimodal: bool
@@ -51,6 +56,7 @@ class ProcessingConfig:
     enable_background_learning: bool
     max_concurrent_tasks: int
     timeout_seconds: int
+
 
 @dataclass
 class DeploymentConfig:
@@ -63,14 +69,15 @@ class DeploymentConfig:
     features_disabled: List[str]
     cluster_role: Optional[str] = None
 
+
 class DeploymentManager:
     """Manages system deployment based on hardware capabilities"""
-    
+
     def __init__(self, probe: Optional[SystemHardwareProbe] = None):
         self.probe = probe or SystemHardwareProbe()
         self.hardware_profile = self.probe.get_hardware_profile()
         self.config_cache: Optional[DeploymentConfig] = None
-        
+
         # Feature requirements (min AI capability score)
         self.feature_requirements = {
             "gpu_acceleration": 10,
@@ -80,10 +87,12 @@ class DeploymentManager:
             "background_learning": 25,
             "concurrent_tasks": 35,
             "high_precision": 60,
-            "cluster_deployment": 70
+            "cluster_deployment": 70,
         }
 
-    def generate_config(self, force_refresh: bool = False, cluster_mode: bool = False) -> DeploymentConfig:
+    def generate_config(
+        self, force_refresh: bool = False, cluster_mode: bool = False
+    ) -> DeploymentConfig:
         """Generate optimal deployment configuration"""
         if self.config_cache and not force_refresh:
             return self.config_cache
@@ -105,7 +114,7 @@ class DeploymentManager:
 
         # Determine enabled/disabled features
         features_enabled, features_disabled = self._determine_features()
-        
+
         if mode == DeploymentMode.CLUSTER:
             if "cluster_deployment" not in features_enabled:
                 features_enabled.append("cluster_deployment")
@@ -119,25 +128,27 @@ class DeploymentManager:
             hardware_profile=self.hardware_profile,
             features_enabled=features_enabled,
             features_disabled=features_disabled,
-            cluster_role=cluster_role
+            cluster_role=cluster_role,
         )
 
         self.config_cache = config
-        
+
         # Initialize cluster manager if in cluster mode
         if mode == DeploymentMode.CLUSTER:
             role = NodeType.MASTER if cluster_role == "master" else NodeType.WORKER
             cluster_manager.node_type = role
             logger.info(f"Initialized cluster manager as {role.value}")
 
-        logger.info(f"Generated deployment config: {mode.value} mode with {len(features_enabled)} features enabled")
+        logger.info(
+            f"Generated deployment config: {mode.value} mode with {len(features_enabled)} features enabled"
+        )
         return config
 
     def _generate_model_config(self, mode: DeploymentMode) -> ModelConfig:
         """Generate model configuration based on deployment mode"""
         memory_mb = self.hardware_profile.memory.total
         cpu_cores = self.hardware_profile.cpu.cores_logical
-        
+
         gpu_available = False
         integrated_graphics = False
         best_gpu_memory_gb = 0
@@ -146,9 +157,18 @@ class DeploymentManager:
             best_gpu = max(self.hardware_profile.gpu, key=lambda g: g.memory_total)
             best_gpu_memory_gb = best_gpu.memory_total / 1024
             gpu_available = best_gpu_memory_gb > 1.0
-            
-            integrated_graphics = any(keyword in best_gpu.name.lower() 
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
+
+            integrated_graphics = any(
+                keyword in best_gpu.name.lower()
+                for keyword in [
+                    "intel",
+                    "amd",
+                    "radeon",
+                    "hd graphics",
+                    "uhd graphics",
+                    "integrated",
+                ]
+            )
 
         # Base configurations for each mode
         configs = {
@@ -159,7 +179,7 @@ class DeploymentManager:
                 "precision": "int8",
                 "use_gpu": False,
                 "cpu_threads": min(2, cpu_cores),
-                "memory_limit_mb": min(512, memory_mb // 8)
+                "memory_limit_mb": min(512, memory_mb // 8),
             },
             DeploymentMode.LITE: {
                 "size": ModelSize.SMALL,
@@ -168,7 +188,7 @@ class DeploymentManager:
                 "precision": "int8",
                 "use_gpu": gpu_available,
                 "cpu_threads": min(4, cpu_cores),
-                "memory_limit_mb": min(1024, memory_mb // 6)
+                "memory_limit_mb": min(1024, memory_mb // 6),
             },
             DeploymentMode.STANDARD: {
                 "size": ModelSize.MEDIUM,
@@ -177,7 +197,7 @@ class DeploymentManager:
                 "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",
                 "use_gpu": gpu_available,
                 "cpu_threads": min(6, cpu_cores),
-                "memory_limit_mb": min(2048, memory_mb // 4)
+                "memory_limit_mb": min(2048, memory_mb // 4),
             },
             DeploymentMode.PERFORMANCE: {
                 "size": ModelSize.LARGE,
@@ -186,7 +206,7 @@ class DeploymentManager:
                 "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",
                 "use_gpu": gpu_available,
                 "cpu_threads": min(8, cpu_cores),
-                "memory_limit_mb": min(4096, memory_mb // 3)
+                "memory_limit_mb": min(4096, memory_mb // 3),
             },
             DeploymentMode.EXTREME: {
                 "size": ModelSize.XLARGE,
@@ -195,7 +215,7 @@ class DeploymentManager:
                 "precision": "fp32" if memory_mb >= 32768 else "fp16",
                 "use_gpu": gpu_available and not integrated_graphics,
                 "cpu_threads": cpu_cores,
-                "memory_limit_mb": min(8192, memory_mb // 2)
+                "memory_limit_mb": min(8192, memory_mb // 2),
             },
             DeploymentMode.CLUSTER: {
                 # Cluster mode uses high settings for master, optimized for worker
@@ -205,8 +225,8 @@ class DeploymentManager:
                 "precision": "fp16",
                 "use_gpu": gpu_available,
                 "cpu_threads": cpu_cores,
-                "memory_limit_mb": min(6144, memory_mb // 2)
-            }
+                "memory_limit_mb": min(6144, memory_mb // 2),
+            },
         }
 
         base_config = configs[mode]
@@ -215,7 +235,7 @@ class DeploymentManager:
     def _generate_processing_config(self, mode: DeploymentMode) -> ProcessingConfig:
         """Generate processing configuration based on deployment mode"""
         cpu_cores = self.hardware_profile.cpu.cores_logical
-        
+
         gpu_available = False
         gpu_memory_gb = 0
         if self.hardware_profile.gpu:
@@ -229,43 +249,43 @@ class DeploymentManager:
                 "enable_real_time": False,
                 "enable_background_learning": False,
                 "max_concurrent_tasks": 1,
-                "timeout_seconds": 120
+                "timeout_seconds": 120,
             },
             DeploymentMode.LITE: {
                 "enable_multimodal": False,
                 "enable_real_time": True,
                 "enable_background_learning": gpu_available or cpu_cores >= 4,
                 "max_concurrent_tasks": 2,
-                "timeout_seconds": 90
+                "timeout_seconds": 90,
             },
             DeploymentMode.STANDARD: {
                 "enable_multimodal": gpu_memory_gb >= 2.0 or cpu_cores >= 6,
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(4, cpu_cores),
-                "timeout_seconds": 60
+                "timeout_seconds": 60,
             },
             DeploymentMode.PERFORMANCE: {
                 "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(8, cpu_cores),
-                "timeout_seconds": 45
+                "timeout_seconds": 45,
             },
             DeploymentMode.EXTREME: {
                 "enable_multimodal": True,
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": cpu_cores,
-                "timeout_seconds": 30
+                "timeout_seconds": 30,
             },
             DeploymentMode.CLUSTER: {
                 "enable_multimodal": True,
                 "enable_real_time": True,
                 "enable_background_learning": True,
-                "max_concurrent_tasks": cpu_cores * 2, # Cluster can handle more via distribution
-                "timeout_seconds": 60
-            }
+                "max_concurrent_tasks": cpu_cores * 2,  # Cluster can handle more via distribution
+                "timeout_seconds": 60,
+            },
         }
 
         return ProcessingConfig(**configs[mode])
@@ -283,37 +303,62 @@ class DeploymentManager:
             best_gpu = max(self.hardware_profile.gpu, key=lambda g: g.memory_total)
             gpu_memory_gb = best_gpu.memory_total / 1024
             gpu_available = gpu_memory_gb > 1.0
-            integrated_graphics = any(keyword in best_gpu.name.lower() 
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
+            integrated_graphics = any(
+                keyword in best_gpu.name.lower()
+                for keyword in [
+                    "intel",
+                    "amd",
+                    "radeon",
+                    "hd graphics",
+                    "uhd graphics",
+                    "integrated",
+                ]
+            )
 
         for feature, min_score in self.feature_requirements.items():
             if feature == "gpu_acceleration":
-                if gpu_available: enabled.append(feature)
-                else: disabled.append(feature)
+                if gpu_available:
+                    enabled.append(feature)
+                else:
+                    disabled.append(feature)
             elif feature == "multimodal_processing":
-                if score >= min_score and (gpu_memory_gb >= 2.0 or self.hardware_profile.cpu.cores_logical >= 8):
+                if score >= min_score and (
+                    gpu_memory_gb >= 2.0 or self.hardware_profile.cpu.cores_logical >= 8
+                ):
                     enabled.append(feature)
-                else: disabled.append(feature)
+                else:
+                    disabled.append(feature)
             elif feature == "real_time_inference":
-                if score >= min_score and (gpu_available or self.hardware_profile.cpu.cores_logical >= 4):
+                if score >= min_score and (
+                    gpu_available or self.hardware_profile.cpu.cores_logical >= 4
+                ):
                     enabled.append(feature)
-                else: disabled.append(feature)
+                else:
+                    disabled.append(feature)
             elif feature == "large_context":
-                if score >= min_score and (self.hardware_profile.memory.total >= 16384 or gpu_memory_gb >= 4.0):
+                if score >= min_score and (
+                    self.hardware_profile.memory.total >= 16384 or gpu_memory_gb >= 4.0
+                ):
                     enabled.append(feature)
-                else: disabled.append(feature)
+                else:
+                    disabled.append(feature)
             elif feature == "background_learning":
-                if score >= min_score and (gpu_available or self.hardware_profile.cpu.cores_logical >= 4):
+                if score >= min_score and (
+                    gpu_available or self.hardware_profile.cpu.cores_logical >= 4
+                ):
                     enabled.append(feature)
-                else: disabled.append(feature)
+                else:
+                    disabled.append(feature)
             elif feature == "concurrent_tasks":
                 if score >= min_score and self.hardware_profile.cpu.cores_logical >= 4:
                     enabled.append(feature)
-                else: disabled.append(feature)
+                else:
+                    disabled.append(feature)
             elif feature == "high_precision":
                 if score >= min_score and not integrated_graphics:
                     enabled.append(feature)
-                else: disabled.append(feature)
+                else:
+                    disabled.append(feature)
             elif score >= min_score:
                 enabled.append(feature)
             else:
@@ -333,59 +378,63 @@ class DeploymentManager:
 
     def _determine_deployment_mode(self) -> DeploymentMode:
         score = self.hardware_profile.ai_capability_score
-        if score >= 90: return DeploymentMode.EXTREME
-        if score >= 70: return DeploymentMode.PERFORMANCE
-        if score >= 50: return DeploymentMode.STANDARD
-        if score >= 30: return DeploymentMode.LITE
+        if score >= 90:
+            return DeploymentMode.EXTREME
+        if score >= 70:
+            return DeploymentMode.PERFORMANCE
+        if score >= 50:
+            return DeploymentMode.STANDARD
+        if score >= 30:
+            return DeploymentMode.LITE
         return DeploymentMode.MINIMAL
 
     def _generate_compression_config(self, mode: DeploymentMode) -> CompressionConfig:
         """Generate compression configuration based on deployment mode"""
         storage_type = self.hardware_profile.storage.disk_type
-        
+
         configs = {
             DeploymentMode.MINIMAL: {
                 "compression_level": "extreme",
                 "vector_dimensions": 128,
                 "chunk_size": 256,
                 "cache_size_mb": 64,
-                "use_quantization": True
+                "use_quantization": True,
             },
             DeploymentMode.LITE: {
                 "compression_level": "high",
                 "vector_dimensions": 256,
                 "chunk_size": 512,
                 "cache_size_mb": 128,
-                "use_quantization": True
+                "use_quantization": True,
             },
             DeploymentMode.STANDARD: {
                 "compression_level": "medium",
                 "vector_dimensions": 512,
                 "chunk_size": 1024,
                 "cache_size_mb": 256,
-                "use_quantization": storage_type != "SSD"
+                "use_quantization": storage_type != "SSD",
             },
             DeploymentMode.PERFORMANCE: {
                 "compression_level": "low",
                 "vector_dimensions": 768,
                 "chunk_size": 2048,
                 "cache_size_mb": 512,
-                "use_quantization": False
+                "use_quantization": False,
             },
             DeploymentMode.EXTREME: {
                 "compression_level": "low",
                 "vector_dimensions": 1024,
                 "chunk_size": 4096,
                 "cache_size_mb": 1024,
-                "use_quantization": False
+                "use_quantization": False,
             },
             DeploymentMode.CLUSTER: {
                 "compression_level": "low",
                 "vector_dimensions": 768,
                 "chunk_size": 2048,
                 "cache_size_mb": 512,
-                "use_quantization": False
-            }
+                "use_quantization": False,
+            },
         }
 
         return CompressionConfig(**configs[mode])
@@ -394,7 +443,7 @@ class DeploymentManager:
         """Apply configuration to system and return settings dict"""
         if config is None:
             config = self.generate_config()
-            
+
         settings = {
             "DEPLOYMENT_MODE": config.mode.value,
             "MODEL_SIZE": config.model_config.size.value,
@@ -416,7 +465,7 @@ class DeploymentManager:
             "TIMEOUT_SECONDS": config.processing_config.timeout_seconds,
             "FEATURES_ENABLED": ", ".join(config.features_enabled),
             "FEATURES_DISABLED": ", ".join(config.features_disabled),
-            "CLUSTER_ROLE": config.cluster_role or "none"
+            "CLUSTER_ROLE": config.cluster_role or "none",
         }
 
         for key, value in settings.items():
@@ -434,10 +483,10 @@ class DeploymentManager:
 
         try:
             config_dict = asdict(config)
-            config_dict['mode'] = config.mode.value
-            config_dict['model_config']['size'] = config.model_config.size.value
-            
-            with open(filepath, 'w', encoding='utf-8') as f:
+            config_dict["mode"] = config.mode.value
+            config_dict["model_config"]["size"] = config.model_config.size.value
+
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(config_dict, f, indent=2, default=str)
 
             logger.info(f"Deployment configuration saved to {filepath}")
@@ -456,43 +505,43 @@ class DeploymentManager:
             return None
 
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            mode = DeploymentMode(data['mode'])
-            
-            model_data = data['model_config']
+            mode = DeploymentMode(data["mode"])
+
+            model_data = data["model_config"]
             model_config = ModelConfig(
-                size=ModelSize(model_data['size']),
-                max_context_length=model_data['max_context_length'],
-                batch_size=model_data['batch_size'],
-                precision=model_data['precision'],
-                use_gpu=model_data['use_gpu'],
-                cpu_threads=model_data['cpu_threads'],
-                memory_limit_mb=model_data['memory_limit_mb']
+                size=ModelSize(model_data["size"]),
+                max_context_length=model_data["max_context_length"],
+                batch_size=model_data["batch_size"],
+                precision=model_data["precision"],
+                use_gpu=model_data["use_gpu"],
+                cpu_threads=model_data["cpu_threads"],
+                memory_limit_mb=model_data["memory_limit_mb"],
             )
 
-            compression_data = data['compression_config']
+            compression_data = data["compression_config"]
             compression_config = CompressionConfig(
-                compression_level=compression_data['compression_level'],
-                vector_dimensions=compression_data['vector_dimensions'],
-                chunk_size=compression_data['chunk_size'],
-                cache_size_mb=compression_data['cache_size_mb'],
-                use_quantization=compression_data['use_quantization']
+                compression_level=compression_data["compression_level"],
+                vector_dimensions=compression_data["vector_dimensions"],
+                chunk_size=compression_data["chunk_size"],
+                cache_size_mb=compression_data["cache_size_mb"],
+                use_quantization=compression_data["use_quantization"],
             )
 
-            processing_data = data['processing_config']
+            processing_data = data["processing_config"]
             processing_config = ProcessingConfig(
-                enable_multimodal=processing_data['enable_multimodal'],
-                enable_real_time=processing_data['enable_real_time'],
-                enable_background_learning=processing_data['enable_background_learning'],
-                max_concurrent_tasks=processing_data['max_concurrent_tasks'],
-                timeout_seconds=processing_data['timeout_seconds']
+                enable_multimodal=processing_data["enable_multimodal"],
+                enable_real_time=processing_data["enable_real_time"],
+                enable_background_learning=processing_data["enable_background_learning"],
+                max_concurrent_tasks=processing_data["max_concurrent_tasks"],
+                timeout_seconds=processing_data["timeout_seconds"],
             )
 
             # Reconstruct HardwareProfile if needed, but usually we just use the current one
             # For simplicity, we'll just use the saved one or re-probe
-            hardware_profile = self.hardware_profile # Fallback to current
+            hardware_profile = self.hardware_profile  # Fallback to current
 
             return DeploymentConfig(
                 mode=mode,
@@ -500,13 +549,14 @@ class DeploymentManager:
                 compression_config=compression_config,
                 processing_config=processing_config,
                 hardware_profile=hardware_profile,
-                features_enabled=data['features_enabled'],
-                features_disabled=data['features_disabled'],
-                cluster_role=data.get('cluster_role')
+                features_enabled=data["features_enabled"],
+                features_disabled=data["features_disabled"],
+                cluster_role=data.get("cluster_role"),
             )
         except Exception as e:
             logger.error(f"Failed to load deployment config: {e}")
             return None
+
 
 def get_deployment_config(cluster_mode: bool = False) -> DeploymentConfig:
     """Helper function to get current deployment configuration"""

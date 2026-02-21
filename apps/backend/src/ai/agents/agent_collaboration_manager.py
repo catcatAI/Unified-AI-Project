@@ -2,11 +2,11 @@ import asyncio
 import logging
 import os
 import sys
-import hashlib # Added missing import
-import json # Added missing import
-import time # Added missing import
+import hashlib  # Added missing import
+import json  # Added missing import
+import time  # Added missing import
 from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, field # Added field import
+from dataclasses import dataclass, field  # Added field import
 from enum import Enum
 
 from core.hsp.connector import HSPConnector
@@ -60,6 +60,7 @@ class AgentCollaborationManager:
             if capability_id not in self.agent_capabilities[agent_id]:
                 self.agent_capabilities[agent_id].append(capability_id)
                 logger.info(f"Registered capability '{capability_id}' for agent '{agent_id}'")
+
     async def find_agent_for_capability(self, capability_id: str) -> Optional[str]:
         """Find an agent that can handle the specified capability."""
         async with self.collaboration_lock:
@@ -68,8 +69,13 @@ class AgentCollaborationManager:
                     return agent_id
             return None
 
-    async def delegate_task(self, requester_agent_id: str, target_agent_id: str,
-                            capability_id: str, parameters: Dict[str, Any]) -> str:
+    async def delegate_task(
+        self,
+        requester_agent_id: str,
+        target_agent_id: str,
+        capability_id: str,
+        parameters: Dict[str, Any],
+    ) -> str:
         """
         Delegate a task from one agent to another.
 
@@ -88,7 +94,7 @@ class AgentCollaborationManager:
             requester_agent_id=requester_agent_id,
             target_agent_id=target_agent_id,
             capability_id=capability_id,
-            parameters=parameters
+            parameters=parameters,
         )
 
         # Store the task
@@ -102,34 +108,38 @@ class AgentCollaborationManager:
             target_ai_id=target_agent_id,
             capability_id_filter=capability_id,
             parameters=parameters,
-            status="pending"
+            status="pending",
         )
 
         try:
             # Send the task request
             success = await self.hsp_connector.send_task_request(
-                payload=task_payload,
-                target_ai_id_or_topic=target_agent_id
+                payload=task_payload, target_ai_id_or_topic=target_agent_id
             )
 
             if success:
                 collaboration_task.status = CollaborationStatus.IN_PROGRESS
-                logger.info(f"Delegated task '{task_id}' from '{requester_agent_id}' to '{target_agent_id}'")
+                logger.info(
+                    f"Delegated task '{task_id}' from '{requester_agent_id}' to '{target_agent_id}'"
+                )
             else:
                 collaboration_task.status = CollaborationStatus.FAILED
                 collaboration_task.error_message = "Failed to send task request via HSP"
-                logger.error(f"Failed to delegate task '{task_id}' from '{requester_agent_id}' to '{target_agent_id}'")
+                logger.error(
+                    f"Failed to delegate task '{task_id}' from '{requester_agent_id}' to '{target_agent_id}'"
+                )
 
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             collaboration_task.status = CollaborationStatus.FAILED
 
             collaboration_task.error_message = str(e)
             logger.error(f"Exception while delegating task '{task_id}': {e}")
         return task_id
 
-    async def _handle_task_result(self, result_payload: HSPTaskResultPayload,
-                                  sender_ai_id: str, envelope: HSPMessageEnvelope):
+    async def _handle_task_result(
+        self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope
+    ):
         """Handle task results from collaborating agents."""
         task_id = result_payload.get("request_id", "")
 
@@ -143,7 +153,9 @@ class AgentCollaborationManager:
                     logger.info(f"Task '{task_id}' completed successfully")
                 else:
                     collaboration_task.status = CollaborationStatus.FAILED
-                    collaboration_task.error_message = result_payload.get("error_details", {}).get("error_message", "Unknown error")
+                    collaboration_task.error_message = result_payload.get("error_details", {}).get(
+                        "error_message", "Unknown error"
+                    )
                     logger.error(f"Task '{task_id}' failed: {collaboration_task.error_message}")
 
     async def get_collaboration_status(self, task_id: str) -> Optional[CollaborationTask]:
@@ -151,7 +163,9 @@ class AgentCollaborationManager:
         async with self.collaboration_lock:
             return self.active_collaborations.get(task_id)
 
-    async def orchestrate_multi_agent_task(self, requester_agent_id: str, task_sequence: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def orchestrate_multi_agent_task(
+        self, requester_agent_id: str, task_sequence: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Orchestrate a sequence of tasks across multiple agents.
         """
@@ -177,14 +191,17 @@ class AgentCollaborationManager:
 
             if not target_agent_id:
                 logger.error(f"No agent found for capability '{capability_id}'")
-                return {"status": "failed", "error": f"No agent found for capability '{capability_id}'"}
-            
+                return {
+                    "status": "failed",
+                    "error": f"No agent found for capability '{capability_id}'",
+                }
+
             # Delegate the task
             task_id = await self.delegate_task(
                 requester_agent_id=requester_agent_id,
                 target_agent_id=target_agent_id,
                 capability_id=capability_id,
-                parameters=parameters
+                parameters=parameters,
             )
 
             # Wait for task completion (with timeout)
@@ -193,7 +210,10 @@ class AgentCollaborationManager:
 
             while asyncio.get_event_loop().time() - start_time < timeout:
                 task_status = await self.get_collaboration_status(task_id)
-                if task_status and task_status.status in [CollaborationStatus.COMPLETED, CollaborationStatus.FAILED]:
+                if task_status and task_status.status in [
+                    CollaborationStatus.COMPLETED,
+                    CollaborationStatus.FAILED,
+                ]:
                     break
                 await asyncio.sleep(0.5)
 

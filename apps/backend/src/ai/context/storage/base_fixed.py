@@ -13,7 +13,9 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ContextType(Enum):
     TOOL = "tool"
@@ -22,10 +24,12 @@ class ContextType(Enum):
     MEMORY = "memory"
     CUSTOM = "custom"
 
+
 class ContextStatus(Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     ARCHIVED = "archived"
+
 
 class Context:
     """上下文数据结构"""
@@ -68,31 +72,32 @@ class Context:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'context_id': self.context_id,
-            'context_type': self.context_type.value,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat(),
-            'status': self.status.value,
-            'metadata': self.metadata,
-            'content': self.content,
-            'version': self.version,
-            'tags': self.tags
+            "context_id": self.context_id,
+            "context_type": self.context_type.value,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "status": self.status.value,
+            "metadata": self.metadata,
+            "content": self.content,
+            "version": self.version,
+            "tags": self.tags,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Context':
+    def from_dict(cls, data: Dict[str, Any]) -> "Context":
         """从字典创建上下文"""
         # 这里可以实现从字典恢复上下文的逻辑
         # 为了简化, 暂时返回一个新的上下文实例
-        context = cls(data['context_id'], ContextType(data['context_type']))
-        context.created_at = datetime.fromisoformat(data['created_at'])
-        context.updated_at = datetime.fromisoformat(data['updated_at'])
-        context.status = ContextStatus(data['status'])
-        context.metadata = data.get('metadata', {})
-        context.content = data.get('content', {})
-        context.version = data.get('version', '1.0')
-        context.tags = data.get('tags', [])
+        context = cls(data["context_id"], ContextType(data["context_type"]))
+        context.created_at = datetime.fromisoformat(data["created_at"])
+        context.updated_at = datetime.fromisoformat(data["updated_at"])
+        context.status = ContextStatus(data["status"])
+        context.metadata = data.get("metadata", {})
+        context.content = data.get("content", {})
+        context.version = data.get("version", "1.0")
+        context.tags = data.get("tags", [])
         return context
+
 
 class Storage(ABC):
     """存储接口"""

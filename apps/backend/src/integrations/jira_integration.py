@@ -7,18 +7,23 @@ import logging
 from typing import Dict, Any, Optional, List
 from unittest.mock import Mock
 
+
 # Mock for syntax validation
 class EnhancedRovoDevConnector:
     def __init__(self):
         self.session = Mock()
-        self.base_urls = {'jira': 'http://mock.url'}
+        self.base_urls = {"jira": "http://mock.url"}
         self.api_token = "mock_token"
         self.user_email = "mock@email.com"
         self.cloud_id = "mock_cloud_id"
-        self.semaphore = asyncio.Semaphore(5) # type: ignore
-    async def start(self): pass
+        self.semaphore = asyncio.Semaphore(5)  # type: ignore
+
+    async def start(self):
+        pass
+
 
 logger = logging.getLogger(__name__)
+
 
 class JiraIntegration:
     """Jira Integration for AI system (SKELETON)"""
@@ -27,14 +32,14 @@ class JiraIntegration:
         """Initialize Jira integration"""
         self.connector = connector
         self.session = self.connector.session
-        self.base_url = self.connector.base_urls.get('jira', '')
+        self.base_url = self.connector.base_urls.get("jira", "")
         self.api_token = self.connector.api_token
         self.user_email = self.connector.user_email
         self.cloud_id = self.connector.cloud_id
         self.headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {self.api_token}'
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_token}",
         }
         logger.info("JiraIntegration Skeleton Initialized")
 
@@ -50,7 +55,16 @@ class JiraIntegration:
         logger.warning(f"SKELETON: get_issue_types for {project_key}, returning empty dict.")
         return {"success": True, "issue_types": [], "count": 0}
 
-    async def create_issue(self, project_key: str, summary: str, issue_type: str = "Task", description: Optional[str] = None, priority: Optional[str] = None, labels: Optional[List[str]] = None, assignee: Optional[str] = None) -> Dict[str, Any]:
+    async def create_issue(
+        self,
+        project_key: str,
+        summary: str,
+        issue_type: str = "Task",
+        description: Optional[str] = None,
+        priority: Optional[str] = None,
+        labels: Optional[List[str]] = None,
+        assignee: Optional[str] = None,
+    ) -> Dict[str, Any]:
         logger.warning("SKELETON: create_issue called, returning empty dict.")
         return {"success": True, "issue": {"key": "MOCK-1"}}
 
@@ -62,7 +76,9 @@ class JiraIntegration:
         logger.warning(f"SKELETON: update_issue for {issue_key}, returning empty dict.")
         return {"success": True, "message": "Mock updated"}
 
-    async def search_issues(self, jql: str, max_results: int = 50, start_at: int = 0) -> Dict[str, Any]:
+    async def search_issues(
+        self, jql: str, max_results: int = 50, start_at: int = 0
+    ) -> Dict[str, Any]:
         logger.warning(f"SKELETON: search_issues for JQL: {jql}, returning empty dict.")
         return {"success": True, "issues": [], "count": 0}
 
@@ -70,9 +86,16 @@ class JiraIntegration:
         logger.warning(f"SKELETON: get_issue_transitions for {issue_key}, returning empty dict.")
         return {"success": True, "transitions": [], "count": 0}
 
-    async def transition_issue(self, issue_key: str, transition_id: str, resolution: Optional[str] = None, comment: Optional[str] = None) -> Dict[str, Any]:
+    async def transition_issue(
+        self,
+        issue_key: str,
+        transition_id: str,
+        resolution: Optional[str] = None,
+        comment: Optional[str] = None,
+    ) -> Dict[str, Any]:
         logger.warning(f"SKELETON: transition_issue for {issue_key}, returning empty dict.")
         return {"success": True, "message": "Mock transitioned"}
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
