@@ -209,8 +209,8 @@ class HSPConnector:
         self._message_retry_counts: Dict[
             str, int
         ] = {}  # New To track retry counts for messages
-        self.ack_timeout_sec = 10  # New Default timeout for ACK
-        self.max_ack_retries = 3  # New Max retries for messages requiring ACK
+        self.ack_timeout_sec = kwargs.get('ack_timeout_sec', 3)  # Configurable ACK timeout
+        self.max_ack_retries = kwargs.get('max_ack_retries', 2)  # Configurable max retries
         self.retry_policy = RetryPolicy(
             max_attempts=self.max_ack_retries, backoff_factor=2
         )  # Initialize retry policy
@@ -1032,9 +1032,17 @@ class HSPConnector:
         # This ensures that external_connector.publish attempts are resilient
         try:
             # The decorated function will handle retries and circuit breaking for the direct publish
-            await self.circuit_breaker(self.retry_policy(self._raw_publish_message))(
+            raw_result = await self.circuit_breaker(self.retry_policy(self._raw_publish_message))(
                 topic, envelope, qos
             )
+            
+            if not raw_result:
+                self.logger.warning(
+                    f"Message {correlation_id} raw publish failed (e.g. target not found). Skipping ACK wait."
+                )
+                self._cache_message(message_id, False)
+                return False
+
             self.logger.debug(
                 f"Message {correlation_id} published via HSP (decorated)."
             )

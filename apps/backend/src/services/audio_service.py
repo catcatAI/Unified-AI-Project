@@ -22,6 +22,25 @@ from system.cluster_manager import cluster_manager, PrecisionLevel
 
 logger = logging.getLogger(__name__)
 
+# Optional dependencies for real STT/TTS
+try:
+    import whisper # type: ignore
+    import tempfile
+    import os
+    WHISPER_AVAILABLE = True
+except ImportError:
+    WHISPER_AVAILABLE = False
+    logger.warning("whisper not installed. AudioService will use mock STT. Run `pip install openai-whisper` to enable.")
+
+try:
+    import edge_tts # type: ignore
+    import tempfile
+    import os
+    EDGE_TTS_AVAILABLE = True
+except ImportError:
+    EDGE_TTS_AVAILABLE = False
+    logger.warning("edge-tts not installed. AudioService will use mock TTS. Run `pip install edge-tts` to enable.")
+
 
 class AudioService:
     """音頻服務：提供語音識別、聲紋辨識、聽覺注意力與場景分析能力"""
@@ -36,6 +55,8 @@ class AudioService:
         self.sampler = AuditorySampler(self.config.get("sampler_config"))
         self.memory = AuditoryMemory(capacity=self.config.get("memory_capacity", 500))
         self.attention = AuditoryAttentionController()
+
+        self.whisper_model = None
 
         self.audio_config = self.config.get(
             "audio_config",
@@ -191,11 +212,8 @@ class AudioService:
         logger.info(
             f"Audio Service: Converting speech to text (ID: {processing_id}) for language '{language}'"
         )
-        return {
-            "text": "mock transcription",
-            "confidence": 0.9,
-            "processing_id": processing_id,
-        }
+        result = await self._perform_speech_recognition(audio_data, language)
+        return dict(list(result.items()) + [("processing_id", processing_id)])
 
     def _generate_processing_id(self, audio_data: bytes) -> str:
         hash_object = hashlib.md5(audio_data if audio_data else b"")
@@ -206,10 +224,50 @@ class AudioService:
     async def _perform_speech_recognition(
         self, audio_data: bytes, language: str
     ) -> Dict[str, Any]:
-        await asyncio.sleep(0.1)
-        return {"text": "This is a mock transcription.", "confidence": 0.9}
+        if not WHISPER_AVAILABLE:
+            await asyncio.sleep(0.1)
+            return {"text": "This is a mock transcription (Install whisper).", "confidence": 0.9}
+        
+        try:
+            loop = asyncio.get_running_loop()
+            
+            # Lazy load model locally
+            if self.whisper_model is None:
+                logger.info("Loading Whisper base model...")
+                self.whisper_model = await loop.run_in_executor(None, whisper.load_model, "base")
+
+            # Write to temporary file for Whisper
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                f.write(audio_data)
+                temp_path = f.name
+                
+            try:
+                # Transcribe
+                def _transcribe():
+                    return self.whisper_model.transcribe(temp_path, language=language.split("-")[0] if language else None)
+                
+                result = await loop.run_in_executor(None, _transcribe)
+                text = result.get("text", "").strip()
+                return {"text": text, "confidence": 0.95}
+            finally:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+            
+        except Exception as e:
+            logger.error(f"Whisper STT failed: {e}")
+            return {"text": "STT Error", "confidence": 0.0}
 
     async def _analyze_sentiment(self, text: str, audio_data: bytes) -> Dict[str, Any]:
+        emotion_system = self.peer_services.get("emotion_system")
+        if emotion_system and hasattr(emotion_system, "analyze_emotional_context"):
+            try:
+                result = emotion_system.analyze_emotional_context({"text": text})
+                # map EmotionType enum string back
+                primary = result.primary_emotion.value if result.primary_emotion else "neutral"
+                return {"sentiment": primary, "confidence": result.emotion_intensity}
+            except Exception as e:
+                logger.error(f"Error calling EmotionSystem from AudioService: {e}")
+
         await asyncio.sleep(0.05)
         return {"sentiment": "neutral", "confidence": 0.7}
 
@@ -229,8 +287,26 @@ class AudioService:
     ) -> Optional[bytes]:
         if text is None:
             text = ""
-        logger.info(f"Audio Service: Converting text to speech for '{text[:50]}...'")
-        return self._generate_demo_speech_audio(text, voice)
+            
+        if not EDGE_TTS_AVAILABLE:
+            logger.info(f"Audio Service: Converting text to speech for '{text[:50]}...' (MOCK)")
+            return self._generate_demo_speech_audio(text, voice)
+            
+        logger.info(f"Audio Service (EdgeTTS): Synthesizing '{text[:50]}...'")
+        try:
+            # Default to a friendly female Chinese voice if not specified.
+            active_voice = voice or "zh-CN-XiaoxiaoNeural"
+            communicate = edge_tts.Communicate(text, active_voice)
+            
+            audio_bytes = b""
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_bytes += chunk["data"]
+            return audio_bytes
+        except Exception as e:
+            logger.error(f"EdgeTTS failed: {e}")
+            # Fallback
+            return self._generate_demo_speech_audio(text, voice)
 
     def _generate_demo_speech_audio(
         self, text: str, voice: Optional[str] = None

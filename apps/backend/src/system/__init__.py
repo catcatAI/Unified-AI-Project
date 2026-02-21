@@ -7,17 +7,7 @@ capabilities for the Unified AI Project.
 import logging
 logger = logging.getLogger(__name__)
 
-# Hardware Detection
-from .hardware_probe import (
-    HardwareProbe,
-    HardwareProfile,
-    CPUInfo,
-    GPUInfo,
-    MemoryInfo,
-    StorageInfo,
-    NetworkInfo,
-    get_hardware_profile
-)
+# Hardware detection was moved to core.hardware.unified_hardware_center
 
 # Deployment Management
 from .deployment_manager import (
@@ -38,16 +28,6 @@ from .integrated_graphics_optimizer import (
 )
 
 __all__ = [
-    # Hardware Detection
-    'HardwareProbe',
-    'HardwareProfile',
-    'CPUInfo',
-    'GPUInfo',
-    'MemoryInfo',
-    'StorageInfo',
-    'NetworkInfo',
-    'get_hardware_profile',
-    
     # Deployment Management
     'DeploymentManager',
     'DeploymentConfig',

@@ -98,11 +98,15 @@ class UnifiedControlCenter:
 
             # 9. HSP Connector (Phase 14)
             # We use a default config for now, assuming environment variables or config file handles details
-            self.components['hsp_connector'] = HSPConnector(self.system_id, self.config.get('hsp', {}))
+            hsp_config = self.config.get('hsp', {})
+            self.components['hsp_connector'] = HSPConnector(self.system_id, **hsp_config)
 
             # 10. LLM Service (Phase 15)
             llm_config_path = self.config.get('llm_config_path')
             self.components['llm_service'] = MultiLLMService(llm_config_path)
+
+            # 11. Emotion System (Phase 12)
+            self.components['emotion_system'] = EmotionSystem(f"{self.system_id}_emotion")
 
             logger.info("✅ All core components initialized successfully.")
         except Exception as e:
