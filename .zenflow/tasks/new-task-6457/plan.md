@@ -95,6 +95,7 @@ Save to `{@artifacts_path}/plan.md`.
   - FastAPI docs accessible; `pytest` suite green
 
 ### [ ] Step: Phase 4 - Node version alignment and Electron build path
+<!-- chat-id: 2bb60174-c206-47fd-8ebd-01583ce844c1 -->
 - Set monorepo Node engines to ≥18 in [./package.json](./package.json) and CI matrix
 - Ensure Electron app installs/builds via pnpm workspace (e.g., `pnpm --filter electron_app install/build`)
 - Centralize native module build flags in [./scripts](./scripts); validate Windows/macOS/Linux where applicable
