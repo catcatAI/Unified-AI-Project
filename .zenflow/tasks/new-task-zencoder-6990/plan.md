@@ -179,9 +179,13 @@ Fix broken tests and ensure test suite passes at >90% rate.
 **Progress So Far**:
 - [x] Fixed 5 critical syntax errors (packages/cli/__init__.py, tests/cli/test_cli.py, tests/core_ai/learning/conftest.py, tests/integration/conftest.py)
 - [x] Added export to packages/cli/__init__.py for main_cli_logic
-- [x] Partially fixed packages/cli/cli/main.py (line 38), ~50+ errors remain
+- [x] Partially fixed packages/cli/cli/main.py (line 38), deferred due to extensive corruption (~100+ errors)
+- [x] Fixed tests/test_quality_assessor.py (missing List import)
+- [x] Fixed tests/test_env.py (assignment syntax, for loop syntax)
+- [x] Fixed apps/backend/src/tools/logic_model/logic_model_nn.py (class name mismatch LogicModelResult → LogicModelPredictionResult)
+- [x] Created fix_main_py.py automated fixing script (partially successful)
 - [ ] Run full test suite to identify failures (BLOCKED: timeout due to hanging imports)
-- [ ] Fix test failures caused by syntax errors (IN PROGRESS: 110+ collection errors found)
+- [ ] Fix test failures caused by syntax errors (IN PROGRESS: 8/110+ files fixed, ~102 remaining)
 - [ ] Fix test failures caused by import errors
 - [ ] Update broken test fixtures and mocks
 - [ ] Document remaining test failures (if <10%)
