@@ -236,5 +236,3 @@ class Logger {
         this._persistToStorage();
     }
 }
-
-window.Logger = Logger;

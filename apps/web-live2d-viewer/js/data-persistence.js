@@ -381,6 +381,3 @@ class StatePersistence extends DataPersistence {
         this.set(this.historyKey, []);
     }
 }
-
-window.DataPersistence = DataPersistence;
-window.StatePersistence = StatePersistence;

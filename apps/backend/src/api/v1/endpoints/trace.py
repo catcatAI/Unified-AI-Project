@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, Any, List, Optional
 import logging
 
-from apps.backend.src.core.tracing import (
+from core.tracing import (
     get_tracer,
     ChainValidator,
     LayerType,

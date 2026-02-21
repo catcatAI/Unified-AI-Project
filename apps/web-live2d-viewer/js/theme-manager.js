@@ -373,5 +373,4 @@ class ThemeManager {
     }
 }
 
-window.ThemeManager = ThemeManager;
-window.theme = new ThemeManager();
+const theme = new ThemeManager();

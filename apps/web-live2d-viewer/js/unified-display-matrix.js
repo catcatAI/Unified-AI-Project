@@ -1353,4 +1353,6 @@ class UnifiedDisplayMatrix {
 }
 
 // 导出
-window.UnifiedDisplayMatrix = UnifiedDisplayMatrix;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = UnifiedDisplayMatrix;
+}

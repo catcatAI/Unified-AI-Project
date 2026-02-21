@@ -1,0 +1,22 @@
+{
+    "models": [
+        {
+            "name": "miara_pro",
+            "displayName": "Miara Pro",
+            "path": "models/miara_pro_en/runtime/miara_pro_t03.model3.json",
+            "description": "Miara Pro Live2D Model (English)",
+            "isDefault": true
+        }
+    ],
+    "settings": {
+        "defaultScale": 1.0,
+        "defaultPosition": {
+            "x": 0,
+            "y": 0
+        },
+        "enablePhysics": true,
+        "enableExpressions": true,
+        "enableMotions": true,
+        "fps": 60
+    }
+}

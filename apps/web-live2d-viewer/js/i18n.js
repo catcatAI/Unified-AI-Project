@@ -467,5 +467,4 @@ class I18nManager {
     }
 }
 
-window.I18nManager = I18nManager;
-window.i18n = new I18nManager();
+const i18n = new I18nManager();

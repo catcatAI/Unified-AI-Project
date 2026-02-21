@@ -411,7 +411,7 @@ class Live2DManager {
         for (const [imageId, imageConfig] of Object.entries(config)) {
             try {
                 const img = new Image();
-                img.src = `local://${imageConfig.path}`;
+                img.src = `${imageConfig.path}`;
                 
                 await new Promise((resolve, reject) => {
                     img.onload = () => {
@@ -456,7 +456,7 @@ class Live2DManager {
     async _loadSingleImage(path, imageId) {
         try {
             const img = new Image();
-            img.src = `local://${path}`;
+            img.src = `${path}`;
             
             await new Promise((resolve, reject) => {
                 img.onload = () => resolve(img);
@@ -1205,4 +1205,6 @@ class Live2DManager {
 }
 
 // Export
-window.Live2DManager = Live2DManager;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Live2DManager;
+}

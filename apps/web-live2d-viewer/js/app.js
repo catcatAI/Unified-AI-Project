@@ -328,22 +328,28 @@ class AngelaApp {
     async _initializeSecurity() {
         this.updateLoadingText('Initializing security...');
         try {
-            // In a web environment, we will use the globally available SecurityUtils instance.
-            if (window.securityUtils) {
-                this.security = window.securityUtils;
-                this.logger.info('Security initialized using global SecurityUtils instance.');
-                // For web, security badge might not be relevant or needs a different check
-                this._updateSecurityBadge(true); // Assume verified for now
-            } else {
-                console.warn('[Security] Global SecurityUtils not found, using a basic mock.');
-                this.security = {
-                    escapeHTML: (str) => str, // Basic mock
-                    detectXSS: (str) => false // Basic mock
-                };
-                this._updateSecurityBadge(false);
+            const backendHost = localStorage.getItem('backend_host') || 'localhost';
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            const response = await fetch(`http://${backendHost}:8000/api/v1/security/sync-key-c`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            const data = await response.json();
+            if (data.key_c) {
+                const result = await window.electronAPI.security.init(data.key_c);
+                if (result.success) {
+                    this.security = window.electronAPI.security;
+                    this.logger.info('Security initialized with remote Key C');
+                    this._updateSecurityBadge(true);
+                    return;
+                }
             }
+            throw new Error('Remote Key C unavailable');
         } catch (error) {
-            this.logger.error('Failed to initialize web security:', error.message);
+            this.logger.warn('Security fallback mode:', error.message);
+            await window.electronAPI.security.init('Angela-Desktop-Sync-Key-C-Fallback');
+            this.security = window.electronAPI.security;
             this._updateSecurityBadge(false);
         }
     }
@@ -861,15 +867,20 @@ class AngelaApp {
 
     _setupUIControls() {
         document.getElementById('btn-settings')?.addEventListener('click', () => {
-            console.log('Settings button clicked (web mock) - Implement web settings here.');
-            // In a web context, you might open a modal or navigate to a settings page.
-            // window.electronAPI?.settings?.open(); // Electron specific, remove
+            window.electronAPI?.settings?.open();
         });
 
-        // Remove Electron-specific window controls
-        document.getElementById('btn-minimize')?.remove();
-        document.getElementById('btn-maximize')?.remove();
-        document.getElementById('btn-close')?.remove();
+        document.getElementById('btn-minimize')?.addEventListener('click', () => {
+            window.electronAPI?.window?.minimize();
+        });
+
+        document.getElementById('btn-maximize')?.addEventListener('click', () => {
+            window.electronAPI?.window?.maximize();
+        });
+
+        document.getElementById('btn-close')?.addEventListener('click', () => {
+            window.electronAPI?.window?.close();
+        });
 
         // Dialogue system
         const dialogueInput = document.getElementById('dialogue-input');
@@ -923,15 +934,12 @@ class AngelaApp {
             addMessage('user', message);
 
             // Send to backend via WebSocket
-            if (this.backendWebSocket && this.backendWebSocket.isConnected()) {
-                this.backendWebSocket.send({
+            if (this.backendClient && this.backendClient.isConnected()) {
+                this.backendClient.sendMessage({
                     type: 'user_message',
                     content: message,
                     timestamp: new Date().toISOString()
                 });
-            } else {
-                console.warn('[App] WebSocket not connected, message not sent.');
-                addMessage('system', 'WebSocket not connected.');
             }
 
             // Clear input
@@ -946,18 +954,13 @@ class AngelaApp {
             }
         });
 
-        // Listen for backend responses (if backendWebSocket is used for this)
-        if (this.backendWebSocket) {
-            this.backendWebSocket.onMessage = (message) => {
-                if (message.type === 'backend_response' && message.content) {
-                    addMessage('angela', message.content);
-                } else if (message.type === 'speech' && message.text) {
-                    // Handle speech response if backend sends it this way
-                    addMessage('angela', message.text);
-                } else {
-                    console.log('[App] Unhandled backend message:', message);
+        // Listen for backend responses
+        if (this.backendClient) {
+            this.backendClient.on('angela_response', (data) => {
+                if (data.response) {
+                    addMessage('angela', data.response);
                 }
-            };
+            });
         }
 
         console.log('[App] Dialogue system initialized');
@@ -965,12 +968,82 @@ class AngelaApp {
 
 
     _setupElectronEvents() {
-        // Electron-specific events are not available in web environment.
-        console.log('[App] Electron events handler disabled in web viewer.');
-        // If necessary, add web-specific event listeners here later.
+        if (!window.electronAPI) return;
+
+        window.electronAPI.on('window-ready', (d) => console.log('Window ready:', d));
+        window.electronAPI.on('screen-changed', (d) => {
+            console.log('Screen changed:', d);
+            this.inputHandler?.updateRegions();
+        });
+
+        // Listen for WebSocket messages from Main process
+        window.electronAPI.on('websocket-message', (message) => {
+            if (this.backendWebSocket) {
+                // Ensure the message is routed correctly
+                this.backendWebSocket._routeMessage(message);
+            }
+        });
+
+        window.electronAPI.on('websocket-connected', () => {
+            if (this.backendWebSocket) {
+                this.backendWebSocket.connected = true;
+                this.backendWebSocket._fireEvent('connected', { success: true });
+            }
+        });
+
+        window.electronAPI.on('websocket-disconnected', () => {
+            if (this.backendWebSocket) {
+                this.backendWebSocket.connected = false;
+                this.backendWebSocket._fireEvent('disconnected', { success: false });
+            }
+        });
+
+        // 處理渲染模式切換
+        window.electronAPI.on('render-mode', (mode) => {
+            if (this.live2dManager) {
+                if (mode === 'live2d' && this.live2dManager.getMode() === 'fallback') {
+                    this.live2dManager.switchToLive2D();
+                    this.showStatus('切換到 Live2D 模式', 2000);
+                } else if (mode === 'fallback' && this.live2dManager.getMode() === 'live2d') {
+                    this.live2dManager.switchToFallback();
+                    this.showStatus('切換到立繫模式', 2000);
+                }
+                // 保存到本地存儲
+                localStorage.setItem('render_mode', mode);
+            }
+        });
+
+        // 設置鍵盤快捷鍵
+        this._setupKeyboardShortcuts();
     }
 
+    /**
+     * 設置鍵盤快捷鍵
+     */
+    _setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // 如果在輸入框中，不處理快捷鍵
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
 
+            switch (e.key) {
+                case '0':
+                    // 雙向切換：Live2D ↔ 立繫模式
+                    if (this.live2dManager?.getMode() === 'fallback') {
+                        this.live2dManager.switchToLive2D();
+                        this.showStatus('切換到 Live2D 模式', 2000);
+                    } else {
+                        this.live2dManager.switchToFallback();
+                        this.showStatus('切換到立繫模式', 2000);
+                    }
+                    break;
+            }
+        });
+
+        console.log('[App] Keyboard shortcuts configured');
+        console.log('[App] 0: 切換 Live2D/立繫 模式');
+    }
 
     async _loadDefaultModel() {
         this.updateLoadingText('Loading model...');
@@ -1123,4 +1196,6 @@ class AngelaApp {
 }
 
 // Export
-window.AngelaApp = AngelaApp;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AngelaApp;
+}

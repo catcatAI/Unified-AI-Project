@@ -1,161 +1,794 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Angela AI Web Live2D Viewer</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Angela AI - Digital Life Companion v6.2.0</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
-            background-color: #333; /* Dark background for visibility */
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
+            /* FIX: Allow pointer events by default, child elements can override if needed */
+            pointer-events: auto;
+        }
+
+        /* 主題變量 */
+        :root {
+            --bg-primary: transparent;
+            --bg-overlay: rgba(0, 0, 0, 0.5);
+            --bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --accent-color: #4facfe;
+            --danger-color: #ff4040;
+            --success-color: #00ff80;
+            --warning-color: #ffcc00;
+            --control-bg: rgba(0, 0, 0, 0.5);
+            --control-bg-hover: rgba(255, 255, 255, 0.8);
+            --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 暗色主題 */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            --bg-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --accent-color: #4facfe;
+            --danger-color: #ff4040;
+            --success-color: #00ff80;
+            --warning-color: #ffcc00;
+            --control-bg: rgba(0, 0, 0, 0.5);
+            --control-bg-hover: rgba(255, 255, 255, 0.8);
+            --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 亮色主題 */
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-overlay: rgba(255, 255, 255, 0.7);
+            --bg-hover: rgba(0, 0, 0, 0.05);
+            --text-primary: #333333;
+            --accent-color: #0077cc;
+            --danger-color: #ff4040;
+            --success-color: #00cc66;
+            --warning-color: #ff9900;
+            --control-bg: rgba(255, 255, 255, 0.7);
+            --control-bg-hover: rgba(255, 255, 255, 0.9);
+            --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 自定義主題 */
+        [data-theme="custom"] {
+            --bg-primary: #1a1a2e;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            --bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --accent-color: #9b59b6;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --control-bg: rgba(155, 89, 182, 0.5);
+            --control-bg-hover: rgba(155, 89, 182, 0.7);
+            --control-bg-disabled: rgba(155, 89, 182, 0.3);
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
         }
-        #live2d-container {
-            position: relative;
-            width: 1280px; /* Base width for 720p */
-            height: 720px; /* Base height for 720p */
-            background-color: transparent;
-            overflow: hidden;
-            border: 1px solid #555; /* Border to show container boundaries */
-        }
+
         #live2d-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Live2D canvas should not block pointer events */
-        }
-        #fallback-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none; /* Hidden by default */
+            z-index: 10;
             pointer-events: none;
         }
-        #fallback-canvas {
-            width: 100%;
-            height: 100%;
+
+        /* Canvas wrapper for fallback character - supports proper scaling */
+        .canvas-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* 尺寸由 UDM 动态设置 (720p = 1280x720 @ 100%) */
+            width: 1280px;
+            height: 720px;
+            z-index: 15;
+            display: none;
+            pointer-events: none;
         }
+
+        .canvas-wrapper.visible {
+            display: block;
+        }
+
+        /* Legacy wrapper for fallback canvas (without proper scaling) */
+        #fallback-wrapper {
+            display: none;
+            /* 继承 canvas-wrapper 的尺寸 (720p = 1280x720) */
+            width: 1280px;
+            height: 720px;
+        }
+
+        #fallback-wrapper.visible {
+            display: block;
+        }
+
         #click-layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 100; /* Above canvas to capture clicks */
-            pointer-events: auto; /* This layer should capture pointer events */
+            z-index: 20;
+            pointer-events: none;
         }
-        #dialogue-overlay {
+
+        /* Auto-hiding top title bar */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #top-bar:hover {
+            opacity: 1;
+        }
+
+        #top-bar.visible {
+            opacity: 1;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .window-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .window-btn.close:hover {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        /* Auto-hiding bottom toolbar */
+        #bottom-bar {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 150px;
-            background: rgba(0,0,0,0.7);
-            color: white;
+            height: 60px;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+            backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
-            padding: 10px;
-            box-sizing: border-box;
-            z-index: 200;
+            z-index: 100;
+            opacity: 0;
+            transition: height 0.3s ease, opacity 0.3s ease;
         }
-        #dialogue-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            border: 1px solid #555;
-            padding: 5px;
+
+        #bottom-bar:hover {
+            opacity: 1;
         }
-        #dialogue-input-container {
+
+        #bottom-bar.visible {
+            opacity: 1;
+        }
+
+        #bottom-bar .toolbar-content {
             display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 15px;
+            height: 60px;
+            min-height: 60px;
+        }
+
+        #dialogue-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 8px 15px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #dialogue-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #dialogue-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(79, 172, 254, 0.6);
+        }
+
+        .toolbar-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Expandable dialogue panel */
+        #bottom-bar {
+            transition: height 0.3s ease, opacity 0.3s ease;
+        }
+
+        #bottom-bar.expanded {
+            height: 400px;
+        }
+
+        #dialogue-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: none;
+            flex-direction: column;
             gap: 10px;
         }
-        #dialogue-input {
-            flex-grow: 1;
-            padding: 5px;
-            background: #444;
-            border: 1px solid #666;
+
+        #bottom-bar.expanded #dialogue-messages {
+            display: flex;
+        }
+
+        #dialogue-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #dialogue-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 70%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.angela {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            align-self: flex-start;
+        }
+
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        /* 8-direction resize handles */
+        .resize-handle {
+            position: absolute;
+            z-index: 95;
+            pointer-events: auto;
+        }
+
+        .resize-handle.top,
+        .resize-handle.bottom {
+            left: 0;
+            right: 0;
+            height: 5px;
+            cursor: ns-resize;
+        }
+
+        .resize-handle.left,
+        .resize-handle.right {
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            cursor: ew-resize;
+        }
+
+        .resize-handle.top {
+            top: 0;
+        }
+
+        .resize-handle.bottom {
+            bottom: 0;
+        }
+
+        .resize-handle.left {
+            left: 0;
+        }
+
+        .resize-handle.right {
+            right: 0;
+        }
+
+        .resize-handle.corner {
+            width: 10px;
+            height: 10px;
+        }
+
+        .resize-handle.top-left {
+            top: 0;
+            left: 0;
+            cursor: nwse-resize;
+        }
+
+        .resize-handle.top-right {
+            top: 0;
+            right: 0;
+            cursor: nesw-resize;
+        }
+
+        .resize-handle.bottom-left {
+            bottom: 0;
+            left: 0;
+            cursor: nesw-resize;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
+        }
+
+        #status-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #status-bar.visible {
+            opacity: 1;
+        }
+
+        #badge-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
+            max-width: 200px;
+            /* 防止溢出 */
+            min-width: 100px;
+            /* 確保最小寬度 */
+            white-space: nowrap;
+            /* 防止文字換行 */
+            overflow: hidden;
+            /* 隱溢出內容 */
+            text-overflow: ellipsis;
+            /* 溢出時顯示省略號 */
+        }
+
+        .badge.secure {
+            background: rgba(0, 255, 128, 0.2);
+            color: #00ff80;
+            border-color: rgba(0, 255, 128, 0.4);
+        }
+
+        .badge.unsecure {
+            background: rgba(255, 64, 64, 0.2);
+            color: #ff4040;
+            border-color: rgba(255, 64, 64, 0.4);
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
             color: white;
         }
-        #btn-send {
-            padding: 5px 10px;
-            background: #007bff;
-            color: white;
+
+        #loading-overlay.hidden {
+            display: none;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #fff;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #loading-text {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar-fill.complete {
+            background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 40;
+            opacity: 0.8;
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(0);
+        }
+
+        #controls.controls-hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+
+        #controls.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .control-btn {
+            width: 32px;
+            height: 32px;
             border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
             cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        #visual-feedback {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 200, 100, 0.8), transparent);
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%);
+            z-index: 150;
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                width: 20px;
+                height: 20px;
+                opacity: 1;
+            }
+
+            100% {
+                width: 100px;
+                height: 100px;
+                opacity: 0;
+            }
+        }
+
+        #audio-visualizer {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 3px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #audio-visualizer.visible {
+            opacity: 1;
+        }
+
+        .audio-bar {
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(to top, #4CAF50, #8BC34A);
+            border-radius: 2px;
+            animation: audio-wave 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes audio-wave {
+            0% {
+                height: 10px;
+            }
+
+            100% {
+                height: 30px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div id="live2d-container">
+    <div id="loading-overlay">
+        <div class="loader"></div>
+        <div id="loading-text">Loading Angela AI...</div>
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+    </div>
+
+    <div id="container">
+        <!-- Auto-hiding top title bar -->
+        <div id="top-bar">
+            <div class="window-title">Angela AI</div>
+            <div class="window-controls">
+                <button class="window-btn minimize" id="btn-minimize" title="Minimize">−</button>
+                <button class="window-btn maximize" id="btn-maximize" title="Maximize">□</button>
+                <button class="window-btn close" id="btn-close" title="Close">✕</button>
+            </div>
+        </div>
+
+        <!-- Canvas layers -->
         <canvas id="live2d-canvas"></canvas>
-        <div id="fallback-wrapper">
-            <canvas id="fallback-canvas"></canvas>
+        <div class="canvas-wrapper" id="fallback-wrapper">
+            <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
         </div>
         <div id="click-layer"></div>
+
+        <!-- Auto-hiding bottom toolbar with dialogue -->
+        <div id="bottom-bar">
+            <div id="dialogue-messages"></div>
+            <div class="toolbar-content">
+                <button class="toolbar-btn" id="btn-toggle-dialogue" title="Toggle Chat">💬</button>
+                <button class="toolbar-btn" id="btn-settings" title="Settings">⚙️</button>
+                <input type="text" id="dialogue-input" placeholder="與 Angela 對話..." />
+                <button class="toolbar-btn" id="btn-send" title="Send">📤</button>
+            </div>
+        </div>
+
+        <!-- 8-direction resize handles -->
+        <div class="resize-handle top"></div>
+        <div class="resize-handle bottom"></div>
+        <div class="resize-handle left"></div>
+        <div class="resize-handle right"></div>
+        <div class="resize-handle corner top-left"></div>
+        <div class="resize-handle corner top-right"></div>
+        <div class="resize-handle corner bottom-left"></div>
+        <div class="resize-handle corner bottom-right"></div>
     </div>
 
-    <div id="dialogue-overlay">
-        <div id="dialogue-messages"></div>
-        <div id="dialogue-input-container">
-            <input type="text" id="dialogue-input" placeholder="Type your message...">
-            <button id="btn-send">Send</button>
-        </div>
-    </div>
+    <div id="status-bar"></div>
+
+    <div id="audio-visualizer"></div>
 
     <!-- Live2D Cubism Web SDK -->
-    <script src="libs/live2dcubismcore.min.js"></script>
-    <script src="libs/live2dframework/dist/live2dcubismframework.bundle.js"></script>
-    <script src="libs/live2dframework/live2dcubism-init.js"></script>
-    <script src="libs/live2d-fallback.js"></script>
-
-    <!-- Angela AI Core Scripts -->
-    <script src="js/logger.js"></script>
-    <script src="js/data-persistence.js"></script>
-    <script src="js/frontend-utils.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/theme-manager.js"></script>
-    <script src="js/security-utils.js"></script>
-
-    <script src="js/state-matrix.js"></script>
-    <script src="js/performance-manager.js"></script>
-    <script src="js/maturity-tracker.js"></script>
-    <script src="js/precision-manager.js"></script>
-
-    <script src="js/live2d-cubism-wrapper.js"></script>
-
-    <!-- Character Configuration - UDM and Live2DManager depend on these -->
-    <script src="js/angela-character-config.js"></script>
-    <script src="js/angela-character-images-config.js"></script>
-
-    <!-- Unified Display Matrix (UDM) - Core dependency -->
-    <script src="js/unified-display-matrix.js"></script>
-
-    <!-- Character System & Input -->
-    <script src="js/layer-renderer.js"></script>
-    <script src="js/live2d-manager.js"></script>
-    <script src="js/input-handler.js"></script>
-    <script src="js/character-touch-detector.js"></script>
-
-    <!-- Backend & API Clients -->
-    <script src="js/backend-websocket.js"></script>
-    <script src="js/api-client.js"></script>
-    <!-- Placeholder for Dialogue UI if it's a separate file -->
-    <!-- <script src="js/dialogue-ui.js"></script> -->
-
-    <!-- Main App Initialization -->
+    <script src="libs/live2dcubismcore.min.js?v=3"></script>
+    <!-- Live2D Cubism Framework SDK 5 (bundled) -->
+    <!-- Framework initialization wrapper -->
+    <script src="libs/live2dframework/live2dcubism-init.js?v=3"></script>
+    <!-- Fallback Local SDK -->
+    <script src="libs/live2d-fallback.js?v=3"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('[WebViewer] Starting Angela App initialization...');
+        console.log('[Init] Checking Live2D SDK status...');
+        console.log('[Init] window.Live2DCubismCore:', typeof window.Live2DCubismCore);
+        // 如果 CDN 加载失败，使用本地 fallback
+        if (typeof window.Live2DCubismCore === 'undefined') {
+            console.log('[Init] CDN failed, using local fallback SDK');
+            window.loadLocalLive2DSDK();
+        } else {
+            console.log('[Init] CDN loaded successfully');
+        }
+    </script>
+
+    <!-- Hardware Detection -->
+    <script src="js/hardware-config.js?v=3"></script>
+    <script src="js/hardware-detection-enhanced.js?v=3"></script>
+    <script src="js/hardware-detection.js?v=3"></script>
+
+    <!-- Security Utils -->
+    <script src="js/security-utils.js?v=3"></script>
+    <script src="js/storage-manager.js?v=3"></script>
+
+    <!-- Core Scripts -->
+    <script src="js/logger.js?v=3"></script>
+    <script src="js/data-persistence.js?v=3"></script>
+    <script src="js/frontend-utils.js?v=3"></script>
+    <script src="js/i18n.js?v=3"></script>
+    <script src="js/theme-manager.js?v=3"></script>
+    <script src="js/backend-websocket.js?v=3"></script>
+    <script src="js/api-client.js?v=3"></script>
+
+    <!-- Angela Systems -->
+    <script src="js/state-matrix.js?v=3"></script>
+    <script src="js/performance-manager.js?v=3"></script>
+    <script src="js/maturity-tracker.js?v=3"></script>
+    <script src="js/precision-manager.js?v=3"></script>
+
+    <!-- Live2D Core -->
+    <script src="js/live2d-cubism-wrapper.js?v=3"></script>
+
+    <!-- Character Configuration - UDM 依赖 -->
+    <script src="js/angela-character-config.js?v=3"></script>
+
+    <!-- Unified Display Matrix (UDM) - 核心依赖，最先加载 -->
+    <script src="js/unified-display-matrix.js?v=3"></script>
+
+    <!-- Character System -->
+    <script src="js/character-touch-detector.js?v=3"></script>
+    <script src="js/haptic-handler.js?v=3"></script>
+    <!-- Character Images Configuration - 在 live2d-manager.js 之前加載 -->
+    <script src="js/angela-character-images-config.js?v=3"></script>
+    <script src="js/layer-renderer.js?v=3"></script>
+    <script src="js/live2d-manager.js?v=3"></script>
+
+    <!-- Input & Audio -->
+    <script src="js/input-handler.js?v=3"></script>
+    <script src="js/audio-handler.js?v=3"></script>
+
+    <!-- UI & Utils -->
+    <script src="js/z-index-manager.js?v=3"></script>
+    <script src="js/error-handler.js?v=3"></script>
+    <script src="js/wallpaper-handler.js?v=3"></script>
+    <script src="js/plugin-manager.js?v=3"></script>
+    <script src="js/user-manager.js?v=3"></script>
+
+    <!-- Hardware Integration -->
+    <script src="js/hardware-integration.js?v=3"></script>
+    <script src="js/hardware-enhancement-patch.js?v=3"></script>
+    <script src="js/laptop-optimizer.js?v=3"></script>
+
+    <!-- Detection System -->
+    <script src="js/driver-detector.js?v=3"></script>
+    <script src="js/availability-manager.js?v=3"></script>
+    <script src="js/unified-detection.js?v=3"></script>
+
+    <!-- Main App -->
+    <script src="js/app.js?v=3"></script>
+
+    <!-- Initialize Angela App -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('[App] Starting Angela App initialization...');
             // Mock Electron API for web environment
             window.electronAPI = {
                 settings: {
@@ -167,7 +800,8 @@
                     close: () => console.log('Window closed (web mock)'),
                     setBounds: (bounds) => console.log('Window setBounds (web mock):', bounds),
                     setAlwaysOnTop: (flag) => console.log('Window setAlwaysOnTop (web mock):', flag),
-                    setIgnoreMouseEvents: (ignore, options) => console.log('Window setIgnoreMouseEvents (web mock):', ignore, options)
+                    setIgnoreMouseEvents: (ignore, options) => console.log('Window setIgnoreMouseEvents (web mock):', ignore, options),
+                    setClickThroughRegions: (regions) => console.log('Mock setClickThroughRegions:', regions)
                 },
                 security: {
                     init: async (keyC) => {
@@ -177,13 +811,16 @@
                 },
                 on: (channel, callback) => {
                     console.log(`ElectronAPI.on called for channel: ${channel} (web mock)`);
-                    // Implement a basic event system if needed, or just log
+                },
+                platform: 'web',
+                hardware: {
+                    getDiagnostics: async () => ({ status: 'mock' })
                 }
             };
             window.angelaApp = new AngelaApp();
-            await window.angelaApp.initialize();
         });
     </script>
 </body>
-</html>
 
+</html>
+ 
