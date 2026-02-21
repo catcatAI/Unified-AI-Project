@@ -12,7 +12,7 @@ from packages.cli.main import main_cli_logic
 @pytest.mark.asyncio
 async def test_cli_no_args():
     """Test CLI response when no arguments are provided."""
-    with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+    with patch('sys.stderr', new_callable=StringIO) as mock_stderr, \
          patch('sys.argv', ['main.py']):
         await main_cli_logic()
         # We expect some form of help or usage message to be printed to stderr
