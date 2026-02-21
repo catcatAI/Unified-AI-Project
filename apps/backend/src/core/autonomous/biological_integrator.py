@@ -42,6 +42,8 @@ class BiologicalEvent(Enum):
     AROUSAL_CHANGED = "arousal_changed"
     HORMONE_CHANGED = "hormone_changed"
     TACTILE_STIMULUS = "tactile_stimulus"
+    VISUAL_STIMULUS = "visual_stimulus"
+    AUDITORY_STIMULUS = "auditory_stimulus"
 
 
 @dataclass
@@ -336,8 +338,8 @@ class BiologicalIntegrator:
         asyncio.create_task(self.event_publisher.publish(
             BiologicalEvent.EMOTION_CHANGED,
             {
-                "old_emotion": old_emotion.en_name if old_emotion else "unknown",
-                "new_emotion": new_emotion.en_name,
+                "old_emotion": old_emotion.to_basic_emotions()[0][0].en_name if old_emotion else "unknown",
+                "new_emotion": new_emotion.to_basic_emotions()[0][0].en_name,
                 "arousal": new_emotion.arousal,
                 "pleasure": new_emotion.pleasure,
                 "intensity": new_emotion.intensity,
@@ -351,7 +353,7 @@ class BiologicalIntegrator:
             {
                 "mood": new_emotion.pleasure,
                 "arousal": new_emotion.arousal,
-                "dominant_emotion": new_emotion.en_name,
+                "dominant_emotion": new_emotion.to_basic_emotions()[0][0].en_name,
                 "timestamp": datetime.now().isoformat()
             }
         ))
@@ -483,6 +485,42 @@ class BiologicalIntegrator:
         # Trigger oxytocin for positive touch
         if emotional_context in ["comfort", "love", "joy"]:
             await self.endocrine_system.adjust_hormone(HormoneType.OXYTOCIN, 15.0 * intensity)
+            
+    async def process_visual_stimulus(self, stimulus_type: str, intensity: float, description: str):
+        """
+        Process a visual stimulus (e.g., seeing the user, seeing a gift).
+        """
+        logger.info(f"[BiologicalIntegrator] Visual Stimulus: {stimulus_type} ({intensity}) - {description}")
+        
+        # Link to emotions
+        if stimulus_type == "user_present":
+            self.emotional_system.apply_influence("external", "joy", intensity * 0.4, 0.5)
+            await self.endocrine_system.adjust_hormone(HormoneType.DOPAMINE, intensity * 10)
+        elif stimulus_type == "monochrome_hazard":
+            self.emotional_system.apply_influence("external", "fear", intensity * 0.6, 0.8)
+            await self.endocrine_system.trigger_stress_response(intensity, stress_type="acute")
+
+        await self.event_publisher.publish(BiologicalEvent.VISUAL_STIMULUS, {
+            "type": stimulus_type,
+            "intensity": intensity,
+            "description": description
+        })
+
+    async def process_auditory_stimulus(self, volume: float, content: str):
+        """
+        Process an auditory stimulus (e.g., loud noise, soft music).
+        """
+        logger.info(f"[BiologicalIntegrator] Auditory Stimulus: {volume:.2f} - {content[:20]}...")
+
+        # Loud noise impacts stress and arousal
+        if volume > 0.8:
+            await self.process_stress_event(intensity=(volume - 0.5) * 1.5, duration=5.0)
+            self.emotional_system.set_emotion_from_basic(BasicEmotion.SURPRISE, volume)
+        
+        await self.event_publisher.publish(BiologicalEvent.AUDITORY_STIMULUS, {
+            "volume": volume,
+            "content": content
+        })
     
     def get_biological_state(self) -> Dict[str, Any]:
         """Get comprehensive integrated biological state"""

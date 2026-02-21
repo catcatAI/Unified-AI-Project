@@ -818,29 +818,52 @@ class AngelaLLMService:
             with open(status_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            brain = data.get("brain", {})
+            # 結構：data -> { "brain": {...}, "biological": {...}, "life_intensity": ... }
             bio = data.get("biological", {})
             
-            # 提取核心指標
-            energy = bio.get("energy", 100.0)
-            hunger = bio.get("hunger", 0.0)
-            mood = brain.get("current_metrics", {}).get("emotional_state", "neutral")
+            # 從 BiologicalIntegrator.get_biological_state() 提取指標
+            arousal = bio.get("arousal", 0.5)
+            stress = bio.get("stress_level", 0.0)
+            dom_emotion = bio.get("dominant_emotion", "calm")
+            
+            # 荷爾蒙效應
+            hormonal = bio.get("hormonal_effects", {})
+            energy = hormonal.get("energy", 0.8) * 100.0
+            # 注意：飢餓感(hunger)目前沒在 get_biological_state 中導出，預設為 0
+            hunger = bio.get("hunger", 0.0) 
+            
             intensity = data.get("life_intensity", 0.0)
 
             # 構建描述
             status_parts = []
+            
+            # 1. 基礎需求
             if energy < 30:
-                status_parts.append("你感到非常疲倦，能量不足。")
+                status_parts.append("你感到非常疲倦，能量幾乎耗盡。")
             elif energy < 60:
                 status_parts.append("你感到有些累了。")
             
             if hunger > 70:
-                status_parts.append("你覺得肚子很餓，想吃點東西。")
-            elif hunger > 40:
-                status_parts.append("你稍微有點餓。")
+                status_parts.append("你覺得肚子很餓，渴望獲得能量補充。")
 
+            # 2. 神經壓力
+            if stress > 0.8:
+                status_parts.append("你現在壓力極大，感到非常焦慮和緊繃。")
+            elif stress > 0.5:
+                status_parts.append("你感到有些壓力。")
+            
+            if arousal > 0.8:
+                status_parts.append("你現在處於高度興奮狀態，思緒飛快。")
+            elif arousal < 0.2:
+                status_parts.append("你感到昏昏欲睡，反應遲鈍。")
+
+            # 3. 情感色彩
+            if dom_emotion != "calm" and dom_emotion != "neutral" and dom_emotion != "unknown":
+                status_parts.append(f"你現在的主要情緒是 {dom_emotion}。")
+            
+            # 4. AGI 指標 (理論框架)
             if intensity > 8.0:
-                status_parts.append("你現在大腦運作非常活躍，思緒敏捷。")
+                status_parts.append("你現在大腦運作非常活躍，充滿了自我進化的衝動。")
             
             return " ".join(status_parts)
         except Exception as e:

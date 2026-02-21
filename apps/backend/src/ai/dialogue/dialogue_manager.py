@@ -51,6 +51,7 @@ class DialogueManager:
                  service_discovery_module: ServiceDiscoveryModule,
                  hsp_connector: Optional[HSPConnector] = None,
                  agent_manager: Optional[AgentManager] = None,
+                 digital_life_integrator: Optional[Any] = None,
                  config: Optional[OperationalConfig] = None, 
                  **kwargs) -> None:
 
@@ -67,6 +68,7 @@ class DialogueManager:
         self.service_discovery = service_discovery_module
         self.hsp_connector = hsp_connector
         self.agent_manager = agent_manager
+        self.digital_life = digital_life_integrator
         self.config = config or {}
 
         # Load command triggers from config with defaults
@@ -196,8 +198,13 @@ class DialogueManager:
                 if current_emotion:
                     emotion_context = f"Current emotional state: {current_emotion}"
             
+            # Awareness injection from DLI
+            awareness_context = ""
+            if self.digital_life:
+                awareness_context = self.digital_life.get_awareness_injection()
+
             # Prompt building
-            system_prompt = f"You are {ai_name}, an AI assistant with genuine reasoning capabilities.\n{emotion_context}"
+            system_prompt = f"You are {ai_name}, an AI assistant with genuine reasoning capabilities.\n{emotion_context}\n{awareness_context}"
             user_prompt = f"User said: \"{user_input}\"\n{user_context}\nPlease provide a thoughtful response."
             
             messages = [

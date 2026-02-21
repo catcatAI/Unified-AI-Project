@@ -27,6 +27,7 @@ import uuid
 import json
 from pathlib import Path
 import logging
+from .kinetic_validator import KineticValidator
 
 logger = logging.getLogger(__name__)
 
@@ -261,6 +262,9 @@ class ActionExecutor:
         self._executor_task: Optional[asyncio.Task] = None
         self._semaphore = asyncio.Semaphore(self.max_concurrent)
         
+        # Kinetic Validation
+        self.kinetic_validator = KineticValidator(self.config.get("kinetic", {}))
+        
         # Callbacks
         self._pre_execution_callbacks: List[Callable[[Action], None]] = []
         self._post_execution_callbacks: List[Callable[[Action, ActionResult], None]] = []
@@ -277,6 +281,7 @@ class ActionExecutor:
         # Dynamic Parameters Integration
         self._dynamic_params_manager: Optional[Any] = None
         self._dynamic_params_enabled: bool = self.config.get('enable_dynamic_params', True)
+        self._dli: Optional[Any] = None
     
     async def initialize(self):
         """Initialize the action executor"""
@@ -339,6 +344,27 @@ class ActionExecutor:
                 except Exception as e:
                     logger.warning(f"Pre-execution callback failed: {e}")
             
+            # Apply biological strain if possible
+            strain_factor = 0.0
+            if self._dli:
+                bio = self._dli.biological_integrator.get_biological_state()
+                stress = bio.get("stress_level", 0.0)
+                arousal = bio.get("arousal", 0.5)
+                # Fatigue is high if stress is high and arousal is low
+                strain_factor = (stress * 0.7) + ((1.0 - arousal) * 0.3)
+                
+                # Apply delay based on strain
+                if strain_factor > 0.6:
+                    delay = strain_factor * 2.0
+                    logger.info(f"[ActionExecutor] Applying behavioral strain delay: {delay:.2f}s")
+                    await asyncio.sleep(delay)
+
+            if self.kinetic_validator:
+                action.parameters = self.kinetic_validator.apply_biological_strain(
+                    action.parameters, 
+                    strain_factor
+                )
+
             # Validate action
             is_valid, error_msg = await self._validate_action(action)
             if not is_valid:
@@ -524,7 +550,19 @@ class ActionExecutor:
                 is_critical=False
             )
         )
+        
+        self.register_safety_check(
+            SafetyCheck(
+                check_name="biological_integrity",
+                check_function=self._check_biological_integrity,
+                is_critical=True
+            )
+        )
     
+    def _check_biological_integrity(self, action: Action) -> tuple[bool, Optional[str]]:
+        """Check if action violates biological/physical limits"""
+        return self.kinetic_validator.validate_action(action.name, action.parameters)
+
     def _check_parameters(self, action: Action) -> tuple[bool, Optional[str]]:
         """Check if required parameters are present"""
         # Basic check - ensure parameters is a dict
@@ -625,6 +663,11 @@ class ActionExecutor:
     def set_bridge(self, bridge: 'ActionExecutionBridge'):
         """Set the ActionExecutionBridge for integration"""
         self._bridge = bridge
+    
+    def set_digital_life_integrator(self, dli: Any):
+        """設置數位生命整合器"""
+        self._dli = dli
+        logger.info("[ActionExecutor] DigitalLifeIntegrator connected")
     
     # ========== NEW: Integration with Dynamic Parameters ==========
     

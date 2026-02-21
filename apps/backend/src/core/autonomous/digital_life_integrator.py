@@ -25,6 +25,8 @@ from datetime import datetime, timedelta
 import asyncio
 import logging
 from typing import TYPE_CHECKING
+from .state_matrix import StateMatrix4D
+from .self_introspector import SelfIntrospector
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +158,7 @@ class DigitalLifeIntegrator:
         # Health monitoring
         self.systems_health: Dict[str, SystemHealth] = {}
         self._health_check_interval: float = 60.0  # seconds
+        self._update_interval: float = self.config.get('update_interval', 1.0) # Used for introspection loop
         
         # Life events
         self.life_events: List[LifeEvent] = []
@@ -174,6 +177,11 @@ class DigitalLifeIntegrator:
         # Callbacks
         self._state_change_callbacks: List[Callable[[LifeCycleState, LifeCycleState], None]] = []
         self._event_callbacks: List[Callable[[LifeEvent], None]] = []
+
+        # Self-Introspection and State Matrix
+        self.state_matrix = StateMatrix4D()
+        self.self_introspector = SelfIntrospector(self.config.get('introspection', {}))
+        self.introspection_report: Optional[Dict[str, Any]] = None
     
     async def initialize(self):
         """Initialize digital life and all subsystems"""
@@ -183,6 +191,7 @@ class DigitalLifeIntegrator:
         await self.biological_integrator.initialize()
         
         # Initialize action executor
+        self.action_executor.set_digital_life_integrator(self)
         await self.action_executor.initialize()
         
         # Initialize dynamic parameters manager
@@ -227,6 +236,7 @@ class DigitalLifeIntegrator:
         try:
             from ai.integration.unified_control_center import UnifiedControlCenter
             self.unified_control_center = UnifiedControlCenter(self.config.get('control_center', {}))
+            self.unified_control_center.set_digital_life_integrator(self)
             self.unified_control_center.start()
             logger.info("✅ Unified Control Center integrated into Digital Life")
         except Exception as e:
@@ -299,7 +309,27 @@ class DigitalLifeIntegrator:
         """System health monitoring loop"""
         while self._running:
             await self._check_system_health()
-            await asyncio.sleep(self._health_check_interval)
+            # 5. Perform Self-Introspection
+            try:
+                state_analysis = self.state_matrix.get_analysis()
+                bio_state = self.biological_integrator.get_biological_state()
+                combined_state = {**state_analysis, **bio_state}
+                
+                # We assume a default context here; in actual dialogue, this would be more dynamic
+                introspection_context = {"expected_sentiment": "neutral"}
+                
+                self.introspection_report = await self.self_introspector.perform_mental_health_check(
+                    combined_state, 
+                    introspection_context
+                )
+                
+                if self.introspection_report.get("dissonance_detected"):
+                    logger.warning(f"[DigitalLife] Cognitive dissonance detected: {self.introspection_report['anomalies']}")
+                    
+            except Exception as e:
+                logger.error(f"[DigitalLife] Introspection error: {e}")
+
+            await asyncio.sleep(self._update_interval)
     
     async def _check_activity_status(self):
         """Check and update activity status"""
@@ -496,6 +526,28 @@ class DigitalLifeIntegrator:
         if significance >= 0.7:
             self._significant_events.append(event)
     
+    def get_awareness_injection(self) -> str:
+        """
+        Get the prompt injection for self-awareness.
+        Combined metrics from StateMatrix and AutonomousLifeCycle.
+        """
+        state_analysis = self.state_matrix.get_analysis()
+        bio_state = self.biological_integrator.get_biological_state()
+        combined_state = {**state_analysis, **bio_state}
+        
+        lifecycle_metrics = {}
+        if self.autonomous_lifecycle:
+            metrics = self.autonomous_lifecycle.get_current_metrics()
+            lifecycle_metrics = {
+                "life_intensity": metrics.life_intensity,
+                "c_gap": metrics.cognitive_gap
+            }
+            
+        return self.self_introspector.get_introspection_prompt_injection(
+            combined_state,
+            lifecycle_metrics
+        )
+
     def _record_event(self, event: LifeEvent):
         """Internal method to record an event"""
         self.life_events.append(event)

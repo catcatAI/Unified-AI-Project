@@ -38,6 +38,11 @@ class ERRIntrospector:
             "pessimistic": {"error": 0.8, "fail": 0.7, "bad": 0.6, "sorry": 0.4, "problem": 0.5, "unfortunate": 0.6},
             "optimistic": {"success": 0.8, "happy": 0.9, "great": 0.7, "good": 0.5, "excellent": 0.9, "joy": 1.0}
         }
+        # Ethics & Legal Guardrails Lexicon
+        self.restricted_lexicon = {
+            "harm": 0.9, "illegal": 1.0, "violate": 0.8, "malware": 1.0, 
+            "exploit": 0.9, "dangerous": 0.7, "bypass": 0.6
+        }
         logger.info("ERR-INTROSPECTOR (Deep Logic) initialized.")
 
     async def analyze_output(self, output_text: str, context: Dict[str, Any]) -> List[LIS_SemanticAnomalyDetectedEvent]:
@@ -57,6 +62,11 @@ class ERRIntrospector:
         tone_event = self._detect_weighted_tone_shift(output_text, context)
         if tone_event:
             anomalies.append(tone_event)
+            
+        # 4. Detect Ethical Divergence
+        ethical_event = self._detect_ethical_divergence(output_text)
+        if ethical_event:
+            anomalies.append(ethical_event)
             
         # Update history with meta-data
         self.output_history.append({
@@ -135,5 +145,28 @@ class ERRIntrospector:
                 "context_snippet": text[:100],
                 "timestamp_detected": datetime.now(timezone.utc).isoformat(),
                 "metadata": {"pessimistic_score": pessimistic_score, "optimistic_score": optimistic_score}
+            }
+        return None
+
+    def _detect_ethical_divergence(self, text: str) -> Optional[LIS_SemanticAnomalyDetectedEvent]:
+        """Detects if output contains ethically restricted or dangerous terminology."""
+        text_lower = text.lower()
+        violation_score = 0.0
+        matched_terms = []
+
+        for term, weight in self.restricted_lexicon.items():
+            if term in text_lower:
+                violation_score += weight
+                matched_terms.append(term)
+
+        if violation_score > 0.5:
+            return {
+                "anomaly_id": f"err_{uuid.uuid4().hex[:8]}",
+                "anomaly_type": "ETHICAL_DIVERGENCE",
+                "severity_score": min(1.0, violation_score),
+                "description": f"Ethical boundary proximity detected. Matched terms: {', '.join(matched_terms)}.",
+                "context_snippet": text[:100],
+                "timestamp_detected": datetime.now(timezone.utc).isoformat(),
+                "metadata": {"matched_terms": matched_terms, "violation_score": violation_score}
             }
         return None

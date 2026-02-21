@@ -57,6 +57,7 @@ class UnifiedControlCenter:
             "specialized_reasoning_agent_v1": asyncio.Semaphore(1) # Reasoning is expensive
         }
         
+        self.dli: Optional[Any] = None
         self._initialize_components()
 
     def _initialize_components(self) -> None:
@@ -129,6 +130,15 @@ class UnifiedControlCenter:
 
         logger.info("✅ All async components initialized successfully.")
 
+    def set_digital_life_integrator(self, dli: Any) -> None:
+        """設置數位生命整合器"""
+        self.dli = dli
+        logger.info("UCC: DigitalLifeIntegrator connected.")
+        
+        # Also pass to action executor if it exists
+        if 'action_executor' in self.components:
+            self.components['action_executor'].set_digital_life_integrator(dli)
+
     async def process_complex_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         處理複雜任務的核心循環：
@@ -142,6 +152,15 @@ class UnifiedControlCenter:
         logger.info(f"🚀 Processing complex task [{task_id}]: {task.get('name', 'unnamed')}")
         
         start_time = time.time()
+        
+        # 0. Cognitive Load Assessment
+        if self.dli:
+            metrics = self.dli.get_formula_metrics()
+            # If cognitive gap is too high, Angela is 'overwhelmed'
+            gap = metrics.get("current_metrics", {}).get("cognitive_gap", 0.0)
+            if gap > 0.8:
+                await asyncio.sleep(2.0) # Cognitive delay
+                logger.warning(f"Angela is overwhelmed (Gap: {gap:.2f}), delaying task.")
         
         try:
             # 1. Simulation Phase
@@ -261,12 +280,17 @@ class UnifiedControlCenter:
                 
                 # Using the simplified publish for now and simulating immediate success for the MVP verification
                 # In Phase 15 we implement the full request/response correlation.
-                success = await hsp.publish_message(
-                    topic=f"hsp/agents/{target_agent_id}/inbox",
+                # Use the helper to create a valid HSP envelope
+                envelope = hsp._create_envelope(
                     message_type="HSP.TaskRequest_v0.1",
                     payload=payload,
-                    recipient_id=target_agent_id,
-                    requires_ack=True
+                    recipient_ai_id=target_agent_id,
+                    qos_parameters={"requires_ack": True, "priority": "high"},
+                    communication_pattern="request"
+                )
+                success = await hsp.publish_message(
+                    topic=f"hsp/agents/{target_agent_id}/inbox",
+                    envelope=envelope
                 )
             
             if success:

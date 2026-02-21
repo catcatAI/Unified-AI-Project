@@ -59,40 +59,23 @@ class BrainBridgeService:
 
     async def sync_metrics(self):
         """Sync internal brain metrics to metrics.md and system state"""
-        brain_summary = self.digital_life.get_formula_metrics()
-        if not brain_summary:
-            return
+        # Prepare full status record
+        full_status = self.get_current_status()
+        
+        # We also need to add 'life_intensity' at the top level if LLM service expects it there
+        # based on angela_llm_service.py:828 (intensity = data.get("life_intensity", 0.0))
+        brain_metrics = full_status.get("brain") or {}
+        brain_current = brain_metrics.get("current_metrics", {}) if brain_metrics else {}
+        full_status["life_intensity"] = brain_current.get("life_intensity", 0.0)
 
-        # Prepare metrics record
-        metrics_data = {
-            "timestamp": datetime.now().isoformat(),
-            "life_intensity": brain_summary.get("current_metrics", {}).get(
-                "life_intensity", 0.0
-            ),
-            "active_cognition": brain_summary.get("current_metrics", {}).get(
-                "a_c", 0.0
-            ),
-            "cognitive_gap": brain_summary.get("current_metrics", {}).get(
-                "cognitive_gap", 0.0
-            ),
-            "coexistence_active": brain_summary.get("current_metrics", {}).get(
-                "coexistence_active", False
-            ),
-            "hormonal_balance": self.digital_life.biological_integrator.get_biological_state().get(
-                "hormonal_effects", {}
-            ),
-        }
-
-        # In a real implementation, we would parse metrics.md and update the table.
-        # For now, we update a secondary JSON status for the API to consume
-        # and we log to indicate the "bridge" is active.
+        # Update secondary JSON status for the API to consume
         status_file = Path("apps/backend/data/brain_status.json")
         status_file.parent.mkdir(parents=True, exist_ok=True)
         with open(status_file, "w", encoding="utf-8") as f:
-            json.dump(metrics_data, f, indent=4)
+            json.dump(full_status, f, indent=4)
 
         logger.info(
-            f"Brain Metrics Synced: L_s={metrics_data['life_intensity']:.4f}, A_c={metrics_data['active_cognition']:.4f}"
+            f"Brain Metrics Synced: LifeIntensity={full_status['life_intensity']:.4f}"
         )
 
     def get_current_status(self) -> Dict[str, Any]:

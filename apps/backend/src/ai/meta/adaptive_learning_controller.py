@@ -106,13 +106,23 @@ class AdaptiveLearningController:
         slope = trend.get("slope", 0.0)
         
         # 根據斜率動態調整 Learning Rate (LR)
-        # 如果趨勢惡化 (slope < 0)，增加 LR 以期更快適應
-        # 如果趨勢過快增長 (slope > 0.1)，適度降低 LR 確保收斂穩定
-        lr_factor = 1.0 - (slope * 0.5) # 簡單的負回饋調節
-        lr_factor = max(0.5, min(1.5, lr_factor))
+        lr_factor = 1.0 - (slope * 0.5) 
+        
+        # 集成認知紅利與生命強度：高紅利允許更穩健的學習，低生命強度則需要更保守
+        latest_metrics = metrics[-1] if metrics else {}
+        cog_dividend = latest_metrics.get("cognitive_dividend", 0.5)
+        life_intensity = latest_metrics.get("life_intensity_impact", 0.5)
+        
+        # 生命強度越低，學習率越趨於保守 (避免在低能量狀態下過度擬合錯誤)
+        lr_factor *= (0.5 + life_intensity * 0.5)
+        
+        # 認知紅利越高，可以適度增加學習效率
+        if cog_dividend > 0.7:
+            lr_factor *= 1.1
+            
+        lr_factor = max(0.3, min(2.0, lr_factor))
         
         self.learning_rate *= lr_factor
-        # 限制邊界
         self.learning_rate = max(0.001, min(0.5, self.learning_rate))
         
         updates["learning_rate"] = round(self.learning_rate, 4)

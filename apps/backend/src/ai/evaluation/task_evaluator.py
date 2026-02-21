@@ -28,17 +28,23 @@ class TaskExecutionEvaluator:
         task_id = task.get('id', str(int(time.time())))
         logger.info(f"Evaluating task execution for [{task_id}]")
 
-        # 1. 計算核心指標 (連貫性, 效率, 成功率)
+        # 1. 計算核心指標 (連貫性, 效率, 成功率, 認知红利)
         metrics = await self._calculate_deep_metrics(task, execution_result)
         
-        # 2. 邏輯一致性檢查 (檢查輸出是否與符號空間中的事實衝突)
+        # 2. 獲取生命強度與認知红利 (從執行上下文)
+        cognitive_dividend = execution_result.get('cognitive_dividend', 0.1)
+        life_intensity = execution_result.get('life_intensity', 0.5)
+        metrics["cognitive_dividend"] = cognitive_dividend
+        metrics["life_intensity_impact"] = life_intensity
+        
+        # 3. 邏輯一致性檢查 (檢查輸出是否與符號空間中的事實衝突)
         consistency_report = self._check_logical_consistency(execution_result.get('output', ""))
         metrics["consistency_score"] = consistency_report["score"]
         
-        # 3. 分析反饋
+        # 4. 分析反饋
         feedback_analysis = self._analyze_feedback(execution_result.get('feedback', {}))
         
-        # 4. 生成改進建議
+        # 5. 生成改進建議
         suggestions = self._generate_suggestions(metrics, feedback_analysis, consistency_report)
 
         evaluation = {

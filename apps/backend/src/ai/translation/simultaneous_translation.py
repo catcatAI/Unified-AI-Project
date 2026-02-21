@@ -1,59 +1,78 @@
-"""
-Simultaneous Translation Service
-Mock implementation for testing purposes. This can be swapped out later.
-"""
-
+import asyncio
 import time
-from typing import Dict, List, Optional, Tuple, Union, Iterator
+import random
+from typing import Dict, List, Optional, Tuple, Union, Iterator, Any
 import logging
-logger = logging.getLogger(__name__)
 
-# Placeholder for a potential monitoring import
-# from enhanced_realtime_monitoring import
+logger = logging.getLogger(__name__)
 
 class SimultaneousTranslationService:
     """
-    Mock service for simultaneous translation.
-    This can be swapped out later.
+    Enhanced translation service mockup.
+    Simulates translation latency and basic language detection logic.
     """
 
-    def __init__(self, default_target_lang: str = "en", latency_ms: int = 100) -> None:
+    def __init__(self, default_target_lang: str = "en", base_latency_ms: int = 150) -> None:
         self.default_target_lang = default_target_lang
-        self.latency_ms = max(0, latency_ms)
+        self.base_latency_ms = base_latency_ms
+        self.supported_languages = ["en", "zh", "ja", "ko", "fr", "de"]
 
-    def translate(self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None) -> Dict[str, Union[str, float, int]]:
+    async def translate(self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None) -> Dict[str, Union[str, float, int]]:
         """
-        Synchronously "translates" text. In this mock, we simply echo the text.
+        Async translation simulation.
+        """
+        if not text:
+            return self._empty_result(source_lang, target_lang)
 
-        Returns a structured payload for forward compatibility.
-        """
-        if text is None:
-            text = ""
         tgt = target_lang or self.default_target_lang
+        
+        # Simulate network/processing latency
+        latency = self.base_latency_ms + random.randint(50, 200)
+        await asyncio.sleep(latency / 1000.0)
+
+        # Mock translation logic: append target language code if it's not the same as source
+        translated = text
+        if source_lang != tgt:
+            translated = f"[{tgt.upper()}] {text}"
+
+        logger.info(f"[Translation] Translated {len(text)} chars to {tgt}")
+
         return {
-            "source_lang": source_lang,
+            "source_lang": source_lang if source_lang != "auto" else "detected_en",
             "target_lang": tgt,
             "original_text": text,
-            "translated_text": text,  # mock no actual translation
-            "confidence": 0.9,
-            "latency_ms": self.latency_ms,
+            "translated_text": translated,
+            "confidence": 0.95,
+            "latency_ms": latency,
         }
 
-    def stream_translate(self, chunks: Union[List[str], Tuple[str, ...]], source_lang: str = "auto", target_lang: Optional[str] = None) -> Iterator[Dict[str, Union[str, float, int, bool]]]:
+    async def stream_translate(self, chunks: Iterator[str], source_lang: str = "auto", target_lang: Optional[str] = None) -> Iterator[Dict[str, Any]]:
         """
-        Generator that yields partial translation results per chunk.
-        This mock yields the chunk as "translated" text without modification.
+        Generator for streaming translation results.
         """
         tgt = target_lang or self.default_target_lang
-        chunk_list = list(chunks or [])
-        for idx, chunk in enumerate(chunk_list):
-            time.sleep(self.latency_ms / 1000.0)
+        for idx, chunk in enumerate(chunks):
+            if not chunk: continue
+            
+            latency = (self.base_latency_ms // 2) + random.randint(10, 50)
+            await asyncio.sleep(latency / 1000.0)
+            
             yield {
                 "index": idx,
                 "source_lang": source_lang,
                 "target_lang": tgt,
-                "original_text": chunk or "",
-                "translated_text": (chunk or ""),  # mock
-                "is_final": idx == len(chunk_list) - 1,
-                "confidence": 0.85 if idx < (len(chunk_list) - 1) else 0.9,
+                "original_text": chunk,
+                "translated_text": f"~{chunk}", # Mock stream marker
+                "is_final": False,
+                "confidence": 0.88,
             }
+
+    def _empty_result(self, src: str, tgt: Optional[str]) -> Dict[str, Any]:
+        return {
+            "source_lang": src,
+            "target_lang": tgt or self.default_target_lang,
+            "original_text": "",
+            "translated_text": "",
+            "confidence": 0.0,
+            "latency_ms": 0
+        }

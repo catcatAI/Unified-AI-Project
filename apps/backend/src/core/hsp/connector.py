@@ -27,10 +27,10 @@ from .advanced_performance_optimizer import (
 from .security import HSPSecurityManager, HSPSecurityContext
 from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
 from .utils.fallback_config_loader import FallbackConfigLoader
-from .retry_policy import RetryPolicy
-from .circuit_breaker import CircuitBreaker
+# from .retry_policy import RetryPolicy
+# from .circuit_breaker import CircuitBreaker
 from .utils.fallback_config_loader import get_config_loader
-from shared.network_resilience import NetworkResilienceManager, NetworkError, RetryPolicy
+from shared.network_resilience import NetworkResilienceManager, NetworkError, RetryPolicy, CircuitBreaker
 from core.shared.error import ErrorHandler
 from .internal.internal_bus import InternalBus
 from .bridge.message_bridge import MessageBridge
@@ -212,7 +212,7 @@ class HSPConnector:
         self.ack_timeout_sec = 10  # New Default timeout for ACK
         self.max_ack_retries = 3  # New Max retries for messages requiring ACK
         self.retry_policy = RetryPolicy(
-            max_retries=self.max_ack_retries, backoff_factor=2
+            max_attempts=self.max_ack_retries, backoff_factor=2
         )  # Initialize retry policy
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=5, recovery_timeout=300
@@ -338,6 +338,15 @@ class HSPConnector:
     def mqtt_client(self, value):
         """Allows tests to set the mock MQTT client."""
         self.external_connector.mqtt_client = value
+
+    async def connect(self) -> bool:
+        """Connect to the HSP network."""
+        if hasattr(self, 'external_connector') and hasattr(self.external_connector, 'connect'):
+            success = await self.external_connector.connect()
+            self.is_connected = success
+            return success
+        self.is_connected = True
+        return True
 
     @property
     def subscribed_topics(self) -> set:
@@ -897,9 +906,9 @@ class HSPConnector:
             "correlation_id": None,
             "sender_ai_id": self.ai_id,
             "recipient_ai_id": recipient_ai_id,
-            "timestamp_sent": datetime.now(timezone.utc()).isoformat(),
+            "timestamp_sent": datetime.now(timezone.utc).isoformat(),
             "message_type": message_type,
-            "protocol_version": self.version_manager.current_version(),
+            "protocol_version": self.version_manager.current_version,
             "communication_pattern": communication_pattern,
             "security_parameters": None,
             "qos_parameters": qos_parameters
@@ -920,16 +929,61 @@ class HSPConnector:
             self.logger.error(f"安全处理消息失败: {e}")
             return envelope
 
+    def _cache_message(self, message_id: str, result: bool) -> None:
+        """Cache a message result with TTL."""
+        if message_id:
+            self.message_cache[message_id] = {
+                "result": result,
+                "timestamp": time.time()
+            }
+
+    def _get_cached_message(self, message_id: str) -> Optional[bool]:
+        """Get a cached message result, respecting TTL."""
+        if message_id and message_id in self.message_cache:
+            entry = self.message_cache[message_id]
+            if time.time() - entry["timestamp"] < self.cache_ttl:
+                return entry["result"]
+            else:
+                del self.message_cache[message_id]
+        return None
+
+    async def _batch_send_messages(self) -> None:
+        """Flush the message batch if conditions are met."""
+        current_time = time.time()
+        if (
+            len(self.message_batch) >= self.batch_size
+            or (current_time - self.last_batch_send) > 1.0
+        ):
+            batch_to_send = self.message_batch[:]
+            self.message_batch.clear()
+            self.last_batch_send = current_time
+            for item in batch_to_send:
+                try:
+                    await self._raw_publish_message(
+                        item["topic"], item["envelope"], item.get("qos", 1)
+                    )
+                except Exception as e:
+                    self.logger.error(f"Batch send error: {e}")
+
     async def _raw_publish_message(
         self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1
     ) -> bool:
         """原始发布消息方法"""
         try:
-            # 将信封转换为JSON字符串
-            payload = json.dumps(envelope, ensure_ascii=False)
-            # 发布消息
-            await self.external_connector.publish(topic, payload, qos)
-            return True
+            # Prepare message for ExternalConnector.send
+            message = dict(envelope)
+            message["target_id"] = envelope.get("recipient_ai_id") or "all"
+            
+            if hasattr(self.external_connector, "send"):
+                return await self.external_connector.send(message)
+            elif hasattr(self.external_connector, "publish"):
+                # Fallback for mock or older implementation
+                payload = json.dumps(envelope, ensure_ascii=False)
+                await self.external_connector.publish(topic, payload, qos)
+                return True
+            
+            self.logger.error("ExternalConnector has neither 'send' nor 'publish' method")
+            return False
         except Exception as e:
             self.logger.error(f"Error in _raw_publish_message: {e}")
             return False
@@ -937,9 +991,7 @@ class HSPConnector:
     async def publish_message(
         self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1
     ) -> bool:
-        self.logger.info(
-            f"HSPConnector: publish_message called. self.external_connector.publish is {type(self.external_connector.publish)}"
-        )
+        self.logger.debug("HSPConnector: publish_message called.")
 
         message_id = envelope.get("message_id")
         correlation_id = (
