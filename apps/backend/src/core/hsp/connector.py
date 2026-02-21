@@ -30,7 +30,7 @@ from .utils.fallback_config_loader import FallbackConfigLoader
 from .retry_policy import RetryPolicy
 from .circuit_breaker import CircuitBreaker
 from .utils.fallback_config_loader import get_config_loader
-from core.shared.network_resilience import NetworkResilienceManager
+from shared.network_resilience import NetworkResilienceManager, NetworkError, RetryPolicy
 from core.shared.error import ErrorHandler
 from .internal.internal_bus import InternalBus
 from .bridge.message_bridge import MessageBridge

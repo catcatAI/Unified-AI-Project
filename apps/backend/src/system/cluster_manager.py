@@ -21,7 +21,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
 from pathlib import Path
 
-from .hardware_probe import HardwareProbe
+from shared.utils.hardware_detector import SystemHardwareProbe
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ class ClusterManager:
         self.memoizer = DecimalMemoizer()
         self.precision_map = PrecisionMap()
         self.metrics_history: List[PerformanceMetrics] = []
-        self.probe = HardwareProbe()
+        self.probe = SystemHardwareProbe()
         
         # FP128 切分還原緩衝區: task_id -> {chunk_index: data}
         self.reconstruction_buffer: Dict[str, Dict[int, List[float]]] = {}

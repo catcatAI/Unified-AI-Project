@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 
 from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
-from system.hardware_probe import HardwareProbe
+from shared.utils.hardware_detector import SystemHardwareProbe
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,10 @@ class BrainBridgeService:
     ):
         self.digital_life = digital_life
         self.metrics_path = Path(metrics_path)
-        self.hardware_probe = HardwareProbe()
+        self.hardware_detector = SystemHardwareProbe()
         self._running = False
         self._task: Optional[asyncio.Task] = None
-        self._update_interval = 60.0  # Sync every minute
+        self._update_interval = 5.0  # Sync every 5 seconds (Increased for real-time dialogue awareness)
 
     async def start(self):
         """Start the bridge sync service"""
@@ -99,9 +99,15 @@ class BrainBridgeService:
         """Return the bridged metrics for API consumption"""
         brain_summary = self.digital_life.get_formula_metrics()
         bio_state = self.digital_life.biological_integrator.get_biological_state()
+        hw_profile = self.hardware_detector.detect()
 
         return {
             "brain": brain_summary,
             "biological": bio_state,
+            "hardware": {
+                "performance_tier": hw_profile.performance_tier,
+                "ai_score": hw_profile.ai_capability_score,
+                "accelerator": hw_profile.accelerator_type.value
+            },
             "timestamp": datetime.now().isoformat(),
         }

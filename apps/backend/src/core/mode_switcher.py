@@ -16,7 +16,7 @@ from typing import Optional, Dict, Any, Callable
 from datetime import datetime, timedelta
 from enum import Enum
 
-from core.system.hardware_detector import HardwareDetector, ModeRecommender
+from shared.utils.hardware_detector import SystemHardwareProbe, ModeRecommender
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class ModeSwitchManager:
         }
         
         # Hardware detection
-        self.hw_detector = HardwareDetector()
+        self.hw_detector = SystemHardwareProbe()
         self.hw_recommender = ModeRecommender(config)
     
     async def start_auto_monitoring(self):

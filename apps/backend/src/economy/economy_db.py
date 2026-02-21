@@ -36,9 +36,14 @@ class EconomyDB:
     def close(self) -> None:
         """Closes the database connection."""
         if self.conn:
-            self.conn.close()
-            self.conn = None
-            self.cursor = None
+            try:
+                self.conn.close()
+                logger.info(f"EconomyDB connection closed: {self.db_path}")
+            except sqlite3.Error as e:
+                logger.error(f"Error closing EconomyDB connection: {e}")
+            finally:
+                self.conn = None
+                self.cursor = None
 
     def add_balance(self, user_id: str, amount: float) -> None:
         """Adds a specified amount to a user's balance."""

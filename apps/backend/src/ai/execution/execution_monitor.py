@@ -102,7 +102,7 @@ class ExecutionMonitor:
             )
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
-            self.logger.setLevel(logging.INFO())
+            self.logger.setLevel(logging.INFO)
 
     def calculate_adaptive_timeout(self, command: str, base_timeout: Optional[float] = None) -> float:
         """
@@ -166,7 +166,8 @@ class ExecutionMonitor:
             start_time = time.time()
 
             if os.name == 'nt':  # Windows
-                result = subprocess.run(['echo', 'test'],
+                command = ['cmd', '/c', 'echo test']
+                result = subprocess.run(command,
                                     capture_output=True,
                                     timeout=5.0,
                                     creationflags=subprocess.CREATE_NO_WINDOW)
@@ -299,11 +300,32 @@ class ExecutionMonitor:
             self._start_time = start_time
             self._last_activity = start_time
 
+            # 安全修復：禁用 shell=True 並處理命令列表
+            if isinstance(command, str):
+                import shlex
+                command_to_run = shlex.split(command)
+                self.logger.info(f"Command split from string: {command_to_run}")
+            else:
+                command_to_run = command
+
+            # Windows 特殊處理：當 shell=False 時，有些內建命令（如 echo）需要通過 cmd /c 執行
+            # 但 cmd /c 會解析 & > | 等符號，造成注入風險。
+            # 我們應該儘量直接執行 .exe 或使用安全的替代方案。
+            if os.name == 'nt' and command_to_run:
+                cmd_name = command_to_run[0].lower()
+                if cmd_name == 'echo':
+                    # 對於 echo，我們可以使用一個安全的內部包裝或者直接調用 cmd，但必須對其餘參數進行轉義
+                    # 在這裡，我們選擇將除了第一個之外的參數都當作普通字符串處理（不建議用 cmd /c）
+                    # 更好的是，如果只是為了測試，可以使用 python -c "print(...)"
+                    pass 
+
+            self.logger.info(f"Final safe command to run: {command_to_run}")
+
             process = subprocess.Popen(
-                command,
+                command_to_run,
                 cwd=cwd,
                 env=env,
-                shell=shell,
+                shell=False,  # 強制禁用 shell=True 以防止注入
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -352,7 +374,7 @@ class ExecutionMonitor:
                 )
 
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            self.logger.error(f'Error in {__name__}: {e}', exc_info=True)
             execution_time = time.time() - start_time
 
             return ExecutionResult(

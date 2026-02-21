@@ -612,7 +612,8 @@ class UnifiedHardwareCenter:
     async def initialize(self) -> bool:
         """初始化總控中心"""
         logger.info("Initializing Unified Hardware Resource Center...")
-        self.hardware_profile = HardwareDetector.detect_all()
+        from shared.utils.hardware_detector import SystemHardwareProbe
+        self.hardware_profile = SystemHardwareProbe().detect_all()
         
         # 打印硬件信息
         cpu = self.hardware_profile.cpu

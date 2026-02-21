@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import os
+import math
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 try:
@@ -8,71 +9,70 @@ try:
 except ImportError:
     np = None
 
-from .learning_log_db import LearningLogDB
-
 logger = logging.getLogger(__name__)
 
 class PerformanceTracker:
+    """分析性能趨勢，為控制器提供優化依據。"""
     async def analyze_trend(self, performance_history: List[Dict[str, Any]]) -> Dict[str, Any]:
-        logger.debug("Analyzing performance trend...")
-        if not performance_history or len(performance_history) < 2:
-            return {"direction": "stable", "magnitude": 0.0}
+        if not performance_history or len(performance_history) < 3:
+            return {"direction": "stable", "magnitude": 0.0, "slope": 0.0}
 
-        if np is None:
-            # Simple fallback trend analysis
-            last = performance_history[-1].get("success_rate", 0.0)
-            prev = performance_history[-2].get("success_rate", 0.0)
-            diff = last - prev
-            return {"direction": "improving" if diff > 0 else "degrading" if diff < 0 else "stable", "magnitude": abs(diff)}
-
-        # Use last 10 entries
-        N = min(len(performance_history), 10)
-        recent_success_rates = np.array([entry.get("success_rate", 0.0) for entry in performance_history[-N:]])
-        x = np.arange(N)
-        y = recent_success_rates
+        # 提取最近的成功率
+        recent_data = [h.get("success_rate", 0.0) for h in performance_history[-10:]]
         
-        slope = 0.0
-        if N > 1 and np.std(x) > 0:
+        if np:
+            x = np.arange(len(recent_data))
+            y = np.array(recent_data)
             slope, _ = np.polyfit(x, y, 1)
-        
-        magnitude = abs(slope) * 100
-        direction = "improving" if slope > 0.01 else "degrading" if slope < -0.01 else "stable"
-        return {"direction": direction, "magnitude": magnitude, "slope": slope}
+        else:
+            # 簡易線性回歸回退方案
+            n = len(recent_data)
+            x = list(range(n))
+            y = recent_data
+            mean_x = sum(x) / n
+            mean_y = sum(y) / n
+            num = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
+            den = sum((x[i] - mean_x) ** 2 for i in range(n))
+            slope = num / den if den != 0 else 0.0
 
-class StrategySelector:
-    def __init__(self):
-        self.confidence_score = 0.7
-
-    async def select(self, task_context: Dict[str, Any], performance_trend: Dict[str, Any]) -> str:
-        logger.debug("Selecting optimal strategy...")
-        direction = performance_trend.get("direction", "stable")
-        if direction == "degrading":
-            return "new_exploration_strategy"
-        return "current_strategy"
+        direction = "improving" if slope > 0.02 else "degrading" if slope < -0.02 else "stable"
+        return {
+            "direction": direction,
+            "magnitude": abs(slope),
+            "slope": slope
+        }
 
 class AdaptiveLearningController:
-    """自適應學習控制器 (Adaptive Learning Controller)"""
+    """
+    自適應學習控制器 (Adaptive Learning Controller)
+    Level 5 ASI 核心組件：負責動態調整 AGI 的學習參數與策略。
+    深度集成趨勢分析與趨準優化。
+    """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None, storage_path: str = "logs/learning_controller") -> None:
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.current_strategy = self.config.get("default_strategy", "balanced")
         self.performance_history: List[Dict[str, Any]] = []
-        self.learning_rate = self.config.get("initial_learning_rate", 0.01)
+        self.learning_rate = self.config.get("initial_learning_rate", 0.05)
+        self.tracker = PerformanceTracker()
+        logger.info("AdaptiveLearningController (Advanced Trend-Aware) initialized.")
 
     async def adapt_learning_strategy(self, task: Dict[str, Any], evolution_metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        根據演化指標調整學習策略。
-        """
-        logger.info(f"Adapting learning strategy based on {len(evolution_metrics)} metrics.")
+        """根據性能趨勢與當前指標調整學習參數。"""
+        # 1. 記錄當前性能快照
+        if evolution_metrics:
+            latest = evolution_metrics[-1]
+            self.performance_history.append({
+                "success_rate": latest.get("success_rate", 0.0),
+                "timestamp": datetime.now().timestamp() # Changed time.time() to datetime.now().timestamp()
+            })
+
+        # 2. 分析趨勢 (Deep Scrutiny)
+        trend = await self.tracker.analyze_trend(self.performance_history)
         
-        # 1. 追蹤表現
-        avg_success = sum(m.get('success_rate', 0) for m in evolution_metrics) / max(1, len(evolution_metrics))
-        
-        # 2. 選擇最佳策略
-        new_strategy = self._select_best_strategy(avg_success)
-        
-        # 3. 調整參數
-        param_updates = self._adjust_parameters(avg_success)
+        # 3. 執行策略選擇與參數優化
+        new_strategy = self._determine_strategy(trend)
+        param_updates = self._optimize_parameters(trend, evolution_metrics)
 
         old_strategy = self.current_strategy
         self.current_strategy = new_strategy
@@ -80,38 +80,49 @@ class AdaptiveLearningController:
         result = {
             "previous_strategy": old_strategy,
             "new_strategy": new_strategy,
+            "trend": trend["direction"],
             "parameter_updates": param_updates,
             "timestamp": datetime.now().isoformat()
         }
         
-        self.performance_history.append(result)
+        logger.info(f"Strategy adapted: {old_strategy} -> {new_strategy} | Trend: {trend['direction']}")
         return result
 
-    def _select_best_strategy(self, success_rate: float) -> str:
-        """基於成功率選擇策略"""
-        if success_rate < 0.5:
-            return "conservative"  # 降低風險，專注於基礎穩定性
-        elif success_rate > 0.9:
-            return "aggressive"   # 嘗試更高難度的學習與探索
-        return "balanced"
+    def _determine_strategy(self, trend: Dict[str, Any]) -> str:
+        """基於趨勢方向選取策略。"""
+        direction = trend["direction"]
+        if direction == "degrading":
+            return "explorative_recovery" # 趨勢下滑，切換到探索/修復模式
+        elif direction == "improving" and trend["slope"] > 0.1:
+            return "acceleration"         # 表現強勁，加速學習
+        return "stable_optimization"      # 穩定或緩慢增長時的默認策略
 
-    def _adjust_parameters(self, success_rate: float) -> Dict[str, Any]:
-        """動態調整超參數"""
+    def _optimize_parameters(self, trend: Dict[str, Any], metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        精細化參數優化邏輯。
+        使用趨勢斜率來調整學習率，而非簡單的閾值判斷。
+        """
         updates = {}
-        if success_rate < 0.7:
-            # 增加學習率以更快適應失敗
-            self.learning_rate *= 1.1
-            updates["learning_rate"] = self.learning_rate
-        elif success_rate > 0.95:
-            # 減少學習率以穩定成果
-            self.learning_rate *= 0.9
-            updates["learning_rate"] = self.learning_rate
-            
+        slope = trend.get("slope", 0.0)
+        
+        # 根據斜率動態調整 Learning Rate (LR)
+        # 如果趨勢惡化 (slope < 0)，增加 LR 以期更快適應
+        # 如果趨勢過快增長 (slope > 0.1)，適度降低 LR 確保收斂穩定
+        lr_factor = 1.0 - (slope * 0.5) # 簡單的負回饋調節
+        lr_factor = max(0.5, min(1.5, lr_factor))
+        
+        self.learning_rate *= lr_factor
+        # 限制邊界
+        self.learning_rate = max(0.001, min(0.5, self.learning_rate))
+        
+        updates["learning_rate"] = round(self.learning_rate, 4)
+        updates["adaptation_factor"] = lr_factor
+        
         return updates
 
     def get_current_configuration(self) -> Dict[str, Any]:
-        """返回當前配置"""
         return {
             "strategy": self.current_strategy,
-            "learning_rate": self.learning_rate
+            "learning_rate": self.learning_rate,
+            "history_depth": len(self.performance_history)
         }

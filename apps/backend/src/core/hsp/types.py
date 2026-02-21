@@ -64,6 +64,9 @@ class HSPFactPayload(TypedDict, total=False):
 class HSPSecurityParameters(TypedDict, total=False):
     signature_algorithm: str
     signature: str
+    public_key: str
+    certificate: str
+    timestamp_signed: str  # ISO 8601 UTC
     encryption_details: Any  # Placeholder
 
 
@@ -93,13 +96,42 @@ class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are requ
         "acknowledgement", "negative_acknowledgement",
         "broadcast", "multicast", "unicast",
         "notification", "event", "command",
-        "query", "reply"
+        "query", "reply", "heartbeat", "discovery"
     ]
     security_parameters: Optional[HSPSecurityParameters]
     qos_parameters: Optional[HSPQoSParameters]
     routing_info: Optional[HSPRoutingInfo]
     payload_schema_uri: Optional[str]
     payload: Dict[str, Any]  # Generic payload,
+
+
+class HSPHeartbeatPayload(TypedDict, total=False):
+    sender_ai_id: str  # DID or URI
+    timestamp_sent: str  # ISO 8601 UTC
+    status: str  # e.g., "healthy", "degraded", "unhealthy"
+    details: Dict[str, Any]  # Optional details about status
+
+
+class HSPDiscoveryPayload(TypedDict, total=False):
+    sender_ai_id: str  # DID or URI
+    capabilities: List[str]  # List of capability IDs or names
+    version: str  # Version string of the AI/agent
+
+
+class HSPAcknowledgementPayload(TypedDict, total=False):
+    original_message_id: str  # UUID of the message being acknowledged
+    target_message_id: str    # ID of the message being acknowledged (backward compat)
+    status: Literal["received", "processed", "failed"]
+    details: str  # Optional details about the status
+    ack_timestamp: str  # ISO 8601 UTC
+    timestamp_acknowledged: str  # ISO 8601 UTC
+
+
+class HSPErrorPayload(TypedDict, total=False):
+    error_code: str  # e.g., "invalid_payload", "processing_failed", "timeout"
+    error_message: str
+    details: Dict[str, Any]  # Additional details about the error
+    timestamp_error: str  # ISO 8601 UTC
     # specific types like HSPFactPayload for actual data
 
 # Example of a more specific envelope if needed,

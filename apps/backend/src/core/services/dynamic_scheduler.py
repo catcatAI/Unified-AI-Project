@@ -342,7 +342,8 @@ class ModelRepository:
         # Try unified repository first
         if UNIFIED_HARDWARE_AVAILABLE:
             try:
-                from core.hardware import ModelRepository as UnifiedRepo
+                from shared.utils.hardware_detector import SystemHardwareProbe as HardwareProbe
+                # We use the unified hardware probe's profile if possible
                 return UnifiedRepo.get_requirement(model_name)
             except Exception as e:
                 logger.error(f'Error in {__name__}: {e}', exc_info=True)

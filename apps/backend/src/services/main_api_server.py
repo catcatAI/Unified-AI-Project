@@ -67,6 +67,15 @@ except Exception:
 
 logger = logging.getLogger(__name__)
 
+# ========== 修复：日志目录自动创建 ==========
+try:
+    log_dir = Path("logs")
+    if not log_dir.exists():
+        log_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Created logs directory at: {log_dir.absolute()}")
+except Exception as e:
+    print(f"Warning: Failed to create logs directory: {e}")
+
 # 现在可以安全地记录环境变量加载状态
 try:
     from dotenv import load_dotenv
@@ -579,6 +588,8 @@ async def shutdown_event():
         await _brain_bridge.stop()
     if _digital_life:
         await _digital_life.shutdown()
+    if _economy_manager:
+        await _economy_manager.shutdown()
 
 
 app.add_middleware(

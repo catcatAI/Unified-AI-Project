@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from .hardware_probe import HardwareProbe, HardwareProfile
+from shared.utils.hardware_detector import SystemHardwareProbe, HardwareProfile
 from .cluster_manager import ClusterManager, NodeType, cluster_manager
 
 logger = logging.getLogger(__name__)
@@ -66,8 +66,8 @@ class DeploymentConfig:
 class DeploymentManager:
     """Manages system deployment based on hardware capabilities"""
     
-    def __init__(self, probe: Optional[HardwareProbe] = None):
-        self.probe = probe or HardwareProbe()
+    def __init__(self, probe: Optional[SystemHardwareProbe] = None):
+        self.probe = probe or SystemHardwareProbe()
         self.hardware_profile = self.probe.get_hardware_profile()
         self.config_cache: Optional[DeploymentConfig] = None
         

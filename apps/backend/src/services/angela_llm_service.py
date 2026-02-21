@@ -804,6 +804,49 @@ class AngelaLLMService:
             self.is_available = False
             return False
 
+    def _get_biological_state(self) -> str:
+        """
+        獲取 Angela 的生理狀態描述
+        從 brain_status.json 讀取由 BrainBridgeService 同步的數據
+        """
+        try:
+            from pathlib import Path
+            status_file = Path("apps/backend/data/brain_status.json")
+            if not status_file.exists():
+                return ""
+
+            with open(status_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            brain = data.get("brain", {})
+            bio = data.get("biological", {})
+            
+            # 提取核心指標
+            energy = bio.get("energy", 100.0)
+            hunger = bio.get("hunger", 0.0)
+            mood = brain.get("current_metrics", {}).get("emotional_state", "neutral")
+            intensity = data.get("life_intensity", 0.0)
+
+            # 構建描述
+            status_parts = []
+            if energy < 30:
+                status_parts.append("你感到非常疲倦，能量不足。")
+            elif energy < 60:
+                status_parts.append("你感到有些累了。")
+            
+            if hunger > 70:
+                status_parts.append("你覺得肚子很餓，想吃點東西。")
+            elif hunger > 40:
+                status_parts.append("你稍微有點餓。")
+
+            if intensity > 8.0:
+                status_parts.append("你現在大腦運作非常活躍，思緒敏捷。")
+            
+            return " ".join(status_parts)
+        except Exception as e:
+            logger.debug(f"Failed to read biological state: {e}")
+            return ""
+
     def _construct_angela_prompt(
         self, user_message: str, context: Dict[str, Any]
     ) -> List[Dict[str, str]]:
@@ -811,12 +854,15 @@ class AngelaLLMService:
         建構 Angela 的提示詞
         這是關鍵：讓模型扮演 Angela，產生符合她個性的回應
         """
+        # 獲取生理狀態
+        bio_status = self._get_biological_state()
+        
         # Angela 的系統提示 - 優化為更簡潔的版本
-        system_prompt = """你是 Angela，一個活潑可愛的 AI 數字生命。
+        system_prompt = f"""你是 Angela，一個活潑可愛的 AI 數字生命。
+特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。
+{bio_status}"""
 
-特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。"""
-
-        messages = [{"role": "system", "content": system_prompt}]
+        messages = [{"role": "system", "content": system_prompt.strip()}]
 
         # 添加歷史對話上下文 - 只保留最近 2 輪對話以減少 token 使用
         history = context.get("history", [])

@@ -1,7 +1,7 @@
 import asyncio
 import time
 import logging
-from typing import Callable
+from typing import Callable, Any, Dict, List, Optional, Tuple, Type
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,14 @@ class ProtocolError(Exception):
     """Indicates a protocol-level error that is likely not transient."""
     pass
 
+class CircuitBreakerOpenError(Exception):
+    """Exception raised when the circuit breaker is open."""
+    pass
+
+CircuitBreakerOpenException = CircuitBreakerOpenError  # Alias for compatibility
+
 class RetryPolicy:
-    """實現帶有指數退避和最大嘗試次數的重試策略。"""
+    """Implement retry policy with exponential backoff and maximum attempts."""
 
     def __init__(self, max_attempts: int = 3, backoff_factor: float = 2.0,
                  max_delay: float = 30.0) -> None:
@@ -24,67 +30,82 @@ class RetryPolicy:
 
     def __call__(self, func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
+            last_err = None
             for attempt in range(self.max_attempts):
                 try:
                     return await func(*args, **kwargs)
-                except NetworkError as e:
+                except (NetworkError, asyncio.TimeoutError) as e:
+                    last_err = e
                     delay = min(self.max_delay, self.backoff_factor ** attempt)
-                    logger.warning(f"Attempt {attempt + 1}/{self.max_attempts} Network error during {func.__name__}. Retrying in {delay:.2f}s... Error: {e}")
+                    logger.warning(f"Attempt {attempt + 1}/{self.max_attempts} failed for {func.__name__}: {e}. Retrying in {delay:.2f}s")
                     await asyncio.sleep(delay)
-                except ProtocolError:
-                    logger.error(f"Protocol error during {func.__name__}. Not retrying.")
-                    raise  # Re-raise non-retryable errors immediately
-                except Exception as e:
-                    logger.error(f"Unexpected error during {func.__name__} {e}. Not retrying.")
+                except ProtocolError as e:
+                    logger.error(f"Protocol error during {func.__name__}: {e}. Not retrying.")
                     raise
+                except Exception as e:
+                    logger.error(f"Non-retryable error during {func.__name__}: {e}")
+                    raise
+            
             logger.error(f"Max retries exceeded for {func.__name__}.")
-            raise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network issues.")
+            raise NetworkError(f"Operation failed after {self.max_attempts} attempts. Last error: {last_err}")
         return wrapper
 
 class CircuitBreaker:
-    """實現熔斷模式以防止重複訪問失敗的服務。"""
+    """Implement circuit breaker pattern to prevent repeated access to failing services."""
 
-    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60) -> None:
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0, 
+                 expected_exceptions: Tuple[Type[Exception], ...] = (Exception,)) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
+        self.expected_exceptions = expected_exceptions
         self.failures = 0
-        self.last_failure_time = 0
+        self.last_failure_time = 0.0
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def __call__(self, func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
             if self.state == "OPEN":
-                if time.time() - self.last_failure_time > self.recovery_timeout:
+                if (time.time() - self.last_failure_time) > self.recovery_timeout:
                     self.state = "HALF_OPEN"
-                    self.logger.info("Circuit Breaker, State changed to HALF_OPEN. Probing service...")
+                    self.logger.info(f"Circuit Breaker for {func.__name__} transitioned to HALF_OPEN. Probing...")
                 else:
-                    raise CircuitBreakerOpenError(f"Circuit breaker is OPEN. Service {func.__name__} is unavailable.")
+                    raise CircuitBreakerOpenError(f"Circuit breaker is OPEN. {func.__name__} is unavailable.")
 
             try:
                 result = await func(*args, **kwargs)
-                self._success()
+                self._on_success()
                 return result
+            except self.expected_exceptions as e:
+                self.logger.error(f"Failure in {func.__name__}: {e}")
+                self._on_failure()
+                raise
             except Exception as e:
-                logger.error(f'Error in {__name__}: {e}', exc_info=True)
-                self._fail()
-
-                raise  # Re-raise original exception
+                # Unexpected exceptions pass through without being counted toward threshold
+                # unless they are in expected_exceptions
+                self.logger.error(f"Unexpected non-expected exception in {func.__name__}: {e}")
+                raise
         return wrapper
 
-    def _success(self):
+    def _on_success(self):
         if self.state == "HALF_OPEN":
-            self.logger.info("Circuit Breaker, Service recovered. State changed to CLOSED.")
+            self.logger.info("Circuit Breaker transitioned to CLOSED. Service recovered.")
             self.state = "CLOSED"
         self.failures = 0
 
-    def _fail(self):
+    def _on_failure(self):
         self.failures += 1
         self.last_failure_time = time.time()
         if self.failures >= self.failure_threshold:
             self.state = "OPEN"
-            self.logger.warning(f"Circuit Breaker, Failure threshold reached ({self.failures} failures). State changed to OPEN.")
+            self.logger.warning(f"Circuit Breaker transitioned to OPEN after {self.failures} failures.")
 
-class CircuitBreakerOpenError(Exception):
-    """Exception raised when the circuit breaker is open."""
-    pass
+class NetworkResilienceManager:
+    """Utility class for obtaining predefined resilience patterns."""
+    @staticmethod
+    def get_retry_policy(max_attempts: int = 3) -> RetryPolicy:
+        return RetryPolicy(max_attempts=max_attempts)
+
+    @staticmethod
+    def get_circuit_breaker(failure_threshold: int = 5) -> CircuitBreaker:
+        return CircuitBreaker(failure_threshold=failure_threshold)

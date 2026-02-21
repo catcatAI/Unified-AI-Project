@@ -161,3 +161,9 @@ class EconomyManager:
         except Exception as e:
             logger.error(f"Error adding transaction for user '{user_id}': {e}")
             return False
+
+    async def shutdown(self) -> None:
+        """Shuts down the EconomyManager and closes its database."""
+        logger.info("EconomyManager shutting down...")
+        self.db.close()
+        logger.info("EconomyManager closed.")

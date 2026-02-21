@@ -21,7 +21,7 @@ from typing import Any # Import Any
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger: Any = logging.getLogger(__name__)
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 class TestQualityAssessor:
     """测试质量评估器"""

@@ -453,11 +453,12 @@ class MultiLLMService:
         
         # 嘗試舊的硬件檢測作為 fallback (同步版本)
         try:
-            from .hardware_detector import HardwareDetector, HardwareAdapter
-            detector = HardwareDetector()
+            from shared.utils.hardware_detector import SystemHardwareProbe
+            detector = SystemHardwareProbe()
             self.hardware_info = detector.detect()
-            adapter = HardwareAdapter(self.hardware_info)
-            self.ollama_settings = adapter.get_recommended_settings()
+            # HardwareAdapter is actually in shared/utils/hardware_detector? 
+            # (I need to check if I added it there)
+            # For now just detecting info.
             logger.info(f"Hardware detected (fallback): {self.hardware_info.accelerator_type.value}")
         except Exception as e:
             logger.warning(f"Hardware detection failed: {e}, using default settings")

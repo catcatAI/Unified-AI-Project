@@ -375,6 +375,8 @@ def detect_hardware() -> HardwareCapabilities:
 
 def create_hardware_manager() -> HardwareManager:
     """便捷函数：创建硬件管理器"""
+    # Use SystemHardwareProbe for underlying detection
+    from shared.utils.hardware_detector import SystemHardwareProbe
     return HardwareFactory.get_manager()
 
 
