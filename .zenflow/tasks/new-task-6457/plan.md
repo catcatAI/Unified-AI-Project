@@ -105,6 +105,7 @@ Save to `{@artifacts_path}/plan.md`.
   - Electron dev starts without runtime errors; native modules compile for target OS
 
 ### [ ] Step: Phase 5 - Tests and coverage gating
+<!-- chat-id: 6cf629c0-5140-4298-8c44-07bcb71500d2 -->
 - Enforce backend coverage threshold via `pytest --cov=apps/backend/src --cov-report=term-missing`
 - Stabilize or mark flaky tests; unify markers (`unit`, `integration`, `slow`)
 - Triage [./tests_backup](./tests_backup): migrate valid tests to [./tests](./tests) or remove obsolete ones
