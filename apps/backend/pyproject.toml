@@ -19,7 +19,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
-  "Flask>=2.0.0",
   "numpy>=1.21.0",
   "cryptography>=3.4.0",
   "requests>=2.25.0",
@@ -46,7 +45,6 @@ text = "MIT"
 
 [project.optional-dependencies]
 minimal = [
-  "Flask",
   "numpy",
   "cryptography",
   "requests",
@@ -60,7 +58,6 @@ minimal = [
   "scikit-learn",
 ]
 standard = [
-  "Flask",
   "numpy",
   "cryptography",
   "requests",
@@ -79,7 +76,6 @@ standard = [
   "chromadb",
 ]
 full = [
-  "Flask",
   "numpy",
   "cryptography",
   "requests",
@@ -118,7 +114,6 @@ full = [
   "transformers",
 ]
 ai_focused = [
-  "Flask",
   "numpy",
   "cryptography",
   "requests",
@@ -137,7 +132,6 @@ ai_focused = [
   "transformers",
 ]
 game = [
-  "Flask",
   "numpy",
   "cryptography",
   "requests",
@@ -166,7 +160,6 @@ testing = [
   "astunparse",
   "cryptography",
   "aiohttp",
-  "Flask",
   "python-dotenv",
   "paho-mqtt",
   "pandas",

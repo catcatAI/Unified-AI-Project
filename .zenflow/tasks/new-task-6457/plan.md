@@ -83,7 +83,7 @@ Save to `{@artifacts_path}/plan.md`.
 - Verification
   - `black`, `isort`, `flake8`, `mypy`, and `pytest` all pass; no duplicate/conflicting dependency files remain
 
-### [ ] Step: Phase 3 - Backend framework standardization (FastAPI)
+### [x] Step: Phase 3 - Backend framework standardization (FastAPI)
 <!-- chat-id: 65fa47e9-aaa2-4d99-ae88-d1871073379d -->
 - Purge Flask metadata/links from [./apps/backend/pyproject.toml](./apps/backend/pyproject.toml)
 - Confirm application entrypoint `src/services/main_api_server.py:app`
