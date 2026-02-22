@@ -73,7 +73,7 @@ Save to `{@artifacts_path}/plan.md`.
 - Verification
   - All commands complete; reports written under [./test_results](./test_results)
 
-### [ ] Step: Phase 2 - Python dependency unification
+### [x] Step: Phase 2 - Python dependency unification
 <!-- chat-id: d1f8f1f3-d203-4082-a17d-a4ec7548a993 -->
 - Select single source of truth for Python deps (default: [./apps/backend/pyproject.toml](./apps/backend/pyproject.toml))
 - Migrate/remove redundant `requirements*.txt` or duplicate `pyproject.toml` entries according to chosen model

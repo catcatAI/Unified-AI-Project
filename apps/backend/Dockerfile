@@ -4,11 +4,10 @@ FROM python:3.9-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies from pyproject (standard extras)
+COPY pyproject.toml ./
+COPY src ./src
+RUN pip install --no-cache-dir .[standard]
 
 # Copy the rest of the backend application code into the container at /app
 COPY . .

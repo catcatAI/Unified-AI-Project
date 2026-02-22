@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "setup": "python -m venv venv; pip install --upgrade pip; pip install -r requirements.txt; pip install -r requirements-dev.txt",
+    "setup": "python -m venv venv && venv\\Scripts\\python -m pip install --upgrade pip && venv\\Scripts\\pip install -e .[standard,testing]",
     "dev": "echo \"Starting Python backend...\"; python scripts/smart_dev_runner.py",
     "dev:api": "python -m uvicorn src.services.main_api_server:app --reload --host 127.0.0.1 --port 8000",
     "test": "python scripts/workflow_controller.py",
