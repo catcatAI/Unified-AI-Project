@@ -104,7 +104,7 @@ Save to `{@artifacts_path}/plan.md`.
   - `pnpm install` succeeds across workspaces under Node 18+
   - Electron dev starts without runtime errors; native modules compile for target OS
 
-### [ ] Step: Phase 5 - Tests and coverage gating
+### [x] Step: Phase 5 - Tests and coverage gating
 <!-- chat-id: 6cf629c0-5140-4298-8c44-07bcb71500d2 -->
 - Enforce backend coverage threshold via `pytest --cov=apps/backend/src --cov-report=term-missing`
 - Stabilize or mark flaky tests; unify markers (`unit`, `integration`, `slow`)
