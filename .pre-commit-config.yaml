@@ -63,6 +63,15 @@ repos:
         args: ['-c', 'pyproject.toml']
         additional_dependencies: ['bandit[toml]']
 
+- repo: local
+  hooks:
+    - id: eslint
+      name: eslint via pnpm
+      entry: pnpm
+      args: ['lint:js']
+      language: system
+      pass_filenames: false
+
 # CI 配置
 ci:
   autofix_commit_msg: |

@@ -45,6 +45,9 @@ jobs:
         run: |
           python -m compileall -q .
 
+      - name: Pre-commit checks
+        uses: pre-commit/action@v3.0.0
+
       - name: Orchestrator CLI --help
         if: ${{ hashFiles('scripts/ai_orchestrator.py') != '' }}
         run: |

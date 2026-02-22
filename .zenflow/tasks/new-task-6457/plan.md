@@ -122,7 +122,7 @@ Save to `{@artifacts_path}/plan.md`.
 - Verification
   - Live2D viewer builds successfully; RN minimal run works and hits backend ping endpoint
 
-### [ ] Step: Phase 7 - Secrets and CI/pre-commit unification
+### [x] Step: Phase 7 - Secrets and CI/pre-commit unification
 <!-- chat-id: 9eaabde8-2adb-404f-97c1-45ac16c789f4 -->
 - Add/verify `.env.example` for each app; confirm secrets are ignored from VCS
 - Unify to a single root pre-commit config invoking Python and JS format/lint hooks
