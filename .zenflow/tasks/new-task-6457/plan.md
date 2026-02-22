@@ -113,7 +113,7 @@ Save to `{@artifacts_path}/plan.md`.
 - Verification
   - Coverage ≥ target (initially backend scope); all tests pass locally and in CI
 
-### [ ] Step: Phase 6 - Live2D libs management and Mobile minimal path
+### [x] Step: Phase 6 - Live2D libs management and Mobile minimal path
 <!-- chat-id: 100b7d1d-2164-4043-af8a-21c384ee1f79 -->
 - Decide strategy for [./apps/web-live2d-viewer/libs/live2dframework](./apps/web-live2d-viewer/libs/live2dframework): vendored with periodic sync or externalized package with lock
 - Pin versions; add/update sync or install script under [./scripts](./scripts)

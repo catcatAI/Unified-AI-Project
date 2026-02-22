@@ -15,6 +15,7 @@ import {
 import QRCodeScanner from 'react-native-qrcode-scanner';
 import { RNCamera } from 'react-native-camera';
 import security from './src/security/encryption';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
 
@@ -110,6 +111,25 @@ const App = () => {
       }
     } catch (error) {
       setStatus('LINK INTERRUPTED');
+    }
+  };
+
+  const pingBackend = async () => {
+    try {
+      const res = await axios.get(`http://${serverAddress}/api/v1/mobile/status`);
+      const data = res.data || {};
+      setStatus(data.status || 'OK');
+      if (data.metrics) {
+        setSystemStats({
+          cpu: data.metrics.cpu || 'N/A',
+          mem: data.metrics.mem || 'N/A',
+          nodes: data.metrics.nodes || 0,
+        });
+      }
+      setChatLog(prev => [...prev, { type: 'angela', text: 'Backend reachable. Status: ' + (data.status || 'OK') }]);
+    } catch (e) {
+      setChatLog(prev => [...prev, { type: 'angela', text: 'Backend ping failed. Check server address.' }]);
+      setStatus('BACKEND UNREACHABLE');
     }
   };
 
@@ -262,6 +282,10 @@ const App = () => {
                 secureTextEntry
                 autoCapitalize="none"
               />
+              <TouchableOpacity style={styles.qrButton} onPress={pingBackend}>
+                <Text style={styles.qrButtonText}>PING BACKEND</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.initButton} onPress={() => handleInit()}>
                 <Text style={styles.initButtonText}>ESTABLISH LINK</Text>
               </TouchableOpacity>
