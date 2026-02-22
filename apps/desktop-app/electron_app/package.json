@@ -1,5 +1,5 @@
 {
-  "name": "angela-desktop-app",
+  "name": "angela-desktop-electron",
   "version": "6.2.0",
   "description": "Angela AI Desktop Application - Live2D Virtual Companion",
   "main": "main.js",
@@ -7,12 +7,17 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "electron-builder",
+    "build:dir": "set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --dir",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "build:linux": "electron-builder --linux",
+    "postinstall": "electron-builder install-app-deps"
   },
   "author": "Angela AI Development Team",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0"
@@ -49,15 +54,13 @@
       "target": [
         "nsis",
         "portable"
-      ],
-      "icon": "assets/icon.svg"
+      ]
     },
     "mac": {
       "target": [
         "dmg",
         "zip"
       ],
-      "icon": "assets/icon.svg",
       "category": "public.app-category.entertainment"
     },
     "linux": {
@@ -66,7 +69,6 @@
         "deb",
         "Appx"
       ],
-      "icon": "assets/icon.svg",
       "category": "Utility"
     }
   }

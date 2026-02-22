@@ -1,5 +1,5 @@
 {
-  "name": "angela-desktop-app",
+  "name": "angela-desktop-shell",
   "version": "0.1.0",
   "description": "Angela AI - Desktop Pet Companion",
   "main": "electron_app/main.js",
@@ -17,6 +17,9 @@
   ],
   "author": "Unified AI Project",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0"
