@@ -104,6 +104,7 @@ addopts = [
     '--cov=apps/backend/src',
     '--cov-report=term-missing',
     '--cov-report=html',
+    '--cov-fail-under=80',
 ]
 markers = [
     'slow: 标记慢速测试',
