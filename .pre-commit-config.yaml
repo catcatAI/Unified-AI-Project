@@ -1,13 +1,7 @@
-# Pre-commit 配置文件
-# 在 git commit 前自动运行代码检查和格式化
-# 安装: pip install pre-commit
-# 启用: pre-commit install
-
 default_language_version:
   python: python3.8
 
 repos:
-  # Python 代码格式化 - Black
   - repo: https://github.com/psf/black
     rev: 24.1.1
     hooks:
@@ -15,14 +9,12 @@ repos:
         language_version: python3.8
         args: ['--line-length=100']
 
-  # Python import 排序 - isort
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
         args: ['--profile=black', '--line-length=100']
 
-  # Python 代码检查 - flake8
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
@@ -33,15 +25,13 @@ repos:
           - flake8-comprehensions
           - flake8-simplify
 
-  # JavaScript/TypeScript 格式化 - Prettier
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+    rev: v3.0.0
     hooks:
       - id: prettier
         types_or: [javascript, jsx, ts, tsx, json, yaml, markdown]
         args: ['--write', '--single-quote', '--print-width=100']
 
-  # 通用检查 - trailing whitespace, end of file
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
@@ -55,7 +45,6 @@ repos:
       - id: debug-statements
       - id: check-toml
 
-  # 安全检查
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.6
     hooks:
@@ -63,16 +52,21 @@ repos:
         args: ['-c', 'pyproject.toml']
         additional_dependencies: ['bandit[toml]']
 
-- repo: local
-  hooks:
-    - id: eslint
-      name: eslint via pnpm
-      entry: pnpm
-      args: ['lint:js']
-      language: system
-      pass_filenames: false
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.18.3
+    hooks:
+      - id: gitleaks
+        args: ['--no-git']
 
-# CI 配置
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint via pnpm
+        entry: pnpm
+        args: ['lint:js']
+        language: system
+        pass_filenames: false
+
 ci:
   autofix_commit_msg: |
     [pre-commit.ci] auto fixes from pre-commit.com hooks

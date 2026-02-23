@@ -179,8 +179,8 @@ testing = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pypa/sampleproject"
-"Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
+Homepage = "https://github.com/catcatAI/Unified-AI-Project"
+"Bug Tracker" = "https://github.com/catcatAI/Unified-AI-Project/issues"
 
 [tool.setuptools.package-dir]
 "" = "src"

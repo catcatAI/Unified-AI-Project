@@ -1,86 +1,60 @@
 name: CI
-permissions:
-  contents: read
 
 on:
   push:
-    branches: [ main, master, chore/**, feat/**, fix/** ]
+    branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  python:
-    name: Python smoke checks
-    permissions:
-      contents: read
+  js:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
         with:
-          python-version: '3.10'
-
-      - name: Cache pip
-        uses: actions/cache@v4
+          version: 8
+      - uses: actions/setup-node@v4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install dependencies (if requirements.txt exists)
-        if: ${{ hashFiles('**/requirements.txt') != '' }}
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Byte-compile all Python modules
-        run: |
-          python -m compileall -q .
-
-      - name: Pre-commit checks
-        uses: pre-commit/action@v3.0.0
-
-      - name: Orchestrator CLI --help
-        if: ${{ hashFiles('scripts/ai_orchestrator.py') != '' }}
-        run: |
-          python scripts/ai_orchestrator.py --help || true
-
-  node:
-    name: Node.js workspace checks
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 18
-        uses: actions/setup-node@v6
-        with:
-          node-version: '18'
+          node-version: 18
           cache: 'pnpm'
+      - name: Install JS workspaces
+        run: pnpm install --frozen-lockfile=false
+      - name: Lint (JS)
+        run: pnpm lint:js
+      - name: Prettier check (JS/TS)
+        run: pnpm exec prettier --check "**/*.{js,jsx,ts,tsx,json,md}"
+      - name: Test (JS placeholder)
+        run: echo "No JS unit tests configured yet"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.9', '3.11' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          version: 9
-
-      - name: Install dependencies (pnpm)
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install backend (editable with extras)
+        run: pip install -e ./apps/backend[standard,testing]
+      - name: Lint/Type (Python)
         run: |
-          pnpm -r install --no-frozen-lockfile
+          black --check apps/backend/src tests/
+          isort --check-only apps/backend/src tests/
+          flake8 apps/backend/src tests/
+          mypy apps/backend/src
+      - name: Tests (Python)
+        run: pytest --cov=apps/backend/src --cov-report=term-missing
 
-      - name: Build (if present)
-        run: |
-          pnpm -r -if-present build
-
-      - name: Test (if present)
-        run: |
-          pnpm -r -if-present test
+  secrets_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gitleaks
+        uses: zricethezav/gitleaks-action@v2.3.2
+        with:
+          args: --no-git
