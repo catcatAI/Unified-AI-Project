@@ -19,7 +19,7 @@ import time
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, side_effect
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from dataclasses import dataclass
 from enum import Enum
 
