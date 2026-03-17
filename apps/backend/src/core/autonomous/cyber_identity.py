@@ -24,7 +24,7 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import logging
-from apps.backend.src.core.tracing import get_tracer
+from core.tracing import get_tracer
 
 logger = logging.getLogger(__name__)
 

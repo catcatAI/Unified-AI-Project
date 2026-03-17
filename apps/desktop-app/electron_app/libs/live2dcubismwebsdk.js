@@ -1,1 +1,0 @@
-Failed to fetch version info for live2d-cubismweb.

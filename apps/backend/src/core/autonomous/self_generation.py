@@ -24,8 +24,10 @@ from datetime import datetime
 from pathlib import Path
 import asyncio
 import logging
+from core.tracing import get_tracer
 
 logger = logging.getLogger(__name__)
+tracer = get_tracer()
 
 
 class AvatarStyle(Enum):

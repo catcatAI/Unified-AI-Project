@@ -339,6 +339,135 @@ class OllamaBackend(BaseLLMBackend):
             return LLMResponse(text="", backend="ollama", model=self.model, error=str(e))
 
 
+class OpenAIAPIBackend(BaseLLMBackend):
+    """OpenAI API 後端 (GPT-4, GPT-3.5 等)"""
+
+    def __init__(self, api_key: str, base_url: str = "https://api.openai.com/v1", model: str = "gpt-4"):
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.model = model
+        self.timeout = 120.0
+
+    async def check_health(self) -> bool:
+        """檢查 OpenAI API 是否可用"""
+        if not self.api_key:
+            return False
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(
+                    f"{self.base_url}/models",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                )
+                return response.status_code == 200
+        except Exception as e:
+            logger.debug(f"OpenAI health check failed: {e}")
+        return False
+
+    async def generate(self, prompt: str, **kwargs) -> LLMResponse:
+        """調用 OpenAI API 生成回應"""
+        start_time = time.time()
+        messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": kwargs.get("max_tokens", 512),
+            "temperature": kwargs.get("temperature", 0.7),
+        }
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    text = data["choices"][0]["message"]["content"]
+                    tokens = data.get("usage", {}).get("total_tokens", 0)
+                    return LLMResponse(
+                        text=text,
+                        backend="openai",
+                        model=self.model,
+                        tokens_used=tokens,
+                        response_time_ms=(time.time() - start_time) * 1000,
+                        confidence=0.95,
+                    )
+                else:
+                    return LLMResponse(
+                        text="",
+                        backend="openai",
+                        model=self.model,
+                        error=f"HTTP {response.status_code}: {response.text[:200]}",
+                    )
+        except Exception as e:
+            logger.error(f"OpenAI API error: {e}", exc_info=True)
+            return LLMResponse(text="", backend="openai", model=self.model, error=str(e))
+
+
+class AnthropicAPIBackend(BaseLLMBackend):
+    """Anthropic API 後端 (Claude 系列)"""
+
+    def __init__(self, api_key: str, base_url: str = "https://api.anthropic.com/v1", model: str = "claude-3-opus-20240229"):
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.model = model
+        self.timeout = 120.0
+
+    async def check_health(self) -> bool:
+        """檢查 Anthropic API 是否可用"""
+        if not self.api_key:
+            return False
+        # Anthropic 沒有簡單的健康檢查端點，有 key 就認為可用
+        return True
+
+    async def generate(self, prompt: str, **kwargs) -> LLMResponse:
+        """調用 Anthropic API 生成回應"""
+        start_time = time.time()
+        messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": kwargs.get("max_tokens", 512),
+            "temperature": kwargs.get("temperature", 0.7),
+        }
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/messages",
+                    json=payload,
+                    headers={
+                        "x-api-key": self.api_key,
+                        "Content-Type": "application/json",
+                        "anthropic-version": "2023-06-01",
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    text = data.get("content", [{}])[0].get("text", "")
+                    tokens = data.get("usage", {}).get("input_tokens", 0) + data.get("usage", {}).get("output_tokens", 0)
+                    return LLMResponse(
+                        text=text,
+                        backend="anthropic",
+                        model=self.model,
+                        tokens_used=tokens,
+                        response_time_ms=(time.time() - start_time) * 1000,
+                        confidence=0.95,
+                    )
+                else:
+                    return LLMResponse(
+                        text="",
+                        backend="anthropic",
+                        model=self.model,
+                        error=f"HTTP {response.status_code}: {response.text[:200]}",
+                    )
+        except Exception as e:
+            logger.error(f"Anthropic API error: {e}", exc_info=True)
+            return LLMResponse(text="", backend="anthropic", model=self.model, error=str(e))
+
+
 class AngelaLLMService:
     """
     Angela 的 LLM 服務 - 核心大腦
@@ -692,63 +821,110 @@ class AngelaLLMService:
 
     def _get_default_config(self) -> Dict[str, Any]:
         """從配置文件讀取預設配置，並從環境變量加載 API 密鑰"""
-        try:
-            import os
+        import os
+        from pathlib import Path
 
-            config_path = os.environ.get("MULTI_LLM_CONFIG", "configs/multi_llm_config.json")
-            with open(config_path, "r", encoding="utf-8") as f:
-                config = json.load(f)
+        # 搜索多個可能的配置路徑（按優先順序）
+        config_paths = [
+            os.environ.get("MULTI_LLM_CONFIG"),
+            "configs/multi_llm_config.json",  # relative to CWD (apps/backend)
+            str(Path(__file__).resolve().parents[2] / "configs" / "multi_llm_config.json"),
+            str(Path(__file__).resolve().parents[4] / "configs" / "multi_llm_config.json"),
+        ]
 
-            # 從環境變量加載 API 密鑰
-            for backend_name, backend_config in config.items():
-                if "api_key_env" in backend_config:
-                    env_var = backend_config["api_key_env"]
-                    api_key = os.environ.get(env_var)
-                    if api_key:
-                        backend_config["api_key"] = api_key
-                        logger.info(
-                            f"Loaded API key from environment variable {env_var} for {backend_name}"
-                        )
-                    else:
-                        logger.warning(f"Environment variable {env_var} not set for {backend_name}")
-                elif "api_key" in backend_config and backend_config["api_key"] == "YOUR_API_KEY":
-                    # 移除佔位符 API 密鑰
-                    logger.warning(f"Removing placeholder API key for {backend_name}")
-                    del backend_config["api_key"]
+        config = None
+        for path in config_paths:
+            if path and os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        config = json.load(f)
+                    logger.info(f"LLM 配置已從 {path} 載入")
+                    break
+                except Exception as e:
+                    logger.warning(f"無法讀取配置 {path}: {e}")
 
-            return config
-        except Exception as e:
-            logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            return {
+        if config is None:
+            logger.warning("未找到 LLM 配置文件，使用默認配置")
+            config = {
                 "llamacpp-local": {
+                    "provider": "llama_cpp",
                     "base_url": "http://localhost:8080",
                     "model_name": "llama-3-8b-instruct",
                     "enabled": True,
                 },
                 "ollama-llama3": {
+                    "provider": "ollama",
                     "base_url": "http://localhost:11434",
                     "model_name": "llama3",
                     "enabled": True,
                 },
             }
 
-    def _init_backends(self):
-        """初始化可用的後端"""
-        # llama.cpp
-        llm_config = self.config.get("llamacpp-local", {})
-        if llm_config.get("enabled", False):
-            self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
-                base_url=llm_config.get("base_url", "http://localhost:8080"),
-                model=llm_config.get("model_name"),
-            )
+        # 從環境變量加載 API 密鑰
+        for backend_name, backend_config in config.items():
+            if not isinstance(backend_config, dict):
+                continue
+            if "api_key_env" in backend_config:
+                env_var = backend_config["api_key_env"]
+                api_key = os.environ.get(env_var)
+                if api_key:
+                    backend_config["api_key"] = api_key
+                    logger.info(
+                        f"Loaded API key from environment variable {env_var} for {backend_name}"
+                    )
+                else:
+                    logger.debug(f"Environment variable {env_var} not set for {backend_name}")
+            elif "api_key" in backend_config and backend_config["api_key"] in ("", "YOUR_API_KEY"):
+                # 移除空或佔位符 API 密鑰
+                del backend_config["api_key"]
 
-        # Ollama
-        ollama_config = self.config.get("ollama-llama3", {})
-        if ollama_config.get("enabled", False):
-            self.backends[LLMBackend.OLLAMA] = OllamaBackend(
-                base_url=ollama_config.get("base_url", "http://localhost:11434"),
-                model=ollama_config.get("model_name", "llama3"),
-            )
+        return config
+
+    def _init_backends(self):
+        """初始化可用的後端（支援所有 provider 類型）"""
+        for backend_id, backend_config in self.config.items():
+            if not isinstance(backend_config, dict):
+                continue
+            if not backend_config.get("enabled", False):
+                continue
+
+            provider = backend_config.get("provider", "").lower()
+            base_url = backend_config.get("base_url", "")
+            model_name = backend_config.get("model_name", "")
+            api_key = backend_config.get("api_key", "")
+
+            if provider in ("llama_cpp", "llamacpp") or backend_id == "llamacpp-local":
+                self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
+                    base_url=base_url or "http://localhost:8080",
+                    model=model_name,
+                )
+                logger.info(f"已注冊 llama.cpp 後端: {model_name}")
+
+            elif provider == "ollama" or backend_id.startswith("ollama"):
+                # 只註冊第一個 enabled 的 Ollama 配置
+                if LLMBackend.OLLAMA not in self.backends:
+                    self.backends[LLMBackend.OLLAMA] = OllamaBackend(
+                        base_url=base_url or "http://localhost:11434",
+                        model=model_name or "llama3",
+                    )
+                    logger.info(f"已注冊 Ollama 後端: {model_name}")
+
+            elif provider == "openai" and api_key:
+                self.backends[LLMBackend.OPENAI] = OpenAIAPIBackend(
+                    api_key=api_key,
+                    base_url=base_url or "https://api.openai.com/v1",
+                    model=model_name or "gpt-4",
+                )
+                logger.info(f"已注冊 OpenAI 後端: {model_name}")
+
+            elif provider == "anthropic" and api_key:
+                self.backends[LLMBackend.ANTHROPIC] = AnthropicAPIBackend(
+                    api_key=api_key,
+                    base_url=base_url or "https://api.anthropic.com/v1",
+                    model=model_name or "claude-3-opus-20240229",
+                )
+                logger.info(f"已注冊 Anthropic 後端: {model_name}")
+
 
     async def initialize(self) -> bool:
         """
@@ -766,8 +942,14 @@ class AngelaLLMService:
                 logger.info(f"✓ {backend_type.value} 後端可用")
 
         if available_backends:
-            # 選擇最佳後端 (優先順序: llama.cpp > Ollama > API)
-            priority = [LLMBackend.LLAMA_CPP, LLMBackend.OLLAMA]
+            # 選擇最佳後端 (優先順序: llama.cpp > Ollama > OpenAI > Anthropic > Google)
+            priority = [
+                LLMBackend.LLAMA_CPP,
+                LLMBackend.OLLAMA,
+                LLMBackend.OPENAI,
+                LLMBackend.ANTHROPIC,
+                LLMBackend.GOOGLE,
+            ]
             for backend_type in priority:
                 if backend_type in available_backends:
                     self.active_backend = self.backends[backend_type]
@@ -777,6 +959,7 @@ class AngelaLLMService:
             self.is_available = True
             backend_name = self.active_backend_type.value if self.active_backend_type else "none"
             logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
+            logger.info(f"可用後端: {[b.value for b in available_backends]}")
             return True
         else:
             logger.warning("沒有可用的 LLM 後端，將使用備份回應機制")

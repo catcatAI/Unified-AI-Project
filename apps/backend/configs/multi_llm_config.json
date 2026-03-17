@@ -1,29 +1,39 @@
 {
   "llamacpp-local": {
+    "provider": "llama_cpp",
     "base_url": "http://localhost:8080",
     "model_name": "llama-3-8b-instruct",
-    "enabled": false
+    "enabled": false,
+    "note": "本地 llama.cpp 伺服器 (需手動啟動)"
   },
   "ollama-llama3": {
+    "provider": "ollama",
     "base_url": "http://localhost:11434",
     "model_name": "phi:latest",
-    "enabled": true
+    "enabled": true,
+    "note": "本地 Ollama 後端 (需 ollama serve)"
   },
   "ollama-tinyllama": {
+    "provider": "ollama",
     "base_url": "http://localhost:11434",
     "model_name": "tinyllama",
-    "enabled": false
+    "enabled": false,
+    "note": "極輕量本地模型 (RAM < 4GB)"
   },
   "openai-gpt4": {
+    "provider": "openai",
     "base_url": "https://api.openai.com/v1",
     "model_name": "gpt-4",
     "api_key_env": "OPENAI_API_KEY",
-    "enabled": false
+    "enabled": false,
+    "note": "從環境變量 OPENAI_API_KEY 讀取 API 密鑰"
   },
   "anthropic-claude": {
+    "provider": "anthropic",
     "base_url": "https://api.anthropic.com/v1",
     "model_name": "claude-3-opus-20240229",
     "api_key_env": "ANTHROPIC_API_KEY",
-    "enabled": false
+    "enabled": false,
+    "note": "從環境變量 ANTHROPIC_API_KEY 讀取 API 密鑰"
   }
 }

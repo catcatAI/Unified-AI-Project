@@ -217,13 +217,11 @@ class Live2DCubismWrapper {
             const baseDir = modelPath.substring(0, lastSlash + 1);
             console.log('[loadModel] baseDir:', baseDir);
 
-            // Step 2: Load MOC3 file using FileReferences
+            // Step 2: Load MOC3 file
+            console.log('[loadModel] Step 2: Loading MOC3...');
             const mocFileName = this.model3Json.FileReferences?.Moc || 'miara_pro_t03.moc3';
             const mocPath = `${baseDir}${mocFileName}`;
-            console.log('[loadModel] Step 2: Loading MOC3 from:', mocPath);
-            const mocBuffer = await this.loadFileAsArrayBuffer(mocPath);
-            this.moc3 = new Uint8Array(mocBuffer);
-            console.log('[loadModel] MOC3 loaded, size:', mocBuffer.byteLength);
+            await this.loadMoc3File(mocPath);
 
             // Step 3: Load CDI3 file (optional)
             const cdiFileName = this.model3Json.FileReferences?.DisplayInfo;
@@ -247,30 +245,27 @@ class Live2DCubismWrapper {
                 console.log('[loadModel] Step 4: No Physics file');
             }
 
-            // Step 5: Load Textures
-            const textureFileNames = this.model3Json.FileReferences?.Textures || ['texture_00.png'];
-            console.log('[loadModel] Step 5: Loading textures:', textureFileNames);
-            this.texturePaths = [];
-            for (const texFile of textureFileNames) {
-                const texPath = `${baseDir}${texFile}`;
-                console.log('[loadModel] Texture path:', texPath);
-                this.texturePaths.push(texPath);
-            }
-
-            // Step 6: Initialize WebGL context
-            console.log('[loadModel] Step 6: Initializing WebGL context...');
-
-            // Set canvas dimensions if not set
-            if (!this.canvas.width || this.canvas.width === 0) {
-                this.canvas.width = 1280;
-                this.canvas.height = 720;
-                console.log('[loadModel] Canvas dimensions set to:', this.canvas.width, 'x', this.canvas.height);
-            }
-
-            // Initialize WebGL context
+            // Step 5: Initialize WebGL context BEFORE textures (textures need GL)
+            console.log('[loadModel] Step 5: Initializing WebGL context...');
             await this.initializeWebGL();
 
-            // Step 7: Create the model
+            // Step 6: Load Textures (requires WebGL context)
+            const textureFileNames = this.model3Json.FileReferences?.Textures || ['texture_00.png'];
+            console.log('[loadModel] Step 6: Loading textures:', textureFileNames);
+            this.textures = [];
+            for (let texFile of textureFileNames) {
+                if (texFile.startsWith('./')) texFile = texFile.substring(2);
+                if (texFile.startsWith('/')) texFile = texFile.substring(1);
+
+                const texPath = `${baseDir}${texFile}`;
+                console.log('[loadModel] Loading texture path:', texPath);
+                const texture = await this.loadTexture(texPath);
+                if (texture) {
+                    this.textures.push(texture);
+                }
+            }
+
+            // Step 7: Create the model instance
             console.log('[loadModel] Step 7: Creating Cubism model...');
             await this.createCubismModel();
             await this.setupMotionGroups();
@@ -283,7 +278,7 @@ class Live2DCubismWrapper {
                 this.callbacks.onLoaded();
             }
 
-            console.log('[loadModel] SUCCESS: Live2D model loaded successfully');
+            console.log('[loadModel] SUCCESS: Live2D model loaded with ' + this.textures.length + ' textures');
             return true;
         } catch (error) {
             console.error('[loadModel] FAILED:', error.message);
@@ -294,73 +289,41 @@ class Live2DCubismWrapper {
     }
 
     async loadMoc3File(modelPath) {
+        // Official CubismCore API: Moc.fromArrayBuffer(buffer)
+        // Reference: https://docs.live2d.com/cubism-sdk-manual/cubism-core-api-reference/
+
         const moc3Paths = this.findFile(modelPath, '.moc3');
+        console.log('[loadMoc3] Candidate paths:', moc3Paths);
 
-        console.log('Possible MOC3 files:', moc3Paths);
-
-        // Try each possible path
         for (const moc3Path of moc3Paths) {
             try {
-                console.log('Trying to load MOC3 file:', moc3Path);
-
-                // Try to load the file
+                console.log('[loadMoc3] Loading:', moc3Path);
                 const arrayBuffer = await this.loadFileAsArrayBuffer(moc3Path);
+                console.log('[loadMoc3] ArrayBuffer size:', arrayBuffer.byteLength, 'bytes');
 
-                // Debug: Check the structure of Moc
-                if (!this.moc3) {
-                    console.log('CubismCore.Moc:', this.cubismSdk.Moc);
-                    if (this.cubismSdk.Moc) {
-                        console.log('CubismCore.Moc keys:', Object.keys(this.cubismSdk.Moc));
-                    }
+                if (!this.cubismSdk || !this.cubismSdk.Moc) {
+                    throw new Error('Live2DCubismCore.Moc is not available');
                 }
 
-                // Try different ways to access Moc
-                let MocClass = this.cubismSdk.Moc || this.cubismSdk.MOC3;
-
-                // Check if MocClass has create method
-                if (typeof MocClass === 'object') {
-                    // Try to find create method in MocClass
-                    if (typeof MocClass.create === 'function') {
-                        this.moc3 = MocClass.create(arrayBuffer);
-                    } else if (MocClass.fromArrayBuffer) {
-                        this.moc3 = MocClass.fromArrayBuffer(arrayBuffer);
-                    } else if (MocClass.fromArrayBuffer) {
-                        this.moc3 = MocClass.fromArrayBuffer(arrayBuffer);
-                    } else {
-                        // Try to find create method in nested properties
-                        for (const key of Object.keys(MocClass)) {
-                            if (typeof MocClass[key] === 'function' && (key.includes('create') || key.includes('load') || key.includes('from'))) {
-                                console.log('Trying to use MocClass.' + key);
-                                this.moc3 = MocClass[key](arrayBuffer);
-                                break;
-                            }
-                        }
-                    }
-                } else if (typeof MocClass === 'function') {
-                    // MocClass is a constructor
-                    this.moc3 = new MocClass(arrayBuffer);
+                // Official API: Live2DCubismCore.Moc.fromArrayBuffer(buffer)
+                if (typeof this.cubismSdk.Moc.fromArrayBuffer === 'function') {
+                    this.moc3 = this.cubismSdk.Moc.fromArrayBuffer(arrayBuffer);
+                } else if (typeof this.cubismSdk.Moc.create === 'function') {
+                    // Fallback for older SDK versions
+                    this.moc3 = this.cubismSdk.Moc.create(arrayBuffer);
+                } else {
+                    throw new Error('No valid Moc creation method found (expected fromArrayBuffer or create)');
                 }
 
                 if (!this.moc3) {
-                    throw new Error('Failed to create MOC3 instance');
+                    throw new Error('Moc creation returned null — possible corrupted .moc3 file');
                 }
 
-                // Debug: Check if moc3 has _ptr property
-                console.log('MOC3 instance:', this.moc3);
-                console.log('MOC3._ptr:', this.moc3._ptr);
-
-                if (!this.moc3._ptr) {
-                    throw new Error('MOC3 instance does not have _ptr property');
-                }
-
-                if (this.moc3.releaseBytes) {
-                    this.moc3.releaseBytes(arrayBuffer);
-                }
-
-                console.log('MOC3 file loaded successfully:', moc3Path);
+                console.log('[loadMoc3] MOC3 loaded successfully:', moc3Path);
+                console.log('[loadMoc3] MOC3._ptr:', this.moc3._ptr);
                 return;
             } catch (error) {
-                console.warn('Failed to load MOC3 file:', moc3Path, error.message);
+                console.warn('[loadMoc3] Failed:', moc3Path, error.message);
                 continue;
             }
         }
@@ -422,9 +385,9 @@ class Live2DCubismWrapper {
 
         // Convert to URL-like format for consistent path handling
         let filePath = modelPath;
-        if (modelPath.startsWith('')) {
+        if (modelPath.startsWith('local://')) {
             // Convert local:// URL to file path
-            filePath = modelPath.startsWith('')
+            filePath = modelPath.startsWith('local:///')
                 ? modelPath.substring(9)  // Remove local:///
                 : modelPath.substring(8);  // Remove local://
         } else if (!modelPath.startsWith('/') && !modelPath.includes(':')) {
@@ -525,8 +488,8 @@ class Live2DCubismWrapper {
         let originalWidth = image.width;
         let originalHeight = image.height;
 
-        // Limit texture size to 512x512 for better performance on laptops
-        const maxAllowedSize = 512;
+        // Limit texture size for performance (2048 preserves good quality for 4K atlases)
+        const maxAllowedSize = 2048;
 
         if (image.width > maxAllowedSize || image.height > maxAllowedSize) {
             const scale = Math.min(maxAllowedSize / image.width, maxAllowedSize / image.height);
@@ -746,88 +709,53 @@ class Live2DCubismWrapper {
     }
 
     async createCubismModel() {
-        console.log('Creating Cubism model...');
+        // Official CubismCore API: Model.fromMoc(moc)
+        // Reference: https://docs.live2d.com/cubism-sdk-manual/cubism-core-api-reference/
 
-        console.log('CubismSdk.Model:', this.cubismSdk.Model);
-        if (this.cubismSdk.Model) {
-            console.log('CubismSdk.Model keys:', Object.keys(this.cubismSdk.Model));
-        }
+        console.log('[createModel] Creating Cubism model...');
 
-        // Check WebGL context
         if (!this.gl) {
-            throw new Error('WebGL context is null');
+            throw new Error('WebGL context is null — call initializeWebGL() first');
         }
 
-        // Try different ways to create model
+        if (!this.moc3) {
+            throw new Error('MOC3 not loaded — call loadMoc3File() first');
+        }
+
         try {
-            if (typeof this.cubismSdk.Model === 'function') {
-                // Model is a constructor
-                console.log('Using Model constructor');
+            // Official API: Live2DCubismCore.Model.fromMoc(moc)
+            if (this.cubismSdk.Model && typeof this.cubismSdk.Model.fromMoc === 'function') {
+                console.log('[createModel] Using Model.fromMoc (official API)');
+                this.live2dModel = this.cubismSdk.Model.fromMoc(this.moc3);
+            } else if (this.cubismSdk.Model && typeof this.cubismSdk.Model.create === 'function') {
+                console.log('[createModel] Using Model.create (fallback)');
+                this.live2dModel = this.cubismSdk.Model.create(this.moc3);
+            } else if (typeof this.cubismSdk.Model === 'function') {
+                console.log('[createModel] Using Model constructor (legacy)');
                 this.live2dModel = new this.cubismSdk.Model(this.moc3);
-
-                // Debug: Check model structure
-                console.log('Model created, checking structure...');
-                if (this.live2dModel.drawables) {
-                    console.log('Drawables object type:', typeof this.live2dModel.drawables);
-                    console.log('Drawables methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.live2dModel.drawables)));
-                    console.log('Drawables own methods:', Object.getOwnPropertyNames(this.live2dModel.drawables));
-                }
-                if (this.live2dModel.parameters) {
-                    console.log('Parameters object type:', typeof this.live2dModel.parameters);
-                    console.log('Parameters methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.live2dModel.parameters)));
-                }
-            } else if (typeof this.cubismSdk.Model === 'object') {
-                // Model is a namespace
-                console.log('Model is a namespace');
-
-                // Check if moc is valid
-                if (!this.moc3 || !this.moc3._ptr) {
-                    throw new Error('MOC3 is invalid or missing _ptr');
-                }
-
-                // Try fromMoc method
-                if (typeof this.cubismSdk.Model.fromMoc === 'function') {
-                    console.log('Using Model.fromMoc');
-                    this.live2dModel = this.cubismSdk.Model.fromMoc(this.moc3);
-                } else if (typeof this.cubismSdk.Model.create === 'function') {
-                    console.log('Using Model.create');
-                    this.live2dModel = this.cubismSdk.Model.create(this.moc3);
-                } else {
-                    throw new Error('No valid method found to create model');
-                }
+            } else {
+                throw new Error('No valid Model creation method found');
             }
 
             if (!this.live2dModel) {
-                throw new Error('Failed to create Live2D model instance');
+                throw new Error('Model creation returned null');
             }
 
-            console.log('Live2D model created:', this.live2dModel);
-            console.log('Live2D model._ptr:', this.live2dModel._ptr);
+            // Initial update to compute drawables
+            this.live2dModel.update();
 
-            // Create renderer if method exists (optional)
-            if (typeof this.live2dModel.createRenderer === 'function') {
-                this.live2dModel.createRenderer(this.gl);
-            } else {
-                console.warn('createRenderer method not found, renderer setup skipped');
-            }
+            // Log model info using property access (official API)
+            const drawables = this.live2dModel.drawables;
+            const parameters = this.live2dModel.parameters;
+            const parts = this.live2dModel.parts;
+            console.log(`[createModel] Model created successfully:`);
+            console.log(`[createModel]   Drawables: ${drawables ? drawables.count : 'N/A'}`);
+            console.log(`[createModel]   Parameters: ${parameters ? parameters.count : 'N/A'}`);
+            console.log(`[createModel]   Parts: ${parts ? parts.count : 'N/A'}`);
 
-            // Update model if method exists (optional)
-            if (typeof this.live2dModel.update === 'function') {
-                this.live2dModel.update();
-            } else {
-                console.warn('update method not found, model update skipped');
-            }
-
-            // Release MOC3 if method exists (optional)
-            if (typeof this.live2dModel.releaseMoc3 === 'function') {
-                this.live2dModel.releaseMoc3();
-            }
-
-            this.moc3 = null;
-
-            console.log('Cubism model created successfully');
+            console.log('[createModel] Cubism model ready');
         } catch (error) {
-            console.error('Failed to create Cubism model:', error);
+            console.error('[createModel] FAILED:', error.message);
             throw error;
         }
     }
@@ -919,355 +847,277 @@ class Live2DCubismWrapper {
             console.log('Renderer created');
         } else {
             console.warn('live2dModel.createRenderer not found, using fallback renderer');
-            // Create a simple fallback renderer using Cubism SDK core methods
+            // Fallback renderer: maps CubismCore model-space coords to WebGL clip-space
+            // CubismCore vertex positions are in model canvas units (varies per model)
+            // We need to scale them to WebGL clip space [-1, 1] using canvasinfo
             const self = this;
-            // Don't initialize self.textures here, let it reference this.textures dynamically
+
+            // Get model canvas info for coordinate transformation
+            const canvasinfo = this.live2dModel.canvasinfo;
+            let ppUnit = 1.0;
+            let originX = 0.0;
+            let originY = 0.0;
+            let canvasW = 1.0;
+            let canvasH = 1.0;
+            if (canvasinfo) {
+                ppUnit = canvasinfo.PixelsPerUnit || 1.0;
+                originX = canvasinfo.OriginX || 0.0;
+                originY = canvasinfo.OriginY || 0.0;
+                canvasW = canvasinfo.CanvasWidth || 1.0;
+                canvasH = canvasinfo.CanvasHeight || 1.0;
+                console.log(`[Renderer] Canvas info: ${canvasW}x${canvasH}, PPU=${ppUnit}, Origin=(${originX},${originY})`);
+            } else {
+                console.warn('[Renderer] No canvasinfo, will auto-detect scale from vertex bounds');
+            }
+
             this.renderer = {
-                update: (model) => {
+                update: function (model) {
                     // Update is handled by model.update()
                 },
-                draw: (gl) => {
-                    if (!self.live2dModel) {
-                        return;
-                    }
-                    // console.log('[Renderer] draw() called');
+                draw: function (gl) {
+                    if (!gl) return;
+                    if (!self.live2dModel) return;
+
+                    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+
                     try {
-                        // Clear the canvas
-                        gl.clearColor(0.0, 0.0, 0.0, 0.0);
-                        gl.clear(gl.COLOR_BUFFER_BIT);
-
-                        // Get canvas dimensions
-                        const width = self.canvas.width;
-                        const height = self.canvas.height;
-
-                        // Setup viewport
-                        gl.viewport(0, 0, width, height);
-
-                        // Enable blending for transparency
                         gl.enable(gl.BLEND);
                         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-                        // Try to render using actual Live2D drawables
-                        if (self.live2dModel.drawables && self.live2dModel.drawables.count > 0) {
-                            const drawables = self.live2dModel.drawables;
-                            const drawableCount = drawables.count;
+                        const drawables = self.live2dModel.drawables;
+                        if (!drawables) {
+                            this.drawPlaceholder(gl);
+                            return;
+                        }
 
-                            console.log(`drawableCount: ${drawableCount}`);
-                            console.log(`drawables.getDrawableCount: ${typeof drawables.getDrawableCount}`);
+                        const drawableCount = drawables.count || 0;
+                        if (drawableCount <= 0) {
+                            this.drawPlaceholder(gl);
+                            return;
+                        }
 
-                            console.log(`Rendering ${drawableCount} drawables`);
-
-                            // Create shader program if not exists
-                            if (!self.shaderProgram) {
-                                const vertexShaderSource = `
-                                    attribute vec2 a_position;
-                                    attribute vec2 a_texCoord;
-                                    varying vec2 v_texCoord;
-                                    void main() {
-                                        // Convert from 0-1 to -1 to 1 NDC space
-                                        vec4 position = vec4(a_position * 2.0 - 1.0, 0.0, 1.0);
-                                        // Flip Y axis for proper rendering
-                                        position.y = -position.y;
-                                        gl_Position = position;
-                                        v_texCoord = a_texCoord;
-                                    }
-                                `;
-
-                                const fragmentShaderSource = `
-                                    precision mediump float;
-                                    varying vec2 v_texCoord;
-                                    uniform sampler2D u_texture;
-                                    uniform float u_opacity;
-                                    void main() {
-                                        vec4 texColor = texture2D(u_texture, v_texCoord);
-                                        gl_FragColor = vec4(texColor.rgb, texColor.a * u_opacity);
-                                    }
-                                `;
-
-                                const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-                                gl.shaderSource(vertexShader, vertexShaderSource);
-                                gl.compileShader(vertexShader);
-
-                                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-                                gl.shaderSource(fragmentShader, fragmentShaderSource);
-                                gl.compileShader(fragmentShader);
-
-                                self.shaderProgram = gl.createProgram();
-                                gl.attachShader(self.shaderProgram, vertexShader);
-                                gl.attachShader(self.shaderProgram, fragmentShader);
-                                gl.linkProgram(self.shaderProgram);
-                            }
-
-                            gl.useProgram(self.shaderProgram);
-
-                            // Render each drawable
-                            // Debug: check self and this
-                            console.log('Debug - self.textures:', self.textures ? self.textures.length : 'undefined');
-                            console.log('Debug - this.textures:', this.textures ? this.textures.length : 'undefined');
-                            const textures = self.textures || this.textures || [];
-                            console.log(`Starting to render ${drawableCount} drawables`);
-                            console.log(`Texture count: ${textures.length}`);
-                            console.log(`About to enter drawable loop`);
-
-                            let successfullyRendered = 0;
-                            let skippedInvisible = 0;
-                            let skippedNoTexture = 0;
-                            let skippedNoData = 0;
-                            let loopCount = 0;
-
-                            for (let i = 0; i < drawableCount; i++) {
-                                loopCount++;
-                                try {
-                                    // Safe access to opacities
-                                    let opacity = 1.0;
-                                    if (drawables.opacities && typeof drawables.opacities === 'object' && 'length' in drawables.opacities) {
-                                        opacity = drawables.opacities[i] !== undefined ? drawables.opacities[i] : 1.0;
-                                    }
-
-                                    // Skip invisible drawables
-                                    if (opacity <= 0.0) {
-                                        skippedInvisible++;
-                                        continue;
-                                    }
-
-                                    const textureIndex = drawables.textureIndices ? drawables.textureIndices[i] : -1;
-
-                                    // Check if we have texture for this drawable
-                                    if (textureIndex >= 0 && textures[textureIndex]) {
-                                        // Safe access to vertexCounts and indexCounts
-                                        if (!drawables.vertexCounts || typeof drawables.vertexCounts[i] === 'undefined') {
-                                            console.error(`vertexCounts[${i}] is undefined`);
-                                            skippedNoData++;
-                                            continue;
-                                        }
-                                        if (!drawables.indexCounts || typeof drawables.indexCounts[i] === 'undefined') {
-                                            console.error(`indexCounts[${i}] is undefined`);
-                                            skippedNoData++;
-                                            continue;
-                                        }
-
-                                        const vertexCount = drawables.vertexCounts[i];
-                                        const indexCount = drawables.indexCounts[i];
-
-                                        if (vertexCount > 0 && indexCount > 0) {
-                                            // Get vertex positions and UVs - check each property
-                                            if (!drawables.vertexPositions) {
-                                                console.error(`vertexPositions is undefined for drawable ${i}`);
-                                                skippedNoData++;
-                                                continue;
-                                            }
-                                            if (!drawables.vertexUvs) {
-                                                console.error(`vertexUvs is undefined for drawable ${i}`);
-                                                skippedNoData++;
-                                                continue;
-                                            }
-                                            if (!drawables.indices) {
-                                                console.error(`indices is undefined for drawable ${i}`);
-                                                skippedNoData++;
-                                                continue;
-                                            }
-
-                                            const vertexPositions = drawables.vertexPositions;
-                                            const vertexUvs = drawables.vertexUvs;
-                                            const indices = drawables.indices;
-
-                                            // Debug: check data sizes
-                                            if (i < 3) {
-                                                console.log(`Drawable ${i}: vertexCount=${vertexCount}, indexCount=${indexCount}`);
-                                                console.log(`  Drawable ID: ${drawables.ids ? drawables.ids[i] : 'N/A'}`);
-                                                console.log(`  vertexPositions[${i}] type:`, vertexPositions[i] ? vertexPositions[i].constructor.name : 'null',
-                                                    'length:', vertexPositions[i] ? vertexPositions[i].length : 'null');
-                                                console.log(`  vertexUvs[${i}] type:`, vertexUvs[i] ? vertexUvs[i].constructor.name : 'null',
-                                                    'length:', vertexUvs[i] ? vertexUvs[i].length : 'null');
-                                                console.log(`  indices[${i}] type:`, indices[i] ? indices[i].constructor.name : 'null',
-                                                    'length:', indices[i] ? indices[i].length : 'null');
-                                                if (vertexPositions[i] && vertexPositions[i].length > 0) {
-                                                    const arr = vertexPositions[i];
-                                                    const values = [];
-                                                    for (let k = 0; k < Math.min(6, arr.length); k++) {
-                                                        values.push(arr[k]);
-                                                    }
-                                                    console.log(`  First 3 vertexPositions:`, values);
-                                                }
-                                            }
-
-                                            // Get the actual data for this drawable
-                                            const drawableVertexPositions = vertexPositions[i];
-                                            const drawableVertexUvs = vertexUvs[i];
-                                            const drawableIndices = indices[i];
-
-                                            if (!drawableVertexPositions || !drawableVertexUvs || !drawableIndices) {
-                                                console.error(`Missing data for drawable ${i}`);
-                                                skippedNoData++;
-                                                continue;
-                                            }
-
-                                            // Create vertex buffer
-                                            const vertexData = new Float32Array(vertexCount * 4);
-                                            for (let j = 0; j < vertexCount; j++) {
-                                                const baseIndex = j * 4;
-                                                vertexData[baseIndex] = drawableVertexPositions[j * 2];
-                                                vertexData[baseIndex + 1] = drawableVertexPositions[j * 2 + 1];
-                                                vertexData[baseIndex + 2] = drawableVertexUvs[j * 2];
-                                                vertexData[baseIndex + 3] = drawableVertexUvs[j * 2 + 1];
-                                            }
-
-                                            const vertexBuffer = gl.createBuffer();
-                                            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-                                            gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
-
-                                            // Create index buffer
-                                            let indexArray;
-                                            if (drawableIndices instanceof Uint16Array || drawableIndices instanceof Uint32Array) {
-                                                indexArray = drawableIndices;
-                                            } else if (Array.isArray(drawableIndices)) {
-                                                indexArray = new Uint16Array(drawableIndices);
-                                            } else {
-                                                console.error(`Invalid indices type for drawable ${i}:`, drawableIndices.constructor.name);
-                                                skippedNoData++;
-                                                continue;
-                                            }
-
-                                            // Check if indices reference valid vertices
-                                            let maxIndex = 0;
-                                            for (let j = 0; j < indexCount && j < indexArray.length; j++) {
-                                                if (indexArray[j] > maxIndex) maxIndex = indexArray[j];
-                                            }
-
-                                            if (maxIndex >= vertexCount) {
-                                                console.error(`Drawable ${i}: max index ${maxIndex} >= vertexCount ${vertexCount}`);
-                                                skippedNoData++;
-                                                continue;
-                                            }
-
-                                            const indexBuffer = gl.createBuffer();
-                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-                                            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.STATIC_DRAW);
-
-                                            // Set up attributes
-                                            const positionLocation = gl.getAttribLocation(self.shaderProgram, 'a_position');
-                                            const texCoordLocation = gl.getAttribLocation(self.shaderProgram, 'a_texCoord');
-
-                                            gl.enableVertexAttribArray(positionLocation);
-                                            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 16, 0);
-
-                                            gl.enableVertexAttribArray(texCoordLocation);
-                                            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 16, 8);
-
-                                            // Bind texture
-                                            gl.activeTexture(gl.TEXTURE0);
-                                            gl.bindTexture(gl.TEXTURE_2D, self.textures[textureIndex]);
-                                            gl.uniform1i(gl.getUniformLocation(self.shaderProgram, 'u_texture'), 0);
-                                            gl.uniform1f(gl.getUniformLocation(self.shaderProgram, 'u_opacity'), opacity);
-
-                                            // Draw - use appropriate index type based on max index
-                                            const indexType = (maxIndex > 65535) ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
-                                            gl.drawElements(gl.TRIANGLES, indexCount, indexType, 0);
-
-                                            successfullyRendered++;
-
-                                            // Clean up
-                                            gl.deleteBuffer(vertexBuffer);
-                                            gl.deleteBuffer(indexBuffer);
-                                        }
-                                    } else {
-                                        skippedNoTexture++;
-                                    }
-                                } catch (drawableError) {
-                                    console.error(`Error rendering drawable ${i}:`, drawableError);
-                                    // Skip problematic drawable
-                                    continue;
+                        // Create shader with model-to-clip-space transform
+                        if (!self.shaderProgram) {
+                            const vs = `
+                                attribute vec2 a_position;
+                                attribute vec2 a_texCoord;
+                                uniform vec4 u_transform; // x: scaleX, y: scaleY, z: offsetX, w: offsetY
+                                varying vec2 v_texCoord;
+                                void main() {
+                                    // Transform model-space coords to clip-space [-1, 1]
+                                    vec2 pos = a_position * u_transform.xy + u_transform.zw;
+                                    gl_Position = vec4(pos.x, -pos.y, 0.0, 1.0);
+                                    v_texCoord = a_texCoord;
                                 }
-                            }
-
-                            console.log(`Loop completed. Total iterations: ${loopCount}`);
-                            console.log(`Rendering stats: ${successfullyRendered} rendered, ${skippedInvisible} invisible, ${skippedNoTexture} no texture, ${skippedNoData} no data`);
-                        } else {
-                            // Fallback: draw animated placeholder if no drawables
-                            if (!self.placeholderShader) {
-                                const vertexShaderSource = `
-                                    attribute vec2 a_position;
-                                    void main() {
-                                        gl_Position = vec4(a_position, 0.0, 1.0);
-                                    }
-                                `;
-
-                                const fragmentShaderSource = `
-                                    precision mediump float;
-                                    uniform float u_time;
-                                    void main() {
-                                        float pulse = sin(u_time * 3.0) * 0.1 + 0.9;
-                                        gl_FragColor = vec4(0.4, 0.6, 0.9, 0.7 * pulse);
-                                    }
-                                `;
-
-                                const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-                                gl.shaderSource(vertexShader, vertexShaderSource);
-                                gl.compileShader(vertexShader);
-
-                                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-                                gl.shaderSource(fragmentShader, fragmentShaderSource);
-                                gl.compileShader(fragmentShader);
-
-                                self.placeholderShader = gl.createProgram();
-                                gl.attachShader(self.placeholderShader, vertexShader);
-                                gl.attachShader(self.placeholderShader, fragmentShader);
-                                gl.linkProgram(self.placeholderShader);
-                            }
-
-                            gl.useProgram(self.placeholderShader);
-
-                            const vertices = new Float32Array([
-                                -0.3, -0.3,
-                                0.3, -0.3,
-                                -0.3, 0.3,
-                                0.3, 0.3
-                            ]);
-
-                            const positionBuffer = gl.createBuffer();
-                            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-                            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-                            const positionLocation = gl.getAttribLocation(self.placeholderShader, 'a_position');
-                            gl.enableVertexAttribArray(positionLocation);
-                            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-                            gl.uniform1f(gl.getUniformLocation(self.placeholderShader, 'u_time'), Date.now() / 1000.0);
-                            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                            `;
+                            const fs = `
+                                precision mediump float;
+                                varying vec2 v_texCoord;
+                                uniform sampler2D u_texture;
+                                uniform float u_opacity;
+                                void main() {
+                                    vec4 texColor = texture2D(u_texture, v_texCoord);
+                                    gl_FragColor = vec4(texColor.rgb, texColor.a * u_opacity);
+                                }
+                            `;
+                            self.shaderProgram = self.compileShader(vs, fs);
                         }
 
-                        // Update model
-                        if (typeof self.live2dModel.update === 'function') {
-                            self.live2dModel.update();
+                        gl.useProgram(self.shaderProgram);
+
+                        // CubismCore with PPU=2000 outputs vertices in [-0.5, 0.5]
+                        // We scale 2x to fill [-1, 1] clip space, Y is flipped in shader
+                        if (!self._transformComputed) {
+                            // Simple 2:1 scale — CubismCore normalizes coords for us
+                            // Adjust for canvas aspect ratio
+                            const canvasAspect = gl.canvas.width / gl.canvas.height;
+
+                            // Scale uniformly, fit taller dimension
+                            self._scaleX = 2.0 / canvasAspect;  // narrower for wide canvases
+                            self._scaleY = 2.0;
+                            self._offsetX = 0.0;
+                            self._offsetY = 0.0;
+                            self._transformComputed = true;
+
+                            console.log(`[Renderer] Transform: scale=(${self._scaleX.toFixed(4)}, ${self._scaleY.toFixed(4)}), canvasAspect=${canvasAspect.toFixed(2)}`);
                         }
 
-                    } catch (error) {
-                        console.error('Renderer draw error:', error);
-                        console.error('Error stack:', error.stack);
+                        // Upload transform uniform
+                        const transformLoc = gl.getUniformLocation(self.shaderProgram, 'u_transform');
+                        gl.uniform4f(transformLoc, self._scaleX, self._scaleY, self._offsetX, self._offsetY);
+
+                        let successfullyRendered = 0;
+                        const textures = self.textures || [];
+
+                        // Property access (official CubismCore API)
+                        const opacities = drawables.opacities;
+                        const textureIndices = drawables.textureIndices;
+                        const vertexCounts = drawables.vertexCounts;
+                        const indexCounts = drawables.indexCounts;
+                        const renderOrders = drawables.renderOrders;
+
+                        // Build sorted draw order
+                        const sortedIndices = [];
+                        for (let i = 0; i < drawableCount; i++) {
+                            sortedIndices.push(i);
+                        }
+                        if (renderOrders) {
+                            sortedIndices.sort((a, b) => (renderOrders[a] || 0) - (renderOrders[b] || 0));
+                        }
+
+                        // Setup WebGL state for Live2D
+                        gl.enable(gl.BLEND);
+                        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+                        gl.disable(gl.CULL_FACE);
+                        gl.disable(gl.DEPTH_TEST);
+
+                        for (const i of sortedIndices) {
+                            const opacity = opacities ? opacities[i] : 1.0;
+                            if (opacity <= 0.0) continue;
+
+                            const textureIndex = textureIndices ? textureIndices[i] : 0;
+                            const vertexCount = vertexCounts ? vertexCounts[i] : 0;
+                            const indexCount = indexCounts ? indexCounts[i] : 0;
+
+                            if (vertexCount > 0 && indexCount > 0 && textures[textureIndex]) {
+                                // Official API: array property access
+                                const vertexPositions = drawables.vertexPositions ? drawables.vertexPositions[i] : null;
+                                const vertexUvs = drawables.vertexUvs ? drawables.vertexUvs[i] : null;
+                                const indices = drawables.indices ? drawables.indices[i] : null;
+
+                                if (!vertexPositions || !vertexUvs || !indices) continue;
+
+                                // Ensure we have typed arrays (SDK usually returns them, fallback if not)
+                                const posArray = (vertexPositions instanceof Float32Array) ? vertexPositions : new Float32Array(vertexPositions);
+                                const uvArray = (vertexUvs instanceof Float32Array) ? vertexUvs : new Float32Array(vertexUvs);
+                                const indexArray = (indices instanceof Uint16Array || indices instanceof Uint32Array) ? indices : new Uint16Array(indices);
+
+                                if (!self.vertexBufferPos) self.vertexBufferPos = gl.createBuffer();
+                                if (!self.vertexBufferUv) self.vertexBufferUv = gl.createBuffer();
+                                if (!self.indexBuffer) self.indexBuffer = gl.createBuffer();
+
+                                // Position Buffer
+                                gl.bindBuffer(gl.ARRAY_BUFFER, self.vertexBufferPos);
+                                gl.bufferData(gl.ARRAY_BUFFER, posArray, gl.DYNAMIC_DRAW);
+                                const posLoc = gl.getAttribLocation(self.shaderProgram, 'a_position');
+                                gl.enableVertexAttribArray(posLoc);
+                                gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+                                // UV Buffer
+                                gl.bindBuffer(gl.ARRAY_BUFFER, self.vertexBufferUv);
+                                gl.bufferData(gl.ARRAY_BUFFER, uvArray, gl.DYNAMIC_DRAW);
+                                const uvLoc = gl.getAttribLocation(self.shaderProgram, 'a_texCoord');
+                                gl.enableVertexAttribArray(uvLoc);
+                                gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+
+                                // Index Buffer
+                                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.indexBuffer);
+                                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.DYNAMIC_DRAW);
+
+                                // Texture Setup
+                                gl.activeTexture(gl.TEXTURE0);
+                                gl.bindTexture(gl.TEXTURE_2D, textures[textureIndex]);
+                                gl.uniform1i(gl.getUniformLocation(self.shaderProgram, 'u_texture'), 0);
+                                gl.uniform1f(gl.getUniformLocation(self.shaderProgram, 'u_opacity'), opacity);
+
+                                // Draw
+                                const indexType = (indexArray instanceof Uint32Array) ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+                                gl.drawElements(gl.TRIANGLES, indexCount, indexType, 0);
+                                successfullyRendered++;
+                            }
+                        }
+
+                        if (successfullyRendered === 0) {
+                            this.drawPlaceholder(gl);
+                        }
+                    } catch (e) {
+                        console.error('Renderer draw error:', e);
+                        this.drawPlaceholder(gl);
                     }
                 },
-                setWebGLContext: (gl) => {
-                    self.gl = gl;
-                }
+                drawPlaceholder: function (gl) {
+                    if (!self.placeholderShader) {
+                        const vs = 'attribute vec2 a_position; void main() { gl_Position = vec4(a_position, 0.0, 1.0); }';
+                        const fs = 'precision mediump float; uniform vec4 u_color; void main() { gl_FragColor = u_color; }';
+                        self.placeholderShader = self.compileShader(vs, fs);
+                    }
+                    gl.useProgram(self.placeholderShader);
+                    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 500);
+                    gl.uniform4f(gl.getUniformLocation(self.placeholderShader, 'u_color'), 0.4, 0.6, 0.9, 0.7 * pulse);
+
+                    if (!self.placeholderBuffer) {
+                        self.placeholderBuffer = gl.createBuffer();
+                    }
+                    const rect = new Float32Array([-0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5]);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, self.placeholderBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, rect, gl.STATIC_DRAW);
+
+                    const loc = gl.getAttribLocation(self.placeholderShader, 'a_position');
+                    gl.enableVertexAttribArray(loc);
+                    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                },
+                setWebGLContext: function (gl) { self.gl = gl; }
             };
-            console.log('Fallback renderer created with Cubism SDK drawing');
         }
     }
 
+    compileShader(vertexSource, fragmentSource) {
+        const gl = this.gl;
+        const vShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vShader, vertexSource);
+        gl.compileShader(vShader);
+        if (!gl.getShaderParameter(vShader, gl.COMPILE_STATUS)) {
+            console.error('VS Error:', gl.getShaderInfoLog(vShader));
+        }
+        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fShader, fragmentSource);
+        gl.compileShader(fShader);
+        if (!gl.getShaderParameter(fShader, gl.COMPILE_STATUS)) {
+            console.error('FS Error:', gl.getShaderInfoLog(fShader));
+        }
+        const program = gl.createProgram();
+        gl.attachShader(program, vShader);
+        gl.attachShader(program, fShader);
+        gl.linkProgram(program);
+        return program;
+    }
+
+
     render() {
-        // console.log('[Wrapper] render() called, isLoaded:', this.isLoaded, 'isRunning:', this.isRunning);
         if (!this.isLoaded || !this.isRunning) {
             return;
         }
 
-        const deltaTime = this.getCurrentDeltaTime();
-        this.lastUpdate = Date.now();
+        try {
+            const deltaTime = this.getCurrentDeltaTime();
+            this.lastUpdate = Date.now();
 
-        this.live2dModel.update(deltaTime);
-        this.renderer.update(this.live2dModel);
-        this.renderer.draw(this.gl);
+            // Safe update call - Core Model might not have update()
+            if (this.live2dModel && typeof this.live2dModel.update === 'function') {
+                this.live2dModel.update(deltaTime);
+            } else if (this.cubismModel && typeof this.cubismModel.update === 'function') {
+                this.cubismModel.update(deltaTime);
+            }
 
-        this.handleMotionTransitions(deltaTime);
+            if (this.renderer) {
+                if (typeof this.renderer.update === 'function') {
+                    this.renderer.update(this.live2dModel || this.cubismModel);
+                }
+                if (typeof this.renderer.draw === 'function') {
+                    this.renderer.draw(this.gl);
+                }
+            }
+
+            this.handleMotionTransitions(deltaTime);
+        } catch (error) {
+            console.error('[Wrapper] Render error:', error);
+            // Don't throw, let the loop continue or show fallback
+            if (this.renderer && typeof this.renderer.drawPlaceholder === 'function') {
+                this.renderer.drawPlaceholder(this.gl);
+            }
+        }
     }
 
     handleMotionTransitions(deltaTime) {
@@ -1443,6 +1293,11 @@ class Live2DCubismWrapper {
         // Update canvas dimensions
         this.canvas.width = width;
         this.canvas.height = height;
+
+        // Update WebGL viewport if gl exists
+        if (this.gl) {
+            this.gl.viewport(0, 0, width, height);
+        }
 
         // Check WebGL context
         if (!this.gl) {

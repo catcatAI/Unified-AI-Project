@@ -515,16 +515,55 @@ async def _handle_chat_request(
 
 @app.on_event("startup")
 async def startup_event():
-    # 驗證環境變量
-    _validate_environment_variables()
+    # ========== 日誌持久化：添加文件處理器到 root logger ==========
+    from logging.handlers import RotatingFileHandler
 
-    # 自動創建日誌目錄
     log_dir = Path("logs")
     try:
-        os.makedirs(log_dir, exist_ok=True)
-        logger.info(f"[STARTUP] Log directory created/verified: {log_dir.absolute()}")
+        log_dir.mkdir(parents=True, exist_ok=True)
     except Exception as e:
-        logger.warning(f"[STARTUP] Failed to create log directory: {e}")
+        print(f"Warning: Failed to create logs directory: {e}")
+
+    try:
+        log_formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+
+        # 主日誌（所有級別）
+        main_handler = RotatingFileHandler(
+            log_dir / "angela.log",
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8",
+        )
+        main_handler.setLevel(logging.DEBUG)
+        main_handler.setFormatter(log_formatter)
+
+        # 錯誤日誌（WARNING 及以上）
+        error_handler = RotatingFileHandler(
+            log_dir / "angela_error.log",
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8",
+        )
+        error_handler.setLevel(logging.WARNING)
+        error_handler.setFormatter(log_formatter)
+
+        # 加到 root logger，這樣所有模組的日誌都會被捕獲
+        root_logger = logging.getLogger()
+        root_logger.addHandler(main_handler)
+        root_logger.addHandler(error_handler)
+        if root_logger.level > logging.DEBUG:
+            root_logger.setLevel(logging.DEBUG)
+
+        logger.info(f"[STARTUP] 日誌持久化已啟用: {log_dir.absolute()}")
+        logger.info(f"[STARTUP]   主日誌: angela.log (所有級別)")
+        logger.info(f"[STARTUP]   錯誤日誌: angela_error.log (WARNING+)")
+    except Exception as e:
+        print(f"Warning: Failed to setup file logging: {e}")
+
+    # 驗證環境變量
+    _validate_environment_variables()
 
     # Initialize all services (lazy loading triggers here)
     (

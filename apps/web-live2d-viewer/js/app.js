@@ -1047,7 +1047,20 @@ class AngelaApp {
 
     async _loadDefaultModel() {
         this.updateLoadingText('Loading model...');
-        // 模型加载逻辑
+        console.log('[App] Loading default model...');
+
+        if (this.live2dManager) {
+            try {
+                // 從配置獲取默認模型路徑
+                const modelPath = 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
+                await this.live2dManager.loadModel(modelPath);
+                console.log('[App] Default model loaded:', modelPath);
+            } catch (error) {
+                console.error('[App] Failed to load default model:', error);
+            }
+        } else {
+            console.warn('[App] Live2DManager not initialized, cannot load model');
+        }
     }
 
     _setupIdleDetection() {

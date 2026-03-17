@@ -24,8 +24,8 @@ from typing import Dict, List, Optional, Tuple, Callable, Any, Set
 from datetime import datetime, timedelta
 from pathlib import Path
 import asyncio
-import json
 import logging
+from core.tracing import get_tracer
 
 logger = logging.getLogger(__name__)
 

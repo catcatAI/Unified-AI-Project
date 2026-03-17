@@ -24,48 +24,48 @@
 class Live2DManager {
     constructor(canvas, unifiedDisplayMatrix = null, performanceManager = null) {
         console.log('[Live2DManager] Constructor with UDM:', !!unifiedDisplayMatrix, 'PM:', !!performanceManager);
-        
+
         this.canvas = canvas;
         this.udm = unifiedDisplayMatrix;
         this.performanceManager = performanceManager;
-        
+
         // Core state
         this.gl = null;
         this.wrapper = null;
         this.isFramework = false;
         this.frameworkLoaded = false;
         this.isFallback = true;
-        
+
         this.modelLoaded = false;
         this.currentModel = null;
-        
+
         // Rendering state
         this.isRunning = false;
         this.lastFrameTime = 0;
         this.currentExpression = 'neutral';
         this.currentMotion = 'idle';
-        
+
         // Performance settings
         this.resolutionScale = 1.0;
         this.effectsLevel = 1.0;
         this.targetFPS = 60;
         this.currentFPS = 60;
         this.frameRate = 60;
-        
+
         // Feature flags
         this.features = {
             advanced_animations: true,
             physics: true,
             lip_sync: true
         };
-        
+
         // Effects
         this.effects = {
             breathing: true,
             blinking: true,
             idle_motion: true
         };
-        
+
         // Fallback rendering - 三層渲染系統
         this.fallbackCanvas = null;
         this.fallbackCtx = null;
@@ -77,7 +77,7 @@ class Live2DManager {
         this.poseIndex = 0;  // 當前姿態索引
         this.lastRenderedImageId = '';  // 跟踪上次渲染的圖片
         this.lastRenderedSpriteIndex = -1;  // 跟踪上次渲染的 sprite sheet 索引
-        
+
         // Expressions
         this.expressions = {
             neutral: { ParamEyeLOpen: 1, ParamEyeROpen: 1, ParamMouthForm: 0, ParamCheek: 0 },
@@ -89,7 +89,7 @@ class Live2DManager {
             love: { ParamEyeLOpen: 0.8, ParamEyeROpen: 0.8, ParamMouthForm: 0.3, ParamCheek: 0.8 },
             calm: { ParamEyeLOpen: 1, ParamEyeROpen: 1, ParamMouthForm: 0, ParamCheek: 0 }
         };
-        
+
         // Parameters (for fallback mode)
         this.parameters = {
             ParamBreath: 0,
@@ -103,27 +103,35 @@ class Live2DManager {
             ParamBodyAngleY: 0,
             ParamCheek: 0
         };
-        
+
         // Clickable regions
         this.clickableRegions = [];
-        
+
         // Eye tracking
         this.eyeTracking = { x: 0.5, y: 0.5 };
         this.lipSync = { level: 0, phoneme: null };
-        
+
         // Initialize
         this._init();
     }
-    
+
     async initialize() {
         console.log('[Live2DManager] initialize() called');
         return this.modelLoaded;
     }
-    
+
     async loadModel(modelPath) {
-        console.log('[Live2DManager] loadModel():', modelPath);
+        console.log('[Live2DManager] loadModel() explicitly called:', modelPath);
         this.currentModel = modelPath;
-        this.modelLoaded = true;
+
+        // 如果 SDK 已經加載，直接調用 _loadLive2DModel
+        if (typeof window.Live2DCubismCore !== 'undefined') {
+            await this._loadLive2DModel(modelPath);
+        } else {
+            console.warn('[Live2DManager] SDK not yet loaded, model will load once SDK is ready');
+            this.modelLoaded = true; // 標記已嘗試加載
+        }
+
         return true;
     }
 
@@ -185,18 +193,18 @@ class Live2DManager {
             ratioDiff: ratioDiff.toFixed(4)
         };
     }
-    
+
     _init() {
         console.log('[Live2DManager] Initializing...');
         this._waitForSDKAndInitialize();
     }
-    
+
     _waitForSDKAndInitialize(maxWait = 5000, interval = 100) {
         const startTime = Date.now();
-        
+
         const checkAndInit = () => {
             const elapsed = Date.now() - startTime;
-            
+
             if (typeof window.Live2DCubismCore !== 'undefined') {
                 console.log('[Live2DManager] Cubism Core detected after', elapsed, 'ms');
                 this._initializeWithSDK(window.Live2DCubismCore);
@@ -208,21 +216,21 @@ class Live2DManager {
                 this._createFallbackManager();
             }
         };
-        
+
         checkAndInit();
     }
-    
+
     _initializeWithSDK(CubismCore) {
         this.isFramework = true;
         this.isFallback = false;
-        
+
         // 加载 Live2D 模型
         this._loadLive2DModel();
     }
-    
+
     async _loadLive2DModel() {
         console.log('[Live2DManager] Loading Live2D model...');
-        
+
         // 無論 Live2D 是否加載成功，都先加載立繪圖片
         await this._loadCharacterImage();
 
@@ -284,7 +292,7 @@ class Live2DManager {
         console.warn('[Live2DManager] 使用默認模型路徑（未在配置中找到）');
         return 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
     }
-    
+
     /**
      * 更新PerformanceManager中的Live2D能力状态
      */
@@ -292,22 +300,22 @@ class Live2DManager {
         if (!this.performanceManager) {
             return;
         }
-        
+
         try {
             // 更新Live2D SDK状态
             this.performanceManager.updateCapability('live2d_sdk', this.isFramework && !this.isFallback);
-            
+
             // 更新Live2D模型状态
             this.performanceManager.updateLive2DModelAvailability(this.modelLoaded && !this.isFallback);
-            
+
             // 更新Live2D物理状态
             const physicsAvailable = this.isFramework && this.modelLoaded && !this.isFallback;
             this.performanceManager.updateLive2DPhysicsAvailability(physicsAvailable);
-            
+
             // 更新Live2D唇型同步状态
             const lipsyncAvailable = this.isFramework && this.modelLoaded && !this.isFallback;
             this.performanceManager.updateLive2DLipsyncAvailability(lipsyncAvailable);
-            
+
             console.log('[Live2DManager] 能力状态已更新:', {
                 live2d_sdk: this.isFramework && !this.isFallback,
                 live2d_model: this.modelLoaded && !this.isFallback,
@@ -318,28 +326,28 @@ class Live2DManager {
             console.error('[Live2DManager] 更新能力状态失败:', error);
         }
     }
-    
+
     // ========== Fallback Rendering (只使用美术资源) ==========
-    
+
     _createFallbackManager() {
         console.log('[Live2DManager] Creating 2D fallback manager');
         this._create2DFallbackCharacter();
     }
-    
+
     async _create2DFallbackCharacter() {
         console.log('[Live2DManager] Creating 2D fallback character');
-        
+
         const fallbackCanvas = document.getElementById('fallback-canvas');
         const ctx = fallbackCanvas?.getContext('2d');
-        
+
         if (!fallbackCanvas || !ctx) {
             console.error('[Live2DManager] Fallback canvas not found');
             return;
         }
-        
+
         this.fallbackCanvas = fallbackCanvas;
         this.fallbackCtx = ctx;
-        
+
         fallbackCanvas.style.display = 'block';
         const wrapper = document.getElementById('fallback-wrapper');
         if (wrapper) {
@@ -347,7 +355,7 @@ class Live2DManager {
             this.fallbackWrapper = wrapper;
         }
         this.canvas.style.display = 'none';
-        
+
         // Set canvas size
         if (this.udm) {
             const baseSize = this.udm.getBaseSize();
@@ -357,32 +365,34 @@ class Live2DManager {
             fallbackCanvas.width = 1280;
             fallbackCanvas.height = 720;
         }
-        
+
         // 初始化 LayerRenderer（三層渲染系統）
         if (typeof window.LayerRenderer !== 'undefined') {
             this.layerRenderer = new window.LayerRenderer(fallbackCanvas, this.udm);
             console.log('[Live2DManager] LayerRenderer initialized');
+        } else {
+            console.warn('[Live2DManager] LayerRenderer not found in window');
         }
-        
+
         // 加载美术资源
         await this._loadCharacterImage();
-        
+
         // 如果 LayerRenderer 可用，將圖片加載到 LayerRenderer
-        if (this.layerRenderer) {
+        if (this.layerRenderer && Object.keys(this.characterImages).length > 0) {
             await this.layerRenderer.loadLayerImages(this.characterImages);
             console.log('[Live2DManager] Layer images loaded into LayerRenderer');
         }
-        
+
         // 设置点击事件
         this._setupClickHandlers();
-        
+
         // 初始化点击区域
         this._initTouchDetector();
-        
+
         // 启动动画循环
         this._startAnimation();
     }
-    
+
     _setupClickHandlers() {
         const wrapper = document.querySelector('.canvas-wrapper') || this.fallbackWrapper;
         if (wrapper) {
@@ -390,12 +400,12 @@ class Live2DManager {
             this._clickHandler = (e) => this._onClick(e);
             this._hoverHandler = (e) => this._onHover(e);
             this._wrapperElement = wrapper;
-            
+
             wrapper.addEventListener('click', this._clickHandler);
             wrapper.addEventListener('mousemove', this._hoverHandler);
         }
     }
-    
+
     async _loadCharacterImage() {
         // 從配置中加載所有立繪圖片
         if (typeof window.ANGELA_CHARACTER_IMAGES === 'undefined') {
@@ -406,13 +416,13 @@ class Live2DManager {
 
         const config = window.ANGELA_CHARACTER_IMAGES;
         console.log('[Live2DManager] Loading character images from config...');
-        
+
         // 嘗試加載所有配置的圖片
         for (const [imageId, imageConfig] of Object.entries(config)) {
             try {
                 const img = new Image();
                 img.src = `${imageConfig.path}`;
-                
+
                 await new Promise((resolve, reject) => {
                     img.onload = () => {
                         console.log(`[Live2DManager] Loaded image: ${imageId} (${img.width}x${img.height})`);
@@ -420,7 +430,7 @@ class Live2DManager {
                     };
                     img.onerror = () => reject(new Error('Failed'));
                 });
-                
+
                 this.characterImages[imageId] = {
                     image: img,
                     config: imageConfig
@@ -457,12 +467,12 @@ class Live2DManager {
         try {
             const img = new Image();
             img.src = `${path}`;
-            
+
             await new Promise((resolve, reject) => {
                 img.onload = () => resolve(img);
                 img.onerror = () => reject(new Error('Failed'));
             });
-            
+
             this.characterImages[imageId] = {
                 image: img,
                 config: {
@@ -480,11 +490,11 @@ class Live2DManager {
                     }
                 }
             };
-            
+
             if (this.currentCharacterImageId === 'default') {
                 this.currentCharacterImageId = imageId;
             }
-            
+
             console.log('[Live2DManager] Character image loaded:', path);
         } catch (e) {
             console.warn('[Live2DManager] Could not load:', path, e.message);
@@ -561,9 +571,9 @@ class Live2DManager {
 
         const config = imageData.config;
         const totalCells = config.grid.rows * config.cols;
-        
+
         if (index < 0 || index >= totalCells) {
-            console.warn(`[Live2DManager] Invalid index: ${index} (0-${totalCells-1})`);
+            console.warn(`[Live2DManager] Invalid index: ${index} (0-${totalCells - 1})`);
             return false;
         }
 
@@ -619,7 +629,7 @@ class Live2DManager {
         }
 
         console.log('[Live2DManager] Switching to fallback mode...');
-        
+
         // 停止 Live2D
         if (this.wrapper) {
             try {
@@ -715,55 +725,55 @@ class Live2DManager {
             { id: 'hair', name: 'Hair', x: 500, y: 30, width: 400, height: 200 }
         ];
     }
-    
+
     _startAnimation() {
         if (this.isRunning) return;
         this.isRunning = true;
         this._animationLoop();
     }
-    
+
     _animationLoop() {
         if (!this.isRunning) return;
-        
+
         const now = performance.now();
         const deltaTime = now - this.lastFrameTime;
         this.lastFrameTime = now;
-        
+
         // Calculate FPS
         this.currentFPS = 1000 / (deltaTime || 16.67);
-        
+
         // Update fallback state
         this._updateBlink(deltaTime);
         this._updateBreathing(deltaTime);
-        
+
         // Render
         this._renderFallback();
-        
+
         requestAnimationFrame(() => this._animationLoop());
     }
-    
+
     _renderFallback() {
         if (!this.fallbackCtx || !this.fallbackCanvas) return;
-        
+
         // 如果 LayerRenderer 可用，使用三層渲染
         if (this.layerRenderer) {
             // 更新 LayerRenderer 的狀態
             this.layerRenderer.setExpressionIndex(this.expressionIndex);
             this.layerRenderer.setPoseIndex(this.poseIndex);
-            
+
             // 渲染三層
             this.layerRenderer.render();
             return;
         }
-        
+
         // 否則使用舊的單層渲染（降級方案）
         const ctx = this.fallbackCtx;
         const canvas = this.fallbackCanvas;
-        
+
         // Clear
         ctx.fillStyle = '#1a1a1e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // 繪制當前選擇的立繪
         const imageData = this.characterImages[this.currentCharacterImageId];
         if (!imageData) {
@@ -780,38 +790,38 @@ class Live2DManager {
             // 單張圖片渲染
             const imgWidth = img.width;
             const imgHeight = img.height;
-            
+
             let renderWidth, renderHeight, renderX, renderY;
-            
+
             if (params.scaleToHeight) {
                 const scale = params.scaleToHeight / imgHeight;
                 renderHeight = params.scaleToHeight * udmScale;
                 renderWidth = imgWidth * scale * udmScale;
-                
+
                 if (renderWidth > canvas.width) {
                     const widthScale = canvas.width / renderWidth;
                     renderWidth = canvas.width;
                     renderHeight = renderHeight * widthScale;
                 }
-                
+
                 renderX = (canvas.width - renderWidth) / 2;
                 renderY = params.offsetY ? params.offsetY * udmScale : (canvas.height - renderHeight) / 2;
             } else {
                 renderWidth = params.targetWidth * udmScale;
                 renderHeight = params.targetHeight * udmScale;
-                
+
                 if (renderWidth > canvas.width) renderWidth = canvas.width;
                 if (renderHeight > canvas.height) renderHeight = canvas.height;
-                
+
                 renderX = params.offsetX ? params.offsetX * udmScale : (canvas.width - renderWidth) / 2;
                 renderY = params.offsetY ? params.offsetY * udmScale : (canvas.height - renderHeight) / 2;
             }
-            
+
             ctx.drawImage(img, renderX, renderY, renderWidth, renderHeight);
-            
+
             if (this.lastRenderedImageId !== this.currentCharacterImageId) {
-                console.log('[Live2DManager] Rendered single image:', config.name, 
-                            `size=${renderWidth.toFixed(0)}x${renderHeight.toFixed(0)}, pos=(${renderX.toFixed(0)}, ${renderY.toFixed(0)})`);
+                console.log('[Live2DManager] Rendered single image:', config.name,
+                    `size=${renderWidth.toFixed(0)}x${renderHeight.toFixed(0)}, pos=(${renderX.toFixed(0)}, ${renderY.toFixed(0)})`);
                 this.lastRenderedImageId = this.currentCharacterImageId;
             }
         } else if (config.type === 'sprite_sheet') {
@@ -819,32 +829,32 @@ class Live2DManager {
             const cellSize = config.cellSize;
             const totalSize = config.totalSize;
             const grid = config.grid;
-            
+
             const colIndex = this.spriteSheetIndex % grid.cols;
             const rowIndex = Math.floor(this.spriteSheetIndex / grid.cols);
-            
+
             const sourceX = colIndex * cellSize.width;
             const sourceY = rowIndex * cellSize.height;
-            
+
             let renderWidth, renderHeight, renderX, renderY;
-            
+
             if (params.scaleToHeight) {
                 const scale = params.scaleToHeight / totalSize.height;
                 renderHeight = params.scaleToHeight * udmScale;
                 renderWidth = totalSize.width * scale * udmScale;
-                
+
                 if (renderWidth > canvas.width) {
                     const widthScale = canvas.width / renderWidth;
                     renderWidth = canvas.width;
                     renderHeight = renderHeight * widthScale;
                 }
-                
+
                 const cellRenderWidth = renderWidth / grid.cols;
                 const cellRenderHeight = renderHeight / grid.rows;
-                
+
                 renderX = (canvas.width - cellRenderWidth) / 2;
                 renderY = (canvas.height - cellRenderHeight) / 2;
-                
+
                 ctx.drawImage(
                     img,
                     sourceX, sourceY,
@@ -855,10 +865,10 @@ class Live2DManager {
             } else {
                 const cellRenderWidth = params.targetWidth * udmScale;
                 const cellRenderHeight = params.targetHeight * udmScale;
-                
+
                 renderX = params.offsetX ? params.offsetX * udmScale : (canvas.width - cellRenderWidth) / 2;
                 renderY = params.offsetY ? params.offsetY * udmScale : (canvas.height - cellRenderHeight) / 2;
-                
+
                 ctx.drawImage(
                     img,
                     sourceX, sourceY,
@@ -867,17 +877,17 @@ class Live2DManager {
                     cellRenderWidth, cellRenderHeight
                 );
             }
-            
-            if (this.lastRenderedImageId !== this.currentCharacterImageId || 
+
+            if (this.lastRenderedImageId !== this.currentCharacterImageId ||
                 this.lastRenderedSpriteIndex !== this.spriteSheetIndex) {
-                console.log('[Live2DManager] Rendered sprite sheet cell:', config.name, 
-                            `index=${this.spriteSheetIndex}, pos=(${colIndex}, ${rowIndex})`);
+                console.log('[Live2DManager] Rendered sprite sheet cell:', config.name,
+                    `index=${this.spriteSheetIndex}, pos=(${colIndex}, ${rowIndex})`);
                 this.lastRenderedImageId = this.currentCharacterImageId;
                 this.lastRenderedSpriteIndex = this.spriteSheetIndex;
             }
         }
     }
-    
+
     _updateBlink(deltaTime) {
         if (!this.fallbackState) {
             this.fallbackState = {
@@ -887,9 +897,9 @@ class Live2DManager {
                 eyeOpenness: 1
             };
         }
-        
+
         this.fallbackState.blinkTimer += deltaTime;
-        
+
         if (this.fallbackState.isBlinking) {
             this.fallbackState.eyeOpenness -= deltaTime / 100;
             if (this.fallbackState.eyeOpenness <= 0) {
@@ -901,64 +911,64 @@ class Live2DManager {
             this.fallbackState.isBlinking = true;
             this.fallbackState.blinkTimer = 0;
         }
-        
+
         this.parameters.ParamEyeLOpen = this.fallbackState.eyeOpenness;
         this.parameters.ParamEyeROpen = this.fallbackState.eyeOpenness;
     }
-    
+
     _updateBreathing(deltaTime) {
         const time = performance.now() / 1000;
         this.parameters.ParamBreath = Math.sin(time * 2) * 0.1;
     }
-    
+
     // ========== Event Handlers ==========
-    
+
     _onClick(event) {
         if (!this.characterImage) return;
-        
+
         const rect = event.currentTarget.getBoundingClientRect();
         const x = (event.clientX - rect.left) * (this.fallbackCanvas.width / rect.width);
         const y = (event.clientY - rect.top) * (this.fallbackCanvas.height / rect.height);
-        
+
         const result = this._detectBodyPart(x, y);
         if (result && result.hit) {
             this._triggerReaction(result.bodyPart);
         }
     }
-    
+
     _onHover(event) {
         if (!this.characterImage) return;
-        
+
         const rect = event.currentTarget.getBoundingClientRect();
         const x = (event.clientX - rect.left) * (this.fallbackCanvas.width / rect.width);
         const y = (event.clientY - rect.top) * (this.fallbackCanvas.height / rect.height);
         this._updateHoverState(x, y);
     }
-    
+
     _detectBodyPart(x, y) {
         const scale = this.udm ? this.udm.getResourceToBaseScale() : 1.0;
-        
+
         for (const region of this.clickableRegions) {
             const rx = region.x * scale;
             const ry = region.y * scale;
             const rw = region.width * scale;
             const rh = region.height * scale;
-            
+
             if (x >= rx && x <= rx + rw && y >= ry && y <= ry + rh) {
                 return { bodyPart: region.id, confidence: 0.8, hit: true };
             }
         }
-        
+
         // Check character bbox
         const bbox = { x: 508, y: 26, width: 391, height: 491 };
         if (x >= bbox.x * scale && x < (bbox.x + bbox.width) * scale &&
             y >= bbox.y * scale && y < (bbox.y + bbox.height) * scale) {
             return { bodyPart: 'generic', confidence: 0.5, hit: true };
         }
-        
+
         return { hit: false };
     }
-    
+
     _updateHoverState(x, y) {
         if (!this.fallbackState) return;
         const result = this._detectBodyPart(x, y);
@@ -966,7 +976,7 @@ class Live2DManager {
             this.fallbackState.hoverRegion = result.bodyPart;
         }
     }
-    
+
     _triggerReaction(bodyPart) {
         const reactions = {
             'face': 'happy', 'eyes': 'surprised', 'mouth': 'happy',
@@ -974,13 +984,13 @@ class Live2DManager {
         };
         this.setExpression(reactions[bodyPart] || 'neutral');
     }
-    
+
     handleCharacterInteraction(x, y) {
         return this._detectBodyPart(x, y);
     }
-    
+
     // ========== Public API ==========
-    
+
     // Expression control
     setExpression(expression) {
         try {
@@ -1006,27 +1016,27 @@ class Live2DManager {
             }
         }
     }
-    
+
     // Motion control
     startMotion(motion) {
         this.currentMotion = motion;
         console.log(`[Live2DManager] Motion: ${motion}`);
     }
-    
+
     async playMotion(category, motion) {
         console.log(`[Live2DManager] Play motion: ${category}/${motion}`);
         return true;
     }
-    
+
     // Parameter control
     setParameter(param, value) {
         this.parameters[param] = value;
     }
-    
+
     getParameter(param) {
         return this.parameters[param] || 0;
     }
-    
+
     /**
      * 设置PerformanceManager引用
      * @param {PerformanceManager} pm - PerformanceManager实例
@@ -1034,69 +1044,69 @@ class Live2DManager {
     setPerformanceManager(pm) {
         this.performanceManager = pm;
         console.log('[Live2DManager] PerformanceManager已设置:', !!pm);
-        
+
         // 如果模型已加载，立即更新能力状态
         if (this.modelLoaded || this.isFallback) {
             this._updateCapabilityStates();
         }
     }
-    
+
     // Eye tracking
     lookAt(normalizedX, normalizedY) {
         this.eyeTracking.x = normalizedX;
         this.eyeTracking.y = normalizedY;
     }
-    
+
     updateEyeTracking(x, y) {
         this.eyeTracking.x = x;
         this.eyeTracking.y = y;
     }
-    
+
     // Lip sync
     updateLipSync(level, strength = 0.8) {
         this.lipSync.level = level;
         this.parameters.ParamMouthOpenY = level * strength;
     }
-    
+
     // Clickable regions
     getClickableRegions() {
         return this.clickableRegions;
     }
-    
+
     updateRegions() {
         this._initTouchDetector();
     }
-    
+
     // ========== Performance Methods (required by PerformanceManager) ==========
-    
+
     setResolutionScale(scale) {
         this.resolutionScale = scale;
     }
-    
+
     setEffectsLevel(level) {
         this.effectsLevel = level;
     }
-    
+
     setAdvancedAnimations(enabled) {
         this.features.advanced_animations = enabled;
     }
-    
+
     setPhysics(enabled) {
         this.features.physics = enabled;
     }
-    
+
     setLipSync(enabled) {
         this.features.lip_sync = enabled;
     }
-    
+
     setTargetFPS(fps) {
         this.targetFPS = fps;
     }
-    
+
     getCurrentFPS() {
         return this.currentFPS;
     }
-    
+
     setFrameRate(fps) {
         this.targetFPS = fps;
     }
@@ -1154,34 +1164,34 @@ class Live2DManager {
     setFrameRate(fps) {
         this.frameRate = fps;
     }
-    
+
     setRenderQuality(quality) {
         console.log(`[Live2DManager] Render quality: ${quality}`);
     }
-    
+
     setEffects(effects) {
         this.effects = { ...this.effects, ...effects };
     }
-    
+
     getEffects() {
         return { ...this.effects };
     }
-    
+
     setFrameRateConfig(config) {
         this.frameRate = config.targetFPS || 60;
     }
-    
+
     // Lifecycle
     stop() {
         this.isRunning = false;
     }
-    
+
     destroy() {
         this.isRunning = false;
-        
+
         // 停止动画循环
         this._stopAnimation();
-        
+
         // 清理事件监听器
         if (this._wrapperElement) {
             if (this._clickHandler) {
@@ -1191,14 +1201,14 @@ class Live2DManager {
                 this._wrapperElement.removeEventListener('mousemove', this._hoverHandler);
             }
         }
-        
+
         // 清理引用
         this._clickHandler = null;
         this._hoverHandler = null;
         this._wrapperElement = null;
         this.characterImage = null;
     }
-    
+
     enableDebugOverlay(enable = true) {
         this.showDebugOverlay = enable;
     }

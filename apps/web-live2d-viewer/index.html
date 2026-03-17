@@ -19,8 +19,8 @@
             background: transparent;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             cursor: default;
-            user-select: none;
             -webkit-user-select: none;
+            user-select: none;
             /* FIX: Allow pointer events by default, child elements can override if needed */
             pointer-events: auto;
         }
@@ -152,6 +152,7 @@
             right: 0;
             height: 40px;
             background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
@@ -206,6 +207,7 @@
             right: 0;
             height: 60px;
             background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
@@ -444,7 +446,8 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -722,7 +725,6 @@
 
     <!-- Hardware Detection -->
     <script src="js/hardware-config.js?v=3"></script>
-    <script src="js/hardware-detection-enhanced.js?v=3"></script>
     <script src="js/hardware-detection.js?v=3"></script>
 
     <!-- Security Utils -->
@@ -739,6 +741,7 @@
     <script src="js/api-client.js?v=3"></script>
 
     <!-- Angela Systems -->
+    <script src="js/state-matrix.js?v=3"></script>
     <script src="js/state-matrix.js?v=3"></script>
     <script src="js/performance-manager.js?v=3"></script>
     <script src="js/maturity-tracker.js?v=3"></script>

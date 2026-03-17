@@ -19,7 +19,7 @@ window.ANGELA_CHARACTER_IMAGES = {
   // ================================================================
   'fullbody_ai_assistant': {
     name: 'AI 助手',
-    path: 'resources/Gemini_Generated_Image_hqq027hqq027hqq0.png',
+    path: 'resources/angela_character_masked.png',
     type: 'single_image',
     layer: 'base',
     zIndex: 0,
@@ -59,7 +59,7 @@ window.ANGELA_CHARACTER_IMAGES = {
   // ================================================================
   'expression_pack_1': {
     name: '表情包 1',
-    path: 'resources/Gemini_Generated_Image_d9altad9altad9al.png',
+    path: 'resources/expression_pack_1.png',
     type: 'sprite_sheet',
     layer: 'expression',
     zIndex: 1,
@@ -90,7 +90,7 @@ window.ANGELA_CHARACTER_IMAGES = {
     expressionOverlayPositions: {
       'neutral': {
         sourceX: 0, sourceY: 0,
-        targetX: 640, targetY: 113,
+        targetX: 480, targetY: 50,
         targetWidth: 320, targetHeight: 222,
         opacity: 0.95,
         useMask: true
@@ -183,7 +183,7 @@ window.ANGELA_CHARACTER_IMAGES = {
   // ================================================================
   'pose_sequence_1': {
     name: '姿態序列 1',
-    path: 'resources/Gemini_Generated_Image_z3pzi0z3pzi0z3pz.png',
+    path: 'resources/pose_sequence_1.png',
     type: 'sprite_sheet',
     layer: 'pose',
     zIndex: 2,
@@ -213,7 +213,7 @@ window.ANGELA_CHARACTER_IMAGES = {
     // 姿態序列包含完整上半身+頭部，需要使用頭部遮罩
     // headMaskRect: 遮蓋姿態層的頭部區域，只保留手勢/身體部分
     poseOverlayPositions: {
-      'idle' : {
+      'idle': {
         sourceX: 0, sourceY: 0,
         targetX: 640, targetY: 350,
         targetWidth: 200, targetHeight: 133,
@@ -232,7 +232,7 @@ window.ANGELA_CHARACTER_IMAGES = {
           { x: 762, y: 113, width: 44, height: 43 }
         ]
       },
-      'greeting' : {
+      'greeting': {
         sourceX: 352, sourceY: 0,
         targetX: 640, targetY: 280,
         targetWidth: 250, targetHeight: 178,
@@ -251,7 +251,7 @@ window.ANGELA_CHARACTER_IMAGES = {
           { x: 762, y: 113, width: 44, height: 43 }
         ]
       },
-      'thinking' : {
+      'thinking': {
         sourceX: 704, sourceY: 0,
         targetX: 640, targetY: 280,
         targetWidth: 150, targetHeight: 133,
@@ -270,7 +270,7 @@ window.ANGELA_CHARACTER_IMAGES = {
           { x: 762, y: 113, width: 44, height: 43 }
         ]
       },
-      'dancing' : {
+      'dancing': {
         sourceX: 1056, sourceY: 0,
         targetX: 640, targetY: 250,
         targetWidth: 300, targetHeight: 222,
@@ -289,7 +289,7 @@ window.ANGELA_CHARACTER_IMAGES = {
           { x: 762, y: 113, width: 44, height: 43 }
         ]
       },
-      'clapping' : {
+      'clapping': {
         sourceX: 0, sourceY: 368,
         targetX: 640, targetY: 300,
         targetWidth: 200, targetHeight: 133,
@@ -308,7 +308,7 @@ window.ANGELA_CHARACTER_IMAGES = {
           { x: 762, y: 113, width: 44, height: 43 }
         ]
       },
-      'nodding' : {
+      'nodding': {
         sourceX: 352, sourceY: 368,
         targetX: 640, targetY: 350,
         targetWidth: 180, targetHeight: 106,
@@ -327,7 +327,7 @@ window.ANGELA_CHARACTER_IMAGES = {
           { x: 762, y: 113, width: 44, height: 43 }
         ]
       },
-      'shaking' : {
+      'shaking': {
         sourceX: 704, sourceY: 368,
         targetX: 640, targetY: 280,
         targetWidth: 220, targetHeight: 160,
@@ -346,7 +346,7 @@ window.ANGELA_CHARACTER_IMAGES = {
           { x: 762, y: 113, width: 44, height: 43 }
         ]
       },
-      'dancing2' : {
+      'dancing2': {
         sourceX: 1056, sourceY: 368,
         targetX: 640, targetY: 250,
         targetWidth: 300, targetHeight: 222,

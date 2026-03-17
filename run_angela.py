@@ -224,6 +224,7 @@ class Launcher:
         self.mode = "user"  # Default mode
         self.progress = ProgressDisplay(total_steps=100)
         self.recovery = ErrorRecovery(self.project_root)
+        self.pid_file = self.project_root / ".angela_backend.pid"
         
         # 加载 .env 文件
         env_file = self.project_root / ".env"
@@ -243,6 +244,39 @@ class Launcher:
             return result != 0
         except Exception as e:
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            return False
+
+    def _kill_port_process(self, port: int) -> bool:
+        """强制终止占用指定端口的进程"""
+        try:
+            import psutil
+            killed = False
+            for conn in psutil.net_connections(kind='inet'):
+                if conn.laddr.port == port and conn.pid:
+                    try:
+                        proc = psutil.Process(conn.pid)
+                        proc_name = proc.name()
+                        logger.warning(f"Killing process {proc.pid} ({proc_name}) on port {port}")
+                        proc.kill()
+                        proc.wait(timeout=5)
+                        killed = True
+                    except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                        logger.warning(f"Could not kill process {conn.pid}: {e}")
+            return killed
+        except ImportError:
+            # Fallback: use netstat + taskkill on Windows
+            if sys.platform == 'win32':
+                try:
+                    result = subprocess.run(
+                        ['powershell', '-Command',
+                         f'Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | '
+                         f'Select-Object -ExpandProperty OwningProcess | '
+                         f'ForEach-Object {{ Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }}'],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    return True
+                except Exception as e:
+                    logger.error(f'Failed to kill port {port} process via PowerShell: {e}')
             return False
 
     
@@ -298,6 +332,18 @@ class Launcher:
         """启动后端"""
         self.progress.update(20, "启动后端 API...")
         
+        # P0 Fix: 启动前检查端口是否被占用，自动清理僵尸进程
+        if not self.check_port_available(8000):
+            logger.warning("Port 8000 already in use, attempting to free it...")
+            self.progress.update(22, "清理残留进程...", "loading")
+            self._kill_port_process(8000)
+            time.sleep(1.5)  # Wait for OS to release the port
+            if not self.check_port_available(8000):
+                self.progress.error("Port 8000 仍被占用，无法启动后端")
+                self.recovery.log_error("backend", Exception("Port 8000 still in use after cleanup"))
+                return None
+            logger.info("Port 8000 freed successfully.")
+        
         try:
             python = sys.executable
             cmd = [
@@ -337,6 +383,11 @@ class Launcher:
             
             if wait_for_server(8000, progress=self.progress):
                 self.progress.update(50, "后端已就绪", "success")
+                # Write PID file for stale process tracking
+                try:
+                    self.pid_file.write_text(str(proc.pid), encoding='utf-8')
+                except Exception:
+                    pass
                 return proc
             else:
                 self.progress.error("后端启动超时")
@@ -440,6 +491,13 @@ class Launcher:
                     except Exception as e:
                         logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
+        # Clean up PID file
+        try:
+            if self.pid_file.exists():
+                self.pid_file.unlink()
+        except Exception:
+            pass
 
         
         self.progress.finish("已关闭")
