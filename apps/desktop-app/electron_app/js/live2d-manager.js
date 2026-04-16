@@ -197,14 +197,25 @@ class Live2DManager {
         const checkAndInit = () => {
             const elapsed = Date.now() - startTime;
             
-            if (typeof window.Live2DCubismCore !== 'undefined') {
-                console.log('[Live2DManager] Cubism Core detected after', elapsed, 'ms');
+            // Check for both Core SDK and Framework SDK
+            const hasCore = typeof window.Live2DCubismCore !== 'undefined';
+            const hasFramework = typeof window.Live2DCubismFramework !== 'undefined';
+            
+            if (hasCore && hasFramework) {
+                console.log('[Live2DManager] Both Core and Framework detected after', elapsed, 'ms');
                 this._initializeWithSDK(window.Live2DCubismCore);
             } else if (elapsed < maxWait) {
-                console.log('[Live2DManager] Waiting for SDK...', elapsed, 'ms');
+                // If Core is loaded but Framework is missing, log specific status
+                if (hasCore && !hasFramework && elapsed % 500 === 0) {
+                    console.log('[Live2DManager] Core loaded, waiting for Framework...', elapsed, 'ms');
+                }
                 setTimeout(checkAndInit, interval);
             } else {
-                console.log('[Live2DManager] SDK timeout after', elapsed, 'ms, using 2D fallback');
+                console.warn('[Live2DManager] SDK timeout after', elapsed, 'ms. Factors:', {
+                    core: hasCore,
+                    framework: hasFramework
+                });
+                console.log('[Live2DManager] Using 2D fallback mode');
                 this._createFallbackManager();
             }
         };

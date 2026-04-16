@@ -620,6 +620,12 @@ class AngelaApp {
 
         await this.live2dManager.initialize?.();
 
+        // 檢查是否自動回退到了 2D 模式
+        if (this.live2dManager.isFallback) {
+            console.warn('[App] Live2D SDK 加載失敗或超時，自動切換至立繪模式');
+            this.showStatus?.('Live2D SDK 加載失敗，已自動切換至立繪模式', 5000);
+        }
+
         // 恢復上次選擇的模式
         const savedMode = localStorage.getItem('render_mode') || 'live2d';
         if (savedMode === 'fallback') {
