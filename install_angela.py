@@ -99,6 +99,7 @@ class AngelaInstaller:
 
     def _get_memory_gb(self):
         try:
+            self._refresh_paths()
             import psutil
 
             return psutil.virtual_memory().total // (1024**3)
@@ -357,6 +358,7 @@ class AngelaInstaller:
                     )
 
             print(f"   ✅ 依赖安装完成\n")
+            self._refresh_paths()
             return True
 
         except subprocess.TimeoutExpired:
@@ -418,6 +420,7 @@ class AngelaInstaller:
 
         config_file = config_dir / "angela_config.yaml"
         try:
+            self._refresh_paths()
             import yaml
 
             with open(config_file, "w", encoding="utf-8") as f:
@@ -591,6 +594,16 @@ $sc.Save()
             print(f'   请手动运行: cd "{self.install_dir}" && python run_angela.py')
             return False
 
+    def _refresh_paths(self):
+        """Refresh sys.path and importlib to see newly installed packages."""
+        import site
+        import importlib
+        if hasattr(site, "getusersitepackages"):
+            user_site = site.getusersitepackages()
+            if user_site not in sys.path:
+                sys.path.append(user_site)
+        importlib.invalidate_caches()
+
     def print_summary(self, success: bool, launch: bool = False):
         print("=" * 70)
         if success:
@@ -631,7 +644,7 @@ $sc.Save()
 
 
 def bootstrap_dependencies():
-    """Ensure essential installer dependencies are present."""
+    """Ensure essential installer dependencies are present and visible."""
     essentials = ["psutil", "PyYAML", "requests"]
     missing = []
     for pkg in essentials:
@@ -648,6 +661,17 @@ def bootstrap_dependencies():
                 check=True,
                 capture_output=True
             )
+            
+            # Refresh paths so we can use them immediately
+            import site
+            import importlib
+            if hasattr(site, "getusersitepackages"):
+                user_site = site.getusersitepackages()
+                if user_site not in sys.path:
+                    # Insert at the beginning to prioritize newly installed packages
+                    sys.path.insert(0, user_site)
+            importlib.invalidate_caches()
+            
             print("✅ 安裝程式組件準備完成\n")
         except Exception as e:
             print(f"⚠️  組件安裝失敗: {e}，這可能會導致後續報錯。")

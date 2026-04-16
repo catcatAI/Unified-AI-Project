@@ -1,0 +1,41 @@
+{
+  "name": "Angela",
+  "version": "6.1.0",
+  "language": "zh-CN",
+  "user_tier": "Low",
+  "hardware": {
+    "platform": "win32",
+    "architecture": "AMD64",
+    "processor": "Intel64 Family 6 Model 156 Stepping 0, GenuineIntel",
+    "python_version": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
+    "cpu_cores": 4,
+    "memory_gb": 8,
+    "gpu": "Intel(R) UHD Graphics",
+    "performance_tier": "Low",
+    "ai_capability_score": 18
+  },
+  "desktop_pet": {
+    "enabled": true,
+    "name": "Angela",
+    "start_position": "bottom-right",
+    "scale": 1.0,
+    "frame_rate": 30
+  },
+  "api": {
+    "google_api_key": "",
+    "gemini_model": "gemini-1.5-flash"
+  },
+  "audio": {
+    "tts_engine": "edge-tts",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  "precision": {
+    "default_mode": "low-resource",
+    "resource_scaling": 0.3,
+    "auto_optimize": true
+  },
+  "maturity": {
+    "start_level": 0,
+    "xp_multiplier": 1.0
+  }
+}

@@ -31,10 +31,10 @@ if not exist "apps\backend\src\services\main_api_server.py" (
 :: Ensure dependencies are present
 echo [INFO] Environment check...
 python -c "import fastapi, uvicorn, psutil, yaml" >nul 2>&1
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo [WARNING] Missing dependencies detected. Running auto-repair...
     python install_angela.py --skip-clone
-    if %errorlevel% neq 0 (
+    if !errorlevel! neq 0 (
         echo [ERROR] Auto-repair failed.
         pause
         exit /b 1
