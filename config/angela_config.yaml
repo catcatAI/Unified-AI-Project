@@ -1,0 +1,34 @@
+api:
+  gemini_model: gemini-1.5-flash
+  google_api_key: ''
+audio:
+  tts_engine: edge-tts
+  voice: zh-CN-XiaoxiaoNeural
+desktop_pet:
+  enabled: true
+  frame_rate: 30
+  name: Angela
+  scale: 1.0
+  start_position: bottom-right
+hardware:
+  ai_capability_score: 13
+  architecture: AMD64
+  cpu_cores: 4
+  gpu: Intel(R) UHD Graphics
+  memory_gb: 7
+  performance_tier: Low
+  platform: win32
+  processor: Intel64 Family 6 Model 156 Stepping 0, GenuineIntel
+  python_version: 3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944
+    64 bit (AMD64)]
+language: zh-CN
+maturity:
+  start_level: 0
+  xp_multiplier: 1.0
+name: Angela
+precision:
+  auto_optimize: true
+  default_mode: low-resource
+  resource_scaling: 0.3
+user_tier: Low
+version: 6.1.0

@@ -5,4 +5,7 @@ PyYAML
 pydantic
 numpy
 requests
+httpx
+Pillow
+python-dotenv
 -e ./apps/backend[standard,testing]

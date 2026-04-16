@@ -341,7 +341,7 @@ class AngelaInstaller:
                 timeout=600,
             )
 
-            critical_packages = ["fastapi", "uvicorn", "pydantic", "numpy"]
+            critical_packages = ["fastapi", "uvicorn", "pydantic", "numpy", "httpx", "Pillow"]
             missing = []
             for package in critical_packages:
                 try:
