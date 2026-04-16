@@ -290,6 +290,8 @@ class Launcher:
             "uvicorn": "Uvicorn",
             "psutil": "psutil",
             "yaml": "PyYAML",
+            "httpx": "httpx",
+            "aiohttp": "aiohttp",
         }
         
         for module, name in required_packages.items():

@@ -341,11 +341,12 @@ class AngelaInstaller:
                 timeout=600,
             )
 
-            critical_packages = ["fastapi", "uvicorn", "pydantic", "numpy", "httpx", "Pillow"]
+            critical_packages = ["fastapi", "uvicorn", "pydantic", "numpy", "httpx", "Pillow", "aiohttp"]
             missing = []
             for package in critical_packages:
                 try:
-                    __import__(package)
+                    target = "PIL" if package == "Pillow" else package.lower().replace("-", "_")
+                    __import__(target)
                 except ImportError:
                     missing.append(package)
 
