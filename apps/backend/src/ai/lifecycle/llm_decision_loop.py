@@ -194,7 +194,7 @@ class LLMDecisionLoop:
             memory_context = await self._get_memory_context()
 
             # 5. 構建決策提示詞
-            prompt = self._build_decision_prompt(state, user_state, memory_context)
+            prompt = await self._build_decision_prompt(state, user_state, memory_context)
 
             # 6. 調用 LLM 生成決策
             decision_data = await self._generate_decision(prompt)
@@ -226,22 +226,28 @@ class LLMDecisionLoop:
     async def _get_current_state(self) -> Dict[str, Any]:
         """獲取當前 Angela 狀態"""
         # 從 state_manager 獲取 4D 狀態矩陣
+        # 從 state_manager 獲取狀態
         try:
-            if hasattr(self.state_manager, "get_state_matrix"):
-                state_matrix = await self.state_manager.get_state_matrix()
+            if hasattr(self.state_manager, "get_analysis"):
+                # StateMatrix4D.get_analysis is synchronous
+                analysis = self.state_manager.get_analysis()
+                state_matrix = analysis.get("averages", {})
+                dominant_emotion = analysis.get("dominant_emotion", ("neutral", 0.5))[0]
             else:
                 state_matrix = {
-                    "alpha": 0.5,  # 情感強度
-                    "beta": 0.5,  # 行為傾向
-                    "gamma": 0.5,  # 認知狀態
-                    "delta": 0.5,  # 意志力
+                    "alpha": 0.5,  # 生理
+                    "beta": 0.5,   # 認知
+                    "gamma": 0.5,  # 情感
+                    "delta": 0.5,  # 社交
                 }
+                dominant_emotion = "neutral"
 
             # 獲取額外狀態信息
             state = {
                 "state_matrix": state_matrix,
-                "mood": state_matrix.get("alpha", 0.5),
-                "energy": state_matrix.get("delta", 0.5),
+                "dominant_emotion": dominant_emotion,
+                "mood": state_matrix.get("gamma", 0.5),
+                "energy": state_matrix.get("alpha", 0.5),
                 "boredom": 1.0 - state_matrix.get("beta", 0.5),
             }
 
@@ -279,22 +285,20 @@ class LLMDecisionLoop:
             logger.warning(f"Error getting memory context: {e}")
             return "記憶上下文獲取失敗"
 
-    def _build_decision_prompt(
+    async def _build_decision_prompt(
         self, state: Dict[str, Any], user_state: UserState, memory_context: str
     ) -> str:
         """構建決策提示詞"""
         state_matrix = state.get("state_matrix", {})
+        dominant_emotion = state.get("dominant_emotion", "neutral")
 
         # P0-4: 获取情感记忆
         emotional_memories_text = ""
         if hasattr(self.memory_manager, "retrieve_emotional_memories"):
             try:
-                # 获取当前主导情绪
-                dominant_emotion = state_matrix.get("dominant_emotion", "neutral")
-                emotional_memories = asyncio.run(
-                    self.memory_manager.retrieve_emotional_memories(
-                        emotion=dominant_emotion, min_intensity=0.5, limit=3
-                    )
+                # 獲取當前主導情緒的記憶
+                emotional_memories = await self.memory_manager.retrieve_emotional_memories(
+                    emotion=dominant_emotion, min_intensity=0.5, limit=3
                 )
 
                 if emotional_memories:
@@ -376,10 +380,17 @@ class LLMDecisionLoop:
 
             # 解析 JSON 響應
             try:
-                decision_data = json.loads(response_text)
+                # 提取 JSON 內容（處理可能存在的 Markdown 代碼塊）
+                content = response_text.strip()
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0].strip()
+                elif "```" in content:
+                    content = content.split("```")[1].split("```")[0].strip()
+                
+                decision_data = json.loads(content)
                 return decision_data
-            except json.JSONDecodeError:
-                logger.warning(f"Failed to parse LLM response as JSON: {response_text}")
+            except Exception as e:
+                logger.warning(f"Failed to parse LLM response as JSON: {e}. Raw: {response_text}")
                 return self._fallback_decision()
 
         except Exception as e:
@@ -675,4 +686,5 @@ if __name__ == "__main__":
         await decision_loop.stop()
         await user_monitor.stop()
 
+if __name__ == "__main__":
     asyncio.run(test_llm_decision_loop())

@@ -83,6 +83,9 @@ class AngelaApp {
         this.loadingProgress = 0;
         this.updateLoadingProgress(0, 'Initializing Angela AI...');
 
+        // 0. Initialize Central Settings (NEW - Core requirement)
+        await settingsManager.initialize();
+
         try {
             // 1. 基础设施 (10%)
             await this._initializeLogger();
@@ -316,13 +319,14 @@ class AngelaApp {
     }
 
     async _initializeDataPersistence() {
-        this.updateLoadingText('Initializing data persistence...');
-        this.dataPersistence = new DataPersistence({
-            prefix: 'angela',
-            autoSave: true,
-            autoSaveInterval: 60000
-        });
-        this.statePersistence = new StatePersistence({ maxHistorySize: 100 });
+        this.updateLoadingText('Initializing settings & persistence...');
+        
+        // Point dataPersistence to settingsManager for compatibility
+        this.dataPersistence = settingsManager;
+        
+        if (typeof StatePersistence !== 'undefined') {
+            this.statePersistence = new StatePersistence({ maxHistorySize: 100 });
+        }
     }
 
     async _initializeSecurity() {
@@ -392,12 +396,14 @@ class AngelaApp {
     }
 
     async _initializeHardwareDetection() {
-        this.updateLoadingText('Detecting hardware...');
-        const start = performance.now();
-        this.hardwareDetector = new HardwareDetector();
-        const hardware = await this.hardwareDetector.detect();
-        console.log(`[Hardware] Detected in ${(performance.now() - start).toFixed(2)}ms`);
-        return hardware;
+        this.updateLoadingText('Profiling system hardware...');
+        
+        // Use unified systemProfile manager
+        this.hardwareDetector = systemProfile;
+        const profile = await this.hardwareDetector.initialize();
+        
+        this._trackInitialization('hardwareDetection');
+        return profile;
     }
 
     /**
@@ -704,6 +710,55 @@ class AngelaApp {
         // P0-2: 处理生物事件
         if (message.type === 'biological_event') {
             this._handleBiologicalEvent(message.data);
+        }
+
+        // P0-3: 处理 Angela 主动动作 (LLM 决策)
+        if (message.type === 'angela_action') {
+            this._handleAngelaAction(message);
+        }
+    }
+
+    /**
+     * P0-3: 处理 Angela 主动动作
+     */
+    _handleAngelaAction(data) {
+        console.log('[App] Angela proactive action received:', data);
+
+        const action = data.action;
+        const message = data.message;
+
+        // 1. 显示对话气泡（如果 DialogueUI 可用）
+        if (this.dialogueUI && message) {
+            this.dialogueUI.showAngelaMessage(message);
+        }
+
+        // 2. 触发 Live2D 动作和表情
+        if (this.live2dManager) {
+            switch (action) {
+                case 'greet':
+                    this.live2dManager.setExpression('happy');
+                    this.live2dManager.startMotion('Wave');
+                    break;
+                case 'comfort':
+                    this.live2dManager.setExpression('love');
+                    this.live2dManager.startMotion('Nod');
+                    break;
+                case 'remind':
+                    this.live2dManager.setExpression('surprised');
+                    this.live2dManager.startMotion('Point');
+                    break;
+                case 'share':
+                    this.live2dManager.setExpression('happy');
+                    this.live2dManager.startMotion('Talk');
+                    break;
+                case 'question':
+                    this.live2dManager.setExpression('neutral');
+                    this.live2dManager.startMotion('Think');
+                    break;
+                case 'observe':
+                    this.live2dManager.setExpression('neutral');
+                    break;
+            }
         }
     }
 

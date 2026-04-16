@@ -14,6 +14,7 @@ const {
 const path = require('path')
 const fs = require('fs')
 const securityManager = require('./js/security-manager')
+const TrayManager = require('./js/tray-manager')
 
 // Define a log file path
 const LOG_FILE = path.join(__dirname, '..', '..', 'logs', 'electron_frontend_main.log')
@@ -22,6 +23,8 @@ const logDirPath = path.dirname(LOG_FILE)
 if (!fs.existsSync(logDirPath)) {
   fs.mkdirSync(logDirPath, { recursive: true })
 }
+
+const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json')
 
 const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' })
 
@@ -51,7 +54,7 @@ process.on('uncaughtException', (err) => {
 // Import Live2D Cubism Web SDK (will be loaded via CDN or local)
 const LIVE2D_VERSION = '5.0.0'
 
-// 单实例锁 - 防止启动多个实例
+// Single instance lock - prevent multiple instances from starting
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
@@ -104,7 +107,33 @@ function safeMainWindowCall(callback) {
   return false
 }
 
-// 当第二个实例尝试启动时，将焦点转移到现有窗口
+// Settings management
+function loadSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      const data = fs.readFileSync(SETTINGS_FILE, 'utf8')
+      return JSON.parse(data)
+    }
+  } catch (e) {
+    console.error('[Main] Failed to load settings:', e)
+  }
+  return {} // Default empty settings
+}
+
+function saveSettings(settings) {
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8')
+    return true
+  } catch (e) {
+    console.error('[Main] Failed to save settings:', e)
+    return false
+  }
+}
+
+// Global settings cache
+let globalSettings = loadSettings()
+
+// When a second instance tries to start, focus the existing window
 app.on('second-instance', (event, commandLine, workingDirectory) => {
   console.log('[Main] Second instance detected, focusing existing window')
 
@@ -405,7 +434,7 @@ function createMainWindow() {
               click: () => setRenderMode('live2d'),
             },
             {
-              label: 'Static Image (立繫)',
+              label: 'Static Image (Stand-in)',
               type: 'radio',
               checked: false,
               click: () => setRenderMode('fallback'),
@@ -573,244 +602,46 @@ function createMainWindow() {
  * Create system tray with context menu
  */
 function createTray() {
-  try {
-    const iconPath = getTrayIconPath()
-    if (fs.existsSync(iconPath)) {
-      tray = new Tray(iconPath)
-    } else {
-      // Fallback to an empty image if icon not found
-      tray = new Tray(nativeImage.createEmpty())
-      console.warn('Tray icon not found, using empty placeholder')
-    }
-  } catch (error) {
-    console.error('Failed to create tray:', error)
-    // Don't crash the whole app if tray fails
-    return
+  const trayManager = new TrayManager()
+  const iconPath = getTrayIconPath()
+  
+  if (trayManager.initialize(iconPath, 'Angela AI')) {
+    tray = trayManager.tray // Keep global reference if needed elsewhere
+
+    trayManager.on('showWindow', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.show()
+        mainWindow.focus()
+      }
+    })
+
+    trayManager.on('hideWindow', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.hide()
+      }
+    })
+
+    trayManager.on('settings', () => {
+      ipcMain.emit('settings-open') // Or call the function directly
+    })
+
+    trayManager.on('quit', () => {
+      app.quit()
+    })
+
+    // Additional menu items can be added via trayManager.updateMenu() if needed
+    console.log('[Main] TrayManager integrated and initialized')
+  } else {
+    console.error('[Main] Failed to initialize TrayManager')
   }
+}
 
-  // Create context menu
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Show Angela',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.show()
-          mainWindow.focus()
-        }
-      },
-    },
-    {
-      label: 'Hide Angela',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.hide()
-        }
-      },
-    },
-    { type: 'separator' },
-    {
-      label: 'Settings',
-      click: () => {
-        createSettingsWindow()
-      },
-    },
-    {
-      label: 'Advanced Settings',
-      submenu: [
-        {
-          label: 'Connection',
-          submenu: [
-            { label: `IP: ${backendIP}`, enabled: false },
-            { label: 'Set to localhost (127.0.0.1)', click: () => setBackendIP('127.0.0.1') },
-            { label: 'Custom IP...', click: () => createSettingsWindow('advanced') },
-          ],
-        },
-        { type: 'separator' },
-        {
-          label: 'Open Advanced Tab',
-          click: () => createSettingsWindow('advanced'),
-        },
-      ],
-    },
-    {
-      label: 'Hardware & Performance',
-      submenu: [
-        {
-          label: 'Performance Mode',
-          submenu: [
-            {
-              label: 'Lite',
-              type: 'radio',
-              checked: currentPerformanceMode === 'lite',
-              click: () => setPerformanceMode('lite'),
-            },
-            {
-              label: 'Standard',
-              type: 'radio',
-              checked: currentPerformanceMode === 'standard',
-              click: () => setPerformanceMode('standard'),
-            },
-            {
-              label: 'Extended',
-              type: 'radio',
-              checked: currentPerformanceMode === 'extended',
-              click: () => setPerformanceMode('extended'),
-            },
-            {
-              label: 'Ultra',
-              type: 'radio',
-              checked: currentPerformanceMode === 'ultra',
-              click: () => setPerformanceMode('ultra'),
-            },
-          ],
-        },
-        {
-          label: 'Wallpaper Rendering',
-          submenu: [
-            {
-              label: '2D (Basic)',
-              type: 'radio',
-              checked: currentWallpaperMode === '2D',
-              click: () => setWallpaperMode('2D'),
-            },
-            {
-              label: '2.5D (Parallax)',
-              type: 'radio',
-              checked: currentWallpaperMode === '2.5D',
-              click: () => setWallpaperMode('2.5D'),
-            },
-            {
-              label: '3D (Full)',
-              type: 'radio',
-              checked: currentWallpaperMode === '3D',
-              click: () => setWallpaperMode('3D'),
-            },
-          ],
-        },
-        {
-          label: 'Rendering Mode',
-          submenu: [
-            {
-              label: 'Live2D (Animated)',
-              type: 'radio',
-              checked: true,
-              click: () => setRenderMode('live2d'),
-            },
-            {
-              label: 'Static Image (立繫)',
-              type: 'radio',
-              checked: false,
-              click: () => setRenderMode('fallback'),
-            },
-          ],
-        },
-        { type: 'separator' },
-        {
-          label: 'Auto-adjust',
-          type: 'checkbox',
-          checked: true,
-          click: (item) => {
-            sendToMainWindow('performance-auto-adjust', item.checked)
-          },
-        },
-      ],
-    },
-    {
-      label: 'Angela Matrix',
-      submenu: [
-        {
-          label: 'Vision System',
-          type: 'checkbox',
-          checked: moduleStates.vision,
-          click: (item) => toggleModule('vision', item.checked),
-        },
-        {
-          label: 'Audio System',
-          type: 'checkbox',
-          checked: moduleStates.audio,
-          click: (item) => toggleModule('audio', item.checked),
-        },
-        {
-          label: 'Tactile System',
-          type: 'checkbox',
-          checked: moduleStates.tactile,
-          click: (item) => toggleModule('tactile', item.checked),
-        },
-        {
-          label: 'Action Executor',
-          type: 'checkbox',
-          checked: moduleStates.action,
-          click: (item) => toggleModule('action', item.checked),
-        },
-      ],
-    },
-    {
-      label: 'Reload Model',
-      click: () => {
-        sendToMainWindow('reload-model')
-      },
-    },
-    {
-      label: 'Auto-startup',
-      type: 'checkbox',
-      checked: getAutoStartupStatus(),
-      click: () => {
-        const currentStatus = getAutoStartupStatus()
-        setAutoStartup(!currentStatus)
-        // Update menu item
-        createTray()
-      },
-    },
-    { type: 'separator' },
-    {
-      label: 'Toggle Always on Top',
-      click: () => {
-        if (mainWindow) {
-          const current = mainWindow.isAlwaysOnTop()
-          mainWindow.setAlwaysOnTop(!current)
-          sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current })
-        }
-      },
-    },
-    {
-      label: 'Toggle Frame',
-      click: () => {
-        if (mainWindow) {
-          const current = mainWindow.isFrameless()
-          mainWindow.setFrameable(!current)
-        }
-      },
-    },
-    { type: 'separator' },
-    {
-      label: 'About',
-      click: () => {
-        app.showAboutPanel()
-      },
-    },
-    {
-      label: 'Check for Updates',
-      click: () => {
-        console.log('Checking for updates...')
-      },
-    },
-    { type: 'separator' },
-    {
-      label: 'Restart',
-      click: () => {
-        app.relaunch()
-        app.exit()
-      },
-    },
-    {
-      label: 'Quit',
-      click: () => {
-        app.quit()
-      },
-    },
-  ])
+function getTrayIconPath() {
+  const iconName = process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+  const iconPath = path.join(__dirname, 'resources', 'icons', iconName)
+  return fs.existsSync(iconPath) ? iconPath : path.join(__dirname, 'icon.png')
+}
 
-  tray.setContextMenu(contextMenu)
   tray.setToolTip('Angela AI - Your Virtual Companion')
 
   // Double click to show window
@@ -1232,7 +1063,24 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
 })
 
 // Live2D model management
-ipcMain.handle('live2d-load-model', async (event, modelPath) => {
+  // Settings IPC
+  ipcMain.handle('settings-get-all', () => {
+    return globalSettings
+  })
+
+  ipcMain.handle('settings-set-all', (event, settings) => {
+    globalSettings = settings
+    saveSettings(globalSettings)
+    return true
+  })
+
+  ipcMain.handle('settings-reset', () => {
+    globalSettings = {}
+    saveSettings(globalSettings)
+    return globalSettings
+  })
+
+  ipcMain.handle('live2d-load-model', async (event, modelPath) => {
   try {
     // Normalize path separators
     const normalizedModelPath = modelPath.replace(/\\/g, '/')

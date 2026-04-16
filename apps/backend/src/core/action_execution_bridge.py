@@ -568,18 +568,25 @@ class ActionExecutionBridge:
     async def _load_history(self):
         """Load execution history from file"""
         try:
-            if self._history_file.exists():
-                with open(self._history_file, "r", encoding="utf-8") as f:
-                    self._execution_history = json.load(f)
+            if await asyncio.to_thread(self._history_file.exists):
+                def read_history():
+                    with open(self._history_file, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                
+                self._execution_history = await asyncio.to_thread(read_history)
         except Exception as e:
             logger.error(f"[ActionExecutionBridge] Failed to load history: {e}")
 
     async def _save_history(self):
         """Save execution history to file"""
         try:
-            self._history_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self._history_file, "w", encoding="utf-8") as f:
-                json.dump(self._execution_history, f, ensure_ascii=False, indent=2)
+            await asyncio.to_thread(self._history_file.parent.mkdir, parents=True, exist_ok=True)
+            
+            def write_history():
+                with open(self._history_file, "w", encoding="utf-8") as f:
+                    json.dump(self._execution_history, f, ensure_ascii=False, indent=2)
+            
+            await asyncio.to_thread(write_history)
         except Exception as e:
             logger.error(f"[ActionExecutionBridge] Failed to save history: {e}")
 

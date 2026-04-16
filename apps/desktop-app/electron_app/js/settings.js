@@ -13,9 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = document.querySelectorAll('.section');
     const notificationContainer = document.getElementById('notification-container');
     
-    initializeSettings();
-    loadCurrentSettings();
-    setupEventListeners();
+    // Initialize settings from IPC
+    settingsManager.initialize().then(() => {
+        initializeSettings();
+        loadCurrentSettings();
+        setupEventListeners();
+        console.log('[Settings] Initialized with SettingsManager');
+    });
     
     function showNotification(message, type = 'info') {
         if (!notificationContainer) return;
@@ -100,11 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadCurrentSettings() {
-        // Load settings from local storage or Electron config
-        const settings = JSON.parse(localStorage.getItem('angela_settings') || '{}');
-        console.log('[Settings] Loaded settings:', settings);
+        // Use the centralized SettingsManager
+        const settings = settingsManager.settings;
+        console.log('[Settings] Current settings from manager:', settings);
         
-        // Apply settings to UI
         applySettingsToUI(settings);
     }
 
@@ -449,17 +452,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openDevTools() {
         console.log('[Settings] Open DevTools clicked');
-        if (window.electronAPI && window.electronAPI.window) {
-            showNotification('DevTools opened in main window', 'success');
+    }
+
+    async function saveSettings() {
+        console.log('[Settings] Collecting and saving settings...');
+        const updatedSettings = collectSettings();
+        
+        try {
+            // Persist to file via IPC
+            await settingsManager.setAll(updatedSettings);
+            
+            // Sync specific application states
+            applySettingsToApplication(updatedSettings);
+            
+            showNotification('Settings saved successfully!', 'success');
+            console.log('[Settings] Settings saved:', updatedSettings);
+        } catch (error) {
+            console.error('[Settings] Save failed:', error);
+            showNotification('Failed to save settings', 'error');
         }
     }
 
-    function resetSettings() {
-        console.log('[Settings] Reset settings clicked');
-        if (confirm('Are you sure you want to reset all settings to default?')) {
-            localStorage.removeItem('angela_settings');
-            loadCurrentSettings();
-            showNotification('Settings reset to default', 'success');
+    function collectSettings() {
+        const s = {};
+        
+        // Helper to get checked/value
+        const val = id => document.getElementById(id)?.value;
+        const checked = id => document.getElementById(id)?.checked;
+
+        s.alwaysOnTop = checked('always-on-top');
+        s.autoStart = checked('auto-start');
+        s.windowOpacity = parseFloat(val('window-opacity'));
+        s.idleMode = checked('idle-mode');
+        s.sensitivity = val('sensitivity');
+        
+        s.model = val('model-select');
+        s.modelScale = parseFloat(val('model-scale'));
+        s.renderMode = val('render-mode');
+        s.autoSwitchFallback = checked('auto-switch-fallback');
+        s.wallpaperMode = val('wallpaper-mode');
+        s.wallpaperEffect = val('wallpaper-effect');
+        
+        s.ttsEngine = val('tts-engine');
+        s.ttsVoice = val('tts-voice');
+        s.speechRate = parseFloat(val('speech-rate'));
+        s.speechPitch = parseFloat(val('speech-pitch'));
+        s.speechLanguage = val('speech-language');
+        s.continuousRecognition = checked('continuous-recognition');
+        s.captureSystemAudio = checked('capture-system-audio');
+        
+        s.enableHaptics = checked('enable-haptics');
+        s.clickIntensity = parseFloat(val('click-intensity'));
+        s.touchIntensity = parseFloat(val('touch-intensity'));
+        s.emotionIntensity = parseFloat(val('emotion-intensity'));
+        
+        s.frameRate = parseInt(val('frame-rate'));
+        s.renderQuality = val('render-quality');
+        s.backendIp = val('backend-ip');
+        s.backendPort = parseInt(val('backend-port'));
+        
+        s.enableCluster = checked('enable-cluster');
+        s.clusterRole = val('cluster-role');
+        s.clusterIntegerOnly = checked('cluster-integer-only');
+        s.clusterMemoization = checked('cluster-memoization');
+        s.nodeName = val('node-name');
+        
+        s.debugMode = checked('debug-mode');
+        // s.showClickRegions = checked('show-click-regions');
+        
+        return s;
+    }
+
+    async function applySettingsToApplication(s) {
+        if (!window.electronAPI) return;
+
+        // Apply Window settings
+        if (window.electronAPI.window) {
+            window.electronAPI.window.setAlwaysOnTop(s.alwaysOnTop);
+        }
+
+        // Apply Performance settings
+        if (window.electronAPI.performance) {
+            window.electronAPI.performance.setMode(s.renderQuality);
+        }
+
+        // Notify other windows/components via IPC if necessary
+        // (This would use ipcRenderer.send in a real world application)
+    }
+
+    async function resetSettings() {
+        if (confirm('Are you sure you want to reset all settings to defaults?')) {
+            const defaults = await settingsManager.reset();
+            applySettingsToUI(defaults);
+            showNotification('Settings have been reset to defaults', 'info');
+        }
+    }
+
+    function cancelSettings() {
+        console.log('[Settings] Cancel button clicked');
+        if (window.electronAPI && window.electronAPI.settings) {
+            window.electronAPI.settings.close();
         }
     }
 

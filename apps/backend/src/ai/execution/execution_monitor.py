@@ -275,7 +275,6 @@ class ExecutionMonitor:
         timeout: Optional[float] = None,
         cwd: Optional[str] = None,
         env: Optional[Dict[str, str]] = None,
-        shell: bool = True,
     ) -> ExecutionResult:
         """
         Execute command and monitor status
@@ -285,7 +284,6 @@ class ExecutionMonitor:
             timeout: Timeout time (seconds)
             cwd: Working directory
             env: Environment variables
-            shell: Whether to use shell
 
         Returns:
             Execution result

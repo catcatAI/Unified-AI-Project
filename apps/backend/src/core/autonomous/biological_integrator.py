@@ -195,6 +195,26 @@ class BiologicalIntegrator:
         # Callbacks
         self._state_callbacks: List[Callable[[Dict[str, Any]], None]] = []
 
+    def register_event_callback(self, callback: Callable[[str, Dict[str, Any]], None]):
+        """
+        Register a callback for all biological events.
+        Convenience method to bridge to external systems like WebSocket.
+        """
+        for event in BiologicalEvent:
+            # Create a wrapper to pass the event name
+            def event_wrapper(ev_type=event.value, ev_data=None):
+                # Ensure ev_data is passed from publisher.publish
+                # BiologicalEventPublisher.publish calls callback(event, data)
+                # So we need to handle those arguments
+                pass
+
+            # Redoing the wrapper correctly based on BiologicalEventPublisher.publish:
+            # result = callback(event, data)
+            def create_wrapper(target_callback):
+                return lambda event_obj, data: target_callback(event_obj.value, data)
+
+            self.event_publisher.subscribe(event.value, create_wrapper(callback))
+
     def _setup_default_interactions(self):
         """Set up default system interactions"""
         self.interactions = [
@@ -313,6 +333,19 @@ class BiologicalIntegrator:
             arousal_boost = (new_val / 100) * 20
             current_arousal = self.nervous_system.arousal_level
             self.nervous_system.set_arousal_directly(min(100, current_arousal + arousal_boost))
+
+        # P0-2: 发布激素变化事件
+        asyncio.create_task(
+            self.event_publisher.publish(
+                BiologicalEvent.HORMONE_CHANGED,
+                {
+                    "hormone_type": hormone_type.en_name,
+                    "old_value": old_val,
+                    "new_value": new_val,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        )
 
     def _on_emotion_change(self, old_emotion, new_emotion):
         """Handle emotional state changes"""

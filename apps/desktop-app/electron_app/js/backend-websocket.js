@@ -48,6 +48,7 @@ class BackendWebSocketClient {
     this.updateBatchInterval = 100 // 批处理间隔 (ms)
     this.updateBatchTimer = null // 批处理定时器
     this.pendingStateUpdates = [] // 待批处理的状态更新
+    this.onMessage = null // P0-4: Single callback for convenience (app.js uses this)
   }
 
   async connect(url) {
@@ -156,9 +157,21 @@ class BackendWebSocketClient {
       case 'biological_event':
         this._handleBiologicalEvent(data)
         break
+      case 'angela_action':
+        this._fireEvent('angela_action', data)
+        break
       default:
         // Log as debug instead of warning to reduce noise
         console.debug('Unknown message type:', type, message)
+    }
+
+    // P0-4: Call the onMessage callback if defined for backward compatibility
+    if (typeof this.onMessage === 'function') {
+      try {
+        this.onMessage(message)
+      } catch (error) {
+        console.error('[BackendWebSocket] Error in onMessage callback:', error)
+      }
     }
   }
 

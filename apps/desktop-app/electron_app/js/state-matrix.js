@@ -344,7 +344,7 @@ class StateMatrix4D {
         const mappings = this.getStateToLive2DMappings();
         const dimChanges = changes || {};
         
-        // 處理 Live2D 模式
+        // 1. 基礎參數同步 (由 mappings 定義)
         for (const [key, value] of Object.entries(dimChanges)) {
             const paramKey = `${dimensionName}_${key}`;
             if (mappings[paramKey]) {
@@ -352,14 +352,64 @@ class StateMatrix4D {
             }
         }
         
+        // 2. 表情同步
         const dominantEmotion = this.getDominantEmotion();
-        if (dominantEmotion && mappings[dominantEmotion]) {
+        if (dominantEmotion) {
             this.live2DManager.setExpression(dominantEmotion);
         }
         
-        // 處理 Fallback 模式 - 根據主導情緒切換立繫
+        // 3. 生理與行為複雜映射 (Consolidated from HardwareDetector)
+        this._applyComplexMappings();
+        
+        // 4. 處理 Fallback 模式 - 根據主導情緒切換立繫
         if (this.live2DManager.isFallback) {
             this._applyFallbackLayers();
+        }
+    }
+
+    /**
+     * 應用複雜的交叉維度映射 (生理與行為)
+     * 從 hardware-detection.js 遷移並優化
+     */
+    _applyComplexMappings() {
+        if (!this.live2DManager) return;
+        
+        // --- 生理維度 (Alpha) 影響 ---
+        if (this.alpha) {
+            const energy = this.alpha.values.energy || 0.5;
+            const arousal = this.alpha.values.arousal || 0.5;
+            const restNeed = this.alpha.values.rest_need || 0.5;
+            
+            // 呼吸頻率與深度：能量與覺醒度越高，呼吸越急促
+            const breathFrequency = 0.5 + (energy * 1.5);
+            const breathDepth = 0.5 + (arousal * 0.5);
+            
+            // 假設 Live2DManager 支援這些抽象設置，或直接設置參數
+            this.live2DManager.setParameter('ParamBreath', breathFrequency);
+            
+            // 眼睛控制：疲勞度 (rest_need) 越高，眼睛越無神/微閉
+            const eyeOpenness = Math.max(0.3, 1.0 - (restNeed * 0.5));
+            this.live2DManager.setParameter('ParamEyeLOpen', eyeOpenness);
+            this.live2DManager.setParameter('ParamEyeROpen', eyeOpenness);
+        }
+        
+        // --- 社交維度 (Delta) 影響 ---
+        if (this.delta) {
+            const attention = this.delta.values.attention || 0.5;
+            const presence = this.delta.values.presence || 0.5;
+            
+            // 身體活動度：存在感高時，身體微動增加
+            const bodyActivity = presence > 0.7 ? 1.0 : 0.5;
+            const bodyAngleVariation = bodyActivity * 0.1;
+            
+            // 這裡可以加入一些隨機微調
+            const currentBodyX = this.live2DManager.getParameter('ParamBodyAngleX') || 0;
+            this.live2DManager.setParameter('ParamBodyAngleX', currentBodyX + (Math.random() - 0.5) * bodyAngleVariation);
+            
+            // 關注度影響眼球追蹤速度/精確度 (如果 Manager 支援)
+            if (this.live2DManager.setTrackingSensitivity) {
+                this.live2DManager.setTrackingSensitivity(attention);
+            }
         }
     }
     

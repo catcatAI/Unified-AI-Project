@@ -29,21 +29,14 @@ class ArchitectureType(Enum):
     X86_32 = "x86"
     ARM64 = "arm64"
     ARM32 = "arm"
-    RISCV64 = "riscv64"
-    RISCV32 = "riscv32"
-    POWER64 = "power64"
-    SPARC64 = "sparc64"
-    MIPS64 = "mips64"
     UNKNOWN = "unknown"
 
 
 class InstructionSet(Enum):
     """指令集分类 / Instruction Set Classifications"""
 
-    CISC = "cisC"
+    CISC = "cisc"
     RISC = "risc"
-    EPIC = "epic"
-    VLIW = "vliw"
     VECTOR = "vector"
 
 
@@ -188,10 +181,6 @@ class HardwareDetector:
             return ArchitectureType.ARM64
         elif machine.startswith("arm"):
             return ArchitectureType.ARM32
-        elif machine in ["riscv64", "riscv"]:
-            return ArchitectureType.RISCV64
-        elif machine == "powerpc64":
-            return ArchitectureType.POWER64
         else:
             return ArchitectureType.UNKNOWN
 
@@ -203,15 +192,7 @@ class HardwareDetector:
         if arch in [ArchitectureType.X86_64, ArchitectureType.X86_32]:
             return InstructionSet.CISC
         elif arch in [ArchitectureType.ARM64, ArchitectureType.ARM32]:
-            if "sve" in flags:
-                return InstructionSet.EPIC
             return InstructionSet.RISC
-        elif arch in [ArchitectureType.RISCV64, ArchitectureType.RISCV32]:
-            if "v" in flags:
-                return InstructionSet.VLIW
-            return InstructionSet.RISC
-        elif arch == ArchitectureType.POWER64:
-            return InstructionSet.CISC
         else:
             return InstructionSet.CISC
 

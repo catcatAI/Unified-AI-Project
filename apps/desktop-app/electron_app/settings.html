@@ -671,58 +671,8 @@
                     </div>
                 </div>
 
-                <div class="setting-group">
-                    <h3>Cluster Deployment (Beta)</h3>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Enable Cluster Mode</label>
-                            <p>Enable (L0~L11) × (4~8) matrix distributed computing</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="enable-cluster">
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Node Role</label>
-                            <p>Master handles distribution, Worker handles calculation</p>
-                        </div>
-                        <div class="setting-control">
-                            <select id="cluster-role">
-                                <option value="auto">Auto Detect</option>
-                                <option value="master">Master</option>
-                                <option value="worker">Worker</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Integer-Only Transmission</label>
-                            <p>Reduce latency by transmitting only integers between nodes</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="cluster-integer-only" checked>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Decimal Memoization</label>
-                            <p>Store decimal values on workers to maintain precision</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="cluster-memoization" checked>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <label>Node Name</label>
-                            <p>Identifier for this node in the cluster</p>
-                        </div>
-                        <div class="setting-control">
-                            <input type="text" id="node-name" placeholder="Angela-Node-1">
-                        </div>
-                    </div>
                 </div>
+            </div>
 
                 <div class="setting-group" id="cluster-monitor-group">
                     <h3>System Status & Cluster Monitoring</h3>
@@ -791,6 +741,59 @@
                 </div>
 
                 <div class="setting-group">
+                    <h3>Cluster Deployment (Legacy/Experimental)</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Enable Cluster Mode</label>
+                            <p>Enable (L0~L11) × (4~8) matrix distributed computing</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="enable-cluster">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Node Role</label>
+                            <p>Master handles distribution, Worker handles calculation</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="cluster-role">
+                                <option value="auto">Auto Detect</option>
+                                <option value="master">Master</option>
+                                <option value="worker">Worker</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Integer-Only Transmission</label>
+                            <p>Reduce latency by transmitting only integers between nodes</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="cluster-integer-only" checked>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Decimal Memoization</label>
+                            <p>Store decimal values on workers to maintain precision</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="cluster-memoization" checked>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Node Name</label>
+                            <p>Identifier for this node in the cluster</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="text" id="node-name" placeholder="Angela-Node-1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
                     <h3>Debug</h3>
                     <div class="setting-item">
                         <div class="setting-label">
@@ -854,6 +857,7 @@
     <!-- Notification container -->
     <div id="notification-container"></div>
 
+    <script src="js/settings-manager.js"></script>
     <script src="js/settings.js"></script>
 </body>
 </html>

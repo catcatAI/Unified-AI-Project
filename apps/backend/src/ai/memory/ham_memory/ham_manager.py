@@ -251,8 +251,11 @@ class HAMMemoryManager:
         }
         self.core_memory_store[memory_id] = data_package
 
-        save_successful = self.core_storage._save_core_memory_to_file(
-            self.core_memory_store, self.next_memory_id, self.fernet
+        save_successful = await asyncio.to_thread(
+            self.core_storage._save_core_memory_to_file,
+            self.core_memory_store,
+            self.next_memory_id,
+            self.fernet,
         )
 
         if save_successful:
@@ -522,7 +525,7 @@ class HAMMemoryManager:
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         return await self.query_engine.retrieve_relevant_memories(query, limit)
 
-    def increment_metadata_field(
+    async def increment_metadata_field(
         self, memory_id: str, field_name: str, increment_by: int = 1
     ) -> bool:
         """
@@ -547,10 +550,16 @@ class HAMMemoryManager:
                 logger.debug(
                     f"HAM: Incremented metadata field '{field_name}' for mem_id '{memory_id}'."
                 )
-                # For simplicity, we trigger a full save. A more advanced implementation
-                # might use a more granular or delayed save mechanism.
-                return self.core_storage._save_core_memory_to_file(
-                    self.core_memory_store, self.next_memory_id, self.fernet
+                record["metadata"][field_name] = current_value + increment_by
+                logger.debug(
+                    f"HAM: Incremented metadata field '{field_name}' for mem_id '{memory_id}'."
+                )
+                # For simplicity, we trigger a full save using a thread.
+                return await asyncio.to_thread(
+                    self.core_storage._save_core_memory_to_file,
+                    self.core_memory_store,
+                    self.next_memory_id,
+                    self.fernet,
                 )
             else:
                 logger.error(

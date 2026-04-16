@@ -271,6 +271,7 @@ from fastapi import (
     BackgroundTasks,
     WebSocket,
     WebSocketDisconnect,
+    Request,
 )
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -393,9 +394,48 @@ def _initialize_all_services():
     brain_bridge = get_brain_bridge()
 
     # Link components
+    pet_manager = pet.get_pet_manager()
+    digital_life.broadcast_callback = manager.broadcast
     pet.set_biological_integrator(digital_life.biological_integrator)
     pet.set_economy_manager(economy_manager)
     economy.set_economy_manager(economy_manager)
+
+    # ========== WebSocket hooks for real-time digital life ==========
+
+    # 1. Hook PetManager to broadcast state changes
+    async def pet_broadcast_wrapper(event_type, data):
+        await manager.broadcast(
+            {
+                "type": event_type,
+                "data": data,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
+    pet_manager.broadcast_callback = pet_broadcast_wrapper
+
+    # 2. Hook BiologicalIntegrator to broadcast discrete events (emotions, etc.)
+    def bio_event_callback(event_name, event_data):
+        # We need to bridge from sync callback to async broadcast
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.run_coroutine_threadsafe(
+                    manager.broadcast(
+                        {
+                            "type": "biological_event",
+                            "data": {"event": event_name, "data": event_data},
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    ),
+                    loop,
+                )
+        except Exception as e:
+            logger.error(f"Failed to bridge biological event: {e}")
+
+    # Registered with the underlying integrator if supported
+    if hasattr(digital_life.biological_integrator, "register_event_callback"):
+        digital_life.biological_integrator.register_event_callback(bio_event_callback)
 
     return (
         desktop_interaction,
@@ -597,8 +637,12 @@ async def startup_event():
     except Exception as e:
         logger.error(f"[STARTUP] LLM Service initialization failed: {e}")
 
-    # Start background task to broadcast state updates
-    asyncio.create_task(broadcast_state_updates())
+    # Start background task to broadcast state updates and store it for lifecycle management
+    task = asyncio.create_task(broadcast_state_updates())
+    if not hasattr(app.state, "background_tasks"):
+        app.state.background_tasks = set()
+    app.state.background_tasks.add(task)
+    task.add_done_callback(app.state.background_tasks.discard)
 
 
 @app.on_event("shutdown")
@@ -613,6 +657,13 @@ async def shutdown_event():
         await _digital_life.shutdown()
     if _economy_manager:
         await _economy_manager.shutdown()
+
+    # Cancel all background tasks
+    if hasattr(app.state, "background_tasks"):
+        for task in app.state.background_tasks:
+            task.cancel()
+        if app.state.background_tasks:
+            await asyncio.gather(*app.state.background_tasks, return_exceptions=True)
 
 
 app.add_middleware(
@@ -687,8 +738,13 @@ async def system_status():
 
 
 @router.get("/api/v1/security/sync-key-c")
-async def sync_key_c():
-    """Get Key C for desktop app synchronization"""
+async def sync_key_c(request: Request):
+    """Get Key C for desktop app synchronization (Localhost restricted)"""
+    client_host = request.client.host
+    if client_host not in ["127.0.0.1", "::1", "localhost"]:
+        logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}")
+        raise HTTPException(status_code=403, detail="Access restricted to localhost")
+    
     abc_key_manager = get_abc_key_manager()
     key_c = abc_key_manager.get_key("KeyC")
     if not key_c:
@@ -1015,8 +1071,12 @@ class ConnectionManager:
 
         logger.info(f"WebSocket 连接已建立 (ID: {self.connection_info[websocket]['client_id']})")
 
-        # 启动心跳检测
-        asyncio.create_task(self._heartbeat_monitor(websocket))
+        # 启动心跳检测并存储任务
+        task = asyncio.create_task(self._heartbeat_monitor(websocket))
+        if not hasattr(app.state, "background_tasks"):
+            app.state.background_tasks = set()
+        app.state.background_tasks.add(task)
+        task.add_done_callback(app.state.background_tasks.discard)
 
     def disconnect(self, websocket: WebSocket):
         """断开连接"""
@@ -1050,13 +1110,16 @@ class ConnectionManager:
                 logger.error(f"心跳监控错误: {e}")
                 break
 
-    async def broadcast(self, message: dict):
-        """广播消息到所有连接"""
-        for connection in self.active_connections[:]:  # 使用副本遍历
+        # Create a copy of the list for safe iteration
+        for connection in list(self.active_connections):
             try:
+                # Ensure connection is still open
+                if connection not in self.active_connections:
+                    continue
+                
                 await connection.send_json(message)
 
-                # 清除该连接的消息缓冲（成功发送）
+                # 清除該連接的消息庫存（成功發送）
                 if connection in self.message_buffer:
                     self.message_buffer[connection].clear()
 
@@ -1147,20 +1210,35 @@ async def broadcast_state_updates():
         try:
             # Get current state from brain bridge
             brain_bridge = get_brain_bridge()
+            status = brain_bridge.get_current_status()
+
+            # Map the complex brain/bio status to what the UI expects (alpha, beta, gamma, delta)
+            bio = status.get("biological", {})
+            brain_data = status.get("brain")
+            brain_metrics = (
+                brain_data.get("current_metrics", {})
+                if brain_data and isinstance(brain_data, dict)
+                else {}
+            )
+
             state_data = {
                 "alpha": {
-                    "energy": (
-                        brain_bridge.get_energy_level()
-                        if hasattr(brain_bridge, "get_energy_level")
-                        else 0.5
-                    ),
-                    "comfort": 0.5,
-                    "arousal": 0.5,
+                    "energy": bio.get("arousal", 50.0) / 100.0,
+                    "stress": bio.get("stress_level", 0.0) / 100.0,
+                    "hormones": bio.get("hormone_levels", {}),
                 },
-                "beta": {"curiosity": 0.5, "focus": 0.5, "learning": 0.5},
-                "gamma": {"happiness": 0.5, "calm": 0.5},
-                "delta": {"attention": 0.5, "engagement": 0.5},
-                "timestamp": datetime.now().isoformat(),
+                "beta": {
+                    "learning_rate": brain_metrics.get("learning_rate", 0.01),
+                    "cognitive_load": brain_metrics.get("cognitive_gap", 0.0),
+                },
+                "gamma": {
+                    "happiness": bio.get("mood", 0.5),
+                    "emotion": bio.get("dominant_emotion", "calm"),
+                },
+                "delta": {
+                    "intensity": brain_metrics.get("life_intensity", 0.0),
+                },
+                "timestamp": status.get("timestamp"),
             }
 
             await manager.broadcast(

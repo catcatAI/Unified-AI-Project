@@ -36,8 +36,14 @@ from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
 
+# P0-4: AI Lifecycle imports
+from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
+from ai.lifecycle.user_monitor import UserMonitor
+
 if TYPE_CHECKING:
     from ai.integration.unified_control_center import UnifiedControlCenter
+    from services.angela_llm_service import AngelaLLMService
+    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
 
 class LifeCycleState(Enum):
@@ -146,6 +152,13 @@ class DigitalLifeIntegrator:
         self.action_executor: ActionExecutor = ActionExecutor()
         self.memory_bridge: Optional[MemoryNeuroplasticityBridge] = None
 
+        # P0-4: AI Lifecycle loops
+        self.llm_decision_loop: Optional[LLMDecisionLoop] = None
+        self.user_monitor: UserMonitor = UserMonitor(
+            config.get("user_id", "default_user") if config else "default_user"
+        )
+        self.broadcast_callback: Optional[Callable] = None
+
         # Theoretical Framework Integration
         self.autonomous_lifecycle: Optional[AutonomousLifeCycle] = None
         self._formula_integration_enabled: bool = self.config.get(
@@ -251,6 +264,30 @@ class DigitalLifeIntegrator:
             logger.info("✅ Unified Control Center integrated into Digital Life")
         except Exception as e:
             logger.error(f"[DigitalLife] Failed to initialize Unified Control Center: {e}")
+
+        # P0-4: Initialize AI Lifecycle loops
+        try:
+            from services.angela_llm_service import get_llm_service
+            from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
+            llm_service = await get_llm_service()
+            memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")
+
+            # Initialize UserMonitor
+            await self.user_monitor.start()
+
+            # Initialize LLMDecisionLoop
+            self.llm_decision_loop = LLMDecisionLoop(
+                llm_service=llm_service,
+                state_manager=self.state_matrix,
+                memory_manager=memory_manager,
+                user_monitor=self.user_monitor,
+                broadcast_callback=self.broadcast_callback,
+            )
+            await self.llm_decision_loop.start()
+            logger.info("✅ LLM Decision Loop integrated and started")
+        except Exception as e:
+            logger.error(f"[DigitalLife] Failed to initialize AI Lifecycle: {e}")
 
         # Set initial state
         await self._transition_state(LifeCycleState.AWAKENING)

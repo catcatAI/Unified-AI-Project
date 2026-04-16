@@ -70,10 +70,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setSource: (source) => ipcRenderer.send('theme-set-source', source)
   },
 
-  // Settings window
+  // Settings management
   settings: {
     open: () => ipcRenderer.send('settings-open'),
-    close: () => ipcRenderer.send('settings-close')
+    close: () => ipcRenderer.send('settings-close'),
+    getAll: () => ipcRenderer.invoke('settings-get-all'),
+    setAll: (settings) => ipcRenderer.invoke('settings-set-all', settings),
+    reset: () => ipcRenderer.invoke('settings-reset')
   },
 
   // Audio system
