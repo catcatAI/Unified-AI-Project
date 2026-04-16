@@ -390,31 +390,19 @@ class Live2DCubismWrapper {
             filePath = modelPath.startsWith('local:///')
                 ? modelPath.substring(9)  // Remove local:///
                 : modelPath.substring(8);  // Remove local://
-        } else if (!modelPath.startsWith('/') && !modelPath.includes(':')) {
-            // Relative path, prepend current directory
-            filePath = '/' + modelPath;
-        } else if (!modelPath.startsWith('/')) {
-            // Has drive letter (Windows) or other format
-            filePath = modelPath;
         }
 
-        // Use URL to properly handle path separators
-        try {
-            const url = new URL('file://' + filePath);
-            filePath = url.pathname;
-        } catch (e) {
-            // URL parsing failed, use manual parsing
-            const lastDot = filePath.lastIndexOf('.');
-            if (lastDot > filePath.lastIndexOf('/')) {
-                filePath = filePath.substring(0, lastDot);
-            }
+        // Just get directory by removing the filename
+        const lastSlash = filePath.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            basePath = filePath.substring(0, lastSlash + 1);
+        } else {
+            // If there's no slash, the basepath is just the current dir
+            basePath = '';
         }
 
-        // Get directory by removing the filename
-        basePath = filePath.substring(0, filePath.lastIndexOf('/') + 1);
-
-        // Ensure basePath ends with /
-        if (!basePath.endsWith('/')) {
+        // Ensure basePath ends with / if it's not empty
+        if (basePath.length > 0 && !basePath.endsWith('/')) {
             basePath = basePath + '/';
         }
 

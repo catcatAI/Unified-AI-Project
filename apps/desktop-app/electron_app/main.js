@@ -636,29 +636,6 @@ function createTray() {
   }
 }
 
-function getTrayIconPath() {
-  const iconName = process.platform === 'win32' ? 'icon.ico' : 'icon.png'
-  const iconPath = path.join(__dirname, 'resources', 'icons', iconName)
-  return fs.existsSync(iconPath) ? iconPath : path.join(__dirname, 'icon.png')
-}
-
-  tray.setToolTip('Angela AI - Your Virtual Companion')
-
-  // Double click to show window
-  tray.on('double-click', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide()
-      } else {
-        mainWindow.show()
-        mainWindow.focus()
-      }
-    }
-  })
-
-  console.log('System tray created')
-}
-
 /**
  * Get tray icon path based on platform
  */
