@@ -361,7 +361,7 @@ class StateMatrix4D {
         // 3. 生理與行為複雜映射 (Consolidated from HardwareDetector)
         this._applyComplexMappings();
         
-        // 4. 處理 Fallback 模式 - 根據主導情緒切換立繫
+        // 4. 處理 Fallback 模式 - 根據主導情緒切換立繪
         if (this.live2DManager.isFallback) {
             this._applyFallbackLayers();
         }
@@ -414,7 +414,7 @@ class StateMatrix4D {
     }
     
     /**
-         * 根據主導情緒應用 fallback 模式的三層立繫渲染
+         * 根據主導情緒應用 fallback 模式的三層立繪渲染
          */
         _applyFallbackLayers() {
             if (!this.live2DManager || !this.live2DManager.isFallback) {
@@ -465,7 +465,7 @@ class StateMatrix4D {
         }
         
         /**
-         * 根據主導情緒應用 fallback 模式的立繫表情（舊版，保留兼容）
+         * 根據主導情緒應用 fallback 模式的立繪表情（舊版，保留兼容）
          */
         _applyFallbackExpression(dominantEmotion) {
             // 使用新的三層渲染系統

@@ -23,6 +23,8 @@ class PerformanceManager {
         this.lastAutoConfigureTime = 0; // 防止短时间内重复自动配置
         this.pendingModeChange = null;
         this.pendingModeChangeTime = 0;
+        this.modeLockUntil = 0; // Lock upgrades after a downgrade to prevent flickering
+        this.modeLockDuration = 30000; // 30 seconds lock after downgrade
         this.isVisible = true; // Page visibility tracking
 
         // 性能变更消息确认机制
@@ -915,8 +917,8 @@ class PerformanceManager {
 
         // Check pending mode change (delayed decision)
         if (this.pendingModeChange) {
-            if (now - this.pendingModeChangeTime >= 3000) {
-                // Wait 3 seconds before committing to mode change
+            if (now - this.pendingModeChangeTime >= 5000) {
+                // Wait 5 seconds before committing to mode change
                 const pendingMode = this.pendingModeChange;
                 this.pendingModeChange = null;
 
@@ -926,7 +928,12 @@ class PerformanceManager {
 
                 if (pendingMode === 'downgrade' && newRatio < 0.85) {
                     this.downgradePerformance();
-                } else if (pendingMode === 'upgrade' && newRatio > 1.15) {
+                } else if (pendingMode === 'upgrade' && newRatio > 1.3) { // Higher threshold for upgrade (1.3 instead of 1.15)
+                    // Check if we are currently locked
+                    if (now < this.modeLockUntil) {
+                        console.log('[PerformanceManager] Upgrade suppressed by stability lock');
+                        return;
+                    }
                     this.upgradePerformance();
                 }
             }
@@ -934,14 +941,14 @@ class PerformanceManager {
         }
 
         // Use hysteresis: different thresholds for up vs down
-        // Downgrade if FPS is consistently low (< 80% of target for 2 consecutive checks)
-        // Upgrade only if FPS is consistently high (> 120% of target for 3 consecutive checks)
-        if (ratio < 0.8) {
+        // Downgrade if FPS is consistently low (< 75% of target)
+        // Upgrade only if FPS is consistently high (> 130% of target)
+        if (ratio < 0.75) {
             // First low reading - set pending downgrade
             this.pendingModeChange = 'downgrade';
             this.pendingModeChangeTime = now;
             console.log(`FPS low (${avgFPS.toFixed(1)}/${targetFPS}), pending downgrade check...`);
-        } else if (ratio > 1.2) {
+        } else if (ratio > 1.3 && now >= this.modeLockUntil) { // Only suggest upgrade if not locked
             // First high reading - set pending upgrade
             this.pendingModeChange = 'upgrade';
             this.pendingModeChangeTime = now;
@@ -960,6 +967,10 @@ class PerformanceManager {
         if (currentIndex > 0) {
             const newMode = modes[currentIndex - 1];
             console.log(`Performance too low, downgrading from ${this.currentMode} to ${newMode}`);
+            
+            // Set stability lock after a downgrade
+            this.modeLockUntil = Date.now() + this.modeLockDuration;
+            
             this.setPerformanceMode(newMode);
             this.lastModeChangeTime = Date.now();
             this.pendingModeChange = null;

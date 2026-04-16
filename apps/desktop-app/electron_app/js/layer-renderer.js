@@ -2,7 +2,7 @@
  * LayerRenderer - 三層渲染器 v2
  * 
  * 管理三層疊加渲染系統：
- * - Layer 1: 主立繫層 (base)
+ * - Layer 1: 主立繪層 (base)
  * - Layer 2: 表情疊加層 (expression)
  * - Layer 3: 姿態疊加層 (pose)
  * 

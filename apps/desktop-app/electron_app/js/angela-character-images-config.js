@@ -1,8 +1,8 @@
 /**
- * Angela AI - 立繫圖片配置
+ * Angela AI - 立繪圖片配置
  * 
  * 三層渲染架構 - 修正版 v5
- * - Layer 1: 主立繫層 (base) - fullbody_ai_assistant
+ * - Layer 1: 主立繪層 (base) - fullbody_ai_assistant
  * - Layer 2: 表情疊加層 (expression) - expression_pack_1 (只包含面部)
  * - Layer 3: 姿態疊加層 (pose) - pose_sequence_1 (⚠️ 包含完整上半身+頭部，需要頭部遮罩)
  * 
@@ -15,7 +15,7 @@
 
 window.ANGELA_CHARACTER_IMAGES = {
   // ================================================================
-  // Layer 1: 主立繫層 (Base Layer)
+  // Layer 1: 主立繪層 (Base Layer)
   // ================================================================
   'fullbody_ai_assistant': {
     name: 'AI 助手',
@@ -31,7 +31,7 @@ window.ANGELA_CHARACTER_IMAGES = {
       offsetY: 0,
       scaleToHeight: 720
     },
-    // 主立繫觸覺區域 - 基於 1280x720 畫布坐標
+    // 主立繪觸覺區域 - 基於 1280x720 畫布坐標
     touchRegions: {
       head: {
         x: 640, y: 100, width: 180, height: 180,

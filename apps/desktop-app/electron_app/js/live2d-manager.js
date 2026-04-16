@@ -636,9 +636,11 @@ class Live2DManager {
         // 顯示 fallback canvas，隱藏 live2d canvas
         const fallbackCanvas = document.getElementById('fallback-canvas');
         const fallbackWrapper = document.getElementById('fallback-wrapper');
+        const live2dCanvas = document.getElementById('live2d-canvas');
+        
         if (fallbackCanvas) fallbackCanvas.style.display = 'block';
         if (fallbackWrapper) fallbackWrapper.classList.add('visible');
-        this.canvas.style.display = 'none';
+        if (live2dCanvas) live2dCanvas.style.display = 'none';
 
         // 如果還沒有創建 fallback manager，創建它
         if (!this.fallbackCanvas || !this.fallbackCtx) {
@@ -760,9 +762,8 @@ class Live2DManager {
         const ctx = this.fallbackCtx;
         const canvas = this.fallbackCanvas;
         
-        // Clear
-        ctx.fillStyle = '#1a1a1e';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Clear - 保持透明
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // 繪制當前選擇的立繪
         const imageData = this.characterImages[this.currentCharacterImageId];

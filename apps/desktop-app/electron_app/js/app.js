@@ -214,7 +214,33 @@ class AngelaApp {
         }
     }
 
-    // ========== 初始化方法 ==========
+    // ========== 事件處理 ==========
+
+    _handleClick(e) {
+        if (!this.udm) return;
+        
+        const clientX = e.clientX || (e.position ? e.position.x : 0);
+        const clientY = e.clientY || (e.position ? e.position.y : 0);
+        
+        const result = this.udm.handleClick(clientX, clientY);
+        
+        if (result.success && result.bodyPart) {
+            console.log(`[App] Clicked on: ${result.bodyPart.name}`);
+            
+            // Show visual feedback
+            if (this.inputHandler) {
+                this.inputHandler.showVisualFeedback(clientX, clientY);
+            }
+        }
+    }
+
+    _handleDrag(dragData) {
+        // Drag handling logic can be implemented here if needed
+    }
+
+    _handleHover(region, pos) {
+        // Hover handling logic can be implemented here if needed
+    }
 
     /**
      * 記錄初始化步驟
@@ -415,13 +441,11 @@ class AngelaApp {
         this.updateLoadingText('Initializing display matrix...');
         console.log('[AngelaApp] Creating UnifiedDisplayMatrix...');
 
-        // 獲取 wrapper 和 canvas 元素
-        const wrapper = document.querySelector('.canvas-wrapper') || document.getElementById('fallback-wrapper');
-        const canvas = document.getElementById('fallback-canvas') || document.getElementById('live2d-canvas');
-
-        // 確保兩個 canvas 都有正確的尺寸
+        // 獲取統一的角色容器
+        const wrapper = document.getElementById('character-container');
         const live2dCanvas = document.getElementById('live2d-canvas');
         const fallbackCanvas = document.getElementById('fallback-canvas');
+        const canvas = this.live2dManager?.isFallback ? fallbackCanvas : live2dCanvas;
 
         // 基準尺寸 (720p)
         const baseWidth = 1280;
@@ -600,7 +624,7 @@ class AngelaApp {
         const savedMode = localStorage.getItem('render_mode') || 'live2d';
         if (savedMode === 'fallback') {
             await this.live2dManager.switchToFallback();
-            console.log('[App] 恢復到立繫模式');
+            console.log('[App] 恢復到立繪模式');
         }
     }
 
@@ -623,9 +647,15 @@ class AngelaApp {
         this.updateLoadingText('Setting up input...');
         const clickLayer = document.getElementById('click-layer');
         this.inputHandler = new InputHandler(this.live2dManager, clickLayer);
-        this.inputHandler.onClick = this._handleClick.bind(this);
-        this.inputHandler.onDrag = this._handleDrag.bind(this);
-        this.inputHandler.onHover = this._handleHover.bind(this);
+        
+        // Link UDM to InputHandler for accurate coordinate mapping
+        if (this.udm) {
+            this.inputHandler.udm = this.udm;
+        }
+        
+        this.inputHandler.onClick = (e) => this._handleClick(e);
+        this.inputHandler.onDrag = (d) => this._handleDrag(d);
+        this.inputHandler.onHover = (h, p) => this._handleHover(h, p);
     }
 
     async _initializeAudioHandler() {
@@ -1061,7 +1091,7 @@ class AngelaApp {
                     this.showStatus('切換到 Live2D 模式', 2000);
                 } else if (mode === 'fallback' && this.live2dManager.getMode() === 'live2d') {
                     this.live2dManager.switchToFallback();
-                    this.showStatus('切換到立繫模式', 2000);
+                    this.showStatus('切換到立繪模式', 2000);
                 }
                 // 保存到本地存儲
                 localStorage.setItem('render_mode', mode);
@@ -1084,20 +1114,20 @@ class AngelaApp {
 
             switch (e.key) {
                 case '0':
-                    // 雙向切換：Live2D ↔ 立繫模式
+                    // 雙向切換：Live2D ↔ 立繪模式
                     if (this.live2dManager?.getMode() === 'fallback') {
                         this.live2dManager.switchToLive2D();
                         this.showStatus('切換到 Live2D 模式', 2000);
                     } else {
                         this.live2dManager.switchToFallback();
-                        this.showStatus('切換到立繫模式', 2000);
+                        this.showStatus('切換到立繪模式', 2000);
                     }
                     break;
             }
         });
 
         console.log('[App] Keyboard shortcuts configured');
-        console.log('[App] 0: 切換 Live2D/立繫 模式');
+        console.log('[App] 0: 切換 Live2D/立繪 模式');
     }
 
     async _loadDefaultModel() {

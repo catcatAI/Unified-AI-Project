@@ -60,6 +60,7 @@ class UnifiedDisplayMatrix {
         this.resourceMatrix = {
             '720p':  { width: 1280, height: 720,  scale: 1.0,  name: '720p (HD)' },
             '1080p': { width: 1920, height: 1080, scale: 1.5,  name: '1080p (FHD)' },
+            '1408p': { width: 1408, height: 768,  scale: 1.1,  name: '1408p (Character Native)' },
             '2k':    { width: 2560, height: 1440, scale: 1.78, name: '2K (QHD)' },
             '4k':    { width: 3840, height: 2160, scale: 3.0,  name: '4K (UHD)' },
             '8k':    { width: 7680, height: 4320, scale: 6.0,  name: '8K (FUHD)' }
@@ -84,7 +85,7 @@ class UnifiedDisplayMatrix {
         // ============================================================
         this.currentState = {
             userScale: this.baseConfig.defaultUserScale,
-            resourcePrecision: '720p',
+            resourcePrecision: '1408p', // Default to character native size
             baseWidth: this.resourceMatrix['720p'].width,
             baseHeight: this.resourceMatrix['720p'].height,
             windowWidth: 0,
@@ -526,7 +527,7 @@ class UnifiedDisplayMatrix {
      * @returns {number} - 總體縮放比例
      */
     getTotalScale() {
-        return this.currentState.userScale * this.currentState.devicePixelRatio;
+        return this.currentState.userScale; // DPR should NOT be part of coordinate mapping, only for canvas sizing
     }
 
     increaseUserScale(delta = null) {

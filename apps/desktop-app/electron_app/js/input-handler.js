@@ -40,6 +40,8 @@ class InputHandler {
         this.onDrag = null;
         this.onHover = null;
         this.onDragEnd = null;
+        
+        this.udm = null; // Will be set by app.js
 
         // Initialize
         this.initialize();
@@ -104,10 +106,17 @@ class InputHandler {
             }
         }
 
-        // Update Live2D eye tracking
-        const normalizedX = (event.clientX / window.innerWidth) * 2 - 1;
-        const normalizedY = (event.clientY / window.innerHeight) * 2 - 1;
-        this.live2dManager.lookAt(normalizedX, normalizedY);
+        // Update Live2D eye tracking using UDM for normalized coords if available
+        if (this.udm) {
+            const canvasCoords = this.udm.screenToCanvas(event.clientX, event.clientY);
+            const normX = (canvasCoords.x / this.udm.getBaseWidth()) * 2 - 1;
+            const normY = (canvasCoords.y / this.udm.getBaseHeight()) * 2 - 1;
+            this.live2dManager.lookAt(normX, normY);
+        } else {
+            const normalizedX = (event.clientX / window.innerWidth) * 2 - 1;
+            const normalizedY = (event.clientY / window.innerHeight) * 2 - 1;
+            this.live2dManager.lookAt(normalizedX, normalizedY);
+        }
     }
 
     _onMouseDown(event) {
@@ -138,14 +147,14 @@ class InputHandler {
     }
 
     _onClick(event) {
-        const region = this._getRegionAtPoint({ x: event.clientX, y: event.clientY });
-
-        if (region && region.type !== 'pass-through' && this.onClick) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            this.onClick(region, { x: event.clientX, y: event.clientY });
-        }
+        if (!this.onClick) return;
+        
+        // Delegating all coordinate handling to UDM for maximum accuracy
+        // InputHandler now strictly handles event capturing and feedback
+        event.preventDefault();
+        event.stopPropagation();
+        
+        this.onClick(event);
     }
 
     _onTouchStart(event) {

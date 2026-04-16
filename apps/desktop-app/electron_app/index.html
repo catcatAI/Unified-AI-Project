@@ -104,30 +104,35 @@
             pointer-events: none;
         }
 
-        /* Canvas wrapper for fallback character - supports proper scaling */
-        .canvas-wrapper {
+        #character-container {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            /* 尺寸由 UDM 动态设置 (720p = 1280x720 @ 100%) */
+            /* Base size (720p = 1280x720) - adjusted by UDM */
             width: 1280px;
             height: 720px;
-            z-index: 15;
-            display: none;
+            z-index: 10;
             pointer-events: none;
+            overflow: visible;
         }
 
-        .canvas-wrapper.visible {
-            display: block;
+        #live2d-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block; /* Managed by JS */
         }
 
-        /* Legacy wrapper for fallback canvas (without proper scaling) */
         #fallback-wrapper {
-            display: none;
-            /* 继承 canvas-wrapper 的尺寸 (720p = 1280x720) */
-            width: 1280px;
-            height: 720px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none; /* Managed by JS */
         }
 
         #fallback-wrapper.visible {
@@ -141,7 +146,7 @@
             width: 100%;
             height: 100%;
             z-index: 20;
-            pointer-events: none;
+            pointer-events: auto; /* IMPORTANT: Must be interactive to catch clicks */
         }
 
         /* Auto-hiding top title bar */
@@ -671,10 +676,12 @@
             </div>
         </div>
 
-        <!-- Canvas layers -->
-        <canvas id="live2d-canvas"></canvas>
-        <div class="canvas-wrapper" id="fallback-wrapper">
-            <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
+        <!-- Character System Container -->
+        <div id="character-container" class="canvas-wrapper">
+            <canvas id="live2d-canvas"></canvas>
+            <div id="fallback-wrapper" style="width: 100%; height: 100%;">
+                <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
+            </div>
         </div>
         <div id="click-layer"></div>
 
