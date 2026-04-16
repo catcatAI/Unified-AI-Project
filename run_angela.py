@@ -187,14 +187,18 @@ def _load_env_file(env_file: Path) -> None:
             logger.error(f"Error loading .env file: {e}")
 
 
-def wait_for_server(port=8000, timeout=180, progress: Optional[ProgressDisplay] = None) -> bool:
-    """等待服务器启动"""
+def wait_for_server(port=8000, timeout=180, progress: Optional[ProgressDisplay] = None, proc: Optional[subprocess.Popen] = None) -> bool:
+    """等待服务器启动, 若进程提前崩溃则立刻返回"""
     import socket
 
     start = time.time()
     check_interval = 0.5
     
     while time.time() - start < timeout:
+        if proc is not None and proc.poll() is not None:
+            logger.error(f"Backend process crashed unexpectedly with exit code {proc.returncode}")
+            return False
+
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
@@ -294,6 +298,7 @@ class Launcher:
             "aiohttp": "aiohttp",
             "edge_tts": "edge-tts",
             "cpuinfo": "py-cpuinfo",
+            "cryptography": "cryptography",
         }
         
         for module, name in required_packages.items():
@@ -385,7 +390,7 @@ class Launcher:
             
             self.progress.update(30, "后端启动中...", "loading")
             
-            if wait_for_server(8000, progress=self.progress):
+            if wait_for_server(8000, progress=self.progress, proc=proc):
                 self.progress.update(50, "后端已就绪", "success")
                 # Write PID file for stale process tracking
                 try:

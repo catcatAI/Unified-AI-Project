@@ -11,4 +11,28 @@ aiohttp
 python-dotenv
 edge-tts
 py-cpuinfo
--e ./apps/backend[standard,testing]
+cryptography
+pystray
+opencv-python
+loguru
+paho-mqtt
+faiss-cpu
+rumps; sys_platform == 'darwin'
+secret-sharing
+SpeechRecognition
+colorama
+colorlog
+comtypes; sys_platform == 'win32'
+PyJWT
+firebase-admin
+gmqtt
+redis
+qrcode
+pynvml
+pytest-asyncio
+sentence-transformers
+scikit-learn
+networkx
+pandas
+tqdm
+-e ./apps/backend

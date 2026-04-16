@@ -10,17 +10,7 @@ logger = logging.getLogger(__name__)
 
 # Hardware detection was moved to core.hardware.unified_hardware_center
 
-# Deployment Management
-from .deployment_manager import (
-    DeploymentManager,
-    DeploymentConfig,
-    DeploymentMode,
-    ModelSize,
-    ModelConfig,
-    CompressionConfig,
-    ProcessingConfig,
-    get_deployment_config,
-)
+# Deployment Management (Moved/Consolidated)
 
 # Integrated Graphics Optimization
 from .integrated_graphics_optimizer import (
@@ -29,15 +19,6 @@ from .integrated_graphics_optimizer import (
 )
 
 __all__ = [
-    # Deployment Management
-    "DeploymentManager",
-    "DeploymentConfig",
-    "DeploymentMode",
-    "ModelSize",
-    "ModelConfig",
-    "CompressionConfig",
-    "ProcessingConfig",
-    "get_deployment_config",
     # Integrated Graphics Optimization
     "IntegratedGraphicsOptimizer",
     "optimize_for_integrated_graphics",

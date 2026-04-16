@@ -1110,6 +1110,8 @@ class ConnectionManager:
                 logger.error(f"心跳监控错误: {e}")
                 break
 
+    async def broadcast(self, message: dict):
+        """广播消息给所有连线的客户端"""
         # Create a copy of the list for safe iteration
         for connection in list(self.active_connections):
             try:
