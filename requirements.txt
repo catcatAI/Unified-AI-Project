@@ -9,4 +9,5 @@ httpx
 Pillow
 aiohttp
 python-dotenv
+edge-tts
 -e ./apps/backend[standard,testing]

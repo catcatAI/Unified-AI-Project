@@ -292,6 +292,7 @@ class Launcher:
             "yaml": "PyYAML",
             "httpx": "httpx",
             "aiohttp": "aiohttp",
+            "edge_tts": "edge-tts",
         }
         
         for module, name in required_packages.items():
