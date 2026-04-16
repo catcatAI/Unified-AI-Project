@@ -293,6 +293,7 @@ class Launcher:
             "httpx": "httpx",
             "aiohttp": "aiohttp",
             "edge_tts": "edge-tts",
+            "cpuinfo": "py-cpuinfo",
         }
         
         for module, name in required_packages.items():

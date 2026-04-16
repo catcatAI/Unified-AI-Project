@@ -341,7 +341,7 @@ class AngelaInstaller:
                 timeout=600,
             )
 
-            critical_packages = ["fastapi", "uvicorn", "pydantic", "numpy", "httpx", "Pillow", "aiohttp", "edge-tts"]
+            critical_packages = ["fastapi", "uvicorn", "pydantic", "numpy", "httpx", "Pillow", "aiohttp", "edge-tts", "py-cpuinfo"]
             missing = []
             for package in critical_packages:
                 try:
@@ -349,6 +349,8 @@ class AngelaInstaller:
                         target = "PIL"
                     elif package == "edge-tts":
                         target = "edge_tts"
+                    elif package == "py-cpuinfo":
+                        target = "cpuinfo"
                     else:
                         target = package.lower().replace("-", "_")
                     __import__(target)
