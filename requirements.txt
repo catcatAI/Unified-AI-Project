@@ -1,1 +1,8 @@
+fastapi
+uvicorn
+psutil
+PyYAML
+pydantic
+numpy
+requests
 -e ./apps/backend[standard,testing]

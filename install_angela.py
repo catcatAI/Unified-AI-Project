@@ -44,6 +44,9 @@ class AngelaInstaller:
 
     def _get_default_install_dir(self) -> Path:
         if sys.platform == "win32":
+            # If current directory looks like a project root, use it
+            if (Path.cwd() / "apps" / "backend").exists():
+                return Path.cwd()
             user_home = os.environ.get("USERPROFILE") or str(Path.home())
             return Path(user_home) / "AngelaAI"
         elif sys.platform == "darwin":
@@ -109,12 +112,26 @@ class AngelaInstaller:
             import subprocess
 
             if sys.platform == "win32":
-                result = subprocess.run(
-                    ["wmic", "path", "win32_VideoController", "get", "name"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                )
+                # Try wmic first
+                try:
+                    result = subprocess.run(
+                        ["wmic", "path", "win32_VideoController", "get", "name"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
+                    )
+                except Exception:
+                    result = None
+
+                # Fallback to PowerShell if wmic fails or returns empty
+                if not result or not result.stdout.strip():
+                    result = subprocess.run(
+                        ["powershell", "-Command", "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
+                    )
+                
                 for line in result.stdout.split("\n"):
                     if line.strip() and "Name" not in line:
                         return line.strip()
@@ -128,7 +145,13 @@ class AngelaInstaller:
                     if "VGA" in line or "3D" in line:
                         return line.split(":")[-1].strip()
         except Exception as e:
-            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
+            # Final fallback
+            try:
+                if sys.platform == "win32":
+                    res = subprocess.run(["powershell", "-Command", "(Get-WmiObject Win32_VideoController).Name"], capture_output=True, text=True)
+                    if res.stdout.strip(): return res.stdout.strip().split("\n")[0]
+            except: pass
+            logger.error(f'GPU detection failed: {e}')
             pass
 
         return "Unknown/Software"
@@ -348,7 +371,7 @@ class AngelaInstaller:
         print("⚙️  生成默认配置...")
 
         config_dir = self.install_dir / "config"
-        config_dir.mkdir(exist_ok=True)
+        config_dir.mkdir(parents=True, exist_ok=True)
 
         tier = self.hardware_info.get("performance_tier", "Medium")
         
@@ -607,7 +630,31 @@ $sc.Save()
         print("=" * 70)
 
 
+def bootstrap_dependencies():
+    """Ensure essential installer dependencies are present."""
+    essentials = ["psutil", "PyYAML", "requests"]
+    missing = []
+    for pkg in essentials:
+        try:
+            __import__(pkg if pkg != "PyYAML" else "yaml")
+        except ImportError:
+            missing.append(pkg)
+    
+    if missing:
+        print(f"📦 正在準備安裝程式組件: {', '.join(missing)}...")
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", *missing, "--user", "--quiet"],
+                check=True,
+                capture_output=True
+            )
+            print("✅ 安裝程式組件準備完成\n")
+        except Exception as e:
+            print(f"⚠️  組件安裝失敗: {e}，這可能會導致後續報錯。")
+
 def main():
+    # Bootstrap before anything else
+    bootstrap_dependencies()
     parser = argparse.ArgumentParser(
         description="Angela AI 一键安装程序",
         formatter_class=argparse.RawDescriptionHelpFormatter,
