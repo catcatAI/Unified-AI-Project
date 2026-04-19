@@ -1,0 +1,8 @@
+pygetwindow
+pyautogui
+pyperclip
+pillow
+psutil
+python-dotenv
+pytesseract
+opencv-python
