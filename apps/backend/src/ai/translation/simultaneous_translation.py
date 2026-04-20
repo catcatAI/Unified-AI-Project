@@ -3,49 +3,57 @@ import time
 import random
 from typing import Dict, List, Optional, Tuple, Union, Iterator, Any
 import logging
+from deep_translator import GoogleTranslator
 
 logger = logging.getLogger(__name__)
 
-
 class SimultaneousTranslationService:
     """
-    Enhanced translation service mockup.
-    Simulates translation latency and basic language detection logic.
+    Real-world functional translation service.
+    Replaced legacy mock implementation with deep-translator integration.
     """
 
     def __init__(self, default_target_lang: str = "en", base_latency_ms: int = 150) -> None:
         self.default_target_lang = default_target_lang
-        self.base_latency_ms = base_latency_ms
+        # map code for deep-translator if needed (e.g. 'zh' to 'zh-TW')
+        self.lang_map = {"zh": "zh-TW"}
         self.supported_languages = ["en", "zh", "ja", "ko", "fr", "de"]
 
     async def translate(
         self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None
     ) -> Dict[str, Union[str, float, int]]:
         """
-        Async translation simulation.
+        Performs REAL translation using GoogleTranslator via deep-translator.
         """
         if not text:
             return self._empty_result(source_lang, target_lang)
 
         tgt = target_lang or self.default_target_lang
+        mapped_tgt = self.lang_map.get(tgt, tgt)
+        
+        start_time = time.time()
+        try:
+            # Running in thread to not block event loop if not using async-native lib
+            loop = asyncio.get_event_loop()
+            translated = await loop.run_in_executor(
+                None, 
+                lambda: GoogleTranslator(source=source_lang, target=mapped_tgt).translate(text)
+            )
+            status = "success"
+        except Exception as e:
+            logger.error(f"Translation Error: {e}")
+            translated = f"[Error: {str(e)}] {text}"
+            status = "fallback_raw"
 
-        # Simulate network/processing latency
-        latency = self.base_latency_ms + random.randint(50, 200)
-        await asyncio.sleep(latency / 1000.0)
-
-        # Mock translation logic: append target language code if it's not the same as source
-        translated = text
-        if source_lang != tgt:
-            translated = f"[{tgt.upper()}] {text}"
-
-        logger.info(f"[Translation] Translated {len(text)} chars to {tgt}")
+        latency = int((time.time() - start_time) * 1000)
+        logger.info(f"[Translation] Real Translation Complete. Latency: {latency}ms")
 
         return {
-            "source_lang": source_lang if source_lang != "auto" else "detected_en",
+            "source_lang": source_lang,
             "target_lang": tgt,
             "original_text": text,
             "translated_text": translated,
-            "confidence": 0.95,
+            "status": status,
             "latency_ms": latency,
         }
 

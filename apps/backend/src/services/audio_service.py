@@ -279,17 +279,17 @@ class AudioService:
         return {"error": "Invalid input format for audio processing"}
 
     async def text_to_speech(self, text: str, voice: Optional[str] = None) -> Optional[bytes]:
-        if text is None:
-            text = ""
+        """Real TTS using Edge-TTS. Removed the fake sine wave generator."""
+        if not text:
+            return None
 
         if not EDGE_TTS_AVAILABLE:
-            logger.info(f"Audio Service: Converting text to speech for '{text[:50]}...' (MOCK)")
-            return self._generate_demo_speech_audio(text, voice)
+            logger.error("TTS Failed: edge-tts not installed. Cannot generate audio.")
+            return None
 
-        logger.info(f"Audio Service (EdgeTTS): Synthesizing '{text[:50]}...'")
+        logger.info(f"Audio Service (EdgeTTS): Synthesizing '{text[:30]}...'")
         try:
-            # Default to a friendly female Chinese voice if not specified.
-            active_voice = voice or "zh-CN-XiaoxiaoNeural"
+            active_voice = voice or "zh-TW-HsiaoChenNeural" # Standard TW voice
             communicate = edge_tts.Communicate(text, active_voice)
 
             audio_bytes = b""
@@ -298,24 +298,7 @@ class AudioService:
                     audio_bytes += chunk["data"]
             return audio_bytes
         except Exception as e:
-            logger.error(f"EdgeTTS failed: {e}")
-            # Fallback
-            return self._generate_demo_speech_audio(text, voice)
+            logger.error(f"EdgeTTS execution failed: {e}")
+            return None
 
-    def _generate_demo_speech_audio(self, text: str, voice: Optional[str] = None) -> bytes:
-        sample_rate = self.audio_config.get("sample_rate", 44100)
-        duration = min(len(text) * 0.1, 5.0)
-        frequency = 440
-        n_samples = int(duration * sample_rate)
-        t = np.linspace(0, duration, n_samples, False)
-        amplitude = np.iinfo(np.int16).max * 0.5
-        data = amplitude * np.sin(2 * np.pi * frequency * t)
-
-        buffer = io.BytesIO()
-        with wave.open(buffer, "wb") as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(sample_rate)
-            wf.writeframes(data.astype(np.int16).tobytes())
-        buffer.seek(0)
-        return buffer.read()
+    # Removed _generate_demo_speech_audio (Legacy fake code)

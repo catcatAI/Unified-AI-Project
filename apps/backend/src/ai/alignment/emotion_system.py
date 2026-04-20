@@ -243,27 +243,25 @@ class EmotionSystem:
         )
 
     def _extract_emotion_features(self, context: Dict[str, Any]) -> Dict[str, float]:
-        """从上下文中提取情感特征"""
+        """Extracts real emotion features using NLP analysis."""
+        from textblob import TextBlob
         features = {}
 
-        # 文本情感分析(简化)
         text_content = context.get("text", "")
         if text_content:
-            # 这里应该使用真实的情感分析模型
-            # 简化实现：基于关键词
-            positive_keywords = ["好", "棒", "优秀", "成功", "快乐"]
-            negative_keywords = ["坏", "差", "失败", "痛苦", "悲伤"]
-
-            positive_count = sum(1 for word in positive_keywords if word in text_content)
-            negative_count = sum(1 for word in negative_keywords if word in text_content)
-
-            features["text_sentiment"] = (positive_count - negative_count) / max(
-                1, positive_count + negative_count
-            )
+            try:
+                # Use TextBlob for real sentiment polarity and subjectivity
+                analysis = TextBlob(text_content)
+                features["text_sentiment"] = analysis.sentiment.polarity
+                features["subjectivity"] = analysis.sentiment.subjectivity
+            except Exception as e:
+                logger.warning(f"TextBlob analysis failed: {e}. Falling back.")
+                features["text_sentiment"] = 0.0
+                features["subjectivity"] = 0.5
         else:
             features["text_sentiment"] = 0.0
+            features["subjectivity"] = 0.0
 
-        # 上下文情感指标
         features["stress_level"] = context.get("stress_level", 0.0)
         features["urgency"] = context.get("urgency", 0.0)
         features["complexity"] = context.get("complexity", 0.0)

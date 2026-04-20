@@ -6,3 +6,4 @@ psutil
 python-dotenv
 pytesseract
 opencv-python
+httpx

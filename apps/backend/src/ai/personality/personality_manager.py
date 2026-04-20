@@ -106,9 +106,9 @@ class PersonalityManager:
             for name, info in self.available_profiles.items()
         ]
 
-    def apply_personality_adjustment(self, adjustment: Dict[str, Any]):
+    def apply_personality_adjustment(self, adjustment: Dict[str, Any], persist: bool = True):
         """
-        Applies a personality adjustment to the current personality.
+        Applies and optionally persists personality adjustments.
         """
         if not self.current_personality:
             return
@@ -122,6 +122,29 @@ class PersonalityManager:
                 target = target[k]
             target[keys[-1]] = value
             logger.info(f"PersonalityManager: Adjusted trait '{key}' to {value}.")
+
+        if persist:
+            self._save_current_personality()
+
+    def _save_current_personality(self):
+        """Persists the current personality state to disk."""
+        profile_name = self.current_personality.get("profile_name")
+        if not profile_name or profile_name not in self.available_profiles:
+            return
+
+        file_path = Path(self.available_profiles[profile_name]["path"])
+        try:
+            # Create a backup first
+            backup_path = file_path.with_suffix(".json.bak")
+            import shutil
+            if file_path.exists():
+                shutil.copy(str(file_path), str(backup_path))
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(self.current_personality, f, indent=4, ensure_ascii=False)
+            logger.info(f"PersonalityManager: Persistent evolution saved to {file_path}.")
+        except Exception as e:
+            logger.error(f"PersonalityManager: Failed to save evolution: {e}")
 
 
 if __name__ == "__main__":

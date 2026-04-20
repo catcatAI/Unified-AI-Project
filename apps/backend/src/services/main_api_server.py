@@ -622,11 +622,12 @@ async def startup_event():
     await action_executor.initialize()
     await digital_life.initialize()
 
-    # Initialize Logic Bridge
-    if digital_life.autonomous_lifecycle:
-        initialize_cognitive_bridge(digital_life.autonomous_lifecycle.cdm, economy_manager)
-
-    await brain_bridge.start()
+    # Initialize all services
+    heartbeat = get_metabolic_heartbeat()
+    await heartbeat.start()
+    
+    # Memory consolidation is now autonomous (token-triggered) inside HAMMemoryManager
+    # No manual time-based scheduler needed here.
     # vision_service doesn't have an async initialize yet
 
     # Initialize LLM Service (Angela's brain)
@@ -1369,6 +1370,22 @@ async def websocket_endpoint(websocket: WebSocket):
                 break
 
             except Exception as e:
+                logger.error(f"WebSocket 处理错误: {e}")
+                break
+
+    finally:
+        # 确保连接被清理
+        manager.disconnect(websocket)
+
+
+app.include_router(api_v1_router)
+app.include_router(router)
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+eption as e:
                 logger.error(f"WebSocket 处理错误: {e}")
                 break
 

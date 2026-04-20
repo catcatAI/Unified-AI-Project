@@ -400,14 +400,19 @@ class BiologicalIntegrator:
             await asyncio.sleep(self._update_interval)  # Configurable update interval
 
     async def _apply_homeostasis(self):
-        """Apply homeostatic regulation across all systems"""
-        # Gradual return to baseline for each system
+        """Apply homeostatic regulation and safety fuses to prevent runaway feedback."""
+        # Standard recovery
         current_arousal = self.nervous_system.arousal_level
         target_arousal = self._homeostatic_targets["arousal"]
 
         if abs(current_arousal - target_arousal) > 5:
-            adjustment = (target_arousal - current_arousal) * 0.02
+            adjustment = (target_arousal - current_arousal) * 0.05
             self.nervous_system.set_arousal_directly(current_arousal + adjustment)
+
+        # Safety Fuse: Detect and dampen extreme oscillations
+        if current_arousal > 95 or current_arousal < 5:
+            logger.warning(f"🚨 Extreme biological state detected ({current_arousal:.1f}). Activating Safety Fuse.")
+            self.nervous_system.set_arousal_directly(target_arousal)
 
     async def _synchronize_states(self):
         """Synchronize states across all biological systems"""

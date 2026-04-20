@@ -933,13 +933,9 @@ class AngelaApp {
             // Add user message to display
             addMessage('user', message);
 
-            // Send to backend via WebSocket
-            if (this.backendClient && this.backendClient.isConnected()) {
-                this.backendClient.sendMessage({
-                    type: 'user_message',
-                    content: message,
-                    timestamp: new Date().toISOString()
-                });
+            // Send to backend via WebSocket (Unified variable name)
+            if (this.backendWebSocket && this.backendWebSocket.isConnected()) {
+                this.backendWebSocket.sendMessage(message);
             }
 
             // Clear input
@@ -955,8 +951,8 @@ class AngelaApp {
         });
 
         // Listen for backend responses
-        if (this.backendClient) {
-            this.backendClient.on('angela_response', (data) => {
+        if (this.backendWebSocket) {
+            this.backendWebSocket.on('angela_response', (data) => {
                 if (data.response) {
                     addMessage('angela', data.response);
                 }
@@ -1173,6 +1169,46 @@ class AngelaApp {
             // 清理 PluginManager
             if (this.pluginManager) {
                 if (typeof this.pluginManager.destroy === 'function') {
+                    this.pluginManager.destroy();
+                }
+                this.pluginManager = null;
+                console.log('[AngelaApp] PluginManager cleaned up');
+            }
+
+            // 清理 PerformanceManager
+            if (this.performanceManager) {
+                if (typeof this.performanceManager.destroy === 'function') {
+                    this.performanceManager.destroy();
+                }
+                this.performanceManager = null;
+                console.log('[AngelaApp] PerformanceManager cleaned up');
+            }
+
+            // 清理定時器
+            if (this.idleTimer) {
+                clearTimeout(this.idleTimer);
+                this.idleTimer = null;
+            }
+
+            // 清理 UI 引用
+            this.loadingOverlay = null;
+            this.loadingText = null;
+            this.progressBarFill = null;
+            this.statusBar = null;
+            this.controls = null;
+
+            console.log('[AngelaApp] All resources cleaned up successfully');
+        } catch (error) {
+            console.error('[AngelaApp] Error during cleanup:', error);
+        }
+    }
+}
+
+// Export
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AngelaApp;
+}
+ion') {
                     this.pluginManager.destroy();
                 }
                 this.pluginManager = null;

@@ -102,30 +102,50 @@ class TactileService:
 
     async def simulate_touch(self, object_id: str, contact_point: Dict[str, Any]) -> Dict[str, Any]:
         """
-        模擬觸摸行為並產生精確的反饋
+        Real-world touch simulation with biological feedback.
+        Bridges tactile input to Angela's internal biological systems.
         """
-        # 1. 獲取物體材質屬性 (從記憶或預設)
-        props = self.memory.get_known_properties(f"material_{object_id}")
-        if not props:
-            # 如果沒有記憶，使用中性屬性
-            props = TactileProperties()
+        # 1. Map body parts to biological intensity
+        part = contact_point.get("body_part", "generic")
+        pressure = contact_point.get("pressure", 0.5)
+        
+        # High sensitivity parts impact arousal more
+        sensitivity_map = {
+            "head": 1.2, "cheeks": 1.5, "palms": 1.0, 
+            "chest": 0.8, "shoulders": 0.5
+        }
+        multiplier = sensitivity_map.get(part, 0.3)
+        intensity = pressure * multiplier
 
-        # 2. 建立觸摸點對象
-        contact = TactileContactPoint(
-            position=contact_point.get("position", (0, 0, 0)),
-            body_part=contact_point.get("body_part", "finger_tip"),
-            pressure=contact_point.get("pressure", 0.5),
-            area=contact_point.get("area", 1.0),
-            timestamp=time.time(),
-        )
+        # 2. Inject stimulus into BiologicalIntegrator
+        try:
+            from core.autonomous.biological_integrator import BiologicalIntegrator
+            bio = BiologicalIntegrator()
+            
+            # Use arousal as the primary physiological response to touch
+            await bio.nervous_system.process_tactile_input({
+                "part": part,
+                "intensity": intensity,
+                "type": contact_point.get("touch_type", "pat")
+            })
+            
+            # If intensity is high (e.g. hitting or rapid poking), increase stress
+            if intensity > 0.7:
+                await bio.process_stress_event(intensity=intensity * 0.2, duration=1.0)
+            else:
+                await bio.process_relaxation_event(intensity=intensity * 0.1)
 
-        # 3. 產生細緻反饋
-        feedback = self.sampler.generate_contact_feedback(props, contact)
+            status = "biologically_processed"
+        except Exception as e:
+            logger.error(f"Failed to bridge tactile to bio: {e}")
+            status = "simulation_only"
 
-        # 4. 記錄此次互動到物體地圖
-        self.memory.update_object_map(object_id, feedback)
-
-        return {"status": "success", "feedback": feedback, "object_id": object_id}
+        return {
+            "status": status,
+            "feedback": {"intensity": intensity, "part": part},
+            "object_id": object_id,
+            "timestamp": datetime.now().isoformat()
+        }
 
     async def process(self, input_data: Any) -> Dict[str, Any]:
         """統一的處理方法"""

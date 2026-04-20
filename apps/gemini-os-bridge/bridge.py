@@ -1,69 +1,77 @@
 import sys
 import json
 import time
+import httpx
+import asyncio
 from src.capabilities import OSCapabilities
 
-def main():
+# Backend configuration
+BACKEND_URL = "http://127.0.0.1:8000"
+
+async def call_angela_api(method, endpoint, data=None):
+    async with httpx.AsyncClient() as client:
+        try:
+            if method == "GET":
+                res = await client.get(f"{BACKEND_URL}{endpoint}")
+            else:
+                res = await client.post(f"{BACKEND_URL}{endpoint}", json=data)
+            return res.json()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+async def main():
     os_cap = OSCapabilities()
     
     if len(sys.argv) < 2:
-        print("Usage: python bridge.py <command>")
+        print("Usage: python bridge.py <command> [args...]")
         return
 
     command = sys.argv[1]
+
+    # Auto-scrub workspace on any new command
+    os_cap.scrub_workspace()
 
     if command == "snapshot":
         path = os_cap.take_screenshot()
         print(json.dumps({"status": "success", "action": "screenshot", "path": path}))
     
     elif command == "clipboard":
-        content = os_cap.get_clipboard()
-        print(json.dumps({"status": "success", "action": "clipboard", "content": content}))
+        print(json.dumps({"status": "success", "content": os_cap.get_clipboard()}))
 
-    elif command == "open":
+    # --- NEW: Angela Soul Bridge Commands ---
+    elif command == "angela":
         if len(sys.argv) < 3:
-            print(json.dumps({"status": "error", "message": "Missing app name"}))
-        else:
-            res = os_cap.open_app(sys.argv[2])
-            print(json.dumps({"status": "success", "action": "open", "result": res}))
+            print("Usage: python bridge.py angela <status|pulse|think|rest>")
+            return
+        
+        sub = sys.argv[2]
+        
+        if sub == "status":
+            # Fetches GSI-4 Governance Stats
+            res = await call_angela_api("GET", "/api/v1/system/status")
+            print(json.dumps(res, indent=2))
+        
+        elif sub == "think":
+            msg = sys.argv[3] if len(sys.argv) > 3 else "Hello Angela"
+            res = await call_angela_api("POST", "/angela/chat", {"message": msg})
+            print(json.dumps(res, indent=2))
+            
+        elif sub == "stimulate":
+            part = sys.argv[3] if len(sys.argv) > 3 else "head"
+            res = await call_angela_api("POST", "/api/v1/tactile/touch", {
+                "object_id": "cli_tester",
+                "contact_point": {"body_part": part, "pressure": 0.8}
+            })
+            print(json.dumps(res, indent=2))
 
-    elif command == "type":
-        if len(sys.argv) < 3:
-            print(json.dumps({"status": "error", "message": "Missing text"}))
-        else:
-            os_cap.backup_clipboard()
-            text = " ".join(sys.argv[2:])
-            res = os_cap.type_text(text)
-            os_cap.restore_clipboard()
-            print(json.dumps({"status": "success", "action": "type"}))
-
-    elif command == "press":
-        if len(sys.argv) < 3:
-            print(json.dumps({"status": "error", "message": "Missing key name"}))
-        else:
-            res = os_cap.press_key(sys.argv[2])
-            print(json.dumps({"status": "success", "action": "press"}))
-
-    elif command == "scroll":
-        amount = int(sys.argv[2]) if len(sys.argv) > 2 else -300
-        os_cap.scroll(amount)
-        print(json.dumps({"status": "success", "action": "scroll", "amount": amount}))
-
-    elif command == "click":
-        x, y = int(sys.argv[2]), int(sys.argv[3])
-        os_cap.click(x, y)
-        print(json.dumps({"status": "success", "action": "click", "x": x, "y": y}))
-
-    elif command == "ocr":
-        text = os_cap.ocr_screenshot()
-        print(json.dumps({"status": "success", "action": "ocr", "text": text[:500]}))
-
-    elif command == "cleanup_tabs":
-        # python bridge.py cleanup_tabs <browser> <keywords_json>
-        browser = sys.argv[2]
-        keywords = json.loads(sys.argv[3])
-        res = os_cap.cleanup_redundant_tabs(browser, keywords)
-        print(json.dumps({"status": "success", "action": "cleanup_tabs", "result": res}))
+        elif sub == "rest":
+            # Manually trigger sleep cycle (memory consolidation)
+            res = await call_angela_api("POST", "/api/v1/actions/execute", {
+                "name": "consolidate_memories",
+                "category": "SYSTEM",
+                "parameters": {"limit": 50}
+            })
+            print(json.dumps(res, indent=2))
 
     elif command == "list_windows":
         titles = os_cap.get_all_window_titles()
@@ -97,9 +105,7 @@ def main():
         }))
     
     else:
-        print(json.dumps({"status": "error", "message": "Unknown command"}))
+        print(json.dumps({"status": "error", "message": f"Unknown command: {command}"}))
 
 if __name__ == "__main__":
-    main()
-f __name__ == "__main__":
-    main()
+    asyncio.run(main())

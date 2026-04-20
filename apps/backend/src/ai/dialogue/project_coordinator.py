@@ -174,6 +174,54 @@ class ProjectCoordinator:
 
             result = await self._dispatch_single_subtask(subtask_data)
             task_results[task_index] = result
+        
+        return task_results
+
+    async def _dispatch_single_subtask(self, subtask_data: Dict[str, Any]) -> Any:
+        """Dispatches a single subtask via HSP and waits for the result."""
+        capability = subtask_data.get("capability_needed")
+        params = subtask_data.get("task_parameters", {})
+        correlation_id = str(uuid.uuid4())
+        
+        logger.info(f"[ProjectCoordinator] Dispatching subtask: {capability}")
+        
+        # Create completion event
+        completion_event = asyncio.Event()
+        self.task_completion_events[correlation_id] = completion_event
+        
+        # Send HSP Request
+        if self.hsp_connector:
+            await self.hsp_connector.send_task_request(
+                capability_name=capability,
+                payload=params,
+                correlation_id=correlation_id
+            )
+            
+            # Wait for result with timeout
+            try:
+                await asyncio.wait_for(completion_event.wait(), timeout=self.turn_timeout_seconds)
+                result = self.task_results.get(correlation_id, {"error": "No result captured"})
+            except asyncio.TimeoutError:
+                result = {"error": f"Task timeout after {self.turn_timeout_seconds}s"}
+        else:
+            result = {"error": "HSP Connector not available"}
+            
+        # Cleanup
+        self.task_completion_events.pop(correlation_id, None)
+        return result
+
+    def _substitute_dependencies(self, params: Dict[str, Any], results: Dict[int, Any]) -> Dict[str, Any]:
+        """Replaces placeholders like '< output_of_task_0 >' with actual results."""
+        import re
+        new_params = params.copy()
+        for key, value in new_params.items():
+            if isinstance(value, str):
+                match = re.search(r" < output_of_task_(\d+) > ", value)
+                if match:
+                    task_idx = int(match.group(1))
+                    actual_result = str(results.get(task_idx, "MISSING_DATA"))
+                    new_params[key] = value.replace(match.group(0), actual_result)
+        return new_params
 
     async def _decompose_user_intent_into_subtasks(
         self, user_query: str, available_capabilities: List[Dict[str, Any]]
