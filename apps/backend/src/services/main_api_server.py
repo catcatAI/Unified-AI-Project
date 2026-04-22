@@ -297,7 +297,7 @@ from api.v1.endpoints import pet, economy
 from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
 from economy.economy_manager import EconomyManager
 from core.cognitive_economy_bridge import initialize_cognitive_bridge
-from services.brain_bridge_service import BrainBridgeService
+from core.autonomous.heartbeat import MetabolicHeartbeat
 
 app = FastAPI(
     title="Angela AI API",
@@ -315,8 +315,15 @@ _tactile_service = None
 _abc_key_manager = None
 _digital_life = None
 _economy_manager = None
-_brain_bridge = None
+_metabolic_heartbeat = None
 
+
+def get_metabolic_heartbeat() -> MetabolicHeartbeat:
+    global _metabolic_heartbeat
+    if _metabolic_heartbeat is None:
+        from core.autonomous.heartbeat import MetabolicHeartbeat
+        _metabolic_heartbeat = MetabolicHeartbeat(update_interval=30.0)
+    return _metabolic_heartbeat
 
 def get_desktop_interaction() -> DesktopInteraction:
     global _desktop_interaction
@@ -374,13 +381,6 @@ def get_economy_manager() -> EconomyManager:
     return _economy_manager
 
 
-def get_brain_bridge() -> BrainBridgeService:
-    global _brain_bridge
-    if _brain_bridge is None:
-        _brain_bridge = BrainBridgeService(get_digital_life())
-    return _brain_bridge
-
-
 # Initialize services and link components during startup
 def _initialize_all_services():
     desktop_interaction = get_desktop_interaction()
@@ -391,7 +391,6 @@ def _initialize_all_services():
     abc_key_manager = get_abc_key_manager()
     digital_life = get_digital_life()
     economy_manager = get_economy_manager()
-    brain_bridge = get_brain_bridge()
 
     # Link components
     pet_manager = pet.get_pet_manager()
@@ -446,7 +445,7 @@ def _initialize_all_services():
         abc_key_manager,
         digital_life,
         economy_manager,
-        brain_bridge,
+        
     )
 
 
@@ -478,34 +477,17 @@ def _validate_environment_variables():
 
 
 async def _handle_chat_request(
-    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str
+    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human"
 ) -> Dict[str, Any]:
     """
-    處理聊天請求的共用函數
-
-    統一處理 /angela/chat 和 /dialogue 端點的聊天邏輯
-    包含 LLM 調用、情感分析和錯誤處理
-
-    Args:
-        user_message: 用戶輸入的消息
-        user_name: 用戶名稱
-        history: 對話歷史
-        session_id: 會話 ID
-
-    Returns:
-        包含回應、情感分析和元數據的字典
+    處理聊天請求的共用函數 (GSI-4 / 2030 Standard)
     """
-    # 輸入驗證
-    if not user_message or not user_message.strip():
-        raise HTTPException(status_code=400, detail="消息不能為空")
-
-    # 調用 LLM 服務生成回應，添加超時控制
+    # ...
     try:
         service = await get_llm_service()
-        # 使用 asyncio.wait_for 添加 30 秒超時（增加以適應慢速模型）
         response_text = await asyncio.wait_for(
-            angela_llm_response(user_message=user_message, history=history, user_name=user_name),
-            timeout=30.0,  # 30 秒超時
+            angela_llm_response(user_message=user_message, history=history, user_name=user_name, origin=origin),
+            timeout=30.0,
         )
         source = "llm" if service and service.is_available else "fallback"
 
@@ -615,7 +597,7 @@ async def startup_event():
         abc_key_manager,
         digital_life,
         economy_manager,
-        brain_bridge,
+        
     ) = _initialize_all_services()
 
     await desktop_interaction.initialize()
@@ -652,8 +634,6 @@ async def shutdown_event():
         await _desktop_interaction.shutdown()
     if _action_executor:
         await _action_executor.shutdown()
-    if _brain_bridge:
-        await _brain_bridge.stop()
     if _digital_life:
         await _digital_life.shutdown()
     if _economy_manager:
@@ -708,15 +688,11 @@ async def system_status():
     try:
         # 獲取服務狀態
         digital_life = get_digital_life()
-        brain_bridge = get_brain_bridge()
 
         services_status = {
             "llm_service": _llm_service.is_available if _llm_service else False,
             "digital_life": (
                 digital_life.is_initialized if hasattr(digital_life, "is_initialized") else False
-            ),
-            "brain_bridge": (
-                brain_bridge.is_running if hasattr(brain_bridge, "is_running") else False
             ),
             "economy": _economy_manager is not None,
         }
@@ -817,8 +793,9 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
+    origin = request.get("origin", "Human")
 
-    return await _handle_chat_request(user_message, user_name, history, session_id)
+    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
 
 
 @router.post("/dialogue")
@@ -830,8 +807,9 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
+    origin = request.get("origin", "Human")
 
-    return await _handle_chat_request(user_message, user_name, history, session_id)
+    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
 
 
 # --- Desktop Interaction API ---
@@ -1016,8 +994,6 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
 @router.post("/api/v1/brain/metrics")
 async def get_brain_metrics():
     """Get theoretical AGI metrics (L_s, A_c, etc.)"""
-    brain_bridge = get_brain_bridge()
-    return brain_bridge.get_current_status()
 
 
 @router.post("/api/v1/brain/dividend")
@@ -1211,37 +1187,30 @@ async def broadcast_state_updates():
     """Periodically broadcast state updates to all connected clients"""
     while True:
         try:
-            # Get current state from brain bridge
-            brain_bridge = get_brain_bridge()
-            status = brain_bridge.get_current_status()
-
-            # Map the complex brain/bio status to what the UI expects (alpha, beta, gamma, delta)
-            bio = status.get("biological", {})
-            brain_data = status.get("brain")
-            brain_metrics = (
-                brain_data.get("current_metrics", {})
-                if brain_data and isinstance(brain_data, dict)
-                else {}
-            )
-
+            # 2030 Standard: Get current state from real life systems
+            heartbeat = get_metabolic_heartbeat()
+            digital_life = get_digital_life()
+            bio_state = heartbeat.bio_integrator.get_biological_state()
+            
+            # Map the GSI-4 / Bio status to UI dimensions (alpha, beta, gamma, delta)
             state_data = {
                 "alpha": {
-                    "energy": bio.get("arousal", 50.0) / 100.0,
-                    "stress": bio.get("stress_level", 0.0) / 100.0,
-                    "hormones": bio.get("hormone_levels", {}),
+                    "energy": (100.0 - bio_state.get("fatigue", 0.0)) / 100.0,
+                    "stress": bio_state.get("stress_level", 0.0),
+                    "hormones": bio_state.get("hormones", {}),
                 },
                 "beta": {
-                    "learning_rate": brain_metrics.get("learning_rate", 0.01),
-                    "cognitive_load": brain_metrics.get("cognitive_gap", 0.0),
+                    "learning_rate": 0.01,
+                    "cognitive_load": 0.0,
                 },
                 "gamma": {
-                    "happiness": bio.get("mood", 0.5),
-                    "emotion": bio.get("dominant_emotion", "calm"),
+                    "happiness": bio_state.get("mood", 0.5),
+                    "emotion": bio_state.get("dominant_emotion", "calm"),
                 },
                 "delta": {
-                    "intensity": brain_metrics.get("life_intensity", 0.0),
+                    "intensity": bio_state.get("arousal", 50.0) / 100.0,
                 },
-                "timestamp": status.get("timestamp"),
+                "timestamp": datetime.now().isoformat(),
             }
 
             await manager.broadcast(
@@ -1317,14 +1286,28 @@ async def websocket_endpoint(websocket: WebSocket):
                         }
                     )
 
+                elif data.get("type") == "tactile_event":
+                    # 2030 Standard: Real-time Reflex Loop
+                    tactile_data = data.get("data", {})
+                    tactile_service = get_tactile_service()
+                    res = await tactile_service.simulate_touch("user_hand", tactile_data)
+                    
+                    # Direct reflex response for 2030 responsiveness
+                    await manager.send_personal_message({
+                        "type": "biological_feedback",
+                        "status": res.get("status"),
+                        "reflex": res.get("reflex"),
+                        "intensity": res.get("feedback", {}).get("intensity")
+                    }, websocket)
+
                 elif data.get("type") == "chat_message":
-                    # Handle chat messages from desktop app - use shared service
+                    # 2030 Standard: Use Realized Chat Service with Origin Tracking
                     user_message = data.get("data", {}).get("content", "")
                     message_id = data.get("data", {}).get("message_id", "")
                     user_name = data.get("data", {}).get("user_name", "朋友")
 
-                    # Use shared chat service
-                    response_text = generate_angela_response(user_message, user_name)
+                    chat_service = AngelaChatService()
+                    response_text = await chat_service.generate_response(user_message, user_name, origin="Human")
 
                     # Send response back to the client
                     await manager.send_personal_message(
@@ -1383,21 +1366,4 @@ app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-eption as e:
-                logger.error(f"WebSocket 处理错误: {e}")
-                break
-
-    finally:
-        # 确保连接被清理
-        manager.disconnect(websocket)
-
-
-app.include_router(api_v1_router)
-app.include_router(router)
-
-if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)

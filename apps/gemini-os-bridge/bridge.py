@@ -53,7 +53,7 @@ async def main():
         
         elif sub == "think":
             msg = sys.argv[3] if len(sys.argv) > 3 else "Hello Angela"
-            res = await call_angela_api("POST", "/angela/chat", {"message": msg})
+            res = await call_angela_api("POST", "/angela/chat", {"message": msg, "origin": "System"})
             print(json.dumps(res, indent=2))
             
         elif sub == "stimulate":

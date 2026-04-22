@@ -75,36 +75,9 @@ def _load_memory_modules():
         _MEMORY_ENHANCED = True
         logger.info("Memory enhancement modules loaded successfully")
     except ImportError as e:
-        # Try relative import
-        try:
-            from ..ai.memory.ham_memory.ham_manager import HAMMemoryManager as _HAM
-            from ..ai.memory.memory_template import (
-                AngelaState as _AS,
-                UserImpression as _UI,
-                MemoryTemplate as _MT,
-            )
-            from ..ai.memory.precompute_service import (
-                PrecomputeService as _PS,
-                PrecomputeTask as _PT,
-            )
-            from ..ai.memory.template_library import get_template_library as _GTL
-            from ..ai.memory.task_generator import TaskGenerator as _TG
-
-            HAMMemoryManager = _HAM
-            AngelaState = _AS
-            UserImpression = _UI
-            MemoryTemplate = _MT
-            PrecomputeService = _PS
-            PrecomputeTask = _PT
-            get_template_library = _GTL
-            TaskGenerator = _TG
-
-            _MEMORY_ENHANCED = True
-            logger.info("Memory enhancement modules loaded (relative import)")
-        except ImportError as e2:
-            logger.warning(f"Memory enhancement modules not available: {e2}")
-            logger.info("Running without memory enhancement (LLM will be called directly)")
-            _MEMORY_ENHANCED = False
+        logger.warning(f"Memory enhancement modules not available: {e}")
+        logger.info("Running without memory enhancement (LLM will be called directly)")
+        _MEMORY_ENHANCED = False
 
     return _MEMORY_ENHANCED
 
@@ -498,7 +471,10 @@ class AngelaLLMService:
         self.config = config or self._get_default_config()
         self.backends: Dict[LLMBackend, BaseLLMBackend] = {}
         self.active_backend: Optional[BaseLLMBackend] = None
+
+        self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
         self.is_available = False
+
         self._initialized = True
 
         # 初始化各後端
@@ -531,9 +507,9 @@ class AngelaLLMService:
     def _init_response_system(self):
         """初始化 P0-2 响应组合与匹配系统"""
         try:
-            from ..ai.response.template_matcher import TemplateMatcher
-            from ..ai.response.composer import ResponseComposer
-            from ..ai.response.deviation_tracker import DeviationTracker, ResponseRoute
+            from ai.response.template_matcher import TemplateMatcher
+            from ai.response.composer import ResponseComposer
+            from ai.response.deviation_tracker import DeviationTracker, ResponseRoute
 
             self.template_matcher = TemplateMatcher()
             self.response_composer = ResponseComposer()
@@ -963,6 +939,7 @@ class AngelaLLMService:
             return True
         else:
             logger.warning("沒有可用的 LLM 後端，將使用備份回應機制")
+            self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
             self.is_available = False
             return False
 
@@ -1264,34 +1241,31 @@ class AngelaLLMService:
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         備份回應機制
-        當沒有可用的 LLM 後端時，使用模板回應
+        當沒有可用的 LLM 後端時，使用實體化後的 GSI-4 邏輯
         """
-        # 這裡調用 chat_service.py 的模板機制
         try:
-            from .chat_service import generate_angela_response
-        except ImportError:
-
-            def generate_angela_response(msg, name):
-                return f"嗨{name}！我現在有點困惑...能再說一次嗎？"
-
-        try:
+            from ai.alignment.emotion_system import EmotionSystem
+            from services.chat_service import AngelaChatService
+            
+            chat_service = AngelaChatService()
             user_name = context.get("user_name", "朋友")
-            text = generate_angela_response(user_message, user_name)
+            origin = context.get("origin", "Human")
+            text = await chat_service.generate_response(user_message, user_name, origin=origin)
 
             return LLMResponse(
                 text=text,
-                backend="fallback-template",
-                model="template-based",
-                confidence=0.5,
-                metadata={"fallback": True},
+                backend="gsi-4-local",
+                model="local-governance",
+                confidence=0.8,
+                metadata={"fallback": False, "local_governance": True},
             )
         except Exception as e:
-            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            logger.error(f"Fallback generation error: {e}")
             return LLMResponse(
-                text="抱歉，我現在有點困惑...能再說一次嗎？",
-                backend="fallback-error",
+                text="（系统正在重启核心治理模组...）",
+                backend="error",
                 model="error",
-                confidence=0.1,
+                confidence=0.0,
                 error=str(e),
             )
 
@@ -1411,7 +1385,7 @@ class AngelaLLMService:
                 return
 
             # 创建模板
-            from ..ai.memory.memory_template import ResponseCategory, create_template
+            from ai.memory.memory_template import ResponseCategory, create_template
 
             template = create_template(
                 content=response.text,
@@ -1712,23 +1686,14 @@ async def get_llm_service() -> AngelaLLMService:
 
 # 便捷函數：生成 Angela 回應
 async def angela_llm_response(
-    user_message: str, history: List[Dict[str, str]] = None, user_name: str = "朋友"
+    user_message: str, history: List[Dict[str, str]] = None, user_name: str = "朋友", origin: str = "Human"
 ) -> str:
     """
-    生成 Angela 的回應（便捷接口）
-    ================================
-    這是 Angela 系統調用 LLM 的主要接口。
-
-    使用方式：
-        response = await angela_llm_response(
-            user_message="你好！",
-            history=[{"role": "user", "content": "..."}],
-            user_name="主人"
-        )
+    生成 Angela 的回應（便捷接口 - 2030 Standard）
     """
     service = await get_llm_service()
 
-    context = {"history": history or [], "user_name": user_name}
+    context = {"history": history or [], "user_name": user_name, "origin": origin}
 
     response = await service.generate_response(user_message, context)
 

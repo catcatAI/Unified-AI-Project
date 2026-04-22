@@ -12,7 +12,7 @@ class RealMCPToolExecutor:
     """
     def __init__(self):
         # Dynamically import the bridge adapter we created earlier
-        from ...integrations.os_bridge_adapter import OSBridgeAdapter
+        from integrations.os_bridge_adapter import OSBridgeAdapter
         self.adapter = OSBridgeAdapter()
 
     async def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:

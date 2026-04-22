@@ -1,4 +1,4 @@
-from ..integrations.os_bridge_adapter import OSBridgeAdapter
+from integrations.os_bridge_adapter import OSBridgeAdapter
 
 class OSContextService:
     def __init__(self):

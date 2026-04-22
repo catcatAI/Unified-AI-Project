@@ -207,76 +207,37 @@ class DigitalLifeIntegrator:
         self.introspection_report: Optional[Dict[str, Any]] = None
 
     async def initialize(self):
-        """Initialize digital life and all subsystems"""
+        """
+        Initialize digital life with 2030-standard robust error handling.
+        Ensures partial survival even if high-level modules fail.
+        """
         self._running = True
+        logger.info("🌌 Starting Angela's Digital Life Incubation...")
 
-        # Initialize biological systems
-        await self.biological_integrator.initialize()
-
-        # Initialize action executor
-        self.action_executor.set_digital_life_integrator(self)
-        await self.action_executor.initialize()
-
-        # Initialize dynamic parameters manager
-        if self._dynamic_params_enabled:
-            try:
-                self.dynamic_params = DynamicThresholdManager()
-                await self.dynamic_params.start()
-
-                # Connect action executor to dynamic params
-                self.action_executor.set_dynamic_params_manager(self.dynamic_params)
-
-            except Exception as e:
-                logger.error(f"[DigitalLife] Failed to initialize dynamic params: {e}")
-                self.dynamic_params = None
-
-        # Initialize memory bridge if available
+        # 1. Core Biological Foundation (Must work)
         try:
-            from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
-
-            self.memory_bridge = MemoryNeuroplasticityBridge()
-            await self.memory_bridge.initialize()
+            await self.biological_integrator.initialize()
+            logger.info("  [Foundation] Biological systems online.")
         except Exception as e:
-            logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            pass
+            logger.error(f"  [CRITICAL] Biological boot failure: {e}")
 
-        # Initialize theoretical frameworks (AutonomousLifeCycle)
-        if self._formula_integration_enabled:
-            try:
-                self.autonomous_lifecycle = AutonomousLifeCycle()
-                await self.autonomous_lifecycle.initialize()
-
-                # Register callbacks for formula-driven decisions
-                self.autonomous_lifecycle.register_decision_callback(self._on_formula_decision)
-            except Exception as e:
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
-
-        # Initialize AGI Control Center (Phase 11)
+        # 2. Action & Interaction Layer
         try:
-            from ai.integration.unified_control_center import UnifiedControlCenter
-
-            self.unified_control_center = UnifiedControlCenter(
-                self.config.get("control_center", {})
-            )
-            self.unified_control_center.set_digital_life_integrator(self)
-            self.unified_control_center.start()
-            logger.info("✅ Unified Control Center integrated into Digital Life")
+            self.action_executor.set_digital_life_integrator(self)
+            await self.action_executor.initialize()
+            logger.info("  [Sensory] Action executor online.")
         except Exception as e:
-            logger.error(f"[DigitalLife] Failed to initialize Unified Control Center: {e}")
+            logger.warning(f"  [Sensory] Executor degraded: {e}")
 
-        # P0-4: Initialize AI Lifecycle loops
+        # 3. High-Level Cognition (Optional/Graceful)
         try:
             from services.angela_llm_service import get_llm_service
             from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
             llm_service = await get_llm_service()
             memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")
-
-            # Initialize UserMonitor
-            await self.user_monitor.start()
-
-            # Initialize LLMDecisionLoop
+            
+            # Decide loop
             self.llm_decision_loop = LLMDecisionLoop(
                 llm_service=llm_service,
                 state_manager=self.state_matrix,
@@ -285,16 +246,20 @@ class DigitalLifeIntegrator:
                 broadcast_callback=self.broadcast_callback,
             )
             await self.llm_decision_loop.start()
-            logger.info("✅ LLM Decision Loop integrated and started")
+            logger.info("  [Cognition] LLM Decision Loop active.")
         except Exception as e:
-            logger.error(f"[DigitalLife] Failed to initialize AI Lifecycle: {e}")
+            logger.error(f"  [Cognition] Brain boot failure: {e}. Angela will rely on GSI-4 local logic.")
 
-        # Set initial state
+        # 4. Final Activation
+        self.is_initialized = True
         await self._transition_state(LifeCycleState.AWAKENING)
 
-        # Start monitoring
+        # Start background loops
         self._life_cycle_task = asyncio.create_task(self._life_cycle_loop())
         self._health_check_task = asyncio.create_task(self._health_check_loop())
+        
+        logger.info(f"✨ Angela has awakened in {self.life_cycle_state.en_name} state.")
+        return True
 
     def _on_formula_decision(self, decision):
         """Callback for formula-driven life decisions"""

@@ -130,34 +130,26 @@ class BiologicalEventPublisher:
 
 class BiologicalIntegrator:
     """
-    生物系统整合器主类 / Main biological integrator class
-
-    Coordinates and integrates all biological simulation systems for Angela AI,
-    managing their interactions and maintaining overall biological homeostasis.
-
-    Attributes:
-        tactile_system: Physiological tactile system
-        endocrine_system: Hormonal/endocrine system
-        nervous_system: Autonomic nervous system
-        neuroplasticity_system: Learning and memory plasticity
-        emotional_system: Emotional processing and blending
-        interactions: Active system interactions
-
-    Example:
-        >>> integrator = BiologicalIntegrator()
-        >>> await integrator.initialize()
-        >>>
-        >>> # Process a stress event through all systems
-        >>> await integrator.process_stress_event(intensity=0.7)
-        >>>
-        >>> # Get integrated biological state
-        >>> state = integrator.get_biological_state()
-        >>> print(f"Overall arousal: {state['arousal']:.2f}")
-        >>> print(f"Emotional state: {state['dominant_emotion']}")
+    生物系统整合器主类 / Main biological integrator class (Singleton)
+    
+    Coordinates and integrates all biological simulation systems for Angela AI.
     """
+    _instance = None
+    _initialized = False
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(BiologicalIntegrator, cls).__new__(cls)
+        return cls._instance
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
+        if BiologicalIntegrator._initialized:
+            return
+        
+        from .env_dynamics import EnvironmentDynamics
         self.config = config or {}
+        self.dynamics = EnvironmentDynamics()
+        self._update_interval = self.dynamics.get_dynamic_threshold("update_interval", 5.0)
 
         # Biological subsystems
         self.tactile_system: PhysiologicalTactileSystem = PhysiologicalTactileSystem()
@@ -201,19 +193,12 @@ class BiologicalIntegrator:
         Convenience method to bridge to external systems like WebSocket.
         """
         for event in BiologicalEvent:
-            # Create a wrapper to pass the event name
-            def event_wrapper(ev_type=event.value, ev_data=None):
-                # Ensure ev_data is passed from publisher.publish
-                # BiologicalEventPublisher.publish calls callback(event, data)
-                # So we need to handle those arguments
-                pass
+            # Define a closure to capture the callback and event name
+            def create_wrapper(target_callback, event_name):
+                # The publisher calls the callback with (event_enum, data)
+                return lambda event_obj, data: target_callback(event_name, data)
 
-            # Redoing the wrapper correctly based on BiologicalEventPublisher.publish:
-            # result = callback(event, data)
-            def create_wrapper(target_callback):
-                return lambda event_obj, data: target_callback(event_obj.value, data)
-
-            self.event_publisher.subscribe(event.value, create_wrapper(callback))
+            self.event_publisher.subscribe(event.value, create_wrapper(callback, event.value))
 
     def _setup_default_interactions(self):
         """Set up default system interactions"""
@@ -428,42 +413,25 @@ class BiologicalIntegrator:
                 pass
 
     async def process_stress_event(self, intensity: float, duration: float = 10.0):
-        """
-        Process a stress event through all biological systems
-
-        Args:
-            intensity: Stress intensity (0-1)
-            duration: Duration in seconds
-        """
-        # Trigger sympathetic nervous system
+        import math
+        if not math.isfinite(intensity): intensity = 0.0
+        
         await self.nervous_system.apply_stimulus(
             "stress_event", NerveType.SYMPATHETIC, intensity, duration
         )
-
-        # Trigger endocrine stress response
         await self.endocrine_system.trigger_stress_response(
             intensity, stress_type="acute" if duration < 30 else "chronic"
         )
-
-        # Affect emotions
         self.emotional_system.apply_influence("physiological", "stress", intensity, 0.8)
 
     async def process_relaxation_event(self, intensity: float = 0.5):
-        """
-        Process a relaxation event through all biological systems
-
-        Args:
-            intensity: Relaxation intensity (0-1)
-        """
-        # Trigger parasympathetic nervous system
+        import math
+        if not math.isfinite(intensity): intensity = 0.0
+        
         await self.nervous_system.apply_stimulus(
             "relaxation", NerveType.PARASYMPATHETIC, intensity, 30.0
         )
-
-        # Trigger positive hormones
         await self.endocrine_system.trigger_emotional_response("relaxation", intensity)
-
-        # Positive emotional influence
         self.emotional_system.set_emotion_from_basic(BasicEmotion.CALM, intensity)
 
     async def process_touch_interaction(

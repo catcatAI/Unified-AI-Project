@@ -259,6 +259,35 @@ class AutonomicNervousSystem:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
+    async def process_tactile_input(self, data: Dict[str, Any]):
+        """
+        Processes real-time tactile stimuli. 
+        Translates physical contact into neurological arousal changes.
+        """
+        part = data.get("part", "generic")
+        intensity = data.get("intensity", 0.5)
+        touch_type = data.get("type", "pat")
+        
+        logger.info(f"🧠 [ANS] Processing tactile: {part} ({touch_type})")
+        
+        # 2030 Standard: Somatic mapping to Autonomic Response
+        if part in ["head", "cheeks", "palms"]:
+            # Soothing areas trigger Parasympathetic (Calming)
+            await self.apply_stimulus(
+                name=f"tactile_{part}",
+                nerve_type=NerveType.PARASYMPATHETIC,
+                intensity=intensity * 0.8,
+                duration=5.0
+            )
+        else:
+            # Sensitive or vital areas trigger Sympathetic (Alertness)
+            await self.apply_stimulus(
+                name=f"tactile_{part}",
+                nerve_type=NerveType.SYMPATHETIC,
+                intensity=intensity * 0.5,
+                duration=3.0
+            )
+
     async def apply_stimulus(
         self, name: str, nerve_type: NerveType, intensity: float, duration: float = 10.0
     ):

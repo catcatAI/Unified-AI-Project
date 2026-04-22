@@ -122,26 +122,41 @@ class TactileService:
             from core.autonomous.biological_integrator import BiologicalIntegrator
             bio = BiologicalIntegrator()
             
-            # Use arousal as the primary physiological response to touch
+            # Reflex Arc: Define immediate motor response (2030 Reflex standard)
+            reflex_map = {
+                "head": {"pose": "head_pat_react", "expression": "joy"},
+                "cheeks": {"pose": "shy_react", "expression": "blush"},
+                "chest": {"pose": "surprise_react", "expression": "shook"},
+                "generic": {"pose": "idle", "expression": "neutral"}
+            }
+            motor_reflex = reflex_map.get(part, reflex_map["generic"])
+
+            # Use arousal as the primary physiological response
             await bio.nervous_system.process_tactile_input({
                 "part": part,
                 "intensity": intensity,
                 "type": contact_point.get("touch_type", "pat")
             })
             
-            # If intensity is high (e.g. hitting or rapid poking), increase stress
-            if intensity > 0.7:
-                await bio.process_stress_event(intensity=intensity * 0.2, duration=1.0)
+            # Stress/Relaxation logic based on intensity (2030 Homeostasis standard)
+            if intensity > 0.8:
+                # Intrusive or rough touch increases stress
+                await bio.process_stress_event(intensity=intensity * 0.15, duration=2.0)
+                logger.info(f"🛡️ [Tactile] Intrusive touch on {part} detected. Stress increasing.")
             else:
+                # Gentle touch promotes relaxation
                 await bio.process_relaxation_event(intensity=intensity * 0.1)
+                logger.info(f"✨ [Tactile] Gentle touch on {part} detected. Calming effect.")
 
-            status = "biologically_processed"
+            status = "reflex_triggered"
         except Exception as e:
             logger.error(f"Failed to bridge tactile to bio: {e}")
             status = "simulation_only"
+            motor_reflex = {"pose": "idle", "expression": "neutral"}
 
         return {
             "status": status,
+            "reflex": motor_reflex, # NEW: The Reflex Arc output
             "feedback": {"intensity": intensity, "part": part},
             "object_id": object_id,
             "timestamp": datetime.now().isoformat()

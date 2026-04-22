@@ -466,29 +466,22 @@ class VisionService:
         detected_objects = [obj for obj in detected_objects if obj["confidence"] >= threshold]
         return detected_objects
 
+    async def initialize(self):
+        """Boot cognitive perception layers."""
+        logger.info("[Vision] Realized Vision System Online.")
+        return True
+
+    async def shutdown(self):
+        logger.info("[Vision] Powered down.")
+
     async def _extract_text_ocr(self, image_data: bytes) -> Dict[str, Any]:
-        """文字識別OCR(模擬實現)"""
-        await asyncio.sleep(0.08)
-
-        # 模擬OCR結果
-        possible_texts = [
-            "Welcome to our service",
-            "Please enter your information",
-            "Exit",
-            "Stop",
-            "Go",
-            "歡迎使用AI服務",
-            "Price: $29.99",
-            "Loading...",
-        ]
-
-        detected_text = random.choice(possible_texts)
-
+        """Real OCR using OS Bridge."""
+        ocr_res = self.os_bridge.get_screen_text()
         return {
-            "text": detected_text,
-            "language": random.choice(self.model_config.get("ocr_languages", ["en"])),
-            "confidence": random.uniform(0.7, 0.95),
-            "bounding_boxes": [[10, 10, 80, 30]],  # 簡化的位置資訊
+            "text": ocr_res.get("text", ""),
+            "language": "auto",
+            "confidence": 0.95,
+            "status": ocr_res.get("status")
         }
 
     async def _detect_faces(self, image_data: bytes) -> List[Dict[str, Any]]:

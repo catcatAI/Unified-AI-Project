@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from typing import Optional
 from .biological_integrator import BiologicalIntegrator
-from ...integrations.os_bridge_adapter import OSBridgeAdapter
+from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
 
