@@ -1,0 +1,30 @@
+Angela 橫縱向區塊化軀幹約束矩陣 (Block_Torso_Rig_v1.0)解析度: 128 x 384 像素核心理念: 將軀幹視為「柔性殼體」，定義橫向區塊與縱向脊椎的連動權重。文件狀態: 已寫入 M3 邏輯備案，作為物理連動的最底層。1. 橫向物理區塊定義 (Horizontal Blocks)我們將軀幹由上至下分為五個具備「體積感」的區塊。區塊名稱關聯脊椎寬度 (Px_W)深度控制 (Z-index)物理特性描述肩帶區 (Shoulder Girdle)T1 - T328 - 32前層:鎖骨, 後層:肩胛骨高聯動區。與手臂角度強耦合。胸腔殼 (Upper Torso)T4 - T824 - 26中層半剛性區。負責呼吸起伏（Scale X）。腹腔區 (Lower Torso)T9 - L218 - 22中層極軟性區。隨腰椎彎曲產生擠壓或拉伸。髂骨區 (Iliac Region)L3 - L524 - 28中層過渡區。定義腰部到臀部的曲線。骨盆底 (Pelvic Base)Sacrum30 - 34底層剛性基座。固定雙腿轉軸。2. 局部連動邏輯 (Local Coupling Logic)A. 肩胛骨與鎖骨複合體 (The Scapular-Clavicular Link)機械關係: 鎖骨（Clavicle）一端接胸骨，一端接肩峰。肩胛骨（Scapula）則在背後滑動。變換規則:當 L_Arm 的 Rot_Z > 90°（手舉過肩），L_Scapula 必須向上旋轉 15°，同時 L_Clavicle 向上偏移 2 像素。這種「橫向抬升」解決了「手臂只是插在身體上」的僵硬感。B. 胸腹部呼吸連動 (Abdominal-Thoracic Coupling)聯動關係: 肺部擴張。變換規則:Thoracic_Block 寬度 $+1$ px 時，Abdominal_Block 寬度 $-0.5$ px（腹部收縮）。這種像素級的補償機制（$E_{M2}=0.1$ 擾動），能在靜態待機中展現 Angela 的生命感。3. 完整區塊化 YAML 實作Torso_Block_System:
+  # 肩帶區：處理極其複雜的肩頸連動
+  Shoulder_Girdle_Block:
+    Y_Range: [48, 70] # 相對於頂部的像素區間
+    Center_Spine: T1_T3
+    Components:
+      L_Clavicle: [L:14, Rot:[-15, 20], Link: "L_Shoulder"]
+      R_Clavicle: [L:14, Rot:[-15, 20], Link: "R_Shoulder"]
+      Scapula_Slide: [Offset_X: ±2, Offset_Y: ±1] # 隨手臂滑動範圍
+
+  # 胸腔區：呼吸與保護
+  Ribcage_Block:
+    Y_Range: [71, 120]
+    Center_Spine: T4_T12
+    Expansion_Factor: 1.02 # 呼吸擴張率
+    Constraints: "限制 Yaw 旋轉，防止胸腔扭曲"
+
+  # 腹腰區：主要的扭轉動力
+  Waist_Soft_Block:
+    Y_Range: [121, 160]
+    Center_Spine: L1_L4
+    Torsion_Max: 45deg # 腹部容許的最大扭轉角度
+    Compression_Ratio: 0.8 # 彎腰時的像素擠壓比
+
+  # 骨盆區：結構支撐
+  Pelvis_Rigid_Block:
+    Y_Range: [161, 192]
+    Center_Spine: L5_Sacrum
+    Width_Fixed: 32
+    Hip_Anchors: [L_Pos: -14, R_Pos: 14] # 雙腿固定接入點

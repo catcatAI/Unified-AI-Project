@@ -508,27 +508,33 @@ class BiologicalIntegrator:
         )
 
     def get_biological_state(self) -> Dict[str, Any]:
-        """Get comprehensive integrated biological state"""
+        """Get comprehensive integrated biological state (2030 Standard)"""
         # Get individual system states
         nervous_state = self.nervous_system.get_system_summary()
         endocrine_effects = self.endocrine_system.calculate_systemic_effects()
         emotional_summary = self.emotional_system.get_emotion_summary()
-
-        dominant_emotion, confidence = self.emotional_system.get_dominant_emotion()
+        
+        # Safely get current emotion from history
+        dominant_emotion = "neutral"
+        confidence = 0.5
+        if self.emotional_system.emotion_history:
+            last_state = self.emotional_system.emotion_history[-1]
+            dominant_emotion = last_state.primary_emotion.value
+            confidence = last_state.emotion_intensity
 
         return {
             "arousal": self.nervous_system.arousal_level,
             "sympathetic_tone": self.nervous_system.sympathetic_tone,
             "parasympathetic_tone": self.nervous_system.parasympathetic_tone,
-            "dominant_emotion": dominant_emotion.en_name if dominant_emotion else "unknown",
+            "dominant_emotion": dominant_emotion,
             "emotion_confidence": confidence,
             "hormonal_effects": endocrine_effects,
             "stress_level": self.endocrine_system.stress_level,
             "physiological": {
-                "heart_rate": nervous_state["physiological"]["heart_rate"],
-                "blood_pressure": nervous_state["physiological"]["blood_pressure"],
+                "heart_rate": nervous_state.get("physiological", {}).get("heart_rate", 70),
+                "blood_pressure": nervous_state.get("physiological", {}).get("blood_pressure", 120),
             },
-            "mood": emotional_summary["pad_state"]["pleasure"],
+            "mood": emotional_summary.get("pad_state", {}).get("pleasure", 0.5),
             "timestamp": datetime.now().isoformat(),
         }
 

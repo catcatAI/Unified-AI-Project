@@ -9,11 +9,6 @@ from integrations.os_bridge_adapter import OSBridgeAdapter
 logger = logging.getLogger(__name__)
 
 class MetabolicHeartbeat:
-    """
-    The Pulse of Angela. 
-    A background service that drives biological aging, data metabolism, 
-    and autonomous environmental observation.
-    """
     def __init__(self, update_interval: float = 30.0):
         self.update_interval = update_interval
         self.bio_integrator = BiologicalIntegrator()
@@ -21,6 +16,12 @@ class MetabolicHeartbeat:
         self._running = False
         self._task: Optional[asyncio.Task] = None
         self.start_time = datetime.now()
+        
+        # --- NEW: Spatial State (Angela's physical presence) ---
+        self.x = 200.0
+        self.y = 0.0 # Will be aligned by ground_y
+        self.target_x = 200.0
+        self.velocity = 0.05
 
     async def start(self):
         if self._running:
@@ -40,27 +41,52 @@ class MetabolicHeartbeat:
     async def _run_loop(self):
         while self._running:
             try:
-                # 0. ANS Modulation (Autonomic Nervous System)
+                # 0. ANS Modulation
                 state = self.bio_integrator.get_biological_state()
                 stress = state.get("stress_level", 0.5)
                 arousal = state.get("arousal", 50.0)
                 
-                # Sympathetic Response: High stress/arousal -> Faster pulse (min 5s)
-                # Parasympathetic Response: Calm/Low energy -> Slower pulse (max 60s)
+                # Dynamic Interval
                 dynamic_interval = max(5.0, min(60.0, 30.0 / (stress * 2 + (arousal / 50.0))))
                 
-                logger.debug(f"💓 [Pulse] Pulse modulation: {dynamic_interval:.1f}s (Stress: {stress:.2f})")
+                # --- NEW: Spatial Decision Making ---
+                await self._update_spatial_state(arousal, stress)
                 
-                # 1. Biological Aging
+                # 1. Metabolism & 2. Environment
                 await self._process_metabolism()
-                
-                # 2. Environmental Perception
                 await self._observe_environment()
                 
                 await asyncio.sleep(dynamic_interval)
             except Exception as e:
                 logger.error(f"[Pulse] Cardiac Arrhythmia: {e}")
                 await asyncio.sleep(10)
+
+    async def _update_spatial_state(self, arousal, stress):
+        """Calculates Angela's next move based on bio-state."""
+        import random
+        # Decision: Higher arousal -> more likely to set a new target
+        if random.random() < (arousal / 100.0) * 0.5:
+            # We assume a standard screen width for logic, renderer will scale
+            self.target_x = random.randint(50, 1800)
+            logger.debug(f"🚶 [Spatial] Angela decided to move to x={self.target_x}")
+        
+        # Simple step towards target (the brain's intention)
+        dist = self.target_x - self.x
+        if abs(dist) > 5:
+            # 2030 Standard: Collision detection linked to pain
+            # Assume we have a method to check world collision
+            if self._check_collision(self.x + (5 if dist > 0 else -5)):
+                from .bio_reflex_manager import BiogenicReflexManager
+                reflex_mgr = BiogenicReflexManager(self.bio_integrator)
+                asyncio.create_task(reflex_mgr.trigger_physical_trauma("leg", 0.7))
+                self.target_x = self.x # Stop moving
+            else:
+                speed = self.velocity * (1.0 - stress)
+                self.x += dist * speed
+
+    def _check_collision(self, next_x):
+        # Simplified: Screen boundaries as collision for now
+        return next_x < 10 or next_x > 1900
 
     async def _process_metabolism(self):
         """

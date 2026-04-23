@@ -1,0 +1,53 @@
+Angela AL 實體約束矩陣 (Hand_Rig_Matrix_v1.0)專案: Angela (AI+AL)全局解析度: 128 x 384 像素手部總長度約束: 38 像素 (符合 10% 仿生比例)文件狀態: 已存入 M3 邏輯備案與 $E_{M2}$ 概念庫系統變數定義與說明每個節點的屬性格式為：[x, y, L, Rot, Px_W]x, y: 動態計算的父節點相對座標。L (Length): 該節點的絕對像素長度。Rot (Rotation): 旋轉角度限制 [Min_Deg, Max_Deg]，遵守仿生學。Px_W (Pixel Width): 該部位的像素寬度/渲染厚度，用於碰撞判定。雙手 YAML 工程邏輯Hands_System:
+  # ==========================================
+  # 【左手系統 (Left_Hand)】 - 絕對像素校準版
+  # ==========================================
+  L_Hand:
+    L_Wrist (左手腕): 
+      - Type: "Root_Anchor"
+      - Attributes: [x, y, L:0, Rot:[-90, 90], Px_W:12] # 手腕寬度約 12 像素
+      
+      L_Palm (左手掌基座):
+        - Type: "Metacarpal_Base"
+        - Constraints: "掌骨總長度 18 像素，作為手指根部基座"
+        
+        # --- 左手拇指 (總長約 18 像素，含掌腕關節) ---
+        L_Thumb:
+          L_Thumb_CMC (掌腕樞紐): [x, y, L:6, Rot:[-30, 45], Px_W:4] # 拇指基座較厚
+          L_Thumb_Proximal (根部):[x, y, L:7, Rot:[0, 90], Px_W:4]
+          L_Thumb_Distal (末梢):  [x, y, L:5, Rot:[-10, 80], Px_W:3] # 指尖微縮
+
+        # --- 左手食指 (總長 18 像素，不含掌骨) ---
+        L_Index:
+          L_Index_Metacarpal:   [x, y, L:18, Rot:[-10, 10], Px_W:0] # 掌骨隱藏在手掌肉內
+          L_Index_Proximal:     [x, y, L:8,  Rot:[-10, 90], Px_W:3]
+          L_Index_Intermediate: [x, y, L:6,  Rot:[0, 100],  Px_W:3]
+          L_Index_Distal:       [x, y, L:4,  Rot:[0, 80],   Px_W:2]
+
+        # --- 左手中指 (總長 20 像素，全手最長) ---
+        L_Middle:
+          L_Middle_Metacarpal:   [x, y, L:18, Rot:[-5, 5],   Px_W:0]
+          L_Middle_Proximal:     [x, y, L:9,  Rot:[-10, 90], Px_W:3]
+          L_Middle_Intermediate: [x, y, L:6,  Rot:[0, 100],  Px_W:3]
+          L_Middle_Distal:       [x, y, L:5,  Rot:[0, 80],   Px_W:2]
+
+        # --- 左手無名指 (總長 18 像素) ---
+        L_Ring:
+          L_Ring_Metacarpal:   [x, y, L:17, Rot:[-5, 15],  Px_W:0]
+          L_Ring_Proximal:     [x, y, L:8,  Rot:[-10, 90], Px_W:3]
+          L_Ring_Intermediate: [x, y, L:6,  Rot:[0, 100],  Px_W:3]
+          L_Ring_Distal:       [x, y, L:4,  Rot:[0, 80],   Px_W:2]
+
+        # --- 左手小拇指 (總長 14 像素) ---
+        L_Pinky:
+          L_Pinky_Metacarpal:   [x, y, L:16, Rot:[-10, 25], Px_W:0]
+          L_Pinky_Proximal:     [x, y, L:6,  Rot:[-10, 90], Px_W:2] # 小指較細
+          L_Pinky_Intermediate: [x, y, L:5,  Rot:[0, 100],  Px_W:2]
+          L_Pinky_Distal:       [x, y, L:3,  Rot:[0, 80],   Px_W:2]
+
+  # ==========================================
+  # 【右手系統 (Right_Hand)】 - X軸鏡像矩陣
+  # ==========================================
+  R_Hand:
+    # 結構與 L_Hand 完全一致。在代碼層面呼叫 Mirror_X() 函數進行實作，避免重複硬編碼。
+    # 參考 L_Hand 的絕對像素長度 (L) 與寬度 (Px_W)。

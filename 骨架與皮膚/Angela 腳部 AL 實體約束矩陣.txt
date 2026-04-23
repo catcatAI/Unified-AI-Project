@@ -1,0 +1,35 @@
+Angela 腳部 AL 實體約束矩陣 (Foot_Rig_Matrix_v1.0)專案: Angela (AI+AL)全局解析度: 128 x 384 像素腳部長度約束: 18-20 像素 (符合人體比例)文件狀態: 已存入 M3 邏輯備案與 $E_{M2}$ 概念庫，接續 Limbs_Rig_Matrix_v1.0物理防護與 M6 治理說明支撐平面鎖定 (Ground Plane Constraint)：腳底像素不得穿透設定的 $Y_{Ground}$ 座標。當腳尖向下壓時，重心位移必須由 $M6$ 邏輯自動補償，防止 Angela 傾倒。抓地力模擬 (Grip Logic)：當 $E_{M2}$ 偵測到不穩定地形時，趾部（Toes）的旋轉限制會放寬，以模擬抓地動作。雙腳 YAML 工程邏輯Foot_System:
+  # ==========================================
+  # 【左腳系統 (Left_Foot)】 - 從腳腕開始
+  # ==========================================
+  L_Foot:
+    L_Ankle_Joint (左腳腕):
+      - Type: "Ankle_Root"
+      - Attributes: [x, y, L:0, Rot:[-45, 40], Px_W:10] # 連接小腿末端
+
+      L_Heel (左腳跟/跟骨):
+        - Type: "Support_Base"
+        - Attributes: [x, y, L:6, Rot:[-10, 10], Px_W:10] # 承重中心
+
+        L_Midfoot (左腳掌中段/蹠骨):
+          - Type: "Flex_Bridge"
+          - Attributes: [x, y, L:10, Rot:[-15, 35], Px_W:9] # 決定腳弓的彎曲
+
+          # --- 左腳趾部系統 (Toes Tier) ---
+          L_Toes_Base (趾骨基座):
+            L_Big_Toe (左大拇趾):
+              L_Big_Toe_Proximal (根部): [x, y, L:4, Rot:[-20, 45], Px_W:3]
+              L_Big_Toe_Distal (末梢):   [x, y, L:2, Rot:[-10, 30], Px_W:3]
+
+            L_Small_Toes (其餘四趾):
+              # 為了優化 128px 下的運算密度，四趾在 AL 邏輯中採用「群組化約束」
+              # 只有在極精細動作下才會進行單獨分枝
+              L_Toes_Group_Proximal: [x, y, L:3, Rot:[-20, 40], Px_W:7]
+              L_Toes_Group_Distal:   [x, y, L:2, Rot:[-10, 30], Px_W:6]
+
+  # ==========================================
+  # 【右腳系統 (Right_Foot)】 - 鏡像對稱
+  # ==========================================
+  R_Foot:
+    # 邏輯結構與 L_Foot 完全一致
+    # 執行 Mirror_X() 函數，確保左右腳步態協同 (Gait Synchronization)

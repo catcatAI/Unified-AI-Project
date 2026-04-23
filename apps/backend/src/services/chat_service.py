@@ -84,7 +84,14 @@ class AngelaChatService:
         governance_core.update_v_total(0.01) 
 
         # 7. Persistence (M5 Value Tier)
-        # If response is complex, mark as strategic memory
+        # GSI-4 Evolution Loop
+        from core.autonomous.evolution_engine import EvolutionEngine
+        evolution = EvolutionEngine(self.personality_manager)
+        await evolution.reflect_and_evolve({
+            "sentiment": emotional_state.emotion_intensity,
+            "security_hit": is_violation
+        })
+
         is_strategic = len(response) > 50 or routing_mode == "Exploratory"
         await self.memory_manager.store_experience(
             user_message, 

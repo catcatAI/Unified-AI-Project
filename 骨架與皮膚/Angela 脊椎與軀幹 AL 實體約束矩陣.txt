@@ -1,0 +1,37 @@
+Angela 脊椎與軀幹 AL 實體約束矩陣 (Spine_Rig_Matrix_v1.0)專案: Angela (AI+AL)全局解析度: 128 x 384 像素軀幹總長度: 144 像素 (從頸部到底部)文件狀態: 已存入 M3 邏輯備案，作為全系統「主骨幹」物理防護與 M6 治理說明重心追蹤 (COG Tracking): 脊椎的腰椎節點 (L3) 被設定為全身的重心點。連帶彎曲 (Spinal Ripple): 當 AI 修改胸椎角度時，腰椎必須根據 $E_{M2}=0.1$ 的連動係數自動補償位移，以維持生理曲線。脊椎系統 YAML 工程邏輯Spine_System:
+  # ==========================================
+  # 【中樞大樑 (Main Axis)】 - 由上至下
+  # ==========================================
+  Spine_Root (脊椎起點):
+    # 連接 Cervical_Spine (見 Head_Matrix)
+    
+    T1_T12_Thoracic (胸椎段):
+      - Type: "Semi_Rigid_Segment"
+      - Attributes: [x, y, L:60, Rot:[[-15, 20], [-10, 10], [-5, 5]], Px_W:24]
+      - Connections: 
+          - Offset_Y: 5 -> [L_Scapula, R_Scapula] # 肩膀接入點
+      - Constraints: "與肋骨架連動，限制大幅度側彎"
+
+    L1_L5_Lumbar (腰椎段):
+      - Type: "High_Flex_Segment"
+      - Attributes: [x, y, L:44, Rot:[[-30, 90], [-45, 45], [-20, 20]], Px_W:20]
+      - Constraints: "Angela 的靈活性核心。負擔主要軀幹扭轉"
+
+    Sacrum_Pelvis (薦骨/骨盆):
+      - Type: "Rigid_Base"
+      - Attributes: [x, y, L:40, Rot:[[-20, 20], [0, 0], [-10, 10]], Px_W:32]
+      - Connections:
+          - Offset_Y: 10 -> [L_Pelvis_Socket, R_Pelvis_Socket] # 腿部接入點
+      - Constraints: "穩定盆腔空間，鎖定雙腿間距"
+
+# ==========================================
+# 【絕對尺寸校準總表】
+# ==========================================
+Scale_Reference:
+  Total_Height: 384px
+  Head_and_Neck: 48px
+  Thoracic: 60px
+  Lumbar: 44px
+  Pelvis: 40px
+  Legs (髖到地): 192px
+  # 總計: 48+60+44+40+192 = 384px (邏輯閉環)

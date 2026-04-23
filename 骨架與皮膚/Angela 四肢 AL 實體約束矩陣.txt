@@ -1,0 +1,65 @@
+Angela 四肢 AL 實體約束矩陣 (Limbs_Rig_Matrix_v1.0)專案: Angela (AI+AL)全局解析度: 128 x 384 像素文件狀態: 已存入 M3 邏輯備案與 $E_{M2}$ 概念庫，接續 Hand_Rig_Matrix_v1.0系統變數定義與物理防護說明格式：[x, y, L, Rot, Px_W]IK_Target (逆向運動學目標)：四肢的末端（手腕、腳腕）為 IK 目標點。當 AI 要求手腕到達座標 (X,Y) 時，系統會自動根據 Rot 限制反推肩/肘的角度，不允許 AI 隨意破壞關節。Rot (Rotation Limits)：這是絕對的物理防護壁 (M6 安全資產)。例如膝蓋只能向後彎曲 [0, 160] 度，防止出現「反向膝蓋」的恐怖谷效應。雙側四肢 YAML 工程邏輯Body_Limbs_System:
+  # ==========================================
+  # 【上肢系統 (Arms)】 - 肩胛骨至手腕
+  # ==========================================
+  Arms:
+    L_Arm (左臂):
+      L_Scapula (左肩胛骨/鎖骨複合體):
+        - Type: "Clavicle_Root"
+        - Constraints: "連接胸骨頂端，允許微幅聳肩與前後擴胸"
+        - Attributes: [x, y, L:20, Rot:[-15, 20], Px_W:0] # 內部骨架
+
+      L_Shoulder (左肩關節):
+        - Type: "Ball_and_Socket_Joint" (球窩關節，三維度高自由度)
+        - Attributes: [x, y, L:0, Rot:[-180, 180], Px_W:16] # 肩膀肌肉厚度
+
+        L_UpperArm (左上臂/肱骨):
+          - Type: "Limb_Segment"
+          - Attributes: [x, y, L:72, Rot:[0, 0], Px_W:14] # 長度72px，受肩關節驅動
+
+          L_Elbow (左肘關節):
+            - Type: "Hinge_Joint" (鉸鏈關節，僅單向彎曲)
+            - Attributes: [x, y, L:0, Rot:[0, 160], Px_W:12] # ★ M6鎖定：禁止反折(<0)
+
+            L_Forearm (左前臂/橈尺骨):
+              - Type: "Limb_Segment"
+              - Constraints: "連接至 L_Wrist (參考 Hand_Rig_Matrix)"
+              - Attributes: [x, y, L:60, Rot:[-90, 90], Px_W:10] # 包含前臂旋前/旋後
+
+    R_Arm (右臂):
+      # 繼承 L_Arm 的絕對像素長度與厚度
+      # 執行 Mirror_X() 函數，旋轉角度進行對稱反轉
+
+  # ==========================================
+  # 【下肢系統 (Legs)】 - 髖關節至腳腕
+  # ==========================================
+  Legs:
+    L_Leg (左腿):
+      L_Pelvis_Socket (左骨盆髖臼):
+        - Type: "Pelvis_Root"
+        - Constraints: "固定於骨盆基座，決定腿部間距"
+        - Attributes: [x, y, L:16, Rot:[-5, 5], Px_W:0] # 骨盆寬度佔比
+
+      L_Hip (左髖關節):
+        - Type: "Ball_and_Socket_Joint" (球窩關節)
+        - Attributes: [x, y, L:0, Rot:[-30, 120], Px_W:22] # 臀/大腿根部厚度(最寬處)
+
+        L_Thigh (左大腿/股骨):
+          - Type: "Limb_Segment"
+          - Attributes: [x, y, L:90, Rot:[0, 0], Px_W:20] # 長度90px
+
+          L_Knee (左膝關節):
+            - Type: "Hinge_Joint"
+            - Attributes: [x, y, L:0, Rot:[0, 160], Px_W:16] # ★ M6鎖定：小腿只能向後彎
+
+            L_Calf (左小腿/脛腓骨):
+              - Type: "Limb_Segment"
+              - Constraints: "末端連接至腳腕 (Ankle)"
+              - Attributes: [x, y, L:90, Rot:[0, 0], Px_W:14] # 漸縮至腳腕
+
+              L_Ankle (左腳腕):
+                - Type: "Ankle_Anchor"
+                - Constraints: "準備接入 Foot_Rig_Matrix (腳部約束矩陣)"
+                - Attributes: [x, y, L:0, Rot:[-45, 45], Px_W:10] # 腳腕厚度
+    R_Leg (右腿):
+      # 繼承 L_Leg 參數，執行 Mirror_X() 對稱渲染

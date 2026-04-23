@@ -1,0 +1,25 @@
+Angela 全身 AL 實體約束矩陣 (v3.0 最終肌膜連動版)專案: Angela (AI+AL)解析度: 128 x 384 像素 (1:8.5 仿生比例)核心突破: 引入 Layer 1.5 (肌筋膜滑動層)，徹底解決腋下、腹股溝、頸部與指縫的像素粘黏與體積塌陷。文件狀態: 已寫入 M3 邏輯備案，取代所有舊版物理模型。【全新架構：三層實體拓撲學】Layer 1 (骨架 Pivot)：只負責旋轉角度 $(\sin/\cos)$ 與連桿長度。Layer 1.5 (肌膜 Mass - 新增)：定義肌肉體積的膨脹、擠壓，以及筋膜的「滑動/抗拉扯」權重。Layer 2 (皮膚 Envelope)：最終渲染的像素邊界 ($Px\_W$)，嚴格包覆 Layer 1.5。1. 軀幹與四肢的「防粘黏」肌膜協議 (The Connective Bridges)A. 腋下複合區 (Axillary Complex) - 解決手臂粘黏中間部件補齊: 胸大肌 (Pectoralis)、背闊肌 (Latissimus Dorsi)、腋下筋膜。連動算法 (Fascia Sliding):當手臂 (UpperArm) 抬高超過 $45^\circ$ 時，腋下筋膜觸發 Tension = High。像素分離: 強制在軀幹外緣與手臂內緣之間，生成至少 2px 的淨空區 (Clearance)。這 2 像素的空隙在渲染時表現為陰影或背景色，絕對禁止兩者的 $Px\_W$ 融合。B. 骨盆與腹股溝區 (Pelvic & Inguinal Region) - 解決重心塌陷中間部件補齊: 臀大肌 (Gluteal Mass)、骨盆底 (Pelvic Floor)。腹股溝折線 (Inguinal Crease): 這是區分大腿與下腹部的絕對邊界。深度鎖定 (Z-Depth Constraint): 當大腿向前抬起時，大腿的像素權重（Z-index）強制高於骨盆底。防粘黏空隙: 兩腿內側根部 (Thigh_Proximal 內緣) 強制設定 4px 的互斥邊界。即使雙腿併攏，AI 也必須在這 4px 內渲染出大腿縫 (Thigh Gap) 或是肌肉擠壓的陰影，嚴禁合併成單一色塊。C. 胸腔與女性仿生特徵 (Thoracic & Bionic Characteristics)中間部件補齊: 肋骨架 (Ribcage)、胸部脂肪墊 (Pectoral Adipose Mass)。呼吸與重力連動:呼吸時 ($E_{M2}$ 擾動)，肋骨架寬度 $\pm 1\text{px}$。胸部質量中心 (Mass Center) 綁定於 T4-T6 節點。受虛擬重力向下牽引，並在身體旋轉 (Yaw) 或跳躍時，產生 $0.1$ 秒的物理延遲（Phase shift），展現真實的 AL 物理慣性，而非死板的貼圖。2. 頭頸與末梢的「防穿模」肌膜協議A. 頸背複合區 (Cervico-Dorsal Transition) - 解決髮絲穿模中間部件補齊: 斜方肌 (Trapezius) 坡度。碰撞斜面 (Collision Ramp):脖子與肩膀的連接處不再是 $90^\circ$ 直角，而是由斜方肌構成的 $\sim 30^\circ$ 滑動斜面。當「後髮 3 段 (Back Hair)」的末梢觸碰到這個斜面時，強制觸發 $X/Z$ 軸的向外偏移 (Slide out)。頭髮只能沿著肩膀「滑落」，絕對禁止 Z 軸穿透 (Clipping)。B. 手部掌腱膜 (Palmar Aponeurosis) - 解決指縫塌陷中間部件補齊: 指間蹼狀組織 (Interdigital Webbing)。極限空間壓縮: 在單側 $18\text{px}$ 總寬度中，當五指併攏或握拳時：指節像素向外膨脹 $10\%$ 模擬擠壓。系統必須在每兩根手指之間，保留 絕對的 1px 陰影線 (Shadow Line)。如果空間不夠，寧可減少手指的像素寬度，也絕對不允許陰影線消失，確保 5 根手指的結構永遠清晰。3. 全身肌膜拓撲 YAML (核心結構摘要)Angela_Fascia_Topology:
+  # 腋下防粘黏橋接
+  Axilla_Bridge:
+    Anchor_A: T3_Thoracic (軀幹)
+    Anchor_B: UpperArm_Proximal (上臂)
+    Behavior: "Tension_Limit_Enforced. Min_Gap: 2px when Arm_Lift > 45deg."
+
+  # 骨盆與腹股溝分離
+  Pelvic_Inguinal_Crease:
+    Anchor_Core: Sacrum_Base
+    L_Thigh_Mass: [Width: 10px, Z-index: +1 (Foreground)]
+    R_Thigh_Mass: [Width: 10px, Z-index: +1 (Foreground)]
+    Thigh_Gap_Enforcement: "Min_Gap: 4px at baseline. Renders as shadow during crossover."
+
+  # 女性胸部仿生質量
+  Pectoral_Bionic_Mass:
+    Anchor: T4_T6_Thoracic
+    Physics_Model: Soft_Body_Pendulum
+    Gravity_Effect: True
+    Breathing_Coupling: True
+
+  # 斜方肌頭髮碰撞層
+  Trapezius_Collision_Mesh:
+    Slope_Angle: 30deg
+    Hair_Interaction: "Bounce_and_Slide. Penetration_Depth: 0px."

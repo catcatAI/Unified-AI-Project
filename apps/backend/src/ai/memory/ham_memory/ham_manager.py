@@ -3,13 +3,14 @@ import os
 import asyncio
 import json
 import hashlib
+import base64
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union, Tuple
 
 # Required imports
 from cryptography.fernet import Fernet
 
-# Internal imports using absolute paths to avoid ImportError
+# Internal imports using absolute paths
 from ai.memory.ham_memory.ham_types import HAMDataPackageInternal, HAMRecallResult
 from ai.memory.ham_memory.ham_core_storage import HAMCoreStorage
 from ai.memory.ham_memory.ham_data_processor import HAMDataProcessor
@@ -46,14 +47,27 @@ class HAMMemoryManager:
         self.personality_manager = personality_manager
         self.pending_tokens = 0
 
+        key_path = os.path.join(self.storage_dir, ".soul.key")
         key_str = os.environ.get("MIKO_HAM_KEY")
+        
+        if not key_str and os.path.exists(key_path):
+            with open(key_path, "rb") as f:
+                key_str = f.read().decode()
+                logger.info("🔑 [Memory] Soul Key loaded from persistent storage.")
+
         self.fernet: Optional[Any] = None
         if key_str:
             try:
                 self.fernet = Fernet(key_str.encode())
             except Exception: self.fernet = None
-        else:
-            self.fernet = Fernet(Fernet.generate_key())
+        
+        if self.fernet is None:
+            # Generate and PERSIST a new key
+            new_key = Fernet.generate_key()
+            self.fernet = Fernet(new_key)
+            with open(key_path, "wb") as f:
+                f.write(new_key)
+            logger.warning("✨ [Memory] New Soul Key generated and persisted. Do not delete .soul.key!")
 
         self.core_storage = HAMCoreStorage(self.storage_dir, core_storage_filename, resource_awareness_service)
         self.data_processor = HAMDataProcessor(fernet=self.fernet)
@@ -102,10 +116,14 @@ class HAMMemoryManager:
 
         await self.vector_store_manager.add_semantic_vector(memory_id=memory_id, content=str(raw_data), metadata=current_metadata)
 
+        # Encode bytes to Base64 for JSON serialization
+        encrypted_bytes = self.data_processor._encrypt(self.data_processor._compress(data_to_process))
+        encoded_payload = base64.b64encode(encrypted_bytes).decode("utf-8")
+
         data_package: HAMDataPackageInternal = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "data_type": data_type,
-            "encrypted_package": self.data_processor._encrypt(self.data_processor._compress(data_to_process)),
+            "encrypted_package": encoded_payload,
             "metadata": current_metadata,
             "relevance": 0.5,
             "protected": current_metadata.get("protected", False),

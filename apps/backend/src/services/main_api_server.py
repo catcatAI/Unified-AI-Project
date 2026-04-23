@@ -285,7 +285,7 @@ from core.autonomous.action_executor import (
 from services.vision_service import VisionService
 from services.audio_service import AudioService
 from services.tactile_service import TactileService
-from services.chat_service import generate_angela_response
+from services.chat_service import generate_angela_response, AngelaChatService
 from services.angela_llm_service import get_llm_service, angela_llm_response
 from system.security_monitor import ABCKeyManager
 
@@ -482,7 +482,22 @@ async def _handle_chat_request(
     """
     處理聊天請求的共用函數 (GSI-4 / 2030 Standard)
     """
-    # ...
+    # 2030 Standard: Deep Input Validation
+    if not user_message or not user_message.strip():
+        raise HTTPException(status_code=400, detail="訊號遺失：消息不能為空")
+    
+    if len(user_message) > 4000:
+        logger.warning(f"🛡️ [LIS] Intercepted oversized input from {origin}")
+        user_message = user_message[:1000] # 強制截斷
+    
+    # 確保 session 持久化
+    if session_id not in sessions:
+        sessions[session_id] = {
+            "created_at": datetime.now().isoformat(),
+            "origin": origin,
+            "user_name": user_name
+        }
+    
     try:
         service = await get_llm_service()
         response_text = await asyncio.wait_for(
@@ -1210,6 +1225,10 @@ async def broadcast_state_updates():
                 "delta": {
                     "intensity": bio_state.get("arousal", 50.0) / 100.0,
                 },
+                "spatial": {
+                    "x": heartbeat.x,
+                    "y": heartbeat.y,
+                },
                 "timestamp": datetime.now().isoformat(),
             }
 
@@ -1223,8 +1242,8 @@ async def broadcast_state_updates():
         except Exception as e:
             logger.error(f"Error broadcasting state update: {e}")
 
-        # Broadcast every 5 seconds
-        await asyncio.sleep(5)
+        # Broadcast every 0.2 seconds
+        await asyncio.sleep(0.2)
 
 
 @app.websocket("/ws")
@@ -1306,7 +1325,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     message_id = data.get("data", {}).get("message_id", "")
                     user_name = data.get("data", {}).get("user_name", "朋友")
 
-                    chat_service = AngelaChatService()
+                    chat_service = get_angela_chat_service()
                     response_text = await chat_service.generate_response(user_message, user_name, origin="Human")
 
                     # Send response back to the client
