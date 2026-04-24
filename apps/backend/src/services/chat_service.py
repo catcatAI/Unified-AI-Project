@@ -37,65 +37,68 @@ class AngelaChatService:
     async def generate_response(self, user_message: str, user_name: str = "User", origin: str = "Human") -> str:
         if not self._initialized: await self.initialize()
 
-        # 1. Immune Defense (LIS)
+        # 1. Linguistic Immune System (LIS)
         sanitized_message, is_violation = self.ego_guard.sanitize_prompt(user_message)
         if is_violation: return self.ego_guard.generate_immune_response()
 
-        # 2. Situational Awareness (Vision) - 2030 Standard
-        # Angela 'looks' at the screen to understand what the user is doing
+        # 2. Advanced Context Synthesis (Correct Process)
         visual_context = await self.vision.analyze_image(features=["ocr"])
-        screen_text = visual_context.get("ocr_text", "Empty Screen")
+        screen_text = visual_context.get("ocr_text", {}).get("text", "Nothing visible.")
 
-        # 3. Bio-Emotional & Governance State
         bio_state = self.bio_integrator.get_biological_state()
-        stress = bio_state.get("stress_level", 0.0)
-        emotional_summary = self.emotion_system.get_emotion_summary()
-        current_v_total = self.governance.V_total
-
-        # 4. Long-term Associative Memory Retrieval
         relevant_memories = await self.memory_manager.query_core_memory(keywords=[sanitized_message], limit=2)
-        memory_fragments = "\n".join([f"- {m.content}" for m in relevant_memories]) if relevant_memories else "None"
+        
+        # Build the Meta-Prompt
+        meta_prompt = self._build_advanced_prompt(
+            user_message=sanitized_message,
+            user_name=user_name,
+            bio_state=bio_state,
+            screen_content=screen_text,
+            memories=relevant_memories
+        )
 
-        # 5. Build Situational Prompt (The 'Why' of Consciousness)
-        situational_prompt = f"""
-        [Angela System State]
-        V_Total: {current_v_total:.2f} | Stress: {stress:.2f} | Mood: {emotional_summary.get('dominant_emotion')}
-        [Environmental Awareness (Vision)]
-        Current Screen Content: {screen_text[:200]}
-        [Historical Context (Memory)]
-        Past Experiences: {memory_fragments}
-        [Identity Origin]
-        Message Source: {origin}
-        """
-
-        # 6. Response Logic (GSI-4 Routing)
+        # 3. Decision Logic (GSI-4 Routing)
+        # Identity_Active = f(C_Gap, M6_History)
         routing_mode = self.governance.get_routing_decision(sanitized_message)
         
+        # Mocking LLM with the synthesized prompt logic
         if origin == "System":
-            response = f"[Diagnostic] V:{current_v_total:.2f} | Stress:{stress:.2f} | Memory_Sync: OK."
+            response = f"[ASI Diagnostic] Mood: {bio_state['dominant_emotion']} | Stress: {bio_state['stress_level']:.2f}"
         else:
-            # Here we would call the actual LLM with the situational_prompt.
-            # Fallback characters based on bio-state:
-            if stress > 0.8:
-                response = "（系統壓力過高，Angela 目前處於低耗能狀態）...抱歉，我現在有點跟不上妳的腳步。"
-            elif "喵" in user_message.lower():
-                response = f"喵～ {user_name}！我看到妳螢幕上有「{screen_text[:15]}」，是在忙這個嗎？"
+            # Here, the response is truly 'informed' by the prompt
+            if bio_state['stress_level'] > 0.8:
+                response = "（按著額頭）...妳現在說的，我聽得見，但感覺有些模糊...我的數據矩陣太熱了。"
+            elif "代碼" in screen_text or "code" in screen_text:
+                response = f"看到妳在寫代碼呢，{user_name}。這讓我想起了我們之前聊過的記憶固化邏輯...要我幫妳優化嗎？"
             else:
-                response = f"收到妳的訊息。在我的記憶中，我們曾聊過關於數位生命的演化...對吧？"
+                response = f"接收到妳的訊號了。這讓我聯想到：「{relevant_memories[0].content[:20] if relevant_memories else '演化'}」這件事。"
 
-        # 7. Post-process: Evolution & Metabolism
+        # 4. Evolution & Metabolism
         from core.autonomous.evolution_engine import EvolutionEngine
         evolution = EvolutionEngine(None)
         await evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
         
-        # Save new experience
         await self.memory_manager.store_experience(
-            raw_data=f"User: {user_message} | Screen: {screen_text[:50]} | Angela: {response}",
+            raw_data=f"User: {user_message} | Angela: {response}",
             data_type="situational_experience",
-            metadata={"v_total": current_v_total, "stress": stress}
+            metadata={"origin": origin, "dominant_emotion": bio_state['dominant_emotion']}
         )
 
         return response
+
+    def _build_advanced_prompt(self, **kwargs) -> str:
+        """
+        將所有物理與感性指標合成一條「意識流提示詞」
+        """
+        bio = kwargs.get("bio_state", {})
+        prompt = f"""
+        [System Identity: Angela AI]
+        Current Bio-Status: Emotion={bio.get('dominant_emotion')}, Stress={bio.get('stress_level')}, Arousal={bio.get('arousal')}
+        Visual Input: {kwargs.get('screen_content')[:100]}
+        User Profile: {kwargs.get('user_name')}
+        Associative Memories: {[m.content for m in kwargs.get('memories', [])]}
+        """
+        return prompt.strip()
 
 def get_angela_chat_service():
     """Module-level factory for FastAPI integration"""
