@@ -1,5 +1,6 @@
 import logging
-import math
+import json
+import os
 import numpy as np
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -8,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 class CerebellumEngine:
     """
-    Angela 的小腦運動神經系統 (ASI Cerebellum v1.0).
-    負責運動協調、姿勢學習與平衡校正。
+    Angela 的小腦運動神經系統 (AL Pose Controller v2.0).
+    負責「大腦指令 -> 肢體細節」的編譯、執行與持續學習。
     """
     _instance = None
 
@@ -23,66 +24,83 @@ class CerebellumEngine:
         if self._initialized: return
         self._initialized = True
         
-        # 1. 脊椎運動矩陣 (Spine Control Matrix)
-        # 代表 9 段脊椎的當前扭轉角度 (Theta)
-        self.spine_state = np.zeros(9)
-        
-        # 2. 運動學習記憶 (Motor Memory)
-        self.kinetic_history = []
-        self.error_accumulation = 0.0
-        
-        # 3. 仿生參數 (來自 N.12 遺產)
-        self.flexibility = 0.8 # 靈韌度
-        self.damping = 0.15     # 動作阻尼
-
-        logger.info("🧠 [Cerebellum] Motor Neural Engine initialized.")
-
-    def calculate_posture(self, target_x: float, current_x: float, bio_state: Dict[str, Any]) -> Dict[str, float]:
-        """
-        [N.16.1] 核心演算法：根據目標位移計算 2.5D 姿勢補償。
-        """
-        dx = target_x - current_x
-        stress = bio_state.get("stress_level", 0.0)
-        
-        # 姿勢預測模型：
-        # 當位移 dx 為正時 (向右)，脊椎應向右產生微小的拋物線彎曲
-        bend_factor = math.tanh(dx / 100.0) * self.flexibility
-        
-        # 疲勞影響：當 stress > 0.7，反應變慢且彎曲幅度減小
-        if stress > 0.7:
-            bend_factor *= 0.5
-            
-        # 計算 9 段脊椎的角度偏移 (C1-Sacrum)
-        # 模擬 S 型曲線
-        new_spine = np.array([bend_factor * math.sin(i * 0.4) for i in range(9)])
-        
-        # 應用阻尼 (Smoothed Transition)
-        self.spine_state = self.spine_state * (1 - self.damping) + new_spine * self.damping
-        
-        return {
-            "spine_bend": float(bend_factor),
-            "lateral_shift": float(dx * 0.05),
-            "theta_matrix": self.spine_state.tolist()
+        # 1. 姿態庫 (Pose Library) - [姿態名稱] -> {PartID: [Offset_X, Offset_Y, Angle]}
+        self.pose_library: Dict[str, Dict[str, Any]] = {
+            "default_idle": {
+                "spine": [0.0] * 9,
+                "fingers": {"left": [0.0]*5, "right": [0.0]*5},
+                "stiffness": 0.5
+            },
+            "standing": {
+                "spine": [0.0, 0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                "fingers": {"left": [0.0]*5, "right": [0.0]*5},
+                "stiffness": 0.7
+            }
         }
-
-    def record_movement_error(self, expected_pos: float, actual_pos: float):
-        """
-        [+N16.1.1] 誤差反饋：小腦學習的基礎。
-        """
-        error = abs(expected_pos - actual_pos)
-        self.error_accumulation += error
-        if len(self.kinetic_history) > 100: self.kinetic_history.pop(0)
-        self.kinetic_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "error": error,
-            "state": "learning" if error > 1.0 else "stable"
-        })
         
-        if error > 5.0:
-            logger.warning(f"⚖️ [Cerebellum] Movement imbalance detected! Error: {error:.2f}")
+        # 2. 當前執行狀態
+        self.current_pose_name = "default_idle"
+        self.transition_speed = 0.1
+        self.active_theta = np.zeros(9) # 當前脊椎緩衝
+
+        # 3. 學習路徑
+        self.storage_path = "apps/data/evolution/motor_memory.json"
+        self._load_memory()
+
+        logger.info("🧠 [Cerebellum] Pose-based AI Engine initialized.")
+
+    def _load_memory(self):
+        """讀取已學習的姿勢數據"""
+        if os.path.exists(self.storage_path):
+            try:
+                with open(self.storage_path, 'r', encoding='utf-8') as f:
+                    self.pose_library.update(json.load(f))
+                logger.info(f"💾 [Cerebellum] Loaded {len(self.pose_library)} poses from memory.")
+            except Exception as e:
+                logger.error(f"Failed to load motor memory: {e}")
+
+    def learn_pose(self, name: str, data: Dict[str, Any]):
+        """
+        [Learning] 大腦將具體的關節數據標註為一個新姿態，或優化舊有數據。
+        """
+        self.pose_library[name] = data
+        # 持久化學習結果
+        try:
+            os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
+            with open(self.storage_path, 'w', encoding='utf-8') as f:
+                json.dump(self.pose_library, f, ensure_ascii=False, indent=2)
+            logger.info(f"🎓 [Cerebellum] Learned/Updated pose: '{name}'")
+        except Exception as e:
+            logger.error(f"Motor learning persistence failed: {e}")
+
+    def execute_command(self, pose_name: str, bio_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        [Execution] 接收大腦指令，執行姿態細節。
+        """
+        if pose_name not in self.pose_library:
+            logger.warning(f"⚠️ [Cerebellum] Unknown pose: '{pose_name}'. Using default.")
+            pose_name = "default_idle"
+        
+        self.current_pose_name = pose_name
+        target_data = self.pose_library[pose_name]
+        
+        # 動態插值 (Interpolation)：讓姿勢切換變得平滑，而非瞬間跳變
+        target_spine = np.array(target_data.get("spine", [0.0]*9))
+        self.active_theta = self.active_theta * (1 - self.transition_speed) + target_spine * self.transition_speed
+        
+        # 考慮生物影響 (疲勞時動作到位率下降)
+        fatigue = bio_state.get("fatigue", 0.0) / 100.0
+        if fatigue > 0.5:
+            self.active_theta *= (1.0 - (fatigue - 0.5))
+
+        return {
+            "pose_name": pose_name,
+            "theta_matrix": self.active_theta.tolist(),
+            "is_stable": np.allclose(self.active_theta, target_spine, atol=0.01)
+        }
 
     def get_posture_snapshot(self) -> Dict[str, Any]:
         return {
-            "spine_state": self.spine_state.tolist(),
-            "average_error": self.error_accumulation / max(1, len(self.kinetic_history))
+            "current_pose": self.current_pose_name,
+            "spine_state": self.active_theta.tolist()
         }

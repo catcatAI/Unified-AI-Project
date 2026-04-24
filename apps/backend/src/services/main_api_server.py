@@ -1228,6 +1228,7 @@ async def broadcast_state_updates():
                 "spatial": {
                     "x": heartbeat.x,
                     "y": heartbeat.y,
+                    "posture": heartbeat.posture, # [Task N.16.1.3] Cerebellum data
                 },
                 "timestamp": datetime.now().isoformat(),
             }
