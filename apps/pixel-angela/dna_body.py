@@ -21,54 +21,64 @@ class AngelaDNA:
         self.voxels[y[0]:y[1], x[0]:x[1], z, 3] = stiff
         self.voxels[y[0]:y[1], x[0]:x[1], z, 4] = pid
 
-    def _build_volumetric_body(self, hair_offset=0.0):
+    def _build_volumetric_body(self, hair_offset=0.0, breath_phase=0.0):
         """
         [Anatomical Realization] 基於 TXT 矩陣重構 Angela 的解剖結構。
-        支援動態偏移 (hair_offset) 用於物理擺動。
+        實施精密脊椎與呼吸聯動 (v1.1 Spine Matrix).
         """
-        # 清空畫布 (增量重繪動態層)
+        import math
         self.voxels.fill(0)
+        
+        # 呼吸縮放係數 (±1px)
+        breathing_w = int(math.sin(breath_phase) * 1.0)
 
-        # --- Z=1: 後髮 3 區 (Back Hair) ---
-        # 髮梢 (ID 12) 擺幅最大，髮根 (ID 10) 幾乎不動
-        s_mid = hair_offset * 1.5
-        s_tip = hair_offset * 3.0
+        # --- Z=1: 後髮 3 區 ---
+        s_mid, s_tip = hair_offset * 1.5, hair_offset * 3.0
+        self._build_part(1, (100, 150), (20, 108), [0.8, 0.9, 1.0], 0.1, 10)
+        self._build_part(1, (150, 300), (int(15+s_mid), int(113+s_mid)), [0.75, 0.85, 1.0], 0.1, 11)
+        self._build_part(1, (300, 380), (int(10+s_tip), int(118+s_tip)), [0.7, 0.8, 0.95], 0.1, 12)
         
-        self._build_part(1, (100, 150), (20, 108), [0.8, 0.9, 1.0], 0.1, 10) # Root
-        self._build_part(1, (150, 300), (int(15+s_mid), int(113+s_mid)), [0.75, 0.85, 1.0], 0.1, 11) # Mid
-        self._build_part(1, (300, 380), (int(10+s_tip), int(118+s_tip)), [0.7, 0.8, 0.95], 0.1, 12) # Tip
-        
-        # --- Z=2: 頸部與軀幹 (固定層) ---
+        # --- Z=2: 精密脊椎與軀幹系統 (The 9-Node Backbone) ---
+        # A. 頸椎 (C1-C7): 長度 8px, 寬度 12px
         self._build_part(2, (142, 150), (58, 70), [0.99, 0.98, 1.0], 0.4, 105)
-        self._build_part(2, (150, 310), (45, 83), [0.98, 0.98, 1.0], 0.5, 101)
-        self._build_part(2, (310, 384), (40, 88), [0.98, 0.98, 1.0], 0.6, 102)
         
-        # --- Z=3: 制服與外殼 ---
-        self._build_part(3, (160, 300), (44, 84), [0.9, 0.9, 0.95], 0.8, 401)
+        # B. 胸椎 (T1-T12): 總長 40px, 基礎寬度 26px + 呼吸補償
+        tw = 26 + breathing_w
+        self._build_part(2, (150, 190), (64 - tw//2, 64 + tw//2), [0.98, 0.98, 1.0], 0.5, 101)
         
-        # --- Z=4: 手臂 ---
-        self._build_part(4, (140, 240), (25, 45), [0.98, 0.98, 1.0], 0.4, 201)
-        self._build_part(4, (140, 240), (83, 103), [0.98, 0.98, 1.0], 0.4, 202)
+        # C. 腰椎 (L1-L5): 總長 36px, 寬度 22px (腰線)
+        self._build_part(2, (190, 226), (53, 75), [0.98, 0.98, 1.0], 0.5, 106)
+        
+        # D. 薦骨與骨盆 (Pelvis): 長度 20px, 寬度 32px (Rigid)
+        self._build_part(2, (226, 246), (48, 80), [0.98, 0.98, 1.0], 0.6, 107)
+
+        # E. 下肢基座 (下半身重構為點陣鏈)
+        self._build_part(2, (246, 384), (44, 84), [0.98, 0.98, 1.0], 0.6, 102)
+        
+        # --- Z=3: 制服 (隨胸腔縮放) ---
+        uw = tw + 2
+        self._build_part(3, (160, 230), (64 - uw//2, 64 + uw//2), [0.9, 0.9, 0.95], 0.8, 401)
+        
+        # --- Z=4: 手臂 (錨定於 T1-T4) ---
+        self._build_part(4, (145, 240), (25, 45), [0.98, 0.98, 1.0], 0.4, 201)
+        self._build_part(4, (145, 240), (83, 103), [0.98, 0.98, 1.0], 0.4, 202)
         
         # --- Z=5: 頭部五官與前髮 ---
         self._build_part(5, (70, 142), (40, 88), [0.99, 0.99, 1.0], 0.3, 501)
         self._build_part(5, (100, 115), (50, 60), [1.0, 0.7, 0.2], 0.2, 502)
         self._build_part(5, (100, 115), (68, 78), [1.0, 0.7, 0.2], 0.2, 503)
         self._build_part(5, (130, 133), (58, 70), [0.9, 0.4, 0.4], 0.1, 504)
-        
-        # 前髮擺動 (s_mid 係數)
         self._build_part(5, (65, 100), (int(35+s_mid), int(93+s_mid)), [0.85, 0.95, 1.0], 0.1, 20)
         self._build_part(5, (100, 115), (int(38+s_tip), int(90+s_tip)), [0.8, 0.9, 1.0], 0.05, 21)
 
     def apply_dynamics(self, phase):
         """
-        [N.12.7.b] 實施分段慣性擺動公式。
+        [N.12.8] 同步驅動肢體、髮絲與胸腔呼吸。
         """
         import math
-        # 核心公式：Swing = sin(Phase)
-        # 我們根據呼吸相位來驅動頭髮微擺
         current_swing = math.sin(phase) * 2.0
-        self._build_volumetric_body(hair_offset=current_swing)
+        # 將相位傳遞給軀體重構，觸發呼吸擴張
+        self._build_volumetric_body(hair_offset=current_swing, breath_phase=phase)
 
     def _apply_fascia_shadows(self, render_matrix):
         """
