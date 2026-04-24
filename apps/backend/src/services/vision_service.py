@@ -11,6 +11,7 @@ from core.perception.perceptual_memory import PerceptualMemory
 from core.perception.attention_controller import AttentionController, AttentionMode
 from core.sync.realtime_sync import sync_manager, SyncEvent
 from system.cluster_manager import cluster_manager, PrecisionLevel
+from core.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,9 @@ class VisionService:
         self.peer_services: Dict[str, Any] = {}  # 其他多模態服務的引用
         self.processing_history: List[Dict[str, Any]] = []  # 處理歷史記錄
 
+        # 2030 Standard: Hardware Bridge for OCR/Screen
+        self.os_bridge = OSBridgeAdapter()
+        
         # 初始化視覺組件
         self.sampler = VisualSampler(self.config.get("sampler_config"))
         self.memory = PerceptualMemory(capacity=self.config.get("memory_capacity", 1000))
@@ -77,16 +81,27 @@ class VisionService:
 
     async def analyze_image(
         self,
-        image_data: bytes,
+        image_data: Optional[bytes] = None,
         features: Optional[List[str]] = None,
         context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
-        分析圖像並提取指定特徵。增強版本支持更多特徵和上下文相關分析。
-        'features' 可以包含 ["ocr", "object_detection", "captioning", "face_recognition",
-                            "scene_analysis", "emotion_detection", "text_extraction",
-                            "color_analysis"]
+        分析圖像並提取指定特徵 (2030 Standard: Support Auto-Capture).
         """
+        # 2030 Detail: Auto-capture if no data provided
+        if image_data is None:
+            try:
+                import pyautogui
+                from io import BytesIO
+                screenshot = pyautogui.screenshot()
+                img_byte_arr = BytesIO()
+                screenshot.save(img_byte_arr, format='PNG')
+                image_data = img_byte_arr.getvalue()
+                logger.info("📸 [Vision] Environment captured: Automated screen snapshot.")
+            except Exception as e:
+                logger.error(f"Failed to auto-capture screen: {e}")
+                return {"error": "Vision capture failed"}
+
         processing_id = self._generate_processing_id(image_data)
         requested_features = features or [
             "captioning",

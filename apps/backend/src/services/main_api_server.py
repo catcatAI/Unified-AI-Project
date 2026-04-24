@@ -285,7 +285,7 @@ from core.autonomous.action_executor import (
 from services.vision_service import VisionService
 from services.audio_service import AudioService
 from services.tactile_service import TactileService
-from services.chat_service import generate_angela_response, AngelaChatService
+from services.chat_service import generate_angela_response, get_angela_chat_service
 from services.angela_llm_service import get_llm_service, angela_llm_response
 from system.security_monitor import ABCKeyManager
 
