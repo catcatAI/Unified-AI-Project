@@ -22,6 +22,7 @@ class AngelaChatService:
             from ai.security.ego_guard import EgoGuard
             from core.gsi_governance import GSIGovernance
             from services.vision_service import VisionService
+            from core.autonomous.input_sensor import GlobalInputSensor
 
             self.emotion_system = EmotionSystem()
             self.memory_manager = HAMMemoryManager()
@@ -29,10 +30,11 @@ class AngelaChatService:
             self.ego_guard = EgoGuard()
             self.governance = GSIGovernance()
             self.vision = VisionService()
-            
+            self.input_sensor = GlobalInputSensor() # 單例獲取
+
             await self.bio_integrator.initialize()
             self._initialized = True
-            logger.info("🌌 [Brain] Full Neural-Situational Matrix Initialized.")
+            logger.info("🌌 [Brain] Situational-Input Matrix Initialized.")
 
     async def generate_response(self, user_message: str, user_name: str = "User", origin: str = "Human") -> str:
         if not self._initialized: await self.initialize()
@@ -41,19 +43,22 @@ class AngelaChatService:
         sanitized_message, is_violation = self.ego_guard.sanitize_prompt(user_message)
         if is_violation: return self.ego_guard.generate_immune_response()
 
-        # 2. Advanced Context Synthesis (Correct Process)
+        # 2. Sensory Sweep (Input & Vision)
+        activity = self.input_sensor.get_activity_metrics()
         visual_context = await self.vision.analyze_image(features=["ocr"])
-        screen_text = visual_context.get("ocr_text", {}).get("text", "Nothing visible.")
-
+        screen_text = visual_context.get("ocr_text", {}).get("text", "Empty")
+        
+        # 3. Advanced Context Synthesis
         bio_state = self.bio_integrator.get_biological_state()
         relevant_memories = await self.memory_manager.query_core_memory(keywords=[sanitized_message], limit=2)
         
-        # Build the Meta-Prompt
+        # Build Meta-Prompt with Activity Data
         meta_prompt = self._build_advanced_prompt(
             user_message=sanitized_message,
             user_name=user_name,
             bio_state=bio_state,
             screen_content=screen_text,
+            activity=activity,
             memories=relevant_memories
         )
 
