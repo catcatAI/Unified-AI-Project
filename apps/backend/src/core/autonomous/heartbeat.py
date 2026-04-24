@@ -37,23 +37,24 @@ class MetabolicHeartbeat:
                 # 1. Metabolism Update (Homeostasis)
                 await self.bio_integrator._apply_homeostasis()
                 
-                # 2. Cerebellum Update (Posture Calculation)
+                # 2. [Task N.16.1.c] Cerebellum Pose Execution
+                # 根據移動狀態決定意圖標籤 (Intent Label)
+                dist_to_target = abs(self.target_x - self.x)
+                intent_pose = "walking" if dist_to_target > 5.0 else "standing"
+                
                 bio_state = self.bio_integrator.get_biological_state()
-                self.posture = self.cerebellum.calculate_posture(
-                    target_x=self.target_x,
-                    current_x=self.x,
+                # 呼叫小腦：執行指令並獲取細節
+                self.posture = self.cerebellum.execute_command(
+                    pose_name=intent_pose,
                     bio_state=bio_state
                 )
                 
                 # 3. Spatial Movement Execution
-                dist = self.target_x - self.x
-                if abs(dist) > 1.0:
-                    # 速度受壓力 (stress) 與 姿態係數 (bend) 影響
+                if dist_to_target > 1.0:
                     stress = bio_state.get("stress_level", 0.0)
                     speed = self.velocity * (1.0 - stress * 0.5)
-                    self.x += dist * speed
+                    self.x += (self.target_x - self.x) * speed
                 
-                # 每 0.1s 執行一次神經整合
                 await asyncio.sleep(0.1)
             except Exception as e:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}")
