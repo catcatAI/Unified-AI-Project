@@ -96,3 +96,13 @@ class AngelaChatService:
         )
 
         return response
+
+def get_angela_chat_service():
+    """Module-level factory for FastAPI integration"""
+    if not hasattr(get_angela_chat_service, "_instance"):
+        get_angela_chat_service._instance = AngelaChatService()
+    return get_angela_chat_service._instance
+
+def generate_angela_response(user_message: str, user_name: str = "朋友") -> str:
+    """Legacy synchronous fallback for timeout/error paths"""
+    return "（系統正在深層思考...請稍候）"

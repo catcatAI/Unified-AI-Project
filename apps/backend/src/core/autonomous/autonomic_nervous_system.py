@@ -261,26 +261,29 @@ class AutonomicNervousSystem:
 
     async def process_tactile_input(self, data: Dict[str, Any]):
         """
-        Processes real-time tactile stimuli. 
-        Translates physical contact into neurological arousal changes.
+        Processes real-time tactile stimuli with Social Bias (2030 Standard).
         """
         part = data.get("part", "generic")
         intensity = data.get("intensity", 0.5)
         touch_type = data.get("type", "pat")
+        origin = data.get("origin", "System")
         
-        logger.info(f"🧠 [ANS] Processing tactile: {part} ({touch_type})")
+        logger.info(f"🧠 [ANS] Processing tactile from {origin}: {part}")
         
-        # 2030 Standard: Somatic mapping to Autonomic Response
+        # 2030 Detail: Social Weighting
+        # Human touch has a 'resonance' effect on the parasympathetic system
+        social_multiplier = 1.5 if origin == "Human" else 1.0
+        
         if part in ["head", "cheeks", "palms"]:
             # Soothing areas trigger Parasympathetic (Calming)
             await self.apply_stimulus(
                 name=f"tactile_{part}",
                 nerve_type=NerveType.PARASYMPATHETIC,
-                intensity=intensity * 0.8,
+                intensity=intensity * 0.8 * social_multiplier,
                 duration=5.0
             )
         else:
-            # Sensitive or vital areas trigger Sympathetic (Alertness)
+            # Sensitive areas trigger Sympathetic
             await self.apply_stimulus(
                 name=f"tactile_{part}",
                 nerve_type=NerveType.SYMPATHETIC,

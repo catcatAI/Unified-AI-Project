@@ -268,6 +268,21 @@ class EndocrineSystem:
             except asyncio.CancelledError:
                 pass
 
+    async def advance_time(self, seconds: float):
+        """
+        推進內分泌系統時間 (2030 Standard).
+        允許精確的激素衰減與代謝計算。
+        """
+        minutes = seconds / 60.0
+        for hormone in self.hormones.values():
+            hormone.update(minutes=minutes)
+        
+        # 同時觸發反饋調節與晝夜節律的微調
+        await self._apply_feedback_loops()
+        
+        # 根據壓力水平自動調整
+        self.stress_level = max(0.0, self.stress_level - 0.01 * minutes)
+
     async def _update_loop(self):
         """Background update loop for hormone dynamics"""
         while self._running:

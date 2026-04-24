@@ -100,9 +100,9 @@ class TactileService:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def simulate_touch(self, object_id: str, contact_point: Dict[str, Any]) -> Dict[str, Any]:
+    async def simulate_touch(self, object_id: str, contact_point: Dict[str, Any], origin: str = "System") -> Dict[str, Any]:
         """
-        Real-world touch simulation with biological feedback.
+        Real-world touch simulation with biological feedback (Identity Aware).
         Bridges tactile input to Angela's internal biological systems.
         """
         # 1. Map body parts to biological intensity
@@ -115,7 +115,11 @@ class TactileService:
             "chest": 0.8, "shoulders": 0.5
         }
         multiplier = sensitivity_map.get(part, 0.3)
-        intensity = pressure * multiplier
+        
+        # 2030 Detail: Weighting by origin
+        # Human touch is 2x more impactful on core emotions than System probes
+        origin_multiplier = 2.0 if origin == "Human" else 0.1
+        intensity = pressure * multiplier * origin_multiplier
 
         # 2. Inject stimulus into BiologicalIntegrator
         try:
@@ -135,7 +139,8 @@ class TactileService:
             await bio.nervous_system.process_tactile_input({
                 "part": part,
                 "intensity": intensity,
-                "type": contact_point.get("touch_type", "pat")
+                "type": contact_point.get("touch_type", "pat"),
+                "origin": origin
             })
             
             # Stress/Relaxation logic based on intensity (2030 Homeostasis standard)

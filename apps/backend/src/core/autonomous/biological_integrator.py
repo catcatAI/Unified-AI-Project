@@ -394,9 +394,9 @@ class BiologicalIntegrator:
             self.nervous_system.set_arousal_directly(current_arousal + adjustment)
 
         # 2. Endocrine System Metabolism (Critical detail: recovery from stress)
-        # We need to call the internal hormone update
+        # 2030 Correct Interface: Use advance_time instead of update_hormones
         try:
-            self.endocrine_system.update_hormones(time_passed=self._update_interval)
+            await self.endocrine_system.advance_time(seconds=self._update_interval)
             logger.debug(f"🧪 [Bio] Endocrine metabolism complete. Stress: {self.endocrine_system.stress_level:.2f}")
         except Exception as e:
             logger.error(f"Failed to update endocrine metabolism: {e}")
