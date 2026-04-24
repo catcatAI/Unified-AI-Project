@@ -59,19 +59,61 @@ class CerebellumEngine:
             except Exception as e:
                 logger.error(f"Failed to load motor memory: {e}")
 
-    def learn_pose(self, name: str, data: Dict[str, Any]):
+    def refine_pose(self, name: str, adjustments: Dict[str, Any]):
         """
-        [Learning] 大腦將具體的關節數據標註為一個新姿態，或優化舊有數據。
+        [Optimization] 大腦對現有姿態進行微調。
+        adjustments: {"spine": [index, value], "stiffness": delta}
         """
-        self.pose_library[name] = data
-        # 持久化學習結果
+        if name in self.pose_library:
+            pose = self.pose_library[name]
+            if "spine" in adjustments:
+                idx, val = adjustments["spine"]
+                pose["spine"][idx] += val
+            if "stiffness" in adjustments:
+                pose["stiffness"] += adjustments["stiffness"]
+            
+            logger.info(f"📈 [Cerebellum] Optimized pose '{name}': index {adjustments.get('spine')} updated.")
+            self._save_memory()
+
+    def capture_current_state(self, new_name: str, current_full_state: Dict[str, Any]):
+        """
+        [New Pose] 大腦捕捉目前的物理快照並定義為新姿態標籤。
+        """
+        self.pose_library[new_name] = {
+            "spine": current_full_state.get("theta_matrix", [0.0]*9),
+            "fingers": current_full_state.get("fingers", {"left": [0.0]*5, "right": [0.0]*5}),
+            "stiffness": current_full_state.get("stiffness", 0.5),
+            "created_at": datetime.now().isoformat()
+        }
+        logger.info(f"🆕 [Cerebellum] New pose learned via Brain capture: '{new_name}'")
+        self._save_memory()
+
+    def _save_memory(self):
+        """持久化姿態庫到硬碟"""
         try:
             os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
             with open(self.storage_path, 'w', encoding='utf-8') as f:
                 json.dump(self.pose_library, f, ensure_ascii=False, indent=2)
-            logger.info(f"🎓 [Cerebellum] Learned/Updated pose: '{name}'")
         except Exception as e:
-            logger.error(f"Motor learning persistence failed: {e}")
+            logger.error(f"Persistence failed: {e}")
+
+    def update_proprioception(self, actual_theta: List[float], external_force: float = 0.0):
+        """
+        [Proprioception] 身體自覺反饋：比較預期與實際姿勢。
+        """
+        actual_np = np.array(actual_theta)
+        error = np.linalg.norm(self.active_theta - actual_np)
+        
+        # 如果誤差持續存在，說明環境阻力大 (如撞牆或被滑鼠拖動)
+        if error > 0.5:
+            # 調高阻尼，嘗試穩定身體
+            self.damping = min(0.5, self.damping + 0.05)
+            logger.debug(f"⚖️ [Cerebellum] Proprioception warning: Pose error {error:.2f}. Increasing damping.")
+        else:
+            # 恢復自然靈韌度
+            self.damping = max(0.15, self.damping - 0.01)
+            
+        self.record_movement_error(np.mean(self.active_theta), np.mean(actual_np))
 
     def execute_command(self, pose_name: str, bio_state: Dict[str, Any]) -> Dict[str, Any]:
         """
