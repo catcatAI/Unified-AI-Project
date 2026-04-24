@@ -170,6 +170,9 @@ class AngelaRenderer(QWidget):
         dx = (self.target_pos.x() - self.angela_pos.x()) * 0.2
         self.angela_pos.setX(self.angela_pos.x() + dx)
         
+        # [Task N.12.7.c] 驅動肢體與髮絲物理動態
+        self.dna.apply_dynamics(self.breath_phase)
+        
         # 同步更新 Hitbox 位置
         self.hitbox.move(int(self.angela_pos.x()), int(self.current_y))
         

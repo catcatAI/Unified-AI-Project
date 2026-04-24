@@ -21,25 +21,27 @@ class AngelaDNA:
         self.voxels[y[0]:y[1], x[0]:x[1], z, 3] = stiff
         self.voxels[y[0]:y[1], x[0]:x[1], z, 4] = pid
 
-    def _build_volumetric_body(self):
+    def _build_volumetric_body(self, hair_offset=0.0):
         """
         [Anatomical Realization] 基於 TXT 矩陣重構 Angela 的解剖結構。
+        支援動態偏移 (hair_offset) 用於物理擺動。
         """
-        # --- 動態參數 (預留給 N.12.7.Dynamics) ---
-        self.hair_swing = 0.0 # 髮絲擺動弧度
-        self.neck_rot = 0.0   # 頸部旋轉弧度
+        # 清空畫布 (增量重繪動態層)
+        self.voxels.fill(0)
 
-        # --- Z=1: 後髮 3 區 (Back Hair - 3 segments) ---
-        # 基於 BC_Root, BC_Mid, BC_Tip 的長度 (18, 16, 16)
-        self._build_part(1, (100, 150), (20, 108), [0.8, 0.9, 1.0], 0.1, 10) # Root
-        self._build_part(1, (150, 300), (15, 113), [0.75, 0.85, 1.0], 0.1, 11) # Mid
-        self._build_part(1, (300, 380), (10, 118), [0.7, 0.8, 0.95], 0.1, 12) # Tip
+        # --- Z=1: 後髮 3 區 (Back Hair) ---
+        # 髮梢 (ID 12) 擺幅最大，髮根 (ID 10) 幾乎不動
+        s_mid = hair_offset * 1.5
+        s_tip = hair_offset * 3.0
         
-        # --- Z=2: 頸部與軀幹 (Spine & Torso) ---
-        # Cervical_Spine L:8, Px_W:12
-        self._build_part(2, (142, 150), (58, 70), [0.99, 0.98, 1.0], 0.4, 105) # Neck
-        self._build_part(2, (150, 310), (45, 83), [0.98, 0.98, 1.0], 0.5, 101) # Torso
-        self._build_part(2, (310, 384), (40, 88), [0.98, 0.98, 1.0], 0.6, 102) # Pelvis
+        self._build_part(1, (100, 150), (20, 108), [0.8, 0.9, 1.0], 0.1, 10) # Root
+        self._build_part(1, (150, 300), (int(15+s_mid), int(113+s_mid)), [0.75, 0.85, 1.0], 0.1, 11) # Mid
+        self._build_part(1, (300, 380), (int(10+s_tip), int(118+s_tip)), [0.7, 0.8, 0.95], 0.1, 12) # Tip
+        
+        # --- Z=2: 頸部與軀幹 (固定層) ---
+        self._build_part(2, (142, 150), (58, 70), [0.99, 0.98, 1.0], 0.4, 105)
+        self._build_part(2, (150, 310), (45, 83), [0.98, 0.98, 1.0], 0.5, 101)
+        self._build_part(2, (310, 384), (40, 88), [0.98, 0.98, 1.0], 0.6, 102)
         
         # --- Z=3: 制服與外殼 ---
         self._build_part(3, (160, 300), (44, 84), [0.9, 0.9, 0.95], 0.8, 401)
@@ -48,23 +50,25 @@ class AngelaDNA:
         self._build_part(4, (140, 240), (25, 45), [0.98, 0.98, 1.0], 0.4, 201)
         self._build_part(4, (140, 240), (83, 103), [0.98, 0.98, 1.0], 0.4, 202)
         
-        # --- Z=5: 頭部五官與前髮 (Front Hair - 2 segments) ---
-        self._build_part(5, (70, 142), (40, 88), [0.99, 0.99, 1.0], 0.3, 501) # Face
-        self._build_part(5, (100, 115), (50, 60), [1.0, 0.7, 0.2], 0.2, 502) # L_Eye
-        self._build_part(5, (100, 115), (68, 78), [1.0, 0.7, 0.2], 0.2, 503) # R_Eye
-        self._build_part(5, (130, 133), (58, 70), [0.9, 0.4, 0.4], 0.1, 504) # Mouth
+        # --- Z=5: 頭部五官與前髮 ---
+        self._build_part(5, (70, 142), (40, 88), [0.99, 0.99, 1.0], 0.3, 501)
+        self._build_part(5, (100, 115), (50, 60), [1.0, 0.7, 0.2], 0.2, 502)
+        self._build_part(5, (100, 115), (68, 78), [1.0, 0.7, 0.2], 0.2, 503)
+        self._build_part(5, (130, 133), (58, 70), [0.9, 0.4, 0.4], 0.1, 504)
         
-        # 前髮 FC_Root, FC_Tip (L:8, 6)
-        self._build_part(5, (65, 100), (35, 93), [0.85, 0.95, 1.0], 0.1, 20) # Bangs_Root
-        self._build_part(5, (100, 115), (38, 90), [0.8, 0.9, 1.0], 0.05, 21) # Bangs_Tip
+        # 前髮擺動 (s_mid 係數)
+        self._build_part(5, (65, 100), (int(35+s_mid), int(93+s_mid)), [0.85, 0.95, 1.0], 0.1, 20)
+        self._build_part(5, (100, 115), (int(38+s_tip), int(90+s_tip)), [0.8, 0.9, 1.0], 0.05, 21)
 
     def apply_dynamics(self, phase):
         """
-        [N.12.7] 應用動態物理影響：頭髮慣性擺動。
+        [N.12.7.b] 實施分段慣性擺動公式。
         """
-        # 此處會根據 phase (sin/cos) 微調髮絲與肢體的 X 軸偏移
-        # 實作細節留給下一輪 Exec 增量
-        pass
+        import math
+        # 核心公式：Swing = sin(Phase)
+        # 我們根據呼吸相位來驅動頭髮微擺
+        current_swing = math.sin(phase) * 2.0
+        self._build_volumetric_body(hair_offset=current_swing)
 
     def _apply_fascia_shadows(self, render_matrix):
         """
