@@ -44,6 +44,6 @@
 
 ---
 
-## 6. 小腦與自律演化 (預留區)
-*   **`cerebellum_engine.py`**: [N.16.1] 預計存放路徑：`apps/backend/src/core/autonomous/cerebellum_engine.py`。
+## 6. 小腦與自律演化
+*   **`cerebellum_engine.py`**: [N.16.1] 小腦單例、脊椎控制矩陣與誤差日誌實作於 L15-L60。
 *   **`evolution_engine.py`**: [N.5.4] 性格演化與持久化 (待進一步映射)。

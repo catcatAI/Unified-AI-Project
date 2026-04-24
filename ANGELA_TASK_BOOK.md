@@ -72,7 +72,8 @@
     *   `+N14.1.b`: 實施 1.5x 人類交互社交共鳴增益。 (已凍結)
 
 ### [Task N.16] 小腦運動神經系統 (Cerebellum AI)
-*   **[Task N.16.1] 小腦核心初始化**: 建立 `CerebellumEngine` 與神經權重矩陣。 (實作中)
+*   **[Task N.16.1] 小腦核心初始化**: 建立 `CerebellumEngine` 與神經權重矩陣。 (已凍結)
+*   **[Task N.16.1.2] 神經與心跳接通**: 將小腦接入 Metabolic Heartbeat 循環。 (實作中)
 *   **[Task N.16.2] 身體自覺反饋流**: 接通 DNA 與 Heartbeat 的動態數據。 (未完成)
 
 ---

@@ -13,24 +13,60 @@ class MetabolicHeartbeat:
         self.update_interval = update_interval
         self.bio_integrator = BiologicalIntegrator()
         self.os_bridge = OSBridgeAdapter()
+        
+        # 2030 Standard: Cerebellum Integration
+        from core.autonomous.cerebellum_engine import CerebellumEngine
+        self.cerebellum = CerebellumEngine()
+        
         self._running = False
         self._task: Optional[asyncio.Task] = None
         self.start_time = datetime.now()
         
-        # --- NEW: Spatial State (Angela's physical presence) ---
-        self.screen_w = 1920 # Default, will be updated by renderer
+        # --- Spatial State (Angela's physical presence) ---
+        self.screen_w = 1920 
         self.screen_h = 1080
         self.x = 200.0
-        self.y = 0.0 # Will be aligned by ground_y
+        self.y = 0.0 
         self.target_x = 200.0
         self.velocity = 0.05
+        self.posture = {"spine_bend": 0.0, "theta_matrix": [0.0]*9}
+
+    async def _integration_loop(self):
+        while self._running:
+            try:
+                # 1. Metabolism Update (Homeostasis)
+                await self.bio_integrator._apply_homeostasis()
+                
+                # 2. Cerebellum Update (Posture Calculation)
+                bio_state = self.bio_integrator.get_biological_state()
+                self.posture = self.cerebellum.calculate_posture(
+                    target_x=self.target_x,
+                    current_x=self.x,
+                    bio_state=bio_state
+                )
+                
+                # 3. Spatial Movement Execution
+                dist = self.target_x - self.x
+                if abs(dist) > 1.0:
+                    # 速度受壓力 (stress) 與 姿態係數 (bend) 影響
+                    stress = bio_state.get("stress_level", 0.0)
+                    speed = self.velocity * (1.0 - stress * 0.5)
+                    self.x += dist * speed
+                
+                # 每 0.1s 執行一次神經整合
+                await asyncio.sleep(0.1)
+            except Exception as e:
+                logger.error(f"[Cerebellum-Sync] Loop error: {e}")
+                await asyncio.sleep(1)
 
     async def start(self):
         if self._running:
             return
         self._running = True
         await self.bio_integrator.initialize()
+        # 啟動雙重循環：1. 生物/代謝循環 2. 小腦/神經整合循環
         self._task = asyncio.create_task(self._run_loop())
+        self._integration_task = asyncio.create_task(self._integration_loop())
         logger.info(f"💓 Angela's Heartbeat started. Birth: {self.start_time}")
 
     async def stop(self):
