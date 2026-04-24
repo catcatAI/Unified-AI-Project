@@ -5,9 +5,9 @@ import json
 import asyncio
 import time
 from datetime import datetime
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QVBoxLayout
+from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QVBoxLayout, QMenu, QSystemTrayIcon
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QRect, QPoint, QPointF
-from PyQt6.QtGui import QPainter, QColor, QFont, QGuiApplication, QImage
+from PyQt6.QtGui import QPainter, QColor, QFont, QGuiApplication, QImage, QIcon, QPixmap
 import websockets
 
 from ui_config import UIConfig
@@ -30,40 +30,46 @@ class AngelaClient(QThread):
         while self._running:
             try:
                 self.event_loop.run_until_complete(self._listen())
-            except (websockets.exceptions.ConnectionClosedError, ConnectionRefusedError, Exception) as e:
-                print(f"🔄 [Network] Connection lost: {e}. Retrying in {UIConfig.WS_RECONNECT_DELAY}s...")
+            except Exception as e:
+                print(f"🔄 [Network] Reconnecting: {e}")
                 time.sleep(UIConfig.WS_RECONNECT_DELAY)
 
     async def _listen(self):
         async with websockets.connect("ws://127.0.0.1:8000/ws", open_timeout=30) as ws:
             print("🟢 [Network] Connection established.")
             self.ws = ws
-            # 啟動背景心跳發送器
             asyncio.create_task(self._send_heartbeat())
             while self._running:
                 msg = await ws.recv()
                 self.state_updated.emit(json.loads(msg))
 
     async def _send_heartbeat(self):
-        """定期發送心跳以維持連線並通報在線"""
         while self._running and hasattr(self, 'ws'):
             try:
-                await self.ws.send(json.dumps({"type": "heartbeat", "timestamp": datetime.now().isoformat()}))
+                await self.ws.send(json.dumps({"type": "heartbeat"}))
                 await asyncio.sleep(30)
-            except Exception:
-                break
+            except: break
 
     async def send_msg(self, text):
         if hasattr(self, 'ws'):
-            payload = {
-                "type": "chat_message",
-                "data": {
-                    "content": text,
-                    "user_name": "User",
-                    "timestamp": datetime.now().isoformat()
-                }
-            }
+            payload = {"type": "chat_message", "data": {"content": text, "user_name": "User"}}
             await self.ws.send(json.dumps(payload))
+
+class AngelaHitbox(QWidget):
+    """
+    這是一個不可見的、跟隨 Angela 移動的碰撞箱。
+    負責攔截滑鼠事件，不擋住螢幕其他區域。
+    """
+    clicked = pyqtSignal(Qt.MouseButton, QPoint)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def mousePressEvent(self, event):
+        self.clicked.emit(event.button(), event.globalPosition().toPoint())
 
 class AngelaRenderer(QWidget):
     def __init__(self):
@@ -73,27 +79,36 @@ class AngelaRenderer(QWidget):
         self.dna = AngelaDNA()
         self.breath_phase = 0.0
         
-        # 1. 幾何校準
+        # 1. 系統幾何
         screen = QGuiApplication.primaryScreen().availableGeometry()
         self.screen_w, self.screen_h = screen.width(), screen.height()
         self.ground_y = screen.y() + screen.height() - UIConfig.ANGELA_HEIGHT
         
-        # 2. 視窗設置 (全螢幕透明)
+        # 2. 全螢幕透明設置 (開啟點擊穿透)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents) # 核心修復：全螢幕可穿透
         
         hwnd = int(self.winId())
         make_window_transparent(hwnd)
         self.setGeometry(0, 0, self.screen_w, self.screen_h)
         
-        # 3. 初始座標
+        # 3. 實體化碰撞箱 (獨立視窗，不設點擊穿透)
+        self.hitbox = AngelaHitbox(None) # 必須是獨立窗口才能攔截事件
+        self.hitbox.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        self.hitbox.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.hitbox.setGeometry(200, int(self.ground_y), UIConfig.ANGELA_WIDTH, UIConfig.ANGELA_HEIGHT)
+        self.hitbox.clicked.connect(self._on_angela_clicked)
+        self.hitbox.show()
+        
         self.angela_pos = QPointF(200, self.ground_y)
         self.target_pos = QPointF(200, self.ground_y)
         self.current_y = self.ground_y
         
-        # 4. 服務啟動
+        self._init_system_tray()
+        self._init_tiered_menu()
+        
         self.client = AngelaClient()
         self.client.state_updated.connect(self.update_state)
         self.client.start()
@@ -102,44 +117,62 @@ class AngelaRenderer(QWidget):
         self.timer.timeout.connect(self.physics_and_render_loop)
         self.timer.start(UIConfig.RENDER_INTERVAL)
 
+    def _init_system_tray(self):
+        self.tray = QSystemTrayIcon(self)
+        pixmap = QPixmap(32, 32)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        p = QPainter(pixmap)
+        p.setBrush(QColor(42, 75, 140)); p.setPen(Qt.PenStyle.NoPen)
+        p.drawRect(4, 4, 24, 24)
+        p.setPen(QColor(255, 255, 255)); p.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        p.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "A")
+        p.end()
+        self.tray.setIcon(QIcon(pixmap))
+        self.tray.activated.connect(self._on_tray_activated)
+        self.tray.show()
+
+    def _init_tiered_menu(self):
+        self.menu = QMenu()
+        ai = self.menu.addMenu("AI"); ai.addAction("LLM Control"); ai.addAction("RAG Knowledge")
+        al = self.menu.addMenu("AL"); al.addAction("Bionics Dynamics"); al.addAction("Pixel Physics")
+        soul = self.menu.addMenu("Soul"); soul.addAction("Angela Core")
+        ui = self.menu.addMenu("UI"); ui.addAction("Default Render")
+        self.menu.addSeparator()
+        self.menu.addAction("Exit").triggered.connect(QApplication.instance().quit)
+
+    def _on_tray_activated(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger: self.show_native_input()
+
+    def _on_angela_clicked(self, button, pos):
+        if button == Qt.MouseButton.LeftButton:
+            print("💖 [Tactile] User touched Angela.")
+            self.add_new_bubble("(觸摸反應)", "Angela")
+        elif button == Qt.MouseButton.RightButton:
+            self.menu.exec(pos)
+
     def update_state(self, new_state):
         msg_type = new_state.get("type")
         if msg_type == "state_update":
             data = new_state.get("data", {})
-            # 修正：對齊後端最新的 dominant_emotion 欄位
-            if "gamma" in data: 
-                self.state["emotion"] = data["gamma"].get("dominant_emotion", "neutral")
-            if "alpha" in data: 
-                self.state["stress"] = data["alpha"].get("stress", 0.0)
-            if "spatial" in data: 
-                self.target_pos.setX(float(data["spatial"].get("x", self.angela_pos.x())))
-        elif msg_type == "biological_feedback":
-            reflex = new_state.get("reflex", {})
-            expr = reflex.get("expression", self.state["emotion"])
-            self.state["emotion"] = expr
-            self.add_new_bubble(f"({expr}!)", "Angela")
+            if "gamma" in data: self.state["emotion"] = data["gamma"].get("dominant_emotion", "neutral")
+            if "alpha" in data: self.state["stress"] = data["alpha"].get("stress", 0.0)
+            if "spatial" in data: self.target_pos.setX(float(data["spatial"].get("x", self.angela_pos.x())))
         self.update()
 
     def add_new_bubble(self, text, origin):
-        new_bubble = {
-            "text": text,
-            "origin": origin,
-            "current_pos": QPointF(self.angela_pos.x(), self.current_y)
-        }
+        new_bubble = {"text": text, "origin": origin, "current_pos": QPointF(self.angela_pos.x(), self.current_y)}
         self.bubble_stack.append(new_bubble)
         if len(self.bubble_stack) > 3: self.bubble_stack.pop(0)
 
     def physics_and_render_loop(self):
-        # 1. 呼吸動畫 (正弦波)
         self.breath_phase += 0.1
-        breath_offset = np.sin(self.breath_phase) * 3.0
-        self.current_y = self.ground_y + breath_offset
-
-        # 2. 水平座標追隨
+        self.current_y = self.ground_y + np.sin(self.breath_phase) * 3.0
         dx = (self.target_pos.x() - self.angela_pos.x()) * 0.2
         self.angela_pos.setX(self.angela_pos.x() + dx)
         
-        # 3. 氣泡追隨
+        # 同步更新 Hitbox 位置
+        self.hitbox.move(int(self.angela_pos.x()), int(self.current_y))
+        
         for bubble in self.bubble_stack:
             target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)
             target_bubble_y = self.current_y - 40
@@ -147,27 +180,18 @@ class AngelaRenderer(QWidget):
             bubble["current_pos"] += diff * 0.1
         self.update()
 
-    def mousePressEvent(self, event):
-        p = event.position()
-        if QRect(int(self.angela_pos.x()), int(self.current_y), UIConfig.ANGELA_WIDTH, UIConfig.ANGELA_HEIGHT).contains(int(p.x()), int(p.y())):
-            self.show_native_input()
-
     def show_native_input(self):
         self.input_win = QWidget()
         self.input_win.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.input_win.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.input_win.setAttribute(Qt.WidgetAttribute.WA_InputMethodEnabled)
-        layout = QVBoxLayout()
-        self.entry = QLineEdit()
-        self.entry.setPlaceholderText("輸入訊息...")
+        layout = QVBoxLayout(); self.entry = QLineEdit()
+        self.entry.setPlaceholderText("意識通訊中...")
         self.entry.setStyleSheet("background: white; color: black; border: 2px solid #2A4B8C; border-radius: 8px; padding: 8px; font-weight: bold;")
         self.entry.returnPressed.connect(self.confirm_user_input)
-        layout.addWidget(self.entry)
-        self.input_win.setLayout(layout)
-        self.input_win.move(int(self.angela_pos.x() - 50), int(self.current_y - 70))
-        self.input_win.show()
-        self.input_win.activateWindow()
-        self.entry.setFocus()
+        layout.addWidget(self.entry); self.input_win.setLayout(layout)
+        self.input_win.move(int(self.screen_w // 2 - 100), int(self.screen_h - 150))
+        self.input_win.show(); self.input_win.activateWindow(); self.entry.setFocus()
 
     def confirm_user_input(self):
         text = self.entry.text().strip()
@@ -183,33 +207,12 @@ class AngelaRenderer(QWidget):
         painter.fillRect(self.rect(), QColor(0, 0, 0, 0))
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
         
-        ax = int(self.angela_pos.x())
-        ay = int(self.current_y)
-        
-        # 1. 獲取 DNA 與生物狀態
+        ax, ay = int(self.angela_pos.x()), int(self.current_y)
         pixel_data = self.dna.get_render_ready_matrix()
         h, w, c = pixel_data.shape
-        emotion = self.state.get("emotion", "neutral")
-        stress = self.state.get("stress", 0.0)
-        
-        # 2030 細節：根據生物狀態進行「濾鏡級」處理
-        if emotion == "pained" or stress > 0.8:
-            # 痛覺/極高壓：矩陣整體泛紅
-            pixel_data[:, :, 0] = np.clip(pixel_data[:, :, 0] * 1.5, 0, 255)
-        
         qimg = QImage(pixel_data.data, w, h, w * c, QImage.Format.Format_RGB888)
         painter.drawImage(ax, ay, qimg)
         
-        # 2030 細節：流汗模擬 (像素液滴)
-        if stress > 0.7:
-            painter.setBrush(QColor(100, 200, 255, 180)) # 淡藍色汗水
-            import random
-            for _ in range(3):
-                px = ax + random.randint(10, UIConfig.ANGELA_WIDTH - 10)
-                py = ay + random.randint(50, 150)
-                painter.drawRect(px, py, 4, 8)
-
-        # 2. 氣泡渲染
         offset_y = 0
         for bubble in reversed(self.bubble_stack):
             is_human = bubble["origin"] == "Human"
@@ -222,14 +225,13 @@ class AngelaRenderer(QWidget):
             text_rect = metrics.boundingRect(bubble["text"])
             bw, bh = text_rect.width() + 24, text_rect.height() + 14
             bx, by = int(bubble["current_pos"].x() - (bw // 2)), int(bubble["current_pos"].y() - bh - offset_y)
-            painter.setBrush(bg_color)
-            painter.drawRoundedRect(QRect(bx, by, bw, bh), UIConfig.BUBBLE_CORNER_RADIUS, UIConfig.BUBBLE_CORNER_RADIUS)
-            painter.setPen(QColor(0, 0, 0))
-            painter.drawText(QRect(bx, by, bw, bh), Qt.AlignmentFlag.AlignCenter, bubble["text"])
+            painter.setBrush(bg_color); painter.drawRoundedRect(QRect(bx, by, bw, bh), UIConfig.BUBBLE_CORNER_RADIUS, UIConfig.BUBBLE_CORNER_RADIUS)
+            painter.setPen(QColor(0, 0, 0)); painter.drawText(QRect(bx, by, bw, bh), Qt.AlignmentFlag.AlignCenter, bubble["text"])
             offset_y += bh + 10
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
     renderer = AngelaRenderer()
     renderer.show()
     sys.exit(app.exec())

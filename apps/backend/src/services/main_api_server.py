@@ -1306,10 +1306,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
 
                 elif data.get("type") == "tactile_event":
-                    # 2030 Standard: Real-time Reflex Loop
+                    # 2030 Standard: Identity-aware Reflex Loop
                     tactile_data = data.get("data", {})
                     tactile_service = get_tactile_service()
-                    res = await tactile_service.simulate_touch("user_hand", tactile_data)
+                    res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
                     
                     # Direct reflex response for 2030 responsiveness
                     await manager.send_personal_message({

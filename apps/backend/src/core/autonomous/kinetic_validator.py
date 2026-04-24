@@ -1,71 +1,50 @@
-"""
-Angela AI v6.0 - Kinetic Validator
-运动学验证器
-
-Ensures that Angela's Live2D/3D movements are biologically and physically valid.
-Prevents 'robotic' or 'glitchy' transitions and manages physical strain.
-"""
-
-from __future__ import annotations
-from typing import Dict, Any, List, Optional, Tuple
 import logging
+import math
+from typing import Dict, Any, Tuple
 
 logger = logging.getLogger(__name__)
 
-
 class KineticValidator:
     """
-    Validator for physical and biological realism in actions.
+    Angela 的動力學驗證器 (2030 Standard)
+    確保肢體動作與位移符合物理極限與生物約束。
     """
-
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
-        # Default physical limits
-        self.limits = {
-            "head_x": (-30, 30),
-            "head_y": (-30, 30),
-            "head_z": (-30, 30),
-            "body_x": (-10, 10),
-            "eye_ball_x": (-1, 1),
-            "eye_ball_y": (-1, 1),
-        }
+        # 根據「四肢實體約束矩陣」定義的物理極限
+        self.max_velocity = 500.0 # px/s
+        self.max_acceleration = 200.0 # px/s^2
+        self.last_pos = None
+        self.last_time = None
 
-    def validate_action(
-        self, action_name: str, parameters: Dict[str, Any]
-    ) -> Tuple[bool, Optional[str]]:
+    def validate_action(self, action_name: str, parameters: Dict[str, Any]) -> Tuple[bool, str]:
         """
-        Checks if action parameters violate physical/biological limits.
+        驗證動作是否符合動力學限制。
         """
-        # 1. Pose Validation (Live2D Parameters)
-        if "params" in parameters and isinstance(parameters["params"], dict):
-            params = parameters["params"]
-            for param, value in params.items():
-                if param in self.limits:
-                    limit_min, limit_max = self.limits[param]
-                    if value < limit_min or value > limit_max:
-                        return (
-                            False,
-                            f"Physical limit exceeded: {param}={value} (Limit: {limit_min} to {limit_max})",
-                        )
+        if action_name == "move":
+            return self._validate_movement(parameters)
+        return True, ""
 
-        # 2. Transition Velocity Validation
-        # (This would require state tracking of previous poses, simplified here)
+    def _validate_movement(self, params: Dict[str, Any]) -> Tuple[bool, str]:
+        import time
+        current_time = time.time()
+        tx, ty = params.get("x", 0), params.get("y", 0)
 
-        return True, None
+        if self.last_pos is not None and self.last_time is not None:
+            dt = current_time - self.last_time
+            if dt > 0:
+                dist = math.sqrt((tx - self.last_pos[0])**2 + (ty - self.last_pos[1])**2)
+                velocity = dist / dt
+                if velocity > self.max_velocity:
+                    return False, f"Velocity too high ({velocity:.1f} > {self.max_velocity})"
 
-    def apply_biological_strain(
-        self, parameters: Dict[str, Any], strain_factor: float
-    ) -> Dict[str, Any]:
-        """
-        Adjusts parameters to reflect physical 'strain' or 'fatigue'.
-        High strain might reduce the range of motion.
-        """
-        if "params" in parameters and isinstance(parameters["params"], dict):
-            params = parameters["params"]
-            # Reduce range of motion by strain factor
-            reduction = 1.0 - (strain_factor * 0.5)
-            for param in params:
-                if param in self.limits:
-                    params[param] *= reduction
+        self.last_pos = (tx, ty)
+        self.last_time = current_time
+        return True, "Success"
 
-        return parameters
+    def calculate_strain(self, velocity: float) -> float:
+        """根據速度計算產生的生理負擔 (Strain)"""
+        # 2030 標準：劇烈運動增加壓力
+        if velocity > self.max_velocity * 0.8:
+            return 0.15 # 顯著壓力
+        return 0.01
