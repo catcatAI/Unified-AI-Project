@@ -52,8 +52,24 @@ class AngelaDNA:
         # D. 薦骨與骨盆 (Pelvis): 長度 20px, 寬度 32px (Rigid)
         self._build_part(2, (226, 246), (48, 80), [0.98, 0.98, 1.0], 0.6, 107)
 
-        # E. 下肢基座 (下半身重構為點陣鏈)
-        self._build_part(2, (246, 384), (44, 84), [0.98, 0.98, 1.0], 0.6, 102)
+        # --- Z=2: 精密下肢與雙腳 (Legs & Feet) ---
+        # 102: 骨盆/下半身基座
+        self._build_part(2, (246, 360), (44, 84), [0.98, 0.98, 1.0], 0.6, 102)
+        
+        # 實體化雙腳 (左腳 ID: 601-605, 右腳 ID: 611-615)
+        for i, side in enumerate([-1, 1]): # -1 為左, 1 為右
+            base_x = 64 + side * 15 # 腳踝起始中軸
+            offset = 10 if side == 1 else 0
+            fid = 601 if side == -1 else 611
+            
+            # 腳踝與腳跟 (Ankle & Heel, L:6, Px_W:10)
+            self._build_part(2, (360, 366), (base_x - 5, base_x + 5), [0.98, 0.98, 1.0], 0.7, fid)
+            # 腳掌中段 (Midfoot, L:10, Px_W:9)
+            self._build_part(2, (366, 376), (base_x - 4, base_x + 5), [0.98, 0.98, 1.0], 0.6, fid + 1)
+            # 大腳趾 (Big Toe, L:6, Px_W:3)
+            self._build_part(2, (376, 382), (base_x - (side*2), base_x - (side*2) + 3), [0.97, 0.97, 1.0], 0.4, fid + 2)
+            # 小腳趾群組 (Small Toes Group, L:5, Px_W:7)
+            self._build_part(2, (376, 381), (base_x + (side*1), base_x + (side*1) + 7*side if side==1 else base_x-6), [0.97, 0.97, 1.0], 0.4, fid + 3)
         
         # --- Z=3: 制服 (隨胸腔縮放) ---
         uw = tw + 2
