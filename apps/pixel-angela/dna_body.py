@@ -131,16 +131,46 @@ class AngelaDNA:
         empty_space = ~ (leg_l | leg_r)
         render_matrix[gap_shadow & empty_space] = [15, 20, 40]
 
-    def get_flattened_frame(self):
+    def _apply_secretions(self, render_matrix, bio_state):
+        """
+        [N.12.11] 實施電子分泌物渲染：紅暈、汗水、淚水。
+        """
+        stress = bio_state.get("stress", 0.0)
+        emotion = bio_state.get("emotion", "neutral")
+        
+        # 1. 紅暈 (Blush) - 基於 Arousal / Stress
+        if stress > 0.4:
+            # 臉部頰部座標 (L110-120, L55-65/L75-85)
+            alpha = min(0.6, (stress - 0.4) * 1.0)
+            for y, x in [(110, 58), (110, 75)]: # 頰點
+                render_matrix[y:y+3, x:x+6] = (render_matrix[y:y+3, x:x+6] * (1-alpha) + 
+                                              np.array([255, 150, 150]) * alpha).astype(np.uint8)
+
+        # 2. 汗水 (Sweat) - 基於 Stress
+        if stress > 0.7:
+            # 隨機產生汗珠像素在頸部或額頭
+            drop_y = 75 + int(datetime.now().microsecond % 20)
+            drop_x = 60 + int(datetime.now().second % 10)
+            render_matrix[drop_y:drop_y+2, drop_x] = [200, 230, 255] # 淡藍色汗滴
+            
+        # 3. 淚水 (Tears) - 極端壓力
+        if stress > 0.9:
+            render_matrix[115:125, 52:54] = [220, 240, 255]
+            render_matrix[115:125, 76:78] = [220, 240, 255]
+
+    def get_flattened_frame(self, bio_state=None):
         render = np.zeros((self.height, self.width, 3), dtype=np.uint8)
-        # Z-Buffer 投影 (Z=1 到 Z=5)
         for z in range(1, 6):
             mask = self.voxels[:, :, z, 4] > 0
             color_data = (self.voxels[:, :, z, :3] * 255).astype(np.uint8)
             render[mask] = color_data[mask]
         
-        # 注入動態陰影
         self._apply_fascia_shadows(render)
+        
+        # --- NEW: ACTIVE SECRETIONS ---
+        if bio_state:
+            self._apply_secretions(render, bio_state)
+            
         return render
 
     def get_render_ready_matrix(self):
