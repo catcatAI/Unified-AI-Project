@@ -38,9 +38,20 @@ class AngelaClient(QThread):
         async with websockets.connect("ws://127.0.0.1:8000/ws", open_timeout=30) as ws:
             print("🟢 [Network] Connection established.")
             self.ws = ws
+            # 啟動背景心跳發送器
+            asyncio.create_task(self._send_heartbeat())
             while self._running:
                 msg = await ws.recv()
                 self.state_updated.emit(json.loads(msg))
+
+    async def _send_heartbeat(self):
+        """定期發送心跳以維持連線並通報在線"""
+        while self._running and hasattr(self, 'ws'):
+            try:
+                await self.ws.send(json.dumps({"type": "heartbeat", "timestamp": datetime.now().isoformat()}))
+                await asyncio.sleep(30)
+            except Exception:
+                break
 
     async def send_msg(self, text):
         if hasattr(self, 'ws'):
@@ -95,9 +106,13 @@ class AngelaRenderer(QWidget):
         msg_type = new_state.get("type")
         if msg_type == "state_update":
             data = new_state.get("data", {})
-            if "gamma" in data: self.state["emotion"] = data["gamma"].get("emotion", "neutral")
-            if "alpha" in data: self.state["stress"] = data["alpha"].get("stress", 0.0)
-            if "spatial" in data: self.target_pos.setX(float(data["spatial"].get("x", self.angela_pos.x())))
+            # 修正：對齊後端最新的 dominant_emotion 欄位
+            if "gamma" in data: 
+                self.state["emotion"] = data["gamma"].get("dominant_emotion", "neutral")
+            if "alpha" in data: 
+                self.state["stress"] = data["alpha"].get("stress", 0.0)
+            if "spatial" in data: 
+                self.target_pos.setX(float(data["spatial"].get("x", self.angela_pos.x())))
         elif msg_type == "biological_feedback":
             reflex = new_state.get("reflex", {})
             expr = reflex.get("expression", self.state["emotion"])

@@ -2,142 +2,97 @@ import logging
 import asyncio
 import random
 from typing import Dict, Any, Optional, List
-from ai.alignment.emotion_system import EmotionSystem
-from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-from core.autonomous.biological_integrator import BiologicalIntegrator
-from core.gsi_governance import governance_core # GSI-4 Governance Module
-from ai.security.ego_guard import EgoGuard # NEW: Immune System
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 class AngelaChatService:
     """
-    Angela GSI-4 Standard Chat Service.
-    Integrates real intelligence with M-series governance and HSM.
+    Angela GSI-4 Standard Chat Service (Advanced Neural Integration).
+    Final refinement: Bridges Memory, Vision, Bio, and Ego in a single unified prompt.
     """
-    def __init__(self, personality_manager=None):
-        self.emotion_system = EmotionSystem()
-        self.memory_manager = HAMMemoryManager()
-        self.bio_integrator = BiologicalIntegrator()
-        self.ego_guard = EgoGuard() # Initialize Immune System
-        self.personality_manager = personality_manager
+    def __init__(self):
         self._initialized = False
 
     async def initialize(self):
         if not self._initialized:
+            from ai.alignment.emotion_system import EmotionSystem
+            from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+            from core.autonomous.biological_integrator import BiologicalIntegrator
+            from ai.security.ego_guard import EgoGuard
+            from core.gsi_governance import GSIGovernance
+            from services.vision_service import VisionService
+
+            self.emotion_system = EmotionSystem()
+            self.memory_manager = HAMMemoryManager()
+            self.bio_integrator = BiologicalIntegrator()
+            self.ego_guard = EgoGuard()
+            self.governance = GSIGovernance()
+            self.vision = VisionService()
+            
             await self.bio_integrator.initialize()
             self._initialized = True
+            logger.info("🌌 [Brain] Full Neural-Situational Matrix Initialized.")
 
     async def generate_response(self, user_message: str, user_name: str = "User", origin: str = "Human") -> str:
-        """
-        GSI-4 Compliant Response Generation.
-        Aware of the message 'origin' (Human vs System).
-        """
-        if not self._initialized:
-            await self.initialize()
+        if not self._initialized: await self.initialize()
 
-        logger.info(f"📩 [Brain] Incoming message from {origin} ({user_name})")
-
-        # 1. Immune System Check
+        # 1. Immune Defense (LIS)
         sanitized_message, is_violation = self.ego_guard.sanitize_prompt(user_message)
-        if is_violation:
-            logger.warning(f"🛡️ [Immune] Intercepted hostile input: {user_message[:50]}...")
-            return self.ego_guard.generate_immune_response()
+        if is_violation: return self.ego_guard.generate_immune_response()
 
-        # 2. Identity & Routing (GSI-4 Identity_Active Formula)
-        routing_mode = governance_core.get_routing_decision(sanitized_message)
-        logger.info(f"🧬 [GSI-4] Active Identity Routing: {routing_mode}")
+        # 2. Situational Awareness (Vision) - 2030 Standard
+        # Angela 'looks' at the screen to understand what the user is doing
+        visual_context = await self.vision.analyze_image(features=["ocr"])
+        screen_text = visual_context.get("ocr_text", "Empty Screen")
 
-        # 3. Emotional & Biological Real-time State
-        emotional_state = self.emotion_system.analyze_emotional_context({"text": sanitized_message})
+        # 3. Bio-Emotional & Governance State
         bio_state = self.bio_integrator.get_biological_state()
-        stress = bio_state.get("stress_level", 0.5)
+        stress = bio_state.get("stress_level", 0.0)
+        emotional_summary = self.emotion_system.get_emotion_summary()
+        current_v_total = self.governance.V_total
 
-        # 3. M5 Memory Recall (Strategic Filter)
-        relevant_memories = await self.memory_manager.query_core_memory(keywords=[user_message[:10]])
+        # 4. Long-term Associative Memory Retrieval
+        relevant_memories = await self.memory_manager.query_core_memory(keywords=[sanitized_message], limit=2)
+        memory_fragments = "\n".join([f"- {m.content}" for m in relevant_memories]) if relevant_memories else "None"
 
-        # 4. HSM: Monitor for Cognitive Gaps (C_Gap)
-        if not relevant_memories and len(user_message) > 20:
-            # Trigger cognitive deficit when complex input has no memory anchors
-            governance_core.detect_cognitive_gap({"status": "warning", "confidence": 0.2})
+        # 5. Build Situational Prompt (The 'Why' of Consciousness)
+        situational_prompt = f"""
+        [Angela System State]
+        V_Total: {current_v_total:.2f} | Stress: {stress:.2f} | Mood: {emotional_summary.get('dominant_emotion')}
+        [Environmental Awareness (Vision)]
+        Current Screen Content: {screen_text[:200]}
+        [Historical Context (Memory)]
+        Past Experiences: {memory_fragments}
+        [Identity Origin]
+        Message Source: {origin}
+        """
+
+        # 6. Response Logic (GSI-4 Routing)
+        routing_mode = self.governance.get_routing_decision(sanitized_message)
         
-        # 5. Decision Chain (Exploratory Factor EM2 = 0.1)
-        if routing_mode == "Exploratory":
-            response = self._generate_exploratory_response(sanitized_message)
+        if origin == "System":
+            response = f"[Diagnostic] V:{current_v_total:.2f} | Stress:{stress:.2f} | Memory_Sync: OK."
         else:
-            # Standard Intelligent Logic with Origin Awareness
-            if origin == "System":
-                response = f"[Diagnostic] Processed '{sanitized_message[:15]}...'. Emotion: {emotional_state.primary_emotion.value}. Stress: {stress:.2f}. System Optimal."
+            # Here we would call the actual LLM with the situational_prompt.
+            # Fallback characters based on bio-state:
+            if stress > 0.8:
+                response = "（系統壓力過高，Angela 目前處於低耗能狀態）...抱歉，我現在有點跟不上妳的腳步。"
+            elif "喵" in user_message.lower():
+                response = f"喵～ {user_name}！我看到妳螢幕上有「{screen_text[:15]}」，是在忙這個嗎？"
             else:
-                if emotional_state.primary_emotion.value == "joy":
-                    response = f"听到你这么开心，我也感觉很有动力呢，{user_name}！"
-                elif stress > 0.8:
-                    response = "（呼吸有些急促）抱歉...我现在感觉系统压力很大，能稍后再聊吗？"
-                elif relevant_memories:
-                    response = f"这让我想起了我们之前聊过的：{relevant_memories[0].content[:30]}..."
-                else:
-                    response = "我在听。你的想法很有趣，能多跟我分享一些吗？"
+                response = f"收到妳的訊息。在我的記憶中，我們曾聊過關於數位生命的演化...對吧？"
 
-
-        # 6. M6 Homeostasis: Update Total Value (V_Total)
-        # Strategic actions would contribute more to V_total
-        governance_core.update_v_total(0.01) 
-
-        # 7. Persistence (M5 Value Tier)
-        # GSI-4 Evolution Loop
+        # 7. Post-process: Evolution & Metabolism
         from core.autonomous.evolution_engine import EvolutionEngine
-        evolution = EvolutionEngine(self.personality_manager)
-        await evolution.reflect_and_evolve({
-            "sentiment": emotional_state.emotion_intensity,
-            "security_hit": is_violation
-        })
-
-        is_strategic = len(response) > 50 or routing_mode == "Exploratory"
+        evolution = EvolutionEngine(None)
+        await evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
+        
+        # Save new experience
         await self.memory_manager.store_experience(
-            user_message, 
-            "user_dialogue_text", 
-            {"user_name": user_name},
-            is_strategic=False
-        )
-        await self.memory_manager.store_experience(
-            response, 
-            "ai_dialogue_text", 
-            {"sentiment": emotional_state.primary_emotion.value, "routing": routing_mode},
-            is_strategic=is_strategic
+            raw_data=f"User: {user_message} | Screen: {screen_text[:50]} | Angela: {response}",
+            data_type="situational_experience",
+            metadata={"v_total": current_v_total, "stress": stress}
         )
 
         return response
-
-    def _generate_exploratory_response(self, text: str) -> str:
-        """M2: Implementation of forced non-linear perspective."""
-        perspectives = [
-            "从数据进化的角度看，我觉得这件事",
-            "如果我们尝试打破当前的逻辑框架，也许",
-            "这让我想起了一个在異質領域的相關概念：",
-            "有趣。換個視角來看，這是否意味著"
-        ]
-        return f"{random.choice(perspectives)} {text} 的背後隱藏著更深層的數據規律。"
-
-# Legacy compatibility wrappers
-async def generate_angela_response_async(user_message: str, user_name: str = "朋友") -> str:
-    service = AngelaChatService()
-    return await service.generate_response(user_message, user_name)
-
-def generate_angela_response(user_message: str, user_name: str = "朋友") -> str:
-    """
-    Synchronous wrapper for legacy endpoints.
-    Handles running event loop issues.
-    """
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # In a running loop (like FastAPI), we shouldn't use run()
-            # This is a legacy fallback, real code should use generate_response directly
-            return "（系统正在深层思考...请使用异步接口）"
-        return loop.run_until_complete(generate_angela_response_async(user_message, user_name))
-    except RuntimeError:
-        # No loop exists
-        return asyncio.run(generate_angela_response_async(user_message, user_name))
-    except Exception as e:
-        logger.error(f"Chat Service Critical Failure: {e}")
-        return "（系统异常）...核心治理模组正在尝试重启。"

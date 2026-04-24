@@ -385,18 +385,24 @@ class BiologicalIntegrator:
             await asyncio.sleep(self._update_interval)  # Configurable update interval
 
     async def _apply_homeostasis(self):
-        """Apply homeostatic regulation and safety fuses to prevent runaway feedback."""
-        # Standard recovery
+        """Apply homeostatic regulation and hormonal decay (Metabolism)."""
+        # 1. Autonomic Nervous System Recovery
         current_arousal = self.nervous_system.arousal_level
         target_arousal = self._homeostatic_targets["arousal"]
-
         if abs(current_arousal - target_arousal) > 5:
             adjustment = (target_arousal - current_arousal) * 0.05
             self.nervous_system.set_arousal_directly(current_arousal + adjustment)
 
-        # Safety Fuse: Detect and dampen extreme oscillations
+        # 2. Endocrine System Metabolism (Critical detail: recovery from stress)
+        # We need to call the internal hormone update
+        try:
+            self.endocrine_system.update_hormones(time_passed=self._update_interval)
+            logger.debug(f"🧪 [Bio] Endocrine metabolism complete. Stress: {self.endocrine_system.stress_level:.2f}")
+        except Exception as e:
+            logger.error(f"Failed to update endocrine metabolism: {e}")
+
+        # 3. Safety Fuse
         if current_arousal > 95 or current_arousal < 5:
-            logger.warning(f"🚨 Extreme biological state detected ({current_arousal:.1f}). Activating Safety Fuse.")
             self.nervous_system.set_arousal_directly(target_arousal)
 
     async def _synchronize_states(self):
@@ -519,8 +525,13 @@ class BiologicalIntegrator:
         confidence = 0.5
         if self.emotional_system.emotion_history:
             last_state = self.emotional_system.emotion_history[-1]
-            dominant_emotion = last_state.primary_emotion.value
-            confidence = last_state.emotion_intensity
+            # 處理可能的多態結構 (EmotionalState 或 PADEmotion)
+            if hasattr(last_state, "primary_emotion"):
+                dominant_emotion = last_state.primary_emotion.value
+                confidence = last_state.emotion_intensity
+            elif hasattr(last_state, "emotion"): # 兼容舊版結構
+                dominant_emotion = last_state.emotion
+                confidence = 0.5
 
         return {
             "arousal": self.nervous_system.arousal_level,

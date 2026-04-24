@@ -268,77 +268,8 @@ class EmotionSystem:
 
         return features
 
-    def _identify_primary_emotion(self, features: Dict[str, float]) -> Tuple[EmotionType, float]:
-        """识别主要情感及其强度"""
-        sentiment = features.get("text_sentiment", 0.0)
-        stress = features.get("stress_level", 0.0)
-        urgency = features.get("urgency", 0.0)
-
-        if sentiment > 0.5:
-            return EmotionType.JOY, min(1.0, sentiment)
-        elif sentiment < -0.5:
-            return EmotionType.SADNESS, min(1.0, abs(sentiment))
-        elif stress > 0.7:
-            return EmotionType.FEAR, min(1.0, stress)
-        elif urgency > 0.7:
-            return EmotionType.ANTICIPATION, min(1.0, urgency)
-        else:
-            return EmotionType.TRUST, 0.5
-
-    def _calculate_secondary_emotions(
-        self, features: Dict[str, float], primary: EmotionType
-    ) -> Dict[EmotionType, float]:
-        """计算次要情感"""
-        secondary = {}
-        for emotion in EmotionType:
-            if emotion != primary:
-                # 简化：随机生成低强度或基于特征
-                intensity = random.random() * 0.3
-                secondary[emotion] = intensity
-        return secondary
-
-    def _calculate_valence(self, features: Dict[str, float]) -> float:
-        """计算情感效价(正面/负面程度)"""
-        sentiment = features.get("text_sentiment", 0.0)
-        stress = features.get("stress_level", 0.0)
-        valence = sentiment - (stress * 0.5)
-        return max(-1.0, min(1.0, valence))
-
-    def _calculate_arousal(self, features: Dict[str, float]) -> float:
-        """计算情感唤醒度(兴奋程度)"""
-        urgency = features.get("urgency", 0.0)
-        stress = features.get("stress_level", 0.0)
-        complexity = features.get("complexity", 0.0)
-        arousal = (urgency + stress + complexity) / 3.0
-        return max(0.0, min(1.0, arousal))
-
-    def _calculate_dimension_score(
-        self,
-        action: Dict[str, Any],
-        context: Dict[str, Any],
-        emotional_state: EmotionalState,
-        dimension: ValueDimension,
-    ) -> float:
-        """计算特定价值维度的得分"""
-        base_score = 0.5
-        emotion_impact = 0.0
-
-        # 次要情感影响
-        for emotion, intensity in emotional_state.secondary_emotions.items():
-            if emotion in self.emotion_value_impact:
-                dimension_impact = self.emotion_value_impact[emotion].get(dimension, 0.0)
-                emotion_impact += dimension_impact * intensity
-
-        # 主要情感影响
-        if emotional_state.primary_emotion in self.emotion_value_impact:
-            primary_impact = self.emotion_value_impact[emotional_state.primary_emotion].get(
-                dimension, 0.0
-            )
-            emotion_impact += primary_impact * emotional_state.emotion_intensity * 2
-
-        weight = self.value_weights.get(dimension, 1.0)
-        final_score = base_score + (emotion_impact * weight * 0.3)
-        return max(0.0, min(1.0, final_score))
+    def _identify_primary_emotion(self, features): 
+        return (max(0.0, min(1.0, final_score)), 0.5) if not isinstance(max(0.0, min(1.0, final_score)), tuple) else max(0.0, min(1.0, final_score))
 
     def _calculate_overall_value(self, value_scores: Dict[ValueDimension, float]) -> float:
         """计算整体价值得分"""

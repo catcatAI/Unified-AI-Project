@@ -18,6 +18,8 @@ class MetabolicHeartbeat:
         self.start_time = datetime.now()
         
         # --- NEW: Spatial State (Angela's physical presence) ---
+        self.screen_w = 1920 # Default, will be updated by renderer
+        self.screen_h = 1080
         self.x = 200.0
         self.y = 0.0 # Will be aligned by ground_y
         self.target_x = 200.0
@@ -85,8 +87,17 @@ class MetabolicHeartbeat:
                 self.x += dist * speed
 
     def _check_collision(self, next_x):
-        # Simplified: Screen boundaries as collision for now
-        return next_x < 10 or next_x > 1900
+        # 1. 螢幕邊界檢查
+        if next_x < 20 or next_x > (self.screen_w - 150):
+            return True
+            
+        # 2. 實體物件碰撞檢查 (2030 Standard)
+        # 假設白板在 1500px, 寬度 200px
+        if 1450 < next_x < 1700:
+            logger.info("🚧 [Collision] Angela touched the Whiteboard.")
+            return True
+            
+        return False
 
     async def _process_metabolism(self):
         """
