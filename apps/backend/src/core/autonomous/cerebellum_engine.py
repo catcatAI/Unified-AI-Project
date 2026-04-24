@@ -43,8 +43,13 @@ class CerebellumEngine:
         self.transition_speed = 0.1
         self.active_theta = np.zeros(9) # 當前脊椎緩衝
 
-        # 3. 學習路徑
+        # 3. 學習路徑與演化里程
         self.storage_path = "apps/data/evolution/motor_memory.json"
+        self.total_distance = 0.0
+        self.evolution_threshold = 10000.0 # 演化門檻
+        self.error_accumulation = 0.0
+        self.kinetic_history = []
+        
         self._load_memory()
 
         logger.info("🧠 [Cerebellum] Pose-based AI Engine initialized.")
@@ -114,6 +119,46 @@ class CerebellumEngine:
             self.damping = max(0.15, self.damping - 0.01)
             
         self.record_movement_error(np.mean(self.active_theta), np.mean(actual_np))
+
+    def record_movement_error(self, expected_pos: float, actual_pos: float):
+        """
+        [+N16.1.1] 誤差反饋與里程累積。
+        """
+        error = abs(expected_pos - actual_pos)
+        self.total_distance += error # 使用位移殘差作為里程指標
+        self.error_accumulation += error
+        
+        if len(self.kinetic_history) > 100: self.kinetic_history.pop(0)
+        self.kinetic_history.append({
+            "timestamp": datetime.now().isoformat(),
+            "error": error
+        })
+        
+        # 檢查是否達到演化門檻 (10000px)
+        if self.total_distance >= self.evolution_threshold:
+            self._evolve_gait()
+            self.total_distance = 0.0 # 重置里程
+
+    def _evolve_gait(self):
+        """
+        [N.16.3] 自律姿態演化：根據歷史誤差微調。
+        """
+        avg_error = self.error_accumulation / max(1, len(self.kinetic_history))
+        logger.info(f"🧬 [Cerebellum] Autonomous Evolution Triggered. Avg Error: {avg_error:.2f}")
+        
+        # 演化邏輯：如果誤差大，優化「walking」姿勢的重心
+        if "walking" in self.pose_library:
+            pose = self.pose_library["walking"]
+            if avg_error > 2.0:
+                # 降低複雜度，追求穩定
+                pose["spine"] = [s * 0.9 for s in pose["spine"]]
+            else:
+                # 增加靈動性
+                pose["spine"] = [s * 1.1 for s in pose["spine"]]
+            
+            self._save_memory()
+            self.error_accumulation = 0.0 # 重置
+            logger.info("✨ [Cerebellum] Walking gait has evolved for better stability.")
 
     def execute_command(self, pose_name: str, bio_state: Dict[str, Any]) -> Dict[str, Any]:
         """
