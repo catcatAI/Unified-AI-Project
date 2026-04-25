@@ -712,6 +712,11 @@ def _build_session_namespace_key(session_id: str, context: Optional[Dict[str, st
         return session_id
     tenant_id = context.get("tenant_id", "default_tenant")
     persona_id = context.get("persona_id", "angela_default")
+    namespace_prefix = f"{tenant_id}::{persona_id}::"
+    # Backward compatibility: if client already sends a namespaced session id,
+    # do not prepend namespace again.
+    if session_id.startswith(namespace_prefix):
+        return session_id
     return f"{tenant_id}::{persona_id}::{session_id}"
 
 
@@ -887,10 +892,10 @@ async def unified_chat(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", context["user_id"])
     history = request.get("history", [])
 
-    # Default session id is now namespace-aware to reduce cross-client confusion
+    # Keep public session_id simple; internal namespace key handles isolation.
     session_id = request.get(
         "session_id",
-        f"{context['tenant_id']}::{context['persona_id']}::{uuid.uuid4().hex[:8]}",
+        f"sess-{uuid.uuid4().hex[:8]}",
     )
     origin = request.get("origin", context["client_id"])
 

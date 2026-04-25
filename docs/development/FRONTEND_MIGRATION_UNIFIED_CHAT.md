@@ -30,6 +30,7 @@ All frontends should gradually include:
 3. Pass persona-specific context in every request.
 4. Log and monitor `migration_note` and `context` fields from response.
 5. Log `session_namespace` for debugging cross-persona/session isolation.
+6. Treat `session_id` as client-facing token; backend now applies namespace internally.
 
 ### Known path updates for current clients
 

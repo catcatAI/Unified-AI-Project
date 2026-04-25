@@ -42,6 +42,7 @@ def test_unified_chat_endpoint_accepts_explicit_context():
     assert payload["context"]["user_id"] == "desktop_user"
     assert payload["context"]["client_id"] == "desktop_electron"
     assert payload["session_id"] == "tenant_alpha::angela_desktop::fixed"
+    assert payload["session_namespace"] == "tenant_alpha::angela_desktop::fixed"
 
 
 def test_unified_chat_session_isolation_by_persona():
@@ -74,3 +75,19 @@ def test_unified_chat_session_isolation_by_persona():
     assert payload_a["session_namespace"] == "tenant_alpha::persona_A::shared-session"
     assert payload_b["session_namespace"] == "tenant_alpha::persona_B::shared-session"
     assert payload_a["session_namespace"] != payload_b["session_namespace"]
+
+
+def test_unified_chat_default_session_id_is_not_double_prefixed():
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/chat/unified",
+        json={"message": "hello", "tenant_id": "t1", "persona_id": "p1"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+
+    # Public session id stays simple for frontend compatibility
+    assert payload["session_id"].startswith("sess-")
+    # Internal namespace key contains exactly one namespace prefix
+    assert payload["session_namespace"].startswith("t1::p1::")
+    assert "::t1::p1::" not in payload["session_namespace"]
