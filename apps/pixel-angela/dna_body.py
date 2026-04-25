@@ -44,19 +44,28 @@ class AngelaDNA:
         C_SOCK = [0.12, 0.12, 0.15] # 黑絲長襪
         C_SHOE = [0.35, 0.25, 0.25] # 小皮鞋
 
-        # --- Z=1: 後髮與貓尾 (IDs 10-19) ---
-        # 貓尾巴 (動態 S 型擺動)
-        tx = bx
-        for i in range(12):
-            ty = 190 + i * 8
-            tw = 6 - int(abs(i-6)*0.4) # 尾巴根部到尖端的粗細變化
-            offset = int(math.sin(i*0.4) * tail_swing)
-            self._build_part(1, (ty, ty+10), (tx+offset-tw, tx+offset+tw), C_HAIR_DARK, 0.2, 15+i)
+        # --- Z=0: 後髮 (最深層) ---
+        self._build_part(0, (90, 160), (hx-35, hx+35), C_HAIR_DARK, 0.1, 10)
+        self._build_part(0, (160, 240), (hx-40+int(s_mid), hx+40+int(s_mid)), C_HAIR_DARK, 0.1, 11)
+        self._build_part(0, (240, 280), (hx-45+int(s_tip), hx+45+int(s_tip)), C_HAIR_DARK, 0.1, 12)
 
-        # 豐盈的後髮
-        self._build_part(1, (90, 160), (hx-35, hx+35), C_HAIR_DARK, 0.1, 10)
-        self._build_part(1, (160, 240), (hx-40+int(s_mid), hx+40+int(s_mid)), C_HAIR_DARK, 0.1, 11)
-        self._build_part(1, (240, 280), (hx-45+int(s_tip), hx+45+int(s_tip)), C_HAIR_DARK, 0.1, 12)
+        # --- Z=1: 貓尾 (在後髮之前) ---
+        # 貓尾巴 (精修版: 兩階段渲染以消除接縫)
+        C_TAIL_EDGE = [0.4, 0.2, 0.3] 
+        tx = bx
+        # 第一階段: 繪製完整的深色邊緣背景
+        for i in range(20):
+            ty = 190 + i * 6 
+            tw = max(2, 7 - int(i * 0.3)) 
+            offset = int(math.sin(i * 0.4) * tail_swing)
+            self._build_part(1, (ty-1, ty+9), (tx+offset-tw-1, tx+offset+tw+1), C_TAIL_EDGE, 0.2, 15+i)
+        
+        # 第二階段: 繪製主體 (覆蓋在所有邊緣之上，消除分界線)
+        for i in range(20):
+            ty = 190 + i * 6 
+            tw = max(2, 7 - int(i * 0.3)) 
+            offset = int(math.sin(i * 0.4) * tail_swing)
+            self._build_part(1, (ty, ty+8), (tx+offset-tw, tx+offset+tw), C_HAIR_DARK, 0.2, 15+i)
 
         # --- Z=2: 軀幹與腿部 (IDs 100-199, 600-699) ---
         # 脖頸
@@ -181,7 +190,7 @@ class AngelaDNA:
         render = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         OUTLINE_COLOR = np.array([45, 35, 55, 255], dtype=np.uint8) # 深紫色描邊
 
-        for z in range(1, 6):
+        for z in range(0, 6):
             mask = self.voxels[:, :, z, 4] > 0
             color_data = (self.voxels[:, :, z, :3] * 255).astype(np.uint8)
             
