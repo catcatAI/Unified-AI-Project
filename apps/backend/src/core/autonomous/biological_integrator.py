@@ -145,6 +145,8 @@ class BiologicalIntegrator:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         if BiologicalIntegrator._initialized:
             return
+        BiologicalIntegrator._initialized = True
+        logger.info("🧬 [Bio] Initializing BiologicalIntegrator Singleton...")
         
         from .env_dynamics import EnvironmentDynamics
         self.config = config or {}
@@ -224,7 +226,10 @@ class BiologicalIntegrator:
     async def initialize(self):
         """Initialize all biological systems"""
         if self._running:
+            logger.info("🧬 [Bio] Already running, skipping initialize.")
             return
+        
+        logger.info("🧬 [Bio] Starting systems initialization...")
         self._running = True
 
         # Initialize subsystems

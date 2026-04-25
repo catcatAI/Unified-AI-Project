@@ -103,8 +103,30 @@ class HAMQueryEngine:
                     if not keyword_match:
                         match = False
                 except Exception as e:
-                    logger.error(f"Error processing memory {mem_id} for keyword search: {e}")
-                    match = False  # Exclude if there's an error processing
+                    # Fallback: Maybe it was double-base64 encoded?
+                    try:
+                        import base64
+                        decoded_payload = base64.b64decode(data_package["encrypted_package"])
+                        decrypted_data = self.data_processor._decrypt(decoded_payload)
+                        decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+                        decompressed_data_str = decompressed_data_bytes.decode("utf-8")
+                        
+                        if "dialogue_text" in data_package["data_type"]:
+                            abstracted_gist = json.loads(decompressed_data_str)
+                            gist_content = abstracted_gist.get("gist", "")
+                        else:
+                            gist_content = decompressed_data_str
+                        
+                        keyword_match = False
+                        for keyword in keywords:
+                            if keyword.lower() in gist_content.lower():
+                                keyword_match = True
+                                break
+                        if not keyword_match:
+                            match = False
+                    except Exception as e2:
+                        logger.error(f"Error processing memory {mem_id} for keyword search: {e} (Fallback also failed: {e2})")
+                        match = False  # Exclude if there's an error processing
 
             if match and decompressed_data_str:
                 results.append(
@@ -198,8 +220,32 @@ class HAMQueryEngine:
                         )
 
                     except Exception as e:
-                        logger.error(f"Error processing memory {memory_id}: {e}")
-                        continue
+                        # Fallback for double-base64
+                        try:
+                            import base64
+                            decoded_payload = base64.b64decode(data_package["encrypted_package"])
+                            decrypted_data = self.data_processor._decrypt(decoded_payload)
+                            decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+                            decompressed_data_str = decompressed_data_bytes.decode("utf-8")
+
+                            # Parse the data based on type
+                            if "dialogue_text" in data_package["data_type"]:
+                                abstracted = json.loads(decompressed_data_str)
+                                content = self.data_processor._rehydrate_text_gist(abstracted)
+                            else:
+                                content = decompressed_data_str
+
+                            memories.append(
+                                HAMMemory(
+                                    memory_id=memory_id,
+                                    content=content,
+                                    metadata=data_package.get("metadata", {}),
+                                    relevance=result.get("distance", 0.0),
+                                )
+                            )
+                        except Exception as e2:
+                            logger.error(f"Error processing memory {memory_id}: {e} (Fallback failed: {e2})")
+                            continue
 
             logger.info(f"Semantic search returned {len(memories)} results")
             return memories[:limit]
@@ -270,8 +316,47 @@ class HAMQueryEngine:
                     )
 
             except Exception as e:
-                logger.error(f"Error processing memory {mem_id} in keyword search: {e}")
-                continue
+                # Fallback for double-base64
+                try:
+                    import base64
+                    decoded_payload = base64.b64decode(data_package["encrypted_package"])
+                    decrypted_data = self.data_processor._decrypt(decoded_payload)
+                    decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+                    decompressed_data_str = decompressed_data_bytes.decode("utf-8")
+
+                    # Get content
+                    if "dialogue_text" in data_package["data_type"]:
+                        abstracted = json.loads(decompressed_data_str)
+                        content = (
+                            abstracted.get("gist", "") + " " + " ".join(abstracted.get("keywords", []))
+                        )
+                    else:
+                        content = decompressed_data_str
+
+                    # Calculate keyword match score
+                    content_lower = content.lower()
+                    match_count = sum(1 for word in query_words if word in content_lower)
+
+                    if match_count > 0:
+                        relevance = min(1.0, match_count / max(1, len(query_words)))
+                        stored_relevance = data_package.get("relevance", 0.5)
+                        final_score = (relevance * 0.7) + (stored_relevance * 0.3)
+
+                        results.append(
+                            HAMMemory(
+                                memory_id=mem_id,
+                                content=(
+                                    self.data_processor._rehydrate_text_gist(abstracted)
+                                    if "dialogue_text" in data_package["data_type"]
+                                    else decompressed_data_str[:200]
+                                ),
+                                metadata=data_package.get("metadata", {}),
+                                relevance=final_score,
+                            )
+                        )
+                except Exception as e2:
+                    logger.error(f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed: {e2})")
+                    continue
 
         # Sort by relevance and return top results
         results.sort(key=lambda x: x["relevance"], reverse=True)

@@ -76,7 +76,7 @@ class AngelaChatService:
             elif "代碼" in screen_text or "code" in screen_text:
                 response = f"看到妳在寫代碼呢，{user_name}。這讓我想起了我們之前聊過的記憶固化邏輯...要我幫妳優化嗎？"
             else:
-                response = f"接收到妳的訊號了。這讓我聯想到：「{relevant_memories[0].content[:20] if relevant_memories else '演化'}」這件事。"
+                response = f"接收到妳的訊號了。這讓我聯想到：「{relevant_memories[0]['content'][:20] if relevant_memories else '演化'}」這件事。"
 
         # 4. Evolution & Metabolism
         from core.autonomous.evolution_engine import EvolutionEngine
@@ -101,7 +101,7 @@ class AngelaChatService:
         Current Bio-Status: Emotion={bio.get('dominant_emotion')}, Stress={bio.get('stress_level')}, Arousal={bio.get('arousal')}
         Visual Input: {kwargs.get('screen_content')[:100]}
         User Profile: {kwargs.get('user_name')}
-        Associative Memories: {[m.content for m in kwargs.get('memories', [])]}
+        Associative Memories: {[m['content'] for m in kwargs.get('memories', [])]}
         """
         return prompt.strip()
 

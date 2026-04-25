@@ -60,8 +60,10 @@ class MetabolicHeartbeat:
     async def start(self):
         if self._running:
             return
+        logger.info("💓 [Heartbeat] Starting MetabolicHeartbeat...")
         self._running = True
         await self.bio_integrator.initialize()
+        logger.info("💓 [Heartbeat] BioIntegrator initialized.")
         # 啟動雙重循環：1. 生物/代謝循環 2. 小腦/神經整合循環
         self._task = asyncio.create_task(self._run_loop())
         self._integration_task = asyncio.create_task(self._integration_loop())

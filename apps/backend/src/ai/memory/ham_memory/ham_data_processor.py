@@ -29,7 +29,7 @@ class HAMDataProcessor:
             try:
                 return self.fernet.decrypt(data)
             except InvalidToken:
-                logger.error("Decryption failed: Invalid key or corrupted data.")
+                # No log here, let caller handle with fallback or log actual error
                 raise
         return data
 

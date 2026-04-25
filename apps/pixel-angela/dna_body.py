@@ -53,18 +53,18 @@ class AngelaDNA:
         # 貓尾巴 (精修版: 兩階段渲染以消除接縫)
         C_TAIL_EDGE = [0.4, 0.2, 0.3] 
         tx = bx
-        # 第一階段: 繪製完整的深色邊緣背景 (稍微大一點，形成軟邊緣效果)
-        for i in range(20):
+        # 第一階段: 繪製完整的深色邊緣背景
+        for i in range(30):
             ty = 190 + i * 6 
-            tw = max(2, 7 - int(i * 0.3)) 
+            tw = max(2, 7 - int(i * 0.2)) 
             offset = int(math.sin(i * 0.4) * tail_swing)
             # 寬度多2, 高度多4，確保背景完全連通
             self._build_part(1, (ty-2, ty+12), (tx+offset-tw-2, tx+offset+tw+2), C_TAIL_EDGE, 0.2, 15+i)
         
-        # 第二階段: 繪製主體 (高度10，步長6，有4px重疊，絕對無接縫)
-        for i in range(20):
+        # 第二階段: 繪製主體 (有4px重疊，絕對無接縫)
+        for i in range(30):
             ty = 190 + i * 6 
-            tw = max(2, 7 - int(i * 0.3)) 
+            tw = max(2, 7 - int(i * 0.2)) 
             offset = int(math.sin(i * 0.4) * tail_swing)
             self._build_part(1, (ty, ty+10), (tx+offset-tw, tx+offset+tw), C_HAIR_DARK, 0.2, 15+i)
 

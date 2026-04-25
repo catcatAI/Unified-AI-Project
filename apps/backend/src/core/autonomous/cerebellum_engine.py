@@ -35,6 +35,11 @@ class CerebellumEngine:
                 "spine": [0.0, 0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 "fingers": {"left": [0.0]*5, "right": [0.0]*5},
                 "stiffness": 0.7
+            },
+            "walking": {
+                "spine": [0.0, 0.15, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                "fingers": {"left": [0.0]*5, "right": [0.0]*5},
+                "stiffness": 0.6
             }
         }
         

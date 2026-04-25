@@ -116,9 +116,9 @@ class HAMMemoryManager:
 
         await self.vector_store_manager.add_semantic_vector(memory_id=memory_id, content=str(raw_data), metadata=current_metadata)
 
-        # Encode bytes to Base64 for JSON serialization
+        # Fernet tokens are already base64-encoded bytes, so we just decode to string for JSON
         encrypted_bytes = self.data_processor._encrypt(self.data_processor._compress(data_to_process))
-        encoded_payload = base64.b64encode(encrypted_bytes).decode("utf-8")
+        encoded_payload = encrypted_bytes.decode("utf-8")
 
         data_package: HAMDataPackageInternal = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -141,7 +141,7 @@ class HAMMemoryManager:
     async def consolidate_memories(self, limit: int = 50):
         recent = await self.query_core_memory(data_type_filter="ai_dialogue_text", limit=limit)
         if len(recent) < 5: return None
-        combined = "\n".join([f"{m.metadata.get('speaker', 'Unknown')}: {m.content}" for m in recent])
+        combined = "\n".join([f"{m['metadata'].get('speaker', 'Unknown')}: {m['content']}" for m in recent])
         abstract = self.data_processor._abstract_text(combined)
         return await self.store_experience(json.dumps(abstract), "long_term_gist", {"source": "consolidation"}, is_strategic=True)
 
