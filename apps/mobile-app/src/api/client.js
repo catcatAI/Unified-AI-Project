@@ -8,7 +8,11 @@ import SecurityManager from './encryption';
 
 class APIClient {
   constructor() {
-    this.baseURL = 'http://127.0.0.1:8000';
+    const envBackendAddr =
+      typeof process !== 'undefined' && process.env ? process.env.ANGELA_BACKEND_ADDR : null;
+    // Migration note:
+    // Keep default 8000, but allow override for future dedicated AI port rollout.
+    this.baseURL = `http://${envBackendAddr || '127.0.0.1:8000'}`;
     this.security = new SecurityManager();
     this.isInitialized = false;
   }
@@ -85,26 +89,17 @@ class APIClient {
    */
   async sendTestMessage(message) {
     const payload = {
-      type: 'test',
       message: message,
       timestamp: Date.now(),
+      tenant_id: 'default_tenant',
+      persona_id: 'angela_mobile',
+      client_id: 'mobile_app',
+      user_id: 'mobile_user',
     };
 
-    const encrypted = this.security.encrypt(payload);
-    const signature = this.security.generateSignature(payload);
-
-    const response = await axios.post(
-      `${this.baseURL}/api/v1/mobile/test`,
-      encrypted,
-      {
-        headers: {
-          'X-Angela-Signature': signature,
-          'Content-Type': 'text/plain',
-        },
-      }
-    );
-
-    return this.security.decrypt(response.data);
+    // During migration, use plain JSON contract that backend endpoints already support.
+    const response = await axios.post(`${this.baseURL}/api/v1/chat/unified`, payload);
+    return response.data;
   }
 
   /**

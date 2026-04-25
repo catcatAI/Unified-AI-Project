@@ -477,7 +477,12 @@ def _validate_environment_variables():
 
 
 async def _handle_chat_request(
-    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human"
+    user_message: str,
+    user_name: str,
+    history: List[Dict[str, Any]],
+    session_id: str,
+    origin: str = "Human",
+    context: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """
     處理聊天請求的共用函數 (GSI-4 / 2030 Standard)
@@ -490,12 +495,16 @@ async def _handle_chat_request(
         logger.warning(f"🛡️ [LIS] Intercepted oversized input from {origin}")
         user_message = user_message[:1000] # 強制截斷
     
-    # 確保 session 持久化
-    if session_id not in sessions:
-        sessions[session_id] = {
+    session_key = _build_session_namespace_key(session_id, context)
+
+    # 確保 session 持久化（內部使用 namespaced key 防止跨 persona 汙染）
+    if session_key not in sessions:
+        sessions[session_key] = {
             "created_at": datetime.now().isoformat(),
+            "session_id": session_id,
             "origin": origin,
-            "user_name": user_name
+            "user_name": user_name,
+            "context": context or {},
         }
     
     try:
@@ -539,6 +548,7 @@ async def _handle_chat_request(
     # 統一響應格式
     return {
         "session_id": session_id,
+        "session_namespace": session_key,
         "response": response_text,
         "response_text": response_text,  # 保留此字段以向後兼容
         "emotion": emotion,
@@ -675,6 +685,36 @@ router = APIRouter()
 sessions: Dict[str, Dict] = {}
 
 
+def _normalize_chat_context(request: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Normalize multi-frontend context keys for AI/AL isolation.
+
+    NOTE:
+    - This is intentionally additive (non-breaking).
+    - Existing clients can keep using legacy payload fields.
+    """
+    tenant_id = str(request.get("tenant_id", "default_tenant"))
+    persona_id = str(request.get("persona_id", "angela_default"))
+    user_id = str(request.get("user_id", request.get("user_name", "anonymous_user")))
+    client_id = str(request.get("client_id", request.get("origin", "unknown_client")))
+
+    return {
+        "tenant_id": tenant_id,
+        "persona_id": persona_id,
+        "user_id": user_id,
+        "client_id": client_id,
+    }
+
+
+def _build_session_namespace_key(session_id: str, context: Optional[Dict[str, str]]) -> str:
+    """Build internal session storage key with tenant/persona isolation."""
+    if not context:
+        return session_id
+    tenant_id = context.get("tenant_id", "default_tenant")
+    persona_id = context.get("persona_id", "angela_default")
+    return f"{tenant_id}::{persona_id}::{session_id}"
+
+
 @router.get("/")
 async def root():
     return {"message": "Angela AI API", "version": "6.0.4"}
@@ -809,8 +849,11 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
     origin = request.get("origin", "Human")
+    context = _normalize_chat_context(request)
 
-    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
+    return await _handle_chat_request(
+        user_message, user_name, history, session_id, origin=origin, context=context
+    )
 
 
 @router.post("/dialogue")
@@ -823,8 +866,48 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
     origin = request.get("origin", "Human")
+    context = _normalize_chat_context(request)
 
-    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
+    return await _handle_chat_request(
+        user_message, user_name, history, session_id, origin=origin, context=context
+    )
+
+
+@router.post("/api/v1/chat/unified")
+async def unified_chat(request: Dict[str, Any] = Body(...)):
+    """
+    Unified chat endpoint for multi-frontend/persona migration.
+
+    Migration notes:
+    - New clients should prefer this endpoint.
+    - Legacy endpoints (/dialogue, /angela/chat) remain available during migration.
+    """
+    user_message = request.get("message", request.get("text", ""))
+    context = _normalize_chat_context(request)
+    user_name = request.get("user_name", context["user_id"])
+    history = request.get("history", [])
+
+    # Default session id is now namespace-aware to reduce cross-client confusion
+    session_id = request.get(
+        "session_id",
+        f"{context['tenant_id']}::{context['persona_id']}::{uuid.uuid4().hex[:8]}",
+    )
+    origin = request.get("origin", context["client_id"])
+
+    response = await _handle_chat_request(
+        user_message=user_message,
+        user_name=user_name,
+        history=history,
+        session_id=session_id,
+        origin=origin,
+        context=context,
+    )
+    response["context"] = context
+    response["migration_note"] = (
+        "Use /api/v1/chat/unified for multi-persona isolation; "
+        "legacy /dialogue and /angela/chat remain temporarily supported."
+    )
+    return response
 
 
 # --- Desktop Interaction API ---

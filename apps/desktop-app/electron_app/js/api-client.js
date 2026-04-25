@@ -10,8 +10,9 @@
  *
  * API 端点:
  * - GET /health - 健康检查
- * - POST /dialogue - 对话接口
- * - POST /angela/chat - Angela 聊天接口
+ * - POST /api/v1/chat/unified - 统一对话接口（推荐）
+ * - POST /dialogue - 旧对话接口（迁移期）
+ * - POST /angela/chat - 旧 Angela 聊天接口（迁移期）
  * - WebSocket /ws - 实时双向通信
  *
  * @class AngelaAPIClient
@@ -21,6 +22,7 @@ class AngelaAPIClient {
     constructor(baseURL = 'http://localhost:8000') {
         this.baseURL = baseURL;
         this.connected = false;
+        this.unifiedChatPath = '/api/v1/chat/unified'; // 新接口（迁移目标）
         
         // 超時配置（毫秒）
         this.timeouts = {
@@ -58,11 +60,12 @@ class AngelaAPIClient {
     async validateEndpoints() {
         const endpoints = [
             { path: '/health', method: 'GET', required: true },
-            { path: '/status', method: 'GET', required: true },
-            { path: '/dialogue', method: 'POST', required: true },
-            { path: '/angela/chat', method: 'POST', required: true },
-            { path: '/economy/balance', method: 'GET', required: false },
-            { path: '/pet/action', method: 'POST', required: false }
+            { path: '/api/v1/status', method: 'GET', required: true },
+            { path: this.unifiedChatPath, method: 'POST', required: true },
+            { path: '/dialogue', method: 'POST', required: false },
+            { path: '/angela/chat', method: 'POST', required: false },
+            { path: '/api/v1/economy/balance/desktop_user', method: 'GET', required: false },
+            { path: '/api/v1/pet/action/trigger', method: 'POST', required: false }
         ];
 
         const results = {
@@ -174,16 +177,36 @@ class AngelaAPIClient {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/dialogue`, {
+            let response = await fetch(`${this.baseURL}${this.unifiedChatPath}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: message,
                     user_id: 'desktop_user',
-                    session_id: this.getSessionId()
+                    session_id: this.getSessionId(),
+                    tenant_id: 'default_tenant',
+                    persona_id: 'angela_desktop',
+                    client_id: 'desktop_electron'
                 }),
                 signal: AbortSignal.timeout(this.timeouts.dialogue)
             });
+
+            // Backward compatibility fallback during migration window
+            if (!response.ok && response.status === 404) {
+                response = await fetch(`${this.baseURL}/dialogue`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        user_id: 'desktop_user',
+                        session_id: this.getSessionId(),
+                        tenant_id: 'default_tenant',
+                        persona_id: 'angela_desktop',
+                        client_id: 'desktop_electron'
+                    }),
+                    signal: AbortSignal.timeout(this.timeouts.dialogue)
+                });
+            }
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -263,13 +286,17 @@ class AngelaAPIClient {
      */
     async getStatus() {
         try {
-            const response = await fetch(`${this.baseURL}/status`);
+            const response = await fetch(`${this.baseURL}/api/v1/system/status`);
             const data = await response.json();
             return {
                 success: true,
-                health: data.health || 100,
-                energy: data.energy || 100,
-                mood: data.mood || 'happy',
+                health: data.system_resources?.memory_percent
+                    ? Math.max(0, 100 - data.system_resources.memory_percent)
+                    : 100,
+                energy: data.system_resources?.cpu_percent
+                    ? Math.max(0, 100 - data.system_resources.cpu_percent)
+                    : 100,
+                mood: data.services?.digital_life ? 'active' : 'neutral',
                 status: data.status || 'idle'
             };
         } catch (error) {
@@ -290,11 +317,11 @@ class AngelaAPIClient {
      */
     async getEconomy() {
         try {
-            const response = await fetch(`${this.baseURL}/economy/balance`);
+            const response = await fetch(`${this.baseURL}/api/v1/economy/balance/desktop_user`);
             const data = await response.json();
             return {
                 success: true,
-                coins: data.coins || 0,
+                coins: data.balance || 0,
                 food: data.food || 0,
                 energy: data.energy || 0
             };
@@ -316,10 +343,10 @@ class AngelaAPIClient {
      */
     async triggerAction(action) {
         try {
-            const response = await fetch(`${this.baseURL}/pet/action`, {
+            const response = await fetch(`${this.baseURL}/api/v1/pet/action/trigger`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action })
+                body: JSON.stringify({ type: action })
             });
             const data = await response.json();
             return {
@@ -355,8 +382,9 @@ class AngelaAPIClient {
      */
     async checkLLMAvailability() {
         const llmEndpoints = [
-            { path: '/angela/chat', name: 'Angela Chat', backend: 'angela' },
-            { path: '/dialogue', name: 'Dialogue', backend: 'general' }
+            { path: this.unifiedChatPath, name: 'Unified Chat', backend: 'unified' },
+            { path: '/angela/chat', name: 'Angela Chat (legacy)', backend: 'angela' },
+            { path: '/dialogue', name: 'Dialogue (legacy)', backend: 'general' }
         ];
 
         const results = {
