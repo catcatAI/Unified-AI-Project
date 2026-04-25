@@ -62,24 +62,33 @@ class APIClient {
   async getSystemStatus(data = {}) {
     const payload = {
       timestamp: Date.now(),
+      tenant_id: 'default_tenant',
+      persona_id: 'angela_mobile',
+      user_id: 'mobile_user',
+      client_id: 'mobile_app',
       ...data
     };
+    try {
+      // Preferred contract during migration: plain JSON payload.
+      const response = await axios.post(`${this.baseURL}/api/v1/system/status`, payload);
+      return response.data;
+    } catch (error) {
+      // Backward compatibility fallback for older secure-flow environments.
+      const encrypted = this.security.encrypt(payload);
+      const signature = this.security.generateSignature(payload);
 
-    const encrypted = this.security.encrypt(payload);
-    const signature = this.security.generateSignature(payload);
-
-    const response = await axios.post(
-      `${this.baseURL}/api/v1/system/status`,
-      encrypted,
-      {
-        headers: {
-          'X-Angela-Signature': signature,
-          'Content-Type': 'text/plain',
-        },
-      }
-    );
-
-    return this.security.decrypt(response.data);
+      const response = await axios.post(
+        `${this.baseURL}/api/v1/system/status`,
+        encrypted,
+        {
+          headers: {
+            'X-Angela-Signature': signature,
+            'Content-Type': 'text/plain',
+          },
+        }
+      );
+      return this.security.decrypt(response.data);
+    }
   }
 
   /**

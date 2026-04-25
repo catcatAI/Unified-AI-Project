@@ -37,6 +37,7 @@ All frontends should gradually include:
 - Desktop status: use `GET /api/v1/system/status` (instead of `/status`).
 - Desktop economy: use `GET /api/v1/economy/balance/{user_id}`.
 - Desktop pet action trigger: use `POST /api/v1/pet/action/trigger`.
+- Mobile chat: prefer `POST /api/v1/chat/unified`, keep `/api/v1/mobile/chat` as fallback only.
 
 ## Port migration note
 

@@ -198,17 +198,28 @@ const App = () => {
     setChatLog(prev => [...prev, { type: 'user', text: userMsg }]);
 
     try {
-      // Migration note:
-      // mobile secure flow currently uses /api/v1/mobile/chat;
-      // target endpoint for multi-persona isolation is /api/v1/chat/unified.
-      // Keep old path during transition to avoid breaking existing pairing flow.
-      const result = await security.securePost(`http://${serverAddress}/api/v1/mobile/chat`, {
-        message: userMsg,
-        timestamp: Date.now(),
-        client: 'Angela-Mobile-V6'
-      });
+      // Preferred migration target: unified chat endpoint with explicit context.
+      let result;
+      try {
+        const response = await axios.post(`http://${serverAddress}/api/v1/chat/unified`, {
+          message: userMsg,
+          timestamp: Date.now(),
+          tenant_id: 'default_tenant',
+          persona_id: 'angela_mobile',
+          user_id: 'mobile_user',
+          client_id: 'Angela-Mobile-V6',
+        });
+        result = response.data;
+      } catch (unifiedError) {
+        // Backward compatibility fallback for legacy mobile flow.
+        result = await security.securePost(`http://${serverAddress}/api/v1/mobile/chat`, {
+          message: userMsg,
+          timestamp: Date.now(),
+          client: 'Angela-Mobile-V6'
+        });
+      }
       
-      setChatLog(prev => [...prev, { type: 'angela', text: result.message }]);
+      setChatLog(prev => [...prev, { type: 'angela', text: result.response || result.message }]);
     } catch (error) {
       setChatLog(prev => [...prev, { type: 'angela', text: 'Error: Connection lost. Re-encrypting...' }]);
     }
