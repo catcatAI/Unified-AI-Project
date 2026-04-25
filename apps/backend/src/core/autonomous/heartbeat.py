@@ -34,10 +34,7 @@ class MetabolicHeartbeat:
     async def _integration_loop(self):
         while self._running:
             try:
-                # 1. Metabolism Update (Homeostasis)
-                await self.bio_integrator._apply_homeostasis()
-                
-                # 2. [Task N.16.1.c] Cerebellum Pose Execution
+                # 1. [Task N.16.1.c] Cerebellum Pose Execution
                 # 根據移動狀態決定意圖標籤 (Intent Label)
                 dist_to_target = abs(self.target_x - self.x)
                 intent_pose = "walking" if dist_to_target > 5.0 else "standing"

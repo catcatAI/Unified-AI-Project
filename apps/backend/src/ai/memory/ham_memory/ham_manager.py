@@ -146,7 +146,7 @@ class HAMMemoryManager:
         return await self.store_experience(json.dumps(abstract), "long_term_gist", {"source": "consolidation"}, is_strategic=True)
 
     async def query_core_memory(self, keywords: Optional[List[str]] = None, data_type_filter: Optional[str] = None, limit: int = 10) -> List[HAMRecallResult]:
-        if self.query_engine: return await self.query_engine.query_core_memory(keywords, data_type_filter, limit)
+        if self.query_engine: return await self.query_engine.query_core_memory(keywords=keywords, data_type_filter=data_type_filter, limit=limit)
         return []
 
     async def store_template(self, template) -> bool:

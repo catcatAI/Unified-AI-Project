@@ -11,7 +11,7 @@ from core.perception.perceptual_memory import PerceptualMemory
 from core.perception.attention_controller import AttentionController, AttentionMode
 from core.sync.realtime_sync import sync_manager, SyncEvent
 from system.cluster_manager import cluster_manager, PrecisionLevel
-from core.os_bridge_adapter import OSBridgeAdapter
+from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
 
