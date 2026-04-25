@@ -47,6 +47,14 @@ seamless cross-device synchronization.
 
 ---
 
+### 🔄 Current Project Status
+
+- **Backend / Core AI (Python)**: 🛠️ Phase 14 Concurrent Execution / Task N.16 Cerebellum Core Initiation (In Progress)
+- **Frontend / Desktop (Electron)**: 🛠️ Phase 12 Restoration Complete (Live2D, Expressions, Touch)
+- **Frontend / Mobile (React Native)**: Active Monitoring & Comm Bridge
+
+---
+
 ### 🎬 What She Can Do
 
 #### 💬 **Converse with You**
@@ -279,6 +287,14 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 
 ---
 
+### 🔄 專案當前進度
+
+- **後端 / 核心 AI (Python)**: 🛠️ Phase 14 並發執行層實裝 / Task N.16 小腦核心初始化 (開發中)
+- **前端 / 桌面端 (Electron)**: 🛠️ Phase 12 狀態復原完成 (Live2D、表情、觸覺感應)
+- **前端 / 行動端 (React Native)**: 穩定監控與通訊橋接中
+
+---
+
 ### 🎬 核心功能展示
 
 #### 💬 深度對話與情感感知
@@ -297,7 +313,8 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 - **10 種動作**: 閒置、打招呼、思考、跳舞、揮手、鼓掌、點頭、搖頭等。
 - **物理模擬**: 真實的頭髮與衣服律動。
 - **觸覺感應**: 18 個身體部位，具有不同的觸覺靈敏度。
-- **情緒狀態**: 真實的情緒變化會影響她的行為邏輯。
+- **情緒狀態**: 真實的情緒變化會影響她的行為邏輯。 (Phase 12 [已復原])
+- **當前狀態**: 🛠️ Phase 12 狀態復原完成
 - **自主行為**: 她會主動發起互動、感到無聊、好奇或困倦。
 - **桌面感知**: 了解您桌面上發生的事情。
 
@@ -429,6 +446,28 @@ python start_monitor.py
 cd ../desktop-app/electron_app
 npm install && npm start
 ```
+
+---
+
+## 🧩 Frontends & Backends Overview / 前後端架構與啟動器解析
+
+To prevent confusion, here is a clear map of the multiple frontends, backends, and launchers in this repository. 為了避免混淆，以下是本專案中多個前端、後端與啟動器的明確分工說明：
+
+### 🚀 Launchers (啟動腳本)
+* **`AngelaLauncher.bat`**: The **Unified Launcher**. It runs `run_angela.py`, which checks the environment, handles error recovery, and launches *both* the main `backend` and the `desktop-app` frontend simultaneously. (官方推薦的整合啟動器，會同時開啟後端與桌面端)
+* **`launch_angela.bat`**: The **Backend-Only Launcher**. It directly starts the FastAPI backend server (`uvicorn services.main_api_server:app`) without starting any frontend. (僅啟動後端 API 伺服器)
+
+### 🧠 Backends (後端服務)
+* **`apps/backend/` (Main API Server)**: The core intelligence powered by Python/FastAPI. It handles the 6-Layer Life Architecture, state sync, memory, emotions, and the advanced autonomous systems (e.g., Cerebellum Core). (Angela 的大腦與核心，處理所有 AI 邏輯、記憶與生物模擬)
+* **`apps/gemini-os-bridge/`**: A specialized Python backend service dedicated to OS-level automation and computer vision tasks (e.g., screen capture, automated web search). (專門處理作業系統自動化與視覺辨識的微服務)
+
+### 🖥️ Frontends (前端應用)
+* **`apps/desktop-app/` (Electron Companion)**: The primary frontend for end-users. Built with Electron, it uses the Live2D SDK for character rendering and native modules (C++) for system audio capture. (主要的使用者前端，負責高畫質 Live2D 渲染與桌面整合)
+* **`apps/pixel-angela/` (Pixel/Voxel Anatomical Frontend)**: An experimental Python-based frontend (PyQt/PyGame). It focuses on deep physical simulation, such as soft-body physics, muscle fascia sliding layers, and 1:3 pixel DNA. This implements the extreme physics described in the Task Book. (實驗性質的像素/體素前端，專注於物理模擬、肌肉筋膜層疊與解剖學算繪)
+* **`apps/mobile-app/` (React Native Mobile Bridge)**: A mobile companion app for secure remote monitoring of Angela's state matrix. (手機端橋接應用，用於遠端監控與安全對話)
+* **`apps/web-live2d-viewer/` (Web Viewer)**: A pure browser-based standalone viewer for quickly testing Live2D assets. (基於瀏覽器的純 Live2D 預覽器)
+
+*(Note: Advanced features like "Concurrent Execution" or "Cerebellum Core" exist in the `backend` and power the logic, but the actual visual manifestation depends on the specific frontend you use. 注意：高階的 AI 邏輯或神經模擬實作於後端，而視覺特效與互動體驗則根據您使用的前端而有所不同。)*
 
 ---
 

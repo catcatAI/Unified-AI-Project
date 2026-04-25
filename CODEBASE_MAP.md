@@ -5,10 +5,10 @@
 ```
 D:\Projects\Unified-AI-Project\
 ├── apps/
-│   ├── backend/                    # 后端主目录
+│   ├── backend/                    # 🧠 主后端 (FastAPI, 核心AI与生命逻辑)
 │   │   ├── src/                   # 源代码
 │   │   │   ├── core/            # 核心系统 (Angela AI v6.0)
-│   │   │   │   ├── autonomous/   # 自主系统 ⭐核心
+│   │   │   │   ├── autonomous/   # 自主系统 ⭐核心 (小脑、内分泌等)
 │   │   │   │   ├── art/         # 创作系统 ⭐新增
 │   │   │   │   ├── cognitive/     # 认知约束
 │   │   │   │   ├── config/         # 配置
@@ -25,7 +25,12 @@ D:\Projects\Unified-AI-Project\
 │   │   │   └── utils/           # 工具函数
 │   │   └── configs/             # 配置文件
 │   │
-│   └── desktop-app/             # 桌面应用 (Electron)
+│   ├── desktop-app/             # 🖥️ 桌面应用 (Electron, Live2D 主前端)
+│   ├── pixel-angela/            # 🖥️ 解剖学实验前端 (PyQt, 物理、肌筋膜与1:3像素DNA)
+│   ├── mobile-app/              # 📱 移动端伴侣 (React Native, 远程通信桥接)
+│   ├── web-live2d-viewer/       # 🌐 Web 预览器 (轻量级 Live2D 浏览器测试工具)
+│   ├── gemini-os-bridge/        # 🧠 OS 自动化微服务 (作业系统控制与计算机视觉)
+│   └── training/                # 🧠 模型训练专属目录
 │
 ├── analysis/                    # 分析文档
 ├── .qoder/                      # 任务追踪
@@ -50,8 +55,24 @@ D:\Projects\Unified-AI-Project\
 | `emotional_blending.py` | 45KB | 情绪混合 | ✅ 完整 |
 | `endocrine_system.py` | 50KB | 内分泌系统 | ✅ 完整 |
 | `neuroplasticity.py` | 67KB | 神经可塑性 | ✅ 完整 |
-| `physiological_tactile.py` | 62KB | 生理触觉 | ✅ 完整 |
-| `memory_neuroplasticity_bridge.py` | 34KB | 记忆-可塑性桥接 | ✅ 完整 |
+| `physiological_tactile.py` | 60KB | 生理触觉 | ✅ 完整 |
+| `memory_neuroplasticity_bridge.py` | 33KB | 记忆-可塑性桥接 | ✅ 完整 |
+| `cerebellum_engine.py` | 8KB | 小脑核心 (Task N.16) | 🔄 迭代中 |
+| `input_sensor.py` | 2KB | 全域活动感知 (Task N.6) | 🔄 迭代中 |
+| `heartbeat.py` | 8KB | 基础心跳驱动 (Task N.1) | ✅ 完整 |
+| `bio_reflex_manager.py` | 2KB | 生物反射管理 (Task N.2) | ✅ 完整 |
+| `kinetic_validator.py` | 2KB | 动力学验证器 (Task N.12) | ✅ 完整 |
+| `self_introspector.py` | 4KB | 意识流合成器 (Task N.4) | ✅ 完整 |
+| `action_executor.py` | 36KB | 行为执行器 | ✅ 完整 |
+| `audio_system.py` | 20KB | 听觉与语音系统 | ✅ 完整 |
+| `browser_controller.py` | 18KB | 浏览器控制 | ✅ 完整 |
+| `desktop_presence.py` | 19KB | 桌面空间感知 | ✅ 完整 |
+| `digital_life_integrator.py` | 29KB | 综合生命循环 | ✅ 完整 |
+| `live2d_integration.py` | 30KB | Live2D渲染桥接 | ✅ 完整 |
+| `live2d_avatar_generator.py` | 43KB | Live2D化身生成 | ✅ 完整 |
+| `multidimensional_trigger.py` | 20KB | 多维事件触发器 | ✅ 完整 |
+| `self_generation.py` | 25KB | 自我生成网络 | ✅ 完整 |
+| `state_matrix.py` | 23KB | 4D 状态矩阵 | ✅ 完整 |
 
 ### 创作模块 (core/art/) ⭐新增
 
@@ -216,7 +237,7 @@ pytest src/core/tests/ -v
 | 指标 | 数值 |
 |------|------|
 | Python 文件 | ~440 |
-| 核心文件 (autonomous/) | 24 |
+| 核心文件 (autonomous/) | 34 |
 | 创作模块 (art/) | 5 |
 | 精度系统 (precision/) | 1 |
 | 成熟度系统 (maturity/) | 1 |
