@@ -13,9 +13,8 @@ import websockets
 from ui_config import UIConfig
 from dna_body import AngelaDNA
 
-def make_window_transparent(hwnd):
-    margins = (ctypes.c_int * 4)(-1, -1, -1, -1)
-    ctypes.windll.dwmapi.DwmExtendFrameIntoClientArea(hwnd, margins)
+# 移除 make_window_transparent，因為在 Windows 11 下 DwmExtendFrameIntoClientArea 會產生額外的玻璃/黑色背景，
+# 造成「兩個背景」的視覺異常。PyQt 的 WA_TranslucentBackground 已經足夠實現完全透明。
 
 class AngelaClient(QThread):
     state_updated = pyqtSignal(dict)
@@ -55,21 +54,7 @@ class AngelaClient(QThread):
             payload = {"type": "chat_message", "data": {"content": text, "user_name": "User"}}
             await self.ws.send(json.dumps(payload))
 
-class AngelaHitbox(QWidget):
-    """
-    這是一個不可見的、跟隨 Angela 移動的碰撞箱。
-    負責攔截滑鼠事件，不擋住螢幕其他區域。
-    """
-    clicked = pyqtSignal(Qt.MouseButton, QPoint)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-
-    def mousePressEvent(self, event):
-        self.clicked.emit(event.button(), event.globalPosition().toPoint())
 
 class AngelaRenderer(QWidget):
     def __init__(self):
@@ -88,19 +73,11 @@ class AngelaRenderer(QWidget):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents) # 核心修復：全螢幕可穿透
+        # 移除 WA_TransparentForMouseEvents，讓主視窗負責所有事件，
+        # 依靠 Windows 預設的 alpha 通道穿透機制，達成「點擊透明處穿透」的效果！
         
-        hwnd = int(self.winId())
-        make_window_transparent(hwnd)
+        # 取消調用 DWM API，避免產生系統級的第二重背景
         self.setGeometry(0, 0, self.screen_w, self.screen_h)
-        
-        # 3. 實體化碰撞箱 (獨立視窗，不設點擊穿透)
-        self.hitbox = AngelaHitbox(None) # 必須是獨立窗口才能攔截事件
-        self.hitbox.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
-        self.hitbox.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.hitbox.setGeometry(200, int(self.ground_y), UIConfig.ANGELA_WIDTH, UIConfig.ANGELA_HEIGHT)
-        self.hitbox.clicked.connect(self._on_angela_clicked)
-        self.hitbox.show()
         
         self.angela_pos = QPointF(200, self.ground_y)
         self.target_pos = QPointF(200, self.ground_y)
@@ -143,12 +120,18 @@ class AngelaRenderer(QWidget):
     def _on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger: self.show_native_input()
 
-    def _on_angela_clicked(self, button, pos):
-        if button == Qt.MouseButton.LeftButton:
-            print("💖 [Tactile] User touched Angela.")
-            self.add_new_bubble("(觸摸反應)", "Angela")
-        elif button == Qt.MouseButton.RightButton:
-            self.menu.exec(pos)
+    def mousePressEvent(self, event):
+        ax, ay = int(self.angela_pos.x()), int(self.current_y)
+        w, h = UIConfig.ANGELA_WIDTH, UIConfig.ANGELA_HEIGHT
+        pos = event.position()
+        
+        # 僅當點擊範圍在 Angela 身上時才觸發互動
+        if ax <= pos.x() <= ax + w and ay <= pos.y() <= ay + h:
+            if event.button() == Qt.MouseButton.LeftButton:
+                print("💖 [Tactile] User touched Angela.")
+                self.add_new_bubble("(觸摸反應)", "Angela")
+            elif event.button() == Qt.MouseButton.RightButton:
+                self.menu.exec(event.globalPosition().toPoint())
 
     def update_state(self, new_state):
         msg_type = new_state.get("type")
@@ -172,9 +155,6 @@ class AngelaRenderer(QWidget):
         
         # [Task N.12.7.c] 驅動肢體與髮絲物理動態
         self.dna.apply_dynamics(self.breath_phase)
-        
-        # 同步更新 Hitbox 位置
-        self.hitbox.move(int(self.angela_pos.x()), int(self.current_y))
         
         for bubble in self.bubble_stack:
             target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)
@@ -213,7 +193,9 @@ class AngelaRenderer(QWidget):
         ax, ay = int(self.angela_pos.x()), int(self.current_y)
         pixel_data = self.dna.get_render_ready_matrix()
         h, w, c = pixel_data.shape
-        qimg = QImage(pixel_data.data, w, h, w * c, QImage.Format.Format_RGB888)
+        # 新的 dna_body.py 支援透明描邊，回傳的陣列是 4 通道 (RGBA)
+        # 所以這裡必須使用 Format_RGBA8888 來避免渲染錯位
+        qimg = QImage(pixel_data.data, w, h, w * c, QImage.Format.Format_RGBA8888)
         painter.drawImage(ax, ay, qimg)
         
         offset_y = 0

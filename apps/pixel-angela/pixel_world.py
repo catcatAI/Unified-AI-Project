@@ -5,21 +5,21 @@ class PixelWorld:
     """
     像素世界引擎 (Pixel World Engine)
     處理 Angela 的響應式顯示與環境物理碰撞。
-    class PixelWorld:
-        def __init__(self, screen_ratio=(16, 9), base_width=128):
-            self.width = base_width
-            self.height = base_width * 3
-            self.grid = np.zeros((self.height, self.width), dtype=np.uint8)
-            self.objects = []
+    """
+    def __init__(self, screen_ratio=(16, 9), base_width=128):
+        self.width = base_width
+        self.height = base_width * 3
+        self.grid = np.zeros((self.height, self.width), dtype=np.uint8)
+        self.objects = []
 
-        def add_object(self, obj):
-            self.objects.append(obj)
-            # 寫入地圖
-            self.grid[obj.y:obj.y+obj.h, obj.x:obj.x+obj.w] = 2
+    def add_object(self, obj):
+        self.objects.append(obj)
+        # 寫入地圖
+        self.grid[obj.y:obj.y+obj.h, obj.x:obj.x+obj.w] = 2
 
-        def get_world_matrix(self):
-            # 動態刷新所有物件
-            return self.grid
+    def get_world_matrix(self):
+        # 動態刷新所有物件
+        return self.grid
 
 
 class PixelAngela:
