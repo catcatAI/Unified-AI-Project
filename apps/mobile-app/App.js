@@ -198,6 +198,10 @@ const App = () => {
     setChatLog(prev => [...prev, { type: 'user', text: userMsg }]);
 
     try {
+      // Migration note:
+      // mobile secure flow currently uses /api/v1/mobile/chat;
+      // target endpoint for multi-persona isolation is /api/v1/chat/unified.
+      // Keep old path during transition to avoid breaking existing pairing flow.
       const result = await security.securePost(`http://${serverAddress}/api/v1/mobile/chat`, {
         message: userMsg,
         timestamp: Date.now(),

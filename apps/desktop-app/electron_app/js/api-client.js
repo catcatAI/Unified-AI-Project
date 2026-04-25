@@ -10,8 +10,9 @@
  *
  * API 端点:
  * - GET /health - 健康检查
- * - POST /dialogue - 对话接口
- * - POST /angela/chat - Angela 聊天接口
+ * - POST /api/v1/chat/unified - 统一对话接口（推荐）
+ * - POST /dialogue - 旧对话接口（迁移期）
+ * - POST /angela/chat - 旧 Angela 聊天接口（迁移期）
  * - WebSocket /ws - 实时双向通信
  *
  * @class AngelaAPIClient
@@ -21,6 +22,7 @@ class AngelaAPIClient {
     constructor(baseURL = 'http://localhost:8000') {
         this.baseURL = baseURL;
         this.connected = false;
+        this.unifiedChatPath = '/api/v1/chat/unified'; // 新接口（迁移目标）
         
         // 超時配置（毫秒）
         this.timeouts = {
@@ -59,8 +61,9 @@ class AngelaAPIClient {
         const endpoints = [
             { path: '/health', method: 'GET', required: true },
             { path: '/status', method: 'GET', required: true },
-            { path: '/dialogue', method: 'POST', required: true },
-            { path: '/angela/chat', method: 'POST', required: true },
+            { path: this.unifiedChatPath, method: 'POST', required: true },
+            { path: '/dialogue', method: 'POST', required: false },
+            { path: '/angela/chat', method: 'POST', required: false },
             { path: '/economy/balance', method: 'GET', required: false },
             { path: '/pet/action', method: 'POST', required: false }
         ];
@@ -174,16 +177,36 @@ class AngelaAPIClient {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/dialogue`, {
+            let response = await fetch(`${this.baseURL}${this.unifiedChatPath}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: message,
                     user_id: 'desktop_user',
-                    session_id: this.getSessionId()
+                    session_id: this.getSessionId(),
+                    tenant_id: 'default_tenant',
+                    persona_id: 'angela_desktop',
+                    client_id: 'desktop_electron'
                 }),
                 signal: AbortSignal.timeout(this.timeouts.dialogue)
             });
+
+            // Backward compatibility fallback during migration window
+            if (!response.ok && response.status === 404) {
+                response = await fetch(`${this.baseURL}/dialogue`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        user_id: 'desktop_user',
+                        session_id: this.getSessionId(),
+                        tenant_id: 'default_tenant',
+                        persona_id: 'angela_desktop',
+                        client_id: 'desktop_electron'
+                    }),
+                    signal: AbortSignal.timeout(this.timeouts.dialogue)
+                });
+            }
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -355,8 +378,9 @@ class AngelaAPIClient {
      */
     async checkLLMAvailability() {
         const llmEndpoints = [
-            { path: '/angela/chat', name: 'Angela Chat', backend: 'angela' },
-            { path: '/dialogue', name: 'Dialogue', backend: 'general' }
+            { path: this.unifiedChatPath, name: 'Unified Chat', backend: 'unified' },
+            { path: '/angela/chat', name: 'Angela Chat (legacy)', backend: 'angela' },
+            { path: '/dialogue', name: 'Dialogue (legacy)', backend: 'general' }
         ];
 
         const results = {

@@ -675,6 +675,27 @@ router = APIRouter()
 sessions: Dict[str, Dict] = {}
 
 
+def _normalize_chat_context(request: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Normalize multi-frontend context keys for AI/AL isolation.
+
+    NOTE:
+    - This is intentionally additive (non-breaking).
+    - Existing clients can keep using legacy payload fields.
+    """
+    tenant_id = str(request.get("tenant_id", "default_tenant"))
+    persona_id = str(request.get("persona_id", "angela_default"))
+    user_id = str(request.get("user_id", request.get("user_name", "anonymous_user")))
+    client_id = str(request.get("client_id", request.get("origin", "unknown_client")))
+
+    return {
+        "tenant_id": tenant_id,
+        "persona_id": persona_id,
+        "user_id": user_id,
+        "client_id": client_id,
+    }
+
+
 @router.get("/")
 async def root():
     return {"message": "Angela AI API", "version": "6.0.4"}
@@ -825,6 +846,42 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     origin = request.get("origin", "Human")
 
     return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
+
+
+@router.post("/api/v1/chat/unified")
+async def unified_chat(request: Dict[str, Any] = Body(...)):
+    """
+    Unified chat endpoint for multi-frontend/persona migration.
+
+    Migration notes:
+    - New clients should prefer this endpoint.
+    - Legacy endpoints (/dialogue, /angela/chat) remain available during migration.
+    """
+    user_message = request.get("message", request.get("text", ""))
+    context = _normalize_chat_context(request)
+    user_name = request.get("user_name", context["user_id"])
+    history = request.get("history", [])
+
+    # Default session id is now namespace-aware to reduce cross-client confusion
+    session_id = request.get(
+        "session_id",
+        f"{context['tenant_id']}::{context['persona_id']}::{uuid.uuid4().hex[:8]}",
+    )
+    origin = request.get("origin", context["client_id"])
+
+    response = await _handle_chat_request(
+        user_message=user_message,
+        user_name=user_name,
+        history=history,
+        session_id=session_id,
+        origin=origin,
+    )
+    response["context"] = context
+    response["migration_note"] = (
+        "Use /api/v1/chat/unified for multi-persona isolation; "
+        "legacy /dialogue and /angela/chat remain temporarily supported."
+    )
+    return response
 
 
 # --- Desktop Interaction API ---
