@@ -113,18 +113,19 @@ pnpm test:coverage
     *   **Skipped**: Unable to complete due to persistent tool environment error: `Directory 'Unified-AI-Project' is not a registered workspace directory.` This prevents creating new directories or files within the project structure via shell commands.
 ## Recent Problem-Solving Log
 
-### Problem-Solving Method Applied
+## Master Operational Instructions
+Refer to the root `D:\Projects\GEMINI.md` for the Mandatory Operational Protocol, including Surgical Execution and Matrix Alignment mandates.
 
-The following structured approach was used to identify and resolve recent issues:
+## Problem-Solving Method (Matrix-Aware)
 
-1.  **Understand the Problem**: Analyze error messages (e.g., `TypeError: 'coroutine' object is not subscriptable`), understand the context of the failure, and review recent code changes (`git diff`).
-2.  **Identify Implemented vs. Documented Features**: Scan code and documentation files to understand the project's current state and identify gaps. This involves reading key documentation and corresponding code files to verify actual implementation against documented status (e.g., "Conceptual," "Partial," "Placeholder").
-3.  **Document Findings**: Create new Markdown documents to formally record identified gaps (e.g., `UNIMPLEMENTED_FEATURES_SUMMARY.md`).
-4.  **Update Project Documentation**: Integrate new documents into the main project index (e.g., `UNIFIED_DOCUMENTATION_INDEX.md`) to ensure discoverability.
-5.  **Plan the Fix**: For specific code issues, pinpoint exact problematic lines, identify failing tests, and formulate precise code changes.
-6.  **Implement the Fix**: Apply code changes (e.g., adding `await` to `async` calls) and corresponding test changes (e.g., correcting `await` usage, using `patch.object` for mocking, addressing timing issues with `asyncio.create_task` and `await`ing tasks).
-7.  **Verify the Fix**: Run affected tests to confirm resolution and absence of new regressions.
-8.  **Update Related Documentation (Post-Fix)**: Review and update documentation directly related to the fixed code to ensure it accurately reflects the current implementation.
+The following structured approach is used to identify and resolve issues within the Angela Matrix:
+
+1.  **Understand the Problem**: Analyze error messages and review recent code changes. Identify the target Layer (L1-L6) and Dimension (αβγδ).
+2.  **Verify Foundation**: Scan `@ANGELA_PREREQUISITE_FOUNDATION.md` to ensure core dependencies are intact.
+3.  **Identify Implemented vs. Documented Features**: Verify actual implementation against `@ANGELA_TASK_BOOK.md` and `@ANGELA_EVOLUTION_REGISTRY.md`.
+4.  **Surgical Fix**: Pinpoint exact problematic lines. Implement changes with **Zero-Side-Effect** precision (strictly targeting the fix).
+5.  **Matrix Annotation**: Ensure the fix includes or respects `@ANGELA_MATRIX_ANNOTATION_GUIDE.md`.
+6.  **Verify & Document**: Run affected tests. Update the Task Book and Evolution Registry immediately.
 
 ### 2025-08-23
 

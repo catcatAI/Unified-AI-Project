@@ -41,10 +41,17 @@ class MetabolicHeartbeat:
                 
                 bio_state = self.bio_integrator.get_biological_state()
                 # 呼叫小腦：執行指令並獲取細節
-                self.posture = self.cerebellum.execute_command(
+                cerebellum_res = self.cerebellum.execute_command(
                     pose_name=intent_pose,
                     bio_state=bio_state
                 )
+                
+                # 更新空間姿態物件 (包含 9 段脊椎矩陣)
+                self.posture = {
+                    "pose_name": cerebellum_res["pose_name"],
+                    "theta_matrix": cerebellum_res["theta_matrix"],
+                    "tremor_active": cerebellum_res.get("tremor_active", False)
+                }
                 
                 # 3. Spatial Movement Execution
                 if dist_to_target > 1.0:

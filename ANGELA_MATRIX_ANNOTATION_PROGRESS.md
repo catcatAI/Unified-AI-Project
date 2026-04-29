@@ -65,27 +65,28 @@
 
 ---
 
-## 语法验证
+## 語法與矩陣驗證 (Win32 兼容)
 
-### Python 文件验证
-```bash
-python3 -m py_compile \
-  apps/backend/src/ai/memory/ham_memory/ham_manager.py \
-  apps/backend/src/core/autonomous/endocrine_system.py \
-  apps/backend/src/ai/alignment/emotion_system.py \
+### Python 矩陣標註驗證
+```powershell
+# 驗證核心後端文件的標註與語法
+python -m py_compile `
+  apps/backend/src/ai/memory/ham_memory/ham_manager.py `
+  apps/backend/src/core/autonomous/endocrine_system.py `
+  apps/backend/src/ai/alignment/emotion_system.py `
   apps/backend/src/services/main_api_server.py
 ```
-**结果**: ✅ 通过 - 无语法错误
+**結果**: ✅ 預期通過
 
-### JavaScript 文件验证
-```bash
-node -c \
-  js/state-matrix.js \
-  js/live2d-manager.js \
-  js/character-touch-detector.js \
-  js/api-client.js
+### JavaScript 矩陣標註驗證
+```powershell
+# 驗證桌面端 JS 的語法
+node -c apps/desktop-app/electron_app/js/state-matrix.js
+node -c apps/desktop-app/electron_app/js/live2d-manager.js
+node -c apps/desktop-app/electron_app/js/character-touch-detector.js
+node -c apps/desktop-app/electron_app/js/api-client.js
 ```
-**结果**: ✅ 通过 - 无语法错误
+**結果**: ✅ 預期通過
 
 ---
 

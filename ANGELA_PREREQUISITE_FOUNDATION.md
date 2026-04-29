@@ -2,8 +2,21 @@
 
 > **🛰️ 實時同步與自癒守則**:
 > 1. 本地圖記錄之行數僅供參考，偏移即更新。
-> 2. **禁止幻覺**: 缺失即架構崩塌，立即重新實作。
-> 3. **持續記憶**: 每次執行前必掃描地基，嚴禁省略任何章節。
+> 2. **動態錨定 (Dynamic Anchoring)**: 執行 `replace` 前，必須先使用關鍵字 `grep_search` 校準。
+> 3. **禁止幻覺**: 缺失即架構崩塌，立即重新實作。
+
+---
+
+## 🔍 核心功能動態錨點 (Grep Keywords)
+
+| 功能模組 | 文件 | 核心關鍵字 (用於定位) |
+|---------|------|--------------------|
+| WebSocket 端點 | `main_api_server.py` | `@app.websocket("/ws")` |
+| 狀態廣播循環 | `main_api_server.py` | `async def broadcast_state_updates` |
+| 體素渲染引擎 | `dna_body.py` | `def get_flattened_frame` |
+| 觸覺身分轉發 | `tactile_service.py` | `def forward_tactile_identity` |
+| 小腦神經初始化 | `cerebellum_engine.py` | `class CerebellumEngine` |
+| 語言免疫系統 | `ego_guard.py` | `class EgoGuard` |
 
 ---
 
@@ -17,7 +30,7 @@
     *   [N.4.3] 身分識別 `origin="Human"` 注入 (L1310)。
     *   [N.9.1] 單例工廠函數 `get_angela_chat_service` (L288, L385)。
 
-## 2. 數據生命軀體與物理層 (`dna_body.py`)
+## 2. 數據生命軀體與物理層 (`apps/backend/src/core/dna_body.py`)
 *   **[N.12.5] 6層體素堆疊**: `self.voxels` 矩陣結構 (L12)。
 *   **[N.12.1.b] 1px 陰影遮罩**: `_apply_fascia_constraints` (L45)。
 *   **[N.12.1.3] AO 陰影生成**: `_apply_fascia_shadows` (L158)。
@@ -39,11 +52,11 @@
 
 ## 5. 記憶、安全與大腦
 *   **`ham_manager.py`**: [N.5.1] 靈魂密鑰持久化 (L55, L105)。
-*   **`ego_guard.py` (LIS)**: [N.4.1] 語言免疫系統與人格守護核心 (L7)。
+*   **`apps/backend/src/ai/security/ego_guard.py` (LIS)**: [N.4.1] 語言免疫系統與人格守護核心 (L7)。
 *   **`chat_service.py`**: [N.4.5] 意識流合成與多維環境感知 (L86, L45)。
 
 ---
 
 ## 6. 小腦與自律演化
-*   **`cerebellum_engine.py`**: [N.16.1] 小腦單例、脊椎控制矩陣與誤差日誌實作於 L15-L60。
+*   **`apps/backend/src/core/autonomous/cerebellum_engine.py`**: [N.16.1] 小腦單例、脊椎控制矩陣與誤差日誌實作於 L15-L60。
 *   **`evolution_engine.py`**: [N.5.4] 性格演化與持久化 (待進一步映射)。

@@ -159,6 +159,10 @@ class BiologicalIntegrator:
         self.nervous_system: AutonomicNervousSystem = AutonomicNervousSystem()
         self.neuroplasticity_system: NeuroplasticitySystem = NeuroplasticitySystem()
         self.emotional_system: EmotionalBlendingSystem = EmotionalBlendingSystem()
+        
+        # 2030 Standard: Cerebellum Motor System
+        from .cerebellum_engine import CerebellumEngine
+        self.cerebellum: CerebellumEngine = CerebellumEngine()
 
         # P0-2: 生物事件发布器
         self.event_publisher = BiologicalEventPublisher()
@@ -415,9 +419,15 @@ class BiologicalIntegrator:
             self.nervous_system.set_arousal_directly(target_arousal)
 
     async def _synchronize_states(self):
-        """Synchronize states across all biological systems"""
+        """Synchronize states across all biological systems (2030 Standard)"""
         # Calculate integrated state
         integrated_state = self.get_biological_state()
+        
+        # 1. [+N16.2] Proprioception Feedback Loop
+        # 比較小腦預期姿勢與當前狀態 (這裡假設同步成功)
+        self.cerebellum.update_proprioception(
+            actual_theta=integrated_state.get("posture", {}).get("theta_matrix", [0.0]*9)
+        )
 
         # Notify state callbacks
         for callback in self._state_callbacks:

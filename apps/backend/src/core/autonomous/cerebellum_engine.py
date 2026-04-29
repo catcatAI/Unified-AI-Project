@@ -49,7 +49,7 @@ class CerebellumEngine:
         self.active_theta = np.zeros(9) # 當前脊椎緩衝
 
         # 3. 學習路徑與演化里程
-        self.storage_path = "apps/data/evolution/motor_memory.json"
+        self.storage_path = os.path.join(os.path.dirname(__file__), "../../../data/evolution/motor_memory.json")
         self.total_distance = 0.0
         self.evolution_threshold = 10000.0 # 演化門檻
         self.error_accumulation = 0.0
@@ -168,6 +168,7 @@ class CerebellumEngine:
     def execute_command(self, pose_name: str, bio_state: Dict[str, Any]) -> Dict[str, Any]:
         """
         [Execution] 接收大腦指令，執行姿態細節。
+        整合 N.16.1.2 神經與心跳對接邏輯。
         """
         if pose_name not in self.pose_library:
             logger.warning(f"⚠️ [Cerebellum] Unknown pose: '{pose_name}'. Using default.")
@@ -176,19 +177,37 @@ class CerebellumEngine:
         self.current_pose_name = pose_name
         target_data = self.pose_library[pose_name]
         
-        # 動態插值 (Interpolation)：讓姿勢切換變得平滑，而非瞬間跳變
-        target_spine = np.array(target_data.get("spine", [0.0]*9))
-        self.active_theta = self.active_theta * (1 - self.transition_speed) + target_spine * self.transition_speed
-        
-        # 考慮生物影響 (疲勞時動作到位率下降)
+        # 1. 提取生物維度
         fatigue = bio_state.get("fatigue", 0.0) / 100.0
-        if fatigue > 0.5:
-            self.active_theta *= (1.0 - (fatigue - 0.5))
+        stress = bio_state.get("stress_level", 0.0)
+        energy = (100.0 - fatigue * 100.0) / 100.0
+        hormones = bio_state.get("hormones", {})
+        adrenaline = hormones.get("adrenaline", 20.0) / 100.0
+
+        # 2. 動態轉換速度 (受能量影響)
+        # 能量低時，姿勢切換變慢 (反應遲鈍)
+        current_speed = self.transition_speed * (0.5 + energy * 0.5)
+        
+        # 3. 插值計算
+        target_spine = np.array(target_data.get("spine", [0.0]*9))
+        self.active_theta = self.active_theta * (1 - current_speed) + target_spine * current_speed
+        
+        # 4. 生物特徵疊加 (Biological Overlays)
+        # 疲勞衰減：動作不到位
+        if fatigue > 0.4:
+            self.active_theta *= (1.0 - (fatigue - 0.4) * 0.5)
+            
+        # 緊張震顫：高壓力或高腎上腺素導致高頻微小抖動
+        tremor_intensity = max(0.0, stress * 0.05 + adrenaline * 0.02)
+        if tremor_intensity > 0.01:
+            tremor = np.random.normal(0, tremor_intensity, size=9)
+            self.active_theta += tremor
 
         return {
             "pose_name": pose_name,
             "theta_matrix": self.active_theta.tolist(),
-            "is_stable": np.allclose(self.active_theta, target_spine, atol=0.01)
+            "is_stable": np.allclose(self.active_theta, target_spine, atol=0.01),
+            "tremor_active": tremor_intensity > 0.01
         }
 
     def get_posture_snapshot(self) -> Dict[str, Any]:

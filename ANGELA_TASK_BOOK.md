@@ -73,11 +73,11 @@
 
 ### [Task N.16] 小腦運動神經系統 (Cerebellum AI)
 *   **[Task N.16.1] 小腦核心初始化**: 建立 `CerebellumEngine` 與神經權重矩陣。 (已凍結)
-*   **[Task N.16.1.2] 神經與心跳接通**: 將小腦接入 Metabolic Heartbeat 循環。 (實作中)
-*   **[Task N.16.2] 身體自覺反饋流**: 接通 DNA 與 Heartbeat 的動態數據。 (未完成)
+*   **[Task N.16.1.2] 神經與心跳接通**: 將小腦接入 Metabolic Heartbeat 循環，實現動態震顫與生物反饋。 (已凍結)
+*   **[Task N.16.2] 身體自覺反饋流**: 實裝 Proprioception 閉環，將小腦輸出映射到 DNA 體素形變。 (已凍結)
+*   **[Task N.16.3] 自律姿態演化**: 實裝基於里程累積的 Gait Evolution 與持久化。 (已凍結)
 
 ---
 
 ## 📅 當前執行進度 (Current Focus)
-1. **[Task N.16.1] 小腦核心初始化** (運動學習地基)
-2. **[Task N.6.1] 全域活動感知 (Input Sniffing)** (環境同步)
+1. **[Task N.6.1] 全域活動感知 (Input Sniffing)** (環境同步)

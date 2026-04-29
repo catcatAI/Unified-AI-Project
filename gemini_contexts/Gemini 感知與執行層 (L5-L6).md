@@ -1,0 +1,5 @@
+<context_domain> <layer>L5 (Presence Layer) & L6 (Execution Layer)</layer> <focus>Electron App, Live2D Control, OS Integration, Native Audio</focus> <dependencies>Requires Gemini_Core.md</dependencies> </context_domain>
+<architecture_constraints> <performance_targets> - Live2D FPS: 60 (target) - CPU Usage: < 5% - Memory Usage: < 100MB - Audio Latency: < 50ms (WASAPI/CoreAudio/PulseAudio) </performance_targets>
+<dynamic_scaling> - Adjust performance (Low/Medium/High/Ultra) based on hardware detection. - Precision Modes (INT to DEC4): Adjust computational precision based on resource availability. </dynamic_scaling>
+<l6_execution> - File System (Create/Delete/Move/Organize) - Browser Control (Search/Navigate) - Live2D Wrapper (Miara Pro Model, 7 Expressions, 10 Motions, Lip Sync) </l6_execution> </architecture_constraints>
+<n_plus_n_template> <Task_N_Container> - Level: L5/L6 Desktop UI & Interop - Rule: Execution code must be robust. If a native module (e.g., node-wasapi-capture) fails, the +N derivative interfaces MUST include a fallback logic (e.g., standard browser getUserMedia). </Task_N_Container> </n_plus_n_template>

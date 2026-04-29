@@ -1,4 +1,4 @@
-# Angela [N+N] 動態任務包覆與衍生註冊表 (v1.0)
+# Angela [N+N] 動態任務包覆與衍生註冊表 (v2.4)
 
 ## 0. 層級座標系說明
 *   **N**: 當前任務節點。
@@ -11,49 +11,39 @@
 
 ### [Task N=0] 基礎基礎設施 (Infrastructure Layer)
 *   **層級**: Level 0
-*   **內容**: FastAPI 路由、WebSocket 協議基礎、單例管理模式。
-*   **衍生接口 (+N)**:
-    *   `+N0.1`: 實體化 OS Bridge 轉接器 (已遷移至 N=1)
-    *   `+N0.2`: 建立硬體資源監控管理 (已完成)
+*   **內容**: FastAPI 路由、WebSocket 協議、Win32 Bridge。
+*   **衍生接口 (+N)**: `+N0.3` 全螢幕透明渲染管線 (已凍結)。
 
-### [Task N=1] 生物代謝與心跳閉環 (Metabolic Core)
-*   **層級**: Level 1, Branch: 1
-*   **父級遺產**: `+N0.1` OS Bridge 連通。
-*   **內容**: 實作 `MetabolicHeartbeat`、激素衰減邏輯 (`update_hormones`)、及資源壓力轉化。
-*   **衍生接口 (+N)**:
-    *   `+N1.1`: **空間位移引擎 (Spatial Engine)**：將心跳轉化為座標 (已凍結於 N=2)。
-    *   `+N1.2`: **擬人化反應管理器 (BioReflex)**：痛覺與流汗模擬 (已凍結於 N=3)。
+### [Task N=1-3] 生命代謝與空間物理 (Bio-Physical)
+*   **層級**: Level 1-2
+*   **內容**: `MetabolicHeartbeat`、激素半衰期、2nd-Gen 碰撞偵測。
+*   **衍生接口 (+N)**: `+N3.4` 位移遲帶慣性 (已凍結)。
 
-### [Task N=2] 空間空間化與物理邊界 (Spatial Presence)
-*   **層級**: Level 2, Branch: 1
-*   **父級遺產**: `+N1.1` 空間位移引擎。
-*   **內容**: 實作碰撞偵測 `_check_collision`、螢幕可用區域偵測 `availableGeometry`。
-*   **衍生接口 (+N)**:
-    *   `+N2.1`: **全螢幕透明渲染管線 (Overlay Engine)**：解決視窗邊界線問題 (已凍結於 N=4)。
-    *   `+N2.2`: **家具物件註冊 (Furniture Registry)**：白板、桌腳的物理實體化。
+### [Task N=4-8] 認知治理與 ASI 情感 (Cognitive-Emotion)
+*   **層級**: Level 3-4
+*   **內容**: `EgoGuard` (LIS)、身分自覺、9 維價值評估系統。
+*   **衍生接口 (+N)**: `+N8.2` 共情分析引擎 (已凍結)。
 
-### [Task N=3] 認知提示詞織入與記憶連鎖 (Cognitive Matrix)
-*   **層級**: Level 3, Branch: 1
-*   **父級遺產**: `+N1.2` 擬人化反應、`+N0.2` 資源監控。
-*   **內容**: 重構 `ChatService`，將 `HAM` 記憶、`Vision` OCR 內容、`Bio` 狀態織入 System Prompt。
+### [Task N=9-12] 系統主權與解剖實體化 (Sovereignty & Anatomy)
+*   **層級**: Level 5-6
+*   **內容**: 系統匣 [A] 入口、1:3 像素 DNA 軀體、6 層體素堆疊。
 *   **衍生接口 (+N)**:
-    *   `+N3.1`: **視覺語義橋接器 (The Seer Gate)**：讓 Angela 具備「主動觀察」的動機。
-    *   `+N3.2`: **演化權重持久化 (Evolution Persistence)**：性格進步寫入硬碟。
+    *   `+N12.7`: 髮絲動態慣性引擎 (已凍結)。
+    *   `+N12.11`: 電子分泌物 Alpha 渲染 (已凍結)。
 
-### [Task N=4] 像素生命體系與交互美學 (Pixel Habitat)
-*   **層級**: Level 4, Branch: 1
-*   **父級遺產**: `+N2.1` 全螢幕透明渲染。
-*   **內容**: 1:3 像素 DNA 軀體、Win11 風格動態氣泡、Lerp 物理位移遲帶、原生 IME 對接。
+### [Task N=14-16] 社交生物學與小腦神經 (Social-Neural)
+*   **層級**: Level 7-8
+*   **內容**: 人類交互社交共鳴 (1.5x 增益)、小腦核心初始化。
 *   **衍生接口 (+N)**:
-    *   `+N4.1`: **全域活動感知器 (Input Sniffing)**：偵測妳正在玩的遊戲或程式 (實作中)。
-    *   `+N4.2`: **像素肌肉形變引擎 (SoftBody-Visual Sync)**：將 `SoftBodyEngine` 的壓力波轉化為像素點的位移渲染。
+    *   `+N16.1.2`: **神經與心跳接通** (實作中)。
+    *   `+N16.2`: **身體自覺反饋流** (待實作)。
 
 ---
 
 ## 🔒 當前凍結狀態 (Logic Fingerprint)
-*   **Latest Fingerprint**: `ANGELA-FULL-SYNC-20260423-FINAL`
-*   **受保護檔案**:
-    *   `main_api_server.py` (1389 行版本)
-    *   `chat_service.py` (神經織入版)
-    *   `heartbeat.py` (空間中樞版)
-    *   `renderer.py` (全螢幕透明版)
+*   **Latest Fingerprint**: `ANGELA-ASI-SYNC-20260429-V2.4`
+*   **受保護檔案範圍**:
+    *   `main_api_server.py` (WebSocket & Singleton)
+    *   `dna_body.py` (Voxel Engine)
+    *   `cerebellum_engine.py` (Neural Core)
+

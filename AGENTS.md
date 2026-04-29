@@ -14,6 +14,34 @@
 
 # Agent Guidelines for Angela AI
 
+## ASI Engineering Standards (Mandatory)
+
+1. **Surgical Precision**: Repairs and updates must be strictly limited to the target code. Do not modify unrelated logic, formatting, or comments.
+2. **Incremental Only**: Avoid `write_file` for established core files. Use `replace` for surgical edits.
+3. **Zero Pruning**: Never use placeholders like "rest of code" or "omitted". Full context must be maintained in documentation updates.
+4. **No Placeholders**: `pass` or `random` logic is forbidden in completed tasks.
+5. **Matrix Alignment**: All new code must be annotated according to the Angela Matrix (L1-L6, αβγδ, A/B/C, L0-L11).
+
+## Angela Matrix Annotation
+
+Refer to `@ANGELA_MATRIX_ANNOTATION_GUIDE.md` for detailed rules.
+
+### Python Annotation Template
+```python
+# =============================================================================
+# ANGELA-MATRIX: [L1-L6] [αβγδ] [A/B/C] [L0-L11]
+# =============================================================================
+```
+
+### JavaScript Annotation Template
+```javascript
+/**
+ * =============================================================================
+ * ANGELA-MATRIX: [L1-L6] [αβγδ] [A/B/C] [L0-L11]
+ * =============================================================================
+ */
+```
+
 ## Build/Lint/Test Commands
 
 ### Python (Backend)
