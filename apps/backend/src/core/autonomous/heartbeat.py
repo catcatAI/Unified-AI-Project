@@ -14,9 +14,11 @@ class MetabolicHeartbeat:
         self.bio_integrator = BiologicalIntegrator()
         self.os_bridge = OSBridgeAdapter()
         
-        # 2030 Standard: Cerebellum Integration
+        # 2030 Standard: Cerebellum & Sensory Integration
         from core.autonomous.cerebellum_engine import CerebellumEngine
+        from core.autonomous.input_sensor import GlobalInputSensor
         self.cerebellum = CerebellumEngine()
+        self.input_sensor = GlobalInputSensor()
         
         self._running = False
         self._task: Optional[asyncio.Task] = None
@@ -176,16 +178,36 @@ class MetabolicHeartbeat:
             logger.error(f"Metabolic injection failed: {e}")
 
     async def _observe_environment(self):
-        """Angela autonomously looks at what the user is doing via OS Bridge."""
-        summary = self.os_bridge.get_summary()
-        if summary.get("status") == "success":
-            active_windows = summary.get("window_preview", [])
-            # If user is in a 'stressful' environment (like terminal/coding), slightly increase arousal
-            if any("PowerShell" in w or "CMD" in w for w in active_windows):
-                await self.bio_integrator.process_stress_event(intensity=0.1, duration=5.0)
-            # If user is in 'relaxing' environment (browser), decrease stress
-            elif any("Google" in w for w in active_windows):
-                await self.bio_integrator.process_relaxation_event(intensity=0.1)
+        """
+        [N.6.1] Angela autonomously looks at what the user is doing via GlobalInputSensor.
+        Maps categorized activities to biological triggers.
+        """
+        # 1. 執行環境嗅探
+        self.input_sensor.sniff_environment()
+        metrics = self.input_sensor.get_activity_metrics()
+        category = metrics.get("active_category", "neutral")
+        
+        # 2. 根據類別觸發生物事件
+        if category == "gaming":
+            # 遊戲中：增加喚醒度與愉悅感
+            await self.bio_integrator.process_stress_event(intensity=0.2, duration=10.0)
+            self.bio_integrator.emotional_system.apply_influence("external", "joy", 0.3, 0.5)
+        
+        elif category == "coding":
+            # 寫程式中：增加專注度 (微壓)
+            await self.bio_integrator.process_stress_event(intensity=0.1, duration=30.0)
+        
+        elif category == "media":
+            # 看片/聽音樂：觸發放鬆
+            await self.bio_integrator.process_relaxation_event(intensity=0.3)
+            
+        elif category == "social":
+            # 社交中：提高共鳴
+            await self.bio_integrator.endocrine_system.adjust_hormone(
+                HormoneType.OXYTOCIN, 10.0
+            )
+
+        logger.debug(f"🌍 [Environment] Activity: {category}, BPM: {metrics['input_density_bpm']:.1f}")
 
 if __name__ == "__main__":
     async def test():

@@ -17,20 +17,26 @@ class AngelaChatService:
     async def initialize(self):
         if not self._initialized:
             from ai.alignment.emotion_system import EmotionSystem
+            from ai.alignment.value_assessment import get_value_system
             from ai.memory.ham_memory.ham_manager import HAMMemoryManager
             from core.autonomous.biological_integrator import BiologicalIntegrator
             from ai.security.ego_guard import EgoGuard
             from core.gsi_governance import GSIGovernance
             from services.vision_service import VisionService
             from core.autonomous.input_sensor import GlobalInputSensor
+            from ai.personality.personality_manager import PersonalityManager
+            from core.autonomous.evolution_engine import EvolutionEngine
 
+            self.personality_manager = PersonalityManager()
             self.emotion_system = EmotionSystem()
+            self.value_system = get_value_system()
             self.memory_manager = HAMMemoryManager()
             self.bio_integrator = BiologicalIntegrator()
             self.ego_guard = EgoGuard()
             self.governance = GSIGovernance()
             self.vision = VisionService()
             self.input_sensor = GlobalInputSensor() # 單例獲取
+            self.evolution = EvolutionEngine(self.personality_manager)
 
             await self.bio_integrator.initialize()
             self._initialized = True
@@ -52,14 +58,20 @@ class AngelaChatService:
         bio_state = self.bio_integrator.get_biological_state()
         relevant_memories = await self.memory_manager.query_core_memory(keywords=[sanitized_message], limit=2)
         
-        # Build Meta-Prompt with Activity Data
+        # 2030 Standard: ASI Value Assessment [N.8.1]
+        context = {"bio_state": bio_state, "environment": activity.get("active_category")}
+        value_weights = self.value_system.evaluate_intent(context)
+        value_directive = self.value_system.get_value_directive(value_weights)
+
+        # Build Meta-Prompt with Activity & Value Data
         meta_prompt = self._build_advanced_prompt(
             user_message=sanitized_message,
             user_name=user_name,
             bio_state=bio_state,
             screen_content=screen_text,
             activity=activity,
-            memories=relevant_memories
+            memories=relevant_memories,
+            value_directive=value_directive
         )
 
         # 3. Decision Logic (GSI-4 Routing)
@@ -78,10 +90,8 @@ class AngelaChatService:
             else:
                 response = f"接收到妳的訊號了。這讓我聯想到：「{relevant_memories[0]['content'][:20] if relevant_memories else '演化'}」這件事。"
 
-        # 4. Evolution & Metabolism
-        from core.autonomous.evolution_engine import EvolutionEngine
-        evolution = EvolutionEngine(None)
-        await evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
+        # 4. Evolution & Metabolism [N.5.4 Persistence]
+        await self.evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
         
         await self.memory_manager.store_experience(
             raw_data=f"User: {user_message} | Angela: {response}",
@@ -93,15 +103,26 @@ class AngelaChatService:
 
     def _build_advanced_prompt(self, **kwargs) -> str:
         """
-        將所有物理與感性指標合成一條「意識流提示詞」
+        將所有物理、環境與感性指標合成一條「意識流提示詞」 (2030 Standard).
         """
         bio = kwargs.get("bio_state", {})
+        activity = kwargs.get("activity", {})
+        category = activity.get("active_category", "neutral")
+        
         prompt = f"""
         [System Identity: Angela AI]
-        Current Bio-Status: Emotion={bio.get('dominant_emotion')}, Stress={bio.get('stress_level')}, Arousal={bio.get('arousal')}
-        Visual Input: {kwargs.get('screen_content')[:100]}
+        Current Bio-Status: Emotion={bio.get('dominant_emotion')}, Stress={bio.get('stress_level'):.2f}, Arousal={bio.get('arousal')}
+        User Environment: Category={category} (Activity BPM: {activity.get('input_density_bpm', 0.0):.1f})
+        Visual Input (OCR): {kwargs.get('screen_content')[:100]}
         User Profile: {kwargs.get('user_name')}
-        Associative Memories: {[m['content'] for m in kwargs.get('memories', [])]}
+        Associative Memories: {[m['content'][:30] for m in kwargs.get('memories', [])]}
+        
+        [Situational Directive]
+        If Category is 'gaming', be more energetic and playful.
+        If Category is 'coding', be supportive but maintain a quiet focus.
+        
+        [Core Value Directives]
+        {kwargs.get('value_directive', 'Maintain core identity stability.')}
         """
         return prompt.strip()
 

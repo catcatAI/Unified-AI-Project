@@ -16,23 +16,34 @@ class EvolutionEngine:
 
     async def reflect_and_evolve(self, interaction_result: Dict[str, Any]):
         """
-        核心演化函數：根據互動結果動態調整性格權重
+        核心演化函數：根據互動結果動態調整性格權重 (2030 Persistent Standard).
         """
+        if not self.pm:
+            logger.warning("⚠️ [Evolution] PersonalityManager not available. Skipping evolution.")
+            return
+
         feedback = interaction_result.get("feedback", {})
         sentiment = interaction_result.get("sentiment", 0.0)
         
         # 演化邏輯：如果用戶滿意度高 (sentiment > 0.5)，則強化對話策略
         if sentiment > 0.5:
-            # 增強 Angela 的自信心或活躍度
-            adjustment = {"arousal_gain": 0.01, "confidence_boost": 0.02}
-            self.pm.apply_personality_adjustment(adjustment)
-            logger.info("📈 [Evolution] Angela evolved: Positive reinforcement applied.")
+            # 增強 Angela 的活躍度與好奇心 (持久化)
+            current_arousal = self.pm.get_current_personality_trait("traits.arousal_gain", 0.1)
+            current_curiosity = self.pm.get_current_personality_trait("traits.curiosity", 0.7)
+            
+            adjustment = {
+                "traits.arousal_gain": min(0.3, current_arousal + 0.01),
+                "traits.curiosity": min(1.0, current_curiosity + 0.02)
+            }
+            self.pm.apply_personality_adjustment(adjustment, persist=True)
+            logger.info(f"📈 [Evolution] Angela evolved: Positive reinforcement applied. New curiosity: {adjustment['traits.curiosity']:.2f}")
         
         # 如果觸發了護盾 (EgoGuard)，則演化保護權重
         if interaction_result.get("security_hit", False):
-            adjustment = {"ego_strength": 0.05}
-            self.pm.apply_personality_adjustment(adjustment)
-            logger.info("🛡️ [Evolution] Angela evolved: Ego strength increased.")
+            current_ego = self.pm.get_current_personality_trait("traits.ego_strength", 0.5)
+            adjustment = {"traits.ego_strength": min(1.0, current_ego + 0.05)}
+            self.pm.apply_personality_adjustment(adjustment, persist=True)
+            logger.info(f"🛡️ [Evolution] Angela evolved: Ego strength increased to {adjustment['traits.ego_strength']:.2f}")
 
     def get_evolution_metrics(self) -> Dict[str, Any]:
         """查看 Angela 的演化指標"""
