@@ -1,3 +1,10 @@
+# =============================================================================
+# ANGELA-MATRIX: L1-L6[小腦] γ [A] L2+
+# =============================================================================
+# 職責: 小腦運動神經系統 (Cerebellum Engine).
+# 維度: 物理維度 (γ) 的運動插值、震顫控制與步態演化。
+# =============================================================================
+
 import logging
 import json
 import os
@@ -203,9 +210,14 @@ class CerebellumEngine:
             tremor = np.random.normal(0, tremor_intensity, size=9)
             self.active_theta += tremor
 
+        # 5. [Task N.12.9] 五指神經矩陣 (Fingers)
+        # 根據姿勢獲取手指捲縮度 (f_curl 0~1)
+        finger_matrix = target_data.get("fingers", {"left": [0.0]*5, "right": [0.0]*5})
+
         return {
             "pose_name": pose_name,
             "theta_matrix": self.active_theta.tolist(),
+            "finger_matrix": finger_matrix,
             "is_stable": np.allclose(self.active_theta, target_spine, atol=0.01),
             "tremor_active": tremor_intensity > 0.01
         }

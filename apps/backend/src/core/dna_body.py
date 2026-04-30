@@ -1,6 +1,11 @@
 import numpy as np
 from datetime import datetime
-from scipy.ndimage import binary_dilation
+from typing import List, Dict, Any, Optional
+try:
+    from scipy.ndimage import binary_dilation
+except ImportError:
+    # 基礎回退：如果沒有 scipy，則不執行描邊擴展
+    def binary_dilation(mask, **kwargs): return mask
 
 class AngelaDNA:
     """
@@ -12,6 +17,12 @@ class AngelaDNA:
         self.height = height
         # Layers: 1:後髮, 2:軀幹/腳, 3:制服, 4:手臂/手, 5:臉部/前髮
         self.voxels = np.zeros((height, width, 6, 5), dtype=np.float32)
+        
+        # [Task N.12.12] 物理慣性緩存 (Inertia State)
+        self.skirt_pos = 64.0
+        self.ribbon_pos = 64.0
+        self.inertia_factor = 0.15 # 0.2 rad 延遲對應的平滑係數
+        
         self._build_volumetric_body()
 
     def _build_part(self, z, y, x, color, stiff, pid):
@@ -32,7 +43,7 @@ class AngelaDNA:
             offsets[i+1] = current_x
         return offsets
 
-    def _build_volumetric_body(self, hair_offset=0.0, breath_phase=0.0, theta_matrix: List[float] = None):
+    def _build_volumetric_body(self, hair_offset=0.0, breath_phase=0.0, theta_matrix: List[float] = None, **kwargs):
         import math
         self.voxels.fill(0)
         
@@ -45,24 +56,30 @@ class AngelaDNA:
         s_mid, s_tip = hair_offset * 1.5, hair_offset * 3.0
         
         # 2. 獲取脊椎累積偏移
-        # 這裡將 y 軸從腳底 (384) 到頭頂 (0) 分成 9 段
         spine_x = self._get_spine_offsets(theta_matrix) 
-        # bx (基礎位移) 取脊椎中段偏移，hx (頭部位移) 取末端偏移
-        bx = int(64 + spine_x[4]) # 軀幹位移 (第4段)
-        hx = int(64 + spine_x[9]) # 頭部位移 (末端)
+        bx = int(64 + spine_x[4]) # 軀幹位移
+        hx = int(64 + spine_x[9]) # 頭部位移
+        
+        # 3. [N.12.10] 重心平衡 (Centroid Balance)
+        balance_offset = -int(spine_x[9] * 0.3)
 
-        # 顏色定義 (RGB float 0~1)
-        C_SKIN = [1.0, 0.88, 0.80]
-        C_HAIR = [0.96, 0.65, 0.75] # 亮粉色貓娘
-        C_HAIR_DARK = [0.85, 0.45, 0.60]
+        # 4. [N.4.3] 色彩覆蓋 (L4 Creation Layer)
+        overrides = kwargs.get("color_overrides", {})
+
+        # 顏色定義 (預設值 + 覆蓋)
+        C_SKIN = overrides.get("C_SKIN", [1.0, 0.88, 0.80])
+        C_HAIR = overrides.get("C_HAIR", [0.96, 0.65, 0.75]) # 亮粉色貓娘
+        C_HAIR_DARK = overrides.get("C_HAIR_DARK", [0.85, 0.45, 0.60])
+        C_EYE = overrides.get("C_EYE", [0.15, 0.65, 0.95]) # 碧藍瞳孔
+        
+        # 其他固定色
         C_EAR_INNER = [1.0, 0.80, 0.85]
-        C_EYE = [0.15, 0.65, 0.95] # 碧藍瞳孔
-        C_EYE_HL = [1.0, 1.0, 1.0] # 高光
-        C_SHIRT = [0.98, 0.98, 1.0] # 白襯衫
-        C_SKIRT = [0.15, 0.18, 0.28] # 深藍百褶裙
-        C_RIBBON = [0.9, 0.25, 0.35] # 紅色緞帶
-        C_SOCK = [0.12, 0.12, 0.15] # 黑絲長襪
-        C_SHOE = [0.35, 0.25, 0.25] # 小皮鞋
+        C_EYE_HL = [1.0, 1.0, 1.0] 
+        C_SHIRT = [0.98, 0.98, 1.0]
+        C_SKIRT = [0.15, 0.18, 0.28]
+        C_RIBBON = [0.9, 0.25, 0.35]
+        C_SOCK = [0.12, 0.12, 0.15]
+        C_SHOE = [0.35, 0.25, 0.25]
 
         # --- Z=0: 後髮 (最深層) ---
         self._build_part(0, (90, 160), (hx-35, hx+35), C_HAIR_DARK, 0.1, 10)
@@ -99,7 +116,7 @@ class AngelaDNA:
 
         # 雙腿 (大腿 -> 小腿 -> 鞋子)
         for side in [-1, 1]:
-            ax = bx + side * 14
+            ax = bx + side * 14 + balance_offset
             fid = 601 if side == -1 else 611
             # 大腿 (透氣膚色)
             self._build_part(2, (180, 230), (ax-8, ax+8), C_SKIN, 0.7, fid)
@@ -111,26 +128,47 @@ class AngelaDNA:
             self._build_part(2, (370, 376), (ax-(side*4)-6, ax-(side*4)+6), C_SHOE, 0.7, fid+3)
 
         # --- Z=3: 服飾配件 (裙子、緞帶) ---
-        ux = int(bx + math.sin(breath_phase)*1.0)
+        # [Task N.12.12] 二階物理解耦：服飾隨動延遲
+        target_ux = bx + math.sin(breath_phase)*1.0
+        self.skirt_pos = self.skirt_pos * (1 - self.inertia_factor) + target_ux * self.inertia_factor
+        self.ribbon_pos = self.ribbon_pos * (1 - self.inertia_factor * 1.5) + target_ux * (self.inertia_factor * 1.5)
+        
+        ux_s = int(self.skirt_pos)
+        ux_r = int(self.ribbon_pos)
+        
         # 百褶裙 (分層次增加立體感)
-        self._build_part(3, (160, 195), (ux-22, ux+22), C_SKIRT, 0.8, 401)
-        self._build_part(3, (185, 205), (ux-28, ux+28), C_SKIRT, 0.8, 402)
+        self._build_part(3, (160, 195), (ux_s-22, ux_s+22), C_SKIRT, 0.8, 401)
+        self._build_part(3, (185, 205), (ux_s-28, ux_s+28), C_SKIRT, 0.8, 402)
         
         # 水手服領結
-        self._build_part(3, (130, 142), (ux-8, ux+8), C_RIBBON, 0.5, 403)
-        self._build_part(3, (135, 155), (ux-14, ux-4), C_RIBBON, 0.6, 404)
-        self._build_part(3, (135, 155), (ux+4, ux+14), C_RIBBON, 0.6, 405)
+        self._build_part(3, (130, 142), (ux_r-8, ux_r+8), C_RIBBON, 0.5, 403)
+        self._build_part(3, (135, 155), (ux_r-14, ux_r-4), C_RIBBON, 0.6, 404)
+        self._build_part(3, (135, 155), (ux_r+4, ux_r+14), C_RIBBON, 0.6, 405)
 
-        # --- Z=4: 手臂 (IDs 200-399) ---
+        # --- Z=4: 手臂與五指 (IDs 200-399) ---
+        finger_data = kwargs.get("finger_matrix", {"left": [0.0]*5, "right": [0.0]*5})
         # 左手
         self._build_part(4, (130, 150), (bx-26, bx-12), C_SHIRT, 0.4, 201) # 短袖
         self._build_part(4, (150, 200), (bx-24, bx-16), C_SKIN, 0.4, 203) # 手臂
-        self._build_part(4, (200, 215), (bx-22, bx-14), C_SKIN, 0.4, 205) # 手掌
+        # 左手掌與五指 (ID 211-215)
+        self._build_part(4, (200, 208), (bx-22, bx-14), C_SKIN, 0.4, 205) # 手掌
+        for i in range(5):
+            f_curl = finger_data["left"][i]
+            # 每一根指節為 2x6 體素，根據 f_curl 產生偏移
+            fx = bx - 22 + i*2
+            fy = 208
+            self._build_part(4, (fy, fy+6+int(f_curl*4)), (fx, fx+2), C_SKIN, 0.3, 211+i)
         
         # 右手
         self._build_part(4, (130, 150), (bx+12, bx+26), C_SHIRT, 0.4, 202) # 短袖
         self._build_part(4, (150, 200), (bx+16, bx+24), C_SKIN, 0.4, 204) # 手臂
-        self._build_part(4, (200, 215), (bx+14, bx+22), C_SKIN, 0.4, 206) # 手掌
+        # 右手掌與五指 (ID 221-225)
+        self._build_part(4, (200, 208), (bx+14, bx+22), C_SKIN, 0.4, 206) # 手掌
+        for i in range(5):
+            f_curl = finger_data["right"][i]
+            fx = bx + 14 + i*2
+            fy = 208
+            self._build_part(4, (fy, fy+6+int(f_curl*4)), (fx, fx+2), C_SKIN, 0.3, 221+i)
 
         # --- Z=5: 頭部、貓耳與五官 ---
         # 臉部輪廓
@@ -176,10 +214,15 @@ class AngelaDNA:
         # 靈魂呆毛 (Ahoge)
         self._build_part(5, (40, 55), (hx-2, hx+2), C_HAIR, 0.05, 23)
 
-    def apply_dynamics(self, phase):
+    def apply_dynamics(self, phase, theta_matrix=None, finger_matrix=None):
         import math
         current_swing = math.sin(phase) * 2.0
-        self._build_volumetric_body(hair_offset=current_swing, breath_phase=phase)
+        self._build_volumetric_body(
+            hair_offset=current_swing, 
+            breath_phase=phase,
+            theta_matrix=theta_matrix,
+            finger_matrix=finger_matrix
+        )
 
     def _apply_fascia_shadows(self, render_matrix):
         """實施 AO 陰影 (Layer 1.5)"""

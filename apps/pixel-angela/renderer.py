@@ -121,17 +121,39 @@ class AngelaRenderer(QWidget):
         if reason == QSystemTrayIcon.ActivationReason.Trigger: self.show_native_input()
 
     def mousePressEvent(self, event):
-        ax, ay = int(self.angela_pos.x()), int(self.current_y)
-        w, h = UIConfig.ANGELA_WIDTH, UIConfig.ANGELA_HEIGHT
         pos = event.position()
+        ax, ay = int(self.angela_pos.x()), int(self.current_y)
         
-        # 僅當點擊範圍在 Angela 身上時才觸發互動
-        if ax <= pos.x() <= ax + w and ay <= pos.y() <= ay + h:
+        # 1. 座標轉換：計算相對於體素矩陣(128x384)的局部座標
+        local_x = int(pos.x() - ax)
+        local_y = int(pos.y() - ay)
+        
+        # 2. [Task N.9.3] 體素探針檢測 (Voxel Hit-Test)
+        is_hit = False
+        if 0 <= local_x < 128 and 0 <= local_y < 384:
+            stiffness = self.dna.get_stiffness_at(local_x, local_y)
+            if stiffness > 0:
+                is_hit = True
+                print(f"💖 [Tactile] Precision hit! Stiffness: {stiffness:.2f}")
+
+        # 3. 處理交互
+        if is_hit:
             if event.button() == Qt.MouseButton.LeftButton:
-                print("💖 [Tactile] User touched Angela.")
                 self.add_new_bubble("(觸摸反應)", "Angela")
+                # 發送觸覺事件到後端
+                asyncio.run_coroutine_threadsafe(
+                    self.client.ws.send(json.dumps({
+                        "type": "tactile_event",
+                        "data": {"x": local_x, "y": local_y, "stiffness": stiffness}
+                    })), 
+                    self.client.event_loop
+                )
             elif event.button() == Qt.MouseButton.RightButton:
                 self.menu.exec(event.globalPosition().toPoint())
+        else:
+            # 點擊了透明區域：手動轉發點擊事件，實現 Windows 穿透 (由 OS 處理)
+            # 在 PyQt 中，如果我們不 accept 事件，它通常會自動傳給下層窗口
+            event.ignore()
 
     def update_state(self, new_state):
         msg_type = new_state.get("type")
@@ -139,7 +161,12 @@ class AngelaRenderer(QWidget):
             data = new_state.get("data", {})
             if "gamma" in data: self.state["emotion"] = data["gamma"].get("dominant_emotion", "neutral")
             if "alpha" in data: self.state["stress"] = data["alpha"].get("stress", 0.0)
-            if "spatial" in data: self.target_pos.setX(float(data["spatial"].get("x", self.angela_pos.x())))
+            if "spatial" in data: 
+                spatial = data["spatial"]
+                self.target_pos.setX(float(spatial.get("x", self.angela_pos.x())))
+                # 2030 Standard: Dynamic Posture Sync
+                self.state["theta_matrix"] = spatial.get("posture", {}).get("theta_matrix")
+                self.state["finger_matrix"] = spatial.get("posture", {}).get("finger_matrix")
         self.update()
 
     def add_new_bubble(self, text, origin):
@@ -153,8 +180,12 @@ class AngelaRenderer(QWidget):
         dx = (self.target_pos.x() - self.angela_pos.x()) * 0.2
         self.angela_pos.setX(self.angela_pos.x() + dx)
         
-        # [Task N.12.7.c] 驅動肢體與髮絲物理動態
-        self.dna.apply_dynamics(self.breath_phase)
+        # [Task N.12.9/10] 驅動精細解剖動態 (脊椎與五指)
+        self.dna.apply_dynamics(
+            self.breath_phase, 
+            theta_matrix=self.state.get("theta_matrix"),
+            finger_matrix=self.state.get("finger_matrix")
+        )
         
         for bubble in self.bubble_stack:
             target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)

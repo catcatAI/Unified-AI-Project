@@ -17,6 +17,8 @@
 | 觸覺身分轉發 | `tactile_service.py` | `def forward_tactile_identity` |
 | 小腦神經初始化 | `cerebellum_engine.py` | `class CerebellumEngine` |
 | 語言免疫系統 | `ego_guard.py` | `class EgoGuard` |
+| 藝術學習工作流 | `art_learning_workflow.py` | `class ArtLearningWorkflow` |
+| 異步標準化工具 | `async_utils.py` | `def safe_create_task` |
 
 ---
 

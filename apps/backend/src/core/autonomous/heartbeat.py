@@ -1,3 +1,10 @@
+# =============================================================================
+# ANGELA-MATRIX: L1[生物層] αβγδ [A] L2+
+# =============================================================================
+# 職責: 代謝心跳驅動器 (Metabolic Heartbeat).
+# 維度: 四維全狀態同步，將硬體負載與環境感知轉化為生命體徵。
+# =============================================================================
+
 import asyncio
 import logging
 import time
@@ -42,16 +49,22 @@ class MetabolicHeartbeat:
                 intent_pose = "walking" if dist_to_target > 5.0 else "standing"
                 
                 bio_state = self.bio_integrator.get_biological_state()
+                
+                # 1.5 [Task N.4.3] L4 Art Learning Sync
+                color_overrides = await self.bio_integrator.art_workflow.update_visual_state()
+
                 # 呼叫小腦：執行指令並獲取細節
                 cerebellum_res = self.cerebellum.execute_command(
                     pose_name=intent_pose,
                     bio_state=bio_state
                 )
                 
-                # 更新空間姿態物件 (包含 9 段脊椎矩陣)
+                # 更新空間姿態物件 (包含 9 段脊椎矩陣與五指矩陣)
                 self.posture = {
                     "pose_name": cerebellum_res["pose_name"],
                     "theta_matrix": cerebellum_res["theta_matrix"],
+                    "finger_matrix": cerebellum_res.get("finger_matrix", {"left": [0.0]*5, "right": [0.0]*5}),
+                    "color_overrides": color_overrides,
                     "tremor_active": cerebellum_res.get("tremor_active", False)
                 }
                 

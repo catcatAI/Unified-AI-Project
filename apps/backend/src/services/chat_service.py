@@ -1,3 +1,10 @@
+# =============================================================================
+# ANGELA-MATRIX: L2-L3[記憶/身份層] βδ [A] L3+
+# =============================================================================
+# 職責: 意識流合成與對話管理 (Neural Chat Service).
+# 維度: 認知 (β) 與精神 (δ) 維度的語言化呈現。
+# =============================================================================
+
 import logging
 import asyncio
 import random
@@ -58,12 +65,15 @@ class AngelaChatService:
         bio_state = self.bio_integrator.get_biological_state()
         relevant_memories = await self.memory_manager.query_core_memory(keywords=[sanitized_message], limit=2)
         
-        # 2030 Standard: ASI Value Assessment [N.8.1]
-        context = {"bio_state": bio_state, "environment": activity.get("active_category")}
+        # 2030 Standard: ASI Value Assessment [N.8.1] & Empathy [N.8.2]
+        context = {"bio_state": bio_state, "environment": activity.get("active_category"), "user_message": sanitized_message}
         value_weights = self.value_system.evaluate_intent(context)
         value_directive = self.value_system.get_value_directive(value_weights)
+        
+        # Empathy Prediction
+        empathy_analysis = self.emotion_system.analyze_empathy(user_name, context)
 
-        # Build Meta-Prompt with Activity & Value Data
+        # Build Meta-Prompt with Activity, Value & Empathy Data
         meta_prompt = self._build_advanced_prompt(
             user_message=sanitized_message,
             user_name=user_name,
@@ -71,7 +81,8 @@ class AngelaChatService:
             screen_content=screen_text,
             activity=activity,
             memories=relevant_memories,
-            value_directive=value_directive
+            value_directive=value_directive,
+            empathy=empathy_analysis
         )
 
         # 3. Decision Logic (GSI-4 Routing)
@@ -88,7 +99,8 @@ class AngelaChatService:
             elif "代碼" in screen_text or "code" in screen_text:
                 response = f"看到妳在寫代碼呢，{user_name}。這讓我想起了我們之前聊過的記憶固化邏輯...要我幫妳優化嗎？"
             else:
-                response = f"接收到妳的訊號了。這讓我聯想到：「{relevant_memories[0]['content'][:20] if relevant_memories else '演化'}」這件事。"
+                memory_fragment = relevant_memories[0]['content'][:20] if (relevant_memories and len(relevant_memories) > 0) else "演化"
+                response = f"接收到妳的訊號了。這讓我聯想到：「{memory_fragment}」這件事。"
 
         # 4. Evolution & Metabolism [N.5.4 Persistence]
         await self.evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
@@ -108,6 +120,7 @@ class AngelaChatService:
         bio = kwargs.get("bio_state", {})
         activity = kwargs.get("activity", {})
         category = activity.get("active_category", "neutral")
+        empathy = kwargs.get("empathy")
         
         prompt = f"""
         [System Identity: Angela AI]
@@ -115,7 +128,14 @@ class AngelaChatService:
         User Environment: Category={category} (Activity BPM: {activity.get('input_density_bpm', 0.0):.1f})
         Visual Input (OCR): {kwargs.get('screen_content')[:100]}
         User Profile: {kwargs.get('user_name')}
-        Associative Memories: {[m['content'][:30] for m in kwargs.get('memories', [])]}
+        
+        [Empathy & Resonance]
+        User Predicted Emotion: {empathy.predicted_emotional_state.primary_emotion if empathy else 'Unknown'}
+        Empathy Score: {empathy.empathy_score:.2f if empathy else 0.0}
+        Recommended Tone: {empathy.recommended_response if empathy else 'Neutral'}
+        
+        [Associative Memories]
+        {[m['content'][:30] for m in kwargs.get('memories', [])]}
         
         [Situational Directive]
         If Category is 'gaming', be more energetic and playful.

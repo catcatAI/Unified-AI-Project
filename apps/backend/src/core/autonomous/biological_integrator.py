@@ -31,6 +31,7 @@ from .endocrine_system import EndocrineSystem, HormoneType
 from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
 from .neuroplasticity import NeuroplasticitySystem
 from .emotional_blending import EmotionalBlendingSystem, BasicEmotion
+from utils.async_utils import safe_create_task
 
 
 # P0-2: 生物事件定义
@@ -163,6 +164,10 @@ class BiologicalIntegrator:
         # 2030 Standard: Cerebellum Motor System
         from .cerebellum_engine import CerebellumEngine
         self.cerebellum: CerebellumEngine = CerebellumEngine()
+        
+        # 2030 Standard: L4 Art Learning Workflow
+        from .art_learning_workflow import get_art_workflow
+        self.art_workflow = get_art_workflow(self)
 
         # P0-2: 生物事件发布器
         self.event_publisher = BiologicalEventPublisher()
@@ -246,8 +251,10 @@ class BiologicalIntegrator:
         # Set up cross-system callbacks
         self._setup_cross_system_callbacks()
 
-        # Start integration loop
-        self._integration_task = asyncio.create_task(self._integration_loop())
+        # [2030 Standard] Start integration loop with safe tracking
+        self._integration_task = safe_create_task(
+            self._integration_loop(), name="Bio-Integration-Loop"
+        )
 
     async def shutdown(self):
         """Shutdown all biological systems"""
