@@ -39,12 +39,13 @@ def check_nodejs():
     """检查Node.js环境"""
     print("\n🔍 检查Node.js环境...")
     try:
+        # 修复：移除 shell=True，使用参数列表
         result = subprocess.run(["node", "--version"], 
-                              capture_output=True, text=True, shell=True)
+                              capture_output=True, text=True, shell=False)
         print(f"✅ Node.js版本: {result.stdout.strip()}")
         
         result = subprocess.run(["npm", "--version"], 
-                              capture_output=True, text=True, shell=True)
+                              capture_output=True, text=True, shell=False)
         print(f"✅ npm版本: {result.stdout.strip()}")
         return True
     except Exception as e:

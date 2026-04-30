@@ -1,12 +1,12 @@
 /**
  * =============================================================================
- * ANGELA-MATRIX: L6[执行层] 全层级 [A→C] L1+
+ * ANGELA-MATRIX: L6[Execution Layer] Full Levels [A→C] L1+
 # =============================================================================
  *
- * 职责: 处理桌面应用与后端 API 服务器的通信
- * 维度: 涉及所有维度，传输状态矩阵数据
- * 安全: 使用 Key C (桌面同步) 与后端 Key A 安全通信
- * 成熟度: L1+ 等级即可使用基本对话功能
+ * Responsibility: Handle communication between desktop app and backend API server
+ * Dimensions: Involves all dimensions, transmits state matrix data
+ * Security: Uses Key C (Desktop Sync) for secure communication with backend Key A
+ * Maturity: L1+ level for basic dialogue functionality
  *
  * API 端点:
  * - GET /health - 健康检查

@@ -5,7 +5,7 @@ class PerformanceManager {
         this.config = config;
         this.hardwareProfile = null;
         this.currentMode = 'standard';
-        this.wallpaperMode = '2D'; // 預設 2D
+        this.wallpaperMode = '2D'; // default 2D
         this.targetFPS = 60;
         this.currentFPS = 60;
         this.resolutionScale = 1.0;

@@ -12,7 +12,7 @@ class MaturityTracker {
         this.stateMatrix = null;
         
         this.maturityLevels = [
-            { level: 0, cn_name: '新生', en_name: 'Newborn', min_memory: 0, max_memory: 100 },
+            { level: 0, name_cn: 'Newborn', name_en: 'Newborn', min_memory: 0, max_memory: 100 },
             { level: 1, cn_name: '幼儿', en_name: 'Infant', min_memory: 100, max_memory: 1000 },
             { level: 2, cn_name: '童年', en_name: 'Child', min_memory: 1000, max_memory: 5000 },
             { level: 3, cn_name: '少年', en_name: 'Adolescent', min_memory: 5000, max_memory: 20000 },

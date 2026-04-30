@@ -1,5 +1,5 @@
 /**
- * 統一錯誤處理工具
+ * Unified error handling tool
  * 用於減少 try-catch 重複代碼並提供一致的錯誤處理
  */
 

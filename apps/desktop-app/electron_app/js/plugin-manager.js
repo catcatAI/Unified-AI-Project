@@ -351,7 +351,7 @@ class PluginManager {
     _getPublicAPI() {
         const angelaApp = window.angelaApp;
 
-        // 定義安全的 API 接口
+        // Definesecure API API
         return {
             // ✅ 允許訪問的只讀數據
             stateMatrix: this._createSafeProxy(angelaApp?.stateMatrix, {

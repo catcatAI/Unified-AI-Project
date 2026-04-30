@@ -1,7 +1,7 @@
 /**
  * Angela AI - Cubism SDK Manager
  * 
- * 管理Live2D Cubism SDK的本地部署和混合加载策略
+ * Manage local deployment and hybrid loading strategy for Live2D Cubism SDK
  */
 
 class CubismSDKManager {

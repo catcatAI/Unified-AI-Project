@@ -1,6 +1,6 @@
 /**
  * Angela AI - Frontend Utilities
- * 通用前端工具模块，提供健壮的边界情况处理
+ * Robust frontend utility module
  */
 
 const FrontendUtils = {

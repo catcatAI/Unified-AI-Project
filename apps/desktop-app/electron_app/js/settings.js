@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Apply to Live2D manager
         if (window.angelaApp && window.angelaApp.live2dManager) {
-            // 應用渲染模式設置
+            // Apply rendering mode setting
             if (settings.renderMode) {
                 if (settings.renderMode === 'live2d' && window.angelaApp.live2dManager.getMode() === 'fallback') {
                     window.angelaApp.live2dManager.switchToLive2D();

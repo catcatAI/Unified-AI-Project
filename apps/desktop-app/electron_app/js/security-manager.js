@@ -1,6 +1,6 @@
 /**
  * Angela AI Desktop Security Manager
- * 負責處理 Key C 跨端同步與本地加密
+ * Responsible for Key C cross-end sync and local encryption
  */
 const crypto = require('crypto');
 const fs = require('fs');

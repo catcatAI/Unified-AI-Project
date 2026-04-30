@@ -1,7 +1,7 @@
 /**
  * Angela AI - Main Application
  * 
- * 统一显示矩阵 (UDM) 集成版本
+ * Unified Display Matrix (UDM) Integration Version
  */
 
 class AngelaApp {

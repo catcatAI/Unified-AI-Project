@@ -1,9 +1,9 @@
 /**
  * Angela AI Voice Configuration (GSI-4 Level)
- * 語音合成引擎參數配置
+ * Voice synthesis engine parameter configuration
  * 
  * Based on Angela AI v6.2.0 Architecture Documentation
- * 整合 4D 狀態矩陣驅動的動態語音參數
+ * Dynamic voice parameters driven by 4D state matrix
  */
 
 const ANGELA_VOICE_CONFIG = {

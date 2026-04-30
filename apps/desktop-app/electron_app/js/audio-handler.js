@@ -1,12 +1,12 @@
 /**
  * =============================================================================
- * ANGELA-MATRIX: L6[执行层] α [C] L1+
+ * ANGELA-MATRIX: L6[Execution Layer] α [C] L1+
 # =============================================================================
  *
- * 职责: 处理音频输入（麦克风、系统音频、浏览器音频）和输出（TTS、音效）
- * 维度: 主要影响生理维度 (α) 的听觉感知和声音交互
- * 安全: 使用 Key C (桌面同步) 进行本地音频处理
- * 成熟度: L1+ 等级即可使用基本音频功能
+ * Responsibility: Handle audio input (microphone, system audio, browser audio) and output (TTS, sound effects)
+ * Dimensions: Mainly affects physiological dimension (α) for auditory perception and voice interaction
+ * Security: Uses Key C (Desktop Sync) for local audio processing
+ * Maturity: L1+ level for basic audio functionality
  *
  * 音频输入:
  * - 麦克风输入

@@ -1,5 +1,5 @@
 /**
- * Angela AI - 深度Live2D问题诊断器
+ * Angela AI - Deep Live2D Diagnostic Tool
  * 
  * 全面诊断Live2D显示问题的根本原因
  */

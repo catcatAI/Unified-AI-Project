@@ -1,12 +1,12 @@
 /**
  * =============================================================================
- * ANGELA-MATRIX: L1[生物层] α [C] L2+
+ * ANGELA-MATRIX: L1[Bio Layer] α [C] L2+
  * =============================================================================
  *
- * 职责: 处理触觉输入，包括鼠标点击、触摸事件
- * 维度: 主要影响生理维度 (α) 的舒适度和紧张度
- * 安全: 使用 Key C (桌面同步) 进行本地触觉检测
- * 成熟度: L2+ 等级开始理解触觉反馈
+ * Responsibility: Handle tactile input including mouse clicks and touch events
+ * Dimensions: Mainly affects physiological dimension (α) for comfort and tension
+ * Security: Uses Key C (Desktop Sync) for local tactile detection
+ * Maturity: L2+ level begins to understand tactile feedback
  *
  * 触觉部位 (18 个身体部位):
  * - 头部 (head)

@@ -1,7 +1,7 @@
 /**
  * Angela AI - Gesture Manager
  * 
- * 复杂手势识别系统 - 双击、长按、捏合
+ * Complex gesture recognition system - double-click, long-press, pinch
  * 
  * 功能：
  * - 双击检测（双击间隔可配置）

@@ -1,7 +1,7 @@
 /**
  * Angela AI - Final Integration and Testing
  * 
- * 集成所有优化并进行系统测试
+ * Integrate all optimizations and system test
  */
 
 class AngelaIntegrationTester {

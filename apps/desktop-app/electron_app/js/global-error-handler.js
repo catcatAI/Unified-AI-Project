@@ -1,5 +1,5 @@
 /**
- * Angela AI - 统一错误处理器
+ * Angela AI - Unified error handler
  * 
  * 提供全局错误捕获和处理机制
  */

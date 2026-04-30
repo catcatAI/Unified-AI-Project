@@ -1,7 +1,7 @@
 /**
  * Angela AI - Advanced Hardware Diagnostic Tool
  * 
- * 深入诊断硬件兼容性和支持问题
+ * In-depth hardware compatibility and support diagnostics
  */
 
 class HardwareDiagnosticTool {

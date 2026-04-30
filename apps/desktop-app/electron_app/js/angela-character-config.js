@@ -1,6 +1,6 @@
 /**
  * Angela Character Configuration
- * 自動生成的身體部位配置 - 修復優先級版本
+ * Auto-generated body part configuration - Priority fix version
  */
 
 const ANGELA_CHARACTER_CONFIG = {

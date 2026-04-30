@@ -1,6 +1,6 @@
 /**
  * Angela AI Performance Monitor
- * 性能監控和分析工具
+ * Performance monitoring and analysis tool
  */
 
 class PerformanceMonitor {

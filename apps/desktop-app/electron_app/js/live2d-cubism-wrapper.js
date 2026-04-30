@@ -57,7 +57,7 @@ class Live2DCubismWrapper {
     }
 
     async loadCubismScript() {
-        // 嘗試多種CDN源，包括本地備份
+        // Try multiple CDN sources including local backup
         // SRI 哈希值用于验证 CDN 资源完整性
         const cdnSources = [
             {

@@ -1,6 +1,6 @@
 /**
  * Angela AI Expression Configuration
- * 8 種基礎情緒表情配置
+ * 8 Basic Emotion Expression Config
  * 
  * Based on Gemini Expression Sheet Analysis
  * Grid: 2 rows x 4 columns, 1024x512px

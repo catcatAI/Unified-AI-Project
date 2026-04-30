@@ -1,5 +1,5 @@
 /**
- * LayerRenderer - 三層渲染器 v2
+ * LayerRenderer - Three-layer renderer v2
  * 
  * 管理三層疊加渲染系統：
  * - Layer 1: 主立繪層 (base)

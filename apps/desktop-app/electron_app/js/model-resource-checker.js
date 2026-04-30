@@ -1,5 +1,5 @@
 /**
- * Angela AI - 模型资源深度检查工具
+ * Angela AI - Deep model resource diagnostic tool
  * 
  * 专门检查Live2D模型资源的完整性和可访问性
  */

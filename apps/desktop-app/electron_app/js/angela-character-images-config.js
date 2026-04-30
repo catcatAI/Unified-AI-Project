@@ -1,13 +1,13 @@
 /**
- * Angela AI - 立繪圖片配置
+ * Angela AI - Standing Image Configuration
  * 
- * 三層渲染架構 - 修正版 v5
- * - Layer 1: 主立繪層 (base) - fullbody_ai_assistant
- * - Layer 2: 表情疊加層 (expression) - expression_pack_1 (只包含面部)
- * - Layer 3: 姿態疊加層 (pose) - pose_sequence_1 (⚠️ 包含完整上半身+頭部，需要頭部遮罩)
+ * Three-layer rendering architecture - Fixed v5
+ * - Layer 1: Main character layer (base) - fullbody_ai_assistant
+ * - Layer 2: Expression overlay layer (expression) - expression_pack_1 (face only)
+ * - Layer 3: Pose overlay layer (pose) - pose_sequence_1 (⚠️ Includes upper body + head, requires head mask)
  * 
- * 修正問題：
- * 1. ⚠️ 姿態序列包含完整上半身和頭部，會導致三個頭部疊加顯示
+ * Fixed issues:
+ * 1. ⚠️ Pose sequence includes upper body and head, causing triple head overlay
  * 2. 解決方案：使用頭部遮罩遮蓋姿態層的頭部區域
  * 3. 所有坐標確保為正數
  * 4. 統一觸覺區域坐標系統為 1280x720 畫布坐標

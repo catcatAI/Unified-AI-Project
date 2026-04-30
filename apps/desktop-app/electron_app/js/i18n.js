@@ -98,7 +98,7 @@ class I18nManager {
         this.registerTranslations('zh-CN', {
             app: {
                 name: 'Angela AI',
-                loading: '正在加载 Angela AI...',
+                loading: 'Loading Angela AI...',
                 ready: 'Angela AI 已就绪！',
                 error: '发生错误'
             },

@@ -1,9 +1,9 @@
 /**
  * Angela AI - Component Initialization Manager
  * 
- * 组件初始化管理器 - 处理组件初始化顺序和依赖关系
+ * Manage component initialization order and dependencies
  * 
- * 功能：
+ * Functionality:
  * - 基于依赖图的拓扑排序
  * - 初始化状态跟踪
  * - 失败回滚机制

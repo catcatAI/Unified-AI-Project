@@ -456,7 +456,6 @@ class ProactiveInteractionSystem:
             # 通過 WebSocket 發送消息給前端
             logger.info(f"[PROACTIVE] {plan.opportunity}: {plan.message}")
 
-            # 實際發送到前端
             if self.broadcast_callback:
                 try:
                     await self.broadcast_callback(

@@ -1,6 +1,6 @@
 /**
  * Angela AI Pose Configuration
- * 8 種動作姿態配置
+ * 8 Action Pose Config
  * 
  * Based on Gemini Pose Sheet Analysis
  * Grid: 2 rows x 4 columns, 1920x1080px

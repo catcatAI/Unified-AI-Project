@@ -1009,8 +1009,8 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
   try {
     // Set transparent regions (where mouse events pass through)
     if (regions && regions.length > 0) {
-      // 将穿透区域转换为skipRegions（不穿透的区域）
-      // Electron的skipRegions参数指定哪些区域不忽略鼠标事件
+      // Convert regions to skipRegions (areas where mouse events are not ignored)
+      // Electron's skipRegions parameter specifies which areas do not ignore mouse events
       const skipRegions = regions.map((region) => ({
         x: Math.floor(region.x),
         y: Math.floor(region.y),
@@ -1024,17 +1024,17 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
         skipRegions: skipRegions,
       })
 
-      console.log('[Main] 点击穿透区域已设置:', skipRegions.length, '个区域')
+      console.log('[Main] Click-through regions set:', skipRegions.length, 'regions')
     } else {
       mainWindow.setIgnoreMouseEvents(false)
-      console.log('[Main] 点击穿透已禁用')
+      console.log('[Main] Click-through disabled')
     }
 
     // Send regions to renderer for hit testing
     sendToMainWindow('click-through-regions-updated', regions)
   } catch (error) {
-    console.error('[Main] 设置点击穿透区域失败:', error)
-    // 失败时恢复默认行为
+    console.error('[Main] Failed to set click-through regions:', error)
+    // Restore default behavior on failure
     mainWindow.setIgnoreMouseEvents(false)
   }
 })

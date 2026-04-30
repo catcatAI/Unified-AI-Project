@@ -1,7 +1,7 @@
 /**
  * Angela AI - Live2D Root Cause Analysis and Repair Tool
  * 
- * 深入分析并修复Live2D显示问题的根本原因
+ * Deep analysis and fix Live2D display issues
  */
 
 class Live2DRootCauseAnalyzer {

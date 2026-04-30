@@ -1,12 +1,12 @@
 /**
  * =============================================================================
- * ANGELA-MATRIX: L6[执行层] 全层级 [A→C] L2+
+ * ANGELA-MATRIX: L6[Execution Layer] Full Levels [A→C] L2+
  * =============================================================================
  *
- * 职责: 处理与后端 WebSocket 的通信和状态矩阵同步
- * 维度: 涉及所有维度 (αβγδ)，实时同步状态矩阵数据
- * 安全: 使用 Key C (桌面同步) 与后端 Key A 安全通信
- * 成熟度: L2+ 等级理解实时通信的概念
+ * Responsibility: Handle WebSocket communication with backend and state matrix sync
+ * Dimensions: Involves all dimensions (αβγδ), real-time state matrix data sync
+ * Security: Uses Key C (Desktop Sync) for secure communication with backend Key A
+ * Maturity: L2+ level understands real-time communication concepts
  *
  * 功能:
  * - WebSocket 连接管理

@@ -1,7 +1,7 @@
 /**
  * Angela AI - Final Integration Test Suite
  * 
- * 综合测试套件，验证所有修复和增强功能
+ * Comprehensive test suite - verify all fixes and enhancements
  */
 
 class FinalIntegrationTester {

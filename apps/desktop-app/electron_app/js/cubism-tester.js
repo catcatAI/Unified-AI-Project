@@ -1,7 +1,7 @@
 /**
  * Angela AI - Cubism SDK Integration Test
  * 
- * 测试Cubism SDK的本地部署和混合加载效果
+ * Test Cubism SDK local deployment and hybrid loading effects
  */
 
 class CubismIntegrationTester {

@@ -1,5 +1,5 @@
 /**
- * 简化硬件诊断 - 可在控制台直接运行
+ * Simplified hardware diagnostic - can be run directly in console
  */
 
 function diagnoseHardwareIssues() {

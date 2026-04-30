@@ -1,7 +1,7 @@
 /**
  * Angela AI - Live2D Hit Test Manager
  * 
- * Live2D原生hitTest功能 - 使用Cubism SDK API精确检测触摸区域
+ * Live2D native hitTest - use Cubism SDK API for precise region detection
  * 
  * 功能：
  * - 基于Live2D SDK的getDrawableAt获取精确触摸区域

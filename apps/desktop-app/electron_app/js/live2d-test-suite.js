@@ -1,6 +1,6 @@
 /**
  * Angela Desktop App - Live2D Test Suite
- * Live2D功能測試套件
+ * Live2D functional test suite
  */
 
 class Live2DTestSuite {
