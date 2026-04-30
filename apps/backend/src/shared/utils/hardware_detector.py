@@ -188,8 +188,12 @@ class SystemHardwareProbe:
         # 4. Windows WMIC Fallback
         if self.platform_name == "windows":
             try:
-                cmd = "wmic path win32_VideoController get name,AdapterRAM /format:list"
-                output = subprocess.check_output(cmd, shell=True).decode("utf-8", errors="ignore")
+                # 修复：移除 shell=True，直接调用 wmic 命令防止注入
+                result = subprocess.run(
+                    ["wmic", "path", "win32_VideoController", "get", "name,AdapterRAM", "/format:list"],
+                    capture_output=True, text=True, timeout=5
+                )
+                output = result.stdout
                 name, ram = "", 0
                 for line in output.splitlines():
                     if "Name=" in line:

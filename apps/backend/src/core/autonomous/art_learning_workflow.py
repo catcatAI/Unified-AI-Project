@@ -6,11 +6,20 @@
 # =============================================================================
 
 import logging
+from enum import Enum
 from typing import Dict, Any
 from .art_learning_system import ArtLearningSystem
 from .biological_integrator import BiologicalIntegrator
 
 logger = logging.getLogger(__name__)
+
+class WorkflowStage(Enum):
+    """工作流阶段 / Workflow stages"""
+    RESEARCH = ("研究", "Search for tutorials and references")
+    ANALYSIS = ("分析", "Analyze images and techniques")
+    PRACTICE = ("练习", "Practice and skill acquisition")
+    EVOLUTION = ("演化", "Evolve aesthetics based on feedback")
+    COMPLETE = ("完成", "Workflow complete")
 
 class ArtLearningWorkflow:
     """

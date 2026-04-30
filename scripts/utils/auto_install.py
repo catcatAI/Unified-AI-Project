@@ -33,13 +33,14 @@ class AngelaAutoInstaller:
     def print_error(self, message):
         print(f"❌ {message}")
         
-    def run_command(self, command, check=True, shell=False):
-        """執行命令並返回結果"""
+    def run_command(self, command, check=True):
+        """執行命令並返回結果（安全：強制 shell=False）"""
         try:
-            if shell:
-                result = subprocess.run(command, shell=True, capture_output=True, text=True)
-            else:
-                result = subprocess.run(command, capture_output=True, text=True)
+            # 強制使用 shell=False 以防止注入
+            if isinstance(command, str):
+                import shlex
+                command = shlex.split(command)
+            result = subprocess.run(command, capture_output=True, text=True, shell=False)
             
             if check and result.returncode != 0:
                 self.print_error(f"命令失敗: {' '.join(command) if isinstance(command, list) else command}")
@@ -473,9 +474,19 @@ if __name__ == "__main__":
             # 安裝 curl 如果需要
             self.run_command(["sudo", "apt", "install", "-y", "curl"], check=False)
 
-            # 安裝 Ollama
-            curl_command = "curl -fsSL https://ollama.ai/install.sh | sh"
-            success, _ = self.run_command(curl_command, shell=True, check=False)
+            # 安裝 Ollama (安全：下載後執行)
+            import tempfile, urllib.request
+            try:
+                with tempfile.NamedTemporaryFile(mode='wb', suffix='.sh', delete=False) as f:
+                    script_path = f.name
+                    with urllib.request.urlopen("https://ollama.ai/install.sh", timeout=10) as response:
+                        f.write(response.read())
+                # 執行下載的腳本
+                success, _ = self.run_command(["sh", script_path], check=False)
+                os.unlink(script_path)
+            except Exception as e:
+                self.print_error(f"下載或執行 Ollama 安裝腳本失敗: {e}")
+                success = False
 
             if success:
                 self.print_success("Ollama 安裝成功")
