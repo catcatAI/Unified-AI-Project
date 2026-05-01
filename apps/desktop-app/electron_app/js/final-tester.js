@@ -148,7 +148,7 @@ class FinalIntegrationTester {
                 name: '系统状态访问',
                 test: async () => {
                     try {
-                        const response = await fetch('http://localhost:8000/api/v1/admin/status');
+                        const response = await fetch('http://localhost:8000/api/v1/system/status');
                         return response.ok;
                     } catch {
                         return false;

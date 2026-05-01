@@ -1496,8 +1496,12 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
+from services.atlassian_api import atlassian_router
+
+# Include existing routers
 app.include_router(api_v1_router)
 app.include_router(router)
+app.include_router(atlassian_router)
 
 if __name__ == "__main__":
     import uvicorn

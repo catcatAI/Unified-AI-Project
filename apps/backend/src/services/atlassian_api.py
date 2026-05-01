@@ -12,54 +12,87 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 
-# Mock dependencies for syntax validation
-class AtlassianCLIBridge:
-    def __init__(self, acli_path: str):
-        pass
-
-    def get_status(self):
-        return {"acli_available": True}
-
-    def get_confluence_spaces(self):
-        return {"success": True, "spaces": [], "count": 0}
-
-    def search_confluence_content(self, query: str):
-        return {"success": True, "content": [], "count": 0}
-
-    def get_jira_projects(self):
-        return {"success": True, "projects": [], "count": 0}
-
-    def get_jira_issues(self, jql: Optional[str] = None, limit: int = 50):
-        return {"success": True, "issues": [], "count": 0}
-
-    def create_jira_issue(
-        self,
-        project_key: str,
-        summary: str,
-        description: Optional[str] = None,
-        issue_type: str = "Task",
-    ):
-        return {"success": True, "issue": {"key": "MOCK-1"}}
-
-
-class EnhancedAtlassianBridge:
-    def __init__(self, connector: Any):
-        pass
-
-
-class RovoDevConnector:
-    def __init__(self, config: Dict[str, Any]):
-        pass
-
-
-def get_services():
-    return Mock()
-
+import subprocess
+import json
+import logging
+import os
+import traceback
+from typing import Dict, Any, Optional, List
+from fastapi import APIRouter, HTTPException, Body
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-atlassian_router = APIRouter(prefix="/api/v1/atlassian", tags=["Atlassian"])
+class AtlassianCLIBridge:
+    """
+    Real bridge to Atlassian CLI (acli.exe)
+    """
+    def __init__(self, acli_path: str = "acli.exe"):
+        self.acli_path = acli_path
+        self.config: Optional[Dict[str, str]] = None
 
+    def set_config(self, domain: str, email: str, token: str):
+        self.config = {
+            "domain": domain,
+            "email": email,
+            "token": token
+        }
+
+    def _run_acli(self, args: List[str]) -> Dict[str, Any]:
+        if not self.config:
+            return {"success": False, "error": "Atlassian CLI not configured."}
+        
+        # Base command with auth
+        # Note: In a real environment, we'd use environment variables or a config file for acli
+        # Here we assume acli is configured or we pass params if supported.
+        # Default: use the system configured acli
+        cmd = [self.acli_path] + args + ["--outputFormat", "json"]
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                try:
+                    data = json.loads(result.stdout)
+                    return {"success": True, "data": data}
+                except json.JSONDecodeError:
+                    return {"success": True, "raw_output": result.stdout}
+            else:
+                return {"success": False, "error": result.stderr or "Command failed"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def get_status(self):
+        # Check if acli exists
+        import shutil
+        exists = shutil.which(self.acli_path) is not None or os.path.exists(self.acli_path)
+        return {"acli_available": exists, "configured": self.config is not None}
+
+    def get_confluence_spaces(self):
+        return self._run_acli(["confluence", "getSpaceList"])
+
+    def search_confluence_content(self, query: str):
+        return self._run_acli(["confluence", "getContentList", "--search", query])
+
+    def get_jira_projects(self):
+        return self._run_acli(["jira", "getProjectList"])
+
+    def get_jira_issues(self, jql: Optional[str] = None, limit: int = 50):
+        args = ["jira", "getIssueList"]
+        if jql:
+            args.extend(["--jql", jql])
+        args.extend(["--limit", str(limit)])
+        return self._run_acli(args)
+
+    def create_jira_issue(self, project_key: str, summary: str, description: str = "", issue_type: str = "Task"):
+        return self._run_acli([
+            "jira", "createIssue", 
+            "--project", project_key, 
+            "--summary", summary, 
+            "--description", description, 
+            "--type", issue_type
+        ])
+
+atlassian_router = APIRouter(prefix="/api/v1/atlassian", tags=["Atlassian"])
 
 class AtlassianConfig(BaseModel):
     domain: str
@@ -67,37 +100,34 @@ class AtlassianConfig(BaseModel):
     api_token: str
     cloud_id: str
 
-
-class ConfluencePageCreate(BaseModel):
-    space_key: str
-    title: str
-    content: str
-
-
-class JiraIssueCreate(BaseModel):
-    project_key: str
-    summary: str
-    description: Optional[str] = None
-    issue_type: str = "Task"
-
-
-class TaskAssignment(BaseModel):
-    task_id: str
-    agent_id: str
-
-
-atlassian_config: Optional[AtlassianConfig] = None
-atlassian_bridge: Optional[AtlassianCLIBridge] = None
-enhanced_bridge: Optional[EnhancedAtlassianBridge] = None
-
+atlassian_bridge = AtlassianCLIBridge()
 
 @atlassian_router.post("/configure")
 async def configure_atlassian(config: AtlassianConfig):
-    global atlassian_config, atlassian_bridge, enhanced_bridge
     try:
-        atlassian_config = config
-        acli_path = os.getenv("ACLIPATH", "acli.exe")
-        atlassian_bridge = AtlassianCLIBridge(acli_path=acli_path)
+        atlassian_bridge.set_config(config.domain, config.user_email, config.api_token)
+        return {"status": "configured", "domain": config.domain}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@atlassian_router.get("/status")
+async def get_atlassian_status():
+    return atlassian_bridge.get_status()
+
+@atlassian_router.get("/confluence/spaces")
+async def get_spaces():
+    result = atlassian_bridge.get_confluence_spaces()
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
+
+@atlassian_router.get("/jira/projects")
+async def get_projects():
+    result = atlassian_bridge.get_jira_projects()
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
+
         rovo_connector = RovoDevConnector(
             {
                 "atlassian": {
