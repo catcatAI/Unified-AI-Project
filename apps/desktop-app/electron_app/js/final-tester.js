@@ -13,10 +13,10 @@ class FinalIntegrationTester {
     }
     
     async runAllTests() {
-        console.log('🧪 开始最终集成测试...\n');
+        console.log('🧪 Starting final integration test...\n');
         
         try {
-            // 1. 基础功能测试
+            // 1. Basic functionality test
             await this.testBasicFunctionality();
             
             // 2. Live2D功能测试

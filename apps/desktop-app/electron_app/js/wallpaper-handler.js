@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * ANGELA-MATRIX: L5[存在感层] γ [C] L1+
+ * ANGELA-MATRIX: L5[Existence Layer] γ [C] L1+
 # =============================================================================
  *
- * 职责: 管理壁纸集成和非破坏性图层合成
+ * Responsibility: Manage wallpaper integration and non-destructive layer compositing
  * 维度: 主要涉及物理维度 (γ) 的视觉环境感知
  * 安全: 使用 Key C (桌面同步) 进行本地壁纸管理
  * 成熟度: L1+ 等级即可看到视觉效果

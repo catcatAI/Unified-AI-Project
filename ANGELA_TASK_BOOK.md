@@ -36,9 +36,11 @@
 
 ### [Infrastructure] 基礎建設
 *   **[Standard] 異步標準化**: 建立 `async_utils.py` 並在 `BiologicalIntegrator` 中實裝 `safe_create_task` 任務追蹤。 (已凍結)
+*   **[Repair] 統一集成**: 修復 `DialogueManager` 引用斷路，對接 `ai-dashboard` 真實 API。 (已完成於 v2.8)
 
----
+-----
 
 ## 📅 專案現狀 (Current Status)
 ✅ **所有前置任務已完成且通過物理對齊檢查。**
-✅ **專案已達到 v2.7 的高穩定演化基準。**
+✅ **專案已達到 v2.8 的高穩定演化基準。**
+

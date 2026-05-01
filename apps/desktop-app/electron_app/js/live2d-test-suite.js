@@ -11,7 +11,7 @@ class Live2DTestSuite {
     }
 
     /**
-     * 初始化測試套件
+     * Initialize test suite
      * @param {HTMLCanvasElement} canvas - 測試用的canvas元素
      */
     async initialize(canvas) {

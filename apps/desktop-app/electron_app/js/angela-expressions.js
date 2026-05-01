@@ -7,7 +7,7 @@
  */
 
 const ANGELA_EXPRESSIONS = {
-    // 圖片基本信息
+    // Image basic info
     image_info: {
         path: 'resources/angela_expressions.png',
         width: 1024,
@@ -18,7 +18,7 @@ const ANGELA_EXPRESSIONS = {
         cell_height: 256
     },
     
-    // 表情定義
+    // Expression definitions
     expressions: {
         // Row 1
         'neutral': {

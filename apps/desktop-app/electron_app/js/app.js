@@ -6,8 +6,8 @@
 
 class AngelaApp {
     constructor() {
-        // 核心系统（按初始化顺序）
-        this.udm = null;                    // 统一显示矩阵（最先）
+        // Core systems (in initialization order)
+        this.udm = null;                    // Unified Display Matrix (first)
         this.stateMatrix = null;             // 情感状态矩阵 (αβγδ)
         this.live2dManager = null;
         this.inputHandler = null;

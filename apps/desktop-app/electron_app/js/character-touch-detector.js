@@ -8,7 +8,7 @@
  * Security: Uses Key C (Desktop Sync) for local tactile detection
  * Maturity: L2+ level begins to understand tactile feedback
  *
- * 触觉部位 (18 个身体部位):
+ * Tactile parts (18 body parts):
  * - 头部 (head)
  * - 脸颊 (cheeks)
  * - 额头 (forehead)

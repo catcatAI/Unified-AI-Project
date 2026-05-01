@@ -1,9 +1,9 @@
 /**
  * Angela AI - Time Evolution Manager
  * 
- * 时间演化管理器 - 增强Angela的时间感知和状态演化能力
+ * Time evolution manager - enhance Angela time perception and state evolution
  * 
- * 功能：
+ * Functionality:
  * - 状态时间衰减（情绪随时间自然衰减）
  * - 时间段感知（白天/夜晚/晨昏）
  * - 节奏感知（工作/休息/娱乐时段）

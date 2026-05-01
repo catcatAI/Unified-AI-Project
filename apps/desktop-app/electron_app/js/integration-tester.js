@@ -20,7 +20,7 @@ class AngelaIntegrationTester {
         console.log('🧪 Starting full integration test...');
         
         try {
-            // 1. 测试API连接
+            // 1. Test API connection
             await this.testAPISystem();
             
             // 2. 测试硬件检测增强

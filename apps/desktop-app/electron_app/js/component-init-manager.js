@@ -4,7 +4,7 @@
  * Manage component initialization order and dependencies
  * 
  * Functionality:
- * - 基于依赖图的拓扑排序
+ * - Topological sort based on dependency graph
  * - 初始化状态跟踪
  * - 失败回滚机制
  * - 初始化超时控制

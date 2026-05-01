@@ -7,7 +7,7 @@
  */
 
 const ANGELA_VOICE_CONFIG = {
-    // 基礎音色配置
+    // Basic voice config
     base_timbre: {
         // 基頻錨點
         base_frequency: {

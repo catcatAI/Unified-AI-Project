@@ -99,7 +99,7 @@ class I18nManager {
             app: {
                 name: 'Angela AI',
                 loading: 'Loading Angela AI...',
-                ready: 'Angela AI 已就绪！',
+                ready: 'Angela AI is ready!',
                 error: '发生错误'
             },
             ui: {

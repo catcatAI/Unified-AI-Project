@@ -20,7 +20,7 @@ class PerformanceManager {
         this.autoAdjustEnabled = true;
         this.lastModeChangeTime = 0;
         this.modeChangeCooldown = 10000; // 10 seconds cooldown between mode changes
-        this.lastAutoConfigureTime = 0; // 防止短时间内重复自动配置
+        this.lastAutoConfigureTime = 0; // Prevent rapid repeated auto-configuration
         this.pendingModeChange = null;
         this.pendingModeChangeTime = 0;
         this.modeLockUntil = 0; // Lock upgrades after a downgrade to prevent flickering

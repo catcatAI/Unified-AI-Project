@@ -3,7 +3,7 @@
  * ANGELA-MATRIX: L5[Existence Layer] γ [C] L1+
 # =============================================================================
  *
- * 职责: 处理鼠标追踪、点击、手势和触摸交互
+ * Responsibility: Handle mouse tracking, click, gesture and touch interaction
  * 维度: 主要涉及物理维度 (γ) 的位置、速度和碰撞检测
  * 安全: 使用 Key C (桌面同步) 进行本地输入处理
  * 成熟度: L1+ 等级即可使用基本交互功能

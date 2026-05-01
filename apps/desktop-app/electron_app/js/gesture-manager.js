@@ -3,7 +3,7 @@
  * 
  * Complex gesture recognition system - double-click, long-press, pinch
  * 
- * 功能：
+ * Functionality:
  * - 双击检测（双击间隔可配置）
  * - 长按检测（长按时长可配置）
  * - 捏合检测（双指缩放）

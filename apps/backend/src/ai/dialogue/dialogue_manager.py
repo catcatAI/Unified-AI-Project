@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from ai.personality.personality_manager import PersonalityManager
 from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 from core.services.multi_llm_service import MultiLLMService, ChatMessage
-from ai.emotion.emotion_system import EmotionSystem
+from ai.alignment.emotion_system import EmotionSystem
 from ai.crisis.crisis_system import CrisisSystem
 from ai.time.time_system import TimeSystem
 from ai.formula_engine import FormulaEngine

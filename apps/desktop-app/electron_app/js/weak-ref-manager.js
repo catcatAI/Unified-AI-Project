@@ -1,9 +1,9 @@
 /**
  * Angela AI - Weak Reference Manager
  * 
- * 弱引用管理器 - 使用WeakMap防止组件循环引用导致内存泄漏
+ * WeakRef manager - use WeakMap to prevent memory leaks from circular references
  * 
- * 功能：
+ * Functionality:
  * - 使用WeakMap存储组件引用
  * - 自动垃圾回收不再使用的引用
  * - 循环引用检测

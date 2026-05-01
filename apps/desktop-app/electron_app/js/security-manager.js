@@ -14,7 +14,7 @@ class SecurityManager {
     }
 
     /**
-     * 初始化密鑰管理器，載入本地存儲或從後端同步
+     * Initialize encryption manager, load local storage or sync from backend
      * @param {string} userDataPath - Electron 的 userData 目錄
      * @param {string} backendIP - 後端 IP 地址
      */

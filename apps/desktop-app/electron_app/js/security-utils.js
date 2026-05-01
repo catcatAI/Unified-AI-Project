@@ -3,7 +3,7 @@
  * ANGELA-MATRIX: L6[Execution Layer] Full Levels [A/B/C] L0+
  * =============================================================================
  *
- * 职责: 提供安全工具，包括 XSS 防护、输入验证和输出编码
+ * Responsibility: Provide security tools including XSS protection, input validation and output encoding
  * 维度: 跨所有维度，确保数据和交互的安全性
  * 安全: 使用 A/B/C 密钥机制进行数据验证
  * 成熟度: L0+ 等级即可使用基本安全功能

@@ -31,7 +31,7 @@ const ANGELA_CHARACTER_CONFIG = {
     "face": {
       "rect": [630, 71, 777, 156],
       "color_range": [[200, 180, 180], [255, 235, 225]],
-      "description": "臉部",
+      "description": "face",
       "priority": 1,
       "param_id": "PARAM_CHEEK",
       "expression": "blush",

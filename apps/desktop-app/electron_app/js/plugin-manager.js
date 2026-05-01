@@ -353,7 +353,7 @@ class PluginManager {
 
         // Definesecure API API
         return {
-            // ✅ 允許訪問的只讀數據
+            // ✅ Allow read-only data access
             stateMatrix: this._createSafeProxy(angelaApp?.stateMatrix, {
                 read: ['getAlpha', 'getBeta', 'getGamma', 'getDelta', 'getValues', 'getAll'],
                 write: []

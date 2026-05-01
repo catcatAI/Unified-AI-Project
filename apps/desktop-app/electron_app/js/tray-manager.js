@@ -1,5 +1,5 @@
 /**
- * Angela AI - 系统托盘管理器
+ * Angela AI - System Tray Manager
  * 
  * 提供系统托盘图标和右键菜单功能
  */

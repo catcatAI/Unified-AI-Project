@@ -1,7 +1,7 @@
 /**
  * Angela AI - Resource Connection Manager
  * 
- * 管理所有外部资源连接（WebSocket、HTTP、MQTT等）
+ * Manage all external resource connections (WebSocket, HTTP, MQTT, etc.)
  * 提供统一的连接状态监控和重连机制
  */
 

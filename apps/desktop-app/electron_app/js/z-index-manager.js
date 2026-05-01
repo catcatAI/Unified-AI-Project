@@ -1,5 +1,5 @@
 /**
- * Z-Index 管理系統
+ * Z-Index Management System
  * 統一管理應用中所有元素的 z-index，確保層疊順序正確
  */
 

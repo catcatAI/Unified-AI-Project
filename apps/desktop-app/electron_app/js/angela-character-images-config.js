@@ -8,7 +8,7 @@
  * 
  * Fixed issues:
  * 1. ⚠️ Pose sequence includes upper body and head, causing triple head overlay
- * 2. 解決方案：使用頭部遮罩遮蓋姿態層的頭部區域
+ * 2. Solution: Use head mask to cover the head area of pose layer
  * 3. 所有坐標確保為正數
  * 4. 統一觸覺區域坐標系統為 1280x720 畫布坐標
  */

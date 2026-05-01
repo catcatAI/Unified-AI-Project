@@ -23,12 +23,21 @@
     *   `+N16.2`: **身體自覺反饋流** (已凍結於 v2.6)。
     *   `+N16.3`: **步態演化持久化** (已凍結於 v2.6)。
 
+### [Task N=15-17] 基礎修復與統一集成 (Infrastructure & Integration)
+*   **層級**: Level 9-10
+*   **內容**: 情緒系統單一化 (L5-ASI)、儀表板真實鏈路建立。
+*   **衍生接口 (+N)**:
+    *   `+N15.1`: **單一情緒系統對齊** (已凍結於 v2.7)。
+    *   `+N15.2`: **儀表板實時監控橋接** (已凍結於 v2.7)。
+    *   `+N17.1`: **TRPG/Alchemy 整合協議** (待命)。
+
 ---
 
 ## 🔒 當前凍結狀態 (Logic Fingerprint)
-*   **Latest Fingerprint**: `ANGELA-ASI-SYNC-20260429-FINAL-V2.6`
+*   **Latest Fingerprint**: `ANGELA-ASI-SYNC-20260430-FINAL-V2.7`
 *   **受保護檔案範圍**:
     *   `main_api_server.py` (WebSocket & Singleton)
     *   `dna_body.py` (Voxel Engine)
     *   `cerebellum_engine.py` (Neural Core)
+    *   `ai.alignment.emotion_system.py` (ASI Soul)
 

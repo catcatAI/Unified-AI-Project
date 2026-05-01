@@ -8,7 +8,7 @@
  * Security: Uses Key C (Desktop Sync) for secure communication with backend Key A
  * Maturity: L1+ level for basic dialogue functionality
  *
- * API 端点:
+ * API endpoints:
  * - GET /health - 健康检查
  * - POST /api/v1/chat/unified - 统一对话接口（推荐）
  * - POST /dialogue - 旧对话接口（迁移期）

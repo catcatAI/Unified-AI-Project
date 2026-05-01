@@ -1,7 +1,7 @@
 /**
  * Angela AI - Unified error handler
  * 
- * 提供全局错误捕获和处理机制
+ * Provide global error capture and handling mechanism
  */
 
 class GlobalErrorHandler {

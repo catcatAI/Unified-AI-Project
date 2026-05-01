@@ -1,7 +1,7 @@
 /**
- * 触摸坐标系统验证测试
+ * Touch coordinate system verification test
  * 
- * 测试目标：
+ * Test targets:
  * 1. 验证在任何屏幕尺寸下头发触摸检测正确
  * 2. 验证在任何窗口尺寸下头发触摸检测正确
  * 3. 验证坐标转换系统的准确性

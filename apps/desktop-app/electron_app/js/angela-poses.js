@@ -7,7 +7,7 @@
  */
 
 const ANGELA_POSES = {
-    // 圖片基本信息
+    // Image basic info
     image_info: {
         path: 'resources/angela_poses.png',
         width: 1920,

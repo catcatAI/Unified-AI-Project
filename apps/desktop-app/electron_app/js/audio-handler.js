@@ -8,7 +8,7 @@
  * Security: Uses Key C (Desktop Sync) for local audio processing
  * Maturity: L1+ level for basic audio functionality
  *
- * 音频输入:
+ * Audio input:
  * - 麦克风输入
  * - 系统音频捕获 (WASAPI/CoreAudio/PulseAudio)
  * - 浏览器音频捕获

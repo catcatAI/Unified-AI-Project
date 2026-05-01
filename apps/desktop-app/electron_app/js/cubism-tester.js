@@ -13,7 +13,7 @@ class CubismIntegrationTester {
     }
     
     async runAllTests() {
-        console.log('🧪 开始Cubism SDK集成测试...\n');
+        console.log('🧪 Starting Cubism SDK integration test...\n');
         
         try {
             // 1. SDK管理器测试

@@ -1,7 +1,7 @@
 /**
  * Angela AI - Unified Display Matrix (UDM)
  * 
- * 统一显示矩阵系统 - 720p (1280×720) = 100% 基准
+ * Unified Display Matrix System - 720p (1280x720) = 100% baseline
  * 
  * 职责划分:
  * ┌─────────────────────────────────────────────────────────────────┐

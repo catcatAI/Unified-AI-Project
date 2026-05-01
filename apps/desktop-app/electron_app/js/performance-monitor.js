@@ -45,7 +45,7 @@ class PerformanceMonitor {
     }
 
     /**
-     * 開始性能監控
+     * Start performance monitoring
      */
     startMonitoring(intervalMs = 1000) {
         if (this.isMonitoring) {

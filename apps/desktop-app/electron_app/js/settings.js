@@ -662,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (settings.renderMode) {
                 if (settings.renderMode === 'live2d' && window.angelaApp.live2dManager.getMode() === 'fallback') {
                     window.angelaApp.live2dManager.switchToLive2D();
-                    console.log('[Settings] 切換到 Live2D 模式');
+                    console.log('[Settings] Switch to Live2D mode');
                 } else if (settings.renderMode === 'fallback' && window.angelaApp.live2dManager.getMode() === 'live2d') {
                     window.angelaApp.live2dManager.switchToFallback();
                     console.log('[Settings] 切換到立繪模式');

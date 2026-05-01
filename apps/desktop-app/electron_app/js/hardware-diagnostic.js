@@ -18,7 +18,7 @@ class HardwareDiagnosticTool {
     }
     
     async runCompleteDiagnosis() {
-        console.log('🔬 开始全面硬件诊断...');
+        console.log('🔬 Starting comprehensive hardware diagnostics...');
         
         for (const step of this.diagnosticSteps) {
             try {

@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * ANGELA-MATRIX: L1-L6[全层] αβγδ [A/B/C] L2+
+ * ANGELA-MATRIX: L1-L6[All Layers] αβγδ [A/B/C] L2+
  * =============================================================================
  *
- * 职责: 管理 4D 状态矩阵 (αβγδ)，实时更新所有维度
+ * Responsibility: Manage 4D state matrix (αβγδ), update all dimensions in real-time
  * 维度: 涉及所有四个维度 (αβγδ)
  *   - α (Alpha): 生理维度 - energy, comfort, arousal, rest_need, vitality, tension
  *   - β (Beta): 认知维度 - curiosity, focus, confusion, learning, clarity, creativity

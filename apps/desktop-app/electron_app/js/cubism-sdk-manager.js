@@ -40,10 +40,10 @@ class CubismSDKManager {
     }
     
     /**
-     * 初始化Cubism SDK管理器
+     * Initialize Cubism SDK manager
      */
     async initialize() {
-        console.log('🚀 初始化Cubism SDK管理器...');
+        console.log('🚀 Initializing Cubism SDK manager...');
         
         // 检查本地SDK是否存在
         const localAvailable = await this.checkLocalSDK();

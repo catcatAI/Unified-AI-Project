@@ -58,7 +58,7 @@ class Live2DCubismWrapper {
 
     async loadCubismScript() {
         // Try multiple CDN sources including local backup
-        // SRI 哈希值用于验证 CDN 资源完整性
+        // SRI hash for CDN resource integrity verification
         const cdnSources = [
             {
                 src: 'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',

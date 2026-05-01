@@ -18,7 +18,7 @@ class Live2DRootCauseAnalyzer {
         }
         
         this.isAnalyzing = true;
-        console.log('🔬 开始 Live2D 根本原因分析...');
+        console.log('🔬 Starting Live2D root cause analysis...');
         
         try {
             // 1. 检查基础环境

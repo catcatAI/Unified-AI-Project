@@ -3,7 +3,7 @@
  * 
  * Live2D native hitTest - use Cubism SDK API for precise region detection
  * 
- * 功能：
+ * Functionality:
  * - 基于Live2D SDK的getDrawableAt获取精确触摸区域
  * - 支持多drawable的hitArea检测
  * - 与UnifiedDisplayMatrix集成

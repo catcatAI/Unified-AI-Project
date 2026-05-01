@@ -275,3 +275,11 @@ class EmotionSystem:
 
     def get_emotion_history(self, limit: int = 100) -> List[EmotionalState]:
         return self.emotion_history[-limit:]
+
+    async def get_current_emotion_state(self) -> str:
+        """
+        [Compatibility] 獲取當前情緒狀態的字串描述。
+        用於對接 DialogueManager 的非同步調用。
+        """
+        summary = self.get_emotion_summary()
+        return f"{summary['dominant_emotion']} (intensity: {summary['intensity']:.2f}, arousal: {summary['arousal']:.2f})"
