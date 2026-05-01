@@ -732,6 +732,64 @@ async def system_status():
             ),
             "economy": _economy_manager is not None,
         }
+        return {
+            "overall_status": "online",
+            "system_resources": system_metrics_manager.get_all_metrics(),
+            "services": services_status,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting system status: {e}")
+        return {"status": "error", "message": str(e)}
+
+# ========== NEW: Specialized Agent Execution API ==========
+
+@router.post("/api/v1/agents/{agent_id}/execute")
+async def execute_agent_task(agent_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    執行專業代理任務 (2030 Unified Integration)
+    動態加載並調用 AgentManager 中的專業代理。
+    """
+    try:
+        # 1. 獲取 AgentManager
+        # 在啟動時載入代理 (此處為示例，實際應用應使用單例)
+        from ai.agents.agent_manager import AgentManager
+        agent_manager = AgentManager()
+        await agent_manager.auto_load_agents()
+        
+        # 2. 獲取特定代理
+        agent = agent_manager.get_agent(agent_id)
+        
+        # 特殊情況：如果 FantasyDM 尚未註冊到 manager
+        if not agent and agent_id == "fantasy_dm":
+            from ai.agents.specialized.fantasy_dm_agent import FantasyDMAgent
+            agent = FantasyDMAgent()
+        
+        if not agent:
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found in registry.")
+            
+        # 3. 執行任務
+        # 提取 action 和 parameters (由前端 payload 決定)
+        action = payload.get("action", "default")
+        parameters = payload.get("parameters", {})
+        
+        # 構建 Agent 預期的任務格式
+        task = {"action": action, "parameters": parameters}
+        
+        # 判斷是否為進程內代理並調用
+        if hasattr(agent, "execute"):
+            result = await agent.execute(task)
+            return result
+        else:
+            raise HTTPException(status_code=422, detail=f"Agent '{agent_id}' does not support direct execution.")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error executing agent {agent_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# =========================================================
 
         # ========== 修复：使用统一的系统指标管理器 ==========
         system_resources = system_metrics_manager.get_all_metrics()

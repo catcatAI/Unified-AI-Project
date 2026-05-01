@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 import ctypes
 import json
@@ -9,6 +10,12 @@ from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QVBoxLayout, QMenu
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QRect, QPoint, QPointF
 from PyQt6.QtGui import QPainter, QColor, QFont, QGuiApplication, QImage, QIcon, QPixmap
 import websockets
+
+# 2030 Unified Integration: Add biology-core to path
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_core_path = os.path.abspath(os.path.join(_current_dir, "../../packages/biology-core/src"))
+if _core_path not in sys.path:
+    sys.path.insert(0, _core_path)
 
 from ui_config import UIConfig
 from dna_body import AngelaDNA

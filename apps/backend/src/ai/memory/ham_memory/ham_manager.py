@@ -88,6 +88,34 @@ class HAMMemoryManager:
     async def initialize(self):
         """Async initialization for Memory systems."""
         logger.info("[Memory] Hierarchical Associative Memory online.")
+        
+        # 2030 Unified Integration: Auto-load TRPG Codex as Strategic Knowledge
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            # Path relative to this file: ../../../../data/trpg/ai-trpg-codex.json
+            codex_path = os.path.abspath(os.path.join(current_dir, "../../../../data/trpg/ai-trpg-codex.json"))
+            
+            if os.path.exists(codex_path):
+                logger.info(f"📚 [Memory] Loading TRPG Codex from {codex_path}")
+                with open(codex_path, "r", encoding="utf-8") as f:
+                    codex_data = json.load(f)
+                    
+                # Inject key categories as strategic experiences
+                for category in ["characters", "locations", "items"]:
+                    if category in codex_data:
+                        content = f"TRPG Knowledge ({category}): " + json.dumps(codex_data[category], ensure_ascii=False)
+                        await self.store_experience(
+                            raw_data=content,
+                            data_type=f"trpg_codex_{category}",
+                            metadata={"source": "trpg_codex", "category": category},
+                            is_strategic=True
+                        )
+                logger.info("✅ [Memory] TRPG Codex successfully injected into strategic knowledge.")
+            else:
+                logger.warning(f"⚠️ [Memory] TRPG Codex not found at {codex_path}. Skipping injection.")
+        except Exception as e:
+            logger.error(f"❌ [Memory] Failed to auto-load TRPG Codex: {e}")
+            
         return True
 
     def _generate_memory_id(self) -> str:
