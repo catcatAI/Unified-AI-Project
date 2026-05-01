@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, AsyncGenerator
 from datetime import datetime
 
-from core.services.multi_llm_service import MultiLLMService, ChatMessage, LLMResponse, ModelConfig
+from services.adapters.multi_llm_adapter import MultiLLMService, ChatMessage, LLMResponse, ModelConfig
 
 logger = logging.getLogger(__name__)
 

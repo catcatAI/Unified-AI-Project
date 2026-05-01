@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from core.services.multi_llm_service import ModelProvider
+from services.adapters.multi_llm_adapter import ModelProvider
 
 
 @dataclass
