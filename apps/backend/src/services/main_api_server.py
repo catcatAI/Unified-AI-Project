@@ -645,6 +645,8 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    if _metabolic_heartbeat:
+        await _metabolic_heartbeat.stop()
     if _desktop_interaction:
         await _desktop_interaction.shutdown()
     if _action_executor:

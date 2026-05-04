@@ -219,8 +219,22 @@ class AudioService:
 
     async def _perform_speech_recognition(self, audio_data: bytes, language: str) -> Dict[str, Any]:
         if not WHISPER_AVAILABLE:
-            await asyncio.sleep(0.1)
-            return {"text": "This is a mock transcription (Install whisper).", "confidence": 0.9}
+            # 2030 Standard: Basic VAD Fallback instead of Mock text
+            try:
+                # Calculate average amplitude as simple VAD
+                if len(audio_data) > 0:
+                    import numpy as np
+                    samples = np.frombuffer(audio_data, dtype=np.int16)
+                    energy = np.abs(samples).mean() if len(samples) > 0 else 0
+                    
+                    if energy > 500: # Threshold for 'detectable sound'
+                        logger.info(f"🔊 [Audio] Sound detected (Energy: {energy:.1f}) but Whisper is unavailable.")
+                        return {"text": "（妳似乎說了些什麼，但我現在還聽不清楚...）", "confidence": 0.5, "fallback": True}
+                
+                return {"text": "", "confidence": 1.0, "fallback": True}
+            except Exception as e:
+                logger.warning(f"Audio fallback failed: {e}")
+                return {"text": "", "confidence": 0.0}
 
         try:
             loop = asyncio.get_running_loop()

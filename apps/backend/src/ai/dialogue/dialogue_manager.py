@@ -17,7 +17,7 @@ from ai.crisis.crisis_system import CrisisSystem
 from ai.time.time_system import TimeSystem
 from ai.formula_engine import FormulaEngine
 from ai.learning.learning_manager import LearningManager
-from ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from ai.service_discovery.service_discovery_module import ServiceDiscoveryModule
 from core.shared.types.common_types import (
     OperationalConfig,
     DialogueTurn,

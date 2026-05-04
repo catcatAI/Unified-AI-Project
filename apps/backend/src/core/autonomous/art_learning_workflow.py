@@ -21,6 +21,17 @@ class WorkflowStage(Enum):
     EVOLUTION = ("演化", "Evolve aesthetics based on feedback")
     COMPLETE = ("完成", "Workflow complete")
 
+class LearningObjective:
+    """代表 Angela 當前的藝術或美學學習目標"""
+    def __init__(self, name: str, priority: float = 0.5):
+        self.name = name
+        self.priority = priority
+        self.progress = 0.0
+        self.milestones = []
+
+    def update_progress(self, increment: float):
+        self.progress = min(1.0, self.progress + increment)
+
 class ArtLearningWorkflow:
     """
     Angela 的外觀演化協調器 (2030 Standard).

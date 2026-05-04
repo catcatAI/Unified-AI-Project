@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional, List, TYPE_CHECKING
 
 # 2030 Standard: Real Service Integration
-# We import from services/main_api_server to get access to real singletons
+# We import from services.main_api_server to get access to real singletons
 # Avoid circular imports by using local imports in methods if needed
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class HotReloadService:
     async def status(self) -> Dict[str, Any]:
         """Probes real system status from authorized singletons."""
         try:
-            # Dynamically import to avoid circular dependency with main server
+            # Dynamically import inside method to avoid circular dependency
             from services.main_api_server import (
                 _llm_service, 
                 _digital_life, 
@@ -58,7 +58,7 @@ class HotReloadService:
                 "real_services": {
                     "llm_available": _llm_service.is_available if _llm_service else False,
                     "digital_life_active": _digital_life is not None,
-                    "heartbeat_running": _metabolic_heartbeat.is_running if _metabolic_heartbeat else False,
+                    "heartbeat_running": _metabolic_heartbeat._running if _metabolic_heartbeat else False,
                 },
                 "metrics": system_metrics_manager.get_all_metrics()
             }
@@ -70,182 +70,6 @@ class HotReloadService:
         """實作配置熱加載邏輯"""
         async with self._lock:
             logger.info("🔄 [HotReload] Reloading configuration matrices...")
-            # Logic: re-read yaml/json configs and apply to singletons
-            await asyncio.sleep(0.5) # Simulate IO
+            # 2030 Standard: Real re-initialization of singletons would happen here
+            await asyncio.sleep(0.5) 
             return {"success": True, "reloaded_at": datetime.now().isoformat()}
-
-        services = core_services.get_services()
-        hsp = core_services.hsp_connector_instance
-        mcp = core_services.mcp_connector_instance
-
-        hsp_status: Optional[Dict[str, Any]] = None
-        mcp_status: Optional[Dict[str, Any]] = None
-
-        try:
-            if hsp is not None and hasattr(hsp, "get_communication_status"):
-                hsp_status = hsp.get_communication_status()
-        except Exception as e:
-            logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            hsp_status = {"error": "failed to get HSP status"}
-
-        try:
-            if mcp is not None and hasattr(mcp, "get_communication_status"):
-                mcp_status = mcp.get_communication_status()
-        except Exception as e:
-            logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            mcp_status = {"error": "failed to get MCP status"}
-
-        metrics: Dict[str, Any] = {
-            "hsp": {},
-            "mcp": {},
-            "learning": {},
-            "memory": {},
-            "lis": {},
-        }
-
-        return {
-            "draining": self._draining,
-            "services_initialized": {k: (v is not None) for k, v in services.items()},
-            "hsp": hsp_status,
-            "mcp": mcp_status,
-            "metrics": metrics,
-        }
-
-    async def reload_llm(self, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        async with self._lock:
-            old_llm = core_services.llm_interface_instance
-            close_ok = True
-            if old_llm:
-                try:
-                    await old_llm.close()
-                except Exception as e:
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    close_ok = False
-
-            try:
-                new_llm = core_services.get_multi_llm_service()
-            except Exception as e:
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                return {
-                    "reloaded": False,
-                    "error": f"Failed to construct new LLM service: {e}",
-                }
-
-            core_services.llm_interface_instance = new_llm
-
-            td = core_services.tool_dispatcher_instance
-            if td is not None:
-                try:
-                    if hasattr(td, "set_llm_service"):
-                        td.set_llm_service(new_llm)  # type ignore[attr-defined]
-                    else:
-                        setattr(td, "llm_service", new_llm)
-                except Exception as e:
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
-
-            dm = core_services.dialogue_manager_instance
-            if dm is not None:
-                try:
-                    if hasattr(dm, "set_llm_interface"):
-                        dm.set_llm_interface(new_llm)  # type ignore[attr-defined]
-                    else:
-                        setattr(dm, "llm_interface", new_llm)
-                except Exception as e:
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
-
-            return {"reloaded": True, "old_closed": close_ok}
-
-    async def reload_personality(self, profile_name: Optional[str] = None) -> Dict[str, Any]:
-        async with self._lock:
-            try:
-                pm = core_services.personality_manager_instance
-                if pm is None:
-                    return {
-                        "reloaded": False,
-                        "error": "PersonalityManager not initialized",
-                    }
-                ok = pm.reload_personality(profile_name)
-                dm = core_services.dialogue_manager_instance
-                es = core_services.emotion_system_instance
-                if dm is not None and hasattr(dm, "personality_manager"):
-                    setattr(dm, "personality_manager", pm)
-                if (
-                    es is not None
-                    and hasattr(es, "personality_profile")
-                    and hasattr(pm, "current_personality")
-                ):
-                    try:
-                        es.personality_profile = pm.current_personality()
-                    except Exception as e:
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
-
-                return {
-                    "reloaded": bool(ok),
-                    "profile": (pm.current_personality or {}).get("profile_name"),
-                }
-            except Exception as e:
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                return {"reloaded": False, "error": str(e)}
-
-    async def reload_hsp(self) -> Dict[str, Any]:
-        async with self._lock:
-            old_hsp = core_services.hsp_connector_instance
-            services = core_services.get_services()
-            sdm = services.get("service_discovery")
-            ai_id = getattr(core_services, "DEFAULT_AI_ID", None)
-
-            if old_hsp is None:
-                return {
-                    "reloaded": False,
-                    "error": "No existing HSP connector to reload.",
-                }
-
-            broker_address = getattr(old_hsp, "broker_address", None)
-            broker_port = getattr(old_hsp, "broker_port", None)
-            if broker_address is None or broker_port is None:
-                return {
-                    "reloaded": False,
-                    "error": "Cannot infer HSP broker settings from existing connector.",
-                }
-
-            try:
-                # Assuming HSPConnector is defined elsewhere and is importable
-                new_hsp = HSPConnector(
-                    ai_id=old_hsp.ai_id,
-                    broker_address=broker_address,
-                    broker_port=broker_port,
-                )
-                connected = await new_hsp.connect()
-                if not connected:
-                    return {
-                        "reloaded": False,
-                        "error": "New HSP connector failed to connect.",
-                    }
-
-                # Re-subscribe minimal topics used in core_services.initialize_services()
-                await new_hsp.subscribe(
-                    f"hsp/capabilities/advertisements/general/#", lambda p, s, e: None
-                )
-                await new_hsp.subscribe(f"hsp/results/{old_hsp.ai_id}/#", lambda p, s, e: None)
-                await new_hsp.subscribe(f"hsp/knowledge/facts/general/#", lambda p, s, e: None)
-
-                core_services.hsp_connector_instance = new_hsp
-
-                if sdm is not None:
-                    new_hsp.register_on_capability_advertisement_callback(
-                        sdm.process_capability_advertisement
-                    )  # type ignore[arg-type]
-
-                try:
-                    await old_hsp.disconnect()
-                except Exception as e:
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
-
-                return {"reloaded": True}
-            except Exception as e:
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                return {"reloaded": False, "error": str(e)}

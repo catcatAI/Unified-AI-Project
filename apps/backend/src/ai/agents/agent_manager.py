@@ -158,54 +158,13 @@ class DefaultAgentResultEvaluator(AgentResultEvaluator):
             impact.beta["evolution"] = 0.05
             impact.alpha["energy"] = -0.05  # 消耗少量精神能量
 
-        return impact
-            impact.gamma["happiness"] = 0.05
-            impact.beta["creativity"] = 0.1
-
         elif result.agent_type == "CodeUnderstandingAgent":
             # 代码理解成功会增加逻辑和清晰度
             impact.beta["logic"] = 0.1
             impact.beta["clarity"] = 0.05
             impact.alpha["focus"] = 0.05
 
-        elif result.agent_type == "VisionProcessingAgent":
-            # 视觉处理成功会增加专注和分析能力
-            impact.beta["focus"] = 0.1
-            impact.beta["analytical"] = 0.05
-            impact.alpha["energy"] = 0.05
-
-        elif result.agent_type == "AudioProcessingAgent":
-            # 音频处理成功会增加专注和感知能力
-            impact.beta["focus"] = 0.1
-            impact.alpha["energy"] = 0.05
-            impact.gamma["attention"] = 0.05
-
-        elif result.agent_type == "KnowledgeGraphAgent":
-            # 知识图谱成功会增加学习和理解能力
-            impact.beta["learning"] = 0.1
-            impact.beta["clarity"] = 0.05
-            impact.alpha["focus"] = 0.05
-
-        elif result.agent_type == "NLPProcessingAgent":
-            # NLP 处理成功会增加理解和表达能力
-            impact.beta["clarity"] = 0.1
-            impact.beta["learning"] = 0.05
-            impact.delta["engagement"] = 0.05
-
-        elif result.agent_type == "PlanningAgent":
-            # 规划成功会增加逻辑和计划能力
-            impact.beta["logic"] = 0.1
-            impact.beta["clarity"] = 0.05
-            impact.alpha["focus"] = 0.05
-
-        # 根据执行时间调整影响
-        if result.execution_time > 10.0:
-            # 长时间执行会消耗能量
-            impact.alpha["energy"] = -0.1
-            impact.alpha["rest_need"] = 0.1
-
         return impact
-
 
 class AgentType(Enum):
     """代理類型"""
