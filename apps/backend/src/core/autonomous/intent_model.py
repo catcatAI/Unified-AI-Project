@@ -55,12 +55,15 @@ class IntentManager:
         logger.info(f"🎯 [Intent] New intent added: {intent.category.name} -> {intent.target_dimension} @ {intent.target_coordinate}")
 
     def update_intents(self, delta_time: float = 1.0):
-        """更新意圖強度並移除過期意圖"""
+        """更新意圖強度 (非線性衰減) 並移除過期意圖"""
         for intent in self.intents:
-            intent.strength -= intent.decay_rate * delta_time
+            # [Task N.21.5] 非線性衰減 (Exponential Decay)
+            # 讓強烈意圖在初期保持，隨後緩慢消逝
+            intent.strength *= (1.0 - intent.decay_rate) ** delta_time
         
         # 移除失效意圖
         self.intents = [i for i in self.intents if not i.is_expired()]
+
         
         # 重新計算當前意圖合力向量 (Weighted average of intent targets)
         self._calculate_active_vectors()
@@ -90,21 +93,84 @@ class IntentManager:
         """獲取特定維度受到的意圖吸引力方向"""
         return self.active_intent_vector.get(dimension, (0.0, 0.0, 0.0))
 
-    def generate_homeostatic_intents(self, state_matrix_summary: Dict[str, Any]):
+    def generate_homeostatic_intents(self, state_summary: Dict[str, Any]):
         """
-        根據當前狀態自動生成維護穩態的意圖。
-        (例如：能量低時生成去休息的意圖)
+        [N.21.2] 根據當前狀態自動生成維護穩態與探索的意圖。
+        Generate self-drive intents based on state matrix summary.
         """
-        # 範例邏輯：如果 Wellbeing 太低，生成自我修復意圖
-        wellbeing = state_matrix_summary.get("wellbeing", 1.0)
-        if wellbeing < 0.3:
-            recovery_intent = SelfIntent(
-                id=f"recover_{datetime.now().timestamp()}",
-                category=IntentCategory.SELF_PRESERVATION,
+        # 1. 生理穩態 (Alpha Drive) - 能量低落時產生休息意圖
+        alpha_stats = state_summary.get("alpha", {})
+        energy = alpha_stats.get("energy", 1.0)
+        if energy < 0.3:
+            self.add_intent(SelfIntent(
+                id=f"rest_{datetime.now().timestamp()}",
+                category=IntentCategory.HOMEOSTASIS,
                 target_dimension="alpha",
-                target_coordinate=(0.0, 0.0, 0.0), # 回歸原點(穩定)
-                urgency=0.9,
-                strength=2.0,
-                decay_rate=0.05
-            )
-            self.add_intent(recovery_intent)
+                target_coordinate=(0.0, 0.0, 0.0), # 回歸穩定原點
+                urgency=1.0 - energy,
+                strength=1.5
+            ))
+
+        # 2. 認知探索 (Beta/Gamma Drive) - 幸福感低或無聊時產生探索意圖
+        gamma_stats = state_summary.get("gamma", {})
+        happiness = gamma_stats.get("happiness", 1.0)
+        if happiness < 0.4:
+            self.add_intent(SelfIntent(
+                id=f"explore_{datetime.now().timestamp()}",
+                category=IntentCategory.EXPLORATION,
+                target_dimension="gamma",
+                target_coordinate=(8.0, 2.0, 0.0), # 移向高刺激區
+                urgency=0.6,
+                strength=1.2
+            ))
+
+        # 3. 社交連結 (Delta Drive) - 孤獨感或親密度下降時產生社交意圖
+        delta_stats = state_summary.get("delta", {})
+        bond = delta_stats.get("bond", 0.5)
+        if bond < 0.3:
+            self.add_intent(SelfIntent(
+                id=f"bond_{datetime.now().timestamp()}",
+                category=IntentCategory.SOCIAL_BOND,
+                target_dimension="delta",
+                target_coordinate=(5.0, 5.0, 5.0), # 移向互動中心
+                urgency=0.7,
+                strength=1.3
+            ))
+
+        logger.debug(f"🧬 [IntentManager] Homeostatic check complete. Active intents: {len(self.intents)}")
+
+    def scan_memory_proximity(self, memory_bridge: Any, current_states: Dict[str, Any]):
+        """
+        [Task N.21.6] 空間記憶自動激活
+        當座標接近某個記憶錨點時，自動產生「聯想意圖」。
+        """
+        for dim_name, state_values in current_states.items():
+            # 假設 DimensionState 已經有 coordinate (我們從 state_matrix 傳入)
+            coord = state_values.get("coordinate", (0.0, 0.0, 0.0))
+            x, y, z = coord
+            
+            # 使用記憶橋接器的空間檢索 (半徑 5.0)
+            nearby_ids = memory_bridge.retrieve_by_spatial_proximity(x, y, z, radius=5.0)
+            
+            for mem_id in nearby_ids:
+                # 如果已經有相同記憶的意圖，跳過
+                if any(str(mem_id) in i.id for i in self.intents):
+                    continue
+                
+                # 獲取記憶座標 (從 metadata)
+                meta = memory_bridge._memory_metadata.get(mem_id, {})
+                mem_coord = meta.get("coordinate", (0.0, 0.0, 0.0))
+                
+                # 產生「聯想/回憶」意圖
+                self.add_intent(SelfIntent(
+                    id=f"recall_{mem_id}",
+                    category=IntentCategory.EXPLORATION,
+                    target_dimension=dim_name,
+                    target_coordinate=mem_coord,
+                    urgency=0.4,
+                    strength=0.8,
+                    decay_rate=0.02
+                ))
+
+
+

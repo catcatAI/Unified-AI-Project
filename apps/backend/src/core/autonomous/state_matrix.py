@@ -268,6 +268,11 @@ class StateMatrix4D:
         # [Task N.21.3] 意圖重力耦合 (Intent Gravity Coupling)
         self.apply_intent_gravity()
 
+        # [Task N.21.7] 維度連動 (Inter-Dimensional Drag)
+        # 如果當前維度發生了座標位移，會對其他維度產生微小的「拖拽」
+        self.apply_inter_dimensional_drag(dimension_name)
+
+
 
         # Trigger callbacks
         dim_state = self.dimensions[dimension_name]
@@ -462,11 +467,12 @@ class StateMatrix4D:
             return {}
 
         return {
-            "alpha": self.alpha.values.copy(),
-            "beta": self.beta.values.copy(),
-            "gamma": self.gamma.values.copy(),
-            "delta": self.delta.values.copy(),
+            "alpha": {**self.alpha.values.copy(), "coordinate": self.alpha.coordinate},
+            "beta": {**self.beta.values.copy(), "coordinate": self.beta.coordinate},
+            "gamma": {**self.gamma.values.copy(), "coordinate": self.gamma.coordinate},
+            "delta": {**self.delta.values.copy(), "coordinate": self.delta.coordinate},
         }
+
 
     def get_dimension_averages(self) -> Dict[str, float]:
         """获取所有维度平均值 / Get averages for all dimensions"""
@@ -610,18 +616,42 @@ class StateMatrix4D:
             tx, ty, tz = state.intent_vector
             cx, cy, cz = state.coordinate
             
-            # 如果意圖不是原點，則產生吸引力
-            if tx != 0 or ty != 0 or tz != 0:
+            # 如果座標與意圖不一致，則產生吸引力 (即使意圖是原點)
+            if abs(tx - cx) > 0.001 or abs(ty - cy) > 0.001 or abs(tz - cz) > 0.001:
                 nx = cx + (tx - cx) * pull_factor
                 ny = cy + (ty - cy) * pull_factor
                 nz = cz + (tz - cz) * pull_factor
                 state.coordinate = (nx, ny, nz)
+
                 
     def set_intent_target(self, dimension: str, target: Tuple[float, float, float]):
         """設置維度的目標意圖座標"""
         if dimension in self.dimensions:
             self.dimensions[dimension].intent_vector = target
             logger.debug(f"🧲 [IntentGravity] {dimension} target set to {target}")
+
+    def apply_inter_dimensional_drag(self, trigger_dim: str, drag_factor: float = 0.02):
+        """
+        [Task N.21.7] 維度連動拖拽
+        當一個維度移動時，會將其他維度也往相同方向「拉動」一點點。
+        """
+        if trigger_dim not in self.dimensions:
+            return
+            
+        # 獲取觸發維度的當前座標
+        tx, ty, tz = self.dimensions[trigger_dim].coordinate
+        
+        for name, state in self.dimensions.items():
+            if name == trigger_dim:
+                continue
+            
+            cx, cy, cz = state.coordinate
+            # 產生拖拽位移
+            nx = cx + (tx - cx) * drag_factor
+            ny = cy + (ty - cy) * drag_factor
+            nz = cz + (tz - cz) * drag_factor
+            state.coordinate = (nx, ny, nz)
+
 
 
 

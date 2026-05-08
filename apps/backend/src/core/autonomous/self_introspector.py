@@ -7,9 +7,11 @@ self-monitor her cognitive state, ethical alignment, and emotional stability.
 """
 
 from __future__ import annotations
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import logging
+import numpy as np
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +70,54 @@ class SelfIntrospector:
             report["recommendations"].append("EXPRESS_EFFORT_OR_STRUGGLE")
 
         return report
+
+    # =============================================================================
+    # ANGELA-MATRIX: [L4] [αβγδ] [A] [L11+]
+    # [Task N.21.4] 意圖一致性檢查 (Intent Alignment Check)
+    # =============================================================================
+    def check_intent_alignment(
+        self, 
+        action_name: str, 
+        action_vector: Tuple[float, float, float],
+        current_coord: Tuple[float, float, float],
+        intent_target: Tuple[float, float, float]
+    ) -> Dict[str, Any]:
+        """
+        對比「擬執行的動作」與「趨向原生意圖的方向」的一致性。
+        Compare proposed action with the direction vector towards native intent.
+        """
+        vec_a = np.array(action_vector)
+        
+        # 計算意圖趨勢向量 (Current -> Target)
+        vec_i = np.array(intent_target) - np.array(current_coord)
+        
+        # 如果當前已經在意圖點附近，且動作向量很小，則視為一致
+        if np.linalg.norm(vec_i) < 0.1:
+            if np.linalg.norm(vec_a) < 0.2:
+                alignment = 1.0
+            else:
+                # 已經在休息了，卻要進行大幅度動作，視為不一致
+                alignment = -0.5 
+        else:
+            # 正常向量夾角計算
+            if np.linalg.norm(vec_a) == 0:
+                alignment = 0.0 # 無動作，中立
+            else:
+                alignment = np.dot(vec_a, vec_i) / (np.linalg.norm(vec_a) * np.linalg.norm(vec_i))
+            
+        dissonance = 1.0 - (alignment + 1.0) / 2.0
+        
+        is_conflicting = dissonance > 0.6 or alignment < 0
+        
+        return {
+            "action": action_name,
+            "alignment": float(alignment),
+            "dissonance_score": float(dissonance),
+            "is_conflicting": is_conflicting,
+            "decision_override": "THROTTLE" if is_conflicting else "PROCEED"
+        }
+
+
 
     def get_introspection_prompt_injection(
         self, state_analysis: Dict[str, Any], lifecycle_metrics: Dict[str, Any]

@@ -92,16 +92,21 @@ class ModalityGateway:
              self.modalities[ModalityType.VISUAL_3D].is_active = True
              self.modalities[ModalityType.AUDIO].is_active = True
 
-        # 2. 意圖驅動邏輯
+        # 2. 意圖驅動邏輯 (Task N.21.4)
         if introspection_report:
-            # 假設 Introspector 會識別主要意圖類型
-            anomalies = introspection_report.get("anomalies", [])
-            is_coding_task = any("code" in str(a).lower() for a in anomalies)
+            dissonance = introspection_report.get("dissonance_score", 0.0)
             
-            if is_coding_task:
-                self.modalities[ModalityType.CODE].is_active = True
-            else:
+            # 如果認知失調過高 (> 0.6)，強制關閉複雜模態，進入「省電/簡化」模式
+            if dissonance > 0.6:
                 self.modalities[ModalityType.CODE].is_active = False
+                self.modalities[ModalityType.AUDIO].is_active = False
+                logger.warning(f"⚠️ [Modality] High Dissonance ({dissonance:.2f}). Throttling energy-heavy modalities.")
+            else:
+                # 根據任務類型動態開啟
+                anomalies = introspection_report.get("anomalies", [])
+                is_coding_task = any("code" in str(a).lower() for a in anomalies)
+                self.modalities[ModalityType.CODE].is_active = is_coding_task
+
 
         # 記錄狀態變更
         for m, s in self.modalities.items():
