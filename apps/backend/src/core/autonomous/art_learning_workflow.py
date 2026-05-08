@@ -58,6 +58,8 @@ class ArtLearningWorkflow:
         self.bio = bio_integrator
         self.art_system = ArtLearningSystem()
         self.current_overrides = {}
+        self.last_logged_emotion = None # 用於減少重複日誌
+
 
     async def update_visual_state(self) -> Dict[str, Any]:
         """
@@ -66,9 +68,13 @@ class ArtLearningWorkflow:
         bio_state = self.bio.get_biological_state()
         self.current_overrides = self.art_system.get_color_overrides(bio_state)
         
-        # 記錄美學日誌
         emotion = bio_state.get("dominant_emotion", "neutral")
-        logger.debug(f"🎨 [L4-Workflow] Aesthetic shift based on '{emotion}'.")
+        
+        # 僅在情緒發生變化時記錄日誌，避免刷屏
+        if emotion != self.last_logged_emotion:
+            logger.info(f"🎨 [L4-Workflow] Aesthetic shift based on '{emotion}'.")
+            self.last_logged_emotion = emotion
+
         
         return self.current_overrides
 

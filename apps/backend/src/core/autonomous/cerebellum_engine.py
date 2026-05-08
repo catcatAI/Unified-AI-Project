@@ -61,8 +61,10 @@ class CerebellumEngine:
         self.evolution_threshold = 10000.0 # 演化門檻
         self.error_accumulation = 0.0
         self.kinetic_history = []
+        self.damping = 0.5 # [Task N16.1.1] 運動阻尼 (Motion Damping)
         
         self._load_memory()
+
 
         logger.info("🧠 [Cerebellum] Pose-based AI Engine initialized.")
 
