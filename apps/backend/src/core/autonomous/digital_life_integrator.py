@@ -46,6 +46,74 @@ if TYPE_CHECKING:
     from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [αβγδ] [A] [L4+]
+# [Task N.20.2] 模態閘控類型與狀態 / Modality Gating types and status
+# =============================================================================
+class ModalityType(Enum):
+    """模態類型 / Modality types"""
+    TEXT = auto()
+    AUDIO = auto()
+    VISUAL_3D = auto()
+    CODE = auto()
+
+
+@dataclass
+class ModalityState:
+    """模態狀態 / Modality state"""
+    modality: ModalityType
+    is_active: bool = True
+    priority: int = 1
+    last_toggle: datetime = field(default_factory=datetime.now)
+
+
+class ModalityGateway:
+    """
+    模態閘控管理器 / Modality Gateway Manager
+    Handles dynamic switching of output streams based on intent and arousal.
+    """
+    def __init__(self):
+        self.modalities: Dict[ModalityType, ModalityState] = {
+            ModalityType.TEXT: ModalityState(ModalityType.TEXT, True, 10),
+            ModalityType.AUDIO: ModalityState(ModalityType.AUDIO, True, 5),
+            ModalityType.VISUAL_3D: ModalityState(ModalityType.VISUAL_3D, True, 8),
+            ModalityType.CODE: ModalityState(ModalityType.CODE, False, 2),
+        }
+
+    def update_gates(self, arousal: float, introspection_report: Optional[Dict[str, Any]] = None):
+        """根據喚醒度與意圖分析更新閘門狀態"""
+        old_states = {m: s.is_active for m, s in self.modalities.items()}
+        
+        # 1. 基礎生理限制 (喚醒度低於 20 關閉耗能模態)
+        if arousal < 20:
+             self.modalities[ModalityType.VISUAL_3D].is_active = False
+             self.modalities[ModalityType.AUDIO].is_active = False
+        else:
+             self.modalities[ModalityType.VISUAL_3D].is_active = True
+             self.modalities[ModalityType.AUDIO].is_active = True
+
+        # 2. 意圖驅動邏輯
+        if introspection_report:
+            # 假設 Introspector 會識別主要意圖類型
+            anomalies = introspection_report.get("anomalies", [])
+            is_coding_task = any("code" in str(a).lower() for a in anomalies)
+            
+            if is_coding_task:
+                self.modalities[ModalityType.CODE].is_active = True
+            else:
+                self.modalities[ModalityType.CODE].is_active = False
+
+        # 記錄狀態變更
+        for m, s in self.modalities.items():
+            if s.is_active != old_states[m]:
+                s.last_toggle = datetime.now()
+                logger.info(f"🔮 [Modality] {m.name} is now {'ACTIVE' if s.is_active else 'INACTIVE'}")
+
+    def is_active(self, modality: ModalityType) -> bool:
+        return self.modalities.get(modality, ModalityState(modality)).is_active
+
+
+
 class LifeCycleState(Enum):
     """生命周期状态 / Life cycle states"""
 
@@ -206,6 +274,9 @@ class DigitalLifeIntegrator:
         self.self_introspector = SelfIntrospector(self.config.get("introspection", {}))
         self.introspection_report: Optional[Dict[str, Any]] = None
 
+        # [Task N.20.2] 模態閘控初始化
+        self.modality_gateway = ModalityGateway()
+
     async def initialize(self):
         """
         Initialize digital life with 2030-standard robust error handling.
@@ -339,6 +410,12 @@ class DigitalLifeIntegrator:
                     logger.warning(
                         f"[DigitalLife] Cognitive dissonance detected: {self.introspection_report['anomalies']}"
                     )
+
+                # [Task N.20.2] 更新模態閘控
+                self.modality_gateway.update_gates(
+                    arousal=bio_state.get("arousal", 50.0),
+                    introspection_report=self.introspection_report
+                )
 
             except Exception as e:
                 logger.error(f"[DigitalLife] Introspection error: {e}")

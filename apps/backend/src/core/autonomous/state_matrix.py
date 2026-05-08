@@ -17,13 +17,35 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Any, Callable
+
 from datetime import datetime, timedelta
 import asyncio
 import json
 import logging
+import math
+import re
+
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# ANGELA-MATRIX: [L4] [γ] [A] [L8+]
+# [Task N.20.5] 認知操作類型 / Cognitive Spatial Operations
+# =============================================================================
+class CognitiveOp(Enum):
+    """
+    原生空間運算類型，將抽象數學邏輯轉化為幾何變換。
+    Native spatial operations that transform abstract logic into geometry.
+    """
+    ACCUMULATE = auto()   # 加法: 向量平移 (Vector Translation)
+    DECREMENT = auto()    # 減法: 反向平移 (Reverse Translation)
+    AMPLIFY = auto()      # 乘法: 座標縮放 (Coordinate Scaling)
+    DIMINISH = auto()     # 除法: 反向縮放 (Inverse Scaling)
+    RESONATE = auto()     # 聯想: 距離吸引 (Spatial Attraction)
+
 
 
 @dataclass
@@ -39,6 +61,14 @@ class DimensionState:
     values: Dict[str, float]
     weight: float = 1.0
     timestamp: datetime = field(default_factory=datetime.now)
+    
+    # =============================================================================
+    # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+    # [Task N.20.1] 座標系 AI：空間定址 (x, y, z)
+    # =============================================================================
+    coordinate: Tuple[float, float, float] = field(default_factory=lambda: (0.0, 0.0, 0.0))
+    intent_vector: Tuple[float, float, float] = field(default_factory=lambda: (0.0, 0.0, 0.0))
+
 
     def get_average(self) -> float:
         """获取维度平均值 / Get average value"""
@@ -123,6 +153,7 @@ class StateMatrix4D:
                 "tension": 0.0,
             },
             weight=self.config.get("alpha_weight", 1.0),
+            coordinate=(0.0, -5.0, 0.0)  # 身體核心座標
         )
 
         self.beta = DimensionState(
@@ -137,6 +168,7 @@ class StateMatrix4D:
                 "creativity": 0.5,
             },
             weight=self.config.get("beta_weight", 1.0),
+            coordinate=(0.0, 10.0, 0.0)  # 認知/頭部座標
         )
 
         self.gamma = DimensionState(
@@ -155,6 +187,7 @@ class StateMatrix4D:
                 "calm": 0.5,
             },
             weight=self.config.get("gamma_weight", 1.0),
+            coordinate=(0.0, 2.0, 2.0)  # 情感/心臟座標
         )
 
         self.delta = DimensionState(
@@ -169,6 +202,7 @@ class StateMatrix4D:
                 "engagement": 0.5,
             },
             weight=self.config.get("delta_weight", 1.0),
+            coordinate=(0.0, 0.0, 10.0)  # 社交/環境座標
         )
 
         # Dimension lookup
@@ -231,6 +265,10 @@ class StateMatrix4D:
         # Record to history
         self._record_history()
 
+        # [Task N.21.3] 意圖重力耦合 (Intent Gravity Coupling)
+        self.apply_intent_gravity()
+
+
         # Trigger callbacks
         dim_state = self.dimensions[dimension_name]
         for callback in self._change_callbacks:
@@ -275,6 +313,28 @@ class StateMatrix4D:
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
+    # =============================================================================
+    # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+    # =============================================================================
+    def compute_spatial_influence_factor(self, source: str, target: str) -> float:
+        """
+        [Task N.20.1] 向量場計算 / Vector Field Computation
+        Calculates the spatial distance and influence factor between two dimensions
+        in the coordinate-based cognitive space.
+        """
+        source_coord = self.dimensions[source].coordinate
+        target_coord = self.dimensions[target].coordinate
+        
+        # Euclidean distance
+        distance = sum((a - b) ** 2 for a, b in zip(source_coord, target_coord)) ** 0.5
+        
+        # Inverse square law for cognitive gravity (with a softening parameter to avoid division by zero)
+        softening = 10.0
+        # Normalize so that average distances yield ~1.0, closer > 1.0, further < 1.0
+        influence_factor = 25.0 / (distance**2 + softening)
+        
+        return max(0.5, min(2.0, influence_factor))
+
     def compute_influences(self) -> Dict[str, Dict[str, float]]:
         """
         计算维度间影响 / Compute inter-dimensional influences
@@ -294,8 +354,11 @@ class StateMatrix4D:
             for target_name, base_strength in targets.items():
                 target_dim = self.dimensions[target_name]
 
-                # Calculate actual influence
-                influence = base_strength * source_avg * source_dim.weight * target_dim.weight
+                # [Task N.20.1] 結合向量場影響力 (Spatial Influence)
+                spatial_factor = self.compute_spatial_influence_factor(source_name, target_name)
+
+                # Calculate actual influence (incorporating spatial topology)
+                influence = base_strength * source_avg * source_dim.weight * target_dim.weight * spatial_factor
                 computed[source_name][target_name] = influence
 
                 # Apply influence
@@ -413,6 +476,156 @@ class StateMatrix4D:
             "gamma": self.gamma.get_average(),
             "delta": self.delta.get_average(),
         }
+
+    # =============================================================================
+    # ANGELA-MATRIX: [L4] [γ] [A] [L9+]
+    # [Task N.20.5] 原生空間推理 (Native Spatial Reasoning)
+    # =============================================================================
+    def perform_spatial_reasoning(
+        self, target_dim: str, op: CognitiveOp, magnitude: float
+    ) -> Tuple[float, float, float]:
+        """
+        執行原生空間推理（如數學運算）。
+        不需要 LLM，直接在指定維度執行幾何變換。
+        """
+        if target_dim == "alpha": state = self.alpha
+        elif target_dim == "beta": state = self.beta
+        elif target_dim == "gamma": state = self.gamma
+        elif target_dim == "delta": state = self.delta
+        else: return (0.0, 0.0, 0.0)
+
+        x, y, z = state.coordinate
+
+        # 執行幾何變換 (幾何直覺運算)
+        if op == CognitiveOp.ACCUMULATE:
+            new_coord = (x + magnitude, y, z)
+        elif op == CognitiveOp.DECREMENT:
+            new_coord = (x - magnitude, y, z)
+        elif op == CognitiveOp.AMPLIFY:
+            new_coord = (x * magnitude, y, z)
+        elif op == CognitiveOp.DIMINISH:
+            new_coord = (x / magnitude if magnitude != 0 else x, y, z)
+        else:
+            new_coord = (x, y, z)
+
+        # 更新狀態：運算結果即為維度的「新位置」
+        state.coordinate = new_coord
+        
+        logger.info(f"🧬 [SpatialReasoning] {target_dim} moved to {new_coord} via {op.name}({magnitude})")
+        return new_coord
+
+    def get_dimension_value(self, dim_name: str) -> float:
+        """獲取維度的「標量解析」 (取 X 軸作為結果)"""
+        if dim_name == "alpha": return self.alpha.coordinate[0]
+        elif dim_name == "beta": return self.beta.coordinate[0]
+        elif dim_name == "gamma": return self.gamma.coordinate[0]
+        elif dim_name == "delta": return self.delta.coordinate[0]
+        return 0.0
+
+    def execute_thought_chain(self, dimension: str, instructions: List[Tuple[CognitiveOp, float]]) -> float:
+        """
+        順暢地執行一連串的「空間思維鏈」。
+        Execute a chain of "Spatial Thoughts" smoothly.
+        """
+        logger.info(f"🧠 [ThoughtChain] Starting reasoning chain on '{dimension}' with {len(instructions)} steps.")
+        for op, magnitude in instructions:
+            self.perform_spatial_reasoning(dimension, op, magnitude)
+        
+        result = self.get_dimension_value(dimension)
+        logger.info(f"✨ [ThoughtChain] Reasoning complete. Resulting scalar: {result}")
+        return result
+
+    def evaluate_math_spatially(self, expression: str) -> float:
+        """
+        [L4-Reasoning] 將數學算式原生解析為空間變換。
+        Parse and execute a math expression as a sequence of spatial transformations.
+        Supports: +, -, *, /, ( )
+        """
+        logger.info(f"🧠 [SpatialMath] Resolving expression: {expression}")
+        
+        # 1. 詞法分析 (Tokenization)
+        tokens = re.findall(r"\d+\.?\d*|[\+\-\*\/\(\)]", expression)
+        
+        # 2. 中綴轉後綴 (Shunting-yard algorithm for RPN)
+        precedence = {"+": 1, "-": 1, "*": 2, "/": 2}
+        output_queue = []
+        operator_stack = []
+        
+        for token in tokens:
+            if re.match(r"\d+\.?\d*", token):
+                output_queue.append(float(token))
+            elif token == "(":
+                operator_stack.append(token)
+            elif token == ")":
+                while operator_stack and operator_stack[-1] != "(":
+                    output_queue.append(operator_stack.pop())
+                operator_stack.pop()
+            else:
+                while (operator_stack and operator_stack[-1] != "(" and 
+                       precedence[operator_stack[-1]] >= precedence[token]):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+        
+        while operator_stack:
+            output_queue.append(operator_stack.pop())
+            
+        # 3. 執行幾何運算 (Spatial Execution)
+        # 我們使用一個虛擬的「認知堆疊」來模擬多步運算
+        # 最終結果會反應在 Gamma 維度的座標上
+        execution_stack = []
+        
+        for token in output_queue:
+            if isinstance(token, float):
+                execution_stack.append(token)
+            else:
+                b = execution_stack.pop()
+                a = execution_stack.pop()
+                
+                # 將「運算」轉化為空間位移
+                # 在執行時，我們將 A 作為基礎座標，B 作為變換幅值
+                self.gamma.coordinate = (a, 0, 0) # 錨定起點
+                
+                if token == "+": op = CognitiveOp.ACCUMULATE
+                elif token == "-": op = CognitiveOp.DECREMENT
+                elif token == "*": op = CognitiveOp.AMPLIFY
+                elif token == "/": op = CognitiveOp.DIMINISH
+                
+                new_coord = self.perform_spatial_reasoning("gamma", op, b)
+                execution_stack.append(new_coord[0])
+                
+        final_result = execution_stack[0] if execution_stack else 0.0
+        logger.info(f"✨ [SpatialMath] Calculation complete: {expression} = {final_result}")
+        return final_result
+
+    # =============================================================================
+    # ANGELA-MATRIX: [L4] [αβγδ] [A] [L10+]
+    # [Task N.21.3] 意圖重力吸引 (Intent Gravity Pull)
+    # =============================================================================
+    def apply_intent_gravity(self, pull_factor: float = 0.05):
+        """
+        將各個維度的座標向其「意圖向量」緩緩拉近。
+        Slowly pull dimension coordinates towards their intent vectors.
+        """
+        for name, state in self.dimensions.items():
+            tx, ty, tz = state.intent_vector
+            cx, cy, cz = state.coordinate
+            
+            # 如果意圖不是原點，則產生吸引力
+            if tx != 0 or ty != 0 or tz != 0:
+                nx = cx + (tx - cx) * pull_factor
+                ny = cy + (ty - cy) * pull_factor
+                nz = cz + (tz - cz) * pull_factor
+                state.coordinate = (nx, ny, nz)
+                
+    def set_intent_target(self, dimension: str, target: Tuple[float, float, float]):
+        """設置維度的目標意圖座標"""
+        if dimension in self.dimensions:
+            self.dimensions[dimension].intent_vector = target
+            logger.debug(f"🧲 [IntentGravity] {dimension} target set to {target}")
+
+
+
+
 
     def get_analysis(self) -> Dict[str, Any]:
         """

@@ -109,6 +109,47 @@ class LipSyncState:
     vowel_sound: Optional[str] = None  # a, i, u, e, o for Japanese lip sync
 
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+# [Task N.20.3] 具身座標映射引擎 / Embodied Coordinate Mapping Engine
+# =============================================================================
+class CoordinateMappingEngine:
+    """
+    Maps global [x, y, z, t] tokens to Live2D skeletal parameters.
+    Ensures spatial consistency between AI state and visual representation.
+    """
+    def __init__(self, integration: Live2DIntegration):
+        self.integration = integration
+        self.last_sync_t: float = 0.0
+
+    def apply_spatial_token(self, x: float, y: float, z: float, t: float):
+        """將空間 Token 應用於 Live2D 模型"""
+        # 防止時序倒流
+        if t < self.last_sync_t:
+            return
+        self.last_sync_t = t
+
+        # 1. 映射頭部/視線座標 (y > 15 為頭部區域)
+        if y > 15:
+            rel_x = max(-1.0, min(1.0, x / 10.0))
+            rel_y = max(-1.0, min(1.0, (y - 18.0) / 5.0))
+            self.integration.look_at(rel_x, rel_y)
+            
+        # 2. 映射身體角度 (基於軀幹區域偏移)
+        if 5 <= y <= 15:
+            body_angle_x = max(-10.0, min(10.0, x))
+            body_angle_z = max(-10.0, min(10.0, z))
+            self.integration.set_parameter("ParamBodyAngleX", body_angle_x)
+            self.integration.set_parameter("ParamBodyAngleZ", body_angle_z)
+            
+        # 3. 呼吸頻率與時間軸校準 (t)
+        # 利用 t 軸的小數位來微調呼吸相位，確保具身同步
+        breath_phase = (t % 3.14159)
+        breath_val = (math.sin(breath_phase) + 1) / 2
+        self.integration.set_parameter("ParamBreath", breath_val * 0.5)
+
+
+
 class Live2DIntegration:
     """
     Live2D集成系统主类 / Main Live2D integration class
@@ -181,6 +222,10 @@ class Live2DIntegration:
         self._parameter_callbacks: Dict[str, List[Callable[[float], None]]] = {}
         self._expression_callbacks: List[Callable[[ExpressionType], None]] = []
         self._motion_callbacks: List[Callable[[MotionType], None]] = []
+
+        # [Task N.20.3] 具身座標映射初始化
+        self.coordinate_engine = CoordinateMappingEngine(self)
+
 
     def _default_parameters(self):
         """Initialize default Live2D parameters"""
@@ -523,6 +568,14 @@ class Live2DIntegration:
         if name in self.parameters:
             return self.parameters[name].value
         return 0.0
+
+    def sync_with_coordinate(self, x: float, y: float, z: float, t: float):
+        """
+        [Task N.20.3] 同步座標系 AI 數據
+        將後端的 [x, y, z, t] 映射到模型骨骼
+        """
+        if self.coordinate_engine:
+            self.coordinate_engine.apply_spatial_token(x, y, z, t)
 
     def look_at(self, x: float, y: float):
         """

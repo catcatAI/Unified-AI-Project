@@ -477,11 +477,12 @@ class ActionExecutor:
             # Record failure to dynamic params
             self._record_action_outcome(action, success=False)
 
-            finally:
-                action.completed_at = datetime.now()
-                self._notify_status_change(action)
-                if action.action_id in self.active_actions:
-                    del self.active_actions[action.action_id]
+        finally:
+            action.completed_at = datetime.now()
+            self._notify_status_change(action)
+            if action.action_id in self.active_actions:
+                del self.active_actions[action.action_id]
+
 
     async def _validate_action(self, action: Action) -> tuple[bool, Optional[str]]:
         """Validate action through safety checks"""

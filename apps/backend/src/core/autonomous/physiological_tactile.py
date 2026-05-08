@@ -66,37 +66,38 @@ class BodyPart(Enum):
     """18个身体部位 / 18 body parts from head to toe"""
 
     # Head region (头部)
-    TOP_OF_HEAD = ("头顶", BodyRegion.HEAD, 0.7)
-    FOREHEAD = ("额头", BodyRegion.HEAD, 0.8)
-    FACE = ("面部", BodyRegion.HEAD, 0.9)
-    NECK = ("颈部", BodyRegion.HEAD, 0.6)
+    TOP_OF_HEAD = ("头顶", BodyRegion.HEAD, 0.7, (0.0, 20.0, 0.0))
+    FOREHEAD = ("额头", BodyRegion.HEAD, 0.8, (0.0, 19.0, 1.0))
+    FACE = ("面部", BodyRegion.HEAD, 0.9, (0.0, 18.0, 2.0))
+    NECK = ("颈部", BodyRegion.HEAD, 0.6, (0.0, 16.0, 0.0))
 
     # Upper body (上身)
-    CHEST = ("胸部", BodyRegion.UPPER_BODY, 0.5)
-    BACK = ("背部", BodyRegion.UPPER_BODY, 0.4)
-    ABDOMEN = ("腹部", BodyRegion.UPPER_BODY, 0.5)
-    WAIST = ("腰部", BodyRegion.UPPER_BODY, 0.5)
+    CHEST = ("胸部", BodyRegion.UPPER_BODY, 0.5, (0.0, 14.0, 1.0))
+    BACK = ("背部", BodyRegion.UPPER_BODY, 0.4, (0.0, 14.0, -1.0))
+    ABDOMEN = ("腹部", BodyRegion.UPPER_BODY, 0.5, (0.0, 10.0, 1.0))
+    WAIST = ("腰部", BodyRegion.UPPER_BODY, 0.5, (0.0, 8.0, 0.0))
 
     # Lower body (下身)
-    HIPS = ("臀部", BodyRegion.LOWER_BODY, 0.4)
-    THIGHS = ("大腿", BodyRegion.LOWER_BODY, 0.4)
+    HIPS = ("臀部", BodyRegion.LOWER_BODY, 0.4, (0.0, 6.0, -1.0))
+    THIGHS = ("大腿", BodyRegion.LOWER_BODY, 0.4, (2.0, 4.0, 0.0))
 
     # Upper limbs (上肢)
-    SHOULDERS = ("肩膀", BodyRegion.UPPER_LIMBS, 0.6)
-    UPPER_ARMS = ("上臂", BodyRegion.UPPER_LIMBS, 0.5)
-    FOREARMS = ("前臂", BodyRegion.UPPER_LIMBS, 0.6)
-    HANDS = ("手掌", BodyRegion.UPPER_LIMBS, 1.0)
-    FINGERS = ("手指", BodyRegion.UPPER_LIMBS, 1.0)
+    SHOULDERS = ("肩膀", BodyRegion.UPPER_LIMBS, 0.6, (4.0, 15.0, 0.0))
+    UPPER_ARMS = ("上臂", BodyRegion.UPPER_LIMBS, 0.5, (5.0, 12.0, 0.0))
+    FOREARMS = ("前臂", BodyRegion.UPPER_LIMBS, 0.6, (6.0, 9.0, 0.0))
+    HANDS = ("手掌", BodyRegion.UPPER_LIMBS, 1.0, (7.0, 7.0, 1.0))
+    FINGERS = ("手指", BodyRegion.UPPER_LIMBS, 1.0, (7.5, 6.0, 1.0))
 
     # Lower limbs (下肢)
-    KNEES = ("膝盖", BodyRegion.LOWER_LIMBS, 0.6)
-    CALVES = ("小腿", BodyRegion.LOWER_LIMBS, 0.5)
-    FEET = ("脚底", BodyRegion.LOWER_LIMBS, 0.8)
+    KNEES = ("膝盖", BodyRegion.LOWER_LIMBS, 0.6, (2.0, 2.0, 1.0))
+    CALVES = ("小腿", BodyRegion.LOWER_LIMBS, 0.5, (2.0, 1.0, 0.0))
+    FEET = ("脚底", BodyRegion.LOWER_LIMBS, 0.8, (2.0, 0.0, 0.0))
 
-    def __init__(self, cn_name: str, region: BodyRegion, base_sensitivity: float):
+    def __init__(self, cn_name: str, region: BodyRegion, base_sensitivity: float, coordinate: Tuple[float, float, float]):
         self.cn_name = cn_name
         self.region = region
         self.base_sensitivity = base_sensitivity
+        self.coordinate = coordinate
 
 
 @dataclass
@@ -446,6 +447,7 @@ class PhysiologicalTactileSystem:
             activated_receptors=len(relevant_receptors),
             duration=stimulus.duration,
             timestamp=datetime.now(),
+            spatial_token=(*stimulus.location.coordinate, datetime.now().timestamp())
         )
 
     def _check_thresholds(self, body_part: BodyPart, intensity: float):
@@ -672,6 +674,13 @@ class TactileResponse:
     live2d_parameters: Dict[str, float] = field(
         default_factory=dict
     )  # Added for Live2D integration
+    # =============================================================================
+    # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+    # [Task N.20.3] 空間標籤 [x, y, z, t]
+    # =============================================================================
+    spatial_token: Tuple[float, float, float, float] = field(
+        default_factory=lambda: (0.0, 0.0, 0.0, 0.0)
+    )
 
     def __repr__(self) -> str:
         return (

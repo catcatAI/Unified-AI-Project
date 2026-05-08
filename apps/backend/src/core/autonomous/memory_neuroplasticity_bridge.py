@@ -22,6 +22,8 @@ from typing import Dict, List, Optional, Callable, Any, Set
 from datetime import datetime, timedelta
 import asyncio
 import logging
+import math
+
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +174,9 @@ class MemoryNeuroplasticityBridge:
         category: str = "general",
         tags: Optional[List[str]] = None,
         initial_strength: float = 0.5,
+        coordinate: Optional[Tuple[float, float, float]] = None,
     ) -> str:
+
         """
         Register a memory from external system
 
@@ -207,7 +211,9 @@ class MemoryNeuroplasticityBridge:
             "tags": tags or [],
             "created_at": datetime.now(),
             "access_count": 0,
+            "coordinate": coordinate,
         }
+
 
         # Initialize reinforcement tracking
         self.reinforcement_map[memory_id] = MemoryReinforcement(
@@ -399,6 +405,29 @@ class MemoryNeuroplasticityBridge:
             "average_retention": avg_retention,
             "neuroplasticity_stats": neuro_stats,
         }
+
+    # =============================================================================
+    # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+    # [Task N.20.4] 空間錨定記憶 / Spatial Anchoring Memory
+    # =============================================================================
+    def retrieve_by_spatial_proximity(
+        self, x: float, y: float, z: float, radius: float = 5.0
+    ) -> List[str]:
+        """
+        檢索指定空間座標附近的記憶
+        Retrieve memories near specific spatial coordinates (Object Permanence)
+        """
+        nearby_memories = []
+        for mid, meta in self._memory_metadata.items():
+            coord = meta.get("coordinate")
+            if coord:
+                dist = math.sqrt(
+                    (coord[0] - x) ** 2 + (coord[1] - y) ** 2 + (coord[2] - z) ** 2
+                )
+                if dist <= radius:
+                    nearby_memories.append(mid)
+        return nearby_memories
+
 
     def get_optimal_review_schedule(self, memory_id: str) -> List[float]:
         """

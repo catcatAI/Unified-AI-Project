@@ -32,6 +32,23 @@ class LearningObjective:
     def update_progress(self, increment: float):
         self.progress = min(1.0, self.progress + increment)
 
+class WorkflowProgress:
+    """Placeholder for missing class"""
+    pass
+
+class SkillAssessment:
+    """Placeholder for missing class"""
+    pass
+
+class GenerationResult:
+    """Placeholder for missing class"""
+    pass
+
+class WorkflowConfig:
+    """Placeholder for missing class"""
+    pass
+
+
 class ArtLearningWorkflow:
     """
     Angela 的外觀演化協調器 (2030 Standard).

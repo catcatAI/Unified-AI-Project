@@ -40,6 +40,17 @@
 
 -----
 
+### [Task N.20] 座標系 AI 增強實作 (Coordinate-Based AI)
+*   **[N.20.1] 基礎座標張量協議**: 在 `state_matrix.py` 中引入 `VectorFieldComputation` 與座標維度。 (已完成)
+*   **[N.20.2] 模態閘控控制邏輯**: 在 `digital_life_integrator.py` 實作動態資源開關。 (已完成)
+*   **[N.20.3] 具身感官與 Live2D 對齊**: 實作 `physiological_tactile.py` 與 `live2d_integration.py` 的座標同步。 (已完成)
+*   **[N.20.4] 空間定址記憶系統**: 實作 `memory_neuroplasticity_bridge.py` 的空間錨定記憶。 (已完成)
+*   **[N.20.5] 原生空間推理 (幾何數學)**: 在 `state_matrix.py` 實作基於張量變換的幾何運算邏輯。 (已完成)
+*   **[N.21] 原生意圖模型實作 (Native Intent Model)**: 定義座標位能場與自主意圖生成。 (進行中)
+
+
+-----
+
 ## 📅 專案現狀 (Current Status)
 ✅ **所有前置任務已完成且通過物理對齊檢查。**
 ✅ **專案已達到 v2.8 的高穩定演化基準。**
