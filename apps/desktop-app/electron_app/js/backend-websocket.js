@@ -935,7 +935,7 @@ class BackendWebSocketClient {
     if (this.eventHandlers[event]) {
       this.eventHandlers[event].forEach((handler) => {
         try {
-          handler(event, data)
+          handler(data)
         } catch (error) {
           console.error(`Error in ${event} handler:`, error)
         }
@@ -956,7 +956,16 @@ class BackendWebSocketClient {
   }
 
   _handleChatResponse(data) {
-    if (!data || !data.message_id) return
+    if (!data) return
+
+    // 觸發事件 (供 UI 顯示)
+    this._fireEvent('angela_response', {
+      response: data.content || data.response || '',
+      session_id: data.session_id,
+      timestamp: data.timestamp
+    })
+
+    if (!data.message_id) return
 
     const pending = this._pendingResponses?.get(data.message_id)
     if (pending) {

@@ -164,6 +164,12 @@ def get_angela_chat_service():
         get_angela_chat_service._instance = AngelaChatService()
     return get_angela_chat_service._instance
 
-def generate_angela_response(user_message: str, user_name: str = "朋友") -> str:
-    """Legacy synchronous fallback for timeout/error paths"""
-    return "（系統正在深層思考...請稍候）"
+async def generate_angela_response(user_message: str, user_name: str = "朋友") -> str:
+    """Integrated response generator that bridges to the neural chat service."""
+    try:
+        service = get_angela_chat_service()
+        return await service.generate_response(user_message, user_name)
+    except Exception as e:
+        logger.error(f"Error generating neural response: {e}", exc_info=True)
+        return "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）"
+

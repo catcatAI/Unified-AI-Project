@@ -58,7 +58,7 @@ async def get_ai_agents():
     """获取所有AI代理 (Dynamic Discovery)"""
     # In a real scenario, this would call AgentManager or HSP Service Discovery
     # For now, we simulate this while keeping the structure ready for integration
-    from src.ai.agents.agent_manager import AgentManager
+    from ai.agents.agent_manager import AgentManager
 
     # Note: AgentManager might need a singleton or a global instance
 
@@ -242,7 +242,8 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", "朋友")
 
     # Use shared chat service
-    response_text = generate_angela_response(user_message, user_name)
+    response_text = await generate_angela_response(user_message, user_name)
+
 
     return {
         "session_id": session_id,

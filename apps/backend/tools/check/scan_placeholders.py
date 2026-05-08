@@ -36,7 +36,7 @@ class PlaceholderScanner,
                         'description': match.group('description').strip(),
                         'content': line.strip(),
                     })
-        except Exception as e::
+        except Exception as e:
             print(f"❌ Error scanning file, {file_path} - {e}")
 
     return placeholders

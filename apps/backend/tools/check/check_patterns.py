@@ -29,11 +29,11 @@ analyzer = ContentAnalyzerModule()
                 try,
                     rule_name = analyzer.nlp.vocab.strings[pattern_id]
                     print(f"  {rule_name}")
-                except Exception as e::
+                except Exception as e:
                     print(f"  Pattern ID {pattern_id} (Error, {e})")
         else,
             print("  No patterns found in stats")
-    except Exception as e::
+    except Exception as e:
         print(f"Error getting matcher stats, {e}")
     
     # Test with a simple text,
@@ -49,7 +49,7 @@ analyzer = ContentAnalyzerModule()
             rule_id = analyzer.nlp.vocab.strings[match_id]
 span = doc[start,end]
             print(f"  Rule, {rule_id} Span, '{span.text}', Start, {start} End, {end}")
-        except Exception as e::
+        except Exception as e:
             print(f"  Match ID, {match_id} Span, '{doc[start,end].text}', Start, {start} End, {end} (Error, {e})")
 
 if __name"__main__":

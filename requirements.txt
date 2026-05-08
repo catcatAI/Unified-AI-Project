@@ -35,4 +35,6 @@ scikit-learn
 networkx
 pandas
 tqdm
+pyautogui
+pyperclip
 -e ./apps/backend
