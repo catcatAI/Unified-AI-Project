@@ -5,6 +5,29 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.2.0] - 2026-05-09
+
+### Added
+- 🧠 **[N.20.5] Native Spatial Math Engine** (`state_matrix.py`): Shunting-yard algorithm + RPN executor for pure geometry-based arithmetic without LLM.
+- 🤩 **[N.21.3] Intent Gravity Pull** (`state_matrix.py`): `apply_intent_gravity` pulls dimension coordinates toward intent vectors each cycle.
+- 🔗 **[N.21.7] Inter-Dimensional Drag** (`state_matrix.py`): `apply_inter_dimensional_drag` propagates coordinate shifts across all dimensions.
+- 📌 **[N.20.4b] Spatial Anchoring Memory** (`memory_neuroplasticity_bridge.py`): `retrieve_by_spatial_proximity` retrieves memories by 3D coordinate radius.
+- 🤖 **[N.21.x] Homeostatic Intent Generation** (`intent_model.py`): Auto-generates physiological intents based on state matrix energy levels.
+- ⚠️ **[N.21.x] Intent Alignment Check** (`self_introspector.py`): Detects cognitive dissonance between LLM action proposals and native biological intent.
+- 🔧 `CognitiveOp` enum in `state_matrix.py`: ACCUMULATE, DECREMENT, AMPLIFY, DIMINISH, RESONATE - maps math ops to spatial geometry.
+- `DimensionState.coordinate` + `DimensionState.intent_vector`: 3D spatial embedding for all 4 dimensions (αβγδ).
+
+### Changed
+- `StateMatrix4D._post_update`: Now calls `apply_intent_gravity` and `apply_inter_dimensional_drag` on every dimension update.
+- `state_matrix.py` expanded from 23KB to 36KB with full spatial engine.
+- `ANGELA_TASK_BOOK.md` updated to v2.9 (Spatial-Intent SYNC).
+- Logic fingerprint updated to `ANGELA-ASI-SYNC-20260509-SPATIAL-V2.9`.
+
+### Status
+- **Phase**: Spatial Intelligence (N.20-N.21 in progress)
+- **Core Spatial Features**: ✅ Complete
+- **Intent Alignment Logic**: 🔄 In Progress
+
 ## [7.1.1] - 2026-02-13
 
 ### Added
@@ -184,6 +207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Status | Key Features |
 |---------|------|--------|--------------|
+| 7.2.0 | 2026-05-09 | Active Dev | Spatial AI: Intent Gravity, Dimensional Drag, Spatial Math, Spatial Memory |
 | 7.1.1 | 2026-02-13 | Production | Comprehensive Resource Analysis, Version Consolidation |
 | 6.2.0 | 2026-02-07 | Production | Phase 14 Complete, 99.2% completion |
 | 6.1.0 | 2026-02-05 | Production | Phase 12 Restoration |

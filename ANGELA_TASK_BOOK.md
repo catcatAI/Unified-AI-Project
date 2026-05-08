@@ -1,7 +1,7 @@
-# Angela [N+N] 任務書 (Task Book) - v2.7 (ASI-Robust FINAL)
+# Angela [N+N] 任務書 (Task Book) - v2.9 (Spatial-Intent SYNC)
 
 > **🛡️ 自癒與對齊條款 (Self-Healing Clause)**:
-> 本任務書 v2.7 代表了專案在 2026-04-29 的最終校準狀態。任何後續任務必須基於此基準點。
+> 本任務書 v2.9 代表了專案在 2026-05-09 的最終校準狀態。任何後續任務必須基於此基準點。
 
 ## 🛠️ ASI 工程開發標準 (Engineering Standards)
 1. **增量優先 (Incremental Only)**: 嚴禁使用 `write_file` 覆蓋成熟檔案。
@@ -45,13 +45,21 @@
 *   **[N.20.2] 模態閘控控制邏輯**: 在 `digital_life_integrator.py` 實作動態資源開關。 (已完成)
 *   **[N.20.3] 具身感官與 Live2D 對齊**: 實作 `physiological_tactile.py` 與 `live2d_integration.py` 的座標同步。 (已完成)
 *   **[N.20.4] 空間定址記憶系統**: 實作 `memory_neuroplasticity_bridge.py` 的空間錨定記憶。 (已完成)
-*   **[N.20.5] 原生空間推理 (幾何數學)**: 在 `state_matrix.py` 實作基於張量變換的幾何運算邏輯。 (已完成)
-*   **[N.21] 原生意圖模型實作 (Native Intent Model)**: 定義座標位能場與自主意圖生成。 (進行中)
+*   **[N.20.5] 原生空間推理 (幾何數學)**: 在 `state_matrix.py` 實作基於張量變換的幾何運算邏輯（含 Shunting-yard 算法與 RPN 執行器）。 (已完成)
 
+### [Task N.21] 原生意圖模型 (Native Intent Model)
+*   **[N.21.3] 意圖重力吸引 (Intent Gravity Pull)**: 在 `state_matrix.py` 實作 `apply_intent_gravity`，將維度座標緩緩吸向意圖向量。 (已完成)
+*   **[N.21.7] 維度連動拖拽 (Inter-Dimensional Drag)**: 在 `state_matrix.py` 實作 `apply_inter_dimensional_drag`，觸發維度對其他維度的拖拽效應。 (已完成)
+*   **[N.21.x] 意圖一致性校驗 (Intent Alignment)**: 在 `self_introspector.py` 實作 `check_intent_alignment`，偵測 LLM 行動提案與生理意圖的認知失調。 (進行中)
+*   **[N.21.x] 自主意圖生成 (Homeostatic Intents)**: 在 `intent_model.py` 實作 `generate_homeostatic_intents`，依生理狀態自主生成意圖。 (進行中)
+
+### [Task N.20.4+] 空間記憶增強
+*   **[N.20.4b] 空間錨定記憶**: 在 `memory_neuroplasticity_bridge.py` 實作 `retrieve_by_spatial_proximity`，基於 3D 座標半徑檢索記憶。 (已完成)
 
 -----
 
 ## 📅 專案現狀 (Current Status)
 ✅ **所有前置任務已完成且通過物理對齊檢查。**
-✅ **專案已達到 v2.8 的高穩定演化基準。**
+✅ **專案已達到 v2.9 的空間意圖演化基準。**
+🔄 **[N.21] 意圖模型核心邏輯實作中（`intent_model.py` + `self_introspector.py`）。**
 

@@ -1,4 +1,4 @@
-# Angela [N+N] 動態任務包覆與衍生註冊表 (v2.6)
+# Angela [N+N] 動態任務包覆與衍生註冊表 (v2.9)
 
 ## 任務矩陣紀錄
 
@@ -31,13 +31,24 @@
     *   `+N15.2`: **儀表板實時監控橋接** (已凍結於 v2.7)。
     *   `+N17.1`: **TRPG/Alchemy 整合協議** (待命)。
 
+### [Task N=19-21] 座標 AI 與空間意圖 (Spatial-Intent Intelligence)
+*   **層級**: Level 10-11
+*   **內容**: 座標張量協議、空間推理引擎、原生意圖生成。
+*   **衍生接口 (+N)**:
+    *   `+N20.1-5`: **座標張量協議全套** (state_matrix, tactile, memory已全完成 v2.9)。
+    *   `+N21.3`: **意圖重力吸引** `apply_intent_gravity` (state_matrix.py 層)。
+    *   `+N21.7`: **維度連動拖拽** `apply_inter_dimensional_drag` (state_matrix.py 層)。
+    *   `+N21.x`: **認知失調偵測** (self_introspector.py 進行中)。
+
 ---
 
 ## 🔒 當前凍結狀態 (Logic Fingerprint)
-*   **Latest Fingerprint**: `ANGELA-ASI-SYNC-20260430-FINAL-V2.7`
+*   **Latest Fingerprint**: `ANGELA-ASI-SYNC-20260509-SPATIAL-V2.9`
 *   **受保護檔案範圍**:
     *   `main_api_server.py` (WebSocket & Singleton)
     *   `dna_body.py` (Voxel Engine)
     *   `cerebellum_engine.py` (Neural Core)
     *   `ai.alignment.emotion_system.py` (ASI Soul)
+    *   `state_matrix.py` (4D+Spatial Tensor)
+    *   `memory_neuroplasticity_bridge.py` (Spatial Memory)
 

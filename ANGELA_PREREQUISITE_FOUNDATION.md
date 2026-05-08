@@ -19,6 +19,10 @@
 | 語言免疫系統 | `ego_guard.py` | `class EgoGuard` |
 | 藝術學習工作流 | `art_learning_workflow.py` | `class ArtLearningWorkflow` |
 | 異步標準化工具 | `async_utils.py` | `def safe_create_task` |
+| **空間座標引擎** | `state_matrix.py` | `def apply_intent_gravity` |
+| **維度連動拖拽** | `state_matrix.py` | `def apply_inter_dimensional_drag` |
+| **空間數學引擎** | `state_matrix.py` | `def evaluate_math_spatially` |
+| **空間錨定記憶** | `memory_neuroplasticity_bridge.py` | `def retrieve_by_spatial_proximity` |
 
 ---
 
@@ -62,3 +66,10 @@
 ## 6. 小腦與自律演化
 *   **`apps/backend/src/core/autonomous/cerebellum_engine.py`**: [N.16.1] 小腦單例、脊椎控制矩陣與誤差日誌實作於 L15-L60。
 *   **`evolution_engine.py`**: [N.5.4] 性格演化與持久化 (待進一步映射)。
+
+## 7. 空間 AI 與意圖引擎 (N.20-N.21)
+*   **`state_matrix.py`**: [N.20.1] 座標張量 `coordinate` + `intent_vector` 於各 `DimensionState` (L68-L71)。
+*   **`state_matrix.py`**: [N.20.5] `evaluate_math_spatially` Shunting-yard RPN 數學引擎 (L583-L643)。
+*   **`state_matrix.py`**: [N.21.3] `apply_intent_gravity` 意圖重力吸引 (L649-L663)。
+*   **`state_matrix.py`**: [N.21.7] `apply_inter_dimensional_drag` 維度連動拖拽 (L672-L692)。
+*   **`memory_neuroplasticity_bridge.py`**: [N.20.4b] `retrieve_by_spatial_proximity` 空間錨定記憶 (L413-L429)。
