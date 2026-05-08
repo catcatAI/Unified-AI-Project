@@ -641,7 +641,13 @@ class AngelaApp {
         this.maturityTracker?.setWebSocket(this.backendWebSocket);
         this.precisionManager?.setWebSocket(this.backendWebSocket);
         this.backendWebSocket.onMessage = (m) => this._handleBackendMessage(m);
+        
+        // P0-4: 真正啟動 WebSocket 連接
+        const backendIP = localStorage.getItem('backend_ip') || 'http://localhost:8000';
+        const wsURL = backendIP.replace('http', 'ws') + '/ws';
+        this.backendWebSocket.connect(wsURL);
     }
+
 
     _initializeAPIClient() {
         this.updateLoadingText('Setting up API...');
@@ -1024,14 +1030,27 @@ class AngelaApp {
             // Add user message to display
             addMessage('user', message);
 
-            // Send to backend via WebSocket
-            if (this.backendClient && this.backendClient.isConnected()) {
-                this.backendClient.sendMessage({
-                    type: 'user_message',
-                    content: message,
-                    timestamp: new Date().toISOString()
+            // 嘗試通過 WebSocket 發送 (優先)
+            let sentViaWS = false;
+            if (this.backendWebSocket && this.backendWebSocket.connected) {
+                console.log('[App] Sending message via WebSocket...');
+                this.backendWebSocket.sendMessage(message);
+                sentViaWS = true;
+            }
+
+            // 如果 WS 沒連上，使用 HTTP API 作為備案
+            if (!sentViaWS && this.apiClient) {
+                console.log('[App] WebSocket not available, using HTTP API...');
+                this.apiClient.sendMessage(message).then(response => {
+                    if (response && response.response) {
+                        addMessage('angela', response.response);
+                    }
+                }).catch(err => {
+                    console.error('[App] HTTP Chat failed:', err);
                 });
             }
+
+
 
             // Clear input
             dialogueInput.value = '';

@@ -176,11 +176,13 @@ class AngelaAPIClient {
             };
         }
 
+        console.log(`[APIClient] Fetching: ${this.baseURL}${this.unifiedChatPath}`, { message });
         try {
             let response = await fetch(`${this.baseURL}${this.unifiedChatPath}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+
                     message: message,
                     user_id: 'desktop_user',
                     session_id: this.getSessionId(),
@@ -208,11 +210,14 @@ class AngelaAPIClient {
                 });
             }
 
+            console.log(`[APIClient] Response Status: ${response.status} ${response.statusText}`);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
+            console.log(`[APIClient] Received Data:`, data);
+
             return {
                 success: true,
                 response: data.response || data.message || 'No response',

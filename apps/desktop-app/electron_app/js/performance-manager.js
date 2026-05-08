@@ -76,8 +76,9 @@ class PerformanceManager {
                 this.lastFrameTime = performance.now();
                 this.frameCount = 0;
                 if (!this.performanceMonitor) {
-                    this.startMonitoring();
+                    this.startPerformanceMonitoring();
                 }
+
             } else {
                 // Pause performance monitoring when hidden
                 if (this.performanceMonitor) {

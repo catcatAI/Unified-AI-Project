@@ -483,7 +483,10 @@ async def _handle_chat_request(
     處理聊天請求的共用函數 (GSI-4 / 2030 Standard)
     """
     # 2030 Standard: Deep Input Validation
+    logger.info(f"📩 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
+    
     if not user_message or not user_message.strip():
+
         raise HTTPException(status_code=400, detail="訊號遺失：消息不能為空")
     
     if len(user_message) > 4000:
@@ -499,12 +502,44 @@ async def _handle_chat_request(
         }
     
     try:
-        service = await get_llm_service()
-        response_text = await asyncio.wait_for(
-            angela_llm_response(user_message=user_message, history=history, user_name=user_name, origin=origin),
-            timeout=30.0,
-        )
-        source = "llm" if service and service.is_available else "fallback"
+        service = None
+        # [Task N.21.8] 原生幾何運算路由 (Native Spatial Math Router)
+
+        is_math = False
+        try:
+            import re
+            math_pattern = r"^[\d\s\+\-\*\/\(\)\=\.]+$"
+            clean_msg = user_message.strip().rstrip("=").strip()
+            
+            # 必須包含運算符且符合數學格式，才進入空間引擎
+            if any(op in clean_msg for op in "+-*/") and re.match(math_pattern, clean_msg):
+                digital_life = get_digital_life()
+                if digital_life and hasattr(digital_life, "state_matrix"):
+                    matrix = digital_life.state_matrix
+
+                    logger.info(f"🧠 [Router] Detected math task '{clean_msg}'. Routing to Spatial Engine.")
+                    math_result = matrix.evaluate_math_spatially(clean_msg)
+                    
+                    response_text = f"根據我的空間感知計算，結果是 {math_result}。 (γ 維度位移已完成)"
+                    source = "spatial_engine"
+                    emotion = "happy"
+                    emotion_confidence = 0.9
+                    emotion_intensity = 0.6
+                    is_math = True
+        except Exception as math_err:
+            logger.warning(f"⚠️ [Router] Spatial math failed, falling back to LLM: {math_err}")
+            is_math = False
+
+        if not is_math:
+
+            # 正常對話流程
+            service = await get_llm_service()
+            response_text = await asyncio.wait_for(
+                angela_llm_response(user_message=user_message, history=history, user_name=user_name, origin=origin),
+                timeout=30.0,
+            )
+            source = "llm" if service and service.is_available else "fallback"
+
 
         # 使用情感识别系统分析情感
         if service and hasattr(service, "analyze_emotion"):
@@ -1346,6 +1381,7 @@ async def broadcast_state_updates():
                     "x": heartbeat.x,
                     "y": heartbeat.y,
                     "posture": heartbeat.posture, # [Task N.16.1.3] Cerebellum data
+
                 },
                 "timestamp": datetime.now().isoformat(),
             }

@@ -131,7 +131,9 @@ class AngelaChatService:
         
         [Empathy & Resonance]
         User Predicted Emotion: {empathy.predicted_emotional_state.primary_emotion if empathy else 'Unknown'}
-        Empathy Score: {empathy.empathy_score:.2f if empathy else 0.0}
+        Empathy Score: {(empathy.empathy_score if empathy and hasattr(empathy, "empathy_score") else 0.0):.2f}
+
+
         Recommended Tone: {empathy.recommended_response if empathy else 'Neutral'}
         
         [Associative Memories]
