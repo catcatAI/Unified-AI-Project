@@ -20,6 +20,8 @@ class AngelaChatService:
     """
     def __init__(self):
         self._initialized = False
+        self._last_visual_context = {"ocr_text": {"text": ""}}
+        self._last_visual_time = 0
 
     async def initialize(self):
         if not self._initialized:
@@ -60,9 +62,20 @@ class AngelaChatService:
         sanitized_message, is_violation = self.ego_guard.sanitize_prompt(user_message)
         if is_violation: return self.ego_guard.generate_immune_response()
 
-        # 2. Sensory Sweep (Input & Vision)
+        # 2. Sensory Sweep (Input & Vision) - Cache optimized
         activity = self.input_sensor.get_activity_metrics()
-        visual_context = await self.vision.analyze_image(features=["ocr"])
+        
+        # Only refresh vision if older than 30 seconds to prevent massive lag
+        import time
+        current_time = time.time()
+        if current_time - self._last_visual_time > 30:
+            try:
+                self._last_visual_context = await self.vision.analyze_image(features=["ocr"])
+                self._last_visual_time = current_time
+            except Exception as e:
+                logger.error(f"Vision refresh failed: {e}")
+        
+        visual_context = self._last_visual_context
         screen_text = visual_context.get("ocr_text", {}).get("text", "Empty")
         
         # 3. Advanced Context Synthesis

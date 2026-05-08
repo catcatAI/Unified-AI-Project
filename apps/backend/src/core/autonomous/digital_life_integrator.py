@@ -508,7 +508,7 @@ class DigitalLifeIntegrator:
 
     async def _check_system_health(self):
         """Check health of all subsystems"""
-        systems = {
+        systems: Dict[str, Any] = {
             "biological": self.biological_integrator,
             "action_executor": self.action_executor,
         }

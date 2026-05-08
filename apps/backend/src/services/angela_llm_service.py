@@ -144,9 +144,9 @@ class LlamaCppBackend(BaseLLMBackend):
     async def check_health(self) -> bool:
         """檢查 llama.cpp 服務是否可用"""
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=3.0) as client:
                 # 嘗試獲取模型列表
-                response = await client.get(f"{self.base_url}/api/tags", timeout=10.0)
+                response = await client.get(f"{self.base_url}/api/tags", timeout=3.0)
                 if response.status_code == 200:
                     data = response.json()
                     self.model = data.get("model_name", self.model)
@@ -212,8 +212,8 @@ class OllamaBackend(BaseLLMBackend):
     async def check_health(self) -> bool:
         """檢查 Ollama 服務是否可用"""
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(f"{self.base_url}/api/tags", timeout=10.0)
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                response = await client.get(f"{self.base_url}/api/tags", timeout=3.0)
                 if response.status_code == 200:
                     data = response.json()
                     # 檢查指定模型是否存在
@@ -323,13 +323,14 @@ class OpenAIAPIBackend(BaseLLMBackend):
 
     async def check_health(self) -> bool:
         """檢查 OpenAI API 是否可用"""
-        if not self.api_key:
+        if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:
             return False
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=3.0) as client:
                 response = await client.get(
                     f"{self.base_url}/models",
                     headers={"Authorization": f"Bearer {self.api_key}"},
+                    timeout=3.0
                 )
                 return response.status_code == 200
         except Exception as e:
@@ -391,9 +392,9 @@ class AnthropicAPIBackend(BaseLLMBackend):
 
     async def check_health(self) -> bool:
         """檢查 Anthropic API 是否可用"""
-        if not self.api_key:
+        if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:
             return False
-        # Anthropic 沒有簡單的健康檢查端點，有 key 就認為可用
+        # Anthropic 沒有簡單的健康檢查端點，有有效 key 就認為可用
         return True
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:

@@ -68,6 +68,7 @@ class DimensionState:
     # =============================================================================
     coordinate: Tuple[float, float, float] = field(default_factory=lambda: (0.0, 0.0, 0.0))
     intent_vector: Tuple[float, float, float] = field(default_factory=lambda: (0.0, 0.0, 0.0))
+    stability: float = 1.0
 
 
     def get_average(self) -> float:

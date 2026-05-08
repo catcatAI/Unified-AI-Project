@@ -94,6 +94,10 @@ async def main():
         except Exception as e:
             print(json.dumps({"status": "error", "message": str(e)}))
 
+    elif command == "ocr":
+        text = os_cap.ocr_screenshot()
+        print(json.dumps({"status": "success", "text": text}))
+    
     elif command == "summary":
         titles = os_cap.get_all_window_titles()
         clipboard = os_cap.get_clipboard()

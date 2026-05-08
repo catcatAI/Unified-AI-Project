@@ -305,7 +305,10 @@ class OSCapabilities:
             text = pytesseract.image_to_string(screenshot, lang='chi_tra+eng')
             return text
         except Exception as e:
-            return f"OCR Error: {str(e)} (Ensure Tesseract-OCR is installed on OS)"
+            msg = str(e)
+            if "tesseract is not installed" in msg.lower() or "not found" in msg.lower():
+                return "OCR Error: Tesseract-OCR not found. Please install it or set tesseract_cmd path in capabilities.py."
+            return f"OCR Error: {msg}"
 
 if __name__ == "__main__":
     os_cap = OSCapabilities()

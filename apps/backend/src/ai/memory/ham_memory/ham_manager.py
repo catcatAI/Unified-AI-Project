@@ -173,9 +173,52 @@ class HAMMemoryManager:
         abstract = self.data_processor._abstract_text(combined)
         return await self.store_experience(json.dumps(abstract), "long_term_gist", {"source": "consolidation"}, is_strategic=True)
 
-    async def query_core_memory(self, keywords: Optional[List[str]] = None, data_type_filter: Optional[str] = None, limit: int = 10) -> List[HAMRecallResult]:
-        if self.query_engine: return await self.query_engine.query_core_memory(keywords=keywords, data_type_filter=data_type_filter, limit=limit)
+    async def query_core_memory(self, keywords: Optional[List[str]] = None, data_type_filter: Optional[str] = None, limit: int = 10, min_importance: float = 0.0) -> List[HAMRecallResult]:
+        if self.query_engine: 
+            return await self.query_engine.query_core_memory(
+                keywords=keywords, 
+                data_type_filter=data_type_filter, 
+                limit=limit,
+                min_importance=min_importance
+            )
         return []
+
+    async def retrieve_response_templates(
+        self,
+        query: str,
+        angela_state: Any,
+        user_impression: Any,
+        limit: int = 5,
+        min_score: float = 0.7,
+    ) -> List[Tuple[Any, float]]:
+        """
+        Retrieves and ranks response templates based on current state and query.
+        """
+        from ai.memory.memory_template import MemoryTemplate
+        
+        # 1. Fetch all templates from core memory
+        # Templates are stored with data_type="response_template"
+        raw_results = await self.query_core_memory(data_type_filter="response_template", limit=100)
+        
+        scored_templates = []
+        for res in raw_results:
+            try:
+                # Reconstruct template object
+                template_data = json.loads(res["content"])
+                template = MemoryTemplate.from_dict(template_data)
+                
+                # 2. Calculate match score
+                score = template.calculate_match_score(query, angela_state, user_impression)
+                
+                if score >= min_score:
+                    scored_templates.append((template, score))
+            except Exception as e:
+                logger.error(f"Error processing template in retrieval: {e}")
+                continue
+        
+        # 3. Sort by score
+        scored_templates.sort(key=lambda x: x[1], reverse=True)
+        return scored_templates[:limit]
 
     async def store_template(self, template) -> bool:
         try:

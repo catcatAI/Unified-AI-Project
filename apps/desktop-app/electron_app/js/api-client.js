@@ -27,9 +27,9 @@ class AngelaAPIClient {
         // 超時配置（毫秒）
         this.timeouts = {
             connection: 5000,      // 連接超時
-            dialogue: 10000,        // 對話超時
-            chat: 10000,            // 聊天超時
-            status: 3000,           // 狀態查詢超時
+            dialogue: 30000,        // 對話超時
+            chat: 30000,            // 聊天超時
+            status: 5000,           // 狀態查詢超時
             economy: 3000,          // 經濟查詢超時
             action: 5000            // 動作超時
         };

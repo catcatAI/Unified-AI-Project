@@ -42,6 +42,12 @@ class Live2DCubismWrapper {
                 this.cubismSdk = window.Live2DCubismCore;
                 this.sdkLoaded = true;
                 console.log('Live2D Cubism Core loaded from window');
+                
+                // NEW: Also initialize Framework if available
+                if (typeof window.initLive2DFramework === 'function') {
+                    console.log('Initializing Live2D Framework...');
+                    window.initLive2DFramework();
+                }
                 return;
             }
 
@@ -418,15 +424,12 @@ class Live2DCubismWrapper {
             }
         }
 
-        // Add fallback paths
+        // Add fallback paths (generic only)
         const possiblePaths = [
             ...texturePaths,
             basePath + 'texture_00.png',
             basePath + 'texture.png',
-            basePath + 'texture.jpg',
-            basePath + 'miara_pro_t03.4096/texture_00.png',
-            basePath + 'miara_pro_t03.4096/texture.png',
-            basePath + 'miara_pro_t03.4096/texture.jpg',
+            basePath + 'texture.jpg'
         ];
 
         for (const texturePath of possiblePaths) {

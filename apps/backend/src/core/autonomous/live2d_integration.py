@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Callable, Any, Tuple
 from datetime import datetime
 import asyncio
 import math
+import random
 import logging
 
 logger = logging.getLogger(__name__)
@@ -740,7 +741,7 @@ class Live2DIntegration:
 
     def create_touch_animation(
         self, body_part: str, touch_type: str = "pat", intensity: float = 0.5
-    ) -> List[Dict[str, float]]:
+    ) -> List[Dict[str, Any]]:
         """
         Create animation keyframes for a touch interaction
 
@@ -771,7 +772,7 @@ class Live2DIntegration:
         return keyframes
 
     def sync_with_physiological_state(
-        self, arousal_level: float, active_body_parts: List[str] = None
+        self, arousal_level: float, active_body_parts: Optional[List[str]] = None
     ):
         """
         Sync Live2D with physiological state
