@@ -391,7 +391,7 @@ class ActionExecutor:
             start_time = asyncio.get_event_loop().time()
 
             try:
-                # Get dynamic success rate
+                # Get success rate from native spatial calculation
                 success_rate = self._get_action_success_rate()
 
                 # Execute with timeout
@@ -401,9 +401,8 @@ class ActionExecutor:
 
                 execution_time = asyncio.get_event_loop().time() - start_time
 
-                # Apply dynamic success rate (simulate occasional failures based on success rate)
+                # Bernoulli sampling based on spatial success rate (principled randomness)
                 import random
-
                 actual_success = random.random() < success_rate
 
                 if actual_success:
@@ -681,7 +680,7 @@ class ActionExecutor:
         self._dynamic_params_manager = manager
         logger.info("[ActionExecutor] Dynamic parameters manager connected")
 
-    def _get_action_success_rate(self, context: Optional[Dict[str, float]] = None) -> float:
+    def _get_action_success_rate(self, context=None) -> float:
         """Get dynamic action success rate"""
         # For testing, we might want to bypass the random failure
         if self.config.get("bypass_dynamic_failure", False):
@@ -689,7 +688,53 @@ class ActionExecutor:
 
         if self._dynamic_params_manager and self._dynamic_params_enabled:
             return self._dynamic_params_manager.get_parameter("action_success_rate", context)
-        return 0.85  # Default 85% success rate
+
+        # Primary: native spatial calculation from biological state
+        return self._get_action_success_rate_spatial()
+
+    # =============================================================================
+    # ANGELA-MATRIX: [L5] [α] [A] [L9+]
+    # [Task N.22.2] 原生生理張力成功率 / Native Bio-Tension Success Rate
+    # =============================================================================
+    def _get_action_success_rate_spatial(self, action: "Action" = None) -> float:
+        """
+        [原生 AI] 以 α 維度生理座標計算動作成功率。
+        替代 random.random() + 固定常數 0.85。
+
+        公式: success_rate = clamp(0.3, 0.99,  0.5 + health_tension * 0.8)
+        health_tension = (energy + comfort) / 2 - tension - priority_cost
+        """
+        if not self._dli:
+            return 0.85  # 安全保底：無生命體時回到預設
+
+        try:
+            sm = self._dli.state_matrix
+            alpha = sm.alpha.values
+
+            energy  = alpha.get("energy",  0.5)
+            comfort = alpha.get("comfort", 0.5)
+            tension = alpha.get("tension", 0.0)
+
+            # 動作消耗係數：優先級越體能耗越體
+            priority_cost = 0.3  # 預設消耗 (NORMAL)
+            if action is not None:
+                cost_map = {0: 0.9, 1: 0.6, 2: 0.3, 3: 0.15, 4: 0.05}
+                priority_cost = cost_map.get(action.priority.level, 0.3)
+
+            # 以 state_matrix 內建的空間數學引擎計算健康張力
+            health_tension = sm.evaluate_math_spatially(
+                f"({energy:.4f} + {comfort:.4f}) / 2 - {tension:.4f} - {priority_cost:.4f}"
+            )
+
+            success_rate = max(0.3, min(0.99, 0.5 + health_tension * 0.8))
+            logger.debug(
+                f"[動作引擎] 居體張力={health_tension:.3f} → 成功率={success_rate:.2%}"
+            )
+            return success_rate
+
+        except Exception as e:
+            logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback 0.85: {e}")
+            return 0.85
 
     def _record_action_outcome(self, action: Action, success: bool):
         """Record action outcome to dynamic parameters manager"""

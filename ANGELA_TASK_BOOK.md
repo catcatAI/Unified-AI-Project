@@ -50,11 +50,19 @@
 ### [Task N.21] 原生意圖模型 (Native Intent Model)
 *   **[N.21.3] 意圖重力吸引 (Intent Gravity Pull)**: 在 `state_matrix.py` 實作 `apply_intent_gravity`，將維度座標緩緩吸向意圖向量。 (已完成)
 *   **[N.21.7] 維度連動拖拽 (Inter-Dimensional Drag)**: 在 `state_matrix.py` 實作 `apply_inter_dimensional_drag`，觸發維度對其他維度的拖拽效應。 (已完成)
-*   **[N.21.x] 意圖一致性校驗 (Intent Alignment)**: 在 `self_introspector.py` 實作 `check_intent_alignment`，偵測 LLM 行動提案與生理意圖的認知失調。 (進行中)
-*   **[N.21.x] 自主意圖生成 (Homeostatic Intents)**: 在 `intent_model.py` 實作 `generate_homeostatic_intents`，依生理狀態自主生成意圖。 (進行中)
+*   **[N.21.x] 意圖一致性校驗 (Intent Alignment)**: 在 `self_introspector.py` 實作 `check_intent_alignment`，偵測 LLM 行動提案與生理意圖的認知失調。 (已完成)
+*   **[N.21.x] 自主意圖生成 (Homeostatic Intents)**: 在 `intent_model.py` 實作 `generate_homeostatic_intents`，依生理狀態自主生成意圖。 (已完成)
 
 ### [Task N.20.4+] 空間記憶增強
 *   **[N.20.4b] 空間錨定記憶**: 在 `memory_neuroplasticity_bridge.py` 實作 `retrieve_by_spatial_proximity`，基於 3D 座標半徑檢索記憶。 (已完成)
+
+### [Task N.22] 原生 AI 邏輯取代 (Native Coordinate AI)
+*   **[N.22.1] 藝術工作流佔位符補完**: 在 `art_learning_workflow.py` 實作 Power Law 技能評估與 AL 衰減學習。 (已完成)
+*   **[N.22.2] 生理張力成功率**: 在 `action_executor.py` 移除假隨機，改由 α 維度座標張量計算真實動作成功率。 (已完成)
+*   **[N.22.3] 空間成熟度計算**: 在 `digital_life_integrator.py` 移除時間閾值，改以 4D 穩定性向量綜合出空間成熟度。 (已完成)
+*   **[N.22.4] 生理週期行為補完**: 實作 GROWING 狀態的學習強化與 MATURE 狀態的公式驅動。 (已完成)
+*   **[N.22.5] 空間美學推斷**: 在 `art_learning_system.py` 移除硬編碼顏色對應表，將 γ 維度情緒投影至 RGB 空間，並實作引力反饋 (Gravity Pull)。 (已完成)
+*   **[N.22.6] 自我內省趨勢追蹤**: 在 `self_introspector.py` 加入歷史趨勢判斷與 AL 自適應失調閾值。 (已完成)
 
 -----
 

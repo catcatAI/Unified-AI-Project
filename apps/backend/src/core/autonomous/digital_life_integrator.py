@@ -443,22 +443,46 @@ class DigitalLifeIntegrator:
                 await self._transition_state(LifeCycleState.MATURE)
 
     async def _process_life_cycle_transitions(self):
-        """Process automatic life cycle transitions"""
-        age = self.get_age()
+        """以空間成熟度取代固定時間閾值 / Spatial maturity replaces fixed thresholds"""
+        maturity = self._compute_maturity_score()
 
-        # Transition from AWAKENING to GROWING after initial learning period
         if self.life_cycle_state == LifeCycleState.AWAKENING:
-            if age > timedelta(hours=1) or self.life_stats.total_interactions > 10:
+            if maturity > 0.35:
                 await self._transition_state(LifeCycleState.GROWING)
 
-        # Transition from GROWING to MATURE after sufficient experience
         elif self.life_cycle_state == LifeCycleState.GROWING:
-            if (
-                age > timedelta(days=7)
-                or self.life_stats.memories_formed > 100
-                or self.life_stats.total_conversations > 50
-            ):
+            if maturity > 0.65:
                 await self._transition_state(LifeCycleState.MATURE)
+
+    # =============================================================================
+    # ANGELA-MATRIX: [L3] [αβγδ] [A] [L7+]
+    # [Task N.22.3] 4D 空間成熟度評估 / 4D Spatial Maturity Score
+    # =============================================================================
+    def _compute_maturity_score(self) -> float:
+        """
+        [原生 AI] 以 4 個維度的穩定性計算成熟度分數。
+        替代固定時間陰値狀態機。
+
+        公式: maturity = avg(α_stability, β_stability, γ_stability, δ_stability)
+        穩定性計算：各維度負面指標的反向度量
+        """
+        sm = self.state_matrix
+
+        alpha_stability = 1.0 - sm.alpha.values.get("tension", 0.0)
+        beta_stability  = 1.0 - sm.beta.values.get("confusion", 0.0)
+        gamma_stability = sm.gamma.values.get("calm", 0.5)
+        delta_stability = sm.delta.values.get("trust", 0.5)
+
+        # 以空間數學引擎對四個維度做平均
+        try:
+            maturity = sm.evaluate_math_spatially(
+                f"({alpha_stability:.4f} + {beta_stability:.4f}"
+                f" + {gamma_stability:.4f} + {delta_stability:.4f}) / 4"
+            )
+        except Exception:
+            maturity = (alpha_stability + beta_stability + gamma_stability + delta_stability) / 4
+
+        return max(0.0, min(1.0, maturity))
 
     async def _transition_state(self, new_state: LifeCycleState):
         """Transition to a new life cycle state"""
@@ -498,13 +522,30 @@ class DigitalLifeIntegrator:
             if self.memory_bridge:
                 self.memory_bridge.trigger_consolidation()
 
-        elif state == LifeCycleState.MATURE:
-            # Normal operation
-            pass
-
         elif state == LifeCycleState.GROWING:
-            # Enhanced learning mode
-            pass
+            # =============================================================
+            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L6+]
+            # [Task N.22.3] GROWING 狀態學習強化
+            # =============================================================
+            # 強化認知維度：提升好奇心與學習典型
+            self.state_matrix.update_beta(learning=0.8, curiosity=0.7)
+            # 觸發記憶鞏固：學習期間穩固記憶
+            if self.memory_bridge:
+                self.memory_bridge.trigger_consolidation()
+            logger.info("🌱 [DigitalLife] GROWING: Learning boost + memory consolidation triggered.")
+
+        elif state == LifeCycleState.MATURE:
+            # =============================================================
+            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L8+]
+            # [Task N.22.4] MATURE 狀態公式評估
+            # =============================================================
+            if self.autonomous_lifecycle:
+                metrics = self.autonomous_lifecycle.get_current_metrics()
+                # 將生命強度映射到 β 維度清晰度
+                self.state_matrix.update_beta(
+                    clarity=min(1.0, metrics.life_intensity * 0.8)
+                )
+            logger.info("✨ [DigitalLife] MATURE: Formula evaluation applied to beta clarity.")
 
     async def _check_system_health(self):
         """Check health of all subsystems"""

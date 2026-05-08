@@ -29,6 +29,12 @@ class SelfIntrospector:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.last_check = datetime.now()
+        # =============================================================================
+        # ANGELA-MATRIX: [L3] [β] [A] [L9+]
+        # [Task N.22.6] 自我內省趨勢追蹤 / Self-Introspection Trend Tracking
+        # =============================================================================
+        self._wellbeing_history: List[float] = []
+        self._dissonance_threshold: float = 0.6  # AL 可調整 / AL adjustable
 
     async def perform_mental_health_check(
         self, state_analysis: Dict[str, Any], context: Dict[str, Any]
@@ -69,6 +75,21 @@ class SelfIntrospector:
             report["anomalies"].append("POSITIVE_INTENT_NEGATIVE_STATE_MISMATCH")
             report["recommendations"].append("EXPRESS_EFFORT_OR_STRUGGLE")
 
+        # 3. Trend Analysis (Native AI/AL extension)
+        self._wellbeing_history.append(wellbeing)
+        if len(self._wellbeing_history) > 10:
+            self._wellbeing_history.pop(0)
+
+        report["wellbeing_trend"] = "stable"
+        if len(self._wellbeing_history) >= 3:
+            recent = self._wellbeing_history[-3:]
+            if all(recent[i] < recent[i-1] for i in range(1, 3)):
+                report["wellbeing_trend"] = "declining"
+                if all(recent[i] < recent[i-1] - 0.05 for i in range(1, 3)):
+                    report["crisis_detected"] = True
+                    report["anomalies"].append("SUSTAINED_WELLBEING_DECLINE")
+                    logger.warning("[Introspector] 檢測到幸福感持續陡降趨勢！")
+
         return report
 
     # =============================================================================
@@ -107,7 +128,7 @@ class SelfIntrospector:
             
         dissonance = 1.0 - (alignment + 1.0) / 2.0
         
-        is_conflicting = dissonance > 0.6 or alignment < 0
+        is_conflicting = dissonance > self._dissonance_threshold or alignment < 0
         
         return {
             "action": action_name,
@@ -117,7 +138,19 @@ class SelfIntrospector:
             "decision_override": "THROTTLE" if is_conflicting else "PROCEED"
         }
 
-
+    def adapt_dissonance_threshold(self, post_override_wellbeing: float, pre_override_wellbeing: float):
+        """
+        [Native AL] 根據 THROTTLE 決策後的 wellbeing 變化，自適應調整失調閾值。
+        若 override 後 wellbeing 改善 → 閾值合理，保持或微調。
+        若 override 後 wellbeing 下降 → 閾值可能過嚴，適當放寬。
+        """
+        delta = post_override_wellbeing - pre_override_wellbeing
+        if delta > 0.05:
+            self._dissonance_threshold = min(0.75, self._dissonance_threshold + 0.02)
+        elif delta < -0.05:
+            self._dissonance_threshold = max(0.45, self._dissonance_threshold - 0.02)
+            
+        logger.debug(f"[Introspector] AL Updated dissonance threshold: {self._dissonance_threshold:.3f}")
 
     def get_introspection_prompt_injection(
         self, state_analysis: Dict[str, Any], lifecycle_metrics: Dict[str, Any]

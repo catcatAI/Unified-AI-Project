@@ -7,7 +7,8 @@
 
 import logging
 from enum import Enum
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
+from datetime import datetime
 from .art_learning_system import ArtLearningSystem
 from .biological_integrator import BiologicalIntegrator
 
@@ -32,21 +33,107 @@ class LearningObjective:
     def update_progress(self, increment: float):
         self.progress = min(1.0, self.progress + increment)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [βγ] [A] [L5+]
+# [Task N.22.1] 工作流資料類補完 / Workflow Data Class Completion
+# =============================================================================
+
+from dataclasses import dataclass, field
+from typing import Optional, List
+import math
+
+@dataclass
 class WorkflowProgress:
-    """Placeholder for missing class"""
-    pass
+    """工作流進度追蹤器 / Workflow progress tracker"""
+    stage: WorkflowStage = WorkflowStage.RESEARCH
+    stage_completion: dict = field(default_factory=dict)
+    start_time: datetime = field(default_factory=datetime.now)
+    quality_scores: List[float] = field(default_factory=list)
 
+    def get_bottleneck_stage(self) -> Optional[str]:
+        """識別完成度最低的瓶頸階段 / Find lowest-completion stage"""
+        if not self.stage_completion:
+            return None
+        return min(self.stage_completion, key=self.stage_completion.get)
+
+    def overall_progress(self) -> float:
+        """整體進度 0-1 / Overall progress 0-1"""
+        if not self.stage_completion:
+            return 0.0
+        total_stages = len(WorkflowStage) - 1  # exclude COMPLETE
+        return min(1.0, sum(self.stage_completion.values()) / max(1, total_stages))
+
+    def record_quality(self, score: float) -> None:
+        self.quality_scores.append(max(0.0, min(1.0, score)))
+
+    def average_quality(self) -> float:
+        if not self.quality_scores:
+            return 0.0
+        return sum(self.quality_scores) / len(self.quality_scores)
+
+
+@dataclass
 class SkillAssessment:
-    """Placeholder for missing class"""
-    pass
+    """
+    [Native AL] 技能評估 — Power Law 習得曲線
+    mastery = 1 - exp(-k * practice_count)
+    k 由用戶反饋自適應調整。
+    """
+    skill_name: str
+    practice_count: int = 0
+    decay_constant: float = 0.1   # AL-adjustable learning rate k
+    user_feedback_scores: List[float] = field(default_factory=list)
 
+    def mastery_level(self) -> float:
+        """Power Law 成熟度 / Power Law mastery score 0-1"""
+        return 1.0 - math.exp(-self.decay_constant * self.practice_count)
+
+    def update_from_feedback(self, score: float) -> None:
+        """
+        [AL] 根據用戶反饋調整衰減常數 k。
+        正反饋 → 加速學習曲線；負反饋 → 放緩。
+        """
+        self.user_feedback_scores.append(max(0.0, min(1.0, score)))
+        self.practice_count += 1
+        if score > 0.7:
+            self.decay_constant = min(0.5, self.decay_constant * 1.05)
+        elif score < 0.3:
+            self.decay_constant = max(0.01, self.decay_constant * 0.95)
+
+    def sessions_to_target(self, target: float = 0.8) -> int:
+        """估計達到目標成熟度所需的練習次數"""
+        if target >= 1.0 or self.decay_constant <= 0:
+            return 9999
+        needed = -math.log(1.0 - target) / self.decay_constant
+        return max(0, int(needed) - self.practice_count)
+
+
+@dataclass
 class GenerationResult:
-    """Placeholder for missing class"""
-    pass
+    """
+    生成結果記錄 — 構成 (state, output, feedback) 訓練三元組
+    供後續 AL 更新使用。
+    """
+    input_emotion_state: dict            # γ 維度快照
+    generated_params: dict               # 輸出的色彩/Live2D 參數
+    user_feedback: Optional[float] = None   # -1.0 壞 ~ +1.0 好
+    timestamp: datetime = field(default_factory=datetime.now)
 
+    def is_positive(self) -> bool:
+        return self.user_feedback is not None and self.user_feedback > 0.1
+
+    def is_negative(self) -> bool:
+        return self.user_feedback is not None and self.user_feedback < -0.1
+
+
+@dataclass
 class WorkflowConfig:
-    """Placeholder for missing class"""
-    pass
+    """工作流配置 / Workflow configuration"""
+    max_research_tutorials: int = 5
+    analysis_timeout_s: float = 30.0
+    practice_target_mastery: float = 0.8
+    auto_evolve_on_feedback: bool = True
+    al_learning_rate: float = 0.05      # AL 全域學習率
 
 
 class ArtLearningWorkflow:
