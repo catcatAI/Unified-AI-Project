@@ -33,7 +33,9 @@ class AngelaChatService:
             from core.autonomous.input_sensor import GlobalInputSensor
             from ai.personality.personality_manager import PersonalityManager
             from core.autonomous.evolution_engine import EvolutionEngine
-
+            from core.autonomous.angela_model_core import get_model_core
+            
+            self.model_core = get_model_core()
             self.personality_manager = PersonalityManager()
             self.emotion_system = EmotionSystem()
             self.value_system = get_value_system()
@@ -46,8 +48,10 @@ class AngelaChatService:
             self.evolution = EvolutionEngine(self.personality_manager)
 
             await self.bio_integrator.initialize()
+            await self.model_core.initialize()
             self._initialized = True
-            logger.info("🌌 [Brain] Situational-Input Matrix Initialized.")
+            logger.info("🌌 [Brain] Situational-Input Matrix & Angela Model Core Initialized.")
+
 
     async def generate_response(self, user_message: str, user_name: str = "User", origin: str = "Human") -> str:
         if not self._initialized: await self.initialize()
@@ -82,8 +86,10 @@ class AngelaChatService:
             activity=activity,
             memories=relevant_memories,
             value_directive=value_directive,
-            empathy=empathy_analysis
+            empathy=empathy_analysis,
+            model_core_state=self.model_core.generate_prompt_prefix()
         )
+
 
         # 3. Decision Logic (GSI-4 Routing)
         # Identity_Active = f(C_Gap, M6_History)
@@ -145,7 +151,11 @@ class AngelaChatService:
         
         [Core Value Directives]
         {kwargs.get('value_directive', 'Maintain core identity stability.')}
+        
+        [Angela Inner Model Awareness]
+        {kwargs.get('model_core_state', 'No internal data available.')}
         """
+
         return prompt.strip()
 
 def get_angela_chat_service():

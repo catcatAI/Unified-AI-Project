@@ -131,6 +131,22 @@ class StateMatrix4D:
         >>> print(f"Overall state: {analysis['overall_state']}")
     """
 
+    _instance = None
+    _initialized = False
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(StateMatrix4D, cls).__new__(cls)
+        return cls._instance
+
+    @property
+    def precision(self) -> float:
+        """獲取當前運算精度 (基於 Beta 維度的聚焦度)"""
+        if hasattr(self, "beta"):
+            return self.beta.values.get("focus", 1.0)
+        return getattr(self, "_precision", 1.0)
+
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize 4D state matrix
@@ -138,7 +154,11 @@ class StateMatrix4D:
         Args:
             config: Optional configuration dictionary
         """
+        if StateMatrix4D._initialized:
+            return
+        StateMatrix4D._initialized = True
         self.config = config or {}
+        self._precision = 1.0 # Default precision
 
         # Initialize dimensions
         self.alpha = DimensionState(
@@ -527,6 +547,24 @@ class StateMatrix4D:
         elif dim_name == "gamma": return self.gamma.coordinate[0]
         elif dim_name == "delta": return self.delta.coordinate[0]
         return 0.0
+
+    def get_position(self) -> Dict[str, Any]:
+        """獲取所有維度的當前座標 / Get current coordinates of all dimensions"""
+        return {
+            name: {
+                "x": state.coordinate[0],
+                "y": state.coordinate[1],
+                "z": state.coordinate[2]
+            }
+            for name, state in self.dimensions.items()
+        }
+
+
+    # Better implementation of get_position for 4D consistency
+    def get_coordinates(self) -> Dict[str, Any]:
+        """獲取 4D 矩陣的完整座標映射"""
+        return {name: state.coordinate for name, state in self.dimensions.items()}
+
 
     def execute_thought_chain(self, dimension: str, instructions: List[Tuple[CognitiveOp, float]]) -> float:
         """
