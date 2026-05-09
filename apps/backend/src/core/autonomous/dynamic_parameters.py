@@ -30,37 +30,79 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ParameterState:
-    """参数状态 / Parameter state with dynamic variation"""
+    """
+    =============================================================================
+    ANGELA-MATRIX: [L2-L4] [αβγδ] [A] [L7]
+    [Task N.22/E1] Native AI Expansion: Parameter State with Spatial Gravity
+    =============================================================================
+    """
 
     base_value: float  # 基础值
     current_value: float  # 当前值（动态变化）
     variation_range: Tuple[float, float]  # 变化范围 (min, max)
     volatility: float  # 波动性 (0-1)
+    
+    # 空間屬性 (Native Coordinate AI)
+    spatial_dimension: Optional[str] = None  # 'alpha', 'beta', 'gamma', 'delta'
+    spatial_anchor: Optional[Tuple[float, float, float]] = None # 參數在空間中的引力錨點
+    inertia_mass: float = 1.0 # 慣性質量 (AL: 質量越大越難被引力拖曳)
+    
     last_update: datetime = field(default_factory=datetime.now)
     update_interval: float = 60.0  # 更新间隔（秒）
     history: List[float] = field(default_factory=list)  # 历史值
-    influence_map: Dict[str, float] = field(default_factory=dict)  # 因素对该参数的影响权重
+    influence_map: Dict[str, float] = field(default_factory=dict)  # Legacy rules
 
     def __post_init__(self):
         if not self.history:
             self.history = [self.base_value]
 
-    def get_value(self, context: Dict[str, float] = None) -> float:
+    def get_gravity_pull(self, state_matrix: Any) -> float:
         """
-        获取当前值（考虑上下文影响）
-        Get current value considering context effects
+        [N.22/E1] 計算空間引力攝動
+        根據當前狀態矩陣與此參數的空間錨點距離，計算引力位移。
         """
-        # 基础当前值
+        if not self.spatial_dimension or not self.spatial_anchor or not state_matrix:
+            return 0.0
+            
+        try:
+            # 獲取當前維度的座標 (x, y, z)
+            # 使用 get_position() 的回傳格式
+            positions = state_matrix.get_position()
+            if self.spatial_dimension not in positions:
+                return 0.0
+            current_coord = positions[self.spatial_dimension]
+            
+            # 計算歐氏距離
+            distance = sum((a - b) ** 2 for a, b in zip(current_coord, self.spatial_anchor)) ** 0.5
+            
+            # 距離越近引力越強，並除以慣性質量
+            gravity = 1.0 / (max(1.0, distance) * self.inertia_mass)
+            
+            # 引力方向映射（簡化：高能量區產生正向拉升）
+            direction = 1.0 if sum(current_coord) > sum(self.spatial_anchor) else -1.0
+            
+            return gravity * direction * self.volatility
+        except Exception as e:
+            logger.debug(f"[DynamicParams] Gravity calculation error: {e}")
+            return 0.0
+
+    def get_value(self, context: Dict[str, float] = None, state_matrix: Any = None) -> float:
+        """
+        获取当前值（優先受空間引力場影響）
+        """
         value = self.current_value
 
-        # 添加上下文影响
-        if context:
+        # Native AI 空間引力計算
+        if state_matrix and self.spatial_dimension:
+            gravity_pull = self.get_gravity_pull(state_matrix)
+            value += gravity_pull
+        elif context:
+            # Fallback to legacy rules
             for factor_name, factor_value in context.items():
-                # 每个因素对参数的影响程度不同
                 influence = self._calculate_influence(factor_name, factor_value)
                 value += influence
 
-        # 添加随机波动（模拟不确定性）
+        # 添加随机波动
         noise = random.gauss(0, self.volatility * 0.1)
         value += noise
 
@@ -87,10 +129,9 @@ class ParameterState:
 
         return factor_value * weight * self.volatility
 
-    def update(self, time_delta: Optional[float] = None):
+    def update(self, time_delta: Optional[float] = None, state_matrix: Any = None):
         """
-        更新参数值（模拟自然波动）
-        Update parameter value (simulate natural fluctuation)
+        更新参数值（結合空間引力與向心力）
         """
         if time_delta is None:
             time_delta = (datetime.now() - self.last_update).total_seconds()
@@ -101,12 +142,17 @@ class ParameterState:
 
         # 向基础值回归的趋势（homeostasis）
         drift_to_base = (self.base_value - self.current_value) * 0.1
+        
+        # [Native AI] 引力拖曳
+        gravity_pull = 0.0
+        if state_matrix and self.spatial_dimension:
+            gravity_pull = self.get_gravity_pull(state_matrix) * 0.5
 
         # 随机游走
         random_walk = random.gauss(0, self.volatility * 0.05)
 
         # 应用变化
-        self.current_value += drift_to_base + random_walk
+        self.current_value += drift_to_base + random_walk + gravity_pull
 
         # 确保在范围内
         self.current_value = max(
@@ -149,9 +195,10 @@ class DynamicThresholdManager:
     - 社交活跃度阈值（有时想互动，有时不想）
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """初始化动态阈值系统 - 支持配置驱动"""
+    def __init__(self, config: Optional[Dict[str, Any]] = None, state_matrix: Optional[Any] = None):
+        """初始化动态阈值系统 - 結合 Native Space"""
         self.config = config or {}
+        self.state_matrix = state_matrix
         self.parameters: Dict[str, ParameterState] = {}
         self._initialize_default_parameters()
         self._update_task: Optional[asyncio.Task] = None
@@ -168,11 +215,9 @@ class DynamicThresholdManager:
             current_value=0.6,
             variation_range=(0.3, 0.9),
             volatility=0.4,
-            influence_map={
-                "stress": 0.5,  # 压力大更难高兴 (threshold increase)
-                "recent_success": -0.6,  # 成功了容易高兴 (threshold decrease)
-                "mood": -0.4,  # 心情好容易更高兴
-            },
+            spatial_dimension="gamma",
+            spatial_anchor=(8.0, 5.0, 0.0), # 快樂區錨點
+            influence_map={"stress": 0.5, "recent_success": -0.6, "mood": -0.4},
         )
 
         self.parameters["emotion_sadness_threshold"] = ParameterState(
@@ -180,10 +225,9 @@ class DynamicThresholdManager:
             current_value=0.4,
             variation_range=(0.2, 0.7),
             volatility=0.3,
-            influence_map={
-                "stress": -0.4,  # 压力大容易难过
-                "recent_failure": -0.5,  # 失败了容易难过
-            },
+            spatial_dimension="gamma",
+            spatial_anchor=(-5.0, -5.0, 0.0), # 負面低能區
+            influence_map={"stress": -0.4, "recent_failure": -0.5},
         )
 
         self.parameters["emotion_anger_threshold"] = ParameterState(
@@ -191,10 +235,9 @@ class DynamicThresholdManager:
             current_value=0.7,
             variation_range=(0.4, 0.95),
             volatility=0.35,
-            influence_map={
-                "stress": -0.6,  # 压力大容易生气 (threshold decrease)
-                "fatigue": -0.4,  # 疲劳容易生气
-            },
+            spatial_dimension="alpha",
+            spatial_anchor=(8.0, 8.0, 5.0), # 高喚醒高張力區
+            influence_map={"stress": -0.6, "fatigue": -0.4},
         )
 
         # 2. 行为执行成功率
@@ -203,6 +246,8 @@ class DynamicThresholdManager:
             current_value=0.85,
             variation_range=(0.5, 0.98),
             volatility=0.25,
+            spatial_dimension="alpha",
+            spatial_anchor=(5.0, -2.0, 0.0), # 健康平衡區
             influence_map={"energy": 0.4, "confidence": 0.3, "fatigue": -0.5},
         )
 
@@ -211,6 +256,8 @@ class DynamicThresholdManager:
             current_value=1.0,
             variation_range=(0.3, 2.0),
             volatility=0.3,
+            spatial_dimension="alpha",
+            spatial_anchor=(10.0, 0.0, 0.0), # 滿能量
             influence_map={"energy": 0.6, "fatigue": -0.7},
         )
 
@@ -220,11 +267,9 @@ class DynamicThresholdManager:
             current_value=0.7,
             variation_range=(0.4, 0.95),
             volatility=0.2,
-            influence_map={
-                "confidence": -0.6,  # 信心足则门槛低
-                "recent_success": -0.4,
-                "recent_failure": 0.5,
-            },
+            spatial_dimension="beta",
+            spatial_anchor=(5.0, 8.0, 0.0), # 高確定性高清晰度區
+            influence_map={"confidence": -0.6, "recent_success": -0.4, "recent_failure": 0.5},
         )
 
         self.parameters["risk_tolerance"] = ParameterState(
@@ -232,6 +277,8 @@ class DynamicThresholdManager:
             current_value=0.5,
             variation_range=(0.1, 0.9),
             volatility=0.4,
+            spatial_dimension="gamma",
+            spatial_anchor=(5.0, 8.0, 5.0), # 高刺激探索區
             influence_map={"confidence": 0.5, "mood": 0.3, "stress": -0.4},
         )
 
@@ -241,10 +288,9 @@ class DynamicThresholdManager:
             current_value=0.5,
             variation_range=(0.1, 0.9),
             volatility=0.35,
-            influence_map={
-                "mood": -0.6,  # 心情好降低门槛 (threshold decrease)
-                "energy": -0.4,  # 精力足降低门槛
-            },
+            spatial_dimension="delta",
+            spatial_anchor=(8.0, 8.0, 0.0), # 高親密高信任區
+            influence_map={"mood": -0.6, "energy": -0.4},
         )
 
         self.parameters["social_sensitivity"] = ParameterState(
@@ -252,6 +298,8 @@ class DynamicThresholdManager:
             current_value=0.6,
             variation_range=(0.2, 0.95),
             volatility=0.3,
+            spatial_dimension="delta",
+            spatial_anchor=(5.0, 0.0, 0.0),
         )
 
         # 5. 学习和记忆参数
@@ -315,7 +363,7 @@ class DynamicThresholdManager:
                 for param_name, param_state in self.parameters.items():
                     # 为当前参数构建特定的上下文
                     param_context = self._build_context_for_parameter(param_name, context)
-                    param_state.update()
+                    param_state.update(state_matrix=self.state_matrix)
 
                     # 记录参数变化（用于调试）
                     if abs(param_state.current_value - param_state.base_value) > 0.2:
@@ -376,11 +424,11 @@ class DynamicThresholdManager:
         return context
 
     def get_parameter(self, name: str, context: Optional[Dict[str, float]] = None) -> float:
-        """获取参数当前值"""
+        """获取参数当前值 (受空間引力影響)"""
         if name not in self.parameters:
             return 0.5  # 默认值
 
-        return self.parameters[name].get_value(context)
+        return self.parameters[name].get_value(context, self.state_matrix)
 
     def set_parameter_base(self, name: str, base_value: float):
         """设置参数基础值（长期调整）"""
@@ -421,9 +469,12 @@ class DynamicThresholdManager:
             if param:
                 param.base_value = max(0.3, param.base_value - 0.03 * intensity)
 
-            # 失败会增加波动性（变得更加不稳定）
+            # [N.22/E1 AL 學習] 失敗會增加波動性，並且降低慣性質量，使其更容易被引力改變
             for param_name in ["emotion_happiness_threshold", "action_success_rate"]:
                 self.adjust_parameter_volatility(param_name, 0.05 * intensity)
+                if param_name in self.parameters:
+                    # 降低慣性質量，使得未來空間座標對其拉扯力增加
+                    self.parameters[param_name].inertia_mass = max(0.1, self.parameters[param_name].inertia_mass - 0.1 * intensity)
 
     def get_all_parameters_summary(self) -> Dict[str, Any]:
         """获取所有参数摘要"""

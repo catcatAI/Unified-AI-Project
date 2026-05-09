@@ -295,6 +295,22 @@ class MemoryNeuroplasticityBridge:
 
         return True
 
+    def retrieve_by_spatial_proximity(
+        self, x: float, y: float, z: float, radius: float = 5.0
+    ) -> List[str]:
+        """
+        [N.21.6/E2 Native AI]
+        Retrieve memories based on spatial proximity (Euclidean distance).
+        """
+        nearby_memories = []
+        for mem_id, meta in self._memory_metadata.items():
+            coord = meta.get("coordinate")
+            if coord:
+                dist = sum((a - b) ** 2 for a, b in zip(coord, (x, y, z))) ** 0.5
+                if dist <= radius:
+                    nearby_memories.append(mem_id)
+        return nearby_memories
+
     def trigger_consolidation(self, memory_ids: Optional[List[str]] = None):
         """
         Trigger memory consolidation (e.g., during rest/sleep)

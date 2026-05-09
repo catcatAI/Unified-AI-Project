@@ -169,8 +169,9 @@ class DesktopPresence:
         >>> presence.set_presence_mode(PresenceMode.WALLPAPER)
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, intent_manager: Optional[Any] = None):
         self.config = config or {}
+        self.intent_manager = intent_manager
 
         # Position and size
         self.current_position: Position = Position(100, 100)
@@ -191,6 +192,7 @@ class DesktopPresence:
         # Mouse tracking
         self.mouse_tracker: MouseTracker = MouseTracker()
         self.last_mouse_position: Optional[Position] = None
+        self.mouse_velocity: Position = Position(0, 0)
 
         # Collision
         self.collision_enabled: bool = True
@@ -233,8 +235,57 @@ class DesktopPresence:
         """Background update loop"""
         while self._running:
             await self._update_collision_detection()
+            await self._apply_intent_gravity()
             await self._enforce_screen_boundaries()
             await asyncio.sleep(0.033)  # ~30 FPS
+
+    async def _apply_intent_gravity(self):
+        """
+        [Task N.22/E3] Native AI 桌面意圖引力
+        依據意圖管理器計算對滑鼠座標的引力或斥力，實現主動靠近或預測性避障。
+        """
+        if not self.intent_manager or not self.last_mouse_position:
+            return
+
+        # 緩慢降低滑鼠速度狀態 (阻尼)
+        self.mouse_velocity.x *= 0.8
+        self.mouse_velocity.y *= 0.8
+
+        my_center = self.get_bounding_box().center
+        mouse_pos = self.last_mouse_position
+        dist = my_center.distance_to(mouse_pos)
+        
+        # 尋找與生存/社交相關的活躍意圖
+        gravity_force = 0.0
+        from .intent_model import IntentCategory
+        for intent in self.intent_manager.intents:
+            if intent.category == IntentCategory.SOCIAL_BOND:
+                gravity_force += intent.strength * 2.0  # 正向引力
+            elif intent.category == IntentCategory.SELF_PRESERVATION:
+                gravity_force -= intent.strength * 3.0  # 斥力
+
+        # 預測性避障 (Predictive Avoidance)
+        mouse_speed = (self.mouse_velocity.x**2 + self.mouse_velocity.y**2)**0.5
+        if mouse_speed > 50.0 and dist < 200:
+            # 滑鼠高速靠近，觸發防衛機制
+            gravity_force -= 5.0
+            if self.layer_mode != LayerMode.CLICK_THROUGH:
+                self.set_layer_mode(LayerMode.CLICK_THROUGH)
+                logger.info("🛡️ [Desktop AI] High velocity mouse detected. Activating Click-Through.")
+        elif mouse_speed < 5.0 and dist > 300 and self.layer_mode == LayerMode.CLICK_THROUGH:
+            # 安全距離恢復互動
+            self.set_layer_mode(LayerMode.TOPMOST)
+
+        if gravity_force != 0.0 and dist > 10:
+            # 計算朝向滑鼠的方向向量
+            dx = (mouse_pos.x - my_center.x) / dist
+            dy = (mouse_pos.y - my_center.y) / dist
+            
+            # 引力衰減公式：距離越近影響越大（上限為每次移動 5px）
+            pull_magnitude = (gravity_force * 1000.0) / (dist ** 1.5)
+            pull_magnitude = max(-5.0, min(5.0, pull_magnitude))
+            
+            self.move_by(Position(dx * pull_magnitude, dy * pull_magnitude))
 
     async def _update_collision_detection(self):
         """Update collision detection"""
@@ -305,8 +356,7 @@ class DesktopPresence:
             velocity = Position(
                 position.x - self.last_mouse_position.x, position.y - self.last_mouse_position.y
             )
-            # Store for velocity-based interactions
-            pass
+            self.mouse_velocity = velocity
 
         self.last_mouse_position = position
 

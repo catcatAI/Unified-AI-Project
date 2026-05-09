@@ -71,9 +71,26 @@ class AngelaModelCore:
                     # 壓力過大時，空間矩陣會產生細微的「不穩定位移」
                     self.spatial.apply_external_force("stress_perturbation", (0.01, 0.01, 0.01))
                 
-                # 3. 更新小腦姿勢 (根據喚醒度選擇姿勢基調)
-                arousal = bio_state.get("arousal", 50.0)
-                # TODO: Link arousal to motor posture selection
+                # 3. 空間喚醒度連結小腦姿勢 (AI Posture Selection)
+                # =============================================================================
+                # [Task N.22.7] AI Posture Selection based on Arousal
+                # =============================================================================
+                if hasattr(self.motor, "execute_command"):
+                    # 將 arousal 映射至姿勢空間
+                    arousal = self.spatial.alpha.values.get("arousal", 50.0)
+                    
+                    # 姿勢的喚醒度空間錨點 (Arousal Anchors)
+                    posture_anchors = {
+                        "default_idle": 30.0,
+                        "standing": 60.0,
+                        "walking": 90.0
+                    }
+                    
+                    # 尋找空間距離最近的姿勢
+                    best_pose = min(posture_anchors.keys(), key=lambda k: abs(posture_anchors[k] - arousal))
+                    
+                    # 執行姿勢
+                    self.motor.execute_command(best_pose, bio_state)
                 
                 await asyncio.sleep(2.0) # 代謝頻率：2秒一次
             except Exception as e:

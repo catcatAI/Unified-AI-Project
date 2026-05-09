@@ -5,6 +5,14 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.4.0] - 2026-05-09
+
+### Added
+- 🪐 **[N.22.E1] Spatial Gravity Parameters** (`dynamic_parameters.py`): Replaced rule-based dynamic thresholds with 4D spatial anchors that fluctuate based on coordinate gravity.
+- 🧠 **[N.22.E2] Spatial Memory Contexts** (`tool_context_manager.py`): Connected tool contexts to `MemoryNeuroplasticityBridge` for automatic tool preset retrieval based on Euclidean proximity to current mood.
+- 🖱️ **[N.22.E3] Intent-Driven Mouse Gravity** (`desktop_presence.py`): Linked `SOCIAL_BOND` and `SELF_PRESERVATION` intents to mouse interaction. Added predictive high-velocity obstacle avoidance via Click-Through layer shifting.
+- 🧬 **[N.22.E4] Loss-based Cerebellum Evolution** (`cerebellum_engine.py`): Evolved gait generation using gradient descent on displacement residuals (loss) and added Beta-dimension driven dynamic damping.
+
 ## [7.3.0] - 2026-05-09
 
 ### Added

@@ -155,24 +155,36 @@ class CerebellumEngine:
 
     def _evolve_gait(self):
         """
-        [N.16.3] 自律姿態演化：根據歷史誤差微調。
+        [Task N.22/E4] 神經可塑性演化：基於 Loss 的梯度微調
         """
         avg_error = self.error_accumulation / max(1, len(self.kinetic_history))
-        logger.info(f"🧬 [Cerebellum] Autonomous Evolution Triggered. Avg Error: {avg_error:.2f}")
+        logger.info(f"🧬 [Cerebellum AL] Autonomous Evolution Triggered. Avg Loss (Error): {avg_error:.3f}")
         
-        # 演化邏輯：如果誤差大，優化「walking」姿勢的重心
-        if "walking" in self.pose_library:
-            pose = self.pose_library["walking"]
-            if avg_error > 2.0:
-                # 降低複雜度，追求穩定
-                pose["spine"] = [s * 0.9 for s in pose["spine"]]
-            else:
-                # 增加靈動性
-                pose["spine"] = [s * 1.1 for s in pose["spine"]]
+        pose_name = self.current_pose_name
+        if pose_name in self.pose_library:
+            pose = self.pose_library[pose_name]
+            spine = np.array(pose.get("spine", [0.0]*9))
             
+            # 計算梯度：誤差越大，微調幅度越大
+            learning_rate = 0.05
+            gradient = avg_error * learning_rate
+            
+            # 關節隨機微擾動 (Simulated Gradient)
+            perturbation = np.random.normal(0, gradient, size=9)
+            
+            if avg_error > 2.0:
+                # 高誤差：向心收斂，追求穩定 (僵硬防禦)
+                spine = spine * (1.0 - learning_rate) + perturbation
+                logger.info(f"🛡️ [Cerebellum AL] High loss ({avg_error:.2f}). Gait '{pose_name}' adapting towards defensive stability.")
+            else:
+                # 低誤差：外向探索，增加靈動性
+                spine = spine + perturbation
+                logger.info(f"✨ [Cerebellum AL] Low loss. Gait '{pose_name}' exploring new flexibility.")
+                
+            pose["spine"] = spine.tolist()
             self._save_memory()
-            self.error_accumulation = 0.0 # 重置
-            logger.info("✨ [Cerebellum] Walking gait has evolved for better stability.")
+            
+        self.error_accumulation = 0.0
 
     def execute_command(self, pose_name: str, bio_state: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -193,9 +205,18 @@ class CerebellumEngine:
         hormones = bio_state.get("hormones", {})
         adrenaline = hormones.get("adrenaline", 20.0) / 100.0
 
-        # 2. 動態轉換速度 (受能量影響)
-        # 能量低時，姿勢切換變慢 (反應遲鈍)
-        current_speed = self.transition_speed * (0.5 + energy * 0.5)
+        # 2. [Task N.22/E4] 動態阻尼 (Dynamic Damping) 的 AL
+        # 根據認知維度 (clarity/chaos) 調整關節阻尼
+        clarity = bio_state.get("clarity", 0.5)
+        chaos = bio_state.get("chaos", 0.5)
+        
+        # 高清晰度 = 降低阻尼（靈活），高混亂 = 升高阻尼（僵硬防禦）
+        target_damping = 0.2 + (chaos * 0.4) - (clarity * 0.1)
+        self.damping = self.damping * 0.9 + target_damping * 0.1
+        self.damping = max(0.05, min(0.8, self.damping))
+
+        # 能量低或高阻尼時，姿勢切換變慢
+        current_speed = self.transition_speed * (0.5 + energy * 0.5) * (1.0 - self.damping)
         
         # 3. 插值計算
         target_spine = np.array(target_data.get("spine", [0.0]*9))
