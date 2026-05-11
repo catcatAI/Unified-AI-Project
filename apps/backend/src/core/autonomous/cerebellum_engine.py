@@ -75,7 +75,7 @@ class CerebellumEngine:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     self.pose_library.update(json.load(f))
                 logger.info(f"💾 [Cerebellum] Loaded {len(self.pose_library)} poses from memory.")
-            except Exception as e:
+            except (IOError, OSError, json.JSONDecodeError) as e:
                 logger.error(f"Failed to load motor memory: {e}")
 
     def refine_pose(self, name: str, adjustments: Dict[str, Any]):
@@ -113,7 +113,7 @@ class CerebellumEngine:
             os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
             with open(self.storage_path, 'w', encoding='utf-8') as f:
                 json.dump(self.pose_library, f, ensure_ascii=False, indent=2)
-        except Exception as e:
+        except (IOError, OSError) as e:
             logger.error(f"Persistence failed: {e}")
 
     def update_proprioception(self, actual_theta: List[float], external_force: float = 0.0):

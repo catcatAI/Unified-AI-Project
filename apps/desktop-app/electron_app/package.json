@@ -1,6 +1,6 @@
 {
   "name": "angela-desktop-electron",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "description": "Angela AI Desktop Application - Live2D Virtual Companion",
   "main": "main.js",
   "scripts": {

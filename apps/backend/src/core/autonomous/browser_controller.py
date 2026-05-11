@@ -23,6 +23,8 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime
 import asyncio
 import logging
+import aiohttp
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -200,9 +202,8 @@ class BrowserController:
             for callback in self._state_change_callbacks:
                 try:
                     callback(old_state, new_state)
-                except Exception as e:
+                except Exception as e:  # Broad exception acceptable here as we want to ensure all callbacks execute
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
     async def search(
         self, query: str, engine: Optional[SearchEngine] = None, max_results: int = 10
@@ -223,9 +224,7 @@ class BrowserController:
         search_engine = engine or self.default_engine
 
         try:
-            # This would integrate with actual search APIs
-            # For now, returning mock results
-            results = await self._perform_mock_search(query, search_engine, max_results)
+            results = await self._perform_real_search(query, search_engine, max_results)
 
             self.active_search_results = results
 
@@ -248,26 +247,50 @@ class BrowserController:
 
             return []
 
-    async def _perform_mock_search(
+    async def _perform_real_search(
         self, query: str, engine: SearchEngine, max_results: int
     ) -> List[SearchResult]:
-        """Mock search implementation (replace with actual search API)"""
-        # This is a placeholder - real implementation would use search APIs
-        await asyncio.sleep(0.5)  # Simulate network delay
-
-        # Generate mock results
+        """
+        [Phase 18.1] 執行真實網路搜尋 (使用 DuckDuckGo HTML 版)
+        取代原有的 _perform_mock_search 佔位符。
+        """
         results = []
-        for i in range(min(max_results, 5)):
-            results.append(
-                SearchResult(
-                    title=f"Result {i+1} for '{query}'",
-                    url=f"https://example.com/result{i+1}",
-                    snippet=f"This is a sample search result snippet for {query}...",
-                    relevance_score=1.0 - (i * 0.1),
-                    source_engine=engine.search_name,
-                )
-            )
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        url = "https://html.duckduckgo.com/html/"
+        data = {"q": query}
 
+        try:
+            async with aiohttp.ClientSession(headers=headers) as session:
+                async with session.post(url, data=data, timeout=10) as response:
+                    if response.status == 200:
+                        html = await response.text()
+                        soup = BeautifulSoup(html, "html.parser")
+                        
+                        # 解析 DuckDuckGo 結果
+                        for result_div in soup.find_all("div", class_="result__body", limit=max_results):
+                            title_a = result_div.find("a", class_="result__title")
+                            snippet_a = result_div.find("a", class_="result__snippet")
+                            url_a = result_div.find("a", class_="result__url")
+                            
+                            if title_a and snippet_a:
+                                title = title_a.get_text(strip=True)
+                                link = title_a.get("href", "")
+                                snippet = snippet_a.get_text(strip=True)
+                                
+                                results.append(
+                                    SearchResult(
+                                        title=title,
+                                        url=link,
+                                        snippet=snippet,
+                                        relevance_score=1.0 - (len(results) * 0.1),
+                                        source_engine="DuckDuckGo"
+                                    )
+                                )
+        except Exception as e:
+            logger.error(f"Real search failed: {e}")
+            
         return results
 
     async def extract_content(self, url: str) -> Optional[ExtractedContent]:
@@ -283,9 +306,7 @@ class BrowserController:
         self._set_state(BrowserState.LOADING)
 
         try:
-            # This would integrate with web scraping
-            # For now, returning mock content
-            content = await self._perform_mock_extraction(url)
+            content = await self._perform_real_extraction(url)
 
             self._set_state(BrowserState.IDLE)
             return content
@@ -296,19 +317,52 @@ class BrowserController:
 
             return None
 
-    async def _perform_mock_extraction(self, url: str) -> ExtractedContent:
-        """Mock content extraction (replace with actual scraping)"""
-        await asyncio.sleep(0.3)  # Simulate loading
-
-        return ExtractedContent(
-            url=url,
-            title="Sample Page Title",
-            text_content="This is sample extracted content from the webpage. "
-            "It would contain the actual text content in a real implementation.",
-            images=["https://example.com/image1.jpg"],
-            links=["https://example.com/link1", "https://example.com/link2"],
-            word_count=150,
-        )
+    async def _perform_real_extraction(self, url: str) -> Optional[ExtractedContent]:
+        """
+        [Phase 18.2] 執行真實網頁內容擷取
+        取代原有的 _perform_mock_extraction 佔位符。
+        """
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        try:
+            async with aiohttp.ClientSession(headers=headers) as session:
+                async with session.get(url, timeout=15) as response:
+                    if response.status == 200:
+                        html = await response.text()
+                        soup = BeautifulSoup(html, "html.parser")
+                        
+                        # 移除 script 與 style
+                        for script in soup(["script", "style", "nav", "footer", "header"]):
+                            script.extract()
+                            
+                        # 取得純文字
+                        text = soup.get_text(separator="\n", strip=True)
+                        lines = (line.strip() for line in text.splitlines())
+                        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                        clean_text = "\n".join(chunk for chunk in chunks if chunk)
+                        
+                        # 提取圖片與連結 (前幾個)
+                        images = [img.get('src') for img in soup.find_all('img') if img.get('src')][:5]
+                        links = [a.get('href') for a in soup.find_all('a', href=True)][:5]
+                        
+                        title = soup.title.string if soup.title else "Untitled"
+                        
+                        return ExtractedContent(
+                            url=url,
+                            title=title.strip(),
+                            text_content=clean_text[:5000], # 限制長度避免過大
+                            images=images,
+                            links=links,
+                            word_count=len(clean_text.split()),
+                            summary=clean_text[:200] + "..." if len(clean_text) > 200 else clean_text
+                        )
+                    else:
+                        logger.warning(f"Extraction failed with status {response.status} for {url}")
+                        return None
+        except Exception as e:
+            logger.error(f"Real extraction failed: {e}")
+            return None
 
     def detect_game(self, url: str, page_title: str, page_content: str) -> bool:
         """

@@ -214,6 +214,8 @@ class ArtLearningSystem:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     self.aesthetic_preferences.update(json.load(f))
             except Exception as e:
+                # Broad exception handling acceptable here to prevent
+                # configuration issues from blocking system startup
                 logger.error(f"Failed to load aesthetics: {e}")
 
     def _save_preferences(self):
@@ -221,7 +223,7 @@ class ArtLearningSystem:
             os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
             with open(self.storage_path, 'w', encoding='utf-8') as f:
                 json.dump(self.aesthetic_preferences, f)
-        except Exception as e:
+        except (IOError, OSError) as e:
             logger.error(f"Failed to save aesthetics: {e}")
 
     def get_color_overrides(self, bio_state: Dict[str, Any]) -> Dict[str, List[float]]:
@@ -270,12 +272,14 @@ class ArtLearningSystem:
         )
         calm = gamma.get("calm", 0.5)
 
-        # Compute brightness delta via the spatial math engine
+         # Compute brightness delta via the spatial math engine
         try:
             brightness_delta = state_matrix.evaluate_math_spatially(
                 f"{warm:.4f} - {cool:.4f}"
             )
         except Exception:
+            # Broad exception handling acceptable here as fallback to simple arithmetic
+            # if the spatial math engine fails
             brightness_delta = warm - cool
 
         pref_b = self.aesthetic_preferences.get("brightness", 1.0)

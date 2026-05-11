@@ -122,7 +122,7 @@ async def test_data_processing():
         
         end_time = time.time()
         
-        print(f"✓ 处理 {len(test_data)} 个组件耗时, {end_time - start_time,.3f} 秒")
+        print(f"✓ 处理 {len(test_data)} 个组件耗时, {end_time - start_time:.3f} 秒")
         
         # 检查结果
         insights = await ops_manager.get_insights()
@@ -186,7 +186,7 @@ async def main():
             result = await test_func()
             end_time = time.time()
             
-            print(f"执行时间, {end_time - start_time,.3f}秒")
+            print(f"执行时间: {end_time - start_time:.3f}秒")
             results.append((test_name, result))
         except Exception as e:
             print(f"✗ {test_name} 测试异常, {e}")

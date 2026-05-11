@@ -4,7 +4,7 @@
   FILE_PATH: readme.md
   FILE_TYPE: documentation
   PURPOSE: Angela AI 项目主文档 - 双语版本，包含完整功能说明和快速开始指南
-  VERSION: 6.2.0
+  VERSION: 6.2.1
   STATUS: active
   LANGUAGE: zh-tw/en
   LAST_MODIFIED: 2026-02-19
@@ -12,7 +12,7 @@
   =============================================================================
 -->
 
-# 🌟 Angela AI v6.2.0 - Cross-Platform Digital Life System
+# 🌟 Angela AI v6.2.1 - Cross-Platform Digital Life System
 
 [English](#english-version) | [繁體中文](#繁體中文版)
 
@@ -943,7 +943,7 @@ If this project helps you, please give us a ⭐!
 
 ---
 
-**Version**: 7.1.1  
+**Version**: 6.2.0  
 **Release Date**: 2026-02-13  
 **Status**: Production Ready ✅ | Phase 14 Complete  
 **Platforms**: Windows, macOS, Linux, Android/iOS (Mobile Bridge)  

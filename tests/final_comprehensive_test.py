@@ -100,7 +100,7 @@ def test_common_types():
 def test_math_model_module():
     """测试数学模型模块"""
     try:
-        import apps.backend.src.tools.math_model.model()
+        import apps.backend.src.tools.math_model.model as math_model_module
         print("✓ math_model.model imported successfully")
         return True
     except Exception as e:
@@ -110,7 +110,7 @@ def test_math_model_module():
 def test_alpha_deep_model():
     """测试Alpha深度模型"""
     try:
-        import apps.backend.src.core_ai.compression.alpha_deep_model()
+        import apps.backend.src.core_ai.compression.alpha_deep_model as alpha_deep_model_module
         print("✓ alpha_deep_model imported successfully")
         return True
     except Exception as e:
@@ -120,7 +120,7 @@ def test_alpha_deep_model():
 def test_unified_symbolic_space():
     """测试统一符号空间"""
     try:
-        import apps.backend.src.core_ai.symbolic_space.unified_symbolic_space()
+        import apps.backend.src.core_ai.symbolic_space.unified_symbolic_space as unified_symbolic_space_module
         print("✓ unified_symbolic_space imported successfully")
         return True
     except Exception as e:
@@ -148,17 +148,17 @@ def main():
     total = len(tests)
     
     for test in tests:
-        if test()::
+        if test():
             passed += 1
         print()
     
     print(f"测试完成, {passed}/{total} 通过")
     
-    if passed == total,:
+    if passed == total:
         print("🎉 所有测试通过！项目语法修复工作圆满完成。")
 
     else:
         print(f"❌ {total - passed} 个测试失败。")
 
-if __name"__main__"::
+if __name__ == "__main__":
     main()

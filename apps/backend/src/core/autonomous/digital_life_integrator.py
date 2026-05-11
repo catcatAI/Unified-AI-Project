@@ -294,7 +294,7 @@ class DigitalLifeIntegrator:
         try:
             await self.biological_integrator.initialize()
             logger.info("  [Foundation] Biological systems online.")
-        except Exception as e:
+        except Exception as e:  # Broad exception acceptable as we want to continue initialization even if biological systems fail
             logger.error(f"  [CRITICAL] Biological boot failure: {e}")
 
         # 2. Action & Interaction Layer

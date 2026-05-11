@@ -311,9 +311,8 @@ class SelfGeneration:
         for callback in self._generation_callbacks:
             try:
                 callback(avatar)
-            except Exception as e:
+            except Exception as e:  # Broad exception acceptable here as we want to ensure all callbacks execute
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return avatar
 
@@ -378,10 +377,48 @@ class SelfGeneration:
                 # Fallback to placeholder
                 pass
 
-        # Fallback: Simulate processing time for backwards compatibility
-        await asyncio.sleep(0.5)
+        # [Phase 18.3] 實作真實的圖像生成 API 通訊介面
+        # 取代原有的 await asyncio.sleep(0.5) 佔位符
+        try:
+            import aiohttp
+            import base64
+            from io import BytesIO
+            from PIL import Image
 
-        # Set placeholder file paths
+            # 準備 AUTOMATIC1111 Stable Diffusion API 格式 Payload
+            prompt = avatar.attributes.to_prompt()
+            payload = {
+                "prompt": f"masterpiece, best quality, ultra-detailed, {prompt}",
+                "negative_prompt": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+                "steps": 20,
+                "width": 512,
+                "height": 512,
+                "cfg_scale": 7
+            }
+            
+            # 使用本地或遠端 SD API (預設 127.0.0.1:7860)
+            sd_api_url = self.config.get("sd_api_url", "http://127.0.0.1:7860/sdapi/v1/txt2img")
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(sd_api_url, json=payload, timeout=5) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if "images" in data and data["images"]:
+                            # 解碼 Base64 圖片
+                            image_data = base64.b64decode(data["images"][0])
+                            image = Image.open(BytesIO(image_data))
+                            
+                            # 儲存真實圖片
+                            img_path = self.output_path / f"{avatar.avatar_id}.png"
+                            image.save(img_path)
+                            
+                            avatar.file_path = img_path
+                            avatar.thumbnail_path = img_path
+                            return
+        except Exception as e:
+            logger.warning(f"Failed to connect to external SD API, using fallback: {e}")
+
+        # Fallback if SD API is unavailable
         avatar.file_path = self.output_path / f"{avatar.avatar_id}.png"
         avatar.thumbnail_path = self.output_path / f"{avatar.avatar_id}_thumb.png"
 

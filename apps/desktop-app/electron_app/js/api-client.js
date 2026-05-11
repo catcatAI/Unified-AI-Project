@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * ANGELA-MATRIX: L6[Execution Layer] Full Levels [A→C] L1+
-# =============================================================================
+ * =============================================================================
  *
  * Responsibility: Handle communication between desktop app and backend API server
  * Dimensions: Involves all dimensions, transmits state matrix data

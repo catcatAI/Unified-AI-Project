@@ -1,4 +1,4 @@
-# Angela AI v6.2.0 - Quick Start Guide
+# Angela AI v6.2.1 - Quick Start Guide
 
 ## 🚀 Quick Start (3 Steps)
 

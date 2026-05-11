@@ -4,7 +4,7 @@
   FILE_PATH: agents.md
   FILE_TYPE: documentation
   PURPOSE: Agent 开发指南 - 包含构建、测试、代码规范等命令说明
-  VERSION: 6.2.0
+  VERSION: 6.2.1
   STATUS: active
   LANGUAGE: en
   LAST_MODIFIED: 2026-02-19

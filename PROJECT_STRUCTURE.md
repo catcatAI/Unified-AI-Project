@@ -4,7 +4,7 @@
   FILE_PATH: project_structure.md
   FILE_TYPE: documentation
   PURPOSE: 项目结构说明文档 - 详细的目录组织和文件放置原则
-  VERSION: 6.2.0
+  VERSION: 6.2.1
   STATUS: active
   LANGUAGE: en
   LAST_MODIFIED: 2026-02-19

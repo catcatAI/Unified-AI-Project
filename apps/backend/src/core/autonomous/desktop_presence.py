@@ -304,6 +304,8 @@ class DesktopPresence:
                     try:
                         callback(collision)
                     except Exception as e:
+                        # Broad exception handling acceptable here to prevent
+                        # faulty user callbacks from breaking the system
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -375,6 +377,8 @@ class DesktopPresence:
             try:
                 callback(old_position, position)
             except Exception as e:
+                # Broad exception handling acceptable here to prevent
+                # faulty user callbacks from breaking the system
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 

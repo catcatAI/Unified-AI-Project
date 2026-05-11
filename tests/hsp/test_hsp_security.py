@@ -53,7 +53,8 @@ class TestHSPSecurity:
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_security_manager_initialization(self, security_manager) -> None,
+
+    def test_security_manager_initialization(self, security_manager) -> None:
         """测试安全管理器初始化"""
         assert security_manager is not None
         assert security_manager.encryption_enabled is True
@@ -93,9 +94,9 @@ def test_security_manager_initialization(self, security_manager) -> None,
         
         # 解密消息
         decrypted_message = security_manager.decrypt_message(encrypted_message)
-        assert decrypted_message=message
+        assert decrypted_message == message
     
-    def test_sender_authentication(self, security_manager) -> None,
+    def test_sender_authentication(self, security_manager) -> None:
         """测试发送者身份验证"""
         sender_id = "did,hsp,test_ai_001"
         
@@ -148,7 +149,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         assert "payload" in processed_message
     
     @pytest.mark.asyncio()
-    async def test_hsp_connector_secure_message_creation(self, hsp_connector) -> None,
+    async def test_hsp_connector_secure_message_creation(self, hsp_connector) -> None:
         """测试HSP连接器安全消息创建"""
         # 创建测试载荷
         fact_payload = HSPFactPayload(
@@ -156,16 +157,16 @@ def test_security_manager_initialization(self, security_manager) -> None,
             statement_type="natural_language",
             statement_nl="Test fact",
             source_ai_id="test_ai",
-            timestamp_created = "2023-01-01T00,00,00Z",
-    confidence_score=1.0(),
+            timestamp_created="2023-01-01T00:00:00Z",
+            confidence_score=1.0,
             tags=["test"]
         )
         
         # 创建消息信封
         envelope = hsp_connector._create_envelope(
-            message_type = "HSP,Fact_v0.1",
+            message_type="HSP,Fact_v0.1",
             payload=fact_payload,
-    recipient_ai_id = "did,hsp,test_ai_002"
+            recipient_ai_id="did,hsp,test_ai_002"
         )
         
         # 验证安全参数已添加
@@ -185,14 +186,14 @@ def test_security_manager_initialization(self, security_manager) -> None,
             "sender_ai_id": "did,hsp,test_ai_001",
             "recipient_ai_id": "did,hsp,test_ai_002",
             "message_type": "HSP,Fact_v0.1",
-            "security_parameters": {}
+            "security_parameters": {},
             "payload": {
                 "id": "fact_001",
                 "statement_type": "natural_language",
                 "statement_nl": "Test fact",
                 "source_ai_id": "test_ai",
-                "timestamp_created": "2023-01-01T00,00,00Z",
-                "confidence_score": 1.0(),
+                "timestamp_created": "2023-01-01T00:00:00Z",
+                "confidence_score": 1.0,
                 "tags": ["test"]
             }
         }
@@ -209,7 +210,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         
         # 验证回调被调用
         assert callback.called()
-if __name"__main__"::
+if __name__ == "__main__":
     # 设置测试模式
     os.environ['TESTING_MODE'] = 'true'
     pytest.main([__file__])

@@ -27,51 +27,41 @@ class AutomatedIntegrationTestPipeline:
 
 
 
-    def __init__(self, project_root, str == None) -> None:
+    def __init__(self, project_root, str=None) -> None:
         """
         初始化自动化集成测试流水线
 
         Args,
             project_root, 项目根目录
         """
-        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent,:
+        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
         self.scripts_dir = self.project_root / "scripts"
         self.tests_dir = self.project_root / "tests" / "integration"
         self.reports_dir = self.project_root / "test_reports"
-        self.reports_dir.mkdir(exist_ok == True)
+        self.reports_dir.mkdir(exist_ok=True)
 
- # 流水线配置
+        # 流水线配置
 
-        self.pipeline_config = {:
+        self.pipeline_config = {
             "environment": {
-            "services": ["chromadb", "mqtt"], "setup_timeout": 300  # 5分钟
-
- }
-
+                "services": ["chromadb", "mqtt"],
+                "setup_timeout": 300,
+            },
             "data": {
-
- "dataset_size": "medium",
-
- "generation_timeout": 120  # 2分钟
-
-
-                }
-
- "testing": {
-
- "test_types": ["all"], "execution_timeout": 1800  # 30分钟
-
-
- }
-
-
+                "dataset_size": "medium",
+                "generation_timeout": 120,
+            },
+            "testing": {
+                "test_types": ["all"],
+                "execution_timeout": 1800,
+            },
             "reporting": {
                 "generate_html": True,
                 "generate_performance": True
             }
         }
 
-    def run_pipeline(self, config, dict == None) -> bool,
+    def run_pipeline(self, config, dict=None) -> bool:
         """
         运行完整的测试流水线
 
@@ -80,7 +70,7 @@ class AutomatedIntegrationTestPipeline:
 
         Returns, bool 流水线执行是否成功
         """
-        if config,:
+        if config:
             self.pipeline_config.update(config)
 
         pipeline_start_time = time.time()
@@ -88,18 +78,18 @@ class AutomatedIntegrationTestPipeline:
 
         try:
             # 1. 设置测试环境
-            if not self._setup_environment()::
+            if not self._setup_environment():
                 logger.error("Failed to setup test environment")
                 return False
 
             # 2. 生成测试数据
-            if not self._generate_test_data()::
+            if not self._generate_test_data():
                 logger.error("Failed to generate test data")
                 return False
 
             # 3. 执行集成测试
             test_results = self._run_integration_tests()
-            if not test_results,:
+            if not test_results:
                 logger.error("Failed to run integration tests")
                 return False
 
@@ -110,7 +100,7 @@ class AutomatedIntegrationTestPipeline:
 
  # 5. 清理测试环境
 
-            if not self._cleanup_environment()::
+            if not self._cleanup_environment():
                 logger.warning("Failed to cleanup test environment")
 
 
@@ -119,9 +109,7 @@ class AutomatedIntegrationTestPipeline:
 
             pipeline_end_time = time.time()
             logger.info(
-    f"Automated integration test pipeline completed successfully in {
-        pipeline_end_time -,
-    pipeline_start_time,.2f} seconds")
+                f"Automated integration test pipeline completed successfully in {pipeline_end_time - pipeline_start_time:.2f} seconds")
             return True
 
         except Exception as e:
@@ -130,7 +118,7 @@ class AutomatedIntegrationTestPipeline:
             self._cleanup_environment()
             return False
 
-    def _setup_environment(self) -> bool,
+    def _setup_environment(self) -> bool:
         """
         设置测试环境
 
@@ -143,35 +131,26 @@ class AutomatedIntegrationTestPipeline:
             # 运行环境管理脚本
             env_manager_script = self.scripts_dir / "test_environment_manager.py"
 
-            if not env_manager_script.exists()::
+            if not env_manager_script.exists():
                 logger.warning("Environment manager script not found, skipping environment setup")
                 return True
 
-                return True
-
-            cmd = [
-            #                 sys.executable(),
-
-#                 str(env_manager_script),
-#                 "setup",
-#                 "--services"
-# 
-            ] + self.pipeline_config["environment"]["services"]
+            cmd = [sys.executable, str(env_manager_script), "setup", "--services"] + self.pipeline_config["environment"]["services"]
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
-                capture_output = True,
-                text = True,
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
                 timeout=self.pipeline_config["environment"]["setup_timeout"]
             )
 
-            if result.returncode != 0,:
+            if result.returncode != 0:
                 logger.error(f"Environment setup failed, {result.stderr}")
                 return False
 
             setup_end_time = time.time()
-            logger.info(f"Test environment setup completed in {setup_end_time - setup_start_time,.2f} seconds")
+            logger.info(f"Test environment setup completed in {setup_end_time - setup_start_time:.2f} seconds")
             return True
 
         except subprocess.TimeoutExpired:
@@ -181,7 +160,7 @@ class AutomatedIntegrationTestPipeline:
             logger.error(f"Error setting up test environment, {e}")
             return False
 
-    def _generate_test_data(self) -> bool,
+    def _generate_test_data(self) -> bool:
         """
         生成测试数据
 
@@ -196,7 +175,7 @@ class AutomatedIntegrationTestPipeline:
 
             data_manager_script = self.scripts_dir / "test_data_manager.py"
 
-            if not data_manager_script.exists()::
+            if not data_manager_script.exists():
                 logger.warning("Data manager script not found, skipping data generation")
 #                 return True
 # 
@@ -221,12 +200,12 @@ self.pipeline_config["data"]["dataset_size"]
                 timeout=self.pipeline_config["data"]["generation_timeout"]
             )
 
-            if result.returncode != 0,:
+            if result.returncode != 0:
                 logger.error(f"Test data generation failed, {result.stderr}")
                 return False
 
             generation_end_time = time.time()
-            logger.info(f"Test data generation completed in {generation_end_time - generation_start_time,.2f} seconds")
+            logger.info(f"Test data generation completed in {generation_end_time - generation_start_time:.2f} seconds")
             return True
 
         except subprocess.TimeoutExpired:
@@ -236,7 +215,7 @@ self.pipeline_config["data"]["dataset_size"]
             logger.error(f"Error generating test data, {e}")
             return False
 
-    def _run_integration_tests(self) -> dict,
+    def _run_integration_tests(self) -> dict:
         """
         执行集成测试
 
@@ -265,12 +244,12 @@ self.pipeline_config["data"]["dataset_size"]
             # 添加测试类型标记
             #             test_types = self.pipeline_config["testing"]["test_types"]
 
-            if "system" in test_types,:
+            if "system" in test_types:
                 #                 cmd.extend(["-m", "system_integration"])
 #             elif "performance" in test_types,:
                 cmd.extend(["-m", "performance"])
 
-            elif "all" not in test_types,:
+            elif "all" not in test_types:
                 # 添加自定义标记
                 markers = " or ".join(test_types)
                 cmd.extend(["-m", markers])
@@ -284,22 +263,22 @@ self.pipeline_config["data"]["dataset_size"]
             )
 
             test_end_time = time.time()
-            logger.info(f"Integration tests completed in {test_end_time - test_start_time,.2f} seconds")
+            logger.info(f"Integration tests completed in {test_end_time - test_start_time:.2f} seconds")
 
             # 解析测试结果
             test_results = {
-                "success": result.returncode=0,
-                "return_code": result.returncode(),
+                "success": result.returncode == 0,
+                "return_code": result.returncode,
                 "execution_time": test_end_time - test_start_time,
-                "stdout": result.stdout(),
-                "stderr": result.stderr(),
+                "stdout": result.stdout,
+                "stderr": result.stderr,
                 "timestamp": datetime.now().isoformat()
             }
 
             # 保存测试结果
             results_file = self.reports_dir / "test_results.json"
-            with open(results_file, "w", encoding == "utf-8") as f,
-                json.dump(test_results, f, indent=2, ensure_ascii == False)
+            with open(results_file, "w", encoding='utf-8') as f:
+                json.dump(test_results, f, indent=2, ensure_ascii=False)
 
             return test_results
 
@@ -310,7 +289,7 @@ self.pipeline_config["data"]["dataset_size"]
             logger.error(f"Error running integration tests, {e}")
             return None
 
-    def _generate_test_reports(self, test_results, dict) -> bool,
+    def _generate_test_reports(self, test_results, dict) -> bool:
         """
         生成测试报告
 
@@ -330,8 +309,8 @@ self.pipeline_config["data"]["dataset_size"]
 
             # 生成HTML报告
             if self.pipeline_config["reporting"]["generate_html"]:
-                #                 report_generator_script = self.scripts_dir / "generate_test_report.py"
-                if report_generator_script.exists()::
+                report_generator_script = self.scripts_dir / "generate_test_report.py"
+                if report_generator_script.exists():
                     cmd = [
                             sys.executable(),
                             str(report_generator_script),
@@ -347,7 +326,7 @@ self.pipeline_config["data"]["dataset_size"]
                             text = True
                     )
 
-                    if result.returncode != 0,:
+                    if result.returncode != 0:
                         logger.error(f"HTML report generation failed, {result.stderr}")
 
                         success = False
@@ -361,7 +340,7 @@ self.pipeline_config["data"]["dataset_size"]
             junit_xml = self.project_root / "test_results.xml"
 
 
-            if junit_xml.exists()::
+            if junit_xml.exists():
                 #                 report_generator_script = self.scripts_dir / "generate_test_report.py"
 
 #                 if report_generator_script.exists()::
@@ -383,21 +362,21 @@ self.pipeline_config["data"]["dataset_size"]
                         text = True
                     )
 
-                    if result.returncode != 0,:
+                    if result.returncode != 0:
                         logger.error(f"XML parsing failed, {result.stderr}")
                         success = False
                     else:
                         logger.info("JUnit XML parsed successfully")
 
             report_end_time = time.time()
-            logger.info(f"Test reports generation completed in {report_end_time - report_start_time,.2f} seconds")
+            logger.info(f"Test reports generation completed in {report_end_time - report_start_time:.2f} seconds")
             return success
 
         except Exception as e:
             logger.error(f"Error generating test reports, {e}")
             return False
 
-    def _cleanup_environment(self) -> bool,
+    def _cleanup_environment(self) -> bool:
         """
         清理测试环境
 
@@ -411,7 +390,7 @@ self.pipeline_config["data"]["dataset_size"]
         try:
             # 运行环境管理脚本
 #             env_manager_script = self.scripts_dir / "test_environment_manager.py"
-            if not env_manager_script.exists()::
+            if not env_manager_script.exists():
                 #                 logger.warning("Environment manager script not found, skipping environment cleanup")
 # 
                 return True
@@ -431,12 +410,12 @@ self.pipeline_config["data"]["dataset_size"]
                 timeout=120  # 2分钟超时
             )
 
-            if result.returncode != 0,:
+            if result.returncode != 0:
                 logger.error(f"Environment cleanup failed, {result.stderr}")
                 return False
 
             cleanup_end_time = time.time()
-            logger.info(f"Test environment cleanup completed in {cleanup_end_time - cleanup_start_time,.2f} seconds")
+            logger.info(f"Test environment cleanup completed in {cleanup_end_time - cleanup_start_time:.2f} seconds")
             return True
 
         except subprocess.TimeoutExpired:
@@ -453,75 +432,55 @@ self.pipeline_config["data"]["dataset_size"]
 #             return False
 
 # 
-def main() -> None,
+def main() -> None:
     #     """主函数"""
 
 #     import argparse
 # 
 
 #     parser = argparse.ArgumentParser(description="Automated Integration Test Pipeline")
+    parser.add_argument("--config", help="Pipeline configuration file (JSON)")
     parser.add_argument(
-#     "--config",
-    #     help="Pipeline configuration file (JSON)"
-
+        "--test-types",
+        nargs="+",
+        choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"],
+        default=["all"],
+        help="Types of tests to run"
     )
     parser.add_argument(
-#     "--test-types",
-
- #     nargs="+",
-
-
-#     choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"]
-#     default=["all"]
-#, help="Types of tests to run"
+        "--dataset-size",
+        choices=["small", "medium", "large"],
+        default="medium",
+        help="Size of test dataset to generate"
     )
-    parser.add_argument(
-#     "--dataset-size",
-
- choices=["small", "medium", "large"]
-
-    default="medium",, help="Size of test dataset to generate"
-
-
-    )
-    parser.add_argument(
-    "--no-environment-setup",
-
- action="store_true",, help="Skip environment setup and teardown"
-    )
-    parser.add_argument(
-    "--no-reporting",
-
- action="store_true",, help="Skip report generation"
-
-    )
+    parser.add_argument("--no-environment-setup", action="store_true", help="Skip environment setup and teardown")
+    parser.add_argument("--no-reporting", action="store_true", help="Skip report generation")
 
     args = parser.parse_args()
 
     # 构建流水线配置
     pipeline_config = {
-    "testing": {
-            "test_types": args.test_types()
-    }
-    "data": {
-            "dataset_size": args.dataset_size()
-    }
+        "testing": {
+            "test_types": args.test_types
+        },
+        "data": {
+            "dataset_size": args.dataset_size
+        }
     }
 
-    if args.no_environment_setup,:
+    if args.no_environment_setup:
         pipeline_config["environment"] = {"services": []}
 
-
-    if args.no_reporting,:
+    if args.no_reporting:
         pipeline_config["reporting"] = {
                 "generate_html": False,
                 "generate_performance": False
         }
 
     # 如果提供了配置文件,加载配置
-    if args.config,:
+    if args.config:
         try:
-            with open(args.config(), "r", encoding == "utf-8") as f,
+            with open(args.config, "r", encoding='utf-8') as f:
                 config_from_file = json.load(f)
             pipeline_config.update(config_from_file)
         except Exception as e:
@@ -532,8 +491,10 @@ def main() -> None,
     pipeline = AutomatedIntegrationTestPipeline()
     success = pipeline.run_pipeline(pipeline_config)
 
-    sys.exit(0 if success else 1):
-if __name"__main__"::
+    sys.exit(0 if success else 1)
+
+
+if __name__ == "__main__":
     main()
 
 

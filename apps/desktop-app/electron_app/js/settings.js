@@ -456,27 +456,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveSettings() {
         console.log('[Settings] Collecting and saving settings...');
-        const updatedSettings = collectSettings();
-        
+
         try {
-            // Persist to file via IPC
-            await settingsManager.setAll(updatedSettings);
-            
-            // Sync specific application states
-            applySettingsToApplication(updatedSettings);
-            
+            const settings = collectSettings();
+            console.log('[Settings] Collected settings:', JSON.stringify(settings, null, 2));
+
+            await settingsManager.setAll(settings);
+
+            applySettingsToApplication(settings);
+
+            localStorage.setItem('angela_settings', JSON.stringify(settings));
+
             showNotification('Settings saved successfully!', 'success');
-            console.log('[Settings] Settings saved:', updatedSettings);
+            console.log('[Settings] Settings saved:', settings);
+
+            setTimeout(() => {
+                console.log('[Settings] Closing settings window...');
+                if (window.electronAPI && window.electronAPI.settings) {
+                    window.electronAPI.settings.close();
+                }
+            }, 1000);
         } catch (error) {
             console.error('[Settings] Save failed:', error);
             showNotification('Failed to save settings', 'error');
         }
-    }
 
     function collectSettings() {
         const s = {};
-        
-        // Helper to get checked/value
         const val = id => document.getElementById(id)?.value;
         const checked = id => document.getElementById(id)?.checked;
 
@@ -485,14 +491,14 @@ document.addEventListener('DOMContentLoaded', () => {
         s.windowOpacity = parseFloat(val('window-opacity'));
         s.idleMode = checked('idle-mode');
         s.sensitivity = val('sensitivity');
-        
+
         s.model = val('model-select');
         s.modelScale = parseFloat(val('model-scale'));
         s.renderMode = val('render-mode');
         s.autoSwitchFallback = checked('auto-switch-fallback');
         s.wallpaperMode = val('wallpaper-mode');
         s.wallpaperEffect = val('wallpaper-effect');
-        
+
         s.ttsEngine = val('tts-engine');
         s.ttsVoice = val('tts-voice');
         s.speechRate = parseFloat(val('speech-rate'));
@@ -500,44 +506,115 @@ document.addEventListener('DOMContentLoaded', () => {
         s.speechLanguage = val('speech-language');
         s.continuousRecognition = checked('continuous-recognition');
         s.captureSystemAudio = checked('capture-system-audio');
-        
+
         s.enableHaptics = checked('enable-haptics');
         s.clickIntensity = parseFloat(val('click-intensity'));
         s.touchIntensity = parseFloat(val('touch-intensity'));
         s.emotionIntensity = parseFloat(val('emotion-intensity'));
-        
+
         s.frameRate = parseInt(val('frame-rate'));
         s.renderQuality = val('render-quality');
         s.backendIp = val('backend-ip');
         s.backendPort = parseInt(val('backend-port'));
-        
         s.enableCluster = checked('enable-cluster');
         s.clusterRole = val('cluster-role');
         s.clusterIntegerOnly = checked('cluster-integer-only');
         s.clusterMemoization = checked('cluster-memoization');
         s.nodeName = val('node-name');
-        
         s.debugMode = checked('debug-mode');
-        // s.showClickRegions = checked('show-click-regions');
-        
+        s.showClickRegions = checked('show-click-regions');
+
         return s;
     }
 
-    async function applySettingsToApplication(s) {
+    function applySettingsToApplication(settings) {
+        if (window.electronAPI && window.electronAPI.window) {
+            window.electronAPI.window.setAlwaysOnTop(settings.alwaysOnTop);
+            window.electronAPI.window.setIgnoreMouseEvents(!settings.showClickRegions);
+        }
+
+        if (window.angelaApp && window.angelaApp.live2dManager) {
+            if (settings.renderMode) {
+                if (settings.renderMode === 'live2d' && window.angelaApp.live2dManager.getMode() === 'fallback') {
+                    window.angelaApp.live2dManager.switchToLive2D();
+                } else if (settings.renderMode === 'fallback' && window.angelaApp.live2dManager.getMode() === 'live2d') {
+                    window.angelaApp.live2dManager.switchToFallback();
+                }
+                localStorage.setItem('render_mode', settings.renderMode);
+            }
+
+            if (settings.model) {
+                const modelPath = 'resources/models/' + settings.model;
+                window.angelaApp.live2dManager.loadModel(modelPath);
+            }
+        }
+
+        if (window.angelaApp && window.angelaApp.audioHandler) {
+            if (settings.continuousRecognition) {
+                window.angelaApp.audioHandler.startSpeechRecognition();
+            } else {
+                window.angelaApp.audioHandler.stopSpeechRecognition();
+            }
+}
+
+    function collectSettings() {
+        const s = {};
+        const val = id => document.getElementById(id)?.value;
+        const checked = id => document.getElementById(id)?.checked;
+
+        s.alwaysOnTop = checked('always-on-top');
+        s.autoStart = checked('auto-start');
+        s.windowOpacity = parseFloat(val('window-opacity'));
+        s.idleMode = checked('idle-mode');
+        s.sensitivity = val('sensitivity');
+
+        s.model = val('model-select');
+        s.modelScale = parseFloat(val('model-scale'));
+        s.renderMode = val('render-mode');
+        s.autoSwitchFallback = checked('auto-switch-fallback');
+        s.wallpaperMode = val('wallpaper-mode');
+        s.wallpaperEffect = val('wallpaper-effect');
+
+        s.ttsEngine = val('tts-engine');
+        s.ttsVoice = val('tts-voice');
+        s.speechRate = parseFloat(val('speech-rate'));
+        s.speechPitch = parseFloat(val('speech-pitch'));
+        s.speechLanguage = val('speech-language');
+        s.continuousRecognition = checked('continuous-recognition');
+        s.captureSystemAudio = checked('capture-system-audio');
+
+        s.enableHaptics = checked('enable-haptics');
+        s.clickIntensity = parseFloat(val('click-intensity'));
+        s.touchIntensity = parseFloat(val('touch-intensity'));
+        s.emotionIntensity = parseFloat(val('emotion-intensity'));
+
+        s.frameRate = parseInt(val('frame-rate'));
+        s.renderQuality = val('render-quality');
+        s.backendIp = val('backend-ip');
+        s.backendPort = parseInt(val('backend-port'));
+
+        s.enableCluster = checked('enable-cluster');
+        s.clusterRole = val('cluster-role');
+        s.clusterIntegerOnly = checked('cluster-integer-only');
+        s.clusterMemoization = checked('cluster-memoization');
+        s.nodeName = val('node-name');
+
+        s.debugMode = checked('debug-mode');
+        s.showClickRegions = checked('show-click-regions');
+
+        return s;
+    }
+
+    function applySettingsToApplication(settings) {
         if (!window.electronAPI) return;
 
-        // Apply Window settings
         if (window.electronAPI.window) {
-            window.electronAPI.window.setAlwaysOnTop(s.alwaysOnTop);
+            window.electronAPI.window.setAlwaysOnTop(settings.alwaysOnTop);
         }
 
-        // Apply Performance settings
         if (window.electronAPI.performance) {
-            window.electronAPI.performance.setMode(s.renderQuality);
+            window.electronAPI.performance.setMode(settings.renderQuality);
         }
-
-        // Notify other windows/components via IPC if necessary
-        // (This would use ipcRenderer.send in a real world application)
     }
 
     async function resetSettings() {
@@ -555,157 +632,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function clearCache() {
+    async function clearCache() {
         console.log('[Settings] Clear cache clicked');
         if (confirm('Are you sure you want to clear all cached data?')) {
             if (window.angelaApp && window.angelaApp.wallpaperHandler) {
                 window.angelaApp.wallpaperHandler.cleanup();
             }
-            
             showNotification('Cache cleared successfully', 'success');
-        }
-    }
-
-    function saveSettings() {
-        console.log('[Settings] Save button clicked');
-        
-        try {
-            const settings = collectSettings();
-            console.log('[Settings] Collected settings:', JSON.stringify(settings, null, 2));
-            
-            // Save to local storage
-            localStorage.setItem('angela_settings', JSON.stringify(settings));
-            console.log('[Settings] Settings saved to localStorage');
-            
-            // Apply settings to application
-            applySettingsToApplication(settings);
-            
-            showNotification('Settings saved successfully!', 'success');
-            
-            // Close settings window after a delay
-            setTimeout(() => {
-                console.log('[Settings] Closing settings window...');
-                if (window.electronAPI && window.electronAPI.settings) {
-                    window.electronAPI.settings.close();
-                }
-            }, 1000);
-        } catch (error) {
-            console.error('[Settings] Error saving settings:', error);
-            showNotification('Error saving settings: ' + error.message, 'error');
-        }
-    }
-
-    function cancelSettings() {
-        console.log('[Settings] Cancel button clicked');
-        if (window.electronAPI && window.electronAPI.settings) {
-            window.electronAPI.settings.close();
-        }
-    }
-
-    function collectSettings() {
-        return {
-            // General
-            alwaysOnTop: document.getElementById('always-on-top')?.checked || false,
-            autoStart: document.getElementById('auto-start')?.checked || false,
-            windowOpacity: parseFloat(document.getElementById('window-opacity')?.value || 1),
-            idleMode: document.getElementById('idle-mode')?.checked !== false,
-            sensitivity: document.getElementById('sensitivity')?.value || 'medium',
-            
-            // Appearance
-            model: document.getElementById('model-select')?.value || 'miara_pro',
-            modelScale: parseFloat(document.getElementById('model-scale')?.value || 1),
-            renderMode: document.getElementById('render-mode')?.value || 'live2d',
-            autoSwitchFallback: document.getElementById('auto-switch-fallback')?.checked || false,
-            wallpaperMode: document.getElementById('wallpaper-mode')?.value || 'overlay',
-            wallpaperEffect: document.getElementById('wallpaper-effect')?.value || 'none',
-            
-            // Audio
-            ttsEngine: document.getElementById('tts-engine')?.value || 'browser',
-            voice: document.getElementById('tts-voice')?.value || 'default',
-            speechRate: parseFloat(document.getElementById('speech-rate')?.value || 1),
-            speechPitch: parseFloat(document.getElementById('speech-pitch')?.value || 1),
-            speechLanguage: document.getElementById('speech-language')?.value || 'en-US',
-            continuousRecognition: document.getElementById('continuous-recognition')?.checked !== false,
-            captureSystemAudio: document.getElementById('capture-system-audio')?.checked || false,
-            
-            // Haptics
-            enableHaptics: document.getElementById('enable-haptics')?.checked !== false,
-            clickIntensity: parseFloat(document.getElementById('click-intensity')?.value || 0.5),
-            touchIntensity: parseFloat(document.getElementById('touch-intensity')?.value || 0.8),
-            emotionIntensity: parseFloat(document.getElementById('emotion-intensity')?.value || 0.7),
-            
-            // Advanced
-            frameRate: parseInt(document.getElementById('frame-rate')?.value || 60),
-            renderQuality: document.getElementById('render-quality')?.value || 'medium',
-            backendIp: document.getElementById('backend-ip')?.value || '127.0.0.1',
-            backendPort: parseInt(document.getElementById('backend-port')?.value || 8000),
-            enableCluster: document.getElementById('enable-cluster')?.checked || false,
-            clusterRole: document.getElementById('cluster-role')?.value || 'auto',
-            clusterIntegerOnly: document.getElementById('cluster-integer-only')?.checked !== false,
-            clusterMemoization: document.getElementById('cluster-memoization')?.checked !== false,
-            nodeName: document.getElementById('node-name')?.value || '',
-            debugMode: document.getElementById('debug-mode')?.checked || false,
-            showClickRegions: document.getElementById('show-click-regions')?.checked || false
-        };
-    }
-
-    function applySettingsToApplication(settings) {
-        // Apply to window settings
-        if (window.electronAPI && window.electronAPI.window) {
-            window.electronAPI.window.setAlwaysOnTop(settings.alwaysOnTop);
-            window.electronAPI.window.setIgnoreMouseEvents(!settings.showClickRegions);
-        }
-        
-        // Apply to Live2D manager
-        if (window.angelaApp && window.angelaApp.live2dManager) {
-            // Apply rendering mode setting
-            if (settings.renderMode) {
-                if (settings.renderMode === 'live2d' && window.angelaApp.live2dManager.getMode() === 'fallback') {
-                    window.angelaApp.live2dManager.switchToLive2D();
-                    console.log('[Settings] Switch to Live2D mode');
-                } else if (settings.renderMode === 'fallback' && window.angelaApp.live2dManager.getMode() === 'live2d') {
-                    window.angelaApp.live2dManager.switchToFallback();
-                    console.log('[Settings] 切換到立繪模式');
-                }
-                // 保存到本地存儲
-                localStorage.setItem('render_mode', settings.renderMode);
-            }
-            
-            // Load selected model
-            if (settings.model) {
-                const modelPath = 'resources/models/' + settings.model;
-                console.log('[Settings] Loading model:', settings.model, 'from', modelPath);
-                window.angelaApp.live2dManager.loadModel(modelPath).then(success => {
-                    if (success) {
-                        console.log('[Settings] Model loaded successfully:', settings.model);
-                    } else {
-                        console.warn('[Settings] Failed to load model:', settings.model);
-                    }
-                });
-            }
-        }
-        
-        // Apply to audio handler
-        if (window.angelaApp && window.angelaApp.audioHandler) {
-            if (settings.continuousRecognition) {
-                window.angelaApp.audioHandler.startSpeechRecognition();
-            } else {
-                window.angelaApp.audioHandler.stopSpeechRecognition();
-            }
-        }
-        
-        // Apply to haptic handler
-        if (window.angelaApp && window.angelaApp.hapticHandler) {
-            if (settings.enableHaptics) {
-                window.angelaApp.hapticHandler.enable();
-            } else {
-                window.angelaApp.hapticHandler.disable();
-            }
-        }
-
-        // Apply backend IP change
-        if (window.electronAPI && window.electronAPI.backend && settings.backendIp) {
-            window.electronAPI.backend.setIP(settings.backendIp);
         }
     }
 });
