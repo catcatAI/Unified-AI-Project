@@ -338,7 +338,7 @@ class TokenValidator:
             logger.info(f"追踪数据已导出到: {filepath}")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: export failures return False to signal failure
             logger.error(f"导出追踪数据失败: {e}")
             return False
 
@@ -392,7 +392,7 @@ class TokenGenerationMonitor:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: monitoring loop errors should not stop the loop
                 logger.error(f"监控循环错误: {e}")
                 await asyncio.sleep(interval)
 

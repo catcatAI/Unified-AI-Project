@@ -62,7 +62,7 @@ class VisionService:
         try:
             await sync_manager.register_client("vision_service", self._handle_sync_event)
             logger.info("Vision Service registered to sync manager")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: sync registration should not crash
             logger.error(f"Failed to register Vision Service to sync manager: {e}")
 
     async def _handle_sync_event(self, event: SyncEvent):
@@ -98,7 +98,7 @@ class VisionService:
                 screenshot.save(img_byte_arr, format='PNG')
                 image_data = img_byte_arr.getvalue()
                 logger.info("📸 [Vision] Environment captured: Automated screen snapshot.")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: auto-capture is optional, should not block
                 logger.error(f"Failed to auto-capture screen: {e}")
                 return {"error": "Vision capture failed"}
 
@@ -171,7 +171,7 @@ class VisionService:
 
             return analysis_results
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: image analysis should be resilient to errors
             logger.error(f"Error analyzing image {processing_id}: {e}")
             error_result: Dict[str, Any] = {
                 "error": str(e),
@@ -245,7 +245,7 @@ class VisionService:
 
             return comparison_result
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: image comparison should be resilient
             logger.error(f"Error comparing images: {e}")
             return {"error": str(e), "similarity_score": None}
 
@@ -395,7 +395,7 @@ class VisionService:
                         )
                     )
                     logger.info(f"Broadcasted wallpaper injection for: {obj['label']}")
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: broadcast is optional, should not block
                     logger.error(f"Failed to broadcast wallpaper injection: {e}")
 
         return {

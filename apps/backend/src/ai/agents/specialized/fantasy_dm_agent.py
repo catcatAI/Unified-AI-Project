@@ -30,7 +30,8 @@ class FantasyDMAgent(BaseAgent):
                 else:
                     logger.warning(f"TRPG Codex not found at {full_path}")
                     self._codex_cache = {}
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: codex loading wraps all JSON and file errors
+                logger.error(f"Failed to load TRPG Codex: {e}")
                 logger.error(f"Failed to load TRPG Codex: {e}")
                 self._codex_cache = {}
         return self._codex_cache

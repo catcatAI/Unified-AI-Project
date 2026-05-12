@@ -552,7 +552,7 @@ class EndocrineSystem:
                 for callback in self._callbacks:
                     try:
                         callback(hormone_type, old_level, hormone.current_level)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: hormone change callbacks should not block adjustment
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
         finally:

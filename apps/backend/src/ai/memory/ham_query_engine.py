@@ -78,7 +78,7 @@ class HAMQueryEngine:
             return HAMMemory(
                 id=memory_id, content=content, timestamp=timestamp_obj, metadata=metadata
             )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: deserialization should not crash query engine
             logger.error(f"Error deserializing memory {memory_id}: {e}")
             raise HAMMemoryError(f"Failed to deserialize memory {memory_id}: {e}")
 
@@ -120,7 +120,7 @@ class HAMQueryEngine:
                 logger.debug(
                     f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'"
                 )
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: semantic search should fallback gracefully
                 logger.error(f"Error during semantic search for query '{query}': {e}")
                 # Fallback if semantic search fails, proceed with only keyword search
                 fallback_semantic = True
@@ -204,7 +204,7 @@ class HAMQueryEngine:
                     )
                     continue
             return results
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: date range query should not crash the engine
             logger.error(f"Failed to query date range: {e}")
             raise Exception(f"Failed to query date range: {e}")
 
@@ -257,7 +257,7 @@ class HAMQueryEngine:
                     logger.debug(
                         f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query."
                     )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: ChromaDB query should fallback gracefully
                     logger.error(f"Error querying ChromaDB: {e}")
                     # Fallback to iterating all memories if ChromaDB query fails
                     candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
@@ -448,10 +448,10 @@ class HAMQueryEngine:
                                     # 反序列化为 MemoryTemplate
                                     template = self._deserialize_template(mem_id, data_package)
                                     templates.append(template)
-                                except Exception as e:
+                                except Exception as e:  # broad exception acceptable: template deserialization should skip invalid templates
                                     logger.warning(f"Failed to deserialize template {mem_id}: {e}")
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: semantic search should not crash the loop
                 logger.error(f"Error during semantic template search: {e}")
 
         # 如果没有找到足够的模板，尝试关键词匹配
@@ -485,7 +485,7 @@ class HAMQueryEngine:
                 try:
                     template = self._deserialize_template(mem_id, data_package)
                     templates.append(template)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: keyword search should skip invalid templates
                     logger.warning(f"Failed to deserialize template {mem_id}: {e}")
 
         return templates
@@ -513,7 +513,7 @@ class HAMQueryEngine:
             template = MemoryTemplate.from_dict(template_data)
             return template
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: template deserialization should raise specific error
             logger.error(f"Error deserializing template {memory_id}: {e}")
             raise HAMMemoryError(f"Failed to deserialize template {memory_id}: {e}")
 

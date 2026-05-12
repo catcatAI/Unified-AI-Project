@@ -166,14 +166,14 @@ async def run_all_tests():
         logger.info("Note: Browser test requires Chrome/Chromium installed")
         try:
             await test_browser_manager()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: browser test is optional, skip if unavailable
             logger.info(f"Browser test skipped (browser not installed?): {e}")
 
         logger.info("\n" + "=" * 60)
         logger.info("ALL TESTS COMPLETED SUCCESSFULLY!")
         logger.info("=" * 60)
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test runner should catch and report all errors
         logger.error(f"\n✗ Test failed: {e}")
         import traceback
 

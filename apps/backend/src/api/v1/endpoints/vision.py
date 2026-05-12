@@ -32,7 +32,7 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
             distribution=distribution,
         )
         return result
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: vision sampling endpoint should be resilient
         logger.error(f"Vision sampling error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -43,7 +43,7 @@ async def vision_perceive(image_data: bytes = Body(...)):
     try:
         result = await _vision_service.perceive_and_focus(image_data)
         return result
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: perceive operation should be resilient to errors
         logger.error(f"Vision perceive error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -55,7 +55,7 @@ async def vision_control(params: Dict[str, Any] = Body(...)):
     try:
         # 簡化實現，不依賴 sync_manager
         return {"status": "success", "module": "vision", "enabled": enabled, "mode": "post_method"}
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: vision control endpoint should be resilient
         logger.error(f"Vision control error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -66,6 +66,6 @@ async def vision_control_get(enabled: bool = True):
     try:
         # 返回簡單的狀態，不依賴 sync_manager
         return {"status": "success", "module": "vision", "enabled": enabled, "mode": "get_method"}
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Vision control error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -158,7 +158,7 @@ class LLMDecisionLoop:
                 await asyncio.sleep(interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in decision loop: {e}")
                 await asyncio.sleep(1)  # 防止緊密循環
 
@@ -220,7 +220,7 @@ class LLMDecisionLoop:
 
             logger.debug(f"Decision made: {decision.action} - {decision.reason[:50]}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: decision failure should not crash the loop
             logger.error(f"Error making decision: {e}")
 
     async def _get_current_state(self) -> Dict[str, Any]:
@@ -252,7 +252,7 @@ class LLMDecisionLoop:
             }
 
             return state
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: state retrieval should not crash decision loop
             logger.warning(f"Error getting state: {e}, using defaults")
             return {
                 "state_matrix": {"alpha": 0.5, "beta": 0.5, "gamma": 0.5, "delta": 0.5},
@@ -281,7 +281,7 @@ class LLMDecisionLoop:
                 if memories:
                     return "\n".join([f"- {m}" for m in memories])
             return "無最近記憶"
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: memory context retrieval should be fault-tolerant
             logger.warning(f"Error getting memory context: {e}")
             return "記憶上下文獲取失敗"
 
@@ -305,7 +305,7 @@ class LLMDecisionLoop:
                     emotional_memories_text = "\n情感記憶：\n"
                     for mem in emotional_memories:
                         emotional_memories_text += f"- {mem.content}\n"
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: emotional memory retrieval should not block decision
                 logger.warning(f"Error retrieving emotional memories: {e}")
 
         prompt = f"""你是 Angela，一個 AI 數字生命。
@@ -375,25 +375,15 @@ class LLMDecisionLoop:
                 response = await self.llm_service.chat_completion(messages)
                 response_text = response.content
             else:
-                # 回退到簡單邏輯
                 return self._fallback_decision()
-
-            # 解析 JSON 響應
             try:
-                # 提取 JSON 內容（處理可能存在的 Markdown 代碼塊）
-                content = response_text.strip()
-                if "```json" in content:
-                    content = content.split("```json")[1].split("```")[0].strip()
-                elif "```" in content:
-                    content = content.split("```")[1].split("```")[0].strip()
-                
-                decision_data = json.loads(content)
-                return decision_data
-            except Exception as e:
+                decision = json.loads(response_text)
+                return decision
+            except Exception as e:  # broad exception acceptable: JSON parsing of LLM response may fail for various formats
                 logger.warning(f"Failed to parse LLM response as JSON: {e}. Raw: {response_text}")
                 return self._fallback_decision()
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: LLM generation should fallback gracefully
             logger.error(f"Error generating decision: {e}")
             return self._fallback_decision()
 
@@ -473,7 +463,7 @@ class LLMDecisionLoop:
 
             return result
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: execution should not crash decision loop
             logger.error(f"Error executing decision: {e}")
             return {"success": False, "error": str(e)}
 
@@ -493,7 +483,7 @@ class LLMDecisionLoop:
                     }
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
                 logger.warning(f"Failed to send message via WebSocket: {e}")
         return {"success": True, "sent": True}
 
@@ -513,7 +503,7 @@ class LLMDecisionLoop:
                     }
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
                 logger.warning(f"Failed to send message via WebSocket: {e}")
         return {"success": True, "sent": True}
 
@@ -533,7 +523,7 @@ class LLMDecisionLoop:
                     }
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
                 logger.warning(f"Failed to send message via WebSocket: {e}")
         return {"success": True, "sent": True}
 
@@ -553,7 +543,7 @@ class LLMDecisionLoop:
                     }
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
                 logger.warning(f"Failed to send message via WebSocket: {e}")
         return {"success": True, "sent": True}
 
@@ -573,7 +563,7 @@ class LLMDecisionLoop:
                     }
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
                 logger.warning(f"Failed to send message via WebSocket: {e}")
         return {"success": True, "sent": True}
 

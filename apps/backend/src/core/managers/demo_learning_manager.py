@@ -60,7 +60,7 @@ class DemoLearningManager:
             else:
                 logger.warning(f"配置文件不存在: {self.config_path}")
                 return {}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: config load resilience
             logger.error(f"加載配置文件失敗: {e}")
             return {}
 
@@ -105,7 +105,7 @@ class DemoLearningManager:
             action_name = action.get("action")
             try:
                 await self._execute_action(action_name)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: action execution resilience
                 logger.error(f"執行動作失敗 {action_name}: {e}")
 
     async def _execute_action(self, action_name: str):
@@ -193,7 +193,7 @@ class DemoLearningManager:
             try:
                 await asyncio.sleep(60)  # 每分鐘檢查一次
                 await self._collect_learning_data()
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: learning loop resilience
                 logger.error(f"學習監控錯誤: {e}")
 
     async def _cleanup_monitor_loop(self):
@@ -204,7 +204,7 @@ class DemoLearningManager:
             try:
                 await asyncio.sleep(3600)  # 每小時檢查一次
                 await self._perform_cleanup(cleanup_config)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: cleanup loop resilience
                 logger.error(f"清除監控錯誤: {e}")
 
     async def _collect_learning_data(self):
@@ -234,7 +234,7 @@ class DemoLearningManager:
                     ][-500:]
 
             await self._save_learning_data()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: learning data collection resilience
             logger.error(f"收集學習數據失敗: {e}")
 
     async def _perform_cleanup(self, cleanup_config: Dict[str, Any]):
@@ -259,13 +259,13 @@ class DemoLearningManager:
 
             logger.info("清除操作完成")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: cleanup operation resilience
             logger.error(f"清除操作失敗: {e}")
 
     def _get_memory_usage(self) -> Dict[str, Any]:
         """獲取內存使用情況"""
         try:
-            # import psutil
+# import psutil
             process = psutil.Process()
             return {
                 "rss": process.memory_info().rss,
@@ -274,7 +274,7 @@ class DemoLearningManager:
             }
         except ImportError:
             return {"error": "psutil not available"}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: memory usage fallback
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"error": str(e)}
 
@@ -290,7 +290,7 @@ class DemoLearningManager:
                 "total_mb": total_size / (1024 * 1024),
                 "file_count": len(list(self.storage_path.rglob("*"))),
             }
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: storage usage fallback
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"error": str(e)}
 
@@ -305,7 +305,7 @@ class DemoLearningManager:
             learning_file = self.storage_path / "learning_data.json"
             with open(learning_file, "w", encoding="utf-8") as f:
                 json.dump(self.learning_data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: save data resilience
             logger.error(f"保存學習數據失敗: {e}")
 
     async def record_user_interaction(
@@ -416,7 +416,7 @@ class DemoLearningManager:
                 "recommendations": self._generate_recommendations(),
             }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: insights resilience
             logger.error(f"獲取學習洞察失敗: {e}")
             return {"error": str(e)}
 

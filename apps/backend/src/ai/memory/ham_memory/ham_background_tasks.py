@@ -92,7 +92,7 @@ class HAMBackgroundTasks:
                         if should_delete:
                             memories_to_delete.append(mem_id)
 
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: memory analysis should not crash cleanup loop
                         logger.error(f"Error analyzing memory {mem_id} for deletion: {e}")
                         continue
 
@@ -131,7 +131,7 @@ class HAMBackgroundTasks:
                 else:
                     logger.info("No memories qualified for deletion")
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: cleanup should not crash background task
                 logger.error(f"Error during memory cleanup: {e}")
 
             logger.info("Background task: Old experiences cleanup complete.")

@@ -129,7 +129,7 @@ class ToolContextManager:
             # context_id = self.context_manager.create_context(ContextType.TOOL, context_content)  # Commented - needs proper import
             logger.info(f"Created tool category {category_id} with context")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to create tool category {category_id}: {e}")
             return False
 
@@ -157,7 +157,7 @@ class ToolContextManager:
             # context_id = self.context_manager.create_context(ContextType.TOOL, context_content)  # Commented - needs proper import
             logger.info(f"Registered tool {tool_id} with context")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to register tool {tool_id}: {e}")
             return False
 
@@ -199,7 +199,7 @@ class ToolContextManager:
             # context_id = self.context_manager.create_context(ContextType.TOOL, context_content)  # Commented - needs proper import
             logger.info(f"Recorded usage for tool {tool_id} with context")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to record usage for tool {tool_id}: {e}")
             return False
 
@@ -226,7 +226,7 @@ class ToolContextManager:
             #     "updated_at": latest_context.updated_at.isoformat()
             # }
             return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for tool {tool_id}: {e}")
             return None
 
@@ -254,6 +254,6 @@ class ToolContextManager:
                 )
 
             return tools_info
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get tools for category {category_id}: {e}")
             return []

@@ -63,7 +63,7 @@ class CircuitBreaker:
             result = await func()
             self.reset()
             return result
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure circuit breaker records all failures for proper state management
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self.record_failure()
 

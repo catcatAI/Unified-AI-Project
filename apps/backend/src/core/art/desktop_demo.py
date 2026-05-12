@@ -258,7 +258,7 @@ if __name__ == "__main__":
         asyncio.run(generate_and_save_to_desktop())
     except KeyboardInterrupt:
         logger.info("\n\n创作已取消")
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: main entry point must handle all errors gracefully
         logger.info(f"\n❌ 错误: {e}")
         import traceback
 

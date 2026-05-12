@@ -140,7 +140,7 @@ class GPUAcceleratorService:
             logger.info("GPU Accelerator Service initialized successfully")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization may fail due to various runtime conditions
             logger.error(f"Failed to initialize GPU Accelerator: {e}")
             return False
 
@@ -190,7 +190,7 @@ class GPUAcceleratorService:
                 return True
             return False
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: quality setting may involve type/value conversions that could fail
             logger.error(f"Failed to set quality: {e}")
             return False
 
@@ -221,7 +221,7 @@ class GPUAcceleratorService:
                 return True
             return False
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: priority mapping involves dict/type operations that could raise various errors
             logger.error(f"Failed to set priority: {e}")
             return False
 

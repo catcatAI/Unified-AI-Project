@@ -85,7 +85,7 @@ class DialogueContextManager:
             # context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)  # Commented - needs proper import
             logger.info(f"Started conversation {conversation_id}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to start conversation {conversation_id}: {e}")
             return False
 
@@ -117,7 +117,7 @@ class DialogueContextManager:
             # context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)  # Commented - needs proper import
             logger.info(f"Added message to conversation {conversation_id}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to add message to conversation {conversation_id}: {e}")
             return False
 
@@ -233,7 +233,7 @@ class DialogueContextManager:
             # context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)  # Commented - needs proper import
             logger.info(f"Generated context summary for conversation {conversation_id}")
             return summary
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(
                 f"Failed to generate context summary for conversation {conversation_id}: {e}"
             )
@@ -264,7 +264,7 @@ class DialogueContextManager:
             #     "updated_at": latest_context.updated_at.isoformat()
             # }
             return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for conversation {conversation_id}: {e}")
             return None
 
@@ -301,7 +301,7 @@ class DialogueContextManager:
                 result.append(conv_info)
 
             return result
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get recent conversations: {e}")
             return []
 
@@ -340,7 +340,7 @@ class DialogueContextManager:
 
             logger.debug(f"No context summary to transfer from {source_conversation_id}")
             return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(
                 f"Failed to transfer context from {source_conversation_id} to {target_conversation_id}: {e}"
             )

@@ -78,7 +78,7 @@ class DependencyManager:
                 f"Using default configuration."
             )
             self._config = self._get_default_config()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: config loading failures use defaults
             logger.warning(
                 f"Could not load dependency config from {config_path} {e}. "
                 f"Using default configuration."
@@ -143,7 +143,7 @@ class DependencyManager:
             except ImportError as e:
                 status.error = str(e)
                 logger.warning(f"Primary dependency '{dep_name}' not available: {e}")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: import errors should be logged and fallbacks attempted
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 status.error = f"An unexpected error occurred: {e}"
 

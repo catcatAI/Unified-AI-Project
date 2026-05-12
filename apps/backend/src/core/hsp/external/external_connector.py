@@ -103,7 +103,7 @@ class MessageRouter:
                             f"http://127.0.0.1:{target_port}/message", json=message, timeout=5.0
                         )
                     return {"status": "delivered", "target": target_id}
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: HTTP delivery may fail with various network errors
                     logger.error(f"Failed to deliver message to {target_id}: {e}")
                     return {"status": "failed", "error": str(e)}
             else:
@@ -120,7 +120,7 @@ class MessageRouter:
                             f"http://127.0.0.1:{info['port']}/message", json=message, timeout=5.0
                         )
                         results.append({"agent": agent_id, "status": "delivered"})
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: broadcast may fail with various network errors
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     results.append({"agent": agent_id, "status": "failed", "error": str(e)})
 
@@ -190,7 +190,7 @@ class ExternalConnector:
                             await callback(data)
                         else:
                             callback(data)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: message callback may raise various errors
                         logger.error(f"[{self.ai_id}] Message callback error: {e}")
 
                 return {"status": "received"}
@@ -232,7 +232,7 @@ class ExternalConnector:
             logger.info(f"[{self.ai_id}] Registered with router at port {self.agent_port}")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization involves multiple operations that may fail
             logger.error(f"[{self.ai_id}] Initialization failed: {e}")
             self.stats["errors"] += 1
             return False
@@ -280,7 +280,7 @@ class ExternalConnector:
                     self.stats["errors"] += 1
                     return False
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: send involves HTTP operations that may fail
             logger.error(f"[{self.ai_id}] Send failed: {e}")
             self.stats["errors"] += 1
             return False
@@ -304,7 +304,7 @@ class ExternalConnector:
                     timeout=30.0,
                 )
                 return response.json()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: broadcast involves HTTP operations that may fail
             logger.error(f"[{self.ai_id}] Broadcast failed: {e}")
             return {"status": "failed", "error": str(e)}
 
@@ -321,7 +321,7 @@ class ExternalConnector:
                     f"http://{self.router_host}:{self.router_port}/registry", timeout=5.0
                 )
                 return response.json()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: registry fetch may fail with network errors
             logger.error(f"[{self.ai_id}] Failed to get registry: {e}")
             return {"agents": {}}
 
@@ -335,7 +335,7 @@ class ExternalConnector:
                     timeout=5.0,
                 )
             logger.info(f"[{self.ai_id}] Unregistered from router")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: disconnect may raise various errors
             logger.error(f"[{self.ai_id}] Disconnect error: {e}")
 
     async def get_stats(self) -> Dict[str, int]:

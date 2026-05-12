@@ -103,7 +103,7 @@ class DailyLanguageModel:
                 # Fallback to simple matching
                 return self._simple_intent_recognition(text, available_tools)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: LLM call errors fall back to simple recognition
             logger.error(f"Error in recognize_intent: {e}")
             return self._simple_intent_recognition(text, available_tools)
 
@@ -147,7 +147,7 @@ class DailyLanguageModel:
                     [{"role": "user", "content": user_input}]
                 )
                 record.response = response
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: LLM errors return error response gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 record.response = f"Sorry, I encountered an error: {str(e)}"
 

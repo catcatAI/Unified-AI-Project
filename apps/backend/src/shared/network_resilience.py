@@ -53,7 +53,7 @@ class RetryPolicy:
                 except ProtocolError as e:
                     logger.error(f"Protocol error during {func.__name__}: {e}. Not retrying.")
                     raise
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: catch non-retryable errors to log and re-raise
                     logger.error(f"Non-retryable error during {func.__name__}: {e}")
                     raise
 
@@ -103,7 +103,7 @@ class CircuitBreaker:
                 self.logger.error(f"Failure in {func.__name__}: {e}")
                 self._on_failure()
                 raise
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: pass through unexpected exceptions without counting them
                 # Unexpected exceptions pass through without being counted toward threshold
                 # unless they are in expected_exceptions
                 self.logger.error(f"Unexpected non-expected exception in {func.__name__}: {e}")

@@ -33,7 +33,7 @@ class VectorMemoryStore:
                 name="ham_memories", metadata={"hnsw:space": "cosine"}
             )
             logger.info("VectorMemoryStore initialized successfully.")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization failures should not crash the system
             logger.error(f"Failed to initialize VectorMemoryStore: {e}")
             self.client = None
             self.collection = None
@@ -58,7 +58,7 @@ class VectorMemoryStore:
                 documents=[content], metadatas=[metadata] if metadata else [{}], ids=[memory_id]
             )
             logger.debug(f"Added memory {memory_id} to vector store.")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: add memory should not crash caller
             logger.error(f"Error adding memory {memory_id} to vector store: {e}")
 
     async def semantic_search(self, query: str, limit: int = 10):
@@ -80,6 +80,6 @@ class VectorMemoryStore:
             results = self.collection.query(query_texts=[query], n_results=limit)
             logger.debug(f"Semantic search returned {len(results.get('ids', []))} results.")
             return results
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: search should return empty results on failure
             logger.error(f"Error performing semantic search: {e}")
             return {}

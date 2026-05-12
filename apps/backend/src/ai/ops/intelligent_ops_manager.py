@@ -127,7 +127,7 @@ class IntelligentOpsManager:
                     # 测试连接
                     await self.redis_client.ping()
                     logger.info("Redis连接成功")
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: Redis connection failure is non-critical, fallback to memory mode
                     logger.warning(f"Redis连接失败, 使用内存模式: {e}")
                     self.redis_client = None
                     self.redis_available = False
@@ -142,7 +142,7 @@ class IntelligentOpsManager:
             asyncio.create_task(self._periodic_insight_cleanup())
 
             logger.info("智能运维管理器启动完成")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization failures should propagate for proper error handling
             logger.error(f"智能运维管理器初始化失败: {e}")
             raise
 
@@ -153,32 +153,32 @@ class IntelligentOpsManager:
             self.ai_ops_engine = AIOpsEngine(self.config)
             try:
                 await self.ai_ops_engine.initialize()
-            except Exception:
+            except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
                 logger.warning("AI运维引擎初始化失败, 继续使用默认配置")
 
             # 初始化预测性维护
             self.predictive_maintenance = PredictiveMaintenanceEngine(self.config)
             try:
                 await self.predictive_maintenance.initialize()
-            except Exception:
+            except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
                 logger.warning("预测性维护初始化失败, 继续使用默认配置")
 
             # 初始化性能优化器
             self.performance_optimizer = PerformanceOptimizer(self.config)
             try:
                 await self.performance_optimizer.initialize()
-            except Exception:
+            except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
                 logger.warning("性能优化器初始化失败, 继续使用默认配置")
 
             # 初始化容量规划器
             self.capacity_planner = CapacityPlanner(self.config)
             try:
                 await self.capacity_planner.initialize()
-            except Exception:
+            except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
                 logger.warning("容量规划器初始化失败, 继续使用默认配置")
 
             logger.info("AI运维组件初始化完成")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: component init failures should propagate for proper error handling
             logger.error(f"AI运维组件初始化失败: {e}")
             raise
 
@@ -193,14 +193,14 @@ class IntelligentOpsManager:
                     await self.ai_ops_engine.collect_system_metrics(
                         component_id, component_type, metrics
                     )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
             if self.predictive_maintenance:
                 try:
                     await self.predictive_maintenance.collect_component_metrics(component_id)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -209,21 +209,21 @@ class IntelligentOpsManager:
                     await self.performance_optimizer.collect_performance_metrics(
                         component_id, component_type, metrics
                     )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
             if self.capacity_planner:
                 try:
                     await self.capacity_planner.collect_resource_usage(metrics)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
             # 生成综合洞察
             await self._generate_comprehensive_insights(component_id, component_type, metrics)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: metric collection failures should not block main workflow
             logger.error(f"收集系统指标失败: {e}")
 
     async def _generate_comprehensive_insights(
@@ -266,7 +266,7 @@ class IntelligentOpsManager:
                 await self._save_insight(insight)
                 await self._send_insight_notification(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: insight generation failures should not block the system
             logger.error(f"生成综合洞察失败: {e}")
 
     async def _analyze_anomalies(
@@ -296,7 +296,7 @@ class IntelligentOpsManager:
                         )
                         insights.append(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: analysis failures return empty list, continue with other analyses
             logger.error(f"分析异常失败: {e}")
 
         return insights
@@ -334,7 +334,7 @@ class IntelligentOpsManager:
                     )
                     insights.append(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: analysis failures return empty list, continue with other analyses
             logger.error(f"分析性能失败: {e}")
 
         return insights
@@ -372,7 +372,7 @@ class IntelligentOpsManager:
                     )
                     insights.append(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: analysis failures return empty list, continue with other analyses
             logger.error(f"分析容量失败: {e}")
 
         return insights
@@ -403,7 +403,7 @@ class IntelligentOpsManager:
                     )
                     insights.append(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: analysis failures return empty list, continue with other analyses
             logger.error(f"分析维护需求失败: {e}")
 
         return insights
@@ -428,7 +428,7 @@ class IntelligentOpsManager:
                 # 限制列表长度
                 await self.redis_client.ltrim("intelligent_ops:insights", 0, 1000)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: save failures should not block the workflow
             logger.error(f"保存洞察失败: {e}")
 
     async def _send_insight_notification(self, insight: OpsInsight):
@@ -455,7 +455,7 @@ class IntelligentOpsManager:
             if insight.auto_actionable and self.auto_healing_enabled:
                 await self._execute_auto_action(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: notification failures are non-critical
             logger.error(f"发送洞察通知失败: {e}")
 
     async def _execute_auto_action(self, insight: OpsInsight):
@@ -496,7 +496,7 @@ class IntelligentOpsManager:
 
             logger.info(f"自动操作执行: {insight.insight_id} - {action_record['status']}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: action execution failures should be logged but not crash
             logger.error(f"执行自动操作失败: {e}")
 
     async def _execute_anomaly_recovery(self, insight: OpsInsight) -> bool:
@@ -509,7 +509,7 @@ class IntelligentOpsManager:
             await asyncio.sleep(1)
 
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: recovery failures return False to signal failure
             logger.error(f"异常恢复失败: {e}")
             return False
 
@@ -534,7 +534,7 @@ class IntelligentOpsManager:
                     )
 
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: optimization failures return False to signal failure
             logger.error(f"性能优化失败: {e}")
             return False
 
@@ -559,7 +559,7 @@ class IntelligentOpsManager:
                     )
 
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: scaling failures return False to signal failure
             logger.error(f"容量扩容失败: {e}")
             return False
 
@@ -584,7 +584,7 @@ class IntelligentOpsManager:
                     )
 
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: maintenance failures return False to signal failure
             logger.error(f"维护操作失败: {e}")
             return False
 
@@ -603,7 +603,7 @@ class IntelligentOpsManager:
                 # 分析趋势和模式
                 await self._analyze_trends_and_patterns()
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: periodic task errors should not stop the loop
                 logger.error(f"定期综合分析失败: {e}")
 
     async def _collect_all_components_metrics(self):
@@ -631,7 +631,7 @@ class IntelligentOpsManager:
 
                 await self.collect_system_metrics(component["id"], component["type"], metrics)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: collection failures should not block the workflow
             logger.error(f"收集所有组件指标失败: {e}")
 
     async def _generate_system_level_insights(self):
@@ -657,7 +657,7 @@ class IntelligentOpsManager:
                 await self._save_insight(insight)
                 await self._send_insight_notification(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: insight generation failures should not block the system
             logger.error(f"生成系统级洞察失败: {e}")
 
     async def _analyze_system_health(self) -> Dict[str, Any]:
@@ -687,7 +687,7 @@ class IntelligentOpsManager:
 
             return {"overall_score": overall_score, "unhealthy_components": unhealthy_components}
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: analysis failures return default healthy state
             logger.error(f"分析系统健康状态失败: {e}")
             return {"overall_score": 75.0, "unhealthy_components": []}
 
@@ -726,7 +726,7 @@ class IntelligentOpsManager:
 
                 await self._save_insight(insight)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: trend analysis failures should not block the system
             logger.error(f"分析趋势和模式失败: {e}")
 
     def _identify_patterns(self, performance_report: Dict, capacity_report: Dict) -> List[Dict]:
@@ -773,7 +773,7 @@ class IntelligentOpsManager:
                         }
                     )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: pattern identification failures return empty list
             logger.error(f"识别模式失败: {e}")
 
         return patterns
@@ -806,7 +806,7 @@ class IntelligentOpsManager:
 
                 logger.info("洞察清理完成")
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: cleanup errors should not stop the periodic task
                 logger.error(f"洞察清理失败: {e}")
 
     async def get_insights(
@@ -826,7 +826,7 @@ class IntelligentOpsManager:
                 insights = [insight for insight in insights if insight.severity == severity]
 
             return insights
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: retrieval failures return empty list
             logger.error(f"获取洞察失败: {e}")
             return []
 
@@ -862,7 +862,7 @@ class IntelligentOpsManager:
                 "last_update": datetime.now(timezone.utc).isoformat(),
             }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: dashboard failures return empty dict
             logger.error(f"获取运维仪表板数据失败: {e}")
             return {}
 
@@ -912,7 +912,7 @@ class IntelligentOpsManager:
 
             return success
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: manual action failures return False to signal failure
             logger.error(f"执行手动操作失败: {e}")
             return False
 

@@ -496,7 +496,7 @@ class NeuroplasticitySystem:
             for callback in self._memory_callbacks[memory_id]:
                 try:
                     callback(trace)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: memory access callbacks should not break access
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -575,7 +575,7 @@ class NeuroplasticitySystem:
                         for callback in self._consolidation_callbacks:
                             try:
                                 callback(memory_id)
-                            except Exception as e:
+                            except Exception as e:  # broad exception acceptable: consolidation callbacks should not break memory consolidation
                                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                                 pass
 
@@ -1366,7 +1366,7 @@ class TraumaMemorySystem:
             results["status"] = "error"
             results["error"] = str(e)
             results["error_type"] = "ValueError"
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: trauma processing must return safe fallback result
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["status"] = "error"
 

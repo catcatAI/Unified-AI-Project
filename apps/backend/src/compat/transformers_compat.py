@@ -47,7 +47,7 @@ def ensure_transformers_compatibility():
     except ImportError as e:
         logging.error(f"Transformers library not found: {e}")
         return False
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: network error should not crash operation
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         logging.error(f"Error ensuring transformers compatibility: {e}")
 

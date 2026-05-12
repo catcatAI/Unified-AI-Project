@@ -76,7 +76,7 @@ class DependencyManager:
             else:
                 logger.warning(f"Dependency configuration file not found: {config_path}")
                 self._config = {}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: config load fallback
             logger.error(f"Error loading dependency configuration: {e}")
             self._config = {}
 

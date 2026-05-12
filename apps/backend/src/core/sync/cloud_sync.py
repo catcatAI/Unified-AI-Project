@@ -324,7 +324,7 @@ class CloudSyncManager:
                 item.remote_version = item.local_version
                 return True
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: upload retries handle various failure modes
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 await asyncio.sleep(self.config.retry_delay)
 

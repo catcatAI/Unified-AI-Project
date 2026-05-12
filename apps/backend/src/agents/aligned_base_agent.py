@@ -140,7 +140,7 @@ class AlignedBaseAgent(BaseAgent):
 
             logger.info(f"[{self.agent_id}] 对齐系统初始化完成")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization failures are non-critical, disable alignment gracefully
             logger.error(f"[{self.agent_id}] 对齐系统初始化失败: {e}")
             self.alignment_enabled = False
 
@@ -165,7 +165,7 @@ class AlignedBaseAgent(BaseAgent):
 
             logger.info(f"[{self.agent_id}] 对齐系统完整初始化完成")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: async init failures should not crash the agent
             logger.error(f"[{self.agent_id}] 对齐系统完整初始化失败: {e}")
 
     async def handle_task_request(
@@ -250,7 +250,7 @@ class AlignedBaseAgent(BaseAgent):
                     "safety_score": alignment_result.safety_score,
                 }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: alignment check failures reject task for safety
             logger.error(f"[{self.agent_id}] 对齐检查失败: {e}")
             # 对齐检查失败时, 为了安全起见, 拒绝任务
             return {
@@ -336,7 +336,7 @@ class AlignedBaseAgent(BaseAgent):
 
             return test_results
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: self-test failures return error dict, non-blocking
             logger.error(f"[{self.agent_id}] 对齐自检失败: {e}")
             return {"error": str(e)}
 
@@ -397,7 +397,7 @@ class AlignedBaseAgent(BaseAgent):
 
             return ethical_assessment
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: analysis failures return error dict, non-blocking
             logger.error(f"[{self.agent_id}] 伦理分析失败: {e}")
             return {"error": str(e)}
 
@@ -423,6 +423,6 @@ class AlignedBaseAgent(BaseAgent):
             logger.info(f"[{self.agent_id}] 已根据人类反馈更新对齐")
             return alignment_update
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: feedback processing failures return error dict, non-blocking
             logger.error(f"[{self.agent_id}] 人类反馈处理失败: {e}")
             return {"error": str(e)}

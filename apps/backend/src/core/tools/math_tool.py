@@ -51,7 +51,7 @@ def _load_math_model():
         # 简化实现
         _model_instance = "SimpleMathModel"
         logger.info("数学模型加载成功")
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: model loading errors should not crash the tool
         logger.info(f"加载数学模型时出错: {e}")
         _tensorflow_import_error = str(e)
         _model_instance = None
@@ -147,7 +147,7 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
             return ToolDispatcherResponse(
                 status="success", payload=str(result), tool_name_attempted="calculate"
             )
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: calculation errors should return graceful failure
         logger.error(f"計算錯誤: {e}, 問題: {problem}")
         return ToolDispatcherResponse(
             status="failure_tool_error",

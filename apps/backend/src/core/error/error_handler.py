@@ -104,7 +104,7 @@ class RetryRecoveryStrategy(RecoveryStrategy):
             await asyncio.sleep(self.delay * (error.recovery_attempts + 1))  # 指數退避
             await self.retry_func()
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: retry operation may fail with various runtime errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             error.context["retry_error"] = str(e)
 
@@ -123,7 +123,7 @@ class FallbackRecoveryStrategy(RecoveryStrategy):
         try:
             await self.fallback_func()
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: fallback operation may fail with various runtime errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             error.context["fallback_error"] = str(e)
 
@@ -161,7 +161,7 @@ class CircuitBreakerRecoveryStrategy(RecoveryStrategy):
                 self.state = "closed"
                 self.failure_count = 0
                 return True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: health check may fail with various runtime errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 self.failure_count += 1
 
@@ -324,7 +324,7 @@ class EnterpriseErrorHandler:
                 else:
                     await strategy.on_recovery_failure(error)
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: recovery strategy execution may fail with various errors
                 self.logger.error(
                     f"恢復策略執行失敗: {strategy.name}",
                     exc_info=e,
@@ -466,7 +466,7 @@ def handle_errors(
         async def async_wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: async function decorator may fail with various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 error = await error_handler.handle_error(
                     e,
@@ -482,7 +482,7 @@ def handle_errors(
         def sync_wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: sync function decorator may fail with various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                 # 同步函數中的錯誤處理

@@ -496,7 +496,7 @@ class HSPAdvancedPerformanceEnhancer:
                         self.optimizer.executor, original_publish_func, *args, **kwargs
                     )
                 success = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: function execution may raise various runtime errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 
@@ -532,7 +532,7 @@ class HSPAdvancedPerformanceEnhancer:
                         self.optimizer.executor, original_receive_func, *args, **kwargs
                     )
                 success = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: function execution may raise various runtime errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 

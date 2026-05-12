@@ -308,7 +308,7 @@ class AngelaRealCreator:
             # 创建展示文件
             results["showcase"] = await self._create_showcase(results, learn_results)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: workflow must handle all errors gracefully
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["errors"].append(str(e))
 
@@ -414,7 +414,7 @@ async def quick_demo():
         logger.info("✅ 演示完成!")
         logger.info("=" * 60)
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: demo must handle all errors gracefully
         logger.info(f"❌ 错误: {e}")
         import traceback
 
@@ -449,7 +449,7 @@ async def full_demo():
         logger.info(f"📄 展示文件: {results['showcase']}")
         logger.info("=" * 60)
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: demo must handle all errors gracefully
         logger.info(f"❌ 错误: {e}")
 
 

@@ -101,7 +101,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
                 "final_alignment_check": final_check,
             }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task handling failures return error response
             logger.error(f"[{self.agent_id}] 创意写作处理失败: {e}")
             return {"status": "error", "error_message": str(e)}
 
@@ -145,7 +145,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
                 "is_approved": overall_score >= self.safety_threshold,
             }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task handling failures return error response
             logger.error(f"[{self.agent_id}] 内容审查失败: {e}")
             return {"status": "error", "error_message": str(e)}
 
@@ -264,7 +264,7 @@ async def main():
         # 等待一段时间以观察处理结果
         await asyncio.sleep(2)
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: demo errors should be logged and cleanup should run
         logger.error(f"示例执行失败: {e}")
 
     finally:

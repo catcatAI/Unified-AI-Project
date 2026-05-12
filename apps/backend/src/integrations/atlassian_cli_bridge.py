@@ -45,7 +45,7 @@ class AtlassianCLIBridge:
                 "stdout": "",
                 "stderr": "Command timed out after 30 seconds",
             }
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: catch all subprocess failures to return graceful error response
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"success": False, "error": str(e), "stdout": "", "stderr": str(e)}
 

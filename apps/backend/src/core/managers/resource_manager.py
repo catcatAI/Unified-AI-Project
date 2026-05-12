@@ -68,7 +68,7 @@ class ResourceManager:
                                 await cleanup_func(resource)
                             else:
                                 cleanup_func(resource)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: cleanup function resilience
                             logger.error(f"Error cleaning up resource for {service_name}: {e}")
 
                 # 清空资源列表
@@ -135,7 +135,7 @@ class ConnectionPool:
                             await conn.close()
                         else:
                             conn.close()
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: connection close resilience
                     logger.error(f"Error closing connection: {e}")
 
             self._connections.clear()

@@ -83,7 +83,7 @@ class MonitoringDemoAgent(BaseAgent):
                 request_id, sender_ai_id, task_payload.get("callback_address", ""), result
             )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task handling failures should return error response
             logger.error(f"[{self.agent_id}] Error handling task: {e}")
             await self.send_task_failure(
                 request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e)
@@ -198,7 +198,7 @@ async def main() -> None:
 
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt, shutting down...")
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: main loop errors should be logged and cleanup should run
         logger.error(f"Error in main: {e}")
     finally:
         # Stop the agent

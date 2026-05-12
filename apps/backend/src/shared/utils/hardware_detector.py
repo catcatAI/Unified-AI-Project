@@ -132,7 +132,7 @@ class SystemHardwareProbe:
                     for line in f:
                         if "flags" in line:
                             return line.split(":")[-1].strip().split()
-            except Exception:
+            except Exception:  # broad exception acceptable: /proc/cpuinfo parsing may fail on non-standard systems
                 pass
         elif self.platform_name == "windows":
             # Windows flags are harder; usually inferred or via specialized tools
@@ -144,7 +144,7 @@ class SystemHardwareProbe:
                 for line in result.stdout.splitlines():
                     if "hw.optional." in line and ": 1" in line:
                         flags.append(line.split(".")[2].split(":")[0])
-            except Exception:
+            except Exception:  # broad exception acceptable: macOS sysctl output parsing may vary by version
                 pass
         return flags
 
@@ -168,7 +168,7 @@ class SystemHardwareProbe:
                 if lines and lines[0]:
                     parts = lines[0].split(",")
                     return AcceleratorType.NVIDIA, parts[0].strip(), int(parts[1].strip())
-        except Exception:
+        except Exception:  # broad exception acceptable: nvidia-smi may not be available or fail on some systems
             pass
 
         # 2. Apple Metal
@@ -182,7 +182,7 @@ class SystemHardwareProbe:
             )
             if result.returncode == 0:
                 return AcceleratorType.AMD, "AMD GPU", 0
-        except Exception:
+        except Exception:  # broad exception acceptable: rocm-smi may not be available on all AMD systems
             pass
 
         # 4. Windows WMIC Fallback
@@ -212,7 +212,7 @@ class SystemHardwareProbe:
                     elif "INTEL" in name.upper():
                         atype = AcceleratorType.INTEL
                     return atype, name, ram
-            except Exception:
+            except Exception:  # broad exception acceptable: wmic command parsing may vary across Windows versions
                 pass
 
         return AcceleratorType.NONE, "None", 0
@@ -244,7 +244,7 @@ class SystemHardwareProbe:
             import shutil
 
             return shutil.disk_usage(".").free / (1024**3)
-        except Exception:
+        except Exception:  # broad exception acceptable: disk usage query may fail in restricted environments
             return 0.0
 
     def _calculate_tier(self, profile: HardwareProfile):

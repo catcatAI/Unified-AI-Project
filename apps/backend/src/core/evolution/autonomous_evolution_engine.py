@@ -158,7 +158,7 @@ class AutonomousEvolutionEngine:
             self._load_historical_data()
 
             logger.info("✅ 自主进化引擎初始化成功")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization may fail with component loading errors
             logger.error(f"❌ 自主进化引擎初始化失败: {e}")
 
     def _register_default_metrics(self):

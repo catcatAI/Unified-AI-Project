@@ -49,6 +49,6 @@ def setup_env_file(
         shutil.copy(example_path, env_path)
         logger.info(f"✅ 已從 {env_example_name} 創建 {env_name}")
         return True
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: file copy may fail for various reasons
         logger.error(f"❌ 創建 {env_name} 失敗: {e}")
         return False

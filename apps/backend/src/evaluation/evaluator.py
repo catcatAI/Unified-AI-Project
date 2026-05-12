@@ -82,7 +82,7 @@ class Evaluator:
             try:
                 model_or_tool.evaluate(input_data)
                 no_exception += 1
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: evaluate() may raise various exceptions; we count them for robustness
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 

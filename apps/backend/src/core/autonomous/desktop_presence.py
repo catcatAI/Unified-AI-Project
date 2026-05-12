@@ -304,8 +304,7 @@ class DesktopPresence:
                     try:
                         callback(collision)
                     except Exception as e:
-                        # Broad exception handling acceptable here to prevent
-                        # faulty user callbacks from breaking the system
+                        # broad exception acceptable: callback errors should not break collision detection
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -377,8 +376,7 @@ class DesktopPresence:
             try:
                 callback(old_position, position)
             except Exception as e:
-                # Broad exception handling acceptable here to prevent
-                # faulty user callbacks from breaking the system
+                # broad exception acceptable: callback errors should not break position updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -428,6 +426,7 @@ class DesktopPresence:
             try:
                 callback(old_mode, mode)
             except Exception as e:
+                # broad exception acceptable: callback errors should not break mode changes
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -446,6 +445,7 @@ class DesktopPresence:
             try:
                 callback(old_mode, mode)
             except Exception as e:
+                # broad exception acceptable: callback errors should not break layer changes
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -568,6 +568,7 @@ class MouseTracker:
                 try:
                     callback(position)
                 except Exception as e:
+                    # broad exception acceptable: callback errors should not break tracking
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

@@ -31,7 +31,7 @@ async def get_ops_dashboard(ops_manager: IntelligentOpsManager = Depends(get_ops
     try:
         dashboard_data = await ops_manager.get_ops_dashboard_data()
         return JSONResponse(content=dashboard_data)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: dashboard endpoint should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"获取仪表板数据失败: {str(e)}")
 
@@ -69,7 +69,7 @@ async def get_insights(
                 for insight in insights
             ]
         )
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: insights endpoint should not crash on errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"获取洞察失败: {str(e)}")
 
@@ -91,7 +91,7 @@ async def execute_manual_action(
             return JSONResponse(content={"status": "success", "message": "操作执行成功"})
         else:
             return JSONResponse(content={"status": "error", "message": "操作执行失败"})
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: action execution should be resilient
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"执行操作失败: {str(e)}")
 
@@ -113,6 +113,6 @@ async def collect_system_metrics(
             ops_manager.collect_metrics, component_id, component_type, metrics
         )
         return {"status": "success", "message": "指标收集任务已提交"}
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: metrics endpoint should be resilient
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"提交指标收集任务失败: {str(e)}")

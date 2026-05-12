@@ -193,7 +193,7 @@ class EconomyManager:
             )
 
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: transaction processing may fail due to DB or validation errors
             logger.error(f"Error adding transaction for user '{user_id}': {e}")
             return False
 

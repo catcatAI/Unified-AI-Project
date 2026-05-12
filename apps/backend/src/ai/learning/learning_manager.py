@@ -91,7 +91,7 @@ class LearningManager:
                 adjustments["technical_focus"] = 0.05
 
             return adjustments if adjustments else None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: analysis errors return None gracefully
             logger.error(f"Error in personality adjustment analysis: {e}")
             return None
 
@@ -296,7 +296,7 @@ class LearningManager:
             logger.info(f"Distilling strategy for case {case_id}...")
             # strategy = await self.fact_extractor.llm_service.chat_completion(...)
             # If successful, store as 'learned_strategy'
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: distillation errors are non-fatal
             logger.error(f"Failed to distill strategy: {e}")
 
     def _create_distillation_prompt(self, project_case: Dict[str, Any]) -> str:

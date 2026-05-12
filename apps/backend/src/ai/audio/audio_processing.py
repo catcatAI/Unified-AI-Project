@@ -44,7 +44,7 @@ class AudioProcessing:
                 logger.debug(f"[AudioProcessing] VAD Active: Energy={energy:.4f}")
 
             return is_active
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"VAD Error: {e}")
             return False
 

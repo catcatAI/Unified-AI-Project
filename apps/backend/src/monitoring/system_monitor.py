@@ -84,7 +84,7 @@ class SystemMonitor:
                     "gpu_utilization": 25.0,
                 }
             ]
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure GPU info errors don't crash metrics collection
             logger.warning(f"获取GPU信息失败: {e}", exc_info=True)
             return []
 
@@ -193,7 +193,7 @@ class SystemMonitor:
                 if metrics.memory_percent > 90:
                     logger.warning(f"内存使用率过高: {metrics.memory_percent:.1f}%")
                 await asyncio.sleep(self.monitoring_interval)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: ensure monitoring loop continues even on collection errors
                 logger.error(f"监控过程中发生错误: {e}", exc_info=True)
                 await asyncio.sleep(self.monitoring_interval)
 
@@ -211,7 +211,7 @@ class SystemMonitor:
                     [m.to_dict() for m in self.metrics_history], f, ensure_ascii=False, indent=2
                 )
             logger.info(f"指标数据已导出到: {filepath}")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure export errors don't crash the caller
             logger.error(f"导出指标数据失败: {e}", exc_info=True)
 
 
@@ -229,5 +229,5 @@ if __name__ == "__main__":
         recommendations = monitor.get_resource_recommendations()
         print(f"资源建议: {recommendations}")
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: ensure test errors are logged and don't crash the script
         logger.error(f"测试过程中发生错误: {e}", exc_info=True)

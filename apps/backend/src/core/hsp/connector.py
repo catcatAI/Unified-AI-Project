@@ -288,7 +288,7 @@ class HSPConnector:
                     await callback(message)
                 else:
                     callback(message)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback execution may raise various runtime errors
                 self.logger.error(f"Error in fact callback: {e}")
 
     async def _dispatch_capability_advertisement_to_callbacks(self, message: Any) -> None:
@@ -299,7 +299,7 @@ class HSPConnector:
                     await callback(message)
                 else:
                     callback(message)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback execution may raise various runtime errors
                 self.logger.error(f"Error in capability advertisement callback: {e}")
 
     async def _dispatch_task_request_to_callbacks(self, message: Any) -> None:
@@ -310,7 +310,7 @@ class HSPConnector:
                     await callback(message)
                 else:
                     callback(message)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback execution may raise various runtime errors
                 self.logger.error(f"Error in task request callback: {e}")
 
     # - - - Test compatibility properties - - -
@@ -444,7 +444,7 @@ class HSPConnector:
             try:
                 await self.external_connector.disconnect()
                 self.logger.info("HSPConnector: External connector disconnected.")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: connector disconnect may raise various errors
                 self.logger.error(f"HSPConnector: Error during external connector disconnect: {e}")
 
         if self.fallback_manager:
@@ -455,7 +455,7 @@ class HSPConnector:
                 ):
                     self.fallback_manager.shutdown()
                 self.logger.info("HSPConnector: Fallback manager shut down.")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: fallback shutdown may raise various errors
                 self.logger.error(f"HSPConnector: Error during fallback manager shutdown: {e}")
 
         self.is_connected = False
@@ -468,7 +468,7 @@ class HSPConnector:
         else:
             try:
                 await self.external_connector.disconnect()
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: disconnect may raise various errors (already closed)
                 self.logger.warning(
                     f"HSPConnector: external disconnect raised (likely already closed) {e}"
                 )
@@ -478,7 +478,7 @@ class HSPConnector:
                     self.is_connected = bool(
                         getattr(self.external_connector, "is_connected", False)
                     )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: state reflection may raise various errors
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     self.is_connected = False
 
@@ -489,7 +489,7 @@ class HSPConnector:
                     self.fallback_manager.shutdown
                 ):
                     self.fallback_manager.shutdown()
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: fallback shutdown may raise various errors
                 self.logger.warning(f"HSPConnector: fallback shutdown error: {e}")
             finally:
                 self.fallback_initialized = False
@@ -497,7 +497,7 @@ class HSPConnector:
         for callback in self._disconnect_callbacks:
             try:
                 await callback()
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback execution may raise various errors
                 self.logger.warning(f"HSPConnector: disconnect callback error: {e}")
 
     async def _initialize_protocols_with_config(self, config: Dict[str, Any]) -> bool:
@@ -556,7 +556,7 @@ class HSPConnector:
             else:
                 return False
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: protocol initialization involves multiple operations that may fail
             self.logger.error(f"Error initializing protocols with config: {e}")
             return False
 
@@ -679,7 +679,7 @@ class HSPConnector:
 
             return success
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: opinion publishing involves multiple operations that may fail
             self.logger.error(f"Error publishing opinion: {e}", exc_info=True)
             return False
 
@@ -882,7 +882,7 @@ class HSPConnector:
             _secured_envelope = self.security_context.secure_message(dict(envelope), self.ai_id)
             # 确保返回类型正确
             return envelope
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: security processing involves multiple operations that may fail
             self.logger.error(f"安全处理消息失败: {e}")
             return envelope
 
@@ -916,7 +916,7 @@ class HSPConnector:
                     await self._raw_publish_message(
                         item["topic"], item["envelope"], item.get("qos", 1)
                     )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: batch send may fail with various errors
                     self.logger.error(f"Batch send error: {e}")
 
     async def _raw_publish_message(
@@ -938,7 +938,7 @@ class HSPConnector:
 
             self.logger.error("ExternalConnector has neither 'send' nor 'publish' method")
             return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: raw publish may fail with various errors
             self.logger.error(f"Error in _raw_publish_message: {e}")
             return False
 
@@ -1052,7 +1052,7 @@ class HSPConnector:
                 # 缓存结果
                 self._cache_message(message_id, True)
                 return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: message publishing involves multiple operations that may fail
             self.logger.error(f"Error publishing message {correlation_id}: {e}")
             # Implement retry logic based on max_ack_retries for general errors
             retry_count = self._message_retry_counts.get(correlation_id, 0)

@@ -105,5 +105,5 @@ class LogicNNModel:
 
         try:
             self.model = tf.keras.models.load_model(path)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: keras model load may raise various exceptions
             logger.info(f"加载模型失败: {e}")

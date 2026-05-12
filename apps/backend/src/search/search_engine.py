@@ -51,7 +51,7 @@ class SearchEngine:
             api = HfApi()
             models = api.list_models(search=query)
             return [model.id for model in models]
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure search failures return empty list, not crash
             print(f"Error searching Hugging Face: {e}")
             return []
 
@@ -68,6 +68,6 @@ class SearchEngine:
         try:
             # GitHub search might require API keys, simplifying for now
             return [f"mock-github-tool-{query}"]
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure search failures return empty list, not crash
             print(f"Error searching GitHub: {e}")
             return []

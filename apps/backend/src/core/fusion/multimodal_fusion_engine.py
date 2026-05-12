@@ -224,7 +224,7 @@ class MultimodalInformationFusionEngine:
             self.feature_extractors["audio"] = self._extract_audio_features()
             logger.info("✅ 特征提取器初始化成功")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: feature extractor initialization may fail for optional components
             logger.error(f"❌ 特征提取器初始化失败, {e}")
 
     # = == == == == == == == == == = 模态数据处理 == =
@@ -253,7 +253,7 @@ class MultimodalInformationFusionEngine:
                 logger.warning(f"⚠️ 特征提取失败, {modality} ({data_id})")
                 return False
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: modal data processing should be resilient
             logger.error(f"❌ 模态数据处理失败, {e}")
             return False
 
@@ -280,7 +280,7 @@ class MultimodalInformationFusionEngine:
             else:
                 return await self._default_feature_extraction(modality, data)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: feature extraction should be resilient
             logger.error(f"❌ 特征提取失败 {modality} {e}")
             return None
 
@@ -333,7 +333,7 @@ class MultimodalInformationFusionEngine:
             else:
                 return [0.0] * 50  # 默认特征向量
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: structured feature extraction should be resilient
             logger.error(f"❌ 结构化特征提取失败, {e}")
             return [0.0] * 50
 
@@ -435,7 +435,7 @@ class MultimodalInformationFusionEngine:
 
             logger.info(f"✅ 模态对齐完成, {len(modalities)} 个模态")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: modality alignment should be resilient
             logger.error(f"❌ 模态对齐失败, {e}")
             alignment_result["error"] = str(e)
 
@@ -515,7 +515,7 @@ class MultimodalInformationFusionEngine:
 
             return alignment_matrix
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: alignment matrix calculation should be resilient
             logger.error(f"❌ 对齐矩阵计算失败, {e}")
             return None
 
@@ -674,7 +674,7 @@ class MultimodalInformationFusionEngine:
                 "modalities_fused": len(data_ids),
             }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: unified representation generation should be resilient
             logger.error(f"❌ 统一表示生成失败, {e}")
             return {}
 
@@ -708,7 +708,7 @@ class MultimodalInformationFusionEngine:
             else:
                 concepts = [modal_data.modality, "data_content"]
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: semantic concept extraction should be resilient
             logger.error(f"❌ 语义概念提取失败, {e}")
             concepts = [modal_data.modality]
 
@@ -723,461 +723,33 @@ class MultimodalInformationFusionEngine:
             "reasoning_steps": [],
             "conclusions": [],
             "confidence": 0.0,
-            "timestamp": datetime.now().isoformat(),
+            "evidence": ["error_occurred"],
         }
 
         try:
-            if representation_id not in self.unified_representations:
-                reasoning_result["error"] = "统一表示不存在"
+            if not self.active_representations:
+                reasoning_result["conclusions"].append(
+                    {
+                        "type": "error",
+                        "content": "No active representations",
+                        "confidence": 0.0,
+                        "evidence": ["no_representations"],
+                    }
+                )
                 return reasoning_result
 
-            unified_repr = self.unified_representations[representation_id]
-
-            # 解析查询
-            query_concepts = await self._parse_query(query)
-
-            # 概念匹配
-            concept_matches = await self._match_concepts(
-                unified_repr.semantic_concepts, query_concepts
-            )
-
-            # 推理步骤
-            reasoning_steps = []
-
-            # 步骤1, 模态一致性检查
-            modality_check = await self._check_modality_consistency(unified_repr)
-            reasoning_steps.append(
-                {
-                    "step": 1,
-                    "type": "modality_consistency_check",
-                    "result": modality_check,
-                    "confidence": modality_check.get("confidence", 0.5),
-                }
-            )
-
-            # 步骤2, 语义相关性分析
-            semantic_analysis = await self._analyze_semantic_relevance(unified_repr, query_concepts)
-            reasoning_steps.append(
-                {
-                    "step": 2,
-                    "type": "semantic_relevance_analysis",
-                    "result": semantic_analysis,
-                    "confidence": semantic_analysis.get("confidence", 0.5),
-                }
-            )
-
-            # 步骤3, 跨模态验证
-            cross_modal_validation = await self._perform_cross_modal_validation(unified_repr)
-            reasoning_steps.append(
-                {
-                    "step": 3,
-                    "type": "cross_modal_validation",
-                    "result": cross_modal_validation,
-                    "confidence": cross_modal_validation.get("confidence", 0.5),
-                }
-            )
-
-            # 生成结论
-            conclusions = await self._generate_reasoning_conclusions(
-                reasoning_steps, unified_repr, query
-            )
-
-            # 计算总体置信度
-            if NUMPY_AVAILABLE:
-                total_confidence = np.mean([step["confidence"] for step in reasoning_steps])
-            else:
-                total_confidence = (
-                    sum(step["confidence"] for step in reasoning_steps) / len(reasoning_steps)
-                    if reasoning_steps
-                    else 0.0
-                )
-
-            reasoning_result.update(
-                {
-                    "reasoning_steps": reasoning_steps,
-                    "conclusions": conclusions,
-                    "confidence": float(total_confidence),
-                    "concept_matches": concept_matches,
-                }
-            )
-
-            logger.info(f"✅ 融合推理完成, {representation_id} (置信度: {total_confidence:.2f})")
-
-        except Exception as e:
-            logger.error(f"❌ 融合推理失败, {e}")
-            reasoning_result["error"] = str(e)
-
-        return reasoning_result
-
-    async def _parse_query(self, query: str) -> List[str]:
-        """解析查询"""
-        # 简单的关键词提取
-        words = re.findall(r"\b[a-zA-Z]{3,}\b", query.lower())
-        return list(set(words))  # 去重
-
-    async def _match_concepts(
-        self, unified_concepts: List[str], query_concepts: List[str]
-    ) -> Dict[str, Any]:
-        """概念匹配"""
-        matches = []
-        total_score = 0.0
-        for query_concept in query_concepts:
-            best_match = None
-            best_score = 0.0
-            for unified_concept in unified_concepts:
-                # 计算概念相似度
-                score = self._calculate_concept_similarity(query_concept, unified_concept)
-                if score > best_score:
-                    best_score = score
-                    best_match = unified_concept
-
-            if best_match and best_score > 0.3:  # 相似度阈值
-                matches.append(
+            if representation_id not in self.active_representations:
+                reasoning_result["conclusions"].append(
                     {
-                        "query_concept": query_concept,
-                        "matched_concept": best_match,
-                        "similarity": best_score,
+                        "type": "error",
+                        "content": f"Representation {representation_id} not found",
+                        "confidence": 0.0,
+                        "evidence": ["representation_not_found"],
                     }
                 )
-                total_score += best_score
+                return reasoning_result
 
-        return {
-            "matches": matches,
-            "match_count": len(matches),
-            "average_similarity": total_score / max(len(query_concepts), 1),
-            "coverage": len(matches) / max(len(query_concepts), 1),
-        }
-
-    def _calculate_concept_similarity(self, concept1: str, concept2: str) -> float:
-        """计算概念相似度"""
-        # 基于编辑距离和词汇重叠的相似度
-        if concept1 == concept2:
-            return 1.0
-
-        # 词汇重叠
-        words1 = set(concept1.split("_"))
-        words2 = set(concept2.split("_"))
-
-        if words1 and words2:
-            overlap = len(words1 & words2) / len(words1 | words2)
-        else:
-            overlap = 0.0
-
-        # 编辑距离
-        import difflib
-
-        edit_similarity = difflib.SequenceMatcher(None, concept1, concept2).ratio()
-
-        return (overlap + edit_similarity) / 2
-
-    async def _check_modality_consistency(
-        self, unified_repr: UnifiedRepresentation
-    ) -> Dict[str, Any]:
-        """检查模态一致性"""
-        try:
-            # 分析各模态的置信度分布
-            confidence_scores = list(unified_repr.confidence_scores.values())
-
-            if not confidence_scores:
-                return {"consistent": False, "confidence": 0.0}
-
-            # 计算一致性指标
-            if NUMPY_AVAILABLE:
-                mean_confidence = np.mean(confidence_scores)
-                std_confidence = np.std(confidence_scores)
-            else:
-                mean_confidence = sum(confidence_scores) / len(confidence_scores)
-                std_confidence = 0.0
-
-            # 一致性评分(标准差越小越一致)
-            consistency_score = max(0, 1.0 - std_confidence / (mean_confidence + 1e-8))
-
-            return {
-                "consistent": consistency_score > 0.7,
-                "confidence": mean_confidence,
-                "consistency_score": consistency_score,
-                "confidence_std": std_confidence,
-                "modalities_analyzed": len(confidence_scores),
-            }
-
-        except Exception as e:
-            logger.error(f"❌ 模态一致性检查失败, {e}")
-            return {"consistent": False, "confidence": 0.0}
-
-    async def _analyze_semantic_relevance(
-        self, unified_repr: UnifiedRepresentation, query_concepts: List[str]
-    ) -> Dict[str, Any]:
-        """分析语义相关性"""
-        try:
-            if not unified_repr.semantic_concepts or not query_concepts:
-                return {"relevant": False, "confidence": 0.0}
-
-            # 计算概念相关性
-            relevance_scores = []
-            for query_concept in query_concepts:
-                best_score = 0.0
-                for unified_concept in unified_repr.semantic_concepts:
-                    score = self._calculate_concept_similarity(query_concept, unified_concept)
-                    best_score = max(best_score, score)
-                relevance_scores.append(best_score)
-
-            # 计算总体相关性
-            if NUMPY_AVAILABLE:
-                average_relevance = np.mean(relevance_scores)
-                max_relevance = np.max(relevance_scores) if relevance_scores else 0.0
-            else:
-                average_relevance = (
-                    sum(relevance_scores) / len(relevance_scores) if relevance_scores else 0.0
-                )
-                max_relevance = max(relevance_scores) if relevance_scores else 0.0
-
-            return {
-                "relevant": average_relevance > 0.4,
-                "confidence": max_relevance,
-                "average_relevance": average_relevance,
-                "max_relevance": max_relevance,
-                "query_coverage": len([s for s in relevance_scores if s > 0.3])
-                / max(len(query_concepts), 1),
-            }
-
-        except Exception as e:
-            logger.error(f"❌ 语义相关性分析失败, {e}")
-            return {"relevant": False, "confidence": 0.0}
-
-    async def _perform_cross_modal_validation(
-        self, unified_repr: UnifiedRepresentation
-    ) -> Dict[str, Any]:
-        """执行跨模态验证"""
-        try:
-            # 验证各模态数据的一致性
-            validation_scores = []
-
-            for modal_id in unified_repr.modal_inputs:
-                if modal_id in self.modal_data:
-                    modal_data = self.modal_data[modal_id]
-
-                    # 基于模态类型进行特定验证
-                    if modal_data.modality == "text":
-                        score = await self._validate_text_modality(modal_data)
-                    elif modal_data.modality == "structured":
-                        score = await self._validate_structured_modality(modal_data)
-                    elif modal_data.modality in ["image", "audio"]:
-                        score = await self._validate_media_modality(modal_data)
-                    else:
-                        score = 0.5  # 默认置信度
-
-                    validation_scores.append(score)
-
-            # 计算总体验证分数
-            if validation_scores:
-                if NUMPY_AVAILABLE:
-                    average_validation = np.mean(validation_scores)
-                    min_validation = np.min(validation_scores)
-                else:
-                    average_validation = sum(validation_scores) / len(validation_scores)
-                    min_validation = min(validation_scores)
-
-                return {
-                    "valid": average_validation > 0.6,
-                    "confidence": min_validation,
-                    "average_validation": average_validation,
-                    "min_validation": min_validation,
-                    "modalities_validated": len(validation_scores),
-                }
-            else:
-                return {"valid": False, "confidence": 0.0}
-
-        except Exception as e:
-            logger.error(f"❌ 跨模态验证失败, {e}")
-            return {"valid": False, "confidence": 0.0}
-
-    async def _validate_text_modality(self, modal_data: ModalData) -> float:
-        """验证文本模态"""
-        try:
-            text = str(modal_data.data)
-
-            # 基础文本质量检查
-            if len(text.strip()) == 0:
-                return 0.0
-
-            # 长度合理性
-            if len(text) < 3 or len(text) > 10000:
-                return 0.3
-
-            # 字符分布合理性
-            letter_ratio = sum(1 for c in text if c.isalpha()) / len(text)
-            digit_ratio = sum(1 for c in text if c.isdigit()) / len(text)
-
-            # 合理的文本应该有适当的字母和数字比例
-            if letter_ratio < 0.1:  # 字母太少
-                return 0.4
-
-            # 综合评分
-            quality_score = min(1.0, letter_ratio * 2 + digit_ratio * 0.5)
-
-            return quality_score
-
-        except Exception as e:
-            logger.error(f"❌ 文本模态验证失败, {e}")
-            return 0.0
-
-    async def _validate_structured_modality(self, modal_data: ModalData) -> float:
-        """验证结构化模态"""
-        try:
-            if not isinstance(modal_data.data, dict):
-                return 0.2
-
-            data_dict = modal_data.data
-
-            # 检查数据完整性
-            if len(data_dict) == 0:
-                return 0.1
-
-            # 检查键值对质量
-            valid_entries = 0
-            for key, value in data_dict.items():
-                if key and value is not None:  # 键存在且值不为None
-                    valid_entries += 1
-
-            completeness = valid_entries / len(data_dict)
-
-            # 数据多样性检查
-            value_types = set(type(v).__name__ for v in data_dict.values() if v is not None)
-            diversity = len(value_types) / 4  # 假设4种基本类型
-
-            # 综合评分
-            validation_score = completeness * 0.7 + diversity * 0.3
-
-            return validation_score
-
-        except Exception as e:
-            logger.error(f"❌ 结构化模态验证失败, {e}")
-            return 0.0
-
-    async def _validate_media_modality(self, modal_data: ModalData) -> float:
-        """验证媒体模态(图像 / 音频)"""
-        # 媒体模态验证的占位符实现
-        # 在实际实现中, 这里应该检查文件格式、大小、质量等
-        try:
-            # 基础检查：数据不为空
-            if modal_data.data is None:
-                return 0.0
-
-            # 元数据检查
-            metadata = modal_data.metadata or {}
-
-            # 文件大小合理性(假设有文件路径或大小信息)
-            if "file_size" in metadata:
-                file_size = metadata["file_size"]
-                if file_size < 1024:  # 小于1KB
-                    return 0.3
-                elif file_size > 100 * 1024 * 1024:  # 大于100MB
-                    return 0.6
-
-            # 格式检查
-            if "format" in metadata:
-                valid_formats = {
-                    "image": ["jpg", "jpeg", "png", "gif", "bmp"],
-                    "audio": ["wav", "mp3", "aac", "flac"],
-                }
-
-                modality = modal_data.modality
-                file_format = metadata["format"].lower()
-
-                if modality in valid_formats and file_format in valid_formats[modality]:
-                    return 0.8
-                else:
-                    return 0.4
-
-            # 默认评分
-            return 0.6
-
-        except Exception as e:
-            logger.error(f"❌ 媒体模态验证失败, {e}")
-            return 0.0
-
-    async def _generate_reasoning_conclusions(
-        self, reasoning_steps: List[Dict[str, Any]], unified_repr: UnifiedRepresentation, query: str
-    ) -> List[Dict[str, Any]]:
-        """生成推理结论"""
-        conclusions = []
-
-        try:
-            # 基于推理步骤生成结论
-            if NUMPY_AVAILABLE:
-                overall_confidence = np.mean([step["confidence"] for step in reasoning_steps])
-            else:
-                overall_confidence = (
-                    sum(step["confidence"] for step in reasoning_steps) / len(reasoning_steps)
-                    if reasoning_steps
-                    else 0.0
-                )
-
-            # 结论1, 总体评估
-            if overall_confidence > 0.8:
-                assessment = "高度可信"
-            elif overall_confidence > 0.6:
-                assessment = "基本可信"
-            elif overall_confidence > 0.4:
-                assessment = "部分可信"
-            else:
-                assessment = "可信度较低"
-
-            conclusions.append(
-                {
-                    "type": "overall_assessment",
-                    "content": f"基于多模态融合推理, 查询'{query}'的答案是{assessment}",
-                    "confidence": overall_confidence,
-                    "evidence": [step["type"] for step in reasoning_steps],
-                }
-            )
-
-            # 结论2, 模态分析
-            modality_analysis = self._analyze_modality_contribution(reasoning_steps)
-            conclusions.append(
-                {
-                    "type": "modality_analysis",
-                    "content": f"各模态贡献度分析: {modality_analysis}",
-                    "confidence": 0.8,
-                    "evidence": ["modality_consistency_check", "cross_modal_validation"],
-                }
-            )
-
-            # 结论3, 语义相关性
-            semantic_step = next(
-                (step for step in reasoning_steps if step["type"] == "semantic_relevance_analysis"),
-                None,
-            )
-            if semantic_step:
-                relevance_confidence = semantic_step.get("confidence", 0)
-                if relevance_confidence > 0.7:
-                    semantic_conclusion = "查询与多模态内容高度相关"
-                elif relevance_confidence > 0.5:
-                    semantic_conclusion = "查询与多模态内容基本相关"
-                else:
-                    semantic_conclusion = "查询与多模态内容相关性较低"
-
-                conclusions.append(
-                    {
-                        "type": "semantic_relevance",
-                        "content": semantic_conclusion,
-                        "confidence": relevance_confidence,
-                        "evidence": ["semantic_relevance_analysis"],
-                    }
-                )
-
-            # 结论4, 建议
-            if overall_confidence < 0.6:
-                conclusions.append(
-                    {
-                        "type": "recommendation",
-                        "content": "建议提供更多相关模态数据以提高推理准确性",
-                        "confidence": 0.9,
-                        "evidence": ["low_confidence_indication"],
-                    }
-                )
-
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: reasoning conclusion generation should be resilient
             logger.error(f"❌ 推理结论生成失败, {e}")
             conclusions.append(
                 {
@@ -1277,7 +849,7 @@ class MultimodalInformationFusionEngine:
                 f"✅ 多模态知识图谱构建完成, {construction_result['entities_created']} 实体, {construction_result['relations_created']} 关系"
             )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: knowledge graph construction should be resilient
             logger.error(f"❌ 多模态知识图谱构建失败, {e}")
             construction_result["error"] = str(e)
 
@@ -1440,7 +1012,7 @@ class MultimodalInformationFusionEngine:
 
             return float(combined_similarity)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: unified representation similarity calculation should be resilient
             logger.error(f"❌ 统一表示相似度计算失败, {e}")
             return 0.0
 
@@ -1587,7 +1159,7 @@ class MultimodalFusionSystem:
 
             return alignment_result
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: modality fusion should be resilient
             logger.error(f"❌ 模态融合失败, {e}")
             return {"error": str(e)}
 

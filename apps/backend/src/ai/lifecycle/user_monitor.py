@@ -151,7 +151,7 @@ class UserMonitor:
                 await asyncio.sleep(self.check_interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in monitor loop: {e}")
                 await asyncio.sleep(1)  # 防止緊密循環
 
@@ -244,7 +244,7 @@ class UserMonitor:
                     await callback(event_type, data)
                 else:
                     callback(event_type, data)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback failures should not crash notification loop
                 logger.error(f"Error in state change callback: {e}")
 
     def record_input(self, input_text: str, metadata: Optional[Dict[str, Any]] = None):

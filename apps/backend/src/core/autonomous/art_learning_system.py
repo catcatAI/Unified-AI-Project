@@ -213,9 +213,7 @@ class ArtLearningSystem:
             try:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     self.aesthetic_preferences.update(json.load(f))
-            except Exception as e:
-                # Broad exception handling acceptable here to prevent
-                # configuration issues from blocking system startup
+            except Exception as e:  # broad exception acceptable: config loading failure should not block system startup
                 logger.error(f"Failed to load aesthetics: {e}")
 
     def _save_preferences(self):
@@ -277,9 +275,7 @@ class ArtLearningSystem:
             brightness_delta = state_matrix.evaluate_math_spatially(
                 f"{warm:.4f} - {cool:.4f}"
             )
-        except Exception:
-            # Broad exception handling acceptable here as fallback to simple arithmetic
-            # if the spatial math engine fails
+        except Exception:  # broad exception acceptable: spatial math fallback should be resilient to parse errors
             brightness_delta = warm - cool
 
         pref_b = self.aesthetic_preferences.get("brightness", 1.0)

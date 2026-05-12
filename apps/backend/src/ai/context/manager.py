@@ -56,7 +56,7 @@ class ContextManager:
                 f"Created new context {context_id} of type {context_type.value if hasattr(context_type, 'value') else context_type}"
             )
             return context_id
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create context: {e}")
             raise
 
@@ -88,7 +88,7 @@ class ContextManager:
 
             logger.debug(f"Context {context_id} not found")
             return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context {context_id}: {e}")
             return None
 
@@ -119,7 +119,7 @@ class ContextManager:
 
             logger.info(f"Context {context_id} updated successfully")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to update context {context_id}: {e}")
             return False
 
@@ -146,7 +146,7 @@ class ContextManager:
                 )
 
             return success
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to delete context {context_id}: {e}")
             return False
 
@@ -191,7 +191,7 @@ class ContextManager:
 
             logger.info(f"Found {len(results)} contexts matching query '{query}'")
             return results
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to search contexts: {e}")
             return []
 
@@ -241,7 +241,7 @@ class ContextManager:
 
             logger.info(f"Transferred context from {source_id} to {target_id}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to transfer context from {source_id} to {target_id}: {e}")
             return False
 
@@ -273,6 +273,6 @@ class ContextManager:
 
             logger.debug(f"Generated summary for context {context_id}")
             return summary
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to generate summary for context {context_id}: {e}")
             return {}

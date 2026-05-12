@@ -193,7 +193,8 @@ class CodeUnderstandingAgent(BaseAgent):
                         ),
                     }
                 )
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: Python AST parsing wraps all syntax errors
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 analysis["syntax_valid"] = False
 

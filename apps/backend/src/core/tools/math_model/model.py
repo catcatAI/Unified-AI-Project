@@ -77,7 +77,7 @@ class MathModel:
         # 简化实现
         try:
             predicted_result = str(eval(expression))
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed expressions
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             predicted_result = "Error"
 
@@ -105,5 +105,5 @@ class MathModel:
 
         try:
             self.model = tf.keras.models.load_model(path)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: keras model load may raise various exceptions
             logger.info(f"加载模型失败: {e}")

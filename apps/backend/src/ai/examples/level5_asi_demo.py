@@ -178,7 +178,7 @@ async def main():
         logger.info("Level 5 ASI 系统演示完成")
         logger.info("=" * 60)
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: demo must handle any error gracefully
         logger.error(f"演示过程中发生错误: {e}")
         import traceback
 
@@ -234,7 +234,7 @@ async def interactive_demo():
 
             except KeyboardInterrupt:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: user input errors must not crash demo loop
                 logger.error(f"处理请求时发生错误: {e}")
 
     finally:

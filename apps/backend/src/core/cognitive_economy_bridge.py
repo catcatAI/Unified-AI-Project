@@ -44,7 +44,7 @@ class CognitiveEconomyBridge:
                 logger.info(
                     f"[Bridge] Converted {output.output_amount:.2f} Life Sense ({output.life_sense_type}) to {dividend:.2f} Coins"
                 )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: cognitive bridge callback should be resilient to processing errors
             logger.error(f"Bridge failed to process dividend: {e}")
 
 

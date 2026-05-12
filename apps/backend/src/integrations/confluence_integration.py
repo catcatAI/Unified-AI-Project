@@ -61,7 +61,7 @@ class ConfluenceIntegration:
                         error_text = await response.text()
                         logger.error(f"Failed to get spaces: {response.status} - {error_text}")
                         return {"success": False, "error": f"HTTP {response.status} {error_text}"}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure get_spaces returns a valid response even on unexpected errors
             logger.error(f"Error getting Confluence spaces: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
@@ -97,7 +97,7 @@ class ConfluenceIntegration:
                         error_text = await response.text()
                         logger.error(f"Failed to create page: {response.status} - {error_text}")
                         return {"success": False, "error": f"HTTP {response.status} {error_text}"}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure create_page returns a valid response even on unexpected errors
             logger.error(f"Error creating Confluence page: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 

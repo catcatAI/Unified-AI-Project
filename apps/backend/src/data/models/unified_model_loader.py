@@ -25,7 +25,7 @@ def load_math_model():
         # 简化实现：返回占位符
         _loaded_models[model_name] = {"name": "math_model", "loaded": True}
         return _loaded_models[model_name]
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: model initialization may fail due to various runtime issues
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         _model_load_errors[model_name] = str(e)
 
@@ -42,7 +42,7 @@ def load_logic_model():
         # 简化实现：返回占位符
         _loaded_models[model_name] = {"name": "logic_model", "loaded": True}
         return _loaded_models[model_name]
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: model initialization may fail due to various runtime issues
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         _model_load_errors[model_name] = str(e)
 

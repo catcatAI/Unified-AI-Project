@@ -214,7 +214,7 @@ class MouseMonitor:
             for callback in self._callbacks:
                 try:
                     callback(mouse_data)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: mouse monitor callback errors should be logged
                     logger.error(f"[MouseMonitor] Callback error: {e}")
 
             # Update last position
@@ -316,7 +316,7 @@ class FileSystemMonitor:
                 if item.is_file() and not self._should_ignore(item):
                     stat = item.stat()
                     self._file_states[str(item)] = {"mtime": stat.st_mtime, "size": stat.st_size}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file scan errors should be logged
             logger.error(f"[FileSystemMonitor] Scan error: {e}")
 
     def _should_ignore(self, path: Path) -> bool:
@@ -380,7 +380,7 @@ class FileSystemMonitor:
 
                         self._file_states[item_str] = current_state
 
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: path check errors should be logged
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -398,7 +398,7 @@ class FileSystemMonitor:
                     )
                     del self._file_states[old_file]
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: path change check errors should be logged
             logger.error(f"[FileSystemMonitor] Check error: {e}")
 
     async def _emit_event(self, event: FileSystemEvent):
@@ -406,7 +406,7 @@ class FileSystemMonitor:
         for callback in self._callbacks:
             try:
                 callback(event)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: file event callback errors should be logged
                 logger.error(f"[FileSystemMonitor] Callback error: {e}")
 
     def register_callback(self, callback: Callable[[FileSystemEvent], None]):
@@ -469,7 +469,7 @@ class TimeMonitor:
                     for callback in self._callbacks:
                         try:
                             callback(event)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: time event callback errors should be logged
                             logger.error(f"[TimeMonitor] Callback error: {e}")
 
                     # Remove or reschedule
@@ -543,10 +543,10 @@ class SystemStateMonitor:
                 for callback in self._callbacks:
                     try:
                         callback(state)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: system state callback errors should be logged
                         logger.error(f"[SystemStateMonitor] Callback error: {e}")
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: system state collection errors should be logged
                 logger.error(f"[SystemStateMonitor] Collection error: {e}")
 
             await asyncio.sleep(self.update_interval)
@@ -672,10 +672,10 @@ class UserActivityMonitor:
                     for callback in self._callbacks:
                         try:
                             callback(activity_data)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: user activity callback errors should be logged
                             logger.error(f"[UserActivityMonitor] Callback error: {e}")
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: user activity analysis errors should be logged
                 logger.error(f"[UserActivityMonitor] Analysis error: {e}")
 
             await asyncio.sleep(self.analysis_interval)
@@ -888,7 +888,7 @@ class RealTimeMonitor:
         for callback in callbacks:
             try:
                 callback(data)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: dispatch callback errors should be logged
                 logger.error(f"[RealTimeMonitor] Dispatch error: {e}")
 
     def register_callback(self, event_type: str, callback: Callable[[Any], None]):

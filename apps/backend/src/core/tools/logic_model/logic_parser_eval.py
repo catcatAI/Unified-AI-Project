@@ -52,7 +52,7 @@ class LogicParserEval:
             py_expr = self._convert_to_python(expression)
             result = eval(py_expr, {"__builtins__": {}})
             return bool(result)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: eval() may raise SyntaxError, NameError, or other exceptions
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return None
 

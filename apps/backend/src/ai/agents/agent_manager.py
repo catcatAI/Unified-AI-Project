@@ -301,7 +301,7 @@ async def send_message(data: dict):
             async with httpx.AsyncClient() as client:
                 await client.post(f"http://127.0.0.1:{target['port']}/message", json=message, timeout=5.0)
             return {"status": "delivered", "target": target_id}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"status": "failed", "error": str(e)}
 
@@ -316,7 +316,7 @@ async def broadcast_message(data: dict):
             async with httpx.AsyncClient() as client:
                 await client.post(f"http://127.0.0.1:{info['port']}/message", json=message, timeout=5.0)
             results.append({"agent": agent_id, "status": "delivered"})
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
             results.append({"agent": agent_id, "status": "failed", "error": str(e)})
 
@@ -360,7 +360,7 @@ if __name__ == "__main__":
                         if response.status_code == 200:
                             logger.info("HSP Router health check passed")
                             break
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
                         if attempt < max_retries - 1:
                             logger.warning(
                                 f"HSP Router health check attempt {attempt + 1} failed: {e}, retrying in {retry_delay}s..."
@@ -373,7 +373,7 @@ if __name__ == "__main__":
             else:
                 logger.error("Failed to start HSP Router")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: router startup wraps subprocess and port errors
             logger.error(f"Error starting router: {e}")
             self.enable_router = False
 
@@ -457,7 +457,7 @@ if __name__ == "__main__":
 
             return result
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: agent execution wraps all agent failures
             execution_time = time.time() - start_time
             logger.error(f"Error executing agent {agent_name}: {e}", exc_info=True)
 
@@ -508,7 +508,7 @@ if __name__ == "__main__":
 
             logger.debug(f"Applied state impact: {impact}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: state impact wraps all state update failures
             logger.error(f"Error applying state impact: {e}", exc_info=True)
 
     # P0-3: 设置自定义评估器
@@ -602,7 +602,7 @@ if __name__ == "__main__":
             if agent_map:
                 logger.info(f"[AgentManager] Agents: {list(agent_map.keys())}")
             return agent_map
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: agent discovery wraps all file enumeration failures
             logger.error(f"[AgentManager] Error discovering agent scripts: {e}")
             return agent_map
 
@@ -653,7 +653,7 @@ if __name__ == "__main__":
                     f"[AgentManager] Successfully launched '{agent_name}' with PID {process.pid}."
                 )
                 return str(process.pid)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: agent launch wraps all subprocess failures
                 logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}")
                 return None
 
@@ -798,7 +798,7 @@ if __name__ == "__main__":
                         logger.warning(
                             f"[AgentManager] No {agent_class_name} class in {agent_name}"
                         )
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: auto-load wraps all module import failures
                 logger.error(f"[AgentManager] Failed to load agent {agent_name}: {e}")
 
         logger.info(

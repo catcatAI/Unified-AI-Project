@@ -58,6 +58,6 @@ class CsvTool:
                     "error": f"Unsupported query: '{query}'. Try 'summarize', 'columns', or 'shape'.",
                 }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: CSV parsing errors should return graceful failure
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"status": "failure", "error": str(e)}

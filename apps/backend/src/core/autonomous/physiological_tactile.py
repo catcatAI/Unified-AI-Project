@@ -434,7 +434,7 @@ class PhysiologicalTactileSystem:
         for callback in self._on_stimulus_callbacks:
             try:
                 callback(stimulus)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: stimulus callbacks should not break stimulus processing
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -456,7 +456,7 @@ class PhysiologicalTactileSystem:
             for callback in self._on_threshold_callbacks[body_part]:
                 try:
                     callback(intensity)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: threshold callbacks should not break threshold checking
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

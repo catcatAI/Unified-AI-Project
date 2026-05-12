@@ -193,7 +193,7 @@ class ExecutionMonitor:
                 return TerminalStatus.UNRESPONSIVE
         except subprocess.TimeoutExpired:
             return TerminalStatus.UNRESPONSIVE
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: terminal check failures default to unresponsive
             self.logger.warning(f"Terminal check failed: {e}")
             return TerminalStatus.UNRESPONSIVE
 
@@ -204,7 +204,7 @@ class ExecutionMonitor:
                 self._terminal_status = self.check_terminal_responsiveness()
                 self.logger.debug(f"Terminal status: {self._terminal_status.value}")
                 time.sleep(self.config.terminal_check_interval)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: monitoring loop must survive any error
                 self.logger.error(f"Terminal monitoring error: {e}")
                 time.sleep(self.config.terminal_check_interval)
 
@@ -239,7 +239,7 @@ class ExecutionMonitor:
 
                 time.sleep(self.config.check_interval)
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: resource monitoring must survive any error
                 self.logger.error(f"Resource monitoring error: {e}")
                 time.sleep(self.config.check_interval)
 
@@ -375,7 +375,7 @@ class ExecutionMonitor:
                     error_message=f"Command timed out after {adaptive_timeout} seconds",
                 )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: subprocess errors must not crash monitor
             self.logger.error(f"Error in {__name__}: {e}", exc_info=True)
             execution_time = time.time() - start_time
 

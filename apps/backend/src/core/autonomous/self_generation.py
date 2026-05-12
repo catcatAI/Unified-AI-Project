@@ -311,7 +311,7 @@ class SelfGeneration:
         for callback in self._generation_callbacks:
             try:
                 callback(avatar)
-            except Exception as e:  # Broad exception acceptable here as we want to ensure all callbacks execute
+            except Exception as e:  # broad exception acceptable: callback errors should not break generation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return avatar
@@ -345,7 +345,7 @@ class SelfGeneration:
                     avatar.thumbnail_path = self.output_path / f"{avatar.avatar_id}_thumb.png"
 
                 return
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: workflow is optional, graceful degradation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                 # Fallback to simple generation if workflow fails
@@ -371,7 +371,7 @@ class SelfGeneration:
                     avatar.thumbnail_path = Path(generated.texture_paths[0])
 
                 return
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: generator is optional, graceful degradation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                 # Fallback to placeholder
@@ -411,11 +411,11 @@ class SelfGeneration:
                             # 儲存真實圖片
                             img_path = self.output_path / f"{avatar.avatar_id}.png"
                             image.save(img_path)
-                            
+
                             avatar.file_path = img_path
                             avatar.thumbnail_path = img_path
                             return
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: SD API is optional, graceful degradation
             logger.warning(f"Failed to connect to external SD API, using fallback: {e}")
 
         # Fallback if SD API is unavailable
@@ -599,7 +599,7 @@ class SelfGeneration:
             for callback in self._evolution_callbacks:
                 try:
                     callback(self.current_avatar, avatar)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not break evolution
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

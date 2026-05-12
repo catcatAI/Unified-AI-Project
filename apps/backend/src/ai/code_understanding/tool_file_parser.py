@@ -80,7 +80,7 @@ def parse_python_file(filepath: str) -> Optional[Tuple[ast.AST, List[str]]]:
         with open(filepath, "r", encoding="utf-8") as source_file:
             source_code = source_file.read()
         tree = ast.parse(source_code, filename=filepath)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: data parsing should be resilient
         logger.error(f"Error parsing Python file '{filepath}': {e}", exc_info=True)
         return None
 

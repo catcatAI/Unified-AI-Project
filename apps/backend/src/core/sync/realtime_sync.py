@@ -105,7 +105,7 @@ class SyncManager:
         for client_id, callback in self._clients.items():
             try:
                 await callback(event)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: client callback errors should not stop broadcasting
                 logger.error(f"廣播事件失敗: {e}")
 
 

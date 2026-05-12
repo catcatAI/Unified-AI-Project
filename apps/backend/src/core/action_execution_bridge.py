@@ -435,7 +435,7 @@ class ActionExecutionBridge:
             for callback in self._pre_execution_callbacks:
                 try:
                     callback(context)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callbacks are user-defined, prevent crash
                     logger.error(f"[ActionExecutionBridge] Pre-execution callback error: {e}")
 
             # Get handler
@@ -473,7 +473,7 @@ class ActionExecutionBridge:
                 error_message="Action timed out",
                 execution_time_ms=execution_time,
             )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure all errors result in failure result
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
 
@@ -504,7 +504,7 @@ class ActionExecutionBridge:
                 for callback in self._post_execution_callbacks:
                     try:
                         callback(context, result)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: prevent callback errors from breaking flow
                         logger.error(f"[ActionExecutionBridge] Post-execution callback error: {e}")
 
                 # Send feedback to CDM for learning (if available)
@@ -574,7 +574,7 @@ class ActionExecutionBridge:
                         return json.load(f)
                 
                 self._execution_history = await asyncio.to_thread(read_history)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: non-critical history load, continue without it
             logger.error(f"[ActionExecutionBridge] Failed to load history: {e}")
 
     async def _save_history(self):
@@ -587,7 +587,7 @@ class ActionExecutionBridge:
                     json.dump(self._execution_history, f, ensure_ascii=False, indent=2)
             
             await asyncio.to_thread(write_history)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: non-critical history save, log and continue
             logger.error(f"[ActionExecutionBridge] Failed to save history: {e}")
 
     async def _send_feedback_to_cdm(self, result: ExecutionResult):
@@ -615,7 +615,7 @@ class ActionExecutionBridge:
                     if self.cdm.should_trigger_learning(delta):
                         if hasattr(self.cdm, "integrate_knowledge"):
                             self.cdm.integrate_knowledge(feedback_delta, delta)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: non-critical CDM update, log and continue
             logger.error(f"[ActionExecutionBridge] Failed to send feedback to CDM: {e}")
 
     # ========== Action Handlers ==========
@@ -641,7 +641,7 @@ class ActionExecutionBridge:
                 elif hasattr(self.orchestrator, "process_user_input"):
                     response = await self.orchestrator.process_user_input(f"[AUTONOMOUS] {message}")
                     result["orchestrator_response"] = response
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional orchestrator call, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["orchestrator_error"] = str(e)
 
@@ -653,7 +653,7 @@ class ActionExecutionBridge:
                 elif hasattr(self.desktop_pet, "display_bubble"):
                     self.desktop_pet.display_bubble(message)
                 result["displayed"] = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional desktop pet display, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["display_error"] = str(e)
 
@@ -677,7 +677,7 @@ class ActionExecutionBridge:
                     num_results=5 if depth == "shallow" else 10 if depth == "medium" else 20,
                 )
                 result["exploration_data"]["search_results"] = search_results
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional search, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["search_error"] = str(e)
 
@@ -688,7 +688,7 @@ class ActionExecutionBridge:
                 if hasattr(self.file_manager, "search_files"):
                     local_results = await self.file_manager.search_files(topic)
                     result["exploration_data"]["local_files"] = local_results
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional local search, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["local_search_error"] = str(e)
 
@@ -703,7 +703,7 @@ class ActionExecutionBridge:
                             metadata={"topic": topic, "type": "exploration"},
                         )
                 result["integrated_to_cdm"] = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional CDM integration, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["cdm_integration_error"] = str(e)
 
@@ -789,7 +789,7 @@ class ActionExecutionBridge:
                 elif hasattr(self.desktop_pet, "display_bubble"):
                     self.desktop_pet.display_bubble(message)
                 result["displayed"] = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional display, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["display_error"] = str(e)
 
@@ -799,7 +799,7 @@ class ActionExecutionBridge:
                 if hasattr(self.live2d_integration, "set_expression"):
                     await self.live2d_integration.set_expression(emotion, intensity)
                     result["live2d_updated"] = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional Live2D, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["live2d_error"] = str(e)
 
@@ -849,7 +849,7 @@ class ActionExecutionBridge:
             else:
                 result["error"] = "Download manager missing download_file method"
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: download operation error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             result["error"] = str(e)
 
@@ -885,7 +885,7 @@ class ActionExecutionBridge:
                     await self.live2d_integration.set_pose(value)
                     result["applied"] = True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Live2D operation error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             result["error"] = str(e)
 
@@ -935,7 +935,7 @@ class ActionExecutionBridge:
                     success = await self.file_manager.move_file(path, destination)
                     result["success"] = success
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file operation error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             result["error"] = str(e)
 
@@ -970,7 +970,7 @@ class ActionExecutionBridge:
             else:
                 result["error"] = "Web search tool missing search method"
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: web search error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             result["error"] = str(e)
 

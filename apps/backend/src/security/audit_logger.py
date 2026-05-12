@@ -65,7 +65,7 @@ class AuditLogger:
                 self.log_buffer.append(event)
             if len(self.log_buffer) >= 100:
                 self._flush_buffer()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure logging errors don't crash the caller
             logger.error(f"Error logging audit event: {e}", exc_info=True)
 
     def log_operation(
@@ -343,7 +343,7 @@ class AuditLogger:
                         event_dict["event_type"] = event_dict["event_type"].value
                         f.write(json.dumps(event_dict, ensure_ascii=False) + "\n")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure flush errors don't crash the buffer management
             logger.error(f"Error flushing audit log buffer: {e}", exc_info=True)
 
     def _rotate_log_if_needed(self):
@@ -356,7 +356,7 @@ class AuditLogger:
                     )
                     os.rename(self.log_file_path, rotated_path)
                     logger.info(f"Rotated audit log file to {rotated_path}")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure rotation errors don't crash the flush operation
             logger.error(f"Error rotating audit log file: {e}", exc_info=True)
 
     def get_recent_events(self, limit: int = 100) -> List[AuditEvent]:
@@ -374,10 +374,10 @@ class AuditLogger:
                             event_data["event_type"] = AuditEventType(event_data["event_type"])
                             event = AuditEvent(**event_data)
                             events.append(event)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: ensure corrupted log lines don't crash retrieval
                             logger.error(f"Error parsing audit log line: {e}", exc_info=True)
             return events[-limit:]
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure get errors return empty list, not crash
             logger.error(f"Error getting recent audit events: {e}", exc_info=True)
             return []
 
@@ -409,10 +409,10 @@ class AuditLogger:
                                 event, user_id, event_type, resource, start_time, end_time
                             ):
                                 events.append(event)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: ensure corrupted log lines don't crash search
                             logger.error(f"Error parsing audit log line: {e}", exc_info=True)
             return events
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure search errors return empty list, not crash
             logger.error(f"Error searching audit events: {e}", exc_info=True)
             return []
 

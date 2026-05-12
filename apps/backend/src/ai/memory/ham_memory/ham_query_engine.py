@@ -102,7 +102,7 @@ class HAMQueryEngine:
                             break
                     if not keyword_match:
                         match = False
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
                     # Fallback: Maybe it was double-base64 encoded?
                     try:
                         import base64
@@ -124,7 +124,7 @@ class HAMQueryEngine:
                                 break
                         if not keyword_match:
                             match = False
-                    except Exception as e2:
+                    except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
                         logger.error(f"Error processing memory {mem_id} for keyword search: {e} (Fallback also failed: {e2})")
                         match = False  # Exclude if there's an error processing
 
@@ -219,7 +219,7 @@ class HAMQueryEngine:
                             )
                         )
 
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: semantic search should skip unprocessable memories
                         # Fallback for double-base64
                         try:
                             import base64
@@ -243,14 +243,14 @@ class HAMQueryEngine:
                                     relevance=result.get("distance", 0.0),
                                 )
                             )
-                        except Exception as e2:
+                        except Exception as e2:  # broad exception acceptable: semantic search should skip unprocessable memories
                             logger.error(f"Error processing memory {memory_id}: {e} (Fallback failed: {e2})")
                             continue
 
             logger.info(f"Semantic search returned {len(memories)} results")
             return memories[:limit]
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: semantic search should fallback gracefully
             logger.error(f"Error during semantic search: {e}")
             return await self._fallback_keyword_search(query, limit)
 
@@ -315,7 +315,7 @@ class HAMQueryEngine:
                         )
                     )
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
                 # Fallback for double-base64
                 try:
                     import base64
@@ -354,7 +354,7 @@ class HAMQueryEngine:
                                 relevance=final_score,
                             )
                         )
-                except Exception as e2:
+                except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
                     logger.error(f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed: {e2})")
                     continue
 

@@ -161,7 +161,7 @@ class ModelContextManager:
                 f"Recorded model call from {caller_model_id} to {callee_model_id} with context"
             )
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to record model call: {e}")
             return False
 
@@ -184,7 +184,7 @@ class ModelContextManager:
             #     "updated_at": latest_context.updated_at.isoformat()
             # }
             return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for model {model_id}: {e}")
             return None
 
@@ -219,7 +219,7 @@ class ModelContextManager:
                 )
 
             return call_history
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get call history for model {model_id}: {e}")
             return []
 
@@ -251,7 +251,7 @@ class AgentContextManager:
             # context_id = self.context_manager.create_context(ContextType.MODEL, context_content)  # Commented - needs proper import
             logger.info(f"Started collaboration {collaboration.collaboration_id} with context")
             return collaboration.collaboration_id
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to start collaboration: {e}")
             raise
 
@@ -292,7 +292,7 @@ class AgentContextManager:
             # context_id = self.context_manager.create_context(ContextType.MODEL, context_content)  # Commented - needs proper import
             logger.info(f"Recorded collaboration step {step.step_id} with context")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to record collaboration step: {e}")
             return False
 
@@ -321,7 +321,7 @@ class AgentContextManager:
             # context_id = self.context_manager.create_context(ContextType.MODEL, context_content)  # Commented - needs proper import
             logger.info(f"Completed collaboration {collaboration_id} with context")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to complete collaboration {collaboration_id}: {e}")
             return False
 
@@ -350,6 +350,6 @@ class AgentContextManager:
             #     "updated_at": latest_context.updated_at.isoformat()
             # }
             return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}")
             return None

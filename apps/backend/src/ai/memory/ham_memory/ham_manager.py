@@ -59,7 +59,8 @@ class HAMMemoryManager:
         if key_str:
             try:
                 self.fernet = Fernet(key_str.encode())
-            except Exception: self.fernet = None
+            except Exception:  # broad exception acceptable: encryption key format error should fallback to unencrypted
+                self.fernet = None
         
         if self.fernet is None:
             # Generate and PERSIST a new key
@@ -114,6 +115,7 @@ class HAMMemoryManager:
             else:
                 logger.warning(f"⚠️ [Memory] TRPG Codex not found at {codex_path}. Skipping injection.")
         except Exception as e:
+            # broad exception acceptable: optional codex loading should not block memory initialization
             logger.error(f"❌ [Memory] Failed to auto-load TRPG Codex: {e}")
             
         return True
@@ -137,7 +139,8 @@ class HAMMemoryManager:
             try:
                 abstracted = self.data_processor._abstract_text(str(raw_data))
                 data_to_process = json.dumps(abstracted).encode("utf-8")
-            except Exception: pass
+            except Exception:  # broad exception acceptable: text abstraction failure should fallback to raw data
+                pass
 
         if current_metadata.get("importance_score") is None:
             current_metadata["importance_score"] = await self.importance_scorer.calculate(str(raw_data), current_metadata)
@@ -213,6 +216,7 @@ class HAMMemoryManager:
                 if score >= min_score:
                     scored_templates.append((template, score))
             except Exception as e:
+                # broad exception acceptable: template retrieval should be resilient to errors
                 logger.error(f"Error processing template in retrieval: {e}")
                 continue
         
@@ -224,7 +228,8 @@ class HAMMemoryManager:
         try:
             content = json.dumps(template.to_dict(), ensure_ascii=False)
             return await self.store_experience(content, "response_template", {"is_template": True}) is not None
-        except Exception: return False
+        except Exception:  # broad exception acceptable: template storage should be resilient to errors
+            return False
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

@@ -45,7 +45,7 @@ def generate_problem(max_digits: int = 3, operations: list = None) -> tuple:
             answer = int(answer)
     except ZeroDivisionError:
         return generate_problem(max_digits, operations)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed expressions
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return generate_problem(max_digits, operations)
 

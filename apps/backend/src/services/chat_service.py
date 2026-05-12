@@ -73,6 +73,7 @@ class AngelaChatService:
                 self._last_visual_context = await self.vision.analyze_image(features=["ocr"])
                 self._last_visual_time = current_time
             except Exception as e:
+                # broad exception acceptable: vision refresh is optional, should not block chat response
                 logger.error(f"Vision refresh failed: {e}")
         
         visual_context = self._last_visual_context
@@ -183,6 +184,7 @@ async def generate_angela_response(user_message: str, user_name: str = "朋友")
         service = get_angela_chat_service()
         return await service.generate_response(user_message, user_name)
     except Exception as e:
+        # broad exception acceptable: chat generation should be resilient to errors, graceful degradation
         logger.error(f"Error generating neural response: {e}", exc_info=True)
         return "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）"
 

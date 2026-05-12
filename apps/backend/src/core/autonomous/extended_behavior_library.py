@@ -703,7 +703,7 @@ class ExtendedBehaviorLibrary:
             for callback in self._behavior_start_callbacks[behavior_id]:
                 try:
                     callback()
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not break behavior execution
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -716,7 +716,7 @@ class ExtendedBehaviorLibrary:
             for callback in self._behavior_end_callbacks[behavior.behavior_id]:
                 try:
                     callback()
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not break behavior cleanup
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

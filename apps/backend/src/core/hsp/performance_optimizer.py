@@ -108,7 +108,7 @@ class HSPPerformanceOptimizer:
                 self.network_stats["messages_sent"] += len(batch_messages)
                 self.last_batch_send = current_time
                 logger.debug(f"批量发送 {len(batch_messages)} 条消息")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: batch send callback may fail with various errors
                 logger.error(f"批量发送消息失败: {e}")
                 # 将消息重新加入队列
                 self.message_queue = batch_messages + self.message_queue
@@ -140,7 +140,7 @@ class HSPPerformanceOptimizer:
                 f"消息压缩完成: {original_size} -> {compressed_size} 字节 (节省 {savings} 字节)"
             )
             return compressed
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: compression may fail with various errors
             logger.error(f"消息压缩失败: {e}")
             return json.dumps(message).encode("utf-8")
 
@@ -150,7 +150,7 @@ class HSPPerformanceOptimizer:
             decompressed = zlib.decompress(compressed_data)
             message = json.loads(decompressed.decode("utf-8"))
             return message
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: decompression may fail with various errors
             logger.error(f"消息解压缩失败: {e}")
             # 如果解压缩失败, 假设数据未压缩
             try:
@@ -368,7 +368,7 @@ class HSPPerformanceEnhancer:
             try:
                 result = await original_publish_func(*args, **kwargs)
                 success = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: publish function execution may raise various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 
@@ -409,7 +409,7 @@ class HSPPerformanceEnhancer:
             try:
                 result = await original_receive_func(*args, **kwargs)
                 success = True
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: receive function execution may raise various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 

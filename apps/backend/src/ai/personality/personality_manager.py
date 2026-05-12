@@ -49,7 +49,7 @@ class PersonalityManager:
                             "path": str(file_path),
                             "display_name": data.get("display_name", profile_name),
                         }
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: profile loading errors are non-critical, skip and continue
                 logger.error(f"PersonalityManager: Error loading profile {file_path.name}: {e}")
         return profiles
 
@@ -74,7 +74,7 @@ class PersonalityManager:
                 self.current_personality = json.load(f)
             logger.info(f"PersonalityManager: Successfully loaded personality '{profile_name}'.")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: profile loading errors return False, non-blocking
             logger.error(
                 f"PersonalityManager: Error loading profile '{profile_name}' from {profile_info['path']}: {e}"
             )
@@ -143,7 +143,7 @@ class PersonalityManager:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(self.current_personality, f, indent=4, ensure_ascii=False)
             logger.info(f"PersonalityManager: Persistent evolution saved to {file_path}.")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: save failures are non-critical, log and continue
             logger.error(f"PersonalityManager: Failed to save evolution: {e}")
 
 

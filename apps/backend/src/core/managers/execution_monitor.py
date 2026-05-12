@@ -207,7 +207,7 @@ class ExecutionMonitor:
 
         except subprocess.TimeoutExpired:
             return TerminalStatus.UNRESPONSIVE
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: terminal check fallback
             self.logger.warning(f"Terminal check failed: {e}")
             return TerminalStatus.UNRESPONSIVE
 
@@ -218,7 +218,7 @@ class ExecutionMonitor:
                 self._terminal_status = self.check_terminal_responsiveness()
                 self.logger.debug(f"Terminal status: {self._terminal_status.value}")
                 time.sleep(self.config.terminal_check_interval)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: terminal monitoring resilience
                 self.logger.error(f"Terminal monitoring error: {e}")
                 time.sleep(self.config.terminal_check_interval)
 
@@ -262,7 +262,7 @@ class ExecutionMonitor:
 
                 time.sleep(self.config.check_interval)
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: resource monitoring resilience
                 self.logger.error(f"Resource monitoring error: {e}")
                 time.sleep(self.config.check_interval)
 
@@ -365,7 +365,7 @@ class ExecutionMonitor:
                 result.status = ExecutionStatus.TIMEOUT
                 result.error_message = f"Command timed out after {effective_timeout}s"
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: command execution resilience
             self.logger.error(f"Command execution error: {e}")
             result.status = ExecutionStatus.ERROR
             result.error_message = str(e)
@@ -486,7 +486,7 @@ class ExecutionMonitor:
                 result.status = ExecutionStatus.TIMEOUT
                 result.error_message = f"Command timed out after {effective_timeout}s"
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: async command execution resilience
             self.logger.error(f"Async command execution error: {e}")
             result.status = ExecutionStatus.ERROR
             result.error_message = str(e)
@@ -558,7 +558,7 @@ class ExecutionMonitor:
                 "process_count": len(psutil.pids()),
                 "timestamp": time.time(),
             }
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: system health fallback
             self.logger.error(f"Failed to get system health: {e}")
             return {"error": str(e)}
 

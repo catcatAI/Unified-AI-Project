@@ -92,7 +92,7 @@ class AudioService:
         try:
             await sync_manager.register_client("audio_service", self._handle_sync_event)
             logger.info("Audio Service registered to sync manager")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: sync registration should not crash
             logger.error(f"Failed to register Audio Service to sync manager: {e}")
 
     async def _handle_sync_event(self, event: SyncEvent):
@@ -232,7 +232,7 @@ class AudioService:
                         return {"text": "（妳似乎說了些什麼，但我現在還聽不清楚...）", "confidence": 0.5, "fallback": True}
                 
                 return {"text": "", "confidence": 1.0, "fallback": True}
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: fallback should not crash
                 logger.warning(f"Audio fallback failed: {e}")
                 return {"text": "", "confidence": 0.0}
 
@@ -263,7 +263,7 @@ class AudioService:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: STT should not crash on errors
             logger.error(f"Whisper STT failed: {e}")
             return {"text": "STT Error", "confidence": 0.0}
 
@@ -275,7 +275,7 @@ class AudioService:
                 # map EmotionType enum string back
                 primary = result.primary_emotion.value if result.primary_emotion else "neutral"
                 return {"sentiment": primary, "confidence": result.emotion_intensity}
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: emotion analysis optional, should not block
                 logger.error(f"Error calling EmotionSystem from AudioService: {e}")
 
         await asyncio.sleep(0.05)
@@ -311,7 +311,7 @@ class AudioService:
                 if chunk["type"] == "audio":
                     audio_bytes += chunk["data"]
             return audio_bytes
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: TTS should not crash on errors
             logger.error(f"EdgeTTS execution failed: {e}")
             return None
 

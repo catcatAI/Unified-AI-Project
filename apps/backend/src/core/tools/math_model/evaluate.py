@@ -59,7 +59,7 @@ def load_test_dataset_csv(file_path: str) -> Optional[Tuple[list, list]]:
     except FileNotFoundError:
         logger.info(f"错误: 测试数据集文件未找到 {file_path}")
         logger.info("请先使用 data_generator.py 生成数据集")
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: CSV loading may raise various IO or format exceptions
         logger.info(f"加载CSV错误: {e}")
 
     return None, None

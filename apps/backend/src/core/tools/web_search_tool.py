@@ -45,7 +45,7 @@ class WebSearchTool:
                 with open(config_path, "r", encoding="utf-8") as f:
                     all_configs = yaml.safe_load(f)
                     return all_configs.get("web_search_tool", {})
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: config file errors should use defaults gracefully
                 logger.info(f"配置文件加载失败，使用默认值: {e}")
 
         return {}
@@ -82,6 +82,6 @@ class WebSearchTool:
 
             return results
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: search errors should return graceful failure
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return [{"error": str(e)}]

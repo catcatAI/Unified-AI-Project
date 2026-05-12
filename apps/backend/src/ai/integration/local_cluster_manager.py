@@ -192,7 +192,7 @@ class LocalClusterManager:
 
                 logger.info(f"[Worker-{worker_id}] Completed task {task.task_id}")
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: worker loop must survive any task error
                 logger.error(f"[Worker-{worker_id}] Error: {e}", exc_info=True)
 
         logger.info(f"[Worker-{worker_id}] Shutting down")
@@ -233,7 +233,7 @@ class LocalClusterManager:
                     }
                 )
                 return result
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: custom executor errors should return error result
                 logger.error(f"[Worker-{worker_id}] Custom executor failed: {e}")
                 return {
                     "status": "error",
@@ -254,7 +254,7 @@ class LocalClusterManager:
             elif task.task_type == "inference":
                 # 執行推理任務
                 return LocalClusterManager._execute_inference_task(worker_id, task, start_time)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: built-in executor errors return error result
             logger.error(f"[Worker-{worker_id}] Built-in executor failed: {e}")
             return {
                 "status": "error",

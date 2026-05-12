@@ -326,7 +326,7 @@ class AutonomousLifeCycle:
         for callback in self._metrics_callbacks:
             try:
                 callback(metrics)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: metrics callbacks should not block updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -512,7 +512,7 @@ class AutonomousLifeCycle:
         for callback in self._decision_callbacks:
             try:
                 callback(decision)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: decision callbacks should not block recording
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -540,7 +540,7 @@ class AutonomousLifeCycle:
             for callback in self._phase_callbacks:
                 try:
                     callback(old_phase, new_phase)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: phase callbacks should not block transition
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

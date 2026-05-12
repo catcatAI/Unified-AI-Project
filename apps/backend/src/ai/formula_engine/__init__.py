@@ -110,7 +110,7 @@ class FormulaEngine:
         except json.JSONDecodeError as e:
             logger.error(f"FormulaEngine: Error decoding JSON from {self.formulas_file_path}: {e}")
             self.formulas = []
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: any load error should fall back to empty list
             logger.error(
                 f"FormulaEngine: An unexpected error occurred while loading formulas from {self.formulas_file_path}: {e}"
             )
@@ -279,7 +279,7 @@ if __name__ == "__main__":
                 logger.info("  No default formula matched for 'weather'.")
         else:
             logger.info("  No formulas loaded from default path, skipping default test.")
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: default engine test errors are non-fatal
         logger.error(f"  Error during default engine test: {e}")
 
     # Clean up dummy file and directory

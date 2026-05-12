@@ -98,7 +98,7 @@ class AngelaRealVoice:
                 logger.error("❌ 语音文件未生成")
                 return None
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: TTS may fail for various reasons
             logger.error(f"❌ 语音生成失败: {e}")
             return None
 
@@ -235,7 +235,7 @@ class AngelaRealVoice:
                     }
                 )
             return result
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: list_voices API may be unavailable
             logger.error(f"获取声音列表失败: {e}")
             return {}
 
@@ -258,7 +258,7 @@ async def test_voice():
         else:
             logger.info("❌ 语音生成失败")
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test must handle all errors gracefully
         logger.info(f"❌ 测试失败: {e}")
         logger.info("提示: 确保已安装 edge-tts: pip install edge-tts")
 

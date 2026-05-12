@@ -126,7 +126,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("\n\nDemo interrupted by user")
         sys.exit(0)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: demo main must handle any error gracefully
         logger.error(f"\n\nError: {e}")
         import traceback
 

@@ -159,7 +159,7 @@ class MQTTSubscriptionManager:
                 logger.info(f"[MQTTSubManager] Subscribed to: {topic} (QoS: {qos})")
                 return True
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: subscribe operations may fail with various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 last_error = e
 
@@ -208,7 +208,7 @@ class MQTTSubscriptionManager:
                 logger.info(f"[MQTTSubManager] Unsubscribed from: {topic}")
                 return True
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: unsubscribe may fail with various errors
                 logger.error(f"[MQTTSubManager] Unsubscribe failed: {e}")
                 return False
 
@@ -304,7 +304,7 @@ class MQTTSubscriptionManager:
 
                     self.stats["callbacks_executed"] += 1
 
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback execution may raise various errors
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     self.stats["callback_errors"] += 1
 

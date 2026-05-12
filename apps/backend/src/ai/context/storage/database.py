@@ -51,7 +51,7 @@ class DatabaseStorage(Storage):
 
             logger.debug(f"Context {context.context_id} saved to database storage")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to save context {context.context_id} to database storage, {e}")
             return False
 
@@ -83,7 +83,7 @@ class DatabaseStorage(Storage):
                 # 实际的数据库加载逻辑
                 # 这里应该使用数据库连接执行SELECT操作
                 pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to load context {context_id} from database storage, {e}")
             return None
 
@@ -106,7 +106,7 @@ class DatabaseStorage(Storage):
                 # 实际的数据库删除逻辑
                 # 这里应该使用数据库连接执行DELETE操作
                 pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to delete context {context_id} from database storage, {e}")
             return False
 
@@ -130,7 +130,7 @@ class DatabaseStorage(Storage):
                 # 实际的数据库查询逻辑
                 # 这里应该使用数据库连接执行SELECT查询
                 pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to list contexts from database storage, {e}")
             return []
 
@@ -154,7 +154,7 @@ class DatabaseStorage(Storage):
                 # 实际的数据库更新逻辑
                 # 这里应该使用数据库连接执行UPDATE操作
                 pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to update context {context_id} metadata in database storage, {e}")
             return False
 
@@ -168,6 +168,6 @@ class DatabaseStorage(Storage):
                 # 实际的数据库信息查询
                 # 这里应该查询数据库统计信息
                 pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get storage info, {e}")
             return {}

@@ -51,7 +51,7 @@ class ParameterExtractor:
 
         try:
             return hf_hub_download(repo_id=self.repo_id, filename=filename, cache_dir=cache_dir)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: HF download may raise various network or HF Hub exceptions
             logger.info(f"下载失败: {e}")
             return None
 

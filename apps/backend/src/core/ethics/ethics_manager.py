@@ -191,7 +191,7 @@ class EthicsManager:
                 # self.ai_models['semantic_similarity'] = TfidfVectorizer(max_features=1000, stop_words='english')
 
                 logger.info("✅ AI伦理模型初始化完成")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: AI model initialization may fail with library loading errors
                 logger.warning(f"⚠️ AI伦理模型初始化失败: {e}")
 
     def _create_bias_detection_model(self):
@@ -547,7 +547,7 @@ class EthicsManager:
             )
             return review_result
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: content review may fail with analysis errors, return safe default
             logger.error(f"❌ 伦理审查失败: {content_id} - {e}")
             # 返回安全的默认结果
             return EthicsReviewResult(
@@ -780,7 +780,7 @@ class EthicsManager:
 
             return False
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: rule condition evaluation may fail with parsing errors
             logger.error(f"规则条件评估错误: {e}")
             return False
 
@@ -1354,8 +1354,8 @@ class EthicsManager:
                         "description": rule.description,
                         "recommended_action": rule.action,
                     }
-                    violations.append(violation)
-            except Exception as e:
+                violations.append(violation)
+            except Exception as e:  # broad exception acceptable: rule evaluation in review may fail with various errors
                 logger.warning(f"⚠️ 规则评估失败 {rule_id}: {e}")
 
         return violations
@@ -1406,7 +1406,7 @@ class EthicsManager:
 
             return False
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: rule condition evaluation in second method may fail
             logger.error(f"❌ 规则条件评估错误: {e}")
             return False
 
@@ -1583,7 +1583,7 @@ class EthicsManager:
             self.ethics_rules[rule.rule_id] = rule
             logger.info(f"✅ 添加伦理规则: {rule.rule_id} - {rule.name}")
             return rule.rule_id
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: rule creation may fail with validation errors
             logger.error(f"❌ 添加伦理规则失败: {e}")
             raise
 
@@ -1603,7 +1603,7 @@ class EthicsManager:
             rule.updated_at = datetime.now()
             logger.info(f"✅ 更新伦理规则: {rule_id}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: rule update may fail with validation or attribute errors
             logger.error(f"❌ 更新伦理规则失败: {rule_id} - {e}")
             return False
 

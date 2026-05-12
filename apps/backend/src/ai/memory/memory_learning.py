@@ -115,7 +115,7 @@ class MemoryLearningEngine:
 
             logger.info(f"Recorded feedback for template {template_id}: {feedback}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: feedback recording should not crash the system
             logger.error(f"Error recording feedback: {e}", exc_info=True)
 
     def _analyze_user_preferences(
@@ -277,7 +277,7 @@ class MemoryLearningEngine:
             self.stats["templates_optimized"] = optimized_count
             logger.info(f"Optimized {optimized_count} templates")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: optimization should not crash the system
             logger.error(f"Error optimizing templates: {e}", exc_info=True)
 
     def get_learning_stats(self) -> Dict[str, Any]:

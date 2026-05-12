@@ -300,7 +300,7 @@ class StateMatrix4D:
         for callback in self._change_callbacks:
             try:
                 callback(dimension_name, dim_state.values.copy())
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback errors should not break state updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -335,7 +335,7 @@ class StateMatrix4D:
             if avg >= threshold:
                 try:
                     callback()
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: threshold callbacks should not break checks
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

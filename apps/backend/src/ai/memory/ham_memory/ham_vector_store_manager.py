@@ -18,7 +18,7 @@ class HAMVectorStoreManager:
                     name="ham_memories", metadata={"hnsw:space": "cosine"}
                 )
                 logger.info("ChromaDB collection initialized from external chroma_client.")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: external client initialization should not crash the system
                 logger.error(f"Failed to initialize ChromaDB collection from external client: {e}")
                 self.chroma_collection = None
         else:
@@ -45,7 +45,7 @@ class HAMVectorStoreManager:
                             logger.info(
                                 "ChromaDB collection initialized successfully via VectorMemoryStore."
                             )
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: collection initialization should not crash the manager
                             logger.error(
                                 f"Failed to initialize ChromaDB collection via VectorMemoryStore: {e}"
                             )
@@ -54,7 +54,7 @@ class HAMVectorStoreManager:
                         logger.warning(
                             "VectorMemoryStore client not available for direct ChromaDB collection access."
                         )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: initialization failure should disable vector store gracefully
                     logger.warning(
                         f"VectorMemoryStore initialization failed (likely due to chromadb / numpy issue): {e}. Vector search will be disabled."
                     )
@@ -79,7 +79,7 @@ class HAMVectorStoreManager:
                 logger.debug(
                     f"HAM: Vector / Chroma store disabled, skipping semantic vector storage for {memory_id}."
                 )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: storage failure should be logged gracefully
             logger.error(f"Error storing semantic vector for {memory_id}: {e}")
 
     def close(self):
@@ -87,5 +87,5 @@ class HAMVectorStoreManager:
             try:
                 self.vector_store.client = None
                 logger.info("HAMVectorStoreManager: Vector store client dereferenced successfully.")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: cleanup should not crash the system
                 logger.error(f"HAMVectorStoreManager: Error dereferencing vector store client: {e}")

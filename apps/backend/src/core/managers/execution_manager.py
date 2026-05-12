@@ -146,7 +146,7 @@ class ExecutionManager:
             logger.info("System config not found, using default configuration")
             return ExecutionManagerConfig()
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: config load fallback
             logger.error(f"Failed to load system config: {e}")
             return ExecutionManagerConfig()
 
@@ -197,7 +197,7 @@ class ExecutionManager:
 
                 time.sleep(10)  # 每10秒檢查一次
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: monitoring loop resilience
                 self.logger.error(f"Health monitoring error: {e}")
                 time.sleep(10)
 
@@ -271,7 +271,7 @@ class ExecutionManager:
             recovery_action["status"] = "completed"
             self.logger.info(f"Recovery action completed for {resource_type}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: recovery action resilience
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             recovery_action["status"] = "failed"
 
@@ -335,7 +335,7 @@ class ExecutionManager:
                 else:
                     break
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: command execution resilience
                 self.logger.error(f"Command execution error: {e}")
                 if retry_count < max_retries:
                     retry_count += 1

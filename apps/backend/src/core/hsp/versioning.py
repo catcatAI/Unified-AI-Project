@@ -160,7 +160,7 @@ class HSPVersionManager:
             converted_message = converter(message)
             logger.debug(f"消息版本转换成功: {from_version} -> {to_version}")
             return converted_message
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: version conversion may raise various errors
             logger.error(f"消息版本转换失败: {e}")
             raise
 
@@ -495,7 +495,7 @@ if __name__ == "__main__":
     try:
         converted_message = version_converter.convert_message_with_version_check(test_message)
         logger.info("转换后的消息: ", json.dumps(converted_message, indent=2, ensure_ascii=False))
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test message conversion may fail with version compatibility errors
         logger.info(f"转换失败: {e}")
 
     # 生成兼容性报告

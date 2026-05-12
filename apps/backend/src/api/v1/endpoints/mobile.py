@@ -105,7 +105,7 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)):
             )
         )
         return {"status": "success", "module": module, "enabled": enabled}
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: module control should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return {"status": "error", "message": str(e)}
 

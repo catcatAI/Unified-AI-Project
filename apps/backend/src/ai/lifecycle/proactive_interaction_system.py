@@ -152,7 +152,7 @@ class ProactiveInteractionSystem:
                 await asyncio.sleep(interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in proactive loop: {e}")
                 await asyncio.sleep(1)  # 防止緊密循環
 
@@ -196,7 +196,7 @@ class ProactiveInteractionSystem:
             # 5. 清理隊列
             self._cleanup_queue()
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: proactive processing should not crash the loop
             logger.error(f"Error processing proactive interaction: {e}")
 
     async def _detect_user_state(self) -> Dict[str, Any]:
@@ -322,7 +322,7 @@ class ProactiveInteractionSystem:
                         }
                     )
                     self.stats["total_opportunities"] += 1
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: memory trigger checks should be fault-tolerant
             logger.warning(f"Error checking memory triggers: {e}")
 
     async def _plan_proactive_action(
@@ -366,7 +366,7 @@ class ProactiveInteractionSystem:
 
             return plan
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: planning action should not crash the loop
             logger.error(f"Error planning proactive action: {e}")
             return None
 
@@ -469,12 +469,12 @@ class ProactiveInteractionSystem:
                         }
                     )
                     logger.debug(f"Proactive action sent via WebSocket: {plan.opportunity}")
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
                     logger.warning(f"Failed to send proactive action via WebSocket: {e}")
 
             return {"success": True, "sent": True, "message": plan.message}
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: action execution should be resilient
             logger.error(f"Error executing proactive action: {e}")
             return {"success": False, "error": str(e)}
 

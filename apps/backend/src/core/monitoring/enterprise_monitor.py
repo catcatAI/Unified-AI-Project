@@ -120,7 +120,7 @@ class EnterpriseMonitor:
         for callback in self._alert_callbacks:
             try:
                 callback(alert)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: alert callback safety
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 

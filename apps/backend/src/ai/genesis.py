@@ -93,7 +93,7 @@ class GenesisManager:
                 secret_hex = parts[1]
                 secret_bytes = bytes.fromhex(secret_hex)
                 return secret_bytes.decode("utf-8")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: recovery failures return None, non-blocking
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 

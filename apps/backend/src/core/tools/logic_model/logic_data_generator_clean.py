@@ -67,7 +67,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
         # 安全评估
         result = eval(py_prop_str, {"__builtins__": {}})
         return bool(result)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed propositions
         logger.info(f"评估错误: {e} 原始表达式: {prop_str} Python表达式: {py_prop_str}")
         return None
 

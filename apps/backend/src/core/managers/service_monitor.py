@@ -292,7 +292,7 @@ class ServiceMonitor:
                 # 等待一段时间后继续
                 await asyncio.sleep(10.0)
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: monitoring loop resilience
                 self.logger.log_event(
                     "monitor", "monitoring_error", LogLevel.ERROR, f"Monitoring loop error: {e}"
                 )

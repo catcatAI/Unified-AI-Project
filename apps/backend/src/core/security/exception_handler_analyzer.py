@@ -70,7 +70,7 @@ class ExceptionHandlerAnalyzer:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file read fallback
             logger.error(f"無法讀取文件 {file_path}: {e}")
             return FileAnalysisResult(str(file_path), 0, 0)
 

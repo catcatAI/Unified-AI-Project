@@ -97,7 +97,7 @@ class ModeSwitchManager:
                 await self._check_auto_switch()
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: auto monitoring loop should be resilient to transient errors
                 logger.error(f"Auto monitoring error: {e}")
 
     async def _check_auto_switch(self):
@@ -156,7 +156,7 @@ class ModeSwitchManager:
                 # Perform the switch
                 await self.switch_mode(suggested_mode, auto_initiated=True)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: auto-switch check should be resilient to system info errors
             logger.error(f"Error checking auto-switch: {e}")
 
     async def switch_mode(self, target_mode: str, auto_initiated: bool = False) -> bool:
@@ -240,7 +240,7 @@ class ModeSwitchManager:
 
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: mode transition should be resilient to phase failures
             logger.error(f"Mode transition failed: {e}")
             self.transition_state = ModeTransitionState.FAILED
 

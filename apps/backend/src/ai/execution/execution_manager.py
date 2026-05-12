@@ -186,7 +186,7 @@ class ExecutionManager:
                 temp_logger.warning("System config not found, using default configuration")
                 return ExecutionManagerConfig()
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: config load failure should not crash manager
             temp_logger.error(f"Failed to load system config: {e}")
             return ExecutionManagerConfig()
 
@@ -268,7 +268,7 @@ class ExecutionManager:
                 # Here can add more health check logic
 
                 time.sleep(10)  # Check every 10 seconds
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: monitoring loop must survive any error
                 self.logger.error(f"Error in health monitoring loop: {e}")
 
     def _check_resource_thresholds(self, health: Dict[str, Any]) -> None:
@@ -340,7 +340,7 @@ class ExecutionManager:
 
             recovery_action["status"] = "completed"
             self.logger.info(f"Recovery action completed for {resource_type}")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: recovery action failures must not propagate
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             recovery_action["status"] = "failed"
 
@@ -404,7 +404,7 @@ class ExecutionManager:
                 else:
                     break
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: command execution errors handled with retry
                 self.logger.error(f"Command execution error: {e}")
                 if retry_count < max_retries:
                     retry_count += 1

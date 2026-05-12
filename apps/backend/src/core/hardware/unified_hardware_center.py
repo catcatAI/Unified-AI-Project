@@ -238,7 +238,7 @@ class HardwareDetector:
                 flags=flags,
             )
             return cpu_info
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: proc/cpuinfo may not exist on all systems
             logger.error(f"CPU detection failed: {e}")
             return CPUInfo()
 
@@ -281,11 +281,11 @@ class HardwareDetector:
                                 vendor="NVIDIA",
                             )
                         )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: lspci may not exist or Intel parsing may fail
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
-        # Intel (via lspci)
+        # AMD (via sysfs)
         if not gpus:
             try:
                 result = subprocess.run(
@@ -295,7 +295,7 @@ class HardwareDetector:
                     gpus.append(
                         GPUInfo(name="Intel UHD Graphics", memory_total_mb=2048, vendor="Intel")
                     )
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: Intel GPU detection via lspci may fail with parsing errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -307,7 +307,7 @@ class HardwareDetector:
                         if "card" in d:
                             gpus.append(GPUInfo(name="AMD GPU", memory_total_mb=4096, vendor="AMD"))
                             break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: AMD GPU detection via sysfs may fail with file system errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -324,7 +324,7 @@ class HardwareDetector:
                 used_mb=int(mem.used / 1024 / 1024),
                 percent_used=mem.percent,
             )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: psutil memory detection may fail on some platforms
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return MemoryInfo()
 
@@ -772,7 +772,7 @@ class UnifiedHardwareCenter:
                 self.loaded_models[model_name] = resource.type.value
                 logger.info(f"✓ {model_name} loaded on {resource.name}")
                 return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: httpx operations may fail with various network/HTTP errors
             logger.error(f"Model load failed: {e}")
             return False
 
@@ -817,7 +817,7 @@ class UnifiedHardwareCenter:
                         "stats": {"duration_ms": data.get("total_duration", 0) / 1000000},
                     }
                 return {"success": False, "error": response.status_code}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: httpx request may fail with network errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 

@@ -245,7 +245,7 @@ class AutonomicNervousSystem:
             for callback in self._state_change_callbacks:
                 try:
                     callback(self._last_state, current_state)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: state change callbacks should not block detection
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -255,7 +255,7 @@ class AutonomicNervousSystem:
         for callback in self._arousal_callbacks:
             try:
                 callback(self.arousal_level)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: arousal callbacks should not block updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 

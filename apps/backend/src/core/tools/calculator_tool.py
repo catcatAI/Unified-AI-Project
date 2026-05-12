@@ -29,7 +29,7 @@ def eval_expr(expr: str) -> Any:
     try:
         node = ast.parse(expr, mode="eval")
         return _eval(node.body)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: safe eval should not crash on invalid expressions
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
 

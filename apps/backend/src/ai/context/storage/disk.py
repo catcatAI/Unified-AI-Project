@@ -72,7 +72,7 @@ class DiskStorage(Storage):
 
             logger.debug(f"Context {context.context_id} saved to disk storage at {file_path}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to save context {context.context_id} to disk storage, {e}")
             return False
 
@@ -91,7 +91,7 @@ class DiskStorage(Storage):
             context = self._dict_to_context(context_data)
             logger.debug(f"Context {context_id} loaded from disk storage")
             return context
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to load context {context_id} from disk storage, {e}")
             return None
 
@@ -107,7 +107,7 @@ class DiskStorage(Storage):
             else:
                 logger.debug(f"Context {context_id} not found in disk storage for deletion")
                 return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to delete context {context_id} from disk storage, {e}")
             return False
 
@@ -128,7 +128,7 @@ class DiskStorage(Storage):
 
             logger.debug(f"Listed {len(context_ids)} contexts from disk storage")
             return context_ids
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to list contexts from disk storage, {e}")
             return []
 
@@ -143,7 +143,7 @@ class DiskStorage(Storage):
             else:
                 logger.debug(f"Context {context_id} not found in disk storage for metadata update")
                 return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to update context {context_id} metadata in disk storage, {e}")
             return False
 
@@ -164,6 +164,6 @@ class DiskStorage(Storage):
                 "total_size_bytes": total_size,
                 "storage_dir": self.storage_dir,
             }
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get storage info, {e}")
             return {}

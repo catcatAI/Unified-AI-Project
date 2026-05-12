@@ -88,7 +88,7 @@ class LogicTool:
                 }
                 result = eval(logic_statement, {"__builtins__": None}, allowed_names)
                 return {"success": True, "result": result, "statement": logic_statement}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: logic evaluation should not crash on invalid statements
             logger.error(f"邏輯評估錯誤: {e}, 語句: {logic_statement}")
             return {"success": False, "error": str(e), "statement": logic_statement}
 

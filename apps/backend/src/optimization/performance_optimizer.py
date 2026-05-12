@@ -95,7 +95,7 @@ class PerformanceOptimizer:
                 return self._create_default_config()
             with open(config_path, "r", encoding="utf-8") as f:
                 return yaml.safe_load(f)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure config loading errors fall back to defaults gracefully
             logger.warning(f"加载性能配置失败, 使用默认配置: {e}", exc_info=True)
             return self._create_default_config()
 
@@ -144,7 +144,7 @@ class PerformanceOptimizer:
                     self.metrics_history.pop(0)
                 self._check_resource_thresholds(metrics)
                 await asyncio.sleep(check_interval)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: ensure monitoring loop continues on collection errors
                 logger.error(f"性能监控错误: {e}", exc_info=True)
                 await asyncio.sleep(check_interval)
 
@@ -238,5 +238,5 @@ if __name__ == "__main__":
         recommendations = optimizer.get_resource_recommendations()
         print(f"资源建议: {recommendations}")
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: ensure test errors are logged and don't crash
         logger.error(f"测试过程中发生错误: {e}", exc_info=True)

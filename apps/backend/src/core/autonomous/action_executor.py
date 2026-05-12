@@ -347,7 +347,7 @@ class ActionExecutor:
             for callback in self._pre_execution_callbacks:
                 try:
                     callback(action)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not break action execution
                     logger.warning(f"Pre-execution callback failed: {e}")
 
             # Apply biological strain if possible
@@ -455,16 +455,16 @@ class ActionExecutor:
                 # Record failure to dynamic params
                 self._record_action_outcome(action, success=False)
 
-            action.completed_at = datetime.now()
+                action.completed_at = datetime.now()
 
             # Post-execution callbacks
             for callback in self._post_execution_callbacks:
                 try:
                     callback(action, action.result)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not break execution loop
                     logger.warning(f"Post-execution callback failed: {e}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: action execution must be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             action.status = ActionStatus.FAILED
 
@@ -539,7 +539,7 @@ class ActionExecutor:
             for callback in self._status_change_callbacks[action.action_id]:
                 try:
                     callback(action.status)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: status callbacks should not break execution
                     logger.warning(
                         f"Status change callback failed for action {action.action_id}: {e}"
                     )
@@ -732,7 +732,7 @@ class ActionExecutor:
             )
             return success_rate
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: spatial calculation failure should fallback to default
             logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback 0.85: {e}")
             return 0.85
 
@@ -745,7 +745,7 @@ class ActionExecutor:
                     success=success,
                     intensity=0.5 if action.priority.level <= 1 else 0.3,
                 )
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: recording failure should not affect action result
                 logger.warning(f"[ActionExecutor] Failed to record outcome: {e}")
 
     async def handle_autonomous_action(
@@ -825,7 +825,7 @@ class ActionExecutor:
                     execution_time_ms=execution_time,
                 )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: fallback execution should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
 
@@ -948,7 +948,7 @@ class ActionExecutor:
             try:
                 if not validator(result):
                     return False, f"Result validation failed: {validator.__name__}"
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: validator errors should not break validation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 return False, f"Validation error: {str(e)}"
 

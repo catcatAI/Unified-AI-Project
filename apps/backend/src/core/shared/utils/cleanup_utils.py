@@ -42,7 +42,7 @@ def cleanup_temp_files(project_root: Path = Path(".")):
                 elif file_path.is_dir():
                     shutil.rmtree(file_path)
                     total_deleted += 1
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: file deletion may fail due to permissions or lock
                 logger.warning(f"Failed to delete {file_path}: {e}")
 
     logger.info(f"Cleaned up {total_deleted} items")
@@ -59,7 +59,7 @@ def cleanup_old_logs(log_dir: Path, days: int = 7):
             if log_file.stat().st_mtime < cutoff.timestamp():
                 log_file.unlink()
                 total_deleted += 1
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: log file deletion may fail due to permissions or lock
             logger.warning(f"Failed to delete {log_file}: {e}")
 
     logger.info(f"Cleaned up {total_deleted} old log files")

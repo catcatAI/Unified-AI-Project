@@ -41,7 +41,7 @@ class ABCKeyManager:
             try:
                 with open(self.key_file, "r") as f:
                     return json.load(f)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: key file may be corrupted or have unexpected format
                 logger.error(f"讀取密鑰文件失敗: {e}")
 
         # 生成新密鑰
@@ -114,7 +114,7 @@ class SecurityTrayMonitor:
                 self.icon.notify(
                     f"Angela 後端服務已啟動 (PID: {self.backend_process.pid})", "系統狀態"
                 )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: backend process launch may fail for many reasons
             logger.error(f"啟動後端服務失敗: {e}")
             if self.icon:
                 self.icon.notify(f"啟動失敗: {e}", "錯誤")
@@ -150,7 +150,7 @@ class SecurityTrayMonitor:
             logger.info("✅ 後端服務已關閉")
             if self.icon:
                 self.icon.notify("Angela 後端服務已停止", "系統狀態")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: process termination may fail in various scenarios
             logger.error(f"關閉後端服務失敗: {e}")
         finally:
             if hasattr(self, "log_stream") and self.log_stream:
@@ -198,7 +198,7 @@ class SecurityTrayMonitor:
             icon.notify("已在終端生成配對 QR Code", "Angela 行動端配對")
         except ImportError:
             icon.notify("請先安裝 qrcode 庫: pip install qrcode", "功能受限")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: qr generation may fail for various reasons
             logger.error(f"生成 QR Code 失敗: {e}")
 
     def update_menu(self):

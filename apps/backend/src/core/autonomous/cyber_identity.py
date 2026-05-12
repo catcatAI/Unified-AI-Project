@@ -356,7 +356,7 @@ class CyberIdentity:
                 for callback in self._milestone_callbacks:
                     try:
                         callback(milestone)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: milestone callbacks should not block growth recording
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -376,7 +376,7 @@ class CyberIdentity:
                 for callback in self._growth_callbacks[aspect]:
                     try:
                         callback(growth_record.previous_level, growth_record.level)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: growth callbacks should not block updates
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 

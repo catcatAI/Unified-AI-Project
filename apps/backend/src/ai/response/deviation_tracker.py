@@ -276,7 +276,7 @@ class DeviationTracker:
 
             logger.debug(f"Persisted metrics to {log_file}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: persistence failures are non-critical, log and continue
             logger.warning(f"Failed to persist metrics: {e}")
 
     def generate_report(self) -> str:
@@ -348,5 +348,5 @@ class DeviationTracker:
 
             logger.info(f"Exported metrics to {filepath}")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: export failures return False to signal failure
             logger.error(f"Failed to export metrics: {e}")

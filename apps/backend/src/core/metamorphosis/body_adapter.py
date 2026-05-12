@@ -215,7 +215,7 @@ class BodyAdapter:
 
             return True, adapted_state
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: state transfer resilience
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             record.mark_failed(str(e))
 

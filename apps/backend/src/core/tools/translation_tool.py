@@ -38,7 +38,7 @@ def _load_dictionary():
         except json.JSONDecodeError:
             logger.info(f"错误: 无法解码JSON {DICTIONARY_PATH}")
             _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: dictionary loading errors should use empty dict fallback
             logger.info(f"加载字典时出错: {e}")
             _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}}
 

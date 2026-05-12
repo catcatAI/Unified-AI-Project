@@ -121,7 +121,7 @@ class UnifiedControlCenter:
             self.components["emotion_system"] = EmotionSystem(f"{self.system_id}_emotion")
 
             logger.info("✅ All core components initialized successfully.")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: component init failures must propagate
             logger.error(f"❌ Error initializing components: {e}")
             raise
 
@@ -141,7 +141,7 @@ class UnifiedControlCenter:
             try:
                 await hsp_connector.connect()
                 logger.info("HSP Connector connected")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: connection failures are non-fatal
                 logger.warning(f"HSP Connector connection failed: {e}")
 
         logger.info("✅ All async components initialized successfully.")
@@ -248,7 +248,7 @@ class UnifiedControlCenter:
                 "lis_anomalies": [a["anomaly_type"] for a in anomalies],
             }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task processing errors must not crash coordinator
             logger.error(f"❌ Error processing task {task_id}: {e}")
             return {
                 "status": "error",
@@ -346,7 +346,7 @@ class UnifiedControlCenter:
                 logger.info(f"Worker [{worker_id}] finished task [{task_id}]")
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: worker loop must survive any task error
                 logger.error(f"Worker [{worker_id}] encountered error: {e}")
                 await asyncio.sleep(1)  # Prevent tight loop on persistent errors
 
@@ -446,7 +446,7 @@ class UnifiedControlCenter:
                         raw_data=f"用戶: {user_message}\nAngela: {response_text}",
                         data_type="conversation",
                     )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: HAM storage failures are non-fatal
                     logger.warning(f"Failed to store conversation to HAM: {e}")
 
             return {
@@ -459,7 +459,7 @@ class UnifiedControlCenter:
                 "timestamp": datetime.now().isoformat(),
             }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: dialogue generation errors return error response
             logger.error(f"Error generating dialogue response: {e}")
             return {
                 "status": "error",

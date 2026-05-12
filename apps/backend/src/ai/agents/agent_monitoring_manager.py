@@ -110,7 +110,7 @@ class AgentMonitoringManager:
                 await asyncio.sleep(self.monitoring_interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: monitoring loop wraps all collection failures
                 logger.error(f"Error in monitoring loop: {e}")
 
     async def _collect_health_metrics(self) -> None:
@@ -143,8 +143,7 @@ class AgentMonitoringManager:
                             )
                             report.error_count += 1
                             report.last_error = "Simulated task failure"
-
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: metrics collection wraps all agent report failures
                     logger.error(f"Error collecting metrics for agent {agent_id}: {e}")
 
     async def _check_agent_status(self) -> None:

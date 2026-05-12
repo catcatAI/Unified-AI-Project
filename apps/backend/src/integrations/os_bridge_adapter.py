@@ -29,7 +29,7 @@ class OSBridgeAdapter:
             if result.stdout:
                 return json.loads(result.stdout)
             return {"status": "error", "message": result.stderr}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: catch all bridge execution errors and return safe error response
             return {"status": "error", "message": str(e)}
 
     def get_summary(self):

@@ -93,7 +93,7 @@ class AngelaModelCore:
                     self.motor.execute_command(best_pose, bio_state)
                 
                 await asyncio.sleep(2.0) # 代謝頻率：2秒一次
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: metabolic loop should be resilient to errors
                 logger.error(f"❌ [Model-Core] Metabolic loop error: {e}")
                 await asyncio.sleep(5.0)
 

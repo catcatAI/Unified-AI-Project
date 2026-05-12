@@ -171,7 +171,7 @@ class IOIntelligenceOrchestrator:
                 # 性能预测模型
                 self.ml_models["performance_predictor"] = self._create_performance_model()
                 logger.info("✅ AI模型初始化完成")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: AI model initialization may fail with sklearn import or configuration errors
                 logger.warning(f"⚠️ AI模型初始化失败, {e}")
 
     def _create_performance_model(self):
@@ -232,7 +232,7 @@ class IOIntelligenceOrchestrator:
             logger.info(f"✅ 表单注册成功: {form_id} - {form.name}")
             return form_id
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: form registration may fail with validation or state errors
             logger.error(f"❌ 表单注册失败: {e}")
             raise
 
@@ -672,7 +672,7 @@ class IOIntelligenceOrchestrator:
                                         }
                                     )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: AI optimization generation may fail with clustering or numpy errors
             logger.warning(f"⚠️ AI优化建议生成失败: {e}")
 
         return suggestions

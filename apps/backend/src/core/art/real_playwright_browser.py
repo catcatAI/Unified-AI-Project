@@ -78,7 +78,7 @@ class AngelaRealBrowser:
             logger.info("✅ 浏览器已初始化")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: browser launch may fail for various reasons
             logger.error(f"❌ 浏览器初始化失败: {e}")
             return False
 
@@ -129,7 +129,7 @@ class AngelaRealBrowser:
                 techniques=techniques,
             )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: page navigation may fail or content extraction errors
             logger.error(f"❌ 教程提取失败: {e}")
             return None
 
@@ -181,7 +181,7 @@ class AngelaRealBrowser:
 
             logger.info(f"✅ 收集到 {len(artworks)} 个作品")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: artwork collection should be resilient to extraction errors
             logger.error(f"❌ 作品收集失败: {e}")
 
         return artworks
@@ -216,7 +216,7 @@ class AngelaRealBrowser:
 
             return analysis
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: style analysis should be resilient to page errors
             logger.error(f"❌ 风格分析失败: {e}")
             return {"error": str(e)}
 
@@ -258,7 +258,7 @@ class AngelaRealBrowser:
 
             return results
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: search should be resilient to network errors
             logger.error(f"❌ 搜索失败: {e}")
             return []
 
@@ -315,7 +315,7 @@ async def test_browser():
         await browser.close()
         logger.info("\n✅ 测试完成!")
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: browser test should handle initialization failures gracefully
         logger.info(f"❌ 测试失败: {e}")
         import traceback
 

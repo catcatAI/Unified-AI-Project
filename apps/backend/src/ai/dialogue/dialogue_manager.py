@@ -155,7 +155,7 @@ class DialogueManager:
                 )
             else:
                 response_text = f"{ai_name}: I'm sorry, I encountered an error while trying to understand your request."
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: tool dispatcher errors should not crash dialogue
             logger.error(f"Error dispatching tool: {e}")
             response_text = (
                 f"{ai_name}: I apologize, but something went wrong while processing your request."
@@ -250,7 +250,7 @@ class DialogueManager:
                     return f"{llm_response.content}"
 
             return await self.generate_contextual_response(user_input, ai_name, user_context)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: fallback to contextual response on any LLM error
             logger.error(f"Error in intelligent response generation: {e}")
             return await self.generate_contextual_response(user_input, ai_name, "")
 
@@ -336,6 +336,6 @@ class DialogueManager:
                 self.pending_hsp_task_requests.pop(correlation_id, None)
                 return ("Failed to send task request via HSP", None)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: HSP dispatch must not crash on any error
             logger.error(f"Error dispatching HSP task: {e}")
             return (f"Error dispatching task: {str(e)}", None)

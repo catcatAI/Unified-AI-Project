@@ -162,7 +162,7 @@ class MemoryNeuroplasticityBridge:
                 for callback in self._forgetting_callbacks:
                     try:
                         callback(memory_id, retention)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: forgetting callbacks should not break the loop
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -337,7 +337,7 @@ class MemoryNeuroplasticityBridge:
                 for callback in self._consolidation_callbacks:
                     try:
                         callback(mid)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: consolidation callbacks should not break consolidation
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -606,7 +606,7 @@ class MemoryNeuroplasticityBridge:
                 for callback in self._consolidation_callbacks:
                     try:
                         callback(memory_id)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: callback errors should not break consolidation
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -630,7 +630,7 @@ class MemoryNeuroplasticityBridge:
         except ValueError as e:
             results["error"] = str(e)
             results["error_type"] = "ValueError"
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: memory operations should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["error"] = str(e)
 
@@ -827,7 +827,7 @@ class MemoryNeuroplasticityBridge:
         except ValueError as e:
             results["error"] = str(e)
             results["error_type"] = "ValueError"
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: memory reinforcement should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["error"] = str(e)
 

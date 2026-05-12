@@ -346,7 +346,7 @@ class VisualManager:
                 self.self_generation = SelfGeneration()
                 await self.self_generation.initialize()
                 logger.info("Self generation system initialized")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: optional subsystem may fail to initialize
                 logger.warning(f"Self generation initialization failed: {e}")
                 self.self_generation = None
 
@@ -534,7 +534,7 @@ class VisualManager:
 
             except asyncio.TimeoutError:
                 continue
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: background preload may encounter various errors
                 logger.error(f"Error preloading asset: {e}")
 
     def register_asset(
@@ -571,7 +571,7 @@ class VisualManager:
                 await self._update_eye_tracking()
                 await self._update_metrics()
                 await asyncio.sleep(1.0 / 60)  # 60 FPS update
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: background update loop must continue
                 logger.error(f"Error in update loop: {e}")
 
     async def _render_loop(self):
@@ -589,7 +589,7 @@ class VisualManager:
                     self._fps_time = current_time
 
                 await asyncio.sleep(1.0 / self.config.performance.target_fps)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: background render loop must continue
                 logger.error(f"Error in render loop: {e}")
 
     async def _update_expression_blending(self):
@@ -613,7 +613,7 @@ class VisualManager:
                 for callback in self._expression_callbacks:
                     try:
                         callback(self.current_presentation.current_expression)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: callback errors should not break update loop
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -680,7 +680,7 @@ class VisualManager:
         for callback in self._motion_callbacks:
             try:
                 callback(motion)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback errors should not break motion playback
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -853,7 +853,7 @@ class VisualManager:
             for callback in self._state_callbacks:
                 try:
                     callback(state)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not break state transitions
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

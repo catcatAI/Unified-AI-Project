@@ -243,7 +243,7 @@ class AudioSystem:
             for callback in self._state_callbacks:
                 try:
                     callback(old_state, new_state)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: state callback errors should not block state changes
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -285,7 +285,7 @@ class AudioSystem:
             self._set_state(AudioState.IDLE)
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: TTS errors should not crash the speak flow
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self._set_state(AudioState.IDLE)
 
@@ -421,7 +421,7 @@ class AudioSystem:
                     for callback in self.lyrics_callbacks:
                         try:
                             callback(current_line, next_line)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: lyrics callback errors should not break sync
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
                             pass
 
@@ -441,7 +441,7 @@ class AudioSystem:
         for callback in self.subtitle_callbacks:
             try:
                 callback(subtitle)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: subtitle callback errors should not break display
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 

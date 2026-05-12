@@ -252,7 +252,7 @@ class ModelEnsemble:
                 messages=messages, model_id=model_id, max_tokens=2048
             )
             return response
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: model query wraps all API and network failures
             logger.error(f"Error querying model {model_id}: {e}")
             raise
 
@@ -276,7 +276,8 @@ class ModelEnsemble:
                 ):
                     yield chunk
                 return  # Successful streaming
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: streaming ensemble wraps all model stream failures
+                logger.warning(f"Streaming failed for {model_id}: {e}")
                 logger.warning(f"Streaming failed for {model_id}: {e}")
                 continue
 

@@ -229,7 +229,7 @@ class ActiveCognitionFormula:
         for callback in self._stress_callbacks:
             try:
                 callback(vector)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: user-defined callback, prevent crash
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -414,7 +414,7 @@ class ActiveCognitionFormula:
                 for callback in self._threshold_callbacks:
                     try:
                         callback(a_c, True)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: user callback, prevent crash
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -423,7 +423,7 @@ class ActiveCognitionFormula:
                 for callback in self._threshold_callbacks:
                     try:
                         callback(a_c, False)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: user callback, prevent crash
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -484,7 +484,7 @@ class ActiveCognitionFormula:
         for callback in self._construction_callbacks:
             try:
                 callback(construction)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: user callback, prevent crash
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 

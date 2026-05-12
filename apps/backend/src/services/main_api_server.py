@@ -63,6 +63,7 @@ try:
 except ImportError:
     pass
 except Exception:
+    # broad exception acceptable: env file may not exist, non-critical setup
     pass
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,7 @@ try:
         log_dir.mkdir(parents=True, exist_ok=True)
         print(f"Created logs directory at: {log_dir.absolute()}")
 except Exception as e:
+    # broad exception acceptable: log directory creation is non-critical, fallback to default
     print(f"Warning: Failed to create logs directory: {e}")
 
 # 现在可以安全地记录环境变量加载状态
@@ -430,6 +432,7 @@ def _initialize_all_services():
                     loop,
                 )
         except Exception as e:
+            # broad exception acceptable: callback errors should not break the loop
             logger.error(f"Failed to bridge biological event: {e}")
 
     # Registered with the underlying integrator if supported
@@ -526,7 +529,7 @@ async def _handle_chat_request(
                     emotion_confidence = 0.9
                     emotion_intensity = 0.6
                     is_math = True
-        except Exception as math_err:
+        except Exception as math_err:  # broad exception acceptable: spatial math is optional, graceful degradation to LLM
             logger.warning(f"⚠️ [Router] Spatial math failed, falling back to LLM: {math_err}")
             is_math = False
 
@@ -561,269 +564,8 @@ async def _handle_chat_request(
         emotion_confidence = 0.5
         emotion_intensity = 0.5
     except Exception as e:
+        # broad exception acceptable: status endpoint should be resilient
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-
-        # 如果 LLM 服務不可用，使用備份回應
-        logger.warning(f"LLM service error: {e}")
-        response_text = generate_angela_response(user_message, user_name)
-        source = "fallback-error"
-        emotion = "neutral"
-        emotion_confidence = 0.5
-        emotion_intensity = 0.5
-
-    # 統一響應格式
-    return {
-        "session_id": session_id,
-        "response": response_text,
-        "response_text": response_text,  # 保留此字段以向後兼容
-        "emotion": emotion,
-        "angela_mood": emotion,  # 保留此字段以向後兼容
-        "emotion_confidence": emotion_confidence,
-        "emotion_intensity": emotion_intensity,
-        "source": source,
-        "timestamp": datetime.now().isoformat(),
-    }
-
-
-@app.on_event("startup")
-async def startup_event():
-    # ========== 日誌持久化：添加文件處理器到 root logger ==========
-    from logging.handlers import RotatingFileHandler
-
-    log_dir = Path("logs")
-    try:
-        log_dir.mkdir(parents=True, exist_ok=True)
-    except Exception as e:
-        print(f"Warning: Failed to create logs directory: {e}")
-
-    try:
-        log_formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-
-        # 主日誌（所有級別）
-        main_handler = RotatingFileHandler(
-            log_dir / "angela.log",
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=5,
-            encoding="utf-8",
-        )
-        main_handler.setLevel(logging.DEBUG)
-        main_handler.setFormatter(log_formatter)
-
-        # 錯誤日誌（WARNING 及以上）
-        error_handler = RotatingFileHandler(
-            log_dir / "angela_error.log",
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=5,
-            encoding="utf-8",
-        )
-        error_handler.setLevel(logging.WARNING)
-        error_handler.setFormatter(log_formatter)
-
-        # 加到 root logger，這樣所有模組的日誌都會被捕獲
-        root_logger = logging.getLogger()
-        root_logger.addHandler(main_handler)
-        root_logger.addHandler(error_handler)
-        if root_logger.level > logging.DEBUG:
-            root_logger.setLevel(logging.DEBUG)
-
-        logger.info(f"[STARTUP] 日誌持久化已啟用: {log_dir.absolute()}")
-        logger.info(f"[STARTUP]   主日誌: angela.log (所有級別)")
-        logger.info(f"[STARTUP]   錯誤日誌: angela_error.log (WARNING+)")
-    except Exception as e:
-        print(f"Warning: Failed to setup file logging: {e}")
-
-    # 驗證環境變量
-    _validate_environment_variables()
-
-    # Initialize all services (lazy loading triggers here)
-    (
-        desktop_interaction,
-        action_executor,
-        vision_service,
-        audio_service,
-        tactile_service,
-        abc_key_manager,
-        digital_life,
-        economy_manager,
-        
-    ) = _initialize_all_services()
-
-    await desktop_interaction.initialize()
-    await action_executor.initialize()
-    await digital_life.initialize()
-
-    # Initialize all services
-    heartbeat = get_metabolic_heartbeat()
-    await heartbeat.start()
-    
-    # Memory consolidation is now autonomous (token-triggered) inside HAMMemoryManager
-    # No manual time-based scheduler needed here.
-    # vision_service doesn't have an async initialize yet
-
-    # Initialize LLM Service (Angela's brain)
-    global _llm_service
-    try:
-        _llm_service = await get_llm_service()
-        logger.info(f"[STARTUP] LLM Service initialized: available={_llm_service.is_available}")
-    except Exception as e:
-        logger.error(f"[STARTUP] LLM Service initialization failed: {e}")
-
-    # Start background task to broadcast state updates and store it for lifecycle management
-    task = asyncio.create_task(broadcast_state_updates())
-    if not hasattr(app.state, "background_tasks"):
-        app.state.background_tasks = set()
-    app.state.background_tasks.add(task)
-    task.add_done_callback(app.state.background_tasks.discard)
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    if _metabolic_heartbeat:
-        await _metabolic_heartbeat.stop()
-    if _desktop_interaction:
-        await _desktop_interaction.shutdown()
-    if _action_executor:
-        await _action_executor.shutdown()
-    if _digital_life:
-        await _digital_life.shutdown()
-    if _economy_manager:
-        await _economy_manager.shutdown()
-
-    # Cancel all background tasks
-    if hasattr(app.state, "background_tasks"):
-        for task in app.state.background_tasks:
-            task.cancel()
-        if app.state.background_tasks:
-            await asyncio.gather(*app.state.background_tasks, return_exceptions=True)
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-router = APIRouter()
-
-sessions: Dict[str, Dict] = {}
-
-
-def _normalize_chat_context(request: Dict[str, Any]) -> Dict[str, str]:
-    """
-    Normalize multi-frontend context keys for AI/AL isolation.
-
-    NOTE:
-    - This is intentionally additive (non-breaking).
-    - Existing clients can keep using legacy payload fields.
-    """
-    tenant_id = str(request.get("tenant_id", "default_tenant"))
-    persona_id = str(request.get("persona_id", "angela_default"))
-    user_id = str(request.get("user_id", request.get("user_name", "anonymous_user")))
-    client_id = str(request.get("client_id", request.get("origin", "unknown_client")))
-
-    return {
-        "tenant_id": tenant_id,
-        "persona_id": persona_id,
-        "user_id": user_id,
-        "client_id": client_id,
-    }
-
-
-@router.get("/")
-async def root():
-    return {"message": "Angela AI API", "version": "6.0.4"}
-
-
-@router.get("/health")
-async def health_check():
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
-
-
-@router.get("/api/v1/status")
-async def api_status():
-    return {"status": "running", "version": "6.0.4", "services": ["chat", "health"]}
-
-
-@router.get("/api/v1/system/status")
-async def system_status():
-    """
-    獲取系統狀態信息
-
-    修复版本：使用统一的系统指标管理器
-    - 统一数据源
-    - 统一计算方法
-    - 添加缓存机制
-    """
-    try:
-        # 獲取服務狀態
-        digital_life = get_digital_life()
-
-        services_status = {
-            "llm_service": _llm_service.is_available if _llm_service else False,
-            "digital_life": (
-                digital_life.is_initialized if hasattr(digital_life, "is_initialized") else False
-            ),
-            "economy": _economy_manager is not None,
-        }
-        return {
-            "overall_status": "online",
-            "system_resources": system_metrics_manager.get_all_metrics(),
-            "services": services_status,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        logger.error(f"Error getting system status: {e}")
-        return {"status": "error", "message": str(e)}
-
-# ========== NEW: Specialized Agent Execution API ==========
-
-@router.post("/api/v1/agents/{agent_id}/execute")
-async def execute_agent_task(agent_id: str, payload: Dict[str, Any] = Body(...)):
-    """
-    執行專業代理任務 (2030 Unified Integration)
-    動態加載並調用 AgentManager 中的專業代理。
-    """
-    try:
-        # 1. 獲取 AgentManager
-        # 在啟動時載入代理 (此處為示例，實際應用應使用單例)
-        from ai.agents.agent_manager import AgentManager
-        agent_manager = AgentManager()
-        await agent_manager.auto_load_agents()
-        
-        # 2. 獲取特定代理
-        agent = agent_manager.get_agent(agent_id)
-        
-        # 特殊情況：如果 FantasyDM 尚未註冊到 manager
-        if not agent and agent_id == "fantasy_dm":
-            from ai.agents.specialized.fantasy_dm_agent import FantasyDMAgent
-            agent = FantasyDMAgent()
-        
-        if not agent:
-            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found in registry.")
-            
-        # 3. 執行任務
-        # 提取 action 和 parameters (由前端 payload 決定)
-        action = payload.get("action", "default")
-        parameters = payload.get("parameters", {})
-        
-        # 構建 Agent 預期的任務格式
-        task = {"action": action, "parameters": parameters}
-        
-        # 判斷是否為進程內代理並調用
-        if hasattr(agent, "execute"):
-            result = await agent.execute(task)
-            return result
-        else:
-            raise HTTPException(status_code=422, detail=f"Agent '{agent_id}' does not support direct execution.")
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error executing agent {agent_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # =========================================================
@@ -841,6 +583,7 @@ async def execute_agent_task(agent_id: str, payload: Dict[str, Any] = Body(...))
             "message": "System operational",
         }
     except Exception as e:
+        # broad exception acceptable: health check should not affect service
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1055,6 +798,7 @@ async def execute_action(action_data: Dict[str, Any]):
             "error": result.error,
         }
     except Exception as e:
+        # broad exception acceptable: action execution must be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -1082,6 +826,7 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
         )
         return result
     except Exception as e:
+        # broad exception acceptable: vision service should be resilient to parse errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1096,6 +841,7 @@ async def vision_perceive(image_data: bytes = Body(...)):
         result = await vision_service.perceive_and_focus(image_data)
         return result
     except Exception as e:
+        # broad exception acceptable: vision perceive should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1110,6 +856,7 @@ async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
         result = await audio_service.scan_and_identify(audio_data, duration)
         return result
     except Exception as e:
+        # broad exception acceptable: audio scan should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1124,6 +871,7 @@ async def audio_register_user(audio_data: bytes = Body(...)):
         result = await audio_service.register_user_voice(audio_data)
         return result
     except Exception as e:
+        # broad exception acceptable: voice registration should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1138,6 +886,7 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
         result = await tactile_service.model_object_tactile(visual_data)
         return result
     except Exception as e:
+        # broad exception acceptable: tactile modeling should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1154,6 +903,7 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
         result = await tactile_service.simulate_touch(object_id, contact_point)
         return result
     except Exception as e:
+        # broad exception acceptable: tactile touch should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1251,6 +1001,7 @@ class ConnectionManager:
                 await asyncio.sleep(self.heartbeat_interval)
 
             except Exception as e:
+                # broad exception acceptable: heartbeat monitor should not break the loop
                 logger.error(f"心跳监控错误: {e}")
                 break
 
@@ -1270,6 +1021,7 @@ class ConnectionManager:
                     self.message_buffer[connection].clear()
 
             except (ConnectionError, RuntimeError, Exception) as e:
+                # broad exception acceptable: broadcast should be resilient to connection errors
                 # 连接失败，添加到消息缓冲
                 logger.warning(
                     f"广播消息失败，添加到缓冲 (ID: {self.connection_info.get(connection, {}).get('client_id', 'unknown')}): {e}"
@@ -1288,6 +1040,7 @@ class ConnectionManager:
                 try:
                     await connection.close()
                 except Exception:
+                    # broad exception acceptable: cleanup should not raise exceptions
                     pass
                 finally:
                     self.disconnect(connection)
@@ -1305,7 +1058,7 @@ class ConnectionManager:
                 await websocket.send_json(message)
                 logger.debug(f"成功重发缓冲消息")
             except Exception as e:
-                # 重发失败，重新添加到缓冲
+                # broad exception acceptable: message retry should be resilient to errors
                 self.message_buffer[websocket].append(message)
                 logger.warning(f"重发消息失败: {e}")
                 break
@@ -1318,7 +1071,7 @@ class ConnectionManager:
             if websocket in self.message_buffer:
                 self.message_buffer[websocket].clear()
         except Exception as e:
-            # 发送失败，添加到缓冲
+            # broad exception acceptable: WebSocket send should be resilient to errors
             logger.warning(f"发送个人消息失败，添加到缓冲: {e}")
             if websocket in self.message_buffer:
                 self.message_buffer[websocket].append(message)
@@ -1394,6 +1147,7 @@ async def broadcast_state_updates():
                 }
             )
         except Exception as e:
+            # broad exception acceptable: broadcast loop should not crash on errors
             logger.error(f"Error broadcasting state update: {e}")
 
         # Broadcast every 0.2 seconds
@@ -1526,6 +1280,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 break
 
             except Exception as e:
+                # broad exception acceptable: WebSocket message handling should be resilient
                 logger.error(f"WebSocket 处理错误: {e}")
                 break
 

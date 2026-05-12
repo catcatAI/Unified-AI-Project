@@ -52,7 +52,7 @@ class HAMCoreStorage:
                 )
                 core_memory_store = {}
                 next_memory_id = 0
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: loading should start with empty memory on failure
                 logger.error(
                     f"Error loading core memory from file {self.core_storage_filepath}: {e}. Starting with empty memory."
                 )
@@ -97,7 +97,7 @@ class HAMCoreStorage:
                 f.write(encrypted_data)
             logger.debug(f"Core memory saved to {self.core_storage_filepath}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: save failure should return False gracefully
             logger.error(f"Error saving core memory to file {self.core_storage_filepath}: {e}")
             return False
 

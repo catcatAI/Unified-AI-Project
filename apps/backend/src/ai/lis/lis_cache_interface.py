@@ -92,7 +92,7 @@ class HAMLISCache(LISCacheInterface):
                 raw_data=incident_record, data_type="lis_incident", metadata=metadata
             )
             return success is not None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: storage failures should return False gracefully
             logger.error(f"Failed to store incident in HAMLISCache: {e}")
             return False
 
@@ -145,7 +145,7 @@ class HAMLISCache(LISCacheInterface):
                 raw_data=antibody, data_type="lis_antibody", metadata=metadata
             )
             return success is not None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: storage failures should return False gracefully
             logger.error(f"Failed to store antibody: {e}")
             return False
 

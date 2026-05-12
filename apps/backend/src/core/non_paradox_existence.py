@@ -232,18 +232,10 @@ class NonParadoxExistence:
             self.coexistence_start = datetime.now()
             for callback in self._gap_threshold_callbacks:
                 try:
-                    callback(self.global_cognitive_gap, True)
-                except Exception as e:
+                    callback(self.global_cognitive_gap, False)
+                except Exception as e:  # broad exception acceptable: callback errors should not block deactivation
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
-
-        elif old_gap >= self.min_gap_for_coexistence > self.global_cognitive_gap:
-            # Crossed down - deactivate coexistence
-            if self.coexistence_start:
-                duration = (datetime.now() - self.coexistence_start).total_seconds()
-                self.total_coexistence_time += duration
-            self.coexistence_active = False
-            self.coexistence_start = None
 
             # Deactivate all gray zones
             for gz in self.gray_zones.values():
@@ -252,7 +244,7 @@ class NonParadoxExistence:
             for callback in self._gap_threshold_callbacks:
                 try:
                     callback(self.global_cognitive_gap, False)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not block deactivation
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -374,7 +366,7 @@ class NonParadoxExistence:
         for callback in self._coexistence_callbacks:
             try:
                 callback(variable_id, True)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback errors should not block coexistence activation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -393,7 +385,7 @@ class NonParadoxExistence:
             for callback in self._coexistence_callbacks:
                 try:
                     callback(variable_id, False)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: callback errors should not block deactivation
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 

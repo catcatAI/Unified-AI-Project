@@ -18,7 +18,7 @@ try:
     except ImportError:
         logger.warning("Warning: Could not import transformers pipeline")
         TRANSFORMERS_AVAILABLE = False
-except Exception as e:
+except Exception as e:  # broad exception acceptable: environment setup errors should not crash module import
     logger.error(f"Warning: Error importing transformers: {e}")
     TRANSFORMERS_AVAILABLE = False
 
@@ -34,7 +34,7 @@ class NaturalLanguageGenerationTool:
         if TRANSFORMERS_AVAILABLE:
             try:
                 self.pipeline = pipeline("text-generation", model=model_name)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: pipeline loading should not crash tool initialization
                 logger.error(f"Error loading pipeline: {e}")
                 self.pipeline = None
 
@@ -46,6 +46,6 @@ class NaturalLanguageGenerationTool:
         try:
             result = self.pipeline(prompt, max_length=max_length, num_return_sequences=1)
             return {"status": "success", "generated_text": result[0]["generated_text"]}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: generation errors should return graceful failure
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"error": str(e)}

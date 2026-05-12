@@ -86,7 +86,7 @@ class GenesisManager:
         try:
             recovered_hex = SecretSharer.recover_secret(shards[:2])
             return bytes.fromhex(recovered_hex).decode("utf-8")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: secret recovery resilience
             logger.error(f"[GenesisManager] Error recovering secret: {e}")
             return None
 

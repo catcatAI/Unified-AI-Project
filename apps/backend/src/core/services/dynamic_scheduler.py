@@ -156,7 +156,7 @@ class HardwareDetector:
                     1.0 if has_avx512 else 0.7 if has_avx2 else 0.5 if has_avx else 0.3
                 ),
             )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: fallback gracefully when hardware detection fails
             logger.error(f"CPU detection failed: {e}")
             return ComputeResource(
                 type=AcceleratorType.CPU_BASIC,
@@ -193,7 +193,7 @@ class HardwareDetector:
                         )
         except (FileNotFoundError, subprocess.TimeoutExpired):
             pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: GPU detection should not fail scheduler startup
             logger.warning(f"NVIDIA GPU detection error: {e}")
 
         return None
@@ -233,7 +233,7 @@ class HardwareDetector:
                         memory_mb=4096,
                         compute_capability=9.0,
                     )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: AMD GPU sysfs detection may fail on non-AMD systems
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
@@ -289,7 +289,7 @@ class HardwareDetector:
                     available = int(line.split()[1]) // 1024
 
             return {"total_mb": total, "available_mb": available, "used_mb": total - available}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful fallback when memory info unavailable
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"total_mb": 1024, "available_mb": 512, "used_mb": 512}
 
@@ -345,7 +345,7 @@ class ModelRepository:
 
                 # We use the unified hardware probe's profile if possible
                 return UnifiedRepo.get_requirement(model_name)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: fallback to local model requirements if import fails
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -623,7 +623,7 @@ class DynamicScheduler:
                 logger.info(f"✓ {model_name} loaded on {resource.name}")
                 return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: model loading should not crash scheduler
             logger.error(f"Failed to load model: {e}")
             return False
 
@@ -695,7 +695,7 @@ class DynamicScheduler:
                 else:
                     return {"success": False, "error": f"Generation failed: {response.status_code}"}
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: generation failure returns error dict gracefully
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 

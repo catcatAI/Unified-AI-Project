@@ -357,7 +357,7 @@ async def test_comfyui():
         if result:
             logger.info(f"✅ 测试图片已保存: {result}")
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test function must handle all connection errors
         logger.info(f"❌ ComfyUI 连接失败: {e}")
         logger.info("请确保 ComfyUI 运行在 http://127.0.0.1:8188")
 

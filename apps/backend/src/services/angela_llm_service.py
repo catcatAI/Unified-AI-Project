@@ -152,6 +152,7 @@ class LlamaCppBackend(BaseLLMBackend):
                     self.model = data.get("model_name", self.model)
                     return True
         except Exception as e:
+            # broad exception acceptable: health checks should not crash the service
             logger.debug(f"llama.cpp health check failed: {e}")
         return False
 
@@ -196,7 +197,7 @@ class LlamaCppBackend(BaseLLMBackend):
                         model=self.model,
                         error=f"HTTP {response.status_code}: {response.text}",
                     )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: LLM generation must be resilient to network/API errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(text="", backend="llama.cpp", model=self.model, error=str(e))
 
@@ -226,6 +227,7 @@ class OllamaBackend(BaseLLMBackend):
                         self.model = models[0].get("name", "llama3")
                         return True
         except Exception as e:
+            # broad exception acceptable: health checks should be resilient to errors
             logger.debug(f"Ollama health check failed: {e}")
         return False
 
@@ -257,6 +259,7 @@ class OllamaBackend(BaseLLMBackend):
                         try:
                             data = response.json()
                         except Exception as json_error:
+                            # broad exception acceptable: JSON parsing should be resilient to malformed responses
                             # 檢查是否是 "Extra data" 錯誤（NDJSON 格式）
                             if "Extra data" in str(json_error):
                                 data = None
@@ -282,6 +285,7 @@ class OllamaBackend(BaseLLMBackend):
                         if not text:
                             text = data.get("message", {}).get("content", "") if data else ""
                     except Exception as json_error:
+                        # broad exception acceptable: JSON parsing should be resilient to malformed responses
                         logger.warning(
                             f"Ollama JSON 解析錯誤: {json_error}, 原始回應: {response.text[:200]}"
                         )
@@ -308,6 +312,7 @@ class OllamaBackend(BaseLLMBackend):
                         error=f"HTTP {response.status_code}",
                     )
         except Exception as e:
+            # broad exception acceptable: LLM generation must be resilient to network/API errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(text="", backend="ollama", model=self.model, error=str(e))
 
@@ -334,6 +339,7 @@ class OpenAIAPIBackend(BaseLLMBackend):
                 )
                 return response.status_code == 200
         except Exception as e:
+            # broad exception acceptable: health checks should be resilient to errors
             logger.debug(f"OpenAI health check failed: {e}")
         return False
 
@@ -377,6 +383,7 @@ class OpenAIAPIBackend(BaseLLMBackend):
                         error=f"HTTP {response.status_code}: {response.text[:200]}",
                     )
         except Exception as e:
+            # broad exception acceptable: LLM generation must be resilient to network/API errors
             logger.error(f"OpenAI API error: {e}", exc_info=True)
             return LLMResponse(text="", backend="openai", model=self.model, error=str(e))
 
@@ -438,6 +445,7 @@ class AnthropicAPIBackend(BaseLLMBackend):
                         error=f"HTTP {response.status_code}: {response.text[:200]}",
                     )
         except Exception as e:
+            # broad exception acceptable: LLM generation must be resilient to network/API errors
             logger.error(f"Anthropic API error: {e}", exc_info=True)
             return LLMResponse(text="", backend="anthropic", model=self.model, error=str(e))
 
@@ -544,6 +552,7 @@ class AngelaLLMService:
                     )
                 logger.info(f"Loaded {len(templates)} templates to matcher")
         except Exception as e:
+            # broad exception acceptable: template loading failure should not block initialization
             logger.warning(f"Failed to load templates to matcher: {e}")
 
         # ========== 记忆增强系统初始化 ==========
@@ -571,6 +580,7 @@ class AngelaLLMService:
 
                 logger.info("Memory enhancement system initialized")
             except Exception as e:
+                # broad exception acceptable: memory enhancement is optional, graceful degradation on failure
                 logger.warning(f"Failed to initialize memory enhancement: {e}")
                 self.enable_memory_enhancement = False
         else:
@@ -818,6 +828,7 @@ class AngelaLLMService:
                     logger.info(f"LLM 配置已從 {path} 載入")
                     break
                 except Exception as e:
+                    # broad exception acceptable: config file read errors should not block fallback to defaults
                     logger.warning(f"無法讀取配置 {path}: {e}")
 
         if config is None:
@@ -1008,6 +1019,7 @@ class AngelaLLMService:
 
             return " ".join(status_parts)
         except Exception as e:
+            # broad exception acceptable: biological state parsing should not crash response generation
             logger.debug(f"Failed to read biological state: {e}")
             return ""
 
@@ -1167,6 +1179,7 @@ class AngelaLLMService:
                     )
 
             except Exception as e:
+                # broad exception acceptable: template matching is best-effort, fallback to LLM
                 logger.warning(f"P0-2 template matching failed: {e}")
 
         # ========== 记忆检索（如果启用）==========
@@ -1192,6 +1205,7 @@ class AngelaLLMService:
                     logger.info(f"Memory hit: {response_time:.0f}ms")
                     return memory_response
             except Exception as e:
+                # broad exception acceptable: memory retrieval is best-effort, fallback to LLM
                 logger.warning(f"Memory retrieval failed: {e}")
 
         # 如果沒有可用的後端，使用備份機制
@@ -1236,6 +1250,7 @@ class AngelaLLMService:
             return response
 
         except Exception as e:
+            # broad exception acceptable: response generation must be resilient to any backend failure
             logger.error(f"生成回應時出錯: {e}")
             return await self._fallback_response(user_message, context)
 
@@ -1261,6 +1276,7 @@ class AngelaLLMService:
                 metadata={"fallback": False, "local_governance": True},
             )
         except Exception as e:
+            # broad exception acceptable: fallback must not crash, return error response
             logger.error(f"Fallback generation error: {e}")
             return LLMResponse(
                 text="（系统正在重启核心治理模组...）",
@@ -1325,6 +1341,7 @@ class AngelaLLMService:
             return None
 
         except Exception as e:
+            # broad exception acceptable: memory retrieval error should not crash main flow
             logger.warning(f"Memory retrieval error: {e}")
             return None
 
@@ -1366,6 +1383,7 @@ class AngelaLLMService:
             logger.warning("LLM generation timeout")
             return await self._fallback_response(user_message, context)
         except Exception as e:
+            # broad exception acceptable: LLM generation must be resilient, fallback on any error
             logger.error(f"LLM generation error: {e}")
             return await self._fallback_response(user_message, context)
 
@@ -1407,6 +1425,7 @@ class AngelaLLMService:
             logger.debug(f"Stored new template for query: '{user_message}'")
 
         except Exception as e:
+            # broad exception acceptable: template storage is best-effort, non-critical
             logger.warning(f"Failed to store response as template: {e}")
 
     def _extract_keywords(self, text: str) -> List[str]:

@@ -70,7 +70,7 @@ class PrecisionProjectionMatrix:
         try:
             mem = psutil.virtual_memory()
             return mem.available
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: psutil may fail, use safe default
             logger.warning(f"Failed to detect RAM: {e}, using default 8GB")
             return 8 * 1024 * 1024 * 1024
 

@@ -54,7 +54,7 @@ def evaluate_logic_model(model, test_data: List[Dict[str, Any]]) -> Dict[str, An
         # 使用模型进行预测
         try:
             prediction = model.evaluate(proposition)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: model.evaluate() may raise any type of exception
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             prediction = None
 

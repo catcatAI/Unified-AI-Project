@@ -52,7 +52,7 @@ class VisionToneInverter:
                 rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
                 bright_rgb = tuple(min(255, c + 50) for c in rgb)
                 new_palette.append("#%02x%02x%02x" % bright_rgb)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: hex color parsing failures should not crash the process
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 new_palette.append(color)
         # Ignore if not a valid hex color

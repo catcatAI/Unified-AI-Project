@@ -62,7 +62,7 @@ class HotReloadService:
                 },
                 "metrics": system_metrics_manager.get_all_metrics()
             }
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: status probe should be resilient
             logger.error(f"Failed to probe system status: {e}")
             return {"status": "error", "message": str(e)}
 

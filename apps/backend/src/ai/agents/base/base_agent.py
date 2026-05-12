@@ -101,7 +101,7 @@ class BaseAgent:
             # self.agent_registry = DynamicAgentRegistry(self.hsp_connector)
             self._initialized = True
             logger.info(f"[{self.agent_id}] BaseAgent full initialization complete.")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: full initialization wraps all HSP connector failures
             logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}")
             self.initialize_basic()
 
@@ -223,7 +223,7 @@ class BaseAgent:
                     result_payload, task.payload["callback_address"], task.task_id
                 )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task processing wraps all handler failures
             logger.error(f"[{self.agent_id}] Error processing task {task.task_id}: {e}")
             if task.retry_count < self.max_retries:
                 logger.info(

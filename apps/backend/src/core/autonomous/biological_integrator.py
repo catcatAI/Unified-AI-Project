@@ -111,7 +111,7 @@ class BiologicalEventPublisher:
                     # 如果回调返回协程，则等待它
                     if asyncio.iscoroutine(result):
                         await result
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: event callback errors should not block publishing
                     logger.error(f"Error in biological event callback: {e}", exc_info=True)
 
     def get_subscribers_count(self, event_type: Optional[str] = None) -> Dict[str, int]:
@@ -418,7 +418,7 @@ class BiologicalIntegrator:
             # Only log if stress is significant to reduce spam
             if self.endocrine_system.stress_level > 0.05:
                 logger.debug(f"🧪 [Bio] Endocrine metabolism complete. Stress: {self.endocrine_system.stress_level:.2f}")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: endocrine metabolism errors should not break homeostasis
             logger.error(f"Failed to update endocrine metabolism: {e}")
 
         # 3. Safety Fuse
@@ -440,7 +440,7 @@ class BiologicalIntegrator:
         for callback in self._state_callbacks:
             try:
                 callback(integrated_state)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: state callback errors should not block synchronization
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -768,7 +768,7 @@ class BiologicalIntegrator:
             # Log successful interaction
             results["status"] = "success"
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: system interaction errors should be handled gracefully
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["status"] = "error"
 

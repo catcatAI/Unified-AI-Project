@@ -101,7 +101,7 @@ class PermissionControlSystem:
                             )
                             self.rules[user_id].append(rule)
                 logger.info(f"Loaded permission configuration from {self.config_path}")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure config loading errors fall back to defaults
             logger.error(f"Error loading permission configuration: {e}", exc_info=True)
 
     def _set_default_rules(self):
@@ -169,7 +169,7 @@ class PermissionControlSystem:
 
             self._log_audit_event(context, False)
             return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure permission check errors return False, not crash
             logger.error(f"Error checking permission: {e}", exc_info=True)
             self._log_audit_event(context, False)
             return False
@@ -240,7 +240,7 @@ class PermissionControlSystem:
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
             logger.info(f"Saved permission configuration to {config_path}")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure save errors are logged but don't crash
             logger.error(f"Error saving permission configuration: {e}", exc_info=True)
 
 

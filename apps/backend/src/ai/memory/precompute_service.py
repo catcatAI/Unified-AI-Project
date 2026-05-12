@@ -152,7 +152,7 @@ class PrecomputeService:
             self.task_queue.put_nowait(task)
             self.stats["total_tasks"] += 1
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task addition should not crash caller
             logger.error(f"Error adding precompute task: {e}")
             return False
 
@@ -180,7 +180,7 @@ class PrecomputeService:
             except asyncio.CancelledError:
                 logger.info("Precompute loop cancelled")
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in precompute loop: {e}", exc_info=True)
                 await asyncio.sleep(1.0)
 
@@ -271,7 +271,7 @@ class PrecomputeService:
         except Empty:
             # 队列为空，正常情况
             pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task processing should not crash the loop
             logger.error(f"Error processing precompute task: {e}", exc_info=True)
             self.failed_count += 1
             self.stats["failed_tasks"] += 1
@@ -301,7 +301,7 @@ class PrecomputeService:
             return LLMResponse(
                 text="", backend="timeout", model="", error=f"Timeout after {timeout}s"
             )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: LLM errors should return fallback response
             logger.error(f"LLM generation error: {e}", exc_info=True)
             from ..services.angela_llm_service import LLMResponse
 

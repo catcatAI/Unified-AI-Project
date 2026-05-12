@@ -153,7 +153,7 @@ class CoreServiceManager:
                         await handler(service_name, data)
                     else:
                         handler(service_name, data)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: event handler safety
                     logger.error(f"Error in event handler for {event_type}: {e}")
 
     async def _resolve_dependencies(self, service_name: str) -> bool:
@@ -214,7 +214,7 @@ class CoreServiceManager:
             )
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: dynamic service loading
             logger.error(f"Failed to load service {service_name}: {e}")
             service_info.status = ServiceStatus.ERROR
             service_info.error_message = str(e)
@@ -325,7 +325,7 @@ class CoreServiceManager:
                                 await callback(service_info.instance)
                             else:
                                 callback(service_info.instance)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: cleanup callback safety
                             logger.error(
                                 f"Error in resource cleanup callback for {service_name}: {e}"
                             )
@@ -351,7 +351,7 @@ class CoreServiceManager:
                 logger.info(f"Service {service_name} unloaded successfully")
                 return True
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: service unload recovery
                 logger.error(f"Failed to unload service {service_name}: {e}")
                 service_info.status = ServiceStatus.ERROR
                 service_info.error_message = str(e)
@@ -402,7 +402,7 @@ class CoreServiceManager:
                 logger.warning(f"Service {service_name} is unhealthy, attempting restart")
                 await self.restart_service(service_name)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: health check resilience
             logger.error(f"Error checking health for service {service_name}: {e}")
             service_info.health = ServiceHealth.UNHEALTHY
             service_info.error_message = str(e)
@@ -421,7 +421,7 @@ class CoreServiceManager:
 
                 await asyncio.sleep(5.0)
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: monitoring loop resilience
                 logger.error(f"Error in health monitoring loop: {e}")
                 await asyncio.sleep(5.0)
 
@@ -528,7 +528,7 @@ class DefaultHealthCheck(HealthCheckFunction):
                 return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY
             else:
                 return ServiceHealth.HEALTHY
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: health check fallback
             logger.error(f"Health check failed: {e}")
             return ServiceHealth.UNHEALTHY
 

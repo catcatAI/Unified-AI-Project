@@ -235,7 +235,7 @@ class FeedbackProcessor:
             except asyncio.TimeoutError:
                 # No feedback to process, continue
                 pass
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: processing loop must be resilient to any error
                 logger.error(f"[FeedbackProcessor] Processing error: {e}")
 
     async def process_feedback(self, feedback: "FeedbackSignal"):
@@ -269,7 +269,7 @@ class FeedbackProcessor:
                 for callback in self._learning_callbacks:
                     try:
                         callback(learning_signal)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: learning callbacks should be resilient
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -287,11 +287,11 @@ class FeedbackProcessor:
                     for callback in self._strategy_callbacks:
                         try:
                             callback(adjustment)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: strategy callbacks should be resilient
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
                             pass
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: feedback processing must be resilient to any error
             logger.error(f"[FeedbackProcessor] Error processing feedback: {e}")
 
     async def _evaluate_action(self, feedback: "FeedbackSignal") -> Optional[ActionEvaluation]:
@@ -444,7 +444,7 @@ class FeedbackProcessor:
                     await self.hsm.update_from_feedback(learning_signal.hsm_update)
 
                 self.processing_metrics["hsm_updates"] += 1
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: HSM update must be resilient to errors
                 logger.error(f"[FeedbackProcessor] HSM update error: {e}")
 
         # Update CDM
@@ -460,7 +460,7 @@ class FeedbackProcessor:
                                 self.cdm.integrate_knowledge(learning_signal.cdm_update, delta)
 
                 self.processing_metrics["cdm_updates"] += 1
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: CDM update must be resilient to errors
                 logger.error(f"[FeedbackProcessor] CDM update error: {e}")
 
     async def _generate_strategy_adjustment(
@@ -542,7 +542,7 @@ class FeedbackProcessor:
             with open(history_path, "w", encoding="utf-8") as f:
                 json.dump(history_data, f, ensure_ascii=False, indent=2)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: history save must be resilient, non-critical
             logger.error(f"[FeedbackProcessor] Save history error: {e}")
 
     async def _load_history(self):
@@ -572,7 +572,7 @@ class FeedbackProcessor:
                     f"[FeedbackProcessor] Loaded history for {len(self.feedback_history)} action types"
                 )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: history load must be resilient, non-critical
             logger.error(f"[FeedbackProcessor] Load history error: {e}")
 
     # ========== Public API ==========

@@ -78,7 +78,7 @@ class SecurityAudit:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file I/O errors should not break security scans
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"file": file_path, "error": str(e), "vulnerabilities": []}
 

@@ -210,7 +210,7 @@ class PetManager:
                     await self.broadcast_callback("pet_state_update", payload)
                 else:
                     self.broadcast_callback("pet_state_update", payload)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: ensure broadcast failures don't break state notification flow
                 logger.error(f"Failed to broadcast pet state change: {e}")
 
     async def handle_interaction(self, interaction_data: Dict[str, Any]) -> Dict[str, Any]:

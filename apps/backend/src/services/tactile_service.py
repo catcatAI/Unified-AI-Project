@@ -44,7 +44,7 @@ class TactileService:
         try:
             await sync_manager.register_client("tactile_service", self._handle_sync_event)
             logger.info("Tactile Service registered to sync manager")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: sync registration should not crash
             logger.error(f"Failed to register Tactile Service to sync manager: {e}")
 
     async def _handle_sync_event(self, event: SyncEvent):
@@ -154,7 +154,7 @@ class TactileService:
                 logger.info(f"✨ [Tactile] Gentle touch on {part} detected. Calming effect.")
 
             status = "reflex_triggered"
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: bio integration optional, graceful degradation
             logger.error(f"Failed to bridge tactile to bio: {e}")
             status = "simulation_only"
             motor_reflex = {"pose": "idle", "expression": "neutral"}

@@ -64,7 +64,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
         py_prop_str = py_prop_str.replace("not", " not ")
 
         return eval(py_prop_str, {"__builtins__": {}})
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed propositions
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
 

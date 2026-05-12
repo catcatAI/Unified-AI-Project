@@ -564,7 +564,7 @@ class EventLoopSystem:
             except asyncio.TimeoutError:
                 # No events, continue
                 pass
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: event processor must be resilient to any error
                 logger.error(f"[EventLoopSystem] Processor error: {e}")
                 self.metrics["processing_errors"] += 1
 
@@ -581,7 +581,7 @@ class EventLoopSystem:
                 else:
                     handler(event)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: event processing must be resilient to handler errors
             logger.error(f"[EventLoopSystem] Event processing error: {e}")
             event.status = EventStatus.FAILED
 

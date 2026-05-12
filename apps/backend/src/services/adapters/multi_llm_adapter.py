@@ -249,7 +249,7 @@ class OpenAIBackend(BaseLLMBackend):
                     headers={"Authorization": f"Bearer {self.config.api_key}"},
                 )
                 return response.status_code == 200
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: OpenAI health check may fail due to network/credential issues
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
 
@@ -317,7 +317,7 @@ class AnthropicBackend(BaseLLMBackend):
                     f"{self.ANTHROPIC_URL}/messages", headers={"x-api-key": self.config.api_key}
                 )
                 return response.status_code == 200
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Anthropic health check may fail due to network/credential issues
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
 
@@ -372,7 +372,7 @@ class OllamaBackend(BaseLLMBackend):
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{base_url}/api/tags")
                 return response.status_code == 200
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Ollama health check may fail due to server issues
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
 
@@ -426,7 +426,7 @@ class LlamaCppBackend(BaseLLMBackend):
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{base_url}/v1/models")
                 return response.status_code == 200
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: llama.cpp health check may fail due to server issues
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return False
 
@@ -465,8 +465,8 @@ class MultiLLMService:
             logger.info(
                 f"Hardware detected (fallback): {self.hardware_info.accelerator_type.value}"
             )
-        except Exception as e:
-            logger.warning(f"Hardware detection failed: {e}, using default settings")
+        except Exception as e:  # broad exception acceptable: hardware detection fallback may fail on non-standard systems
+            logger.warning(f"Hardware detection fallback failed: {e}")
 
         if config_path:
             self._load_config(config_path)
@@ -502,8 +502,8 @@ class MultiLLMService:
 
             logger.info(f"Loaded {len(self.model_configs)} model configs from {config_path}")
 
-        except Exception as e:
-            logger.error(f"Failed to load config from {config_path}: {e}")
+        except Exception as e:  # broad exception acceptable: config loading may fail due to file issues or invalid JSON
+            logger.warning(f"Failed to load config: {e}")
 
     def _auto_configure_ollama(self) -> None:
         """根據硬件自動配置 Ollama 後端"""
@@ -519,9 +519,8 @@ class MultiLLMService:
             else:
                 logger.warning("Ollama server not responding")
                 return
-        except Exception:
-            logger.warning("Ollama not available")
-            return
+        except Exception:  # broad exception acceptable: Ollama availability check may fail in various network scenarios
+            pass
 
         # 根據硬件推薦選擇模型
         if self.hardware_info:
@@ -583,7 +582,7 @@ class MultiLLMService:
                             logger.info(
                                 f"Hardware detected: {accelerator.type.value} - {accelerator.name}"
                             )
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: hardware center init may fail on non-standard systems
                     logger.warning(f"Hardware center init failed: {e}")
 
             # 初始化所有可用的後端

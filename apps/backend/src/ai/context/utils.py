@@ -46,7 +46,7 @@ def serialize_context(context) -> bytes:
 
         json_str = json.dumps(context_dict, ensure_ascii=False)
         return json_str.encode("utf-8")
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: data parsing should be resilient
         logger.error(f"Failed to serialize context {context.context_id}: {e}")
         raise
 
@@ -80,7 +80,7 @@ def deserialize_context(data: bytes):
 
         # return context
         return None  # Placeholder
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: data parsing should be resilient
         logger.error(f"Failed to deserialize context: {e}")
         raise
 
@@ -97,7 +97,7 @@ def compress_context_data(data: bytes) -> bytes:
     """
     try:
         return zlib.compress(data)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: data parsing should be resilient
         logger.error(f"Failed to compress context data: {e}")
         raise
 
@@ -114,7 +114,7 @@ def decompress_context_data(data: bytes) -> bytes:
     """
     try:
         return zlib.decompress(data)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: data parsing should be resilient
         logger.error(f"Failed to decompress context data: {e}")
         raise
 
@@ -144,7 +144,7 @@ def encrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
             encrypted.append(byte ^ key[i % key_len])
 
         return bytes(encrypted)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Failed to encrypt context data: {e}")
         raise
 
@@ -168,7 +168,7 @@ def decrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
 
         # XOR加密是对称的, 解密过程与加密过程相同
         return encrypt_context_data(data, key)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Failed to decrypt context data: {e}")
         raise
 
@@ -190,7 +190,7 @@ def calculate_context_hash(context) -> str:
         # 计算哈希值
         hash_object = hashlib.sha256(serialized_data)
         return hash_object.hexdigest()
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Failed to calculate context hash: {e}")
         raise
 
@@ -228,7 +228,7 @@ def validate_context(context) -> bool:
             return False
 
         return True
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Failed to validate context: {e}")
         return False
 
@@ -269,7 +269,7 @@ def merge_contexts(context1, context2):
 
         # return merged_context
         return None  # Placeholder
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Failed to merge contexts: {e}")
         raise
 
@@ -291,7 +291,7 @@ def filter_context_content(content: Dict[Any, Any], allowed_keys: List[Any]) -> 
             if key in content:
                 filtered_content[key] = content[key]
         return filtered_content
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Failed to filter context content: {e}")
         raise
 

@@ -49,7 +49,7 @@ def safe_read_file(path: Union[str, Path], encoding: str = "utf-8") -> Optional[
     """安全读取文件，失败返回 None"""
     try:
         return Path(path).read_text(encoding=encoding)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: file read may fail with various OS errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
 
@@ -60,7 +60,7 @@ def safe_write_file(path: Union[str, Path], content: str, encoding: str = "utf-8
         ensure_dir(Path(path).parent)
         Path(path).write_text(content, encoding=encoding)
         return True
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: file write may fail with various OS errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return False
 
@@ -81,7 +81,7 @@ def save_json(path: Union[str, Path], data: Dict[str, Any], indent: int = 2) -> 
     try:
         content = json.dumps(data, indent=indent, ensure_ascii=False)
         return safe_write_file(path, content)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: JSON serialization may fail for various reasons
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return False
 
@@ -94,7 +94,7 @@ def get_file_hash(path: Union[str, Path], algorithm: str = "sha256") -> Optional
             for chunk in iter(lambda: f.read(4096), b""):
                 hasher.update(chunk)
         return hasher.hexdigest()
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: file access may fail with various OS errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
 
@@ -103,7 +103,7 @@ def get_file_size(path: Union[str, Path]) -> int:
     """获取文件大小（字节）"""
     try:
         return Path(path).stat().st_size
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: file stat may fail for various reasons
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return 0
 
@@ -172,7 +172,7 @@ def parse_timestamp(timestamp: str) -> Optional[datetime]:
     """解析时间戳字符串"""
     try:
         return datetime.fromisoformat(timestamp)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: timestamp parsing may fail with invalid formats
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return None
 
@@ -451,7 +451,7 @@ async def gather_with_errors(*coroutines) -> List[Any]:
         try:
             result = await coro
             results.append(result)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: collect results from failed coroutines
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results.append(e)
 

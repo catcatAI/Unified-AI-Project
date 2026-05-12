@@ -74,7 +74,7 @@ class AtlassianCLIBridge:
                 return {"success": False, "error": stderr.decode() or "Command failed"}
         except asyncio.TimeoutError:
             return {"success": False, "error": "Atlassian CLI operation timed out."}
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: CLI execution should be resilient
             return {"success": False, "error": str(e)}
 
     def get_status(self):
@@ -115,7 +115,7 @@ async def configure_atlassian(config: AtlassianConfig):
     try:
         atlassian_bridge.set_config(config.domain, config.user_email, config.api_token)
         return {"status": "configured", "domain": config.domain}
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: configuration endpoint should be resilient
         raise HTTPException(status_code=500, detail=str(e))
 
 @atlassian_router.get("/status")

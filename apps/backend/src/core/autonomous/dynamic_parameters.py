@@ -82,7 +82,7 @@ class ParameterState:
             direction = 1.0 if sum(current_coord) > sum(self.spatial_anchor) else -1.0
             
             return gravity * direction * self.volatility
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: gravity calculation failure should return safe default
             logger.debug(f"[DynamicParams] Gravity calculation error: {e}")
             return 0.0
 
@@ -375,7 +375,7 @@ class DynamicThresholdManager:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: update loop should continue on parameter errors
                 logger.error(f"[DynamicParams] Update error: {e}")
                 await asyncio.sleep(10)
 

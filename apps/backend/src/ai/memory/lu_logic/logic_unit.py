@@ -167,7 +167,7 @@ class LogicUnit:
             logger.info(f"Rule {rule.rule_id} added successfully")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: rule validation failures should not crash the system
             logger.error(f"Failed to add rule {rule.rule_id}: {e}")
             return False
 
@@ -192,7 +192,7 @@ class LogicUnit:
             logger.info(f"Rule {rule_id} removed successfully")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: rule removal failures should not crash the system
             logger.error(f"Failed to remove rule {rule_id}: {e}")
             return False
 
@@ -272,7 +272,7 @@ class LogicUnit:
             logger.debug("No rule matched the given context")
             return None
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: evaluation errors should not crash the system, return None to signal failure
             logger.error(f"Failed to evaluate rules: {e}")
             return None
 
@@ -304,7 +304,7 @@ class LogicUnit:
 
             return actions
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: batch evaluation errors should not crash the system
             logger.error(f"Failed to evaluate all rules: {e}")
             return actions
 
@@ -318,7 +318,7 @@ class LogicUnit:
         try:
             # 简单表达式直接存储
             self._condition_cache[rule_id] = condition
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: compilation failures are non-critical, warn and continue
             logger.warning(f"Failed to compile condition for rule {rule_id}: {e}")
 
     def _check_condition(self, rule_id: str, condition: str, context: Dict[str, Any]) -> bool:
@@ -351,7 +351,7 @@ class LogicUnit:
 
             return bool(result)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: condition evaluation failures return False, non-blocking
             logger.warning(f"Failed to evaluate condition for rule {rule_id}: {e}")
             return False
 
@@ -439,7 +439,7 @@ class LogicUnit:
             logger.info(f"Rules saved to {filepath}")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file I/O errors should not crash the system
             logger.error(f"Failed to save rules to {filepath}: {e}")
             return False
 
@@ -468,7 +468,7 @@ class LogicUnit:
             logger.info(f"Rules loaded from {filepath}, total={len(self.rules)}")
             return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file I/O errors should not crash the system
             logger.error(f"Failed to load rules from {filepath}: {e}")
             return False
 

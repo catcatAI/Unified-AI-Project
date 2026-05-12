@@ -404,7 +404,7 @@ class Live2DIntegration:
         for callback in self._expression_callbacks:
             try:
                 callback(expression)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: expression callbacks should not break execution
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -506,7 +506,7 @@ class Live2DIntegration:
         for callback in self._motion_callbacks:
             try:
                 callback(motion)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: motion callbacks should not break playback
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -560,7 +560,7 @@ class Live2DIntegration:
                 for callback in self._parameter_callbacks[name]:
                     try:
                         callback(value)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: parameter callbacks should not break setting
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 

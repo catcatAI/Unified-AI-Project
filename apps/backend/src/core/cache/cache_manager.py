@@ -155,7 +155,7 @@ class RedisCache(CacheBackend):
             # if value:
             #     return pickle.loads(value)
             return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Redis operation should fallback gracefully
             logger.error(f"Redis get error: {e}")
             return None
 
@@ -170,7 +170,7 @@ class RedisCache(CacheBackend):
             # else:
             #     return await client.set(key, serialized)
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Redis operation should fallback gracefully
             logger.error(f"Redis set error: {e}")
             return False
 
@@ -181,7 +181,7 @@ class RedisCache(CacheBackend):
                 return False
             # return bool(await client.delete(key))
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Redis operation should fallback gracefully
             logger.error(f"Redis delete error: {e}")
             return False
 
@@ -192,7 +192,7 @@ class RedisCache(CacheBackend):
                 return False
             # return await client.flushdb()
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Redis operation should fallback gracefully
             logger.error(f"Redis clear error: {e}")
             return False
 
@@ -203,7 +203,7 @@ class RedisCache(CacheBackend):
                 return False
             # return bool(await client.exists(key))
             return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Redis operation should fallback gracefully
             logger.error(f"Redis exists error: {e}")
             return False
 
@@ -232,7 +232,7 @@ class CacheManager:
                 self.config.redis_url, self.config.redis_db
             )
             logger.info("Redis缓存后端初始化成功")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Redis initialization failure should not block startup
             logger.warning(f"Redis缓存初始化失败: {e}")
 
     async def get(self, key: str, level: CacheLevel = CacheLevel.MEMORY) -> Optional[Any]:
@@ -392,7 +392,7 @@ class CacheWarmer:
                 result = await func(*args)
                 cache_key = self._generate_func_key(func.__name__, args)
                 await self.cache_manager.set(cache_key, result)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: cache warming should not fail entire operation
                 logger.error(f"预热函数缓存失败: {e}")
 
     def _generate_func_key(self, func_name: str, args: tuple) -> str:

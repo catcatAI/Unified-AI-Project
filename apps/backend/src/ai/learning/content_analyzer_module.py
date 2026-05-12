@@ -71,9 +71,9 @@ class ContentAnalyzerModule:
 
                     cli.download(spacy_model_name)
                     ContentAnalyzerModule._nlp_model = spacy.load(spacy_model_name)
-                except Exception as e:
-                    logger.error(f"Failed to download/load {spacy_model_name}: {e}")
-                    ContentAnalyzerModule._nlp_model = None
+                except Exception as e:  # broad exception acceptable: model download failures fall back gracefully
+                        logger.error(f"Failed to download/load {spacy_model_name}: {e}")
+                        ContentAnalyzerModule._nlp_model = None
 
         self.nlp = ContentAnalyzerModule._nlp_model
         self.graph = nx.DiGraph()
@@ -106,7 +106,7 @@ class ContentAnalyzerModule:
                 self.ontology_mapping.update(config.get("property_mappings", {}))
                 self.ontology_mapping.update(config.get("instance_mappings", {}))
                 logger.info(f"Loaded ontology mappings from {filepath}")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: ontology load failures are non-fatal
                 logger.error(f"Error loading ontology mappings: {e}")
 
     def _add_custom_matcher_patterns(self):

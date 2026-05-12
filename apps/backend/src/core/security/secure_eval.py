@@ -202,7 +202,7 @@ class SafeEvaluator:
 
         except RecursionError:
             return EvalResult(success=False, error="表達式過深（遞歸限制）", expression=expression)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: expression evaluation fallback
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return EvalResult(success=False, error=f"評估錯誤: {str(e)}", expression=expression)
 

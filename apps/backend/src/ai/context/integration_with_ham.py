@@ -79,7 +79,7 @@ class ContextHAMIntegration:
 
             logger.info(f"Synced context {context_id} to HAM memory")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to sync context {context_id} to HAM: {e}")
             return False
 
@@ -123,7 +123,7 @@ class ContextHAMIntegration:
             # logger.info(f"Synced HAM memory {ham_memory_id} to context {context_id}")
             # return context_id
             return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to sync HAM memory {ham_memory_id} to context: {e}")
             return None
 
@@ -160,7 +160,7 @@ class ContextHAMIntegration:
 
             logger.info(f"Created memory context from HAM data with context")
             return "memory_id"  # Placeholder
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create memory context from HAM data: {e}")
             raise
 
@@ -208,7 +208,7 @@ class ContextHAMIntegration:
 
             logger.info(f"Updated HAM from memory context {memory_id} with context")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to update HAM from memory context {memory_id}: {e}")
             return False
 
@@ -261,7 +261,7 @@ class ContextHAMIntegration:
                 f"Transferred context memory from {source_context_id} to new_memory_id with context"
             )
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to transfer context memory from {source_context_id}: {e}")
             return False
 

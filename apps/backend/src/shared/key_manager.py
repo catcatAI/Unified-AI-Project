@@ -64,7 +64,7 @@ class UnifiedKeyManager:
             try:
                 with open(self.config_path, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: ensure config loading errors fall back to empty dict
                 logger.error(f"載入配置失敗: {e}")
         return {}
 
@@ -77,7 +77,7 @@ class UnifiedKeyManager:
             try:
                 with open(self.keys_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: ensure key file errors generate new keys, not crash
                 logger.warning(f"加载密钥文件失败: {e}，将创建新密钥")
 
         # 如果文件不存在，创建默认密钥
@@ -118,7 +118,7 @@ class UnifiedKeyManager:
                 json.dump(keys_data, f, indent=2)
             # 设置文件权限（仅所有者可读写）
             os.chmod(self.keys_file, 0o600)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure save errors are logged but don't crash
             logger.error(f"保存密钥失败: {e}")
 
     def _should_rotate_keys(self) -> bool:
@@ -276,7 +276,7 @@ class UnifiedKeyManager:
                 logger.warning(f"Signature verification failed for state hash {state_hash}")
 
             return is_valid
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: ensure verification errors return False, not crash
             logger.error(f"Signature verification error: {e}")
             return False
 

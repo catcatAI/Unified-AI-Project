@@ -86,7 +86,7 @@ class FactExtractorModule:
                 logger.error(f"Could not decode JSON from LLM: {llm_response_str}")
                 return []
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: LLM errors return empty list gracefully
             logger.error(f"Error during LLM fact extraction: {e}")
             return []
 

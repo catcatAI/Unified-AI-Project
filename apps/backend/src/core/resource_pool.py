@@ -231,7 +231,7 @@ class ResourcePool(Generic[T]):
             self._stats.current_size += 1
             self._stats.idle_size += 1
             return pooled
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: resource creation errors should be handled gracefully
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self._stats.failed += 1
 
@@ -241,7 +241,7 @@ class ResourcePool(Generic[T]):
         """销毁资源"""
         try:
             self.closer(resource.resource)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: resource cleanup errors should be ignored
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
         # 忽略关闭错误
@@ -293,7 +293,7 @@ class ResourcePool(Generic[T]):
                     self._cleanup_expired_resources()
                     self._validate_resources()
                     time.sleep(self.config.validation_interval)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: cleanup loop should be resilient to validation errors
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -398,7 +398,7 @@ class ThreadPool:
                     result = func(*args, **kwargs)
                     future.set_result(result)
                     self._stats.completed += 1
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: task execution errors should be handled gracefully
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     future.set_exception(e)
 

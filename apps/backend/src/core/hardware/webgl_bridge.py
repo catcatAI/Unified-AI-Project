@@ -165,7 +165,7 @@ class WebGLBridge:
             logger.info(f"WebGL Bridge result: {result}")
             return result
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: GPU info processing involves multiple conversions that may fail
             logger.error(f"Failed to process GPU info: {e}")
             return {"success": False, "error": str(e)}
 

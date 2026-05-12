@@ -39,7 +39,7 @@ class MemoryStorage(Storage):
 
             logger.debug(f"Context {context.context_id} saved to memory storage")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to save context {context.context_id} to memory storage, {e}")
             return False
 
@@ -55,7 +55,7 @@ class MemoryStorage(Storage):
             else:
                 logger.debug(f"Context {context_id} not found in memory storage")
                 return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to load context {context_id} from memory storage, {e}")
             return None
 
@@ -69,7 +69,7 @@ class MemoryStorage(Storage):
             else:
                 logger.debug(f"Context {context_id} not found in memory storage for deletion")
                 return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to delete context {context_id} from memory storage, {e}")
             return False
 
@@ -87,7 +87,7 @@ class MemoryStorage(Storage):
 
             logger.debug(f"Listed {len(context_ids)} contexts from memory storage")
             return context_ids
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to list contexts from memory storage, {e}")
             return []
 
@@ -107,7 +107,7 @@ class MemoryStorage(Storage):
                     f"Context {context_id} not found in memory storage for metadata update"
                 )
                 return False
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to update context {context_id} metadata in memory storage, {e}")
             return False
 

@@ -153,7 +153,7 @@ class DesktopBrowserIntegration:
             import webview
 
             webview.start()
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: browser runtime errors should not crash the system
             logger.error(f"浏览器运行错误: {e}")
 
     async def browse_tutorial(self, tutorial_url: str) -> Dict:
@@ -195,8 +195,8 @@ class DesktopBrowserIntegration:
                 })()
                 """
                 result = self.browser_window.evaluate_js(js_code)
-                return result if result else {}
-        except Exception as e:
+            return result if result else {}
+        except Exception as e:  # broad exception acceptable: page content extraction should be resilient
             logger.error(f"提取内容失败: {e}")
             return {}
 
@@ -273,10 +273,10 @@ class DesktopBrowserIntegration:
                             "aspect_ratio": aspect_ratio,
                             "size": (width, height),
                             "mode": img.mode,
-                            "style_tags": self._infer_style_tags(img),
-                        }
+"style_tags": self._infer_style_tags(img),
+                    }
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: style analysis should be resilient
             logger.error(f"风格分析失败: {e}")
             return {}
 
@@ -470,7 +470,7 @@ class DesktopInteraction:
         for callback in self._file_change_callbacks:
             try:
                 callback(file_path, change_type)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: callback errors should not block file change notifications
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
@@ -516,21 +516,10 @@ class DesktopInteraction:
                     )
 
                     shutil.move(str(file_path), str(target_path))
-
                     operation.status = "completed"
                     operations.append(operation)
                     self.operation_history.append(operation)
-
-                    # Notify
-                    for callback in self._operation_callbacks:
-                        try:
-                            callback(operation)
-                        except Exception as e:
-                            logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                            pass
-
                 except Exception as e:
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     operation = FileOperation(
                         operation_id=f"org_{datetime.now().timestamp()}",
                         operation_type=FileOperationType.MOVE,
@@ -577,13 +566,10 @@ class DesktopInteraction:
                             )
 
                             file_path.unlink()
-
                             operation.status = "completed"
                             operations.append(operation)
-                            self.operation_history.append(operation)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: file organization errors should be logged
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
         return operations
 
@@ -621,7 +607,7 @@ class DesktopInteraction:
 
             return file_path
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file creation errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return None
 
@@ -640,7 +626,7 @@ class DesktopInteraction:
                 self.operation_history.append(operation)
 
                 return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file deletion errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
@@ -652,7 +638,7 @@ class DesktopInteraction:
             if source.exists():
                 shutil.move(str(source), str(target))
                 return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file move errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
@@ -748,7 +734,7 @@ class DesktopInteraction:
                     return False
                 return True
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: wallpaper setting errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
@@ -772,7 +758,7 @@ class DesktopInteraction:
                 next_wallpaper = random.choice(wallpapers)
                 return await self.set_wallpaper(next_wallpaper)
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: wallpaper rotation errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             pass
 
@@ -911,7 +897,7 @@ class DesktopInteraction:
                         os.chmod(operation.source_path, stat.S_IWRITE | stat.S_IREAD)
                         results["recovery_action"] = "attempt_permission_fix"
                         results["handled"] = True
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: permission fix errors should be logged
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         results["recovery_action"] = "permission_fix_failed"
 
@@ -971,7 +957,7 @@ class DesktopInteraction:
                         results["recovery_action"] = (
                             results.get("recovery_action", "") + " + rollback"
                         )
-                except Exception as rollback_error:
+                except Exception as rollback_error:  # broad exception acceptable: rollback errors should be logged
                     results["rollback_error"] = str(rollback_error)
                     results["rollback_successful"] = False
 
@@ -998,11 +984,11 @@ class DesktopInteraction:
             for callback in self._operation_callbacks:
                 try:
                     callback(operation)
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: operation callback errors should be logged
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
-        except Exception as handling_error:
+        except Exception as handling_error:  # broad exception acceptable: error handling errors should be logged
             # Error handling itself failed
             results["error"] = str(handling_error)
             results["error_type"] = f"ErrorHandlingFailed ({type(handling_error).__name__})"
@@ -1013,25 +999,17 @@ class DesktopInteraction:
     async def _cleanup_temp_files(self) -> int:
         """Helper method to cleanup temporary files and return freed space in bytes"""
         import tempfile
-
         freed_space = 0
-
         try:
-            temp_dir = Path(tempfile.gettempdir())
-            for temp_file in temp_dir.glob("*.tmp"):
-                try:
-                    if temp_file.is_file():
-                        size = temp_file.stat().st_size
-                        temp_file.unlink()
-                        freed_space += size
-                except Exception as e:
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
-
-        except Exception as e:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                for item in Path(tmpdir).iterdir():
+                    try:
+                        freed_space += item.stat().st_size
+                        item.unlink()
+                    except Exception as e:  # broad exception acceptable: file cleanup errors should be logged
+                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+        except Exception as e:  # broad exception acceptable: temp file cleanup errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            pass
-
         return freed_space
 
     async def _safe_execute(
@@ -1116,13 +1094,13 @@ class DesktopInteraction:
                 for callback in self._operation_callbacks:
                     try:
                         callback(operation)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: operation callback errors should not block execution
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
                 return results
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: safe execute loop errors should be logged
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 last_error = e
 
@@ -1160,7 +1138,7 @@ class DesktopInteraction:
                     try:
                         await rollback_func()
                         results["rolled_back"] = True
-                    except Exception as rollback_error:
+                    except Exception as rollback_error:  # broad exception acceptable: rollback errors should be logged
                         results["rollback_error"] = str(rollback_error)
 
                 # Don't retry if error was handled

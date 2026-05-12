@@ -202,7 +202,7 @@ class BrowserController:
             for callback in self._state_change_callbacks:
                 try:
                     callback(old_state, new_state)
-                except Exception as e:  # Broad exception acceptable here as we want to ensure all callbacks execute
+                except Exception as e:  # broad exception acceptable: callback errors should not break state changes
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def search(
@@ -241,7 +241,7 @@ class BrowserController:
             self._set_state(BrowserState.IDLE)
             return results
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: search should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self._set_state(BrowserState.IDLE)
 
@@ -288,7 +288,7 @@ class BrowserController:
                                         source_engine="DuckDuckGo"
                                     )
                                 )
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: real search should be resilient to network errors
             logger.error(f"Real search failed: {e}")
             
         return results
@@ -311,7 +311,7 @@ class BrowserController:
             self._set_state(BrowserState.IDLE)
             return content
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: content extraction should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self._set_state(BrowserState.IDLE)
 
@@ -360,7 +360,7 @@ class BrowserController:
                     else:
                         logger.warning(f"Extraction failed with status {response.status} for {url}")
                         return None
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: real extraction should be resilient to network errors
             logger.error(f"Real extraction failed: {e}")
             return None
 
@@ -392,7 +392,7 @@ class BrowserController:
                     for callback in self._game_detection_callbacks:
                         try:
                             callback(self.current_game)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: callback errors should not break game detection
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
                             pass
 

@@ -40,7 +40,7 @@ class SimultaneousTranslationService:
                 lambda: GoogleTranslator(source=source_lang, target=mapped_tgt).translate(text)
             )
             status = "success"
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: translation failures return fallback with error message
             logger.error(f"Translation Error: {e}")
             translated = f"[Error: {str(e)}] {text}"
             status = "fallback_raw"

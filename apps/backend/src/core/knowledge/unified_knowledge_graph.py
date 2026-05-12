@@ -154,7 +154,7 @@ class UnifiedKnowledgeGraph:
                 logger.info("✅ AI组件初始化成功")
             else:
                 logger.warning("⚠️ scikit-learn不可用，将使用简化算法")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: AI component initialization may fail with various errors
             logger.error(f"❌ AI组件初始化失败: {e}")
 
     async def add_entity(self, entity: Entity) -> bool:
@@ -180,7 +180,7 @@ class UnifiedKnowledgeGraph:
 
             logger.info(f"✅ 成功添加实体: {entity.entity_id}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: entity addition involves multiple operations that may fail
             logger.error(f"❌ 添加实体失败: {e}")
             return False
 
@@ -267,7 +267,7 @@ class UnifiedKnowledgeGraph:
             similarity = cosine_similarity(vec1, vec2)[0][0]
 
             return float(similarity)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: similarity calculation involves multiple operations that may fail
             logger.warning(f"计算实体相似度失败: {e}")
             return 0.0
 
@@ -310,7 +310,7 @@ class UnifiedKnowledgeGraph:
 
             logger.info(f"✅ 成功添加关系: {relation.relation_id}")
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: relation addition involves multiple operations that may fail
             logger.error(f"❌ 添加关系失败: {e}")
             return False
 
@@ -326,7 +326,7 @@ class UnifiedKnowledgeGraph:
             else:
                 logger.warning(f"未知的查询类型: {query_type}")
                 return []
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: query operations involve multiple operations that may fail
             logger.error(f"查询知识失败: {e}")
             return []
 

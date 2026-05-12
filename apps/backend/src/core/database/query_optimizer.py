@@ -117,7 +117,7 @@ class QueryOptimizer:
 
                 return data
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: query execution may fail with database connection or syntax errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
             # 记录错误指标
@@ -175,7 +175,7 @@ class QueryOptimizer:
             }
             # Simplified - actual implementation would use Redis
             # await self.redis.hset(f"query_metrics:{query_hash}", mapping=metrics_data)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: Redis operations may fail with connection or serialization errors
             logger.error(f"保存指标到Redis失败: {e}")
 
     async def _analyze_slow_query(self, query: str, execution_time: float):
@@ -252,7 +252,7 @@ class QueryOptimizer:
                     optimization_suggestions=suggestions,
                 )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: query plan analysis may fail with parsing errors
             logger.error(f"获取查询计划失败: {e}")
             return QueryPlan(
                 query=query,
@@ -309,7 +309,7 @@ class QueryOptimizer:
             # slow_queries = await self.redis.lrange("slow_queries", 0, limit - 1)
             # return [json.loads(q) for q in slow_queries]
             return []
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: slow query retrieval may fail with Redis or JSON parsing errors
             logger.error(f"获取慢查询失败: {e}")
             return []
 
@@ -342,7 +342,7 @@ class QueryOptimizer:
                 # Simplified - actual implementation would analyze table indexes
                 suggestions = ["需要实现实际的表索引分析"]
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: index optimization may fail with database operations
             logger.error(f"优化表索引失败: {e}")
             suggestions.append("无法分析表索引")
 
@@ -355,7 +355,7 @@ class QueryOptimizer:
                 # Simplified - actual implementation would analyze table performance
                 return {"table_name": table_name, "size": "N/A", "column_stats": []}
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: table performance analysis may fail with database operations
             logger.error(f"分析表性能失败: {e}")
             return {"error": str(e)}
 

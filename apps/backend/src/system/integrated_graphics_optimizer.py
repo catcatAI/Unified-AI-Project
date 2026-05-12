@@ -100,7 +100,7 @@ class IntegratedGraphicsOptimizer:
                 logger.info(f"Applying {optimization['strategy']}: {optimization['action']}")
 
             return True
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: optimization may fail due to various hardware constraints
             logger.error(f"Failed to apply optimizations: {e}")
             return False
 

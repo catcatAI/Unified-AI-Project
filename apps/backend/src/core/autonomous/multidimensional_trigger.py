@@ -422,7 +422,7 @@ class MultidimensionalTriggerSystem:
             for callback in self._dimension_change_callbacks[dimension]:
                 try:
                     callback(self.dimension_values[dimension])
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: dimension callbacks should not break dimension updates
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
@@ -451,7 +451,7 @@ class MultidimensionalTriggerSystem:
                     for callback in self._trigger_callbacks[trigger.trigger_id]:
                         try:
                             callback(score)
-                        except Exception as e:
+                        except Exception as e:  # broad exception acceptable: trigger callbacks should not break evaluation
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
                             pass
 

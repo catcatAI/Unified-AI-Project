@@ -188,7 +188,7 @@ class WindowsTrayManager(BaseTrayManager):
                 # Run in thread to avoid blocking tray
                 threading.Thread(target=lambda: asyncio.run(self.angela.switch_mode(mode))).start()
                 self.show_notification("Angela AI", f"Switching to {mode.title()} mode...")
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: mode switching may fail with asyncio or callback errors
                 logger.error(f"Error switching mode: {e}")
                 self.show_notification("Angela AI", f"Failed to switch mode: {e}")
 
@@ -205,7 +205,7 @@ class WindowsTrayManager(BaseTrayManager):
             else:
                 logger.warning("Key manager GUI script not found")
                 self.show_notification("Angela AI", "Key manager not yet implemented")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: key manager launch may fail with subprocess or file system errors
             logger.error(f"Error opening key manager: {e}")
 
     def _open_settings(self):
@@ -220,7 +220,7 @@ class WindowsTrayManager(BaseTrayManager):
             else:
                 logger.warning("Settings GUI script not found")
                 self.show_notification("Angela AI", "Settings GUI not yet implemented")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: settings GUI launch may fail with subprocess or file system errors
             logger.error(f"Error opening settings: {e}")
 
     def _exit(self):
@@ -229,7 +229,7 @@ class WindowsTrayManager(BaseTrayManager):
         if self.angela and hasattr(self.angela, "shutdown"):
             try:
                 asyncio.run(self.angela.shutdown())
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: shutdown may fail with asyncio or process termination errors
                 logger.error(f"Error during shutdown: {e}")
 
         if self._tray_icon:

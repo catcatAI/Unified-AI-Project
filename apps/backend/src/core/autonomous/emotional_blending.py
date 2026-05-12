@@ -315,7 +315,7 @@ class EmotionalBlendingSystem:
                 for callback in self._emotion_change_callbacks:
                     try:
                         callback(prev, curr)
-                    except Exception as e:
+                    except Exception as e:  # broad exception acceptable: emotion change callbacks should not break updates
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
@@ -336,7 +336,7 @@ class EmotionalBlendingSystem:
         for callback in self._expression_callbacks:
             try:
                 callback(self.current_expression)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: expression callbacks should not break updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 

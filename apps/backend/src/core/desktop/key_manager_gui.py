@@ -49,7 +49,7 @@ class KeyManagerGUI:
                 # 圖標加載失敗，使用默認圖標
                 logger.debug(f"圖標加載失敗（可忽略）: {e}")
                 pass
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: icon path resolution may fail with file system errors
             logger.debug(f"圖標路徑解析失敗（可忽略）: {e}")
             pass
 
@@ -539,7 +539,7 @@ class KeyManagerGUI:
                 dialog.destroy()
                 self._refresh_display()
 
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: key save operations may fail with file system or environment errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 messagebox.showerror("Error", f"Failed to save key: {e}")
 

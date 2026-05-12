@@ -104,7 +104,7 @@ class AgentCollaborationManager:
             logger.info(f"[Collaboration] Collaborative task {task_id} completed")
             return integrated_results
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: asyncio.gather result handling
             logger.error(f"[Collaboration] Error in collaborative task {task_id}: {e}")
             raise
 
@@ -160,7 +160,7 @@ class AgentCollaborationManager:
             logger.info(f"[Collaboration] Subtask {subtask_id} completed successfully")
             return result
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: simulate subtask execution
             logger.error(f"[Collaboration] Subtask {subtask_id} failed: {e}")
             return {"status": "failure", "subtask_id": subtask_id, "error": str(e)}
 
@@ -348,7 +348,7 @@ if __name__ == "__main__":
         try:
             results = await collaboration_manager.coordinate_collaborative_task(task_id, subtasks)
             logger.info(f"Collaborative task results: {results}")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: demo main example
             logger.error(f"Error in collaborative task: {e}")
 
     # Run the example

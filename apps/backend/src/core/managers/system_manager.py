@@ -35,7 +35,7 @@ class SystemManager:
             if hasattr(component, "shutdown"):
                 try:
                     await component.shutdown()
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: component shutdown resilience
                     logger.error(f"Error shutting down {name}: {e}")
         self.initialized = False
         logger.info("系统管理器已关闭")

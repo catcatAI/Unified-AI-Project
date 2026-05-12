@@ -75,7 +75,7 @@ class MetabolicHeartbeat:
                     self.x += (self.target_x - self.x) * speed
                 
                 await asyncio.sleep(0.1)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: integration loop should be resilient to errors
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}")
                 await asyncio.sleep(1)
 
@@ -117,7 +117,7 @@ class MetabolicHeartbeat:
                 await self._observe_environment()
                 
                 await asyncio.sleep(dynamic_interval)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: heartbeat loop must be resilient to errors
                 logger.error(f"[Pulse] Cardiac Arrhythmia: {e}")
                 await asyncio.sleep(10)
 
@@ -187,7 +187,7 @@ class MetabolicHeartbeat:
                 await self.bio_integrator.process_stress_event(intensity=0.3, duration=10.0)
             
             logger.debug(f"[Metabolism] Hardware Pulse - CPU: {cpu_usage}%, Battery: {energy_level}%")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: metabolism processing should be resilient to hardware errors
             logger.error(f"Metabolic injection failed: {e}")
 
     async def _observe_environment(self):

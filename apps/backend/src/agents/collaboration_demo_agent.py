@@ -76,7 +76,7 @@ class CollaborationDemoAgent(BaseAgent):
                 request_id, sender_ai_id, task_payload.get("callback_address", ""), result
             )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: task handling failures should return error response
             logger.error(f"[{self.agent_id}] Error handling task: {e}")
             await self.send_task_failure(
                 request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e)
@@ -113,7 +113,7 @@ class CollaborationDemoAgent(BaseAgent):
                     "result": result,
                     "message": "Multi-agent task orchestration completed",
                 }
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: orchestration failures return error response
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 return {"status": "error", "message": f"Failed to orchestrate tasks: {str(e)}"}
 
@@ -135,7 +135,7 @@ class CollaborationDemoAgent(BaseAgent):
                         "task_id": task_id,
                         "message": f"Task delegated to {target_agent}",
                     }
-                except Exception as e:
+                except Exception as e:  # broad exception acceptable: delegation failures return error response
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     return {"status": "error", "message": f"Failed to delegate task: {str(e)}"}
 
@@ -192,7 +192,7 @@ async def main() -> None:
 
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt, shutting down...")
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: main loop errors should be logged and cleanup should run
         logger.error(f"Error in main: {e}")
     finally:
         # Stop the agent

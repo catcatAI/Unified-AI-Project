@@ -53,6 +53,7 @@ class ToolContextManager:
                             logger.info(f"✨ [ToolContextManager] Auto-recalled context for {tool_id} via Spatial Proximity.")
                             break
             except Exception as e:
+                # broad exception acceptable: spatial recall failure should fallback to default context
                 logger.error(f"❌ [ToolContextManager] Spatial recall failed: {e}")
 
         # Fallback to active contexts or default
@@ -84,6 +85,7 @@ class ToolContextManager:
                 )
                 logger.info(f"💾 [ToolContextManager] Context for {tool_id} anchored at spatial pos {pos}.")
             except Exception as e:
+                # broad exception acceptable: context anchoring failure should not block tool operation
                 logger.error(f"❌ [ToolContextManager] Failed to anchor context: {e}")
 
     def reset_context(self, tool_id: str):

@@ -73,7 +73,7 @@ class ProjectCoordinator:
         try:
             with open(prompts_path, "r") as f:
                 self.prompts = yaml.safe_load(f)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: prompts missing is non-fatal, use empty dict
             logger.error(f"Failed to load prompts: {e}")
             self.prompts = {}
 

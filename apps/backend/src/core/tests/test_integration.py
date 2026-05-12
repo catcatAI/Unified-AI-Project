@@ -43,7 +43,7 @@ def run_tests():
         logger.info("  ✅ test_precision_loss_tracking")
         total_passed += 1
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test failures should not crash test runner
         logger.info(f"  ❌ {str(e)[:60]}")
         total_failed += 3
     logger.info()
@@ -70,7 +70,7 @@ def run_tests():
         logger.info("  ✅ test_level_progression")
         total_passed += 1
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test failures should not crash test runner
         logger.info(f"  ❌ {str(e)[:60]}")
         total_failed += 3
     logger.info()
@@ -93,7 +93,7 @@ def run_tests():
         logger.info("  ✅ test_soul_integrity")
         total_passed += 1
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test failures should not crash test runner
         logger.info(f"  ❌ {str(e)[:60]}")
         total_failed += 3
     logger.info()
@@ -119,7 +119,7 @@ def run_tests():
         logger.info("  ✅ test_transfer_process")
         total_passed += 1
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test failures should not crash test runner
         logger.info(f"  ❌ {str(e)[:60]}")
         total_failed += 3
     logger.info()
@@ -144,7 +144,7 @@ def run_tests():
         logger.info("  ✅ test_animation_summary")
         total_passed += 1
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test failures should not crash test runner
         logger.info(f"  ❌ {str(e)[:60]}")
         total_failed += 3
     logger.info()
@@ -176,7 +176,7 @@ def run_tests():
         logger.info("  ✅ test_all_exports_available")
         total_passed += 1
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: test failures should not crash test runner
         logger.info(f"  ❌ {str(e)[:60]}")
         total_failed += 1
     logger.info()

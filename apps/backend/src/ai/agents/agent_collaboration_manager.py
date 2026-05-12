@@ -129,7 +129,7 @@ class AgentCollaborationManager:
                     f"Failed to delegate task '{task_id}' from '{requester_agent_id}' to '{target_agent_id}'"
                 )
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: HSP delegation wraps all external failures
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             collaboration_task.status = CollaborationStatus.FAILED
 

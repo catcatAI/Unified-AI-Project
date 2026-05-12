@@ -617,7 +617,7 @@ class Live2DAvatarGenerator:
 
             self._notify_progress(GenerationStage.FINALIZING, 100, "Generation complete!")
 
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: generation must be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self._notify_progress(GenerationStage.FINALIZING, 0, f"Generation failed: {str(e)}")
 
@@ -710,7 +710,7 @@ class Live2DAvatarGenerator:
                     base_image_path = image_result
 
                 avatar.texture_paths.append(str(base_image_path))
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: image generation failure should not crash generation
             logger.error(f"Image generation failed: {e}")
 
     def _build_generation_prompt(
@@ -812,7 +812,7 @@ class Live2DAvatarGenerator:
             layer.image_path = str(real_image_path)
             return
             
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: layer generation fallback should not crash pipeline
             logger.warning(f"Layer generation failed, using empty fallback: {e}")
             
         layer.image_path = str(

@@ -41,7 +41,7 @@ class LightweightMathModel:
         try:
             result = eval(expression, {"__builtins__": {}})
             return float(result)
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed expressions
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return None
 

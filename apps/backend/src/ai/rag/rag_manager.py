@@ -44,7 +44,7 @@ class RAGManager:
                 self.embedding_dim = self.model.get_sentence_embedding_dimension()
                 if FAISS_AVAILABLE:
                     self.index = faiss.IndexFlatL2(self.embedding_dim)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: initialization failures are non-critical, continue with limited functionality
                 logger.error(f"Error initializing RAG model or index: {e}")
         else:
             logger.warning("RAGManager initialized without a functional embedding model.")
@@ -65,7 +65,7 @@ class RAGManager:
             current_pos = self.index.ntotal - 1
             self.documents[current_pos] = text
             logger.info(f"RAGManager: Document added at position {current_pos}.")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: document addition failures are non-blocking
             logger.error(f"Error adding document to RAG: {e}")
 
     def search(self, query: str, k: int = 5) -> List[Tuple[str, float]]:
@@ -88,7 +88,7 @@ class RAGManager:
                         # L2 distance normalized similarity
                         results.append((doc, float(1.0 - dist)))
                 return results
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: search failures return empty list to signal no results
             logger.error(f"Error during RAG search: {e}")
             return []
 

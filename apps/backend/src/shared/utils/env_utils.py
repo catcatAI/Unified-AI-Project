@@ -38,7 +38,7 @@ def setup_env_file(
 
             logger.info(f"✅ 已創建 {env_file_path} 文件")
             logger.warning("⚠️  请編輯 .env 文件, 添加你的 API 密鑰")
-        except Exception as e:
+        except Exception as e:  # broad exception acceptable: file I/O and environment access can fail in many ways
             logger.error(f"❌ 創建 {env_file_path} 失敗: {e}")
             return False
     else:
@@ -85,6 +85,6 @@ def add_env_variable(
 
         logger.info(f"✅ 環境變量 {key} 已更新或添加至 {env_file_path}")
         return True
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: file I/O and environment access can fail in many ways
         logger.error(f"❌ 更新 {env_file_path} 失敗: {e}")
         return False

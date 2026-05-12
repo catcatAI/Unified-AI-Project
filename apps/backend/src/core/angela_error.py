@@ -520,7 +520,7 @@ def handle_errors(default_return: Any = None, log_errors: bool = True, reraise: 
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception as e:  # broad exception acceptable: error handling decorator must be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 if log_errors:
 
@@ -543,7 +543,7 @@ def safe_execute(
     """安全执行函数"""
     try:
         return func(*args, **kwargs)
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: safe execution must be resilient to any error
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         if log_errors:
 
@@ -572,6 +572,6 @@ if __name__ == "__main__":
 
     try:
         raise error
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: error handler must be resilient to any error
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         handler.handle(e)

@@ -111,7 +111,7 @@ def verify_context_system():
         logger.info("\n🎉 所有验证测试通过！上下文系统基本功能正常工作。")
         return True
 
-    except Exception as e:
+    except Exception as e:  # broad exception acceptable: health check should be resilient to errors
         logger.info(f"✗ 验证过程中发生错误: {e}")
         traceback.print_exc()
         return False
