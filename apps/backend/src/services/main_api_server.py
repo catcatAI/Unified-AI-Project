@@ -588,7 +588,7 @@ async def _handle_chat_request(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/v1/security/sync-key-c")
+@api_v1_router.get("/api/v1/security/sync-key-c")
 async def sync_key_c(request: Request):
     """Get Key C for desktop app synchronization (Localhost restricted)"""
     client_host = request.client.host
@@ -603,7 +603,7 @@ async def sync_key_c(request: Request):
     return {"key_c": key_c}
 
 
-@router.post("/session/start")
+@api_v1_router.post("/session/start")
 async def start_session(request: Dict[str, Any] = Body(default={})):
     session_id = f"sess-{uuid.uuid4().hex[:8]}"
     sessions[session_id] = {
@@ -614,7 +614,7 @@ async def start_session(request: Dict[str, Any] = Body(default={})):
     return {"session_id": session_id, "message": "Welcome to Angela AI!"}
 
 
-@router.post("/session/{session_id}/send")
+@api_v1_router.post("/session/{session_id}/send")
 async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -648,7 +648,7 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
     return {"session_id": session_id, "response_text": ai_response}
 
 
-@router.post("/angela/chat")
+@api_v1_router.post("/angela/chat")
 async def angela_chat(request: Dict[str, Any] = Body(...)):
     """
     Angela 智能對話接口
@@ -672,7 +672,7 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
 
 
-@router.post("/dialogue")
+@api_v1_router.post("/dialogue")
 async def dialogue(request: Dict[str, Any] = Body(...)):
     """
     对話接口 - 與 /angela/chat 相同，為前端兼容性提供
@@ -686,7 +686,7 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
 
 
-@router.post("/api/v1/chat/unified")
+@api_v1_router.post("/api/v1/chat/unified")
 async def unified_chat(request: Dict[str, Any] = Body(...)):
     """
     Unified chat endpoint for multi-frontend/persona migration.
@@ -725,7 +725,7 @@ async def unified_chat(request: Dict[str, Any] = Body(...)):
 # --- Desktop Interaction API ---
 
 
-@router.get("/api/v1/desktop/state")
+@api_v1_router.get("/api/v1/desktop/state")
 async def get_desktop_state():
     """Get current desktop state"""
     desktop_interaction = get_desktop_interaction()
@@ -739,7 +739,7 @@ async def get_desktop_state():
     }
 
 
-@router.post("/api/v1/desktop/organize")
+@api_v1_router.post("/api/v1/desktop/organize")
 async def organize_desktop(background_tasks: BackgroundTasks):
     """Trigger desktop organization"""
     # Background task for long running operation
@@ -748,7 +748,7 @@ async def organize_desktop(background_tasks: BackgroundTasks):
     return {"status": "success", "operations_count": len(operations)}
 
 
-@router.post("/api/v1/desktop/cleanup")
+@api_v1_router.post("/api/v1/desktop/cleanup")
 async def cleanup_desktop(days_old: int = 30):
     """Trigger desktop cleanup"""
     desktop_interaction = get_desktop_interaction()
@@ -759,14 +759,14 @@ async def cleanup_desktop(days_old: int = 30):
 # --- Action Executor API ---
 
 
-@router.get("/api/v1/actions/status")
+@api_v1_router.get("/api/v1/actions/status")
 async def get_actions_status():
     """Get action executor status"""
     action_executor = get_action_executor()
     return action_executor.queue.get_queue_status()
 
 
-@router.post("/api/v1/actions/execute")
+@api_v1_router.post("/api/v1/actions/execute")
 async def execute_action(action_data: Dict[str, Any]):
     """Execute a custom action"""
     # This is a simplified implementation. In a real scenario,
@@ -806,7 +806,7 @@ async def execute_action(action_data: Dict[str, Any]):
 # --- Vision API ---
 
 
-@router.post("/api/v1/vision/sampling")
+@api_v1_router.post("/api/v1/vision/sampling")
 async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
     """
     Get visual sampling analysis with particle cloud
@@ -831,7 +831,7 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/vision/perceive")
+@api_v1_router.post("/api/v1/vision/perceive")
 async def vision_perceive(image_data: bytes = Body(...)):
     """
     Simulate Discover-Focus-Memory cycle
@@ -846,7 +846,7 @@ async def vision_perceive(image_data: bytes = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/audio/scan")
+@api_v1_router.post("/api/v1/audio/scan")
 async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
     """
     Simulate cocktail party effect: listen, identify, and focus
@@ -861,7 +861,7 @@ async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/audio/register_user")
+@api_v1_router.post("/api/v1/audio/register_user")
 async def audio_register_user(audio_data: bytes = Body(...)):
     """
     Register user voiceprint
@@ -876,7 +876,7 @@ async def audio_register_user(audio_data: bytes = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/tactile/model")
+@api_v1_router.post("/api/v1/tactile/model")
 async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
     """
     Model tactile properties from visual data (texture, light, etc.)
@@ -891,7 +891,7 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/tactile/touch")
+@api_v1_router.post("/api/v1/tactile/touch")
 async def tactile_touch(request: Dict[str, Any] = Body(...)):
     """
     Simulate touch interaction with a specific object
@@ -908,12 +908,14 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/brain/metrics")
+@api_v1_router.get("/api/v1/brain/metrics")
 async def get_brain_metrics():
     """Get theoretical AGI metrics (L_s, A_c, etc.)"""
+    digital_life = get_digital_life()
+    return {"status": "available", "message": "Brain metrics endpoint ready"}
 
 
-@router.post("/api/v1/brain/dividend")
+@api_v1_router.post("/api/v1/brain/dividend")
 async def get_brain_dividend():
     """Get CDM Economic Model data"""
     digital_life = get_digital_life()
@@ -1293,7 +1295,6 @@ from services.atlassian_api import atlassian_router
 
 # Include existing routers
 app.include_router(api_v1_router)
-app.include_router(router)
 app.include_router(atlassian_router)
 
 if __name__ == "__main__":

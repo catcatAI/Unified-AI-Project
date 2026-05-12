@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-# Mock yaml import - TODO: Replace with actual yaml when available
+# NOTE: 依賴 yaml 庫（如未安裝則降級運行）
 try:
     import yaml
 except ImportError:

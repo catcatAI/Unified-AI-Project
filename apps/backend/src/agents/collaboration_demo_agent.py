@@ -10,11 +10,11 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 sys.path.insert(0, project_root)
 
 try:
-    from .base_agent import BaseAgent
+    from ..ai.agents.base.base_agent import BaseAgent
     from src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 except ImportError:
-    from src.agents.base_agent import BaseAgent
-    from src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+    from ai.agents.base.base_agent import BaseAgent
+    from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 

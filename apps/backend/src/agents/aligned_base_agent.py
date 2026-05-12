@@ -18,27 +18,21 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 try:
-    from .base_agent import BaseAgent
-    from src.ai.alignment import (
-        ReasoningSystem,
-        EmotionSystem,
-        OntologySystem,
-        AlignmentManager,
-        DecisionTheorySystem,
-        AdversarialGenerationSystem,
-    )
-    from src.core.hsp.types import HSPTaskResultPayload  # Added missing import
+    from ..ai.agents.base.base_agent import BaseAgent
+    from src.ai.alignment.reasoning_system import ReasoningSystem
+    from src.ai.alignment.emotion_system import EmotionSystem
+    from src.ai.alignment.ontology_system import OntologySystem
+    from src.ai.alignment.alignment_manager import AlignmentManager
+    from src.ai.alignment.decision_theory_system import DecisionTheorySystem
+    from src.ai.alignment.adversarial_generation_system import AdversarialGenerationSystem
 except ImportError:
-    from src.agents.base_agent import BaseAgent
-    from src.ai.alignment import (
-        ReasoningSystem,
-        EmotionSystem,
-        OntologySystem,
-        AlignmentManager,
-        DecisionTheorySystem,
-        AdversarialGenerationSystem,
-    )
-    from src.core.hsp.types import HSPTaskResultPayload  # Added missing import
+    from ai.agents.base.base_agent import BaseAgent
+    from ai.alignment.reasoning_system import ReasoningSystem
+    from ai.alignment.emotion_system import EmotionSystem
+    from ai.alignment.ontology_system import OntologySystem
+    from ai.alignment.alignment_manager import AlignmentManager
+    from ai.alignment.decision_theory_system import DecisionTheorySystem
+    from ai.alignment.adversarial_generation_system import AdversarialGenerationSystem
 
 logger = logging.getLogger(__name__)
 

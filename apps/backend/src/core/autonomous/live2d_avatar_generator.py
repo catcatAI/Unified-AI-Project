@@ -788,7 +788,7 @@ class Live2DAvatarGenerator:
                 "style": style_preferences or {}
             }
             
-            # TODO: 等待真實的分層微服務上線後可開啟此段
+            # NOTE: 待分層微服務上線後可開啟此段（當前使用 Pillow fallback）
             # async with aiohttp.ClientSession() as session:
             #     async with session.post(seg_api_url, json=payload, timeout=2) as response:
             #         if response.status == 200: ...
