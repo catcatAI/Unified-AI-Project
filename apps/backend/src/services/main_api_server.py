@@ -388,6 +388,7 @@ def get_economy_manager() -> EconomyManager:
 
 # Initialize services and link components during startup
 def _initialize_all_services():
+    global manager
     desktop_interaction = get_desktop_interaction()
     action_executor = get_action_executor()
     vision_service = get_vision_service()
@@ -472,9 +473,9 @@ def _validate_environment_variables():
 
     if missing_keys:
         logger.warning(
-            f"[STARTUP] Missing environment variables: {', '.join(missing_keys)}. "
+            "[STARTUP] Required security keys missing. "
             "Using demo keys for development mode. "
-            "Set these variables for production deployment."
+            "Set required environment variables for production deployment."
         )
     else:
         logger.info("[STARTUP] All required environment variables are set")
@@ -584,7 +585,7 @@ async def _handle_chat_request(
         }
     except Exception as e:
         logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="internal server error")
 
 
 @api_v1_router.get("/security/sync-key-c")

@@ -527,36 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return s;
     }
 
-    function applySettingsToApplication(settings) {
-        if (window.electronAPI && window.electronAPI.window) {
-            window.electronAPI.window.setAlwaysOnTop(settings.alwaysOnTop);
-            window.electronAPI.window.setIgnoreMouseEvents(!settings.showClickRegions);
-        }
-
-        if (window.angelaApp && window.angelaApp.live2dManager) {
-            if (settings.renderMode) {
-                if (settings.renderMode === 'live2d' && window.angelaApp.live2dManager.getMode() === 'fallback') {
-                    window.angelaApp.live2dManager.switchToLive2D();
-                } else if (settings.renderMode === 'fallback' && window.angelaApp.live2dManager.getMode() === 'live2d') {
-                    window.angelaApp.live2dManager.switchToFallback();
-                }
-                localStorage.setItem('render_mode', settings.renderMode);
-            }
-
-            if (settings.model) {
-                const modelPath = 'resources/models/' + settings.model;
-                window.angelaApp.live2dManager.loadModel(modelPath);
-            }
-        }
-
-        if (window.angelaApp && window.angelaApp.audioHandler) {
-            if (settings.continuousRecognition) {
-                window.angelaApp.audioHandler.startSpeechRecognition();
-            } else {
-                window.angelaApp.audioHandler.stopSpeechRecognition();
-            }
-}
-
     function collectSettings() {
         const s = {};
         const val = id => document.getElementById(id)?.value;
@@ -592,13 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
         s.renderQuality = val('render-quality');
         s.backendIp = val('backend-ip');
         s.backendPort = parseInt(val('backend-port'));
-
         s.enableCluster = checked('enable-cluster');
         s.clusterRole = val('cluster-role');
         s.clusterIntegerOnly = checked('cluster-integer-only');
         s.clusterMemoization = checked('cluster-memoization');
         s.nodeName = val('node-name');
-
         s.debugMode = checked('debug-mode');
         s.showClickRegions = checked('show-click-regions');
 
@@ -606,14 +574,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applySettingsToApplication(settings) {
-        if (!window.electronAPI) return;
-
-        if (window.electronAPI.window) {
+        if (window.electronAPI && window.electronAPI.window) {
             window.electronAPI.window.setAlwaysOnTop(settings.alwaysOnTop);
+            window.electronAPI.window.setIgnoreMouseEvents(!settings.showClickRegions);
         }
 
-        if (window.electronAPI.performance) {
-            window.electronAPI.performance.setMode(settings.renderQuality);
+        if (window.angelaApp && window.angelaApp.live2dManager) {
+            if (settings.renderMode) {
+                if (settings.renderMode === 'live2d' && window.angelaApp.live2dManager.getMode() === 'fallback') {
+                    window.angelaApp.live2dManager.switchToLive2D();
+                } else if (settings.renderMode === 'fallback' && window.angelaApp.live2dManager.getMode() === 'live2d') {
+                    window.angelaApp.live2dManager.switchToFallback();
+                }
+                localStorage.setItem('render_mode', settings.renderMode);
+            }
+
+            if (settings.model) {
+                const modelPath = 'resources/models/' + settings.model;
+                window.angelaApp.live2dManager.loadModel(modelPath);
+            }
+        }
+
+        if (window.angelaApp && window.angelaApp.audioHandler) {
+            if (settings.continuousRecognition) {
+                window.angelaApp.audioHandler.startSpeechRecognition();
+            } else {
+                window.angelaApp.audioHandler.stopSpeechRecognition();
+            }
         }
     }
 

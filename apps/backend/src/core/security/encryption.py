@@ -79,8 +79,7 @@ class EncryptionUtils:
         if salt is None:
             salt = secrets.token_hex(32)
 
-        # 使用 PBKDF2 进行密码哈希
-        kdf = hashlib.pbkdf2_hmac(sha256, password.encode("utf-8"), salt.encode("utf-8"), 100000)
+        kdf = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
 
         hash_hex = kdf.hex()
 
@@ -118,7 +117,7 @@ class EncryptionUtils:
         if isinstance(key, str):
             key = key.encode("utf-8")
 
-        hmac_obj = hmac.new(key, data, hashlib.sha256)
+        hmac_obj = hmac.new(key, data, hashlib.sha256())
         return hmac_obj.hexdigest()
 
     def verify_hmac(self, data: Union[str, bytes], signature: str, key: Union[str, bytes]) -> bool:

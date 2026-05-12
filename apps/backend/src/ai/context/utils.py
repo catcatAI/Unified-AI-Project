@@ -7,7 +7,13 @@ import logging
 import hashlib
 import zlib
 
-# from tests.test_json_fix import  # Commented out - incomplete import
+try:
+    from cryptography.fernet import Fernet
+
+    FERNET_AVAILABLE = True
+except ImportError:
+    FERNET_AVAILABLE = False
+    logging.warning("cryptography module not available, context encryption disabled")
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -125,26 +131,22 @@ def encrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
 
     Args:
         data: 要加密的字节数据
-        key: 加密密钥(可选)
+        key: 加密密钥(可选, 32-byte URL-safe base64-encoded)
 
     Returns:
         bytes: 加密后的字节数据
     """
     try:
         if key is None:
-            # 如果没有提供密钥, 返回原始数据(不加密)
             logger.warning("No encryption key provided, returning raw data")
             return data
 
-        # 使用简单的XOR加密作为示例
-        # 在实际应用中应该使用更安全的加密算法
-        encrypted = bytearray()
-        key_len = len(key)
-        for i, byte in enumerate(data):
-            encrypted.append(byte ^ key[i % key_len])
+        if not FERNET_AVAILABLE:
+            raise ValueError("Fernet not available")
 
-        return bytes(encrypted)
-    except Exception as e:  # broad exception acceptable: graceful degradation on failure
+        fernet = Fernet(key)
+        return fernet.encrypt(data)
+    except Exception as e:
         logger.error(f"Failed to encrypt context data: {e}")
         raise
 
@@ -155,20 +157,22 @@ def decrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
 
     Args:
         data: 要解密的字节数据
-        key: 解密密钥(可选)
+        key: 解密密钥(可选, 32-byte URL-safe base64-encoded)
 
     Returns:
         bytes: 解密后的字节数据
     """
     try:
         if key is None:
-            # 如果没有提供密钥, 返回原始数据(不解密)
             logger.warning("No decryption key provided, returning raw data")
             return data
 
-        # XOR加密是对称的, 解密过程与加密过程相同
-        return encrypt_context_data(data, key)
-    except Exception as e:  # broad exception acceptable: graceful degradation on failure
+        if not FERNET_AVAILABLE:
+            raise ValueError("Fernet not available")
+
+        fernet = Fernet(key)
+        return fernet.decrypt(data)
+    except Exception as e:
         logger.error(f"Failed to decrypt context data: {e}")
         raise
 

@@ -260,6 +260,9 @@ class AudioHandler {
         if (window.live2dApp && window.live2dApp.live2dManager) {
             const level = this._calculateAudioLevel(samples);
             window.live2dApp.live2dManager.updateLipSync(level);
+        } else if (window.angelaApp && window.angelaApp.live2dManager) {
+            const level = this._calculateAudioLevel(samples);
+            window.angelaApp.live2dManager.updateLipSync(level);
         }
     }
 
@@ -566,10 +569,15 @@ class AudioHandler {
         
         utterance.onboundary = (event) => {
             // Update lip sync based on phoneme boundaries
-            if (window.live2dApp && window.live2dApp.live2dManager) {
+            const manager = (window.live2dApp && window.live2dApp.live2dManager) 
+                ? window.live2dApp.live2dManager 
+                : (window.angelaApp && window.angelaApp.live2dManager) 
+                    ? window.angelaApp.live2dManager 
+                    : null;
+            if (manager) {
                 // Approximate phoneme from event
                 const phoneme = this._approximatePhoneme(event.name);
-                window.live2dApp.live2dManager.updateLipSync(phoneme, 0.8);
+                manager.updateLipSync(phoneme, 0.8);
             }
         };
         

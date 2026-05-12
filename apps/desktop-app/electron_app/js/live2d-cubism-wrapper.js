@@ -781,17 +781,26 @@ class Live2DCubismWrapper {
     }
 
     async createMotionGroup(groupName, groupData) {
+        if (!this.cubismSdk || !this.cubismSdk.MotionGroup) {
+            console.warn('[createMotionGroup] MotionGroup not available, skipping motion group creation');
+            return null;
+        }
+        
         const group = this.cubismSdk.MotionGroup;
         const groupInstance = new group();
 
-        await group.loadfromJsonFile(
-            `${groupName}.motion3.json`,
-            {
-                instance: groupInstance,
-                name: groupName,
-                path: groupData.File
-            }
-        );
+        if (typeof groupInstance.loadFromJsonFile === 'function') {
+            await groupInstance.loadFromJsonFile(
+                `${groupName}.motion3.json`,
+                {
+                    instance: groupInstance,
+                    name: groupName,
+                    path: groupData.File
+                }
+            );
+        } else {
+            console.warn('[createMotionGroup] loadFromJsonFile method not found on MotionGroup');
+        }
 
         return groupInstance;
     }

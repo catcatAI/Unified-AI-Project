@@ -55,6 +55,8 @@
 | 2026-05-11 | pytest.ini testpaths修正 | apps/backend/tests -> tests | ✅ 完成 |
 | 2026-05-11 | 創建缺失模組 | state-persistence.js | ✅ 完成 |
 | 2026-05-11 | 註冊缺失模組 | index.html 添加 state-persistence.js 引用 | ✅ 完成 |
+| 2026-05-12 | 文檔版本同步 | PROJECT_STRUCTURE.md, QUICKSTART.md, metrics.md -> v6.2.1 | ✅ 完成 |
+| 2026-05-12 | 文檔狀態更新 | COMPREHENSIVE_PROJECT_AUDIT.md 状态标记更新 | ✅ 完成 |
 
 ---
 
@@ -401,9 +403,9 @@ ANGELA-MATRIX: L6[执行层] 全层级 [A] L2+    (中文，無 #)
 | 重複函數定義 settings.js | P1 | ✅ 已完成 |
 | P1異常處理注釋 (~902處) | P1 | ✅ 已完成 |
 | P2 TODO/FIXME標記 | P2 | ✅ 已完成 |
-| 硬編碼值配置化 | P2 | 待修復 |
-| Angela Matrix注釋標準化 | P2 | 待修復 |
-| 空 pass 語句處理 | P3 | 待修復 |
+| 硬編碼值配置化 | P2 | 🔶 部分完成 |
+| Angela Matrix注釋標準化 | P2 | 🔶 部分完成 |
+| 空 pass 語句處理 | P3 | 🔶 已記錄 |
 
 ---
 

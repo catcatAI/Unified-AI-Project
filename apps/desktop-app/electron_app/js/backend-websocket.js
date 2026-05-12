@@ -54,10 +54,16 @@ class BackendWebSocketClient {
   async connect(url) {
     console.log('Connecting to backend:', url)
 
+    // Store URL for reconnect
+    this.url = url
+
     if (this.connected) {
       console.log('Already connected')
       return
     }
+
+    // Initialize pending responses map
+    this._pendingResponses = this._pendingResponses || new Map()
 
     try {
       // Use Electron IPC bridge if available
@@ -524,6 +530,9 @@ class BackendWebSocketClient {
       return { success: false, response: 'Not connected to backend' }
     }
 
+    // Ensure _pendingResponses is initialized
+    this._pendingResponses = this._pendingResponses || new Map()
+
     return new Promise((resolve) => {
       const messageId = Date.now().toString()
       const timeout = setTimeout(() => {
@@ -531,7 +540,6 @@ class BackendWebSocketClient {
         resolve({ success: false, response: 'Timeout waiting for response' })
       }, 30000)
 
-      this._pendingResponses = this._pendingResponses || new Map()
       this._pendingResponses.set(messageId, { timeout, resolve, timestamp: Date.now() })
 
       const payload = {

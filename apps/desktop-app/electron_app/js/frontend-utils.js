@@ -146,41 +146,64 @@ const FrontendUtils = {
   },
   
   /**
-   * 检查路径是否为文件
+   * 检查路径是否为文件 (uses IPC in renderer, native in main process)
    */
   isFile(filePath) {
     try {
-      return require('fs').existsSync(filePath) && 
-             require('fs').statSync(filePath).isFile();
+      if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.file) {
+        return window.electronAPI.file.existsSync(filePath) && window.electronAPI.file.isFileSync(filePath);
+      }
+      if (typeof require !== 'undefined' && typeof require('fs') !== 'undefined') {
+        const fs = require('fs');
+        return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+      }
+      return false;
     } catch (e) {
       return false;
     }
   },
   
   /**
-   * 检查路径是否为目录
+   * 检查路径是否为目录 (uses IPC in renderer, native in main process)
    */
   isDir(dirPath) {
     try {
-      return require('fs').existsSync(dirPath) && 
-             require('fs').statSync(dirPath).isDirectory();
+      if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.file) {
+        return window.electronAPI.file.existsSync(dirPath) && window.electronAPI.file.isDirectorySync(dirPath);
+      }
+      if (typeof require !== 'undefined' && typeof require('fs') !== 'undefined') {
+        const fs = require('fs');
+        return fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory();
+      }
+      return false;
     } catch (e) {
       return false;
     }
   },
   
   /**
-   * 在目录中查找文件
+   * 在目录中查找文件 (uses IPC in renderer, native in main process)
    */
   findFileInDir(dirPath, pattern) {
     if (!this.isDir(dirPath)) return null;
     
     try {
-      const files = require('fs').readdirSync(dirPath);
+      let files;
+      if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.file) {
+        files = window.electronAPI.file.readDirSync(dirPath);
+      } else if (typeof require !== 'undefined' && typeof require('fs') !== 'undefined') {
+        files = require('fs').readdirSync(dirPath);
+      } else {
+        return null;
+      }
       const match = files.find(f => 
         pattern.startsWith('*') ? f.endsWith(pattern.slice(1)) : f.includes(pattern)
       );
-      return match ? require('path').join(dirPath, match) : null;
+      if (!match) return null;
+      if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.file) {
+        return window.electronAPI.file.pathJoin(dirPath, match);
+      }
+      return require('path').join(dirPath, match);
     } catch (e) {
       return null;
     }

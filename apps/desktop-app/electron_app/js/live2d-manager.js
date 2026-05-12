@@ -926,7 +926,7 @@ class Live2DManager {
     // ========== Event Handlers ==========
     
     _onClick(event) {
-        if (!this.characterImage) return;
+        if (!this.characterImages[this.currentCharacterImageId]) return;
         
         const rect = event.currentTarget.getBoundingClientRect();
         const x = (event.clientX - rect.left) * (this.fallbackCanvas.width / rect.width);
@@ -939,7 +939,7 @@ class Live2DManager {
     }
     
     _onHover(event) {
-        if (!this.characterImage) return;
+        if (!this.characterImages[this.currentCharacterImageId]) return;
         
         const rect = event.currentTarget.getBoundingClientRect();
         const x = (event.clientX - rect.left) * (this.fallbackCanvas.width / rect.width);
@@ -1208,7 +1208,8 @@ class Live2DManager {
         this._clickHandler = null;
         this._hoverHandler = null;
         this._wrapperElement = null;
-        this.characterImage = null;
+        this.characterImages = {};
+        this.currentCharacterImageId = null;
     }
     
     enableDebugOverlay(enable = true) {

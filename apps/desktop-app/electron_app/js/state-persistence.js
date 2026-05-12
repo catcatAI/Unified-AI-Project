@@ -94,7 +94,15 @@ class StatePersistence {
 
     deserialize(data) {
         try {
+            if (!data || typeof data !== 'string') {
+                console.warn('[StatePersistence] Invalid data type for deserialization');
+                return false;
+            }
             const parsed = JSON.parse(data);
+            if (parsed === null || parsed === undefined) {
+                console.warn('[StatePersistence] Parsed data is null or undefined');
+                return false;
+            }
             this.currentState = parsed.currentState || {};
             this.history = parsed.history || [];
             this.maxHistorySize = parsed.maxHistorySize || 100;

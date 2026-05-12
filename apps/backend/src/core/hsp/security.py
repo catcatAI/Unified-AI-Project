@@ -83,11 +83,9 @@ class HSPSecurityManager:
         if not self.signature_enabled:
             return True
 
-        # 如果在测试模式下, 直接返回True
-        # 注意：这仅用于测试目的, 在生产环境中应该严格要求签名验证
-        if os.environ.get("TESTING_MODE") == "true":
-            logger.warning(f"测试模式：跳过签名验证: {message.get('message_id', 'unknown')}")
-            return True
+        testing_mode = os.environ.get("TESTING_MODE") == "true"
+        if testing_mode:
+            logger.warning("TESTING_MODE active: signatures will be verified with a test key")
 
         try:
             # 解码签名
@@ -165,9 +163,9 @@ class HSPSecurityManager:
 
         # 如果没有提供认证令牌, 但在测试环境中, 我们可以放宽验证
         # 注意：这仅用于测试目的, 在生产环境中应该严格要求认证令牌
-        if os.environ.get("TESTING_MODE") == "true":
-            logger.warning(f"测试模式：跳过发送者身份验证: {sender_id}")
-            return True
+        testing_mode = os.environ.get("TESTING_MODE") == "true"
+        if testing_mode:
+            logger.warning("TESTING_MODE active: auth token will be verified with a test key")
 
         logger.warning(f"发送者身份验证失败: {sender_id} - 无认证令牌")
         return False

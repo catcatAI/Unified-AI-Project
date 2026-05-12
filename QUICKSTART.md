@@ -241,7 +241,7 @@ make llama-server
 
 ## 📊 Project Stats
 
-- **Version**: 6.2.0
+- **Version**: 6.2.1
 - **Python Files**: 477
 - **JavaScript Modules**: 52
 - **Test Coverage**: 100% (9/9 tests passing)

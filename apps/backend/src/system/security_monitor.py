@@ -172,34 +172,12 @@ class SecurityTrayMonitor:
         icon.stop()
 
     def on_show_key_b(self, icon, item):
-        key_b = self.km.get_key("KeyB")
-        # 顯示更詳細的說明
-        msg = f"行動端通訊密鑰 (Key B):\n{key_b}\n\n請在手機 App 設置中輸入此金鑰以啟用加密通訊。"
-        icon.notify(msg, "Angela 安全金鑰")
-        print("\n" + "=" * 50)
-        print("📱 Angela Mobile Pairing Key (Key B)")
-        print(f"Key: {key_b}")
-        print("=" * 50 + "\n")
+        logger.info("Key display disabled for security")
+        icon.notify("金鑰顯示已停用以保護安全。請透過安全管道取得金鑰。", "Angela 安全資訊")
 
     def on_generate_qr(self, icon, item):
-        try:
-            import qrcode
-
-            key_b = self.km.get_key("KeyB")
-            qr = qrcode.QRCode(version=1, box_size=1, border=1)
-            qr.add_data(key_b)
-            qr.make(fit=True)
-
-            print("\n" + " " * 10 + "📱 SCAN TO PAIR MOBILE APP")
-            # 在終端打印 QR Code
-            qr.print_ascii(invert=True)
-            print("\n" + " " * 10 + f"Key B: {key_b}\n")
-
-            icon.notify("已在終端生成配對 QR Code", "Angela 行動端配對")
-        except ImportError:
-            icon.notify("請先安裝 qrcode 庫: pip install qrcode", "功能受限")
-        except Exception as e:  # broad exception acceptable: qr generation may fail for various reasons
-            logger.error(f"生成 QR Code 失敗: {e}")
+        logger.info("QR code key display disabled for security")
+        icon.notify("QR Code 金鑰顯示已停用以保護安全。請透過安全管道取得金鑰。", "Angela 安全資訊")
 
     def update_menu(self):
         def get_status():
