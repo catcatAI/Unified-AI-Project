@@ -588,7 +588,7 @@ async def _handle_chat_request(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_v1_router.get("/api/v1/security/sync-key-c")
+@api_v1_router.get("/security/sync-key-c")
 async def sync_key_c(request: Request):
     """Get Key C for desktop app synchronization (Localhost restricted)"""
     client_host = request.client.host
@@ -686,7 +686,7 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
 
 
-@api_v1_router.post("/api/v1/chat/unified")
+@api_v1_router.post("/chat/unified")
 async def unified_chat(request: Dict[str, Any] = Body(...)):
     """
     Unified chat endpoint for multi-frontend/persona migration.
@@ -725,197 +725,19 @@ async def unified_chat(request: Dict[str, Any] = Body(...)):
 # --- Desktop Interaction API ---
 
 
-@api_v1_router.get("/api/v1/desktop/state")
-async def get_desktop_state():
-    """Get current desktop state"""
-    desktop_interaction = get_desktop_interaction()
-    state = desktop_interaction.get_desktop_state()
-    return {
-        "total_files": state.total_files,
-        "total_size": state.total_size,
-        "clutter_level": state.clutter_level,
-        "files_by_category": {cat.name: count for cat, count in state.files_by_category.items()},
-        "last_organized": (state.last_organized.isoformat() if state.last_organized else None),
-    }
-
-
-@api_v1_router.post("/api/v1/desktop/organize")
-async def organize_desktop(background_tasks: BackgroundTasks):
-    """Trigger desktop organization"""
-    # Background task for long running operation
-    desktop_interaction = get_desktop_interaction()
-    operations = await desktop_interaction.organize_desktop()
-    return {"status": "success", "operations_count": len(operations)}
-
-
-@api_v1_router.post("/api/v1/desktop/cleanup")
-async def cleanup_desktop(days_old: int = 30):
-    """Trigger desktop cleanup"""
-    desktop_interaction = get_desktop_interaction()
-    operations = await desktop_interaction.cleanup_desktop(days_old=days_old)
-    return {"status": "success", "operations_count": len(operations)}
-
-
-# --- Action Executor API ---
-
-
-@api_v1_router.get("/api/v1/actions/status")
-async def get_actions_status():
-    """Get action executor status"""
-    action_executor = get_action_executor()
-    return action_executor.queue.get_queue_status()
-
-
-@api_v1_router.post("/api/v1/actions/execute")
-async def execute_action(action_data: Dict[str, Any]):
-    """Execute a custom action"""
-    # This is a simplified implementation. In a real scenario,
-    # we would map the request to specific registered functions.
-
-    # Example action creation
-    try:
-        category = ActionCategory[action_data.get("category", "SYSTEM")]
-        priority = ActionPriority[action_data.get("priority", "NORMAL")]
-
-        # For now, we only support a "dummy" function via API for safety
-        async def dummy_func(**kwargs):
-            return {"result": "Action executed successfully", "params": kwargs}
-
-        action = Action.create(
-            name=action_data.get("name", "api_action"),
-            category=category,
-            priority=priority,
-            function=dummy_func,
-            parameters=action_data.get("parameters", {}),
-        )
-
-        action_executor = get_action_executor()
-        result = await action_executor.submit_and_execute(action)
-        return {
-            "success": result.success,
-            "action_id": result.action_id,
-            "output": result.output,
-            "error": result.error,
-        }
-    except Exception as e:
-        # broad exception acceptable: action execution must be resilient to errors
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-# --- Vision API ---
-
-
-@api_v1_router.post("/api/v1/vision/sampling")
-async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
-    """
-    Get visual sampling analysis with particle cloud
-    """
-    center = params.get("center", [0.5, 0.5])
-    scale = params.get("scale", 1.0)
-    deformation = params.get("deformation", 0.0)
-    distribution = params.get("distribution", "GAUSSIAN")
-
-    try:
-        vision_service = get_vision_service()
-        result = await vision_service.get_sampling_analysis(
-            center=(center[0], center[1]),
-            scale=scale,
-            deformation=deformation,
-            distribution=distribution,
-        )
-        return result
-    except Exception as e:
-        # broad exception acceptable: vision service should be resilient to parse errors
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@api_v1_router.post("/api/v1/vision/perceive")
-async def vision_perceive(image_data: bytes = Body(...)):
-    """
-    Simulate Discover-Focus-Memory cycle
-    """
-    try:
-        vision_service = get_vision_service()
-        result = await vision_service.perceive_and_focus(image_data)
-        return result
-    except Exception as e:
-        # broad exception acceptable: vision perceive should be resilient to errors
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@api_v1_router.post("/api/v1/audio/scan")
-async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
-    """
-    Simulate cocktail party effect: listen, identify, and focus
-    """
-    try:
-        audio_service = get_audio_service()
-        result = await audio_service.scan_and_identify(audio_data, duration)
-        return result
-    except Exception as e:
-        # broad exception acceptable: audio scan should be resilient to errors
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@api_v1_router.post("/api/v1/audio/register_user")
-async def audio_register_user(audio_data: bytes = Body(...)):
-    """
-    Register user voiceprint
-    """
-    try:
-        audio_service = get_audio_service()
-        result = await audio_service.register_user_voice(audio_data)
-        return result
-    except Exception as e:
-        # broad exception acceptable: voice registration should be resilient to errors
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@api_v1_router.post("/api/v1/tactile/model")
-async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
-    """
-    Model tactile properties from visual data (texture, light, etc.)
-    """
-    try:
-        tactile_service = get_tactile_service()
-        result = await tactile_service.model_object_tactile(visual_data)
-        return result
-    except Exception as e:
-        # broad exception acceptable: tactile modeling should be resilient to errors
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@api_v1_router.post("/api/v1/tactile/touch")
-async def tactile_touch(request: Dict[str, Any] = Body(...)):
-    """
-    Simulate touch interaction with a specific object
-    """
-    try:
-        object_id = request.get("object_id")
-        contact_point = request.get("contact_point", {})
-        tactile_service = get_tactile_service()
-        result = await tactile_service.simulate_touch(object_id, contact_point)
-        return result
-    except Exception as e:
-        # broad exception acceptable: tactile touch should be resilient to errors
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@api_v1_router.get("/api/v1/brain/metrics")
-async def get_brain_metrics():
-    """Get theoretical AGI metrics (L_s, A_c, etc.)"""
-    digital_life = get_digital_life()
-    return {"status": "available", "message": "Brain metrics endpoint ready"}
-
-
-@api_v1_router.post("/api/v1/brain/dividend")
+@api_v1_router.get("/desktop/state")
+@api_v1_router.post("/desktop/organize")
+@api_v1_router.post("/desktop/cleanup")
+@api_v1_router.get("/actions/status")
+@api_v1_router.post("/actions/execute")
+@api_v1_router.post("/vision/sampling")
+@api_v1_router.post("/vision/perceive")
+@api_v1_router.post("/audio/scan")
+@api_v1_router.post("/audio/register_user")
+@api_v1_router.post("/tactile/model")
+@api_v1_router.post("/tactile/touch")
+@api_v1_router.post("/brain/metrics")
+@api_v1_router.post("/brain/dividend")
 async def get_brain_dividend():
     """Get CDM Economic Model data"""
     digital_life = get_digital_life()
