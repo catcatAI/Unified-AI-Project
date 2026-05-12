@@ -319,6 +319,9 @@ _digital_life = None
 _economy_manager = None
 _metabolic_heartbeat = None
 
+# Session management
+sessions: Dict[str, Any] = {}
+
 
 def get_metabolic_heartbeat() -> MetabolicHeartbeat:
     global _metabolic_heartbeat
@@ -555,36 +558,32 @@ async def _handle_chat_request(
             emotion_confidence = 0.5
             emotion_intensity = 0.5
 
+        return {
+            "response_text": response_text,
+            "source": source,
+            "emotion": emotion,
+            "emotion_confidence": emotion_confidence,
+            "emotion_intensity": emotion_intensity,
+            "session_id": session_id,
+        }
+
     except asyncio.TimeoutError:
         logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
-        # 超時時使用備份回應
-        response_text = generate_angela_response(user_message, user_name)
+        response_text = await generate_angela_response(user_message, user_name)
         source = "fallback-timeout"
         emotion = "neutral"
         emotion_confidence = 0.5
         emotion_intensity = 0.5
-    except Exception as e:
-        # broad exception acceptable: status endpoint should be resilient
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-# =========================================================
-
-        # ========== 修复：使用统一的系统指标管理器 ==========
-        system_resources = system_metrics_manager.get_all_metrics()
-
         return {
-            "status": "running",
-            "version": "6.0.4",
-            "timestamp": datetime.now().isoformat(),
-            "services": services_status,
-            "system_resources": system_resources,
-            "active_sessions": len(sessions),
-            "message": "System operational",
+            "response_text": response_text,
+            "source": source,
+            "emotion": emotion,
+            "emotion_confidence": emotion_confidence,
+            "emotion_intensity": emotion_intensity,
+            "session_id": session_id,
         }
     except Exception as e:
-        # broad exception acceptable: health check should not affect service
-        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+        logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -696,7 +695,12 @@ async def unified_chat(request: Dict[str, Any] = Body(...)):
     - Legacy endpoints (/dialogue, /angela/chat) remain available during migration.
     """
     user_message = request.get("message", request.get("text", ""))
-    context = _normalize_chat_context(request)
+    context = {
+        "user_id": request.get("user_name", request.get("user_id", "User")),
+        "tenant_id": request.get("tenant_id", "default"),
+        "persona_id": request.get("persona_id", "angela"),
+        "client_id": request.get("origin", request.get("client_id", "desktop")),
+    }
     user_name = request.get("user_name", context["user_id"])
     history = request.get("history", [])
 
