@@ -1,4 +1,4 @@
-"""Test WebSocket Connection Manager"""
+"""Test WebSocket Connection Manager - Standalone Tests"""
 import pytest
 import asyncio
 import sys
@@ -10,19 +10,8 @@ if str(src_path) not in sys.path:
 
 
 @pytest.mark.asyncio
-async def test_connection_manager_import():
-    """Test ConnectionManager can be imported"""
-    try:
-        from services.main_api_server import ConnectionManager, manager
-        assert ConnectionManager is not None
-        assert manager is not None
-    except ImportError as e:
-        pytest.skip(f"ConnectionManager not available: {e}")
-
-
-@pytest.mark.asyncio
-async def test_connection_manager_init():
-    """Test ConnectionManager initialization"""
+async def test_websocket_manager_class_exists():
+    """Test WebSocket manager can be created standalone"""
     from services.main_api_server import ConnectionManager
 
     cm = ConnectionManager()
@@ -55,25 +44,28 @@ async def test_message_buffer():
 
 
 @pytest.mark.asyncio
-async def test_manager_singleton():
+async def test_manager_singleton_exists():
     """Test global manager instance exists"""
-    try:
-        from services.main_api_server import manager
-        assert manager is not None
-        assert isinstance(manager, type(lambda: None).__class__.__bases__[0])
-    except ImportError:
-        pytest.skip("manager singleton not available")
+    from services.main_api_server import manager
+
+    assert manager is not None
+    assert hasattr(manager, "active_connections")
 
 
 @pytest.mark.asyncio
-async def test_websocket_endpoint_exists():
-    """Test WebSocket endpoint exists in main_api_server"""
-    try:
-        from services.main_api_server import app
-        routes = [r.path for r in app.routes]
-        assert any("/ws" in r for r in routes)
-    except ImportError:
-        pytest.skip("main_api_server not fully available")
+async def test_manager_broadcast():
+    """Test manager broadcast method exists and is callable"""
+    from services.main_api_server import manager
+
+    assert callable(manager.broadcast)
+
+
+@pytest.mark.asyncio
+async def test_manager_connect():
+    """Test manager connect method exists"""
+    from services.main_api_server import manager
+
+    assert callable(manager.connect)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, AsyncMock
 
 # Correct import path for CreativeWritingAgent
 from ai.agents.specialized.creative_writing_agent import CreativeWritingAgent
-from core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
+from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 
 @pytest.fixture

@@ -527,52 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return s;
     }
 
-    function collectSettings() {
-        const s = {};
-        const val = id => document.getElementById(id)?.value;
-        const checked = id => document.getElementById(id)?.checked;
-
-        s.alwaysOnTop = checked('always-on-top');
-        s.autoStart = checked('auto-start');
-        s.windowOpacity = parseFloat(val('window-opacity'));
-        s.idleMode = checked('idle-mode');
-        s.sensitivity = val('sensitivity');
-
-        s.model = val('model-select');
-        s.modelScale = parseFloat(val('model-scale'));
-        s.renderMode = val('render-mode');
-        s.autoSwitchFallback = checked('auto-switch-fallback');
-        s.wallpaperMode = val('wallpaper-mode');
-        s.wallpaperEffect = val('wallpaper-effect');
-
-        s.ttsEngine = val('tts-engine');
-        s.ttsVoice = val('tts-voice');
-        s.speechRate = parseFloat(val('speech-rate'));
-        s.speechPitch = parseFloat(val('speech-pitch'));
-        s.speechLanguage = val('speech-language');
-        s.continuousRecognition = checked('continuous-recognition');
-        s.captureSystemAudio = checked('capture-system-audio');
-
-        s.enableHaptics = checked('enable-haptics');
-        s.clickIntensity = parseFloat(val('click-intensity'));
-        s.touchIntensity = parseFloat(val('touch-intensity'));
-        s.emotionIntensity = parseFloat(val('emotion-intensity'));
-
-        s.frameRate = parseInt(val('frame-rate'));
-        s.renderQuality = val('render-quality');
-        s.backendIp = val('backend-ip');
-        s.backendPort = parseInt(val('backend-port'));
-        s.enableCluster = checked('enable-cluster');
-        s.clusterRole = val('cluster-role');
-        s.clusterIntegerOnly = checked('cluster-integer-only');
-        s.clusterMemoization = checked('cluster-memoization');
-        s.nodeName = val('node-name');
-        s.debugMode = checked('debug-mode');
-        s.showClickRegions = checked('show-click-regions');
-
-        return s;
-    }
-
     function applySettingsToApplication(settings) {
         if (window.electronAPI && window.electronAPI.window) {
             window.electronAPI.window.setAlwaysOnTop(settings.alwaysOnTop);

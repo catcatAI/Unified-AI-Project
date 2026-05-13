@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock
 
 from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
-from core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
+from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 
 @pytest.fixture

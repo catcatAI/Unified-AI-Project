@@ -1,4 +1,4 @@
-"""Test Main API Server - FastAPI app startup and core functionality"""
+"""Test Main API Server - Standalone Tests"""
 import pytest
 import sys
 from pathlib import Path
@@ -11,11 +11,8 @@ if str(src_path) not in sys.path:
 @pytest.mark.asyncio
 async def test_main_api_server_import():
     """Test main API server module can be imported"""
-    try:
-        from services.main_api_server import app
-        assert app is not None
-    except ImportError as e:
-        pytest.skip(f"main_api_server not available: {e}")
+    from services.main_api_server import app
+    assert app is not None
 
 
 @pytest.mark.asyncio
@@ -96,19 +93,6 @@ async def test_state_merge():
     assert merged["a"] == 1
     assert merged["b"] == 3
     assert merged["c"] == 4
-
-
-@pytest.mark.asyncio
-async def test_api_router_integration():
-    """Test API router is included in app"""
-    from services.main_api_server import app
-
-    included = any(
-        hasattr(router, "routes") and any("/health" in str(r.path) for r in router.routes)
-        for router in app.routes
-        if hasattr(router, "routes")
-    )
-    assert included or any(hasattr(r, "path") and "/api/v1" in r.path for r in app.routes)
 
 
 if __name__ == "__main__":

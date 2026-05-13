@@ -5,9 +5,17 @@ import json
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple, TypedDict
 
-import spacy
-from spacy.matcher import Matcher
-from spacy.lang.en import English
+try:
+    import spacy
+    from spacy.matcher import Matcher
+    from spacy.lang.en import English
+    SPACY_AVAILABLE = True
+except ImportError:
+    spacy = None
+    Matcher = None
+    English = None
+    SPACY_AVAILABLE = False
+
 import networkx as nx
 
 try:
@@ -55,9 +63,19 @@ class ContentAnalyzerModule:
     内容分析模块 - 使用NLP技术从文本中提取实体和关系, 并构建知识圖譜
     """
 
-    _nlp_model: Optional[spacy.language.Language] = None
+    _nlp_model: Optional[Any] = None
 
     def __init__(self, spacy_model_name: str = "en_core_web_sm") -> None:
+        if not SPACY_AVAILABLE:
+            logger.warning("spaCy not available. ContentAnalyzerModule will run in limited mode.")
+            self.nlp = None
+            self.matcher = None
+            self.graph = nx.DiGraph()
+            self.ontology_mapping = {}
+            self.internal_uri_prefixes = {}
+            logger.info("ContentAnalyzerModule initialized (limited mode).")
+            return
+
         if ContentAnalyzerModule._nlp_model is None:
             try:
                 ContentAnalyzerModule._nlp_model = spacy.load(spacy_model_name)
@@ -71,22 +89,23 @@ class ContentAnalyzerModule:
 
                     cli.download(spacy_model_name)
                     ContentAnalyzerModule._nlp_model = spacy.load(spacy_model_name)
-                except Exception as e:  # broad exception acceptable: model download failures fall back gracefully
-                        logger.error(f"Failed to download/load {spacy_model_name}: {e}")
-                        ContentAnalyzerModule._nlp_model = None
+                except Exception as e:
+                    logger.error(f"Failed to download/load {spacy_model_name}: {e}")
+                    ContentAnalyzerModule._nlp_model = None
 
         self.nlp = ContentAnalyzerModule._nlp_model
         self.graph = nx.DiGraph()
 
-        if self.nlp is not None:
+        if self.nlp is not None and Matcher is not None:
             self.matcher = Matcher(self.nlp.vocab)
         else:
-            self.matcher = Matcher(English.Defaults.vocab)
+            self.matcher = None
 
         self.ontology_mapping: Dict[str, str] = {}
         self.internal_uri_prefixes: Dict[str, str] = {}
         self._load_ontology_mappings()
-        self._add_custom_matcher_patterns()
+        if self.matcher is not None:
+            self._add_custom_matcher_patterns()
 
         logger.info("ContentAnalyzerModule initialized.")
 

@@ -1162,10 +1162,6 @@ class Live2DManager {
     getTouchDetector() {
         return this.touchDetector || null;
     }
-
-    setFrameRate(fps) {
-        this.frameRate = fps;
-    }
     
     setRenderQuality(quality) {
         console.log(`[Live2DManager] Render quality: ${quality}`);
