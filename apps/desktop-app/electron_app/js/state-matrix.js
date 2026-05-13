@@ -82,19 +82,36 @@ class StateMatrix4D {
             weight: config.delta_weight || 1.0,
             timestamp: Date.now()
         };
-        
+
+        this.epsilon = {
+            name: 'epsilon',
+            cn_name: '数理维度',
+            values: {
+                logic: 0.5,
+                precision: 0.5,
+                abstraction: 0.5,
+                certainty: 0.5,
+                complexity: 0.0,
+                fatigue: 0.0
+            },
+            weight: config.epsilon_weight || 0.3,
+            timestamp: Date.now()
+        };
+
         this.dimensions = {
             alpha: this.alpha,
             beta: this.beta,
             gamma: this.gamma,
-            delta: this.delta
+            delta: this.delta,
+            epsilon: this.epsilon
         };
         
         this.influenceMatrix = config.influence_matrix || {
-            alpha: { beta: 0.3, gamma: 0.5, delta: 0.2 },
-            beta: { alpha: 0.2, gamma: 0.4, delta: 0.3 },
-            gamma: { alpha: 0.4, beta: 0.3, delta: 0.5 },
-            delta: { alpha: 0.2, beta: 0.3, gamma: 0.6 }
+            alpha: { beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1 },
+            beta: { alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2 },
+            gamma: { alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3 },
+            delta: { alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1 },
+            epsilon: { alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1 }
         };
         
         this.history = [];
@@ -169,7 +186,34 @@ class StateMatrix4D {
         this.delta.timestamp = Date.now();
         this.postUpdate('delta', kwargs);
     }
-    
+
+    updateEpsilon(kwargs) {
+        for (const [key, value] of Object.entries(kwargs)) {
+            if (key in this.epsilon.values) {
+                this.epsilon.values[key] = Math.max(0, Math.min(1, parseFloat(value)));
+            }
+        }
+        this.epsilon.timestamp = Date.now();
+        this.postUpdate('epsilon', kwargs);
+    }
+
+    applyEpsilonInfluence() {
+        const certainty = this.epsilon.values.certainty || 0.5;
+        const complexity = this.epsilon.values.complexity || 0.0;
+        const fatigue = this.epsilon.values.fatigue || 0.0;
+
+        const difficulty = Math.min(1.0, complexity);
+        const conf = Math.min(1.0, certainty);
+
+        this.gamma.values.surprise = Math.min(1.0, this.gamma.values.surprise + difficulty * 0.2);
+        this.gamma.values.happiness = Math.min(1.0, this.gamma.values.happiness + conf * 0.15);
+
+        if (fatigue > 0.7) {
+            this.beta.values.focus = Math.max(0, this.beta.values.focus - fatigue * 0.1);
+            this.gamma.values.calm = Math.max(0, this.gamma.values.calm - fatigue * 0.05);
+        }
+    }
+
     postUpdate(dimensionName, changes) {
         this.updateCount++;
         this.lastUpdate = Date.now();
@@ -200,7 +244,8 @@ class StateMatrix4D {
             alpha: { ...this.alpha.values },
             beta: { ...this.beta.values },
             gamma: { ...this.gamma.values },
-            delta: { ...this.delta.values }
+            delta: { ...this.delta.values },
+            epsilon: { ...this.epsilon.values }
         };
         
         this.history.push(snapshot);
@@ -619,12 +664,13 @@ class StateMatrix4D {
         if (dimension && this.dimensions[dimension]) {
             return { ...this.dimensions[dimension].values };
         }
-        
+
         return {
             alpha: { ...this.alpha.values },
             beta: { ...this.beta.values },
             gamma: { ...this.gamma.values },
-            delta: { ...this.delta.values }
+            delta: { ...this.delta.values },
+            epsilon: { ...this.epsilon.values }
         };
     }
     
@@ -641,14 +687,15 @@ class StateMatrix4D {
             alpha: this.getDimensionAverage('alpha'),
             beta: this.getDimensionAverage('beta'),
             gamma: this.getDimensionAverage('gamma'),
-            delta: this.getDimensionAverage('delta')
+            delta: this.getDimensionAverage('delta'),
+            epsilon: this.getDimensionAverage('epsilon')
         };
     }
     
     getAnalysis() {
         const averages = this.getDimensionAverages();
         
-        const overall = Object.values(averages).reduce((a, b) => a + b, 0) / 4;
+        const overall = Object.values(averages).reduce((a, b) => a + b, 0) / 5;
         
         const wellbeing = (
             averages.alpha * 0.25 +
@@ -1090,11 +1137,13 @@ class StateMatrix4D {
             beta: { ...this.beta.values },
             gamma: { ...this.gamma.values },
             delta: { ...this.delta.values },
+            epsilon: { ...this.epsilon.values },
             weights: {
                 alpha: this.alpha.weight,
                 beta: this.beta.weight,
                 gamma: this.gamma.weight,
-                delta: this.delta.weight
+                delta: this.delta.weight,
+                epsilon: this.epsilon.weight
             },
             influence_matrix: JSON.parse(JSON.stringify(this.influenceMatrix)),
             metadata: {
@@ -1118,6 +1167,9 @@ class StateMatrix4D {
         if (data.delta) {
             this.delta.values = { ...data.delta };
         }
+        if (data.epsilon) {
+            this.epsilon.values = { ...data.epsilon };
+        }
         if (data.weights) {
             for (const [name, weight] of Object.entries(data.weights)) {
                 if (this.dimensions[name]) {
@@ -1128,7 +1180,7 @@ class StateMatrix4D {
         if (data.influence_matrix) {
             this.influence_matrix = data.influence_matrix;
         }
-        
+
         this.lastUpdate = Date.now();
     }
     

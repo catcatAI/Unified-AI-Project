@@ -488,58 +488,95 @@ async def _handle_chat_request(
 ) -> Dict[str, Any]:
     """
     處理聊天請求的共用函數 (GSI-4 / 2030 Standard)
+    雙軌數學驗證：LLM 提取 + 引擎驗證 + 狀態觸發
     """
-    # 2030 Standard: Deep Input Validation
-    logger.info(f"📩 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
-    
-    if not user_message or not user_message.strip():
+    from services.math_verifier import MathVerifier  # noqa: E402
 
+    logger.info(f"📩 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
+
+    if not user_message or not user_message.strip():
         raise HTTPException(status_code=400, detail="訊號遺失：消息不能為空")
-    
+
     if len(user_message) > 4000:
         logger.warning(f"🛡️ [LIS] Intercepted oversized input from {origin}")
-        user_message = user_message[:1000] # 強制截斷
-    
-    # 確保 session 持久化
+        user_message = user_message[:1000]
+
     if session_id not in sessions:
         sessions[session_id] = {
             "created_at": datetime.now().isoformat(),
             "origin": origin,
             "user_name": user_name
         }
-    
+
     try:
         service = None
-        # [Task N.21.8] 原生幾何運算路由 (Native Spatial Math Router)
 
+        # ============================================================
+        # [Task N.22-DUAL-RAIL] 雙軌數學驗證
+        # ============================================================
         is_math = False
-        try:
-            import re
-            math_pattern = r"^[\d\s\+\-\*\/\(\)\=\.]+$"
-            clean_msg = user_message.strip().rstrip("=").strip()
-            
-            # 必須包含運算符且符合數學格式，才進入空間引擎
-            if any(op in clean_msg for op in "+-*/") and re.match(math_pattern, clean_msg):
-                digital_life = get_digital_life()
-                if digital_life and hasattr(digital_life, "state_matrix"):
-                    matrix = digital_life.state_matrix
+        verifier = None
 
-                    logger.info(f"🧠 [Router] Detected math task '{clean_msg}'. Routing to Spatial Engine.")
-                    math_result = matrix.evaluate_math_spatially(clean_msg)
-                    
-                    response_text = f"根據我的空間感知計算，結果是 {math_result}。 (γ 維度位移已完成)"
-                    source = "spatial_engine"
-                    emotion = "happy"
-                    emotion_confidence = 0.9
-                    emotion_intensity = 0.6
+        try:
+            digital_life = get_digital_life()
+            matrix = None
+            if digital_life and hasattr(digital_life, "state_matrix"):
+                matrix = digital_life.state_matrix
+
+            verifier = MathVerifier(state_matrix=matrix)
+            is_math = verifier.is_math_message(user_message)
+
+            if is_math:
+                logger.info(f"🧮 [DualRail] Math task detected from {origin}")
+                verification = await verifier.verify(user_message, user_name)
+
+                if verification.response_text:
+                    response_text = verification.response_text
+                    source = "dual_rail"
+
+                    if verification.needs_clarification:
+                        emotion = "confused"
+                        emotion_confidence = 0.7
+                        emotion_intensity = 0.6
+                    elif not verification.matches:
+                        emotion = "surprised"
+                        emotion_confidence = 0.8
+                        emotion_intensity = 0.7
+                    elif verification.extraction and verification.extraction.confidence >= 0.8:
+                        emotion = "happy"
+                        emotion_confidence = 0.9
+                        emotion_intensity = 0.6
+                    else:
+                        emotion = "calm"
+                        emotion_confidence = 0.6
+                        emotion_intensity = 0.4
+
                     is_math = True
-        except Exception as math_err:  # broad exception acceptable: spatial math is optional, graceful degradation to LLM
-            logger.warning(f"⚠️ [Router] Spatial math failed, falling back to LLM: {math_err}")
+
+                    if matrix and verification.final_answer is not None:
+                        epsilon_conf = verification.extraction.confidence if verification.extraction else 0.5
+                        matrix.epsilon.values["certainty"] = min(1.0, 0.5 + epsilon_conf * 0.5)
+                        matrix.epsilon.values["complexity"] = min(
+                            1.0, len(user_message) / 50.0
+                        )
+                        if not verification.matches:
+                            matrix.epsilon.values["certainty"] *= 0.5
+                            matrix.gamma.values["surprise"] = min(
+                                1.0, matrix.gamma.values.get("surprise", 0.0) + 0.3
+                            )
+                        elif verification.needs_clarification:
+                            matrix.beta.values["confusion"] = min(
+                                1.0, matrix.beta.values.get("confusion", 0.0) + 0.4
+                            )
+                        matrix.apply_epsilon_influence()
+                else:
+                    is_math = False
+
+        except Exception as math_err:  # broad exception acceptable: math verification is optional
+            logger.warning(f"⚠️ [DualRail] Math verification failed, falling back to LLM: {math_err}")
             is_math = False
 
         if not is_math:
-
-            # 正常對話流程
             service = await get_llm_service()
             response_text = await asyncio.wait_for(
                 angela_llm_response(user_message=user_message, history=history, user_name=user_name, origin=origin),
@@ -547,17 +584,18 @@ async def _handle_chat_request(
             )
             source = "llm" if service and service.is_available else "fallback"
 
-
-        # 使用情感识别系统分析情感
+        # ============================================================
+        # 情感分析
+        # ============================================================
         if service and hasattr(service, "analyze_emotion"):
             emotion_analysis = service.analyze_emotion(user_message, response_text)
             emotion = emotion_analysis.get("emotion", "happy")
             emotion_confidence = emotion_analysis.get("confidence", 0.5)
             emotion_intensity = emotion_analysis.get("intensity", 0.5)
         else:
-            emotion = "happy"
-            emotion_confidence = 0.5
-            emotion_intensity = 0.5
+            emotion = emotion if is_math else "happy"
+            emotion_confidence = emotion_confidence if is_math else 0.5
+            emotion_intensity = emotion_intensity if is_math else 0.5
 
         return {
             "response_text": response_text,
