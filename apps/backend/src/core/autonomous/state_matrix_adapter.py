@@ -67,8 +67,19 @@ class StateMatrixAdapter:
         self._init_allocation()
         self._init_ripple()
         self._init_learning()
+        self._init_port_routing()
 
     # === 初始化 ===
+
+    def _init_port_routing(self) -> None:
+        """初始化軸端口路由系統"""
+        from core.autonomous.axis_port_registry import PortRegistry, PortDirection
+        from core.autonomous.theta_router import ThetaRouter
+        from core.autonomous.port_channel import AxisOutputManager
+
+        self._port_registry = PortRegistry(state_adapter=self)
+        self._theta_router = ThetaRouter(state_adapter=self, port_registry=self._port_registry)
+        self._axis_output_manager = AxisOutputManager(state_adapter=self, port_registry=self._port_registry)
 
     def _init_config(self) -> None:
         """初始化配置"""
@@ -472,7 +483,77 @@ class StateMatrixAdapter:
                 'stages': [s.name for s in self._allocation_policy.stages],
             },
             'negativity': self._negativity_detector.report(),
+            'port_routing': self._port_registry.get_report() if hasattr(self, '_port_registry') else {},
         }
+
+    # === 端口路由 API ===
+
+    def register_port(
+        self,
+        name: str,
+        direction: str,
+        semantic_vector: List[float],
+        priority: float = 0.5,
+        tags: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        auto_bind: bool = True,
+    ) -> Any:
+        """註冊端口（自動 θ 路由綁定）"""
+        from core.autonomous.axis_port_registry import PortDirection as PD
+        direction_map = {"in": PD.IN, "out": PD.OUT, "io": PD.IO}
+        port_dir = direction_map.get(direction, PD.IO)
+        return self._port_registry.register(
+            name=name,
+            direction=port_dir,
+            semantic_vector=semantic_vector,
+            priority=priority,
+            tags=tags,
+            metadata=metadata,
+            auto_bind=auto_bind,
+        )
+
+    def unregister_port(self, name: str) -> bool:
+        """註銷端口"""
+        return self._port_registry.unregister(name)
+
+    def list_ports(
+        self,
+        direction: Optional[str] = None,
+        bound: Optional[bool] = None,
+        axis: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """列舉端口"""
+        from core.autonomous.axis_port_registry import PortDirection as PD
+        direction_map = {"in": PD.IN, "out": PD.OUT, "io": PD.IO}
+        dir_filter = direction_map.get(direction) if direction else None
+        return [p.to_dict() for p in self._port_registry.list_ports(
+            direction=dir_filter, bound=bound, axis=axis
+        )]
+
+    def output_to_port(self, port_name: str, data: Any) -> bool:
+        """寫入數據到端口緩衝區"""
+        return self._axis_output_manager.push_to_port(port_name, data)
+
+    def input_from_port(self, port_name: str) -> Optional[Any]:
+        """從端口緩衝區讀取數據"""
+        return self._axis_output_manager.pull_from_port(port_name)
+
+    def cascade_output(self, axis_name: str, data: Any) -> Dict[str, Any]:
+        """將軸數據廣播到所有輸出端口"""
+        return self._theta_router.cascade_output(axis_name, data)
+
+    def merge_input(self, axis_name: str) -> Dict[str, Any]:
+        """從所有輸入端口合併數據到軸"""
+        return self._axis_output_manager.input(axis_name)
+
+    def auto_allocate_ports(self) -> int:
+        """自動為所有未綁定端口分配軸"""
+        return len(self._theta_router.auto_allocate())
+
+    def re_evaluate_routing(self) -> List[Dict[str, Any]]:
+        """重新評估所有端口的路由"""
+        decisions = self._theta_router.re_evaluate_routing()
+        return [d.to_dict() for d in decisions]
 
     def __repr__(self) -> str:
         return (

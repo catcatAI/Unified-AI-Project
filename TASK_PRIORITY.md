@@ -66,12 +66,33 @@
 
 | # | 任務 | 優先級 | 說明 |
 |---|------|--------|------|
-| ~~P1~~ | ~~語義錨點學習系統~~ → ✅ DONE | ~~HIGH~~ | AnchorLearningEngine + 10 tests + StateMatrixAdapter 集成（4 觸發點）。INIT_DEFAULT_ANCHORS: 非零維度 ~5 → ~8-10。學習後：非零維度 48→55 (+15%), Avg sim +26%, ASSIGN rate 改善 |
-| P2 | StateMatrix4D 進一步清理 | HIGH | Direction 2 未完成：目標 ~500 行，目前仍 ~1832 行 |
-| P3 | RippleApplicatorRegistry | MEDIUM | Direction 2.5 跳過 |
-| P4 | 標記過時方法 deprecated | MEDIUM | 準備最終移除 |
+| ~~P1~~ | ~~語義錨點學習系統~~ → ✅ DONE | ~~HIGH~~ | AnchorLearningEngine + 10 tests + StateMatrixAdapter 集成（4 觸發點） |
+| ~~P2~~ | ~~6D Axis Port Routing System~~ → ✅ DONE | ~~HIGH~~ | axis_port_registry.py + theta_router.py + port_channel.py + StateMatrixAdapter 集成 + 3 個測試檔 + E2E 測試 |
+| ~~P3~~ | ~~6D state matrix polish~~ → ✅ DONE | ~~LOW~~ | get_analysis() wellbeing 包含 epsilon/theta（6維加權） |
+| ~~P4~~ | ~~Dual-rail math verification~~ → ✅ DONE | ~~HIGH~~ | services/math_verifier.py 已有完整實現 |
+| ~~P5~~ | ~~Attractor field gradient descent~~ → ✅ DONE | ~~HIGH~~ | ai/memory/attractor_field.py GradientField 已有完整實現 |
+| P6 | StateMatrix4D further cleanup | HIGH | Direction 2 未完成：目標 ~500 行，目前仍 ~1606 行 |
+| P7 | Human+Angela collaborative workflow | MEDIUM | 工作流定義文檔 |
 
-### 📐 語義錨點學習系統設計
+### 📐 軸端口路由系統（Phase 2 完成）
+
+**核心模組：**
+- `core/autonomous/axis_port_registry.py` — PortRegistry, PortDirection, Port (260行)
+- `core/autonomous/theta_router.py` — ThetaRouter, RouteAction, RouteDecision, AxisBinding (300行)
+- `core/autonomous/port_channel.py` — PortChannel, AxisOutputManager (240行)
+
+**StateMatrixAdapter 新 API：**
+- `register_port()` / `unregister_port()` / `list_ports()` — 端口管理
+- `output_to_port()` / `input_from_port()` — 端口 I/O
+- `cascade_output()` / `merge_input()` — θ 路由驅動的廣播/合併
+- `auto_allocate_ports()` / `re_evaluate_routing()` — 自動路由
+- `full_report()['port_routing']` — 端口狀態監控
+
+**測試覆蓋：**
+- `test_axis_port_registry.py` — 9 tests (Port/PortRegistry)
+- `test_theta_router.py` — 11 tests (ThetaRouter)
+- `test_port_channel.py` — 13 tests (PortChannel/AxisOutputManager)
+- `test_port_routing_e2e.py` — 3 tests (end-to-end integration)
 
 **問題根因：** `_init_semantic_anchors()` 用固定描述文本一次性生成 anchor（`state_matrix.py:403`），從不更新。`text_to_vector()` 用 hash 映射導致 ~5 個非零維度，cosine similarity 全為 0.0-0.276，ASSIGN 閾值 (0.7) 無法觸發。
 
@@ -89,16 +110,6 @@
 
 ---
 
-## 🔵 已完成文檔
-
-| 文檔 | 更新內容 |
-|------|---------|
-| REFACTORING_PLAN.md | v1.0 → v2.0，Phase 1-7 全部標記完成 + Post-Refactor Plan v1.0 完成 + Bug修復記錄 + 新建模組清單（14個檔案，3881行）|
-| TASK_PRIORITY.md | 本檔案，標記 P1 + Post-Refactor 全部完成 |
-| POST_REFACTOR_PLAN.md | 標記 v1.0 完成 |
-
----
-
 ## 新的行動計劃
 
 ### 立即可用
@@ -113,15 +124,18 @@ sm.temporal_trend('alpha', 'energy', window=50)
 sm.influence_compute('alpha', 'beta')
 sm.allocation_decide(vector, 'task')
 sm.apply_ripple(MathOp.MUL, result, cascade_targets=['alpha','beta','gamma'])
-sm.full_report()
+
+# 端口路由 API（新增）
+sm.register_port(name="llm_out", direction="io", semantic_vector=[...])
+sm.cascade_output("beta", {"focus": 0.8})
+sm.full_report()  # 包含 port_routing
 ```
 
 ### 待處理
 
-1. **StateMatrix4D 進一步清理** — 目前仍是 ~1832 行，方向 2 的最終目標（~500行）未達到
-2. **Semantic Anchor 向量改進** — 目前 32 維向量只有 4-5 個非零值，導致相似度普遍偏低，ASSIGN 閾值 (0.7) 幾乎無法觸發
-3. **RippleApplicatorRegistry** — 方向 2.5 跳過，未來可實現
-4. **P2 迭代任務** — N.22.x 其餘任務在新架構上實現
+1. **StateMatrix4D further cleanup** — 目前仍是 ~1606 行，方向 2 的最終目標（~500行）未達到
+2. **Human+Angela collaborative workflow** — 工作流定義文檔
+3. **Semantic Anchor 向量改進** — 目前 32 維向量只有 4-5 個非零值
 
 ---
 
@@ -135,5 +149,6 @@ sm.full_report()
 3. 影響規則實驗 — 在 InfluenceApplicator 中動態配置
 4. 歷史分析 — TemporalState 提供 trend/correlation/anomaly/drift 查詢
 5. 單元測試 — 每個模組可獨立測試，tests/refactor/ 目錄下有完整覆蓋（71+ 測試）
+6. 軸端口路由 — PortRegistry + ThetaRouter + AxisOutputManager，後期只需管理端口
 
-**目標：重構已完成。現在可以用新架構實現 P2 迭代任務。**
+**目標：重構已完成，軸端口路由系統完成。現已進入 Phase 3。**

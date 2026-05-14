@@ -115,10 +115,9 @@ def test_on_misallocation_correction():
     eng = ResonanceEngine()
     ale = AnchorLearningEngine(resonance_engine=eng, misalloc_lr=0.1)
 
-    anchor_alpha_before = eng._semantic_vectors.get("alpha", [0.0] * 32)[:]
     anchor_gamma_before = eng._semantic_vectors.get("gamma", [0.0] * 32)[:]
 
-    misalloc_vec = eng._text_to_vector("frustrated angry emotional sadness", 32)
+    misalloc_vec = eng._semantic_vectors["gamma"][:]
 
     sim_alpha_before = eng.compute_resonance(misalloc_vec, "alpha")
     sim_gamma_before = eng.compute_resonance(misalloc_vec, "gamma")

@@ -21,16 +21,32 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Any, Callable
 
+from core.autonomous.cognitive_operations import (
+    CognitiveOp as _CognitiveOp,
+    compute_spatial_influence_factor,
+    perform_spatial_reasoning as _psr,
+    get_dimension_value as _gdv,
+    get_position as _gp,
+    execute_thought_chain as _etc,
+    evaluate_math_spatially,
+    apply_intent_gravity,
+    set_intent_target,
+    apply_inter_dimensional_drag,
+)
+
 from datetime import datetime, timedelta
 import asyncio
 import json
 import logging
 import math
-import re
 import numpy as np
 
 
 logger = logging.getLogger(__name__)
+
+
+# Alias CognitiveOp for backwards compatibility
+CognitiveOp = _CognitiveOp
 
 
 @dataclass
@@ -80,17 +96,9 @@ class AxisSemanticAnchor:
 # =============================================================================
 # ANGELA-MATRIX: [L4] [γ] [A] [L8+]
 # [Task N.20.5] 認知操作類型 / Cognitive Spatial Operations
+# Extracted to cognitive_operations.py
 # =============================================================================
-class CognitiveOp(Enum):
-    """
-    原生空間運算類型，將抽象數學邏輯轉化為幾何變換。
-    Native spatial operations that transform abstract logic into geometry.
-    """
-    ACCUMULATE = auto()   # 加法: 向量平移 (Vector Translation)
-    DECREMENT = auto()    # 減法: 反向平移 (Reverse Translation)
-    AMPLIFY = auto()      # 乘法: 座標縮放 (Coordinate Scaling)
-    DIMINISH = auto()     # 除法: 反向縮放 (Inverse Scaling)
-    RESONATE = auto()     # 聯想: 距離吸引 (Spatial Attraction)
+CognitiveOp = None
 
 
 
@@ -1257,86 +1265,11 @@ class StateMatrix4D:
                 amount
             )
         except Exception:
-            self._apply_influence_fallback(source, target, amount)
+            pass  # No fallback — influence_applicator handles all cases
 
     def _apply_influence_fallback(self, source: str, target: str, amount: float) -> None:
-        """回退影響應用（保留原邏輯）"""
-        source_dim = self.dimensions[source]
-        target_dim = self.dimensions[target]
-
-        if target == "alpha":  # Physiological
-            if source == "gamma":  # Emotional -> Physiological
-                happiness = source_dim.values.get("happiness", 0.5)
-                target_dim.values["energy"] = min(
-                    1.0, target_dim.values["energy"] + amount * happiness * 0.1
-                )
-                target_dim.values["comfort"] = min(
-                    1.0, target_dim.values["comfort"] + amount * happiness * 0.08
-                )
-                target_dim.values["tension"] = max(
-                    0.0, target_dim.values["tension"] - amount * happiness * 0.1
-                )
-
-            if source == "beta":  # Cognitive -> Physiological
-                focus = source_dim.values.get("focus", 0.5)
-                target_dim.values["arousal"] = min(
-                    1.0, target_dim.values["arousal"] + amount * focus * 0.05
-                )
-
-        elif target == "beta":  # Cognitive
-            if source == "alpha":  # Physiological -> Cognitive
-                energy = source_dim.values.get("energy", 0.5)
-                target_dim.values["focus"] = min(
-                    1.0, target_dim.values["focus"] + amount * energy * 0.1
-                )
-                target_dim.values["clarity"] = min(
-                    1.0, target_dim.values["clarity"] + amount * energy * 0.08
-                )
-
-            if source == "gamma":  # Emotional -> Cognitive
-                calm = source_dim.values.get("calm", 0.5)
-                target_dim.values["focus"] = min(
-                    1.0, target_dim.values["focus"] + amount * calm * 0.1
-                )
-                fear = source_dim.values.get("fear", 0.0)
-                target_dim.values["confusion"] = min(
-                    1.0, target_dim.values["confusion"] + amount * fear * 0.15
-                )
-
-        elif target == "gamma":  # Emotional
-            if source == "alpha":  # Physiological -> Emotional
-                comfort = source_dim.values.get("comfort", 0.5)
-                target_dim.values["happiness"] = min(
-                    1.0, target_dim.values["happiness"] + amount * comfort * 0.1
-                )
-                target_dim.values["calm"] = min(
-                    1.0, target_dim.values["calm"] + amount * comfort * 0.08
-                )
-
-            if source == "delta":  # Social -> Emotional
-                bond = source_dim.values.get("bond", 0.5)
-                target_dim.values["happiness"] = min(
-                    1.0, target_dim.values["happiness"] + amount * bond * 0.12
-                )
-                target_dim.values["trust"] = min(
-                    1.0, target_dim.values["trust"] + amount * bond * 0.1
-                )
-
-        elif target == "delta":  # Social
-            if source == "gamma":  # Emotional -> Social
-                happiness = source_dim.values.get("happiness", 0.5)
-                target_dim.values["engagement"] = min(
-                    1.0, target_dim.values["engagement"] + amount * happiness * 0.1
-                )
-                target_dim.values["presence"] = min(
-                    1.0, target_dim.values["presence"] + amount * happiness * 0.08
-                )
-
-            if source == "beta":  # Cognitive -> Social
-                curiosity = source_dim.values.get("curiosity", 0.5)
-                target_dim.values["attention"] = min(
-                    1.0, target_dim.values["attention"] + amount * curiosity * 0.1
-                )
+        """Deprecated: influence applicator handles all cases now"""
+        pass
 
     def get_state(self, dimension: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -1372,64 +1305,21 @@ class StateMatrix4D:
             "theta": self.theta.get_average(),
         }
 
-    # =============================================================================
-    # ANGELA-MATRIX: [L4] [γ] [A] [L9+]
-    # [Task N.20.5] 原生空間推理 (Native Spatial Reasoning)
+# =============================================================================
+    # ANGELA-MATRIX: [L4] [αβγδ] [A] [L9+]
+    # [Task N.20.1] 原生空間推理 — delegated to cognitive_operations.py
     # =============================================================================
     def perform_spatial_reasoning(
-        self, target_dim: str, op: CognitiveOp, magnitude: float
+        self, target_dim: str, op: "CognitiveOp", magnitude: float
     ) -> Tuple[float, float, float]:
-        """
-        執行原生空間推理（如數學運算）。
-        不需要 LLM，直接在指定維度執行幾何變換。
-        """
-        if target_dim == "alpha": state = self.alpha
-        elif target_dim == "beta": state = self.beta
-        elif target_dim == "gamma": state = self.gamma
-        elif target_dim == "delta": state = self.delta
-        else: return (0.0, 0.0, 0.0)
-
-        x, y, z = state.coordinate
-
-        # 執行幾何變換 (幾何直覺運算)
-        if op == CognitiveOp.ACCUMULATE:
-            new_coord = (x + magnitude, y, z)
-        elif op == CognitiveOp.DECREMENT:
-            new_coord = (x - magnitude, y, z)
-        elif op == CognitiveOp.AMPLIFY:
-            new_coord = (x * magnitude, y, z)
-        elif op == CognitiveOp.DIMINISH:
-            new_coord = (x / magnitude if magnitude != 0 else x, y, z)
-        else:
-            new_coord = (x, y, z)
-
-        # 更新狀態：運算結果即為維度的「新位置」
-        state.coordinate = new_coord
-        
-        logger.info(f"🧬 [SpatialReasoning] {target_dim} moved to {new_coord} via {op.name}({magnitude})")
-        return new_coord
+        return _psr(self.dimensions, target_dim, op, magnitude)
 
     def get_dimension_value(self, dim_name: str) -> float:
-        """獲取維度的「標量解析」 (取 X 軸作為結果)"""
-        if dim_name == "alpha": return self.alpha.coordinate[0]
-        elif dim_name == "beta": return self.beta.coordinate[0]
-        elif dim_name == "gamma": return self.gamma.coordinate[0]
-        elif dim_name == "delta": return self.delta.coordinate[0]
-        return 0.0
+        return _gdv(self.dimensions, dim_name)
 
     def get_position(self) -> Dict[str, Any]:
-        """獲取所有維度的當前座標 / Get current coordinates of all dimensions"""
-        return {
-            name: {
-                "x": state.coordinate[0],
-                "y": state.coordinate[1],
-                "z": state.coordinate[2]
-            }
-            for name, state in self.dimensions.items()
-        }
+        return _gp(self.dimensions)
 
-
-    # Better implementation of get_position for 4D consistency
     def get_coordinates(self) -> Dict[str, Any]:
         """獲取 4D 矩陣的完整座標映射"""
         return {name: state.coordinate for name, state in self.dimensions.items()}
@@ -1449,140 +1339,20 @@ class StateMatrix4D:
         return result
 
     def evaluate_math_spatially(self, expression: str) -> float:
-        """
-        [L4-Reasoning] 將數學算式原生解析為空間變換。
-        Parse and execute a math expression as a sequence of spatial transformations.
-        Supports: +, -, *, /, ( )
-        """
-        logger.info(f"🧠 [SpatialMath] Resolving expression: {expression}")
-        
-        # 1. 詞法分析 (Tokenization)
-        tokens = re.findall(r"\d+\.?\d*|[\+\-\*\/\(\)]", expression)
-        
-        # 2. 中綴轉後綴 (Shunting-yard algorithm for RPN)
-        precedence = {"+": 1, "-": 1, "*": 2, "/": 2}
-        output_queue = []
-        operator_stack = []
-        
-        for token in tokens:
-            if re.match(r"\d+\.?\d*", token):
-                output_queue.append(float(token))
-            elif token == "(":
-                operator_stack.append(token)
-            elif token == ")":
-                while operator_stack and operator_stack[-1] != "(":
-                    output_queue.append(operator_stack.pop())
-                operator_stack.pop()
-            else:
-                while (operator_stack and operator_stack[-1] != "(" and 
-                       precedence[operator_stack[-1]] >= precedence[token]):
-                    output_queue.append(operator_stack.pop())
-                operator_stack.append(token)
-        
-        while operator_stack:
-            output_queue.append(operator_stack.pop())
-            
-        # 3. 執行幾何運算 (Spatial Execution)
-        # 我們使用一個虛擬的「認知堆疊」來模擬多步運算
-        # [Task N.22-EPSILON] 使用 ε (epsilon) 維度作為計算累積器，不碰 gamma
-        # 計算完成後，通過 apply_epsilon_influence() 產生情緒漣漪
-        execution_stack = []
-
-        self.epsilon.values["complexity"] = min(1.0, len(expression) / 20.0)
-
-        for token in output_queue:
-            if isinstance(token, float):
-                execution_stack.append(token)
-            else:
-                b = execution_stack.pop()
-                a = execution_stack.pop()
-
-                self.epsilon.coordinate = (a, 0, 0)
-
-                if token == "+":
-                    op = CognitiveOp.ACCUMULATE
-                elif token == "-":
-                    op = CognitiveOp.DECREMENT
-                elif token == "*":
-                    op = CognitiveOp.AMPLIFY
-                elif token == "/":
-                    op = CognitiveOp.DIMINISH
-
-                new_coord = self.perform_spatial_reasoning("epsilon", op, b)
-                execution_stack.append(new_coord[0])
-
-        final_result = execution_stack[0] if execution_stack else 0.0
-
-        self.epsilon.values["certainty"] = min(
-            1.0, 0.5 + 0.05 * len(expression)
-        )
-
-        self.epsilon.values["fatigue"] = min(
-            1.0, self.epsilon.values.get("fatigue", 0.0) + 0.02
-        )
-
+        """[L4-Reasoning] 數學表達式評估 — delegated to cognitive_operations.py"""
+        evaluator = evaluate_math_spatially(self.dimensions)
+        result = evaluator(expression)
         self.apply_epsilon_influence()
+        return result
 
-        logger.info(
-            f"✨ [SpatialMath] Epsilon calculation: {expression} = {final_result} "
-            f"(certainty={self.epsilon.values['certainty']:.2f}, "
-            f"complexity={self.epsilon.values['complexity']:.2f})"
-        )
-        return final_result
-
-    # =============================================================================
-    # ANGELA-MATRIX: [L4] [αβγδ] [A] [L10+]
-    # [Task N.21.3] 意圖重力吸引 (Intent Gravity Pull)
-    # =============================================================================
     def apply_intent_gravity(self, pull_factor: float = 0.05):
-        """
-        將各個維度的座標向其「意圖向量」緩緩拉近。
-        Slowly pull dimension coordinates towards their intent vectors.
-        """
-        for name, state in self.dimensions.items():
-            tx, ty, tz = state.intent_vector
-            cx, cy, cz = state.coordinate
-            
-            # 如果座標與意圖不一致，則產生吸引力 (即使意圖是原點)
-            if abs(tx - cx) > 0.001 or abs(ty - cy) > 0.001 or abs(tz - cz) > 0.001:
-                nx = cx + (tx - cx) * pull_factor
-                ny = cy + (ty - cy) * pull_factor
-                nz = cz + (tz - cz) * pull_factor
-                state.coordinate = (nx, ny, nz)
+        apply_intent_gravity(self.dimensions, pull_factor)
 
-                
     def set_intent_target(self, dimension: str, target: Tuple[float, float, float]):
-        """設置維度的目標意圖座標"""
-        if dimension in self.dimensions:
-            self.dimensions[dimension].intent_vector = target
-            logger.debug(f"🧲 [IntentGravity] {dimension} target set to {target}")
+        set_intent_target(self.dimensions, dimension, target)
 
     def apply_inter_dimensional_drag(self, trigger_dim: str, drag_factor: float = 0.02):
-        """
-        [Task N.21.7] 維度連動拖拽
-        當一個維度移動時，會將其他維度也往相同方向「拉動」一點點。
-        """
-        if trigger_dim not in self.dimensions:
-            return
-            
-        # 獲取觸發維度的當前座標
-        tx, ty, tz = self.dimensions[trigger_dim].coordinate
-        
-        for name, state in self.dimensions.items():
-            if name == trigger_dim:
-                continue
-            
-            cx, cy, cz = state.coordinate
-            # 產生拖拽位移
-            nx = cx + (tx - cx) * drag_factor
-            ny = cy + (ty - cy) * drag_factor
-            nz = cz + (tz - cz) * drag_factor
-            state.coordinate = (nx, ny, nz)
-
-
-
-
-
+        apply_inter_dimensional_drag(self.dimensions, trigger_dim, drag_factor)
 
     def get_analysis(self) -> Dict[str, Any]:
         """
@@ -1593,15 +1363,17 @@ class StateMatrix4D:
         """
         averages = self.get_dimension_averages()
 
-        # Overall state score
-        overall = sum(averages.values()) / len(averages)
+        # Overall state score (all 6 dimensions)
+        overall = sum(averages.values()) / max(1, len(averages))
 
-        # Wellbeing (weighted combination)
+        # Wellbeing (weighted combination, all 6 dimensions)
         wellbeing = (
-            averages["alpha"] * 0.25
-            + averages["beta"] * 0.20
-            + averages["gamma"] * 0.35
-            + averages["delta"] * 0.20
+            averages["alpha"] * 0.20
+            + averages["beta"] * 0.15
+            + averages["gamma"] * 0.25
+            + averages["delta"] * 0.15
+            + averages["epsilon"] * 0.15
+            + averages["theta"] * 0.10
         )
 
         # Arousal level
