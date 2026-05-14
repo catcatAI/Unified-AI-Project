@@ -29,7 +29,7 @@ Author: Angela AI v6.2.1
 """
 
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Query
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any, Tuple
 import logging
@@ -80,11 +80,13 @@ class ThetaTriggerRequest(BaseModel):
 
 
 class SaveStateRequest(BaseModel):
-    pass
+    label: Optional[str] = None
+    force: bool = False
 
 
 class LoadStateRequest(BaseModel):
-    data: Dict[str, Any]
+    checkpoint_id: Optional[str] = None
+    tag: Optional[str] = None
 
 
 _sm_instance: Optional[Any] = None
@@ -292,19 +294,46 @@ def influence_compute(
 
 
 @state_matrix_router.post("/save")
-def save_state(req: SaveStateRequest):
-    """保存狀態"""
+async def save_state(req: SaveStateRequest):
+    """保存狀態快照到 Redis/JSON（持久化層）"""
     sm = get_state_matrix()
-    state = sm.save_state()
-    return {"status": "saved", "state": state}
+    await sm.init_persistence()
+    result = await sm.save_checkpoint(label=req.label, force=req.force)
+    return result
 
 
 @state_matrix_router.post("/load")
-def load_state(req: LoadStateRequest):
-    """恢復狀態"""
+async def load_state(req: LoadStateRequest):
+    """從 Redis/JSON 加載狀態快照"""
     sm = get_state_matrix()
-    sm.load_state(req.data)
-    return {"status": "loaded"}
+    await sm.init_persistence()
+    result = await sm.load_checkpoint(checkpoint_id=req.checkpoint_id, tag=req.tag)
+    return result
+
+
+@state_matrix_router.get("/checkpoint/list")
+async def list_checkpoints(limit: int = Query(default=10)):
+    """列舉最近的快照"""
+    sm = get_state_matrix()
+    await sm.init_persistence()
+    return await sm.list_checkpoints(limit=limit)
+
+
+@state_matrix_router.delete("/checkpoint/{checkpoint_id}")
+async def delete_checkpoint(checkpoint_id: str):
+    """刪除指定快照"""
+    sm = get_state_matrix()
+    await sm.init_persistence()
+    success = await sm.delete_checkpoint(checkpoint_id)
+    return {"status": "deleted" if success else "failed"}
+
+
+@state_matrix_router.get("/checkpoint/stats")
+async def checkpoint_stats():
+    """獲取持久化層狀態"""
+    sm = get_state_matrix()
+    await sm.init_persistence()
+    return sm.get_persistence_stats()
 
 
 @state_matrix_router.get("/code-inspect/report")
@@ -356,6 +385,66 @@ def add_attractor(
         tags=tags,
     )
     return {"status": "added" if result else "failed"}
+
+
+class MathVerifyRequest(BaseModel):
+    message: str
+    user_name: str = "朋友"
+
+
+class CodeInspectRequest(BaseModel):
+    code: str
+    file_path: str = "analysis"
+
+
+@state_matrix_router.post("/math/verify")
+async def math_verify(req: MathVerifyRequest):
+    """數學驗證 + 狀態反饋"""
+    sm = get_state_matrix()
+    from services.math_verifier import MathVerifier
+
+    verifier = MathVerifier(state_matrix=sm._sm)
+    result = await verifier.verify(req.message, req.user_name)
+
+    feedback = sm.integrate_verification_result(result)
+
+    return {
+        "verification": {
+            "expression": result.expression,
+            "llm_answer": result.llm_answer,
+            "engine_answer": result.engine_answer,
+            "matches": result.matches,
+            "discrepancy": result.discrepancy,
+            "needs_clarification": result.needs_clarification,
+            "response_text": result.response_text,
+        },
+        "state_feedback": feedback,
+    }
+
+
+@state_matrix_router.post("/code/inspect")
+def code_inspect(req: CodeInspectRequest):
+    """代碼檢查 + 軸狀態更新"""
+    sm = get_state_matrix()
+    from ai.code_inspection.code_inspector import CodeInspector
+
+    inspector = CodeInspector()
+    result = inspector.inspect_content(req.code, req.file_path)
+
+    feedback = sm.integrate_code_inspect(result)
+    return {"inspection": result, "state_feedback": feedback}
+
+
+class ThetaAnalysisRequest(BaseModel):
+    context: str = ""
+
+
+@state_matrix_router.post("/theta/analyze")
+async def theta_analyze(req: ThetaAnalysisRequest):
+    """θ 觸發的 LLM 分析（當 doubt/negativity 高時）"""
+    sm = get_state_matrix()
+    result = await sm.ask_theta_for_analysis(req.context)
+    return result
 
 
 @state_matrix_router.get("/health")

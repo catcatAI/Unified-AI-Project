@@ -68,6 +68,7 @@ class StateMatrixAdapter:
         self._init_ripple()
         self._init_learning()
         self._init_port_routing()
+        self._init_persistence()
         self._gradient_field = None
         self._BehaviorTone = None
 
@@ -82,6 +83,36 @@ class StateMatrixAdapter:
         self._port_registry = PortRegistry(state_adapter=self)
         self._theta_router = ThetaRouter(state_adapter=self, port_registry=self._port_registry)
         self._axis_output_manager = AxisOutputManager(state_adapter=self, port_registry=self._port_registry)
+
+    def _init_persistence(self) -> None:
+        """初始化持久化層"""
+        from core.autonomous.state_persistence import StatePersistence, PersistenceConfig
+
+        try:
+            if self._config:
+                redis_enabled = getattr(self._config, 'redis_enabled', True)
+                redis_host = getattr(self._config, 'redis_host', 'localhost')
+                redis_port = getattr(self._config, 'redis_port', 6379)
+                auto_save = getattr(self._config, 'auto_save_interval', 300)
+                max_snap = getattr(self._config, 'max_snapshots', 100)
+            else:
+                redis_enabled = True
+                redis_host = "localhost"
+                redis_port = 6379
+                auto_save = 300
+                max_snap = 100
+
+            config = PersistenceConfig(
+                redis_enabled=redis_enabled,
+                redis_host=redis_host,
+                redis_port=redis_port,
+                auto_save_interval=auto_save,
+                max_snapshots=max_snap,
+                checkpoint_every_n_updates=50,
+            )
+            self._persistence = StatePersistence(config)
+        except Exception:
+            self._persistence = StatePersistence()
 
     def _init_config(self) -> None:
         """初始化配置"""
@@ -332,6 +363,96 @@ class StateMatrixAdapter:
 
     def trigger_negativity(self, strength: float = 0.1) -> None:
         self.trigger_theta_negativity(strength)
+
+    async def ask_theta_for_analysis(self, context: str = "") -> Dict[str, Any]:
+        """
+        θ 觸發的 LLM 分析
+
+        當 θ.doubt 或 θ.negativity 超過閾值時，自動調用 LLM 進行分析。
+        這是 Angela 的「自我懷疑 → 尋求分析」循環。
+
+        流程：
+        1. 檢查 θ.doubt / θ.negativity 是否超過閾值
+        2. 如果超過，調用 LLM 生成分析
+        3. 根據分析結果更新軸狀態
+        4. 如果需要澄清，設置 theta.caution
+
+        Args:
+            context: 額外上下文（如 "MathVerifier 不一致"，"代碼檢查 critical"）
+
+        Returns:
+            分析結果摘要
+        """
+        from services.angela_llm_service import get_llm_service
+
+        doubt = self._sm.theta.values.get("doubt", 0.0)
+        negativity = self._sm.theta.values.get("theta_negativity", 0.0)
+
+        if doubt < 0.4 and negativity < 0.3:
+            return {"status": "skip", "reason": "theta too confident", "doubt": doubt, "negativity": negativity}
+
+        state_summary = self._get_theta_analysis_context()
+        prompt = f"""你是 Angela 的 θ 元認知系統。當前狀態：
+
+{state_summary}
+
+{context}
+
+請分析：
+1. 當前最主要的問題是什麼？
+2. 應該如何調整軸狀態？
+3. 是否需要觸發校正？
+
+只返回 JSON：
+{{"problem": "...", "adjustments": {{...}}, "needs_correction": true/false, "confidence": 0.0-1.0}}
+"""
+
+        try:
+            service = await get_llm_service()
+            response = await service.generate_response(
+                prompt,
+                {"history": [], "user_name": "θ-MetaCognition", "origin": "theta_analysis"}
+            )
+            text = response.text
+
+            import json
+            try:
+                analysis = json.loads(text) if text.startswith("{") else {}
+            except Exception:
+                analysis = {"raw": text[:200]}
+
+            adjustments = analysis.get("adjustments", {})
+            for axis_name, values in adjustments.items():
+                if axis_name in self._sm.dimensions:
+                    for field, delta in values.items():
+                        current = self._sm.dimensions[axis_name].values.get(field, 0.5)
+                        new_val = max(0.0, min(1.0, current + delta))
+                        getattr(self, f"update_{axis_name}")(**{field: new_val})
+
+            if analysis.get("needs_correction"):
+                self.trigger_theta_negativity(strength=0.15)
+
+            return {
+                "status": "analyzed",
+                "doubt": doubt,
+                "negativity": negativity,
+                "analysis": analysis,
+                "response_preview": text[:100] if text else "",
+            }
+        except Exception as e:
+            return {"status": "error", "reason": str(e), "doubt": doubt, "negativity": negativity}
+
+    def _get_theta_analysis_context(self) -> str:
+        """構建 θ 分析所需的上下文"""
+        lines = []
+        for axis_name, dim in self._sm.dimensions.items():
+            avg = dim.get_average()
+            lines.append(f"  {axis_name}: avg={avg:.3f}")
+        lines.append(f"  θ.negativity={self._sm.theta.values.get('theta_negativity', 0):.3f}")
+        lines.append(f"  θ.audit_intensity={self._sm.theta.values.get('audit_intensity', 0):.3f}")
+        lines.append(f"  θ.complexity={self._sm.theta.values.get('complexity', 0):.3f}")
+        lines.append(f"  update_count={self._sm.update_count}")
+        return "\n".join(lines)
 
     def detect_misallocated_points(self) -> List[Dict[str, Any]]:
         return self._sm.detect_misallocated_points()
@@ -772,6 +893,64 @@ class StateMatrixAdapter:
         if tn > 0:
             self._sm.trigger_theta_negativity(strength=tn)
 
+    async def init_persistence(self) -> None:
+        """初始化持久化層（異步）"""
+        await self._persistence.initialize()
+
+    async def save_checkpoint(
+        self,
+        label: Optional[str] = None,
+        force: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        保存狀態快照到 Redis/JSON
+
+        Args:
+            label: 快照標籤（如 "manual", "auto", "critical_fix"）
+            force: 是否強制保存
+
+        Returns:
+            保存結果摘要
+        """
+        return await self._persistence.save_checkpoint(self, label=label, force=force)
+
+    async def load_checkpoint(
+        self,
+        checkpoint_id: Optional[str] = None,
+        tag: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        加載狀態快照
+
+        Args:
+            checkpoint_id: 指定快照 ID
+            tag: 指定標籤
+
+        Returns:
+            加載結果摘要
+        """
+        return await self._persistence.load_checkpoint(self, checkpoint_id=checkpoint_id, tag=tag)
+
+    async def list_checkpoints(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """列舉最近的快照"""
+        return await self._persistence.list_checkpoints(limit=limit)
+
+    async def delete_checkpoint(self, checkpoint_id: str) -> bool:
+        """刪除指定快照"""
+        return await self._persistence.delete_checkpoint(checkpoint_id)
+
+    def set_checkpoint_tag(self, tag: str) -> None:
+        """設置即將保存的 checkpoint 標籤"""
+        self._persistence.set_checkpoint_id(tag)
+
+    async def auto_checkpoint(self) -> Optional[Dict[str, Any]]:
+        """自動 checkpoint（如果滿足條件）"""
+        return await self._persistence.auto_checkpoint(self, self._sm.update_count)
+
+    def get_persistence_stats(self) -> Dict[str, Any]:
+        """獲取持久化層狀態"""
+        return self._persistence.get_stats()
+
     # === Code Inspector Integration ===
 
     def integrate_code_inspect(self, inspect_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -795,6 +974,67 @@ class StateMatrixAdapter:
             return {"status": "skip", "reason": "code_inspector_integration not available"}
         except Exception as e:
             return {"status": "error", "reason": str(e)}
+
+    # === Math Verifier Integration ===
+
+    def integrate_verification_result(self, verification_result: "VerificationResult") -> Dict[str, Any]:
+        """
+        將 MathVerifier 的驗證結果整合到狀態矩陣
+
+        流程：
+        1. 如果 matches=True → epsilon.confidence +=，epsilon.awareness +=
+        2. 如果 matches=False → epsilon.confidence -=，theta.doubt +=
+        3. 觸發漣漪（gamma.excitement 根據 discrepancy 大小）
+        4. 如果 needs_clarification → theta.self_awareness +=
+
+        Args:
+            verification_result: MathVerifier.verify() 的返回值
+
+        Returns:
+            整合結果摘要
+        """
+        if verification_result.expression:
+            expr_len = len(verification_result.expression)
+            self._sm.epsilon.update(complexity=min(1.0, expr_len / 100.0))
+
+        if verification_result.matches:
+            delta = 0.05
+            current = self._sm.epsilon.values.get("certainty", 0.5)
+            self._sm.epsilon.update(certainty=min(1.0, current + delta))
+            status = "trusted"
+        else:
+            delta = -0.1
+            current = self._sm.epsilon.values.get("certainty", 0.5)
+            self._sm.epsilon.update(certainty=max(0.0, current + delta))
+            doubt_delta = 0.15
+            current_d = self._sm.theta.values.get("theta_negativity", 0.0)
+            self._sm.theta.values["theta_negativity"] = min(1.0, current_d + doubt_delta)
+            self._sm.theta.values["audit_intensity"] = min(
+                1.0, self._sm.theta.values.get("audit_intensity", 0) + 0.1
+            )
+            status = "corrected"
+
+        if verification_result.discrepancy > 0.01:
+            gamma_delta = min(0.2, verification_result.discrepancy * 0.5)
+            current_e = self._sm.gamma.values.get("excitement", 0.0)
+            self._sm.gamma.update(excitement=min(1.0, current_e + gamma_delta))
+
+        if verification_result.needs_clarification:
+            self._sm.theta.values["theta_negativity"] = min(
+                1.0, self._sm.theta.values.get("theta_negativity", 0) + 0.05
+            )
+            status = "clarification_needed"
+
+        return {
+            "status": status,
+            "expression": verification_result.expression,
+            "llm_answer": verification_result.llm_answer,
+            "engine_answer": verification_result.engine_answer,
+            "matches": verification_result.matches,
+            "discrepancy": verification_result.discrepancy,
+            "epsilon_certainty": self._sm.epsilon.values.get("certainty", 0),
+            "theta_negativity": self._sm.theta.values.get("theta_negativity", 0),
+        }
 
     def code_inspect_report(self) -> Dict[str, Any]:
         """獲取當前代碼檢查狀態摘要"""

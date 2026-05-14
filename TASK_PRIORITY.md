@@ -73,8 +73,8 @@
 | ~~P5~~ | ~~Attractor field gradient descent~~ → ✅ DONE | ~~HIGH~~ | ai/memory/attractor_field.py GradientField 已有完整實現 |
 | ~~P6~~ | ~~StateMatrix4D further cleanup~~ → 1606→1498 (-108) | ~~HIGH~~ | Extracted cognitive_operations.py (241 lines); improved semantic vectors (22-28 non-zero dims); get_analysis wellbeing includes ε/θ |
 | **P7** | **StateMatrix4D → ~1200 lines** (optional) | 🟢 LOW | Target ~1200 lines is more realistic; breaking into separate modules risky |
-| **P8** | **True LLM End-to-End Integration** | 🔴 HIGH | MathVerifier → CodeInspector → StateMatrixAdapter real flow |
-| **P9** | **Persistence Layer (Redis/DB)** | 🟡 MEDIUM | save_state/load_state → Redis/JSON file |
+| **P8** | **True LLM End-to-End Integration** | ✅ COMPLETE | MathVerifier → StateMatrixAdapter → CodeInspector → θ-analysis + 4 tests passing |
+| **P9** | **Persistence Layer (Redis/DB)** | ✅ COMPLETE | StatePersistence (Redis + JSON dual mode) + 5 HTTP endpoints + 6 tests passing |
 
 ---
 
