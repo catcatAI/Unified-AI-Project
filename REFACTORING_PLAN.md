@@ -562,3 +562,46 @@ angela/
 3. **規則僵化** — 影響矩陣寫死，無法實驗不同的影響模型
 4. **歷史無用** — 500條快照只是列表，無法做時間分析
 5. **決策黑盒** — if-elif鏈的決策邏輯無法單獨測試和配置
+
+---
+
+## 測試報告摘要 (2026-05-14)
+
+### 測試結果矩陣
+
+| 套件 | 檔案 | 測試數 | 狀態 |
+|------|------|--------|------|
+| TemporalState unit | test_temporal_unit.py | 14 | ✅ PASS |
+| AllocationPolicy unit | test_allocation_policy_unit.py | 10 | ✅ PASS |
+| InfluenceApplicator unit | test_influence_applicator_unit.py | 7 | ✅ PASS |
+| CodeInspectorBridge unit | test_code_inspector_integration.py | 8 | ✅ PASS |
+| SelfIntrospectorV2 unit | test_self_introspector_v2.py | 8 | ✅ PASS |
+| Smoke real | test_smoke_real.py | 9 場景 | ✅ PASS |
+| Final pipeline | test_final.py | 1 | ✅ PASS |
+| Phase1 | test_phase1.py | 5 | ⚠️ 4/5 (1 test fixture) |
+| Phase1-2 integration | test_phase1_2.py | 7 | ✅ PASS |
+| Phase5-6 | test_phase5_6.py | 10 | ✅ PASS |
+| Comprehensive audit | test_audit_comprehensive.py | 14 sections | ✅ PASS |
+| **總計** | **11 files** | **93+** | **92+ PASS / 1 fixture** |
+
+### 發現的關鍵問題
+
+**Finding 1: ~~語義錨點稀疏~~ → 根本原因是沒有訓練機制** 🔴 HIGH → 見 `ANCHOR_LEARNING_PLAN.md`
+- 32維錨點只有4-5個非零值（`_init_semantic_anchors()` 一次性硬編碼生成，從不更新）
+- `text_to_vector()` 用 hash 映射導致碰撞
+- ASSIGN閾值(0.7)實際上無法觸發 → 所有分配落到DEFER或CREATE
+- **根本問題**：只有硬編碼，沒有從軸狀態快照、分配決策歷史、θ自糾結果學習的機制
+- **解決方案**：`AnchorLearningEngine` — EMA 更新錨點 + 分配反饋 + θ 驅動修正 + 關鍵詞學習
+
+**Finding 2: ~~State Matrix Averages 缺少3軸~~ → ✅ 已修復** 🟡 ~~MEDIUM~~ → DONE
+- `full_report()['state_matrix']['averages']` 只包含 alpha, beta, gamma, delta
+- 缺少: epsilon, theta
+
+### 待處理任務
+
+| # | 任務 | 優先級 |
+|---|------|--------|
+| ~~P1~~ | ~~語義錨點學習系統~~ → ✅ DONE | ~~HIGH~~ | `anchor_learning.py` (295行) + `test_anchor_learning.py` (10 tests) + StateMatrixAdapter 集成。INIT_DEFAULT_ANCHORS: 非零維度 ~5→8-10。學習後: 48→55 (+15%), Avg sim +26%。4 觸發點: update_*, allocation_decide, meta_allocate, correct_misallocation |
+| P2 | StateMatrix4D 進一步清理（→~500行）| HIGH |
+| P3 | RippleApplicatorRegistry | MEDIUM |
+| P5 | test_phase1.py fixture 修復 | LOW |

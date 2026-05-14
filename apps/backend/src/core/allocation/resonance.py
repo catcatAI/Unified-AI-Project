@@ -65,6 +65,36 @@ class ResonanceEngine:
         if axes:
             for axis in axes:
                 self.register_axis(axis)
+        else:
+            self.init_default_anchors()
+
+    def init_default_anchors(self) -> None:
+        """
+        從 6 個軸的真實 field 值初始化 semantic anchors
+
+        方法：每個 field 名 hash 到兩個不同的 32 維位置。
+        這樣 6 個 field → 最多 12 個非零維度（有些 hash 碰撞）。
+        然後 EMA 更新可以逐步豐富。
+        """
+        from core.state.axis_field import AxisFieldRegistry
+        reg = AxisFieldRegistry()
+        for axis_name in reg.all_axes():
+            fields = reg.fields_for(axis_name)
+            vector = [0.0] * 32
+            for f in fields:
+                pos1 = hash(f.name) % 32
+                pos2 = (hash(f.name + '_secondary') % 32)
+                vector[pos1] += f.default
+                vector[pos2] += f.default * 0.5
+            vector = self._normalize(vector)
+            self._semantic_vectors[axis_name] = vector
+
+    def _normalize(self, vector: List[float]) -> List[float]:
+        """L2 正規化"""
+        norm = math.sqrt(sum(v * v for v in vector))
+        if norm > 1e-10:
+            return [v / norm for v in vector]
+        return vector
 
     def register_axis(self, axis: "Axis") -> None:
         """註冊一個軸及其語義向量"""

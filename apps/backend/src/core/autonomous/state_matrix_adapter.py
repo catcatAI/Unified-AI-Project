@@ -32,6 +32,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple, Any, Callable
 from datetime import datetime
 
+from core.autonomous.anchor_learning import AnchorLearningEngine
 from core.state.axis_field import AxisFieldRegistry
 from core.state.axis import Axis
 from core.state.temporal import TemporalState
@@ -41,6 +42,7 @@ from core.allocation.policy import AllocationPolicy, AllocationContext, Allocati
 from core.allocation.negativity import NegativityDetector
 from core.influence.space import InfluenceSpace, GravityRule, EntropyRule, MemoryRule
 from core.ripple.node import RippleNode, MathOp, LinearCascade, RippleApplicatorRegistry, RippleAccumulator
+from core.state.text_to_vector import text_to_vector
 
 
 class StateMatrixAdapter:
@@ -64,6 +66,7 @@ class StateMatrixAdapter:
         self._init_influence()
         self._init_allocation()
         self._init_ripple()
+        self._init_learning()
 
     # === 初始化 ===
 
@@ -123,6 +126,18 @@ class StateMatrixAdapter:
         """初始化漣漪系統"""
         self._ripple_accumulator = RippleAccumulator()
 
+    def _init_learning(self) -> None:
+        """初始化錨點學習引擎"""
+        self._anchor_learning = AnchorLearningEngine(
+            resonance_engine=self._resonance_engine,
+            temporal=self._temporal,
+            ema_alpha=0.9,
+            learning_interval=10,
+            defer_threshold=0.3,
+            assign_lr=0.05,
+            misalloc_lr=0.03,
+        )
+
     # === 屬性訪問 ===
 
     @property
@@ -154,6 +169,11 @@ class StateMatrixAdapter:
     def config(self) -> Optional[StateConfig]:
         """配置"""
         return self._config
+
+    @property
+    def anchor_learning(self) -> AnchorLearningEngine:
+        """錨點學習引擎"""
+        return self._anchor_learning
 
     # === 舊 API 委託 ===
 
@@ -192,6 +212,32 @@ class StateMatrixAdapter:
     def update_alpha(self, **kwargs) -> None:
         self._sm.update_alpha(**kwargs)
         self._record_to_temporal()
+        self._anchor_learning.on_axis_update("alpha", kwargs, is_stable=False)
+
+    def update_beta(self, **kwargs) -> None:
+        self._sm.update_beta(**kwargs)
+        self._record_to_temporal()
+        self._anchor_learning.on_axis_update("beta", kwargs, is_stable=False)
+
+    def update_gamma(self, **kwargs) -> None:
+        self._sm.update_gamma(**kwargs)
+        self._record_to_temporal()
+        self._anchor_learning.on_axis_update("gamma", kwargs, is_stable=False)
+
+    def update_delta(self, **kwargs) -> None:
+        self._sm.update_delta(**kwargs)
+        self._record_to_temporal()
+        self._anchor_learning.on_axis_update("delta", kwargs, is_stable=False)
+
+    def update_epsilon(self, **kwargs) -> None:
+        self._sm.update_epsilon(**kwargs)
+        self._record_to_temporal()
+        self._anchor_learning.on_axis_update("epsilon", kwargs, is_stable=False)
+
+    def update_theta(self, **kwargs) -> None:
+        self._sm.update_theta(**kwargs)
+        self._record_to_temporal()
+        self._anchor_learning.on_axis_update("theta", kwargs, is_stable=False)
 
     def update_beta(self, **kwargs) -> None:
         self._sm.update_beta(**kwargs)
@@ -229,7 +275,25 @@ class StateMatrixAdapter:
         self._sm.import_from_dict(data)
 
     def meta_allocate(self, semantic_vector: List[float], label: str = "") -> Any:
-        return self._sm.meta_allocate(semantic_vector, label)
+        result = self._sm.meta_allocate(semantic_vector, label)
+        action_map = {
+            "assign_to_axis": "ASSIGN",
+            "composite_assign": "COMPOSITE",
+            "create_axis": "CREATE",
+            "defer_to_buffer": "DEFER",
+        }
+        action = action_map.get(result.action, result.action)
+        target = result.target
+        if result.targets:
+            target = result.targets[0][0] if result.targets else None
+        self._anchor_learning.on_allocation_decision(
+            semantic_vector, action, target, result.confidence
+        )
+        if label:
+            best = self._anchor_learning.get_best_axis(semantic_vector)
+            if best:
+                self._anchor_learning.on_text_vectorized(label, semantic_vector, best)
+        return result
 
     def trigger_theta_negativity(self, strength: float = 0.1) -> None:
         self._sm.trigger_theta_negativity(strength)
@@ -239,10 +303,30 @@ class StateMatrixAdapter:
         return self._sm.detect_misallocated_points()
 
     def correct_misallocation(self, point_id: str, target_axis: Optional[str] = None, dry_run: bool = False) -> Dict[str, Any]:
-        return self._sm.correct_misallocation(point_id, target_axis, dry_run)
+        result = self._sm.correct_misallocation(point_id, target_axis, dry_run)
+        if result.get("status") == "corrected":
+            source_axis = result.get("source_axis", "")
+            tgt_axis = result.get("target_axis", "")
+            key = result.get("key", "")
+            confidence = self._sm.theta.values.get("theta_negativity", 0.3)
+            input_vector = self._sm._key_to_vector(key, 32)
+            self._anchor_learning.on_misallocation_detected(
+                input_vector, source_axis, tgt_axis, confidence
+            )
+        return result
 
     def auto_correct_all(self, min_confidence: float = 0.5) -> Dict[str, Any]:
-        return self._sm.auto_correct_all(min_confidence)
+        result = self._sm.auto_correct_all(min_confidence)
+        corrected = result.get("corrected", 0)
+        if corrected > 0:
+            for item in self._sm.detect_misallocated_points():
+                source = item.get("source_axis", "")
+                tgt = item.get("target_axis", "")
+                key = item.get("original_key", "")
+                conf = item.get("misallocation_confidence", 0.5)
+                vec = self._sm._key_to_vector(key, 32)
+                self._anchor_learning.on_misallocation_detected(vec, source, tgt, conf)
+        return result
 
     def get_negativity_report(self) -> Dict[str, Any]:
         return self._sm.get_negativity_report()
@@ -272,12 +356,20 @@ class StateMatrixAdapter:
         - allocation_decide() 使用 ResonanceEngine 計算 profile
         """
         profile = self._resonance_engine.compute_profile(vector)
-        return self._allocation_policy.decide_from_profile(
+        decision = self._allocation_policy.decide_from_profile(
             vector=vector,
             profile=profile,
             label=label,
             buffer_tracking=self._sm.buffer_tracking,
         )
+        self._anchor_learning.on_allocation_decision(
+            vector, decision.action.value.upper(), decision.target, decision.confidence
+        )
+        if label:
+            best = self._anchor_learning.get_best_axis(vector)
+            if best:
+                self._anchor_learning.on_text_vectorized(label, vector, best)
+        return decision
 
     def compute_resonance(self, vector: List[float]) -> ResonanceProfile:
         """新 API：計算向量與所有軸的共振配置"""

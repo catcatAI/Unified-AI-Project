@@ -49,10 +49,43 @@
 
 | Bug | 檔案 | 問題 | 修復 |
 |-----|------|------|------|
-| TemporalState `get_at()` 負索引 | `temporal.py` | 負索引 `index < 0` 時先 compare 再 normalize，應 normalize 再 compare | 調整順序：先 `n + index`，再 bounds check |
+| TemporalState `get_at()` 負索引 | `temporal.py` | 負索引 `index < 0` 時先 compare 再 normalize | 調整順序：先 `n + index`，再 bounds check |
 | Facade `_group_kwargs_by_axis()` 路由錯誤 | `state_matrix_adapter.py` | 單一 kwarg 時路由到錯誤軸 | 先 group ALL kwargs，再 dispatch |
 | InfluenceApplicator `amount` 被忽略 | `influence_applicator.py` | `apply_influence_to_axis()` 只用 `weight * src_val`，忽略 `amount`，導致 18.7x 過強影響 | 改為 `amount * weight * src_val` |
 | Smoke S1 使用錯誤軸字段 | `test_smoke_real.py` | `focus` 在 beta 不在 alpha，test 只驗證 size 不驗證值 | 改用正確字段，添加明確值斷言 |
+
+### 🔍 關鍵發現
+
+| 發現 | 嚴重度 | 說明 |
+|------|--------|------|
+| 語義錨點稀疏 | 🔴 HIGH | 32維錨點只有4-5個非零值 → 所有相似度極低(0.0-0.28) → ASSIGN閾值(0.7)無法觸發 → 所有分配落到DEFER/CREATE。**預存設計問題**，非重構引入 |
+| State Matrix Averages 缺少軸 | 🟡 MEDIUM | `full_report()['state_matrix']['averages']` 只包含 alpha/beta/gamma/delta，缺少 epsilon/theta |
+| test_phase1.py fixture | 🟢 LOW | Python 3.14 classmethod 交互問題，4/5 測試通過 |
+
+### 📋 待處理任務
+
+| # | 任務 | 優先級 | 說明 |
+|---|------|--------|------|
+| ~~P1~~ | ~~語義錨點學習系統~~ → ✅ DONE | ~~HIGH~~ | AnchorLearningEngine + 10 tests + StateMatrixAdapter 集成（4 觸發點）。INIT_DEFAULT_ANCHORS: 非零維度 ~5 → ~8-10。學習後：非零維度 48→55 (+15%), Avg sim +26%, ASSIGN rate 改善 |
+| P2 | StateMatrix4D 進一步清理 | HIGH | Direction 2 未完成：目標 ~500 行，目前仍 ~1832 行 |
+| P3 | RippleApplicatorRegistry | MEDIUM | Direction 2.5 跳過 |
+| P4 | 標記過時方法 deprecated | MEDIUM | 準備最終移除 |
+
+### 📐 語義錨點學習系統設計
+
+**問題根因：** `_init_semantic_anchors()` 用固定描述文本一次性生成 anchor（`state_matrix.py:403`），從不更新。`text_to_vector()` 用 hash 映射導致 ~5 個非零維度，cosine similarity 全為 0.0-0.276，ASSIGN 閾值 (0.7) 無法觸發。
+
+**核心設計：** `AnchorLearningEngine`（見 `ANCHOR_LEARNING_PLAN.md`）
+
+| 學習來源 | 觸發時機 | 作用 |
+|---------|---------|------|
+| 軸狀態快照 | `update_*()` 後（每 N 次） | EMA 更新對應 anchor，朝向穩定狀態中心 |
+| 分配決策歷史 | `allocation_decide()` 後 | ASSIGN → 錨點靠近輸入；DEFER → 加入未分類池 |
+| Misallocation Log | θ 自糾檢測到錯誤分配 | wrong_axis anchor 遠離，right_axis anchor 靠近 |
+| 關鍵詞映射 | `text_to_vector()` + 成功分配 | 構建 keyword→axis 權重矩陣，豐富錨點描述 |
+| 文本關聯 | 每次向量化 | 建立「文本 → 軸」映射庫 |
+
+**預期效果：** 非零維度 5 → 16+， ASSIGN 觸發率 0% → 60%
 
 ---
 

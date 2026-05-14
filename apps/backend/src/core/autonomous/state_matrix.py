@@ -1368,6 +1368,8 @@ class StateMatrix4D:
             "beta": self.beta.get_average(),
             "gamma": self.gamma.get_average(),
             "delta": self.delta.get_average(),
+            "epsilon": self.epsilon.get_average(),
+            "theta": self.theta.get_average(),
         }
 
     # =============================================================================

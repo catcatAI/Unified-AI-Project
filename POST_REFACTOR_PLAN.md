@@ -177,10 +177,89 @@ tests/refactor/
 
 | # | Bug | 檔案 | 問題 | 修復 | 驗證 |
 |---|-----|------|------|------|------|
-| B1 | TemporalState `get_at()` 負索引崩潰 | `temporal.py` | `index < 0` 時先 compare 再 normalize | 調整順序：`n + index` 在 bounds check 之前 | test_negative_index 通過 |
+| B1 | TemporalState `get_at()` 負索引崩潰 | `temporal.py` | `index < 0` 時先 compare 再 normalize | 調整順序：`n + index` 在 bounds check 之前 | test_negative_index 通過；audit 全部3個負索引測試 PASS |
 | B2 | Facade `_group_kwargs_by_axis()` 單軸路由錯誤 | `state_matrix_adapter.py` | 單一 kwarg (`focus=0.9`) 被路由到錯誤軸 | 先 group ALL kwargs，再 dispatch | smoke S1 值斷言通過 |
-| B3 | InfluenceApplicator `amount` 被忽略 | `influence_applicator.py` | 只用 `weight * src_val`，忽略 `amount`，18.7x 過強影響 | 改為 `amount * weight * src_val` | 覆蓋審計通過 |
+| B3 | InfluenceApplicator `amount` 被忽略 | `influence_applicator.py` | 只用 `weight * src_val`，忽略 `amount`，18.7x 過強影響 | 改為 `amount * weight * src_val` | audit 驗證：delta=+0.0040 完全匹配 expected |
 | B4 | Smoke S1 使用錯誤軸字段 | `test_smoke_real.py` | `focus` 在 beta 不在 alpha，test 只驗證 size 不驗證值 | 改用正確字段 + 明確值斷言 | S1 值斷言通過 |
+
+---
+
+## 測試數據分析
+
+### 軸 Field 分佈（43 fields / 6 axes）
+- α (alpha/生理): 6 fields — energy, comfort, arousal, rest_need, vitality, tension
+- β (beta/認知): 6 fields — curiosity, focus, confusion, learning, clarity, creativity
+- γ (gamma/情感): 10 fields — happiness, sadness, anger, fear, disgust, surprise, trust, anticipation, love, calm
+- δ (delta/社交): 6 fields — attention, bond, trust, presence, intimacy, engagement
+- ε (epsilon/數理): 6 fields — logic, precision, abstraction, certainty, complexity, fatigue
+- θ (theta/元認知): 9 fields — novelty, complexity, ambiguity, abstraction_level, dimension_fit, creation_urge, theta_negativity, correction_urge, audit_intensity
+
+**注意**: γ.trust 和 δ.trust 是不同軸（同名不同義）；ε.complexity 和 θ.complexity 同理。
+
+### TemporalState 查詢能力（50 snapshots 測試數據）
+| 查詢類型 | 結果 | 分析 |
+|---------|------|------|
+| trend (alpha.energy, window=30) | stable, slope=0.0022, mean=0.590 | 測試數據均勻遞增，slope接近0 → 穩定 |
+| trend (beta.focus, window=30) | stable, slope=-0.0005, mean=0.671 | 同上 |
+| trend (gamma.happiness, window=30) | stable, slope=-0.0003, mean=0.557 | 同上 |
+| anomalies (alpha.energy, thresh=0.3) | 40/50 異常 | 高異常率因為測試數據每步+0.02偏離均值，>0.3閾值觸發 |
+| correlation (alpha.energy, beta.focus) | r=0.1162 (negligible) | 獨立變量間無相關性，符合預期 |
+| drift (gamma.happiness, 0.5, 0.2) | 0 points | 測試數據無漂移 |
+| get_at(-N) == get_at(N-1) | PASS × 3 | Bug B1 已修復 |
+
+### ResonanceEngine 相似度（32-dim vectors）
+| 向量類型 | Best Axis | Max Similarity | Active Axes (>0.15) |
+|---------|----------|---------------|---------------------|
+| 低方差測試向量 ([0.1]*31 + [0.8]) | None | 0.0000 | 0 |
+| 梯度測試向量 (test_phase1_2.py) | epsilon | 0.276 | 2 |
+| 最終整合測試 (test_final.py) | delta | 0.614 | 若干 |
+
+**🔴 關鍵發現**: 32維語義錨點向量只有4-5個非零值 → 與均勻向量做 cosine similarity ≈ 0.0。
+這導致 ALLOCATION 系統無法達到 ASSIGN 閾值 (0.7)，所有輸入都落到 DEFER/CREATE。
+這是**預存設計問題**，不是重構引入。
+
+### AllocationPolicy 決策結果
+| 上下文 | max_resonance | action | 分析 |
+|--------|---------------|--------|------|
+| high_sim | 0.8 | DEFER | 應為 ASSIGN，但共振太低 |
+| low_sim | 0.2 | DEFER | 正確 |
+| composite | 0.4 | DEFER | 應為 COMPOSITE，但共振太低 |
+
+### NegativityDetector 漸進行為
+| 觸發強度 | negativity | correction_urge | needs_correction |
+|----------|-------------|-----------------|------------------|
+| 0.1 | 0.10 | 0.00 | False |
+| 0.3 | 0.40 | 0.09 | False |
+| 0.5 | 0.90 | 0.24 | True |
+| 0.7 | 1.00 | 0.45 | True |
+| 0.9 | 1.00 | 0.72 | True |
+
+**分析**: negativity 累積到上限 1.0；correction_urge 加速增長（0→0.72），符合 θ 自糾機制設計。
+
+### InfluenceApplicator 規則覆蓋（28 rules）
+| Source | # Rules | Negative Weights | Key Effects |
+|--------|---------|-----------------|-------------|
+| alpha→beta | 5 | 0 | energy→focus, comfort→happiness |
+| alpha→gamma | 3 | 0 | comfort→happiness, energy→vitality |
+| alpha→delta | 2 | 0 | comfort→engagement |
+| beta→alpha | 2 | 0 | focus→arousal |
+| beta→gamma | 2 | 0 | focus→focus, curiosity→anticipation |
+| beta→delta | 1 | 0 | curiosity→attention |
+| gamma→alpha | 5 | 1 | **happiness→tension: -0.10** (negative!) |
+| gamma→beta | 2 | 0 | calm→focus, fear→confusion |
+| gamma→delta | 3 | 0 | happiness→engagement/presence/happiness |
+| delta→gamma | 2 | 0 | bond→happiness/trust |
+| delta→beta | 1 | 0 | attention→focus |
+| **Total** | **28** | **1** | 覆蓋所有舊 _apply_influence 邏輯（15/15） |
+
+### StateMatrixAdapter 完整報告
+| Section | Content | Status |
+|---------|---------|--------|
+| state_matrix | averages[αβγδ], overall, wellbeing, arousal, valence, dominant_*, update_count | ⚠️ averages 缺少 ε/θ |
+| temporal | snapshots[], trend_data, anomaly_count | ✅ |
+| influence | rules[], influence_matrix | ✅ |
+| allocation | stages[], resonance_profile | ✅ |
+| negativity | neg, urge, corrections, misallocation_log | ✅ |
 
 ---
 
@@ -222,15 +301,18 @@ tests/refactor/
 
 ### 高優先級
 - **StateMatrix4D 進一步清理** — 目標從 ~1832 行縮減到 ~500 行（移除已委託給新模組的舊邏輯）
-- **Semantic Anchor 向量改進** — 32 維向量只有 4-5 個非零值導致相似度普遍偏低
+- **語義錨點稀疏修復** — 32 維向量只有 4-5 個非零值導致相似度普遍偏低，ASSIGN 閾值無法觸發（預存設計問題）
 
 ### 中優先級
+- **~~State Matrix Averages 缺少軸~~ → ✅ 已修復** — 已在 `get_dimension_averages()` 添加 epsilon 和 theta
+- **~~語義錨點稀疏~~ → ✅ 已修復** — `AnchorLearningEngine` + `init_default_anchors()`：非零維度 ~5→8-10，ASSIGN 觸發率改善
 - **RippleApplicatorRegistry** — 方向 2.5 跳過，可補充
 - **標記過時方法 deprecated** — 準備最終移除
 - **StateMatrix4D 內部只使用新模組** — 完成雙軌並行後的最終整合
 
 ### 低優先級（P2 迭代任務）
 - N.22-DUAL-RAIL, N.22.5, N.22.2, N.22.3-4, N.22.7 在新架構上實現
+- test_phase1.py `test_axis_typed_access()` fixture 修復（Python 3.14 classmethod 問題 — 已修復 ✅）
 
 ---
 

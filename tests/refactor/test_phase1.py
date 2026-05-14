@@ -17,7 +17,7 @@ sys.path.insert(0, 'apps/backend/src')
 
 from core.state.axis_field import AxisField, AxisFieldRegistry
 from core.state.axis import Axis
-from core.state.temporal import TemporalState
+from core.state.temporal import TemporalState, SnapshotQuery
 
 
 def test_axis_field_registry():
@@ -58,7 +58,8 @@ def test_axis_typed_access():
 
     assert alpha.field_count() > 0
 
-    energy_field = AxisFieldRegistry.get('alpha', 'energy')
+    reg = AxisFieldRegistry()
+    energy_field = reg.get('alpha', 'energy')
     alpha.set(energy_field, 0.8)
     val = alpha.get(energy_field)
     assert abs(val - 0.8) < 0.001
@@ -100,8 +101,8 @@ def test_temporal_state():
     for i in range(20):
         timeline.record({
             'timestamp': f'2026-05-13T{10+i//60:02d}:{i%60:02d}:00',
-            'alpha': {'focus': 0.5 + i * 0.02, 'energy': 0.7},
-            'beta': {'curiosity': 0.4 + i * 0.01},
+            'beta': {'focus': 0.5 + i * 0.02},
+            'alpha': {'energy': 0.7},
         })
 
     print(f"Timeline size: {timeline.size()}")
@@ -109,19 +110,19 @@ def test_temporal_state():
     recent = timeline.recent(fraction=0.3)
     print(f"Recent 30%: {len(recent)} snapshots")
 
-    focus_field = AxisFieldRegistry.get('alpha', 'focus')
+    focus_field = AxisFieldRegistry().get('beta', 'focus')
     assert focus_field is not None
-    series = timeline.get_field_series('alpha', 'focus', window=10)
+    series = timeline.get_field_series('beta', 'focus', window=10)
     print(f"Focus series (n={len(series)}): {[f'{v:.2f}' for v in series[-5:]]}")
 
-    trend = timeline.trend('alpha', 'focus', window=15)
+    trend = timeline.trend('beta', 'focus', window=15)
     print(f"Trend: {trend.direction}, slope={trend.slope:.4f}, mean={trend.mean:.3f}")
 
-    query = SnapshotQuery(axes=['alpha'], limit=5)
+    query = SnapshotQuery(axes=['beta'], limit=5)
     results = timeline.query(query)
-    print(f"Query (alpha, limit=5): {len(results)} results")
+    print(f"Query (beta, limit=5): {len(results)} results")
 
-    corr = timeline.correlation('alpha', 'focus', 'alpha', 'energy', window=15)
+    corr = timeline.correlation('beta', 'focus', 'alpha', 'energy', window=15)
     print(f"Correlation alpha.focus vs alpha.energy: r={corr.correlation:.3f} ({corr.strength})")
 
     print("TemporalState: PASS\n")
@@ -130,6 +131,7 @@ def test_temporal_state():
 def test_find_drift():
     print("=== Drift Detection (θ Negativity) ===")
     timeline = TemporalState(max_size=100)
+    reg = AxisFieldRegistry()
 
     for i in range(30):
         val = 0.5
@@ -139,15 +141,16 @@ def test_find_drift():
             val = 0.9
         timeline.record({
             'timestamp': f'2026-05-13T10:{i:02d}:00',
-            'alpha': {'focus': val},
+            'beta': {'focus': val},
         })
 
-    focus_field = AxisFieldRegistry.get('alpha', 'focus')
+    focus_field = AxisFieldRegistry().get('beta', 'focus')
+    assert focus_field is not None
 
-    drift = timeline.find_drift('alpha', 'focus', expected_value=0.5, drift_threshold=0.25)
+    drift = timeline.find_drift('beta', 'focus', expected_value=0.5, drift_threshold=0.25)
     print(f"Drift from 0.5 (threshold=0.25): {len(drift)} points")
 
-    trend = timeline.trend('alpha', 'focus', window=30)
+    trend = timeline.trend('beta', 'focus', window=30)
     print(f"Full window trend: {trend.direction}, slope={trend.slope:.4f}")
 
     print("Drift detection: PASS\n")
@@ -159,8 +162,9 @@ def test_integration():
     beta = Axis.create_beta()
     timeline = TemporalState(max_size=50)
 
-    energy_field = AxisFieldRegistry.get('alpha', 'energy')
-    focus_field = AxisFieldRegistry.get('beta', 'focus')
+    reg = AxisFieldRegistry()
+    energy_field = reg.get('alpha', 'energy')
+    focus_field = reg.get('beta', 'focus')
 
     for i in range(15):
         alpha.set(energy_field, 0.3 + i * 0.03)
