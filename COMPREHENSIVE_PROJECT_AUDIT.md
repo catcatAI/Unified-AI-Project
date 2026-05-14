@@ -67,6 +67,7 @@
 | 2026-05-13 | Theta (θ) 元認知軸 | state_matrix.py + test_theta_axis.py | ✅ 完成 |
 | 2026-05-13 | 漣漪深度×演算法深度系統 | math_ripple_engine.py (v6.2.1) | ✅ 完成 |
 | 2026-05-13 | θ 軸負值檢測與修正系統 | state_matrix.py (Task N.24-THETA-NEG) | ✅ 完成 |
+| 2026-05-13 | 原生代碼檢查系統 (0 LLM) | ai/code_inspection/ (3個模組) | ✅ 完成 |
 
 ---
 
@@ -799,3 +800,106 @@ correction_urge > 0.6?
 - **ε (數理)**: 計算結果不一致時觸發 negativity
 - **Buffer**: 錯配點位可進入 buffer 等待重新分配
 - **Attractor Field**: 校正後重新計算梯度
+
+---
+
+## 附錄 F：原生代碼檢查系統（0 LLM 依賴）[v6.2.1]
+
+### 核心設計原則
+
+```
+純演算法，0 LLM 依賴
+基於 AST 解析 + 模式匹配
+模板化修復，確定性輸出
+工具級精確度
+```
+
+### 架構
+
+```
+┌─ CodeInspector ──────────────────────────────────────────┐
+│  ├─ ASTInspector     → 解析 Python AST                 │
+│  ├─ PatternMatcher    → 規則匹配（正則 + AST）        │
+│  └─ ProjectInspector  → 跨文件一致性檢查               │
+└────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─ KnowledgeGraph ─────────────────────────────────────────┐
+│  ├─ 節點：File, Class, Function, Method, Import         │
+│  ├─ 邊：CONTAINS, IMPORTS, CALLS, INHERITS             │
+│  └─ GraphQueryEngine → 複雜查詢                         │
+└────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─ CodeLearningEngine ──────────────────────────────────────┐
+│  ├─ 內置模式：7個（除零、空值、索引、類型、異常等）      │
+│  ├─ 人類反饋學習：success/failure → confidence 更新     │
+│  └─ 模式導出/導入：持久化                                │
+└────────────────────────────────────────────────────────┘
+```
+
+### 模組檔案
+
+| 檔案 | 類 | 功能 |
+|------|-----|------|
+| `code_inspector.py` | CodeInspector, ASTInspector, PatternMatcher, CodeFixer | AST解析+規則匹配+自動修復 |
+| `knowledge_graph.py` | KnowledgeGraph, GraphQueryEngine | 代碼結構圖譜+查詢 |
+| `code_learning.py` | CodeLearningEngine, CodeInspectorInterface | 人類反饋學習+統一介面 |
+| `__init__.py` | - | 導出所有公開 API |
+| `test_code_inspector.py` | 5個測試類 | 單元+整合測試 |
+
+### PatternMatcher 規則（16條）
+
+| ID | 類別 | 描述 | 嚴重度 |
+|----|------|------|--------|
+| SEC-001 | 安全 | 硬編碼密鑰/密碼 | CRITICAL |
+| SEC-002 | 安全 | eval() 使用 | CRITICAL |
+| SEC-003 | 安全 | SQL 注入風險 | CRITICAL |
+| SEC-004 | 安全 | print/日志敏感信息 | MEDIUM |
+| TYP-001 | 類型 | 未使用的 import | LOW |
+| TYP-002 | 類型 | 可能為 None 的引用 | HIGH |
+| TYP-003 | 類型 | IndexError 風險 | MEDIUM |
+| LOG-001 | 邏輯 | 除零風險 | HIGH |
+| LOG-002 | 邏輯 | 死代碼 | LOW |
+| LOG-003 | 邏輯 | 空 except 塊 | MEDIUM |
+| LOG-004 | 邏輯 | 巢狀深度 > 5 | MEDIUM |
+| STY-001 | 樣式 | 過長函數 (>100行) | MEDIUM |
+| STY-002 | 樣式 | 過長行 (>100字符) | LOW |
+| STY-003 | 樣式 | 缺少 docstring | LOW |
+| CON-001 | 一致 | 命名不一致 | MEDIUM |
+| CON-002 | 一致 | 重複代碼 | MEDIUM |
+| DEP-001 | 棄用 | 使用 deprecated API | MEDIUM |
+
+### CodeLearningEngine 內置模式（7個）
+
+| ID | 名稱 | 描述 | 置信度 |
+|----|------|------|--------|
+| PAT-001 | 除零保護 | 在除法前檢查除數是否為零 | 0.95 |
+| PAT-002 | 空值檢查 | 訪問字典/列表前檢查 None/空 | 0.92 |
+| PAT-003 | 索引邊界檢查 | 訪問列表前檢查索引是否越界 | 0.90 |
+| PAT-004 | 類型一致性 | 確保前後端類型一致 | 0.88 |
+| PAT-005 | 異常處理 | 非空異常處理块包含日誌 | 0.93 |
+| PAT-006 | 歷史快照完整性 | _record_history 包含所有軸 | 0.97 |
+| PAT-007 | Theta軸初始化 | StateMatrix4D 初始化所有6軸 | 0.96 |
+
+### 使用方式
+
+```python
+from ai.code_inspection import create_inspector
+
+inspector = create_inspector("/path/to/project")
+result = inspector.inspect()
+
+print(f"Total issues: {result['total_issues']}")
+print(f"Auto-fixable: {result['auto_fixable']}")
+
+# 自動修復
+fix_result = inspector.fix_all_auto(dry_run=True)
+print(f"Would apply: {fix_result['applied']}")
+
+# 學習人類反饋
+inspector.learn("SEC-001", "replace_with_env", "Good", accepted=True)
+
+# 獲取狀態
+status = inspector.get_status()
+```

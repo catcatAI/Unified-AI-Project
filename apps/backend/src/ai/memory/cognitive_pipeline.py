@@ -1,15 +1,16 @@
 """
-Angela Unified Cognitive Pipeline - 統一認知管線
-============================================
+Angela Unified Cognitive Pipeline v6.2.1 - 統一認知管線
+=====================================================
 
-核心流程：axis-first pathfinding + attractor hit + θ meta-allocation
-  1. 解析用戶輸入 → 定位當前狀態點 (αβγδε)
+核心流程：axis-first pathfinding + attractor hit + θ meta-allocation + code inspection
+  1. 解析用戶輸入 → 定位當前狀態點 (αβγδεθ)
   2. θ (Meta-Cognitive) 分析輸入 → 決定分配方式（assign/composite/create/defer）
   3. MathRippleEngine 分析是否含數學運算
   4. 計算跨軸漣漪，更新 ε 維度
   5. GradientField 計算梯度，定位最近的吸引子
   6. 沿梯度導航，觸發行為輸出
   7. 觸發 epsilon-influence → γ 情緒漣漪
+  8. [v6.2.1] CodeInspector 原生代碼檢查（0 LLM）
 
 θ 軸職責：
   - 分析輸入與現有軸的語義相似度
@@ -59,10 +60,14 @@ class CognitivePipeline:
         attractor_field=None,
         math_ripple_engine=None,
         llm_service=None,
+        code_inspector=None,
+        root_path=None,
     ):
         self.state_matrix = state_matrix
         self.attractor_field = attractor_field
         self.math_engine = math_ripple_engine
+        self.code_inspector = code_inspector
+        self.root_path = root_path
 
         self._init_subsystems()
 
@@ -82,6 +87,14 @@ class CognitivePipeline:
             except ImportError:
                 logger.warning("[CognitivePipeline] MathRippleEngine not available")
                 self.math_engine = None
+
+        if not self.code_inspector and self.root_path:
+            try:
+                from ai.code_inspection import CodeInspectorInterface
+                self.code_inspector = CodeInspectorInterface(self.root_path)
+            except ImportError:
+                logger.warning("[CognitivePipeline] CodeInspector not available")
+                self.code_inspector = None
 
     def get_current_state(self) -> List[float]:
         """獲取當前狀態座標"""
@@ -328,3 +341,54 @@ class CognitivePipeline:
             }
             for a, d in result.nearest_attractors
         ]
+
+    def inspect_code(self, scope: str = "full") -> Dict[str, Any]:
+        """執行代碼檢查（整合 CodeInspectorInterface）"""
+        if not self.code_inspector:
+            return {"error": "CodeInspector not initialized"}
+
+        result = self.code_inspector.inspect(scope)
+        return {
+            "total_issues": result["total_issues"],
+            "auto_fixable": result["auto_fixable"],
+            "critical": result["critical"],
+            "high": result["high"],
+            "medium": result["medium"],
+            "low": result["low"],
+            "issues_summary": self._summarize_issues(result["report"].issues) if "report" in result else {},
+        }
+
+    def _summarize_issues(self, issues: List) -> Dict[str, int]:
+        by_cat = {}
+        for issue in issues:
+            cat = getattr(issue, "category", "unknown").value if hasattr(getattr(issue, "category", None), "value") else str(getattr(issue, "category", "unknown"))
+            by_cat[cat] = by_cat.get(cat, 0) + 1
+        return by_cat
+
+    def apply_auto_fixes(self, dry_run: bool = True) -> Dict[str, Any]:
+        """自動修復所有可修復的問題"""
+        if not self.code_inspector:
+            return {"error": "CodeInspector not initialized"}
+
+        return self.code_inspector.fix_all_auto(dry_run)
+
+    def learn_from_fix_feedback(
+        self,
+        issue_id: str,
+        original_fix: str,
+        feedback: str,
+        accepted: bool,
+        correction: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """從修復反饋中學習"""
+        if not self.code_inspector:
+            return {"error": "CodeInspector not initialized"}
+
+        return self.code_inspector.learn(issue_id, original_fix, feedback, accepted, correction)
+
+    def get_inspector_status(self) -> Dict[str, Any]:
+        """獲取代碼檢查系統狀態"""
+        if not self.code_inspector:
+            return {"error": "CodeInspector not initialized"}
+
+        return self.code_inspector.get_status()

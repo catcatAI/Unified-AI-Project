@@ -213,6 +213,8 @@ class StateMatrix4D:
         StateMatrix4D._initialized = True
         self.config = config or {}
         self._precision = 1.0 # Default precision
+        self._temporal_state: Optional[Any] = None
+        self._temporal_synced = False
 
         # Initialize dimensions
         self.alpha = DimensionState(
@@ -482,13 +484,109 @@ class StateMatrix4D:
     # [Task N.23-THETA] Meta-Cognitive Axis (θ) - 軸管理與分配決策
     # =============================================================================
 
+    def _meta_allocate_policy(self, semantic_vector: List[float], label: str = "") -> AllocateDecision:
+        """
+        使用 AllocationPolicy 的分配決策（Phase 2 重構結果）
+
+        這是 meta_allocate() 的重構版本，使用可配置的 stages 替代 if-elif 鏈。
+        保留給 StateMatrixAdapter 的 allocation_decide() 使用。
+
+        Returns:
+            AllocateDecision（與 meta_allocate 相同格式）
+        """
+        from core.allocation.policy import (
+            AllocationPolicy, AllocationContext,
+            AllocationAction as PolicyAction,
+        )
+
+        axis_similarities: Dict[str, float] = {}
+        for axis_name, anchor in self.semantic_anchors.items():
+            sim = anchor.compute_resonance(semantic_vector)
+            axis_similarities[axis_name] = sim
+
+        max_sim = max(axis_similarities.values()) if axis_similarities else 0.0
+        best_axis = max(axis_similarities, key=axis_similarities.get) if axis_similarities else None
+        num_high_sim = sum(1 for s in axis_similarities.values() if s > 0.5)
+        active_dims = sum(1 for v in axis_similarities.values() if v > 0.1)
+
+        entropy_val = 0.0
+        if axis_similarities:
+            total = sum(axis_similarities.values())
+            if total > 0:
+                probs = [s / total for s in axis_similarities.values()]
+                for p in probs:
+                    if p > 0:
+                        entropy_val -= p * math.log(p + 1e-10)
+                max_entropy = math.log(len(probs) + 1e-10)
+                if max_entropy > 0:
+                    entropy_val /= max_entropy
+
+        self.theta.update(
+            novelty=1.0 - max_sim,
+            complexity=active_dims / max(1, len(self.dimensions)),
+            ambiguity=entropy_val,
+            dimension_fit=max_sim,
+        )
+
+        if label:
+            self._track_buffer(label)
+
+        ctx = AllocationContext(
+            vector=semantic_vector,
+            label=label,
+            similarities=axis_similarities,
+            max_resonance=max_sim,
+            best_axis=best_axis,
+            num_high_sim=num_high_sim,
+            entropy=entropy_val,
+            active_dims=active_dims,
+            novelty=1.0 - max_sim,
+            complexity=float(active_dims) / max(1, len(self.dimensions)),
+            dimension_fit=max_sim,
+            buffer_tracking=self.buffer_tracking,
+        )
+
+        policy = AllocationPolicy()
+        decision = policy.decide(ctx)
+
+        if decision.action == PolicyAction.ASSIGN:
+            return AllocateDecision(
+                action="assign_to_axis",
+                target=decision.target,
+                confidence=decision.confidence,
+                reasoning=decision.reasoning,
+            )
+        elif decision.action == PolicyAction.COMPOSITE:
+            top_axes = [(t[0], t[1]) for t in (decision.targets or [])]
+            return AllocateDecision(
+                action="composite_assign",
+                targets=top_axes,
+                confidence=decision.confidence,
+                reasoning=decision.reasoning,
+            )
+        elif decision.action == PolicyAction.CREATE:
+            self.theta.update(creation_urge=0.8)
+            return AllocateDecision(
+                action="create_axis",
+                proposed_name=decision.proposed_name or label or "new_axis",
+                semantic_anchor=semantic_vector,
+                confidence=decision.confidence,
+                reasoning=decision.reasoning,
+            )
+        else:
+            return AllocateDecision(
+                action="defer_to_buffer",
+                buffer="unclassified_experiences",
+                confidence=decision.confidence,
+                reasoning=decision.reasoning,
+            )
+
     def meta_allocate(self, semantic_vector: List[float], label: str = "") -> AllocateDecision:
         """
         θ 轴分析输入，决定如何分配到状态空间。
 
-        Step 1: 计算与所有现有轴的语义相似度
-        Step 2: θ 轴更新（ novelty, complexity, ambiguity 等）
-        Step 3: 基于分析做出决策（ assign / composite / create / defer）
+        默認使用 AllocationPolicy 重構版本。
+        可以切換到 legacy 版本以保持完全向後兼容。
 
         Args:
             semantic_vector: 输入的语义向量（低维，32维）
@@ -496,6 +594,14 @@ class StateMatrix4D:
 
         Returns:
             AllocateDecision: 分配决策
+        """
+        return self._meta_allocate_policy(semantic_vector, label)
+        """
+        原始的 meta_allocate 邏輯（保留給向後兼容）
+
+        Step 1: 计算与所有现有轴的语义相似度
+        Step 2: θ 轴更新（ novelty, complexity, ambiguity 等）
+        Step 3: 基于分析做出决策（ assign / composite / create / defer）
         """
         axis_similarities: Dict[str, float] = {}
         for axis_name, anchor in self.semantic_anchors.items():
@@ -794,6 +900,28 @@ class StateMatrix4D:
 
         return misallocated
 
+    def detect_misallocated_points_indexed(self) -> List[Dict[str, Any]]:
+        """
+        使用 TemporalState 索引的錯配檢測（相位 2 重構結果）
+
+        不再需要 O(n) 遍歷歷史。使用 TemporalState.get_field_series()
+        配合 trend() 和 anomaly detection 直接定位偏移的 field。
+
+        Returns:
+            錯配點位列表
+        """
+        timeline = self._get_temporal_state()
+        if timeline.is_empty():
+            return []
+
+        if self.theta.values.get("theta_negativity", 0) < 0.5:
+            return []
+
+        from core.allocation.negativity import NegativityDetector
+        detector = NegativityDetector(timeline=timeline)
+        result = detector.detect()
+        return result.items
+
     def correct_misallocation(
         self,
         point_id: str,
@@ -1027,9 +1155,26 @@ class StateMatrix4D:
 
         self.history.append(snapshot)
 
-        # Maintain max history size
         if len(self.history) > self.max_history:
             self.history.pop(0)
+
+    def _get_temporal_state(self):
+        """獲取關聯的 TemporalState（用於雙軌整合）"""
+        if not hasattr(self, "_temporal_state"):
+            from core.state.temporal import TemporalState
+            self._temporal_state = TemporalState(max_size=self.max_history)
+            self._temporal_synced = False
+        return self._temporal_state
+
+    def _sync_to_temporal(self) -> None:
+        """將最新快照同步到 TemporalState（延遲初始化）"""
+        if not hasattr(self, "_temporal_state"):
+            return
+        if self._temporal_synced:
+            return
+        if self.history:
+            self._temporal_state.record(self.history[-1])
+            self._temporal_synced = True
 
     def _check_thresholds(self, dimension_name: str) -> None:
         """检查阈值 / Check thresholds for callbacks"""
@@ -1102,10 +1247,23 @@ class StateMatrix4D:
 
     def _apply_influence(self, source: str, target: str, amount: float) -> None:
         """应用影响 / Apply influence from source to target dimension"""
+        try:
+            from core.autonomous.influence_applicator import get_applicator
+            applier = get_applicator()
+            applier.apply(
+                source, target,
+                self.dimensions[source],
+                self.dimensions[target],
+                amount
+            )
+        except Exception:
+            self._apply_influence_fallback(source, target, amount)
+
+    def _apply_influence_fallback(self, source: str, target: str, amount: float) -> None:
+        """回退影響應用（保留原邏輯）"""
         source_dim = self.dimensions[source]
         target_dim = self.dimensions[target]
 
-        # Dimension-specific influence logic
         if target == "alpha":  # Physiological
             if source == "gamma":  # Emotional -> Physiological
                 happiness = source_dim.values.get("happiness", 0.5)
@@ -1550,7 +1708,7 @@ class StateMatrix4D:
         self.history.clear()
         self.last_update = datetime.now()
 
-def export_to_dict(self) -> Dict[str, Any]:
+    def export_to_dict(self) -> Dict[str, Any]:
         """导出为字典 / Export state to dictionary"""
         return {
             "alpha": self.alpha.values,

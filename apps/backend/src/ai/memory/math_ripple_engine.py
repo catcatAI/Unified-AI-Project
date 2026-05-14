@@ -576,9 +576,9 @@ class MathRippleEngine:
                 final_result = nums[0]
                 for j in range(1, len(nums)):
                     if j - 1 < len(tokens):
-                        if tokens[tokens.index(str(nums[j-1])) == "+":
+                        if tokens[tokens.index(str(nums[j-1]))] == "+":
                             final_result += nums[j]
-                        elif tokens[tokens.index(str(nums[j-1])) == "-":
+                        elif tokens[tokens.index(str(nums[j-1]))] == "-":
                             final_result -= nums[j]
 
         if not ripples:

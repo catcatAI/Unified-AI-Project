@@ -1,25 +1,40 @@
-# =============================================================================
-# ANGELA-MATRIX: Hash+Matrix Dual System - State Module
-# =============================================================================
-#
-# 職責: Angela 的"數位脊柱" - 狀態主權與真實性保障
-# 組成: 哈希表 (骨) + 精度矩陣 (肉) + 密鑰驗證 (靈魂)
-#
-# "矩陣負責'肉'(語言與感知), 哈希負責'骨'(主權與真實)"
-#
-# =============================================================================
+"""
+Core State Module — 狀態系統重構 Phase 1-4
+==========================================
 
-from .integer_hash_table import IntegerHashTable, IntegerHashEntry
-from .decimal_hash_table import DecimalHashTable, DecimalHashEntry
-from .precision_projection_matrix import PrecisionProjectionMatrix, PrecisionMode
-from .state_hash_manager import StateHashManager
+Phase 1: Axis 抽象
+  - axis_field.py: AxisField 定義 + AxisFieldRegistry 全局註冊表
+  - axis.py: Axis 軸對象（typed field 存取 + 座標 + 統計）
+  - temporal.py: TemporalState（歷史查詢引擎）
+
+Phase 2: 決策重構
+  - allocation/resonance.py: ResonanceEngine — 語義共振統一引擎
+  - allocation/policy.py: AllocationPolicy — 規則化分配策略
+  - allocation/negativity.py: NegativityDetector — θ 自糾系統
+
+Phase 4: 配置外部化
+  - config_loader.py: StateConfig — 從 YAML 載入所有配置
+
+Author: Angela AI v6.2
+Version: 6.2.1
+"""
+
+from core.state.axis_field import AxisField, AxisFieldRegistry
+from core.state.axis import Axis
+from core.state.temporal import TemporalState, SnapshotQuery, TrendResult, AnomalyResult, CorrelationResult
+from core.state.config_loader import StateConfig, StateMatrixConfig, AxisConfig, AxisFieldConfig
 
 __all__ = [
-    "IntegerHashTable",
-    "IntegerHashEntry",
-    "DecimalHashTable",
-    "DecimalHashEntry",
-    "PrecisionProjectionMatrix",
-    "PrecisionMode",
-    "StateHashManager",
+    "AxisField",
+    "AxisFieldRegistry",
+    "Axis",
+    "TemporalState",
+    "SnapshotQuery",
+    "TrendResult",
+    "AnomalyResult",
+    "CorrelationResult",
+    "StateConfig",
+    "StateMatrixConfig",
+    "AxisConfig",
+    "AxisFieldConfig",
 ]
