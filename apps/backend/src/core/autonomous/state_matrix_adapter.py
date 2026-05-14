@@ -68,6 +68,8 @@ class StateMatrixAdapter:
         self._init_ripple()
         self._init_learning()
         self._init_port_routing()
+        self._gradient_field = None
+        self._BehaviorTone = None
 
     # === 初始化 ===
 
@@ -213,12 +215,30 @@ class StateMatrixAdapter:
         return self._sm.theta
 
     @property
-    def dimensions(self):
-        return self._sm.dimensions
+    def temporal(self):
+        """TemporalState 實例（用於時間查詢）"""
+        return self._temporal
+
+    @property
+    def influence_space(self):
+        """InfluenceSpace 實例（用於影響計算）"""
+        return self._influence_space
+
+    @property
+    def allocation_policy(self):
+        """AllocationPolicy 實例"""
+        return self._allocation_policy
 
     @property
     def history(self):
         return self._sm.history
+
+    @property
+    def gradient_field(self):
+        """GradientField 實例（延遲初始化）"""
+        if self._gradient_field is None:
+            self._init_attractor_field()
+        return self._gradient_field
 
     def update_alpha(self, **kwargs) -> None:
         self._sm.update_alpha(**kwargs)
@@ -309,6 +329,9 @@ class StateMatrixAdapter:
     def trigger_theta_negativity(self, strength: float = 0.1) -> None:
         self._sm.trigger_theta_negativity(strength)
         self._negativity_detector.trigger(strength)
+
+    def trigger_negativity(self, strength: float = 0.1) -> None:
+        self.trigger_theta_negativity(strength)
 
     def detect_misallocated_points(self) -> List[Dict[str, Any]]:
         return self._sm.detect_misallocated_points()
@@ -554,6 +577,235 @@ class StateMatrixAdapter:
         """重新評估所有端口的路由"""
         decisions = self._theta_router.re_evaluate_routing()
         return [d.to_dict() for d in decisions]
+
+    # === Attractor Field Integration ===
+
+    def _init_attractor_field(self) -> None:
+        """初始化吸引子場"""
+        try:
+            from ai.memory.attractor_field import GradientField, BehaviorTone
+            self._gradient_field = GradientField(dimension_names=["alpha", "beta", "gamma", "delta", "epsilon"])
+            self._BehaviorTone = BehaviorTone
+        except ImportError:
+            self._gradient_field = None
+            self._BehaviorTone = None
+
+    def _get_state_vector(self) -> List[float]:
+        """將當前軸狀態轉為向量"""
+        return [
+            self._sm.alpha.get_average(),
+            self._sm.beta.get_average(),
+            self._sm.gamma.get_average(),
+            self._sm.delta.get_average(),
+            self._sm.epsilon.get_average(),
+        ]
+
+    def compute_gradient(self) -> Optional[Dict[str, Any]]:
+        """計算當前狀態的梯度（不需要導航）"""
+        if not self._gradient_field:
+            self._init_attractor_field()
+        if not self._gradient_field:
+            return None
+
+        state = self._get_state_vector()
+        result = self._gradient_field.compute_gradient(state)
+
+        return {
+            "gradient": result.gradient,
+            "gradient_strength": result.gradient_strength,
+            "nearest_attractors": [
+                {"description": a.description, "tone": a.tone.value, "distance": d}
+                for a, d in result.nearest_attractors
+            ],
+            "blended_tone": result.blended_tone.value if result.blended_tone else None,
+            "blended_behavior": result.blended_behavior,
+            "blended_coord": result.blended_coord,
+            "certainty": result.certainty,
+        }
+
+    def navigate_to_attractor(
+        self,
+        target_tags: Optional[List[str]] = None,
+        max_steps: int = 5,
+        dt: float = 0.15,
+        threshold: float = 0.05,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        沿梯度導航到吸引子，並將結果應用到軸狀態
+
+        Args:
+            target_tags: 目標吸引子的標籤（None=最近的）
+            max_steps: 最大導航步數
+            dt: 步長
+            threshold: 收斂閾值
+
+        Returns:
+            導航結果（new_state, gradient, nearest_attractors）
+        """
+        if not self._gradient_field:
+            self._init_attractor_field()
+        if not self._gradient_field:
+            return None
+
+        state = self._get_state_vector()
+
+        if target_tags:
+            for attractor in self._gradient_field.attractors:
+                if any(t in attractor.tags for t in target_tags):
+                    target_coord = list(attractor.coord[:5])
+                    state = target_coord
+                    break
+
+        new_state, result = self._gradient_field.navigate(state, max_steps, dt, threshold)
+
+        self._sm.alpha.update(value=max(0, min(1, new_state[0])))
+        self._sm.beta.update(value=max(0, min(1, new_state[1])))
+        self._sm.gamma.update(value=max(0, min(1, new_state[2])))
+        self._sm.delta.update(value=max(0, min(1, new_state[3])))
+        self._sm.epsilon.update(value=max(0, min(1, new_state[4])))
+
+        self._record_to_temporal()
+
+        return {
+            "navigation_steps": result.navigation_steps,
+            "new_state": new_state,
+            "gradient": result.gradient,
+            "gradient_strength": result.gradient_strength,
+            "nearest_attractors": [
+                {"description": a.description, "tone": a.tone.value, "distance": d}
+                for a, d in result.nearest_attractors
+            ],
+            "blended_tone": result.blended_tone.value if result.blended_tone else None,
+            "blended_behavior": result.blended_behavior,
+        }
+
+    def add_attractor(
+        self,
+        coord: Tuple[float, float, float, float, float],
+        behavior: str,
+        tone: str = "warm",
+        mass: float = 1.0,
+        radius: float = 0.4,
+        tags: Optional[List[str]] = None,
+    ) -> bool:
+        """添加自定義吸引子"""
+        if not self._gradient_field:
+            self._init_attractor_field()
+        if not self._gradient_field:
+            return False
+
+        try:
+            if self._BehaviorTone:
+                tone_enum = self._BehaviorTone(tone)
+            else:
+                tone_enum = "warm"
+        except (ValueError, TypeError):
+            tone_enum = "warm"
+
+        from ai.memory.attractor_field import MemoryAttractor
+        attractor = MemoryAttractor(
+            coord=coord,
+            behavior=behavior,
+            tone=tone_enum if hasattr(tone_enum, "value") else tone_enum,
+            mass=mass,
+            radius=radius,
+            tags=tags or [],
+            description=f"Custom: {behavior[:50]}",
+        )
+        self._gradient_field.add_attractor(attractor)
+        return True
+
+    def remove_attractor_by_tags(self, tags: List[str]) -> int:
+        """移除指定標籤的吸引子"""
+        if not self._gradient_field:
+            self._init_attractor_field()
+        if not self._gradient_field:
+            return 0
+
+        before = len(self._gradient_field.attractors)
+        self._gradient_field.remove_attractor(tags)
+        after = len(self._gradient_field.attractors)
+        return before - after
+
+    # === Persistable State ===
+
+    def save_state(self) -> Dict[str, Any]:
+        """序列化解壓縮的狀態（不含 GradientField 等不可序列化對象）"""
+        return {
+            "dimensions": {
+                name: dim.values.copy()
+                for name, dim in [
+                    ("alpha", self._sm.alpha),
+                    ("beta", self._sm.beta),
+                    ("gamma", self._sm.gamma),
+                    ("delta", self._sm.delta),
+                    ("epsilon", self._sm.epsilon),
+                    ("theta", self._sm.theta),
+                ]
+            },
+            "theta_negativity": self._sm.theta.values.get("theta_negativity", 0),
+            "theta_negativity_correction_urge": self._sm.theta.values.get("correction_urge", 0),
+            "update_count": self._sm.update_count,
+            "axis_creation_log": self._sm.axis_creation_log[-20:],
+            "misallocation_log": self._sm.misallocation_log[-20:],
+            "correction_audit_trail": self._sm.correction_audit_trail[-20:],
+        }
+
+    def load_state(self, data: Dict[str, Any]) -> None:
+        """從序列化的狀態恢復"""
+        dims = data.get("dimensions", {})
+        for name, values in dims.items():
+            if name == "alpha":
+                self._sm.update_alpha(**values)
+            elif name == "beta":
+                self._sm.update_beta(**values)
+            elif name == "gamma":
+                self._sm.update_gamma(**values)
+            elif name == "delta":
+                self._sm.update_delta(**values)
+            elif name == "epsilon":
+                self._sm.update_epsilon(**values)
+            elif name == "theta":
+                self._sm.update_theta(**values)
+
+        tn = data.get("theta_negativity", 0)
+        if tn > 0:
+            self._sm.trigger_theta_negativity(strength=tn)
+
+    # === Code Inspector Integration ===
+
+    def integrate_code_inspect(self, inspect_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        將代碼檢查結果整合到狀態矩陣
+
+        封裝 CodeInspectorBridge.integrate_inspect()
+        將檢查結果轉化為軸狀態更新 + 漣漪觸發 + 分配決策
+
+        Args:
+            inspect_result: CodeInspectorInterface.inspect() 的返回值
+
+        Returns:
+            整合結果摘要
+        """
+        try:
+            from ai.code_inspection.code_inspector_integration import CodeInspectorBridge
+            bridge = CodeInspectorBridge(state_adapter=self)
+            return bridge.integrate_inspect(inspect_result)
+        except ImportError:
+            return {"status": "skip", "reason": "code_inspector_integration not available"}
+        except Exception as e:
+            return {"status": "error", "reason": str(e)}
+
+    def code_inspect_report(self) -> Dict[str, Any]:
+        """獲取當前代碼檢查狀態摘要"""
+        return {
+            "last_temporal_snapshot": self._temporal.size(),
+            "epsilon_complexity": self._sm.epsilon.values.get("complexity", 0),
+            "theta_negativity": self._sm.theta.values.get("theta_negativity", 0),
+            "alpha_stability": self._sm.alpha.values.get("tension", 0),
+            "beta_clarity": self._sm.beta.values.get("confusion", 0),
+            "audit_intensity": self._sm.theta.values.get("audit_intensity", 0),
+        }
 
     def __repr__(self) -> str:
         return (

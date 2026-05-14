@@ -1,5 +1,5 @@
-# Angela 任務優先級清單 v2.0
-## 2026-05-14 更新 — Post-Refactor Plan v1.0 完成 ✅
+# Angela 任務優先級清單 v3.0
+## 2026-05-14 更新 — Phase 3 Post-Refactor v1.0 完成 ✅
 
 ---
 
@@ -71,8 +71,108 @@
 | ~~P3~~ | ~~6D state matrix polish~~ → ✅ DONE | ~~LOW~~ | get_analysis() wellbeing 包含 epsilon/theta（6維加權） |
 | ~~P4~~ | ~~Dual-rail math verification~~ → ✅ DONE | ~~HIGH~~ | services/math_verifier.py 已有完整實現 |
 | ~~P5~~ | ~~Attractor field gradient descent~~ → ✅ DONE | ~~HIGH~~ | ai/memory/attractor_field.py GradientField 已有完整實現 |
-| P6 | StateMatrix4D further cleanup | HIGH | Direction 2 未完成：目標 ~500 行，目前仍 ~1606 行 |
-| P7 | Human+Angela collaborative workflow | MEDIUM | 工作流定義文檔 |
+| ~~P6~~ | ~~StateMatrix4D further cleanup~~ → 1606→1498 (-108) | ~~HIGH~~ | Extracted cognitive_operations.py (241 lines); improved semantic vectors (22-28 non-zero dims); get_analysis wellbeing includes ε/θ |
+| **P7** | **StateMatrix4D → ~1200 lines** (optional) | 🟢 LOW | Target ~1200 lines is more realistic; breaking into separate modules risky |
+| **P8** | **True LLM End-to-End Integration** | 🔴 HIGH | MathVerifier → CodeInspector → StateMatrixAdapter real flow |
+| **P9** | **Persistence Layer (Redis/DB)** | 🟡 MEDIUM | save_state/load_state → Redis/JSON file |
+
+---
+
+## P8 — True LLM End-to-End Integration 🔴 HIGH
+
+### Current State
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| MathVerifier | ✅ Implemented | Has LLM extraction, fallback degrades gracefully |
+| CodeInspector | ✅ Implemented | `integrate_code_inspect()` exists, never called in production |
+| AllocationPolicy ASSIGN | ⚠️ Improved | Threshold 0.7, anchor improvement helped (22-28 non-zero dims) |
+| LLM service | ⚠️ Stub | No real API key configured |
+
+### Required Steps
+
+1. **Configure real LLM** — Add Gemini/GPT API key to config
+2. **Wire MathVerifier → StateMatrixAdapter** — Verification results feedback to state
+3. **Wire CodeInspector → AllocationPolicy** — Code-aware routing based on inspection
+4. **θ-triggered LLM calls** — Self-doubt → ask for analysis automatically
+5. **End-to-end test** — Real LLM responses flowing through system
+
+### API Flow
+
+```
+User Input → StateMatrixAdapter.allocation_decide()
+         → ResonanceEngine.similarity() [uses anchors]
+         → MathVerifier.extract_formulas() [LLM]
+         → CodeInspector.integrate_code_inspect() [LLM]
+         → StateMatrixAdapter.update_axis() [state change]
+         → θ meta-cognition [self-reflection]
+```
+
+### Verification
+
+```bash
+pytest tests/test_llm_e2e.py
+```
+
+---
+
+## P9 — Persistence Layer to DB 🟡 MEDIUM
+
+### Current State
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| save_state() | ✅ Implemented | JSON serialization of dimensions, theta, history, audit |
+| load_state() | ✅ Implemented | Restores axis values, triggers negativity |
+| Redis | ❌ Not configured | No connection |
+| PostgreSQL | ❌ Not configured | No connection |
+
+### Required Steps
+
+1. **Add Redis integration** — Fast state snapshots
+2. **Add PostgreSQL integration** — Long-term history archival
+3. **State diff compression** — Reduce storage size
+4. **Auto-checkpoint scheduling** — Periodic saves
+
+### Configuration
+
+```yaml
+persistence:
+  redis:
+    host: localhost
+    port: 6379
+    db: 0
+  postgres:
+    host: localhost
+    port: 5432
+    database: angela_state
+  auto_save_interval: 300
+  max_history: 1000
+```
+
+---
+
+## P7 — StateMatrix4D Further Cleanup 🟢 LOW (Optional)
+
+### Target: ~1200 lines (from 1520)
+
+### Approach
+
+| Step | Action | Risk |
+|------|--------|------|
+| 1 | Extract remaining helper methods to utility modules | LOW |
+| 2 | Delegate more to TemporalState/InfluenceApplicator | MEDIUM |
+| 3 | Remove duplicate/dead code | LOW |
+| 4 | Add type hints throughout | LOW |
+
+### Validation
+
+```bash
+wc -l apps/backend/src/core/autonomous/state_matrix.py
+# Target: <1200 lines
+```
+
+---
 
 ### 📐 軸端口路由系統（Phase 2 完成）
 
@@ -110,7 +210,9 @@
 
 ---
 
-## 新的行動計劃
+## 🚀 Roadmap — Phase 3
+
+### 📐 軸端口路由系統（Phase 2 完成）
 
 ### 立即可用
 
@@ -131,11 +233,11 @@ sm.cascade_output("beta", {"focus": 0.8})
 sm.full_report()  # 包含 port_routing
 ```
 
-### 待處理
+### 待處理（見上方 P8/P9/P7 詳細說明）
 
-1. **StateMatrix4D further cleanup** — 目前仍是 ~1606 行，方向 2 的最終目標（~500行）未達到
-2. **Human+Angela collaborative workflow** — 工作流定義文檔
-3. **Semantic Anchor 向量改進** — 目前 32 維向量只有 4-5 個非零值
+1. **P8 (HIGH)** — True LLM integration end-to-end
+2. **P9 (MEDIUM)** — Persistence layer (Redis/DB)
+3. **P7 (LOW)** — StateMatrix4D → ~1200 lines
 
 ---
 
@@ -151,4 +253,4 @@ sm.full_report()  # 包含 port_routing
 5. 單元測試 — 每個模組可獨立測試，tests/refactor/ 目錄下有完整覆蓋（71+ 測試）
 6. 軸端口路由 — PortRegistry + ThetaRouter + AxisOutputManager，後期只需管理端口
 
-**目標：重構已完成，軸端口路由系統完成。現已進入 Phase 3。**
+**目標：重構已完成，軸端口路由系統完成。Phase 3 — Feature Completion (P8/P9/P7)。**

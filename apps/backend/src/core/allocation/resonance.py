@@ -22,6 +22,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 import math
+import logging
+
+logger = logging.getLogger("angela_resonance")
 
 
 @dataclass
@@ -70,24 +73,51 @@ class ResonanceEngine:
 
     def init_default_anchors(self) -> None:
         """
-        從 6 個軸的真實 field 值初始化 semantic anchors
+        從 6 個軸的 field 定義初始化 semantic anchors
 
-        方法：每個 field 名 hash 到兩個不同的 32 維位置。
-        這樣 6 個 field → 最多 12 個非零維度（有些 hash 碰撞）。
-        然後 EMA 更新可以逐步豐富。
+        方法：多通道語意向量構建
+          - channel 0: field name 哈希（3個位置，用 default 加權）
+          - channel 1: field description 分詞哈希（5個位置）
+          - channel 2: axis label + cn_name 哈希（3個位置）
+          - channel 3: field label 哈希（2個位置）
+
+        結果：每個軸 ~13 個非零維度（對比舊方法的 ~5-8）
+        通過 AnchorLearningEngine 的 EMA 更新逐步豐富。
         """
         from core.state.axis_field import AxisFieldRegistry
         reg = AxisFieldRegistry()
         for axis_name in reg.all_axes():
             fields = reg.fields_for(axis_name)
             vector = [0.0] * 32
+
             for f in fields:
-                pos1 = hash(f.name) % 32
-                pos2 = (hash(f.name + '_secondary') % 32)
-                vector[pos1] += f.default
-                vector[pos2] += f.default * 0.5
+                weight = f.default + 0.3
+
+                p0 = hash(f.name) % 32
+                p1 = (hash(f.name + '_A') % 31) + 1
+                p2 = (hash(f.name + '_B') % 30) + 2
+                vector[p0] += weight * 0.6
+                vector[p1] += weight * 0.3
+                vector[p2] += weight * 0.1
+
+                desc_words = f.description.lower().split()
+                for i, word in enumerate(desc_words[:4]):
+                    pos = (hash(word + axis_name) % 31) + 1
+                    vector[pos] += 0.15 * (1.0 / (i + 1))
+
+                for i, word in enumerate(f.label.lower().split()[:2]):
+                    pos = (hash(word + '_label') % 31) + 1
+                    vector[pos] += 0.1
+
+            for word in [axis_name, "cognitive", "emotional", "social", "mathematical", "meta"]:
+                pos = (hash(word + '_axis') % 31) + 1
+                vector[pos] += 0.15
+
             vector = self._normalize(vector)
             self._semantic_vectors[axis_name] = vector
+
+            nonzero = sum(1 for v in vector if abs(v) > 0.01)
+            logger.debug(f"[Resonance] {axis_name}: {nonzero} non-zero dims")
 
     def _normalize(self, vector: List[float]) -> List[float]:
         """L2 正規化"""

@@ -600,88 +600,10 @@ class StateMatrix4D:
             semantic_vector: 输入的语义向量（低维，32维）
             label: 可选的输入标签/关键词
 
-        Returns:
-            AllocateDecision: 分配决策
+Returns:
+            AllocateDecision: 分配決策
         """
         return self._meta_allocate_policy(semantic_vector, label)
-        """
-        原始的 meta_allocate 邏輯（保留給向後兼容）
-
-        Step 1: 计算与所有现有轴的语义相似度
-        Step 2: θ 轴更新（ novelty, complexity, ambiguity 等）
-        Step 3: 基于分析做出决策（ assign / composite / create / defer）
-        """
-        axis_similarities: Dict[str, float] = {}
-        for axis_name, anchor in self.semantic_anchors.items():
-            sim = anchor.compute_resonance(semantic_vector)
-            axis_similarities[axis_name] = sim
-
-        max_sim = max(axis_similarities.values()) if axis_similarities else 0.0
-        best_axis = max(axis_similarities, key=axis_similarities.get) if axis_similarities else None
-        num_high_sim = sum(1 for s in axis_similarities.values() if s > 0.5)
-
-        active_dims = sum(1 for v in axis_similarities.values() if v > 0.1)
-
-        entropy_val = 0.0
-        if axis_similarities:
-            total = sum(axis_similarities.values())
-            if total > 0:
-                probs = [s / total for s in axis_similarities.values()]
-                for p in probs:
-                    if p > 0:
-                        entropy_val -= p * math.log(p + 1e-10)
-                max_entropy = math.log(len(probs) + 1e-10)
-                if max_entropy > 0:
-                    entropy_val /= max_entropy
-
-        self.theta.update(
-            novelty=1.0 - max_sim,
-            complexity=active_dims / max(1, len(self.dimensions)),
-            ambiguity=entropy_val,
-            dimension_fit=max_sim,
-        )
-
-        if label:
-            self._track_buffer(label)
-
-        if max_sim > 0.7:
-            confidence = max_sim
-            reasoning = f"高相似度匹配現有軸 {best_axis} (sim={max_sim:.2f})"
-            return AllocateDecision(
-                action="assign_to_axis",
-                target=best_axis,
-                confidence=confidence,
-                reasoning=reasoning,
-            )
-        elif num_high_sim >= 2 and max_sim > 0.3:
-            top_axes = sorted(axis_similarities.items(), key=lambda x: -x[1])[:3]
-            confidence = sum(s for _, s in top_axes) / len(top_axes)
-            reasoning = f"多軸部分匹配：{', '.join(f'{k}({v:.2f})' for k, v in top_axes)}"
-            return AllocateDecision(
-                action="composite_assign",
-                targets=top_axes,
-                confidence=confidence,
-                reasoning=reasoning,
-            )
-        elif self.theta.values.get("novelty", 0) > 0.6 and active_dims >= 2:
-            self.theta.update(creation_urge=0.8)
-            proposed = label if label else "new_axis"
-            reasoning = f"新穎度={self.theta.values.get('novelty',0):.2f}，複雜度={active_dims}，建議創建新軸"
-            return AllocateDecision(
-                action="create_axis",
-                proposed_name=proposed,
-                semantic_anchor=semantic_vector,
-                confidence=0.5,
-                reasoning=reasoning,
-            )
-        else:
-            reasoning = f"模糊地帶，最大相似度={max_sim:.2f}，緩存等待更多數據"
-            return AllocateDecision(
-                action="defer_to_buffer",
-                buffer="unclassified_experiences",
-                confidence=0.3,
-                reasoning=reasoning,
-            )
 
     def _track_buffer(self, label: str) -> None:
         """追踪未分类experience的频率 / Track frequency of unclassified experiences"""
@@ -1098,14 +1020,6 @@ class StateMatrix4D:
         logger.info("[Theta-Neg] Negativity system reset")
 
     def migrate_buffer_to_axis(self, axis_name: str) -> int:
-        """
-        将buffer中的条目迁移到指定轴 / Migrate buffer entries to specified axis
-
-        Returns:
-            迁移的条目数量
-        """
-        if axis_name not in self.dimensions:
-            return 0
         if axis_name not in self.dimensions:
             return 0
         count = 0

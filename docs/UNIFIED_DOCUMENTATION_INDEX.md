@@ -3,7 +3,8 @@
 ## 📋 文档分类
 
 ### 1. 项目概述与入门
-- [README.md](../../README.md) - 项目主要说明 (已更新至 1.0.1)
+- [README.md](../../README.md) - 项目主要说明 (已更新至 6.2.1)
+- [ANGELA_STATUS.md](../../ANGELA_STATUS.md) - **Angela AI 完整狀態報告 (Phase 3)** — 架構、模組、測試、Roadmap
 - [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) - 项目全貌文档 (已更新)
 - [PROJECT_STATUS_SUMMARY_2025_09_06.md](../PROJECT_STATUS_SUMMARY_2025_09_06.md) - 專案狀態總結報告 (2025存檔)
 - [PROJECT_PROGRESS_SUMMARY.md](01-summaries-and-reports/PROJECT_PROGRESS_SUMMARY.md) - **最新專案進度總結 (Phase 14)**

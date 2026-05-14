@@ -1157,10 +1157,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 from services.atlassian_api import atlassian_router
+from services.api.state_matrix_api import state_matrix_router
 
 # Include existing routers
 app.include_router(api_v1_router)
 app.include_router(atlassian_router)
+app.include_router(state_matrix_router)
 
 if __name__ == "__main__":
     import uvicorn
