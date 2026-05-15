@@ -69,6 +69,7 @@ class StateMatrixAdapter:
         self._init_learning()
         self._init_port_routing()
         self._init_persistence()
+        self._init_eta()
         self._gradient_field = None
         self._BehaviorTone = None
 
@@ -113,6 +114,14 @@ class StateMatrixAdapter:
             self._persistence = StatePersistence(config)
         except Exception:
             self._persistence = StatePersistence()
+
+    def _init_eta(self) -> None:
+        """初始化 η (Eta) 軸 — 執行/操作層"""
+        from core.autonomous.eta_axis import EtaAxisState, create_default_modules
+
+        self._eta = EtaAxisState()
+        for name, config in create_default_modules().items():
+            self._eta.register_module(config)
 
     def _init_config(self) -> None:
         """初始化配置"""
@@ -218,6 +227,11 @@ class StateMatrixAdapter:
     def anchor_learning(self) -> AnchorLearningEngine:
         """錨點學習引擎"""
         return self._anchor_learning
+
+    @property
+    def eta(self) -> "EtaAxisState":
+        """η (Eta) 軸 — 執行/操作層"""
+        return self._eta
 
     # === 舊 API 委託 ===
 
@@ -628,6 +642,14 @@ class StateMatrixAdapter:
             },
             'negativity': self._negativity_detector.report(),
             'port_routing': self._port_registry.get_report() if hasattr(self, '_port_registry') else {},
+            'eta': {
+                'module_count': len(self._eta.module_registry),
+                'active_count': len(self._eta.active_modules),
+                'execution_count': self._eta.execution_count,
+                'success_rate': self._eta.success_rate,
+                'structural_drift': self._eta.structural_drift,
+                'pending_updates': len(self._eta.pending_updates),
+            },
         }
 
     # === 端口路由 API ===
@@ -698,6 +720,269 @@ class StateMatrixAdapter:
         """重新評估所有端口的路由"""
         decisions = self._theta_router.re_evaluate_routing()
         return [d.to_dict() for d in decisions]
+
+    # === η (Eta) Axis API ===
+
+    def update_eta(self, **kwargs) -> None:
+        """更新 η 軸字段"""
+        if 'active_modules' in kwargs:
+            self._eta.active_modules = kwargs['active_modules']
+        if 'success_rate' in kwargs:
+            self._eta.success_rate = max(0.0, min(1.0, kwargs['success_rate']))
+        if 'structural_drift' in kwargs:
+            self._eta.structural_drift = max(0.0, min(1.0, kwargs['structural_drift']))
+        self._eta.update_composition()
+
+    def invoke_eta_modules(self, inputs: Dict[str, Any], count: Optional[int] = None) -> List[Tuple[str, Any]]:
+        """
+        調用 η 軸模組
+
+        Args:
+            inputs: 模組輸入
+            count: 調用數量（None=全部活躍模組）
+
+        Returns:
+            [(module_name, result), ...]
+        """
+        if count is None:
+            return self._eta.execute_active_modules(inputs)
+        active = self._eta.active_modules[:count]
+        results = []
+        for name in active:
+            result = self._eta.execute(name, inputs)
+            if result is not None:
+                results.append((name, result))
+        return results
+
+    def eta_signals_from_theta(self) -> Dict[str, float]:
+        """
+        從 θ 狀態提取信號，用於觸發 η
+
+        Returns:
+            信號字典：update_frequency, complexity_delta, novelty_peak,
+                     misallocation_rate, buffer_pressure
+        """
+        theta = self._sm.theta.values
+        complexity = theta.get('complexity', 0.5)
+        novelty = theta.get('novelty', 0.5)
+
+        update_freq = min(1.0, self._sm.update_count / 1000)
+        misalloc_rate = len(self._sm.misallocation_log) / max(1, self._sm.update_count)
+        buffer_pressure = len(self._sm.buffer_tracking) / 50
+
+        return {
+            'update_frequency': update_freq,
+            'complexity_delta': complexity,
+            'novelty_peak': novelty,
+            'misallocation_rate': min(1.0, misalloc_rate),
+            'buffer_pressure': min(1.0, buffer_pressure),
+        }
+
+    def apply_theta_to_eta(self) -> Dict[str, Any]:
+        """
+        θ → η 信號應用：根據 θ 狀態計算 η 應執行的操作
+
+        Returns:
+            Dict with modules_to_call, delta, triggered, threshold
+        """
+        signals = self.eta_signals_from_theta()
+        return self._eta.apply_theta_signals(signals)
+
+    def eta_feedback_to_theta(self, success: bool) -> None:
+        """
+        η → θ 反饋：將 η 執行結果反饋給 θ
+
+        Args:
+            success: 執行是否成功
+        """
+        if success:
+            self._sm.theta.values['dimension_fit'] = min(1.0, self._sm.theta.values.get('dimension_fit', 0.5) + 0.01)
+        else:
+            self._sm.theta.values['theta_negativity'] = min(1.0, self._sm.theta.values.get('theta_negativity', 0) + 0.05)
+
+    def register_eta_module(
+        self,
+        name: str,
+        module_type: str,
+        sub_type: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        tags: Optional[List[str]] = None,
+    ) -> bool:
+        """註冊新的 η 模組"""
+        from core.autonomous.eta_axis import (
+            ModuleConfig, AtomicModuleType,
+            LogicGateType, ArithmeticOpType,
+            AggregatorType, RouterType,
+        )
+
+        type_map = {
+            'LOGIC_GATE': AtomicModuleType.LOGIC_GATE,
+            'ARITHMETIC_OP': AtomicModuleType.ARITHMETIC_OP,
+            'AGGREGATOR': AtomicModuleType.AGGREGATOR,
+            'ROUTER': AtomicModuleType.ROUTER,
+        }
+        sub_map = {
+            'LOGIC_GATE': {
+                'AND': LogicGateType.AND, 'OR': LogicGateType.OR,
+                'NOT': LogicGateType.NOT, 'XOR': LogicGateType.XOR,
+                'THRESHOLD': LogicGateType.THRESHOLD,
+            },
+            'ARITHMETIC_OP': {
+                'ADD': ArithmeticOpType.ADD, 'SUB': ArithmeticOpType.SUB,
+                'MUL': ArithmeticOpType.MUL, 'DIV': ArithmeticOpType.DIV,
+                'CUSTOM_EXPR': ArithmeticOpType.CUSTOM_EXPR,
+            },
+            'AGGREGATOR': {
+                'SUM': AggregatorType.SUM, 'MEAN': AggregatorType.MEAN,
+                'MAX': AggregatorType.MAX, 'MIN': AggregatorType.MIN,
+                'WEIGHTED_AVG': AggregatorType.WEIGHTED_AVG,
+            },
+            'ROUTER': {
+                'DIRECT': RouterType.DIRECT, 'FANOUT': RouterType.FANOUT,
+                'MERGE': RouterType.MERGE, 'SPLIT': RouterType.SPLIT,
+            },
+        }
+
+        mt = type_map.get(module_type)
+        st = sub_map.get(module_type, {}).get(sub_type)
+        if not mt or not st:
+            return False
+
+        config = ModuleConfig(
+            name=name,
+            module_type=mt,
+            sub_type=st,
+            parameters=parameters or {},
+            tags=tags or [],
+        )
+        self._eta.register_module(config)
+        return True
+
+    def get_eta_report(self) -> Dict[str, Any]:
+        """獲取 η 軸完整報告"""
+        return self._eta.to_dict()
+
+    # === θ-η Feedback Loop (P10.5) ===
+
+    def theta_to_eta_cycle(self, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        完整的 θ → η → θ 迴路
+
+        流程：
+        1. θ 觀測信號
+        2. η 計算模組調用
+        3. η 執行模組
+        4. η → θ 反饋
+        5. θ 更新評估標準
+
+        Args:
+            context: 可選上下文（如用戶輸入）
+
+        Returns:
+            Dict with: signals, trigger_result, execution_results, feedback, theta_updates
+        """
+        signals = self.eta_signals_from_theta()
+        trigger_result = self.apply_theta_to_eta()
+
+        execution_results = []
+        if trigger_result["triggered"]:
+            count = trigger_result["modules_to_call"]
+            inputs = self._build_eta_inputs(signals, context)
+            execution_results = self.invoke_eta_modules(inputs, count)
+            success = len(execution_results) > 0
+            self.eta_feedback_to_theta(success)
+
+        feedback = self._compute_eta_feedback(signals, trigger_result, execution_results)
+        theta_updates = self._update_theta_from_feedback(feedback)
+
+        return {
+            "signals": signals,
+            "trigger_result": trigger_result,
+            "execution_results": [(name, r) for name, r in execution_results],
+            "feedback": feedback,
+            "theta_updates": theta_updates,
+        }
+
+    def _build_eta_inputs(self, signals: Dict[str, float], context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """從 θ 信號構建 η 模組輸入"""
+        inputs = {
+            "values": [
+                signals.get("update_frequency", 0.5),
+                signals.get("complexity_delta", 0.5),
+                signals.get("novelty_peak", 0.5),
+            ],
+            "signal_strength": self._eta._compute_signal_strength(signals),
+        }
+        if context:
+            inputs.update(context)
+        return inputs
+
+    def _compute_eta_feedback(
+        self,
+        signals: Dict[str, float],
+        trigger_result: Dict[str, Any],
+        execution_results: List[Tuple[str, Any]],
+    ) -> Dict[str, Any]:
+        """計算 η 反饋"""
+        return {
+            "triggered": trigger_result.get("triggered", False),
+            "modules_called": len(execution_results),
+            "modules_to_call": trigger_result.get("modules_to_call", 0),
+            "delta_applied": trigger_result.get("delta", 0.0),
+            "signal_strength": trigger_result.get("signal_strength", 0.0),
+            "threshold": trigger_result.get("threshold", 0.5),
+            "execution_count": self._eta.execution_count,
+            "success_rate": self._eta.success_rate,
+            "structural_drift": self._eta.structural_drift,
+        }
+
+    def _update_theta_from_feedback(self, feedback: Dict[str, Any]) -> Dict[str, Any]:
+        """根據 η 反饋更新 θ"""
+        updates = {}
+        if feedback["triggered"]:
+            dim_fit = self._sm.theta.values.get("dimension_fit", 0.5)
+            if dim_fit < 0.6:
+                new_dim_fit = min(1.0, dim_fit + 0.02)
+                self._sm.theta.values["dimension_fit"] = new_dim_fit
+                updates["dimension_fit"] = new_dim_fit
+
+        if feedback["structural_drift"] > 0.3:
+            self._sm.theta.values["complexity"] = max(0.0, self._sm.theta.values.get("complexity", 0.5) - 0.01)
+            updates["complexity_adjusted"] = True
+
+        if feedback["modules_called"] > 5:
+            self._sm.theta.values["audit_intensity"] = min(1.0, self._sm.theta.values.get("audit_intensity", 0) + 0.05)
+            updates["audit_intensity_increased"] = True
+
+        return updates
+
+    def execute_theta_eta_loop(self, input_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        執行 θ-η 迴路（主入口）
+
+        這是 Angela 的主迴路：
+        θ 觀測 → η 執行 → θ 調整
+
+        Args:
+            input_data: 可選的輸入數據（如用戶請求）
+
+        Returns:
+            迴路執行結果
+        """
+        self._sm.theta.values["creation_urge"] = max(0.0, self._sm.theta.values.get("creation_urge", 0) - 0.01)
+        self._sm.theta.values["correction_urge"] = max(0.0, self._sm.theta.values.get("correction_urge", 0) - 0.01)
+
+        result = self.theta_to_eta_cycle(input_data)
+        result["theta_state"] = {
+            "novelty": self._sm.theta.values.get("novelty", 0),
+            "complexity": self._sm.theta.values.get("complexity", 0),
+            "dimension_fit": self._sm.theta.values.get("dimension_fit", 0),
+            "creation_urge": self._sm.theta.values.get("creation_urge", 0),
+            "correction_urge": self._sm.theta.values.get("correction_urge", 0),
+        }
+
+        self._record_to_temporal()
+        return result
 
     # === Attractor Field Integration ===
 
@@ -870,6 +1155,7 @@ class StateMatrixAdapter:
             "axis_creation_log": self._sm.axis_creation_log[-20:],
             "misallocation_log": self._sm.misallocation_log[-20:],
             "correction_audit_trail": self._sm.correction_audit_trail[-20:],
+            "eta": self._eta.to_dict(),
         }
 
     def load_state(self, data: Dict[str, Any]) -> None:
@@ -892,6 +1178,11 @@ class StateMatrixAdapter:
         tn = data.get("theta_negativity", 0)
         if tn > 0:
             self._sm.trigger_theta_negativity(strength=tn)
+
+        eta_data = data.get("eta")
+        if eta_data:
+            from core.autonomous.eta_axis import EtaAxisState
+            self._eta = EtaAxisState.from_dict(eta_data)
 
     async def init_persistence(self) -> None:
         """初始化持久化層（異步）"""

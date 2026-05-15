@@ -20,7 +20,7 @@ def test_port_routing_integration():
 
     p1 = sm.register_port(
         name="llm_output",
-        direction="in",
+        direction="io",
         semantic_vector=make_vector(0.9, nonzero=10),
         priority=0.7,
         tags=["llm", "text"],

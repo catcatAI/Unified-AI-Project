@@ -72,105 +72,115 @@
 | ~~P4~~ | ~~Dual-rail math verification~~ → ✅ DONE | ~~HIGH~~ | services/math_verifier.py 已有完整實現 |
 | ~~P5~~ | ~~Attractor field gradient descent~~ → ✅ DONE | ~~HIGH~~ | ai/memory/attractor_field.py GradientField 已有完整實現 |
 | ~~P6~~ | ~~StateMatrix4D further cleanup~~ → 1606→1498 (-108) | ~~HIGH~~ | Extracted cognitive_operations.py (241 lines); improved semantic vectors (22-28 non-zero dims); get_analysis wellbeing includes ε/θ |
-| **P7** | **StateMatrix4D → ~1200 lines** (optional) | 🟢 LOW | Target ~1200 lines is more realistic; breaking into separate modules risky |
-| **P8** | **True LLM End-to-End Integration** | ✅ COMPLETE | MathVerifier → StateMatrixAdapter → CodeInspector → θ-analysis + 4 tests passing |
-| **P9** | **Persistence Layer (Redis/DB)** | ✅ COMPLETE | StatePersistence (Redis + JSON dual mode) + 5 HTTP endpoints + 6 tests passing |
+| ~~P7~~ | ~~StateMatrix4D → ~1200 lines~~ (optional) | ~~LOW~~ | Target ~1200 lines is more realistic; breaking into separate modules risky |
+| ~~P8~~ | ~~True LLM End-to-End Integration~~ | ~~COMPLETE~~ | MathVerifier → StateMatrixAdapter → CodeInspector → θ-analysis + 4 tests passing |
+| ~~P9~~ | ~~Persistence Layer (Redis/DB)~~ | ~~COMPLETE~~ | StatePersistence (Redis + JSON dual mode) + 5 HTTP endpoints + 6 tests passing |
+| **P10** | **η (Eta) Axis Implementation** | 🟡 PLANNED | Module system + trigger curves + θ-η feedback loop (see `docs/eta_axis_plan.md`) |
 
 ---
 
-## P8 — True LLM End-to-End Integration 🔴 HIGH
+## P10 — η (Eta) Axis Implementation 🟡 PLANNED
 
-### Current State
+### Overview
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| MathVerifier | ✅ Implemented | Has LLM extraction, fallback degrades gracefully |
-| CodeInspector | ✅ Implemented | `integrate_code_inspect()` exists, never called in production |
-| AllocationPolicy ASSIGN | ⚠️ Improved | Threshold 0.7, anchor improvement helped (22-28 non-zero dims) |
-| LLM service | ⚠️ Stub | No real API key configured |
+η is the 7th axis (after αβγδεθ) that handles **execution/operation layer**, contrasting θ's **cognitive/evaluation layer**. This creates a dual-loop architecture where θ's output goes through η and returns to θ, enabling higher-order metacognition.
 
-### Required Steps
+### θ-η Responsibility Split
 
-1. **Configure real LLM** — Add Gemini/GPT API key to config
-2. **Wire MathVerifier → StateMatrixAdapter** — Verification results feedback to state
-3. **Wire CodeInspector → AllocationPolicy** — Code-aware routing based on inspection
-4. **θ-triggered LLM calls** — Self-doubt → ask for analysis automatically
-5. **End-to-end test** — Real LLM responses flowing through system
+| Responsibility | θ (Cognitive) | η (Execution) |
+|---------------|---------------|---------------|
+| Routing decision | ✅ Evaluate "should route?" | ❌ |
+| Logic gate mounting | ✅ Evaluate "what logic?" | ✅ Execute mount |
+| Arithmetic config | ✅ Evaluate "what calc?" | ✅ Execute config |
+| Dynamic axis creation | ✅ Evaluate "should create?" | ✅ Execute create |
+| Node capacity expansion | ✅ Evaluate "capacity?" | ✅ Execute expand |
+| Module parameter adjustment | ✅ Evaluate "adjust?" | ✅ Execute adjust |
+| Module composition | ✅ Evaluate "valid?" | ✅ Execute compose |
+| Persistence | ❌ | ✅ Storage/recovery |
 
-### API Flow
+### Module System
+
+| Layer | Type | Examples |
+|-------|------|----------|
+| Layer 0 | Atomic modules | LogicGate (AND/OR/NOT/XOR/threshold), ArithmeticOp (+−×÷), Aggregator (SUM/MEAN/MAX), Router (DIRECT/FANOUT/MERGE) |
+| Layer 1 | Composed modules | Built from atoms, e.g., code_quality = AND(is_code, bugs) + threshold(error_rate, 0.2) |
+| Layer 2 | Adjusted modules | ComposedModule.adjust(threshold=0.15, weights=[0.7, 0.3]) |
+
+### Trigger Curves
 
 ```
-User Input → StateMatrixAdapter.allocation_decide()
-         → ResonanceEngine.similarity() [uses anchors]
-         → MathVerifier.extract_formulas() [LLM]
-         → CodeInspector.integrate_code_inspect() [LLM]
-         → StateMatrixAdapter.update_axis() [state change]
-         → θ meta-cognition [self-reflection]
+modules_to_call = floor(min(12, 3 × sigmoid(complexity × axis_count / 6)))
+adjustment_magnitude = min(0.2, 0.15 × sigmoid(complexity - 0.5))
 ```
 
-### Verification
+| Axis Count | Base | Complexity 0.5 | Complexity 0.8 | Complexity 1.0 |
+|------------|------|----------------|----------------|----------------|
+| 6 | 3 | 4 | 6 | 12 |
+| 10 | 5 | 7 | 10 | 12 |
+| 16 | 8 | 12 | 12 | 12 |
 
-```bash
-pytest tests/test_llm_e2e.py
-```
+### η Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `module_registry` | `Dict[str, ModuleConfig]` | All modules index |
+| `active_modules` | `List[str]` | Currently active module names |
+| `execution_count` | `int` | Total execution count |
+| `success_rate` | `float` | Routing success rate (0-1) |
+| `parameter_tuning` | `Dict[str, float]` | Adjustment magnitude per module |
+| `structural_drift` | `float` | Structural drift (0-1) |
+| `module_composition` | `Dict[str, Any]` | Current topology snapshot |
+| `pending_updates` | `List[UpdateOp]` | Pending parameter updates |
+
+### Implementation Steps
+
+| # | Task | Priority |
+|---|------|----------|
+| P10.1 | η Axis Core Design | HIGH |
+| P10.2 | Atomic Module System | HIGH |
+| P10.3 | Composed Module | HIGH |
+| P10.4 | Trigger Curve Implementation | HIGH |
+| P10.5 | θ-η Feedback Loop | HIGH |
+| P10.6 | StateMatrixAdapter Integration | HIGH |
+| P10.7 | Persistence | HIGH |
+| P10.8 | HTTP API | MEDIUM |
+| P10.9 | Tests | HIGH |
+
+### Key Design
+
+1. **No authorization required** — All operations are automatic (like AnchorLearningEngine, NegativityDetector)
+2. **Adjustment over creation** — Angela adjusts module parameters, not creating from scratch
+3. **Adaptive threshold** — If no trigger → threshold decreases; if too frequent → threshold increases
+4. **Upper cap 12** — Prevents system explosion
+5. **Sigmoid curves** — Prevent oscillation at extremes
+
+### Documentation
+
+- `docs/eta_axis_plan.md` — Full implementation plan (version 1.0)
 
 ---
 
-## P9 — Persistence Layer to DB 🟡 MEDIUM
+## P8 — True LLM End-to-End Integration ✅ COMPLETE
 
-### Current State
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| save_state() | ✅ Implemented | JSON serialization of dimensions, theta, history, audit |
-| load_state() | ✅ Implemented | Restores axis values, triggers negativity |
-| Redis | ❌ Not configured | No connection |
-| PostgreSQL | ❌ Not configured | No connection |
-
-### Required Steps
-
-1. **Add Redis integration** — Fast state snapshots
-2. **Add PostgreSQL integration** — Long-term history archival
-3. **State diff compression** — Reduce storage size
-4. **Auto-checkpoint scheduling** — Periodic saves
-
-### Configuration
-
-```yaml
-persistence:
-  redis:
-    host: localhost
-    port: 6379
-    db: 0
-  postgres:
-    host: localhost
-    port: 5432
-    database: angela_state
-  auto_save_interval: 300
-  max_history: 1000
-```
+- **MathVerifier** → StateMatrixAdapter integration (`integrate_verification_result()`)
+- **CodeInspector** → StateMatrixAdapter integration (`integrate_code_inspect()`)
+- **θ-triggered LLM calls** → `ask_theta_for_analysis()` async
+- **4 tests passing** (`test_llm_e2e.py`)
 
 ---
 
-## P7 — StateMatrix4D Further Cleanup 🟢 LOW (Optional)
+## P9 — Persistence Layer ✅ COMPLETE
 
-### Target: ~1200 lines (from 1520)
+- **StatePersistence** (478 lines): Redis + JSON dual mode
+- **Auto-checkpoint**: time + update-count triggers
+- **5 HTTP endpoints**: `/checkpoint/*`
+- **6 tests passing** (`test_persistence.py`)
 
-### Approach
+---
 
-| Step | Action | Risk |
-|------|--------|------|
-| 1 | Extract remaining helper methods to utility modules | LOW |
-| 2 | Delegate more to TemporalState/InfluenceApplicator | MEDIUM |
-| 3 | Remove duplicate/dead code | LOW |
-| 4 | Add type hints throughout | LOW |
+## P7 — StateMatrix4D Cleanup (Optional) 🟢 LOW
 
-### Validation
-
-```bash
-wc -l apps/backend/src/core/autonomous/state_matrix.py
-# Target: <1200 lines
-```
+**Status**: Deferred. Current size ~1520 lines is acceptable.
 
 ---
 
@@ -233,17 +243,16 @@ sm.cascade_output("beta", {"focus": 0.8})
 sm.full_report()  # 包含 port_routing
 ```
 
-### 待處理（見上方 P8/P9/P7 詳細說明）
+### 待處理
 
-1. **P8 (HIGH)** — True LLM integration end-to-end
-2. **P9 (MEDIUM)** — Persistence layer (Redis/DB)
-3. **P7 (LOW)** — StateMatrix4D → ~1200 lines
+1. **P10 (MEDIUM)** — η (Eta) Axis Implementation — see `docs/eta_axis_plan.md`
+2. **P7 (LOW)** — StateMatrix4D cleanup (deferred)
 
 ---
 
 ## 關鍵原則（更新）
 
-**Phase 1-7 + Post-Refactor Plan v1.0 完成，P1 障礙已清除。**
+**Phase 1-7 + P8/P9 完成。P10 η軸規劃完成，準備實作。**
 
 重構帶來的改變：
 1. 新增軸 — 只需修改 YAML 配置 + 新 AxisField
@@ -253,4 +262,4 @@ sm.full_report()  # 包含 port_routing
 5. 單元測試 — 每個模組可獨立測試，tests/refactor/ 目錄下有完整覆蓋（71+ 測試）
 6. 軸端口路由 — PortRegistry + ThetaRouter + AxisOutputManager，後期只需管理端口
 
-**目標：重構已完成，軸端口路由系統完成。Phase 3 — Feature Completion (P8/P9/P7)。**
+**目標：重構已完成，P8/P9 完成。P10 η軸 — 模組化執行層，準備實作。**

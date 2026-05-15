@@ -447,6 +447,175 @@ async def theta_analyze(req: ThetaAnalysisRequest):
     return result
 
 
+# === η (Eta) Axis API ===
+
+class EtaUpdateRequest(BaseModel):
+    active_modules: Optional[List[str]] = None
+    success_rate: Optional[float] = None
+    structural_drift: Optional[float] = None
+
+
+class EtaInvokeRequest(BaseModel):
+    inputs: Dict[str, Any] = Field(default_factory=dict)
+    count: Optional[int] = None
+
+
+class EtaRegisterModuleRequest(BaseModel):
+    name: str
+    module_type: str
+    sub_type: str
+    parameters: Optional[Dict[str, Any]] = None
+    tags: Optional[List[str]] = None
+
+
+class EtaCycleRequest(BaseModel):
+    context: Optional[Dict[str, Any]] = None
+
+
+@state_matrix_router.get("/eta/report")
+def eta_report():
+    """η 軸完整報告"""
+    sm = get_state_matrix()
+    return sm.get_eta_report()
+
+
+@state_matrix_router.post("/eta/update")
+def eta_update(req: EtaUpdateRequest):
+    """更新 η 軸字段"""
+    sm = get_state_matrix()
+    sm.update_eta(
+        active_modules=req.active_modules,
+        success_rate=req.success_rate,
+        structural_drift=req.structural_drift,
+    )
+    return {"status": "updated", "eta_report": sm.get_eta_report()}
+
+
+@state_matrix_router.post("/eta/invoke")
+def eta_invoke(req: EtaInvokeRequest):
+    """調用 η 模組"""
+    sm = get_state_matrix()
+    results = sm.invoke_eta_modules(req.inputs, req.count)
+    return {
+        "results": [(name, r) for name, r in results],
+        "execution_count": sm._eta.execution_count,
+    }
+
+
+@state_matrix_router.post("/eta/register-module")
+def eta_register_module(req: EtaRegisterModuleRequest):
+    """註冊新的 η 模組"""
+    sm = get_state_matrix()
+    success = sm.register_eta_module(
+        name=req.name,
+        module_type=req.module_type,
+        sub_type=req.sub_type,
+        parameters=req.parameters,
+        tags=req.tags,
+    )
+    return {"status": "registered" if success else "failed", "eta_report": sm.get_eta_report()}
+
+
+@state_matrix_router.get("/eta/signals")
+def eta_signals():
+    """從 θ 提取 η 觸發信號"""
+    sm = get_state_matrix()
+    return sm.eta_signals_from_theta()
+
+
+@state_matrix_router.post("/eta/apply")
+def eta_apply():
+    """應用 θ 信號到 η"""
+    sm = get_state_matrix()
+    return sm.apply_theta_to_eta()
+
+
+@state_matrix_router.post("/eta/cycle")
+def eta_cycle(req: EtaCycleRequest):
+    """執行完整 θ → η → θ 迴路"""
+    sm = get_state_matrix()
+    return sm.theta_to_eta_cycle(req.context)
+
+
+@state_matrix_router.post("/eta/execute-loop")
+def eta_execute_loop(input_data: Optional[Dict[str, Any]] = None):
+    """執行 θ-η 主迴路"""
+    sm = get_state_matrix()
+    return sm.execute_theta_eta_loop(input_data)
+
+
+# === Module API ===
+
+@state_matrix_router.get("/module/list")
+def list_modules():
+    """列舉所有 η 模組"""
+    sm = get_state_matrix()
+    modules = []
+    for name, config in sm._eta.module_registry.items():
+        modules.append({
+            "name": name,
+            "type": config.module_type.name,
+            "sub_type": config.sub_type.name if hasattr(config.sub_type, 'name') else str(config.sub_type),
+            "parameters": config.parameters,
+            "tags": config.tags,
+            "version": config.version,
+            "adjusted_count": config.adjusted_count,
+            "active": name in sm._eta.active_modules,
+        })
+    return {"modules": modules, "total": len(modules), "active_count": len(sm._eta.active_modules)}
+
+
+@state_matrix_router.post("/module/execute")
+def module_execute(name: str = Query(...), inputs: str = "{}"):
+    """執行指定模組"""
+    sm = get_state_matrix()
+    import json
+    try:
+        parsed_inputs = json.loads(inputs)
+    except Exception:
+        parsed_inputs = {}
+    result = sm._eta.execute(name, parsed_inputs)
+    return {"module": name, "result": result, "execution_count": sm._eta.execution_count}
+
+
+@state_matrix_router.post("/module/adjust")
+def module_adjust(
+    name: str = Query(...),
+    parameter: str = Query(...),
+    delta: float = Query(...),
+):
+    """調整模組參數"""
+    sm = get_state_matrix()
+    sm._eta.adjust_parameter(name, parameter, delta)
+    return {"status": "adjusted", "module": name, "parameter": parameter, "delta": delta}
+
+
+@state_matrix_router.get("/module/active")
+def list_active_modules():
+    """列舉活躍模組"""
+    sm = get_state_matrix()
+    return {
+        "active_modules": sm._eta.active_modules,
+        "count": len(sm._eta.active_modules),
+    }
+
+
+@state_matrix_router.post("/module/activate")
+def activate_module(name: str = Query(...)):
+    """激活模組"""
+    sm = get_state_matrix()
+    success = sm._eta.activate_module(name)
+    return {"status": "activated" if success else "not_found", "name": name}
+
+
+@state_matrix_router.post("/module/deactivate")
+def deactivate_module(name: str = Query(...)):
+    """停用模組"""
+    sm = get_state_matrix()
+    success = sm._eta.deactivate_module(name)
+    return {"status": "deactivated" if success else "not_found", "name": name}
+
+
 @state_matrix_router.get("/health")
 def health_check():
     """健康檢查"""

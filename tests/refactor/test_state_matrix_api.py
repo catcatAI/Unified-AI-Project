@@ -18,7 +18,7 @@ from services.api.state_matrix_api import (
 def test_router_exists():
     assert state_matrix_router is not None
     routes = state_matrix_router.routes
-    assert len(routes) == 23
+    assert len(routes) == 43
     paths = [r.path for r in routes]
     assert "/state/summary" in paths
     assert "/state/axis/{axis_name}" in paths
@@ -27,6 +27,9 @@ def test_router_exists():
     assert "/state/port/register" in paths
     assert "/state/attractor/list" in paths
     assert "/state/health" in paths
+    assert "/state/eta/report" in paths
+    assert "/state/eta/cycle" in paths
+    assert "/state/module/list" in paths
     print(f"  Router has {len(routes)} endpoints")
 
 
