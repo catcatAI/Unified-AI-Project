@@ -155,19 +155,21 @@ class BackendWebSocketClient {
         this._handleChatResponse(data)
         break
       case 'echo':
-        // FIX: Handle echo message (heartbeat/ping from backend)
-        // Echo is used for keep-alive, respond with pong if needed
         console.log('Received echo (keep-alive):', message)
         break
-      // P0-2: 处理生物事件
       case 'biological_event':
         this._handleBiologicalEvent(data)
         break
       case 'angela_action':
         this._fireEvent('angela_action', data)
         break
+      case 'request_state':
+        this._handleRequestState(data)
+        break
+      case 'eta_status':
+        this._handleEtaStatus(data)
+        break
       default:
-        // Log as debug instead of warning to reduce noise
         console.debug('Unknown message type:', type, message)
     }
 
@@ -213,6 +215,21 @@ class BackendWebSocketClient {
 
     // 觸發事件
     this._fireEvent('wallpaperObjectInjected', data)
+  }
+
+  _handleRequestState(data) {
+    // 回應狀態請求
+    console.log('[BackendWebSocket] Received state request, sending current state')
+    if (window.angelaApp && window.angelaApp.stateMatrix) {
+      const currentState = window.angelaApp.stateMatrix.getState()
+      this.sendStateUpdate(currentState)
+    }
+  }
+
+  _handleEtaStatus(data) {
+    // 處理 η 軸狀態回應
+    console.log('[BackendWebSocket] η status received:', data)
+    this._fireEvent('etaStatusUpdated', data)
   }
 
   _handleStateUpdate(data) {
@@ -280,6 +297,8 @@ class BackendWebSocketClient {
       beta: { ...currentState.beta, ...(updateData.beta || {}) },
       gamma: { ...currentState.gamma, ...(updateData.gamma || {}) },
       delta: { ...currentState.delta, ...(updateData.delta || {}) },
+      epsilon: { ...currentState.epsilon, ...(updateData.epsilon || {}) },
+      theta: { ...currentState.theta, ...(updateData.theta || {}) },
     }
 
     return merged
@@ -563,6 +582,137 @@ class BackendWebSocketClient {
         clearTimeout(timeout)
         this._pendingResponses.delete(messageId)
         resolve({ success: false, response: error.message })
+      }
+    })
+  }
+
+  /**
+   * Send state update to backend (6D state matrix)
+   * @param {Object} stateUpdate - State update data
+   */
+  sendStateUpdate(stateUpdate) {
+    if (!this.connected) {
+      console.warn('[BackendWebSocket] Not connected, queuing state update')
+      this._addToOfflineQueue({
+        type: 'state_update',
+        data: stateUpdate,
+        timestamp: Date.now()
+      })
+      return false
+    }
+
+    const payload = {
+      type: 'state_update',
+      data: {
+        ...stateUpdate,
+        timestamp: Date.now()
+      }
+    }
+
+    try {
+      if (window.electronAPI && window.electronAPI.websocket) {
+        window.electronAPI.websocket.send(payload)
+      } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify(payload))
+      } else {
+        throw new Error('No active connection')
+      }
+      return true
+    } catch (error) {
+      console.error('[BackendWebSocket] Failed to send state update:', error)
+      this._addToOfflineQueue({
+        type: 'state_update',
+        data: stateUpdate,
+        timestamp: Date.now()
+      })
+      return false
+    }
+  }
+
+  /**
+   * Request full state from backend
+   */
+  async requestFullState() {
+    if (!this.connected) {
+      console.warn('[BackendWebSocket] Not connected')
+      return null
+    }
+
+    return new Promise((resolve) => {
+      const messageId = 'state_req_' + Date.now()
+      const timeout = setTimeout(() => {
+        this._pendingResponses.delete(messageId)
+        resolve(null)
+      }, 5000)
+
+      this._pendingResponses.set(messageId, { timeout, resolve, timestamp: Date.now() })
+
+      const payload = {
+        type: 'request_state',
+        data: {
+          message_id: messageId,
+          timestamp: new Date().toISOString()
+        }
+      }
+
+      try {
+        if (window.electronAPI && window.electronAPI.websocket) {
+          window.electronAPI.websocket.send(payload)
+        } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify(payload))
+        } else {
+          clearTimeout(timeout)
+          this._pendingResponses.delete(messageId)
+          resolve(null)
+        }
+      } catch (error) {
+        clearTimeout(timeout)
+        this._pendingResponses.delete(messageId)
+        resolve(null)
+      }
+    })
+  }
+
+  /**
+   * 请求后端 η (Eta) 轴状态
+   */
+  async requestEtaStatus() {
+    if (!this.connected) {
+      console.warn('[BackendWebSocket] Not connected')
+      return null
+    }
+
+    return new Promise((resolve) => {
+      const messageId = 'eta_req_' + Date.now()
+      const timeout = setTimeout(() => {
+        this._pendingResponses.delete(messageId)
+        resolve(null)
+      }, 5000)
+
+      this._pendingResponses.set(messageId, { timeout, resolve, timestamp: Date.now() })
+
+      const payload = {
+        type: 'request_eta_status',
+        data: {
+          message_id: messageId,
+          timestamp: new Date().toISOString()
+        }
+      }
+
+      try {
+        if (window.electronAPI && window.electronAPI.websocket) {
+          window.electronAPI.websocket.send(payload)
+        } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify(payload))
+        } else {
+          clearTimeout(timeout)
+          this._pendingResponses.delete(messageId)
+          resolve(null)
+        }
+      } catch (error) {
+        clearTimeout(timeout)
+        this._pendingResponses.delete(messageId)
+        resolve(null)
       }
     })
   }

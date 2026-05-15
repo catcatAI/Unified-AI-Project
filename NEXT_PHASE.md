@@ -17,8 +17,11 @@ All core P-tasks (P1-P10) are **complete**. Phase 4 focuses on:
 | Task | Status | Changes |
 |------|--------|---------|
 | T1 | ✅ Done | Fixed `test_learning_before_after` (relaxed assertion), `test_e2e_async` (graceful LLM error handling) |
+| T2 | ✅ Done | Live2D Cubism SDK R5 extracted to `electron_app/libs/cubism/`, index.html updated with SDK paths |
 | T3 | ✅ Done | Desktop `state-matrix.js` — Added θ axis, updated influence matrix, getState/getAnalysis/import/export all support 6D |
+| T4 | ✅ Done | Desktop WebSocket updated — sendStateUpdate(), requestFullState(), requestEtaStatus(), request_state/eta_status handlers, _mergeStateData 6D |
 | T5 | ✅ Done | Mobile `App.js` — Updated to 6D matrix (αβγδεθ), fetch from `/api/v1/state/matrix`, real backend data |
+| T6 | ✅ Done | Mobile `App.js` — Added η button to module bar, fetches from `/api/v1/state/eta/report`, shows execution count, success rate, drift, active modules |
 
 ---
 
@@ -26,9 +29,6 @@ All core P-tasks (P1-P10) are **complete**. Phase 4 focuses on:
 
 | # | Task | Priority | Notes |
 |---|------|----------|-------|
-| T2 | Desktop App — Live2D SDK Integration | MEDIUM | Replace placeholder with actual Cubism SDK |
-| T4 | Desktop App — StateMatrixAdapter Integration | MEDIUM | Connect desktop WS to new backend adapter API |
-| T6 | Mobile App — η Axis / Module Controls | LOW | Add module status panel from `/api/v1/eta/*` |
 | T7 | P7 StateMatrix4D cleanup (optional) | LOW | Deferred |
 
 ---

@@ -36,7 +36,7 @@ const App = () => {
     tactile: true,
     action: true
   });
-  const [matrixState, setMatrixState] = useState({
+const [matrixState, setMatrixState] = useState({
     alpha: 0.5,
     beta: 0.5,
     gamma: 0.5,
@@ -44,6 +44,31 @@ const App = () => {
     epsilon: 0.5,
     theta: 0.5
   });
+
+  const [axisDetails, setAxisDetails] = useState({
+    alpha: { energy: 0.5, comfort: 0.5, arousal: 0.5 },
+    beta: { curiosity: 0.5, focus: 0.5, learning: 0.5 },
+    gamma: { happiness: 0.5, calm: 0.5, trust: 0.5 },
+    delta: { attention: 0.5, bond: 0.5, engagement: 0.5 },
+    epsilon: { logic: 0.5, precision: 0.5, certainty: 0.5 },
+    theta: { self_reflection: 0.5, meta_accuracy: 0.5, doubt: 0.0 }
+  });
+
+  const [etaStatus, setEtaStatus] = useState({
+    active_modules: [],
+    execution_count: 0,
+    success_rate: 0.5,
+    structural_drift: 0.0
+  });
+
+  const [modules, setModules] = useState({
+    vision: true,
+    audio: true,
+    tactile: true,
+    action: true
+  });
+
+  const [showEtaPanel, setShowEtaPanel] = useState(false);
 
   const [axisDetails, setAxisDetails] = useState({
     alpha: { energy: 0.5, comfort: 0.5, arousal: 0.5 },
@@ -99,10 +124,11 @@ const App = () => {
 
   const fetchSystemStatus = async () => {
     try {
-      const res = await axios.get(`http://${serverAddress}/api/v1/state/matrix`, {
-        timeout: 3000
-      });
-      const data = res.data || {};
+      const [matrixRes, etaRes] = await Promise.all([
+        axios.get(`http://${serverAddress}/api/v1/state/summary`, { timeout: 3000 }),
+        axios.get(`http://${serverAddress}/api/v1/state/eta/report`, { timeout: 3000 }).catch(() => null)
+      ]);
+      const data = matrixRes.data || {};
 
       if (data.state_matrix) {
         const averages = data.state_matrix.averages || {};
@@ -124,6 +150,15 @@ const App = () => {
           delta: dims.delta || axisDetails.delta,
           epsilon: dims.epsilon || axisDetails.epsilon,
           theta: dims.theta || axisDetails.theta
+        });
+      }
+
+      if (etaRes?.data) {
+        setEtaStatus({
+          active_modules: etaRes.data.active_modules || [],
+          execution_count: etaRes.data.execution_count || 0,
+          success_rate: etaRes.data.success_rate || 0.5,
+          structural_drift: etaRes.data.structural_drift || 0.0
         });
       }
 
@@ -347,8 +382,8 @@ const App = () => {
             {/* Module Controls */}
             <View style={styles.moduleBar}>
               {Object.keys(modules).map(mod => (
-                <TouchableOpacity 
-                  key={mod} 
+                <TouchableOpacity
+                  key={mod}
                   style={[styles.moduleItem, modules[mod] ? styles.moduleActive : styles.moduleInactive]}
                   onPress={() => toggleModule(mod)}
                 >
@@ -356,7 +391,36 @@ const App = () => {
                   <View style={[styles.moduleDot, { backgroundColor: modules[mod] ? '#00ffcc' : '#444' }]} />
                 </TouchableOpacity>
               ))}
+              <TouchableOpacity
+                style={[styles.moduleItem, showEtaPanel ? styles.moduleActive : styles.moduleInactive]}
+                onPress={() => setShowEtaPanel(!showEtaPanel)}
+              >
+                <Text style={styles.moduleText}>η</Text>
+                <View style={[styles.moduleDot, { backgroundColor: etaStatus.active_modules.length > 0 ? '#ffcc33' : '#444' }]} />
+              </TouchableOpacity>
             </View>
+
+            {showEtaPanel && (
+              <View style={styles.etaPanel}>
+                <Text style={styles.etaPanelTitle}>η (Eta) Axis Status</Text>
+                <View style={styles.etaStats}>
+                  <Text style={styles.etaStatText}>Executions: {etaStatus.execution_count}</Text>
+                  <Text style={styles.etaStatText}>Success: {(etaStatus.success_rate * 100).toFixed(0)}%</Text>
+                  <Text style={styles.etaStatText}>Drift: {etaStatus.structural_drift.toFixed(3)}</Text>
+                </View>
+                {etaStatus.active_modules.length > 0 ? (
+                  <ScrollView horizontal style={styles.etaModuleList}>
+                    {etaStatus.active_modules.map((mod, i) => (
+                      <View key={i} style={styles.etaModuleItem}>
+                        <Text style={styles.etaModuleName}>{mod}</Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <Text style={styles.etaStatText}>No active modules</Text>
+                )}
+              </View>
+            )}
 
             {/* Chat Display */}
             <ScrollView 
@@ -608,7 +672,7 @@ const styles = StyleSheet.create({
   },
   moduleItem: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: 2,
     height: 40,
     borderRadius: 6,
     justifyContent: 'center',
@@ -633,6 +697,46 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginTop: 4,
+  },
+  // η Panel Styles
+  etaPanel: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ffcc33',
+    padding: 12,
+    marginBottom: 15,
+  },
+  etaPanelTitle: {
+    color: '#ffcc33',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  etaStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  etaStatText: {
+    color: '#888',
+    fontSize: 10,
+  },
+  etaModuleList: {
+    flexDirection: 'row',
+  },
+  etaModuleItem: {
+    backgroundColor: 'rgba(255, 204, 51, 0.1)',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ffcc33',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 8,
+  },
+  etaModuleName: {
+    color: '#ffcc33',
+    fontSize: 10,
   },
   // Chat Styles
   chatArea: {

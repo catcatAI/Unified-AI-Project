@@ -711,23 +711,23 @@
 
     <div id="audio-visualizer"></div>
 
-    <!-- Live2D Cubism Web SDK -->
-    <script src="libs/live2dcubismcore.min.js"></script>
+    <!-- Live2D Cubism Web SDK (SDK 5) -->
+    <script src="libs/cubism/Core/live2dcubismcore.min.js"></script>
     <!-- Live2D Cubism Framework SDK 5 (bundled) -->
     <script src="libs/live2dframework/dist/live2dcubismframework.bundle.js"></script>
     <!-- Framework initialization wrapper -->
     <script src="libs/live2dframework/live2dcubism-init.js"></script>
-    <!-- Fallback Local SDK -->
-    <script src="libs/live2d-fallback.js"></script>
     <script>
         console.log('[Init] Checking Live2D SDK status...');
         console.log('[Init] window.Live2DCubismCore:', typeof window.Live2DCubismCore);
-        // 如果 CDN 加载失败，使用本地 fallback
-        if (typeof window.Live2DCubismCore === 'undefined') {
-            console.log('[Init] CDN failed, using local fallback SDK');
-            window.loadLocalLive2DSDK();
+        console.log('[Init] window.Live2DCubismFramework:', typeof window.Live2DCubismFramework);
+        if (typeof window.Live2DCubismCore !== 'undefined') {
+            console.log('[Init] Cubism Core R5 loaded successfully');
         } else {
-            console.log('[Init] CDN loaded successfully');
+            console.warn('[Init] Cubism Core not found, will use fallback');
+            if (typeof window.loadLocalLive2DSDK === 'function') {
+                window.loadLocalLive2DSDK();
+            }
         }
     </script>
 
