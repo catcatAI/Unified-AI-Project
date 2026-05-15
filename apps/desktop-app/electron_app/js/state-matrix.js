@@ -98,20 +98,37 @@ class StateMatrix4D {
             timestamp: Date.now()
         };
 
+        this.theta = {
+            name: 'theta',
+            cn_name: '元认知维度',
+            values: {
+                doubt: 0.0,
+                theta_negativity: 0.0,
+                audit_intensity: 0.0,
+                caution: 0.0,
+                self_reflection: 0.5,
+                meta_accuracy: 0.5
+            },
+            weight: config.theta_weight || 0.2,
+            timestamp: Date.now()
+        };
+
         this.dimensions = {
             alpha: this.alpha,
             beta: this.beta,
             gamma: this.gamma,
             delta: this.delta,
-            epsilon: this.epsilon
+            epsilon: this.epsilon,
+            theta: this.theta
         };
         
         this.influenceMatrix = config.influence_matrix || {
-            alpha: { beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1 },
-            beta: { alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2 },
-            gamma: { alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3 },
-            delta: { alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1 },
-            epsilon: { alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1 }
+            alpha: { beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1, theta: 0.1 },
+            beta: { alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2, theta: 0.15 },
+            gamma: { alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3, theta: 0.2 },
+            delta: { alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1, theta: 0.15 },
+            epsilon: { alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1, theta: 0.25 },
+            theta: { alpha: 0.15, beta: 0.2, gamma: 0.3, delta: 0.1, epsilon: 0.2 }
         };
         
         this.history = [];
@@ -197,6 +214,16 @@ class StateMatrix4D {
         this.postUpdate('epsilon', kwargs);
     }
 
+    updateTheta(kwargs) {
+        for (const [key, value] of Object.entries(kwargs)) {
+            if (key in this.theta.values) {
+                this.theta.values[key] = Math.max(0, Math.min(1, parseFloat(value)));
+            }
+        }
+        this.theta.timestamp = Date.now();
+        this.postUpdate('theta', kwargs);
+    }
+
     applyEpsilonInfluence() {
         const certainty = this.epsilon.values.certainty || 0.5;
         const complexity = this.epsilon.values.complexity || 0.0;
@@ -245,7 +272,8 @@ class StateMatrix4D {
             beta: { ...this.beta.values },
             gamma: { ...this.gamma.values },
             delta: { ...this.delta.values },
-            epsilon: { ...this.epsilon.values }
+            epsilon: { ...this.epsilon.values },
+            theta: { ...this.theta.values }
         };
         
         this.history.push(snapshot);
@@ -549,7 +577,14 @@ class StateMatrix4D {
             delta_presence: 'ParamPresence',
             delta_intimacy: 'ParamIntimacy',
             delta_engagement: 'ParamEngagement',
-            
+
+            theta_doubt: 'ParamDoubt',
+            theta_theta_negativity: 'ParamThetaNegativity',
+            theta_audit_intensity: 'ParamAuditIntensity',
+            theta_caution: 'ParamCaution',
+            theta_self_reflection: 'ParamSelfReflection',
+            theta_meta_accuracy: 'ParamMetaAccuracy',
+
             happiness: 'expr_happy',
             sad: 'expr_sad',
             angry: 'expr_angry',
@@ -670,7 +705,8 @@ class StateMatrix4D {
             beta: { ...this.beta.values },
             gamma: { ...this.gamma.values },
             delta: { ...this.delta.values },
-            epsilon: { ...this.epsilon.values }
+            epsilon: { ...this.epsilon.values },
+            theta: { ...this.theta.values }
         };
     }
     
@@ -688,39 +724,49 @@ class StateMatrix4D {
             beta: this.getDimensionAverage('beta'),
             gamma: this.getDimensionAverage('gamma'),
             delta: this.getDimensionAverage('delta'),
-            epsilon: this.getDimensionAverage('epsilon')
+            epsilon: this.getDimensionAverage('epsilon'),
+            theta: this.getDimensionAverage('theta')
         };
     }
     
     getAnalysis() {
         const averages = this.getDimensionAverages();
-        
-        const overall = Object.values(averages).reduce((a, b) => a + b, 0) / 5;
-        
+
+        const overall = Object.values(averages).reduce((a, b) => a + b, 0) / 6;
+
         const wellbeing = (
-            averages.alpha * 0.25 +
-            averages.beta * 0.20 +
-            averages.gamma * 0.35 +
-            averages.delta * 0.20
+            averages.alpha * 0.20 +
+            averages.beta * 0.15 +
+            averages.gamma * 0.25 +
+            averages.delta * 0.15 +
+            averages.epsilon * 0.10 +
+            averages.theta * 0.15
         );
-        
+
+        const meta_cognition = (
+            this.theta.values.self_reflection * 0.4 +
+            (1 - this.theta.values.doubt) * 0.3 +
+            this.theta.values.meta_accuracy * 0.3
+        );
+
         const arousal = (
             this.alpha.values.arousal * 0.4 +
             this.gamma.values.surprise * 0.3 +
             (1 - this.gamma.values.calm) * 0.3
         );
-        
+
         const positive = this.gamma.values.happiness + this.gamma.values.trust + this.gamma.values.love;
         const negative = this.gamma.values.sadness + this.gamma.values.anger + this.gamma.values.fear;
         const valence = (positive - negative) / 3;
-        
+
         const dominantDim = Object.entries(averages).sort((a, b) => b[1] - a[1])[0];
         const dominantEmotion = this.getDominantEmotion();
-        
+
         return {
             averages,
             overall,
             wellbeing,
+            meta_cognition,
             arousal,
             valence,
             dominant_dimension: dominantDim ? dominantDim[0] : null,
@@ -1138,12 +1184,14 @@ class StateMatrix4D {
             gamma: { ...this.gamma.values },
             delta: { ...this.delta.values },
             epsilon: { ...this.epsilon.values },
+            theta: { ...this.theta.values },
             weights: {
                 alpha: this.alpha.weight,
                 beta: this.beta.weight,
                 gamma: this.gamma.weight,
                 delta: this.delta.weight,
-                epsilon: this.epsilon.weight
+                epsilon: this.epsilon.weight,
+                theta: this.theta.weight
             },
             influence_matrix: JSON.parse(JSON.stringify(this.influenceMatrix)),
             metadata: {
@@ -1153,7 +1201,7 @@ class StateMatrix4D {
             }
         };
     }
-    
+
     importFromDict(data) {
         if (data.alpha) {
             this.alpha.values = { ...data.alpha };
@@ -1169,6 +1217,9 @@ class StateMatrix4D {
         }
         if (data.epsilon) {
             this.epsilon.values = { ...data.epsilon };
+        }
+        if (data.theta) {
+            this.theta.values = { ...data.theta };
         }
         if (data.weights) {
             for (const [name, weight] of Object.entries(data.weights)) {
@@ -1306,23 +1357,31 @@ class StateMatrix4D {
     updateFromBackend(data) {
         // Update state matrix from backend data
         if (!data) return;
-        
+
         if (data.alpha) {
             this.updateAlpha(data.alpha);
         }
-        
+
         if (data.beta) {
             this.updateBeta(data.beta);
         }
-        
+
         if (data.gamma) {
             this.updateGamma(data.gamma);
         }
-        
+
         if (data.delta) {
             this.updateDelta(data.delta);
         }
-        
+
+        if (data.epsilon) {
+            this.updateEpsilon(data.epsilon);
+        }
+
+        if (data.theta) {
+            this.updateTheta(data.theta);
+        }
+
         if (data.timestamp) {
             this.lastUpdate = data.timestamp;
         }

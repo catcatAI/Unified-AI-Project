@@ -37,10 +37,21 @@ const App = () => {
     action: true
   });
   const [matrixState, setMatrixState] = useState({
-    emotion: 0.5,
-    cognition: 0.5,
-    memory: 0.5,
-    stability: 0.5
+    alpha: 0.5,
+    beta: 0.5,
+    gamma: 0.5,
+    delta: 0.5,
+    epsilon: 0.5,
+    theta: 0.5
+  });
+
+  const [axisDetails, setAxisDetails] = useState({
+    alpha: { energy: 0.5, comfort: 0.5, arousal: 0.5 },
+    beta: { curiosity: 0.5, focus: 0.5, learning: 0.5 },
+    gamma: { happiness: 0.5, calm: 0.5, trust: 0.5 },
+    delta: { attention: 0.5, bond: 0.5, engagement: 0.5 },
+    epsilon: { logic: 0.5, precision: 0.5, certainty: 0.5 },
+    theta: { self_reflection: 0.5, meta_accuracy: 0.5, doubt: 0.0 }
   });
 
   const scrollRef = useRef();
@@ -88,27 +99,40 @@ const App = () => {
 
   const fetchSystemStatus = async () => {
     try {
-      const data = await security.securePost(`http://${serverAddress}/api/v1/mobile/status`, {
-        action: 'get_status',
-        timestamp: Date.now()
+      const res = await axios.get(`http://${serverAddress}/api/v1/state/matrix`, {
+        timeout: 3000
       });
-      
-      if (data.metrics) {
-        setSystemStats({
-          cpu: data.metrics.cpu,
-          mem: data.metrics.mem,
-          nodes: data.metrics.nodes
-        });
-        
-        // 模擬從後端獲取的矩陣狀態 (未來應由 AGI 核心返回)
+      const data = res.data || {};
+
+      if (data.state_matrix) {
+        const averages = data.state_matrix.averages || {};
+        const dims = data.state_matrix.dimensions || {};
+
         setMatrixState({
-          emotion: 0.4 + Math.random() * 0.2,
-          cognition: 0.6 + Math.random() * 0.3,
-          memory: 0.8 + Math.random() * 0.1,
-          stability: 0.9 + Math.random() * 0.05
+          alpha: averages.alpha ?? 0.5,
+          beta: averages.beta ?? 0.5,
+          gamma: averages.gamma ?? 0.5,
+          delta: averages.delta ?? 0.5,
+          epsilon: averages.epsilon ?? 0.5,
+          theta: averages.theta ?? 0.5
         });
-        setStatus(data.status || 'SECURE LINK ACTIVE');
+
+        setAxisDetails({
+          alpha: dims.alpha || axisDetails.alpha,
+          beta: dims.beta || axisDetails.beta,
+          gamma: dims.gamma || axisDetails.gamma,
+          delta: dims.delta || axisDetails.delta,
+          epsilon: dims.epsilon || axisDetails.epsilon,
+          theta: dims.theta || axisDetails.theta
+        });
       }
+
+      setStatus(data.status || 'LINK ACTIVE');
+      setSystemStats({
+        cpu: data.metrics?.cpu || 'N/A',
+        mem: data.metrics?.mem || 'N/A',
+        nodes: data.metrics?.nodes || 0
+      });
     } catch (error) {
       setStatus('LINK INTERRUPTED');
     }
@@ -301,20 +325,22 @@ const App = () => {
         ) : (
           /* Main AGI Interface */
           <View style={styles.mainInterface}>
-            {/* 4D Matrix State Visualization */}
+            {/* 6D Matrix State Visualization */}
             <View style={styles.matrixContainer}>
               <View style={styles.matrixGrid}>
-                <MatrixIndicator label="EMO" value={matrixState.emotion} color="#ff3366" />
-                <MatrixIndicator label="COG" value={matrixState.cognition} color="#33ccff" />
-                <MatrixIndicator label="MEM" value={matrixState.memory} color="#ffcc33" />
-                <MatrixIndicator label="STB" value={matrixState.stability} color="#00ffcc" />
+                <MatrixIndicator label="α" value={matrixState.alpha} color="#ff3366" />
+                <MatrixIndicator label="β" value={matrixState.beta} color="#33ccff" />
+                <MatrixIndicator label="γ" value={matrixState.gamma} color="#ffcc33" />
+                <MatrixIndicator label="δ" value={matrixState.delta} color="#00ffcc" />
+                <MatrixIndicator label="ε" value={matrixState.epsilon} color="#cc66ff" />
+                <MatrixIndicator label="θ" value={matrixState.theta} color="#66ccff" />
               </View>
               <View style={styles.matrixVisual}>
                 <Animated.View style={[styles.visualCircle, {
                   transform: [{ scale: matrixAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }],
                   opacity: matrixAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.3, 0.6, 0.3] })
                 }]} />
-                <Text style={styles.visualText}>CORE ACTIVE</Text>
+                <Text style={styles.visualText}>6D CORE</Text>
               </View>
             </View>
 

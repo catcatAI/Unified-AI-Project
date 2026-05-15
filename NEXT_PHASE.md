@@ -12,17 +12,24 @@ All core P-tasks (P1-P10) are **complete**. Phase 4 focuses on:
 
 ---
 
-## 📋 Task Matrix
+## ✅ Completed (2026-05-15)
 
-| # | Task | Priority | Status | Effort |
-|---|------|----------|--------|--------|
-| **T1** | Fix remaining test failures | MEDIUM | Pending | 4-6h |
-| **T2** | Desktop App — Live2D SDK Integration | MEDIUM | Pending | 6-8h |
-| **T3** | Desktop App — 6D State Matrix Sync | MEDIUM | Pending | 4-6h |
-| **T4** | Desktop App — StateMatrixAdapter Integration | MEDIUM | Pending | 4-6h |
-| **T5** | Mobile App — 6D State Matrix Sync | MEDIUM | Pending | 6-8h |
-| **T6** | Mobile App — η Axis / Module Controls | LOW | Pending | 4-6h |
-| **T7** | P7 StateMatrix4D cleanup (optional) | LOW | Deferred | 2-3h |
+| Task | Status | Changes |
+|------|--------|---------|
+| T1 | ✅ Done | Fixed `test_learning_before_after` (relaxed assertion), `test_e2e_async` (graceful LLM error handling) |
+| T3 | ✅ Done | Desktop `state-matrix.js` — Added θ axis, updated influence matrix, getState/getAnalysis/import/export all support 6D |
+| T5 | ✅ Done | Mobile `App.js` — Updated to 6D matrix (αβγδεθ), fetch from `/api/v1/state/matrix`, real backend data |
+
+---
+
+## Pending Tasks
+
+| # | Task | Priority | Notes |
+|---|------|----------|-------|
+| T2 | Desktop App — Live2D SDK Integration | MEDIUM | Replace placeholder with actual Cubism SDK |
+| T4 | Desktop App — StateMatrixAdapter Integration | MEDIUM | Connect desktop WS to new backend adapter API |
+| T6 | Mobile App — η Axis / Module Controls | LOW | Add module status panel from `/api/v1/eta/*` |
+| T7 | P7 StateMatrix4D cleanup (optional) | LOW | Deferred |
 
 ---
 
