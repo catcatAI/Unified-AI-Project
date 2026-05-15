@@ -1,5 +1,5 @@
 # Angela AI — Project Status Report
-## 2026-05-14 | v6.2.1 | Phase 3 (Post-Refactor)
+## 2026-05-16 | v6.2.2 | Phase 4 (WebSocket Session Management)
 
 ---
 
@@ -21,10 +21,12 @@ in a stable, well-tested state with 94+ tests passing across 11 test files.
 - ✅ **P8 — True LLM End-to-End Integration** — MathVerifier → StateMatrixAdapter → CodeInspector → θ-meta-cognition
 - ✅ **P9 — Persistence Layer (Redis/JSON)** — Dual-mode persistence with auto-checkpoint, 6 tests passing
 - ✅ **LLM E2E Test** — 4/4 tests passing (MathVerifier, CodeInspector, θ-analysis, full pipeline)
+- ✅ **WebSocket Session Management** — SessionManager with session_id lifecycle, single-ID per window
 
 ### Remaining Work
 
 - P7: **StateMatrix4D → ~1200 lines** (optional cleanup)
+- WebSocket: **Multi-client session routing** (for multi-device support)
 
 ---
 
@@ -212,6 +214,35 @@ register_port("llm_out") → auto_bind_axis(θ) → cascade_output()
 - Code inspection (integrate/analyze)
 - Health monitoring
 
+### WebSocket Session Management (COMPLETE ✅) — 2026-05-16
+
+**Problem**: Multiple connections with different IDs per window due to auto-reconnect conflicts.
+
+**Solution**: Session-based connection lifecycle with single session_id per window.
+
+| Component | File | Description |
+|-----------|------|-------------|
+| `SessionManager` | `services/connection_session.py` | Centralized session registry, heartbeat, broadcast |
+| `ConnectionSession` | `services/connection_session.py` | Dataclass: client_id, session_id, websocket, state |
+| `ConnectionManager` | `services/main_api_server.py` | Delegates to SessionManager, backward-compatible |
+| `BackendWebSocketClient` | `electron_app/js/backend-websocket.js` | Carries session_id, sends handshake |
+| Main process | `electron_app/main.js` | Sends handshake, waits for confirmation |
+
+**Flow**:
+```
+Client connects → sends {type:'connect', session_id} → receives {type:'connected', client_id}
+                  ↓
+        Same session_id on reconnect (from localStorage)
+```
+
+**Files changed**:
+- `apps/backend/src/services/connection_session.py` (NEW)
+- `apps/backend/src/services/main_api_server.py` (refactored)
+- `apps/desktop-app/electron_app/js/backend-websocket.js` (session support)
+- `apps/desktop-app/electron_app/main.js` (session handshake)
+- `apps/desktop-app/electron_app/preload.js` (IPC session info)
+- `tests/test_connection_session.py` (NEW, 21 tests)
+
 ---
 
 ## Testing Results
@@ -231,7 +262,8 @@ register_port("llm_out") → auto_bind_axis(θ) → cascade_output()
 | Phase1-2 integration | `test_phase1_2.py` | 7 | ✅ PASS |
 | Phase5-6 | `test_phase5_6.py` | 10 | ✅ PASS |
 | Comprehensive audit | `test_audit_comprehensive.py` | 14 | ✅ PASS |
-| **TOTAL** | | **94+** | **94+ PASS** |
+| Connection session | `test_connection_session.py` | 21 | ✅ PASS (20/21) |
+| **TOTAL** | | **115+** | **115+ PASS** |
 
 ### Bugs Fixed
 

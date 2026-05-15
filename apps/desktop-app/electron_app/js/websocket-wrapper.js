@@ -105,40 +105,47 @@ class WebSocketConnection extends events.EventEmitter {
       const firstByte = this._buffer[0]
       const secondByte = this._buffer[1]
       const opcode = firstByte & 0x0f
-      const isFinal = (firstByte & 0x80) !== 0
+      const rsv = firstByte & 0x70
+      if (rsv !== 0) {
+        // Invalid frame with reserved bits - log but try to recover
+        const textPreview = this._buffer.slice(0, Math.min(50, this._buffer.length)).toString('utf8')
+        console.warn('[NativeWS] Received frame with RSV bits set (ignoring). firstByte=0x' + firstByte.toString(16) + ', text="...' + textPreview.replace(/[\r\n]/g, ' ') + '"')
+        // Clear this byte and try to resync
+        this._buffer = this._buffer.slice(1)
+        continue  // Skip this byte and try again
+      }
       const masked = (secondByte & 0x80) !== 0
       let payloadLen = secondByte & 0x7f
 
-      let offset = 2
+      let headerLen = 2
       if (payloadLen === 126) {
         if (this._buffer.length < 4) return
         payloadLen = this._buffer.readUInt16BE(2)
-        offset = 4
+        headerLen = 4
       } else if (payloadLen === 127) {
         if (this._buffer.length < 10) return
-        payloadLen = this._buffer.readUInt32BE(6)
-        offset = 10
+        const high = this._buffer.readUInt32BE(2)
+        const low = this._buffer.readUInt32BE(6)
+        payloadLen = low
+        headerLen = 10
       }
 
+      const dataStart = headerLen + (masked ? 4 : 0)
+      if (this._buffer.length < dataStart + payloadLen) return
+
+      let payload
       if (masked) {
-        if (this._buffer.length < offset + 4) return
-        const mask = this._buffer.slice(offset, offset + 4)
-        offset += 4
-
-        if (this._buffer.length < offset + payloadLen) return
-        const payload = Buffer.from(this._buffer.slice(offset, offset + payloadLen))
-        for (let i = 0; i < payload.length; i++) {
-          payload[i] ^= mask[i % 4]
+        const mask = this._buffer.slice(headerLen, headerLen + 4)
+        payload = Buffer.alloc(payloadLen)
+        for (let i = 0; i < payloadLen; i++) {
+          payload[i] = this._buffer[dataStart + i] ^ mask[i % 4]
         }
-        this._buffer = this._buffer.slice(offset + payloadLen)
-
-        this._handleOpcode(opcode, payload)
       } else {
-        if (this._buffer.length < offset + payloadLen) return
-        const payload = this._buffer.slice(offset, offset + payloadLen)
-        this._buffer = this._buffer.slice(offset + payloadLen)
-        this._handleOpcode(opcode, payload)
+        payload = this._buffer.slice(dataStart, dataStart + payloadLen)
       }
+
+      this._buffer = this._buffer.slice(dataStart + payloadLen)
+      this._handleOpcode(opcode, payload)
     }
   }
 
@@ -168,29 +175,49 @@ class WebSocketConnection extends events.EventEmitter {
     const payload = Buffer.isBuffer(data) ? data : Buffer.from(String(data), 'utf8')
     const payloadLen = payload.length
 
-    const maskBit = 0x80 // Client MUST mask frames
     const mask = crypto.randomBytes(4)
 
-    let frameLen = 2 + 4 + payloadLen
-    if (payloadLen > 65535) frameLen += 8
-    else if (payloadLen > 125) frameLen += 2
-
-    const frame = Buffer.alloc(frameLen)
-    frame[0] = 0x80 | opcode
-    frame[1] = maskBit | (payloadLen <= 125 ? payloadLen : payloadLen <= 65535 ? 126 : 127)
-
-    if (payloadLen > 65535) {
-      frame.writeUInt32BE(0, 2)
-      frame.writeUInt32BE(payloadLen, 6)
-    } else if (payloadLen > 125) {
-      frame.writeUInt16BE(payloadLen, 2)
+    let headerLen = 2
+    if (payloadLen > 125) {
+      if (payloadLen > 65535) {
+        headerLen = 10
+      } else {
+        headerLen = 4
+      }
     }
 
-    mask.copy(frame, 2)
-    const payloadStart = frameLen - payloadLen
+    const frame = Buffer.alloc(headerLen + 4 + payloadLen)
+
+    // Byte 0: FIN=1 (0x80), RSV=000, opcode
+    frame[0] = 0x80 | opcode
+
+    // Byte 1: MASK=1 (0x80), length
+    if (payloadLen <= 125) {
+      frame[1] = 0x80 | payloadLen
+    } else if (payloadLen <= 65535) {
+      frame[1] = 0x80 | 126
+      frame.writeUInt16BE(payloadLen, 2)
+    } else {
+      frame[1] = 0x80 | 127
+      frame[2] = 0
+      frame[3] = 0
+      frame[4] = 0
+      frame[5] = 0
+      frame.writeUInt32BE(payloadLen, 6)
+    }
+
+    // Copy mask key
+    mask.copy(frame, headerLen)
+
+    // Apply mask to payload
+    const payloadStart = headerLen + 4
     for (let i = 0; i < payloadLen; i++) {
       frame[payloadStart + i] = payload[i] ^ mask[i % 4]
     }
+
+    // Debug: log first few bytes
+    const hexDump = frame.slice(0, Math.min(16, frame.length)).toString('hex')
+    console.log('[NativeWS] Sending frame: opcode=0x' + opcode.toString(16) + ', payloadLen=' + payloadLen + ', firstBytes=' + hexDump)
 
     this._socket.write(frame)
   }

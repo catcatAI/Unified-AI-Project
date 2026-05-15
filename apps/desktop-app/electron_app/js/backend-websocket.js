@@ -28,6 +28,12 @@ class BackendWebSocketClient {
     this.heartbeatInterval = null
     this.eventHandlers = {}
 
+    // Session management (P0: Single session per window)
+    this.clientId = null        // Backend-assigned client_id (received on connect)
+    this.sessionId = this._loadOrCreateSessionId()  // Persistent session identifier
+    this.clientType = 'desktop'
+    this.clientVersion = '6.2.1'
+
     // 离线消息队列
     this._offlineQueue = []
     this._maxQueueSize = 100 // 最大队列大小
@@ -51,6 +57,49 @@ class BackendWebSocketClient {
     this.onMessage = null // P0-4: Single callback for convenience (app.js uses this)
   }
 
+  /**
+   * Load session_id from localStorage or create new one
+   * Session persists across reconnects for same window
+   */
+  _loadOrCreateSessionId() {
+    let sid = localStorage.getItem('angela_session_id')
+    if (!sid) {
+      sid = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9)
+      localStorage.setItem('angela_session_id', sid)
+    }
+    return sid
+  }
+
+  /**
+   * Clear session (for testing or logout)
+   */
+  _clearSession() {
+    localStorage.removeItem('angela_session_id')
+    this.clientId = null
+    this.sessionId = this._loadOrCreateSessionId()
+  }
+
+  /**
+   * Build connection URL with session_id query parameter
+   */
+  _buildUrl(url) {
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}session_id=${encodeURIComponent(this.sessionId)}`
+  }
+
+  /**
+   * Build initial handshake message with session info
+   */
+  _buildHandshake() {
+    return {
+      type: 'connect',
+      session_id: this.sessionId,
+      client_type: this.clientType,
+      client_version: this.clientVersion,
+      timestamp: new Date().toISOString()
+    }
+  }
+
   async connect(url) {
     console.log('Connecting to backend:', url)
 
@@ -66,54 +115,90 @@ class BackendWebSocketClient {
     this._pendingResponses = this._pendingResponses || new Map()
 
     try {
-      // Use Electron IPC bridge if available
+      // Use Electron IPC bridge if available - ALL messages go through main process
       if (window.electronAPI && window.electronAPI.websocket) {
         console.log('[BackendWebSocket] Using Electron IPC bridge')
-        window.electronAPI.websocket.connect(url)
-        // Status will be updated via 'websocket-connected' IPC event handled in app.js
-
-        // Still start cleanup timer
-        this._startPendingResponsesCleanup()
+        console.log('[BackendWebSocket] Session ID:', this.sessionId)
+        
+        // Don't mark as connected immediately - wait for confirmation
+        this._usingIpcBridge = true
+        
+        // Listen for backend connection confirmation BEFORE marking connected
+        const onConnectedHandler = (data) => {
+          console.log('[BackendWebSocket] Backend confirmed connection via IPC:', data)
+          
+          // Store client_id received from backend
+          if (data.client_id) {
+            this.clientId = data.client_id
+            console.log('[BackendWebSocket] Received client_id:', this.clientId)
+          }
+          
+          this.connected = true
+          this._fireEvent('connected', data)
+          
+          // Start cleanup timer
+          this._startPendingResponsesCleanup()
+          
+          // Send any queued messages
+          this._flushOfflineQueue()
+          
+          // Remove this listener after first connection
+          window.electronAPI.off('websocket-connected', onConnectedHandler)
+        }
+        
+        window.electronAPI.on('websocket-connected', onConnectedHandler)
+        
+        // Also listen for messages from main process
+        window.electronAPI.on('websocket-message', (message) => {
+          console.log('[BackendWebSocket] Received via IPC:', message)
+          this._handleMessage({ data: JSON.stringify(message) })
+        })
+        
+        // Trigger connection with session info
+        window.electronAPI.websocket.connect(url, {
+          sessionId: this.sessionId,
+          clientType: this.clientType,
+          clientVersion: this.clientVersion
+        })
         return
       }
 
-      // Fallback to native WebSocket (for browser/standard environments)
-      this.ws = new WebSocket(url)
+      // Only fallback to native WebSocket if IPC bridge is NOT available
+      // This happens in browser environments, not in Electron
+      console.log('[BackendWebSocket] IPC bridge not available, using native WebSocket')
+      console.log('[BackendWebSocket] Session ID:', this.sessionId)
+      
+      const wsUrl = this._buildUrl(url)
+      this.ws = new WebSocket(wsUrl)
 
       this.ws.onopen = () => {
-        console.log('WebSocket connected')
-        this.connected = true
-        this.reconnectAttempts = 0
-
-        // 開始心跳
-        this._startHeartbeat()
-
-        // 启动待处理响应清理
-        this._startPendingResponsesCleanup()
-
-        // 通知連接成功
-        this._fireEvent('connected', { url, timestamp: Date.now() })
-
-        // 发送离线队列中的消息
-        this._flushOfflineQueue()
+        console.log('[BackendWebSocket] Native WebSocket connected, sending handshake')
+        
+        // Send handshake message with session info
+        const handshake = this._buildHandshake()
+        console.log('[BackendWebSocket] Sending handshake:', handshake)
+        this.ws.send(JSON.stringify(handshake))
+        
+        // Wait for 'connected' response before marking as connected
+        // (This will be handled in _routeMessage)
       }
 
       this.ws.onmessage = (event) => this._handleMessage(event)
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+        console.error('[BackendWebSocket] WebSocket error:', error)
         this._fireEvent('error', error)
         this._handleReconnect()
       }
 
-      this.ws.onclose = () => {
-        console.log('WebSocket closed')
+      this.ws.onclose = (code, reason) => {
+        console.log('[BackendWebSocket] WebSocket closed:', code, reason)
         this.connected = false
         this._stopHeartbeat()
         this._handleReconnect()
       }
     } catch (error) {
-      console.error('Failed to connect:', error)
+      console.error('[BackendWebSocket] Failed to connect:', error)
       this._handleReconnect()
     }
   }
@@ -123,7 +208,7 @@ class BackendWebSocketClient {
       const message = JSON.parse(event.data)
       this._routeMessage(message)
     } catch (error) {
-      console.error('Failed to parse message:', error, event.data)
+      console.error('[BackendWebSocket] Failed to parse message:', error, event.data)
     }
   }
 
@@ -133,8 +218,29 @@ class BackendWebSocketClient {
 
     switch (type) {
       case 'connected':
-        console.log('Backend confirmed connection:', message)
+        // Backend confirmed connection with session info
+        console.log('[BackendWebSocket] Backend confirmed connection:', message)
+        
+        // Store client_id from backend
+        if (message.client_id) {
+          this.clientId = message.client_id
+          console.log('[BackendWebSocket] Received client_id:', this.clientId)
+        }
+        
+        // Mark as connected and start services
+        this.connected = true
+        this.reconnectAttempts = 0
+        
+        // 開始心跳
+        this._startHeartbeat()
+        
+        // 启动待处理响应清理
+        this._startPendingResponsesCleanup()
+        
         this._fireEvent('connected', message)
+        
+        // 发送离线队列中的消息
+        this._flushOfflineQueue()
         break
       case 'state_update':
         this._handleStateUpdate(data)
@@ -501,6 +607,7 @@ class BackendWebSocketClient {
       }
 
       this.reconnectInterval = setTimeout(() => {
+        console.log('[BackendWebSocket] Attempting reconnect with session_id:', this.sessionId)
         this.connect(this.url || 'ws://localhost:8000/ws')
       }, reconnectDelay)
     } else {
@@ -522,10 +629,12 @@ class BackendWebSocketClient {
     }
 
     try {
-      if (window.electronAPI && window.electronAPI.websocket) {
+      if (this._usingIpcBridge && window.electronAPI && window.electronAPI.websocket) {
+        // Send via IPC bridge (main process WebSocket)
         window.electronAPI.websocket.send(message)
         return true
       } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        // Fallback to native WebSocket
         this.ws.send(JSON.stringify(message))
         return true
       }
@@ -571,7 +680,7 @@ class BackendWebSocketClient {
       }
 
       try {
-        if (window.electronAPI && window.electronAPI.websocket) {
+        if (this._usingIpcBridge && window.electronAPI && window.electronAPI.websocket) {
           window.electronAPI.websocket.send(payload)
         } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
           this.ws.send(JSON.stringify(payload))
@@ -610,7 +719,7 @@ class BackendWebSocketClient {
     }
 
     try {
-      if (window.electronAPI && window.electronAPI.websocket) {
+      if (this._usingIpcBridge && window.electronAPI && window.electronAPI.websocket) {
         window.electronAPI.websocket.send(payload)
       } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify(payload))
@@ -656,7 +765,7 @@ class BackendWebSocketClient {
       }
 
       try {
-        if (window.electronAPI && window.electronAPI.websocket) {
+        if (this._usingIpcBridge && window.electronAPI && window.electronAPI.websocket) {
           window.electronAPI.websocket.send(payload)
         } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
           this.ws.send(JSON.stringify(payload))
@@ -700,7 +809,7 @@ class BackendWebSocketClient {
       }
 
       try {
-        if (window.electronAPI && window.electronAPI.websocket) {
+        if (this._usingIpcBridge && window.electronAPI && window.electronAPI.websocket) {
           window.electronAPI.websocket.send(payload)
         } else if (this.ws && this.ws.readyState === WebSocket.OPEN) {
           this.ws.send(JSON.stringify(payload))

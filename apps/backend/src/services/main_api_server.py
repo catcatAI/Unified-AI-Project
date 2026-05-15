@@ -794,174 +794,103 @@ async def get_brain_dividend():
 
 import asyncio
 import json
+from services.connection_session import get_session_manager, SessionState
 
 
 class ConnectionManager:
-    """连接管理器
-
-    修复版本：改进的 WebSocket 连接管理
-    - 添加心跳机制
-    - 改进重连逻辑
-    - 添加连接状态监控
-    - 实现状态缓冲和重发
+    """
+    WebSocket connection manager - now uses SessionManager internally.
+    
+    This class provides backward-compatible API while delegating to SessionManager.
     """
 
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
-        self.connection_info: Dict[WebSocket, Dict[str, Any]] = {}  # 连接信息
-        self.message_buffer: Dict[WebSocket, List[Dict[str, Any]]] = {}  # 消息缓冲
-        self.max_buffer_size = 10  # 最大缓冲消息数
-        self.heartbeat_interval = 30  # 心跳间隔（秒）
-        self.heartbeat_timeout = 120  # 心跳超时（秒） - 增加到120秒以提高稳定性
-
-    async def connect(self, websocket: WebSocket):
-        """接受新连接"""
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-        # 记录连接信息
-        self.connection_info[websocket] = {
-            "connected_at": datetime.now().isoformat(),
-            "last_heartbeat": datetime.now(),
-            "heartbeat_missed": 0,
-            "client_id": str(uuid.uuid4()),
-        }
-
-        # 初始化消息缓冲
-        self.message_buffer[websocket] = []
-
-        logger.info(f"WebSocket 连接已建立 (ID: {self.connection_info[websocket]['client_id']})")
-
-        # 启动心跳检测并存储任务
-        task = asyncio.create_task(self._heartbeat_monitor(websocket))
-        if not hasattr(app.state, "background_tasks"):
-            app.state.background_tasks = set()
-        app.state.background_tasks.add(task)
-        task.add_done_callback(app.state.background_tasks.discard)
-
-    def disconnect(self, websocket: WebSocket):
-        """断开连接"""
-        if websocket in self.active_connections:
-            client_id = self.connection_info.get(websocket, {}).get("client_id", "unknown")
-            self.active_connections.remove(websocket)
-            self.connection_info.pop(websocket, None)
-            self.message_buffer.pop(websocket, None)
-            logger.info(f"WebSocket 连接已断开 (ID: {client_id})")
-
-    async def _heartbeat_monitor(self, websocket: WebSocket):
-        """心跳监控"""
-        while websocket in self.active_connections:
-            try:
-                # 检查心跳超时
-                info = self.connection_info.get(websocket)
-                if info:
-                    time_since_last_heartbeat = (
-                        datetime.now() - info["last_heartbeat"]
-                    ).total_seconds()
-
-                    if time_since_last_heartbeat > self.heartbeat_timeout:
-                        logger.warning(f"心跳超时，断开连接 (ID: {info['client_id']})")
-                        self.disconnect(websocket)
-                        break
-
-                # 等待心跳间隔
-                await asyncio.sleep(self.heartbeat_interval)
-
-            except Exception as e:
-                # broad exception acceptable: heartbeat monitor should not break the loop
-                logger.error(f"心跳监控错误: {e}")
-                break
-
-    async def broadcast(self, message: dict):
-        """广播消息给所有连线的客户端"""
-        # Create a copy of the list for safe iteration
-        for connection in list(self.active_connections):
-            try:
-                # Ensure connection is still open
-                if connection not in self.active_connections:
-                    continue
-                
-                await connection.send_json(message)
-
-                # 清除該連接的消息庫存（成功發送）
-                if connection in self.message_buffer:
-                    self.message_buffer[connection].clear()
-
-            except (ConnectionError, RuntimeError, Exception) as e:
-                # broad exception acceptable: broadcast should be resilient to connection errors
-                # 连接失败，添加到消息缓冲
-                logger.warning(
-                    f"广播消息失败，添加到缓冲 (ID: {self.connection_info.get(connection, {}).get('client_id', 'unknown')}): {e}"
-                )
-
-                if connection in self.message_buffer:
-                    self.message_buffer[connection].append(message)
-                    # 限制缓冲大小
-                    if len(self.message_buffer[connection]) > self.max_buffer_size:
-                        self.message_buffer[connection].pop(0)
-
-                # 尝试重发缓冲的消息
-                await self._retry_buffered_messages(connection)
-
-                # 如果仍然失败，断开连接
-                try:
-                    await connection.close()
-                except Exception:
-                    # broad exception acceptable: cleanup should not raise exceptions
-                    pass
-                finally:
-                    self.disconnect(connection)
-
-    async def _retry_buffered_messages(self, websocket: WebSocket):
-        """重发缓冲的消息"""
-        if websocket not in self.message_buffer:
-            return
-
-        buffered_messages = self.message_buffer[websocket].copy()
-        self.message_buffer[websocket].clear()
-
-        for message in buffered_messages:
-            try:
-                await websocket.send_json(message)
-                logger.debug(f"成功重发缓冲消息")
-            except Exception as e:
-                # broad exception acceptable: message retry should be resilient to errors
-                self.message_buffer[websocket].append(message)
-                logger.warning(f"重发消息失败: {e}")
-                break
-
-    async def send_personal_message(self, message: dict, websocket: WebSocket):
-        """发送个人消息"""
-        try:
-            await websocket.send_json(message)
-            # 清除该连接的消息缓冲（成功发送）
-            if websocket in self.message_buffer:
-                self.message_buffer[websocket].clear()
-        except Exception as e:
-            # broad exception acceptable: WebSocket send should be resilient to errors
-            logger.warning(f"发送个人消息失败，添加到缓冲: {e}")
-            if websocket in self.message_buffer:
-                self.message_buffer[websocket].append(message)
-                # 限制缓冲大小
-                if len(self.message_buffer[websocket]) > self.max_buffer_size:
-                    self.message_buffer[websocket].pop(0)
-
-    def get_connection_stats(self) -> Dict[str, Any]:
-        """获取连接统计信息"""
+        self._sm = get_session_manager()
+    
+    @property
+    def active_connections(self):
+        return [s.websocket for s in self._sm._sessions.values()]
+    
+    @property
+    def connection_info(self):
         return {
-            "active_connections": len(self.active_connections),
+            s.websocket: {
+                "client_id": s.client_id,
+                "session_id": s.session_id,
+                "connected_at": s.created_at.isoformat(),
+                "last_heartbeat": s.last_heartbeat,
+                "heartbeat_missed": 0,
+                "metadata": s.metadata,
+            }
+            for s in self._sm._sessions.values()
+        }
+    
+    @property
+    def message_buffer(self):
+        return self._sm._message_buffers
+    
+    @property
+    def heartbeat_interval(self):
+        return self._sm.heartbeat_interval
+    
+    @property
+    def heartbeat_timeout(self):
+        return self._sm.heartbeat_timeout
+    
+    async def connect(self, websocket: WebSocket, session_id: str = None, metadata: dict = None):
+        """Accept new connection with optional session_id"""
+        await websocket.accept()
+        session = await self._sm.register(websocket, session_id, metadata, single_device_mode=True)
+        return session
+    
+    def disconnect(self, websocket: WebSocket):
+        """Disconnect a WebSocket"""
+        for client_id, session in list(self._sm._sessions.items()):
+            if session.websocket == websocket:
+                asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
+                break
+    
+    async def broadcast(self, message: dict):
+        """Broadcast message to all connections"""
+        return await self._sm.broadcast(message)
+    
+    async def send_personal_message(self, message: dict, websocket: WebSocket):
+        """Send message to specific WebSocket"""
+        for client_id, session in self._sm._sessions.items():
+            if session.websocket == websocket:
+                return await self._sm.send_to_client(client_id, message)
+        return False
+    
+    def get_connection_stats(self):
+        return self._sm.get_stats()
+    
+    # Legacy compatibility: direct access to SessionManager methods
+    async def send_to_session(self, session_id: str, message: dict):
+        return await self._sm.send_to_session(session_id, message)
+    
+    async def unregister(self, client_id: str):
+        return await self._sm.unregister(client_id)
+    
+    def get_all_connections_info(self):
+        return self._sm.get_all_connections_info()
+    
+    def get_connection_stats(self) -> Dict[str, Any]:
+        """获取连接统计信息 - uses SessionManager"""
+        stats = self._sm.get_stats()
+        connections = self._sm.get_all_connections_info()
+        return {
+            "active_connections": stats.active_sessions,
+            "total_sessions": stats.total_sessions,
             "connections": [
                 {
                     "client_id": info.get("client_id", "unknown"),
-                    "connected_at": info.get("connected_at", "unknown"),
-                    "last_heartbeat": (
-                        info.get("last_heartbeat").isoformat()
-                        if info.get("last_heartbeat")
-                        else "unknown"
-                    ),
-                    "heartbeat_missed": info.get("heartbeat_missed", 0),
+                    "session_id": info.get("session_id", "unknown"),
+                    "state": info.get("state", "unknown"),
+                    "connected_at": info.get("created_at", "unknown"),
+                    "last_heartbeat": info.get("last_heartbeat", "unknown"),
+                    "metadata": info.get("metadata", {}),
                 }
-                for info in self.connection_info.values()
+                for info in connections
             ],
         }
 
@@ -1026,26 +955,48 @@ async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for real-time communication with desktop app
 
-    修复版本：改进的 WebSocket 端点
-    - 改进心跳处理
-    - 添加错误处理
-    - 支持消息重发
+    修复版本：改进的 WebSocket 端点 - 支持 session_id
+    - 使用 SessionManager 进行会话管理
+    - 支持单 session 生命周期
+    - 支持多客户端注册
     """
-    await manager.connect(websocket)
-    client_id = manager.connection_info.get(websocket, {}).get("client_id", "unknown")
+    # Wait for initial handshake message with session_id
+    try:
+        handshake = await asyncio.wait_for(websocket.receive_json(), timeout=10)
+    except asyncio.TimeoutError:
+        logger.warning("[WebSocket] Handshake timeout, closing connection")
+        await websocket.close(code=4001, reason="Handshake timeout")
+        return
+    
+    # Extract session info from handshake
+    session_id = handshake.get("session_id") or str(uuid.uuid4())
+    client_type = handshake.get("client_type", "desktop")
+    client_version = handshake.get("client_version", "unknown")
+    
+    metadata = {
+        "client_type": client_type,
+        "client_version": client_version,
+    }
+    
+    # Register session with SessionManager
+    session = await manager.connect(websocket, session_id, metadata)
+    client_id = session.client_id
+    
+    logger.info(f"[WebSocket] Incoming connection - client_id: {client_id}, session_id: {session_id}, remote: {websocket.client}")
 
     try:
-        # Send initial connection confirmation
+        # Send initial connection confirmation with session info
         await websocket.send_json(
             {
                 "type": "connected",
                 "client_id": client_id,
+                "session_id": session_id,
                 "timestamp": datetime.now().isoformat(),
                 "server_version": "6.0.4",
             }
         )
 
-        # ========== 修复：改进的消息处理循环 ==========
+        # ========== Session-based message processing loop ==========
         while True:
             try:
                 # 接收消息（带超时）
@@ -1053,11 +1004,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     websocket.receive_json(), timeout=manager.heartbeat_timeout
                 )
 
-                # 更新心跳时间
-                if websocket in manager.connection_info:
-                    manager.connection_info[websocket]["last_heartbeat"] = datetime.now()
-                    manager.connection_info[websocket]["heartbeat_missed"] = 0
-
+                # Update heartbeat and sequence
+                await manager._sm.update_heartbeat(client_id)
+                sequence = manager._sm.increment_sequence(client_id)
+                
                 # Handle different message types
                 if data.get("type") in ["heartbeat", "ping"]:
                     # 心跳响应
@@ -1128,32 +1078,22 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
 
             except asyncio.TimeoutError:
-                # 超时，检查是否需要断开连接
-                if websocket in manager.connection_info:
-                    manager.connection_info[websocket]["heartbeat_missed"] += 1
-                    logger.warning(
-                        f"心跳超时 ({manager.connection_info[websocket]['heartbeat_missed']}次): {client_id}"
-                    )
-
-                    # 如果连续错过多次心跳，断开连接
-                    if manager.connection_info[websocket]["heartbeat_missed"] >= 2:
-                        logger.warning(f"连续心跳超时，断开连接: {client_id}")
-                        break
-                else:
-                    break
+                # Heartbeat timeout - SessionManager handles this, but we close here
+                logger.warning(f"[WebSocket] Heartbeat timeout for client: {client_id}")
+                break
 
             except WebSocketDisconnect:
-                logger.info(f"WebSocket 客户端主动断开: {client_id}")
+                logger.info(f"[WebSocket] Client disconnected: {client_id}")
                 break
 
             except Exception as e:
                 # broad exception acceptable: WebSocket message handling should be resilient
-                logger.error(f"WebSocket 处理错误: {e}")
-                break
+                logger.error(f"[WebSocket] Message error for {client_id}: {e}")
+                continue
 
     finally:
-        # 确保连接被清理
-        manager.disconnect(websocket)
+        # Clean up session via SessionManager
+        asyncio.create_task(manager.unregister(client_id))
 
 
 from services.atlassian_api import atlassian_router

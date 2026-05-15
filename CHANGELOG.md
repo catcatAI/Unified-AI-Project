@@ -5,6 +5,38 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.2] - 2026-05-16
+
+### Added
+- 🆕 **SessionManager** (`services/connection_session.py`): Centralized WebSocket session management with client_id, session_id, heartbeat monitoring, and message buffering.
+- 🆕 **ConnectionSession** dataclass: Stores client_id (backend-assigned), session_id (client-provided, persistent), websocket, state, sequence, metadata.
+- 🆕 **Session-based handshake protocol**: Clients send `{type:'connect', session_id, client_type, client_version}`, receive `{type:'connected', client_id, session_id}`.
+- 🆕 **test_connection_session.py**: 21 unit tests for SessionManager functionality.
+
+### Changed
+- 🔄 **ConnectionManager** (`main_api_server.py`): Now delegates to SessionManager, supports session_id registration.
+- 🔄 **WebSocket endpoint** (`main_api_server.py:967`): Now waits for handshake message with session_id before confirming connection.
+- 🔄 **BackendWebSocketClient** (`electron_app/js/backend-websocket.js`): Added sessionId (from localStorage), clientId (from backend), `_loadOrCreateSessionId()`, `_buildUrl()`, `_buildHandshake()`.
+- 🔄 **Main process** (`electron_app/main.js`): Sends handshake on connect, waits for 'connected' message before marking success. Removed auto-reconnect.
+- 🔄 **Preload** (`preload.js`): IPC `websocket-connect` now accepts `sessionInfo` parameter.
+
+### Fixed
+- 🐛 **Multiple client_id problem**: Previously each reconnect generated a new UUID. Now single session_id persists across reconnects.
+- 🐛 **Double-reconnect conflict**: Removed auto-reconnect from main process. Only renderer (BackendWebSocketClient) controls reconnection.
+- 🐛 **Invalid RSV bits error**: Now properly sends handshake before marking connected, preventing malformed frames.
+
+### Architecture
+```
+Client connects → sends {type:'connect', session_id:'sess_xxx'} → 
+Backend registers session → returns {type:'connected', client_id:'uuid', session_id:'sess_xxx'}
+                   ↓
+        Same session_id used on reconnect (from localStorage)
+```
+
+### Status
+- **Phase**: Phase 4 (WebSocket Session Management)
+- **Test count**: 115+ tests (21 new for SessionManager)
+
 ## [7.4.0] - 2026-05-09
 
 ### Added

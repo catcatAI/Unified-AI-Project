@@ -276,10 +276,11 @@ app.whenReady().then(async () => {
   // Initialize system integrations
   initializeSystemIntegrations()
 
-  // Auto-connect to backend WebSocket (deferred to avoid TDZ with wsClient)
-  const wsUrl = `ws://${backendIP}:8000/ws`
-  console.log(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`)
-  setTimeout(() => connectWebSocket(wsUrl), 0)
+  // Auto-connect to backend WebSocket - DISABLED to avoid conflicts
+  // Renderer process uses IPC bridge for WebSocket communication
+  // const wsUrl = `ws://${backendIP}:8000/ws`
+  // console.log(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`)
+  // setTimeout(() => connectWebSocket(wsUrl), 0)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -1369,37 +1370,44 @@ ipcMain.handle('file-open-dialog', async (event, options) => {
 
 // Backend API communication (WebSocket)
 let wsClient = null
+let wsSessionInfo = null  // Store session info for reconnect
 let wsReconnectTimer = null
 let wsReconnectAttempts = 0
 let wsHeartbeatInterval = null
 const WS_MAX_RECONNECT_ATTEMPTS = 5
 const WS_RECONNECT_DELAY = 3000
 
-function connectWebSocket(url) {
+function connectWebSocket(url, sessionInfo) {
+  console.log('[Main] connectWebSocket() called with:', url, 'session:', sessionInfo)
+  
+  // Store session info for potential reconnect
+  wsSessionInfo = sessionInfo || { sessionId: null, clientType: 'desktop', clientVersion: '6.2.1' }
+  
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
-    console.log('[WebSocket] Already connected')
+    console.log('[WebSocket] Already connected, skipping')
     return
   }
 
   try {
-    console.log(`[WebSocket] Connecting to ${url}...`)
+    console.log(`[Main] Creating new WebSocket connection to: ${url}`)
     wsClient = new WebSocket(url)
 
     wsClient.on('open', () => {
       console.log('[WebSocket] Connected successfully')
       wsReconnectAttempts = 0
 
-      // Start heartbeat
-      if (wsHeartbeatInterval) clearInterval(wsHeartbeatInterval)
-      wsHeartbeatInterval = setInterval(() => {
-        if (wsClient && wsClient.readyState === WebSocket.OPEN) {
-          wsClient.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }))
-        }
-      }, 30000)
-
-      // Skip sending if window is destroyed
-      if (!mainWindow || mainWindow.isDestroyed()) return
-      sendToMainWindow('websocket-connected', { success: true })
+      // Send handshake with session info
+      const handshake = {
+        type: 'connect',
+        session_id: wsSessionInfo?.sessionId || null,
+        client_type: wsSessionInfo?.clientType || 'desktop',
+        client_version: wsSessionInfo?.clientVersion || '6.2.1',
+        timestamp: new Date().toISOString()
+      }
+      console.log('[WebSocket] Sending handshake:', handshake)
+      wsClient.send(JSON.stringify(handshake))
+      
+      // NOTE: Don't mark connected immediately. Wait for 'connected' message from backend.
     })
 
     wsClient.on('message', (data) => {
@@ -1409,43 +1417,56 @@ function connectWebSocket(url) {
       try {
         const message = JSON.parse(data.toString())
         console.log('[WebSocket] Received:', message)
-        sendToMainWindow('websocket-message', message)
+        
+        // Handle 'connected' message - this is the session confirmation
+        if (message.type === 'connected') {
+          console.log('[WebSocket] Session confirmed - client_id:', message.client_id, 'session_id:', message.session_id)
+          
+          // Start heartbeat now
+          if (wsHeartbeatInterval) clearInterval(wsHeartbeatInterval)
+          wsHeartbeatInterval = setInterval(() => {
+            if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+              wsClient.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }))
+            }
+          }, 30000)
+          
+          // Forward to renderer
+          sendToMainWindow('websocket-connected', message)
+        } else {
+          // Forward other messages to renderer
+          sendToMainWindow('websocket-message', message)
+        }
       } catch (error) {
         console.error('[WebSocket] Failed to parse message:', error)
       }
     })
 
-    wsClient.on('error', (error) => {
-      console.error('[WebSocket] Error:', error.message)
-
-      // Handle EPIPE errors specifically
-      if (error.code === 'EPIPE' || error.message.includes('EPIPE')) {
-        console.warn('[WebSocket] EPIPE error detected - connection may be broken')
-        // Force close and reconnect
-        if (wsClient) {
-          wsClient.terminate()
-          wsClient = null
-        }
-        // Trigger immediate reconnection
-        if (wsReconnectAttempts < WS_MAX_RECONNECT_ATTEMPTS) {
-          wsReconnectAttempts++
-          console.log(
-            `[WebSocket] Reconnecting after EPIPE (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`
-          )
-          wsReconnectTimer = setTimeout(() => {
-            connectWebSocket(url)
-          }, WS_RECONNECT_DELAY)
-        }
-        return
+wsClient.on('error', (error) => {
+      console.error(`[WebSocket] Error: ${error.message}`)
+      
+      // Clear reconnection state on error
+      if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer)
+        wsReconnectTimer = null
       }
+      wsReconnectAttempts = 0
 
       // Skip sending if window is destroyed
       if (!mainWindow || mainWindow.isDestroyed()) return
       sendToMainWindow('websocket-error', { error: error.message })
+      
+      // NOTE: Auto-reconnect is DISABLED.
+      // Renderer process via IPC bridge controls connection lifecycle.
+      // If renderer wants to reconnect, it will call websocket-connect IPC.
+      // We do NOT auto-reconnect here because:
+      // 1. Each reconnect creates a new connection with a new client_id
+      // 2. This causes multiple active connections flooding the backend
+      // 3. Main process should only handle explicit connection requests from renderer
     })
 
     wsClient.on('close', (code, reason) => {
       console.log(`[WebSocket] Closed: ${code} - ${reason}`)
+      const oldClient = wsClient
       wsClient = null
 
       if (wsHeartbeatInterval) {
@@ -1453,23 +1474,20 @@ function connectWebSocket(url) {
         wsHeartbeatInterval = null
       }
 
+      if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer)
+        wsReconnectTimer = null
+      }
+      wsReconnectAttempts = 0
+
       // Skip sending if window is destroyed
       if (!mainWindow || mainWindow.isDestroyed()) return
 
       sendToMainWindow('websocket-disconnected', { code, reason: reason.toString() })
 
-      // Auto-reconnect
-      if (wsReconnectAttempts < WS_MAX_RECONNECT_ATTEMPTS) {
-        wsReconnectAttempts++
-        console.log(
-          `[WebSocket] Reconnecting in ${WS_RECONNECT_DELAY}ms (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`
-        )
-        wsReconnectTimer = setTimeout(() => {
-          connectWebSocket(url)
-        }, WS_RECONNECT_DELAY)
-      } else {
-        console.error('[WebSocket] Max reconnection attempts reached')
-      }
+      // NOTE: Auto-reconnect is DISABLED. 
+      // Renderer process via IPC bridge controls connection lifecycle.
+      // If renderer wants to reconnect, it will call websocket-connect IPC.
     })
   } catch (error) {
     console.error('[WebSocket] Connection failed:', error)
@@ -1504,6 +1522,7 @@ function sendWebSocketMessage(message) {
 
   try {
     wsClient.send(JSON.stringify(message))
+    console.log('[Main] WebSocket send SUCCESS:', message.type || 'unknown')
     return true
   } catch (error) {
     console.error('[WebSocket] Failed to send message:', error)
@@ -1511,8 +1530,9 @@ function sendWebSocketMessage(message) {
   }
 }
 
-ipcMain.on('websocket-connect', (event, { url }) => {
-  connectWebSocket(url)
+ipcMain.on('websocket-connect', (event, { url, sessionInfo }) => {
+  console.log('[Main] IPC: websocket-connect received, session:', sessionInfo)
+  connectWebSocket(url, sessionInfo)
 })
 
 ipcMain.on('websocket-disconnect', () => {

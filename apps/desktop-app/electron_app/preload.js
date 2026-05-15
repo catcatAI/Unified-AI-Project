@@ -106,9 +106,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // WebSocket communication with backend
   websocket: {
-    connect: (url) => ipcRenderer.send('websocket-connect', { url }),
+    connect: (url, sessionInfo) => ipcRenderer.send('websocket-connect', { url, sessionInfo }),
     disconnect: () => ipcRenderer.send('websocket-disconnect'),
-    send: (message) => ipcRenderer.send('websocket-send', message)
+    send: (message) => ipcRenderer.send('websocket-send', message),
+    getStatus: () => ipcRenderer.invoke('websocket-get-status')
   },
 
   // Event listeners (receive messages from main process)
