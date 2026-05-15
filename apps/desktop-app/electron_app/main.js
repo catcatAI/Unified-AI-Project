@@ -15,6 +15,7 @@ const path = require('path')
 const fs = require('fs')
 const securityManager = require('./js/security-manager')
 const TrayManager = require('./js/tray-manager')
+const WebSocket = require('./js/websocket-wrapper')
 
 // Define a log file path
 const LOG_FILE = path.join(__dirname, '..', '..', 'logs', 'electron_frontend_main.log')
@@ -275,10 +276,10 @@ app.whenReady().then(async () => {
   // Initialize system integrations
   initializeSystemIntegrations()
 
-  // Auto-connect to backend WebSocket
+  // Auto-connect to backend WebSocket (deferred to avoid TDZ with wsClient)
   const wsUrl = `ws://${backendIP}:8000/ws`
   console.log(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`)
-  connectWebSocket(wsUrl)
+  setTimeout(() => connectWebSocket(wsUrl), 0)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -362,9 +363,10 @@ function createMainWindow() {
   // Enable draggable region
   mainWindow.setSkipTaskbar(false)
 
-  // Load the app
-  console.log('[Window] Loading index.html...')
-  mainWindow.loadFile('index.html')
+  // Load the app - use __dirname to resolve relative to electron_app directory
+  const indexPath = path.join(__dirname, 'index.html')
+  console.log('[Window] Loading index.html from:', indexPath)
+  mainWindow.loadFile(indexPath)
 
   // Log when page is loaded
   mainWindow.webContents.on('did-finish-load', () => {
@@ -642,26 +644,31 @@ function createTray() {
 function getTrayIconPath() {
   const iconName =
     process.platform === 'win32'
-      ? 'icon.ico'
+      ? 'icon.png'
       : process.platform === 'darwin'
         ? 'icon.icns'
         : 'icon.png'
 
-  // Try to find icon in assets directory
   const iconPath = path.join(__dirname, 'assets', iconName)
 
   if (fs.existsSync(iconPath)) {
     return iconPath
   }
 
-  // Fallback to app icon
   if (process.platform === 'win32') {
-    return path.join(__dirname, '..', '..', 'resources', 'icon.ico')
-  } else if (process.platform === 'darwin') {
-    return path.join(__dirname, '..', '..', 'resources', 'icon.icns')
-  } else {
-    return path.join(__dirname, '..', '..', 'resources', 'icon.png')
+    const pngPath = path.join(__dirname, 'assets', 'icon.png')
+    if (fs.existsSync(pngPath)) return pngPath
   }
+
+  if (process.platform === 'darwin') {
+    const icnsPath = path.join(__dirname, '..', '..', 'resources', 'icon.icns')
+    if (fs.existsSync(icnsPath)) return icnsPath
+  }
+
+  const pngFallback = path.join(__dirname, '..', '..', 'resources', 'icon.png')
+  if (fs.existsSync(pngFallback)) return pngFallback
+
+  return null
 }
 
 /**
@@ -1361,7 +1368,6 @@ ipcMain.handle('file-open-dialog', async (event, options) => {
 })
 
 // Backend API communication (WebSocket)
-const WebSocket = require('ws')
 let wsClient = null
 let wsReconnectTimer = null
 let wsReconnectAttempts = 0

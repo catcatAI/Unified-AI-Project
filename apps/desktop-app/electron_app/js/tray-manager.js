@@ -1,8 +1,10 @@
 /**
  * Angela AI - System Tray Manager
- * 
+ *
  * 提供系统托盘图标和右键菜单功能
  */
+
+const fs = require('fs')
 
 class TrayManager {
     constructor() {
@@ -22,8 +24,12 @@ class TrayManager {
     initialize(iconPath, tooltip = 'Angela AI') {
         try {
             const { Tray } = require('electron');
-            
-            // 创建托盘图标
+
+            if (!iconPath || !fs.existsSync(iconPath)) {
+                console.warn('[TrayManager] Tray icon not found, skipping tray initialization');
+                return false;
+            }
+
             this.tray = new Tray(iconPath);
             this.tray.setToolTip(tooltip);
             
