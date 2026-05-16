@@ -1190,7 +1190,7 @@ def _run_uvicorn_in_thread():
 
 async def _run_repl():
     import logging
-    logging.disable(logging.INFO)
+    logging.disable(logging.WARNING)
 
     from services.chat_service import get_angela_chat_service
 

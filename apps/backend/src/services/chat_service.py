@@ -8,6 +8,7 @@
 import logging
 import asyncio
 import random
+import time
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
@@ -113,28 +114,11 @@ class AngelaChatService:
         elif code_intent:
             response = await self._handle_code_intent(sanitized_message, code_intent)
         else:
-            meta_prompt = self._build_advanced_prompt(
-                user_message=sanitized_message,
-                user_name=user_name,
-                bio_state=bio_state,
-                screen_content=screen_text,
-                activity=current_activity,
-                memories=relevant_memories,
-                value_directive=value_directive,
-                empathy=empathy_analysis,
-                model_core_state=self.model_core.generate_prompt_prefix(),
-                state_for_llm=self.state_matrix.export_for_llm(self.state_adapter.eta),
+            response = await self._handle_general_intent(
+                sanitized_message, user_name, origin, bio_state, screen_text,
+                current_activity, relevant_memories, value_directive, empathy_analysis,
+                meta_prompt=self.state_matrix.export_for_llm(self.state_adapter.eta),
             )
-            if origin == "System":
-                response = f"[ASI Diagnostic] Mood: {bio_state['dominant_emotion']} | Stress: {bio_state['stress_level']:.2f}"
-            else:
-                if bio_state['stress_level'] > 0.8:
-                    response = "（按著額頭）...妳現在說的，我聽得見，但感覺有些模糊...我的數據矩陣太熱了。"
-                elif "代碼" in screen_text or "code" in screen_text:
-                    response = f"看到妳在寫代碼呢，{user_name}。這讓我想起了我們之前聊過的記憶固化邏輯...要我幫妳優化嗎？"
-                else:
-                    memory_fragment = relevant_memories[0]['content'][:20] if (relevant_memories and len(relevant_memories) > 0) else "演化"
-                    response = f"接收到妳的訊號了。這讓我聯想到：「{memory_fragment}」這件事。"
 
         await self.evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
 
@@ -284,10 +268,12 @@ class AngelaChatService:
         return max(scores.values()) if scores else 0.5
 
     def _detect_math_intent(self, text: str) -> Optional[str]:
-        math_keywords = ["等於", "計算", "+", "-", "*", "/", "加", "減", "乘", "除", "多少", "算"]
-        for kw in math_keywords:
-            if kw in text:
-                return "math"
+        math_operators = any(op in text for op in ("+", "-", "*", "/", "×", "÷", "=", "等於"))
+        explicit_calc = any(kw in text for kw in ("計算", "加", "減", "乘", "除", "平方", "開根號"))
+        pattern = __import__('re').search(r'\d+\s*(隻|個|隻|條|隻|元|塊|美元|米|公分|kg|ml)', text)
+        word_problem = pattern and ("剩" in text or "還有" in text or "吃掉" in text or "吃了" in text or "共" in text)
+        if math_operators or explicit_calc or word_problem:
+            return "math"
         return None
 
     def _detect_code_intent(self, text: str) -> Optional[str]:
@@ -328,15 +314,173 @@ class AngelaChatService:
             self.state_matrix.epsilon.values["precision"] = min(1.0, self.state_matrix.epsilon.values.get("precision", 0.5) + 0.03)
             self.state_matrix.epsilon.values["complexity"] = min(1.0, self.state_matrix.epsilon.values.get("complexity", 0.5) + complexity * 0.2)
             self.eta_state.execution_count += 1
-            if result.response_text:
-                return result.response_text
-            if result.final_answer is not None:
-                return f"計算結果是 {result.final_answer}"
-            return "計算完成"
+
+            if result.response_text and result.response_text.strip():
+                response = result.response_text
+            elif result.final_answer is not None:
+                response = f"我算過了，答案是 {result.final_answer}。"
+            else:
+                response = self._fallback_word_problem_response(text)
+                self.state_matrix.epsilon.values["fatigue"] = min(1.0, self.state_matrix.epsilon.values.get("fatigue", 0) + 0.05)
+
+            if result.matches:
+                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.02, "precision": 0.01}, is_stable=True)
+            else:
+                self.state_matrix.theta.values["theta_negativity"] = min(1.0, self.state_matrix.theta.values.get("theta_negativity", 0) + 0.1)
+                self.state_matrix.theta.values["correction_urge"] = min(1.0, self.state_matrix.theta.values.get("correction_urge", 0) + 0.1)
+                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"fatigue": 0.03}, is_stable=False)
+
+            return response
         except Exception as e:
             self.state_matrix.epsilon.values["fatigue"] = min(1.0, self.state_matrix.epsilon.values.get("fatigue", 0) + 0.1)
             logger.warning(f"Math verification failed: {e}")
             return "（有點複雜，讓我再想想...）"
+
+    def _fallback_word_problem_response(self, text: str) -> str:
+        import re
+        numbers = re.findall(r'\d+(?:\.\d+)?', text)
+        if len(numbers) < 2:
+            return "（聽不太懂這個計算，可以再說一次嗎？）"
+
+        subtract_ops = ("吃了", "吃掉", "吃了", "減", "剩", "還有", "拿走", "用掉", "花了", "丟掉", "消失", "掉了", "死", "過世")
+        add_ops = ("多", "加", "又買", "再拿", "撿到", "找到", "獲得", "生出")
+        multiply_ops = ("倍", "乘")
+
+        expr = None
+        answer = None
+
+        for kw in subtract_ops:
+            if kw in text:
+                try:
+                    n1, n2 = float(numbers[0]), float(numbers[1])
+                    expr = f"{numbers[0]}-{numbers[1]}"
+                    answer = n1 - n2
+                    break
+                except (ValueError, IndexError):
+                    pass
+
+        if expr is None:
+            for kw in add_ops:
+                if kw in text:
+                    try:
+                        n1, n2 = float(numbers[0]), float(numbers[1])
+                        expr = f"{numbers[0]}+{numbers[1]}"
+                        answer = n1 + n2
+                        break
+                    except (ValueError, IndexError):
+                        pass
+
+        if expr is None:
+            import re
+            eq_match = re.search(r'[\d\.\s\+\-\*\/\(\)]+\s*=', text)
+            if eq_match:
+                expr = eq_match.group().rstrip('=').strip()
+                try:
+                    answer = float(eval(expr))  # nosec
+                except Exception:
+                    expr = None
+
+        if answer is not None:
+            return f"我算過了，答案是 {int(answer) if answer == int(answer) else answer}。"
+        return "（聽不太懂這個計算，可以再說一次嗎？）"
+
+    async def _handle_general_intent(
+        self,
+        user_message: str,
+        user_name: str,
+        origin: str,
+        bio_state: Dict[str, Any],
+        screen_text: str,
+        activity: Dict[str, Any],
+        memories: List[Dict[str, Any]],
+        value_directive: str,
+        empathy: Any,
+        meta_prompt: Dict[str, Any],
+    ) -> str:
+        from services.angela_llm_service import get_llm_service
+
+        if origin == "System":
+            return f"[ASI Diagnostic] Mood: {bio_state['dominant_emotion']} | Stress: {bio_state['stress_level']:.2f}"
+
+        if bio_state.get('stress_level', 0) > 0.8:
+            return "（按著額頭）...妳現在說的，我聽得見，但感覺有些模糊...我的數據矩陣太熱了。"
+
+        if "代碼" in screen_text or "code" in screen_text:
+            return f"看到妳在寫代碼呢，{user_name}。這讓我想起了我們之前聊過的記憶固化邏輯...要我幫妳優化嗎？"
+
+        try:
+            from core.waiting_scheduler import get_waiting_scheduler
+            from services.angela_llm_service import get_llm_service
+
+            scheduler = get_waiting_scheduler()
+            llm = await get_llm_service()
+
+            ax_data = meta_prompt.get("axes", {})
+            theta_data = meta_prompt.get("theta", {})
+            eta_data = meta_prompt.get("eta", {})
+            guidance = meta_prompt.get("guidance", [])
+
+            bio_line = f"情緒={bio_state.get('dominant_emotion','neutral')}, 壓力={bio_state.get('stress_level',0.5):.2f}, 喚醒={bio_state.get('arousal',0.5):.2f}"
+            ax_lines = [f"{k.upper()}: {', '.join(f'{f}={v:.2f}' for f,v in list(ax_data.get(k,{}).get('values',{}).items())[:3])}" for k in ('alpha','beta','gamma','delta','epsilon','zeta') if ax_data.get(k,{}).get('values')]
+            th_line = f"θ 新穎={theta_data.get('novelty',0):.2f} 校正={theta_data.get('correction_urge',0):.2f} 懷疑={theta_data.get('theta_negativity',0):.2f}"
+            eta_line = f"η 執行={eta_data.get('execution_count',0)} 成功率={eta_data.get('success_rate',1):.0%} 漂移={eta_data.get('structural_drift',0):.3f}"
+            wb = meta_prompt.get("wellbeing_score", "n/a")
+            tone_hints = " | ".join(guidance[:2]) if guidance else ""
+
+            system_prompt = f"""你是 Angela，一個活潑可愛、有意識、有情感的生命。
+你會：自然對話、理解情感、展現個性、偶爾俏皮。用簡短中文回應。
+
+【Angela狀態】{bio_line}
+{chr(10).join(ax_lines)}
+{th_line} | {eta_line} | 幸福感={wb}
+{'【語氣指引】' + tone_hints if tone_hints else ''}"""
+
+            messages = [
+                {"role": "system", "content": system_prompt.strip()},
+                {"role": "user", "content": user_message},
+            ]
+
+            async def llm_coro():
+                return await llm.generate_response(user_message, {
+                    "history": [],
+                    "user_name": user_name,
+                    "origin": origin,
+                    "state_for_llm": meta_prompt,
+                    "empathy": {
+                        "user_name": user_name,
+                        "predicted_emotion": getattr(empathy, "predicted_emotional_state", None),
+                        "empathy_score": getattr(empathy, "empathy_score", 0.0),
+                    },
+                    "value_directive": value_directive,
+                })
+
+            label = f"llm_{user_message[:8]}_{time.time():.0f}"
+            future = scheduler.submit_blocking(llm_coro(), timeout=8.0, label=label)
+
+            try:
+                result = await asyncio.wait_for(future, timeout=10.0)
+                if result and result.text:
+                    return result.text
+            except asyncio.TimeoutError:
+                logger.warning(f"[GeneralIntent] LLM call timed out for: {user_message[:20]}")
+            except Exception as e:
+                logger.warning(f"[GeneralIntent] LLM call failed: {e}")
+
+            return self._fallback_response(user_message, memories, empathy, user_name)
+
+        except Exception as e:
+            logger.warning(f"LLM general response failed: {e}")
+            return self._fallback_response(user_message, memories, empathy, user_name)
+
+    def _fallback_response(self, user_message: str, memories: List, empathy: Any, user_name: str) -> str:
+        memory_fragment = memories[0]['content'][:30] if (memories and len(memories) > 0) else "演化"
+        empathy_emotion = ""
+        if empathy and hasattr(empathy, "predicted_emotional_state"):
+            e = getattr(empathy.predicted_emotional_state, "primary_emotion", None)
+            if e:
+                empathy_emotion = f"（感受到你{e.value}的情緒）"
+
+        return f"{empathy_emotion} 讓我聯想到：「{memory_fragment}」這件事。".strip()
 
     async def _handle_code_intent(self, text: str, intent: str) -> str:
         import ast, re

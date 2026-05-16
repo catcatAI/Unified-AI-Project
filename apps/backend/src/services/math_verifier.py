@@ -183,6 +183,41 @@ class MathExtractor:
             m = re.search(p, text.replace("×", "*").replace("÷", "/"))
             if m:
                 return m.group().replace("×", "*").replace("÷", "/").replace(" ", "")
+
+        word_expr = self._parse_chinese_word_problem(text)
+        if word_expr:
+            return word_expr
+
+        return None
+
+    def _parse_chinese_word_problem(self, text: str) -> Optional[str]:
+        """解析中文應用題：提取運算式"""
+        numbers = re.findall(r'\d+(?:\.\d+)?', text)
+        if len(numbers) < 2:
+            return None
+
+        subtract_ops = ("吃了", "吃掉", "吃了", "減", "-", "剩", "還有", "拿走", "用掉", "花了", "丟掉", "消失", "掉了", "死", "過世", "離開", "不見", "去哪")
+        add_ops = ("多", "加", "+", "又買", "再拿", "撿到", "找到", "獲得", "生出")
+        multiply_ops = ("倍", "乘", "*", "x")
+
+        for kw in subtract_ops:
+            if kw in text:
+                idx1 = text.find(numbers[0])
+                idx2 = text.find(numbers[1])
+                if idx1 > 0 and idx2 > idx1:
+                    op1 = numbers[0]
+                    op2 = numbers[1]
+                    return f"{op1}-{op2}"
+
+        for kw in add_ops:
+            if kw in text:
+                op1 = numbers[0]
+                op2 = numbers[1]
+                return f"{op1}+{op2}"
+
+        if any(kw in text for kw in multiply_ops) and len(numbers) >= 2:
+            return f"{numbers[0]}*{numbers[1]}"
+
         return None
 
     def _safe_float(self, value) -> Optional[float]:
