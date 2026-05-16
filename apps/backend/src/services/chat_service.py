@@ -53,14 +53,12 @@ class AngelaChatService:
             await self.model_core.initialize()
 
             from core.autonomous.state_matrix_adapter import StateMatrixAdapter
-            from core.autonomous.theta_router import ThetaRouter
-            from core.autonomous.eta_axis import EtaAxisState
             from core.autonomous.state_matrix import StateMatrix4D
 
             self.state_matrix = StateMatrix4D()
-            self.state_adapter = StateMatrixAdapter(self.state_matrix)
-            self.theta_router = ThetaRouter(self.state_adapter)
-            self.eta_state = EtaAxisState()
+            self.state_adapter = StateMatrixAdapter()
+            self.theta_router = self.state_adapter._theta_router
+            self.eta_state = self.state_adapter.eta()
 
             self._initialized = True
             logger.info("🌌 [Brain] Situational-Input Matrix & Angela Model Core Initialized.")

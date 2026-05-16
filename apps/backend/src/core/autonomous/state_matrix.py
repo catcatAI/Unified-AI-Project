@@ -335,6 +335,21 @@ class StateMatrix4D:
         )
         self.dimensions["theta"] = self.theta
 
+        # Ζ (Zeta) Axis — Consciousness Flow Dimension (時間/記憶/意識流)
+        self.zeta = DimensionState(
+            name="zeta",
+            cn_name="意識流維度",
+            values={
+                "temporal_coherence": 0.8,
+                "memory_depth": 0.6,
+                "narrative_flow": 0.7,
+                "identity_continuity": 0.75,
+            },
+            weight=self.config.get("zeta_weight", 0.2),
+            coordinate=(0.0, 0.0, 0.0),
+        )
+        self.dimensions["zeta"] = self.zeta
+
         # [Task N.24-THETA-NEG] 負值檢測與修正系統
         self.misallocation_log: List[Dict[str, Any]] = []
         self.correction_audit_trail: List[Dict[str, Any]] = []
@@ -361,7 +376,8 @@ class StateMatrix4D:
                 "gamma": {"alpha": 0.4, "beta": 0.3, "delta": 0.5, "epsilon": 0.3, "theta": 0.15},
                 "delta": {"alpha": 0.2, "beta": 0.3, "gamma": 0.6, "epsilon": 0.1, "theta": 0.15},
                 "epsilon": {"alpha": 0.1, "beta": 0.3, "gamma": 0.4, "delta": 0.1, "theta": 0.1},
-                "theta": {"alpha": 0.05, "beta": 0.1, "gamma": 0.1, "delta": 0.05, "epsilon": 0.05},
+                "theta": {"alpha": 0.05, "beta": 0.1, "gamma": 0.1, "delta": 0.05, "epsilon": 0.05, "zeta": 0.05},
+                "zeta": {"alpha": 0.05, "beta": 0.1, "gamma": 0.1, "delta": 0.05, "epsilon": 0.05, "theta": 0.05},
             },
         )
 
@@ -407,6 +423,11 @@ class StateMatrix4D:
         """更新θ维度 / Update theta dimension (meta-cognitive)"""
         self.theta.update(**kwargs)
         self._post_update("theta")
+
+    def update_zeta(self, **kwargs) -> None:
+        """更新ζ维度 / Update zeta dimension (consciousness flow)"""
+        self.zeta.update(**kwargs)
+        self._post_update("zeta")
 
     def _init_semantic_anchors(self) -> None:
         """初始化軸的語義錨點 / Initialize semantic anchors for all axes"""
@@ -1217,6 +1238,7 @@ Returns:
             "delta": self.delta.get_average(),
             "epsilon": self.epsilon.get_average(),
             "theta": self.theta.get_average(),
+            "zeta": self.zeta.get_average(),
         }
 
 # =============================================================================
@@ -1268,64 +1290,17 @@ Returns:
     def apply_inter_dimensional_drag(self, trigger_dim: str, drag_factor: float = 0.02):
         apply_inter_dimensional_drag(self.dimensions, trigger_dim, drag_factor)
 
-    def get_analysis(self) -> Dict[str, Any]:
-        """
-        综合分析 / Comprehensive state analysis
-
-        Returns:
-            Analysis dictionary with computed metrics
-        """
+    def compute_wellbeing(self) -> float:
+        """計算維度加權幸福感 / Compute dimension-weighted wellbeing score."""
         averages = self.get_dimension_averages()
-
-        # Overall state score (all 6 dimensions)
-        overall = sum(averages.values()) / max(1, len(averages))
-
-        # Wellbeing (weighted combination, all 6 dimensions)
-        wellbeing = (
-            averages["alpha"] * 0.20
-            + averages["beta"] * 0.15
-            + averages["gamma"] * 0.25
-            + averages["delta"] * 0.15
-            + averages["epsilon"] * 0.15
-            + averages["theta"] * 0.10
+        return (
+            averages.get("alpha", 0.5) * 0.20
+            + averages.get("beta", 0.5) * 0.15
+            + averages.get("gamma", 0.5) * 0.25
+            + averages.get("delta", 0.5) * 0.15
+            + averages.get("epsilon", 0.5) * 0.15
+            + averages.get("theta", 0.5) * 0.10
         )
-
-        # Arousal level
-        arousal = (
-            self.alpha.values["arousal"] * 0.4
-            + self.gamma.values["surprise"] * 0.3
-            + (1 - self.gamma.values["calm"]) * 0.3
-        )
-
-        # Valence (positive/negative)
-        positive = (
-            self.gamma.values["happiness"] + self.gamma.values["trust"] + self.gamma.values["love"]
-        )
-        negative = (
-            self.gamma.values["sadness"] + self.gamma.values["anger"] + self.gamma.values["fear"]
-        )
-        valence = (positive - negative) / 3  # -1 to 1
-
-        # Dominant dimension
-        if averages:
-            dominant_dim = max(averages.items(), key=lambda x: x[1])[0]
-        else:
-            dominant_dim = None
-
-        # Dominant emotions
-        dominant_emotion = self.gamma.get_dominant()
-
-        return {
-            "averages": averages,
-            "overall": overall,
-            "wellbeing": wellbeing,
-            "arousal": arousal,
-            "valence": valence,
-            "dominant_dimension": dominant_dim,
-            "dominant_emotion": dominant_emotion,
-            "update_count": self.update_count,
-            "last_update": self.last_update.isoformat(),
-        }
 
     def get_history(
         self, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None
@@ -1405,6 +1380,7 @@ Returns:
             "delta": self.delta.values,
             "epsilon": self.epsilon.values,
             "theta": self.theta.values,
+            "zeta": self.zeta.values,
             "weights": {name: dim.weight for name, dim in self.dimensions.items()},
             "influence_matrix": self.influence_matrix,
             "metadata": {
@@ -1428,6 +1404,8 @@ Returns:
             self.epsilon.values.update(data["epsilon"])
         if "theta" in data:
             self.theta.values.update(data["theta"])
+        if "zeta" in data:
+            self.zeta.values.update(data["zeta"])
 
         if "weights" in data:
             for name, weight in data["weights"].items():
@@ -1448,13 +1426,57 @@ Returns:
         data = json.loads(json_str)
         self.import_from_dict(data)
 
+    def compute_wellbeing(self) -> float:
+        """計算維度加權幸福感 / Compute dimension-weighted wellbeing score."""
+        averages = self.get_dimension_averages()
+        return (
+            averages.get("alpha", 0.5) * 0.20
+            + averages.get("beta", 0.5) * 0.15
+            + averages.get("gamma", 0.5) * 0.25
+            + averages.get("delta", 0.5) * 0.15
+            + averages.get("epsilon", 0.5) * 0.15
+            + averages.get("theta", 0.5) * 0.10
+        )
+
+    def get_history(
+        self, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None
+    ) -> List[Dict[str, Any]]:
+        """获取历史记录 / Get state history"""
+        filtered = self.history.copy()
+        if start_time:
+            filtered = [h for h in filtered if datetime.fromisoformat(h["timestamp"]) >= start_time]
+        if end_time:
+            filtered = [h for h in filtered if datetime.fromisoformat(h["timestamp"]) <= end_time]
+        return filtered
+
+    def set_dimension_weight(self, dimension: str, weight: float) -> None:
+        """设置维度权重 / Set dimension weight"""
+        if dimension in self.dimensions:
+            self.dimensions[dimension].weight = weight
+
+    def set_influence_strength(self, source: str, target: str, strength: float) -> None:
+        """设置影响强度 / Set influence strength between dimensions"""
+        if source in self.influence_matrix and target in self.influence_matrix[source]:
+            self.influence_matrix[source][target] = max(0.0, min(1.0, strength))
+
+    def register_change_callback(self, callback: Callable[[str, Dict[str, float]], None]) -> None:
+        """注册变化回调 / Register change callback"""
+        self._change_callbacks.append(callback)
+
+    def trigger_threshold_callback(self, dimension: str, value: float) -> None:
+        """触发阈值回调 / Trigger threshold callback"""
+        if dimension in self._threshold_callbacks:
+            for threshold, callback in self._threshold_callbacks[dimension]:
+                if value >= threshold:
+                    try:
+                        callback()
+                    except Exception:
+                        pass
+
     def export_for_llm(self, eta_state: Optional[Any] = None) -> Dict[str, Any]:
-        """
-        导出完整 7 維狀態 + θ + η，供 LLM prompt 使用。
-        包裝格式：座標 + 各軸值 + 座標 + 趨勢 + 氛圍指引。
-        """
+        """導出完整 7 維狀態 + θ + η，供 LLM prompt 使用。"""
         axes_data = {}
-        for name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta"):
+        for name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta"):
             dim = self.dimensions.get(name)
             if dim:
                 coord = getattr(dim, "coordinate", None)
@@ -1463,14 +1485,6 @@ Returns:
                     "coordinate": list(coord) if coord else [0.0, 0.0, 0.0],
                     "weight": dim.weight,
                 }
-
-        zeta_data = getattr(self, "zeta", None)
-        if zeta_data and hasattr(zeta_data, "values"):
-            axes_data["zeta"] = {
-                "values": zeta_data.values.copy(),
-                "coordinate": [0.0, 0.0, 0.0],
-                "weight": 1.0,
-            }
 
         theta_values = axes_data.get("theta", {}).get("values", {})
         novelty = theta_values.get("novelty", 0.0)
@@ -1513,7 +1527,59 @@ Returns:
                 "correction_urge": correction_urge,
             },
             "eta": eta_data,
-            "temporal_trend": self.temporal_state.get_trend() if self.temporal_state else "stable",
+            "temporal_trend": self._get_temporal_state().get_trend() if hasattr(self, "_temporal_state") and self._temporal_state else "stable",
+            "wellbeing_score": self.compute_wellbeing(),
+            "guidance": guidance,
+        }
+
+        axes_data["zeta"] = {
+            "values": self.zeta.values.copy(),
+            "coordinate": list(self.zeta.coordinate),
+            "weight": self.zeta.weight,
+        }
+
+        theta_values = axes_data.get("theta", {}).get("values", {})
+        novelty = theta_values.get("novelty", 0.0)
+        negativity = theta_values.get("theta_negativity", 0.0)
+        creation_urge = theta_values.get("creation_urge", 0.0)
+        correction_urge = theta_values.get("correction_urge", 0.0)
+
+        eta_data = {}
+        if eta_state:
+            eta_data = {
+                "active_modules": eta_state.active_modules,
+                "module_count": len(eta_state.active_modules),
+                "execution_count": eta_state.execution_count,
+                "success_rate": round(eta_state.success_rate, 3),
+                "structural_drift": round(eta_state.structural_drift, 3),
+            }
+
+        avg_energy = self.alpha.values.get("energy", 0.5)
+        avg_happiness = self.gamma.values.get("happiness", 0.5)
+        avg_calm = self.gamma.values.get("calm", 0.5)
+
+        guidance = []
+        if avg_energy < 0.4:
+            guidance.append("能量偏低，選擇溫柔安撫的語氣")
+        elif avg_energy > 0.7:
+            guidance.append("能量充沛，選擇活潑開朗的語氣")
+        if avg_happiness < 0.4:
+            guidance.append("用戶情緒偏負，選擇同理支持的角色")
+        if novelty > 0.5:
+            guidance.append("θ 新穎度較高，嘗試新的表達方式")
+        if eta_state and eta_state.success_rate > 0.9:
+            guidance.append("η 執行穩定，回應可以包含行動建議")
+
+        return {
+            "axes": axes_data,
+            "theta": {
+                "novelty": novelty,
+                "theta_negativity": negativity,
+                "creation_urge": creation_urge,
+                "correction_urge": correction_urge,
+            },
+            "eta": eta_data,
+            "temporal_trend": self._get_temporal_state().get_trend() if self._temporal_state else "stable",
             "wellbeing_score": self.compute_wellbeing(),
             "guidance": guidance,
         }
