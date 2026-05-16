@@ -140,12 +140,13 @@ class StateMatrixAdapter:
     def _init_influence(self) -> None:
         """初始化影響空間"""
         base_matrix = {
-            'alpha': {'beta': 0.4, 'gamma': 0.2, 'delta': 0.1, 'epsilon': 0.3, 'theta': 0.2},
-            'beta': {'alpha': 0.3, 'gamma': 0.5, 'delta': 0.2, 'epsilon': 0.4, 'theta': 0.3},
-            'gamma': {'alpha': 0.2, 'beta': 0.3, 'delta': 0.4, 'epsilon': 0.2, 'theta': 0.2},
-            'delta': {'alpha': 0.1, 'beta': 0.2, 'gamma': 0.3, 'epsilon': 0.1, 'theta': 0.2},
-            'epsilon': {'alpha': 0.2, 'beta': 0.5, 'gamma': 0.3, 'delta': 0.1, 'theta': 0.2},
-            'theta': {'alpha': 0.2, 'beta': 0.3, 'gamma': 0.2, 'delta': 0.2, 'epsilon': 0.3},
+            'alpha': {'beta': 0.4, 'gamma': 0.2, 'delta': 0.1, 'epsilon': 0.3, 'theta': 0.2, 'zeta': 0.05},
+            'beta': {'alpha': 0.3, 'gamma': 0.5, 'delta': 0.2, 'epsilon': 0.4, 'theta': 0.3, 'zeta': 0.1},
+            'gamma': {'alpha': 0.2, 'beta': 0.3, 'delta': 0.4, 'epsilon': 0.2, 'theta': 0.2, 'zeta': 0.1},
+            'delta': {'alpha': 0.1, 'beta': 0.2, 'gamma': 0.3, 'epsilon': 0.1, 'theta': 0.2, 'zeta': 0.05},
+            'epsilon': {'alpha': 0.2, 'beta': 0.5, 'gamma': 0.3, 'delta': 0.1, 'theta': 0.2, 'zeta': 0.05},
+            'theta': {'alpha': 0.2, 'beta': 0.3, 'gamma': 0.2, 'delta': 0.2, 'epsilon': 0.3, 'zeta': 0.05},
+            'zeta': {'alpha': 0.05, 'beta': 0.1, 'gamma': 0.1, 'delta': 0.05, 'epsilon': 0.05, 'theta': 0.05},
         }
 
         if self._config and self._config.influence_matrix:
@@ -159,6 +160,7 @@ class StateMatrixAdapter:
                 'delta': self._sm.delta,
                 'epsilon': self._sm.epsilon,
                 'theta': self._sm.theta,
+                'zeta': self._sm.zeta,
             },
             base_matrix=base_matrix,
         )
@@ -171,6 +173,7 @@ class StateMatrixAdapter:
         self._resonance_engine = ResonanceEngine(axes=[
             self._sm.alpha, self._sm.beta, self._sm.gamma,
             self._sm.delta, self._sm.epsilon, self._sm.theta,
+            self._sm.zeta,
         ])
         self._allocation_policy = AllocationPolicy()
         self._negativity_detector = NegativityDetector(timeline=self._temporal)
@@ -252,27 +255,12 @@ class StateMatrixAdapter:
         return self._sm.delta
 
     @property
-    def epsilon(self):
-        return self._sm.epsilon
-
-    @property
     def theta(self):
         return self._sm.theta
 
     @property
-    def temporal(self):
-        """TemporalState 實例（用於時間查詢）"""
-        return self._temporal
-
-    @property
-    def influence_space(self):
-        """InfluenceSpace 實例（用於影響計算）"""
-        return self._influence_space
-
-    @property
-    def allocation_policy(self):
-        """AllocationPolicy 實例"""
-        return self._allocation_policy
+    def zeta(self):
+        return self._sm.zeta
 
     @property
     def history(self):
@@ -315,25 +303,10 @@ class StateMatrixAdapter:
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("theta", kwargs, is_stable=False)
 
-    def update_beta(self, **kwargs) -> None:
-        self._sm.update_beta(**kwargs)
+    def update_zeta(self, **kwargs) -> None:
+        self._sm.update_zeta(**kwargs)
         self._record_to_temporal()
-
-    def update_gamma(self, **kwargs) -> None:
-        self._sm.update_gamma(**kwargs)
-        self._record_to_temporal()
-
-    def update_delta(self, **kwargs) -> None:
-        self._sm.update_delta(**kwargs)
-        self._record_to_temporal()
-
-    def update_epsilon(self, **kwargs) -> None:
-        self._sm.update_epsilon(**kwargs)
-        self._record_to_temporal()
-
-    def update_theta(self, **kwargs) -> None:
-        self._sm.update_theta(**kwargs)
-        self._record_to_temporal()
+        self._anchor_learning.on_axis_update("zeta", kwargs, is_stable=False)
 
     def compute_influences(self) -> Dict[str, Dict[str, float]]:
         return self._sm.compute_influences()

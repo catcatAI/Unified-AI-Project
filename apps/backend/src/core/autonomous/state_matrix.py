@@ -101,7 +101,6 @@ class AxisSemanticAnchor:
 CognitiveOp = None
 
 
-
 @dataclass
 class DimensionState:
     """
@@ -115,7 +114,7 @@ class DimensionState:
     values: Dict[str, float]
     weight: float = 1.0
     timestamp: datetime = field(default_factory=datetime.now)
-    
+
     # =============================================================================
     # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
     # [Task N.20.1] 座標系 AI：空間定址 (x, y, z)
@@ -123,6 +122,103 @@ class DimensionState:
     coordinate: Tuple[float, float, float] = field(default_factory=lambda: (0.0, 0.0, 0.0))
     intent_vector: Tuple[float, float, float] = field(default_factory=lambda: (0.0, 0.0, 0.0))
     stability: float = 1.0
+
+    def compute_coordinate(self) -> Tuple[float, float, float]:
+        """根據當前維度值計算實際座標 / Compute actual coordinate from current values"""
+        v = self.values
+        n = self.name
+        if n == "alpha":
+            comfort = v.get("comfort", 0.5)
+            tension = v.get("tension", 0.0)
+            energy = v.get("energy", 0.5)
+            rest_need = v.get("rest_need", 0.5)
+            arousal = v.get("arousal", 0.5)
+            x = comfort - tension
+            y = (energy - rest_need) * 10.0
+            z = arousal - 0.5
+            return (round(x, 3), round(y, 3), round(z, 3))
+        elif n == "beta":
+            clarity = v.get("clarity", 0.5)
+            confusion = v.get("confusion", 0.0)
+            focus = v.get("focus", 0.5)
+            learning = v.get("learning", 0.5)
+            curiosity = v.get("curiosity", 0.5)
+            creativity = v.get("creativity", 0.5)
+            x = (clarity - confusion) * 5.0
+            y = (focus + learning + curiosity) / 3.0 * 15.0
+            z = (creativity - 0.5) * 4.0
+            return (round(x, 3), round(y, 3), round(z, 3))
+        elif n == "gamma":
+            happiness = v.get("happiness", 0.5)
+            sadness = v.get("sadness", 0.0)
+            anger = v.get("anger", 0.0)
+            fear = v.get("fear", 0.0)
+            trust = v.get("trust", 0.5)
+            calm = v.get("calm", 0.5)
+            love = v.get("love", 0.0)
+            x = (happiness - sadness) * 5.0 + (anger - 0.5) * 2.0
+            y = (happiness + trust + calm) / 3.0 * 5.0 + 2.0
+            z = (love - fear) * 3.0
+            return (round(x, 3), round(y, 3), round(z, 3))
+        elif n == "delta":
+            bond = v.get("bond", 0.5)
+            attention = v.get("attention", 0.5)
+            presence = v.get("presence", 0.5)
+            engagement = v.get("engagement", 0.5)
+            intimacy = v.get("intimacy", 0.0)
+            x = (bond - intimacy) * 3.0
+            y = presence * 5.0
+            z = (attention + engagement) / 2.0 * 10.0
+            return (round(x, 3), round(y, 3), round(z, 3))
+        elif n == "epsilon":
+            logic = v.get("logic", 0.5)
+            precision = v.get("precision", 0.5)
+            abstraction = v.get("abstraction_level", v.get("abstraction", 0.5))
+            certainty = v.get("certainty", 0.5)
+            fatigue = v.get("fatigue", 0.0)
+            x = (logic + precision) / 2.0 * 5.0
+            y = abstraction * 10.0
+            z = (certainty - fatigue) * 5.0
+            return (round(x, 3), round(y, 3), round(z, 3))
+        elif n == "theta":
+            novelty = v.get("novelty", 0.5)
+            creation_urge = v.get("creation_urge", 0.0)
+            correction_urge = v.get("correction_urge", 0.0)
+            complexity = v.get("complexity", 0.5)
+            x = novelty * 5.0 - 2.5
+            y = (creation_urge + correction_urge) * 5.0
+            z = complexity * 10.0 - 5.0
+            return (round(x, 3), round(y, 3), round(z, 3))
+        elif n == "zeta":
+            temporal = v.get("temporal_coherence", 0.8)
+            memory = v.get("memory_depth", 0.6)
+            narrative = v.get("narrative_flow", 0.7)
+            identity = v.get("identity_continuity", 0.75)
+            x = (temporal - 0.5) * 10.0
+            y = (memory + narrative) / 2.0 * 10.0
+            z = (identity - 0.5) * 10.0
+            return (round(x, 3), round(y, 3), round(z, 3))
+        return (0.0, 0.0, 0.0)
+
+    def get_average(self) -> float:
+        """获取维度平均值 / Get average value"""
+        if not self.values:
+            return 0.0
+        return sum(self.values.values()) / len(self.values)
+
+    def get_dominant(self) -> Tuple[str, float]:
+        """获取主导指标 / Get dominant metric"""
+        if not self.values:
+            return ("", 0.0)
+        return max(self.values.items(), key=lambda x: x[1])
+
+    def update(self, **kwargs) -> None:
+        """更新维度值 / Update dimension values"""
+        for key, value in kwargs.items():
+            if key in self.values:
+                self.values[key] = max(0.0, min(1.0, float(value)))
+        self.timestamp = datetime.now()
+        self.coordinate = self.compute_coordinate()
 
 
     def get_average(self) -> float:
@@ -371,11 +467,11 @@ class StateMatrix4D:
         self.influence_matrix: Dict[str, Dict[str, float]] = self.config.get(
             "influence_matrix",
             {
-                "alpha": {"beta": 0.3, "gamma": 0.5, "delta": 0.2, "epsilon": 0.1, "theta": 0.05},
-                "beta": {"alpha": 0.2, "gamma": 0.4, "delta": 0.3, "epsilon": 0.2, "theta": 0.1},
-                "gamma": {"alpha": 0.4, "beta": 0.3, "delta": 0.5, "epsilon": 0.3, "theta": 0.15},
-                "delta": {"alpha": 0.2, "beta": 0.3, "gamma": 0.6, "epsilon": 0.1, "theta": 0.15},
-                "epsilon": {"alpha": 0.1, "beta": 0.3, "gamma": 0.4, "delta": 0.1, "theta": 0.1},
+                "alpha": {"beta": 0.3, "gamma": 0.5, "delta": 0.2, "epsilon": 0.1, "theta": 0.05, "zeta": 0.05},
+                "beta": {"alpha": 0.2, "gamma": 0.4, "delta": 0.3, "epsilon": 0.2, "theta": 0.1, "zeta": 0.1},
+                "gamma": {"alpha": 0.4, "beta": 0.3, "delta": 0.5, "epsilon": 0.3, "theta": 0.15, "zeta": 0.1},
+                "delta": {"alpha": 0.2, "beta": 0.3, "gamma": 0.6, "epsilon": 0.1, "theta": 0.15, "zeta": 0.05},
+                "epsilon": {"alpha": 0.1, "beta": 0.3, "gamma": 0.4, "delta": 0.1, "theta": 0.1, "zeta": 0.05},
                 "theta": {"alpha": 0.05, "beta": 0.1, "gamma": 0.1, "delta": 0.05, "epsilon": 0.05, "zeta": 0.05},
                 "zeta": {"alpha": 0.05, "beta": 0.1, "gamma": 0.1, "delta": 0.05, "epsilon": 0.05, "theta": 0.05},
             },
@@ -467,6 +563,20 @@ class StateMatrix4D:
                 description="Mathematical/logical state: precision, abstraction, certainty",
                 semantic_vector=self._text_to_vector("number calculation logic precise math", dim_vector_size),
                 keywords=["calculate", "number", "math", "precise", "logic", "answer", "compute", "result"],
+            ),
+            "theta": AxisSemanticAnchor(
+                name="theta",
+                label="元認知",
+                description="Meta-cognitive state: novelty, complexity, abstraction, creation",
+                semantic_vector=self._text_to_vector("think about thinking reflection analysis strategy plan", dim_vector_size),
+                keywords=["think", "reflection", "analyze", "meta", "novel", "create", "abstract", "complex", "strategy", "plan", "decision"],
+            ),
+            "zeta": AxisSemanticAnchor(
+                name="zeta",
+                label="意識流",
+                description="Consciousness flow: temporal coherence, memory, narrative, identity",
+                semantic_vector=self._text_to_vector("time memory story identity continuous self history", dim_vector_size),
+                keywords=["time", "memory", "story", "identity", "continuous", "self", "history", "narrative", "temporal", "flow"],
             ),
         }
 
@@ -735,9 +845,25 @@ Returns:
         """从向量推断主导键名 / Infer dominant key name from vector"""
         if not vector:
             return "value"
-        if len(vector) >= 5:
-            return "happiness"
-        return "value"
+        if not self.semantic_anchors:
+            return "value"
+        best_axis = None
+        best_resonance = -1.0
+        for name, anchor in self.semantic_anchors.items():
+            resonance = anchor.compute_resonance(vector)
+            if resonance > best_resonance:
+                best_resonance = resonance
+                best_axis = name
+        key_map = {
+            "alpha": "energy",
+            "beta": "focus",
+            "gamma": "happiness",
+            "delta": "bond",
+            "epsilon": "logic",
+            "theta": "creation_urge",
+            "zeta": "narrative_flow",
+        }
+        return key_map.get(best_axis, "value")
 
     def get_theta_analysis(self) -> Dict[str, Any]:
         """获取θ轴分析报告 / Get theta axis analysis report"""
@@ -1531,59 +1657,6 @@ Returns:
             "wellbeing_score": self.compute_wellbeing(),
             "guidance": guidance,
         }
-
-        axes_data["zeta"] = {
-            "values": self.zeta.values.copy(),
-            "coordinate": list(self.zeta.coordinate),
-            "weight": self.zeta.weight,
-        }
-
-        theta_values = axes_data.get("theta", {}).get("values", {})
-        novelty = theta_values.get("novelty", 0.0)
-        negativity = theta_values.get("theta_negativity", 0.0)
-        creation_urge = theta_values.get("creation_urge", 0.0)
-        correction_urge = theta_values.get("correction_urge", 0.0)
-
-        eta_data = {}
-        if eta_state:
-            eta_data = {
-                "active_modules": eta_state.active_modules,
-                "module_count": len(eta_state.active_modules),
-                "execution_count": eta_state.execution_count,
-                "success_rate": round(eta_state.success_rate, 3),
-                "structural_drift": round(eta_state.structural_drift, 3),
-            }
-
-        avg_energy = self.alpha.values.get("energy", 0.5)
-        avg_happiness = self.gamma.values.get("happiness", 0.5)
-        avg_calm = self.gamma.values.get("calm", 0.5)
-
-        guidance = []
-        if avg_energy < 0.4:
-            guidance.append("能量偏低，選擇溫柔安撫的語氣")
-        elif avg_energy > 0.7:
-            guidance.append("能量充沛，選擇活潑開朗的語氣")
-        if avg_happiness < 0.4:
-            guidance.append("用戶情緒偏負，選擇同理支持的角色")
-        if novelty > 0.5:
-            guidance.append("θ 新穎度較高，嘗試新的表達方式")
-        if eta_state and eta_state.success_rate > 0.9:
-            guidance.append("η 執行穩定，回應可以包含行動建議")
-
-        return {
-            "axes": axes_data,
-            "theta": {
-                "novelty": novelty,
-                "theta_negativity": negativity,
-                "creation_urge": creation_urge,
-                "correction_urge": correction_urge,
-            },
-            "eta": eta_data,
-            "temporal_trend": self._get_temporal_state().get_trend() if self._temporal_state else "stable",
-            "wellbeing_score": self.compute_wellbeing(),
-            "guidance": guidance,
-        }
-
 
 # Example usage
 if __name__ == "__main__":
