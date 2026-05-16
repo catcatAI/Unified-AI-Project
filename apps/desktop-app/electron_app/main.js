@@ -1433,6 +1433,11 @@ function connectWebSocket(url, sessionInfo) {
           // Forward to renderer
           sendToMainWindow('websocket-connected', message)
         } else {
+          // Debug: log chat_response for tracing
+          if (message.type === 'chat_response') {
+            console.log('[WebSocket] >>> chat_response received from backend, forwarding to renderer')
+            console.log('[WebSocket] >>> chat_response data:', JSON.stringify(message.data || {}).substring(0, 200))
+          }
           // Forward other messages to renderer
           sendToMainWindow('websocket-message', message)
         }

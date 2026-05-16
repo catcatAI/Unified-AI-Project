@@ -212,9 +212,13 @@ class BackendWebSocketClient {
     }
   }
 
-  _routeMessage(message) {
+_routeMessage(message) {
+    if (!message) return
+
     const type = message.type
     const data = message.data
+
+    console.log('[BackendWebSocket] _routeMessage called, type:', type, 'data:', JSON.stringify(data || {}).substring(0, 200))
 
     switch (type) {
       case 'connected':
@@ -678,6 +682,8 @@ class BackendWebSocketClient {
           timestamp: new Date().toISOString(),
         },
       }
+
+      console.log('[BackendWebSocket] >>> sendMessage payload:', JSON.stringify(payload).substring(0, 300))
 
       try {
         if (this._usingIpcBridge && window.electronAPI && window.electronAPI.websocket) {
@@ -1224,6 +1230,8 @@ class BackendWebSocketClient {
 
   _handleChatResponse(data) {
     if (!data) return
+
+    console.log('[BackendWebSocket] _handleChatResponse called, data:', JSON.stringify(data || {}).substring(0, 200))
 
     // 觸發事件 (供 UI 顯示)
     this._fireEvent('angela_response', {

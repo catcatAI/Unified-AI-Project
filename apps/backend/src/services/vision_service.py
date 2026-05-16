@@ -491,7 +491,7 @@ class VisionService:
 
     async def _extract_text_ocr(self, image_data: bytes) -> Dict[str, Any]:
         """Real OCR using OS Bridge."""
-        ocr_res = self.os_bridge.get_screen_text()
+        ocr_res = await self.os_bridge.get_screen_text()
         return {
             "text": ocr_res.get("text", ""),
             "language": "auto",

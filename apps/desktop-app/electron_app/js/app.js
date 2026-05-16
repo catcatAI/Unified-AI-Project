@@ -1067,6 +1067,7 @@ class AngelaApp {
         // Listen for backend responses
         if (this.backendWebSocket) {
             this.backendWebSocket.on('angela_response', (data) => {
+                console.log('[App] angela_response event received:', JSON.stringify(data || {}).substring(0, 200))
                 if (data.response) {
                     addMessage('angela', data.response);
                 }

@@ -162,7 +162,7 @@ class WebSocketConnection extends events.EventEmitter {
         this.emit('close', 1005, Buffer.alloc(0))
         break
       case 0x9:
-        this._sendFrame(0x10, payload)
+        this._sendFrame(0xA, payload)
         break
       case 0xA:
         break
@@ -223,7 +223,7 @@ class WebSocketConnection extends events.EventEmitter {
   }
 
   send(data) {
-    this._sendFrame(0x81, data)
+    this._sendFrame(0x1, data)
   }
 
   close() {

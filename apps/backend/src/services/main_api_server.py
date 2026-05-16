@@ -1026,6 +1026,10 @@ async def websocket_endpoint(websocket: WebSocket):
     client_id = session.client_id
     
     logger.info(f"[WebSocket] Incoming connection - client_id: {client_id}, session_id: {session_id}, remote: {websocket.client}")
+    msg_count = 0
+
+    # After handshake, give time for messages to arrive
+    logger.info(f"[WebSocket] Waiting for next message from {client_id}...")
 
     # Send initial connection confirmation with session info
     logger.info(f"[WebSocket] Sending 'connected' response to client_id: {client_id}")
@@ -1040,11 +1044,16 @@ async def websocket_endpoint(websocket: WebSocket):
     )
 
     # ========== Session-based message processing loop ==========
+    logger.info(f"[WebSocket] Entering message loop for client_id={client_id}, session_id={session_id}")
+    msg_count = 0
     while True:
+        msg_count += 1
         try:
             data = await asyncio.wait_for(
                 websocket.receive_json(), timeout=manager.heartbeat_timeout
             )
+
+            logger.info(f"[WebSocket] >>> Received message #{msg_count} from {client_id}: type={data.get('type')}, keys={list(data.keys())}")
 
             # Update heartbeat and sequence
             await manager._sm.update_heartbeat(client_id)
@@ -1086,21 +1095,56 @@ async def websocket_endpoint(websocket: WebSocket):
                 message_id = data.get("data", {}).get("message_id", "")
                 user_name = data.get("data", {}).get("user_name", "朋友")
 
-                chat_service = get_angela_chat_service()
-                response_text = await chat_service.generate_response(user_message, user_name, origin="Human")
+                logger.info(f"💬 [WS] Chat message from {client_id}: {user_message[:50]}...")
+                logger.info(f"🔍 [WS] About to call _handle_chat_request for session_id={session_id}, user={user_name}")
+                logger.info(f"🔍 [WS] Message payload: {data}")
 
-                await manager.send_personal_message(
-                    {
-                        "type": "chat_response",
-                        "data": {
-                            "message_id": message_id,
-                            "content": response_text,
-                            "sender": "angela",
+                try:
+                    chat_res = await _handle_chat_request(
+                        user_message=user_message,
+                        user_name=user_name,
+                        history=[],
+                        session_id=session_id,
+                        origin="Human"
+                    )
+
+                    logger.info(f"🧠 [WS] _handle_chat_request returned: {chat_res.get('response_text', '')[:50]}...")
+
+                    logger.info(f"🧠 [WS] About to call send_personal_message. Looking for websocket in sessions...")
+                    for cid, sess in manager._sm._sessions.items():
+                        logger.info(f"  Session {cid}: websocket={sess.websocket is not None}, state={sess.state}")
+                    logger.info(f"  Target websocket: {websocket}")
+
+                    await manager.send_personal_message(
+                        {
+                            "type": "chat_response",
+                            "data": {
+                                "message_id": message_id,
+                                "content": chat_res["response_text"],
+                                "sender": "angela",
+                                "emotion": chat_res.get("emotion", "happy"),
+                                "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
+                            },
+                            "timestamp": datetime.now().isoformat(),
                         },
-                        "timestamp": datetime.now().isoformat(),
-                    },
-                    websocket,
-                )
+                        websocket,
+                    )
+                    logger.info(f"✅ [WS] Sent chat response to {client_id}")
+                except Exception as chat_err:
+                    logger.error(f"❌ [WS] Chat error for {client_id}: {chat_err}")
+                    await manager.send_personal_message(
+                        {
+                            "type": "chat_response",
+                            "data": {
+                                "message_id": message_id,
+                                "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
+                                "sender": "angela",
+                                "error": str(chat_err)
+                            },
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                        websocket,
+                    )
 
             else:
                 await websocket.send_json(
@@ -1123,8 +1167,7 @@ async def websocket_endpoint(websocket: WebSocket):
             logger.error(f"[WebSocket] Message error for {client_id}: {e}")
             continue
 
-        finally:
-            asyncio.create_task(manager.unregister(client_id))
+    asyncio.create_task(manager.unregister(client_id))
 
 
 from services.atlassian_api import atlassian_router

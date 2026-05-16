@@ -22,25 +22,44 @@ class OSBridgeAdapter:
             if os.path.exists(alt_root):
                 self.bridge_path = alt_root
 
+    async def _execute_async(self, command, *args):
+        cmd = [self.python_exe, self.bridge_path, command] + list(args)
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            if stdout:
+                return json.loads(stdout.decode('utf-8'))
+            return {"status": "error", "message": stderr.decode('utf-8')}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
     def _execute(self, command, *args):
+        """Legacy synchronous execute - use _execute_async whenever possible"""
         cmd = [self.python_exe, self.bridge_path, command] + list(args)
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
             if result.stdout:
                 return json.loads(result.stdout)
             return {"status": "error", "message": result.stderr}
-        except Exception as e:  # broad exception acceptable: catch all bridge execution errors and return safe error response
+        except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def get_summary(self):
-        return self._execute("summary")
+    async def get_summary(self):
+        return await self._execute_async("summary")
 
-    def take_action(self, action_name, args=None):
+    async def take_action(self, action_name, args=None):
         task = [{"name": action_name, "args": args or []}]
-        return self._execute("task", json.dumps(task))
+        return await self._execute_async("task", json.dumps(task))
 
-    def get_screen_text(self):
-        return self._execute("ocr")
+    async def get_screen_text(self):
+        return await self._execute_async("ocr")
+
+import asyncio
 
 if __name__ == "__main__":
     adapter = OSBridgeAdapter()
