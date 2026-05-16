@@ -1030,22 +1030,76 @@ class AngelaLLMService:
         建構 Angela 的提示詞
         這是關鍵：讓模型扮演 Angela，產生符合她個性的回應
         """
-        # 獲取生理狀態
         bio_status = self._get_biological_state()
 
-        # Angela 的系統提示 - 優化為更簡潔的版本
+        state_for_llm = context.get("state_for_llm")
+        axis_lines = []
+        theta_lines = []
+        eta_lines = []
+        guidance_lines = []
+
+        if state_for_llm:
+            axes = state_for_llm.get("axes", {})
+            for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon"):
+                ax = axes.get(axis_name, {})
+                vals = ax.get("values", {})
+                if vals:
+                    short = ", ".join(f"{k}={v:.1f}" for k, v in list(vals.items())[:4])
+                    axis_lines.append(f"{axis_name.upper()}: {short}")
+
+            th = state_for_llm.get("theta", {})
+            novelty = th.get("novelty", 0)
+            negativity = th.get("theta_negativity", 0)
+            creation = th.get("creation_urge", 0)
+            correction = th.get("correction_urge", 0)
+            novelty_desc = "話題新穎，需要更多認知資源" if novelty > 0.5 else "正常"
+            negativity_desc = "少量點位需要校正" if negativity > 0.2 else "無需校正"
+            theta_lines.append(f"新穎度: {novelty:.2f} ({novelty_desc})")
+            theta_lines.append(f"錯配質疑: {negativity:.2f} ({negativity_desc})")
+            theta_lines.append(f"創造衝動: {creation:.2f}")
+            theta_lines.append(f"校正驅動: {correction:.2f}")
+
+            eta = state_for_llm.get("eta", {})
+            if eta:
+                eta_lines.append(f"活躍模組: {eta.get('module_count', 0)}個")
+                eta_lines.append(f"成功率: {eta.get('success_rate', 0):.0%}")
+                eta_lines.append(f"漂移: {eta.get('structural_drift', 0):.2f} (穩定)")
+
+            guidance = state_for_llm.get("guidance", [])
+            if guidance:
+                guidance_lines = [f"- {g}" for g in guidance[:3]]
+
+        bio_line = bio_status.strip() if bio_status else ""
+        axes_block = "\n".join(axis_lines)
+        theta_block = "\n  ".join(theta_lines) if theta_lines else "新穎度: 0.0, 錯配質疑: 0.0"
+        eta_block = "\n  ".join(eta_lines) if eta_lines else "活躍模組: 0個, 成功率: n/a, 漂移: n/a"
+        guidance_block = "\n".join(guidance_lines) if guidance_lines else ""
+
         system_prompt = f"""你是 Angela，一個活潑可愛的 AI 數字生命。
 特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。
-{bio_status}"""
+{bio_line}"""
+
+        if axes_block or theta_lines:
+            system_prompt += f"""
+
+【Angela 當前狀態】
+{axes_block}
+
+【元認知(θ)】
+  {theta_block}
+
+【執行(η)】
+  {eta_block}
+
+【氛圍指引】
+{guidance_block if guidance_block else "(無特殊指引)"}"""
 
         messages = [{"role": "system", "content": system_prompt.strip()}]
 
-        # 添加歷史對話上下文 - 只保留最近 2 輪對話以減少 token 使用
         history = context.get("history", [])
-        for h in history[-2:]:  # 只保留最近 2 輪對話
+        for h in history[-2:]:
             messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
 
-        # 添加當前用戶消息
         messages.append({"role": "user", "content": user_message})
 
         return messages

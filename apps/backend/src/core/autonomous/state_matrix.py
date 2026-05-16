@@ -1448,6 +1448,76 @@ Returns:
         data = json.loads(json_str)
         self.import_from_dict(data)
 
+    def export_for_llm(self, eta_state: Optional[Any] = None) -> Dict[str, Any]:
+        """
+        导出完整 7 維狀態 + θ + η，供 LLM prompt 使用。
+        包裝格式：座標 + 各軸值 + 座標 + 趨勢 + 氛圍指引。
+        """
+        axes_data = {}
+        for name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta"):
+            dim = self.dimensions.get(name)
+            if dim:
+                coord = getattr(dim, "coordinate", None)
+                axes_data[name] = {
+                    "values": dim.values.copy(),
+                    "coordinate": list(coord) if coord else [0.0, 0.0, 0.0],
+                    "weight": dim.weight,
+                }
+
+        zeta_data = getattr(self, "zeta", None)
+        if zeta_data and hasattr(zeta_data, "values"):
+            axes_data["zeta"] = {
+                "values": zeta_data.values.copy(),
+                "coordinate": [0.0, 0.0, 0.0],
+                "weight": 1.0,
+            }
+
+        theta_values = axes_data.get("theta", {}).get("values", {})
+        novelty = theta_values.get("novelty", 0.0)
+        negativity = theta_values.get("theta_negativity", 0.0)
+        creation_urge = theta_values.get("creation_urge", 0.0)
+        correction_urge = theta_values.get("correction_urge", 0.0)
+
+        eta_data = {}
+        if eta_state:
+            eta_data = {
+                "active_modules": eta_state.active_modules,
+                "module_count": len(eta_state.active_modules),
+                "execution_count": eta_state.execution_count,
+                "success_rate": round(eta_state.success_rate, 3),
+                "structural_drift": round(eta_state.structural_drift, 3),
+            }
+
+        avg_energy = self.alpha.values.get("energy", 0.5)
+        avg_happiness = self.gamma.values.get("happiness", 0.5)
+        avg_calm = self.gamma.values.get("calm", 0.5)
+
+        guidance = []
+        if avg_energy < 0.4:
+            guidance.append("能量偏低，選擇溫柔安撫的語氣")
+        elif avg_energy > 0.7:
+            guidance.append("能量充沛，選擇活潑開朗的語氣")
+        if avg_happiness < 0.4:
+            guidance.append("用戶情緒偏負，選擇同理支持的角色")
+        if novelty > 0.5:
+            guidance.append("θ 新穎度較高，嘗試新的表達方式")
+        if eta_state and eta_state.success_rate > 0.9:
+            guidance.append("η 執行穩定，回應可以包含行動建議")
+
+        return {
+            "axes": axes_data,
+            "theta": {
+                "novelty": novelty,
+                "theta_negativity": negativity,
+                "creation_urge": creation_urge,
+                "correction_urge": correction_urge,
+            },
+            "eta": eta_data,
+            "temporal_trend": self.temporal_state.get_trend() if self.temporal_state else "stable",
+            "wellbeing_score": self.compute_wellbeing(),
+            "guidance": guidance,
+        }
+
 
 # Example usage
 if __name__ == "__main__":

@@ -1,27 +1,27 @@
 # Angela AI — Project Status Report
-## 2026-05-16 | v6.2.2 | Phase 4 (WebSocket Session Management)
+## 2026-05-16 | v6.2.5 | Phase 5 (REPL + θ/η Integration)
 
 ---
 
 ## Executive Summary
 
-**Version 6.2.1** represents a complete architectural refactor of Angela's core AI systems.
+**Version 6.2.5** represents Phase 5: REPL terminal chat + full 6D state matrix (αβγδεθ) + θ/η axes + coordinate AI system integration with learning, LLM state packaging, and growth tracking.
 All Phase 1-7 refactoring tasks + Post-Refactor Plan v1.0 are **COMPLETE**. The system is
 in a stable, well-tested state with 94+ tests passing across 11 test files.
 
 ### Key Achievements
 
-- ✅ **6D State Matrix** (αβγδεθ) — 1520 lines refactored from 1834
-- ✅ **Axis Port Routing System** — PortRegistry + ThetaRouter + PortChannel
-- ✅ **Semantic Anchor Improvement** — 22-28 non-zero dims per anchor
+- ✅ **REPL Terminal Chat** — `launch_angela.bat --repl` starts uvicorn daemon + interactive input loop; `logging.disable()` suppresses noise
+- ✅ **6D State Matrix** (αβγδεθ) — StateMatrix4D with export_for_llm() packaging full state for LLM
+- ✅ **θ Axis Integration** — ThetaRouter wired into chat flow; novelty/novelty estimation, theta_negativity tracking, self-correction loop after each response
+- ✅ **η Axis Integration** — EtaAxisState wired into chat flow; trigger curve computing complexity, execution_count + success_rate tracking
+- ✅ **IntentRouter** — math intent detection → MathVerifier, code intent detection → CodeInspector
+- ✅ **LLM State Packaging** — `_construct_angela_prompt()` includes full 6D state + θ (novelty/negativity/creation/correction) + η (modules/success/drift) + guidance
+- ✅ **8D Coordinate System** — export_for_llm() returns axes (values, coordinate, weight) + θ + η + temporal_trend + wellbeing_score + guidance
 - ✅ **94+ Tests Passing** — Full coverage of refactored modules
 - ✅ **FastAPI Integration** — 23 HTTP endpoints
 - ✅ **Persistence Layer** — save_state/load_state
-- ✅ **CodeInspector Integration** — native AST-based inspection
-- ✅ **P8 — True LLM End-to-End Integration** — MathVerifier → StateMatrixAdapter → CodeInspector → θ-meta-cognition
-- ✅ **P9 — Persistence Layer (Redis/JSON)** — Dual-mode persistence with auto-checkpoint, 6 tests passing
-- ✅ **LLM E2E Test** — 4/4 tests passing (MathVerifier, CodeInspector, θ-analysis, full pipeline)
-- ✅ **WebSocket Session Management** — SessionManager with session_id lifecycle, single-ID per window
+- ✅ **WebSocket Session Management** — SessionManager with session_id lifecycle
 
 ### Remaining Work
 
@@ -32,6 +32,44 @@ in a stable, well-tested state with 94+ tests passing across 11 test files.
 
 ## Architecture Overview
 
+```
+┌─────────────────────────────────────────────────────┐
+│                  Angela AI v6.2.5                   │
+├─────────────────────────────────────────────────────┤
+│  Layer 6 — Execution                                  │
+│    REPL Terminal / HTTP API / CLI / Desktop Bridge  │
+├─────────────────────────────────────────────────────┤
+│  Layer 5 — Autonomous Agent                          │
+│    StateMatrixAdapter (port routing, persistence)   │
+│    θ Meta-Cognition (routing, self-correction)       │
+│    η Execution Layer (module trigger curve)         │
+├─────────────────────────────────────────────────────┤
+│  Layer 4 — Cognitive Operations                      │
+│    SelfIntrospectorV2 / CodeInspectorBridge        │
+│    MathVerifier / AnchorLearningEngine              │
+├─────────────────────────────────────────────────────┤
+│  Layer 3 — Intent Routing                            │
+│    IntentRouter (math/code/general分流)            │
+│    ResultMerger (結果合併)                          │
+├─────────────────────────────────────────────────────┤
+│  Layer 2 — State Management                          │
+│    StateMatrix4D (6 axes × fields)                  │
+│    export_for_llm() (7維 + θ + η 打包)             │
+│    TemporalState (history, trends, drift)           │
+│    InfluenceApplicator (axis influence matrix)     │
+│    RippleCascade (ε→γ ripple propagation)          │
+├─────────────────────────────────────────────────────┤
+│  Layer 1 — Foundation                                │
+│    Axis / AxisField (axis schema registry)         │
+│    ThetaRouter (port→axis, cascade, merge)         │
+│    EtaAxisState (execution layer, modules)         │
+│    ResonanceEngine (semantic anchors, similarity)   │
+│    ConfigLoader (YAML configuration)                │
+├─────────────────────────────────────────────────────┤
+│  Layer 0 — Memory (HAM)                             │
+│    AttractorField (gradient descent navigation)    │
+│    HAMMemoryManager (hierarchical abstract memory)  │
+└─────────────────────────────────────────────────────┘
 ```
 ┌─────────────────────────────────────────────────────┐
 │                  Angela AI v6.2.1                   │
@@ -75,7 +113,7 @@ in a stable, well-tested state with 94+ tests passing across 11 test files.
 
 | File | Lines | Description |
 |------|-------|-------------|
-| `core/autonomous/state_matrix.py` | 1520 | StateMatrix4D — 6D axis storage + influence math + ripple cascade |
+| `core/autonomous/state_matrix.py` | 1565 | StateMatrix4D — 6D axis storage + influence math + ripple cascade + export_for_llm() |
 | `core/state/temporal.py` | 426 | TemporalState — history snapshots, trend analysis, drift detection |
 | `core/influence/space.py` | 333 | InfluenceSpace — axis influence matrix management |
 | `core/influence/influence_applicator.py` | 124 | InfluenceApplicator — applies influence between axes |
@@ -89,6 +127,12 @@ in a stable, well-tested state with 94+ tests passing across 11 test files.
 | `core/allocation/policy.py` | 260 | AllocationPolicy — vector → axis routing with ASSIGN/DEFER/CREATE |
 | `core/allocation/resonance.py` | 184 | ResonanceEngine — semantic anchors, cosine similarity, EMA updates |
 | `core/allocation/negativity.py` | 310 | NegativityTrigger — anomaly detection, self-doubt triggers |
+
+### Execution Layer (Layer 3.5)
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `core/autonomous/eta_axis.py` | 818 | EtaAxisState — execution engine (LogicGate, ArithmeticOp, Aggregator, Router) + trigger curve |
 
 ### Foundation (Layer 1)
 
@@ -278,80 +322,40 @@ Client connects → sends {type:'connect', session_id} → receives {type:'conne
 
 ## Roadmap
 
-### Phase 3 — Feature Completion
+### Phase 5 — REPL + θ/η Integration 🟡 ~~LOW~~ ACTIVE
 
-#### P8: True LLM End-to-End Integration 🔴 HIGH
-
-**Goal:** Connect all LLM-based services into real working flow
-
-Current state:
-- `MathVerifier` has LLM extraction but fallback degrades gracefully
-- `CodeInspector` has `integrate_code_inspect()` but never called in production
-- `AllocationPolicy` ASSIGN threshold (0.7) still hard to trigger after anchor improvement
-
-### P8 — True LLM End-to-End Integration 🔴 ~~HIGH~~ ✅ COMPLETE
-
-**Goal:** Connect all LLM-based services into real working flow ✅
-
-**Implementation:**
+**Goal:** Integrate REPL terminal chat with full 6D state matrix + θ meta-cognition + η execution layer.
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| `integrate_verification_result()` | ✅ | MathVerifier results → epsilon.certainty + theta.negativity |
-| `integrate_code_inspect()` | ✅ | CodeInspector results → epsilon.complexity + axis updates + ripple |
-| `ask_theta_for_analysis()` | ✅ | Async LLM analysis when θ.doubt/negativity > threshold |
-| HTTP API `/math/verify` | ✅ | POST endpoint with verification + state feedback |
-| HTTP API `/code/inspect` | ✅ | POST endpoint with inspection + axis updates |
-| HTTP API `/theta/analyze` | ✅ | POST async endpoint for θ meta-cognition |
-| E2E Test | ✅ | 4/4 tests passing |
+| `state_matrix.export_for_llm()` | ✅ | Packages 7D + θ + η + guidance for LLM |
+| `_construct_angela_prompt()` enhancement | ✅ | Full 6D state + θ/η + coordinate + guidance |
+| IntentRouter | ✅ | math/code/general intent detection |
+| θ wiring (input→response→post) | ✅ | novelty estimation, negativity tracking, self-correction |
+| η wiring (input→response→post) | ✅ | trigger curve, execution_count, success_rate |
+| REPL test | 🔄 | Full 8D flow observation |
 
-**Verified Flow:**
+### REPL + θ/η Flow
+
 ```
-User Input → MathVerifier.verify() → integrate_verification_result()
-         → StateMatrixAdapter.update_axis()
-         → CodeInspector.inspect() → integrate_code_inspect()
-         → AllocationPolicy.allocate()
-         → θ.meta_cognition → ask_theta_for_analysis()
-```
-
-### P9 — Persistence Layer (Redis/JSON) 🟡 ~~MEDIUM~~ ✅ COMPLETE
-
-**Goal:** Dual-mode persistence with Redis + JSON fallback ✅
-
-**Implementation:**
-
-| Component | Status | Details |
-|-----------|--------|---------|
-| `StatePersistence` class | ✅ | Redis + JSON dual mode, lazy connection |
-| `save_checkpoint()` | ✅ | Async save to Redis/JSON with tags |
-| `load_checkpoint()` | ✅ | Async load by ID or tag |
-| `list_checkpoints()` | ✅ | Enumerate recent snapshots |
-| `delete_checkpoint()` | ✅ | Delete by ID |
-| `auto_checkpoint()` | ✅ | Time-based + update-count triggers |
-| `init_persistence()` | ✅ | Wired into StateMatrixAdapter |
-| HTTP API | ✅ | 5 new endpoints (/checkpoint/*) |
-| Tests | ✅ | 6/6 tests passing |
-
-**HTTP API:**
-```
-POST /api/state/save            # save_checkpoint
-POST /api/state/load            # load_checkpoint
-GET  /api/state/checkpoint/list  # list_checkpoints
-DELETE /api/state/checkpoint/{id} # delete_checkpoint
-GET  /api/state/checkpoint/stats # persistence stats
+User Input → EgoGuard → θ novelty estimation → η complexity signals
+          → θ-η loop → IntentRouter (math/code/general)
+          → StateMatrix update → LLM (with 6D+θ+η state)
+          → Emotion analysis → θ post-correction → η post-execution
+          → Evolution reflect → Memory store → REPL output
 ```
 
-#### P7: StateMatrix4D Further Cleanup 🟢 LOW (Optional)
+**θ signals tracked per turn:**
+- `novelty` (new words ratio, 0-1)
+- `theta_negativity` (decays 0.02 per turn)
+- `creation_urge` (adjusts via η loop)
+- `correction_urge` (decays 0.05 per turn)
 
-**Goal:** Reduce StateMatrix4D from 1520 to ~1200 lines
-
-Steps:
-1. Extract remaining helper methods
-2. Delegate more to TemporalState/InfluenceApplicator
-3. Remove duplicate/dead code
-4. Add type hints throughout
-
-### Future Phases
+**η signals tracked per turn:**
+- `modules_to_call` (from trigger curve)
+- `delta` (parameter adjustment magnitude)
+- `execution_count` (increments per operation)
+- `success_rate` (micro-increments 0.002 per turn)
 
 #### Phase 4 — Desktop Companion Enhancement
 
@@ -400,10 +404,11 @@ No manual axis→port mapping needed. θ self-correction drives routing decision
 `_gradient_field = None` on init. `gradient_field` property triggers initialization
 on first access. Prevents unnecessary computation on startup.
 
-### StateMatrix4D Singleton
+### StateMatrix4D Singleton + export_for_llm()
 
 All `StateMatrixAdapter` instances share the same internal `StateMatrix4D`.
 Use `StateMatrixAdapter()` singleton for consistent state across the application.
+`export_for_llm(eta_state)` packages full 7D state + θ + η + guidance for LLM prompts.
 
 ---
 
@@ -555,6 +560,7 @@ Total: ~35 core Python files, ~7000 lines
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 6.2.5 | 2026-05-16 | REPL + θ/η Integration — export_for_llm(), IntentRouter, θ/η wiring |
 | 6.2.1 | 2026-05-14 | Post-Refactor v1.0 complete — 94 tests passing |
 | 6.2.0 | 2026-02-19 | Phase 1-7 refactoring complete |
 | 6.1.0 | 2025-09 | Desktop companion restoration |
@@ -562,5 +568,5 @@ Total: ~35 core Python files, ~7000 lines
 
 ---
 
-_Last Updated: 2026-05-14_
-_Status: Phase 3 Active — Feature Completion_
+_Last Updated: 2026-05-16_
+_Status: Phase 5 Active — REPL + θ/η Integration_

@@ -6,12 +6,12 @@
 
 ## 執行摘要
 
-**版本**: v6.2.2 (Phase 4 — WebSocket Session Management)
-**總任務數**: 87
-**已完成**: 71 (81.6%)
-**進行中**: 3 (3.4%)
-**待處理**: 12 (13.8%)
-**已跳過/延後**: 1 (1.1%)
+**版本**: v6.2.5 (Phase 5 — REPL + θ/η Integration)
+**總任務數**: 96
+**已完成**: 71 (74.0%)
+**進行中**: 3 (3.1%)
+**待處理**: 12 (12.5%)
+**已跳過/延後**: 1 (1.0%)
 
 ---
 
@@ -236,7 +236,67 @@
 
 ---
 
-## 四、已跳過/延後任務（1項）
+## 四、v6.2.x REPL + θ/η 整合任務（8項）
+
+> Angela v6.2.3+ — 座標AI系統 + REPL 完整整合
+> 來源: ANGELA_REPL_INTEGRATION_PLAN_v6.2.5.md
+
+### 4.1 狀態打包（1項）
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 1 | `state_matrix.export_for_llm()` | `core/autonomous/state_matrix.py` | 待處理 |
+> 打包完整 7 維狀態（αβγδεζ）+ θ（novelty, negativity, creation_urge, correction_urge）+ η（modules, success_rate, drift）+ 座標 + 趨勢，供 LLM prompt 使用
+
+### 4.2 θ/η 初始化（1項）
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 2 | θ/η 初始化 | `services/main_api_server.py` | 待處理 |
+> REPL 初始化時建立 ThetaRouter + EtaAxisState 實例，θ 接收 η 信號
+
+### 4.3 LLM 增強（1項）
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 3 | `_construct_angela_prompt()` 增強 | `services/angela_llm_service.py` | 待處理 |
+> 加入完整 6 維狀態 + θ + η + 座標 + 氛圍指引（能量、情緒、θ新穎度、η執行狀態）
+
+### 4.4 Chat Pipeline 整合（1項）
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 4 | `chat_service.generate_response()` 重構 | `services/chat_service.py` | 待處理 |
+> 加入 IntentRouter + MathVerifier + CodeInspector + ResultMerger + θ/η 更新 + 演化觸發
+
+### 4.5 θ 自檢迴路（2項）
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 5 | θ 錯配檢測觸發 | `core/autonomous/theta_router.py` | 待處理 |
+> 對話結束後 θ 自檢，detect_misallocated_points()，theta_negativity > 閾值觸發校正 |
+| 6 | θ 校正執行 | `core/autonomous/theta_router.py` | 待處理 |
+> auto_correct_all() 移動錯配點位，更新座標
+
+### 4.6 η 執行整合（2項）
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 7 | η 模組觸發曲線 | `core/autonomous/eta_axis.py` | 待處理 |
+> 根據 complexity × axis_count 計算 modules_to_call，觸發 LogicGate/ArithmeticOp/Aggregator/Router |
+| 8 | η → θ 反饋 | `core/autonomous/eta_axis.py` | 待處理 |
+> η 執行結果反饋到 θ，success_rate/drift 更新，continuous refinement 循環 |
+
+### 4.7 測試驗證（1項）
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 9 | REPL 完整流程測試 | - | 待處理 |
+> 觀察 αβγδεθζη 全部 8 維運作、θ 錯配校正、η 參數調整、LLM 狀態打包 |
+
+---
+
+## 五、已跳過/延後任務（1項）
 
 | # | 任務 | 狀態 | 說明 |
 |---|------|------|------|
@@ -427,9 +487,14 @@
 | 6.2.0 | 2026-02-19 | Phase 1-7 重構完成 | ✅ |
 | 6.2.1 | 2026-05-14 | Post-Refactor v1.0 完成 + 94 tests | ✅ |
 | 6.2.2 | 2026-05-16 | WebSocket Session Management | 🔄 81.6% |
+| 6.2.5 | 2026-05-16 | REPL + θ/η Integration Added | 🔄 74.0% |
 
 ---
 
 **最後更新**: 2026-05-16
-**版本**: v6.2.2
-**下一步**: 解決 WebSocket RSV Error (Issue #1)
+**版本**: v6.2.5
+**下一步**: 
+1. 新增 `state_matrix.export_for_llm()` — 打包 6 維 + θ + η 供 LLM 使用
+2. 增強 `_construct_angela_prompt()` — 加入 θ/η 狀態 + 座標 + 氛圍指引
+3. 重構 `chat_service.generate_response()` — 加入 IntentRouter + θ/η 管道
+4. REPL 測試 + 觀察座標變化

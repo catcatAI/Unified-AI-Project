@@ -1178,6 +1178,57 @@ app.include_router(api_v1_router)
 app.include_router(atlassian_router)
 app.include_router(state_matrix_router)
 
-if __name__ == "__main__":
+
+# ================================================================
+# REPL Mode: uvicorn daemon + interactive chat loop
+# ================================================================
+
+def _run_uvicorn_in_thread():
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
+
+
+async def _run_repl():
+    import logging
+    logging.disable(logging.INFO)
+
+    from services.chat_service import get_angela_chat_service
+
+    print("[REPL] Angela brain initializing...")
+    service = get_angela_chat_service()
+    await service.initialize()
+    print("[REPL] Angela ready! (exit/quit to stop)\n")
+
+    loop = asyncio.get_event_loop()
+
+    while True:
+        try:
+            user_input = await loop.run_in_executor(None, lambda: input("\n\U0001F4AC  你: "))
+        except (EOFError, KeyboardInterrupt):
+            print("\n[REPL] Shutting down...")
+            break
+
+        text = user_input.strip()
+        if text.lower() in ("exit", "quit"):
+            print("[REPL] Good bye!")
+            break
+        if not text:
+            continue
+
+        print("\U0001F4AD Angela: ", end="", flush=True)
+        response = await service.generate_response(text)
+        print(response)
+
+
+if __name__ == "__main__":
+    import sys, threading, time
+
+    if "--repl" in sys.argv:
+        server_thread = threading.Thread(target=_run_uvicorn_in_thread, daemon=True)
+        server_thread.start()
+        print("[REPL] Backend starting on http://127.0.0.1:8000 ...")
+        time.sleep(3)
+        asyncio.run(_run_repl())
+    else:
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
