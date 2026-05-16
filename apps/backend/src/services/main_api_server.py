@@ -307,6 +307,20 @@ app = FastAPI(
     version="6.0.4",
 )
 
+# ========== DEBUG: Patch websockets Frame.check to log RSV frames ==========
+import websockets
+import websockets.frames
+import sys
+_orig_frame_check = websockets.frames.Frame.check
+
+def _patched_frame_check(self):
+    if self.rsv1 or self.rsv2 or self.rsv3:
+        payload = getattr(self, 'data', b'') if hasattr(self, 'data') else b''
+        sys.stderr.write(f"[DEBUG RSV] RSV: rsv3={self.rsv3} opcode={self.opcode} fin={self.fin} payload_len={len(payload)} payload={payload[:50]}\n")
+    return _orig_frame_check(self)
+
+websockets.frames.Frame.check = _patched_frame_check
+
 # ========== Lazy Loading: Service Initialization ==========
 # Services are initialized on first access to avoid blocking imports
 _desktop_interaction = None
@@ -960,12 +974,43 @@ async def websocket_endpoint(websocket: WebSocket):
     - 支持单 session 生命周期
     - 支持多客户端注册
     """
+    # Accept the WebSocket connection
+    await websocket.accept()
+    
+    # DEBUG: Wrap the receive function to log ASGI events
+    orig_receive = websocket._receive
+    async def debug_receive():
+        msg = await orig_receive()
+        sys.stderr.write(f"[DEBUG WS endpoint] ASGI msg type={msg.get('type')} keys={list(msg.keys())}\n")
+        if msg.get('type') == 'websocket.receive':
+            text = msg.get('text')
+            bytes_d = msg.get('bytes')
+            if text:
+                sys.stderr.write(f"[DEBUG WS endpoint] text content: {repr(text[:80])}\n")
+            if bytes_d:
+                sys.stderr.write(f"[DEBUG WS endpoint] bytes content: {repr(bytes_d[:80])}\n")
+        return msg
+    websocket._receive = debug_receive
+    
     # Wait for initial handshake message with session_id
     try:
-        handshake = await asyncio.wait_for(websocket.receive_json(), timeout=10)
+        raw_data = await asyncio.wait_for(websocket.receive_text(), timeout=10)
+        logger.info(f"[WebSocket] Raw handshake data: {raw_data[:200]}")
+        try:
+            handshake = json.loads(raw_data)
+        except json.JSONDecodeError as e:
+            logger.warning(f"[WebSocket] Handshake is not valid JSON: {raw_data[:100]}")
+            await websocket.close(code=4002, reason="Invalid handshake format")
+            return
     except asyncio.TimeoutError:
         logger.warning("[WebSocket] Handshake timeout, closing connection")
-        await websocket.close(code=4001, reason="Handshake timeout")
+        try:
+            await websocket.close(code=4001, reason="Handshake timeout")
+        except Exception:
+            pass
+        return
+    except WebSocketDisconnect:
+        logger.warning("[WebSocket] Client disconnected during handshake")
         return
     
     # Extract session info from handshake
@@ -973,127 +1018,113 @@ async def websocket_endpoint(websocket: WebSocket):
     client_type = handshake.get("client_type", "desktop")
     client_version = handshake.get("client_version", "unknown")
     
-    metadata = {
+    # Register with session_id
+    session = await manager._sm.register(websocket, session_id, {
         "client_type": client_type,
         "client_version": client_version,
-    }
-    
-    # Register session with SessionManager
-    session = await manager.connect(websocket, session_id, metadata)
+    }, single_device_mode=True)
     client_id = session.client_id
     
     logger.info(f"[WebSocket] Incoming connection - client_id: {client_id}, session_id: {session_id}, remote: {websocket.client}")
 
-    try:
-        # Send initial connection confirmation with session info
-        await websocket.send_json(
-            {
-                "type": "connected",
-                "client_id": client_id,
-                "session_id": session_id,
-                "timestamp": datetime.now().isoformat(),
-                "server_version": "6.0.4",
-            }
-        )
+    # Send initial connection confirmation with session info
+    logger.info(f"[WebSocket] Sending 'connected' response to client_id: {client_id}")
+    await websocket.send_json(
+        {
+            "type": "connected",
+            "client_id": client_id,
+            "session_id": session_id,
+            "timestamp": datetime.now().isoformat(),
+            "server_version": "6.0.4",
+        }
+    )
 
-        # ========== Session-based message processing loop ==========
-        while True:
-            try:
-                # 接收消息（带超时）
-                data = await asyncio.wait_for(
-                    websocket.receive_json(), timeout=manager.heartbeat_timeout
+    # ========== Session-based message processing loop ==========
+    while True:
+        try:
+            data = await asyncio.wait_for(
+                websocket.receive_json(), timeout=manager.heartbeat_timeout
+            )
+
+            # Update heartbeat and sequence
+            await manager._sm.update_heartbeat(client_id)
+            sequence = manager._sm.increment_sequence(client_id)
+
+            if data.get("type") in ["heartbeat", "ping"]:
+                await websocket.send_json(
+                    {
+                        "type": (
+                            "heartbeat_ack" if data.get("type") == "heartbeat" else "echo"
+                        ),
+                        "timestamp": datetime.now().isoformat(),
+                    }
                 )
 
-                # Update heartbeat and sequence
-                await manager._sm.update_heartbeat(client_id)
-                sequence = manager._sm.increment_sequence(client_id)
-                
-                # Handle different message types
-                if data.get("type") in ["heartbeat", "ping"]:
-                    # 心跳响应
-                    await websocket.send_json(
-                        {
-                            "type": (
-                                "heartbeat_ack" if data.get("type") == "heartbeat" else "echo"
-                            ),
-                            "timestamp": datetime.now().isoformat(),
-                        }
-                    )
+            elif data.get("type") == "state_update":
+                await manager.broadcast(
+                    {
+                        "type": "state_update",
+                        "data": data.get("data", {}),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
-                elif data.get("type") == "state_update":
-                    # Broadcast state updates to all connected clients
-                    await manager.broadcast(
-                        {
-                            "type": "state_update",
-                            "data": data.get("data", {}),
-                            "timestamp": datetime.now().isoformat(),
-                        }
-                    )
+            elif data.get("type") == "tactile_event":
+                tactile_data = data.get("data", {})
+                tactile_service = get_tactile_service()
+                res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
 
-                elif data.get("type") == "tactile_event":
-                    # 2030 Standard: Identity-aware Reflex Loop
-                    tactile_data = data.get("data", {})
-                    tactile_service = get_tactile_service()
-                    res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
-                    
-                    # Direct reflex response for 2030 responsiveness
-                    await manager.send_personal_message({
-                        "type": "biological_feedback",
-                        "status": res.get("status"),
-                        "reflex": res.get("reflex"),
-                        "intensity": res.get("feedback", {}).get("intensity")
-                    }, websocket)
+                await manager.send_personal_message({
+                    "type": "biological_feedback",
+                    "status": res.get("status"),
+                    "reflex": res.get("reflex"),
+                    "intensity": res.get("feedback", {}).get("intensity")
+                }, websocket)
 
-                elif data.get("type") == "chat_message":
-                    # 2030 Standard: Use Realized Chat Service with Origin Tracking
-                    user_message = data.get("data", {}).get("content", "")
-                    message_id = data.get("data", {}).get("message_id", "")
-                    user_name = data.get("data", {}).get("user_name", "朋友")
+            elif data.get("type") == "chat_message":
+                user_message = data.get("data", {}).get("content", "")
+                message_id = data.get("data", {}).get("message_id", "")
+                user_name = data.get("data", {}).get("user_name", "朋友")
 
-                    chat_service = get_angela_chat_service()
-                    response_text = await chat_service.generate_response(user_message, user_name, origin="Human")
+                chat_service = get_angela_chat_service()
+                response_text = await chat_service.generate_response(user_message, user_name, origin="Human")
 
-                    # Send response back to the client
-                    await manager.send_personal_message(
-                        {
-                            "type": "chat_response",
-                            "data": {
-                                "message_id": message_id,
-                                "content": response_text,
-                                "sender": "angela",
-                            },
-                            "timestamp": datetime.now().isoformat(),
+                await manager.send_personal_message(
+                    {
+                        "type": "chat_response",
+                        "data": {
+                            "message_id": message_id,
+                            "content": response_text,
+                            "sender": "angela",
                         },
-                        websocket,
-                    )
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                    websocket,
+                )
 
-                else:
-                    # Echo back other messages for now
-                    await websocket.send_json(
-                        {
-                            "type": "echo",
-                            "original": data,
-                            "timestamp": datetime.now().isoformat(),
-                        }
-                    )
+            else:
+                await websocket.send_json(
+                    {
+                        "type": "echo",
+                        "original": data,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
-            except asyncio.TimeoutError:
-                # Heartbeat timeout - SessionManager handles this, but we close here
-                logger.warning(f"[WebSocket] Heartbeat timeout for client: {client_id}")
-                break
+        except asyncio.TimeoutError:
+            logger.warning(f"[WebSocket] Heartbeat timeout for client: {client_id}")
+            break
 
-            except WebSocketDisconnect:
-                logger.info(f"[WebSocket] Client disconnected: {client_id}")
-                break
+        except WebSocketDisconnect:
+            logger.info(f"[WebSocket] Client disconnected: {client_id}")
+            break
 
-            except Exception as e:
-                # broad exception acceptable: WebSocket message handling should be resilient
-                logger.error(f"[WebSocket] Message error for {client_id}: {e}")
-                continue
+        except Exception as e:
+            logger.error(f"[WebSocket] Message error for {client_id}: {e}")
+            continue
 
-    finally:
-        # Clean up session via SessionManager
-        asyncio.create_task(manager.unregister(client_id))
+        finally:
+            asyncio.create_task(manager.unregister(client_id))
 
 
 from services.atlassian_api import atlassian_router
