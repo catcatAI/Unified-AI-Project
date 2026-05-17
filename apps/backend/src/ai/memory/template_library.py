@@ -10,6 +10,8 @@
 """
 
 import logging
+import asyncio
+import threading
 from typing import Dict, List, Optional
 from enum import Enum
 
@@ -107,11 +109,19 @@ class TemplateLibrary:
     """
     模板库
     管理所有预定义和自定义回應模板
+
+    B4 修復：新增 asyncio.Lock 保護並發寫入操作。
+    - 預定義模板在 __init__ 時寫入（單線程，無需鎖）
+    - add_custom_template / remove_template 等寫操作需要鎖
+    - get_by_category / get_by_id 等讀操作無需鎖（Python GIL + dict 原子性）
     """
 
     def __init__(self):
         """初始化模板库"""
         self._templates: Dict[str, MemoryTemplate] = {}
+        self._write_lock: asyncio.Lock = asyncio.Lock()
+        self._thread_lock: threading.Lock = threading.Lock()
+        self._initialized: bool = False
         self._initialize_predefined_templates()
 
     def _initialize_predefined_templates(self):
@@ -620,15 +630,24 @@ class TemplateLibrary:
         """
         添加自定义模板
 
-        Args:
-            template: 自定义模板
+        B4 修復：使用 threading.Lock 保護寫入。
+        - 同步安全：threading.Lock 在 sync 上下文和多線程環境都安全
+        - get_template_library() 單例在多線程啟動時可能被並發初始化
+        - add_custom_template / remove_template 被多線程同時調用
         """
-        self._templates[template.id] = template
+        with self._thread_lock:
+            self._templates[template.id] = template
         logger.info(f"Added custom template: {template.id}")
+
+    async def add_custom_template_async(self, template: MemoryTemplate):
+        """async 版本添加自定義模板（使用 asyncio.Lock）"""
+        async with self._write_lock:
+            self._templates[template.id] = template
+        logger.info(f"Added custom template (async): {template.id}")
 
     def remove_template(self, template_id: str) -> bool:
         """
-        移除模板
+        移除模板（並發安全）
 
         Args:
             template_id: 模板 ID
@@ -636,10 +655,11 @@ class TemplateLibrary:
         Returns:
             bool: 是否成功移除
         """
-        if template_id in self._templates:
-            del self._templates[template_id]
-            logger.info(f"Removed template: {template_id}")
-            return True
+        with self._thread_lock:
+            if template_id in self._templates:
+                del self._templates[template_id]
+                logger.info(f"Removed template: {template_id}")
+                return True
         return False
 
     def get_template_count(self) -> int:
@@ -667,16 +687,21 @@ class TemplateLibrary:
 
 # 全局模板库实例
 _template_library: Optional[TemplateLibrary] = None
+_template_init_lock = threading.Lock()
 
 
 def get_template_library() -> TemplateLibrary:
     """
     获取全局模板库实例
 
-    Returns:
-        TemplateLibrary: 模板库实例
+    B4 修復：使用 double-checked locking 確保單例線程安全。
+    - 第一個 if 不需要鎖（大多數時候已初始化）
+    - 第二個 if 持有鎖（防止多線程並發初始化）
+    - 結合 threading.Lock 保護 _template_library 的初始化
     """
     global _template_library
     if _template_library is None:
-        _template_library = TemplateLibrary()
+        with _template_init_lock:
+            if _template_library is None:
+                _template_library = TemplateLibrary()
     return _template_library

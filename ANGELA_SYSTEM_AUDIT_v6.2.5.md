@@ -509,15 +509,17 @@ P3（可選）
 
 | # | 系統 | 問題 | 評估 |
 |---|------|------|------|
-| **B6** | HAMMemoryManager + FantasyDMAgent | 兩者都加載 TRPG Codex，行為不一致 | ⚠️ P1.2 統一到 HAMMemoryManager |
-| **B7** | ProjectCoordinator._decompose_user_intent_into_subtasks() | LLM 失敗時無 fallback | ⚠️ P1.3 測試並補 fallback |
-| **B8** | ProjectCoordinator._integrate_subtask_results() | LLM 失敗時 raw concat，需標註 | ⚠️ 明確 fallback 行為 |
-| **B9** | DocumentBuilder 段落無 timeout | 慢模型會導致 document build hang | ⚠️ P1.3 添加 segment timeout |
-| **B10** | ChatService 用 WaitingScheduler，DocumentBuilder 不用 | LLM 調用模式不一致 | ⚠️ 標註差異原因或統一 |
-| **B11** | DocumentBuilder._learn_format() 無去重 | 每次成功都寫入，累積重複 | ⚠️ P2.2 添加去重邏輯 |
-| **B12** | 三處 hardcoded keyword 意圖檢測 | _detect_task_intent + _detect_complex_task + _detect_task_type | ⚠️ P2.4 統一意圖 registry |
-| **B13** | angela_llm_service._fetch_angela_response() 呼叫 get_template_library() | init order 不保證 | ⚠️ 改為 lazy init |
-| **B14** | ChatService._fallback_response() 缺少 hasattr check | 經確認：已有 `getattr(empathy.predicted_emotional_state, "primary_emotion", None)` ✅ | ✅ 已修復 |
+| **B6** | HAMMemoryManager + FantasyDMAgent | 兩者都加載 TRPG Codex，行為不一致 | ✅ 統一到 HAMMemoryManager |
+| **B7** | ProjectCoordinator._decompose_user_intent_into_subtasks() | LLM 失敗時無 fallback | ✅ 已測試 + fallback |
+| **B8** | ProjectCoordinator._integrate_subtask_results() | LLM 失敗時 raw concat，需標註 | ✅ 已測試 + fallback |
+| **B9** | DocumentBuilder 段落無 timeout | 慢模型會導致 document build hang | ✅ asyncio.wait_for(timeout=15.0) |
+| **B10** | ChatService 用 WaitingScheduler，DocumentBuilder 不用 | LLM 調用模式不一致 | ✅ 標註差異原因 |
+| **B11** | DocumentBuilder._learn_format() 無去重 | 每次成功都寫入，累積重複 | ✅ _learned_format_keys dedup |
+| **B12** | 三處 hardcoded keyword 意圖檢測 | _detect_task_intent + _detect_complex_task + _detect_task_type | ✅ core/intent_registry.py 統一 |
+| **B13** | `get_template_library()` singleton 模塊初始化時無鎖保護 | init order + race condition | ✅ double-checked locking + threading.Lock |
+| **B14** | ChatService._fallback_response() missing hasattr check | Confirmed: uses `getattr(..., "primary_emotion", None)` ✅ | ✅ 已修復 |
+| **B15** | PlanningAgent (123行) 無任何引用 | 未被導入或調用 | ⏳ 已在代碼標注 deprecate staticmethod |
+| **B16** | AlignedCreativeWritingAgent 位於 examples/ 目錄 | 從未被主代碼導入 | ✅ 無需操作（無引用） |
 
 ---
 

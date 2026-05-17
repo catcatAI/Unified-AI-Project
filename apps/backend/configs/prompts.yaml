@@ -1,38 +1,33 @@
 # Prompts for the ProjectCoordinator
 
 decompose_user_intent: |
-  Given a user's request, break it down into a series of subtasks that can be executed by specialized agents.
-  The available capabilities are:
+  你是一個任務規劃專家。將用戶的複雜請求分解成可執行的子任務。
+  可用的能力如下：
   {capabilities}
 
-  The user's request is:
+  用戶請求：
   {user_query}
 
-  Please provide a JSON-formatted list of subtasks with the following structure:
-  [
-    {{
-      "capability_needed": "capability_name",
-      "task_parameters": {{
-        "param1": "value1",
-        "param2": "value2"
-      }},
-      "task_description": "A description of the subtask."
-    }},
-    ...
-  ]
+  請輸出 JSON 格式的子任務列表，每個任務包含：
+    - capability_needed: 需要的 capability 名稱（如 web_search_v1, creative_writing_v1, data_analysis_v1 等）
+    - task_parameters: 任務參數（可包含 '<output_of_task_N>' 引用前 N 個任務的輸出結果）
+    - task_description: 任務簡要描述（中文）
+  只輸出 JSON 陣列格式，不要加任何其他文字。
 
-  If a task depends on the output of a previous task, use the placeholder "<output_of_task_N>" where N is the index of the dependency task.
+  任務類型映射：
+    - 「角色卡/角色生成/艦娘」→ capability_needed: creative_writing_v1, task_parameters 加 query
+    - 「搜尋資料/查找」→ capability_needed: web_search_v1, task_parameters 加 query 和 num_results
+    - 「整理文件/報告」→ capability_needed: creative_writing_v1, task_parameters 加 task_type: document
 
 integrate_subtask_results: |
-  Given the user's original request and the results of the subtasks, please provide a comprehensive final response.
-
-  User's Original Request:
+  用戶原始請求：
   {original_query}
 
-  Collected Results from Sub-Agents:
+  子任務收集到的結果：
   {results}
 
-  Please provide a final, integrated response that directly addresses the user's original request.
+  請將這些結果整合成一個完整、連貫的回應，直接回答用戶的原始請求。
+  如果結果不完整，說明原因並給給出合理的補充。保持中文輸出。
 
 # Prompts for the CreativeWritingAgent
 creative_writing_agent:

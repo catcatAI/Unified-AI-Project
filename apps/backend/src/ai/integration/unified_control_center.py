@@ -23,7 +23,7 @@ from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 from economy.economy_manager import EconomyManager
 from ai.agents.agent_manager import AgentManager
 from core.hsp.connector import HSPConnector
-from services.adapters.multi_llm_adapter import MultiLLMService, ChatMessage
+from services.angela_llm_service import ChatMessage
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +114,11 @@ class UnifiedControlCenter:
             self.components["hsp_connector"] = HSPConnector(self.system_id, **hsp_config)
 
             # 10. LLM Service (Phase 15)
-            llm_config_path = self.config.get("llm_config_path")
-            self.components["llm_service"] = MultiLLMService(llm_config_path)
+            # 使用 angela_llm_service 而非 multi_llm_adapter
+            from services.angela_llm_service import get_llm_service
+            async def init_llm():
+                return await get_llm_service()
+            self.components["llm_service"] = await init_llm()
 
             # 11. Emotion System (Phase 12)
             self.components["emotion_system"] = EmotionSystem(f"{self.system_id}_emotion")

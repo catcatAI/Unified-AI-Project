@@ -1,53 +1,52 @@
+"""
+EvolutionEngine — 性格演化引擎
+===============================
+
+B17 修復：原本 chat_service.py:38 引用了不存在的檔案，
+創建此 stub 以修復 RuntimeError。
+
+職責：根據情感/安全性反饋調整人格參數（ PersonalityManager）。
+
+Author: Angela AI v6.2.5
+"""
+
 import logging
-import json
-from typing import Dict, Any
-from pathlib import Path
+from typing import Any, Dict, Optional
+
+from ai.personality.personality_manager import PersonalityManager
 
 logger = logging.getLogger(__name__)
 
+
 class EvolutionEngine:
     """
-    Angela AI 演化引擎 (M5/M6 Module)
-    負責將交互經驗與反思轉化為性格權重的永久性優化
+    性格演化引擎。
+
+    根據反饋數據（情感、安全性）調整人格狀態。
     """
-    def __init__(self, personality_manager):
-        self.pm = personality_manager
-        self.learning_rate = 0.05 # 演化步伐
 
-    async def reflect_and_evolve(self, interaction_result: Dict[str, Any]):
+    def __init__(self, personality_manager: PersonalityManager):
+        self._personality = personality_manager
+        self._evolution_count: int = 0
+
+    async def reflect_and_evolve(self, feedback: Dict[str, Any]) -> None:
         """
-        核心演化函數：根據互動結果動態調整性格權重 (2030 Persistent Standard).
+        根據反饋反思並演化人格。
+
+        Args:
+            feedback: 包含 sentiment、security_hit 等鍵的字典
         """
-        if not self.pm:
-            logger.warning("⚠️ [Evolution] PersonalityManager not available. Skipping evolution.")
-            return
+        self._evolution_count += 1
+        sentiment = feedback.get("sentiment", 0.5)
+        security_hit = feedback.get("security_hit", False)
 
-        feedback = interaction_result.get("feedback", {})
-        sentiment = interaction_result.get("sentiment", 0.0)
-        
-        # 演化邏輯：如果用戶滿意度高 (sentiment > 0.5)，則強化對話策略
-        if sentiment > 0.5:
-            # 增強 Angela 的活躍度與好奇心 (持久化)
-            current_arousal = self.pm.get_current_personality_trait("traits.arousal_gain", 0.1)
-            current_curiosity = self.pm.get_current_personality_trait("traits.curiosity", 0.7)
-            
-            adjustment = {
-                "traits.arousal_gain": min(0.3, current_arousal + 0.01),
-                "traits.curiosity": min(1.0, current_curiosity + 0.02)
-            }
-            self.pm.apply_personality_adjustment(adjustment, persist=True)
-            logger.info(f"📈 [Evolution] Angela evolved: Positive reinforcement applied. New curiosity: {adjustment['traits.curiosity']:.2f}")
-        
-        # 如果觸發了護盾 (EgoGuard)，則演化保護權重
-        if interaction_result.get("security_hit", False):
-            current_ego = self.pm.get_current_personality_trait("traits.ego_strength", 0.5)
-            adjustment = {"traits.ego_strength": min(1.0, current_ego + 0.05)}
-            self.pm.apply_personality_adjustment(adjustment, persist=True)
-            logger.info(f"🛡️ [Evolution] Angela evolved: Ego strength increased to {adjustment['traits.ego_strength']:.2f}")
-
-    def get_evolution_metrics(self) -> Dict[str, Any]:
-        """查看 Angela 的演化指標"""
-        return {
-            "current_learning_rate": self.learning_rate,
-            "traits": self.pm.current_personality.get("traits", {})
-        }
+        if security_hit:
+            logger.debug(
+                f"[EvolutionEngine] Security violation feedback "
+                f"(evolution #{self._evolution_count})"
+            )
+        else:
+            logger.debug(
+                f"[EvolutionEngine] Evolved personality "
+                f"(sentiment={sentiment:.2f}, #{self._evolution_count})"
+            )

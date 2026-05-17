@@ -220,8 +220,81 @@ _input → _update_theta_from_input → _update_eta_from_input
 - WebSocket: Multi-client session routing (for multi-device support)
 - Intent routing: semantic routing via anchor keywords (currently token-based)
 
+## Audit Issues Found (2026-05-17)
+
+1. **A1**: P0.1 only listed 1 import for `multi_llm_adapter.py` — actually **5 imports** (fact_extractor_module, ensemble, unified_control_center, dialogue_manager, router). Action plan updated.
+2. **A2**: P0.3 suggested `ProjectCoordinator._dispatch_single_subtask` (private) as ToolDispatcher replacement — not feasible. Action plan redesigned with two options.
+3. **A3**:废弃清单 had duplicate entry for `evolution_engine.py`
+4. **A4**: `core/evolution/autonomous_evolution_engine.py` (609 lines) never referenced — added to废弃清单
+5. **A5**: Both ExecutionManagers have `get_execution_manager()` singleton — deleting one may break dependencies
+6. **A6**: `CreativeWritingAgent` is 63-line stub; `AlignedCreativeWritingAgent` (208 lines) exists but may not be wired. → P2.5: `CreativeWritingAgent` rewrote from 63→158 lines, now delegates to DocumentBuilder with 3 capabilities (write_story, write_character_card, write_article)
+7. **A7**: PlanningAgent (123 lines) is template-based, can be replaced by ProjectCoordinator
+8. **A8**: FantasyDMAgent `_load_codex()` never called on init
+9. **A9**: EgoGuard 59行（已驗證）✓
+10. **A10**: Line counts verified: VisionService 704 ✓, AngelaLLMService 1743→**1780** (updated) ✓, StateMatrix 1729 ✓, TemplateLibrary 682 ✓, Connector 1071 ✓, BiologicalIntegrator 841 ✓, EgoGuard 59 ✓
+11. **A11 (新)**: `angela_llm_service.py` has NO `chat_completion()` — only `generate()`/`generate_text()`. multi_llm_adapter consumers call `chat_completion()`.
+12. **A12 (新)**: `ensemble.py` calls `chat_completion()` — interface mismatch (A11 chain).
+13. **A13 (新)**: `unified_control_center.py` instantiates `MultiLLMService(llm_config_path)` directly.
+14. **A14 (新)**: `language_models/router.py` only imports `ModelProvider` enum — can keep/reimplement.
+15. **A15 (新)**: `fact_extractor_module.py` calls `chat_completion()` — A11 chain.
+16. **A16 (新)**: `LearningManager`→`FactExtractorModule`→`MultiLLMService.chat_completion()` chain risk.
+17. **A17 (新)**: `ai/agents/__init__.py`, `agent_manager.py`, `api/router.py` reference `CreativeWritingAgent` — can't simply delete.
+18. **A18 (新)**: `core_service_manager.py` has commented-out ExecutionManager import — no live reference.
+19. **A19 (新)**: `ai/execution/execution_manager.py` double-monitor init; `_load_config_from_system` references missing `history_size` field. → P0: deleted file; `core/managers/execution_manager.py` deleted too
+
+## Additional Boundary Issues (B6-B14, from deep code review)
+
+| # | System | Issue | Assessment |
+|---|--------|-------|------------|
+| **B6** | HAMMemoryManager + FantasyDMAgent | Both load TRPG Codex, inconsistent behavior | ✅ HAMMemoryManager is sole source, DocumentBuilder queries it |
+| **B7** | ProjectCoordinator._decompose_user_intent_into_subtasks() | No fallback if LLM fails during planning | ✅ Tested + fallback: `_fallback_decompose()` method |
+| **B8** | ProjectCoordinator._integrate_subtask_results() | LLM failure → raw concat, needs explicit fallback | ✅ Tested + fallback with empty prompt template |
+| **B9** | DocumentBuilder segments have no timeout | Slow model = hanging build | ✅ Fixed: `asyncio.wait_for(timeout=15.0)` per segment |
+| **B10** | ChatService uses WaitingScheduler, DocumentBuilder does not | Inconsistent LLM call patterns | ⚠️ Documented: ChatService uses scheduler, DB uses direct calls |
+| **B11** | DocumentBuilder._learn_format() no dedup | Every success writes, accumulates duplicates | ✅ Fixed: `_learned_format_keys` set deduplicates by (task_type, keywords) |
+| **B12** | Three hardcoded keyword intent systems | Duplicated logic | ✅ Fixed: `core/intent_registry.py` created with `detect()`, `detect_task_type()` etc. |
+| **B13** | `get_template_library()` singleton race condition at module init | ✅ Fixed: double-checked locking + `threading.Lock` in singleton + `_thread_lock` in class |
+
+## Modularity Boundary Risks (Identified 2026-05-17)
+
+| # | System | Risk | Assessment |
+|---|--------|------|------------|
+| **B1** | P0.1 `chat_completion()` wrapper | Becoming another "universal LLM interface" | ⚠️ Keep thin |
+| **B2** | ProjectCoordinator → DocumentBuilder → generate_text() chain | Single failure point if LLM fails | ⚠️ Documented: each has fallback, segment timeout |
+| **B3** | ChatService (598 lines < 1000) | Becoming a "god class" | ✅ Monitored: currently 598 lines, below 1000 threshold |
+| **B4** | TemplateLibrary shared by multiple consumers | Race condition risk | ✅ Fixed: `threading.Lock` + `asyncio.Lock` added, `add_custom_template` / `remove_template` now thread-safe |
+
 ---
 
 **Version**: v6.2.5
 **Last Updated**: 2026-05-17
-**Status**: 8D system fully integrated, all axes with real computation drivers, dynamic coordinates, semantic anchors for all axes including θ and ζ
+**Status**: P0 + P1 + P2 all completed. B7-B12 fixed. IntentRegistry wired into ProjectCoordinator + DocumentBuilder.
+
+## Completed Actions
+
+| Phase | Item | Status | Notes |
+|-------|------|--------|-------|
+| P0 | Deleted 6 files (evolution_engine, dialogue_manager, tool_dispatcher, etc.) | ✅ | zero live references |
+| P0.1 | `chat_completion()` wrapper in angela_llm_service | ✅ | thin wrapper |
+| P0.2 | `EvolutionEngine` removed, `anchor_learning.on_axis_update()` used | ✅ | |
+| P1.3 | ProjectCoordinator + DocumentBuilder isolation tests | ✅ | 14 tests pass |
+| P2.1 | ChatService size monitoring | ✅ | 598 lines < 1000 threshold |
+| P2.2 | `_learn_format()` dedup | ✅ | `_learned_format_keys` set |
+| P2.4 | IntentRegistry | ✅ | `core/intent_registry.py` wired into PC + DB |
+| P2.5 | CreativeWritingAgent rewrite | ✅ | 63→158 lines, 3 capabilities |
+| P1.2 | HAMMemoryManager is sole TRPG Codex source | ✅ | DocumentBuilder queries it |
+
+## Remaining Issues
+
+| # | Issue | Priority | Action |
+|---|-------|----------|--------|
+| B13 | `get_template_library()` init order + race condition | Low | ✅ Fixed: double-checked locking + threading.Lock |
+| B15 | PlanningAgent (123 lines) zero reference | Low | ✅ Annotated deprecate() in source |
+| B16 | AlignedCreativeWritingAgent in examples | Low | Observe |
+| B17 | `ai.lifecycle` namespace package issue | High | ✅ Fixed: pre-load `ai.lifecycle` in conftest.py to avoid double-scan overhead |
+
+## Test Files
+
+- `tests/test_project_coordinator_isolation.py` — pytest suite (20 tests, fixtures for slow imports)
+- `tests/_run_pc_tests.py` — quick runner (14 tests, uses importlib.util)
+- `tests/_run_pc_tests_file.py` — file-based runner (bypasses pytest init slowness)

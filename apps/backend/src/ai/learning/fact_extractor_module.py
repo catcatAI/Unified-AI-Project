@@ -2,7 +2,7 @@ import logging
 import json
 import asyncio
 from typing import List, Dict, Optional, Any
-from services.adapters.multi_llm_adapter import MultiLLMService, ChatMessage
+from services.angela_llm_service import ChatMessage, LLMResponse
 from .types import ExtractedFact
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ class FactExtractorModule:
 
     def __init__(
         self,
-        llm_service: MultiLLMService,
+        llm_service: Any,
         model_id: str = "gpt-3.5-turbo",
         model_params: Optional[Dict[str, Any]] = None,
     ) -> None:

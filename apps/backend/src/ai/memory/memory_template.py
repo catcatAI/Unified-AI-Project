@@ -42,6 +42,10 @@ class ResponseCategory(Enum):
     APOLOGY = "apology"  # 道歉
     GRATITUDE = "gratitude"  # 感谢
     HELP = "help"  # 帮助
+    CHARACTER_CARD = "character_card"
+    DOCUMENT = "document"
+    RESEARCH = "research"
+    PLAN = "plan"
     UNKNOWN = "unknown"  # 未知类别
 
 

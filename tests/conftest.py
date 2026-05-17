@@ -25,6 +25,7 @@ def minimal_app() -> FastAPI:
     """
     Minimal FastAPI app for tests that don't need the full server.
     Provides basic health check and system endpoints without heavy imports.
+    Lazy import: only loaded when fixture is actually used, not during collection.
     """
     from fastapi import APIRouter
 

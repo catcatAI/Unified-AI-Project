@@ -248,6 +248,23 @@ class AngelaChatService:
 
         dim_fit = self._compute_dimension_fit(text)
         self.state_matrix.theta.values["dimension_fit"] = dim_fit
+        scores = {}
+        anchor_keywords = {
+            "alpha": ["能量", "疲憊", "身體", "累", "餓", "渴", "健康", "energy", "tired", "body", "sick", "rest", "sleep"],
+            "beta": ["思考", "學習", "專注", "好奇", "困惑", "理解", "think", "learn", "focus", "curious", "understand", "decide"],
+            "gamma": ["開心", "難過", "生氣", "害怕", "愛", "情緒", "happy", "sad", "angry", "fear", "love", "emotion", "feel"],
+            "delta": ["社交", "信任", "連接", "朋友", "alone", "social", "trust", "bond", "friend", "connection", "together"],
+            "epsilon": ["計算", "邏輯", "數字", "精確", "calculate", "logic", "number", "math", "precise", "compute"],
+            "theta": ["複雜", "新穎", "創造", "策略", "分析", "元認知", "complex", "novel", "create", "strategy", "analyze"],
+            "zeta": ["記憶", "時間", "故事", "身份", "連續", "memory", "time", "story", "identity", "history", "narrative"],
+            "eta": ["執行", "成功率", "漂移", "迭代", "execute", "success", "drift", "iteration", "iterate"],
+        }
+        text_lower = text.lower()
+        for axis, keywords in anchor_keywords.items():
+            scores[axis] = sum(1 for kw in keywords if kw in text_lower) / max(1, len(keywords))
+        if dim_fit > 0.15:
+            dominant_axis = max(scores, key=scores.get)
+            self.state_adapter.anchor_learning.on_axis_update(dominant_axis, {"dimension_fit_boost": 0.01}, is_stable=True)
 
     def _compute_dimension_fit(self, text: str) -> float:
         anchor_keywords = {
@@ -258,6 +275,7 @@ class AngelaChatService:
             "epsilon": ["計算", "邏輯", "數字", "精確", "calculate", "logic", "number", "math", "precise", "compute"],
             "theta": ["複雜", "新穎", "創造", "策略", "分析", "元認知", "complex", "novel", "create", "strategy", "analyze"],
             "zeta": ["記憶", "時間", "故事", "身份", "連續", "memory", "time", "story", "identity", "history", "narrative"],
+            "eta": ["執行", "成功率", "漂移", "迭代", "execute", "success", "drift", "iteration", "iterate"],
         }
         text_lower = text.lower()
         scores = {}
@@ -460,6 +478,7 @@ class AngelaChatService:
             try:
                 result = await asyncio.wait_for(future, timeout=10.0)
                 if result and result.text:
+                    self.state_adapter.anchor_learning.on_axis_update("gamma", {"trust": 0.01, "connection": 0.01}, is_stable=True)
                     return result.text
             except asyncio.TimeoutError:
                 logger.warning(f"[GeneralIntent] LLM call timed out for: {user_message[:20]}")
@@ -496,9 +515,11 @@ class AngelaChatService:
                 classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
                 lines = code.count('\n') + 1
                 self.state_matrix.beta.values["clarity"] = min(1.0, self.state_matrix.beta.values.get("clarity", 0.5) + 0.05)
+                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.03, "task_completion": 0.02}, is_stable=True)
                 return f"（代碼解析完成）函數：{funcs}，類：{classes}，行數：{lines}。ε 複雜度已更新。"
             except SyntaxError as se:
                 self.state_matrix.beta.values["confusion"] = min(1.0, self.state_matrix.beta.values.get("confusion", 0) + 0.1)
+                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"fatigue": 0.03}, is_stable=False)
                 return f"（代碼解析完成）發現語法問題：{se.msg}，位置：行{se.lineno}。ε 複雜度已更新。"
 
         func_names = re.findall(r'def\s+(\w+)|function\s+(\w+)|class\s+(\w+)', text, re.IGNORECASE)
@@ -529,6 +550,8 @@ class AngelaChatService:
         self.state_matrix.zeta.values["memory_depth"] = min(1.0, self.eta_state.execution_count * 0.001)
         self.state_matrix.zeta.values["narrative_flow"] = 0.7 if self.eta_state.execution_count > 0 else 0.5
         self.state_matrix.zeta.values["identity_continuity"] = 0.75 if self.eta_state.execution_count > 5 else 0.6
+        if self.eta_state.execution_count > 0:
+            self.state_adapter.anchor_learning.on_axis_update("zeta", {"temporal_coherence": 0.005, "narrative_flow": 0.005}, is_stable=True)
 
     def _build_advanced_prompt(self, **kwargs) -> str:
         """

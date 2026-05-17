@@ -31,7 +31,16 @@ logger = logging.getLogger(__name__)
 class PlanningAgent(BaseAgent):
     """
     A specialized agent for task planning, scheduling, and project management.
+
+    B15: 零引用代理 — 未被任何模塊導入或調用。計畫標注為可棄用。
     """
+
+    @staticmethod
+    def deprecate() -> str:
+        return (
+            "PlanningAgent 已在 v6.2.5 棄用。功能已被 "
+            "ProjectCoordinator + DocumentBuilder 的任務規劃取代。"
+        )
 
     def __init__(self, agent_id: str) -> None:
         capabilities = [

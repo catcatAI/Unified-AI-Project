@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, AsyncGenerator
 from datetime import datetime
 
-from services.adapters.multi_llm_adapter import MultiLLMService, ChatMessage, LLMResponse, ModelConfig
+from services.angela_llm_service import ChatMessage, LLMResponse
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class ModelEnsemble:
     - 20% Local model (Mixtral or similar)
     """
 
-    def __init__(self, llm_service: MultiLLMService):
+    def __init__(self, llm_service: Any):
         self.llm_service = llm_service
         self.fusion_engine = ResponseFusionEngine()
         self.weights: Dict[str, float] = {}

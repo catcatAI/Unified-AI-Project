@@ -14,12 +14,13 @@ import asyncio
 import json
 import time
 import logging
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
 from abc import ABC, abstractmethod
 
-import httpx
+import aiohttp
 
 # 簡單日誌設置
 logging.basicConfig(level=logging.INFO)
@@ -105,6 +106,19 @@ class LLMBackend(Enum):
     NONE = "none"
 
 
+class ModelProvider(Enum):
+    """LLM 提供者（遷移自 multi_llm_adapter.py）"""
+
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    GOOGLE = "google"
+    AZURE_OPENAI = "azure_openai"
+    COHERE = "cohere"
+    HUGGINGFACE = "huggingface"
+    OLLAMA = "ollama"
+    LLAMA_CPP = "llama_cpp"
+
+
 @dataclass
 class LLMResponse:
     """LLM 回應結構"""
@@ -117,6 +131,45 @@ class LLMResponse:
     confidence: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
+
+    @property
+    def content(self) -> str:
+        return self.text
+
+
+@dataclass
+class ChatMessage:
+    """對話消息（遷移自 multi_llm_adapter.py）"""
+
+    role: str  # system, user, assistant
+    content: str
+    name: Optional[str] = None
+    timestamp: Optional[datetime] = None
+
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "role": self.role,
+            "content": self.content,
+            "name": self.name,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ChatMessage":
+        return cls(
+            role=data.get("role", "user"),
+            content=data.get("content", ""),
+            name=data.get("name"),
+            timestamp=(
+                datetime.fromisoformat(data["timestamp"])
+                if data.get("timestamp")
+                else None
+            ),
+        )
 
 
 class BaseLLMBackend(ABC):
@@ -144,15 +197,15 @@ class LlamaCppBackend(BaseLLMBackend):
     async def check_health(self) -> bool:
         """檢查 llama.cpp 服務是否可用"""
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                # 嘗試獲取模型列表
-                response = await client.get(f"{self.base_url}/api/tags", timeout=3.0)
-                if response.status_code == 200:
-                    data = response.json()
-                    self.model = data.get("model_name", self.model)
-                    return True
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=5)
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        self.model = data.get("model_name", self.model)
+                        return True
         except Exception as e:
-            # broad exception acceptable: health checks should not crash the service
             logger.debug(f"llama.cpp health check failed: {e}")
         return False
 
@@ -170,34 +223,34 @@ class LlamaCppBackend(BaseLLMBackend):
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
                     f"{self.base_url}/v1/chat/completions",
                     json=payload,
-                    timeout=self.timeout,
-                )
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        text = data["choices"][0]["message"]["content"]
+                        tokens = data.get("usage", {}).get("total_tokens", 0)
 
-                if response.status_code == 200:
-                    data = response.json()
-                    text = data["choices"][0]["message"]["content"]
-                    tokens = data.get("usage", {}).get("total_tokens", 0)
-
-                    return LLMResponse(
-                        text=text,
-                        backend="llama.cpp",
-                        model=self.model or "unknown",
-                        tokens_used=tokens,
-                        response_time_ms=(time.time() - start_time) * 1000,
-                        confidence=0.9,
-                    )
-                else:
-                    return LLMResponse(
-                        text="",
-                        backend="llama.cpp",
-                        model=self.model,
-                        error=f"HTTP {response.status_code}: {response.text}",
-                    )
-        except Exception as e:  # broad exception acceptable: LLM generation must be resilient to network/API errors
+                        return LLMResponse(
+                            text=text,
+                            backend="llama.cpp",
+                            model=self.model or "unknown",
+                            tokens_used=tokens,
+                            response_time_ms=(time.time() - start_time) * 1000,
+                            confidence=0.9,
+                        )
+                    else:
+                        text = await response.text()
+                        return LLMResponse(
+                            text="",
+                            backend="llama.cpp",
+                            model=self.model,
+                            error=f"HTTP {response.status}: {text[:200]}",
+                        )
+        except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(text="", backend="llama.cpp", model=self.model, error=str(e))
 
@@ -213,21 +266,20 @@ class OllamaBackend(BaseLLMBackend):
     async def check_health(self) -> bool:
         """檢查 Ollama 服務是否可用"""
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                response = await client.get(f"{self.base_url}/api/tags", timeout=3.0)
-                if response.status_code == 200:
-                    data = response.json()
-                    # 檢查指定模型是否存在
-                    models = data.get("models", [])
-                    for m in models:
-                        if self.model in m.get("name", ""):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        models = data.get("models", [])
+                        for m in models:
+                            if self.model in m.get("name", ""):
+                                return True
+                        if models:
+                            self.model = models[0].get("name", "llama3")
                             return True
-                    # 如果模型不存在，嘗試使用第一個可用模型
-                    if models:
-                        self.model = models[0].get("name", "llama3")
-                        return True
         except Exception as e:
-            # broad exception acceptable: health checks should be resilient to errors
             logger.debug(f"Ollama health check failed: {e}")
         return False
 
@@ -242,77 +294,43 @@ class OllamaBackend(BaseLLMBackend):
             "messages": messages,
             "options": {
                 "temperature": kwargs.get("temperature", 0.7),
-                "num_predict": kwargs.get("max_tokens", 512),
+                "num_predict": kwargs.get("max_tokens", 256),
             },
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.base_url}/api/chat", json=payload, timeout=self.timeout
-                )
-
-                if response.status_code == 200:
-                    try:
-                        # Ollama 可能返回 NDJSON 格式（多個 JSON 用換行分隔）
-                        # 先嘗試標準 JSON 解析，如果失敗則處理 NDJSON
-                        try:
-                            data = response.json()
-                        except Exception as json_error:
-                            # broad exception acceptable: JSON parsing should be resilient to malformed responses
-                            # 檢查是否是 "Extra data" 錯誤（NDJSON 格式）
-                            if "Extra data" in str(json_error):
-                                data = None
-                                text = ""
-                                # 解析 NDJSON - 逐行解析，取最後一個完整的 JSON
-                                lines = response.text.strip().split("\n")
-                                for line in lines:
-                                    line = line.strip()
-                                    if line:
-                                        try:
-                                            data = json.loads(line)
-                                            # 找到最後一個包含 message.content 的完整回應
-                                            if data.get("message", {}).get("content"):
-                                                text = data.get("message", {}).get("content", "")
-                                        except json.JSONDecodeError:
-                                            # JSON解析失敗，跳過該行
-                                            continue
-                                if data is None:
-                                    raise json_error
-                            else:
-                                raise json_error
-
-                        if not text:
-                            text = data.get("message", {}).get("content", "") if data else ""
-                    except Exception as json_error:
-                        # broad exception acceptable: JSON parsing should be resilient to malformed responses
-                        logger.warning(
-                            f"Ollama JSON 解析錯誤: {json_error}, 原始回應: {response.text[:200]}"
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/api/chat",
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as response:
+                    if response.status == 200:
+                        text = ""
+                        async for line in response.content:
+                            line = line.decode("utf-8").strip()
+                            if line:
+                                try:
+                                    data = json.loads(line)
+                                    if data.get("message", {}).get("content"):
+                                        text += data["message"]["content"]
+                                except json.JSONDecodeError:
+                                    continue
+                        return LLMResponse(
+                            text=text,
+                            backend="ollama",
+                            model=self.model,
+                            response_time_ms=(time.time() - start_time) * 1000,
+                            confidence=0.9,
                         )
+                    else:
                         return LLMResponse(
                             text="",
                             backend="ollama",
                             model=self.model,
-                            error=f"JSON parse error: {str(json_error)}",
-                            response_time_ms=(time.time() - start_time) * 1000,
+                            error=f"HTTP {response.status}",
                         )
-
-                    return LLMResponse(
-                        text=text,
-                        backend="ollama",
-                        model=self.model,
-                        response_time_ms=(time.time() - start_time) * 1000,
-                        confidence=0.9,
-                    )
-                else:
-                    return LLMResponse(
-                        text="",
-                        backend="ollama",
-                        model=self.model,
-                        error=f"HTTP {response.status_code}",
-                    )
         except Exception as e:
-            # broad exception acceptable: LLM generation must be resilient to network/API errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(text="", backend="ollama", model=self.model, error=str(e))
 
@@ -331,15 +349,14 @@ class OpenAIAPIBackend(BaseLLMBackend):
         if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:
             return False
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                response = await client.get(
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
                     f"{self.base_url}/models",
                     headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=3.0
-                )
-                return response.status_code == 200
+                    timeout=aiohttp.ClientTimeout(total=5),
+                ) as response:
+                    return response.status == 200
         except Exception as e:
-            # broad exception acceptable: health checks should be resilient to errors
             logger.debug(f"OpenAI health check failed: {e}")
         return False
 
@@ -354,36 +371,37 @@ class OpenAIAPIBackend(BaseLLMBackend):
             "temperature": kwargs.get("temperature", 0.7),
         }
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
                     f"{self.base_url}/chat/completions",
                     json=payload,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json",
                     },
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    text = data["choices"][0]["message"]["content"]
-                    tokens = data.get("usage", {}).get("total_tokens", 0)
-                    return LLMResponse(
-                        text=text,
-                        backend="openai",
-                        model=self.model,
-                        tokens_used=tokens,
-                        response_time_ms=(time.time() - start_time) * 1000,
-                        confidence=0.95,
-                    )
-                else:
-                    return LLMResponse(
-                        text="",
-                        backend="openai",
-                        model=self.model,
-                        error=f"HTTP {response.status_code}: {response.text[:200]}",
-                    )
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        text = data["choices"][0]["message"]["content"]
+                        tokens = data.get("usage", {}).get("total_tokens", 0)
+                        return LLMResponse(
+                            text=text,
+                            backend="openai",
+                            model=self.model,
+                            tokens_used=tokens,
+                            response_time_ms=(time.time() - start_time) * 1000,
+                            confidence=0.95,
+                        )
+                    else:
+                        text = await response.text()
+                        return LLMResponse(
+                            text="",
+                            backend="openai",
+                            model=self.model,
+                            error=f"HTTP {response.status}: {text[:200]}",
+                        )
         except Exception as e:
-            # broad exception acceptable: LLM generation must be resilient to network/API errors
             logger.error(f"OpenAI API error: {e}", exc_info=True)
             return LLMResponse(text="", backend="openai", model=self.model, error=str(e))
 
@@ -415,8 +433,8 @@ class AnthropicAPIBackend(BaseLLMBackend):
             "temperature": kwargs.get("temperature", 0.7),
         }
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
                     f"{self.base_url}/messages",
                     json=payload,
                     headers={
@@ -424,28 +442,29 @@ class AnthropicAPIBackend(BaseLLMBackend):
                         "Content-Type": "application/json",
                         "anthropic-version": "2023-06-01",
                     },
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    text = data.get("content", [{}])[0].get("text", "")
-                    tokens = data.get("usage", {}).get("input_tokens", 0) + data.get("usage", {}).get("output_tokens", 0)
-                    return LLMResponse(
-                        text=text,
-                        backend="anthropic",
-                        model=self.model,
-                        tokens_used=tokens,
-                        response_time_ms=(time.time() - start_time) * 1000,
-                        confidence=0.95,
-                    )
-                else:
-                    return LLMResponse(
-                        text="",
-                        backend="anthropic",
-                        model=self.model,
-                        error=f"HTTP {response.status_code}: {response.text[:200]}",
-                    )
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        text = data.get("content", [{}])[0].get("text", "")
+                        tokens = data.get("usage", {}).get("input_tokens", 0) + data.get("usage", {}).get("output_tokens", 0)
+                        return LLMResponse(
+                            text=text,
+                            backend="anthropic",
+                            model=self.model,
+                            tokens_used=tokens,
+                            response_time_ms=(time.time() - start_time) * 1000,
+                            confidence=0.95,
+                        )
+                    else:
+                        text = await response.text()
+                        return LLMResponse(
+                            text="",
+                            backend="anthropic",
+                            model=self.model,
+                            error=f"HTTP {response.status}: {text[:200]}",
+                        )
         except Exception as e:
-            # broad exception acceptable: LLM generation must be resilient to network/API errors
             logger.error(f"Anthropic API error: {e}", exc_info=True)
             return LLMResponse(text="", backend="anthropic", model=self.model, error=str(e))
 
@@ -1741,6 +1760,93 @@ class AngelaLLMService:
             Dict[str, Any]: 包含情感分析结果的字典
         """
         return self.analyze_emotion(response_text, response_text)
+
+    async def generate_text(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+        temperature: float = 0.7,
+        system_prompt: str = "",
+    ) -> str:
+        """
+        純文字生成介面（供 ProjectCoordinator 等內部元件使用）
+        不走 Angela 風格包裝，直接返回 LLM 原始文字。
+        """
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        if not self.is_available or self.active_backend is None:
+            return ""
+
+        try:
+            response = await asyncio.wait_for(
+                self.active_backend.generate(
+                    prompt=messages[-1]["content"],
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                ),
+                timeout=60.0,
+            )
+            return response.text if not response.error else ""
+        except asyncio.TimeoutError:
+            logger.warning("generate_text timeout")
+            return ""
+        except Exception as e:
+            logger.error(f"generate_text error: {e}")
+            return ""
+
+    async def chat_completion(
+        self, messages: List[ChatMessage], model_id: Optional[str] = None, **kwargs
+    ) -> LLMResponse:
+        """
+        聊天補全介面（遷移自 multi_llm_adapter.py，thin wrapper）
+        用於向後相容需要 chat_completion() 的消費者。
+        """
+        if not self.is_available or self.active_backend is None:
+            return LLMResponse(text="", backend="none", model="unknown", error="No backend available")
+
+        try:
+            converted_messages = []
+            for msg in messages:
+                if isinstance(msg, ChatMessage):
+                    converted_messages.append({"role": msg.role, "content": msg.content})
+                elif isinstance(msg, dict):
+                    converted_messages.append(msg)
+                else:
+                    converted_messages.append({"role": "user", "content": str(msg)})
+
+            max_tokens = kwargs.get("max_tokens", 256)
+            temperature = kwargs.get("temperature", 0.7)
+
+            text = await asyncio.wait_for(
+                self.active_backend.generate(
+                    prompt=converted_messages[-1]["content"],
+                    messages=converted_messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                ),
+                timeout=60.0,
+            )
+
+            return LLMResponse(
+                text=text.text if not text.error else "",
+                backend=text.backend,
+                model=text.model,
+                tokens_used=text.tokens_used,
+                response_time_ms=text.response_time_ms,
+                confidence=text.confidence,
+                error=text.error,
+            )
+
+        except asyncio.TimeoutError:
+            logger.warning("chat_completion timeout")
+            return LLMResponse(text="", backend=self.active_backend.__class__.__name__, model="unknown", error="timeout")
+        except Exception as e:
+            logger.error(f"chat_completion error: {e}")
+            return LLMResponse(text="", backend="unknown", model="unknown", error=str(e))
 
 
 # 全局實例
