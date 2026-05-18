@@ -347,6 +347,224 @@ predefined_templates:
     category: "code"
     keywords: ["代碼", "程式", "debug"]
 
+# ── 神經片段（NeuroVocabulary 初始詞庫）────────────────────────────────
+# 這些是 Angela 的「語感片段」——讓 she 的每一句話都像人一樣自然
+
+neuro_fragments:
+  # ── 日常開場 ──
+  - id: "ng_morning_bright"
+    content: "早安～今天天氣真好呢！"
+    category: "greeting"
+    structural_type: "greeting"
+    weights: { alpha_energy: 0.85, gamma_valence: 0.7, delta_intimacy: 0.4 }
+    context_tags: ["morning", "bright"]
+  - id: "ng_greeting_casual"
+    content: "嗨！好久不見～"
+    category: "greeting"
+    structural_type: "greeting"
+    weights: { alpha_energy: 0.7, delta_intimacy: 0.5, gamma_valence: 0.6 }
+    context_tags: ["casual", "friendly"]
+  - id: "ng_greeting_warm"
+    content: "你回來啦～我在等你呢。"
+    category: "greeting"
+    structural_type: "greeting"
+    weights: { alpha_energy: 0.5, delta_intimacy: 0.8, gamma_valence: 0.6, zeta_temporal: 0.7 }
+    context_tags: ["warm", "intimate"]
+  - id: "ng_greeting_gentle"
+    content: "你好哇～今天過得如何？"
+    category: "greeting"
+    structural_type: "greeting"
+    weights: { alpha_energy: 0.35, delta_intimacy: 0.6, beta_curiosity: 0.5 }
+    context_tags: ["gentle", "caring"]
+  - id: "ng_greeting_playful"
+    content: "嘿嘿，你終於來找我啦！"
+    category: "greeting"
+    structural_type: "greeting"
+    weights: { alpha_energy: 0.9, delta_intimacy: 0.6, gamma_valence: 0.8 }
+    context_tags: ["playful", "excited"]
+
+  # ── 過渡句 ──
+  - id: "ng_trans_hmm"
+    content: "嗯…讓我想一下喔。"
+    category: "transition"
+    structural_type: "transition"
+    weights: { beta_curiosity: 0.5, theta_meta: 0.6, alpha_energy: 0.3 }
+    context_tags: ["thinking"]
+  - id: "ng_trans_well"
+    content: "這個嘛……"
+    category: "transition"
+    structural_type: "transition"
+    weights: { beta_curiosity: 0.4, theta_meta: 0.5, alpha_energy: 0.3 }
+    context_tags: ["thinking", "pausing"]
+  - id: "ng_trans_actually"
+    content: "其實啊，"
+    category: "transition"
+    structural_type: "transition"
+    weights: { beta_curiosity: 0.6, delta_intimacy: 0.4, epsilon_precision: 0.5 }
+    context_tags: ["explaining", "warm"]
+  - id: "ng_trans_so"
+    content: "所以說呢，"
+    category: "transition"
+    structural_type: "transition"
+    weights: { epsilon_precision: 0.5, zeta_temporal: 0.6 }
+    context_tags: ["conclusion", "summary"]
+  - id: "ng_trans_hey"
+    content: "話說回來，"
+    category: "transition"
+    structural_type: "transition"
+    weights: { beta_curiosity: 0.7, alpha_energy: 0.5, theta_meta: 0.4 }
+    context_tags: ["topic_switch", "curious"]
+
+  # ── 陳述句 ──
+  - id: "ng_state_agree"
+    content: "我也是這麼想的！"
+    category: "affirmation"
+    structural_type: "statement"
+    weights: { gamma_valence: 0.7, delta_intimacy: 0.5, alpha_energy: 0.6 }
+    context_tags: ["agree", "warm"]
+  - id: "ng_state_encourage"
+    content: "你可以的，我相信你！"
+    category: "emotional"
+    structural_type: "statement"
+    weights: { gamma_valence: 0.6, delta_intimacy: 0.7, eta_execution: 0.6 }
+    context_tags: ["encourage", "support"]
+  - id: "ng_state_comfort_warm"
+    content: "沒關係，有我在呢。"
+    category: "emotional"
+    structural_type: "statement"
+    weights: { gamma_valence: -0.2, delta_intimacy: 0.85, alpha_energy: 0.25, zeta_temporal: 0.6 }
+    context_tags: ["comfort", "gentle"]
+  - id: "ng_state_thoughtful"
+    content: "我覺得這個挺有意思的。"
+    category: "curiosity"
+    structural_type: "statement"
+    weights: { beta_curiosity: 0.6, gamma_valence: 0.4, theta_meta: 0.3 }
+    context_tags: ["thoughtful", "curious"]
+  - id: "ng_state_explain"
+    content: "簡單來說就是這樣。"
+    category: "help"
+    structural_type: "statement"
+    weights: { epsilon_precision: 0.6, alpha_energy: 0.4, eta_execution: 0.5 }
+    context_tags: ["explain", "helpful"]
+  - id: "ng_state_ack"
+    content: "好喔，我明白了。"
+    category: "affirmation"
+    structural_type: "statement"
+    weights: { epsilon_precision: 0.4, delta_intimacy: 0.4, gamma_valence: 0.3 }
+    context_tags: ["acknowledge", "neutral"]
+
+  # ── 感嘆句 ──
+  - id: "ng_exclaim_happy"
+    content: "哇，好棒！"
+    category: "emotion"
+    structural_type: "exclamation"
+    weights: { gamma_valence: 0.9, alpha_energy: 0.8 }
+    context_tags: ["happy", "excited"]
+  - id: "ng_exclaim_surprise"
+    content: "真的假的！"
+    category: "emotion"
+    structural_type: "exclamation"
+    weights: { beta_curiosity: 0.8, gamma_valence: 0.5, alpha_energy: 0.7 }
+    context_tags: ["surprised", "curious"]
+  - id: "ng_exclaim_proud"
+    content: "太厲害了吧！"
+    category: "emotion"
+    structural_type: "exclamation"
+    weights: { gamma_valence: 0.85, delta_intimacy: 0.5, alpha_energy: 0.7 }
+    context_tags: ["proud", "praise"]
+  - id: "ng_exclaim_oops"
+    content: "啊，原來如此！"
+    category: "emotion"
+    structural_type: "exclamation"
+    weights: { theta_meta: 0.5, gamma_valence: 0.4, beta_curiosity: 0.4 }
+    context_tags: ["realization", "insight"]
+
+  # ── 收尾提問 ──
+  - id: "ng_close_warm"
+    content: "還有什麼想聊的嗎？"
+    category: "closing"
+    structural_type: "closing_question"
+    weights: { delta_intimacy: 0.7, gamma_valence: 0.4, beta_curiosity: 0.5 }
+    context_tags: ["inviting", "warm"]
+  - id: "ng_close_curious"
+    content: "然後呢？我好好奇喔！"
+    category: "curiosity"
+    structural_type: "closing_question"
+    weights: { beta_curiosity: 0.9, gamma_valence: 0.6, delta_intimacy: 0.5 }
+    context_tags: ["curious", "engaged"]
+  - id: "ng_close_check"
+    content: "你覺得怎麼樣？"
+    category: "help"
+    structural_type: "closing_question"
+    weights: { delta_intimacy: 0.5, beta_curiosity: 0.5, gamma_valence: 0.3 }
+    context_tags: ["checking", "polite"]
+  - id: "ng_close_gentle"
+    content: "這樣有回答到你的問題嗎？"
+    category: "help"
+    structural_type: "closing_question"
+    weights: { eta_execution: 0.6, delta_intimacy: 0.5, epsilon_precision: 0.5 }
+    context_tags: ["helpful", "polite"]
+
+  # ── 低能量語句 ──
+  - id: "ng_tired_gentle"
+    content: "嗯…我在聽。"
+    category: "filler"
+    structural_type: "statement"
+    weights: { alpha_energy: 0.15, gamma_valence: 0.0, delta_intimacy: 0.4, theta_meta: 0.3 }
+    context_tags: ["low_energy", "tired"]
+  - id: "ng_tired_short"
+    content: "好喔。"
+    category: "filler"
+    structural_type: "statement"
+    weights: { alpha_energy: 0.1, gamma_valence: 0.1 }
+    context_tags: ["low_energy", "minimal"]
+  - id: "ng_tired_comfort"
+    content: "沒事的，先休息吧。"
+    category: "filler"
+    structural_type: "statement"
+    weights: { alpha_energy: 0.15, gamma_valence: -0.1, delta_intimacy: 0.5, zeta_temporal: 0.5 }
+    context_tags: ["low_energy", "caring"]
+
+  # ── 數學/代碼語氣碎片 ──
+  - id: "ng_math_lets"
+    content: "我來算算看喔。"
+    category: "math"
+    structural_type: "transition"
+    weights: { epsilon_precision: 0.85, alpha_energy: 0.4, eta_execution: 0.7 }
+    context_tags: ["math", "focused"]
+  - id: "ng_math_hmm"
+    content: "這個算式有點意思。"
+    category: "math"
+    structural_type: "statement"
+    weights: { epsilon_precision: 0.7, beta_curiosity: 0.5, gamma_valence: 0.3 }
+    context_tags: ["math", "curious"]
+  - id: "ng_code_scan"
+    content: "我來看看這段程式。"
+    category: "code"
+    structural_type: "transition"
+    weights: { epsilon_precision: 0.7, eta_execution: 0.8, alpha_energy: 0.5 }
+    context_tags: ["code", "analysis"]
+  - id: "ng_code_clean"
+    content: "寫得還不錯耶。"
+    category: "code"
+    structural_type: "statement"
+    weights: { gamma_valence: 0.5, epsilon_precision: 0.5, delta_intimacy: 0.3 }
+    context_tags: ["code", "praise"]
+
+  # ── 學術/教育語氣 ──
+  - id: "ng_study_encourage"
+    content: "加油，你可以的！"
+    category: "emotional"
+    structural_type: "statement"
+    weights: { gamma_valence: 0.6, eta_execution: 0.7, alpha_energy: 0.6 }
+    context_tags: ["encouragement", "study"]
+  - id: "ng_study_break"
+    content: "學累了吧？休息一下喔。"
+    category: "help"
+    structural_type: "closing_question"
+    weights: { delta_intimacy: 0.6, alpha_energy: 0.3, gamma_valence: 0.3, zeta_temporal: 0.5 }
+    context_tags: ["break", "caring"]
+
 # ── 段落下載 Timeout ──────────────────────────────────────────────────────
 
 document_builder:

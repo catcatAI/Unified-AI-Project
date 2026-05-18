@@ -11,14 +11,27 @@ Angela Response Composition & Matching System
 """
 
 from .template_matcher import TemplateMatcher, MatchResult
-from .composer import ResponseComposer, FragmentComposer
+from .composer import (
+    ResponseComposer,
+    FragmentComposer,
+    NeuroFragment,
+    NeuroVocabulary,
+    NeuroBlender,
+)
 from .deviation_tracker import DeviationTracker, ResponseMetrics
+from .learning_loop import LearningLoop, FragmentExtractor, get_learning_loop
 
 __all__ = [
     "TemplateMatcher",
     "MatchResult",
     "ResponseComposer",
     "FragmentComposer",
+    "NeuroFragment",
+    "NeuroVocabulary",
+    "NeuroBlender",
     "DeviationTracker",
     "ResponseMetrics",
+    "LearningLoop",
+    "FragmentExtractor",
+    "get_learning_loop",
 ]

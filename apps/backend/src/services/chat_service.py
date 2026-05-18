@@ -23,9 +23,54 @@ class AngelaChatService:
         self._initialized = False
         self._last_visual_context = {"ocr_text": {"text": ""}}
         self._last_visual_time = 0
+        self._neuro_blender = None
 
         from core.config_loader import get_angela_config
         self._angela_config = get_angela_config()
+
+    def _get_neuro_blender(self):
+        """Lazy-init shared NeuroBlender instance (vocabulary reused across calls)"""
+        if self._neuro_blender is None:
+            from ai.response.composer import NeuroVocabulary, NeuroBlender
+            from ai.memory.template_library import get_template_library
+
+            vocab = NeuroVocabulary()
+            vocab.decompose_from_templates(get_template_library())
+            neuro_cfg = self._angela_config.get_authority("angela_core", {}).get("neuro_fragments", [])
+            if neuro_cfg:
+                vocab.load_from_config(neuro_cfg)
+            self._neuro_blender = NeuroBlender(vocab)
+            logger.info(f"[NeuroBlender] Loaded {vocab.total_count()} fragments")
+        return self._neuro_blender
+
+    def _build_neuro_blend_state(self, text: str, bio_state: Dict[str, Any], empathy_analysis: Any) -> Dict[str, Any]:
+        """Build state_dict for NeuroBlender from current state matrix + bio + empathy"""
+        empathy_valence = 0.0
+        if empathy_analysis and hasattr(empathy_analysis, "predicted_emotional_state"):
+            empathy_valence = getattr(empathy_analysis.predicted_emotional_state, "valence", 0.0)
+        return {
+            "alpha": {"energy": 1.0 - bio_state.get("stress_level", 0.0) * 0.5},
+            "beta": {"curiosity": self.state_matrix.beta.values.get("curiosity", 0.5)},
+            "gamma": {"valence": bio_state.get("valence", 0.0)},
+            "delta": {"intimacy": self.state_matrix.delta.values.get("intimacy", 0.3)},
+            "epsilon": {"precision": self.state_matrix.epsilon.values.get("precision", 0.5)},
+            "zeta": {"temporal_coherence": self.state_matrix.zeta.values.get("temporal_coherence", 0.5)},
+            "theta": {"novelty": self.state_matrix.theta.values.get("novelty", 0.3)},
+            "eta": {"execution_count": self.eta_state.execution_count if hasattr(self, "eta_state") else 0.5},
+        }
+
+    def _build_neuro_intent_vec(self, text: str) -> Dict[str, float]:
+        """Build intent vector from user message keywords"""
+        intent_vec = {"casual": 0.5}
+        for kw in ["計算", "數學", "積分", "微分"]:
+            if kw in text:
+                intent_vec = {"math": 0.8}
+                break
+        for kw in ["代碼", "程式", "python", "function"]:
+            if kw in text:
+                intent_vec = {"code": 0.8}
+                break
+        return intent_vec
 
     async def initialize(self):
         if not self._initialized:
@@ -112,6 +157,34 @@ class AngelaChatService:
         code_intent = self._detect_code_intent(sanitized_message)
         complexity = self._estimate_complexity(sanitized_message)
 
+        # ---- NeuroBlender speech synthesis (runs once, feeds both paths) ----
+        neuro_state = self._build_neuro_blend_state(sanitized_message, bio_state, empathy_analysis)
+        neuro_intent = self._build_neuro_intent_vec(sanitized_message)
+        empathy_valence = 0.0
+        if empathy_analysis and hasattr(empathy_analysis, "predicted_emotional_state"):
+            empathy_valence = getattr(empathy_analysis.predicted_emotional_state, "valence", 0.0)
+
+        neuro_composed = None
+        neuro_meta = {}
+        try:
+            blender = self._get_neuro_blender()
+            neuro_composed = blender.synthesize(
+                state_dict=neuro_state,
+                intent_vec=neuro_intent,
+                empathy_valence=empathy_valence,
+                user_name=user_name,
+            )
+            if neuro_composed and neuro_composed.text:
+                neuro_meta = {
+                    "neuro_text": neuro_composed.text,
+                    "neuro_fragments": neuro_composed.fragments_used,
+                    "neuro_target_vector": neuro_composed.metadata.get("target_vector", []),
+                    "neuro_confidence": neuro_composed.confidence,
+                    "neuro_exploration": neuro_composed.metadata.get("structural_exploration", False),
+                }
+        except Exception as e:
+            logger.warning(f"[NeuroBlender] Pre-synthesis failed: {e}")
+
         file_op_intent = self._detect_file_op_intent(sanitized_message)
         if file_op_intent:
             response = await self._handle_file_op_intent(sanitized_message, file_op_intent)
@@ -130,11 +203,18 @@ class AngelaChatService:
             elif code_intent:
                 response = await self._handle_code_intent(sanitized_message, code_intent)
             else:
-                response = await self._handle_general_intent(
-                    sanitized_message, user_name, origin, bio_state, screen_text,
-                    current_activity, relevant_memories, value_directive, empathy_analysis,
-                    meta_prompt=self.state_matrix.export_for_llm(self.state_adapter.eta),
-                )
+                # NeuroBlender → LLM 雙路饋送
+                # low complexity: NeuroBlender 直接輸出（離線也能說人話）
+                # high complexity: LLM 收到 NeuroBlender 的語意向量當作額外上下文
+                if complexity < 0.4 and neuro_composed and neuro_composed.text and neuro_composed.confidence > 0.3:
+                    response = neuro_composed.text
+                else:
+                    response = await self._handle_general_intent(
+                        sanitized_message, user_name, origin, bio_state, screen_text,
+                        current_activity, relevant_memories, value_directive, empathy_analysis,
+                        meta_prompt=self.state_matrix.export_for_llm(self.state_adapter.eta),
+                        neuro_blend_meta=neuro_meta,
+                    )
 
         await self.evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
 
@@ -672,6 +752,73 @@ class AngelaChatService:
             logger.warning(f"Code intent failed: {e}")
             return f"（代碼處理遇到問題：{e}）"
 
+    async def _try_neuro_synthesis(
+        self,
+        text: str,
+        complexity: float,
+        bio_state: Dict[str, Any],
+        empathy_analysis: Any,
+        user_name: str,
+        category: str,
+    ) -> Optional[str]:
+        """
+        Phase D: 共情校準 NeuroBlender 合成
+        低复杂度查询使用 NeuroBlender 快速合成回复。
+        """
+        try:
+            from ai.response.composer import NeuroVocabulary, NeuroBlender
+            from ai.memory.template_library import get_template_library
+
+            vocab = NeuroVocabulary()
+            library = get_template_library()
+            vocab.decompose_from_templates(library)
+            neuro_cfg = self._angela_config.get_authority("angela_core", {}).get("neuro_fragments", [])
+            if neuro_cfg:
+                vocab.load_from_config(neuro_cfg)
+
+            blender = NeuroBlender(vocab)
+
+            empathy_valence = 0.0
+            if empathy_analysis and hasattr(empathy_analysis, "predicted_emotional_state"):
+                empathy_valence = getattr(empathy_analysis.predicted_emotional_state, "valence", 0.0)
+
+            state_dict = {
+                "alpha": {"energy": 1.0 - bio_state.get("stress_level", 0.0) * 0.5},
+                "beta": {"curiosity": self.state_matrix.beta.values.get("curiosity", 0.5)},
+                "gamma": {"valence": bio_state.get("valence", 0.0)},
+                "delta": {"intimacy": self.state_matrix.delta.values.get("intimacy", 0.3)},
+                "epsilon": {"precision": self.state_matrix.epsilon.values.get("precision", 0.5)},
+                "zeta": {"temporal_coherence": self.state_matrix.zeta.values.get("temporal_coherence", 0.5)},
+                "theta": {"novelty": self.state_matrix.theta.values.get("novelty", 0.3)},
+                "eta": {"execution_count": self.eta_state.execution_count if hasattr(self, "eta_state") else 0.5},
+            }
+
+            intent_vec = {"casual": 0.5}
+            math_kws = ["計算", "數學", "積分", "微分"]
+            code_kws = ["代碼", "程式", "python", "function"]
+            for kw in math_kws:
+                if kw in text:
+                    intent_vec = {"math": 0.8}
+                    break
+            for kw in code_kws:
+                if kw in text:
+                    intent_vec = {"code": 0.8}
+                    break
+
+            result = blender.synthesize(
+                state_dict=state_dict,
+                intent_vec=intent_vec,
+                empathy_valence=empathy_valence,
+                user_name=user_name,
+            )
+
+            if result and result.text and result.confidence > 0.3:
+                logger.info(f"[NeuroBlender] Synthesized: {result.text[:60]}... (conf={result.confidence:.2f})")
+                return result.text
+        except Exception as e:
+            logger.warning(f"Neuro synthesis failed: {e}")
+        return None
+
     async def _handle_general_intent(
         self,
         text: str,
@@ -684,6 +831,7 @@ class AngelaChatService:
         value_directive: str,
         empathy_analysis: Any,
         meta_prompt: Optional[Dict[str, Any]] = None,
+        neuro_blend_meta: Optional[Dict[str, Any]] = None,
     ) -> str:
         self.state_adapter.anchor_learning.on_axis_update("beta", {"curiosity": 0.03, "focus": 0.02}, is_stable=True)
         try:
@@ -704,6 +852,7 @@ class AngelaChatService:
                 "model_core_state": meta_prompt or {},
                 "activity": current_activity,
                 "memories": relevant_memories or [],
+                "neuro_blend": neuro_blend_meta or {},
             }
             response = await llm.generate_response(text, context)
             response_text = getattr(response, "text", str(response)) if hasattr(response, "text") else str(response)
@@ -732,6 +881,10 @@ class AngelaChatService:
         category = activity.get("active_category", "neutral")
         empathy = kwargs.get("empathy")
         memories_str = str([m['content'][:30] for m in kwargs.get('memories', [])])
+        neuro = kwargs.get("neuro_blend", {})
+        neuro_text = neuro.get("neuro_text", "")
+        neuro_conf = neuro.get("neuro_confidence", 0.0)
+        neuro_target = neuro.get("neuro_target_vector", [])
         prompt = f"""
         [System Identity: Angela AI]
         Current Bio-Status: Emotion={bio.get('dominant_emotion')}, Stress={bio.get('stress_level'):.2f}, Arousal={bio.get('arousal')}
@@ -741,6 +894,11 @@ class AngelaChatService:
 
         [Angela 8D State — Natural Context]
         {self._build_anchor_context_for_llm(kwargs.get('model_core_state', {}))}
+
+        [Angela Inner Speech Intent — NeuroBlender]
+        Neural Target Vector: {neuro_target}
+        Speech Confidence: {neuro_conf:.2f}
+        Angela's Own Words: {neuro_text[:200] if neuro_text else '(awaiting synthesis)'}
 
         [Empathy & Resonance]
         User Predicted Emotion: {empathy.predicted_emotional_state.primary_emotion if empathy else 'Unknown'}

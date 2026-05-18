@@ -1363,17 +1363,24 @@ class AngelaLLMService:
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         備份回應機制
-        當沒有可用的 LLM 後端時，使用簡單模板或狀態回應，避免循環調用
+        當沒有可用的 LLM 後端時，使用 NeuroBlender 或簡單模板。
         """
+        try:
+            # Try NeuroBlender first
+            result = await self._try_neuro_blender(user_message, context)
+            if result:
+                return result
+        except Exception as e:
+            logger.warning(f"NeuroBlender fallback failed: {e}")
+
+        # Ultimate fallback: pure template
         try:
             from ai.memory.template_library import get_template_library
             from ai.memory.memory_template import ResponseCategory
             library = get_template_library()
-            
-            # 根據關鍵字簡單匹配
+
             emotion = context.get("bio_state", {}).get("dominant_emotion", "neutral").lower()
-            
-            # 情感映射到類別
+
             category_map = {
                 "happy": ResponseCategory.SMALL_TALK,
                 "sad": ResponseCategory.SUPPORT,
@@ -1383,16 +1390,15 @@ class AngelaLLMService:
                 "fear": ResponseCategory.SUPPORT,
                 "surprise": ResponseCategory.CURIOSITY
             }
-            
+
             target_category = category_map.get(emotion, ResponseCategory.SMALL_TALK)
             templates = library.get_by_category(target_category)
-            
+
             if not templates:
                 templates = library.get_by_category(ResponseCategory.SMALL_TALK)
-            
+
             if templates:
                 template = random.choice(templates)
-                # 簡單替換佔位符
                 text = template.content.replace("{user_name}", context.get("user_name", "朋友"))
             else:
                 text = "（核心 LLM 目前離線中，但我依然能感受到妳。能稍微等我一下嗎？）"
@@ -1413,6 +1419,78 @@ class AngelaLLMService:
                 confidence=0.0,
                 error=str(e),
             )
+
+    # ── NeuroBlender fallback helper ──────────────────────────────────────
+
+    _neuro_vocab_instance = None
+
+    async def _try_neuro_blender(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+        """尝试使用 NeuroBlender 合成回复"""
+        # Lazy initialize NeuroVocabulary from TemplateLibrary
+        if self.__class__._neuro_vocab_instance is None:
+            from ai.response.composer import NeuroVocabulary, NeuroBlender
+            from ai.memory.template_library import get_template_library
+
+            vocab = NeuroVocabulary()
+            library = get_template_library()
+            count = vocab.decompose_from_templates(library)
+            logger.info(f"[NeuroBlender] Decomposed {count} fragments from TemplateLibrary")
+
+            # Try loading config fragments
+            from core.config_loader import get_angela_config
+            cfg = get_angela_config()
+            neuro_cfg = cfg.get_authority("angela_core", {}).get("neuro_fragments", [])
+            if neuro_cfg:
+                vocab.load_from_config(neuro_cfg)
+                logger.info(f"[NeuroBlender] Loaded {len(neuro_cfg)} config fragments")
+
+            self.__class__._neuro_vocab_instance = (vocab, NeuroBlender(vocab))
+
+        vocab, blender = self.__class__._neuro_vocab_instance
+
+        # Build state_dict from context
+        bio = context.get("bio_state", {})
+        state_dict = {
+            "alpha": {"energy": 0.6 - 0.3 * bio.get("stress_level", 0.0)},
+            "beta": {"curiosity": 0.5},
+            "gamma": {"valence": bio.get("valence", 0.0)},
+            "delta": {"intimacy": 0.4},
+            "epsilon": {"precision": 0.4},
+            "zeta": {"temporal_coherence": 0.5},
+            "theta": {"novelty": 0.3},
+            "eta": {"execution_count": 0.5},
+        }
+
+        # Build intent_vec from user_message keywords
+        intent_vec = {"casual": 0.5}
+        math_kws = ["計算", "數學", "積分", "微分"]
+        code_kws = ["代碼", "程式", "python", "function"]
+        for kw in math_kws:
+            if kw in user_message:
+                intent_vec["math"] = 0.8
+                break
+        for kw in code_kws:
+            if kw in user_message:
+                intent_vec["code"] = 0.8
+                break
+
+        empathy_valence = bio.get("valence", 0.0)
+        user_name = context.get("user_name", "朋友")
+
+        result = blender.synthesize(
+            state_dict=state_dict,
+            intent_vec=intent_vec,
+            empathy_valence=empathy_valence,
+            user_name=user_name,
+        )
+
+        return LLMResponse(
+            text=result.text,
+            backend="local-fallback",
+            model="neuro-blender",
+            confidence=result.confidence,
+            metadata={"fallback": True, "neuro_blend": True, "fragments": result.fragments_used},
+        )
 
     # ========== 记忆增强系统 - 辅助方法 ==========
 
