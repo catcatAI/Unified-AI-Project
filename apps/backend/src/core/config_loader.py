@@ -183,6 +183,28 @@ class AngelaConfigManager:
         """取得軸狀態解讀規則"""
         return self._authority.get("anchor_rules", {})
 
+    def get_google_drive_config(self) -> Dict:
+        """取得 Google Drive 配置（含 sub_operations）"""
+        intents = self.get_intents()
+        return intents.get("google_drive", {})
+
+    def get_drive_sub_operation(self, op: str) -> Optional[Dict]:
+        """取得 Google Drive 子操作配置"""
+        drive = self.get_google_drive_config()
+        return drive.get("sub_operations", {}).get(op)
+
+    def get_drive_all_operations(self) -> Dict:
+        """取得所有 Google Drive 子操作配置"""
+        drive = self.get_google_drive_config()
+        return drive.get("sub_operations", {})
+
+    def get_google_drive_keywords(self, op: str, key: str = "keywords") -> List:
+        """取得 Google Drive 子操作的特定鍵值"""
+        sub_op = self.get_drive_sub_operation(op)
+        if not sub_op:
+            return []
+        return sub_op.get(key, [])
+
     def get_tickle_config(self) -> Dict:
         """取得搔癢反射配置"""
         return self._authority.get("tickle_config", {})

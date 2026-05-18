@@ -408,9 +408,10 @@ class AngelaChatService:
             if not status_data.get("authenticated"):
                 return "（Google Drive 未認證）我還沒連上妳的 Google Drive 喔。要不要讓我生出授權連結給妳？只要去 `/model` 那邊看一下 Drive 狀態就可以開始了～"
 
-            list_kws = ["列出", "看", "列表", "有什麼", "找", "搜索", "搜"]
-            sync_kws = ["同步", "下載", "存到本地"]
-            analyze_kws = ["分析", "總結", "總結一下", "說說"]
+            ops = self._angela_config.get_drive_all_operations()
+            list_kws = self._angela_config.get_google_drive_keywords("list")
+            sync_kws = self._angela_config.get_google_drive_keywords("sync")
+            analyze_kws = self._angela_config.get_google_drive_keywords("analyze")
 
             for kw in list_kws:
                 if kw in text:

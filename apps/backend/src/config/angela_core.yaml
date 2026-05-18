@@ -112,6 +112,43 @@ intents:
       - "打開雲端"
     priority: 5
     handler: "GoogleDriveHandler"
+    sub_operations:
+      list:
+        keywords:
+          - "列出"
+          - "看"
+          - "列表"
+          - "有什麼"
+          - "找"
+          - "搜索"
+          - "搜"
+        aliases: ["list", "ls", "l"]
+        description: "列出雲端檔案"
+      sync:
+        keywords:
+          - "同步"
+          - "下載"
+          - "存到本地"
+          - "同步到本地"
+        aliases: ["sync", "download", "dl"]
+        description: "同步檔案到本地"
+      analyze:
+        keywords:
+          - "分析"
+          - "總結"
+          - "總結一下"
+          - "說說"
+        aliases: ["analyze", "ana"]
+        description: "分析檔案內容"
+      auth:
+        aliases: ["auth", "a", "callback", "cb"]
+        description: "OAuth 認證"
+      status:
+        aliases: ["status", "s"]
+        description: "連接狀態"
+      logout:
+        aliases: ["logout", "out"]
+        description: "登出"
 
   web_search:
     keywords:

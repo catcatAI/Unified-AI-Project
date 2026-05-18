@@ -1459,15 +1459,26 @@ def _handle_model_command(args: str, service: Any) -> str:
 def _handle_drive_command(args: str) -> str:
     """Handle /drive command: /drive [status|auth|url|list|search <q>|sync|analyze|logout]"""
     import httpx
+    from core.config_loader import get_angela_config
 
     parts = args.strip().split(maxsplit=1)
     subcmd = parts[0].lower() if parts else "status"
     subarg = parts[1] if len(parts) > 1 else ""
 
+    cfg = get_angela_config()
+    ops = cfg.get_drive_all_operations()
+
+    def resolve_op(cmd: str) -> Optional[str]:
+        for op_name, op_cfg in ops.items():
+            if cmd in op_cfg.get("aliases", []):
+                return op_name
+        return None
+
+    op = resolve_op(subcmd)
     base = "http://127.0.0.1:8000/api/v1/drive"
 
     try:
-        if subcmd in ("status", "s"):
+        if op == "status" or subcmd in ("status", "s"):
             resp = httpx.get(f"{base}/status", timeout=10)
             d = resp.json()
             auth = d.get("authenticated", False)
@@ -1480,22 +1491,22 @@ def _handle_drive_command(args: str) -> str:
             ]
             return "\n".join(lines)
 
-        if subcmd in ("auth", "a") and subarg in ("", "url"):
+        if op == "auth" or (subcmd in ("auth", "a") and subarg in ("", "url")):
             resp = httpx.get(f"{base}/auth/url", timeout=10)
             url = resp.json().get("url", "")
             return f"授權 URL：\n{url}\n\n請用瀏覽器打開這個連結，授權後把回傳的 code 貼給我。"
 
-        if subcmd in ("callback", "cb") and subarg:
+        if op == "auth" or subcmd in ("callback", "cb"):
             resp = httpx.post(f"{base}/auth/callback", json={"code": subarg}, timeout=15)
             if resp.status_code == 200:
                 return "✅ Google Drive 認證成功！"
             return f"❌ 認證失敗：{resp.text}"
 
-        if subcmd in ("logout", "out"):
+        if op == "logout" or subcmd in ("logout", "out"):
             httpx.post(f"{base}/auth/logout", timeout=5)
             return "✅ 已登出 Google Drive。"
 
-        if subcmd in ("list", "ls", "l"):
+        if op == "list" or subcmd in ("list", "ls", "l"):
             n = int(subarg) if subarg.isdigit() else 10
             resp = httpx.get(f"{base}/files?page_size={n}", timeout=15)
             files = resp.json().get("files", [])
@@ -1504,7 +1515,7 @@ def _handle_drive_command(args: str) -> str:
             lines = [f"📄 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
             return "📂 Google Drive 檔案列表：\n" + "\n".join(lines)
 
-        if subcmd in ("search", "q") and subarg:
+        if op == "list" or subcmd in ("search", "q"):
             resp = httpx.post(f"{base}/files/search", json={"query": subarg, "page_size": 10}, timeout=15)
             files = resp.json().get("files", [])
             if not files:
@@ -1512,7 +1523,7 @@ def _handle_drive_command(args: str) -> str:
             lines = [f"📄 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
             return f"🔍 搜尋「{subarg}」結果：\n" + "\n".join(lines)
 
-        if subcmd in ("sync", "download", "dl"):
+        if op == "sync" or subcmd in ("sync", "download", "dl"):
             resp = httpx.get(f"{base}/files?page_size=10", timeout=15)
             files = resp.json().get("files", [])
             if not files:
@@ -1523,7 +1534,7 @@ def _handle_drive_command(args: str) -> str:
                     f"跳過 {r.get('skipped', 0)} 個（已存在），"
                     f"存入記憶 {r.get('memorized_count', 0)} 個。")
 
-        if subcmd in ("analyze", "ana"):
+        if op == "analyze" or subcmd in ("analyze", "ana"):
             resp = httpx.post(f"{base}/analyze", json={"limit": 3}, timeout=60)
             r = resp.json()
             return f"📊 分析結果：\n{r.get('analysis', '無法分析')[:1000]}"
