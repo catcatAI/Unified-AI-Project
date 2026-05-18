@@ -396,7 +396,7 @@ _routeMessage(message) {
   /**
    * P0-1: 状态数据合并（避免覆盖）
    */
-  _mergeStateData(updateData) {
+   _mergeStateData(updateData) {
     if (!window.angelaApp || !window.angelaApp.stateMatrix) {
       return updateData
     }
@@ -409,6 +409,8 @@ _routeMessage(message) {
       delta: { ...currentState.delta, ...(updateData.delta || {}) },
       epsilon: { ...currentState.epsilon, ...(updateData.epsilon || {}) },
       theta: { ...currentState.theta, ...(updateData.theta || {}) },
+      zeta: { ...currentState.zeta, ...(updateData.zeta || {}) },
+      eta: { ...currentState.eta, ...(updateData.eta || {}) },
     }
 
     return merged

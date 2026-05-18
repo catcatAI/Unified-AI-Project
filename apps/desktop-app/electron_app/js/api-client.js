@@ -222,6 +222,8 @@ class AngelaAPIClient {
                 success: true,
                 response: data.response || data.message || 'No response',
                 emotion: data.emotion || 'neutral',
+                source: data.source || 'unknown',
+                neuro_blend: data.neuro_blend || null,
                 timestamp: new Date().toISOString()
             };
         } catch (error) {

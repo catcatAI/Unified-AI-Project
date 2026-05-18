@@ -216,6 +216,7 @@ class FragmentComposer:
 
         if match_score > 0.8:
             composition_time = (time.time() - start_time) * 1000
+            self._update_stats(composition_time, 1)
             return ComposedResponse(
                 text=template_content,
                 fragments_used=["complete_template"],
@@ -353,9 +354,12 @@ class FragmentComposer:
             return 0.0
 
         avg_priority = sum(f.priority for f in fragments) / len(fragments)
-        confidence = min(1.0, avg_priority / 10.0)
+        base = min(1.0, avg_priority / 10.0)
 
-        return confidence
+        types_used = len(set(f.type for f in fragments))
+        type_bonus = min(0.2, types_used * 0.05)
+
+        return min(1.0, base + type_bonus)
 
     def _update_stats(self, composition_time: float, fragments_count: int):
         """更新统计信息"""

@@ -115,6 +115,37 @@ class DialogueUI {
                 background: rgba(255, 255, 255, 0.1);
                 color: #e0e0e0;
                 align-self: flex-start;
+                border-bottom-left-radius: 4px;
+            }
+
+            .source-badge {
+                display: inline-block;
+                font-size: 10px;
+                padding: 1px 6px;
+                border-radius: 8px;
+                margin-left: 6px;
+                vertical-align: middle;
+                font-weight: 500;
+            }
+
+            .source-badge.neuro {
+                background: rgba(100, 200, 255, 0.25);
+                color: #7dd3fc;
+            }
+
+            .source-badge.llm {
+                background: rgba(100, 255, 150, 0.2);
+                color: #86efac;
+            }
+
+            .source-badge.fallback {
+                background: rgba(255, 200, 100, 0.2);
+                color: #fcd34d;
+            }
+
+            .source-badge.math {
+                background: rgba(200, 150, 255, 0.2);
+                color: #c4b5fd;
             }
 
             .message.system {
@@ -242,13 +273,13 @@ class DialogueUI {
 
         // Add Angela's response
         if (response.success) {
-            this.addMessage('angela', response.response);
+            this.addMessage('angela', response.response, response.source || 'unknown', response.neuro_blend);
         } else {
             this.addSystemMessage(`Error: ${response.response}`);
         }
     }
 
-    addMessage(sender, text) {
+    addMessage(sender, text, source, neuroBlend) {
         const messagesContainer = document.getElementById('dialogue-messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}`;
@@ -258,15 +289,30 @@ class DialogueUI {
             minute: '2-digit'
         });
 
+        let badge = '';
+        if (sender === 'angela') {
+            if (source === 'neuro_blender' || (neuroBlend && neuroBlend.confidence > 0.3)) {
+                badge = '<span class="source-badge neuro">✨ 合成</span>';
+            } else if (source === 'llm' || source === 'llm_full') {
+                badge = '<span class="source-badge llm">🧠 LLM</span>';
+            } else if (source === 'fallback') {
+                badge = '<span class="source-badge fallback">📡 離線</span>';
+            } else if (source === 'dual_rail') {
+                badge = '<span class="source-badge math">🔢 數學</span>';
+            } else if (neuroBlend && neuroBlend.confidence) {
+                badge = `<span class="source-badge neuro">✨ ${Math.round(neuroBlend.confidence * 100)}%</span>`;
+            }
+        }
+
         messageDiv.innerHTML = `
-            <div class="message-text">${this.escapeHtml(text)}</div>
+            <div class="message-text">${this.escapeHtml(text)}${badge}</div>
             <div class="message-time">${time}</div>
         `;
 
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        this.messages.push({ sender, text, time });
+        this.messages.push({ sender, text, time, source, neuroBlend });
     }
 
     addSystemMessage(text) {

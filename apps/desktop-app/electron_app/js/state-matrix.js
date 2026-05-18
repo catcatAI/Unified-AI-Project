@@ -113,22 +113,52 @@ class StateMatrix4D {
             timestamp: Date.now()
         };
 
+        this.zeta = {
+            name: 'zeta',
+            cn_name: '敘事維度',
+            values: {
+                temporal_coherence: 0.5,
+                memory_depth: 0.3,
+                narrative_flow: 0.5,
+                identity_continuity: 0.5
+            },
+            weight: config.zeta_weight || 0.3,
+            timestamp: Date.now()
+        };
+
+        this.eta = {
+            name: 'eta',
+            cn_name: '執行維度',
+            values: {
+                execution_count: 0,
+                success_rate: 0.5,
+                structural_drift: 0.0,
+                parameter_tuning: 0.5
+            },
+            weight: config.eta_weight || 0.2,
+            timestamp: Date.now()
+        };
+
         this.dimensions = {
             alpha: this.alpha,
             beta: this.beta,
             gamma: this.gamma,
             delta: this.delta,
             epsilon: this.epsilon,
-            theta: this.theta
+            theta: this.theta,
+            zeta: this.zeta,
+            eta: this.eta
         };
         
         this.influenceMatrix = config.influence_matrix || {
-            alpha: { beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1, theta: 0.1 },
-            beta: { alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2, theta: 0.15 },
-            gamma: { alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3, theta: 0.2 },
-            delta: { alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1, theta: 0.15 },
-            epsilon: { alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1, theta: 0.25 },
-            theta: { alpha: 0.15, beta: 0.2, gamma: 0.3, delta: 0.1, epsilon: 0.2 }
+            alpha: { beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1, theta: 0.1, zeta: 0.05, eta: 0.1 },
+            beta: { alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2, theta: 0.15, zeta: 0.1, eta: 0.15 },
+            gamma: { alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3, theta: 0.2, zeta: 0.1, eta: 0.1 },
+            delta: { alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1, theta: 0.15, zeta: 0.05, eta: 0.1 },
+            epsilon: { alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1, theta: 0.25, zeta: 0.05, eta: 0.2 },
+            theta: { alpha: 0.15, beta: 0.2, gamma: 0.3, delta: 0.1, epsilon: 0.2, zeta: 0.1, eta: 0.2 },
+            zeta: { alpha: 0.05, beta: 0.1, gamma: 0.1, delta: 0.05, epsilon: 0.05, theta: 0.05, eta: 0.1 },
+            eta: { alpha: 0.05, beta: 0.1, gamma: 0.05, delta: 0.05, epsilon: 0.1, theta: 0.1, zeta: 0.05 }
         };
         
         this.history = [];
@@ -222,6 +252,26 @@ class StateMatrix4D {
         }
         this.theta.timestamp = Date.now();
         this.postUpdate('theta', kwargs);
+    }
+
+    updateZeta(kwargs) {
+        for (const [key, value] of Object.entries(kwargs)) {
+            if (key in this.zeta.values) {
+                this.zeta.values[key] = Math.max(0, Math.min(1, parseFloat(value)));
+            }
+        }
+        this.zeta.timestamp = Date.now();
+        this.postUpdate('zeta', kwargs);
+    }
+
+    updateEta(kwargs) {
+        for (const [key, value] of Object.entries(kwargs)) {
+            if (key in this.eta.values) {
+                this.eta.values[key] = Math.max(0, Math.min(1, parseFloat(value)));
+            }
+        }
+        this.eta.timestamp = Date.now();
+        this.postUpdate('eta', kwargs);
     }
 
     applyEpsilonInfluence() {
@@ -706,7 +756,9 @@ class StateMatrix4D {
             gamma: { ...this.gamma.values },
             delta: { ...this.delta.values },
             epsilon: { ...this.epsilon.values },
-            theta: { ...this.theta.values }
+            theta: { ...this.theta.values },
+            zeta: { ...this.zeta.values },
+            eta: { ...this.eta.values }
         };
     }
     
@@ -1380,6 +1432,14 @@ class StateMatrix4D {
 
         if (data.theta) {
             this.updateTheta(data.theta);
+        }
+
+        if (data.zeta) {
+            this.updateZeta(data.zeta);
+        }
+
+        if (data.eta) {
+            this.updateEta(data.eta);
         }
 
         if (data.timestamp) {

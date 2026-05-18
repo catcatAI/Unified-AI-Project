@@ -112,11 +112,21 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)):
 
 @router.post("/chat")
 async def mobile_chat(data: Dict[str, Any] = Body(...)):
-    """行動端聊天代理"""
-    # 此處應對接到 DialogueManager，暫時返回簡單響應以驗證連通性
+    """行動端聊天代理 (NGR v6.3)"""
+    from services.main_api_server import _handle_chat_request
+
     message = data.get("message", "")
-    return {
-        "status": "success",
-        "message": f"Angela 收到你的訊息: {message}",
-        "timestamp": datetime.now().isoformat(),
-    }
+    user_name = data.get("user_name", "朋友")
+    history = data.get("history", [])
+    session_id = data.get("session_id", f"mobile-{datetime.now().timestamp()}")
+    origin = data.get("origin", "mobile_app")
+
+    response = await _handle_chat_request(
+        user_message=message,
+        user_name=user_name,
+        history=history,
+        session_id=session_id,
+        origin=origin,
+    )
+    response["status"] = "success"
+    return response

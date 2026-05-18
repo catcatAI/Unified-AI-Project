@@ -42,7 +42,9 @@ const [matrixState, setMatrixState] = useState({
     gamma: 0.5,
     delta: 0.5,
     epsilon: 0.5,
-    theta: 0.5
+    theta: 0.5,
+    zeta: 0.5,
+    eta: 0.5
   });
 
   const [axisDetails, setAxisDetails] = useState({
@@ -51,7 +53,9 @@ const [matrixState, setMatrixState] = useState({
     gamma: { happiness: 0.5, calm: 0.5, trust: 0.5 },
     delta: { attention: 0.5, bond: 0.5, engagement: 0.5 },
     epsilon: { logic: 0.5, precision: 0.5, certainty: 0.5 },
-    theta: { self_reflection: 0.5, meta_accuracy: 0.5, doubt: 0.0 }
+    theta: { self_reflection: 0.5, meta_accuracy: 0.5, doubt: 0.0 },
+    zeta: { temporal_coherence: 0.5, memory_depth: 0.3, narrative_flow: 0.5, identity_continuity: 0.5 },
+    eta: { execution_count: 0, success_rate: 0.5, structural_drift: 0.0 }
   });
 
   const [etaStatus, setEtaStatus] = useState({
@@ -61,23 +65,7 @@ const [matrixState, setMatrixState] = useState({
     structural_drift: 0.0
   });
 
-  const [modules, setModules] = useState({
-    vision: true,
-    audio: true,
-    tactile: true,
-    action: true
-  });
-
   const [showEtaPanel, setShowEtaPanel] = useState(false);
-
-  const [axisDetails, setAxisDetails] = useState({
-    alpha: { energy: 0.5, comfort: 0.5, arousal: 0.5 },
-    beta: { curiosity: 0.5, focus: 0.5, learning: 0.5 },
-    gamma: { happiness: 0.5, calm: 0.5, trust: 0.5 },
-    delta: { attention: 0.5, bond: 0.5, engagement: 0.5 },
-    epsilon: { logic: 0.5, precision: 0.5, certainty: 0.5 },
-    theta: { self_reflection: 0.5, meta_accuracy: 0.5, doubt: 0.0 }
-  });
 
   const scrollRef = useRef();
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -140,7 +128,9 @@ const [matrixState, setMatrixState] = useState({
           gamma: averages.gamma ?? 0.5,
           delta: averages.delta ?? 0.5,
           epsilon: averages.epsilon ?? 0.5,
-          theta: averages.theta ?? 0.5
+          theta: averages.theta ?? 0.5,
+          zeta: averages.zeta ?? 0.5,
+          eta: averages.eta ?? 0.5
         });
 
         setAxisDetails({
@@ -149,7 +139,9 @@ const [matrixState, setMatrixState] = useState({
           gamma: dims.gamma || axisDetails.gamma,
           delta: dims.delta || axisDetails.delta,
           epsilon: dims.epsilon || axisDetails.epsilon,
-          theta: dims.theta || axisDetails.theta
+          theta: dims.theta || axisDetails.theta,
+          zeta: dims.zeta || axisDetails.zeta,
+          eta: dims.eta || axisDetails.eta
         });
       }
 
@@ -267,7 +259,7 @@ const [matrixState, setMatrixState] = useState({
         client: 'Angela-Mobile-V6'
       });
       
-      setChatLog(prev => [...prev, { type: 'angela', text: result.message }]);
+      setChatLog(prev => [...prev, { type: 'angela', text: result.response_text, source: result.source }]);
     } catch (error) {
       setChatLog(prev => [...prev, { type: 'angela', text: 'Error: Connection lost. Re-encrypting...' }]);
     }
@@ -369,13 +361,15 @@ const [matrixState, setMatrixState] = useState({
                 <MatrixIndicator label="δ" value={matrixState.delta} color="#00ffcc" />
                 <MatrixIndicator label="ε" value={matrixState.epsilon} color="#cc66ff" />
                 <MatrixIndicator label="θ" value={matrixState.theta} color="#66ccff" />
+                <MatrixIndicator label="ζ" value={matrixState.zeta} color="#ff99cc" />
+                <MatrixIndicator label="η" value={matrixState.eta} color="#99ff99" />
               </View>
               <View style={styles.matrixVisual}>
                 <Animated.View style={[styles.visualCircle, {
                   transform: [{ scale: matrixAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }],
                   opacity: matrixAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.3, 0.6, 0.3] })
                 }]} />
-                <Text style={styles.visualText}>6D CORE</Text>
+                <Text style={styles.visualText}>8D CORE</Text>
               </View>
             </View>
 
@@ -437,6 +431,9 @@ const [matrixState, setMatrixState] = useState({
                   <Text style={[styles.messageText, log.type === 'user' ? styles.userText : styles.angelaText]}>
                     {log.type === 'angela' ? '> ' : ''}{log.text}
                   </Text>
+                  {log.type === 'angela' && log.source && (
+                    <Text style={styles.sourceBadge}>[{log.source.toUpperCase()}]</Text>
+                  )}
                 </View>
               ))}
             </ScrollView>
@@ -786,6 +783,12 @@ const styles = StyleSheet.create({
   angelaText: {
     color: '#eee',
     fontFamily: 'monospace',
+  },
+  sourceBadge: {
+    color: '#00ffcc',
+    fontSize: 9,
+    marginTop: 2,
+    opacity: 0.7,
   },
   // Input Styles
   inputArea: {
