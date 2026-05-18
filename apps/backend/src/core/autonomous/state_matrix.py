@@ -218,27 +218,6 @@ class DimensionState:
             if key in self.values:
                 self.values[key] = max(0.0, min(1.0, float(value)))
         self.timestamp = datetime.now()
-        self.coordinate = self.compute_coordinate()
-
-
-    def get_average(self) -> float:
-        """获取维度平均值 / Get average value"""
-        if not self.values:
-            return 0.0
-        return sum(self.values.values()) / len(self.values)
-
-    def get_dominant(self) -> Tuple[str, float]:
-        """获取主导指标 / Get dominant metric"""
-        if not self.values:
-            return ("", 0.0)
-        return max(self.values.items(), key=lambda x: x[1])
-
-    def update(self, **kwargs) -> None:
-        """更新维度值 / Update dimension values"""
-        for key, value in kwargs.items():
-            if key in self.values:
-                self.values[key] = max(0.0, min(1.0, float(value)))
-        self.timestamp = datetime.now()
 
 
 class StateMatrix4D:
@@ -1551,29 +1530,6 @@ Returns:
         """从JSON导入 / Import state from JSON string"""
         data = json.loads(json_str)
         self.import_from_dict(data)
-
-    def compute_wellbeing(self) -> float:
-        """計算維度加權幸福感 / Compute dimension-weighted wellbeing score."""
-        averages = self.get_dimension_averages()
-        return (
-            averages.get("alpha", 0.5) * 0.20
-            + averages.get("beta", 0.5) * 0.15
-            + averages.get("gamma", 0.5) * 0.25
-            + averages.get("delta", 0.5) * 0.15
-            + averages.get("epsilon", 0.5) * 0.15
-            + averages.get("theta", 0.5) * 0.10
-        )
-
-    def get_history(
-        self, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None
-    ) -> List[Dict[str, Any]]:
-        """获取历史记录 / Get state history"""
-        filtered = self.history.copy()
-        if start_time:
-            filtered = [h for h in filtered if datetime.fromisoformat(h["timestamp"]) >= start_time]
-        if end_time:
-            filtered = [h for h in filtered if datetime.fromisoformat(h["timestamp"]) <= end_time]
-        return filtered
 
     def set_dimension_weight(self, dimension: str, weight: float) -> None:
         """设置维度权重 / Set dimension weight"""

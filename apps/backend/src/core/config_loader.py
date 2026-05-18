@@ -15,6 +15,7 @@ import logging
 import threading
 from pathlib import Path
 from typing import Any, Dict, Optional, TypeVar, Generic, Union
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -135,7 +136,8 @@ class AngelaConfigManager:
         fname = fname_map.get(learned_type)
         if not fname:
             return default
-        return self._learned.get(fname, default if default is not None else {})
+        key = fname.replace(".yaml", "").replace("learned_", "")
+        return self._learned.get(key, default if default is not None else {})
 
     def get_authority(self, section: str, default: Any = None) -> Any:
         """取得 Authority 配置（原始，未合併）"""
@@ -258,16 +260,23 @@ class AngelaConfigManager:
 
     def _update_watchers(self) -> None:
         """更新監控時間戳"""
-        for fname in self._authority_files + self._learned_files:
-            self._watchers[fname] = os.path.getmtime(
-                str(self._base_dir / fname)
-            ) if (self._base_dir / fname).exists() else 0.0
+        for fname in self._authority_files:
+            path = self._base_dir / fname
+            self._watchers[fname] = os.path.getmtime(str(path)) if path.exists() else 0.0
+        for fname in self._learned_files:
+            path = self._angela_dir / fname
+            self._watchers[fname] = os.path.getmtime(str(path)) if path.exists() else 0.0
 
     def reload_if_changed(self) -> bool:
         """熱重載：檢查配置檔是否變更，如有則重新載入"""
         changed = False
         for fname, last_mtime in list(self._watchers.items()):
-            path = self._base_dir / fname
+            if fname in self._authority_files:
+                path = self._base_dir / fname
+            elif fname in self._learned_files:
+                path = self._angela_dir / fname
+            else:
+                continue
             if path.exists():
                 current_mtime = os.path.getmtime(str(path))
                 if current_mtime > last_mtime:
@@ -318,9 +327,6 @@ class AngelaConfigManager:
 
         learned = self.get_learned("patterns", {})
         authority = self.get_authority("angela_core", {}).get("intents", {})
-
-        if intent_name in authority:
-            return False
 
         patterns = learned.get("intent_patterns", {})
         existing = patterns.get(intent_name, {})
@@ -389,8 +395,9 @@ class AngelaConfigManager:
         }
         try:
             patterns = self.get_learned("patterns", {})
+            patterns_key = patterns.get("intent_patterns", {})
+            stats["patterns"]["learned"] = len(patterns_key)
             authority_intents = self.get_authority("angela_core", {}).get("intents", {})
-            stats["patterns"]["learned"] = len(patterns.get("intent_patterns", {}))
             stats["patterns"]["authority"] = len(authority_intents)
             thresholds = self.get_learned("thresholds", {})
             stats["thresholds"]["adjustments"] = len(thresholds.get("threshold_adjustments", {}))
@@ -427,11 +434,21 @@ class AngelaConfigManager:
         return adjustments.get(metric)
 
     def get_best_route(self, intent: str) -> Optional[str]:
-        """根據學習歷史返回最佳路由（延遲最低的成功路由）"""
-        routes = self.get_learned("routes", {}).get("successful_routes", {})
+        """根據學習歷史返回最佳路由（延遲最低的成功路由，排除已知失敗）"""
+        routes = self.get_learned("routes", {})
+        successful = routes.get("successful_routes", {})
+        failed = routes.get("failed_routes", {})
+        failed_providers = set()
+        for key in failed:
+            parts = key.split(":", 1)
+            if len(parts) == 2 and parts[0] == intent:
+                failed_providers.add(parts[1])
         best_key, best_latency = None, float("inf")
-        for key, entry in routes.items():
+        for key, entry in successful.items():
             if key.startswith(f"{intent}:"):
+                provider = key.split(":", 1)[1]
+                if provider in failed_providers:
+                    continue
                 avg = entry.get("avg_latency", float("inf"))
                 if avg < best_latency:
                     best_key = key

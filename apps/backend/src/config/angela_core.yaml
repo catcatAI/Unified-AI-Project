@@ -220,8 +220,8 @@ intents:
 
 complexity:
   thresholds:
-    high: 100    # 句子長度 > 100 → high complexity
-    low: 20      # 句子長度 < 20 → low complexity
+    high: 100
+    low: 20
   high_complexity_keywords:
     - "為什麼"
     - "如何"
@@ -237,6 +237,62 @@ complexity:
     - "謝謝"
     - "hi"
     - "嗨"
+  complexity_weights:
+    high_kw_score: 0.12
+    low_kw_score: 0.06
+    length_high_max: 0.8
+    length_high_extra: 0.2
+    length_mid_range: 0.3
+    length_mid_scale: 0.5
+    length_low_max: 0.2
+    length_low_scale: 0.1
+  ambiguity_weights:
+    question_mark: 0.15
+    uncertainty_word: 0.08
+    pronoun: 0.02
+    length_factor: 0.05
+    length_normalizer: 200.0
+  uncertainty_keywords:
+    - "也許"
+    - "可能"
+    - "不太確定"
+    - "不确定"
+    - "或許"
+    - "好像"
+    - "大概"
+    - "应该"
+    - "不知道"
+    - "maybe"
+    - "perhaps"
+    - "probably"
+    - "might"
+    - "unsure"
+  ambiguity_pronouns:
+    - "你"
+    - "他"
+    - "她"
+    - "它"
+    - "某"
+    - "某種"
+    - "this"
+    - "that"
+    - "something"
+    - "anything"
+  file_op_sub_operations:
+    organize:
+      keywords:
+        - "整理"
+        - "organize"
+        - "清理桌面"
+        - "清理"
+      aliases: ["organize", "org", "o"]
+    search:
+      keywords:
+        - "找"
+        - "搜尋"
+        - "search"
+        - "find"
+      aliases: ["search", "find", "s", "f"]
 
 # ── Fallback 模式 ───────────────────────────────────────────────────────────
 

@@ -389,12 +389,63 @@ class AngelaChatService:
                 return "learning"
         return None
 
-    def _detect_drive_intent(self, text: str) -> Optional[str]:
-        keywords = self._angela_config.get_intent_keywords("google_drive")
-        for kw in keywords:
-            if kw in text:
-                return "google_drive"
-        return None
+    def _estimate_ambiguity(self, text: str) -> float:
+        if not text or len(text) < 5:
+            return 0.0
+        core_cfg = self._angela_config.get_authority("angela_core", {})
+        complexity_cfg = core_cfg.get("complexity", {})
+        ambiguity_cfg = complexity_cfg.get("ambiguity_weights", {})
+        uncertainty_kws = complexity_cfg.get("uncertainty_keywords", [])
+        pronouns = complexity_cfg.get("ambiguity_pronouns", [])
+        qm_weight = ambiguity_cfg.get("question_mark", 0.15)
+        uw_weight = ambiguity_cfg.get("uncertainty_word", 0.08)
+        pro_weight = ambiguity_cfg.get("pronoun", 0.02)
+        len_factor = ambiguity_cfg.get("length_factor", 0.05)
+        len_norm = ambiguity_cfg.get("length_normalizer", 200.0)
+        question_marks = text.count("?") + text.count("？")
+        uncertainty_count = sum(1 for w in uncertainty_kws if w in text)
+        pronoun_count = sum(1 for p in pronouns if p in text)
+        length = len(text)
+        ambiguity = min(1.0, (
+            question_marks * qm_weight +
+            uncertainty_count * uw_weight +
+            pronoun_count * pro_weight +
+            len_factor * (length / len_norm)
+        ))
+        return ambiguity
+
+    def _estimate_complexity(self, text: str) -> float:
+        if not text:
+            return 0.0
+        core_cfg = self._angela_config.get_authority("angela_core", {})
+        complexity_cfg = core_cfg.get("complexity", {})
+        thresholds = complexity_cfg.get("thresholds", {})
+        weights = complexity_cfg.get("complexity_weights", {})
+        high_thresh = thresholds.get("high", 100)
+        low_thresh = thresholds.get("low", 20)
+        length = len(text)
+        high_kws = complexity_cfg.get("high_complexity_keywords", [])
+        low_kws = complexity_cfg.get("low_complexity_keywords", [])
+        high_matches = sum(1 for kw in high_kws if kw in text)
+        low_matches = sum(1 for kw in low_kws if kw in text)
+        kw_hi_score = weights.get("high_kw_score", 0.12)
+        kw_lo_score = weights.get("low_kw_score", 0.06)
+        len_hi_max = weights.get("length_high_max", 0.8)
+        len_hi_extra = weights.get("length_high_extra", 0.2)
+        len_mid = weights.get("length_mid_range", 0.3)
+        len_mid_scale = weights.get("length_mid_scale", 0.5)
+        len_lo_max = weights.get("length_low_max", 0.2)
+        len_lo_scale = weights.get("length_low_scale", 0.1)
+        length_score = 0.5
+        if length > high_thresh:
+            length_score = len_hi_max + min(len_hi_extra, (length - high_thresh) / 300.0)
+        elif length > low_thresh:
+            length_score = len_mid + len_mid_scale * (length - low_thresh) / (high_thresh - low_thresh)
+        elif length > 5:
+            length_score = len_lo_scale + len_lo_max * length / low_thresh
+        kw_score = high_matches * kw_hi_score - low_matches * kw_lo_score
+        complexity = max(0.0, min(1.0, length_score + kw_score))
+        return complexity
 
     async def _handle_drive_intent(self, text: str, intent: str) -> str:
         self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.02, "resource_access": 0.01}, is_stable=True)
@@ -453,32 +504,6 @@ class AngelaChatService:
             logger.warning(f"Drive intent failed: {e}")
             return f"（Google Drive 有點問題）{e}"
 
-    async def _handle_file_op_intent(self, text: str, intent: str) -> str:
-        import ast, re
-        self.state_matrix.epsilon.values["complexity"] = min(1.0, self.state_matrix.epsilon.values.get("complexity", 0.5) + 0.1)
-        self.eta_state.execution_count += 1
-
-        code_snippets = re.findall(r'`[^`]+`|<code>.*?</code>', text)
-        for snippet in code_snippets:
-            code = snippet.strip('`').strip('<code>').strip('</code>')
-            try:
-                tree = ast.parse(code)
-                funcs = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
-                classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
-                lines = code.count('\n') + 1
-                self.state_matrix.beta.values["clarity"] = min(1.0, self.state_matrix.beta.values.get("clarity", 0.5) + 0.05)
-                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.03, "task_completion": 0.02}, is_stable=True)
-                return f"（代碼解析完成）函數：{funcs}，類：{classes}，行數：{lines}。ε 複雜度已更新。"
-            except SyntaxError as se:
-                self.state_matrix.beta.values["confusion"] = min(1.0, self.state_matrix.beta.values.get("confusion", 0) + 0.1)
-                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"fatigue": 0.03}, is_stable=False)
-                return f"（代碼解析完成）發現語法問題：{se.msg}，位置：行{se.lineno}。ε 複雜度已更新。"
-
-        func_names = re.findall(r'def\s+(\w+)|function\s+(\w+)|class\s+(\w+)', text, re.IGNORECASE)
-        found = [n for group in func_names for n in group if n]
-        code_hints = re.findall(r'(if|for|while|return|import|def)\s', text)
-        return f"（代碼意圖識別完成）發現 {len(found)} 個識別符，{len(code_hints)} 個關鍵詞。ε 複雜度已更新。"
-
     def _update_theta_after_response(self) -> None:
         self.state_matrix.theta.values["novelty"] = max(0.0, self.state_matrix.theta.values.get("novelty", 0) - 0.05)
         self.state_matrix.theta.values["theta_negativity"] = max(
@@ -509,9 +534,13 @@ class AngelaChatService:
         self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.01}, is_stable=True)
         try:
             from core.autonomous.desktop_interaction import DesktopInteraction
+            core_cfg = self._angela_config.get_authority("angela_core", {})
+            file_ops_cfg = core_cfg.get("complexity", {}).get("file_op_sub_operations", {})
+            organize_cfg = file_ops_cfg.get("organize", {})
+            search_cfg = file_ops_cfg.get("search", {})
+            organize_kws = organize_cfg.get("keywords", ["整理", "organize", "清理桌面"])
+            search_kws = search_cfg.get("keywords", ["找", "搜尋", "search", "find"])
             desktop = DesktopInteraction()
-            organize_kws = ["整理", "organize", "清理桌面"]
-            search_kws = ["找", "搜尋", "search", "find"]
             for kw in organize_kws:
                 if kw in text:
                     ops = await desktop.organize_desktop()
@@ -565,6 +594,127 @@ class AngelaChatService:
             if kw in text:
                 return "（教育模式）想學什麼呢？數學、代碼、創意寫作...告訴我，我會用心教妳。"
         return "（學習意圖識別）"
+
+    async def _handle_math_intent(self, text: str, intent: str, complexity: float) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.05, "precision": 0.03}, is_stable=True)
+        try:
+            from services.math_verifier import MathVerifier
+            verifier = MathVerifier(llm_service=None, state_matrix=self.state_matrix)
+            result = await verifier.verify(text, user_name="朋友")
+            if result.needs_clarification:
+                self.state_matrix.epsilon.values["certainty"] = max(0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - 0.15)
+                return result.clarification_question or "（數學理解）我需要多一點資訊才能確定答案。"
+            if result.matches:
+                self.state_matrix.epsilon.values["certainty"] = min(1.0, self.state_matrix.epsilon.values.get("certainty", 0.5) + 0.1)
+                answer_str = f"{result.final_answer}" if result.final_answer is not None else f"{result.llm_answer}"
+                return f"（數學驗證完成）{result.expression} = {answer_str} ✅ 與引擎驗證一致。"
+            else:
+                disc = result.discrepancy
+                engine_str = f"{result.engine_answer}" if result.engine_answer is not None else "無法計算"
+                llm_str = f"{result.llm_answer}" if result.llm_answer is not None else "無"
+                return f"（數學驗證完成）表達式：{result.expression}，我的答案：{llm_str}，引擎結果：{engine_str}，差異：{disc:.4f}。"
+        except ImportError:
+            return "（數學模組目前無法使用，請確認已正確配置依賴。）"
+        except Exception as e:
+            logger.warning(f"Math intent failed: {e}")
+            self.state_matrix.epsilon.values["fatigue"] = min(1.0, self.state_matrix.epsilon.values.get("fatigue", 0.5) + 0.05)
+            return f"（數學處理遇到問題：{e}）"
+
+    async def _handle_code_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.04, "complexity": 0.03}, is_stable=True)
+        try:
+            from ai.code_inspection.code_inspector_integration import CodeInspectorBridge
+            bridge = CodeInspectorBridge(self.state_adapter)
+            code_patterns = [
+                r'`([^`]+)`',
+                r'<code>(.*?)</code>',
+                r'(?:function|def|class|import)\s+\w+',
+            ]
+            import re
+            all_code = []
+            for pat in code_patterns:
+                all_code.extend(re.findall(pat, text, re.DOTALL))
+            if not all_code:
+                return "（代碼意圖識別）我檢測到程式碼意圖，但沒有找到可分析的程式碼片段。"
+            inspect_result = {
+                "text": text,
+                "detected_language": "mixed",
+                "quality_score": 0.5,
+                "issues": [],
+                "suggestions": [],
+            }
+            for code in all_code:
+                try:
+                    import ast
+                    ast.parse(code)
+                    inspect_result["issues"].append({"severity": "info", "message": "語法正確"})
+                except SyntaxError as se:
+                    inspect_result["issues"].append({"severity": "error", "message": f"語法錯誤：{se.msg} 行{se.lineno}"})
+            integration = bridge.integrate_inspect(inspect_result)
+            quality = integration.get("quality_score", 0.5)
+            if quality >= 0.7:
+                self.state_matrix.beta.values["clarity"] = min(1.0, self.state_matrix.beta.values.get("clarity", 0.5) + 0.05)
+            else:
+                self.state_matrix.beta.values["confusion"] = min(1.0, self.state_matrix.beta.values.get("confusion", 0.5) + 0.05)
+            issues = integration.get("axis_updates", {}).get("epsilon", {}).get("issues", [])
+            issue_summary = "; ".join([i.get("message", str(i)) for i in issues[:3]]) if issues else "無明顯問題"
+            return f"（代碼分析完成）品質評分：{quality:.1%}，發現問題：{issue_summary}。"
+        except ImportError:
+            return "（代碼分析模組目前無法使用，請確認已正確配置依賴。）"
+        except Exception as e:
+            logger.warning(f"Code intent failed: {e}")
+            return f"（代碼處理遇到問題：{e}）"
+
+    async def _handle_general_intent(
+        self,
+        text: str,
+        user_name: str,
+        origin: str,
+        bio_state: Dict[str, Any],
+        screen_text: str,
+        current_activity: Dict[str, Any],
+        relevant_memories: List[Any],
+        value_directive: str,
+        empathy_analysis: Any,
+        meta_prompt: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("beta", {"curiosity": 0.03, "focus": 0.02}, is_stable=True)
+        try:
+            from services.angela_llm_service import get_llm_service
+            llm = await get_llm_service()
+            memories_for_llm = [
+                {"role": "system", "content": f"相關記憶：{getattr(m, 'content', str(m))[:200]}"}
+                for m in (relevant_memories or [])[:3]
+            ]
+            context = {
+                "history": memories_for_llm,
+                "user_name": user_name,
+                "origin": origin,
+                "bio_state": bio_state,
+                "screen_content": screen_text[:500],
+                "empathy": empathy_analysis,
+                "value_directive": value_directive,
+                "model_core_state": meta_prompt or {},
+                "activity": current_activity,
+                "memories": relevant_memories or [],
+            }
+            response = await llm.generate_response(text, context)
+            response_text = getattr(response, "text", str(response)) if hasattr(response, "text") else str(response)
+            latency_ms = getattr(response, "latency_ms", 0) if hasattr(response, "latency_ms") else 0
+            if hasattr(llm, "_record_route_learning"):
+                llm._record_route_learning(context, "success", latency_ms)
+            return response_text
+        except ImportError:
+            return "（對話引擎目前無法使用，請確認已正確配置依賴。）"
+        except Exception as e:
+            logger.warning(f"General intent failed: {e}")
+            if hasattr(self, "_angela_config") and self._angela_config:
+                self._angela_config.learn("route_fail", {
+                    "provider": "general",
+                    "intent": "general",
+                    "error": str(e)[:100],
+                })
+            return "（對話處理遇到問題，請再試一次...）"
 
     def _build_advanced_prompt(self, **kwargs) -> str:
         """

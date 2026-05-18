@@ -404,7 +404,16 @@ class StateMatrixAdapter:
 
             import json
             try:
-                analysis = json.loads(text) if text.startswith("{") else {}
+                text_stripped = text.strip()
+                if text_stripped.startswith("{"):
+                    analysis = json.loads(text_stripped)
+                else:
+                    import re
+                    match = re.search(r'\{[^{}]*\}', text_stripped)
+                    if match:
+                        analysis = json.loads(match.group())
+                    else:
+                        analysis = {}
             except Exception:
                 analysis = {"raw": text[:200]}
 
@@ -878,13 +887,26 @@ class StateMatrixAdapter:
 
     def _build_eta_inputs(self, signals: Dict[str, float], context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """從 θ 信號構建 η 模組輸入"""
+        weights = {
+            "update_frequency": 0.2,
+            "complexity_delta": 0.3,
+            "novelty_peak": 0.2,
+            "misallocation_rate": 0.2,
+            "buffer_pressure": 0.1,
+        }
+        total, weight_sum = 0.0, 0.0
+        for key, weight in weights.items():
+            if key in signals:
+                total += signals[key] * weight
+                weight_sum += weight
+        signal_strength = total / weight_sum if weight_sum > 0 else 0.0
         inputs = {
             "values": [
                 signals.get("update_frequency", 0.5),
                 signals.get("complexity_delta", 0.5),
                 signals.get("novelty_peak", 0.5),
             ],
-            "signal_strength": self._eta._compute_signal_strength(signals),
+            "signal_strength": signal_strength,
         }
         if context:
             inputs.update(context)
