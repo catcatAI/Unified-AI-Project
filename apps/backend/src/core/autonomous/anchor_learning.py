@@ -372,3 +372,39 @@ class AnchorLearningEngine:
         ]
         scored.sort(key=lambda x: x[1], reverse=True)
         return scored[:top_n]
+
+    def suggest_config_update(self) -> List[Dict[str, Any]]:
+        """
+        分析錨點學習數據，建議配置更新（寫入 learned_*.yaml）。
+
+        觸發條件：
+        - 某軸 keyword 學習次數 >= 10 次 → 建議新增意圖關鍵字
+        - 某軸 misallocation 率 > 20% → 建議調整閾值
+        - 某軸 更新次數 == 0 且有輸入 → 建議初始化錨點
+
+        返回：建議列表（可安全地寫入 Learned 配置）
+        """
+        suggestions = []
+        for axis in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta", "eta"):
+            kw = self.get_top_keywords(axis, top_n=5)
+            if kw:
+                strong_kw = [(w, s) for w, s in kw if s > 0.15]
+                if strong_kw and len(self._update_counts.get(axis, 0)) > 0:
+                    suggestions.append({
+                        "type": "intent_keyword",
+                        "axis": axis,
+                        "keywords": [w for w, _ in strong_kw],
+                        "confidence": strong_kw[0][1],
+                        "rationale": f"軸 {axis} 有 {len(strong_kw)} 個強關鍵字，置信度 > 0.15",
+                    })
+
+        misalloc_rate = len(self._misallocation_history) / max(1, len(self._allocation_history))
+        if misalloc_rate > 0.2:
+            suggestions.append({
+                "type": "threshold_adjust",
+                "metric": "misallocation_rate",
+                "value": round(misalloc_rate, 3),
+                "rationale": f"錯誤分配率 {misalloc_rate:.1%} 超過 20% 閾值",
+            })
+
+        return suggestions

@@ -1,0 +1,177 @@
+# =============================================================================
+# ANGELA v6.3 - Tickle Reflex Configuration
+# =============================================================================
+# Authority 配置（人寫，搔癢反射安全配置）
+# ⚠️ 所有 allowed_responses 為「允許列表」非「唯一列表」
+# 版本: 6.3
+# 更新: 2026-05-17
+# =============================================================================
+
+# ── 強度分級 ────────────────────────────────────────────────────────────────
+
+intensity_thresholds:
+  light: 0.25      # 輕度：輕微觸碰 (0.0-0.25)
+  medium: 0.55     # 中度：持續撫摸 (0.25-0.55)
+  intense: 0.60    # 強度：強烈刺激 (0.60-1.0)
+  sustained_seconds: 5.0  # 持續刺激閾值（秒）
+
+# ── 部位配置 ──────────────────────────────────────────────────────────────
+
+body_parts:
+  abdomen:
+    sensitivity: 0.9
+    reflex_type: "giggle_twitch"
+    # 允許的回應類型（非唯一限制—LLM 可生成其他合適內容）
+    allowed_responses:
+      - "giggle"
+      - "laugh"
+      - "squirm"
+      - "plead"
+    llm_delay_ms: 250
+    animation_priority: 2
+
+  feet:
+    sensitivity: 0.8
+    reflex_type: "foot_kick"
+    allowed_responses:
+      - "laughing"
+      - "squirm"
+    llm_delay_ms: 300
+    animation_priority: 2
+
+  neck:
+    sensitivity: 0.7
+    reflex_type: "neck_shrink"
+    allowed_responses:
+      - "laughing"
+      - "flinch"
+      - "plead"
+    llm_delay_ms: 280
+    animation_priority: 2
+
+  back:
+    sensitivity: 0.6
+    reflex_type: "back_twitch"
+    allowed_responses:
+      - "giggle"
+      - "laughing"
+      - "squirm"
+    llm_delay_ms: 260
+    animation_priority: 2
+
+  sides:
+    sensitivity: 0.85
+    reflex_type: "giggle_twitch"
+    allowed_responses:
+      - "giggle"
+      - "laugh"
+      - "squirm"
+      - "plead"
+    llm_delay_ms: 240
+    animation_priority: 3
+
+  face:
+    sensitivity: 0.5
+    reflex_type: "face_squirm"
+    allowed_responses:
+      - "laughing"
+      - "flinch"
+    llm_delay_ms: 200
+    animation_priority: 1
+
+  hands:
+    sensitivity: 0.4
+    reflex_type: "hand_twitch"
+    allowed_responses:
+      - "giggle"
+      - "flinch"
+    llm_delay_ms: 200
+    animation_priority: 1
+
+# ── 敏感部位（祇能觸發 Phase 1，Phase 2 受限）──────────────────────────────
+
+sensitive_parts:
+  # 這些部位觸發 Phase 1 但 Phase 2 輸出受限於安全回應
+  - "chest"
+  - "shoulders"
+
+# Phase 2 安全回應（當敏感部位被觸發時）
+sensitive_part_fallback:
+  output_mode: "comfort_seek"
+  response_type: "gentle_redirect"
+  max_words: 10
+
+# ── 安全邊界 ──────────────────────────────────────────────────────────────
+
+safety:
+  # intensity >= 0.8 時的輸出模式
+  intense_output_mode: "scream"
+
+  # > 5s 持續刺激時的行為
+  sustained_action: "comfort_seek"
+
+  # Phase 1 完成超時（ms）
+  reflex_timeout_ms: 2000
+
+  # 強度模式下 LLM 輸出長度上限（非唯一列表—限制長度而非內容）
+  max_llm_words: 20
+
+  # Output Mode 定義（配置驅動，非 hardcoded）
+  output_modes:
+    speak:       # 正常說話
+    scream:      # 尖叫/求饒短語
+    silence:     # 不說話（祇動作）
+    comfort_seek:  # 尋求安慰/擁抱
+
+  # LLM 語言鎖定：intense 模式下祇允許短語類型
+  intense_allowed_types:
+    - "short_scream"
+    - "plea"
+    - "no_stop"
+    - "comfort_request"
+
+# ── γ 軸「被侵犯」映射 ────────────────────────────────────────────────────
+
+gamma_invasion:
+  # 持續刺激時 γ軸 的情緒影響
+  sustained_stimulus_threshold: 0.6  # 強度 > 0.6 持續 > 5s
+  emotion_shift:
+    primary: "fear"
+    secondary: "anxiety"
+    tertiary: "protective"
+  behavioral_trigger: "comfort_seek"
+  gamma_value_override: 0.8  # 入侵值
+
+# ── 小腦動畫映射 ──────────────────────────────────────────────────────────
+
+animations:
+  giggle_twitch:
+    motion_name: "giggle_twitch"
+    duration_ms: 150
+    expression: "laughing"
+    audio: "giggle_short"
+  foot_kick:
+    motion_name: "foot_kick"
+    duration_ms: 200
+    expression: "laughing"
+    audio: "giggle_short"
+  neck_shrink:
+    motion_name: "neck_shrink"
+    duration_ms: 180
+    expression: "flinch"
+    audio: "none"
+  back_twitch:
+    motion_name: "back_twitch"
+    duration_ms: 160
+    expression: "laughing"
+    audio: "giggle_short"
+  face_squirm:
+    motion_name: "face_squirm"
+    duration_ms: 120
+    expression: "laughing"
+    audio: "none"
+  hand_twitch:
+    motion_name: "hand_twitch"
+    duration_ms: 100
+    expression: "giggle"
+    audio: "none"

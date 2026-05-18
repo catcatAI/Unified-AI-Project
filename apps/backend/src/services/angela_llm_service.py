@@ -532,6 +532,10 @@ class AngelaLLMService:
         # ========== 情感识别系统（新增）==========
         self._init_emotion_recognition()
 
+        self._angela_routing = self.config.get("_routing_policy", {})
+        self._angela_fallback_chain = self.config.get("_fallback_chain", [])
+        self._angela_intent_routing = self.config.get("_intent_routing", {})
+
     def _init_response_system(self):
         """初始化 P0-2 响应组合与匹配系统"""
         try:
@@ -826,14 +830,41 @@ class AngelaLLMService:
         )
 
     def _get_default_config(self) -> Dict[str, Any]:
-        """從配置文件讀取預設配置，並從環境變量加載 API 密鑰"""
+        """從 Angela 配置層讀取 LLM 配置，支援 YAML + 降級回退"""
         import os
         from pathlib import Path
 
-        # 搜索多個可能的配置路徑（按優先順序）
+        config = None
+        try:
+            from core.config_loader import get_angela_config
+            cfg = get_angela_config()
+            providers = cfg.get_llm_config()
+            if providers and providers.get("providers"):
+                config = {"_angela_managed": True}
+                for name, prov in providers.get("providers", {}).items():
+                    config[name] = {
+                        "provider": prov.get("provider", "ollama"),
+                        "base_url": prov.get("base_url", ""),
+                        "model_name": prov.get("model", ""),
+                        "enabled": prov.get("enabled", True),
+                        "temperature": prov.get("temperature", 0.7),
+                    }
+                    if prov.get("api_key_env"):
+                        key = os.environ.get(prov["api_key_env"])
+                        if key:
+                            config[name]["api_key"] = key
+                routing = providers.get("routing_policy", {})
+                config["_routing_policy"] = routing
+                config["_fallback_chain"] = routing.get("fallback_chain", [])
+                config["_intent_routing"] = routing.get("intent_based_routing", {})
+                logger.info(f"LLM 配置已從 angela_config 載入 ({len(config)-3} providers)")
+                return config
+        except Exception:
+            pass
+
         config_paths = [
             os.environ.get("MULTI_LLM_CONFIG"),
-            "configs/multi_llm_config.json",  # relative to CWD (apps/backend)
+            "configs/multi_llm_config.json",
             str(Path(__file__).resolve().parents[2] / "configs" / "multi_llm_config.json"),
             str(Path(__file__).resolve().parents[4] / "configs" / "multi_llm_config.json"),
         ]
@@ -1320,6 +1351,7 @@ class AngelaLLMService:
                 await self._store_response_as_template(user_message, response, context)
 
             logger.info(f"Angela 回應生成完成 (LLM_FULL) ({response_time:.0f}ms)")
+            self._record_route_learning(context, "success", response_time)
             return response
 
         except Exception as e:
@@ -1448,17 +1480,68 @@ class AngelaLLMService:
 
             if response.error:
                 logger.warning(f"LLM 回應錯誤: {response.error}")
+                if self._angela_fallback_chain:
+                    return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
                 return await self._fallback_response(user_message, context)
 
             return response
 
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout")
+            self._record_route_learning(context, "timeout", 30000.0)
+            if self._angela_fallback_chain:
+                return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
             return await self._fallback_response(user_message, context)
         except Exception as e:
             # broad exception acceptable: LLM generation must be resilient, fallback on any error
             logger.error(f"LLM generation error: {e}")
+            self._record_route_learning(context, "error", 0.0)
+            if self._angela_fallback_chain:
+                return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
             return await self._fallback_response(user_message, context)
+
+    async def _try_fallback_chain(
+        self, user_message: str, context: Dict[str, Any], chain: List[str]
+    ) -> LLMResponse:
+        """嘗試降級鏈中的後端"""
+        for backend_name in chain:
+            for btype, bobj in self.backends.items():
+                bname_str = btype.name.lower()
+                if backend_name.lower() in bname_str or bname_str in backend_name.lower():
+                    try:
+                        prev = self.active_backend
+                        self.active_backend = bobj
+                        response = await asyncio.wait_for(
+                            bobj.generate(
+                                prompt=self._construct_angela_prompt(user_message, context)[-1]["content"],
+                                messages=self._construct_angela_prompt(user_message, context),
+                                temperature=0.7, max_tokens=512,
+                            ),
+                            timeout=30.0,
+                        )
+                        logger.info(f"[Fallback] Switched from {prev} to {btype.name}")
+                        return response
+                    except Exception:
+                        continue
+        return await self._fallback_response(user_message, context)
+
+    def _record_route_learning(self, context: Dict[str, Any], status: str, latency_ms: float) -> None:
+        """學習閉環：記錄 LLM 路由結果到雙層配置"""
+        try:
+            from core.config_loader import get_angela_config
+            cfg = get_angela_config()
+            provider = self.active_backend.__class__.__name__ if self.active_backend else "unknown"
+            intent = context.get("origin", "general") if context else "general"
+            if status == "success":
+                cfg.learn("route_success", {
+                    "provider": provider, "intent": intent, "latency_ms": latency_ms
+                })
+            else:
+                cfg.learn("route_fail", {
+                    "provider": provider, "intent": intent, "error": status
+                })
+        except Exception:
+            pass
 
     async def _store_response_as_template(
         self, user_message: str, response: LLMResponse, context: Dict[str, Any]

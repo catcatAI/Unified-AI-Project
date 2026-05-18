@@ -46,7 +46,7 @@ import asyncio
 import httpx
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import logging
 
 # 加载环境变量
@@ -1198,8 +1198,11 @@ async def _run_repl():
     service = get_angela_chat_service()
     await service.initialize()
     print("[REPL] Angela ready! (exit/quit to stop)\n")
+    print("[Hint] Type /help for commands, /state to view 8D matrix\n")
 
     loop = asyncio.get_event_loop()
+    cmd_history: List[str] = []
+    _last_intent: str = "general"
 
     while True:
         try:
@@ -1215,9 +1218,332 @@ async def _run_repl():
         if not text:
             continue
 
+        if text.startswith("/") or text.startswith(":"):
+            intent_name, response_text = _handle_repl_command(text, service, cmd_history)
+            if response_text is not None:
+                _last_intent = intent_name
+                print(f"\U0001F4AD Angela [{intent_name}]: {response_text}")
+                continue
+
         print("\U0001F4AD Angela: ", end="", flush=True)
         response = await service.generate_response(text)
         print(response)
+        cmd_history.append(text)
+        if len(cmd_history) > 100:
+            cmd_history = cmd_history[-100:]
+
+
+def _handle_repl_command(text: str, service: Any, history: List[str]) -> Tuple[str, Optional[str]]:
+    """Parse and handle REPL commands. Returns (intent, response_text or None for passthrough)."""
+    parts = text.lstrip("/:").split(maxsplit=1)
+    cmd = parts[0].lower()
+    args = parts[1] if len(parts) > 1 else ""
+
+    if cmd in ("h", "help"):
+        return ("system", _build_help_text())
+
+    if cmd in ("s", "state"):
+        return ("system", _format_state_snapshot(service))
+
+    if cmd in ("m", "mem", "memory"):
+        return ("system", _format_memory_summary(service, args))
+
+    if cmd in ("c", "clear"):
+        return ("system", "\033[2J\033[H")
+
+    if cmd in ("cfg", "config"):
+        return ("system", _format_config_summary(service))
+
+    if cmd in ("i", "intent"):
+        return ("system", _format_intent_registry())
+
+    if cmd in ("r", "route"):
+        return ("system", _format_llm_routing(service))
+
+    if cmd in ("tickle", "tkl"):
+        return ("system", _handle_tickle_command(args))
+
+    if cmd in ("model", "m") and args:
+        return ("system", _handle_model_command(args, service))
+
+    if cmd in ("drive", "gd", "cloud"):
+        return ("system", _handle_drive_command(args))
+
+    if cmd in ("hist", "history"):
+        lines = [f"  {i+1}. {h[:60]}" for i, h in enumerate(history[-10:])]
+        return ("system", f"Recent history:\n" + "\n".join(lines) if lines else "(empty)")
+
+    return ("unknown", None)
+
+
+def _build_help_text() -> str:
+    return """Angela REPL Commands:
+  /help, /h        — This help
+  /state, /s        — 8D state matrix snapshot
+  /memory, /m [q]   — Memory summary (optional search)
+  /tickle, /tkl [part] [intensity] — Trigger tickle reflex
+  /model [list|stats|switch <name>|auto] — LLM model management
+  /drive [status|auth|list|search <q>|sync|analyze|logout] — Google Drive
+  /clear, /c        — Clear screen
+  /config, /cfg     — Current YAML config summary
+  /intent, /i       — Intent registry overview
+  /route, /r        — LLM routing status
+  /history          — Recent command history
+  /eval <expr>      — Evaluate Python expression
+  exit/quit         — Stop REPL"""
+
+
+def _format_state_snapshot(service: Any) -> str:
+    try:
+        sm = service.state_matrix
+        lines = ["--- 8D State Matrix ---"]
+        for axis in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta"):
+            ax = getattr(sm, axis, None)
+            if ax and hasattr(ax, "values"):
+                vals = list(ax.values.items())[:4]
+                vals_str = ", ".join(f"{k}={v:.2f}" for k, v in vals)
+                lines.append(f"  [{axis}] {vals_str}")
+        eta = service.eta_state
+        if eta:
+            lines.append(f"  [eta] exec={eta.execution_count}, success={eta.success_rate:.1%}, drift={eta.structural_drift:.3f}")
+        theta = sm.theta if hasattr(sm, "theta") else None
+        if theta:
+            lines.append(f"  [theta] novelty={theta.values.get('novelty',0):.2f}, correction={theta.values.get('correction_urge',0):.2f}")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"State unavailable: {e}"
+
+
+def _format_memory_summary(service: Any, search: str) -> str:
+    try:
+        if hasattr(service, "memory_manager") and service.memory_manager:
+            import asyncio
+            loop = asyncio.new_event_loop()
+            results = loop.run_until_complete(service.memory_manager.query_core_memory(
+                keywords=[search] if search else ["experience"], limit=5
+            ))
+            loop.close()
+            if not results:
+                return "(no memories found)"
+            lines = [f"Memory {i+1}: {r.get('content','')[:80]}" for i, r in enumerate(results)]
+            return "\n".join(lines)
+        return "(memory manager not initialized)"
+    except Exception as e:
+        return f"Memory error: {e}"
+
+
+def _format_config_summary(service: Any) -> str:
+    try:
+        cfg = service._angela_config
+        intents = list(cfg.get_intents().keys())
+        thresholds = cfg.get_complexity_thresholds()
+        llm = cfg.get_llm_config()
+        providers = list(llm.get("providers", {}).keys()) if llm else []
+        routing = cfg.get_routing_policy()
+        chain = routing.get("fallback_chain", [])
+        return f"Intents: {intents}\nComplexity thresholds: {thresholds}\nLLM providers: {providers}\nFallback chain: {chain}"
+    except Exception as e:
+        return f"Config error: {e}"
+
+
+def _format_intent_registry() -> str:
+    try:
+        from core.intent_registry import IntentRegistry
+        reg = IntentRegistry()
+        lines = ["Intent Registry:"]
+        for p in reg.patterns:
+            lines.append(f"  {p.name} (pri={p.priority}): {p.keywords[:5]}")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Intent registry error: {e}"
+
+
+def _format_llm_routing(service: Any) -> str:
+    try:
+        from services.angela_llm_service import get_llm_service
+        llm_svc = get_llm_service()
+        backends = list(llm_svc.backends.keys()) if hasattr(llm_svc, "backends") else []
+        active = getattr(llm_svc, "active_backend", None)
+        chain = getattr(llm_svc, "_angela_fallback_chain", [])
+        stats = getattr(llm_svc, "stats", {})
+        return f"Backends: {backends}\nActive: {active}\nFallback chain: {chain}\nStats: {stats}"
+    except Exception as e:
+        return f"LLM routing error: {e}"
+
+
+def _handle_tickle_command(args: str) -> str:
+    """Handle /tickle command: /tickle <part> [intensity]"""
+    parts = args.strip().split()
+    if not parts:
+        from core.autonomous.tickle_reflex_system import get_reflex_system
+        reflex = get_reflex_system()
+        all_parts = reflex.get_all_body_parts()
+        sensitive = reflex.get_sensitive_parts()
+        thresholds = reflex.get_intensity_thresholds()
+        return (f"Tickle Reflex System\nParts: {all_parts}\nSensitive: {sensitive}\n"
+                f"Thresholds: {thresholds}\n\nUsage: /tickle <part> [intensity 0-1]")
+
+    body_part = parts[0]
+    intensity = float(parts[1]) if len(parts) > 1 else 0.5
+
+    import asyncio
+    from core.autonomous.tickle_reflex_system import get_reflex_system
+
+    reflex = get_reflex_system()
+
+    async def run_tickles():
+        return await reflex.trigger_tickles(
+            body_part=body_part,
+            intensity=intensity,
+            duration_seconds=1.0,
+            origin="REPL"
+        )
+
+    loop = asyncio.new_event_loop()
+    try:
+        result = loop.run_until_complete(run_tickles())
+    finally:
+        loop.close()
+
+    phase1 = result.get("phase1", {})
+    phase2 = result.get("phase2", {})
+    anim = phase1.get("animation", {})
+    return (f"[Tickle] {body_part} intensity={intensity:.1f}\n"
+            f"Level: {result.get('intensity_level', '?')}\n"
+            f"Output: {phase1.get('output_mode', '?')}\n"
+            f"Animation: {anim.get('motion_name', '?')} ({anim.get('duration_ms', 0)}ms)\n"
+            f"Expression: {anim.get('expression', '?')}\n"
+            f"Phase2 triggered: {phase2.get('triggered', False)}\n"
+            f"Elapsed: {result.get('elapsed_ms', 0)}ms")
+
+
+def _handle_model_command(args: str, service: Any) -> str:
+    """Handle /model command: /model [list|stats|switch <name>|auto]"""
+    parts = args.strip().split(maxsplit=1)
+    subcmd = parts[0].lower() if parts else "list"
+    subarg = parts[1] if len(parts) > 1 else ""
+
+    try:
+        from services.angela_llm_service import get_llm_service
+        llm_svc = get_llm_service()
+
+        if subcmd in ("list", "ls", "l"):
+            backends = list(llm_svc.backends.keys()) if hasattr(llm_svc, "backends") else []
+            active = getattr(llm_svc, "active_backend", None)
+            return f"Available models: {backends}\nActive: {active}"
+
+        if subcmd in ("stats", "s"):
+            stats = getattr(llm_svc, "stats", {})
+            return f"LLM Stats: {stats}"
+
+        if subcmd in ("switch", "sw", "set"):
+            if not subarg:
+                return "Usage: /model switch <name>\nAvailable: " + str(list(getattr(llm_svc, "backends", {}).keys()))
+            backend_key = subarg.strip()
+            for btype, bobj in getattr(llm_svc, "backends", {}).items():
+                if backend_key.lower() in btype.name.lower():
+                    llm_svc.active_backend = bobj
+                    return f"[OK] Switched to {btype.name}"
+            return f"[FAIL] Model '{backend_key}' not found"
+
+        if subcmd in ("auto", "a"):
+            routing = getattr(llm_svc, "_angela_routing", {})
+            return f"Auto routing enabled. Policy: {routing}"
+
+        return f"Unknown subcommand: {subcmd}\nUsage: /model [list|stats|switch <name>|auto]"
+
+    except Exception as e:
+        return f"Model command error: {e}"
+
+
+def _handle_drive_command(args: str) -> str:
+    """Handle /drive command: /drive [status|auth|url|list|search <q>|sync|analyze|logout]"""
+    import httpx
+
+    parts = args.strip().split(maxsplit=1)
+    subcmd = parts[0].lower() if parts else "status"
+    subarg = parts[1] if len(parts) > 1 else ""
+
+    base = "http://127.0.0.1:8000/api/v1/drive"
+
+    try:
+        if subcmd in ("status", "s"):
+            resp = httpx.get(f"{base}/status", timeout=10)
+            d = resp.json()
+            auth = d.get("authenticated", False)
+            quota = d.get("quota", {})
+            lines = [
+                f"Google Drive: {'✅ 已認證' if auth else '❌ 未認證'}",
+                f"  用戶: {quota.get('user', 'N/A')}",
+                f"  已用: {quota.get('used', 'N/A')} / {quota.get('total', 'N/A')}",
+                f"  狀態: {d.get('status', 'unknown')}",
+            ]
+            return "\n".join(lines)
+
+        if subcmd in ("auth", "a") and subarg in ("", "url"):
+            resp = httpx.get(f"{base}/auth/url", timeout=10)
+            url = resp.json().get("url", "")
+            return f"授權 URL：\n{url}\n\n請用瀏覽器打開這個連結，授權後把回傳的 code 貼給我。"
+
+        if subcmd in ("callback", "cb") and subarg:
+            resp = httpx.post(f"{base}/auth/callback", json={"code": subarg}, timeout=15)
+            if resp.status_code == 200:
+                return "✅ Google Drive 認證成功！"
+            return f"❌ 認證失敗：{resp.text}"
+
+        if subcmd in ("logout", "out"):
+            httpx.post(f"{base}/auth/logout", timeout=5)
+            return "✅ 已登出 Google Drive。"
+
+        if subcmd in ("list", "ls", "l"):
+            n = int(subarg) if subarg.isdigit() else 10
+            resp = httpx.get(f"{base}/files?page_size={n}", timeout=15)
+            files = resp.json().get("files", [])
+            if not files:
+                return "📂 雲端硬碟是空的。"
+            lines = [f"📄 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
+            return "📂 Google Drive 檔案列表：\n" + "\n".join(lines)
+
+        if subcmd in ("search", "q") and subarg:
+            resp = httpx.post(f"{base}/files/search", json={"query": subarg, "page_size": 10}, timeout=15)
+            files = resp.json().get("files", [])
+            if not files:
+                return f"🔍 找不到包含「{subarg}」的檔案。"
+            lines = [f"📄 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
+            return f"🔍 搜尋「{subarg}」結果：\n" + "\n".join(lines)
+
+        if subcmd in ("sync", "download", "dl"):
+            resp = httpx.get(f"{base}/files?page_size=10", timeout=15)
+            files = resp.json().get("files", [])
+            if not files:
+                return "沒有找到可以同步的檔案。"
+            resp = httpx.post(f"{base}/files/sync", json={"file_ids": [f["id"] for f in files[:5]]}, timeout=60)
+            r = resp.json()
+            return (f"✅ 同步完成！下載了 {r.get('synced', 0)} 個檔案，"
+                    f"跳過 {r.get('skipped', 0)} 個（已存在），"
+                    f"存入記憶 {r.get('memorized_count', 0)} 個。")
+
+        if subcmd in ("analyze", "ana"):
+            resp = httpx.post(f"{base}/analyze", json={"limit": 3}, timeout=60)
+            r = resp.json()
+            return f"📊 分析結果：\n{r.get('analysis', '無法分析')[:1000]}"
+
+        return (
+            "Google Drive 命令用法：\n"
+            "  /drive status     — 連接狀態\n"
+            "  /drive auth       — 取得授權 URL\n"
+            "  /drive callback <code>  — 用授權碼完成認證\n"
+            "  /drive list [n]   — 列出檔案（預設10個）\n"
+            "  /drive search <q>  — 搜尋檔案\n"
+            "  /drive sync        — 下載並存入記憶\n"
+            "  /drive analyze     — 分析檔案內容\n"
+            "  /drive logout      — 登出"
+        )
+
+    except httpx.ConnectError:
+        return "❌ 無法連接後端，請先啟動伺服器（launch_angela.bat --repl）"
+    except Exception as e:
+        return f"❌ Drive 錯誤：{e}"
 
 
 if __name__ == "__main__":

@@ -4,21 +4,522 @@ Angela AI - Configuration Loader
 配置加载器
 
 安全地加载和访问应用配置，提供类型安全的配置访问。
+支持 YAML 多文件读取、热重载、Authority + Learned 双层配置合并。
 """
 
 import os
 import json
+import copy
+import yaml
+import logging
+import threading
 from pathlib import Path
 from typing import Any, Dict, Optional, TypeVar, Generic, Union
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
 
 logger = logging.getLogger(__name__)
 
 
-T = TypeVar("T")
+# ── S1 擴展：Angela 配置管理器 ─────────────────────────────────────────────
 
+class AngelaConfigManager:
+    """
+    Angela 專用配置管理器（v6.3）
+    支援：YAML 多文件讀取、雙層配置合併（Authority + Learned）、熱重載
+    """
+
+    _instance: Optional["AngelaConfigManager"] = None
+    _init_lock = threading.Lock()
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._init_lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if hasattr(self, "_initialized") and self._initialized:
+            return
+        self._initialized = True
+
+        self._base_dir = Path(__file__).parent.parent / "config"
+        self._angela_dir = self._base_dir / "angela"
+
+        self._authority: Dict[str, Any] = {}
+        self._learned: Dict[str, Dict[str, Any]] = {}
+        self._merged: Dict[str, Any] = {}
+
+        self._authority_files = [
+            "angela_core.yaml",
+            "llm_providers.yaml",
+            "file_ops.yaml",
+            "anchor_rules.yaml",
+            "tickle_config.yaml",
+        ]
+        self._learned_files = [
+            "learned_patterns.yaml",
+            "learned_thresholds.yaml",
+            "learned_routes.yaml",
+        ]
+
+        self._watch_lock = threading.Lock()
+        self._watchers: Dict[str, float] = {}
+
+        self._load_all()
+
+    def _load_yaml(self, path: Path) -> Dict[str, Any]:
+        """載入單個 YAML 檔"""
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+            return data if data else {}
+        except FileNotFoundError:
+            logger.debug(f"YAML not found: {path}")
+            return {}
+        except yaml.YAMLError as e:
+            logger.warning(f"YAML parse error {path}: {e}")
+            return {}
+
+    def _load_all(self) -> None:
+        """載入所有配置（Authority + Learned）"""
+        self._authority = {}
+        for fname in self._authority_files:
+            path = self._base_dir / fname
+            data = self._load_yaml(path)
+            self._authority[fname.replace(".yaml", "")] = data
+
+        self._learned = {}
+        for fname in self._learned_files:
+            path = self._angela_dir / fname
+            data = self._load_yaml(path)
+            key = fname.replace(".yaml", "").replace("learned_", "")
+            self._learned[key] = data
+
+        self._merged = self.merge_config(self._authority, self._learned)
+        self._update_watchers()
+
+    def merge_config(
+        self, base: Dict[str, Any], learned: Dict[str, Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        雙層配置合併：Authority + Learned
+        規則：Learned 疊加在 Authority 上；Learned 祇能新增 key，不可覆蓋 Authority 的 key
+        """
+        result = copy.deepcopy(base)
+        for key, value in learned.items():
+            if key not in result:
+                result[key] = value
+            elif isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = self._merge_dict(result[key], value)
+        return result
+
+    def _merge_dict(self, base: Dict, learned: Dict) -> Dict:
+        """遞歸合併字典，Learned 祇能新增 key，不可覆蓋 base 的 key"""
+        result = copy.deepcopy(base)
+        for k, v in learned.items():
+            if k not in result:
+                result[k] = v
+            elif isinstance(result[k], dict) and isinstance(v, dict):
+                result[k] = self._merge_dict(result[k], v)
+        return result
+
+    def get_learned(self, learned_type: str, default: Any = None) -> Any:
+        """取得 Learned 配置（純 Learned，未合併）"""
+        fname_map = {
+            "patterns": "learned_patterns.yaml",
+            "thresholds": "learned_thresholds.yaml",
+            "routes": "learned_routes.yaml",
+        }
+        fname = fname_map.get(learned_type)
+        if not fname:
+            return default
+        return self._learned.get(fname, default if default is not None else {})
+
+    def get_authority(self, section: str, default: Any = None) -> Any:
+        """取得 Authority 配置（原始，未合併）"""
+        return self._authority.get(section, default)
+
+    def get_merged(self, section: str, key: Optional[str] = None, default: Any = None) -> Any:
+        """取得合併後配置（Authority + Learned）"""
+        section_data = self._merged.get(section, default if default is not None else {})
+        if key is None:
+            return section_data
+        return section_data.get(key, default) if isinstance(section_data, dict) else default
+
+    def get_intents(self) -> Dict[str, Dict]:
+        """取得意圖配置"""
+        core = self._authority.get("angela_core", {})
+        return core.get("intents", {})
+
+    def get_intent_keywords(self, intent: str) -> list:
+        """取得某意圖的關鍵字列表（Authority + Learned 回退）"""
+        intents = self.get_intents()
+        kw = intents.get(intent, {}).get("keywords", [])
+        if not kw:
+            kw = self.get_learned_intent_keywords(intent)
+        return kw
+
+    def get_complexity_thresholds(self) -> Dict:
+        """取得複雜度閾值"""
+        core = self._authority.get("angela_core", {})
+        return core.get("complexity", {}).get("thresholds", {})
+
+    def get_llm_config(self) -> Dict:
+        """取得 LLM 配置"""
+        return self._authority.get("llm_providers", {})
+
+    def get_routing_policy(self) -> Dict:
+        """取得路由策略"""
+        llm = self._authority.get("llm_providers", {})
+        return llm.get("routing_policy", {})
+
+    def get_file_ops_config(self) -> Dict:
+        """取得檔案操作配置"""
+        return self._authority.get("file_ops", {})
+
+    def get_anchor_rules(self) -> Dict:
+        """取得軸狀態解讀規則"""
+        return self._authority.get("anchor_rules", {})
+
+    def get_tickle_config(self) -> Dict:
+        """取得搔癢反射配置"""
+        return self._authority.get("tickle_config", {})
+
+    def get_body_part_tickle(self, body_part: str) -> Optional[Dict]:
+        """取得特定部位的搔癢配置"""
+        tickle = self.get_tickle_config()
+        return tickle.get("body_parts", {}).get(body_part)
+
+    def get_intensity_threshold(self, level: str) -> float:
+        """取得強度閾值（light/medium/intense）"""
+        tickle = self.get_tickle_config()
+        thresholds = tickle.get("intensity_thresholds", {})
+        return thresholds.get(level, 0.0)
+
+    def get_segment_timeout(self) -> float:
+        """取得段落下載超時（秒）"""
+        core = self._authority.get("angela_core", {})
+        return core.get("document_builder", {}).get("segment_timeout_seconds", 15.0)
+
+    def write_learned(self, learned_type: str, data: Dict) -> bool:
+        """
+        寫入 Learned 配置（Angela 自我學習結果）
+        需校驗：祇能新增 key，不可覆蓋 Authority
+        """
+        fname_map = {
+            "patterns": "learned_patterns.yaml",
+            "thresholds": "learned_thresholds.yaml",
+            "routes": "learned_routes.yaml",
+        }
+        fname = fname_map.get(learned_type)
+        if not fname:
+            return False
+
+        path = self._angela_dir / fname
+
+        if "metadata" not in data:
+            data["metadata"] = {}
+        from datetime import datetime, timezone
+
+        data["metadata"]["updated"] = datetime.now(timezone.utc).isoformat()
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                yaml.safe_dump(data, f, allow_unicode=True, default_flow_style=False)
+            self._load_all()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to write learned config {fname}: {e}")
+            return False
+
+    def _update_watchers(self) -> None:
+        """更新監控時間戳"""
+        for fname in self._authority_files + self._learned_files:
+            self._watchers[fname] = os.path.getmtime(
+                str(self._base_dir / fname)
+            ) if (self._base_dir / fname).exists() else 0.0
+
+    def reload_if_changed(self) -> bool:
+        """熱重載：檢查配置檔是否變更，如有則重新載入"""
+        changed = False
+        for fname, last_mtime in list(self._watchers.items()):
+            path = self._base_dir / fname
+            if path.exists():
+                current_mtime = os.path.getmtime(str(path))
+                if current_mtime > last_mtime:
+                    changed = True
+                    break
+        if changed:
+            logger.info("[AngelaConfigManager] Config changed, reloading...")
+            self._load_all()
+        return changed
+
+    def watch(self) -> bool:
+        """便捷熱重載方法（每次 call 檢查一次）"""
+        return self.reload_if_changed()
+
+    def learn(self, event_type: str, data: Dict[str, Any]) -> bool:
+        """
+        學習閉環入口 — 根據事件類型更新對應的 Learned 配置。
+
+        事件類型：
+        - "intent_pattern": 意圖模式學習（新增已識別意圖到 patterns）
+        - "threshold_adjust": 閾值調整（根據準確率調整複雜度閾值）
+        - "route_success": 路由成功（記錄成功的 LLM 路由決策）
+        - "route_fail": 路由失敗（記錄失敗的 LLM 路由決策）
+
+        校驗：Learned 祇能新增 key，不能覆蓋 Authority 已有的值。
+        """
+        handler_map = {
+            "intent_pattern": self._learn_intent_pattern,
+            "threshold_adjust": self._learn_threshold_adjust,
+            "route_success": self._learn_route_success,
+            "route_fail": self._learn_route_fail,
+        }
+        handler = handler_map.get(event_type)
+        if not handler:
+            logger.warning(f"[Learning] Unknown event type: {event_type}")
+            return False
+        try:
+            return handler(data)
+        except Exception as e:
+            logger.error(f"[Learning] Handler {event_type} failed: {e}")
+            return False
+
+    def _learn_intent_pattern(self, data: Dict[str, Any]) -> bool:
+        intent_name = data.get("intent", "unknown")
+        keywords = data.get("keywords", [])
+        if not intent_name or intent_name == "unknown":
+            return False
+
+        learned = self.get_learned("patterns", {})
+        authority = self.get_authority("angela_core", {}).get("intents", {})
+
+        if intent_name in authority:
+            return False
+
+        patterns = learned.get("intent_patterns", {})
+        existing = patterns.get(intent_name, {})
+        existing_keywords = set(existing.get("keywords", []))
+        for kw in keywords:
+            existing_keywords.add(kw)
+        patterns[intent_name] = {
+            "keywords": sorted(list(existing_keywords)),
+            "count": existing.get("count", 0) + 1,
+            "last_seen": datetime.now(timezone.utc).isoformat(),
+        }
+        learned["intent_patterns"] = patterns
+        return self.write_learned("patterns", learned)
+
+    def _learn_threshold_adjust(self, data: Dict[str, Any]) -> bool:
+        metric = data.get("metric", "")
+        value = data.get("value", 0.5)
+        learned = self.get_learned("thresholds", {})
+        adjustments = learned.get("threshold_adjustments", {})
+        adjustments[metric] = {
+            "value": value,
+            "updated": datetime.now(timezone.utc).isoformat(),
+            "count": adjustments.get(metric, {}).get("count", 0) + 1,
+        }
+        learned["threshold_adjustments"] = adjustments
+        return self.write_learned("thresholds", learned)
+
+    def _learn_route_success(self, data: Dict[str, Any]) -> bool:
+        provider = data.get("provider", "")
+        intent = data.get("intent", "general")
+        latency_ms = data.get("latency_ms", 0)
+        learned = self.get_learned("routes", {})
+        routes = learned.get("successful_routes", {})
+        key = f"{intent}:{provider}"
+        entry = routes.get(key, {"count": 0, "total_latency": 0.0, "intents": []})
+        entry["count"] += 1
+        entry["total_latency"] += latency_ms
+        if intent not in entry["intents"]:
+            entry["intents"].append(intent)
+        entry["avg_latency"] = entry["total_latency"] / entry["count"]
+        routes[key] = entry
+        learned["successful_routes"] = routes
+        return self.write_learned("routes", learned)
+
+    def _learn_route_fail(self, data: Dict[str, Any]) -> bool:
+        provider = data.get("provider", "")
+        intent = data.get("intent", "general")
+        error = data.get("error", "unknown")
+        learned = self.get_learned("routes", {})
+        routes = learned.get("failed_routes", {})
+        key = f"{intent}:{provider}"
+        entry = routes.get(key, {"count": 0, "errors": []})
+        entry["count"] += 1
+        if error not in entry["errors"]:
+            entry["errors"].append(error[:100])
+        routes[key] = entry
+        learned["failed_routes"] = routes
+        return self.write_learned("routes", learned)
+
+    def get_learned_stats(self) -> Dict[str, Any]:
+        """獲取學習統計摘要"""
+        stats = {
+            "patterns": {"learned": 0, "authority": 0},
+            "thresholds": {"adjustments": 0},
+            "routes": {"success": 0, "fail": 0},
+        }
+        try:
+            patterns = self.get_learned("patterns", {})
+            authority_intents = self.get_authority("angela_core", {}).get("intents", {})
+            stats["patterns"]["learned"] = len(patterns.get("intent_patterns", {}))
+            stats["patterns"]["authority"] = len(authority_intents)
+            thresholds = self.get_learned("thresholds", {})
+            stats["thresholds"]["adjustments"] = len(thresholds.get("threshold_adjustments", {}))
+            routes = self.get_learned("routes", {})
+            stats["routes"]["success"] = len(routes.get("successful_routes", {}))
+            stats["routes"]["fail"] = len(routes.get("failed_routes", {}))
+        except Exception as e:
+            logger.warning(f"[Learning] Stats collection failed: {e}")
+        return stats
+
+    def _check_and_auto_optimize(self) -> bool:
+        """檢查是否需要自動優化（每 100 次學習事件觸發）"""
+        stats = self.get_learned_stats()
+        total = sum([
+            stats["patterns"]["learned"],
+            stats["thresholds"]["adjustments"],
+            stats["routes"]["success"],
+            stats["routes"]["fail"],
+        ])
+        if total > 0 and total % 100 == 0:
+            logger.info(f"[Learning] Auto-optimization triggered at {total} events")
+            return True
+        return False
+
+    def get_learned_intent_keywords(self, intent: str) -> List[str]:
+        """獲取 Learned 層意圖關鍵字（配置驅動回退）"""
+        patterns = self.get_learned("patterns", {}).get("intent_patterns", {})
+        entry = patterns.get(intent, {})
+        return entry.get("keywords", [])
+
+    def get_learned_thresholds(self, metric: str) -> Optional[Dict[str, Any]]:
+        """獲取 Learned 層閾值調整"""
+        adjustments = self.get_learned("thresholds", {}).get("threshold_adjustments", {})
+        return adjustments.get(metric)
+
+    def get_best_route(self, intent: str) -> Optional[str]:
+        """根據學習歷史返回最佳路由（延遲最低的成功路由）"""
+        routes = self.get_learned("routes", {}).get("successful_routes", {})
+        best_key, best_latency = None, float("inf")
+        for key, entry in routes.items():
+            if key.startswith(f"{intent}:"):
+                avg = entry.get("avg_latency", float("inf"))
+                if avg < best_latency:
+                    best_key = key
+                    best_latency = avg
+        return best_key.split(":")[1] if best_key else None
+
+    def build_anchor_context(self, state_for_llm: Dict[str, Any]) -> str:
+        """
+        使用 anchor_rules.yaml 的 prompt_context_template，
+        將 StateMatrix.export_for_llm() 的原始座標翻譯為自然語境，
+        解決 P2.2 退化（座標計算了但 LLM 不理解含義）。
+        """
+        try:
+            rules = self._authority.get("anchor_rules", {})
+            template = rules.get("prompt_context_template", "{all_axes}")
+            if "{all_axes}" in template or template == "{all_axes}":
+                return self._build_axis_context(rules, state_for_llm)
+
+            axes = state_for_llm.get("axes", {})
+            context_map = {
+                "alpha_context": self._interpret_axis(axes.get("alpha", {}), rules.get("alpha", {})),
+                "beta_context": self._interpret_axis(axes.get("beta", {}), rules.get("beta", {})),
+                "gamma_context": self._interpret_axis(axes.get("gamma", {}), rules.get("gamma", {})),
+                "delta_context": self._interpret_axis(axes.get("delta", {}), rules.get("delta", {})),
+                "epsilon_context": self._interpret_axis(axes.get("epsilon", {}), rules.get("epsilon", {})),
+                "theta_context": self._interpret_axis(axes.get("theta", {}), rules.get("theta", {})),
+                "zeta_context": self._interpret_axis(axes.get("zeta", {}), rules.get("zeta", {})),
+                "eta_context": self._interpret_axis(axes.get("eta", {}), rules.get("eta", {})),
+                "overall_summary": self._build_summary(axes),
+            }
+            return template.format(**context_map)
+        except Exception as e:
+            logger.warning(f"[AnchorContext] Failed to build context: {e}")
+            return ""
+
+    def _interpret_axis(self, axis_data: Dict[str, Any], axis_rules: Dict[str, Any]) -> str:
+        """將單軸數值翻譯為自然語境"""
+        if not axis_data or not axis_rules:
+            return "狀態正常"
+        coords = axis_data.get("values", {})
+        coord_interp = axis_rules.get("coordinate_interpretation", {})
+
+        interpretations = []
+        for coord_name, coord_rules in coord_interp.items():
+            value = coords.get(coord_name, 0.5)
+            if value >= 0.7:
+                label = coord_rules.get("high_positive", coord_rules.get("mid_positive", ""))
+            elif value >= 0.5:
+                label = coord_rules.get("mid_positive", coord_rules.get("neutral", ""))
+            elif value >= 0.3:
+                label = coord_rules.get("mid_negative", coord_rules.get("neutral", ""))
+            else:
+                label = coord_rules.get("high_negative", coord_rules.get("mid_negative", ""))
+            if label:
+                interpretations.append(label)
+        return interpretations[0] if interpretations else "狀態正常"
+
+    def _build_axis_context(self, rules: Dict[str, Any], state_for_llm: Dict[str, Any]) -> str:
+        """Fallback: 建構軸狀態自然語境"""
+        axes = state_for_llm.get("axes", {})
+        lines = []
+        for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta", "eta"):
+            interp = self._interpret_axis(axes.get(axis_name, {}), rules.get(axis_name, {}))
+            lines.append(f"{axis_name}({interp})")
+        theta_data = state_for_llm.get("theta", {})
+        eta_data = state_for_llm.get("eta", {})
+        if theta_data:
+            novelty = theta_data.get("novelty", 0)
+            lines.append(f"θ 新穎={novelty:.1f}")
+        if eta_data:
+            lines.append(f"η 成功率={eta_data.get('success_rate', 0):.0%}")
+        return " | ".join(lines)
+
+    def _build_summary(self, axes: Dict[str, Any]) -> str:
+        """建構總結語境"""
+        try:
+            gamma_vals = axes.get("gamma", {}).get("values", {})
+            beta_vals = axes.get("beta", {}).get("values", {})
+            alpha_vals = axes.get("alpha", {}).get("values", {})
+            happy = gamma_vals.get("happiness", 0.5)
+            trust = gamma_vals.get("trust", 0.5)
+            focus = beta_vals.get("focus", 0.5)
+            energy = alpha_vals.get("energy", 0.5)
+            if happy > 0.7 and trust > 0.7:
+                return "狀態良好，信任且開心"
+            elif trust < 0.3:
+                return "信任度低，需要建立安全感"
+            elif focus > 0.7:
+                return "高度專注"
+            elif energy < 0.3:
+                return "能量低，需要休息"
+            return "狀態平穩"
+        except Exception:
+            return "狀態平穩"
+
+
+# ── 全域單例 ────────────────────────────────────────────────────────────────
+
+_angela_config: Optional[AngelaConfigManager] = None
+
+
+def get_angela_config() -> AngelaConfigManager:
+    """獲取全域 Angela 配置管理器"""
+    global _angela_config
+    if _angela_config is None:
+        _angela_config = AngelaConfigManager()
+    return _angela_config
+
+
+# ── 原有 Config 類（保持向後兼容）────────────────────────────────────────────
 
 class Environment(Enum):
     """运行环境"""

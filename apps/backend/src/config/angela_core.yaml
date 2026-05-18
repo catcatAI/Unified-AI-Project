@@ -1,0 +1,305 @@
+# =============================================================================
+# ANGELA v6.3 - Core Authority Configuration
+# =============================================================================
+# Authority 配置（人寫，Angela 不可修改核心邏輯）
+# 用途：意圖關鍵字、閾值、路由規則、LLM 配置、安全白名單
+# 版本: 6.3
+# 更新: 2026-05-17
+# =============================================================================
+
+# ── 意圖關鍵字 ─────────────────────────────────────────────────────────────
+
+intents:
+  math:
+    keywords:
+      - "計算"
+      - "積分"
+      - "微分"
+      - "導數"
+      - "求導"
+      - "數學"
+      - "函數"
+      - "方程式"
+      - "證明"
+      - "幾何"
+      - "代數"
+      - "三角函數"
+      - "機率"
+      - "統計"
+      - "矩陣"
+      - "向量"
+      - "極限"
+      - "級數"
+      - "複數"
+    priority: 3
+    handler: "MathVerifier"
+
+  code:
+    keywords:
+      - "代碼"
+      - "程式"
+      - "python"
+      - "javascript"
+      - "function"
+      - "class"
+      - "import"
+      - "debug"
+      - "bug"
+      - "refactor"
+      - "重構"
+      - "算法"
+      - "資料結構"
+      - "測試"
+      - "lint"
+      - "compile"
+      - "runtime"
+      - "api"
+      - "endpoint"
+    priority: 3
+    handler: "CodeInspectorBridge"
+
+  task:
+    keywords:
+      - "幫我"
+      - "做一個"
+      - "規劃"
+      - "項目"
+      - "多步驟"
+      - "複雜"
+      - "分解"
+      - "子任務"
+      - "工作流"
+      - "project"
+      - "plan"
+    priority: 4
+    handler: "ProjectCoordinator"
+
+  file_op:
+    keywords:
+      - "整理"
+      - "桌面"
+      - "移動"
+      - "刪除"
+      - "創建文件"
+      - "刪除文件"
+      - "移動文件"
+      - "複製"
+      - "重新命名"
+      - "建立資料夾"
+      - "organize"
+      - "桌面整理"
+    priority: 5
+    handler: "FileOperationHandler"
+
+  google_drive:
+    keywords:
+      - "谷歌硬碟"
+      - "google硬碟"
+      - "Google硬碟"
+      - "google drive"
+      - "Google Drive"
+      - "我的雲端"
+      - "雲端硬碟"
+      - "雲端磁碟"
+      - "drive同步"
+      - "Drive同步"
+      - "下載雲端"
+      - "從雲端"
+      - "同步drive"
+      - "列出雲端"
+      - "搜索雲端"
+      - "找雲端"
+      - "打開雲端"
+    priority: 5
+    handler: "GoogleDriveHandler"
+
+  web_search:
+    keywords:
+      - "搜尋"
+      - "搜索"
+      - "查"
+      - "找"
+      - "google"
+      - "網頁"
+      - "網路上"
+      - "最近"
+      - "資訊"
+      - "search"
+      - "lookup"
+    priority: 5
+    handler: "WebSearchHandler"
+
+  llm_manage:
+    keywords:
+      - "切換模型"
+      - "換模型"
+      - "llm"
+      - "模型管理"
+      - "用什麼模型"
+      - "切到"
+      - "model"
+    priority: 6
+    handler: "LLMManager"
+
+  learning:
+    keywords:
+      - "記住"
+      - "學習"
+      - "記錄"
+      - "調整"
+      - "理解"
+      - "教我"
+      - "記住這個"
+    priority: 7
+    handler: "LearningHandler"
+
+  general:
+    keywords: []
+    priority: 1
+    handler: "LLMResponse"
+
+  character_card:
+    keywords:
+      - "角色卡"
+      - "人物"
+      - "建立角色"
+      - "character"
+      - "角色"
+      - "生成角色"
+    priority: 6
+    handler: "DocumentBuilder"
+
+  document:
+    keywords:
+      - "文章"
+      - "報告"
+      - "文件"
+      - "寫一篇"
+      - "document"
+    priority: 5
+    handler: "DocumentBuilder"
+
+# ── 複雜度閾值 ─────────────────────────────────────────────────────────────
+
+complexity:
+  thresholds:
+    high: 100    # 句子長度 > 100 → high complexity
+    low: 20      # 句子長度 < 20 → low complexity
+  high_complexity_keywords:
+    - "為什麼"
+    - "如何"
+    - "解釋"
+    - "分析"
+    - "比較"
+    - "複雜"
+    - "詳細"
+  low_complexity_keywords:
+    - "是"
+    - "不"
+    - "好"
+    - "謝謝"
+    - "hi"
+    - "嗨"
+
+# ── Fallback 模式 ───────────────────────────────────────────────────────────
+
+fallback_patterns:
+  task_decompose:
+    - "幫我"
+    - "做一個"
+    - "規劃"
+    - "處理"
+  character_card:
+    - "角色卡"
+    - "人物"
+    - "建立角色"
+    - "character"
+  document:
+    - "文章"
+    - "報告"
+    - "文件"
+    - "寫一篇"
+    - "document"
+  research:
+    - "研究"
+    - "搜尋"
+    - "調查"
+    - "research"
+  plan:
+    - "計劃"
+    - "安排"
+    - "plan"
+
+# ── 預定義模板（TemplateLibrary 初始內容）───────────────────────────────
+
+predefined_templates:
+  - id: "greeting_morning"
+    content: "早安！今天也元氣滿滿的樣子呢～有什麼想聊的嗎？"
+    category: "greeting"
+    keywords: ["早安", "早上好", "早"]
+  - id: "greeting_evening"
+    content: "晚安～今天辛苦了，好好休息吧！"
+    category: "greeting"
+    keywords: ["晚安", "晚上好", "晚"]
+  - id: "greeting_general"
+    content: "你好呀！有什麼需要幫忙的嗎？"
+    category: "greeting"
+    keywords: ["你好", "嗨", "hi", "hey"]
+  - id: "math_hint"
+    content: "這個問題涉及數學計算，讓我來幫你分析。"
+    category: "math"
+    keywords: ["計算", "數學", "積分"]
+  - id: "code_hint"
+    content: "這段代碼我看過了，讓我幫你分析一下。"
+    category: "code"
+    keywords: ["代碼", "程式", "debug"]
+
+# ── 段落下載 Timeout ──────────────────────────────────────────────────────
+
+document_builder:
+  segment_timeout_seconds: 15.0
+  max_segments: 10
+  learning_threshold:
+    success_count: 3   # 成功 >= 3 次才學習格式
+    keyword_match_count: 2  # keyword 匹配 >= 2 次才學習
+
+# ── 情緒/Empathy 閾值 ─────────────────────────────────────────────────────
+
+empathy:
+  thresholds:
+    high_arousal: 0.7
+    high_valence: 0.6
+    low_valence: 0.3
+  emotion_keywords:
+    happy: ["開心", "快樂", "高興", "happy", "joy"]
+    sad: ["難過", "傷心", "悲傷", "sad", "upset"]
+    angry: ["生氣", "憤怒", "氣", "angry", "mad"]
+    scared: ["害怕", "恐懼", "擔心", "scared", "afraid"]
+
+# ── 8D 座標追蹤 ──────────────────────────────────────────────────────────
+
+state_tracking:
+  coordinate_recalculation_on_update: true
+  anchor_update_threshold: 0.1   # 變化 > 0.1 才更新 anchor
+  history_window: 50
+
+# ── θ 自檢 ────────────────────────────────────────────────────────────────
+
+theta:
+  novelty_estimation:
+    min_threshold: 0.3
+    high_novelty: 0.7
+  self_correction:
+    trigger_on_low_novelty: true
+    correction_interval_turns: 5
+
+# ── η 執行層 ─────────────────────────────────────────────────────────────
+
+eta:
+  module_trigger_curve:
+    complexity_weight: 0.5
+    novelty_weight: 0.3
+    history_weight: 0.2
+  execution_tracking:
+    success_rate_window: 20
+    auto_fallback_threshold: 0.6  # 成功率 < 60% 觸發降級

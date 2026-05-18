@@ -104,10 +104,39 @@ class TactileService:
         """
         Real-world touch simulation with biological feedback (Identity Aware).
         Bridges tactile input to Angela's internal biological systems.
+        Also routes to TickleReflexSystem for tickle-triggered body parts.
         """
         # 1. Map body parts to biological intensity
         part = contact_point.get("body_part", "generic")
         pressure = contact_point.get("pressure", 0.5)
+
+        # High sensitivity parts impact arousal more
+        sensitivity_map = {
+            "head": 1.2, "cheeks": 1.5, "palms": 1.0,
+            "chest": 0.8, "shoulders": 0.5
+        }
+        multiplier = sensitivity_map.get(part, 0.3)
+
+        # 2030 Detail: Weighting by origin
+        # Human touch is 2x more impactful on core emotions than System probes
+        origin_multiplier = 2.0 if origin == "Human" else 0.1
+        intensity = pressure * multiplier * origin_multiplier
+
+        # Check for tickle-triggered body parts
+        if part in ("abdomen", "feet", "neck", "back", "sides", "face", "hands"):
+            try:
+                from core.autonomous.tickle_reflex_system import get_reflex_system
+                reflex = get_reflex_system()
+                duration = contact_point.get("duration", 0.0)
+                tickle_result = await reflex.trigger_tickles(
+                    body_part=part, intensity=intensity, duration_seconds=duration, origin=origin
+                )
+                return tickle_result
+            except Exception as e:
+                logger.warning(f"[Tactile] Tickle reflex failed: {e}")
+                # Fall through to normal tactile handling
+
+        # 2. Inject stimulus into BiologicalIntegrator
         
         # High sensitivity parts impact arousal more
         sensitivity_map = {

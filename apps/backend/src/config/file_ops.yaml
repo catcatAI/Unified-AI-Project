@@ -1,0 +1,95 @@
+# =============================================================================
+# ANGELA v6.3 - File Operations Configuration
+# =============================================================================
+# Authority 配置（人寫，檔案操作白名單與安全限制）
+# 版本: 6.3
+# 更新: 2026-05-17
+# =============================================================================
+
+# 允許的檔案操作
+allowed_operations:
+  read:
+    - "列出目錄"
+    - "讀取檔案"
+    - "獲取檔案資訊"
+    - "搜尋檔案"
+    - "list"
+    - "read"
+    - "stat"
+    - "search"
+
+  write:
+    - "創建檔案"
+    - "寫入檔案"
+    - "建立資料夾"
+    - "create"
+    - "write"
+    - "mkdir"
+
+  move:
+    - "移動檔案"
+    - "重新命名"
+    - "move"
+    - "rename"
+
+  delete:
+    - "刪除檔案"
+    - "移到回收筒"
+    - "delete"
+    - "trash"
+
+# 允許存取的目錄（白名單）
+allowed_paths:
+  desktop: true
+  documents: true
+  downloads: true
+  pictures: true
+  user_home: false   # 需特別授權
+  system: false      # 禁止
+  app_data: true
+
+# 禁止存取的目錄（黑名單）
+blocked_paths:
+  - "C:\\Windows"
+  - "C:\\Program Files"
+  - "C:\\Program Files (x86)"
+  - "/etc"
+  - "/usr"
+  - "/bin"
+  - "/sbin"
+  - "/sys"
+  - "/proc"
+
+# 檔案操作限制
+limits:
+  max_file_size_mb: 50
+  max_batch_operations: 20
+  require_confirmation_over_mb: 10
+  move_to_trash: true  # 刪除前先移到回收筒
+
+# 桌面整理策略
+organize_strategies:
+  by_type:
+    folders:
+      - name: "圖片"
+        extensions: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"]
+      - name: "文檔"
+        extensions: [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md"]
+      - name: "影片"
+        extensions: [".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv"]
+      - name: "音頻"
+        extensions: [".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma"]
+      - name: "壓縮包"
+        extensions: [".zip", ".rar", ".7z", ".tar", ".gz"]
+      - name: "代碼"
+        extensions: [".py", ".js", ".ts", ".java", ".cpp", ".c", ".h", ".cs", ".go", ".rs"]
+  by_date:
+    folders:
+      - name: "今天"
+        pattern: "today"
+      - name: "本週"
+        pattern: "this_week"
+      - name: "本月"
+        pattern: "this_month"
+      - name: "更早"
+        pattern: "older"

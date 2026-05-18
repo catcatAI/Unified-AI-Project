@@ -1,5 +1,5 @@
 # Angela AI — Project Status Report
-## 2026-05-17 | v6.2.5 | Phase 5 (REPL + θ/η + Full 8D Integration)
+## 2026-05-18 | v6.3 | Phase 串線 **全部完成**
 
 ---
 
@@ -268,7 +268,7 @@ _input → _update_theta_from_input → _update_eta_from_input
 
 **Version**: v6.2.5
 **Last Updated**: 2026-05-17
-**Status**: P0 + P1 + P2 all completed. B7-B12 fixed. IntentRegistry wired into ProjectCoordinator + DocumentBuilder.
+**Status**: v6.3 Planning. S1 配置層 — YAML 配置建立。
 
 ## Completed Actions
 
@@ -276,22 +276,67 @@ _input → _update_theta_from_input → _update_eta_from_input
 |-------|------|--------|-------|
 | P0 | Deleted 6 files (evolution_engine, dialogue_manager, tool_dispatcher, etc.) | ✅ | zero live references |
 | P0.1 | `chat_completion()` wrapper in angela_llm_service | ✅ | thin wrapper |
-| P0.2 | `EvolutionEngine` removed, `anchor_learning.on_axis_update()` used | ✅ | |
+| P0.2 | `EvolutionEngine` removed, `anchor_learning.on_axis_update()` used | ✅ | B17 stub created |
 | P1.3 | ProjectCoordinator + DocumentBuilder isolation tests | ✅ | 14 tests pass |
-| P2.1 | ChatService size monitoring | ✅ | 598 lines < 1000 threshold |
+| P2.1 | ChatService size monitoring | ✅ | 610 lines < 1000 threshold |
 | P2.2 | `_learn_format()` dedup | ✅ | `_learned_format_keys` set |
 | P2.4 | IntentRegistry | ✅ | `core/intent_registry.py` wired into PC + DB |
 | P2.5 | CreativeWritingAgent rewrite | ✅ | 63→158 lines, 3 capabilities |
 | P1.2 | HAMMemoryManager is sole TRPG Codex source | ✅ | DocumentBuilder queries it |
+| B4 | TemplateLibrary thread-safety | ✅ | threading.Lock + asyncio.Lock |
+| B13 | `get_template_library()` race condition | ✅ | double-checked locking |
+| B17 | EvolutionEngine missing file | ✅ | stub created (46 lines) |
 
-## Remaining Issues
+## v6.3 退化追蹤（需修復）
 
-| # | Issue | Priority | Action |
+| # | Issue | Severity | Action |
 |---|-------|----------|--------|
-| B13 | `get_template_library()` init order + race condition | Low | ✅ Fixed: double-checked locking + threading.Lock |
-| B15 | PlanningAgent (123 lines) zero reference | Low | ✅ Annotated deprecate() in source |
-| B16 | AlignedCreativeWritingAgent in examples | Low | Observe |
-| B17 | `ai.lifecycle` namespace package issue | High | ✅ Fixed: pre-load `ai.lifecycle` in conftest.py to avoid double-scan overhead |
+| B18 | 執行層（DesktopInteraction/BrowserController/AudioSystem/Live2D）未接入 | High | S1-S6 串線 |
+| P0.2-D | EvolutionEngine stub 未串入學習迴路 | Medium | S5 學習閉環 |
+| P1.2-D | FantasyDMAgent 未被 ChatService 調用 | Medium | S2 意圖擴展 |
+| P2.2-D | 8D 座標未注入 prompt（LLM 不理解坐標含義） | Medium | S5 學習閉環 |
+| P2.3-D | RAGManager 未評估 | Low | S2 意圖擴展 |
+
+## v6.3 行動計劃
+
+| Stage | 內容 | 狀態 |
+|-------|------|------|
+| S1 | 配置層（YAML 配置，剝離硬編） | ✅ 完成 |
+| S2 | 意圖擴展（file_op/web_search/llm_manage/learn） | ✅ 完成 |
+| S3 | LLM 管理（配置驅動模型選擇與降級） | ✅ 完成 |
+| S4 | REPL 終端（命令解析 + 自動意圖識別） | ✅ 完成 |
+| S5 | 學習閉環（雙層配置 + 自我優化） | ✅ 完成 |
+| S6 | 端到端測試 | ✅ 完成 |
+| S7 | 小腦反射系統（搔癢 + 安全邊界） | ✅ 完成 |
+
+## S1+S2+S3 交付物
+
+| 交付物 | 狀態 |
+|--------|------|
+| `config/` 目錄 + 5 個 Authority YAML | ✅ |
+| `config/angela/` 子目錄 + 3 個 Learned YAML | ✅ |
+| `AngelaConfigManager` (YAML 讀取 + merge_config + 熱重載) | ✅ |
+| `IntentRegistry` 配置驅動意圖注册 | ✅ |
+| `ChatService` 意圖擴展 (file_op/web_search/learning) | ✅ |
+| `ChatService` 硬編剝離 (intent keywords, anchor keywords) | ✅ |
+| `ProjectCoordinator._fallback_decompose` 硬編剝離 | ✅ |
+| `DocumentBuilder._segment_timeout` 硬編剝離 | ✅ |
+| `AngelaLLMService` 配置驅動後端初始化 | ✅ |
+| `AngelaLLMService` 配置驅動降級鏈 | ✅ |
+| REPL 命令解析 (`/state`, `/memory`, `/config`, `/intent`, `/route`, `/history`) | ✅ |
+| `AngelaConfigManager.learn()` 學習事件 API (intent_pattern/threshold_adjust/route_success/route_fail) | ✅ |
+| `ChatService._record_learning_event()` 每輪回應記錄學習 | ✅ |
+| `AngelaLLMService._record_route_learning()` LLM 路由結果學習 | ✅ |
+| `AngelaConfigManager.get_learned_stats()` 學習統計摘要 | ✅ |
+| `AngelaConfigManager.get_best_route()` 最佳路由查詢（延遲最低） | ✅ |
+| `config/angela/learned_*.yaml` 雙層寫入（Authority 不可覆蓋） | ✅ |
+| `tests/test_v63_config_driven.py` — 33 個端到端測試（全部通過） | ✅ |
+| `TickleReflexSystem` 搔癢反射系統（Phase1 反射 + Phase2 LLM） | ✅ |
+| `TickleReflexSystem` 配置驅動（tickle_config.yaml 全量讀取） | ✅ |
+| `TickleReflexSystem` 5層安全邊界（sensitive/comfort_seek/scream/γ入侵） | ✅ |
+| `TactileService` 整合搔癢路由（觸碰部位 → TickleReflexSystem） | ✅ |
+
+計劃文件：`docs/planning/core-development/ANGELA_V6.3_C串線行動計劃.md`
 
 ## Test Files
 

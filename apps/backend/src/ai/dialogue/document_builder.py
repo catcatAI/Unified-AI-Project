@@ -85,7 +85,9 @@ class DocumentBuilder:
         self.tokens_per_segment = tokens_per_segment
         self._format_counter: int = 0
         self.eta_state: Optional["EtaAxisState"] = None
-        self._segment_timeout_seconds: float = 15.0
+        from core.config_loader import get_angela_config
+        self._angela_config = get_angela_config()
+        self._segment_timeout_seconds: float = self._angela_config.get_segment_timeout()
 
     def _update_eta(self, execution_count_delta: int = 1) -> None:
         """Update eta_state after segment completion (B10: eta axis tracks execution load)."""

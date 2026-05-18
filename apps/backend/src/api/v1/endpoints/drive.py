@@ -8,124 +8,255 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import logging
 from pathlib import Path
-from unittest.mock import MagicMock
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/drive", tags=["Google Drive"])
 
 
-# 模擬服務
-class DriveService:
-    def is_authenticated(self):
-        return True
-
-    def authenticate(self):
-        return True
-
-    def list_files(self, page_size: int = 10):
-        return [
-            {
-                "id": "1",
-                "name": "Document.docx",
-                "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            },
-            {
-                "id": "2",
-                "name": "Spreadsheet.xlsx",
-                "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            },
-            {"id": "3", "name": "Image.png", "mimeType": "image/png"},
-        ]
-
-    def get_file_metadata(self, file_id: str):
-        return {
-            "id": file_id,
-            "name": f"file_{file_id}.txt",
-            "mimeType": "text/plain",
-            "modifiedTime": "2026-01-01T10:00:00Z",
-            "size": "1234",
-            "webViewLink": f"http://example.com/view/{file_id}",
-        }
-
-    def download_file(self, file_id: str, dest_path: str):
-        return True
-
-
-drive_service = DriveService()
+def _get_drive_service():
+    from integrations.google_drive_service import get_drive_service
+    return get_drive_service()
 
 
 class DriveDeduplication:
+    """根據 content_hash 避免重複下載"""
+
+    def __init__(self):
+        from pathlib import Path
+        db_path = Path(__file__).parent.parent.parent.parent / "data" / "drive_sync_db.json"
+        self._db_path = db_path
+        self._syncs: Dict[str, Dict[str, Any]] = {}
+        self._load()
+
+    def _load(self):
+        if self._db_path.exists():
+            try:
+                import json
+                with open(self._db_path, "r", encoding="utf-8") as f:
+                    self._syncs = json.load(f)
+            except Exception:
+                self._syncs = {}
+
+    def _save(self):
+        self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        import json
+        with open(self._db_path, "w", encoding="utf-8") as f:
+            json.dump(self._syncs, f, ensure_ascii=False, indent=2)
+
     def should_download(self, metadata: Dict[str, Any]) -> bool:
-        return True
+        key = metadata.get("id", "")
+        content_hash = metadata.get("content_hash", "")
+        if not key:
+            return True
+        if key not in self._syncs:
+            return True
+        return self._syncs[key].get("content_hash") != content_hash
 
     def record_sync(self, metadata: Dict[str, Any], content_hash: str):
-        pass
+        key = metadata.get("id", "")
+        if not key:
+            return
+        self._syncs[key] = {
+            "content_hash": content_hash,
+            "name": metadata.get("name"),
+            "synced_at": datetime.now().isoformat(),
+        }
+        self._save()
 
     def compute_content_hash(self, file_path: str) -> str:
-        return "dummy_hash"
+        import hashlib
+        path = Path(file_path)
+        if not path.exists():
+            return ""
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                h.update(chunk)
+        return h.hexdigest()
 
 
 class DocumentParser:
+    """解析常見文件格式為純文字"""
+
     def parse_document(self, file_path: str) -> str:
-        return "parsed content"
+        path = Path(file_path)
+        suffix = path.suffix.lower()
 
+        if suffix == ".txt":
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception:
+                return ""
 
-class HAMMemoryManager:
-    async def store_experience(self, *args, **kwargs):
-        pass
+        if suffix in (".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".html", ".css", ".xml"):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception:
+                return ""
 
+        if suffix in (".docx",):
+            try:
+                from docx import Document as DocxDocument
+                doc = DocxDocument(path)
+                return "\n".join(p.text for p in doc.paragraphs)
+            except ImportError:
+                return f"[Binary file: {path.name}]"
+            except Exception:
+                return ""
 
-# 實例化依賴
-ham_memory_manager = HAMMemoryManager()
+        if suffix in (".xlsx", ".xls"):
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(path, read_only=True)
+                lines = []
+                for sheet in wb.sheetnames:
+                    ws = wb[sheet]
+                    for row in ws.iter_rows(values_only=True):
+                        line = " | ".join(str(c) if c is not None else "" for c in row)
+                        if line.strip():
+                            lines.append(line)
+                return "\n".join(lines)
+            except ImportError:
+                return f"[Spreadsheet: {path.name}]"
+            except Exception:
+                return ""
+
+        return f"[File: {path.name} ({suffix})]"
 
 
 @router.get("/status")
 async def get_drive_status():
     """獲取 Google Drive 服務狀態"""
-    return {
-        "status": "connected",
-        "authenticated": drive_service.is_authenticated(),
-        "service": "Google Drive",
-        "quota": {"used": "5.2GB", "total": "15GB"},
-        "last_sync": datetime.now().isoformat(),
-    }
+    try:
+        svc = _get_drive_service()
+        authenticated = svc.is_authenticated()
+        info: Dict[str, Any] = {
+            "status": "connected" if authenticated else "disconnected",
+            "authenticated": authenticated,
+            "service": "Google Drive",
+            "last_sync": datetime.now().isoformat(),
+        }
+        if authenticated:
+            try:
+                storage = svc.get_storage_info()
+                info["quota"] = {
+                    "used": storage.get("used", "0"),
+                    "total": storage.get("total", "0"),
+                    "user": storage.get("user", "unknown"),
+                }
+            except Exception:
+                pass
+        return info
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Drive status error: {e}")
+        return {"status": "error", "authenticated": False, "detail": str(e)}
 
 
 @router.get("/auth/status")
 async def get_auth_status():
     """獲取認證狀態"""
-    return {"authenticated": drive_service.is_authenticated()}
+    try:
+        svc = _get_drive_service()
+        return {"authenticated": svc.is_authenticated()}
+    except FileNotFoundError:
+        raise HTTPException(status_code=503, detail="credentials.json not found")
+    except Exception as e:
+        logger.error(f"Auth status error: {e}")
+        return {"authenticated": False, "detail": str(e)}
 
 
-@router.post("/auth/authenticate")
-async def authenticate():
-    """開始認證流程"""
-    success = drive_service.authenticate()
-    if success:
-        return {"message": "Authentication successful"}
-    raise HTTPException(status_code=400, detail="Authentication failed")
+@router.get("/auth/url")
+async def get_oauth_url():
+    """獲取 OAuth 授權 URL"""
+    try:
+        svc = _get_drive_service()
+        url = svc.get_auth_url()
+        return {"url": url}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Auth URL error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/auth/callback")
+async def oauth_callback(code: str = Body(..., embed=True)):
+    """用授權碼換取 Token"""
+    try:
+        svc = _get_drive_service()
+        success = svc.exchange_code(code)
+        if success:
+            return {"message": "Authentication successful", "authenticated": True}
+        raise HTTPException(status_code=400, detail="Token exchange failed")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"OAuth callback error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/auth/logout")
+async def logout():
+    """登出 Google Drive"""
+    try:
+        svc = _get_drive_service()
+        svc.logout()
+        return {"message": "Logged out successfully"}
+    except Exception as e:
+        logger.error(f"Logout error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/files")
-async def list_files(page_size: int = Query(10, ge=1, le=100)):
+async def list_files(
+    page_size: int = Query(10, ge=1, le=100),
+    query: Optional[str] = Query(None, description="Drive search query (e.g. 'name contains \"report\"')"),
+):
     """列出文件"""
-    files = drive_service.list_files(page_size=page_size)
-    return {"files": files}
+    try:
+        svc = _get_drive_service()
+        files = svc.list_files(page_size=page_size, query=query)
+        return {"files": files}
+    except PermissionError:
+        raise HTTPException(status_code=401, detail="Not authenticated. Run /drive/auth/url first.")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"List files error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/files/{file_id}/metadata")
+async def get_file_metadata(file_id: str):
+    """獲取文件元數據"""
+    try:
+        svc = _get_drive_service()
+        metadata = svc.get_file_metadata(file_id)
+        return metadata
+    except PermissionError:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    except Exception as e:
+        logger.error(f"Metadata error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/files/sync")
 async def sync_files(request: Dict[str, Any] = Body(...)):
-    """同步選定的文件"""
-    logger.info(f"Module name: {__name__}")
-    # 使用局部實例化以支援測試中的 patch
-    deduplicator = DriveDeduplication()
-    parser = DocumentParser()
-
+    """同步選定的文件到本地並存入記憶"""
     file_ids = request.get("file_ids", [])
     folder_path = request.get("folder_path", "data/drive_downloads")
+    store_memory = request.get("store_memory", True)
 
     logger.info(f"Syncing files: {file_ids} to {folder_path}")
+
+    svc = _get_drive_service()
+    deduplicator = DriveDeduplication()
+    parser = DocumentParser()
 
     synced_files = []
     skipped_count = 0
@@ -133,27 +264,28 @@ async def sync_files(request: Dict[str, Any] = Body(...)):
     memorized_count = 0
 
     for fid in file_ids:
-        metadata = drive_service.get_file_metadata(fid)
-
-        # 1. 重複數據刪除檢查
-        if not deduplicator.should_download(metadata):
-            skipped_count += 1
+        try:
+            metadata = svc.get_file_metadata(fid)
+        except Exception as e:
+            logger.warning(f"Could not get metadata for {fid}: {e}")
+            synced_files.append({"id": fid, "name": f"file_{fid}", "memorized": False, "error": str(e)})
             continue
 
-        # 通過 deduplication 的文件計入 synced
-        synced_count += 1
+        dest_path = Path(folder_path) / metadata.get("name", f"file_{fid}")
+        content_hash = ""
 
-        # 2. 下載文件
-        dest_path = f"{folder_path}/{metadata['name']}"
-        download_success = drive_service.download_file(fid, dest_path)
+        if not deduplicator.should_download(metadata):
+            skipped_count += 1
+            synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "skipped": True})
+            continue
+
+        download_success = svc.download_file(fid, str(dest_path))
 
         if download_success:
-            # 3. 解析與存入記憶
-            content = parser.parse_document(dest_path)
-            content_hash = deduplicator.compute_content_hash(dest_path)
+            synced_count += 1
+            content_hash = deduplicator.compute_content_hash(str(dest_path))
             deduplicator.record_sync(metadata, content_hash)
 
-            # 轉換 metadata 為測試期望的格式
             memory_metadata = {
                 "file_id": metadata.get("id"),
                 "name": metadata.get("name"),
@@ -163,17 +295,28 @@ async def sync_files(request: Dict[str, Any] = Body(...)):
                 "source": "google_drive",
             }
 
-            await ham_memory_manager.store_experience(
-                {"content": content, "metadata": memory_metadata}
-            )
-
-            memorized_count += 1
-            synced_files.append({"name": metadata["name"], "memorized": True})
+            if store_memory:
+                try:
+                    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+                    ham = HAMMemoryManager()
+                    content = parser.parse_document(str(dest_path))
+                    await ham.store_experience(
+                        raw_data=content[:5000] if content else f"[File: {dest_path.name}]",
+                        data_type="document",
+                        metadata=memory_metadata,
+                    )
+                    memorized_count += 1
+                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": True})
+                except ImportError:
+                    logger.warning("HAMMemoryManager not available, skipping memory store")
+                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})
+                except Exception as me:
+                    logger.warning(f"Memory store failed: {me}")
+                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "memory_error": str(me)})
+            else:
+                synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})
         else:
-            # 下載失敗
-            synced_files.append(
-                {"name": metadata["name"], "memorized": False, "error": "Download failed"}
-            )
+            synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "error": "Download failed"})
 
     return {
         "status": "success",
@@ -182,3 +325,66 @@ async def sync_files(request: Dict[str, Any] = Body(...)):
         "memorized_count": memorized_count,
         "files": synced_files,
     }
+
+
+@router.post("/files/search")
+async def search_and_list(
+    request: Dict[str, Any] = Body(...),
+):
+    """搜尋文件並返回列表（不下載）"""
+    query = request.get("query", "")
+    page_size = request.get("page_size", 10)
+
+    if not query:
+        raise HTTPException(status_code=400, detail="query is required")
+
+    try:
+        svc = _get_drive_service()
+        files = svc.search_files(query=query, page_size=page_size)
+        return {"files": files, "count": len(files)}
+    except PermissionError:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    except Exception as e:
+        logger.error(f"Search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyze")
+async def analyze_drive(request: Dict[str, Any] = Body(...)):
+    """分析 Drive 文件並總結內容（需下載 + 解析）"""
+    limit = request.get("limit", 5)
+    folder_path = request.get("folder_path", "data/drive_downloads")
+
+    try:
+        svc = _get_drive_service()
+        files = svc.list_files(page_size=limit)
+        parser = DocumentParser()
+
+        summaries = []
+        for f in files:
+            dest = Path(folder_path) / f.get("name", f"file_{f['id']}")
+            if svc.download_file(f["id"], str(dest)):
+                content = parser.parse_document(str(dest))
+                summaries.append({
+                    "name": f.get("name"),
+                    "size": f.get("size"),
+                    "modified": f.get("modifiedTime"),
+                    "preview": content[:500] if content else "",
+                })
+
+        analysis_parts = []
+        for s in summaries:
+            analysis_parts.append(
+                f"📄 {s['name']} ({s.get('size', '?')} bytes, {s.get('modified', '?')})\n{s['preview'][:200]}"
+            )
+
+        analysis = "\n\n".join(analysis_parts) if analysis_parts else "No files found."
+        return {"analysis": analysis, "files_analyzed": len(summaries)}
+
+    except PermissionError:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Analyze error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

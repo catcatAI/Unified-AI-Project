@@ -66,6 +66,8 @@ class ProjectCoordinator:
         personality_manager: "PersonalityManager" = None,
         dialogue_manager_config: Optional[Dict[str, Any]] = None,
     ):
+        from core.config_loader import get_angela_config
+        self._angela_config = get_angela_config()
         self.llm_interface = llm_interface
         self.service_discovery = service_discovery
         self.hsp_connector = hsp_connector
@@ -374,21 +376,36 @@ class ProjectCoordinator:
         return score >= 1 or len(query) > 50
 
     def _fallback_decompose(self, query: str) -> List[Dict[str, Any]]:
+        core = self._angela_config.get_authority("angela_core", {})
+        patterns = core.get("fallback_patterns", {})
         query_lower = query.lower()
-        if "角色" in query or "角色卡" in query:
-            return [
-                {"capability_needed": "creative_writing_v1", "task_parameters": {"task_type": "character_card", "query": query}, "task_description": "生成角色卡"},
-                {"capability_needed": "creative_writing_v1", "task_parameters": {"task_type": "character_background", "query": query}, "task_description": "生成背景故事"},
-            ]
-        elif "搜尋" in query or "找資料" in query:
-            return [
-                {"capability_needed": "web_search_v1", "task_parameters": {"query": query, "num_results": 5}, "task_description": "搜索相關資料"},
-                {"capability_needed": "creative_writing_v1", "task_parameters": {"task_type": "research_summary", "query": query}, "task_description": "整理搜索結果"},
-            ]
-        else:
-            return [
-                {"capability_needed": "creative_writing_v1", "task_parameters": {"query": query, "task_type": "general"}, "task_description": "處理任務"},
-            ]
+
+        task_patterns = patterns.get("task_decompose", [])
+        for p in task_patterns:
+            if p in query:
+                return [
+                    {"capability_needed": "creative_writing_v1", "task_parameters": {"query": query, "task_type": "general"}, "task_description": "處理任務"},
+                ]
+
+        char_patterns = patterns.get("character_card", [])
+        for p in char_patterns:
+            if p in query:
+                return [
+                    {"capability_needed": "creative_writing_v1", "task_parameters": {"task_type": "character_card", "query": query}, "task_description": "生成角色卡"},
+                    {"capability_needed": "creative_writing_v1", "task_parameters": {"task_type": "character_background", "query": query}, "task_description": "生成背景故事"},
+                ]
+
+        search_patterns = patterns.get("research", [])
+        for p in search_patterns:
+            if p in query:
+                return [
+                    {"capability_needed": "web_search_v1", "task_parameters": {"query": query, "num_results": 5}, "task_description": "搜索相關資料"},
+                    {"capability_needed": "creative_writing_v1", "task_parameters": {"task_type": "research_summary", "query": query}, "task_description": "整理搜索結果"},
+                ]
+
+        return [
+            {"capability_needed": "creative_writing_v1", "task_parameters": {"query": query, "task_type": "general"}, "task_description": "處理任務"},
+        ]
 
     def _clean_json_response(self, text: str) -> str:
         match = re.search(r"\[.*\]|\{.*\}", text, re.DOTALL)

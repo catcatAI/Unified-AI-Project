@@ -1,39 +1,61 @@
 import requests
-import json
 import sys
 import logging
 logger = logging.getLogger(__name__)
 
 API_URL = "http://127.0.0.1:8000/api/v1"
 
-def verify_drive_analyzer():
-    print(f"Testing Drive Analyzer endpoint at {API_URL}/drive/analyze...")
-    
+def verify_drive_status():
+    print("=== Google Drive Integration Verification ===\n")
+
     try:
-        # Trigger analysis
-        response = requests.post(f"{API_URL}/drive/analyze", params={"limit": 5}, timeout=300)
-        
+        status = requests.get(f"{API_URL}/drive/status", timeout=10).json()
+        print(f"Status: {status.get('status')}")
+        print(f"Authenticated: {status.get('authenticated')}")
+        quota = status.get('quota', {})
+        if quota:
+            print(f"User: {quota.get('user', 'N/A')}")
+            print(f"Storage: {quota.get('used', 'N/A')} / {quota.get('total', 'N/A')}")
+        return True
+    except requests.ConnectException:
+        print("❌ 無法連接後端。請先啟動 launch_angela.bat --repl")
+        return False
+    except Exception as e:
+        print(f"❌ Status check failed: {e}")
+        return False
+
+
+def verify_drive_analyzer():
+    print(f"\nTesting Drive Analyzer at {API_URL}/drive/analyze...")
+    try:
+        response = requests.post(f"{API_URL}/drive/analyze", json={"limit": 3}, timeout=120)
         if response.status_code == 200:
             data = response.json()
-            analysis = data.get("analysis", "No analysis found")
-            
-            print("\n✅ Drive Analyzer Verification Passed!")
-            print(f"Analysis Length: {len(analysis)} chars")
+            analysis = data.get("analysis", "No analysis")
+            print(f"\n✅ Drive Analyzer Passed!")
+            print(f"Files analyzed: {data.get('files_analyzed', 0)}")
             print("-" * 40)
-            print("Preview of Analysis:")
-            print("-" * 40)
-            print(analysis[:500] + "..." if len(analysis) > 500 else analysis)
+            print(analysis[:800] + ("..." if len(analysis) > 800 else ""))
             print("-" * 40)
             return True
-        else:
-            print(f"❌ Verification Failed: Status {response.status_code}")
-            print(f"Response: {response.text}")
+        elif response.status_code == 401:
+            print(f"❌ 未認證。請先執行：")
+            print(f"  python scripts/get_drive_auth_url.py")
+            print(f"  python scripts/exchange_drive_code.py <code>")
             return False
-            
+        else:
+            print(f"❌ Verification Failed: {response.status_code} - {response.text}")
+            return False
+    except requests.ConnectException:
+        print("❌ 無法連接後端")
+        return False
     except Exception as e:
         print(f"❌ Verification Failed: {e}")
         return False
 
+
 if __name__ == "__main__":
-    success = verify_drive_analyzer()
-    sys.exit(0 if success else 1)
+    s_ok = verify_drive_status()
+    a_ok = verify_drive_analyzer() if s_ok else False
+    print(f"\n{'✅ All checks passed!' if (s_ok and a_ok) else '⚠️  Some checks failed'}")
+    sys.exit(0 if (s_ok and a_ok) else 1)

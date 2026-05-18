@@ -1,0 +1,79 @@
+# =============================================================================
+# ANGELA v6.3 - LLM Providers Configuration
+# =============================================================================
+# Authority 配置（人寫，模型配置與路由策略）
+# 版本: 6.3
+# 更新: 2026-05-17
+# =============================================================================
+
+providers:
+  ollama:
+    endpoint: "http://localhost:11434"
+    default_timeout_ms: 30000
+    retry_attempts: 2
+    models:
+      - name: "phi:latest"
+        capability: "general"
+        latency_ms: 37000
+        context_window: 2048
+        description: "通用對話，輕量快速"
+      - name: "qwen2.5-coder:latest"
+        capability: "code"
+        latency_ms: 15000
+        context_window: 4096
+        description: "代碼生成與分析"
+      - name: "deepseek-r1:latest"
+        capability: "reasoning"
+        latency_ms: 40000
+        context_window: 8192
+        description: "複雜推理與數學"
+      - name: "llama3.2:latest"
+        capability: "general"
+        latency_ms: 35000
+        context_window: 8192
+        description: "備用通用模型"
+
+# 路由策略（配置驅動，非硬編）
+routing_policy:
+  # 意圖路由
+  math: "deepseek-r1:latest"
+  code: "qwen2.5-coder:latest"
+  task: "deepseek-r1:latest"
+  general: "phi:latest"
+
+  # 複雜度路由
+  complexity_high: "deepseek-r1:latest"
+  complexity_medium: "phi:latest"
+  complexity_low: "phi:latest"
+
+  # 備用路由
+  fallback: "llama3.2:latest"
+
+# 降級鏈
+fallback_chain:
+  phi:latest:
+    - "ollama:llama3.2:latest"
+    - "openai:gpt-4o-mini"
+  qwen2.5-coder:latest:
+    - "ollama:codellama:latest"
+  deepseek-r1:latest:
+    - "ollama:deepseek-coder:latest"
+    - "ollama:llama3.2:latest"
+
+# 性能追蹤
+performance_tracking:
+  success_rate_threshold: 0.70   # 成功率 < 70% 觸發降級
+  latency_threshold_ms: 30000     # 延遲 > 30s 觸發降級
+  tracking_window: 50             # 追蹤最近 50 次請求
+
+# Prompt 模板
+prompt_templates:
+  general: |
+    你是一個 AI 助手。請根據用戶輸入給出回應。
+  math: |
+    你是一個數學專家。請逐步解決以下問題，展現推理過程。
+  code: |
+    你是一個程式設計專家。請分析以下代碼並給出建議。
+  system_context: |
+    Angela 狀態: {state_context}
+    8D 座標: {coordinates}

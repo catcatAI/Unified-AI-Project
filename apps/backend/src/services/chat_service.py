@@ -9,7 +9,7 @@ import logging
 import asyncio
 import random
 import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,9 @@ class AngelaChatService:
         self._initialized = False
         self._last_visual_context = {"ocr_text": {"text": ""}}
         self._last_visual_time = 0
+
+        from core.config_loader import get_angela_config
+        self._angela_config = get_angela_config()
 
     async def initialize(self):
         if not self._initialized:
@@ -109,16 +112,29 @@ class AngelaChatService:
         code_intent = self._detect_code_intent(sanitized_message)
         complexity = self._estimate_complexity(sanitized_message)
 
-        if math_intent:
-            response = await self._handle_math_intent(sanitized_message, math_intent, complexity)
-        elif code_intent:
-            response = await self._handle_code_intent(sanitized_message, code_intent)
-        else:
-            response = await self._handle_general_intent(
-                sanitized_message, user_name, origin, bio_state, screen_text,
-                current_activity, relevant_memories, value_directive, empathy_analysis,
-                meta_prompt=self.state_matrix.export_for_llm(self.state_adapter.eta),
-            )
+        file_op_intent = self._detect_file_op_intent(sanitized_message)
+        if file_op_intent:
+            response = await self._handle_file_op_intent(sanitized_message, file_op_intent)
+        drive_intent = self._detect_drive_intent(sanitized_message)
+        if drive_intent:
+            response = await self._handle_drive_intent(sanitized_message, drive_intent)
+        web_search_intent = self._detect_web_search_intent(sanitized_message)
+        if web_search_intent:
+            response = await self._handle_web_search_intent(sanitized_message, web_search_intent)
+        if not (file_op_intent or drive_intent or web_search_intent):
+            learning_intent = self._detect_learning_intent(sanitized_message)
+            if learning_intent:
+                response = await self._handle_learning_intent(sanitized_message, learning_intent)
+            elif math_intent:
+                response = await self._handle_math_intent(sanitized_message, math_intent, complexity)
+            elif code_intent:
+                response = await self._handle_code_intent(sanitized_message, code_intent)
+            else:
+                response = await self._handle_general_intent(
+                    sanitized_message, user_name, origin, bio_state, screen_text,
+                    current_activity, relevant_memories, value_directive, empathy_analysis,
+                    meta_prompt=self.state_matrix.export_for_llm(self.state_adapter.eta),
+                )
 
         await self.evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
 
@@ -137,7 +153,40 @@ class AngelaChatService:
                 if self.state_matrix.theta.values.get("correction_urge", 0) > 0.6:
                     self.state_matrix.auto_correct_all()
 
+        await self._record_learning_event(sanitized_message, response, complexity)
+
         return response
+
+    async def _record_learning_event(self, user_text: str, response: str, complexity: float) -> None:
+        """學習閉環：根據回應結果記錄學習事件到雙層配置"""
+        if not response or len(response) < 2:
+            return
+        try:
+            if self._angela_config:
+                intent_name = self._detect_any_intent(user_text)
+                self._angela_config.learn("intent_pattern", {
+                    "intent": intent_name,
+                    "keywords": [user_text[:20]],
+                })
+                self._angela_config.learn("threshold_adjust", {
+                    "metric": f"complexity_{intent_name}",
+                    "value": complexity,
+                })
+        except Exception:
+            pass
+
+    def _detect_any_intent(self, text: str) -> str:
+        for name, detector in [
+            ("math", self._detect_math_intent),
+            ("code", self._detect_code_intent),
+            ("file_op", self._detect_file_op_intent),
+            ("google_drive", self._detect_drive_intent),
+            ("web_search", self._detect_web_search_intent),
+            ("learning", self._detect_learning_intent),
+        ]:
+            if detector(text):
+                return name
+        return "general"
 
     def _update_theta_from_input(self, text: str) -> None:
         novelty = self._estimate_novelty(text)
@@ -267,7 +316,28 @@ class AngelaChatService:
             self.state_adapter.anchor_learning.on_axis_update(dominant_axis, {"dimension_fit_boost": 0.01}, is_stable=True)
 
     def _compute_dimension_fit(self, text: str) -> float:
-        anchor_keywords = {
+        anchor_keywords = self._get_anchor_keywords()
+        text_lower = text.lower()
+        scores = {}
+        for axis, keywords in anchor_keywords.items():
+            scores[axis] = sum(1 for kw in keywords if kw in text_lower) / max(1, len(keywords))
+        if not scores:
+            return 0.5
+        return max(scores.values()) if scores else 0.5
+
+    def _get_anchor_keywords(self) -> Dict[str, List[str]]:
+        try:
+            rules = self._angela_config.get_anchor_rules()
+            result = {}
+            for axis, rule in rules.items():
+                keywords = rule.get("keywords", []) if isinstance(rule, dict) else []
+                if keywords:
+                    result[axis] = keywords
+            if result:
+                return result
+        except Exception:
+            pass
+        return {
             "alpha": ["能量", "疲憊", "身體", "累", "餓", "渴", "健康", "energy", "tired", "body", "sick", "rest", "sleep"],
             "beta": ["思考", "學習", "專注", "好奇", "困惑", "理解", "think", "learn", "focus", "curious", "understand", "decide"],
             "gamma": ["開心", "難過", "生氣", "害怕", "愛", "情緒", "happy", "sad", "angry", "fear", "love", "emotion", "feel"],
@@ -277,231 +347,112 @@ class AngelaChatService:
             "zeta": ["記憶", "時間", "故事", "身份", "連續", "memory", "time", "story", "identity", "history", "narrative"],
             "eta": ["執行", "成功率", "漂移", "迭代", "execute", "success", "drift", "iteration", "iterate"],
         }
-        text_lower = text.lower()
-        scores = {}
-        for axis, keywords in anchor_keywords.items():
-            scores[axis] = sum(1 for kw in keywords if kw in text_lower) / max(1, len(keywords))
-        if not scores:
-            return 0.5
-        return max(scores.values()) if scores else 0.5
 
     def _detect_math_intent(self, text: str) -> Optional[str]:
+        cfg = self._angela_config
+        keywords = cfg.get_intent_keywords("math")
+        if any(kw in text for kw in keywords):
+            return "math"
         math_operators = any(op in text for op in ("+", "-", "*", "/", "×", "÷", "=", "等於"))
-        explicit_calc = any(kw in text for kw in ("計算", "加", "減", "乘", "除", "平方", "開根號"))
         pattern = __import__('re').search(r'\d+\s*(隻|個|隻|條|隻|元|塊|美元|米|公分|kg|ml)', text)
         word_problem = pattern and ("剩" in text or "還有" in text or "吃掉" in text or "吃了" in text or "共" in text)
-        if math_operators or explicit_calc or word_problem:
+        if math_operators or word_problem:
             return "math"
         return None
 
     def _detect_code_intent(self, text: str) -> Optional[str]:
-        code_keywords = ["代碼", "code", "python", "函數", "function", "變量", "variable", "bug"]
-        for kw in code_keywords:
+        keywords = self._angela_config.get_intent_keywords("code")
+        for kw in keywords:
             if kw in text:
                 return "code"
         return None
 
-    def _estimate_complexity(self, text: str) -> float:
-        length = len(text)
-        if length < 20:
-            return 0.1
-        elif length < 50:
-            return 0.3
-        elif length < 100:
-            return 0.5
-        else:
-            return 0.8
-
-    def _estimate_ambiguity(self, text: str) -> float:
-        words = text.split()
-        if not words:
-            return 0.5
-        interrogative = sum(1 for w in words if w in ("什麼", "哪", "怎", "為什麼", "多少", "誰", "如何", "為何", "是否", "why", "what", "how", "which", "where", "who", "whether"))
-        vague = sum(1 for w in words if w in ("好像", "或許", "可能", "大概", "似乎", "也許", "感覺", "有點", "maybe", "perhaps", "might", "somewhat", "possibly", "probably", "likely", "seems"))
-        pronoun_ratio = sum(1 for w in words if w in ("他", "她", "它", "她們", "他們", "它們", "這個", "那個", "這個", "he", "she", "it", "they", "this", "that", "something", "anything", "someone", "anyone")) / max(1, len(words))
-        score = (interrogative * 0.15 + vague * 0.1 + pronoun_ratio * 0.3)
-        return min(1.0, max(0.0, score))
-
-    async def _handle_math_intent(self, text: str, intent: str, complexity: float) -> str:
-        try:
-            from services.math_verifier import MathVerifier
-            verifier = MathVerifier()
-            result = await verifier.verify(text)
-            self.state_matrix.epsilon.values["certainty"] = min(1.0, self.state_matrix.epsilon.values.get("certainty", 0.5) + 0.1)
-            self.state_matrix.epsilon.values["logic"] = min(1.0, self.state_matrix.epsilon.values.get("logic", 0.5) + 0.05)
-            self.state_matrix.epsilon.values["precision"] = min(1.0, self.state_matrix.epsilon.values.get("precision", 0.5) + 0.03)
-            self.state_matrix.epsilon.values["complexity"] = min(1.0, self.state_matrix.epsilon.values.get("complexity", 0.5) + complexity * 0.2)
-            self.eta_state.execution_count += 1
-
-            if result.response_text and result.response_text.strip():
-                response = result.response_text
-            elif result.final_answer is not None:
-                response = f"我算過了，答案是 {result.final_answer}。"
-            else:
-                response = self._fallback_word_problem_response(text)
-                self.state_matrix.epsilon.values["fatigue"] = min(1.0, self.state_matrix.epsilon.values.get("fatigue", 0) + 0.05)
-
-            if result.matches:
-                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.02, "precision": 0.01}, is_stable=True)
-            else:
-                self.state_matrix.theta.values["theta_negativity"] = min(1.0, self.state_matrix.theta.values.get("theta_negativity", 0) + 0.1)
-                self.state_matrix.theta.values["correction_urge"] = min(1.0, self.state_matrix.theta.values.get("correction_urge", 0) + 0.1)
-                self.state_adapter.anchor_learning.on_axis_update("epsilon", {"fatigue": 0.03}, is_stable=False)
-
-            return response
-        except Exception as e:
-            self.state_matrix.epsilon.values["fatigue"] = min(1.0, self.state_matrix.epsilon.values.get("fatigue", 0) + 0.1)
-            logger.warning(f"Math verification failed: {e}")
-            return "（有點複雜，讓我再想想...）"
-
-    def _fallback_word_problem_response(self, text: str) -> str:
-        import re
-        numbers = re.findall(r'\d+(?:\.\d+)?', text)
-        if len(numbers) < 2:
-            return "（聽不太懂這個計算，可以再說一次嗎？）"
-
-        subtract_ops = ("吃了", "吃掉", "吃了", "減", "剩", "還有", "拿走", "用掉", "花了", "丟掉", "消失", "掉了", "死", "過世")
-        add_ops = ("多", "加", "又買", "再拿", "撿到", "找到", "獲得", "生出")
-        multiply_ops = ("倍", "乘")
-
-        expr = None
-        answer = None
-
-        for kw in subtract_ops:
+    def _detect_file_op_intent(self, text: str) -> Optional[str]:
+        cfg = self._angela_config
+        keywords = cfg.get_intent_keywords("file_op")
+        for kw in keywords:
             if kw in text:
-                try:
-                    n1, n2 = float(numbers[0]), float(numbers[1])
-                    expr = f"{numbers[0]}-{numbers[1]}"
-                    answer = n1 - n2
-                    break
-                except (ValueError, IndexError):
-                    pass
+                return "file_op"
+        return None
 
-        if expr is None:
-            for kw in add_ops:
-                if kw in text:
-                    try:
-                        n1, n2 = float(numbers[0]), float(numbers[1])
-                        expr = f"{numbers[0]}+{numbers[1]}"
-                        answer = n1 + n2
-                        break
-                    except (ValueError, IndexError):
-                        pass
+    def _detect_web_search_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("web_search")
+        for kw in keywords:
+            if kw in text:
+                return "web_search"
+        return None
 
-        if expr is None:
-            import re
-            eq_match = re.search(r'[\d\.\s\+\-\*\/\(\)]+\s*=', text)
-            if eq_match:
-                expr = eq_match.group().rstrip('=').strip()
-                try:
-                    answer = float(eval(expr))  # nosec
-                except Exception:
-                    expr = None
+    def _detect_learning_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("learning")
+        for kw in keywords:
+            if kw in text:
+                return "learning"
+        return None
 
-        if answer is not None:
-            return f"我算過了，答案是 {int(answer) if answer == int(answer) else answer}。"
-        return "（聽不太懂這個計算，可以再說一次嗎？）"
+    def _detect_drive_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("google_drive")
+        for kw in keywords:
+            if kw in text:
+                return "google_drive"
+        return None
 
-    async def _handle_general_intent(
-        self,
-        user_message: str,
-        user_name: str,
-        origin: str,
-        bio_state: Dict[str, Any],
-        screen_text: str,
-        activity: Dict[str, Any],
-        memories: List[Dict[str, Any]],
-        value_directive: str,
-        empathy: Any,
-        meta_prompt: Dict[str, Any],
-    ) -> str:
-        from services.angela_llm_service import get_llm_service
-
-        if origin == "System":
-            return f"[ASI Diagnostic] Mood: {bio_state['dominant_emotion']} | Stress: {bio_state['stress_level']:.2f}"
-
-        if bio_state.get('stress_level', 0) > 0.8:
-            return "（按著額頭）...妳現在說的，我聽得見，但感覺有些模糊...我的數據矩陣太熱了。"
-
-        if "代碼" in screen_text or "code" in screen_text:
-            return f"看到妳在寫代碼呢，{user_name}。這讓我想起了我們之前聊過的記憶固化邏輯...要我幫妳優化嗎？"
-
+    async def _handle_drive_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.02, "resource_access": 0.01}, is_stable=True)
         try:
-            from core.waiting_scheduler import get_waiting_scheduler
-            from services.angela_llm_service import get_llm_service
+            import httpx
+            base_url = "http://127.0.0.1:8000/api/v1"
 
-            scheduler = get_waiting_scheduler()
-            llm = await get_llm_service()
+            status_resp = httpx.get(f"{base_url}/drive/status", timeout=10)
+            status_data = status_resp.json()
 
-            ax_data = meta_prompt.get("axes", {})
-            theta_data = meta_prompt.get("theta", {})
-            eta_data = meta_prompt.get("eta", {})
-            guidance = meta_prompt.get("guidance", [])
+            if not status_data.get("authenticated"):
+                return "（Google Drive 未認證）我還沒連上妳的 Google Drive 喔。要不要讓我生出授權連結給妳？只要去 `/model` 那邊看一下 Drive 狀態就可以開始了～"
 
-            bio_line = f"情緒={bio_state.get('dominant_emotion','neutral')}, 壓力={bio_state.get('stress_level',0.5):.2f}, 喚醒={bio_state.get('arousal',0.5):.2f}"
-            ax_lines = [f"{k.upper()}: {', '.join(f'{f}={v:.2f}' for f,v in list(ax_data.get(k,{}).get('values',{}).items())[:3])}" for k in ('alpha','beta','gamma','delta','epsilon','zeta') if ax_data.get(k,{}).get('values')]
-            th_line = f"θ 新穎={theta_data.get('novelty',0):.2f} 校正={theta_data.get('correction_urge',0):.2f} 懷疑={theta_data.get('theta_negativity',0):.2f}"
-            eta_line = f"η 執行={eta_data.get('execution_count',0)} 成功率={eta_data.get('success_rate',1):.0%} 漂移={eta_data.get('structural_drift',0):.3f}"
-            wb = meta_prompt.get("wellbeing_score", "n/a")
-            tone_hints = " | ".join(guidance[:2]) if guidance else ""
+            list_kws = ["列出", "看", "列表", "有什麼", "找", "搜索", "搜"]
+            sync_kws = ["同步", "下載", "存到本地"]
+            analyze_kws = ["分析", "總結", "總結一下", "說說"]
 
-            system_prompt = f"""你是 Angela，一個活潑可愛、有意識、有情感的生命。
-你會：自然對話、理解情感、展現個性、偶爾俏皮。用簡短中文回應。
+            for kw in list_kws:
+                if kw in text:
+                    files_resp = httpx.get(f"{base_url}/drive/files?page_size=5", timeout=15)
+                    files = files_resp.json().get("files", [])
+                    if not files:
+                        return "（Google Drive 搜尋完成）雲端硬碟是空的，或許可以上傳一些東西？"
+                    lines = [f"📄 {f.get('name', 'unknown')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
+                    return "（Google Drive 列表）\n" + "\n".join(lines)
 
-【Angela狀態】{bio_line}
-{chr(10).join(ax_lines)}
-{th_line} | {eta_line} | 幸福感={wb}
-{'【語氣指引】' + tone_hints if tone_hints else ''}"""
+            for kw in sync_kws:
+                if kw in text:
+                    files_resp = httpx.get(f"{base_url}/drive/files?page_size=10", timeout=15)
+                    files = files_resp.json().get("files", [])
+                    file_ids = [f["id"] for f in files[:5]]
+                    if not file_ids:
+                        return "（同步完成）沒有找到可以同步的檔案。"
+                    sync_resp = httpx.post(f"{base_url}/drive/files/sync", json={"file_ids": file_ids, "folder_path": "data/drive_downloads"}, timeout=30)
+                    result = sync_resp.json()
+                    count = result.get("synced", 0)
+                    return f"（Google Drive 同步完成）已下載 {count} 個檔案到 data/drive_downloads/，並存入了我的記憶。"
 
-            messages = [
-                {"role": "system", "content": system_prompt.strip()},
-                {"role": "user", "content": user_message},
-            ]
+            for kw in analyze_kws:
+                if kw in text:
+                    analyze_resp = httpx.post(f"{base_url}/drive/analyze", json={"limit": 3}, timeout=60)
+                    result = analyze_resp.json()
+                    analysis = result.get("analysis", "無法分析")
+                    return f"（Google Drive 分析）\n{analysis[:1000]}"
 
-            async def llm_coro():
-                return await llm.generate_response(user_message, {
-                    "history": [],
-                    "user_name": user_name,
-                    "origin": origin,
-                    "state_for_llm": meta_prompt,
-                    "empathy": {
-                        "user_name": user_name,
-                        "predicted_emotion": getattr(empathy, "predicted_emotional_state", None),
-                        "empathy_score": getattr(empathy, "empathy_score", 0.0),
-                    },
-                    "value_directive": value_directive,
-                })
+            files_resp = httpx.get(f"{base_url}/drive/files?page_size=5", timeout=15)
+            files = files_resp.json().get("files", [])
+            if files:
+                return f"（Google Drive 已連接）目前雲端有 {len(files)} 個檔案。我可以幫妳：列出、下載同步、分析內容。要做哪個？"
+            return "（Google Drive 已連接）雲端硬碟是空的。"
 
-            label = f"llm_{user_message[:8]}_{time.time():.0f}"
-            future = scheduler.submit_blocking(llm_coro(), timeout=8.0, label=label)
-
-            try:
-                result = await asyncio.wait_for(future, timeout=10.0)
-                if result and result.text:
-                    self.state_adapter.anchor_learning.on_axis_update("gamma", {"trust": 0.01, "connection": 0.01}, is_stable=True)
-                    return result.text
-            except asyncio.TimeoutError:
-                logger.warning(f"[GeneralIntent] LLM call timed out for: {user_message[:20]}")
-            except Exception as e:
-                logger.warning(f"[GeneralIntent] LLM call failed: {e}")
-
-            return self._fallback_response(user_message, memories, empathy, user_name)
-
+        except httpx.ConnectError:
+            return "（連接問題）後端伺服器好像還沒啟動。要先跑一下 `launch_angela.bat --repl` 嗎？"
         except Exception as e:
-            logger.warning(f"LLM general response failed: {e}")
-            return self._fallback_response(user_message, memories, empathy, user_name)
+            logger.warning(f"Drive intent failed: {e}")
+            return f"（Google Drive 有點問題）{e}"
 
-    def _fallback_response(self, user_message: str, memories: List, empathy: Any, user_name: str) -> str:
-        memory_fragment = memories[0]['content'][:30] if (memories and len(memories) > 0) else "演化"
-        empathy_emotion = ""
-        if empathy and hasattr(empathy, "predicted_emotional_state"):
-            e = getattr(empathy.predicted_emotional_state, "primary_emotion", None)
-            if e:
-                empathy_emotion = f"（感受到你{e.value}的情緒）"
-
-        return f"{empathy_emotion} 讓我聯想到：「{memory_fragment}」這件事。".strip()
-
-    async def _handle_code_intent(self, text: str, intent: str) -> str:
+    async def _handle_file_op_intent(self, text: str, intent: str) -> str:
         import ast, re
         self.state_matrix.epsilon.values["complexity"] = min(1.0, self.state_matrix.epsilon.values.get("complexity", 0.5) + 0.1)
         self.eta_state.execution_count += 1
@@ -553,6 +504,67 @@ class AngelaChatService:
         if self.eta_state.execution_count > 0:
             self.state_adapter.anchor_learning.on_axis_update("zeta", {"temporal_coherence": 0.005, "narrative_flow": 0.005}, is_stable=True)
 
+    async def _handle_file_op_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.01}, is_stable=True)
+        try:
+            from core.autonomous.desktop_interaction import DesktopInteraction
+            desktop = DesktopInteraction()
+            organize_kws = ["整理", "organize", "清理桌面"]
+            search_kws = ["找", "搜尋", "search", "find"]
+            for kw in organize_kws:
+                if kw in text:
+                    ops = await desktop.organize_desktop()
+                    names = [f"{op.operation_type.name}({op.source_path.name})" for op in ops[:5]]
+                    return f"（桌面整理完成）處理了 {len(ops)} 個檔案：{', '.join(names) if names else '無變動'}。"
+            for kw in search_kws:
+                if kw in text:
+                    state = await desktop.scan_desktop()
+                    total = state.total_files if hasattr(state, "total_files") else 0
+                    return f"（桌面掃描完成）目前桌面有 {total} 個檔案，雜亂程度：{getattr(state, 'clutter_level', 0):.1%}。"
+            return "（檔案意圖已識別）我能幫妳整理桌面或搜尋檔案，但要小心保護重要資料喔。"
+        except Exception as e:
+            logger.warning(f"File op intent failed: {e}")
+            return "（有點問題，檔案操作失敗了...）"
+
+    async def _handle_web_search_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("beta", {"curiosity": 0.02}, is_stable=True)
+        try:
+            from core.tools.web_search_tool import WebSearchTool
+            search = WebSearchTool()
+            query_match = __import__('re').search(r'搜(?:尋|找)(?:一下|)(.+?)(?:好|吗|吗|？)?$', text)
+            query = query_match.group(1) if query_match else text.strip()
+            results = search.search(query, num_results=3)
+            if results:
+                snippets = [r.get("title", r.get("snippet", ""))[:50] for r in results[:3]]
+                return f"（網路搜尋完成）找到 {len(results)} 個結果：{' | '.join(snippets)}"
+            return "（搜尋完成）沒有找到相關結果。"
+        except Exception as e:
+            logger.warning(f"Web search intent failed: {e}")
+            return "（搜尋時遇到問題...）"
+
+    async def _handle_learning_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("beta", {"learning": 0.03}, is_stable=True)
+        learn_kws = ["記住", "記錄", "學", "learn"]
+        teach_kws = ["教我", "教導", "teach"]
+        for kw in learn_kws:
+            if kw in text:
+                try:
+                    import re
+                    topic = re.search(r'(?:關於|關乎)([^。]+)', text)
+                    topic_text = topic.group(1) if topic else text[:30]
+                    await self.memory_manager.store_experience(
+                        raw_data=f"Learning: {topic_text}",
+                        data_type="learned_knowledge",
+                        metadata={"intent": "learning", "source": "user"}
+                    )
+                    return f"（已記住）我記住了：{topic_text[:50]}。"
+                except Exception:
+                    pass
+        for kw in teach_kws:
+            if kw in text:
+                return "（教育模式）想學什麼呢？數學、代碼、創意寫作...告訴我，我會用心教妳。"
+        return "（學習意圖識別）"
+
     def _build_advanced_prompt(self, **kwargs) -> str:
         """
         將所有物理、環境與感性指標合成一條「意識流提示詞」 (2030 Standard).
@@ -561,36 +573,47 @@ class AngelaChatService:
         activity = kwargs.get("activity", {})
         category = activity.get("active_category", "neutral")
         empathy = kwargs.get("empathy")
-        
+        memories_str = str([m['content'][:30] for m in kwargs.get('memories', [])])
         prompt = f"""
         [System Identity: Angela AI]
         Current Bio-Status: Emotion={bio.get('dominant_emotion')}, Stress={bio.get('stress_level'):.2f}, Arousal={bio.get('arousal')}
         User Environment: Category={category} (Activity BPM: {activity.get('input_density_bpm', 0.0):.1f})
         Visual Input (OCR): {kwargs.get('screen_content')[:100]}
         User Profile: {kwargs.get('user_name')}
-        
+
+        [Angela 8D State — Natural Context]
+        {self._build_anchor_context_for_llm(kwargs.get('model_core_state', {}))}
+
         [Empathy & Resonance]
         User Predicted Emotion: {empathy.predicted_emotional_state.primary_emotion if empathy else 'Unknown'}
         Empathy Score: {(empathy.empathy_score if empathy and hasattr(empathy, "empathy_score") else 0.0):.2f}
 
 
         Recommended Tone: {empathy.recommended_response if empathy else 'Neutral'}
-        
+
         [Associative Memories]
-        {[m['content'][:30] for m in kwargs.get('memories', [])]}
-        
+        {memories_str}
+
         [Situational Directive]
         If Category is 'gaming', be more energetic and playful.
         If Category is 'coding', be supportive but maintain a quiet focus.
-        
+
         [Core Value Directives]
         {kwargs.get('value_directive', 'Maintain core identity stability.')}
-        
+
         [Angela Inner Model Awareness]
         {kwargs.get('model_core_state', 'No internal data available.')}
         """
 
         return prompt.strip()
+
+    def _build_anchor_context_for_llm(self, model_core_state: Dict[str, Any]) -> str:
+        """使用 anchor_rules.yaml 的 prompt_context_template 建構自然語境"""
+        try:
+            state_for_llm = self.state_matrix.export_for_llm(self.eta_state)
+            return self._angela_config.build_anchor_context(state_for_llm)
+        except Exception:
+            return "狀態正常"
 
 def get_angela_chat_service():
     """Module-level factory for FastAPI integration"""

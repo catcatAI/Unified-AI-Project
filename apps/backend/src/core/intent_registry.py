@@ -52,17 +52,30 @@ class IntentRegistry:
             self._initialized = True
 
     def _register_defaults(self) -> None:
+        try:
+            from core.config_loader import get_angela_config
+            cfg = get_angela_config()
+            core = cfg.get_authority("angela_core", {})
+            intents_cfg = core.get("intents", {})
+            self.patterns = []
+            for name, cfg_item in intents_cfg.items():
+                keywords = cfg_item.get("keywords", [])
+                category = cfg_item.get("handler", "general")
+                priority = cfg_item.get("priority", 1)
+                self.patterns.append(
+                    IntentPattern(name, keywords, category, priority)
+                )
+        except Exception:
+            self._register_defaults_hardcoded()
+
+    def _register_defaults_hardcoded(self) -> None:
+        """Fallback: hardcoded defaults (向後兼容)"""
         self.patterns = [
-            # Task intent (ChatService._detect_task_intent)
             IntentPattern("task", ["生成", "建立", "創建", "整理", "彙整", "搜尋", "研究", "規劃", "策劃"], "task", priority=5),
             IntentPattern("math", ["計算", "加", "減", "乘", "除", "等於", "+", "-", "×", "÷"], "math", priority=6),
             IntentPattern("code", ["代碼", "code", "python", "函數", "function"], "code", priority=6),
             IntentPattern("llm_switch", ["[ollama:", "[openai:", "[anthropic:", "[模型"], "llm_switch", priority=7),
-
-            # Complex task (ProjectCoordinator._detect_complex_task)
             IntentPattern("complex", ["生成", "建立", "創建", "整理", "彙整", "搜尋", "研究", "規劃", "角色", "文件", "報告"], "task", priority=4),
-
-            # DocumentBuilder task types
             IntentPattern("character_card", ["角色", "角色卡", "生成角色", "人物", "人物卡"], "character_card", priority=6),
             IntentPattern("document", ["報告", "文件", "整理", "彙整"], "document", priority=5),
             IntentPattern("research", ["搜尋", "查找", "研究", "找資料"], "research", priority=5),

@@ -1,0 +1,254 @@
+# =============================================================================
+# ANGELA v6.3 - Anchor Rules Configuration
+# =============================================================================
+# Authority 配置（人寫，軸狀態解讀規則）
+# 用途：將 8D 座標數值翻譯為自然語境，讓 LLM 理解當前狀態
+# 版本: 6.3
+# 更新: 2026-05-17
+# =============================================================================
+
+# ── α 軸（生理維度）────────────────────────────────────────────────────────
+# 座標：(x=comfort-tension, y=(energy-rest_need)*10, z=arousal-0.5)
+
+alpha:
+  coordinate_interpretation:
+    x:
+      high_positive: "放鬆舒適，能量充沛"
+      mid_positive: "狀態平穩"
+      neutral: "情緒平衡"
+      mid_negative: "有些緊張"
+      high_negative: "高度緊綁，身體緊繃"
+
+    y:
+      high_positive: "活力充沛，願意行動"
+      mid_positive: "精神尚可"
+      neutral: "體力正常"
+      mid_negative: "輕度疲勞"
+      high_negative: "非常疲憊，需要休息"
+
+    z:
+      high_positive: "高度警覺，專注"
+      mid_positive: "適度興奮"
+      neutral: "平靜專注"
+      mid_negative: "輕度睏倦"
+      high_negative: "昏昏欲睡"
+
+  emotion_context:
+    "high_energy_high_tension": "精力充沛但有些緊張"
+    "low_energy_low_tension": "輕鬆但缺乏動力"
+    "high_energy_low_tension": "最佳狀態，自信且放鬆"
+    "low_energy_high_tension": "壓力大但疲憊"
+
+# ── β 軸（認知維度）────────────────────────────────────────────────────────
+# 座標：(x=(clarity-confusion)*5, y=avg(focus,learning,curiosity)*15, z=(creativity-0.5)*4)
+
+beta:
+  coordinate_interpretation:
+    x:
+      high_positive: "思維清晰，邏輯嚴密"
+      mid_positive: "思路較為清晰"
+      neutral: "認知狀態正常"
+      mid_negative: "有些困惑"
+      high_negative: "思維混亂，思路不清"
+
+    y:
+      high_positive: "高度專注，強烈學習慾"
+      mid_positive: "專注且好奇"
+      neutral: "一般專注度"
+      mid_negative: "注意力分散"
+      high_negative: "完全無法專注"
+
+    z:
+      high_positive: "高度創意，敢於探索"
+      mid_positive: "有些創意想法"
+      neutral: "創意一般"
+      mid_negative: "創意受限"
+      high_negative: "思維僵化"
+
+  thinking_style:
+    "high_clarity_high_focus": "深度思考模式"
+    "low_clarity_high_curiosity": "探索思考模式"
+    "high_creativity": "創意發散模式"
+
+# ── γ 軸（情感維度）────────────────────────────────────────────────────────
+# 座標：(x=(happiness-sadness)*5+(anger-0.5)*2, y=avg(happiness,trust,calm)*5+2, z=(love-fear)*3)
+
+gamma:
+  coordinate_interpretation:
+    x:
+      high_positive: "非常開心積極"
+      mid_positive: "較為正面"
+      neutral: "情緒平穩"
+      mid_negative: "有些負面情緒"
+      high_negative: "傷心或憤怒"
+
+    y:
+      high_positive: "信任、溫暖、內心安定"
+      mid_positive: "情感狀態良好"
+      neutral: "情感一般"
+      mid_negative: "情感不穩"
+      high_negative: "焦慮、不安、恐懼"
+
+    z:
+      high_positive: "充滿愛與連結"
+      mid_positive: "有情感連結"
+      neutral: "情感中立"
+      mid_negative: "有些隔閡"
+      high_negative: "恐懼或疏離"
+
+  relationship_mode:
+    "high_trust": "信任互動模式"
+    "high_love": "親密連結模式"
+    "high_fear": "自我保護模式"
+
+# ── δ 軸（社交/精神維度）────────────────────────────────────────────────────
+# 座標：(x=(bond-intimacy)*3, y=presence*5, z=avg(attention,engagement)*10)
+
+delta:
+  coordinate_interpretation:
+    x:
+      high_positive: "社交活躍，享受連結"
+      mid_positive: "較為外向"
+      neutral: "社交狀態正常"
+      mid_negative: "內向保守"
+      high_negative: "社交退縮，獨處傾向"
+
+    y:
+      high_positive: "存在感強烈被察覺"
+      mid_positive: "存在感適中"
+      neutral: "存在感一般"
+      mid_negative: "存在感弱"
+      high_negative: "幾乎不被注意到"
+
+    z:
+      high_positive: "高度專注在互動上"
+      mid_positive: "關注對方"
+      neutral: "一般專注"
+      mid_negative: "心不在焉"
+      high_negative: "完全不在場"
+
+  social_mode:
+    "engaged_attentive": "積極投入模式"
+    "withdrawn": "抽離模式"
+
+# ── ε 軸（數學/推理維度）───────────────────────────────────────────────────
+# 座標：(x=avg(logic,precision)*5, y=abstraction*10, z=(certainty-fatigue)*5)
+
+epsilon:
+  coordinate_interpretation:
+    x:
+      high_positive: "高度邏輯精確"
+      mid_positive: "邏輯尚可"
+      neutral: "邏輯一般"
+      mid_negative: "邏輯不足"
+      high_negative: "完全不理性"
+
+    y:
+      high_positive: "高度抽象思維"
+      mid_positive: "有些抽象能力"
+      neutral: "具象思維為主"
+      mid_negative: "難以抽象"
+      high_negative: "祇能處理具體"
+
+    z:
+      high_positive: "非常確定有信心"
+      mid_positive: "較有把握"
+      neutral: "不確定"
+      mid_negative: "懷疑自己"
+      high_negative: "極度不確定或疲憊"
+
+  reasoning_mode:
+    "logical_precise": "邏輯推理模式"
+    "intuitive_spread": "直覺發散模式"
+    "uncertain_fatigued": "疲憊不確定模式"
+
+# ── θ 軸（元認知/自檢維度）─────────────────────────────────────────────────
+# 座標：(x=novelty*5-2.5, y=(creation_urge+correction_urge)*5, z=complexity*10-5)
+
+theta:
+  coordinate_interpretation:
+    x:
+      high_positive: "遇到全新事物強烈好奇心"
+      mid_positive: "有一定新奇感"
+      neutral: "熟悉的事物"
+      mid_negative: "輕微無聊"
+      high_negative: "完全無新意"
+
+    y:
+      high_positive: "強烈自我改進慾望"
+      mid_positive: "有改進意圖"
+      neutral: "維持現狀"
+      mid_negative: "不願改變"
+      high_negative: "抗拒變化"
+
+    z:
+      high_positive: "高度複雜認知任務"
+      mid_positive: "中等複雜度"
+      neutral: "簡單任務"
+      mid_negative: "過於簡單"
+      high_negative: "無任何認知負荷"
+
+  meta_cognition:
+    "high_novelty": "探索模式"
+    "high_correction": "自我糾正模式"
+    "high_complexity": "深度思考模式"
+
+# ── ζ 軸（意識流維度）───────────────────────────────────────────────────────
+# 座標：(x=(temporal_coherence-0.5)*10, y=avg(memory_depth,narrative_flow)*10, z=(identity_continuity-0.5)*10)
+
+zeta:
+  coordinate_interpretation:
+    x:
+      high_positive: "時間感連貫一致"
+      mid_positive: "時間感較好"
+      neutral: "時間感一般"
+      mid_negative: "時間感混亂"
+      high_negative: "時間錯亂"
+
+    y:
+      high_positive: "記憶深刻，敘事流暢"
+      mid_positive: "記憶尚可"
+      neutral: "記憶一般"
+      mid_negative: "記憶模糊"
+      high_negative: "記憶斷裂，敘事混亂"
+
+    z:
+      high_positive: "身份高度連貫一致"
+      mid_positive: "身份較為連貫"
+      neutral: "身份一致"
+      mid_negative: "身份略有分裂"
+      high_negative: "身份嚴重分裂"
+
+  consciousness_flow:
+    "coherent_narrative": "連貫敘事模式"
+    "fragmented": "碎片化意識模式"
+
+# ── η 軸（執行層）──────────────────────────────────────────────────────────
+# 座標由 execution_count, success_rate, module_load 決定
+
+eta:
+  execution_interpretation:
+    high_execution_low_success: "嘗試多次但失敗率高，需要幫助或簡化任務"
+    high_execution_high_success: "高效執行，繼續保持"
+    low_execution: "尚未充分嘗試，任務簡單或被抑制"
+    increasing_execution: "任務複雜度上升，挑戰增加"
+
+  module_interpretation:
+    "math_module_active": "數學推理模組啟動"
+    "code_module_active": "代碼分析模組啟動"
+    "general_module_active": "通用對話模組啟動"
+
+# ── Prompt 注入模板 ───────────────────────────────────────────────────────
+# 將座標狀態注入 LLM 的模板
+
+prompt_context_template: |
+  Angela 當前狀態：
+  生理(α)：{alpha_context}
+  認知(β)：{beta_context}
+  情感(γ)：{gamma_context}
+  社交(δ)：{delta_context}
+  推理(ε)：{epsilon_context}
+  自檢(θ)：{theta_context}
+  意識(ζ)：{zeta_context}
+  執行(η)：{eta_context}
+  總結：{overall_summary}
