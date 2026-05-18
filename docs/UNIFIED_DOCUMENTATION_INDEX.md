@@ -60,11 +60,15 @@
 - [enhanced-sandbox.md](03-technical-architecture/security/enhanced-sandbox.md) - 增強型沙盒執行器
 - [trust-manager.md](03-technical-architecture/ai-components/trust-manager.md) - 信任管理器
 - [economy-manager.md](03-technical-architecture/ai-components/economy-manager.md) - 經濟管理器
+- [neuro-generative-response.md](03-technical-architecture/ai-components/neuro-generative-response.md) - **NGR 神經生成回應系統 (v6.3)**
 - [game-systems-overview.md](02-game-design/game-systems-overview.md) - 遊戲系統總覽
 - [knowledge-graph.md](04-advanced-concepts/knowledge-graph.md) - 知識圖譜
 - [TOOL_CALL_CHAIN_TRACKING_DESIGN.md](../TOOL_CALL_CHAIN_TRACKING_DESIGN.md) - 工具调用链追踪机制设计
 - [TOOL_CONTEXT_DATA_MODEL_DESIGN.md](../TOOL_CONTEXT_DATA_MODEL_DESIGN.md) - 工具上下文数据模型设计
 - [TOOL_CATEGORY_SYSTEM_DESIGN.md](../TOOL_CATEGORY_SYSTEM_DESIGN.md) - 工具分类体系设计
+- [NEURO_GENERATIVE_REPLY_PLAN.md](../NEURO_GENERATIVE_REPLY_PLAN.md) - **NGR 實作計畫 (已完成)**
+- [eta_axis_plan.md](eta_axis_plan.md) - **η 軸實作計畫 (已完成)**
+- [ANGELA_FRONTEND_SYNC_PLAN.md](planning/frontend-sync/ANGELA_FRONTEND_SYNC_PLAN.md) - **前端同步計畫 (已完成)**
 
 ### 8. 项目管理与规划
 - [implementation_plan.md](implementation_plan.md) - 实施计划
@@ -125,5 +129,5 @@
 4. **用户反馈**：根据用户反馈优化文档结构和内容
 
 ---
-*最后更新：2026年2月7日*
-*更新内容：整合 Phase 14 状态，更新 `PROJECT_PROGRESS_SUMMARY.md` 链接，确认 HSP 与并发层文档更新。*
+*最后更新：2026年5月18日*
+*更新内容：新增 NGR v6.3 文檔索引 (NeuroBlender, η軸, 前端同步計畫)*

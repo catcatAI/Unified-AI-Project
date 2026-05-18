@@ -120,6 +120,21 @@ D:\Projects\Unified-AI-Project\
 | `cdm_dividend_model.py` | CDM模型 | ✅ 完整 |
 | `non_paradox_existence.py` | 非悖论存在 | ✅ 完整 |
 
+### AI 回應系統 (ai/response/) ⭐NGR v6.3
+
+| 文件 | 功能 | 狀態 |
+|------|------|------|
+| `composer.py` | NeuroFragment + NeuroVocabulary + NeuroBlender + ResponseComposer | ✅ 完整 |
+| `learning_loop.py` | 自主語言演化 (FragmentExtractor + LearningLoop) | ✅ 新增 |
+| `template_matcher.py` | 模板匹配器 | ✅ 完整 |
+| `deviation_tracker.py` | 偏差追蹤 | ✅ 完整 |
+
+### 行動端 API (api/v1/endpoints/) ⭐更新
+
+| 文件 | 功能 | 狀態 |
+|------|------|------|
+| `mobile.py` | 行動端專用接口 (含 NGR v6.3 chat proxy) | ✅ 完整 |
+
 ---
 
 ## 📋 版本对照表
@@ -152,9 +167,12 @@ Angela 的當前狀態由一個四維張量定義：`V × L × P × M`
 | β (情感) 维度 | `EmotionalBlendingSystem` | `emotional_blending.py` |
 | γ (认知) 维度 | `autonomous_life_cycle.py` | `autonomous_life_cycle.py` |
 | δ (社交) 维度 | `CyberIdentity` | `cyber_identity.py` |
-| 触觉 (18部位) | `PhysiologicalTactileSystem` | `physiological_tactile.py` |
-| 内分泌 (12激素) | `EndocrineSystem` | `endocrine_system.py` |
-| 记忆 CDM/LU/HSM/HAM | `MemoryNeuroplasticityBridge` | `memory_neuroplasticity_bridge.py` |
+| ε (邏輯) 維度 | `EpsilonState` | `state_matrix.py` |
+| θ (元認知) 維度 | `ThetaAxisState` | `theta_router.py` |
+| ζ (時間敘事) 維度 | `ZetaState` | `state_matrix.py` |
+| η (執行) 維度 | `EtaAxisState` | `eta_axis.py` |
+| NGR 回應系統 | `NeuroBlender` | `composer.py` |
+| 語言演化 | `LearningLoop` | `learning_loop.py` |
 
 ---
 
@@ -224,6 +242,8 @@ pytest src/core/tests/ -v
 | i18n多语言 (i18n/) | 2 |
 | 云同步 (sync/) | 2 |
 | 硬件支持 (hardware/) | 5 |
+| AI回應系統 (ai/response/) | 4 |
+| 行動端API (api/v1/endpoints/) | 8 |
 | 测试文件 | 3 |
 | 最大文件 | `cognitive_constraint_engine.py` (2680行) |
 | 总代码量 | ~700KB+ |
@@ -319,6 +339,7 @@ pytest src/core/tests/ -v
 
 | 日期 | 版本 | 描述 |
 |------|------|------|
+| 2026-05-18 | 6.3.0 | NGR v6.3: NeuroBlender + 8D State Matrix + Frontend Sync + Mobile NGR |
 | 2026-02-07 | 6.2.0 | Phase 14: 並發與真實執行層 (Task Queue, Worker Pool, HSP Integration) |
 | 2026-02-05 | 6.0.4 | Phase 4: 集群分佈式計算、統一狀態張量 (V×L×P×M)、精度圖譜實作 |
 | 2026-02-04 | 6.0.4 | Phase 4: 跨架构硬件支持 (CISC/RISC/EPIC/VLIW, CPU/GPU/TPU, 精度矩阵) |

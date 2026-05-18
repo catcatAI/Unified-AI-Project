@@ -4,15 +4,15 @@
   FILE_PATH: readme.md
   FILE_TYPE: documentation
   PURPOSE: Angela AI 项目主文档 - 双语版本，包含完整功能说明和快速开始指南
-  VERSION: 6.2.1
+  VERSION: 6.3.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-02-19
+  LAST_MODIFIED: 2026-05-18
   DEPENDENCIES: 无
   =============================================================================
 -->
 
-# 🌟 Angela AI v6.2.1 — Cross-Platform Digital Life System
+# 🌟 Angela AI v6.3.0 — Cross-Platform Digital Life System
 
 [English](#english-version) | [繁體中文](#繁體中文版)
 
@@ -49,7 +49,7 @@ seamless cross-device synchronization.
 
 ### 🔄 Current Project Status
 
-- **Backend / Core AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0 (6D State Matrix, θ Meta-Cognition, Axis Port Routing, 94+ Tests Passing)
+- **Backend / Core AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0 (8D State Matrix αβγδεθζη, θ-η Dual Loop, Neuro-Generative Response, 94+ Tests Passing)
 - **Frontend / Desktop (Electron)**: 🛠️ Phase 12 Restoration Complete (Live2D, Expressions, Touch)
 - **Frontend / Mobile (React Native)**: Active Monitoring & Comm Bridge
 
@@ -145,7 +145,8 @@ mechanism:
 ### 🧠 Advanced AI Features
 
 - **System Metrics**: [View Detailed Performance & Indicators](metrics.md)
-- **6D State Matrix (αβγδεθ)**: Real-time emotional and cognitive modeling across six dimensions
+- **8D State Matrix (αβγδεθζη)**: Real-time emotional, cognitive, temporal-narrative, and execution modeling across eight dimensions
+- **Neuro-Generative Response (NGR)**: 8D-state-driven dynamic response composition via NeuroBlender — replaces static templates with cosine-similarity fragment selection
 - **Maturity Tracking (L0-L11)**: Adaptive complexity that grows with
   interaction time.
 - **Precision Modes (INT-DEC4)**: Flexible response accuracy based on available
@@ -289,7 +290,7 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 
 ### 🔄 專案當前進度
 
-- **後端 / 核心 AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0（6D 狀態矩陣、θ 元認知、軸端口路由、94+ 測試通過）
+- **後端 / 核心 AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0（8D 狀態矩陣 αβγδεθζη、θ-η Dual Loop、Neuro-Generative Response、94+ 測試通過）
 - **前端 / 桌面端 (Electron)**: 🛠️ Phase 12 狀態復原完成 (Live2D、表情、觸覺感應)
 - **前端 / 行動端 (React Native)**: 穩定監控與通訊橋接中
 
@@ -371,7 +372,8 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 ### 🧠 進階 AI 特性
 
 - **性能指標**: [查看詳細性能指標與矩陣](metrics.md)
-- **4D 狀態矩陣 (αβγδ)**: 實時的情感與認知建模。
+- **8D 狀態矩陣 (αβγδεθζη)**: 即時的情感、認知、時間敘事與執行層建模
+- **NGR 神經生成回應**: 透過 NeuroBlender 以 8D 狀態驅動回應組合，取代靜態模板
 - **成熟度追蹤 (L0-L11)**: 隨交互時間增長的自適應複雜度。
 - **精度模式 (INT-DEC4)**: 根據資源情況調整計算精度。
 - **硬體自適應調整**: 根據系統能力動態調整性能與桌布模式。
@@ -500,7 +502,7 @@ To prevent confusion, here is a clear map of the multiple frontends, backends, a
 │ │   └── Lip Sync Integration                                │
 │ │                                                           │
 │ ├── State Matrix (state-matrix.js)                          │
-│ │   ├── 4D αβγδ Synchronization                          │
+│ │   ├── 8D αβγδεθζη Synchronization                          │
 │ │   ├── Emotional State Management                             │
 │ │   └── Backend WebSocket Bridge                            │
 │ │                                                           │
@@ -622,7 +624,7 @@ Unified-AI-Project/
  │  │     ├─ live2d-test.js      # Test suite
  │  │     ├─ audio-handler.js     # Audio I/O
  │  │     ├─ backend-websocket.js # Backend connection
- │  │     ├─ state-matrix.js     # 4D state sync
+ │  │     ├─ state-matrix.js     # 8D state sync
  │  │     ├─ maturity-tracker.js # Maturity tracking
  │  │     ├─ precision-manager.js # Precision modes
  │  │     ├─ performance-manager.js # Performance scaling
@@ -885,14 +887,14 @@ Special thanks to the following projects and communities:
 
 ---
 
-**Last Updated**: 2026-05-14 **Version**: 6.2.1 (Phase 3 Post-Refactor Complete)
+**Last Updated**: 2026-05-18 **Version**: 6.3.0 (NGR v6.3)
 **Maintainer**: Angela AI Development Team **Project Status**: Production Ready ✅ | 99.5% Complete
 
 ## 📋 Known Issues & Next Steps
 
-### Current Status (v6.2.1 — Phase 3)
+### Current Status (v6.3.0 — NGR)
 
-All Phase 1-7 refactoring + Post-Refactor Plan v1.0 **COMPLETE**. 94+ tests passing.
+All Phase 1-7 refactoring + Post-Refactor Plan v1.0 + NGR v6.3 **COMPLETE**. 94+ tests passing.
 
 ### Roadmap
 
@@ -931,9 +933,9 @@ If this project helps you, please give us a ⭐!
 
 ---
 
-**Version**: 6.2.1
-**Release Date**: 2026-05-14
-**Status**: Production Ready ✅ | Phase 3 Post-Refactor v1.0 Complete
+**Version**: 6.3.0
+**Release Date**: 2026-05-18
+**Status**: Production Ready ✅ | NGR v6.3 Complete
 **Platforms**: Windows, macOS, Linux, Android/iOS (Mobile Bridge)
 **Code Stats**: 35+ Core Python Modules, ~7,000 Lines (Core), 52 JS Modules
 **Test Status**: 94+ Tests Passing (11 test files)

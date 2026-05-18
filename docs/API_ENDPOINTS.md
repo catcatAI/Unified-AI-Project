@@ -197,6 +197,44 @@ Check the status of a training session.
 }
 ```
 
+## State / Chat
+
+### POST /mobile/chat
+
+Secure mobile chat proxy endpoint (NGR v6.3). Routes through `_handle_chat_request` for full NGR pipeline: math verification → LLM → NeuroBlender fallback.
+
+**Request Body:**
+```json
+{
+  "message": "你好！",
+  "user_name": "朋友",
+  "history": [],
+  "session_id": "mobile-1712345678"
+}
+```
+
+**Response:**
+```json
+{
+  "response_text": "嗨～今天過得怎麼樣？",
+  "source": "neuro_blender",
+  "emotion": "happy",
+  "emotion_confidence": 0.8,
+  "emotion_intensity": 0.6,
+  "session_id": "mobile-1712345678",
+  "status": "success"
+}
+```
+
+- `source` can be: `"llm"`, `"neuro_blender"`, `"dual_rail"`, `"fallback"`, `"fallback-timeout"`
+- Requires Key B encrypted payload (see mobile.py:113-132)
+
+### POST /api/v1/chat/unified
+
+Unified multi-persona chat endpoint. Preferred for new clients.
+
+**Response includes `context` and `migration_note` fields.**
+
 ## HSP Protocol
 
 ### POST /hsp/register

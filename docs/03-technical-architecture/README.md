@@ -42,6 +42,27 @@ The project implements specialized AI agents for different tasks:
 - **ImageGenerationAgent**: Image generation capabilities
 - **WebSearchAgent**: Web search and information retrieval
 
+### Neuro-Generative Response (NGR) System
+
+The NGR system replaces static response templates with dynamic, 8D-state-driven fragment composition. Components include:
+
+- **NeuroFragment**: Weighted semantic fragments with 8D state vectors (alpha through eta) that determine contextual appropriateness
+- **NeuroVocabulary**: Fragment registry with config loading from `angela_core.yaml` and automatic template decomposition
+- **NeuroBlender**: Core synthesis engine using cosine similarity between state target vector and fragment vectors for selection, plus structural exploration (curiosity-driven phrase ordering) and natural assembly (connectors, punctuation flow)
+- **ResponseComposer**: High-level facade integrating FragmentComposer, NeuroVocabulary, and NeuroBlender
+- **LearningLoop**: Autonomous linguistic evolution — extracts fragments, emoji, and collocations from LLM responses for continuous vocabulary growth
+
+**Pipeline**: `8D State Matrix → Target Vector → Cosine Similarity Scoring → Fragment Selection → Natural Assembly → Output`
+
+### 8D State Matrix
+
+The state matrix expanded from 6D to 8D with the addition of:
+
+- **Zeta (ζ) Axis**: Temporal-narrative dimensions — `temporal_coherence`, `memory_depth`, `narrative_flow`, `identity_continuity`
+- **Eta (η) Axis**: Execution-operation layer — module invocation, parameter adjustment, structural drift tracking (θ-η dual loop with cognitive layer)
+
+All eight axes (α β γ δ ε θ ζ η) drive the NGR system's target vector construction.
+
 ## Communication Layer
 
 The communication layer facilitates interaction between different components of the system:

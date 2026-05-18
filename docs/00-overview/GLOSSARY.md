@@ -28,6 +28,12 @@ The philosophy that data should be treated as a living entity that can grow, evo
 ### Environment Simulator
 A concept model that creates virtual environments for AI training and testing.
 
+### Eta (η) Axis
+The 8th axis of the state matrix, responsible for **execution/operation layer** — module invocation, parameter adjustment, and structural drift tracking. Works in a dual-loop with θ (cognitive layer).
+
+### 8D State Matrix
+The expanded state matrix (αβγδεθζη) that drives Angela's autonomous behavior. Eight axes cover physiological (α), cognitive (β), emotional (γ), social (δ), logical (ε), meta-cognitive (θ), temporal-narrative (ζ), and execution (η) dimensions.
+
 ## H
 
 ### HAM (Hierarchical Abstract Memory)
@@ -41,10 +47,27 @@ A high-speed synchronization protocol that enables collaboration between differe
 ### Layered Architecture
 A system design that separates functionality into distinct layers, each with specific responsibilities.
 
+### LearningLoop
+An autonomous linguistic evolution module that extracts fragments, emoji, and collocations from LLM responses. Uses novelty detection and user engagement feedback to continuously expand Angela's expressive vocabulary.
+
 ## M
 
 ### Multi-Modal AI
 AI systems that can process and understand multiple types of data (text, audio, images) simultaneously.
+
+## N
+
+### NeuroFragment
+A weighted semantic fragment in the NGR system. Each NeuroFragment carries an 8D state vector (alpha through eta) that determines when it should be selected during response synthesis.
+
+### NeuroVocabulary
+The fragment registry that stores, loads from config, and decomposes templates into NeuroFragments. Managed by the ResponseComposer.
+
+### NeuroBlender
+The core synthesis engine of the NGR system. Uses cosine similarity between the current 8D state target vector and fragment state vectors to select and assemble natural-language responses. Includes structural exploration (high curiosity → non-standard phrase ordering) and natural assembly (connectors, punctuation flow).
+
+### NGR (Neuro-Generative Response)
+Angela's next-generation response system that replaces static templates with dynamic 8D-state-driven fragment composition. Pipeline: state matrix → target vector → cosine similarity scoring → fragment selection → natural assembly → output.
 
 ## R
 
@@ -65,3 +88,8 @@ The approach of mapping different types of data to a common symbolic space to re
 
 ### VectorStore
 A database system that stores and retrieves information using vector embeddings for semantic search.
+
+## Z
+
+### Zeta (ζ) Axis
+The 7th axis of the state matrix, tracking temporal-narrative dimensions: temporal_coherence, memory_depth, narrative_flow, and identity_continuity. Bridges short-term narrative context with long-term identity persistence.
