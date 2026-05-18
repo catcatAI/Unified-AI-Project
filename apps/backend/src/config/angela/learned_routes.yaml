@@ -1,1 +1,9 @@
-# Learned routes will be written by Angela during runtime
+metadata:
+  updated: '2026-05-18T11:24:00.210389+00:00'
+successful_routes:
+  Human:unknown:
+    avg_latency: 0.0
+    count: 3
+    intents:
+    - Human
+    total_latency: 0.0

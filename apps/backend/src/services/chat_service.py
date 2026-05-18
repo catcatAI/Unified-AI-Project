@@ -389,6 +389,13 @@ class AngelaChatService:
                 return "learning"
         return None
 
+    def _detect_drive_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("google_drive")
+        for kw in keywords:
+            if kw in text:
+                return "google_drive"
+        return None
+
     def _estimate_ambiguity(self, text: str) -> float:
         if not text or len(text) < 5:
             return 0.0

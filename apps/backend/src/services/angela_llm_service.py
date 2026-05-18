@@ -13,6 +13,7 @@ Angela LLM Service - Angela 的智能對話引擎
 import asyncio
 import json
 import time
+import random
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional, List
@@ -1362,29 +1363,51 @@ class AngelaLLMService:
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         備份回應機制
-        當沒有可用的 LLM 後端時，使用實體化後的 GSI-4 邏輯
+        當沒有可用的 LLM 後端時，使用簡單模板或狀態回應，避免循環調用
         """
         try:
-            from ai.alignment.emotion_system import EmotionSystem
-            from services.chat_service import AngelaChatService
+            from ai.memory.template_library import get_template_library
+            from ai.memory.memory_template import ResponseCategory
+            library = get_template_library()
             
-            chat_service = AngelaChatService()
-            user_name = context.get("user_name", "朋友")
-            origin = context.get("origin", "Human")
-            text = await chat_service.generate_response(user_message, user_name, origin=origin)
+            # 根據關鍵字簡單匹配
+            emotion = context.get("bio_state", {}).get("dominant_emotion", "neutral").lower()
+            
+            # 情感映射到類別
+            category_map = {
+                "happy": ResponseCategory.SMALL_TALK,
+                "sad": ResponseCategory.SUPPORT,
+                "angry": ResponseCategory.CASUAL,
+                "neutral": ResponseCategory.SMALL_TALK,
+                "calm": ResponseCategory.SMALL_TALK,
+                "fear": ResponseCategory.SUPPORT,
+                "surprise": ResponseCategory.CURIOSITY
+            }
+            
+            target_category = category_map.get(emotion, ResponseCategory.SMALL_TALK)
+            templates = library.get_by_category(target_category)
+            
+            if not templates:
+                templates = library.get_by_category(ResponseCategory.SMALL_TALK)
+            
+            if templates:
+                template = random.choice(templates)
+                # 簡單替換佔位符
+                text = template.content.replace("{user_name}", context.get("user_name", "朋友"))
+            else:
+                text = "（核心 LLM 目前離線中，但我依然能感受到妳。能稍微等我一下嗎？）"
 
             return LLMResponse(
                 text=text,
-                backend="gsi-4-local",
-                model="local-governance",
-                confidence=0.8,
-                metadata={"fallback": False, "local_governance": True},
+                backend="local-fallback",
+                model="template-engine",
+                confidence=0.5,
+                metadata={"fallback": True},
             )
         except Exception as e:
-            # broad exception acceptable: fallback must not crash, return error response
-            logger.error(f"Fallback generation error: {e}")
+            logger.error(f"Ultimate fallback failure: {e}")
             return LLMResponse(
-                text="（系统正在重启核心治理模组...）",
+                text="（系統核心對話模組載入失敗，請檢查後端日誌。）",
                 backend="error",
                 model="error",
                 confidence=0.0,

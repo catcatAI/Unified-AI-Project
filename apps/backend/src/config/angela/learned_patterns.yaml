@@ -1,1 +1,8 @@
-# Learned patterns will be written by Angela during runtime
+intent_patterns:
+  general:
+    count: 3
+    keywords:
+    - 你好
+    last_seen: '2026-05-18T11:24:01.564336+00:00'
+metadata:
+  updated: '2026-05-18T11:24:01.564417+00:00'
