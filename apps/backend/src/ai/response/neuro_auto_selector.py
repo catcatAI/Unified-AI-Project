@@ -302,8 +302,13 @@ class StateInterpreter:
             if "theta" in state:
                 result["theta_novelty"] = float(state["theta"].get("novelty", 0.3))
                 result["theta_negativity"] = float(state["theta"].get("negativity", 0.3))
-            if "eta" in state:
-                result["eta_success_rate"] = float(state["eta"].get("success_rate", 0.85))
+            # η 不在 StateMatrix4D 中，需從 export_for_llm() 取得
+            try:
+                full = self._state_matrix.export_for_llm()
+                eta_data = full.get("eta", {})
+                result["eta_success_rate"] = float(eta_data.get("success_rate", 0.85))
+            except Exception:
+                pass
         except Exception:
             pass
 

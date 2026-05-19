@@ -74,8 +74,78 @@ INFLUENCE_RULES: InfluenceRules = {
             ("attention", "focus", 0.05),
         ],
     },
-    "epsilon": {},
-    "theta": {},
+    "epsilon": {
+        "alpha": [
+            ("logic", "energy", 0.05),
+            ("precision", "tension", 0.08),
+            ("fatigue", "rest_need", 0.1),
+        ],
+        "beta": [
+            ("logic", "clarity", 0.08),
+            ("precision", "focus", 0.06),
+            ("complexity", "confusion", 0.05),
+        ],
+        "gamma": [
+            ("precision", "calm", 0.05),
+            ("fatigue", "sadness", 0.06),
+            ("abstraction", "creativity", 0.08),
+        ],
+        "delta": [
+            ("logic", "attention", 0.05),
+            ("precision", "bond", 0.03),
+        ],
+        "theta": [
+            ("certainty", "ambiguity", -0.08),
+            ("complexity", "novelty", 0.06),
+        ],
+    },
+    "theta": {
+        "alpha": [
+            ("novelty", "arousal", 0.08),
+            ("theta_negativity", "tension", 0.12),
+        ],
+        "beta": [
+            ("novelty", "curiosity", 0.1),
+            ("complexity", "complexity", 0.05),
+        ],
+        "gamma": [
+            ("theta_negativity", "sadness", 0.08),
+            ("novelty", "surprise", 0.1),
+        ],
+        "delta": [
+            ("novelty", "attention", 0.08),
+            ("ambiguity", "bond", -0.05),
+        ],
+        "epsilon": [
+            ("novelty", "abstraction", 0.06),
+            ("theta_negativity", "fatigue", 0.05),
+        ],
+    },
+    "zeta": {
+        "alpha": [
+            ("temporal_coherence", "vitality", 0.06),
+            ("identity_continuity", "comfort", 0.05),
+        ],
+        "beta": [
+            ("narrative_flow", "creativity", 0.08),
+            ("memory_depth", "clarity", 0.07),
+        ],
+        "gamma": [
+            ("identity_continuity", "trust", 0.08),
+            ("temporal_coherence", "calm", 0.06),
+        ],
+        "delta": [
+            ("memory_depth", "bond", 0.07),
+            ("narrative_flow", "presence", 0.06),
+        ],
+        "epsilon": [
+            ("temporal_coherence", "certainty", 0.06),
+        ],
+        "theta": [
+            ("memory_depth", "novelty", 0.05),
+            ("identity_continuity", "dimension_fit", 0.06),
+        ],
+    },
 }
 
 

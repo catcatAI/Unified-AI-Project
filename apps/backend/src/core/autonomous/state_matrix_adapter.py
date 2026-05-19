@@ -1386,15 +1386,36 @@ class StateMatrixFacade:
                 self._adapter.update_epsilon(**values)
             elif axis == 'theta':
                 self._adapter.update_theta(**values)
+            elif axis == 'zeta':
+                self._adapter.update_zeta(**values)
 
     def _group_kwargs_by_axis(self, kwargs: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         key_map = {
+            # Alpha
             'energy': 'alpha', 'comfort': 'alpha', 'arousal': 'alpha', 'tension': 'alpha',
+            'rest_need': 'alpha', 'vitality': 'alpha',
+            # Beta
             'curiosity': 'beta', 'focus': 'beta', 'confusion': 'beta', 'learning': 'beta',
+            'clarity': 'beta', 'creativity': 'beta',
+            # Gamma
             'happiness': 'gamma', 'sadness': 'gamma', 'anger': 'gamma', 'fear': 'gamma',
+            'disgust': 'gamma', 'surprise': 'gamma', 'trust': 'gamma',
+            'anticipation': 'gamma', 'love': 'gamma', 'calm': 'gamma',
+            # Delta
             'bond': 'delta', 'attention': 'delta', 'presence': 'delta',
+            'intimacy': 'delta', 'engagement': 'delta',
+            # Epsilon
             'logic': 'epsilon', 'precision': 'epsilon',
+            'abstraction': 'epsilon', 'certainty': 'epsilon',
+            'complexity': 'epsilon', 'fatigue': 'epsilon',
+            # Theta (prefix complexity_theta to avoid collision with epsilon.complexity)
             'novelty': 'theta', 'creation_urge': 'theta', 'theta_negativity': 'theta',
+            'complexity_theta': 'theta', 'ambiguity': 'theta',
+            'abstraction_level': 'theta', 'dimension_fit': 'theta',
+            'correction_urge': 'theta', 'audit_intensity': 'theta',
+            # Zeta
+            'temporal_coherence': 'zeta', 'memory_depth': 'zeta',
+            'narrative_flow': 'zeta', 'identity_continuity': 'zeta',
         }
         result: Dict[str, Dict[str, Any]] = {}
         for key, value in kwargs.items():

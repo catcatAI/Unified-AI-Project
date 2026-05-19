@@ -472,36 +472,43 @@ class StateMatrix4D:
     def update_alpha(self, **kwargs) -> None:
         """更新α维度 / Update alpha dimension (physiological)"""
         self.alpha.update(**kwargs)
+        self.alpha.compute_coordinate()
         self._post_update("alpha")
 
     def update_beta(self, **kwargs) -> None:
         """更新β维度 / Update beta dimension (cognitive)"""
         self.beta.update(**kwargs)
+        self.beta.compute_coordinate()
         self._post_update("beta")
 
     def update_gamma(self, **kwargs) -> None:
         """更新γ维度 / Update gamma dimension (emotional)"""
         self.gamma.update(**kwargs)
+        self.gamma.compute_coordinate()
         self._post_update("gamma")
 
     def update_delta(self, **kwargs) -> None:
         """更新δ维度 / Update delta dimension (social)"""
         self.delta.update(**kwargs)
+        self.delta.compute_coordinate()
         self._post_update("delta")
 
     def update_epsilon(self, **kwargs) -> None:
         """更新ε维度 / Update epsilon dimension (mathematical/logical)"""
         self.epsilon.update(**kwargs)
+        self.epsilon.compute_coordinate()
         self._post_update("epsilon")
 
     def update_theta(self, **kwargs) -> None:
         """更新θ维度 / Update theta dimension (meta-cognitive)"""
         self.theta.update(**kwargs)
+        self.theta.compute_coordinate()
         self._post_update("theta")
 
     def update_zeta(self, **kwargs) -> None:
         """更新ζ维度 / Update zeta dimension (consciousness flow)"""
         self.zeta.update(**kwargs)
+        self.zeta.compute_coordinate()
         self._post_update("zeta")
 
     def _init_semantic_anchors(self) -> None:
@@ -1331,6 +1338,9 @@ Returns:
             "beta": {**self.beta.values.copy(), "coordinate": self.beta.coordinate},
             "gamma": {**self.gamma.values.copy(), "coordinate": self.gamma.coordinate},
             "delta": {**self.delta.values.copy(), "coordinate": self.delta.coordinate},
+            "epsilon": {**self.epsilon.values.copy(), "coordinate": self.epsilon.coordinate},
+            "theta": {**self.theta.values.copy(), "coordinate": self.theta.coordinate},
+            "zeta": {**self.zeta.values.copy(), "coordinate": self.zeta.coordinate},
         }
 
 
@@ -1406,6 +1416,32 @@ Returns:
             + averages.get("epsilon", 0.5) * 0.15
             + averages.get("theta", 0.5) * 0.10
         )
+
+    def get_analysis(self) -> Dict[str, Any]:
+        """
+        回傳完整狀態分析 / Return comprehensive state analysis.
+        Used by digital_life_integrator, llm_decision_loop, and adapter.
+        """
+        return {
+            "state": self.get_state(),
+            "coordinates": self.get_coordinates(),
+            "averages": self.get_dimension_averages(),
+            "wellbeing": self.compute_wellbeing(),
+            "arousal": self.alpha.values.get("arousal", 0.5),
+            "valence": (
+                self.gamma.values.get("happiness", 0.5)
+                - self.gamma.values.get("sadness", 0.0)
+            ),
+            "dominant_emotion": self.gamma.get_dominant(),
+            "alpha": self.alpha.values.copy(),
+            "beta": self.beta.values.copy(),
+            "gamma": self.gamma.values.copy(),
+            "delta": self.delta.values.copy(),
+            "epsilon": self.epsilon.values.copy(),
+            "theta": self.theta.values.copy(),
+            "zeta": self.zeta.values.copy(),
+            "dimension_count": len(self.dimensions),
+        }
 
     def get_history(
         self, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None
