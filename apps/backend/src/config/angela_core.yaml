@@ -1,10 +1,10 @@
 # =============================================================================
-# ANGELA v6.3 - Core Authority Configuration
+# ANGELA v6.4 - Core Authority Configuration
 # =============================================================================
 # Authority 配置（人寫，Angela 不可修改核心邏輯）
 # 用途：意圖關鍵字、閾值、路由規則、LLM 配置、安全白名單
-# 版本: 6.3
-# 更新: 2026-05-17
+# 版本: 6.4
+# 更新: 2026-05-19
 # =============================================================================
 
 # ── 意圖關鍵字 ─────────────────────────────────────────────────────────────
@@ -614,3 +614,49 @@ eta:
   execution_tracking:
     success_rate_window: 20
     auto_fallback_threshold: 0.6  # 成功率 < 60% 觸發降級
+
+# ── [auto] LLM Mode ──────────────────────────────────────────────────────
+# 控制 NeuroAutoSelector 的行為
+# 當 llm_mode = "auto" 時生效
+
+auto_mode:
+  enabled: true
+  default_if_unknown: "ollama:phi:latest"
+  min_time_budget_ms: 5000        # 低於此直接 NeuroBlender
+  max_time_budget_ms: 60000       # 最高預算上限
+
+  # 意圖對應的計算成本 (0.0-1.0)
+  intent_cost:
+    math: 0.9
+    code: 0.8
+    task: 0.7
+    reasoning: 0.6
+    general: 0.4
+    smalltalk: 0.2
+    emotion: 0.3
+
+  # 硬體等級對應的時間預算 (ms)
+  time_budget_table:
+    extreme: 60000
+    high: 30000
+    medium: 20000
+    low: 10000
+    critical: 3000
+
+  # 本地模型 RAM/VRAM 門檻
+  local_model_ram_thresholds:
+    - min_ram_gb: 16
+      min_vram_gb: 8
+      recommend: "deepseek-r1:latest"
+    - min_ram_gb: 8
+      min_vram_gb: 4
+      recommend: "qwen2.5-coder:latest"
+    - min_ram_gb: 4
+      min_vram_gb: 0
+      recommend: "phi:latest"
+
+  # 雲端供應商優先順序
+  cloud_providers_priority:
+    - "openai"
+    - "anthropic"
+    - "google"

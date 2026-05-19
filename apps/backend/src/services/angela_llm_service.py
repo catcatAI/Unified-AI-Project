@@ -504,6 +504,10 @@ class AngelaLLMService:
         self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
         self.is_available = False
 
+        # [auto] LLM mode
+        self.llm_mode = self.config.get("llm_mode", "auto")
+        self.auto_selector = None
+
         self._initialized = True
 
         # 初始化各後端
@@ -966,13 +970,44 @@ class AngelaLLMService:
 
 
     async def initialize(self) -> bool:
-        """
-        初始化服務，檢測可用的後端
+        """初始化服務，檢測可用的後端
         返回: 是否至少有一個可用的後端
         """
         logger.info("正在初始化 Angela LLM 服務...")
 
-        # 檢查各後端健康狀態
+        # [auto] mode: use NeuroAutoSelector for initial backend selection
+        if self.llm_mode == "auto":
+            try:
+                from ai.response.neuro_auto_selector import NeuroAutoSelector
+
+                self.auto_selector = NeuroAutoSelector(config=self.config)
+                result = await self.auto_selector.decide(context={})
+
+                if result.backend.value != "neuroblender":
+                    # Map AutoBackendChoice to LLMBackend
+                    backend_map = {
+                        "ollama": LLMBackend.OLLAMA,
+                        "llamacpp": LLMBackend.LLAMA_CPP,
+                        "openai": LLMBackend.OPENAI,
+                        "anthropic": LLMBackend.ANTHROPIC,
+                        "google": LLMBackend.GOOGLE,
+                    }
+                    mapped = backend_map.get(result.backend.value)
+                    if mapped and mapped in self.backends:
+                        self.active_backend = self.backends[mapped]
+                        self.active_backend_type = mapped
+                        self.is_available = True
+                        logger.info(
+                            f"[auto] 初始化完成，使用 {result.backend.value}/{result.model} "
+                            f"(hw={result.hw_score:.0f}, budget={result.time_budget_ms}ms)"
+                        )
+                        return True
+
+                logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化")
+            except Exception as e:
+                logger.warning(f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化")
+
+        # 標準初始化：檢查各後端健康狀態
         available_backends = []
 
         for backend_type, backend in self.backends.items():
@@ -1564,20 +1599,73 @@ class AngelaLLMService:
         """
         start_time = time.time()
 
+        # [auto] mode: re-evaluate backend selection and parameters
+        timeout_seconds = 30.0
+        temperature = 0.7
+        max_tokens = 512
+
+        if self.llm_mode == "auto" and self.auto_selector is not None:
+            try:
+                from ai.response.neuro_auto_selector import AutoDecision, AutoBackendChoice
+
+                ctx = {
+                    "intent": context.get("intent", "general"),
+                    "complexity": context.get("complexity", 0.5),
+                    "user_message": user_message,
+                    "energy": context.get("energy"),
+                }
+                auto_result = await self.auto_selector.decide(context=ctx)
+
+                if auto_result.backend.value == "neuroblender":
+                    logger.info("[auto] 預算不足，使用 NeuroBlender 降級")
+                    return await self._fallback_response(user_message, context)
+
+                # 如果需要切換後端
+                if auto_result.backend.value != (self.active_backend_type.value if self.active_backend_type else ""):
+                    backend_map = {
+                        "ollama": LLMBackend.OLLAMA,
+                        "llamacpp": LLMBackend.LLAMA_CPP,
+                        "openai": LLMBackend.OPENAI,
+                        "anthropic": LLMBackend.ANTHROPIC,
+                        "google": LLMBackend.GOOGLE,
+                    }
+                    mapped = backend_map.get(auto_result.backend.value)
+                    if mapped and mapped in self.backends:
+                        prev = self.active_backend_type.value if self.active_backend_type else "none"
+                        self.active_backend = self.backends[mapped]
+                        self.active_backend_type = mapped
+                        logger.info(f"[auto] 切換後端: {prev} → {mapped.value}")
+
+                # 使用動態參數
+                timeout_seconds = auto_result.time_budget_ms / 1000.0
+                temperature = auto_result.temperature
+                max_tokens = auto_result.max_tokens
+            except Exception as e:
+                logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數")
+
         try:
             # 建構提示詞
             messages = self._construct_angela_prompt(user_message, context)
 
-            # 調用 LLM（超时 30 秒）
+            # 調用 LLM（動態超時）
             response = await asyncio.wait_for(
                 self.active_backend.generate(
                     prompt=messages[-1]["content"],
                     messages=messages,
-                    temperature=0.7,
-                    max_tokens=512,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
                 ),
-                timeout=30.0,
+                timeout=timeout_seconds,
             )
+
+            # [auto] record result
+            if self.llm_mode == "auto" and self.auto_selector is not None:
+                elapsed = (time.time() - start_time) * 1000
+                self.auto_selector.record_result(
+                    AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
+                    actual_ms=elapsed,
+                    success=not response.error,
+                )
 
             if response.error:
                 logger.warning(f"LLM 回應錯誤: {response.error}")
@@ -1589,7 +1677,15 @@ class AngelaLLMService:
 
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout")
-            self._record_route_learning(context, "timeout", 30000.0)
+            self._record_route_learning(context, "timeout", timeout_seconds * 1000)
+            # [auto] record timeout
+            if self.llm_mode == "auto" and self.auto_selector is not None:
+                elapsed = (time.time() - start_time) * 1000
+                self.auto_selector.record_result(
+                    AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
+                    actual_ms=elapsed,
+                    success=False,
+                )
             if self._angela_fallback_chain:
                 return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
             return await self._fallback_response(user_message, context)

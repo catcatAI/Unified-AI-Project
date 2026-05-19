@@ -20,6 +20,16 @@ from .composer import (
 )
 from .deviation_tracker import DeviationTracker, ResponseMetrics
 from .learning_loop import LearningLoop, FragmentExtractor, get_learning_loop
+from .neuro_auto_selector import (
+    NeuroAutoSelector,
+    HardwareAnalyzer,
+    BudgetScheduler,
+    StateInterpreter,
+    LearnRecorder,
+    AutoDecision,
+    AutoBackendChoice,
+    HardwareTier,
+)
 
 __all__ = [
     "TemplateMatcher",
@@ -34,4 +44,12 @@ __all__ = [
     "LearningLoop",
     "FragmentExtractor",
     "get_learning_loop",
+    "NeuroAutoSelector",
+    "HardwareAnalyzer",
+    "BudgetScheduler",
+    "StateInterpreter",
+    "LearnRecorder",
+    "AutoDecision",
+    "AutoBackendChoice",
+    "HardwareTier",
 ]

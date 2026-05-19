@@ -4,15 +4,15 @@
   FILE_PATH: readme.md
   FILE_TYPE: documentation
   PURPOSE: Angela AI 项目主文档 - 双语版本，包含完整功能说明和快速开始指南
-  VERSION: 6.3.0
+  VERSION: 6.4.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-05-18
+  LAST_MODIFIED: 2026-05-19
   DEPENDENCIES: 无
   =============================================================================
 -->
 
-# 🌟 Angela AI v6.3.0 — Cross-Platform Digital Life System
+# 🌟 Angela AI v6.4.0 — Cross-Platform Digital Life System
 
 [English](#english-version) | [繁體中文](#繁體中文版)
 
@@ -886,14 +886,23 @@ Special thanks to the following projects and communities:
 
 ---
 
-**Last Updated**: 2026-05-18 **Version**: 6.3.0 (NGR v6.3)
-**Maintainer**: Angela AI Development Team **Project Status**: Production Ready ✅
+  **Last Updated**: 2026-05-19 **Version**: 6.4.0 (Neuro Auto LLM)
 
-## 📋 Known Issues & Next Steps
+### Current Status (v6.4.0 — Neuro Auto LLM)
 
-### Current Status (v6.3.0 — NGR)
+All Phase 1-7 refactoring + Post-Refactor Plan v1.0 + NGR v6.4 **COMPLETE**. 236 test files across the project.
 
-All Phase 1-7 refactoring + Post-Refactor Plan v1.0 + NGR v6.3 **COMPLETE**. 236 test files across the project.
+#### v6.4.0 New — [auto] LLM Mode (NeuroAutoSelector)
+
+Angela can now automatically select LLM backend, model, and parameters based on:
+- **Hardware**: GPU/CPU/RAM detection → capability score (0-100)
+- **System Load**: Real-time CPU/memory → throttling factor (0.2-1.0)
+- **Task Analysis**: Intent cost (math=0.9, smalltalk=0.2) + complexity
+- **8D State Correction**: α energy, ε precision, θ novelty, η success rate all influence the decision
+- **Adaptive Parameters**: Dynamic timeout, temperature, max_tokens per request
+- **Learning Loop**: Records every decision, flushes to learned_routes.yaml for continuous optimization
+
+Files: `ai/response/neuro_auto_selector.py` (+372 lines), `services/resource_awareness_service.py` (strengthened), `config/angela_core.yaml` (auto_mode section)
 
 ### Roadmap
 
@@ -934,7 +943,7 @@ If this project helps you, please give us a ⭐!
 
 **Version**: 6.3.0
 **Release Date**: 2026-05-18
-**Status**: Production Ready ✅ | NGR v6.3 Complete
+**Status**: Production Ready ✅ | NGR v6.4 Complete | [auto] LLM Mode Active
 **Platforms**: Windows, macOS, Linux, Android/iOS (Mobile Bridge)
 **Code Stats**: 502 Python Source Files, ~114,000 Lines, 63 Desktop JS Modules
 **Test Status**: 236 Test Files

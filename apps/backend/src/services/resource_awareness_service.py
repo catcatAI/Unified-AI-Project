@@ -1,4 +1,4 @@
-"Service to provide information about the AI's simulated hardware resources.\nLoads configuration from a YAML file and makes it accessible to other modules. (SKELETON)\n"
+"Real-time hardware resource awareness for Angela AI.\nProvides system load metrics (CPU/RAM), throttling factor for dynamic scaling,\nand available memory for LLM model selection.\n"
 
 import os
 import yaml  # type: ignore
@@ -44,7 +44,9 @@ DEFAULT_CONFIG_PATH = "configs/simulated_resources.yaml"
 
 class ResourceAwarenessService:
     """
-    Manages and provides access to the AI's simulated hardware resource profile. (SKELETON)
+    Real-time system resource monitor for dynamic LLM model selection.
+    Provides CPU load, memory pressure, throttling factor, and available RAM.
+    Used by NeuroAutoSelector for [auto] LLM mode budget calculation.
     """
 
     def __init__(self, config_filepath: Optional[str] = None) -> None:
@@ -83,12 +85,33 @@ class ResourceAwarenessService:
         return cpu > 80 or mem > 90
 
     def get_throttling_factor(self) -> float:
-        """獲取節流因子 (0.0 - 1.0)"""
-        if not self.is_system_stressed():
+        """
+        獲取節流因子 (0.0 - 1.0)
+        連續縮放：0.2 (輕載) ~ 1.0 (滿載)
+        """
+        if not self.psutil:
             return 1.0
 
-        # 如果壓力大，返回更小的縮放因子
-        return 0.5
+        cpu = self.psutil.cpu_percent(interval=0.1) / 100.0
+        mem = self.psutil.virtual_memory().percent / 100.0
+
+        # CPU 和記憶體的加權組合
+        factor = min(cpu * 0.6 + mem * 0.4, 1.0)
+
+        # 確保不低於 0.2（留底）
+        return max(factor, 0.2)
+
+    def get_available_ram_mb(self) -> float:
+        """獲取可用 RAM（MB）"""
+        if not self.psutil:
+            return 512.0
+        return self.psutil.virtual_memory().available / (1024 * 1024)
+
+    def get_cpu_count(self) -> int:
+        """獲取 CPU 邏輯核心數"""
+        if not self.psutil:
+            return 1
+        return self.psutil.cpu_count(logical=True)
 
 
 if __name__ == "__main__":
