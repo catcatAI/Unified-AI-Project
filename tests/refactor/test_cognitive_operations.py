@@ -54,21 +54,29 @@ def test_perform_spatial_reasoning():
     }
     dims["x"].coordinate = (0.0, 0.0, 0.0)
 
+    # Default SPATIAL_RATIO = (1.0, 0.3, 0.15)
+    # ACCUMULATE/DECREMENT: affects all axes via ratio
+    # AMPLIFY/DIMINISH: X-only (scaling operations)
     new = perform_spatial_reasoning(dims, "x", CognitiveOp.ACCUMULATE, 5.0)
-    assert new == (5.0, 0.0, 0.0)
-    assert dims["x"].coordinate == (5.0, 0.0, 0.0)
+    assert new == (5.0, 1.5, 0.75), f"got {new}"
+    assert dims["x"].coordinate == (5.0, 1.5, 0.75)
 
     new = perform_spatial_reasoning(dims, "x", CognitiveOp.DECREMENT, 2.0)
-    assert new == (3.0, 0.0, 0.0)
+    assert new == (3.0, 0.9, 0.45), f"got {new}"
 
     new = perform_spatial_reasoning(dims, "x", CognitiveOp.AMPLIFY, 2.0)
-    assert new == (6.0, 0.0, 0.0)
+    assert new == (6.0, 0.9, 0.45), f"got {new}"
 
     new = perform_spatial_reasoning(dims, "x", CognitiveOp.DIMINISH, 2.0)
-    assert new == (3.0, 0.0, 0.0)
+    assert new == (3.0, 0.9, 0.45), f"got {new}"
 
     missing = perform_spatial_reasoning(dims, "missing", CognitiveOp.ACCUMULATE, 1.0)
     assert missing == (0.0, 0.0, 0.0)
+
+    # Explicit ratio=(1,0,0) reproduces old X-only behavior
+    dims["x"].coordinate = (0.0, 0.0, 0.0)
+    old = perform_spatial_reasoning(dims, "x", CognitiveOp.ACCUMULATE, 5.0, ratio=(1, 0, 0))
+    assert old == (5.0, 0.0, 0.0), f"got {old}"
     print(f"  PASS: spatial reasoning works for all ops")
 
 

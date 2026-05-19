@@ -9,7 +9,7 @@ Cognitive Operations — StateMatrix4D 空間推理與意圖系統
 - 維度連動拖拽 (Inter-Dimensional Drag)
 
 Author: Angela AI v6.2
-Version: 6.2.1
+Version: 6.4.0
 """
 
 from __future__ import annotations
@@ -32,6 +32,12 @@ class CognitiveOp(Enum):
     AMPLIFY = auto()
     DIMINISH = auto()
     RESONATE = auto()
+
+
+# [auto] spatial ratio: controls how much each axis participates in operations
+# X is primary axis (1.0), Y and Z are secondary with reduced sensitivity
+# Can be overridden per operation via state_matrix config
+SPATIAL_RATIO: Tuple[float, float, float] = (1.0, 0.3, 0.15)
 
 
 def compute_spatial_influence_factor(
@@ -58,28 +64,32 @@ def perform_spatial_reasoning(
     target_dim: str,
     op: CognitiveOp,
     magnitude: float,
+    ratio: Tuple[float, float, float] = SPATIAL_RATIO,
 ) -> Tuple[float, float, float]:
-    """執行原生空間推理"""
+    """執行原生空間推理（X 主軸 + 設定檔控制副軸敏感度）"""
     if target_dim not in dimensions:
         return (0.0, 0.0, 0.0)
 
     state = dimensions[target_dim]
     x, y, z = state.coordinate
 
+    rx, ry, rz = ratio
+
     if op == CognitiveOp.ACCUMULATE:
-        new_coord = (x + magnitude, y, z)
+        new_coord = (x + magnitude * rx, y + magnitude * ry, z + magnitude * rz)
     elif op == CognitiveOp.DECREMENT:
-        new_coord = (x - magnitude, y, z)
+        new_coord = (x - magnitude * rx, y - magnitude * ry, z - magnitude * rz)
     elif op == CognitiveOp.AMPLIFY:
         new_coord = (x * magnitude, y, z)
     elif op == CognitiveOp.DIMINISH:
-        new_coord = (x / magnitude if magnitude != 0 else x, y, z)
+        dmag = magnitude if magnitude != 0 else 1.0
+        new_coord = (x / dmag, y, z)
     else:
         new_coord = (x, y, z)
 
     state.coordinate = new_coord
 
-    logger.info(f"[SpatialReasoning] {target_dim} moved to {new_coord} via {op.name}({magnitude})")
+    logger.info(f"[SpatialReasoning] {target_dim} moved to {new_coord} via {op.name}({magnitude}) ratio={ratio}")
     return new_coord
 
 
@@ -164,7 +174,8 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
                 a = execution_stack.pop()
 
                 if "epsilon" in dimensions:
-                    dimensions["epsilon"].coordinate = (a, 0, 0)
+                    ey, ez = dimensions["epsilon"].coordinate[1], dimensions["epsilon"].coordinate[2]
+                    dimensions["epsilon"].coordinate = (a, ey, ez)
 
                 if token == "+":
                     op = CognitiveOp.ACCUMULATE
