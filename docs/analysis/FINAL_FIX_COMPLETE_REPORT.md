@@ -164,8 +164,10 @@ GOOGLE_API_KEY=AIzaSyCu2F1o48fLD3w5o_G13-WXQW6i7HzM3X0
 ```
 已提交到git历史
 
+> **歷史備註**：此報告撰寫時 `GOOGLE_API_KEY` 兼用於 Gemini。後續審計發現：Drive 使用 `credentials.json` OAuth 流程（不讀 env var），`GOOGLE_API_KEY` 在程式碼中無讀取點，已安全移除。Gemini LLM 改用 `GEMINI_API_KEY`（從 https://aistudio.google.com/apikey 取得，以 `AIza` 開頭）。此處的 `AIza` 格式泄漏 key 應歸屬於 `GEMINI_API_KEY`。
+
 **必须执行:**
-1. 访问 https://makersuite.google.com/app/apikey
+1. 访问 https://aistudio.google.com/apikey
 2. 删除旧的 key
 3. 创建新的 key
 4. 更新本地 .env 文件

@@ -54,9 +54,10 @@ class KeyValidator:
         "ANGELA_KEY_A": 32,
         "ANGELA_KEY_B": 32,
         "ANGELA_KEY_C": 32,
+        "GEMINI_API_KEY": 20,
         "OPENAI_API_KEY": 20,
-        "GOOGLE_API_KEY": 20,
         "ANTHROPIC_API_KEY": 20,
+        "OLLAMA_API_KEY": 20,
     }
 
     def __init__(self):
@@ -149,8 +150,8 @@ class KeyValidator:
             result = self.validate_key(key_name, key_value)
             self.results.append(result)
 
-        # 驗證 API 密鑰
-        api_keys = ["OPENAI_API_KEY", "GOOGLE_API_KEY", "ANTHROPIC_API_KEY"]
+        # 驗證 API 密鑰（GOOGLE_API_KEY 已移除—Drive 使用 credentials.json OAuth 流程，不讀 env var）
+        api_keys = ["GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OLLAMA_API_KEY"]
         for key_name in api_keys:
             key_value = env_dict.get(key_name, "")
             # API 密鑰可能為空（如果不使用該服務），所以只檢查非空值的情況

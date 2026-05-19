@@ -189,12 +189,18 @@ class AngelaChatService:
         if file_op_intent:
             response = await self._handle_file_op_intent(sanitized_message, file_op_intent)
         drive_intent = self._detect_drive_intent(sanitized_message)
+        drive_file_context = None
         if drive_intent:
-            response = await self._handle_drive_intent(sanitized_message, drive_intent)
+            drive_file_context = await self._handle_drive_intent_with_content(sanitized_message, drive_intent)
+        drive_write_intent = self._detect_drive_write_intent(sanitized_message)
+        if drive_write_intent:
+            write_result = await self._handle_drive_write_intent(sanitized_message)
+            if write_result:
+                response = write_result
         web_search_intent = self._detect_web_search_intent(sanitized_message)
         if web_search_intent:
             response = await self._handle_web_search_intent(sanitized_message, web_search_intent)
-        if not (file_op_intent or drive_intent or web_search_intent):
+        if not (file_op_intent or web_search_intent or drive_write_intent):
             learning_intent = self._detect_learning_intent(sanitized_message)
             if learning_intent:
                 response = await self._handle_learning_intent(sanitized_message, learning_intent)
@@ -206,7 +212,17 @@ class AngelaChatService:
                 # NeuroBlender → LLM 雙路饋送
                 # low complexity: NeuroBlender 直接輸出（離線也能說人話）
                 # high complexity: LLM 收到 NeuroBlender 的語意向量當作額外上下文
-                if complexity < 0.4 and neuro_composed and neuro_composed.text and neuro_composed.confidence > 0.3:
+                nb_cfg = self._angela_config.get_authority("angela_core", {}).get("complexity", {}).get("neuro_blender", {})
+                nb_threshold = nb_cfg.get("bypass_threshold", 0.4)
+                nb_min_conf = nb_cfg.get("bypass_min_confidence", 0.3)
+                # LLM 可用時自動降低 bypass threshold，讓更多對話走 LLM
+                try:
+                    from services.angela_llm_service import AngelaLLMService
+                    if AngelaLLMService._instance and AngelaLLMService._instance.is_available:
+                        nb_threshold = nb_threshold * 0.5
+                except ImportError:
+                    pass
+                if complexity < nb_threshold and neuro_composed and neuro_composed.text and neuro_composed.confidence > nb_min_conf:
                     response = neuro_composed.text
                 else:
                     response = await self._handle_general_intent(
@@ -214,6 +230,7 @@ class AngelaChatService:
                         current_activity, relevant_memories, value_directive, empathy_analysis,
                         meta_prompt=self.state_matrix.export_for_llm(self.state_adapter.eta),
                         neuro_blend_meta=neuro_meta,
+                        drive_files=drive_file_context,
                     )
 
         await self.evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
@@ -476,6 +493,13 @@ class AngelaChatService:
                 return "google_drive"
         return None
 
+    def _detect_drive_write_intent(self, text: str) -> Optional[str]:
+        ops = self._angela_config.get_drive_all_operations()
+        write_kws = ops.get("write", {}).get("keywords", ["儲存", "存到", "建立", "新增", "創建", "上傳", "存檔", "保存"])
+        if any(kw in text for kw in write_kws) and any(kw in text for kw in ("硬碟", "雲端", "drive", "Drive")):
+            return "drive_write"
+        return None
+
     def _estimate_ambiguity(self, text: str) -> float:
         if not text or len(text) < 5:
             return 0.0
@@ -590,6 +614,73 @@ class AngelaChatService:
         except Exception as e:
             logger.warning(f"Drive intent failed: {e}")
             return f"（Google Drive 有點問題）{e}"
+
+    async def _handle_drive_intent_with_content(self, text: str, intent: str) -> Optional[Dict[str, Any]]:
+        """處理 Drive intent 並回傳檔案內容結構，供 LLM 使用"""
+        try:
+            import httpx
+            base_url = "http://127.0.0.1:8000/api/v1"
+
+            status_resp = httpx.get(f"{base_url}/drive/status", timeout=10)
+            status_data = status_resp.json()
+            if not status_data.get("authenticated"):
+                return None
+
+            ops = self._angela_config.get_drive_all_operations()
+            analyze_kws = self._angela_config.get_google_drive_keywords("analyze")
+
+            for kw in analyze_kws:
+                if kw in text:
+                    analyze_resp = httpx.post(f"{base_url}/drive/analyze", json={"limit": 3}, timeout=60)
+                    result = analyze_resp.json()
+                    analysis = result.get("analysis", "")
+                    return {
+                        "summary": analysis[:2000],
+                        "files": result.get("files", []),
+                    }
+
+            list_kws = self._angela_config.get_google_drive_keywords("list")
+            for kw in list_kws:
+                if kw in text:
+                    files_resp = httpx.get(f"{base_url}/drive/files?page_size=5", timeout=15)
+                    files = files_resp.json().get("files", [])
+                    if not files:
+                        return None
+                    lines = [f"📄 {f.get('name', 'unknown')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
+                    return {
+                        "summary": "（Google Drive 列表）\n" + "\n".join(lines),
+                        "files": [{"name": f["name"], "mimeType": f.get("mimeType", "")} for f in files],
+                    }
+
+            return None
+        except Exception:
+            return None
+
+    async def _handle_drive_write_intent(self, text: str) -> Optional[str]:
+        """處理 Drive 寫入意圖：建立檔案並上傳到雲端"""
+        try:
+            import httpx
+            base_url = "http://127.0.0.1:8000/api/v1"
+            status_resp = httpx.get(f"{base_url}/drive/status", timeout=10)
+            if not status_resp.json().get("authenticated"):
+                return None
+            import re
+            content_match = re.search(r'[：:](.+?)(?:$|。|儲存|上傳)', text)
+            content = content_match.group(1).strip() if content_match else f"來自 Angela 對話 ({datetime.now().isoformat()})"
+            file_name = f"angela_note_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            resp = httpx.post(f"{base_url}/drive/files/create", json={
+                "file_name": file_name,
+                "content": content,
+                "mime_type": "text/markdown",
+            }, timeout=30)
+            result = resp.json()
+            if result.get("id"):
+                link = result.get("webViewLink", "")
+                return f"📄 已儲存到雲端硬碟：{file_name}{'  ' + link if link else ''}"
+            return "（儲存失敗）"
+        except Exception as e:
+            logger.warning(f"Drive write failed: {e}")
+            return None
 
     def _update_theta_after_response(self) -> None:
         self.state_matrix.theta.values["novelty"] = max(0.0, self.state_matrix.theta.values.get("novelty", 0) - 0.05)
@@ -832,6 +923,7 @@ class AngelaChatService:
         empathy_analysis: Any,
         meta_prompt: Optional[Dict[str, Any]] = None,
         neuro_blend_meta: Optional[Dict[str, Any]] = None,
+        drive_files: Optional[Dict[str, Any]] = None,
     ) -> str:
         self.state_adapter.anchor_learning.on_axis_update("beta", {"curiosity": 0.03, "focus": 0.02}, is_stable=True)
         try:
@@ -853,7 +945,10 @@ class AngelaChatService:
                 "activity": current_activity,
                 "memories": relevant_memories or [],
                 "neuro_blend": neuro_blend_meta or {},
+                "drive_files": (drive_files or {}).get("files", []),
             }
+            if drive_files:
+                text = f"{text}\n\n[Drive 檔案內容]\n{drive_files['summary']}"
             response = await llm.generate_response(text, context)
             response_text = getattr(response, "text", str(response)) if hasattr(response, "text") else str(response)
             latency_ms = getattr(response, "latency_ms", 0) if hasattr(response, "latency_ms") else 0

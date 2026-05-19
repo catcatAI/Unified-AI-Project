@@ -265,6 +265,7 @@ class CodeInspectorInterface:
 
         from ai.code_inspection.knowledge_graph import KnowledgeGraph
         self.knowledge_graph = KnowledgeGraph(root_path)
+        self.knowledge_graph.build_from_directory()
 
         self.learning = CodeLearningEngine(self.knowledge_graph)
 

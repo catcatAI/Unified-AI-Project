@@ -9,9 +9,10 @@
   "ollama-llama3": {
     "provider": "ollama",
     "base_url": "http://localhost:11434",
-    "model_name": "phi:latest",
+    "model_name": "qwen3.5:0.8b",
+    "api_key_env": "OLLAMA_API_KEY",
     "enabled": true,
-    "note": "本地 Ollama 後端 (需 ollama serve)"
+    "note": "本地 Ollama 後端 (需 ollama serve)。若設定 OLLAMA_API_KEY，會以 Bearer token 傳送。"
   },
   "ollama-tinyllama": {
     "provider": "ollama",
@@ -35,5 +36,12 @@
     "api_key_env": "ANTHROPIC_API_KEY",
     "enabled": false,
     "note": "從環境變量 ANTHROPIC_API_KEY 讀取 API 密鑰"
+  },
+  "google-gemini": {
+    "provider": "google",
+    "model_name": "gemini-3.1-flash-lite",
+    "api_key_env": "GEMINI_API_KEY",
+    "enabled": true,
+    "note": "從環境變量 GEMINI_API_KEY 讀取 API 密鑰（以 AIza 開頭，從 https://aistudio.google.com/apikey 取得）。注意：GOOGLE_API_KEY 已安全移除 — Drive 使用 credentials.json OAuth 流程，不讀 env var。切勿混淆。"
   }
 }

@@ -259,10 +259,11 @@ class LlamaCppBackend(BaseLLMBackend):
 class OllamaBackend(BaseLLMBackend):
     """Ollama 後端"""
 
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3"):
+    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3", api_key: str = "", timeout: float = 120):
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.timeout = 30.0  # 增加超時到 30 秒，以適應慢速模型
+        self.api_key = api_key
+        self.timeout = timeout
 
     async def check_health(self) -> bool:
         """檢查 Ollama 服務是否可用"""
@@ -299,11 +300,15 @@ class OllamaBackend(BaseLLMBackend):
             },
         }
 
+        headers = {}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     f"{self.base_url}/api/chat",
                     json=payload,
+                    headers=headers or None,
                     timeout=aiohttp.ClientTimeout(total=self.timeout),
                 ) as response:
                     if response.status == 200:
@@ -468,6 +473,68 @@ class AnthropicAPIBackend(BaseLLMBackend):
         except Exception as e:
             logger.error(f"Anthropic API error: {e}", exc_info=True)
             return LLMResponse(text="", backend="anthropic", model=self.model, error=str(e))
+
+
+class GoogleAPIBackend(BaseLLMBackend):
+    """Google Gemini API 後端"""
+
+    GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
+
+    def __init__(self, api_key: str, model: str = "gemini-3.1-flash-lite"):
+        self.api_key = api_key
+        self.model = model
+        self.timeout = 120.0
+
+    async def check_health(self) -> bool:
+        if not self.api_key:
+            return False
+        return True
+
+    async def generate(self, prompt: str, **kwargs) -> LLMResponse:
+        start_time = time.time()
+        messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
+        contents = []
+        for msg in messages:
+            role = "model" if msg["role"] == "assistant" else msg["role"]
+            contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+        payload = {
+            "contents": contents,
+            "generationConfig": {
+                "maxOutputTokens": kwargs.get("max_tokens", 512),
+                "temperature": kwargs.get("temperature", 0.7),
+            },
+        }
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.GEMINI_BASE}/models/{self.model}:generateContent",
+                    params={"key": self.api_key},
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        candidate = data.get("candidates", [{}])[0]
+                        text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
+                        usage = data.get("usageMetadata", {})
+                        tokens = usage.get("totalTokenCount", 0)
+                        return LLMResponse(
+                            text=text,
+                            backend="google",
+                            model=self.model,
+                            tokens_used=tokens,
+                            response_time_ms=(time.time() - start_time) * 1000,
+                            confidence=0.95,
+                        )
+                    else:
+                        err_text = await resp.text()
+                        return LLMResponse(
+                            text="", backend="google", model=self.model,
+                            error=f"HTTP {resp.status}: {err_text[:200]}",
+                        )
+        except Exception as e:
+            logger.error(f"Google Gemini API error: {e}", exc_info=True)
+            return LLMResponse(text="", backend="google", model=self.model, error=str(e))
 
 
 class AngelaLLMService:
@@ -949,6 +1016,8 @@ class AngelaLLMService:
                     self.backends[LLMBackend.OLLAMA] = OllamaBackend(
                         base_url=base_url or "http://localhost:11434",
                         model=model_name or "llama3",
+                        api_key=api_key,
+                        timeout=backend_config.get("timeout", 120),
                     )
                     logger.info(f"已注冊 Ollama 後端: {model_name}")
 
@@ -967,6 +1036,13 @@ class AngelaLLMService:
                     model=model_name or "claude-3-opus-20240229",
                 )
                 logger.info(f"已注冊 Anthropic 後端: {model_name}")
+
+            elif provider == "google" and api_key:
+                self.backends[LLMBackend.GOOGLE] = GoogleAPIBackend(
+                    api_key=api_key,
+                    model=model_name or "gemini-3.1-flash-lite",
+                )
+                logger.info(f"已注冊 Google Gemini 後端: {model_name}")
 
 
     async def initialize(self) -> bool:
@@ -1181,6 +1257,16 @@ class AngelaLLMService:
 {guidance_block if guidance_block else "(無特殊指引)"}"""
 
         messages = [{"role": "system", "content": system_prompt.strip()}]
+
+        # 注入 Drive 檔案內容（如有）
+        drive_files = context.get("drive_files", [])
+        if drive_files:
+            drive_block = "\n\n【Google Drive 檔案內容】\n"
+            for f in drive_files[:3]:
+                name = f.get("name", "unknown")
+                content = f.get("content", f.get("snippet", ""))[:1500]
+                drive_block += f"📄 {name}:\n{content}\n---\n"
+            messages[0]["content"] += drive_block
 
         history = context.get("history", [])
         for h in history[-2:]:
@@ -1599,8 +1685,7 @@ class AngelaLLMService:
         """
         start_time = time.time()
 
-        # [auto] mode: re-evaluate backend selection and parameters
-        timeout_seconds = 30.0
+        timeout_seconds = getattr(self.active_backend, "timeout", 30.0)
         temperature = 0.7
         max_tokens = 512
 

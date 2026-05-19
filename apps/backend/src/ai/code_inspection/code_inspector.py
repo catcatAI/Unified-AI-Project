@@ -208,7 +208,7 @@ class PatternMatcher:
                 name="IndexError 風險",
                 category=IssueCategory.TYPE,
                 severity=Severity.MEDIUM,
-                pattern=re.compile(r"\[-(?\d+)\]"),
+                pattern=re.compile(r"\[-?\d+\]"),
                 description="Negative index access without bounds check",
                 suggestion="Check 'if len(list) > abs(index):' before access",
                 confidence=0.80,

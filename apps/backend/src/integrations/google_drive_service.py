@@ -161,6 +161,71 @@ class GoogleDriveService:
             logger.warning(f"Could not get storage info: {e}")
             return {"used": "0", "total": "0", "user": "unknown"}
 
+    def upload_file(self, local_path: str, drive_folder_id: Optional[str] = None, mime_type: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """上傳本地檔案到 Google Drive"""
+        try:
+            service = self._get_service()
+            path = Path(local_path)
+            if not path.exists():
+                logger.error(f"File not found: {local_path}")
+                return None
+            guessed_mime = mime_type or self._guess_mime(path.suffix)
+            media = MediaFileUpload(str(path), mimetype=guessed_mime, resumable=True)
+            file_metadata = {"name": path.name}
+            if drive_folder_id:
+                file_metadata["parents"] = [drive_folder_id]
+            uploaded = service.files().create(body=file_metadata, media_body=media, fields="id,name,mimeType,size,webViewLink").execute()
+            logger.info(f"Uploaded {path.name} to Drive (id={uploaded.get('id')})")
+            return uploaded
+        except Exception as e:
+            logger.error(f"Upload failed: {e}")
+            return None
+
+    def create_file_from_text(self, file_name: str, content: str, mime_type: str = "text/plain", drive_folder_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """建立文字檔案並上傳到 Google Drive"""
+        import tempfile
+        suffix = ".txt"
+        if mime_type == "text/markdown":
+            suffix = ".md"
+        elif mime_type == "application/json":
+            suffix = ".json"
+        elif mime_type == "text/html":
+            suffix = ".html"
+        elif mime_type == "text/csv":
+            suffix = ".csv"
+        with tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False, encoding="utf-8") as f:
+            f.write(content)
+            tmp_path = f.name
+        try:
+            result = self.upload_file(tmp_path, drive_folder_id, mime_type)
+            return result
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
+    @staticmethod
+    def _guess_mime(suffix: str) -> str:
+        mapping = {
+            ".txt": "text/plain",
+            ".md": "text/markdown",
+            ".json": "application/json",
+            ".html": "text/html",
+            ".htm": "text/html",
+            ".csv": "text/csv",
+            ".py": "text/x-python",
+            ".js": "text/javascript",
+            ".ts": "text/typescript",
+            ".yaml": "text/yaml",
+            ".yml": "text/yaml",
+            ".xml": "text/xml",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".pdf": "application/pdf",
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+        }
+        return mapping.get(suffix.lower(), "text/plain")
+
     def logout(self) -> None:
         if TOKEN_PATH.exists():
             TOKEN_PATH.unlink()

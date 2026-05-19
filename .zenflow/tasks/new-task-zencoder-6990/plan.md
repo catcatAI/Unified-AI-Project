@@ -400,7 +400,8 @@ Integrate Google Gemini as an LLM backend.
 pytest tests/test_llm_backends/test_gemini_backend.py -v
 
 # Integration test (requires real API key)
-GOOGLE_API_KEY=... pytest tests/integration/test_gemini_live.py -v
+# ⚠️ 使用 GEMINI_API_KEY（GOOGLE_API_KEY 已安全移除，Drive 使用 credentials.json OAuth 流程）
+GEMINI_API_KEY=... pytest tests/integration/test_gemini_live.py -v
 ```
 
 **Success Criteria**:

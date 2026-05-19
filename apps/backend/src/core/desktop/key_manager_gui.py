@@ -73,7 +73,7 @@ class KeyManagerGUI:
                 "name": "Google",
                 "env_var": "GEMINI_API_KEY",
                 "icon": "🔍",
-                "description": "Gemini 1.5 Pro/Flash models",
+                "description": "Gemini 1.5 Pro/Flash models（此為 GEMINI_API_KEY，從 https://aistudio.google.com/apikey 取得，以 AIza 開頭。注意：GOOGLE_API_KEY 已安全移除 — Drive 使用 credentials.json OAuth 流程，不讀 env var）",
                 "required": False,
             },
             "azure_openai": {

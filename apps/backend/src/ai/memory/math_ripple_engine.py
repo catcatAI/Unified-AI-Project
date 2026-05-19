@@ -139,7 +139,7 @@ def _detect_algorithm_depth(expr: str) -> AlgorithmDepth:
     detected = AlgorithmDepth.LIGHT
     for keyword, depth in ALGORITHM_DEPTH_KEYWORDS.items():
         if keyword in expr_lower:
-            if depth.value > detected.value:
+            if depth.complexity > detected.complexity:
                 detected = depth
     return detected
 
@@ -335,7 +335,7 @@ class RippleCascade:
                 if mat:
                     RippleCascade._apply_ripple_to_axis(mat, effect, axis)
 
-        if target_depth.feedback_enabled and ripple.overload_triggered:
+        if target_depth.feedback_enabled and (ripple.overload_triggered or ripple.fear_triggered or ripple.confusion_triggered):
             feedback_ripples = RippleCascade.compute_feedback(ripple, target_depth)
             all_ripples.extend(feedback_ripples)
             ripple.feedback_ripples = feedback_ripples
@@ -451,9 +451,9 @@ class MathRippleEngine:
     """
 
     ARITHMETIC_THRESHOLD = 0.001
-    OVERLOAD_THRESHOLD_MAGNITUDE = 10000.0
+    OVERLOAD_THRESHOLD_MAGNITUDE = 2000.0
     OVERLOAD_THRESHOLD_CHAIN = 3
-    FEAR_DIVISOR_NEAR_ZERO = 0.01
+    FEAR_DIVISOR_NEAR_ZERO = 0.0002
 
     def __init__(
         self,
@@ -569,19 +569,9 @@ class MathRippleEngine:
                 pass
             i += 1
 
-        final_result = 0.0
-        if tokens:
-            nums = [float(t) for t in tokens if t.isdigit() or (t.replace(".", "").isdigit())]
-            if nums:
-                final_result = nums[0]
-                for j in range(1, len(nums)):
-                    if j - 1 < len(tokens):
-                        if tokens[tokens.index(str(nums[j-1]))] == "+":
-                            final_result += nums[j]
-                        elif tokens[tokens.index(str(nums[j-1]))] == "-":
-                            final_result -= nums[j]
-
-        if not ripples:
+        if ripples:
+            final_result = current
+        else:
             final_result = self._eval_simple_safe(expr)
 
         return final_result, ripples
@@ -664,7 +654,7 @@ class MathRippleEngine:
         elif op == "/" or op == "//" or op == "÷":
             op_enum = MathOp.DIV
             if abs(b) < self.FEAR_DIVISOR_NEAR_ZERO:
-                result = 0.0 if b == 0 else float("inf") * (-1 if a * b < 0 else 1)
+                result = float("inf") * (-1 if a * b < 0 else 1)
                 ripple.epsilon_delta = 1.0
                 ripple.gamma_excitement = 0.3
                 ripple.fear_triggered = True

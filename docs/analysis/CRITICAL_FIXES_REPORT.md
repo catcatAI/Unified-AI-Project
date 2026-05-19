@@ -1,5 +1,9 @@
 # 🚨 CRITICAL FIXES REQUIRED - Angela AI Pre-Production
 
+> **⚠️ 當前註記 (2026-05-19)**：本報告撰寫於 2026-02-01，部分資訊已過時：
+> - **".env 已刪除" (Line 6)** — 當時指從 git 追蹤中移除。`.env` 檔案仍存在於本機供運行使用，不應刪除。
+> - **GOOGLE_API_KEY vs GEMINI_API_KEY** — 現已釐清：`GOOGLE_API_KEY` 已安全移除（Drive 使用 `credentials.json` OAuth 流程，不讀 env var）；Gemini LLM 使用 `GEMINI_API_KEY`。詳見 `SESSION_CHANGE_AUDIT_AND_REPAIR_PLAN.md`。
+
 ## ⚠️ 发现的关键问题 (CRITICAL ISSUES FOUND)
 
 ### 1. 🔴 SECURITY: Exposed API Key in .env
@@ -102,7 +106,8 @@
 # 3. Create a new key
 
 # 4. Add to your local .env file (DO NOT COMMIT)
-echo "GOOGLE_API_KEY=your_new_key_here" > .env
+# ⚠️ 注意：GOOGLE_API_KEY 已安全移除（Drive 使用 credentials.json OAuth 流程，不讀 env var）。Gemini LLM 請使用 GEMINI_API_KEY。
+echo "GEMINI_API_KEY=your_new_gemini_key_here" > .env
 ```
 
 2. **Verify Docker Compose**

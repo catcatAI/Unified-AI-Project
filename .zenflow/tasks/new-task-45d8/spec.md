@@ -166,7 +166,7 @@ Unified-AI-Project/
   - `ANGELA_KEY_A` (backend control, min 32 chars)
   - `ANGELA_KEY_B` (mobile communication, HMAC-SHA256)
   - `ANGELA_KEY_C` (desktop sync, AES-256-CBC)
-  - `OPENAI_API_KEY`, `GOOGLE_API_KEY` (optional LLM services)
+  - `OPENAI_API_KEY`, `GEMINI_API_KEY` (optional LLM services; GOOGLE_API_KEY was removed — Drive uses credentials.json OAuth)
   - `DATABASE_URL` (default: sqlite:///./angela.db)
 - **Security Impact**: System cannot run securely without proper key generation
 - **Documentation**: Key generation method documented in `.env.example:31-42`

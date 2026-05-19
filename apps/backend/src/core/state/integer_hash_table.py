@@ -150,7 +150,7 @@ class IntegerHashTable:
     def get_state_fingerprint(self) -> int:
         """獲取整體狀態指紋
 
-        將所有哈希值合併為單一指紋
+        將所有哈希值以因果鏈方式合併
 
         Returns:
             uint64 狀態指紋
@@ -158,9 +158,10 @@ class IntegerHashTable:
         if not self.hash_chain:
             return 0
 
-        combined = "".join(str(h) for h in self.hash_chain[-100:])
-        fingerprint_bytes = hashlib.sha256(combined.encode()).digest()[:8]
-        fingerprint = struct.unpack(">Q", fingerprint_bytes)[0]
+        fingerprint = 0
+        for h in self.hash_chain[-100:]:
+            combined = f"{fingerprint}:{h}".encode()
+            fingerprint = struct.unpack(">Q", hashlib.sha256(combined).digest()[:8])[0]
 
         return fingerprint
 

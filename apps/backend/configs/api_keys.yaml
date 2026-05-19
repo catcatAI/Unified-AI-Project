@@ -3,8 +3,12 @@
 # Actual values should be provided via environment variables (e.g., in a .env file).
 
 # Google Gemini API
+# ⚠️ 注意：GEMINI_API_KEY 是唯一需要的 Google API 金鑰。
+#    - GEMINI_API_KEY: 從 https://aistudio.google.com/apikey 取得，用於 Gemini LLM 雲端推理（以 "AIza" 開頭）
+#    - GOOGLE_API_KEY: 已安全移除。Drive 使用 credentials.json OAuth 2.0 流程，不讀取 env var。
+#    切勿將 GEMINI_API_KEY 誤認為 Drive 金鑰。
 gemini:
-  api_key: "GEMINI_API_KEY_PLACEHOLDER" # Environment variable: GEMINI_API_KEY
+  api_key: "GEMINI_API_KEY_PLACEHOLDER" # Environment variable: GEMINI_API_KEY（Gemini LLM 專用，非 Drive 金鑰）
 
 # OpenAI API
 openai:
@@ -52,5 +56,6 @@ general:
 # Note: The configuration manager (e.g., src/shared/config/config_manager.js)
 # should be responsible for loading these values from environment variables
 # based on the keys defined here (e.g., GEMINI_API_KEY, OPENAI_API_KEY).
+# ⚠️ GOOGLE_API_KEY 已安全移除 — Drive 使用 credentials.json OAuth 流程，不讀 env var。
 # The "PLACEHOLDER" values in this file are for documentation and structural reference only.
 # The system should expect the actual values to be supplied via the environment.

@@ -388,3 +388,36 @@ async def analyze_drive(request: Dict[str, Any] = Body(...)):
     except Exception as e:
         logger.error(f"Analyze error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/files/upload")
+async def upload_file(
+    file_path: str = Body(..., embed=True),
+    folder_id: Optional[str] = Body(None, embed=True),
+    mime_type: Optional[str] = Body(None, embed=True),
+):
+    """上傳本地檔案到 Drive"""
+    svc = get_drive_service()
+    if not svc.is_authenticated():
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = svc.upload_file(file_path, folder_id, mime_type)
+    if result is None:
+        raise HTTPException(status_code=400, detail="Upload failed")
+    return result
+
+
+@router.post("/files/create")
+async def create_file(
+    file_name: str = Body(...),
+    content: str = Body(...),
+    mime_type: str = Body("text/plain"),
+    folder_id: Optional[str] = Body(None),
+):
+    """建立文字檔案並上傳到 Drive"""
+    svc = get_drive_service()
+    if not svc.is_authenticated():
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = svc.create_file_from_text(file_name, content, mime_type, folder_id)
+    if result is None:
+        raise HTTPException(status_code=400, detail="File creation failed")
+    return result

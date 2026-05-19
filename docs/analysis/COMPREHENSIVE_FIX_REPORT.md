@@ -16,6 +16,8 @@
 
 **Overall Progress:** 33% Complete (5/25 issues fixed)
 
+> **⏳ 當前註記 (2026-05-19)**：5/25 = **20%**（非 33%）。此外 `makersuite.google.com` 已過期，正確網址為 `https://aistudio.google.com/apikey`。關鍵拆分 `GOOGLE_API_KEY` vs `GEMINI_API_KEY` 已修復，詳見 `SESSION_CHANGE_AUDIT_AND_REPAIR_PLAN.md`。
+
 ---
 
 ## ✅ FIXED ISSUES
@@ -44,6 +46,7 @@ import os
 #### 2. ⚠️ Exposed API Key - DOCUMENTED
 **File:** `.env`  
 **Issue:** `GOOGLE_API_KEY` committed to git  
+> **歷史備註**：此報告撰寫時 `GOOGLE_API_KEY` 被視為 Drive 金鑰。後續審計發現：Drive 實際上使用 `credentials.json` OAuth 2.0 流程（不讀 env var），`GOOGLE_API_KEY` 在程式碼中無任何讀取點，已安全移除。Gemini LLM 改用 `GEMINI_API_KEY`（從 https://aistudio.google.com/apikey 取得，以 `AIza` 開頭）。此處的 `AIza` 格式泄漏 key 應歸屬於 `GEMINI_API_KEY`。
 **Fix:** 
 - ✅ Created `.env.example` template
 - ✅ Created `SECURITY_WARNING.md` with immediate action plan
@@ -285,7 +288,7 @@ Prompt Assembly → LLM → Response
 **The Google API key has been exposed in git history.**
 
 **Immediate Actions:**
-1. Go to https://makersuite.google.com/app/apikey
+1. Go to https://aistudio.google.com/apikey
 2. Delete key: `AIzaSyCu2F1o48fLD3w5o_G13-WXQW6i7HzM3X0`
 3. Create new key
 4. Update local `.env` file

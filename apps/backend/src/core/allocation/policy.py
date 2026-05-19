@@ -245,7 +245,7 @@ class AllocationPolicy:
             self.stages = stages
         else:
             self.stages = [
-                AssignStage(threshold=0.7),
+                AssignStage(threshold=0.55),
             ]
             if enable_composite:
                 self.stages.append(CompositeStage(threshold=0.3, min_axes=2))

@@ -381,7 +381,9 @@ MICROPHONE_INDEX=0
 
 # 外部服務配置
 OPENAI_API_KEY=
-GOOGLE_API_KEY=
+# GEMINI_API_KEY：Gemini LLM 雲端推理，從 https://aistudio.google.com/apikey 取得
+# Drive 使用 credentials.json OAuth 流程（不讀 env var），詳見 google_drive_service.py
+GEMINI_API_KEY=
 
 # 功能開關
 ENABLE_VOICE_RECOGNITION=true

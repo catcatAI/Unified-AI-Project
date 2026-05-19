@@ -146,6 +146,21 @@ intents:
       status:
         aliases: ["status", "s"]
         description: "連接狀態"
+      write:
+        keywords:
+          - "儲存"
+          - "存到"
+          - "建立"
+          - "新增"
+          - "創建"
+          - "建立檔案"
+          - "新增檔案"
+          - "上傳"
+          - "存檔"
+          - "保存"
+          - "輸出到"
+        aliases: ["write", "create", "upload", "save"]
+        description: "建立或上傳檔案到雲端"
       logout:
         aliases: ["logout", "out"]
         description: "登出"
@@ -222,6 +237,11 @@ complexity:
   thresholds:
     high: 100
     low: 20
+  neuro_blender:
+    # NeuroBlender 直接輸出門檻：complexity 低於此值時跳過 LLM
+    # LLM 可用時自動減半，讓更多對話走 LLM
+    bypass_threshold: 0.4
+    bypass_min_confidence: 0.3
   high_complexity_keywords:
     - "為什麼"
     - "如何"
