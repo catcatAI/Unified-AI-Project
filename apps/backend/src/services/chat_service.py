@@ -24,6 +24,7 @@ class AngelaChatService:
         self._last_visual_context = {"ocr_text": {"text": ""}}
         self._last_visual_time = 0
         self._neuro_blender = None
+        self._user_profiles: Dict[str, Dict] = {}
 
         from core.config_loader import get_angela_config
         self._angela_config = get_angela_config()
@@ -124,7 +125,8 @@ class AngelaChatService:
 
         import time
         current_time = time.time()
-        if current_time - self._last_visual_time > 30:
+        visual_interval = self._get_state_constants("visual_refresh_interval", 30)
+        if current_time - self._last_visual_time > visual_interval:
             try:
                 self._last_visual_context = await self.vision.analyze_image(features=["ocr"])
                 self._last_visual_time = current_time
@@ -148,7 +150,8 @@ class AngelaChatService:
         # Update input state into state_matrix (AFTER all data is available)
         self._apply_input_to_state(sanitized_message, current_activity, bio_state, empathy_analysis)
 
-        relevant_memories = await self.memory_manager.query_core_memory(keywords=[sanitized_message], limit=2)
+        mem_limit = self._get_state_constants("memory_query_limit", 2)
+        relevant_memories = await self.memory_manager.query_core_memory(keywords=[sanitized_message], limit=mem_limit)
         value_weights = self.value_system.evaluate_intent(context)
         value_directive = self.value_system.get_value_directive(value_weights)
 
@@ -200,6 +203,8 @@ class AngelaChatService:
         web_search_intent = self._detect_web_search_intent(sanitized_message)
         if web_search_intent:
             response = await self._handle_web_search_intent(sanitized_message, web_search_intent)
+        self._extract_and_store_user_info(sanitized_message, user_name)
+
         if not (file_op_intent or web_search_intent or drive_write_intent):
             learning_intent = self._detect_learning_intent(sanitized_message)
             if learning_intent:
@@ -219,7 +224,8 @@ class AngelaChatService:
                 try:
                     from services.angela_llm_service import AngelaLLMService
                     if AngelaLLMService._instance and AngelaLLMService._instance.is_available:
-                        nb_threshold = nb_threshold * 0.5
+                        mult = self._get_state_constants("bypass_threshold_multiplier", 0.5)
+                        nb_threshold = nb_threshold * mult
                 except ImportError:
                     pass
                 if complexity < nb_threshold and neuro_composed and neuro_composed.text and neuro_composed.confidence > nb_min_conf:
@@ -311,12 +317,13 @@ class AngelaChatService:
 
     def _update_eta_from_input(self, text: str, activity: Dict[str, Any]) -> Dict[str, float]:
         complexity = self._estimate_complexity(text)
+        buf_pressure = self._get_state_constants("buffer_pressure_default", 0.3)
         return self.eta_state.apply_theta_signals({
             "update_frequency": 1.0,
             "complexity_delta": complexity,
             "novelty_peak": self.state_matrix.theta.values.get("novelty", 0),
             "misallocation_rate": self.state_matrix.theta.values.get("theta_negativity", 0),
-            "buffer_pressure": 0.3,
+            "buffer_pressure": buf_pressure,
         })
 
     def _apply_theta_eta_loop(self, eta_signals: Dict[str, Any]) -> None:
@@ -326,91 +333,116 @@ class AngelaChatService:
         delta = eta_signals.get("delta", 0.0)
 
         if triggered:
+            cr_gain = self._get_state_constants("creation_urge_gain", 0.05)
+            co_gain = self._get_state_constants("correction_urge_gain", 0.03)
             self.state_matrix.theta.values["creation_urge"] = max(
-                0.0, self.state_matrix.theta.values.get("creation_urge", 0) + signal_strength * 0.05
+                0.0, self.state_matrix.theta.values.get("creation_urge", 0) + signal_strength * cr_gain
             )
             self.state_matrix.theta.values["correction_urge"] = max(
-                0.0, self.state_matrix.theta.values.get("correction_urge", 0) + signal_strength * 0.03
+                0.0, self.state_matrix.theta.values.get("correction_urge", 0) + signal_strength * co_gain
             )
         else:
+            cr_decay = self._get_state_constants("creation_urge_decay", 0.01)
             self.state_matrix.theta.values["creation_urge"] = max(
-                0.0, self.state_matrix.theta.values.get("creation_urge", 0) - 0.01
+                0.0, self.state_matrix.theta.values.get("creation_urge", 0) - cr_decay
             )
 
     def _apply_input_to_state(self, text: str, activity: Dict[str, Any], bio_state: Dict[str, Any], empathy: Any) -> None:
+        sc = lambda k, d: self._get_state_constants(k, d)
         stress = bio_state.get("stress_level", 0.5)
         arousal = bio_state.get("arousal", 0.5)
         emotion = bio_state.get("dominant_emotion", "neutral")
 
-        self.state_matrix.alpha.values["energy"] = max(0.3, self.state_matrix.alpha.values.get("energy", 0.5) - stress * 0.05)
+        alpha_min_energy = sc("alpha_min_energy", 0.3)
+        alpha_stress_drain = sc("alpha_stress_drain", 0.05)
+        stress_to_rest = sc("stress_to_rest_gain", 0.03)
+        comfort_weight = sc("comfort_formula_stress_weight", 0.5)
+        tension_pos = sc("tension_formula_positive_weight", 0.8)
+        tension_neg = sc("tension_formula_negative_weight", 0.2)
+        focus_short = sc("focus_delta_short", 0.01)
+        focus_med = sc("focus_delta_medium", 0.03)
+        focus_long = sc("focus_delta_long", 0.06)
+        focus_short_len = sc("focus_length_threshold_short", 20)
+        focus_long_len = sc("focus_length_threshold_long", 50)
+        curiosity_gain = sc("curiosity_gain", 0.02)
+        creativity_pos = sc("creativity_gain_positive", 0.03)
+        creativity_neg = sc("creativity_loss_negative", 0.02)
+        empathy_learn = sc("empathy_to_learning_gain", 0.02)
+        gamma_happy = sc("gamma_delta_happy", 0.05)
+        gamma_sad = sc("gamma_delta_sad", 0.03)
+        gamma_angry = sc("gamma_delta_angry", 0.01)
+        trust_gain = sc("trust_gain", 0.01)
+        delta_attn_on = sc("delta_attention_base", 0.8)
+        delta_attn_off = sc("delta_attention_min", 0.3)
+        delta_attn_decay = sc("delta_attention_decay", 0.02)
+        bond_gain = sc("bond_gain", 0.01)
+        presence_gain = sc("presence_gain", 0.02)
+        engage_gain = sc("engagement_gain", 0.01)
+        abstr_base = sc("abstraction_level_low", 0.3)
+        abstr_scale = sc("abstraction_level_high", 0.4)
+        dim_fit_thresh = sc("dim_fit_threshold", 0.15)
+        anchor_boost = sc("anchor_learning_boost", 0.01)
+
+        self.state_matrix.alpha.values["energy"] = max(alpha_min_energy, self.state_matrix.alpha.values.get("energy", 0.5) - stress * alpha_stress_drain)
         self.state_matrix.alpha.values["arousal"] = arousal
-        self.state_matrix.alpha.values["rest_need"] = min(1.0, self.state_matrix.alpha.values.get("rest_need", 0.5) + stress * 0.03)
-        self.state_matrix.alpha.values["comfort"] = max(0.0, 1.0 - stress * 0.5)
+        self.state_matrix.alpha.values["rest_need"] = min(1.0, self.state_matrix.alpha.values.get("rest_need", 0.5) + stress * stress_to_rest)
+        self.state_matrix.alpha.values["comfort"] = max(0.0, 1.0 - stress * comfort_weight)
         self.state_matrix.alpha.values["vitality"] = (self.state_matrix.alpha.values.get("energy", 0.5) + self.state_matrix.alpha.values.get("comfort", 0.5)) / 2.0
-        self.state_matrix.alpha.values["tension"] = min(1.0, stress * 0.8 + arousal * 0.2)
+        self.state_matrix.alpha.values["tension"] = min(1.0, stress * tension_pos + arousal * tension_neg)
 
         input_length = len(text)
-        if input_length < 20:
-            focus_delta = 0.01
-        elif input_length < 50:
-            focus_delta = 0.03
+        if input_length < focus_short_len:
+            focus_delta = focus_short
+        elif input_length < focus_long_len:
+            focus_delta = focus_med
         else:
-            focus_delta = 0.06
+            focus_delta = focus_long
         self.state_matrix.beta.values["focus"] = min(1.0, self.state_matrix.beta.values.get("focus", 0.5) + focus_delta)
-        self.state_matrix.beta.values["curiosity"] = min(1.0, self.state_matrix.beta.values.get("curiosity", 0.5) + 0.02)
+        self.state_matrix.beta.values["curiosity"] = min(1.0, self.state_matrix.beta.values.get("curiosity", 0.5) + curiosity_gain)
         if empathy:
             if hasattr(empathy, "predicted_emotional_state") and hasattr(empathy.predicted_emotional_state, "primary_emotion"):
                 e = empathy.predicted_emotional_state.primary_emotion
                 if e in ("happiness", "joy", "excitement"):
-                    self.state_matrix.beta.values["creativity"] = min(1.0, self.state_matrix.beta.values.get("creativity", 0.5) + 0.03)
+                    self.state_matrix.beta.values["creativity"] = min(1.0, self.state_matrix.beta.values.get("creativity", 0.5) + creativity_pos)
                 elif e in ("sadness", "fear", "anger"):
-                    self.state_matrix.beta.values["creativity"] = max(0.0, self.state_matrix.beta.values.get("creativity", 0.5) - 0.02)
+                    self.state_matrix.beta.values["creativity"] = max(0.0, self.state_matrix.beta.values.get("creativity", 0.5) - creativity_neg)
             if hasattr(empathy, "empathy_score"):
-                self.state_matrix.beta.values["learning"] = min(1.0, self.state_matrix.beta.values.get("learning", 0.5) + empathy.empathy_score * 0.02)
+                self.state_matrix.beta.values["learning"] = min(1.0, self.state_matrix.beta.values.get("learning", 0.5) + empathy.empathy_score * empathy_learn)
 
         if empathy:
             es = empathy.predicted_emotional_state.primary_emotion if hasattr(empathy, "predicted_emotional_state") else "neutral"
             if es in ("happiness", "joy", "excitement", "love"):
-                self.state_matrix.gamma.values["happiness"] = min(1.0, self.state_matrix.gamma.values.get("happiness", 0.5) + 0.05)
-                self.state_matrix.gamma.values["love"] = min(1.0, self.state_matrix.gamma.values.get("love", 0.5) + 0.03)
+                self.state_matrix.gamma.values["happiness"] = min(1.0, self.state_matrix.gamma.values.get("happiness", 0.5) + gamma_happy)
+                self.state_matrix.gamma.values["love"] = min(1.0, self.state_matrix.gamma.values.get("love", 0.5) + gamma_sad)
             elif es in ("sadness", "disappointment"):
-                self.state_matrix.gamma.values["sadness"] = min(1.0, self.state_matrix.gamma.values.get("sadness", 0) + 0.05)
-                self.state_matrix.gamma.values["calm"] = max(0.0, self.state_matrix.gamma.values.get("calm", 0.5) - 0.03)
+                self.state_matrix.gamma.values["sadness"] = min(1.0, self.state_matrix.gamma.values.get("sadness", 0) + gamma_happy)
+                self.state_matrix.gamma.values["calm"] = max(0.0, self.state_matrix.gamma.values.get("calm", 0.5) - gamma_sad)
             elif es in ("fear", "anxiety"):
-                self.state_matrix.gamma.values["fear"] = min(1.0, self.state_matrix.gamma.values.get("fear", 0) + 0.05)
+                self.state_matrix.gamma.values["fear"] = min(1.0, self.state_matrix.gamma.values.get("fear", 0) + gamma_happy)
             elif es in ("anger", "frustration"):
-                self.state_matrix.gamma.values["anger"] = min(1.0, self.state_matrix.gamma.values.get("anger", 0) + 0.05)
-            self.state_matrix.gamma.values["trust"] = min(1.0, self.state_matrix.gamma.values.get("trust", 0.5) + 0.01)
+                self.state_matrix.gamma.values["anger"] = min(1.0, self.state_matrix.gamma.values.get("anger", 0) + gamma_happy)
+            self.state_matrix.gamma.values["trust"] = min(1.0, self.state_matrix.gamma.values.get("trust", 0.5) + trust_gain)
 
         category = activity.get("active_category", "neutral")
-        self.state_matrix.delta.values["attention"] = 0.8 if category != "neutral" else max(0.3, self.state_matrix.delta.values.get("attention", 0.5) - 0.02)
-        self.state_matrix.delta.values["bond"] = min(1.0, self.state_matrix.delta.values.get("bond", 0.5) + 0.01)
-        self.state_matrix.delta.values["presence"] = min(1.0, self.state_matrix.delta.values.get("presence", 0.5) + 0.02)
-        self.state_matrix.delta.values["engagement"] = min(1.0, self.state_matrix.delta.values.get("engagement", 0.5) + 0.01)
+        self.state_matrix.delta.values["attention"] = delta_attn_on if category != "neutral" else max(delta_attn_off, self.state_matrix.delta.values.get("attention", 0.5) - delta_attn_decay)
+        self.state_matrix.delta.values["bond"] = min(1.0, self.state_matrix.delta.values.get("bond", 0.5) + bond_gain)
+        self.state_matrix.delta.values["presence"] = min(1.0, self.state_matrix.delta.values.get("presence", 0.5) + presence_gain)
+        self.state_matrix.delta.values["engagement"] = min(1.0, self.state_matrix.delta.values.get("engagement", 0.5) + engage_gain)
 
         self.state_matrix.theta.values["complexity"] = self._estimate_complexity(text)
         self.state_matrix.theta.values["ambiguity"] = self._estimate_ambiguity(text)
-        self.state_matrix.theta.values["abstraction_level"] = 0.3 + self._estimate_complexity(text) * 0.4
+        self.state_matrix.theta.values["abstraction_level"] = abstr_base + self._estimate_complexity(text) * abstr_scale
 
         dim_fit = self._compute_dimension_fit(text)
         self.state_matrix.theta.values["dimension_fit"] = dim_fit
         scores = {}
-        anchor_keywords = {
-            "alpha": ["能量", "疲憊", "身體", "累", "餓", "渴", "健康", "energy", "tired", "body", "sick", "rest", "sleep"],
-            "beta": ["思考", "學習", "專注", "好奇", "困惑", "理解", "think", "learn", "focus", "curious", "understand", "decide"],
-            "gamma": ["開心", "難過", "生氣", "害怕", "愛", "情緒", "happy", "sad", "angry", "fear", "love", "emotion", "feel"],
-            "delta": ["社交", "信任", "連接", "朋友", "alone", "social", "trust", "bond", "friend", "connection", "together"],
-            "epsilon": ["計算", "邏輯", "數字", "精確", "calculate", "logic", "number", "math", "precise", "compute"],
-            "theta": ["複雜", "新穎", "創造", "策略", "分析", "元認知", "complex", "novel", "create", "strategy", "analyze"],
-            "zeta": ["記憶", "時間", "故事", "身份", "連續", "memory", "time", "story", "identity", "history", "narrative"],
-            "eta": ["執行", "成功率", "漂移", "迭代", "execute", "success", "drift", "iteration", "iterate"],
-        }
+        anchor_keywords = self._get_anchor_keywords()
         text_lower = text.lower()
         for axis, keywords in anchor_keywords.items():
             scores[axis] = sum(1 for kw in keywords if kw in text_lower) / max(1, len(keywords))
-        if dim_fit > 0.15:
+        if dim_fit > dim_fit_thresh:
             dominant_axis = max(scores, key=scores.get)
-            self.state_adapter.anchor_learning.on_axis_update(dominant_axis, {"dimension_fit_boost": 0.01}, is_stable=True)
+            self.state_adapter.anchor_learning.on_axis_update(dominant_axis, {"dimension_fit_boost": anchor_boost}, is_stable=True)
 
     def _compute_dimension_fit(self, text: str) -> float:
         anchor_keywords = self._get_anchor_keywords()
@@ -485,6 +517,54 @@ class AngelaChatService:
             if kw in text:
                 return "learning"
         return None
+
+    def _get_user_profile_patterns(self) -> list:
+        try:
+            return self._angela_config.get_authority("angela_core", {}).get("user_profile", {}).get("patterns", [])
+        except Exception:
+            return []
+
+    def _get_state_constants(self, key: str, default):
+        try:
+            return self._angela_config.get_authority("angela_core", {}).get("state_constants", {}).get(key, default)
+        except Exception:
+            return default
+
+    def _extract_and_store_user_info(self, text: str, user_name: str) -> bool:
+        import re
+        profile = self._user_profiles.setdefault(user_name, {})
+        found = False
+        patterns = self._get_user_profile_patterns()
+
+        for p in patterns:
+            try:
+                m = re.search(p["regex"], text)
+                if not m:
+                    continue
+                field = p.get("field", "custom")
+                if field == "custom":
+                    key, val = m.group(1).strip(), m.group(2).strip()
+                    if key and val:
+                        profile[key] = val
+                        found = True
+                elif p.get("append"):
+                    val = m.group(1).strip()
+                    if val:
+                        profile.setdefault(field, []).append(val)
+                        found = True
+                elif p.get("overwrite") is False and field in profile:
+                    continue
+                else:
+                    val = m.group(1).strip()
+                    if val:
+                        profile[field] = val
+                        found = True
+            except Exception:
+                continue
+
+        if found:
+            logger.info(f"[UserProfile] {user_name}: {profile}")
+        return found
 
     def _detect_drive_intent(self, text: str) -> Optional[str]:
         keywords = self._angela_config.get_intent_keywords("google_drive")
@@ -562,9 +642,10 @@ class AngelaChatService:
         self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.02, "resource_access": 0.01}, is_stable=True)
         try:
             import httpx
-            base_url = "http://127.0.0.1:8000/api/v1"
+            base_url = self._get_state_constants("drive_api_base_url", "http://127.0.0.1:8000/api/v1")
+            auth_timeout = self._get_state_constants("drive_auth_timeout", 10)
 
-            status_resp = httpx.get(f"{base_url}/drive/status", timeout=10)
+            status_resp = httpx.get(f"{base_url}/drive/status", timeout=auth_timeout)
             status_data = status_resp.json()
 
             if not status_data.get("authenticated"):
@@ -619,9 +700,10 @@ class AngelaChatService:
         """處理 Drive intent 並回傳檔案內容結構，供 LLM 使用"""
         try:
             import httpx
-            base_url = "http://127.0.0.1:8000/api/v1"
+            base_url = self._get_state_constants("drive_api_base_url", "http://127.0.0.1:8000/api/v1")
+            auth_timeout = self._get_state_constants("drive_auth_timeout", 10)
 
-            status_resp = httpx.get(f"{base_url}/drive/status", timeout=10)
+            status_resp = httpx.get(f"{base_url}/drive/status", timeout=auth_timeout)
             status_data = status_resp.json()
             if not status_data.get("authenticated"):
                 return None
@@ -660,8 +742,10 @@ class AngelaChatService:
         """處理 Drive 寫入意圖：建立檔案並上傳到雲端"""
         try:
             import httpx
-            base_url = "http://127.0.0.1:8000/api/v1"
-            status_resp = httpx.get(f"{base_url}/drive/status", timeout=10)
+            base_url = self._get_state_constants("drive_api_base_url", "http://127.0.0.1:8000/api/v1")
+            auth_timeout = self._get_state_constants("drive_auth_timeout", 10)
+            dl_timeout = self._get_state_constants("drive_download_timeout", 30)
+            status_resp = httpx.get(f"{base_url}/drive/status", timeout=auth_timeout)
             if not status_resp.json().get("authenticated"):
                 return None
             import re
@@ -672,7 +756,7 @@ class AngelaChatService:
                 "file_name": file_name,
                 "content": content,
                 "mime_type": "text/markdown",
-            }, timeout=30)
+            }, timeout=dl_timeout)
             result = resp.json()
             if result.get("id"):
                 link = result.get("webViewLink", "")
@@ -683,28 +767,38 @@ class AngelaChatService:
             return None
 
     def _update_theta_after_response(self) -> None:
-        self.state_matrix.theta.values["novelty"] = max(0.0, self.state_matrix.theta.values.get("novelty", 0) - 0.05)
-        self.state_matrix.theta.values["theta_negativity"] = max(
-            0.0, self.state_matrix.theta.values.get("theta_negativity", 0) - 0.02
-        )
-        self.state_matrix.theta.values["correction_urge"] = max(
-            0.0, self.state_matrix.theta.values.get("correction_urge", 0) - 0.05
-        )
+        sc = lambda k, d: self._get_state_constants(k, d)
+        nov_d = sc("novelty_decay_after_response", 0.05)
+        neg_d = sc("negativity_decay_after_response", 0.02)
+        corr_d = sc("correction_urge_decay_after_response", 0.05)
+        self.state_matrix.theta.values["novelty"] = max(0.0, self.state_matrix.theta.values.get("novelty", 0) - nov_d)
+        self.state_matrix.theta.values["theta_negativity"] = max(0.0, self.state_matrix.theta.values.get("theta_negativity", 0) - neg_d)
+        self.state_matrix.theta.values["correction_urge"] = max(0.0, self.state_matrix.theta.values.get("correction_urge", 0) - corr_d)
 
     def _update_eta_after_response(self) -> None:
+        sc = lambda k, d: self._get_state_constants(k, d)
         self.eta_state.execution_count += 1
         complexity = self.state_matrix.theta.values.get("complexity", 0.5)
         prev_rate = self.eta_state.success_rate
-        self.eta_state.success_rate = min(1.0, prev_rate + 0.002)
-        self.eta_state.structural_drift = min(1.0, self.eta_state.structural_drift + 0.0005 * complexity)
-        self.eta_state.parameter_tuning["global"] = self.eta_state.parameter_tuning.get("global", 0.0) + 0.001 * complexity
-        self.state_matrix.theta.values["theta_negativity"] = max(
-            0.0, self.state_matrix.theta.values.get("theta_negativity", 0) - 0.02
-        )
-        self.state_matrix.zeta.values["temporal_coherence"] = max(0.5, 0.9 - self.eta_state.execution_count * 0.01)
-        self.state_matrix.zeta.values["memory_depth"] = min(1.0, self.eta_state.execution_count * 0.001)
-        self.state_matrix.zeta.values["narrative_flow"] = 0.7 if self.eta_state.execution_count > 0 else 0.5
-        self.state_matrix.zeta.values["identity_continuity"] = 0.75 if self.eta_state.execution_count > 5 else 0.6
+        sr_gain = sc("eta_success_rate_gain", 0.002)
+        sd_gain = sc("eta_structural_drift_gain", 0.0005)
+        pt_gain = sc("eta_parameter_tuning_gain", 0.001)
+        tc_base = sc("temporal_coherence_base", 0.5)
+        tc_max = sc("temporal_coherence_max", 0.9)
+        tc_decay = sc("temporal_coherence_decay", 0.01)
+        md_gain = sc("memory_depth_gain", 0.001)
+        nf_low = sc("narrative_flow_low", 0.7)
+        nf_high = sc("narrative_flow_high", 0.5)
+        ic_thresh = sc("identity_continuity_threshold", 0.75)
+        ic_bound = sc("identity_continuity_bound", 0.6)
+        ic_count = sc("identity_continuity_count", 5)
+        self.eta_state.success_rate = min(1.0, prev_rate + sr_gain)
+        self.eta_state.structural_drift = min(1.0, self.eta_state.structural_drift + sd_gain * complexity)
+        self.eta_state.parameter_tuning["global"] = self.eta_state.parameter_tuning.get("global", 0.0) + pt_gain * complexity
+        self.state_matrix.zeta.values["temporal_coherence"] = max(tc_base, tc_max - self.eta_state.execution_count * tc_decay)
+        self.state_matrix.zeta.values["memory_depth"] = min(1.0, self.eta_state.execution_count * md_gain)
+        self.state_matrix.zeta.values["narrative_flow"] = nf_low if self.eta_state.execution_count > 0 else nf_high
+        self.state_matrix.zeta.values["identity_continuity"] = ic_thresh if self.eta_state.execution_count > ic_count else ic_bound
         if self.eta_state.execution_count > 0:
             self.state_adapter.anchor_learning.on_axis_update("zeta", {"temporal_coherence": 0.005, "narrative_flow": 0.005}, is_stable=True)
 
@@ -765,6 +859,7 @@ class AngelaChatService:
                         data_type="learned_knowledge",
                         metadata={"intent": "learning", "source": "user"}
                     )
+                    self._extract_and_store_user_info(text, "user")
                     return f"（已記住）我記住了：{topic_text[:50]}。"
                 except Exception:
                     pass
@@ -779,11 +874,14 @@ class AngelaChatService:
             from services.math_verifier import MathVerifier
             verifier = MathVerifier(llm_service=None, state_matrix=self.state_matrix)
             result = await verifier.verify(text, user_name="朋友")
+            cert_dec = self._get_state_constants("epsilon_certainty_decrease", 0.15)
+            cert_inc = self._get_state_constants("epsilon_certainty_increase", 0.1)
+            fat_inc = self._get_state_constants("epsilon_fatigue_increase", 0.05)
             if result.needs_clarification:
-                self.state_matrix.epsilon.values["certainty"] = max(0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - 0.15)
+                self.state_matrix.epsilon.values["certainty"] = max(0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - cert_dec)
                 return result.clarification_question or "（數學理解）我需要多一點資訊才能確定答案。"
             if result.matches:
-                self.state_matrix.epsilon.values["certainty"] = min(1.0, self.state_matrix.epsilon.values.get("certainty", 0.5) + 0.1)
+                self.state_matrix.epsilon.values["certainty"] = min(1.0, self.state_matrix.epsilon.values.get("certainty", 0.5) + cert_inc)
                 answer_str = f"{result.final_answer}" if result.final_answer is not None else f"{result.llm_answer}"
                 return f"（數學驗證完成）{result.expression} = {answer_str} ✅ 與引擎驗證一致。"
             else:
@@ -795,7 +893,7 @@ class AngelaChatService:
             return "（數學模組目前無法使用，請確認已正確配置依賴。）"
         except Exception as e:
             logger.warning(f"Math intent failed: {e}")
-            self.state_matrix.epsilon.values["fatigue"] = min(1.0, self.state_matrix.epsilon.values.get("fatigue", 0.5) + 0.05)
+            self.state_matrix.epsilon.values["fatigue"] = min(1.0, self.state_matrix.epsilon.values.get("fatigue", 0.5) + fat_inc)
             return f"（數學處理遇到問題：{e}）"
 
     async def _handle_code_intent(self, text: str, intent: str) -> str:
@@ -929,10 +1027,12 @@ class AngelaChatService:
         try:
             from services.angela_llm_service import get_llm_service
             llm = await get_llm_service()
+            mem_trunc = self._get_state_constants("memory_truncation_length", 200)
             memories_for_llm = [
-                {"role": "system", "content": f"相關記憶：{getattr(m, 'content', str(m))[:200]}"}
+                {"role": "system", "content": f"相關記憶：{getattr(m, 'content', str(m))[:mem_trunc]}"}
                 for m in (relevant_memories or [])[:3]
             ]
+            profile = self._user_profiles.get(user_name, {})
             context = {
                 "history": memories_for_llm,
                 "user_name": user_name,
@@ -946,6 +1046,7 @@ class AngelaChatService:
                 "memories": relevant_memories or [],
                 "neuro_blend": neuro_blend_meta or {},
                 "drive_files": (drive_files or {}).get("files", []),
+                "user_profile": profile,
             }
             if drive_files:
                 text = f"{text}\n\n[Drive 檔案內容]\n{drive_files['summary']}"

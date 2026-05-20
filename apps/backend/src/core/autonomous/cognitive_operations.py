@@ -39,6 +39,13 @@ class CognitiveOp(Enum):
 # Can be overridden per operation via state_matrix config
 SPATIAL_RATIO: Tuple[float, float, float] = (1.0, 0.3, 0.15)
 
+def _get_spatial_config(key: str, default):
+    try:
+        from core.config_loader import get_angela_config
+        return get_angela_config().get_authority("angela_core", {}).get("spatial_math", {}).get(key, default)
+    except Exception:
+        return default
+
 
 def compute_spatial_influence_factor(
     dimensions: Dict[str, Any], source: str, target: str
@@ -53,8 +60,9 @@ def compute_spatial_influence_factor(
 
     distance = sum((a - b) ** 2 for a, b in zip(source_coord, target_coord)) ** 0.5
 
-    softening = 10.0
-    influence_factor = 25.0 / (distance**2 + softening)
+    softening = _get_spatial_config("influence_factor_softening", 10.0)
+    numerator = _get_spatial_config("influence_factor_numerator", 25.0)
+    influence_factor = numerator / (distance**2 + softening)
 
     return max(0.5, min(2.0, influence_factor))
 
@@ -137,9 +145,9 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
     def evaluator(expression: str) -> float:
         logger.info(f"[SpatialMath] Resolving expression: {expression}")
 
-        tokens = re.findall(r"\d+\.?\d*|[\+\-\*\/\(\)]", expression)
+        tokens = re.findall(r"\d+\.?\d*|\*\*|[\+\-\*\/\(\)]", expression)
 
-        precedence = {"+": 1, "-": 1, "*": 2, "/": 2}
+        precedence = _get_spatial_config("operator_precedence", {"+": 1, "-": 1, "*": 2, "/": 2, "**": 3})
         output_queue = []
         operator_stack = []
 
@@ -164,7 +172,8 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
         execution_stack = []
 
         if "epsilon" in dimensions:
-            dimensions["epsilon"].values["complexity"] = min(1.0, len(expression) / 20.0)
+            comp_div = _get_spatial_config("complexity_divisor", 20.0)
+            dimensions["epsilon"].values["complexity"] = min(1.0, len(expression) / comp_div)
 
         for token in output_queue:
             if isinstance(token, float):
@@ -185,6 +194,9 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
                     op = CognitiveOp.AMPLIFY
                 elif token == "/":
                     op = CognitiveOp.DIMINISH
+                elif token == "**":
+                    execution_stack.append(a ** b)
+                    continue
                 else:
                     op = CognitiveOp.ACCUMULATE
 
@@ -194,11 +206,14 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
         final_result = execution_stack[0] if execution_stack else 0.0
 
         if "epsilon" in dimensions:
+            cert_base = _get_spatial_config("certainty_base", 0.5)
+            cert_char = _get_spatial_config("certainty_per_char", 0.05)
+            fat_inc = _get_spatial_config("fatigue_increment", 0.02)
             dimensions["epsilon"].values["certainty"] = min(
-                1.0, 0.5 + 0.05 * len(expression)
+                1.0, cert_base + cert_char * len(expression)
             )
             dimensions["epsilon"].values["fatigue"] = min(
-                1.0, dimensions["epsilon"].values.get("fatigue", 0.0) + 0.02
+                1.0, dimensions["epsilon"].values.get("fatigue", 0.0) + fat_inc
             )
 
         logger.info(
@@ -209,13 +224,16 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
     return evaluator
 
 
-def apply_intent_gravity(dimensions: Dict[str, Any], pull_factor: float = 0.05) -> None:
+def apply_intent_gravity(dimensions: Dict[str, Any], pull_factor: Optional[float] = None) -> None:
     """將各個維度的座標向其「意圖向量」緩緩拉近"""
+    if pull_factor is None:
+        pull_factor = _get_spatial_config("intent_gravity_pull", 0.05)
+    thresh = _get_spatial_config("intent_gravity_threshold", 0.001)
     for name, state in dimensions.items():
         tx, ty, tz = state.intent_vector
         cx, cy, cz = state.coordinate
 
-        if abs(tx - cx) > 0.001 or abs(ty - cy) > 0.001 or abs(tz - cz) > 0.001:
+        if abs(tx - cx) > thresh or abs(ty - cy) > thresh or abs(tz - cz) > thresh:
             nx = cx + (tx - cx) * pull_factor
             ny = cy + (ty - cy) * pull_factor
             nz = cz + (tz - cz) * pull_factor
@@ -230,8 +248,10 @@ def set_intent_target(dimensions: Dict[str, Any], dimension: str, target: Tuple[
 
 
 def apply_inter_dimensional_drag(
-    dimensions: Dict[str, Any], trigger_dim: str, drag_factor: float = 0.02
+    dimensions: Dict[str, Any], trigger_dim: str, drag_factor: Optional[float] = None
 ) -> None:
+    if drag_factor is None:
+        drag_factor = _get_spatial_config("inter_dimensional_drag", 0.02)
     """
     [Task N.21.7] 維度連動拖拽
     當一個維度移動時，會將其他維度也往相同方向「拉動」一點點。

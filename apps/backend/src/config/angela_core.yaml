@@ -585,6 +585,219 @@ neuro_fragments:
     weights: { delta_intimacy: 0.6, alpha_energy: 0.3, gamma_valence: 0.3, zeta_temporal: 0.5 }
     context_tags: ["break", "caring"]
 
+# ── 用戶資訊提取 ──────────────────────────────────────────────────────────
+
+user_profile:
+  patterns:
+    - name: "my_name_is"
+      regex: '我(?:叫|的名字(?:是|叫)?)\s*(.+?)(?:[，。,\.]|$)'
+      field: "name"
+    - name: "i_am"
+      regex: '我是\s*(.+?)(?:[，。,\.]|$)'
+      field: "name"
+      overwrite: false
+    - name: "favorite"
+      regex: '最喜歡\s*(.+?)(?:[，。,\.]|$)'
+      field: "favorites"
+      append: true
+    - name: "my_attr_is"
+      regex: '我的\s*(.+?)\s*(?:是|叫)\s*(.+?)(?:[，。,\.]|$)'
+      field: "custom"
+
+# ── 空間數學引擎 ──────────────────────────────────────────────────────────
+
+spatial_math:
+  operator_precedence:
+    "+": 1
+    "-": 1
+    "*": 2
+    "/": 2
+    "**": 3
+  spatial_ratio:
+    - 1.0
+    - 0.3
+    - 0.15
+  influence_factor_numerator: 25.0
+  influence_factor_softening: 10.0
+  complexity_divisor: 20.0
+  certainty_base: 0.5
+  certainty_per_char: 0.05
+  fatigue_increment: 0.02
+  intent_gravity_pull: 0.05
+  intent_gravity_threshold: 0.001
+  inter_dimensional_drag: 0.02
+
+# ── 狀態更新常量 ──────────────────────────────────────────────────────────
+
+state_constants:
+  visual_refresh_interval: 30
+  memory_query_limit: 2
+  bypass_threshold_multiplier: 0.5
+  evolution_sentiment_default: 0.5
+  theta_negativity_threshold: 0.5
+  theta_correction_urge_threshold: 0.6
+  correction_strength_max: 0.3
+  correction_strength_per_point: 0.1
+  novelty_decay_after_response: 0.05
+  negativity_decay_after_response: 0.02
+  correction_urge_decay_after_response: 0.05
+  eta_success_rate_gain: 0.002
+  eta_structural_drift_gain: 0.0005
+  eta_parameter_tuning_gain: 0.001
+  temporal_coherence_base: 0.5
+  temporal_coherence_max: 0.9
+  temporal_coherence_decay: 0.01
+  memory_depth_gain: 0.001
+  narrative_flow_low: 0.7
+  narrative_flow_high: 0.5
+  identity_continuity_threshold: 0.75
+  identity_continuity_bound: 0.6
+  identity_continuity_count: 5
+  focus_length_threshold_short: 20
+  focus_length_threshold_long: 50
+  focus_delta_short: 0.01
+  focus_delta_medium: 0.03
+  focus_delta_long: 0.06
+  curiosity_gain: 0.02
+  creativity_gain_positive: 0.03
+  creativity_loss_negative: 0.02
+  empathy_to_learning_gain: 0.02
+  gamma_delta_happy: 0.05
+  gamma_delta_sad: 0.03
+  gamma_delta_angry: 0.01
+  trust_gain: 0.01
+  delta_attention_base: 0.8
+  delta_attention_min: 0.3
+  delta_attention_decay: 0.02
+  bond_gain: 0.01
+  presence_gain: 0.02
+  engagement_gain: 0.01
+  epsilon_certainty_decrease: 0.15
+  epsilon_certainty_increase: 0.1
+  epsilon_fatigue_increase: 0.05
+  buffer_pressure_default: 0.3
+  dim_fit_threshold: 0.15
+  anchor_learning_boost: 0.01
+  abstraction_level_low: 0.3
+  abstraction_level_high: 0.4
+  creation_urge_gain: 0.05
+  correction_urge_gain: 0.03
+  creation_urge_decay: 0.01
+  alpha_min_energy: 0.3
+  alpha_stress_drain: 0.05
+  stress_to_rest_gain: 0.03
+  comfort_formula_stress_weight: 0.5
+  tension_formula_positive_weight: 0.8
+  tension_formula_negative_weight: 0.2
+  min_response_length_to_learn: 2
+  max_drive_file_id_count: 5
+  drive_api_base_url: "http://127.0.0.1:8000/api/v1"
+  drive_page_size: 10
+  drive_api_timeout: 30
+  drive_download_timeout: 60
+  drive_auth_timeout: 10
+  drive_download_folder: "data/drive_downloads"
+  web_search_num_results: 3
+  web_search_timeout: 15
+  drive_default_mime: "text/markdown"
+  code_quality_threshold: 0.7
+  memory_truncation_length: 200
+  screen_content_truncation: 500
+  file_content_truncation: 1500
+  history_items_to_include: 2
+  max_conversation_history: 50
+  template_match_composed_threshold: 0.8
+  template_match_hybrid_threshold: 0.5
+  template_storage_confidence: 0.5
+  max_keywords: 5
+  emotion_confidence_base: 0.1
+  emotion_confidence_max: 0.5
+  emotion_intensity_normalizer: 3.0
+  emotion_secondary_threshold: 0.5
+
+# ── 數學驗證器 ─────────────────────────────────────────────────────────────
+
+math_verifier:
+  keywords:
+    contains_math:
+      - "多少"
+      - "多少錢"
+      - "價格"
+      - "計算"
+      - "等於"
+      - "總共"
+      - "剩下"
+      - "剩餘"
+      - "花了"
+      - "買了"
+      - "賣了"
+      - "折扣"
+      - "打折"
+      - "稅"
+      - "百分比"
+      - "+"
+      - "-"
+      - "*"
+      - "/"
+      - "×"
+      - "÷"
+      - "加"
+      - "減"
+      - "乘"
+      - "除"
+      - "平方"
+      - "開根號"
+      - "次方"
+      - "次幂"
+  unit_pattern: '\d+\s*(元|塊|美元|人民幣|日圓)'
+  operator_pattern: '\d+[\+\-\*\/\(\)]'
+  word_problem_operators:
+    pow:
+      - "次方"
+      - "次幂"
+      - "幂"
+    subtract:
+      - "吃了"
+      - "吃掉"
+      - "減"
+      - "-"
+      - "剩"
+      - "還有"
+      - "拿走"
+      - "用掉"
+      - "花了"
+      - "丟掉"
+      - "消失"
+      - "掉了"
+      - "死"
+      - "過世"
+      - "離開"
+      - "不見"
+      - "去哪"
+    add:
+      - "加"
+      - "+"
+      - "又買"
+      - "再拿"
+      - "撿到"
+      - "找到"
+      - "獲得"
+      - "生出"
+    multiply:
+      - "倍"
+      - "乘"
+      - "*"
+      - "x"
+  thresholds:
+    extract_confidence_default: 0.5
+    extract_fallback_confidence: 0.3
+    extract_json_error_confidence: 0.2
+    extract_failure_confidence: 0.1
+    verification_match_diff: 0.01
+    clarification_trigger_confidence: 0.7
+    high_confidence_threshold: 0.8
+  allowed_chars: "0123456789.+-*/()"
+
 # ── 段落下載 Timeout ──────────────────────────────────────────────────────
 
 document_builder:
@@ -634,6 +847,51 @@ eta:
   execution_tracking:
     success_rate_window: 20
     auto_fallback_threshold: 0.6  # 成功率 < 60% 觸發降級
+
+# ── LLM 服務配置 ───────────────────────────────────────────────────────────
+
+llm:
+  defaults:
+    temperature: 0.7
+    max_tokens: 512
+    timeout_default: 120.0
+    health_check_timeout: 10
+    max_conversation_history: 50
+    default_response_max_tokens: 256
+  backend_priority:
+    - "ollama"
+    - "google"
+    - "openai"
+    - "anthropic"
+    - "llamacpp"
+  biological_state:
+    default_certainty: 0.5
+    default_fatigue: 0.0
+    default_mood: "calm"
+    stress_high_threshold: 0.8
+    stress_max: 100.0
+    stress_default: 0.0
+    energy_high: 30
+    energy_moderate: 60
+    energy_low: 70
+    stress_high_desc: 0.8
+    rest_need_high: 0.5
+    fatigue_moderate: 0.2
+    sleep_hours_threshold: 8.0
+    caffeine_sensitivity: 0.7
+  template_match:
+    composed: 0.8
+    hybrid: 0.5
+    storage_confidence: 0.5
+  memory:
+    precompute_idle_threshold: 5.0
+    precompute_cpu_threshold: 70.0
+    precompute_max_queue: 50
+    precompute_llm_timeout: 180.0
+    task_generator_max_tasks: 10
+  emotion:
+    negation_words: ["不", "沒", "没", "别", "別", "非", "無", "无", "未"]
+    intensifier_words: ["很", "非常", "太", "超", "極", "極其", "好", "真", "挺", "有點", "比較", "比較", "相當", "十分"]
 
 # ── [auto] LLM Mode ──────────────────────────────────────────────────────
 # 控制 NeuroAutoSelector 的行為

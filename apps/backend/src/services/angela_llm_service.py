@@ -572,7 +572,7 @@ class AngelaLLMService:
         self.is_available = False
 
         # [auto] LLM mode
-        self.llm_mode = self.config.get("llm_mode", "auto")
+        self.llm_mode = self.config.get("llm_mode", "standard")
         self.auto_selector = None
 
         self._initialized = True
@@ -1124,6 +1124,7 @@ class AngelaLLMService:
         """
         try:
             from pathlib import Path
+            bio_cfg = _get_llm_config("biological_state", {})
 
             status_file = Path("apps/backend/data/brain_status.json")
             if not status_file.exists():
@@ -1132,43 +1133,44 @@ class AngelaLLMService:
             with open(status_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            # 結構：data -> { "brain": {...}, "biological": {...}, "life_intensity": ... }
             bio = data.get("biological", {})
 
-            # 從 BiologicalIntegrator.get_biological_state() 提取指標
-            arousal = bio.get("arousal", 0.5)
-            stress = bio.get("stress_level", 0.0)
-            dom_emotion = bio.get("dominant_emotion", "calm")
+            arousal = bio.get("arousal", bio_cfg.get("default_certainty", 0.5))
+            stress = bio.get("stress_level", bio_cfg.get("stress_default", 0.0))
+            dom_emotion = bio.get("dominant_emotion", bio_cfg.get("default_mood", "calm"))
 
-            # 荷爾蒙效應
             hormonal = bio.get("hormonal_effects", {})
-            energy = hormonal.get("energy", 0.8) * 100.0
-            # 注意：飢餓感(hunger)目前沒在 get_biological_state 中導出，預設為 0
+            energy = hormonal.get("energy", bio_cfg.get("caffeine_sensitivity", 0.8)) * 100.0
             hunger = bio.get("hunger", 0.0)
 
             intensity = data.get("life_intensity", 0.0)
 
-            # 構建描述
             status_parts = []
 
-            # 1. 基礎需求
-            if energy < 30:
+            energy_low = bio_cfg.get("energy_low", 30)
+            energy_moderate = bio_cfg.get("energy_moderate", 60)
+            stress_high = bio_cfg.get("stress_high_desc", 0.8)
+            stress_moderate = bio_cfg.get("stress_high_threshold", 0.5)
+
+            if energy < energy_low:
                 status_parts.append("你感到非常疲倦，能量幾乎耗盡。")
-            elif energy < 60:
+            elif energy < energy_moderate:
                 status_parts.append("你感到有些累了。")
 
-            if hunger > 70:
+            hunger_high = bio_cfg.get("stress_max", 70)
+            if hunger > hunger_high:
                 status_parts.append("你覺得肚子很餓，渴望獲得能量補充。")
 
-            # 2. 神經壓力
-            if stress > 0.8:
+            if stress > stress_high:
                 status_parts.append("你現在壓力極大，感到非常焦慮和緊繃。")
-            elif stress > 0.5:
+            elif stress > stress_moderate:
                 status_parts.append("你感到有些壓力。")
 
-            if arousal > 0.8:
+            arousal_high = bio_cfg.get("energy_high", 0.8)
+            arousal_low = bio_cfg.get("energy_low", 0.2)
+            if arousal > arousal_high:
                 status_parts.append("你現在處於高度興奮狀態，思緒飛快。")
-            elif arousal < 0.2:
+            elif arousal < arousal_low:
                 status_parts.append("你感到昏昏欲睡，反應遲鈍。")
 
             # 3. 情感色彩
@@ -1258,6 +1260,17 @@ class AngelaLLMService:
 
         messages = [{"role": "system", "content": system_prompt.strip()}]
 
+        # 注入用戶資料（如有）
+        user_profile = context.get("user_profile", {})
+        if user_profile:
+            profile_lines = ["\n\n【用戶資訊】"]
+            for k, v in user_profile.items():
+                if isinstance(v, list):
+                    profile_lines.append(f"- {k}: {', '.join(v)}")
+                else:
+                    profile_lines.append(f"- {k}: {v}")
+            messages[0]["content"] += "\n".join(profile_lines)
+
         # 注入 Drive 檔案內容（如有）
         drive_files = context.get("drive_files", [])
         if drive_files:
@@ -1310,8 +1323,9 @@ class AngelaLLMService:
         if hasattr(self, "conversation_history"):
             self.conversation_history.append({"role": "user", "content": user_message})
             # 限制历史长度
-            if len(self.conversation_history) > 50:
-                self.conversation_history = self.conversation_history[-50:]
+            max_hist = _get_llm_config("defaults", {}).get("max_conversation_history", 50)
+            if len(self.conversation_history) > max_hist:
+                self.conversation_history = self.conversation_history[-max_hist:]
 
         # ========== P0-2: Template Matching & Routing ==========
         if hasattr(self, "template_matcher") and self.template_matcher:
@@ -1319,7 +1333,10 @@ class AngelaLLMService:
                 match_result = self.template_matcher.match(user_message, context)
                 match_score = match_result.score
 
-                if match_score > 0.8:
+                tmpl_cfg = _get_llm_config("template_match", {})
+                composed_thresh = tmpl_cfg.get("composed", 0.8)
+                hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
+                if match_score > composed_thresh:
                     composed_response = self.response_composer.compose_response(
                         match_result.template_content, match_score, context
                     )
@@ -1360,7 +1377,7 @@ class AngelaLLMService:
                         },
                     )
 
-                elif match_score > 0.5:
+                elif match_score > hybrid_thresh:
                     composed_response = self.response_composer.compose_response(
                         match_result.template_content, match_score, context
                     )
@@ -1685,9 +1702,10 @@ class AngelaLLMService:
         """
         start_time = time.time()
 
-        timeout_seconds = getattr(self.active_backend, "timeout", 30.0)
-        temperature = 0.7
-        max_tokens = 512
+        defaults = _get_llm_config("defaults", {})
+        timeout_seconds = getattr(self.active_backend, "timeout", defaults.get("timeout_default", 30.0))
+        temperature = defaults.get("temperature", 0.7)
+        max_tokens = defaults.get("max_tokens", 512)
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:
@@ -2214,15 +2232,22 @@ class AngelaLLMService:
             return LLMResponse(text="", backend="unknown", model="unknown", error=str(e))
 
 
+def _get_llm_config(key: str, default=None):
+    try:
+        from core.config_loader import get_angela_config
+        return get_angela_config().get_authority("angela_core", {}).get("llm", {}).get(key, default)
+    except Exception:
+        return default
+
 # 全局實例
 _llm_service: Optional[AngelaLLMService] = None
 
 
-async def get_llm_service() -> AngelaLLMService:
+async def get_llm_service(force_reload: bool = False) -> AngelaLLMService:
     """獲取全局 LLM 服務實例"""
     global _llm_service
 
-    if _llm_service is None:
+    if _llm_service is None or force_reload:
         _llm_service = AngelaLLMService()
         await _llm_service.initialize()
 

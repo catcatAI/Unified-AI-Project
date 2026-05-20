@@ -233,6 +233,19 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
     return {"session_id": session_id, "response_text": ai_response}
 
 
+@router.post("/angela/reload")
+async def reload_llm():
+    """強制重新載入 LLM 服務（hot-reload 配置變更）"""
+    from services.angela_llm_service import get_llm_service
+    svc = await get_llm_service(force_reload=True)
+    providers = list(svc.backends.keys())
+    return {
+        "status": "reloaded",
+        "llm_mode": svc.llm_mode,
+        "active_backend": str(svc.active_backend_type.value) if svc.active_backend_type else "none",
+        "available_backends": [str(b.value) for b in providers],
+    }
+
 # Angela-specific chat endpoint with personality
 @router.post("/angela/chat")
 async def angela_chat(request: Dict[str, Any] = Body(...)):

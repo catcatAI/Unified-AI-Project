@@ -133,18 +133,29 @@ class MathExtractor:
 
     def _contains_likely_math(self, text: str) -> bool:
         """快速檢查是否可能包含數學意圖"""
-        math_keywords = [
-            "多少", "多少錢", "價格", "計算", "等於", "總共",
-            "剩下", "剩餘", "花了", "買了", "賣了",
-            "折扣", "打折", "稅", "百分比",
-            "+", "-", "*", "/", "×", "÷",
-            "加", "減", "乘", "除", "平方", "開根號",
-        ]
+        cfg = None
+        try:
+            from core.config_loader import get_angela_config
+            cfg = get_angela_config().get_authority("angela_core", {}).get("math_verifier", {})
+        except Exception:
+            pass
+        math_keywords = cfg.get("keywords", {}).get("contains_math", []) if cfg else []
+        if not math_keywords:
+            math_keywords = [
+                "多少", "多少錢", "價格", "計算", "等於", "總共",
+                "剩下", "剩餘", "花了", "買了", "賣了",
+                "折扣", "打折", "稅", "百分比",
+                "+", "-", "*", "/", "×", "÷",
+                "加", "減", "乘", "除", "平方", "開根號",
+                "次方", "次幂",
+            ]
+        unit_pat = (cfg.get("unit_pattern") if cfg else None) or r'\d+\s*(元|塊|美元|人民幣|日圓)'
+        op_pat = (cfg.get("operator_pattern") if cfg else None) or r'\d+[\+\-\*\/\(\)]'
         text_lower = text.lower()
         return (
             any(kw in text_lower for kw in math_keywords) or
-            bool(re.search(r"\d+[\+\-\*\/\(\)]", text)) or
-            bool(re.search(r"\d+\s*(元|塊|美元|人民幣|日圓)", text))
+            bool(re.search(op_pat, text)) or
+            bool(re.search(unit_pat, text))
         )
 
     async def _call_llm(self, user_message: str) -> str:
@@ -196,9 +207,22 @@ class MathExtractor:
         if len(numbers) < 2:
             return None
 
-        subtract_ops = ("吃了", "吃掉", "吃了", "減", "-", "剩", "還有", "拿走", "用掉", "花了", "丟掉", "消失", "掉了", "死", "過世", "離開", "不見", "去哪")
-        add_ops = ("多", "加", "+", "又買", "再拿", "撿到", "找到", "獲得", "生出")
-        multiply_ops = ("倍", "乘", "*", "x")
+        cfg = None
+        try:
+            from core.config_loader import get_angela_config
+            cfg = get_angela_config().get_authority("angela_core", {}).get("math_verifier", {}).get("word_problem_operators", {})
+        except Exception:
+            pass
+
+        pow_ops = tuple(cfg.get("pow", [])) if cfg else ("次方", "次幂", "幂")
+        for kw in pow_ops:
+            if kw in text:
+                a, b = numbers[0], numbers[1]
+                return f"{a}**{b}"
+
+        subtract_ops = tuple(cfg.get("subtract", [])) if cfg else ("吃了", "吃掉", "減", "-", "剩", "還有", "拿走", "用掉", "花了", "丟掉", "消失", "掉了", "死", "過世", "離開", "不見", "去哪")
+        add_ops = tuple(cfg.get("add", [])) if cfg else ("加", "+", "又買", "再拿", "撿到", "找到", "獲得", "生出")
+        multiply_ops = tuple(cfg.get("multiply", [])) if cfg else ("倍", "乘", "*", "x")
 
         for kw in subtract_ops:
             if kw in text:
@@ -259,13 +283,21 @@ class SpatialEngine:
             logger.warning(f"[SpatialEngine] Evaluation failed for '{expression}': {e}")
             return 0.0, False
 
+    def _get_math_config(self, key: str, default):
+        try:
+            from core.config_loader import get_angela_config
+            return get_angela_config().get_authority("angela_core", {}).get("math_verifier", {}).get(key, default)
+        except Exception:
+            return default
+
     def _eval_simple(self, expression: str) -> float:
         """安全的本地計算（不依賴 StateMatrix）"""
         clean = expression.strip().replace(" ", "")
-        clean = re.sub(r"[^0-9\.\+\-\*\/\(\)]", "", clean)
+        allowed_chars = self._get_math_config("allowed_chars", "0123456789.+-*/()")
+        clean = re.sub(r"[^" + re.escape(allowed_chars) + r"]", "", clean)
         if not clean:
             return 0.0
-        allowed = set("0123456789.+-*/()")
+        allowed = set(allowed_chars)
         if all(c in allowed for c in clean):
             result = eval(clean)  # nosec: clean input only
             return float(result)
@@ -314,15 +346,19 @@ class MathVerifier:
             result.engine_answer = engine_result
             result.final_answer = engine_result
 
+        thresh_cfg = self._get_math_config("thresholds", {})
+        match_diff = thresh_cfg.get("verification_match_diff", 0.01)
+        clarify_conf = thresh_cfg.get("clarification_trigger_confidence", 0.7)
+
         if extraction.llm_answer is not None and engine_ok:
             diff = abs(extraction.llm_answer - engine_result)
             result.discrepancy = diff
-            result.matches = diff < 0.01
+            result.matches = diff < match_diff
         elif engine_ok:
             result.matches = True
             result.discrepancy = 0.0
 
-        if extraction.confidence < 0.7 and extraction.assumptions:
+        if extraction.confidence < clarify_conf and extraction.assumptions:
             result.needs_clarification = True
             result.clarification_question = self._build_clarification(
                 extraction.understanding,
@@ -369,8 +405,9 @@ class MathVerifier:
         if result.clarification_question:
             return result.clarification_question
 
+        high_conf = self._get_math_config("thresholds", {}).get("high_confidence_threshold", 0.8)
         if result.matches:
-            if extraction.confidence >= 0.8:
+            if extraction.confidence >= high_conf:
                 return f"計算結果是 {answer}。"
             else:
                 return f"嗯... 我算了一下，應該是 {answer}。"

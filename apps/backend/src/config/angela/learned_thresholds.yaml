@@ -1,7 +1,11 @@
 metadata:
-  updated: '2026-05-18T11:24:01.751091+00:00'
+  updated: '2026-05-19T15:03:25.078304+00:00'
 threshold_adjustments:
   complexity_general:
-    count: 3
-    updated: '2026-05-18T11:24:01.751011+00:00'
-    value: 0.44
+    count: 5
+    updated: '2026-05-19T15:03:25.078231+00:00'
+    value: 0.26
+  complexity_math:
+    count: 4
+    updated: '2026-05-19T14:59:01.448400+00:00'
+    value: 0.22000000000000003
