@@ -273,15 +273,41 @@ class MemoryTemplate:
 
     def _calculate_state_similarity(self, current_state: AngelaState) -> float:
         """计算状态相似度"""
-        # 简化版本：返回 0.8
-        # 完整版本应该计算 αβγδ 各维度的相似度
-        return 0.8
+        if not current_state or not hasattr(current_state, '__dict__'):
+            return 0.5
+        try:
+            state_dict = current_state.__dict__ if hasattr(current_state, '__dict__') else {}
+            template_state = self.angela_state.__dict__ if hasattr(self, 'angela_state') and hasattr(self.angela_state, '__dict__') else {}
+            if not state_dict or not template_state:
+                return 0.5
+            common_keys = set(state_dict.keys()) & set(template_state.keys())
+            if not common_keys:
+                return 0.5
+            diffs = [abs(float(state_dict[k]) - float(template_state[k])) for k in common_keys if isinstance(state_dict[k], (int, float)) and isinstance(template_state[k], (int, float))]
+            if not diffs:
+                return 0.5
+            return max(0.0, 1.0 - sum(diffs) / len(diffs))
+        except Exception:
+            return 0.5
 
     def _calculate_impression_similarity(self, current_impression: UserImpression) -> float:
         """计算用户印象相似度"""
-        # 简化版本：返回 0.7
-        # 完整版本应该比较关系度和偏好风格
-        return 0.7
+        if not current_impression or not hasattr(current_impression, '__dict__'):
+            return 0.5
+        try:
+            imp_dict = current_impression.__dict__ if hasattr(current_impression, '__dict__') else {}
+            template_imp = self.user_impression.__dict__ if hasattr(self, 'user_impression') and hasattr(self.user_impression, '__dict__') else {}
+            if not imp_dict or not template_imp:
+                return 0.5
+            common_keys = set(imp_dict.keys()) & set(template_imp.keys())
+            if not common_keys:
+                return 0.5
+            diffs = [abs(float(imp_dict[k]) - float(template_imp[k])) for k in common_keys if isinstance(imp_dict[k], (int, float)) and isinstance(template_imp[k], (int, float))]
+            if not diffs:
+                return 0.5
+            return max(0.0, 1.0 - sum(diffs) / len(diffs))
+        except Exception:
+            return 0.5
 
 
 def generate_template_id(content: str) -> str:

@@ -206,21 +206,32 @@ class AngelaChatService:
         self._extract_and_store_user_info(sanitized_message, user_name)
 
         if not (file_op_intent or web_search_intent or drive_write_intent):
-            learning_intent = self._detect_learning_intent(sanitized_message)
-            if learning_intent:
-                response = await self._handle_learning_intent(sanitized_message, learning_intent)
-            elif math_intent:
-                response = await self._handle_math_intent(sanitized_message, math_intent, complexity)
-            elif code_intent:
-                response = await self._handle_code_intent(sanitized_message, code_intent)
-            else:
+            # Priority-based intent routing from YAML
+            intent_matches = self._rank_intents_by_priority(sanitized_message)
+            if intent_matches:
+                top_intent_name = intent_matches[0]
+                handler_map = {
+                    "learning": self._handle_learning_intent,
+                    "math": self._handle_math_intent,
+                    "code": self._handle_code_intent,
+                    "task": self._handle_task_intent,
+                    "character_card": self._handle_character_card_intent,
+                    "document": self._handle_document_intent,
+                    "llm_manage": self._handle_llm_manage_intent,
+                }
+                handler = handler_map.get(top_intent_name)
+                if handler:
+                    if top_intent_name == "math":
+                        response = await handler(sanitized_message, top_intent_name, complexity)
+                    else:
+                        response = await handler(sanitized_message, top_intent_name)
+                    handled_intent = True
+
+            if not (intent_matches and locals().get('handled_intent')):
                 # NeuroBlender → LLM 雙路饋送
-                # low complexity: NeuroBlender 直接輸出（離線也能說人話）
-                # high complexity: LLM 收到 NeuroBlender 的語意向量當作額外上下文
                 nb_cfg = self._angela_config.get_authority("angela_core", {}).get("complexity", {}).get("neuro_blender", {})
                 nb_threshold = nb_cfg.get("bypass_threshold", 0.4)
                 nb_min_conf = nb_cfg.get("bypass_min_confidence", 0.3)
-                # LLM 可用時自動降低 bypass threshold，讓更多對話走 LLM
                 try:
                     from services.angela_llm_service import AngelaLLMService
                     if AngelaLLMService._instance and AngelaLLMService._instance.is_available:
@@ -231,12 +242,14 @@ class AngelaChatService:
                 if complexity < nb_threshold and neuro_composed and neuro_composed.text and neuro_composed.confidence > nb_min_conf:
                     response = neuro_composed.text
                 else:
+                    detected_intent = intent_matches[0] if intent_matches else "general"
                     response = await self._handle_general_intent(
                         sanitized_message, user_name, origin, bio_state, screen_text,
                         current_activity, relevant_memories, value_directive, empathy_analysis,
                         meta_prompt=self.state_matrix.export_for_llm(self.state_adapter.eta),
                         neuro_blend_meta=neuro_meta,
                         drive_files=drive_file_context,
+                        intent=detected_intent,
                     )
 
         await self.evolution.reflect_and_evolve({"sentiment": 0.5, "security_hit": is_violation})
@@ -248,6 +261,7 @@ class AngelaChatService:
         )
 
         self._update_theta_after_response()
+        self._update_eta_after_response()
 
         if self.state_matrix.theta.values.get("theta_negativity", 0) > 0.5:
             misaligned = self.state_matrix.detect_misallocated_points()
@@ -257,6 +271,17 @@ class AngelaChatService:
                     self.state_matrix.auto_correct_all()
 
         await self._record_learning_event(sanitized_message, response, complexity)
+
+        # 狀態檢查點：定期持久化狀態矩陣和用戶資料至 HAM
+        if hasattr(self, "memory_manager") and self.memory_manager:
+            try:
+                await self.memory_manager.store_experience(
+                    raw_data=f"STATE_CHECKPOINT|matrix={self.state_matrix.export_for_llm(self.state_adapter.eta)}|profiles={self._user_profiles}",
+                    data_type="state_checkpoint",
+                    metadata={"type": "periodic"}
+                )
+            except Exception:
+                pass
 
         return response
 
@@ -279,17 +304,23 @@ class AngelaChatService:
             pass
 
     def _detect_any_intent(self, text: str) -> str:
-        for name, detector in [
-            ("math", self._detect_math_intent),
-            ("code", self._detect_code_intent),
-            ("file_op", self._detect_file_op_intent),
-            ("google_drive", self._detect_drive_intent),
-            ("web_search", self._detect_web_search_intent),
-            ("learning", self._detect_learning_intent),
-        ]:
-            if detector(text):
-                return name
-        return "general"
+        """Priority-based intent routing from YAML config"""
+        matches = self._rank_intents_by_priority(text)
+        return matches[0] if matches else "general"
+
+    def _rank_intents_by_priority(self, text: str) -> List[str]:
+        """Rank matching intents by YAML priority (highest first)"""
+        intents = self._angela_config.get_intents()
+        matches = []
+        for name, cfg in intents.items():
+            if name == "general":
+                continue
+            keywords = cfg.get("keywords", [])
+            priority = cfg.get("priority", 1)
+            if any(kw in text for kw in keywords):
+                matches.append((name, priority))
+        matches.sort(key=lambda x: x[1], reverse=True)
+        return [name for name, _ in matches]
 
     def _update_theta_from_input(self, text: str) -> None:
         novelty = self._estimate_novelty(text)
@@ -518,6 +549,34 @@ class AngelaChatService:
                 return "learning"
         return None
 
+    def _detect_task_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("task")
+        for kw in keywords:
+            if kw in text:
+                return "task"
+        return None
+
+    def _detect_character_card_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("character_card")
+        for kw in keywords:
+            if kw in text:
+                return "character_card"
+        return None
+
+    def _detect_document_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("document")
+        for kw in keywords:
+            if kw in text:
+                return "document"
+        return None
+
+    def _detect_llm_manage_intent(self, text: str) -> Optional[str]:
+        keywords = self._angela_config.get_intent_keywords("llm_manage")
+        for kw in keywords:
+            if kw in text:
+                return "llm_manage"
+        return None
+
     def _get_user_profile_patterns(self) -> list:
         try:
             return self._angela_config.get_authority("angela_core", {}).get("user_profile", {}).get("patterns", [])
@@ -638,20 +697,45 @@ class AngelaChatService:
         complexity = max(0.0, min(1.0, length_score + kw_score))
         return complexity
 
+    def _get_services_config(self) -> dict:
+        try:
+            return self._angela_config.get_authority("angela_core", {}).get("services", {})
+        except Exception:
+            return {}
+
     async def _handle_drive_intent(self, text: str, intent: str) -> str:
         self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.02, "resource_access": 0.01}, is_stable=True)
         try:
-            import httpx
+            svc_cfg = self._get_services_config().get("google_drive", {})
+            use_real = svc_cfg.get("real_service", False)
             base_url = self._get_state_constants("drive_api_base_url", "http://127.0.0.1:8000/api/v1")
             auth_timeout = self._get_state_constants("drive_auth_timeout", 10)
 
+            if use_real:
+                try:
+                    from integrations.google_drive_service import GoogleDriveService
+                    gd = GoogleDriveService.get_instance()
+                    if not gd.is_authenticated():
+                        return "（Google Drive 未認證）我還沒連上妳的 Google Drive 喔。要不要讓我生出授權連結給妳？"
+                    files = gd.list_files(page_size=5) if hasattr(gd, "list_files") else []
+                    if files:
+                        lines = [f"📄 {f.get('name', 'unknown')} ({f.get('mimeType', '').split('.')[-1]})" for f in files[:5]]
+                        return "（Google Drive 列表）\n" + "\n".join(lines)
+                    return "（Google Drive 已連接）雲端硬碟是空的。"
+                except ImportError:
+                    logger.warning("GoogleDriveService not available, falling back to httpx")
+                    use_real = False
+                except Exception as e:
+                    logger.warning(f"GoogleDriveService error: {e}, falling back to httpx")
+                    use_real = False
+
+            import httpx
             status_resp = httpx.get(f"{base_url}/drive/status", timeout=auth_timeout)
             status_data = status_resp.json()
 
             if not status_data.get("authenticated"):
                 return "（Google Drive 未認證）我還沒連上妳的 Google Drive 喔。要不要讓我生出授權連結給妳？只要去 `/model` 那邊看一下 Drive 狀態就可以開始了～"
 
-            ops = self._angela_config.get_drive_all_operations()
             list_kws = self._angela_config.get_google_drive_keywords("list")
             sync_kws = self._angela_config.get_google_drive_keywords("sync")
             analyze_kws = self._angela_config.get_google_drive_keywords("analyze")
@@ -672,7 +756,8 @@ class AngelaChatService:
                     file_ids = [f["id"] for f in files[:5]]
                     if not file_ids:
                         return "（同步完成）沒有找到可以同步的檔案。"
-                    sync_resp = httpx.post(f"{base_url}/drive/files/sync", json={"file_ids": file_ids, "folder_path": "data/drive_downloads"}, timeout=30)
+                    dl_timeout = self._get_state_constants("drive_download_timeout", 30)
+                    sync_resp = httpx.post(f"{base_url}/drive/files/sync", json={"file_ids": file_ids, "folder_path": "data/drive_downloads"}, timeout=dl_timeout)
                     result = sync_resp.json()
                     count = result.get("synced", 0)
                     return f"（Google Drive 同步完成）已下載 {count} 個檔案到 data/drive_downloads/，並存入了我的記憶。"
@@ -868,6 +953,57 @@ class AngelaChatService:
                 return "（教育模式）想學什麼呢？數學、代碼、創意寫作...告訴我，我會用心教妳。"
         return "（學習意圖識別）"
 
+    async def _handle_task_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("eta", {"execution": 0.05}, is_stable=True)
+        try:
+            from ai.dialogue.project_coordinator import ProjectCoordinator
+            coordinator = ProjectCoordinator()
+            result = await coordinator.process(text)
+            return result.get("response", str(result))[:2000]
+        except ImportError:
+            return "（任務規劃模組載入失敗）"
+        except Exception as e:
+            logger.warning(f"Task intent failed: {e}")
+            return "（任務規劃處理遇到問題）"
+
+    async def _handle_character_card_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("gamma", {"creativity": 0.04}, is_stable=True)
+        try:
+            from ai.dialogue.document_builder import DocumentBuilder
+            builder = DocumentBuilder()
+            result = await builder.generate(text, doc_type="character_card")
+            return result[:2000]
+        except ImportError:
+            return "（角色卡模組載入失敗）"
+        except Exception as e:
+            logger.warning(f"Character card intent failed: {e}")
+            return "（角色卡生成遇到問題）"
+
+    async def _handle_document_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("epsilon", {"precision": 0.03}, is_stable=True)
+        try:
+            from ai.dialogue.document_builder import DocumentBuilder
+            builder = DocumentBuilder()
+            result = await builder.generate(text, doc_type="document")
+            return result[:2000]
+        except ImportError:
+            return "（文檔生成模組載入失敗）"
+        except Exception as e:
+            logger.warning(f"Document intent failed: {e}")
+            return "（文檔生成遇到問題）"
+
+    async def _handle_llm_manage_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("epsilon", {"precision": 0.02}, is_stable=True)
+        try:
+            from services.angela_llm_service import get_llm_service
+            llm = await get_llm_service()
+            backends = list(llm.backends.keys()) if hasattr(llm, "backends") else []
+            active = getattr(llm, "active_backend", None)
+            return f"（LLM 管理）目前可用後端：{backends}，活動後端：{active}"
+        except Exception as e:
+            logger.warning(f"LLM manage intent failed: {e}")
+            return "（LLM 管理模組載入失敗）"
+
     async def _handle_math_intent(self, text: str, intent: str, complexity: float) -> str:
         self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.05, "precision": 0.03}, is_stable=True)
         try:
@@ -900,35 +1036,49 @@ class AngelaChatService:
         self.state_adapter.anchor_learning.on_axis_update("epsilon", {"logic": 0.04, "complexity": 0.03}, is_stable=True)
         try:
             from ai.code_inspection.code_inspector_integration import CodeInspectorBridge
+            from ai.code_inspection.code_inspector import CodeInspector
             bridge = CodeInspectorBridge(self.state_adapter)
-            code_patterns = [
-                r'`([^`]+)`',
-                r'<code>(.*?)</code>',
-                r'(?:function|def|class|import)\s+\w+',
-            ]
+            svc_cfg = self._get_services_config().get("code_inspector", {})
+            use_real = svc_cfg.get("real_service", False)
+            quality_threshold = svc_cfg.get("quality_threshold", 0.7)
+
             import re
+            import ast
+
             all_code = []
+            file_paths = re.findall(r'(?:[a-zA-Z]:\\[^\s]+|\.\/[^\s]+|\/[^\s]+\/\S+\.\w+)', text)
+            code_patterns = [r'`([^`]+)`', r'<code>(.*?)</code>', r'(?:function|def|class|import)\s+\w+']
             for pat in code_patterns:
                 all_code.extend(re.findall(pat, text, re.DOTALL))
-            if not all_code:
-                return "（代碼意圖識別）我檢測到程式碼意圖，但沒有找到可分析的程式碼片段。"
-            inspect_result = {
-                "text": text,
-                "detected_language": "mixed",
-                "quality_score": 0.5,
-                "issues": [],
-                "suggestions": [],
-            }
-            for code in all_code:
+
+            inspect_result = {"text": text, "detected_language": "mixed", "quality_score": 0.5, "issues": [], "suggestions": []}
+
+            if file_paths and use_real:
                 try:
-                    import ast
-                    ast.parse(code)
-                    inspect_result["issues"].append({"severity": "info", "message": "語法正確"})
-                except SyntaxError as se:
-                    inspect_result["issues"].append({"severity": "error", "message": f"語法錯誤：{se.msg} 行{se.lineno}"})
+                    inspector = CodeInspector(root_path=file_paths[0])
+                    report = inspector.scan(max_files=5)
+                    qs = (report.total_files - report.total_issues) / max(1, report.total_files)
+                    inspect_result["quality_score"] = min(1.0, qs)
+                    inspect_result["issues"] = [
+                        {"severity": i.severity.name if hasattr(i.severity, 'name') else str(i.severity), "message": i.message}
+                        for i in report.issues[:10]
+                    ]
+                except Exception as scan_err:
+                    logger.warning(f"CodeInspector scan failed: {scan_err}")
+
+            if not file_paths or not use_real:
+                if not all_code:
+                    return "（代碼意圖識別）我檢測到程式碼意圖，但沒有找到可分析的程式碼片段。"
+                for code in all_code:
+                    try:
+                        ast.parse(code)
+                        inspect_result["issues"].append({"severity": "info", "message": "語法正確"})
+                    except SyntaxError as se:
+                        inspect_result["issues"].append({"severity": "error", "message": f"語法錯誤：{se.msg} 行{se.lineno}"})
+
             integration = bridge.integrate_inspect(inspect_result)
             quality = integration.get("quality_score", 0.5)
-            if quality >= 0.7:
+            if quality >= quality_threshold:
                 self.state_matrix.beta.values["clarity"] = min(1.0, self.state_matrix.beta.values.get("clarity", 0.5) + 0.05)
             else:
                 self.state_matrix.beta.values["confusion"] = min(1.0, self.state_matrix.beta.values.get("confusion", 0.5) + 0.05)
@@ -950,22 +1100,9 @@ class AngelaChatService:
         user_name: str,
         category: str,
     ) -> Optional[str]:
-        """
-        Phase D: 共情校準 NeuroBlender 合成
-        低复杂度查询使用 NeuroBlender 快速合成回复。
-        """
+        """Phase D: 共情校準 NeuroBlender 合成 — 使用共享的 singleton 實例"""
         try:
-            from ai.response.composer import NeuroVocabulary, NeuroBlender
-            from ai.memory.template_library import get_template_library
-
-            vocab = NeuroVocabulary()
-            library = get_template_library()
-            vocab.decompose_from_templates(library)
-            neuro_cfg = self._angela_config.get_authority("angela_core", {}).get("neuro_fragments", [])
-            if neuro_cfg:
-                vocab.load_from_config(neuro_cfg)
-
-            blender = NeuroBlender(vocab)
+            blender = self._get_neuro_blender()
 
             empathy_valence = 0.0
             if empathy_analysis and hasattr(empathy_analysis, "predicted_emotional_state"):
@@ -983,13 +1120,11 @@ class AngelaChatService:
             }
 
             intent_vec = {"casual": 0.5}
-            math_kws = ["計算", "數學", "積分", "微分"]
-            code_kws = ["代碼", "程式", "python", "function"]
-            for kw in math_kws:
+            for kw in ["計算", "數學", "積分", "微分"]:
                 if kw in text:
                     intent_vec = {"math": 0.8}
                     break
-            for kw in code_kws:
+            for kw in ["代碼", "程式", "python", "function"]:
                 if kw in text:
                     intent_vec = {"code": 0.8}
                     break
@@ -1022,6 +1157,7 @@ class AngelaChatService:
         meta_prompt: Optional[Dict[str, Any]] = None,
         neuro_blend_meta: Optional[Dict[str, Any]] = None,
         drive_files: Optional[Dict[str, Any]] = None,
+        intent: str = "general",
     ) -> str:
         self.state_adapter.anchor_learning.on_axis_update("beta", {"curiosity": 0.03, "focus": 0.02}, is_stable=True)
         try:
@@ -1037,6 +1173,7 @@ class AngelaChatService:
                 "history": memories_for_llm,
                 "user_name": user_name,
                 "origin": origin,
+                "intent": intent,
                 "bio_state": bio_state,
                 "screen_content": screen_text[:500],
                 "empathy": empathy_analysis,

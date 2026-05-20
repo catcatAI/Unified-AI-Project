@@ -1,30 +1,42 @@
-# 總任務追蹤清單 (Master Task List) - 架構審計報告版
+# 總任務追蹤清單 (Master Task List) - 實證審計完整版
 
-本檔案彙整了專案任務。**狀態已根據代碼庫實證審計更新，並納入架構健壯性與安全性修復目標。**
+本檔案基於代碼庫實體稽核。所有任務已與實際檔案系統路徑進行一對一對應。
 
-## 1. 任務清單 (Status Verified)
+## 1. 核心模組與架構驗證 (Verified)
+| ID | 任務 | 檔案路徑 | 狀態 |
+|---|------|------|------|
+| 1.1 | 核心狀態軸 (Axis) | `core/state/axis.py` | ✅ |
+| 1.2 | 軸字段註冊 (AxisFieldRegistry) | `core/state/axis_field.py` | ✅ |
+| 1.3 | 時間狀態管理 (TemporalState) | `core/state/temporal.py` | ✅ |
+| 1.4 | 資源分配政策 (AllocationPolicy) | `core/allocation/policy.py` | ✅ |
+| 1.5 | 影響空間抽象 (InfluenceSpace) | `core/influence/space.py` | ✅ |
+| 1.6 | 狀態矩陣適配器 (StateMatrixAdapter) | `core/autonomous/state_matrix_adapter.py` | ✅ |
+| 1.7 | η (Eta) 軸執行層 | `core/autonomous/eta_axis.py` | ✅ |
+| 1.8 | 狀態持久化 (StatePersistence) | `core/autonomous/state_persistence.py` | ✅ |
 
-| # | 任務 | 狀態 | 優先級 | 備註 |
-|---|------|------|--------|--------------|
-| 1 | 核心架構重構 (Phase 1-7) | ✅ 完成 | - | 檔案結構驗證通過 |
-| 2 | WebSocket Session 管理 | ✅ 完成 | - | 基礎設施存在，需強化異常恢復 |
-| 3 | WebSocket RSV Error 修復 | 🔄 進行中 | 🔴 HIGH | 需重構 `main_api_server.py` 的異常處理邏輯 |
-| 4 | StateMatrix4D 架構重構 | 🔄 進行中 | 🟡 MEDIUM | 待執行 `AxisManager` 職責剝離 |
-| 5 | WebSocket 生命週期測試 | ⚠️ 缺失 | 🔴 HIGH | **需建立 `test_websocket_lifecycle.py` 驗證重連與中斷** |
-| 6 | 檔案路徑注入防護 | ⚠️ 缺失 | 🔴 HIGH | **需建立 `file_handler.py` 進行路徑沙盒化 (Sandboxing)** |
-| 7 | 安全性加固：EvaluationDB | ⚠️ 缺失 | 🟡 MEDIUM | 需在 `evaluation_db.py` 加入路徑合法性驗證 |
+## 2. 服務與通訊驗證 (Verified)
+| ID | 任務 | 檔案路徑 | 狀態 |
+|---|------|------|------|
+| 2.1 | WebSocket API 服務 | `services/main_api_server.py` | 🔄 (RSV 錯誤中) |
+| 2.2 | 會話管理 (ConnectionSession) | `services/connection_session.py` | ✅ |
+| 2.3 | Angela LLM 服務 | `services/angela_llm_service.py` | ✅ |
+| 2.4 | 安全中間件 | `shared/security_middleware.py` | ✅ |
 
----
+## 3. 安全性與穩健性修復 (In Progress/Pending)
+| ID | 任務 | 優先級 | 狀態 | 備註 |
+|---|------|--------|------|------|
+| 3.1 | WebSocket 生命週期測試 | 🔴 HIGH | ⚠️ 缺失 | 需補建 `tests/integration/test_websocket_lifecycle.py` |
+| 3.2 | 路徑沙盒化防護 | 🔴 HIGH | ⚠️ 缺失 | 需建立 `security/file_handler.py` |
+| 3.3 | 資料庫路徑校驗 | 🟡 MEDIUM | 🔄 進行中 | 修復 `evaluation_db.py` 路徑風險 |
 
-## 2. 關鍵架構債務與行動方案 (Action Plan)
-
-| 類型 | 問題點 | 建議行動 |
-|---|------|------|
-| **架構健壯性** | WebSocket 異常處理過於消極 (`continue`) | 重構 `websocket_endpoint`，強制執行斷線清除狀態 |
-| **安全性** | `evaluation_db.py` 缺乏路徑範圍檢查 | 實作路徑解析與範圍強制檢查 (Path Scoping) |
-| **測試覆蓋率** | 缺乏 WebSocket 生命週期邊界測試 | 建立穩定性測試套件，模擬異常中斷 |
+## 4. 代碼瘦身計畫 (Refactoring Roadmap)
+| ID | 任務 | 目標 | 狀態 |
+|---|------|------|------|
+| 4.1 | 軸更新邏輯委託 | `state_matrix.py` → `AxisManager` | 🟡 待開始 |
+| 4.2 | 語義處理邏輯拆分 | `state_matrix.py` → `text_utils.py` | 🟡 待開始 |
+| 4.3 | 舊版決策邏輯遷移 | `state_matrix.py` → `AllocationPolicy` | 🟡 待開始 |
 
 ---
 **審計總結**:
-- 系統已具備核心功能，但架構穩定性與安全性邊界處於「開發者模式」（缺乏防禦性編碼）。
-- 下一階段目標：從「功能實現」轉向「韌性工程」(Resilience Engineering)，首要任務為補強 WebSocket 的健壯性與檔案系統安全性。
+- 本清單是對應實際磁碟路徑的實證審計，取代所有過去的預估清單。
+- 接下來將依照「安全性防護」→「測試補建」→「架構瘦身」的順序進行修復。

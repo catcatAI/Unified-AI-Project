@@ -44,6 +44,7 @@ import uuid
 import random
 import asyncio
 import httpx
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
@@ -276,6 +277,7 @@ from fastapi import (
     Request,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from core.config_loader import get_angela_config
 
 from core.autonomous.desktop_interaction import DesktopInteraction, FileCategory
 from core.autonomous.action_executor import (
@@ -307,6 +309,61 @@ app = FastAPI(
     version="6.0.4",
 )
 
+# ========== CORS 中間件（從配置讀取） ==========
+try:
+    _angela_cfg = get_angela_config()
+    _cors_cfg = _angela_cfg.get_authority("angela_core", {}).get("middleware", {}).get("cors", {})
+    if _cors_cfg.get("enabled", True):
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=_cors_cfg.get("allow_origins", ["*"]),
+            allow_credentials=_cors_cfg.get("allow_credentials", True),
+            allow_methods=_cors_cfg.get("allow_methods", ["*"]),
+            allow_headers=_cors_cfg.get("allow_headers", ["*"]),
+        )
+        logger.info("[Middleware] CORS enabled from config")
+except Exception as e:
+    logger.warning(f"[Middleware] CORS setup skipped: {e}")
+
+# ========== 生命週期管理 ==========
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup: 預初始化核心服務。Shutdown: 清理資源。"""
+    logger.info("[Lifecycle] Starting Angela AI API server...")
+    try:
+        _lc = _angela_cfg.get("lifecycle", {}) if _angela_cfg else {}
+        if _lc.get("preinitialize_on_startup", True):
+            for svc_name in _lc.get("services_to_preinit", []):
+                try:
+                    if svc_name == "AngelaChatService":
+                        from services.chat_service import get_angela_chat_service
+                        svc = get_angela_chat_service()
+                        await svc.initialize()
+                        logger.info("[Lifecycle] AngelaChatService initialized")
+                    elif svc_name == "AngelaLLMService":
+                        from services.angela_llm_service import get_llm_service
+                        await get_llm_service()
+                        logger.info("[Lifecycle] AngelaLLMService initialized")
+                    elif svc_name == "BiologicalIntegrator":
+                        from core.autonomous.biological_integrator import BiologicalIntegrator
+                        bio = BiologicalIntegrator()
+                        await bio.initialize()
+                        logger.info("[Lifecycle] BiologicalIntegrator initialized")
+                except Exception as e:
+                    logger.warning(f"[Lifecycle] Failed to pre-init {svc_name}: {e}")
+    except Exception as e:
+        logger.warning(f"[Lifecycle] Startup config error: {e}")
+
+    logger.info("[Lifecycle] Server startup complete")
+    yield
+
+    logger.info("[Lifecycle] Shutting down...")
+    _sd_timeout = _lc.get("shutdown_timeout", 10.0) if _angela_cfg else 10.0
+    logger.info(f"[Lifecycle] Shutdown complete (timeout={_sd_timeout}s)")
+
+
+app.router.lifespan_context = lifespan
+
 # ========== DEBUG: Patch websockets Frame.check to log RSV frames ==========
 import websockets
 import websockets.frames
@@ -333,8 +390,47 @@ _digital_life = None
 _economy_manager = None
 _metabolic_heartbeat = None
 
-# Session management
-sessions: Dict[str, Any] = {}
+# Session management with TTL
+class TTLSessionManager:
+    """TTL-aware session manager with LRU eviction"""
+    def __init__(self):
+        self._sessions: Dict[str, Dict[str, Any]] = {}
+        self._config = _angela_cfg.get_authority("angela_core", {}).get("session_manager", {}) if _angela_cfg else {}
+        self._ttl = self._config.get("ttl_seconds", 3600)
+        self._max_sessions = self._config.get("max_sessions", 1000)
+
+    def _purge_expired(self):
+        now = datetime.now()
+        expired = [sid for sid, s in self._sessions.items()
+                    if (now - datetime.fromisoformat(s.get("created_at", now.isoformat()))).total_seconds() > self._ttl]
+        for sid in expired:
+            del self._sessions[sid]
+        if len(self._sessions) > self._max_sessions:
+            sorted_sessions = sorted(self._sessions.items(), key=lambda x: x[1].get("created_at", ""))
+            for sid, _ in sorted_sessions[:len(sorted_sessions) - self._max_sessions]:
+                del self._sessions[sid]
+
+    def get(self, session_id: str) -> Optional[Dict[str, Any]]:
+        self._purge_expired()
+        return self._sessions.get(session_id)
+
+    def set(self, session_id: str, data: Dict[str, Any]):
+        self._purge_expired()
+        if len(self._sessions) >= self._max_sessions:
+            oldest = min(self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", ""))
+            del self._sessions[oldest]
+        self._sessions[session_id] = data
+
+    def __contains__(self, session_id: str) -> bool:
+        self._purge_expired()
+        return session_id in self._sessions
+
+    def items(self):
+        self._purge_expired()
+        return self._sessions.items()
+
+
+sessions = TTLSessionManager()
 
 
 def get_metabolic_heartbeat() -> MetabolicHeartbeat:
@@ -500,144 +596,106 @@ def _validate_environment_variables():
 async def _handle_chat_request(
     user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human"
 ) -> Dict[str, Any]:
-    """
-    處理聊天請求的共用函數 (GSI-4 / 2030 Standard)
-    雙軌數學驗證：LLM 提取 + 引擎驗證 + 狀態觸發
-    """
-    from services.math_verifier import MathVerifier  # noqa: E402
-
+    """處理聊天請求 — 合併 Flow A (AngelaChatService) 完整管線 + Flow B HTTP"""
     logger.info(f"📩 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
 
     if not user_message or not user_message.strip():
         raise HTTPException(status_code=400, detail="訊號遺失：消息不能為空")
 
-    if len(user_message) > 4000:
-        logger.warning(f"🛡️ [LIS] Intercepted oversized input from {origin}")
-        user_message = user_message[:1000]
+    # 從配置讀取截斷閾值
+    _chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
+    _max_len = _chat_cfg.get("max_message_length", 4000)
+    _trunc_len = _chat_cfg.get("truncation_length", 1000)
+    if len(user_message) > _max_len:
+        logger.warning(f"🛡️ [LIS] Intercepted oversized input ({len(user_message)} chars)")
+        user_message = user_message[:_trunc_len]
 
     if session_id not in sessions:
-        sessions[session_id] = {
+        sessions.set(session_id, {
             "created_at": datetime.now().isoformat(),
             "origin": origin,
             "user_name": user_name
-        }
+        })
 
     try:
-        service = None
-
-        # ============================================================
-        # [Task N.22-DUAL-RAIL] 雙軌數學驗證
-        # ============================================================
+        # Step 1: 雙軌數學驗證（保留為前置快速通道）
+        from services.math_verifier import MathVerifier
         is_math = False
-        verifier = None
-
         try:
             digital_life = get_digital_life()
-            matrix = None
-            if digital_life and hasattr(digital_life, "state_matrix"):
-                matrix = digital_life.state_matrix
-
+            matrix = digital_life.state_matrix if digital_life and hasattr(digital_life, "state_matrix") else None
             verifier = MathVerifier(state_matrix=matrix)
             is_math = verifier.is_math_message(user_message)
-
             if is_math:
                 logger.info(f"🧮 [DualRail] Math task detected from {origin}")
                 verification = await verifier.verify(user_message, user_name)
-
                 if verification.response_text:
-                    response_text = verification.response_text
-                    source = "dual_rail"
-
-                    if verification.needs_clarification:
-                        emotion = "confused"
-                        emotion_confidence = 0.7
-                        emotion_intensity = 0.6
-                    elif not verification.matches:
-                        emotion = "surprised"
-                        emotion_confidence = 0.8
-                        emotion_intensity = 0.7
-                    elif verification.extraction and verification.extraction.confidence >= 0.8:
-                        emotion = "happy"
-                        emotion_confidence = 0.9
-                        emotion_intensity = 0.6
-                    else:
-                        emotion = "calm"
-                        emotion_confidence = 0.6
-                        emotion_intensity = 0.4
-
-                    is_math = True
-
-                    if matrix and verification.final_answer is not None:
-                        epsilon_conf = verification.extraction.confidence if verification.extraction else 0.5
-                        matrix.epsilon.values["certainty"] = min(1.0, 0.5 + epsilon_conf * 0.5)
-                        matrix.epsilon.values["complexity"] = min(
-                            1.0, len(user_message) / 50.0
-                        )
-                        if not verification.matches:
-                            matrix.epsilon.values["certainty"] *= 0.5
-                            matrix.gamma.values["surprise"] = min(
-                                1.0, matrix.gamma.values.get("surprise", 0.0) + 0.3
-                            )
-                        elif verification.needs_clarification:
-                            matrix.beta.values["confusion"] = min(
-                                1.0, matrix.beta.values.get("confusion", 0.0) + 0.4
-                            )
-                        matrix.apply_epsilon_influence()
-                else:
-                    is_math = False
-
-        except Exception as math_err:  # broad exception acceptable: math verification is optional
-            logger.warning(f"⚠️ [DualRail] Math verification failed, falling back to LLM: {math_err}")
+                    return _build_math_response(verification, matrix, user_message, session_id)
+                is_math = False
+        except Exception as math_err:
+            logger.warning(f"⚠️ [DualRail] Math verification failed: {math_err}")
             is_math = False
 
-        if not is_math:
-            service = await get_llm_service()
-            response_text = await asyncio.wait_for(
-                angela_llm_response(user_message=user_message, history=history, user_name=user_name, origin=origin),
-                timeout=30.0,
-            )
-            source = "llm" if service and service.is_available else "fallback"
-
-        # ============================================================
-        # 情感分析
-        # ============================================================
-        if service and hasattr(service, "analyze_emotion"):
-            emotion_analysis = service.analyze_emotion(user_message, response_text)
-            emotion = emotion_analysis.get("emotion", "happy")
-            emotion_confidence = emotion_analysis.get("confidence", 0.5)
-            emotion_intensity = emotion_analysis.get("intensity", 0.5)
-        else:
-            emotion = emotion if is_math else "happy"
-            emotion_confidence = emotion_confidence if is_math else 0.5
-            emotion_intensity = emotion_intensity if is_math else 0.5
-
+        # Step 2: 非數學 → 走 AngelaChatService 完整管線
+        from services.chat_service import generate_angela_response
+        response_text = await asyncio.wait_for(
+            generate_angela_response(user_message, user_name),
+            timeout=30.0,
+        )
         return {
             "response_text": response_text,
-            "source": source,
-            "emotion": emotion,
-            "emotion_confidence": emotion_confidence,
-            "emotion_intensity": emotion_intensity,
+            "source": "angela_chat_service",
+            "emotion": "happy",
+            "emotion_confidence": 0.5,
+            "emotion_intensity": 0.5,
             "session_id": session_id,
         }
 
     except asyncio.TimeoutError:
         logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
-        response_text = await generate_angela_response(user_message, user_name)
-        source = "fallback-timeout"
-        emotion = "neutral"
-        emotion_confidence = 0.5
-        emotion_intensity = 0.5
         return {
-            "response_text": response_text,
-            "source": source,
-            "emotion": emotion,
-            "emotion_confidence": emotion_confidence,
-            "emotion_intensity": emotion_intensity,
+            "response_text": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
+            "source": "fallback-timeout",
+            "emotion": "neutral",
+            "emotion_confidence": 0.5,
+            "emotion_intensity": 0.5,
             "session_id": session_id,
         }
     except Exception as e:
         logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="internal server error")
+
+
+def _build_math_response(verification, matrix, user_message: str, session_id: str) -> Dict[str, Any]:
+    """建構數學驗證回應（抽出為獨立函數）"""
+    if verification.needs_clarification:
+        emotion, emotion_confidence, emotion_intensity = "confused", 0.7, 0.6
+    elif not verification.matches:
+        emotion, emotion_confidence, emotion_intensity = "surprised", 0.8, 0.7
+    elif verification.extraction and verification.extraction.confidence >= 0.8:
+        emotion, emotion_confidence, emotion_intensity = "happy", 0.9, 0.6
+    else:
+        emotion, emotion_confidence, emotion_intensity = "calm", 0.6, 0.4
+
+    if matrix and verification.final_answer is not None:
+        epsilon_conf = verification.extraction.confidence if verification.extraction else 0.5
+        matrix.epsilon.values["certainty"] = min(1.0, 0.5 + epsilon_conf * 0.5)
+        matrix.epsilon.values["complexity"] = min(1.0, len(user_message) / 50.0)
+        if not verification.matches:
+            matrix.epsilon.values["certainty"] *= 0.5
+            matrix.gamma.values["surprise"] = min(1.0, matrix.gamma.values.get("surprise", 0.0) + 0.3)
+        elif verification.needs_clarification:
+            matrix.beta.values["confusion"] = min(1.0, matrix.beta.values.get("confusion", 0.0) + 0.4)
+        matrix.apply_epsilon_influence()
+
+    return {
+        "response_text": verification.response_text,
+        "source": "dual_rail",
+        "emotion": emotion,
+        "emotion_confidence": emotion_confidence,
+        "emotion_intensity": emotion_intensity,
+        "session_id": session_id,
+    }
 
 
 @api_v1_router.get("/security/sync-key-c")
@@ -658,11 +716,11 @@ async def sync_key_c(request: Request):
 @api_v1_router.post("/session/start")
 async def start_session(request: Dict[str, Any] = Body(default={})):
     session_id = f"sess-{uuid.uuid4().hex[:8]}"
-    sessions[session_id] = {
+    sessions.set(session_id, {
         "created_at": datetime.now().isoformat(),
         "messages": [],
         "user_name": request.get("user_name", "User"),
-    }
+    })
     return {"session_id": session_id, "message": "Welcome to Angela AI!"}
 
 
@@ -672,7 +730,8 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=404, detail="Session not found")
 
     user_message = request.get("text", request.get("message", ""))
-    sessions[session_id]["messages"].append(
+    session = sessions.get(session_id)
+    session["messages"].append(
         {
             "role": "user",
             "content": user_message,
@@ -689,7 +748,7 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
     ]
     ai_response = random.choice(responses)
 
-    sessions[session_id]["messages"].append(
+    session["messages"].append(
         {
             "role": "assistant",
             "content": ai_response,

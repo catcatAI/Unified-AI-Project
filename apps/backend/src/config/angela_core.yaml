@@ -7,6 +7,67 @@
 # 更新: 2026-05-19
 # =============================================================================
 
+# ── 聊天流與請求處理 ──────────────────────────────────────────────────────
+
+chat_flow:
+  default_flow: "angela_chat_service"
+  http_timeout: 30.0
+  max_message_length: 4000
+  truncation_length: 1000
+  truncation_message: "（訊息已截斷至 {max} 字元）"
+  response_schema_version: "2.0"
+
+# ── 中間件配置 ─────────────────────────────────────────────────────────────
+
+middleware:
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+    allow_methods: ["*"]
+    allow_headers: ["*"]
+    allow_credentials: true
+  encrypted_communication:
+    enabled: false
+  auth:
+    enabled: false
+
+# ── 生命週期 ──────────────────────────────────────────────────────────────
+
+lifecycle:
+  preinitialize_on_startup: true
+  services_to_preinit:
+    - "AngelaChatService"
+    - "AngelaLLMService"
+    - "BiologicalIntegrator"
+  shutdown_timeout: 10.0
+
+# ── 工作階段管理 ───────────────────────────────────────────────────────────
+
+session_manager:
+  ttl_seconds: 3600
+  max_sessions: 1000
+  cleanup_interval: 300
+  eviction_policy: "lru"
+
+# ── 路由註冊表 ─────────────────────────────────────────────────────────────
+
+routing:
+  route_registry:
+    - path: "/angela/chat"
+      owner: "main_api_server"
+    - path: "/session/start"
+      owner: "main_api_server"
+    - path: "/session/{session_id}/send"
+      owner: "main_api_server"
+    - path: "/dialogue"
+      owner: "main_api_server"
+    - path: "/chat/unified"
+      owner: "main_api_server"
+    - path: "/angela/reload"
+      owner: "router"
+    - path: "/chat/completions"
+      action: "connect_to_llm"
+
 # ── 意圖關鍵字 ─────────────────────────────────────────────────────────────
 
 intents:
@@ -231,6 +292,21 @@ intents:
     priority: 5
     handler: "DocumentBuilder"
 
+# ── 服務層配置 ─────────────────────────────────────────────────────────────
+
+services:
+  google_drive:
+    real_service: true
+    max_retries: 3
+    timeout: 30
+  code_inspector:
+    real_service: true
+    quality_threshold: 0.7
+  web_search:
+    real_service: true
+    num_results: 3
+    timeout: 15
+
 # ── 複雜度閾值 ─────────────────────────────────────────────────────────────
 
 complexity:
@@ -314,6 +390,62 @@ complexity:
         - "find"
       aliases: ["search", "find", "s", "f"]
 
+# ── 學習系統配置 ───────────────────────────────────────────────────────────
+
+learning:
+  decay:
+    enabled: true
+    days_to_decay: 30
+    decay_factor: 0.1
+    removal_threshold: 0.3
+    authority_priority: true
+  write_strategy:
+    mode: "debounce"
+    debounce_ms: 5000
+    max_batch_size: 100
+  template_quality:
+    enabled: true
+    match_tracking_window: 100
+    prune_after_days: 30
+    min_match_rate: 0.05
+
+# ── 狀態→自然語言轉換 ─────────────────────────────────────────────────────
+
+state_to_llm:
+  alpha_energy:
+    high: "精力充沛"
+    medium: "狀態平穩"
+    low: "有點疲憊"
+  beta_curiosity:
+    high: "充滿好奇"
+    medium: "平靜專注"
+    low: "不太在意"
+  gamma_valence:
+    high: "心情很好"
+    medium: "狀態平穩"
+    low: "有點低落"
+  delta_intimacy:
+    high: "感覺親近"
+    medium: "相處自在"
+    low: "保持距離"
+
+# ── 回應模式 ──────────────────────────────────────────────────────────────
+
+response_schema:
+  version: "2.0"
+  fields: ["response_text", "session_id", "emotion", "emotion_confidence", "source"]
+
+# ── 持久化 ─────────────────────────────────────────────────────────────────
+
+persistence:
+  state_matrix:
+    checkpoint_interval: 300
+    persist_to: "ham"
+  user_profiles:
+    persist_to: "ham"
+  sessions:
+    persist_to: "none"
+
 # ── Fallback 模式 ───────────────────────────────────────────────────────────
 
 fallback_patterns:
@@ -342,6 +474,16 @@ fallback_patterns:
     - "計劃"
     - "安排"
     - "plan"
+
+# ── 模板匹配權重 ──────────────────────────────────────────────────────────
+
+template_matching:
+  score_weights:
+    content_similarity: 0.4
+    keyword_overlap: 0.3
+    recency_factor: 0.2
+    state_similarity: 0.0
+    impression_similarity: 0.0
 
 # ── 預定義模板（TemplateLibrary 初始內容）───────────────────────────────
 

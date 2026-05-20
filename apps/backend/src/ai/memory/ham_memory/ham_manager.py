@@ -224,6 +224,31 @@ class HAMMemoryManager:
         scored_templates.sort(key=lambda x: x[1], reverse=True)
         return scored_templates[:limit]
 
+    async def get_template(self, template_id: str) -> Optional[Any]:
+        """Retrieve a template by ID from core memory"""
+        try:
+            results = await self.query_core_memory(data_type_filter="response_template", limit=50)
+            for res in results:
+                try:
+                    data = json.loads(res["content"])
+                    if isinstance(data, dict) and data.get("id") == template_id:
+                        from ai.memory.memory_template import MemoryTemplate
+                        return MemoryTemplate.from_dict(data)
+                except Exception:
+                    continue
+            return None
+        except Exception as e:
+            logger.warning(f"get_template failed: {e}")
+            return None
+
+    async def update_template(self, template) -> bool:
+        """Update an existing template by re-storing it"""
+        try:
+            return await self.store_template(template)
+        except Exception as e:
+            logger.warning(f"update_template failed: {e}")
+            return False
+
     async def store_template(self, template) -> bool:
         try:
             content = json.dumps(template.to_dict(), ensure_ascii=False)

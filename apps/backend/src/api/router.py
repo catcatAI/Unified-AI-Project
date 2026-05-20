@@ -7,13 +7,11 @@ import psutil
 from system.cluster_manager import cluster_manager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-import uuid
 import logging
 
 logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Body
-from services.chat_service import generate_angela_response
 from api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy, trace
 from api.routes.ops_routes import router as ops_router
 
@@ -177,62 +175,6 @@ async def chat_completions(request: Dict[str, Any] = Body(...)):
     }
 
 
-# Session management for Angela
-sessions: Dict[str, Dict] = {}
-
-
-@router.post("/session/start")
-async def start_session(request: Dict[str, Any] = Body(default={})):
-    """开始新对话会话"""
-    session_id = str(uuid.uuid4())[:8]
-    sessions[session_id] = {
-        "created_at": datetime.now().isoformat(),
-        "messages": [],
-        "user_name": request.get("user_name", "User"),
-    }
-    return {
-        "session_id": session_id,
-        "message": "Session started. Welcome to Angela AI!",
-    }
-
-
-@router.post("/session/{session_id}/send")
-async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
-    """发送消息到会话"""
-    if session_id not in sessions:
-        return {"error": "Session not found"}
-
-    user_message = request.get("text", "")
-    sessions[session_id]["messages"].append(
-        {
-            "role": "user",
-            "content": user_message,
-            "timestamp": datetime.now().isoformat(),
-        }
-    )
-
-    angela_responses = [
-        "我明白了！让我帮你想想...",
-        "这是个很有趣的想法！",
-        "我可以帮你处理这个。",
-        "让我分析一下这个问题...",
-        "没问题，我这就帮你做！",
-        "我理解你的需求了。",
-    ]
-
-    ai_response = random.choice(angela_responses)
-
-    sessions[session_id]["messages"].append(
-        {
-            "role": "assistant",
-            "content": ai_response,
-            "timestamp": datetime.now().isoformat(),
-        }
-    )
-
-    return {"session_id": session_id, "response_text": ai_response}
-
-
 @router.post("/angela/reload")
 async def reload_llm():
     """強制重新載入 LLM 服務（hot-reload 配置變更）"""
@@ -246,21 +188,4 @@ async def reload_llm():
         "available_backends": [str(b.value) for b in providers],
     }
 
-# Angela-specific chat endpoint with personality
-@router.post("/angela/chat")
-async def angela_chat(request: Dict[str, Any] = Body(...)):
-    """Angela 智能對話接口 - 帶有性格和情感"""
-    user_message = request.get("message", request.get("text", ""))
-    session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
-    user_name = request.get("user_name", "朋友")
 
-    # Use shared chat service
-    response_text = await generate_angela_response(user_message, user_name)
-
-
-    return {
-        "session_id": session_id,
-        "response_text": response_text,
-        "angela_mood": "happy",
-        "personality": "Angela AI",
-    }

@@ -1831,7 +1831,7 @@ class AngelaLLMService:
             from core.config_loader import get_angela_config
             cfg = get_angela_config()
             provider = self.active_backend.__class__.__name__ if self.active_backend else "unknown"
-            intent = context.get("origin", "general") if context else "general"
+            intent = context.get("intent", context.get("origin", "general")) if context else "general"
             if status == "success":
                 cfg.learn("route_success", {
                     "provider": provider, "intent": intent, "latency_ms": latency_ms
