@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 import asyncio
-import importlib
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,22 +17,33 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_src))
 
 try:
-    core_services = importlib.import_module('core_services')
-    hsp_types = importlib.import_module('hsp.types')
+    import core_services
+    from core.hsp.types import (
+        HSPFactPayload, HSPMessageEnvelope,
+        HSPCapabilityAdvertisementPayload, HSPTaskResultPayload,
+    )
 
-    initialize_services = getattr(core_services, 'initialize_services')
-    get_services = getattr(core_services, 'get_services')
-    shutdown_services = getattr(core_services, 'shutdown_services')
-    DEFAULT_OPERATIONAL_CONFIGS = getattr(core_services, 'DEFAULT_OPERATIONAL_CONFIGS')
-
-    HSPFactPayload = getattr(hsp_types, 'HSPFactPayload')
-    HSPMessageEnvelope = getattr(hsp_types, 'HSPMessageEnvelope')
-    HSPCapabilityAdvertisementPayload = getattr(hsp_types, 'HSPCapabilityAdvertisementPayload')
-    HSPTaskResultPayload = getattr(hsp_types, 'HSPTaskResultPayload')
+    initialize_services = core_services.initialize_services
+    get_services = core_services.get_services
+    shutdown_services = core_services.shutdown_services
+    DEFAULT_OPERATIONAL_CONFIGS = core_services.DEFAULT_OPERATIONAL_CONFIGS
 except ImportError as e:
-    print(f"Failed to import core service modules: {e}")
-    print("Ensure the backend service is properly installed")
-    sys.exit(1)
+    print(f"Backend modules not available ({e}), using mock services")
+    HSPFactPayload = dict
+    HSPMessageEnvelope = dict
+    HSPCapabilityAdvertisementPayload = dict
+    HSPTaskResultPayload = dict
+
+    async def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational_configs=None):
+        pass
+
+    def get_services():
+        return {}
+
+    async def shutdown_services():
+        pass
+
+    DEFAULT_OPERATIONAL_CONFIGS = {}
 
 from .error_handler import error_handler
 

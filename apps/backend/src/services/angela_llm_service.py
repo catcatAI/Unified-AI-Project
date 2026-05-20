@@ -659,13 +659,14 @@ class AngelaLLMService:
                 self.enable_memory_enhancement = True
 
                 # 初始化预计算服务
+                _mem_cfg = _get_llm_config("memory", {})
                 self.precompute_service = PrecomputeService(
                     llm_service=self,
                     memory_manager=self.memory_manager,
-                    idle_threshold=5.0,
-                    cpu_threshold=70.0,
-                    max_queue_size=50,
-                    llm_timeout=180.0,
+                    idle_threshold=_mem_cfg.get("precompute_idle_threshold", 5.0),
+                    cpu_threshold=_mem_cfg.get("precompute_cpu_threshold", 70.0),
+                    max_queue_size=_mem_cfg.get("precompute_max_queue_size", 50),
+                    llm_timeout=_mem_cfg.get("precompute_llm_timeout", 180.0),
                 )
 
                 # 初始化模板库
