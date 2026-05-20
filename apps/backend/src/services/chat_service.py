@@ -218,6 +218,7 @@ class AngelaChatService:
                     "character_card": self._handle_character_card_intent,
                     "document": self._handle_document_intent,
                     "llm_manage": self._handle_llm_manage_intent,
+                    "fantasy_dm": self._handle_fantasy_dm_intent,
                 }
                 handler = handler_map.get(top_intent_name)
                 if handler:
@@ -887,6 +888,48 @@ class AngelaChatService:
         self.state_matrix.zeta.values["identity_continuity"] = ic_thresh if self.eta_state.execution_count > ic_count else ic_bound
         if self.eta_state.execution_count > 0:
             self.state_adapter.anchor_learning.on_axis_update("zeta", {"temporal_coherence": 0.005, "narrative_flow": 0.005}, is_stable=True)
+
+    async def _handle_fantasy_dm_intent(self, text: str, intent: str) -> str:
+        self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.02}, is_stable=True)
+        try:
+            from ai.agents.specialized.fantasy_dm_agent import FantasyDMAgent
+            agent = FantasyDMAgent()
+            action = "rpg_narration"
+            params = {}
+            if any(kw in text for kw in ["煉金", "藥水", "調配"]):
+                action = "alchemy_brewing"
+                params = {
+                    "item1": {"name": "草藥", "description": "普通的草藥"},
+                    "item2": {"name": "露水", "description": "清晨的露水"}
+                }
+            elif any(kw in text for kw in ["查", "檢索", "搜尋", "資料"]):
+                action = "codex_lookup"
+                params = {"query": text}
+            else:
+                action = "rpg_narration"
+                params = {
+                    "location_name": "幽暗森林",
+                    "base_description": text
+                }
+            task = {"action": action, "parameters": params}
+            res = await agent.execute(task)
+            if res.get("status") == "success":
+                payload = res.get("payload", {})
+                if action == "rpg_narration":
+                    return payload.get("narration", "敘事失敗")
+                elif action == "alchemy_brewing":
+                    item = payload.get("item", {})
+                    return f"（煉金結果）{payload.get('message', '')} 獲得：{item.get('name')}。"
+                elif action == "codex_lookup":
+                    results = res.get("results", [])
+                    if results:
+                        names = [f"[{r.get('category')}] {r.get('id')}" for r in results]
+                        return f"（檢索到資料）{', '.join(names)}"
+                    return "沒有找到相關資料。"
+            return "（TRPG 代理呼叫失敗）"
+        except Exception as e:
+            logger.warning(f"Fantasy DM intent failed: {e}")
+            return "（TRPG 模組有點混亂，等一下喔...）"
 
     async def _handle_file_op_intent(self, text: str, intent: str) -> str:
         self.state_adapter.anchor_learning.on_axis_update("delta", {"connection": 0.01}, is_stable=True)

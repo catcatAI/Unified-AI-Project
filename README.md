@@ -130,14 +130,17 @@ your desktop:
 #### 🛡️ **A/B/C Security System**
 
 To protect your digital life data, Angela employs a three-tier key isolation
-mechanism:
+mechanism (HMAC-SHA256 signature verification, no body encryption):
 
-- **Key A (Backend Control)**: Manages system core permissions and the Security
-  Tray Monitor.
-- **Key B (Mobile Comm)**: Dedicated to encrypted mobile communication,
-  preventing man-in-the-middle attacks.
-- **Key C (Desktop Sync)**: Handles cross-device data synchronization and local
-  AES-256-CBC encryption.
+- **Key A (Backend Control)**: Manages system core permissions.
+- **Key B (Mobile Comm)**: Dedicated to mobile communication signature
+  verification.
+- **Key C (Desktop Sync)**: Handles cross-device data synchronization.
+
+> **Note**: The EncryptedCommunicationMiddleware only verifies HMAC-SHA256
+> signatures on protected endpoints; it does not encrypt/decrypt request bodies.
+> The mobile app's encryption layer was stripped — `getSystemStatus()` uses
+> no middleware and is never called from app code.
 
 ---
 
@@ -197,6 +200,8 @@ math to high-precision decimal (10,000x scale).
 - **Python**: 3.9+ (for backend)
 - **RAM**: 4GB minimum (8GB recommended)
 - **OS**: Windows 10/11, macOS 10.15+, Ubuntu 20.04+, or Android 10+
+- **Ollama** (primary LLM backend): Required for AI dialogue. CPU-only mode
+  supported but >120s per inference. Gemini API key can be used as fallback.
 
 #### Installation
 
@@ -223,9 +228,8 @@ cd Unified-AI-Project
 cd apps/backend
 pip install -r requirements.txt
 
-# 3. Start Security Monitor (System Tray)
-# This generates A/B/C keys and starts the backend service
-python start_monitor.py
+# 3. Start backend service
+python run_angela.py --api-only
 
 # 4. Install desktop app dependencies
 cd ../desktop-app/electron_app
@@ -360,11 +364,15 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 
 #### 🛡️ A/B/C 安全防護體系
 
-為了保護您的數位生命數據，Angela 採用了三級密鑰隔離機制：
+為了保護您的數位生命數據，Angela 採用了三級密鑰隔離機制（HMAC-SHA256 簽名驗證，非本體加密）：
 
-- **Key A (後端控制)**: 負責系統核心權限與常駐監控器 (System Tray) 的啟停。
-- **Key B (行動通訊)**: 專用於手機端與後端的加密通訊，防止中間人攻擊。
-- **Key C (桌面同步)**: 處理跨裝置數據同步與本地數據的 AES-256 加密。
+- **Key A (後端控制)**: 負責系統核心權限。
+- **Key B (行動通訊)**: 專用於手機端通訊簽名驗證。
+- **Key C (桌面同步)**: 處理跨裝置數據同步。
+
+> **注意**: EncryptedCommunicationMiddleware 僅驗證受保護端點的 HMAC-SHA256
+> 簽名，不加密/解密請求本體。手機端的加密層已被剝離 — `getSystemStatus()`
+> 使用無中介層、從未被 App 代碼呼叫。
 
 ---
 
@@ -439,9 +447,8 @@ cd Unified-AI-Project
 cd apps/backend
 pip install -r requirements.txt
 
-# 3. 啟動安全監控器 (System Tray)
-# 這將生成 A/B/C 密鑰並開啟後端服務
-python start_monitor.py
+# 3. 啟動後端服務
+python run_angela.py --api-only
 
 # 4. 安裝桌面端依賴並啟動
 cd ../desktop-app/electron_app
@@ -459,7 +466,7 @@ To prevent confusion, here is a clear map of the multiple frontends, backends, a
 * **`launch_angela.bat`**: The **Backend-Only Launcher**. It directly starts the FastAPI backend server (`uvicorn services.main_api_server:app`) without starting any frontend. (僅啟動後端 API 伺服器)
 
 ### 🧠 Backends (後端服務)
-* **`apps/backend/` (Main API Server)**: The core intelligence powered by Python/FastAPI. It handles the 6-Layer Life Architecture, state sync, memory, emotions, and the advanced autonomous systems (e.g., Cerebellum Core). (Angela 的大腦與核心，處理所有 AI 邏輯、記憶與生物模擬)
+* **`apps/backend/` (Main API Server)**: The core intelligence powered by Python/FastAPI. Contains **two servers** on default port 8000 — `main.py` (system management, 9 routes) and `main_api_server.py` (primary AI server, ~104 routes including ~50 from shared `api/router.py`). Handles the 6-Layer Life Architecture, state sync, memory, emotions, and advanced autonomous systems. (Angela 的大腦與核心，包含兩台伺服器，均預設 port 8000 — `main.py` 系統管理用、`main_api_server.py` 主要 AI 伺服器。處理所有 AI 邏輯、記憶與生物模擬)
 * **`apps/gemini-os-bridge/`**: A specialized Python backend service dedicated to OS-level automation and computer vision tasks (e.g., screen capture, automated web search). (專門處理作業系統自動化與視覺辨識的微服務)
 
 ### 🖥️ Frontends (前端應用)
@@ -546,13 +553,18 @@ To prevent confusion, here is a clear map of the multiple frontends, backends, a
                               ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                    Backend API (FastAPI)                        │
-│ ├── A/B/C Security Middleware (HMAC/AES)                      │
-│ ├── System Tray Monitoring (pystray)                          │
-│ ├── State Matrix Synchronization                                 │
+│  ⚠️ Two servers on default port 8000:                          │
+│    App A (main.py) — system management tool                     │
+│    App B (main_api_server.py) — primary AI server               │
+│ ├── Shared router at api/router.py (/api/v1/*)                │
+│ ├── EncryptedCommunicationMiddleware (HMAC-SHA256, no body     │
+│ │   encryption)                                                 │
+│ ├── State Matrix Synchronization (34 endpoints)                │
 │ ├── Maturity/Precision Management                               │
-│ ├── Hardware Detection Integration                                │
-│ ├── WebSocket Server                                          │
-│ └── AI/Model Endpoints                                     │
+│ ├── Hardware Detection Integration                               │
+│ ├── WebSocket Server (ConnectionManager)                       │
+│ ├── AI/LLM Endpoints (Ollama primary, Gemini backup)            │
+│ └── 12 of 27 config sections in angela_core.yaml are dead code  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -941,8 +953,8 @@ If this project helps you, please give us a ⭐!
 
 ---
 
-**Version**: 6.3.0
-**Release Date**: 2026-05-18
+**Version**: 6.4.0
+**Release Date**: 2026-05-19
 **Status**: Production Ready ✅ | NGR v6.4 Complete | [auto] LLM Mode Active
 **Platforms**: Windows, macOS, Linux, Android/iOS (Mobile Bridge)
 **Code Stats**: 502 Python Source Files, ~114,000 Lines, 63 Desktop JS Modules

@@ -254,7 +254,19 @@ intents:
       - "切到"
       - "model"
     priority: 6
-    handler: "LLMManager"
+  fantasy_dm:
+    keywords:
+      - "跑團"
+      - "冒險"
+      - "煉金"
+      - "藥水"
+      - "dm"
+      - "dungeon master"
+      - "trpg"
+      - "奇幻"
+      - "敘事"
+    priority: 5
+    handler: "FantasyDMAgent"
 
   learning:
     keywords:
