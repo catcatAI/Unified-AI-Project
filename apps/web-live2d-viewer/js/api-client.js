@@ -38,7 +38,7 @@ class AngelaAPIClient {
      */
     async testConnection() {
         try {
-            const response = await fetch(`${this.baseURL}/health`, {
+            const response = await fetch(`${this.baseURL}/api/v1/health`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -57,12 +57,12 @@ class AngelaAPIClient {
      */
     async validateEndpoints() {
         const endpoints = [
-            { path: '/health', method: 'GET', required: true },
-            { path: '/status', method: 'GET', required: true },
-            { path: '/dialogue', method: 'POST', required: true },
-            { path: '/angela/chat', method: 'POST', required: true },
-            { path: '/economy/balance', method: 'GET', required: false },
-            { path: '/pet/action', method: 'POST', required: false }
+            { path: '/api/v1/health', method: 'GET', required: true },
+            { path: '/api/v1/status', method: 'GET', required: true },
+            { path: '/api/v1/dialogue', method: 'POST', required: true },
+            { path: '/api/v1/angela/chat', method: 'POST', required: true },
+            { path: '/api/v1/economy/balance/default', method: 'GET', required: false },
+            { path: '/api/v1/pet/action/trigger', method: 'POST', required: false }
         ];
 
         const results = {
@@ -174,7 +174,7 @@ class AngelaAPIClient {
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/dialogue`, {
+            const response = await fetch(`${this.baseURL}/api/v1/dialogue`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -263,7 +263,7 @@ class AngelaAPIClient {
      */
     async getStatus() {
         try {
-            const response = await fetch(`${this.baseURL}/status`);
+            const response = await fetch(`${this.baseURL}/api/v1/status`);
             const data = await response.json();
             return {
                 success: true,
@@ -290,13 +290,13 @@ class AngelaAPIClient {
      */
     async getEconomy() {
         try {
-            const response = await fetch(`${this.baseURL}/economy/balance`);
+            const response = await fetch(`${this.baseURL}/api/v1/economy/balance/default`);
             const data = await response.json();
             return {
                 success: true,
-                coins: data.coins || 0,
-                food: data.food || 0,
-                energy: data.energy || 0
+                coins: data.balance || 0,
+                food: 0,
+                energy: 0
             };
         } catch (error) {
             console.error('Failed to get economy:', error);
@@ -316,15 +316,15 @@ class AngelaAPIClient {
      */
     async triggerAction(action) {
         try {
-            const response = await fetch(`${this.baseURL}/pet/action`, {
+            const response = await fetch(`${this.baseURL}/api/v1/pet/action/trigger`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action })
+                body: JSON.stringify({ type: action, data: {} })
             });
             const data = await response.json();
             return {
                 success: true,
-                result: data.result || 'Action completed',
+                result: data.message || 'Action completed',
                 newStatus: data.status || {}
             };
         } catch (error) {
@@ -355,8 +355,8 @@ class AngelaAPIClient {
      */
     async checkLLMAvailability() {
         const llmEndpoints = [
-            { path: '/angela/chat', name: 'Angela Chat', backend: 'angela' },
-            { path: '/dialogue', name: 'Dialogue', backend: 'general' }
+            { path: '/api/v1/angela/chat', name: 'Angela Chat', backend: 'angela' },
+            { path: '/api/v1/dialogue', name: 'Dialogue', backend: 'general' }
         ];
 
         const results = {

@@ -62,8 +62,8 @@ class AngelaAPIClient {
             { path: '/health', method: 'GET', required: true },
             { path: '/api/v1/status', method: 'GET', required: true },
             { path: this.unifiedChatPath, method: 'POST', required: true },
-            { path: '/dialogue', method: 'POST', required: false },
-            { path: '/angela/chat', method: 'POST', required: false },
+            { path: '/api/v1/dialogue', method: 'POST', required: false },
+            { path: '/api/v1/angela/chat', method: 'POST', required: false },
             { path: '/api/v1/economy/balance/default', method: 'GET', required: false },
             { path: '/api/v1/pet/action/trigger', method: 'POST', required: false }
         ];
