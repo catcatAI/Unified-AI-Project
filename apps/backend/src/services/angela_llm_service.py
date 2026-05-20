@@ -12,6 +12,7 @@ Angela LLM Service - Angela 的智能對話引擎
 
 import asyncio
 import json
+import os
 import time
 import random
 import logging
@@ -1001,7 +1002,7 @@ class AngelaLLMService:
             provider = backend_config.get("provider", "").lower()
             base_url = backend_config.get("base_url", "")
             model_name = backend_config.get("model_name", "")
-            api_key = backend_config.get("api_key", "")
+            api_key = backend_config.get("api_key", "") or os.environ.get(backend_config.get("api_key_env", ""), "")
 
             if provider in ("llama_cpp", "llamacpp") or backend_id == "llamacpp-local":
                 self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
@@ -1984,25 +1985,17 @@ class AngelaLLMService:
                 - intensity: 情感强度 (0-1)
                 - secondary_emotions: 次要情感列表
         """
-        # 否定词列表（简繁体）
-        negation_words = ["不", "沒", "没", "别", "別", "非", "無", "无", "未"]
-
-        # 程度词列表（增强情感强度）
-        intensifier_words = [
-            "好",
-            "很",
-            "太",
-            "非常",
-            "超级",
-            "特別",
-            "特别",
-            "真",
-            "超",
-            "極",
-            "极",
-            "格外",
-            "尤其",
-        ]
+        # 从配置读取否定词/程度词（fallback 到内建列表）
+        try:
+            from core.config_loader import get_config_loader
+            _cfg = get_config_loader()
+            _em = _cfg.get_authority("angela_core", {}).get("llm", {}).get("emotion", {})
+        except Exception:
+            _em = {}
+        negation_words = _em.get("negation_words", ["不", "沒", "没", "别", "別", "非", "無", "无", "未"])
+        intensifier_words = _em.get("intensifier_words", [
+            "好", "很", "太", "非常", "超级", "特別", "特别", "真", "超", "極", "极", "格外", "尤其",
+        ])
 
         emotion_scores = {}
 

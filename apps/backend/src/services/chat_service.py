@@ -921,7 +921,9 @@ class AngelaChatService:
             search = WebSearchTool()
             query_match = __import__('re').search(r'搜(?:尋|找)(?:一下|)(.+?)(?:好|吗|吗|？)?$', text)
             query = query_match.group(1) if query_match else text.strip()
-            results = search.search(query, num_results=3)
+            _svc_cfg = self._angela_config.get_authority("angela_core", {}).get("services", {}) if hasattr(self, '_angela_config') else {}
+            _num_results = _svc_cfg.get("web_search", {}).get("num_results", 3)
+            results = search.search(query, num_results=_num_results)
             if results:
                 snippets = [r.get("title", r.get("snippet", ""))[:50] for r in results[:3]]
                 return f"（網路搜尋完成）找到 {len(results)} 個結果：{' | '.join(snippets)}"
@@ -998,9 +1000,13 @@ class AngelaChatService:
         try:
             from services.angela_llm_service import get_llm_service
             llm = await get_llm_service()
-            backends = list(llm.backends.keys()) if hasattr(llm, "backends") else []
-            active = getattr(llm, "active_backend", None)
-            return f"（LLM 管理）目前可用後端：{backends}，活動後端：{active}"
+            lines = ["可用後端："]
+            for backend_type, backend in llm.backends.items():
+                model = getattr(backend, "model", "unknown")
+                avail = "✅" if getattr(backend, "is_available", False) else "❌"
+                active = "👈" if backend == getattr(llm, "active_backend", None) else ""
+                lines.append(f"  {avail} {backend_type.value} ({model}) {active}")
+            return "（LLM 管理）\n" + "\n".join(lines)
         except Exception as e:
             logger.warning(f"LLM manage intent failed: {e}")
             return "（LLM 管理模組載入失敗）"

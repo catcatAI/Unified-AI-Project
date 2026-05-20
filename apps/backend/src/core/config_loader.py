@@ -507,11 +507,27 @@ class AngelaConfigManager:
         return interpretations[0] if interpretations else "狀態正常"
 
     def _build_axis_context(self, rules: Dict[str, Any], state_for_llm: Dict[str, Any]) -> str:
-        """Fallback: 建構軸狀態自然語境"""
+        """建構軸狀態自然語境（優先讀取 state_to_llm 配置）"""
         axes = state_for_llm.get("axes", {})
+        state_desc = self._authority.get("angela_core", {}).get("state_to_llm", {})
+        axis_dim_map = {"alpha": ("energy", "alpha_energy"), "beta": ("curiosity", "beta_curiosity"),
+                        "gamma": ("happiness", "gamma_valence"), "delta": ("intimacy", "delta_intimacy")}
         lines = []
         for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta", "eta"):
-            interp = self._interpret_axis(axes.get(axis_name, {}), rules.get(axis_name, {}))
+            axis_data = axes.get(axis_name, {})
+            mapping = axis_dim_map.get(axis_name)
+            interp = ""
+            if mapping and mapping[1] in state_desc:
+                val = axis_data.get("values", {}).get(mapping[0], 0.5)
+                levels = state_desc[mapping[1]]
+                if val >= 0.7:
+                    interp = levels.get("high", "")
+                elif val >= 0.4:
+                    interp = levels.get("medium", "")
+                else:
+                    interp = levels.get("low", "")
+            if not interp:
+                interp = self._interpret_axis(axis_data, rules.get(axis_name, {}))
             lines.append(f"{axis_name}({interp})")
         theta_data = state_for_llm.get("theta", {})
         eta_data = state_for_llm.get("eta", {})

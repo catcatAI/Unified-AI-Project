@@ -479,11 +479,9 @@ fallback_patterns:
 
 template_matching:
   score_weights:
-    content_similarity: 0.4
-    keyword_overlap: 0.3
-    recency_factor: 0.2
-    state_similarity: 0.0
-    impression_similarity: 0.0
+    content_similarity: 0.30
+    state_similarity: 0.40
+    impression_similarity: 0.20
 
 # ── 預定義模板（TemplateLibrary 初始內容）───────────────────────────────
 

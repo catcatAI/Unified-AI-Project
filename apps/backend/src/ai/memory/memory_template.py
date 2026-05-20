@@ -252,12 +252,22 @@ class MemoryTemplate:
         # 4. 成功率权重 (10%)
         success_score = self.success_rate
 
-        # 综合评分
+        # 从配置读取权重
+        try:
+            from core.config_loader import get_config_loader
+            _cfg = get_config_loader()
+            _w = _cfg.get_authority("angela_core", {}).get("template_matching", {}).get("score_weights", {})
+        except Exception:
+            _w = {}
+        _kw_w = _w.get("content_similarity", 0.30)
+        _st_w = _w.get("state_similarity", 0.40)
+        _im_w = _w.get("impression_similarity", 0.20)
+        _sc_w = 1.0 - (_kw_w + _st_w + _im_w)
         total_score = (
-            keyword_score * 0.30
-            + state_score * 0.40
-            + impression_score * 0.20
-            + success_score * 0.10
+            keyword_score * _kw_w
+            + state_score * _st_w
+            + impression_score * _im_w
+            + success_score * _sc_w
         )
 
         return total_score

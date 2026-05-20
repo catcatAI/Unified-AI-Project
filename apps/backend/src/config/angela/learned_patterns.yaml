@@ -6,10 +6,15 @@ intent_patterns:
     - 你好，今天天氣如何？
     - 我叫小明，最喜歡的天體是獵戶座星雲
     last_seen: '2026-05-19T15:03:24.573292+00:00'
+  llm_manage:
+    count: 1
+    keywords:
+    - /model
+    last_seen: '2026-05-20T03:05:00.287242+00:00'
   math:
     count: 4
     keywords:
     - 幫我計算 2 的 10 次方是多少？
     last_seen: '2026-05-19T14:59:00.748829+00:00'
 metadata:
-  updated: '2026-05-19T15:03:24.573392+00:00'
+  updated: '2026-05-20T03:05:00.287402+00:00'

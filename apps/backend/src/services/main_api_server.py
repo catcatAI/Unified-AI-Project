@@ -602,10 +602,10 @@ async def _handle_chat_request(
     if not user_message or not user_message.strip():
         raise HTTPException(status_code=400, detail="訊號遺失：消息不能為空")
 
-    # 從配置讀取截斷閾值
     _chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
     _max_len = _chat_cfg.get("max_message_length", 4000)
     _trunc_len = _chat_cfg.get("truncation_length", 1000)
+    _http_timeout = _chat_cfg.get("http_timeout", 30.0)
     if len(user_message) > _max_len:
         logger.warning(f"🛡️ [LIS] Intercepted oversized input ({len(user_message)} chars)")
         user_message = user_message[:_trunc_len]
@@ -618,7 +618,6 @@ async def _handle_chat_request(
         })
 
     try:
-        # Step 1: 雙軌數學驗證（保留為前置快速通道）
         from services.math_verifier import MathVerifier
         is_math = False
         try:
@@ -636,15 +635,19 @@ async def _handle_chat_request(
             logger.warning(f"⚠️ [DualRail] Math verification failed: {math_err}")
             is_math = False
 
-        # Step 2: 非數學 → 走 AngelaChatService 完整管線
         from services.chat_service import generate_angela_response
         response_text = await asyncio.wait_for(
             generate_angela_response(user_message, user_name),
-            timeout=30.0,
+            timeout=_http_timeout,
         )
+        _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
+        _trunc_msg = _chat_cfg.get("truncation_message", "...（截斷）")
+        _schema_ver = _chat_cfg.get("response_schema_version", "2.0")
         return {
             "response_text": response_text,
-            "source": "angela_chat_service",
+            "source": _flow_source,
+            "schema_version": _schema_ver,
+            "truncation_message": _trunc_msg if len(user_message) > _max_len else "",
             "emotion": "happy",
             "emotion_confidence": 0.5,
             "emotion_intensity": 0.5,
