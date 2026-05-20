@@ -767,7 +767,8 @@ class AngelaChatService:
                     analyze_resp = httpx.post(f"{base_url}/drive/analyze", json={"limit": 3}, timeout=60)
                     result = analyze_resp.json()
                     analysis = result.get("analysis", "無法分析")
-                    return f"（Google Drive 分析）\n{analysis[:1000]}"
+                    _trunc = self._get_state_constants("file_content_truncation", 1500)
+                    return f"（Google Drive 分析）\n{analysis[:_trunc]}"
 
             files_resp = httpx.get(f"{base_url}/drive/files?page_size=5", timeout=15)
             files = files_resp.json().get("files", [])

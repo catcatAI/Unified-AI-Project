@@ -156,18 +156,23 @@ async def get_cluster_status():
 
 @router.post("/chat/completions")
 async def chat_completions(request: Dict[str, Any] = Body(...)):
-    """聊天完成接口"""
+    """聊天完成接口 — 代理至 AngelaChatService"""
+    messages = request.get("messages", [])
+    user_message = messages[-1].get("content", "") if messages else request.get("prompt", "")
+    user_name = request.get("user_name", "User")
+    from services.chat_service import generate_angela_response
+    response_text = await generate_angela_response(user_message, user_name)
     return {
         "id": f"chatcmpl-{random.randint(1000, 9999)}",
         "object": "chat.completion",
         "created": int(datetime.now().timestamp()),
-        "model": "gpt-4",
+        "model": "angela-ai",
         "choices": [
             {
                 "index": 0,
                 "message": {
                     "role": "assistant",
-                    "content": "你好！我是 Angela，很高兴见到你！有什么我可以帮助你的吗？",
+                    "content": response_text,
                 },
                 "finish_reason": "stop",
             }

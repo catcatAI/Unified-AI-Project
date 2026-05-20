@@ -290,7 +290,7 @@ from services.vision_service import VisionService
 from services.audio_service import AudioService
 from services.tactile_service import TactileService
 from services.chat_service import generate_angela_response, get_angela_chat_service
-from services.angela_llm_service import get_llm_service, angela_llm_response
+from services.angela_llm_service import get_llm_service
 from system.security_monitor import ABCKeyManager
 
 # Initialize _llm_service as None to prevent NameError before startup
@@ -731,7 +731,8 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
 
     user_message = request.get("text", request.get("message", ""))
     session = sessions.get(session_id)
-    session["messages"].append(
+    messages = session.get("messages", [])
+    messages.append(
         {
             "role": "user",
             "content": user_message,
@@ -748,7 +749,7 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
     ]
     ai_response = random.choice(responses)
 
-    session["messages"].append(
+    messages.append(
         {
             "role": "assistant",
             "content": ai_response,
@@ -1596,7 +1597,14 @@ def _handle_drive_command(args: str) -> str:
         if op == "analyze" or subcmd in ("analyze", "ana"):
             resp = httpx.post(f"{base}/analyze", json={"limit": 3}, timeout=60)
             r = resp.json()
-            return f"📊 分析結果：\n{r.get('analysis', '無法分析')[:1000]}"
+            _trunc = 1500
+            try:
+                from core.config_loader import get_angela_config
+                _cfg = get_angela_config()
+                _trunc = _cfg.get_authority("angela_core", {}).get("state_constants", {}).get("file_content_truncation", 1500)
+            except Exception:
+                pass
+            return f"📊 分析結果：\n{r.get('analysis', '無法分析')[:_trunc]}"
 
         return (
             "Google Drive 命令用法：\n"

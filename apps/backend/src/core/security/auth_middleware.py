@@ -115,38 +115,36 @@ class AuthMiddleware:
     def create_session(self, user_id: str) -> str:
         """创建会话"""
         session_id = secrets.token_urlsafe(32)
-
+        expires_at = (datetime.utcnow() + timedelta(hours=24)).isoformat()
         self.sessions[session_id] = {
             "user_id": user_id,
             "created_at": datetime.utcnow().isoformat(),
             "last_activity": datetime.utcnow().isoformat(),
-            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat(),
+            "expires_at": expires_at,
         }
-
         return session_id
 
     def verify_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """验证会话"""
-        if session_id not in self.sessions:
+        session = self.sessions.get(session_id)
+        if session is None:
             return None
 
-        session = self.sessions[session_id]
         session["last_activity"] = datetime.utcnow().isoformat()
-
-        # 检查是否过期
-        expires_at = datetime.fromisoformat(session["expires_at"])
-        if datetime.utcnow() > expires_at:
-            del self.sessions[session_id]
-            return None
-
+        expires_at_str = session.get("expires_at", "")
+        if expires_at_str:
+            try:
+                expires_at = datetime.fromisoformat(expires_at_str)
+                if datetime.utcnow() > expires_at:
+                    self.sessions.pop(session_id, None)
+                    return None
+            except (ValueError, TypeError):
+                pass
         return session
 
     def revoke_session(self, session_id: str) -> bool:
         """撤销会话"""
-        if session_id in self.sessions:
-            del self.sessions[session_id]
-            return True
-        return False
+        return self.sessions.pop(session_id, None) is not None
 
     def revoke_api_key(self, api_key: str) -> bool:
         """撤销 API 密钥"""
