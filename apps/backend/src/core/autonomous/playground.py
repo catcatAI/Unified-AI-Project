@@ -13,7 +13,7 @@ Author: Angela AI v6.2.1
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from core.autonomous.state_matrix_adapter import StateMatrixAdapter
 from core.state.text_to_vector import text_to_vector
@@ -292,6 +292,6 @@ banner("Playground Complete")
 print("\n所有能力展示完成。")
 print("\n下一步：")
 print("  1. 啟動服務: python -m uvicorn src.services.main_api_server:app --port 8000")
-print("  2. 查看 API:  GET /state/summary")
-print("  3. 測試路由: POST /state/navigate  {\"max_steps\": 3}")
+print("  2. 查看 API:  GET /api/v1/state/summary")
+print("  3. 測試路由: POST /api/v1/state/navigate  {\"max_steps\": 3}")
 print("  4. 學習系統: 多次 allocation_decide() 後 AnchorLearningEngine 會自優化")

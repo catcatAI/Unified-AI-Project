@@ -279,7 +279,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from core.config_loader import get_angela_config
 
-from core.autonomous.desktop_interaction import DesktopInteraction, FileCategory
+from core.autonomous.desktop_interaction import DesktopInteraction
 from core.autonomous.action_executor import (
     ActionExecutor,
     Action,
@@ -301,7 +301,7 @@ from api.router import router as api_v1_router
 from api.v1.endpoints import pet, economy
 from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
 from economy.economy_manager import EconomyManager
-from core.cognitive_economy_bridge import initialize_cognitive_bridge
+
 from core.autonomous.heartbeat import MetabolicHeartbeat
 
 app = FastAPI(
@@ -936,7 +936,6 @@ async def brain_dividend():
 
 # --- WebSocket Endpoint for Desktop App ---
 
-import asyncio
 import json
 from services.connection_session import get_session_manager, SessionState
 

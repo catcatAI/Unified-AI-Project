@@ -64,7 +64,7 @@ def resolve_path(path_str: str) -> Path:
         Path: 解析后的路径对象
     """
     path = Path(path_str)
-    if path.is_absolute:
+    if path.is_absolute():
         return path
     else:
         return PROJECT_ROOT / path

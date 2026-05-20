@@ -4,7 +4,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Dict, Optional, List, Tuple, Any
 
-from core.hsp.payloads import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+from core.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 from ai.trust.trust_manager_module import TrustManager
 
 logger = logging.getLogger(__name__)

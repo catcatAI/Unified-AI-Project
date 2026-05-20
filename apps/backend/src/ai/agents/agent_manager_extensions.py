@@ -186,8 +186,9 @@ def example_agent_entry_point(agent_id: str):
 # 測試代碼
 if __name__ == "__main__":
     import sys
+    from pathlib import Path
 
-    sys.path.insert(0, "D:/Projects/Unified-AI-Project/apps/backend/src")
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
     from ai.agents.agent_manager import AgentManager
 

@@ -73,7 +73,7 @@ To start working with the Unified AI Project:
 
 Once started, you can access:
 - **Backend API**: http://localhost:8000
-- **Frontend Dashboard**: http://localhost:3000
+- **Desktop App**: Electron app at `apps/desktop-app/`
 - **ChromaDB**: http://localhost:8001
 
 ## Interacting with AI Agents
@@ -250,7 +250,7 @@ If you encounter issues not covered in this guide:
 
 Modify AI behavior through configuration files:
 
-1. Locate configuration files in `apps/backend/configs/`
+1. Main configuration at `apps/backend/src/config/angela_core.yaml`
 2. Edit YAML files to adjust AI parameters
 3. Restart services for changes to take effect
 
@@ -260,7 +260,7 @@ Add new features to the system:
 
 1. Create new agents in `apps/backend/src/agents/`
 2. Implement new services in `apps/backend/src/services/`
-3. Add frontend components in `apps/frontend-dashboard/src/components/`
+3. Desktop UI is at `apps/desktop-app/electron_app/`
 
 ### Integration with External Services
 

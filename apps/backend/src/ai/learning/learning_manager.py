@@ -14,7 +14,7 @@ from ai.personality.personality_manager import PersonalityManager
 
 # HSP payloads - 可选依赖
 try:
-    from ...core.hsp.payloads import HSPFactPayload, HSPMessageEnvelope
+    from ...core.hsp.types import HSPFactPayload, HSPMessageEnvelope
 
     HSP_AVAILABLE = True
 except ImportError:

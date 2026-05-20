@@ -397,7 +397,7 @@ async def upload_file(
     mime_type: Optional[str] = Body(None, embed=True),
 ):
     """上傳本地檔案到 Drive"""
-    svc = get_drive_service()
+    svc = _get_drive_service()
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
     result = svc.upload_file(file_path, folder_id, mime_type)
@@ -414,7 +414,7 @@ async def create_file(
     folder_id: Optional[str] = Body(None),
 ):
     """建立文字檔案並上傳到 Drive"""
-    svc = get_drive_service()
+    svc = _get_drive_service()
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
     result = svc.create_file_from_text(file_name, content, mime_type, folder_id)

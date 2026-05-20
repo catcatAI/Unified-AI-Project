@@ -10,11 +10,12 @@ import asyncio
 import sys
 import os
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 # Add path for imports
-sys.path.insert(0, "apps/backend/src/core")
+sys.path.insert(0, str(Path(__file__).parent))
 
 from feedback_loop_engine import (
     FeedbackLoopEngine,

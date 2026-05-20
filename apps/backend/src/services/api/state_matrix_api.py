@@ -29,7 +29,7 @@ Author: Angela AI v6.2.1
 """
 
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException, Query, Query
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any, Tuple
 import logging

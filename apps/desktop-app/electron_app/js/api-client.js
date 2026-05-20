@@ -59,7 +59,7 @@ class AngelaAPIClient {
      */
     async validateEndpoints() {
         const endpoints = [
-            { path: '/health', method: 'GET', required: true },
+            { path: '/api/v1/health', method: 'GET', required: true },
             { path: '/api/v1/status', method: 'GET', required: true },
             { path: this.unifiedChatPath, method: 'POST', required: true },
             { path: '/api/v1/dialogue', method: 'POST', required: false },

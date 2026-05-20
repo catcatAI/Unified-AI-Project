@@ -29,7 +29,7 @@ from ai.knowledge_graph.types import (
     KGRelationship,
     KnowledgeGraphMetadata,
 )
-from core.hsp.payloads import HSPFactPayload
+from core.hsp.types import HSPFactPayload
 
 logger = logging.getLogger(__name__)
 

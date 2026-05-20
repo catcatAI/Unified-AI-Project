@@ -16,14 +16,13 @@ from typing import Dict, Any, List, Optional
 
 # 添加 src 到路徑
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+SRC_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 # 導入安全求值器
 try:
-    from src.core.security.secure_eval import safe_eval, EvalResult
+    from core.security.secure_eval import safe_eval, EvalResult
 
     SECURE_EVAL_AVAILABLE = True
 except ImportError:
@@ -31,13 +30,6 @@ except ImportError:
     logger.warning("安全求值器不可用，將使用備用方案")
 
 logger = logging.getLogger("logic_tool")
-
-# Add the src directory to the path
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
 
 
 class LogicTool:

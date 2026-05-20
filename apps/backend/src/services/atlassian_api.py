@@ -7,7 +7,7 @@ import subprocess
 import json
 import logging
 import os
-import traceback
+import asyncio
 from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Depends, Body
 from pydantic import BaseModel

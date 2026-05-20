@@ -2,6 +2,7 @@ import subprocess
 import json
 import os
 import sys
+import asyncio
 
 class OSBridgeAdapter:
     """
@@ -58,8 +59,6 @@ class OSBridgeAdapter:
 
     async def get_screen_text(self):
         return await self._execute_async("ocr")
-
-import asyncio
 
 if __name__ == "__main__":
     adapter = OSBridgeAdapter()
