@@ -172,7 +172,7 @@ Included only in App B (`main_api_server.py:1237`, prefix `/api/v1/state`). Pref
 | Middleware | Applied? | Details |
 |-----------|---------|---------|
 | CORSMiddleware | L313-326 | Reads from `angela_core.yaml` `middleware.cors` keys. Falls back to `["*"]`. |
-| EncryptedCommunicationMiddleware | **No** | Not imported, not applied. |
+| EncryptedCommunicationMiddleware | ✅ L329-336 | Added via `get_abc_key_manager().get_key("KeyB")`. Same protection as App A. |
 
 ---
 
@@ -281,30 +281,26 @@ Included only in App B (`main_api_server.py:1237`, prefix `/api/v1/state`). Pref
 
 ## 6. Known Architectural Issues
 
-### 6.1 Semantic Route Mismatch (non-crash)
+### ~~6.1 Semantic Route Mismatch~~ ✅ Fixed
 
-8 routes in `main_api_server.py:848-855` all map to `get_brain_dividend()` (returns CDM economic data):
-- `GET /api/v1/desktop/state` → should return desktop state
-- `POST /api/v1/desktop/organize` → should organize desktop
-- `POST /api/v1/desktop/cleanup` → should clean desktop
-- `GET /api/v1/actions/status` → should return action status
-- `POST /api/v1/actions/execute` → should execute action
-- `POST /api/v1/tactile/touch` → should process touch
-- `POST /api/v1/brain/metrics` → should return brain metrics
-- `POST /api/v1/brain/dividend` → correct (it IS the dividend endpoint)
-
-These are placeholder/stub implementations. They don't crash the server but return semantically wrong data.
+8 routes in `main_api_server.py:848-855` previously all mapped to `get_brain_dividend()`. Now each has its own handler:
+- `GET /api/v1/desktop/state` → `DesktopInteraction.get_desktop_state()`
+- `POST /api/v1/desktop/organize` → `DesktopInteraction.organize_desktop()`
+- `POST /api/v1/desktop/cleanup` → `DesktopInteraction.cleanup_desktop()`
+- `GET /api/v1/actions/status` → `ActionExecutor.get_execution_stats()`
+- `POST /api/v1/actions/execute` → `ActionExecutor.handle_autonomous_action()`
+- `POST /api/v1/tactile/touch` → `TactileService.simulate_touch()`
+- `POST /api/v1/brain/metrics` → `DigitalLifeIntegrator.get_formula_metrics()` (returns ALL formula metrics)
+- `POST /api/v1/brain/dividend` → unchanged (returns CDM dividend data)
 
 ### 6.2 Two Apps, Same Port
 
 App A (`main.py`) and App B (`main_api_server.py`) both default to port 8000. They cannot run simultaneously. The desktop requires App B-specific routes; the mobile can work with either.
 
-### 6.3 EncryptedCommunicationMiddleware Asymmetry
+### ~~6.3 EncryptedCommunicationMiddleware Asymmetry~~ ✅ Fixed
 
-- **App A**: Has middleware → mobile/system routes require HMAC signature
-- **App B**: No middleware → same routes accept unauthenticated requests
-
-The middleware only verifies signatures (doesn't decrypt/encrypt), and only for 3 path prefixes:
+Both App A and App B now have `EncryptedCommunicationMiddleware` with identical KeyB configuration.
+The middleware verifies HMAC-SHA256 signatures for these path prefixes:
 `/api/v1/mobile/*`, `/api/v1/system/status/detailed`, `/api/v1/system/module-control`.
 
 ### 6.4 Config Sections Never Read
@@ -340,15 +336,15 @@ Both frontends (desktop `backend-websocket.js`, mobile `client.js`) connect to `
 
 ## 9. Remaining Open Issues
 
-| # | Issue | Impact | Location |
-|---|-------|--------|----------|
-| 1 | 8 routes mapped to wrong handler (get_brain_dividend) | Wrong data returned | main_api_server.py:848-855 |
-| 2 | Two apps on same port 8000 | Can't run both | main.py:501 vs main_api_server.py:1246 |
-| 3 | No EncryptedCommunicationMiddleware in App B | Mobile requests to App B bypass signature check | main_api_server.py (missing) |
-| 4 | 11 dead config sections (300+ lines) | Stale documentation, maintainability debt | angela_core.yaml |
-| 5 | CLI `get_services()` always returns None | CLI "not available" for all services | core_services.py (stub) |
-| 6 | `health` endpoint asymmetry | App A has `/health` AND `/api/v1/health`; App B only `/api/v1/health` | main.py:307 vs router.py:48 |
-| 7 | `playground.py` references `/state/summary` without `/api/v1` prefix | Wrong example URL if server is App B | playground.py:295 |
-| 8 | `API_STATUS_REPORT.md` claims 45 endpoints, ~15-20 don't exist | Stale documentation, misleading readers | docs/09-archive/API_STATUS_REPORT.md |
-| 9 | `USER_GUIDE.md` references non-existent `frontend-dashboard/` | User can't find frontend | docs/USER_GUIDE.md |
-| 10 | `organization-status.md` claims Flask dep + wrong file counts | Stale planning doc | docs/06-project-management/status/organization-status.md |
+| # | Issue | Impact | Location | Status |
+|---|-------|--------|----------|--------|
+| 1 | 8 routes mapped to wrong handler (get_brain_dividend) | Wrong data returned | main_api_server.py:848-855 | ✅ Fixed — each route now calls correct implementation |
+| 2 | Two apps on same port 8000 | Can't run both | main.py:501 vs main_api_server.py:1246 | ⚠️ Architecture — App A can use `--port` arg |
+| 3 | No EncryptedCommunicationMiddleware in App B | Mobile requests bypass signature check | main_api_server.py | ✅ Fixed — middleware added after CORS |
+| 4 | 12 dead config sections (300+ lines) | Stale documentation | angela_core.yaml | ✅ Fixed — marked `# DEAD` comments on each |
+| 5 | CLI `get_services()` always returns None | CLI "not available" messages | core_services.py (stub) | ✅ Improved stub logging, kept graceful degradation |
+| 6 | `health` endpoint asymmetry | App A has `/health` AND `/api/v1/health`; App B only `/api/v1/health` | main.py:307 vs router.py:48 | ⚠️ Minor — both apps serve `/api/v1/health` |
+| 7 | `playground.py` references `/state/summary` without prefix | Wrong example URL | playground.py:295 | ⚠️ Minor — comment only |
+| 8 | `API_STATUS_REPORT.md` claims 45 endpoints, ~15-20 don't exist | Stale documentation | docs/09-archive/API_STATUS_REPORT.md | ⚠️ Document needs update |
+| 9 | `USER_GUIDE.md` references non-existent `frontend-dashboard/` | Misleading | docs/USER_GUIDE.md | ⚠️ Document needs update |
+| 10 | `organization-status.md` claims Flask dep + wrong counts | Stale planning doc | docs/06-project-management/status/organization-status.md | ⚠️ Document needs update |

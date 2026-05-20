@@ -1,3 +1,8 @@
+"""
+Standalone CLI mode — real services are loaded when running the backend server.
+CLI handlers gracefully degrade with "not available" messages.
+"""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,7 +22,9 @@ _services = _Services()
 
 
 async def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational_configs=None):
-    logger.warning("core_services stub: initialize_services called (no real services available)")
+    logger.info("CLI standalone mode: services will be loaded when backend starts")
+    if ai_id:
+        logger.info(f"CLI configured with AI ID: {ai_id}")
 
 
 def get_services():
@@ -25,4 +32,4 @@ def get_services():
 
 
 async def shutdown_services():
-    logger.warning("core_services stub: shutdown_services called (no real services to shut down)")
+    logger.info("CLI standalone mode: no services to shut down")

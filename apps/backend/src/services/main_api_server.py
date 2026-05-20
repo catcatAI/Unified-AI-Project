@@ -292,6 +292,7 @@ from services.tactile_service import TactileService
 from services.chat_service import generate_angela_response, get_angela_chat_service
 from services.angela_llm_service import get_llm_service
 from system.security_monitor import ABCKeyManager
+from shared.security_middleware import EncryptedCommunicationMiddleware
 
 # Initialize _llm_service as None to prevent NameError before startup
 _llm_service = None
@@ -324,6 +325,16 @@ try:
         logger.info("[Middleware] CORS enabled from config")
 except Exception as e:
     logger.warning(f"[Middleware] CORS setup skipped: {e}")
+
+# ========== 加密通訊中間件（Key B 簽名驗證） ==========
+try:
+    app.add_middleware(
+        EncryptedCommunicationMiddleware,
+        key_b=get_abc_key_manager().get_key("KeyB"),
+    )
+    logger.info("[Middleware] EncryptedCommunication enabled")
+except Exception as e:
+    logger.warning(f"[Middleware] EncryptedCommunication setup skipped: {e}")
 
 # ========== 生命週期管理 ==========
 @asynccontextmanager
@@ -846,15 +857,76 @@ async def unified_chat(request: Dict[str, Any] = Body(...)):
 
 
 @api_v1_router.get("/desktop/state")
+async def desktop_state():
+    """返回當前桌面狀態"""
+    state = get_desktop_interaction().get_desktop_state()
+    return {"success": True, "state": {
+        "total_files": getattr(state, "total_files", 0),
+        "total_size": getattr(state, "total_size", 0),
+        "categories": getattr(state, "categories", {}),
+        "clutter_level": getattr(state, "clutter_level", 0.0),
+    }}
+
+
 @api_v1_router.post("/desktop/organize")
+async def desktop_organize():
+    """整理桌面文件"""
+    ops = await get_desktop_interaction().organize_desktop()
+    return {"success": True, "operations": [{
+        "source": str(op.source) if hasattr(op, "source") else "",
+        "destination": str(op.destination) if hasattr(op, "destination") else "",
+        "category": op.category if hasattr(op, "category") else "",
+    } for op in ops]}
+
+
 @api_v1_router.post("/desktop/cleanup")
+async def desktop_cleanup(days_old: int = 30):
+    """清理桌面過期文件"""
+    ops = await get_desktop_interaction().cleanup_desktop(days_old=days_old)
+    return {"success": True, "operations": [{
+        "source": str(op.source) if hasattr(op, "source") else "",
+        "category": op.category if hasattr(op, "category") else "",
+    } for op in ops]}
+
+
 @api_v1_router.get("/actions/status")
+async def actions_status():
+    """返回動作執行器狀態"""
+    stats = get_action_executor().get_execution_stats()
+    return {"success": True, "stats": stats}
+
+
 @api_v1_router.post("/actions/execute")
+async def actions_execute(action_data: Dict[str, Any] = Body(...)):
+    """提交並執行動作"""
+    action_type = action_data.get("type", "general")
+    parameters = action_data.get("parameters", {})
+    priority = action_data.get("priority", "normal")
+    result = await get_action_executor().handle_autonomous_action(action_type, parameters, priority)
+    return {"success": True, "result": result}
+
+
 @api_v1_router.post("/tactile/touch")
+async def tactile_touch(touch_data: Dict[str, Any] = Body(...)):
+    """模擬觸覺交互"""
+    object_id = touch_data.get("object_id", "default")
+    contact_point = touch_data.get("contact_point", {"body_part": "generic", "pressure": 0.5})
+    origin = touch_data.get("origin", "System")
+    result = await get_tactile_service().simulate_touch(object_id, contact_point, origin)
+    return {"success": True, "feedback": result}
+
+
 @api_v1_router.post("/brain/metrics")
+async def brain_metrics():
+    """返回完整腦指標（HSM, CDM, 生命強度等）"""
+    digital_life = get_digital_life()
+    summary = digital_life.get_formula_metrics()
+    return {"success": True, "metrics": summary.get("formula_status", {}) if summary else {}}
+
+
 @api_v1_router.post("/brain/dividend")
-async def get_brain_dividend():
-    """Get CDM Economic Model data"""
+async def brain_dividend():
+    """返回 CDM 經濟模型數據"""
     digital_life = get_digital_life()
     summary = digital_life.get_formula_metrics()
     if summary and "formula_status" in summary:

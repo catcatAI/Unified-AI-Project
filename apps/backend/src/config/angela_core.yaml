@@ -27,11 +27,12 @@ middleware:
     allow_headers: ["*"]
     allow_credentials: true
   encrypted_communication:
-    enabled: false
+    enabled: false  # DEAD — no code reads this
   auth:
-    enabled: false
+    enabled: false  # DEAD — no code reads this
 
 # ── 生命週期 ──────────────────────────────────────────────────────────────
+# DEAD — broken code path in main_api_server.py:334, silently caught
 
 lifecycle:
   preinitialize_on_startup: true
@@ -51,6 +52,7 @@ session_manager:
 
 # ── 路由註冊表 ─────────────────────────────────────────────────────────────
 
+# DEAD — no code reads `routing` from angela_core.yaml
 routing:
   route_registry:
     - path: "/angela/chat"
@@ -391,6 +393,7 @@ complexity:
       aliases: ["search", "find", "s", "f"]
 
 # ── 學習系統配置 ───────────────────────────────────────────────────────────
+# DEAD — no code reads `learning` from angela_core.yaml
 
 learning:
   decay:
@@ -430,12 +433,14 @@ state_to_llm:
     low: "保持距離"
 
 # ── 回應模式 ──────────────────────────────────────────────────────────────
+# DEAD — no code reads `response_schema` from angela_core.yaml
 
 response_schema:
   version: "2.0"
   fields: ["response_text", "session_id", "emotion", "emotion_confidence", "source"]
 
 # ── 持久化 ─────────────────────────────────────────────────────────────────
+# DEAD — no code reads `persistence` from angela_core.yaml; hardcoded in state_persistence.py
 
 persistence:
   state_matrix:
@@ -485,6 +490,7 @@ template_matching:
 
 # ── 預定義模板（TemplateLibrary 初始內容）───────────────────────────────
 
+# DEAD — hardcoded in template_library.py, not read from YAML
 predefined_templates:
   - id: "greeting_morning"
     content: "早安！今天也元氣滿滿的樣子呢～有什麼想聊的嗎？"
@@ -948,6 +954,7 @@ document_builder:
     keyword_match_count: 2  # keyword 匹配 >= 2 次才學習
 
 # ── 情緒/Empathy 閾值 ─────────────────────────────────────────────────────
+# DEAD — no code reads `empathy` from angela_core.yaml
 
 empathy:
   thresholds:
@@ -961,6 +968,7 @@ empathy:
     scared: ["害怕", "恐懼", "擔心", "scared", "afraid"]
 
 # ── 8D 座標追蹤 ──────────────────────────────────────────────────────────
+# DEAD — no code reads `state_tracking` from angela_core.yaml
 
 state_tracking:
   coordinate_recalculation_on_update: true
@@ -968,6 +976,7 @@ state_tracking:
   history_window: 50
 
 # ── θ 自檢 ────────────────────────────────────────────────────────────────
+# DEAD — theta config not read from angela_core.yaml; theta values come from runtime state_for_llm
 
 theta:
   novelty_estimation:
@@ -978,6 +987,7 @@ theta:
     correction_interval_turns: 5
 
 # ── η 執行層 ─────────────────────────────────────────────────────────────
+# DEAD — eta config not read from angela_core.yaml; eta values come from runtime state_for_llm
 
 eta:
   module_trigger_curve:
