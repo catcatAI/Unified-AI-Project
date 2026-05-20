@@ -271,7 +271,7 @@ class AngelaIntegrationTester {
     
     async _checkAPIHealth() {
         try {
-            const response = await fetch('http://127.0.0.1:8000/health', { timeout: 5000 });
+            const response = await fetch('http://127.0.0.1:8000/api/v1/health', { timeout: 5000 });
             return { healthy: response.ok, details: 'API responding' };
         } catch {
             return { healthy: false, details: 'API not responding' };

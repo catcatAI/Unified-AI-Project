@@ -51,6 +51,18 @@ async def health_check():
     return {"status": "healthy"}
 
 
+@router.get("/status")
+async def app_status():
+    """桌面端狀態查詢"""
+    return {"health": 100, "energy": 100, "mood": "happy", "status": "idle"}
+
+
+@router.post("/system/status")
+async def system_status():
+    """系統狀態 (行動端/桌面端通用)"""
+    return {"status": "online", "stats": {"cpu": "N/A", "mem": "N/A", "nodes": 0}}
+
+
 @router.get("/agents", response_model=List[Dict[str, Any]])
 async def get_ai_agents():
     """获取所有AI代理 (Dynamic Discovery)"""

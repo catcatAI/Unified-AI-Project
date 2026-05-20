@@ -850,11 +850,6 @@ async def unified_chat(request: Dict[str, Any] = Body(...)):
 @api_v1_router.post("/desktop/cleanup")
 @api_v1_router.get("/actions/status")
 @api_v1_router.post("/actions/execute")
-@api_v1_router.post("/vision/sampling")
-@api_v1_router.post("/vision/perceive")
-@api_v1_router.post("/audio/scan")
-@api_v1_router.post("/audio/register_user")
-@api_v1_router.post("/tactile/model")
 @api_v1_router.post("/tactile/touch")
 @api_v1_router.post("/brain/metrics")
 @api_v1_router.post("/brain/dividend")
@@ -1239,7 +1234,7 @@ from services.api.state_matrix_api import state_matrix_router
 # Include existing routers
 app.include_router(api_v1_router)
 app.include_router(atlassian_router)
-app.include_router(state_matrix_router)
+app.include_router(state_matrix_router, prefix="/api/v1")
 
 
 # ================================================================

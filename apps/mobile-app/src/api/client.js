@@ -58,26 +58,12 @@ class APIClient {
    * @returns {Promise<object>}
    */
   async getSystemStatus(data = {}) {
-    const payload = {
-      timestamp: Date.now(),
-      ...data
-    };
-
-    const encrypted = this.security.encrypt(payload);
-    const signature = this.security.generateSignature(payload);
-
     const response = await axios.post(
       `${this.baseURL}/api/v1/system/status`,
-      encrypted,
-      {
-        headers: {
-          'X-Angela-Signature': signature,
-          'Content-Type': 'text/plain',
-        },
-      }
+      { timestamp: Date.now(), ...data }
     );
 
-    return this.security.decrypt(response.data);
+    return response.data;
   }
 
   /**

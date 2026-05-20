@@ -282,10 +282,6 @@ def create_app() -> FastAPI:
         return {"status": "error", "message": "Invalid module or state"}
 
     # API 路由 - 安全與行動端測試 (手動註冊)
-    @app.get("/api/v1/health")
-    async def health_check_v1():
-        return {"status": "ok", "timestamp": datetime.now().isoformat()}
-
     @app.post("/api/v1/mobile/test")
     async def mobile_test(data: Dict[str, Any]):
         logger.info(f"收到來自行動端的安全請求: {data}")
@@ -305,7 +301,7 @@ def create_app() -> FastAPI:
     # API路由
     from src.api.router import router
 
-    app.include_router(router, prefix="/api/v1")
+    app.include_router(router)
 
     # 健康检查端点
     @app.get("/health")
