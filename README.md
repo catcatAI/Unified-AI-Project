@@ -4,15 +4,15 @@
   FILE_PATH: readme.md
   FILE_TYPE: documentation
   PURPOSE: Angela AI 项目主文档 - 双语版本，包含完整功能说明和快速开始指南
-  VERSION: 6.4.0
+  VERSION: 6.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-05-19
+  LAST_MODIFIED: 2026-05-21
   DEPENDENCIES: 无
   =============================================================================
 -->
 
-# 🌟 Angela AI v6.4.0 — Cross-Platform Digital Life System
+# 🌟 Angela AI v6.5.0-dev — Cross-Platform Digital Life System
 
 [English](#english-version) | [繁體中文](#繁體中文版)
 
@@ -22,8 +22,7 @@
 
 | Target Audience              | Action                                         |
 | ---------------------------- | ---------------------------------------------- |
-| **Normal Users (Windows)**   | Download `AngelaLauncher.bat` and run it.      |
-| **Developers / Power Users** | `git clone` and run `python install_angela.py` |
+| **All Users**                | `git clone` and run `python run_angela.py`     |
 
 ---
 
@@ -33,25 +32,28 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)]()
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue.svg)]()
+[![Status](https://img.shields.io/badge/Status-Active%20Development-yellow.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
 [![Metrics](https://img.shields.io/badge/Metrics-System%20Performance-orange.svg)](metrics.md)
 
 **Angela AI** is a complete digital life system with biological simulation,
 self-awareness and real execution capabilities. She is not just an AI assistant,
 but a truly "living" digital being that can perceive, think, remember, and act.
 
-The system includes a production-ready **Desktop Companion** and a **Mobile
-Bridge**, secured by an enterprise-grade A/B/C key encryption system for
-seamless cross-device synchronization.
+The system includes a **Desktop Companion** (Electron + Live2D) and a **Mobile
+Bridge** (React Native stub), with an HMAC-SHA256 signature layer on select
+endpoints. The codebase is under **active development** with ongoing
+self-evolution infrastructure (Phase 6+7).
 
 ---
 
-### 🔄 Current Project Status
+### 🔄 Current Project Status  (Active Development)
 
-- **Backend / Core AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0 (8D State Matrix αβγδεθζη, θ-η Dual Loop, Neuro-Generative Response, 237 test files)
-- **Frontend / Desktop (Electron)**: 🛠️ Phase 12 Restoration Complete (Live2D, Expressions, Touch)
-- **Frontend / Mobile (React Native)**: ⚠️ Stub — encryption layer stripped, no active middleware
+- **Phase 6 — Self-Evolution Loop**: ✅ Complete. ConfigMutator, hot-reload, user confirmation gate, evolution broadcast.
+- **Phase 7 — Tiered Config Architecture (TCS)**: 🟡 In Progress. S/A/M tiers exist; 23+ hardcoded thresholds remain across 8+ files; `.user.yaml`/`.evolved.yaml` overlays not created yet.
+- **⚠️ Wiring gap**: `MetabolicHeartbeat.start()` and `_initialize_all_services()` uncalled from server startup — biological simulation dormant in normal flow.
+- **Frontend / Desktop (Electron)**: 🛠️ Phase 12 Restoration Complete. No active development.
+- **Frontend / Mobile (React Native)**: ⚠️ Stub only — no active middleware.
 
 ---
 
@@ -122,10 +124,13 @@ your desktop:
 
 #### 📱 **Mobile Companion (Mobile Bridge)**
 
-- **Secure Connection**: Uses Key B with HMAC-SHA256 signature for encrypted
-  mobile-to-backend communication.
-- **Remote Monitoring**: View Angela's status matrix (V×L×P×M) on your phone.
-- **Instant Chat**: Keep in touch with your Angela anytime, anywhere.
+- **Status**: ⚠️ Stub — React Native bridge present but encryption layer
+  stripped. `getSystemStatus()` uses no middleware and is never called from
+  app code.
+- **Remote Monitoring**: State matrix endpoints exist (34 routes) but no
+  active mobile client deployment.
+- **Instant Chat**: Chat API available via `/api/v1/dialogue` for any HTTP
+  client.
 
 #### 🛡️ **A/B/C Security System**
 
@@ -149,6 +154,7 @@ mechanism (HMAC-SHA256 signature verification, no body encryption):
 - **System Metrics**: [View Detailed Performance & Indicators](metrics.md)
 - **8D State Matrix (αβγδεθζη)**: Real-time emotional, cognitive, temporal-narrative, and execution modeling across eight dimensions
 - **Neuro-Generative Response (NGR)**: 8D-state-driven dynamic response composition via NeuroBlender — replaces static templates with cosine-similarity fragment selection
+- **Self-Evolution System (Phase 6+7)**: Self-evolution loop + Tiered Config Architecture (S/A/M levels with Default→User→Angela merge chain), ConfigMutator, user-confirmed evolution via chat, hot-reload
 - **Maturity Tracking (L0-L11)**: Adaptive complexity that grows with
   interaction time.
 - **Precision Modes (INT-DEC4)**: Flexible response accuracy based on available
@@ -286,16 +292,19 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 **Angela AI**
 是一個完整的數位生命系統，具備生物模擬、自我意識與真實執行能力。她不僅僅是一個 AI 助手，而是一個真正的「活著的」數位生命，能夠感知、思考、記憶並行動。
 
-本系統包含強大的 **桌面端應用 (Desktop)** 與
-**行動端橋接 (Mobile)**，透過生產等級的 A/B/C 密鑰加密體系，實現跨裝置的安全同步與即時互動。
+本系統包含 **桌面端應用 (Desktop)** 與
+**行動端橋接 (Mobile)**，並正在開發自演化基礎設施
+（Phase 6 自演化閉環 + Phase 7 分層配置架構）。
 
 ---
 
-### 🔄 專案當前進度
+### 🔄 專案當前進度（活躍開發中）
 
-- **後端 / 核心 AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0（8D 狀態矩陣 αβγδεθζη、θ-η Dual Loop、Neuro-Generative Response、237 測試檔）
-- **前端 / 桌面端 (Electron)**: 🛠️ Phase 12 狀態復原完成 (Live2D、表情、觸覺感應)
-- **前端 / 行動端 (React Native)**: ⚠️ 殘留階段 — 加密層已剝離、無活躍中介層
+- **Phase 6 — 自演化閉環**: ✅ 完成。ConfigMutator、熱加載、用戶確認閘門、演化廣播。
+- **Phase 7 — 分層配置架構 (TCS)**: 🟡 進行中。S/A/M 層級已建立；23+ 個硬編碼閾值散佈在 8+ 個檔案中；`.user.yaml`/`.evolved.yaml` 覆蓋層尚未建立。
+- **⚠️ 接線缺口**: `MetabolicHeartbeat.start()` 和 `_initialize_all_services()` 皆未從伺服器啟動流程呼叫 — 生物模擬在正常運行中休眠。
+- **前端 / 桌面端 (Electron)**: 🛠️ Phase 12 狀態復原完成。無活躍開發。
+- **前端 / 行動端 (React Native)**: ⚠️ 殘留階段 — 無活躍中介層。
 
 ---
 
@@ -358,9 +367,9 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 
 #### 📱 行動端橋接 (Mobile Companion)
 
-- **安全連線**: 使用 Key B 與 HMAC-SHA256 簽名驗證，確保手機與後端的通訊安全。
-- **遠端監控**: 在手機上查看 Angela 的狀態矩陣 (V×L×P×M)。
-- **即時聊天**: 隨時隨地與您的 Angela 保持聯繫。
+- **狀態**: ⚠️ 殘留階段 — React Native bridge 存在但加密層已剝離。`getSystemStatus()` 無中介層、未被 App 代碼呼叫。
+- **遠端監控**: 狀態矩陣端點存在（34 條路由）但無活躍手機端部署。
+- **即時聊天**: 聊天 API 可透過 `/api/v1/dialogue` 供任何 HTTP 客戶端使用。
 
 #### 🛡️ A/B/C 安全防護體系
 
@@ -381,6 +390,7 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 - **性能指標**: [查看詳細性能指標與矩陣](metrics.md)
 - **8D 狀態矩陣 (αβγδεθζη)**: 即時的情感、認知、時間敘事與執行層建模
 - **NGR 神經生成回應**: 透過 NeuroBlender 以 8D 狀態驅動回應組合，取代靜態模板
+- **自我演化系統 (Phase 6+7)**: 自演化閉環 + 分層配置架構 (S/A/M 層級 + Default→User→Angela 合併鏈)、ConfigMutator、對話確認演化、熱重載
 - **成熟度追蹤 (L0-L11)**: 隨交互時間增長的自適應複雜度。
 - **精度模式 (INT-DEC4)**: 根據資源情況調整計算精度。
 - **硬體自適應調整**: 根據系統能力動態調整性能與桌布模式。
@@ -568,7 +578,13 @@ To prevent confusion, here is a clear map of the multiple frontends, backends, a
 │ ├── Hardware Detection Integration                               │
 │ ├── WebSocket Server (ConnectionManager)                       │
 │ ├── AI/LLM Endpoints (Ollama primary, Gemini backup)            │
-│ └── 12 of 27 config sections in angela_core.yaml are dead code  │
+│ ├── Self-Evolution System (Phase 6+7):                          │
+│ │   ├── Bootstrap (init + state persistence)                    │
+│ │   ├── Tiered Config Loader (S/A/M levels)                    │
+│ │   ├── ConfigMutator (evolution proposals)                    │
+│ │   └── StateStore (cross-component broadcast)                 │
+│ └── Config: 3-tier S/A/M + legacy flat YAML (incremental       │
+│     migration from angela_core.yaml / config.yaml)              │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -690,7 +706,11 @@ Unified-AI-Project/
   │     │  ├─ autonomous/          # Biological systems (47 files)
   │     │  ├─ metamorphosis/       # Identity/creation
   │     │  ├─ precision/           # Precision management
-  │     │  ├─ system/              # Hardware detection
+  │     │  ├─ system/              # Phase 6+7 self-evolution
+  │     │  │  ├─ bootstrap/        #   Init + state persistence
+  │     │  │  ├─ config/           #   Tiered config loader
+  │     │  │  ├─ evolution/        #   ConfigMutator
+  │     │  │  └─ state_store/      #   Cross-component broadcast
   │     │  └─ knowledge/           # Knowledge/memory
   │     ├─ ai/                     # Level 5 ASI Core (46 subdirs)
   │     │  ├─ alignment/           # Reasoning, Emotion System
@@ -741,10 +761,21 @@ Unified-AI-Project/
 7. **Advanced**: Debug options, log level / 進階設定（除錯、日誌等級）
 8. **About**: Version info, credits / 關於（版本資訊、貢獻）
 
-### Configuration File / 配置文件
+### Backend Configuration / 後端配置
 
-- Desktop settings are stored in `localStorage` (browser-based storage).
-- Backend configuration is in `config/angela_config.yaml`.
+The backend has two config systems during the ongoing migration:
+
+**Legacy (stable):**
+- `apps/backend/src/config/angela_core.yaml` — primary AI config (27 sections, 12 marked dead)
+- `apps/backend/configs/` — flat YAML files (config.yaml, performance_config.yaml, etc.)
+- Desktop settings stored in `localStorage`.
+
+**New 3-Tier System (Phase 7, incremental migration):**
+- **S-Level** (`configs/system/`): Core infrastructure, bootstrap, keys — low evolution权限
+- **A-Level** (`configs/standard/`): Runtime parameters (science, behavior, matrix) — high evolution权限
+- **M-Level** (`configs/mods/`): User mods and plugins — medium evolution权限
+- **Override chain**: `*.default.yaml` ← `*.user.yaml` ← `*.evolved.yaml`
+- See [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md) for full spec.
 
 ---
 
@@ -915,33 +946,72 @@ Special thanks to the following projects and communities:
 
 ---
 
-  **Last Updated**: 2026-05-21 **Version**: 6.4.0 (Neuro Auto LLM)
+  **Last Updated**: 2026-05-21 **Version**: 6.5.0-dev (Self-Evolution)
 
-### Current Status (v6.4.0 — Neuro Auto LLM)
+### Current Status (v6.5.0-dev — Self-Evolution Phase 6+7)
 
-All Phase 1-7 refactoring + Post-Refactor Plan v1.0 + NGR v6.4 **COMPLETE**. ~237 test files in `tests/` (+ additional in `apps/backend/tests/`).
+**Active development** on Self-Evolution (Phase 6) and Tiered Config Architecture (Phase 7). Previous phases (1-5, Post-Refactor, NGR v6.4) complete.
 
-#### v6.4.0 New — [auto] LLM Mode (NeuroAutoSelector)
+#### Phase 6 — Self-Evolution Loop ✅
 
-Angela can now automatically select LLM backend, model, and parameters based on:
-- **Hardware**: GPU/CPU/RAM detection → capability score (0-100)
-- **System Load**: Real-time CPU/memory → throttling factor (0.2-1.0)
-- **Task Analysis**: Intent cost (math=0.9, smalltalk=0.2) + complexity
-- **8D State Correction**: α energy, ε precision, θ novelty, η success rate all influence the decision
-- **Adaptive Parameters**: Dynamic timeout, temperature, max_tokens per request
-- **Learning Loop**: Records every decision, flushes to learned_routes.yaml for continuous optimization
+| Component | File | Status |
+|-----------|------|--------|
+| ConfigMutator (validation + atomic write) | `core/system/evolution/config_mutator.py` | ✅ Done |
+| LLM config hot-reload | `services/angela_llm_service.py` | ✅ Done |
+| Evolution chat confirmation | `services/chat_service.py` | ✅ Done |
+| Bootstrap broadcast | `core/system/bootstrap/bootstrap_manager.py` | ✅ Done |
+| StateStore | `core/system/state_store/` | ✅ Done |
 
-Files: `ai/response/neuro_auto_selector.py` (+372 lines), `services/resource_awareness_service.py` (strengthened), `config/angela_core.yaml` (auto_mode section)
+#### Phase 7 — Tiered Config Architecture (TCS) 🟡
+
+| Component | Path | Status |
+|-----------|------|--------|
+| TieredConfigLoader (Default→User→Angela) | `core/system/config/tiered_loader.py` | ✅ Done |
+| S-level: bootstrap, core, keys | `configs/system/*.default.yaml` | ✅ Defaults exist |
+| A-level: science params | `configs/standard/science/*.default.yaml` | ✅ Defaults exist |
+| A-level: behavior params | `configs/standard/behavior/dynamic.default.yaml` | ✅ Defaults exist |
+| A-level: matrix | `configs/standard/matrix/` | ⚠️ Empty dir |
+| A-level: text assets | `configs/standard/text/` | ❌ Missing |
+| M-level: mods | `configs/mods/` | ⚠️ Empty dir |
+| `.user.yaml` overlays | All tiers | ⏳ Not Started |
+| `.evolved.yaml` overlays | All tiers | ⏳ Not Started |
+| ConfigMutator → `*.evolved.yaml` | `config_mutator.py` | 🟡 Being rewritten |
+| `config_loader.py` redirect | `config_loader.py` | 🟡 Partial |
+| Legacy flat configs → tiered | 23 files in `configs/` root | 🟡 Migration started |
+
+#### Hardcoded Thresholds Still in Code (`apps/backend/src/`)
+
+23+ values across 8+ files — all candidates for config externalization:
+
+| Pattern | Files | Example |
+|---------|-------|---------|
+| `arousal > N` / `arousal < N` | 8 files, 19 occ | `heartbeat.py:135` (`0.7`), `biological_integrator.py:294` (`70`), `autonomic_nervous_system.py:351` (`0.6`) |
+| `random.random() < N` | 5 files, 8 occ | `heartbeat.py:135` (`0.1`), `agent_monitoring_manager.py:136` (`0.95`) |
+| `target_fps = N` | 3 files, 6 occ | `visual_config.py:316` (`30`), `visual_config.py:325` (`60`), `visual_config.py:398` (`144`) |
+
+#### Config Sprawl (5+ Locations)
+
+| Location | Files | Role |
+|----------|-------|------|
+| `apps/backend/configs/` | 23 files | Main runtime configs (legacy flat + new tiered) |
+| `apps/backend/src/config/` | 6 files | Source-level configs (angela_core.yaml, llm_providers.yaml, etc.) |
+| `config/` (project root) | 5 files | Project-level config (mcp.json, angela_config.yaml) |
+| `configs/` (project root) | 5 files | Additional global configs (pytest, pyright) |
+
+#### Previous: v6.4.0 — [auto] LLM Mode (NeuroAutoSelector)
+
+Angela can automatically select LLM backend, model, and parameters based on hardware detection, system load, task analysis, and 8D state correction. Files: `ai/response/neuro_auto_selector.py`.
 
 ### Roadmap
 
 | Priority | Task | Status | Description |
 |----------|------|--------|-------------|
-| **P8** 🔴 | True LLM End-to-End | Pending | MathVerifier → CodeInspector → StateMatrixAdapter real flow |
-| **P9** 🟡 | Persistence Layer | Pending | save_state/load_state → Redis/JSON |
-| **P7** 🟢 | StateMatrix4D Cleanup | Pending | 1520 → ~1200 lines (optional) |
+| **P7** 🔴 | TCS Config Migration | 🟡 Progress | Complete 3-tier adoption, purge 23+ hardcoded values, create user/evolved overlays |
+| **P6.5** 🟡 | Startup Wiring | ⏳ Pending | Call `MetabolicHeartbeat.start()` and `_initialize_all_services()` from server lifecycle |
+| **P8** 🔴 | True LLM End-to-End | ⏳ Pending | MathVerifier → CodeInspector → StateMatrixAdapter real flow |
+| **P9** 🟡 | Persistence Layer | ⏳ Pending | save_state/load_state → Redis/JSON |
 
-For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md).
+For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md) and [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md).
 
 ---
 
@@ -961,7 +1031,7 @@ If this project helps you, please give us a ⭐!
 
 <p align="center">
   <b>Angela AI - Cross-Platform Desktop Companion with Live2D</b><br>
-  <i>Production Ready ✅</i>
+  <i>Active Development 🔄 — Phase 6+7 Self-Evolution</i>
 </p>
 
 <p align="center">
@@ -970,9 +1040,9 @@ If this project helps you, please give us a ⭐!
 
 ---
 
-**Version**: 6.4.0
+**Version**: 6.5.0-dev
 **Release Date**: 2026-05-21
-**Status**: Production Ready ✅ | NGR v6.4 Complete | [auto] LLM Mode Active
+**Status**: Active Development 🔄 | Phase 6+7 Self-Evolution | NGR v6.4
 **Platforms**: Windows, macOS, Linux (Mobile Bridge: stub only)
-**Code Stats**: 502 Python Source Files, ~114,000 Lines, 63 Desktop JS Modules
+**Code Stats**: 500+ Python Source Files, ~114,000 Lines, 63 Desktop JS Modules
 **Test Status**: ~237 test_*.py files in tests/
