@@ -876,14 +876,14 @@ comprehensive testing procedures.
 | Audio Latency        | < 50ms           | 50ms      |
 | **Security Latency** | **< 2ms (HMAC)** | **5ms**   |
 | **ABC Key Sync**     | **< 50ms**       | **100ms** |
-| Total Lines of Code  | ~114,000+       | -         |
-| Desktop App JS Files | 63              | -         |
-| Python Source Files  | 502             | -         |
-| AI Agents            | 15              | -         |
-| Autonomous Modules   | 49              | -         |
-| Mobile App Modules   | 5               | -         |
-| Native Audio Modules | 3               | -         |
-| Test Files (tests/)  | ~237            | -         |
+| Python Source Lines  | 116,265         | (84% live, 9% dead, 7% semi-finished) |
+| Desktop App JS Files | 63              | (52 JS modules)                         |
+| Python Source Files  | 515             | -                                       |
+| Test Files (tests/)  | 327             | -                                       |
+| AI Agents            | 15              | -                                       |
+| Autonomous Modules   | 49              | -                                       |
+| Mobile App Modules   | 5               | -                                       |
+| Native Audio Modules | 3               | -                                       |
 
 > For more detailed system indicators, cluster performance, and precision
 > mapping, please refer to [metrics.md](metrics.md).
@@ -1011,7 +1011,7 @@ Angela can automatically select LLM backend, model, and parameters based on hard
 | **P8** 🔴 | True LLM End-to-End | ⏳ Pending | MathVerifier → CodeInspector → StateMatrixAdapter real flow |
 | **P9** 🟡 | Persistence Layer | ⏳ Pending | save_state/load_state → Redis/JSON |
 
-For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md), [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md), and [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) (server lifecycle, factory chains, subtle wiring, dead code).
+For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md), [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md), [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) (server lifecycle, factory chains, subtle wiring, dead code), [CODE_STATISTICS](docs/analysis/CODE_STATISTICS_2026-05-21.md) (live vs dead code breakdown, semi-finished systems), [MODULARITY_ANALYSIS](docs/analysis/MODULARITY_ANALYSIS_2026-05-21.md) (coupling, god modules, singleton abuse), and [PROBLEM_ANALYSIS](docs/analysis/PROBLEM_ANALYSIS_2026-05-21.md) (architect/AI-researcher/engineering perspectives, prioritized fix plan).
 
 ---
 
