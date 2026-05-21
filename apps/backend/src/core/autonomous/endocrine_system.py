@@ -80,37 +80,46 @@ class HormoneType(Enum):
 
 @dataclass
 class Hormone:
-    """激素 / Hormone"""
+    """
+    激素實體 / Hormone Entity
+    使用一室藥代動力學模型 (First-order Elimination Kinetics)
+    """
 
     hormone_type: HormoneType
-    base_level: float  # 基础水平 (0-100) / Base level
-    current_level: float  # 当前水平 / Current level
-    production_rate: float  # 产生速率 / Production rate per minute
-    decay_rate: float  # 衰减率 / Decay rate per minute
-    min_level: float = 0.0  # 最小水平 / Minimum level
-    max_level: float = 100.0  # 最大水平 / Maximum level
+    base_level: float  # 穩態水平 (Steady-state level, 0-100)
+    current_level: float  # 當前水平 / Current level
+    half_life_minutes: float  # 半衰期 (分鐘) / Half-life in minutes
+    production_rate: float = 0.0  # 基礎產生速率 (單位/分鐘) / Basal production rate
+    min_level: float = 0.0
+    max_level: float = 100.0
     last_update: datetime = field(default_factory=datetime.now)
 
     def __post_init__(self):
         self.current_level = max(self.min_level, min(self.max_level, self.current_level))
+        # 計算消除常數 k = ln(2) / t1/2
+        self._k = math.log(2) / max(0.1, self.half_life_minutes)
 
     def get_normalized_level(self) -> float:
-        """Get level normalized to 0-1 range"""
+        """獲取歸一化水平 (0-1)"""
         return (self.current_level - self.min_level) / (self.max_level - self.min_level)
 
-    def update(self, minutes: float = 1.0):
-        """Update hormone level over time"""
-        time_delta = minutes
-
-        # Natural decay toward base level
-        if self.current_level > self.base_level:
-            decay = self.decay_rate * time_delta
-            self.current_level = max(self.base_level, self.current_level - decay)
-        elif self.current_level < self.base_level:
-            recovery = self.decay_rate * 0.5 * time_delta  # Slower recovery
-            self.current_level = min(self.base_level, self.current_level + recovery)
-
+    def update(self, dt_minutes: float = 1.0):
+        """
+        使用指數衰減模型更新激素水平
+        公式: C(t) = C_ss + (C0 - C_ss) * e^(-k * t)
+        其中 C_ss 是穩態水平 (base_level)
+        """
+        # 1. 計算自然代謝後的水平 (指數衰減至穩態)
+        # 即使 current_level < base_level，此公式也會讓其平滑回歸至 base_level
+        self.current_level = self.base_level + (self.current_level - self.base_level) * math.exp(-self._k * dt_minutes)
+        
+        # 2. 應用邊界限制
+        self.current_level = max(self.min_level, min(self.max_level, self.current_level))
         self.last_update = datetime.now()
+
+    def adjust(self, amount: float):
+        """瞬時調整激素水平 (例如情緒衝擊)"""
+        self.current_level = max(self.min_level, min(self.max_level, self.current_level + amount))
 
 
 @dataclass
@@ -152,67 +161,67 @@ class EndocrineSystem:
         >>> print(f"Energy boost: {effects['energy']:.2f}")
     """
 
-    # Default hormone configurations
+    # 激素默認配置 (基於生物學半衰期)
     DEFAULT_HORMONE_CONFIGS: Dict[HormoneType, Dict[str, float]] = {
         HormoneType.ADRENALINE: {
             "base_level": 10.0,
             "production_rate": 5.0,
-            "decay_rate": 3.0,
+            "half_life": 6.0,  # 6 min
         },
         HormoneType.CORTISOL: {
             "base_level": 20.0,
             "production_rate": 2.0,
-            "decay_rate": 1.5,
+            "half_life": 90.0, # 1.5 hours
         },
         HormoneType.DOPAMINE: {
             "base_level": 40.0,
             "production_rate": 3.0,
-            "decay_rate": 2.0,
+            "half_life": 6.0,  # 6 min
         },
         HormoneType.SEROTONIN: {
             "base_level": 50.0,
             "production_rate": 2.5,
-            "decay_rate": 1.0,
+            "half_life": 60.0, # 1 hour
         },
         HormoneType.OXYTOCIN: {
             "base_level": 30.0,
             "production_rate": 4.0,
-            "decay_rate": 2.5,
+            "half_life": 6.0,  # 6 min
         },
         HormoneType.ENDORPHIN: {
             "base_level": 25.0,
             "production_rate": 6.0,
-            "decay_rate": 4.0,
+            "half_life": 30.0, # 30 min
         },
         HormoneType.THYROXINE: {
             "base_level": 60.0,
             "production_rate": 1.0,
-            "decay_rate": 0.5,
+            "half_life": 10080.0, # 7 days
         },
         HormoneType.ESTROGEN_TESTOSTERONE: {
             "base_level": 35.0,
             "production_rate": 1.5,
-            "decay_rate": 1.0,
+            "half_life": 1440.0, # 24 hours
         },
         HormoneType.GROWTH_HORMONE: {
             "base_level": 15.0,
             "production_rate": 2.0,
-            "decay_rate": 1.5,
+            "half_life": 18.0, # 18 min
         },
         HormoneType.INSULIN: {
             "base_level": 45.0,
             "production_rate": 3.0,
-            "decay_rate": 2.5,
+            "half_life": 6.0, # 6 min
         },
         HormoneType.MELATONIN: {
             "base_level": 5.0,
             "production_rate": 8.0,
-            "decay_rate": 5.0,
+            "half_life": 30.0, # 30 min
         },
         HormoneType.NOREPINEPHRINE: {
             "base_level": 20.0,
             "production_rate": 4.0,
-            "decay_rate": 3.0,
+            "half_life": 3.0, # 3 min
         },
     }
 
@@ -250,7 +259,7 @@ class EndocrineSystem:
                 base_level=config["base_level"],
                 current_level=config["base_level"],
                 production_rate=config["production_rate"],
-                decay_rate=config["decay_rate"],
+                half_life_minutes=config["half_life"],
             )
 
     async def initialize(self):
@@ -271,46 +280,50 @@ class EndocrineSystem:
     async def advance_time(self, seconds: float):
         """
         推進內分泌系統時間 (2030 Standard).
-        允許精確的激素衰減與代謝計算。
+        使用藥代動力學模型進行連續演化。
         """
-        minutes = seconds / 60.0
+        dt_min = seconds / 60.0
         for hormone in self.hormones.values():
-            hormone.update(minutes=minutes)
+            # 指數衰減至穩態 (基於生物半衰期)
+            hormone.update(dt_minutes=dt_min)
         
-        # 同時觸發反饋調節與晝夜節律的微調
+        # 應用激素間的反饋調節 (非線性耦合)
         await self._apply_feedback_loops()
         
-        # 根據壓力水平自動調整
-        self.stress_level = max(0.0, self.stress_level - 0.01 * minutes)
+        # 壓力代謝：壓力水平也遵循指數衰減
+        # 假設壓力半衰期為 30 分鐘
+        k_stress = math.log(2) / 30.0
+        self.stress_level = self.stress_level * math.exp(-k_stress * dt_min)
 
     async def _update_loop(self):
-        """Background update loop for hormone dynamics"""
+        """核心代謝循環"""
+        last_run = datetime.now()
         while self._running:
-            await self._update_hormones()
-            await self._apply_feedback_loops()
+            now = datetime.now()
+            dt_sec = (now - last_run).total_seconds()
+            
+            await self.advance_time(dt_sec)
             await self._update_circadian_rhythm()
-            await asyncio.sleep(60)  # Update every minute
+            
+            last_run = now
+            await asyncio.sleep(5)  # 提高採樣頻率以保證數值演化平滑 (5秒一跳)
 
     async def _update_hormones(self):
-        """Update all hormone levels"""
-        for hormone in self.hormones.values():
-            hormone.update(minutes=1.0)
+        """(已由 advance_time 整合) 保持兼容性"""
+        pass
 
     async def _apply_feedback_loops(self):
-        """Apply feedback regulation between hormones"""
+        """應用激素間的反饋調節"""
         for (source, target), factor in self.feedback_loops.items():
-            source_level = self.hormones[source].current_level
+            source_hormone = self.hormones[source]
             target_hormone = self.hormones[target]
 
-            # Calculate feedback effect
-            normalized_source = source_level / 100.0
-            adjustment = factor * normalized_source * target_hormone.production_rate
-
-            # Apply adjustment
-            target_hormone.current_level = max(
-                target_hormone.min_level,
-                min(target_hormone.max_level, target_hormone.current_level + adjustment),
-            )
+            # 反饋強度基於源激素的偏移程度
+            deviation = (source_hormone.current_level - source_hormone.base_level) / 100.0
+            # 瞬時調節量
+            adjustment = factor * deviation * target_hormone.base_level * 0.1
+            
+            target_hormone.adjust(adjustment)
 
     async def _update_circadian_rhythm(self):
         """Update circadian phase and melatonin levels"""
@@ -523,11 +536,7 @@ class EndocrineSystem:
 
     async def adjust_hormone(self, hormone_type: HormoneType, amount: float):
         """
-        Adjust a specific hormone level
-
-        Args:
-            hormone_type: Type of hormone to adjust
-            amount: Amount to add (positive or negative)
+        瞬時調節特定激素 (具備追蹤與回調)
         """
         tracer = get_tracer()
         trace_id = tracer.start(
@@ -541,35 +550,25 @@ class EndocrineSystem:
             if hormone_type in self.hormones:
                 hormone = self.hormones[hormone_type]
                 old_level = hormone.current_level
-                hormone.current_level = max(
-                    hormone.min_level, min(hormone.max_level, hormone.current_level + amount)
-                )
+                hormone.adjust(amount)
 
                 tracer.record(trace_id, "old_level", old_level)
                 tracer.record(trace_id, "new_level", hormone.current_level)
 
-                # Notify callbacks
+                # 通知觀察者
                 for callback in self._callbacks:
                     try:
                         callback(hormone_type, old_level, hormone.current_level)
-                    except Exception as e:  # broad exception acceptable: hormone change callbacks should not block adjustment
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
+                    except Exception as e:
+                        logger.error(f"Hormone callback error: {e}")
         finally:
             tracer.finish(trace_id)
 
     def get_hormone_level(self, hormone_type: HormoneType) -> float:
         """Get current level of a specific hormone"""
-        return self.hormones.get(
-            hormone_type,
-            Hormone(
-                hormone_type=hormone_type,
-                base_level=0,
-                current_level=0,
-                production_rate=0,
-                decay_rate=0,
-            ),
-        ).current_level
+        if hormone_type in self.hormones:
+            return self.hormones[hormone_type].current_level
+        return 0.0
 
     def get_all_hormone_levels(self) -> Dict[HormoneType, float]:
         """Get all hormone levels"""

@@ -68,11 +68,29 @@
 *   **[N.22.E3] 桌面互動意圖避障**: 在 `desktop_presence.py` 連結社交與防衛意圖，實作對滑鼠座標的引力靠近與高速避障 (Click-Through)。 (已完成)
 *   **[N.22.E4] 小腦神經可塑性演化**: 在 `cerebellum_engine.py` 引入基於歷史位移誤差的梯度微調 (Gradient Refinement) 與基於認知的動態阻尼。 (已完成)
 
+### [Task N.24] 基礎設施正規化 (Infrastructure Formalization)
+*   **[N.24.1] 統一引導系統**: 實作 `src.core.system.bootstrap`，整合環境偵測、硬體分級與效能適配。 (已完成)
+*   **[N.24.2] 腳本歸檔與清理**: 清理根目錄冗餘腳本，建立 `tools/legacy_scripts` 存檔。 (已完成)
+*   **[N.24.3] 主入口集成**: 修正 `main.py` 引用，將硬體感知部署統一至 `BootstrapManager`。 (已完成)
+
+### [Task N.25] 架構正規化與解耦 (Architectural Formalization)
+*   **[N.25.1] 全域狀態中心**: 實作 `GlobalStateStore` 並在 `StateMatrix4D` 中整合自動同步機制。 (已完成)
+*   **[N.25.2] 層級協議定義**: 在 `core.interfaces.protocols` 定義 L1-L4 標準合約。 (已完成)
+*   **[N.25.3] 服務解耦重構**: 重構 `ChatService` 採用 Store 模式獲取狀態，移除循環依賴風險。 (已完成)
+
+### [Task N.27] 穩健度與場景驗證 (Validation & Safety)
+*   **[N.27.1] 行為軌跡測試**: 實施 `test_long_term_drift`，驗證生物系統在 100k Tick 下的收斂穩定性。 (已完成)
+*   **[N.27.2] 數值壓力測試**: 實施 `test_sensory_overload`，確認位能場模型在極端輸入下不發生計算發散。 (已完成)
+*   **[N.27.3] 語義債務審核**: 驗證 `REFINEMENT_MANIFESTO` 描述的病灶已全數清除。 (已完成)
+
 -----
 
 ## 📅 專案現狀 (Current Status)
 ✅ **所有前置任務已完成且通過物理對齊檢查。**
 ✅ **專案已達到 v2.9 的空間意圖演化基準。**
 ✅ **[N.21] 原生意圖模型與 [N.22] Native Coordinate AI 擴展已全數完成。**
-✅ **[N.23] 核心穩定性補丁 (Stability Patch v6.3) 已於 2026-05-18 完成修復，解決了聊天循環依賴與介面缺失問題。**
+✅ **[N.23] 核心穩定性補丁 (Stability Patch v6.3) 及其後續演化已全數達成。**
+✅ **[N.24-27] 實作正規化與科學化計畫 (Refinement Mission v6.3.5) 已於 2026-05-21 圓滿完成。**
+✅ **系統已進入「科學實體化」階段，具備 AGI 級別的數值穩定性與架構解耦度。**
+
 

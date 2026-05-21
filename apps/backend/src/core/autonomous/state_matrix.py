@@ -1182,7 +1182,13 @@ Returns:
         # 如果當前維度發生了座標位移，會對其他維度產生微小的「拖拽」
         self.apply_inter_dimensional_drag(dimension_name)
 
-
+        # --- Phase 2: Global State Store Integration ---
+        try:
+            from src.core.system.state_store import state_store
+            dim_state = self.dimensions[dimension_name]
+            state_store.update_state(dimension_name, dim_state.values.copy())
+        except Exception as e:
+            logger.error(f"[StateStore] Failed to sync {dimension_name}: {e}")
 
         # Trigger callbacks
         dim_state = self.dimensions[dimension_name]

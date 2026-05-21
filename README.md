@@ -49,9 +49,9 @@ seamless cross-device synchronization.
 
 ### 🔄 Current Project Status
 
-- **Backend / Core AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0 (8D State Matrix αβγδεθζη, θ-η Dual Loop, Neuro-Generative Response, 236 Tests)
+- **Backend / Core AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0 (8D State Matrix αβγδεθζη, θ-η Dual Loop, Neuro-Generative Response, 237 test files)
 - **Frontend / Desktop (Electron)**: 🛠️ Phase 12 Restoration Complete (Live2D, Expressions, Touch)
-- **Frontend / Mobile (React Native)**: Active Monitoring & Comm Bridge
+- **Frontend / Mobile (React Native)**: ⚠️ Stub — encryption layer stripped, no active middleware
 
 ---
 
@@ -293,9 +293,9 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 
 ### 🔄 專案當前進度
 
-- **後端 / 核心 AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0（8D 狀態矩陣 αβγδεθζη、θ-η Dual Loop、Neuro-Generative Response、236 測試）
+- **後端 / 核心 AI (Python)**: ✅ Phase 3 — Post-Refactor v1.0（8D 狀態矩陣 αβγδεθζη、θ-η Dual Loop、Neuro-Generative Response、237 測試檔）
 - **前端 / 桌面端 (Electron)**: 🛠️ Phase 12 狀態復原完成 (Live2D、表情、觸覺感應)
-- **前端 / 行動端 (React Native)**: 穩定監控與通訊橋接中
+- **前端 / 行動端 (React Native)**: ⚠️ 殘留階段 — 加密層已剝離、無活躍中介層
 
 ---
 
@@ -476,6 +476,10 @@ To prevent confusion, here is a clear map of the multiple frontends, backends, a
 * **`apps/web-live2d-viewer/` (Web Viewer)**: A pure browser-based standalone viewer for quickly testing Live2D assets. (基於瀏覽器的純 Live2D 預覽器)
 
 *(Note: Advanced features like "Concurrent Execution" or "Cerebellum Core" exist in the `backend` and power the logic, but the actual visual manifestation depends on the specific frontend you use. 注意：高階的 AI 邏輯或神經模擬實作於後端，而視覺特效與互動體驗則根據您使用的前端而有所不同。)*
+
+> **⚠️ Architecture Note**: The backend contains **two FastAPI servers** that both default to port 8000 — `main.py` (App A, 9 routes for system management) and `main_api_server.py` (App B, ~104 routes as the primary AI server). They share a common router at `api/router.py`. Only one can bind to port 8000 at a time; the other must use `--port`. This is a known deployment constraint.
+>
+> **架構注意**：後端包含**兩台 FastAPI 伺服器**，均預設 port 8000 — `main.py`（App A，9 條路由，系統管理用）和 `main_api_server.py`（App B，~104 條路由，主要 AI 伺服器）。兩者共用 `api/router.py`。同一時間只能有一台綁定 port 8000，另一台需用 `--port` 指定其他埠。
 
 ---
 
@@ -672,24 +676,36 @@ Unified-AI-Project/
  │        ├─ index.js
  │        └─ test.js
  │
- ├─ 🧠 Backend API (apps/backend/)
- │  ├─ main.py                    # FastAPI main program
- │  ├─ start_monitor.py           # Security tray monitor
- │  └─ src/                       # Source code
- │     ├─ core/                  # Core components
- │     │  ├─ autonomous/          # Biological systems
- │     │  ├─ metamorphosis/        # Identity/creation
- │     │  ├─ precision/           # Precision management
- │     │  ├─ system/             # Hardware detection
- │     │  └─ knowledge/           # Knowledge/memory
- │     ├── ai/                          # Level 5 ASI Core
- │     │  ├── alignment/               # Reasoning, Emotion System [Restored]
- │     │  ├── lis/                     # Linguistic Immune System [New Proto]
- │     │  └── integration/             # Unified Control Center (UCC)
- │        ├─ router.py             # RESTful router
- │        └─ v1/endpoints/        # v1 endpoints (drive, pet)
- │
- ├─ 🦟 Data Directories
+  ├─ 🧠 Backend API (apps/backend/)
+  │  ├─ main.py                    # App A: System management server (9 routes)
+  │  └─ src/                       # Source code
+  │     ├─ services/               # App B: Main AI server (~104 routes)
+  │     │  ├─ main_api_server.py   # Server entry point
+  │     │  ├─ api/                 # State Matrix API (34 routes)
+  │     │  └─ ...                  # Chat, LLM, Atlassian services
+  │     ├─ api/                    # Shared router
+  │     │  ├─ router.py            # /api/v1/* routes (used by both servers)
+  │     │  └─ v1/endpoints/        # drive, pet endpoints
+  │     ├─ core/                   # Core components
+  │     │  ├─ autonomous/          # Biological systems (47 files)
+  │     │  ├─ metamorphosis/       # Identity/creation
+  │     │  ├─ precision/           # Precision management
+  │     │  ├─ system/              # Hardware detection
+  │     │  └─ knowledge/           # Knowledge/memory
+  │     ├─ ai/                     # Level 5 ASI Core (46 subdirs)
+  │     │  ├─ alignment/           # Reasoning, Emotion System
+  │     │  ├─ lis/                 # Linguistic Immune System
+  │     │  ├─ integration/         # Unified Control Center (UCC)
+  │     │  ├─ memory/              # HAM, LU memory systems
+  │     │  ├─ learning/            # Learning manager, content analyzer
+  │     │  ├─ response/            # NeuroAutoSelector, NGR
+  │     │  └─ ...                  # 40+ additional AI modules
+  │     ├─ config/                 # YAML configuration
+  │     ├─ shared/                 # Middleware, security, utils
+  │     ├─ economy/                # Economy manager, gacha
+  │     ├─ pet/                    # Pet lifecycle, biological integrator
+  │
+  ├─ 🦟 Data Directories
  │  ├─ data/models/               # Model data
  │  ├─ data/memories/             # Memory storage
  │  ├─ data/cache/                # Cache files
@@ -701,10 +717,11 @@ Unified-AI-Project/
  │     ├─ audio/                 # Audio resources
  │     └─ images/                # Image resources
  │
- └─ 🧪 Testing (tests/)
-    ├─ game/                     # Desktop Pet tests
-    ├─ integration/              # Integration tests
-    └─ test_comprehensive_system.py  # Comprehensive tests
+  └─ 🧪 Testing (tests/)
+     ├─ game/                     # Desktop Pet tests
+     ├─ integration/              # Integration tests
+     ├─ unit/                     # Unit tests
+     └─ ...                       # ~237 test_*.py files total
 ```
 
 ---
@@ -835,7 +852,7 @@ comprehensive testing procedures.
 | Autonomous Modules   | 49              | -         |
 | Mobile App Modules   | 5               | -         |
 | Native Audio Modules | 3               | -         |
-| Test Files           | 236             | -         |
+| Test Files (tests/)  | ~237            | -         |
 
 > For more detailed system indicators, cluster performance, and precision
 > mapping, please refer to [metrics.md](metrics.md).
@@ -898,11 +915,11 @@ Special thanks to the following projects and communities:
 
 ---
 
-  **Last Updated**: 2026-05-19 **Version**: 6.4.0 (Neuro Auto LLM)
+  **Last Updated**: 2026-05-21 **Version**: 6.4.0 (Neuro Auto LLM)
 
 ### Current Status (v6.4.0 — Neuro Auto LLM)
 
-All Phase 1-7 refactoring + Post-Refactor Plan v1.0 + NGR v6.4 **COMPLETE**. 236 test files across the project.
+All Phase 1-7 refactoring + Post-Refactor Plan v1.0 + NGR v6.4 **COMPLETE**. ~237 test files in `tests/` (+ additional in `apps/backend/tests/`).
 
 #### v6.4.0 New — [auto] LLM Mode (NeuroAutoSelector)
 
@@ -954,8 +971,8 @@ If this project helps you, please give us a ⭐!
 ---
 
 **Version**: 6.4.0
-**Release Date**: 2026-05-19
+**Release Date**: 2026-05-21
 **Status**: Production Ready ✅ | NGR v6.4 Complete | [auto] LLM Mode Active
-**Platforms**: Windows, macOS, Linux, Android/iOS (Mobile Bridge)
+**Platforms**: Windows, macOS, Linux (Mobile Bridge: stub only)
 **Code Stats**: 502 Python Source Files, ~114,000 Lines, 63 Desktop JS Modules
-**Test Status**: 236 Test Files
+**Test Status**: ~237 test_*.py files in tests/

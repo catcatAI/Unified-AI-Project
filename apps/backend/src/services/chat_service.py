@@ -45,18 +45,30 @@ class AngelaChatService:
         return self._neuro_blender
 
     def _build_neuro_blend_state(self, text: str, bio_state: Dict[str, Any], empathy_analysis: Any) -> Dict[str, Any]:
-        """Build state_dict for NeuroBlender from current state matrix + bio + empathy"""
+        """Build state_dict for NeuroBlender from GlobalStateStore (Decoupled Phase 2)"""
+        from src.core.system.state_store import state_store
+        
+        # Get latest states from Store instead of direct matrix access
+        alpha = state_store.get_state("alpha")
+        beta = state_store.get_state("beta")
+        gamma = state_store.get_state("gamma")
+        delta = state_store.get_state("delta")
+        epsilon = state_store.get_state("epsilon")
+        theta = state_store.get_state("theta")
+        zeta = state_store.get_state("zeta")
+
         empathy_valence = 0.0
         if empathy_analysis and hasattr(empathy_analysis, "predicted_emotional_state"):
             empathy_valence = getattr(empathy_analysis.predicted_emotional_state, "valence", 0.0)
+            
         return {
             "alpha": {"energy": 1.0 - bio_state.get("stress_level", 0.0) * 0.5},
-            "beta": {"curiosity": self.state_matrix.beta.values.get("curiosity", 0.5)},
+            "beta": {"curiosity": beta.get("curiosity", 0.5)},
             "gamma": {"valence": bio_state.get("valence", 0.0)},
-            "delta": {"intimacy": self.state_matrix.delta.values.get("intimacy", 0.3)},
-            "epsilon": {"precision": self.state_matrix.epsilon.values.get("precision", 0.5)},
-            "zeta": {"temporal_coherence": self.state_matrix.zeta.values.get("temporal_coherence", 0.5)},
-            "theta": {"novelty": self.state_matrix.theta.values.get("novelty", 0.3)},
+            "delta": {"intimacy": delta.get("intimacy", 0.3)},
+            "epsilon": {"precision": epsilon.get("precision", 0.5)},
+            "zeta": {"temporal_coherence": zeta.get("temporal_coherence", 0.5)},
+            "theta": {"novelty": theta.get("novelty", 0.3)},
             "eta": {"execution_count": self.eta_state.execution_count if hasattr(self, "eta_state") else 0.5},
         }
 

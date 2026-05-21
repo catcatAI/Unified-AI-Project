@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Dict, Tuple, List, Any, Callable
 from enum import Enum, auto
 import re
+import math
 import logging
 
 
@@ -224,20 +225,72 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
     return evaluator
 
 
+class PotentialFieldEngine:
+    """
+    位能場引擎 / Potential Field Engine
+    使用梯度下降法計算座標位移。
+    """
+    
+    @staticmethod
+    def calculate_attractive_displacement(
+        current: Tuple[float, float, float],
+        target: Tuple[float, float, float],
+        pull_factor: float,
+        threshold: float = 0.001
+    ) -> Tuple[float, float, float]:
+        """
+        計算吸引力產生的位移。
+        採用 Huber-like 位能場：
+        - 遠距離時力大小恆定 (線性位能) 防止爆炸。
+        - 近距離時力隨距離減小 (二次位能) 保證平滑收斂。
+        """
+        cx, cy, cz = current
+        tx, ty, tz = target
+        
+        dx, dy, dz = tx - cx, ty - cy, tz - cz
+        dist = math.sqrt(dx**2 + dy**2 + dz**2)
+        
+        if dist < threshold:
+            return (0.0, 0.0, 0.0)
+            
+        # Huber 閾值：距離大於 0.5 時轉為線性力
+        delta = 0.5
+        if dist > delta:
+            # 線性力區域 (恆定引力大小)
+            force_mag = pull_factor * delta
+        else:
+            # 二次力區域 (正比於距離)
+            force_mag = pull_factor * dist
+            
+        # 計算位移向量
+        nx = (dx / dist) * force_mag
+        ny = (dy / dist) * force_mag
+        nz = (dz / dist) * force_mag
+        
+        return (nx, ny, nz)
+
+
 def apply_intent_gravity(dimensions: Dict[str, Any], pull_factor: Optional[float] = None) -> None:
-    """將各個維度的座標向其「意圖向量」緩緩拉近"""
+    """
+    將各個維度的座標向其「意圖向量」拉近。
+    [Task N.26.3] 升級為位能場模型。
+    """
     if pull_factor is None:
         pull_factor = _get_spatial_config("intent_gravity_pull", 0.05)
-    thresh = _get_spatial_config("intent_gravity_threshold", 0.001)
+    
+    engine = PotentialFieldEngine()
+    
     for name, state in dimensions.items():
-        tx, ty, tz = state.intent_vector
-        cx, cy, cz = state.coordinate
-
-        if abs(tx - cx) > thresh or abs(ty - cy) > thresh or abs(tz - cz) > thresh:
-            nx = cx + (tx - cx) * pull_factor
-            ny = cy + (ty - cy) * pull_factor
-            nz = cz + (tz - cz) * pull_factor
-            state.coordinate = (nx, ny, nz)
+        # 獲取吸引位移
+        dx, dy, dz = engine.calculate_attractive_displacement(
+            state.coordinate,
+            state.intent_vector,
+            pull_factor
+        )
+        
+        if dx != 0 or dy != 0 or dz != 0:
+            cx, cy, cz = state.coordinate
+            state.coordinate = (cx + dx, cy + dy, cz + dz)
 
 
 def set_intent_target(dimensions: Dict[str, Any], dimension: str, target: Tuple[float, float, float]) -> None:
@@ -250,23 +303,30 @@ def set_intent_target(dimensions: Dict[str, Any], dimension: str, target: Tuple[
 def apply_inter_dimensional_drag(
     dimensions: Dict[str, Any], trigger_dim: str, drag_factor: Optional[float] = None
 ) -> None:
-    if drag_factor is None:
-        drag_factor = _get_spatial_config("inter_dimensional_drag", 0.02)
     """
     [Task N.21.7] 維度連動拖拽
-    當一個維度移動時，會將其他維度也往相同方向「拉動」一點點。
+    升級為位能場耦合模型：觸發維度的座標作為其他維度的「動態引力點」。
     """
+    if drag_factor is None:
+        drag_factor = _get_spatial_config("inter_dimensional_drag", 0.02)
+        
     if trigger_dim not in dimensions:
         return
 
-    tx, ty, tz = dimensions[trigger_dim].coordinate
+    trigger_coord = dimensions[trigger_dim].coordinate
+    engine = PotentialFieldEngine()
 
     for name, state in dimensions.items():
         if name == trigger_dim:
             continue
 
-        cx, cy, cz = state.coordinate
-        nx = cx + (tx - cx) * drag_factor
-        ny = cy + (ty - cy) * drag_factor
-        nz = cz + (tz - cz) * drag_factor
-        state.coordinate = (nx, ny, nz)
+        # 計算其他維度受到的「連動引力」
+        dx, dy, dz = engine.calculate_attractive_displacement(
+            state.coordinate,
+            trigger_coord,
+            drag_factor
+        )
+        
+        if dx != 0 or dy != 0 or dz != 0:
+            cx, cy, cz = state.coordinate
+            state.coordinate = (cx + dx, cy + dy, cz + dz)

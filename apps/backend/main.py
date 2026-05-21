@@ -88,27 +88,23 @@ async def lifespan(app: FastAPI):
 
     # 初始化硬體感知部署與集群管理器
     try:
-        from src.system.deployment_manager import DeploymentManager
+        from src.core.system.bootstrap import get_bootstrap_manager
         from src.system.cluster_manager import ClusterManager, NodeType
 
-        # 1. 硬體偵測與配置生成
-        dm = DeploymentManager()
-        config = dm.generate_config(cluster_mode=True)  # 預設開啟集群模式支援
-        logger.info(
-            f"✅ 硬體感知部署配置已生成: 模式={config.mode.value}, 角色={config.cluster_role}"
-        )
-
-        # 2. 初始化集群管理器
-        node_type = (
-            NodeType.MASTER if config.cluster_role == "master" else NodeType.WORKER
-        )
+        # 1. 正規化引導與硬體偵測 (替代已棄用的 DeploymentManager)
+        bootstrap = get_bootstrap_manager()
+        state = bootstrap.run_full_bootstrap()
+        
+        # 2. 初始化集群管理器 (適配 bootstrap 狀態)
+        # 注意: 目前預設為 MASTER 節點，未來可由 bootstrap 狀態擴展
+        node_type = NodeType.MASTER 
         cluster = ClusterManager(node_type=node_type)
-        logger.info(f"✅ 集群管理器初始化完成: 節點類型={node_type.value}")
+        logger.info(f"✅ 正規化引導完成: Tier={state['hardware']['performance_tier']}, 節點類型={node_type.value}")
 
     except ImportError as e:
-        logger.warning(f"部署或集群模組不可用: {e}")
+        logger.warning(f"引導或集群模組不可用: {e}")
     except Exception as e:
-        logger.warning(f"硬體感知部署初始化失敗: {e}")
+        logger.warning(f"正規化引導初始化失敗: {e}")
 
     # 初始化实时同步系统
     try:

@@ -52,9 +52,9 @@
     *   `state_matrix.py` (4D+Spatial Tensor)
     *   `memory_neuroplasticity_bridge.py` (Spatial Memory)
 
-## 演化里程碑 (v6.3 - 2026-05-18)
-*   **修復**: `chat_service.py` 與 `angela_llm_service.py` 之間的循環依賴 (Circular Dependency) 導致的死循環。
-*   **補完**: `AngelaChatService` 缺失的 `_detect_drive_intent` 接口。
-*   **穩定化**: `AngelaLLMService` 的備份回應機制 (Fallback) 修正為基於 `TemplateLibrary` 的無狀態回應。
-*   **驗證**: 通過 `repro_crash.py` 整合測試，確保在 LLM 離線時系統仍能維持 512ms 內的快速模板回應。
+## 演化里程碑 (v6.3.5 - 2026-05-21)
+*   **行為守衛**: 實裝行為軌跡驗證體系，通過 100,000 次 Tick 的長週期漂移測試，驗證 PK 模型的穩態收斂性。
+*   **壓力穩定化**: 通過「感官過載」場景測試，確認位能場引力模型與內分泌系統在高頻衝擊下具備數值穩定性（無 NaN/Inf 崩潰）。
+*   **重構完備**: 達成 `PROJECT_REFINEMENT_PLAN v1.5` 的所有工程指標，系統正式從「數值模擬」演進為「科學實體化」架構。
+
 
