@@ -365,11 +365,30 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"[Lifecycle] Startup config error: {e}")
 
+    # 接線跨服務依賴 & 啟動生物心跳
+    try:
+        _initialize_all_services()
+        logger.info("[Lifecycle] Cross-service wiring complete")
+    except Exception as e:
+        logger.warning(f"[Lifecycle] Service wiring failed: {e}")
+
+    try:
+        heartbeat = get_metabolic_heartbeat()
+        await heartbeat.start()
+        logger.info("[Lifecycle] MetabolicHeartbeat started")
+    except Exception as e:
+        logger.warning(f"[Lifecycle] Heartbeat start failed: {e}")
+
     logger.info("[Lifecycle] Server startup complete")
     yield
 
     logger.info("[Lifecycle] Shutting down...")
     _sd_timeout = _lc.get("shutdown_timeout", 10.0) if _angela_cfg else 10.0
+    try:
+        hb = get_metabolic_heartbeat()
+        await hb.stop()
+    except Exception:
+        pass
     logger.info(f"[Lifecycle] Shutdown complete (timeout={_sd_timeout}s)")
 
 
