@@ -1,0 +1,57 @@
+# Spatial Potential Field & Gravity Parameters
+
+gravity:
+  intent_gravity_pull: 0.05
+  intent_gravity_threshold: 0.001
+  inter_dimensional_drag: 0.02
+  huber_delta: 0.5
+
+projection_weights:
+  alpha:
+    x_factor: 1.0 # comfort - tension
+    y_factor: 10.0 # (energy - rest_need)
+    z_factor: 1.0 # arousal - 0.5
+  beta:
+    x_factor: 5.0 # (clarity - confusion)
+    y_factor: 15.0 # (focus + learning + curiosity) / 3
+    z_factor: 4.0 # creativity - 0.5
+  gamma:
+    x_factor: 5.0
+    y_factor: 5.0
+    z_factor: 5.0
+
+dimension_weights:
+  alpha: 1.0
+  beta: 1.0
+  gamma: 1.0
+  delta: 1.0
+  epsilon: 0.3
+  theta: 0.2
+  zeta: 0.2
+
+initial_coordinates:
+  alpha: [0.0, -5.0, 0.0]
+  beta: [0.0, 10.0, 0.0]
+  gamma: [0.0, 2.0, 2.0]
+  delta: [0.0, 0.0, 10.0]
+  epsilon: [0.0, 0.0, 0.0]
+  theta: [0.0, 0.0, 0.0]
+  zeta: [0.0, 0.0, 0.0]
+
+influence_matrix:
+  alpha: {beta: 0.3, gamma: 0.5, delta: 0.2, epsilon: 0.1, theta: 0.05, zeta: 0.05}
+  beta: {alpha: 0.2, gamma: 0.4, delta: 0.3, epsilon: 0.2, theta: 0.1, zeta: 0.1}
+  gamma: {alpha: 0.4, beta: 0.3, delta: 0.5, epsilon: 0.3, theta: 0.15, zeta: 0.1}
+  delta: {alpha: 0.2, beta: 0.3, gamma: 0.6, epsilon: 0.1, theta: 0.15, zeta: 0.05}
+  epsilon: {alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.1, theta: 0.1, zeta: 0.05}
+  theta: {alpha: 0.05, beta: 0.1, gamma: 0.1, delta: 0.05, epsilon: 0.05, zeta: 0.05}
+  zeta: {alpha: 0.05, beta: 0.1, gamma: 0.1, delta: 0.05, epsilon: 0.05, theta: 0.05}
+
+mapping:
+  cosine_similarity_threshold: 0.8
+  precision_scaling: 1.0
+
+anchors:
+  alpha: [0.5, 0.5, 0.5]
+  beta: [0.3, 0.7, 0.4]
+  gamma: [0.8, 0.2, 0.6]

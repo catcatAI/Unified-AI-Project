@@ -27,10 +27,11 @@ class HardwareSpecs:
 class HardwareProbe:
     """
     Surgically detects hardware capabilities and assigns performance tiers.
-    Replaces the fragmented logic in root-level installation scripts.
     """
     
     def __init__(self):
+        from config_loader import get_bootstrap_config
+        self.bootstrap_config = get_bootstrap_config()
         self.specs: Optional[HardwareSpecs] = None
 
     def probe(self) -> HardwareSpecs:
@@ -40,10 +41,13 @@ class HardwareProbe:
             memory = self._get_memory_gb()
             gpu_name = self._detect_gpu()
             
-            # AI Capability Scoring (Formalized from install_angela.py)
-            score = cores * 2 + (memory // 4) * 5
+            # AI Capability Scoring from config
+            weights = self.bootstrap_config.get("scoring_weights", {})
+            score = cores * weights.get("cpu_core_multiplier", 2) + memory * weights.get("memory_gb_multiplier", 1.25)
+            
             if any(kw in gpu_name.upper() for kw in ["RTX", "GTX", "NVIDIA", "APPLE", "METAL"]):
-                score += 40 if "RTX" in gpu_name.upper() else 30
+                bonus = weights.get("gpu_rtx_bonus", 40) if "RTX" in gpu_name.upper() else weights.get("gpu_standard_bonus", 30)
+                score += bonus
             
             tier = self._assign_tier(score)
             
@@ -55,12 +59,11 @@ class HardwareProbe:
                 memory_gb=memory,
                 gpu=gpu_name,
                 performance_tier=tier,
-                ai_capability_score=score
+                ai_capability_score=int(score)
             )
             return self.specs
         except Exception as e:
-            logger.error(f"Hardware probe failed: {e}", exc_info=True)
-            # Safe Fallback
+            logger.error(f"Hardware probe failed: {e}")
             return HardwareSpecs(
                 platform=sys.platform,
                 architecture=platform.machine(),
@@ -72,54 +75,20 @@ class HardwareProbe:
                 ai_capability_score=50
             )
 
-    def _get_memory_gb(self) -> int:
-        try:
-            import psutil
-            return int(psutil.virtual_memory().total // (1024**3))
-        except ImportError:
-            # Fallback for when psutil is not yet installed during bootstrap
-            if sys.platform == "win32":
-                try:
-                    res = subprocess.run(["wmic", "ComputerSystem", "get", "TotalPhysicalMemory"], 
-                                       capture_output=True, text=True)
-                    lines = res.stdout.strip().split("\n")
-                    if len(lines) > 1:
-                        return int(lines[1].strip()) // (1024**3)
-                except: pass
-            return 8
-
-    def _detect_gpu(self) -> str:
-        try:
-            if sys.platform == "win32":
-                res = subprocess.run(["powershell", "-Command", 
-                                    "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name"],
-                                    capture_output=True, text=True, timeout=5)
-                name = res.stdout.strip().split("\n")[0]
-                if name: return name
-            elif sys.platform == "darwin":
-                return "Apple Metal"
-            else:
-                res = subprocess.run(["lspci"], capture_output=True, text=True, timeout=5)
-                for line in res.stdout.split("\n"):
-                    if "VGA" in line or "3D" in line:
-                        return line.split(":")[-1].strip()
-        except Exception: pass
-        return "Unknown/Software"
-
-    def _assign_tier(self, score: int) -> str:
-        if score > 80: return "Extreme"
-        if score > 60: return "High"
-        if score > 40: return "Medium"
+    def _assign_tier(self, score: float) -> str:
+        tiers = self.bootstrap_config.get("hardware_tiers", {})
+        # Sort tiers by threshold descending to find the highest match
+        sorted_tiers = sorted(tiers.items(), key=lambda x: x[1].get("score_threshold", 0), reverse=True)
+        for tier_name, config in sorted_tiers:
+            if score >= config.get("score_threshold", 0):
+                return tier_name
         return "Low"
 
     def get_performance_constants(self) -> Dict[str, Any]:
-        """Maps tier to actual system constants."""
+        """Maps tier to actual system constants from config."""
         if not self.specs: self.probe()
+        tiers = self.bootstrap_config.get("hardware_tiers", {})
+        tier_config = tiers.get(self.specs.performance_tier, tiers.get("Medium", {}))
         
-        tier_map = {
-            "Extreme": {"max_fps": 60, "llm_model": "gemini-1.5-pro-latest", "precision": 1.0},
-            "High":    {"max_fps": 60, "llm_model": "gemini-pro", "precision": 0.8},
-            "Medium":  {"max_fps": 30, "llm_model": "gemini-pro", "precision": 0.5},
-            "Low":     {"max_fps": 24, "llm_model": "gemini-1.5-flash", "precision": 0.3},
-        }
-        return tier_map.get(self.specs.performance_tier, tier_map["Medium"])
+        # Strip score_threshold from the constants
+        return {k: v for k, v in tier_config.items() if k != "score_threshold"}

@@ -125,17 +125,26 @@ class DimensionState:
 
     def compute_coordinate(self) -> Tuple[float, float, float]:
         """根據當前維度值計算實際座標 / Compute actual coordinate from current values"""
+        from config_loader import get_formula_config
+        proj_conf = get_formula_config("spatial").get("projection_weights", {}).get(self.name, {})
+        
         v = self.values
         n = self.name
+        
+        # 獲取縮放因子，默認為 1.0
+        xf = proj_conf.get("x_factor", 1.0)
+        yf = proj_conf.get("y_factor", 1.0)
+        zf = proj_conf.get("z_factor", 1.0)
+
         if n == "alpha":
             comfort = v.get("comfort", 0.5)
             tension = v.get("tension", 0.0)
             energy = v.get("energy", 0.5)
             rest_need = v.get("rest_need", 0.5)
             arousal = v.get("arousal", 0.5)
-            x = comfort - tension
-            y = (energy - rest_need) * 10.0
-            z = arousal - 0.5
+            x = (comfort - tension) * xf
+            y = (energy - rest_need) * yf
+            z = (arousal - 0.5) * zf
             return (round(x, 3), round(y, 3), round(z, 3))
         elif n == "beta":
             clarity = v.get("clarity", 0.5)
@@ -144,9 +153,9 @@ class DimensionState:
             learning = v.get("learning", 0.5)
             curiosity = v.get("curiosity", 0.5)
             creativity = v.get("creativity", 0.5)
-            x = (clarity - confusion) * 5.0
-            y = (focus + learning + curiosity) / 3.0 * 15.0
-            z = (creativity - 0.5) * 4.0
+            x = (clarity - confusion) * xf
+            y = (focus + learning + curiosity) / 3.0 * yf
+            z = (creativity - 0.5) * zf
             return (round(x, 3), round(y, 3), round(z, 3))
         elif n == "gamma":
             happiness = v.get("happiness", 0.5)
@@ -287,187 +296,109 @@ class StateMatrix4D:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize 4D state matrix
-
-        Args:
-            config: Optional configuration dictionary
         """
         if StateMatrix4D._initialized:
             return
         StateMatrix4D._initialized = True
+        
+        from config_loader import get_formula_config
+        self.formula_config = get_formula_config("spatial")
         self.config = config or {}
-        self._precision = 1.0 # Default precision
+        self._precision = 1.0 
         self._temporal_state: Optional[Any] = None
         self._temporal_synced = False
 
-        # Initialize dimensions
+        self._setup_dimensions()
+        self._setup_systems()
+        self._setup_history()
+
+    def _setup_dimensions(self):
+        """設置維度初始狀態 (從配置讀取)"""
+        weights = self.formula_config.get("dimension_weights", {})
+        coords = self.formula_config.get("initial_coordinates", {})
+        
         self.alpha = DimensionState(
-            name="alpha",
-            cn_name="生理维度",
-            values={
-                "energy": 0.5,
-                "comfort": 0.5,
-                "arousal": 0.5,
-                "rest_need": 0.5,
-                "vitality": 0.5,
-                "tension": 0.0,
-            },
-            weight=self.config.get("alpha_weight", 1.0),
-            coordinate=(0.0, -5.0, 0.0)  # 身體核心座標
+            name="alpha", cn_name="生理维度",
+            values={"energy": 0.5, "comfort": 0.5, "arousal": 0.5, "rest_need": 0.5, "vitality": 0.5, "tension": 0.0},
+            weight=weights.get("alpha", 1.0),
+            coordinate=tuple(coords.get("alpha", [0.0, -5.0, 0.0]))
         )
 
         self.beta = DimensionState(
-            name="beta",
-            cn_name="认知维度",
-            values={
-                "curiosity": 0.5,
-                "focus": 0.5,
-                "confusion": 0.0,
-                "learning": 0.5,
-                "clarity": 0.5,
-                "creativity": 0.5,
-            },
-            weight=self.config.get("beta_weight", 1.0),
-            coordinate=(0.0, 10.0, 0.0)  # 認知/頭部座標
+            name="beta", cn_name="认知维度",
+            values={"curiosity": 0.5, "focus": 0.5, "confusion": 0.0, "learning": 0.5, "clarity": 0.5, "creativity": 0.5},
+            weight=weights.get("beta", 1.0),
+            coordinate=tuple(coords.get("beta", [0.0, 10.0, 0.0]))
         )
 
         self.gamma = DimensionState(
-            name="gamma",
-            cn_name="情感维度",
-            values={
-                "happiness": 0.5,
-                "sadness": 0.0,
-                "anger": 0.0,
-                "fear": 0.0,
-                "disgust": 0.0,
-                "surprise": 0.0,
-                "trust": 0.5,
-                "anticipation": 0.5,
-                "love": 0.0,
-                "calm": 0.5,
-            },
-            weight=self.config.get("gamma_weight", 1.0),
-            coordinate=(0.0, 2.0, 2.0)  # 情感/心臟座標
+            name="gamma", cn_name="情感维度",
+            values={"happiness": 0.5, "sadness": 0.0, "anger": 0.0, "fear": 0.0, "trust": 0.5, "anticipation": 0.5, "love": 0.0, "calm": 0.5},
+            weight=weights.get("gamma", 1.0),
+            coordinate=tuple(coords.get("gamma", [0.0, 2.0, 2.0]))
         )
 
         self.delta = DimensionState(
-            name="delta",
-            cn_name="社交维度",
-            values={
-                "attention": 0.5,
-                "bond": 0.5,
-                "trust": 0.5,
-                "presence": 0.5,
-                "intimacy": 0.0,
-                "engagement": 0.5,
-            },
-            weight=self.config.get("delta_weight", 1.0),
-            coordinate=(0.0, 0.0, 10.0)  # 社交/環境座標
+            name="delta", cn_name="社交维度",
+            values={"attention": 0.5, "bond": 0.5, "trust": 0.5, "presence": 0.5, "intimacy": 0.0, "engagement": 0.5},
+            weight=weights.get("delta", 1.0),
+            coordinate=tuple(coords.get("delta", [0.0, 0.0, 10.0]))
         )
 
-        # [Task N.22-EPSILON] Epsilon Dimension - 數理/理性維度
-        # 獨立處理數學運算，讓計算結果以「漣漪」方式影響情感，而非直接覆蓋 gamma 座標
         self.epsilon = DimensionState(
-            name="epsilon",
-            cn_name="数理维度",
-            values={
-                "logic": 0.5,
-                "precision": 0.5,
-                "abstraction": 0.5,
-                "certainty": 0.5,
-                "complexity": 0.0,
-                "fatigue": 0.0,
-            },
-            weight=self.config.get("epsilon_weight", 0.3),
-            coordinate=(0.0, 0.0, 0.0)  # 計算累積器，不影響其他維度直接座標
+            name="epsilon", cn_name="数理维度",
+            values={"logic": 0.5, "precision": 0.5, "abstraction": 0.5, "certainty": 0.5, "complexity": 0.0, "fatigue": 0.0},
+            weight=weights.get("epsilon", 0.3),
+            coordinate=tuple(coords.get("epsilon", [0.0, 0.0, 0.0]))
         )
 
-        # Dimension lookup
-        self.dimensions: Dict[str, DimensionState] = {
-            "alpha": self.alpha,
-            "beta": self.beta,
-            "gamma": self.gamma,
-            "delta": self.delta,
-            "epsilon": self.epsilon,
+        self.theta = DimensionState(
+            name="theta", cn_name="元認知維度",
+            values={"novelty": 0.5, "complexity": 0.5, "ambiguity": 0.5, "abstraction_level": 0.5, "dimension_fit": 0.5, "creation_urge": 0.0, "theta_negativity": 0.0, "correction_urge": 0.0, "audit_intensity": 0.0},
+            weight=weights.get("theta", 0.2),
+            coordinate=tuple(coords.get("theta", [0.0, 0.0, 0.0]))
+        )
+
+        self.zeta = DimensionState(
+            name="zeta", cn_name="意識流維度",
+            values={"temporal_coherence": 0.8, "memory_depth": 0.6, "narrative_flow": 0.7, "identity_continuity": 0.75},
+            weight=weights.get("zeta", 0.2),
+            coordinate=tuple(coords.get("zeta", [0.0, 0.0, 0.0]))
+        )
+
+        self.dimensions = {
+            "alpha": self.alpha, "beta": self.beta, "gamma": self.gamma,
+            "delta": self.delta, "epsilon": self.epsilon, "theta": self.theta, "zeta": self.zeta
         }
 
-        # [Task N.23-THETA] Meta-Cognitive Axis (θ) - 分析軸與點的相似性，決定分配/創建/組合
-        self.theta = DimensionState(
-            name="theta",
-            cn_name="元認知維度",
-            values={
-                "novelty": 0.5,
-                "complexity": 0.5,
-                "ambiguity": 0.5,
-                "abstraction_level": 0.5,
-                "dimension_fit": 0.5,
-                "creation_urge": 0.0,
-                "theta_negativity": 0.0,  # 負值越大 = 越懷疑當前分配
-                "correction_urge": 0.0,    # 重新分配衝動
-                "audit_intensity": 0.0,    # 審計強度
-            },
-            weight=self.config.get("theta_weight", 0.2),
-            coordinate=(0.0, 0.0, 0.0),
-        )
-        self.dimensions["theta"] = self.theta
-
-        # Ζ (Zeta) Axis — Consciousness Flow Dimension (時間/記憶/意識流)
-        self.zeta = DimensionState(
-            name="zeta",
-            cn_name="意識流維度",
-            values={
-                "temporal_coherence": 0.8,
-                "memory_depth": 0.6,
-                "narrative_flow": 0.7,
-                "identity_continuity": 0.75,
-            },
-            weight=self.config.get("zeta_weight", 0.2),
-            coordinate=(0.0, 0.0, 0.0),
-        )
-        self.dimensions["zeta"] = self.zeta
-
-        # [Task N.24-THETA-NEG] 負值檢測與修正系統
-        self.misallocation_log: List[Dict[str, Any]] = []
-        self.correction_audit_trail: List[Dict[str, Any]] = []
+    def _setup_systems(self):
+        """設置子系統與矩陣常數"""
+        self.misallocation_log = []
+        self.correction_audit_trail = []
         self.max_misallocation_log = 100
         self.max_audit_trail = 50
-
-        # Semantic anchors for each axis (used by θ for similarity computation)
-        self.semantic_anchors: Dict[str, AxisSemanticAnchor] = {}
+        self.unclassified_buffer = []
+        self.buffer_tracking = {}
+        self.axis_creation_log = []
+        
+        # 加載影響矩陣 (Influence Matrix)
+        self.influence_matrix = self.config.get(
+            "influence_matrix", 
+            self.formula_config.get("influence_matrix", {})
+        )
+        
+        self.semantic_anchors = {}
         self._init_semantic_anchors()
 
-        # Unclassified experiences buffer (for deferred allocation)
-        self.unclassified_buffer: List[Dict[str, Any]] = []
-        self.buffer_tracking: Dict[str, int] = {}
-
-        # Axis creation history (for tracking when new axes were created)
-        self.axis_creation_log: List[Dict[str, Any]] = []
-
-        # Influence matrix (source -> target -> strength)
-        self.influence_matrix: Dict[str, Dict[str, float]] = self.config.get(
-            "influence_matrix",
-            {
-                "alpha": {"beta": 0.3, "gamma": 0.5, "delta": 0.2, "epsilon": 0.1, "theta": 0.05, "zeta": 0.05},
-                "beta": {"alpha": 0.2, "gamma": 0.4, "delta": 0.3, "epsilon": 0.2, "theta": 0.1, "zeta": 0.1},
-                "gamma": {"alpha": 0.4, "beta": 0.3, "delta": 0.5, "epsilon": 0.3, "theta": 0.15, "zeta": 0.1},
-                "delta": {"alpha": 0.2, "beta": 0.3, "gamma": 0.6, "epsilon": 0.1, "theta": 0.15, "zeta": 0.05},
-                "epsilon": {"alpha": 0.1, "beta": 0.3, "gamma": 0.4, "delta": 0.1, "theta": 0.1, "zeta": 0.05},
-                "theta": {"alpha": 0.05, "beta": 0.1, "gamma": 0.1, "delta": 0.05, "epsilon": 0.05, "zeta": 0.05},
-                "zeta": {"alpha": 0.05, "beta": 0.1, "gamma": 0.1, "delta": 0.05, "epsilon": 0.05, "theta": 0.05},
-            },
-        )
-
-        # State history
-        self.history: List[Dict[str, Any]] = []
-        self.max_history: int = self.config.get("max_history", 1000)
-
-        # Update tracking
-        self.update_count: int = 0
-        self.created_at: datetime = datetime.now()
-        self.last_update: datetime = datetime.now()
-
-        # Callbacks
-        self._change_callbacks: List[Callable[[str, Dict[str, float]], None]] = []
-        self._threshold_callbacks: Dict[str, List[Tuple[float, Callable[[], None]]]] = {}
+    def _setup_history(self):
+        """設置歷史紀錄與追蹤"""
+        self.history = []
+        self.max_history = self.config.get("max_history", 1000)
+        self.update_count = 0
+        self.created_at = datetime.now()
+        self.last_update = datetime.now()
+        self._change_callbacks = []
+        self._threshold_callbacks = {}
 
     def update_alpha(self, **kwargs) -> None:
         """更新α维度 / Update alpha dimension (physiological)"""

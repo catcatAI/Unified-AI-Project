@@ -187,150 +187,47 @@ class ParameterState:
 class DynamicThresholdManager:
     """
     动态阈值管理器
-
-    管理所有动态变化的阈值参数：
-    - 情绪触发阈值（有时容易高兴，有时不容易）
-    - 行为执行成功率（有时成功，有时失败）
-    - 决策置信度阈值（有时觉得能做到，有时觉得不能）
-    - 社交活跃度阈值（有时想互动，有时不想）
+    管理所有動態變化的閾值參數，完全由配置驅動。
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None, state_matrix: Optional[Any] = None):
         """初始化动态阈值系统 - 結合 Native Space"""
+        from config_loader import get_formula_config
+        self.bio_config = get_formula_config("biological")
+        self.spatial_config = get_formula_config("spatial")
+        
         self.config = config or {}
         self.state_matrix = state_matrix
         self.parameters: Dict[str, ParameterState] = {}
-        self._initialize_default_parameters()
+        self._initialize_from_config()
         self._update_task: Optional[asyncio.Task] = None
         self._running = False
-        # Configurable update interval (default 60 seconds)
         self._update_interval = self.config.get("update_interval", 60.0)
 
-    def _initialize_default_parameters(self):
-        """初始化默认的动态参数"""
+    def _initialize_from_config(self):
+        """從 YAML 配置初始化動態參數"""
+        # 加載動態閾值專用配置 (如果有的話，否則使用預設)
+        # 此處展示如何從 biological_parameters.yaml 中擴展動態閾值定義
+        # 為簡化，我們在 configs/formula_configs/ 下建立 dynamic_parameters.yaml
+        from config_loader import load_yaml
+        dyn_params = load_yaml("configs/formula_configs/dynamic_parameters.yaml")
+        
+        if not dyn_params:
+            # 建立默認動態參數配置（如果檔案不存在）
+            self._initialize_default_parameters()
+            return
 
-        # 1. 情绪触发阈值
-        self.parameters["emotion_happiness_threshold"] = ParameterState(
-            base_value=0.6,
-            current_value=0.6,
-            variation_range=(0.3, 0.9),
-            volatility=0.4,
-            spatial_dimension="gamma",
-            spatial_anchor=(8.0, 5.0, 0.0), # 快樂區錨點
-            influence_map={"stress": 0.5, "recent_success": -0.6, "mood": -0.4},
-        )
-
-        self.parameters["emotion_sadness_threshold"] = ParameterState(
-            base_value=0.4,
-            current_value=0.4,
-            variation_range=(0.2, 0.7),
-            volatility=0.3,
-            spatial_dimension="gamma",
-            spatial_anchor=(-5.0, -5.0, 0.0), # 負面低能區
-            influence_map={"stress": -0.4, "recent_failure": -0.5},
-        )
-
-        self.parameters["emotion_anger_threshold"] = ParameterState(
-            base_value=0.7,
-            current_value=0.7,
-            variation_range=(0.4, 0.95),
-            volatility=0.35,
-            spatial_dimension="alpha",
-            spatial_anchor=(8.0, 8.0, 5.0), # 高喚醒高張力區
-            influence_map={"stress": -0.6, "fatigue": -0.4},
-        )
-
-        # 2. 行为执行成功率
-        self.parameters["action_success_rate"] = ParameterState(
-            base_value=0.85,
-            current_value=0.85,
-            variation_range=(0.5, 0.98),
-            volatility=0.25,
-            spatial_dimension="alpha",
-            spatial_anchor=(5.0, -2.0, 0.0), # 健康平衡區
-            influence_map={"energy": 0.4, "confidence": 0.3, "fatigue": -0.5},
-        )
-
-        self.parameters["action_speed_factor"] = ParameterState(
-            base_value=1.0,
-            current_value=1.0,
-            variation_range=(0.3, 2.0),
-            volatility=0.3,
-            spatial_dimension="alpha",
-            spatial_anchor=(10.0, 0.0, 0.0), # 滿能量
-            influence_map={"energy": 0.6, "fatigue": -0.7},
-        )
-
-        # 3. 决策置信度
-        self.parameters["decision_confidence_threshold"] = ParameterState(
-            base_value=0.7,
-            current_value=0.7,
-            variation_range=(0.4, 0.95),
-            volatility=0.2,
-            spatial_dimension="beta",
-            spatial_anchor=(5.0, 8.0, 0.0), # 高確定性高清晰度區
-            influence_map={"confidence": -0.6, "recent_success": -0.4, "recent_failure": 0.5},
-        )
-
-        self.parameters["risk_tolerance"] = ParameterState(
-            base_value=0.5,
-            current_value=0.5,
-            variation_range=(0.1, 0.9),
-            volatility=0.4,
-            spatial_dimension="gamma",
-            spatial_anchor=(5.0, 8.0, 5.0), # 高刺激探索區
-            influence_map={"confidence": 0.5, "mood": 0.3, "stress": -0.4},
-        )
-
-        # 4. 社交活跃度
-        self.parameters["social_initiative_threshold"] = ParameterState(
-            base_value=0.5,
-            current_value=0.5,
-            variation_range=(0.1, 0.9),
-            volatility=0.35,
-            spatial_dimension="delta",
-            spatial_anchor=(8.0, 8.0, 0.0), # 高親密高信任區
-            influence_map={"mood": -0.6, "energy": -0.4},
-        )
-
-        self.parameters["social_sensitivity"] = ParameterState(
-            base_value=0.6,
-            current_value=0.6,
-            variation_range=(0.2, 0.95),
-            volatility=0.3,
-            spatial_dimension="delta",
-            spatial_anchor=(5.0, 0.0, 0.0),
-        )
-
-        # 5. 学习和记忆参数
-        self.parameters["learning_rate"] = ParameterState(
-            base_value=0.1,
-            current_value=0.1,
-            variation_range=(0.01, 0.3),
-            volatility=0.2,
-        )
-
-        self.parameters["memory_retention"] = ParameterState(
-            base_value=0.8,
-            current_value=0.8,
-            variation_range=(0.4, 0.98),
-            volatility=0.15,
-        )
-
-        # 6. 生理参数
-        self.parameters["energy_decay_rate"] = ParameterState(
-            base_value=0.05,
-            current_value=0.05,
-            variation_range=(0.01, 0.15),
-            volatility=0.2,
-        )
-
-        self.parameters["rest_recovery_rate"] = ParameterState(
-            base_value=0.1,
-            current_value=0.1,
-            variation_range=(0.02, 0.25),
-            volatility=0.25,
-        )
+        for name, p in dyn_params.get("parameters", {}).items():
+            self.parameters[name] = ParameterState(
+                base_value=p.get("base_value", 0.5),
+                current_value=p.get("base_value", 0.5),
+                variation_range=tuple(p.get("range", [0.1, 0.9])),
+                volatility=p.get("volatility", 0.2),
+                spatial_dimension=p.get("spatial_dimension"),
+                spatial_anchor=tuple(p.get("spatial_anchor")) if p.get("spatial_anchor") else None,
+                inertia_mass=p.get("inertia_mass", 1.0),
+                influence_map=p.get("influence_map", {})
+            )
 
     async def start(self):
         """启动动态更新循环"""

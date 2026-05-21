@@ -1,0 +1,56 @@
+# Endocrine System First-order Elimination Kinetics Parameters
+# Based on biological half-lives (minutes)
+
+hormones:
+  ADRENALINE:
+    base_level: 10.0
+    production_rate: 5.0
+    half_life: 6.0
+  CORTISOL:
+    base_level: 20.0
+    production_rate: 2.0
+    half_life: 90.0
+  DOPAMINE:
+    base_level: 40.0
+    production_rate: 3.0
+    half_life: 6.0
+  SEROTONIN:
+    base_level: 50.0
+    production_rate: 2.5
+    half_life: 60.0
+  OXYTOCIN:
+    base_level: 30.0
+    production_rate: 4.0
+    half_life: 6.0
+  ENDORPHIN:
+    base_level: 25.0
+    production_rate: 6.0
+    half_life: 30.0
+  THYROXINE:
+    base_level: 60.0
+    production_rate: 1.0
+    half_life: 10080.0
+  ESTROGEN_TESTOSTERONE:
+    base_level: 35.0
+    production_rate: 1.5
+    half_life: 1440.0
+  GROWTH_HORMONE:
+    base_level: 15.0
+    production_rate: 2.0
+    half_life: 18.0
+  INSULIN:
+    base_level: 45.0
+    production_rate: 3.0
+    half_life: 6.0
+  MELATONIN:
+    base_level: 5.0
+    production_rate: 8.0
+    half_life: 30.0
+  NOREPINEPHRINE:
+    base_level: 20.0
+    production_rate: 4.0
+    half_life: 3.0
+
+stress:
+  half_life: 30.0
+  default_decay_rate: 0.01

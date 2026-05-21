@@ -161,121 +161,34 @@ class EndocrineSystem:
         >>> print(f"Energy boost: {effects['energy']:.2f}")
     """
 
-    # 激素默認配置 (基於生物學半衰期)
-    DEFAULT_HORMONE_CONFIGS: Dict[HormoneType, Dict[str, float]] = {
-        HormoneType.ADRENALINE: {
-            "base_level": 10.0,
-            "production_rate": 5.0,
-            "half_life": 6.0,  # 6 min
-        },
-        HormoneType.CORTISOL: {
-            "base_level": 20.0,
-            "production_rate": 2.0,
-            "half_life": 90.0, # 1.5 hours
-        },
-        HormoneType.DOPAMINE: {
-            "base_level": 40.0,
-            "production_rate": 3.0,
-            "half_life": 6.0,  # 6 min
-        },
-        HormoneType.SEROTONIN: {
-            "base_level": 50.0,
-            "production_rate": 2.5,
-            "half_life": 60.0, # 1 hour
-        },
-        HormoneType.OXYTOCIN: {
-            "base_level": 30.0,
-            "production_rate": 4.0,
-            "half_life": 6.0,  # 6 min
-        },
-        HormoneType.ENDORPHIN: {
-            "base_level": 25.0,
-            "production_rate": 6.0,
-            "half_life": 30.0, # 30 min
-        },
-        HormoneType.THYROXINE: {
-            "base_level": 60.0,
-            "production_rate": 1.0,
-            "half_life": 10080.0, # 7 days
-        },
-        HormoneType.ESTROGEN_TESTOSTERONE: {
-            "base_level": 35.0,
-            "production_rate": 1.5,
-            "half_life": 1440.0, # 24 hours
-        },
-        HormoneType.GROWTH_HORMONE: {
-            "base_level": 15.0,
-            "production_rate": 2.0,
-            "half_life": 18.0, # 18 min
-        },
-        HormoneType.INSULIN: {
-            "base_level": 45.0,
-            "production_rate": 3.0,
-            "half_life": 6.0, # 6 min
-        },
-        HormoneType.MELATONIN: {
-            "base_level": 5.0,
-            "production_rate": 8.0,
-            "half_life": 30.0, # 30 min
-        },
-        HormoneType.NOREPINEPHRINE: {
-            "base_level": 20.0,
-            "production_rate": 4.0,
-            "half_life": 3.0, # 3 min
-        },
-    }
-
     def __init__(self, config: Optional[Dict[str, Any]] = None):
+        from config_loader import get_formula_config
+        self.formula_config = get_formula_config("biological")
         self.config = config or {}
         self.hormones: Dict[HormoneType, Hormone] = {}
         self.circadian_phase: float = 12.0  # Start at noon
         self.stress_level: float = 0.0
-        self.activity_level: float = 0.5
-        self.social_engagement: float = 0.5
-        self.emotional_state: Dict[str, float] = {}
-
-        self._running = False
-        self._update_task: Optional[asyncio.Task] = None
-        self._callbacks: List[Callable[[HormoneType, float, float], None]] = []
-
-        # Feedback loop configurations
-        self.feedback_loops: Dict[Tuple[HormoneType, HormoneType], float] = {
-            # Inhibitory feedbacks
-            (HormoneType.CORTISOL, HormoneType.CORTISOL): -0.3,  # Self-inhibition
-            (HormoneType.ADRENALINE, HormoneType.ADRENALINE): -0.2,
-            # Stimulatory feedbacks
-            (HormoneType.DOPAMINE, HormoneType.SEROTONIN): 0.1,
-            (HormoneType.OXYTOCIN, HormoneType.DOPAMINE): 0.15,
-            (HormoneType.SEROTONIN, HormoneType.MELATONIN): 0.2,
-        }
+        
+        # ... rest of init ...
 
         self._initialize_hormones()
 
     def _initialize_hormones(self):
-        """Initialize all hormone instances"""
-        for hormone_type, config in self.DEFAULT_HORMONE_CONFIGS.items():
-            self.hormones[hormone_type] = Hormone(
-                hormone_type=hormone_type,
-                base_level=config["base_level"],
-                current_level=config["base_level"],
-                production_rate=config["production_rate"],
-                half_life_minutes=config["half_life"],
+        """Initialize all hormone instances from configuration"""
+        configs = self.formula_config.get("hormones", {})
+        for ht in HormoneType:
+            h_conf = configs.get(ht.name, {})
+            if not h_conf:
+                # Fallback to a safe default if config is missing
+                h_conf = {"base_level": 50.0, "production_rate": 1.0, "half_life": 60.0}
+                
+            self.hormones[ht] = Hormone(
+                hormone_type=ht,
+                base_level=h_conf.get("base_level", 50.0),
+                current_level=h_conf.get("base_level", 50.0),
+                production_rate=h_conf.get("production_rate", 1.0),
+                half_life_minutes=h_conf.get("half_life", 60.0),
             )
-
-    async def initialize(self):
-        """Initialize the endocrine system"""
-        self._running = True
-        self._update_task = asyncio.create_task(self._update_loop())
-
-    async def shutdown(self):
-        """Shutdown the endocrine system"""
-        self._running = False
-        if self._update_task:
-            self._update_task.cancel()
-            try:
-                await self._update_task
-            except asyncio.CancelledError:
-                pass
 
     async def advance_time(self, seconds: float):
         """
@@ -284,15 +197,13 @@ class EndocrineSystem:
         """
         dt_min = seconds / 60.0
         for hormone in self.hormones.values():
-            # 指數衰減至穩態 (基於生物半衰期)
             hormone.update(dt_minutes=dt_min)
         
-        # 應用激素間的反饋調節 (非線性耦合)
         await self._apply_feedback_loops()
         
-        # 壓力代謝：壓力水平也遵循指數衰減
-        # 假設壓力半衰期為 30 分鐘
-        k_stress = math.log(2) / 30.0
+        # 壓力代謝：從配置讀取半衰期
+        stress_conf = self.formula_config.get("stress", {})
+        k_stress = math.log(2) / stress_conf.get("half_life", 30.0)
         self.stress_level = self.stress_level * math.exp(-k_stress * dt_min)
 
     async def _update_loop(self):

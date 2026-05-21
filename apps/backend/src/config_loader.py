@@ -1,9 +1,20 @@
-# from diagnose_base_agent import
-# from typing import Dict, Any
-# import os
+import yaml
+import os
+from typing import Dict, Any, Optional
 
 _config = None
 _simulated_resources = None
+_formula_configs = {}
+
+
+def load_yaml(file_path: str) -> Dict[str, Any]:
+    """Helper to load a YAML file relative to backend root."""
+    backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    full_path = os.path.join(backend_root, file_path)
+    if not os.path.exists(full_path):
+        return {}
+    with open(full_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
 
 
 def load_config(config_path="configs/config.yaml"):
@@ -11,12 +22,24 @@ def load_config(config_path="configs/config.yaml"):
     Loads the main configuration file.
     """
     global _config
-    if _config is None:
-        backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        full_config_path = os.path.join(backend_root, config_path)
-        with open(full_config_path, "r") as f:
-            _config = yaml.safe_load(f)
-    return _config if _config is not None else {}
+    _config = load_yaml(config_path)
+    return _config
+
+
+def get_formula_config(name: str) -> Dict[str, Any]:
+    """
+    Retrieves a specific formula configuration (biological, spatial, etc.)
+    """
+    global _formula_configs
+    if name not in _formula_configs:
+        path = f"configs/formula_configs/{name}_parameters.yaml"
+        _formula_configs[name] = load_yaml(path)
+    return _formula_configs[name]
+
+
+def get_bootstrap_config() -> Dict[str, Any]:
+    """Retrieves infrastructure bootstrap configuration."""
+    return load_yaml("configs/bootstrap_config.yaml")
 
 
 def get_config():

@@ -225,6 +225,16 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
     return evaluator
 
 
+def _get_spatial_config(key: str, default: Any) -> Any:
+    """從 spatial_parameters.yaml 獲取配置"""
+    try:
+        from config_loader import get_formula_config
+        spatial_conf = get_formula_config("spatial")
+        return spatial_conf.get("gravity", {}).get(key, default)
+    except Exception:
+        return default
+
+
 class PotentialFieldEngine:
     """
     位能場引擎 / Potential Field Engine
@@ -236,14 +246,16 @@ class PotentialFieldEngine:
         current: Tuple[float, float, float],
         target: Tuple[float, float, float],
         pull_factor: float,
-        threshold: float = 0.001
+        threshold: Optional[float] = None
     ) -> Tuple[float, float, float]:
         """
         計算吸引力產生的位移。
-        採用 Huber-like 位能場：
-        - 遠距離時力大小恆定 (線性位能) 防止爆炸。
-        - 近距離時力隨距離減小 (二次位能) 保證平滑收斂。
+        採用 Huber-like 位能場。
         """
+        if threshold is None:
+            threshold = _get_spatial_config("intent_gravity_threshold", 0.001)
+        delta = _get_spatial_config("huber_delta", 0.5)
+        
         cx, cy, cz = current
         tx, ty, tz = target
         
@@ -253,16 +265,11 @@ class PotentialFieldEngine:
         if dist < threshold:
             return (0.0, 0.0, 0.0)
             
-        # Huber 閾值：距離大於 0.5 時轉為線性力
-        delta = 0.5
         if dist > delta:
-            # 線性力區域 (恆定引力大小)
             force_mag = pull_factor * delta
         else:
-            # 二次力區域 (正比於距離)
             force_mag = pull_factor * dist
             
-        # 計算位移向量
         nx = (dx / dist) * force_mag
         ny = (dy / dist) * force_mag
         nz = (dz / dist) * force_mag
@@ -281,7 +288,6 @@ def apply_intent_gravity(dimensions: Dict[str, Any], pull_factor: Optional[float
     engine = PotentialFieldEngine()
     
     for name, state in dimensions.items():
-        # 獲取吸引位移
         dx, dy, dz = engine.calculate_attractive_displacement(
             state.coordinate,
             state.intent_vector,
@@ -305,7 +311,7 @@ def apply_inter_dimensional_drag(
 ) -> None:
     """
     [Task N.21.7] 維度連動拖拽
-    升級為位能場耦合模型：觸發維度的座標作為其他維度的「動態引力點」。
+    升級為位能場耦合模型。
     """
     if drag_factor is None:
         drag_factor = _get_spatial_config("inter_dimensional_drag", 0.02)
@@ -320,7 +326,6 @@ def apply_inter_dimensional_drag(
         if name == trigger_dim:
             continue
 
-        # 計算其他維度受到的「連動引力」
         dx, dy, dz = engine.calculate_attractive_displacement(
             state.coordinate,
             trigger_coord,

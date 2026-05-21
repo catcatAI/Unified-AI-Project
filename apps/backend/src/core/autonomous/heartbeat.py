@@ -122,27 +122,43 @@ class MetabolicHeartbeat:
                 await asyncio.sleep(10)
 
     async def _update_spatial_state(self, arousal, stress):
-        """Calculates Angela's next move based on bio-state."""
+        """
+        [Task N.26.3] 位能場驅動的空間決策。
+        廢除隨機機率，改由喚醒度 (Arousal) 驅動意圖向量的跳變。
+        """
         import random
-        # Decision: Higher arousal -> more likely to set a new target
-        if random.random() < (arousal / 100.0) * 0.5:
-            # We assume a standard screen width for logic, renderer will scale
-            self.target_x = random.randint(50, 1800)
-            logger.debug(f"🚶 [Spatial] Angela decided to move to x={self.target_x}")
+        from config_loader import get_formula_config
+        spatial_conf = get_formula_config("spatial")
         
-        # Simple step towards target (the brain's intention)
-        dist = self.target_x - self.x
-        if abs(dist) > 5:
-            # 2030 Standard: Collision detection linked to pain
-            # Assume we have a method to check world collision
-            if self._check_collision(self.x + (5 if dist > 0 else -5)):
+        # Decision: 喚醒度越高，意圖跳變頻率越高 (能量不穩定性)
+        # 喚醒度超過 0.7 時產生強烈移動衝動
+        if arousal > 0.7 and random.random() < 0.1:
+            # 獲取配置中的螢幕範圍或預設
+            max_x = spatial_conf.get("screen", {}).get("width", 1920)
+            self.target_x = random.randint(50, max_x - 100)
+            logger.info(f"🚶 [Spatial] Intent Jump: Target set to x={self.target_x} (Arousal: {arousal:.2f})")
+        
+        # 使用 PotentialFieldEngine 計算位移 (不直接 LERP)
+        from .cognitive_operations import PotentialFieldEngine
+        engine = PotentialFieldEngine()
+        
+        # 將當前 x 座標視為 1D 位能場 (簡化處理)
+        dx, _, _ = engine.calculate_attractive_displacement(
+            (self.x, 0, 0),
+            (self.target_x, 0, 0),
+            pull_factor=self.velocity * (1.0 - stress * 0.8)
+        )
+        
+        if dx != 0:
+            next_x = self.x + dx
+            if not self._check_collision(next_x):
+                self.x = next_x
+            else:
+                # 碰撞觸發痛覺反射
                 from .bio_reflex_manager import BiogenicReflexManager
                 reflex_mgr = BiogenicReflexManager(self.bio_integrator)
                 asyncio.create_task(reflex_mgr.trigger_physical_trauma("leg", 0.7))
-                self.target_x = self.x # Stop moving
-            else:
-                speed = self.velocity * (1.0 - stress)
-                self.x += dist * speed
+                self.target_x = self.x # 停止意圖
 
     def _check_collision(self, next_x):
         # 1. 螢幕邊界檢查
