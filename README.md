@@ -1006,12 +1006,13 @@ Angela can automatically select LLM backend, model, and parameters based on hard
 
 | Priority | Task | Status | Description |
 |----------|------|--------|-------------|
-| **P7** 🔴 | TCS Config Migration | 🟡 Progress | Complete 3-tier adoption, purge 23+ hardcoded values, create user/evolved overlays |
+| **P8** 🔴 | Tech Debt Cleanup | 🆕 Planned | 6-week prioritized cleanup: god modules, security, singleton, dead code, logging, DI. See [PHASE_8_PLAN](docs/plans/PHASE_8_DEBT_CLEANUP.md) |
+| **P7** 🟡 | TCS Config Migration | 🟡 Progress | Complete 3-tier adoption, purge 23+ hardcoded values, create user/evolved overlays |
 | **P6.5** 🟢 | Startup Wiring | ✅ Done | `MetabolicHeartbeat.start()` + `_initialize_all_services()` wired into `main_api_server.py` lifespan |
-| **P8** 🔴 | True LLM End-to-End | ⏳ Pending | MathVerifier → CodeInspector → StateMatrixAdapter real flow |
+| **P8.5** 🔴 | True LLM End-to-End | ⏳ Pending | MathVerifier → CodeInspector → StateMatrixAdapter real flow (after P8 cleanup) |
 | **P9** 🟡 | Persistence Layer | ⏳ Pending | save_state/load_state → Redis/JSON |
 
-For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md), [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md), [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) (server lifecycle, factory chains, subtle wiring, dead code), [CODE_STATISTICS](docs/analysis/CODE_STATISTICS_2026-05-21.md) (live vs dead code breakdown, semi-finished systems), [MODULARITY_ANALYSIS](docs/analysis/MODULARITY_ANALYSIS_2026-05-21.md) (coupling, god modules, singleton abuse), and [PROBLEM_ANALYSIS](docs/analysis/PROBLEM_ANALYSIS_2026-05-21.md) (architect/AI-researcher/engineering perspectives, prioritized fix plan).
+For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md), [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md), [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) (server lifecycle, factory chains, subtle wiring, dead code), [CODE_STATISTICS](docs/analysis/CODE_STATISTICS_2026-05-21.md) (live vs dead code breakdown, semi-finished systems), [MODULARITY_ANALYSIS](docs/analysis/MODULARITY_ANALYSIS_2026-05-21.md) (coupling, god modules, singleton abuse), [PROBLEM_ANALYSIS](docs/analysis/PROBLEM_ANALYSIS_2026-05-21.md) (architect/AI-researcher/engineering perspectives), and [PHASE_8_PLAN](docs/plans/PHASE_8_DEBT_CLEANUP.md) (6-week prioritized cleanup roadmap).
 
 ---
 
