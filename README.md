@@ -51,7 +51,7 @@ self-evolution infrastructure (Phase 6+7).
 
 - **Phase 6 — Self-Evolution Loop**: ✅ Complete. ConfigMutator, hot-reload, user confirmation gate, evolution broadcast.
 - **Phase 7 — Tiered Config Architecture (TCS)**: 🟡 In Progress. S/A/M tiers exist; 23+ hardcoded thresholds remain across 8+ files; `.user.yaml`/`.evolved.yaml` overlays not created yet.
-- **⚠️ Wiring gap**: `MetabolicHeartbeat.start()` and `_initialize_all_services()` uncalled from server startup — biological simulation dormant in normal flow.
+- **Wiring**: ✅ Closed. `MetabolicHeartbeat.start()` and `_initialize_all_services()` now called from `main_api_server.py` lifespan. See [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) for full factory dependency chains, server lifecycle, subtle wiring, and dead code registry.
 - **Frontend / Desktop (Electron)**: 🛠️ Phase 12 Restoration Complete. No active development.
 - **Frontend / Mobile (React Native)**: ⚠️ Stub only — no active middleware.
 
@@ -302,7 +302,7 @@ _Requires: `libpulse-dev`, `build-essential`, `pkg-config`._
 
 - **Phase 6 — 自演化閉環**: ✅ 完成。ConfigMutator、熱加載、用戶確認閘門、演化廣播。
 - **Phase 7 — 分層配置架構 (TCS)**: 🟡 進行中。S/A/M 層級已建立；23+ 個硬編碼閾值散佈在 8+ 個檔案中；`.user.yaml`/`.evolved.yaml` 覆蓋層尚未建立。
-- **⚠️ 接線缺口**: `MetabolicHeartbeat.start()` 和 `_initialize_all_services()` 皆未從伺服器啟動流程呼叫 — 生物模擬在正常運行中休眠。
+- **接線狀態**: ✅ 已閉合。`MetabolicHeartbeat.start()` 和 `_initialize_all_services()` 已從 `main_api_server.py` lifespan 呼叫。完整接線地圖請見 [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md)（工廠鏈、伺服器生命週期、隱晦接線、死代碼清單）。
 - **前端 / 桌面端 (Electron)**: 🛠️ Phase 12 狀態復原完成。無活躍開發。
 - **前端 / 行動端 (React Native)**: ⚠️ 殘留階段 — 無活躍中介層。
 
@@ -1007,11 +1007,11 @@ Angela can automatically select LLM backend, model, and parameters based on hard
 | Priority | Task | Status | Description |
 |----------|------|--------|-------------|
 | **P7** 🔴 | TCS Config Migration | 🟡 Progress | Complete 3-tier adoption, purge 23+ hardcoded values, create user/evolved overlays |
-| **P6.5** 🟡 | Startup Wiring | ⏳ Pending | Call `MetabolicHeartbeat.start()` and `_initialize_all_services()` from server lifecycle |
+| **P6.5** 🟢 | Startup Wiring | ✅ Done | `MetabolicHeartbeat.start()` + `_initialize_all_services()` wired into `main_api_server.py` lifespan |
 | **P8** 🔴 | True LLM End-to-End | ⏳ Pending | MathVerifier → CodeInspector → StateMatrixAdapter real flow |
 | **P9** 🟡 | Persistence Layer | ⏳ Pending | save_state/load_state → Redis/JSON |
 
-For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md) and [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md).
+For full architecture details, see [ANGELA_STATUS.md](ANGELA_STATUS.md), [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md), and [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) (server lifecycle, factory chains, subtle wiring, dead code).
 
 ---
 
