@@ -341,28 +341,35 @@ class AutonomicNervousSystem:
         """
         arousal = self.arousal_level / 100.0  # Normalize to 0-1
 
-        # Physiological effects
+        # Physiological effects (Triggers from Config [Phase 7])
+        from core.config_loader import get_config
+        beh_conf = get_config("standard/behavior/behavior")
+        bio_thresh = beh_conf.get("biological_thresholds", {})
+        
+        sweat_thresh = bio_thresh.get("sweat_trigger", 0.6)
+
         physiological = PhysiologicalEffects(
             heart_rate=self.BASE_HEART_RATE + arousal * 60,  # 70-130 bpm
             blood_pressure=1.0 + arousal * 0.4,  # Normalized BP
             respiration_rate=self.BASE_RESP_RATE + arousal * 20,  # 16-36 breaths/min
             pupil_dilation=self.BASE_PUPIL_SIZE + arousal * 0.5,  # 0.3-0.8
             digestion=max(0, 1.0 - arousal * 1.5),  # Decreases with arousal
-            sweating=arousal * 0.8 if arousal > 0.6 else 0.0,  # Starts at high arousal
+            sweating=arousal * 0.8 if arousal > sweat_thresh else 0.0,
         )
 
         # Emotional effects
+        irritability_thresh = bio_thresh.get("arousal_irritability_trigger", 0.7)
+
         emotional = EmotionalEffects(
             anxiety=max(0, (arousal - 0.5) * 2.0),  # Increases above 50%
             calmness=max(0, 1.0 - arousal * 1.2),  # Decreases with arousal
             excitement=arousal * 0.8 if arousal > 0.4 else arousal * 0.3,
-            irritability=max(0, (arousal - 0.7) * 3.0),  # High arousal only
-            confidence=0.5 + arousal * 0.3 if arousal < 0.7 else 0.8 - (arousal - 0.7),
+            irritability=max(0, (arousal - irritability_thresh) * 3.0),
+            confidence=0.5 + arousal * 0.3 if arousal < irritability_thresh else 0.8 - (arousal - irritability_thresh),
         )
 
         # Cognitive effects
-        # Optimal arousal for cognition is around 0.6-0.7 (Yerkes-Dodson Law)
-        optimal_arousal = 0.65
+        optimal_arousal = bio_thresh.get("optimal_arousal", 0.65)
         arousal_distance = abs(arousal - optimal_arousal)
 
         cognitive = CognitiveEffects(

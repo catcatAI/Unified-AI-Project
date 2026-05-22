@@ -313,78 +313,43 @@ class StateMatrix4D:
         self._setup_history()
 
     def _setup_dimensions(self):
-        """設置維度初始狀態 (從配置讀取)"""
-        weights = self.formula_config.get("dimension_weights", {})
-        coords = self.formula_config.get("initial_coordinates", {})
+        """設置維度初始狀態 (從分層配置讀取)"""
+        from config_loader import get_formula_config
+        matrix_conf = get_formula_config("matrix")
+        dim_defs = matrix_conf.get("dimensions", {})
         
-        self.alpha = DimensionState(
-            name="alpha", cn_name="生理维度",
-            values={"energy": 0.5, "comfort": 0.5, "arousal": 0.5, "rest_need": 0.5, "vitality": 0.5, "tension": 0.0},
-            weight=weights.get("alpha", 1.0),
-            coordinate=tuple(coords.get("alpha", [0.0, -5.0, 0.0]))
-        )
-
-        self.beta = DimensionState(
-            name="beta", cn_name="认知维度",
-            values={"curiosity": 0.5, "focus": 0.5, "confusion": 0.0, "learning": 0.5, "clarity": 0.5, "creativity": 0.5},
-            weight=weights.get("beta", 1.0),
-            coordinate=tuple(coords.get("beta", [0.0, 10.0, 0.0]))
-        )
-
-        self.gamma = DimensionState(
-            name="gamma", cn_name="情感维度",
-            values={"happiness": 0.5, "sadness": 0.0, "anger": 0.0, "fear": 0.0, "trust": 0.5, "anticipation": 0.5, "love": 0.0, "calm": 0.5},
-            weight=weights.get("gamma", 1.0),
-            coordinate=tuple(coords.get("gamma", [0.0, 2.0, 2.0]))
-        )
-
-        self.delta = DimensionState(
-            name="delta", cn_name="社交维度",
-            values={"attention": 0.5, "bond": 0.5, "trust": 0.5, "presence": 0.5, "intimacy": 0.0, "engagement": 0.5},
-            weight=weights.get("delta", 1.0),
-            coordinate=tuple(coords.get("delta", [0.0, 0.0, 10.0]))
-        )
-
-        self.epsilon = DimensionState(
-            name="epsilon", cn_name="数理维度",
-            values={"logic": 0.5, "precision": 0.5, "abstraction": 0.5, "certainty": 0.5, "complexity": 0.0, "fatigue": 0.0},
-            weight=weights.get("epsilon", 0.3),
-            coordinate=tuple(coords.get("epsilon", [0.0, 0.0, 0.0]))
-        )
-
-        self.theta = DimensionState(
-            name="theta", cn_name="元認知維度",
-            values={"novelty": 0.5, "complexity": 0.5, "ambiguity": 0.5, "abstraction_level": 0.5, "dimension_fit": 0.5, "creation_urge": 0.0, "theta_negativity": 0.0, "correction_urge": 0.0, "audit_intensity": 0.0},
-            weight=weights.get("theta", 0.2),
-            coordinate=tuple(coords.get("theta", [0.0, 0.0, 0.0]))
-        )
-
-        self.zeta = DimensionState(
-            name="zeta", cn_name="意識流維度",
-            values={"temporal_coherence": 0.8, "memory_depth": 0.6, "narrative_flow": 0.7, "identity_continuity": 0.75},
-            weight=weights.get("zeta", 0.2),
-            coordinate=tuple(coords.get("zeta", [0.0, 0.0, 0.0]))
-        )
-
-        self.dimensions = {
-            "alpha": self.alpha, "beta": self.beta, "gamma": self.gamma,
-            "delta": self.delta, "epsilon": self.epsilon, "theta": self.theta, "zeta": self.zeta
-        }
+        # 動態初始化所有定義在配置中的維度
+        self.dimensions = {}
+        for name, d_cfg in dim_defs.items():
+            state = DimensionState(
+                name=name,
+                cn_name=d_cfg.get("cn_name", name),
+                values=d_cfg.get("initial_values", {}).copy(),
+                weight=d_cfg.get("weight", 1.0),
+                coordinate=tuple(d_cfg.get("initial_coordinate", [0.0, 0.0, 0.0]))
+            )
+            setattr(self, name, state) # 保持 self.alpha 等屬性兼容性
+            self.dimensions[name] = state
 
     def _setup_systems(self):
         """設置子系統與矩陣常數"""
+        from config_loader import get_formula_config
+        matrix_conf = get_formula_config("matrix")
+        limits = matrix_conf.get("system_limits", {})
+        
         self.misallocation_log = []
         self.correction_audit_trail = []
-        self.max_misallocation_log = 100
-        self.max_audit_trail = 50
+        self.max_misallocation_log = limits.get("max_misallocation_log", 100)
+        self.max_audit_trail = limits.get("max_audit_trail", 50)
         self.unclassified_buffer = []
         self.buffer_tracking = {}
         self.axis_creation_log = []
         
         # 加載影響矩陣 (Influence Matrix)
+        spatial_conf = get_formula_config("spatial")
         self.influence_matrix = self.config.get(
             "influence_matrix", 
-            self.formula_config.get("influence_matrix", {})
+            spatial_conf.get("influence_matrix", {})
         )
         
         self.semantic_anchors = {}
@@ -392,8 +357,12 @@ class StateMatrix4D:
 
     def _setup_history(self):
         """設置歷史紀錄與追蹤"""
+        from config_loader import get_formula_config
+        matrix_conf = get_formula_config("matrix")
+        limits = matrix_conf.get("system_limits", {})
+
         self.history = []
-        self.max_history = self.config.get("max_history", 1000)
+        self.max_history = self.config.get("max_history", limits.get("max_history", 1000))
         self.update_count = 0
         self.created_at = datetime.now()
         self.last_update = datetime.now()

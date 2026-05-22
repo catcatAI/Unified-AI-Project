@@ -1,0 +1,9 @@
+# Active MODs Registry
+# Lists all enabled non-standard extensions
+
+enabled_mods: []
+
+mod_settings:
+  # Example: 
+  # sample_mod:
+  #   feature_x: true

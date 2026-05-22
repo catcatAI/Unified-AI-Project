@@ -132,8 +132,12 @@ class AgentMonitoringManager:
                     # Simulate task count and success rate changes
                     if report.status == AgentStatus.RUNNING:
                         report.task_count += 1
-                        # Randomly simulate success or failure
-                        if random.random() < 0.95:  # 95% success rate
+                        
+                        from core.config_loader import get_config
+                        beh_conf = get_config("standard/behavior/behavior")
+                        success_rate_thresh = beh_conf.get("state_constants", {}).get("agent_success_rate_base", 0.95)
+
+                        if random.random() < success_rate_thresh:
                             report.success_rate = (report.success_rate * report.task_count + 1) / (
                                 report.task_count + 1
                             )

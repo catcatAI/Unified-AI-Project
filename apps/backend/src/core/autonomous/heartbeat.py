@@ -124,29 +124,35 @@ class MetabolicHeartbeat:
     async def _update_spatial_state(self, arousal, stress):
         """
         [Task N.26.3] 位能場驅動的空間決策。
-        廢除隨機機率，改由喚醒度 (Arousal) 驅動意圖向量的跳變。
+        從分層配置 (Standard/Behavior) 讀取參數。
         """
         import random
-        from config_loader import get_formula_config
-        spatial_conf = get_formula_config("spatial")
+        from core.config_loader import get_config
+        beh_conf = get_config("standard/behavior/behavior")
+        mov_conf = beh_conf.get("movement", {})
         
-        # Decision: 喚醒度越高，意圖跳變頻率越高 (能量不穩定性)
-        # 喚醒度超過 0.7 時產生強烈移動衝動
-        if arousal > 0.7 and random.random() < 0.1:
-            # 獲取配置中的螢幕範圍或預設
+        # Decision: 喚醒度驅動
+        arousal_thresh = mov_conf.get("arousal_threshold", 0.7)
+        jump_prob = mov_conf.get("jump_probability", 0.1)
+        
+        if arousal > arousal_thresh and random.random() < jump_prob:
+            from config_loader import get_formula_config
+            spatial_conf = get_formula_config("spatial")
             max_x = spatial_conf.get("screen", {}).get("width", 1920)
             self.target_x = random.randint(50, max_x - 100)
             logger.info(f"🚶 [Spatial] Intent Jump: Target set to x={self.target_x} (Arousal: {arousal:.2f})")
         
-        # 使用 PotentialFieldEngine 計算位移 (不直接 LERP)
         from .cognitive_operations import PotentialFieldEngine
         engine = PotentialFieldEngine()
         
-        # 將當前 x 座標視為 1D 位能場 (簡化處理)
+        # 速度與壓力影響係數從配置讀取
+        vel_scale = mov_conf.get("velocity_scaling", 1.0)
+        stress_impact = mov_conf.get("stress_impact", 0.8)
+        
         dx, _, _ = engine.calculate_attractive_displacement(
             (self.x, 0, 0),
             (self.target_x, 0, 0),
-            pull_factor=self.velocity * (1.0 - stress * 0.8)
+            pull_factor=self.velocity * vel_scale * (1.0 - stress * stress_impact)
         )
         
         if dx != 0:
@@ -154,11 +160,11 @@ class MetabolicHeartbeat:
             if not self._check_collision(next_x):
                 self.x = next_x
             else:
-                # 碰撞觸發痛覺反射
                 from .bio_reflex_manager import BiogenicReflexManager
                 reflex_mgr = BiogenicReflexManager(self.bio_integrator)
-                asyncio.create_task(reflex_mgr.trigger_physical_trauma("leg", 0.7))
-                self.target_x = self.x # 停止意圖
+                damage = mov_conf.get("collision_damage", 0.7)
+                asyncio.create_task(reflex_mgr.trigger_physical_trauma("leg", damage))
+                self.target_x = self.x
 
     def _check_collision(self, next_x):
         # 1. 螢幕邊界檢查

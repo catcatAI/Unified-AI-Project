@@ -305,43 +305,50 @@ class VisualConfiguration:
         return config
 
     def optimize_for_quality(self, quality: RenderQuality):
-        """Optimize all settings for specific quality level"""
+        """Optimize all settings for specific quality level from Config [Phase 7]"""
         self.render_quality = quality
+        
+        from core.config_loader import get_config
+        beh_conf = get_config("standard/behavior/behavior")
+        presets = beh_conf.get("visual_presets", {})
+        
+        q_key = quality.value[0].lower() # "low", "medium", etc.
+        q_cfg = presets.get(q_key, {})
 
         if quality == RenderQuality.LOW:
-            self.model.texture_resolution = 1024
-            self.model.lod_levels = 2
+            self.model.texture_resolution = q_cfg.get("texture_resolution", 1024)
+            self.model.lod_levels = q_cfg.get("lod_levels", 2)
             self.effects.enable_particles = False
             self.effects.enable_bloom = False
-            self.performance.target_fps = 30
+            self.performance.target_fps = q_cfg.get("target_fps", 30)
             self.lip_sync.update_rate = 15
 
         elif quality == RenderQuality.MEDIUM:
-            self.model.texture_resolution = 2048
-            self.model.lod_levels = 3
+            self.model.texture_resolution = q_cfg.get("texture_resolution", 2048)
+            self.model.lod_levels = q_cfg.get("lod_levels", 3)
             self.effects.enable_particles = True
             self.effects.max_particles = 500
             self.effects.enable_bloom = False
-            self.performance.target_fps = 60
+            self.performance.target_fps = q_cfg.get("target_fps", 60)
             self.lip_sync.update_rate = 30
 
         elif quality == RenderQuality.HIGH:
-            self.model.texture_resolution = 2048
-            self.model.lod_levels = 4
+            self.model.texture_resolution = q_cfg.get("texture_resolution", 2048)
+            self.model.lod_levels = q_cfg.get("lod_levels", 4)
             self.effects.enable_particles = True
             self.effects.max_particles = 1000
             self.effects.enable_bloom = True
-            self.performance.target_fps = 60
+            self.performance.target_fps = q_cfg.get("target_fps", 60)
             self.lip_sync.update_rate = 60
 
         elif quality == RenderQuality.ULTRA:
-            self.model.texture_resolution = 4096
-            self.model.lod_levels = 5
+            self.model.texture_resolution = q_cfg.get("texture_resolution", 4096)
+            self.model.lod_levels = q_cfg.get("lod_levels", 5)
             self.effects.enable_particles = True
             self.effects.max_particles = 2000
             self.effects.enable_bloom = True
             self.effects.enable_blur = True
-            self.performance.target_fps = 60
+            self.performance.target_fps = q_cfg.get("target_fps", 60)
             self.lip_sync.update_rate = 60
 
 

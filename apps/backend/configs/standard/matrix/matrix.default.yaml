@@ -1,0 +1,57 @@
+# State Matrix Meta-Configuration
+# Defines axes, initial values, and weights
+
+dimensions:
+  alpha:
+    cn_name: "生理维度"
+    initial_values: {energy: 0.5, comfort: 0.5, arousal: 0.5, rest_need: 0.5, vitality: 0.5, tension: 0.0}
+    weight: 1.0
+    initial_coordinate: [0.0, -5.0, 0.0]
+    anchor_keywords: ["能量", "疲憊", "身體", "累", "餓", "渴", "健康", "energy", "tired", "body", "physical", "health"]
+  
+  beta:
+    cn_name: "认知维度"
+    initial_values: {curiosity: 0.5, focus: 0.5, confusion: 0.0, learning: 0.5, clarity: 0.5, creativity: 0.5}
+    weight: 1.0
+    initial_coordinate: [0.0, 10.0, 0.0]
+    anchor_keywords: ["思考", "學習", "專注", "好奇", "困惑", "理解", "think", "learn", "focus", "curious", "understand", "decide"]
+    
+  gamma:
+    cn_name: "情感维度"
+    initial_values: {happiness: 0.5, sadness: 0.0, anger: 0.0, fear: 0.0, trust: 0.5, anticipation: 0.5, love: 0.0, calm: 0.5}
+    weight: 1.0
+    initial_coordinate: [0.0, 2.0, 2.0]
+    anchor_keywords: ["開心", "難過", "生氣", "害怕", "愛", "情緒", "happy", "sad", "angry", "fear", "love", "emotion", "feel"]
+    
+  delta:
+    cn_name: "社交维度"
+    initial_values: {attention: 0.5, bond: 0.5, trust: 0.5, presence: 0.5, intimacy: 0.0, engagement: 0.5}
+    weight: 1.0
+    initial_coordinate: [0.0, 0.0, 10.0]
+    anchor_keywords: ["社交", "信任", "連接", "朋友", "alone", "social", "trust", "bond", "friend", "connection", "together"]
+    
+  epsilon:
+    cn_name: "数理维度"
+    initial_values: {logic: 0.5, precision: 0.5, abstraction: 0.5, certainty: 0.5, complexity: 0.0, fatigue: 0.0}
+    weight: 0.3
+    initial_coordinate: [0.0, 0.0, 0.0]
+    anchor_keywords: ["計算", "邏輯", "數字", "精確", "calculate", "logic", "number", "math", "precise", "compute"]
+    
+  theta:
+    cn_name: "元認知維度"
+    initial_values: {novelty: 0.5, complexity: 0.5, ambiguity: 0.5, abstraction_level: 0.5, dimension_fit: 0.5, creation_urge: 0.0, theta_negativity: 0.0, correction_urge: 0.0, audit_intensity: 0.0}
+    weight: 0.2
+    initial_coordinate: [0.0, 0.0, 0.0]
+    anchor_keywords: ["複雜", "新穎", "創造", "策略", "分析", "元認知", "complex", "novel", "create", "strategy", "analyze"]
+    
+  zeta:
+    cn_name: "意識流維度"
+    initial_values: {temporal_coherence: 0.8, memory_depth: 0.6, narrative_flow: 0.7, identity_continuity: 0.75}
+    weight: 0.2
+    initial_coordinate: [0.0, 0.0, 0.0]
+    anchor_keywords: ["記憶", "時間", "故事", "身份", "連續", "memory", "time", "story", "identity", "history", "narrative"]
+
+system_limits:
+  max_misallocation_log: 100
+  max_audit_trail: 50
+  max_history: 1000

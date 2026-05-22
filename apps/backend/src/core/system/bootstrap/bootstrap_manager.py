@@ -55,6 +55,28 @@ class BootstrapManager:
         logger.info(f"✅ [Bootstrap] Persistence complete. State saved to system_status.json")
         return self.state
 
+    def broadcast_evolution(self, config_type: str, details: Dict[str, Any]):
+        """
+        [Phase 6] 廣播演化事件。
+        更新系統狀態並通知客戶端。
+        """
+        logger.info(f"📢 [Bootstrap] System evolved: {config_type}")
+        
+        # 1. 更新內存狀態
+        self.state["last_evolution"] = {
+            "type": config_type,
+            "time": datetime.now().isoformat(),
+            "details": details
+        }
+        
+        # 2. 持久化
+        self._persist_state()
+        
+        # 3. 透過 StateStore 廣播
+        from src.core.system.state_store import state_store
+        state_store.update_state("hardware", {"evolution_pending_reload": True})
+        logger.info(f"✅ [Bootstrap] Evolution broadcast complete.")
+
     def _persist_state(self):
         """Saves bootstrap state to a JSON file for cross-platform access."""
         import json

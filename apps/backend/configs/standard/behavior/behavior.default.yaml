@@ -1,0 +1,101 @@
+# Behavioral Logic Constants
+# Migrated from hardcoded values in heartbeat.py and chat_service.py
+
+biological_thresholds:
+  arousal_stress_trigger: 70.0
+  arousal_sweat_trigger: 0.6 # Normalized (0-1)
+  arousal_irritability_trigger: 0.7 # Normalized (0-1)
+  optimal_arousal: 0.65
+
+visual_presets:
+  low:
+    target_fps: 30
+    texture_resolution: 1024
+    lod_levels: 2
+  medium:
+    target_fps: 60
+    texture_resolution: 2048
+    lod_levels: 3
+  high:
+    target_fps: 60
+    texture_resolution: 2048
+    lod_levels: 4
+  ultra:
+    target_fps: 60
+    texture_resolution: 4096
+    lod_levels: 5
+
+movement:
+  arousal_threshold: 0.7
+  jump_probability: 0.1
+  velocity_scaling: 1.0
+  stress_impact: 0.8
+  collision_damage: 0.7
+
+state_constants:
+  # Migrated from chat_service.py
+  visual_refresh_interval: 30
+  memory_query_limit: 2
+  memory_truncation_length: 200
+  drive_api_base_url: "http://127.0.0.1:8000/api/v1"
+  drive_auth_timeout: 10
+  drive_download_timeout: 30
+  file_content_truncation: 1500
+  bypass_threshold_multiplier: 0.5
+  creation_urge_gain: 0.05
+  correction_urge_gain: 0.03
+  creation_urge_decay: 0.01
+  novelty_decay_after_response: 0.05
+  negativity_decay_after_response: 0.02
+  correction_urge_decay_after_response: 0.05
+  eta_success_rate_gain: 0.002
+  eta_structural_drift_gain: 0.0005
+  eta_parameter_tuning_gain: 0.001
+  temporal_coherence_base: 0.5
+  temporal_coherence_max: 0.9
+  temporal_coherence_decay: 0.01
+  memory_depth_gain: 0.001
+  narrative_flow_low: 0.7
+  narrative_flow_high: 0.5
+  identity_continuity_threshold: 0.75
+  identity_continuity_bound: 0.6
+  identity_continuity_count: 5
+
+  # Alpha Formula Weights
+  alpha_min_energy: 0.3
+  alpha_stress_drain: 0.05
+  stress_to_rest_gain: 0.03
+  comfort_formula_stress_weight: 0.5
+  tension_formula_positive_weight: 0.8
+  tension_formula_negative_weight: 0.2
+
+  # Beta Formula Weights
+  focus_delta_short: 0.01
+  focus_delta_medium: 0.03
+  focus_delta_long: 0.06
+  focus_length_threshold_short: 20
+  focus_length_threshold_long: 50
+  curiosity_gain: 0.02
+  creativity_gain_positive: 0.03
+  creativity_gain_negative: 0.02
+  empathy_to_learning_gain: 0.02
+
+  # Gamma Formula Weights
+  gamma_delta_happy: 0.05
+  gamma_delta_sad: 0.03
+  gamma_delta_angry: 0.01
+  trust_gain: 0.01
+
+  # Delta Formula Weights
+  delta_attention_base: 0.8
+  delta_attention_min: 0.3
+  delta_attention_decay: 0.02
+  bond_gain: 0.01
+  presence_gain: 0.02
+  engagement_gain: 0.01
+
+  # Theta Formula Weights
+  abstraction_level_low: 0.3
+  abstraction_level_high: 0.4
+  dim_fit_threshold: 0.15
+  anchor_learning_boost: 0.01

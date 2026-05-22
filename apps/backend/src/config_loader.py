@@ -17,29 +17,36 @@ def load_yaml(file_path: str) -> Dict[str, Any]:
         return yaml.safe_load(f) or {}
 
 
-def load_config(config_path="configs/config.yaml"):
+def load_config(config_path="system/core"):
     """
-    Loads the main configuration file.
+    Redirects to TieredConfigLoader.
     """
-    global _config
-    _config = load_yaml(config_path)
-    return _config
+    from core.system.config.tiered_loader import get_config
+    return get_config(config_path)
 
 
 def get_formula_config(name: str) -> Dict[str, Any]:
     """
-    Retrieves a specific formula configuration (biological, spatial, etc.)
+    Redirects to tiered standard/science path.
     """
-    global _formula_configs
-    if name not in _formula_configs:
-        path = f"configs/formula_configs/{name}_parameters.yaml"
-        _formula_configs[name] = load_yaml(path)
-    return _formula_configs[name]
+    from core.system.config.tiered_loader import get_config
+    # Mapping old names to new tiered paths
+    mapping = {
+        "biological": "standard/science/biological",
+        "spatial": "standard/science/spatial",
+        "dynamic": "standard/behavior/dynamic",
+        "behavior": "standard/behavior/behavior",
+        "matrix": "standard/matrix/matrix",
+        "prompts": "standard/narrative/prompts",
+        "mods": "mods/active_mods"
+    }
+    return get_config(mapping.get(name, f"standard/science/{name}"))
 
 
 def get_bootstrap_config() -> Dict[str, Any]:
-    """Retrieves infrastructure bootstrap configuration."""
-    return load_yaml("configs/bootstrap_config.yaml")
+    """Retrieves infrastructure bootstrap configuration from tiered system."""
+    from core.system.config.tiered_loader import get_config
+    return get_config("system/bootstrap")
 
 
 def get_config():

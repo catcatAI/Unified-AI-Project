@@ -904,73 +904,23 @@ class AngelaLLMService:
         )
 
     def _get_default_config(self) -> Dict[str, Any]:
-        """從 Angela 配置層讀取 LLM 配置，支援 YAML + 降級回退"""
-        import os
-        from pathlib import Path
-
-        config = None
-        try:
-            from core.config_loader import get_angela_config
-            cfg = get_angela_config()
-            providers = cfg.get_llm_config()
-            if providers and providers.get("providers"):
-                config = {"_angela_managed": True}
-                for name, prov in providers.get("providers", {}).items():
-                    config[name] = {
-                        "provider": prov.get("provider", "ollama"),
-                        "base_url": prov.get("base_url", ""),
-                        "model_name": prov.get("model", ""),
-                        "enabled": prov.get("enabled", True),
-                        "temperature": prov.get("temperature", 0.7),
-                    }
-                    if prov.get("api_key_env"):
-                        key = os.environ.get(prov["api_key_env"])
-                        if key:
-                            config[name]["api_key"] = key
-                routing = providers.get("routing_policy", {})
-                config["_routing_policy"] = routing
-                config["_fallback_chain"] = routing.get("fallback_chain", [])
-                config["_intent_routing"] = routing.get("intent_based_routing", {})
-                logger.info(f"LLM 配置已從 angela_config 載入 ({len(config)-3} providers)")
-                return config
-        except Exception:
-            pass
-
-        config_paths = [
-            os.environ.get("MULTI_LLM_CONFIG"),
-            "configs/multi_llm_config.json",
-            str(Path(__file__).resolve().parents[2] / "configs" / "multi_llm_config.json"),
-            str(Path(__file__).resolve().parents[4] / "configs" / "multi_llm_config.json"),
-        ]
-
-        config = None
-        for path in config_paths:
-            if path and os.path.exists(path):
-                try:
-                    with open(path, "r", encoding="utf-8") as f:
-                        config = json.load(f)
-                    logger.info(f"LLM 配置已從 {path} 載入")
-                    break
-                except Exception as e:
-                    # broad exception acceptable: config file read errors should not block fallback to defaults
-                    logger.warning(f"無法讀取配置 {path}: {e}")
-
-        if config is None:
-            logger.warning("未找到 LLM 配置文件，使用默認配置")
-            config = {
-                "llamacpp-local": {
-                    "provider": "llama_cpp",
-                    "base_url": "http://localhost:8080",
-                    "model_name": "llama-3-8b-instruct",
-                    "enabled": True,
-                },
-                "ollama-llama3": {
-                    "provider": "ollama",
-                    "base_url": "http://localhost:11434",
-                    "model_name": "llama3",
-                    "enabled": True,
-                },
-            }
+        """從分層配置系統讀取 LLM 配置 [Phase 7]"""
+        from core.config_loader import get_config
+        config = get_config("system/llm")
+        if config:
+            logger.info(f"LLM 配置已從 TieredConfig 載入 ({len(config)} items)")
+            return config
+            
+        # Fallback to absolute bare-minimum if even TieredConfig fails
+        return {
+            "ollama": {
+                "provider": "ollama",
+                "base_url": "http://localhost:11434",
+                "model_name": "llama3",
+                "enabled": True
+            },
+            "_fallback_chain": ["ollama"]
+        }
 
         # 從環境變量加載 API 密鑰
         for backend_name, backend_config in config.items():
@@ -991,6 +941,26 @@ class AngelaLLMService:
                 del backend_config["api_key"]
 
         return config
+
+    def reload_config(self, new_config: Optional[Dict[str, Any]] = None):
+        """
+        [Phase 6] 熱加載配置。
+        允許在不重啟進程的情況下演化 LLM 後端。
+        """
+        logger.info("🔄 [LLMService] Reloading configuration...")
+        if new_config:
+            self.config = new_config
+        else:
+            self.config = self._get_default_config()
+            
+        # 清空舊後端並重新初始化
+        self.backends = {}
+        self._init_backends()
+        
+        # 更新狀態廣播
+        from core.system.state_store import state_store
+        state_store.update_state("hardware", {"active_llm": getattr(self.active_backend, "model", "unknown")})
+        logger.info("✅ [LLMService] Configuration hot-reloaded.")
 
     def _init_backends(self):
         """初始化可用的後端（支援所有 provider 類型）"""

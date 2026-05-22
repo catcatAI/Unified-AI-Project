@@ -290,11 +290,15 @@ class BiologicalIntegrator:
         # Affect tactile sensitivity
         self.tactile_system.set_arousal_level(arousal)
 
-        # High arousal triggers adrenaline
-        if arousal > 70:
+        # High arousal triggers adrenaline (From Config [Phase 7])
+        from core.config_loader import get_config
+        beh_conf = get_config("standard/behavior/behavior")
+        stress_thresh = beh_conf.get("biological_thresholds", {}).get("arousal_stress_trigger", 70.0)
+
+        if arousal > stress_thresh:
             asyncio.create_task(
                 self.endocrine_system.trigger_stress_response(
-                    (arousal - 70) / 30, stress_type="acute"
+                    (arousal - stress_thresh) / 30, stress_type="acute"
                 )
             )
 
