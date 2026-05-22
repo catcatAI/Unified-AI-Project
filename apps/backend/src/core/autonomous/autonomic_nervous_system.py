@@ -342,7 +342,7 @@ class AutonomicNervousSystem:
         arousal = self.arousal_level / 100.0  # Normalize to 0-1
 
         # Physiological effects (Triggers from Config [Phase 7])
-        from core.config_loader import get_config
+        from core.system.config.tiered_loader import get_config
         beh_conf = get_config("standard/behavior/behavior")
         bio_thresh = beh_conf.get("biological_thresholds", {})
         

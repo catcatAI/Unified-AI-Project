@@ -308,7 +308,7 @@ class VisualConfiguration:
         """Optimize all settings for specific quality level from Config [Phase 7]"""
         self.render_quality = quality
         
-        from core.config_loader import get_config
+        from core.system.config.tiered_loader import get_config
         beh_conf = get_config("standard/behavior/behavior")
         presets = beh_conf.get("visual_presets", {})
         

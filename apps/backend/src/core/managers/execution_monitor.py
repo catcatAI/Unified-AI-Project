@@ -629,7 +629,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG())
+        logging.basicConfig(level=logging.DEBUG)
 
     monitor = ExecutionMonitor()
     result = monitor.execute_command(args.command, timeout=args.timeout)

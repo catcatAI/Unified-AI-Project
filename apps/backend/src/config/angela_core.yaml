@@ -26,21 +26,7 @@ middleware:
     allow_methods: ["*"]
     allow_headers: ["*"]
     allow_credentials: true
-  encrypted_communication:
-    enabled: false  # DEAD — no code reads this
-  auth:
-    enabled: false  # DEAD — no code reads this
 
-# ── 生命週期 ──────────────────────────────────────────────────────────────
-# DEAD — broken code path in main_api_server.py:334, silently caught
-
-lifecycle:
-  preinitialize_on_startup: true
-  services_to_preinit:
-    - "AngelaChatService"
-    - "AngelaLLMService"
-    - "BiologicalIntegrator"
-  shutdown_timeout: 10.0
 
 # ── 工作階段管理 ───────────────────────────────────────────────────────────
 
@@ -49,26 +35,6 @@ session_manager:
   max_sessions: 1000
   cleanup_interval: 300
   eviction_policy: "lru"
-
-# ── 路由註冊表 ─────────────────────────────────────────────────────────────
-
-# DEAD — no code reads `routing` from angela_core.yaml
-routing:
-  route_registry:
-    - path: "/angela/chat"
-      owner: "main_api_server"
-    - path: "/session/start"
-      owner: "main_api_server"
-    - path: "/session/{session_id}/send"
-      owner: "main_api_server"
-    - path: "/dialogue"
-      owner: "main_api_server"
-    - path: "/chat/unified"
-      owner: "main_api_server"
-    - path: "/angela/reload"
-      owner: "router"
-    - path: "/chat/completions"
-      action: "connect_to_llm"
 
 # ── 意圖關鍵字 ─────────────────────────────────────────────────────────────
 
@@ -404,26 +370,6 @@ complexity:
         - "find"
       aliases: ["search", "find", "s", "f"]
 
-# ── 學習系統配置 ───────────────────────────────────────────────────────────
-# DEAD — no code reads `learning` from angela_core.yaml
-
-learning:
-  decay:
-    enabled: true
-    days_to_decay: 30
-    decay_factor: 0.1
-    removal_threshold: 0.3
-    authority_priority: true
-  write_strategy:
-    mode: "debounce"
-    debounce_ms: 5000
-    max_batch_size: 100
-  template_quality:
-    enabled: true
-    match_tracking_window: 100
-    prune_after_days: 30
-    min_match_rate: 0.05
-
 # ── 狀態→自然語言轉換 ─────────────────────────────────────────────────────
 
 state_to_llm:
@@ -443,25 +389,6 @@ state_to_llm:
     high: "感覺親近"
     medium: "相處自在"
     low: "保持距離"
-
-# ── 回應模式 ──────────────────────────────────────────────────────────────
-# DEAD — no code reads `response_schema` from angela_core.yaml
-
-response_schema:
-  version: "2.0"
-  fields: ["response_text", "session_id", "emotion", "emotion_confidence", "source"]
-
-# ── 持久化 ─────────────────────────────────────────────────────────────────
-# DEAD — no code reads `persistence` from angela_core.yaml; hardcoded in state_persistence.py
-
-persistence:
-  state_matrix:
-    checkpoint_interval: 300
-    persist_to: "ham"
-  user_profiles:
-    persist_to: "ham"
-  sessions:
-    persist_to: "none"
 
 # ── Fallback 模式 ───────────────────────────────────────────────────────────
 
@@ -499,31 +426,6 @@ template_matching:
     content_similarity: 0.30
     state_similarity: 0.40
     impression_similarity: 0.20
-
-# ── 預定義模板（TemplateLibrary 初始內容）───────────────────────────────
-
-# DEAD — hardcoded in template_library.py, not read from YAML
-predefined_templates:
-  - id: "greeting_morning"
-    content: "早安！今天也元氣滿滿的樣子呢～有什麼想聊的嗎？"
-    category: "greeting"
-    keywords: ["早安", "早上好", "早"]
-  - id: "greeting_evening"
-    content: "晚安～今天辛苦了，好好休息吧！"
-    category: "greeting"
-    keywords: ["晚安", "晚上好", "晚"]
-  - id: "greeting_general"
-    content: "你好呀！有什麼需要幫忙的嗎？"
-    category: "greeting"
-    keywords: ["你好", "嗨", "hi", "hey"]
-  - id: "math_hint"
-    content: "這個問題涉及數學計算，讓我來幫你分析。"
-    category: "math"
-    keywords: ["計算", "數學", "積分"]
-  - id: "code_hint"
-    content: "這段代碼我看過了，讓我幫你分析一下。"
-    category: "code"
-    keywords: ["代碼", "程式", "debug"]
 
 # ── 神經片段（NeuroVocabulary 初始詞庫）────────────────────────────────
 # 這些是 Angela 的「語感片段」——讓 she 的每一句話都像人一樣自然
@@ -964,51 +866,6 @@ document_builder:
   learning_threshold:
     success_count: 3   # 成功 >= 3 次才學習格式
     keyword_match_count: 2  # keyword 匹配 >= 2 次才學習
-
-# ── 情緒/Empathy 閾值 ─────────────────────────────────────────────────────
-# DEAD — no code reads `empathy` from angela_core.yaml
-
-empathy:
-  thresholds:
-    high_arousal: 0.7
-    high_valence: 0.6
-    low_valence: 0.3
-  emotion_keywords:
-    happy: ["開心", "快樂", "高興", "happy", "joy"]
-    sad: ["難過", "傷心", "悲傷", "sad", "upset"]
-    angry: ["生氣", "憤怒", "氣", "angry", "mad"]
-    scared: ["害怕", "恐懼", "擔心", "scared", "afraid"]
-
-# ── 8D 座標追蹤 ──────────────────────────────────────────────────────────
-# DEAD — no code reads `state_tracking` from angela_core.yaml
-
-state_tracking:
-  coordinate_recalculation_on_update: true
-  anchor_update_threshold: 0.1   # 變化 > 0.1 才更新 anchor
-  history_window: 50
-
-# ── θ 自檢 ────────────────────────────────────────────────────────────────
-# DEAD — theta config not read from angela_core.yaml; theta values come from runtime state_for_llm
-
-theta:
-  novelty_estimation:
-    min_threshold: 0.3
-    high_novelty: 0.7
-  self_correction:
-    trigger_on_low_novelty: true
-    correction_interval_turns: 5
-
-# ── η 執行層 ─────────────────────────────────────────────────────────────
-# DEAD — eta config not read from angela_core.yaml; eta values come from runtime state_for_llm
-
-eta:
-  module_trigger_curve:
-    complexity_weight: 0.5
-    novelty_weight: 0.3
-    history_weight: 0.2
-  execution_tracking:
-    success_rate_window: 20
-    auto_fallback_threshold: 0.6  # 成功率 < 60% 觸發降級
 
 # ── LLM 服務配置 ───────────────────────────────────────────────────────────
 

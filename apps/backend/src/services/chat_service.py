@@ -13,7 +13,7 @@ from datetime import datetime
 from .angela_llm_service import get_llm_service
 from core.autonomous.state_matrix import StateMatrix4D
 from core.autonomous.state_matrix_adapter import StateMatrixAdapter
-from core.security.ego_guard import EgoGuard
+from ai.security.ego_guard import EgoGuard
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class ChatService:
             return
 
         self.state_matrix = StateMatrix4D()
-        self.state_adapter = StateMatrixAdapter(self.state_matrix)
+        self.state_adapter = StateMatrixAdapter()
         self.ego_guard = EgoGuard()
         self._user_profiles: Dict[str, Dict[str, Any]] = {}
         self._conversation_history: List[Dict[str, str]] = []
@@ -267,7 +267,7 @@ class ChatService:
                     proposal = mutator.propose_change("llm", {backend_id: {"model_name": new_model}})
                     
                     # 存入待處理提案
-                    self.pending_evolution_proposals["User"] = proposal # 簡化處理，實際應對應 user_name
+                    self.pending_evolution_proposals[user_name] = proposal
                     
                     return f"（演化提案）我識別到妳想讓我使用模型 `{new_model}`。這將修改我的系統配置，妳確認要執行這個自我演化嗎？（請回覆：確認/取消）"
 
@@ -304,3 +304,17 @@ class ChatService:
             return dyn_conf.get("state_constants", {}).get(key, default)
         except Exception:
             return default
+
+# Module-level exports for backward compatibility (Phase 7 fix)
+_chat_service_instance = None
+
+async def get_angela_chat_service():
+    global _chat_service_instance
+    if _chat_service_instance is None:
+        _chat_service_instance = ChatService()
+        await _chat_service_instance.initialize()
+    return _chat_service_instance
+
+async def generate_angela_response(user_message, user_name="User"):
+    svc = await get_angela_chat_service()
+    return await svc.generate_response(user_message, user_name)

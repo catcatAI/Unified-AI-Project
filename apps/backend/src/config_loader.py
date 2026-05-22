@@ -53,8 +53,9 @@ def get_config():
     """
     Returns the loaded configuration.
     """
+    global _config
     if _config is None:
-        load_config()
+        _config = load_config()
     return _config if _config is not None else {}
 
 

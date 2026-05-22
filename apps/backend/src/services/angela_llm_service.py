@@ -905,7 +905,7 @@ class AngelaLLMService:
 
     def _get_default_config(self) -> Dict[str, Any]:
         """從分層配置系統讀取 LLM 配置 [Phase 7]"""
-        from core.config_loader import get_config
+        from core.system.config.tiered_loader import get_config
         config = get_config("system/llm")
         if config:
             logger.info(f"LLM 配置已從 TieredConfig 載入 ({len(config)} items)")

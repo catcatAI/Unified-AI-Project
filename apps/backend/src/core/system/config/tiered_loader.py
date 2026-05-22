@@ -20,7 +20,7 @@ class TieredConfigLoader:
     """
     
     def __init__(self, backend_root: Optional[Path] = None):
-        self.backend_root = backend_root or Path(__file__).parent.parent.parent.parent
+        self.backend_root = backend_root or Path(__file__).resolve().parent.parent.parent.parent.parent
         self.config_dir = self.backend_root / "configs"
         self._cache: Dict[str, Dict[str, Any]] = {}
 

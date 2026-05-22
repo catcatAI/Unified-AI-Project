@@ -300,7 +300,7 @@ class BiologicalIntegrator:
         self.tactile_system.set_arousal_level(arousal)
 
         # High arousal triggers adrenaline (From Config [Phase 7])
-        from core.config_loader import get_config
+        from core.system.config.tiered_loader import get_config
         beh_conf = get_config("standard/behavior/behavior")
         stress_thresh = beh_conf.get("biological_thresholds", {}).get("arousal_stress_trigger", 70.0)
 

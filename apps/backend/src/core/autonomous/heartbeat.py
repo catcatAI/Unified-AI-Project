@@ -127,7 +127,7 @@ class MetabolicHeartbeat:
         從分層配置 (Standard/Behavior) 讀取參數。
         """
         import random
-        from core.config_loader import get_config
+        from core.system.config.tiered_loader import get_config
         beh_conf = get_config("standard/behavior/behavior")
         mov_conf = beh_conf.get("movement", {})
         

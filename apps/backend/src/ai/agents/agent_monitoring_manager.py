@@ -133,7 +133,7 @@ class AgentMonitoringManager:
                     if report.status == AgentStatus.RUNNING:
                         report.task_count += 1
                         
-                        from core.config_loader import get_config
+                        from core.system.config.tiered_loader import get_config
                         beh_conf = get_config("standard/behavior/behavior")
                         success_rate_thresh = beh_conf.get("state_constants", {}).get("agent_success_rate_base", 0.95)
 

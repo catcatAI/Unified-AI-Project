@@ -604,7 +604,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG())
+        logging.basicConfig(level=logging.DEBUG)
 
     with ExecutionManager() as manager:
         if args.health_report:

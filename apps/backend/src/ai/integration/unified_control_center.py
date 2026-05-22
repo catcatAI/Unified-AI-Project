@@ -429,7 +429,7 @@ class UnifiedControlCenter:
                 # 回退到模板
                 from src.services.chat_service import generate_angela_response
 
-                response_text = generate_angela_response(user_message, user_name)
+                response_text = await generate_angela_response(user_message, user_name)
                 provider = "fallback-template"
                 latency_ms = 1.0
 
