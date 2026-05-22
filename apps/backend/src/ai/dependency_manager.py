@@ -26,7 +26,8 @@ from core.hsp.types import HSPCapabilityAdvertisementPayload
 from core.hsp.connector import HSPConnector
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 
 
 class DependencyStatus:

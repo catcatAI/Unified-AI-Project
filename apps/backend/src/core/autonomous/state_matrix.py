@@ -277,14 +277,6 @@ class StateMatrix4D:
         >>> print(f"Overall state: {analysis['overall_state']}")
     """
 
-    _instance = None
-    _initialized = False
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(StateMatrix4D, cls).__new__(cls)
-        return cls._instance
-
     @property
     def precision(self) -> float:
         """獲取當前運算精度 (基於 Beta 維度的聚焦度)"""
@@ -297,9 +289,9 @@ class StateMatrix4D:
         """
         Initialize 4D state matrix
         """
-        if StateMatrix4D._initialized:
+        if getattr(self, "_initialized", False):
             return
-        StateMatrix4D._initialized = True
+        self._initialized = True
         
         from config_loader import get_formula_config
         self.formula_config = get_formula_config("spatial")

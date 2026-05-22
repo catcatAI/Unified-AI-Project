@@ -30,18 +30,8 @@ class AngelaConfigManager:
     支援：YAML 多文件讀取、雙層配置合併（Authority + Learned）、熱重載
     """
 
-    _instance: Optional["AngelaConfigManager"] = None
-    _init_lock = threading.Lock()
-
-    def __new__(cls):
-        if cls._instance is None:
-            with cls._init_lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-        return cls._instance
-
     def __init__(self):
-        if hasattr(self, "_initialized") and self._initialized:
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
 
@@ -563,6 +553,8 @@ class AngelaConfigManager:
 
 # ── 全域單例 ────────────────────────────────────────────────────────────────
 
+from core.interfaces.service_registry import get_registry
+
 _angela_config: Optional[AngelaConfigManager] = None
 
 
@@ -571,6 +563,7 @@ def get_angela_config() -> AngelaConfigManager:
     global _angela_config
     if _angela_config is None:
         _angela_config = AngelaConfigManager()
+        get_registry().register("angela_config", _angela_config)
     return _angela_config
 
 

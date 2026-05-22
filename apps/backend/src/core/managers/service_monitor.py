@@ -390,6 +390,7 @@ class ServiceMonitor:
 _global_service_monitor: Optional[ServiceMonitor] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_service_monitor(service_manager: Optional["CoreServiceManager"] = None) -> ServiceMonitor:
     """获取全局服务监控器实例"""
     global _global_service_monitor

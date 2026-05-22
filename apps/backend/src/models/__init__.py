@@ -1,4 +1,4 @@
-from services.api_models import (
+from models.api_models import (
     UserInput,
     AIOutput,
     SessionStartRequest,

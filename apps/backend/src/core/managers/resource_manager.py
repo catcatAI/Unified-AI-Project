@@ -18,7 +18,8 @@ from contextlib import asynccontextmanager
 # from .core_service_manager import
 
 logger: Any = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 
 
 class ResourceManager:

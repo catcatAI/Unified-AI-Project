@@ -381,6 +381,7 @@ class SafeEvaluator:
 _evaluator: Optional[SafeEvaluator] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_safe_evaluator() -> SafeEvaluator:
     """獲取全局安全求值器實例"""
     global _evaluator

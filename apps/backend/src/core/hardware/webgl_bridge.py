@@ -13,6 +13,7 @@ import logging
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import json
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -111,16 +112,8 @@ class WebGLBridge:
     3. 更新 GPU 加速服務配置
     """
 
-    _instance: Optional["WebGLBridge"] = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
         self._initialized = True
@@ -200,11 +193,13 @@ class WebGLBridge:
 _bridge: Optional[WebGLBridge] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_webgl_bridge() -> WebGLBridge:
     """獲取 WebGL 橋接器實例"""
     global _bridge
     if _bridge is None:
         _bridge = WebGLBridge()
+        get_registry().register("webgl_bridge", _bridge)
     return _bridge
 
 

@@ -240,6 +240,7 @@ class KeyValidator:
 _key_validator: Optional[KeyValidator] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_key_validator() -> KeyValidator:
     """獲取全局密鑰驗證器實例"""
     global _key_validator

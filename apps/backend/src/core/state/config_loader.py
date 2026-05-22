@@ -142,16 +142,8 @@ class StateConfig:
     從 YAML 檔案載入，解析為強類型 dataclass 結構。
     """
 
-    _instance: Optional["StateConfig"] = None
-
-    def __new__(cls, config_path: Optional[str] = None) -> "StateConfig":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._loaded = False
-        return cls._instance
-
     def __init__(self, config_path: Optional[str] = None):
-        if self._loaded:
+        if getattr(self, "_loaded", False):
             return
         self._loaded = True
 

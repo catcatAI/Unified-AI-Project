@@ -12,20 +12,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Body
-from api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy, trace
 from api.routes.ops_routes import router as ops_router
 
 router = APIRouter(prefix="/api/v1")
 
-# 包含 v1 端點
-router.include_router(drive.router)
-router.include_router(pet.router)
-router.include_router(vision.router)
-router.include_router(audio.router)
-router.include_router(tactile.router)
-router.include_router(mobile.router)
-router.include_router(economy.router)
-router.include_router(trace.router)
+# Lazy-load endpoint routers
+from api.v1.endpoints import include_endpoint_routers
+include_endpoint_routers(router)
+
 router.include_router(ops_router)
 
 

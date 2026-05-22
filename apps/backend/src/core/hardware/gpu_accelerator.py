@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import json
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -72,16 +73,8 @@ class GPUAcceleratorService:
     - 多精度模式支持
     """
 
-    _instance: Optional["GPUAcceleratorService"] = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
         self._initialized = True
@@ -362,6 +355,7 @@ def get_gpu_service() -> GPUAcceleratorService:
     global _gpu_service
     if _gpu_service is None:
         _gpu_service = GPUAcceleratorService()
+        get_registry().register("gpu_accelerator_service", _gpu_service)
     return _gpu_service
 
 

@@ -166,6 +166,7 @@ class AuthMiddleware:
 _auth_middleware: Optional[AuthMiddleware] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_auth_middleware(config: Optional[Dict[str, Any]] = None) -> AuthMiddleware:
     """获取全局认证中间件实例"""
     global _auth_middleware

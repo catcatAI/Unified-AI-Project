@@ -19,16 +19,9 @@ class CerebellumEngine:
     Angela 的小腦運動神經系統 (AL Pose Controller v2.0).
     負責「大腦指令 -> 肢體細節」的編譯、執行與持續學習。
     """
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(CerebellumEngine, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized: return
+        if getattr(self, "_initialized", False):
+            return
         self._initialized = True
         
         # 1. 姿態庫 (Pose Library) - [姿態名稱] -> {PartID: [Offset_X, Offset_Y, Angle]}

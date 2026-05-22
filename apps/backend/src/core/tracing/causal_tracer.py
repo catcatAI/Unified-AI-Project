@@ -17,6 +17,7 @@ import logging
 from contextvars import ContextVar
 
 from .causal_chain import CausalNode, CausalChain, LayerType
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +30,10 @@ class CausalTracer:
     单例追踪器，用于管理因果链。
     """
 
-    _instance: Optional[CausalTracer] = None
     _lock = asyncio.Lock()
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
         self._chains: Dict[str, CausalChain] = {}
@@ -266,4 +260,5 @@ def get_tracer() -> CausalTracer:
     global _global_tracer
     if _global_tracer is None:
         _global_tracer = CausalTracer()
+        get_registry().register("causal_tracer", _global_tracer)
     return _global_tracer

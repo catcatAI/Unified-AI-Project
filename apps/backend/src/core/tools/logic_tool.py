@@ -99,6 +99,7 @@ class LogicTool:
 _logic_tool: Optional[LogicTool] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_logic_tool() -> LogicTool:
     """获取全局逻辑工具实例"""
     global _logic_tool

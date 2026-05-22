@@ -52,7 +52,8 @@ except ImportError:
     NUMPY_AVAILABLE = False
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 添加项目路径

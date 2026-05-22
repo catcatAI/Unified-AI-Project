@@ -94,18 +94,11 @@ class AxisFieldRegistry:
     單例模式，確保全局只有一個註冊表。
     """
 
-    _instance: Optional["AxisFieldRegistry"] = None
     _fields: Dict[str, Dict[str, AxisField]] = {}
     _by_name: Dict[str, AxisField] = {}
 
-    def __new__(cls) -> "AxisFieldRegistry":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
         self._register_all_fields()

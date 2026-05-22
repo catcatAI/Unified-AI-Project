@@ -135,18 +135,10 @@ class BiologicalIntegrator:
     
     Coordinates and integrates all biological simulation systems for Angela AI.
     """
-    _instance = None
-    _initialized = False
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(BiologicalIntegrator, cls).__new__(cls)
-        return cls._instance
-
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        if BiologicalIntegrator._initialized:
+        if getattr(self, "_initialized", False):
             return
-        BiologicalIntegrator._initialized = True
+        self._initialized = True
         logger.info("🧬 [Bio] Initializing BiologicalIntegrator Singleton...")
         
         from .env_dynamics import EnvironmentDynamics

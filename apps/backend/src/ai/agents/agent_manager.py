@@ -260,7 +260,8 @@ import uvicorn
 import httpx
 from datetime import datetime
 
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HSPRouter")
 
 app = FastAPI()

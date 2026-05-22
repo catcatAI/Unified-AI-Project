@@ -25,7 +25,8 @@ from .real_comfyui_api import AngelaRealPainter, ComfyUIClient
 from .real_edge_tts import AngelaRealVoice
 from .real_playwright_browser import AngelaRealBrowser
 
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

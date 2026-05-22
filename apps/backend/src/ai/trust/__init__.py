@@ -1,3 +1,3 @@
 # Trust Manager Module
 
-__all_["TrustManager"]
+__all__ = ["TrustManager"]

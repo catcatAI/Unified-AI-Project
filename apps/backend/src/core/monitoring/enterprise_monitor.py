@@ -68,16 +68,8 @@ class MetricsCollector:
 class EnterpriseMonitor:
     """企業級監控器 / Enterprise monitor"""
 
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
         self._running = False
@@ -156,5 +148,8 @@ class EnterpriseMonitor:
         }
 
 
+from core.interfaces.service_registry import get_registry
+
 # 全局監控器實例
 enterprise_monitor = EnterpriseMonitor()
+get_registry().register("enterprise_monitor", enterprise_monitor)

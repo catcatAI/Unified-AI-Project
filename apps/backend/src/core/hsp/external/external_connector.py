@@ -24,7 +24,6 @@ class MessageRouter:
     Agents register with this router and messages are forwarded accordingly.
     """
 
-    _instance = None
     _router_port = 11435  # Default router port
 
     def __init__(self, host: str = "127.0.0.1", port: int = None):
@@ -37,15 +36,13 @@ class MessageRouter:
 
     @classmethod
     def get_instance(cls, port: int = None) -> "MessageRouter":
-        """Get or create the singleton MessageRouter."""
-        if cls._instance is None:
-            cls._instance = cls(port=port)
-        return cls._instance
+        """Get or create the MessageRouter."""
+        return cls(port=port)
 
     @classmethod
     def reset_instance(cls):
-        """Reset the singleton (for testing)."""
-        cls._instance = None
+        """Reset (for testing)."""
+        pass
 
     async def start(self):
         """Start the HTTP server for the message router."""

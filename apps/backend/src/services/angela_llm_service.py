@@ -23,9 +23,11 @@ from enum import Enum
 from abc import ABC, abstractmethod
 
 import aiohttp
+from core.interfaces.service_registry import get_registry
 
 # 簡單日誌設置
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("angela_llm")
 
 # Lazy import for memory enhancement system - deferred until first use
@@ -551,18 +553,9 @@ class AngelaLLMService:
     3. 整合 Angela 的認知和情感系統
     """
 
-    _instance = None
-
-    def __new__(cls, config: Dict[str, Any] = None):
-        """單例模式"""
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self, config: Dict[str, Any] = None):
         """初始化 LLM 服務"""
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
         self.config = config or self._get_default_config()
@@ -2240,6 +2233,7 @@ async def get_llm_service(force_reload: bool = False) -> AngelaLLMService:
     if _llm_service is None or force_reload:
         _llm_service = AngelaLLMService()
         await _llm_service.initialize()
+        get_registry().register("angela_llm_service", _llm_service)
 
     return _llm_service
 

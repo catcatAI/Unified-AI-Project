@@ -541,6 +541,7 @@ class ExecutionManager:
 _global_execution_manager: Optional[ExecutionManager] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_execution_manager(config: Optional[ExecutionManagerConfig] = None) -> ExecutionManager:
     """
     Get global execution manager instance

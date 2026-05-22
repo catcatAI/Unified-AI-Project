@@ -487,6 +487,7 @@ class ResourceManager:
 _resource_manager = ResourceManager()
 
 
+# DORMANT FACTORY (not called externally)
 def get_resource_manager() -> ResourceManager:
     """获取全局资源管理器"""
     return _resource_manager

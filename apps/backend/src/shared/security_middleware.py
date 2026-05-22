@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class EncryptedCommunicationMiddleware(BaseHTTPMiddleware):
+class SignedCommunicationMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, key_b: str):
         super().__init__(app)
         self.key_b = key_b.encode()

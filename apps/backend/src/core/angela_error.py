@@ -495,6 +495,7 @@ class ErrorHandler:
 _error_handler = ErrorHandler()
 
 
+# DORMANT FACTORY (not called externally)
 def get_error_handler() -> ErrorHandler:
     """获取全局错误处理器"""
     return _error_handler

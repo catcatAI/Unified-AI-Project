@@ -34,6 +34,9 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict, deque
 from pathlib import Path
 
+from core.interfaces.persistence import StatePersistence
+from core.interfaces.service_registry import get_registry
+
 # 尝试导入AI库
 try:
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
@@ -56,7 +59,8 @@ except ImportError:
     NUMPY_AVAILABLE = False
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -360,66 +364,105 @@ class MetacognitiveCapabilitiesEngine:
 
         return actions
 
-    async def save_state(self):
+    async def save_state(self, key: str = "", data: Optional[Dict[str, Any]] = None) -> bool:
         """保存状态到文件"""
-        state_file = self.workspace_path / "current_state.json"
+        if not key and data is None:
+            # Original behavior: save full internal state to files
+            state_file = self.workspace_path / "current_state.json"
 
-        if self.current_state:
-            state_data = asdict(self.current_state)
-            state_data["timestamp"] = state_data["timestamp"].isoformat()
+            if self.current_state:
+                state_data = asdict(self.current_state)
+                state_data["timestamp"] = state_data["timestamp"].isoformat()
 
-            with open(state_file, "w", encoding="utf-8") as f:
-                json.dump(state_data, f, ensure_ascii=False, indent=2)
+                with open(state_file, "w", encoding="utf-8") as f:
+                    json.dump(state_data, f, ensure_ascii=False, indent=2)
 
-        # 保存能力画像
-        profiles_file = self.workspace_path / "capability_profiles.json"
-        profiles_data = {}
-        for cap_id, profile in self.capability_profiles.items():
-            profiles_data[cap_id] = {
-                "capability_id": profile.capability_id,
-                "capability_name": profile.capability_name,
-                "domain": profile.domain,
-                "proficiency_level": profile.proficiency_level,
-                "confidence_level": profile.confidence_level,
-                "learning_rate": profile.learning_rate,
-                "last_practiced": profile.last_practiced.isoformat(),
-                "practice_count": profile.practice_count,
-                "success_rate": profile.success_rate,
-            }
+            # 保存能力画像
+            profiles_file = self.workspace_path / "capability_profiles.json"
+            profiles_data = {}
+            for cap_id, profile in self.capability_profiles.items():
+                profiles_data[cap_id] = {
+                    "capability_id": profile.capability_id,
+                    "capability_name": profile.capability_name,
+                    "domain": profile.domain,
+                    "proficiency_level": profile.proficiency_level,
+                    "confidence_level": profile.confidence_level,
+                    "learning_rate": profile.learning_rate,
+                    "last_practiced": profile.last_practiced.isoformat(),
+                    "practice_count": profile.practice_count,
+                    "success_rate": profile.success_rate,
+                }
 
-        with open(profiles_file, "w", encoding="utf-8") as f:
-            json.dump(profiles_data, f, ensure_ascii=False, indent=2)
+            with open(profiles_file, "w", encoding="utf-8") as f:
+                json.dump(profiles_data, f, ensure_ascii=False, indent=2)
 
-        logger.info("状态已保存")
+            logger.info("状态已保存")
+            return True
 
-    async def load_state(self):
+        # Protocol: persist data under key
+        persist_dir = self.workspace_path / "persistence"
+        persist_dir.mkdir(exist_ok=True)
+        filepath = persist_dir / f"{key}.json"
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        logger.info(f"状态已保存到 key: {key}")
+        return True
+
+    async def load_state(self, key: str = "") -> Optional[Dict[str, Any]]:
         """从文件加载状态"""
-        state_file = self.workspace_path / "current_state.json"
-        profiles_file = self.workspace_path / "capability_profiles.json"
+        if not key:
+            # Original behavior: load full internal state from files
+            state_file = self.workspace_path / "current_state.json"
+            profiles_file = self.workspace_path / "capability_profiles.json"
 
-        if state_file.exists():
-            with open(state_file, "r", encoding="utf-8") as f:
-                state_data = json.load(f)
-                # 这里需要更复杂的逻辑来重构 MetacognitiveState 对象
+            if state_file.exists():
+                with open(state_file, "r", encoding="utf-8") as f:
+                    state_data = json.load(f)
 
-        if profiles_file.exists():
-            with open(profiles_file, "r", encoding="utf-8") as f:
-                profiles_data = json.load(f)
-                for cap_id, profile_data in profiles_data.items():
-                    self.capability_profiles[cap_id] = CapabilityProfile(
-                        capability_id=profile_data["capability_id"],
-                        capability_name=profile_data["capability_name"],
-                        domain=profile_data["domain"],
-                        proficiency_level=profile_data["proficiency_level"],
-                        confidence_level=profile_data["confidence_level"],
-                        learning_rate=profile_data["learning_rate"],
-                        last_practiced=datetime.fromisoformat(profile_data["last_practiced"]),
-                        practice_count=profile_data["practice_count"],
-                        success_rate=profile_data["success_rate"],
-                    )
+            if profiles_file.exists():
+                with open(profiles_file, "r", encoding="utf-8") as f:
+                    profiles_data = json.load(f)
+                    for cap_id, profile_data in profiles_data.items():
+                        self.capability_profiles[cap_id] = CapabilityProfile(
+                            capability_id=profile_data["capability_id"],
+                            capability_name=profile_data["capability_name"],
+                            domain=profile_data["domain"],
+                            proficiency_level=profile_data["proficiency_level"],
+                            confidence_level=profile_data["confidence_level"],
+                            learning_rate=profile_data["learning_rate"],
+                            last_practiced=datetime.fromisoformat(profile_data["last_practiced"]),
+                            practice_count=profile_data["practice_count"],
+                            success_rate=profile_data["success_rate"],
+                        )
 
         logger.info("状态已加载")
+
+    async def delete_state(self, key: str) -> bool:
+        """Remove persisted state by key."""
+        persist_dir = self.workspace_path / "persistence"
+        filepath = persist_dir / f"{key}.json"
+        if filepath.exists():
+            filepath.unlink()
+            logger.info(f"状态已删除 key: {key}")
+            return True
+        return False
+
+    async def list_keys(self, prefix: str = "") -> list:
+        """List all keys matching the given prefix."""
+        persist_dir = self.workspace_path / "persistence"
+        if not persist_dir.exists():
+            return []
+        keys = []
+        for f in persist_dir.iterdir():
+            if f.suffix == ".json":
+                k = f.stem
+                if k.startswith(prefix):
+                    keys.append(k)
+        return sorted(keys)
 
 
 # 全局实例
 metacognitive_engine = MetacognitiveCapabilitiesEngine()
+
+# Register in service registry
+get_registry().register("metacognitive_persistence", metacognitive_engine)

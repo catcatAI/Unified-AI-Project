@@ -286,12 +286,6 @@ def create_app() -> FastAPI:
             "message": "Angela 核心已接收您的加密訊息",
         }
 
-    @app.get("/api/v1/security/sync-key-c")
-    async def get_sync_key_c():
-        """獲取桌面端同步金鑰 Key C (僅限授權設備)"""
-        # 在生產環境中，這裡應該有嚴格的設備授權驗證
-        return {"key_c": km.get_key("KeyC"), "timestamp": datetime.now().isoformat()}
-
     # API路由
     from src.api.router import router
 

@@ -29,6 +29,8 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
+import json
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Callable
 from datetime import datetime
 
@@ -1178,6 +1180,64 @@ class StateMatrixAdapter:
         if eta_data:
             from core.autonomous.eta_axis import EtaAxisState
             self._eta = EtaAxisState.from_dict(eta_data)
+
+    async def save_state(self, key: str, data: Dict[str, Any]) -> bool:
+        """StatePersistence protocol: persist data under key."""
+        try:
+            data_dir = self._get_protocol_data_dir()
+            filepath = data_dir / f"{key}.json"
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, default=str)
+            return True
+        except Exception:
+            return False
+
+    async def load_state(self, key: str) -> Optional[Dict[str, Any]]:
+        """StatePersistence protocol: load data by key."""
+        try:
+            data_dir = self._get_protocol_data_dir()
+            filepath = data_dir / f"{key}.json"
+            if filepath.exists():
+                with open(filepath, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return None
+        except Exception:
+            return None
+
+    async def delete_state(self, key: str) -> bool:
+        """StatePersistence protocol: remove persisted state by key."""
+        try:
+            data_dir = self._get_protocol_data_dir()
+            filepath = data_dir / f"{key}.json"
+            if filepath.exists():
+                filepath.unlink()
+                return True
+            return False
+        except Exception:
+            return False
+
+    async def list_keys(self, prefix: str = "") -> list:
+        """StatePersistence protocol: list keys matching prefix."""
+        try:
+            data_dir = self._get_protocol_data_dir()
+            if not data_dir.exists():
+                return []
+            keys = []
+            for f in data_dir.iterdir():
+                if f.suffix == ".json":
+                    k = f.stem
+                    if k.startswith(prefix):
+                        keys.append(k)
+            return sorted(keys)
+        except Exception:
+            return []
+
+    def _get_protocol_data_dir(self) -> Path:
+        """Get directory for StatePersistence protocol data files."""
+        base = Path(self._persistence.config.json_storage_path)
+        data_dir = base / "protocol_data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        return data_dir
 
     async def init_persistence(self) -> None:
         """初始化持久化層（異步）"""

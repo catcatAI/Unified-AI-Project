@@ -6,6 +6,7 @@ Centralizes system states to eliminate circular dependencies.
 import logging
 from typing import Dict, Any, List, Callable, Optional
 from datetime import datetime
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -14,15 +15,10 @@ class GlobalStateStore:
     Central repository for all Angela AI states.
     Modules push updates here, and consumers subscribe to changes.
     """
-    _instance = None
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(GlobalStateStore, cls).__new__(cls)
-            cls._instance._initialize()
-        return cls._instance
-
-    def _initialize(self):
+    def __init__(self):
+        if getattr(self, "_initialized", False):
+            return
+        self._initialized = True
         self._states: Dict[str, Any] = {
             "alpha": {},  # Biological
             "beta": {},   # Cognitive
@@ -84,3 +80,4 @@ class GlobalStateStore:
 
 # Singleton Access
 state_store = GlobalStateStore()
+get_registry().register("global_state_store", state_store)

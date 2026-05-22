@@ -9,6 +9,8 @@ from typing import Any, Dict, Optional, List, TYPE_CHECKING
 # We import from services.main_api_server to get access to real singletons
 # Avoid circular imports by using local imports in methods if needed
 
+from core.interfaces.service_registry import get_registry
+
 logger = logging.getLogger(__name__)
 
 _hot_reload_service_singleton: Optional["HotReloadService"] = None
@@ -17,6 +19,7 @@ def get_hot_reload_service() -> "HotReloadService":
     global _hot_reload_service_singleton
     if _hot_reload_service_singleton is None:
         _hot_reload_service_singleton = HotReloadService()
+        get_registry().register("hot_reload_service", _hot_reload_service_singleton)
     return _hot_reload_service_singleton
 
 class HotReloadService:

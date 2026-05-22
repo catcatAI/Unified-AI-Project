@@ -67,10 +67,4 @@ class ValueAssessmentSystem:
             
         return " | ".join(directives)
 
-# 單例模式
-_instance = None
-def get_value_system():
-    global _instance
-    if _instance is None:
-        _instance = ValueAssessmentSystem()
-    return _instance
+

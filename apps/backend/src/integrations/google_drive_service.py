@@ -16,6 +16,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +31,6 @@ DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
 
 class GoogleDriveService:
-    _instance: Optional["GoogleDriveService"] = None
-
     def __init__(self):
         self._creds: Optional[Credentials] = None
         self._service = None
@@ -39,9 +38,7 @@ class GoogleDriveService:
 
     @classmethod
     def get_instance(cls) -> "GoogleDriveService":
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
+        return cls()
 
     def _load_token(self) -> Optional[Credentials]:
         if not TOKEN_PATH.exists():
@@ -231,8 +228,15 @@ class GoogleDriveService:
             TOKEN_PATH.unlink()
         self._creds = None
         self._service = None
-        GoogleDriveService._instance = None
+        pass
+
+
+_drive_instance: Optional[GoogleDriveService] = None
 
 
 def get_drive_service() -> GoogleDriveService:
-    return GoogleDriveService.get_instance()
+    global _drive_instance
+    if _drive_instance is None:
+        _drive_instance = GoogleDriveService()
+        get_registry().register("google_drive_service", _drive_instance)
+    return _drive_instance

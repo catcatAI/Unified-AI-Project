@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
 import psutil
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -620,16 +621,8 @@ class UnifiedHardwareCenter:
     - 系統監控
     """
 
-    _instance: "UnifiedHardwareCenter" = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
         self._initialized = True
@@ -901,6 +894,7 @@ async def get_hardware_center() -> UnifiedHardwareCenter:
     if _uhrc is None:
         _uhrc = UnifiedHardwareCenter()
         await _uhrc.initialize()
+        get_registry().register("unified_hardware_center", _uhrc)
     return _uhrc
 
 

@@ -1,3 +1,3 @@
 # Service Discovery Module
 
-__all_["ServiceDiscoveryModule"]
+__all__ = ["ServiceDiscoveryModule"]

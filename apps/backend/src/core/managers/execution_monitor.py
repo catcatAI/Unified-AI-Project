@@ -298,7 +298,7 @@ class ExecutionMonitor:
         timeout: Optional[float] = None,
         cwd: Optional[str] = None,
         env: Optional[Dict[str, str]] = None,
-        shell: bool = True,
+        shell: bool = False,
     ) -> ExecutionResult:
         """
         執行命令並監控狀態
@@ -422,6 +422,7 @@ class ExecutionMonitor:
         timeout: Optional[float] = None,
         cwd: Optional[str] = None,
         env: Optional[Dict[str, str]] = None,
+        shell: bool = False,
     ) -> ExecutionResult:
         """
         異步執行命令
@@ -445,13 +446,22 @@ class ExecutionMonitor:
 
         try:
             if isinstance(command, str):
-                process = await asyncio.create_subprocess_shell(
-                    command,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    cwd=cwd,
-                    env=env,
-                )
+                if shell:
+                    process = await asyncio.create_subprocess_shell(
+                        command,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                        cwd=cwd,
+                        env=env,
+                    )
+                else:
+                    process = await asyncio.create_subprocess_exec(
+                        *command.split(),
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                        cwd=cwd,
+                        env=env,
+                    )
             else:
                 process = await asyncio.create_subprocess_exec(
                     *command,
@@ -567,6 +577,7 @@ class ExecutionMonitor:
 _global_monitor: Optional[ExecutionMonitor] = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_execution_monitor(config: Optional[ExecutionConfig] = None) -> ExecutionMonitor:
     """
     獲取全局執行監控器實例

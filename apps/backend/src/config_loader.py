@@ -49,6 +49,7 @@ def get_bootstrap_config() -> Dict[str, Any]:
     return get_config("system/bootstrap")
 
 
+# DORMANT FACTORY (not called externally)
 def get_config():
     """
     Returns the loaded configuration.
@@ -72,6 +73,7 @@ def load_simulated_resources(config_path="configs/simulated_resources.yaml"):
     return _simulated_resources if _simulated_resources is not None else {}
 
 
+# DORMANT FACTORY (not called externally)
 def get_simulated_resources():
     """
     Returns the loaded simulated resources.

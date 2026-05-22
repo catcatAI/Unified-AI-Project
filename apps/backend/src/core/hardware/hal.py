@@ -354,14 +354,10 @@ class HardwareManager:
 class HardwareFactory:
     """硬件工厂 / Hardware Factory"""
 
-    _instance: Optional[HardwareManager] = None
-
     @classmethod
     def get_manager(cls) -> HardwareManager:
         """获取硬件管理器 / Get hardware manager"""
-        if cls._instance is None:
-            cls._instance = HardwareManager()
-        return cls._instance
+        return HardwareManager()
 
 
 def detect_hardware() -> HardwareCapabilities:

@@ -138,11 +138,4 @@ class AngelaModelCore:
             f"Current Focus: Angela is aware of her own digital existence and spatial coordinates."
         )
 
-# 單例模式獲取 / Singleton Factory
-_core_instance = None
 
-def get_model_core() -> AngelaModelCore:
-    global _core_instance
-    if _core_instance is None:
-        _core_instance = AngelaModelCore()
-    return _core_instance

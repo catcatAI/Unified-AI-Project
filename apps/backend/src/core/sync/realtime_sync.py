@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List, Any, Optional, Callable
 from datetime import datetime
 from enum import Enum
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -58,16 +59,8 @@ class SyncEvent:
 class SyncManager:
     """同步管理器 / Sync manager"""
 
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
         self._clients: Dict[str, Any] = {}
@@ -113,11 +106,13 @@ class SyncManager:
 _sync_manager = None
 
 
+# DORMANT FACTORY (not called externally)
 def get_sync_manager() -> SyncManager:
     """Get or create the sync manager singleton"""
     global _sync_manager
     if _sync_manager is None:
         _sync_manager = SyncManager()
+        get_registry().register("sync_manager", _sync_manager)
     return _sync_manager
 
 

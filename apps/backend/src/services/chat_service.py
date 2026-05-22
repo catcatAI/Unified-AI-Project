@@ -24,16 +24,8 @@ class ChatService:
     負責意圖分析、上下文管理、以及調用 LLM 生成回應。
     """
 
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(ChatService, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
         self.state_matrix = StateMatrix4D()
@@ -313,6 +305,8 @@ async def get_angela_chat_service():
     if _chat_service_instance is None:
         _chat_service_instance = ChatService()
         await _chat_service_instance.initialize()
+        from core.interfaces.service_registry import get_registry
+        get_registry().register("chat_service", _chat_service_instance)
     return _chat_service_instance
 
 async def generate_angela_response(user_message, user_name="User"):

@@ -259,19 +259,13 @@ class MessageManager:
 # 创建全局消息管理器实例
 message_manager = MessageManager()
 
-# 確保 src 目錄在 Python 路徑中
-# 必須添加 src 目錄本身，這樣 Python 才能找到 src.core 等模塊
-_backend_dir = Path(__file__).parent.parent.parent  # /apps/backend
-_src_path = str(_backend_dir / "src")  # /apps/backend/src
-if _src_path not in sys.path:
-    sys.path.insert(0, _src_path)
-
 from fastapi import (
     FastAPI,
     HTTPException,
     APIRouter,
     Body,
     BackgroundTasks,
+    Depends,
     WebSocket,
     WebSocketDisconnect,
     Request,
@@ -292,7 +286,7 @@ from services.tactile_service import TactileService
 from services.chat_service import generate_angela_response, get_angela_chat_service
 from services.angela_llm_service import get_llm_service
 from system.security_monitor import ABCKeyManager
-from shared.security_middleware import EncryptedCommunicationMiddleware
+from shared.security_middleware import SignedCommunicationMiddleware
 
 # Initialize _llm_service as None to prevent NameError before startup
 _llm_service = None
@@ -326,10 +320,10 @@ try:
 except Exception as e:
     logger.warning(f"[Middleware] CORS setup skipped: {e}")
 
-# ========== 加密通訊中間件（Key B 簽名驗證） ==========
+# ========== 簽名驗證中間件（Key B 簽名驗證） ==========
 try:
     app.add_middleware(
-        EncryptedCommunicationMiddleware,
+        SignedCommunicationMiddleware,
         key_b=get_abc_key_manager().get_key("KeyB"),
     )
     logger.info("[Middleware] EncryptedCommunication enabled")
@@ -367,7 +361,8 @@ async def lifespan(app: FastAPI):
 
     # 接線跨服務依賴 & 啟動生物心跳
     try:
-        _initialize_all_services()
+        from services.wiring import initialize_all_services
+        initialize_all_services(manager)
         logger.info("[Lifecycle] Cross-service wiring complete")
     except Exception as e:
         logger.warning(f"[Lifecycle] Service wiring failed: {e}")
@@ -436,6 +431,12 @@ _abc_key_manager = None
 _digital_life = None
 _economy_manager = None
 _metabolic_heartbeat = None
+
+def get_abc_key_manager() -> ABCKeyManager:
+    global _abc_key_manager
+    if _abc_key_manager is None:
+        _abc_key_manager = ABCKeyManager()
+    return _abc_key_manager
 
 # Session management with TTL
 class TTLSessionManager:
@@ -522,13 +523,6 @@ def get_tactile_service() -> TactileService:
     return _tactile_service
 
 
-def get_abc_key_manager() -> ABCKeyManager:
-    global _abc_key_manager
-    if _abc_key_manager is None:
-        _abc_key_manager = ABCKeyManager()
-    return _abc_key_manager
-
-
 def get_digital_life() -> DigitalLifeIntegrator:
     global _digital_life
     if _digital_life is None:
@@ -543,84 +537,6 @@ def get_economy_manager() -> EconomyManager:
     return _economy_manager
 
 
-# Initialize services and link components during startup
-def _initialize_all_services():
-    global manager
-    desktop_interaction = get_desktop_interaction()
-    action_executor = get_action_executor()
-    vision_service = get_vision_service()
-    audio_service = get_audio_service()
-    tactile_service = get_tactile_service()
-    abc_key_manager = get_abc_key_manager()
-    digital_life = get_digital_life()
-    economy_manager = get_economy_manager()
-
-    # Link components
-    pet_manager = pet.get_pet_manager()
-    digital_life.broadcast_callback = manager.broadcast
-    pet.set_biological_integrator(digital_life.biological_integrator)
-    pet.set_economy_manager(economy_manager)
-    economy.set_economy_manager(economy_manager)
-
-    # [Phase 8 Activation] 啟動管理與安全資產
-    try:
-        from services.hot_reload_service import get_hot_reload_service
-        from core.security.security_audit import get_security_audit
-        hot_reload = get_hot_reload_service()
-        sec_audit = get_security_audit()
-        logger.info("[Lifecycle] HotReloadService and SecurityAudit activated and ready.")
-    except Exception as e:
-        logger.warning(f"[Lifecycle] Failed to activate management assets: {e}")
-
-    # ========== WebSocket hooks for real-time digital life ==========
-
-    # 1. Hook PetManager to broadcast state changes
-    async def pet_broadcast_wrapper(event_type, data):
-        await manager.broadcast(
-            {
-                "type": event_type,
-                "data": data,
-                "timestamp": datetime.now().isoformat(),
-            }
-        )
-
-    pet_manager.broadcast_callback = pet_broadcast_wrapper
-
-    # 2. Hook BiologicalIntegrator to broadcast discrete events (emotions, etc.)
-    def bio_event_callback(event_name, event_data):
-        # We need to bridge from sync callback to async broadcast
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.run_coroutine_threadsafe(
-                    manager.broadcast(
-                        {
-                            "type": "biological_event",
-                            "data": {"event": event_name, "data": event_data},
-                            "timestamp": datetime.now().isoformat(),
-                        }
-                    ),
-                    loop,
-                )
-        except Exception as e:
-            # broad exception acceptable: callback errors should not break the loop
-            logger.error(f"Failed to bridge biological event: {e}")
-
-    # Registered with the underlying integrator if supported
-    if hasattr(digital_life.biological_integrator, "register_event_callback"):
-        digital_life.biological_integrator.register_event_callback(bio_event_callback)
-
-    return (
-        desktop_interaction,
-        action_executor,
-        vision_service,
-        audio_service,
-        tactile_service,
-        abc_key_manager,
-        digital_life,
-        economy_manager,
-        
-    )
 
 
 def _validate_environment_variables():
@@ -903,9 +819,11 @@ async def unified_chat(request: Dict[str, Any] = Body(...)):
 
 
 @api_v1_router.get("/desktop/state")
-async def desktop_state():
+async def desktop_state(
+    interaction: DesktopInteraction = Depends(get_desktop_interaction),
+):
     """返回當前桌面狀態"""
-    state = get_desktop_interaction().get_desktop_state()
+    state = interaction.get_desktop_state()
     return {"success": True, "state": {
         "total_files": getattr(state, "total_files", 0),
         "total_size": getattr(state, "total_size", 0),
@@ -936,9 +854,11 @@ async def desktop_cleanup(days_old: int = 30):
 
 
 @api_v1_router.get("/actions/status")
-async def actions_status():
+async def actions_status(
+    executor: ActionExecutor = Depends(get_action_executor),
+):
     """返回動作執行器狀態"""
-    stats = get_action_executor().get_execution_stats()
+    stats = executor.get_execution_stats()
     return {"success": True, "stats": stats}
 
 
@@ -963,9 +883,10 @@ async def tactile_touch(touch_data: Dict[str, Any] = Body(...)):
 
 
 @api_v1_router.post("/brain/metrics")
-async def brain_metrics():
+async def brain_metrics(
+    digital_life: DigitalLifeIntegrator = Depends(get_digital_life),
+):
     """返回完整腦指標（HSM, CDM, 生命強度等）"""
-    digital_life = get_digital_life()
     summary = digital_life.get_formula_metrics()
     return {"success": True, "metrics": summary.get("formula_status", {}) if summary else {}}
 

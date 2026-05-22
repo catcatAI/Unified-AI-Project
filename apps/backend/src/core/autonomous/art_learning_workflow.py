@@ -12,6 +12,8 @@ from datetime import datetime
 from .art_learning_system import ArtLearningSystem
 from .biological_integrator import BiologicalIntegrator
 
+from core.interfaces.service_registry import get_registry
+
 logger = logging.getLogger(__name__)
 
 class WorkflowStage(Enum):
@@ -177,4 +179,5 @@ def get_art_workflow(bio=None):
     global _instance
     if _instance is None and bio is not None:
         _instance = ArtLearningWorkflow(bio)
+        get_registry().register("art_learning_workflow", _instance)
     return _instance

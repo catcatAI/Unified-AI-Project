@@ -54,8 +54,8 @@ def ensure_transformers_compatibility():
         return False
 
 
-# 在模块加载时自动执行兼容性检查
-ensure_transformers_compatibility()
+# 兼容性檢查改為被動調用，不在 module 載入時自動執行
+# ensure_transformers_compatibility()
 
 
 def safe_import_sentence_transformer():

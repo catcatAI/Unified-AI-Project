@@ -26,6 +26,7 @@ from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from collections import deque
 import heapq
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -57,15 +58,8 @@ class WaitingScheduler:
       - 單一工作者線程，不阻塞主 event loop
     """
 
-    _instance: Optional["WaitingScheduler"] = None
-
-    def __new__(cls, *args, **kwargs) -> "WaitingScheduler":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
     def __init__(self, max_wait_seconds: float = 30.0):
-        if hasattr(self, "_initialized") and self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
         self._initialized = True
@@ -247,6 +241,13 @@ class WaitingScheduler:
         logger.info("[WaitingScheduler] Worker thread stopped")
 
 
+_scheduler_instance: Optional[WaitingScheduler] = None
+
+
 def get_waiting_scheduler() -> WaitingScheduler:
     """取得全域 WaitingScheduler 實例"""
-    return WaitingScheduler(max_wait_seconds=30.0)
+    global _scheduler_instance
+    if _scheduler_instance is None:
+        _scheduler_instance = WaitingScheduler(max_wait_seconds=30.0)
+        get_registry().register("waiting_scheduler", _scheduler_instance)
+    return _scheduler_instance

@@ -24,7 +24,8 @@ from typing import Any, Dict, List, Optional, Callable
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 
 # Lazy import DependencyManager and ExecutionManager to avoid circular dependencies
 # and allow for more flexible testing / mocking.
@@ -498,18 +499,6 @@ class CoreServiceManager:
         await self.stop_health_monitoring()
         for service_name in list(self._services.keys()):
             await self.unload_service(service_name, force=True)
-
-
-# 全局核心服务管理器实例
-_global_core_service_manager: Optional[CoreServiceManager] = None
-
-
-def get_core_service_manager() -> CoreServiceManager:
-    """获取全局核心服务管理器实例"""
-    global _global_core_service_manager
-    if _global_core_service_manager is None:
-        _global_core_service_manager = CoreServiceManager()
-    return _global_core_service_manager
 
 
 # 示例健康检查函数

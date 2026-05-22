@@ -12,6 +12,8 @@ import time
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 
+from core.interfaces.service_registry import get_registry
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,16 +30,8 @@ class TickleReflexSystem:
     - sustained 模式（> 5s）自動切換到安全回應
     """
 
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
 
@@ -346,6 +340,13 @@ class TickleReflexSystem:
         return dict(self._intensity_thresholds)
 
 
+_reflex_instance: Optional[TickleReflexSystem] = None
+
+
 def get_reflex_system() -> TickleReflexSystem:
     """單例工廠"""
-    return TickleReflexSystem()
+    global _reflex_instance
+    if _reflex_instance is None:
+        _reflex_instance = TickleReflexSystem()
+        get_registry().register("tickle_reflex_system", _reflex_instance)
+    return _reflex_instance
