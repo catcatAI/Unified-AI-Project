@@ -67,19 +67,19 @@ except Exception:
     # broad exception acceptable: env file may not exist, non-critical setup
     pass
 
+# 確保 src 目錄在 Python 路徑中
+# 必須添加 src 目錄本身，這樣 Python 才能找到 src.core 等模塊
+_backend_dir = Path(__file__).parent.parent.parent  # /apps/backend
+_src_path = str(_backend_dir / "src")  # /apps/backend/src
+if _src_path not in sys.path:
+    sys.path.insert(0, _src_path)
+
+# [Phase 8 Activation] 啟動統一日誌系統
+from core.logging.setup import setup_logging
+setup_logging(level=logging.INFO, log_file="angela_ai.log")
 logger = logging.getLogger(__name__)
 
-# ========== 修复：日志目录自动创建 ==========
-try:
-    log_dir = Path("logs")
-    if not log_dir.exists():
-        log_dir.mkdir(parents=True, exist_ok=True)
-        print(f"Created logs directory at: {log_dir.absolute()}")
-except Exception as e:
-    # broad exception acceptable: log directory creation is non-critical, fallback to default
-    print(f"Warning: Failed to create logs directory: {e}")
-
-# 现在可以安全地记录环境变量加载状态
+# 現在可以安全地記錄環境變量加載狀態
 try:
     from dotenv import load_dotenv
 
@@ -379,6 +379,23 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"[Lifecycle] Heartbeat start failed: {e}")
 
+    # [Phase 8 Activation] 啟動定期安全審計任務
+    async def run_security_audit_task():
+        """定期運行安全審計並更新全域狀態"""
+        while True:
+            try:
+                from core.security.security_audit import get_security_audit
+                from core.system.state_store import state_store
+                audit = get_security_audit()
+                results = audit.scan_directory()
+                logger.info(f"🛡️ [Security] Periodic audit complete. Score: {results.get('score', 0)}")
+                state_store.update_state("hardware", {"security_score": results.get("score", 0)})
+            except Exception as e:
+                logger.error(f"🛡️ [Security] Audit task failed: {e}")
+            await asyncio.sleep(3600) # 每小時執行一次
+
+    asyncio.create_task(run_security_audit_task(), name="Security-Audit-Task")
+
     logger.info("[Lifecycle] Server startup complete")
     yield
 
@@ -544,6 +561,16 @@ def _initialize_all_services():
     pet.set_biological_integrator(digital_life.biological_integrator)
     pet.set_economy_manager(economy_manager)
     economy.set_economy_manager(economy_manager)
+
+    # [Phase 8 Activation] 啟動管理與安全資產
+    try:
+        from services.hot_reload_service import get_hot_reload_service
+        from core.security.security_audit import get_security_audit
+        hot_reload = get_hot_reload_service()
+        sec_audit = get_security_audit()
+        logger.info("[Lifecycle] HotReloadService and SecurityAudit activated and ready.")
+    except Exception as e:
+        logger.warning(f"[Lifecycle] Failed to activate management assets: {e}")
 
     # ========== WebSocket hooks for real-time digital life ==========
 

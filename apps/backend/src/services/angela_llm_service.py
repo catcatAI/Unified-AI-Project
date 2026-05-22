@@ -1722,16 +1722,42 @@ class AngelaLLMService:
             # 建構提示詞
             messages = self._construct_angela_prompt(user_message, context)
 
-            # 調用 LLM（動態超時）
-            response = await asyncio.wait_for(
-                self.active_backend.generate(
+            # [Phase 8 Activation] 使用 WaitingScheduler 調度 LLM 調用，防止阻塞主事件循環
+            try:
+                from core.waiting_scheduler import get_waiting_scheduler
+                scheduler = get_waiting_scheduler()
+                
+                # 提交生成任務
+                coro = self.active_backend.generate(
                     prompt=messages[-1]["content"],
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                ),
-                timeout=timeout_seconds,
-            )
+                )
+                
+                # 透過排程器執行（內建超時管理）
+                response = await scheduler.submit(
+                    coro, 
+                    timeout=timeout_seconds, 
+                    label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
+                )
+                
+                if response is None:
+                    # 排程器回傳 None 通常代表超時或內部失敗
+                    raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")
+
+            except (ImportError, AttributeError) as e:
+                logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}")
+                # 降級：直接調用
+                response = await asyncio.wait_for(
+                    self.active_backend.generate(
+                        prompt=messages[-1]["content"],
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    ),
+                    timeout=timeout_seconds,
+                )
 
             # [auto] record result
             if self.llm_mode == "auto" and self.auto_selector is not None:

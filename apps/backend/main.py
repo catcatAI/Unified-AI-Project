@@ -29,13 +29,11 @@ from fastapi.middleware.cors import CORSMiddleware
 # 添加项目路径
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("backend.log"), logging.StreamHandler()],
-)
+# [Phase 8 Activation] 啟動統一日誌系統
+from core.logging.setup import setup_logging
+setup_logging(level=logging.INFO, log_file="backend_main.log")
 logger = logging.getLogger(__name__)
 
 # 初始化密鑰管理器與中間件

@@ -136,6 +136,20 @@ class ChatService:
         # 4. 調用 LLM 生成智慧回應
         response = await self._call_llm(sanitized_message, user_name, bio_state, intent_analysis)
 
+        # [Phase 8 Activation] 啟動語言學習循環 (Linguistic Evolution)
+        try:
+            from ai.response.learning_loop import get_learning_loop
+            loop = get_learning_loop()
+            
+            # 嘗試綁定詞彙庫，實現學習 -> 合成的閉環
+            blender = self._get_neuro_blender()
+            if blender and hasattr(blender, "vocabulary"):
+                loop.bind_vocabulary(blender.vocabulary)
+            
+            loop.process_llm_response(response, intent_analysis)
+        except Exception as e:
+            logger.warning(f"Linguistic learning loop failed: {e}")
+
         # 5. 更新對話歷史
         self._conversation_history.append({"role": "user", "content": user_message})
         self._conversation_history.append({"role": "assistant", "content": response})

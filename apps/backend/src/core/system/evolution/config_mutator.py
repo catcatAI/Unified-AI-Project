@@ -128,6 +128,7 @@ class ConfigMutator:
             "behavior": self.config_dir / "standard/behavior/behavior.evolved.yaml",
             "matrix": self.config_dir / "standard/matrix/matrix.evolved.yaml",
             "prompts": self.config_dir / "standard/narrative/prompts.evolved.yaml",
+            "demo": self.config_dir / "standard/behavior/demo.evolved.yaml",
             
             # M-Tier (MOD)
             "mods": self.config_dir / "mods/active_mods.evolved.yaml"

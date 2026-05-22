@@ -251,6 +251,15 @@ class BiologicalIntegrator:
         # Set up cross-system callbacks
         self._setup_cross_system_callbacks()
 
+        # [Phase 8 Activation] 啟動藝術學習工作流 (L1 -> L4 橋接)
+        try:
+            from .art_learning_workflow import get_art_workflow
+            art_wf = get_art_workflow(bio=self)
+            if art_wf:
+                logger.info("🎨 [Bio] ArtLearningWorkflow activated and linked.")
+        except Exception as e:
+            logger.warning(f"🎨 [Bio] Failed to activate ArtLearningWorkflow: {e}")
+
         # [2030 Standard] Start integration loop with safe tracking
         self._integration_task = safe_create_task(
             self._integration_loop(), name="Bio-Integration-Loop"

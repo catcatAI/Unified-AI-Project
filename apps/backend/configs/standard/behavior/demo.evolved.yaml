@@ -1,0 +1,13 @@
+# Angela AI Demo Credentials - Evolved Layer
+# This file contains the actual demo trigger strings.
+
+demo_credentials:
+  atlassian:
+    api_token: "DEMO_ATLASSIAN_TOKEN_2025"
+    cloud_id: "demo-cloud-12345"
+    user_email: "demo@catcatai.dev"
+    domain: "catcatai-demo"
+  openai:
+    api_key: "DEMO_OPENAI_KEY_2025"
+  gemini:
+    api_key: "DEMO_GEMINI_KEY_2025"
