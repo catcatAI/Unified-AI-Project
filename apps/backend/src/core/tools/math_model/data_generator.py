@@ -38,7 +38,7 @@ def generate_problem(max_digits: int = 3, operations: list = None) -> tuple:
     problem_str = f"{num1} {operation} {num2}"
 
     try:
-        answer = eval(problem_str)
+        answer = eval(problem_str, {"__builtins__": {}}, {})
         if operation == "/":
             answer = round(answer, 4)
         else:

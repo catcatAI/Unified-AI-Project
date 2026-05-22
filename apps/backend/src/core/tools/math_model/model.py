@@ -76,8 +76,10 @@ class MathModel:
 
         # 简化实现
         try:
-            predicted_result = str(eval(expression))
-        except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed expressions
+            import re
+            safe = re.sub(r"[^0-9.\+\-\*\/\(\)\%\ ]", "", expression)
+            predicted_result = str(eval(safe, {"__builtins__": {}}, {}))
+        except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             predicted_result = "Error"
 

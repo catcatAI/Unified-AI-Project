@@ -16,7 +16,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-print("common_types.py is being imported and defining types...")
+
 
 
 class ServiceStatus(Enum):
@@ -192,4 +192,4 @@ class HAMDataPackageInternal(TypedDict):
     confidence_score: float
 
 
-print("common_types.py finished definitions.")
+

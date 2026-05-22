@@ -706,7 +706,7 @@ class MathRippleEngine:
         if not clean:
             return 0.0
         try:
-            return float(eval(clean))  # nosec: already sanitized
+            return float(eval(clean, {"__builtins__": {}}, {}))
         except Exception:
             return 0.0
 

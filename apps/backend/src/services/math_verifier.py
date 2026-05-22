@@ -299,7 +299,7 @@ class SpatialEngine:
             return 0.0
         allowed = set(allowed_chars)
         if all(c in allowed for c in clean):
-            result = eval(clean)  # nosec: clean input only
+            result = eval(clean, {"__builtins__": {}}, {})
             return float(result)
         return 0.0
 

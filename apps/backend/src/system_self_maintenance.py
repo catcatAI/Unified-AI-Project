@@ -31,7 +31,8 @@ class RealSystemMaintenance:
         return True
 
     def _verify_bridge_script(self) -> bool:
-        bridge_path = os.path.abspath("apps/gemini-os-bridge/bridge.py")
+        from pathlib import Path
+        bridge_path = str(Path(__file__).parent.parent.parent.parent.parent / "apps/gemini-os-bridge/bridge.py")
         return os.path.exists(bridge_path)
 
     async def auto_repair(self):

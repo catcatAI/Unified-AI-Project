@@ -6,8 +6,7 @@ Transformers库兼容性模块
 import os
 import logging
 
-# 设置环境变量以解决Keras兼容性问题
-os.environ["TF_USE_LEGACY_KERAS"] = "1"
+
 
 KERAS_AVAILABLE = False
 

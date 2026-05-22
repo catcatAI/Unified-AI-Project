@@ -1,6 +1,7 @@
 # Angela Matrix: Genesis Manager - α=β=0.9, γ=0.5, δ=0.4 (V×L×P×M)
 import uuid
 import sys
+import subprocess
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,9 +21,6 @@ except ImportError:
         "Warning: secretsharing module not available. GenesisManager will not work properly."
     )
 
-# from tests.run_test_subprocess import
-# from system_test import
-import subprocess
 from typing import List, Tuple, Optional
 
 
