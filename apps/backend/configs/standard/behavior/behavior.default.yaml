@@ -3,9 +3,35 @@
 
 biological_thresholds:
   arousal_stress_trigger: 70.0
-  arousal_sweat_trigger: 0.6 # Normalized (0-1)
-  arousal_irritability_trigger: 0.7 # Normalized (0-1)
+  arousal_sweat_trigger: 0.6
+  arousal_irritability_trigger: 0.7
   optimal_arousal: 0.65
+  arousal_clamp_min: 5
+  arousal_clamp_max: 95
+  cortisol_trigger: 60
+  sympathetic_activation: 70
+  excitement_high_arousal: 0.4
+  decision_speed_high_arousal: 0.5
+  energy_tone_low: 0.4
+  energy_tone_high: 0.7
+  stress_perturbation: 0.7
+  arousal_modality_off: 20
+  energy_rest_intent: 0.3
+  stress_render_blush: 0.4
+  stress_render_tear: 0.7
+  composer_energy_fragment_low: 0.2
+  composer_energy_fragment_medium: 0.4
+  composer_energy_greeting: 0.3
+  emotion_classification_stress: 0.7
+  value_stress_threshold: 0.7
+  arousal_mouth_open: 0.5
+  arousal_blush: 0.6
+  pleasure_blush: 0.5
+  arousal_fear_tremor: 0.6
+  excitement_high_multiplier: 0.8
+  excitement_low_multiplier: 0.3
+  decision_speed_high_multiplier: 0.8
+  decision_speed_low_multiplier: 0.4
 
 visual_presets:
   low:

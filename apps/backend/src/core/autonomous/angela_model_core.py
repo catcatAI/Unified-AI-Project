@@ -67,7 +67,10 @@ class AngelaModelCore:
                 
                 # 2. 根據生理狀態影響空間矩陣 (例如：疲勞導致坐標漂移)
                 stress = bio_state.get("stress_level", 0.0)
-                if stress > 0.7:
+                from core.system.config.tiered_loader import get_config
+                _beh_conf = get_config("standard/behavior/behavior")
+                _stress_perturb = _beh_conf.get("biological_thresholds", {}).get("stress_perturbation", 0.7)
+                if stress > _stress_perturb:
                     # 壓力過大時，空間矩陣會產生細微的「不穩定位移」
                     self.spatial.apply_external_force("stress_perturbation", (0.01, 0.01, 0.01))
                 

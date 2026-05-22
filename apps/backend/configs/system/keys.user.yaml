@@ -1,0 +1,4 @@
+# User configuration overrides
+# Add user-specific overrides below to customize Angela's behavior
+# This file takes priority over *.default.yaml but below *.evolved.yaml
+{}

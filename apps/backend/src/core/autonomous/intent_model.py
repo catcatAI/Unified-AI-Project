@@ -101,7 +101,10 @@ class IntentManager:
         # 1. 生理穩態 (Alpha Drive) - 能量低落時產生休息意圖
         alpha_stats = state_summary.get("alpha", {})
         energy = alpha_stats.get("energy", 1.0)
-        if energy < 0.3:
+        from core.system.config.tiered_loader import get_config
+        _beh_conf = get_config("standard/behavior/behavior")
+        _energy_rest = _beh_conf.get("biological_thresholds", {}).get("energy_rest_intent", 0.3)
+        if energy < _energy_rest:
             self.add_intent(SelfIntent(
                 id=f"rest_{datetime.now().timestamp()}",
                 category=IntentCategory.HOMEOSTASIS,

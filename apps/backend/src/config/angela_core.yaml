@@ -1,10 +1,20 @@
 # =============================================================================
-# ANGELA v6.4 - Core Authority Configuration
+# ANGELA v6.5 - Core Authority Configuration (DEPRECATED)
 # =============================================================================
+# DEPRECATION NOTICE: This file is being phased out in favor of the
+# Tiered Configuration System (configs/*.default.yaml + .user.yaml + .evolved.yaml).
+# New thresholds should be added to configs/standard/behavior/behavior.default.yaml
+# under the 'biological_thresholds' or 'state_constants' sections.
+#
+# Remaining sections that have NOT been migrated:
+# - chat_flow, middleware, session_manager, intents, services,
+#   complexity, state_to_llm, fallback_patterns, template_matching,
+#   neuro_fragments, user_profile, spatial_math, math_verifier,
+#   document_builder, llm, auto_mode
+#
 # Authority 配置（人寫，Angela 不可修改核心邏輯）
-# 用途：意圖關鍵字、閾值、路由規則、LLM 配置、安全白名單
-# 版本: 6.4
-# 更新: 2026-05-19
+# 版本: 6.5
+# 更新: 2026-05-22
 # =============================================================================
 
 # ── 聊天流與請求處理 ──────────────────────────────────────────────────────

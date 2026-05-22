@@ -1531,9 +1531,12 @@ Returns:
         avg_calm = self.gamma.values.get("calm", 0.5)
 
         guidance = []
-        if avg_energy < 0.4:
+        from core.system.config.tiered_loader import get_config
+        _beh_conf = get_config("standard/behavior/behavior")
+        _bio_thresh = _beh_conf.get("biological_thresholds", {})
+        if avg_energy < _bio_thresh.get("energy_tone_low", 0.4):
             guidance.append("能量偏低，選擇溫柔安撫的語氣")
-        elif avg_energy > 0.7:
+        elif avg_energy > _bio_thresh.get("energy_tone_high", 0.7):
             guidance.append("能量充沛，選擇活潑開朗的語氣")
         if avg_happiness < 0.4:
             guidance.append("用戶情緒偏負，選擇同理支持的角色")

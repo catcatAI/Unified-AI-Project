@@ -421,11 +421,14 @@ class EmotionalBlendingSystem:
         facial.eyebrow_raise = emotion.arousal * emotion.intensity * 0.5
 
         # High arousal + positive pleasure = excitement = mouth open slightly
-        if emotion.arousal > 0.5 and emotion.pleasure > 0:
+        from core.system.config.tiered_loader import get_config
+        _beh_conf = get_config("standard/behavior/behavior")
+        _bio_thresh = _beh_conf.get("biological_thresholds", {})
+        if emotion.arousal > _bio_thresh.get("arousal_mouth_open", 0.5) and emotion.pleasure > 0:
             facial.mouth_open = (emotion.arousal + emotion.pleasure) / 2 * emotion.intensity * 0.5
 
         # Blush for high arousal situations (embarrassment, excitement)
-        if emotion.arousal > 0.6 and abs(emotion.pleasure) > 0.5:
+        if emotion.arousal > _bio_thresh.get("arousal_blush", 0.6) and abs(emotion.pleasure) > _bio_thresh.get("pleasure_blush", 0.5):
             facial.blush = emotion.arousal * emotion.intensity * 0.6
 
         # Vocal expression
@@ -439,7 +442,7 @@ class EmotionalBlendingSystem:
         vocal.warmth = emotion.pleasure * emotion.intensity
 
         # High arousal + negative pleasure = fear/anger = tremor
-        if emotion.arousal > 0.6 and emotion.pleasure < 0:
+        if emotion.arousal > _bio_thresh.get("arousal_fear_tremor", 0.6) and emotion.pleasure < 0:
             vocal.tremor = emotion.arousal * abs(emotion.pleasure) * emotion.intensity
 
         # Volume based on arousal and dominance

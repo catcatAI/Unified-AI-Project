@@ -363,7 +363,7 @@ class AutonomicNervousSystem:
         emotional = EmotionalEffects(
             anxiety=max(0, (arousal - 0.5) * 2.0),  # Increases above 50%
             calmness=max(0, 1.0 - arousal * 1.2),  # Decreases with arousal
-            excitement=arousal * 0.8 if arousal > 0.4 else arousal * 0.3,
+            excitement=arousal * bio_thresh.get("excitement_high_multiplier", 0.8) if arousal > bio_thresh.get("excitement_high_arousal", 0.4) else arousal * bio_thresh.get("excitement_low_multiplier", 0.3),
             irritability=max(0, (arousal - irritability_thresh) * 3.0),
             confidence=0.5 + arousal * 0.3 if arousal < irritability_thresh else 0.8 - (arousal - irritability_thresh),
         )
@@ -376,7 +376,7 @@ class AutonomicNervousSystem:
             focus=max(0, 1.0 - arousal_distance * 2.0),
             reaction_time=1.0 - arousal * 0.4,  # Faster at higher arousal
             memory_consolidation=1.0 - arousal * 0.3,  # Better at lower arousal
-            decision_speed=arousal * 0.8 if arousal > 0.5 else arousal * 0.4,
+            decision_speed=arousal * bio_thresh.get("decision_speed_high_multiplier", 0.8) if arousal > bio_thresh.get("decision_speed_high_arousal", 0.5) else arousal * bio_thresh.get("decision_speed_low_multiplier", 0.4),
             creativity=max(0, 1.0 - arousal * 1.2),  # Better at lower arousal
         )
 

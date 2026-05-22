@@ -435,7 +435,11 @@ class BiologicalIntegrator:
             logger.error(f"Failed to update endocrine metabolism: {e}")
 
         # 3. Safety Fuse
-        if current_arousal > 95 or current_arousal < 5:
+        from core.system.config.tiered_loader import get_config
+        beh_conf = get_config("standard/behavior/behavior")
+        arousal_clamp_max = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_max", 95)
+        arousal_clamp_min = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_min", 5)
+        if current_arousal > arousal_clamp_max or current_arousal < arousal_clamp_min:
             self.nervous_system.set_arousal_directly(target_arousal)
 
     async def _synchronize_states(self):
@@ -667,8 +671,11 @@ class BiologicalIntegrator:
                     results["changes"]["adrenaline"] = f"+{adrenaline_increase:.1f}"
 
                     # Trigger cortisol for sustained arousal
-                    if arousal > 60:
-                        cortisol_increase = ((arousal - 60) / 40.0) * intensity * 15.0
+                    from core.system.config.tiered_loader import get_config as _get_bio3
+                    _beh3 = _get_bio3("standard/behavior/behavior")
+                    _cort_trigger = _beh3.get("biological_thresholds", {}).get("cortisol_trigger", 60)
+                    if arousal > _cort_trigger:
+                        cortisol_increase = ((arousal - _cort_trigger) / 40.0) * intensity * 15.0
                         await target.adjust_hormone(HormoneType.CORTISOL, cortisol_increase)
                         results["changes"]["cortisol"] = f"+{cortisol_increase:.1f}"
 
@@ -729,11 +736,12 @@ class BiologicalIntegrator:
                             results["changes"]["arousal"] = f"{new_arousal - current_arousal:+.1f}"
 
                             # High arousal triggers sympathetic activation
-                            if new_arousal > 70 and hasattr(target, "apply_stimulus"):
+                            _symp_act = _beh3.get("biological_thresholds", {}).get("sympathetic_activation", 70)
+                            if new_arousal > _symp_act and hasattr(target, "apply_stimulus"):
                                 await target.apply_stimulus(
                                     "emotional_arousal",
                                     NerveType.SYMPATHETIC,
-                                    (new_arousal - 70) / 30,
+                                    (new_arousal - _symp_act) / 30,
                                     5.0,
                                 )
 

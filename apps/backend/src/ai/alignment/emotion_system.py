@@ -256,7 +256,10 @@ class EmotionSystem:
         stress = features.get("stress_level", 0.0)
         
         if sentiment > 0.5: return EmotionType.JOY, sentiment
-        if stress > 0.7: return EmotionType.FEAR, stress
+        from core.system.config.tiered_loader import get_config
+        _beh_conf = get_config("standard/behavior/behavior")
+        _stress_class = _beh_conf.get("biological_thresholds", {}).get("emotion_classification_stress", 0.7)
+        if stress > _stress_class: return EmotionType.FEAR, stress
         if sentiment < -0.5: return EmotionType.SADNESS, abs(sentiment)
         return EmotionType.TRUST, 0.5
 

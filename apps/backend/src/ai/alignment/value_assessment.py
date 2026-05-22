@@ -39,7 +39,10 @@ class ValueAssessmentSystem:
         stress = bio.get("stress_level", 0.0)
         
         # 邏輯: 壓力過高時，'protection' 權重提升，'curiosity' 權重下降
-        if stress > 0.7:
+        from core.system.config.tiered_loader import get_config
+        _beh_conf = get_config("standard/behavior/behavior")
+        _stress_val = _beh_conf.get("biological_thresholds", {}).get("value_stress_threshold", 0.7)
+        if stress > _stress_val:
             active_weights["protection"] += 0.1
             active_weights["curiosity"] -= 0.2
             

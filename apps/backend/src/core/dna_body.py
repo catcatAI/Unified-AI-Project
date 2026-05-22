@@ -241,11 +241,15 @@ class AngelaDNA:
 
     def _apply_secretions(self, render_matrix, bio_state):
         stress = bio_state.get("stress", 0.0) if bio_state else 0.0
-        if stress > 0.4:
-            alpha = min(0.6, (stress - 0.4) * 1.0)
+        from core.system.config.tiered_loader import get_config
+        _beh_conf = get_config("standard/behavior/behavior")
+        _bio_thresh = _beh_conf.get("biological_thresholds", {})
+        _stress_blush = _bio_thresh.get("stress_render_blush", 0.4)
+        if stress > _stress_blush:
+            alpha = min(0.6, (stress - _stress_blush) * 1.0)
             for y, x in [(110, 58), (110, 75)]:
                 render_matrix[y:y+3, x:x+6, :3] = (render_matrix[y:y+3, x:x+6, :3] * (1-alpha) + np.array([255, 150, 150]) * alpha).astype(np.uint8)
-        if stress > 0.7:
+        if stress > _bio_thresh.get("stress_render_tear", 0.7):
             drop_y, drop_x = 75 + int(datetime.now().microsecond % 20), 60 + int(datetime.now().second % 10)
             render_matrix[drop_y:drop_y+2, drop_x] = [200, 230, 255, 255]
 

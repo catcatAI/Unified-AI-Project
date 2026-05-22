@@ -659,9 +659,12 @@ class NeuroBlender:
         else:
             alpha_energy = getattr(alpha_state, "energy", 0.5)
 
-        if alpha_energy < 0.2:
+        from core.system.config.tiered_loader import get_config
+        _beh_conf = get_config("standard/behavior/behavior")
+        _bio_thresh = _beh_conf.get("biological_thresholds", {})
+        if alpha_energy < _bio_thresh.get("composer_energy_fragment_low", 0.2):
             top_k_total = 2
-        elif alpha_energy < 0.4:
+        elif alpha_energy < _bio_thresh.get("composer_energy_fragment_medium", 0.4):
             top_k_total = 4
         else:
             top_k_total = 6
@@ -681,7 +684,7 @@ class NeuroBlender:
                 return True
             return False
 
-        if alpha_energy < 0.3:
+        if alpha_energy < _bio_thresh.get("composer_energy_greeting", 0.3):
             # Low energy: skip greeting entirely, prefer statement + one more
             for role in ("statement", "closing_question", "transition"):
                 items = by_role.get(role, [])
