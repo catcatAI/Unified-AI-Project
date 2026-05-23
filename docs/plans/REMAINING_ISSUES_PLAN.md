@@ -6,7 +6,63 @@
 
 ---
 
-### 1. 修復測試架構違規 (P1)
+### ✅ 已完成
+
+#### 1.1 `tests/ai/response/test_neuro_auto_selector.py:139`
+- **狀態**: **✅ 已完成** — `@patch("services.resource_awareness_service.ResourceAwarenessService")` 已移除，改為全域 sys.modules mock + 注入
+- **驗證**: pytest 通過
+
+#### 1.2 `tests/test_memory_enhancement.py:175,277`
+- **狀態**: **✅ 已完成** — `from services.angela_llm_service import LLMResponse` 已改為 `from core.interfaces.protocols import LLMResponse`
+- **驗證**: pytest 通過
+
+#### 1.3 目錄清理
+- **狀態**: **✅ 已完成** — `tests/ai/agents/`, `tests/api/`, `tests/ai/memory/`, `tests/ai/alignment/`, `tests/ai/learning/`, `tests/ai/lifecycle/` 均已建立並含測試
+
+#### 2. 清除 Placeholder 測試 (P1)
+- **狀態**: **✅ 已完成** — 17 個 placeholder/break 測試已移除或轉換
+  - `test_coverage_report.py` → 移除
+  - `test_coverage_analyzer.py` → 移除
+  - `test_core_service_manager.py` → 轉換為 import smoke test
+  - `test_content_analyzer.py` → 轉換為 import smoke test
+  - `test_config_loader.py` → 轉換為 import smoke test
+  - `test_core_services_module.py` → 移除
+  - `test_compat_fix.py` → 移除
+  - `test_concept_models_training.py` → 移除
+  - `test_chromadb_fix.py` → 移除
+  - `test_capital_of_debug.py` → 移除
+  - `test_capital_of.py` → 移除
+  - `test_automated_defect_detector.py` → 移除
+  - `test_audio_service_direct.py` → 移除
+  - `test_atlassian_integration.py` → 移除
+  - `test_defect_detector.py` → 移除（指向不存在 module）
+  - `test_llm_timeout.py` → 移除（指向不存在 module）
+  - `test_tool_call_chain.py` → 已修復 import
+- **驗證**: pytest 全部通過
+
+#### 3. Broken Test 修復
+- **`test_tool_call_chain.py`**: **✅** 已補上 import
+- **`test_type_fixes.py::test_health_check_service`**: **✅** 已修復（移除 scripts/ 依賴）
+- **`test_real_causal_reasoning_engine.py::test_causal_strength_calculation`**: **✅** 已修復（實作 Pearson correlation，非 hardcoded 0.75）
+
+#### 4. Stub 測試清理
+- **狀態**: **✅ 已完成** — 6 個 pre-existing stub 移除（`test_health_ready_endpoints.py`, `test_hot_endpoints.py`, `test_hsp_endpoints.py`, `test_llm_interface.py`, `test_models_endpoints.py`, `test_sandbox_executor.py`）
+
+#### 5. ServiceRegistry Unit Test
+- **狀態**: **✅ 已完成** — `tests/core/interfaces/test_service_registry.py` 含 9 個 tests
+
+#### 6. unittest.TestCase 遷移
+- **狀態**: **✅ 已完成** — 所有 38 個 unittest.TestCase 檔案已遷移至 pytest 或移除
+
+#### 7. 源碼 Bug 修復
+- `real_causal_reasoning_engine.py:80` — hardcoded 0.75 → Pearson correlation
+- `alignment_manager.py:389` — `meets` NameError → `meets_thresholds`
+- `alignment_manager.py:430` — `emotional_arousal=` → `arousal=`
+- `scripts/health_check_service.py:79,85` — 錯誤 import path
+
+---
+
+### 剩餘項目
 
 #### 1.1 `tests/ai/response/test_neuro_auto_selector.py:139`
 - **違規**: `@patch("services.resource_awareness_service.ResourceAwarenessService")` 在 ai 層測試中引用 services

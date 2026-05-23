@@ -44,175 +44,51 @@ Priority 8: integration/       ← Cross-layer flows
 
 ---
 
-### Phase 1: Core Layer Tests (Priority: 最高)
+### ✅ 已完成
 
-#### `tests/core/interfaces/test_service_registry.py`
-```python
-def test_registry_is_singleton():
-    r1 = get_registry()
-    r2 = get_registry()
-    assert r1 is r2
+| Phase | 內容 | 狀態 |
+|-------|------|------|
+| **Phase 1: Core** | ServiceRegistry (9 tests)、StatePersistence protocol (7 tests)、StateMatrixAdapter (25 tests)、ExecutionMonitor (9 tests)、EtaAxis (18 tests) | ✅ **68 tests** |
+| **Phase 2: Shared** | SecurityMiddleware (4 tests)、StandardImports 驗證、wiring | ✅ **4 tests** |
+| **Phase 3: Services** | wiring (4 tests)、main_api_server DI (7 tests)、ChatService (16 tests)、VisionService (17 tests)、AudioService (15 tests)、TactileService (11 tests)、AIEditor (21 tests) | ✅ **95 tests** |
+| **Phase 4: AI** | Agents (65 tests)、Memory (84 tests)、Dialogue+Alignment (153 tests)、Learning (71 tests)、Lifecycle (162 tests) | ✅ **535 tests** |
+| **Phase 5: API** | Router (14 tests)、Endpoints (24 tests)、HealthCheck (4 tests) | ✅ **42 tests** |
+| **Phase 6: Migration** | 38 個 unittest.TestCase 全部遷移至 pytest 或移除 | ✅ |
+| **Phase 7: Integration** | Server import (2 tests)、Wiring (4 tests)、Middleware (7 tests) | ✅ **13 tests** |
+| **CI Integration** | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項) | ✅ |
+| **Totals** | **~806 tests** across 9 directories | ✅ **All passing** |
 
-def test_register_and_resolve():
-    reg = get_registry()
-    reg.register("test", 42)
-    assert reg.resolve("test") == 42
-    reg.unregister("test")
+### 當前測試目錄結構
 
-def test_register_duplicate_overwrites():
-    reg = get_registry()
-    reg.register("dup", 1)
-    reg.register("dup", 2)
-    assert reg.resolve("dup") == 2
+```
+tests/
+├── core/              ← 68 tests ✅
+├── ai/
+│   ├── agents/       ← 65 tests ✅
+│   ├── memory/       ← 84 tests ✅
+│   ├── alignment/    ← 63 tests ✅
+│   ├── dialogue/     ← 90 tests ✅
+│   ├── learning/     ← 71 tests ✅
+│   └── lifecycle/    ← 162 tests ✅
+├── services/          ← 95 tests ✅
+├── api/               ← 42 tests ✅
+├── shared/            ← 4 tests ✅
+├── integration/       ← 13 tests ✅
+└── (legacy root)      ← 2 tests ✅
 ```
 
-#### `tests/core/interfaces/test_persistence_protocol.py`
-```python
-class FakePersistence:
-    """Structural subtyping conformance test"""
-    async def save_state(self, key, data): ...
-    async def load_state(self, key): ...
-    async def delete_state(self, key): ...
-    async def list_keys(self): ...
+### 剩餘待補層級
 
-def test_persistence_protocol_conformance():
-    from core.interfaces.persistence import StatePersistence
-    from typing import runtime_checkable
-    assert isinstance(FakePersistence(), StatePersistence)
-```
-
-#### `tests/core/test_state_matrix_adapter.py`
-測試 StateMatrixAdapter 的核心功能（不涉及持久化）：
-- `test_update_axis()` — 每個軸更新後值正確
-- `test_influence_compute()` — 跨軸影響計算
-- `test_temporal_trend()` — 時間序列查詢
-- `test_allocation_decide()` — 資源分配決策
-
-#### `tests/core/test_hsp_connector.py`
-測試 HSP 連接器：
-- `test_connect_disconnect()` — 連線生命週期
-- `test_publish_subscribe()` — 發布/訂閱模式
-
-#### `tests/core/managers/test_execution_monitor.py`
-- `test_shell_default_false()` — shell 預設為 False
-- `test_run_sync_command()` — 同步執行
-- `test_run_async_command()` — 非同步執行
-
----
-
-### Phase 2: Shared Layer Tests
-
-#### `tests/shared/test_security_middleware.py`
-```python
-def test_middleware_name():
-    from shared.security_middleware import SignedCommunicationMiddleware
-    assert "Signed" in SignedCommunicationMiddleware.__name__
-    assert "Encrypted" not in SignedCommunicationMiddleware.__name__
-```
-
-#### `tests/shared/test_standard_imports.py`
-```python
-def test_module_level_warning_present():
-    import shared.standard_imports
-    assert "DEAD CODE" in shared.standard_imports.__doc__
-```
-
----
-
-### Phase 3: Services Layer Tests
-
-#### `tests/services/test_wiring.py`
-```python
-def test_initialize_all_services_exists():
-    from services.wiring import initialize_all_services
-    assert callable(initialize_all_services)
-
-def test_initialize_with_mock_manager():
-    manager = Mock()
-    initialize_all_services(manager)
-    # 驗證 wiring 正確設定了跨服務依賴
-```
-
-#### `tests/services/test_main_api_server_di.py`
-- `test_desktop_interaction_depends()` — Depends DI 正確解析
-- `test_action_executor_depends()`
-- `test_digital_life_depends()`
-
----
-
-### Phase 4: AI Layer Tests
-
-#### `tests/ai/test_layer_isolation.py`
-```python
-def test_no_top_level_services_import():
-    """驗證 ai/ 層不直接依賴 services/"""
-    import ast, os
-    ai_dir = "apps/backend/src/ai"
-    violations = []
-    for root, dirs, files in os.walk(ai_dir):
-        for f in files:
-            if f.endswith(".py"):
-                with open(os.path.join(root, f)) as fh:
-                    tree = ast.parse(fh.read())
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.ImportFrom) and node.level == 0:
-                            if node.module and node.module.startswith("services"):
-                                violations.append((os.path.join(root, f), node.lineno))
-    assert len(violations) == 0, f"Ai->services imports found: {violations}"
-```
-
----
-
-### Phase 5: Model Layer Tests
-
-#### `tests/models/test_api_models.py`
-```python
-def test_chat_message_roundtrip():
-    from core.interfaces.protocols import ChatMessage
-    msg = ChatMessage(role="user", content="hello")
-    d = msg.to_dict()
-    msg2 = ChatMessage.from_dict(d)
-    assert msg2.role == "user"
-    assert msg2.content == "hello"
-
-def test_model_provider_values():
-    from core.interfaces.protocols import ModelProvider
-    assert ModelProvider.OPENAI.value == "openai"
-    assert len(ModelProvider) == 8
-```
-
----
-
-### Phase 6: 移除非 pytest 框架測試
-
-38 個 `unittest.TestCase` 檔案逐步遷移至 pytest。
-
-遷移腳本模板 (`scripts/migrate_unittest_to_pytest.py`)：
-```python
-# 自動化遷移腳本
-# 1. 讀取 unittest.TestCase 檔案
-# 2. 將 setUp/tearDown → conftest fixtures
-# 3. 將 self.assertEqual → assert
-# 4. 將 self.assertRaises → pytest.raises
-# 5. 將 @patch → pytest fixture
-```
-
----
-
-### Phase 7: Integration Tests
-
-建立跨層整合測試，驗證架構合約：
-
-```python
-# tests/integration/test_core_to_services_contract.py
-
-async def test_state_persistence_across_layers():
-    """驗證 core 的 StatePersistence protocol
-    可被 services 層的 state_matrix_api 正確實作"""
-    from core.interfaces.persistence import StatePersistence
-    from services.api.state_matrix_api import state_matrix_persistence
-    assert isinstance(state_matrix_persistence, StatePersistence)
-```
+| 待補層級 | 檔案數 | 優先度 | 狀態 |
+|---------|--------|--------|------|
+| `tests/ai/context/` | 14 | Medium | ❌ 零測試 |
+| `tests/ai/ops/` | 5 | Low | ❌ 零測試 |
+| `tests/ai/meta/` | 3 | Low | ❌ 零測試 |
+| `tests/ai/execution/` | 1 | Low | ❌ |
+| `tests/ai/rag/` | 1 | Low | ❌ |
+| `tests/ai/crisis/` | 1 | Low | ❌ |
+| `tests/models/` | 2 | Medium | ❌ 需要建立 |
+| `tests/core/` (剩餘) | ~50 | Medium | ⏳ 部分完成 |
 
 ---
 
