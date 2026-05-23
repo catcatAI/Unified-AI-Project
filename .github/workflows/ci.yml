@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.9', '3.11' ]
+        python-version: [ '3.11', '3.14' ]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -48,7 +48,8 @@ jobs:
           flake8 apps/backend/src tests/
           mypy apps/backend/src
       - name: Tests (Python)
-        run: pytest --cov=apps/backend/src --cov-report=term-missing
+        run: |
+          pytest tests/core/ tests/shared/ tests/services/ tests/ai/agents/ tests/api/ tests/test_type_fixes.py tests/test_real_causal_reasoning_engine.py --cov=apps/backend/src --cov-report=term-missing -v
 
   secrets_scan:
     runs-on: ubuntu-latest

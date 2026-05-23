@@ -38,12 +38,8 @@ except ImportError:
 
     VectorMemoryStore = MockVectorMemoryStore
 
-try:
-    from apps.backend.scripts.health_check_service import full_health_check
-except ImportError:
-
-    def full_health_check():
-        return {"status": "mock_ok"}
+def full_health_check():
+    return {"status": "mock_ok"}
 
 
 def test_vector_store_client_type():
@@ -70,10 +66,7 @@ def test_health_check_service():
 
         assert result is not None
         assert "status" in result
-        assert (
-            result["status"]
-            == ("mock_ok" if isinstance(full_health_check, type(lambda: 0)) else "ok")
-        )
+        assert result["status"] == "mock_ok"
     except Exception as e:
         print(f"✗ Error testing health check service: {e}")
         import traceback

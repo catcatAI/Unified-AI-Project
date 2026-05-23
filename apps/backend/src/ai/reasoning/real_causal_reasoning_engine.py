@@ -77,7 +77,22 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
     async def _calculate_real_causal_strength(
         self, cause: str, effect: str, data: Dict[str, Any]
     ) -> float:
-        return 0.75
+        cause_vals = data.get(cause, [])
+        effect_vals = data.get(effect, [])
+        if len(cause_vals) < 2 or len(effect_vals) < 2:
+            return 0.0
+        n = min(len(cause_vals), len(effect_vals))
+        cause_vals = cause_vals[:n]
+        effect_vals = effect_vals[:n]
+        mean_c = sum(cause_vals) / n
+        mean_e = sum(effect_vals) / n
+        num = sum((c - mean_c) * (e - mean_e) for c, e in zip(cause_vals, effect_vals))
+        den_c = sum((c - mean_c) ** 2 for c in cause_vals) ** 0.5
+        den_e = sum((e - mean_e) ** 2 for e in effect_vals) ** 0.5
+        if den_c == 0 or den_e == 0:
+            return 0.0
+        r = num / (den_c * den_e)
+        return max(0.0, min(1.0, (r + 1.0) / 2.0))
 
 
 class RealCausalGraph:

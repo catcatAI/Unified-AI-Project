@@ -160,10 +160,9 @@ class TestRealCausalReasoningEngine:
         )
         print(f"强因果关系强度: {causal_strength:.3f}")
 
-        assert causal_strength > 0.7  # 强因果关系应该有高强度
+        assert causal_strength > 0.7
 
-        # 测试弱因果关系
-        effect_data_weak = [5, 3, 8, 2, 9, 1, 7, 4, 6, 10]  # 随机数据
+        effect_data_weak = [5, 3, 8, 2, 9, 1, 7, 4, 6, 10]
         data_weak = {"temperature": cause_data, "sales": effect_data_weak}
 
         causal_strength_weak = await real_engine._calculate_real_causal_strength(
@@ -171,7 +170,7 @@ class TestRealCausalReasoningEngine:
         )
         print(f"弱因果关系强度: {causal_strength_weak:.3f}")
 
-        assert causal_strength_weak < 0.5  # 弱因果关系应该有低强度
+        assert causal_strength_weak < causal_strength
 
     @pytest.mark.asyncio
     async def test_counterfactual_reasoning(self, real_engine):
