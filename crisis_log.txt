@@ -1,0 +1,2 @@
+[2026-05-23 19:31:05.931350] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
+[2026-05-23 19:32:59.289012] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}

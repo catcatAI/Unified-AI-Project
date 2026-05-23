@@ -56,7 +56,7 @@ Priority 8: integration/       ← Cross-layer flows
 | **Phase 6: Migration** | 38 個 unittest.TestCase 全部遷移至 pytest 或移除 | ✅ |
 | **Phase 7: Integration** | Server import (2 tests)、Wiring (4 tests)、Middleware (7 tests) | ✅ **13 tests** |
 | **CI Integration** | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項) | ✅ |
-| **Totals** | **~806 tests** across 9 directories | ✅ **All passing** |
+| **Totals** | **~1010 tests** across 14 directories | ✅ **All passing** |
 
 ### 當前測試目錄結構
 
@@ -69,11 +69,17 @@ tests/
 │   ├── alignment/    ← 63 tests ✅
 │   ├── dialogue/     ← 90 tests ✅
 │   ├── learning/     ← 71 tests ✅
-│   └── lifecycle/    ← 162 tests ✅
+│   ├── lifecycle/    ← 162 tests ✅
+│   ├── context/      ← 104 tests ✅
+│   ├── execution/    ← 24 tests ✅
+│   ├── ops/          ← 14 tests ✅
+│   ├── rag/          ← 8 tests ✅
+│   └── crisis/       ← 19 tests ✅
 ├── services/          ← 95 tests ✅
 ├── api/               ← 42 tests ✅
 ├── shared/            ← 4 tests ✅
 ├── integration/       ← 13 tests ✅
+├── models/            ← 35 tests ✅
 └── (legacy root)      ← 2 tests ✅
 ```
 
@@ -81,13 +87,7 @@ tests/
 
 | 待補層級 | 檔案數 | 優先度 | 狀態 |
 |---------|--------|--------|------|
-| `tests/ai/context/` | 14 | Medium | ❌ 零測試 |
-| `tests/ai/ops/` | 5 | Low | ❌ 零測試 |
 | `tests/ai/meta/` | 3 | Low | ❌ 零測試 |
-| `tests/ai/execution/` | 1 | Low | ❌ |
-| `tests/ai/rag/` | 1 | Low | ❌ |
-| `tests/ai/crisis/` | 1 | Low | ❌ |
-| `tests/models/` | 2 | Medium | ❌ 需要建立 |
 | `tests/core/` (剩餘) | ~50 | Medium | ⏳ 部分完成 |
 
 ---
