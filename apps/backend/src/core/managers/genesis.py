@@ -5,11 +5,19 @@ import subprocess
 import logging
 
 logger = logging.getLogger(__name__)
-try:
-    from cryptography.fernet import Fernet
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"])
-    from cryptography.fernet import Fernet
+from typing import List, Tuple, Optional
+
+
+def _ensure_crypto():
+    try:
+        from cryptography.fernet import Fernet
+        return Fernet
+    except ImportError:
+        logger.warning("cryptography not installed, installing...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"])
+        from cryptography.fernet import Fernet
+        return Fernet
+
 
 # Note secretsharing module may need to be installed separately
 # pip install secret-sharing
@@ -20,8 +28,6 @@ except ImportError:
     logger.warning(
         "Warning: secretsharing module not available. GenesisManager will not work properly."
     )
-
-from typing import List, Tuple, Optional
 
 
 class GenesisManager:
@@ -41,6 +47,7 @@ class GenesisManager:
             - The UID part of the secret.
         """
         uid = f"uid_{uuid.uuid4().hex}"
+        Fernet = _ensure_crypto()
         ham_key = Fernet.generate_key().decode("utf-8")
         genesis_secret = f"{uid}:{ham_key}"
         return genesis_secret, uid

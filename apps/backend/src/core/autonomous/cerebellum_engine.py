@@ -49,7 +49,8 @@ class CerebellumEngine:
         self.active_theta = np.zeros(9) # 當前脊椎緩衝
 
         # 3. 學習路徑與演化里程
-        self.storage_path = os.path.join(os.path.dirname(__file__), "../../../data/evolution/motor_memory.json")
+        from pathlib import Path
+        self.storage_path = str(Path(__file__).parent.parent.parent / "data/evolution/motor_memory.json")
         self.total_distance = 0.0
         self.evolution_threshold = 10000.0 # 演化門檻
         self.error_accumulation = 0.0

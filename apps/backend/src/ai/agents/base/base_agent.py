@@ -65,7 +65,6 @@ class BaseAgent:
         self.task_handlers: Dict[str, Callable] = {}
         self.max_retries = 3
         self.retry_delay = 1.0
-        logging.basicConfig(level=logging.INFO)
         self.services: Optional[Any] = None
         self._task_counter = 0
         self._start_time: Optional[float] = None

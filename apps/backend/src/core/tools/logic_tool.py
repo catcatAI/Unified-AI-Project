@@ -78,7 +78,9 @@ class LogicTool:
                     "False": False,
                     "None": None,
                 }
-                result = eval(logic_statement, {"__builtins__": None}, allowed_names)
+                import re
+                safe = re.sub(r"[^a-zA-Z0-9\s_()]", "", logic_statement)
+                result = eval(safe, {"__builtins__": None}, allowed_names)
                 return {"success": True, "result": result, "statement": logic_statement}
         except Exception as e:  # broad exception acceptable: logic evaluation should not crash on invalid statements
             logger.error(f"邏輯評估錯誤: {e}, 語句: {logic_statement}")

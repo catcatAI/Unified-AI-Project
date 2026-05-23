@@ -143,7 +143,9 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
                 "min": min,
                 "max": max,
             }
-            result = eval(problem, {"__builtins__": None}, allowed_names)
+            import re
+            safe = re.sub(r"[^0-9+\-*/().,%\s]", "", problem)
+            result = eval(safe, {"__builtins__": None}, allowed_names)
             return ToolDispatcherResponse(
                 status="success", payload=str(result), tool_name_attempted="calculate"
             )

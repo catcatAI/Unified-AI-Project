@@ -1414,16 +1414,8 @@ class StateMatrixFacade:
         decision = sm.allocate(vector)
     """
 
-    _instance: Optional["StateMatrixFacade"] = None
-
-    def __new__(cls) -> "StateMatrixFacade":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._adapter = None
-        return cls._instance
-
     def __init__(self):
-        if self._adapter is None:
+        if getattr(self, "_adapter", None) is None:
             self._adapter = StateMatrixAdapter()
 
     @property

@@ -347,7 +347,9 @@ class LogicUnit:
             eval_context = {**allowed_names, **context}
 
             # 执行条件表达式
-            result = eval(condition, {"__builtins__": {}}, eval_context)
+            import re
+            safe = re.sub(r"[^a-zA-Z0-9\s_()\[\].,]", "", condition)
+            result = eval(safe, {"__builtins__": {}}, eval_context)
 
             return bool(result)
 

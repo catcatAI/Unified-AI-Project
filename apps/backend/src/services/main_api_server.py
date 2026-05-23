@@ -288,8 +288,9 @@ from services.angela_llm_service import get_llm_service
 from system.security_monitor import ABCKeyManager
 from shared.security_middleware import SignedCommunicationMiddleware
 
-# Initialize _llm_service as None to prevent NameError before startup
+# Initialize globals to None to prevent NameError before startup
 _llm_service = None
+_abc_key_manager = None
 
 from api.router import router as api_v1_router
 from api.v1.endpoints import pet, economy
@@ -321,16 +322,27 @@ except Exception as e:
     logger.warning(f"[Middleware] CORS setup skipped: {e}")
 
 # ========== 簽名驗證中間件（Key B 簽名驗證） ==========
+
+
+def _get_abc_key_manager():
+    global _abc_key_manager
+    if _abc_key_manager is None:
+        _abc_key_manager = ABCKeyManager()
+    return _abc_key_manager
+
+
 try:
     app.add_middleware(
         SignedCommunicationMiddleware,
-        key_b=get_abc_key_manager().get_key("KeyB"),
+        key_b=_get_abc_key_manager().get_key("KeyB"),
     )
     logger.info("[Middleware] EncryptedCommunication enabled")
 except Exception as e:
     logger.warning(f"[Middleware] EncryptedCommunication setup skipped: {e}")
 
+
 # ========== 生命週期管理 ==========
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: 預初始化核心服務。Shutdown: 清理資源。"""
@@ -427,7 +439,6 @@ _action_executor = None
 _vision_service = None
 _audio_service = None
 _tactile_service = None
-_abc_key_manager = None
 _digital_life = None
 _economy_manager = None
 _metabolic_heartbeat = None

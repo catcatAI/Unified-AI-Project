@@ -44,6 +44,8 @@ class LightweightLogicModel:
         try:
             # 转换为Python表达式
             py_expr = self._convert_to_python(proposition)
+            import re
+            py_expr = re.sub(r"[^a-zA-Z0-9\s_()]", "", py_expr)
             result = eval(py_expr, {"__builtins__": {}}, {})
             return bool(result)
         except Exception as e:  # broad exception acceptable: eval() may raise SyntaxError, NameError, or other exceptions

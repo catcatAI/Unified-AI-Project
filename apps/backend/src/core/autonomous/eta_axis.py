@@ -212,7 +212,9 @@ class AtomicModule:
             expr = params.get("expr", "")
             try:
                 local_vars = dict(inputs)
-                return eval(expr, {"__builtins__": {}}, local_vars)
+                import re
+                safe = re.sub(r"[^0-9+\-*/().%\s_a-zA-Z]", "", expr)
+                return eval(safe, {"__builtins__": {}}, local_vars)
             except Exception:
                 return 0.0
 

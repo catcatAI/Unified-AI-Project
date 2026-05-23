@@ -39,7 +39,9 @@ class LightweightMathModel:
             return None
 
         try:
-            result = eval(expression, {"__builtins__": {}})
+            import re
+            safe = re.sub(r"[^0-9+\-*/().%\s]", "", expression)
+            result = eval(safe, {"__builtins__": {}})
             return float(result)
         except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed expressions
             logger.error(f"Error in {__name__}: {e}", exc_info=True)

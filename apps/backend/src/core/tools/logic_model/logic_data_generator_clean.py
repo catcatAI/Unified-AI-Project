@@ -12,9 +12,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 定义输出目录和文件名
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", "..", "..", ".."))
-OUTPUT_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw_datasets")
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent
+OUTPUT_DATA_DIR = str(PROJECT_ROOT / "data" / "raw_datasets")
 
 TRAIN_FILE = os.path.join(OUTPUT_DATA_DIR, "logic_train.json")
 TEST_FILE = os.path.join(OUTPUT_DATA_DIR, "logic_test.json")
@@ -65,6 +65,8 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
         py_prop_str = py_prop_str.replace("not", "not")
 
         # 安全评估
+        import re
+        py_prop_str = re.sub(r"[^a-zA-Z0-9\s_()]", "", py_prop_str)
         result = eval(py_prop_str, {"__builtins__": {}})
         return bool(result)
     except Exception as e:  # broad exception acceptable: eval() may raise various exceptions for malformed propositions

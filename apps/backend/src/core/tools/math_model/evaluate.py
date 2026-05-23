@@ -19,9 +19,11 @@ except ImportError:
 
 
 # 配置
-TEST_DATASET_PATH = "data/raw_datasets/arithmetic_test_dataset.csv"
-MODEL_LOAD_PATH = "data/models/arithmetic_model.keras"
-CHAR_MAP_LOAD_PATH = "data/models/arithmetic_char_maps.json"
+from pathlib import Path
+_PROJ_ROOT = Path(__file__).parent.parent.parent.parent.parent
+TEST_DATASET_PATH = str(_PROJ_ROOT / "data/raw_datasets/arithmetic_test_dataset.csv")
+MODEL_LOAD_PATH = str(_PROJ_ROOT / "data/models/arithmetic_model.keras")
+CHAR_MAP_LOAD_PATH = str(_PROJ_ROOT / "data/models/arithmetic_char_maps.json")
 
 
 def load_char_maps(file_path: str) -> Optional[Dict[str, Any]]:

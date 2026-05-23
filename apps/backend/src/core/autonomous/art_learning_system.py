@@ -186,8 +186,9 @@ class ArtLearningSystem:
         # ... (其餘 BodyPartMapping 簡化)
     }
 
-    def __init__(self, storage_path: str = "apps/backend/data/evolution/aesthetic_preferences.json", browser_controller=None, vision_service=None, neuroplasticity=None, config=None):
-        self.storage_path = os.path.join(os.path.dirname(__file__), "../../../../data/evolution/aesthetic_preferences.json")
+    def __init__(self, storage_path: str = "", browser_controller=None, vision_service=None, neuroplasticity=None, config=None):
+        from pathlib import Path
+        self.storage_path = storage_path or str(Path(__file__).parent.parent.parent.parent / "data/evolution/aesthetic_preferences.json")
         self.browser_controller = browser_controller
         self.vision_service = vision_service
         self.neuroplasticity = neuroplasticity
