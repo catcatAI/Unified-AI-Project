@@ -27,9 +27,9 @@ except ImportError:
             return {"value_alignment": 0.5}
 
     class EmotionalState:
-        def __init__(self, primary_emotion="neutral", emotional_arousal=0.5, valence=0.0):
+        def __init__(self, primary_emotion="neutral", arousal=0.5, valence=0.0):
             self.primary_emotion = primary_emotion
-            self.emotional_arousal = emotional_arousal
+            self.arousal = arousal
             self.valence = valence
 
     class OntologySystem:
@@ -386,7 +386,7 @@ class AlignmentManager:
                     "ethical_score": ethical_score,
                     "emotional_score": emotional_score,
                     "existential_score": existential_consistency,
-                    "meets_thresholds": meets,
+                    "meets_thresholds": meets_thresholds,
                     "priority_used": priority,
                 }
             )
@@ -427,7 +427,7 @@ class AlignmentManager:
         # 创建情感状态
         emotional_state = EmotionalState(
             primary_emotion="neutral",
-            emotional_arousal=best_option_data["emotional_score"],
+            arousal=best_option_data["emotional_score"],
             valence=0.0,
         )
 
