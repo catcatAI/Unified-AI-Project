@@ -136,7 +136,7 @@ class TestBudgetScheduler:
         budget = scheduler.schedule(hw_score=10, tier=HardwareTier.LOW, energy=0.5)
         assert 5000 <= budget <= 60000
 
-    @patch("services.resource_awareness_service.ResourceAwarenessService")
+    @patch("ai.response.neuro_auto_selector.ResourceAwarenessService")
     def test_schedule_with_load(self, MockResource):
         mock_svc = MagicMock()
         mock_svc.get_throttling_factor.return_value = 0.5

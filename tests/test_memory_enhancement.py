@@ -172,7 +172,7 @@ class TestMemoryEnhancement:
             # 创建模拟的 LLM 服务
             class MockLLMService:
                 async def generate_response(self, query, context):
-                    from apps.backend.src.services.angela_llm_service import LLMResponse
+                    from core.interfaces.protocols import LLMResponse
 
                     return LLMResponse(text=f"回应: {query}", backend="mock", model="test")
 
@@ -274,7 +274,7 @@ class TestMemoryEnhancement:
         try:
             # 导入必要的模块
             from apps.backend.src.ai.memory.precompute_service import PrecomputeTask
-            from apps.backend.src.services.angela_llm_service import LLMResponse
+            from core.interfaces.protocols import LLMResponse
 
             # 创建模拟的 LLM 服务
             class MockLLMService:
