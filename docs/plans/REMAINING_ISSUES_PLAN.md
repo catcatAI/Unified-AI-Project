@@ -58,172 +58,65 @@
 - `real_causal_reasoning_engine.py:80` — hardcoded 0.75 → Pearson correlation
 - `alignment_manager.py:389` — `meets` NameError → `meets_thresholds`
 - `alignment_manager.py:430` — `emotional_arousal=` → `arousal=`
+- `alignment_manager.py:428` — `EmotionalState()` 只傳入 3/5 必填欄位 → 補上 `emotion_intensity` + `secondary_emotions`
 - `scripts/health_check_service.py:79,85` — 錯誤 import path
+
+#### 8. 測試目錄清理 (Phase 9)
+- 移除 9 個根目錄非測試 script: `test_import.py`, `test_env.py`, `test_path.py`, `test_module.py`, `test_all_fixed_modules.py`, `test_json_fix.py`, `test_modules_with_output.py`, `test_repeat_fix.py`, `test_syntax_fixer.py`
+- 移除 5 個 `tests/core_ai/` assert-True stubs: `test_agent_manager.py`, `test_crisis_system.py`, `test_deep_mapper.py`, `test_emotion_system.py`, `test_time_system.py`
+- 移除 5 個 `tests/core_ai/` 重疊子目錄 (`context`, `dialogue`, `learning`, `memory`, `rag`)
+- 搬遷 8 個 `tests/core_ai/` 獨特子目錄 → `tests/ai/`
+- 搬遷 24 個 `tests/refactor/` 檔案 → `tests/core/`
+- 修復 `tests/refactor/test_anchor_learning.py:274` indent error
+- 移除空目錄 `tests/core_ai/`, `tests/refactor/`
+
+#### 9. 品質審計
+- **架構審計**: 所有層級隔離 ✅ 0 違規
+- **測試品質審計**: ~28 個純 smoke test 轉換或移除
+- **Bug fix 審計**: 發現 EmotionalState 隱藏 bug (3/5 必填欄位) 並修復
 
 ---
 
 ### 剩餘項目
 
-#### 1.1 `tests/ai/response/test_neuro_auto_selector.py:139`
-- **違規**: `@patch("services.resource_awareness_service.ResourceAwarenessService")` 在 ai 層測試中引用 services
-- **解法**: 將 `@patch("services.resource_awareness_service.ResourceAwarenessService")` 改為在全域 mock 前直接匯入目標類別，使用 `@patch.object` 或是用 `from unittest.mock import Mock` 建立 mock instance 後注入
-  ```python
-  from unittest.mock import Mock, patch
-  mock_resource = Mock()
-  @patch("ai.response.neuro_auto_selector.ResourceAwarenessService", return_value=mock_resource)
-  ```
-  這樣 ai 層測試只依賴 ai 層內部 api，不依賴 services 層
-- **驗證**: flake8 不報錯 + pytest 通過
+#### 1. 根目錄 legacy test 尚未搬遷 (P2)
+以下檔案仍在 `tests/` 根目錄，未依架構搬遷至正確層級：
 
-#### 1.2 `tests/test_memory_enhancement.py:175,277`
-- **違規**: `from services.angela_llm_service import LLMResponse` 在 ai.memory 測試中
-- **解法**: 改為 `from core.interfaces.protocols import LLMResponse`
-- **驗證**: import 成功 + pytest 通過
+| 檔案 | 測試目標 | 目標目錄 | 優先度 |
+|------|---------|---------|--------|
+| `test_angela_core.py` | `services.main_api_server` | `tests/services/` | P2 |
+| `test_websocket.py` | `services.main_api_server` | `tests/services/` | P2 |
+| `test_connection_session.py` | `services.connection_session` | `tests/services/` | P2 |
+| `test_security.py` | `shared.security` | `tests/shared/` | P2 |
+| `test_math_tool.py` | `core.math_tool` | `tests/core/` | P3 |
+| `test_logic_tool.py` | `core.logic_tool` | `tests/core/` | P3 |
 
-#### 1.3 `tests/test_angela_core.py`, `tests/test_websocket.py`, 等
-- **違規**: 根目錄測試直接 import `services.main_api_server`
-- **解法**: 這些測試實測的是 services 層邏輯，應移至 `tests/services/` 目錄。搬移並更新 import path。
-- **注意**: 這些檔案多為 async function 內 import，屬於 lazy import，違規程度較低。搬遷優先度 P2。
-- **驗證**: pytest 全部通過
+**注意**: 這些檔案多為 async function 內 import (lazy import)，架構違規程度較低。
 
----
+#### 2. 新搬遷的 8 個 tests/ai/ 子目錄待升級 (P3)
+從 `tests/core_ai/` 搬遷至 `tests/ai/` 的 8 個子目錄目前多為 import smoke test，缺少真實 assertion：
 
-### 2. 清除 14 個 Placeholder 測試 (P1)
+| 目錄 | 測試數 | 目前性質 | 建議升級 |
+|------|--------|---------|---------|
+| `code_understanding/` | 5 | REAL (LightweightCodeModel) | 已足夠 |
+| `compression/` | 4 | REAL (AlphaDeepModel) | 已足夠 |
+| `formula_engine/` | 1 | SMOKE | 升級為 REAL |
+| `language_models/` | 1 | SMOKE | 升級為 REAL |
+| `lis/` | 2 | SMOKE | 升級為 REAL |
+| `meta_formulas/` | 1 | SMOKE | 升級為 REAL |
+| `personality/` | 2 | SMOKE | 升級為 REAL |
+| `service_discovery/` | 1 | SMOKE | 升級為 REAL |
 
-14 個 `tests/test_*.py` 僅含 `self.assertTrue(True)`，無測試價值。
+#### 3. `tests/ai/meta/` 零測試 (P3)
+`tests/ai/meta/` 目錄目前不存在 — `ai/meta/` 模組無對應測試。
 
-| 檔案 | 建議處理 |
-|------|---------|
-| `test_coverage_report.py` | 移除 |
-| `test_coverage_analyzer.py` | 移除 |
-| `test_core_service_manager.py` | 改為 import smoke test |
-| `test_content_analyzer.py` | 改為 import smoke test |
-| `test_config_loader.py` | 改為 import smoke test |
-| `test_core_services_module.py` | 移除 |
-| `test_compat_fix.py` | 移除 |
-| `test_concept_models_training.py` | 移除 |
-| `test_chromadb_fix.py` | 移除 |
-| `test_capital_of_debug.py` | 移除 |
-| `test_capital_of.py` | 移除 |
-| `test_automated_defect_detector.py` | 移除 |
-| `test_audio_service_direct.py` | 移除 |
-| `test_atlassian_integration.py` | 移除 |
+#### 4. `tests/core/` 剩餘 ~50 個 source modules 無測試
+- ~50 個 `core/` 模組仍無測試覆蓋
+- 同 `TEST_RESTRUCTURE_PLAN.md` 所述
 
-- **驗證**: `pytest tests/` 通過，移除以不報錯
-- **執行**: 批次移除（寫 script 確認後執行）
-
----
-
-### 3. 修復 Broken Test: `test_tool_call_chain.py` (P1)
-
-- **問題**: 使用 `Mock`, `ContextManager`, `ToolCallChainTracker`, `ToolCallChainContext` 但完全沒有 import
-- **解法**: 根據語意補上 import 或改為有效的 import smoke test
-  ```python
-  from unittest.mock import Mock, MagicMock
-  from core.managers.tool_context_manager import ToolContextManager
-  ```
-- **驗證**: pytest 通過
-
----
-
-### 4. 未實作的 14 個 stub（已轉換但指向不存在 module）(P2)
-
-- 已轉換為 import test，但 `test_defect_detector`、`test_llm_timeout` 指向不存在的 module
-- **解法**: 移除這 2 個檔案
-
----
-
-### 5. Integration conftest 驗證 (P2)
-
+#### 5. Integration conftest 驗證 (P2)
 - conftest mock path 已修正，但 fixture 未被任何 test 調用
-- **解法**: 檢查是否有測試使用這些 fixture。如無，標記為待清理
+- 待確認是否保留或清理
 
----
-
-### 6. ServiceRegistry Unit Test (P2)
-
-```python
-# tests/core/test_service_registry.py
-def test_registry_singleton():
-    from core.interfaces.service_registry import get_registry
-    r1 = get_registry()
-    r2 = get_registry()
-    assert r1 is r2
-
-def test_register_and_resolve():
-    reg = get_registry()
-    reg.register("test_svc", 42)
-    assert reg.resolve("test_svc") == 42
-```
-- **驗證**: pytest 通過
-
----
-
-### 7. 38 個 unittest.TestCase 遷移至 pytest (P2)
-
-這是大工程，建議漸進式遷移：
-
-| 階段 | 內容 | 檔案數 |
-|------|------|--------|
-| Phase 1 | Placeholder 移除 | 14 |
-| Phase 2 | Broken test 修復 | 1 |
-| Phase 3 | Import-only tests 遷移 | 8 |
-| Phase 4 | Mock-heavy tests 遷移 | 6 |
-| Phase 5 | 剩餘真實 tests 遷移 | 9 |
-
-遷移模式：
-```python
-# Before (unittest)
-class TestFoo(unittest.TestCase):
-    def test_bar(self):
-        self.assertEqual(foo(), 42)
-
-# After (pytest)
-def test_bar():
-    assert foo() == 42
-```
-
----
-
-### 8. 架構層級測試目錄清理 (P2)
-
-確保所有測試檔案放在正確的層級目錄：
-
-```
-tests/
-├── core/          ← core/ 的測試
-├── ai/            ← ai/ 的測試（不可 import services/）
-├── services/      ← services/ 的測試
-├── api/           ← api/ 的測試
-├── shared/        ← shared/ 的測試
-├── models/        ← 需要建立，放 models/ 的測試
-└── integration/   ← 跨層整合測試
-```
-
-搬遷原則：
-- `tests/test_angela_core.py` → `tests/services/` (因為測試的是 services.main_api_server)
-- `tests/test_websocket.py` → `tests/services/`
-- `tests/test_connection_session.py` → `tests/services/`
-- `tests/test_security.py` → `tests/shared/`
-- `tests/test_math_tool.py` → `tests/core/`
-- `tests/test_logic_tool.py` → `tests/core/`
-
----
-
-### 執行順序
-
-```
-Phase 1: P1 修復 (架構違規 + broken test + placeholder 移除)
-Phase 2: P2 ServiceRegistry test + 目錄清理
-Phase 3: P2 遷移 unittest.TestCase → pytest
-Phase 4: 驗證全測試套件通過
-```
-
-### 驗證標準
-
-1. 所有測試架構違規歸零
-2. 無 broken test
-3. 無 placeholder test
-4. ServiceRegistry 有 unit test
-5. `pytest tests/` 無 failure（torch-bound tests 可 skip）
-6. flake8 on tests/ 無新增錯誤
+#### 6. flake8 on tests/ 尚未啟用於 CI
+- `tests/` 目錄尚未納入 flake8 檢查

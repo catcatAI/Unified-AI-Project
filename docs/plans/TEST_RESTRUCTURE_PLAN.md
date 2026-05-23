@@ -55,14 +55,24 @@ Priority 8: integration/       ← Cross-layer flows
 | **Phase 5: API** | Router (14 tests)、Endpoints (24 tests)、HealthCheck (4 tests) | ✅ **42 tests** |
 | **Phase 6: Migration** | 38 個 unittest.TestCase 全部遷移至 pytest 或移除 | ✅ |
 | **Phase 7: Integration** | Server import (2 tests)、Wiring (4 tests)、Middleware (7 tests) | ✅ **13 tests** |
+| **Phase 8: AI Migration** | 從 `tests/core_ai/` 搬遷 8 個獨特模組 (`code_understanding`, `compression`, `formula_engine`, `language_models`, `lis`, `meta_formulas`, `personality`, `service_discovery`) 至 `tests/ai/` | ✅ **~20 tests** |
+| **Phase 9: Refactor Migration** | 從 `tests/refactor/` 搬遷 24 個檔案至 `tests/core/` (2 個例外: `code_inspector_integration` → `tests/ai/`, `state_matrix_api` → `tests/api/`) | ✅ **24 files** |
+| **Cleanup: Dead files** | 移除 14 個 stub/testless 檔案: 5 個 `core_ai/` assert-True, 9 個根目錄非測試 script | ✅ |
+| **Cleanup: Stale duplicates** | 移除 `tests/core_ai/` 中與 `tests/ai/` 重疊的5個子目錄 (`context`, `dialogue`, `learning`, `memory`, `rag`) | ✅ |
+| **Architecture audit** | 0 層級違規 (架構隔離正確執行) | ✅ |
+| **Bug fix audit** | EmotionalState 隱藏 bug 已修復 (缺少 2 個必要欄位) | ✅ |
 | **CI Integration** | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項) | ✅ |
-| **Totals** | **~1010 tests** across 14 directories | ✅ **All passing** |
+| **Totals** | **~1030 tests** across 22 directories | ✅ **All passing** |
 
-### 當前測試目錄結構
+### 當前測試目錄結構 (Phase 9 清理後)
 
 ```
 tests/
-├── core/              ← 68 tests ✅
+├── core/              ← ~92 tests ✅ (含 refactor 搬遷 + 原有)
+│   ├── autonomous/   ← 原有 + refactor tests
+│   ├── interfaces/   ← ServiceRegistry
+│   ├── managers/     ← state managers
+│   └── state/        ← state adapters
 ├── ai/
 │   ├── agents/       ← 65 tests ✅
 │   ├── memory/       ← 84 tests ✅
@@ -74,13 +84,21 @@ tests/
 │   ├── execution/    ← 24 tests ✅
 │   ├── ops/          ← 14 tests ✅
 │   ├── rag/          ← 8 tests ✅
-│   └── crisis/       ← 19 tests ✅
+│   ├── crisis/       ← 19 tests ✅
+│   ├── code_understanding/  ← 5 tests ✅ (從 core_ai 搬遷)
+│   ├── compression/         ← 4 tests ✅
+│   ├── formula_engine/      ← 1 test  ✅
+│   ├── language_models/     ← 1 test  ✅
+│   ├── lis/                 ← 2 tests ✅
+│   ├── meta_formulas/       ← 1 test  ✅
+│   ├── personality/         ← 2 tests ✅
+│   └── service_discovery/   ← 1 test  ✅
 ├── services/          ← 95 tests ✅
-├── api/               ← 42 tests ✅
+├── api/               ← ~43 tests ✅ (含 state_matrix_api 搬遷)
 ├── shared/            ← 4 tests ✅
 ├── integration/       ← 13 tests ✅
 ├── models/            ← 35 tests ✅
-└── (legacy root)      ← 2 tests ✅
+├── conftest.py        ← session fixture
 ```
 
 ### 剩餘待補層級
@@ -89,6 +107,19 @@ tests/
 |---------|--------|--------|------|
 | `tests/ai/meta/` | 3 | Low | ❌ 零測試 |
 | `tests/core/` (剩餘) | ~50 | Medium | ⏳ 部分完成 |
+| `tests/ai/` (新搬遷) | 8 subdirs | Low | ⏳ 僅 import smoke — 需升級為 REAL_TEST |
+
+### 品質審計摘要
+
+Phase 9 完成三項審計：
+
+| 審計 | 結果 | 行動 |
+|------|------|------|
+| **Architecture**: 層級隔離檢查所有測試 | 0 違規 ✅ | 全部通過 |
+| **Quality**: 測試能否發現 bug | 5 個源碼 bug 被發現並修復 ✅ | EmotionalState 隱藏 bug 已修復 |
+| **Bug Fix Correctness**: 修復方法是否正確 | 4/5 正確, 第 5 個 (EmotionalState) 發現隱藏 bug | 已補上缺少的 2 個必要欄位 |
+
+發現的隱藏 bug: `alignment_manager.py:428` 的 `EmotionalState()` 呼叫只傳入 3/5 必填欄位。真實 `EmotionalState` dataclass 有 5 個必填欄位 (`primary_emotion`, `emotion_intensity`, `secondary_emotions`, `valence`, `arousal`)，但原始碼只傳了 3 個。若 import 成功 (不走 fallback mock)，執行時會 `TypeError: __init__() missing 2 required positional arguments`。
 
 ---
 
@@ -173,3 +204,16 @@ jobs:
 4. 0 個 stub/placeholder 測試檔案
 5. 每個核心 interface 都有 conformance test
 6. ServiceRegistry 有 unit test
+
+### Phase 9 清理一覽
+
+| 操作 | 檔案/目錄數 | 說明 |
+|------|------------|------|
+| 🗑 移除 root stubs | 9 files | `test_import.py`, `test_env.py`, `test_path.py`, `test_module.py`, `test_all_fixed_modules.py`, `test_json_fix.py`, `test_modules_with_output.py`, `test_repeat_fix.py`, `test_syntax_fixer.py` |
+| 🗑 移除 core_ai stubs | 5 files | `test_agent_manager.py`, `test_crisis_system.py`, `test_deep_mapper.py`, `test_emotion_system.py`, `test_time_system.py` |
+| 🗑 移除 core_ai duplicate dirs | 5 dirs | `context/`, `dialogue/`, `learning/`, `memory/`, `rag/` (已由 tests/ai/ 全面覆蓋) |
+| 🚚 搬遷 core_ai unique dirs → tests/ai/ | 8 dirs | `code_understanding/`, `compression/`, `formula_engine/`, `language_models/`, `lis/`, `meta_formulas/`, `personality/`, `service_discovery/` |
+| 🚚 搬遷 refactor/ → tests/core/ | 24 files | 含 `test_anchor_learning.py` (修復 indent) |
+| 🚚 例外搬遷 | 2 files | `code_inspector_integration` → `tests/ai/`, `state_matrix_api` → `tests/api/` |
+| 🔧 修復 EmotionalState bug | 1 file | 補上缺少的 2 個必填欄位 (`emotion_intensity`, `secondary_emotions`) |
+| 🧹 移除空目錄 | 2 dirs | `tests/core_ai/`, `tests/refactor/` |

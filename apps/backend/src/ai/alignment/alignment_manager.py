@@ -27,10 +27,13 @@ except ImportError:
             return {"value_alignment": 0.5}
 
     class EmotionalState:
-        def __init__(self, primary_emotion="neutral", arousal=0.5, valence=0.0):
+        def __init__(self, primary_emotion="neutral", emotion_intensity=0.5,
+                     secondary_emotions=None, valence=0.0, arousal=0.5):
             self.primary_emotion = primary_emotion
-            self.arousal = arousal
+            self.emotion_intensity = emotion_intensity
+            self.secondary_emotions = secondary_emotions or {}
             self.valence = valence
+            self.arousal = arousal
 
     class OntologySystem:
         async def assess_relationship_impact(self, option, context):
@@ -427,8 +430,10 @@ class AlignmentManager:
         # 创建情感状态
         emotional_state = EmotionalState(
             primary_emotion="neutral",
-            arousal=best_option_data["emotional_score"],
+            emotion_intensity=0.5,
+            secondary_emotions={},
             valence=0.0,
+            arousal=best_option_data["emotional_score"],
         )
 
         # 创建对齐结果

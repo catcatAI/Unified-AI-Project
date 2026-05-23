@@ -271,7 +271,7 @@ def test_learning_before_after():
     print(f"  Total non-zero dims:  {total_nonzero_before:3d} → {total_nonzero_after:3d}  (delta={total_nonzero_after-total_nonzero_before:+.0f})")
     print(f"  Max similarity:      {max_sim_before:.4f} → {max_sim_after:.4f}  (delta={max_sim_after-max_sim_before:+.4f})")
 
-nonzero_changed = total_nonzero_after != total_nonzero_before
+    nonzero_changed = total_nonzero_after != total_nonzero_before
     sim_improved = max_sim_after >= max_sim_before - 0.01
 
     print(f"\n  Non-zero dims changed:  {'YES' if nonzero_changed else 'NO'}")
