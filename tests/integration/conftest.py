@@ -25,7 +25,7 @@ def integration_test_config():
 @pytest.fixture(scope="function")
 def mock_agent_manager():
     """模拟代理管理器"""
-    with patch("apps.backend.src.managers.agent_manager.AgentManager") as mock:
+    with patch("apps.backend.src.ai.agents.agent_manager.AgentManager") as mock:
         mock_instance = Mock()
         mock_instance.start_agent = Mock(return_value=True)
         mock_instance.stop_agent = Mock(return_value=True)
@@ -38,7 +38,7 @@ def mock_agent_manager():
 @pytest.fixture(scope="function")
 def mock_hsp_connector():
     """模拟HSP连接器"""
-    with patch("apps.backend.src.hsp.connector.HSPConnector") as mock:
+    with patch("apps.backend.src.core.hsp.connector.HSPConnector") as mock:
         mock_instance = Mock()
         mock_instance.connect = Mock(return_value=True)
         mock_instance.disconnect = Mock(return_value=True)
@@ -51,7 +51,7 @@ def mock_hsp_connector():
 @pytest.fixture(scope="function")
 def mock_memory_manager():
     """模拟记忆管理器"""
-    with patch("apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager") as mock:
+    with patch("apps.backend.src.ai.memory.ham_memory.ham_manager.HAMMemoryManager") as mock:
         mock_instance = Mock()
         mock_instance.store_memory = Mock(return_value="test_memory_id")
         mock_instance.retrieve_memory = Mock(return_value={"content": "test content"})
@@ -63,7 +63,7 @@ def mock_memory_manager():
 @pytest.fixture(scope="function")
 def mock_learning_manager():
     """模拟学习管理器"""
-    with patch("apps.backend.src.core_services.DemoLearningManager") as mock:
+    with patch("apps.backend.src.core.managers.demo_learning_manager.DemoLearningManager") as mock:
         mock_instance = Mock()
         mock_instance.start_learning = Mock(return_value=True)
         mock_instance.stop_learning = Mock(return_value=True)
@@ -75,7 +75,7 @@ def mock_learning_manager():
 @pytest.fixture(scope="function")
 def mock_dialogue_manager():
     """模拟对话管理器"""
-    with patch("apps.backend.src.ai.dialogue.dialogue_manager.DialogueManager") as mock:
+    with patch("apps.backend.src.ai.dialogue.project_coordinator.ProjectCoordinator") as mock:
         mock_instance = Mock()
         mock_instance.process_dialogue = Mock(return_value={"status": "success"})
         mock_instance.end_dialogue = Mock(return_value=True)
@@ -86,7 +86,7 @@ def mock_dialogue_manager():
 @pytest.fixture(scope="function")
 def mock_llm_service():
     """模拟LLM服务"""
-    with patch("apps.backend.src.services.multi_llm_service.MultiLLMService") as mock:
+    with patch("apps.backend.src.services.angela_llm_service.AngelaLLMService") as mock:
         mock_instance = Mock()
         mock_instance.generate_response = Mock(return_value="Mock response")
         mock_instance.get_model_info = Mock(return_value={})

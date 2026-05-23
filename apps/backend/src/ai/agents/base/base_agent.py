@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Callable, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
-from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload
+from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload, HSPTaskResultPayload
 
 logger = logging.getLogger(__name__)
 

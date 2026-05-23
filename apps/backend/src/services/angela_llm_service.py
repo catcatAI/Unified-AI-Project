@@ -24,6 +24,7 @@ from abc import ABC, abstractmethod
 
 import aiohttp
 from core.interfaces.service_registry import get_registry
+from core.interfaces.protocols import ChatMessage, LLMResponse, ModelProvider
 
 # 簡單日誌設置
 if __name__ == "__main__":
@@ -110,70 +111,8 @@ class LLMBackend(Enum):
     NONE = "none"
 
 
-class ModelProvider(Enum):
-    """LLM 提供者（遷移自 multi_llm_adapter.py）"""
-
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
-    GOOGLE = "google"
-    AZURE_OPENAI = "azure_openai"
-    COHERE = "cohere"
-    HUGGINGFACE = "huggingface"
-    OLLAMA = "ollama"
-    LLAMA_CPP = "llama_cpp"
-
-
-@dataclass
-class LLMResponse:
-    """LLM 回應結構"""
-
-    text: str
-    backend: str
-    model: str
-    tokens_used: int = 0
-    response_time_ms: float = 0.0
-    confidence: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
-
-    @property
-    def content(self) -> str:
-        return self.text
-
-
-@dataclass
-class ChatMessage:
-    """對話消息（遷移自 multi_llm_adapter.py）"""
-
-    role: str  # system, user, assistant
-    content: str
-    name: Optional[str] = None
-    timestamp: Optional[datetime] = None
-
-    def __post_init__(self):
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "role": self.role,
-            "content": self.content,
-            "name": self.name,
-            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ChatMessage":
-        return cls(
-            role=data.get("role", "user"),
-            content=data.get("content", ""),
-            name=data.get("name"),
-            timestamp=(
-                datetime.fromisoformat(data["timestamp"])
-                if data.get("timestamp")
-                else None
-            ),
-        )
+# ModelProvider, LLMResponse, ChatMessage are now defined in core.interfaces.protocols
+from core.interfaces.protocols import ModelProvider, LLMResponse, ChatMessage  # noqa: F811
 
 
 class BaseLLMBackend(ABC):

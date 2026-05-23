@@ -23,7 +23,7 @@ from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 from economy.economy_manager import EconomyManager
 from ai.agents.agent_manager import AgentManager
 from core.hsp.connector import HSPConnector
-from services.angela_llm_service import ChatMessage
+from core.interfaces.protocols import ChatMessage
 
 logger = logging.getLogger(__name__)
 

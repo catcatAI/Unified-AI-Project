@@ -2,7 +2,7 @@ import logging
 import json
 import asyncio
 from typing import List, Dict, Optional, Any
-from services.angela_llm_service import ChatMessage, LLMResponse
+from core.interfaces.protocols import ChatMessage, LLMResponse
 from .types import ExtractedFact
 
 logger = logging.getLogger(__name__)

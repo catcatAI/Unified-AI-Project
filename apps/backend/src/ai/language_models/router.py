@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from services.angela_llm_service import ModelProvider
+from core.interfaces.protocols import ModelProvider
 
 
 @dataclass

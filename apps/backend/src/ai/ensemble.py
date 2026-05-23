@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, AsyncGenerator
 from datetime import datetime
 
-from services.angela_llm_service import ChatMessage, LLMResponse
+from core.interfaces.protocols import ChatMessage, LLMResponse
 
 logger = logging.getLogger(__name__)
 
