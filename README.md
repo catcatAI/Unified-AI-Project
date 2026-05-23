@@ -277,6 +277,8 @@ npm start
 | [MODULARITY_ANALYSIS](docs/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God module、耦合、singleton |
 | [PROBLEM_ANALYSIS](docs/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 三重視角審計、安全問題、優先級 |
 | [PHASE_8_PLAN](docs/plans/PHASE_8_DEBT_CLEANUP.md) | 6 週清理路線圖 |
+| [遺留問題修復計畫](docs/plans/REMAINING_ISSUES_PLAN.md) | 架構違規修復、placeholder 清除、unittest→pytest 遷移 |
+| [測試重構與建立計畫](docs/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI integration、階段執行路線 |
 
 ---
 

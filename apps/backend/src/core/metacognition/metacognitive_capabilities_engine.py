@@ -435,7 +435,16 @@ class MetacognitiveCapabilitiesEngine:
                             success_rate=profile_data["success_rate"],
                         )
 
-        logger.info("状态已加载")
+            logger.info("状态已加载")
+            return None
+
+        # Protocol: load data by key
+        persist_dir = self.workspace_path / "persistence"
+        filepath = persist_dir / f"{key}.json"
+        if filepath.exists():
+            with open(filepath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return None
 
     async def delete_state(self, key: str) -> bool:
         """Remove persisted state by key."""

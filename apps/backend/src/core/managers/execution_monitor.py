@@ -119,7 +119,7 @@ class ExecutionMonitor:
             formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
-            self.logger.setLevel(logging.INFO())
+            self.logger.setLevel(logging.INFO)
 
     def calculate_adaptive_timeout(
         self, command: str, base_timeout: Optional[float] = None

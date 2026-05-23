@@ -12,8 +12,9 @@
 import sys
 import os
 from pathlib import Path
-import unittest
 import logging
+
+import pytest
 
 logger = logging.getLogger(__name__)
 
@@ -45,74 +46,37 @@ except ImportError:
         return {"status": "mock_ok"}
 
 
-class TestTypeFixes(unittest.TestCase):
-    def setUp(self):
-        """测试前设置"""
-        self.test_data = {}
-        self.test_config = {}
+def test_vector_store_client_type():
+    try:
+        vector_store = VectorMemoryStore()
 
-    def tearDown(self):
-        """测试后清理"""
-        self.test_data.clear()
-        self.test_config.clear()
+        client = vector_store.client
+        print(f"✓ VectorMemoryStore.client type: {type(client)}")
+        print(f"✓ VectorMemoryStore.client value: {client}")
 
-    def test_vector_store_client_type(self):
-        """测试VectorMemoryStore client属性的类型"""
-        try:
-            vector_store = VectorMemoryStore()
+        assert client is not None
+    except Exception as e:
+        print(f"✗ Error testing VectorMemoryStore client: {e}")
+        import traceback
 
-            # 检查client属性是否存在且类型正确
-            client = vector_store.client
-            print(f"✓ VectorMemoryStore.client type: {type(client)}")
-            print(f"✓ VectorMemoryStore.client value: {client}")
-
-            self.assertIsNotNone(client)
-            # Add more specific type assertions if needed, e.g., self.assertIsInstance(client, ExpectedClientType)
-        except Exception as e:
-            print(f"✗ Error testing VectorMemoryStore client: {e}")
-            import traceback
-
-            traceback.print_exc()
-            self.fail(f"VectorMemoryStore client type test failed: {e}")
-
-    def test_health_check_service(self):
-        """测试健康检查服务"""
-        try:
-            # 运行完整健康检查
-            result = full_health_check()
-            print(f"✓ Health check result: {result}")
-
-            self.assertIsNotNone(result)
-            self.assertIn("status", result)
-            self.assertEqual(
-                result["status"],
-                "mock_ok" if isinstance(full_health_check, type(lambda: 0)) else "ok",
-            )
-        except Exception as e:
-            print(f"✗ Error testing health check service: {e}")
-            import traceback
-
-            traceback.print_exc()
-            self.fail(f"Health check service test failed: {e}")
+        traceback.print_exc()
+        pytest.fail(f"VectorMemoryStore client type test failed: {e}")
 
 
-def main():
-    """主函数"""
-    print("Testing type fixes...")
+def test_health_check_service():
+    try:
+        result = full_health_check()
+        print(f"✓ Health check result: {result}")
 
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestTypeFixes))
+        assert result is not None
+        assert "status" in result
+        assert (
+            result["status"]
+            == ("mock_ok" if isinstance(full_health_check, type(lambda: 0)) else "ok")
+        )
+    except Exception as e:
+        print(f"✗ Error testing health check service: {e}")
+        import traceback
 
-    runner = unittest.TextTestRunner()
-    result = runner.run(suite)
-
-    if result.wasSuccessful():
-        print("\n✓ All tests passed!")
-        return 0
-    else:
-        print("\n✗ Some tests failed!")
-        return 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+        traceback.print_exc()
+        pytest.fail(f"Health check service test failed: {e}")
