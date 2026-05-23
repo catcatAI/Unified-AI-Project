@@ -1,14 +1,15 @@
-"""Tests for resource awareness service."""
+"""Smoke test for apps.backend.src.services.resource_awareness_service."""
 import pytest
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
-
-def test_resource_awareness_stub():
-    pytest.skip("Resource awareness service test pending implementation")
+def test_resource_awareness_service_imports():
+    """Smoke test: apps.backend.src.services.resource_awareness_service imports successfully."""
+    from services import resource_awareness_service as resource_awareness_service
+    assert resource_awareness_service is not None
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, '-v'])

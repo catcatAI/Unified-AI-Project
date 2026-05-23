@@ -353,12 +353,10 @@ async def lifespan(app: FastAPI):
             for svc_name in _lc.get("services_to_preinit", []):
                 try:
                     if svc_name == "AngelaChatService":
-                        from services.chat_service import get_angela_chat_service
                         svc = get_angela_chat_service()
                         await svc.initialize()
                         logger.info("[Lifecycle] AngelaChatService initialized")
                     elif svc_name == "AngelaLLMService":
-                        from services.angela_llm_service import get_llm_service
                         await get_llm_service()
                         logger.info("[Lifecycle] AngelaLLMService initialized")
                     elif svc_name == "BiologicalIntegrator":
@@ -619,7 +617,6 @@ async def _handle_chat_request(
             logger.warning(f"⚠️ [DualRail] Math verification failed: {math_err}")
             is_math = False
 
-        from services.chat_service import generate_angela_response
         response_text = await asyncio.wait_for(
             generate_angela_response(user_message, user_name),
             timeout=_http_timeout,
@@ -692,7 +689,7 @@ async def sync_key_c(request: Request):
     if client_host not in ["127.0.0.1", "::1", "localhost"]:
         logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}")
         raise HTTPException(status_code=403, detail="Access restricted to localhost")
-    
+
     abc_key_manager = get_abc_key_manager()
     key_c = abc_key_manager.get_key("KeyC")
     if not key_c:
@@ -921,17 +918,17 @@ from services.connection_session import get_session_manager, SessionState
 class ConnectionManager:
     """
     WebSocket connection manager - now uses SessionManager internally.
-    
+
     This class provides backward-compatible API while delegating to SessionManager.
     """
 
     def __init__(self):
         self._sm = get_session_manager()
-    
+
     @property
     def active_connections(self):
         return [s.websocket for s in self._sm._sessions.values()]
-    
+
     @property
     def connection_info(self):
         return {
@@ -945,56 +942,52 @@ class ConnectionManager:
             }
             for s in self._sm._sessions.values()
         }
-    
+
     @property
     def message_buffer(self):
         return self._sm._message_buffers
-    
+
     @property
     def heartbeat_interval(self):
         return self._sm.heartbeat_interval
-    
+
     @property
     def heartbeat_timeout(self):
         return self._sm.heartbeat_timeout
-    
+
     async def connect(self, websocket: WebSocket, session_id: str = None, metadata: dict = None):
         """Accept new connection with optional session_id"""
         await websocket.accept()
         session = await self._sm.register(websocket, session_id, metadata, single_device_mode=True)
         return session
-    
+
     def disconnect(self, websocket: WebSocket):
         """Disconnect a WebSocket"""
         for client_id, session in list(self._sm._sessions.items()):
             if session.websocket == websocket:
                 asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
                 break
-    
+
     async def broadcast(self, message: dict):
         """Broadcast message to all connections"""
         return await self._sm.broadcast(message)
-    
+
     async def send_personal_message(self, message: dict, websocket: WebSocket):
         """Send message to specific WebSocket"""
         for client_id, session in self._sm._sessions.items():
             if session.websocket == websocket:
                 return await self._sm.send_to_client(client_id, message)
         return False
-    
-    def get_connection_stats(self):
-        return self._sm.get_stats()
-    
-    # Legacy compatibility: direct access to SessionManager methods
+
     async def send_to_session(self, session_id: str, message: dict):
         return await self._sm.send_to_session(session_id, message)
-    
+
     async def unregister(self, client_id: str):
         return await self._sm.unregister(client_id)
-    
+
     def get_all_connections_info(self):
         return self._sm.get_all_connections_info()
-    
+
     def get_connection_stats(self) -> Dict[str, Any]:
         """获取连接统计信息 - uses SessionManager"""
         stats = self._sm.get_stats()
@@ -1026,9 +1019,8 @@ async def broadcast_state_updates():
         try:
             # 2030 Standard: Get current state from real life systems
             heartbeat = get_metabolic_heartbeat()
-            digital_life = get_digital_life()
             bio_state = heartbeat.bio_integrator.get_biological_state()
-            
+
             # Map the GSI-4 / Bio status to UI dimensions (alpha, beta, gamma, delta)
             state_data = {
                 "alpha": {
@@ -1083,7 +1075,7 @@ async def websocket_endpoint(websocket: WebSocket):
     """
     # Accept the WebSocket connection
     await websocket.accept()
-    
+
     # DEBUG: Wrap the receive function to log ASGI events
     orig_receive = websocket._receive
     async def debug_receive():
@@ -1098,14 +1090,14 @@ async def websocket_endpoint(websocket: WebSocket):
                 sys.stderr.write(f"[DEBUG WS endpoint] bytes content: {repr(bytes_d[:80])}\n")
         return msg
     websocket._receive = debug_receive
-    
+
     # Wait for initial handshake message with session_id
     try:
         raw_data = await asyncio.wait_for(websocket.receive_text(), timeout=10)
         logger.info(f"[WebSocket] Raw handshake data: {raw_data[:200]}")
         try:
             handshake = json.loads(raw_data)
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             logger.warning(f"[WebSocket] Handshake is not valid JSON: {raw_data[:100]}")
             await websocket.close(code=4002, reason="Invalid handshake format")
             return
@@ -1119,19 +1111,19 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         logger.warning("[WebSocket] Client disconnected during handshake")
         return
-    
+
     # Extract session info from handshake
     session_id = handshake.get("session_id") or str(uuid.uuid4())
     client_type = handshake.get("client_type", "desktop")
     client_version = handshake.get("client_version", "unknown")
-    
+
     # Register with session_id
     session = await manager._sm.register(websocket, session_id, {
         "client_type": client_type,
         "client_version": client_version,
     }, single_device_mode=True)
     client_id = session.client_id
-    
+
     logger.info(f"[WebSocket] Incoming connection - client_id: {client_id}, session_id: {session_id}, remote: {websocket.client}")
     msg_count = 0
 
@@ -1164,8 +1156,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # Update heartbeat and sequence
             await manager._sm.update_heartbeat(client_id)
-            sequence = manager._sm.increment_sequence(client_id)
-
             if data.get("type") in ["heartbeat", "ping"]:
                 await websocket.send_json(
                     {
@@ -1299,8 +1289,6 @@ async def _run_repl():
     import logging
     logging.disable(logging.WARNING)
 
-    from services.chat_service import get_angela_chat_service
-
     print("[REPL] Angela brain initializing...")
     service = get_angela_chat_service()
     await service.initialize()
@@ -1309,8 +1297,6 @@ async def _run_repl():
 
     loop = asyncio.get_event_loop()
     cmd_history: List[str] = []
-    _last_intent: str = "general"
-
     while True:
         try:
             user_input = await loop.run_in_executor(None, lambda: input("\n\U0001F4AC  你: "))
@@ -1328,7 +1314,6 @@ async def _run_repl():
         if text.startswith("/") or text.startswith(":"):
             intent_name, response_text = _handle_repl_command(text, service, cmd_history)
             if response_text is not None:
-                _last_intent = intent_name
                 print(f"\U0001F4AD Angela [{intent_name}]: {response_text}")
                 continue
 
@@ -1467,7 +1452,6 @@ def _format_intent_registry() -> str:
 
 def _format_llm_routing(service: Any) -> str:
     try:
-        from services.angela_llm_service import get_llm_service
         llm_svc = get_llm_service()
         backends = list(llm_svc.backends.keys()) if hasattr(llm_svc, "backends") else []
         active = getattr(llm_svc, "active_backend", None)
@@ -1565,7 +1549,6 @@ def _handle_model_command(args: str, service: Any) -> str:
 
 def _handle_drive_command(args: str) -> str:
     """Handle /drive command: /drive [status|auth|url|list|search <q>|sync|analyze|logout]"""
-    import httpx
     from core.config_loader import get_angela_config
 
     parts = args.strip().split(maxsplit=1)

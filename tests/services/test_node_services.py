@@ -1,14 +1,15 @@
-"""Tests for node services."""
+"""Smoke test for apps.backend.src.services.node_services."""
 import pytest
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
-
-def test_node_services_stub():
-    pytest.skip("Node services test pending implementation")
+def test_node_services_imports():
+    """Smoke test: apps.backend.src.services.node_services imports successfully."""
+    from services import node_services as node_services
+    assert node_services is not None
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, '-v'])

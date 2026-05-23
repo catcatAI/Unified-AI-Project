@@ -842,7 +842,7 @@ class AngelaLLMService:
         if config:
             logger.info(f"LLM 配置已從 TieredConfig 載入 ({len(config)} items)")
             return config
-            
+
         # Fallback to absolute bare-minimum if even TieredConfig fails
         return {
             "ollama": {
@@ -884,11 +884,11 @@ class AngelaLLMService:
             self.config = new_config
         else:
             self.config = self._get_default_config()
-            
+
         # 清空舊後端並重新初始化
         self.backends = {}
         self._init_backends()
-        
+
         # 更新狀態廣播
         from core.system.state_store import state_store
         state_store.update_state("hardware", {"active_llm": getattr(self.active_backend, "model", "unknown")})
@@ -1658,7 +1658,7 @@ class AngelaLLMService:
             try:
                 from core.waiting_scheduler import get_waiting_scheduler
                 scheduler = get_waiting_scheduler()
-                
+
                 # 提交生成任務
                 coro = self.active_backend.generate(
                     prompt=messages[-1]["content"],
@@ -1666,14 +1666,14 @@ class AngelaLLMService:
                     temperature=temperature,
                     max_tokens=max_tokens,
                 )
-                
+
                 # 透過排程器執行（內建超時管理）
                 response = await scheduler.submit(
-                    coro, 
-                    timeout=timeout_seconds, 
+                    coro,
+                    timeout=timeout_seconds,
                     label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
                 )
-                
+
                 if response is None:
                     # 排程器回傳 None 通常代表超時或內部失敗
                     raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")

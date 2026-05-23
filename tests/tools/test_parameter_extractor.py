@@ -1,14 +1,15 @@
-"""Tests for parameter extractor."""
+"""Smoke test for apps.backend.src.core.tools.parameter_extractor."""
 import pytest
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
-
-def test_parameter_extractor_stub():
-    pytest.skip("Parameter extractor test pending full implementation")
+def test_parameter_extractor_imports():
+    """Smoke test: apps.backend.src.core.tools.parameter_extractor imports successfully."""
+    from core.tools import parameter_extractor as parameter_extractor
+    assert parameter_extractor is not None
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, '-v'])

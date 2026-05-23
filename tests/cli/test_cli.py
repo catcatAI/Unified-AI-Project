@@ -1,10 +1,13 @@
-"""Tests for the command-line interface (CLI)."""
+"""Smoke test for apps.backend.src.cli.cli."""
 import pytest
+import sys
+from pathlib import Path
 
-
-def test_cli_stub():
-    pytest.skip("CLI tests require heavy module imports - run manually with full environment")
+def test_cli_imports():
+    """Smoke test: apps.backend.src.cli.cli imports successfully."""
+    from cli import cli as cli
+    assert cli is not None
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, '-v'])
