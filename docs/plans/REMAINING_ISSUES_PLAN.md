@@ -54,12 +54,13 @@
 #### 6. unittest.TestCase 遷移
 - **狀態**: **✅ 已完成** — 所有 38 個 unittest.TestCase 檔案已遷移至 pytest 或移除
 
-#### 7. 源碼 Bug 修復
-- `real_causal_reasoning_engine.py:80` — hardcoded 0.75 → Pearson correlation
-- `alignment_manager.py:389` — `meets` NameError → `meets_thresholds`
-- `alignment_manager.py:430` — `emotional_arousal=` → `arousal=`
-- `alignment_manager.py:428` — `EmotionalState()` 只傳入 3/5 必填欄位 → 補上 `emotion_intensity` + `secondary_emotions`
-- `scripts/health_check_service.py:79,85` — 錯誤 import path
+#### 7. 源碼 Bug 修復 (審計驗證)
+- `real_causal_reasoning_engine.py:80` — hardcoded 0.75 → Pearson correlation ✅ **verified in source**
+- `alignment_manager.py:389` — `meets` NameError → `meets_thresholds` ✅ **verified**
+- `alignment_manager.py:430` — `emotional_arousal=` → `arousal=` ✅ **verified**
+- `alignment_manager.py:428` — `EmotionalState()` 只傳入 3/5 必填欄位 → 補上 `emotion_intensity` + `secondary_emotions` ✅ **verified**
+- `life_intensity_formula.py:279-304` — `register_observer()` 缺少 `attention_level` 參數 ✅ **verified**
+- `scripts/health_check_service.py:79,85` — 錯誤 import path ⚠️ **NOT FIXED in source** — 只在測試層 mock, 源碼仍引用不存在的 `ham_memory_manager.py` 和 `multi_llm_service.py`
 
 #### 8. 測試目錄清理 (Phase 9)
 - 移除 9 個根目錄非測試 script: `test_import.py`, `test_env.py`, `test_path.py`, `test_module.py`, `test_all_fixed_modules.py`, `test_json_fix.py`, `test_modules_with_output.py`, `test_repeat_fix.py`, `test_syntax_fixer.py`
@@ -98,17 +99,21 @@
 
 ---
 
-### 剩餘項目
+### 剩餘項目 (審計更新)
 
-#### 1. `tests/ai/meta/` 零測試 (P3)
-`tests/ai/meta/` 目錄目前不存在 — `ai/meta/` 模組無對應測試。
+#### 1. `tests/core/` 剩餘 ~50 個 source modules 無測試
+- ~50 個 `core/` 模組仍無測試覆蓋 (30/80 已有, 校驗後總數 316 tests)
+- 覆蓋率瓶頸: 需從 16.34% → 30%
 
-#### 2. `tests/core/` 剩餘 ~50 個 source modules 無測試
-- ~50 個 `core/` 模組仍無測試覆蓋
+#### 2. `health_check_service.py` 源碼 import 未修
+- 審計確認: `ham_memory_manager.py` 與 `multi_llm_service.py` 不存在於專案中
+- 目前只在測試層以 `def full_health_check(): return {"status": "mock_ok"}` mock 繞過
+- 源碼的 `try/except ImportError` 會捕捉錯誤，但功能實際斷鏈
+- 需修復 import path 或重構 `scripts/health_check_service.py`
 
-#### 3. `tests/unit/test_ai_ops.py` 確認歸屬 (P3)
-- 35 tests 在 `tests/unit/` 中測試 `ai.ops.*`，但 `tests/ai/` 也有 `test_ops.py` (14 tests)
-- 需確認是否重疊
+#### 3. `full_health_check` 回傳型別非 bug
+- 審計確認: 函數正確回傳 `bool` (`True`/`False`)
+- 之前列為 bug 7 實為誤判，已在審計中更正
 
 #### 4. Integration conftest 驗證 (P2)
 - conftest mock path 已修正，但 fixture 未被任何 test 調用

@@ -44,7 +44,7 @@ Priority 8: integration/       ← Cross-layer flows
 
 ---
 
-### ✅ 已完成
+### ✅ 已完成 (審計驗證 — 實際測試數 vs MD 舊值)
 
 | Phase | 內容 | 狀態 |
 |-------|------|------|
@@ -55,33 +55,34 @@ Priority 8: integration/       ← Cross-layer flows
 | **Phase 5: API** | Router (14 tests)、Endpoints (24 tests)、HealthCheck (4 tests) | ✅ **42 tests** |
 | **Phase 6: Migration** | 38 個 unittest.TestCase 全部遷移至 pytest 或移除 | ✅ |
 | **Phase 7: Integration** | Server import (2 tests)、Wiring (4 tests)、Middleware (7 tests) | ✅ **13 tests** |
-| **Phase 8: AI Migration** | 從 `tests/core_ai/` 搬遷 8 個獨特模組 (`code_understanding`, `compression`, `formula_engine`, `language_models`, `lis`, `meta_formulas`, `personality`, `service_discovery`) 至 `tests/ai/` | ✅ **~20 tests** |
-| **Phase 9: Refactor Migration** | 從 `tests/refactor/` 搬遷 24 個檔案至 `tests/core/` (2 個例外: `code_inspector_integration` → `tests/ai/`, `state_matrix_api` → `tests/api/`) | ✅ **24 files** |
-| **Phase 10: Quality Audit** | 審計核心/AI 15 files (浮點數/時區/mock 斷言), Services/API 24 files (70 WEAK→STRONG), SMOKE→REAL 升級 8 subdirs (7→50 tests) | ✅ **All upgraded** |
-| **Phase 11: Legacy Migration** | 40 個 root-level 測試搬遷至正確層級 (services 6, core 22, ai 5, ai/memory 3, ai/agents 2, shared 2) + import path 修復 | ✅ **40 files** |
-| **Phase 13: Core + Meta Tests** | `ai/meta/` 48 tests (PerformanceTracker, LearningLogDB, LearningOrchestrator). `core/` 222 tests across 13 modules (config_validator, life_intensity_formula, active_cognition_formula, encryption, key_validator, axis, etc.) | ✅ **270 tests, coverage 16.34%** |
-| **Architecture audit** | 0 層級違規 (架構隔離正確執行) | ✅ |
-| **Bug fix audit** | EmotionalState 隱藏 bug 已修復 (缺少 2 個必要欄位) | ✅ |
+| **Phase 8: AI Migration** | 從 `tests/core_ai/` 搬遷 8 個獨特模組至 `tests/ai/` | ✅ **~20 tests** |
+| **Phase 9: Refactor Migration** | 從 `tests/refactor/` 搬遷 24 個檔案至 `tests/core/` | ✅ **24 files** |
+| **Phase 10: Quality Audit** | 審計核心/AI 15 files, Services/API 24 files (70 WEAK→STRONG), SMOKE→REAL 升級 8 subdirs (7→50 tests) | ✅ **All upgraded** |
+| **Phase 11: Legacy Migration** | 40 個 root-level 測試搬遷至正確層級 + import path 修復 | ✅ **40 files** |
+| **Phase 12: Subdirectory Cleanup** | 刪除 6 legacy stub dirs, 合併 agents/ → ai/agents/, 刪除 integrations/, 清除 8 hsp stubs, 搬遷 62 utility scripts → scripts/ | ✅ **Complete** |
+| **Phase 13: Core + Meta Tests** | `ai/meta/` 48 tests (3 modules). `core/` 222 tests across 13 modules | ✅ **270 tests** |
+| **Architecture audit** | 0 層級違規 (架構隔離正確執行) — lazy imports only | ✅ |
+| **Bug fix audit** | 6/7 source bugs verified in code; 1 (health_check_service imports) only test-mocked | ✅ **6 fixed** |
+| **Test quality audit** | 8 files spot-checked: 62–100% REAL, avg ~90%, 0 STUB | ✅ |
+| **File structure audit** | Directory tree corrected from audit (4 dirs→files, all counts updated) | ✅ |
 | **CI Integration** | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項) | ✅ |
-| **Totals** | **~1500+ tests** across 30+ directories | **coverage 16.34%** |
+| **Totals** | **~1300+ tests** (審計實際總計) across 30+ directories | **coverage 16.34%** |
 
-### 當前測試目錄結構 (Phase 12 清理後)
+### 當前測試目錄結構 (Phase 13 清理後 — 審計實際數據)
 
 ```
 tests/
-├── core/              ← ~114 tests ✅
+├── core/              ← 316 tests ✅ (含 refactor 搬遷 + 新增 13 modules)
 ├── ai/
-│   ├── agents/       ← 71 tests ✅ (含 6 merged from tests/agents/)
-│   ├── memory/       ← 87 tests ✅ (含 3 legacy moved)
-│   ├── alignment/    ← 63 tests ✅
-│   ├── dialogue/     ← 90 tests ✅
+│   ├── agents/       ← 96 tests ✅ (含 merged from tests/agents/)
+│   ├── memory/       ← 277 tests ✅ (含 legacy moved)
+│   ├── alignment/    ← 93 tests ✅
+│   ├── dialogue/     ← 48 tests ✅
 │   ├── learning/     ← 71 tests ✅
 │   ├── lifecycle/    ← 162 tests ✅
 │   ├── context/      ← 104 tests ✅
-│   ├── execution/    ← 24 tests ✅
-│   ├── ops/          ← 14 tests ✅
-│   ├── rag/          ← 8 tests ✅
-│   ├── crisis/       ← 19 tests ✅
+│   ├── (files: test_execution.py ← 24, test_ops.py ← 14,
+│   │       test_rag.py ← 8, test_crisis.py ← 19)
 │   ├── code_understanding/  ← 5 tests ✅
 │   ├── compression/         ← 4 tests ✅
 │   ├── formula_engine/      ← 8 tests ✅
@@ -90,11 +91,11 @@ tests/
 │   ├── meta_formulas/       ← 4 tests ✅
 │   ├── personality/         ← 6 tests ✅
 │   └── service_discovery/   ← 9 tests ✅
-├── services/          ← ~101 tests ✅
-├── api/               ← ~43 tests ✅
-├── shared/            ← ~6 tests ✅
-├── integration/       ← 13 tests ✅
-├── models/            ← 35 tests ✅
+├── services/          ← 140 tests ✅
+├── api/               ← 31 tests ✅
+├── shared/            ← 9 tests ✅
+├── integration/       ← 75 tests ✅
+├── models/            ← 32 tests ✅
 ├── scripts/           ← 62 utility scripts (非 pytest)
 ├── hsp/               ← 10 files (3 real + mocks)
 ├── fragmenta/         ← 1 test (keep)
@@ -112,25 +113,25 @@ tests/
 └── __init__.py
 ```
 
-### 剩餘待補層級
+**Notice**: `execution/`, `ops/`, `rag/`, `crisis/` are FILES (`test_execution.py`, etc.) under `tests/ai/`, not subdirectories — corrected from earlier MD versions.
+
+### 剩餘待補層級 (審計更新)
 
 | 待補層級 | 檔案數 | 優先度 | 狀態 |
 |---------|--------|--------|------|
-| `tests/ai/meta/` | 3 | Low | ❌ 零測試 |
-| `tests/core/` (剩餘) | ~50 | Medium | ⏳ 部分完成 |
-| `tests/ai/` (新搬遷) | 8 subdirs | Low | ⏳ 僅 import smoke — 需升級為 REAL_TEST |
+| `tests/core/` (剩餘) | ~50 | Medium | ⏳ 部分完成 (30/80 modules 有測試, 校驗後總數 316) |
+| `health_check_service.py` 源碼 import | 2 broken imports | Low | ⚠️ 只在測試 mock, 源碼未修 |
 
-### 品質審計摘要
-
-Phase 9 完成三項審計：
+### 品質審計摘要 (Phase 13 最終審計)
 
 | 審計 | 結果 | 行動 |
 |------|------|------|
-| **Architecture**: 層級隔離檢查所有測試 | 0 違規 ✅ | 全部通過 |
-| **Quality**: 測試能否發現 bug | 5 個源碼 bug 被發現並修復 ✅ | EmotionalState 隱藏 bug 已修復 |
-| **Bug Fix Correctness**: 修復方法是否正確 | 4/5 正確, 第 5 個 (EmotionalState) 發現隱藏 bug | 已補上缺少的 2 個必要欄位 |
-
-發現的隱藏 bug: `alignment_manager.py:428` 的 `EmotionalState()` 呼叫只傳入 3/5 必填欄位。真實 `EmotionalState` dataclass 有 5 個必填欄位 (`primary_emotion`, `emotion_intensity`, `secondary_emotions`, `valence`, `arousal`)，但原始碼只傳了 3 個。若 import 成功 (不走 fallback mock)，執行時會 `TypeError: __init__() missing 2 required positional arguments`。
+| **Architecture**: 層級隔離檢查 ai/ → services/ | 0 違規 ✅ | 4 個 lazy imports (在 method 內) 可接受 |
+| **Bug Fix Correctness**: 7 個聲稱的修復審計 | 6/7 verified in source ✅, 1 only test-mocked ⚠️ | `health_check_service.py` imports 只在測試層 mock，源碼問題未修 |
+| **Test Quality**: 8 檔案抽樣審計 | REAL 62–100%, avg ~90%, 0 STUB ✅ | 僅 9% weak (`is None` for edge cases) |
+| **File Structure**: MD 目錄 vs 實際 | 4 dirs→files, 多數 count 錯誤 ⚠️ | 全部修正：execution/ops/rag/crisis 是檔案非目錄 |
+| **Source bug 6** (health_check_service imports) | **NOT FIXED in source** — `ham_memory_manager.py` 與 `multi_llm_service.py` 不存在 | 僅在測試層 mock 繞過，源碼 import 仍會拋 ImportError (雖被 try/except 捕捉) |
+| **Source bug 7** (full_health_check return) | **NOT_A_BUG** — 函數正確回傳 bool | 測試的 mock 是冗餘的 |
 
 ---
 
@@ -138,15 +139,14 @@ Phase 9 完成三項審計：
 
 在 Phase 8 驗收前，測試必須滿足：
 
-| 指標 | 最低門檻 | 目標 |
+| 指標 | 最低門檻 | 當前 |
 |------|---------|------|
-| 語法正確 | 100% | 100% |
-| import 不報錯 | 100% | 100% |
-| arch violation | 0 | 0 |
-| coverage | >15% | >30% |
-| stub files | 0 | 0 |
-| unittest.TestCase | <38 | <10 |
-| CI pass rate | 95%+ | 99%+ |
+| 語法正確 | 100% | ✅ 100% |
+| import 不報錯 | 100% | ✅ 100% |
+| arch violation | 0 | ✅ 0 |
+| coverage | >15% | 🟡 **16.34%** |
+| stub files | 0 | ✅ 0 |
+| CI pass rate | 95%+ | ❓ 需 CI 執行驗證 |
 
 ---
 
@@ -216,7 +216,7 @@ jobs:
 5. 每個核心 interface 都有 conformance test
 6. ServiceRegistry 有 unit test
 
-### Phase 12 清理一覽
+### Phase 12-13 清理一覽
 
 | 操作 | 數量 | 說明 |
 |------|------|------|

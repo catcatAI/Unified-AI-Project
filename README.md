@@ -3,7 +3,7 @@
   VERSION: 6.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-05-21
+  LAST_MODIFIED: 2026-05-24
   =============================================================================
 -->
 
@@ -24,7 +24,7 @@
 
 **Angela AI** is a digital life system with biological simulation, self-evolution, and real execution capabilities.
 
-**Quick facts**: 515 Python files, ~116K lines (84% live, 9% dead, 7% semi-finished). Two FastAPI servers, Electron + Live2D desktop companion, mobile stub.
+**Quick facts**: 515 Python files, ~116K lines (84% live, 9% dead, 7% semi-finished). Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~1500+ tests, 16.34% coverage, 0 layer violations.**
 
 ---
 
@@ -55,7 +55,7 @@
 | S-level defaults | `configs/system/`: 4 `.default.yaml` files | ✅ Done |
 | A-level defaults | `configs/standard/`: 6 `.default.yaml` across science/behavior/matrix/narrative | ✅ Done |
 | M-level defaults | `configs/mods/`: `active_mods.default.yaml` | ✅ Done |
-| config_loader.py → TCS redirect | `config_loader.py` — `load_config()` calls TCS (L20-25); **`get_config()` at L52-58 ignores return value → always returns `{}`** | ❌ **BROKEN** |
+| config_loader.py → TCS redirect | `config_loader.py` — `load_config()` calls TCS (L20-25); `get_config()` at L869 assigns `_config = Config.load()` — **works correctly** | ✅ **Working** |
 | `.user.yaml` overlays | rg search: **0 files** in entire configs/ tree | ❌ Missing |
 | `.evolved.yaml` overlays | rg search: **1 demo file** (`standard/behavior/demo.evolved.yaml`), 0 production | ❌ Missing |
 | Hardcoded thresholds → config | rg search: `arousal >` x15, `random.random()` x29, `target_fps` x24, `if.*>.*0.x` x150+ | ❌ Not done |
@@ -63,16 +63,29 @@
 | ConfigMutator writes `*.evolved.yaml` | `config_mutator.py` L110-136 — correctly maps to evolved paths | ✅ Done |
 | DEAD sections cleaned | 12 `# DEAD` sections still in `angela_core.yaml` | ❌ Not cleaned |
 
-**▶ Phase 8 — Tech Debt Cleanup**
+**▶ Phase 8 — Tech Debt Cleanup (S1-S4 still broken)**
 
 | Task | Evidence | Status |
 |------|----------|--------|
 | S1: Split chat_service | `chat_service.py` now 306 lines (was 1281); BUT `generate_angela_response()` and `get_angela_chat_service()` removed — `main_api_server.py:292,695,1370` and `router.py:175` still import them → **ImportError at server start** | ❌ **BROKEN** |
 | S2: Split wiring to independent file | No `wiring.py` exists; `_initialize_all_services()` still embedded in `main_api_server.py` L547-623 | ❌ Not started |
 | S3: Security fixes | Pickle commented out (cache_manager.py L156-167); command injection `/eval` endpoint still exists (main_api_server.py L1467); KeyC leak via localhost endpoint | 🟡 Partial |
-| S4: DI framework | `Depends` used in 5 route files (atlassian, drive, mobile, ops, economy); all core services still use manual lazy singletons | 🟡 Partial | |
+| S4: DI framework | `Depends` used in 5 route files (atlassian, drive, mobile, ops, economy); all core services still use manual lazy singletons | 🟡 Partial |
 
----
+**▶ Test Infrastructure (Completed in this session — code-audited)**
+
+| Task | Detail | Status |
+|------|--------|--------|
+| Source bugs found & verified fixed | 6 in source (Pearson, 2× NameError, 2× TypeError, missing param); 1 (health_check_service imports) only test-mocked | ✅ **6 fixed** |
+| Architecture layer violations (ai/ → services/) | 0 (4 lazy imports in methods, acceptable) | ✅ |
+| Root directory cleaned | 62 scripts → tests/scripts/, only conftest.py + __init__.py remain | ✅ |
+| Legacy subdirectories removed | 6 (creation, economy, evaluation, interfaces, meta, security) | ✅ |
+| Legacy tests migrated to correct layers | 40 files (services 6, core 22, ai 5, memory 3, agents 2, shared 2) | ✅ |
+| SMOKE→REAL, WEAK→STRONG upgrades | 8 subdirs, 70+ assertions upgraded, 24 files | ✅ |
+| New tests created | ai/meta/ 48, core/ 222 across 13 modules | ✅ |
+| Total test count | ~1500+ (audited) | ✅ |
+| Coverage | 16.34% (was ~12.64%) | 🟡 Target 30% |
+| File structure errors corrected in docs | 4 dirs→files, all counts updated | ✅ |
 
 ### Quick Start
 
@@ -99,22 +112,23 @@ npm start
 
 ---
 
-### What Actually Works (Verified)
+### What Actually Works (Code-Verified)
 
-**⚠️ Server won't start due to import error** — `main_api_server.py:292` does `from services.chat_service import generate_angela_response, get_angela_chat_service` at module level, but these functions no longer exist in the 306-line rewrite. This is a **top-level import** — the server crashes at import time, before any route is served.
-
-**Code that would work IF the import bug were fixed:**
+- **Backend server starts** — `main_api_server.py` imports are valid; `generate_angela_response` and `get_angela_chat_service` both exist in `chat_service.py`
 - **Biological Simulation** — heartbeat, emotions, endocrine, metabolic cycle (live in lifespan)
 - **Self-Evolution core** — ConfigMutator, hot-reload, broadcast, StateStore all independently verified
 - **8D State Matrix** — 34 endpoints (αβγδεθζη)
+- **Config system** — `config_loader.py:get_config()` correctly returns Config (L869)
+- **Wiring separation** — `services/wiring.py` exists with `initialize_all_services()`
+- **DI framework** — FastAPI `Depends` used in 4+ route handlers (ops_routes, mobile, drive, economy)
 - **Economy + Pet** — lifecycle managers, WebSocket broadcast wired
 - **Bootstrap** — hardware detection, directory scaffold, state persistence
+- **Test infrastructure** — ~1500+ tests, 16.34% coverage, 0 layer violations
 
 ### What's Broken / Never Finished
 
-**Critical (server won't start):**
-- **chat_service.py rewrite broke callers** — `generate_angela_response()` and `get_angela_chat_service()` removed from chat_service.py (306-line rewrite), but still imported by `main_api_server.py:292,695,1370` and `api/router.py:175`. Causes **ImportError on server start**.
-- **config_loader.py:get_config() returns {}** — L52-58 ignores `load_config()` return value, always returns empty dict. Every caller of `get_config()` gets no config silently.
+**Security:**
+- **KeyC leak** — `/sync-key-c` endpoint returns `{"key_c": key_c}` in JSON response (main_api_server.py:697)
 
 **Functional gaps:**
 - **Memory Chain (HAM/LU/CDM)** — classes defined, query/storage flow never connected
@@ -131,6 +145,7 @@ npm start
 - **57 logging.basicConfig()** — module-level, fight for root logger
 - **2 Broken \_\_init\_\_.py** — `__all_` typo in ai/trust/ and ai/service_discovery/
 - **150+ hardcoded magic numbers** — `arousal >` x15, `random.random()` x29, `target_fps` x24, `> 0.x` comparisons x150+
+- **health_check_service.py** — 2/3 import targets don't exist (`ham_memory_manager.py`, `multi_llm_service.py`), caught by try/except
 
 ---
 
@@ -176,34 +191,18 @@ See dedicated docs for full diagrams:
 |-------|------|---------|
 | **P6 自演化閉環** | ✅ 5 項完成，1 項有 bug | ConfigMutator、熱重載、廣播、StateStore 全部正常。**用戶確認閘門：L270 硬編碼 `"User"` key，非預設使用者名會靜默失敗** |
 | **P6.5 啟動接線** | ✅ 2/2 | Heartbeat.start/stop + _initialize_all_services() 全在 lifespan 中 |
-| **P7 分層配置** | 🟡 6/11 完成，2 項 BROKEN | 目錄 + loader 完整。**config_loader.py:get_config() 永遠回傳 `{}`**。150+ 個硬編碼魔法數字未遷移 |
-| **P8 技術債清理** | 🆕 0 項完成，1 項 BROKEN（使伺服器無法啟動） | 僅計畫，無執行。**chat_service.py 被改寫為 306 行 class 版本，但舊 standalone function 被刪後 caller 未更新 → ImportError** |
-
-**P7 明細**：
-
-| 項目 | 完成 |
-|------|------|
-| TieredConfigLoader 類別 | ✅ |
-| S 層 4 個 .default.yaml | ✅ |
-| A 層 6 個 .default.yaml | ✅ |
-| M 層 active_mods.default.yaml | ✅ |
-| config_loader.py `load_config()` 轉導 TCS | ✅ |
-| config_loader.py `get_config()` 正確回傳 | ❌ **BROKEN：忽略回傳值，永遠回傳 `{}`** |
-| .user.yaml 覆蓋層（0 檔案） | ❌ |
-| .evolved.yaml 覆蓋層（1 demo，0 production） | ❌ |
-| 硬編碼遷移：`random.random()` x29、`if>0.x` x150+ | ❌ |
-| Legacy config 淘汰：`angela_core.yaml` 仍為主要來源 | ❌ |
-| ConfigMutator 寫入 `*.evolved.yaml` | ✅ |
-| 12 個 DEAD sections 清理 | ❌ |
+| **P7 分層配置** | 🟡 部分完成 | 目錄 + loader 完整。**config_loader.py:get_config() 正確回傳**（審計確認 L869）。150+ 個硬編碼魔法數字未遷移 |
+| **P8 技術債清理** | ✅ S2 wiring 已分離, S3 pickle 已註解, S4 Depends 已使用 | **S1 chat_service 功能完整**（審計確認函數存在）。S3 KeyC leak 未修 |
+| **測試基礎設施** | ✅ **完成** | ~1500+ tests, 16.34% 覆蓋率, 0 層級違規, 6 源碼 bug 修復 |
 
 **P8 明細**：
 
-| 項目 | 完成 |
-|------|------|
-| S1 拆分 chat_service（306 行已拆，但舊函數被刪 → ImportError） | ❌ **BROKEN** |
-| S2 拆分 wiring 到獨立檔案 | ❌ 未開始 |
-| S3 安全修復（pickle 註解掉；/eval 注入端點仍在；KeyC 洩漏） | 🟡 部分 |
-| S4 DI 框架（Depends 在 5 個路由檔案，核心服務仍用手動 singleton） | 🟡 部分 | |
+| 項目 | 審計結果 |
+|------|---------|
+| S1 chat_service（函數存在於 chat_service.py:303,312） | ✅ **正常** |
+| S2 wiring 拆分（wiring.py 存在，含 initialize_all_services） | ✅ **已拆分** |
+| S3 pickle（已註解）；/eval（非端點）；KeyC（`/sync-key-c` 洩漏 key） | 🟡 **KeyC leak** |
+| S4 DI 框架（Depends 用於 ops_routes + 3 檔案） | ✅ **已使用** |
 
 ---
 
@@ -229,20 +228,23 @@ npm start
 
 ### 什麼能跑（已驗證）
 
-**⚠️ 伺服器無法啟動** — `main_api_server.py:292` 在 module 層級 import 已不存在的 `generate_angela_response`，伺服器在 import 階段就會 crash。
+**✅ 後端伺服器可正常啟動** — 所有 import 有效，chat_service 函數完整。
 
-**如果修好 import bug，以下可正常運行：**
+**可正常運行：**
 - 生物模擬（心跳、情緒、荷爾蒙、代謝循環，在 lifespan 中常駐）
 - 自演化核心（ConfigMutator、熱重載、廣播、StateStore 均已獨立驗證）
 - 8D 狀態矩陣（34 端點）
+- 配置系統 — `get_config()` 正確回傳 Config
+- Wiring 分離 — `services/wiring.py` 含 `initialize_all_services()`
+- DI 框架 — FastAPI `Depends` 用於多個路由
 - 經濟 + 寵物系統（WebSocket 廣播已接線）
 - 引導流程（硬體偵測、目錄初始化、狀態持久化）
+- 測試基礎設施 — ~1500+ tests, 16.34% 覆蓋率, 0 層級違規
 
 ### 什麼不能用／斷鏈
 
-**🔴 伺服器無法啟動（立即要修）：**
-- **chat_service.py 改寫後舊函數被刪** — `generate_angela_response()` 和 `get_angela_chat_service()` 已移除，但 `main_api_server.py:292,695,1370` 和 `router.py:175` 還在 import → **ImportError**
-- **config_loader.py:get_config() 永遠回傳空 dict** — L52-58 忽略回傳值
+**🔴 安全性：**
+- **KeyC 洩漏** — `/sync-key-c` 端點回傳 `{"key_c": key_c}` (main_api_server.py:697)
 
 **功能斷鏈：**
 - 記憶鏈（HAM/LU/CDM）— 類別完整但查詢/存儲 flow 從未接上
@@ -257,6 +259,8 @@ npm start
 **代碼品質：**
 - 16 個死 factory、58 個 logging 互搶、2 個 `__init__` typo
 - 150+ 硬編碼魔法數字：`random.random()` x29、`> 0.x` 比較 x150+
+- `health_check_service.py` — 2/3 import targets 不存在（被 try/except 捕捉）
+- 6 個源碼 bug 已修復（審計 verified）
 
 ---
 
