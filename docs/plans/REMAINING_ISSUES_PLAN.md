@@ -72,51 +72,44 @@
 
 #### 9. 品質審計
 - **架構審計**: 所有層級隔離 ✅ 0 違規
-- **測試品質審計**: ~28 個純 smoke test 轉換或移除
+- **測試品質審計**: 
+  - 核心/AI 層 15 檔案修復 (浮點數/時區/mock 斷言)
+  - Services/API 層 24 檔案修復 (70 個 WEAK→STRONG)
+  - 8 個 SMOKE→REAL 升級 (7 tests → 50 tests)
 - **Bug fix 審計**: 發現 EmotionalState 隱藏 bug (3/5 必填欄位) 並修復
+
+#### 10. Legacy 測試搬遷 (Phase 11)
+- 40 個 root-level 測試搬遷至正確層級目錄
+- 所有 import path 已修復
+
+#### 11. 子目錄清理 (Phase 12)
+- 🗑 刪除 6 個 legacy stub 目錄: `creation/`, `economy/`, `evaluation/`, `interfaces/`, `meta/`, `security/`
+- 🚚 合併 tests/agents/ 6 個獨特檔案至 tests/ai/agents/
+- 🗑 刪除 tests/integrations/ (全部 stub)
+- 🗑 清除 tests/hsp/ 8 個 assert-True stubs
+- 🚚 搬遷 62 個 utility scripts 至 tests/scripts/
+- 🧹 根目錄僅保留 conftest.py + __init__.py
 
 ---
 
 ### 剩餘項目
 
-#### 1. 根目錄 legacy test 尚未搬遷 (P2)
-以下檔案仍在 `tests/` 根目錄，未依架構搬遷至正確層級：
-
-| 檔案 | 測試目標 | 目標目錄 | 優先度 |
-|------|---------|---------|--------|
-| `test_angela_core.py` | `services.main_api_server` | `tests/services/` | P2 |
-| `test_websocket.py` | `services.main_api_server` | `tests/services/` | P2 |
-| `test_connection_session.py` | `services.connection_session` | `tests/services/` | P2 |
-| `test_security.py` | `shared.security` | `tests/shared/` | P2 |
-| `test_math_tool.py` | `core.math_tool` | `tests/core/` | P3 |
-| `test_logic_tool.py` | `core.logic_tool` | `tests/core/` | P3 |
-
-**注意**: 這些檔案多為 async function 內 import (lazy import)，架構違規程度較低。
-
-#### 2. 新搬遷的 8 個 tests/ai/ 子目錄待升級 (P3)
-從 `tests/core_ai/` 搬遷至 `tests/ai/` 的 8 個子目錄目前多為 import smoke test，缺少真實 assertion：
-
-| 目錄 | 測試數 | 目前性質 | 建議升級 |
-|------|--------|---------|---------|
-| `code_understanding/` | 5 | REAL (LightweightCodeModel) | 已足夠 |
-| `compression/` | 4 | REAL (AlphaDeepModel) | 已足夠 |
-| `formula_engine/` | 1 | SMOKE | 升級為 REAL |
-| `language_models/` | 1 | SMOKE | 升級為 REAL |
-| `lis/` | 2 | SMOKE | 升級為 REAL |
-| `meta_formulas/` | 1 | SMOKE | 升級為 REAL |
-| `personality/` | 2 | SMOKE | 升級為 REAL |
-| `service_discovery/` | 1 | SMOKE | 升級為 REAL |
-
-#### 3. `tests/ai/meta/` 零測試 (P3)
+#### 1. `tests/ai/meta/` 零測試 (P3)
 `tests/ai/meta/` 目錄目前不存在 — `ai/meta/` 模組無對應測試。
 
-#### 4. `tests/core/` 剩餘 ~50 個 source modules 無測試
+#### 2. `tests/core/` 剩餘 ~50 個 source modules 無測試
 - ~50 個 `core/` 模組仍無測試覆蓋
-- 同 `TEST_RESTRUCTURE_PLAN.md` 所述
 
-#### 5. Integration conftest 驗證 (P2)
+#### 3. `tests/unit/test_ai_ops.py` 確認歸屬 (P3)
+- 35 tests 在 `tests/unit/` 中測試 `ai.ops.*`，但 `tests/ai/` 也有 `test_ops.py` (14 tests)
+- 需確認是否重疊
+
+#### 4. Integration conftest 驗證 (P2)
 - conftest mock path 已修正，但 fixture 未被任何 test 調用
 - 待確認是否保留或清理
 
-#### 6. flake8 on tests/ 尚未啟用於 CI
+#### 5. flake8 on tests/ 尚未啟用於 CI
 - `tests/` 目錄尚未納入 flake8 檢查
+
+#### 6. `tests/hsp/`, `tests/game/`, 等保留目錄待後續審計
+- 這些目錄不在主要測試層級結構內，但含有真實測試內容

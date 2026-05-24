@@ -57,25 +57,22 @@ Priority 8: integration/       ← Cross-layer flows
 | **Phase 7: Integration** | Server import (2 tests)、Wiring (4 tests)、Middleware (7 tests) | ✅ **13 tests** |
 | **Phase 8: AI Migration** | 從 `tests/core_ai/` 搬遷 8 個獨特模組 (`code_understanding`, `compression`, `formula_engine`, `language_models`, `lis`, `meta_formulas`, `personality`, `service_discovery`) 至 `tests/ai/` | ✅ **~20 tests** |
 | **Phase 9: Refactor Migration** | 從 `tests/refactor/` 搬遷 24 個檔案至 `tests/core/` (2 個例外: `code_inspector_integration` → `tests/ai/`, `state_matrix_api` → `tests/api/`) | ✅ **24 files** |
-| **Cleanup: Dead files** | 移除 14 個 stub/testless 檔案: 5 個 `core_ai/` assert-True, 9 個根目錄非測試 script | ✅ |
-| **Cleanup: Stale duplicates** | 移除 `tests/core_ai/` 中與 `tests/ai/` 重疊的5個子目錄 (`context`, `dialogue`, `learning`, `memory`, `rag`) | ✅ |
+| **Phase 10: Quality Audit** | 審計核心/AI 15 files (浮點數/時區/mock 斷言), Services/API 24 files (70 WEAK→STRONG), SMOKE→REAL 升級 8 subdirs (7→50 tests) | ✅ **All upgraded** |
+| **Phase 11: Legacy Migration** | 40 個 root-level 測試搬遷至正確層級 (services 6, core 22, ai 5, ai/memory 3, ai/agents 2, shared 2) + import path 修復 | ✅ **40 files** |
+| **Phase 12: Subdirectory Cleanup** | 刪除 6 個 legacy stub 目錄、合併 agents/ → ai/agents/、刪除 integrations/、清除 8 hsp stubs、搬遷 62 utility scripts → scripts/ | ✅ **Complete** |
 | **Architecture audit** | 0 層級違規 (架構隔離正確執行) | ✅ |
 | **Bug fix audit** | EmotionalState 隱藏 bug 已修復 (缺少 2 個必要欄位) | ✅ |
 | **CI Integration** | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項) | ✅ |
-| **Totals** | **~1030 tests** across 22 directories | ✅ **All passing** |
+| **Totals** | **~1200+ tests** across 30+ directories | ✅ |
 
-### 當前測試目錄結構 (Phase 9 清理後)
+### 當前測試目錄結構 (Phase 12 清理後)
 
 ```
 tests/
-├── core/              ← ~92 tests ✅ (含 refactor 搬遷 + 原有)
-│   ├── autonomous/   ← 原有 + refactor tests
-│   ├── interfaces/   ← ServiceRegistry
-│   ├── managers/     ← state managers
-│   └── state/        ← state adapters
+├── core/              ← ~114 tests ✅
 ├── ai/
-│   ├── agents/       ← 65 tests ✅
-│   ├── memory/       ← 84 tests ✅
+│   ├── agents/       ← 71 tests ✅ (含 6 merged from tests/agents/)
+│   ├── memory/       ← 87 tests ✅ (含 3 legacy moved)
 │   ├── alignment/    ← 63 tests ✅
 │   ├── dialogue/     ← 90 tests ✅
 │   ├── learning/     ← 71 tests ✅
@@ -85,20 +82,34 @@ tests/
 │   ├── ops/          ← 14 tests ✅
 │   ├── rag/          ← 8 tests ✅
 │   ├── crisis/       ← 19 tests ✅
-│   ├── code_understanding/  ← 5 tests ✅ (從 core_ai 搬遷)
+│   ├── code_understanding/  ← 5 tests ✅
 │   ├── compression/         ← 4 tests ✅
-│   ├── formula_engine/      ← 1 test  ✅
-│   ├── language_models/     ← 1 test  ✅
-│   ├── lis/                 ← 2 tests ✅
-│   ├── meta_formulas/       ← 1 test  ✅
-│   ├── personality/         ← 2 tests ✅
-│   └── service_discovery/   ← 1 test  ✅
-├── services/          ← 95 tests ✅
-├── api/               ← ~43 tests ✅ (含 state_matrix_api 搬遷)
-├── shared/            ← 4 tests ✅
+│   ├── formula_engine/      ← 8 tests ✅
+│   ├── language_models/     ← 8 tests ✅
+│   ├── lis/                 ← 16 tests ✅
+│   ├── meta_formulas/       ← 4 tests ✅
+│   ├── personality/         ← 6 tests ✅
+│   └── service_discovery/   ← 9 tests ✅
+├── services/          ← ~101 tests ✅
+├── api/               ← ~43 tests ✅
+├── shared/            ← ~6 tests ✅
 ├── integration/       ← 13 tests ✅
 ├── models/            ← 35 tests ✅
+├── scripts/           ← 62 utility scripts (非 pytest)
+├── hsp/               ← 10 files (3 real + mocks)
+├── fragmenta/         ← 1 test (keep)
+├── game/              ← 3 tests (keep)
+├── modules_fragmenta/ ← 4 tests (keep)
+├── pet/               ← 17 tests (keep)
+├── search/            ← 1 test (keep)
+├── training/          ← 1 test (keep)
+├── unit/              ← 35 tests (keep)
+├── tools/             ← 6 tests (keep)
+├── .benchmarks/       ← data dir
+├── logs/              ← test artifact dir
+├── test_output_data/  ← test artifact dir
 ├── conftest.py        ← session fixture
+└── __init__.py
 ```
 
 ### 剩餘待補層級
@@ -205,15 +216,14 @@ jobs:
 5. 每個核心 interface 都有 conformance test
 6. ServiceRegistry 有 unit test
 
-### Phase 9 清理一覽
+### Phase 12 清理一覽
 
-| 操作 | 檔案/目錄數 | 說明 |
-|------|------------|------|
-| 🗑 移除 root stubs | 9 files | `test_import.py`, `test_env.py`, `test_path.py`, `test_module.py`, `test_all_fixed_modules.py`, `test_json_fix.py`, `test_modules_with_output.py`, `test_repeat_fix.py`, `test_syntax_fixer.py` |
-| 🗑 移除 core_ai stubs | 5 files | `test_agent_manager.py`, `test_crisis_system.py`, `test_deep_mapper.py`, `test_emotion_system.py`, `test_time_system.py` |
-| 🗑 移除 core_ai duplicate dirs | 5 dirs | `context/`, `dialogue/`, `learning/`, `memory/`, `rag/` (已由 tests/ai/ 全面覆蓋) |
-| 🚚 搬遷 core_ai unique dirs → tests/ai/ | 8 dirs | `code_understanding/`, `compression/`, `formula_engine/`, `language_models/`, `lis/`, `meta_formulas/`, `personality/`, `service_discovery/` |
-| 🚚 搬遷 refactor/ → tests/core/ | 24 files | 含 `test_anchor_learning.py` (修復 indent) |
-| 🚚 例外搬遷 | 2 files | `code_inspector_integration` → `tests/ai/`, `state_matrix_api` → `tests/api/` |
-| 🔧 修復 EmotionalState bug | 1 file | 補上缺少的 2 個必填欄位 (`emotion_intensity`, `secondary_emotions`) |
-| 🧹 移除空目錄 | 2 dirs | `tests/core_ai/`, `tests/refactor/` |
+| 操作 | 數量 | 說明 |
+|------|------|------|
+| 🗑 刪除 legacy stub 目錄 | 6 dirs | `creation/`, `economy/`, `evaluation/`, `interfaces/`, `meta/`, `security/` |
+| 🚚 合併 agents/ → ai/agents/ | 6 files | `test_audio_processing_agent.py`, `test_creative_writing_agent.py`, `test_data_analysis_agent.py`, `test_imports.py`, `test_knowledge_graph_agent.py`, `test_simple.py` |
+| 🗑 刪除 agents/ duplicates | 2 files | `test_agent_manager.py`, `test_base_agent.py` (已在 ai/agents/ 有更新版) |
+| 🗑 刪除 integrations/ | 6 files | 全部為 stub, 無獨特內容 |
+| 🗑 清除 hsp stubs | 8 files | `test_basic.py`, `test_debug.py`, `test_hsp_connector.py`, 等 |
+| 🚚 utility scripts → scripts/ | 62 files | runner/verify/check/generate/report scripts |
+| 🧹 根目錄剩餘 | 2 files | 僅 `conftest.py` + `__init__.py` |
