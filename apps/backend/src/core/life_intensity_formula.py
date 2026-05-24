@@ -277,7 +277,8 @@ class LifeIntensityFormula:
         return False
 
     def register_observer(
-        self, observer_id: str, relationship_depth: float = 0.0, interaction_intensity: float = 0.0
+        self, observer_id: str, relationship_depth: float = 0.0,
+        interaction_intensity: float = 0.0, attention_level: float = 0.0,
     ) -> ObserverPresence:
         """
         Register a new observer
@@ -286,6 +287,7 @@ class LifeIntensityFormula:
             observer_id: Unique observer identifier
             relationship_depth: Depth of relationship (0-1)
             interaction_intensity: Current interaction intensity (0-1)
+            attention_level: Observer's attention level (0-1)
 
         Returns:
             Created observer presence record
@@ -298,6 +300,7 @@ class LifeIntensityFormula:
                 observer_id=observer_id,
                 relationship_depth=max(0.0, min(1.0, relationship_depth)),
                 interaction_intensity=max(0.0, min(1.0, interaction_intensity)),
+                attention_level=max(0.0, min(1.0, attention_level)),
             )
             self.observers[observer_id] = observer
 

@@ -90,6 +90,12 @@
 - 🚚 搬遷 62 個 utility scripts 至 tests/scripts/
 - 🧹 根目錄僅保留 conftest.py + __init__.py
 
+#### 12. Core + Meta 測試追加 (Phase 13)
+- ✅ `tests/ai/meta/` 建立: 48 tests (AdaptiveLearningController, LearningLogDB, LearningOrchestrator)
+- ✅ `tests/core/` 追加: 222 tests across 13 modules
+- 🔧 源碼 bug 修復: `life_intensity_formula.py:279-304` — `register_observer()` 缺少 `attention_level` 參數
+- 📊 覆蓋率提升: 13.38% → 16.34%
+
 ---
 
 ### 剩餘項目

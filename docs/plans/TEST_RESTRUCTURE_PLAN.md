@@ -59,11 +59,11 @@ Priority 8: integration/       ← Cross-layer flows
 | **Phase 9: Refactor Migration** | 從 `tests/refactor/` 搬遷 24 個檔案至 `tests/core/` (2 個例外: `code_inspector_integration` → `tests/ai/`, `state_matrix_api` → `tests/api/`) | ✅ **24 files** |
 | **Phase 10: Quality Audit** | 審計核心/AI 15 files (浮點數/時區/mock 斷言), Services/API 24 files (70 WEAK→STRONG), SMOKE→REAL 升級 8 subdirs (7→50 tests) | ✅ **All upgraded** |
 | **Phase 11: Legacy Migration** | 40 個 root-level 測試搬遷至正確層級 (services 6, core 22, ai 5, ai/memory 3, ai/agents 2, shared 2) + import path 修復 | ✅ **40 files** |
-| **Phase 12: Subdirectory Cleanup** | 刪除 6 個 legacy stub 目錄、合併 agents/ → ai/agents/、刪除 integrations/、清除 8 hsp stubs、搬遷 62 utility scripts → scripts/ | ✅ **Complete** |
+| **Phase 13: Core + Meta Tests** | `ai/meta/` 48 tests (PerformanceTracker, LearningLogDB, LearningOrchestrator). `core/` 222 tests across 13 modules (config_validator, life_intensity_formula, active_cognition_formula, encryption, key_validator, axis, etc.) | ✅ **270 tests, coverage 16.34%** |
 | **Architecture audit** | 0 層級違規 (架構隔離正確執行) | ✅ |
 | **Bug fix audit** | EmotionalState 隱藏 bug 已修復 (缺少 2 個必要欄位) | ✅ |
 | **CI Integration** | `.github/workflows/ci.yml` 已更新 (py3.11/3.14, 含新測項) | ✅ |
-| **Totals** | **~1200+ tests** across 30+ directories | ✅ |
+| **Totals** | **~1500+ tests** across 30+ directories | **coverage 16.34%** |
 
 ### 當前測試目錄結構 (Phase 12 清理後)
 
