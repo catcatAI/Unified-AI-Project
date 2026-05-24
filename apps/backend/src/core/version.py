@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class ReleasePhase(Enum):
     """发布阶段"""
 
+    DEV = "dev"
     ALPHA = "alpha"
     BETA = "beta"
     RC = "rc"  # Release Candidate
@@ -113,9 +114,9 @@ class VersionInfo:
 # 当前版本信息
 CURRENT_VERSION = VersionInfo(
     major=6,
-    minor=2,
+    minor=5,
     patch=0,
-    phase=ReleasePhase.STABLE,
+    phase=ReleasePhase.DEV,
 )
 
 # 版本常量

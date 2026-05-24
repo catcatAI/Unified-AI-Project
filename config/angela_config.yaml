@@ -31,4 +31,4 @@ precision:
   default_mode: low-resource
   resource_scaling: 0.3
 user_tier: Low
-version: 6.1.0
+version: 6.5.0-dev

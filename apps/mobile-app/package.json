@@ -1,6 +1,6 @@
 {
   "name": "angela-mobile",
-  "version": "6.2.1",
+  "version": "6.5.0-dev",
   "private": true,
   "scripts": {
     "start": "react-native start",
