@@ -60,9 +60,19 @@
 - `alignment_manager.py:430` — `emotional_arousal=` → `arousal=` ✅ **verified**
 - `alignment_manager.py:428` — `EmotionalState()` 只傳入 3/5 必填欄位 → 補上 `emotion_intensity` + `secondary_emotions` ✅ **verified**
 - `life_intensity_formula.py:279-304` — `register_observer()` 缺少 `attention_level` 參數 ✅ **verified**
-- `scripts/health_check_service.py:79,85` — 錯誤 import path ⚠️ **NOT FIXED in source** — 只在測試層 mock, 源碼仍引用不存在的 `ham_memory_manager.py` 和 `multi_llm_service.py`
+- `scripts/health_check_service.py:79,85` — 錯誤 import path ✅ **已修復** — 改為指向 `ai.memory.ham_memory.ham_manager` 和 `services.angela_llm_service`
 
-#### 8. 測試目錄清理 (Phase 9)
+#### 8. 安全性修復
+- `main_api_server.py:697` — KeyC 洩漏 (`/sync-key-c` 回傳明文 key) ✅ **已修復** — 改為只回傳 `{"key_available": true}`
+
+#### 9. 全部 `ham_memory_manager` + `multi_llm_service` 錯誤 import path 修復
+- `scripts/health_check_service.py` — 2 處 ✅
+- `scripts/smart_dev_runner.py` — 3 處 ✅
+- `scripts/final_validation.py` — 4 處 ✅
+- `tools/check/check_ham_methods.py` ✅
+- `tools/check/check_query_core_memory.py` ✅
+
+#### 10. 測試目錄清理 (Phase 9)
 - 移除 9 個根目錄非測試 script: `test_import.py`, `test_env.py`, `test_path.py`, `test_module.py`, `test_all_fixed_modules.py`, `test_json_fix.py`, `test_modules_with_output.py`, `test_repeat_fix.py`, `test_syntax_fixer.py`
 - 移除 5 個 `tests/core_ai/` assert-True stubs: `test_agent_manager.py`, `test_crisis_system.py`, `test_deep_mapper.py`, `test_emotion_system.py`, `test_time_system.py`
 - 移除 5 個 `tests/core_ai/` 重疊子目錄 (`context`, `dialogue`, `learning`, `memory`, `rag`)
@@ -91,13 +101,19 @@
 - 🚚 搬遷 62 個 utility scripts 至 tests/scripts/
 - 🧹 根目錄僅保留 conftest.py + __init__.py
 
-#### 12. Core + Meta 測試追加 (Phase 13)
+#### 12. Core + Meta 測試追加 + Infrastructure 清理 (Phase 13-14)
 - ✅ `tests/ai/meta/` 建立: 48 tests (AdaptiveLearningController, LearningLogDB, LearningOrchestrator)
 - ✅ `tests/core/` 追加: 222 tests across 13 modules
 - 🔧 源碼 bug 修復: `life_intensity_formula.py:279-304` — `register_observer()` 缺少 `attention_level` 參數
 - 📊 覆蓋率提升: 13.38% → 16.34%
-
----
+- ✅ **Conftest 清理**: 移除 root conftest 3 個未用 fixtures (`minimal_app`, `minimal_client`, `heavy_import_available`)
+- ✅ **Integration conftest 清理**: 移除 9 個未用 fixtures + `IntegrationTestUtils` 類，僅保留 `pytest_configure`
+- ✅ **`tests/hsp/` 清理**: 刪除 3 個 stub (`test_hsp_integration.py`), 1 個 broken import (`test_mqtt_broker_startup.py`), 1 個 dead script (`run_hsp_tests.py`), 搬遷 `verify_fixes.py` → `tests/scripts/`
+- ✅ **`tests/game/` 刪除**: 全部 3 個測試指向不存在模組 (`game.main`, `game.npcs`, `game.assets`)
+- ✅ **`temp_test_gmqtt_mock.py` 修復**: 缺少 `AsyncMock` import，檔名改為 `test_gmqtt_mock.py`
+- ✅ **8 個 scripts 語法錯誤修復**: `logging.basicConfig(,`, `level=logging.INFO()`, `class X,`, `def __init__(==)` 等
+- ✅ **5 個 module-level logging.basicConfig guard**: moved inside `if __name__ == "__main__"` blocks
+- ✅ **13 個 scripts 完整語法修復**: 所有 scripts 目錄檔案現可正確 parse
 
 ### 剩餘項目 (審計更新)
 
@@ -105,22 +121,13 @@
 - ~50 個 `core/` 模組仍無測試覆蓋 (30/80 已有, 校驗後總數 316 tests)
 - 覆蓋率瓶頸: 需從 16.34% → 30%
 
-#### 2. `health_check_service.py` 源碼 import 未修
-- 審計確認: `ham_memory_manager.py` 與 `multi_llm_service.py` 不存在於專案中
-- 目前只在測試層以 `def full_health_check(): return {"status": "mock_ok"}` mock 繞過
-- 源碼的 `try/except ImportError` 會捕捉錯誤，但功能實際斷鏈
-- 需修復 import path 或重構 `scripts/health_check_service.py`
-
-#### 3. `full_health_check` 回傳型別非 bug
-- 審計確認: 函數正確回傳 `bool` (`True`/`False`)
-- 之前列為 bug 7 實為誤判，已在審計中更正
-
-#### 4. Integration conftest 驗證 (P2)
-- conftest mock path 已修正，但 fixture 未被任何 test 調用
-- 待確認是否保留或清理
-
-#### 5. flake8 on tests/ 尚未啟用於 CI
+#### 2. flake8 on tests/ 尚未啟用於 CI
 - `tests/` 目錄尚未納入 flake8 檢查
 
-#### 6. `tests/hsp/`, `tests/game/`, 等保留目錄待後續審計
-- 這些目錄不在主要測試層級結構內，但含有真實測試內容
+#### 3. 12 個死 factory 待刪除
+- `CloudSyncFactory`, `create_logic_unit`, `create_hardware_center`, `create_hardware_manager`,
+  `create_tray_manager`, `create_cloud_sync_manager`, `build_model`(x2),
+  `create_directory`, `create_i18n_manager`, `create_precision_manager`, `create_compute_optimizer`
+
+#### 4. `tests/hsp/` 保留目錄待後續審計
+- 剩 4 個 test files: `test_hsp_security.py` (6 tests), `test_message_bridge.py` (8 tests), `test_mqtt_broker_startup.py` (已刪), `test_gmqtt_mock.py` (1 test)

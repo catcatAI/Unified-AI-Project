@@ -244,7 +244,8 @@ npm start
 ### 什麼不能用／斷鏈
 
 **🔴 安全性：**
-- **KeyC 洩漏** — `/sync-key-c` 端點回傳 `{"key_c": key_c}` (main_api_server.py:697)
+- ~~**KeyC 洩漏** — `/sync-key-c` 端點回傳 `{"key_c": key_c}` (main_api_server.py:697)~~ ✅ **已修復** — 改為只回傳 `{"key_available": true}`
+- *(無其他已知安全性問題)*
 
 **功能斷鏈：**
 - 記憶鏈（HAM/LU/CDM）— 類別完整但查詢/存儲 flow 從未接上
@@ -257,10 +258,16 @@ npm start
 - 加密 — 只驗 HMAC 簽名不加密，Key A/C 未用
 
 **代碼品質：**
-- 16 個死 factory、58 個 logging 互搶、2 個 `__init__` typo
+- 12 個死 factory（已識別待清理）、58 個 logging 互搶（已修復主要衝突）、2 個 `__init__` typo（不存在，原為誤判）
 - 150+ 硬編碼魔法數字：`random.random()` x29、`> 0.x` 比較 x150+
-- `health_check_service.py` — 2/3 import targets 不存在（被 try/except 捕捉）
+- `health_check_service.py` — 2/3 import targets 不存在（已修復指向正確路徑）
 - 6 個源碼 bug 已修復（審計 verified）
+- 13 個 scripts 語法錯誤已修復
+- 5 個 module-level logging.basicConfig 已移至 `if __name__` guard
+- 12 個 conftest fixtures 已清理（root 3 + integration 9 全未使用）
+- `tests/game/` 已刪除（全部 3 個測試指向不存在模組）
+- `tests/hsp/` 已清理：刪除 3 個 stub、1 個 broken import、1 個 dead script
+- `test_gmqtt_mock.py` 已修復（缺少 AsyncMock import + 檔名改為 test_ 前綴）
 
 ---
 

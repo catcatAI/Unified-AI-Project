@@ -18,12 +18,6 @@ import sys
 # from tests.test_json_fix import  # Fixed: commented out incomplete import
 from datetime import datetime
 
-# from ..level5_asi_system import Level5ASISystem  # Fixed: commented out incomplete import
-
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
 
@@ -243,6 +237,9 @@ async def interactive_demo():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     if len(sys.argv) > 1 and sys.argv[1] == "interactive":
         asyncio.run(interactive_demo())
     else:

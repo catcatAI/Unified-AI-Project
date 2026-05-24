@@ -7,15 +7,6 @@ import logging
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Any
 
-# from .manager import  # Commented out - incomplete import
-# from .storage.base import  # Commented out - incomplete import
-# from .tool_context import  # Commented out - incomplete import
-# from .model_context import  # Commented out - incomplete import
-# from .dialogue_context import  # Commented out - incomplete import
-# from .memory_context import  # Commented out - incomplete import
-
-# 配置日志
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -222,4 +213,5 @@ def demo_context_retrieval(context_manager):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     demo_context_system()

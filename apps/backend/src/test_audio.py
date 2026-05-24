@@ -11,8 +11,6 @@ sys.path.append(str((project_root / "src").absolute()))
 
 from services.audio_service import AudioService, WHISPER_AVAILABLE, EDGE_TTS_AVAILABLE
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-
 
 async def test():
     print(f"WHISPER_AVAILABLE: {WHISPER_AVAILABLE}")
@@ -37,4 +35,5 @@ async def test():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     asyncio.run(test())

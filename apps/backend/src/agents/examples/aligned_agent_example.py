@@ -10,8 +10,6 @@ from typing import Dict, Any
 from agents.aligned_base_agent import AlignedBaseAgent
 from core.hsp.types import HSPMessageEnvelope
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -274,4 +272,5 @@ async def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     asyncio.run(main())

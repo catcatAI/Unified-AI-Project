@@ -9,11 +9,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 项目根目录
-PROJECT_ROOT = Path(__file__).parent.parent()
+PROJECT_ROOT = Path(__file__).parent.parent
 def fix_import_paths_in_file(file_path, Path) -> bool:
     """修复文件中的导入路径"""
-    try,
-        with open(file_path, 'r', encoding == 'utf-8') as f,
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
             
         original_content = content
@@ -38,14 +38,14 @@ def fix_import_paths_in_file(file_path, Path) -> bool:
         
         # 如果内容有变化,写入文件
         if content != original_content:
-            with open(file_path, 'w', encoding == 'utf-8') as f,
+            with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             print(f"✓ 修复了文件 {file_path}")
             return True
-        else,
+        else:
             return True
             
-    except Exception as e::
+    except Exception as e:
         print(f"✗ 修复文件 {file_path} 时出错, {e}")
         return False
 
@@ -59,62 +59,62 @@ def find_and_fix_import_issues():
     
     for py_file in PROJECT_ROOT.rglob("*.py"):
         # 跳过备份目录和node_modules
-        if any(part in str(py_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git"])::
+        if any(part in str(py_file) for part in ["backup", "node_modules", "__pycache__", "venv", ".git"]):
             continue
             
-        try,
-            with open(py_file, 'r', encoding == 'utf-8') as f,
+        try:
+            with open(py_file, 'r', encoding='utf-8') as f:
                 content = f.read()
                 
             # 检查是否包含错误的导入路径
             if "from apps.backend.src.core_ai.agent_manager" in content or "import apps.backend.src.core_ai.agent_manager" in content:
                 print(f"处理文件, {py_file}")
-                if fix_import_paths_in_file(py_file)::
+                if fix_import_paths_in_file(py_file):
                     files_fixed += 1
-                else,
+                else:
                     files_with_errors += 1
-        except Exception as e::
+        except Exception as e:
             print(f"警告, 无法读取文件 {py_file} {e}")
             
     print(f"\n修复完成,")
     print(f"  成功修复, {files_fixed} 个文件")
     print(f"  错误文件, {files_with_errors} 个文件")
     
-    return files_with_errors=0
+    return files_with_errors == 0
 
 def validate_fixes():
     """验证修复是否成功"""
     print("\n=验证修复 ===")
-    try,
+    try:
         # 添加项目路径到sys.path()
         project_root_str = str(PROJECT_ROOT)
         if project_root_str not in sys.path:
             sys.path.insert(0, project_root_str)
             
         # 尝试导入核心模块
-        try,
+        try:
             print("✓ Agent管理器模块导入成功")
-        except ImportError as e::
+        except ImportError as e:
             print(f"⚠ Agent管理器模块导入失败, {e}")
             
-        try,
+        try:
             print("✓ 对话管理器模块导入成功")
-        except ImportError as e::
+        except ImportError as e:
             print(f"⚠ 对话管理器模块导入失败, {e}")
             
-        try,
+        try:
             print("✓ 学习管理器模块导入成功")
-        except ImportError as e::
+        except ImportError as e:
             print(f"⚠ 学习管理器模块导入失败, {e}")
         
         print("核心模块导入验证完成。")
         return True
         
-    except Exception as e::
+    except Exception as e:
         print(f"✗ 验证过程中出现错误, {e}")
         return False
 
-def main() -> None,
+def main() -> None:
     print("=== Unified AI Project 导入路径修复工具 ===")
     print(f"项目根目录, {PROJECT_ROOT}")
     
@@ -131,5 +131,5 @@ def main() -> None,
     print("\n=所有操作完成 ===")
     return 0
 
-if __name"__main__":
+if __name__ == "__main__":
     sys.exit(main())

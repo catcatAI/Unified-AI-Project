@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 项目根目录
-PROJECT_ROOT = Path(__file__).parent.parent()
+PROJECT_ROOT = Path(__file__).parent.parent
 SRC_DIR = PROJECT_ROOT / "src"
 
 def setup_environment():
@@ -23,7 +23,7 @@ def setup_environment():
     if str(SRC_DIR) not in sys.path:
         sys.path.insert(0, str(SRC_DIR))
 
-def detect_import_errors(stderr_output, str) -> List[str],
+def detect_import_errors(stderr_output: str) -> List[str]:
     """检测导入错误"""
     import_error_patterns = [
         r"ModuleNotFoundError, No module named '(\w+)'",
@@ -32,13 +32,13 @@ def detect_import_errors(stderr_output, str) -> List[str],
         r"NameError, name '(\w+)' is not defined",
     ]
 
-    for pattern in import_error_patterns::
+    for pattern in import_error_patterns:
         matches = re.findall(pattern, stderr_output)
         if matches:
             return matches
     return []
 
-def detect_path_errors(stderr_output, str) -> bool,
+def detect_path_errors(stderr_output: str) -> bool:
     """检测路径错误"""
     path_error_patterns = [
         r"No module named 'core_ai",
@@ -46,8 +46,8 @@ def detect_path_errors(stderr_output, str) -> bool,
         r"from \.\.core_ai",
     ]
 
-    for pattern in path_error_patterns::
-        if re.search(pattern, stderr_output)::
+    for pattern in path_error_patterns:
+        if re.search(pattern, stderr_output):
             return True
     return False
 
@@ -55,35 +55,35 @@ def run_auto_fix():
     """运行自动修复工具"""
     print("🔍 检测到导入错误,正在自动修复...")
 
-    try,
+    try:
         # 导入并运行增强版修复工具
         sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
         from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
-fixer = AdvancedImportFixer()
+        fixer = AdvancedImportFixer()
         results = fixer.fix_all_files()
 
         if results.files_fixed > 0:
             print(f"✅ 自动修复完成,修复了 {results.files_fixed} 个文件")
             return True
-        else,
+        else:
             print("⚠️ 未发现需要修复的问题")
             return False
-    except Exception as e::
+    except Exception as e:
         print(f"❌ 自动修复时出错, {e}")
         return False
 
-def execute_command(command, auto_fix == True):
+def execute_command(command, auto_fix=True):
     """执行命令并处理错误"""
     print(f"🚀 执行命令, {command}")
 
-    try,
+    try:
         # 执行命令
         process = subprocess.Popen(
             command,
 shell = True,
 cwd = PROJECT_ROOT,
-    stdout=subprocess.PIPE(),
-            stderr=subprocess.PIPE(),
+    stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
 text = True,
             encoding='utf-8'
         )
@@ -115,21 +115,21 @@ text = True,
                         print("🔄 修复完成,重新执行命令...")
                         # 重新执行命令
                         return execute_command(command, auto_fix == False)  # 避免无限循环
-                    else,
+                    else:
                         print("❌ 自动修复失败")
                         return process.returncode()
-                else,
+                else:
                     print("❓ 未检测到可自动修复的导入错误")
             return process.returncode()
-        else,
+        else:
             print("✅ 命令执行成功")
             return 0
 
-    except Exception as e::
+    except Exception as e:
         print(f"❌ 执行命令时出错, {e}")
         return 1
 
-def main() -> None,
+def main() -> None:
     """主函数"""
     setup_environment()
 
@@ -144,5 +144,5 @@ def main() -> None,
     exit_code = execute_command(command, auto_fix)
     sys.exit(exit_code)
 
-if __name"__main__":
+if __name__ == "__main__":
     main()

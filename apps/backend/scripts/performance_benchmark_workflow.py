@@ -12,28 +12,28 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # 配置日志
-logging.basicConfig(,
-    level=logging.INFO(),
+logging.basicConfig(
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-class PerformanceBenchmarkWorkflow,
+class PerformanceBenchmarkWorkflow:
     """性能基准测试和回归检测工作流"""
 
-    def __init__(self, project_root, Optional[str] = None) -> None,
+    def __init__(self, project_root: Optional[str] = None) -> None:
         """
         初始化性能基准测试工作流
 
         Args,
             project_root, 项目根目录
         """
-        self.project_root == Path(project_root) if project_root else Path(__file__).parent.parent:
-            elf.scripts_dir = self.project_root / "scripts"
+        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
+        self.scripts_dir = self.project_root / "scripts"
         self.benchmarks_dir = self.project_root / "benchmarks"
-        self.benchmarks_dir.mkdir(exist_ok == True)
+        self.benchmarks_dir.mkdir(exist_ok=True)
         self.reports_dir = self.project_root / "test_reports"
-        self.reports_dir.mkdir(exist_ok == True)
+        self.reports_dir.mkdir(exist_ok=True)
 
         # 工作流配置
         self.workflow_config = {
@@ -42,19 +42,19 @@ class PerformanceBenchmarkWorkflow,
                 "warmup": 10,
                 "timeout": 300,
                 "tags": ["performance", "benchmark"]
-            }
+                                        },
             "regression": {
                 "time_window_days": 30,
-                "regression_threshold": 0.05(),
+                "regression_threshold": 0.05,
                 "alert_on_regression": True
-            }
+                                        },
             "reporting": {
                 "generate_html": True,
                 "generate_json": True
             }
         }
 
-    def run_complete_performance_workflow(self, benchmark_suite, str == "all") -> Dict[str, Any],
+    def run_complete_performance_workflow(self, benchmark_suite: str = "all") -> Dict[str, Any]:
         """
         运行完整的性能工作流
 
@@ -72,7 +72,7 @@ class PerformanceBenchmarkWorkflow,
             "phases": {}
         }
 
-        try,
+        try:
             # 1. 运行基准测试
             workflow_results["phases"]["benchmark_execution"] = self._run_benchmark_suite(benchmark_suite)
 
@@ -86,7 +86,7 @@ class PerformanceBenchmarkWorkflow,
             )
 
             # 4. 发送警报(如果有回归)
-            workflow_results["phases"]["alerting"] = self._send_regression_alerts(,
+            workflow_results["phases"]["alerting"] = self._send_regression_alerts(
     workflow_results["phases"]["regression_analysis"]
             )
 
@@ -94,9 +94,9 @@ class PerformanceBenchmarkWorkflow,
             workflow_results["duration"] = (workflow_end_time - workflow_start_time).total_seconds()
             workflow_results["status"] = "completed"
 
-            logger.info(f"Performance benchmark workflow completed in {workflow_results['duration'].2f} seconds")
+            logger.info(f"Performance benchmark workflow completed in {workflow_results['duration']:2f} seconds")
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error in performance benchmark workflow, {e}")
             workflow_results["status"] = "failed"
             workflow_results["error"] = str(e)
@@ -106,7 +106,7 @@ class PerformanceBenchmarkWorkflow,
 
         return workflow_results
 
-    def _run_benchmark_suite(self, benchmark_suite, str) -> Dict[str, Any],
+    def _run_benchmark_suite(self, benchmark_suite: str) -> Dict[str, Any]:
         """
         运行基准测试套件
 
@@ -118,10 +118,10 @@ class PerformanceBenchmarkWorkflow,
         """
         logger.info(f"Running benchmark suite, {benchmark_suite}")
 
-        try,
+        try:
             # 构建pytest命令来运行性能基准测试
             cmd = [
-                sys.executable(),
+                sys.executable,
                 "-m",
                 "pytest",
                 "tests/integration/test_performance_benchmarks.py",
@@ -138,31 +138,31 @@ class PerformanceBenchmarkWorkflow,
             # 运行基准测试
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
+    cwd=self.project_root,
 capture_output = True,
 text = True,
                 timeout=self.workflow_config["benchmark"]["timeout"]
             )
 
             benchmark_result = {
-                "success": result.returncode=0,
+                "success": result.returncode == 0,
                 "return_code": result.returncode(),
-                "stdout": result.stdout(),
-                "stderr": result.stderr(),
+                "stdout": result.stdout,
+                "stderr": result.stderr,
                 "timestamp": datetime.now().isoformat()
             }
 
-            logger.info(f"Benchmark suite execution {'succeeded' if benchmark_result['success'] else 'failed'}"):
-                eturn benchmark_result
+            logger.info(f"Benchmark suite execution {'succeeded' if benchmark_result['success'] else 'failed'}")
+            return benchmark_result
 
-        except subprocess.TimeoutExpired::
+        except subprocess.TimeoutExpired:
             logger.error("Benchmark suite execution timed out")
             return {
                 "success": False,
                 "error": "Benchmark suite execution timed out",
                 "timestamp": datetime.now().isoformat()
             }
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error running benchmark suite, {e}")
             return {
                 "success": False,
@@ -170,7 +170,7 @@ text = True,
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _analyze_performance_regressions(self) -> Dict[str, Any],
+    def _analyze_performance_regressions(self) -> Dict[str, Any]:
         """
         分析性能回归
 
@@ -179,7 +179,7 @@ text = True,
         """
         logger.info("Analyzing performance regressions...")
 
-        try,
+        try:
             # 调用性能回归检测器
             regression_detector_script = self.scripts_dir / "performance_regression_detector.py"
             if not regression_detector_script.exists():
@@ -187,30 +187,30 @@ text = True,
                 return {"status": "skipped", "reason": "Script not found"}
 
             cmd = [
-                sys.executable(),
+                sys.executable,
                 str(regression_detector_script),
                 "detect"
             ]
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
+    cwd=self.project_root,
 capture_output = True,
 text = True
             )
 
             regression_result = {
-                "success": result.returncode=0,
+                "success": result.returncode == 0,
                 "return_code": result.returncode(),
-                "stdout": result.stdout(),
-                "stderr": result.stderr(),
+                "stdout": result.stdout,
+                "stderr": result.stderr,
                 "timestamp": datetime.now().isoformat()
             }
 
-            logger.info(f"Performance regression analysis {'succeeded' if regression_result['success'] else 'failed'}"):
-                eturn regression_result
+            logger.info(f"Performance regression analysis {'succeeded' if regression_result['success'] else 'failed'}")
+            return regression_result
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error analyzing performance regressions, {e}")
             return {
                 "success": False,
@@ -218,7 +218,7 @@ text = True
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _generate_performance_reports(self, benchmark_results, Dict[str, Any], regression_results, Dict[str, Any]) -> Dict[str, Any],
+    def _generate_performance_reports(self, benchmark_results: Dict[str, Any], regression_results: Dict[str, Any]) -> Dict[str, Any]:
         """
         生成性能报告
 
@@ -231,12 +231,12 @@ text = True
         """
         logger.info("Generating performance reports...")
 
-        try,
+        try:
             report_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             report_files = []
 
             # 生成JSON报告
-            if self.workflow_config["reporting"]["generate_json"]::
+            if self.workflow_config["reporting"]["generate_json"]:
                 json_report_path = self.reports_dir / f"performance_report_{report_timestamp}.json"
                 report_data = {
                     "benchmark_results": benchmark_results,
@@ -245,14 +245,14 @@ text = True
                 }
                 
                 import json
-                with open(json_report_path, 'w', encoding == 'utf-8') as f,
-                    json.dump(report_data, f, indent=2, ensure_ascii == False)
+                with open(json_report_path, 'w', encoding='utf-8') as f:
+                    json.dump(report_data, f, indent=2, ensure_ascii=False)
                 
                 report_files.append(str(json_report_path))
                 logger.info(f"Generated JSON report, {json_report_path}")
 
             # 生成HTML报告
-            if self.workflow_config["reporting"]["generate_html"]::
+            if self.workflow_config["reporting"]["generate_html"]:
                 html_report_path = self.reports_dir / f"performance_report_{report_timestamp}.html"
                 
                 # 简单的HTML报告模板
@@ -293,7 +293,7 @@ text = True
 </html>
                 """
                 
-                with open(html_report_path, 'w', encoding == 'utf-8') as f,
+                with open(html_report_path, 'w', encoding='utf-8') as f:
                     f.write(html_content)
                 
                 report_files.append(str(html_report_path))
@@ -305,7 +305,7 @@ text = True
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error generating performance reports, {e}")
             return {
                 "success": False,
@@ -313,7 +313,7 @@ text = True
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _send_regression_alerts(self, regression_results, Dict[str, Any]) -> Dict[str, Any],
+    def _send_regression_alerts(self, regression_results: Dict[str, Any]) -> Dict[str, Any]:
         """
         发送回归警报
 
@@ -325,15 +325,15 @@ text = True
         """
         logger.info("Sending regression alerts...")
 
-        try,
+        try:
             # 检查是否有回归
-has_regression = False
-            if regression_results.get("success", False)::
+            has_regression = False
+            if regression_results.get("success", False):
                 # 在实际实现中,这里会解析回归分析结果来确定是否有回归
                 # 简化处理：假设如果有输出就可能有回归
                 has_regression = bool(regression_results.get("stdout", "").strip())
 
-            if has_regression and self.workflow_config["regression"]["alert_on_regression"]::
+            if has_regression and self.workflow_config["regression"]["alert_on_regression"]:
                 # 发送警报(例如通过邮件、Slack等)
                 alert_message = f"Performance regression detected at {datetime.now().isoformat()}"
                 logger.warning(f"Performance regression alert, {alert_message}")
@@ -346,7 +346,7 @@ has_regression = False
                     "message": alert_message,
                     "timestamp": datetime.now().isoformat()
                 }
-            else,
+            else:
                 return {
                     "success": True,
                     "alert_sent": False,
@@ -354,7 +354,7 @@ has_regression = False
                     "timestamp": datetime.now().isoformat()
                 }
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error sending regression alerts, {e}")
             return {
                 "success": False,
@@ -362,34 +362,34 @@ has_regression = False
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _save_workflow_results(self, workflow_results, Dict[str, Any]) -> None,
+    def _save_workflow_results(self, workflow_results: Dict[str, Any]) -> None:
         """
         保存工作流结果
 
         Args,
             workflow_results, 工作流结果
         """
-        try,
+        try:
             results_file = self.benchmarks_dir / f"workflow_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             
             import json
-            with open(results_file, 'w', encoding == 'utf-8') as f,
-                json.dump(workflow_results, f, indent=2, ensure_ascii == False)
+            with open(results_file, 'w', encoding='utf-8') as f:
+                json.dump(workflow_results, f, indent=2, ensure_ascii=False)
             
             logger.info(f"Saved workflow results to {results_file}")
             
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error saving workflow results, {e}")
 
-def main() -> None,
+def main() -> None:
     """主函数"""
-workflow = PerformanceBenchmarkWorkflow()
+    workflow = PerformanceBenchmarkWorkflow()
     results = workflow.run_complete_performance_workflow()
     
     if results["status"] == "completed":
         logger.info("Performance benchmark workflow completed successfully")
-    else,
+    else:
         logger.error(f"Performance benchmark workflow failed, {results.get('error', 'Unknown error')}")
 
-if __name"__main__":
+if __name__ == "__main__":
     main()

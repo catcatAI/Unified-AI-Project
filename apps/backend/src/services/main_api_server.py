@@ -684,7 +684,7 @@ def _build_math_response(verification, matrix, user_message: str, session_id: st
 
 @api_v1_router.get("/security/sync-key-c")
 async def sync_key_c(request: Request):
-    """Get Key C for desktop app synchronization (Localhost restricted)"""
+    """Check Key C availability for desktop app synchronization (Localhost restricted)"""
     client_host = request.client.host
     if client_host not in ["127.0.0.1", "::1", "localhost"]:
         logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}")
@@ -693,8 +693,8 @@ async def sync_key_c(request: Request):
     abc_key_manager = get_abc_key_manager()
     key_c = abc_key_manager.get_key("KeyC")
     if not key_c:
-        raise HTTPException(status_code=500, detail="Security keys not initialized")
-    return {"key_c": key_c}
+        raise HTTPException(status_code=404, detail="Security keys not initialized")
+    return {"key_available": True}
 
 
 @api_v1_router.post("/session/start")

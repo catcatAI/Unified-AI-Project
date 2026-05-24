@@ -14,25 +14,25 @@ from typing import Any, Callable, Dict, List, Optional
 import numpy as np
 
 # 配置日志
-logging.basicConfig(,
-    level=logging.INFO(),
+logging.basicConfig(
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-class PerformanceBenchmarkFramework,
+class PerformanceBenchmarkFramework:
     """性能基准测试框架"""
 
-    def __init__(self, project_root, Optional[str] = None) -> None,
+    def __init__(self, project_root: Optional[str] = None) -> None:
         """
         初始化性能基准测试框架
 
         Args,
             project_root, 项目根目录
         """
-        self.project_root == Path(project_root) if project_root else Path(__file__).parent.parent:
-            elf.benchmarks_dir = self.project_root / "benchmarks"
-        self.benchmarks_dir.mkdir(exist_ok == True)
+        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
+        self.benchmarks_dir = self.project_root / "benchmarks"
+        self.benchmarks_dir.mkdir(exist_ok=True)
         self.db_path = self.benchmarks_dir / "benchmark_history.db"
 
         # 基准测试配置
@@ -47,10 +47,10 @@ class PerformanceBenchmarkFramework,
 
         self._init_database()
 
-    def _init_database(self) -> None,
+    def _init_database(self) -> None:
         """初始化基准测试数据库"""
-        try,
-            conn = sqlite3.connect(self.db_path())
+        try:
+            conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
             # 创建基准测试历史表
@@ -94,10 +94,10 @@ class PerformanceBenchmarkFramework,
             conn.close()
             logger.info("Benchmark database initialized successfully")
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error initializing benchmark database, {e}")
 
-    def register_benchmark(self, name, str, func, Callable, **kwargs) -> Dict[str, Any],
+    def register_benchmark(self, name, str, func, Callable, **kwargs) -> Dict[str, Any]:
         """
         注册基准测试
 
@@ -119,10 +119,7 @@ class PerformanceBenchmarkFramework,
         logger.info(f"Registered benchmark, {name}")
         return benchmark_info
 
-    def run_benchmark(self, benchmark_info, Dict[str, Any]
-                     iterations, Optional[int] = None,
-                     warmup, Optional[int] = None,
-    tags, Optional[List[str]] = None) -> Dict[str, Any],
+    def run_benchmark(self, benchmark_info: Dict[str, Any], iterations: Optional[int] = None, warmup: Optional[int] = None, tags: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         运行基准测试
 
@@ -146,22 +143,22 @@ class PerformanceBenchmarkFramework,
 
         logger.info(f"Running benchmark, {name} ({iterations} iterations)")
 
-        try,
+        try:
             # 预热
             if warmup > 0:
-                logger.info(f"Warming up {name} with {warmup} iterations"):
-                    or i in range(warmup)
+                logger.info(f"Warming up {name} with {warmup} iterations")
+                for i in range(warmup):
                     func()
 
             # 监控系统资源
-monitor = SystemResourceMonitor()
+                monitor = SystemResourceMonitor()
             monitor.start_monitoring()
 
             # 执行基准测试
             execution_times = []
             start_time = time.time()
 
-            for i in range(iterations)::
+            for i in range(iterations):
                 if time.time() - start_time > timeout:
                     logger.warning(f"Benchmark {name} timed out after {timeout} seconds")
                     break
@@ -177,7 +174,7 @@ monitor = SystemResourceMonitor()
             resource_stats = monitor.get_statistics()
 
             # 计算统计信息
-            benchmark_result = self._calculate_benchmark_stats(,
+            benchmark_result = self._calculate_benchmark_stats(
     name, execution_times, resource_stats, tags
             )
 
@@ -187,7 +184,7 @@ monitor = SystemResourceMonitor()
             logger.info(f"Benchmark {name} completed successfully")
             return benchmark_result
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error running benchmark {name} {e}")
             return {
                 "name": name,
@@ -196,8 +193,8 @@ monitor = SystemResourceMonitor()
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _calculate_benchmark_stats(self, name, str, execution_times, List[float],
-    resource_stats, Dict[str, Any] tags, Optional[List[str]] = None) -> Dict[str, Any],
+    def _calculate_benchmark_stats(self, name: str, execution_times: List[float],
+                                  resource_stats: Dict[str, Any], tags: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         计算基准测试统计信息
 
@@ -230,8 +227,8 @@ monitor = SystemResourceMonitor()
             "median_time": float(np.median(times_array)),
             "std_dev": float(np.std(times_array)),
             "total_time": float(np.sum(times_array)),
-            "ops_per_second": len(execution_times) / np.sum(times_array) if np.sum(times_array) > 0 else 0:
-                tags": tags or []
+            "ops_per_second": len(execution_times) / np.sum(times_array) if np.sum(times_array) > 0 else 0,
+                "tags": tags or [],
         }
 
         # 合并资源统计信息
@@ -239,15 +236,15 @@ monitor = SystemResourceMonitor()
 
         return stats
 
-    def _save_benchmark_result(self, result, Dict[str, Any]) -> None,
+    def _save_benchmark_result(self, result: Dict[str, Any]) -> None:
         """
         保存基准测试结果到数据库
 
         Args,
             result, 基准测试结果
         """
-        try,
-            conn = sqlite3.connect(self.db_path())
+        try:
+            conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
             # 插入基准测试历史记录
@@ -257,8 +254,8 @@ monitor = SystemResourceMonitor()
                  std_dev, total_time, ops_per_second, cpu_usage, memory_usage,, disk_io_read, disk_io_write, tags)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                result["name"]
-                result["timestamp"]
+                result["name"],
+                result["timestamp"],
                 result.get("iterations", 0),
                 result.get("min_time", 0),
                 result.get("max_time", 0),
@@ -274,15 +271,15 @@ monitor = SystemResourceMonitor()
                 ",".join(result.get("tags", []))
             ))
 
-            benchmark_id = cursor.lastrowid()
+            benchmark_id = cursor.lastrowid
             conn.commit()
             conn.close()
 
-            logger.info(f"Saved benchmark result for {result['name']} with ID {benchmark_id}"):
-                xcept Exception as e,
+            logger.info(f"Saved benchmark result for {result['name']} with ID {benchmark_id}")
+        except Exception as e:
             logger.error(f"Error saving benchmark result, {e}")
 
-    def get_benchmark_history(self, name, Optional[str] = None, limit, int == 100) -> List[Dict[str, Any]],
+    def get_benchmark_history(self, name: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         """
         获取基准测试历史记录
 
@@ -293,39 +290,39 @@ monitor = SystemResourceMonitor()
         Returns,
             List[Dict] 历史记录列表
         """
-        try,
-            conn = sqlite3.connect(self.db_path())
+        try:
+            conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
             if name:
                 cursor.execute("""
                     SELECT * FROM benchmark_history 
                     WHERE name = ? 
-                    ORDER BY timestamp DESC, LIMIT ?
+                    ORDER BY timestamp DESC LIMIT ?
                 """, (name, limit))
-            else,
+            else:
                 cursor.execute("""
                     SELECT * FROM benchmark_history 
-                    ORDER BY timestamp DESC, LIMIT ?
+                    ORDER BY timestamp DESC LIMIT ?
                 """, (limit))
 
             rows = cursor.fetchall()
-columns = [description[0] for description in cursor.description]::
-results = []
-            for row in rows::
+            columns = [description[0] for description in cursor.description]
+            results = []
+            for row in rows:
                 result = dict(zip(columns, row))
-                if result["tags"]::
+                if result["tags"]:
                     result["tags"] = result["tags"].split(",")
                 results.append(result)
 
             conn.close()
             return results
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error retrieving benchmark history, {e}")
             return []
 
-    def compare_benchmarks(self, name, str, baseline_commit, str, current_commit, str) -> Dict[str, Any],
+    def compare_benchmarks(self, name, str, baseline_commit, str, current_commit, str) -> Dict[str, Any]:
         """
         比较两个版本的基准测试结果
 
@@ -337,8 +334,8 @@ results = []
         Returns,
             Dict, 比较结果
         """
-        try,
-            conn = sqlite3.connect(self.db_path())
+        try:
+            conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
             # 获取基线结果
@@ -360,7 +357,8 @@ results = []
             if not baseline_result or not current_result:
                 return {
                     "status": "error",
-                    "message": "Could not find benchmark results for comparison":
+                    "message": "Could not find benchmark results for comparison",
+                }
             baseline_mean, baseline_std = baseline_result
             current_mean, current_std = current_result
 
@@ -375,32 +373,32 @@ results = []
                 "is_significant": abs(performance_change) > 5  # 5%变化认为是显著的
             }
 
-        except Exception as e::
+        except Exception as e:
             logger.error(f"Error comparing benchmarks, {e}")
             return {
                 "status": "error",
                 "message": str(e)
             }
 
-class SystemResourceMonitor,
+class SystemResourceMonitor:
     """系统资源监控器"""
 
-    def __init__(self) -> None,
-        self.is_monitoring == False
+    def __init__(self) -> None:
+        self.is_monitoring = False
         self.monitoring_data = []
-        self.monitoring_task == None
+        self.monitoring_task = None
 
-    def start_monitoring(self) -> None,
+    def start_monitoring(self) -> None:
         """开始监控"""
-        self.is_monitoring == True
+        self.is_monitoring = True
         # 在实际实现中,这里会启动一个监控线程
 
-    def stop_monitoring(self) -> None,
+    def stop_monitoring(self) -> None:
         """停止监控"""
-        self.is_monitoring == False
+        self.is_monitoring = False
         # 在实际实现中,这里会停止监控线程
 
-    def get_statistics(self) -> Dict[str, Any],
+    def get_statistics(self) -> Dict[str, Any]:
         """
         获取统计信息
 
@@ -409,16 +407,16 @@ class SystemResourceMonitor,
         """
         # 在实际实现中,这里会返回真实的系统资源统计信息
         return {
-            "cpu_usage": 0.0(),
-            "memory_usage": 0.0(),
-            "disk_io_read": 0.0(),
-            "disk_io_write": 0.0()
+            "cpu_usage": 0.0,
+            "memory_usage": 0.0,
+            "disk_io_read": 0.0,
+            "disk_io_write": 0.0
         }
 
-def main() -> None,
+def main() -> None:
     """主函数"""
-framework = PerformanceBenchmarkFramework()
+    framework = PerformanceBenchmarkFramework()
     logger.info("Performance benchmark framework initialized")
 
-if __name"__main__":
+if __name__ == "__main__":
     main()

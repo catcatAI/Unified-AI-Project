@@ -2,7 +2,7 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 sys.path.insert(0, 'src')
-from ai.memory.ham_memory_manager import HAMMemoryManager
+from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 import inspect
 
 # 获取所有方法名

@@ -13,25 +13,25 @@ from datetime import datetime
 from typing import Dict, Any, List, Literal, Optional
 
 # 添加项目根目录到路径
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent()
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # 配置日志
-logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class SmartFixExecutor,
+class SmartFixExecutor:
     """智能修复执行器"""
 
-    def __init__(self, project_root, Optional[Path] = None) -> None,
+    def __init__(self, project_root: Optional[Path] = None) -> None:
         self.project_root = project_root or PROJECT_ROOT
         self.reports_dir = self.project_root / "reports"
-        self.reports_dir.mkdir(exist_ok == True)
+        self.reports_dir.mkdir(exist_ok=True)
 
-    def run_smart_auto_fix(self) -> bool,
+    def run_smart_auto_fix(self) -> bool:
         """运行智能自动修复"""
         logger.info("开始运行智能自动修复...")
-        try,
+        try:
             # 导入并运行智能自动修复工具
             smart_fix_script = self.project_root / "scripts" / "enhanced_auto_fix.py"
             if not smart_fix_script.exists():
@@ -40,26 +40,26 @@ class SmartFixExecutor,
 
             result = subprocess.run([
                 "python", str(smart_fix_script), "--all"
-            ] cwd=self.project_root(), capture_output == True, text == True, timeout=600)
+            ], cwd=self.project_root, capture_output=True, text=True, timeout=600)
 
             if result.returncode == 0:
                 logger.info("✓ 智能自动修复执行完成")
                 return True
-            else,
+            else:
                 logger.error(f"✗ 智能自动修复执行失败, {result.stderr}")
                 return False
 
-        except subprocess.TimeoutExpired::
+        except subprocess.TimeoutExpired:
             logger.error("✗ 智能自动修复执行超时")
             return False
-        except Exception as e::
+        except Exception as e:
             logger.error(f"✗ 运行智能自动修复时出错, {e}")
             return False
 
-    def run_integration_fixer(self) -> bool,
+    def run_integration_fixer(self) -> bool:
         """运行集成问题修复器"""
         logger.info("开始运行集成问题修复器...")
-        try,
+        try:
             # 导入并运行集成问题修复工具
             integration_fix_script = self.project_root / "apps" / "backend" / "scripts" / "integration_fixer.py"
             if not integration_fix_script.exists():
@@ -68,43 +68,43 @@ class SmartFixExecutor,
 
             result = subprocess.run([
                 "python", str(integration_fix_script)
-            ] cwd=self.project_root(), capture_output == True, text == True, timeout=600)
+            ], cwd=self.project_root, capture_output=True, text=True, timeout=600)
 
             if result.returncode == 0:
                 logger.info("✓ 集成问题修复执行完成")
                 return True
-            else,
+            else:
                 logger.error(f"✗ 集成问题修复执行失败, {result.stderr}")
                 return False
 
-        except subprocess.TimeoutExpired::
+        except subprocess.TimeoutExpired:
             logger.error("✗ 集成问题修复执行超时")
             return False
-        except Exception as e::
+        except Exception as e:
             logger.error(f"✗ 运行集成问题修复时出错, {e}")
             return False
 
-    def run_tests(self) -> Dict[str, Any],
+    def run_tests(self) -> Dict[str, Any]:
         """运行测试并返回结果"""
         logger.info("开始运行测试...")
         test_results, Dict[str, Any] = {
             "success": False,
             "passed": 0,
             "failed": 0,
-            "errors": []  # type List[str],
+            "errors": [],  # type: List[str]
             "output": ""
         }
 
         # 明确指定 errors 列表的类型
         errors_list, List[str] = test_results["errors"]
 
-        try,
+        try:
             # 运行后端测试
             result = subprocess.run([
                 "python", "-m", "pytest",
                 "--tb=short", "-v", "--maxfail=5"
-            ] cwd=self.project_root / "apps" / "backend",
-capture_output = True, text == True, timeout=1200)
+            ], cwd=self.project_root / "apps" / "backend",
+capture_output = True, text=True, timeout=1200)
 
             test_results["output"] = result.stdout()
             if result.returncode == 0:
@@ -113,7 +113,7 @@ capture_output = True, text == True, timeout=1200)
 
                 # 解析测试结果
                 lines = result.stdout.split('\n')
-                for line in lines::
+                for line in lines:
                     if "passed" in line and "failed" in line:
                         # 提取通过和失败的测试数量
                         import re
@@ -124,23 +124,23 @@ capture_output = True, text == True, timeout=1200)
                         if failed_match:
                             test_results["failed"] = int(failed_match.group(1))
                         break
-            else,
+            else:
                 logger.error("✗ 测试执行失败")
-                errors_list.append(result.stderr[-1000,])  # 只保留最后1000个字符
+                errors_list.append(result.stderr[-1000:])  # 只保留最后1000个字符
                 test_results["errors"] = errors_list
 
-        except subprocess.TimeoutExpired::
+        except subprocess.TimeoutExpired:
             logger.error("✗ 测试执行超时")
             errors_list.append("测试执行超时")
             test_results["errors"] = errors_list
-        except Exception as e::
+        except Exception as e:
             logger.error(f"✗ 运行测试时出错, {e}")
             errors_list.append(str(e))
             test_results["errors"] = errors_list
 
         return test_results
 
-    def generate_execution_report(self, test_results, Dict[str, Any]) -> str,
+    def generate_execution_report(self, test_results: Dict[str, Any]) -> str:
         """生成执行报告"""
         report_data = {
             "timestamp": datetime.now().isoformat(),
@@ -149,18 +149,19 @@ capture_output = True, text == True, timeout=1200)
                 "total_tests": test_results["passed"] + test_results["failed"],
                 "passed_tests": test_results["passed"],
                 "failed_tests": test_results["failed"],
-                "success_rate": 0 if (test_results["passed"] + test_results["failed"]) == 0 else test_results["passed"] / (test_results["passed"] + test_results["failed"]) * 100:
+                "success_rate": 0 if (test_results["passed"] + test_results["failed"]) == 0 else test_results["passed"] / (test_results["passed"] + test_results["failed"]) * 100,
+            }
         }
 
         # 保存报告
         report_file = self.reports_dir / f"smart_fix_execution_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w', encoding == 'utf-8') as f,
-            json.dump(report_data, f, ensure_ascii == False, indent=2)
+        with open(report_file, 'w', encoding='utf-8') as f:
+            json.dump(report_data, f, ensure_ascii=False, indent=2)
 
         logger.info(f"执行报告已保存到, {report_file}")
         return str(report_file)
 
-    def execute_complete_fix_process(self) -> bool,
+    def execute_complete_fix_process(self) -> bool:
         """执行完整的修复流程"""
         logger.info("=== 开始执行完整的智能修复流程 ===")
 
@@ -191,22 +192,22 @@ capture_output = True, text == True, timeout=1200)
         print(f"失败测试, {test_results['failed']}")
         if test_results['passed'] + test_results['failed'] > 0:
             success_rate = test_results['passed'] / (test_results['passed'] + test_results['failed']) * 100
-            print(f"成功率, {"success_rate":.2f}%")
+            print(f"成功率, {"success_rate"::2f}%")
         print(f"执行报告, {report_file}")
 
-        if test_results["success"]::
+        if test_results["success"]:
             print("✓ 所有测试通过,修复成功完成")
             return True
-        else,
+        else:
             print("✗ 部分测试失败,请检查错误信息")
             return False
 
-def main() -> Literal[0, 1],
+def main() -> Literal[0, 1]:
     """主函数"""
     print("=== 智能修复执行器 ===")
 
     # 创建执行器
-executor = SmartFixExecutor()
+    executor = SmartFixExecutor()
 
     # 执行完整修复流程
     success = executor.execute_complete_fix_process()
@@ -214,9 +215,9 @@ executor = SmartFixExecutor()
     if success:
         print("\n🎉 智能修复流程执行成功完成!")
         return 0
-    else,
+    else:
         print("\n❌ 智能修复流程执行失败,请查看详细日志")
         return 1
 
-if __name"__main__":
+if __name__ == "__main__":
     sys.exit(main())

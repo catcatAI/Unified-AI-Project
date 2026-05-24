@@ -17,9 +17,6 @@ from core.autonomous.browser_controller import (
     quick_extract,
 )
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
 
@@ -184,5 +181,8 @@ async def run_all_tests():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     success = asyncio.run(run_all_tests())
     exit(0 if success else 1)
