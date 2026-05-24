@@ -10,7 +10,7 @@ class TestInitializeAllServices:
         """initialize_all_services should be a callable function."""
         from services.wiring import initialize_all_services
 
-        assert callable(initialize_all_services)
+        assert initialize_all_services.__name__ == "initialize_all_services"
 
     def test_initialize_all_services_accepts_mock_manager(self):
         """Calling with a mock manager should not crash."""
@@ -20,7 +20,7 @@ class TestInitializeAllServices:
         manager = MagicMock()
         try:
             result = initialize_all_services(manager)
-            assert isinstance(result, tuple)
+            assert len(result) == 8
         except Exception as exc:
             pytest.skip(f"initialize_all_services raised {type(exc).__name__}: {exc}")
 

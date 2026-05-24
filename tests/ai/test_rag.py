@@ -40,9 +40,9 @@ class TestRAGManagerWithMockedModel:
         mock_faiss.IndexFlatL2.return_value = mock_index
 
         manager = RAGManager(model_name='all-MiniLM-L6-v2')
-        assert manager.model is not None
+        assert manager.model is mock_model
         assert manager.embedding_dim == 384
-        assert manager.index is not None
+        assert manager.index is mock_index
 
     @patch('apps.backend.src.ai.rag.rag_manager.SENTENCE_TRANSFORMERS_AVAILABLE', True)
     @patch('apps.backend.src.ai.rag.rag_manager.FAISS_AVAILABLE', True)
@@ -90,8 +90,8 @@ class TestRAGManagerWithMockedModel:
         manager.documents = {0: 'test document'}
 
         results = manager.search('test query', k=2)
-        assert len(results) > 0
-        assert results[0][0] == 'test document'
+        assert len(results) == 1
+        assert results[0] == ('test document', 0.8)
 
     @patch('apps.backend.src.ai.rag.rag_manager.SENTENCE_TRANSFORMERS_AVAILABLE', True)
     @patch('apps.backend.src.ai.rag.rag_manager.FAISS_AVAILABLE', True)

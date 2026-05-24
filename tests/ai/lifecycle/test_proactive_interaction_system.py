@@ -460,8 +460,7 @@ class TestMessageGeneration:
     @pytest.mark.asyncio
     async def test_generate_return_message(self, proactive_system):
         msg = await proactive_system._generate_return_message({})
-        assert isinstance(msg, str)
-        assert len(msg) > 0
+        assert '歡迎' in msg or '回' in msg
 
     @pytest.mark.asyncio
     async def test_generate_idle_message_long(self, proactive_system):

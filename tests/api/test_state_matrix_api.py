@@ -16,7 +16,6 @@ from services.api.state_matrix_api import (
 
 
 def test_router_exists():
-    assert state_matrix_router is not None
     routes = state_matrix_router.routes
     assert len(routes) == 43
     paths = [r.path for r in routes]
@@ -35,8 +34,6 @@ def test_router_exists():
 
 def test_state_matrix_integration():
     sm = get_state_matrix()
-    assert sm is not None
-
     summary = sm.full_report()
     assert "state_matrix" in summary
     assert "temporal" in summary
@@ -59,16 +56,16 @@ def test_gradient_and_navigate():
     sm = get_state_matrix()
 
     g = sm.compute_gradient()
-    assert g is not None
     assert "gradient" in g
     assert "gradient_strength" in g
+    assert isinstance(g["gradient_strength"], float)
     assert "nearest_attractors" in g
     print(f"  compute_gradient OK (strength={g['gradient_strength']:.2f})")
 
     n = sm.navigate_to_attractor(max_steps=3)
-    assert n is not None
     assert "new_state" in n
     assert "nearest_attractors" in n
+    assert n.get("navigation_steps", 0) > 0
     print(f"  navigate_to_attractor OK ({n['navigation_steps']} steps)")
 
 
@@ -94,8 +91,8 @@ def test_allocation_api():
     sm = get_state_matrix()
     vec = [0.1] * 32
     decision = sm.allocation_decide(vec, "api_test")
-    assert decision is not None
     assert decision.confidence > 0
+    assert hasattr(decision, "action")
     print(f"  allocation_decide OK (action={decision.action.value})")
 
 
@@ -117,9 +114,7 @@ def test_save_load():
 def test_attractor_list():
     sm = get_state_matrix()
     gf = sm.gradient_field
-    assert gf is not None
-    count = len(gf.attractors)
-    assert count > 0
+    assert len(gf.attractors) > 0
     print(f"  gradient_field has {count} attractors")
 
 
@@ -145,7 +140,7 @@ def test_temporal_queries():
         sm.update_alpha(energy=0.5 + 0.05 * _)
 
     trend = sm.temporal_trend("alpha", "energy", window=5)
-    assert trend is not None
+    assert isinstance(trend, dict)
     print("  temporal_trend OK")
 
     anomalies = sm.temporal_anomalies("alpha", "energy", threshold=0.3)

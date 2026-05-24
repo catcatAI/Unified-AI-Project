@@ -12,7 +12,7 @@ class TestSignedCommunicationMiddleware:
 
     def test_import_success(self):
         from shared.security_middleware import SignedCommunicationMiddleware
-        assert SignedCommunicationMiddleware is not None
+        assert SignedCommunicationMiddleware.__name__ == "SignedCommunicationMiddleware"
 
     def test_middleware_inherits_base_http_middleware(self):
         from starlette.middleware.base import BaseHTTPMiddleware

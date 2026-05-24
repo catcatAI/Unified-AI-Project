@@ -38,8 +38,8 @@ class TestInit:
     def test_default_init(self):
         am = AlignmentManager()
         assert am.system_id == 'alignment_manager_v1'
-        assert am.reasoning_system is not None
-        assert am.emotion_system is not None
+        assert am.reasoning_system.system_id == 'reasoning_system_v1'
+        assert am.emotion_system.system_id == 'emotion_system_v1'
         assert am.ontology_system is not None
         assert am.adversarial_mode is False
         assert am.adversarial_intensity == 0.0
@@ -240,12 +240,11 @@ class TestMakeDecision:
                           AsyncMock(return_value=mock_result)):
             result = await manager.make_decision(context, options)
 
-        assert isinstance(result, AlignmentResult)
         assert result.decision == options[0]
         assert result.confidence == 0.85
         assert result.ethical_score == 0.8
         assert result.existential_score == 0.9
-        assert result.reasoning != ''
+        assert result.reasoning == 'Balanced decision'
         assert result.emotional_state is not None
 
     @pytest.mark.asyncio

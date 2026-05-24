@@ -388,10 +388,10 @@ class TestMakeDecision:
         assert len(decision_loop.decision_history) == 1
 
     @pytest.mark.asyncio
-    async def test_make_decision_handles_llm_exception_gracefully(self, decision_loop):
+    async def test_execute_decision_handles_llm_exception_gracefully(self, decision_loop):
         decision_loop.llm_service.chat_completion.side_effect = Exception('LLM error')
         await decision_loop._make_decision()
-        assert decision_loop.stats['total_decisions'] >= 0
+        assert decision_loop.stats['total_decisions'] == 1
 
     @pytest.mark.asyncio
     async def test_make_decision_no_action_skips_execution(self, decision_loop):

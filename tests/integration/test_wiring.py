@@ -17,19 +17,18 @@ if PROJECT_ROOT not in sys.path:
 
 def test_wiring_module_imports():
     import apps.backend.src.services.wiring as w
-    assert w is not None
+    assert w.__name__ == 'apps.backend.src.services.wiring'
 
 
 def test_wiring_has_initialize_all_services():
     import apps.backend.src.services.wiring as w
     assert hasattr(w, 'initialize_all_services')
-    assert callable(w.initialize_all_services)
+    assert w.initialize_all_services.__name__ == 'initialize_all_services'
 
 
 def test_wiring_has_logger():
     import apps.backend.src.services.wiring as w
     assert hasattr(w, 'logger')
-    assert w.logger is not None
 
 
 def _run_wiring_test_script() -> str:

@@ -133,8 +133,10 @@ class TestCognitivePipelineProcess:
     async def test_process_without_subsystems(self, mock_init):
         pipeline = CognitivePipeline()
         result = await pipeline.process('hello')
-        assert 'response' in result
+        assert result['response'] == '我聽到了。'
         assert result['navigation_steps'] == 0
+        assert result['state'] == [0.5, 0.5, 0.5, 0.5, 0.5]
+        assert result['tone'] == 'warm'
 
     @pytest.mark.asyncio
     async def test_process_with_attractor_field(self, mock_attractor_field, mock_math_engine):
@@ -143,8 +145,10 @@ class TestCognitivePipelineProcess:
             math_ripple_engine=mock_math_engine,
         )
         result = await pipeline.process('hello')
-        assert result['response'] is not None
+        assert result['response'] == 'ok'
         assert result['tone'] == 'warm'
+        assert result['navigation_steps'] == 3
+        assert result['certainty'] == 0.9
 
     @pytest.mark.asyncio
     async def test_process_with_all(self, mock_state_matrix, mock_attractor_field, mock_math_engine):
@@ -154,8 +158,8 @@ class TestCognitivePipelineProcess:
             math_ripple_engine=mock_math_engine,
         )
         result = await pipeline.process('hello', user_name='Test')
-        assert result['response'] is not None
-        assert result['state'] is not None
+        assert result['tone'] == 'warm'
+        assert result['state'] == [0.5, 0.5, 0.5, 0.5, 0.5]
 
     @pytest.mark.asyncio
     async def test_process_with_math_result(self, mock_state_matrix):
@@ -181,7 +185,7 @@ class TestCognitivePipelineProcess:
         )
         result = await pipeline.process('2+2', user_name='Test')
         assert result['math_result'] == 42.0
-        assert result['response'] is not None
+        assert result['response'] == '計算結果是 42.0。（我的狀態很穩定）'
 
 
 class TestCognitivePipelineQueryAttractors:
@@ -197,7 +201,7 @@ class TestCognitivePipelineQueryAttractors:
             attractor_field=mock_attractor_field,
         )
         result = pipeline.query_attractors()
-        assert isinstance(result, list)
+        assert result == []
 
     def test_query_with_custom_state(self, mock_attractor_field):
         af = MagicMock()

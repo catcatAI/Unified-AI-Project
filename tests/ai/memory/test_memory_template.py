@@ -152,8 +152,8 @@ class TestMemoryTemplate:
         assert sample_template.content == 'Hello!'
         assert sample_template.keywords == ['hi', 'hello']
         assert sample_template.usage_count == 0
-        assert isinstance(sample_template.angela_state, AngelaState)
-        assert isinstance(sample_template.user_impression, UserImpression)
+        assert sample_template.angela_state.to_dict() == AngelaState().to_dict()
+        assert sample_template.user_impression.to_dict() == UserImpression().to_dict()
 
     def test_to_dict(self, sample_template):
         d = sample_template.to_dict()
@@ -163,10 +163,10 @@ class TestMemoryTemplate:
         assert d['keywords'] == ['hi', 'hello']
         assert d['usage_count'] == 0
         assert d['success_rate'] == 1.0
-        assert 'created_at' in d
-        assert 'updated_at' in d
-        assert 'angela_state' in d
-        assert 'user_impression' in d
+        assert d['created_at'] == sample_template.created_at.isoformat()
+        assert d['updated_at'] == sample_template.updated_at.isoformat()
+        assert d['angela_state'] == sample_template.angela_state.to_dict()
+        assert d['user_impression'] == sample_template.user_impression.to_dict()
 
     def test_from_dict_roundtrip(self, sample_template):
         d = sample_template.to_dict()
@@ -181,7 +181,8 @@ class TestMemoryTemplate:
         sample_template.record_usage(success=True)
         assert sample_template.usage_count == 1
         assert sample_template.success_rate == 1.0
-        assert sample_template.last_used is not None
+        assert isinstance(sample_template.last_used, datetime)
+        assert (datetime.utcnow() - sample_template.last_used).total_seconds() < 5
 
     def test_record_usage_failure(self, sample_template):
         sample_template.record_usage(success=False)
@@ -203,7 +204,7 @@ class TestMemoryTemplate:
     def test_calculate_match_score_no_keywords(self, sample_template):
         tpl = MemoryTemplate(id='t', category=ResponseCategory.UNKNOWN, content='x')
         score = tpl.calculate_match_score('anything', AngelaState(), UserImpression())
-        assert 0.0 <= score <= 1.0
+        assert score == pytest.approx(0.65, abs=1e-6)
 
     def test_calculate_keyword_match_all(self, sample_template):
         score = sample_template._calculate_keyword_match('hello world hi')
@@ -221,15 +222,12 @@ class TestMemoryTemplate:
         state = AngelaState(alpha={'energy': 0.5, 'focus': 0.5})
         sample_template.angela_state = AngelaState(alpha={'energy': 0.5, 'focus': 0.5})
         score = sample_template._calculate_state_similarity(state)
-        # AngelaState.__dict__ contains dict-fields (alpha, beta, etc),
-        # so isinstance(..., (int,float)) is False → returns 0.5
         assert score == 0.5
 
     def test_calculate_state_similarity_different(self, sample_template):
         state = AngelaState(alpha={'energy': 1.0})
         sample_template.angela_state = AngelaState(alpha={'energy': 0.0})
         score = sample_template._calculate_state_similarity(state)
-        # Same reason as above: dicts not int/float → returns 0.5
         assert score == 0.5
 
     def test_calculate_state_similarity_no_common(self, sample_template):
@@ -252,8 +250,8 @@ class TestHelpers:
         assert tpl.content == 'content'
         assert tpl.category == ResponseCategory.GREETING
         assert tpl.keywords == []
-        assert isinstance(tpl.angela_state, AngelaState)
-        assert isinstance(tpl.user_impression, UserImpression)
+        assert tpl.angela_state.to_dict() == AngelaState().to_dict()
+        assert tpl.user_impression.to_dict() == UserImpression().to_dict()
 
     def test_create_template_custom(self):
         state = AngelaState(alpha={'energy': 0.9})

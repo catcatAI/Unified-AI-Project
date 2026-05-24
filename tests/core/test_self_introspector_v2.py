@@ -20,7 +20,7 @@ def test_record_wellbeing():
     insp.record_wellbeing(0.7)
     insp.record_wellbeing(0.6)
 
-    assert adapter.temporal.size() >= 3
+    assert adapter.temporal.size() == 3
 
 
 def test_mental_health_check_trend():

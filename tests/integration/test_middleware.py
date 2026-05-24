@@ -25,7 +25,6 @@ class TestSignedCommunicationMiddleware:
 
         app = FastAPI()
         middleware = SignedCommunicationMiddleware(app, key_b='test_key_b')
-        assert middleware is not None
         assert middleware.key_b == b'test_key_b'
 
     def test_dispatch_non_protected_path(self):

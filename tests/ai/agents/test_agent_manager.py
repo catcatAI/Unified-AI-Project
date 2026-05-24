@@ -173,11 +173,10 @@ class TestAgentManagerLifecycle:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_get_agent_status(self, agent_manager, mock_agent):
+    async     def test_get_agent_status(self, agent_manager, mock_agent):
         """Test get_agent_status returns the agent's status dict."""
         await agent_manager.add_agent(mock_agent)
         status = agent_manager.get_agent_status(mock_agent.agent_id)
-        assert status is not None
         assert status["status"] == "active"
         mock_agent.get_status.assert_called_once()
 

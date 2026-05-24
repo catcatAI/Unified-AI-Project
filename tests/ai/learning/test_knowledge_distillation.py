@@ -69,6 +69,8 @@ class TestKnowledgeDistillationManagerDistill:
         student = MagicMock()
         manager = KnowledgeDistillationManager(teacher, student)
         await manager.distill_knowledge([], epochs=1)
+        teacher.predict.assert_not_called()
+        student.predict.assert_not_called()
 
 
 class TestKnowledgeDistillationManagerEvaluate:

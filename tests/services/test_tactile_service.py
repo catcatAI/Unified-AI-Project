@@ -37,13 +37,15 @@ class TestTactileServiceModelObject:
 
     async def test_model_object_tactile_basic(self, tactile_service):
         result = await tactile_service.model_object_tactile(visual_data={})
-        assert isinstance(result, dict)
+        assert result['object_id'] == 'unknown_obj'
+        assert 'tactile_properties' in result
 
     async def test_model_object_tactile_with_data(self, tactile_service):
         result = await tactile_service.model_object_tactile(
             visual_data={'hardness': 0.5, 'roughness': 0.3},
         )
-        assert isinstance(result, dict)
+        assert result['object_id'] == 'unknown_obj'
+        assert 'roughness' in result['tactile_properties']
 
 
 class TestTactileServiceSimulateTouch:
@@ -52,13 +54,15 @@ class TestTactileServiceSimulateTouch:
         result = await tactile_service.simulate_touch(
             object_id='obj1', contact_point={'x': 0.5, 'y': 0.3},
         )
-        assert isinstance(result, dict)
+        assert result['object_id'] == 'obj1'
+        assert 'reflex' in result
 
     async def test_simulate_touch_with_origin(self, tactile_service):
         result = await tactile_service.simulate_touch(
             object_id='obj1', contact_point={}, origin='User',
         )
-        assert isinstance(result, dict)
+        assert result['object_id'] == 'obj1'
+        assert 'status' in result
 
 
 class TestTactileServiceProcess:
@@ -68,28 +72,31 @@ class TestTactileServiceProcess:
             'model_object_tactile': True,
             'visual_data': {},
         })
-        assert result is not None
+        assert result.get('error') == 'Invalid input format for tactile processing'
 
     async def test_process_invalid(self, tactile_service):
         result = await tactile_service.process('invalid')
-        assert 'error' in result
+        assert result['error'] == 'Invalid input format for tactile processing'
 
     async def test_process_no_intent(self, tactile_service):
         result = await tactile_service.process({})
-        assert 'error' in result
+        assert result['error'] == 'Invalid input format for tactile processing'
 
 
 class TestTactileServiceFeedback:
 
     async def test_model_tactile_feedback_basic(self, tactile_service):
         result = await tactile_service.model_tactile_feedback(visual_data={})
-        assert isinstance(result, dict)
+        assert result['object_id'] == 'unknown_obj'
+        assert 'tactile_properties' in result
 
     async def test_trigger_physical_feedback(self, tactile_service):
         result = await tactile_service.trigger_physical_feedback(
             device_id='device1', intensity=0.5, pattern='pulse',
         )
-        assert isinstance(result, dict)
+        assert result['status'] == 'success'
+        assert result['device_id'] == 'device1'
+        assert result['pattern'] == 'pulse'
 
     async def test_trigger_physical_feedback_disabled(self, tactile_service):
         tactile_service.enabled = False

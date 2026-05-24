@@ -35,9 +35,9 @@ class TestTemplateLibraryInit:
 
     def test_init_contains_known_ids(self):
         lib = TemplateLibrary()
-        assert lib.get_by_id('greeting_morning') is not None
-        assert lib.get_by_id('farewell_general') is not None
-        assert lib.get_by_id('comfort_sad') is not None
+        assert lib.get_by_id('greeting_morning').id == 'greeting_morning'
+        assert lib.get_by_id('farewell_general').id == 'farewell_general'
+        assert lib.get_by_id('comfort_sad').id == 'comfort_sad'
 
 
 class TestTemplateLibraryGet:
@@ -49,7 +49,10 @@ class TestTemplateLibraryGet:
     def test_get_all_templates(self, lib):
         templates = lib.get_all_templates()
         assert len(templates) == 45
-        assert all(isinstance(t, MemoryTemplate) for t in templates)
+        ids = [t.id for t in templates]
+        assert 'greeting_morning' in ids
+        assert 'farewell_general' in ids
+        assert 'comfort_sad' in ids
 
     def test_get_by_id_exists(self, lib):
         tpl = lib.get_by_id('greeting_general')
@@ -62,7 +65,7 @@ class TestTemplateLibraryGet:
 
     def test_get_by_category_greeting(self, lib):
         templates = lib.get_by_category(ResponseCategory.GREETING)
-        assert len(templates) >= 4
+        assert len(templates) == 6
         assert all(t.category == ResponseCategory.GREETING for t in templates)
 
     def test_get_by_category_emotional(self, lib):
@@ -85,7 +88,6 @@ class TestTemplateLibraryCategoryCounts:
 
     def test_get_category_counts(self, lib):
         counts = lib.get_category_counts()
-        assert isinstance(counts, dict)
         assert sum(counts.values()) == 45
         assert ResponseCategory.GREETING in counts
         assert ResponseCategory.FAREWELL in counts
@@ -116,7 +118,7 @@ class TestTemplateLibraryAddRemove:
         before = lib.get_template_count()
         lib.add_custom_template(tpl)
         assert lib.get_template_count() == before + 1
-        assert lib.get_by_id('custom_1') is not None
+        assert lib.get_by_id('custom_1').id == 'custom_1'
 
     def test_add_custom_template_overwrite(self, lib):
         tpl = MemoryTemplate(
@@ -161,4 +163,4 @@ class TestTemplateLibrarySingleton:
 
     def test_singleton_is_template_library(self):
         lib = get_template_library()
-        assert isinstance(lib, TemplateLibrary)
+        assert lib.get_template_count() == 45

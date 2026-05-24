@@ -194,11 +194,10 @@ class TestValueAssessment:
         action = {'action_id': 'test_action', 'type': 'help'}
         context = {'text': 'helpful context'}
         assessment = emotion_system.assess_values(action, context)
-        assert isinstance(assessment, ValueAssessment)
         assert len(assessment.value_scores) == len(ValueDimension)
         assert 0.0 <= assessment.overall_value <= 1.0
         assert 0.0 <= assessment.confidence <= 1.0
-        assert assessment.reasoning != ''
+        assert len(assessment.reasoning) > 0
 
     def test_assess_values_with_explicit_state(self, emotion_system):
         action = {'action_id': 'test'}

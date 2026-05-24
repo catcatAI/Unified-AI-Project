@@ -62,7 +62,7 @@ class TestChatServiceGenerateResponse:
     async def test_generate_response_llm_error_fallback(self, chat_service):
         chat_service._call_llm = AsyncMock(return_value='fallback response')
         result = await chat_service.generate_response('hello', 'User')
-        assert isinstance(result, str)
+        assert result == 'fallback response'
 
     async def test_generate_response_llm_manage_intent(self, chat_service):
         chat_service.ego_guard.sanitize_prompt.return_value = ('切換模型 gpt-4', False)

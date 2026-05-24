@@ -36,15 +36,15 @@ class TestVectorMemoryStoreInit:
         with patch('apps.backend.src.ai.memory.vector_store.chromadb.Client', return_value=mock_client) as mock_cls:
             store = VectorMemoryStore()
             mock_cls.assert_called_once()
-            assert store.client is not None
-            assert store.collection is not None
+            assert store.client is mock_client
+            assert store.collection is mock_client.get_or_create_collection.return_value
 
     def test_init_persistent(self, mock_client):
         with patch('apps.backend.src.ai.memory.vector_store.chromadb.PersistentClient', return_value=mock_client) as mock_cls:
             store = VectorMemoryStore(persist_directory='/tmp/test')
             mock_cls.assert_called_once_with(path='/tmp/test')
-            assert store.client is not None
-            assert store.collection is not None
+            assert store.client is mock_client
+            assert store.collection is mock_client.get_or_create_collection.return_value
 
     def test_init_collection_name_and_metadata(self, mock_client):
         with patch('apps.backend.src.ai.memory.vector_store.chromadb.Client', return_value=mock_client):
@@ -56,8 +56,7 @@ class TestVectorMemoryStoreInit:
     def test_init_failure_sets_none(self):
         with patch('apps.backend.src.ai.memory.vector_store.chromadb.Client', side_effect=Exception('fail')):
             store = VectorMemoryStore()
-            assert store.client is None
-            assert store.collection is None
+            assert store.client is None and store.collection is None
 
 
 class TestVectorMemoryStoreAddMemory:
@@ -87,7 +86,9 @@ class TestVectorMemoryStoreAddMemory:
     async def test_add_memory_exception_handled(self, vector_store, mock_collection):
         mock_collection.add.side_effect = Exception('add error')
         await vector_store.add_memory('mem1', 'content')
-        mock_collection.add.assert_called_once()
+        mock_collection.add.assert_called_once_with(
+            documents=['content'], metadatas=[{}], ids=['mem1']
+        )
 
 
 class TestVectorMemoryStoreSemanticSearch:

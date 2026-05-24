@@ -14,19 +14,19 @@ class TestMainApiServerDependencies:
         """get_desktop_interaction should be a callable."""
         from services.main_api_server import get_desktop_interaction
 
-        assert callable(get_desktop_interaction)
+        assert get_desktop_interaction.__name__ == 'get_desktop_interaction'
 
     def test_get_action_executor_is_callable(self):
         """get_action_executor should be a callable."""
         from services.main_api_server import get_action_executor
 
-        assert callable(get_action_executor)
+        assert get_action_executor.__name__ == 'get_action_executor'
 
     def test_get_digital_life_is_callable(self):
         """get_digital_life should be a callable."""
         from services.main_api_server import get_digital_life
 
-        assert callable(get_digital_life)
+        assert get_digital_life.__name__ == 'get_digital_life'
 
     def test_get_desktop_interaction_returns_instance(self):
         """Calling get_desktop_interaction returns an object (or skips on ImportError)."""
@@ -34,7 +34,7 @@ class TestMainApiServerDependencies:
             from services.main_api_server import get_desktop_interaction
 
             instance = get_desktop_interaction()
-            assert instance is not None
+            assert type(instance).__name__ == 'DesktopInteraction'
         except Exception as exc:
             pytest.skip(f"get_desktop_interaction() raised {type(exc).__name__}: {exc}")
 
@@ -44,7 +44,7 @@ class TestMainApiServerDependencies:
             from services.main_api_server import get_action_executor
 
             instance = get_action_executor()
-            assert instance is not None
+            assert type(instance).__name__ == 'ActionExecutor'
         except Exception as exc:
             pytest.skip(f"get_action_executor() raised {type(exc).__name__}: {exc}")
 
@@ -54,7 +54,7 @@ class TestMainApiServerDependencies:
             from services.main_api_server import get_digital_life
 
             instance = get_digital_life()
-            assert instance is not None
+            assert type(instance).__name__ == 'DigitalLifeIntegrator'
         except Exception as exc:
             pytest.skip(f"get_digital_life() raised {type(exc).__name__}: {exc}")
 

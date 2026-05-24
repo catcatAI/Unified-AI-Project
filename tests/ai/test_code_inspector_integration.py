@@ -23,7 +23,7 @@ def test_bridge_creation():
 def test_factory():
     adapter = StateMatrixAdapter()
     bridge = create_bridge(adapter)
-    assert isinstance(bridge, CodeInspectorBridge)
+    assert bridge._adapter is adapter
 
 
 def test_compute_complexity():
@@ -33,8 +33,7 @@ def test_compute_complexity():
     result = bridge._compute_complexity({
         'critical': 2, 'high': 3, 'medium': 10, 'low': 20,
     })
-    assert 0.0 <= result <= 1.0
-    assert result > 0
+    assert result == 1.0
 
 
 def test_compute_stability():

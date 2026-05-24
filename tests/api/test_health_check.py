@@ -7,22 +7,16 @@ class TestHealthCheck:
     """Test the health_check function directly."""
 
     @pytest.mark.asyncio
-    async def test_health_check_returns_dict(self):
-        from api.router import health_check
-        result = await health_check()
-        assert isinstance(result, dict)
-
-    @pytest.mark.asyncio
     async def test_health_check_returns_healthy_status(self):
         from api.router import health_check
         result = await health_check()
         assert result == {"status": "healthy"}
 
     @pytest.mark.asyncio
-    async def test_health_check_has_status_key(self):
+    async def test_health_check_has_status_healthy(self):
         from api.router import health_check
         result = await health_check()
-        assert "status" in result
+        assert result["status"] == "healthy"
 
     def test_health_check_is_coroutine_function(self):
         import inspect

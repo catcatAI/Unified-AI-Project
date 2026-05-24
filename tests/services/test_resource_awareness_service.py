@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" 
 def test_resource_awareness_service_imports():
     """Smoke test: apps.backend.src.services.resource_awareness_service imports successfully."""
     from services import resource_awareness_service as resource_awareness_service
-    assert resource_awareness_service is not None
+    assert resource_awareness_service.__name__ == 'services.resource_awareness_service'
 
 
 if __name__ == "__main__":

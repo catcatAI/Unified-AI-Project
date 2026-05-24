@@ -111,7 +111,8 @@ class TestExecutionManagerInit:
 
         manager = ExecutionManager()
         mock_load.assert_called_once()
-        assert isinstance(manager.config, ExecutionManagerConfig)
+        assert manager.config.enabled is True
+        assert manager.config.default_timeout == 60.0
 
 
 class TestExecutionManagerTaskExecution:

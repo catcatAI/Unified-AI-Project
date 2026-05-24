@@ -101,9 +101,8 @@ class TestDynamicAgentRegistry:
             capabilities=[],
         )
         agent = await registry.get_agent("agent_001")
-        assert agent is not None
         assert agent.agent_id == "agent_001"
-        assert isinstance(agent, RegisteredAgent)
+        assert agent.agent_name == "TestAgent"
 
     async def test_get_agent_not_found(self, registry):
         """Test get_agent returns None for non-existent agent."""
