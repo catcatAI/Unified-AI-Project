@@ -76,8 +76,6 @@ async def collaboration_manager(mock_hsp_connector):
     await manager.hsp_connector.subscribe(f"collab_manager/{manager.agent_id}/responses", manager._response_handler)
     yield manager
     await manager.stop()
-
-@pytest.mark.asyncio
 async def test_manager_initialization(collaboration_manager: AgentCollaborationManager, mock_hsp_connector: MagicMock):
     """Test if the manager initializes correctly and connects HSP."""
     assert collaboration_manager.name == "TestTeamLead"
@@ -87,8 +85,6 @@ async def test_manager_initialization(collaboration_manager: AgentCollaborationM
         f"collab_manager/{collaboration_manager.agent_id}/responses",
         collaboration_manager._response_handler
     )
-
-@pytest.mark.asyncio
 async def test_register_agent_operation(collaboration_manager: AgentCollaborationManager):
     """Test the manager's ability to register a new agent."""
     agent_id = "test_agent_1"
@@ -100,8 +96,6 @@ async def test_register_agent_operation(collaboration_manager: AgentCollaboratio
     assert "Agent 'WriterBot' registered with ID 'test_agent_1'." in result["result"]["message"]
     assert agent_id in collaboration_manager.registered_agents
     assert agent_id in collaboration_manager.agent_response_queues
-
-@pytest.mark.asyncio
 async def test_orchestrate_operation(collaboration_manager: AgentCollaborationManager, mock_hsp_connector: MagicMock):
     """Test the manager's ability to orchestrate subtasks to registered agents."""
     # Register a mock agent first
@@ -156,8 +150,6 @@ async def test_orchestrate_operation(collaboration_manager: AgentCollaborationMa
         }
     )
     await writer_agent.stop()
-
-@pytest.mark.asyncio
 async def test_orchestrate_operation_timeout(collaboration_manager: AgentCollaborationManager, mock_hsp_connector: MagicMock):
     """Test orchestration when a subtask times out."""
     # Register a mock agent that won't send a response
@@ -187,8 +179,6 @@ async def test_orchestrate_operation_timeout(collaboration_manager: AgentCollabo
     assert f"Task timed out after {collaboration_manager.task_timeout} seconds." in result["error"]
     
     await timeout_agent.stop()
-
-@pytest.mark.asyncio
 async def test_orchestrate_operation_unregistered_agent(collaboration_manager: AgentCollaborationManager):
     """Test orchestration with an unregistered agent."""
     orchestration_task = {

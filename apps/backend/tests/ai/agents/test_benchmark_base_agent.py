@@ -25,8 +25,6 @@ class BenchmarkAgent(BaseAgent):
 def benchmark_agent():
     """Fixture to provide a BenchmarkAgent instance."""
     return BenchmarkAgent(name="BenchmarkAgent")
-
-@pytest.mark.asyncio
 async def test_base_agent_handle_task_benchmark(benchmark_agent: BenchmarkAgent, benchmark):
     """
     Benchmark the handle_task method of the BaseAgent.

@@ -111,6 +111,14 @@ markers = [
     'integration: 标记集成测试',
     'unit: 标记单元测试',
     'asyncio: 标记异步测试',
+    'online: 标记需要联网的测试',
+    'mcp: 标记 MCP 相关测试',
+    'context7: 标记 Context7 集成测试',
+    'ai_core: 标记核心 AI 功能测试',
+    'timeout: 标记有超时限制的测试',
+    'flaky: 标记不稳定的测试',
+    'system_integration: 标记系统集成测试',
+    'performance: 标记性能基准测试',
 ]
 asyncio_mode = 'auto'
 

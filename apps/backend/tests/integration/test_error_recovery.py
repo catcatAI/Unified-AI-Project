@@ -80,8 +80,6 @@ class TestComponentFailureRecovery:
                 self.faults.clear()
         
         return FaultInjector()
-    
-    @pytest.mark.asyncio
     async def test_perception_component_failure(self, fault_injector):
         """
         测试感知组件故障恢复
@@ -148,8 +146,6 @@ class TestComponentFailureRecovery:
             metrics.success = False
             metrics.error_message = str(e)
             raise
-    
-    @pytest.mark.asyncio
     async def test_cognitive_component_failure(self, fault_injector):
         """
         测试认知组件故障恢复
@@ -216,8 +212,6 @@ class TestComponentFailureRecovery:
             metrics.success = False
             metrics.error_message = str(e)
             raise
-    
-    @pytest.mark.asyncio
     async def test_memory_component_failure(self, fault_injector):
         """
         测试记忆组件故障恢复
@@ -279,8 +273,6 @@ class TestComponentFailureRecovery:
             metrics.success = False
             metrics.error_message = str(e)
             raise
-    
-    @pytest.mark.asyncio
     async def test_emotional_component_failure(self, fault_injector):
         """
         测试情绪组件故障恢复
@@ -337,8 +329,6 @@ class TestComponentFailureRecovery:
             metrics.success = False
             metrics.error_message = str(e)
             raise
-    
-    @pytest.mark.asyncio
     async def test_live2d_rendering_failure(self, fault_injector):
         """
         测试Live2D渲染故障恢复
@@ -407,8 +397,6 @@ class TestNetworkInterruptionRecovery:
     
     测试网络相关功能的中断恢复
     """
-    
-    @pytest.mark.asyncio
     async def test_api_service_reconnection(self):
         """
         测试API服务重连
@@ -457,8 +445,6 @@ class TestNetworkInterruptionRecovery:
             print(f"  - Detection time: {metrics.detection_time_ms:.2f}ms")
             print(f"  - Reconnection time: {metrics.recovery_time_ms:.2f}ms")
             print(f"  - Reconnection attempts: {reconnect_result['attempts']}")
-    
-    @pytest.mark.asyncio
     async def test_cloud_service_fallback(self):
         """
         测试云服务降级
@@ -517,8 +503,6 @@ class TestNetworkInterruptionRecovery:
             print(f"✓ Cloud service fallback:")
             print(f"  - Local mode activated: ✓")
             print(f"  - Sync queue: {sync_result['sync_id'][:8]}...")
-    
-    @pytest.mark.asyncio
     async def test_external_api_timeout_recovery(self):
         """
         测试外部API超时恢复
@@ -565,8 +549,6 @@ class TestDataCorruptionRecovery:
     
     测试数据完整性保护和恢复
     """
-    
-    @pytest.mark.asyncio
     async def test_memory_data_corruption_detection(self):
         """
         测试记忆数据损坏检测
@@ -624,8 +606,6 @@ class TestDataCorruptionRecovery:
             print(f"  - Corrupted entries: {len(check_result['corrupted_entries'])}")
             print(f"  - Entries restored: {restore_result['entries_restored']}")
             print(f"  - Data loss: None")
-    
-    @pytest.mark.asyncio
     async def test_configuration_corruption_recovery(self):
         """
         测试配置损坏恢复
@@ -681,8 +661,6 @@ class TestDataCorruptionRecovery:
             print(f"✓ Configuration corruption recovery:")
             print(f"  - Default config loaded: ✓")
             print(f"  - System operational: ✓")
-    
-    @pytest.mark.asyncio
     async def test_experience_corruption_handling(self):
         """
         测试经验数据损坏处理
@@ -742,8 +720,6 @@ class TestDegradedModeOperation:
     
     测试系统在降级模式下的运行
     """
-    
-    @pytest.mark.asyncio
     async def test_core_functionality_in_degraded_mode(self):
         """
         测试降级模式下核心功能
@@ -798,8 +774,6 @@ class TestDegradedModeOperation:
             print(f"  - Active components: {len(health['active_components'])}")
             print(f"  - Core functionality: ✓")
             print(f"  - Response generation: ✓")
-    
-    @pytest.mark.asyncio
     async def test_graceful_feature_degradation(self):
         """
         测试功能优雅降级
@@ -852,8 +826,6 @@ class TestDegradedModeOperation:
                 print(f"  - Stage {stage['stage']}: {len(stage['disabled'])} disabled, {len(stage['enabled'])} enabled")
         
         print(f"  - Graceful degradation: ✓")
-    
-    @pytest.mark.asyncio
     async def test_auto_recovery_from_degraded_mode(self):
         """
         测试从降级模式自动恢复
@@ -916,8 +888,6 @@ class TestSystemResilience:
     
     测试系统整体韧性
     """
-    
-    @pytest.mark.asyncio
     async def test_cascading_failure_prevention(self):
         """
         测试级联故障预防
@@ -963,8 +933,6 @@ class TestSystemResilience:
             print(f"  - Affected components: {len(isolation['affected_components'])}")
             print(f"  - Healthy components: {isolation['healthy_components']}")
             print(f"  - Cascading failure prevented: ✓")
-    
-    @pytest.mark.asyncio
     async def test_state_preservation_during_failure(self):
         """
         测试故障期间状态保持

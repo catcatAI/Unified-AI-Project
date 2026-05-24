@@ -30,7 +30,7 @@ class AngelaTester:
             self.results["tests"].append({"name": name, "status": "passed", "message": "Success"})
             print(f"✅ {name}")
         except Exception as e:
-            logger.error(f"Error in comprehensive_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_comprehensive.py: {e}", exc_info=True)
             self.results["failed"] += 1
 
             self.results["tests"].append({"name": name, "status": "failed", "message": str(e)})
@@ -142,7 +142,7 @@ class AngelaTester:
                 if "electron . --disable-dev-shm-usage --no-sandbox" in cmd:
                     main_processes += 1
             except Exception as e:
-                logger.error(f"Unexpected error in comprehensive_test.py: {e}", exc_info=True)
+                logger.error(f"Unexpected error in test_comprehensive.py: {e}", exc_info=True)
                 pass
 
         # Should have 2 main processes (node wrapper + electron binary), which is normal

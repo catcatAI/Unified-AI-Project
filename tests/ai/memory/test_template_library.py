@@ -140,8 +140,6 @@ class TestTemplateLibraryAddRemove:
     def test_remove_template_missing(self, lib):
         result = lib.remove_template('nonexistent')
         assert result is False
-
-    @pytest.mark.asyncio
     async def test_add_custom_template_async(self, lib):
         tpl = MemoryTemplate(
             id='async_custom',

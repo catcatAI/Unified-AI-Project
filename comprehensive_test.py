@@ -14,7 +14,7 @@ sys.path.insert(0, str(tests_dir))
 if __name__ == "__main__":
     # Run the actual comprehensive test
     result = subprocess.run(
-        [sys.executable, str(tests_dir / "comprehensive_test.py")],
+        [sys.executable, str(tests_dir / "scripts" / "test_comprehensive.py")],
         cwd=str(Path(__file__).parent)
     )
     sys.exit(result.returncode)

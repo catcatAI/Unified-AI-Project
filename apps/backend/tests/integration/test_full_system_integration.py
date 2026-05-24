@@ -70,8 +70,6 @@ class TestCognitiveCycle:
             'action': Mock(),
             'reflection': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_perceive_phase(self, cognitive_system):
         """
         测试感知阶段 (Perceive)
@@ -115,8 +113,6 @@ class TestCognitiveCycle:
             raise
         
         print(f"✓ Perceive phase completed in {metrics.latency_ms:.2f}ms")
-    
-    @pytest.mark.asyncio
     async def test_think_phase(self, cognitive_system):
         """
         测试思考阶段 (Think)
@@ -163,8 +159,6 @@ class TestCognitiveCycle:
             raise
         
         print(f"✓ Think phase completed in {metrics.latency_ms:.2f}ms")
-    
-    @pytest.mark.asyncio
     async def test_act_phase(self, cognitive_system):
         """
         测试行动阶段 (Act)
@@ -208,8 +202,6 @@ class TestCognitiveCycle:
             raise
         
         print(f"✓ Act phase completed in {metrics.latency_ms:.2f}ms")
-    
-    @pytest.mark.asyncio
     async def test_reflect_phase(self, cognitive_system):
         """
         测试反思阶段 (Reflect)
@@ -259,8 +251,6 @@ class TestCognitiveCycle:
             raise
         
         print(f"✓ Reflect phase completed in {metrics.latency_ms:.2f}ms")
-    
-    @pytest.mark.asyncio
     async def test_complete_cognitive_cycle(self, cognitive_system):
         """
         测试完整认知循环 (Perceive → Think → Act → Reflect)
@@ -345,8 +335,6 @@ class TestBiologicalSystemCoordination:
             'endocrine': Mock(),
             'emotional': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_tactile_to_physiological(self, biological_systems):
         """
         测试触觉到生理反应链路
@@ -402,8 +390,6 @@ class TestBiologicalSystemCoordination:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_physiological_to_endocrine(self, biological_systems):
         """
         测试生理反应到激素变化链路
@@ -449,8 +435,6 @@ class TestBiologicalSystemCoordination:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_endocrine_to_emotion(self, biological_systems):
         """
         测试激素变化到情绪生成链路
@@ -502,8 +486,6 @@ class TestBiologicalSystemCoordination:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_complete_biological_chain(self, biological_systems):
         """
         测试完整生物系统链路
@@ -563,8 +545,6 @@ class TestBiologicalSystemCoordination:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_biological_feedback_loop(self, biological_systems):
         """
         测试生物系统反馈循环
@@ -630,8 +610,6 @@ class TestExecutionPipeline:
             'execution_bridge': Mock(),
             'tool_executor': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_decision_to_executor(self, execution_system):
         """
         测试决策到执行器链路
@@ -673,8 +651,6 @@ class TestExecutionPipeline:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_executor_to_bridge(self, execution_system):
         """
         测试执行器到桥接器链路
@@ -714,8 +690,6 @@ class TestExecutionPipeline:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_bridge_to_tool_execution(self, execution_system):
         """
         测试桥接器到工具执行链路
@@ -756,8 +730,6 @@ class TestExecutionPipeline:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_feedback_collection(self, execution_system):
         """
         测试反馈收集链路
@@ -805,8 +777,6 @@ class TestExecutionPipeline:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_complete_execution_pipeline(self, execution_system):
         """
         测试完整执行链路
@@ -889,8 +859,6 @@ class TestMemoryLearningIntegration:
             'cdm_system': Mock(),
             'strategy_adjuster': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_experience_storage(self, memory_learning_system):
         """
         测试经验存储
@@ -935,8 +903,6 @@ class TestMemoryLearningIntegration:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_hsm_update(self, memory_learning_system):
         """
         测试HSM更新
@@ -977,8 +943,6 @@ class TestMemoryLearningIntegration:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_cdm_learning(self, memory_learning_system):
         """
         测试CDM学习
@@ -1024,8 +988,6 @@ class TestMemoryLearningIntegration:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_strategy_adjustment(self, memory_learning_system):
         """
         测试策略调整
@@ -1067,8 +1029,6 @@ class TestMemoryLearningIntegration:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_complete_memory_learning_cycle(self, memory_learning_system):
         """
         测试完整记忆-学习循环
@@ -1146,8 +1106,6 @@ class TestRealTimeFeedbackLoop:
             'event_processor': Mock(),
             'response_generator': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_input_monitoring(self, feedback_system):
         """
         测试输入监测
@@ -1186,8 +1144,6 @@ class TestRealTimeFeedbackLoop:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_event_processing(self, feedback_system):
         """
         测试事件处理
@@ -1228,8 +1184,6 @@ class TestRealTimeFeedbackLoop:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_response_generation(self, feedback_system):
         """
         测试响应生成
@@ -1273,8 +1227,6 @@ class TestRealTimeFeedbackLoop:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_complete_feedback_loop(self, feedback_system):
         """
         测试完整反馈循环
@@ -1328,8 +1280,6 @@ class TestRealTimeFeedbackLoop:
         except Exception as e:
             metrics.complete(success=False, error=str(e))
             raise
-    
-    @pytest.mark.asyncio
     async def test_event_integrity(self, feedback_system):
         """
         测试事件完整性

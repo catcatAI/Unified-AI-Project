@@ -38,9 +38,6 @@ def test_knowledge_graph_agent_init(knowledge_graph_agent: KnowledgeGraphAgent):
     assert "entity_linking" in capability_names
     assert "relationship_extraction" in capability_names
     assert "graph_query" in capability_names
-
-
-@pytest.mark.asyncio
 async def test_knowledge_graph_agent_perform_entity_linking(
     knowledge_graph_agent: KnowledgeGraphAgent,
 ):
@@ -58,9 +55,6 @@ async def test_knowledge_graph_agent_perform_entity_linking(
     result = knowledge_graph_agent._perform_entity_linking(params)
     assert "entities" in result
     assert result["total_entities"] >= 1
-
-
-@pytest.mark.asyncio
 async def test_knowledge_graph_agent_extract_relationships(
     knowledge_graph_agent: KnowledgeGraphAgent,
 ):
@@ -82,9 +76,6 @@ async def test_knowledge_graph_agent_extract_relationships(
     result = knowledge_graph_agent._extract_relationships(params)
     assert "relationships" in result
     assert result["total_relationships"] >= 1
-
-
-@pytest.mark.asyncio
 async def test_knowledge_graph_agent_query_knowledge_graph(
     knowledge_graph_agent: KnowledgeGraphAgent,
 ):
@@ -106,9 +97,6 @@ async def test_knowledge_graph_agent_query_knowledge_graph(
     result = knowledge_graph_agent._query_knowledge_graph(params)
     assert "results" in result
     assert result["total_results"] >= 1
-
-
-@pytest.mark.asyncio
 async def test_handle_task_request_entity_linking(knowledge_graph_agent: KnowledgeGraphAgent):
     """Test handling an entity linking task request."""
     task_payload = HSPTaskRequestPayload(
@@ -139,9 +127,6 @@ async def test_handle_task_request_entity_linking(knowledge_graph_agent: Knowled
     assert result_payload["status"] == "success"
     assert "payload" in result_payload
     assert callback_topic == "test_callback_1"
-
-
-@pytest.mark.asyncio
 async def test_handle_task_request_unsupported_capability(
     knowledge_graph_agent: KnowledgeGraphAgent,
 ):

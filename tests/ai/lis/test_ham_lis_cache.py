@@ -15,9 +15,6 @@ def ham_manager_mock():
 @pytest.fixture
 def cache(ham_manager_mock):
     return HAMLISCache(ham_manager_mock)
-
-
-@pytest.mark.asyncio
 async def test_store_incident_success(cache):
     incident = LIS_IncidentRecord(
         incident_id="test_001",
@@ -37,21 +34,12 @@ async def test_store_incident_success(cache):
     )
     result = await cache.store_incident(incident)
     assert result is True
-
-
-@pytest.mark.asyncio
 async def test_query_incidents_empty(cache):
     results = await cache.query_incidents()
     assert results == []
-
-
-@pytest.mark.asyncio
 async def test_query_incidents_by_type_empty(cache):
     results = await cache.query_incidents(anomaly_type="REPETITION_ECHO", limit=5)
     assert results == []
-
-
-@pytest.mark.asyncio
 async def test_store_antibody_success(cache):
     antibody = NarrativeAntibodyObject(
         antibody_id="ab_001",
@@ -65,9 +53,6 @@ async def test_store_antibody_success(cache):
     )
     result = await cache.store_antibody(antibody)
     assert result is True
-
-
-@pytest.mark.asyncio
 async def test_get_learned_antibodies_empty(cache):
     results = await cache.get_learned_antibodies(for_anomaly_type="REPETITION_ECHO", limit=5)
     assert results == []

@@ -5,10 +5,6 @@
 import sys
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-
-pytestmark = pytest.mark.asyncio
-
-
 def _async_mock():
     m = MagicMock()
     async def async_fn(*args, **kwargs):

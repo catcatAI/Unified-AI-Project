@@ -127,8 +127,6 @@ class TestCognitivePipelineExtractLabel:
 
 
 class TestCognitivePipelineProcess:
-
-    @pytest.mark.asyncio
     @patch('apps.backend.src.ai.memory.cognitive_pipeline.CognitivePipeline._init_subsystems')
     async def test_process_without_subsystems(self, mock_init):
         pipeline = CognitivePipeline()
@@ -137,8 +135,6 @@ class TestCognitivePipelineProcess:
         assert result['navigation_steps'] == 0
         assert result['state'] == [0.5, 0.5, 0.5, 0.5, 0.5]
         assert result['tone'] == 'warm'
-
-    @pytest.mark.asyncio
     async def test_process_with_attractor_field(self, mock_attractor_field, mock_math_engine):
         pipeline = CognitivePipeline(
             attractor_field=mock_attractor_field,
@@ -149,8 +145,6 @@ class TestCognitivePipelineProcess:
         assert result['tone'] == 'warm'
         assert result['navigation_steps'] == 3
         assert result['certainty'] == 0.9
-
-    @pytest.mark.asyncio
     async def test_process_with_all(self, mock_state_matrix, mock_attractor_field, mock_math_engine):
         pipeline = CognitivePipeline(
             state_matrix=mock_state_matrix,
@@ -160,8 +154,6 @@ class TestCognitivePipelineProcess:
         result = await pipeline.process('hello', user_name='Test')
         assert result['tone'] == 'warm'
         assert result['state'] == [0.5, 0.5, 0.5, 0.5, 0.5]
-
-    @pytest.mark.asyncio
     async def test_process_with_math_result(self, mock_state_matrix):
         math_engine = MagicMock()
         math_engine.analyze_expression.return_value = {

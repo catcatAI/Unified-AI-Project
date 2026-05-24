@@ -57,21 +57,16 @@ class TestDemoLearningManagerInit:
 
 
 class TestDemoLearningManagerModelManagement:
-    @pytest.mark.asyncio
     async def test_start_learning(self, demo_manager):
         result = await demo_manager.start_learning('model_1', {'lr': 0.01})
         assert result == {'status': 'completed'}
         assert 'model_1' in demo_manager.model_registry
         assert demo_manager.model_registry['model_1']['status'] == 'trained'
-
-    @pytest.mark.asyncio
     async def test_stop_learning_existing_model(self, demo_manager):
         demo_manager.model_registry['model_1'] = {'status': 'trained'}
         result = await demo_manager.stop_learning('model_1')
         assert result is True
         assert demo_manager.model_registry['model_1']['status'] == 'stopped'
-
-    @pytest.mark.asyncio
     async def test_stop_learning_nonexistent_model(self, demo_manager):
         result = await demo_manager.stop_learning('nonexistent')
         assert result is False
@@ -106,18 +101,13 @@ class TestDemoLearningManagerCredentials:
 
 
 class TestDemoLearningManagerActivation:
-    @pytest.mark.asyncio
     async def test_activate_demo_mode_with_demo_credentials(self, demo_manager):
         assert demo_manager.demo_mode is False
         await demo_manager.activate_demo_mode({'key': 'demo_abcdef'})
         assert demo_manager.demo_mode is True
-
-    @pytest.mark.asyncio
     async def test_activate_demo_mode_without_demo_credentials(self, demo_manager):
         await demo_manager.activate_demo_mode({'key': 'real_key'})
         assert demo_manager.demo_mode is False
-
-    @pytest.mark.asyncio
     async def test_activate_demo_mode_creates_flag_file(self, demo_manager, tmp_path):
         await demo_manager.activate_demo_mode({'key': 'demo_xyz'})
         flag_file = demo_manager.storage_path / 'demo_mode.flag'
@@ -125,12 +115,9 @@ class TestDemoLearningManagerActivation:
 
 
 class TestDemoLearningManagerRecording:
-    @pytest.mark.asyncio
     async def test_record_user_interaction_only_in_demo_mode(self, demo_manager):
         await demo_manager.record_user_interaction('test_action', {}, 'success')
         assert len(demo_manager.learning_data['user_interactions']) == 0
-
-    @pytest.mark.asyncio
     async def test_record_user_interaction_in_demo_mode(self, demo_manager):
         demo_manager.demo_mode = True
         await demo_manager.record_user_interaction('test_action', {'key': 'val'}, 'success')
@@ -138,29 +125,21 @@ class TestDemoLearningManagerRecording:
         entry = demo_manager.learning_data['user_interactions'][0]
         assert entry['action'] == 'test_action'
         assert entry['result'] == 'success'
-
-    @pytest.mark.asyncio
     async def test_record_error_pattern_only_in_demo_mode(self, demo_manager):
         await demo_manager.record_error_pattern('type_a', 'msg', {}, 'fix')
         assert len(demo_manager.learning_data['error_patterns']) == 0
-
-    @pytest.mark.asyncio
     async def test_record_error_pattern_in_demo_mode(self, demo_manager):
         demo_manager.demo_mode = True
         await demo_manager.record_error_pattern('type_a', 'error msg', {'ctx': 1}, 'restart')
         assert len(demo_manager.learning_data['error_patterns']) == 1
         key = 'type_a-error msg'
         assert demo_manager.learning_data['error_patterns'][key]['frequency'] == 1
-
-    @pytest.mark.asyncio
     async def test_record_error_pattern_increments_frequency(self, demo_manager):
         demo_manager.demo_mode = True
         await demo_manager.record_error_pattern('type_a', 'msg', {}, 'fix')
         await demo_manager.record_error_pattern('type_a', 'msg', {}, 'fix')
         key = 'type_a-msg'
         assert demo_manager.learning_data['error_patterns'][key]['frequency'] == 2
-
-    @pytest.mark.asyncio
     async def test_learning_data_capacity_limit(self, demo_manager):
         demo_manager.demo_mode = True
         for i in range(1200):
@@ -169,12 +148,9 @@ class TestDemoLearningManagerRecording:
 
 
 class TestDemoLearningManagerInsights:
-    @pytest.mark.asyncio
     async def test_get_learning_insights_not_in_demo_mode(self, demo_manager):
         insights = await demo_manager.get_learning_insights()
         assert insights == {}
-
-    @pytest.mark.asyncio
     async def test_get_learning_insights_in_demo_mode(self, demo_manager):
         demo_manager.demo_mode = True
         demo_manager.learning_data['user_interactions'] = [
@@ -187,8 +163,6 @@ class TestDemoLearningManagerInsights:
         assert insights['demo_mode'] is True
         assert insights['interactions']['total'] == 1
         assert insights['performance']['samples'] == 1
-
-    @pytest.mark.asyncio
     async def test_get_learning_insights_recommendations_high_memory(self, demo_manager):
         demo_manager.demo_mode = True
         demo_manager.learning_data['performance_metrics'] = [
@@ -196,8 +170,6 @@ class TestDemoLearningManagerInsights:
         ]
         insights = await demo_manager.get_learning_insights()
         assert len(insights['recommendations']) > 0
-
-    @pytest.mark.asyncio
     async def test_get_learning_insights_recommendations_low_success(self, demo_manager):
         demo_manager.demo_mode = True
         for i in range(10):
@@ -210,12 +182,9 @@ class TestDemoLearningManagerInsights:
 
 
 class TestDemoLearningManagerShutdown:
-    @pytest.mark.asyncio
     async def test_shutdown_not_in_demo_mode(self, demo_manager):
         await demo_manager.shutdown()
         assert demo_manager.demo_mode is False
-
-    @pytest.mark.asyncio
     async def test_shutdown_in_demo_mode_saves_data(self, demo_manager, tmp_path):
         demo_manager.demo_mode = True
         await demo_manager.shutdown()
@@ -235,8 +204,6 @@ class TestDemoLearningManagerInternal:
 
     def test_get_active_connections(self, demo_manager):
         assert demo_manager._get_active_connections() == 0
-
-    @pytest.mark.asyncio
     async def test_collect_learning_data(self, demo_manager):
         demo_manager.demo_mode = True
         await demo_manager._collect_learning_data()

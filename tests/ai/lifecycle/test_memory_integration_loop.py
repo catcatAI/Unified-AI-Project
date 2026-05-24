@@ -149,23 +149,17 @@ class TestMemoryIntegrationLoopInit:
         assert loop.loop_interval == 300.0
         assert loop.min_loop_interval == 200.0
         assert loop.max_loop_interval == 600.0
-
-    @pytest.mark.asyncio
     async def test_start_stop(self, integration_loop):
         await integration_loop.start()
         assert integration_loop.is_running
         assert integration_loop._integration_task is not None
         await integration_loop.stop()
         assert not integration_loop.is_running
-
-    @pytest.mark.asyncio
     async def test_start_when_already_running(self, integration_loop):
         await integration_loop.start()
         await integration_loop.start()
         assert integration_loop.is_running
         await integration_loop.stop()
-
-    @pytest.mark.asyncio
     async def test_stop_when_not_running(self, integration_loop):
         await integration_loop.stop()
         assert not integration_loop.is_running
@@ -194,22 +188,16 @@ class TestAddMemory:
 
 class TestCollectNewInfo:
     """Tests for collecting new information."""
-
-    @pytest.mark.asyncio
     async def test_collect_new_info_from_memory_manager(self, integration_loop, mock_memory_manager):
         await integration_loop._collect_new_info()
         assert len(integration_loop.memory_infos) == 3
         assert len(integration_loop.integration_queue) == 3
         assert integration_loop.stats['total_memories'] == 3
-
-    @pytest.mark.asyncio
     async def test_collect_new_info_skips_duplicates(self, integration_loop, mock_memory_manager):
         await integration_loop._collect_new_info()
         assert integration_loop.stats['total_memories'] == 3
         await integration_loop._collect_new_info()  # same content, should skip
         assert integration_loop.stats['total_memories'] == 3
-
-    @pytest.mark.asyncio
     async def test_collect_new_info_without_memory_method(self, mock_learning_engine):
         from ai.lifecycle.memory_integration_loop import MemoryIntegrationLoop
         bare_manager = MagicMock(spec=[])  # no get_recent_memories
@@ -219,8 +207,6 @@ class TestCollectNewInfo:
         )
         await loop._collect_new_info()
         assert len(loop.memory_infos) == 0
-
-    @pytest.mark.asyncio
     async def test_collect_new_info_limits_count(self, integration_loop, mock_memory_manager):
         integration_loop.max_infos = 2
         mock_memory_manager.get_recent_memories.return_value = [
@@ -232,8 +218,6 @@ class TestCollectNewInfo:
 
 class TestAnalyzePatterns:
     """Tests for pattern analysis."""
-
-    @pytest.mark.asyncio
     async def test_analyze_patterns_finds_keywords(self, integration_loop):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         # Add enough memory info with repeated keywords
@@ -244,8 +228,6 @@ class TestAnalyzePatterns:
             ))
         await integration_loop._analyze_patterns()
         assert any('keyword_用户话题' in k or 'keyword_喜欢' in k for k in integration_loop.knowledge_patterns)
-
-    @pytest.mark.asyncio
     async def test_analyze_patterns_updates_existing(self, integration_loop):
         from ai.lifecycle.memory_integration_loop import MemoryInfo, KnowledgePattern
         now = datetime.now()
@@ -261,8 +243,6 @@ class TestAnalyzePatterns:
         await integration_loop._analyze_patterns()
         assert integration_loop.knowledge_patterns['keyword_python'].frequency > 2
         assert integration_loop.knowledge_patterns['keyword_python'].confidence > 0.3
-
-    @pytest.mark.asyncio
     async def test_analyze_patterns_ignores_short_words(self, integration_loop):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         now = datetime.now()
@@ -272,8 +252,6 @@ class TestAnalyzePatterns:
         await integration_loop._analyze_patterns()
         # No word > 2 chars should appear
         assert len(integration_loop.knowledge_patterns) == 0
-
-    @pytest.mark.asyncio
     async def test_analyze_patterns_handles_exception(self, integration_loop):
         integration_loop.add_memory('test test test', 'conversation', 0.5)
         with patch.object(integration_loop.memory_infos[0], 'content', 123):
@@ -282,8 +260,6 @@ class TestAnalyzePatterns:
 
 class TestStructureMemory:
     """Tests for memory structuring."""
-
-    @pytest.mark.asyncio
     async def test_structure_memory_processes_queue(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         now = datetime.now()
@@ -292,8 +268,6 @@ class TestStructureMemory:
         await integration_loop._structure_memory()
         assert info.structured is True
         assert integration_loop.stats['structured_memories'] == 1
-
-    @pytest.mark.asyncio
     async def test_structure_memory_skips_already_structured(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         now = datetime.now()
@@ -301,8 +275,6 @@ class TestStructureMemory:
         integration_loop.integration_queue.append(info)
         await integration_loop._structure_memory()
         assert integration_loop.stats['structured_memories'] == 0
-
-    @pytest.mark.asyncio
     async def test_structure_memory_limits_batch(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         now = datetime.now()
@@ -312,8 +284,6 @@ class TestStructureMemory:
             ))
         await integration_loop._structure_memory()
         assert integration_loop.stats['structured_memories'] == 10  # max 10 per call
-
-    @pytest.mark.asyncio
     async def test_structure_memory_without_manager_method(self, mock_learning_engine):
         from ai.lifecycle.memory_integration_loop import MemoryIntegrationLoop, MemoryInfo
         bare_manager = MagicMock(spec=[])
@@ -337,8 +307,6 @@ class TestStructureMemory:
 
 class TestUpdateKnowledgeBase:
     """Tests for knowledge base updates."""
-
-    @pytest.mark.asyncio
     async def test_update_knowledge_base_integrates_structured(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         now = datetime.now()
@@ -351,8 +319,6 @@ class TestUpdateKnowledgeBase:
         assert info.integrated is True
         assert integration_loop.stats['integrated_memories'] == 1
         assert integration_loop.stats['knowledge_base_updates'] == 1
-
-    @pytest.mark.asyncio
     async def test_update_knowledge_base_skips_unstructured(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         now = datetime.now()
@@ -364,8 +330,6 @@ class TestUpdateKnowledgeBase:
         await integration_loop._update_knowledge_base()
         assert not info.integrated
         assert integration_loop.stats['integrated_memories'] == 0
-
-    @pytest.mark.asyncio
     async def test_update_knowledge_base_cleans_up(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
         now = datetime.now()
@@ -381,8 +345,6 @@ class TestUpdateKnowledgeBase:
         await integration_loop._update_knowledge_base()
         assert pending not in integration_loop.integration_queue  # should be removed
         assert integrated not in integration_loop.integration_queue  # removed too
-
-    @pytest.mark.asyncio
     async def test_update_knowledge_base_without_manager_method(self, mock_learning_engine):
         from ai.lifecycle.memory_integration_loop import MemoryIntegrationLoop, MemoryInfo
         bare_manager = MagicMock(spec=[])
@@ -402,8 +364,6 @@ class TestUpdateKnowledgeBase:
 
 class TestGenerateTemplates:
     """Tests for template generation."""
-
-    @pytest.mark.asyncio
     async def test_generate_templates_high_confidence(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import KnowledgePattern
         now = datetime.now()
@@ -415,8 +375,6 @@ class TestGenerateTemplates:
         await integration_loop._generate_templates()
         assert mock_memory_manager.generate_template.call_count == 3  # max 3 per call
         assert integration_loop.stats['templates_generated'] == 3
-
-    @pytest.mark.asyncio
     async def test_generate_templates_few_patterns(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import KnowledgePattern
         now = datetime.now()
@@ -427,8 +385,6 @@ class TestGenerateTemplates:
         await integration_loop._generate_templates()
         assert integration_loop.stats['templates_generated'] == 0
         mock_memory_manager.generate_template.assert_not_called()
-
-    @pytest.mark.asyncio
     async def test_generate_templates_low_confidence(self, integration_loop, mock_memory_manager):
         from ai.lifecycle.memory_integration_loop import KnowledgePattern
         now = datetime.now()

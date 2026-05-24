@@ -56,7 +56,7 @@ class DialogueLLMTester:
             )
             return False
         except Exception as e:
-            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_dialogue_llm.py: {e}", exc_info=True)
             self.failed_tests += 1
 
             self.results.append(
@@ -102,7 +102,7 @@ class DialogueLLMTester:
                 )
                 return False
         except Exception as e:
-            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_dialogue_llm.py: {e}", exc_info=True)
             self.failed_tests += 1
 
             self.results.append(
@@ -125,7 +125,7 @@ class DialogueLLMTester:
             else:
                 return False, response.text, "❌"
         except Exception as e:
-            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_dialogue_llm.py: {e}", exc_info=True)
             return False, str(e), "❌"
 
     def test_emotion_detection(self) -> bool:
@@ -163,7 +163,7 @@ class DialogueLLMTester:
             )
             return True
         except Exception as e:
-            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_dialogue_llm.py: {e}", exc_info=True)
             self.failed_tests += 1
 
             self.results.append(
@@ -234,7 +234,7 @@ class DialogueLLMTester:
                 )
                 return False
         except Exception as e:
-            logger.error(f"Error in dialogue_llm_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_dialogue_llm.py: {e}", exc_info=True)
             self.failed_tests += 1
 
             self.results.append(
@@ -306,7 +306,7 @@ if __name__ == "__main__":
     results = tester.run_all_tests()
 
     # 保存結果到 JSON 文件
-    with open("/home/cat/桌面/dialogue_llm_test_results.json", "w", encoding="utf-8") as f:
+    with open("/home/cat/桌面/test_dialogue_llm_results.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n詳細結果已保存到: /home/cat/桌面/dialogue_llm_test_results.json")
+    print(f"\n詳細結果已保存到: /home/cat/桌面/test_dialogue_llm_results.json")

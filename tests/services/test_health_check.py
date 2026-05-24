@@ -52,9 +52,6 @@ def test_app():
     app = FastAPI()
     app.include_router(router)
     return app
-
-
-@pytest.mark.asyncio
 async def test_health_check_endpoint(test_app):
     """Test health check endpoint returns healthy status"""
     from fastapi.testclient import TestClient
@@ -64,9 +61,6 @@ async def test_health_check_endpoint(test_app):
 
     assert response.status_code == 200
     assert response.json()["status"] == "healthy"
-
-
-@pytest.mark.asyncio
 async def test_root_endpoint(test_app):
     """Test root endpoint returns API info"""
     from fastapi.testclient import TestClient
@@ -76,9 +70,6 @@ async def test_root_endpoint(test_app):
 
     assert response.status_code == 200
     assert "message" in response.json()
-
-
-@pytest.mark.asyncio
 async def test_system_metrics_endpoint(test_app):
     """Test system metrics endpoint"""
     from fastapi.testclient import TestClient
@@ -90,9 +81,6 @@ async def test_system_metrics_endpoint(test_app):
     data = response.json()
     assert "cpu" in data
     assert "memory" in data
-
-
-@pytest.mark.asyncio
 async def test_emergency_mode_endpoint(test_app):
     """Test emergency mode endpoint"""
     from fastapi.testclient import TestClient
@@ -102,9 +90,6 @@ async def test_emergency_mode_endpoint(test_app):
 
     assert response.status_code == 200
     assert response.json()["status"] == "emergency_active"
-
-
-@pytest.mark.asyncio
 async def test_cluster_status_endpoint(test_app):
     """Test cluster status endpoint exists"""
     from fastapi.testclient import TestClient

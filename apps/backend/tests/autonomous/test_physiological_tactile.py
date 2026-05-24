@@ -265,8 +265,6 @@ class TestBodyPart:
 
 class TestPhysiologicalTactileSystem:
     """Tests for the main PhysiologicalTactileSystem class."""
-
-    @pytest.mark.asyncio
     async def test_system_initialization(self, tactile_system: PhysiologicalTactileSystem) -> None:
         """Test system initialization."""
         await tactile_system.initialize()
@@ -274,8 +272,6 @@ class TestPhysiologicalTactileSystem:
         assert tactile_system._update_task is not None
         assert len(tactile_system.receptors) == 18  # 18 body parts
         await tactile_system.shutdown()
-
-    @pytest.mark.asyncio
     async def test_system_shutdown(self, tactile_system: PhysiologicalTactileSystem) -> None:
         """Test system shutdown."""
         await tactile_system.initialize()
@@ -307,8 +303,6 @@ class TestPhysiologicalTactileSystem:
         assert "joy" in tactile_system.emotional_mappings
         assert "comfort" in tactile_system.emotional_mappings
         assert "anxiety" in tactile_system.emotional_mappings
-
-    @pytest.mark.asyncio
     async def test_process_stimulus(self, initialized_tactile_system: PhysiologicalTactileSystem) -> None:
         """Test processing a tactile stimulus."""
         stimulus = TactileStimulus(
@@ -325,8 +319,6 @@ class TestPhysiologicalTactileSystem:
         assert response.perceived_intensity > 0
         assert response.activated_receptors > 0
         assert response.timestamp is not None
-
-    @pytest.mark.asyncio
     async def test_process_stimulus_with_emotion(self, initialized_tactile_system: PhysiologicalTactileSystem) -> None:
         """Test processing stimulus with emotional context."""
         # Anxiety increases intensity perception
@@ -586,8 +578,6 @@ class TestAdaptationMechanism:
         
         assert adaptation_mechanism.habituation_rate == 0.1
         assert adaptation_mechanism.recovery_rate == 0.05
-
-    @pytest.mark.asyncio
     async def test_recovery_over_time(self, adaptation_mechanism: AdaptationMechanism) -> None:
         """Test sensitivity recovery over time."""
         adaptation_mechanism.register_receptor("test_receptor", base_sensitivity=0.8)
@@ -617,8 +607,6 @@ class TestAdaptationMechanism:
 
 class TestTactileSystemIntegration:
     """Integration tests for the tactile system."""
-
-    @pytest.mark.asyncio
     async def test_full_stimulus_processing_workflow(self) -> None:
         """Test complete stimulus processing workflow."""
         system = PhysiologicalTactileSystem()

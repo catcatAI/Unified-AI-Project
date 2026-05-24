@@ -53,15 +53,9 @@ def test_sdm_is_capability_available_false(sdm):
 
 def test_sdm_get_all_capabilities_empty(sdm):
     assert sdm.get_all_capabilities() == []
-
-
-@pytest.mark.asyncio
 async def test_sdm_find_capabilities_empty(sdm):
     results = await sdm.find_capabilities()
     assert results == []
-
-
-@pytest.mark.asyncio
 async def test_sdm_get_all_capabilities_async_empty(sdm):
     results = await sdm.get_all_capabilities_async()
     assert results == []

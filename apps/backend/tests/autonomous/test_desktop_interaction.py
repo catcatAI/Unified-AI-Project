@@ -251,8 +251,6 @@ class TestFileWatcherConfig:
 
 class TestDesktopInteraction:
     """Tests for the main DesktopInteraction class."""
-
-    @pytest.mark.asyncio
     async def test_initialization(self, desktop_interaction: DesktopInteraction, temp_desktop_dir: Path) -> None:
         """Test desktop interaction initialization."""
         await desktop_interaction.initialize()
@@ -273,8 +271,6 @@ class TestDesktopInteraction:
         assert desktop_interaction.desktop_path == temp_desktop_dir
         assert desktop_interaction.organized_path == temp_desktop_dir / "Organized"
         assert desktop_interaction.wallpaper_path == temp_desktop_dir / "Wallpapers"
-
-    @pytest.mark.asyncio
     async def test_create_file(self, initialized_desktop: DesktopInteraction, temp_desktop_dir: Path) -> None:
         """Test file creation."""
         result = await initialized_desktop.create_file(
@@ -290,8 +286,6 @@ class TestDesktopInteraction:
         # Should be in Documents folder
         expected_path = temp_desktop_dir / "Organized" / "文档" / "test_note.txt"
         assert result == expected_path
-
-    @pytest.mark.asyncio
     async def test_create_file_no_category(self, initialized_desktop: DesktopInteraction, temp_desktop_dir: Path) -> None:
         """Test file creation without category (goes to desktop)."""
         result = await initialized_desktop.create_file(
@@ -303,8 +297,6 @@ class TestDesktopInteraction:
         assert result.exists()
         # Should be on desktop
         assert result.parent == temp_desktop_dir
-
-    @pytest.mark.asyncio
     async def test_delete_file(self, initialized_desktop: DesktopInteraction, sample_files: Dict[str, Path]) -> None:
         """Test file deletion."""
         file_to_delete = sample_files["document"]
@@ -317,8 +309,6 @@ class TestDesktopInteraction:
         
         assert result is True
         assert not file_to_delete.exists()
-
-    @pytest.mark.asyncio
     async def test_delete_nonexistent_file(self, initialized_desktop: DesktopInteraction) -> None:
         """Test deleting non-existent file."""
         nonexistent = Path("/nonexistent/path/file.txt")
@@ -326,8 +316,6 @@ class TestDesktopInteraction:
         result = await initialized_desktop.delete_file(nonexistent)
         
         assert result is False
-
-    @pytest.mark.asyncio
     async def test_move_file(self, initialized_desktop: DesktopInteraction, temp_desktop_dir: Path, sample_files: Dict[str, Path]) -> None:
         """Test file movement."""
         source = sample_files["document"]
@@ -338,8 +326,6 @@ class TestDesktopInteraction:
         assert result is True
         assert not source.exists()
         assert target.exists()
-
-    @pytest.mark.asyncio
     async def test_organize_desktop(self, initialized_desktop: DesktopInteraction, temp_desktop_dir: Path, sample_files: Dict[str, Path]) -> None:
         """Test desktop organization."""
         # Scan to populate state
@@ -380,8 +366,6 @@ class TestDesktopInteraction:
         state = initialized_desktop.get_desktop_state()
         # 30 files should give moderate clutter (30/50 = 0.6)
         assert state.clutter_level > 0.5
-
-    @pytest.mark.asyncio
     async def test_cleanup_desktop(self, initialized_desktop: DesktopInteraction, temp_desktop_dir: Path) -> None:
         """Test desktop cleanup."""
         # Create old temp files
@@ -452,8 +436,6 @@ class TestDesktopInteraction:
 
 class TestCrossPlatformCompatibility:
     """Tests for cross-platform compatibility using mocks."""
-
-    @pytest.mark.asyncio
     @patch("platform.system")
     @patch("ctypes.windll.user32.SystemParametersInfoW")
     async def test_set_wallpaper_windows(self, mock_spi, mock_platform, temp_desktop_dir: Path) -> None:
@@ -471,8 +453,6 @@ class TestCrossPlatformCompatibility:
         
         assert result is True
         mock_spi.assert_called_once()
-
-    @pytest.mark.asyncio
     @patch("platform.system")
     @patch("os.system")
     async def test_set_wallpaper_macos(self, mock_system, mock_platform, temp_desktop_dir: Path) -> None:
@@ -489,8 +469,6 @@ class TestCrossPlatformCompatibility:
         
         assert result is True
         mock_system.assert_called_once()
-
-    @pytest.mark.asyncio
     @patch("platform.system")
     @patch("os.environ.get")
     @patch("os.system")
@@ -508,8 +486,6 @@ class TestCrossPlatformCompatibility:
         result = await desktop.set_wallpaper(wallpaper)
         
         assert result is True
-
-    @pytest.mark.asyncio
     async def test_set_wallpaper_nonexistent_file(self, temp_desktop_dir: Path) -> None:
         """Test wallpaper setting with non-existent file."""
         desktop = DesktopInteraction(config={"desktop_path": str(temp_desktop_dir)})
@@ -519,8 +495,6 @@ class TestCrossPlatformCompatibility:
         result = await desktop.set_wallpaper(nonexistent)
         
         assert result is False
-
-    @pytest.mark.asyncio
     @patch("random.choice")
     async def test_rotate_wallpaper(self, mock_choice, temp_desktop_dir: Path) -> None:
         """Test wallpaper rotation."""
@@ -540,8 +514,6 @@ class TestCrossPlatformCompatibility:
         with patch.object(desktop, 'set_wallpaper', return_value=True):
             result = await desktop.rotate_wallpaper()
             assert result is True
-
-    @pytest.mark.asyncio
     async def test_rotate_wallpaper_no_wallpapers(self, temp_desktop_dir: Path) -> None:
         """Test wallpaper rotation with no wallpapers available."""
         desktop = DesktopInteraction(config={
@@ -563,8 +535,6 @@ class TestCrossPlatformCompatibility:
 
 class TestFileSystemMonitoring:
     """Tests for file system monitoring functionality."""
-
-    @pytest.mark.asyncio
     async def test_file_detection(self, initialized_desktop: DesktopInteraction, temp_desktop_dir: Path) -> None:
         """Test file detection in monitoring."""
         # Create a new file
@@ -576,8 +546,6 @@ class TestFileSystemMonitoring:
         
         # Should be in cache
         assert str(new_file) in initialized_desktop._file_cache
-
-    @pytest.mark.asyncio
     async def test_file_deletion_detection(self, initialized_desktop: DesktopInteraction, temp_desktop_dir: Path, sample_files: Dict[str, Path]) -> None:
         """Test detection of file deletion."""
         doc_file = sample_files["document"]
@@ -594,8 +562,6 @@ class TestFileSystemMonitoring:
         
         # Should be removed from cache
         assert str(doc_file) not in initialized_desktop._file_cache
-
-    @pytest.mark.asyncio
     async def test_auto_organize_trigger(self, temp_desktop_dir: Path) -> None:
         """Test auto-organize trigger when threshold exceeded."""
         config = {
@@ -628,8 +594,6 @@ class TestFileSystemMonitoring:
 
 class TestDesktopInteractionIntegration:
     """Integration tests for desktop interaction."""
-
-    @pytest.mark.asyncio
     async def test_full_workflow(self, temp_desktop_dir: Path) -> None:
         """Test complete desktop interaction workflow."""
         desktop = DesktopInteraction(config={

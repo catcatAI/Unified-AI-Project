@@ -12,8 +12,6 @@ class TestAIAgentIntegration:
     def setup_agent_test(self):
         self.data_factory = TestDataFactory() if hasattr(self, 'data_factory') else MockDataFactory()
         yield
-
-    @pytest.mark.asyncio()
     async def test_agent_lifecycle_integration(self):
         agent_config = {
             "agent_id": "lifecycle_test_agent",

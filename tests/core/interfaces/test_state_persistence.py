@@ -118,9 +118,6 @@ def test_state_matrix_adapter_conforms(sm_adapter):
     from core.interfaces.persistence import StatePersistence
 
     assert isinstance(sm_adapter, StatePersistence)
-
-
-@pytest.mark.asyncio
 async def test_state_matrix_adapter_save_load(sm_adapter):
     """Basic save + load via protocol interface (JSON-file backend)."""
     key = "test_sma_rt"

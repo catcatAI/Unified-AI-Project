@@ -97,8 +97,6 @@ class TestProjectCoordinator:
         raw = "This is not JSON"
         result = coord._clean_json_response(raw)
         assert result == raw
-
-    @pytest.mark.asyncio
     async def test_integrate_fallback(self, project_coordinator):
         from unittest.mock import AsyncMock
         coord = project_coordinator()
@@ -160,15 +158,11 @@ class TestDocumentBuilder:
         result = builder._load_format_from_memory("character_card")
         assert result is not None
         assert result["format_id"] == "fmt_001"
-
-    @pytest.mark.asyncio
     async def test_load_fantasy_codex_no_memory(self, document_builder):
         async def ml(p, **k): pass
         builder = document_builder(llm_generate_fn=ml, memory_manager=None)
         result = await builder._load_fantasy_codex("生成角色")
         assert result == {}
-
-    @pytest.mark.asyncio
     async def test_build_basic(self, document_builder):
         async def slow_llm(prompt, **kwargs):
             import asyncio
@@ -184,8 +178,6 @@ class TestDocumentBuilder:
         loop.close()
         assert result is not None
         assert len(result.segments) >= 1
-
-    @pytest.mark.asyncio
     async def test_build_with_user_feedback(self, document_builder):
         async def ml(p, **k): return "Generated"
         builder = document_builder(llm_generate_fn=ml)
@@ -195,8 +187,6 @@ class TestDocumentBuilder:
         )
         loop.close()
         assert result is not None
-
-    @pytest.mark.asyncio
     async def test_build_segment_failure_resilient(self, document_builder):
         attempt = {"count": 0}
         async def flaky_llm(prompt, **kwargs):

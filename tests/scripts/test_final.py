@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 # Fix the import path
 
 
-def final_test():
+def test_final():
     # Initialize the analyzer
     analyzer = ContentAnalyzerModule()
 
@@ -60,4 +60,4 @@ def final_test():
     return all_passed
 
 if __name__ == "__main__":
-    final_test()
+    test_final()

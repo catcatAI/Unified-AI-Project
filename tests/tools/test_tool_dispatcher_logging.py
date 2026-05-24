@@ -53,9 +53,6 @@ class MockHAMManager:
                 )
             }
         ]
-
-
-@pytest.mark.asyncio
 @pytest.mark.timeout(15)
 async def test_tool_dispatcher_action_policy_logged_smoke() -> None:
     """

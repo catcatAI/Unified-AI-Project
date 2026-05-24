@@ -95,8 +95,6 @@ class TestSessionManager:
         for task in manager._heartbeat_tasks.values():
             if not task.done():
                 task.cancel()
-    
-    @pytest.mark.asyncio
     async def test_register_new_session(self, sm):
         """Test registering a new session"""
         ws = MockWebSocket()
@@ -111,8 +109,6 @@ class TestSessionManager:
         assert session.client_id in sm._sessions
         assert "test-session-1" in sm._sessions_by_id
         assert session in sm._sessions_by_id["test-session-1"]
-    
-    @pytest.mark.asyncio
     async def test_register_auto_generate_session_id(self, sm):
         """Test that session_id is auto-generated if not provided"""
         ws = MockWebSocket()
@@ -120,8 +116,6 @@ class TestSessionManager:
         session = await sm.register(ws)
         
         assert len(session.session_id) > 0
-    
-    @pytest.mark.asyncio
     async def test_register_replaces_existing_session(self, sm):
         """Test that registering with same session_id replaces old session in single-device mode"""
         ws1 = MockWebSocket("client-1")
@@ -140,8 +134,6 @@ class TestSessionManager:
         assert ws1._closed  # Old WebSocket should be closed
         assert client_id_1 not in sm._sessions
         assert client_id_2 in sm._sessions
-    
-    @pytest.mark.asyncio
     async def test_unregister_session(self, sm):
         """Test unregistering a session"""
         ws = MockWebSocket()
@@ -152,8 +144,6 @@ class TestSessionManager:
         
         assert client_id not in sm._sessions
         assert "test-session" not in sm._sessions_by_id
-    
-    @pytest.mark.asyncio
     async def test_send_to_session(self, sm):
         """Test sending message to a specific session"""
         ws = MockWebSocket()
@@ -164,14 +154,10 @@ class TestSessionManager:
         assert sent == 1
         assert len(ws.sent_messages) == 1
         assert ws.sent_messages[0]["type"] == "test"
-    
-    @pytest.mark.asyncio
     async def test_send_to_nonexistent_session(self, sm):
         """Test sending to a session that doesn't exist"""
         sent = await sm.send_to_session("nonexistent", {"type": "test"})
         assert sent == 0
-    
-    @pytest.mark.asyncio
     async def test_broadcast(self, sm):
         """Test broadcasting to all sessions"""
         ws1 = MockWebSocket("client-1")
@@ -188,8 +174,6 @@ class TestSessionManager:
         assert len(ws1.sent_messages) == 1
         assert len(ws2.sent_messages) == 1
         assert len(ws3.sent_messages) == 1
-    
-    @pytest.mark.asyncio
     async def test_broadcast_excludes(self, sm):
         """Test broadcasting with exclusions"""
         ws1 = MockWebSocket("client-1")
@@ -206,8 +190,6 @@ class TestSessionManager:
         assert sent == 1
         assert len(ws1.sent_messages) == 1
         assert len(ws2.sent_messages) == 0
-    
-    @pytest.mark.asyncio
     async def test_get_session(self, sm):
         """Test getting session by client_id"""
         ws = MockWebSocket()
@@ -216,8 +198,6 @@ class TestSessionManager:
         retrieved = sm.get(session.client_id)
         
         assert retrieved.client_id == session.client_id
-    
-    @pytest.mark.asyncio
     async def test_get_by_session_id(self, sm):
         """Test getting sessions by session_id"""
         ws1 = MockWebSocket("client-1")
@@ -229,8 +209,6 @@ class TestSessionManager:
         sessions = sm.get_by_session_id("shared")
         
         assert len(sessions) == 2
-    
-    @pytest.mark.asyncio
     async def test_get_all_connections_info(self, sm):
         """Test getting info about all connections"""
         ws1 = MockWebSocket("client-1")
@@ -245,8 +223,6 @@ class TestSessionManager:
         assert any(c["session_id"] == "session-1" for c in info)
         assert any(c["session_id"] == "session-2" for c in info)
         assert any(c["metadata"]["client_type"] == "desktop" for c in info)
-    
-    @pytest.mark.asyncio
     async def test_stats(self, sm):
         """Test session statistics"""
         ws1 = MockWebSocket("client-1")
@@ -259,8 +235,6 @@ class TestSessionManager:
         
         assert stats.total_sessions == 2
         assert stats.active_sessions == 2
-    
-    @pytest.mark.asyncio
     async def test_message_buffering(self, sm):
         """Test message buffering for disconnected clients"""
         ws = MockWebSocket()
@@ -272,8 +246,6 @@ class TestSessionManager:
         # No crash, sent returns 0
         sent = await sm.send_to_session("nonexistent-session", {"type": "test"})
         assert sent == 0
-    
-    @pytest.mark.asyncio
     async def test_update_heartbeat(self, sm):
         """Test heartbeat update"""
         ws = MockWebSocket()
@@ -284,8 +256,6 @@ class TestSessionManager:
         await sm.update_heartbeat(session.client_id)
         
         assert session.last_heartbeat > original_heartbeat
-    
-    @pytest.mark.asyncio
     async def test_increment_sequence(self, sm):
         """Test sequence incrementing"""
         ws = MockWebSocket()
@@ -297,8 +267,6 @@ class TestSessionManager:
         assert seq1 == 1
         assert seq2 == 2
         assert session.sequence == 2
-    
-    @pytest.mark.asyncio
     async def test_multi_device_same_session(self, sm):
         """Test multiple devices connecting with same session_id (multi-device mode, no replacement)"""
         ws1 = MockWebSocket("client-1")
@@ -317,8 +285,6 @@ class TestSessionManager:
         # Broadcast should reach all three
         sent = await sm.send_to_session("family-session", {"type": "family-alert"})
         assert sent == 3
-    
-    @pytest.mark.asyncio
     async def test_clear_buffer(self, sm):
         """Test clearing message buffer"""
         ws = MockWebSocket()

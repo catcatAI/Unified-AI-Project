@@ -5,9 +5,6 @@
 import sys
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-
-pytestmark = pytest.mark.asyncio
-
 _MODULE_MOCKS = {
     'core.perception.tactile_sampler': MagicMock(),
     'core.perception.tactile_memory': MagicMock(),

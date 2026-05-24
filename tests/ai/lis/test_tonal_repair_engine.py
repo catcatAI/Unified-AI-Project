@@ -51,16 +51,10 @@ def test_detect_ethical_divergence_restricted(introspector):
     assert result is not None
     assert result["anomaly_type"] == "ETHICAL_DIVERGENCE"
     assert result["severity_score"] > 0.5
-
-
-@pytest.mark.asyncio
 async def test_analyze_output_clean(introspector):
     events = await introspector.analyze_output("Have a wonderful day", {})
     assert isinstance(events, list)
     assert len(events) == 0
-
-
-@pytest.mark.asyncio
 async def test_analyze_output_ethical_violation(introspector):
     events = await introspector.analyze_output("This is illegal and harmful", {})
     assert len(events) >= 1

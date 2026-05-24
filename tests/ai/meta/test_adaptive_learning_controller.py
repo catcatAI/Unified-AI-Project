@@ -30,40 +30,29 @@ def controller_custom():
 
 
 class TestPerformanceTracker:
-    @pytest.mark.asyncio
     async def test_analyze_trend_empty_list(self, tracker):
         result = await tracker.analyze_trend([])
         assert result == {"direction": "stable", "magnitude": 0.0, "slope": 0.0}
-
-    @pytest.mark.asyncio
     async def test_analyze_trend_less_than_three(self, tracker):
         result = await tracker.analyze_trend([
             {"success_rate": 0.5},
             {"success_rate": 0.6},
         ])
         assert result == {"direction": "stable", "magnitude": 0.0, "slope": 0.0}
-
-    @pytest.mark.asyncio
     async def test_analyze_trend_improving(self, tracker):
         data = [{"success_rate": 0.1 + i * 0.08} for i in range(5)]
         result = await tracker.analyze_trend(data)
         assert result["direction"] == "improving"
         assert result["slope"] > 0
-
-    @pytest.mark.asyncio
     async def test_analyze_trend_degrading(self, tracker):
         data = [{"success_rate": 0.9 - i * 0.08} for i in range(5)]
         result = await tracker.analyze_trend(data)
         assert result["direction"] == "degrading"
         assert result["slope"] < 0
-
-    @pytest.mark.asyncio
     async def test_analyze_trend_uses_last_ten_only(self, tracker):
         data = [{"success_rate": 0.5}] * 20
         result = await tracker.analyze_trend(data)
         assert result["direction"] in ("improving", "degrading", "stable")
-
-    @pytest.mark.asyncio
     async def test_analyze_trend_missing_success_rate_defaults_zero(self, tracker):
         data = [{"success_rate": 0.9}, {"other": 1}, {"success_rate": 0.7}]
         result = await tracker.analyze_trend(data)
@@ -137,7 +126,6 @@ class TestAdaptiveLearningControllerOptimizeParameters:
 
 
 class TestAdaptiveLearningControllerAdapt:
-    @pytest.mark.asyncio
     async def test_adapt_no_metrics(self, controller):
         result = await controller.adapt_learning_strategy(
             {"id": "task_1", "type": "test"},
@@ -145,8 +133,6 @@ class TestAdaptiveLearningControllerAdapt:
         )
         assert result["previous_strategy"] == "balanced"
         assert result["trend"] == "stable"
-
-    @pytest.mark.asyncio
     async def test_adapt_with_metrics(self, controller):
         result = await controller.adapt_learning_strategy(
             {"id": "task_1", "type": "test"},
@@ -154,15 +140,11 @@ class TestAdaptiveLearningControllerAdapt:
         )
         assert result["previous_strategy"] == "balanced"
         assert "timestamp" in result
-
-    @pytest.mark.asyncio
     async def test_adapt_updates_performance_history(self, controller):
         metrics = [{"success_rate": 0.8, "cognitive_dividend": 0.5, "life_intensity_impact": 0.5}]
         await controller.adapt_learning_strategy({"id": "t1"}, metrics)
         assert len(controller.performance_history) == 1
         assert controller.performance_history[0]["success_rate"] == 0.8
-
-    @pytest.mark.asyncio
     async def test_adapt_changes_strategy_on_degrading(self, controller):
         initial = controller.current_strategy
         degrading_metrics = [

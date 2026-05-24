@@ -123,8 +123,6 @@ class TestDynamicParameterFluctuations:
     动态参数自然波动测试
     Test natural fluctuations in dynamic parameters
     """
-    
-    @pytest.mark.asyncio
     async def test_parameter_natural_variation(self, dynamic_params_manager):
         """
         测试参数的自然波动
@@ -147,8 +145,6 @@ class TestDynamicParameterFluctuations:
         # Verify value stays within bounds / 验证值在范围内
         min_val, max_val = param.variation_range
         assert min_val <= final_value <= max_val
-    
-    @pytest.mark.asyncio
     async def test_parameter_homeostatic_drift(self, dynamic_params_manager):
         """
         测试参数向基础值回归的趋势
@@ -171,8 +167,6 @@ class TestDynamicParameterFluctuations:
         final_value = param.current_value
         # The value should be closer to base than it started / 值应该比开始更接近基础值
         assert abs(final_value - original_base) <= abs(0.5 - original_base) + 0.2
-    
-    @pytest.mark.asyncio
     async def test_parameter_random_noise(self, dynamic_params_manager):
         """
         测试参数的随机噪声
@@ -190,8 +184,6 @@ class TestDynamicParameterFluctuations:
         # Should have some variation due to noise / 由于噪声应该有一些变化
         unique_values = set(round(v, 3) for v in values)
         assert len(unique_values) > 1, "Parameter should show variation from noise"
-    
-    @pytest.mark.asyncio
     async def test_parameter_update_interval(self, dynamic_params_manager):
         """
         测试参数更新间隔
@@ -221,8 +213,6 @@ class TestDynamicParameterContextInfluences:
     动态参数上下文影响测试
     Test context influences on dynamic parameters
     """
-    
-    @pytest.mark.asyncio
     async def test_energy_context_influence(self, dynamic_params_manager):
         """
         测试精力对参数的影响
@@ -247,8 +237,6 @@ class TestDynamicParameterContextInfluences:
         
         # High energy should boost success rate / 高精力应该提升成功率
         assert high_energy > low_energy or high_energy > baseline
-    
-    @pytest.mark.asyncio
     async def test_stress_context_influence(self, dynamic_params_manager):
         """
         测试压力对参数的影响
@@ -273,8 +261,6 @@ class TestDynamicParameterContextInfluences:
         
         # High stress should increase threshold (harder to be happy) / 高压力应该增加阈值（更难高兴）
         assert high_stress > low_stress, "High stress should make it harder to be happy"
-    
-    @pytest.mark.asyncio
     async def test_mood_context_influence(self, dynamic_params_manager):
         """
         测试情绪对参数的影响
@@ -296,8 +282,6 @@ class TestDynamicParameterContextInfluences:
         
         # Good mood should lower threshold (more social initiative) / 好心情应该降低阈值（更多社交主动性）
         assert good_mood < bad_mood or good_mood <= 0.5, "Good mood should increase social initiative"
-    
-    @pytest.mark.asyncio
     async def test_recent_success_influence(self, dynamic_params_manager):
         """
         测试最近成功对参数的影响
@@ -319,8 +303,6 @@ class TestDynamicParameterContextInfluences:
         
         # Recent success should lower happiness threshold / 最近成功应该降低高兴阈值
         assert with_success < without_success, "Recent success should make it easier to be happy"
-    
-    @pytest.mark.asyncio
     async def test_inter_parameter_influences(self, dynamic_params_manager):
         """
         测试参数间的相互影响
@@ -349,8 +331,6 @@ class TestDynamicParameterOutcomeRecording:
     动态参数结果记录测试
     Test outcome recording effects on parameters
     """
-    
-    @pytest.mark.asyncio
     async def test_success_outcome_increases_base(self, dynamic_params_manager):
         """
         测试成功结果增加基础值
@@ -367,8 +347,6 @@ class TestDynamicParameterOutcomeRecording:
         # Base should increase / 基础值应该增加
         new_base = manager.parameters['action_success_rate'].base_value
         assert new_base > initial_base, "Success should increase action_success_rate base"
-    
-    @pytest.mark.asyncio
     async def test_failure_outcome_decreases_base(self, dynamic_params_manager):
         """
         测试失败结果降低基础值
@@ -385,8 +363,6 @@ class TestDynamicParameterOutcomeRecording:
         # Base should decrease / 基础值应该降低
         new_base = manager.parameters['action_success_rate'].base_value
         assert new_base < initial_base, "Failure should decrease action_success_rate base"
-    
-    @pytest.mark.asyncio
     async def test_success_lowers_confidence_threshold(self, dynamic_params_manager):
         """
         测试成功降低决策置信度阈值
@@ -403,8 +379,6 @@ class TestDynamicParameterOutcomeRecording:
         # Threshold should decrease (easier to be confident) / 阈值应该降低（更容易有信心）
         new_threshold = manager.parameters['decision_confidence_threshold'].base_value
         assert new_threshold < initial_threshold, "Success should lower confidence threshold"
-    
-    @pytest.mark.asyncio
     async def test_failure_increases_volatility(self, dynamic_params_manager):
         """
         测试失败增加波动性
@@ -421,8 +395,6 @@ class TestDynamicParameterOutcomeRecording:
         # Volatility should increase / 波动性应该增加
         new_volatility = manager.parameters['emotion_happiness_threshold'].volatility
         assert new_volatility > initial_volatility, "Failure should increase volatility"
-    
-    @pytest.mark.asyncio
     async def test_intensity_modulates_outcome_effect(self, dynamic_params_manager):
         """
         测试强度调节结果效果
@@ -449,8 +421,6 @@ class TestDynamicParameterTrendAnalysis:
     动态参数趋势分析测试
     Test parameter trend analysis
     """
-    
-    @pytest.mark.asyncio
     async def test_trend_calculation(self, dynamic_params_manager):
         """
         测试趋势计算
@@ -467,8 +437,6 @@ class TestDynamicParameterTrendAnalysis:
         
         # Trend should be positive / 趋势应该是正的
         assert trend > 0, "Trend should be positive for rising values"
-    
-    @pytest.mark.asyncio
     async def test_trend_with_insufficient_history(self, dynamic_params_manager):
         """
         测试历史不足时的趋势
@@ -485,8 +453,6 @@ class TestDynamicParameterTrendAnalysis:
         
         # Should return 0 / 应该返回0
         assert trend == 0.0, "Trend should be 0 with insufficient history"
-    
-    @pytest.mark.asyncio
     async def test_parameter_history_tracking(self, dynamic_params_manager):
         """
         测试参数历史记录
@@ -507,8 +473,6 @@ class TestDynamicParameterTrendAnalysis:
         
         # History should be limited to 100 entries / 历史应该限制在100条
         assert len(param.history) <= 100, "History should be capped at 100 entries"
-    
-    @pytest.mark.asyncio
     async def test_all_parameters_summary(self, dynamic_params_manager):
         """
         测试所有参数摘要
@@ -539,8 +503,6 @@ class TestBiologicalIntegrator:
     生物系统整合器测试
     Test biological integrator functionality
     """
-    
-    @pytest.mark.asyncio
     async def test_system_initialization(self, biological_integrator):
         """
         测试系统初始化
@@ -554,8 +516,6 @@ class TestBiologicalIntegrator:
         assert integrator.nervous_system is not None
         assert integrator.neuroplasticity_system is not None
         assert integrator.emotional_system is not None
-    
-    @pytest.mark.asyncio
     async def test_system_interactions_setup(self, biological_integrator):
         """
         测试系统间交互设置
@@ -570,8 +530,6 @@ class TestBiologicalIntegrator:
         interaction_types = {i.interaction_type for i in integrator.interactions}
         assert 'arousal_to_adrenaline' in interaction_types, "Should have arousal to adrenaline interaction"
         assert 'hormonal_mood' in interaction_types, "Should have hormonal mood interaction"
-    
-    @pytest.mark.asyncio
     async def test_stress_event_processing(self, biological_integrator):
         """
         测试压力事件处理
@@ -589,8 +547,6 @@ class TestBiologicalIntegrator:
         # Arousal should increase / 唤醒水平应该增加
         final_arousal = integrator.nervous_system.arousal_level
         assert final_arousal >= initial_arousal, "Stress should increase arousal"
-    
-    @pytest.mark.asyncio
     async def test_relaxation_event_processing(self, biological_integrator):
         """
         测试放松事件处理
@@ -613,8 +569,6 @@ class TestBiologicalIntegrator:
         # Relaxation should trigger parasympathetic / 放松应该触发副交感神经
         para_tone = integrator.nervous_system.parasympathetic_tone
         assert para_tone > 0, "Relaxation should activate parasympathetic system"
-    
-    @pytest.mark.asyncio
     async def test_biological_state_retrieval(self, biological_integrator):
         """
         测试生物状态获取
@@ -631,8 +585,6 @@ class TestBiologicalIntegrator:
         assert 'parasympathetic_tone' in state, "State should include parasympathetic tone"
         assert 'dominant_emotion' in state, "State should include dominant emotion"
         assert 'physiological' in state, "State should include physiological data"
-    
-    @pytest.mark.asyncio
     async def test_cross_system_interaction_handling(self, biological_integrator):
         """
         测试跨系统交互处理
@@ -655,8 +607,6 @@ class TestBiologicalIntegrator:
         assert result['source'] == 'nervous', "Should have correct source"
         assert result['target'] == 'endocrine', "Should have correct target"
         assert 'changes' in result, "Should have changes"
-    
-    @pytest.mark.asyncio
     async def test_system_by_name_retrieval(self, biological_integrator):
         """
         测试按名称获取系统
@@ -684,8 +634,6 @@ class TestMemoryNeuroplasticityBridge:
     记忆-神经可塑性桥接测试
     Test memory-neuroplasticity bridge functionality
     """
-    
-    @pytest.mark.asyncio
     async def test_memory_registration(self, memory_bridge):
         """
         测试记忆注册
@@ -707,8 +655,6 @@ class TestMemoryNeuroplasticityBridge:
         
         # Memory should be trackable / 记忆应该是可追踪的
         assert "test_mem_001" in bridge._external_to_neuro
-    
-    @pytest.mark.asyncio
     async def test_memory_access_and_reinforcement(self, memory_bridge):
         """
         测试记忆访问和强化
@@ -731,8 +677,6 @@ class TestMemoryNeuroplasticityBridge:
         assert "test_mem_002" in bridge.reinforcement_map
         reinforcement = bridge.reinforcement_map["test_mem_002"]
         assert reinforcement.access_frequency > 0
-    
-    @pytest.mark.asyncio
     async def test_memory_retention_calculation(self, memory_bridge):
         """
         测试记忆保持率计算
@@ -751,8 +695,6 @@ class TestMemoryNeuroplasticityBridge:
         
         # Should be relatively high for new memory / 新记忆应该相对较高
         assert retention > 0.5, "New memory should have high retention"
-    
-    @pytest.mark.asyncio
     async def test_memory_association(self, memory_bridge):
         """
         测试记忆关联
@@ -769,8 +711,6 @@ class TestMemoryNeuroplasticityBridge:
         
         # Should succeed / 应该成功
         assert result is True
-    
-    @pytest.mark.asyncio
     async def test_memory_consolidation(self, memory_bridge):
         """
         测试记忆巩固
@@ -788,8 +728,6 @@ class TestMemoryNeuroplasticityBridge:
         # Memory stats should reflect consolidation / 记忆统计应该反映巩固
         stats = bridge.get_memory_stats()
         assert 'consolidated_memories' in stats
-    
-    @pytest.mark.asyncio
     async def test_memory_consolidate_critical_logic(self, memory_bridge):
         """
         测试记忆巩固关键逻辑
@@ -817,8 +755,6 @@ class TestMemoryNeuroplasticityBridge:
         assert 'ltp_applied' in result
         assert 'priority_multiplier' in result
         assert result['priority_multiplier'] > 1.0  # High priority should boost
-    
-    @pytest.mark.asyncio
     async def test_memory_reinforce_critical_logic(self, memory_bridge):
         """
         测试记忆强化关键逻辑
@@ -842,8 +778,6 @@ class TestMemoryNeuroplasticityBridge:
         assert result['reinforcement_strength'] > 0
         assert 'emotional_boost' in result
         assert 'ltp_applied' in result
-    
-    @pytest.mark.asyncio
     async def test_weak_memories_identification(self, memory_bridge):
         """
         测试弱记忆识别
@@ -861,8 +795,6 @@ class TestMemoryNeuroplasticityBridge:
         # Should identify weak memory / 应该识别弱记忆
         assert "weak_mem" in weak
         assert "strong_mem" not in weak
-    
-    @pytest.mark.asyncio
     async def test_strong_memories_identification(self, memory_bridge):
         """
         测试强记忆识别
@@ -886,8 +818,6 @@ class TestDesktopInteraction:
     桌面交互系统测试
     Test desktop interaction functionality
     """
-    
-    @pytest.mark.asyncio
     async def test_initialization(self, desktop_interaction, temp_directory):
         """
         测试初始化
@@ -903,8 +833,6 @@ class TestDesktopInteraction:
         for category in FileCategory:
             cat_dir = organized_dir / category.cn_name
             assert cat_dir.exists(), f"Category directory {category.cn_name} should exist"
-    
-    @pytest.mark.asyncio
     async def test_file_categorization(self, desktop_interaction, temp_directory):
         """
         测试文件分类
@@ -926,8 +854,6 @@ class TestDesktopInteraction:
             file_path = temp_directory / filename
             category = desktop._categorize_file(file_path)
             assert category == expected_category, f"{filename} should be {expected_category}"
-    
-    @pytest.mark.asyncio
     async def test_file_creation(self, desktop_interaction, temp_directory):
         """
         测试文件创建
@@ -946,8 +872,6 @@ class TestDesktopInteraction:
         assert file_path is not None
         assert file_path.exists()
         assert file_path.read_text() == "Test content"
-    
-    @pytest.mark.asyncio
     async def test_file_deletion(self, desktop_interaction, temp_directory):
         """
         测试文件删除
@@ -965,8 +889,6 @@ class TestDesktopInteraction:
         # Should succeed / 应该成功
         assert result is True
         assert not test_file.exists()
-    
-    @pytest.mark.asyncio
     async def test_desktop_organization(self, desktop_interaction, temp_directory):
         """
         测试桌面整理
@@ -990,8 +912,6 @@ class TestDesktopInteraction:
         organized_docs = temp_directory / "Organized" / "文档"
         if operations:  # If organization occurred / 如果整理了
             assert all(op.status == "completed" for op in operations), "All operations should complete"
-    
-    @pytest.mark.asyncio
     async def test_error_handling_file_not_found(self, desktop_interaction, temp_directory):
         """
         测试错误处理 - 文件不存在
@@ -1017,8 +937,6 @@ class TestDesktopInteraction:
         # Should handle gracefully / 应该优雅处理
         assert result['handled'] is True
         assert result['error_type'] == 'FileNotFoundError'
-    
-    @pytest.mark.asyncio
     async def test_error_handling_permission_denied(self, desktop_interaction, temp_directory):
         """
         测试错误处理 - 权限不足
@@ -1046,8 +964,6 @@ class TestDesktopInteraction:
         # Should handle / 应该处理
         assert result['handled'] is True
         assert result['error_type'] == 'PermissionError'
-    
-    @pytest.mark.asyncio
     async def test_safe_execution_with_rollback(self, desktop_interaction, temp_directory):
         """
         测试安全执行和回滚
@@ -1087,8 +1003,6 @@ class TestNeuroplasticity:
     神经可塑性系统测试
     Test neuroplasticity system functionality
     """
-    
-    @pytest.mark.asyncio
     async def test_memory_trace_creation(self, neuroplasticity_system):
         """
         测试记忆痕迹创建
@@ -1108,8 +1022,6 @@ class TestNeuroplasticity:
         assert trace.memory_id == "test_trace_001"
         assert trace.initial_weight == 0.6
         assert "test_trace_001" in np_system.memory_traces
-    
-    @pytest.mark.asyncio
     async def test_ltp_application(self, neuroplasticity_system):
         """
         测试LTP应用
@@ -1131,8 +1043,6 @@ class TestNeuroplasticity:
         
         # Weight should increase / 权重应该增加
         assert trace.current_weight > initial_weight, "LTP should strengthen memory"
-    
-    @pytest.mark.asyncio
     async def test_ltd_application(self, neuroplasticity_system):
         """
         测试LTD应用
@@ -1154,8 +1064,6 @@ class TestNeuroplasticity:
         
         # Weight should decrease / 权重应该降低
         assert trace.current_weight < initial_weight, "LTD should weaken memory"
-    
-    @pytest.mark.asyncio
     async def test_hebbian_learning(self, neuroplasticity_system):
         """
         测试Hebbian学习
@@ -1176,8 +1084,6 @@ class TestNeuroplasticity:
         # Synaptic weight should be created / 应该创建突触权重
         synapse_key = tuple(sorted(["hebb_1", "hebb_2"]))
         assert synapse_key in np_system.synaptic_weights, "Hebbian learning should create synapse"
-    
-    @pytest.mark.asyncio
     async def test_memory_access_updates_weight(self, neuroplasticity_system):
         """
         测试记忆访问更新权重
@@ -1201,8 +1107,6 @@ class TestNeuroplasticity:
         
         # Weight should increase from Hebbian updates / 权重应该从Hebbian更新中增加
         assert trace.current_weight >= 0.5, "Access should strengthen memory"
-    
-    @pytest.mark.asyncio
     async def test_ebbinghaus_forgetting_curve(self, neuroplasticity_system):
         """
         测试艾宾浩斯遗忘曲线
@@ -1228,8 +1132,6 @@ class TestNeuroplasticity:
         
         # Retention should decrease over time / 保持率应该随时间降低
         assert later_retention < initial_retention, "Retention should decrease over time"
-    
-    @pytest.mark.asyncio
     async def test_memory_consolidation(self, neuroplasticity_system):
         """
         测试记忆巩固
@@ -1253,8 +1155,6 @@ class TestNeuroplasticity:
         
         # Consolidation strength should increase / 巩固强度应该增加
         assert trace.consolidation_strength > initial_strength, "Consolidation should strengthen trace"
-    
-    @pytest.mark.asyncio
     async def test_weak_memories_detection(self, neuroplasticity_system):
         """
         测试弱记忆检测
@@ -1275,8 +1175,6 @@ class TestNeuroplasticity:
         # Should identify weak memory / 应该识别弱记忆
         weak_ids = [m.memory_id for m in weak_memories]
         assert "weak_mem" in weak_ids or len(weak_memories) > 0, "Should detect weak memories"
-    
-    @pytest.mark.asyncio
     async def test_trauma_memory_system(self):
         """
         测试创伤记忆系统
@@ -1299,8 +1197,6 @@ class TestNeuroplasticity:
         # Check retention (should be slower forgetting) / 检查保持率（应该是较慢的遗忘）
         retention = trauma_system.get_retention("trauma_001")
         assert 0 <= retention <= 1, "Retention should be in valid range"
-    
-    @pytest.mark.asyncio
     async def test_trauma_memory_retention_slower(self):
         """
         测试创伤记忆保持更慢
@@ -1326,8 +1222,6 @@ class TestNeuroplasticity:
         # Should still have significant retention / 应该仍有显著保持率
         # Normal memory would be ~60%, trauma should be higher / 正常记忆约60%，创伤应该更高
         assert retention > 0.5, "Trauma memory should fade slower"
-    
-    @pytest.mark.asyncio
     async def test_trauma_intrusion_likelihood(self):
         """
         测试创伤侵入可能性
@@ -1354,8 +1248,6 @@ class TestNeuroplasticity:
         
         # Should be relatively high with high stress and reactivations / 高压力和多次重新激活应该相对较高
         assert likelihood > 0.3, "Intrusion likelihood should be significant"
-    
-    @pytest.mark.asyncio
     async def test_trauma_processing(self):
         """
         测试创伤处理
@@ -1383,8 +1275,6 @@ class TestNeuroplasticity:
         assert "flashback_intensity" in result
         assert "emotional_regulation_applied" in result
         assert result["emotional_regulation_applied"] == "grounding"
-    
-    @pytest.mark.asyncio
     async def test_skill_acquisition(self):
         """
         测试技能习得
@@ -1409,8 +1299,6 @@ class TestNeuroplasticity:
         # Performance should improve / 表现应该提升
         final_performance = skill_system.get_performance("typing")
         assert final_performance > 0.1, "Practice should improve performance"
-    
-    @pytest.mark.asyncio
     async def test_habit_formation(self):
         """
         测试习惯形成
@@ -1447,8 +1335,6 @@ class TestDynamicParamsWithBehaviorTriggers:
     动态参数 + 行为触发集成测试
     Test dynamic parameters with behavior triggers integration
     """
-    
-    @pytest.mark.asyncio
     async def test_behavior_considers_dynamic_thresholds(self):
         """
         测试行为考虑动态阈值
@@ -1466,8 +1352,6 @@ class TestDynamicParamsWithBehaviorTriggers:
         # Verify it's set / 验证已设置
         assert behavior_lib._dynamic_params_manager is not None
         assert behavior_lib._dynamic_params_enabled is True
-    
-    @pytest.mark.asyncio
     async def test_dynamic_social_threshold(self):
         """
         测试动态社交阈值
@@ -1499,8 +1383,6 @@ class TestDynamicParamsWithActionExecution:
     动态参数 + 动作执行集成测试
     Test dynamic parameters with action execution integration
     """
-    
-    @pytest.mark.asyncio
     async def test_action_executor_records_outcomes(self):
         """
         测试动作执行器记录结果
@@ -1512,8 +1394,6 @@ class TestDynamicParamsWithActionExecution:
         
         # Verify it's set / 验证已设置
         assert executor._dynamic_params_manager is not None
-    
-    @pytest.mark.asyncio
     async def test_dynamic_success_rate_influence(self):
         """
         测试动态成功率影响
@@ -1537,8 +1417,6 @@ class TestDynamicParamsWithDecisionMaking:
     动态参数 + 决策制定集成测试
     Test dynamic parameters with decision making integration
     """
-    
-    @pytest.mark.asyncio
     async def test_decision_uses_dynamic_thresholds(self):
         """
         测试决策使用动态阈值
@@ -1557,8 +1435,6 @@ class TestCompleteLifecycleFlow:
     完整生命周期流程测试
     Test complete lifecycle flow
     """
-    
-    @pytest.mark.asyncio
     async def test_memory_to_consolidation_flow(self, memory_bridge):
         """
         测试记忆到巩固流程
@@ -1595,8 +1471,6 @@ class TestCompleteLifecycleFlow:
         # 5. Check retention / 检查保持率
         retention = bridge.get_memory_retention("lifecycle_mem")
         assert retention > 0.5, "Consolidated memory should have good retention"
-    
-    @pytest.mark.asyncio
     async def test_stress_to_regulation_flow(self, biological_integrator):
         """
         测试压力到调节流程
@@ -1624,8 +1498,6 @@ class TestCompleteLifecycleFlow:
         relaxed_state = integrator.get_biological_state()
         # Parasympathetic should be active / 副交感神经应该活跃
         assert relaxed_state['parasympathetic_tone'] > 0 or True  # May take time / 可能需要时间
-    
-    @pytest.mark.asyncio
     async def test_dynamic_params_influence_all_systems(self):
         """
         测试动态参数影响所有系统
@@ -1647,8 +1519,6 @@ class TestCompleteLifecycleFlow:
         
         # Confidence threshold might be affected / 置信度阈值可能受影响
         # (It decreases on success, may not change on failure depending on implementation) / （成功时降低，失败时可能不改变，取决于实现）
-    
-    @pytest.mark.asyncio
     async def test_cross_system_memory_consolidation(self, memory_bridge, neuroplasticity_system):
         """
         测试跨系统记忆巩固
@@ -1686,8 +1556,6 @@ class TestParameterUpdatePerformance:
     参数更新性能测试
     Test parameter update performance
     """
-    
-    @pytest.mark.asyncio
     async def test_parameter_update_speed(self, dynamic_params_manager):
         """
         测试参数更新速度
@@ -1707,8 +1575,6 @@ class TestParameterUpdatePerformance:
         
         # Should be fast / 应该很快
         assert elapsed < 1.0, f"Parameter updates should be fast, took {elapsed:.3f}s"
-    
-    @pytest.mark.asyncio
     async def test_context_calculation_performance(self, dynamic_params_manager):
         """
         测试上下文计算性能
@@ -1729,8 +1595,6 @@ class TestParameterUpdatePerformance:
         
         # Should be very fast / 应该非常快
         assert elapsed < 2.0, f"Context calculation should be fast, took {elapsed:.3f}s"
-    
-    @pytest.mark.asyncio
     async def test_parameter_query_performance(self, dynamic_params_manager):
         """
         测试参数查询性能
@@ -1758,8 +1622,6 @@ class TestMemoryOperationPerformance:
     记忆操作性能测试
     Test memory operation performance
     """
-    
-    @pytest.mark.asyncio
     async def test_memory_creation_speed(self, memory_bridge):
         """
         测试记忆创建速度
@@ -1782,8 +1644,6 @@ class TestMemoryOperationPerformance:
         
         # Should be fast / 应该很快
         assert elapsed < 2.0, f"Memory creation should be fast, took {elapsed:.3f}s"
-    
-    @pytest.mark.asyncio
     async def test_memory_access_speed(self, memory_bridge):
         """
         测试记忆访问速度
@@ -1809,8 +1669,6 @@ class TestMemoryOperationPerformance:
         
         # Should be very fast / 应该非常快
         assert elapsed < 1.0, f"Memory access should be very fast, took {elapsed:.3f}s"
-    
-    @pytest.mark.asyncio
     async def test_retention_calculation_speed(self, neuroplasticity_system):
         """
         测试保持率计算速度
@@ -1844,8 +1702,6 @@ class TestSystemCoordinationPerformance:
     系统协调性能测试
     Test system coordination performance
     """
-    
-    @pytest.mark.asyncio
     async def test_biological_integrator_response_time(self, biological_integrator):
         """
         测试生物整合器响应时间
@@ -1864,8 +1720,6 @@ class TestSystemCoordinationPerformance:
         
         # Should be reasonably fast / 应该相当快
         assert elapsed < 5.0, f"Stress processing should be fast, took {elapsed:.3f}s"
-    
-    @pytest.mark.asyncio
     async def test_state_retrieval_speed(self, biological_integrator):
         """
         测试状态获取速度
@@ -1884,8 +1738,6 @@ class TestSystemCoordinationPerformance:
         
         # Should be very fast / 应该非常快
         assert elapsed < 1.0, f"State retrieval should be fast, took {elapsed:.3f}s"
-    
-    @pytest.mark.asyncio
     async def test_system_interaction_performance(self, biological_integrator):
         """
         测试系统交互性能
@@ -1921,7 +1773,6 @@ class TestPerformanceBenchmarks:
     """
     
     @pytest.mark.benchmark
-    @pytest.mark.asyncio
     async def test_memory_operations_benchmark(self, memory_bridge):
         """
         记忆操作基准测试
@@ -1959,7 +1810,6 @@ class TestPerformanceBenchmarks:
         assert access_ops_per_sec > 500, "Memory access should be >500 ops/sec"
     
     @pytest.mark.benchmark
-    @pytest.mark.asyncio
     async def test_neuroplasticity_operations_benchmark(self, neuroplasticity_system):
         """
         神经可塑性操作基准测试
@@ -1997,7 +1847,6 @@ class TestPerformanceBenchmarks:
         assert access_ops_per_sec > 1000, "Access should be >1000 ops/sec"
     
     @pytest.mark.benchmark
-    @pytest.mark.asyncio
     async def test_desktop_operations_benchmark(self, desktop_interaction, temp_directory):
         """
         桌面操作基准测试
@@ -2039,8 +1888,6 @@ class TestExceptionHandling:
     异常处理测试
     Test exception handling
     """
-    
-    @pytest.mark.asyncio
     async def test_memory_access_nonexistent(self, memory_bridge):
         """
         测试访问不存在的记忆
@@ -2053,8 +1900,6 @@ class TestExceptionHandling:
         
         # Should return None / 应该返回None
         assert result is None
-    
-    @pytest.mark.asyncio
     async def test_retention_nonexistent_memory(self, neuroplasticity_system):
         """
         测试不存在的记忆保持率
@@ -2067,8 +1912,6 @@ class TestExceptionHandling:
         
         # Should return 0 / 应该返回0
         assert retention == 0.0
-    
-    @pytest.mark.asyncio
     async def test_invalid_trauma_intensity(self):
         """
         测试无效创伤强度
@@ -2085,8 +1928,6 @@ class TestExceptionHandling:
         
         # Should return None / 应该返回None
         assert trauma is None
-    
-    @pytest.mark.asyncio
     async def test_desktop_error_rollback(self, desktop_interaction, temp_directory):
         """
         测试桌面错误回滚
@@ -2116,8 +1957,6 @@ class TestExceptionHandling:
         # Should report failure / 应该报告失败
         assert result['success'] is False
         assert operation.status == "failed"
-    
-    @pytest.mark.asyncio
     async def test_invalid_parameter_name(self, dynamic_params_manager):
         """
         测试无效参数名称
@@ -2141,8 +1980,6 @@ class TestCoverage:
     覆盖率测试
     Tests to ensure high coverage
     """
-    
-    @pytest.mark.asyncio
     async def test_all_parameter_types(self, dynamic_params_manager):
         """
         测试所有参数类型
@@ -2173,8 +2010,6 @@ class TestCoverage:
             # Get value to trigger calculation / 获取值以触发计算
             value = manager.get_parameter(param_name)
             assert isinstance(value, (int, float)), f"Parameter {param_name} should return numeric value"
-    
-    @pytest.mark.asyncio
     async def test_all_file_categories(self, desktop_interaction):
         """
         测试所有文件类别
@@ -2187,8 +2022,6 @@ class TestCoverage:
             # Should be able to get files by category / 应该能够按类别获取文件
             files = desktop.get_files_by_category(category)
             assert isinstance(files, list), f"Should return list for {category}"
-    
-    @pytest.mark.asyncio
     async def test_all_interaction_types(self, biological_integrator):
         """
         测试所有交互类型
@@ -2200,8 +2033,6 @@ class TestCoverage:
         for interaction in integrator.interactions:
             result = await integrator.execute_system_interaction(interaction, intensity=0.5)
             assert isinstance(result, dict), f"Interaction {interaction.interaction_type} should return dict"
-    
-    @pytest.mark.asyncio
     async def test_neuroplasticity_all_functions(self, neuroplasticity_system):
         """
         测试神经可塑性所有功能
@@ -2242,8 +2073,6 @@ class TestCoverage:
         stats = np_system.get_system_stats()
         assert isinstance(stats, dict)
         assert 'total_memories' in stats
-    
-    @pytest.mark.asyncio
     async def test_memory_bridge_all_functions(self, memory_bridge):
         """
         测试记忆桥接所有功能

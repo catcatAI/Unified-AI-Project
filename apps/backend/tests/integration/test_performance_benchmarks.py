@@ -172,8 +172,6 @@ class TestResponseTimeBenchmarks:
             }
         
         return get_metrics
-    
-    @pytest.mark.asyncio
     async def test_perception_response_time(self, performance_monitor):
         """
         测试感知系统响应时间
@@ -214,8 +212,6 @@ class TestResponseTimeBenchmarks:
         print(f"  - P99: {metrics.p99_latency_ms:.2f}ms")
         print(f"  - Std Dev: {metrics.std_deviation_ms:.2f}ms")
         print(f"  ✓ All within target (< 1s)")
-    
-    @pytest.mark.asyncio
     async def test_cognitive_response_time(self, performance_monitor):
         """
         测试认知系统响应时间
@@ -254,8 +250,6 @@ class TestResponseTimeBenchmarks:
         print(f"  - P95: {metrics.p95_latency_ms:.2f}ms")
         print(f"  - Max: {metrics.max_latency_ms:.2f}ms")
         print(f"  ✓ All within target (< 1s)")
-    
-    @pytest.mark.asyncio
     async def test_emotional_response_time(self, performance_monitor):
         """
         测试情绪系统响应时间
@@ -290,8 +284,6 @@ class TestResponseTimeBenchmarks:
         print(f"  - Avg: {metrics.avg_latency_ms:.2f}ms")
         print(f"  - P95: {metrics.p95_latency_ms:.2f}ms")
         print(f"  ✓ All within target (< 1s)")
-    
-    @pytest.mark.asyncio
     async def test_memory_retrieval_time(self, performance_monitor):
         """
         测试记忆检索响应时间
@@ -327,8 +319,6 @@ class TestResponseTimeBenchmarks:
         print(f"  - Avg: {metrics.avg_latency_ms:.2f}ms")
         print(f"  - P95: {metrics.p95_latency_ms:.2f}ms")
         print(f"  ✓ All within target (< 1s)")
-    
-    @pytest.mark.asyncio
     async def test_response_generation_time(self, performance_monitor):
         """
         测试回应生成响应时间
@@ -365,8 +355,6 @@ class TestResponseTimeBenchmarks:
         print(f"  - P95: {metrics.p95_latency_ms:.2f}ms")
         print(f"  - Max: {metrics.max_latency_ms:.2f}ms")
         print(f"  ✓ All within target (< 1s)")
-    
-    @pytest.mark.asyncio
     async def test_live2d_rendering_time(self, performance_monitor):
         """
         测试Live2D渲染响应时间
@@ -409,8 +397,6 @@ class TestConcurrencyBenchmarks:
     
     测试系统处理50个并发请求的能力
     """
-    
-    @pytest.mark.asyncio
     async def test_concurrent_perception_requests(self):
         """
         测试并发感知请求处理
@@ -459,8 +445,6 @@ class TestConcurrencyBenchmarks:
         print(f"  - Avg latency: {avg_latency:.2f}ms")
         print(f"  - Failed: {len(failed)}")
         print(f"  ✓ Meets requirements")
-    
-    @pytest.mark.asyncio
     async def test_concurrent_cognitive_requests(self):
         """
         测试并发认知请求处理
@@ -506,8 +490,6 @@ class TestConcurrencyBenchmarks:
         print(f"  - Success rate: {success_rate:.1f}%")
         print(f"  - Avg latency: {avg_latency:.2f}ms")
         print(f"  ✓ Meets requirements (< 1s)")
-    
-    @pytest.mark.asyncio
     async def test_concurrent_memory_operations(self):
         """
         测试并发记忆操作
@@ -558,8 +540,6 @@ class TestConcurrencyBenchmarks:
         print(f"  - Success rate: {success_rate:.1f}%")
         print(f"  - Data conflicts: {len(failed)}")
         print(f"  ✓ No conflicts detected")
-    
-    @pytest.mark.asyncio
     async def test_mixed_concurrent_workload(self):
         """
         测试混合并发工作负载
@@ -650,8 +630,6 @@ class TestMemoryUsageBenchmarks:
             return process.memory_info().rss / 1024 / 1024
         
         return get_memory_mb
-    
-    @pytest.mark.asyncio
     async def test_memory_leak_detection_short_term(self, memory_monitor):
         """
         短期内存泄漏检测
@@ -689,8 +667,6 @@ class TestMemoryUsageBenchmarks:
         print(f"  - Final: {final_memory:.2f} MB")
         print(f"  - Growth: {memory_growth:.2f} MB ({growth_percent:.1f}%)")
         print(f"  ✓ No significant memory leak detected")
-    
-    @pytest.mark.asyncio
     async def test_memory_usage_under_load(self, memory_monitor):
         """
         负载下内存使用测试
@@ -733,8 +709,6 @@ class TestMemoryUsageBenchmarks:
         print(f"  - Peak: {peak_memory:.2f} MB")
         print(f"  - Final: {final_memory:.2f} MB")
         print(f"  ✓ Within expected limits (< {max_expected_memory}MB)")
-    
-    @pytest.mark.asyncio
     async def test_memory_after_cleanup(self, memory_monitor):
         """
         清理后内存测试
@@ -784,8 +758,6 @@ class TestCpuUsageBenchmarks:
             return process.cpu_percent(interval=0.1)
         
         return get_cpu_percent
-    
-    @pytest.mark.asyncio
     async def test_idle_cpu_usage(self, cpu_monitor):
         """
         空闲状态CPU使用
@@ -808,8 +780,6 @@ class TestCpuUsageBenchmarks:
         print(f"✓ Idle CPU usage:")
         print(f"  - Average: {avg_cpu:.1f}%")
         print(f"  ✓ Within acceptable range (< 5%)")
-    
-    @pytest.mark.asyncio
     async def test_under_load_cpu_usage(self, cpu_monitor):
         """
         负载状态CPU使用
@@ -837,8 +807,6 @@ class TestCpuUsageBenchmarks:
         print(f"  - Average: {avg_cpu:.1f}%")
         print(f"  - Peak: {peak_cpu:.1f}%")
         print(f"  ✓ Within acceptable range (< {max_expected_cpu}%)")
-    
-    @pytest.mark.asyncio
     async def test_burst_cpu_handling(self, cpu_monitor):
         """
         突发负载CPU处理
@@ -879,8 +847,6 @@ class TestLongRunningStability:
     
     24小时稳定性测试（模拟）
     """
-    
-    @pytest.mark.asyncio
     @pytest.mark.timeout(300)  # 5分钟超时
     async def test_sustained_operation_stability(self):
         """
@@ -945,8 +911,6 @@ class TestLongRunningStability:
         print(f"  - Errors: {len(errors)} ({error_rate:.3f}%)")
         print(f"  - Avg latency: {avg_latency:.2f}ms")
         print(f"  ✓ System stable over time")
-    
-    @pytest.mark.asyncio
     async def test_recovery_from_stress(self):
         """
         压力后恢复测试

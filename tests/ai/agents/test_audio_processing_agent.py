@@ -109,9 +109,6 @@ def test_audio_methods(
         result = method_to_test(params)
         for key in expected_keys:
             assert key in result
-
-
-@pytest.mark.asyncio
 async def test_handle_speech_recognition_task(audio_agent: AudioProcessingAgent):
     """Test handling a speech recognition task request."""
     task_payload = HSPTaskRequestPayload(
@@ -143,9 +140,6 @@ async def test_handle_speech_recognition_task(audio_agent: AudioProcessingAgent)
     assert result_payload["status"] == "success"
     assert "transcription" in result_payload["payload"]
     assert result_payload["request_id"] == "test_request_001"
-
-
-@pytest.mark.asyncio
 async def test_handle_unsupported_capability(audio_agent: AudioProcessingAgent):
     """Test handling an unsupported capability."""
     task_payload = HSPTaskRequestPayload(

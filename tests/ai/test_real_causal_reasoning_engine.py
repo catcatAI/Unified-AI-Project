@@ -56,8 +56,6 @@ class TestRealCausalReasoningEngine:
         """原始引擎实例"""
         engine = CausalReasoningEngine(original_engine_config)
         yield engine
-
-    @pytest.mark.asyncio
     async def test_semantic_similarity_calculation(self, real_engine):
         """测试语义相似度计算"""
         print("\n=测试语义相似度计算 ===")
@@ -81,8 +79,6 @@ class TestRealCausalReasoningEngine:
         print(f"语义相似度 '{text3}' vs '{text4}': {similarity2:.3f}")
 
         assert similarity2 < similarity  # 应该比之前的相似度低
-
-    @pytest.mark.asyncio
     async def test_real_correlation_calculation(self, real_engine):
         """测试真实相关性计算"""
         print("\n=测试真实相关性计算 ===")
@@ -107,8 +103,6 @@ class TestRealCausalReasoningEngine:
         print(f"随机数据相关测试: {correlation_random:.3f}")
 
         assert abs(correlation_random) < 0.5  # 应该接近0
-
-    @pytest.mark.asyncio
     async def test_temporal_pattern_detection(self, real_engine):
         """测试时间模式检测"""
         print("\n=测试时间模式检测 ===")
@@ -143,8 +137,6 @@ class TestRealCausalReasoningEngine:
         print(f"稳定趋势检测结果: {temp_pattern_stable}")
 
         assert temp_pattern_stable["trend"] == "stable"
-
-    @pytest.mark.asyncio
     async def test_causal_strength_calculation(self, real_engine):
         """测试因果强度计算"""
         print("\n=测试因果强度计算 ===")
@@ -171,8 +163,6 @@ class TestRealCausalReasoningEngine:
         print(f"弱因果关系强度: {causal_strength_weak:.3f}")
 
         assert causal_strength_weak < causal_strength
-
-    @pytest.mark.asyncio
     async def test_counterfactual_reasoning(self, real_engine):
         """测试反事实推理"""
         print("\n=测试反事实推理 ===")
@@ -215,8 +205,6 @@ class TestRealCausalReasoningEngine:
         assert "confidence" in counterfactual_result
         assert counterfactual_result["confidence"] >= 0.0
         assert counterfactual_result["confidence"] <= 1.0
-
-    @pytest.mark.asyncio
     async def test_intervention_planning(self, real_engine):
         """测试干预规划"""
         print("\n=测试干预规划 ===")
@@ -238,8 +226,6 @@ class TestRealCausalReasoningEngine:
         assert "confidence" in intervention_plan
         assert intervention_plan["confidence"] >= 0.0
         assert intervention_plan["confidence"] <= 1.0
-
-    @pytest.mark.asyncio
     async def test_comparison_with_original_engine(self, real_engine, original_engine):
         """与原始引擎对比测试"""
         print("\n=与原始引擎对比测试 ===")
@@ -284,8 +270,6 @@ class TestRealCausalReasoningEngine:
             for key, value in original_correlations.items():
                 # 原始引擎使用random.uniform(-1, 1),所以也应该在范围内
                 assert -1.0 <= value <= 1.0, f"原始引擎相关性超出范围: {value}"
-
-    @pytest.mark.asyncio
     async def test_memory_usage_and_performance(self, real_engine):
         """测试内存使用和性能"""
         print("\n=测试内存使用和性能 ===")
@@ -331,8 +315,6 @@ class TestRealCausalReasoningEngine:
         # 性能要求
         assert (end_time - start_time) < 30  # 100次操作应该在30秒内完成
         assert (final_memory - initial_memory) < 100  # 内存增加不超过100MB
-
-    @pytest.mark.asyncio
     async def test_error_handling_and_robustness(self, real_engine):
         """测试错误处理和鲁棒性"""
         print("\n=测试错误处理和鲁棒性 ===")

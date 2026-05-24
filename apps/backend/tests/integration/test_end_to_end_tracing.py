@@ -18,9 +18,6 @@ from apps.backend.src.core.autonomous.cyber_identity import (
     CyberIdentity,
     IdentityAspect,
 )
-
-
-@pytest.mark.asyncio
 class TestEndToEndTracing:
     async def test_l1_hormone_tracing(self):
         """Test L1 endocrine system tracing"""

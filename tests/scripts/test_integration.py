@@ -19,7 +19,7 @@ class ConceptModelIntegrationTest:
         self.environment_simulator = EnvironmentSimulator
         self.causal_reasoning_engine = CausalReasoningEngine
         self.adaptive_learning_controller = AdaptiveLearningController
-        self.alpha_deep_model = AlphaDeepModel("integration_test_symbolic_space.db")
+        self.alpha_deep_model = AlphaDeepModel("test_integration_symbolic_space.db")
         self.symbolic_space = self.alpha_deep_model.get_symbolic_space()
     async def test_environment_causal_integration(self) -> None:
         """测试环境模拟器与因果推理引擎的集成"""
@@ -284,7 +284,7 @@ class ConceptModelIntegrationTest:
             return False
 
 # 独立测试函数
-async def run_integration_tests():
+async def run_test_integrations():
     """运行集成测试"""
     # 设置日志
     logging.basicConfig(level=logging.INFO())
@@ -304,7 +304,7 @@ async def run_integration_tests():
 # 测试入口点
 if __name__ == "__main__":
     # 运行集成测试
-    asyncio.run(run_integration_tests)
+    asyncio.run(run_test_integrations)
 
 # 添加pytest标记,防止被误认为测试类
 ConceptModelIntegrationTest.__test_False

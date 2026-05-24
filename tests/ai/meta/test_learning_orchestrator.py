@@ -68,7 +68,6 @@ class TestLearningOrchestratorInit:
 
 
 class TestLearningOrchestratorProcessCycle:
-    @pytest.mark.asyncio
     async def test_process_learning_cycle_returns_expected_keys(self, orchestrator):
         task = {"id": "task_001", "type": "reasoning"}
         execution_result = {"output": "test output", "success": True}
@@ -78,8 +77,6 @@ class TestLearningOrchestratorProcessCycle:
         assert "adaptation" in result
         assert "timestamp" in result
         assert result["task_id"] == "task_001"
-
-    @pytest.mark.asyncio
     async def test_process_learning_cycle_appends_history(self, orchestrator):
         assert len(orchestrator.learning_history) == 0
         await orchestrator.process_learning_cycle(
@@ -87,8 +84,6 @@ class TestLearningOrchestratorProcessCycle:
             {"output": "ok", "success": True},
         )
         assert len(orchestrator.learning_history) == 1
-
-    @pytest.mark.asyncio
     async def test_process_learning_cycle_multiple_cycles(self, orchestrator):
         for i in range(3):
             await orchestrator.process_learning_cycle(
@@ -96,15 +91,11 @@ class TestLearningOrchestratorProcessCycle:
                 {"output": "ok", "success": True},
             )
         assert len(orchestrator.learning_history) == 3
-
-    @pytest.mark.asyncio
     async def test_process_learning_cycle_calls_evaluator(self, orchestrator, mock_evaluator):
         task = {"id": "t1", "type": "reasoning"}
         result = {"output": "done", "success": False}
         await orchestrator.process_learning_cycle(task, result)
         mock_evaluator.evaluate_task_execution.assert_called_once_with(task, result)
-
-    @pytest.mark.asyncio
     async def test_process_learning_cycle_evaluation_in_result(self, orchestrator):
         result = await orchestrator.process_learning_cycle(
             {"id": "t1"},
@@ -112,8 +103,6 @@ class TestLearningOrchestratorProcessCycle:
         )
         assert result["evaluation"]["overall_rating"] == 0.88
         assert result["evaluation"]["metrics"]["success_rate"] == 0.9
-
-    @pytest.mark.asyncio
     async def test_process_learning_cycle_adaptation_has_strategy(self, orchestrator):
         result = await orchestrator.process_learning_cycle(
             {"id": "t1"},
@@ -128,8 +117,6 @@ class TestLearningOrchestratorStatus:
         status = orchestrator.get_learning_status()
         assert status["cycles_completed"] == 0
         assert status["latest_rating"] == 0.0
-
-    @pytest.mark.asyncio
     async def test_get_learning_status_after_cycle(self, orchestrator):
         await orchestrator.process_learning_cycle(
             {"id": "t1"},
@@ -140,8 +127,6 @@ class TestLearningOrchestratorStatus:
         assert status["latest_rating"] == 0.88
         assert "strategy" in status["controller_config"]
         assert "learning_rate" in status["controller_config"]
-
-    @pytest.mark.asyncio
     async def test_get_learning_status_uses_latest_rating(self, orchestrator, mock_evaluator):
         mock_evaluator.evaluate_task_execution = AsyncMock(return_value={
             "task_id": "t2",

@@ -156,14 +156,11 @@ class TestAnalyzeEmotionalContext:
 
 
 class TestGetCurrentEmotionState:
-    @pytest.mark.asyncio
     async def test_async_get_state(self):
         es = EmotionSystem()
         state_str = await es.get_current_emotion_state()
         assert 'neutral' in state_str
         assert 'intensity' in state_str
-
-    @pytest.mark.asyncio
     async def test_async_get_state_after_context(self):
         with patch('textblob.TextBlob') as mock_tb, \
              patch('core.system.config.tiered_loader.get_config') as mock_gc:

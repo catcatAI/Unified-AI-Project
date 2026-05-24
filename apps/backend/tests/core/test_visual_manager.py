@@ -123,8 +123,6 @@ class TestVisualConfiguration:
 
 
 # ==================== Visual Effect Generator Tests ====================
-
-@pytest.mark.asyncio
 class TestVisualEffectGenerator:
     """Test visual effect generator"""
     
@@ -229,8 +227,6 @@ class TestVisualEffectGenerator:
 
 
 # ==================== Asset Cache Tests ====================
-
-@pytest.mark.asyncio
 class TestAssetCache:
     """Test asset cache system"""
     
@@ -331,8 +327,6 @@ class TestAssetCache:
 
 
 # ==================== Visual Manager Tests ====================
-
-@pytest.mark.asyncio
 class TestVisualManager:
     """Test visual manager"""
     
@@ -475,8 +469,6 @@ class TestVisualManager:
 
 
 # ==================== Integration Tests ====================
-
-@pytest.mark.asyncio
 class TestVisualManagerIntegration:
     """Test visual manager integration"""
     
@@ -569,8 +561,6 @@ class TestVisualManagerIntegration:
 
 
 # ==================== Performance Tests ====================
-
-@pytest.mark.asyncio
 class TestVisualManagerPerformance:
     """Test visual manager performance"""
     

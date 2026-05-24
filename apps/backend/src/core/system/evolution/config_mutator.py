@@ -140,7 +140,9 @@ class ConfigMutator:
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f) or {}
-        except: return {}
+        except Exception:
+            logger.warning(f"Failed to load {path}, returning empty config")
+            return {}
 
     def _write_file(self, path: Path, data: Dict[str, Any]):
         path.parent.mkdir(parents=True, exist_ok=True)

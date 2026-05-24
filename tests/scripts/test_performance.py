@@ -39,7 +39,7 @@ for method, path in endpoints:
         response_time = time.time() - start_time
         print(f"  {method} {path}: {response_time:.3f}s (狀態: {response.status_code})")
     except Exception as e:
-        logger.error(f"Error in performance_test.py: {e}", exc_info=True)
+        logger.error(f"Error in test_performance.py: {e}", exc_info=True)
         response_time = time.time() - start_time
 
         print(f"  {method} {path}: {response_time:.3f}s (錯誤: {e})")
@@ -76,7 +76,7 @@ def make_request(request_id):
         response_time = time.time() - start_time
         return request_id, response_time, response.status_code, None
     except Exception as e:
-        logger.error(f"Error in performance_test.py: {e}", exc_info=True)
+        logger.error(f"Error in test_performance.py: {e}", exc_info=True)
         response_time = time.time() - start_time
 
         return request_id, response_time, None, str(e)

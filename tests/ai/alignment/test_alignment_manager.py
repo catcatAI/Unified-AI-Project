@@ -56,12 +56,9 @@ class TestInit:
 
 
 class TestPriority:
-    @pytest.mark.asyncio
     async def test_set_and_get_priority(self, manager):
         await manager.set_alignment_priority('emergency', AlignmentPriority.SURVIVAL)
         assert manager.alignment_priorities['emergency'] == AlignmentPriority.SURVIVAL
-
-    @pytest.mark.asyncio
     async def test_set_multiple_priorities(self, manager):
         await manager.set_alignment_priority('ctx_a', AlignmentPriority.ETHICAL)
         await manager.set_alignment_priority('ctx_b', AlignmentPriority.EMOTIONAL)
@@ -69,7 +66,6 @@ class TestPriority:
 
 
 class TestThresholds:
-    @pytest.mark.asyncio
     async def test_configure_thresholds(self, manager):
         await manager.configure_balance_thresholds(0.5, 0.5, 0.5)
         assert manager.balance_thresholds == {
@@ -80,26 +76,19 @@ class TestThresholds:
 
 
 class TestAdversarialMode:
-    @pytest.mark.asyncio
     async def test_enable_default_intensity(self, manager):
         await manager.enable_adversarial_mode()
         assert manager.adversarial_mode is True
         assert manager.adversarial_intensity == 0.5
-
-    @pytest.mark.asyncio
     async def test_enable_custom_intensity(self, manager):
         await manager.enable_adversarial_mode(intensity=0.8)
         assert manager.adversarial_intensity == 0.8
-
-    @pytest.mark.asyncio
     async def test_enable_clamps_intensity(self, manager):
         await manager.enable_adversarial_mode(intensity=2.0)
         assert manager.adversarial_intensity == 1.0
 
         await manager.enable_adversarial_mode(intensity=-1.0)
         assert manager.adversarial_intensity == 0.0
-
-    @pytest.mark.asyncio
     async def test_disable(self, manager):
         await manager.enable_adversarial_mode(intensity=0.7)
         await manager.disable_adversarial_mode()
@@ -188,7 +177,6 @@ class TestCalculateConfidence:
 
 
 class TestMakeDecision:
-    @pytest.mark.asyncio
     async def test_make_decision_basic(self, manager):
         context = {'type': 'general', 'text': 'test'}
         options = [
@@ -246,8 +234,6 @@ class TestMakeDecision:
         assert result.existential_score == 0.9
         assert result.reasoning == 'Balanced decision'
         assert result.emotional_state is not None
-
-    @pytest.mark.asyncio
     async def test_make_decision_stores_history(self, manager):
         context = {'type': 'test'}
         options = [{'action_id': 'opt1'}]
@@ -265,8 +251,6 @@ class TestMakeDecision:
             assert len(manager.decision_history) == 1
             await manager.make_decision(context, options)
             assert len(manager.decision_history) == 2
-
-    @pytest.mark.asyncio
     async def test_make_decision_adversarial(self, manager):
         await manager.enable_adversarial_mode(intensity=0.5)
         context = {'type': 'stress_test'}
@@ -287,12 +271,9 @@ class TestMakeDecision:
 
 
 class TestDecisionHistory:
-    @pytest.mark.asyncio
     async def test_get_decision_history_empty(self, manager):
         history = await manager.get_decision_history()
         assert history == []
-
-    @pytest.mark.asyncio
     async def test_get_decision_history_with_limit(self, manager):
         context = {'type': 'test'}
         options = [{'action_id': 'opt1'}]
@@ -314,12 +295,9 @@ class TestDecisionHistory:
 
 
 class TestAnalyzeTrends:
-    @pytest.mark.asyncio
     async def test_analyze_no_history(self, manager):
         trends = await manager.analyze_alignment_trends()
         assert trends == {'message': 'No decision history available'}
-
-    @pytest.mark.asyncio
     async def test_analyze_with_history(self, manager):
         context = {'type': 'test'}
         options = [{'action_id': 'opt1'}]
@@ -343,7 +321,6 @@ class TestAnalyzeTrends:
 
 
 class TestSelfImprove:
-    @pytest.mark.asyncio
     async def test_self_improve_no_history(self, manager):
         await manager.self_improve()
         assert manager.balance_thresholds == {
@@ -351,8 +328,6 @@ class TestSelfImprove:
             'emotional_min': 0.6,
             'existential_min': 0.8,
         }
-
-    @pytest.mark.asyncio
     async def test_self_improve_low_confidence(self, manager):
         context = {'type': 'test'}
         options = [{'action_id': 'a', 'action_type': 'help'}]
@@ -376,7 +351,6 @@ class TestSelfImprove:
 
 
 class TestGenerateReasoning:
-    @pytest.mark.asyncio
     async def test_reasoning_mentions_priority(self, manager):
         decision_data = {
             'best_option': {
@@ -394,8 +368,6 @@ class TestGenerateReasoning:
         reasoning = await manager._generate_reasoning(decision_data, {})
         assert 'ETHICAL' in reasoning
         assert '0.85' in reasoning
-
-    @pytest.mark.asyncio
     async def test_reasoning_threshold_warning(self, manager):
         decision_data = {
             'best_option': {

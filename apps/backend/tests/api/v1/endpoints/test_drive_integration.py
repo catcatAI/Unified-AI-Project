@@ -64,8 +64,6 @@ def sample_file_metadata():
         "size": "1234",
         "webViewLink": "http://example.com/view/file123"
     }
-
-@pytest.mark.asyncio
 async def test_sync_files_new_file_success(mock_dependencies, sample_file_metadata):
     """Test successful sync and memorization of a new file."""
     # Ensure local path exists for mock download
@@ -96,8 +94,6 @@ async def test_sync_files_new_file_success(mock_dependencies, sample_file_metada
     mock_dependencies["mock_deduplication_instance"].record_sync.assert_called()
     mock_dependencies["mock_document_parser_instance"].parse_document.assert_called()
     mock_dependencies["mock_ham_memory_manager"].store_experience.assert_called()
-
-@pytest.mark.asyncio
 async def test_sync_files_skip_unchanged_file(mock_dependencies, sample_file_metadata):
     """Test skipping an unchanged file due to deduplication."""
     mock_dependencies["mock_deduplication_instance"].should_download.return_value = False
@@ -118,8 +114,6 @@ async def test_sync_files_skip_unchanged_file(mock_dependencies, sample_file_met
     mock_dependencies["mock_deduplication_instance"].should_download.assert_called_with(sample_file_metadata)
     mock_dependencies["mock_drive_service"].download_file.assert_not_called()
     mock_dependencies["mock_ham_memory_manager"].store_experience.assert_not_called()
-
-@pytest.mark.asyncio
 async def test_sync_files_download_failure(mock_dependencies, sample_file_metadata):
     """Test handling of a download failure."""
     mock_dependencies["mock_drive_service"].download_file.return_value = False
@@ -140,8 +134,6 @@ async def test_sync_files_download_failure(mock_dependencies, sample_file_metada
     
     mock_dependencies["mock_drive_service"].download_file.assert_called()
     mock_dependencies["mock_ham_memory_manager"].store_experience.assert_not_called()
-
-@pytest.mark.asyncio
 async def test_sync_files_memorize_different_types(mock_dependencies, sample_file_metadata):
     """Test syncing and memorizing different file types (PDF, CSV)."""
     pdf_metadata = {**sample_file_metadata, "id": "pdf456", "name": "report.pdf", "mimeType": "application/pdf"}

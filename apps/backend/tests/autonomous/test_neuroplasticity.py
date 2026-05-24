@@ -332,8 +332,6 @@ class TestConsolidationPhase:
 
 class TestNeuroplasticitySystem:
     """Tests for the main NeuroplasticitySystem class."""
-
-    @pytest.mark.asyncio
     async def test_system_initialization(self, neuroplasticity_system: NeuroplasticitySystem) -> None:
         """Test system initialization."""
         await neuroplasticity_system.initialize()
@@ -893,8 +891,6 @@ class TestNeuroplasticityIntegration:
         
         # Should be calculated using forgetting curve
         assert 0 <= retention <= 1
-
-    @pytest.mark.asyncio
     async def test_system_updates(self) -> None:
         """Test system background updates."""
         system = NeuroplasticitySystem()

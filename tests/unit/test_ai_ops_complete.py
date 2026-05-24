@@ -47,9 +47,6 @@ def capacity_planner():
 def intelligent_ops_manager():
     """Fixture for IntelligentOpsManager instance."""
     return IntelligentOpsManager()
-
-
-@pytest.mark.asyncio
 class TestAIOpsEngine:
     """AI運維引擎測試"""
 
@@ -150,9 +147,6 @@ class TestAIOpsEngine:
         assert "current_cpu" in result
         assert "trend" in result
         assert "confidence" in result
-
-
-@pytest.mark.asyncio
 class TestPredictiveMaintenance:
     """預測性維護測試"""
 
@@ -209,9 +203,6 @@ class TestPredictiveMaintenance:
         assert component_id in recommendation
         assert "維護" in recommendation
         assert len(recommendation) > 10
-
-
-@pytest.mark.asyncio
 class TestPerformanceOptimizer:
     """性能優化器測試"""
 
@@ -285,9 +276,6 @@ class TestPerformanceOptimizer:
         # 應該檢測到CPU瓶頸
         if bottlenecks:
             assert "cpu" in bottlenecks[0].lower()
-
-
-@pytest.mark.asyncio
 class TestCapacityPlanner:
     """容量規劃器測試"""
 
@@ -377,9 +365,6 @@ class TestCapacityPlanner:
         # 應該檢測到增長趨勢
         assert analysis["cpu_trend"] == "increasing"
         assert analysis["memory_trend"] == "increasing"
-
-
-@pytest.mark.asyncio
 class TestIntelligentOpsManager:
     """智能運維管理器測試"""
 
@@ -452,9 +437,6 @@ class TestIntelligentOpsManager:
         assert "auto_actions_24h" in dashboard
         assert "total_insights" in dashboard
         assert "last_update" in dashboard
-
-
-@pytest.mark.asyncio
 class TestIntegration:
     """集成測試"""
 

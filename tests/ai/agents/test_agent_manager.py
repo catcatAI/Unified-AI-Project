@@ -57,16 +57,12 @@ class TestAgentManagerInit:
 
 class TestAgentManagerRegister:
     """Tests for agent registration (add, remove, list, get)."""
-
-    @pytest.mark.asyncio
     async def test_add_agent(self, agent_manager, mock_agent):
         """Test adding a single agent to the manager."""
         result = await agent_manager.add_agent(mock_agent)
         assert result is True
         assert mock_agent.agent_id in agent_manager.agents
         assert agent_manager.agents[mock_agent.agent_id] is mock_agent
-
-    @pytest.mark.asyncio
     async def test_add_duplicate_agent_overwrites(self, agent_manager, mock_agent):
         """Test adding a duplicate agent_id overwrites the previous entry."""
         await agent_manager.add_agent(mock_agent)
@@ -76,30 +72,22 @@ class TestAgentManagerRegister:
         assert result is True
         assert agent_manager.agents["test_agent_001"] is replacement
         assert len(agent_manager.agents) == 1
-
-    @pytest.mark.asyncio
     async def test_remove_agent(self, agent_manager, mock_agent):
         """Test removing a registered agent returns True and removes it."""
         await agent_manager.add_agent(mock_agent)
         result = await agent_manager.remove_agent(mock_agent.agent_id)
         assert result is True
         assert mock_agent.agent_id not in agent_manager.agents
-
-    @pytest.mark.asyncio
     async def test_remove_nonexistent_agent(self, agent_manager):
         """Test removing an unregistered agent returns False."""
         result = await agent_manager.remove_agent("nonexistent")
         assert result is False
-
-    @pytest.mark.asyncio
     async def test_list_agents(self, agent_manager, mock_agent):
         """Test list_agents returns all registered agent IDs."""
         await agent_manager.add_agent(mock_agent)
         agents = agent_manager.list_agents()
         assert len(agents) == 1
         assert mock_agent.agent_id in agents
-
-    @pytest.mark.asyncio
     async def test_list_agents_empty(self, agent_manager):
         """Test list_agents returns empty list when no agents registered."""
         assert agent_manager.list_agents() == []
@@ -121,8 +109,6 @@ class TestAgentManagerRegister:
         agent_manager.register_agent_factory("test_type", factory)
         assert "test_type" in agent_manager.agent_factories
         assert agent_manager.agent_factories["test_type"] is factory
-
-    @pytest.mark.asyncio
     async def test_create_agent_from_factory(self, agent_manager):
         """Test creating an agent from a registered factory."""
         factory = Mock()
@@ -133,8 +119,6 @@ class TestAgentManagerRegister:
         agent = await agent_manager.create_agent("test_type", "TestAgent")
         assert agent is created
         factory.assert_called_once_with("TestAgent")
-
-    @pytest.mark.asyncio
     async def test_create_agent_unregistered_type(self, agent_manager):
         """Test create_agent returns None for unregistered type."""
         agent = await agent_manager.create_agent("unknown_type", "Test")
@@ -143,36 +127,26 @@ class TestAgentManagerRegister:
 
 class TestAgentManagerLifecycle:
     """Tests for agent lifecycle management (start, stop, status)."""
-
-    @pytest.mark.asyncio
     async def test_start_agent(self, agent_manager, mock_agent):
         """Test start_agent calls agent.start() and returns True."""
         await agent_manager.add_agent(mock_agent)
         result = await agent_manager.start_agent(mock_agent.agent_id)
         assert result is True
         mock_agent.start.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_start_nonexistent_agent(self, agent_manager):
         """Test start_agent returns False for non-existent agent."""
         result = await agent_manager.start_agent("nonexistent")
         assert result is False
-
-    @pytest.mark.asyncio
     async def test_stop_agent(self, agent_manager, mock_agent):
         """Test stop_agent calls agent.stop() and returns True."""
         await agent_manager.add_agent(mock_agent)
         result = await agent_manager.stop_agent(mock_agent.agent_id)
         assert result is True
         mock_agent.stop.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_stop_nonexistent_agent(self, agent_manager):
         """Test stop_agent returns False for non-existent agent."""
         result = await agent_manager.stop_agent("nonexistent")
         assert result is False
-
-    @pytest.mark.asyncio
     async     def test_get_agent_status(self, agent_manager, mock_agent):
         """Test get_agent_status returns the agent's status dict."""
         await agent_manager.add_agent(mock_agent)
@@ -183,8 +157,6 @@ class TestAgentManagerLifecycle:
     def test_get_agent_status_nonexistent(self, agent_manager):
         """Test get_agent_status returns None for non-existent agent."""
         assert agent_manager.get_agent_status("nonexistent") is None
-
-    @pytest.mark.asyncio
     async def test_start_all_agents(self, agent_manager):
         """Test start_all_agents starts every registered agent."""
         a1 = Mock()
@@ -199,8 +171,6 @@ class TestAgentManagerLifecycle:
         assert len(results) == 2
         a1.start.assert_called_once()
         a2.start.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_stop_all_agents(self, agent_manager, mock_agent):
         """Test stop_all_agents stops every registered agent."""
         await agent_manager.add_agent(mock_agent)

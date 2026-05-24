@@ -34,8 +34,6 @@ class TestDataAnalysisAgent:
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-
-    @pytest.mark.asyncio
     async def test_data_analysis_agent(self):
         """测试 DataAnalysisAgent 的基本功能"""
         # 创建一个DataAnalysisAgent实例

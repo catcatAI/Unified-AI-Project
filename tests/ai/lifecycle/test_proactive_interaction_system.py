@@ -130,23 +130,17 @@ class TestProactiveInteractionSystemInit:
         assert system.check_interval == 30.0
         assert system.min_check_interval == 15.0
         assert system.max_check_interval == 60.0
-
-    @pytest.mark.asyncio
     async def test_start_stop(self, proactive_system):
         await proactive_system.start()
         assert proactive_system.is_running
         assert proactive_system._proactive_task is not None
         await proactive_system.stop()
         assert not proactive_system.is_running
-
-    @pytest.mark.asyncio
     async def test_start_when_already_running(self, proactive_system):
         await proactive_system.start()
         await proactive_system.start()
         assert proactive_system.is_running
         await proactive_system.stop()
-
-    @pytest.mark.asyncio
     async def test_stop_when_not_running(self, proactive_system):
         await proactive_system.stop()
         assert not proactive_system.is_running
@@ -154,8 +148,6 @@ class TestProactiveInteractionSystemInit:
 
 class TestDetectUserState:
     """Tests for user state detection."""
-
-    @pytest.mark.asyncio
     async def test_detect_user_state_returns_dict(self, proactive_system, user_monitor):
         user_monitor.user_state.online = True
         state = await proactive_system._detect_user_state()
@@ -168,8 +160,6 @@ class TestDetectUserState:
 
 class TestIdentifyOpportunities:
     """Tests for opportunity identification."""
-
-    @pytest.mark.asyncio
     async def test_identify_user_return_opportunity(self, proactive_system):
         user_state = {
             'online': True,
@@ -182,8 +172,6 @@ class TestIdentifyOpportunities:
         opportunities = await proactive_system._identify_opportunities(user_state)
         types = [o['type'] for o in opportunities]
         assert 'user_return' in types
-
-    @pytest.mark.asyncio
     async def test_identify_long_idle_opportunity(self, proactive_system):
         user_state = {
             'online': True,
@@ -195,8 +183,6 @@ class TestIdentifyOpportunities:
         opportunities = await proactive_system._identify_opportunities(user_state)
         types = [o['type'] for o in opportunities]
         assert 'long_idle' in types
-
-    @pytest.mark.asyncio
     async def test_identify_emotional_change_opportunity(self, proactive_system):
         user_state = {
             'online': True,
@@ -209,8 +195,6 @@ class TestIdentifyOpportunities:
         opportunities = await proactive_system._identify_opportunities(user_state)
         types = [o['type'] for o in opportunities]
         assert 'emotional_change' in types
-
-    @pytest.mark.asyncio
     async def test_identify_no_opportunities(self, proactive_system):
         user_state = {
             'online': True,
@@ -223,8 +207,6 @@ class TestIdentifyOpportunities:
             with patch.object(proactive_system, '_check_memory_triggers', AsyncMock()):
                 opportunities = await proactive_system._identify_opportunities(user_state)
         assert len(opportunities) == 0
-
-    @pytest.mark.asyncio
     async def test_identify_memory_trigger_opportunity(self, proactive_system, mock_memory_manager):
         mock_memory_manager.get_important_events = AsyncMock(return_value=['Important event'])
         user_state = {
@@ -237,8 +219,6 @@ class TestIdentifyOpportunities:
         opportunities = await proactive_system._identify_opportunities(user_state)
         types = [o['type'] for o in opportunities]
         assert 'memory_trigger' in types
-
-    @pytest.mark.asyncio
     async def test_opportunity_counts_tracked(self, proactive_system):
         user_state = {
             'online': True,
@@ -257,8 +237,6 @@ class TestIdentifyOpportunities:
 
 class TestPlanProactiveAction:
     """Tests for planning proactive actions."""
-
-    @pytest.mark.asyncio
     async def test_plan_user_return_action(self, proactive_system):
         opportunity = {
             'type': 'user_return',
@@ -270,8 +248,6 @@ class TestPlanProactiveAction:
         assert plan is not None
         assert plan.opportunity == 'user_return'
         assert plan.priority == 'high'
-
-    @pytest.mark.asyncio
     async def test_plan_respects_cooldown(self, proactive_system):
         proactive_system.last_interaction_time = datetime.now()
         opportunity = {
@@ -282,8 +258,6 @@ class TestPlanProactiveAction:
         user_state = {'online': True}
         plan = await proactive_system._plan_proactive_action(opportunity, user_state)
         assert plan is None  # cooldown active, not high priority
-
-    @pytest.mark.asyncio
     async def test_plan_bypasses_cooldown_for_high_priority(self, proactive_system):
         proactive_system.last_interaction_time = datetime.now()
         opportunity = {
@@ -294,8 +268,6 @@ class TestPlanProactiveAction:
         user_state = {'online': True}
         plan = await proactive_system._plan_proactive_action(opportunity, user_state)
         assert plan is not None  # high priority bypasses cooldown
-
-    @pytest.mark.asyncio
     async def test_plan_cooldown_expired(self, proactive_system):
         proactive_system.last_interaction_time = datetime.now() - timedelta(seconds=120)
         opportunity = {
@@ -310,13 +282,9 @@ class TestPlanProactiveAction:
 
 class TestExecutePlannedActions:
     """Tests for executing planned actions."""
-
-    @pytest.mark.asyncio
     async def test_execute_empty_queue(self, proactive_system):
         await proactive_system._execute_planned_actions()
         assert proactive_system.stats['executed_actions'] == 0
-
-    @pytest.mark.asyncio
     async def test_execute_single_plan(self, proactive_system):
         from ai.lifecycle.proactive_interaction_system import InteractionPlan
         now = datetime.now()
@@ -331,8 +299,6 @@ class TestExecutePlannedActions:
         await proactive_system._execute_planned_actions()
         assert plan.executed is True
         assert proactive_system.stats['executed_actions'] == 1
-
-    @pytest.mark.asyncio
     async def test_execute_prioritizes_high(self, proactive_system):
         from ai.lifecycle.proactive_interaction_system import InteractionPlan
         now = datetime.now()
@@ -354,8 +320,6 @@ class TestExecutePlannedActions:
         await proactive_system._execute_planned_actions()
         assert high_plan.executed is True
         assert low_plan.executed is True  # both in first 3 after sort
-
-    @pytest.mark.asyncio
     async def test_execute_limits_to_three(self, proactive_system):
         from ai.lifecycle.proactive_interaction_system import InteractionPlan
         now = datetime.now()
@@ -456,48 +420,30 @@ class TestCalculateInterval:
 
 class TestMessageGeneration:
     """Tests for message generation methods."""
-
-    @pytest.mark.asyncio
     async def test_generate_return_message(self, proactive_system):
         msg = await proactive_system._generate_return_message({})
         assert '歡迎' in msg or '回' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_idle_message_long(self, proactive_system):
         msg = await proactive_system._generate_idle_message({'data': {'idle_time': 400}})
         assert '忙' in msg or '帮忙' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_idle_message_short(self, proactive_system):
         msg = await proactive_system._generate_idle_message({'data': {'idle_time': 100}})
         assert '做' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_emotional_message_sad(self, proactive_system):
         msg = await proactive_system._generate_emotional_message({'data': {'emotion': 'sad'}})
         assert '難過' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_emotional_message_frustrated(self, proactive_system):
         msg = await proactive_system._generate_emotional_message({'data': {'emotion': 'frustrated'}})
         assert '煩惱' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_time_based_morning(self, proactive_system):
         msg = await proactive_system._generate_time_based_message({'data': {'time_type': 'morning_greeting'}})
         assert '早上' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_time_based_evening(self, proactive_system):
         msg = await proactive_system._generate_time_based_message({'data': {'time_type': 'evening_greeting'}})
         assert '晚上' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_memory_message(self, proactive_system):
         msg = await proactive_system._generate_memory_message({'data': {'events': ['We talked about AI yesterday']}})
         assert '記得' in msg
-
-    @pytest.mark.asyncio
     async def test_generate_memory_message_no_events(self, proactive_system):
         msg = await proactive_system._generate_memory_message({'data': {'events': []}})
         assert '想起' in msg

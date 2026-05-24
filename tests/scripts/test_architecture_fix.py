@@ -139,7 +139,7 @@ class ArchitectureFixTest:
             ]
             self.log_test("P0-2 生物事件定義", "pass", f"定義了 {len(events)} 種生物事件")
         except Exception as e:
-            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_architecture_fix.py: {e}", exc_info=True)
             self.log_test("P0-2 生物事件定義", "fail", str(e))
 
         # 測試生物事件發布器
@@ -160,7 +160,7 @@ class ArchitectureFixTest:
             else:
                 self.log_test("P0-2 事件發布器", "fail", "事件發布器無法發布事件")
         except Exception as e:
-            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_architecture_fix.py: {e}", exc_info=True)
             self.log_test("P0-2 事件發布器", "fail", str(e))
 
         # 檢查前端生物事件監聽
@@ -219,7 +219,7 @@ class ArchitectureFixTest:
                 self.log_test("P0-3 失敗結果評估", "fail", "失敗結果未評估緊張影響")
 
         except Exception as e:
-            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_architecture_fix.py: {e}", exc_info=True)
             self.log_test("P0-3 代理結果評估器", "fail", str(e))
 
         # 檢查 AgentManager 是否集成了評估器
@@ -276,7 +276,7 @@ class ArchitectureFixTest:
                 self.log_test("P0-4 情感記憶檢索", "fail", "情感記憶檢索失敗")
 
         except Exception as e:
-            logger.error(f"Error in architecture_fix_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_architecture_fix.py: {e}", exc_info=True)
             self.log_test("P0-4 情感記憶功能", "fail", str(e))
 
         # 檢查決策循環是否集成了情感記憶
@@ -351,7 +351,7 @@ class ArchitectureFixTest:
         print(f"耗時: {report['summary']['duration_seconds']:.2f} 秒")
 
         # 保存報告
-        report_file = "/home/cat/桌面/architecture_fix_test_report.json"
+        report_file = "/home/cat/桌面/test_architecture_fix_report.json"
         with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 

@@ -84,7 +84,7 @@ class PerformanceMetrics:
         index = int(len(sorted_data) * percentile / 100)
         return sorted_data[min(index, len(sorted_data) - 1)]
 
-async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1000):
+async def test_stress_ai_ops_engine(concurrent_requests == 100, total_requests=1000):
     """压力测试AI运维引擎"""
     print(f"\n{'='*60}")
     print("AI运维引擎压力测试")
@@ -167,7 +167,7 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
         print(f"AI运维引擎压力测试失败, {e}")
         return None
 
-async def stress_test_predictive_maintenance(concurrent_requests == 50, total_requests=500):
+async def test_stress_predictive_maintenance(concurrent_requests == 50, total_requests=500):
     """压力测试预测性维护"""
     print(f"\n{'='*60}")
     print("预测性维护压力测试")
@@ -244,7 +244,7 @@ async def stress_test_predictive_maintenance(concurrent_requests == 50, total_re
         print(f"预测性维护压力测试失败, {e}")
         return None
 
-async def stress_test_performance_optimizer(concurrent_requests == 30, total_requests=300):
+async def test_stress_performance_optimizer(concurrent_requests == 30, total_requests=300):
     """压力测试性能优化器"""
     print(f"\n{'='*60}")
     print("性能优化器压力测试")
@@ -328,7 +328,7 @@ async def stress_test_performance_optimizer(concurrent_requests == 30, total_req
         print(f"性能优化器压力测试失败, {e}")
         return None
 
-async def stress_test_capacity_planner(concurrent_requests == 20, total_requests=200):
+async def test_stress_capacity_planner(concurrent_requests == 20, total_requests=200):
     """压力测试容量规划器"""
     print(f"\n{'='*60}")
     print("容量规划器压力测试")
@@ -415,25 +415,25 @@ async def main():
     test_configs = [
         {
             'name': 'AI运维引擎',
-            'func': stress_test_ai_ops_engine,
+            'func': test_stress_ai_ops_engine,
             'concurrent': 100,
             'total': 1000
         }
         {
             'name': '预测性维护',
-            'func': stress_test_predictive_maintenance,
+            'func': test_stress_predictive_maintenance,
             'concurrent': 50,
             'total': 500
         }
         {
             'name': '性能优化器',
-            'func': stress_test_performance_optimizer,
+            'func': test_stress_performance_optimizer,
             'concurrent': 30,
             'total': 300
         }
         {
             'name': '容量规划器',
-            'func': stress_test_capacity_planner,
+            'func': test_stress_capacity_planner,
             'concurrent': 20,
             'total': 200
         }

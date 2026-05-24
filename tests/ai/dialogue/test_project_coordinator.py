@@ -233,7 +233,6 @@ class TestHandleTaskResult:
 
 
 class TestExecuteWebSearch:
-    @pytest.mark.asyncio
     async def test_success(self, coordinator):
         web_mock = MagicMock()
         web_mock.search.return_value = ['r1', 'r2']
@@ -245,8 +244,6 @@ class TestExecuteWebSearch:
         assert result['count'] == 2
         assert result['query'] == 'test'
         web_mock.search.assert_called_once_with('test', num_results=5)
-
-    @pytest.mark.asyncio
     async def test_with_search_query_param(self, coordinator):
         web_mock = MagicMock()
         web_mock.search.return_value = []
@@ -257,8 +254,6 @@ class TestExecuteWebSearch:
         )
         assert result['count'] == 0
         web_mock.search.assert_called_once_with('fallback', num_results=5)
-
-    @pytest.mark.asyncio
     async def test_tool_unavailable(self, coordinator):
         coordinator._web_search = None
         with patch('core.tools.web_search_tool.WebSearchTool',
@@ -268,7 +263,6 @@ class TestExecuteWebSearch:
 
 
 class TestExecuteDocumentTask:
-    @pytest.mark.asyncio
     async def test_success(self, coordinator):
         doc_builder = AsyncMock()
         doc_result = MagicMock(
@@ -288,13 +282,9 @@ class TestExecuteDocumentTask:
         assert result['segments'] == 2
         assert result['successful'] == 2
         assert result['format_id'] == 'fmt-1'
-
-    @pytest.mark.asyncio
     async def test_no_query(self, coordinator):
         result = await coordinator._execute_document_task({}, 'document')
         assert 'error' in result
-
-    @pytest.mark.asyncio
     async def test_task_type_creative(self, coordinator):
         doc_builder = AsyncMock()
         doc_builder.build.return_value = MagicMock(
@@ -310,7 +300,6 @@ class TestExecuteDocumentTask:
 
 
 class TestExecuteLLM:
-    @pytest.mark.asyncio
     async def test_direct_llm_call(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = 'llm response'
@@ -319,8 +308,6 @@ class TestExecuteLLM:
         ):
             result = await coordinator._execute_llm_direct({'prompt': 'hi'})
             assert result['text'] == 'llm response'
-
-    @pytest.mark.asyncio
     async def test_with_query_param(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = 'response'
@@ -329,8 +316,6 @@ class TestExecuteLLM:
         ):
             result = await coordinator._execute_llm_direct({'query': 'what'})
             assert result['text'] == 'response'
-
-    @pytest.mark.asyncio
     async def test_empty_prompt(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = ''
@@ -342,7 +327,6 @@ class TestExecuteLLM:
 
 
 class TestHandleAsDocumentTask:
-    @pytest.mark.asyncio
     async def test_returns_full_text(self, coordinator):
         doc_builder = AsyncMock()
         doc_builder.build.return_value = MagicMock(full_text='generated text')
@@ -352,8 +336,6 @@ class TestHandleAsDocumentTask:
             'query', MagicMock()
         )
         assert result == 'generated text'
-
-    @pytest.mark.asyncio
     async def test_empty_full_text(self, coordinator):
         doc_builder = AsyncMock()
         doc_builder.build.return_value = MagicMock(full_text=None)
@@ -366,7 +348,6 @@ class TestHandleAsDocumentTask:
 
 
 class TestDecomposeUserIntent:
-    @pytest.mark.asyncio
     async def test_decompose_returns_list(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = json.dumps([
@@ -378,8 +359,6 @@ class TestDecomposeUserIntent:
         )
         assert len(result) == 1
         assert result[0]['capability_needed'] == 'search'
-
-    @pytest.mark.asyncio
     async def test_decompose_empty_llm_response(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = ''
@@ -387,8 +366,6 @@ class TestDecomposeUserIntent:
             'test', [], llm_mock
         )
         assert result == []
-
-    @pytest.mark.asyncio
     async def test_decompose_invalid_json(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = 'not json'
@@ -398,8 +375,6 @@ class TestDecomposeUserIntent:
                 'simple', [], llm_mock
             )
             assert result == []
-
-    @pytest.mark.asyncio
     async def test_decompose_invalid_json_with_complex_fallback(
         self, coordinator
     ):
@@ -413,8 +388,6 @@ class TestDecomposeUserIntent:
                     'complex task', [], llm_mock
                 )
                 assert result == [{'capability_needed': 'fallback'}]
-
-    @pytest.mark.asyncio
     async def test_decompose_with_subtasks_key(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = json.dumps({
@@ -431,7 +404,6 @@ class TestDecomposeUserIntent:
 
 
 class TestIntegrateSubtaskResults:
-    @pytest.mark.asyncio
     async def test_integrate(self, coordinator):
         llm_mock = AsyncMock()
         llm_mock.generate_text.return_value = 'integrated response'
@@ -448,7 +420,6 @@ class TestIntegrateSubtaskResults:
 
 
 class TestExecuteViaHSP:
-    @pytest.mark.asyncio
     async def test_execute_via_hsp_success(self, coordinator):
         hsp_mock = AsyncMock()
         coordinator.hsp_connector = hsp_mock
@@ -464,8 +435,6 @@ class TestExecuteViaHSP:
             result = await coordinator._execute_via_hsp(
                 'some_cap', {'param': 1}
             )
-
-    @pytest.mark.asyncio
     async def test_execute_no_hsp(self, coordinator):
         coordinator.hsp_connector = None
         result = await coordinator._execute_via_hsp('cap', {})

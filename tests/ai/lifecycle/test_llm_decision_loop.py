@@ -180,8 +180,6 @@ class TestLLMDecisionLoopInit:
             broadcast_callback=callback,
         )
         assert loop.broadcast_callback is callback
-
-    @pytest.mark.asyncio
     async def test_start_stop(self, decision_loop):
         assert not decision_loop.is_running
         await decision_loop.start()
@@ -189,20 +187,14 @@ class TestLLMDecisionLoopInit:
         assert decision_loop._decision_task is not None
         await decision_loop.stop()
         assert not decision_loop.is_running
-
-    @pytest.mark.asyncio
     async def test_start_when_already_running(self, decision_loop):
         await decision_loop.start()
         await decision_loop.start()
         assert decision_loop.is_running
         await decision_loop.stop()
-
-    @pytest.mark.asyncio
     async def test_stop_when_not_running(self, decision_loop):
         await decision_loop.stop()
         assert not decision_loop.is_running
-
-    @pytest.mark.asyncio
     async def test_stop_cancels_task(self, decision_loop):
         await decision_loop.start()
         task = decision_loop._decision_task
@@ -212,8 +204,6 @@ class TestLLMDecisionLoopInit:
 
 class TestDecisionExecution:
     """Tests for individual decision execution methods."""
-
-    @pytest.mark.asyncio
     async def test_execute_greet_action(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         decision = Decision(
@@ -226,8 +216,6 @@ class TestDecisionExecution:
         result = await decision_loop._execute_greet(decision)
         assert result['success']
         assert result['sent']
-
-    @pytest.mark.asyncio
     async def test_execute_comfort_action(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         decision = Decision(
@@ -239,8 +227,6 @@ class TestDecisionExecution:
         )
         result = await decision_loop._execute_comfort(decision)
         assert result['success']
-
-    @pytest.mark.asyncio
     async def test_execute_remind_action(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         decision = Decision(
@@ -252,8 +238,6 @@ class TestDecisionExecution:
         )
         result = await decision_loop._execute_remind(decision)
         assert result['success']
-
-    @pytest.mark.asyncio
     async def test_execute_share_action(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         decision = Decision(
@@ -265,8 +249,6 @@ class TestDecisionExecution:
         )
         result = await decision_loop._execute_share(decision)
         assert result['success']
-
-    @pytest.mark.asyncio
     async def test_execute_question_action(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         decision = Decision(
@@ -278,8 +260,6 @@ class TestDecisionExecution:
         )
         result = await decision_loop._execute_question(decision)
         assert result['success']
-
-    @pytest.mark.asyncio
     async def test_execute_observe_action_does_not_broadcast(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         decision = Decision(
@@ -292,8 +272,6 @@ class TestDecisionExecution:
         result = await decision_loop._execute_observe(decision)
         assert result['success']
         assert result['observed']
-
-    @pytest.mark.asyncio
     async def test_execute_decision_dispatches_by_action(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         for action in [
@@ -313,8 +291,6 @@ class TestDecisionExecution:
             )
             result = await decision_loop._execute_decision(decision)
             assert result['success'], f'Failed for action {action}'
-
-    @pytest.mark.asyncio
     async def test_execute_decision_updates_stats(self, decision_loop):
         from ai.lifecycle.llm_decision_loop import Decision, DecisionAction, DecisionPriority
         decision = Decision(
@@ -326,8 +302,6 @@ class TestDecisionExecution:
         )
         await decision_loop._execute_decision(decision)
         assert decision_loop.stats['executed_decisions'] == 1
-
-    @pytest.mark.asyncio
     async def test_execute_greet_via_broadcast_callback(self, mock_llm_service, mock_state_manager, mock_memory_manager, user_monitor):
         from ai.lifecycle.llm_decision_loop import LLMDecisionLoop, Decision, DecisionAction, DecisionPriority
         callback = AsyncMock()
@@ -355,8 +329,6 @@ class TestDecisionExecution:
 
 class TestMakeDecision:
     """Tests for the decision-making flow."""
-
-    @pytest.mark.asyncio
     async def test_make_decision_records_and_executes(self, decision_loop):
         await decision_loop._make_decision()
         assert len(decision_loop.decision_history) == 1
@@ -364,8 +336,6 @@ class TestMakeDecision:
         recorded = decision_loop.decision_history[0]
         assert recorded.action == 'greet'
         assert recorded.executed
-
-    @pytest.mark.asyncio
     async def test_make_decision_uses_fallback_when_no_chat_completion(self, mock_state_manager, mock_memory_manager, user_monitor):
         from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
         bad_llm = MagicMock(spec=[])
@@ -378,22 +348,16 @@ class TestMakeDecision:
         await loop._make_decision()
         assert len(loop.decision_history) == 1
         assert loop.stats['total_decisions'] == 1
-
-    @pytest.mark.asyncio
     async def test_make_decision_handles_json_parse_error(self, decision_loop):
         mock_response = MagicMock()
         mock_response.content = 'not valid json'
         decision_loop.llm_service.chat_completion.return_value = mock_response
         await decision_loop._make_decision()
         assert len(decision_loop.decision_history) == 1
-
-    @pytest.mark.asyncio
     async def test_execute_decision_handles_llm_exception_gracefully(self, decision_loop):
         decision_loop.llm_service.chat_completion.side_effect = Exception('LLM error')
         await decision_loop._make_decision()
         assert decision_loop.stats['total_decisions'] == 1
-
-    @pytest.mark.asyncio
     async def test_make_decision_no_action_skips_execution(self, decision_loop):
         mock_response = MagicMock()
         mock_response.content = json.dumps({
@@ -573,8 +537,6 @@ class TestCalculateInterval:
 
 class TestGetCurrentState:
     """Tests for get_current_state."""
-
-    @pytest.mark.asyncio
     async def test_get_current_state_returns_dict(self, decision_loop):
         state = await decision_loop._get_current_state()
         assert 'state_matrix' in state
@@ -583,8 +545,6 @@ class TestGetCurrentState:
         assert 'energy' in state
         assert 'boredom' in state
         assert state['dominant_emotion'] == 'neutral'
-
-    @pytest.mark.asyncio
     async def test_get_current_state_without_analysis(self, mock_memory_manager, user_monitor):
         from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
         state_manager = MagicMock(spec=[])
@@ -597,8 +557,6 @@ class TestGetCurrentState:
         state = await loop._get_current_state()
         assert state['dominant_emotion'] == 'neutral'
         assert state['mood'] == 0.5
-
-    @pytest.mark.asyncio
     async def test_get_current_state_fallback_on_error(self, decision_loop, mock_state_manager):
         mock_state_manager.get_analysis.side_effect = Exception('State error')
         state = await decision_loop._get_current_state()

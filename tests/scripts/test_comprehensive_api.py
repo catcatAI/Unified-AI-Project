@@ -60,7 +60,7 @@ class APITester:
             try:
                 result["response"] = response.json()
             except Exception as e:
-                logger.error(f"Unexpected error in comprehensive_api_test.py: {e}", exc_info=True)
+                logger.error(f"Unexpected error in test_comprehensive_api.py: {e}", exc_info=True)
                 result["response"] = response.text[:500]
 
             self.results.append(result)
@@ -93,7 +93,7 @@ class APITester:
             )
             return False, {}, f"❌ FAIL - {error_msg}"
         except Exception as e:
-            logger.error(f"Error in comprehensive_api_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_comprehensive_api.py: {e}", exc_info=True)
             self.failed_tests += 1
 
             error_msg = str(e)

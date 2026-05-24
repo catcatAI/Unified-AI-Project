@@ -116,7 +116,6 @@ class TestExecutionManagerInit:
 
 
 class TestExecutionManagerTaskExecution:
-    @pytest.mark.asyncio
     @patch('apps.backend.src.ai.execution.execution_manager.ExecutionMonitor')
     async def test_execute_task_default(self, mock_monitor_cls):
         mock_monitor_cls.return_value = MagicMock()
@@ -126,8 +125,6 @@ class TestExecutionManagerTaskExecution:
         assert result == {'status': 'completed'}
         assert 't1' in manager.task_queue
         assert manager.task_queue['t1'] == {'task_id': 't1'}
-
-    @pytest.mark.asyncio
     @patch('apps.backend.src.ai.execution.execution_manager.ExecutionMonitor')
     async def test_execute_task_auto_id(self, mock_monitor_cls):
         mock_monitor_cls.return_value = MagicMock()
@@ -326,7 +323,6 @@ class TestExecutionManagerResourceThresholds:
 
 
 class TestExecutionManagerAsyncCommand:
-    @pytest.mark.asyncio
     @patch('apps.backend.src.ai.execution.execution_manager.ExecutionMonitor')
     async def test_execute_async_command(self, mock_monitor_cls):
         mock_exec = MagicMock()

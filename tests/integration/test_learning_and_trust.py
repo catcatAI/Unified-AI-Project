@@ -23,8 +23,6 @@ class TestLearningAndTrustIntegration:
         mock_content_analyzer.process_hsp_fact_content.return_value = {}
 
         self.learning_manager = MagicMock()
-
-    @pytest.mark.asyncio()
     async def test_duplicate_fact_increments_corroboration(self):
         existing_ham_id = "ham_existing_fact_001"
         fact_id = "hsp_fact_duplicate_test"
@@ -50,8 +48,6 @@ class TestLearningAndTrustIntegration:
         self.ham_memory.increment_metadata_field.assert_called_once_with(
             existing_ham_id, "corroboration_count"
         )
-
-    @pytest.mark.asyncio()
     async def test_fact_from_low_trust_source_is_discarded(self):
         low_trust_sender_id = "did:hsp:untrusted_sender"
         self.trust_manager.update_trust_score = MagicMock()

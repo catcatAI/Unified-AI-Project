@@ -104,8 +104,6 @@ class TestTaskPriority:
 
 class TestTaskQueue:
     """Tests for task queue operations."""
-
-    @pytest.mark.asyncio
     async def test_handle_task_request_adds_to_queue(self, base_agent):
         """Test that handle_task_request adds a task to the queue."""
         base_agent.hsp_connector = AsyncMock()
@@ -116,8 +114,6 @@ class TestTaskQueue:
         # Task should be in queue (may be consumed by _process_task_queue later)
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].task_id == "req_001"
-
-    @pytest.mark.asyncio
     async def test_queue_task_sorts_by_priority_on_insert(self, base_agent):
         """Test that adding tasks via handle_task_request maintains priority order."""
         base_agent.hsp_connector = AsyncMock()
@@ -134,8 +130,6 @@ class TestTaskQueue:
         if len(base_agent.task_queue) >= 2:
             assert base_agent.task_queue[0].task_id == "high_001"
             assert base_agent.task_queue[1].task_id == "low_001"
-
-    @pytest.mark.asyncio
     async def test_process_task_queue_pops_first_task(self, base_agent):
         """Test that _process_task_queue pops and processes the first task."""
         base_agent.hsp_connector = AsyncMock()
@@ -152,15 +146,11 @@ class TestTaskQueue:
 
         await base_agent._process_task_queue()
         assert len(base_agent.task_queue) == 0
-
-    @pytest.mark.asyncio
     async def test_process_task_queue_empty_does_nothing(self, base_agent):
         """Test that _process_task_queue does nothing when queue is empty."""
         base_agent.task_queue = []
         await base_agent._process_task_queue()
         assert base_agent.task_queue == []
-
-    @pytest.mark.asyncio
     async def test_queue_overflow_rejects_task(self, base_agent):
         """Test that tasks are rejected when queue exceeds max_queue_size."""
         base_agent.hsp_connector = AsyncMock()
@@ -183,8 +173,6 @@ class TestTaskQueue:
         call_args = base_agent.hsp_connector.send_task_result.call_args
         result_payload = call_args[0][0]
         assert result_payload["status"] == "rejected"
-
-    @pytest.mark.asyncio
     async def test_handle_task_request_parses_priority(self, base_agent):
         """Test that handle_task_request correctly parses priority from payload."""
         base_agent.hsp_connector = AsyncMock()
@@ -194,8 +182,6 @@ class TestTaskQueue:
 
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].priority == TaskPriority.CRITICAL
-
-    @pytest.mark.asyncio
     async def test_handle_task_request_invalid_priority_defaults_normal(self, base_agent):
         """Test that invalid priority value defaults to NORMAL."""
         base_agent.hsp_connector = AsyncMock()
@@ -205,8 +191,6 @@ class TestTaskQueue:
 
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].priority == TaskPriority.NORMAL
-
-    @pytest.mark.asyncio
     async def test_handle_task_request_no_priority_defaults_normal(self, base_agent):
         """Test that missing priority defaults to NORMAL."""
         base_agent.hsp_connector = AsyncMock()
@@ -216,8 +200,6 @@ class TestTaskQueue:
 
         assert len(base_agent.task_queue) > 0
         assert base_agent.task_queue[0].priority == TaskPriority.NORMAL
-
-    @pytest.mark.asyncio
     async def test_default_task_handler_returns_not_implemented(self, base_agent):
         """Test that default task handler returns NOT_IMPLEMENTED failure."""
         base_agent.hsp_connector = AsyncMock()
@@ -235,8 +217,6 @@ class TestTaskQueue:
         # The default handler was called - we can't easily assert on the result
         # without a callback_address, so just verify no crash
         pass
-
-    @pytest.mark.asyncio
     async def test_register_task_handler(self, base_agent):
         """Test registering a custom handler for a capability."""
         handler = Mock()
@@ -248,8 +228,6 @@ class TestTaskQueue:
 
 class TestAgentLifecycle:
     """Tests for agent lifecycle (start, stop, health)."""
-
-    @pytest.mark.asyncio
     async def test_is_healthy_false_by_default(self, base_agent):
         """Test that is_healthy returns False when not started."""
         assert base_agent.is_healthy() is False
@@ -273,8 +251,6 @@ class TestAgentLifecycle:
         base_agent.is_running = True
         base_agent.hsp_connector = None
         assert base_agent.is_healthy() is False
-
-    @pytest.mark.asyncio
     async def test_stop_sets_running_false(self, base_agent):
         """Test that stop sets is_running to False."""
         base_agent.is_running = True
@@ -282,8 +258,6 @@ class TestAgentLifecycle:
         base_agent.hsp_connector.is_connected = True
         await base_agent.stop()
         assert base_agent.is_running is False
-
-    @pytest.mark.asyncio
     async def test_start_with_mock_connector(self, base_agent):
         """Test start succeeds when hsp_connector is pre-configured."""
         base_agent.hsp_connector = AsyncMock()

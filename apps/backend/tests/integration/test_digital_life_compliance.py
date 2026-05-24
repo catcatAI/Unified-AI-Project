@@ -72,8 +72,6 @@ class TestSelfAwarenessCompliance:
     - 边界意识
     - 存在感知
     """
-    
-    @pytest.mark.asyncio
     async def test_identity_continuity(self):
         """
         测试身份连续性
@@ -124,8 +122,6 @@ class TestSelfAwarenessCompliance:
             print(f"  - Identity stable: ✓" if metrics.passed else "  - Status: ✗ FAILED")
             
             assert metrics.passed, f"Identity continuity {continuity_score:.2f} below threshold {metrics.threshold}"
-    
-    @pytest.mark.asyncio
     async def test_self_recognition(self):
         """
         测试自我识别能力
@@ -176,8 +172,6 @@ class TestSelfAwarenessCompliance:
             print(f"  - External recognition: {user_recognition['confidence']:.2f}")
             
             assert metrics.passed, f"Self recognition score {avg_confidence:.2f} below threshold"
-    
-    @pytest.mark.asyncio
     async def test_boundary_awareness(self):
         """
         测试边界意识
@@ -238,8 +232,6 @@ class TestPhysiologicalSimulationCompliance:
     - 激素系统
     - 生物节律
     """
-    
-    @pytest.mark.asyncio
     async def test_tactile_system_simulation(self):
         """
         测试触觉系统模拟
@@ -290,8 +282,6 @@ class TestPhysiologicalSimulationCompliance:
             print(f"  - Realism score: {realism:.2f}")
             
             assert metrics.passed, f"Tactile simulation realism {realism:.2f} below threshold"
-    
-    @pytest.mark.asyncio
     async def test_endocrine_system_simulation(self):
         """
         测试内分泌系统模拟
@@ -349,8 +339,6 @@ class TestPhysiologicalSimulationCompliance:
             print(f"  - Hormone trends realistic: {'✓' if realistic_response else '✗'}")
             
             assert metrics.passed, "Endocrine simulation not realistic enough"
-    
-    @pytest.mark.asyncio
     async def test_biorhythm_simulation(self):
         """
         测试生物节律模拟
@@ -413,8 +401,6 @@ class TestAutonomousDecisionCompliance:
     - 目标导向性
     - 非随机性
     """
-    
-    @pytest.mark.asyncio
     async def test_autonomous_behavior_triggering(self):
         """
         测试自主行为触发
@@ -465,8 +451,6 @@ class TestAutonomousDecisionCompliance:
             print(f"  - Trigger accuracy: {trigger_accuracy:.2f}")
             
             assert metrics.passed, f"Autonomous triggering accuracy {trigger_accuracy:.2f} below threshold"
-    
-    @pytest.mark.asyncio
     async def test_decision_rationality(self):
         """
         测试决策合理性
@@ -528,8 +512,6 @@ class TestLearningCapabilityCompliance:
     - 策略优化
     - 长期记忆形成
     """
-    
-    @pytest.mark.asyncio
     async def test_cdm_learning_effectiveness(self):
         """
         测试CDM学习效果
@@ -583,8 +565,6 @@ class TestLearningCapabilityCompliance:
             print(f"  - Yield improvement: +{improvement:.2f}")
             
             assert metrics.passed, "CDM learning not effective enough"
-    
-    @pytest.mark.asyncio
     async def test_hsm_exploration_learning(self):
         """
         测试HSM探索学习
@@ -632,8 +612,6 @@ class TestLearningCapabilityCompliance:
             print(f"  - Discoveries: {discoveries}")
             
             assert metrics.passed, "HSM exploration not effective"
-    
-    @pytest.mark.asyncio
     async def test_long_term_memory_formation(self):
         """
         测试长期记忆形成
@@ -709,8 +687,6 @@ class TestEmotionalExpressionCompliance:
     - 表情参数准确性
     - 情感连贯性
     """
-    
-    @pytest.mark.asyncio
     async def test_emotional_blending_realism(self):
         """
         测试情绪混合真实性
@@ -768,8 +744,6 @@ class TestEmotionalExpressionCompliance:
             print(f"  - Blending score: {avg_blending_score:.2f}")
             
             assert metrics.passed, f"Emotional blending {avg_blending_score:.2f} below threshold"
-    
-    @pytest.mark.asyncio
     async def test_expression_parameter_accuracy(self):
         """
         测试表情参数准确性
@@ -836,8 +810,6 @@ class TestRealtimeFeedbackCompliance:
     - 事件完整性
     - 响应及时性
     """
-    
-    @pytest.mark.asyncio
     async def test_feedback_loop_latency(self):
         """
         测试反馈循环延迟
@@ -883,8 +855,6 @@ class TestRealtimeFeedbackCompliance:
         print(f"  - Average latency: {avg_latency:.2f}ms")
         
         assert metrics.passed, f"Feedback latency compliance {compliance_rate*100:.1f}% below threshold {metrics.threshold*100:.0f}%"
-    
-    @pytest.mark.asyncio
     async def test_event_integrity(self):
         """
         测试事件完整性
@@ -949,8 +919,6 @@ class TestLifeIntensityCompliance:
     - 生命感强度合理范围
     - 动态变化真实
     """
-    
-    @pytest.mark.asyncio
     async def test_life_intensity_formula(self):
         """
         测试生命强度公式
@@ -1020,8 +988,6 @@ class TestLifeIntensityCompliance:
             print(f"  - Formula accuracy: {formula_accuracy:.2f}")
             
             assert metrics.passed, f"Life intensity formula accuracy {formula_accuracy:.2f} below threshold"
-    
-    @pytest.mark.asyncio
     async def test_life_intensity_dynamics(self):
         """
         测试生命强度动态变化
@@ -1087,8 +1053,6 @@ class TestDigitalLifeComplianceSummary:
     
     汇总所有合规测试结果
     """
-    
-    @pytest.mark.asyncio
     async def test_digital_life_compliance_summary(self):
         """
         生成数字生命合规总结报告

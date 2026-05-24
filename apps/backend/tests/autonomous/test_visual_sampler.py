@@ -51,8 +51,6 @@ def test_attention_stats():
     assert 0 < stats["average_precision"] <= 1.0
     assert stats["attention_range"] > 0
     assert stats["focus_point"] == (0.5, 0.5)
-
-@pytest.mark.asyncio
 async def test_sample_image():
     sampler = VisualSampler()
     sampler.generate_cloud(count=10, center=(0.5, 0.5))

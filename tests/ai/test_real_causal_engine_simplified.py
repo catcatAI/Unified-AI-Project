@@ -32,8 +32,6 @@ class TestRealCausalEngineSimplified:
     def real_causal_graph(self):
         """真实因果图实例(无AI模型)"""
         return RealCausalGraph(tokenizer=None, model=None)  # Corrected assignment
-
-    @pytest.mark.asyncio
     async def test_simple_semantic_similarity(self, real_causal_graph):
         """测试简化语义相似度计算"""
         print("\n=测试简化语义相似度计算 ===")
@@ -59,8 +57,6 @@ class TestRealCausalEngineSimplified:
         similarity_different = await real_causal_graph.calculate_semantic_similarity(text1, text3)
         print(f"不同文本相似度: {similarity_different:.3f}")
         assert similarity_different < similarity  # 应该更低
-
-    @pytest.mark.asyncio
     async def test_real_correlation_calculation(self):
         """测试真实相关性计算(独立函数测试)"""
         print("\n=测试真实相关性计算 ===")
@@ -89,8 +85,6 @@ class TestRealCausalEngineSimplified:
         print(f"随机数据相关测试: {correlation_random:.3f}")
 
         assert abs(correlation_random) < 0.5  # 应该接近0
-
-    @pytest.mark.asyncio
     async def test_causal_graph_operations(self, real_causal_graph):
         """测试因果图操作"""
         print("\n=测试因果图操作 ===")
@@ -114,8 +108,6 @@ class TestRealCausalEngineSimplified:
 
         assert len(paths) > 0
         assert ["temperature", "sales"] in paths
-
-    @pytest.mark.asyncio
     async def test_temporal_pattern_detection_simplified(self):
         """测试简化时间模式检测"""
         print("\n=测试简化时间模式检测 ===")
@@ -152,8 +144,6 @@ class TestRealCausalEngineSimplified:
         print(f"稳定趋势检测结果: {temp_pattern_stable}")
 
         assert temp_pattern_stable["trend"] == "stable"
-
-    @pytest.mark.asyncio
     async def test_causal_strength_calculation_simplified(self):
         """测试简化因果强度计算"""
         print("\n=测试简化因果强度计算 ===")
@@ -181,8 +171,6 @@ class TestRealCausalEngineSimplified:
         print(f"弱因果关系强度: {causal_strength_weak:.3f}")
 
         assert causal_strength_weak < 0.5  # 弱因果关系应该有低强度
-
-    @pytest.mark.asyncio
     async def test_intervention_planner_simplified(self):
         """测试简化干预规划器"""
         print("\n=测试简化干预规划器 ===")
@@ -217,8 +205,6 @@ class TestRealCausalEngineSimplified:
         assert intervention_plan["confidence"] >= 0.0
         assert intervention_plan["confidence"] <= 1.0
         assert intervention_plan["variable"] in actionable_variables
-
-    @pytest.mark.asyncio
     async def test_counterfactual_reasoning_simplified(self):
         """测试简化反事实推理"""
         print("\n=测试简化反事实推理 ===")
@@ -291,8 +277,6 @@ class TestRealCausalEngineSimplified:
         correlation_constant = engine._calculate_real_correlation(constant_data1, constant_data2)
         print(f"常数序列相关性: {correlation_constant}")
         assert correlation_constant == 0.0  # 常数序列应该返回0
-
-    @pytest.mark.asyncio
     async def test_performance_benchmark(self):
         """测试性能基准"""
         print("\n=测试性能基准 ===")

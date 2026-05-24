@@ -10,7 +10,5 @@ class TestTrainingWorkflowE2E:
 
     def teardown_method(self):
         self.test_data.clear()
-
-    @pytest.mark.asyncio()
     async def test_training_workflow_basic(self):
         assert True

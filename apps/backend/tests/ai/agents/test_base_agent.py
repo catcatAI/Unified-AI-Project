@@ -3,9 +3,6 @@ import pytest
 from unittest.mock import AsyncMock
 
 from ai.agents.base_agent import BaseAgent
-
-pytestmark = pytest.mark.asyncio
-
 class MockAgent(BaseAgent):
     """
     A concrete implementation of BaseAgent for testing,

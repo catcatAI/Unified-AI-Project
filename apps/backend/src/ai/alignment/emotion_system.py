@@ -244,7 +244,7 @@ class EmotionSystem:
             try:
                 analysis = TextBlob(text)
                 features["sentiment"] = analysis.sentiment.polarity
-            except:
+            except Exception:
                 features["sentiment"] = 0.0
         else:
             features["sentiment"] = 0.0

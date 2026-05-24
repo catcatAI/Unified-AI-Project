@@ -92,8 +92,6 @@ class TestScenarioUserTouch:
             'emotional_system': Mock(),
             'live2d_renderer': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_scenario_touch_detection(self, touch_scenario_setup):
         """
         步骤1：触摸检测
@@ -149,8 +147,6 @@ class TestScenarioUserTouch:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_tactile_processing(self, touch_scenario_setup):
         """
         步骤2：触觉处理
@@ -199,8 +195,6 @@ class TestScenarioUserTouch:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_emotional_response(self, touch_scenario_setup):
         """
         步骤3：情绪响应
@@ -255,8 +249,6 @@ class TestScenarioUserTouch:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_expression_update(self, touch_scenario_setup):
         """
         步骤4：表情更新
@@ -309,8 +301,6 @@ class TestScenarioUserTouch:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_live2d_rendering(self, touch_scenario_setup):
         """
         步骤5：Live2D渲染
@@ -360,8 +350,6 @@ class TestScenarioUserTouch:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_complete_touch_scenario(self, touch_scenario_setup):
         """
         完整场景测试：用户触摸Desktop Pet
@@ -470,8 +458,6 @@ class TestScenarioUserConversation:
             'tts_engine': Mock(),
             'lip_sync': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_scenario_voice_input(self, conversation_setup):
         """
         步骤1：语音输入处理
@@ -510,8 +496,6 @@ class TestScenarioUserConversation:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_cognitive_processing(self, conversation_setup):
         """
         步骤2：认知处理
@@ -551,8 +535,6 @@ class TestScenarioUserConversation:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_response_generation(self, conversation_setup):
         """
         步骤3：回应生成
@@ -595,8 +577,6 @@ class TestScenarioUserConversation:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_tts_generation(self, conversation_setup):
         """
         步骤4：TTS生成
@@ -637,8 +617,6 @@ class TestScenarioUserConversation:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_lip_sync(self, conversation_setup):
         """
         步骤5：口型同步
@@ -680,8 +658,6 @@ class TestScenarioUserConversation:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_complete_conversation_scenario(self, conversation_setup):
         """
         完整场景测试：用户发起对话
@@ -790,8 +766,6 @@ class TestScenarioAutonomousBehavior:
             'feedback_collector': Mock(),
             'learning_system': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_scenario_state_evaluation(self, autonomous_setup):
         """
         步骤1：内在状态评估
@@ -831,8 +805,6 @@ class TestScenarioAutonomousBehavior:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_behavior_decision(self, autonomous_setup):
         """
         步骤2：行为决策
@@ -874,8 +846,6 @@ class TestScenarioAutonomousBehavior:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_action_execution(self, autonomous_setup):
         """
         步骤3：行动执行
@@ -920,8 +890,6 @@ class TestScenarioAutonomousBehavior:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_feedback_collection(self, autonomous_setup):
         """
         步骤4：结果反馈
@@ -966,8 +934,6 @@ class TestScenarioAutonomousBehavior:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_learning_update(self, autonomous_setup):
         """
         步骤5：学习更新
@@ -1013,8 +979,6 @@ class TestScenarioAutonomousBehavior:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_complete_autonomous_scenario(self, autonomous_setup):
         """
         完整场景测试：自主行为触发
@@ -1121,8 +1085,6 @@ class TestScenarioFileOrganization:
             'execution_verifier': Mock(),
             'result_reporter': Mock(),
         }
-    
-    @pytest.mark.asyncio
     async def test_scenario_intent_recognition(self, file_org_setup):
         """
         步骤1：意图识别
@@ -1166,8 +1128,6 @@ class TestScenarioFileOrganization:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_operation_planning(self, file_org_setup):
         """
         步骤2：操作规划
@@ -1217,8 +1177,6 @@ class TestScenarioFileOrganization:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_file_operation_execution(self, file_org_setup):
         """
         步骤3：文件操作执行
@@ -1268,8 +1226,6 @@ class TestScenarioFileOrganization:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_execution_verification(self, file_org_setup):
         """
         步骤4：执行验证
@@ -1314,8 +1270,6 @@ class TestScenarioFileOrganization:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_scenario_result_reporting(self, file_org_setup):
         """
         步骤5：结果汇报
@@ -1360,8 +1314,6 @@ class TestScenarioFileOrganization:
         
         metrics.complete(success=True)
         return metrics
-    
-    @pytest.mark.asyncio
     async def test_complete_file_organization_scenario(self, file_org_setup):
         """
         完整场景测试：文件整理请求

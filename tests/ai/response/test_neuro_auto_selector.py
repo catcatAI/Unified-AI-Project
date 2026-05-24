@@ -269,7 +269,6 @@ class TestLearnRecorder:
 
 
 class TestNeuroAutoSelector:
-    @pytest.mark.asyncio
     async def test_decide_neuroblender_low_budget(self):
         selector = NeuroAutoSelector(config={"auto_mode": {"min_time_budget_ms": 5000}})
         with patch.object(selector.hardware, "analyze") as mock_hw, \
@@ -286,8 +285,6 @@ class TestNeuroAutoSelector:
             decision = await selector.decide()
             assert decision.backend == AutoBackendChoice.NEUROBLENDER
             assert "low" in decision.reason
-
-    @pytest.mark.asyncio
     async def test_decide_force_backend(self):
         selector = NeuroAutoSelector(config={})
         with patch.object(selector.hardware, "analyze") as mock_hw, \
@@ -305,8 +302,6 @@ class TestNeuroAutoSelector:
             decision = await selector.decide(context={"force_backend": "neuroblender"})
             assert decision.backend == AutoBackendChoice.NEUROBLENDER
             assert "force" in decision.reason
-
-    @pytest.mark.asyncio
     async def test_decide_no_available_backends(self):
         selector = NeuroAutoSelector(config={})
         with patch.object(selector.hardware, "analyze") as mock_hw, \

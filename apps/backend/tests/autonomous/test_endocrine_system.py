@@ -211,16 +211,12 @@ class TestHormone:
 
 class TestEndocrineSystem:
     """Tests for the main EndocrineSystem class."""
-
-    @pytest.mark.asyncio
     async def test_system_initialization(self, endocrine_system: EndocrineSystem) -> None:
         """Test system initialization."""
         await endocrine_system.initialize()
         assert endocrine_system._running is True
         assert len(endocrine_system.hormones) == 12
         await endocrine_system.shutdown()
-
-    @pytest.mark.asyncio
     async def test_system_shutdown(self, endocrine_system: EndocrineSystem) -> None:
         """Test system shutdown."""
         await endocrine_system.initialize()
@@ -249,8 +245,6 @@ class TestEndocrineSystem:
         for hormone_type, level in levels.items():
             assert isinstance(hormone_type, HormoneType)
             assert isinstance(level, float)
-
-    @pytest.mark.asyncio
     async def test_adjust_hormone(self, initialized_endocrine_system: EndocrineSystem) -> None:
         """Test adjusting hormone levels."""
         initial_level = initialized_endocrine_system.get_hormone_level(HormoneType.DOPAMINE)
@@ -259,8 +253,6 @@ class TestEndocrineSystem:
         
         new_level = initialized_endocrine_system.get_hormone_level(HormoneType.DOPAMINE)
         assert new_level == initial_level + 10.0
-
-    @pytest.mark.asyncio
     async def test_adjust_hormone_bounds(self, initialized_endocrine_system: EndocrineSystem) -> None:
         """Test hormone adjustment respects bounds."""
         # Try to exceed max
@@ -272,8 +264,6 @@ class TestEndocrineSystem:
         await initialized_endocrine_system.adjust_hormone(HormoneType.DOPAMINE, -200.0)
         level = initialized_endocrine_system.get_hormone_level(HormoneType.DOPAMINE)
         assert level >= 0.0
-
-    @pytest.mark.asyncio
     async def test_emotional_response_joy(self, initialized_endocrine_system: EndocrineSystem) -> None:
         """Test emotional response triggers hormone changes (joy)."""
         initial_dopamine = initialized_endocrine_system.get_hormone_level(HormoneType.DOPAMINE)
@@ -283,8 +273,6 @@ class TestEndocrineSystem:
         # Joy should increase dopamine
         new_dopamine = initialized_endocrine_system.get_hormone_level(HormoneType.DOPAMINE)
         assert new_dopamine > initial_dopamine
-
-    @pytest.mark.asyncio
     async def test_emotional_response_fear(self, initialized_endocrine_system: EndocrineSystem) -> None:
         """Test emotional response triggers hormone changes (fear)."""
         initial_adrenaline = initialized_endocrine_system.get_hormone_level(HormoneType.ADRENALINE)
@@ -294,8 +282,6 @@ class TestEndocrineSystem:
         # Fear should increase adrenaline
         new_adrenaline = initialized_endocrine_system.get_hormone_level(HormoneType.ADRENALINE)
         assert new_adrenaline > initial_adrenaline
-
-    @pytest.mark.asyncio
     async def test_stress_response_acute(self, initialized_endocrine_system: EndocrineSystem) -> None:
         """Test acute stress response."""
         initial_adrenaline = initialized_endocrine_system.get_hormone_level(HormoneType.ADRENALINE)
@@ -306,8 +292,6 @@ class TestEndocrineSystem:
         # Acute stress should increase adrenaline significantly
         new_adrenaline = initialized_endocrine_system.get_hormone_level(HormoneType.ADRENALINE)
         assert new_adrenaline > initial_adrenaline
-
-    @pytest.mark.asyncio
     async def test_activity_response_exercise(self, initialized_endocrine_system: EndocrineSystem) -> None:
         """Test physical exercise activity response."""
         initial_endorphin = initialized_endocrine_system.get_hormone_level(HormoneType.ENDORPHIN)
@@ -317,8 +301,6 @@ class TestEndocrineSystem:
         # Exercise should increase endorphins
         new_endorphin = initialized_endocrine_system.get_hormone_level(HormoneType.ENDORPHIN)
         assert new_endorphin > initial_endorphin
-
-    @pytest.mark.asyncio
     async def test_social_response_positive(self, initialized_endocrine_system: EndocrineSystem) -> None:
         """Test positive social interaction response."""
         initial_oxytocin = initialized_endocrine_system.get_hormone_level(HormoneType.OXYTOCIN)
@@ -655,8 +637,6 @@ class TestFeedbackLoop:
 
 class TestEndocrineIntegration:
     """Integration tests for the endocrine system."""
-
-    @pytest.mark.asyncio
     async def test_emotional_cascade_effects(self) -> None:
         """Test how emotions cascade through hormone system."""
         system = EndocrineSystem()
@@ -679,8 +659,6 @@ class TestEndocrineIntegration:
             
         finally:
             await system.shutdown()
-
-    @pytest.mark.asyncio
     async def test_stress_then_relaxation(self) -> None:
         """Test stress response followed by relaxation."""
         system = EndocrineSystem()

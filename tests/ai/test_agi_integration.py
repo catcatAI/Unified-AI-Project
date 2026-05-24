@@ -54,8 +54,6 @@ class TestAGIIntegration:
         """每个测试方法执行前的设置"""
         self.test_results = []
         self.unified_control_center = None
-
-    @pytest.mark.asyncio()
     async def test_unified_control_center(self) -> None:
         """测试统一控制中心"""
         logger.info("Testing Unified Control Center...")

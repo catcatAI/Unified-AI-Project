@@ -60,29 +60,21 @@ class TestVectorMemoryStoreInit:
 
 
 class TestVectorMemoryStoreAddMemory:
-
-    @pytest.mark.asyncio
     async def test_add_memory_success(self, vector_store, mock_collection):
         await vector_store.add_memory('mem1', 'hello world', {'key': 'val'})
         mock_collection.add.assert_called_once_with(
             documents=['hello world'], metadatas=[{'key': 'val'}], ids=['mem1']
         )
-
-    @pytest.mark.asyncio
     async def test_add_memory_no_metadata(self, vector_store, mock_collection):
         await vector_store.add_memory('mem2', 'content')
         mock_collection.add.assert_called_once_with(
             documents=['content'], metadatas=[{}], ids=['mem2']
         )
-
-    @pytest.mark.asyncio
     async def test_add_memory_not_initialized(self, mock_collection):
         store = VectorMemoryStore()
         store.collection = None
         await store.add_memory('mem1', 'content')
         mock_collection.add.assert_not_called()
-
-    @pytest.mark.asyncio
     async def test_add_memory_exception_handled(self, vector_store, mock_collection):
         mock_collection.add.side_effect = Exception('add error')
         await vector_store.add_memory('mem1', 'content')
@@ -92,29 +84,21 @@ class TestVectorMemoryStoreAddMemory:
 
 
 class TestVectorMemoryStoreSemanticSearch:
-
-    @pytest.mark.asyncio
     async def test_search_success(self, vector_store, mock_collection):
         mock_collection.query.return_value = {'ids': [['id1']], 'documents': [['doc1']]}
         results = await vector_store.semantic_search('test query', limit=5)
         mock_collection.query.assert_called_once_with(query_texts=['test query'], n_results=5)
         assert results['ids'] == [['id1']]
-
-    @pytest.mark.asyncio
     async def test_search_default_limit(self, vector_store, mock_collection):
         mock_collection.query.return_value = {'ids': []}
         await vector_store.semantic_search('hello')
         mock_collection.query.assert_called_once_with(query_texts=['hello'], n_results=10)
-
-    @pytest.mark.asyncio
     async def test_search_not_initialized(self, mock_collection):
         store = VectorMemoryStore()
         store.collection = None
         results = await store.semantic_search('query')
         assert results == {}
         mock_collection.query.assert_not_called()
-
-    @pytest.mark.asyncio
     async def test_search_exception_returns_empty(self, vector_store, mock_collection):
         mock_collection.query.side_effect = Exception('query error')
         results = await vector_store.semantic_search('query')

@@ -37,8 +37,6 @@ def mock_data_aligner():
 @pytest.fixture()
 def message_bridge(mock_external_connector, mock_internal_bus, mock_data_aligner):
     return MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
-
-@pytest.mark.asyncio()
 async def test_message_bridge_initialization(mock_external_connector, mock_internal_bus, mock_data_aligner):
     bridge = MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
 
@@ -46,8 +44,6 @@ async def test_message_bridge_initialization(mock_external_connector, mock_inter
     mock_internal_bus.subscribe.assert_called_once_with(
         "hsp.internal.message", bridge.handle_internal_message
     )
-
-@pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_valid_fact(message_bridge, mock_data_aligner, mock_internal_bus) -> None:
     topic = "hsp/fact/some_id"
@@ -62,8 +58,6 @@ async def test_handle_external_message_valid_fact(message_bridge, mock_data_alig
     mock_internal_bus.publish_async.assert_called_once_with(
         "hsp.external.fact", message_payload
     )
-
-@pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_invalid_json(message_bridge, capsys):
     topic = "hsp/fact/some_id"
@@ -73,8 +67,6 @@ async def test_handle_external_message_invalid_json(message_bridge, capsys):
 
     out, err = capsys.readouterr()
     assert "Error, Received invalid JSON message" in out
-
-@pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_data_alignment_error(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None:
     topic = "hsp/fact/some_id"
@@ -89,8 +81,6 @@ async def test_handle_external_message_data_alignment_error(message_bridge, mock
     mock_internal_bus.publish_async.assert_not_called()
     out, err = capsys.readouterr()
     assert "Error, MessageBridge.handle_external_message - Data alignment failed, alignment error" in out
-
-@pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_unknown_message_type(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None:
     topic = "hsp/fact/some_id"
@@ -104,8 +94,6 @@ async def test_handle_external_message_unknown_message_type(message_bridge, mock
     mock_internal_bus.publish_async.assert_not_called()
     out, err = capsys.readouterr()
     assert "Warning, MessageBridge.handle_external_message - Unknown message_type 'UNKNOWN_TYPE'. Not publishing to internal bus." in out
-
-@pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_internal_message_publish_to_external(message_bridge, mock_external_connector):
     internal_message = {
@@ -121,8 +109,6 @@ async def test_handle_internal_message_publish_to_external(message_bridge, mock_
         json.dumps(internal_message["payload"]).encode('utf-8'),
         qos=internal_message["qos"]
     )
-
-@pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_internal_message_payload_types(message_bridge, mock_external_connector):
     await message_bridge.handle_internal_message({"topic": "test/str", "payload": "hello", "qos": 0})
@@ -140,9 +126,6 @@ async def test_handle_internal_message_payload_types(message_bridge, mock_extern
     await message_bridge.handle_internal_message({"topic": "test/obj", "payload": NonSerializable(), "qos": 2})
     mock_external_connector.publish.assert_called_with("test/obj", b"non_serializable_obj", qos=2)
     mock_external_connector.publish.reset_mock()
-
-
-@pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_external_message_no_publish_async_on_bus(message_bridge, mock_data_aligner, mock_internal_bus):
     mock_internal_bus.publish = MagicMock()

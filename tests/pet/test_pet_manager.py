@@ -71,25 +71,16 @@ def test_add_action(pet_manager) -> None:
     pet_manager.add_action(action)
     actions = pet_manager.get_pending_actions()
     assert len(actions) > 0
-
-
-@pytest.mark.asyncio
 async def test_handle_interaction(pet_manager) -> None:
     """测试处理交互（异步）"""
     interaction_data = {"type": "pet"}
     result = await pet_manager.handle_interaction(interaction_data)
     assert result is not None
-
-
-@pytest.mark.asyncio
 async def test_apply_resource_decay(pet_manager) -> None:
     """测试应用资源衰减（异步）"""
     initial_state = pet_manager.get_current_state()
     await pet_manager.apply_resource_decay()
     assert pet_manager.get_current_state() is not None
-
-
-@pytest.mark.asyncio
 async def test_check_survival_needs(pet_manager) -> None:
     """测试检查生存需求（异步）"""
     needs = await pet_manager.check_survival_needs()

@@ -9,13 +9,9 @@ class TestHSPDebug:
     @pytest.fixture(autouse=True)
     def setup_test(self):
         yield
-
-    @pytest.mark.asyncio()
     async def test_hsp_debug_basic(self):
         debug_info = {"timestamp": "2026-01-01", "level": "info"}
         assert debug_info is not None
-
-    @pytest.mark.asyncio()
     async def test_hsp_message_debugging(self):
         message = {"type": "test", "payload": {"data": "test"}}
         assert message["type"] == "test"

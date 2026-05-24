@@ -99,7 +99,8 @@ class BootstrapManager:
                         self.state = json.load(f)
                     self._initialized = True
                     return self.state
-                except: pass
+                except json.JSONDecodeError:
+                    logger.warning("Corrupted system_status.json, running full bootstrap")
             return self.run_full_bootstrap()
         return self.state
 

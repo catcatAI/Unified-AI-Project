@@ -50,7 +50,6 @@ class TestKnowledgeDistillationManagerInit:
 
 
 class TestKnowledgeDistillationManagerDistill:
-    @pytest.mark.asyncio
     async def test_distill_knowledge_runs_without_error(self):
         from apps.backend.src.ai.learning.knowledge_distillation import KnowledgeDistillationManager
         teacher = MagicMock()
@@ -61,8 +60,6 @@ class TestKnowledgeDistillationManagerDistill:
         await manager.distill_knowledge([1, 2, 3], epochs=2)
         assert teacher.predict.call_count == 6
         assert student.predict.call_count == 6
-
-    @pytest.mark.asyncio
     async def test_distill_knowledge_empty_data(self):
         from apps.backend.src.ai.learning.knowledge_distillation import KnowledgeDistillationManager
         teacher = MagicMock()
@@ -74,7 +71,6 @@ class TestKnowledgeDistillationManagerDistill:
 
 
 class TestKnowledgeDistillationManagerEvaluate:
-    @pytest.mark.asyncio
     async def test_evaluate_with_evaluate_method(self):
         from apps.backend.src.ai.learning.knowledge_distillation import KnowledgeDistillationManager
         teacher = MagicMock()
@@ -86,8 +82,6 @@ class TestKnowledgeDistillationManagerEvaluate:
         assert result['teacher_accuracy'] == 0.95
         assert result['student_accuracy'] == 0.85
         assert result['distillation_ratio'] == pytest.approx(0.85 / 0.95)
-
-    @pytest.mark.asyncio
     async def test_evaluate_without_evaluate_method_uses_default(self):
         from apps.backend.src.ai.learning.knowledge_distillation import KnowledgeDistillationManager
         teacher = MagicMock(spec=[])

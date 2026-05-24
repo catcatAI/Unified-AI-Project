@@ -22,9 +22,6 @@ def test_creative_agent_initialization(creative_agent) -> None:
     capability_names = [cap["name"] for cap in creative_agent.capabilities]
     assert "generate_marketing_copy" in capability_names
     assert "polish_text" in capability_names
-
-
-@pytest.mark.asyncio
 async def test_creative_agent_handle_task_request_generate_marketing_copy(creative_agent) -> None:
     """Test CreativeWritingAgent handling generate_marketing_copy task."""
     # Mock the HSP connector and LLM interface
@@ -70,9 +67,6 @@ async def test_creative_agent_handle_task_request_generate_marketing_copy(creati
     assert result_payload["request_id"] == "test_request_123"
     assert "payload" in result_payload
     assert isinstance(result_payload["payload"], str)
-
-
-@pytest.mark.asyncio
 async def test_creative_agent_handle_task_request_polish_text(creative_agent) -> None:
     """Test CreativeWritingAgent handling polish_text task."""
     # Mock the HSP connector and LLM interface
@@ -114,9 +108,6 @@ async def test_creative_agent_handle_task_request_polish_text(creative_agent) ->
     assert result_payload["request_id"] == "test_request_456"
     assert "payload" in result_payload
     assert isinstance(result_payload["payload"], str)
-
-
-@pytest.mark.asyncio
 async def test_creative_agent_handle_task_request_unsupported_capability(creative_agent) -> None:
     """Test CreativeWritingAgent handling unsupported capability."""
     # Mock the HSP connector
@@ -151,9 +142,6 @@ async def test_creative_agent_handle_task_request_unsupported_capability(creativ
     assert result_payload["status"] == "failure"
     assert result_payload["request_id"] == "test_request_999"
     assert result_payload["error_details"]["error_code"] == "CAPABILITY_NOT_SUPPORTED"
-
-
-@pytest.mark.asyncio
 async def test_creative_agent_generate_marketing_copy(creative_agent) -> None:
     """Test the _generate_marketing_copy method."""
     # Mock the LLM interface
@@ -175,9 +163,6 @@ async def test_creative_agent_generate_marketing_copy(creative_agent) -> None:
     assert isinstance(result, str)
     assert result == "Creative marketing copy for testing."
     creative_agent.llm_interface.chat_completion.assert_called_once()
-
-
-@pytest.mark.asyncio
 async def test_creative_agent_polish_text(creative_agent) -> None:
     """Test the _polish_text method."""
     # Mock the LLM interface

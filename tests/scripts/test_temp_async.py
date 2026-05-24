@@ -66,7 +66,6 @@ def populated_sdm(mock_trust_manager: MagicMock):
 
 
 # --- Problematic test ---
-@pytest.mark.asyncio
 async def test_find_capabilities_no_filters(populated_sdm: ServiceDiscoveryModule) -> None:
     results = await populated_sdm.find_capabilities()
     assert len(results) == 4

@@ -50,7 +50,7 @@ class SystemAnalyzer:
                         response_data = await response.json()
                     except Exception as e:
                         logger.error(
-                            f"Unexpected error in comprehensive_analysis_test.py: {e}",
+                            f"Unexpected error in test_comprehensive_analysis.py: {e}",
                             exc_info=True,
                         )
                         response_data = await response.text()
@@ -71,7 +71,7 @@ class SystemAnalyzer:
                         response_data = await response.json()
                     except Exception as e:
                         logger.error(
-                            f"Unexpected error in comprehensive_analysis_test.py: {e}",
+                            f"Unexpected error in test_comprehensive_analysis.py: {e}",
                             exc_info=True,
                         )
                         response_data = await response.text()
@@ -85,7 +85,7 @@ class SystemAnalyzer:
                     }
 
         except Exception as e:
-            logger.error(f"Error in comprehensive_analysis_test.py: {e}", exc_info=True)
+            logger.error(f"Error in test_comprehensive_analysis.py: {e}", exc_info=True)
             return {
                 "status": "error",
                 "status_code": None,

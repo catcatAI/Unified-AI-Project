@@ -164,23 +164,17 @@ class TestBehaviorFeedbackLoopInit:
         assert params['priority_weight']['high'] == 1.0
         assert params['priority_weight']['medium'] == 0.7
         assert params['priority_weight']['low'] == 0.4
-
-    @pytest.mark.asyncio
     async def test_start_stop(self, feedback_loop):
         await feedback_loop.start()
         assert feedback_loop.is_running
         assert feedback_loop._feedback_task is not None
         await feedback_loop.stop()
         assert not feedback_loop.is_running
-
-    @pytest.mark.asyncio
     async def test_start_when_already_running(self, feedback_loop):
         await feedback_loop.start()
         await feedback_loop.start()
         assert feedback_loop.is_running
         await feedback_loop.stop()
-
-    @pytest.mark.asyncio
     async def test_stop_when_not_running(self, feedback_loop):
         await feedback_loop.stop()
         assert not feedback_loop.is_running
@@ -240,8 +234,6 @@ class TestRecordBehavior:
 
 class TestEvaluateBehavior:
     """Tests for behavior evaluation."""
-
-    @pytest.mark.asyncio
     async def test_evaluate_behavior_with_positive_response(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         now = datetime.now()
@@ -256,8 +248,6 @@ class TestEvaluateBehavior:
         score = await feedback_loop.evaluate_behavior(record)
         assert score >= 0.0
         assert score <= 1.0
-
-    @pytest.mark.asyncio
     async def test_evaluate_behavior_no_response(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         record = BehaviorRecord(
@@ -268,8 +258,6 @@ class TestEvaluateBehavior:
         )
         score = await feedback_loop.evaluate_behavior(record)
         assert score == 0.6  # 0.5 base + 0.1 time bonus
-
-    @pytest.mark.asyncio
     async def test_evaluate_behavior_negative_emotion(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         record = BehaviorRecord(
@@ -282,8 +270,6 @@ class TestEvaluateBehavior:
         )
         score = await feedback_loop.evaluate_behavior(record)
         assert score == 0.5  # 0.5 base + 0.1 response - 0.2 emotion + 0.1 time
-
-    @pytest.mark.asyncio
     async def test_evaluate_behavior_old_record(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         old_time = datetime.now() - timedelta(hours=2)
@@ -298,8 +284,6 @@ class TestEvaluateBehavior:
         )
         score = await feedback_loop.evaluate_behavior(record)
         assert score == 0.6
-
-    @pytest.mark.asyncio
     async def test_evaluate_behaviors_catches_evaluation_errors(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         record = BehaviorRecord(
@@ -310,8 +294,6 @@ class TestEvaluateBehavior:
         with patch.object(feedback_loop, 'evaluate_behavior', AsyncMock(side_effect=Exception('Eval error'))):
             await feedback_loop._process_feedback()  # should not raise
         assert feedback_loop.stats['evaluated_behaviors'] == 0
-
-    @pytest.mark.asyncio
     async def test_evaluate_behaviors_skips_already_evaluated(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         evaluated = BehaviorRecord(
@@ -332,8 +314,6 @@ class TestEvaluateBehavior:
 
 class TestAnalyzePatterns:
     """Tests for behavior pattern analysis."""
-
-    @pytest.mark.asyncio
     async def test_analyze_patterns_creates_patterns(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         now = datetime.now()
@@ -349,8 +329,6 @@ class TestAnalyzePatterns:
         pattern = feedback_loop.behavior_patterns['greet_default']
         assert pattern.success_rate == 1.0
         assert pattern.avg_effectiveness == pytest.approx(0.8)
-
-    @pytest.mark.asyncio
     async def test_analyze_patterns_skips_insufficient_data(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord
         feedback_loop.behavior_records.append(BehaviorRecord(
@@ -359,8 +337,6 @@ class TestAnalyzePatterns:
         ))
         await feedback_loop._analyze_patterns()
         assert 'comfort_default' not in feedback_loop.behavior_patterns
-
-    @pytest.mark.asyncio
     async def test_analyze_patterns_updates_existing(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorRecord, BehaviorPattern
         now = datetime.now()
@@ -384,8 +360,6 @@ class TestAnalyzePatterns:
 
 class TestUpdateStrategy:
     """Tests for strategy parameter updates."""
-
-    @pytest.mark.asyncio
     async def test_update_strategy_low_success_rate(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
         now = datetime.now()
@@ -398,8 +372,6 @@ class TestUpdateStrategy:
         await feedback_loop._update_strategy()
         assert feedback_loop.strategy_parameters['greet_threshold'] > initial_threshold
         assert feedback_loop.stats['strategy_updates'] == 1
-
-    @pytest.mark.asyncio
     async def test_update_strategy_high_success_rate(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
         now = datetime.now()
@@ -412,8 +384,6 @@ class TestUpdateStrategy:
         await feedback_loop._update_strategy()
         assert feedback_loop.strategy_parameters['greet_threshold'] < initial_threshold
         assert feedback_loop.stats['strategy_updates'] == 1
-
-    @pytest.mark.asyncio
     async def test_update_strategy_comfort_low_success(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
         now = datetime.now()
@@ -424,8 +394,6 @@ class TestUpdateStrategy:
         )
         await feedback_loop._update_strategy()
         assert feedback_loop.strategy_parameters['comfort_sensitivity'] <= 1.0
-
-    @pytest.mark.asyncio
     async def test_update_strategy_insufficient_data(self, feedback_loop):
         from ai.lifecycle.behavior_feedback_loop import BehaviorPattern
         now = datetime.now()
@@ -440,18 +408,12 @@ class TestUpdateStrategy:
 
 class TestStoreLearningResults:
     """Tests for storing learning results."""
-
-    @pytest.mark.asyncio
     async def test_store_learning_results_calls_memory_manager(self, feedback_loop, mock_memory_manager):
         await feedback_loop._store_learning_results()
         mock_memory_manager.store_experience.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_store_learning_results_without_memory_method(self, feedback_loop, mock_memory_manager):
         del mock_memory_manager.store_experience
         await feedback_loop._store_learning_results()  # should not raise
-
-    @pytest.mark.asyncio
     async def test_store_learning_results_handles_exception(self, feedback_loop, mock_memory_manager):
         mock_memory_manager.store_experience.side_effect = Exception('Storage error')
         await feedback_loop._store_learning_results()  # should not raise

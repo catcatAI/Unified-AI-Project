@@ -442,8 +442,6 @@ class TestSafetyCheck:
 
 class TestActionExecutor:
     """Tests for the main ActionExecutor class."""
-
-    @pytest.mark.asyncio
     async def test_executor_initialization(self, action_executor: ActionExecutor) -> None:
         """Test executor initialization."""
         await action_executor.initialize()
@@ -452,8 +450,6 @@ class TestActionExecutor:
         assert action_executor._executor_task is not None
         
         await action_executor.shutdown()
-
-    @pytest.mark.asyncio
     async def test_executor_shutdown(self, action_executor: ActionExecutor) -> None:
         """Test executor shutdown."""
         await action_executor.initialize()
@@ -461,8 +457,6 @@ class TestActionExecutor:
         
         assert action_executor._running is False
         assert action_executor._executor_task is None
-
-    @pytest.mark.asyncio
     async def test_submit_and_execute_sync_action(self, initialized_executor: ActionExecutor) -> None:
         """Test submitting and executing a synchronous action."""
         def test_func(name: str) -> str:
@@ -482,8 +476,6 @@ class TestActionExecutor:
         assert result.output == "Hello, Alice!"
         assert result.error is None
         assert result.execution_time >= 0
-
-    @pytest.mark.asyncio
     async def test_submit_and_execute_async_action(self, initialized_executor: ActionExecutor) -> None:
         """Test submitting and executing an asynchronous action."""
         async def async_func(value: int) -> int:
@@ -503,8 +495,6 @@ class TestActionExecutor:
         assert result.success is True
         assert result.output == 42
         assert result.execution_time >= 0.04
-
-    @pytest.mark.asyncio
     async def test_action_failure(self, initialized_executor: ActionExecutor) -> None:
         """Test action failure handling."""
         def failing_func() -> None:
@@ -522,8 +512,6 @@ class TestActionExecutor:
         assert result.success is False
         assert result.error is not None
         assert "Intentional failure" in result.error
-
-    @pytest.mark.asyncio
     async def test_action_timeout(self, initialized_executor: ActionExecutor) -> None:
         """Test action timeout handling."""
         async def slow_func() -> str:
@@ -634,8 +622,6 @@ class TestActionExecutor:
         initialized_executor.register_pre_execution_callback(test_callback)
         
         assert len(initialized_executor._pre_execution_callbacks) == 1
-
-    @pytest.mark.asyncio
     async def test_visual_sampling_action(self, initialized_executor: ActionExecutor) -> None:
         """Test a visual sampling action using the new sampler logic"""
         # Mock a vision service response
@@ -666,8 +652,6 @@ class TestActionExecutor:
         """Test that default safety checks are registered."""
         assert "parameter_validation" in action_executor.safety_checks
         assert "dependency_check" in action_executor.safety_checks
-
-    @pytest.mark.asyncio
     async def test_parameter_validation_check(self, initialized_executor: ActionExecutor) -> None:
         """Test parameter validation safety check."""
         def test_func(param1: str, param2: int) -> str:
@@ -695,8 +679,6 @@ class TestActionExecutor:
 
 class TestActionExecutorIntegration:
     """Integration tests for the action executor."""
-
-    @pytest.mark.asyncio
     async def test_multiple_actions_sequential(self) -> None:
         """Test executing multiple actions sequentially."""
         executor = ActionExecutor()
@@ -727,8 +709,6 @@ class TestActionExecutorIntegration:
             
         finally:
             await executor.shutdown()
-
-    @pytest.mark.asyncio
     async def test_action_with_callback(self) -> None:
         """Test action execution with callbacks."""
         executor = ActionExecutor()
@@ -767,8 +747,6 @@ class TestActionExecutorIntegration:
             
         finally:
             await executor.shutdown()
-
-    @pytest.mark.asyncio
     async def test_concurrent_action_limit(self) -> None:
         """Test concurrent action limit."""
         executor = ActionExecutor(config={"max_concurrent_actions": 2})

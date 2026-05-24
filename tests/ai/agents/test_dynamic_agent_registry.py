@@ -18,9 +18,6 @@ def mock_hsp_connector():
 def registry(mock_hsp_connector):
     """Create a DynamicAgentRegistry with mocked HSP connector."""
     return DynamicAgentRegistry(hsp_connector=mock_hsp_connector)
-
-
-@pytest.mark.asyncio
 class TestDynamicAgentRegistry:
     """Tests for DynamicAgentRegistry."""
 

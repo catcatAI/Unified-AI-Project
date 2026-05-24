@@ -324,9 +324,6 @@ class TestChainValidator:
         assert "L1" in stats["layers_present"]
         assert "L2" in stats["layers_present"]
         assert "L3" in stats["layers_present"]
-
-
-@pytest.mark.asyncio
 async def test_performance_overhead():
     """Test that tracing overhead is minimal"""
     import time

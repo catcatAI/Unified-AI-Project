@@ -60,47 +60,33 @@ class TestLearningManagerInit:
 
 
 class TestLearningManagerAnalyze:
-    @pytest.mark.asyncio
     async def test_analyze_positive_keywords(self, learning_manager):
         result = await learning_manager.analyze_for_personality_adjustment('This is great and amazing')
         assert result == {'friendliness': 0.05}
-
-    @pytest.mark.asyncio
     async def test_analyze_negative_keywords(self, learning_manager):
         result = await learning_manager.analyze_for_personality_adjustment('This is terrible and awful')
         assert result == {'empathy': 0.05}
-
-    @pytest.mark.asyncio
     async def test_analyze_technical_keywords(self, learning_manager):
         result = await learning_manager.analyze_for_personality_adjustment('Need help with code and programming')
         assert result == {'technical_focus': 0.05}
-
-    @pytest.mark.asyncio
     async def test_analyze_empty_string(self, learning_manager):
         result = await learning_manager.analyze_for_personality_adjustment('')
         assert result is None
-
-    @pytest.mark.asyncio
     async def test_analyze_no_keywords(self, learning_manager):
         result = await learning_manager.analyze_for_personality_adjustment('just a normal sentence')
         assert result is None
 
 
 class TestLearningManagerProcessAndStore:
-    @pytest.mark.asyncio
     async def test_empty_text_returns_empty(self, learning_manager):
         result = await learning_manager.process_and_store_learnables('', 'user1')
         assert result == []
-
-    @pytest.mark.asyncio
     async def test_below_threshold_not_stored(self, learning_manager):
         learning_manager.fact_extractor.extract_facts = AsyncMock(
             return_value=[{'confidence': 0.3, 'content': 'test', 'fact_type': 'statement'}]
         )
         result = await learning_manager.process_and_store_learnables('test text', 'user1')
         assert result == []
-
-    @pytest.mark.asyncio
     async def test_above_threshold_stored(self, learning_manager):
         learning_manager.fact_extractor.extract_facts = AsyncMock(
             return_value=[{'confidence': 0.9, 'content': 'important fact', 'fact_type': 'knowledge'}]
@@ -109,8 +95,6 @@ class TestLearningManagerProcessAndStore:
         result = await learning_manager.process_and_store_learnables('important text', 'user1')
         assert result == ['stored_id_123']
         learning_manager.ham_memory.store_experience.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_above_share_threshold_shares_via_hsp(self, learning_manager):
         learning_manager.fact_extractor.extract_facts = AsyncMock(
             return_value=[{
@@ -122,8 +106,6 @@ class TestLearningManagerProcessAndStore:
         result = await learning_manager.process_and_store_learnables('shareable text', 'user1')
         assert result == ['stored_id_456']
         learning_manager.hsp_connector.publish_fact.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_no_hsp_connector_does_not_share(self, learning_manager):
         learning_manager.hsp_connector = None
         learning_manager.fact_extractor.extract_facts = AsyncMock(
@@ -132,8 +114,6 @@ class TestLearningManagerProcessAndStore:
         learning_manager.ham_memory.store_experience.return_value = 'stored_id'
         result = await learning_manager.process_and_store_learnables('text', 'user1')
         assert result == ['stored_id']
-
-    @pytest.mark.asyncio
     async def test_multiple_facts_some_filtered(self, learning_manager):
         learning_manager.fact_extractor.extract_facts = AsyncMock(return_value=[
             {'confidence': 0.9, 'content': 'high confidence', 'fact_type': 'statement'},
@@ -147,7 +127,6 @@ class TestLearningManagerProcessAndStore:
 
 
 class TestLearningManagerProcessHspFact:
-    @pytest.mark.asyncio
     async def test_duplicate_fact_returns_none(self, learning_manager):
         hsp_payload = {
             'id': 'fact_1', 'source_ai_id': 'ai_1',
@@ -157,8 +136,6 @@ class TestLearningManagerProcessHspFact:
         learning_manager.ham_memory.query_core_memory.return_value = [{'id': 'existing'}]
         result = await learning_manager.process_and_store_hsp_fact(hsp_payload, 'sender_ai', None)
         assert result is None
-
-    @pytest.mark.asyncio
     async def test_below_threshold_discards(self, learning_manager):
         hsp_payload = {
             'id': 'fact_2', 'source_ai_id': 'ai_1',
@@ -169,8 +146,6 @@ class TestLearningManagerProcessHspFact:
         learning_manager.trust_manager.get_trust_score.return_value = 0.5
         result = await learning_manager.process_and_store_hsp_fact(hsp_payload, 'sender_ai', None)
         assert result is None
-
-    @pytest.mark.asyncio
     async def test_above_threshold_stores(self, learning_manager):
         hsp_payload = {
             'id': 'fact_3', 'source_ai_id': 'ai_1',
@@ -182,8 +157,6 @@ class TestLearningManagerProcessHspFact:
         learning_manager.ham_memory.store_experience.return_value = 'stored_hsp_fact'
         result = await learning_manager.process_and_store_hsp_fact(hsp_payload, 'sender_ai', None)
         assert result == 'stored_hsp_fact'
-
-    @pytest.mark.asyncio
     async def test_with_content_analyzer_boosts_novelty(self, learning_manager):
         learning_manager.min_hsp_fact_confidence_to_store = 0.3
         hsp_payload = {
@@ -199,8 +172,6 @@ class TestLearningManagerProcessHspFact:
         learning_manager.ham_memory.store_experience.return_value = 'stored_id'
         result = await learning_manager.process_and_store_hsp_fact(hsp_payload, 'sender_ai', None)
         assert result == 'stored_id'
-
-    @pytest.mark.asyncio
     async def test_without_trust_uses_default(self, learning_manager):
         learning_manager.min_hsp_fact_confidence_to_store = 0.3
         learning_manager.trust_manager = None
@@ -216,7 +187,6 @@ class TestLearningManagerProcessHspFact:
 
 
 class TestLearningManagerLearnFromCase:
-    @pytest.mark.asyncio
     async def test_learn_from_project_case(self, learning_manager):
         project_case = {'user_query': 'build a web app', 'user_id': 'user1'}
         learning_manager.ham_memory.store_experience.return_value = 'case_id'

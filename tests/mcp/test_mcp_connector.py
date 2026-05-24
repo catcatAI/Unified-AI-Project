@@ -10,8 +10,6 @@ class TestMCPConnector:
     @pytest.fixture(autouse=True)
     def setup_test(self):
         yield
-
-    @pytest.mark.asyncio()
     async def test_mcp_connection(self):
         mock_connector = Mock()
         mock_connector.connect = AsyncMock(return_value=True)

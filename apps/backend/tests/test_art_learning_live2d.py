@@ -114,8 +114,6 @@ class TestArtLearningSystem:
         await system.initialize()
         yield system
         await system.shutdown()
-    
-    @pytest.mark.asyncio
     async def test_tutorial_search(self, art_system):
         """Test tutorial search functionality"""
         tutorials = await art_system.search_tutorials("Live2D tutorial", max_results=5)
@@ -124,8 +122,6 @@ class TestArtLearningSystem:
         assert all(hasattr(t, 'tutorial_id') for t in tutorials)
         assert all(hasattr(t, 'title') for t in tutorials)
         print(f"✓ Found {len(tutorials)} tutorials")
-    
-    @pytest.mark.asyncio
     async def test_domain_tutorial_search(self, art_system):
         """Test domain-specific tutorial search"""
         tutorials = await art_system.search_domain_tutorials(
@@ -135,8 +131,6 @@ class TestArtLearningSystem:
         
         assert len(tutorials) > 0
         print(f"✓ Found {len(tutorials)} Live2D tutorials")
-    
-    @pytest.mark.asyncio
     async def test_image_analysis(self, art_system):
         """Test image analysis"""
         analysis = await art_system.analyze_image(image_path="test_anime.png")
@@ -145,8 +139,6 @@ class TestArtLearningSystem:
         assert len(analysis.style_features) > 0
         assert len(analysis.color_palette) > 0
         print(f"✓ Analyzed image with {len(analysis.style_features)} features")
-    
-    @pytest.mark.asyncio
     async def test_tutorial_learning(self, art_system):
         """Test learning from tutorial"""
         try:
@@ -168,8 +160,6 @@ class TestArtLearningSystem:
         assert knowledge.technique == "layering"
         assert knowledge.mastery_level >= 0.0
         print(f"✓ Created knowledge entry: {knowledge.knowledge_id}")
-    
-    @pytest.mark.asyncio
     async def test_body_part_mapping(self, art_system):
         """Test 18 body part mappings"""
         mappings = art_system.get_all_body_mappings()
@@ -187,8 +177,6 @@ class TestArtLearningSystem:
         assert "ParamCheek" in face_mapping.live2d_params
         
         print(f"✓ All 18 body parts mapped")
-    
-    @pytest.mark.asyncio
     async def test_touch_response(self, art_system):
         """Test touch to Live2D parameter conversion"""
         # Test pat on head
@@ -203,8 +191,6 @@ class TestArtLearningSystem:
         assert 0 <= params["ParamHairSwing"] <= 1
         
         print(f"✓ Touch response generates correct parameters")
-    
-    @pytest.mark.asyncio
     async def test_power_law_mastery(self, art_system):
         """Test power law skill acquisition"""
         mastery = art_system.calculate_mastery_level(
@@ -236,8 +222,6 @@ class TestLive2DAvatarGenerator:
         await gen.initialize()
         yield gen
         await gen.shutdown()
-    
-    @pytest.mark.asyncio
     async def test_avatar_generation(self, generator):
         """Test avatar generation"""
         avatar = await generator.generate_avatar(
@@ -255,8 +239,6 @@ class TestLive2DAvatarGenerator:
         assert avatar.generation_quality > 0
         
         print(f"✓ Generated avatar with {len(avatar.layers)} layers, quality={avatar.generation_quality:.2%}")
-    
-    @pytest.mark.asyncio
     async def test_multi_angle_generation(self, generator):
         """Test multi-angle avatar generation"""
         avatar = await generator.generate_multi_angle_avatar(
@@ -326,8 +308,6 @@ class TestArtLearningWorkflow:
         await wf.initialize()
         yield wf
         await wf.shutdown()
-    
-    @pytest.mark.asyncio
     async def test_workflow_stages(self, workflow):
         """Test workflow stage progression"""
         stages_completed = []
@@ -344,8 +324,6 @@ class TestArtLearningWorkflow:
         assert result.quality_score > 0
         
         print(f"✓ Workflow completed, avatar: {result.avatar_id}")
-    
-    @pytest.mark.asyncio
     async def test_complete_workflow(self, workflow):
         """Test complete learning and generation workflow"""
         progress_updates = []
@@ -388,8 +366,6 @@ class TestPhysiologicalLive2DBridge:
         await system.initialize()
         yield system
         await system.shutdown()
-    
-    @pytest.mark.asyncio
     async def test_live2d_response_generation(self, tactile_system):
         """Test generating Live2D parameters from touch"""
         stimulus = TactileStimulus(
@@ -409,8 +385,6 @@ class TestPhysiologicalLive2DBridge:
         assert "ParamCheek" in response.live2d_parameters
         
         print(f"✓ Touch generated {len(response.live2d_parameters)} Live2D parameters")
-    
-    @pytest.mark.asyncio
     async def test_all_body_parts_mapped(self, tactile_system):
         """Test all 18 body parts have Live2D mappings"""
         touch_zones = tactile_system.get_live2d_touch_zones()
@@ -443,7 +417,6 @@ class TestPhysiologicalLive2DBridge:
 
 # Integration Tests
 class TestIntegration:
-    @pytest.mark.asyncio
     async def test_end_to_end_pipeline(self):
         """Test complete end-to-end pipeline"""
         print("\n" + "=" * 60)
