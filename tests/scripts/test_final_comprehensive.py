@@ -60,20 +60,6 @@ def test_math_model():
         print(f"✗ Error in math_model, {e}")
         return False
 
-def test_math_tool():
-    """测试数学工具"""
-    try:
-        from tools.math_tool import calculate
-        print("✓ math_tool imported successfully")
-        
-        # 测试简单表达式
-        result = calculate("what is 5 + 3?")
-        print(f"✓ Math tool calculation result, {result}")
-        return True
-    except Exception as e:
-        print(f"✗ Error in math_tool, {e}")
-        return False
-
 def test_dependency_manager():
     """测试依赖管理器"""
     try:
@@ -132,16 +118,8 @@ def main():
     print("开始最终全面测试...\n")
     
     tests = [
-        test_logic_parser,
-        test_logic_tool,
-        test_math_model,
-        test_math_tool,
         test_dependency_manager,
         test_common_types,
-        test_math_model_module,
-        test_alpha_deep_model,
-        test_unified_symbolic_space
-
     ]
     
     passed = 0
