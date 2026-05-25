@@ -13,6 +13,50 @@
 
 ---
 
+## 📑 Index
+
+<details>
+<summary><b>English</b></summary>
+
+- [English Version](#english-version)
+  - [Current Status (Code-Verified)](#current-status-code-verified-by-independent-audit)
+    - [Phase 6 — Self-Evolution Loop](#current-status-code-verified-by-independent-audit)
+    - [Phase 6.5 — Startup Wiring](#current-status-code-verified-by-independent-audit)
+    - [Phase 7 — Tiered Config](#current-status-code-verified-by-independent-audit)
+    - [Phase 8 — Tech Debt Cleanup](#current-status-code-verified-by-independent-audit)
+    - [Test Infrastructure](#current-status-code-verified-by-independent-audit)
+  - [Quick Start](#quick-start)
+  - [What Actually Works](#what-actually-works-code-verified)
+  - [What's Broken / Never Finished](#whats-broken--never-finished)
+    - [Security](#whats-broken--never-finished)
+    - [Functional Gaps](#whats-broken--never-finished)
+    - [Code Quality](#whats-broken--never-finished)
+  - [Architecture Documents](#architecture)
+  - [Analysis Documents](#analysis-documents)
+</details>
+
+<details>
+<summary><b>繁體中文</b></summary>
+
+- [繁體中文版](#繁體中文版)
+  - [當前進度 (獨立代理逐項代碼驗證)](#當前進度獨立代理逐項代碼驗證)
+    - [P6 自演化閉環](#當前進度獨立代理逐項代碼驗證)
+    - [P6.5 啟動接線](#當前進度獨立代理逐項代碼驗證)
+    - [P7 分層配置](#當前進度獨立代理逐項代碼驗證)
+    - [P8 技術債清理](#當前進度獨立代理逐項代碼驗證)
+    - [測試基礎設施](#當前進度獨立代理逐項代碼驗證)
+  - [快速啟動](#快速啟動)
+  - [什麼能跑 (已驗證)](#什麼能跑已驗證)
+  - [什麼不能用／斷鏈](#什麼不能用斷鏈)
+    - [安全性](#什麼不能用斷鏈)
+    - [功能斷鏈](#什麼不能用斷鏈)
+    - [代碼品質](#什麼不能用斷鏈)
+  - [架構文件](#架構文件)
+  - [分析文件](#分析文件)
+</details>
+
+---
+
 <a name="english-version"></a>
 
 ## English Version
@@ -172,6 +216,7 @@ See dedicated docs for full diagrams:
 | [PHASE_8_PLAN](docs/plans/PHASE_8_DEBT_CLEANUP.md) | 6-week cleanup roadmap |
 | [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md) | TCS spec and migration plan |
 | [FORENSIC_AUDIT](docs/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
+| [FULL_ARCHITECTURE_ANALYSIS](docs/FULL_ARCHITECTURE_ANALYSIS.md) | Full architecture map, version history, component version audit, consistency scoring |
 
 ---
 
@@ -290,6 +335,7 @@ npm start
 | [PHASE_8_PLAN](docs/plans/PHASE_8_DEBT_CLEANUP.md) | 6 週清理路線圖 |
 | [遺留問題修復計畫](docs/plans/REMAINING_ISSUES_PLAN.md) | 架構違規修復、placeholder 清除、unittest→pytest 遷移 |
 | [測試重構與建立計畫](docs/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI integration、階段執行路線 |
+| [全量架構分析](docs/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本歷史、組件版本審計、一致性評分 |
 
 ---
 
