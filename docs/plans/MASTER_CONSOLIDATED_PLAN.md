@@ -167,13 +167,25 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 執行: 2026-05-26
 
-### A7. 建立 `docs/ARCHITECTURE.md` SSOT
+### ~~A7. 建立 `docs/ARCHITECTURE.md` SSOT~~ ✅ 已完成
 
-從 `FULL_ARCHITECTURE_ANALYSIS.md` §2 濃縮為權威、開發者導向的架構文檔。
+從 `FULL_ARCHITECTURE_ANALYSIS.md` 濃縮為權威、開發者導向的架構文檔。
+
+| 章節 | 來源 | 說明 |
+|------|------|------|
+| 1. System Overview | §2.1 (6-layer ASCII diagram) | 6 層全景架構 + 橫切集成 |
+| 2. Module Dependency | §2.3 | 模塊依賴圖 |
+| 3. Data Flow | §2.4 | Chat 請求完整生命週期 |
+| 4. Directory Structure | §3.1 | monorepo 目錄樹 |
+| 5. Key Technologies | §4-5 | 技術棧 + 設計模式 |
+| 6. 8D State Matrix | §2.1 + §5 | αβγδ εθζη 定義表 |
+| 7-10. Conventions/Governance | AGENTS.md + plan | 命名/錯誤處理/版本治理/相關文檔 |
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟢1 | 🟡2 | 1天 | **6** |
+| 🟢1 | 🟢0 | 1天 | **3** |
+
+執行: 2026-05-26
 
 ---
 
@@ -294,8 +306,8 @@ Week 4-5 (深度重構):
   → 6 天 — 最大耦合解除
 
 Week 6 (智能與文檔):
-  ✅ A4 (公式集成 1.5d) + ✅ A6 (Matrix補全 0.5d) + A7 (SSOT 1d) + B6 (持久層統一 2d)
-  → 3 天剩餘
+  ✅ A4 (公式集成 1.5d) + ✅ A6 (Matrix補全 0.5d) + ✅ A7 (SSOT 1d) + B6 (持久層統一 2d)
+  → 2 天剩餘
 
 Ongoing:
   B7 (singleton→DI 2d) + B10 (docs整理 2d)
@@ -309,7 +321,7 @@ Ongoing:
 | 層級 | 任務數 | 工時 |
 |------|--------|------|
 | S 級 | 4 | **✅ 2.3 天** |
-| A 級 | 7 | **10.3 天 (已完成 A1/A2/A4/A5/A6 ≈ 4.5d)** |
+| A 級 | 7 | **9.3 天 (已完成 A1/A2/A4/A5/A6/A7 ≈ 5.5d)** |
 | B 級 | 11 | **7.6 天 (已完成 B1-B5/B8/B11 ≈ 2.5d)** |
 | C 級 | 5 | 未估算 (功能開發) |
 | **總計** | **27** | **~22.4 天 (全職) / 6-8 週 (兼職)** |
@@ -335,5 +347,5 @@ Ongoing:
 | save_state/load_state | 11 散落 5 檔案 | **1 統一介面** | B6 |
 | Singleton | ~6 處 | **0 處 (全 DI)** | B7 |
 | 根目錄條目 | 142 | **<50** | B9 |
-| docs/ARCHITECTURE.md SSOT | 不存在 | **存在且維護** | A7 |
+| docs/ARCHITECTURE.md SSOT | 不存在 | **✅ 存在** (A7 已完成) | A7 |
 | 理論公式集成 | 0% (定義未接線) | **✅ 100% 注入 Prompt** (A4 已完成) | A4 |
