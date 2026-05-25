@@ -105,17 +105,21 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟢1 | 🟢1 | 0天 | **5** |
 
-### A3. 拆分上帝模塊
+### A3. 拆分上帝模塊 (完成度 ~20%)
 
-| 檔案 | 當前行數 | 拆分方案 | 工時 |
+| 檔案 | 當前行數 | 拆分方案 | 狀態 |
 |------|---------|---------|------|
-| `main_api_server.py` | 1668 | → `api/lifespan.py` + `api/routes/*.py` + `services/websocket_manager.py` | 2天 |
-| `angela_llm_service.py` | 2196 | → `services/llm/router.py` + `services/llm/providers/*.py` + `services/llm/prompt_builder.py` | 2天 |
-| `core/autonomous/` | 60+ 文件 | → 按領域拆 `core/life/`, `core/bio/`, `core/engine/` | 2天 |
+| `main_api_server.py` | 1668→1335 | → `services/websocket_manager.py` (303行) ✅ 已提取 | ✅ WS 提取 |
+| | | → `api/lifespan.py` + `api/routes/*.py` | ⏳ 待跟進 |
+| `angela_llm_service.py` | 2196 | → `services/llm/router.py` + `services/llm/providers/*.py` + `services/llm/prompt_builder.py` | ⏳ 待審計 |
+| `core/autonomous/` | 60+ 文件 | → 按領域拆 `core/life/`, `core/bio/`, `core/engine/` | ⏳ 待審計 |
+
+**已提取**: `services/websocket_manager.py` (ConnectionManager, broadcast_state_updates, websocket_handler)  
+**啟動修復**: `broadcast_state_updates()` 原本是死代碼（從未被調用），提取後已在 lifespan 中作為 background task 啟動。
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🔴3 | 6天 | **6** |
+| 🟡2 | 🔴3 | 5天剩餘 | **6** |
 
 ### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
@@ -306,7 +310,7 @@ All S ✅ (4) + All B ✅ (B1-B6/B8/B11 = 8) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A
 → 18/27 完成！~0 天剩餘（按原計畫路線）
 
 Remaining:
-  A3 (拆上帝模塊 6d) — 最大耦合解除，單獨排程
+  A3 (拆上帝模塊 5d剩餘) — WS已提取 ✅，lifespan+routes 待跟進
   B7 (singleton→DI 2d) — 可選，現有 singleton 多數已 DI-ready
   B9 (根目錄清理 0.5d) — 跨引用風險高，需手動處理
   B10 (docs整理 2d) — 低優先級
