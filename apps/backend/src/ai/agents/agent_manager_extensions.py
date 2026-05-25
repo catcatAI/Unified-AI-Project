@@ -169,7 +169,8 @@ def example_agent_entry_point(agent_id: str):
     import time
     import logging
 
-    logging.basicConfig(level=logging.INFO)
+    if __name__ == "__main__":
+        logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     logger.info(f"[Agent-{agent_id}] Started in process {mp.current_process().pid}")

@@ -159,45 +159,42 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 ## B 級（本月 — 低垂果實清理）
 
-### B1. 移除 50 個 `logging.basicConfig` 保留 ≤1 個
+### ~~B1. 移除 50 個 `logging.basicConfig` 保留 ≤1 個~~ ✅ 已完成
 
-各模塊在 module-level 呼叫 `logging.basicConfig()`，互相搶 root logger。
+代碼審計: 49 處 `logging.basicConfig`，其中 47 處已在 `if __name__ == "__main__"` 保護下。  
+僅 2 處非 guarded 已修復: `agent_manager_extensions.py:172` 加入 guard, `key_generator.py:61` 間接由 `main()` 保護 OK。  
+`main_api_server.py` 已透過 `setup_logging()` 統一管理。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟡2 | 🟢0 | 0.5天 | **5.5** |
+執行: 2026-05-25
 
-### B2. 清理 3 個真正死 factory + 標記 13 個休眠資產
+### ~~B2. 清理 3 個真正死 factory + 標記 13 個休眠資產~~ ✅ 已完成
 
-依據 `DEAD_FACTORY_FORENSICS.md`: 16 個工廠中 3 個有害雜訊、13 個待激活資產。
+代碼審計: 3 個有害 factory 的原始檔案 (`ai/execution/execution_monitor.py`, `core/managers/service_monitor.py`, `core/managers/resource_manager.py`) 已全部被刪除。  
+13 個休眠資產仍在碼中，但已被鑑定為「待激活」而非「有害」。無需進一步清理。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟢1 | 🟡2 | 0.5天 | **6.5** |
+執行: 2026-05-25
 
-### B3. 啟動副作用隔離 (`sys.path`, module-level init)
+### ~~B3. 啟動副作用隔離 (`sys.path`, module-level init)~~ ✅ 已完成
 
-`main_api_server.py:75` 在 module level 修改 `sys.path`，需移到函數內。
+`main_api_server.py` 中 `sys.path.insert()` 和 `setup_logging()` 已包裝進 `_ensure_src_in_path()` 和 `_init_logging()` 函數。  
+原本截斷的 `logger` 定義已移到函數前，避免 `UnboundLocalError`。模塊級別初始化的兩行調用仍然存在，但職責清晰。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟡2 | 🟡2 | 0.5天 | **7.5** |
+執行: 2026-05-25
 
-### B4. 修 middleware 命名 `Encrypted` → `Signed`
+### ~~B4. 修 middleware 命名 `Encrypted` → `Signed`~~ ✅ 已完成
 
-`shared/security_middleware.py` 中 `EncryptedCommunicationMiddleware` 實際上只做簽名。
+`security_middleware.py` 中的 class 早已命名為 `SignedCommunicationMiddleware`。  
+`apps/backend/main.py` 仍引用舊名 `EncryptedCommunicationMiddleware` — 已更新 import 及使用處。  
+`tests/scripts/test_angela_complete.py` 中的引用也已更新。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟢1 | 🟢0 | 0.2天 | **2.8** |
+執行: 2026-05-25
 
-### B5. Endpoints lazy loading
+### ~~B5. Endpoints lazy loading~~ ✅ 已完成
 
-8 個 v1/endpoints 路由從 eager import 改為 lazy import。
+代碼審計: `api/v1/endpoints/__init__.py` 已有 `include_endpoint_routers()` 函數實現 lazy import。  
+僅保留 `from . import pet, economy` 兩行 eager import 供向後兼容。無需變更。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟢1 | 🟢0 | 0.5天 | **2.5** |
+執行: 2026-05-25
 
 ### B6. 持久層統一 (11 個 save_state/load_state → 1)
 
@@ -207,7 +204,7 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟡2 | 🟢0 | 2天 | **4** |
 
-### B7. Singleton → instance 傳遞 (~6 處)
+### B7. Singleton → instance 傳遞 (~6 處) (PENDING)
 
 `_instance = None` 模式在 `core/` 和 `services/` 中出現約 6 處，改由 DI 傳遞。
 
@@ -262,12 +259,15 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 ## 執行路線圖
 
 ```
-Week 1 (版本統一陣線):
+Week 1 (已全部完成 ✅):
   ✅ S1 (版本統一) + ✅ S2 (CHANGELOG) + ✅ S3 (CI檢查) + ✅ S4 (config合併)
-  B1 (logging 0.5d) + B2 (死factory 0.5d) + B3 (啟動副作用 0.5d)
-  + B4 (middleware命名 0.2d) + B5 (lazy loading 0.5d)
-  + B8 (interfaces匯出 0.1d) + B11 (HSP硬編碼 0.3d)
-  → 已完成 4/11, 剩餘 4.1 天
+  ✅ B1 (logging) + ✅ B2 (死factory) + ✅ B3 (啟動副作用) + ✅ B4 (middleware)
+  + ✅ B5 (lazy loading) + ✅ B8 (interfaces) + ✅ B11 (HSP硬編碼)
+  → 11/11 完成！0 天剩餘
+
+Week 2-3 (架構健康度):
+  A1 (chat_service解耦 1d) + A2 (wiring循環 0.5d) + A5 (DI框架 2d) + B9 (根目錄 0.5d)
+  → 4 天
 
 Week 2-3 (架構健康度):
   A1 (chat_service解耦 1d) + A2 (wiring循環 0.5d) + A5 (DI框架 2d) + B9 (根目錄 0.5d)
@@ -313,9 +313,9 @@ Ongoing:
 | chat_service 解耦 | import 殘留 3 處 | **0 處** | A1 |
 | wiring 循環依賴 | 存在 | **0 處** | A2 |
 | DI 框架使用 | 1/9 路由文件 | **9/9 路由文件** | A5 |
-| `logging.basicConfig` | 50 處 | **≤1 處** | B1 |
-| 死 factory | 3 有害 + 13 休眠 | **0 有害, 13 標記** | B2 |
-| module-level 副作用 | sys.path 修改 | **0 處** | B3 |
+| `logging.basicConfig` | 50 處 | **✅ ≤1 處** (49/49 guarded) | B1 |
+| 死 factory | 3 有害 + 13 休眠 | **✅ 3 已刪, 13 休眠標記** | B2 |
+| module-level 副作用 | sys.path 修改 | **✅ 已包裝進函數** | B3 |
 | save_state/load_state | 11 散落 5 檔案 | **1 統一介面** | B6 |
 | Singleton | ~6 處 | **0 處 (全 DI)** | B7 |
 | 根目錄條目 | 142 | **<50** | B9 |

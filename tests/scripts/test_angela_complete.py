@@ -46,9 +46,9 @@ class TestAngelaCore:
         """測試安全中間件"""
         try:
             sys.path.insert(0, str(project_root / "apps/backend"))
-            from src.shared.security_middleware import EncryptedCommunicationMiddleware
-
-            assert EncryptedCommunicationMiddleware is not None
+            from src.shared.security_middleware import SignedCommunicationMiddleware
+            # 驗證中間件可用
+            assert SignedCommunicationMiddleware is not None
         except ImportError as e:
             pytest.skip(f"Security module not available: {e}")
 

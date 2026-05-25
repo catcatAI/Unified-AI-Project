@@ -67,17 +67,26 @@ except Exception:
     # broad exception acceptable: env file may not exist, non-critical setup
     pass
 
-# 確保 src 目錄在 Python 路徑中
-# 必須添加 src 目錄本身，這樣 Python 才能找到 src.core 等模塊
-_backend_dir = Path(__file__).parent.parent.parent  # /apps/backend
-_src_path = str(_backend_dir / "src")  # /apps/backend/src
-if _src_path not in sys.path:
-    sys.path.insert(0, _src_path)
-
-# [Phase 8 Activation] 啟動統一日誌系統
-from core.logging.setup import setup_logging
-setup_logging(level=logging.INFO, log_file="angela_ai.log")
 logger = logging.getLogger(__name__)
+
+
+def _ensure_src_in_path():
+    """Ensure src directory is in Python path (called once at module init)."""
+    _backend_dir = Path(__file__).parent.parent.parent
+    _src_path = str(_backend_dir / "src")
+    if _src_path not in sys.path:
+        sys.path.insert(0, _src_path)
+
+
+def _init_logging():
+    """Initialize the unified logging system (called once at module init)."""
+    from core.logging.setup import setup_logging
+    setup_logging(level=logging.INFO, log_file="angela_ai.log")
+
+
+# Module-level initialization
+_ensure_src_in_path()
+_init_logging()
 
 # 現在可以安全地記錄環境變量加載狀態
 try:

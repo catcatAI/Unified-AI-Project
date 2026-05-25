@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 # 初始化密鑰管理器與中間件
 from src.system.security_monitor import ABCKeyManager
-from src.shared.security_middleware import EncryptedCommunicationMiddleware
+from src.shared.security_middleware import SignedCommunicationMiddleware
 
 km = ABCKeyManager()
 
@@ -225,7 +225,7 @@ def create_app() -> FastAPI:
     )
 
     # 加密通訊中間件 (使用 Key B)
-    app.add_middleware(EncryptedCommunicationMiddleware, key_b=km.get_key("KeyB"))
+    app.add_middleware(SignedCommunicationMiddleware, key_b=km.get_key("KeyB"))
 
     # CORS配置
     app.add_middleware(
