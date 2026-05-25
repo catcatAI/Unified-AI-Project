@@ -114,7 +114,7 @@ async def broadcast_state_updates():
     """Periodically broadcast state updates to all connected clients."""
     while True:
         try:
-            from services.main_api_server import get_metabolic_heartbeat
+            from api.lifespan import get_metabolic_heartbeat
             heartbeat = get_metabolic_heartbeat()
             bio_state = heartbeat.bio_integrator.get_biological_state()
 
@@ -234,7 +234,7 @@ async def websocket_handler(websocket: WebSocket):
                 })
 
             elif data.get("type") == "tactile_event":
-                from services.main_api_server import get_tactile_service
+                from api.lifespan import get_tactile_service
                 tactile_data = data.get("data", {})
                 tactile_service = get_tactile_service()
                 res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")

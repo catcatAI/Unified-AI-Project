@@ -105,21 +105,27 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟢1 | 🟢1 | 0天 | **5** |
 
-### A3. 拆分上帝模塊 (完成度 ~20%)
+### A3. 拆分上帝模塊 (完成度 ~50%)
 
 | 檔案 | 當前行數 | 拆分方案 | 狀態 |
 |------|---------|---------|------|
-| `main_api_server.py` | 1668→1335 | → `services/websocket_manager.py` (303行) ✅ 已提取 | ✅ WS 提取 |
-| | | → `api/lifespan.py` + `api/routes/*.py` | ⏳ 待跟進 |
+| `main_api_server.py` | 1668→1335→**1103** | → `services/websocket_manager.py` (303行) ✅ | ✅ WS 提取 |
+| | | → `api/lifespan.py` (189行) ✅ | ✅ lifespan 提取 |
+| | | → `api/routes/*.py` | ⏳ 待跟進 |
 | `angela_llm_service.py` | 2196 | → `services/llm/router.py` + `services/llm/providers/*.py` + `services/llm/prompt_builder.py` | ⏳ 待審計 |
 | `core/autonomous/` | 60+ 文件 | → 按領域拆 `core/life/`, `core/bio/`, `core/engine/` | ⏳ 待審計 |
 
-**已提取**: `services/websocket_manager.py` (ConnectionManager, broadcast_state_updates, websocket_handler)  
-**啟動修復**: `broadcast_state_updates()` 原本是死代碼（從未被調用），提取後已在 lifespan 中作為 background task 啟動。
+**已提取 (492 行)**:  
+- `services/websocket_manager.py` (303行): ConnectionManager, broadcast_state_updates, websocket_handler  
+- `api/lifespan.py` (189行): lifespan context manager, middleware setup, 所有 service factory 函數, `_angela_cfg`, `_validate_environment_variables`  
+
+**修復**: `broadcast_state_updates()` 從死代碼→lifespan background task ✅  
+**修復**: `setup_middleware()` 從 inline code→封裝函數 ✅  
+**修復**: wiring.py/hot_reload_service.py/websocket_manager.py import 路徑更新 ✅
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🔴3 | 5天剩餘 | **6** |
+| 🟡2 | 🔴3 | 3天剩餘 | **6** |
 
 ### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
@@ -339,7 +345,7 @@ Remaining:
 |------|------|------|---------|
 | 版本一致性 | 31% (13中4) | **✅ 100%** (S1+S2+S3 已完成) | S1, S2, S3 |
 | 架構一致性總分 | 62.6% | **85%+** | A3, A5, B6 |
-| 上帝模塊 (1668/2196 行) | 2 個 | **0 個** (<500行) | A3 |
+| 上帝模塊 (1103/2196 行) | 2 個 | **0 個** (<500行) | A3 |
 | config/ 雙目錄 | 2 個 | **✅ 1 個** (S4 已完成) | S4 |
 | chat_service 解耦 | import 殘留 4 處 | **✅ 0 處** (A1 已完成) | A1 |
 | wiring 循環依賴 | 函數內 lazy import | **✅ 無問題** (A2 已完成) | A2 |

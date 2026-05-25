@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def initialize_all_services(manager) -> tuple:
     """Initialize services and link components during startup."""
-    from services.main_api_server import (
+    from api.lifespan import (
         get_desktop_interaction,
         get_action_executor,
         get_vision_service,

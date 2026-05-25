@@ -48,20 +48,24 @@ class HotReloadService:
         """Probes real system status from authorized singletons."""
         try:
             # Dynamically import inside method to avoid circular dependency
-            from services.main_api_server import (
-                _llm_service, 
-                _digital_life, 
-                _metabolic_heartbeat,
-                system_metrics_manager
+            from api.lifespan import (
+                get_metabolic_heartbeat,
+                get_digital_life,
             )
+            from services.angela_llm_service import get_llm_service
+            from services.main_api_server import system_metrics_manager
+            
+            llm_svc = get_llm_service()
+            dl = get_digital_life()
+            hb = get_metabolic_heartbeat()
             
             return {
                 "is_draining": self._draining,
                 "timestamp": datetime.now().isoformat(),
                 "real_services": {
-                    "llm_available": _llm_service.is_available if _llm_service else False,
-                    "digital_life_active": _digital_life is not None,
-                    "heartbeat_running": _metabolic_heartbeat._running if _metabolic_heartbeat else False,
+                    "llm_available": llm_svc.is_available if llm_svc else False,
+                    "digital_life_active": dl is not None,
+                    "heartbeat_running": getattr(hb, '_running', False) if hb else False,
                 },
                 "metrics": system_metrics_manager.get_all_metrics()
             }
