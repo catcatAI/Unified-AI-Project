@@ -3,21 +3,19 @@
 Vision API 端點
 """
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
 from typing import Dict, Any, List, Optional
 import logging
-from services.vision_service import VisionService
+
+from ._deps import get_vision_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/vision", tags=["Vision"])
 
-# 共享的 VisionService 實例
-_vision_service = VisionService()
-
 
 @router.post("/sampling")
-async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
+async def get_vision_sampling(params: Dict[str, Any] = Body(...), svc=Depends(get_vision_service)):
     """獲取視覺採樣分析"""
     center = params.get("center", [0.5, 0.5])
     scale = params.get("scale", 1.0)
@@ -25,7 +23,7 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
     distribution = params.get("distribution", "GAUSSIAN")
 
     try:
-        result = await _vision_service.get_sampling_analysis(
+        result = await svc.get_sampling_analysis(
             center=(center[0], center[1]),
             scale=scale,
             deformation=deformation,
@@ -38,10 +36,10 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
 
 
 @router.post("/perceive")
-async def vision_perceive(image_data: bytes = Body(...)):
+async def vision_perceive(image_data: bytes = Body(...), svc=Depends(get_vision_service)):
     """模擬發現-聚焦-記憶循環"""
     try:
-        result = await _vision_service.perceive_and_focus(image_data)
+        result = await svc.perceive_and_focus(image_data)
         return result
     except Exception as e:  # broad exception acceptable: perceive operation should be resilient to errors
         logger.error(f"Vision perceive error: {e}")

@@ -32,13 +32,14 @@ def initialize_all_services(manager) -> tuple:
     digital_life = get_digital_life()
     economy_manager = get_economy_manager()
 
-    from api.v1.endpoints import pet, economy
+    from api.v1.endpoints import pet
+    from api.v1.endpoints._deps import set_economy_manager as _set_econ
 
     pet_manager = pet.get_pet_manager()
     digital_life.broadcast_callback = manager.broadcast
     pet.set_biological_integrator(digital_life.biological_integrator)
     pet.set_economy_manager(economy_manager)
-    economy.set_economy_manager(economy_manager)
+    _set_econ(economy_manager)
 
     try:
         from services.hot_reload_service import get_hot_reload_service

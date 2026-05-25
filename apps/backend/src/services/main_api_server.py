@@ -315,8 +315,6 @@ async def _get_chat_service():
 
 
 from api.router import router as api_v1_router
-from api.v1.endpoints import pet, economy
-from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
 from economy.economy_manager import EconomyManager
 
 from core.autonomous.heartbeat import MetabolicHeartbeat

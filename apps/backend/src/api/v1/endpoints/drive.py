@@ -9,14 +9,11 @@ from datetime import datetime
 import logging
 from pathlib import Path
 
+from ._deps import get_drive_service
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/drive", tags=["Google Drive"])
-
-
-def _get_drive_service():
-    from integrations.google_drive_service import get_drive_service
-    return get_drive_service()
 
 
 class DriveDeduplication:
@@ -128,10 +125,9 @@ class DocumentParser:
 
 
 @router.get("/status")
-async def get_drive_status():
+async def get_drive_status(svc=Depends(get_drive_service)):
     """獲取 Google Drive 服務狀態"""
     try:
-        svc = _get_drive_service()
         authenticated = svc.is_authenticated()
         info: Dict[str, Any] = {
             "status": "connected" if authenticated else "disconnected",
@@ -158,10 +154,9 @@ async def get_drive_status():
 
 
 @router.get("/auth/status")
-async def get_auth_status():
+async def get_auth_status(svc=Depends(get_drive_service)):
     """獲取認證狀態"""
     try:
-        svc = _get_drive_service()
         return {"authenticated": svc.is_authenticated()}
     except FileNotFoundError:
         raise HTTPException(status_code=503, detail="credentials.json not found")
@@ -171,10 +166,9 @@ async def get_auth_status():
 
 
 @router.get("/auth/url")
-async def get_oauth_url():
+async def get_oauth_url(svc=Depends(get_drive_service)):
     """獲取 OAuth 授權 URL"""
     try:
-        svc = _get_drive_service()
         url = svc.get_auth_url()
         return {"url": url}
     except FileNotFoundError as e:
@@ -185,10 +179,9 @@ async def get_oauth_url():
 
 
 @router.post("/auth/callback")
-async def oauth_callback(code: str = Body(..., embed=True)):
+async def oauth_callback(code: str = Body(..., embed=True), svc=Depends(get_drive_service)):
     """用授權碼換取 Token"""
     try:
-        svc = _get_drive_service()
         success = svc.exchange_code(code)
         if success:
             return {"message": "Authentication successful", "authenticated": True}
@@ -201,10 +194,9 @@ async def oauth_callback(code: str = Body(..., embed=True)):
 
 
 @router.post("/auth/logout")
-async def logout():
+async def logout(svc=Depends(get_drive_service)):
     """登出 Google Drive"""
     try:
-        svc = _get_drive_service()
         svc.logout()
         return {"message": "Logged out successfully"}
     except Exception as e:
@@ -215,11 +207,11 @@ async def logout():
 @router.get("/files")
 async def list_files(
     page_size: int = Query(10, ge=1, le=100),
-    query: Optional[str] = Query(None, description="Drive search query (e.g. 'name contains \"report\"')"),
+    query: Optional[str] = Query(None, description='Drive search query (e.g. \'name contains "report"\')'),
+    svc=Depends(get_drive_service),
 ):
     """列出文件"""
     try:
-        svc = _get_drive_service()
         files = svc.list_files(page_size=page_size, query=query)
         return {"files": files}
     except PermissionError:
@@ -232,10 +224,9 @@ async def list_files(
 
 
 @router.get("/files/{file_id}/metadata")
-async def get_file_metadata(file_id: str):
+async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)):
     """獲取文件元數據"""
     try:
-        svc = _get_drive_service()
         metadata = svc.get_file_metadata(file_id)
         return metadata
     except PermissionError:
@@ -246,7 +237,7 @@ async def get_file_metadata(file_id: str):
 
 
 @router.post("/files/sync")
-async def sync_files(request: Dict[str, Any] = Body(...)):
+async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)):
     """同步選定的文件到本地並存入記憶"""
     file_ids = request.get("file_ids", [])
     folder_path = request.get("folder_path", "data/drive_downloads")
@@ -254,7 +245,6 @@ async def sync_files(request: Dict[str, Any] = Body(...)):
 
     logger.info(f"Syncing files: {file_ids} to {folder_path}")
 
-    svc = _get_drive_service()
     deduplicator = DriveDeduplication()
     parser = DocumentParser()
 
@@ -330,6 +320,7 @@ async def sync_files(request: Dict[str, Any] = Body(...)):
 @router.post("/files/search")
 async def search_and_list(
     request: Dict[str, Any] = Body(...),
+    svc=Depends(get_drive_service),
 ):
     """搜尋文件並返回列表（不下載）"""
     query = request.get("query", "")
@@ -339,7 +330,6 @@ async def search_and_list(
         raise HTTPException(status_code=400, detail="query is required")
 
     try:
-        svc = _get_drive_service()
         files = svc.search_files(query=query, page_size=page_size)
         return {"files": files, "count": len(files)}
     except PermissionError:
@@ -350,13 +340,12 @@ async def search_and_list(
 
 
 @router.post("/analyze")
-async def analyze_drive(request: Dict[str, Any] = Body(...)):
+async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)):
     """分析 Drive 文件並總結內容（需下載 + 解析）"""
     limit = request.get("limit", 5)
     folder_path = request.get("folder_path", "data/drive_downloads")
 
     try:
-        svc = _get_drive_service()
         files = svc.list_files(page_size=limit)
         parser = DocumentParser()
 
@@ -395,9 +384,9 @@ async def upload_file(
     file_path: str = Body(..., embed=True),
     folder_id: Optional[str] = Body(None, embed=True),
     mime_type: Optional[str] = Body(None, embed=True),
+    svc=Depends(get_drive_service),
 ):
     """上傳本地檔案到 Drive"""
-    svc = _get_drive_service()
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
     result = svc.upload_file(file_path, folder_id, mime_type)
@@ -412,9 +401,9 @@ async def create_file(
     content: str = Body(...),
     mime_type: str = Body("text/plain"),
     folder_id: Optional[str] = Body(None),
+    svc=Depends(get_drive_service),
 ):
     """建立文字檔案並上傳到 Drive"""
-    svc = _get_drive_service()
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
     result = svc.create_file_from_text(file_name, content, mime_type, folder_id)

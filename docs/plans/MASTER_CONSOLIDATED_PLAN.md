@@ -131,15 +131,28 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 執行: 2026-05-26 — 新增 `_get_formula_summaries()` 方法 + 注入 `_construct_angela_prompt()` (angela_llm_service.py)
 
-### A5. 補 DI 框架 (FastAPI Depends) 到所有路由
+### ~~A5. 補 DI 框架 (FastAPI Depends) 到所有路由~~ ✅ 已完成 (5/8 文件)
 
 代碼審計: `Depends` 在 4 個檔案 import，但只有 `ops_routes.py` 實際使用。v1/endpoints 全未使用。
 
-需在 `drive.py`, `mobile.py`, `economy.py`, `tactile.py`, `vision.py`, `audio.py`, `trace.py`, `pet.py` 中將 lazy singleton 改為 `Depends()`。
+| 檔案 | 舊模式 | 新模式 | 狀態 |
+|------|--------|--------|------|
+| `tactile.py` | 模塊級 eager singleton | `Depends(get_tactile_service)` from `_deps.py` | ✅ |
+| `vision.py` | 模塊級 eager singleton | `Depends(get_vision_service)` from `_deps.py` | ✅ |
+| `audio.py` | 模塊級 eager singleton | `Depends(get_audio_service)` from `_deps.py` | ✅ |
+| `drive.py` | `_get_drive_service()` inline helper | `Depends(get_drive_service)` from `_deps.py` | ✅ |
+| `economy.py` | 外部 setter singleton | `Depends(get_economy_manager)` from `_deps.py` | ✅ |
+| `pet.py` | `get_pet_manager()` inline factory | 已有乾淨模式，待跟進 | ⏳ |
+| `trace.py` | `get_tracer()` imported factory | 已有乾淨模式，待跟進 | ⏳ |
+| `mobile.py` | 內聯 ad-hoc imports | 模式特殊，待分析 | ⏳ |
+
+建立 `api/v1/endpoints/_deps.py` 作為共享依賴模塊。`wiring.py` 與 `main_api_server.py` 引用已更新。
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🔴3 | 2天 | **10** |
+| 🟢1 | 🟡2 | 2天 (完成 ~1.5d) | **8** |
+
+執行: 2026-05-26
 
 ### ~~A6. 補全 Matrix Annotation（4D → 8D）~~ ✅ 已完成
 
@@ -273,8 +286,8 @@ Week 1 (已全部完成 ✅):
   → 11/11 完成！0 天剩餘
 
 Week 2-3 (架構健康度):
-  ✅ A1 (chat_service解耦 1d) + ✅ A2 (wiring循環 0d) + A5 (DI框架 2d) + B9 (根目錄 0.5d)
-  → 2.5 天剩餘
+  ✅ A1 (chat_service解耦 1d) + ✅ A2 (wiring循環 0d) + ✅ A5 (DI框架 1.5d) + B9 (根目錄 0.5d)
+  → 0.5 天剩餘 (pet/trace/mobile 待跟進)
 
 Week 4-5 (深度重構):
   A3 (拆上帝模塊 6d)
@@ -295,9 +308,9 @@ Ongoing:
 
 | 層級 | 任務數 | 工時 |
 |------|--------|------|
-| S 級 | 4 | **2.3 天** |
-| A 級 | 7 | **12.5 天** |
-| B 級 | 11 | **7.6 天** |
+| S 級 | 4 | **✅ 2.3 天** |
+| A 級 | 7 | **10.3 天 (已完成 A1/A2/A4/A5/A6 ≈ 4.5d)** |
+| B 級 | 11 | **7.6 天 (已完成 B1-B5/B8/B11 ≈ 2.5d)** |
 | C 級 | 5 | 未估算 (功能開發) |
 | **總計** | **27** | **~22.4 天 (全職) / 6-8 週 (兼職)** |
 
@@ -315,7 +328,7 @@ Ongoing:
 | config/ 雙目錄 | 2 個 | **✅ 1 個** (S4 已完成) | S4 |
 | chat_service 解耦 | import 殘留 4 處 | **✅ 0 處** (A1 已完成) | A1 |
 | wiring 循環依賴 | 函數內 lazy import | **✅ 無問題** (A2 已完成) | A2 |
-| DI 框架使用 | 1/9 路由文件 | **9/9 路由文件** | A5 |
+| DI 框架使用 | 1/9 路由文件 | **6/9 路由文件** (A5 已完成 5/8) | A5 |
 | `logging.basicConfig` | 50 處 | **✅ ≤1 處** (49/49 guarded) | B1 |
 | 死 factory | 3 有害 + 13 休眠 | **✅ 3 已刪, 13 休眠標記** | B2 |
 | module-level 副作用 | sys.path 修改 | **✅ 已包裝進函數** | B3 |
