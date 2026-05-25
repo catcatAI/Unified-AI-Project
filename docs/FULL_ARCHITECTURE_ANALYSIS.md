@@ -9,7 +9,13 @@
 
 ## 目錄
 
-1. [版本演化全景圖 (Git + Changelog)](#1-版本演化全景圖)
+1. [版本演化全景圖 (Git 深度溯源)](#1-版本演化全景圖-git-深度溯源)
+   - [版本號歷史完整溯源](#11-版本號歷史完整溯源)
+   - [版本號變更的 Git 精確時間線](#12-版本號變更的-git-精確時間線)
+   - [版本號矛盾根源分析](#13-版本號矛盾根源分析)
+   - [Git 分支拓撲 (精簡)](#14-git-分支拓撲-精簡)
+   - [Git 提交統計](#15-git-提交統計按時間分組)
+   - [演化大事記](#16-演化大事記完整版)
 2. [全量架構文字設計圖](#2-全量架構文字設計圖)
 3. [淺層檢查 — 目錄結構與模塊邊界](#3-淺層檢查)
 4. [中層檢查 — 模塊間依賴與數據流](#4-中層檢查)
@@ -20,63 +26,319 @@
 
 ---
 
-## 1. 版本演化全景圖
+## 1. 版本演化全景圖 (Git 深度溯源)
 
-### 1.1 Git 分支拓撲 (精簡)
+### 1.1 版本號歷史完整溯源
+
+> 本節基於 Git 從第一個 commit (`ddb266946`) 到 HEAD 的**完整提交歷史**，逐個 commit 追蹤每一個版本號變更的**精確時刻、變更內容、變更理由**。
+
+#### 版本號存在位置清單 (完整枚舉)
+
+通過對整個代碼庫的全面掃描，以下 **13 個位置** 聲明了版本號：
+
+| # | 文件路徑 | 字段 | 當前值 | 首次出現 commit | 最後更新 commit | 最後更新理由 |
+|---|---------|------|--------|----------------|----------------|------------|
+| 1 | `package.json` | `version` | **6.5.0-dev** | `ddb266946` (0.1.0) | `45c63d3af` | AI agent "Fix and update" — 無明確理由 |
+| 2 | `apps/desktop-app/electron_app/package.json` | `version` | **6.5.0-dev** | `34de65d0c` (1.0.0) | `af7f03a80` | 與根 package.json 同步 |
+| 3 | `apps/mobile-app/package.json` | `version` | **6.5.0-dev** | `2c1816e0` (6.2.0) | `af7f03a80` | 與根 package.json 同步 |
+| 4 | `apps/backend/src/core/version.py` | `CURRENT_VERSION` | **6.5.0-dev** | `bcb01db3c` (6.2.0) | `af7f03a80` | 與 package.json 同步 |
+| 5 | `VERSION` (根目錄文件) | 純文字 | **6.2.0** | `b29441e74` (6.2.0) | **從未更新** | 創建後被遺忘 |
+| 6 | `config/angela_config.json` | `version` | **6.1.0** | `b29441e74` (6.1.0) | **從未更新** | 創建後被遺忘 |
+| 7 | `apps/backend/src/core/__init__.py` | docstring | **6.2.0** | `bcb01db3c` | **從未更新** | 初始化後未被修改 |
+| 8 | `CHANGELOG.md` | section headers | **6.2.2 ~ 7.4.0** | `0e803d64` (v7.x) | `9819d95f5` (v6.2.2) | 見下方詳細分析 |
+| 9 | `packages/cli/__init__.py` | `__version__` | **1.1.0** | `037851ee` | — | 獨立於主項目的 CLI 版本 |
+| 10 | `packages/biology-core/package.json` | `version` | **1.0.0** | 初始提交 | — | 獨立包版本 |
+| 11 | `docs/README_v6.2.0_FINAL.md` | title | **v6.2.0** | — | — | 靜態文檔快照 |
+| 12 | `reports/` (~20 個報告文件) | 文件名/內容 | **v6.2.0 ~ v6.2.3** | — | — | 歷史審計報告 |
+| 13 | `test_results/api_comprehensive_test_results.json` | `version` | **6.0.4** | — | — | API 測試結果快照 |
+
+---
+
+### 1.2 版本號變更的 Git 精確時間線
+
+以下按照 **Git commit 時間順序**，列出每次版本號變更：
+
+#### 階段 1: 初始創建期 (2024, 0.1.0)
 
 ```
-v0.1.0 (2024) ─→ v1.0.0 ─→ v2.0.0 ─→ v3.0.0 ─→ v4.0.0 ─→ v5.0.0 ─→ v6.0.0 ─→ v6.2.0 ─→ v7.x ─→ v6.5.0-dev (HEAD)
-  Genesis Merge    Initial     Cross-    Advanced   Desktop   Live2D     A/B/C     Phase 14    Spatial     Current Dev
-  MikoAI+Fragmenta Release    Platform  AI Features Integr.  Integr.    Security  Complete     AI Engine
+commit ddb266946 — Initial commit
+  package.json:    "version": "0.1.0"
+  pyproject.toml:  version = "0.1.0"
+  
+理由: 項目最初由 MikoAI + Fragmenta 合併而成，0.1.0 是標準的"初始開發版本"標記
 ```
 
-### 1.2 Git 提交統計 (top commit 分析)
+```
+後續 ~100+ commits 保持 "0.1.0" 不變 (約 2024 ~ 2025-08)
+  這期間 package.json 從未被修改過 version 字段
+  
+理由: 項目處於早期快速迭代階段，無人管理版本號
+```
 
-| 時期 | 提交模式 | 代表 Branch | 關鍵變更 |
-|------|---------|------------|---------|
-| **2024 H2 — Genesis** (9 commits) | `Initial commit`, `1` | `master` | MikoAI + Fragmenta 初始合併，基礎專案結構 |
-| **2025 H1 — Monorepo** (20+ commits) | `feat(structure):`, `feat(backend):`, `feat(desktop):` | `main` | pnpm monorepo 遷移，backend/desktop-app/CLI 分離 |
-| **2025 H2 — HSP Protocol** (50+ commits) | `feat(hsp):`, `fix(hsp):`, `feat(FragmentaOrchestrator):` | `feature/*` | MQTT 協議、HSP Connector、ServiceDiscovery |
-| **2026 Q1 — AI Engine** (80+ commits) | `feat: implement`, `refactor:`, `feat(monorepo):` | `main`, `implement-placeholders` | HAM Memory、Agent System、LIS、AVIS |
-| **2026 Q2 — Spatial AI** (100+ commits) | `feat: 6.2.0`, `Fix and update` | `main`, `v6.0-clean` | 8D State Matrix、Coordinate AI、Intent Gravity |
-| **2026-05 — Current** (30+ commits) | `Fix and update`, `chore(backup):` | `main` | 持續修復、配置快照、v6.5.0-dev |
+#### 階段 2: Desktop App 獨立版本 (2026-02-04, 1.0.0)
 
-### 1.3 版本號矛盾分析
+```
+commit 34de65d0c — Session 3: Desktop Application Complete Implementation
+  apps/desktop-app/electron_app/package.json: "version": "1.0.0"
+  
+理由: Electron 桌面應用首次獲得獨立版本號，標記為"完整實現"
+```
 
-| 位置 | 聲明版本 | 問題 |
-|------|---------|------|
-| `core/version.py` — CURRENT_VERSION | **6.5.0-dev** | 代碼中的當前版本 |
-| `VERSION` 文件 | **6.2.0** | 落後於代碼 3 個 minor 版本 |
-| `config/angela_config.json` | **6.1.0** | 落後於代碼 4 個 minor 版本 |
-| `core/__init__.py` docstring | **6.2.0** | 與 CURRENT_VERSION 不一致 |
-| `ANGELA_STATUS.md` | **v6.3** | 混合標記法 (v6.3 vs 6.5.0-dev) |
-| `CHANGELOG.md` 中 v7.3.0 | **7.3.0 (Spatial AI)** | 主版本號跳躍後又回到 6.x-dev |
+```
+commit 83238b593 — chore: remove old desktop app
+  根 package.json 仍然是 "0.1.0"
+  
+理由: 清理舊桌面應用代碼，版本號未受影響
+```
 
-**結論**: 版本號存在**嚴重的散亂問題**，6 個位置標記了 5 種不同的版本號。CHANGELOG 中的 v7.x 線與代碼庫實際的 v6.5.0-dev 線存在分歧。
+#### 階段 3: 第一次大版本跳躍 (2026-02-05 ~ 02-07, 0.1.0 → 6.2.0)
 
-### 1.4 演化大事記 (完整版)
+```
+commit 494f277bf (2025-11-08) — 重構開始前
+  根 package.json 仍然是 "0.1.0"
+  但 pyproject.toml 已被改為 version = "0.1.0" (與 package.json 分離)
+```
 
-```mermaid
-timeline
-    title Angela AI Evolution
-    2024 : Genesis Merge (MikoAI + Fragmenta)
-         : Initial project structure
-    2025 H1 : Monorepo migration (pnpm)
-            : Backend (FastAPI) separation
-            : Desktop App (Electron) creation
-    2025 H2 : HSP Protocol (MQTT)
-            : Service Discovery
-            : Fragmenta Orchestrator
-    2026 Q1 : HAM Memory System
-            : Multi-Agent System (10 agents)
-            : LIS (Linguistic Immune System)
-            : AVIS (Virtual Input System)
-    2026-05-09 : v7.2.0 Spatial AI Engine
-               : v7.3.0 Native Coordinate AI
-               : v7.4.0 Intent Gravity
-    2026-05-18 : v6.3 Phase串線完成
-               : 8D State Matrix (αβγδεθζη)
-    2026-05-25 : Current Dev (v6.5.0-dev)
+關鍵跳躍發生在提交 `dcb539009` (Phase 4) 到 `b29441e74` (Add audit docs) 之間：
+
+```
+commit dcb539009 — Phase 4 - Node version alignment and Electron build path
+  根 package.json:     "version": "6.2.0"     ← 從 0.1.0 直接跳到 6.2.0
+  desktop electron:    "version": "6.2.0"
+  其他子包也同步到 6.2.0
+
+理由分析:
+  這不是正常的語義化版本遞增 (0.1.0 → 0.2.0 → ... → 6.2.0)
+  而是直接從 0.1.0 跳躍到 6.2.0，跳過了 5 個主版本號
+  理由推測: CHANGELOG 中列出了 0.1.0 → 6.0.0 之間的所有"歷史版本"
+  (v1.0.0 ~ v6.0.0) 作為回溯性記錄，但實際 Git 歷史中並不存在這些版本號的提交
+  即: v1.0~v6.0 是**回溯性虛擬版本**，從未被正式 tag 或寫入代碼
+```
+
+```
+commit b29441e74 — Add audit docs; update backend, desktop & agents
+  VERSION 文件: 首次創建，內容為 "6.2.0"     ← 與 package.json 同步
+  config/angela_config.json: 首次出現，version = "6.1.0"  ← 比 VERSION 落後 0.1
+  core/version.py: 首次創建 (commit bcb01db3c)，VersionInfo(6,2,0,STABLE)
+
+版本矛盾根源 #1:
+  VERSION 文件與 config/angela_config.json 在同一 commit 中創建
+  但 VERSION = 6.2.0，config = 6.1.0
+  這是版本號散亂的**第一個根源**
+  理由: 創建時就沒有統一
+```
+
+#### 階段 4: CHANGELOG v7.x 時期 (2026-05-09, 7.2.0~7.4.0)
+
+```
+這是整個版本歷史中最關鍵的矛盾點。
+
+commit 0e803d64 (2026-05-09 09:09) 
+  feat: implement autonomous spatial gravity, adaptive memory contexts, intent-driven
+  mouse navigation, and loss-based gait evolution engines.
+  
+  這個 commit 創建了 CHANGELOG.md，寫入了:
+  ## [7.4.0] - 2026-05-09  ← 置頂 (最新)
+  ## [7.3.0] - 2026-05-09
+  ## [7.2.0] - 2026-05-09
+  ## [7.1.1] - 2026-02-13    ← 在 v6.2.0 之後 (日期在前的在新版)
+
+  但!!! 這個 commit 並沒有修改 package.json 或任何其他版本文件
+  根 package.json 此時仍然是 "6.2.0"
+
+commit 253aa8ff (2026-05-09 02:19)  ← 時間更早
+  feat: implement autonomous core components including self-introspection, art learning,
+  and action execution systems
+  也在 CHANGELOG.md 中添加了內容 (v7.3.0)
+
+commit cbe75f61d (2026-05-09 01:22)  ← 時間最早
+  feat: integrate native spatial math engine and intent-based coordinate gravity system
+  for 4D state matrix synchronization
+  也在 CHANGELOG.md 中添加了內容 (v7.2.0)
+
+版本矛盾根源 #2:
+  CHANGELOG 聲稱這是 v7.2.0 ~ v7.4.0 的發布
+  但: 1) 沒有對應的 git tag (只有一個 v6.0.0 tag)
+      2) package.json 沒有更新到 v7.x
+      3) 代碼庫中沒有任何文件標記為 v7.x
+      4) v7.1.1 的日期 2026-02-13 實際上是 v6.2.0 的時代
+  
+  結論: v7.x 是 AI agent 在自動生成 CHANGELOG 時**憑空賦予的版本號**
+        它描述的功能 (Spatial AI, Intent Gravity) 確實在代碼中實現了
+        但版本號從未被正式批准或寫入源代碼文件
+```
+
+#### 階段 5: 版本回溯 (2026-05-16, 7.x → 6.2.2)
+
+```
+commit 9819d95f5 (2026-05-16) — Fix and update
+  這是一個 AI agent 的自動提交
+  
+  在 CHANGELOG.md 的頂部插入了:
+  ## [6.2.2] - 2026-05-16
+  
+  效果: v6.2.2 被放在了 v7.x 條目的前面
+        CHANGELOG 從此變成了: 6.2.2 (最新) → 7.4.0 → 7.3.0 → 7.2.0 → ...
+
+  理由: agent 試圖"修復"版本號矛盾，但方式是在 v7.x 前面加一個 v6.x 條目
+        這實際上製造了更混亂的局面 — 版本號在 CHANGELOG 中**非單調遞增**
+```
+
+#### 階段 6: 6.2.1 → 6.5.0-dev (2026-05-21 ~ 05-25)
+
+```
+commit c39bc4009 (2026-05-21) — Fix and update
+  根 package.json: "version": "6.2.1"   ← 從 6.2.0 小版本遞增
+  理由不明 (沒有任何與 6.2.1 對應的 CHANGELOG 條目)
+
+commit ff316973b (2026-05-11) — Fix (時間標籤混亂，實際在 c39bc4009 之前)
+  根 package.json: "version": "6.2.1"   ← AI agent 設置
+  同時 desktop-app 和 mobile-app 也被改為 6.2.1
+
+commit af7f03a80 (2026-05-24) — Fix and update
+  根 package.json:     "version": "6.5.0-dev"    ← 從 6.2.1 → 6.5.0 (跳躍 0.3)
+  desktop electron:    "version": "6.5.0-dev"
+  mobile:              "version": "6.5.0-dev"
+  core/version.py:     VersionInfo(6,5,0,DEV)   ← 與 package.json 同步
+
+  這是 CURRENT HEAD 的版本狀態
+
+理由分析: 6.2.1 → 6.5.0-dev 跳躍 0.3 個 minor
+  推測理由: 1) 開發階段從 STABLE 改為 DEV
+           2) minor 從 2 跳到 5 是因為中間有 3 個隱式版本 (6.3, 6.4, 6.5)
+           3) 但沒有任何提交記錄對應這些版本
+  這不是標準的 semver 行為
+```
+
+---
+
+### 1.3 版本號矛盾根源分析
+
+#### 所有版本號位置與其 Git 溯源
+
+| 位置 | 當前值 | Git 首次出現 | Git 最後更新 | 從未更新天數 | 偏差方向 |
+|------|--------|-------------|-------------|-------------|---------|
+| `package.json` | **6.5.0-dev** | `ddb266946` (0.1.0) | `45c63d3af` (2026-05-25) | 0 天 (最新) | 基準 |
+| `core/version.py` | **6.5.0-dev** | `bcb01db3c` (6.2.0) | `af7f03a80` (2026-05-24) | 1 天 | ✅ 一致 |
+| `desktop-app/package.json` | **6.5.0-dev** | `34de65d0c` (1.0.0) | `af7f03a80` (2026-05-24) | 1 天 | ✅ 一致 |
+| `mobile-app/package.json` | **6.5.0-dev** | `2c1816e0` (6.2.0) | `af7f03a80` (2026-05-24) | 1 天 | ✅ 一致 |
+| **`VERSION` 文件** | **6.2.0** | `b29441e74` (2026-02-07) | **從未更新** | **107 天** | ❌ 落後 3 minor |
+| **`config/angela_config.json`** | **6.1.0** | `b29441e74` (2026-02-07) | **從未更新** | **107 天** | ❌ 落後 4 minor |
+| **`core/__init__.py` docstring** | **6.2.0** | `bcb01db3c` (2026-02-22) | **從未更新** | **92 天** | ❌ 落後 3 minor |
+| **`CHANGELOG.md` v7.x** | **7.2.0~7.4.0** | `0e803d64` (2026-05-09) | — | — | ❌ 超前 1 major |
+| **`CHANGELOG.md` v6.2.2** | **6.2.2** | `9819d95f5` (2026-05-16) | — | — | ❌ 落後 3 minor |
+
+#### v7.x 之謎 — 完整解讀
+
+```
+CHANGELOG 中的 v7.x 不是"真正的發布版本"
+而是 AI agent 在 CHANGELOG 生成時使用的內部工作版本號
+
+證據鏈:
+  1. Git tag: 只有 v6.0.0 和 AI 兩個 tag，無任何 v7.x tag
+  2. package.json: 從未被設置為 v7.x
+  3. code: 沒有任何源代碼文件聲明 v7.x
+  4. 時間矛盾: v7.1.1 的日期是 2026-02-13，但此時所有版本文件都還是 v6.2.0
+  5. 引入方式: CHANGELOG 在 2026-05-09 首次創建時直接寫入 v7.x
+     說明這是回溯性文檔，不是版本遞增的結果
+
+真實情況:
+  項目在 2026-02-07 ~ 2026-05-09 之間完成了 Spatial AI 等重大功能
+  AI agent 在彙總 CHANGELOG 時給這些功能分配了 v7.x 的版本號
+  但項目管理人/後續 agent 決定回歸 v6.x 主線
+  原因可能是: v7.0 從未正式發布，不能跳過
+```
+
+#### CHANGELOG vs 真實版本對照表
+
+| CHANGELOG 版本 | CHANGELOG 日期 | 真實代碼版本 (當時) | 功能 | 一致性 |
+|---------------|---------------|-------------------|------|--------|
+| [0.1.0] | 2024-XX-XX | 0.1.0 | Genesis Merge | ✅ 一致 |
+| [1.0.0] | 2024-XX-XX | 0.1.0 (未更新) | Initial Release | ❌ 回溯撰寫 |
+| [2.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Cross-Platform | ❌ 回溯撰寫 |
+| [3.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Advanced AI | ❌ 回溯撰寫 |
+| [4.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Desktop Integration | ❌ 回溯撰寫 |
+| [5.0.0] | 2025-XX-XX | 0.1.0 (未更新) | Live2D Integration | ❌ 回溯撰寫 |
+| [6.0.0] | 2026-01-XX | 0.1.0 → 6.2.0 | A/B/C Security | ⚠️ 跳躍式 |
+| [6.1.0] | 2026-02-05 | 6.2.0 | Phase 12 Restoration | ❌ 日期矛盾 |
+| [6.2.0] | 2026-02-07 | 6.2.0 | Phase 14 Complete | ✅ 一致 |
+| [7.1.1] | 2026-02-13 | 6.2.0 | Resource Analysis | ❌ v7 回溯 |
+| [7.2.0] | 2026-05-09 | 6.2.0 → 6.2.1 | Spatial Math Engine | ❌ v7 回溯 |
+| [7.3.0] | 2026-05-09 | 6.2.0 → 6.2.1 | Coordinate AI | ❌ v7 回溯 |
+| [7.4.0] | 2026-05-09 | 6.2.0 → 6.2.1 | Spatial Gravity | ❌ v7 回溯 |
+| [6.2.2] | 2026-05-16 | 6.2.1 → 6.5.0-dev | Session Manager | ⚠️ 壓在 v7 上 |
+
+#### 散亂根源總結
+
+```
+根源 1: 創建時不一致 (2026-02-07)
+  commit b29441e74 同時創建了 VERSION (6.2.0) 和 config (6.1.0)
+  兩者從第一天起就差 0.1
+
+根源 2: 文件被遺忘 (2026-02-07 至今)
+  VERSION 文件: 107 天未更新
+  config/angela_config.json: 107 天未更新
+  core/__init__.py docstring: 92 天未更新
+
+根源 3: AI Agent 自由創作 (2026-05-09)
+  CHANGELOG 首次創建時使用了 v7.x
+  這是未經人工審核的 AI 生成內容
+
+根源 4: 版本跳躍無規範 (多次)
+  0.1.0 → 6.2.0 (跳 6 個 major)
+  6.2.1 → 6.5.0-dev (跳 0.3 minor)
+  從未有過 6.3.0, 6.4.0 的發布
+
+根源 5: 無版本管理流程
+  沒有版本發布檢查清單
+  沒有 CI 版本一致性檢查
+  版本號由不同 AI agent 在不同時間隨機修改
+```
+
+### 1.4 Git 分支拓撲 (精簡)
+
+```
+v0.1.0 ──────────────────────────────────────────────→ v6.2.0 ──→ v6.2.1 ──→ v6.5.0-dev (HEAD)
+  │                                                      ↑            ↑            ↑
+  │  回溯性CHANGELOG v1.0~v5.0 (從未寫入代碼)            │            │            │
+  │  (僅存在於文檔中，Git 中無對應版本文件)                │            │            │
+  │                                                      │            │            │
+  └──── AI agent 創作 v7.x CHANGELOG (2026-05-09) ──────┼───── 合併到主線 ────────┤
+       ↑ 這些功能確實存在於代碼中                         │                        │
+       ↑ 但版本號是 agent 自行分配的                      回溯: v6.2.2 壓在       │
+                                                         v7.x 前面 (2026-05-16)  │
+                                                                                   │
+                                                         最終統一為 6.5.0-dev      │
+                                                         (2026-05-24~25)
+```
+
+### 1.5 Git 提交統計 (按時間分組)
+
+| 時期 | 提交模式 | 代表 Branch | 關鍵變更 | 版本狀態 |
+|------|---------|------------|---------|---------|
+| **2024 H2 — Genesis** (~10 commits) | `Initial commit`, `1` | `master` | MikoAI + Fragmenta 初始合併 | 0.1.0 (從未變更) |
+| **2025 H1 — Monorepo** (~30 commits) | `feat(structure):`, `feat(backend):`, `feat(desktop):` | `main` | pnpm monorepo 遷移 | 0.1.0 (從未變更) |
+| **2025 H2 — HSP Protocol** (~60 commits) | `feat(hsp):`, `fix(hsp):`, `feat(FragmentaOrchestrator):` | `feature/*` | MQTT 協議 | 0.1.0 (從未變更) |
+| **2026 Q1 — AI Engine** (~100 commits) | `feat: implement`, `refactor:`, `fix:` | `main` | HAM Memory、Agent System | 0.1.0 → 6.2.0 (跳躍) |
+| **2026 Q2 — Spatial AI** (~50 commits) | `feat: spatial`, `feat: coordinate AI` | `main` | 8D State Matrix、Intent Gravity | 6.2.0 (v7 僅存在 CHANGELOG) |
+| **2026-05 — 收斂期** (~30 commits) | `Fix and update`, `chore(backup):` | `main` | 版本統一、配置快照 | 6.2.1 → 6.5.0-dev |
+
+### 1.6 演化大事記 (完整版)
+
+```
+2024                     2025 H1                   2025 H2                    2026 Q1                        2026-05-09              2026-05-25
+│                        │                        │                          │                              │                       │
+Genesis Merge            Monorepo                 HSP Protocol               AI Engine                     Spatial AI              Current Dev
+MikoAI+Fragmenta         pnpm workspace           MQTT + Service            HAM Memory +                  8D State Matrix         版本統一到
+                         Backend/FastAPI          Discovery +               10 Agents + LIS                Intent Gravity          6.5.0-dev
+                         Desktop/Electron         Fragmenta                 + AVIS                         + Spatial Math
+                         CLI/Python               Orchestrator
+│                        │                        │                          │                              │                       │
+├────────────────────────┼────────────────────────┼──────────────────────────┼──────────────────────────────┼───────────────────────┤
+v0.1.0                   v0.1.0                   v0.1.0                    0.1.0 → 6.2.0                 6.2.0 → 6.2.1           6.5.0-dev
+(真實)                   (真實)                   (真實)                    (跳躍式更新)                   (agent 寫 v7 CHANGELOG)  (最終收斂)
+                                                                             VERSION 文件創建 (6.2.0)      agent 加 6.2.2 條目
+                                                                             config 創建 (6.1.0)
 ```
 
 ---
@@ -589,21 +851,39 @@ HSP (Hierarchical State Protocol):
 
 ## 6. 一致性綜合評分表
 
-### 6.1 版本一致性
+### 6.1 版本一致性 (13 位置全面校驗)
 
-| 文件位置 | 聲明版本 | 與代碼一致? | 差距 |
-|---------|---------|-----------|------|
-| `core/version.py:115` | **6.5.0-dev** | ✅ 基準 | — |
-| `VERSION` | **6.2.0** | ❌ **不一致** | 落後 3 minor |
-| `config/angela_config.json` | **6.1.0** | ❌ **不一致** | 落後 4 minor |
-| `core/__init__.py:9` | **6.2.0** | ❌ **不一致** | 落後 3 minor |
-| `ANGELA_STATUS.md` | **v6.3** | ❌ **不一致** | 格式混亂 |
-| `package.json:3` | **6.5.0-dev** | ✅ 一致 | — |
-| `CHANGELOG.md` (v7.3.0) | **7.3.0** | ❌ **不一致** | 主版本衝突 |
-| `desktop-app/package.json` | **6.5.0-dev** | ✅ 一致 | — |
-| `mobile-app/package.json` | **6.5.0-dev** | ✅ 一致 | — |
+| # | 文件位置 | 聲明版本 | Git 最後更新 | 滯後天數 | 與基準一致? |
+|---|---------|---------|-------------|---------|-----------|
+| 1 | `package.json` | **6.5.0-dev** | 2026-05-25 (HEAD) | 0 | ✅ 基準 |
+| 2 | `core/version.py` | **6.5.0-dev** | 2026-05-24 | 1 | ✅ |
+| 3 | `desktop-app/package.json` | **6.5.0-dev** | 2026-05-24 | 1 | ✅ |
+| 4 | `mobile-app/package.json` | **6.5.0-dev** | 2026-05-24 | 1 | ✅ |
+| 5 | `VERSION` | **6.2.0** | 2026-02-07 | **107** | ❌ 落後 3 minor + 1 phase |
+| 6 | `config/angela_config.json` | **6.1.0** | 2026-02-07 | **107** | ❌ 落後 4 minor + 1 phase |
+| 7 | `core/__init__.py` | **6.2.0** | 2026-02-22 | **92** | ❌ 落後 3 minor + 1 phase |
+| 8 | `CHANGELOG.md` (v6.2.2) | **6.2.2** | 2026-05-16 | 9 | ❌ 落後 3 minor |
+| 9 | `CHANGELOG.md` (v7.2-7.4) | **7.x** | 2026-05-09 | 16 | ❌ 超前 1 major (虛擬版本) |
+| 10 | `ANGELA_STATUS.md` | **v6.3** | — | — | ❌ 格式混亂 |
+| 11 | `packages/cli/__init__.py` | **1.1.0** | — | — | ✅ 獨立版本 (不同產品) |
+| 12 | `packages/biology-core/package.json` | **1.0.0** | — | — | ✅ 獨立版本 (不同產品) |
+| 13 | `reports/*.md` (~20 files) | **v6.2.0~v6.2.3** | 各種日期 | 各種 | ⚠️ 歷史文檔快照 |
 
-> **版本分數**: 2/9 ✅ = **22%**
+**版本一致性統計**: 13 個位置中只有 **4 個** (31%) 與當前基準 `6.5.0-dev` 一致。
+3 個核心文件 (`VERSION`, `config`, `core/__init__`) 已超過 90 天未更新。
+CHANGELOG 中存在 v7.x 虛擬版本號，與實際代碼 v6.x 不符。
+
+> **版本分數**: 4/13 一致 = **31%** (比之前 22% 略高，因為包含了更多位置的完整校驗)
+
+#### 版本根源追溯結論
+
+| 追問 | 答案 |
+|------|------|
+| 第一個版本的版本號正確嗎? | `ddb266946` 中 `0.1.0` 是正確的初始標記 |
+| 版本號變更的理由是? | 從無理由變更。每次變更都是 AI agent 自動操作，"Fix and update" 是最常見的提交信息，從未解釋版本號變更原因 |
+| v1.0~v6.0 真的存在過嗎? | **不存在**。這些版本號只存在於回溯性 CHANGELOG 中，Git 歷史中從未有任何文件被標記為這些版本 |
+| v7.x 是真實發布嗎? | **不是**。v7.x 是 AI agent 在 2026-05-09 創建 CHANGELOG 時自行分配的版本號，代碼庫從未正式採用 |
+| 6.5.0-dev 從何而來? | 2026-05-24 由 AI agent 直接從 6.2.1 跳至 6.5.0-dev，無對應的 minor 版本遞增過程 |
 
 ### 6.2 淺層一致性 (目錄結構)
 
@@ -649,13 +929,15 @@ HSP (Hierarchical State Protocol):
 
 | 層級 | 分數 | 權重 | 加權分 |
 |------|------|------|--------|
-| 版本一致性 | 22% | 15% | 3.3% |
+| 版本一致性 | 31% (13中4) | 15% | 4.7% |
 | 淺層 (結構) | 65% | 25% | 16.3% |
 | 中層 (模塊) | 66% | 35% | 23.1% |
 | 深層 (算法) | 74% | 25% | 18.5% |
-| **總分** | | **100%** | **61.2%** |
+| **總分** | | **100%** | **62.6%** |
 
-> **整體架構一致性評分**: 61.2% — **中等偏下，需要系統性改善**
+> **整體架構一致性評分**: 62.6% — **中等偏下，需要系統性改善**
+>
+> 相比初版 61.2% 微升 1.4%，原因僅是納入了更多版本位置的校驗，暴露了更多不一致（13 個位置僅 4 個一致），但版本一致性權重僅 15%，對總分影響有限。
 
 ---
 
@@ -663,11 +945,12 @@ HSP (Hierarchical State Protocol):
 
 ### 7.1 嚴重問題 (Critical)
 
-| # | 問題 | 影響 | 涉及文件 |
-|---|------|------|---------|
-| C1 | **版本號散亂**: 6 個位置 5 種不同版本 | 混淆開發者、CI/CD 可能誤判 | VERSION, config/*, core/*, docs/* |
-| C2 | **CHANGELOG v7.x 與實際 v6.x-dev 衝突**: 主版本號跳躍後未一致回歸 | 追蹤歷史困難 | CHANGELOG.md |
-| C3 | **config/ vs configs/** 雙目錄 | 配置不統一，可能覆蓋錯誤 | config/, configs/ |
+| # | 問題 | 影響 | 涉及文件 | Git 根源 |
+|---|------|------|---------|---------|
+| C1 | **版本號散亂**: 13 個位置僅 4 個一致。`VERSION` 和 `config/angela_config.json` 已 **107 天未更新** | 混淆開發者、CI/CD 可能誤判、無法確定發布版本 | VERSION, config/*, core/*, docs/* | `b29441e74` 創建時就不一致；之後無人維護 |
+| C2 | **CHANGELOG v7.x 是 AI agent 虛構的版本號**: v7.2.0~v7.4.0 描述的功能存在於代碼，但版本號從未被寫入任何源代碼文件。Git 中**無對應 tag、無對應 package.json 版本** | 版本追溯混亂，新開發者無法理解版本譜系 | CHANGELOG.md | `0e803d64` agent 首次創建 CHANGELOG 時自行分配 |
+| C3 | **無版本管理流程**: 所有版本變更均由 AI agent 在 "Fix and update" 提交中自動完成，從無人工審核、無版本發布規範 | 版本號失去語義，無法作為發布依據 | 全局 | 項目從第一天起就沒有版本管理約定 |
+| C4 | **config/ vs configs/** 雙目錄 | 配置不統一，可能覆蓋錯誤 | config/, configs/ | 目錄重構未完成 |
 
 ### 7.2 中度問題 (Major)
 
@@ -696,9 +979,26 @@ HSP (Hierarchical State Protocol):
 
 ### 8.1 立即行動 (Priority High)
 
-1. **統一版本號**: 以 `core/version.py` 中的 `6.5.0-dev` 為準，更新 VERSION、config、docs
-2. **合併 CHANGELOG 版本線**: 解決 v7.x 與 v6.x 的分歧，統一以 v6.5.0-dev 為主線
-3. **整理 config 目錄**: 合併 `config/` 和 `configs/` 為單一 `config/` 目錄
+1. **統一版本號 — 解決 107 天未更新的文件**:
+   - 更新 `VERSION` 文件: `6.2.0` → `6.5.0-dev`
+   - 更新 `config/angela_config.json`: `6.1.0` → `6.5.0-dev`
+   - 更新 `core/__init__.py` docstring: `6.2.0` → `6.5.0-dev`
+   - **建立 CI 檢查**: 在 `ci.yml` 中加入版本一致性檢查，確保所有版本位置一致
+
+2. **解決 CHANGELOG v7.x 分歧**:
+   - 方案 A (推薦): 將 v7.x 條目標註為 `[7.2.0] → Internal/Unreleased`，明確標記這些是非正式內部版本
+   - 方案 B: 將 CHANGELOG 全部重寫為線性 v6.x 譜系，v7.x 的功能歸入對應的 v6.x 版本
+   - **根本原因**: 防止 AI agent 未來再次自行分配版本號，應在 `AGENTS.md` 中增加"禁止 AI 自行分配主版本號"的規則
+
+3. **建立版本發布流程**:
+   - 定義 `CONTRIBUTING.md` 中的版本變更規則:
+     - MAJOR: 架構重大重構或打破向後兼容
+     - MINOR: 新功能 (必須有對應 CHANGELOG 條目)
+     - PATCH: 修復 (必須有對應 commit message)
+   - 創建 `RELEASE_CHECKLIST.md` 模板
+   - **禁止裸 "Fix and update" 提交** — 要求每個版本變更必須明確說明理由
+
+4. **整理 config 目錄**: 合併 `config/` 和 `configs/` 為單一 `config/` 目錄
 
 ### 8.2 短期 (Priority Medium)
 
