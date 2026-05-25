@@ -16,6 +16,7 @@
    - [Git 分支拓撲 (精簡)](#14-git-分支拓撲-精簡)
    - [Git 提交統計](#15-git-提交統計按時間分組)
    - [演化大事記](#16-演化大事記完整版)
+   - [各組件正確子版本號分析](#17-各組件正確子版本號分析)
 2. [全量架構文字設計圖](#2-全量架構文字設計圖)
 3. [淺層檢查 — 目錄結構與模塊邊界](#3-淺層檢查)
 4. [中層檢查 — 模塊間依賴與數據流](#4-中層檢查)
@@ -340,6 +341,142 @@ v0.1.0                   v0.1.0                   v0.1.0                    0.1.
                                                                              VERSION 文件創建 (6.2.0)      agent 加 6.2.2 條目
                                                                              config 創建 (6.1.0)
 ```
+
+---
+
+### 1.7 各組件正確子版本號分析
+
+> 以下基於實際代碼功能完整度、獨立於任何現有版本號，為每個組件重新計算正確的 semver。
+>
+> **原則**: 非 lockstep — 每個組件依自身功能成熟度獨立定版。
+> MAJOR = 架構質變/breaking change, MINOR = 新功能集合, PATCH = 修復, -dev = 存在已知不一致
+
+#### ① apps/backend (Python FastAPI) → **7.5.0-dev**
+
+這是整個專案的核心，503 個 Python 源文件、34 個 core/ 子包、40 個 ai/ 子系統。
+
+| 版本里程碑 | 代碼證據 | 功能說明 | breaking? |
+|-----------|---------|---------|-----------|
+| v7.0 | `core/security/*`, 三鑰體系, `SignedCommunicationMiddleware` | A/B/C 安全架構 — 打破 v5 以前所有安全模型 | ✅ 是 |
+| v7.1 | `ai/memory/ham_memory/`, `ai/agents/*` (10 agents) | HAM 分層記憶 + 多 Agent 系統 | ❌ |
+| v7.2 | `state_matrix.py` shunting-yard + RPN executor | 原生空間數學引擎 (純幾何算術，脫離 LLM) | ❌ |
+| v7.3 | 8 軸 `compute_coordinate()`, `art_learning_system.py` spatial aesthetic | 原生坐標 AI + 美感空間推理 | ❌ |
+| v7.4 | `apply_intent_gravity()`, `apply_inter_dimensional_drag()`, `retrieve_by_spatial_proximity()` | 意圖重力 + 維度拖拽 + 空間記憶 | ❌ |
+| **v7.5** | `services/connection_session.py`, 各種修復 | **Session 握手協議 (超出 v7.4 的功能)** | ❌ |
+
+**當前錯誤標記對照**:
+| 文件 | 當前值 | 正確值 | 錯誤分析 |
+|------|--------|--------|---------|
+| `pyproject.toml` | 0.1.0 | **7.5.0-dev** | 從 monorepo 遷移 (`e32cfe31b`, 2025-03) 後從未更新，已過期約 **15 個月** |
+| `setup.py` | 0.1.0 | **7.5.0-dev** | 同上 |
+| `package.json` (backend/) | 1.0.0 | **7.5.0-dev** | 單獨的 pnpm workspace 文件，被遺忘 |
+| `core/version.py` | 6.5.0-dev | **7.5.0-dev** | MAJOR 少 1 — 忽視了 Spatial AI 帶來的架構質變 |
+| `core/__init__.py` | 6.2.0 | **7.5.0-dev** | docstring 未更新 (92 天) |
+
+---
+
+#### ② apps/desktop-app (Electron) → **4.1.0-dev**
+
+Desktop 是**後端的客戶端**，它不實現 Spatial AI / HAM / HSP，它實現的是**桌面寵物互動 + Live2D 渲染 + 通訊層**。37 個 JS 模塊、一個 1566 行的 main process。
+
+| 版本里程碑 | 代碼證據 | 功能說明 | breaking? |
+|-----------|---------|---------|-----------|
+| v1.0 | `main.js` Electron shell, 基本 window | frameless + transparent + always-on-top 桌面窗口 | — |
+| v2.0 | `live2d-cubism-wrapper.js` (1426 行), Cubism SDK 5 R5 | Live2D: 7 表情, 10 動作, 物理模擬 (頭髮/衣物) | ✅ 新渲染引擎 |
+| v3.0 | `tray-manager.js`, `desktop-presence.js`, autostart | 系統托盤 + 自動啟動 + 桌面空間感知 + 壁紙整合 | ❌ |
+| v4.0 | `security-manager.js`, Key C, `state-matrix.js` | 安全層 (Key C 加密) + 4D 情緒狀態矩陣同步 | ✅ 安全架構 |
+| **v4.1** | `backend-websocket.js` session handshake, IPC 重構 | **Session 協議 + 移除 auto-reconnect + 修復多重 client_id** | ❌ |
+
+**為什麼是 4.x 而不是 7.x？** Desktop 的 v4 (security) 約等於 backend 的 v6 水平。Backend v7 的 Spatial AI 完全在服務器端，desktop 只是被動顯示 state matrix 的結果，不涉及自身的架構質變。
+
+**當前錯誤標記**: `electron_app/package.json` → `6.5.0-dev` ❌ — 盲目跟隨根 package.json，非自身功能反映。降級到 4.1.0-dev 才是真實狀態。
+
+---
+
+#### ③ apps/mobile-app (React Native) → **1.2.0-dev**
+
+Mobile 是**最不成熟的組件**。只有 **3 個源文件**：`App.js` (828 行)、`src/api/client.js` (131 行)、`src/security/encryption.js` (212 行)。無 Live2D、無 WebSocket、無複雜 UI。
+
+| 版本里程碑 | 代碼證據 | 功能說明 |
+|-----------|---------|---------|
+| v1.0 | `App.js` | React Native 骨架 + QR code 掃描配對 + Matrix 狀態顯示 |
+| v1.1 | `src/security/encryption.js` | AES-256-CBC 加密通訊 + HMAC-SHA256 簽名 + Key B 整合 |
+| **v1.2** | `src/api/client.js` | **API 客戶端 (healthCheck, getSystemStatus, connectWebSocket)** |
+
+**為什麼這麼低？** 對比 desktop (37 JS 模塊, 完整 Live2D, WebSocket, system tray, IPC security)，mobile 只有 3 個源文件，功能密度差了一個數量級。標記為 6.5.0-dev 是**整個代碼庫最嚴重的版本號通貨膨脹**。
+
+**當前錯誤標記**: `package.json` → `6.5.0-dev` ❌ — MAJOR 虛高 5、MINOR 虛高 3。
+
+---
+
+#### ④ packages/cli (Python CLI) → **1.1.0** ✅ (保持當前)
+
+獨立工具，有自己的生命週期。8 個 Python 模塊。
+
+| 版本 | 代碼證據 | 功能 |
+|------|---------|------|
+| v1.0 | `cli/main.py`, `cli/unified_cli.py` | 基礎 CLI: health check, chat, analyze |
+| **v1.1** | HSP 整合, `port_manager.py`, error handling | **HSP protocol CLI + port conflict resolution** |
+
+**當前錯誤標記**: `package.json` → `1.0.0` ❌ 與 `__init__.py` (`1.1.0`) 自身不一致。CLI package.json 應更新為 `1.1.0`。
+
+---
+
+#### ⑤ packages/biology-core (Voxel DNA) → **1.0.0** ✅ (保持當前)
+
+| 版本 | 代碼證據 | 功能 |
+|------|---------|------|
+| **v1.0** | `src/dna_body.py` (285 行) | AngelaDNA 體素引擎: 2.5D 128×384×6×5 軀體矩陣, 9 段脊椎, 五指獨立指節, 慣性布料物理 |
+
+單一文件但功能穩定。1.0.0 合理。
+
+---
+
+#### 總版本 vs 子版本關係圖
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Unified AI Project                                │
+│                    總版本: 7.5.0-dev                                 │
+│  (定義: 整個專案的完整功能集合, 由 backend 主版本驅動)               │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │ apps/backend      7.5.0-dev  ▲ 主產品, 驅動總版本             │   │
+│  │ (FastAPI+AI Engine)          │ 總版本 = backend 版本           │   │
+│  └──────────────────────────────┘                                  │   │
+│                                                                     │
+│  ┌────────────────────────┐   ┌────────────────────────┐           │   │
+│  │ apps/desktop-app       │   │ apps/mobile-app        │           │   │
+│  │ 4.1.0-dev              │   │ 1.2.0-dev              │           │   │
+│  │ (Electron + Live2D)    │   │ (React Native)         │           │   │
+│  │ ↑ 版本反映自身渲染層    │   │ ↑ 獨立版本, 成熟度低    │           │   │
+│  │   和安全層的成熟度      │   │   不應跟隨 backend      │           │   │
+│  └────────────────────────┘   └────────────────────────┘           │   │
+│                                                                     │
+│  ┌────────────────────────┐   ┌────────────────────────┐           │   │
+│  │ packages/cli           │   │ packages/biology-core  │           │   │
+│  │ 1.1.0 ✅               │   │ 1.0.0 ✅               │           │   │
+│  │ (Python CLI, 獨立工具)  │   │ (Voxel DNA, 獨立包)    │           │   │
+│  └────────────────────────┘   └────────────────────────┘           │   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### 子版本號錯誤修正行動清單
+
+| 文件 | 當前值 | 正確值 | 操作 | 緊急性 |
+|------|--------|--------|------|--------|
+| `apps/backend/pyproject.toml` | 0.1.0 | 7.5.0-dev | 修改 version 字段 | 🔴 High |
+| `apps/backend/setup.py` | 0.1.0 | 7.5.0-dev | 修改 version 字段 | 🔴 High |
+| `apps/backend/package.json` | 1.0.0 | 7.5.0-dev | 修改 version 字段 | 🔴 High |
+| `apps/backend/src/core/version.py` | 6.5.0-dev | **7.5.0-dev** | MAJOR +1 | 🔴 High |
+| `apps/backend/src/core/__init__.py` | 6.2.0 | 7.5.0-dev | 更新 docstring | 🟡 Medium |
+| `apps/desktop-app/electron_app/package.json` | 6.5.0-dev | **4.1.0-dev** | MAJOR -2, MINOR -4 | 🟡 Medium |
+| `apps/mobile-app/package.json` | 6.5.0-dev | **1.2.0-dev** | MAJOR -5, MINOR -3 | 🟡 Medium |
+| `packages/cli/package.json` | 1.0.0 | **1.1.0** | PATCH +1 (與 __init__.py 統一) | 🟢 Low |
+| `VERSION` | 6.2.0 | **7.5.0-dev** | 與 backend 同步 | 🔴 High |
+| `config/angela_config.json` | 6.1.0 | **7.5.0-dev** | 與 backend 同步 | 🔴 High |
 
 ---
 
