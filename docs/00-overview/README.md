@@ -75,7 +75,7 @@
 ### 🚀 新用户入门路径
 
 1. `README.md` - 项目概述
-2. `docs/README.md` - 文档导航
+2. `docs/INDEX.md` - 文档导航
 3. `docs/GLOSSARY.md` - 术语表
 4. `docs/00-overview/PROJECT_CHARTER.md` - 详细架构
 

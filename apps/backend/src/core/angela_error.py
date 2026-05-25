@@ -15,6 +15,8 @@ from enum import Enum
 from datetime import datetime
 import json
 
+logger = logging.getLogger(__name__)
+
 
 class ErrorSeverity(Enum):
     """错误严重程度"""

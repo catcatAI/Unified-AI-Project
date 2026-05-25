@@ -21,17 +21,17 @@ structure, directory organization, and file placement principles.
 ```
 angela-ai/
 ├── apps/
-│   └── backend/                 # Backend application
-│       ├── src/                 # Source code
-│       │   ├── ai/              # AI systems
-│       │   ├── api/             # API endpoints
-│       │   ├── core/            # Core components
-│       │   │   └── autonomous/  # Autonomous life systems
-│       │   ├── game/            # Desktop Pet game
-│       │   └── services/        # Service layer
-│       ├── debug/               # Debug utilities
-│       ├── tests/               # Backend tests
-│       └── tools/               # Backend tools
+│   ├── backend/                 # Backend application (FastAPI)
+│   │   ├── src/                 # Source code
+│   │   │   ├── ai/              # AI systems (genesis, ensemble, memory)
+│   │   │   ├── api/             # API endpoints
+│   │   │   ├── core/            # Core components (config, errors, etc.)
+│   │   │   ├── game/            # Desktop Pet game
+│   │   │   └── services/        # Service layer
+│   │   ├── debug/               # Debug utilities
+│   │   └── tools/               # Backend tools
+│   ├── desktop-app/             # Electron + Live2D frontend
+│   └── mobile-app/              # React Native bridge
 ├── archive/                     # Archived/deprecated code
 ├── cli/                         # Command-line interface
 ├── config/                      # Configuration files
@@ -40,7 +40,15 @@ angela-ai/
 │   ├── memories/                # Memory storage
 │   └── models/                  # ML models
 ├── docs/                        # Documentation
-│   └── screenshots/             # Screenshots
+│   ├── 00-overview/             # Project overview, charter, glossary
+│   ├── 02-game-design/          # Game design docs
+│   ├── 03-technical-architecture/ # Architecture, HSP, HAM specs
+│   ├── 04-advanced-concepts/    # Agent collaboration, meta-formulas
+│   ├── 05-development/          # Dev guidelines
+│   ├── 06-project-management/   # Status reports, planning
+│   └── 09-archive/              # Archived/outdated docs
+├── js/
+│   └── _archive/                # Archived orphaned JS modules
 ├── logs/                        # Log files
 ├── resources/                   # Static resources
 │   ├── audio/                   # Audio files
@@ -52,6 +60,8 @@ angela-ai/
 │   └── debug/                   # Debug/diagnostic scripts
 ├── temp/                        # Temporary files
 └── tests/                       # Test suites
+    ├── ai/                      # AI system tests
+    ├── core/                    # Core component tests
     └── game/                    # Game tests
 ```
 
@@ -70,12 +80,11 @@ Main backend application containing all server-side code.
 - **`src/api/`** - FastAPI endpoints and API routes
 
 - **`src/core/`** - Core business logic
-  - **`autonomous/`** - Autonomous life systems (26 modules)
-    - Biological systems (endocrine, nervous, tactile)
-    - Digital identity and self-awareness
-    - Memory and neuroplasticity
-    - Desktop interaction and presence
-    - Action execution and behavior
+  - Error hierarchy (`angela_error.py`)
+  - Configuration loader (`config_loader.py`)
+  - Interfaces/protocols
+  - Security utilities
+  - Service registry
 
 - **`src/game/`** - Desktop Pet implementation
   - `desktop_pet.py` - Main Desktop Pet class
@@ -247,13 +256,13 @@ from apps.backend.src.core.autonomous import DesktopPet
 
 ## 📊 Current Statistics
 
-- **Total Python Files**: ~477 (apps/backend/src/)
-- **JavaScript Modules**: 52 (electron_app/js/)
-- **Core System Files**: 26 (autonomous/)
+- **Total Python Files**: ~454 (apps/backend/src/)
+- **JavaScript Modules**: 26 (electron_app/js/), 24 archived (js/_archive/)
+- **Core System Files**: 15+ (core/)
 - **AI Agent Files**: 20 (agents/)
-- **Scripts**: 50+ (organized in subdirectories)
-- **Tests**: 100+ (tests/)
-- **Lines of Code**: ~30,000+
+- **Scripts**: 30+ (organized in subdirectories)
+- **Tests**: 89+ (tests/)
+- **Lines of Code**: ~25,000+
 
 ## 🔍 Quick Reference
 
