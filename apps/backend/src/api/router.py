@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Body
 from api.routes.ops_routes import router as ops_router
+from api.routes.chat_routes import router as chat_router
 
 router = APIRouter(prefix="/api/v1")
 
@@ -21,6 +22,7 @@ from api.v1.endpoints import include_endpoint_routers
 include_endpoint_routers(router)
 
 router.include_router(ops_router)
+router.include_router(chat_router)
 
 
 @router.get("/")

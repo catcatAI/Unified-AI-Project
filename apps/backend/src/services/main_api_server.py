@@ -40,9 +40,8 @@ Usage:
 
 import os
 import sys
-import uuid
-import random
 import asyncio
+import httpx
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
@@ -268,31 +267,10 @@ message_manager = MessageManager()
 
 from fastapi import (
     FastAPI,
-    HTTPException,
-    APIRouter,
-    Body,
-    BackgroundTasks,
     Depends,
-    WebSocket,
-    WebSocketDisconnect,
-    Request,
+    Body,
 )
 from services.angela_llm_service import get_llm_service
-
-_chat_service_instance = None
-
-
-async def _get_chat_service():
-    """Lazy-init chat service via registry (replaces direct import)."""
-    global _chat_service_instance
-    if _chat_service_instance is None:
-        from core.interfaces.service_registry import get_registry
-        _chat_service_instance = get_registry().get("chat_service")
-        if _chat_service_instance is None:
-            from services.chat_service import get_angela_chat_service as _init_chat
-            _chat_service_instance = await _init_chat()
-    return _chat_service_instance
-
 
 from api.router import router as api_v1_router
 
@@ -302,10 +280,13 @@ app = FastAPI(
     version="6.0.4",
 )
 
+from core.autonomous.desktop_interaction import DesktopInteraction
+from core.autonomous.action_executor import ActionExecutor
+from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
+
 from api.lifespan import (
     lifespan,
     setup_middleware,
-    _angela_cfg,
     get_metabolic_heartbeat,
     get_desktop_interaction,
     get_action_executor,
@@ -314,301 +295,12 @@ from api.lifespan import (
     get_tactile_service,
     get_digital_life,
     get_economy_manager,
-    get_abc_key_manager,
 )
+
+from api.routes.chat_routes import router as chat_router
 
 setup_middleware(app)
 app.router.lifespan_context = lifespan
-
-# Session management with TTL
-class TTLSessionManager:
-    def __init__(self):
-        self._sessions: Dict[str, Dict[str, Any]] = {}
-        self._config = _angela_cfg.get_authority("angela_core", {}).get("session_manager", {}) if _angela_cfg else {}
-        self._ttl = self._config.get("ttl_seconds", 3600)
-        self._max_sessions = self._config.get("max_sessions", 1000)
-
-    def _purge_expired(self):
-        now = datetime.now()
-        expired = [sid for sid, s in self._sessions.items()
-                    if (now - datetime.fromisoformat(s.get("created_at", now.isoformat()))).total_seconds() > self._ttl]
-        for sid in expired:
-            del self._sessions[sid]
-        if len(self._sessions) > self._max_sessions:
-            sorted_sessions = sorted(self._sessions.items(), key=lambda x: x[1].get("created_at", ""))
-            for sid, _ in sorted_sessions[:len(sorted_sessions) - self._max_sessions]:
-                del self._sessions[sid]
-
-    def get(self, session_id: str) -> Optional[Dict[str, Any]]:
-        self._purge_expired()
-        return self._sessions.get(session_id)
-
-    def set(self, session_id: str, data: Dict[str, Any]):
-        self._purge_expired()
-        if len(self._sessions) >= self._max_sessions:
-            oldest = min(self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", ""))
-            del self._sessions[oldest]
-        self._sessions[session_id] = data
-
-    def __contains__(self, session_id: str) -> bool:
-        self._purge_expired()
-        return session_id in self._sessions
-
-    def items(self):
-        self._purge_expired()
-        return self._sessions.items()
-
-
-sessions = TTLSessionManager()
-
-async def _handle_chat_request(
-    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human"
-) -> Dict[str, Any]:
-    """處理聊天請求 — 合併 Flow A (AngelaChatService) 完整管線 + Flow B HTTP"""
-    logger.info(f"📩 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
-
-    if not user_message or not user_message.strip():
-        raise HTTPException(status_code=400, detail="訊號遺失：消息不能為空")
-
-    _chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
-    _max_len = _chat_cfg.get("max_message_length", 4000)
-    _trunc_len = _chat_cfg.get("truncation_length", 1000)
-    _http_timeout = _chat_cfg.get("http_timeout", 30.0)
-    if len(user_message) > _max_len:
-        logger.warning(f"🛡️ [LIS] Intercepted oversized input ({len(user_message)} chars)")
-        user_message = user_message[:_trunc_len]
-
-    if session_id not in sessions:
-        sessions.set(session_id, {
-            "created_at": datetime.now().isoformat(),
-            "origin": origin,
-            "user_name": user_name
-        })
-
-    try:
-        from services.math_verifier import MathVerifier
-        is_math = False
-        try:
-            digital_life = get_digital_life()
-            matrix = digital_life.state_matrix if digital_life and hasattr(digital_life, "state_matrix") else None
-            verifier = MathVerifier(state_matrix=matrix)
-            is_math = verifier.is_math_message(user_message)
-            if is_math:
-                logger.info(f"🧮 [DualRail] Math task detected from {origin}")
-                verification = await verifier.verify(user_message, user_name)
-                if verification.response_text:
-                    return _build_math_response(verification, matrix, user_message, session_id)
-                is_math = False
-        except Exception as math_err:
-            logger.warning(f"⚠️ [DualRail] Math verification failed: {math_err}")
-            is_math = False
-
-        _chat_svc = await _get_chat_service()
-        response_text = await asyncio.wait_for(
-            _chat_svc.generate_response(user_message, user_name),
-            timeout=_http_timeout,
-        )
-        _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
-        _trunc_msg = _chat_cfg.get("truncation_message", "...（截斷）")
-        _schema_ver = _chat_cfg.get("response_schema_version", "2.0")
-        return {
-            "response_text": response_text,
-            "source": _flow_source,
-            "schema_version": _schema_ver,
-            "truncation_message": _trunc_msg if len(user_message) > _max_len else "",
-            "emotion": "happy",
-            "emotion_confidence": 0.5,
-            "emotion_intensity": 0.5,
-            "session_id": session_id,
-        }
-
-    except asyncio.TimeoutError:
-        logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
-        return {
-            "response_text": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
-            "source": "fallback-timeout",
-            "emotion": "neutral",
-            "emotion_confidence": 0.5,
-            "emotion_intensity": 0.5,
-            "session_id": session_id,
-        }
-    except Exception as e:
-        logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="internal server error")
-
-
-def _build_math_response(verification, matrix, user_message: str, session_id: str) -> Dict[str, Any]:
-    """建構數學驗證回應（抽出為獨立函數）"""
-    if verification.needs_clarification:
-        emotion, emotion_confidence, emotion_intensity = "confused", 0.7, 0.6
-    elif not verification.matches:
-        emotion, emotion_confidence, emotion_intensity = "surprised", 0.8, 0.7
-    elif verification.extraction and verification.extraction.confidence >= 0.8:
-        emotion, emotion_confidence, emotion_intensity = "happy", 0.9, 0.6
-    else:
-        emotion, emotion_confidence, emotion_intensity = "calm", 0.6, 0.4
-
-    if matrix and verification.final_answer is not None:
-        epsilon_conf = verification.extraction.confidence if verification.extraction else 0.5
-        matrix.epsilon.values["certainty"] = min(1.0, 0.5 + epsilon_conf * 0.5)
-        matrix.epsilon.values["complexity"] = min(1.0, len(user_message) / 50.0)
-        if not verification.matches:
-            matrix.epsilon.values["certainty"] *= 0.5
-            matrix.gamma.values["surprise"] = min(1.0, matrix.gamma.values.get("surprise", 0.0) + 0.3)
-        elif verification.needs_clarification:
-            matrix.beta.values["confusion"] = min(1.0, matrix.beta.values.get("confusion", 0.0) + 0.4)
-        matrix.apply_epsilon_influence()
-
-    return {
-        "response_text": verification.response_text,
-        "source": "dual_rail",
-        "emotion": emotion,
-        "emotion_confidence": emotion_confidence,
-        "emotion_intensity": emotion_intensity,
-        "session_id": session_id,
-    }
-
-
-@api_v1_router.get("/security/sync-key-c")
-async def sync_key_c(request: Request):
-    """Check Key C availability for desktop app synchronization (Localhost restricted)"""
-    client_host = request.client.host
-    if client_host not in ["127.0.0.1", "::1", "localhost"]:
-        logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}")
-        raise HTTPException(status_code=403, detail="Access restricted to localhost")
-
-    abc_key_manager = get_abc_key_manager()
-    key_c = abc_key_manager.get_key("KeyC")
-    if not key_c:
-        raise HTTPException(status_code=404, detail="Security keys not initialized")
-    return {"key_available": True}
-
-
-@api_v1_router.post("/session/start")
-async def start_session(request: Dict[str, Any] = Body(default={})):
-    session_id = f"sess-{uuid.uuid4().hex[:8]}"
-    sessions.set(session_id, {
-        "created_at": datetime.now().isoformat(),
-        "messages": [],
-        "user_name": request.get("user_name", "User"),
-    })
-    return {"session_id": session_id, "message": "Welcome to Angela AI!"}
-
-
-@api_v1_router.post("/session/{session_id}/send")
-async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
-    if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    user_message = request.get("text", request.get("message", ""))
-    session = sessions.get(session_id)
-    messages = session.get("messages", [])
-    messages.append(
-        {
-            "role": "user",
-            "content": user_message,
-            "timestamp": datetime.now().isoformat(),
-        }
-    )
-
-    responses = [
-        "我明白了！让我帮你想想...",
-        "这是个很有趣的想法！",
-        "我可以帮你处理这个。",
-        "让我分析一下...",
-        "没问题，我这就帮你做！",
-    ]
-    ai_response = random.choice(responses)
-
-    messages.append(
-        {
-            "role": "assistant",
-            "content": ai_response,
-            "timestamp": datetime.now().isoformat(),
-        }
-    )
-
-    return {"session_id": session_id, "response_text": ai_response}
-
-
-@api_v1_router.post("/angela/chat")
-async def angela_chat(request: Dict[str, Any] = Body(...)):
-    """
-    Angela 智能對話接口
-    ==================
-    這是 Angela 與用戶對話的核心接口。
-
-    處理流程：
-    1. 接收用戶消息
-    2. 通過 Angela LLM 服務生成回應
-    3. 分析用戶情感
-    4. 返回經過 Angela 個性化處理的回應
-
-    用戶不是直接與 LLM 對話，而是透過 Angela。
-    """
-    user_message = request.get("message", request.get("text", ""))
-    session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
-    user_name = request.get("user_name", "朋友")
-    history = request.get("history", [])
-    origin = request.get("origin", "Human")
-
-    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
-
-
-@api_v1_router.post("/dialogue")
-async def dialogue(request: Dict[str, Any] = Body(...)):
-    """
-    对話接口 - 與 /angela/chat 相同，為前端兼容性提供
-    """
-    user_message = request.get("message", request.get("text", ""))
-    session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
-    user_name = request.get("user_name", "朋友")
-    history = request.get("history", [])
-    origin = request.get("origin", "Human")
-
-    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
-
-
-@api_v1_router.post("/chat/unified")
-async def unified_chat(request: Dict[str, Any] = Body(...)):
-    """
-    Unified chat endpoint for multi-frontend/persona migration.
-
-    Migration notes:
-    - New clients should prefer this endpoint.
-    - Legacy endpoints (/dialogue, /angela/chat) remain available during migration.
-    """
-    user_message = request.get("message", request.get("text", ""))
-    context = {
-        "user_id": request.get("user_name", request.get("user_id", "User")),
-        "tenant_id": request.get("tenant_id", "default"),
-        "persona_id": request.get("persona_id", "angela"),
-        "client_id": request.get("origin", request.get("client_id", "desktop")),
-    }
-    user_name = request.get("user_name", context["user_id"])
-    history = request.get("history", [])
-
-    # Default session id is now namespace-aware to reduce cross-client confusion
-    session_id = request.get(
-        "session_id",
-        f"{context['tenant_id']}::{context['persona_id']}::{uuid.uuid4().hex[:8]}",
-    )
-    origin = request.get("origin", context["client_id"])
-
-    response = await _handle_chat_request(
-        user_message=user_message,
-        user_name=user_name,
-        history=history,
-        session_id=session_id,
-        origin=origin,
-    )
-    response["context"] = context
-    response["migration_note"] = (
-        "Use /api/v1/chat/unified for multi-persona isolation; "
-        "legacy /dialogue and /angela/chat remain temporarily supported."
-    )
-    return response
-
 
 # --- Desktop Interaction API ---
 
@@ -719,6 +411,8 @@ def _run_uvicorn_in_thread():
 
 
 async def _run_repl():
+    from api.lifespan import _get_chat_service
+
     import logging
     logging.disable(logging.WARNING)
 

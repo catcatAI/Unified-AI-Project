@@ -246,7 +246,7 @@ async def websocket_handler(websocket: WebSocket):
                 }, websocket)
 
             elif data.get("type") == "chat_message":
-                from services.main_api_server import _handle_chat_request
+                from api.routes.chat_routes import _handle_chat_request
                 user_message = data.get("data", {}).get("content", "")
                 message_id = data.get("data", {}).get("message_id", "")
                 user_name = data.get("data", {}).get("user_name", "朋友")

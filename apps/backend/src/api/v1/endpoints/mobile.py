@@ -113,7 +113,7 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)):
 @router.post("/chat")
 async def mobile_chat(data: Dict[str, Any] = Body(...)):
     """行動端聊天代理 (NGR v6.3)"""
-    from services.main_api_server import _handle_chat_request
+    from api.routes.chat_routes import _handle_chat_request
 
     message = data.get("message", "")
     user_name = data.get("user_name", "朋友")

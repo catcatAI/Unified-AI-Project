@@ -139,6 +139,18 @@ def get_economy_manager() -> EconomyManager:
     return _economy_manager
 
 
+async def _get_chat_service():
+    """Lazy-init chat service via registry (replaces direct import)."""
+    global _chat_service_instance
+    if _chat_service_instance is None:
+        from core.interfaces.service_registry import get_registry
+        _chat_service_instance = get_registry().get("chat_service")
+        if _chat_service_instance is None:
+            from services.chat_service import get_angela_chat_service as _init_chat
+            _chat_service_instance = await _init_chat()
+    return _chat_service_instance
+
+
 def _validate_environment_variables():
     required_keys = ["ANGELA_KEY_A", "ANGELA_KEY_B", "ANGELA_KEY_C"]
     missing_keys = []
@@ -157,7 +169,6 @@ def _validate_environment_variables():
 async def lifespan(app: FastAPI):
     """Startup: pre-init core services. Shutdown: cleanup resources."""
     from services.websocket_manager import broadcast_state_updates
-    from services.main_api_server import _get_chat_service
 
     logger.info("[Lifecycle] Starting Angela AI API server...")
     try:
