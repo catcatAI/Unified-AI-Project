@@ -82,32 +82,28 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 ## A 級（本月 — 架構健康度提升）
 
-### A1. 完成 `chat_service.py` 與 `main_api_server.py` 解耦
+### ~~A1. 完成 `chat_service.py` 與 `main_api_server.py` 解耦~~ ✅ 已完成
 
 代碼審計發現: `chat_service.py` 已存在 (276行)，但 `main_api_server.py` 仍在 3 處直接 import 並呼叫。
 
-| 動作 | 檔案 |
-|------|------|
-| 將 `generate_angela_response()` 移回 `chat_service.py` | `chat_service.py`, `main_api_server.py` |
-| 移除 `main_api_server.py` 中 3 處 import 與呼叫 | `main_api_server.py` L286, L356, L621, L1293 |
-| 改由 wiring.py 統一注入 | `wiring.py` |
+| 動作 | 檔案 | 狀態 |
+|------|------|------|
+| 移除 `main_api_server.py` 中 import (L295) + 3 處呼叫 (L365, L630, L1302) | `main_api_server.py` | ✅ `_get_chat_service()` helper + registry lookup |
+| `router.py` 中 import (L169) 改 registry | `api/router.py` | ✅ Registry lookup w/ fallback |
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
 | 🟡2 | 🔴3 | 1天 | **11** |
 
-### A2. 修 `wiring.py` 循環依賴
+執行: 2026-05-26
 
-代碼審計發現: `wiring.py` 存在 (79 行) 但 `from services.main_api_server import get_desktop_interaction, ...` 形成了反向依賴。
+### ~~A2. 修 `wiring.py` 循環依賴~~ ✅ 無需變更
 
-| 動作 | 說明 |
-|------|------|
-| 將 main_api_server 的函數引用改為 lazy import | wiring.py L15-24 |
-| 或將被引用的函數移到獨立模塊 | 視情況而定 |
+代碼審計發現: `wiring.py` 的 `from services.main_api_server import ...` 寫在 `initialize_all_services()` 函數內部 (lazy import)，而非模塊級別。`main_api_server.py` 也只是函數內 `from services.wiring import initialize_all_services`。雙向 import 皆在函數內部，**不會觸發循環依賴**。
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🟡2 | 0.5天 | **9.5** |
+| 🟢1 | 🟢1 | 0天 | **5** |
 
 ### A3. 拆分上帝模塊
 
@@ -121,13 +117,19 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟡2 | 🔴3 | 6天 | **6** |
 
-### A4. 集成五大理論公式到 LLM Prompt
+### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
-代碼審計確認: 5 個公式 (`HSMFormula`, `CdmDividend`, `LifeIntensity`, `ActiveCognition`, `NonParadox`) 在 `core/` 中定義完整，但 `chat_service.py` 和 `angela_llm_service.py` 皆未 import 或呼叫它們。需將計算結果注入 `_construct_angela_prompt()`。
+代碼審計確認: 5 個公式在 `core/` 中定義完整，但 `chat_service.py` 和 `angela_llm_service.py` 皆未 import 或呼叫它們。需將計算結果注入 `_construct_angela_prompt()`。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟡2 | 🟡2 | 1.5天 | **8.5** |
+| 公式 | 類 | 狀態 |
+|------|-----|------|
+| HSM | `HSMFormulaSystem` (hsm_formula_system.py) | ✅ `_get_formula_summaries()` 注入 |
+| CDM 配息 | `CDMCognitiveDividendModel` (cdm_dividend_model.py) | ✅ 同上 |
+| 生命強度 | `LifeIntensityFormula` (life_intensity_formula.py) | ✅ 同上 |
+| 活躍認知 | `ActiveCognitionFormula` (active_cognition_formula.py) | ✅ 同上 |
+| 非悖論共存 | `NonParadoxExistence` (non_paradox_existence.py) | ✅ 同上 |
+
+執行: 2026-05-26 — 新增 `_get_formula_summaries()` 方法 + 注入 `_construct_angela_prompt()` (angela_llm_service.py)
 
 ### A5. 補 DI 框架 (FastAPI Depends) 到所有路由
 
@@ -139,13 +141,18 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟡2 | 🔴3 | 2天 | **10** |
 
-### A6. 補全 Matrix Annotation（4D → 8D）
+### ~~A6. 補全 Matrix Annotation（4D → 8D）~~ ✅ 已完成
 
-更新 `ANGELA_MATRIX_ANNOTATION_GUIDE.md` 補充 εθζη 定義；掃描 `ai/` 子包補齊缺失註解。
+更新 `ANGELA_MATRIX_ANNOTATION_GUIDE.md` 補充 εθζη 定義；掃描 `ai/` 子包補齊缺失註解（`ai/` 目錄不存在，無需掃描）。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟢1 | 🟡2 | 0.5天 | **6.5** |
+| 動作 | 狀態 |
+|------|------|
+| 4D → 8D 標題/描述更新 | ✅ `ANGELA_MATRIX_ANNOTATION_GUIDE.md` |
+| 新增 εθζη 維度定義表 | ✅ ε(環境), θ(元認知), ζ(連通), η(執行) |
+| 更新示例 2 為 8D | ✅ StateMatrix4D → StateMatrix8D |
+| 掃描 `ai/` 子包 | ✅ 目錄不存在，無操作 |
+
+執行: 2026-05-26
 
 ### A7. 建立 `docs/ARCHITECTURE.md` SSOT
 
@@ -266,20 +273,16 @@ Week 1 (已全部完成 ✅):
   → 11/11 完成！0 天剩餘
 
 Week 2-3 (架構健康度):
-  A1 (chat_service解耦 1d) + A2 (wiring循環 0.5d) + A5 (DI框架 2d) + B9 (根目錄 0.5d)
-  → 4 天
-
-Week 2-3 (架構健康度):
-  A1 (chat_service解耦 1d) + A2 (wiring循環 0.5d) + A5 (DI框架 2d) + B9 (根目錄 0.5d)
-  → 4 天 — 架構紀律恢復
+  ✅ A1 (chat_service解耦 1d) + ✅ A2 (wiring循環 0d) + A5 (DI框架 2d) + B9 (根目錄 0.5d)
+  → 2.5 天剩餘
 
 Week 4-5 (深度重構):
   A3 (拆上帝模塊 6d)
   → 6 天 — 最大耦合解除
 
 Week 6 (智能與文檔):
-  A4 (公式集成 1.5d) + A6 (Matrix補全 0.5d) + A7 (SSOT 1d) + B6 (持久層統一 2d)
-  → 5 天 — AI + 文檔同步
+  ✅ A4 (公式集成 1.5d) + ✅ A6 (Matrix補全 0.5d) + A7 (SSOT 1d) + B6 (持久層統一 2d)
+  → 3 天剩餘
 
 Ongoing:
   B7 (singleton→DI 2d) + B10 (docs整理 2d)
@@ -310,8 +313,8 @@ Ongoing:
 | 架構一致性總分 | 62.6% | **85%+** | A3, A5, B6 |
 | 上帝模塊 (1668/2196 行) | 2 個 | **0 個** (<500行) | A3 |
 | config/ 雙目錄 | 2 個 | **✅ 1 個** (S4 已完成) | S4 |
-| chat_service 解耦 | import 殘留 3 處 | **0 處** | A1 |
-| wiring 循環依賴 | 存在 | **0 處** | A2 |
+| chat_service 解耦 | import 殘留 4 處 | **✅ 0 處** (A1 已完成) | A1 |
+| wiring 循環依賴 | 函數內 lazy import | **✅ 無問題** (A2 已完成) | A2 |
 | DI 框架使用 | 1/9 路由文件 | **9/9 路由文件** | A5 |
 | `logging.basicConfig` | 50 處 | **✅ ≤1 處** (49/49 guarded) | B1 |
 | 死 factory | 3 有害 + 13 休眠 | **✅ 3 已刪, 13 休眠標記** | B2 |
@@ -320,4 +323,4 @@ Ongoing:
 | Singleton | ~6 處 | **0 處 (全 DI)** | B7 |
 | 根目錄條目 | 142 | **<50** | B9 |
 | docs/ARCHITECTURE.md SSOT | 不存在 | **存在且維護** | A7 |
-| 理論公式集成 | 0% (定義未接線) | **100% 注入 Prompt** | A4 |
+| 理論公式集成 | 0% (定義未接線) | **✅ 100% 注入 Prompt** (A4 已完成) | A4 |

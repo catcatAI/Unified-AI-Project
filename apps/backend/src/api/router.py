@@ -166,8 +166,12 @@ async def chat_completions(request: Dict[str, Any] = Body(...)):
     messages = request.get("messages", [])
     user_message = messages[-1].get("content", "") if messages else request.get("prompt", "")
     user_name = request.get("user_name", "User")
-    from services.chat_service import generate_angela_response
-    response_text = await generate_angela_response(user_message, user_name)
+    from core.interfaces.service_registry import get_registry
+    svc = get_registry().get("chat_service")
+    if svc is None:
+        from services.chat_service import get_angela_chat_service
+        svc = await get_angela_chat_service()
+    response_text = await svc.generate_response(user_message, user_name)
     return {
         "id": f"chatcmpl-{random.randint(1000, 9999)}",
         "object": "chat.completion",

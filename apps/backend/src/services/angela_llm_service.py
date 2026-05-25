@@ -1091,6 +1091,47 @@ class AngelaLLMService:
             logger.debug(f"Failed to read biological state: {e}")
             return ""
 
+    def _get_formula_summaries(self) -> str:
+        """Compute 5 theoretical formulas and return a formatted string for prompt injection."""
+        lines = []
+        try:
+            from core.hsm_formula_system import HSMFormulaSystem
+            hsm = HSMFormulaSystem()
+            lines.append(f"HSM: {hsm.calculate_hsm():.4f}")
+        except Exception as e:
+            logger.debug(f"HSM formula unavailable: {e}")
+        try:
+            from core.life_intensity_formula import LifeIntensityFormula
+            life = LifeIntensityFormula()
+            lines.append(f"生命強度: {life.calculate_life_intensity():.4f}")
+        except Exception as e:
+            logger.debug(f"LifeIntensity formula unavailable: {e}")
+        try:
+            from core.active_cognition_formula import ActiveCognitionFormula
+            ac = ActiveCognitionFormula()
+            lines.append(f"活躍認知: {ac.calculate_active_cognition():.4f}")
+        except Exception as e:
+            logger.debug(f"ActiveCognition formula unavailable: {e}")
+        try:
+            from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveInvestment
+            cdm = CDMCognitiveDividendModel()
+            inv = CognitiveInvestment(type="dialogue", amount=1.0, complexity=0.5)
+            output = cdm.calculate_life_sense_output(inv)
+            lines.append(f"CDM 產出: {output.output_amount:.2f} (品質: {output.quality_score:.2f})")
+        except Exception as e:
+            logger.debug(f"CDM formula unavailable: {e}")
+        try:
+            from core.non_paradox_existence import NonParadoxExistence
+            npe = NonParadoxExistence()
+            state = npe.calculate_coexistence_state("angela_dialogue")
+            if state:
+                lines.append(f"非悖論共存: 相干性 {state.get('coherence', 0):.2f}")
+            else:
+                lines.append("非悖論共存: 未激活")
+        except Exception as e:
+            logger.debug(f"NonParadox formula unavailable: {e}")
+        return "\n".join(lines) if lines else ""
+
     def _construct_angela_prompt(
         self, user_message: str, context: Dict[str, Any]
     ) -> List[Dict[str, str]]:
@@ -1161,6 +1202,13 @@ class AngelaLLMService:
 
 【氛圍指引】
 {guidance_block if guidance_block else "(無特殊指引)"}"""
+
+        formula_block = self._get_formula_summaries()
+        if formula_block:
+            system_prompt += f"""
+
+【理論公式指標】
+{formula_block}"""
 
         messages = [{"role": "system", "content": system_prompt.strip()}]
 

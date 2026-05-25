@@ -292,7 +292,6 @@ from core.autonomous.action_executor import (
 from services.vision_service import VisionService
 from services.audio_service import AudioService
 from services.tactile_service import TactileService
-from services.chat_service import generate_angela_response, get_angela_chat_service
 from services.angela_llm_service import get_llm_service
 from system.security_monitor import ABCKeyManager
 from shared.security_middleware import SignedCommunicationMiddleware
@@ -300,6 +299,20 @@ from shared.security_middleware import SignedCommunicationMiddleware
 # Initialize globals to None to prevent NameError before startup
 _llm_service = None
 _abc_key_manager = None
+_chat_service_instance = None
+
+
+async def _get_chat_service():
+    """Lazy-init chat service via registry (replaces direct import)."""
+    global _chat_service_instance
+    if _chat_service_instance is None:
+        from core.interfaces.service_registry import get_registry
+        _chat_service_instance = get_registry().get("chat_service")
+        if _chat_service_instance is None:
+            from services.chat_service import get_angela_chat_service as _init_chat
+            _chat_service_instance = await _init_chat()
+    return _chat_service_instance
+
 
 from api.router import router as api_v1_router
 from api.v1.endpoints import pet, economy
@@ -362,7 +375,7 @@ async def lifespan(app: FastAPI):
             for svc_name in _lc.get("services_to_preinit", []):
                 try:
                     if svc_name == "AngelaChatService":
-                        svc = get_angela_chat_service()
+                        svc = await _get_chat_service()
                         await svc.initialize()
                         logger.info("[Lifecycle] AngelaChatService initialized")
                     elif svc_name == "AngelaLLMService":
@@ -626,8 +639,9 @@ async def _handle_chat_request(
             logger.warning(f"⚠️ [DualRail] Math verification failed: {math_err}")
             is_math = False
 
+        _chat_svc = await _get_chat_service()
         response_text = await asyncio.wait_for(
-            generate_angela_response(user_message, user_name),
+            _chat_svc.generate_response(user_message, user_name),
             timeout=_http_timeout,
         )
         _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
@@ -1299,7 +1313,7 @@ async def _run_repl():
     logging.disable(logging.WARNING)
 
     print("[REPL] Angela brain initializing...")
-    service = get_angela_chat_service()
+    service = await _get_chat_service()
     await service.initialize()
     print("[REPL] Angela ready! (exit/quit to stop)\n")
     print("[Hint] Type /help for commands, /state to view 8D matrix\n")
