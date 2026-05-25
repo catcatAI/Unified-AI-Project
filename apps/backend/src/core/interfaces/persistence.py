@@ -3,8 +3,13 @@ ANGELA-MATRIX: [L2-L3] [α] [A] [L2]
 State persistence protocol for save/load operations.
 """
 
+import json
+import logging
 from abc import abstractmethod
+from pathlib import Path
 from typing import Dict, Any, Optional, Protocol, runtime_checkable
+
+logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
@@ -32,4 +37,63 @@ class StatePersistence(Protocol):
         ...
 
 
-__all__ = ["StatePersistence"]
+class JsonFileStateStore:
+    """Concrete StatePersistence implementation using JSON files.
+
+    Usage:
+        store = JsonFileStateStore(data_dir="data/state/")
+        await store.save_state("matrix/alpha", {"value": 0.5})
+        data = await store.load_state("matrix/alpha")
+    """
+
+    def __init__(self, data_dir: str = "data/state/"):
+        self._data_dir = Path(data_dir)
+        self._data_dir.mkdir(parents=True, exist_ok=True)
+
+    def _resolve_path(self, key: str) -> Path:
+        safe = key.replace("/", "_").replace("\\", "_")
+        return self._data_dir / f"{safe}.json"
+
+    async def save_state(self, key: str, data: Dict[str, Any]) -> bool:
+        try:
+            path = self._resolve_path(key)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, default=str)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save state key={key}: {e}")
+            return False
+
+    async def load_state(self, key: str) -> Optional[Dict[str, Any]]:
+        try:
+            path = self._resolve_path(key)
+            if path.exists():
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return None
+        except Exception as e:
+            logger.error(f"Failed to load state key={key}: {e}")
+            return None
+
+    async def delete_state(self, key: str) -> bool:
+        try:
+            path = self._resolve_path(key)
+            if path.exists():
+                path.unlink()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete state key={key}: {e}")
+            return False
+
+    async def list_keys(self, prefix: str = "") -> list:
+        try:
+            pattern = f"{prefix.replace('/', '_')}*.json"
+            return sorted(
+                str(f.stem) for f in self._data_dir.glob(pattern)
+            )
+        except Exception as e:
+            logger.error(f"Failed to list keys prefix={prefix}: {e}")
+            return []
+
+
+__all__ = ["StatePersistence", "JsonFileStateStore"]

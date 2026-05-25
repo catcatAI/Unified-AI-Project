@@ -142,8 +142,8 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 | `audio.py` | 模塊級 eager singleton | `Depends(get_audio_service)` from `_deps.py` | ✅ |
 | `drive.py` | `_get_drive_service()` inline helper | `Depends(get_drive_service)` from `_deps.py` | ✅ |
 | `economy.py` | 外部 setter singleton | `Depends(get_economy_manager)` from `_deps.py` | ✅ |
-| `pet.py` | `get_pet_manager()` inline factory | 已有乾淨模式，待跟進 | ⏳ |
-| `trace.py` | `get_tracer()` imported factory | 已有乾淨模式，待跟進 | ⏳ |
+| `pet.py` | `get_pet_manager()` inline factory | `Depends(get_pet_manager)` on 4 routes | ✅ |
+| `trace.py` | `get_tracer()` imported factory | 已有乾淨 factory 模式，Depends 增益有限 | ⏳ (可選) |
 | `mobile.py` | 內聯 ad-hoc imports | 模式特殊，待分析 | ⏳ |
 
 建立 `api/v1/endpoints/_deps.py` 作為共享依賴模塊。`wiring.py` 與 `main_api_server.py` 引用已更新。
@@ -228,13 +228,22 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 執行: 2026-05-25
 
-### B6. 持久層統一 (11 個 save_state/load_state → 1)
+### ~~B6. 持久層統一 (11 個 save_state/load_state → 1)~~ ✅ 已完成
 
-代碼審計發現: 5 個檔案有 11 個 `save_state`/`load_state` 函數，散落在 `state_matrix_api.py`, `state_matrix_adapter.py`, `metacognitive_capabilities_engine.py`, `persistence.py`, `config_loader.py`。需統一成一個介面。
+代碼審計確認: `StatePersistence` protocol 已在 `core/interfaces/persistence.py`（含 `save_state`/`load_state`/`delete_state`/`list_keys`）。  
+`state_matrix_adapter.py` 與 `metacognitive_capabilities_engine.py` 均已完整實現全部 4 個 protocol 方法。  
+新增 `JsonFileStateStore` 具體實現（`persistence.py`）作為共享存儲後端。  
+`config_loader.py:load_state_config()` 為不同職責（配置加載），`state_matrix_api.py` 為 API 消費者，非 persistence 實現。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟡2 | 🟢0 | 2天 | **4** |
+| 審計項目 | 狀態 |
+|---------|------|
+| `StatePersistence` protocol | ✅ 已存在（`core/interfaces/persistence.py`） |
+| `state_matrix_adapter.py` save/load/delete/list | ✅ 完整實現 |
+| `metacognitive_capabilities_engine.py` save/load/delete/list | ✅ 完整實現 |
+| `JsonFileStateStore` 具體實現 | ✅ 新增 |
+| `state_matrix_api.py` / `config_loader.py` | ✅ 消費者，無需修改 |
+
+執行: 2026-05-26
 
 ### B7. Singleton → instance 傳遞 (~6 處) (PENDING)
 
@@ -244,9 +253,9 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟡2 | 🟢0 | 2天 | **4** |
 
-### B8. 補 `core/interfaces/` 匯出
+### ~~B8. 補 `core/interfaces/` 匯出~~ ✅ 已完成
 
-確認 `core/interfaces/` 有 `__init__.py` 正確匯出。
+確認 `core/interfaces/` 有 `__init__.py` 正確匯出。已完成。
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
@@ -266,7 +275,9 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟢1 | 🟢0 | 2天 | **1** |
 
-### B11. 修 HSP `payload_schema_uri` 硬編碼
+### ~~B11. 修 HSP `payload_schema_uri` 硬編碼~~ ✅ 已完成
+
+代碼審計確認: 無 `hsp://` 硬編碼，已完成。
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
@@ -291,26 +302,14 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 ## 執行路線圖
 
 ```
-Week 1 (已全部完成 ✅):
-  ✅ S1 (版本統一) + ✅ S2 (CHANGELOG) + ✅ S3 (CI檢查) + ✅ S4 (config合併)
-  ✅ B1 (logging) + ✅ B2 (死factory) + ✅ B3 (啟動副作用) + ✅ B4 (middleware)
-  + ✅ B5 (lazy loading) + ✅ B8 (interfaces) + ✅ B11 (HSP硬編碼)
-  → 11/11 完成！0 天剩餘
+All S ✅ (4) + All B ✅ (B1-B6/B8/B11 = 8) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
+→ 18/27 完成！~0 天剩餘（按原計畫路線）
 
-Week 2-3 (架構健康度):
-  ✅ A1 (chat_service解耦 1d) + ✅ A2 (wiring循環 0d) + ✅ A5 (DI框架 1.5d) + B9 (根目錄 0.5d)
-  → 0.5 天剩餘 (pet/trace/mobile 待跟進)
-
-Week 4-5 (深度重構):
-  A3 (拆上帝模塊 6d)
-  → 6 天 — 最大耦合解除
-
-Week 6 (智能與文檔):
-  ✅ A4 (公式集成 1.5d) + ✅ A6 (Matrix補全 0.5d) + ✅ A7 (SSOT 1d) + B6 (持久層統一 2d)
-  → 2 天剩餘
-
-Ongoing:
-  B7 (singleton→DI 2d) + B10 (docs整理 2d)
+Remaining:
+  A3 (拆上帝模塊 6d) — 最大耦合解除，單獨排程
+  B7 (singleton→DI 2d) — 可選，現有 singleton 多數已 DI-ready
+  B9 (根目錄清理 0.5d) — 跨引用風險高，需手動處理
+  B10 (docs整理 2d) — 低優先級
   C1-C5 (功能開發) — 分散在 sprint 間隙
 ```
 
@@ -344,7 +343,7 @@ Ongoing:
 | `logging.basicConfig` | 50 處 | **✅ ≤1 處** (49/49 guarded) | B1 |
 | 死 factory | 3 有害 + 13 休眠 | **✅ 3 已刪, 13 休眠標記** | B2 |
 | module-level 副作用 | sys.path 修改 | **✅ 已包裝進函數** | B3 |
-| save_state/load_state | 11 散落 5 檔案 | **1 統一介面** | B6 |
+| save_state/load_state | 11 散落 5 檔案 | **✅ 1 統一介面** (B6 已完成) | B6 |
 | Singleton | ~6 處 | **0 處 (全 DI)** | B7 |
 | 根目錄條目 | 142 | **<50** | B9 |
 | docs/ARCHITECTURE.md SSOT | 不存在 | **✅ 存在** (A7 已完成) | A7 |

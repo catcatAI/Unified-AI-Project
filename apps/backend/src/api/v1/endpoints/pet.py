@@ -3,7 +3,7 @@
 Desktop Pet API 端點
 """
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
 from typing import Dict, Any, Optional
 import logging
 from pet.pet_manager import PetManager
@@ -43,9 +43,8 @@ def set_economy_manager(manager):
 
 
 @router.get("/status")
-async def get_pet_status():
+async def get_pet_status(pm: PetManager = Depends(get_pet_manager)):
     """獲取寵物當前狀態 (同步生理數據後)"""
-    pm = get_pet_manager()
     pm.sync_with_biological_state()
     return {
         "pet_id": pm.pet_id,
@@ -56,38 +55,34 @@ async def get_pet_status():
 
 
 @router.post("/interaction")
-async def handle_interaction(interaction: Dict[str, Any] = Body(...)):
+async def handle_interaction(interaction: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)):
     """處理用戶與寵物的交互"""
     interaction_type = interaction.get("type", interaction.get("action", "unknown"))
     interaction_data = interaction.get("data", interaction)
 
     if "type" not in interaction_data:
         interaction_data["type"] = interaction_type
-
-    # 修復：添加 await 關鍵字
-    pm = get_pet_manager()
     result = await pm.handle_interaction(interaction_data)
 
     return {"status": "success", "new_state": result["new_state"]}
 
 
 @router.post("/position")
-async def update_position(pos_data: Dict[str, Any] = Body(...)):
+async def update_position(pos_data: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)):
     """更新寵物在桌面上的位置"""
     x = pos_data.get("x", 0)
     y = pos_data.get("y", 0)
     scale = pos_data.get("scale")
-    pm = get_pet_manager()
     pm.update_position(x, y, scale)
     return {"status": "success", "current_position": pm.state["position"]}
 
 
 @router.post("/action/trigger")
-async def trigger_action(action_data: Dict[str, Any] = Body(...)):
+async def trigger_action(action_data: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)):
     """手動觸發寵物動作 (用於測試或外部調用)"""
     action_type = action_data.get("type", "idle")
     data = action_data.get("data", {})
-    get_pet_manager().add_action(action_type, data)
+    pm.add_action(action_type, data)
     return {"status": "success", "message": f"Action {action_type} added to queue"}
 
 
