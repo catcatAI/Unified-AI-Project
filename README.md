@@ -198,10 +198,10 @@ npm start
 - **`core/autonomous/`** — 60+ files, over-broad boundary. See [§4.3](docs/FULL_ARCHITECTURE_ANALYSIS.md#43-核心層-core-分析--30-子包).
 
 **Architecture & Governance (Critical):**
-- **Version chaos** — 13 files declare versions, only 4 (31%) are consistent; `VERSION` and `config/angela_config.json` **107 days stale**. See [full audit](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).
+- **Version chaos** — 13 files declare versions, only 4 (31%) are consistent; `VERSION` and `configs/angela_config.json` **107 days stale**. See [full audit](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).
 - **Fake v7.x changelog** — AI agent self-assigned v7.2.0~v7.4.0 in `CHANGELOG.md` without any corresponding git tag or source code version change. See [analysis](docs/FULL_ARCHITECTURE_ANALYSIS.md#72-中度問題-major).
 - **No version management process** — all version bumps happen in blind "Fix and update" AI commits, never human-reviewed.
-- **Dual config dirs** — `config/` vs `configs/` coexist with overlapping purposes, risking overwrites.
+- **Dual config dirs** — `config/` vs `configs/` coexisted with overlapping purposes — ✅ **已修復 (merged → `configs/`)**
 
 **Code quality:**
 - **16 Factories: 9 truly dead + 6 dormant + 1 alive** — forensic audit: `DEAD_FACTORY_FORENSICS.md`
@@ -326,10 +326,10 @@ npm start
 - 加密 — 只驗 HMAC 簽名不加密，Key A/C 未用
 
 **架構與治理（嚴重）：**
-- **版本號混亂** — 13 個文件僅 4 個 (31%) 一致；`VERSION` 和 `config/angela_config.json` **107 天未更新**。見[完整審計](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析)
+- **版本號混亂** — 13 個文件僅 4 個 (31%) 一致；`VERSION` 和 `configs/angela_config.json` **107 天未更新**。見[完整審計](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析)
 - **虛假 v7.x CHANGELOG** — AI agent 自行分配 v7.2.0~v7.4.0，無對應 git tag 或代碼版本
 - **無版本管理流程** — 所有版本變更在盲目 AI 提交中自動完成
-- **雙 config 目錄** — `config/` vs `configs/` 並存可能造成覆蓋
+- **雙 config 目錄** — `config/` vs `configs/` 已合併 ✅ → `configs/`
 
 **大型上帝模塊（Major）：**
 - **`main_api_server.py`** — 1668 行，混合 API/WebSocket/生命週期

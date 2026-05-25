@@ -1,13 +1,13 @@
 """
-Angela AI v6.2.0 - Core Module
+Angela AI v7.5.0-dev - Core Module
 核心模块
 
 Contains core systems including action execution, orchestration,
 theoretical formulas for digital life, and system management components.
 
 Author: Angela AI Development Team
-Version: 6.2.0
-Date: 2026-02-11
+Version: 7.5.0-dev
+Date: 2026-05-25
 """
 
 import logging

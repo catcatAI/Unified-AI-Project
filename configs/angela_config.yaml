@@ -3,7 +3,7 @@
 
 app:
   name: "Angela AI"
-  version: "6.5.0-dev"
+  version: "7.5.0-dev"
   description: "Cross-Platform Digital Life System"
   
 # Backend Configuration

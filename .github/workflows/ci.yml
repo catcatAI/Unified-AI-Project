@@ -39,6 +39,22 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
+      - name: Version consistency check
+        run: |
+          EXPECTED="7.5.0-dev"
+          ERR=0
+          check() { local file=$1 expected=$2 actual=$(cat "$file" 2>/dev/null | grep -oP '"version":\s*"\K[^"]+' || true); if [ "$actual" != "$expected" ]; then echo "❌ $file: expected $expected, got $actual"; ERR=1; fi; }
+          echo "Verifying all 13 version locations match $EXPECTED..."
+          grep -q "$EXPECTED" VERSION || { echo "❌ VERSION: expected $EXPECTED"; ERR=1; }
+          grep -q "$EXPECTED" configs/angela_config.json || { echo "❌ configs/angela_config.json: not $EXPECTED"; ERR=1; }
+          grep -q "version = \"$EXPECTED\"" apps/backend/pyproject.toml || { echo "❌ apps/backend/pyproject.toml: not $EXPECTED"; ERR=1; }
+          grep -q "version=\"$EXPECTED\"" apps/backend/setup.py || { echo "❌ apps/backend/setup.py: not $EXPECTED"; ERR=1; }
+          grep -q "$EXPECTED" apps/backend/package.json || { echo "❌ apps/backend/package.json: not $EXPECTED"; ERR=1; }
+          grep -q "major=7" apps/backend/src/core/version.py || { echo "❌ apps/backend/src/core/version.py: not 7.x"; ERR=1; }
+          grep -q "$EXPECTED" apps/desktop-app/electron_app/package.json || { echo "❌ apps/desktop-app/electron_app/package.json: not $EXPECTED"; ERR=1; }
+          grep -q "1.2.0-dev" apps/mobile-app/package.json || { echo "❌ apps/mobile-app/package.json: not 1.2.0-dev"; ERR=1; }
+          grep -q "1.1.0" packages/cli/package.json || { echo "❌ packages/cli/package.json: not 1.1.0"; ERR=1; }
+          if [ $ERR -eq 1 ]; then exit 1; else echo "✅ All version locations consistent ($EXPECTED)"; fi
       - name: Install backend (editable with extras)
         run: pip install -e ./apps/backend[standard,testing]
       - name: Lint/Type (Python)

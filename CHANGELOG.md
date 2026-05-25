@@ -37,7 +37,9 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **Phase**: Phase 4 (WebSocket Session Management)
 - **Test count**: 115+ tests (21 new for SessionManager)
 
-## [7.4.0] - 2026-05-09
+## [7.4.0] - 2026-05-09 — Internal/Unreleased
+
+> ⚠️ **Note**: This version was self-assigned by AI agent in CHANGELOG only. No corresponding git tag or source code version exists. All described features exist in the codebase under version `7.5.0-dev`.
 
 ### Added
 - 🪐 **[N.22.E1] Spatial Gravity Parameters** (`dynamic_parameters.py`): Replaced rule-based dynamic thresholds with 4D spatial anchors that fluctuate based on coordinate gravity.
@@ -45,7 +47,9 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 🖱️ **[N.22.E3] Intent-Driven Mouse Gravity** (`desktop_presence.py`): Linked `SOCIAL_BOND` and `SELF_PRESERVATION` intents to mouse interaction. Added predictive high-velocity obstacle avoidance via Click-Through layer shifting.
 - 🧬 **[N.22.E4] Loss-based Cerebellum Evolution** (`cerebellum_engine.py`): Evolved gait generation using gradient descent on displacement residuals (loss) and added Beta-dimension driven dynamic damping.
 
-## [7.3.0] - 2026-05-09
+## [7.3.0] - 2026-05-09 — Internal/Unreleased
+
+> ⚠️ **Note**: AI agent self-assigned version. Features exist in codebase under `7.5.0-dev`.
 
 ### Added
 - 🎨 **[N.22.1] Workflow Data Classes** (`art_learning_workflow.py`): Replaced placeholder classes with full implementations, including a Power Law mastery curve in `SkillAssessment` that adapts based on user feedback.
@@ -61,7 +65,9 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **Phase**: Native Coordinate AI (N.22)
 - **Core AI Replacement**: ✅ Complete
 
-## [7.2.0] - 2026-05-09
+## [7.2.0] - 2026-05-09 — Internal/Unreleased
+
+> ⚠️ **Note**: AI agent self-assigned version. Features exist in codebase under `7.5.0-dev`.
 
 ### Added
 - 🧠 **[N.20.5] Native Spatial Math Engine** (`state_matrix.py`): Shunting-yard algorithm + RPN executor for pure geometry-based arithmetic without LLM.
@@ -84,7 +90,9 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **Core Spatial Features**: ✅ Complete
 - **Intent Alignment Logic**: 🔄 In Progress
 
-## [7.1.1] - 2026-02-13
+## [7.1.1] - 2026-02-13 — Internal/Unreleased
+
+> ⚠️ **Note**: AI agent self-assigned version. No corresponding git tag.
 
 ### Added
 - 📊 Completed comprehensive resource analysis (2,761 resources identified)

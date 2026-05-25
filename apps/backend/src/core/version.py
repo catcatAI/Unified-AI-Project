@@ -30,10 +30,10 @@ class ReleasePhase(Enum):
 class VersionInfo:
     """版本信息"""
 
-    major: int = 6
-    minor: int = 2
+    major: int = 7
+    minor: int = 5
     patch: int = 0
-    phase: ReleasePhase = ReleasePhase.STABLE
+    phase: ReleasePhase = ReleasePhase.DEV
     phase_number: int = 0
     build_metadata: str = ""
 
@@ -113,7 +113,7 @@ class VersionInfo:
 
 # 当前版本信息
 CURRENT_VERSION = VersionInfo(
-    major=6,
+    major=7,
     minor=5,
     patch=0,
     phase=ReleasePhase.DEV,

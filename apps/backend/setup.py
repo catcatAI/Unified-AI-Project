@@ -105,7 +105,7 @@ optional_requirements["minimal"] = []  # Only core requirements
 
 setup(
     name="unified-ai-project",
-    version="0.1.0",
+    version="7.5.0-dev",
     packages=find_packages(),
     install_requires=core_requirements,
     extras_require=optional_requirements,

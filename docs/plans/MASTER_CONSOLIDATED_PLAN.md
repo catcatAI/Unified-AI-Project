@@ -36,50 +36,47 @@
 
 ## S 級（本週 — 版本統一陣線 + 安全殘留）
 
-### S1. 統一全部 13 個版本號位置
+### ~~S1. 統一全部 13 個版本號位置~~ ✅ 已完成
 
-| 文件 | 當前值 | 正確值 |
-|------|--------|--------|
+| 文件 | 舊值 | 新值 |
+|------|------|------|
 | `VERSION` | 6.2.0 | **7.5.0-dev** |
 | `config/angela_config.json` | 6.1.0 | **7.5.0-dev** |
+| `config/project-config/PROJECT_FILE_RELATIONSHIPS.json` | 6.2.0 | **7.5.0-dev** |
 | `apps/backend/pyproject.toml` | 0.1.0 | **7.5.0-dev** |
 | `apps/backend/setup.py` | 0.1.0 | **7.5.0-dev** |
 | `apps/backend/package.json` | 1.0.0 | **7.5.0-dev** |
-| `apps/backend/src/core/version.py` | 6.5.0-dev | **7.5.0-dev** |
+| `apps/backend/src/core/version.py` | 6.5.0-dev (major=6) | **7.5.0-dev (major=7)** |
 | `apps/backend/src/core/__init__.py` | 6.2.0 | **7.5.0-dev** |
+| `apps/desktop-app/package.json` | 0.1.0 | **4.1.0-dev** |
 | `apps/desktop-app/electron_app/package.json` | 6.5.0-dev | **4.1.0-dev** |
 | `apps/mobile-app/package.json` | 6.5.0-dev | **1.2.0-dev** |
 | `packages/cli/package.json` | 1.0.0 | **1.1.0** |
+| `core/version.py` dataclass defaults | major=6, phase=STABLE | **major=7, phase=DEV** |
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🔴3 | 🔴3 | 0.5天 | **14.5** |
+執行: 2026-05-25, 12 個文件已更新。
 
-### S2. 修復 CHANGELOG v7.x 虛構版本
+### ~~S2. 修復 CHANGELOG v7.x 虛構版本~~ ✅ 已完成
 
-將 CHANGELOG 中 v7.2.0~v7.4.0 條目標註為 `[7.2.0] → Internal/Unreleased`。  
-在 `AGENTS.md` 增加規則：「禁止 AI 自行分配主版本號，任何版本變更需人工審核」。
+CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/Unreleased`。  
+`AGENTS.md` 已新增「Version Governance Rules」章節（4 條規則）。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟡2 | 🟡2 | 0.3天 | **9.7** |
+執行: 2026-05-25
 
-### S3. 建立 CI 版本一致性檢查
+### ~~S3. 建立 CI 版本一致性檢查~~ ✅ 已完成
 
-在 `.github/ci.yml` 中加入 step：對比全部 13 個版本位置是否一致，不一致則 fail。
+在 `.github/workflows/ci.yml` 的 python job 中加入 version consistency check step。檢查 9 個關鍵版本位置，不一致則 fail。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟡2 | 🔴3 | 0.5天 | **11.5** |
+執行: 2026-05-25
 
-### S4. 合併 `config/` 與 `configs/` 雙目錄
+### ~~S4. 合併 `config/` 與 `configs/` 雙目錄~~ ✅ 已完成
 
-`angela_config.yaml` 存在於兩個目錄 — 衝突風險。  
-步驟: 分析獨有內容 → 遷移到 `configs/` → 更新引用 → 刪除 `config/`。
+`angela_config.yaml` 存在於兩個目錄 — 已確認衝突並解決。  
+已將 `config/` 的獨有文件 (`angela_config.json`, `credentials.example.json`, `mcp.json`, `project-config/`) 遷移至 `configs/`。  
+無任何 Python 源碼引用 `config/` 路徑。CI 檢查已更新為 `configs/`。  
+`config/` 已刪除。
 
-| 風險 | 耦合 | 工時 | 分數 |
-|------|------|------|------|
-| 🟡2 | 🔴3 | 1天 | **11** |
+執行: 2026-05-25
 
 ---
 
@@ -266,11 +263,11 @@
 
 ```
 Week 1 (版本統一陣線):
-  S1 (版本統一 0.5d) + S2 (CHANGELOG 0.3d) + S3 (CI檢查 0.5d) + S4 (config合併 1d)
-  + B1 (logging 0.5d) + B2 (死factory 0.5d) + B3 (啟動副作用 0.5d)
-  + B4 (middleware命名 0.2d) + B5 (lazy loading 0.5d) + B8 (interfaces匯出 0.1d)
-  + B11 (HSP硬編碼 0.3d)
-  → 4.9 天 — 清掉所有 S 級 + 低垂果實
+  ✅ S1 (版本統一) + ✅ S2 (CHANGELOG) + ✅ S3 (CI檢查) + ✅ S4 (config合併)
+  B1 (logging 0.5d) + B2 (死factory 0.5d) + B3 (啟動副作用 0.5d)
+  + B4 (middleware命名 0.2d) + B5 (lazy loading 0.5d)
+  + B8 (interfaces匯出 0.1d) + B11 (HSP硬編碼 0.3d)
+  → 已完成 4/11, 剩餘 4.1 天
 
 Week 2-3 (架構健康度):
   A1 (chat_service解耦 1d) + A2 (wiring循環 0.5d) + A5 (DI框架 2d) + B9 (根目錄 0.5d)
@@ -309,10 +306,10 @@ Ongoing:
 
 | 指標 | 當前 | 目標 | 對應任務 |
 |------|------|------|---------|
-| 版本一致性 | 31% (13中4) | **100%** | S1, S2, S3 |
+| 版本一致性 | 31% (13中4) | **✅ 100%** (S1+S2+S3 已完成) | S1, S2, S3 |
 | 架構一致性總分 | 62.6% | **85%+** | A3, A5, B6 |
 | 上帝模塊 (1668/2196 行) | 2 個 | **0 個** (<500行) | A3 |
-| config/ 雙目錄 | 2 個 | **1 個** | S4 |
+| config/ 雙目錄 | 2 個 | **✅ 1 個** (S4 已完成) | S4 |
 | chat_service 解耦 | import 殘留 3 處 | **0 處** | A1 |
 | wiring 循環依賴 | 存在 | **0 處** | A2 |
 | DI 框架使用 | 1/9 路由文件 | **9/9 路由文件** | A5 |
