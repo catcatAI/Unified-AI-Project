@@ -147,7 +147,14 @@ def construct_angela_prompt(
             ax = axes.get(axis_name, {})
             vals = ax.get("values", {})
             if vals:
-                short = ", ".join(f"{k}={v:.4f}" for k, v in list(vals.items())[:4])
+                parts = []
+                for k, v in list(vals.items())[:4]:
+                    desc = neuro_vocabulary.get_description(f"{axis_name}.{k}", v) if neuro_vocabulary else None
+                    if desc:
+                        parts.append(f"{k}={v:.4f}（{desc}）")
+                    else:
+                        parts.append(f"{k}={v:.4f}")
+                short = ", ".join(parts)
                 axis_lines.append(f"{axis_name.upper()}: {short}")
 
         th = state_for_llm.get("theta", {})

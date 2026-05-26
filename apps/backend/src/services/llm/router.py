@@ -651,7 +651,10 @@ class AngelaLLMService:
         self, user_message: str, context: Dict[str, Any]
     ) -> List[Dict[str, str]]:
         """Wrapper — delegates to standalone function for A3 split compatibility"""
-        return construct_angela_prompt(user_message, context)
+        nv = None
+        if self.__class__._neuro_vocab_instance is not None:
+            nv = self.__class__._neuro_vocab_instance[0]
+        return construct_angela_prompt(user_message, context, neuro_vocabulary=nv)
 
     async def generate_response(
         self, user_message: str, context: Dict[str, Any] = None
@@ -1238,7 +1241,7 @@ class AngelaLLMService:
         self, user_message: str, response: LLMResponse, context: Dict[str, Any]
     ):
         """
-        将新回應存储为模板候选
+        将新回應存储为模板候选，并从中萃取數值→語意映射（C6）
 
         Args:
             user_message: 用户消息
@@ -1249,6 +1252,29 @@ class AngelaLLMService:
             # 只有当回應质量较高时才存储
             if response.confidence < 0.5:
                 return
+
+            # C6: 從回應文本萃取自我描述句，學習數值→語意映射
+            if self.__class__._neuro_vocab_instance is not None:
+                import re as _re
+                nv = self.__class__._neuro_vocab_instance[0]
+                state_for_llm = context.get("state_for_llm")
+                if state_for_llm and response.text:
+                    sentences = _re.split(r'(?<=[。！？.!?\n])\s*', response.text)
+                    desc_pattern = _re.compile(r'(我感覺|像是|有點|好像|覺得|似乎|彷彿)')
+                    for sentence in sentences:
+                        sentence = sentence.strip()
+                        if not sentence or len(sentence) < 4:
+                            continue
+                        match = desc_pattern.search(sentence)
+                        if not match:
+                            continue
+                        desc_text = sentence[:80]
+                        # 映射到最近一次軸點位數值
+                        axes = state_for_llm.get("axes", {})
+                        for axis_name, ax in axes.items():
+                            vals = ax.get("values", {})
+                            for k, v in vals.items():
+                                nv.learn_mapping(f"{axis_name}.{k}", v, desc_text)
 
             # 创建模板
             from ai.memory.memory_template import ResponseCategory, create_template

@@ -440,7 +440,7 @@ Remaining:
 - **B1-B6, B8, B9, B11** ✅
 - **A3 Phase 0-3** (angela_llm_service 完整拆分：providers 提取 → prompt_builder → router.py + shim) ✅
 - **系統審計 + P0/P1 修復** ✅
-- **翻譯學習計畫發佈** ✅
+- **C6 翻譯學習層 Phase 1-3** (NeuroVocabulary 擴充 → prompt_builder 注入 → 回存萃取) ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
@@ -450,7 +450,7 @@ Remaining:
 - **C1-C6** (功能開發)
 
 ### 已知約束
-- C6 翻譯學習層 Phase 2 可開始（A3 拆分已達 injection target：prompt_builder.py 存在）
+- C6 翻譯學習層 Phase 1-3 已完成，剩 Phase 4 持續收斂（內建於 narrow() + serialize_mappings LRU）
 - core/autonomous 拆分前需確認 `biological_integrator` ↔ `art_learning_workflow` 環狀依賴
 - `self_generation.py` 因依賴 `art_learning_workflow` 留在 `autonomous/`
 - `services/angela_llm_service.py` 現在是 21 行的純 shim，所有核心邏輯在 `services/llm/router.py`

@@ -13,6 +13,7 @@ Response Composer - 响应片段组合系统
 
 import logging
 import time
+from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -426,11 +427,31 @@ class NeuroFragment:
         ]
 
 
+@dataclass
+class ValueRangeMapping:
+    """數值→語意描述映射，用於翻譯學習層（C6）"""
+    axis_field: str        # e.g. "gamma.indolence"
+    range_lo: float
+    range_hi: float
+    description: str       # LLM 或正則萃取的語意描述
+    confidence: float      # 0-1，基於 usage_count
+    usage_count: int = 0
+    created_at: datetime = field(default_factory=datetime.now)
+    last_used_at: Optional[datetime] = None
+
+    def covers(self, value: float) -> bool:
+        return self.range_lo <= value <= self.range_hi
+
+    def narrow(self, value: float):
+        self.range_lo = max(self.range_lo, value - 0.01)
+        self.range_hi = min(self.range_hi, value + 0.01)
+
+
 class NeuroVocabulary:
     """
     神经词汇表 (Neuro Vocabulary)
     =============================
-    管理所有带 8D 标签的语义片段。
+    管理所有带 8D 标签的语义片段和數值區間映射。
     支持从 config 加载和从 TemplateLibrary 自动分解。
     """
 
@@ -438,6 +459,7 @@ class NeuroVocabulary:
         self._fragments: Dict[str, NeuroFragment] = {}
         self._category_index: Dict[str, List[str]] = {}
         self._structural_index: Dict[str, List[str]] = {}
+        self._value_range_mappings: Dict[str, List[ValueRangeMapping]] = {}
 
     def add_fragment(self, fragment: NeuroFragment):
         self._fragments[fragment.fragment_id] = fragment
@@ -458,6 +480,98 @@ class NeuroVocabulary:
 
     def total_count(self) -> int:
         return len(self._fragments)
+
+    # ── 數值區間映射（C6 翻譯學習層）────────────────────────────────────
+
+    def get_description(self, axis_field: str, value: float) -> Optional[str]:
+        """找出所有 covers(value) 的 mapping，回傳 confidence 最高的 description"""
+        mappings = self._value_range_mappings.get(axis_field, [])
+        if not mappings:
+            return None
+        candidates = [(m.confidence, m.description) for m in mappings if m.covers(value)]
+        if not candidates:
+            return None
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        return candidates[0][1]
+
+    def learn_mapping(self, axis_field: str, value: float, description: str):
+        """學習或更新數值→語意映射"""
+        now = datetime.now()
+        existing = self._value_range_mappings.get(axis_field, [])
+
+        for m in existing:
+            if m.covers(value):
+                m.narrow(value)
+                m.usage_count += 1
+                m.confidence = min(1.0, m.confidence + 0.05)
+                m.last_used_at = now
+                # 若新描述更長（更精確），取代舊描述
+                if len(description) > len(m.description):
+                    m.description = description
+                return
+
+        # 新增 mapping
+        mappings = self._value_range_mappings.setdefault(axis_field, [])
+        mappings.append(ValueRangeMapping(
+            axis_field=axis_field,
+            range_lo=value,
+            range_hi=value,
+            description=description,
+            confidence=0.3,
+            usage_count=1,
+            created_at=now,
+            last_used_at=now,
+        ))
+
+    def get_value_range_mappings(self, axis_field: str) -> List[ValueRangeMapping]:
+        """回傳指定軸點位的所有 mapping"""
+        return list(self._value_range_mappings.get(axis_field, []))
+
+    def serialize_mappings(self, max_age_days: float = 90.0) -> List[Dict[str, Any]]:
+        """序列化所有映射（用於持久化），可選清除過舊項目"""
+        now = datetime.now()
+        result = []
+        stale_fields = []
+        for field_name, mappings in self._value_range_mappings.items():
+            alive = []
+            for m in mappings:
+                age = (now - m.created_at).days
+                if age > max_age_days and m.usage_count < 2:
+                    continue
+                alive.append({
+                    "axis_field": m.axis_field,
+                    "range_lo": m.range_lo,
+                    "range_hi": m.range_hi,
+                    "description": m.description,
+                    "confidence": m.confidence,
+                    "usage_count": m.usage_count,
+                    "created_at": m.created_at.isoformat(),
+                    "last_used_at": m.last_used_at.isoformat() if m.last_used_at else None,
+                })
+            if alive:
+                result.extend(alive)
+            else:
+                stale_fields.append(field_name)
+        for f in stale_fields:
+            del self._value_range_mappings[f]
+        return result
+
+    def load_mappings_from_config(self, config_data: List[Dict[str, Any]]):
+        """從配置加載映射"""
+        if not config_data:
+            return
+        for item in config_data:
+            m = ValueRangeMapping(
+                axis_field=item["axis_field"],
+                range_lo=item["range_lo"],
+                range_hi=item["range_hi"],
+                description=item["description"],
+                confidence=item.get("confidence", 0.3),
+                usage_count=item.get("usage_count", 0),
+                created_at=datetime.fromisoformat(item["created_at"]) if "created_at" in item else datetime.now(),
+                last_used_at=datetime.fromisoformat(item["last_used_at"]) if item.get("last_used_at") else None,
+            )
+            self._value_range_mappings.setdefault(m.axis_field, []).append(m)
 
     def load_from_config(self, config_data: List[Dict[str, Any]]):
         """从配置加载片段"""

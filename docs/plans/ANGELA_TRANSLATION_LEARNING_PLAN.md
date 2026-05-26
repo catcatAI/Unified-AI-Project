@@ -129,7 +129,7 @@ LLM 回應文本
 
 ## 與 MASTER_CONSOLIDATED_PLAN.md 的衝突
 
-**A3（angela_llm_service.py 拆分，pending）：** 拆分後 `_construct_angela_prompt` 會搬到 `services/llm/prompt_builder.py`。Phase 2 修改程式碼需在拆分後重新定位 injection target。建議：先完成 A3 拆分，再實作 Phase 2，避免雙重搬遷。
+A3 已完成。`_construct_angela_prompt` 已位於 `services/llm/prompt_builder.py`，Phase 2 直接修改此處。
 
 ## 不做的範圍
 
@@ -140,20 +140,42 @@ LLM 回應文本
 | 覆蓋現有 prompt 描述格式 | 現有 threshold 分支描述（novelty_desc 等）保留不動，只附加 |
 | session 隔離 | 沿用 `NeuroVocabulary` 的 `load_from_config` 機制，跨 session 持久化 |
 
-## 實作順序建議
+## 實作狀態 (2026-05-26)
 
 ```
-A3 拆分完成 (等待中)
-  → Phase 1: NeuroVocabulary 擴充 (1天)
-  → Phase 2: 注入機制 (0.5天)
-  → Phase 3: 回存擴充 (0.5天)
-  → Phase 4: 持續收斂
+A3 拆分完成 ✓
+  → Phase 1: NeuroVocabulary 擴充 ✅ 完成
+  → Phase 2: 注入機制 ✅ 完成
+  → Phase 3: 回存擴充 ✅ 完成
+  → Phase 4: 持續收斂 ⏳ 待做（自然收斂無需額外開發，已內建於 narrow() + serialize_mappings LRU）
 ```
 
-等待 A3 期間可先做 Phase 1（純 `composer.py` 變更，無依賴衝突）。
+### Phase 1 變更
+- `ai/response/composer.py`:
+  - 新增 `ValueRangeMapping` dataclass（covers(), narrow()）
+  - `NeuroVocabulary.__init__` 新增 `_value_range_mappings` dict
+  - 新增 `get_description()`, `learn_mapping()`, `get_value_range_mappings()`
+  - 新增 `serialize_mappings()`, `load_mappings_from_config()`（含 LRU 清除）
+  - 新增 `from datetime import datetime`
+
+### Phase 2 變更
+- `services/llm/prompt_builder.py`:
+  - `construct_angela_prompt` 軸格式化（line 150）改為支援語意描述附加
+  - 當 `neuro_vocabulary` 參數提供時，在數值後附加 `（描述）`
+- `services/llm/router.py`:
+  - `_construct_angela_prompt` wrapper 傳遞 `neuro_vocabulary` 至 `construct_angela_prompt`
+
+### Phase 3 變更
+- `services/llm/router.py`:
+  - `_store_response_as_template` 新增萃取流程：
+    1. 正則分割回應文本為句子
+    2. 匹配「我感覺/像是/有點/好像/覺得/似乎/彷彿」描述句
+    3. 對應到 `context.state_for_llm` 的軸點位數值
+    4. 呼叫 `NeuroVocabulary.learn_mapping()`
 
 ## 待確認
 
-1. `NeuroVocabulary` 的 JSON 持久化路徑是否與 `config_loader` 一致，還是另開檔案？
-2. `ValueRangeMapping` 的 `description` 是否需要雙語（中/英）？
-3. mapping 數量上限（初始建議 200，之後可調整）
+1. ~~JSON 持久化路徑？~~ → 已實作 `serialize_mappings()` + `load_mappings_from_config()`，與既有 `load_from_config` 模式一致
+2. ~~雙語需求？~~ → 目前中文即可，後續可擴充 lang tag
+3. ~~數量上限？~~ → 已內建於 `serialize_mappings(max_age_days=90)`：超齡低使用量 mapping 自動清除
+4. `serialize_mappings()` 的呼叫時機：暫未整合至既有存檔流程。建議由 `start_precompute` 或類似背景任務定期觸發
