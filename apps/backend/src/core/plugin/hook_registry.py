@@ -4,6 +4,7 @@ Defines named hooks, registers handlers, executes them asynchronously.
 """
 
 import asyncio
+import inspect
 import logging
 from typing import Any, Callable, Dict, List, Optional
 from datetime import datetime
@@ -83,7 +84,7 @@ class HookRegistry:
         results = []
         for handler_name, handler in self._handlers[hook_name]:
             try:
-                if asyncio.iscoroutinefunction(handler):
+                if inspect.iscoroutinefunction(handler):
                     result = await handler(data)
                 else:
                     result = handler(data)

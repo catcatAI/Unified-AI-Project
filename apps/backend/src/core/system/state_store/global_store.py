@@ -112,6 +112,16 @@ class GlobalStateStore:
 
         if notify:
             self._notify_subscribers(domain)
+        # C3 Phase 2: fire on_state_change hook for plugin system (non-blocking)
+        try:
+            from core.plugin import plugin_manager as _pm
+            import asyncio as _aio
+            _aio.ensure_future(_pm.execute_hook('on_state_change', {
+                'domain': domain,
+                'data': data,
+            }))
+        except Exception:
+            pass
 
     def get_state(self, domain: Optional[str] = None) -> Dict[str, Any]:
         """Retrieve state for a domain or the entire system."""

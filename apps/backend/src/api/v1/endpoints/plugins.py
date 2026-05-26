@@ -3,8 +3,8 @@ Plugin API endpoints — C3: query hooks, list plugins, execute hooks.
 """
 
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, List
-import logging
+from typing import Dict, Any, List, Optional
+import logging, json
 
 from core.plugin.plugin_manager import plugin_manager
 from core.plugin.hook_registry import hook_registry
@@ -58,7 +58,58 @@ async def execute_hook(hook_name: str, data: Dict[str, Any] = {}):
     }
 
 
+@router.post("/register")
+async def register_plugin(name: str, version: str = "1.0", description: str = ""):
+    """Register a plugin with the backend system."""
+    info = plugin_manager.register_plugin(name, version, description)
+    return {"status": "registered", "name": info.name, "version": info.version}
+
+
 @router.get("/stats")
 async def plugin_stats():
     """Get plugin system statistics."""
     return plugin_manager.get_stats()
+
+
+# ── Plugin data persistence ──────────────────────────────────────────────
+
+@router.post("/data/{plugin_name}")
+async def set_plugin_data(plugin_name: str, data: Dict[str, Any] = {}):
+    """Store key-value data for a plugin."""
+    try:
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore(f"data/plugins/{plugin_name}/")
+        for key, value in data.items():
+            await store.save_state(key, {plugin_name: {key: value}})
+        return {"status": "stored", "keys": list(data.keys())}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/data/{plugin_name}")
+async def get_plugin_data(plugin_name: str):
+    """Retrieve all stored data for a plugin."""
+    try:
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore(f"data/plugins/{plugin_name}/")
+        keys = await store.list_keys()
+        result = {}
+        for key in keys:
+            val = await store.load_state(key)
+            if val:
+                result[key] = val
+        return {"plugin": plugin_name, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/data/{plugin_name}/{key}")
+async def delete_plugin_data(plugin_name: str, key: str):
+    """Delete a specific data key for a plugin."""
+    try:
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore(f"data/plugins/{plugin_name}/")
+        ok = await store.delete_state(key)
+        return {"status": "deleted" if ok else "not_found", "key": key}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
