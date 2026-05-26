@@ -400,7 +400,7 @@ core/
 | C2 | Desktop→Live2D WebSocket 控制鏈 | 後端到 Electron 從未完成 |
 | C3 | 插件系統後端 hooks | 前端 JS 存在，後端 hooks 不存在 |
 | C4 | 提升測試覆蓋率 85%+ | 當前 16.34%，目標 85% |
-| C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore |
+| C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore ✅ C5: GlobalStateStore 加入 async save/load + dirty tracking + JsonFileStateStore 預設後端 |
 | C6 | Angela 數值→文本翻譯學習層 | ↔ A3 拆分後方可做 Phase 2。見 [ANGELA_TRANSLATION_LEARNING_PLAN.md](ANGELA_TRANSLATION_LEARNING_PLAN.md) |
 
 ---
@@ -441,12 +441,13 @@ Remaining:
 - **A3 Phase 0-5** (angela_llm_service 完整拆分 + core/autonomous → core/{life,bio,engine}/ 拆分 + 清理) ✅
 - **系統審計 + P0/P1 修復** ✅
 - **C6 翻譯學習層 Phase 1-3** (NeuroVocabulary 擴充 → prompt_builder 注入 → 回存萃取) ✅
+- **C5 持久層 unified (GlobalStateStore + JsonFileStateStore)** ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
-- **C1-C5** (功能開發)
+- **C1-C4** (功能開發)
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-3 已完成，剩 Phase 4 持續收斂（內建於 narrow() + serialize_mappings LRU）
