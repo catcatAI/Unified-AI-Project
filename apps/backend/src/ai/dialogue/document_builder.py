@@ -35,7 +35,7 @@ except ImportError:
     _intent_registry = None
 
 if TYPE_CHECKING:
-    from core.autonomous.eta_axis_state import EtaAxisState
+    from core.autonomous.eta_axis import EtaAxisState
 
 
 @dataclass

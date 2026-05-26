@@ -149,19 +149,36 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 3. **跨包依賴**：`self_generation` 匯入 `art_learning_workflow`（保留在 `autonomous/`）
 4. **測試遷移**：3 個測試文件 (`test_browser_controller.py` 等) 搬到 `tests/core/autonomous/`
 
-#### 執行順序
+#### 執行狀態
 
+| Phase | 內容 | 狀態 |
+|-------|------|------|
+| Phase 0 | 前置修復：eta_axis_state import fix + prompt_builder 函數簽名 refactor | ✅ 完成 |
+| Phase 1 | providers 提取（7 檔案至 services/llm/providers/） | ✅ 完成 |
+| Phase 2a | prompt_builder.py 建置（services/llm/prompt_builder.py） | ✅ 完成 |
+| Phase 2b | core/autonomous/ 前置修復 + 搬移 | ⏳ 待做 |
+| Phase 3 | router.py + shim 建立 | ⏳ 待做 |
+| Phase 4 | core/autonomous/ 文件搬移 + __init__ 更新 | ⏳ 待做 |
+
+**完成狀態：** angela_llm_service.py 2245→**~1500** 行（-33%）。已建立 `services/llm/` 套件：
 ```
-Phase 0: 前置修復（缺失文件、環狀依賴、測試遷移）→ ~0.5天
-Phase 1: providers 提取（最低風險）→ ~0.5天
-Phase 2: prompt_builder 提取（需 refactor prompt 函數簽名）→ ~1天
-Phase 3: router.py + shim 建立 → ~0.5天
-Phase 4: core/autonomous/ 文件搬移 + __init__ 更新 → ~1天
+services/llm/
+  __init__.py          (待建)
+  prompt_builder.py    (220行) — prompt 建構、生物狀態、公式摘要
+  providers/
+    __init__.py         — re-export
+    base.py             — BaseLLMBackend ABC
+    registry.py         — LLMBackend Enum
+    llamacpp.py         — LlamaCppBackend
+    ollama.py           — OllamaBackend
+    openai.py           — OpenAIAPIBackend
+    anthropic.py        — AnthropicAPIBackend
+    google.py           — GoogleAPIBackend
 ```
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🔴3 | **3.5天剩餘** | **6** |
+| 🟡2 | 🔴3 | **~2天剩餘** | **6** |
 
 ### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
@@ -381,6 +398,28 @@ Remaining:
 | **總計** | **28** | **~22.4 天 (全職) / 6-8 週 (兼職)** |
 
 比舊 P8 v1 (12 天) + P9 (17.9 天) = ~30 天，合併後減少 ~25%。
+
+## 目前進度 (2026-05-26)
+
+### 已完成
+- **S1-S4** (版本/CHANGELOG/CI/config) ✅
+- **A1, A2, A4, A5, A6, A7** ✅
+- **B1-B6, B8, B9, B11** ✅
+- **A3 Phase 0-2a** (angela_llm_service 拆分前置 → providers 提取 → prompt_builder 提取) ✅
+- **系統審計 + P0/P1 修復** ✅
+- **翻譯學習計畫發佈** ✅
+- **eta_axis_state import 路徑修復** ✅
+
+### 待完成
+- **A3 Phase 2b-4** (core/autonomous 拆分 + router.py shim) ~2天
+- **B7** (singleton→DI, 可選) ~2天
+- **B10** (docs整理, 低優先) ~2天
+- **C1-C6** (功能開發)
+
+### 已知約束
+- C6 翻譯學習層 Phase 2 依賴 A3 拆分完成（injection target 才確定）
+- core/autonomous 拆分前需確認 `biological_integrator` ↔ `art_learning_workflow` 環狀依賴
+- `self_generation.py` 因依賴 `art_learning_workflow` 留在 `autonomous/`
 
 ---
 
