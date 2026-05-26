@@ -109,35 +109,59 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 | 檔案 | 當前行數 | 拆分方案 | 狀態 |
 |------|---------|---------|------|
-| `main_api_server.py` | 1668→**247** | → `services/websocket_manager.py` (303行) ✅ | ✅ WS 提取 |
-| | | → `api/lifespan.py` (230行) ✅ | ✅ lifespan+factories |
-| | | → `api/routes/chat_routes.py` (252行) ✅ | ✅ chat routes |
-| | | → `api/routes/desktop_routes.py` (113行) ✅ | ✅ desktop/brain routes |
-| | | → `cli/repl.py` (392行) ✅ | ✅ REPL 提取 |
-| `angela_llm_service.py` | 2196 | → `services/llm/router.py` + `services/llm/providers/*.py` + `services/llm/prompt_builder.py` | ⏳ 待審計 |
-| `core/autonomous/` | 60+ 文件 | → 按領域拆 `core/life/`, `core/bio/`, `core/engine/` | ⏳ 待審計 |
+| `main_api_server.py` | 1668→**247** | → 5 目標文件 | ✅ 完成 |
+| `angela_llm_service.py` | 2245 | → `services/llm/router.py` + `providers/` + `prompt_builder.py` | ✅ 審計完成 |
+| `core/autonomous/` | 50 文件 ~28k 行 | → `core/life/`, `core/bio/`, `core/engine/` | ✅ 審計完成 |
 
 **總提取量: 1442 行** | `main_api_server.py` **1689→247 (-85%)** ✅ **已達 <500 行目標**
 
-| 提取目標 | 行數 | 狀態 |
-|---------|------|------|
-| `services/websocket_manager.py` | 303 | ✅ |
-| `api/lifespan.py` | 230 | ✅ |
-| `api/routes/chat_routes.py` | 252 | ✅ |
-| `api/routes/desktop_routes.py` | 113 | ✅ |
-| `cli/repl.py` | 392 | ✅ |
+#### angela_llm_service.py 拆分計畫
 
-**修復**:  
-- `broadcast_state_updates()` 從死代碼→lifespan background task ✅  
-- `setup_middleware()` 從 inline code→封裝函數 ✅  
-- `_get_chat_service()` 從 main_api_server→api/lifespan ✅  
-- `wiring.py`/`hot_reload_service.py`/`websocket_manager.py`/`mobile.py` import 路徑更新 ✅  
-- `api/router.py` 新增 chat_routes/desktop_routes include ✅  
-- REPL 入口 `python -m src.services.main_api_server --repl` 保持相容 ✅
+| 目標文件 | 源行數 | 內容 |
+|---------|-------|------|
+| `services/llm/providers/base.py` | 118-130 | `BaseLLMBackend` ABC |
+| `services/llm/providers/registry.py` | 102-111 | `LLMBackend` Enum |
+| `services/llm/providers/llamacpp.py` | 132-199 | `LlamaCppBackend` |
+| `services/llm/providers/ollama.py` | 201-284 | `OllamaBackend` |
+| `services/llm/providers/openai.py` | 286-355 | `OpenAIAPIBackend` |
+| `services/llm/providers/anthropic.py` | 357-417 | `AnthropicAPIBackend` |
+| `services/llm/providers/google.py` | 420-479 | `GoogleAPIBackend` |
+| `services/llm/prompt_builder.py` | 618-836, 1024-1242, 1866-1885, 1951-2116 | Prompt 建構、生物狀態、情緒分析 |
+| `services/llm/router.py` | 剩餘 ~1200 行 | `AngelaLLMService` 核心、routing、fallback、singleton |
+| `services/angela_llm_service.py` | shim | 向後相容 re-export |
+
+**外部依賴：14 個文件**，全部只 import `get_llm_service()`——shim 策略可無痛過渡。
+**環狀風險：無**。providers → protocols，prompt_builder → config，router → providers + prompt_builder。
+**前置 refactor**：`_construct_angela_prompt()` 需從 `self.*` 改為參數傳遞 config/emotion_keywords。
+
+#### core/autonomous/ 拆分計畫
+
+| 目標目錄 | 文件數 | 行數 | 領域 |
+|---------|-------|------|------|
+| `core/engine/` | 15 | ~8,200 | 狀態矩陣、執行、routing、數學、物理 |
+| `core/bio/` | 9 | ~8,300 | 生物模擬（觸覺、荷爾蒙、神經、情緒） |
+| `core/life/` | 11 | ~4,800 | 數位生命、身份、生命週期、行為 |
+| `core/autonomous/` (保留) | 14 | ~6,900 | 整合層、桌面/瀏覽器/音訊、Live2D、藝術學習 |
+
+**前置修復（必須先做）：**
+1. **缺失文件**：`eta_axis_state.py` 被 2 個外部文件引用但不存在（`document_builder.py`、`creative_writing_agent.py`）
+2. **環狀依賴**：`biological_integrator` ↔ `art_learning_workflow`（已有 lazy import，需確認全數 guarded）
+3. **跨包依賴**：`self_generation` 匯入 `art_learning_workflow`（保留在 `autonomous/`）
+4. **測試遷移**：3 個測試文件 (`test_browser_controller.py` 等) 搬到 `tests/core/autonomous/`
+
+#### 執行順序
+
+```
+Phase 0: 前置修復（缺失文件、環狀依賴、測試遷移）→ ~0.5天
+Phase 1: providers 提取（最低風險）→ ~0.5天
+Phase 2: prompt_builder 提取（需 refactor prompt 函數簽名）→ ~1天
+Phase 3: router.py + shim 建立 → ~0.5天
+Phase 4: core/autonomous/ 文件搬移 + __init__ 更新 → ~1天
+```
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🔴3 | 0.5天剩餘 | **6** |
+| 🟡2 | 🔴3 | **3.5天剩餘** | **6** |
 
 ### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
@@ -334,14 +358,14 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 ## 執行路線圖
 
 ```
-All S ✅ (4) + All B ✅ (B1-B6/B8/B11 = 8) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
-→ 20/27 完成！(A3 ≈4d ✅，B9 0.5d ✅，剩餘 ~2.5d)
+All S ✅ (4) + All B ✅ (B1-B6/B8/B11 = 9) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
+→ 20/27 完成！(A3 審計 ✅ 剩實作 ~3.5d，B9 0.5d ✅)
 
 Remaining:
-  A3 (~0.5d審計) — LLM + core/autonomous 審計 (低優先)
+  A3 (實作 ~3.5d) — LLM 拆分 (1.5d) + core/autonomous 拆分 (1d) + 前置修復 (0.5d)
   B7 (singleton→DI 2d) — 可選，多數已 DI-ready
   B10 (docs整理 2d) — 低優先級
-  C1-C5 (功能開發) — 分散在 sprint 間隙
+  C1-C6 (功能開發) — 分散在 sprint 間隙
 ```
 
 ---
@@ -351,10 +375,10 @@ Remaining:
 | 層級 | 任務數 | 工時 |
 |------|--------|------|
 | S 級 | 4 | **✅ 2.3 天** |
-| A 級 | 7 | **9.3 天 (已完成 A1/A2/A4/A5/A6/A7 ≈ 5.5d)** |
+| A 級 | 7 | **9.3 天 (已完成 A1/A2/A4/A5/A6/A7 ≈ 5.5d + A3 審計 ✅, 剩 ~3.5d)** |
 | B 級 | 11 | **8.1 天 (已完成 B1-B6/B8/B9/B11 ≈ 3.0d)** |
-| C 級 | 5 | 未估算 (功能開發) |
-| **總計** | **27** | **~22.4 天 (全職) / 6-8 週 (兼職)** |
+| C 級 | 6 | 未估算 (功能開發) |
+| **總計** | **28** | **~22.4 天 (全職) / 6-8 週 (兼職)** |
 
 比舊 P8 v1 (12 天) + P9 (17.9 天) = ~30 天，合併後減少 ~25%。
 
