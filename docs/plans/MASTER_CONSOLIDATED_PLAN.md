@@ -105,32 +105,39 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟢1 | 🟢1 | 0天 | **5** |
 
-### A3. 拆分上帝模塊 (完成度 ~70%)
+### A3. 拆分上帝模塊 (完成度 ~95%)
 
 | 檔案 | 當前行數 | 拆分方案 | 狀態 |
 |------|---------|---------|------|
-| `main_api_server.py` | 1668→1101→**637** | → `services/websocket_manager.py` (303行) ✅ | ✅ WS 提取 |
-| | | → `api/lifespan.py` (230行) ✅ | ✅ lifespan+factories 提取 |
-| | | → `api/routes/chat_routes.py` (252行) ✅ | ✅ chat routes 提取 |
-| | | → `api/routes/desktop_routes.py` | ⏳ 待跟進 |
+| `main_api_server.py` | 1668→**247** | → `services/websocket_manager.py` (303行) ✅ | ✅ WS 提取 |
+| | | → `api/lifespan.py` (230行) ✅ | ✅ lifespan+factories |
+| | | → `api/routes/chat_routes.py` (252行) ✅ | ✅ chat routes |
+| | | → `api/routes/desktop_routes.py` (113行) ✅ | ✅ desktop/brain routes |
+| | | → `cli/repl.py` (392行) ✅ | ✅ REPL 提取 |
 | `angela_llm_service.py` | 2196 | → `services/llm/router.py` + `services/llm/providers/*.py` + `services/llm/prompt_builder.py` | ⏳ 待審計 |
 | `core/autonomous/` | 60+ 文件 | → 按領域拆 `core/life/`, `core/bio/`, `core/engine/` | ⏳ 待審計 |
 
-**已提取 (785 行)**:  
-- `services/websocket_manager.py` (303行): ConnectionManager, broadcast_state_updates, websocket_handler  
-- `api/lifespan.py` (230行): lifespan, middleware, service factories, `_angela_cfg`, `_validate_environment_variables`, `_get_chat_service`  
-- `api/routes/chat_routes.py` (252行): TTLSessionManager, `_handle_chat_request`, `_build_math_response`, 所有 chat/session/security route handlers  
+**總提取量: 1442 行** | `main_api_server.py` **1689→247 (-85%)** ✅ **已達 <500 行目標**
+
+| 提取目標 | 行數 | 狀態 |
+|---------|------|------|
+| `services/websocket_manager.py` | 303 | ✅ |
+| `api/lifespan.py` | 230 | ✅ |
+| `api/routes/chat_routes.py` | 252 | ✅ |
+| `api/routes/desktop_routes.py` | 113 | ✅ |
+| `cli/repl.py` | 392 | ✅ |
 
 **修復**:  
 - `broadcast_state_updates()` 從死代碼→lifespan background task ✅  
 - `setup_middleware()` 從 inline code→封裝函數 ✅  
-- `_get_chat_service()` 從 main_api_server→api/lifespan，lifespan 內部 lazy import 改 direct call ✅  
+- `_get_chat_service()` 從 main_api_server→api/lifespan ✅  
 - `wiring.py`/`hot_reload_service.py`/`websocket_manager.py`/`mobile.py` import 路徑更新 ✅  
-- `api/router.py` 新增 `chat_router` include ✅
+- `api/router.py` 新增 chat_routes/desktop_routes include ✅  
+- REPL 入口 `python -m src.services.main_api_server --repl` 保持相容 ✅
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🔴3 | 2天剩餘 | **6** |
+| 🟡2 | 🔴3 | 0.5天剩餘 | **6** |
 
 ### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
@@ -318,10 +325,10 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 ```
 All S ✅ (4) + All B ✅ (B1-B6/B8/B11 = 8) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
-→ 18/27 完成！~0 天剩餘（按原計畫路線）
+→ 18/27 完成！(A3 約 4d 已完成，剩餘 ~0.5d 審計)
 
 Remaining:
-  A3 (拆上帝模塊 ~2d剩餘) — WS/lifespan/chat routes 已提取 ✅，剩 desktop routes + REPL 提取
+  A3 (拆上帝模塊 ~0.5d剩餘) — WS/lifespan/chat/desktop/REPL 已提取 ✅，剩 LLM + core/autonomous 審計
   B7 (singleton→DI 2d) — 可選，現有 singleton 多數已 DI-ready
   B9 (根目錄清理 0.5d) — 跨引用風險高，需手動處理
   B10 (docs整理 2d) — 低優先級
@@ -350,7 +357,7 @@ Remaining:
 |------|------|------|---------|
 | 版本一致性 | 31% (13中4) | **✅ 100%** (S1+S2+S3 已完成) | S1, S2, S3 |
 | 架構一致性總分 | 62.6% | **85%+** | A3, A5, B6 |
-| 上帝模塊 (637/2196 行) | 2 個 | **0 個** (<500行) | A3 |
+| 上帝模塊 (247/2196 行) | 2 個 | **0 個** (<500行) | ✅ A3 |
 | config/ 雙目錄 | 2 個 | **✅ 1 個** (S4 已完成) | S4 |
 | chat_service 解耦 | import 殘留 4 處 | **✅ 0 處** (A1 已完成) | A1 |
 | wiring 循環依賴 | 函數內 lazy import | **✅ 無問題** (A2 已完成) | A2 |
