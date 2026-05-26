@@ -156,11 +156,11 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 | Phase 0 | 前置修復：eta_axis_state import fix + prompt_builder 函數簽名 refactor | ✅ 完成 |
 | Phase 1 | providers 提取（7 檔案至 services/llm/providers/） | ✅ 完成 |
 | Phase 2a | prompt_builder.py 建置（services/llm/prompt_builder.py） | ✅ 完成 |
-| Phase 2b | core/autonomous/ 前置修復 + 搬移 | ⏳ 待做 |
+| Phase 2b | core/autonomous/ 前置修復 + 搬移 | ✅ 完成 |
 | Phase 3 | router.py + shim 建立 | ✅ 完成 |
-| Phase 4 | core/autonomous/ 文件搬移 + __init__ 更新 | ⏳ 待做 |
+| Phase 4 | core/autonomous/ 文件搬移 + __init__ 更新 | ✅ 完成 |
 
-**完成狀態：** angela_llm_service.py 2245→**21 行**（shim）。核心邏輯已完整遷移至 `services/llm/`：
+**完成狀態：** angela_llm_service.py 2245→**21 行**（shim）。`core/autonomous/` 拆分為三個子套件。核心邏輯已完整遷移至：
 ```
 services/llm/
   __init__.py           — 聚合 router, providers, prompt_builder
@@ -182,9 +182,36 @@ services/llm/
 - 14 個外部 import 者全部相容（含 `precompute_service.py` 的相對 import）
 - 29 個類方法 + 5 個模組級函式完整保留
 
+### core/autonomous/ → core/{life,bio,engine}/ 拆分
+
+```
+core/
+  life/      (13 files, ~3700 lines) — 數位生命、心跳、反射、身分、演化
+    autonomous_life_cycle, digital_life_integrator, self_generation, self_introspector,
+    cyber_identity, evolution_engine, tickle_reflex_system, bio_reflex_manager,
+    intent_model, dynamic_parameters, digital_life_constants, heartbeat, env_dynamics
+  bio/       (12 files, ~7800 lines) — 生理模擬、內分泌、神經、情緒
+    physiological_tactile, endocrine_system, autonomic_nervous_system, neuroplasticity,
+    emotional_blending, biological_integrator, memory_neuroplasticity_bridge, input_sensor,
+    kinetic_validator, cerebellum_engine, extended_behavior_library, multidimensional_trigger
+  engine/    (20 files, ~11000 lines) — 狀態矩陣、路由、執行、藝術學習、桌面操作
+    state_matrix, state_matrix_adapter, state_persistence, influence_applicator,
+    cognitive_operations, anchor_learning, eta_axis, theta_router, axis_port_registry,
+    port_channel, angela_model_core, art_learning_system, art_learning_workflow,
+    live2d_avatar_generator, action_executor, desktop_interaction, desktop_presence,
+    browser_controller, audio_system, live2d_integration
+  autonomous/ (21 lines shim — 向後相容)
+```
+
+**拆分驗證結果：**
+- 45 個檔案搬移至新子套件，47 個 import 路徑自動修正
+- 所有跨套件 import 正確解析（如 `biological_integrator` → `core.engine.art_learning_workflow`）
+- `core.autonomous.xxx` 舊路徑仍相容（原始檔案暫留作為向後相容層）
+- `core.__init__` re-export 路徑已更新指向 `core.engine.action_executor`
+
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡1 | 🟡2 | **~1天剩餘** | **3** |
+| 🟢1 | 🟢2 | **可開始 C6** | **1** |
 
 ### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
@@ -417,8 +444,7 @@ Remaining:
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
-- **A3 Phase 2b** (core/autonomous 前置修復) ~0.5天
-- **A3 Phase 4** (core/autonomous/ → core/{life,bio,engine}/ 搬移) ~0.5天
+- **A3 Phase 5** （可選）清理 originals：移除 `core/autonomous/` 中已搬移的原始檔案，僅保留 shim + playground + test 檔案
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
 - **C1-C6** (功能開發)
@@ -428,6 +454,7 @@ Remaining:
 - core/autonomous 拆分前需確認 `biological_integrator` ↔ `art_learning_workflow` 環狀依賴
 - `self_generation.py` 因依賴 `art_learning_workflow` 留在 `autonomous/`
 - `services/angela_llm_service.py` 現在是 21 行的純 shim，所有核心邏輯在 `services/llm/router.py`
+- `core/autonomous/__init__.py` 現在是 430 行的純 shim，所有模組邏輯在 `core/{life,bio,engine}/`
 
 ---
 

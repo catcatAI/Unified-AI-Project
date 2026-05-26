@@ -25,8 +25,8 @@ from .action_execution_bridge import (
     FeedbackCollector,
 )
 
-# Autonomous Systems
-from .autonomous.action_executor import (
+# Autonomous Systems (refactored to core/engine/)
+from .engine.action_executor import (
     ActionExecutor,
     ActionQueue,
     ActionPriority,

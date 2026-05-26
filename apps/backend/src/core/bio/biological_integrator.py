@@ -1,0 +1,854 @@
+"""
+Angela AI v6.0 - Biological Integrator
+生物系统整合器
+
+Integrates all biological simulation systems (tactile, endocrine, nervous,
+neuroplasticity, emotions) and manages their interconnections and mutual influences.
+
+Features:
+- Coordinates all biological subsystems
+- Manages cross-system interactions
+- Synchronizes physiological-emotional-hormonal states
+- Maintains biological homeostasis
+
+Author: Angela AI Development Team
+Version: 6.0.0
+Date: 2026-02-02
+"""
+
+from __future__ import annotations
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Callable, Any
+from datetime import datetime
+import asyncio
+import logging
+from enum import Enum
+
+logger = logging.getLogger(__name__)
+
+from .physiological_tactile import PhysiologicalTactileSystem, TactileType, BodyPart
+from .endocrine_system import EndocrineSystem, HormoneType
+from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
+from .neuroplasticity import NeuroplasticitySystem
+from .emotional_blending import EmotionalBlendingSystem, BasicEmotion
+from utils.async_utils import safe_create_task
+
+
+# P0-2: 生物事件定义
+class BiologicalEvent(Enum):
+    """生物事件类型"""
+
+    EMOTION_CHANGED = "emotion_changed"
+    STRESS_CHANGED = "stress_changed"
+    ENERGY_CHANGED = "energy_changed"
+    MOOD_CHANGED = "mood_changed"
+    AROUSAL_CHANGED = "arousal_changed"
+    HORMONE_CHANGED = "hormone_changed"
+    TACTILE_STIMULUS = "tactile_stimulus"
+    VISUAL_STIMULUS = "visual_stimulus"
+    AUDITORY_STIMULUS = "auditory_stimulus"
+
+
+@dataclass
+class SystemInteraction:
+    """系统间交互 / System interaction definition"""
+
+    source_system: str
+    target_system: str
+    interaction_type: str
+    influence_strength: float  # 0-1
+    bidirectional: bool = False
+
+
+# P0-2: 生物事件发布器
+class BiologicalEventPublisher:
+    """
+    生物事件发布器
+    负责发布生物系统事件给订阅者
+    """
+
+    def __init__(self):
+        self.subscribers: Dict[str, List[Callable]] = {}
+
+    def subscribe(self, event_type: str, callback: Callable):
+        """
+        订阅生物事件
+
+        Args:
+            event_type: 事件类型
+            callback: 回调函数
+        """
+        if event_type not in self.subscribers:
+            self.subscribers[event_type] = []
+        self.subscribers[event_type].append(callback)
+        logger.debug(f"Subscribed to event: {event_type}")
+
+    def unsubscribe(self, event_type: str, callback: Callable):
+        """
+        取消订阅
+
+        Args:
+            event_type: 事件类型
+            callback: 回调函数
+        """
+        if event_type in self.subscribers and callback in self.subscribers[event_type]:
+            self.subscribers[event_type].remove(callback)
+            logger.debug(f"Unsubscribed from event: {event_type}")
+
+    async def publish(self, event: BiologicalEvent, data: Dict[str, Any]):
+        """
+        发布生物事件
+
+        Args:
+            event: 生物事件
+            data: 事件数据
+        """
+        event_type = event.value
+        if event_type in self.subscribers:
+            for callback in self.subscribers[event_type]:
+                try:
+                    result = callback(event, data)
+                    # 如果回调返回协程，则等待它
+                    if asyncio.iscoroutine(result):
+                        await result
+                except Exception as e:  # broad exception acceptable: event callback errors should not block publishing
+                    logger.error(f"Error in biological event callback: {e}", exc_info=True)
+
+    def get_subscribers_count(self, event_type: Optional[str] = None) -> Dict[str, int]:
+        """
+        获取订阅者数量
+
+        Args:
+            event_type: 事件类型（可选）
+
+        Returns:
+            订阅者数量字典
+        """
+        if event_type:
+            return {event_type: len(self.subscribers.get(event_type, []))}
+        return {k: len(v) for k, v in self.subscribers.items()}
+
+
+class BiologicalIntegrator:
+    """
+    生物系统整合器主类 / Main biological integrator class (Singleton)
+    
+    Coordinates and integrates all biological simulation systems for Angela AI.
+    """
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        if getattr(self, "_initialized", False):
+            return
+        self._initialized = True
+        logger.info("🧬 [Bio] Initializing BiologicalIntegrator Singleton...")
+        
+        from core.life.env_dynamics import EnvironmentDynamics
+        self.config = config or {}
+        self.dynamics = EnvironmentDynamics()
+        self._update_interval = self.dynamics.get_dynamic_threshold("update_interval", 5.0)
+
+        # Biological subsystems
+        self.tactile_system: PhysiologicalTactileSystem = PhysiologicalTactileSystem()
+        self.endocrine_system: EndocrineSystem = EndocrineSystem()
+        self.nervous_system: AutonomicNervousSystem = AutonomicNervousSystem()
+        self.neuroplasticity_system: NeuroplasticitySystem = NeuroplasticitySystem()
+        self.emotional_system: EmotionalBlendingSystem = EmotionalBlendingSystem()
+        
+        # 2030 Standard: Cerebellum Motor System
+        from .cerebellum_engine import CerebellumEngine
+        self.cerebellum: CerebellumEngine = CerebellumEngine()
+        
+        # 2030 Standard: L4 Art Learning Workflow
+        from core.engine.art_learning_workflow import get_art_workflow
+        self.art_workflow = get_art_workflow(self)
+
+        # P0-2: 生物事件发布器
+        self.event_publisher = BiologicalEventPublisher()
+
+        # Interactions
+        self.interactions: List[SystemInteraction] = []
+        self._setup_default_interactions()
+
+        # State tracking
+        self._last_update: datetime = datetime.now()
+        # Configurable homeostatic targets (from config or use defaults)
+        self._homeostatic_targets = self.config.get(
+            "homeostatic_targets",
+            {
+                "arousal": 50.0,
+                "stress": 20.0,
+                "mood": 0.6,
+            },
+        )
+
+        # Update interval from config (default 5 seconds)
+        self._update_interval = self.config.get("update_interval", 5.0)
+
+        # Running state
+        self._running = False
+        self._integration_task: Optional[asyncio.Task] = None
+
+        # Callbacks
+        self._state_callbacks: List[Callable[[Dict[str, Any]], None]] = []
+
+    def register_event_callback(self, callback: Callable[[str, Dict[str, Any]], None]):
+        """
+        Register a callback for all biological events.
+        Convenience method to bridge to external systems like WebSocket.
+        """
+        for event in BiologicalEvent:
+            # Define a closure to capture the callback and event name
+            def create_wrapper(target_callback, event_name):
+                # The publisher calls the callback with (event_enum, data)
+                return lambda event_obj, data: target_callback(event_name, data)
+
+            self.event_publisher.subscribe(event.value, create_wrapper(callback, event.value))
+
+    def _setup_default_interactions(self):
+        """Set up default system interactions"""
+        self.interactions = [
+            # Nervous system influences hormones
+            SystemInteraction("nervous", "endocrine", "arousal_to_adrenaline", 0.8),
+            # Hormones influence emotions
+            SystemInteraction("endocrine", "emotional", "hormonal_mood", 0.7, True),
+            # Emotions influence nervous system
+            SystemInteraction("emotional", "nervous", "emotion_to_arousal", 0.6, True),
+            # Tactile influences emotions
+            SystemInteraction("tactile", "emotional", "touch_to_emotion", 0.5),
+            # Emotions influence tactile sensitivity
+            SystemInteraction("emotional", "tactile", "emotion_to_sensitivity", 0.4, True),
+            # Nervous system influences tactile sensitivity
+            SystemInteraction("nervous", "tactile", "arousal_to_sensitivity", 0.6),
+            # Stress hormones influence neuroplasticity
+            SystemInteraction("endocrine", "neuroplasticity", "cortisol_to_memory", 0.5),
+            # Emotional memories influence neuroplasticity
+            SystemInteraction("emotional", "neuroplasticity", "emotional_memory", 0.7),
+        ]
+
+    async def initialize(self):
+        """Initialize all biological systems"""
+        if self._running:
+            logger.info("🧬 [Bio] Already running, skipping initialize.")
+            return
+        
+        logger.info("🧬 [Bio] Starting systems initialization...")
+        self._running = True
+
+        # Initialize subsystems
+        await self.tactile_system.initialize()
+        await self.endocrine_system.initialize()
+        await self.nervous_system.initialize()
+        await self.neuroplasticity_system.initialize()
+        await self.emotional_system.initialize()
+
+        # Set up cross-system callbacks
+        self._setup_cross_system_callbacks()
+
+        # [Phase 8 Activation] 啟動藝術學習工作流 (L1 -> L4 橋接)
+        try:
+            from core.engine.art_learning_workflow import get_art_workflow
+            art_wf = get_art_workflow(bio=self)
+            if art_wf:
+                logger.info("🎨 [Bio] ArtLearningWorkflow activated and linked.")
+        except Exception as e:
+            logger.warning(f"🎨 [Bio] Failed to activate ArtLearningWorkflow: {e}")
+
+        # [2030 Standard] Start integration loop with safe tracking
+        self._integration_task = safe_create_task(
+            self._integration_loop(), name="Bio-Integration-Loop"
+        )
+
+    async def shutdown(self):
+        """Shutdown all biological systems"""
+        self._running = False
+
+        if self._integration_task:
+            self._integration_task.cancel()
+            try:
+                await self._integration_task
+            except asyncio.CancelledError:
+                pass
+
+        # Shutdown subsystems
+        await self.tactile_system.shutdown()
+        await self.endocrine_system.shutdown()
+        await self.nervous_system.shutdown()
+        await self.neuroplasticity_system.shutdown()
+        await self.emotional_system.shutdown()
+
+    def _setup_cross_system_callbacks(self):
+        """Set up callbacks for cross-system communication"""
+        # Nervous system arousal changes affect endocrine system
+        self.nervous_system.register_arousal_callback(self._on_arousal_change)
+
+        # Hormone changes affect emotional system
+        self.endocrine_system.register_change_callback(self._on_hormone_change)
+
+        # Emotional changes affect nervous system
+        self.emotional_system.register_emotion_change_callback(self._on_emotion_change)
+
+    def _on_arousal_change(self, arousal: float):
+        """Handle arousal level changes"""
+        # Affect tactile sensitivity
+        self.tactile_system.set_arousal_level(arousal)
+
+        # High arousal triggers adrenaline (From Config [Phase 7])
+        from core.system.config.tiered_loader import get_config
+        beh_conf = get_config("standard/behavior/behavior")
+        stress_thresh = beh_conf.get("biological_thresholds", {}).get("arousal_stress_trigger", 70.0)
+
+        if arousal > stress_thresh:
+            asyncio.create_task(
+                self.endocrine_system.trigger_stress_response(
+                    (arousal - stress_thresh) / 30, stress_type="acute"
+                )
+            )
+
+        # P0-2: 发布唤醒水平变化事件
+        asyncio.create_task(
+            self.event_publisher.publish(
+                BiologicalEvent.AROUSAL_CHANGED,
+                {
+                    "arousal": arousal,
+                    "energy": arousal / 100.0,  # 归一化到 0-1
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        )
+
+        # P0-2: 发布能量变化事件
+        asyncio.create_task(
+            self.event_publisher.publish(
+                BiologicalEvent.ENERGY_CHANGED,
+                {
+                    "energy": arousal / 100.0,  # 归一化到 0-1
+                    "arousal": arousal,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        )
+
+    def _on_hormone_change(self, hormone_type: HormoneType, old_val: float, new_val: float):
+        """Handle hormone level changes"""
+        # Dopamine and serotonin affect emotions
+        if hormone_type in [HormoneType.DOPAMINE, HormoneType.SEROTONIN]:
+            normalized = (new_val - 20) / 80  # Rough normalization
+            self.emotional_system.apply_influence(
+                "hormonal", hormone_type.en_name.lower(), normalized, 0.6
+            )
+
+        # Adrenaline affects nervous system
+        if hormone_type == HormoneType.ADRENALINE:
+            arousal_boost = (new_val / 100) * 20
+            current_arousal = self.nervous_system.arousal_level
+            self.nervous_system.set_arousal_directly(min(100, current_arousal + arousal_boost))
+
+        # P0-2: 发布激素变化事件
+        asyncio.create_task(
+            self.event_publisher.publish(
+                BiologicalEvent.HORMONE_CHANGED,
+                {
+                    "hormone_type": hormone_type.en_name,
+                    "old_value": old_val,
+                    "new_value": new_val,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        )
+
+    def _on_emotion_change(self, old_emotion, new_emotion):
+        """Handle emotional state changes"""
+        # Affect nervous system based on emotion arousal
+        arousal_impact = new_emotion.arousal * 30  # -30 to 30
+        current_arousal = self.nervous_system.arousal_level
+        self.nervous_system.set_arousal_directly(max(0, min(100, current_arousal + arousal_impact)))
+
+        # Emotional touch preferences
+        if new_emotion.pleasure > 0.5:
+            # Positive emotions prefer gentle touch
+            self.tactile_system.apply_emotional_context("joy", new_emotion.intensity)
+        elif new_emotion.pleasure < -0.3:
+            # Negative emotions
+            self.tactile_system.apply_emotional_context("anxiety", new_emotion.intensity)
+
+        # P0-2: 发布情绪变化事件
+        asyncio.create_task(
+            self.event_publisher.publish(
+                BiologicalEvent.EMOTION_CHANGED,
+                {
+                    "old_emotion": (
+                        old_emotion.to_basic_emotions()[0][0].en_name if old_emotion else "unknown"
+                    ),
+                    "new_emotion": new_emotion.to_basic_emotions()[0][0].en_name,
+                    "arousal": new_emotion.arousal,
+                    "pleasure": new_emotion.pleasure,
+                    "intensity": new_emotion.intensity,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        )
+
+        # P0-2: 发布心情变化事件
+        asyncio.create_task(
+            self.event_publisher.publish(
+                BiologicalEvent.MOOD_CHANGED,
+                {
+                    "mood": new_emotion.pleasure,
+                    "arousal": new_emotion.arousal,
+                    "dominant_emotion": new_emotion.to_basic_emotions()[0][0].en_name,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        )
+
+    async def _integration_loop(self):
+        """Background loop for system integration - Configurable"""
+        while self._running:
+            await self._apply_homeostasis()
+            await self._synchronize_states()
+            await asyncio.sleep(self._update_interval)  # Configurable update interval
+
+    async def _apply_homeostasis(self):
+        """Apply homeostatic regulation and hormonal decay (Metabolism)."""
+        # 1. Autonomic Nervous System Recovery
+        current_arousal = self.nervous_system.arousal_level
+        target_arousal = self._homeostatic_targets["arousal"]
+        if abs(current_arousal - target_arousal) > 5:
+            adjustment = (target_arousal - current_arousal) * 0.05
+            self.nervous_system.set_arousal_directly(current_arousal + adjustment)
+
+        # 2. Endocrine System Metabolism (Critical detail: recovery from stress)
+        # 2030 Correct Interface: Use advance_time instead of update_hormones
+        try:
+            await self.endocrine_system.advance_time(seconds=self._update_interval)
+            # Only log if stress is significant to reduce spam
+            if self.endocrine_system.stress_level > 0.05:
+                logger.debug(f"🧪 [Bio] Endocrine metabolism complete. Stress: {self.endocrine_system.stress_level:.2f}")
+        except Exception as e:  # broad exception acceptable: endocrine metabolism errors should not break homeostasis
+            logger.error(f"Failed to update endocrine metabolism: {e}")
+
+        # 3. Safety Fuse
+        from core.system.config.tiered_loader import get_config
+        beh_conf = get_config("standard/behavior/behavior")
+        arousal_clamp_max = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_max", 95)
+        arousal_clamp_min = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_min", 5)
+        if current_arousal > arousal_clamp_max or current_arousal < arousal_clamp_min:
+            self.nervous_system.set_arousal_directly(target_arousal)
+
+    async def _synchronize_states(self):
+        """Synchronize states across all biological systems (2030 Standard)"""
+        # Calculate integrated state
+        integrated_state = self.get_biological_state()
+        
+        # 1. [+N16.2] Proprioception Feedback Loop
+        # 比較小腦預期姿勢與當前狀態 (這裡假設同步成功)
+        self.cerebellum.update_proprioception(
+            actual_theta=integrated_state.get("posture", {}).get("theta_matrix", [0.0]*9)
+        )
+
+        # Notify state callbacks
+        for callback in self._state_callbacks:
+            try:
+                callback(integrated_state)
+            except Exception as e:  # broad exception acceptable: state callback errors should not block synchronization
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                pass
+
+    async def process_stress_event(self, intensity: float, duration: float = 10.0):
+        import math
+        if not math.isfinite(intensity): intensity = 0.0
+        
+        await self.nervous_system.apply_stimulus(
+            "stress_event", NerveType.SYMPATHETIC, intensity, duration
+        )
+        await self.endocrine_system.trigger_stress_response(
+            intensity, stress_type="acute" if duration < 30 else "chronic"
+        )
+        self.emotional_system.apply_influence("physiological", "stress", intensity, 0.8)
+
+    async def process_relaxation_event(self, intensity: float = 0.5):
+        import math
+        if not math.isfinite(intensity): intensity = 0.0
+        
+        await self.nervous_system.apply_stimulus(
+            "relaxation", NerveType.PARASYMPATHETIC, intensity, 30.0
+        )
+        await self.endocrine_system.trigger_emotional_response("relaxation", intensity)
+        self.emotional_system.set_emotion_from_basic(BasicEmotion.CALM, intensity)
+
+    async def process_touch_interaction(
+        self, body_part: BodyPart, intensity: float, emotional_context: Optional[str] = None
+    ):
+        """
+        Process a touch interaction through biological systems
+
+        Args:
+            body_part: Body part touched
+            intensity: Touch intensity
+            emotional_context: Optional emotional context
+        """
+        from .physiological_tactile import TactileStimulus
+
+        # Create tactile stimulus
+        stimulus = TactileStimulus(
+            tactile_type=TactileType.LIGHT_TOUCH,
+            intensity=intensity * 10,
+            location=body_part,
+            duration=2.0,
+            emotional_tag=emotional_context,
+        )
+
+        # Process through tactile system
+        response = await self.tactile_system.process_stimulus(stimulus)
+
+        # Trigger emotional response based on perceived intensity
+        if response.perceived_intensity > 7:
+            # Strong touch
+            if emotional_context == "comfort":
+                self.emotional_system.set_emotion_from_basic(BasicEmotion.LOVE, 0.6)
+            else:
+                self.emotional_system.set_emotion_from_basic(BasicEmotion.SURPRISE, 0.5)
+
+        # Trigger oxytocin for positive touch
+        if emotional_context in ["comfort", "love", "joy"]:
+            await self.endocrine_system.adjust_hormone(HormoneType.OXYTOCIN, 15.0 * intensity)
+
+    async def process_visual_stimulus(self, stimulus_type: str, intensity: float, description: str):
+        """
+        Process a visual stimulus (e.g., seeing the user, seeing a gift).
+        """
+        logger.info(
+            f"[BiologicalIntegrator] Visual Stimulus: {stimulus_type} ({intensity}) - {description}"
+        )
+
+        # Link to emotions
+        if stimulus_type == "user_present":
+            self.emotional_system.apply_influence("external", "joy", intensity * 0.4, 0.5)
+            await self.endocrine_system.adjust_hormone(HormoneType.DOPAMINE, intensity * 10)
+        elif stimulus_type == "monochrome_hazard":
+            self.emotional_system.apply_influence("external", "fear", intensity * 0.6, 0.8)
+            await self.endocrine_system.trigger_stress_response(intensity, stress_type="acute")
+
+        await self.event_publisher.publish(
+            BiologicalEvent.VISUAL_STIMULUS,
+            {"type": stimulus_type, "intensity": intensity, "description": description},
+        )
+
+    async def process_auditory_stimulus(self, volume: float, content: str):
+        """
+        Process an auditory stimulus (e.g., loud noise, soft music).
+        """
+        logger.info(f"[BiologicalIntegrator] Auditory Stimulus: {volume:.2f} - {content[:20]}...")
+
+        # Loud noise impacts stress and arousal
+        if volume > 0.8:
+            await self.process_stress_event(intensity=(volume - 0.5) * 1.5, duration=5.0)
+            self.emotional_system.set_emotion_from_basic(BasicEmotion.SURPRISE, volume)
+
+        await self.event_publisher.publish(
+            BiologicalEvent.AUDITORY_STIMULUS, {"volume": volume, "content": content}
+        )
+
+    def get_biological_state(self) -> Dict[str, Any]:
+        """Get comprehensive integrated biological state (2030 Standard)"""
+        # Get individual system states
+        nervous_state = self.nervous_system.get_system_summary()
+        endocrine_effects = self.endocrine_system.calculate_systemic_effects()
+        emotional_summary = self.emotional_system.get_emotion_summary()
+        
+        # Safely get current emotion from history
+        dominant_emotion = "neutral"
+        confidence = 0.5
+        if self.emotional_system.emotion_history:
+            last_state = self.emotional_system.emotion_history[-1]
+            # 處理可能的多態結構 (EmotionalState 或 PADEmotion)
+            if hasattr(last_state, "primary_emotion"):
+                dominant_emotion = last_state.primary_emotion.value
+                confidence = last_state.emotion_intensity
+            elif hasattr(last_state, "emotion"): # 兼容舊版結構
+                dominant_emotion = last_state.emotion
+                confidence = 0.5
+
+        return {
+            "arousal": self.nervous_system.arousal_level,
+            "sympathetic_tone": self.nervous_system.sympathetic_tone,
+            "parasympathetic_tone": self.nervous_system.parasympathetic_tone,
+            "dominant_emotion": dominant_emotion,
+            "emotion_confidence": confidence,
+            "hormonal_effects": endocrine_effects,
+            "stress_level": self.endocrine_system.stress_level,
+            "physiological": {
+                "heart_rate": nervous_state.get("physiological", {}).get("heart_rate", 70),
+                "blood_pressure": nervous_state.get("physiological", {}).get("blood_pressure", 120),
+            },
+            "mood": emotional_summary.get("pad_state", {}).get("pleasure", 0.5),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    def register_state_callback(self, callback: Callable[[Dict[str, Any]], None]):
+        """Register callback for integrated state updates"""
+        self._state_callbacks.append(callback)
+
+    def get_system_by_name(self, name: str) -> Any:
+        """Get a biological system by name"""
+        systems = {
+            "tactile": self.tactile_system,
+            "endocrine": self.endocrine_system,
+            "nervous": self.nervous_system,
+            "neuroplasticity": self.neuroplasticity_system,
+            "emotional": self.emotional_system,
+        }
+        return systems.get(name)
+
+    async def _handle_system_interaction(
+        self, source_system: str, target_system: str, interaction_type: str, intensity: float
+    ) -> Dict[str, Any]:
+        """
+        处理生物系统间的实际协调逻辑 / Handle actual coordination logic between biological systems
+
+        实现以下生理-内分泌-情绪系统间的相互影响：
+        - 生理系统影响内分泌系统（压力反应）
+        - 内分泌系统影响情绪系统（激素效应）
+        - 自主神经系统调节生理状态（唤醒水平）
+        - 添加激素对情绪的具体影响计算
+        - 添加神经激活对生理参数的影响
+
+        Implements the following physiological-endocrine-emotional system interactions:
+        - Physiological system affects endocrine system (stress response)
+        - Endocrine system affects emotional system (hormonal effects)
+        - Autonomic nervous system regulates physiological state (arousal level)
+        - Specific calculations for hormone effects on emotions
+        - Neural activation effects on physiological parameters
+
+        Args:
+            source_system: Source biological system name (nervous, endocrine, tactile, emotional)
+            target_system: Target biological system name
+            interaction_type: Type of interaction (e.g., 'arousal_to_adrenaline', 'hormonal_mood')
+            intensity: Influence strength (0-1)
+
+        Returns:
+            Dict containing interaction results and system state changes
+
+        Example:
+            >>> result = await integrator._handle_system_interaction(
+            ...     "nervous", "endocrine", "arousal_to_adrenaline", 0.8
+            ... )
+            >>> print(f"Hormone change: {result['hormone_change']:.2f}")
+        """
+        results = {
+            "source": source_system,
+            "target": target_system,
+            "interaction_type": interaction_type,
+            "intensity": intensity,
+            "changes": {},
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        try:
+            # Get source and target system instances
+            source = self.get_system_by_name(source_system)
+            target = self.get_system_by_name(target_system)
+
+            if not source or not target:
+                results["error"] = f"System not found: {source_system} or {target_system}"
+                return results
+
+            # 1. 生理系统影响内分泌系统 / Physiological system affects endocrine system
+            if interaction_type == "arousal_to_adrenaline" and source_system == "nervous":
+                # Calculate adrenaline release based on arousal level
+                arousal = getattr(source, "arousal_level", 50.0)
+                adrenaline_increase = (arousal / 100.0) * intensity * 25.0  # Max 25 unit increase
+
+                if hasattr(target, "adjust_hormone"):
+                    await target.adjust_hormone(HormoneType.ADRENALINE, adrenaline_increase)
+                    results["changes"]["adrenaline"] = f"+{adrenaline_increase:.1f}"
+
+                    # Trigger cortisol for sustained arousal
+                    from core.system.config.tiered_loader import get_config as _get_bio3
+                    _beh3 = _get_bio3("standard/behavior/behavior")
+                    _cort_trigger = _beh3.get("biological_thresholds", {}).get("cortisol_trigger", 60)
+                    if arousal > _cort_trigger:
+                        cortisol_increase = ((arousal - _cort_trigger) / 40.0) * intensity * 15.0
+                        await target.adjust_hormone(HormoneType.CORTISOL, cortisol_increase)
+                        results["changes"]["cortisol"] = f"+{cortisol_increase:.1f}"
+
+            # 2. 内分泌系统影响情绪系统 / Endocrine system affects emotional system
+            elif interaction_type == "hormonal_mood" and source_system == "endocrine":
+                # Calculate emotional influence from hormone levels
+                hormone_effects = {}
+
+                if hasattr(source, "get_hormone_level"):
+                    # Dopamine effect on pleasure/joy
+                    dopamine = source.get_hormone_level(HormoneType.DOPAMINE)
+                    dopamine_normalized = (dopamine - 20) / 80  # Normalize to -0.25 to 1.0
+                    hormone_effects["pleasure"] = dopamine_normalized * intensity * 0.6
+
+                    # Serotonin effect on mood stability
+                    serotonin = source.get_hormone_level(HormoneType.SEROTONIN)
+                    serotonin_normalized = (serotonin - 30) / 70
+                    hormone_effects["mood_stability"] = serotonin_normalized * intensity * 0.5
+
+                    # Adrenaline effect on arousal/anxiety
+                    adrenaline = source.get_hormone_level(HormoneType.ADRENALINE)
+                    if adrenaline > 50:
+                        hormone_effects["anxiety"] = ((adrenaline - 50) / 50) * intensity * 0.7
+
+                    # Oxytocin effect on bonding/trust
+                    oxytocin = source.get_hormone_level(HormoneType.OXYTOCIN)
+                    if oxytocin > 40:
+                        hormone_effects["trust"] = ((oxytocin - 40) / 60) * intensity * 0.5
+
+                    # Cortisol effect on stress/negative mood
+                    cortisol = source.get_hormone_level(HormoneType.CORTISOL)
+                    if cortisol > 30:
+                        hormone_effects["stress"] = ((cortisol - 30) / 70) * intensity * 0.8
+
+                # Apply emotional influence
+                if hasattr(target, "apply_influence"):
+                    for emotion, value in hormone_effects.items():
+                        if abs(value) > 0.1:  # Only apply significant effects
+                            target.apply_influence("hormonal", emotion, value, intensity)
+
+                results["changes"]["emotional_influences"] = hormone_effects
+
+            # 3. 自主神经系统调节生理状态 / Autonomic nervous system regulates physiological state
+            elif interaction_type == "emotion_to_arousal" and source_system == "emotional":
+                # Calculate arousal change from emotional state
+                if hasattr(source, "get_dominant_emotion"):
+                    emotion, confidence = source.get_dominant_emotion()
+                    if emotion:
+                        # Emotion arousal affects nervous system
+                        arousal_impact = emotion.arousal * 30 * intensity  # -30 to +30
+
+                        if hasattr(target, "arousal_level") and hasattr(
+                            target, "set_arousal_directly"
+                        ):
+                            current_arousal = target.arousal_level
+                            new_arousal = max(0, min(100, current_arousal + arousal_impact))
+                            target.set_arousal_directly(new_arousal)
+                            results["changes"]["arousal"] = f"{new_arousal - current_arousal:+.1f}"
+
+                            # High arousal triggers sympathetic activation
+                            _symp_act = _beh3.get("biological_thresholds", {}).get("sympathetic_activation", 70)
+                            if new_arousal > _symp_act and hasattr(target, "apply_stimulus"):
+                                await target.apply_stimulus(
+                                    "emotional_arousal",
+                                    NerveType.SYMPATHETIC,
+                                    (new_arousal - _symp_act) / 30,
+                                    5.0,
+                                )
+
+            # 4. 触觉系统影响情绪系统 / Tactile system affects emotional system
+            elif interaction_type == "touch_to_emotion" and source_system == "tactile":
+                # Calculate emotional response from tactile input
+                if hasattr(source, "get_sensitivity_level"):
+                    sensitivity = source.get_sensitivity_level()
+
+                    # High sensitivity increases emotional response
+                    if sensitivity > 0.6 and hasattr(target, "apply_influence"):
+                        target.apply_influence(
+                            "tactile", "sensitivity", sensitivity * intensity, 0.5
+                        )
+                        results["changes"]["tactile_sensitivity"] = f"{sensitivity * intensity:.2f}"
+
+            # 5. 压力激素影响神经可塑性 / Stress hormones affect neuroplasticity
+            elif interaction_type == "cortisol_to_memory" and source_system == "endocrine":
+                # Cortisol can impair memory formation under chronic stress
+                if hasattr(source, "get_hormone_level"):
+                    cortisol = source.get_hormone_level(HormoneType.CORTISOL)
+
+                    if cortisol > 50 and hasattr(target, "set_learning_rate"):
+                        # High cortisol reduces learning rate
+                        learning_impairment = ((cortisol - 50) / 50) * intensity * 0.4
+                        target.set_learning_rate(1.0 - learning_impairment)
+                        results["changes"]["learning_rate"] = f"{1.0 - learning_impairment:.2f}"
+                        results["changes"]["stress_impact"] = "impaired"
+                    elif hasattr(target, "set_learning_rate"):
+                        # Normal learning rate
+                        target.set_learning_rate(1.0)
+
+            # 6. 情绪记忆影响神经可塑性 / Emotional memories affect neuroplasticity
+            elif interaction_type == "emotional_memory" and source_system == "emotional":
+                # Emotional intensity enhances memory consolidation
+                if hasattr(source, "get_emotional_intensity"):
+                    emotional_intensity = source.get_emotional_intensity()
+
+                    if emotional_intensity > 0.5 and hasattr(target, "enhance_consolidation"):
+                        # Strong emotions enhance memory consolidation
+                        enhancement = (emotional_intensity - 0.5) * 2 * intensity * 0.3
+                        target.enhance_consolidation(enhancement)
+                        results["changes"]["consolidation_enhancement"] = f"+{enhancement:.2f}"
+
+            # Log successful interaction
+            results["status"] = "success"
+
+        except Exception as e:  # broad exception acceptable: system interaction errors should be handled gracefully
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            results["status"] = "error"
+
+            results["error"] = str(e)
+            results["error_type"] = type(e).__name__
+
+        return results
+
+    async def execute_system_interaction(
+        self, interaction: SystemInteraction, intensity: float = 0.5
+    ) -> Dict[str, Any]:
+        """
+        执行预定义的系统交互 / Execute a predefined system interaction
+
+        Args:
+            interaction: SystemInteraction definition
+            intensity: Influence intensity (0-1)
+
+        Returns:
+            Interaction results
+        """
+        return await self._handle_system_interaction(
+            interaction.source_system,
+            interaction.target_system,
+            interaction.interaction_type,
+            intensity * interaction.influence_strength,
+        )
+
+
+# Example usage
+if __name__ == "__main__":
+
+    async def demo():
+        integrator = BiologicalIntegrator()
+        await integrator.initialize()
+
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 生物系统整合器演示")
+        logger.info("Biological Integrator Demo")
+        logger.info("=" * 60)
+
+        # Show initial state
+        logger.info("\n初始生物状态 / Initial biological state:")
+        state = integrator.get_biological_state()
+        logger.info(f"  唤醒水平: {state['arousal']:.1f}")
+        logger.info(f"  主要情绪: {state['dominant_emotion']}")
+
+        # Process stress
+        logger.info("\n处理压力事件 / Processing stress event:")
+        await integrator.process_stress_event(intensity=0.7)
+        await asyncio.sleep(1)
+
+        state = integrator.get_biological_state()
+        logger.info(f"  唤醒水平: {state['arousal']:.1f}")
+        logger.info(f"  压力水平: {state['stress_level']:.2f}")
+        logger.info(f"  心率: {state['physiological']['heart_rate']:.0f}")
+
+        # Process relaxation
+        logger.info("\n处理放松事件 / Processing relaxation event:")
+        await integrator.process_relaxation_event(intensity=0.6)
+        await asyncio.sleep(1)
+
+        state = integrator.get_biological_state()
+        logger.info(f"  唤醒水平: {state['arousal']:.1f}")
+        logger.info(f"  情绪: {state['dominant_emotion']}")
+
+        await integrator.shutdown()
+        logger.info("\n系统已关闭 / System shutdown complete")
+
+    asyncio.run(demo())
