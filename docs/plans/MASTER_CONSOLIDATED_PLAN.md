@@ -445,14 +445,14 @@ Remaining:
 - **C1 Phase 1-2: UnifiedMemoryCoordinator (HAM+LU+CDM bridge + router.py storage integration)** ✅
 - **C2: Live2D state broadcast (live2d_integration → registry → websocket_manager → desktop handler)** ✅
 - **C3 Phase 1: Plugin backend hooks (HookRegistry + PluginManager + API + Electron IPC bridge)** ✅
-- **C4: 30 new tests for C3/C5 modules (test_plugin_hook_registry, test_plugin_manager, test_state_store)** ✅
+- **C4: 73 new tests across C1/C2/C3/C5/C6 modules** ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
 - **C3 Phase 2+** (進階插件功能)
-- **C4 (Phase 1) — 30 新測試已加入，後續需繼續補**
+- **C4 (Phase 1-2) — 73 新測試已加入（C1: 9, C2: 8, C3: 22, C5: 16, C6: 12 + 舊 6）**
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層

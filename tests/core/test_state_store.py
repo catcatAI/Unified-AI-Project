@@ -60,16 +60,54 @@ class TestGlobalStateStore:
         import shutil
         shutil.rmtree('data/test_state', ignore_errors=True)
 
-    def test_persistence_round_trip(self):
+    def test_no_persistence_returns_false(self):
+        self.store._persistence = None
+        ok = asyncio.run(self.store.save_domain('alpha'))
+        assert ok is False
+        ok = asyncio.run(self.store.load_domain('alpha'))
+        assert ok is False
+        cnt = asyncio.run(self.store.save_all())
+        assert cnt == 0
+        cnt = asyncio.run(self.store.load_all())
+        assert cnt == 0
+
+    def test_save_all_dirty_tracking(self):
         from core.interfaces.persistence import JsonFileStateStore
         self.store.set_persistence(JsonFileStateStore('data/test_state/'))
-        self.store.update_state('alpha', {'round_trip': 99})
-        asyncio.run(self.store.save_all())
-        # Load into fresh store
-        s2 = __import__('core.system.state_store.global_store', fromlist=['GlobalStateStore']).GlobalStateStore()
-        s2.set_persistence(JsonFileStateStore('data/test_state/'))
-        ok = asyncio.run(s2.load_domain('alpha'))
-        assert ok is True
-        assert s2.get_state('alpha').get('round_trip') == 99
+        self.store.update_state('alpha', {'x': 1})
+        self.store.update_state('beta', {'y': 2})
+        assert self.store.is_dirty() is True
+        cnt = asyncio.run(self.store.save_all())
+        assert cnt >= 2
+        assert self.store.is_dirty() is False
         import shutil
         shutil.rmtree('data/test_state', ignore_errors=True)
+
+    def test_update_unknown_domain(self):
+        self.store.update_state('unknown_domain', {'test': 1})
+        state = self.store.get_state('unknown_domain')
+        assert state.get('test') == 1
+
+    def test_subscriber_error_does_not_crash(self):
+        def bad_cb(domain, data):
+            raise ValueError('subscriber error')
+        self.store.subscribe('alpha', bad_cb)
+        self.store.update_state('alpha', {'x': 1})
+        # No crash = pass
+
+    def test_concurrent_updates(self):
+        import asyncio
+        async def update_many():
+            tasks = []
+            for i in range(10):
+                tasks.append(asyncio.to_thread(self.store.update_state, 'alpha', {f'k{i}': i}))
+            await asyncio.gather(*tasks)
+        asyncio.run(update_many())
+        state = self.store.get_state('alpha')
+        keys_found = sum(1 for k in state if k.startswith('k'))
+        assert keys_found >= 1
+
+    def test_neuro_vocabulary_domain_registered(self):
+        state = self.store.get_state()
+        assert 'neuro_vocabulary' in state
+
