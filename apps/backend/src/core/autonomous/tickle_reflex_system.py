@@ -299,11 +299,10 @@ class TickleReflexSystem:
         """呼叫 LLM 生成回應（超時保護）"""
         from services.angela_llm_service import get_llm_service
         llm = await get_llm_service()
-        response = await asyncio.wait_for(
-            llm.generate_response(prompt, {}),
+        return await asyncio.wait_for(
+            llm.generate_text(prompt, max_tokens=256, temperature=0.7),
             timeout=timeout_seconds,
         )
-        return response.text if response and response.text else ""
 
     def _update_stimulus_history(
         self, body_part: str, intensity: float, duration: float, origin: str

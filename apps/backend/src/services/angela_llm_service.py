@@ -1113,9 +1113,9 @@ class AngelaLLMService:
         except Exception as e:
             logger.debug(f"ActiveCognition formula unavailable: {e}")
         try:
-            from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveInvestment
+            from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveInvestment, CognitiveActivity
             cdm = CDMCognitiveDividendModel()
-            inv = CognitiveInvestment(type="dialogue", amount=1.0, complexity=0.5)
+            inv = CognitiveInvestment(activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5)
             output = cdm.calculate_life_sense_output(inv)
             lines.append(f"CDM 產出: {output.output_amount:.2f} (品質: {output.quality_score:.2f})")
         except Exception as e:
@@ -1149,11 +1149,11 @@ class AngelaLLMService:
 
         if state_for_llm:
             axes = state_for_llm.get("axes", {})
-            for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon"):
+            for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
                 ax = axes.get(axis_name, {})
                 vals = ax.get("values", {})
                 if vals:
-                    short = ", ".join(f"{k}={v:.1f}" for k, v in list(vals.items())[:4])
+                    short = ", ".join(f"{k}={v:.4f}" for k, v in list(vals.items())[:4])
                     axis_lines.append(f"{axis_name.upper()}: {short}")
 
             th = state_for_llm.get("theta", {})
@@ -1171,7 +1171,7 @@ class AngelaLLMService:
             eta = state_for_llm.get("eta", {})
             if eta:
                 eta_lines.append(f"活躍模組: {eta.get('module_count', 0)}個")
-                eta_lines.append(f"成功率: {eta.get('success_rate', 0):.0%}")
+                eta_lines.append(f"成功率: {eta.get('success_rate', 0):.1%}")
                 eta_lines.append(f"漂移: {eta.get('structural_drift', 0):.2f} (穩定)")
 
             guidance = state_for_llm.get("guidance", [])
@@ -1789,10 +1789,11 @@ class AngelaLLMService:
                     try:
                         prev = self.active_backend
                         self.active_backend = bobj
+                        full_prompt = self._construct_angela_prompt(user_message, context)
                         response = await asyncio.wait_for(
                             bobj.generate(
-                                prompt=self._construct_angela_prompt(user_message, context)[-1]["content"],
-                                messages=self._construct_angela_prompt(user_message, context),
+                                prompt=full_prompt[-1]["content"],
+                                messages=full_prompt,
                                 temperature=0.7, max_tokens=512,
                             ),
                             timeout=30.0,

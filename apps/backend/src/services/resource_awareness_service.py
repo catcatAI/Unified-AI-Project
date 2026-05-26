@@ -87,7 +87,8 @@ class ResourceAwarenessService:
     def get_throttling_factor(self) -> float:
         """
         獲取節流因子 (0.0 - 1.0)
-        連續縮放：0.2 (輕載) ~ 1.0 (滿載)
+        連續縮放：1.0 (輕載) ~ 0.2 (滿載)
+        反轉含義：因子的值代表可用預算比例，而非節流強度。
         """
         if not self.psutil:
             return 1.0
@@ -95,11 +96,10 @@ class ResourceAwarenessService:
         cpu = self.psutil.cpu_percent(interval=0.1) / 100.0
         mem = self.psutil.virtual_memory().percent / 100.0
 
-        # CPU 和記憶體的加權組合
-        factor = min(cpu * 0.6 + mem * 0.4, 1.0)
+        # CPU 和記憶體的加權組合（已反轉：低負載→高預算，高負載→低預算）
+        load = min(cpu * 0.6 + mem * 0.4, 1.0)
 
-        # 確保不低於 0.2（留底）
-        return max(factor, 0.2)
+        return max(1.0 - load, 0.2)
 
     def get_available_ram_mb(self) -> float:
         """獲取可用 RAM（MB）"""

@@ -400,34 +400,41 @@ class ActiveCognitionFormula:
         s_stress = self.calculate_s_stress()
         o_order = self.calculate_o_order()
 
-        # Avoid division by zero
+        if o_order < 0.01:
+            o_order = 0.01
+
+        return s_stress / o_order
+
+    def process_active_cognition(self) -> float:
+        """
+        Calculate A_c and apply side effects (callbacks, recording).
+        Use this in the main cognitive loop; use calculate_active_cognition()
+        for read-only access.
+        """
+        s_stress = self.calculate_s_stress()
+        o_order = self.calculate_o_order()
+
         if o_order < 0.01:
             o_order = 0.01
 
         a_c = s_stress / o_order
 
-        # Check threshold crossing
         if self.construction_history:
             prev_a_c = self.construction_history[-1].a_c_value
             if prev_a_c < self.min_a_c_threshold <= a_c:
-                # Crossed above threshold - started active construction
                 for callback in self._threshold_callbacks:
                     try:
                         callback(a_c, True)
-                    except Exception as e:  # broad exception acceptable: user callback, prevent crash
+                    except Exception as e:
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
             elif prev_a_c >= self.min_a_c_threshold > a_c:
-                # Crossed below threshold
                 for callback in self._threshold_callbacks:
                     try:
                         callback(a_c, False)
-                    except Exception as e:  # broad exception acceptable: user callback, prevent crash
+                    except Exception as e:
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
-        # Trigger construction event if A_c is high
         if a_c > self.min_a_c_threshold:
             self._record_construction(a_c, s_stress, o_order)
 

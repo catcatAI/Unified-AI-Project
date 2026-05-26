@@ -232,21 +232,25 @@ class NonParadoxExistence:
             self.coexistence_start = datetime.now()
             for callback in self._gap_threshold_callbacks:
                 try:
-                    callback(self.global_cognitive_gap, False)
-                except Exception as e:  # broad exception acceptable: callback errors should not block deactivation
+                    callback(self.global_cognitive_gap, True)
+                except Exception as e:
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
-            # Deactivate all gray zones
+            # Activate all gray zones for coexistence
             for gz in self.gray_zones.values():
-                gz.coexistence_active = False
+                gz.coexistence_active = True
 
+        elif self.coexistence_active and old_gap >= self.min_gap_for_coexistence > self.global_cognitive_gap:
+            # Crossed down - deactivate coexistence
+            self.coexistence_active = False
             for callback in self._gap_threshold_callbacks:
                 try:
                     callback(self.global_cognitive_gap, False)
-                except Exception as e:  # broad exception acceptable: callback errors should not block deactivation
+                except Exception as e:
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
+
+            for gz in self.gray_zones.values():
+                gz.coexistence_active = False
 
     def create_gray_zone(
         self,

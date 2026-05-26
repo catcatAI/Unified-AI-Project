@@ -162,20 +162,27 @@ class PrecomputeService:
         ==========
         1. 检查空闲时间（5秒空闲阈值）
         2. 检查 CPU 使用率（70% 阈值）
-        3. 处理任务队列
+        3. 处理任务队列（最多 3 個並發）
         """
+        sem = asyncio.Semaphore(3)
+
         while self.is_running:
             try:
-                # 检查是否应该开始预计算
                 if not self._should_precompute():
                     await asyncio.sleep(1.0)
                     continue
 
-                # 处理下一个任务
-                await self._process_next_task()
+                async with sem:
+                    await self._process_next_task()
 
-                # 短暂休息，避免过度占用资源
                 await asyncio.sleep(0.5)
+
+            except asyncio.CancelledError:
+                logger.info("Precompute loop cancelled")
+                break
+            except Exception as e:
+                logger.error(f"Error in precompute loop: {e}", exc_info=True)
+                await asyncio.sleep(1.0)
 
             except asyncio.CancelledError:
                 logger.info("Precompute loop cancelled")
@@ -290,10 +297,12 @@ class PrecomputeService:
         """
         try:
             # 使用 asyncio.wait_for 设置超时
-            response = await asyncio.wait_for(
-                self.llm_service.generate_response(query, context), timeout=timeout
+            text = await asyncio.wait_for(
+                self.llm_service.generate_text(query, max_tokens=256, temperature=0.7), timeout=timeout
             )
-            return response
+            from ..services.angela_llm_service import LLMResponse
+            return LLMResponse(text=text, backend="precompute", model="", tokens_used=0,
+                               response_time_ms=0, confidence=0.0)
         except asyncio.TimeoutError:
             logger.warning(f"LLM generation timeout after {timeout}s")
             from ..services.angela_llm_service import LLMResponse
@@ -301,7 +310,7 @@ class PrecomputeService:
             return LLMResponse(
                 text="", backend="timeout", model="", error=f"Timeout after {timeout}s"
             )
-        except Exception as e:  # broad exception acceptable: LLM errors should return fallback response
+        except Exception as e:
             logger.error(f"LLM generation error: {e}", exc_info=True)
             from ..services.angela_llm_service import LLMResponse
 

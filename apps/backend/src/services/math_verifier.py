@@ -163,11 +163,11 @@ class MathExtractor:
         from services.angela_llm_service import get_llm_service
 
         service = self.llm_service or await get_llm_service()
-        response = await service.generate_response(
+        return await service.generate_text(
             f"{self.MATH_EXTRACTION_PROMPT}\n\n用戶輸入：{user_message}",
-            {"history": [], "user_name": "System", "origin": "MathExtractor"}
+            max_tokens=256,
+            temperature=0.3,
         )
-        return response.text
 
     def _fallback_extract(self, user_message: str) -> str:
         """Fallback 正則提取"""

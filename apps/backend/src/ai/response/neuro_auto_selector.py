@@ -716,9 +716,9 @@ class NeuroAutoSelector:
         """
         available = []
         try:
-            from services.angela_llm_service import AngelaLLMService
+            from services.angela_llm_service import get_llm_service
 
-            svc = AngelaLLMService()
+            svc = await get_llm_service()
             if not svc._initialized:
                 return []
 
