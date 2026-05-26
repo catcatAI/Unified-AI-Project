@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Any, TYPE_CHECKING
 import logging
 
 if TYPE_CHECKING:
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
 
 logger = logging.getLogger("angela_code_integration")
 

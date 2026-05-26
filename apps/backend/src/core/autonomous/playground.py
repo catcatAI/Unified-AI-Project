@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+from core.engine.state_matrix_adapter import StateMatrixAdapter
 from core.state.text_to_vector import text_to_vector
 from core.ripple.node import MathOp
 

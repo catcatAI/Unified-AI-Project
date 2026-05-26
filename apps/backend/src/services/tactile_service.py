@@ -125,7 +125,7 @@ class TactileService:
         # Check for tickle-triggered body parts
         if part in ("abdomen", "feet", "neck", "back", "sides", "face", "hands"):
             try:
-                from core.autonomous.tickle_reflex_system import get_reflex_system
+                from core.life.tickle_reflex_system import get_reflex_system
                 reflex = get_reflex_system()
                 duration = contact_point.get("duration", 0.0)
                 tickle_result = await reflex.trigger_tickles(
@@ -152,7 +152,7 @@ class TactileService:
 
         # 2. Inject stimulus into BiologicalIntegrator
         try:
-            from core.autonomous.biological_integrator import BiologicalIntegrator
+            from core.bio.biological_integrator import BiologicalIntegrator
             bio = BiologicalIntegrator()
             
             # Reflex Arc: Define immediate motor response (2030 Reflex standard)

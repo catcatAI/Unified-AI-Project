@@ -83,7 +83,7 @@ class CreativeWritingAgent(BaseAgent):
         if self._builder is None:
             from ai.dialogue.document_builder import DocumentBuilder
             from services.angela_llm_service import get_llm_service
-            from core.autonomous.eta_axis import EtaAxisState
+            from core.engine.eta_axis import EtaAxisState
             async def get_llm():
                 return await get_llm_service()
             self._builder = DocumentBuilder(

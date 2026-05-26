@@ -206,7 +206,7 @@ def _format_llm_routing(service: Any) -> str:
 def _handle_tickle_command(args: str) -> str:
     parts = args.strip().split()
     if not parts:
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
         reflex = get_reflex_system()
         all_parts = reflex.get_all_body_parts()
         sensitive = reflex.get_sensitive_parts()
@@ -218,7 +218,7 @@ def _handle_tickle_command(args: str) -> str:
     intensity = float(parts[1]) if len(parts) > 1 else 0.5
 
     import asyncio
-    from core.autonomous.tickle_reflex_system import get_reflex_system
+    from core.life.tickle_reflex_system import get_reflex_system
 
     reflex = get_reflex_system()
 

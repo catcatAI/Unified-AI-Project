@@ -15,15 +15,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config_loader import get_angela_config
-from core.autonomous.desktop_interaction import DesktopInteraction
-from core.autonomous.action_executor import ActionExecutor, Action, ActionCategory, ActionPriority
-from core.autonomous.heartbeat import MetabolicHeartbeat
+from core.engine.desktop_interaction import DesktopInteraction
+from core.engine.action_executor import ActionExecutor, Action, ActionCategory, ActionPriority
+from core.life.heartbeat import MetabolicHeartbeat
 from services.vision_service import VisionService
 from services.audio_service import AudioService
 from services.tactile_service import TactileService
 from services.angela_llm_service import get_llm_service
 from economy.economy_manager import EconomyManager
-from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
+from core.life.digital_life_integrator import DigitalLifeIntegrator
 from system.security_monitor import ABCKeyManager
 from shared.security_middleware import SignedCommunicationMiddleware
 
@@ -184,7 +184,7 @@ async def lifespan(app: FastAPI):
                         await get_llm_service()
                         logger.info("[Lifecycle] AngelaLLMService initialized")
                     elif svc_name == "BiologicalIntegrator":
-                        from core.autonomous.biological_integrator import BiologicalIntegrator
+                        from core.bio.biological_integrator import BiologicalIntegrator
                         bio = BiologicalIntegrator()
                         await bio.initialize()
                         logger.info("[Lifecycle] BiologicalIntegrator initialized")

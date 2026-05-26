@@ -29,7 +29,7 @@ import logging
 from typing import Dict, List, Optional, Tuple, Any
 
 try:
-    from core.autonomous.state_matrix import AllocateDecision
+    from core.engine.state_matrix import AllocateDecision
 except ImportError:
     class AllocateDecision:
         def __init__(self, action="", **kwargs):

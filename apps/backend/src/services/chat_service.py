@@ -11,8 +11,8 @@ from typing import Dict, Any, List, Optional, Tuple, Callable
 from datetime import datetime
 
 from .angela_llm_service import get_llm_service
-from core.autonomous.state_matrix import StateMatrix4D
-from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+from core.engine.state_matrix import StateMatrix4D
+from core.engine.state_matrix_adapter import StateMatrixAdapter
 from ai.security.ego_guard import EgoGuard
 
 logger = logging.getLogger(__name__)

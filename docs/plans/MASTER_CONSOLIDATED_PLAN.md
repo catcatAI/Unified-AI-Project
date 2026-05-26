@@ -438,16 +438,15 @@ Remaining:
 - **S1-S4** (版本/CHANGELOG/CI/config) ✅
 - **A1, A2, A4, A5, A6, A7** ✅
 - **B1-B6, B8, B9, B11** ✅
-- **A3 Phase 0-3** (angela_llm_service 完整拆分：providers 提取 → prompt_builder → router.py + shim) ✅
+- **A3 Phase 0-5** (angela_llm_service 完整拆分 + core/autonomous → core/{life,bio,engine}/ 拆分 + 清理) ✅
 - **系統審計 + P0/P1 修復** ✅
 - **C6 翻譯學習層 Phase 1-3** (NeuroVocabulary 擴充 → prompt_builder 注入 → 回存萃取) ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
-- **A3 Phase 5** （可選）清理 originals：移除 `core/autonomous/` 中已搬移的原始檔案，僅保留 shim + playground + test 檔案
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
-- **C1-C6** (功能開發)
+- **C1-C5** (功能開發)
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-3 已完成，剩 Phase 4 持續收斂（內建於 narrow() + serialize_mappings LRU）

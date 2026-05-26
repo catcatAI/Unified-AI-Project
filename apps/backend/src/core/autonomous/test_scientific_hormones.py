@@ -10,7 +10,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.autonomous.endocrine_system import EndocrineSystem, HormoneType
+from src.core.bio.endocrine_system import EndocrineSystem, HormoneType
 
 async def test_hormone_scientific_decay():
     print("Testing Scientific Hormone Decay (Phase 3)...")

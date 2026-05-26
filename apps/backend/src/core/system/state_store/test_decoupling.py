@@ -10,7 +10,7 @@ project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.core.system.state_store import state_store
-from src.core.autonomous.state_matrix import StateMatrix4D
+from src.core.engine.state_matrix import StateMatrix4D
 
 async def test_state_decoupling():
     print("Testing State Decoupling Phase 2...")

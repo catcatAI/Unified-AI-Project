@@ -95,7 +95,7 @@ _sm_instance: Optional[Any] = None
 def get_state_matrix() -> Any:
     global _sm_instance
     if _sm_instance is None:
-        from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+        from core.engine.state_matrix_adapter import StateMatrixAdapter
         _sm_instance = StateMatrixAdapter()
         logger.info("[StateMatrixAPI] StateMatrixAdapter initialized")
         from core.interfaces.service_registry import get_registry

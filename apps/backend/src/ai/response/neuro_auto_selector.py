@@ -253,7 +253,7 @@ class StateInterpreter:
     def _ensure_loaded(self):
         if self._state_matrix is None:
             try:
-                from core.autonomous.state_matrix import StateMatrix4D
+                from core.engine.state_matrix import StateMatrix4D
 
                 self._state_matrix = StateMatrix4D()
             except Exception:

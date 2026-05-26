@@ -15,9 +15,9 @@ from api.lifespan import (
     get_tactile_service,
     get_digital_life,
 )
-from core.autonomous.desktop_interaction import DesktopInteraction
-from core.autonomous.action_executor import ActionExecutor
-from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
+from core.engine.desktop_interaction import DesktopInteraction
+from core.engine.action_executor import ActionExecutor
+from core.life.digital_life_integrator import DigitalLifeIntegrator
 
 logger = logging.getLogger(__name__)
 
