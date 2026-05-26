@@ -157,28 +157,34 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 | Phase 1 | providers 提取（7 檔案至 services/llm/providers/） | ✅ 完成 |
 | Phase 2a | prompt_builder.py 建置（services/llm/prompt_builder.py） | ✅ 完成 |
 | Phase 2b | core/autonomous/ 前置修復 + 搬移 | ⏳ 待做 |
-| Phase 3 | router.py + shim 建立 | ⏳ 待做 |
+| Phase 3 | router.py + shim 建立 | ✅ 完成 |
 | Phase 4 | core/autonomous/ 文件搬移 + __init__ 更新 | ⏳ 待做 |
 
-**完成狀態：** angela_llm_service.py 2245→**~1500** 行（-33%）。已建立 `services/llm/` 套件：
+**完成狀態：** angela_llm_service.py 2245→**21 行**（shim）。核心邏輯已完整遷移至 `services/llm/`：
 ```
 services/llm/
-  __init__.py          (待建)
-  prompt_builder.py    (220行) — prompt 建構、生物狀態、公式摘要
+  __init__.py           — 聚合 router, providers, prompt_builder
+  router.py             (1650行) — AngelaLLMService 類 + 模組級函式
+  prompt_builder.py     (220行) — prompt 建構、生物狀態、公式摘要
   providers/
-    __init__.py         — re-export
-    base.py             — BaseLLMBackend ABC
-    registry.py         — LLMBackend Enum
-    llamacpp.py         — LlamaCppBackend
-    ollama.py           — OllamaBackend
-    openai.py           — OpenAIAPIBackend
-    anthropic.py        — AnthropicAPIBackend
-    google.py           — GoogleAPIBackend
+    __init__.py          — re-export
+    base.py              — BaseLLMBackend ABC
+    registry.py          — LLMBackend Enum
+    llamacpp.py          — LlamaCppBackend
+    ollama.py            — OllamaBackend
+    openai.py            — OpenAIAPIBackend
+    anthropic.py         — AnthropicAPIBackend
+    google.py            — GoogleAPIBackend
 ```
+
+**Shim 驗證結果：**
+- 20 個公開符號全部可存取
+- 14 個外部 import 者全部相容（含 `precompute_service.py` 的相對 import）
+- 29 個類方法 + 5 個模組級函式完整保留
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
-| 🟡2 | 🔴3 | **~2天剩餘** | **6** |
+| 🟡1 | 🟡2 | **~1天剩餘** | **3** |
 
 ### ~~A4. 集成五大理論公式到 LLM Prompt~~ ✅ 已完成
 
@@ -405,21 +411,23 @@ Remaining:
 - **S1-S4** (版本/CHANGELOG/CI/config) ✅
 - **A1, A2, A4, A5, A6, A7** ✅
 - **B1-B6, B8, B9, B11** ✅
-- **A3 Phase 0-2a** (angela_llm_service 拆分前置 → providers 提取 → prompt_builder 提取) ✅
+- **A3 Phase 0-3** (angela_llm_service 完整拆分：providers 提取 → prompt_builder → router.py + shim) ✅
 - **系統審計 + P0/P1 修復** ✅
 - **翻譯學習計畫發佈** ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
-- **A3 Phase 2b-4** (core/autonomous 拆分 + router.py shim) ~2天
+- **A3 Phase 2b** (core/autonomous 前置修復) ~0.5天
+- **A3 Phase 4** (core/autonomous/ → core/{life,bio,engine}/ 搬移) ~0.5天
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
 - **C1-C6** (功能開發)
 
 ### 已知約束
-- C6 翻譯學習層 Phase 2 依賴 A3 拆分完成（injection target 才確定）
+- C6 翻譯學習層 Phase 2 可開始（A3 拆分已達 injection target：prompt_builder.py 存在）
 - core/autonomous 拆分前需確認 `biological_integrator` ↔ `art_learning_workflow` 環狀依賴
 - `self_generation.py` 因依賴 `art_learning_workflow` 留在 `autonomous/`
+- `services/angela_llm_service.py` 現在是 21 行的純 shim，所有核心邏輯在 `services/llm/router.py`
 
 ---
 
