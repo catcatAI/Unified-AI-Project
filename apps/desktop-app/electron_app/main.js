@@ -1556,6 +1556,52 @@ ipcMain.handle('websocket-get-status', () => {
   }
 })
 
+// C3: Plugin IPC handlers
+const path = require('path')
+const fs = require('fs')
+const pluginDir = path.join(app.getPath('userData'), 'plugins')
+if (!fs.existsSync(pluginDir)) {
+  fs.mkdirSync(pluginDir, { recursive: true })
+}
+
+ipcMain.handle('plugins-list', () => {
+  try {
+    const files = fs.readdirSync(pluginDir).filter(f => f.endsWith('.js'))
+    return files.map(f => {
+      const p = path.join(pluginDir, f)
+      const code = fs.readFileSync(p, 'utf-8')
+      const name = f.replace(/\.js$/, '')
+      return { name, path: p }
+    })
+  } catch { return [] }
+})
+
+ipcMain.handle('plugins-load', (event, { name, code }) => {
+  try {
+    const p = path.join(pluginDir, `${name}.js`)
+    if (code) {
+      fs.writeFileSync(p, code, 'utf-8')
+    }
+    return { success: true, path: p }
+  } catch (e) { return { success: false, error: e.message } }
+})
+
+ipcMain.handle('plugins-save', (event, { name, code }) => {
+  try {
+    const p = path.join(pluginDir, `${name}.js`)
+    fs.writeFileSync(p, code, 'utf-8')
+    return { success: true, path: p }
+  } catch (e) { return { success: false, error: e.message } }
+})
+
+ipcMain.handle('plugins-delete', (event, name) => {
+  try {
+    const p = path.join(pluginDir, `${name}.js`)
+    if (fs.existsSync(p)) fs.unlinkSync(p)
+    return { success: true }
+  } catch (e) { return { success: false, error: e.message } }
+})
+
 // Export for testing
 if (module.exports) {
   module.exports = {

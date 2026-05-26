@@ -104,6 +104,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     decrypt: (encryptedData) => ipcRenderer.invoke('security:decrypt', encryptedData)
   },
 
+  // Plugin management (C3)
+  plugins: {
+    list: () => ipcRenderer.invoke('plugins-list'),
+    load: (name, code) => ipcRenderer.invoke('plugins-load', { name, code }),
+    save: (name, code) => ipcRenderer.invoke('plugins-save', { name, code }),
+    del: (name) => ipcRenderer.invoke('plugins-delete', name)
+  },
+
   // WebSocket communication with backend
   websocket: {
     connect: (url, sessionInfo) => ipcRenderer.send('websocket-connect', { url, sessionInfo }),

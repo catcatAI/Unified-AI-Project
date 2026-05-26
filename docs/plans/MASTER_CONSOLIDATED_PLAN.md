@@ -398,7 +398,7 @@ core/
 |---|------|------|
 | C1 | 記憶鏈串接 (HAM/LU/CDM → query/storage flow) | UnifiedMemoryCoordinator 已實作 + 接入 router.py ✅ Phase 2: router.py 儲存流程整合 CognitiveActivity + store_experience ✅ |
 | C2 | Desktop→Live2D WebSocket 控制鏈 | ✅ live2d 狀態寫入 broadcast_state_updates + desktop 端 handler 解析 expression/parameters |
-| C3 | 插件系統後端 hooks | 前端 JS 存在，後端 hooks 不存在 |
+| C3 | 插件系統後端 hooks | ✅ HookRegistry + PluginManager + API + Electron IPC bridge (Phase 1) |
 | C4 | 提升測試覆蓋率 85%+ | 當前 16.34%，目標 85% |
 | C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore ✅ C5: GlobalStateStore 加入 async save/load + dirty tracking + JsonFileStateStore 預設後端 |
 | C6 | Angela 數值→文本翻譯學習層 | ↔ A3 拆分後方可做 Phase 2。見 [ANGELA_TRANSLATION_LEARNING_PLAN.md](ANGELA_TRANSLATION_LEARNING_PLAN.md) |
@@ -444,12 +444,15 @@ Remaining:
 - **C5 持久層 unified (GlobalStateStore + JsonFileStateStore)** ✅
 - **C1 Phase 1-2: UnifiedMemoryCoordinator (HAM+LU+CDM bridge + router.py storage integration)** ✅
 - **C2: Live2D state broadcast (live2d_integration → registry → websocket_manager → desktop handler)** ✅
+- **C3 Phase 1: Plugin backend hooks (HookRegistry + PluginManager + API + Electron IPC bridge)** ✅
+- **C4: 30 new tests for C3/C5 modules (test_plugin_hook_registry, test_plugin_manager, test_state_store)** ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
-- **C3-C4** (功能開發)
+- **C3 Phase 2+** (進階插件功能)
+- **C4 (Phase 1) — 30 新測試已加入，後續需繼續補**
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層

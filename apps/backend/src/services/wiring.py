@@ -81,6 +81,30 @@ def initialize_all_services(manager) -> tuple:
     if hasattr(digital_life.biological_integrator, "register_event_callback"):
         digital_life.biological_integrator.register_event_callback(bio_event_callback)
 
+    # C3: register plugin system and wire bio event → on_bio_event hook
+    try:
+        from core.plugin import plugin_manager
+        from core.interfaces.service_registry import get_registry
+        get_registry().register("plugin_manager", plugin_manager)
+
+        if hasattr(digital_life.biological_integrator, "register_event_callback"):
+            original_callback = bio_event_callback
+            def _plugin_aware_callback(event_name, event_data):
+                try:
+                    import asyncio as _aio
+                    _aio.ensure_future(
+                        plugin_manager.execute_hook("on_bio_event", {
+                            "event": event_name, "data": event_data
+                        })
+                    )
+                except Exception:
+                    pass
+                original_callback(event_name, event_data)
+            digital_life.biological_integrator.register_event_callback(_plugin_aware_callback)
+        logger.info("[C3] Plugin system registered and bio hooks wired")
+    except Exception as e:
+        logger.warning(f"[C3] Plugin system wiring skipped: {e}")
+
     return (
         desktop_interaction,
         action_executor,
