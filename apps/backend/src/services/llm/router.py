@@ -208,6 +208,31 @@ class AngelaLLMService:
                 self.memory_manager = HAMMemoryManager()
                 self.enable_memory_enhancement = True
 
+                # C1: 初始化统一记忆协调器（HAM + 可选 LU + 可选 CDM）
+                try:
+                    from ai.lifecycle.unified_memory_coordinator import UnifiedMemoryCoordinator
+                    logic_unit = None
+                    cdm_model = None
+                    try:
+                        from ai.memory.lu_logic.logic_unit import LogicUnit
+                        logic_unit = LogicUnit(max_rules=500)
+                    except Exception:
+                        pass
+                    try:
+                        from core.cdm_dividend_model import CDMCognitiveDividendModel
+                        cdm_model = CDMCognitiveDividendModel()
+                    except Exception:
+                        pass
+                    self.memory_coordinator = UnifiedMemoryCoordinator(
+                        memory_manager=self.memory_manager,
+                        logic_unit=logic_unit,
+                        cdm_model=cdm_model,
+                    )
+                    logger.info("[C1] UnifiedMemoryCoordinator initialized")
+                except Exception as e:
+                    logger.warning(f"[C1] UnifiedMemoryCoordinator unavailable: {e}")
+                    self.memory_coordinator = None
+
                 # 初始化预计算服务
                 _mem_cfg = _get_llm_config("memory", {})
                 self.precompute_service = PrecomputeService(
@@ -1275,6 +1300,8 @@ class AngelaLLMService:
                             vals = ax.get("values", {})
                             for k, v in vals.items():
                                 nv.learn_mapping(f"{axis_name}.{k}", v, desc_text)
+                    # C6 Phase 4: sync learned mappings to StateStore for persistence
+                    nv.sync_to_state_store()
 
             # 创建模板
             from ai.memory.memory_template import ResponseCategory, create_template
@@ -1294,6 +1321,22 @@ class AngelaLLMService:
 
             # 存储到记忆系统
             await self.memory_manager.store_template(template)
+
+            # C1: 通过协调器记录认知投入（如果 CDM 可用）
+            if hasattr(self, 'memory_coordinator') and self.memory_coordinator is not None:
+                try:
+                    from core.cdm_dividend_model import CognitiveActivity
+                    await self.memory_coordinator.store_experience(
+                        raw_data=response.text,
+                        data_type="response_template",
+                        metadata={"llm_generated": True},
+                        activity_type=CognitiveActivity.LEARNING,
+                        duration=2.0,
+                        intensity=response.confidence,
+                        context={"user_message": user_message},
+                    )
+                except Exception:
+                    pass
 
             logger.debug(f"Stored new template for query: '{user_message}'")
 

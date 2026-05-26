@@ -389,6 +389,19 @@ _routeMessage(message) {
       window.angelaApp.stateMatrix.updateFromBackend(mergedData)
     }
 
+    // C2: forward Live2D state to Live2DManager directly
+    if (data.live2d && window.angelaApp && window.angelaApp.live2dManager) {
+      const l2d = window.angelaApp.live2dManager
+      if (data.live2d.expression) {
+        l2d.setExpression(data.live2d.expression)
+      }
+      if (data.live2d.parameters) {
+        for (const [key, val] of Object.entries(data.live2d.parameters)) {
+          l2d.setParameter(key, val)
+        }
+      }
+    }
+
     // 觸發事件
     this._fireEvent('stateUpdated', mergedData)
   }

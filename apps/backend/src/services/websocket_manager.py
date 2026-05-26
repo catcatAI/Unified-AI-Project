@@ -111,7 +111,7 @@ manager = ConnectionManager()
 
 
 async def broadcast_state_updates():
-    """Periodically broadcast state updates to all connected clients."""
+    """Periodically broadcast state updates (bio + Live2D) to all connected clients."""
     while True:
         try:
             from api.lifespan import get_metabolic_heartbeat
@@ -142,6 +142,15 @@ async def broadcast_state_updates():
                 },
                 "timestamp": datetime.now().isoformat(),
             }
+
+            # C2: include Live2D state (from service registry singleton) in broadcast
+            try:
+                from core.interfaces.service_registry import get_registry
+                reg_live2d = get_registry().get("live2d_integration")
+                if reg_live2d is not None and hasattr(reg_live2d, 'get_live2d_state'):
+                    state_data["live2d"] = reg_live2d.get_live2d_state()
+            except Exception:
+                pass
 
             await manager.broadcast(
                 {

@@ -396,8 +396,8 @@ core/
 
 | # | 任務 | 備註 |
 |---|------|------|
-| C1 | 記憶鏈串接 (HAM/LU/CDM → query/storage flow) | 類別定義完整但 flow 未連 |
-| C2 | Desktop→Live2D WebSocket 控制鏈 | 後端到 Electron 從未完成 |
+| C1 | 記憶鏈串接 (HAM/LU/CDM → query/storage flow) | UnifiedMemoryCoordinator 已實作 + 接入 router.py ✅ Phase 2: router.py 儲存流程整合 CognitiveActivity + store_experience ✅ |
+| C2 | Desktop→Live2D WebSocket 控制鏈 | ✅ live2d 狀態寫入 broadcast_state_updates + desktop 端 handler 解析 expression/parameters |
 | C3 | 插件系統後端 hooks | 前端 JS 存在，後端 hooks 不存在 |
 | C4 | 提升測試覆蓋率 85%+ | 當前 16.34%，目標 85% |
 | C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore ✅ C5: GlobalStateStore 加入 async save/load + dirty tracking + JsonFileStateStore 預設後端 |
@@ -440,17 +440,19 @@ Remaining:
 - **B1-B6, B8, B9, B11** ✅
 - **A3 Phase 0-5** (angela_llm_service 完整拆分 + core/autonomous → core/{life,bio,engine}/ 拆分 + 清理) ✅
 - **系統審計 + P0/P1 修復** ✅
-- **C6 翻譯學習層 Phase 1-3** (NeuroVocabulary 擴充 → prompt_builder 注入 → 回存萃取) ✅
+- **C6 翻譯學習層 Phase 1-4** (NeuroVocabulary 擴充 → prompt_builder 注入 → 回存萃取 → C5 持久層整合) ✅
 - **C5 持久層 unified (GlobalStateStore + JsonFileStateStore)** ✅
+- **C1 Phase 1-2: UnifiedMemoryCoordinator (HAM+LU+CDM bridge + router.py storage integration)** ✅
+- **C2: Live2D state broadcast (live2d_integration → registry → websocket_manager → desktop handler)** ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
-- **C1-C4** (功能開發)
+- **C3-C4** (功能開發)
 
 ### 已知約束
-- C6 翻譯學習層 Phase 1-3 已完成，剩 Phase 4 持續收斂（內建於 narrow() + serialize_mappings LRU）
+- C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
 - core/autonomous 拆分前需確認 `biological_integrator` ↔ `art_learning_workflow` 環狀依賴
 - `self_generation.py` 因依賴 `art_learning_workflow` 留在 `autonomous/`
 - `services/angela_llm_service.py` 現在是 21 行的純 shim，所有核心邏輯在 `services/llm/router.py`

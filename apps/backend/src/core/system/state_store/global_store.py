@@ -33,7 +33,8 @@ class GlobalStateStore:
             "theta": {},  # Meta-cognitive
             "zeta": {},   # Consciousness Flow
             "environment": {},
-            "hardware": {}
+            "hardware": {},
+            "neuro_vocabulary": {}  # C6 數值→語意映射
         }
         self._subscribers: Dict[str, List[Callable]] = {k: [] for k in self._states.keys()}
         self._global_subscribers: List[Callable] = []

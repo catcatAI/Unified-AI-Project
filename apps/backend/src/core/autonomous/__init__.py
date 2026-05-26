@@ -456,4 +456,13 @@ async def initialize_all_systems() -> dict:
         if hasattr(system, "initialize"):
             await system.initialize()
 
+    # C2: register Live2D singleton for WebSocket state broadcast
+    live2d_reg = systems.get("live2d_integration")
+    if live2d_reg:
+        try:
+            from core.interfaces.service_registry import get_registry
+            get_registry().register("live2d_integration", live2d_reg)
+        except Exception:
+            pass
+
     return systems

@@ -14,6 +14,7 @@ from .proactive_interaction_system import ProactiveInteractionSystem
 from .user_monitor import UserMonitor, UserState
 from .behavior_feedback_loop import BehaviorFeedbackLoop
 from .memory_integration_loop import MemoryIntegrationLoop
+from .unified_memory_coordinator import UnifiedMemoryCoordinator
 
 __all__ = [
     "LLMDecisionLoop",
@@ -22,4 +23,5 @@ __all__ = [
     "UserState",
     "BehaviorFeedbackLoop",
     "MemoryIntegrationLoop",
+    "UnifiedMemoryCoordinator",
 ]

@@ -147,7 +147,7 @@ A3 拆分完成 ✓
   → Phase 1: NeuroVocabulary 擴充 ✅ 完成
   → Phase 2: 注入機制 ✅ 完成
   → Phase 3: 回存擴充 ✅ 完成
-  → Phase 4: 持續收斂 ⏳ 待做（自然收斂無需額外開發，已內建於 narrow() + serialize_mappings LRU）
+  → Phase 4: 持續收斂 ✅ 完成（sync_to_state_store / restore_from_state_store 整合 C5 持久層）
 ```
 
 ### Phase 1 變更
@@ -178,4 +178,4 @@ A3 拆分完成 ✓
 1. ~~JSON 持久化路徑？~~ → 已實作 `serialize_mappings()` + `load_mappings_from_config()`，與既有 `load_from_config` 模式一致
 2. ~~雙語需求？~~ → 目前中文即可，後續可擴充 lang tag
 3. ~~數量上限？~~ → 已內建於 `serialize_mappings(max_age_days=90)`：超齡低使用量 mapping 自動清除
-4. `serialize_mappings()` 的呼叫時機：暫未整合至既有存檔流程。建議由 `start_precompute` 或類似背景任務定期觸發
+4. ~~`serialize_mappings()` 的呼叫時機~~ → C5 Phase 4 整合：`sync_to_state_store()` 每輪學習後推至 `GlobalStateStore`，`save_all()` 自動寫入檔案；`restore_from_state_store()` 啟動時恢復

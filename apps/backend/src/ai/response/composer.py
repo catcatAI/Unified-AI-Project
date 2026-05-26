@@ -573,6 +573,26 @@ class NeuroVocabulary:
             )
             self._value_range_mappings.setdefault(m.axis_field, []).append(m)
 
+    def sync_to_state_store(self):
+        """同步數值映射到 GlobalStateStore（C5+C6 整合）"""
+        serialized = self.serialize_mappings()
+        try:
+            from core.system.state_store.global_store import state_store
+            state_store.update_state("neuro_vocabulary", {"mappings": serialized})
+        except Exception as e:
+            logger.warning(f"[NeuroVocabulary] sync_to_state_store failed: {e}")
+
+    def restore_from_state_store(self):
+        """從 GlobalStateStore 恢復數值映射"""
+        try:
+            from core.system.state_store.global_store import state_store
+            data = state_store.get_state("neuro_vocabulary")
+            mappings = data.get("mappings") if data else None
+            if mappings:
+                self.load_mappings_from_config(mappings)
+        except Exception as e:
+            logger.warning(f"[NeuroVocabulary] restore_from_state_store failed: {e}")
+
     def load_from_config(self, config_data: List[Dict[str, Any]]):
         """从配置加载片段"""
         if not config_data:
@@ -1017,6 +1037,7 @@ class ResponseComposer:
     def __init__(self):
         self.fragment_composer = FragmentComposer()
         self.neuro_vocabulary = NeuroVocabulary()
+        self.neuro_vocabulary.restore_from_state_store()
         self.neuro_blender = NeuroBlender(self.neuro_vocabulary)
         logger.info("ResponseComposer initialized")
 

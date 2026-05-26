@@ -223,6 +223,7 @@ class Live2DIntegration:
         self._parameter_callbacks: Dict[str, List[Callable[[float], None]]] = {}
         self._expression_callbacks: List[Callable[[ExpressionType], None]] = []
         self._motion_callbacks: List[Callable[[MotionType], None]] = []
+        self._live2d_state_callbacks: List[Callable[[Dict[str, Any]], None]] = []
 
         # [Task N.20.3] 具身座標映射初始化
         self.coordinate_engine = CoordinateMappingEngine(self)
@@ -407,6 +408,8 @@ class Live2DIntegration:
             except Exception as e:  # broad exception acceptable: expression callbacks should not break execution
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
+        # C2: notify Live2D state change for WebSocket broadcast
+        self._notify_live2d_state()
 
     def _get_expression_parameters(self, expression: ExpressionType) -> Dict[str, float]:
         """Get parameter values for an expression"""
@@ -509,6 +512,8 @@ class Live2DIntegration:
             except Exception as e:  # broad exception acceptable: motion callbacks should not break playback
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
+        # C2: notify Live2D state change for WebSocket broadcast
+        self._notify_live2d_state()
 
         return True
 
@@ -620,6 +625,27 @@ class Live2DIntegration:
     def get_all_parameters(self) -> Dict[str, float]:
         """Get all current parameter values"""
         return {name: param.value for name, param in self.parameters.items()}
+
+    def get_live2d_state(self) -> Dict[str, Any]:
+        """Get full Live2D state bundle (expression + motion + parameters) for WebSocket broadcast."""
+        return {
+            "expression": self.current_expression.value[1].lower() if self.current_expression else "neutral",
+            "motion": self.current_motion.value[1].lower() if self.current_motion else "idle",
+            "parameters": self.get_all_parameters(),
+        }
+
+    def register_live2d_state_callback(self, callback: Callable[[Dict[str, Any]], None]):
+        """Register a callback that fires on any Live2D state change with the full state bundle."""
+        self._live2d_state_callbacks.append(callback)
+
+    def _notify_live2d_state(self):
+        """Notify registered callbacks of current Live2D state."""
+        state = self.get_live2d_state()
+        for cb in self._live2d_state_callbacks:
+            try:
+                cb(state)
+            except Exception:
+                logger.warning("[Live2D] state callback error", exc_info=True)
 
     # Body-to-Live2D Integration Methods
     def apply_body_touch(
