@@ -327,6 +327,7 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 | C3 | 插件系統後端 hooks | 前端 JS 存在，後端 hooks 不存在 |
 | C4 | 提升測試覆蓋率 85%+ | 當前 16.34%，目標 85% |
 | C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore |
+| C6 | Angela 數值→文本翻譯學習層 | ↔ A3 拆分後方可做 Phase 2。見 [ANGELA_TRANSLATION_LEARNING_PLAN.md](ANGELA_TRANSLATION_LEARNING_PLAN.md) |
 
 ---
 
