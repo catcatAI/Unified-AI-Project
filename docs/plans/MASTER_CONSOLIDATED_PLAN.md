@@ -283,9 +283,18 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 |------|------|------|------|
 | 🟢1 | 🟢0 | 0.1天 | **2.9** |
 
-### B9. 根目錄清理 (142 條目 → <50)
+### ~~B9. 根目錄清理 (142 條目 → <50)~~ ✅ 已完成
 
-搬 legacy 報告到 `reports/archive/`，零散腳本到 `scripts/`。
+| 動作 | 數量 | 目標 |
+|------|------|------|
+| 搬 legacy .md 到 `reports/archive/` | 34 文件 | 歷史報告/計畫/審計文檔 |
+| 搬腳本到 `scripts/` | 20 文件 | Python/sh/bat 腳本 |
+| 搬設定到 `configs/` | 4 文件 | `.env.production`, `maintenance_schedule.json` 等 |
+| 搬 zip/圖檔到 `archive/` + `resources/` | 6 文件 | 安裝包、圖片 |
+| 搬 legacy 目錄到 `archive/` | 9 目錄 | `temp_miara_extract`, `gemini_contexts` 等 |
+| 合併 `test_data`/`test_results` 到 `tests/` | 2 目錄 | 測試資產歸位 |
+| 刪除暫存/垃圾 | 7 文件 | `.coverage`，`backend.log`，`nul` 等 |
+| **最終根目錄** | **50** 條目 (含 `.venv`/`myenv`/`venv_py311` 佔 3) | 🟢 ≈目標達成 |
 
 | 風險 | 耦合 | 工時 | 分數 |
 |------|------|------|------|
@@ -325,12 +334,11 @@ CHANGELOG 中 [7.4.0], [7.3.0], [7.2.0], [7.1.1] 已全部標註 `— Internal/U
 
 ```
 All S ✅ (4) + All B ✅ (B1-B6/B8/B11 = 8) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
-→ 18/27 完成！(A3 約 4d 已完成，剩餘 ~0.5d 審計)
+→ 20/27 完成！(A3 ≈4d ✅，B9 0.5d ✅，剩餘 ~2.5d)
 
 Remaining:
-  A3 (拆上帝模塊 ~0.5d剩餘) — WS/lifespan/chat/desktop/REPL 已提取 ✅，剩 LLM + core/autonomous 審計
-  B7 (singleton→DI 2d) — 可選，現有 singleton 多數已 DI-ready
-  B9 (根目錄清理 0.5d) — 跨引用風險高，需手動處理
+  A3 (~0.5d審計) — LLM + core/autonomous 審計 (低優先)
+  B7 (singleton→DI 2d) — 可選，多數已 DI-ready
   B10 (docs整理 2d) — 低優先級
   C1-C5 (功能開發) — 分散在 sprint 間隙
 ```
@@ -343,7 +351,7 @@ Remaining:
 |------|--------|------|
 | S 級 | 4 | **✅ 2.3 天** |
 | A 級 | 7 | **9.3 天 (已完成 A1/A2/A4/A5/A6/A7 ≈ 5.5d)** |
-| B 級 | 11 | **7.6 天 (已完成 B1-B5/B8/B11 ≈ 2.5d)** |
+| B 級 | 11 | **8.1 天 (已完成 B1-B6/B8/B9/B11 ≈ 3.0d)** |
 | C 級 | 5 | 未估算 (功能開發) |
 | **總計** | **27** | **~22.4 天 (全職) / 6-8 週 (兼職)** |
 
@@ -367,6 +375,6 @@ Remaining:
 | module-level 副作用 | sys.path 修改 | **✅ 已包裝進函數** | B3 |
 | save_state/load_state | 11 散落 5 檔案 | **✅ 1 統一介面** (B6 已完成) | B6 |
 | Singleton | ~6 處 | **0 處 (全 DI)** | B7 |
-| 根目錄條目 | 142 | **<50** | B9 |
+| 根目錄條目 | 142 | **50** (✅ 已完成) | B9 |
 | docs/ARCHITECTURE.md SSOT | 不存在 | **✅ 存在** (A7 已完成) | A7 |
 | 理論公式集成 | 0% (定義未接線) | **✅ 100% 注入 Prompt** (A4 已完成) | A4 |
