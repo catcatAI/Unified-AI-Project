@@ -140,7 +140,49 @@ A3 已完成。`_construct_angela_prompt` 已位於 `services/llm/prompt_builder
 | 覆蓋現有 prompt 描述格式 | 現有 threshold 分支描述（novelty_desc 等）保留不動，只附加 |
 | session 隔離 | 沿用 `NeuroVocabulary` 的 `load_from_config` 機制，跨 session 持久化 |
 
-## 實作狀態 (2026-05-26)
+## Phase 5：反向映射 + 進階功能
+
+### 新增方法
+
+所有方法新增在 `ai/response/composer.py` 的 `NeuroVocabulary` 類別中。
+
+1. **`find_axis_values(description, threshold=0.3)`** — 反向映射
+   - 給定語意描述文字，找出所有包含該文字的 mapping
+   - 回傳 `[{axis_field, range_lo, range_hi, description, confidence, usage_count}]`
+   - 支援大小寫不敏感比對
+   - `threshold` 過濾低信心 mapping
+
+2. **`decay_confidences(hours=24.0, decay_rate=0.01)`** — 信心衰減
+   - 降低長時間未使用的 mapping 信心度
+   - 超過 `hours` 未使用時，信心值按 `decay_rate * (elapsed / hours)` 下降
+   - 信心低於 0.01 的 mapping 自動清除
+   - 在 `sync_to_state_store()` 中自動調用，無需手動觸發
+
+3. **`get_uncovered_values(state_for_llm)`** — 缺口檢測
+   - 給定 state dict，找出尚未有 mapping 覆蓋的軸點位數值
+   - 回傳 `[{axis_field, value}]`
+   - 可作為 active learning 的觸發器（需搭配 LLM call）
+
+4. **`detect_overlaps(axis_field)`** — 重疊檢測
+   - 檢測同一軸點位上 range 重疊的 mappings
+   - 回傳 `[{a: {description, range_lo, range_hi, confidence}, b: {...}}]`
+   - 輔助除錯與 quality control
+
+### 變更摘要
+
+| 檔案 | 變更 |
+|------|------|
+| `ai/response/composer.py` | + 4 個新方法 (find_axis_values, decay_confidences, get_uncovered_values, detect_overlaps) |
+| `tests/ai/test_value_range_mapping.py` | + 9 tests → 總計 21 tests |
+| `sync_to_state_store()` | 內部調用 `decay_confidences()` 作為自動清理 |
+
+## 潛在 Phase 6（未來方向）
+
+- **Active Learning**: 當 `get_uncovered_values()` 傳回缺口時，自動產生 LLM prompt 請求描述（需新增 LLM call，權衡效益）
+- **多語言支援**: ValueRangeMapping 新增 lang tag
+- **合併重疊 mapping**: 當 detect_overlaps 發現高相似度描述時自動合併
+
+## 實作狀態 (2026-05-27)
 
 ```
 A3 拆分完成 ✓
@@ -148,6 +190,7 @@ A3 拆分完成 ✓
   → Phase 2: 注入機制 ✅ 完成
   → Phase 3: 回存擴充 ✅ 完成
   → Phase 4: 持續收斂 ✅ 完成（sync_to_state_store / restore_from_state_store 整合 C5 持久層）
+  → Phase 5: 反向映射 + 進階功能 ✅ 完成（find_axis_values, decay_confidences, get_uncovered_values, detect_overlaps）
 ```
 
 ### Phase 1 變更

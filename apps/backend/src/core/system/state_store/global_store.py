@@ -112,7 +112,10 @@ class GlobalStateStore:
 
         if notify:
             self._notify_subscribers(domain)
-        # C3 Phase 2: fire on_state_change hook for plugin system (non-blocking)
+        self._fire_state_change_hook(domain, data)
+
+    def _fire_state_change_hook(self, domain: str, data: Dict[str, Any]):
+        """Fire on_state_change plugin hook (non-blocking)."""
         try:
             from core.plugin import plugin_manager as _pm
             import asyncio as _aio

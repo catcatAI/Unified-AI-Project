@@ -9,6 +9,7 @@ class TestGlobalStateStore:
     def setup_method(self):
         from core.system.state_store.global_store import GlobalStateStore
         self.store = GlobalStateStore()
+        self.store._fire_state_change_hook = lambda d, data: None  # suppress plugin hook warnings
 
     def test_update_and_get_state(self):
         self.store.update_state('alpha', {'energy': 0.8, 'stress': 0.2})

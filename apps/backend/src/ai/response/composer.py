@@ -573,8 +573,80 @@ class NeuroVocabulary:
             )
             self._value_range_mappings.setdefault(m.axis_field, []).append(m)
 
+    # ── C6 Phase 5+：反向映射 + 信心衰減 ────────────────────────────────
+
+    def find_axis_values(self, description: str, threshold: float = 0.3) -> List[Dict[str, Any]]:
+        """反向映射：從語意描述找出對應的軸點位數值區間"""
+        results = []
+        desc_lower = description.lower()
+        for field_name, mappings in self._value_range_mappings.items():
+            for m in mappings:
+                if m.confidence < threshold:
+                    continue
+                if desc_lower in m.description.lower() or m.description.lower() in desc_lower:
+                    results.append({
+                        "axis_field": m.axis_field,
+                        "range_lo": m.range_lo,
+                        "range_hi": m.range_hi,
+                        "description": m.description,
+                        "confidence": m.confidence,
+                        "usage_count": m.usage_count,
+                    })
+        return results
+
+    def get_uncovered_values(self, state_for_llm: Dict[str, Dict]) -> List[Dict[str, Any]]:
+        """找出 state 中尚未有 mapping 覆蓋的軸點位數值"""
+        uncovered = []
+        for axis_name, axis_data in state_for_llm.items():
+            if not isinstance(axis_data, dict):
+                continue
+            vals = axis_data.get("values", {})
+            for k, v in vals.items():
+                field = f"{axis_name}.{k}"
+                mappings = self._value_range_mappings.get(field, [])
+                if not any(m.covers(v) for m in mappings):
+                    uncovered.append({"axis_field": field, "value": v})
+        return uncovered
+
+    def decay_confidences(self, hours: float = 24.0, decay_rate: float = 0.01):
+        """降低長時間未使用的 mapping 信心度"""
+        now = datetime.now()
+        for field_name, mappings in list(self._value_range_mappings.items()):
+            alive = []
+            for m in mappings:
+                if m.last_used_at is None:
+                    continue
+                elapsed = (now - m.last_used_at).total_seconds() / 3600.0
+                if elapsed > hours:
+                    decay = decay_rate * (elapsed / hours)
+                    m.confidence = max(0.0, m.confidence - decay)
+                if m.confidence > 0.01:
+                    alive.append(m)
+            if alive:
+                self._value_range_mappings[field_name] = alive
+            else:
+                del self._value_range_mappings[field_name]
+
+    def detect_overlaps(self, axis_field: str) -> List[Dict[str, Any]]:
+        """檢測同一軸點位上 range 重疊的 mappings"""
+        mappings = sorted(
+            self._value_range_mappings.get(axis_field, []),
+            key=lambda m: m.range_lo,
+        )
+        overlaps = []
+        for i in range(len(mappings) - 1):
+            a = mappings[i]
+            b = mappings[i + 1]
+            if a.range_hi >= b.range_lo:
+                overlaps.append({
+                    "a": {"description": a.description, "range_lo": a.range_lo, "range_hi": a.range_hi, "confidence": a.confidence},
+                    "b": {"description": b.description, "range_lo": b.range_lo, "range_hi": b.range_hi, "confidence": b.confidence},
+                })
+        return overlaps
+
     def sync_to_state_store(self):
         """同步數值映射到 GlobalStateStore（C5+C6 整合）"""
+        self.decay_confidences()
         serialized = self.serialize_mappings()
         try:
             from core.system.state_store.global_store import state_store
