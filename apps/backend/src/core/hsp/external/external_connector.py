@@ -37,14 +37,13 @@ class MessageRouter:
         self._running = False
 
     @classmethod
-    def get_instance(cls, port: int = None) -> "MessageRouter":
-        """Get or create the MessageRouter."""
+    def _create(cls, port: int = None) -> "MessageRouter":
+        """Factory: create a new MessageRouter instance."""
         return cls(port=port)
 
     @classmethod
     def reset_instance(cls):
-        """Reset (for testing)."""
-        pass
+        """No-op (deprecated)."""
 
     async def start(self):
         """Start the HTTP server for the message router."""
@@ -344,7 +343,7 @@ class ExternalConnector:
 
 async def start_router(host: str = DEFAULT_HOST, port: int = 11435) -> MessageRouter:
     """Start the central message router."""
-    router = MessageRouter.get_instance(port=port)
+    router = MessageRouter._create(port=port)
     await router.start()
     return router
 

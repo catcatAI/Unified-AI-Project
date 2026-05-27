@@ -37,7 +37,8 @@ class GoogleDriveService:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def get_instance(cls) -> "GoogleDriveService":
+    def _create(cls) -> "GoogleDriveService":
+        """Factory: create a new GoogleDriveService instance."""
         return cls()
 
     def _load_token(self) -> Optional[Credentials]:

@@ -471,6 +471,7 @@ Remaining (審計後優先級調整):
 - **D12-D14: core/system/config/network_defaults.py 創建 + 9 核心文件更新** (router, 5 LLM providers, external_connector, agent_manager; 集中管理 hosts, URLs, models, timeouts) ✅
 - **D7: logger.error exc_info=True** (批次修復 34 文件 309 處單行調用; 含 logger.error + logging.error 兩種模式) ✅ (partial, ~48%)
 - **D8: async I/O offloading** (創建 `core/system/config/async_io.py`, 9 文件 ~24 處 sync open/json → async_json_dump/load/write_file) ✅
+- **B7 Phase 1: singleton→DI cleanup** (移除死 `Singleton` 元類; `get_instance()` → `_create()` factory; 修正 buggy 單例測試) ✅
 - **D9: 雙測試目錄整合** (根 pyproject.toml testpaths 統一、修復 11 個 A3 引起的壞 import 或 skip) ✅
 
 ### 待完成

@@ -640,12 +640,12 @@ class TestGoogleDriveIntegration:
         from integrations.google_drive_service import GoogleDriveService
         assert GoogleDriveService is not None
 
-    def test_drive_service_singleton(self):
-        """GoogleDriveService 單例模式"""
+    def test_drive_service_factory(self):
+        """GoogleDriveService._create returns new instance each time"""
         from integrations.google_drive_service import GoogleDriveService
-        s1 = GoogleDriveService.get_instance()
-        s2 = GoogleDriveService.get_instance()
-        assert s1 is s2
+        s1 = GoogleDriveService._create()
+        s2 = GoogleDriveService._create()
+        assert s1 is not s2
 
     def test_drive_service_is_authenticated_without_token(self):
         """無有效 token 時返回 False"""

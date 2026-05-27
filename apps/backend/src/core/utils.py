@@ -471,17 +471,6 @@ async def timeout_after(coro: asyncio.coroutine, timeout: float) -> Any:
 # ============================================
 
 
-class Singleton(type):
-    """单例元类"""
-
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
 class LazyProperty:
     """懒加载属性描述器"""
 
@@ -621,7 +610,6 @@ __all__ = [
     "gather_with_errors",
     "timeout_after",
     # 类和对象工具
-    "Singleton",
     "LazyProperty",
     "cached_property",
     # 环境工具
