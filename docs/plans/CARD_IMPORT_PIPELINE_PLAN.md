@@ -65,7 +65,7 @@
 │ Stage 1: 自動程序 (Auto)                         │
 │ ● 正則解析標準欄位 (card_id, name, world_line...) │
 │ ● 表格語意映射 (key: value → form field)          │
-│ ● 跨文件編號合併 (CC-43 + CC-43 = 同一張卡)       │
+│ ● 跨文件合併 (同 world_line 內依 qualified_id 合併)               │
 │ ● 時間戳排序 (LastWriteTime 決定優先級)           │
 │ ● 基礎衝突檢測 (世界線/數值/格式)                  │
 │ 輸出: StructuredCard + unresolved_fields          │
@@ -107,7 +107,10 @@
 ```python
 @dataclass
 class Card:
-    card_id: str                    # CC-43, SL-01, RC-01...
+    card_id: str                    # "CC-43"
+    world_line: str                 # "W01", "W02", "迴廊"
+    qualified_id: str               # "CC-43@W01"  (複合主鍵, 跨文件合併用)
+    alternate_selves: List[str]     # ["CC-43@W02", "CC-43@迴廊"] 同位體列表
     card_type: CardType             # CHARACTER | STORY_LINE | EVENT | RULE
     name: str
     source_files: List[SourceFile]  # 原始文件列表 + 時間戳
@@ -117,8 +120,8 @@ class Card:
     history_events: List[Event]     # 時間序列事件
     custom_fields: Dict[str, Any]   # 動態捕獲的新欄位
     visual_data: Optional[Visual]   # 立繪路徑/生成提示詞
-    conflict_assertions: Dict[str, Any]  # 用於檢測的斷言
     core_trait: str                 # 核心特質 (文本引力錨點)
+    conflicts: List[Conflict]       # 已知衝突記錄 (含用戶意圖)
 ```
 
 ### 2.3 文本引力系統 (Text Gravity)
@@ -220,6 +223,58 @@ CardImportPipeline.process(content.decode('utf-8'))
 - 畫漫畫 = `Card.visual_data → Composer + Stable Diffusion API`
 - 全部共用同一套 `Card` 數據和 `TextGravityField`
 
+### 3.6 缺陷: 自動衝突解決不尊重用戶意圖
+
+**問題**: 系統可能強制「解決」用戶刻意保留的設定衝突。有些衝突是故意的：
+- 用戶不希望自動處理的衝突
+- 角色間的認知差異 (A 以為 B 欠他錢, B 不認為)
+- 敘事需要的戲劇性矛盾
+
+**修正**: 引入衝突分類 + 用戶意圖標記系統。
+
+```python
+@dataclass
+class Conflict:
+    type: ConflictType      # HARD_ERROR | INTENTIONAL | MULTIVERSE | NARRATIVE_DEVICE
+    dimension: str           # world_line | numerical | tone
+    description: str
+    resolution: Optional[str]  # 建議解法
+    user_intent: IntentFlag  # PENDING | CONFIRMED_KEEP | SUPPRESS_FUTURE
+    suppressed: bool = False # 用戶已確認保留
+```
+
+### 3.7 缺陷: 多元宇宙同位體被誤判為衝突
+
+**問題**: 同一個編號的角色在不同世界線是不同的個體（同位體/alternate selves）。`CC-43@W01`（貪婪財閥）和 `CC-43@W02`（完全不同性格）不該合併，也不該視為衝突。
+
+**修正**: 
+- Card ID 改為 `{card_id}@{world_line}` 格式，如 `CC-43@W01`
+- 合併引擎只在相同 world_line 內進行
+- 跨 world_line 的相同 card_id 自動識別為「同位體」，記錄 `alternate_selves: List[str]`
+- 文本引力場的作用域限定於該 world_line 的核心特質
+
+```python
+@dataclass
+class Card:
+    card_id: str                    # "CC-43"
+    world_line: str                 # "W01", "W02", "迴廊"
+    qualified_id: str               # "CC-43@W01"  (複合主鍵)
+    alternate_selves: List[str]     # ["CC-43@W02", "CC-43@迴廊"]
+    ...
+```
+
+### 3.8 缺陷: 質量評分不區分故意衝突 vs 錯誤衝突
+
+**問題**: 當前質量評分把「衝突解決率」視為越高越好。但對於故意保留的衝突，不解決才是正確的。
+
+**修正**:
+- `衝突解決率` 改為 `衝突處理得當率`：
+  ```
+  衝突處理得當率 = (正確解決數 + 正確保留數) / 總衝突數
+  ```
+- 故意保留的衝突 (user_intent=CONFIRMED_KEEP) 計入「正確保留」
+- 質量分數計算排除已 suppress 的衝突
+
 ---
 
 ## 4. 實作路線圖
@@ -296,12 +351,14 @@ CardImportPipeline.process(content.decode('utf-8'))
 ### 5.1 導入質量評分
 
 ```
-總分 = 0.3 × 結構保留率 + 0.4 × 語意保留率 + 0.3 × 衝突解決率
+總分 = 0.3 × 結構保留率 + 0.4 × 語意保留率 + 0.3 × 衝突處理得當率
 
 結構保留率 = 匹配欄位數 / 總欄位數
 語意保留率 = (1 - |原N-gram集 - 結果N-gram集| / 原N-gram集) × 0.7
            + 命名實體保留率 × 0.3
-衝突解決率 = 解決數 / (檢測數 + 1)   # +1 防止除零
+衝突處理得當率 = (正確解決數 + 正確保留數) / 總衝突數
+  # 正確保留 = user_intent==CONFIRMED_KEEP 且未強制修改的衝突
+  # 注意: 故意保留的衝突不應降低分數
 ```
 
 ### 5.2 文本引力有效度檢驗

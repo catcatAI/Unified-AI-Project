@@ -420,6 +420,7 @@ Remaining (審計後優先級調整):
   **D13** (~2h) — hardcoded model names → config**
   **D14** (~2h) — hardcoded timeouts → centralized**
   **D15** (~5min) — unused import cleanup**
+  **E0-E6** (~18-23d) — Card Import Pipeline: G drive 卡片導入 + 角色扮演/寫故事/演戲/漫畫派生能力**
 ```
 
 ---
@@ -484,6 +485,12 @@ Remaining (審計後優先級調整):
 | **D15** | ~~🔵 LOW~~ | 測試 | `pytest_asyncio` 不存在於 `test_state_store.py` — 假陽性，已移除 | — | ❌ 假陽性 |
 
 **評估總工時**: ~4-5 天 (含 D7 調試 ~2d 為最大項)
+
+### 新增: E 級 (Card Import Pipeline)
+
+| 項 | 優先 | 類型 | 說明 | 位置 | 工時 |
+|----|------|------|------|------|------|
+| **E0-E6** | 🟡 **MEDIUM** | 新功能 | 卡片導入流水線: 從 G 槽卡片堆導入 222+ 張卡片，使 Angela 能角色扮演/寫故事/演戲/畫漫畫 | `docs/plans/CARD_IMPORT_PIPELINE_PLAN.md` | ~18-23 天 |
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
