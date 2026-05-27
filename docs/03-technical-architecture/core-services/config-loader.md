@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides an overview of the `config_loader.py` module (`src/config_loader.py`). This module offers centralized functions for loading and accessing application configuration and simulated resource settings from YAML files.
+This document provides an overview of the `app_config_loader.py` module (`src/app_config_loader.py`). This module offers centralized functions for loading and accessing application configuration and simulated resource settings from YAML files.
 
 ## Purpose
 
@@ -32,4 +32,4 @@ The `config_loader` module uses global variables (`_config` and `_simulated_reso
 
 ## Code Location
 
-`src/config_loader.py`
+`src/app_config_loader.py`

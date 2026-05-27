@@ -11,17 +11,12 @@ import re  # type: ignore
 import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Union
-from unittest.mock import Mock
-
-
-# Mock dependencies for syntax validation
-class AIVirtualInputService:
-    pass
+from services.ai_virtual_input_service import AIVirtualInputService
 
 
 class SandboxExecutor:
     def run(self, script, name, action, params):
-        return Mock(), None
+        return None, None
 
 
 class HAMMemoryManager:

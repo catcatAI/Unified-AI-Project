@@ -125,7 +125,7 @@ class DimensionState:
 
     def compute_coordinate(self) -> Tuple[float, float, float]:
         """根據當前維度值計算實際座標 / Compute actual coordinate from current values"""
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         proj_conf = get_formula_config("spatial").get("projection_weights", {}).get(self.name, {})
         
         v = self.values
@@ -293,7 +293,7 @@ class StateMatrix4D:
             return
         self._initialized = True
         
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         self.formula_config = get_formula_config("spatial")
         self.config = config or {}
         self._precision = 1.0 
@@ -306,7 +306,7 @@ class StateMatrix4D:
 
     def _setup_dimensions(self):
         """設置維度初始狀態 (從分層配置讀取)"""
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         matrix_conf = get_formula_config("matrix")
         dim_defs = matrix_conf.get("dimensions", {})
         
@@ -325,7 +325,7 @@ class StateMatrix4D:
 
     def _setup_systems(self):
         """設置子系統與矩陣常數"""
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})
         
@@ -349,7 +349,7 @@ class StateMatrix4D:
 
     def _setup_history(self):
         """設置歷史紀錄與追蹤"""
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})
 

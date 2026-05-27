@@ -456,6 +456,7 @@ Remaining (審計後優先級調整):
 - **C6 Phase 5: 翻譯學習層進階 (反向映射 find_axis_values + 信心衰減 decay_confidences + 缺口檢測 get_uncovered_values + 重疊檢測 detect_overlaps)** ✅
 - **C4: 180 tests across all C-level modules (+65 maturity/intent/mappable/system-manager)** ✅
 - **eta_axis_state import 路徑修復** ✅
+- **D1-D5: 審計修復** (credentials.example.json + .env.example 建立、root package.json 版本統一、config_loader.py→app_config_loader.py 重命名+8 文件更新、AIVirtualInputService 重複類合併) ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天 — ~40 instances already DI-ready
@@ -466,21 +467,21 @@ Remaining (審計後優先級調整):
 
 | 項 | 優先 | 類型 | 說明 | 位置 | 工時 |
 |----|------|------|------|------|------|
-| **D1** | 🔴 **CRITICAL** | 安全 | `credentials.json` 含真實 Google OAuth client_id + client_secret 已 commit | `apps/backend/config/credentials.json` | ~0.5h |
-| **D2** | 🔴 **CRITICAL** | 安全 | `.env` 含 5 組真實 API Key/加密密鑰已 commit (ANGELA_KEY_A/B/C, GEMINI, OLLAMA) | `.env` (git tracked) | ~0.5h |
-| **D3** | 🟠 **HIGH** | 版本 | Root `package.json` 版本 `6.5.0-dev` vs `VERSION` 文件 `7.5.0-dev` — 應統一到 7.5.0-dev | `package.json:2` | ~0.5h |
-| **D4** | 🟠 **HIGH** | 正確性 | `from config_loader import` 裸 import，3 個同名文件 (`config_loader.py` ×3)，解析依賴 sys.path 順序 | 11 files | ~4h |
-| **D5** | 🟠 **HIGH** | 重複 | `AIVirtualInputService` 類定義在 2 個檔案中 | `ai_editor.py:18`, `ai_virtual_input_service.py:61` | ~1h |
+| **D1** | 🟢 **MEDIUM** (was 🔴) | 安全 | `credentials.json` 含真實憑證，但已被 `.gitignore` 保護、從未 commit。已建立 `credentials.example.json` | `apps/backend/config/credentials.json` | ✅ ~0.5h |
+| **D2** | 🟢 **MEDIUM** (was 🔴) | 安全 | `.env` 含真實 API 密鑰，但已被 `.gitignore` 保護、從未 commit。已建立 `.env.example` | `.env` | ✅ ~0.5h |
+| **D3** | 🟢 **HIGH** | 版本 | Root `package.json` 版本 `6.5.0-dev` vs `VERSION` 文件 `7.5.0-dev` — 已統一為 `7.5.0-dev` | `package.json:2` | ✅ ~5min |
+| **D4** | 🟢 **HIGH** (降為 MEDIUM) | 正確性 | `from config_loader import` 裸 import 解析正確(目標函數僅在 root config_loader)。已改名 `config_loader.py→app_config_loader.py`，8 個引用文件已更新 | 8 files | ✅ ~1h |
+| **D5** | 🟢 **HIGH** | 重複 | `AIVirtualInputService` 定義在 2 處。`ai_editor.py` 改用 import, 移除 mock class + `Mock` import | `ai_editor.py:18`, `ai_virtual_input_service.py:61` | ✅ ~0.5h |
 | **D6** | 🟡 **MEDIUM** | 編碼 | `open()` 未指定 `encoding="utf-8"`，Windows 默認 cp1252 會炸非 ASCII | 3 production files | ~1h |
 | **D7** | 🟡 **MEDIUM** | 調試 | `logger.error(f"...{e}")` 未加 `exc_info=True`，traceback 遺失 | ~300+ instances | ~2d |
 | **D8** | 🟡 **MEDIUM** | 同步 | Async function 內使用同步 `open()`/`json.load()` 阻塞 event loop | ~8 functions | ~4h |
 | **D9** | 🟡 **MEDIUM** | 測試 | 雙測試目錄: `tests/` + `apps/backend/tests/` 造成維護分散 | 2 dirs | ~2h (評估) |
 | **D10** | 🟡 **MEDIUM** | 版本 | 5 個子包 `__version__ = "6.0.0"` 陳舊 | autonomous, sync, metamorphosis, i18n, perception | ~1h |
-| **D11** | 🟡 **MEDIUM** | 文檔 | AGENTS.md `VERSION: 6.5.0-dev` vs 實際 `7.5.0-dev` | `AGENTS.md:7` | ~0.5h |
+| **D11** | 🟢 **LOW (假陽性)** | 文檔 | AGENTS.md `VERSION: 6.5.0-dev` 為文件自身版本號，非專案版本位置 | `AGENTS.md:7` | ✅ 無需修改 |
 | **D12** | 🟡 **MEDIUM** | 硬編碼 | 40+ 處 `localhost`/`127.0.0.1`/port 在源碼中 | 散佈 src/ | ~1d (持續) |
 | **D13** | 🟡 **MEDIUM** | 硬編碼 | 14 處 model name 硬編碼 (`gpt-4`, `claude-3-opus-...` 等) | providers + selector | ~2h |
 | **D14** | 🟡 **MEDIUM** | 硬編碼 | 12+ 處 timeout 硬編碼 (120s 重複 5 次無集中管理) | providers + router | ~2h |
-| **D15** | 🔵 **LOW** | 測試 | `test_state_store.py` 未使用的 `pytest_asyncio` import | `test_state_store.py:2` | ~5min |
+| **D15** | ~~🔵 LOW~~ | 測試 | `pytest_asyncio` 不存在於 `test_state_store.py` — 假陽性，已移除 | — | ❌ 假陽性 |
 
 **評估總工時**: ~4-5 天 (含 D7 調試 ~2d 為最大項)
 
@@ -548,22 +549,19 @@ Remaining (審計後優先級調整):
 3. **C3 sandbox**: _createSandbox() 已存在。Phase 4 已補 timeout + error tracking + safe timers + perf 監控。
 4. **C6 Phase 5**: 反向映射 (find_axis_values) + 信心衰減 (decay_confidences) + 缺口檢測 (get_uncovered_values) + 重疊檢測 (detect_overlaps) — 已完成。await主動學習仍需 LLM call。實驗性質。
 5. **C4 Phase 2+**: 180 tests across 12 files (23.31s, 0 warnings)。成熟度系統、意圖模型、MappableDataObject、SystemManager 已覆蓋。剩餘 candidate: kinetic_validator (50行), bio/, perception/ 等有硬體/網路依賴。
-6. **D1 (CRITICAL)**: `apps/backend/config/credentials.json` 含真實 Google OAuth client_id + client_secret，已 git tracked。
-7. **D2 (CRITICAL)**: `.env` 含 5 組真實 API/加密密鑰，已 git tracked（雖有 gitignore 但 commit 在前）。
-8. **D3 (HIGH)**: Root `package.json:2` 版本 `6.5.0-dev` 與 `VERSION` 文件 `7.5.0-dev` 不一致。
-9. **D4 (HIGH)**: 11 處 `from config_loader import` 裸 import，實際有 3 個不同 `config_loader.py` 文件。
-10. **D5 (HIGH)**: `AIVirtualInputService` 定義在 `ai_editor.py:18` 和 `ai_virtual_input_service.py:61` 兩處。
-11. **D7 (MEDIUM)**: ~300+ `logger.error(f"...{e}")` 缺 `exc_info=True`，traceback 遺失。
-12. **D10 (MEDIUM)**: 5 子包 `__version__ = "6.0.0"` 陳舊 (autonomous/sync/metamorphosis/i18n/perception)。
+6. **D1-D2 (降為 MEDIUM)**: `credentials.json` 和 `.env` 含真實憑證但從未 commit，`.gitignore` 已保護。已補 `credentials.example.json` + `.env.example`。
+7. **D3 (已修)**: Root `package.json` 版本 `6.5.0-dev` → `7.5.0-dev` 已同步。
+8. **D4 (已修)**: `config_loader.py` 改名 `app_config_loader.py`，8 文件 import 已更新。3 個函數均僅在 root `config_loader` 中，無運行時歧義。
+9. **D5 (已修)**: `ai_editor.py` 移除 mock `AIVirtualInputService`，改用 import `services.ai_virtual_input_service`。
 
 ### D 級優先級建議
 
 | 層級 | 建議順序 | 理由 |
 |------|---------|------|
-| **D1-D2** (安全) | **立即修復** | 真實憑證已 commit，需撤銷 + .gitignore + 移除歷史 |
-| **D3-D5** (正確性) | **本週** | 版本錯誤、import 歧義、class 重複會直接導致運行時 bug |
-| **D6-D8, D10-D11** (品質) | **下週** | 編碼/調試/同步/文檔問題 |
-| **D9, D12-D15** (持續改進) | **隨任務附帶** | 測試目錄、硬編碼、import 清理隨其他 PR 一起修
+| **D1-D5** | **✅ 已完成** | 憑證保護、版本統一、import 重命名、類合併 |
+| **D6-D7** (品質) | **下週** | 編碼/調試問題 |
+| **D8-D10** (品質) | **隨任務附帶** | 同步 IO/文檔/子包版本 |
+| **D12-D14** (持續改進) | **隨任務附帶** | 硬編碼改善 |
 
 ---
 

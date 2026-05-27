@@ -228,7 +228,7 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
 def _get_spatial_config(key: str, default: Any) -> Any:
     """從 spatial_parameters.yaml 獲取配置"""
     try:
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         spatial_conf = get_formula_config("spatial")
         return spatial_conf.get("gravity", {}).get(key, default)
     except Exception:

@@ -162,7 +162,7 @@ class EndocrineSystem:
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         self.formula_config = get_formula_config("biological")
         self.config = config or {}
         self.hormones: Dict[HormoneType, Hormone] = {}

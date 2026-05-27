@@ -9,7 +9,7 @@ if str(src_path) not in sys.path:
 
 def test_config_loader_functions():
     """Test config_loader module functions"""
-    from config_loader import load_config, get_config
+    from app_config_loader import load_config, get_config
     assert load_config.__name__ == 'load_config'
     assert get_config.__name__ == 'get_config'
 

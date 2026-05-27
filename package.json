@@ -1,6 +1,6 @@
 {
   "name": "unified-ai-project",
-  "version": "6.5.0-dev",
+  "version": "7.5.0-dev",
   "description": "Angela AI - Complete AGI System with HSP Protocol and Multi-Agent Architecture",
   "private": true,
   "workspaces": [

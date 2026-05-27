@@ -192,7 +192,7 @@ class DynamicThresholdManager:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None, state_matrix: Optional[Any] = None):
         """初始化动态阈值系统 - 結合 Native Space"""
-        from config_loader import get_formula_config
+        from app_config_loader import get_formula_config
         self.bio_config = get_formula_config("biological")
         self.spatial_config = get_formula_config("spatial")
         
@@ -209,7 +209,7 @@ class DynamicThresholdManager:
         # 加載動態閾值專用配置 (如果有的話，否則使用預設)
         # 此處展示如何從 biological_parameters.yaml 中擴展動態閾值定義
         # 為簡化，我們在 configs/formula_configs/ 下建立 dynamic_parameters.yaml
-        from config_loader import load_yaml
+        from app_config_loader import load_yaml
         dyn_params = load_yaml("configs/formula_configs/dynamic_parameters.yaml")
         
         if not dyn_params:

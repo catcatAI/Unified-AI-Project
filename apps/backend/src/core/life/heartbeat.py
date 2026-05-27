@@ -136,7 +136,7 @@ class MetabolicHeartbeat:
         jump_prob = mov_conf.get("jump_probability", 0.1)
         
         if arousal > arousal_thresh and random.random() < jump_prob:
-            from config_loader import get_formula_config
+            from app_config_loader import get_formula_config
             spatial_conf = get_formula_config("spatial")
             max_x = spatial_conf.get("screen", {}).get("width", 1920)
             self.target_x = random.randint(50, max_x - 100)
