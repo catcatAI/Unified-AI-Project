@@ -2,7 +2,7 @@
 
 > **目標**: 從 `G:\我的雲端硬碟\卡片堆` 導入卡片，使 Angela 能學會角色扮演、寫故事、演戲、畫漫畫
 > **日期**: 2026-05-27
-> **狀態**: Phase 0 (數據結構) ✅ + Phase 1 (自動解析引擎) ✅ + Phase 2 (Angela/LLM層) ✅
+> **狀態**: Phase 0 (數據結構) ✅ + Phase 1 (自動解析引擎) ✅ + Phase 2 (Angela/LLM層) ✅ + Phase 3 (質量控制+存儲) ✅ + Phase 4 (派生能力) ✅
 
 ---
 
@@ -308,23 +308,23 @@ class Card:
 | 2.3 | `core/card/resolver/llm_fallback.py` | LLM 最終裁決器 (硬編碼規則，無 LLM 依賴) |
 | 2.4 | `core/card/resolver/pipeline_orchestrator.py` | 三階流水線調度器 (auto→angela→llm) |
 
-### Phase 3: 質量控制 + 存儲 (2 天)
+### Phase 3: 質量控制 + 存儲 [✅ 已完成]
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|
-| 3.1 | `core/card/quality/import_quality_checker.py` | 三維度質量評分 |
-| 3.2 | `core/card/quality/gravity_calibration.py` | 引力校準 + entropy bonus |
-| 3.3 | `core/card/integration/memory_adapter.py` | Card → HAM 記憶寫入 |
-| 3.4 | `core/card/integration/personality_adapter.py` | Card → PersonalityManager 特質裝載 |
+| 3.1 | `core/card/quality/import_quality_checker.py` | 三維度質量評分 (結構/語意/衝突處理得當率) |
+| 3.2 | `core/card/quality/gravity_calibration.py` | 引力校準 + 有效度測量 (理想 0.6-0.85) |
+| 3.3 | `core/card/integration/memory_adapter.py` | Card → HAM 記憶寫入 (async store_experience) |
+| 3.4 | `core/card/integration/personality_adapter.py` | Card → PersonalityManager 特質裝載 (apply_personality_adjustment) |
 
-### Phase 4: 派生能力 (3-4 天)
+### Phase 4: 派生能力 [✅ 已完成]
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|
-| 4.1 | `core/card/capabilities/roleplay_engine.py` | 角色扮演: Card.persona → 對話生成 |
-| 4.2 | `core/card/capabilities/story_writer.py` | 寫故事: Card.history_events → 敘事 |
-| 4.3 | `core/card/capabilities/scene_interpreter.py` | 演戲: Card.tokens + 社會距離 → 場景 |
-| 4.4 | `core/card/capabilities/comic_composer.py` | 畫漫畫: Card.visual_data → 提示詞 → API |
+| 4.1 | `core/card/capabilities/roleplay_engine.py` | 角色扮演: Card → PersonalityAdapter → PersonalityManager |
+| 4.2 | `core/card/capabilities/story_writer.py` | 寫故事: Card.history_events → DocumentBuilder.build() |
+| 4.3 | `core/card/capabilities/scene_interpreter.py` | 演戲: Card.tokens + 社會距離 → 場景描述 + TextGravityField 基調一致 |
+| 4.4 | `core/card/capabilities/comic_composer.py` | 畫漫畫: Card.visual_data → AngelaRealPainter.paint_portrait() |
 
 ### Phase 5: 導入/導出 UI (3-4 天)
 

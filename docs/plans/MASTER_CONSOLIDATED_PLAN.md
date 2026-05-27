@@ -461,6 +461,8 @@ Remaining (審計後優先級調整):
 - **E0: Card 數據結構** (card_types.py: Card/Token/SourceFile/Relation/Event/Visual/Conflict dataclasses + card_store.py: CardRegistry) ✅
 - **E1: 自動解析引擎** (gdoc_reader.py + deterministic_parser.py + merge_engine.py + conflict_detector.py + timeline_resolver.py) ✅
 - **E2: Angela/LLM 層** (text_gravity.py + token_extractor.py + llm_fallback.py + pipeline_orchestrator.py) ✅
+- **E3: 質量控制+存儲** (import_quality_checker.py + gravity_calibration.py + memory_adapter.py + personality_adapter.py) ✅
+- **E4: 派生能力** (roleplay_engine.py + story_writer.py + scene_interpreter.py + comic_composer.py) ✅
 - **設計修正: GoogleDriveService 補 export_gdoc() 方法** (原缺少 .gdoc 匯出功能) ✅
 
 ### 待完成
@@ -494,7 +496,7 @@ Remaining (審計後優先級調整):
 
 | 項 | 優先 | 類型 | 說明 | 位置 | 工時 |
 |----|------|------|------|------|------|
-| **E0-E6** | 🟡 **MEDIUM** | 新功能 | 卡片導入流水線: 從 G 槽卡片堆導入 222+ 張卡片。E0 ✅ E1 ✅ E2 ✅ E3 (quality/storage) 待完成 | `docs/plans/CARD_IMPORT_PIPELINE_PLAN.md` | ~18-23 天 |
+| **E0-E6** | 🟡 **MEDIUM** | 新功能 | 卡片導入流水線: 從 G 槽卡片堆導入 222+ 張卡片。E0 ✅ E1 ✅ E2 ✅ E3 ✅ E4 ✅ E5 (export UI) 待完成 | `docs/plans/CARD_IMPORT_PIPELINE_PLAN.md` | ~18-23 天 |
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
