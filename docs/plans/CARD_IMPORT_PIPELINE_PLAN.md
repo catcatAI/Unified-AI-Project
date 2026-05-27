@@ -2,7 +2,7 @@
 
 > **目標**: 從 `G:\我的雲端硬碟\卡片堆` 導入卡片，使 Angela 能學會角色扮演、寫故事、演戲、畫漫畫
 > **日期**: 2026-05-27
-> **狀態**: 設計階段
+> **狀態**: Phase 0 (數據結構) ✅ + Phase 1 (自動解析引擎) ✅
 
 ---
 
@@ -180,6 +180,8 @@ class TextGravityField:
 
 **解決方案**: 使用現有 `GoogleDriveService` (`integrations/google_drive_service.py`)，用 OAuth2 (`credentials.json`) 認證後透過 Drive API `files.export(fileId, mimeType='text/plain')` 直接拉取文字內容。
 
+**實作發現**: `GoogleDriveService` 原缺少 `export_gdoc()` 方法，已補上。`gdoc_reader.py` 使用公開 API 而非訪問 `_get_service()`。
+
 ```python
 # 1. 讀取 .gdoc JSON 提取 document id
 # .gdoc 內容範例: {"url": "...", "doc_id": "ABC123"}
@@ -279,7 +281,7 @@ class Card:
 
 ## 4. 實作路線圖
 
-### Phase 0: 基礎卡片數據結構 (2-3 天)
+### Phase 0: 基礎卡片數據結構 [✅ 已完成]
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|
@@ -287,7 +289,7 @@ class Card:
 | 0.2 | `core/card/card_store.py` | CardRegistry (基於 ServiceRegistry) |
 | 0.3 | `core/card/__init__.py` | 公開 API |
 
-### Phase 1: 自動解析引擎 (3-4 天)
+### Phase 1: 自動解析引擎 [✅ 已完成]
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|

@@ -142,6 +142,18 @@ class GoogleDriveService:
             logger.error(f"Unexpected download error: {e}")
             return False
 
+    def export_gdoc(self, file_id: str, mime_type: str = "text/plain") -> Optional[str]:
+        """Export a Google-native document (gdoc) content as text."""
+        try:
+            service = self._get_service()
+            content = service.files().export(fileId=file_id, mimeType=mime_type).execute()
+            if isinstance(content, bytes):
+                return content.decode("utf-8")
+            return str(content)
+        except HttpError as e:
+            logger.error(f"Export gdoc error for {file_id}: {e}")
+            return None
+
     def search_files(self, query: str, page_size: int = 10) -> List[Dict[str, Any]]:
         return self.list_files(page_size=page_size, query=query)
 

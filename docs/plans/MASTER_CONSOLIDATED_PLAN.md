@@ -458,6 +458,9 @@ Remaining (審計後優先級調整):
 - **C4: 180 tests across all C-level modules (+65 maturity/intent/mappable/system-manager)** ✅
 - **eta_axis_state import 路徑修復** ✅
 - **D1-D5: 審計修復** (credentials.example.json + .env.example 建立、root package.json 版本統一、config_loader.py→app_config_loader.py 重命名+8 文件更新、AIVirtualInputService 重複類合併) ✅
+- **E0: Card 數據結構** (card_types.py: Card/Token/SourceFile/Relation/Event/Visual/Conflict dataclasses + card_store.py: CardRegistry) ✅
+- **E1: 自動解析引擎** (gdoc_reader.py + deterministic_parser.py + merge_engine.py + conflict_detector.py + timeline_resolver.py) ✅
+- **設計修正: GoogleDriveService 補 export_gdoc() 方法** (原缺少 .gdoc 匯出功能) ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天 — ~40 instances already DI-ready
@@ -490,7 +493,7 @@ Remaining (審計後優先級調整):
 
 | 項 | 優先 | 類型 | 說明 | 位置 | 工時 |
 |----|------|------|------|------|------|
-| **E0-E6** | 🟡 **MEDIUM** | 新功能 | 卡片導入流水線: 從 G 槽卡片堆導入 222+ 張卡片，使 Angela 能角色扮演/寫故事/演戲/畫漫畫 | `docs/plans/CARD_IMPORT_PIPELINE_PLAN.md` | ~18-23 天 |
+| **E0-E6** | 🟡 **MEDIUM** | 新功能 | 卡片導入流水線: 從 G 槽卡片堆導入 222+ 張卡片。E0 ✅ E1 ✅ E2 (resolver) 待完成 | `docs/plans/CARD_IMPORT_PIPELINE_PLAN.md` | ~18-23 天 |
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
