@@ -398,7 +398,7 @@ core/
 |---|------|------|
 | C1 | 記憶鏈串接 (HAM/LU/CDM → query/storage flow) | UnifiedMemoryCoordinator 已實作 + 接入 router.py ✅ Phase 2: router.py 儲存流程整合 CognitiveActivity + store_experience ✅ |
 | C2 | Desktop→Live2D WebSocket 控制鏈 | ✅ live2d 狀態寫入 broadcast_state_updates + desktop 端 handler 解析 expression/parameters |
-| C3 | 插件系統後端 hooks | ✅ Phase 1+2+3: HookRegistry + PluginManager + API + IPC + 事件勾子 + 數據持久化 + hot-reload (Electron fs.watch) |
+| C3 | 插件系統後端 hooks | ✅ Phase 1-4: HookRegistry + PluginManager + API + IPC + 事件勾子 + 數據持久化 + hot-reload + 沙箱強化 (timeout, auto-disable, safe timers, perf logging) |
 | C4 | 提升測試覆蓋率 85%+ | ✅ 89 tests across C1-C6 modules (hook_registry:10, plugin_manager:12, plugin_api:18, state_store:19, live2d_state:8, umc:9, vrm:12 + 既有) |
 | C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore ✅ C5: GlobalStateStore 加入 async save/load + dirty tracking + JsonFileStateStore 預設後端 |
 | C6 | Angela 數值→文本翻譯學習層 | ↔ A3 拆分後方可做 Phase 2。見 [ANGELA_TRANSLATION_LEARNING_PLAN.md](ANGELA_TRANSLATION_LEARNING_PLAN.md) |
@@ -410,13 +410,14 @@ core/
 ```
 All S ✅ (4) + All B ✅ (B1-B6/B8/B9/B11 = 10) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
 + A3 Phase 0-5 ✅ (angela_llm_service + core/autonomous 完整拆分)
-+ C1-C6 Phase 1-3 ✅ (all C-level infrastructure + hot-reload complete)
++ C1-C6 Phase 1-4 ✅ (all C-level infrastructure + hot-reload + sandbox hardening complete)
 → 26/27 完成！
 
 Remaining (審計後優先級調整):
   B10 (docs整理 ~2d) — 低優先: ~170+ 計畫文件需合併/歸檔
   B7 (singleton→DI ~2d) — 可選: ~40 ready, ~3 hard
-  C3 Phase 4+ (~1d) — 沙箱強化: _createSandbox 已存在，補效能監控 + 安全策略
+  B7 (singleton→DI ~2d) — 可選: ~40 ready, ~3 hard
+  B10 (docs整理 ~2d) — 低優先: ~170+ 計畫文件需合併/歸檔
   C4 Phase 2+ (~2d) — 目標 85% 覆蓋: 當前 ~30%
   C6 Phase 5+ (~2d) — 雙向映射: 需設計階段
 ```
@@ -450,6 +451,7 @@ Remaining (審計後優先級調整):
 - **C3 Phase 1: Plugin backend hooks (HookRegistry + PluginManager + API + Electron IPC bridge)** ✅
 - **C3 Phase 2: on_message/on_state_change hooks wired + plugin data persistence API** ✅
 - **C3 Phase 3: Plugin hot-reload (Electron fs.watch + IPC → renderer auto-reload)** ✅
+- **C3 Phase 4: Plugin sandbox hardening (hook timeout, auto-disable on errors, managed timers, perf monitoring)** ✅
 - **C4: 89 tests across C1/C2/C3/C5/C6 modules (18 plugin API + 6 state_store edge cases + 73 prior)** ✅
 - **eta_axis_state import 路徑修復** ✅
 
@@ -511,7 +513,7 @@ Remaining (審計後優先級調整):
 | C3 Phase 1 (hooks) | ✅ | 檔案存在 | HookRegistry + PluginManager ✅ |
 | C3 Phase 2 (wiring) | ✅ | grep wiring | on_message + on_state_change ✅ |
 | C3 Phase 3 (hot-reload) | ✅ | grep main.js | fs.watch + IPC + renderer handler ✅ |
-| C3 Phase 4+ (sandbox) | ⏳ 可擴充 | 檔案存在 | _createSandbox() 已存在，可強化性能監控 |
+| C3 Phase 4+ (sandbox) | ✅ 完成 | 檔案存在 | hook timeout + auto-disable + managed timers + perf logging |
 | C4 測試覆蓋 | ✅ Phase 1-2 | pytest run | **89 tests** all passing (16.66s) |
 | C5 GlobalStateStore | ✅ | 檔案存在 + 測試 | 19 tests, persistence end-to-end ✅ |
 | C6 Phase 1-4 (翻譯學習) | ✅ | 檔案存在 | 注入 + 回存 + C5 整合 ✅ |

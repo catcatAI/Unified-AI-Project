@@ -3,13 +3,17 @@ class PluginManager {
         this.config = {
             pluginsDir: config.pluginsDir || 'plugins',
             autoLoad: config.autoLoad !== false,
-            sandbox: config.sandbox !== false
+            sandbox: config.sandbox !== false,
+            hookTimeout: config.hookTimeout || 5000,
+            maxErrorsBeforeDisable: config.maxErrorsBeforeDisable || 5
         };
         
         this.plugins = new Map();
         this.hooks = new Map();
         this.loaded = false;
         this.logger = null;
+        this._pluginErrorCount = new Map();
+        this._timers = new Map();
     }
     
     setLogger(logger) {
@@ -158,7 +162,7 @@ class PluginManager {
         
         try {
             if (this.config.sandbox) {
-                const sandbox = this._createSandbox();
+                const sandbox = this._createSandbox(name);
                 const sandboxedCode = `
                     with (sandbox) {
                         ${code}
@@ -185,18 +189,48 @@ class PluginManager {
         return plugin;
     }
     
-    _createSandbox() {
+    _createSandbox(pluginName) {
+        const pluginTimers = [];
+        this._timers.set(pluginName, pluginTimers);
+        const safeSetTimeout = (fn, delay, ...args) => {
+            const id = setTimeout(() => {
+                try { fn(...args); } catch (e) {
+                    this._log('error', `[Sandbox:${pluginName}] Timer error:`, e);
+                }
+            }, delay);
+            pluginTimers.push({ type: 'timeout', id });
+            return id;
+        };
+        const safeClearTimeout = (id) => {
+            const idx = pluginTimers.findIndex(t => t.type === 'timeout' && t.id === id);
+            if (idx !== -1) pluginTimers.splice(idx, 1);
+            clearTimeout(id);
+        };
+        const safeSetInterval = (fn, interval, ...args) => {
+            const id = setInterval(() => {
+                try { fn(...args); } catch (e) {
+                    this._log('error', `[Sandbox:${pluginName}] Interval error:`, e);
+                }
+            }, interval);
+            pluginTimers.push({ type: 'interval', id });
+            return id;
+        };
+        const safeClearInterval = (id) => {
+            const idx = pluginTimers.findIndex(t => t.type === 'interval' && t.id === id);
+            if (idx !== -1) pluginTimers.splice(idx, 1);
+            clearInterval(id);
+        };
         const sandbox = {
             exports: {},
             console: {
-                log: (...args) => this._log('info', `[Sandbox]`, args),
-                warn: (...args) => this._log('warn', `[Sandbox]`, args),
-                error: (...args) => this._log('error', `[Sandbox]`, args)
+                log: (...args) => this._log('info', `[${pluginName}]`, args),
+                warn: (...args) => this._log('warn', `[${pluginName}]`, args),
+                error: (...args) => this._log('error', `[${pluginName}]`, args),
             },
-            setTimeout,
-            setInterval,
-            clearTimeout,
-            clearInterval,
+            setTimeout: safeSetTimeout,
+            clearTimeout: safeClearTimeout,
+            setInterval: safeSetInterval,
+            clearInterval: safeClearInterval,
             Promise,
             JSON,
             Math,
@@ -210,7 +244,10 @@ class PluginManager {
             Map,
             Set,
             WeakMap,
-            WeakSet
+            WeakSet,
+            performance: {
+                now: () => performance.now()
+            }
         };
         
         return sandbox;
@@ -290,12 +327,25 @@ class PluginManager {
             }
             
             this.plugins.delete(name);
+            this._pluginErrorCount.delete(name);
+            this._cleanupTimers(name);
             
             this._log('info', `Plugin ${name} unloaded successfully`);
             return true;
         } catch (e) {
             this._log('error', `Failed to unload plugin ${name}`, e);
             return false;
+        }
+    }
+    
+    _cleanupTimers(pluginName) {
+        const timers = this._timers.get(pluginName);
+        if (timers) {
+            for (const t of timers) {
+                if (t.type === 'timeout') clearTimeout(t.id);
+                else clearInterval(t.id);
+            }
+            this._timers.delete(pluginName);
         }
     }
     
@@ -342,6 +392,35 @@ class PluginManager {
         );
     }
     
+    async _executeWithTimeout(handler, data, pluginName, timeoutMs) {
+        const startTime = Date.now();
+        try {
+            const result = await Promise.race([
+                handler(data),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(`Hook timed out after ${timeoutMs}ms`)), timeoutMs)
+                )
+            ]);
+            const elapsed = Date.now() - startTime;
+            if (elapsed > 100) {
+                this._log('warn', `Slow hook (${elapsed}ms) in plugin ${pluginName}`);
+            }
+            this._pluginErrorCount.set(pluginName, 0);
+            return { result, error: null };
+        } catch (e) {
+            const errCount = (this._pluginErrorCount.get(pluginName) || 0) + 1;
+            this._pluginErrorCount.set(pluginName, errCount);
+            if (errCount >= this.config.maxErrorsBeforeDisable) {
+                const plugin = this.plugins.get(pluginName);
+                if (plugin) {
+                    plugin.enabled = false;
+                    this._log('error', `Plugin ${pluginName} auto-disabled after ${errCount} consecutive errors`);
+                }
+            }
+            return { result: null, error: e };
+        }
+    }
+
     async executeHook(hookName, data = null) {
         if (!this.hooks.has(hookName)) {
             return [];
@@ -356,13 +435,11 @@ class PluginManager {
         const results = [];
         
         for (const { handler, pluginName } of handlers) {
-            try {
-                const result = await handler(data);
-                results.push({ pluginName, result, error: null });
-            } catch (e) {
-                this._log('error', `Hook ${hookName} failed in plugin ${pluginName}`, e);
-                results.push({ pluginName, result: null, error: e });
+            const outcome = await this._executeWithTimeout(handler, data, pluginName, this.config.hookTimeout);
+            if (outcome.error) {
+                this._log('error', `Hook ${hookName} failed in plugin ${pluginName}`, outcome.error);
             }
+            results.push({ pluginName, result: outcome.result, error: outcome.error });
         }
         
         return results;
@@ -526,6 +603,14 @@ class PluginManager {
         
         this.plugins.clear();
         this.hooks.clear();
+        this._pluginErrorCount.clear();
+        this._timers.forEach((timers) => {
+            for (const t of timers) {
+                if (t.type === 'timeout') clearTimeout(t.id);
+                else clearInterval(t.id);
+            }
+        });
+        this._timers.clear();
         this._log('info', 'Plugin manager destroyed');
     }
 }
