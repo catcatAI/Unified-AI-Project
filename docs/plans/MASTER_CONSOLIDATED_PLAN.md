@@ -410,15 +410,16 @@ core/
 ```
 All S ✅ (4) + All B ✅ (B1-B6/B8/B9/B11 = 10) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
 + A3 Phase 0-5 ✅ (angela_llm_service + core/autonomous 完整拆分)
-+ C1-C6 Phase 1-2 ✅ (all C-level infrastructure complete)
++ C1-C6 Phase 1-3 ✅ (all C-level infrastructure + hot-reload complete)
 → 26/27 完成！
 
 Remaining:
   A3 Phase 6 (收尾清理 ~0.5d) — 細部 import 整理
   B7 (singleton→DI 2d) — 可選，多數已 DI-ready
   B10 (docs整理 2d) — 低優先級
-  C3 Phase 3+ (進階插件: hot-reload, 沙箱執行)
+  C3 Phase 4+ (沙箱強化, 效能監控)
   C4 Phase 2+ (持續擴大測試覆蓋)
+  C6 Phase 5+ (翻譯學習層進階)
 ```
 
 ---
@@ -454,10 +455,11 @@ Remaining:
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
-- **B7** (singleton→DI, 可選) ~2天
+- **B7** (singleton→DI, 可選) ~2天 — ~40 instances already DI-ready
 - **B10** (docs整理, 低優先) ~2天
-- **C3 Phase 3+** (進階插件: hot-reload, 沙箱執行)
+- **C3 Phase 4+** (沙箱強化 perf + 安全策略)
 - **C4 Phase 2+** — 持續擴大測試覆蓋，目標 85%（89 tests in C-modules）
+- **C6 Phase 5+** (翻譯學習層進階: 雙向映射 + 主動學習)
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
