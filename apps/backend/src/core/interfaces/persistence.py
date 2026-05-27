@@ -9,6 +9,8 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Dict, Any, Optional, Protocol, runtime_checkable
 
+from core.system.config.async_io import async_json_dump, async_json_load
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,8 +59,7 @@ class JsonFileStateStore:
     async def save_state(self, key: str, data: Dict[str, Any]) -> bool:
         try:
             path = self._resolve_path(key)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, default=str)
+            await async_json_dump(data, str(path), ensure_ascii=False, default=str)
             return True
         except Exception as e:
             logger.error(f"Failed to save state key={key}: {e}")
@@ -68,8 +69,7 @@ class JsonFileStateStore:
         try:
             path = self._resolve_path(key)
             if path.exists():
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                return await async_json_load(str(path))
             return None
         except Exception as e:
             logger.error(f"Failed to load state key={key}: {e}")

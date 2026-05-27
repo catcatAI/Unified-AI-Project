@@ -36,6 +36,7 @@ from pathlib import Path
 
 from core.interfaces.persistence import StatePersistence
 from core.interfaces.service_registry import get_registry
+from core.system.config.async_io import async_json_dump, async_json_load
 
 # 尝试导入AI库
 try:
@@ -374,8 +375,7 @@ class MetacognitiveCapabilitiesEngine:
                 state_data = asdict(self.current_state)
                 state_data["timestamp"] = state_data["timestamp"].isoformat()
 
-                with open(state_file, "w", encoding="utf-8") as f:
-                    json.dump(state_data, f, ensure_ascii=False, indent=2)
+                await async_json_dump(state_data, str(state_file), ensure_ascii=False, indent=2)
 
             # 保存能力画像
             profiles_file = self.workspace_path / "capability_profiles.json"
@@ -393,8 +393,7 @@ class MetacognitiveCapabilitiesEngine:
                     "success_rate": profile.success_rate,
                 }
 
-            with open(profiles_file, "w", encoding="utf-8") as f:
-                json.dump(profiles_data, f, ensure_ascii=False, indent=2)
+            await async_json_dump(profiles_data, str(profiles_file), ensure_ascii=False, indent=2)
 
             logger.info("状态已保存")
             return True
@@ -403,8 +402,7 @@ class MetacognitiveCapabilitiesEngine:
         persist_dir = self.workspace_path / "persistence"
         persist_dir.mkdir(exist_ok=True)
         filepath = persist_dir / f"{key}.json"
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        await async_json_dump(data, str(filepath), ensure_ascii=False, indent=2)
         logger.info(f"状态已保存到 key: {key}")
         return True
 
@@ -416,12 +414,10 @@ class MetacognitiveCapabilitiesEngine:
             profiles_file = self.workspace_path / "capability_profiles.json"
 
             if state_file.exists():
-                with open(state_file, "r", encoding="utf-8") as f:
-                    state_data = json.load(f)
+                    state_data = await async_json_load(str(state_file))
 
             if profiles_file.exists():
-                with open(profiles_file, "r", encoding="utf-8") as f:
-                    profiles_data = json.load(f)
+                    profiles_data = await async_json_load(str(profiles_file))
                     for cap_id, profile_data in profiles_data.items():
                         self.capability_profiles[cap_id] = CapabilityProfile(
                             capability_id=profile_data["capability_id"],
@@ -442,8 +438,7 @@ class MetacognitiveCapabilitiesEngine:
         persist_dir = self.workspace_path / "persistence"
         filepath = persist_dir / f"{key}.json"
         if filepath.exists():
-            with open(filepath, "r", encoding="utf-8") as f:
-                return json.load(f)
+                return await async_json_load(str(filepath))
         return None
 
     async def delete_state(self, key: str) -> bool:

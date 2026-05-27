@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 import logging
 from core.bio.kinetic_validator import KineticValidator
+from core.system.config.async_io import async_json_dump, async_json_load
 
 logger = logging.getLogger(__name__)
 
@@ -867,16 +868,14 @@ class ActionExecutor:
                     }
                 )
 
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
+        await async_json_dump(history, str(path), ensure_ascii=False, indent=2)
 
     async def load_execution_history(self, filepath: Optional[str] = None):
         """Load execution history from file"""
         path = Path(filepath or "~/.angela/executor_history.json").expanduser()
 
         if path.exists():
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                return await async_json_load(str(path))
         return []
 
     # ========== NEW: Retry Mechanism ==========

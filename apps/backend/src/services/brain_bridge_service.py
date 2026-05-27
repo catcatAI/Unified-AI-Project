@@ -12,6 +12,7 @@ from typing import Optional, Dict, Any
 
 from core.life.digital_life_integrator import DigitalLifeIntegrator
 from shared.utils.hardware_detector import SystemHardwareProbe
+from core.system.config.async_io import async_json_dump
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,7 @@ class BrainBridgeService:
         # Update secondary JSON status for the API to consume
         status_file = Path("apps/backend/data/brain_status.json")
         status_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(status_file, "w", encoding="utf-8") as f:
-            json.dump(full_status, f, indent=4)
+        await async_json_dump(full_status, str(status_file), indent=4)
 
         logger.info(f"Brain Metrics Synced: LifeIntensity={full_status['life_intensity']:.4f}")
 

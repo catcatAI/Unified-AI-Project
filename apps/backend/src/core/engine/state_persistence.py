@@ -30,6 +30,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, TYPE_CHECKING
 
+from core.system.config.async_io import async_write_text, async_read_text
+
 logger = logging.getLogger("angela_persistence")
 
 # Redis 可用性檢查
@@ -217,10 +219,10 @@ class StatePersistence:
             storage_path = self._get_json_path()
 
             checkpoint_file = storage_path / f"checkpoint_{snapshot['id']}.json"
-            checkpoint_file.write_text(self._serialize(snapshot), encoding="utf-8")
+            await async_write_text(checkpoint_file, self._serialize(snapshot))
 
             index_file = storage_path / "checkpoint_index.json"
-            index = self._load_json_index(index_file)
+            index = await self._load_json_index(index_file)
 
             index["checkpoints"].insert(0, {
                 "id": snapshot["id"],
@@ -238,7 +240,7 @@ class StatePersistence:
                 index["checkpoints"] = index["checkpoints"][:self.config.max_snapshots]
 
             index["last_checkpoint"] = index["checkpoints"][0] if index["checkpoints"] else None
-            index_file.write_text(self._serialize(index), encoding="utf-8")
+            await async_write_text(index_file, self._serialize(index))
 
             logger.info(f"[Persistence] Saved to JSON: {snapshot['id']} ({snapshot['tag']})")
 
@@ -258,11 +260,11 @@ class StatePersistence:
         """Redis 失敗時的 JSON 回退"""
         return await self._save_to_json(snapshot)
 
-    def _load_json_index(self, index_file: Path) -> Dict[str, Any]:
+    async def _load_json_index(self, index_file: Path) -> Dict[str, Any]:
         """加載 JSON 索引"""
         if index_file.exists():
             try:
-                return json.loads(index_file.read_text(encoding="utf-8"))
+                return json.loads(await async_read_text(index_file))
             except Exception:
                 pass
         return {"checkpoints": [], "last_checkpoint": None}
@@ -331,7 +333,7 @@ class StatePersistence:
             storage_path = self._get_json_path()
             checkpoint_file = storage_path / f"checkpoint_{checkpoint_id}.json"
             if checkpoint_file.exists():
-                return json.loads(checkpoint_file.read_text(encoding="utf-8"))
+                return json.loads(await async_read_text(checkpoint_file))
         except Exception as e:
             logger.error(f"[Persistence] JSON load failed: {e}")
         return None
@@ -432,9 +434,9 @@ class StatePersistence:
                 checkpoint_file.unlink()
 
             index_file = storage_path / "checkpoint_index.json"
-            index = self._load_json_index(index_file)
+            index = await self._load_json_index(index_file)
             index["checkpoints"] = [c for c in index["checkpoints"] if c["id"] != checkpoint_id]
-            index_file.write_text(self._serialize(index), encoding="utf-8")
+            await async_write_text(index_file, self._serialize(index))
             logger.info(f"[Persistence] Deleted from JSON: {checkpoint_id}")
             return True
         except Exception as e:

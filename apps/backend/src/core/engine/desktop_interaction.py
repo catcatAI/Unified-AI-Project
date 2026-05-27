@@ -28,6 +28,7 @@ import shutil
 import json
 import subprocess
 import shlex
+from core.system.config.async_io import async_write_text, async_write_file
 import logging
 
 logger = logging.getLogger(__name__)
@@ -304,8 +305,7 @@ class DesktopBrowserIntegration:
         desktop_path = self.desktop.desktop_path
         target_path = desktop_path / filename
 
-        with open(target_path, "wb") as f:
-            f.write(content)
+        await async_write_file(str(target_path), content)
 
         logger.info(f"资源已保存到桌面: {target_path}")
         return target_path
@@ -595,7 +595,7 @@ class DesktopInteraction:
             else:
                 file_path = self.desktop_path / filename
 
-            file_path.write_text(content, encoding="utf-8")
+            await async_write_text(file_path, content)
 
             operation = FileOperation(
                 operation_id=f"create_{datetime.now().timestamp()}",

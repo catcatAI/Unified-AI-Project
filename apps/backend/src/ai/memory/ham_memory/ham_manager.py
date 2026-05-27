@@ -18,6 +18,7 @@ from ai.memory.ham_memory.ham_vector_store_manager import HAMVectorStoreManager
 from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
 from ai.memory.ham_memory.ham_query_engine import HAMQueryEngine
 from ai.memory.ham_memory.ham_background_tasks import HAMBackgroundTasks
+from core.system.config.async_io import async_json_load
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +99,7 @@ class HAMMemoryManager:
             
             if os.path.exists(codex_path):
                 logger.info(f"📚 [Memory] Loading TRPG Codex from {codex_path}")
-                with open(codex_path, "r", encoding="utf-8") as f:
-                    codex_data = json.load(f)
+                codex_data = await async_json_load(codex_path)
                     
                 # Inject key categories as strategic experiences
                 for category in ["characters", "locations", "items"]:

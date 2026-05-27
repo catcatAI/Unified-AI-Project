@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Callable
 from datetime import datetime
 
+from core.system.config.async_io import async_json_dump, async_json_load
 from core.engine.anchor_learning import AnchorLearningEngine
 from core.state.axis_field import AxisFieldRegistry
 from core.state.axis import Axis
@@ -1186,8 +1187,7 @@ class StateMatrixAdapter:
         try:
             data_dir = self._get_protocol_data_dir()
             filepath = data_dir / f"{key}.json"
-            with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, default=str)
+            await async_json_dump(data, str(filepath), ensure_ascii=False, default=str)
             return True
         except Exception:
             return False
@@ -1198,8 +1198,7 @@ class StateMatrixAdapter:
             data_dir = self._get_protocol_data_dir()
             filepath = data_dir / f"{key}.json"
             if filepath.exists():
-                with open(filepath, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                return await async_json_load(str(filepath))
             return None
         except Exception:
             return None

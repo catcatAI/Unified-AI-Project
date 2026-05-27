@@ -30,6 +30,8 @@ from pathlib import Path
 from collections import deque
 import logging
 
+from core.system.config.async_io import async_json_dump, async_json_load
+
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -539,8 +541,7 @@ class FeedbackProcessor:
                 "saved_at": datetime.now().isoformat(),
             }
 
-            with open(history_path, "w", encoding="utf-8") as f:
-                json.dump(history_data, f, ensure_ascii=False, indent=2)
+            await async_json_dump(history_data, str(history_path), ensure_ascii=False, indent=2)
 
         except Exception as e:  # broad exception acceptable: history save must be resilient, non-critical
             logger.error(f"[FeedbackProcessor] Save history error: {e}")
@@ -551,8 +552,7 @@ class FeedbackProcessor:
             history_path = Path("~/.angela/feedback_history.json").expanduser()
 
             if history_path.exists():
-                with open(history_path, "r", encoding="utf-8") as f:
-                    history_data = json.load(f)
+                history_data = await async_json_load(str(history_path))
 
                 # Load feedback history
                 for k, v in history_data.get("feedback_history", {}).items():
