@@ -417,6 +417,9 @@ Remaining (審計後優先級調整):
   B10 (docs整理 ~2d) — 低優先: ~170+ 計畫文件需合併/歸檔
   B7 (singleton→DI ~2d) — 可選: ~40 ready, ~3 hard
   C4 Phase 2+ (~2d) — 目標 85% 覆蓋: 當前 180 tests, 12 files
+  **D13** (~2h) — hardcoded model names → config**
+  **D14** (~2h) — hardcoded timeouts → centralized**
+  **D15** (~5min) — unused import cleanup**
 ```
 
 ---
@@ -429,7 +432,8 @@ Remaining (審計後優先級調整):
 | A 級 | 7 | **9.3 天 (已完成 A1/A2/A4/A5/A6/A7 ≈ 5.5d + A3 審計 ✅, 剩 ~3.5d)** |
 | B 級 | 11 | **8.1 天 (已完成 B1-B6/B8/B9/B11 ≈ 3.0d)** |
 | C 級 | 6 | 未估算 (功能開發) |
-| **總計** | **28** | **~22.4 天 (全職) / 6-8 週 (兼職)** |
+| **D 級** (Debt Audit) | **15** | **~4-5 天 (含 D7 調試 ~2d 為最大項)** |
+| **總計** | **43** | **~27 天 (全職) / 6-8 週 (兼職)** |
 
 比舊 P8 v1 (12 天) + P9 (17.9 天) = ~30 天，合併後減少 ~25%。
 
@@ -457,6 +461,28 @@ Remaining (審計後優先級調整):
 - **B7** (singleton→DI, 可選) ~2天 — ~40 instances already DI-ready
 - **B10** (docs整理, 低優先) ~2天
 - **C4 Phase 2+** — 持續擴大測試覆蓋（180 tests, 0 warnings, 23.31s）
+
+### 新增: D 級 (Debt — Audit Findings 2026-05-27)
+
+| 項 | 優先 | 類型 | 說明 | 位置 | 工時 |
+|----|------|------|------|------|------|
+| **D1** | 🔴 **CRITICAL** | 安全 | `credentials.json` 含真實 Google OAuth client_id + client_secret 已 commit | `apps/backend/config/credentials.json` | ~0.5h |
+| **D2** | 🔴 **CRITICAL** | 安全 | `.env` 含 5 組真實 API Key/加密密鑰已 commit (ANGELA_KEY_A/B/C, GEMINI, OLLAMA) | `.env` (git tracked) | ~0.5h |
+| **D3** | 🟠 **HIGH** | 版本 | Root `package.json` 版本 `6.5.0-dev` vs `VERSION` 文件 `7.5.0-dev` — 應統一到 7.5.0-dev | `package.json:2` | ~0.5h |
+| **D4** | 🟠 **HIGH** | 正確性 | `from config_loader import` 裸 import，3 個同名文件 (`config_loader.py` ×3)，解析依賴 sys.path 順序 | 11 files | ~4h |
+| **D5** | 🟠 **HIGH** | 重複 | `AIVirtualInputService` 類定義在 2 個檔案中 | `ai_editor.py:18`, `ai_virtual_input_service.py:61` | ~1h |
+| **D6** | 🟡 **MEDIUM** | 編碼 | `open()` 未指定 `encoding="utf-8"`，Windows 默認 cp1252 會炸非 ASCII | 3 production files | ~1h |
+| **D7** | 🟡 **MEDIUM** | 調試 | `logger.error(f"...{e}")` 未加 `exc_info=True`，traceback 遺失 | ~300+ instances | ~2d |
+| **D8** | 🟡 **MEDIUM** | 同步 | Async function 內使用同步 `open()`/`json.load()` 阻塞 event loop | ~8 functions | ~4h |
+| **D9** | 🟡 **MEDIUM** | 測試 | 雙測試目錄: `tests/` + `apps/backend/tests/` 造成維護分散 | 2 dirs | ~2h (評估) |
+| **D10** | 🟡 **MEDIUM** | 版本 | 5 個子包 `__version__ = "6.0.0"` 陳舊 | autonomous, sync, metamorphosis, i18n, perception | ~1h |
+| **D11** | 🟡 **MEDIUM** | 文檔 | AGENTS.md `VERSION: 6.5.0-dev` vs 實際 `7.5.0-dev` | `AGENTS.md:7` | ~0.5h |
+| **D12** | 🟡 **MEDIUM** | 硬編碼 | 40+ 處 `localhost`/`127.0.0.1`/port 在源碼中 | 散佈 src/ | ~1d (持續) |
+| **D13** | 🟡 **MEDIUM** | 硬編碼 | 14 處 model name 硬編碼 (`gpt-4`, `claude-3-opus-...` 等) | providers + selector | ~2h |
+| **D14** | 🟡 **MEDIUM** | 硬編碼 | 12+ 處 timeout 硬編碼 (120s 重複 5 次無集中管理) | providers + router | ~2h |
+| **D15** | 🔵 **LOW** | 測試 | `test_state_store.py` 未使用的 `pytest_asyncio` import | `test_state_store.py:2` | ~5min |
+
+**評估總工時**: ~4-5 天 (含 D7 調試 ~2d 為最大項)
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
@@ -522,6 +548,22 @@ Remaining (審計後優先級調整):
 3. **C3 sandbox**: _createSandbox() 已存在。Phase 4 已補 timeout + error tracking + safe timers + perf 監控。
 4. **C6 Phase 5**: 反向映射 (find_axis_values) + 信心衰減 (decay_confidences) + 缺口檢測 (get_uncovered_values) + 重疊檢測 (detect_overlaps) — 已完成。await主動學習仍需 LLM call。實驗性質。
 5. **C4 Phase 2+**: 180 tests across 12 files (23.31s, 0 warnings)。成熟度系統、意圖模型、MappableDataObject、SystemManager 已覆蓋。剩餘 candidate: kinetic_validator (50行), bio/, perception/ 等有硬體/網路依賴。
+6. **D1 (CRITICAL)**: `apps/backend/config/credentials.json` 含真實 Google OAuth client_id + client_secret，已 git tracked。
+7. **D2 (CRITICAL)**: `.env` 含 5 組真實 API/加密密鑰，已 git tracked（雖有 gitignore 但 commit 在前）。
+8. **D3 (HIGH)**: Root `package.json:2` 版本 `6.5.0-dev` 與 `VERSION` 文件 `7.5.0-dev` 不一致。
+9. **D4 (HIGH)**: 11 處 `from config_loader import` 裸 import，實際有 3 個不同 `config_loader.py` 文件。
+10. **D5 (HIGH)**: `AIVirtualInputService` 定義在 `ai_editor.py:18` 和 `ai_virtual_input_service.py:61` 兩處。
+11. **D7 (MEDIUM)**: ~300+ `logger.error(f"...{e}")` 缺 `exc_info=True`，traceback 遺失。
+12. **D10 (MEDIUM)**: 5 子包 `__version__ = "6.0.0"` 陳舊 (autonomous/sync/metamorphosis/i18n/perception)。
+
+### D 級優先級建議
+
+| 層級 | 建議順序 | 理由 |
+|------|---------|------|
+| **D1-D2** (安全) | **立即修復** | 真實憑證已 commit，需撤銷 + .gitignore + 移除歷史 |
+| **D3-D5** (正確性) | **本週** | 版本錯誤、import 歧義、class 重複會直接導致運行時 bug |
+| **D6-D8, D10-D11** (品質) | **下週** | 編碼/調試/同步/文檔問題 |
+| **D9, D12-D15** (持續改進) | **隨任務附帶** | 測試目錄、硬編碼、import 清理隨其他 PR 一起修
 
 ---
 
