@@ -171,15 +171,31 @@ class TextGravityField:
 - 與 `GradientField` 現有的 `curiosity`/`boredom` 機制整合
 - 加入 `entropy_bonus`: 選擇多樣性獎勵
 
-### 3.3 缺陷: .gdoc 格式不可直接解析
+### 3.3 (已解決) .gdoc 格式不可直接解析
 
 **問題**: `.gdoc` 是 Google Docs 的捷徑檔 (189 bytes)，非實際內容。
 
-**修正**:
-- 需要 Google Docs API 下載實際內容
-- 或用 Google Drive API 導出為 `.txt`/`.md`
-- **短期方案**: 用戶先手動導出為 `.txt` 放回 `原始文件/`
-- **長期方案**: 整合 `google-api-python-client` 自動抓取
+**解決方案**: 使用現有 `GoogleDriveService` (`integrations/google_drive_service.py`)，用 OAuth2 (`credentials.json`) 認證後透過 Drive API `files.export(fileId, mimeType='text/plain')` 直接拉取文字內容。
+
+```python
+# 1. 讀取 .gdoc JSON 提取 document id
+# .gdoc 內容範例: {"url": "...", "doc_id": "ABC123"}
+with open("card.gdoc", "r") as f:
+    meta = json.load(f)
+    doc_id = meta.get("doc_id") or meta["url"].split("/d/")[1].split("/")[0]
+
+# 2. 用 GoogleDriveService export 為純文字
+from integrations.google_drive_service import get_drive_service
+drive = get_drive_service()
+content = drive._get_service().files().export(
+    fileId=doc_id, mimeType='text/plain'
+).execute()
+
+# 3. 餵入卡片解析流水線
+CardImportPipeline.process(content.decode('utf-8'))
+```
+
+無需手動導出。`get_drive_service()` 已註冊到 `ServiceRegistry`。首次使用需 OAuth 授權一次 (調用 `get_auth_url()` + `exchange_code()`)。
 
 ### 3.4 缺陷: 質量判斷缺乏基準
 
@@ -220,10 +236,11 @@ class TextGravityField:
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|
-| 1.1 | `core/card/parser/deterministic_parser.py` | Regex 解析器: CC-XX, 表格欄位, Token 格式 |
-| 1.2 | `core/card/parser/merge_engine.py` | 跨文件編號合併 + 時間戳排序 |
-| 1.3 | `core/card/parser/conflict_detector.py` | 三維衝突檢測 (物理/數值/基調) |
-| 1.4 | `core/card/parser/timeline_resolver.py` | 時間序列自動覆蓋邏輯 |
+| 1.1 | `core/card/parser/gdoc_reader.py` | 讀取 `.gdoc` 捷徑檔 → 提取 doc_id → Drive API export 文字 |
+| 1.2 | `core/card/parser/deterministic_parser.py` | Regex 解析器: CC-XX, 表格欄位, Token 格式 |
+| 1.3 | `core/card/parser/merge_engine.py` | 跨文件編號合併 + 時間戳排序 |
+| 1.4 | `core/card/parser/conflict_detector.py` | 三維衝突檢測 (物理/數值/基調) |
+| 1.5 | `core/card/parser/timeline_resolver.py` | 時間序列自動覆蓋邏輯 |
 
 ### Phase 2: Angela 核心/LLM 層 (3-4 天)
 
@@ -326,7 +343,8 @@ class TextGravityField:
 ## 7. 關鍵約束
 
 1. **LLM 僅做最終裁決**: Stage 1 auto 處理佔 ≥ 70% 工作量, Stage 2 Angela core 佔 ~25%, Stage 3 LLM ≤ 5%
-2. **文本引力不直接指定**: 引力是物理場計算後的 side effect, 非 LLM prompt 指令
-3. **不可重複實作**: 優先復用 PotentialFieldEngine / GradientField / PersonalityManager 等現有組件
-4. **代理檢查**: 每次導入後需通過 proxy 對比原文件+結果, 確保質量
-5. **MD 更新**: 每個 Phase 完成後更新本計畫
+2. **Google Drive 直連**: 透過 `GoogleDriveService` + `credentials.json` OAuth2，自動從 `.gdoc` 捷徑檔提取 doc_id → Drive API export 文字內容，無需手動導出
+3. **文本引力不直接指定**: 引力是物理場計算後的 side effect, 非 LLM prompt 指令
+4. **不可重複實作**: 優先復用 GoogleDriveService / PotentialFieldEngine / GradientField / PersonalityManager 等現有組件
+5. **代理檢查**: 每次導入後需通過 proxy 對比原文件+結果, 確保質量
+6. **MD 更新**: 每個 Phase 完成後更新本計畫
