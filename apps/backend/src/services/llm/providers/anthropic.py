@@ -7,6 +7,7 @@ import time
 import aiohttp
 
 from core.interfaces.protocols import LLMResponse
+from core.system.config.network_defaults import ANTHROPIC_API_BASE, DEFAULT_ANTHROPIC_MODEL, ANTHROPIC_TIMEOUT
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)
@@ -15,11 +16,11 @@ logger = logging.getLogger(__name__)
 class AnthropicAPIBackend(BaseLLMBackend):
     """Anthropic API 後端 (Claude 系列)"""
 
-    def __init__(self, api_key: str, base_url: str = "https://api.anthropic.com/v1", model: str = "claude-3-opus-20240229"):
+    def __init__(self, api_key: str, base_url: str = ANTHROPIC_API_BASE, model: str = DEFAULT_ANTHROPIC_MODEL):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.timeout = 120.0
+        self.timeout = ANTHROPIC_TIMEOUT
 
     async def check_health(self) -> bool:
         if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:

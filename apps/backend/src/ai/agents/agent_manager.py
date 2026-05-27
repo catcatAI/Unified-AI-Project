@@ -49,6 +49,8 @@ from dataclasses import dataclass
 from enum import Enum
 from abc import ABC, abstractmethod
 
+from core.system.config.network_defaults import DEFAULT_HOST
+
 logger = logging.getLogger(__name__)
 
 
@@ -230,7 +232,7 @@ class AgentManager:
         self.router_process: Optional[subprocess.Popen] = None
         self._router_path: Optional[str] = None
         self.router_port = 11435
-        self.router_url = f"http://127.0.0.1:{self.router_port}"
+        self.router_url = f"http://{DEFAULT_HOST}:{self.router_port}"
 
         # P0-3: 状态管理器和结果评估器
         self.state_manager = state_manager
@@ -300,7 +302,7 @@ async def send_message(data: dict):
         target = registry[target_id]
         try:
             async with httpx.AsyncClient() as client:
-                await client.post(f"http://127.0.0.1:{target['port']}/message", json=message, timeout=5.0)
+                    await client.post(f"http://{DEFAULT_HOST}:{target['port']}/message", json=message, timeout=5.0)
             return {"status": "delivered", "target": target_id}
         except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
@@ -315,7 +317,7 @@ async def broadcast_message(data: dict):
     for agent_id, info in registry.items():
         try:
             async with httpx.AsyncClient() as client:
-                await client.post(f"http://127.0.0.1:{info['port']}/message", json=message, timeout=5.0)
+                    await client.post(f"http://{DEFAULT_HOST}:{info['port']}/message", json=message, timeout=5.0)
             results.append({"agent": agent_id, "status": "delivered"})
         except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
@@ -328,7 +330,7 @@ async def health():
     return {"status": "healthy", "agents": len(registry)}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=11435, log_level="error")
+    uvicorn.run(app, host=DEFAULT_HOST, port=11435, log_level="error")
 """
 
             # Write router script to temp file

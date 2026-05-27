@@ -144,7 +144,7 @@ class CrisisSystem:
 
         if action_details == "log_and_monitor_basic_crisis_response":
             try:
-                with open(self.log_file, "a") as f:
+                with open(self.log_file, "a", encoding="utf-8") as f:
                     f.write(
                         f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n"
                     )
@@ -163,7 +163,7 @@ class CrisisSystem:
             # For any other protocol, also log to file if crisis level > 0
             if level > 0:
                 try:
-                    with open(self.log_file, "a") as f:
+                    with open(self.log_file, "a", encoding="utf-8") as f:
                         f.write(
                             f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n"
                         )
@@ -192,7 +192,7 @@ class CrisisSystem:
             config_path = os.path.join(
                 current_dir, "..", "..", "configs", "crisis_system_config.json"
             )
-            with open(config_path, "r") as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 self.config = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logging.error(f"Error loading crisis system config: {e}")

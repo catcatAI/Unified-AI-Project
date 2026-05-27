@@ -24,7 +24,7 @@ from .cloud_sync import (
     create_cloud_sync_manager,
 )
 
-__version__ = "6.0.0"
+__version__ = "7.5.0-dev"
 __author__ = "Angela AI Development Team"
 
 __all__ = [

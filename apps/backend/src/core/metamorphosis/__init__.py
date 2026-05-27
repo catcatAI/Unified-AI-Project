@@ -46,7 +46,7 @@ from .transition_anim import (
     create_transition_manager,
 )
 
-__version__ = "6.0.0"
+__version__ = "7.5.0-dev"
 __author__ = "Angela AI Development Team"
 
 __all__ = [

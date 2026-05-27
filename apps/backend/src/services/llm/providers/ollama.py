@@ -8,6 +8,7 @@ import time
 import aiohttp
 
 from core.interfaces.protocols import LLMResponse
+from core.system.config.network_defaults import OLLAMA_HOST, DEFAULT_OLLAMA_MODEL, OLLAMA_TIMEOUT
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 class OllamaBackend(BaseLLMBackend):
     """Ollama 後端"""
 
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3", api_key: str = "", timeout: float = 120):
+    def __init__(self, base_url: str = OLLAMA_HOST, model: str = DEFAULT_OLLAMA_MODEL, api_key: str = "", timeout: float = OLLAMA_TIMEOUT):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.api_key = api_key
@@ -35,7 +36,7 @@ class OllamaBackend(BaseLLMBackend):
                             if self.model in m.get("name", ""):
                                 return True
                         if models:
-                            self.model = models[0].get("name", "llama3")
+                            self.model = models[0].get("name", DEFAULT_OLLAMA_MODEL)
                             return True
         except Exception as e:
             logger.debug(f"Ollama health check failed: {e}")

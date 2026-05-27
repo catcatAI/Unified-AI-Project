@@ -13,6 +13,17 @@ Angela LLM Service - Angela 的智能對話引擎
 import asyncio
 import json
 import os
+from core.system.config.network_defaults import (
+    OLLAMA_HOST,
+    LLAMACPP_HOST,
+    OPENAI_API_BASE,
+    ANTHROPIC_API_BASE,
+    DEFAULT_OPENAI_MODEL,
+    DEFAULT_ANTHROPIC_MODEL,
+    DEFAULT_OLLAMA_MODEL,
+    DEFAULT_GOOGLE_MODEL,
+    LLM_REQUEST_TIMEOUT,
+)
 import time
 import random
 import logging
@@ -490,11 +501,11 @@ class AngelaLLMService:
         return {
             "ollama": {
                 "provider": "ollama",
-                "base_url": "http://localhost:11434",
-                "model_name": "llama3",
-                "enabled": True
+                "base_url": OLLAMA_HOST,
+                "model_name": DEFAULT_OLLAMA_MODEL,
+                "enabled": True,
             },
-            "_fallback_chain": ["ollama"]
+            "_fallback_chain": ["ollama"],
         }
 
         # 從環境變量加載 API 密鑰
@@ -552,42 +563,41 @@ class AngelaLLMService:
 
             if provider in ("llama_cpp", "llamacpp") or backend_id == "llamacpp-local":
                 self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
-                    base_url=base_url or "http://localhost:8080",
+                    base_url=base_url or LLAMACPP_HOST,
                     model=model_name,
                 )
                 logger.info(f"已注冊 llama.cpp 後端: {model_name}")
 
             elif provider == "ollama" or backend_id.startswith("ollama"):
-                # 只註冊第一個 enabled 的 Ollama 配置
                 if LLMBackend.OLLAMA not in self.backends:
                     self.backends[LLMBackend.OLLAMA] = OllamaBackend(
-                        base_url=base_url or "http://localhost:11434",
-                        model=model_name or "llama3",
+                        base_url=base_url or OLLAMA_HOST,
+                        model=model_name or DEFAULT_OLLAMA_MODEL,
                         api_key=api_key,
-                        timeout=backend_config.get("timeout", 120),
+                        timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
                     )
                     logger.info(f"已注冊 Ollama 後端: {model_name}")
 
             elif provider == "openai" and api_key:
                 self.backends[LLMBackend.OPENAI] = OpenAIAPIBackend(
                     api_key=api_key,
-                    base_url=base_url or "https://api.openai.com/v1",
-                    model=model_name or "gpt-4",
+                    base_url=base_url or OPENAI_API_BASE,
+                    model=model_name or DEFAULT_OPENAI_MODEL,
                 )
                 logger.info(f"已注冊 OpenAI 後端: {model_name}")
 
             elif provider == "anthropic" and api_key:
                 self.backends[LLMBackend.ANTHROPIC] = AnthropicAPIBackend(
                     api_key=api_key,
-                    base_url=base_url or "https://api.anthropic.com/v1",
-                    model=model_name or "claude-3-opus-20240229",
+                    base_url=base_url or ANTHROPIC_API_BASE,
+                    model=model_name or DEFAULT_ANTHROPIC_MODEL,
                 )
                 logger.info(f"已注冊 Anthropic 後端: {model_name}")
 
             elif provider == "google" and api_key:
                 self.backends[LLMBackend.GOOGLE] = GoogleAPIBackend(
                     api_key=api_key,
-                    model=model_name or "gemini-3.1-flash-lite",
+                    model=model_name or DEFAULT_GOOGLE_MODEL,
                 )
                 logger.info(f"已注冊 Google Gemini 後端: {model_name}")
 

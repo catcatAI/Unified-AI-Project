@@ -68,7 +68,7 @@ def load_simulated_resources(config_path="configs/simulated_resources.yaml"):
     if _simulated_resources is None:
         backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         full_config_path = os.path.join(backend_root, config_path)
-        with open(full_config_path, "r") as f:
+        with open(full_config_path, "r", encoding="utf-8") as f:
             _simulated_resources = yaml.safe_load(f)
     return _simulated_resources if _simulated_resources is not None else {}
 

@@ -7,6 +7,11 @@ import time
 import aiohttp
 
 from core.interfaces.protocols import LLMResponse
+from core.system.config.network_defaults import (
+    GOOGLE_API_BASE,
+    DEFAULT_GOOGLE_MODEL,
+    GOOGLE_TIMEOUT,
+)
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)
@@ -15,12 +20,12 @@ logger = logging.getLogger(__name__)
 class GoogleAPIBackend(BaseLLMBackend):
     """Google Gemini API 後端"""
 
-    GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
+    GEMINI_BASE = GOOGLE_API_BASE
 
-    def __init__(self, api_key: str, model: str = "gemini-3.1-flash-lite"):
+    def __init__(self, api_key: str, model: str = DEFAULT_GOOGLE_MODEL):
         self.api_key = api_key
         self.model = model
-        self.timeout = 120.0
+        self.timeout = GOOGLE_TIMEOUT
 
     async def check_health(self) -> bool:
         if not self.api_key:

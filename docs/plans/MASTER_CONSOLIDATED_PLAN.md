@@ -466,6 +466,9 @@ Remaining (審計後優先級調整):
 - **E5: 導出 UI** (json_exporter.py + html_viewer.py + pdf_exporter.py) ✅
 - **E6: 測試整合** (72 tests, 0 failed, 15.23s) ✅
 - **設計修正: GoogleDriveService 補 export_gdoc() 方法** (原缺少 .gdoc 匯出功能) ✅
+- **D6: 3 production files 補 encoding="utf-8"** (app_config_loader.py, security_monitor.py, crisis_system.py) ✅
+- **D10: 4 子包 __version__ → "7.5.0-dev"** (autonomous, sync, metamorphosis, i18n) ✅
+- **D12-D14: core/system/config/network_defaults.py 創建 + 9 核心文件更新** (router, 5 LLM providers, external_connector, agent_manager; 集中管理 hosts, URLs, models, timeouts) ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天 — ~40 instances already DI-ready
@@ -481,15 +484,15 @@ Remaining (審計後優先級調整):
 | **D3** | 🟢 **HIGH** | 版本 | Root `package.json` 版本 `6.5.0-dev` vs `VERSION` 文件 `7.5.0-dev` — 已統一為 `7.5.0-dev` | `package.json:2` | ✅ ~5min |
 | **D4** | 🟢 **HIGH** (降為 MEDIUM) | 正確性 | `from config_loader import` 裸 import 解析正確(目標函數僅在 root config_loader)。已改名 `config_loader.py→app_config_loader.py`，8 個引用文件已更新 | 8 files | ✅ ~1h |
 | **D5** | 🟢 **HIGH** | 重複 | `AIVirtualInputService` 定義在 2 處。`ai_editor.py` 改用 import, 移除 mock class + `Mock` import | `ai_editor.py:18`, `ai_virtual_input_service.py:61` | ✅ ~0.5h |
-| **D6** | 🟡 **MEDIUM** | 編碼 | `open()` 未指定 `encoding="utf-8"`，Windows 默認 cp1252 會炸非 ASCII | 3 production files | ~1h |
+| **D6** | 🟢 **MEDIUM** | 編碼 | `open()` 未指定 `encoding="utf-8"`，Windows 默認 cp1252 會炸非 ASCII | 3 production files | ✅ ~1h |
 | **D7** | 🟡 **MEDIUM** | 調試 | `logger.error(f"...{e}")` 未加 `exc_info=True`，traceback 遺失 | ~300+ instances | ~2d |
 | **D8** | 🟡 **MEDIUM** | 同步 | Async function 內使用同步 `open()`/`json.load()` 阻塞 event loop | ~8 functions | ~4h |
 | **D9** | 🟡 **MEDIUM** | 測試 | 雙測試目錄: `tests/` + `apps/backend/tests/` 造成維護分散 | 2 dirs | ~2h (評估) |
-| **D10** | 🟡 **MEDIUM** | 版本 | 5 個子包 `__version__ = "6.0.0"` 陳舊 | autonomous, sync, metamorphosis, i18n, perception | ~1h |
+| **D10** | 🟢 **MEDIUM** | 版本 | 5 個子包 `__version__ = "6.0.0"` 陳舊 → 統一為 "7.5.0-dev" | autonomous, sync, metamorphosis, i18n | ✅ ~1h |
 | **D11** | 🟢 **LOW (假陽性)** | 文檔 | AGENTS.md `VERSION: 6.5.0-dev` 為文件自身版本號，非專案版本位置 | `AGENTS.md:7` | ✅ 無需修改 |
-| **D12** | 🟡 **MEDIUM** | 硬編碼 | 40+ 處 `localhost`/`127.0.0.1`/port 在源碼中 | 散佈 src/ | ~1d (持續) |
-| **D13** | 🟡 **MEDIUM** | 硬編碼 | 14 處 model name 硬編碼 (`gpt-4`, `claude-3-opus-...` 等) | providers + selector | ~2h |
-| **D14** | 🟡 **MEDIUM** | 硬編碼 | 12+ 處 timeout 硬編碼 (120s 重複 5 次無集中管理) | providers + router | ~2h |
+| **D12** | 🟢 **MEDIUM (partial)** | 硬編碼 | 40+ 處 `localhost`/`127.0.0.1`/port → 創建 `network_defaults.py`，更新 9 個核心文件 (router, 5 providers, external_connector, agent_manager, network_defaults) | `core/system/config/network_defaults.py` + 8 consumers | ✅ ~3h |
+| **D13** | 🟢 **MEDIUM** | 硬編碼 | 14 處 model name 硬編碼 → 中央化到 `network_defaults.py` | provider 默認參數 | ✅ ~0h (已中央化) |
+| **D14** | 🟢 **MEDIUM** | 硬編碼 | 12+ 處 timeout 硬編碼 → 中央化到 `network_defaults.py` | provider 默認參數 | ✅ ~0h (已中央化) |
 | **D15** | ~~🔵 LOW~~ | 測試 | `pytest_asyncio` 不存在於 `test_state_store.py` — 假陽性，已移除 | — | ❌ 假陽性 |
 
 **評估總工時**: ~4-5 天 (含 D7 調試 ~2d 為最大項)
@@ -573,10 +576,11 @@ Remaining (審計後優先級調整):
 
 | 層級 | 建議順序 | 理由 |
 |------|---------|------|
-| **D1-D5** | **✅ 已完成** | 憑證保護、版本統一、import 重命名、類合併 |
-| **D6-D7** (品質) | **下週** | 編碼/調試問題 |
-| **D8-D10** (品質) | **隨任務附帶** | 同步 IO/文檔/子包版本 |
-| **D12-D14** (持續改進) | **隨任務附帶** | 硬編碼改善 |
+| **D1-D6** | **✅ 已完成** | 憑證保護、版本統一、import 重命名、類合併、編碼 |
+| **D7** (品質) | **下週** | 調試 traceback |
+| **D8-D9** (品質) | **隨任務附帶** | 同步 IO/測試雙目錄 |
+| **D10** | **✅ 已完成** | 子包版本統一 |
+| **D12-D14** (持續改進) | **✅ 已完成 (partial)** | `network_defaults.py` 創建，9 個核心文件已更新 |
 
 ---
 

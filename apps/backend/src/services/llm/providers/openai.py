@@ -7,6 +7,7 @@ import time
 import aiohttp
 
 from core.interfaces.protocols import LLMResponse
+from core.system.config.network_defaults import OPENAI_API_BASE, DEFAULT_OPENAI_MODEL, OPENAI_TIMEOUT
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)
@@ -15,11 +16,11 @@ logger = logging.getLogger(__name__)
 class OpenAIAPIBackend(BaseLLMBackend):
     """OpenAI API 後端 (GPT-4, GPT-3.5 等)"""
 
-    def __init__(self, api_key: str, base_url: str = "https://api.openai.com/v1", model: str = "gpt-4"):
+    def __init__(self, api_key: str, base_url: str = OPENAI_API_BASE, model: str = DEFAULT_OPENAI_MODEL):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.timeout = 120.0
+        self.timeout = OPENAI_TIMEOUT
 
     async def check_health(self) -> bool:
         if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:

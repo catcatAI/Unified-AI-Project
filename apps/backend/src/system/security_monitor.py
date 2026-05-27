@@ -39,12 +39,11 @@ class ABCKeyManager:
     def _load_or_generate_keys(self) -> Dict[str, str]:
         if self.key_file.exists():
             try:
-                with open(self.key_file, "r") as f:
+                with open(self.key_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except Exception as e:  # broad exception acceptable: key file may be corrupted or have unexpected format
-                logger.error(f"讀取密鑰文件失敗: {e}")
+            except Exception as e:
+                logger.error(f"讀取密鑰檔案失敗: {e}")
 
-        # 生成新密鑰
         keys = {
             "KeyA": Fernet.generate_key().decode(),
             "KeyB": Fernet.generate_key().decode(),
@@ -52,7 +51,7 @@ class ABCKeyManager:
             "created_at": time.time(),
         }
 
-        with open(self.key_file, "w") as f:
+        with open(self.key_file, "w", encoding="utf-8") as f:
             json.dump(keys, f, indent=4)
 
         logger.info(f"✅ 已生成全新 A/B/C 密鑰體系: {self.key_file}")

@@ -15,6 +15,8 @@ from typing import Any, Callable, Dict, List, Optional
 from datetime import datetime, timezone
 from pathlib import Path
 
+from core.system.config.network_defaults import DEFAULT_HOST
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,9 +26,9 @@ class MessageRouter:
     Agents register with this router and messages are forwarded accordingly.
     """
 
-    _router_port = 11435  # Default router port
+    _router_port = 11435
 
-    def __init__(self, host: str = "127.0.0.1", port: int = None):
+    def __init__(self, host: str = DEFAULT_HOST, port: int = None):
         self.host = host
         self.port = port or MessageRouter._router_port
         self.registry: Dict[str, Dict[str, Any]] = {}  # agent_id -> info
@@ -65,7 +67,7 @@ class MessageRouter:
                     "port": port,
                     "capabilities": capabilities,
                     "registered_at": datetime.now(timezone.utc).isoformat(),
-                    "host": "127.0.0.1",
+                    "host": DEFAULT_HOST,
                 }
                 logger.info(f"Agent registered: {agent_id} at port {port}")
                 return {"status": "registered", "agent_id": agent_id}
@@ -97,7 +99,7 @@ class MessageRouter:
                 try:
                     async with httpx.AsyncClient() as client:
                         response = await client.post(
-                            f"http://127.0.0.1:{target_port}/message", json=message, timeout=5.0
+                            f"http://{DEFAULT_HOST}:{target_port}/message", json=message, timeout=5.0
                         )
                     return {"status": "delivered", "target": target_id}
                 except Exception as e:  # broad exception acceptable: HTTP delivery may fail with various network errors
@@ -114,7 +116,7 @@ class MessageRouter:
                 try:
                     async with httpx.AsyncClient() as client:
                         response = await client.post(
-                            f"http://127.0.0.1:{info['port']}/message", json=message, timeout=5.0
+                            f"http://{DEFAULT_HOST}:{info['port']}/message", json=message, timeout=5.0
                         )
                         results.append({"agent": agent_id, "status": "delivered"})
                 except Exception as e:  # broad exception acceptable: broadcast may fail with various network errors
@@ -146,7 +148,7 @@ class ExternalConnector:
     def __init__(self, ai_id: str = None, config: Dict[str, Any] = None, **kwargs):
         self.ai_id = ai_id or f"agent_{uuid.uuid4().hex[:8]}"
         self.config = config or {}
-        self.router_host = self.config.get("router_host", "127.0.0.1")
+        self.router_host = self.config.get("router_host", DEFAULT_HOST)
         self.router_port = self.config.get("router_port", 11435)
         self.agent_port = self.config.get("agent_port", 0)  # 0 = auto-assign
 
@@ -211,7 +213,7 @@ class ExternalConnector:
 
             # Start server
             self._server = uvicorn.Server(
-                uvicorn.Config(app, host="127.0.0.1", port=self.agent_port, log_level="error")
+                uvicorn.Config(app, host=DEFAULT_HOST, port=self.agent_port, log_level="error")
             )
 
             # Register with router
@@ -340,7 +342,7 @@ class ExternalConnector:
         return self.stats
 
 
-async def start_router(host: str = "127.0.0.1", port: int = 11435) -> MessageRouter:
+async def start_router(host: str = DEFAULT_HOST, port: int = 11435) -> MessageRouter:
     """Start the central message router."""
     router = MessageRouter.get_instance(port=port)
     await router.start()

@@ -26,7 +26,7 @@ from .i18n_manager import (
     create_i18n_manager,
 )
 
-__version__ = "6.0.0"
+__version__ = "7.5.0-dev"
 __author__ = "Angela AI Development Team"
 
 __all__ = [
