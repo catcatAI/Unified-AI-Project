@@ -133,7 +133,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'performance-auto-adjust',
       'wallpaper-mode-changed',
       'wallpaper-inject-object',
-      'module-toggle'
+      'module-toggle',
+      'plugins-changed'
     ];
 
     if (validChannels.includes(channel)) {

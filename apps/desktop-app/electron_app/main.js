@@ -586,6 +586,7 @@ function createMainWindow() {
     sendToMainWindow('window-ready', {
       bounds: safeMainWindowCall((w) => w.getBounds()) || mainWindow.getBounds(),
     })
+    startPluginWatcher()
   })
 
   // Handle window position saving
@@ -883,6 +884,7 @@ function restoreWindowPosition() {
  */
 function cleanupResources() {
   globalShortcut.unregisterAll()
+  stopPluginWatcher()
 }
 
 /**
@@ -1557,8 +1559,6 @@ ipcMain.handle('websocket-get-status', () => {
 })
 
 // C3: Plugin IPC handlers
-const path = require('path')
-const fs = require('fs')
 const pluginDir = path.join(app.getPath('userData'), 'plugins')
 if (!fs.existsSync(pluginDir)) {
   fs.mkdirSync(pluginDir, { recursive: true })
@@ -1601,6 +1601,38 @@ ipcMain.handle('plugins-delete', (event, name) => {
     return { success: true }
   } catch (e) { return { success: false, error: e.message } }
 })
+
+// C3 Phase 3: Plugin hot-reload via fs.watch
+let pluginWatcher = null
+let watchDebounceTimer = null
+
+function startPluginWatcher() {
+  if (pluginWatcher) return
+  try {
+    pluginWatcher = fs.watch(pluginDir, (eventType, filename) => {
+      if (!filename || !filename.endsWith('.js')) return
+      if (watchDebounceTimer) clearTimeout(watchDebounceTimer)
+      watchDebounceTimer = setTimeout(() => {
+        const name = filename.replace(/\.js$/, '')
+        sendToMainWindow('plugins-changed', { name, event: eventType === 'rename' ? 'rename' : 'change' })
+      }, 500)
+    })
+    console.log('[PluginWatcher] Started watching:', pluginDir)
+  } catch (e) {
+    console.error('[PluginWatcher] Failed to start:', e)
+  }
+}
+
+function stopPluginWatcher() {
+  if (pluginWatcher) {
+    pluginWatcher.close()
+    pluginWatcher = null
+  }
+  if (watchDebounceTimer) {
+    clearTimeout(watchDebounceTimer)
+    watchDebounceTimer = null
+  }
+}
 
 // Export for testing
 if (module.exports) {

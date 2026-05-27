@@ -398,7 +398,7 @@ core/
 |---|------|------|
 | C1 | 記憶鏈串接 (HAM/LU/CDM → query/storage flow) | UnifiedMemoryCoordinator 已實作 + 接入 router.py ✅ Phase 2: router.py 儲存流程整合 CognitiveActivity + store_experience ✅ |
 | C2 | Desktop→Live2D WebSocket 控制鏈 | ✅ live2d 狀態寫入 broadcast_state_updates + desktop 端 handler 解析 expression/parameters |
-| C3 | 插件系統後端 hooks | ✅ Phase 1+2: HookRegistry + PluginManager + API + IPC + 事件勾子 + 數據持久化 |
+| C3 | 插件系統後端 hooks | ✅ Phase 1+2+3: HookRegistry + PluginManager + API + IPC + 事件勾子 + 數據持久化 + hot-reload (Electron fs.watch) |
 | C4 | 提升測試覆蓋率 85%+ | ✅ 89 tests across C1-C6 modules (hook_registry:10, plugin_manager:12, plugin_api:18, state_store:19, live2d_state:8, umc:9, vrm:12 + 既有) |
 | C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore ✅ C5: GlobalStateStore 加入 async save/load + dirty tracking + JsonFileStateStore 預設後端 |
 | C6 | Angela 數值→文本翻譯學習層 | ↔ A3 拆分後方可做 Phase 2。見 [ANGELA_TRANSLATION_LEARNING_PLAN.md](ANGELA_TRANSLATION_LEARNING_PLAN.md) |
@@ -449,6 +449,7 @@ Remaining:
 - **C2: Live2D state broadcast (live2d_integration → registry → websocket_manager → desktop handler)** ✅
 - **C3 Phase 1: Plugin backend hooks (HookRegistry + PluginManager + API + Electron IPC bridge)** ✅
 - **C3 Phase 2: on_message/on_state_change hooks wired + plugin data persistence API** ✅
+- **C3 Phase 3: Plugin hot-reload (Electron fs.watch + IPC → renderer auto-reload)** ✅
 - **C4: 89 tests across C1/C2/C3/C5/C6 modules (18 plugin API + 6 state_store edge cases + 73 prior)** ✅
 - **eta_axis_state import 路徑修復** ✅
 

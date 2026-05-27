@@ -29,12 +29,54 @@ class PluginManager {
         
         if (this.config.autoLoad) {
             await this.loadPluginsFromDir();
+            this.startWatching();
         }
         
         this.loaded = true;
         this._log('info', 'Plugin manager initialized', {
             pluginsCount: this.plugins.size
         });
+    }
+
+    startWatching() {
+        if (typeof window === 'undefined' || !window.electronAPI || !window.electronAPI.on) {
+            this._log('warn', 'Cannot start plugin watcher: electronAPI not available');
+            return;
+        }
+        window.electronAPI.on('plugins-changed', this._handlePluginChanged.bind(this));
+        this._log('info', 'Plugin hot-reload watcher started');
+    }
+
+    async _handlePluginChanged({ name, event }) {
+        this._log('info', `Plugin file changed: ${name} (${event})`);
+
+        const isLoaded = this.plugins.has(name);
+        const fullPath = `${this.config.pluginsDir}/${name}.js`;
+
+        try {
+            if (event === 'rename') {
+                const response = await fetch(fullPath).catch(() => null);
+                const fileExists = response && response.ok;
+
+                if (fileExists && !isLoaded) {
+                    this._log('info', `New plugin detected: ${name}`);
+                    await this.loadPlugin(name, fullPath);
+                } else if (!fileExists && isLoaded) {
+                    this._log('info', `Plugin file deleted: ${name}`);
+                    await this.unloadPlugin(name);
+                } else if (fileExists && isLoaded) {
+                    this._log('info', `Plugin file replaced: ${name}, reloading`);
+                    await this.unloadPlugin(name);
+                    await this.loadPlugin(name, fullPath);
+                }
+            } else if (event === 'change' && isLoaded) {
+                this._log('info', `Plugin file modified: ${name}, reloading`);
+                await this.unloadPlugin(name);
+                await this.loadPlugin(name, fullPath);
+            }
+        } catch (e) {
+            this._log('error', `Failed to hot-reload plugin ${name}`, e);
+        }
     }
     
     async loadPluginsFromDir() {
@@ -484,5 +526,6 @@ class PluginManager {
         
         this.plugins.clear();
         this.hooks.clear();
+        this._log('info', 'Plugin manager destroyed');
     }
 }
