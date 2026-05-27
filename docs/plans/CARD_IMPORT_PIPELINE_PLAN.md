@@ -2,7 +2,7 @@
 
 > **目標**: 從 `G:\我的雲端硬碟\卡片堆` 導入卡片，使 Angela 能學會角色扮演、寫故事、演戲、畫漫畫
 > **日期**: 2026-05-27
-> **狀態**: Phase 0 (數據結構) ✅ + Phase 1 (自動解析引擎) ✅ + Phase 2 (Angela/LLM層) ✅ + Phase 3 (質量控制+存儲) ✅ + Phase 4 (派生能力) ✅
+> **狀態**: Phase 0-6 全部完成 ✅
 
 ---
 
@@ -326,25 +326,27 @@ class Card:
 | 4.3 | `core/card/capabilities/scene_interpreter.py` | 演戲: Card.tokens + 社會距離 → 場景描述 + TextGravityField 基調一致 |
 | 4.4 | `core/card/capabilities/comic_composer.py` | 畫漫畫: Card.visual_data → AngelaRealPainter.paint_portrait() |
 
-### Phase 5: 導入/導出 UI (3-4 天)
+### Phase 5: 導入/導出 UI [✅ 已完成]
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|
-| 5.1 | `core/card/export/json_exporter.py` | JSON + 立繪 ZIP 打包 |
-| 5.2 | `core/card/export/html_viewer.py` | 互動 HTML 閱覽頁 |
-| 5.3 | `core/card/export/pdf_exporter.py` | PDF 實體卡片排版 |
-| 5.4 | (前端) 雙視角 UI: 表單 + 關係星雲圖 | 基於 Electron |
+| 5.1 | `core/card/export/json_exporter.py` | JSON 序列化 + ZIP 打包 (含立繪) |
+| 5.2 | `core/card/export/html_viewer.py` | 互動 HTML 閱覽頁 (卡片瀏覽界面) |
+| 5.3 | `core/card/export/pdf_exporter.py` | 列印就緒 HTML 排版 (A4 紙張) |
+| 5.4 | (前端) 雙視角 UI | Electron 前端，另行規劃 |
 
-### Phase 6: 測試 + 整合 (2 天)
+### Phase 6: 測試 + 整合 [✅ 已完成]
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|
-| 6.1 | `tests/core/card/test_deterministic_parser.py` | 正則解析測試 |
-| 6.2 | `tests/core/card/test_merge_engine.py` | 跨文件合併測試 |
-| 6.3 | `tests/core/card/test_conflict_detector.py` | 三維衝突檢測測試 |
-| 6.4 | `tests/core/card/test_text_gravity.py` | 文本引力校準測試 |
-| 6.5 | `tests/core/card/test_quality_checker.py` | 質量評分測試 |
-| 6.6 | `tests/core/card/test_pipeline_orchestrator.py` | 全流程整合測試 |
+| 6.1 | `tests/core/card/test_deterministic_parser.py` | 正則解析測試 (15 tests) |
+| 6.2 | `tests/core/card/test_merge_engine.py` | 跨文件合併測試 (10 tests) |
+| 6.3 | `tests/core/card/test_conflict_detector.py` | 三維衝突檢測測試 (11 tests) |
+| 6.4 | `tests/core/card/test_text_gravity.py` | 文本引力校準測試 (15 tests) |
+| 6.5 | `tests/core/card/test_quality_checker.py` | 質量評分測試 (11 tests) |
+| 6.6 | `tests/core/card/test_pipeline_orchestrator.py` | 全流程整合測試 (10 tests) |
+
+**合計: 72 tests, 0 failed, 15.23s**
 
 ---
 

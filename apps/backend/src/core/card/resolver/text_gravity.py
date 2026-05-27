@@ -18,6 +18,8 @@ ENTROPY_STRENGTH = 0.05
 
 
 def _ngram_jaccard_distance(a: str, b: str, n: int = 3) -> float:
+    if not a and not b:
+        return 0.0
     if not a or not b:
         return 1.0
     a_ngrams = {a[i:i + n] for i in range(len(a) - n + 1)}
