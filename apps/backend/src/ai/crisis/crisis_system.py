@@ -151,7 +151,7 @@ class CrisisSystem:
                 logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
             except Exception as e:  # broad exception acceptable: file I/O errors must not halt crisis response
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    logging.error(f"Failed to write to crisis log file: {e}")
+                    logging.error(f"Failed to write to crisis log file: {e}", exc_info=True)
 
         elif action_details == "notify_human_moderator":  # Example from previous version
             logging.critical(
@@ -170,7 +170,7 @@ class CrisisSystem:
                     logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
                 except Exception as e:  # broad exception acceptable: file I/O errors must not halt crisis response
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    logging.error(f"Failed to write to crisis log file: {e}")
+                    logging.error(f"Failed to write to crisis log file: {e}", exc_info=True)
 
             logging.info(f"CRISIS_INFO: Protocol '{action_details}' executed for level {level}.")
 
@@ -195,7 +195,7 @@ class CrisisSystem:
             with open(config_path, "r", encoding="utf-8") as f:
                 self.config = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            logging.error(f"Error loading crisis system config: {e}")
+            logging.error(f"Error loading crisis system config: {e}", exc_info=True)
             self.config = {}
 
 

@@ -69,7 +69,7 @@ class MemoryContextManager:
             logger.info(f"Created memory {memory.memory_id} with context")
             return memory.memory_id
         except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
-            logger.error(f"Failed to create memory: {e}")
+            logger.error(f"Failed to create memory: {e}", exc_info=True)
             raise
 
     def access_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
@@ -103,7 +103,7 @@ class MemoryContextManager:
                 "metadata": memory.metadata,
             }
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to access memory {memory_id}: {e}")
+            logger.error(f"Failed to access memory {memory_id}: {e}", exc_info=True)
             return None
 
     def update_memory_embedding(self, memory_id: str, embedding: List[float]) -> bool:
@@ -129,7 +129,7 @@ class MemoryContextManager:
             logger.info(f"Updated embedding for memory {memory_id} with context")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to update embedding for memory {memory_id}: {e}")
+            logger.error(f"Failed to update embedding for memory {memory_id}: {e}", exc_info=True)
             return False
 
     def get_memory_context(self, memory_id: str) -> Optional[Dict[str, Any]]:
@@ -158,7 +158,7 @@ class MemoryContextManager:
             # }
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context for memory {memory_id}: {e}")
+            logger.error(f"Failed to get context for memory {memory_id}: {e}", exc_info=True)
             return None
 
     def get_memories_by_type(self, memory_type: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -191,7 +191,7 @@ class MemoryContextManager:
 
             return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get memories by type {memory_type}: {e}")
+            logger.error(f"Failed to get memories by type {memory_type}: {e}", exc_info=True)
             return []
 
     def cleanup_old_memories(self, days: int = 30) -> int:
@@ -227,7 +227,7 @@ class MemoryContextManager:
             logger.info(f"Cleaned up {deleted_count} old memories")
             return deleted_count
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to cleanup old memories: {e}")
+            logger.error(f"Failed to cleanup old memories: {e}", exc_info=True)
             return 0
 
     def transfer_memory(self, source_memory_id: str, target_memory_type: str) -> Optional[str]:
@@ -267,5 +267,5 @@ class MemoryContextManager:
             )
             return new_memory_id
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to transfer memory {source_memory_id}: {e}")
+            logger.error(f"Failed to transfer memory {source_memory_id}: {e}", exc_info=True)
             return None

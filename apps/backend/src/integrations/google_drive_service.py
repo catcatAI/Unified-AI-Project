@@ -48,7 +48,7 @@ class GoogleDriveService:
                 token_data = json.load(f)
             return Credentials.from_authorized_user_info(token_data, SCOPES)
         except Exception as e:
-            logger.warning(f"Failed to load token: {e}")
+            logger.warning(f"Failed to load token: {e}", exc_info=True)
             return None
 
     def _save_token(self, creds: Credentials) -> None:
@@ -87,7 +87,7 @@ class GoogleDriveService:
             self._save_token(self._creds)
             return True
         except Exception as e:
-            logger.error(f"Token exchange failed: {e}")
+            logger.error(f"Token exchange failed: {e}", exc_info=True)
             return False
 
     def _get_service(self):
@@ -110,7 +110,7 @@ class GoogleDriveService:
             results = service.files().list(**params).execute()
             return results.get("files", [])
         except HttpError as e:
-            logger.error(f"Drive list_files error: {e}")
+            logger.error(f"Drive list_files error: {e}", exc_info=True)
             raise
         except PermissionError:
             raise
@@ -136,10 +136,10 @@ class GoogleDriveService:
             logger.info(f"Downloaded file to {dest_path}")
             return True
         except HttpError as e:
-            logger.error(f"Download error: {e}")
+            logger.error(f"Download error: {e}", exc_info=True)
             return False
         except Exception as e:
-            logger.error(f"Unexpected download error: {e}")
+            logger.error(f"Unexpected download error: {e}", exc_info=True)
             return False
 
     def export_gdoc(self, file_id: str, mime_type: str = "text/plain") -> Optional[str]:
@@ -151,7 +151,7 @@ class GoogleDriveService:
                 return content.decode("utf-8")
             return str(content)
         except HttpError as e:
-            logger.error(f"Export gdoc error for {file_id}: {e}")
+            logger.error(f"Export gdoc error for {file_id}: {e}", exc_info=True)
             return None
 
     def search_files(self, query: str, page_size: int = 10) -> List[Dict[str, Any]]:
@@ -167,7 +167,7 @@ class GoogleDriveService:
                 "user": about.get("user", {}).get("emailAddress", "unknown"),
             }
         except Exception as e:
-            logger.warning(f"Could not get storage info: {e}")
+            logger.warning(f"Could not get storage info: {e}", exc_info=True)
             return {"used": "0", "total": "0", "user": "unknown"}
 
     def upload_file(self, local_path: str, drive_folder_id: Optional[str] = None, mime_type: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -187,7 +187,7 @@ class GoogleDriveService:
             logger.info(f"Uploaded {path.name} to Drive (id={uploaded.get('id')})")
             return uploaded
         except Exception as e:
-            logger.error(f"Upload failed: {e}")
+            logger.error(f"Upload failed: {e}", exc_info=True)
             return None
 
     def create_file_from_text(self, file_name: str, content: str, mime_type: str = "text/plain", drive_folder_id: Optional[str] = None) -> Optional[Dict[str, Any]]:

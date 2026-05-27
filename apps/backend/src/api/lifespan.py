@@ -60,7 +60,7 @@ def setup_middleware(app: FastAPI):
             )
             logger.info("[Middleware] CORS enabled from config")
     except Exception as e:
-        logger.warning(f"[Middleware] CORS setup skipped: {e}")
+        logger.warning(f"[Middleware] CORS setup skipped: {e}", exc_info=True)
 
     try:
         app.add_middleware(
@@ -69,7 +69,7 @@ def setup_middleware(app: FastAPI):
         )
         logger.info("[Middleware] EncryptedCommunication enabled")
     except Exception as e:
-        logger.warning(f"[Middleware] EncryptedCommunication setup skipped: {e}")
+        logger.warning(f"[Middleware] EncryptedCommunication setup skipped: {e}", exc_info=True)
 
 
 def _get_abc_key_manager():
@@ -189,9 +189,9 @@ async def lifespan(app: FastAPI):
                         await bio.initialize()
                         logger.info("[Lifecycle] BiologicalIntegrator initialized")
                 except Exception as e:
-                    logger.warning(f"[Lifecycle] Failed to pre-init {svc_name}: {e}")
+                    logger.warning(f"[Lifecycle] Failed to pre-init {svc_name}: {e}", exc_info=True)
     except Exception as e:
-        logger.warning(f"[Lifecycle] Startup config error: {e}")
+        logger.warning(f"[Lifecycle] Startup config error: {e}", exc_info=True)
 
     try:
         from services.wiring import initialize_all_services
@@ -199,14 +199,14 @@ async def lifespan(app: FastAPI):
         initialize_all_services(_ws_manager)
         logger.info("[Lifecycle] Cross-service wiring complete")
     except Exception as e:
-        logger.warning(f"[Lifecycle] Service wiring failed: {e}")
+        logger.warning(f"[Lifecycle] Service wiring failed: {e}", exc_info=True)
 
     try:
         heartbeat = get_metabolic_heartbeat()
         await heartbeat.start()
         logger.info("[Lifecycle] MetabolicHeartbeat started")
     except Exception as e:
-        logger.warning(f"[Lifecycle] Heartbeat start failed: {e}")
+        logger.warning(f"[Lifecycle] Heartbeat start failed: {e}", exc_info=True)
 
     async def run_security_audit_task():
         while True:
@@ -218,7 +218,7 @@ async def lifespan(app: FastAPI):
                 logger.info(f"[Security] Periodic audit complete. Score: {results.get('score', 0)}")
                 state_store.update_state("hardware", {"security_score": results.get("score", 0)})
             except Exception as e:
-                logger.error(f"[Security] Audit task failed: {e}")
+                logger.error(f"[Security] Audit task failed: {e}", exc_info=True)
             await asyncio.sleep(3600)
 
     asyncio.create_task(run_security_audit_task(), name="Security-Audit-Task")

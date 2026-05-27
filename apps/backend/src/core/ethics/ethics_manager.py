@@ -192,7 +192,7 @@ class EthicsManager:
 
                 logger.info("✅ AI伦理模型初始化完成")
             except Exception as e:  # broad exception acceptable: AI model initialization may fail with library loading errors
-                logger.warning(f"⚠️ AI伦理模型初始化失败: {e}")
+                logger.warning(f"⚠️ AI伦理模型初始化失败: {e}", exc_info=True)
 
     def _create_bias_detection_model(self):
         """创建偏见检测模型"""
@@ -548,7 +548,7 @@ class EthicsManager:
             return review_result
 
         except Exception as e:  # broad exception acceptable: content review may fail with analysis errors, return safe default
-            logger.error(f"❌ 伦理审查失败: {content_id} - {e}")
+            logger.error(f"❌ 伦理审查失败: {content_id} - {e}", exc_info=True)
             # 返回安全的默认结果
             return EthicsReviewResult(
                 content_id=content_id,
@@ -781,7 +781,7 @@ class EthicsManager:
             return False
 
         except Exception as e:  # broad exception acceptable: rule condition evaluation may fail with parsing errors
-            logger.error(f"规则条件评估错误: {e}")
+            logger.error(f"规则条件评估错误: {e}", exc_info=True)
             return False
 
     async def _check_bias(self, content: str, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -1356,7 +1356,7 @@ class EthicsManager:
                     }
                 violations.append(violation)
             except Exception as e:  # broad exception acceptable: rule evaluation in review may fail with various errors
-                logger.warning(f"⚠️ 规则评估失败 {rule_id}: {e}")
+                logger.warning(f"⚠️ 规则评估失败 {rule_id}: {e}", exc_info=True)
 
         return violations
 
@@ -1407,7 +1407,7 @@ class EthicsManager:
             return False
 
         except Exception as e:  # broad exception acceptable: rule condition evaluation in second method may fail
-            logger.error(f"❌ 规则条件评估错误: {e}")
+            logger.error(f"❌ 规则条件评估错误: {e}", exc_info=True)
             return False
 
     def _extract_privacy_data(self, content: str) -> List[Dict[str, Any]]:
@@ -1584,7 +1584,7 @@ class EthicsManager:
             logger.info(f"✅ 添加伦理规则: {rule.rule_id} - {rule.name}")
             return rule.rule_id
         except Exception as e:  # broad exception acceptable: rule creation may fail with validation errors
-            logger.error(f"❌ 添加伦理规则失败: {e}")
+            logger.error(f"❌ 添加伦理规则失败: {e}", exc_info=True)
             raise
 
     async def update_ethics_rule(self, rule_id: str, updates: Dict[str, Any]) -> bool:
@@ -1604,7 +1604,7 @@ class EthicsManager:
             logger.info(f"✅ 更新伦理规则: {rule_id}")
             return True
         except Exception as e:  # broad exception acceptable: rule update may fail with validation or attribute errors
-            logger.error(f"❌ 更新伦理规则失败: {rule_id} - {e}")
+            logger.error(f"❌ 更新伦理规则失败: {rule_id} - {e}", exc_info=True)
             return False
 
     async def get_ethics_rules(self) -> List[Dict[str, Any]]:

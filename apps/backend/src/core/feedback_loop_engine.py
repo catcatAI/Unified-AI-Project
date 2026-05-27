@@ -421,7 +421,7 @@ class FeedbackLoopEngine:
             try:
                 callback(cycle)
             except Exception as e:  # broad exception acceptable: cycle start callbacks should be resilient
-                logger.error(f"[FeedbackLoopEngine] Cycle start callback error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Cycle start callback error: {e}", exc_info=True)
 
         # Trigger cognitive processing
         decision = await self._cognitive_processing(perception_event)
@@ -521,7 +521,7 @@ class FeedbackLoopEngine:
                 )
                 return result.action_id if hasattr(result, "action_id") else str(uuid.uuid4())
             except Exception as e:  # broad exception acceptable: action bridge execution must be resilient
-                logger.error(f"[FeedbackLoopEngine] Action bridge execution error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Action bridge execution error: {e}", exc_info=True)
 
         # Fallback to action executor
         if self.action_executor and hasattr(self.action_executor, "handle_autonomous_action"):
@@ -531,7 +531,7 @@ class FeedbackLoopEngine:
                 )
                 return result.action_id if hasattr(result, "action_id") else str(uuid.uuid4())
             except Exception as e:  # broad exception acceptable: action executor fallback must be resilient
-                logger.error(f"[FeedbackLoopEngine] Action executor error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Action executor error: {e}", exc_info=True)
 
         return None
 
@@ -635,7 +635,7 @@ class FeedbackLoopEngine:
             try:
                 callback(signal)
             except Exception as e:  # broad exception acceptable: feedback callbacks should be resilient
-                logger.error(f"[FeedbackLoopEngine] Feedback callback error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Feedback callback error: {e}", exc_info=True)
 
     async def _update_active_cycles(self):
         """Update active cycles and complete finished ones"""
@@ -660,7 +660,7 @@ class FeedbackLoopEngine:
                     try:
                         callback(cycle)
                     except Exception as e:  # broad exception acceptable: cycle end callbacks should be resilient
-                        logger.error(f"[FeedbackLoopEngine] Cycle end callback error: {e}")
+                        logger.error(f"[FeedbackLoopEngine] Cycle end callback error: {e}", exc_info=True)
 
                 # Update metrics
                 self._update_performance_metrics(cycle)
@@ -715,7 +715,7 @@ class FeedbackLoopEngine:
                 )
                 learning_update.hsm_update = {"status": "updated"}
             except Exception as e:  # broad exception acceptable: HSM update from feedback must be resilient
-                logger.error(f"[FeedbackLoopEngine] HSM update error: {e}")
+                logger.error(f"[FeedbackLoopEngine] HSM update error: {e}", exc_info=True)
 
         # Update CDM if available
         if self.cdm and hasattr(self.cdm, "integrate_execution_feedback"):
@@ -730,7 +730,7 @@ class FeedbackLoopEngine:
                 )
                 learning_update.cdm_update = {"status": "updated"}
             except Exception as e:  # broad exception acceptable: CDM update from feedback must be resilient
-                logger.error(f"[FeedbackLoopEngine] CDM update error: {e}")
+                logger.error(f"[FeedbackLoopEngine] CDM update error: {e}", exc_info=True)
 
         self.performance_metrics["learning_updates"] += 1
 

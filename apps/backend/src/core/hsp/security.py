@@ -75,7 +75,7 @@ class HSPSecurityManager:
             return signature_b64
 
         except Exception as e:  # broad exception acceptable: signing involves crypto operations that may fail
-            logger.error(f"消息签名生成失败: {e}")
+            logger.error(f"消息签名生成失败: {e}", exc_info=True)
             return ""
 
     def verify_signature(self, message: Dict[str, Any], signature: str, sender_id: str) -> bool:
@@ -112,7 +112,7 @@ class HSPSecurityManager:
             return True
 
         except Exception as e:  # broad exception acceptable: signature verification involves crypto operations that may fail
-            logger.warning(f"消息签名验证失败: {message.get('message_id', 'unknown')} 错误: {e}")
+            logger.warning(f"消息签名验证失败: {message.get('message_id', 'unknown')} 错误: {e}", exc_info=True)
             return False
 
     def encrypt_message(self, message: Dict[str, Any]) -> bytes:
@@ -128,7 +128,7 @@ class HSPSecurityManager:
             return encrypted_message
 
         except Exception as e:  # broad exception acceptable: encryption involves crypto operations that may fail
-            logger.error(f"消息加密失败: {e}")
+            logger.error(f"消息加密失败: {e}", exc_info=True)
             raise
 
     def decrypt_message(self, encrypted_message: bytes) -> Dict[str, Any]:
@@ -144,7 +144,7 @@ class HSPSecurityManager:
             return message
 
         except Exception as e:  # broad exception acceptable: decryption involves crypto operations that may fail
-            logger.error(f"消息解密失败: {e}")
+            logger.error(f"消息解密失败: {e}", exc_info=True)
             raise
 
     def authenticate_sender(self, sender_id: str, auth_token: Optional[str] = None) -> bool:
@@ -236,14 +236,14 @@ class HSPSecurityContext:
                     message["payload"] = decrypted_payload
 
                 except Exception as e:  # broad exception acceptable: decryption involves crypto operations that may fail
-                    logger.error(f"消息解密失败: {e}")
+                    logger.error(f"消息解密失败: {e}", exc_info=True)
                     return False, {"error": "Message decryption failed"}
 
             logger.debug(f"消息验证和处理成功: {message.get('message_id', 'unknown')}")
             return True, message
 
         except Exception as e:  # broad exception acceptable: message authentication involves multiple operations that may fail
-            logger.error(f"消息验证和处理过程中发生错误: {e}")
+            logger.error(f"消息验证和处理过程中发生错误: {e}", exc_info=True)
             return False, {"error": "Message processing failed"}
 
     def secure_message(self, message: Dict[str, Any], sender_id: str) -> Dict[str, Any]:
@@ -275,7 +275,7 @@ class HSPSecurityContext:
             return message
 
         except Exception as e:  # broad exception acceptable: message securing involves multiple operations that may fail
-            logger.error(f"消息安全处理过程中发生错误: {e}")
+            logger.error(f"消息安全处理过程中发生错误: {e}", exc_info=True)
             raise
 
 

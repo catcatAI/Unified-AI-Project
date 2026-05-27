@@ -109,7 +109,7 @@ class CapacityPlanner:
                     await self.redis_client.ping()
                     logger.info("Redis连接成功")
                 except Exception as e:  # broad exception acceptable: Redis connection failure is non-critical, fallback to memory mode
-                    logger.warning(f"Redis连接失败, 使用内存模式: {e}")
+                    logger.warning(f"Redis连接失败, 使用内存模式: {e}", exc_info=True)
                     self.redis_client = None
                     self.redis_available = False
 
@@ -123,7 +123,7 @@ class CapacityPlanner:
 
             logger.info("容量规划引擎启动完成")
         except Exception as e:  # broad exception acceptable: initialization failures should propagate for proper error handling
-            logger.error(f"容量规划引擎初始化失败: {e}")
+            logger.error(f"容量规划引擎初始化失败: {e}", exc_info=True)
             raise
 
     async def _load_usage_data(self):
@@ -135,7 +135,7 @@ class CapacityPlanner:
                 self.usage_history = [json.loads(item) for item in data] if data else []
                 logger.info(f"加载资源使用历史数据: {len(self.usage_history)} 条记录")
         except Exception as e:  # broad exception acceptable: data loading failures are non-critical, continue with empty data
-            logger.warning(f"加载使用数据失败: {e}")
+            logger.warning(f"加载使用数据失败: {e}", exc_info=True)
 
     async def collect_resource_usage(self, resource_data: Dict[str, float]):
         """收集资源使用数据"""
@@ -174,7 +174,7 @@ class CapacityPlanner:
             await self._analyze_capacity_needs(usage)
 
         except Exception as e:  # broad exception acceptable: collection failures should not block the main workflow
-            logger.error(f"收集资源使用数据失败: {e}")
+            logger.error(f"收集资源使用数据失败: {e}", exc_info=True)
 
     async def _analyze_capacity_needs(self, current_usage: ResourceUsage):
         """分析容量需求"""
@@ -191,7 +191,7 @@ class CapacityPlanner:
                     await self._create_scaling_plan(prediction)
 
         except Exception as e:  # broad exception acceptable: analysis failures should not block the system
-            logger.error(f"分析容量需求失败: {e}")
+            logger.error(f"分析容量需求失败: {e}", exc_info=True)
 
     async def _predict_resource_needs(
         self, current_usage: ResourceUsage
@@ -228,7 +228,7 @@ class CapacityPlanner:
             return predictions
 
         except Exception as e:  # broad exception acceptable: prediction failures return empty list to signal no predictions
-            logger.error(f"预测资源需求失败: {e}")
+            logger.error(f"预测资源需求失败: {e}", exc_info=True)
             return []
 
     async def _predict_cpu_needs(
@@ -301,7 +301,7 @@ class CapacityPlanner:
             )
 
         except Exception as e:  # broad exception acceptable: prediction failures return None to signal no prediction
-            logger.error(f"CPU需求预测失败: {e}")
+            logger.error(f"CPU需求预测失败: {e}", exc_info=True)
             return None
 
     async def _predict_memory_needs(
@@ -375,7 +375,7 @@ class CapacityPlanner:
             )
 
         except Exception as e:  # broad exception acceptable: prediction failures return None to signal no prediction
-            logger.error(f"内存需求预测失败: {e}")
+            logger.error(f"内存需求预测失败: {e}", exc_info=True)
             return None
 
     async def _predict_disk_needs(
@@ -437,7 +437,7 @@ class CapacityPlanner:
             )
 
         except Exception as e:  # broad exception acceptable: prediction failures return None to signal no prediction
-            logger.error(f"磁盘需求预测失败: {e}")
+            logger.error(f"磁盘需求预测失败: {e}", exc_info=True)
             return None
 
     async def _predict_network_needs(
@@ -508,7 +508,7 @@ class CapacityPlanner:
             )
 
         except Exception as e:  # broad exception acceptable: prediction failures return None to signal no prediction
-            logger.error(f"网络需求预测失败: {e}")
+            logger.error(f"网络需求预测失败: {e}", exc_info=True)
             return None
 
     async def _predict_gpu_needs(
@@ -563,7 +563,7 @@ class CapacityPlanner:
             )
 
         except Exception as e:  # broad exception acceptable: prediction failures return None to signal no prediction
-            logger.error(f"GPU需求预测失败: {e}")
+            logger.error(f"GPU需求预测失败: {e}", exc_info=True)
             return None
 
     def _calculate_user_growth_rate(self) -> float:
@@ -589,7 +589,7 @@ class CapacityPlanner:
 
             return 0.0
         except Exception as e:  # broad exception acceptable: calculation failures return 0 to signal no growth
-            logger.error(f"计算用户增长率失败: {e}")
+            logger.error(f"计算用户增长率失败: {e}", exc_info=True)
             return 0.0
 
     def _calculate_request_growth_rate(self) -> float:
@@ -615,7 +615,7 @@ class CapacityPlanner:
 
             return 0.0
         except Exception as e:  # broad exception acceptable: calculation failures return 0 to signal no growth
-            logger.error(f"计算请求增长率失败: {e}")
+            logger.error(f"计算请求增长率失败: {e}", exc_info=True)
             return 0.0
 
     async def _create_scaling_plan(self, prediction: CapacityPrediction):
@@ -676,7 +676,7 @@ class CapacityPlanner:
             logger.info(f"创建扩容计划: {plan.plan_id}")
 
         except Exception as e:  # broad exception acceptable: plan creation failures should not block the system
-            logger.error(f"创建扩容计划失败: {e}")
+            logger.error(f"创建扩容计划失败: {e}", exc_info=True)
 
     def _calculate_scaling_cost(self, resource_type: str, current: float, target: float) -> float:
         """计算扩容成本"""
@@ -699,7 +699,7 @@ class CapacityPlanner:
             else:
                 return 0.0
         except Exception as e:  # broad exception acceptable: calculation failures return 0, non-blocking
-            logger.error(f"计算扩容成本失败: {e}")
+            logger.error(f"计算扩容成本失败: {e}", exc_info=True)
             return 0.0
 
     async def _send_scaling_notification(self, plan: ScalingPlan, prediction: CapacityPrediction):
@@ -722,7 +722,7 @@ class CapacityPlanner:
                 await self.redis_client.publish("notifications:capacity", json.dumps(notification))
 
         except Exception as e:  # broad exception acceptable: notification failures are non-critical
-            logger.error(f"发送扩容通知失败: {e}")
+            logger.error(f"发送扩容通知失败: {e}", exc_info=True)
 
     async def _periodic_capacity_check(self):
         """定期容量检查"""
@@ -756,7 +756,7 @@ class CapacityPlanner:
                         await self.redis_client.delete(f"capacity_planner:plan:{plan_id}")
 
             except Exception as e:  # broad exception acceptable: periodic check errors should not stop the loop
-                logger.error(f"定期容量检查失败: {e}")
+                logger.error(f"定期容量检查失败: {e}", exc_info=True)
 
     async def _execute_scaling_plan(self, plan: ScalingPlan):
         """执行扩容计划"""
@@ -788,7 +788,7 @@ class CapacityPlanner:
             logger.info(f"扩容计划执行完成: {plan.plan_id}")
 
         except Exception as e:  # broad exception acceptable: execution failures should be logged but not crash the system
-            logger.error(f"执行扩容计划失败: {e}")
+            logger.error(f"执行扩容计划失败: {e}", exc_info=True)
 
     async def get_capacity_predictions(
         self, resource_type: Optional[str] = None
@@ -810,7 +810,7 @@ class CapacityPlanner:
             return predictions
 
         except Exception as e:  # broad exception acceptable: retrieval failures return empty list, non-blocking
-            logger.error(f"获取容量预测失败: {e}")
+            logger.error(f"获取容量预测失败: {e}", exc_info=True)
             return []
 
     async def get_scaling_plans(self, resource_type: Optional[str] = None) -> List[ScalingPlan]:
@@ -825,7 +825,7 @@ class CapacityPlanner:
             return plans
 
         except Exception as e:  # broad exception acceptable: retrieval failures return empty list, non-blocking
-            logger.error(f"获取扩容计划失败: {e}")
+            logger.error(f"获取扩容计划失败: {e}", exc_info=True)
             return []
 
     async def approve_scaling_plan(self, plan_id: str, approved_by: str) -> bool:
@@ -852,7 +852,7 @@ class CapacityPlanner:
             return False
 
         except Exception as e:  # broad exception acceptable: approval failures return False to signal failure
-            logger.error(f"批准扩容计划失败: {e}")
+            logger.error(f"批准扩容计划失败: {e}", exc_info=True)
             return False
 
     async def get_capacity_report(self, time_range: int = 24) -> Dict[str, Any]:
@@ -883,7 +883,7 @@ class CapacityPlanner:
             return report
 
         except Exception as e:  # broad exception acceptable: report failures return error dict instead of crashing
-            logger.error(f"生成容量报告失败: {e}")
+            logger.error(f"生成容量报告失败: {e}", exc_info=True)
             return {"error": str(e)}
 
     def _generate_resource_summary(self, data: List[Dict]) -> Dict[str, Any]:
@@ -905,7 +905,7 @@ class CapacityPlanner:
             return summary
 
         except Exception as e:  # broad exception acceptable: summary failures return empty dict, non-blocking
-            logger.error(f"生成资源摘要失败: {e}")
+            logger.error(f"生成资源摘要失败: {e}", exc_info=True)
             return {}
 
     def _calculate_trend(self, values: List[float]) -> str:
@@ -940,7 +940,7 @@ class CapacityPlanner:
             return trends
 
         except Exception as e:  # broad exception acceptable: analysis failures return empty dict, non-blocking
-            logger.error(f"分析利用率趋势失败: {e}")
+            logger.error(f"分析利用率趋势失败: {e}", exc_info=True)
             return {}
 
     def _analyze_cost_trends(self, data: List[Dict]) -> Dict[str, Any]:
@@ -967,7 +967,7 @@ class CapacityPlanner:
             }
 
         except Exception as e:  # broad exception acceptable: analysis failures return empty dict, non-blocking
-            logger.error(f"分析成本趋势失败: {e}")
+            logger.error(f"分析成本趋势失败: {e}", exc_info=True)
             return {}
 
 

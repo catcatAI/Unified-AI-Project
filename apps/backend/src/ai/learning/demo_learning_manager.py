@@ -110,7 +110,7 @@ class DemoLearningManager:
                 logger.warning(f"配置文件不存在: {self.config_path}")
                 return {}
         except Exception as e:  # broad exception acceptable: config load failure falls back to empty dict
-            logger.error(f"加載配置文件失敗: {e}")
+            logger.error(f"加載配置文件失敗: {e}", exc_info=True)
             return {}
 
     def detect_demo_credentials(self, credentials: Dict[str, Any]) -> bool:
@@ -153,7 +153,7 @@ class DemoLearningManager:
             try:
                 await self._execute_action(action_name)
             except Exception as e:  # broad exception acceptable: action errors should not crash activation
-                logger.error(f"執行動作失敗 {action_name}: {e}")
+                logger.error(f"執行動作失敗 {action_name}: {e}", exc_info=True)
 
     async def _execute_action(self, action_name: str) -> None:
         """執行指定動作
@@ -249,7 +249,7 @@ class DemoLearningManager:
                 await asyncio.sleep(60)  # 每分鐘檢查一次
                 await self._collect_learning_data()
             except Exception as e:  # broad exception acceptable: monitoring loop must survive any error
-                logger.error(f"學習監控錯誤: {e}")
+                logger.error(f"學習監控錯誤: {e}", exc_info=True)
 
     async def _cleanup_monitor_loop(self) -> None:
         """清除監控循環"""
@@ -260,7 +260,7 @@ class DemoLearningManager:
                 await asyncio.sleep(3600)  # 每小時檢查一次
                 await self._perform_cleanup(cleanup_config)
             except Exception as e:  # broad exception acceptable: cleanup loop must survive any error
-                logger.error(f"清除監控錯誤: {e}")
+                logger.error(f"清除監控錯誤: {e}", exc_info=True)
 
     async def _collect_learning_data(self) -> None:
         """收集學習數據"""
@@ -288,7 +288,7 @@ class DemoLearningManager:
             await self._save_learning_data()
 
         except Exception as e:  # broad exception acceptable: data collection errors are non-fatal
-            logger.error(f"收集學習數據失敗: {e}")
+            logger.error(f"收集學習數據失敗: {e}", exc_info=True)
 
     async def _perform_cleanup(self, cleanup_config: Dict[str, Any]) -> None:
         """執行清除操作
@@ -313,7 +313,7 @@ class DemoLearningManager:
             logger.info("清除操作完成")
 
         except Exception as e:  # broad exception acceptable: cleanup errors should not crash manager
-            logger.error(f"清除操作失敗: {e}")
+            logger.error(f"清除操作失敗: {e}", exc_info=True)
 
     def _get_memory_usage(self) -> Dict[str, Any]:
         """獲取內存使用情況"""
@@ -363,7 +363,7 @@ class DemoLearningManager:
             with open(learning_file, "w", encoding="utf-8") as f:
                 json.dump(self.learning_data, f, indent=2, ensure_ascii=False)
         except Exception as e:  # broad exception acceptable: save errors should not crash learning
-            logger.error(f"保存學習數據失敗: {e}")
+            logger.error(f"保存學習數據失敗: {e}", exc_info=True)
 
     async def record_user_interaction(
         self, action: str, context: Dict[str, Any], result: str, feedback: Optional[str] = None
@@ -466,7 +466,7 @@ class DemoLearningManager:
             }
 
         except Exception as e:  # broad exception acceptable: insights generation errors return error dict
-            logger.error(f"獲取學習洞察失敗: {e}")
+            logger.error(f"獲取學習洞察失敗: {e}", exc_info=True)
             return {"error": str(e)}
 
     def _analyze_interactions(self) -> Dict[str, Any]:

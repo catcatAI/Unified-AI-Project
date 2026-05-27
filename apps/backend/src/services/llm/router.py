@@ -92,7 +92,7 @@ def _load_memory_modules():
         _MEMORY_ENHANCED = True
         logger.info("Memory enhancement modules loaded successfully")
     except ImportError as e:
-        logger.warning(f"Memory enhancement modules not available: {e}")
+        logger.warning(f"Memory enhancement modules not available: {e}", exc_info=True)
         logger.info("Running without memory enhancement (LLM will be called directly)")
         _MEMORY_ENHANCED = False
 
@@ -186,7 +186,7 @@ class AngelaLLMService:
 
             logger.info("P0-2 Response Composition & Matching System initialized")
         except ImportError as e:
-            logger.warning(f"Failed to initialize P0-2 response system: {e}")
+            logger.warning(f"Failed to initialize P0-2 response system: {e}", exc_info=True)
             self.template_matcher = None
             self.response_composer = None
             self.deviation_tracker = None
@@ -210,7 +210,7 @@ class AngelaLLMService:
                 logger.info(f"Loaded {len(templates)} templates to matcher")
         except Exception as e:
             # broad exception acceptable: template loading failure should not block initialization
-            logger.warning(f"Failed to load templates to matcher: {e}")
+            logger.warning(f"Failed to load templates to matcher: {e}", exc_info=True)
 
         # ========== 记忆增强系统初始化 ==========
         if is_memory_enhanced():
@@ -241,7 +241,7 @@ class AngelaLLMService:
                     )
                     logger.info("[C1] UnifiedMemoryCoordinator initialized")
                 except Exception as e:
-                    logger.warning(f"[C1] UnifiedMemoryCoordinator unavailable: {e}")
+                    logger.warning(f"[C1] UnifiedMemoryCoordinator unavailable: {e}", exc_info=True)
                     self.memory_coordinator = None
 
                 # 初始化预计算服务
@@ -264,7 +264,7 @@ class AngelaLLMService:
                 logger.info("Memory enhancement system initialized")
             except Exception as e:
                 # broad exception acceptable: memory enhancement is optional, graceful degradation on failure
-                logger.warning(f"Failed to initialize memory enhancement: {e}")
+                logger.warning(f"Failed to initialize memory enhancement: {e}", exc_info=True)
                 self.enable_memory_enhancement = False
         else:
             self.enable_memory_enhancement = False
@@ -638,7 +638,7 @@ class AngelaLLMService:
 
                 logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化")
             except Exception as e:
-                logger.warning(f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化")
+                logger.warning(f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化", exc_info=True)
 
         # 標準初始化：檢查各後端健康狀態
         available_backends = []
@@ -825,7 +825,7 @@ class AngelaLLMService:
 
             except Exception as e:
                 # broad exception acceptable: template matching is best-effort, fallback to LLM
-                logger.warning(f"P0-2 template matching failed: {e}")
+                logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
 
         # ========== 记忆检索（如果启用）==========
         if self.enable_memory_enhancement:
@@ -851,7 +851,7 @@ class AngelaLLMService:
                     return memory_response
             except Exception as e:
                 # broad exception acceptable: memory retrieval is best-effort, fallback to LLM
-                logger.warning(f"Memory retrieval failed: {e}")
+                logger.warning(f"Memory retrieval failed: {e}", exc_info=True)
 
         # 如果沒有可用的後端，使用備份機制
         if not self.is_available or self.active_backend is None:
@@ -897,7 +897,7 @@ class AngelaLLMService:
 
         except Exception as e:
             # broad exception acceptable: response generation must be resilient to any backend failure
-            logger.error(f"生成回應時出錯: {e}")
+            logger.error(f"生成回應時出錯: {e}", exc_info=True)
             return await self._fallback_response(user_message, context)
 
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
@@ -911,7 +911,7 @@ class AngelaLLMService:
             if result:
                 return result
         except Exception as e:
-            logger.warning(f"NeuroBlender fallback failed: {e}")
+            logger.warning(f"NeuroBlender fallback failed: {e}", exc_info=True)
 
         # Ultimate fallback: pure template
         try:
@@ -951,7 +951,7 @@ class AngelaLLMService:
                 metadata={"fallback": True},
             )
         except Exception as e:
-            logger.error(f"Ultimate fallback failure: {e}")
+            logger.error(f"Ultimate fallback failure: {e}", exc_info=True)
             return LLMResponse(
                 text="（系統核心對話模組載入失敗，請檢查後端日誌。）",
                 backend="error",
@@ -1088,7 +1088,7 @@ class AngelaLLMService:
 
         except Exception as e:
             # broad exception acceptable: memory retrieval error should not crash main flow
-            logger.warning(f"Memory retrieval error: {e}")
+            logger.warning(f"Memory retrieval error: {e}", exc_info=True)
             return None
 
     async def _generate_with_llm(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
@@ -1146,7 +1146,7 @@ class AngelaLLMService:
                 temperature = auto_result.temperature
                 max_tokens = auto_result.max_tokens
             except Exception as e:
-                logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數")
+                logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
 
         try:
             # 建構提示詞
@@ -1177,7 +1177,7 @@ class AngelaLLMService:
                     raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")
 
             except (ImportError, AttributeError) as e:
-                logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}")
+                logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
                 # 降級：直接調用
                 response = await asyncio.wait_for(
                     self.active_backend.generate(
@@ -1222,7 +1222,7 @@ class AngelaLLMService:
             return await self._fallback_response(user_message, context)
         except Exception as e:
             # broad exception acceptable: LLM generation must be resilient, fallback on any error
-            logger.error(f"LLM generation error: {e}")
+            logger.error(f"LLM generation error: {e}", exc_info=True)
             self._record_route_learning(context, "error", 0.0)
             if self._angela_fallback_chain:
                 return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
@@ -1352,7 +1352,7 @@ class AngelaLLMService:
 
         except Exception as e:
             # broad exception acceptable: template storage is best-effort, non-critical
-            logger.warning(f"Failed to store response as template: {e}")
+            logger.warning(f"Failed to store response as template: {e}", exc_info=True)
 
     def _extract_keywords(self, text: str) -> List[str]:
         """提取关键词"""
@@ -1640,7 +1640,7 @@ class AngelaLLMService:
             logger.warning("generate_text timeout")
             return ""
         except Exception as e:
-            logger.error(f"generate_text error: {e}")
+            logger.error(f"generate_text error: {e}", exc_info=True)
             return ""
 
     async def chat_completion(
@@ -1704,7 +1704,7 @@ class AngelaLLMService:
             logger.warning("chat_completion timeout")
             return LLMResponse(text="", backend=self.active_backend.__class__.__name__, model="unknown", error="timeout")
         except Exception as e:
-            logger.error(f"chat_completion error: {e}")
+            logger.error(f"chat_completion error: {e}", exc_info=True)
             return LLMResponse(text="", backend="unknown", model="unknown", error=str(e))
 def _get_llm_config(key: str, default=None):
     try:

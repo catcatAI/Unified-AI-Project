@@ -121,7 +121,7 @@ class StatePersistence:
             self._redis_available = True
             logger.info(f"[Persistence] Redis connected: {self.config.redis_host}:{self.config.redis_port}")
         except Exception as e:
-            logger.warning(f"[Persistence] Redis connection failed: {e}. Using JSON mode.")
+            logger.warning(f"[Persistence] Redis connection failed: {e}. Using JSON mode.", exc_info=True)
             self._redis_available = False
             self._redis_client = None
 
@@ -210,7 +210,7 @@ class StatePersistence:
                 "timestamp": snapshot["timestamp"],
             }
         except Exception as e:
-            logger.error(f"[Persistence] Redis save failed: {e}")
+            logger.error(f"[Persistence] Redis save failed: {e}", exc_info=True)
             return await self._save_to_json_fallback(snapshot)
 
     async def _save_to_json(self, snapshot: Dict[str, Any]) -> Dict[str, Any]:
@@ -253,7 +253,7 @@ class StatePersistence:
                 "path": str(checkpoint_file),
             }
         except Exception as e:
-            logger.error(f"[Persistence] JSON save failed: {e}")
+            logger.error(f"[Persistence] JSON save failed: {e}", exc_info=True)
             return {"status": "error", "reason": str(e)}
 
     async def _save_to_json_fallback(self, snapshot: Dict[str, Any]) -> Dict[str, Any]:
@@ -314,7 +314,7 @@ class StatePersistence:
                 "update_count": snapshot.get("update_count"),
             }
         except Exception as e:
-            logger.error(f"[Persistence] Load failed: {e}")
+            logger.error(f"[Persistence] Load failed: {e}", exc_info=True)
             return {"status": "error", "reason": str(e)}
 
     async def _load_from_redis(self, checkpoint_id: str) -> Optional[Dict[str, Any]]:
@@ -324,7 +324,7 @@ class StatePersistence:
             if raw:
                 return self._deserialize(raw)
         except Exception as e:
-            logger.error(f"[Persistence] Redis load failed: {e}")
+            logger.error(f"[Persistence] Redis load failed: {e}", exc_info=True)
         return None
 
     async def _load_from_json(self, checkpoint_id: str) -> Optional[Dict[str, Any]]:
@@ -335,7 +335,7 @@ class StatePersistence:
             if checkpoint_file.exists():
                 return json.loads(await async_read_text(checkpoint_file))
         except Exception as e:
-            logger.error(f"[Persistence] JSON load failed: {e}")
+            logger.error(f"[Persistence] JSON load failed: {e}", exc_info=True)
         return None
 
     async def _load_latest_from_redis(self) -> Optional[Dict[str, Any]]:
@@ -345,7 +345,7 @@ class StatePersistence:
             if ids:
                 return await self._load_from_redis(ids[0])
         except Exception as e:
-            logger.error(f"[Persistence] Redis latest load failed: {e}")
+            logger.error(f"[Persistence] Redis latest load failed: {e}", exc_info=True)
         return None
 
     async def _load_latest_from_json(self) -> Optional[Dict[str, Any]]:
@@ -357,7 +357,7 @@ class StatePersistence:
             if last:
                 return await self._load_from_json(last["id"])
         except Exception as e:
-            logger.error(f"[Persistence] JSON latest load failed: {e}")
+            logger.error(f"[Persistence] JSON latest load failed: {e}", exc_info=True)
         return None
 
     async def _find_by_tag(self, tag: str) -> Optional[Dict[str, Any]]:
@@ -425,7 +425,7 @@ class StatePersistence:
                 logger.info(f"[Persistence] Deleted from Redis: {checkpoint_id}")
                 return True
             except Exception as e:
-                logger.error(f"[Persistence] Redis delete failed: {e}")
+                logger.error(f"[Persistence] Redis delete failed: {e}", exc_info=True)
 
         try:
             storage_path = self._get_json_path()
@@ -440,7 +440,7 @@ class StatePersistence:
             logger.info(f"[Persistence] Deleted from JSON: {checkpoint_id}")
             return True
         except Exception as e:
-            logger.error(f"[Persistence] JSON delete failed: {e}")
+            logger.error(f"[Persistence] JSON delete failed: {e}", exc_info=True)
         return False
 
     def should_auto_save(self, update_count: int) -> bool:

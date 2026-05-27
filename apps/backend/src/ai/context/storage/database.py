@@ -52,7 +52,7 @@ class DatabaseStorage(Storage):
             logger.debug(f"Context {context.context_id} saved to database storage")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to save context {context.context_id} to database storage, {e}")
+            logger.error(f"Failed to save context {context.context_id} to database storage, {e}", exc_info=True)
             return False
 
     def load_context(self, context_id: str) -> Optional[Context]:
@@ -84,7 +84,7 @@ class DatabaseStorage(Storage):
                 # 这里应该使用数据库连接执行SELECT操作
                 pass
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to load context {context_id} from database storage, {e}")
+            logger.error(f"Failed to load context {context_id} from database storage, {e}", exc_info=True)
             return None
 
     def delete_context(self, context_id: str) -> bool:
@@ -107,7 +107,7 @@ class DatabaseStorage(Storage):
                 # 这里应该使用数据库连接执行DELETE操作
                 pass
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to delete context {context_id} from database storage, {e}")
+            logger.error(f"Failed to delete context {context_id} from database storage, {e}", exc_info=True)
             return False
 
     def list_contexts(self, context_type: Optional[ContextType] = None) -> List[str]:
@@ -131,7 +131,7 @@ class DatabaseStorage(Storage):
                 # 这里应该使用数据库连接执行SELECT查询
                 pass
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to list contexts from database storage, {e}")
+            logger.error(f"Failed to list contexts from database storage, {e}", exc_info=True)
             return []
 
     def update_context_metadata(self, context_id: str, metadata: Dict[str, Any]) -> bool:
@@ -155,7 +155,7 @@ class DatabaseStorage(Storage):
                 # 这里应该使用数据库连接执行UPDATE操作
                 pass
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to update context {context_id} metadata in database storage, {e}")
+            logger.error(f"Failed to update context {context_id} metadata in database storage, {e}", exc_info=True)
             return False
 
     def get_storage_info(self) -> Dict[str, Any]:
@@ -169,5 +169,5 @@ class DatabaseStorage(Storage):
                 # 这里应该查询数据库统计信息
                 pass
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get storage info, {e}")
+            logger.error(f"Failed to get storage info, {e}", exc_info=True)
             return {}

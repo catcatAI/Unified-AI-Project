@@ -24,7 +24,7 @@ try:
         ReceptorAdaptationState,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import physiological_tactile: {e}")
+    logger.warning(f"Failed to import physiological_tactile: {e}", exc_info=True)
     PhysiologicalTactileSystem = None
     Receptor = None
     BodyPart = None
@@ -45,7 +45,7 @@ try:
         FeedbackNode,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import endocrine_system: {e}")
+    logger.warning(f"Failed to import endocrine_system: {e}", exc_info=True)
     EndocrineSystem = None
     Hormone = None
     HormoneType = None
@@ -57,7 +57,7 @@ except ImportError as e:
 try:
     from core.bio.autonomic_nervous_system import AutonomicNervousSystem, ANSState, NerveType
 except ImportError as e:
-    logger.warning(f"Failed to import autonomic_nervous_system: {e}")
+    logger.warning(f"Failed to import autonomic_nervous_system: {e}", exc_info=True)
     AutonomicNervousSystem = None
     ANSState = None
     NerveType = None
@@ -77,7 +77,7 @@ try:
         LearningEvent,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import neuroplasticity: {e}")
+    logger.warning(f"Failed to import neuroplasticity: {e}", exc_info=True)
     NeuroplasticitySystem = None
     MemoryTrace = None
     HebbianRule = None
@@ -99,7 +99,7 @@ try:
         StateDimension,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import emotional_blending: {e}")
+    logger.warning(f"Failed to import emotional_blending: {e}", exc_info=True)
     EmotionalBlendingSystem = None
     PADEmotion = None
     EmotionalExpression = None
@@ -109,28 +109,28 @@ except ImportError as e:
 try:
     from core.bio.biological_integrator import BiologicalIntegrator, SystemInteraction
 except ImportError as e:
-    logger.warning(f"Failed to import biological_integrator: {e}")
+    logger.warning(f"Failed to import biological_integrator: {e}", exc_info=True)
     BiologicalIntegrator = None
     SystemInteraction = None
 
 try:
     from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge, MemoryConsolidation
 except ImportError as e:
-    logger.warning(f"Failed to import memory_neuroplasticity_bridge: {e}")
+    logger.warning(f"Failed to import memory_neuroplasticity_bridge: {e}", exc_info=True)
     MemoryNeuroplasticityBridge = None
     MemoryConsolidation = None
 
 try:
     from core.bio.extended_behavior_library import ExtendedBehaviorLibrary, BehaviorDefinition
 except ImportError as e:
-    logger.warning(f"Failed to import extended_behavior_library: {e}")
+    logger.warning(f"Failed to import extended_behavior_library: {e}", exc_info=True)
     ExtendedBehaviorLibrary = None
     BehaviorDefinition = None
 
 try:
     from core.bio.multidimensional_trigger import MultidimensionalTriggerSystem, TriggerDimension
 except ImportError as e:
-    logger.warning(f"Failed to import multidimensional_trigger: {e}")
+    logger.warning(f"Failed to import multidimensional_trigger: {e}", exc_info=True)
     MultidimensionalTriggerSystem = None
     TriggerDimension = None
 
@@ -140,7 +140,7 @@ except ImportError as e:
 try:
     from core.engine.state_matrix import StateMatrix4D, DimensionState
 except ImportError as e:
-    logger.warning(f"Failed to import state_matrix: {e}")
+    logger.warning(f"Failed to import state_matrix: {e}", exc_info=True)
     StateMatrix4D = None
     DimensionState = None
 
@@ -155,7 +155,7 @@ try:
         ActionCategory,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import action_executor: {e}")
+    logger.warning(f"Failed to import action_executor: {e}", exc_info=True)
     ActionExecutor = None
     ActionQueue = None
     ActionPriority = None
@@ -167,7 +167,7 @@ except ImportError as e:
 try:
     from core.engine.desktop_interaction import DesktopInteraction, FileOperation, DesktopState
 except ImportError as e:
-    logger.warning(f"Failed to import desktop_interaction: {e}")
+    logger.warning(f"Failed to import desktop_interaction: {e}", exc_info=True)
     DesktopInteraction = None
     FileOperation = None
     DesktopState = None
@@ -175,7 +175,7 @@ except ImportError as e:
 try:
     from core.engine.browser_controller import BrowserController, SearchResult, BrowserState
 except ImportError as e:
-    logger.warning(f"Failed to import browser_controller: {e}")
+    logger.warning(f"Failed to import browser_controller: {e}", exc_info=True)
     BrowserController = None
     SearchResult = None
     BrowserState = None
@@ -183,7 +183,7 @@ except ImportError as e:
 try:
     from core.engine.audio_system import AudioSystem, TTSConfig, LyricsSync
 except ImportError as e:
-    logger.warning(f"Failed to import audio_system: {e}")
+    logger.warning(f"Failed to import audio_system: {e}", exc_info=True)
     AudioSystem = None
     TTSConfig = None
     LyricsSync = None
@@ -191,14 +191,14 @@ except ImportError as e:
 try:
     from core.engine.desktop_presence import DesktopPresence, MouseTracker
 except ImportError as e:
-    logger.warning(f"Failed to import desktop_presence: {e}")
+    logger.warning(f"Failed to import desktop_presence: {e}", exc_info=True)
     DesktopPresence = None
     MouseTracker = None
 
 try:
     from core.engine.live2d_integration import Live2DIntegration, Live2DExpression, Live2DAction
 except ImportError as e:
-    logger.warning(f"Failed to import live2d_integration: {e}")
+    logger.warning(f"Failed to import live2d_integration: {e}", exc_info=True)
     Live2DIntegration = None
     Live2DExpression = None
     Live2DAction = None
@@ -209,14 +209,14 @@ except ImportError as e:
 try:
     from core.life.digital_life_integrator import DigitalLifeIntegrator, LifeCycleState
 except ImportError as e:
-    logger.warning(f"Failed to import digital_life_integrator: {e}")
+    logger.warning(f"Failed to import digital_life_integrator: {e}", exc_info=True)
     DigitalLifeIntegrator = None
     LifeCycleState = None
 
 try:
     from core.life.cyber_identity import CyberIdentity, SelfModel, IdentityGrowth
 except ImportError as e:
-    logger.warning(f"Failed to import cyber_identity: {e}")
+    logger.warning(f"Failed to import cyber_identity: {e}", exc_info=True)
     CyberIdentity = None
     SelfModel = None
     IdentityGrowth = None
@@ -224,7 +224,7 @@ except ImportError as e:
 try:
     from core.life.self_generation import SelfGeneration, AvatarBuilder
 except ImportError as e:
-    logger.warning(f"Failed to import self_generation: {e}")
+    logger.warning(f"Failed to import self_generation: {e}", exc_info=True)
     SelfGeneration = None
     AvatarBuilder = None
 
@@ -244,7 +244,7 @@ try:
         LearningType,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import art_learning_system: {e}")
+    logger.warning(f"Failed to import art_learning_system: {e}", exc_info=True)
     ArtLearningSystem = None
     ArtKnowledge = None
     ArtDomain = None
@@ -265,7 +265,7 @@ try:
         BodyLayer,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import live2d_avatar_generator: {e}")
+    logger.warning(f"Failed to import live2d_avatar_generator: {e}", exc_info=True)
     Live2DAvatarGenerator = None
     GeneratedAvatar = None
     Live2DModelConfig = None
@@ -284,7 +284,7 @@ try:
         WorkflowConfig,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import art_learning_workflow: {e}")
+    logger.warning(f"Failed to import art_learning_workflow: {e}", exc_info=True)
     ArtLearningWorkflow = None
     WorkflowStage = None
     LearningObjective = None
@@ -296,7 +296,7 @@ except ImportError as e:
 try:
     from core.life.autonomous_life_cycle import AutonomousLifeCycle, LifePhase, LifeDecision, FormulaMetrics
 except ImportError as e:
-    logger.warning(f"Failed to import autonomous_life_cycle: {e}")
+    logger.warning(f"Failed to import autonomous_life_cycle: {e}", exc_info=True)
     AutonomousLifeCycle = None
     LifePhase = None
     LifeDecision = None

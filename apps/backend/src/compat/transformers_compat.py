@@ -44,11 +44,11 @@ def ensure_transformers_compatibility():
 
         return True
     except ImportError as e:
-        logging.error(f"Transformers library not found: {e}")
+        logging.error(f"Transformers library not found: {e}", exc_info=True)
         return False
     except Exception as e:  # broad exception acceptable: network error should not crash operation
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-        logging.error(f"Error ensuring transformers compatibility: {e}")
+        logging.error(f"Error ensuring transformers compatibility: {e}", exc_info=True)
 
         return False
 
@@ -66,7 +66,7 @@ def safe_import_sentence_transformer():
 
         return SentenceTransformer, True
     except (ImportError, ValueError) as e:
-        logging.error(f"Could not import SentenceTransformer: {e}")
+        logging.error(f"Could not import SentenceTransformer: {e}", exc_info=True)
         return None, False
 
 
@@ -79,5 +79,5 @@ def safe_import_pipeline():
 
         return pipeline, True
     except (ImportError, ValueError) as e:
-        logging.error(f"Could not import transformers pipeline: {e}")
+        logging.error(f"Could not import transformers pipeline: {e}", exc_info=True)
         return None, False

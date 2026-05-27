@@ -155,7 +155,7 @@ class MemoryIntegrationLoop:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
-                logger.error(f"Error in integration loop: {e}")
+                logger.error(f"Error in integration loop: {e}", exc_info=True)
                 await asyncio.sleep(1)  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
@@ -187,7 +187,7 @@ class MemoryIntegrationLoop:
             await self._generate_templates()
 
         except Exception as e:  # broad exception acceptable: integration process should not crash the loop
-            logger.error(f"Error processing integration: {e}")
+            logger.error(f"Error processing integration: {e}", exc_info=True)
 
     async def _collect_new_info(self):
         """收集新信息"""
@@ -214,7 +214,7 @@ class MemoryIntegrationLoop:
                 self.memory_infos = self.memory_infos[-self.max_infos :]
 
         except Exception as e:  # broad exception acceptable: collecting new info should not crash integration loop
-            logger.warning(f"Error collecting new info: {e}")
+            logger.warning(f"Error collecting new info: {e}", exc_info=True)
 
     async def _analyze_patterns(self):
         """分析模式"""
@@ -255,7 +255,7 @@ class MemoryIntegrationLoop:
                         self.stats["patterns_found"] += 1
 
         except Exception as e:  # broad exception acceptable: pattern analysis should not crash the loop
-            logger.warning(f"Error analyzing patterns: {e}")
+            logger.warning(f"Error analyzing patterns: {e}", exc_info=True)
 
     async def _structure_memory(self):
         """結構化記憶"""
@@ -275,7 +275,7 @@ class MemoryIntegrationLoop:
                     self.stats["structured_memories"] += 1
 
                 except Exception as e:  # broad exception acceptable: memory structuring failures should not crash the loop
-                    logger.warning(f"Error structuring memory: {e}")
+                    logger.warning(f"Error structuring memory: {e}", exc_info=True)
 
     def _simple_structure(self, content: str) -> Dict[str, Any]:
         """簡單的記憶結構化"""
@@ -313,7 +313,7 @@ class MemoryIntegrationLoop:
             ]
 
         except Exception as e:  # broad exception acceptable: knowledge base updates should be fault-tolerant
-            logger.warning(f"Error updating knowledge base: {e}")
+            logger.warning(f"Error updating knowledge base: {e}", exc_info=True)
 
     async def _generate_templates(self):
         """生成新模板"""
@@ -338,7 +338,7 @@ class MemoryIntegrationLoop:
                         self.stats["templates_generated"] += 1
 
         except Exception as e:  # broad exception acceptable: template generation failures should not crash the loop
-            logger.warning(f"Error generating templates: {e}")
+            logger.warning(f"Error generating templates: {e}", exc_info=True)
 
     def add_memory(self, content: str, memory_type: str = "general", importance: float = 0.5):
         """添加記憶"""

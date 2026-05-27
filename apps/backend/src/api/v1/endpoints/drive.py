@@ -149,7 +149,7 @@ async def get_drive_status(svc=Depends(get_drive_service)):
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"Drive status error: {e}")
+        logger.error(f"Drive status error: {e}", exc_info=True)
         return {"status": "error", "authenticated": False, "detail": str(e)}
 
 
@@ -161,7 +161,7 @@ async def get_auth_status(svc=Depends(get_drive_service)):
     except FileNotFoundError:
         raise HTTPException(status_code=503, detail="credentials.json not found")
     except Exception as e:
-        logger.error(f"Auth status error: {e}")
+        logger.error(f"Auth status error: {e}", exc_info=True)
         return {"authenticated": False, "detail": str(e)}
 
 
@@ -174,7 +174,7 @@ async def get_oauth_url(svc=Depends(get_drive_service)):
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"Auth URL error: {e}")
+        logger.error(f"Auth URL error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -189,7 +189,7 @@ async def oauth_callback(code: str = Body(..., embed=True), svc=Depends(get_driv
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"OAuth callback error: {e}")
+        logger.error(f"OAuth callback error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -200,7 +200,7 @@ async def logout(svc=Depends(get_drive_service)):
         svc.logout()
         return {"message": "Logged out successfully"}
     except Exception as e:
-        logger.error(f"Logout error: {e}")
+        logger.error(f"Logout error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -219,7 +219,7 @@ async def list_files(
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"List files error: {e}")
+        logger.error(f"List files error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -232,7 +232,7 @@ async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)):
     except PermissionError:
         raise HTTPException(status_code=401, detail="Not authenticated")
     except Exception as e:
-        logger.error(f"Metadata error: {e}")
+        logger.error(f"Metadata error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -257,7 +257,7 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
         try:
             metadata = svc.get_file_metadata(fid)
         except Exception as e:
-            logger.warning(f"Could not get metadata for {fid}: {e}")
+            logger.warning(f"Could not get metadata for {fid}: {e}", exc_info=True)
             synced_files.append({"id": fid, "name": f"file_{fid}", "memorized": False, "error": str(e)})
             continue
 
@@ -335,7 +335,7 @@ async def search_and_list(
     except PermissionError:
         raise HTTPException(status_code=401, detail="Not authenticated")
     except Exception as e:
-        logger.error(f"Search error: {e}")
+        logger.error(f"Search error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -375,7 +375,7 @@ async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_dri
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error(f"Analyze error: {e}")
+        logger.error(f"Analyze error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

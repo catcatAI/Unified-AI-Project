@@ -53,7 +53,7 @@ def serialize_context(context) -> bytes:
         json_str = json.dumps(context_dict, ensure_ascii=False)
         return json_str.encode("utf-8")
     except Exception as e:  # broad exception acceptable: data parsing should be resilient
-        logger.error(f"Failed to serialize context {context.context_id}: {e}")
+        logger.error(f"Failed to serialize context {context.context_id}: {e}", exc_info=True)
         raise
 
 
@@ -87,7 +87,7 @@ def deserialize_context(data: bytes):
         # return context
         return None  # Placeholder
     except Exception as e:  # broad exception acceptable: data parsing should be resilient
-        logger.error(f"Failed to deserialize context: {e}")
+        logger.error(f"Failed to deserialize context: {e}", exc_info=True)
         raise
 
 
@@ -104,7 +104,7 @@ def compress_context_data(data: bytes) -> bytes:
     try:
         return zlib.compress(data)
     except Exception as e:  # broad exception acceptable: data parsing should be resilient
-        logger.error(f"Failed to compress context data: {e}")
+        logger.error(f"Failed to compress context data: {e}", exc_info=True)
         raise
 
 
@@ -121,7 +121,7 @@ def decompress_context_data(data: bytes) -> bytes:
     try:
         return zlib.decompress(data)
     except Exception as e:  # broad exception acceptable: data parsing should be resilient
-        logger.error(f"Failed to decompress context data: {e}")
+        logger.error(f"Failed to decompress context data: {e}", exc_info=True)
         raise
 
 
@@ -147,7 +147,7 @@ def encrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
         fernet = Fernet(key)
         return fernet.encrypt(data)
     except Exception as e:
-        logger.error(f"Failed to encrypt context data: {e}")
+        logger.error(f"Failed to encrypt context data: {e}", exc_info=True)
         raise
 
 
@@ -173,7 +173,7 @@ def decrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
         fernet = Fernet(key)
         return fernet.decrypt(data)
     except Exception as e:
-        logger.error(f"Failed to decrypt context data: {e}")
+        logger.error(f"Failed to decrypt context data: {e}", exc_info=True)
         raise
 
 
@@ -195,7 +195,7 @@ def calculate_context_hash(context) -> str:
         hash_object = hashlib.sha256(serialized_data)
         return hash_object.hexdigest()
     except Exception as e:  # broad exception acceptable: graceful degradation on failure
-        logger.error(f"Failed to calculate context hash: {e}")
+        logger.error(f"Failed to calculate context hash: {e}", exc_info=True)
         raise
 
 
@@ -233,7 +233,7 @@ def validate_context(context) -> bool:
 
         return True
     except Exception as e:  # broad exception acceptable: graceful degradation on failure
-        logger.error(f"Failed to validate context: {e}")
+        logger.error(f"Failed to validate context: {e}", exc_info=True)
         return False
 
 
@@ -274,7 +274,7 @@ def merge_contexts(context1, context2):
         # return merged_context
         return None  # Placeholder
     except Exception as e:  # broad exception acceptable: graceful degradation on failure
-        logger.error(f"Failed to merge contexts: {e}")
+        logger.error(f"Failed to merge contexts: {e}", exc_info=True)
         raise
 
 
@@ -296,7 +296,7 @@ def filter_context_content(content: Dict[Any, Any], allowed_keys: List[Any]) -> 
                 filtered_content[key] = content[key]
         return filtered_content
     except Exception as e:  # broad exception acceptable: graceful degradation on failure
-        logger.error(f"Failed to filter context content: {e}")
+        logger.error(f"Failed to filter context content: {e}", exc_info=True)
         raise
 
 

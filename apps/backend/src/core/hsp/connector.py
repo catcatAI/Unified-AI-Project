@@ -289,7 +289,7 @@ class HSPConnector:
                 else:
                     callback(message)
             except Exception as e:  # broad exception acceptable: callback execution may raise various runtime errors
-                self.logger.error(f"Error in fact callback: {e}")
+                self.logger.error(f"Error in fact callback: {e}", exc_info=True)
 
     async def _dispatch_capability_advertisement_to_callbacks(self, message: Any) -> None:
         """异步分发能力广告消息到回调"""
@@ -300,7 +300,7 @@ class HSPConnector:
                 else:
                     callback(message)
             except Exception as e:  # broad exception acceptable: callback execution may raise various runtime errors
-                self.logger.error(f"Error in capability advertisement callback: {e}")
+                self.logger.error(f"Error in capability advertisement callback: {e}", exc_info=True)
 
     async def _dispatch_task_request_to_callbacks(self, message: Any) -> None:
         """异步分发任务请求消息到回调"""
@@ -311,7 +311,7 @@ class HSPConnector:
                 else:
                     callback(message)
             except Exception as e:  # broad exception acceptable: callback execution may raise various runtime errors
-                self.logger.error(f"Error in task request callback: {e}")
+                self.logger.error(f"Error in task request callback: {e}", exc_info=True)
 
     # - - - Test compatibility properties - - -
     @property
@@ -445,7 +445,7 @@ class HSPConnector:
                 await self.external_connector.disconnect()
                 self.logger.info("HSPConnector: External connector disconnected.")
             except Exception as e:  # broad exception acceptable: connector disconnect may raise various errors
-                self.logger.error(f"HSPConnector: Error during external connector disconnect: {e}")
+                self.logger.error(f"HSPConnector: Error during external connector disconnect: {e}", exc_info=True)
 
         if self.fallback_manager:
             try:
@@ -456,7 +456,7 @@ class HSPConnector:
                     self.fallback_manager.shutdown()
                 self.logger.info("HSPConnector: Fallback manager shut down.")
             except Exception as e:  # broad exception acceptable: fallback shutdown may raise various errors
-                self.logger.error(f"HSPConnector: Error during fallback manager shutdown: {e}")
+                self.logger.error(f"HSPConnector: Error during fallback manager shutdown: {e}", exc_info=True)
 
         self.is_connected = False
         self.hsp_available = False
@@ -490,7 +490,7 @@ class HSPConnector:
                 ):
                     self.fallback_manager.shutdown()
             except Exception as e:  # broad exception acceptable: fallback shutdown may raise various errors
-                self.logger.warning(f"HSPConnector: fallback shutdown error: {e}")
+                self.logger.warning(f"HSPConnector: fallback shutdown error: {e}", exc_info=True)
             finally:
                 self.fallback_initialized = False
 
@@ -498,7 +498,7 @@ class HSPConnector:
             try:
                 await callback()
             except Exception as e:  # broad exception acceptable: callback execution may raise various errors
-                self.logger.warning(f"HSPConnector: disconnect callback error: {e}")
+                self.logger.warning(f"HSPConnector: disconnect callback error: {e}", exc_info=True)
 
     async def _initialize_protocols_with_config(self, config: Dict[str, Any]) -> bool:
         """
@@ -557,7 +557,7 @@ class HSPConnector:
                 return False
 
         except Exception as e:  # broad exception acceptable: protocol initialization involves multiple operations that may fail
-            self.logger.error(f"Error initializing protocols with config: {e}")
+            self.logger.error(f"Error initializing protocols with config: {e}", exc_info=True)
             return False
 
     def get_communication_status(self) -> Dict[str, Any]:
@@ -883,7 +883,7 @@ class HSPConnector:
             # 确保返回类型正确
             return envelope
         except Exception as e:  # broad exception acceptable: security processing involves multiple operations that may fail
-            self.logger.error(f"安全处理消息失败: {e}")
+            self.logger.error(f"安全处理消息失败: {e}", exc_info=True)
             return envelope
 
     def _cache_message(self, message_id: str, result: bool) -> None:
@@ -917,7 +917,7 @@ class HSPConnector:
                         item["topic"], item["envelope"], item.get("qos", 1)
                     )
                 except Exception as e:  # broad exception acceptable: batch send may fail with various errors
-                    self.logger.error(f"Batch send error: {e}")
+                    self.logger.error(f"Batch send error: {e}", exc_info=True)
 
     async def _raw_publish_message(
         self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1
@@ -939,7 +939,7 @@ class HSPConnector:
             self.logger.error("ExternalConnector has neither 'send' nor 'publish' method")
             return False
         except Exception as e:  # broad exception acceptable: raw publish may fail with various errors
-            self.logger.error(f"Error in _raw_publish_message: {e}")
+            self.logger.error(f"Error in _raw_publish_message: {e}", exc_info=True)
             return False
 
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
@@ -1053,7 +1053,7 @@ class HSPConnector:
                 self._cache_message(message_id, True)
                 return True
         except Exception as e:  # broad exception acceptable: message publishing involves multiple operations that may fail
-            self.logger.error(f"Error publishing message {correlation_id}: {e}")
+            self.logger.error(f"Error publishing message {correlation_id}: {e}", exc_info=True)
             # Implement retry logic based on max_ack_retries for general errors
             retry_count = self._message_retry_counts.get(correlation_id, 0)
             if retry_count < self.max_ack_retries:

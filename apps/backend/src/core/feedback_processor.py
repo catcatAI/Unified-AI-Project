@@ -238,7 +238,7 @@ class FeedbackProcessor:
                 # No feedback to process, continue
                 pass
             except Exception as e:  # broad exception acceptable: processing loop must be resilient to any error
-                logger.error(f"[FeedbackProcessor] Processing error: {e}")
+                logger.error(f"[FeedbackProcessor] Processing error: {e}", exc_info=True)
 
     async def process_feedback(self, feedback: "FeedbackSignal"):
         """
@@ -294,7 +294,7 @@ class FeedbackProcessor:
                             pass
 
         except Exception as e:  # broad exception acceptable: feedback processing must be resilient to any error
-            logger.error(f"[FeedbackProcessor] Error processing feedback: {e}")
+            logger.error(f"[FeedbackProcessor] Error processing feedback: {e}", exc_info=True)
 
     async def _evaluate_action(self, feedback: "FeedbackSignal") -> Optional[ActionEvaluation]:
         """Evaluate action effectiveness from feedback"""
@@ -447,7 +447,7 @@ class FeedbackProcessor:
 
                 self.processing_metrics["hsm_updates"] += 1
             except Exception as e:  # broad exception acceptable: HSM update must be resilient to errors
-                logger.error(f"[FeedbackProcessor] HSM update error: {e}")
+                logger.error(f"[FeedbackProcessor] HSM update error: {e}", exc_info=True)
 
         # Update CDM
         if self.cdm and learning_signal.cdm_update:
@@ -463,7 +463,7 @@ class FeedbackProcessor:
 
                 self.processing_metrics["cdm_updates"] += 1
             except Exception as e:  # broad exception acceptable: CDM update must be resilient to errors
-                logger.error(f"[FeedbackProcessor] CDM update error: {e}")
+                logger.error(f"[FeedbackProcessor] CDM update error: {e}", exc_info=True)
 
     async def _generate_strategy_adjustment(
         self, feedback: "FeedbackSignal", evaluation: ActionEvaluation
@@ -544,7 +544,7 @@ class FeedbackProcessor:
             await async_json_dump(history_data, str(history_path), ensure_ascii=False, indent=2)
 
         except Exception as e:  # broad exception acceptable: history save must be resilient, non-critical
-            logger.error(f"[FeedbackProcessor] Save history error: {e}")
+            logger.error(f"[FeedbackProcessor] Save history error: {e}", exc_info=True)
 
     async def _load_history(self):
         """Load feedback history from file"""
@@ -573,7 +573,7 @@ class FeedbackProcessor:
                 )
 
         except Exception as e:  # broad exception acceptable: history load must be resilient, non-critical
-            logger.error(f"[FeedbackProcessor] Load history error: {e}")
+            logger.error(f"[FeedbackProcessor] Load history error: {e}", exc_info=True)
 
     # ========== Public API ==========
 

@@ -162,7 +162,7 @@ class ModelContextManager:
             )
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to record model call: {e}")
+            logger.error(f"Failed to record model call: {e}", exc_info=True)
             return False
 
     def get_model_context(self, model_id: str) -> Optional[Dict[str, Any]]:
@@ -185,7 +185,7 @@ class ModelContextManager:
             # }
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context for model {model_id}: {e}")
+            logger.error(f"Failed to get context for model {model_id}: {e}", exc_info=True)
             return None
 
     def get_model_call_history(self, model_id: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -220,7 +220,7 @@ class ModelContextManager:
 
             return call_history
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get call history for model {model_id}: {e}")
+            logger.error(f"Failed to get call history for model {model_id}: {e}", exc_info=True)
             return []
 
 
@@ -252,7 +252,7 @@ class AgentContextManager:
             logger.info(f"Started collaboration {collaboration.collaboration_id} with context")
             return collaboration.collaboration_id
         except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
-            logger.error(f"Failed to start collaboration: {e}")
+            logger.error(f"Failed to start collaboration: {e}", exc_info=True)
             raise
 
     def record_collaboration_step(
@@ -293,7 +293,7 @@ class AgentContextManager:
             logger.info(f"Recorded collaboration step {step.step_id} with context")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to record collaboration step: {e}")
+            logger.error(f"Failed to record collaboration step: {e}", exc_info=True)
             return False
 
     def complete_collaboration(self, collaboration_id: str) -> bool:
@@ -322,7 +322,7 @@ class AgentContextManager:
             logger.info(f"Completed collaboration {collaboration_id} with context")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to complete collaboration {collaboration_id}: {e}")
+            logger.error(f"Failed to complete collaboration {collaboration_id}: {e}", exc_info=True)
             return False
 
     def get_collaboration_context(self, collaboration_id: str) -> Optional[Dict[str, Any]]:
@@ -351,5 +351,5 @@ class AgentContextManager:
             # }
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}")
+            logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}", exc_info=True)
             return None

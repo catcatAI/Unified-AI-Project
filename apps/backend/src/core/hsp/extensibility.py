@@ -276,7 +276,7 @@ class HSPExtensionManager:
             logger.info(f"扩展加载成功: {extension_id}")
             return True
         except Exception as e:  # broad exception acceptable: extension loading may fail with dynamic import errors
-            logger.error(f"扩展加载失败: {extension_id} 错误: {e}")
+            logger.error(f"扩展加载失败: {extension_id} 错误: {e}", exc_info=True)
             return False
 
     def unload_extension(self, extension_id: str) -> bool:
@@ -297,7 +297,7 @@ class HSPExtensionManager:
             logger.info(f"扩展卸载成功: {extension_id}")
             return True
         except Exception as e:  # broad exception acceptable: extension unloading may fail with cleanup errors
-            logger.error(f"扩展卸载失败: {extension_id} 错误: {e}")
+            logger.error(f"扩展卸载失败: {extension_id} 错误: {e}", exc_info=True)
             return False
 
     def register_message_handler(self, handler: HSPMessageHandler):
@@ -333,7 +333,7 @@ class HSPExtensionManager:
                             context["handled_by"].append(type(handler).__name__)
                             return result
                     except Exception as e:  # broad exception acceptable: handler execution may raise various errors
-                        logger.error(f"消息处理器执行失败: {type(handler).__name__} 错误: {e}")
+                        logger.error(f"消息处理器执行失败: {type(handler).__name__} 错误: {e}", exc_info=True)
 
         # 2. 通过所有消息处理器查找能处理的处理器
         for handler in self.message_handlers:
@@ -344,7 +344,7 @@ class HSPExtensionManager:
                         context["handled_by"].append(type(handler).__name__)
                         return result
                 except Exception as e:  # broad exception acceptable: handler execution may raise various errors
-                    logger.error(f"消息处理器执行失败: {type(handler).__name__} 错误: {e}")
+                    logger.error(f"消息处理器执行失败: {type(handler).__name__} 错误: {e}", exc_info=True)
 
         # 3. 如果没有处理器能处理, 返回None
         logger.debug(f"没有找到能处理消息类型的处理器: {message_type}")
@@ -437,7 +437,7 @@ class HSPPluginLoader:
                 # 例如扫描目录中的Python模块
                 pass
             except Exception as e:  # broad exception acceptable: dynamic import may raise various errors
-                logger.error(f"插件发现失败: {path} 错误: {e}")
+                logger.error(f"插件发现失败: {path} 错误: {e}", exc_info=True)
 
         return plugins
 
@@ -461,7 +461,7 @@ class HSPPluginLoader:
             logger.info(f"插件加载成功: {plugin_name}")
             return True
         except Exception as e:  # broad exception acceptable: plugin loading involves dynamic import that may fail
-            logger.error(f"插件加载失败: {plugin_name} 错误: {e}")
+            logger.error(f"插件加载失败: {plugin_name} 错误: {e}", exc_info=True)
             return False
 
     def unload_plugin(self, plugin_name: str) -> bool:
@@ -481,7 +481,7 @@ class HSPPluginLoader:
             logger.info(f"插件卸载成功: {plugin_name}")
             return True
         except Exception as e:  # broad exception acceptable: plugin cleanup may raise various errors
-            logger.error(f"插件卸载失败: {plugin_name} 错误: {e}")
+            logger.error(f"插件卸载失败: {plugin_name} 错误: {e}", exc_info=True)
             return False
 
     def get_loaded_plugins(self) -> List[str]:

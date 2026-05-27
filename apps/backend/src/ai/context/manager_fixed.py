@@ -68,7 +68,7 @@ class ContextManager:
             )
             return context_id
         except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
-            logger.error(f"Failed to create context: {e}")
+            logger.error(f"Failed to create context: {e}", exc_info=True)
             raise
 
     def get_context(self, context_id: str) -> Optional[Any]:
@@ -100,7 +100,7 @@ class ContextManager:
             logger.debug(f"Context {context_id} not found")
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context {context_id}: {e}")
+            logger.error(f"Failed to get context {context_id}: {e}", exc_info=True)
             return None
 
     def update_context(self, context_id: str, updates: Dict[str, Any]) -> bool:
@@ -131,7 +131,7 @@ class ContextManager:
             logger.info(f"Context {context_id} updated successfully")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to update context {context_id}: {e}")
+            logger.error(f"Failed to update context {context_id}: {e}", exc_info=True)
             return False
 
     def delete_context(self, context_id: str) -> bool:
@@ -157,7 +157,7 @@ class ContextManager:
 
             return success
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to delete context {context_id}: {e}")
+            logger.error(f"Failed to delete context {context_id}: {e}", exc_info=True)
             return False
 
     def search_contexts(self, query: str, context_types: Optional[List[Any]] = None) -> List[Any]:
@@ -202,7 +202,7 @@ class ContextManager:
             logger.info(f"Found {len(results)} contexts matching query '{query}'")
             return results
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to search contexts: {e}")
+            logger.error(f"Failed to search contexts: {e}", exc_info=True)
             return []
 
     def transfer_context(
@@ -255,7 +255,7 @@ class ContextManager:
             logger.info(f"Transferred context from {source_id} to {target_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to transfer context from {source_id} to {target_id}: {e}")
+            logger.error(f"Failed to transfer context from {source_id} to {target_id}: {e}", exc_info=True)
             return False
 
     def get_context_summary(self, context_id: str) -> Dict[str, Any]:
@@ -287,7 +287,7 @@ class ContextManager:
             logger.debug(f"Generated summary for context {context_id}")
             return summary
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to generate summary for context {context_id}: {e}")
+            logger.error(f"Failed to generate summary for context {context_id}: {e}", exc_info=True)
             return {}
 
 

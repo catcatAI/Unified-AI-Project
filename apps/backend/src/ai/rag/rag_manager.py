@@ -10,7 +10,7 @@ try:
 
     SentenceTransformer, SENTENCE_TRANSFORMERS_AVAILABLE = import_sentence_transformers()
 except ImportError as e:
-    logging.error(f"Could not import transformers_compat: {e}")
+    logging.error(f"Could not import transformers_compat: {e}", exc_info=True)
     SentenceTransformer = None
     SENTENCE_TRANSFORMERS_AVAILABLE = False
 

@@ -103,7 +103,7 @@ class MessageRouter:
                         )
                     return {"status": "delivered", "target": target_id}
                 except Exception as e:  # broad exception acceptable: HTTP delivery may fail with various network errors
-                    logger.error(f"Failed to deliver message to {target_id}: {e}")
+                    logger.error(f"Failed to deliver message to {target_id}: {e}", exc_info=True)
                     return {"status": "failed", "error": str(e)}
             else:
                 return {"status": "failed", "error": "Target not found"}
@@ -190,7 +190,7 @@ class ExternalConnector:
                         else:
                             callback(data)
                     except Exception as e:  # broad exception acceptable: message callback may raise various errors
-                        logger.error(f"[{self.ai_id}] Message callback error: {e}")
+                        logger.error(f"[{self.ai_id}] Message callback error: {e}", exc_info=True)
 
                 return {"status": "received"}
 
@@ -232,7 +232,7 @@ class ExternalConnector:
             return True
 
         except Exception as e:  # broad exception acceptable: initialization involves multiple operations that may fail
-            logger.error(f"[{self.ai_id}] Initialization failed: {e}")
+            logger.error(f"[{self.ai_id}] Initialization failed: {e}", exc_info=True)
             self.stats["errors"] += 1
             return False
 
@@ -280,7 +280,7 @@ class ExternalConnector:
                     return False
 
         except Exception as e:  # broad exception acceptable: send involves HTTP operations that may fail
-            logger.error(f"[{self.ai_id}] Send failed: {e}")
+            logger.error(f"[{self.ai_id}] Send failed: {e}", exc_info=True)
             self.stats["errors"] += 1
             return False
 
@@ -304,7 +304,7 @@ class ExternalConnector:
                 )
                 return response.json()
         except Exception as e:  # broad exception acceptable: broadcast involves HTTP operations that may fail
-            logger.error(f"[{self.ai_id}] Broadcast failed: {e}")
+            logger.error(f"[{self.ai_id}] Broadcast failed: {e}", exc_info=True)
             return {"status": "failed", "error": str(e)}
 
     def on_message(self, callback: Callable):
@@ -321,7 +321,7 @@ class ExternalConnector:
                 )
                 return response.json()
         except Exception as e:  # broad exception acceptable: registry fetch may fail with network errors
-            logger.error(f"[{self.ai_id}] Failed to get registry: {e}")
+            logger.error(f"[{self.ai_id}] Failed to get registry: {e}", exc_info=True)
             return {"agents": {}}
 
     async def disconnect(self):
@@ -335,7 +335,7 @@ class ExternalConnector:
                 )
             logger.info(f"[{self.ai_id}] Unregistered from router")
         except Exception as e:  # broad exception acceptable: disconnect may raise various errors
-            logger.error(f"[{self.ai_id}] Disconnect error: {e}")
+            logger.error(f"[{self.ai_id}] Disconnect error: {e}", exc_info=True)
 
     async def get_stats(self) -> Dict[str, int]:
         """Get connection statistics."""

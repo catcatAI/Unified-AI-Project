@@ -168,7 +168,7 @@ class LogicUnit:
             return True
 
         except Exception as e:  # broad exception acceptable: rule validation failures should not crash the system
-            logger.error(f"Failed to add rule {rule.rule_id}: {e}")
+            logger.error(f"Failed to add rule {rule.rule_id}: {e}", exc_info=True)
             return False
 
     def remove_rule(self, rule_id: str) -> bool:
@@ -193,7 +193,7 @@ class LogicUnit:
             return True
 
         except Exception as e:  # broad exception acceptable: rule removal failures should not crash the system
-            logger.error(f"Failed to remove rule {rule_id}: {e}")
+            logger.error(f"Failed to remove rule {rule_id}: {e}", exc_info=True)
             return False
 
     def enable_rule(self, rule_id: str) -> bool:
@@ -273,7 +273,7 @@ class LogicUnit:
             return None
 
         except Exception as e:  # broad exception acceptable: evaluation errors should not crash the system, return None to signal failure
-            logger.error(f"Failed to evaluate rules: {e}")
+            logger.error(f"Failed to evaluate rules: {e}", exc_info=True)
             return None
 
     def evaluate_all(self, context: Dict[str, Any]) -> List[str]:
@@ -305,7 +305,7 @@ class LogicUnit:
             return actions
 
         except Exception as e:  # broad exception acceptable: batch evaluation errors should not crash the system
-            logger.error(f"Failed to evaluate all rules: {e}")
+            logger.error(f"Failed to evaluate all rules: {e}", exc_info=True)
             return actions
 
     def _compile_condition(self, rule_id: str, condition: str) -> None:
@@ -319,7 +319,7 @@ class LogicUnit:
             # 简单表达式直接存储
             self._condition_cache[rule_id] = condition
         except Exception as e:  # broad exception acceptable: compilation failures are non-critical, warn and continue
-            logger.warning(f"Failed to compile condition for rule {rule_id}: {e}")
+            logger.warning(f"Failed to compile condition for rule {rule_id}: {e}", exc_info=True)
 
     def _check_condition(self, rule_id: str, condition: str, context: Dict[str, Any]) -> bool:
         """检查条件是否满足
@@ -354,7 +354,7 @@ class LogicUnit:
             return bool(result)
 
         except Exception as e:  # broad exception acceptable: condition evaluation failures return False, non-blocking
-            logger.warning(f"Failed to evaluate condition for rule {rule_id}: {e}")
+            logger.warning(f"Failed to evaluate condition for rule {rule_id}: {e}", exc_info=True)
             return False
 
     def get_rule(self, rule_id: str) -> Optional[LogicRule]:
@@ -442,7 +442,7 @@ class LogicUnit:
             return True
 
         except Exception as e:  # broad exception acceptable: file I/O errors should not crash the system
-            logger.error(f"Failed to save rules to {filepath}: {e}")
+            logger.error(f"Failed to save rules to {filepath}: {e}", exc_info=True)
             return False
 
     def load_from_file(self, filepath: str) -> bool:
@@ -471,7 +471,7 @@ class LogicUnit:
             return True
 
         except Exception as e:  # broad exception acceptable: file I/O errors should not crash the system
-            logger.error(f"Failed to load rules from {filepath}: {e}")
+            logger.error(f"Failed to load rules from {filepath}: {e}", exc_info=True)
             return False
 
     def clear_history(self) -> None:

@@ -159,7 +159,7 @@ class LLMDecisionLoop:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
-                logger.error(f"Error in decision loop: {e}")
+                logger.error(f"Error in decision loop: {e}", exc_info=True)
                 await asyncio.sleep(1)  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
@@ -221,7 +221,7 @@ class LLMDecisionLoop:
             logger.debug(f"Decision made: {decision.action} - {decision.reason[:50]}")
 
         except Exception as e:  # broad exception acceptable: decision failure should not crash the loop
-            logger.error(f"Error making decision: {e}")
+            logger.error(f"Error making decision: {e}", exc_info=True)
 
     async def _get_current_state(self) -> Dict[str, Any]:
         """獲取當前 Angela 狀態"""
@@ -253,7 +253,7 @@ class LLMDecisionLoop:
 
             return state
         except Exception as e:  # broad exception acceptable: state retrieval should not crash decision loop
-            logger.warning(f"Error getting state: {e}, using defaults")
+            logger.warning(f"Error getting state: {e}, using defaults", exc_info=True)
             return {
                 "state_matrix": {"alpha": 0.5, "beta": 0.5, "gamma": 0.5, "delta": 0.5},
                 "mood": 0.5,
@@ -282,7 +282,7 @@ class LLMDecisionLoop:
                     return "\n".join([f"- {m}" for m in memories])
             return "無最近記憶"
         except Exception as e:  # broad exception acceptable: memory context retrieval should be fault-tolerant
-            logger.warning(f"Error getting memory context: {e}")
+            logger.warning(f"Error getting memory context: {e}", exc_info=True)
             return "記憶上下文獲取失敗"
 
     async def _build_decision_prompt(
@@ -306,7 +306,7 @@ class LLMDecisionLoop:
                     for mem in emotional_memories:
                         emotional_memories_text += f"- {mem.content}\n"
             except Exception as e:  # broad exception acceptable: emotional memory retrieval should not block decision
-                logger.warning(f"Error retrieving emotional memories: {e}")
+                logger.warning(f"Error retrieving emotional memories: {e}", exc_info=True)
 
         prompt = f"""你是 Angela，一個 AI 數字生命。
 
@@ -380,11 +380,11 @@ class LLMDecisionLoop:
                 decision = json.loads(response_text)
                 return decision
             except Exception as e:  # broad exception acceptable: JSON parsing of LLM response may fail for various formats
-                logger.warning(f"Failed to parse LLM response as JSON: {e}. Raw: {response_text}")
+                logger.warning(f"Failed to parse LLM response as JSON: {e}. Raw: {response_text}", exc_info=True)
                 return self._fallback_decision()
 
         except Exception as e:  # broad exception acceptable: LLM generation should fallback gracefully
-            logger.error(f"Error generating decision: {e}")
+            logger.error(f"Error generating decision: {e}", exc_info=True)
             return self._fallback_decision()
 
     def _fallback_decision(self) -> Dict[str, Any]:
@@ -464,7 +464,7 @@ class LLMDecisionLoop:
             return result
 
         except Exception as e:  # broad exception acceptable: execution should not crash decision loop
-            logger.error(f"Error executing decision: {e}")
+            logger.error(f"Error executing decision: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
     async def _execute_greet(self, decision: Decision) -> Dict[str, Any]:
@@ -484,7 +484,7 @@ class LLMDecisionLoop:
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
             except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
-                logger.warning(f"Failed to send message via WebSocket: {e}")
+                logger.warning(f"Failed to send message via WebSocket: {e}", exc_info=True)
         return {"success": True, "sent": True}
 
     async def _execute_comfort(self, decision: Decision) -> Dict[str, Any]:
@@ -504,7 +504,7 @@ class LLMDecisionLoop:
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
             except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
-                logger.warning(f"Failed to send message via WebSocket: {e}")
+                logger.warning(f"Failed to send message via WebSocket: {e}", exc_info=True)
         return {"success": True, "sent": True}
 
     async def _execute_remind(self, decision: Decision) -> Dict[str, Any]:
@@ -524,7 +524,7 @@ class LLMDecisionLoop:
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
             except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
-                logger.warning(f"Failed to send message via WebSocket: {e}")
+                logger.warning(f"Failed to send message via WebSocket: {e}", exc_info=True)
         return {"success": True, "sent": True}
 
     async def _execute_share(self, decision: Decision) -> Dict[str, Any]:
@@ -544,7 +544,7 @@ class LLMDecisionLoop:
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
             except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
-                logger.warning(f"Failed to send message via WebSocket: {e}")
+                logger.warning(f"Failed to send message via WebSocket: {e}", exc_info=True)
         return {"success": True, "sent": True}
 
     async def _execute_question(self, decision: Decision) -> Dict[str, Any]:
@@ -564,7 +564,7 @@ class LLMDecisionLoop:
                 )
                 logger.debug(f"Message sent via WebSocket: {decision.message}")
             except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
-                logger.warning(f"Failed to send message via WebSocket: {e}")
+                logger.warning(f"Failed to send message via WebSocket: {e}", exc_info=True)
         return {"success": True, "sent": True}
 
     async def _execute_observe(self, decision: Decision) -> Dict[str, Any]:

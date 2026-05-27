@@ -125,7 +125,7 @@ class UnifiedControlCenter:
 
             logger.info("✅ All core components initialized successfully.")
         except Exception as e:  # broad exception acceptable: component init failures must propagate
-            logger.error(f"❌ Error initializing components: {e}")
+            logger.error(f"❌ Error initializing components: {e}", exc_info=True)
             raise
 
     async def initialize_async(self) -> None:
@@ -145,7 +145,7 @@ class UnifiedControlCenter:
                 await hsp_connector.connect()
                 logger.info("HSP Connector connected")
             except Exception as e:  # broad exception acceptable: connection failures are non-fatal
-                logger.warning(f"HSP Connector connection failed: {e}")
+                logger.warning(f"HSP Connector connection failed: {e}", exc_info=True)
 
         logger.info("✅ All async components initialized successfully.")
 
@@ -252,7 +252,7 @@ class UnifiedControlCenter:
             }
 
         except Exception as e:  # broad exception acceptable: task processing errors must not crash coordinator
-            logger.error(f"❌ Error processing task {task_id}: {e}")
+            logger.error(f"❌ Error processing task {task_id}: {e}", exc_info=True)
             return {
                 "status": "error",
                 "task_id": task_id,
@@ -350,7 +350,7 @@ class UnifiedControlCenter:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: worker loop must survive any task error
-                logger.error(f"Worker [{worker_id}] encountered error: {e}")
+                logger.error(f"Worker [{worker_id}] encountered error: {e}", exc_info=True)
                 await asyncio.sleep(1)  # Prevent tight loop on persistent errors
 
     async def submit_task(self, task: Dict[str, Any]) -> str:
@@ -450,7 +450,7 @@ class UnifiedControlCenter:
                         data_type="conversation",
                     )
                 except Exception as e:  # broad exception acceptable: HAM storage failures are non-fatal
-                    logger.warning(f"Failed to store conversation to HAM: {e}")
+                    logger.warning(f"Failed to store conversation to HAM: {e}", exc_info=True)
 
             return {
                 "status": "success",
@@ -463,7 +463,7 @@ class UnifiedControlCenter:
             }
 
         except Exception as e:  # broad exception acceptable: dialogue generation errors return error response
-            logger.error(f"Error generating dialogue response: {e}")
+            logger.error(f"Error generating dialogue response: {e}", exc_info=True)
             return {
                 "status": "error",
                 "task_id": task_id,

@@ -153,7 +153,7 @@ class ProactiveInteractionSystem:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
-                logger.error(f"Error in proactive loop: {e}")
+                logger.error(f"Error in proactive loop: {e}", exc_info=True)
                 await asyncio.sleep(1)  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
@@ -197,7 +197,7 @@ class ProactiveInteractionSystem:
             self._cleanup_queue()
 
         except Exception as e:  # broad exception acceptable: proactive processing should not crash the loop
-            logger.error(f"Error processing proactive interaction: {e}")
+            logger.error(f"Error processing proactive interaction: {e}", exc_info=True)
 
     async def _detect_user_state(self) -> Dict[str, Any]:
         """檢測用戶狀態"""
@@ -323,7 +323,7 @@ class ProactiveInteractionSystem:
                     )
                     self.stats["total_opportunities"] += 1
         except Exception as e:  # broad exception acceptable: memory trigger checks should be fault-tolerant
-            logger.warning(f"Error checking memory triggers: {e}")
+            logger.warning(f"Error checking memory triggers: {e}", exc_info=True)
 
     async def _plan_proactive_action(
         self, opportunity: Dict[str, Any], user_state: Dict[str, Any]
@@ -367,7 +367,7 @@ class ProactiveInteractionSystem:
             return plan
 
         except Exception as e:  # broad exception acceptable: planning action should not crash the loop
-            logger.error(f"Error planning proactive action: {e}")
+            logger.error(f"Error planning proactive action: {e}", exc_info=True)
             return None
 
     async def _generate_return_message(self, opportunity: Dict[str, Any]) -> str:
@@ -470,12 +470,12 @@ class ProactiveInteractionSystem:
                     )
                     logger.debug(f"Proactive action sent via WebSocket: {plan.opportunity}")
                 except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
-                    logger.warning(f"Failed to send proactive action via WebSocket: {e}")
+                    logger.warning(f"Failed to send proactive action via WebSocket: {e}", exc_info=True)
 
             return {"success": True, "sent": True, "message": plan.message}
 
         except Exception as e:  # broad exception acceptable: action execution should be resilient
-            logger.error(f"Error executing proactive action: {e}")
+            logger.error(f"Error executing proactive action: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
     def _cleanup_queue(self):

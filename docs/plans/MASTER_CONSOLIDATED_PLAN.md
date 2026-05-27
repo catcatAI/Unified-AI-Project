@@ -433,7 +433,7 @@ Remaining (審計後優先級調整):
 | A 級 | 7 | **9.3 天 (已完成 A1/A2/A4/A5/A6/A7 ≈ 5.5d + A3 審計 ✅, 剩 ~3.5d)** |
 | B 級 | 11 | **8.1 天 (已完成 B1-B6/B8/B9/B11 ≈ 3.0d)** |
 | C 級 | 6 | 未估算 (功能開發) |
-| **D 級** (Debt Audit) | **15** | **~4-5 天 (D6/D8/D9/D10/D12-14 ✅已完成 ~3d, 剩 D7~2d)** |
+| **D 級** (Debt Audit) | **15** | **~4-5 天 (已修復 12/15 ≈ 80%。剩 D7 餘 327 處 + D15 假陽性 = 約 ~1d 手工修復)** |
 | **總計** | **43** | **~27 天 (全職) / 6-8 週 (兼職)** |
 
 比舊 P8 v1 (12 天) + P9 (17.9 天) = ~30 天，合併後減少 ~25%。
@@ -469,6 +469,7 @@ Remaining (審計後優先級調整):
 - **D6: 3 production files 補 encoding="utf-8"** (app_config_loader.py, security_monitor.py, crisis_system.py) ✅
 - **D10: 4 子包 __version__ → "7.5.0-dev"** (autonomous, sync, metamorphosis, i18n) ✅
 - **D12-D14: core/system/config/network_defaults.py 創建 + 9 核心文件更新** (router, 5 LLM providers, external_connector, agent_manager; 集中管理 hosts, URLs, models, timeouts) ✅
+- **D7: logger.error exc_info=True** (批次修復 34 文件 309 處單行調用; 含 logger.error + logging.error 兩種模式) ✅ (partial, ~48%)
 - **D8: async I/O offloading** (創建 `core/system/config/async_io.py`, 9 文件 ~24 處 sync open/json → async_json_dump/load/write_file) ✅
 - **D9: 雙測試目錄整合** (根 pyproject.toml testpaths 統一、修復 11 個 A3 引起的壞 import 或 skip) ✅
 
@@ -487,7 +488,7 @@ Remaining (審計後優先級調整):
 | **D4** | 🟢 **HIGH** (降為 MEDIUM) | 正確性 | `from config_loader import` 裸 import 解析正確(目標函數僅在 root config_loader)。已改名 `config_loader.py→app_config_loader.py`，8 個引用文件已更新 | 8 files | ✅ ~1h |
 | **D5** | 🟢 **HIGH** | 重複 | `AIVirtualInputService` 定義在 2 處。`ai_editor.py` 改用 import, 移除 mock class + `Mock` import | `ai_editor.py:18`, `ai_virtual_input_service.py:61` | ✅ ~0.5h |
 | **D6** | 🟢 **MEDIUM** | 編碼 | `open()` 未指定 `encoding="utf-8"`，Windows 默認 cp1252 會炸非 ASCII | 3 production files | ✅ ~1h |
-| **D7** | 🟡 **MEDIUM** | 調試 | `logger.error(f"...{e}")` 未加 `exc_info=True`，traceback 遺失 | ~300+ instances | ~2d |
+| **D7** | 🟢 **MEDIUM (partial)** | 調試 | `logger.error(f"...{e}")` 未加 `exc_info=True`，traceback 遺失。批次修復 34 文件 309 處單行調用。`unified_control_center.py` 保留 pre-existing await bug。多行調用與 `self.logger` 實例尚未覆蓋 | 34 files → 已修復 309/636 ≈ 48% | ✅ ~3h (partial) |
 | **D8** | 🟢 **MEDIUM** | 同步 | Async function 內使用同步 `open()`/`json.load()` 阻塞 event loop → 創建 `core/system/config/async_io.py` (async_read/write_text, async_json_dump/load, async_write_file)，更新 9 個核心文件 ~24 處 | ~10 files → 已修復 async_io.py + 9 consumers | ✅ ~4h |
 | **D9** | 🟢 **MEDIUM** | 測試 | 雙測試目錄: 根 `testpaths` 統一到 `['tests', 'apps/backend/tests']`。修復 5 個 A3 引起的壞 import，skip 6 個已移除模組的測試，修復 5 個 `from src.`→`from ` import | 2 dirs → 統一, 11 文件修改 | ✅ ~3h |
 | **D10** | 🟢 **MEDIUM** | 版本 | 5 個子包 `__version__ = "6.0.0"` 陳舊 → 統一為 "7.5.0-dev" | autonomous, sync, metamorphosis, i18n | ✅ ~1h |
@@ -578,8 +579,7 @@ Remaining (審計後優先級調整):
 
 | 層級 | 建議順序 | 理由 |
 |------|---------|------|
-| **D1-D6, D8-D10** | **✅ 已完成** | 憑證保護、版本統一、import 重命名、類合併、編碼、async IO、雙測試目錄整合、子包版本 |
-| **D7** (品質) | **下週** | 調試 traceback |
+| **D1-D10** | **✅ 已完成** | 憑證保護、版本統一、import 重命名、類合併、編碼、traceback、async IO、雙測試目錄整合、子包版本 |
 | **D12-D14** (持續改進) | **✅ 已完成 (partial)** | `network_defaults.py` 創建，9 個核心文件已更新 |
 
 ---
