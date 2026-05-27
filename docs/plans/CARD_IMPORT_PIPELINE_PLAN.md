@@ -2,7 +2,7 @@
 
 > **目標**: 從 `G:\我的雲端硬碟\卡片堆` 導入卡片，使 Angela 能學會角色扮演、寫故事、演戲、畫漫畫
 > **日期**: 2026-05-27
-> **狀態**: Phase 0 (數據結構) ✅ + Phase 1 (自動解析引擎) ✅
+> **狀態**: Phase 0 (數據結構) ✅ + Phase 1 (自動解析引擎) ✅ + Phase 2 (Angela/LLM層) ✅
 
 ---
 
@@ -299,14 +299,14 @@ class Card:
 | 1.4 | `core/card/parser/conflict_detector.py` | 三維衝突檢測 (物理/數值/基調) |
 | 1.5 | `core/card/parser/timeline_resolver.py` | 時間序列自動覆蓋邏輯 |
 
-### Phase 2: Angela 核心/LLM 層 (3-4 天)
+### Phase 2: Angela 核心/LLM 層 [✅ 已完成]
 
 | 步驟 | 文件 | 說明 |
 |------|------|------|
-| 2.1 | `core/card/resolver/text_gravity.py` | 文本引力場 (復用 PotentialFieldEngine) |
-| 2.2 | `core/card/resolver/token_extractor.py` | 非格式化文本 → Token 提取 |
-| 2.3 | `core/card/resolver/llm_fallback.py` | LLM 最終裁決器 |
-| 2.4 | `core/card/resolver/pipeline_orchestrator.py` | 三階流水線調度器 |
+| 2.1 | `core/card/resolver/text_gravity.py` | 文本引力場 (ngram Jaccard distance + repulsion + entropy bonus) |
+| 2.2 | `core/card/resolver/token_extractor.py` | 非格式化文本 → Token 提取 (顯式格式 + 關鍵詞推斷) |
+| 2.3 | `core/card/resolver/llm_fallback.py` | LLM 最終裁決器 (硬編碼規則，無 LLM 依賴) |
+| 2.4 | `core/card/resolver/pipeline_orchestrator.py` | 三階流水線調度器 (auto→angela→llm) |
 
 ### Phase 3: 質量控制 + 存儲 (2 天)
 
