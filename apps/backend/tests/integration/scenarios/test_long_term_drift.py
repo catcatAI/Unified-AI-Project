@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.autonomous.endocrine_system import EndocrineSystem, HormoneType
+from core.autonomous.endocrine_system import EndocrineSystem, HormoneType
 
 async def test_long_term_drift():
     print("🚀 [Behavioral Test] Starting Long-term Drift Analysis...")

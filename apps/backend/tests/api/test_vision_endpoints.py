@@ -1,9 +1,9 @@
 import numpy as np
 from fastapi.testclient import TestClient
 
-from src.services.main_api_server import app
-from src.api.v1.endpoints import vision as vision_mod
-from src.services.vision_service import VisionService
+from services.main_api_server import app
+from api.v1.endpoints import vision as vision_mod
+from services.vision_service import VisionService
 
 
 def setup_module(module):

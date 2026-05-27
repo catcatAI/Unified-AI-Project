@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from src.services.main_api_server import app
+from services.main_api_server import app
 
 
 def test_api_v1_root_and_health():

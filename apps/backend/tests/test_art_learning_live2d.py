@@ -17,39 +17,21 @@ from datetime import datetime
 from pathlib import Path
 
 # Import the systems
-try:
-    from apps.backend.src.core.autonomous.art_learning_system import (
-        ArtLearningSystem, ArtKnowledge, ArtDomain,
-        LearningType, BodyPartMapping
-    )
-    from apps.backend.src.core.autonomous.live2d_avatar_generator import (
-        Live2DAvatarGenerator, ViewAngle, GenerationStage
-    )
-    from apps.backend.src.core.autonomous.art_learning_workflow import (
-        ArtLearningWorkflow, WorkflowStage, LearningObjective,
-        WorkflowConfig
-    )
-    from apps.backend.src.core.autonomous.physiological_tactile import (
-        PhysiologicalTactileSystem, TactileStimulus, TactileType, BodyPart
-    )
-    from apps.backend.src.core.autonomous.live2d_integration import Live2DIntegration
-except ImportError:
-    # Fallback for direct import
-    from core.autonomous.art_learning_system import (
-        ArtLearningSystem, ArtKnowledge, ArtDomain,
-        LearningType, BodyPartMapping
-    )
-    from core.autonomous.live2d_avatar_generator import (
-        Live2DAvatarGenerator, ViewAngle, GenerationStage
-    )
-    from core.autonomous.art_learning_workflow import (
-        ArtLearningWorkflow, WorkflowStage, LearningObjective,
-        WorkflowConfig
-    )
-    from core.autonomous.physiological_tactile import (
-        PhysiologicalTactileSystem, TactileStimulus, TactileType, BodyPart
-    )
-    from core.autonomous.live2d_integration import Live2DIntegration
+from core.engine.art_learning_system import (
+    ArtLearningSystem, ArtKnowledge, ArtDomain,
+    LearningType, BodyPartMapping
+)
+from core.engine.live2d_avatar_generator import (
+    Live2DAvatarGenerator, ViewAngle, GenerationStage
+)
+from core.engine.art_learning_workflow import (
+    ArtLearningWorkflow, WorkflowStage, LearningObjective,
+    WorkflowConfig
+)
+from core.bio.physiological_tactile import (
+    PhysiologicalTactileSystem, TactileStimulus, TactileType, BodyPart
+)
+from core.engine.live2d_integration import Live2DIntegration
 
 
 class MockBrowserController:

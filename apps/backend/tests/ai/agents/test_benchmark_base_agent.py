@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from ai.agents.base_agent import BaseAgent
+from ai.agents.base.base_agent import BaseAgent
 from typing import Any, Dict
 
 # A concrete implementation of BaseAgent for benchmarking

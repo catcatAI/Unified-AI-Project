@@ -2,7 +2,7 @@ import json
 from fastapi.testclient import TestClient
 
 # Import the FastAPI app
-from src.services.main_api_server import app
+from services.main_api_server import app
 
 client = TestClient(app)
 

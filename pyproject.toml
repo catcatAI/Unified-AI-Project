@@ -93,7 +93,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 # pytest - Python 测试框架配置
-testpaths = ['tests']
+testpaths = ['tests', 'apps/backend/tests']
 python_files = ['test_*.py']
 python_classes = ['Test*']
 python_functions = ['test_*']
