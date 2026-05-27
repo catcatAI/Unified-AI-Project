@@ -1,4 +1,4 @@
-"""C5 — GlobalStateStore persistence unit tests"""
+"""C4+C5 — GlobalStateStore persistence unit tests"""
 
 import sys, asyncio, os
 sys.path.insert(0, 'apps/backend/src')
@@ -110,4 +110,64 @@ class TestGlobalStateStore:
     def test_neuro_vocabulary_domain_registered(self):
         state = self.store.get_state()
         assert 'neuro_vocabulary' in state
+
+    def test_load_domain_restores_state(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        self.store.set_persistence(JsonFileStateStore('data/test_state/'))
+        self.store.update_state('alpha', {'loaded_val': 99.9})
+        asyncio.run(self.store.save_domain('alpha'))
+        self.store.update_state('alpha', {'loaded_val': 0.0})
+        ok = asyncio.run(self.store.load_domain('alpha'))
+        assert ok is True
+        assert self.store.get_state('alpha')['loaded_val'] == 99.9
+        import shutil
+        shutil.rmtree('data/test_state', ignore_errors=True)
+
+    def test_load_nonexistent_domain_returns_false(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        self.store.set_persistence(JsonFileStateStore('data/test_state/'))
+        ok = asyncio.run(self.store.load_domain('epsilon'))
+        assert ok is False
+        import shutil
+        shutil.rmtree('data/test_state', ignore_errors=True)
+
+    def test_persistence_dirty_cleared_on_save(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        self.store.set_persistence(JsonFileStateStore('data/test_state/'))
+        self.store.update_state('alpha', {'x': 1})
+        assert self.store.is_dirty('alpha') is True
+        asyncio.run(self.store.save_domain('alpha'))
+        assert self.store.is_dirty('alpha') is False
+        import shutil
+        shutil.rmtree('data/test_state', ignore_errors=True)
+
+    def test_save_all_then_load_all_roundtrip(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        self.store.set_persistence(JsonFileStateStore('data/test_state/'))
+        self.store.update_state('alpha', {'a': 10})
+        self.store.update_state('beta', {'b': 20})
+        cnt_saved = asyncio.run(self.store.save_all())
+        assert cnt_saved >= 2
+        self.store.update_state('alpha', {'a': 0})
+        self.store.update_state('beta', {'b': 0})
+        cnt_loaded = asyncio.run(self.store.load_all())
+        assert cnt_loaded >= 2
+        assert self.store.get_state('alpha')['a'] == 10
+        assert self.store.get_state('beta')['b'] == 20
+        import shutil
+        shutil.rmtree('data/test_state', ignore_errors=True)
+
+    def test_persistence_is_dirty_after_update(self):
+        assert self.store.is_dirty('alpha') is False
+        self.store.update_state('alpha', {'v': 1})
+        assert self.store.is_dirty('alpha') is True
+
+    def test_set_persistence_on_existing_store(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        assert self.store._persistence is None
+        backend = JsonFileStateStore('data/test_state/')
+        self.store.set_persistence(backend)
+        assert self.store._persistence is backend
+        import shutil
+        shutil.rmtree('data/test_state', ignore_errors=True)
 

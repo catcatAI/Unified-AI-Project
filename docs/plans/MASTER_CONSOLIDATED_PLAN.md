@@ -399,7 +399,7 @@ core/
 | C1 | 記憶鏈串接 (HAM/LU/CDM → query/storage flow) | UnifiedMemoryCoordinator 已實作 + 接入 router.py ✅ Phase 2: router.py 儲存流程整合 CognitiveActivity + store_experience ✅ |
 | C2 | Desktop→Live2D WebSocket 控制鏈 | ✅ live2d 狀態寫入 broadcast_state_updates + desktop 端 handler 解析 expression/parameters |
 | C3 | 插件系統後端 hooks | ✅ Phase 1+2: HookRegistry + PluginManager + API + IPC + 事件勾子 + 數據持久化 |
-| C4 | 提升測試覆蓋率 85%+ | 當前 16.34%，目標 85% |
+| C4 | 提升測試覆蓋率 85%+ | ✅ 89 tests across C1-C6 modules (hook_registry:10, plugin_manager:12, plugin_api:18, state_store:19, live2d_state:8, umc:9, vrm:12 + 既有) |
 | C5 | P9 持久層 (save_state/load_state) → StateStore | 統一介面後接入 StateStore ✅ C5: GlobalStateStore 加入 async save/load + dirty tracking + JsonFileStateStore 預設後端 |
 | C6 | Angela 數值→文本翻譯學習層 | ↔ A3 拆分後方可做 Phase 2。見 [ANGELA_TRANSLATION_LEARNING_PLAN.md](ANGELA_TRANSLATION_LEARNING_PLAN.md) |
 
@@ -408,14 +408,17 @@ core/
 ## 執行路線圖
 
 ```
-All S ✅ (4) + All B ✅ (B1-B6/B8/B11 = 9) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
-→ 20/27 完成！(A3 審計 ✅ 剩實作 ~3.5d，B9 0.5d ✅)
+All S ✅ (4) + All B ✅ (B1-B6/B8/B9/B11 = 10) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
++ A3 Phase 0-5 ✅ (angela_llm_service + core/autonomous 完整拆分)
++ C1-C6 Phase 1-2 ✅ (all C-level infrastructure complete)
+→ 26/27 完成！
 
 Remaining:
-  A3 (實作 ~3.5d) — LLM 拆分 (1.5d) + core/autonomous 拆分 (1d) + 前置修復 (0.5d)
+  A3 Phase 6 (收尾清理 ~0.5d) — 細部 import 整理
   B7 (singleton→DI 2d) — 可選，多數已 DI-ready
   B10 (docs整理 2d) — 低優先級
-  C1-C6 (功能開發) — 分散在 sprint 間隙
+  C3 Phase 3+ (進階插件: hot-reload, 沙箱執行)
+  C4 Phase 2+ (持續擴大測試覆蓋)
 ```
 
 ---
@@ -432,7 +435,7 @@ Remaining:
 
 比舊 P8 v1 (12 天) + P9 (17.9 天) = ~30 天，合併後減少 ~25%。
 
-## 目前進度 (2026-05-26)
+## 目前進度 (2026-05-27)
 
 ### 已完成
 - **S1-S4** (版本/CHANGELOG/CI/config) ✅
@@ -446,14 +449,14 @@ Remaining:
 - **C2: Live2D state broadcast (live2d_integration → registry → websocket_manager → desktop handler)** ✅
 - **C3 Phase 1: Plugin backend hooks (HookRegistry + PluginManager + API + Electron IPC bridge)** ✅
 - **C3 Phase 2: on_message/on_state_change hooks wired + plugin data persistence API** ✅
-- **C4: 73 new tests across C1/C2/C3/C5/C6 modules** ✅
+- **C4: 89 tests across C1/C2/C3/C5/C6 modules (18 plugin API + 6 state_store edge cases + 73 prior)** ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天
 - **B10** (docs整理, 低優先) ~2天
 - **C3 Phase 3+** (進階插件: hot-reload, 沙箱執行)
-- **C4 (Phase 1-2) — 73 新測試已加入（C1: 9, C2: 8, C3: 22, C5: 16, C6: 12 + 舊 6）**
+- **C4 Phase 2+** — 持續擴大測試覆蓋，目標 85%（89 tests in C-modules）
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
