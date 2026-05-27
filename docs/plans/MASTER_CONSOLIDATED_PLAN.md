@@ -450,13 +450,13 @@ Remaining (審計後優先級調整):
 - **C3 Phase 3: Plugin hot-reload (Electron fs.watch + IPC → renderer auto-reload)** ✅
 - **C3 Phase 4: Plugin sandbox hardening (hook timeout, auto-disable on errors, managed timers, perf monitoring)** ✅
 - **C6 Phase 5: 翻譯學習層進階 (反向映射 find_axis_values + 信心衰減 decay_confidences + 缺口檢測 get_uncovered_values + 重疊檢測 detect_overlaps)** ✅
-- **C4: 98 tests across C1/C2/C3/C5/C6 modules (21 VRM + 77 prior)** ✅
+- **C4: 115 tests across C1/C2/C3/C5/C6 modules (12 service_registry + 41 state_store/persistence + 40 plugin + 8 live2d + 9 umc + 21 vrm)** ✅
 - **eta_axis_state import 路徑修復** ✅
 
 ### 待完成
 - **B7** (singleton→DI, 可選) ~2天 — ~40 instances already DI-ready
 - **B10** (docs整理, 低優先) ~2天
-- **C4 Phase 2+** — 持續擴大測試覆蓋，目標 85%（98 tests in C-modules）
+- **C4 Phase 2+** — 持續擴大測試覆蓋（115 tests, 0 warnings, 19.44s）
 
 ### 已知約束
 - C6 翻譯學習層 Phase 1-4 全部完成，sync_to_state_store / restore_from_state_store 已整合 C5 持久層
@@ -510,8 +510,8 @@ Remaining (審計後優先級調整):
 | C3 Phase 2 (wiring) | ✅ | grep wiring | on_message + on_state_change ✅ |
 | C3 Phase 3 (hot-reload) | ✅ | grep main.js | fs.watch + IPC + renderer handler ✅ |
 | C3 Phase 4+ (sandbox) | ✅ 完成 | 檔案存在 | hook timeout + auto-disable + managed timers + perf logging |
-| C4 測試覆蓋 | ✅ Phase 1-2 | pytest run | **98 tests** all passing (45.91s) |
-| C5 GlobalStateStore | ✅ | 檔案存在 + 測試 | 19 tests, persistence end-to-end ✅ |
+| C4 測試覆蓋 | ✅ Phase 1-2 | pytest run | **115 tests** all passing (19.44s, 0 warnings) |
+| C5 GlobalStateStore | ✅ | 檔案存在 + 測試 | 25 tests (19 state_store + 6 JsonFileStateStore direct), persistence end-to-end ✅ |
 | C6 Phase 1-4 (翻譯學習) | ✅ | 檔案存在 | 注入 + 回存 + C5 整合 ✅ |
 | C6 Phase 5 (反向映射+信心衰減+缺口檢測) | ✅ 完成 | 檔案存在 + 測試 | find_axis_values + decay_confidences + get_uncovered_values + detect_overlaps ✅ 9 tests |
 

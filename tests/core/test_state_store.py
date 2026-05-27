@@ -172,3 +172,63 @@ class TestGlobalStateStore:
         import shutil
         shutil.rmtree('data/test_state', ignore_errors=True)
 
+    # ── JsonFileStateStore direct tests ──────────────────────────────
+
+    def test_json_store_save_and_load(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore('data/test_json/')
+        ok = asyncio.run(store.save_state('test_key', {'val': 42}))
+        assert ok is True
+        data = asyncio.run(store.load_state('test_key'))
+        assert data == {'val': 42}
+        import shutil
+        shutil.rmtree('data/test_json', ignore_errors=True)
+
+    def test_json_store_load_nonexistent(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore('data/test_json/')
+        data = asyncio.run(store.load_state('nonexistent_key'))
+        assert data is None
+        import shutil
+        shutil.rmtree('data/test_json', ignore_errors=True)
+
+    def test_json_store_delete(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore('data/test_json/')
+        asyncio.run(store.save_state('del_key', {'x': 1}))
+        ok = asyncio.run(store.delete_state('del_key'))
+        assert ok is True
+        data = asyncio.run(store.load_state('del_key'))
+        assert data is None
+        import shutil
+        shutil.rmtree('data/test_json', ignore_errors=True)
+
+    def test_json_store_list_keys(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore('data/test_json/')
+        asyncio.run(store.save_state('key_a', {'a': 1}))
+        asyncio.run(store.save_state('key_b', {'b': 2}))
+        asyncio.run(store.save_state('other_c', {'c': 3}))
+        keys = asyncio.run(store.list_keys('key_'))
+        assert 'key_a' in keys
+        assert 'key_b' in keys
+        assert 'other_c' not in keys
+        import shutil
+        shutil.rmtree('data/test_json', ignore_errors=True)
+
+    def test_json_store_save_after_dir_removed_returns_false(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore('data/test_json/')
+        import shutil
+        shutil.rmtree('data/test_json', ignore_errors=True)
+        ok = asyncio.run(store.save_state('key', {'v': 1}))
+        assert ok is False
+
+    def test_json_store_delete_nonexistent(self):
+        from core.interfaces.persistence import JsonFileStateStore
+        store = JsonFileStateStore('data/test_json/')
+        ok = asyncio.run(store.delete_state('no_such_key'))
+        assert ok is True
+        import shutil
+        shutil.rmtree('data/test_json', ignore_errors=True)
+
