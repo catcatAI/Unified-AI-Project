@@ -18,10 +18,17 @@
 import ast
 import operator
 import logging
+import sys
 from typing import Any, Dict, List, Optional, Set
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# Compatibility for removed AST node types (Python >= 3.14 removed deprecated aliases)
+_HAS_NUM = hasattr(ast, "Num")
+_HAS_STR = hasattr(ast, "Str")
+_HAS_NAMECONST = hasattr(ast, "NameConstant")
+_HAS_INDEX = hasattr(ast, "Index")
 
 
 @dataclass
@@ -123,20 +130,24 @@ class SafeEvaluator:
         ast.UnaryOp,
         ast.Compare,
         ast.BoolOp,
-        ast.Num,
         ast.Constant,
-        ast.Str,
-        ast.Name,
-        ast.NameConstant,
         ast.Call,
         ast.List,
         ast.Tuple,
         ast.Set,
         ast.Dict,
         ast.Subscript,
-        ast.Index,
         ast.Slice,
+        ast.Name,
     }
+    if _HAS_NUM:
+        ALLOWED_NODE_TYPES.add(ast.Num)
+    if _HAS_STR:
+        ALLOWED_NODE_TYPES.add(ast.Str)
+    if _HAS_NAMECONST:
+        ALLOWED_NODE_TYPES.add(ast.NameConstant)
+    if _HAS_INDEX:
+        ALLOWED_NODE_TYPES.add(ast.Index)
 
     def __init__(self, max_length: int = 1000, max_complexity: int = 100):
         """
@@ -228,13 +239,13 @@ class SafeEvaluator:
         elif isinstance(node, ast.Constant):
             return node.value
 
-        elif isinstance(node, ast.Num):  # Python < 3.8
+        elif _HAS_NUM and isinstance(node, ast.Num):
             return node.n
 
-        elif isinstance(node, ast.Str):  # Python < 3.8
+        elif _HAS_STR and isinstance(node, ast.Str):
             return node.s
 
-        elif isinstance(node, ast.NameConstant):  # Python < 3.8
+        elif _HAS_NAMECONST and isinstance(node, ast.NameConstant):
             return node.value
 
         elif isinstance(node, ast.Name):
