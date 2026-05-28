@@ -477,7 +477,6 @@ Remaining (審計後優先級調整):
 ### 待完成
 - **實際導入** — 執行 `python run_card_import.py` 從 G Drive 卡片堆導入（需 Drive OAuth 授權一次）
 - **Phase 5.4 (Electron 前端雙視圖 UI)** — 獨立領域，Electron app 已存在 (`apps/desktop-app/`)
-- **B10** (docs整理, 低優先) ~2天 — 181 docs/ 檔案需分類歸檔
 - **C4 Phase 2+** — 持續擴大測試覆蓋（目前 180+ tests, 0 warnings）
 
 ### 新增: D 級 (Debt — Audit Findings 2026-05-27)
