@@ -477,7 +477,8 @@ Remaining (審計後優先級調整):
 ### 待完成
 - **實際導入** — 執行 `python run_card_import.py` 從 G Drive 卡片堆導入（需 Drive OAuth 授權一次）
 - **Phase 5.4 (Electron 前端雙視圖 UI)** — 獨立領域，Electron app 已存在 (`apps/desktop-app/`)
-- **C4 Phase 2+** — 持續擴大測試覆蓋（目前 180+ tests, 0 warnings）
+- **C4 Phase 4** — 持續擴大測試覆蓋（目前 157+ tests across 36 test files; 從剩下 200+ 未測試模塊中繼續）
+- **source bug 發現** — `MathVerifier` 缺少 `_get_math_config`（原只存在於 `SpatialEngine`）；已修復路由到 `self.engine._get_math_config()`
 
 ### 新增: D 級 (Debt — Audit Findings 2026-05-27)
 
@@ -546,7 +547,7 @@ Remaining (審計後優先級調整):
 | B7 Singleton→DI | ✅ 已修正 | 全庫掃描 | Dead Singleton metaclass 移除, 2x get_instance→_create, 5 _instance=None 皆 DI-ready via registry |
 | B8 介面匯出 | ✅ | 檔案存在 | core/interfaces/__init__.py 已匯出 |
 | B9 根目錄清理 | ✅ 部分 | ls 根目錄 | **54 條目**（目標 <50，差 4 為環境文件） |
-| B10 docs 整理 | ⏳ PENDING | 全庫掃描 | ~170+ 計畫文件散落各處 |
+| B10 docs 整理 | ✅ 已完成 | docs/ 根層 → 10 條目 (原 181) | 7 個編號目錄, INDEX.md 更新 |
 | B11 HSP 硬編碼 | ✅ | grep hsp:// | 無硬編碼 |
 
 ### C 級審計

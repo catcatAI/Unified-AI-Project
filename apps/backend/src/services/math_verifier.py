@@ -346,7 +346,7 @@ class MathVerifier:
             result.engine_answer = engine_result
             result.final_answer = engine_result
 
-        thresh_cfg = self._get_math_config("thresholds", {})
+        thresh_cfg = self.engine._get_math_config("thresholds", {})
         match_diff = thresh_cfg.get("verification_match_diff", 0.01)
         clarify_conf = thresh_cfg.get("clarification_trigger_confidence", 0.7)
 
@@ -405,7 +405,7 @@ class MathVerifier:
         if result.clarification_question:
             return result.clarification_question
 
-        high_conf = self._get_math_config("thresholds", {}).get("high_confidence_threshold", 0.8)
+        high_conf = self.engine._get_math_config("thresholds", {}).get("high_confidence_threshold", 0.8)
         if result.matches:
             if extraction.confidence >= high_conf:
                 return f"計算結果是 {answer}。"
