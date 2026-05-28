@@ -477,7 +477,7 @@ Remaining (審計後優先級調整):
 ### 待完成
 - **實際導入** — 執行 `python run_card_import.py` 從 G Drive 卡片堆導入（需 Drive OAuth 授權一次）
 - **Phase 5.4 (Electron 前端雙視圖 UI)** — 獨立領域，Electron app 已存在 (`apps/desktop-app/`)，36 JS modules, ~90% scaffolded
-- **C4 Phase 5** — 持續擴大測試覆蓋（目前 259+ tests across 38 test files）
+- **C4 Phase 5** — 持續擴大測試覆蓋（目前 289+ tests across 39 test files; 新增 code_learning 30 tests）
 - **source bugs 發現與修復**:
   - `MathVerifier` 缺少 `_get_math_config` → 已修復
   - `audit_logger.py` 缺少 `import os` → 已修復
