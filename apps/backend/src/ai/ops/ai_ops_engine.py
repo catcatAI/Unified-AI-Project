@@ -19,7 +19,7 @@ class AIOpsEngine:
     def start_monitoring(self) -> bool:
         """Starts the AI Ops monitoring process."""
         if self.monitoring_active:
-            logger.warning("Monitoring is already active.")
+            logger.warning("Monitoring is already active.", exc_info=True)
             return False
         self.monitoring_active = True
         logger.info("AI Ops monitoring started.")
@@ -28,7 +28,7 @@ class AIOpsEngine:
     def stop_monitoring(self) -> bool:
         """Stops the AI Ops monitoring process."""
         if not self.monitoring_active:
-            logger.warning("Monitoring is not active.")
+            logger.warning("Monitoring is not active.", exc_info=True)
             return False
         self.monitoring_active = False
         logger.info("AI Ops monitoring stopped.")
@@ -42,7 +42,7 @@ class AIOpsEngine:
         logger.debug(f"Detecting anomaly in data: {data}")
         # Simple placeholder: detect if a 'value' exceeds a threshold
         if "value" in data and data["value"] > self.config.get("anomaly_threshold", 100):
-            logger.warning(f"Anomaly detected: value {data['value']} exceeds threshold.")
+            logger.warning(f"Anomaly detected: value {data['value']} exceeds threshold.", exc_info=True)
             return True
         return False
 

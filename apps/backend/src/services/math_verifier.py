@@ -123,7 +123,7 @@ class MathExtractor:
             result.confidence = 0.2
             result.is_valid = bool(result.expression)
         except Exception as e:
-            logger.warning(f"[MathExtractor] Extraction failed: {e}")
+            logger.warning(f"[MathExtractor] Extraction failed: {e}", exc_info=True)
             result.expression = self._fallback_extract_expression(user_message)
             result.understanding = "Fallback 提取"
             result.confidence = 0.1
@@ -280,7 +280,7 @@ class SpatialEngine:
             self._local_cache[expression] = result
             return result, True
         except Exception as e:
-            logger.warning(f"[SpatialEngine] Evaluation failed for '{expression}': {e}")
+            logger.warning(f"[SpatialEngine] Evaluation failed for '{expression}': {e}", exc_info=True)
             return 0.0, False
 
     def _get_math_config(self, key: str, default):

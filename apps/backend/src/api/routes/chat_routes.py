@@ -78,7 +78,7 @@ async def _handle_chat_request(
     _trunc_len = _chat_cfg.get("truncation_length", 1000)
     _http_timeout = _chat_cfg.get("http_timeout", 30.0)
     if len(user_message) > _max_len:
-        logger.warning(f"\U0001f6df [LIS] Intercepted oversized input ({len(user_message)} chars)")
+        logger.warning(f"\U0001f6df [LIS] Intercepted oversized input ({len(user_message)} chars)", exc_info=True)
         user_message = user_message[:_trunc_len]
 
     if session_id not in sessions:
@@ -103,7 +103,7 @@ async def _handle_chat_request(
                     return _build_math_response(verification, matrix, user_message, session_id)
                 is_math = False
         except Exception as math_err:
-            logger.warning(f"\u26a0 [DualRail] Math verification failed: {math_err}")
+            logger.warning(f"\u26a0 [DualRail] Math verification failed: {math_err}", exc_info=True)
             is_math = False
 
         _chat_svc = await _get_chat_service()
@@ -126,7 +126,7 @@ async def _handle_chat_request(
         }
 
     except asyncio.TimeoutError:
-        logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
+        logger.warning(f"LLM response timeout for message: {user_message[:50]}...", exc_info=True)
         return {
             "response_text": "\uff08\u6211\u7684\u5927\u8166\u4f3c\u4e4e\u9047\u5230\u4e86\u4e00\u9ede\u9ede\u5c0f\u5e72\u6270\uff0c\u80fd\u518d\u8aaa\u4e00\u6b21\u55ce\uff1f\uff09",
             "source": "fallback-timeout",
@@ -175,7 +175,7 @@ def _build_math_response(verification, matrix, user_message: str, session_id: st
 async def sync_key_c(request: Request):
     client_host = request.client.host
     if client_host not in ["127.0.0.1", "::1", "localhost"]:
-        logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}")
+        logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}", exc_info=True)
         raise HTTPException(status_code=403, detail="Access restricted to localhost")
     abc_key_manager = get_abc_key_manager()
     key_c = abc_key_manager.get_key("KeyC")

@@ -565,9 +565,9 @@ if __name__ == "__main__":
         context=ErrorContext(module="test", function="main"),
     )
 
-    logger.error(f"Error: {error}")
-    logger.error(f"Dict: {error.to_dict()}")
-    logger.error(f"JSON: {error.to_json()}")
+    logger.error(f"Error: {error}", exc_info=True)
+    logger.error(f"Dict: {error.to_dict()}", exc_info=True)
+    logger.error(f"JSON: {error.to_json()}", exc_info=True)
 
     # 测试错误处理
     handler = get_error_handler()

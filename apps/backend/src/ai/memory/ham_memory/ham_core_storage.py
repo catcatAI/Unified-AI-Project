@@ -76,7 +76,7 @@ class HAMCoreStorage:
             if self.resource_awareness_service:
                 available_space_gb = self.resource_awareness_service.get_available_disk_space_gb()
                 if available_space_gb < 0.1:  # Example: require at least 0.1 GB free
-                    logger.warning("Insufficient disk space to save core memory. Skipping save.")
+                    logger.warning("Insufficient disk space to save core memory. Skipping save.", exc_info=True)
                     return False
 
             data_to_save = {
@@ -98,7 +98,7 @@ class HAMCoreStorage:
             logger.debug(f"Core memory saved to {self.core_storage_filepath}")
             return True
         except Exception as e:  # broad exception acceptable: save failure should return False gracefully
-            logger.error(f"Error saving core memory to file {self.core_storage_filepath}: {e}")
+            logger.error(f"Error saving core memory to file {self.core_storage_filepath}: {e}", exc_info=True)
             return False
 
     def _get_current_disk_usage_gb(self) -> float:

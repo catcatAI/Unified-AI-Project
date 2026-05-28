@@ -41,7 +41,7 @@ def setup_env_file(
 
     # 檢查 .env.example 是否存在
     if not example_path.exists():
-        logger.warning(f"⚠️  {env_example_name} 不存在，無法創建 {env_name}")
+        logger.warning(f"⚠️  {env_example_name} 不存在，無法創建 {env_name}", exc_info=True)
         return False
 
     # 複製 .env.example 到 .env
@@ -50,5 +50,5 @@ def setup_env_file(
         logger.info(f"✅ 已從 {env_example_name} 創建 {env_name}")
         return True
     except Exception as e:  # broad exception acceptable: file copy may fail for various reasons
-        logger.error(f"❌ 創建 {env_name} 失敗: {e}")
+        logger.error(f"❌ 創建 {env_name} 失敗: {e}", exc_info=True)
         return False

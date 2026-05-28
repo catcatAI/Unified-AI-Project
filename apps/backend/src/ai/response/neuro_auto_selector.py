@@ -257,7 +257,7 @@ class StateInterpreter:
 
                 self._state_matrix = StateMatrix4D()
             except Exception:
-                logger.warning("[StateInterpreter] StateMatrix4D not available")
+                logger.warning("[StateInterpreter] StateMatrix4D not available", exc_info=True)
 
     def get_energy(self) -> float:
         """Get alpha.energy from state matrix."""
@@ -429,7 +429,7 @@ class LearnRecorder:
             logger.info(f"[LearnRecorder] Flushed {len(self._pending)} records")
             self._pending.clear()
         except Exception:
-            logger.warning("[LearnRecorder] Flush failed, will retry later")
+            logger.warning("[LearnRecorder] Flush failed, will retry later", exc_info=True)
 
     def flush_sync(self):
         """Force flush (called on shutdown)."""

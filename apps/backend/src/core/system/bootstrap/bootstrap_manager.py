@@ -85,7 +85,7 @@ class BootstrapManager:
             with open(status_path, 'w', encoding='utf-8') as f:
                 json.dump(self.state, f, indent=2)
         except Exception as e:
-            logger.error(f"Failed to persist bootstrap state: {e}")
+            logger.error(f"Failed to persist bootstrap state: {e}", exc_info=True)
 
     def get_state(self) -> Dict[str, Any]:
         """Returns the current bootstrap state, running if necessary."""
@@ -100,7 +100,7 @@ class BootstrapManager:
                     self._initialized = True
                     return self.state
                 except json.JSONDecodeError:
-                    logger.warning("Corrupted system_status.json, running full bootstrap")
+                    logger.warning("Corrupted system_status.json, running full bootstrap", exc_info=True)
             return self.run_full_bootstrap()
         return self.state
 

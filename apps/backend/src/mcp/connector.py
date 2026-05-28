@@ -147,7 +147,7 @@ class MCPConnector:
             client.subscribe(f"mcp/broadcast")
             client.subscribe(f"mcp/unicast/{self.ai_id}")
         else:
-            self.logger.warning(f"MCPConnector failed to connect, return code {rc}")
+            logger.warning(f"MCPConnector failed to connect, return code {rc}", exc_info=True)
             self.is_connected = False
             self.mcp_available = False
 
@@ -210,7 +210,7 @@ class MCPConnector:
             except Exception as e:  # broad exception acceptable: ensure fallback send failure is logged but does not crash
                 self.logger.error(f"MCP fallback發送失敗: {e}", exc_info=True)
 
-        self.logger.error(f"無法發送MCP命令 '{command_name}' 到 {target_id}")
+        logger.error(f"無法發送MCP命令 '{command_name}' 到 {target_id}", exc_info=True)
         return request_id
 
     async def _initialize_fallback_protocols(self):
@@ -226,7 +226,7 @@ class MCPConnector:
                     self.fallback_manager.register_command_handler(command_name, handler)
                 self.logger.info("MCP fallback protocols initialized successfully")
             else:
-                self.logger.error("Failed to initialize MCP fallback protocols")
+                logger.error("Failed to initialize MCP fallback protocols", exc_info=True)
                 self.fallback_initialized = False
         except Exception as e:  # broad exception acceptable: ensure init failure does not crash the connector
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
@@ -252,7 +252,7 @@ class MCPConnector:
             if success:
                 self.logger.debug(f"MCP command sent via fallback: {request_id}")
             else:
-                self.logger.error(f"Failed to send MCP command via fallback: {request_id}")
+                logger.error(f"Failed to send MCP command via fallback: {request_id}", exc_info=True)
             return success
         except Exception as e:  # broad exception acceptable: ensure fallback send errors are caught and handled gracefully
             self.logger.error(f"Error sending MCP command via fallback: {e}", exc_info=True)

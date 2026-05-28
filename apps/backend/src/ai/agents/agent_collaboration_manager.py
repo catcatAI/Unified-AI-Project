@@ -134,7 +134,7 @@ class AgentCollaborationManager:
             collaboration_task.status = CollaborationStatus.FAILED
 
             collaboration_task.error_message = str(e)
-            logger.error(f"Exception while delegating task '{task_id}': {e}")
+            logger.error(f"Exception while delegating task '{task_id}': {e}", exc_info=True)
         return task_id
 
     async def _handle_task_result(
@@ -156,7 +156,7 @@ class AgentCollaborationManager:
                     collaboration_task.error_message = result_payload.get("error_details", {}).get(
                         "error_message", "Unknown error"
                     )
-                    logger.error(f"Task '{task_id}' failed: {collaboration_task.error_message}")
+                    logger.error(f"Task '{task_id}' failed: {collaboration_task.error_message}", exc_info=True)
 
     async def get_collaboration_status(self, task_id: str) -> Optional[CollaborationTask]:
         """Get the status of a collaboration task."""
@@ -184,13 +184,13 @@ class AgentCollaborationManager:
                         if task_index in results:
                             parameters[key] = results[task_index]
                     except (ValueError, IndexError):
-                        logger.warning(f"Failed to parse dependency placeholder: {value}")
+                        logger.warning(f"Failed to parse dependency placeholder: {value}", exc_info=True)
 
             # Find an agent for this capability
             target_agent_id = await self.find_agent_for_capability(capability_id)
 
             if not target_agent_id:
-                logger.error(f"No agent found for capability '{capability_id}'")
+                logger.error(f"No agent found for capability '{capability_id}'", exc_info=True)
                 return {
                     "status": "failed",
                     "error": f"No agent found for capability '{capability_id}'",
@@ -223,7 +223,7 @@ class AgentCollaborationManager:
                 results[i] = task_status.result
             else:
                 error_msg = task_status.error_message if task_status else "Task timed out"
-                logger.error(f"Task {i} failed: {error_msg}")
+                logger.error(f"Task {i} failed: {error_msg}", exc_info=True)
                 return {"status": "failed", "error": f"Task {i} failed: {error_msg}"}
 
         return {"status": "success", "results": results}

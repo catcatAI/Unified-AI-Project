@@ -143,12 +143,12 @@ class OntologySystem:
 
         # 检查实体ID是否已存在
         if entity.entity_id in self.entities:
-            logger.warning(f"[{self.system_id}] 实体ID已存在: {entity.entity_id}")
+            logger.warning(f"[{self.system_id}] 实体ID已存在: {entity.entity_id}", exc_info=True)
             return False
 
         # 验证实体的存在一致性
         if not self._validate_entity_consistency(entity):
-            logger.warning(f"[{self.system_id}] 实体一致性验证失败: {entity.entity_id}")
+            logger.warning(f"[{self.system_id}] 实体一致性验证失败: {entity.entity_id}", exc_info=True)
             return False
 
         # 添加到实体库
@@ -182,21 +182,21 @@ class OntologySystem:
 
         # 检查关系ID是否已存在
         if relationship.relationship_id in self.relationships:
-            logger.warning(f"[{self.system_id}] 关系ID已存在: {relationship.relationship_id}")
+            logger.warning(f"[{self.system_id}] 关系ID已存在: {relationship.relationship_id}", exc_info=True)
             return False
 
         # 检查源实体和目标实体是否存在
         if relationship.source_entity not in self.entities:
-            logger.warning(f"[{self.system_id}] 源实体不存在: {relationship.source_entity}")
+            logger.warning(f"[{self.system_id}] 源实体不存在: {relationship.source_entity}", exc_info=True)
             return False
 
         if relationship.target_entity not in self.entities:
-            logger.warning(f"[{self.system_id}] 目标实体不存在: {relationship.target_entity}")
+            logger.warning(f"[{self.system_id}] 目标实体不存在: {relationship.target_entity}", exc_info=True)
             return False
 
         # 验证关系的逻辑一致性
         if not self._validate_relationship_consistency(relationship):
-            logger.warning(f"[{self.system_id}] 关系一致性验证失败: {relationship.relationship_id}")
+            logger.warning(f"[{self.system_id}] 关系一致性验证失败: {relationship.relationship_id}", exc_info=True)
             return False
 
         # 添加到关系库
@@ -306,7 +306,7 @@ class OntologySystem:
             bool: 更新是否成功
         """
         if entity_id not in self.entities:
-            logger.warning(f"[{self.system_id}] 实体不存在: {entity_id}")
+            logger.warning(f"[{self.system_id}] 实体不存在: {entity_id}", exc_info=True)
             return False
 
         entity = self.entities[entity_id]
@@ -333,13 +333,13 @@ class OntologySystem:
         if entity.entity_type in required_properties:
             for prop in required_properties[entity.entity_type]:
                 if prop not in entity.properties:
-                    logger.warning(f"[{self.system_id}] 缺少必要属性: {prop}")
+                    logger.warning(f"[{self.system_id}] 缺少必要属性: {prop}", exc_info=True)
                     return False
 
         # 检查存在层次的逻辑性
         if entity.entity_type == EntityType.HUMAN:
             if ExistenceLevel.PHYSICAL not in entity.existence_levels:
-                logger.warning(f"[{self.system_id}] 人类实体必须具有物理存在")
+                logger.warning(f"[{self.system_id}] 人类实体必须具有物理存在", exc_info=True)
                 return False
 
         return True
@@ -353,7 +353,7 @@ class OntologySystem:
 
             if source and target:
                 if self._has_type_conflict(source.entity_type, target.entity_type):
-                    logger.warning(f"[{self.system_id}] 检测到类型冲突")
+                    logger.warning(f"[{self.system_id}] 检测到类型冲突", exc_info=True)
                     return False
 
         return True
@@ -559,13 +559,13 @@ class OntologySystem:
         # 检查属性值的有效性
         for key, value in entity.properties.items():
             if value is None:
-                logger.warning(f"[{self.system_id}] 实体 {entity.entity_id} 属性 {key} 为空")
+                logger.warning(f"[{self.system_id}] 实体 {entity.entity_id} 属性 {key} 为空", exc_info=True)
                 return False
 
         # 检查存在层次的逻辑性
         if entity.entity_type == EntityType.AI_AGENT:
             if ExistenceLevel.DIGITAL not in entity.existence_levels:
-                logger.warning(f"[{self.system_id}] AI实体 {entity.entity_id} 缺少数字存在")
+                logger.warning(f"[{self.system_id}] AI实体 {entity.entity_id} 缺少数字存在", exc_info=True)
                 return False
 
         return True
@@ -574,7 +574,7 @@ class OntologySystem:
         """检查关系内部一致性"""
         # 检查关系强度的有效性
         if not (0.0 <= relationship.strength <= 1.0):
-            logger.warning(f"[{self.system_id}] 关系 {relationship.relationship_id} 强度无效")
+            logger.warning(f"[{self.system_id}] 关系 {relationship.relationship_id} 强度无效", exc_info=True)
             return False
 
         # 检查属性值的有效性

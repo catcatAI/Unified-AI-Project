@@ -200,7 +200,7 @@ class KeyValidator:
         logger.info(f"總計密鑰數: {summary['total_keys']}")
         logger.info(f"有效密鑰數: {summary['valid_keys']}")
         logger.info(f"無效密鑰數: {summary['invalid_keys']}")
-        logger.error(f"嚴重問題: {summary['critical_issues']}")
+        logger.error(f"嚴重問題: {summary['critical_issues']}", exc_info=True)
         logger.info(f"高優先級問題: {summary['high_issues']}")
         logger.info(f"整體狀態: {'✓ 通過' if summary['all_valid'] else '✗ 失敗'}")
         logger.info()
@@ -227,7 +227,7 @@ class KeyValidator:
         logger.info("=" * 80)
 
         if not summary["all_valid"]:
-            logger.warning("\n⚠️  安全警告: 發現密鑰安全問題！")
+            logger.warning("\n⚠️  安全警告: 發現密鑰安全問題！", exc_info=True)
             logger.info("請採取以下措施:")
             logger.info("1. 使用強隨機生成器創建新的密鑰")
             logger.info("2. 確保密鑰長度符合要求")

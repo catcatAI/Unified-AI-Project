@@ -371,7 +371,7 @@ class EnterpriseErrorHandler:
             "timestamp": datetime.now().isoformat(),
         }
 
-        self.logger.critical(f"系統警報: {reason}", extra=alert_data)
+        logger.critical(f"系統警報: {reason}", extra=alert_data, exc_info=True)
 
     def register_strategy(self, category: ErrorCategory, strategy: RecoveryStrategy):
         """註冊恢復策略"""

@@ -51,7 +51,7 @@ class PredictiveMaintenanceEngine:
                         "average_value": average_value,
                         "message": f"Sensor value {latest_data['value']} deviates significantly from average {average_value:.2f}",
                     }
-                    logger.warning(f"Anomaly detected for sensor {sensor_id}: {anomaly['message']}")
+                    logger.warning(f"Anomaly detected for sensor {sensor_id}: {anomaly['message']}", exc_info=True)
                     return anomaly
         return None
 
@@ -72,7 +72,7 @@ class PredictiveMaintenanceEngine:
                 "likelihood": 0.8,  # High likelihood due to anomaly
                 "details": anomaly["message"],
             }
-            logger.critical(f"Failure predicted for sensor {sensor_id}: {prediction['details']}")
+            logger.critical(f"Failure predicted for sensor {sensor_id}: {prediction['details']}", exc_info=True)
             return prediction
         return None
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     if prediction:
         logger.info(f"Prediction for temp_sensor_1: {prediction}")
     else:
-        logger.error("No immediate failure predicted for temp_sensor_1.")
+        logger.error("No immediate failure predicted for temp_sensor_1.", exc_info=True)
 
     engine.ingest_sensor_data("pressure_sensor_A", {"value": 100.0})
     engine.ingest_sensor_data("pressure_sensor_A", {"value": 101.0})
@@ -112,6 +112,6 @@ if __name__ == "__main__":
     if prediction:
         logger.info(f"Prediction for pressure_sensor_A: {prediction}")
     else:
-        logger.error("No immediate failure predicted for pressure_sensor_A.")
+        logger.error("No immediate failure predicted for pressure_sensor_A.", exc_info=True)
 
     logger.info("\n--- PredictiveMaintenanceEngine Example Finished ---")

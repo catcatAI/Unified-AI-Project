@@ -21,7 +21,7 @@ async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0, svc=D
         result = await svc.scan_and_identify(audio_data, duration)
         return result
     except Exception as e:  # broad exception acceptable: audio scan endpoint should be resilient to errors
-        logger.error(f"Audio scan error: {e}")
+        logger.error(f"Audio scan error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -32,7 +32,7 @@ async def audio_register_user(audio_data: bytes = Body(...), svc=Depends(get_aud
         result = await svc.register_user_voice(audio_data)
         return result
     except Exception as e:  # broad exception acceptable: user registration should not crash on errors
-        logger.error(f"Audio registration error: {e}")
+        logger.error(f"Audio registration error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -43,7 +43,7 @@ async def audio_control(params: Dict[str, Any] = Body(...)):
     try:
         return {"status": "success", "module": "audio", "enabled": enabled, "mode": "post_method"}
     except Exception as e:  # broad exception acceptable: audio control endpoint should be resilient
-        logger.error(f"Audio control error: {e}")
+        logger.error(f"Audio control error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -53,5 +53,5 @@ async def audio_control_get(enabled: bool = True):
     try:
         return {"status": "success", "module": "audio", "enabled": enabled, "mode": "get_method"}
     except Exception as e:  # broad exception acceptable: graceful degradation on failure
-        logger.error(f"Audio control error: {e}")
+        logger.error(f"Audio control error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

@@ -34,7 +34,7 @@ class VectorMemoryStore:
             )
             logger.info("VectorMemoryStore initialized successfully.")
         except Exception as e:  # broad exception acceptable: initialization failures should not crash the system
-            logger.error(f"Failed to initialize VectorMemoryStore: {e}")
+            logger.error(f"Failed to initialize VectorMemoryStore: {e}", exc_info=True)
             self.client = None
             self.collection = None
 
@@ -50,7 +50,7 @@ class VectorMemoryStore:
             metadata (Optional[Dict[str, Any]]): Metadata associated with the memory.
         """
         if not self.collection:
-            logger.warning("VectorMemoryStore not initialized. Cannot add memory.")
+            logger.warning("VectorMemoryStore not initialized. Cannot add memory.", exc_info=True)
             return
 
         try:
@@ -59,7 +59,7 @@ class VectorMemoryStore:
             )
             logger.debug(f"Added memory {memory_id} to vector store.")
         except Exception as e:  # broad exception acceptable: add memory should not crash caller
-            logger.error(f"Error adding memory {memory_id} to vector store: {e}")
+            logger.error(f"Error adding memory {memory_id} to vector store: {e}", exc_info=True)
 
     async def semantic_search(self, query: str, limit: int = 10):
         """
@@ -73,7 +73,7 @@ class VectorMemoryStore:
             Search results from ChromaDB.
         """
         if not self.collection:
-            logger.warning("VectorMemoryStore not initialized. Cannot perform semantic search.")
+            logger.warning("VectorMemoryStore not initialized. Cannot perform semantic search.", exc_info=True)
             return {}
 
         try:
@@ -81,5 +81,5 @@ class VectorMemoryStore:
             logger.debug(f"Semantic search returned {len(results.get('ids', []))} results.")
             return results
         except Exception as e:  # broad exception acceptable: search should return empty results on failure
-            logger.error(f"Error performing semantic search: {e}")
+            logger.error(f"Error performing semantic search: {e}", exc_info=True)
             return {}

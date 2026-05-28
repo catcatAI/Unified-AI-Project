@@ -70,7 +70,7 @@ class FallbackConfigLoader:
             if os.path.exists(path):
                 return path
 
-        logger.warning("未找到配置文件, 将使用默认配置")
+        logger.warning("未找到配置文件, 将使用默认配置", exc_info=True)
         return None
 
     def load_config(self) -> Dict[str, Any]:
@@ -88,7 +88,7 @@ class FallbackConfigLoader:
                 logger.info(f"已加载配置文件: {self.config_path}")
 
             except Exception as e:  # broad exception acceptable: YAML parsing may fail with various errors
-                logger.error(f"加载配置文件失败: {e}")
+                logger.error(f"加载配置文件失败: {e}", exc_info=True)
                 self._config = self.DEFAULT_CONFIG.copy()
         else:
             logger.info("使用默认配置")
@@ -153,7 +153,7 @@ class FallbackConfigLoader:
             logger.info(f"配置已保存到: {save_path}")
 
         except Exception as e:  # broad exception acceptable: file/directory operations may fail with various errors
-            logger.error(f"保存配置失败: {e}")
+            logger.error(f"保存配置失败: {e}", exc_info=True)
             raise
 
     def validate_config(self, config: Optional[Dict[str, Any]] = None) -> bool:
@@ -168,11 +168,11 @@ class FallbackConfigLoader:
             protocols = fallback_config.get("protocols")
             for protocol_name, protocol_config in protocols.items():
                 if not isinstance(protocol_config.get("priority"), int):
-                    logger.error(f"协议 {protocol_name} 的优先级必须是整数")
+                    logger.error(f"协议 {protocol_name} 的优先级必须是整数", exc_info=True)
                     return False
 
                 if not isinstance(protocol_config.get("enabled"), bool):
-                    logger.error(f"协议 {protocol_name} 的enabled必须是布尔值")
+                    logger.error(f"协议 {protocol_name} 的enabled必须是布尔值", exc_info=True)
                     return False
 
             # 检查消息配置
@@ -182,7 +182,7 @@ class FallbackConfigLoader:
                     not isinstance(message_config["default_max_retries"], int)
                     or message_config["default_max_retries"] < 0
                 ):
-                    logger.error("default_max_retries必须是非负整数")
+                    logger.error("default_max_retries必须是非负整数", exc_info=True)
                     return False
 
             if message_config.get("default_ttl") is not None:
@@ -190,14 +190,14 @@ class FallbackConfigLoader:
                     not isinstance(message_config["default_ttl"], (int, float))
                     or message_config["default_ttl"] <= 0
                 ):
-                    logger.error("default_ttl必须是正数")
+                    logger.error("default_ttl必须是正数", exc_info=True)
                     return False
 
             logger.info("配置验证通过")
             return True
 
         except Exception as e:  # broad exception acceptable: config validation involves dict operations that may fail
-            logger.error(f"配置验证失败: {e}")
+            logger.error(f"配置验证失败: {e}", exc_info=True)
             return False
 
 

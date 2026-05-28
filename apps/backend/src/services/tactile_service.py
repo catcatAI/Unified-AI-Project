@@ -45,7 +45,7 @@ class TactileService:
             await sync_manager.register_client("tactile_service", self._handle_sync_event)
             logger.info("Tactile Service registered to sync manager")
         except Exception as e:  # broad exception acceptable: sync registration should not crash
-            logger.error(f"Failed to register Tactile Service to sync manager: {e}")
+            logger.error(f"Failed to register Tactile Service to sync manager: {e}", exc_info=True)
 
     async def _handle_sync_event(self, event: SyncEvent):
         """處理同步事件"""
@@ -133,7 +133,7 @@ class TactileService:
                 )
                 return tickle_result
             except Exception as e:
-                logger.warning(f"[Tactile] Tickle reflex failed: {e}")
+                logger.warning(f"[Tactile] Tickle reflex failed: {e}", exc_info=True)
                 # Fall through to normal tactile handling
 
         # 2. Inject stimulus into BiologicalIntegrator
@@ -184,7 +184,7 @@ class TactileService:
 
             status = "reflex_triggered"
         except Exception as e:  # broad exception acceptable: bio integration optional, graceful degradation
-            logger.error(f"Failed to bridge tactile to bio: {e}")
+            logger.error(f"Failed to bridge tactile to bio: {e}", exc_info=True)
             status = "simulation_only"
             motor_reflex = {"pose": "idle", "expression": "neutral"}
 

@@ -326,7 +326,7 @@ class ModeRecommender:
                     mode_config,
                 )
             else:
-                logger.warning(f"Preferred mode {preferred_mode} not compatible: {reason}")
+                logger.warning(f"Preferred mode {preferred_mode} not compatible: {reason}", exc_info=True)
 
         # Priority 2: Auto-selection based on profile
         modes_to_check = ["extended", "standard", "lite"]

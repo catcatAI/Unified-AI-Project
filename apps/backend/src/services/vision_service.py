@@ -63,7 +63,7 @@ class VisionService:
             await sync_manager.register_client("vision_service", self._handle_sync_event)
             logger.info("Vision Service registered to sync manager")
         except Exception as e:  # broad exception acceptable: sync registration should not crash
-            logger.error(f"Failed to register Vision Service to sync manager: {e}")
+            logger.error(f"Failed to register Vision Service to sync manager: {e}", exc_info=True)
 
     async def _handle_sync_event(self, event: SyncEvent):
         """處理同步事件"""
@@ -99,7 +99,7 @@ class VisionService:
                 image_data = img_byte_arr.getvalue()
                 logger.info("📸 [Vision] Environment captured: Automated screen snapshot.")
             except Exception as e:  # broad exception acceptable: auto-capture is optional, should not block
-                logger.error(f"Failed to auto-capture screen: {e}")
+                logger.error(f"Failed to auto-capture screen: {e}", exc_info=True)
                 return {"error": "Vision capture failed"}
 
         processing_id = self._generate_processing_id(image_data)
@@ -172,7 +172,7 @@ class VisionService:
             return analysis_results
 
         except Exception as e:  # broad exception acceptable: image analysis should be resilient to errors
-            logger.error(f"Error analyzing image {processing_id}: {e}")
+            logger.error(f"Error analyzing image {processing_id}: {e}", exc_info=True)
             error_result: Dict[str, Any] = {
                 "error": str(e),
                 "processing_id": processing_id,
@@ -246,7 +246,7 @@ class VisionService:
             return comparison_result
 
         except Exception as e:  # broad exception acceptable: image comparison should be resilient
-            logger.error(f"Error comparing images: {e}")
+            logger.error(f"Error comparing images: {e}", exc_info=True)
             return {"error": str(e), "similarity_score": None}
 
     async def process_video_frame(
@@ -396,7 +396,7 @@ class VisionService:
                     )
                     logger.info(f"Broadcasted wallpaper injection for: {obj['label']}")
                 except Exception as e:  # broad exception acceptable: broadcast is optional, should not block
-                    logger.error(f"Failed to broadcast wallpaper injection: {e}")
+                    logger.error(f"Failed to broadcast wallpaper injection: {e}", exc_info=True)
 
         return {
             "status": "success",

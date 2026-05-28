@@ -73,7 +73,7 @@ class DynamicAgentRegistry:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: registry cleanup loop wraps all failures
-                logger.error(f"Error in registry loop: {e}")
+                logger.error(f"Error in registry loop: {e}", exc_info=True)
 
     async def _cleanup_inactive_agents(self) -> None:
         """Remove agents that have been inactive for too long."""
@@ -124,8 +124,8 @@ class DynamicAgentRegistry:
                     try:
                         callback(self.registered_agents[agent_id])
                     except Exception as e:  # broad exception acceptable: capability advertisement callback wraps all registration failures
-                        logger.error(f"Error in discovery callback: {e}")
-                        logger.error(f"Error in discovery callback: {e}")
+                        logger.error(f"Error in discovery callback: {e}", exc_info=True)
+                        logger.error(f"Error in discovery callback: {e}", exc_info=True)
             else:
                 # Update existing agent
                 agent = self.registered_agents[agent_id]

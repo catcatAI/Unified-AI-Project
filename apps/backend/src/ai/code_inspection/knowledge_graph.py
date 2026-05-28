@@ -87,7 +87,7 @@ class KnowledgeGraph:
                 if count % 50 == 0:
                     logger.info(f"[KnowledgeGraph] Processed {count} files...")
             except Exception as e:
-                logger.warning(f"[KnowledgeGraph] Failed to parse {filepath}: {e}")
+                logger.warning(f"[KnowledgeGraph] Failed to parse {filepath}: {e}", exc_info=True)
 
         self._build_call_relationships()
         logger.info(f"[KnowledgeGraph] Built graph with {len(self.nodes)} nodes, {len(self.edges)} edges")

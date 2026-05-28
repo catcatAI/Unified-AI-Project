@@ -92,7 +92,7 @@ class LearningManager:
 
             return adjustments if adjustments else None
         except Exception as e:  # broad exception acceptable: analysis errors return None gracefully
-            logger.error(f"Error in personality adjustment analysis: {e}")
+            logger.error(f"Error in personality adjustment analysis: {e}", exc_info=True)
             return None
 
     async def process_and_store_learnables(
@@ -297,7 +297,7 @@ class LearningManager:
             # strategy = await self.fact_extractor.llm_service.chat_completion(...)
             # If successful, store as 'learned_strategy'
         except Exception as e:  # broad exception acceptable: distillation errors are non-fatal
-            logger.error(f"Failed to distill strategy: {e}")
+            logger.error(f"Failed to distill strategy: {e}", exc_info=True)
 
     def _create_distillation_prompt(self, project_case: Dict[str, Any]) -> str:
         """Creates the LLM prompt for strategy distillation."""

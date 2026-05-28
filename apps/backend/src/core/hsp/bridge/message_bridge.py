@@ -41,7 +41,7 @@ class MessageBridge:
         try:
             message_dict = json.loads(message)
         except json.JSONDecodeError:
-            logger.error(f"Error: Received invalid JSON message: {message}")
+            logger.error(f"Error: Received invalid JSON message: {message}", exc_info=True)
             return
 
         aligned_message = self.data_aligner.align_incoming(message_dict)

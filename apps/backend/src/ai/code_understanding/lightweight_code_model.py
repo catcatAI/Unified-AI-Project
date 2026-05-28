@@ -64,7 +64,7 @@ class LightweightCodeModel:
         Enhanced with DNA数据链支持.
         """
         if not os.path.isfile(filepath):
-            logger.error(f"File not found at '{filepath}' for analysis.")
+            logger.error(f"File not found at '{filepath}' for analysis.", exc_info=True)
             return None
 
         tree, dependencies = parse_python_file(filepath)

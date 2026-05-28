@@ -83,7 +83,7 @@ class ConfigMutator:
         Physically writes the changes to the .evolved layer.
         """
         if not self.validate_updates(config_type, updates)["is_valid"]:
-            logger.error(f"[Mutator] Blocked invalid mutation attempt for {config_type}")
+            logger.error(f"[Mutator] Blocked invalid mutation attempt for {config_type}", exc_info=True)
             return False
 
         file_path = self._get_path(config_type)
@@ -104,7 +104,7 @@ class ConfigMutator:
             logger.info(f"✅ [Mutator] System evolved: {config_type} layer updated.")
             return True
         except Exception as e:
-            logger.error(f"❌ [Mutator] Evolution write failed for {config_type}: {e}")
+            logger.error(f"❌ [Mutator] Evolution write failed for {config_type}: {e}", exc_info=True)
             return False
 
     def _get_path(self, config_type: str) -> Optional[Path]:
@@ -141,7 +141,7 @@ class ConfigMutator:
             with open(path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f) or {}
         except Exception:
-            logger.warning(f"Failed to load {path}, returning empty config")
+            logger.warning(f"Failed to load {path}, returning empty config", exc_info=True)
             return {}
 
     def _write_file(self, path: Path, data: Dict[str, Any]):

@@ -48,7 +48,7 @@ def initialize_all_services(manager) -> tuple:
         sec_audit = get_security_audit()
         logger.info("[Lifecycle] HotReloadService and SecurityAudit activated and ready.")
     except Exception as e:
-        logger.warning(f"[Lifecycle] Failed to activate management assets: {e}")
+        logger.warning(f"[Lifecycle] Failed to activate management assets: {e}", exc_info=True)
 
     async def pet_broadcast_wrapper(event_type, data):
         await manager.broadcast(
@@ -76,7 +76,7 @@ def initialize_all_services(manager) -> tuple:
                     loop,
                 )
         except Exception as e:
-            logger.error(f"Failed to bridge biological event: {e}")
+            logger.error(f"Failed to bridge biological event: {e}", exc_info=True)
 
     if hasattr(digital_life.biological_integrator, "register_event_callback"):
         digital_life.biological_integrator.register_event_callback(bio_event_callback)
@@ -103,7 +103,7 @@ def initialize_all_services(manager) -> tuple:
             digital_life.biological_integrator.register_event_callback(_plugin_aware_callback)
         logger.info("[C3] Plugin system registered and bio hooks wired")
     except Exception as e:
-        logger.warning(f"[C3] Plugin system wiring skipped: {e}")
+        logger.warning(f"[C3] Plugin system wiring skipped: {e}", exc_info=True)
 
     return (
         desktop_interaction,

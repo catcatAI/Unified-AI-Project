@@ -35,7 +35,7 @@ class JSONExporter:
             logger.info(f"Exported {card.qualified_id} to {path}")
             return True
         except OSError as e:
-            logger.error(f"Failed to export {card.qualified_id}: {e}")
+            logger.error(f"Failed to export {card.qualified_id}: {e}", exc_info=True)
             return False
 
     def export_zip(
@@ -58,7 +58,7 @@ class JSONExporter:
             logger.info(f"Exported {len(cards)} cards to {zip_path}")
             return True
         except (OSError, zipfile.BadZipFile) as e:
-            logger.error(f"ZIP export failed: {e}")
+            logger.error(f"ZIP export failed: {e}", exc_info=True)
             return False
 
     def _card_to_export_dict(self, card: Card) -> Dict[str, Any]:

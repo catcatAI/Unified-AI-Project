@@ -471,7 +471,7 @@ class EndocrineSystem:
                     try:
                         callback(hormone_type, old_level, hormone.current_level)
                     except Exception as e:
-                        logger.error(f"Hormone callback error: {e}")
+                        logger.error(f"Hormone callback error: {e}", exc_info=True)
         finally:
             tracer.finish(trace_id)
 

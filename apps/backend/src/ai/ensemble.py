@@ -203,7 +203,7 @@ class ModelEnsemble:
 
         for model_id, response in zip(model_ids, responses):
             if isinstance(response, Exception):
-                logger.warning(f"Model {model_id} failed: {response}")
+                logger.warning(f"Model {model_id} failed: {response}", exc_info=True)
                 failed_models.append(model_id)
             else:
                 valid_responses.append(response)
@@ -253,7 +253,7 @@ class ModelEnsemble:
             )
             return response
         except Exception as e:  # broad exception acceptable: model query wraps all API and network failures
-            logger.error(f"Error querying model {model_id}: {e}")
+            logger.error(f"Error querying model {model_id}: {e}", exc_info=True)
             raise
 
     async def streaming_ensemble(
@@ -277,8 +277,8 @@ class ModelEnsemble:
                     yield chunk
                 return  # Successful streaming
             except Exception as e:  # broad exception acceptable: streaming ensemble wraps all model stream failures
-                logger.warning(f"Streaming failed for {model_id}: {e}")
-                logger.warning(f"Streaming failed for {model_id}: {e}")
+                logger.warning(f"Streaming failed for {model_id}: {e}", exc_info=True)
+                logger.warning(f"Streaming failed for {model_id}: {e}", exc_info=True)
                 continue
 
         # If all fail

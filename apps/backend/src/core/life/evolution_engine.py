@@ -89,4 +89,4 @@ class EvolutionEngine:
                     f"[EvolutionEngine] Evolution #{self._evolution_count} applied traits adjustments: {adjustments}"
                 )
             except Exception as e:
-                logger.error(f"[EvolutionEngine] Failed to apply personality adjustments: {e}")
+                logger.error(f"[EvolutionEngine] Failed to apply personality adjustments: {e}", exc_info=True)

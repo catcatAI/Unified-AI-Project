@@ -97,7 +97,7 @@ class AngelaModelCore:
                 
                 await asyncio.sleep(2.0) # 代謝頻率：2秒一次
             except Exception as e:  # broad exception acceptable: metabolic loop should be resilient to errors
-                logger.error(f"❌ [Model-Core] Metabolic loop error: {e}")
+                logger.error(f"❌ [Model-Core] Metabolic loop error: {e}", exc_info=True)
                 await asyncio.sleep(5.0)
 
     def get_consciousness_snapshot(self) -> Dict[str, Any]:

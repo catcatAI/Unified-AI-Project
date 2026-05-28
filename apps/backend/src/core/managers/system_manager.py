@@ -36,7 +36,7 @@ class SystemManager:
                 try:
                     await component.shutdown()
                 except Exception as e:  # broad exception acceptable: component shutdown resilience
-                    logger.error(f"Error shutting down {name}: {e}")
+                    logger.error(f"Error shutting down {name}: {e}", exc_info=True)
         self.initialized = False
         logger.info("系统管理器已关闭")
 

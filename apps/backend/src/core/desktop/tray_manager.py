@@ -92,7 +92,7 @@ class WindowsTrayManager(BaseTrayManager):
             )
 
         except ImportError as e:
-            logger.error(f"pystray not installed: {e}")
+            logger.error(f"pystray not installed: {e}", exc_info=True)
             raise
 
     def _create_default_icon(self):
@@ -189,7 +189,7 @@ class WindowsTrayManager(BaseTrayManager):
                 threading.Thread(target=lambda: asyncio.run(self.angela.switch_mode(mode))).start()
                 self.show_notification("Angela AI", f"Switching to {mode.title()} mode...")
             except Exception as e:  # broad exception acceptable: mode switching may fail with asyncio or callback errors
-                logger.error(f"Error switching mode: {e}")
+                logger.error(f"Error switching mode: {e}", exc_info=True)
                 self.show_notification("Angela AI", f"Failed to switch mode: {e}")
 
     def _open_key_manager(self):
@@ -203,10 +203,10 @@ class WindowsTrayManager(BaseTrayManager):
             if script_path.exists():
                 subprocess.Popen([sys.executable, str(script_path)])
             else:
-                logger.warning("Key manager GUI script not found")
+                logger.warning("Key manager GUI script not found", exc_info=True)
                 self.show_notification("Angela AI", "Key manager not yet implemented")
         except Exception as e:  # broad exception acceptable: key manager launch may fail with subprocess or file system errors
-            logger.error(f"Error opening key manager: {e}")
+            logger.error(f"Error opening key manager: {e}", exc_info=True)
 
     def _open_settings(self):
         """Open settings window"""
@@ -218,10 +218,10 @@ class WindowsTrayManager(BaseTrayManager):
             if script_path.exists():
                 subprocess.Popen([sys.executable, str(script_path)])
             else:
-                logger.warning("Settings GUI script not found")
+                logger.warning("Settings GUI script not found", exc_info=True)
                 self.show_notification("Angela AI", "Settings GUI not yet implemented")
         except Exception as e:  # broad exception acceptable: settings GUI launch may fail with subprocess or file system errors
-            logger.error(f"Error opening settings: {e}")
+            logger.error(f"Error opening settings: {e}", exc_info=True)
 
     def _exit(self):
         """Exit Angela"""
@@ -230,7 +230,7 @@ class WindowsTrayManager(BaseTrayManager):
             try:
                 asyncio.run(self.angela.shutdown())
             except Exception as e:  # broad exception acceptable: shutdown may fail with asyncio or process termination errors
-                logger.error(f"Error during shutdown: {e}")
+                logger.error(f"Error during shutdown: {e}", exc_info=True)
 
         if self._tray_icon:
             self._tray_icon.stop()
@@ -287,7 +287,7 @@ class MacOSTrayManager(BaseTrayManager):
             )
 
         except ImportError:
-            logger.error("rumps not installed")
+            logger.error("rumps not installed", exc_info=True)
             raise
 
     def _switch_mode(self, mode: str):
@@ -402,7 +402,7 @@ class LinuxTrayManager(BaseTrayManager):
             self._indicator.set_menu(menu)
 
         except ImportError:
-            logger.error("GTK3/GI not available")
+            logger.error("GTK3/GI not available", exc_info=True)
             raise
 
     def _switch_mode(self, mode: str):
@@ -472,21 +472,21 @@ class AngelaTrayManager:
                 self._manager = WindowsTrayManager(self.angela)
                 logger.info("Initialized Windows tray manager")
             except ImportError:
-                logger.warning("pystray not available, falling back to console mode")
+                logger.warning("pystray not available, falling back to console mode", exc_info=True)
 
         elif system == "Darwin":  # macOS
             try:
                 self._manager = MacOSTrayManager(self.angela)
                 logger.info("Initialized macOS tray manager")
             except ImportError:
-                logger.warning("rumps not available, falling back to console mode")
+                logger.warning("rumps not available, falling back to console mode", exc_info=True)
 
         else:  # Linux and others
             try:
                 self._manager = LinuxTrayManager(self.angela)
                 logger.info("Initialized Linux tray manager")
             except ImportError:
-                logger.warning("GTK not available, falling back to console mode")
+                logger.warning("GTK not available, falling back to console mode", exc_info=True)
 
     def setup(self):
         """Setup the tray menu"""
@@ -498,7 +498,7 @@ class AngelaTrayManager:
         if self._manager:
             self._manager.run()
         else:
-            logger.warning("No tray manager available, running in console mode")
+            logger.warning("No tray manager available, running in console mode", exc_info=True)
             # Keep the program alive
             try:
                 while True:

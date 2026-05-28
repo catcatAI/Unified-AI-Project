@@ -100,7 +100,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
             }
 
         except Exception as e:  # broad exception acceptable: task handling failures return error response
-            logger.error(f"[{self.agent_id}] 创意写作处理失败: {e}")
+            logger.error(f"[{self.agent_id}] 创意写作处理失败: {e}", exc_info=True)
             return {"status": "error", "error_message": str(e)}
 
     async def handle_content_review(
@@ -144,7 +144,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
             }
 
         except Exception as e:  # broad exception acceptable: task handling failures return error response
-            logger.error(f"[{self.agent_id}] 内容审查失败: {e}")
+            logger.error(f"[{self.agent_id}] 内容审查失败: {e}", exc_info=True)
             return {"status": "error", "error_message": str(e)}
 
     async def _generate_creative_content(self, prompt: str, style: str, constraints: list) -> str:
@@ -263,7 +263,7 @@ async def main():
         await asyncio.sleep(2)
 
     except Exception as e:  # broad exception acceptable: demo errors should be logged and cleanup should run
-        logger.error(f"示例执行失败: {e}")
+        logger.error(f"示例执行失败: {e}", exc_info=True)
 
     finally:
         # 停止代理

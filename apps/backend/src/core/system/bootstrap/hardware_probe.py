@@ -63,7 +63,7 @@ class HardwareProbe:
             )
             return self.specs
         except Exception as e:
-            logger.error(f"Hardware probe failed: {e}")
+            logger.error(f"Hardware probe failed: {e}", exc_info=True)
             return HardwareSpecs(
                 platform=sys.platform,
                 architecture=platform.machine(),

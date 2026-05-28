@@ -169,13 +169,13 @@ class StateHashManager:
             return start_hash == end_hash
 
         if start_hash == end_hash and len(log) > 0:
-            logger.warning("State hash unchanged despite changes in log")
+            logger.warning("State hash unchanged despite changes in log", exc_info=True)
             return False
 
         for i, change in enumerate(log):
             required_fields = ["key", "value", "hash", "timestamp"]
             if not all(field in change for field in required_fields):
-                logger.warning(f"Change log entry {i} missing required fields")
+                logger.warning(f"Change log entry {i} missing required fields", exc_info=True)
                 return False
 
         is_valid = True
@@ -193,12 +193,12 @@ class StateHashManager:
             簽名字符串，若無密鑰管理器則返回 None
         """
         if not self._key_manager:
-            logger.warning("No key manager attached, cannot sign state")
+            logger.warning("No key manager attached, cannot sign state", exc_info=True)
             return None
 
         key_a = self._key_manager.get_security_key("KeyA")
         if not key_a:
-            logger.warning("Key A not available")
+            logger.warning("Key A not available", exc_info=True)
             return None
 
         data = f"{state_hash}:{key_a}".encode()
@@ -218,12 +218,12 @@ class StateHashManager:
             簽名是否有效
         """
         if not self._key_manager:
-            logger.warning("No key manager attached, cannot verify signature")
+            logger.warning("No key manager attached, cannot verify signature", exc_info=True)
             return False
 
         key_a = self._key_manager.get_security_key("KeyA")
         if not key_a:
-            logger.warning("Key A not available")
+            logger.warning("Key A not available", exc_info=True)
             return False
 
         data = f"{state_hash}:{key_a}".encode()
@@ -232,7 +232,7 @@ class StateHashManager:
         is_valid = signature == expected_signature
 
         if not is_valid:
-            logger.warning(f"Signature verification failed for state {state_hash}")
+            logger.warning(f"Signature verification failed for state {state_hash}", exc_info=True)
 
         return is_valid
 

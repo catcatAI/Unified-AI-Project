@@ -454,7 +454,7 @@ if __name__ == "__main__":
         if result.success:
             logger.info(f"  結果: {result.result}")
         else:
-            logger.error(f"  錯誤: {result.error}")
+            logger.error(f"  錯誤: {result.error}", exc_info=True)
         logger.info()
 
     logger.info("=" * 60)

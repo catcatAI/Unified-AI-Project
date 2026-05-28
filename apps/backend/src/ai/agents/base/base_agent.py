@@ -101,7 +101,7 @@ class BaseAgent:
             self._initialized = True
             logger.info(f"[{self.agent_id}] BaseAgent full initialization complete.")
         except Exception as e:  # broad exception acceptable: full initialization wraps all HSP connector failures
-            logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}")
+            logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}", exc_info=True)
             self.initialize_basic()
 
     async def start(self):
@@ -116,7 +116,7 @@ class BaseAgent:
         await self.initialize_full()
 
         if not self.hsp_connector:
-            logger.error(f"[{self.agent_id}] Error: HSPConnector not available.")
+            logger.error(f"[{self.agent_id}] Error: HSPConnector not available.", exc_info=True)
             self.is_running = False
             return
 
@@ -223,7 +223,7 @@ class BaseAgent:
                 )
 
         except Exception as e:  # broad exception acceptable: task processing wraps all handler failures
-            logger.error(f"[{self.agent_id}] Error processing task {task.task_id}: {e}")
+            logger.error(f"[{self.agent_id}] Error processing task {task.task_id}: {e}", exc_info=True)
             if task.retry_count < self.max_retries:
                 logger.info(
                     f"[{self.agent_id}] Retrying task {task.task_id} ({task.retry_count + 1} / {self.max_retries})"
@@ -249,7 +249,7 @@ class BaseAgent:
     ) -> Dict[str, Any]:
         """Default task handler for unimplemented capabilities."""
         capability_id = task_payload.get("capability_id_filter", "")
-        logger.warning(f"[{self.agent_id}] No specific handler for capability '{capability_id}'")
+        logger.warning(f"[{self.agent_id}] No specific handler for capability '{capability_id}'", exc_info=True)
         return {
             "status": "failure",
             "error_details": {

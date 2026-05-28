@@ -76,7 +76,7 @@ class MemoryContextManager:
         """访问记忆"""
         try:
             if memory_id not in self.memories:
-                logger.error(f"Memory {memory_id} not found")
+                logger.error(f"Memory {memory_id} not found", exc_info=True)
                 return None
 
             memory = self.memories[memory_id]
@@ -110,7 +110,7 @@ class MemoryContextManager:
         """更新记忆向量表示"""
         try:
             if memory_id not in self.memories:
-                logger.error(f"Memory {memory_id} not found")
+                logger.error(f"Memory {memory_id} not found", exc_info=True)
                 return False
 
             memory = self.memories[memory_id]
@@ -136,7 +136,7 @@ class MemoryContextManager:
         """获取记忆上下文"""
         try:
             if memory_id not in self.memories:
-                logger.error(f"Memory {memory_id} not found")
+                logger.error(f"Memory {memory_id} not found", exc_info=True)
                 return None
 
             memory = self.memories[memory_id]
@@ -234,7 +234,7 @@ class MemoryContextManager:
         """转移记忆(例如从短期记忆转移到长期记忆)"""
         try:
             if source_memory_id not in self.memories:
-                logger.error(f"Source memory {source_memory_id} not found")
+                logger.error(f"Source memory {source_memory_id} not found", exc_info=True)
                 return None
 
             source_memory = self.memories[source_memory_id]

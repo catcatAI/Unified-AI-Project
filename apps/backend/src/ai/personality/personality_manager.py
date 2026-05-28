@@ -50,7 +50,7 @@ class PersonalityManager:
                             "display_name": data.get("display_name", profile_name),
                         }
             except Exception as e:  # broad exception acceptable: profile loading errors are non-critical, skip and continue
-                logger.error(f"PersonalityManager: Error loading profile {file_path.name}: {e}")
+                logger.error(f"PersonalityManager: Error loading profile {file_path.name}: {e}", exc_info=True)
         return profiles
 
     def load_personality(self, profile_name: str) -> bool:
@@ -144,7 +144,7 @@ class PersonalityManager:
                 json.dump(self.current_personality, f, indent=4, ensure_ascii=False)
             logger.info(f"PersonalityManager: Persistent evolution saved to {file_path}.")
         except Exception as e:  # broad exception acceptable: save failures are non-critical, log and continue
-            logger.error(f"PersonalityManager: Failed to save evolution: {e}")
+            logger.error(f"PersonalityManager: Failed to save evolution: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

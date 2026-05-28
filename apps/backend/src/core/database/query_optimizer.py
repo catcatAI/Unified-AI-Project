@@ -180,7 +180,7 @@ class QueryOptimizer:
 
     async def _analyze_slow_query(self, query: str, execution_time: float):
         """分析慢查询"""
-        logger.warning(f"检测到慢查询 ({execution_time:.2f}s): {query[:100]}...")
+        logger.warning(f"检测到慢查询 ({execution_time:.2f}s): {query[:100]}...", exc_info=True)
 
         # 分析查询模式
         issues = []

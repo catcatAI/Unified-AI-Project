@@ -21,7 +21,7 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...), svc=Depends(get
         result = await svc.model_tactile_feedback(visual_data)
         return result
     except Exception as e:  # broad exception acceptable: tactile modeling should be resilient to errors
-        logger.error(f"Tactile modeling error: {e}")
+        logger.error(f"Tactile modeling error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -31,7 +31,7 @@ async def tactile_model_get():
     try:
         return {"status": "active", "model": "tactile_feedback_v1", "enabled": True}
     except Exception as e:  # broad exception acceptable: model status endpoint should not crash
-        logger.error(f"Tactile model status error: {e}")
+        logger.error(f"Tactile model status error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -46,7 +46,7 @@ async def trigger_tactile(trigger_data: Dict[str, Any] = Body(...), svc=Depends(
         result = await svc.trigger_physical_feedback(device_id, intensity, pattern)
         return result
     except Exception as e:  # broad exception acceptable: tactile trigger should be resilient to errors
-        logger.error(f"Tactile trigger error: {e}")
+        logger.error(f"Tactile trigger error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -58,5 +58,5 @@ async def tactile_control(params: Dict[str, Any] = Body(...)):
         # 簡化實現，不依賴 sync_manager
         return {"status": "success", "module": "tactile", "enabled": enabled, "mode": "post_method"}
     except Exception as e:  # broad exception acceptable: graceful degradation on failure
-        logger.error(f"Tactile control error: {e}")
+        logger.error(f"Tactile control error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

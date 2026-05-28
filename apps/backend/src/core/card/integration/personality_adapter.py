@@ -32,7 +32,7 @@ class PersonalityAdapter:
 
     def load_card(self, card: Card, persist: bool = True) -> bool:
         if not card.core_trait and not card.tokens:
-            logger.warning(f"No traits to load for {card.qualified_id}")
+            logger.warning(f"No traits to load for {card.qualified_id}", exc_info=True)
             return False
 
         adjustment: Dict[str, Any] = {}
@@ -52,7 +52,7 @@ class PersonalityAdapter:
             logger.info(f"Loaded card {card.qualified_id} into PersonalityManager")
             return True
         except Exception as e:
-            logger.error(f"Failed to load card {card.qualified_id}: {e}")
+            logger.error(f"Failed to load card {card.qualified_id}: {e}", exc_info=True)
             return False
 
 

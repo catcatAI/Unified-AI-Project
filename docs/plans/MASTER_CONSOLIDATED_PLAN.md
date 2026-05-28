@@ -469,13 +469,14 @@ Remaining (審計後優先級調整):
 - **D6: 3 production files 補 encoding="utf-8"** (app_config_loader.py, security_monitor.py, crisis_system.py) ✅
 - **D10: 4 子包 __version__ → "7.5.0-dev"** (autonomous, sync, metamorphosis, i18n) ✅
 - **D12-D14: core/system/config/network_defaults.py 創建 + 9 核心文件更新** (router, 5 LLM providers, external_connector, agent_manager; 集中管理 hosts, URLs, models, timeouts) ✅
-- **D7: logger.error exc_info=True** (批次修復 34 文件 309 處單行調用; 含 logger.error + logging.error 兩種模式) ✅ (partial, ~48%)
+- **D7: logger.error exc_info=True** (批次修復 244 文件 1203 處單行調用; 0 單行剩餘; 含 79 多行待人工檢視) ✅ (1203/1203 single-line ✅, 0/79 multi-line ⏳)
 - **D8: async I/O offloading** (創建 `core/system/config/async_io.py`, 9 文件 ~24 處 sync open/json → async_json_dump/load/write_file) ✅
-- **B7 Phase 1: singleton→DI cleanup** (移除死 `Singleton` 元類; `get_instance()` → `_create()` factory; 修正 buggy 單例測試) ✅
+- **B7: singleton→DI cleanup** (移除死 `Singleton` 元類; `get_instance()` → `_create()` factory; 5 個 `_instance=None` 均 DI-ready via registry) ✅
 - **D9: 雙測試目錄整合** (根 pyproject.toml testpaths 統一、修復 11 個 A3 引起的壞 import 或 skip) ✅
 
 ### 待完成
-- **B7** (singleton→DI, 可選) ~2天 — ~40 instances already DI-ready
+- **D7 Phase 2** — 剩餘 667 單行 logger.error/warning/critical 缺 exc_info=True（腳本批次）
+- **D7 Phase 3** — 79 多行 logger 調用缺 exc_info=True（逐一檢視）
 - **B10** (docs整理, 低優先) ~2天
 - **C4 Phase 2+** — 持續擴大測試覆蓋（180 tests, 0 warnings, 23.31s）
 
@@ -543,7 +544,7 @@ Remaining (審計後優先級調整):
 | B4 命名修復 | ✅ | grep Encrypted | 已改名 Signed |
 | B5 Endpoints lazy | ✅ | 檔案存在 | __init__.py 有 include_endpoint_routers() |
 | B6 持久層統一 | ✅ | 介面存在 | StatePersistence protocol + JsonFileStateStore |
-| B7 Singleton→DI | ⏳ PENDING | 全庫掃描 | ~60 單例，其中 ~40 DI-ready，~3 難轉換 |
+| B7 Singleton→DI | ✅ 已修正 | 全庫掃描 | Dead Singleton metaclass 移除, 2x get_instance→_create, 5 _instance=None 皆 DI-ready via registry |
 | B8 介面匯出 | ✅ | 檔案存在 | core/interfaces/__init__.py 已匯出 |
 | B9 根目錄清理 | ✅ 部分 | ls 根目錄 | **54 條目**（目標 <50，差 4 為環境文件） |
 | B10 docs 整理 | ⏳ PENDING | 全庫掃描 | ~170+ 計畫文件散落各處 |

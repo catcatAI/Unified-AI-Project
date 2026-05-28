@@ -150,7 +150,7 @@ class HSPVersionManager:
             reverse_converter = self.version_converters.get(reverse_pair)
             if reverse_converter:
                 # 对于反向转换器, 我们需要反向应用
-                logger.warning(f"使用反向转换器: {reverse_pair}")
+                logger.warning(f"使用反向转换器: {reverse_pair}", exc_info=True)
                 return message  # 简化处理, 实际应该实现反向转换逻辑
             else:
                 raise ValueError(f"未找到版本转换器: {version_pair}")
@@ -161,19 +161,19 @@ class HSPVersionManager:
             logger.debug(f"消息版本转换成功: {from_version} -> {to_version}")
             return converted_message
         except Exception as e:  # broad exception acceptable: version conversion may raise various errors
-            logger.error(f"消息版本转换失败: {e}")
+            logger.error(f"消息版本转换失败: {e}", exc_info=True)
             raise
 
     def negotiate_version(self, client_version: str, server_version: str) -> Optional[str]:
         """协商版本"""
         # 检查客户端版本是否受支持
         if not self.is_version_supported(client_version):
-            logger.warning(f"客户端版本不受支持: {client_version}")
+            logger.warning(f"客户端版本不受支持: {client_version}", exc_info=True)
             return None
 
         # 检查服务器版本是否受支持
         if not self.is_version_supported(server_version):
-            logger.warning(f"服务器版本不受支持: {server_version}")
+            logger.warning(f"服务器版本不受支持: {server_version}", exc_info=True)
             return None
 
         # 检查兼容性
@@ -187,7 +187,7 @@ class HSPVersionManager:
                 # 如果版本号不符合semver格式, 选择客户端版本
                 return client_version
         else:
-            logger.warning(f"版本不兼容: {client_version} <-> {server_version}")
+            logger.warning(f"版本不兼容: {client_version} <-> {server_version}", exc_info=True)
             return None
 
     def get_version_migration_path(self, from_version: str, to_version: str) -> List[str]:
@@ -280,7 +280,7 @@ class HSPVersionConverter:
             return self.version_manager.convert_message(message, message_version, current_version)
         else:
             # 消息版本比当前版本新, 可能需要降级或其他处理
-            logger.warning(f"消息版本比当前版本新: {message_version} > {current_version}")
+            logger.warning(f"消息版本比当前版本新: {message_version} > {current_version}", exc_info=True)
             return message
 
 
@@ -298,7 +298,7 @@ class HSPVersionNegotiator:
         common_versions = set(client_capabilities) & set(server_capabilities)
 
         if not common_versions:
-            logger.warning("客户端和服务器没有共同支持的版本")
+            logger.warning("客户端和服务器没有共同支持的版本", exc_info=True)
             return None
 
         # 选择最高版本

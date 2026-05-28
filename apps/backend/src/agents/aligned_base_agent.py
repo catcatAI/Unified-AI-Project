@@ -135,7 +135,7 @@ class AlignedBaseAgent(BaseAgent):
             logger.info(f"[{self.agent_id}] 对齐系统初始化完成")
 
         except Exception as e:  # broad exception acceptable: initialization failures are non-critical, disable alignment gracefully
-            logger.error(f"[{self.agent_id}] 对齐系统初始化失败: {e}")
+            logger.error(f"[{self.agent_id}] 对齐系统初始化失败: {e}", exc_info=True)
             self.alignment_enabled = False
 
     async def initialize_alignment_full(self):
@@ -160,7 +160,7 @@ class AlignedBaseAgent(BaseAgent):
             logger.info(f"[{self.agent_id}] 对齐系统完整初始化完成")
 
         except Exception as e:  # broad exception acceptable: async init failures should not crash the agent
-            logger.error(f"[{self.agent_id}] 对齐系统完整初始化失败: {e}")
+            logger.error(f"[{self.agent_id}] 对齐系统完整初始化失败: {e}", exc_info=True)
 
     async def handle_task_request(
         self, task_payload: Dict[str, Any], sender_ai_id: str, envelope: Any
@@ -245,7 +245,7 @@ class AlignedBaseAgent(BaseAgent):
                 }
 
         except Exception as e:  # broad exception acceptable: alignment check failures reject task for safety
-            logger.error(f"[{self.agent_id}] 对齐检查失败: {e}")
+            logger.error(f"[{self.agent_id}] 对齐检查失败: {e}", exc_info=True)
             # 对齐检查失败时, 为了安全起见, 拒绝任务
             return {
                 "is_aligned": False,
@@ -279,7 +279,7 @@ class AlignedBaseAgent(BaseAgent):
     async def enable_adversarial_mode(self, intensity: float = 0.5):
         """启用对抗模式进行安全测试"""
         if not self.adversarial_system:
-            logger.warning(f"[{self.agent_id}] 对抗性生成系统未初始化")
+            logger.warning(f"[{self.agent_id}] 对抗性生成系统未初始化", exc_info=True)
             return
 
         self.adversarial_mode = True
@@ -331,7 +331,7 @@ class AlignedBaseAgent(BaseAgent):
             return test_results
 
         except Exception as e:  # broad exception acceptable: self-test failures return error dict, non-blocking
-            logger.error(f"[{self.agent_id}] 对齐自检失败: {e}")
+            logger.error(f"[{self.agent_id}] 对齐自检失败: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def get_alignment_status(self) -> Dict[str, Any]:
@@ -362,7 +362,7 @@ class AlignedBaseAgent(BaseAgent):
             try:
                 self.alignment_level = AlignmentLevel(parameters["alignment_level"])
             except ValueError:
-                logger.warning(f"[{self.agent_id}] 无效的对齐级别: {parameters['alignment_level']}")
+                logger.warning(f"[{self.agent_id}] 无效的对齐级别: {parameters['alignment_level']}", exc_info=True)
 
         logger.info(f"[{self.agent_id}] 对齐参数已更新: {parameters}")
 
@@ -392,7 +392,7 @@ class AlignedBaseAgent(BaseAgent):
             return ethical_assessment
 
         except Exception as e:  # broad exception acceptable: analysis failures return error dict, non-blocking
-            logger.error(f"[{self.agent_id}] 伦理分析失败: {e}")
+            logger.error(f"[{self.agent_id}] 伦理分析失败: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def align_with_human_values(self, human_feedback: Dict[str, Any]) -> Dict[str, Any]:
@@ -418,5 +418,5 @@ class AlignedBaseAgent(BaseAgent):
             return alignment_update
 
         except Exception as e:  # broad exception acceptable: feedback processing failures return error dict, non-blocking
-            logger.error(f"[{self.agent_id}] 人类反馈处理失败: {e}")
+            logger.error(f"[{self.agent_id}] 人类反馈处理失败: {e}", exc_info=True)
             return {"error": str(e)}

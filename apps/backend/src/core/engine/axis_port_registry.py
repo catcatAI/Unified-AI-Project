@@ -132,7 +132,7 @@ class PortRegistry:
             創建的 Port
         """
         if name in self._ports:
-            logger.warning(f"[PortRegistry] Port '{name}' already exists, updating")
+            logger.warning(f"[PortRegistry] Port '{name}' already exists, updating", exc_info=True)
             port = self._ports[name]
             port.direction = direction
             port.semantic_vector = semantic_vector
@@ -216,7 +216,7 @@ class PortRegistry:
         """
         port = self._ports.get(port_name)
         if not port:
-            logger.warning(f"[PortRegistry] Port '{port_name}' not found")
+            logger.warning(f"[PortRegistry] Port '{port_name}' not found", exc_info=True)
             return False
 
         old_axis = port.axis

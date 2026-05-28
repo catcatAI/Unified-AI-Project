@@ -211,7 +211,7 @@ class PetManager:
                 else:
                     self.broadcast_callback("pet_state_update", payload)
             except Exception as e:  # broad exception acceptable: ensure broadcast failures don't break state notification flow
-                logger.error(f"Failed to broadcast pet state change: {e}")
+                logger.error(f"Failed to broadcast pet state change: {e}", exc_info=True)
 
     async def handle_interaction(self, interaction_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -398,7 +398,7 @@ class PetManager:
         - 记录状态变更
         """
         if not self.economy_manager:
-            logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!")
+            logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!", exc_info=True)
             return
 
         logger.info(

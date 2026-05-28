@@ -143,7 +143,7 @@ class DesktopBrowserIntegration:
             asyncio.create_task(self._run_browser())
 
         except ImportError:
-            logger.warning("webview未安装，使用系统浏览器")
+            logger.warning("webview未安装，使用系统浏览器", exc_info=True)
             import webbrowser
 
             webbrowser.open(url)
@@ -155,7 +155,7 @@ class DesktopBrowserIntegration:
 
             webview.start()
         except Exception as e:  # broad exception acceptable: browser runtime errors should not crash the system
-            logger.error(f"浏览器运行错误: {e}")
+            logger.error(f"浏览器运行错误: {e}", exc_info=True)
 
     async def browse_tutorial(self, tutorial_url: str) -> Dict:
         """
@@ -177,7 +177,7 @@ class DesktopBrowserIntegration:
                 "timestamp": datetime.now(),
             }
         else:
-            logger.error("浏览器未初始化")
+            logger.error("浏览器未初始化", exc_info=True)
             return {}
 
     async def _extract_page_content(self) -> Dict:
@@ -198,7 +198,7 @@ class DesktopBrowserIntegration:
                 result = self.browser_window.evaluate_js(js_code)
             return result if result else {}
         except Exception as e:  # broad exception acceptable: page content extraction should be resilient
-            logger.error(f"提取内容失败: {e}")
+            logger.error(f"提取内容失败: {e}", exc_info=True)
             return {}
 
     async def collect_artwork(self, gallery_url: str) -> List[Dict]:
@@ -278,7 +278,7 @@ class DesktopBrowserIntegration:
                     }
 
         except Exception as e:  # broad exception acceptable: style analysis should be resilient
-            logger.error(f"风格分析失败: {e}")
+            logger.error(f"风格分析失败: {e}", exc_info=True)
             return {}
 
     def _infer_style_tags(self, img) -> List[str]:

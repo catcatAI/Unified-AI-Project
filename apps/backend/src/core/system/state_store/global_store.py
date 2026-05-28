@@ -101,7 +101,7 @@ class GlobalStateStore:
     def update_state(self, domain: str, data: Dict[str, Any], notify: bool = True):
         """Update state for a specific domain."""
         if domain not in self._states:
-            logger.warning(f"[StateStore] Attempted to update unknown domain: {domain}")
+            logger.warning(f"[StateStore] Attempted to update unknown domain: {domain}", exc_info=True)
             self._states[domain] = {}
             self._subscribers[domain] = []
 
@@ -153,14 +153,14 @@ class GlobalStateStore:
             try:
                 callback(domain, data)
             except Exception as e:
-                logger.error(f"[StateStore] Error in subscriber callback for {domain}: {e}")
+                logger.error(f"[StateStore] Error in subscriber callback for {domain}: {e}", exc_info=True)
 
         # Notify global subscribers
         for callback in self._global_subscribers:
             try:
                 callback(domain, data)
             except Exception as e:
-                logger.error(f"[StateStore] Error in global subscriber callback: {e}")
+                logger.error(f"[StateStore] Error in global subscriber callback: {e}", exc_info=True)
 
 
 # Singleton Access
@@ -172,6 +172,6 @@ try:
     _default_backend = JsonFileStateStore(data_dir="data/state/")
     state_store.set_persistence(_default_backend)
 except Exception as e:
-    logger.warning(f"[StateStore] Default persistence backend unavailable: {e}")
+    logger.warning(f"[StateStore] Default persistence backend unavailable: {e}", exc_info=True)
 
 get_registry().register("global_state_store", state_store)

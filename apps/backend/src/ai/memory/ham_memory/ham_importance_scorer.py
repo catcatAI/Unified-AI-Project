@@ -249,7 +249,7 @@ class ImportanceScorer:
             return max(0.3, decay)  # Minimum score of 0.3
 
         except Exception as e:  # broad exception acceptable: time score fallback should return default
-            logger.warning(f"Error calculating time score: {e}")
+            logger.warning(f"Error calculating time score: {e}", exc_info=True)
             return 0.5
 
     def record_access(self, memory_id: str) -> None:

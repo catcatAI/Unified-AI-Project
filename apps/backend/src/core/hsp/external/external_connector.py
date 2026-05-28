@@ -248,7 +248,7 @@ class ExternalConnector:
         """
         target_id = message.get("target_id") or message.get("recipient_id")
         if not target_id:
-            logger.error(f"[{self.ai_id}] No target specified in message")
+            logger.error(f"[{self.ai_id}] No target specified in message", exc_info=True)
             self.stats["errors"] += 1
             return False
 
@@ -274,7 +274,7 @@ class ExternalConnector:
                     logger.debug(f"[{self.ai_id}] Message sent to {target_id}")
                     return True
                 else:
-                    logger.warning(f"[{self.ai_id}] Message delivery failed: {result.get('error')}")
+                    logger.warning(f"[{self.ai_id}] Message delivery failed: {result.get('error')}", exc_info=True)
                     self.stats["errors"] += 1
                     return False
 

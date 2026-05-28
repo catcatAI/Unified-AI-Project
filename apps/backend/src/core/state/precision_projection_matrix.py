@@ -71,7 +71,7 @@ class PrecisionProjectionMatrix:
             mem = psutil.virtual_memory()
             return mem.available
         except Exception as e:  # broad exception acceptable: psutil may fail, use safe default
-            logger.warning(f"Failed to detect RAM: {e}, using default 8GB")
+            logger.warning(f"Failed to detect RAM: {e}, using default 8GB", exc_info=True)
             return 8 * 1024 * 1024 * 1024
 
     def _determine_precision_mode(self) -> PrecisionMode:

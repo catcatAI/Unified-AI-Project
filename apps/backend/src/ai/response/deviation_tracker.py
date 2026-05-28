@@ -150,7 +150,7 @@ class DeviationTracker:
 
         record_time = (time.time() - start_time) * 1000
         if record_time > 0.5:
-            logger.warning(f"Deviation tracking took {record_time:.2f}ms (slow)")
+            logger.warning(f"Deviation tracking took {record_time:.2f}ms (slow)", exc_info=True)
 
     def _update_stats(self, metrics: ResponseMetrics):
         """更新统计信息"""
@@ -277,7 +277,7 @@ class DeviationTracker:
             logger.debug(f"Persisted metrics to {log_file}")
 
         except Exception as e:  # broad exception acceptable: persistence failures are non-critical, log and continue
-            logger.warning(f"Failed to persist metrics: {e}")
+            logger.warning(f"Failed to persist metrics: {e}", exc_info=True)
 
     def generate_report(self) -> str:
         """
@@ -349,4 +349,4 @@ class DeviationTracker:
             logger.info(f"Exported metrics to {filepath}")
 
         except Exception as e:  # broad exception acceptable: export failures return False to signal failure
-            logger.error(f"Failed to export metrics: {e}")
+            logger.error(f"Failed to export metrics: {e}", exc_info=True)

@@ -93,7 +93,7 @@ class AudioService:
             await sync_manager.register_client("audio_service", self._handle_sync_event)
             logger.info("Audio Service registered to sync manager")
         except Exception as e:  # broad exception acceptable: sync registration should not crash
-            logger.error(f"Failed to register Audio Service to sync manager: {e}")
+            logger.error(f"Failed to register Audio Service to sync manager: {e}", exc_info=True)
 
     async def _handle_sync_event(self, event: SyncEvent):
         """處理同步事件"""
@@ -233,7 +233,7 @@ class AudioService:
                 
                 return {"text": "", "confidence": 1.0, "fallback": True}
             except Exception as e:  # broad exception acceptable: fallback should not crash
-                logger.warning(f"Audio fallback failed: {e}")
+                logger.warning(f"Audio fallback failed: {e}", exc_info=True)
                 return {"text": "", "confidence": 0.0}
 
         try:
@@ -264,7 +264,7 @@ class AudioService:
                     os.remove(temp_path)
 
         except Exception as e:  # broad exception acceptable: STT should not crash on errors
-            logger.error(f"Whisper STT failed: {e}")
+            logger.error(f"Whisper STT failed: {e}", exc_info=True)
             return {"text": "STT Error", "confidence": 0.0}
 
     async def _analyze_sentiment(self, text: str, audio_data: bytes) -> Dict[str, Any]:
@@ -276,7 +276,7 @@ class AudioService:
                 primary = result.primary_emotion.value if result.primary_emotion else "neutral"
                 return {"sentiment": primary, "confidence": result.emotion_intensity}
             except Exception as e:  # broad exception acceptable: emotion analysis optional, should not block
-                logger.error(f"Error calling EmotionSystem from AudioService: {e}")
+                logger.error(f"Error calling EmotionSystem from AudioService: {e}", exc_info=True)
 
         await asyncio.sleep(0.05)
         return {"sentiment": "neutral", "confidence": 0.7}
@@ -298,7 +298,7 @@ class AudioService:
             return None
 
         if not EDGE_TTS_AVAILABLE:
-            logger.error("TTS Failed: edge-tts not installed. Cannot generate audio.")
+            logger.error("TTS Failed: edge-tts not installed. Cannot generate audio.", exc_info=True)
             return None
 
         logger.info(f"Audio Service (EdgeTTS): Synthesizing '{text[:30]}...'")
@@ -312,7 +312,7 @@ class AudioService:
                     audio_bytes += chunk["data"]
             return audio_bytes
         except Exception as e:  # broad exception acceptable: TTS should not crash on errors
-            logger.error(f"EdgeTTS execution failed: {e}")
+            logger.error(f"EdgeTTS execution failed: {e}", exc_info=True)
             return None
 
     # Removed _generate_demo_speech_audio (Legacy fake code)

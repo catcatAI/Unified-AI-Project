@@ -13,7 +13,7 @@ try:
     FERNET_AVAILABLE = True
 except ImportError:
     FERNET_AVAILABLE = False
-    logging.warning("cryptography module not available, context encryption disabled")
+    logging.warning("cryptography module not available, context encryption disabled", exc_info=True)
 # from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -138,7 +138,7 @@ def encrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
     """
     try:
         if key is None:
-            logger.warning("No encryption key provided, returning raw data")
+            logger.warning("No encryption key provided, returning raw data", exc_info=True)
             return data
 
         if not FERNET_AVAILABLE:
@@ -164,7 +164,7 @@ def decrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
     """
     try:
         if key is None:
-            logger.warning("No decryption key provided, returning raw data")
+            logger.warning("No decryption key provided, returning raw data", exc_info=True)
             return data
 
         if not FERNET_AVAILABLE:
@@ -212,23 +212,23 @@ def validate_context(context) -> bool:
     try:
         # 检查必需字段
         if not context.context_id:
-            logger.error("Context ID is required")
+            logger.error("Context ID is required", exc_info=True)
             return False
 
         if not context.context_type:
-            logger.error("Context type is required")
+            logger.error("Context type is required", exc_info=True)
             return False
 
         if context.created_at > datetime.now():
-            logger.error("Context created_at cannot be in the future")
+            logger.error("Context created_at cannot be in the future", exc_info=True)
             return False
 
         if context.updated_at > datetime.now():
-            logger.error("Context updated_at cannot be in the future")
+            logger.error("Context updated_at cannot be in the future", exc_info=True)
             return False
 
         if context.created_at > context.updated_at:
-            logger.error("Context created_at cannot be later than updated_at")
+            logger.error("Context created_at cannot be later than updated_at", exc_info=True)
             return False
 
         return True

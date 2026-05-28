@@ -73,7 +73,7 @@ def parse_python_file(filepath: str) -> Optional[Tuple[ast.AST, List[str]]]:
     Parses a Python file and extracts its AST and dependencies.
     """
     if not os.path.isfile(filepath):
-        logger.error(f"File not found at '{filepath}' for parsing.")
+        logger.error(f"File not found at '{filepath}' for parsing.", exc_info=True)
         return None
 
     try:

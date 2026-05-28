@@ -80,7 +80,7 @@ class RegistryDemoAgent(BaseAgent):
             )
 
         except Exception as e:  # broad exception acceptable: task handling failures should return error response
-            logger.error(f"[{self.agent_id}] Error handling task: {e}")
+            logger.error(f"[{self.agent_id}] Error handling task: {e}", exc_info=True)
             await self.send_task_failure(
                 request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e)
             )

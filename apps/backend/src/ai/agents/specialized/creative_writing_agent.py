@@ -107,7 +107,7 @@ class CreativeWritingAgent(BaseAgent):
                 )
                 return result or ""
             except Exception as e:
-                logger.warning(f"[CreativeWritingAgent] LLM call failed: {e}")
+                logger.warning(f"[CreativeWritingAgent] LLM call failed: {e}", exc_info=True)
                 return ""
 
         return llm_wrapper
@@ -124,7 +124,7 @@ class CreativeWritingAgent(BaseAgent):
             if result and result.full_text:
                 return result.full_text
         except Exception as e:
-            logger.warning(f"[CreativeWritingAgent] Story write failed: {e}")
+            logger.warning(f"[CreativeWritingAgent] Story write failed: {e}", exc_info=True)
         return f"抱歉，故事生成遇到了問題。提示：{query[:50]}"
 
     async def _handle_character_card(
@@ -138,7 +138,7 @@ class CreativeWritingAgent(BaseAgent):
             if result and result.full_text:
                 return result.full_text
         except Exception as e:
-            logger.warning(f"[CreativeWritingAgent] Character card failed: {e}")
+            logger.warning(f"[CreativeWritingAgent] Character card failed: {e}", exc_info=True)
         return f"抱歉，角色卡生成失敗。查詢：{query[:50]}"
 
     async def _handle_article(
@@ -154,5 +154,5 @@ class CreativeWritingAgent(BaseAgent):
             if result and result.full_text:
                 return result.full_text
         except Exception as e:
-            logger.warning(f"[CreativeWritingAgent] Article write failed: {e}")
+            logger.warning(f"[CreativeWritingAgent] Article write failed: {e}", exc_info=True)
         return f"抱歉，文章生成失敗。主題：{query[:50]}"

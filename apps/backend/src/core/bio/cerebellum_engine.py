@@ -70,7 +70,7 @@ class CerebellumEngine:
                     self.pose_library.update(json.load(f))
                 logger.info(f"💾 [Cerebellum] Loaded {len(self.pose_library)} poses from memory.")
             except (IOError, OSError, json.JSONDecodeError) as e:
-                logger.error(f"Failed to load motor memory: {e}")
+                logger.error(f"Failed to load motor memory: {e}", exc_info=True)
 
     def refine_pose(self, name: str, adjustments: Dict[str, Any]):
         """
@@ -108,7 +108,7 @@ class CerebellumEngine:
             with open(self.storage_path, 'w', encoding='utf-8') as f:
                 json.dump(self.pose_library, f, ensure_ascii=False, indent=2)
         except (IOError, OSError) as e:
-            logger.error(f"Persistence failed: {e}")
+            logger.error(f"Persistence failed: {e}", exc_info=True)
 
     def update_proprioception(self, actual_theta: List[float], external_force: float = 0.0):
         """
@@ -186,7 +186,7 @@ class CerebellumEngine:
         整合 N.16.1.2 神經與心跳對接邏輯。
         """
         if pose_name not in self.pose_library:
-            logger.warning(f"⚠️ [Cerebellum] Unknown pose: '{pose_name}'. Using default.")
+            logger.warning(f"⚠️ [Cerebellum] Unknown pose: '{pose_name}'. Using default.", exc_info=True)
             pose_name = "default_idle"
         
         self.current_pose_name = pose_name

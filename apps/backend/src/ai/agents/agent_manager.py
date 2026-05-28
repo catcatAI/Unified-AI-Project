@@ -374,10 +374,10 @@ if __name__ == "__main__":
                                 f"HSP Router health check failed after {max_retries} attempts"
                             )
             else:
-                logger.error("Failed to start HSP Router")
+                logger.error("Failed to start HSP Router", exc_info=True)
 
         except Exception as e:  # broad exception acceptable: router startup wraps subprocess and port errors
-            logger.error(f"Error starting router: {e}")
+            logger.error(f"Error starting router: {e}", exc_info=True)
             self.enable_router = False
 
     def register_agent_factory(self, agent_type: str, factory: Any):
@@ -591,7 +591,7 @@ if __name__ == "__main__":
                     agents_dir = os.path.join(os.path.dirname(__file__), "..", "agents")
 
             if not os.path.isdir(agents_dir):
-                logger.warning(f"[AgentManager] Agents directory not found: {agents_dir}")
+                logger.warning(f"[AgentManager] Agents directory not found: {agents_dir}", exc_info=True)
                 return agent_map
 
             for filename in os.listdir(agents_dir):
@@ -606,7 +606,7 @@ if __name__ == "__main__":
                 logger.info(f"[AgentManager] Agents: {list(agent_map.keys())}")
             return agent_map
         except Exception as e:  # broad exception acceptable: agent discovery wraps all file enumeration failures
-            logger.error(f"[AgentManager] Error discovering agent scripts: {e}")
+            logger.error(f"[AgentManager] Error discovering agent scripts: {e}", exc_info=True)
             return agent_map
 
     def launch_agent(self, agent_name: str, args: Optional[List[str]] = None) -> Optional[str]:
@@ -624,7 +624,7 @@ if __name__ == "__main__":
         """
         with self.launch_lock:
             if agent_name not in self.agent_script_map:
-                logger.error(f"[AgentManager] Error: Agent '{agent_name}' not found.")
+                logger.error(f"[AgentManager] Error: Agent '{agent_name}' not found.", exc_info=True)
                 return None
 
             if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
@@ -657,7 +657,7 @@ if __name__ == "__main__":
                 )
                 return str(process.pid)
             except Exception as e:  # broad exception acceptable: agent launch wraps all subprocess failures
-                logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}")
+                logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}", exc_info=True)
                 return None
 
     def check_agent_health(self, agent_name: str) -> bool:
@@ -693,7 +693,7 @@ if __name__ == "__main__":
             del self.active_agents[agent_name]
             return True
         else:
-            logger.warning(f"[AgentManager] Agent '{agent_name}' not found or not running.")
+            logger.warning(f"[AgentManager] Agent '{agent_name}' not found or not running.", exc_info=True)
             return False
 
     def shutdown_all_agents(self):
@@ -762,7 +762,7 @@ if __name__ == "__main__":
             )
             await asyncio.sleep(0.5)
 
-        logger.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.")
+        logger.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.", exc_info=True)
 
     def get_available_agents(self) -> List[str]:
         """
@@ -802,7 +802,7 @@ if __name__ == "__main__":
                             f"[AgentManager] No {agent_class_name} class in {agent_name}"
                         )
             except Exception as e:  # broad exception acceptable: auto-load wraps all module import failures
-                logger.error(f"[AgentManager] Failed to load agent {agent_name}: {e}")
+                logger.error(f"[AgentManager] Failed to load agent {agent_name}: {e}", exc_info=True)
 
         logger.info(
             f"[AgentManager] Auto-loaded {loaded_count}/{len(self.agent_script_map)} agents"
@@ -826,6 +826,6 @@ if __name__ == "__main__":
         Retrieves the capabilities of a specific agent.
         """
         if service_discovery is None:
-            logger.warning("[AgentManager] Service discovery not available.")
+            logger.warning("[AgentManager] Service discovery not available.", exc_info=True)
             return []
         return await service_discovery.get_all_capabilities_async()

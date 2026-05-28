@@ -93,7 +93,7 @@ class HAMLISCache(LISCacheInterface):
             )
             return success is not None
         except Exception as e:  # broad exception acceptable: storage failures should return False gracefully
-            logger.error(f"Failed to store incident in HAMLISCache: {e}")
+            logger.error(f"Failed to store incident in HAMLISCache: {e}", exc_info=True)
             return False
 
     async def get_incident_by_id(self, incident_id: str) -> Optional[LIS_IncidentRecord]:
@@ -146,7 +146,7 @@ class HAMLISCache(LISCacheInterface):
             )
             return success is not None
         except Exception as e:  # broad exception acceptable: storage failures should return False gracefully
-            logger.error(f"Failed to store antibody: {e}")
+            logger.error(f"Failed to store antibody: {e}", exc_info=True)
             return False
 
     async def get_learned_antibodies(

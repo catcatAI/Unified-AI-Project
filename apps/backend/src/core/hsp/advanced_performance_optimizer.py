@@ -78,7 +78,7 @@ class HSPConnectionPool:
                     logger.debug("创建新连接")
                     return connection
 
-            logger.warning("连接池已满, 无法获取新连接")
+            logger.warning("连接池已满, 无法获取新连接", exc_info=True)
             return None
 
     def return_connection(self, connection: Any):
@@ -501,7 +501,7 @@ class HSPAdvancedPerformanceEnhancer:
                 result = None
 
                 success = False
-                logger.error(f"消息发布失败: {e}")
+                logger.error(f"消息发布失败: {e}", exc_info=True)
 
             # 记录结束时间
             end_time = time.time()
@@ -537,7 +537,7 @@ class HSPAdvancedPerformanceEnhancer:
                 result = None
 
                 success = False
-                logger.error(f"消息接收失败: {e}")
+                logger.error(f"消息接收失败: {e}", exc_info=True)
 
             # 记录结束时间
             end_time = time.time()

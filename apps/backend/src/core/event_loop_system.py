@@ -565,7 +565,7 @@ class EventLoopSystem:
                 # No events, continue
                 pass
             except Exception as e:  # broad exception acceptable: event processor must be resilient to any error
-                logger.error(f"[EventLoopSystem] Processor error: {e}")
+                logger.error(f"[EventLoopSystem] Processor error: {e}", exc_info=True)
                 self.metrics["processing_errors"] += 1
 
     async def _process_event(self, event: Event):
@@ -582,7 +582,7 @@ class EventLoopSystem:
                     handler(event)
 
         except Exception as e:  # broad exception acceptable: event processing must be resilient to handler errors
-            logger.error(f"[EventLoopSystem] Event processing error: {e}")
+            logger.error(f"[EventLoopSystem] Event processing error: {e}", exc_info=True)
             event.status = EventStatus.FAILED
 
     async def _metrics_collector(self):

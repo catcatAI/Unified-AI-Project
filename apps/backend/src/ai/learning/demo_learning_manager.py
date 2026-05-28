@@ -107,7 +107,7 @@ class DemoLearningManager:
                 with open(self.config_path, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
             else:
-                logger.warning(f"配置文件不存在: {self.config_path}")
+                logger.warning(f"配置文件不存在: {self.config_path}", exc_info=True)
                 return {}
         except Exception as e:  # broad exception acceptable: config load failure falls back to empty dict
             logger.error(f"加載配置文件失敗: {e}", exc_info=True)
@@ -170,7 +170,7 @@ class DemoLearningManager:
         elif action_name == "configure_auto_cleanup":
             await self._configure_auto_cleanup()
         else:
-            logger.warning(f"未知動作: {action_name}")
+            logger.warning(f"未知動作: {action_name}", exc_info=True)
 
     async def _enable_demo_mode(self) -> None:
         """啟用演示模式"""

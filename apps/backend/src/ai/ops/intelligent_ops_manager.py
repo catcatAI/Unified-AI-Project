@@ -154,28 +154,28 @@ class IntelligentOpsManager:
             try:
                 await self.ai_ops_engine.initialize()
             except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
-                logger.warning("AI运维引擎初始化失败, 继续使用默认配置")
+                logger.warning("AI运维引擎初始化失败, 继续使用默认配置", exc_info=True)
 
             # 初始化预测性维护
             self.predictive_maintenance = PredictiveMaintenanceEngine(self.config)
             try:
                 await self.predictive_maintenance.initialize()
             except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
-                logger.warning("预测性维护初始化失败, 继续使用默认配置")
+                logger.warning("预测性维护初始化失败, 继续使用默认配置", exc_info=True)
 
             # 初始化性能优化器
             self.performance_optimizer = PerformanceOptimizer(self.config)
             try:
                 await self.performance_optimizer.initialize()
             except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
-                logger.warning("性能优化器初始化失败, 继续使用默认配置")
+                logger.warning("性能优化器初始化失败, 继续使用默认配置", exc_info=True)
 
             # 初始化容量规划器
             self.capacity_planner = CapacityPlanner(self.config)
             try:
                 await self.capacity_planner.initialize()
             except Exception:  # broad exception acceptable: component init failures are non-critical, continue with defaults
-                logger.warning("容量规划器初始化失败, 继续使用默认配置")
+                logger.warning("容量规划器初始化失败, 继续使用默认配置", exc_info=True)
 
             logger.info("AI运维组件初始化完成")
         except Exception as e:  # broad exception acceptable: component init failures should propagate for proper error handling
@@ -483,7 +483,7 @@ class IntelligentOpsManager:
                 # 执行维护操作
                 success = await self._execute_maintenance_action(insight)
             else:
-                logger.warning(f"未知洞察类型, 无法执行自动操作: {insight.insight_type}")
+                logger.warning(f"未知洞察类型, 无法执行自动操作: {insight.insight_type}", exc_info=True)
                 success = False
 
             action_record["status"] = "completed" if success else "failed"
@@ -542,7 +542,7 @@ class IntelligentOpsManager:
         """执行容量扩容"""
         try:
             if not self.capacity_planner:
-                logger.warning("Capacity Planner not initialized, skipping capacity scaling.")
+                logger.warning("Capacity Planner not initialized, skipping capacity scaling.", exc_info=True)
                 return False
 
             # 获取扩容计划并执行
@@ -879,7 +879,7 @@ class IntelligentOpsManager:
                     break
 
             if not insight:
-                logger.warning(f"未找到洞察: {insight_id}")
+                logger.warning(f"未找到洞察: {insight_id}", exc_info=True)
                 return False
 
             success = False
@@ -891,7 +891,7 @@ class IntelligentOpsManager:
             elif action_type == "schedule_maintenance":
                 success = await self._execute_maintenance_action(insight)
             else:
-                logger.warning(f"未知操作类型: {action_type}")
+                logger.warning(f"未知操作类型: {action_type}", exc_info=True)
                 return False
 
             # 记录手动操作

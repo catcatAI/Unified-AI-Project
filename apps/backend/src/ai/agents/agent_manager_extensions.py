@@ -35,7 +35,7 @@ class AgentManagerExtensions:
             是否成功啟動
         """
         if not agent_manager.enable_process_agents:
-            logger.error("Process agents are disabled")
+            logger.error("Process agents are disabled", exc_info=True)
             return False
 
         try:
@@ -60,15 +60,15 @@ class AgentManagerExtensions:
             logger.info(f"Launched process agent {agent_id} (PID: {process.pid})")
             return True
         except Exception as e:  # broad exception acceptable: agent restart wraps all subprocess failures
-            logger.error(f"Failed to restart agent {agent_id}: {e}")
-            logger.error(f"Failed to launch process agent {agent_id}: {e}")
+            logger.error(f"Failed to restart agent {agent_id}: {e}", exc_info=True)
+            logger.error(f"Failed to launch process agent {agent_id}: {e}", exc_info=True)
             return False
 
     @staticmethod
     async def start_health_monitoring(agent_manager):
         """啟動健康監控任務"""
         if agent_manager._health_monitor_task:
-            logger.warning("Health monitor already running")
+            logger.warning("Health monitor already running", exc_info=True)
             return
 
         agent_manager._health_monitor_task = asyncio.create_task(
@@ -101,7 +101,7 @@ class AgentManagerExtensions:
                 dead_agents = []
                 for agent_id, agent_info in agent_manager.process_agents.items():
                     if not agent_info.process.is_alive():
-                        logger.warning(f"Agent {agent_id} is dead (PID: {agent_info.process.pid})")
+                        logger.warning(f"Agent {agent_id} is dead (PID: {agent_info.process.pid})", exc_info=True)
                         dead_agents.append(agent_id)
 
                 # 嘗試重啟死亡代理
@@ -111,7 +111,7 @@ class AgentManagerExtensions:
                 logger.info("Health monitor loop cancelled")
                 break
             except Exception as e:  # broad exception acceptable: health monitor loop wraps all task failures
-                logger.error(f"Failed to restart agent {agent_id}: {e}")
+                logger.error(f"Failed to restart agent {agent_id}: {e}", exc_info=True)
                 return False
 
     @staticmethod
@@ -151,7 +151,7 @@ class AgentManagerExtensions:
                 agent_info.process.join(timeout=5.0)
 
                 if agent_info.process.is_alive():
-                    logger.warning(f"Force killing agent {agent_id}")
+                    logger.warning(f"Force killing agent {agent_id}", exc_info=True)
                     agent_info.process.kill()
 
         agent_manager.process_agents.clear()

@@ -18,7 +18,7 @@ try:
 
     REDIS_AVAILABLE = True
 except ImportError:
-    logger.warning("Redis.asyncio not found. CapacityPlanner will run in in-memory mode.")
+    logger.warning("Redis.asyncio not found. CapacityPlanner will run in in-memory mode.", exc_info=True)
 
 # Scikit-learn可用性检查
 SKLEARN_AVAILABLE = False
@@ -28,7 +28,7 @@ try:
 
     SKLEARN_AVAILABLE = True
 except ImportError:
-    logger.warning("Scikit-learn not found. CapacityPlanner will use simpler prediction models.")
+    logger.warning("Scikit-learn not found. CapacityPlanner will use simpler prediction models.", exc_info=True)
 
 
 @dataclass

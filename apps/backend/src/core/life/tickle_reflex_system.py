@@ -254,7 +254,7 @@ class TickleReflexSystem:
         except asyncio.TimeoutError:
             return {"triggered": False, "response": None, "reason": "llm_timeout"}
         except Exception as e:
-            logger.warning(f"[TickleReflex] LLM response failed: {e}")
+            logger.warning(f"[TickleReflex] LLM response failed: {e}", exc_info=True)
             return {"triggered": False, "response": None, "reason": str(e)}
 
     def _build_reflex_prompt(

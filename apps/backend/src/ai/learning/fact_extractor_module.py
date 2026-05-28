@@ -45,7 +45,7 @@ class FactExtractorModule:
         Uses an LLM to extract a list of facts/preferences from the user's text.
         """
         if not self.llm_service:
-            logger.error("LLM Service not available. Cannot extract facts.")
+            logger.error("LLM Service not available. Cannot extract facts.", exc_info=True)
             return []
 
         prompt = self._construct_fact_extraction_prompt(text, user_id)
@@ -57,7 +57,7 @@ class FactExtractorModule:
             )
 
             if not llm_response or not llm_response.content:
-                logger.warning("Empty response from LLM during fact extraction.")
+                logger.warning("Empty response from LLM during fact extraction.", exc_info=True)
                 return []
 
             llm_response_str = llm_response.content.strip()
@@ -70,7 +70,7 @@ class FactExtractorModule:
             try:
                 extracted_data = json.loads(llm_response_str)
                 if not isinstance(extracted_data, list):
-                    logger.error(f"LLM response is not a list: {llm_response_str}")
+                    logger.error(f"LLM response is not a list: {llm_response_str}", exc_info=True)
                     return []
 
                 valid_facts: List[ExtractedFact] = []
@@ -83,11 +83,11 @@ class FactExtractorModule:
                 return valid_facts
 
             except json.JSONDecodeError:
-                logger.error(f"Could not decode JSON from LLM: {llm_response_str}")
+                logger.error(f"Could not decode JSON from LLM: {llm_response_str}", exc_info=True)
                 return []
 
         except Exception as e:  # broad exception acceptable: LLM errors return empty list gracefully
-            logger.error(f"Error during LLM fact extraction: {e}")
+            logger.error(f"Error during LLM fact extraction: {e}", exc_info=True)
             return []
 
 

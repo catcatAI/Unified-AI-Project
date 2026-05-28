@@ -42,7 +42,7 @@ class EconomyDB:
                 self.conn.close()
                 logger.info(f"EconomyDB connection closed: {self.db_path}")
             except sqlite3.Error as e:
-                logger.error(f"Error closing EconomyDB connection: {e}")
+                logger.error(f"Error closing EconomyDB connection: {e}", exc_info=True)
             finally:
                 self.conn = None
                 self.cursor = None

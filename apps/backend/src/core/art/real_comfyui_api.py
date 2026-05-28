@@ -103,12 +103,12 @@ class ComfyUIClient:
                 f"{self.server_url}/prompt", json={"prompt": workflow, "client_id": self.client_id}
             ) as resp:
                 if resp.status != 200:
-                    logger.error(f"ComfyUI API 错误: {await resp.text()}")
+                    logger.error(f"ComfyUI API 错误: {await resp.text()}", exc_info=True)
                     return None
                 data = await resp.json()
                 prompt_id = data.get("prompt_id")
                 if not prompt_id:
-                    logger.error("无法获取 prompt_id")
+                    logger.error("无法获取 prompt_id", exc_info=True)
                     return None
 
             output_images = []
@@ -125,7 +125,7 @@ class ComfyUIClient:
                         break
 
             if not output_images:
-                logger.error("未找到生成的图片")
+                logger.error("未找到生成的图片", exc_info=True)
                 return None
 
             for img_info in output_images:
@@ -259,7 +259,7 @@ class AngelaRealPainter:
             logger.info(f"✅ 肖像已保存: {save_path}")
             return save_path
 
-        logger.error("❌ 肖像生成失败")
+        logger.error("❌ 肖像生成失败", exc_info=True)
         return None
 
     async def paint_background(
@@ -294,7 +294,7 @@ class AngelaRealPainter:
             logger.info(f"✅ 背景已保存: {save_path}")
             return save_path
 
-        logger.error("❌ 背景生成失败")
+        logger.error("❌ 背景生成失败", exc_info=True)
         return None
 
     async def paint_expression(
@@ -336,7 +336,7 @@ class AngelaRealPainter:
             logger.info(f"✅ 表情已保存: {save_path}")
             return save_path
 
-        logger.error("❌ 表情生成失败")
+        logger.error("❌ 表情生成失败", exc_info=True)
         return None
 
 

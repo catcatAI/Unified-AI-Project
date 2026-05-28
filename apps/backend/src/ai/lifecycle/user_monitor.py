@@ -118,7 +118,7 @@ class UserMonitor:
     async def start(self):
         """啟動監控"""
         if self.is_running:
-            logger.warning("UserMonitor is already running")
+            logger.warning("UserMonitor is already running", exc_info=True)
             return
 
         self.is_running = True
@@ -152,7 +152,7 @@ class UserMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
-                logger.error(f"Error in monitor loop: {e}")
+                logger.error(f"Error in monitor loop: {e}", exc_info=True)
                 await asyncio.sleep(1)  # 防止緊密循環
 
     async def _check_user_status(self):
@@ -245,7 +245,7 @@ class UserMonitor:
                 else:
                     callback(event_type, data)
             except Exception as e:  # broad exception acceptable: callback failures should not crash notification loop
-                logger.error(f"Error in state change callback: {e}")
+                logger.error(f"Error in state change callback: {e}", exc_info=True)
 
     def record_input(self, input_text: str, metadata: Optional[Dict[str, Any]] = None):
         """記錄用戶輸入"""

@@ -37,7 +37,7 @@ class RealMCPToolExecutor:
             result = self.adapter.take_action(action, arguments.get("args", []))
             return {"status": "success", "output": result}
         except Exception as e:  # broad exception acceptable: ensure tool execution errors are caught and returned as status
-            logger.error(f"[MCP] Tool Execution Failed: {e}")
+            logger.error(f"[MCP] Tool Execution Failed: {e}", exc_info=True)
             return {"status": "error", "message": str(e)}
 
 async def initialize_mcp_fallback_protocols() -> bool:

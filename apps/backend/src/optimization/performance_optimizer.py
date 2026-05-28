@@ -188,7 +188,7 @@ class PerformanceOptimizer:
         return hashlib.md5(key_string.encode()).hexdigest()
 
     async def run_parallel_tasks(self, tasks: List[Callable[..., Any]]) -> List[Any]:
-        logger.warning("SKELETON: run_parallel_tasks, returning empty list.")
+        logger.warning("SKELETON: run_parallel_tasks, returning empty list.", exc_info=True)
         return []
 
     def get_performance_report(self) -> Dict[str, Any]:

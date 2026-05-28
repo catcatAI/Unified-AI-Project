@@ -341,7 +341,7 @@ def main():
     else:
         if not result.valid:
             for error in result.errors:
-                logger.error(f"ERROR: {error}", file=sys.stderr)
+                logger.error(f"ERROR: {error}", file=sys.stderr, exc_info=True)
         sys.exit(0 if result.valid else 1)
 
 

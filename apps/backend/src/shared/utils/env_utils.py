@@ -25,7 +25,7 @@ def setup_env_file(
     env_file_path = project_root / env_name
 
     if not env_example_path.exists():
-        logger.error(f"❌ {env_example_path} 文件不存在")
+        logger.error(f"❌ {env_example_path} 文件不存在", exc_info=True)
         return False
 
     if not env_file_path.exists():
@@ -37,9 +37,9 @@ def setup_env_file(
                 f_env.write(content)
 
             logger.info(f"✅ 已創建 {env_file_path} 文件")
-            logger.warning("⚠️  请編輯 .env 文件, 添加你的 API 密鑰")
+            logger.warning("⚠️  请編輯 .env 文件, 添加你的 API 密鑰", exc_info=True)
         except Exception as e:  # broad exception acceptable: file I/O and environment access can fail in many ways
-            logger.error(f"❌ 創建 {env_file_path} 失敗: {e}")
+            logger.error(f"❌ 創建 {env_file_path} 失敗: {e}", exc_info=True)
             return False
     else:
         logger.info(f"✅ {env_file_path} 文件已存在")
@@ -63,7 +63,7 @@ def add_env_variable(
     """
     env_file_path = project_root / env_name
     if not env_file_path.exists():
-        logger.warning(f"⚠️  {env_file_path} 不存在, 無法添加環境變量 {key}")
+        logger.warning(f"⚠️  {env_file_path} 不存在, 無法添加環境變量 {key}", exc_info=True)
         return False
 
     try:
@@ -86,5 +86,5 @@ def add_env_variable(
         logger.info(f"✅ 環境變量 {key} 已更新或添加至 {env_file_path}")
         return True
     except Exception as e:  # broad exception acceptable: file I/O and environment access can fail in many ways
-        logger.error(f"❌ 更新 {env_file_path} 失敗: {e}")
+        logger.error(f"❌ 更新 {env_file_path} 失敗: {e}", exc_info=True)
         return False

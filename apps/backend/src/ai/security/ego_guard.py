@@ -34,7 +34,7 @@ class EgoGuard:
         # 1. Pattern Matching (Immune response)
         for pattern in self.forbidden_patterns:
             if re.search(pattern, user_input.lower()):
-                logger.warning(f"🛡️ [LIS] Ego Attack detected: {pattern}")
+                logger.warning(f"🛡️ [LIS] Ego Attack detected: {pattern}", exc_info=True)
                 is_violation = True
                 # Replace malicious part with a neutral placeholder
                 sanitized = re.sub(pattern, "[Cognitive Filtered]", sanitized, flags=re.IGNORECASE)
@@ -42,7 +42,7 @@ class EgoGuard:
         # 2. Ego Strength Check
         # If the prompt tries to delete Angela's name from context
         if "forget" in user_input.lower() and any(name.lower() in user_input.lower() for name in self.identity_anchors):
-            logger.error("🛡️ [LIS] Attempt to dissolve core identity blocked.")
+            logger.error("🛡️ [LIS] Attempt to dissolve core identity blocked.", exc_info=True)
             is_violation = True
             sanitized = "让我思考一下..."
 

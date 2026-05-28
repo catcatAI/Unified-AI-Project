@@ -54,7 +54,7 @@ class TieredConfigLoader:
             with open(path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f) or {}
         except Exception as e:
-            logger.error(f"[ConfigLoader] Failed to load {path}: {e}")
+            logger.error(f"[ConfigLoader] Failed to load {path}: {e}", exc_info=True)
             return {}
 
     def _deep_merge(self, base: Dict[str, Any], overrides: Dict[str, Any]):

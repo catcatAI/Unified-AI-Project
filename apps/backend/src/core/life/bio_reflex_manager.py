@@ -15,7 +15,7 @@ class BiogenicReflexManager:
 
     async def trigger_physical_trauma(self, location: str, severity: float):
         """處理突發撞擊（踢到桌腳）"""
-        logger.warning(f"⚠️ [Reflex] Angela collided with {location} (Severity: {severity})")
+        logger.warning(f"⚠️ [Reflex] Angela collided with {location} (Severity: {severity})", exc_info=True)
         
         # 1. 觸發痛覺刺激 (Nervous System)
         await self.bio.nervous_system.apply_stimulus(

@@ -19,7 +19,7 @@ try:
 
     FAISS_AVAILABLE = True
 except ImportError:
-    logging.error("faiss module not found. Vector search will be unavailable.")
+    logging.error("faiss module not found. Vector search will be unavailable.", exc_info=True)
     FAISS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
@@ -45,14 +45,14 @@ class RAGManager:
                 if FAISS_AVAILABLE:
                     self.index = faiss.IndexFlatL2(self.embedding_dim)
             except Exception as e:  # broad exception acceptable: initialization failures are non-critical, continue with limited functionality
-                logger.error(f"Error initializing RAG model or index: {e}")
+                logger.error(f"Error initializing RAG model or index: {e}", exc_info=True)
         else:
-            logger.warning("RAGManager initialized without a functional embedding model.")
+            logger.warning("RAGManager initialized without a functional embedding model.", exc_info=True)
 
     def add_document(self, text: str, doc_id: Optional[str] = None):
         """Adds a document to the RAG manager and generates its vector embedding."""
         if not self.model or not self.index:
-            logger.error("RAGManager: Model or Index not available.")
+            logger.error("RAGManager: Model or Index not available.", exc_info=True)
             return
 
         try:
@@ -66,7 +66,7 @@ class RAGManager:
             self.documents[current_pos] = text
             logger.info(f"RAGManager: Document added at position {current_pos}.")
         except Exception as e:  # broad exception acceptable: document addition failures are non-blocking
-            logger.error(f"Error adding document to RAG: {e}")
+            logger.error(f"Error adding document to RAG: {e}", exc_info=True)
 
     def search(self, query: str, k: int = 5) -> List[Tuple[str, float]]:
         """Searches for the most similar documents to a given query."""
@@ -89,7 +89,7 @@ class RAGManager:
                         results.append((doc, float(1.0 - dist)))
                 return results
         except Exception as e:  # broad exception acceptable: search failures return empty list to signal no results
-            logger.error(f"Error during RAG search: {e}")
+            logger.error(f"Error during RAG search: {e}", exc_info=True)
             return []
 
         return []

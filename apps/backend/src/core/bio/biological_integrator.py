@@ -250,7 +250,7 @@ class BiologicalIntegrator:
             if art_wf:
                 logger.info("🎨 [Bio] ArtLearningWorkflow activated and linked.")
         except Exception as e:
-            logger.warning(f"🎨 [Bio] Failed to activate ArtLearningWorkflow: {e}")
+            logger.warning(f"🎨 [Bio] Failed to activate ArtLearningWorkflow: {e}", exc_info=True)
 
         # [2030 Standard] Start integration loop with safe tracking
         self._integration_task = safe_create_task(
@@ -424,7 +424,7 @@ class BiologicalIntegrator:
             if self.endocrine_system.stress_level > 0.05:
                 logger.debug(f"🧪 [Bio] Endocrine metabolism complete. Stress: {self.endocrine_system.stress_level:.2f}")
         except Exception as e:  # broad exception acceptable: endocrine metabolism errors should not break homeostasis
-            logger.error(f"Failed to update endocrine metabolism: {e}")
+            logger.error(f"Failed to update endocrine metabolism: {e}", exc_info=True)
 
         # 3. Safety Fuse
         from core.system.config.tiered_loader import get_config

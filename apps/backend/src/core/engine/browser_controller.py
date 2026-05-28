@@ -289,7 +289,7 @@ class BrowserController:
                                     )
                                 )
         except Exception as e:  # broad exception acceptable: real search should be resilient to network errors
-            logger.error(f"Real search failed: {e}")
+            logger.error(f"Real search failed: {e}", exc_info=True)
             
         return results
 
@@ -358,10 +358,10 @@ class BrowserController:
                             summary=clean_text[:200] + "..." if len(clean_text) > 200 else clean_text
                         )
                     else:
-                        logger.warning(f"Extraction failed with status {response.status} for {url}")
+                        logger.warning(f"Extraction failed with status {response.status} for {url}", exc_info=True)
                         return None
         except Exception as e:  # broad exception acceptable: real extraction should be resilient to network errors
-            logger.error(f"Real extraction failed: {e}")
+            logger.error(f"Real extraction failed: {e}", exc_info=True)
             return None
 
     def detect_game(self, url: str, page_title: str, page_content: str) -> bool:

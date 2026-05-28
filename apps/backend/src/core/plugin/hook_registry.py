@@ -62,7 +62,7 @@ class HookRegistry:
     def register_handler(self, hook_name: str, handler_name: str, handler: Callable) -> bool:
         """Register a handler function for a hook."""
         if hook_name not in self._hooks:
-            logger.warning(f"[HookRegistry] Unknown hook '{hook_name}', defining automatically")
+            logger.warning(f"[HookRegistry] Unknown hook '{hook_name}', defining automatically", exc_info=True)
             self.define_hook(hook_name)
         self._handlers[hook_name].append((handler_name, handler))
         return True
@@ -95,7 +95,7 @@ class HookRegistry:
                     result=result,
                 ))
             except Exception as e:
-                logger.error(f"[HookRegistry] Handler '{handler_name}' for hook '{hook_name}' failed: {e}")
+                logger.error(f"[HookRegistry] Handler '{handler_name}' for hook '{hook_name}' failed: {e}", exc_info=True)
                 results.append(HookResult(
                     hook_name=hook_name,
                     handler_name=handler_name,

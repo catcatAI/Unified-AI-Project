@@ -116,7 +116,7 @@ class EnterpriseMonitor:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-        logger.warning(f"告警 [{level.value}]: {message}")
+        logger.warning(f"告警 [{level.value}]: {message}", exc_info=True)
         return alert
 
     def get_alerts(self, acknowledged: bool = None) -> List[Alert]:

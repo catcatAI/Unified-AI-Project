@@ -234,7 +234,7 @@ class LocalClusterManager:
                 )
                 return result
             except Exception as e:  # broad exception acceptable: custom executor errors should return error result
-                logger.error(f"[Worker-{worker_id}] Custom executor failed: {e}")
+                logger.error(f"[Worker-{worker_id}] Custom executor failed: {e}", exc_info=True)
                 return {
                     "status": "error",
                     "worker_id": worker_id,
@@ -255,7 +255,7 @@ class LocalClusterManager:
                 # 執行推理任務
                 return LocalClusterManager._execute_inference_task(worker_id, task, start_time)
         except Exception as e:  # broad exception acceptable: built-in executor errors return error result
-            logger.error(f"[Worker-{worker_id}] Built-in executor failed: {e}")
+            logger.error(f"[Worker-{worker_id}] Built-in executor failed: {e}", exc_info=True)
             return {
                 "status": "error",
                 "worker_id": worker_id,
@@ -404,7 +404,7 @@ class LocalClusterManager:
             if worker_info.process:
                 worker_info.process.join(timeout=5.0)
                 if worker_info.process.is_alive():
-                    logger.warning(f"Force terminating worker {worker_info.worker_id}")
+                    logger.warning(f"Force terminating worker {worker_info.worker_id}", exc_info=True)
                     worker_info.process.terminate()
 
         logger.info("Local cluster shutdown complete")

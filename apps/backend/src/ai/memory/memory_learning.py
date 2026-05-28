@@ -74,7 +74,7 @@ class MemoryLearningEngine:
             template = await self.memory_manager.get_template(template_id)
 
             if template is None:
-                logger.warning(f"Template {template_id} not found")
+                logger.warning(f"Template {template_id} not found", exc_info=True)
                 return
 
             # 2. 更新成功率（移动平均）

@@ -62,7 +62,7 @@ class JsonFileStateStore:
             await async_json_dump(data, str(path), ensure_ascii=False, default=str)
             return True
         except Exception as e:
-            logger.error(f"Failed to save state key={key}: {e}")
+            logger.error(f"Failed to save state key={key}: {e}", exc_info=True)
             return False
 
     async def load_state(self, key: str) -> Optional[Dict[str, Any]]:
@@ -72,7 +72,7 @@ class JsonFileStateStore:
                 return await async_json_load(str(path))
             return None
         except Exception as e:
-            logger.error(f"Failed to load state key={key}: {e}")
+            logger.error(f"Failed to load state key={key}: {e}", exc_info=True)
             return None
 
     async def delete_state(self, key: str) -> bool:
@@ -82,7 +82,7 @@ class JsonFileStateStore:
                 path.unlink()
             return True
         except Exception as e:
-            logger.error(f"Failed to delete state key={key}: {e}")
+            logger.error(f"Failed to delete state key={key}: {e}", exc_info=True)
             return False
 
     async def list_keys(self, prefix: str = "") -> list:
@@ -92,7 +92,7 @@ class JsonFileStateStore:
                 str(f.stem) for f in self._data_dir.glob(pattern)
             )
         except Exception as e:
-            logger.error(f"Failed to list keys prefix={prefix}: {e}")
+            logger.error(f"Failed to list keys prefix={prefix}: {e}", exc_info=True)
             return []
 
 

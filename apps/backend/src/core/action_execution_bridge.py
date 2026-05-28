@@ -436,7 +436,7 @@ class ActionExecutionBridge:
                 try:
                     callback(context)
                 except Exception as e:  # broad exception acceptable: callbacks are user-defined, prevent crash
-                    logger.error(f"[ActionExecutionBridge] Pre-execution callback error: {e}")
+                    logger.error(f"[ActionExecutionBridge] Pre-execution callback error: {e}", exc_info=True)
 
             # Get handler
             handler = self._handlers.get(context.action_type)
@@ -505,7 +505,7 @@ class ActionExecutionBridge:
                     try:
                         callback(context, result)
                     except Exception as e:  # broad exception acceptable: prevent callback errors from breaking flow
-                        logger.error(f"[ActionExecutionBridge] Post-execution callback error: {e}")
+                        logger.error(f"[ActionExecutionBridge] Post-execution callback error: {e}", exc_info=True)
 
                 # Send feedback to CDM for learning (if available)
                 if self.cdm:
@@ -575,7 +575,7 @@ class ActionExecutionBridge:
                 
                 self._execution_history = await asyncio.to_thread(read_history)
         except Exception as e:  # broad exception acceptable: non-critical history load, continue without it
-            logger.error(f"[ActionExecutionBridge] Failed to load history: {e}")
+            logger.error(f"[ActionExecutionBridge] Failed to load history: {e}", exc_info=True)
 
     async def _save_history(self):
         """Save execution history to file"""
@@ -588,7 +588,7 @@ class ActionExecutionBridge:
             
             await asyncio.to_thread(write_history)
         except Exception as e:  # broad exception acceptable: non-critical history save, log and continue
-            logger.error(f"[ActionExecutionBridge] Failed to save history: {e}")
+            logger.error(f"[ActionExecutionBridge] Failed to save history: {e}", exc_info=True)
 
     async def _send_feedback_to_cdm(self, result: ExecutionResult):
         """Send execution feedback to CDM for learning"""
@@ -616,7 +616,7 @@ class ActionExecutionBridge:
                         if hasattr(self.cdm, "integrate_knowledge"):
                             self.cdm.integrate_knowledge(feedback_delta, delta)
         except Exception as e:  # broad exception acceptable: non-critical CDM update, log and continue
-            logger.error(f"[ActionExecutionBridge] Failed to send feedback to CDM: {e}")
+            logger.error(f"[ActionExecutionBridge] Failed to send feedback to CDM: {e}", exc_info=True)
 
     # ========== Action Handlers ==========
 

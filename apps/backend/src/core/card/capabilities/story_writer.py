@@ -32,7 +32,7 @@ class StoryWriter:
 
     async def write(self, card: Card, query: str = "") -> Optional[str]:
         if not card.history_events:
-            logger.warning(f"No history events for {card.qualified_id}")
+            logger.warning(f"No history events for {card.qualified_id}", exc_info=True)
             return None
 
         context: Dict[str, Any] = {

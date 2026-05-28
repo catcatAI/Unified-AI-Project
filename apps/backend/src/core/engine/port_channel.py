@@ -67,7 +67,7 @@ class PortChannel:
             是否成功
         """
         if len(self.buffer) >= self.max_buffer:
-            logger.warning(f"[PortChannel] Buffer full for '{self.port_name}', dropping oldest")
+            logger.warning(f"[PortChannel] Buffer full for '{self.port_name}', dropping oldest", exc_info=True)
             self.buffer.popleft()
 
         self.buffer.append(data)
@@ -181,7 +181,7 @@ class AxisOutputManager:
         """寫入數據到端口緩衝區"""
         port = self._port_registry.get_port(port_name) if self._port_registry else None
         if not port:
-            logger.warning(f"[AxisOutputManager] Port '{port_name}' not registered")
+            logger.warning(f"[AxisOutputManager] Port '{port_name}' not registered", exc_info=True)
             return False
 
         channel = self._get_channel(port_name)

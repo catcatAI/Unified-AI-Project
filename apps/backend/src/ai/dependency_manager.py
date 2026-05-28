@@ -126,7 +126,7 @@ class DependencyManager:
 
         # OS-specific check for tensorflow
         if dep_name == "tensorflow" and os.name == "nt":
-            logger.warning("Skipping direct import of 'tensorflow' on Windows.")
+            logger.warning("Skipping direct import of 'tensorflow' on Windows.", exc_info=True)
             status.error = "Direct import skipped on Windows."
         else:
             try:
@@ -143,7 +143,7 @@ class DependencyManager:
                 return
             except ImportError as e:
                 status.error = str(e)
-                logger.warning(f"Primary dependency '{dep_name}' not available: {e}")
+                logger.warning(f"Primary dependency '{dep_name}' not available: {e}", exc_info=True)
             except Exception as e:  # broad exception acceptable: import errors should be logged and fallbacks attempted
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 status.error = f"An unexpected error occurred: {e}"
@@ -180,7 +180,7 @@ class DependencyManager:
                 self._dependencies[name] = DependencyStatus(name)
                 self._check_dependency_availability(name, dep_config)
             else:
-                logger.warning(f"Unknown dependency '{name}' requested")
+                logger.warning(f"Unknown dependency '{name}' requested", exc_info=True)
                 return None
 
         status = self._dependencies[name]
@@ -196,7 +196,7 @@ class DependencyManager:
             if dep_config:
                 self._check_dependency_availability(name, dep_config)
             else:
-                logger.error(f"Configuration for dependency '{name}' not found.")
+                logger.error(f"Configuration for dependency '{name}' not found.", exc_info=True)
                 status.error = "Configuration not found"
 
         if status.is_available:
@@ -210,7 +210,7 @@ class DependencyManager:
                     f"Dependency '{name}' and fallbacks unavailable. Reason: {status.error}"
                 )
             else:
-                logger.warning(f"Dependency '{name}' and fallbacks unavailable.")
+                logger.warning(f"Dependency '{name}' and fallbacks unavailable.", exc_info=True)
             return None
 
     def is_available(self, name: str) -> bool:

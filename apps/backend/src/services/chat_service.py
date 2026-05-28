@@ -78,7 +78,7 @@ class ChatService:
                 else:
                     return f"（演化失敗）寫入配置時似乎遇到了點小麻煩..."
             except Exception as e:
-                logger.error(f"Evolution execution error: {e}")
+                logger.error(f"Evolution execution error: {e}", exc_info=True)
                 return f"（演化失敗）發生了意料之外的錯誤：{e}"
                 
         elif any(kw in msg for kw in ["取消", "不", "拒絕", "cancel", "no", "reject"]):
@@ -140,7 +140,7 @@ class ChatService:
             
             loop.process_llm_response(response, intent_analysis)
         except Exception as e:
-            logger.warning(f"Linguistic learning loop failed: {e}")
+            logger.warning(f"Linguistic learning loop failed: {e}", exc_info=True)
 
         # 5. 更新對話歷史
         self._conversation_history.append({"role": "user", "content": user_message})
@@ -185,12 +185,12 @@ class ChatService:
             
             if response.error:
                 # 失敗時嘗試使用 NeuroBlender 降級
-                logger.warning(f"LLM Error, falling back to NeuroBlender: {response.error}")
+                logger.warning(f"LLM Error, falling back to NeuroBlender: {response.error}", exc_info=True)
                 return await self._try_neuro_fallback(message, bio_state)
                 
             return response.text
         except Exception as e:
-            logger.error(f"LLM Call failed: {e}")
+            logger.error(f"LLM Call failed: {e}", exc_info=True)
             return await self._try_neuro_fallback(message, bio_state)
 
     async def _try_neuro_fallback(self, text: str, bio_state: Dict[str, Any]) -> str:
@@ -271,7 +271,7 @@ class ChatService:
                 lines.append(f"  {avail} {backend_type.value} ({model}) {active}")
             return "（LLM 管理）目前運行狀態如下。妳可以告訴我「切換到某模型」來觸發演化。\n" + "\n".join(lines)
         except Exception as e:
-            logger.warning(f"LLM manage intent failed: {e}")
+            logger.warning(f"LLM manage intent failed: {e}", exc_info=True)
             return "（LLM 管理模組載入失敗）"
 
     async def _handle_file_intent(self, text: str, intent: str) -> str:

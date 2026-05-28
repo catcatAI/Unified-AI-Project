@@ -69,7 +69,7 @@ class HAMMemoryManager:
             self.fernet = Fernet(new_key)
             with open(key_path, "wb") as f:
                 f.write(new_key)
-            logger.warning("✨ [Memory] New Soul Key generated and persisted. Do not delete .soul.key!")
+            logger.warning("✨ [Memory] New Soul Key generated and persisted. Do not delete .soul.key!", exc_info=True)
 
         self.core_storage = HAMCoreStorage(self.storage_dir, core_storage_filename, resource_awareness_service)
         self.data_processor = HAMDataProcessor(fernet=self.fernet)
@@ -113,10 +113,10 @@ class HAMMemoryManager:
                         )
                 logger.info("✅ [Memory] TRPG Codex successfully injected into strategic knowledge.")
             else:
-                logger.warning(f"⚠️ [Memory] TRPG Codex not found at {codex_path}. Skipping injection.")
+                logger.warning(f"⚠️ [Memory] TRPG Codex not found at {codex_path}. Skipping injection.", exc_info=True)
         except Exception as e:
             # broad exception acceptable: optional codex loading should not block memory initialization
-            logger.error(f"❌ [Memory] Failed to auto-load TRPG Codex: {e}")
+            logger.error(f"❌ [Memory] Failed to auto-load TRPG Codex: {e}", exc_info=True)
             
         return True
 
@@ -217,7 +217,7 @@ class HAMMemoryManager:
                     scored_templates.append((template, score))
             except Exception as e:
                 # broad exception acceptable: template retrieval should be resilient to errors
-                logger.error(f"Error processing template in retrieval: {e}")
+                logger.error(f"Error processing template in retrieval: {e}", exc_info=True)
                 continue
         
         # 3. Sort by score
@@ -238,7 +238,7 @@ class HAMMemoryManager:
                     continue
             return None
         except Exception as e:
-            logger.warning(f"get_template failed: {e}")
+            logger.warning(f"get_template failed: {e}", exc_info=True)
             return None
 
     async def update_template(self, template) -> bool:
@@ -246,7 +246,7 @@ class HAMMemoryManager:
         try:
             return await self.store_template(template)
         except Exception as e:
-            logger.warning(f"update_template failed: {e}")
+            logger.warning(f"update_template failed: {e}", exc_info=True)
             return False
 
     async def store_template(self, template) -> bool:

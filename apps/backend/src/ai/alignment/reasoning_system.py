@@ -251,7 +251,7 @@ class ReasoningSystem:
             self.ethical_principles[principle] = weight
             logger.info(f"[{self.system_id}] 更新伦理原则权重: {principle.value} = {weight}")
         else:
-            logger.warning(f"[{self.system_id}] 无效的权重值: {weight} (应在0.0 - 2.0之间)")
+            logger.warning(f"[{self.system_id}] 无效的权重值: {weight} (应在0.0 - 2.0之间)", exc_info=True)
 
     def get_reasoning_history(self, limit: int = 100) -> List[Dict[str, Any]]:
         """获取推理历史"""

@@ -120,7 +120,7 @@ class LLMDecisionLoop:
     async def start(self):
         """啟動決策循環"""
         if self.is_running:
-            logger.warning("LLMDecisionLoop is already running")
+            logger.warning("LLMDecisionLoop is already running", exc_info=True)
             return
 
         self.is_running = True

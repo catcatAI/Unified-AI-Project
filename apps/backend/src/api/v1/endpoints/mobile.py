@@ -46,7 +46,7 @@ async def get_mobile_status_get():
             "server_time": datetime.now().isoformat(),
         }
     except ImportError as e:
-        logger.error(f"Mobile status import error: {e}")
+        logger.error(f"Mobile status import error: {e}", exc_info=True)
         return {
             "status": "partial",
             "metrics": {"cpu": "N/A", "mem": "N/A", "nodes": 0},
@@ -78,7 +78,7 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)):
             "server_time": datetime.now().isoformat(),
         }
     except ImportError as e:
-        logger.error(f"Mobile status import error: {e}")
+        logger.error(f"Mobile status import error: {e}", exc_info=True)
         return {
             "status": "partial",
             "metrics": {"cpu": "N/A", "mem": "N/A", "nodes": 0},

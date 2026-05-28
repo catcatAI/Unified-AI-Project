@@ -19,7 +19,7 @@ class HAMVectorStoreManager:
                 )
                 logger.info("ChromaDB collection initialized from external chroma_client.")
             except Exception as e:  # broad exception acceptable: external client initialization should not crash the system
-                logger.error(f"Failed to initialize ChromaDB collection from external client: {e}")
+                logger.error(f"Failed to initialize ChromaDB collection from external client: {e}", exc_info=True)
                 self.chroma_collection = None
         else:
             if os.environ.get("HAM_DISABLE_VECTOR_STORE", "0") == "1":
@@ -80,7 +80,7 @@ class HAMVectorStoreManager:
                     f"HAM: Vector / Chroma store disabled, skipping semantic vector storage for {memory_id}."
                 )
         except Exception as e:  # broad exception acceptable: storage failure should be logged gracefully
-            logger.error(f"Error storing semantic vector for {memory_id}: {e}")
+            logger.error(f"Error storing semantic vector for {memory_id}: {e}", exc_info=True)
 
     def close(self):
         if self.vector_store and hasattr(self.vector_store, "client") and self.vector_store.client:
@@ -88,4 +88,4 @@ class HAMVectorStoreManager:
                 self.vector_store.client = None
                 logger.info("HAMVectorStoreManager: Vector store client dereferenced successfully.")
             except Exception as e:  # broad exception acceptable: cleanup should not crash the system
-                logger.error(f"HAMVectorStoreManager: Error dereferencing vector store client: {e}")
+                logger.error(f"HAMVectorStoreManager: Error dereferencing vector store client: {e}", exc_info=True)

@@ -260,7 +260,7 @@ class HSPExtensionManager:
     def load_extension(self, extension_id: str) -> bool:
         """加载扩展"""
         if extension_id not in self.extensions:
-            logger.warning(f"扩展未注册: {extension_id}")
+            logger.warning(f"扩展未注册: {extension_id}", exc_info=True)
             return False
 
         extension = self.extensions[extension_id]
@@ -282,7 +282,7 @@ class HSPExtensionManager:
     def unload_extension(self, extension_id: str) -> bool:
         """卸载扩展"""
         if extension_id not in self.extensions:
-            logger.warning(f"扩展未注册: {extension_id}")
+            logger.warning(f"扩展未注册: {extension_id}", exc_info=True)
             return False
 
         extension = self.extensions[extension_id]
@@ -467,7 +467,7 @@ class HSPPluginLoader:
     def unload_plugin(self, plugin_name: str) -> bool:
         """卸载插件"""
         if plugin_name not in self.loaded_plugins:
-            logger.warning(f"插件未加载: {plugin_name}")
+            logger.warning(f"插件未加载: {plugin_name}", exc_info=True)
             return False
 
         try:

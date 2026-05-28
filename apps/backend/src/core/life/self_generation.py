@@ -416,7 +416,7 @@ class SelfGeneration:
                             avatar.thumbnail_path = img_path
                             return
         except Exception as e:  # broad exception acceptable: SD API is optional, graceful degradation
-            logger.warning(f"Failed to connect to external SD API, using fallback: {e}")
+            logger.warning(f"Failed to connect to external SD API, using fallback: {e}", exc_info=True)
 
         # Fallback if SD API is unavailable
         avatar.file_path = self.output_path / f"{avatar.avatar_id}.png"

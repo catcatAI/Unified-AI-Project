@@ -36,7 +36,7 @@ class EvaluationDB:
             conn.commit()
             logger.info(f"EvaluationDB initialized at {self.db_path}")
         except sqlite3.Error as e:
-            logger.error(f"Error initializing EvaluationDB at {self.db_path}: {e}")
+            logger.error(f"Error initializing EvaluationDB at {self.db_path}: {e}", exc_info=True)
             raise
         finally:
             if conn:

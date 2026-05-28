@@ -22,14 +22,14 @@ def read_gdoc_file(gdoc_path: str) -> Optional[str]:
     """
     path = Path(gdoc_path)
     if not path.exists():
-        logger.error(f".gdoc file not found: {gdoc_path}")
+        logger.error(f".gdoc file not found: {gdoc_path}", exc_info=True)
         return None
 
     try:
         with open(path, "r", encoding="utf-8") as f:
             meta = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
-        logger.error(f"Failed to read .gdoc file {gdoc_path}: {e}")
+        logger.error(f"Failed to read .gdoc file {gdoc_path}: {e}", exc_info=True)
         return None
 
     doc_id = meta.get("doc_id")
@@ -38,7 +38,7 @@ def read_gdoc_file(gdoc_path: str) -> Optional[str]:
         if "/d/" in url:
             doc_id = url.split("/d/")[1].split("/")[0]
     if not doc_id:
-        logger.error(f"No doc_id found in .gdoc file: {gdoc_path}")
+        logger.error(f"No doc_id found in .gdoc file: {gdoc_path}", exc_info=True)
         return None
 
     drive = get_drive_service()

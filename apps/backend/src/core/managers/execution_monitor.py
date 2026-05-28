@@ -248,7 +248,7 @@ class ExecutionMonitor:
 
                 # 檢查資源警告
                 if cpu_percent > self.config.cpu_threshold:
-                    self.logger.warning(f"High CPU usage: {cpu_percent:.1f}%")
+                    logger.warning(f"High CPU usage: {cpu_percent:.1f}%", exc_info=True)
 
                 if memory_percent > self.config.memory_threshold:
                     self.logger.warning(
@@ -351,7 +351,7 @@ class ExecutionMonitor:
                 result.stderr = stderr
 
             except subprocess.TimeoutExpired:
-                self.logger.warning(f"Command timed out after {effective_timeout}s")
+                logger.warning(f"Command timed out after {effective_timeout}s", exc_info=True)
 
                 # 嘗試優雅終止
                 self._current_process.terminate()
@@ -483,7 +483,7 @@ class ExecutionMonitor:
                 result.stderr = stderr.decode() if stderr else ""
 
             except asyncio.TimeoutError:
-                self.logger.warning(f"Async command timed out after {effective_timeout}s")
+                logger.warning(f"Async command timed out after {effective_timeout}s", exc_info=True)
 
                 # 終止進程
                 process.terminate()
@@ -657,4 +657,4 @@ if __name__ == "__main__":
     if result.stderr:
         logger.info(f"STDERR:\n{result.stderr}")
     if result.error_message:
-        logger.error(f"Error: {result.error_message}")
+        logger.error(f"Error: {result.error_message}", exc_info=True)

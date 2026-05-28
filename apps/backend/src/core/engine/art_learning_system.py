@@ -215,7 +215,7 @@ class ArtLearningSystem:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
                     self.aesthetic_preferences.update(json.load(f))
             except Exception as e:  # broad exception acceptable: config loading failure should not block system startup
-                logger.error(f"Failed to load aesthetics: {e}")
+                logger.error(f"Failed to load aesthetics: {e}", exc_info=True)
 
     def _save_preferences(self):
         try:
@@ -223,7 +223,7 @@ class ArtLearningSystem:
             with open(self.storage_path, 'w', encoding='utf-8') as f:
                 json.dump(self.aesthetic_preferences, f)
         except (IOError, OSError) as e:
-            logger.error(f"Failed to save aesthetics: {e}")
+            logger.error(f"Failed to save aesthetics: {e}", exc_info=True)
 
     def get_color_overrides(self, bio_state: Dict[str, Any]) -> Dict[str, List[float]]:
         """Legacy fallback: use emotion name lookup table."""

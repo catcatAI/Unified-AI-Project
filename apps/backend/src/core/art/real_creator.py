@@ -313,7 +313,7 @@ class AngelaRealCreator:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["errors"].append(str(e))
 
-            logger.error(f"创作流程错误: {e}")
+            logger.error(f"创作流程错误: {e}", exc_info=True)
 
         finally:
             await self.close()

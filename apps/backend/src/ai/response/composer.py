@@ -652,7 +652,7 @@ class NeuroVocabulary:
             from core.system.state_store.global_store import state_store
             state_store.update_state("neuro_vocabulary", {"mappings": serialized})
         except Exception as e:
-            logger.warning(f"[NeuroVocabulary] sync_to_state_store failed: {e}")
+            logger.warning(f"[NeuroVocabulary] sync_to_state_store failed: {e}", exc_info=True)
 
     def restore_from_state_store(self):
         """從 GlobalStateStore 恢復數值映射"""
@@ -663,7 +663,7 @@ class NeuroVocabulary:
             if mappings:
                 self.load_mappings_from_config(mappings)
         except Exception as e:
-            logger.warning(f"[NeuroVocabulary] restore_from_state_store failed: {e}")
+            logger.warning(f"[NeuroVocabulary] restore_from_state_store failed: {e}", exc_info=True)
 
     def load_from_config(self, config_data: List[Dict[str, Any]]):
         """从配置加载片段"""

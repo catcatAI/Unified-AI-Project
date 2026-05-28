@@ -33,7 +33,7 @@ def project_error_handler(error: ProjectError):
     import logging
 
     logger = logging.getLogger(__name__)
-    logger.error(f"Caught Project Error: {error}")
+    logger.error(f"Caught Project Error: {error}", exc_info=True)
 
 
 class ErrorHandler:
@@ -44,4 +44,4 @@ class ErrorHandler:
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.error(f"Error in {context}: {error}")
+        logger.error(f"Error in {context}: {error}", exc_info=True)

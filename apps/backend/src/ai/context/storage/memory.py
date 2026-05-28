@@ -40,7 +40,7 @@ class MemoryStorage(Storage):
             logger.debug(f"Context {context.context_id} saved to memory storage")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to save context {context.context_id} to memory storage, {e}")
+            logger.error(f"Failed to save context {context.context_id} to memory storage, {e}", exc_info=True)
             return False
 
     def load_context(self, context_id: str) -> Optional[Context]:
@@ -56,7 +56,7 @@ class MemoryStorage(Storage):
                 logger.debug(f"Context {context_id} not found in memory storage")
                 return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to load context {context_id} from memory storage, {e}")
+            logger.error(f"Failed to load context {context_id} from memory storage, {e}", exc_info=True)
             return None
 
     def delete_context(self, context_id: str) -> bool:
@@ -70,7 +70,7 @@ class MemoryStorage(Storage):
                 logger.debug(f"Context {context_id} not found in memory storage for deletion")
                 return False
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to delete context {context_id} from memory storage, {e}")
+            logger.error(f"Failed to delete context {context_id} from memory storage, {e}", exc_info=True)
             return False
 
     def list_contexts(self, context_type: Optional[ContextType] = None) -> List[str]:
@@ -88,7 +88,7 @@ class MemoryStorage(Storage):
             logger.debug(f"Listed {len(context_ids)} contexts from memory storage")
             return context_ids
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to list contexts from memory storage, {e}")
+            logger.error(f"Failed to list contexts from memory storage, {e}", exc_info=True)
             return []
 
     def update_context_metadata(self, context_id: str, metadata: Dict[str, Any]) -> bool:
@@ -108,7 +108,7 @@ class MemoryStorage(Storage):
                 )
                 return False
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to update context {context_id} metadata in memory storage, {e}")
+            logger.error(f"Failed to update context {context_id} metadata in memory storage, {e}", exc_info=True)
             return False
 
     def get_storage_info(self) -> Dict[str, Any]:

@@ -269,7 +269,7 @@ class ExecutionManager:
 
                 time.sleep(10)  # Check every 10 seconds
             except Exception as e:  # broad exception acceptable: monitoring loop must survive any error
-                self.logger.error(f"Error in health monitoring loop: {e}")
+                logger.error(f"Error in health monitoring loop: {e}", exc_info=True)
 
     def _check_resource_thresholds(self, health: Dict[str, Any]) -> None:
         """Check resource thresholds"""
@@ -309,11 +309,11 @@ class ExecutionManager:
         self.issues_log.append(issue)
 
         if severity == "critical":
-            self.logger.error(f"Critical {resource_type} usage: {value}%")
+            logger.error(f"Critical {resource_type} usage: {value}%", exc_info=True)
             if self.config.auto_recovery:
                 self._attempt_resource_recovery(resource_type)
         else:
-            self.logger.warning(f"High {resource_type} usage: {value}%")
+            logger.warning(f"High {resource_type} usage: {value}%", exc_info=True)
 
     def _attempt_resource_recovery(self, resource_type: str) -> None:
         """Attempt resource recovery"""
@@ -345,7 +345,7 @@ class ExecutionManager:
             recovery_action["status"] = "failed"
 
             recovery_action["error"] = str(e)
-            self.logger.error(f"Recovery action failed for {resource_type}: {e}")
+            logger.error(f"Recovery action failed for {resource_type}: {e}", exc_info=True)
 
         self.recovery_actions.append(recovery_action)
 
@@ -398,14 +398,14 @@ class ExecutionManager:
                 # Check if need to retry
                 if retry_count < max_retries and self._should_retry(result):
                     retry_count += 1
-                    self.logger.warning(f"Retrying command (attempt {retry_count}/{max_retries})")
+                    logger.warning(f"Retrying command (attempt {retry_count}/{max_retries})", exc_info=True)
                     time.sleep(self.config.retry_interval)
                     continue
                 else:
                     break
 
             except Exception as e:  # broad exception acceptable: command execution errors handled with retry
-                self.logger.error(f"Command execution error: {e}")
+                logger.error(f"Command execution error: {e}", exc_info=True)
                 if retry_count < max_retries:
                     retry_count += 1
                     time.sleep(self.config.retry_interval)
@@ -636,4 +636,4 @@ if __name__ == "__main__":
         if result.stderr:
             logger.info(f"STDERR:\n{result.stderr}")
         if result.error_message:
-            logger.error(f"Error: {result.error_message}")
+            logger.error(f"Error: {result.error_message}", exc_info=True)

@@ -99,7 +99,7 @@ class PrecomputeService:
         启动预计算服务（后台任务）
         """
         if self.is_running:
-            logger.warning("Precompute service is already running")
+            logger.warning("Precompute service is already running", exc_info=True)
             return
 
         self.is_running = True
@@ -141,7 +141,7 @@ class PrecomputeService:
             bool: 是否成功添加
         """
         if not self.is_running:
-            logger.warning("Precompute service is not running")
+            logger.warning("Precompute service is not running", exc_info=True)
             return False
 
         if self.task_queue.full():
@@ -153,7 +153,7 @@ class PrecomputeService:
             self.stats["total_tasks"] += 1
             return True
         except Exception as e:  # broad exception acceptable: task addition should not crash caller
-            logger.error(f"Error adding precompute task: {e}")
+            logger.error(f"Error adding precompute task: {e}", exc_info=True)
             return False
 
     async def _precompute_loop(self):
@@ -233,7 +233,7 @@ class PrecomputeService:
             response = await self._generate_with_timeout(task.query, task.context, self.llm_timeout)
 
             if response.error:
-                logger.warning(f"LLM generation failed: {response.error}")
+                logger.warning(f"LLM generation failed: {response.error}", exc_info=True)
                 self.failed_count += 1
                 self.stats["failed_tasks"] += 1
                 return
@@ -304,7 +304,7 @@ class PrecomputeService:
             return LLMResponse(text=text, backend="precompute", model="", tokens_used=0,
                                response_time_ms=0, confidence=0.0)
         except asyncio.TimeoutError:
-            logger.warning(f"LLM generation timeout after {timeout}s")
+            logger.warning(f"LLM generation timeout after {timeout}s", exc_info=True)
             from ..services.angela_llm_service import LLMResponse
 
             return LLMResponse(

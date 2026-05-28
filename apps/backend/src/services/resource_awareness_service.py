@@ -125,11 +125,11 @@ if __name__ == "__main__":
         disk_conf = service_default.get_simulated_disk_config()
         if disk_conf:
             logger.info(f"  Disk Space (GB): {disk_conf.space_gb}")
-            logger.warning(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}")
+            logger.warning(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}", exc_info=True)
         else:
             logger.info("  No disk config found in default profile.")
     else:
-        logger.error("  Failed to load default profile.")
+        logger.error("  Failed to load default profile.", exc_info=True)
 
     # Test with a non-existent config file path
     logger.info("\n2. Testing with non-existent config file:")

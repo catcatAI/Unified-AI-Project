@@ -103,7 +103,7 @@ class ModalityGateway:
             if dissonance > 0.6:
                 self.modalities[ModalityType.CODE].is_active = False
                 self.modalities[ModalityType.AUDIO].is_active = False
-                logger.warning(f"⚠️ [Modality] High Dissonance ({dissonance:.2f}). Throttling energy-heavy modalities.")
+                logger.warning(f"⚠️ [Modality] High Dissonance ({dissonance:.2f}). Throttling energy-heavy modalities.", exc_info=True)
             else:
                 # 根據任務類型動態開啟
                 anomalies = introspection_report.get("anomalies", [])
@@ -299,7 +299,7 @@ class DigitalLifeIntegrator:
             logger.info("  [Foundation] Biological systems online.")
         except Exception as e:
             # broad exception acceptable: initialization should continue on optional component failure
-            logger.error(f"  [CRITICAL] Biological boot failure: {e}")
+            logger.error(f"  [CRITICAL] Biological boot failure: {e}", exc_info=True)
 
         # 2. Action & Interaction Layer
         try:
@@ -308,7 +308,7 @@ class DigitalLifeIntegrator:
             logger.info("  [Sensory] Action executor online.")
         except Exception as e:
             # broad exception acceptable: executor degradation is non-critical, graceful degradation
-            logger.warning(f"  [Sensory] Executor degraded: {e}")
+            logger.warning(f"  [Sensory] Executor degraded: {e}", exc_info=True)
 
         # 3. High-Level Cognition (Optional/Graceful)
         try:
@@ -330,7 +330,7 @@ class DigitalLifeIntegrator:
             logger.info("  [Cognition] LLM Decision Loop active.")
         except Exception as e:
             # broad exception acceptable: LLM failure is optional, graceful degradation
-            logger.error(f"  [Cognition] Brain boot failure: {e}. Angela will rely on GSI-4 local logic.")
+            logger.error(f"  [Cognition] Brain boot failure: {e}. Angela will rely on GSI-4 local logic.", exc_info=True)
 
         # 4. Final Activation
         self.is_initialized = True
@@ -431,7 +431,7 @@ class DigitalLifeIntegrator:
 
             except Exception as e:
                 # broad exception acceptable: introspection loop should not break on errors
-                logger.error(f"[DigitalLife] Introspection error: {e}")
+                logger.error(f"[DigitalLife] Introspection error: {e}", exc_info=True)
 
             await asyncio.sleep(self._update_interval)
 
@@ -634,7 +634,7 @@ class DigitalLifeIntegrator:
                 self._last_params_log = datetime.now()
         except Exception as e:
             # broad exception acceptable: dynamic params update is non-critical, graceful degradation
-            logger.error(f"[DigitalLife] Error updating dynamic parameters: {e}")
+            logger.error(f"[DigitalLife] Error updating dynamic parameters: {e}", exc_info=True)
 
     def record_activity(self, activity_type: str):
         """Record user activity"""

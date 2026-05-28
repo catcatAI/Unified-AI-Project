@@ -125,7 +125,7 @@ class HAMQueryEngine:
                         if not keyword_match:
                             match = False
                     except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
-                        logger.error(f"Error processing memory {mem_id} for keyword search: {e} (Fallback also failed: {e2})")
+                        logger.error(f"Error processing memory {mem_id} for keyword search: {e} (Fallback also failed: {e2})", exc_info=True)
                         match = False  # Exclude if there's an error processing
 
             if match and decompressed_data_str:
@@ -164,7 +164,7 @@ class HAMQueryEngine:
             List of semantically relevant memories with relevance scores
         """
         if not self.vector_store_manager.vector_store:
-            logger.warning("Vector store not initialized. Cannot perform semantic search.")
+            logger.warning("Vector store not initialized. Cannot perform semantic search.", exc_info=True)
             # Fallback to keyword-based search in core memory
             return await self._fallback_keyword_search(query, limit)
 
@@ -175,7 +175,7 @@ class HAMQueryEngine:
             query_embedding = await self.vector_store_manager.embed_text(query)
 
             if query_embedding is None:
-                logger.error("Failed to embed query for semantic search")
+                logger.error("Failed to embed query for semantic search", exc_info=True)
                 return await self._fallback_keyword_search(query, limit)
 
             # Query the vector store for similar memories
@@ -244,14 +244,14 @@ class HAMQueryEngine:
                                 )
                             )
                         except Exception as e2:  # broad exception acceptable: semantic search should skip unprocessable memories
-                            logger.error(f"Error processing memory {memory_id}: {e} (Fallback failed: {e2})")
+                            logger.error(f"Error processing memory {memory_id}: {e} (Fallback failed: {e2})", exc_info=True)
                             continue
 
             logger.info(f"Semantic search returned {len(memories)} results")
             return memories[:limit]
 
         except Exception as e:  # broad exception acceptable: semantic search should fallback gracefully
-            logger.error(f"Error during semantic search: {e}")
+            logger.error(f"Error during semantic search: {e}", exc_info=True)
             return await self._fallback_keyword_search(query, limit)
 
     async def _fallback_keyword_search(self, query: str, limit: int = 10) -> List[HAMMemory]:
@@ -355,7 +355,7 @@ class HAMQueryEngine:
                             )
                         )
                 except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
-                    logger.error(f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed: {e2})")
+                    logger.error(f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed: {e2})", exc_info=True)
                     continue
 
         # Sort by relevance and return top results

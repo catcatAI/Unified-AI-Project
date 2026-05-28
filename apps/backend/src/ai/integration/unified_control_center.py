@@ -179,7 +179,7 @@ class UnifiedControlCenter:
             gap = metrics.get("current_metrics", {}).get("cognitive_gap", 0.0)
             if gap > 0.8:
                 await asyncio.sleep(2.0)  # Cognitive delay
-                logger.warning(f"Angela is overwhelmed (Gap: {gap:.2f}), delaying task.")
+                logger.warning(f"Angela is overwhelmed (Gap: {gap:.2f}), delaying task.", exc_info=True)
 
         try:
             # 1. Simulation Phase
@@ -213,7 +213,7 @@ class UnifiedControlCenter:
                 execution_result["output"], {"expected_sentiment": "joy"}
             )
             if anomalies:
-                logger.warning(f"LIS detected {len(anomalies)} anomalies in task output.")
+                logger.warning(f"LIS detected {len(anomalies)} anomalies in task output.", exc_info=True)
 
             # 6. Emotion Analysis Phase (Phase 12)
             emotion_sys = self.components["emotion_system"]

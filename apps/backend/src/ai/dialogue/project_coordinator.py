@@ -95,7 +95,7 @@ class ProjectCoordinator:
             with open(prompts_path, "r", encoding="utf-8") as f:
                 self.prompts = yaml.safe_load(f) or {}
         except Exception as e:
-            logger.warning(f"Failed to load prompts: {e}")
+            logger.warning(f"Failed to load prompts: {e}", exc_info=True)
             self.prompts = {}
 
     async def _ensure_llm_service(self) -> Any:
@@ -110,7 +110,7 @@ class ProjectCoordinator:
                 from core.tools.web_search_tool import WebSearchTool
                 self._web_search = WebSearchTool()
             except Exception as e:
-                logger.warning(f"WebSearchTool not available: {e}")
+                logger.warning(f"WebSearchTool not available: {e}", exc_info=True)
         return self._web_search
 
     def _get_template_library(self) -> Any:
@@ -119,7 +119,7 @@ class ProjectCoordinator:
                 from ai.memory.template_library import TemplateLibrary
                 self._template_library = TemplateLibrary()
             except Exception as e:
-                logger.warning(f"TemplateLibrary not available: {e}")
+                logger.warning(f"TemplateLibrary not available: {e}", exc_info=True)
         return self._template_library
 
     async def _get_document_builder(self) -> Any:
@@ -184,14 +184,14 @@ class ProjectCoordinator:
         subtasks = await self._decompose_user_intent_into_subtasks(project_query, available_capabilities, llm)
 
         if not subtasks:
-            logger.warning("[ProjectCoordinator] No subtasks generated, falling back to document builder")
+            logger.warning("[ProjectCoordinator] No subtasks generated, falling back to document builder", exc_info=True)
             return await self._handle_as_document_task(project_query, llm)
 
         logger.info(f"[{self.ai_id}] Phase 2: Executing task graph...")
         try:
             task_execution_results = await self._execute_task_graph(subtasks)
         except ValueError as e:
-            logger.error(f"[ProjectCoordinator] Task graph error: {e}")
+            logger.error(f"[ProjectCoordinator] Task graph error: {e}", exc_info=True)
             return f"{ai_name}：規劃過程中發現邏輯錯誤：{e}。"
 
         logger.info(f"[{self.ai_id}] Phase 3: Integrating results...")
@@ -348,7 +348,7 @@ class ProjectCoordinator:
         raw = await llm.generate_text(prompt=prompt, max_tokens=768, temperature=0.3)
 
         if not raw:
-            logger.warning("[ProjectCoordinator] Empty LLM response for decomposition")
+            logger.warning("[ProjectCoordinator] Empty LLM response for decomposition", exc_info=True)
             return []
 
         try:
@@ -361,7 +361,7 @@ class ProjectCoordinator:
                 if isinstance(subtasks, list):
                     return subtasks
         except json.JSONDecodeError as e:
-            logger.warning(f"[ProjectCoordinator] JSON parse failed: {e}")
+            logger.warning(f"[ProjectCoordinator] JSON parse failed: {e}", exc_info=True)
             logger.debug(f"Raw: {raw[:200]}")
 
         if self._detect_complex_task(user_query):

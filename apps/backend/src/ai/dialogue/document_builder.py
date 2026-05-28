@@ -187,7 +187,7 @@ class DocumentBuilder:
             logger.info(f"Learned format: {format_id} (type={task_type})")
             return format_id
         except Exception as e:
-            logger.warning(f"Format learning failed: {e}")
+            logger.warning(f"Format learning failed: {e}", exc_info=True)
             return ""
 
     def _extract_keywords(self, text: str) -> List[str]:
@@ -358,10 +358,10 @@ class DocumentBuilder:
             except asyncio.TimeoutError:
                 seg.error = f"Segment timeout after {self._segment_timeout_seconds}s"
                 seg.time_ms = self._segment_timeout_seconds * 1000
-                logger.warning(f"[DocumentBuilder] Segment {seg.index} timed out after {self._segment_timeout_seconds}s")
+                logger.warning(f"[DocumentBuilder] Segment {seg.index} timed out after {self._segment_timeout_seconds}s", exc_info=True)
             except Exception as e:
                 seg.error = str(e)
-                logger.warning(f"[DocumentBuilder] Segment {seg.index} failed: {e}")
+                logger.warning(f"[DocumentBuilder] Segment {seg.index} failed: {e}", exc_info=True)
 
             results.append(seg)
 

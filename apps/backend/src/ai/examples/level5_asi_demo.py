@@ -70,7 +70,7 @@ async def main():
         init_success = await asi_system.initialize()
 
         if not init_success:
-            logger.error("系统初始化失败，退出演示")
+            logger.error("系统初始化失败，退出演示", exc_info=True)
             return
 
         logger.info("✅ 系统初始化成功")
@@ -80,7 +80,7 @@ async def main():
         start_success = await asi_system.start()
 
         if not start_success:
-            logger.error("系统启动失败，退出演示")
+            logger.error("系统启动失败，退出演示", exc_info=True)
             return
 
         logger.info("✅ 系统启动成功")
@@ -173,7 +173,7 @@ async def main():
         logger.info("=" * 60)
 
     except Exception as e:  # broad exception acceptable: demo must handle any error gracefully
-        logger.error(f"演示过程中发生错误: {e}")
+        logger.error(f"演示过程中发生错误: {e}", exc_info=True)
         import traceback
 
         traceback.print_exc()
@@ -229,7 +229,7 @@ async def interactive_demo():
             except KeyboardInterrupt:
                 break
             except Exception as e:  # broad exception acceptable: user input errors must not crash demo loop
-                logger.error(f"处理请求时发生错误: {e}")
+                logger.error(f"处理请求时发生错误: {e}", exc_info=True)
 
     finally:
         await asi_system.stop()

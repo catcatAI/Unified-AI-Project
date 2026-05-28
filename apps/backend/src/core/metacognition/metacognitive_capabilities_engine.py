@@ -278,7 +278,7 @@ class MetacognitiveCapabilitiesEngine:
     ):
         """练习能力"""
         if capability_id not in self.capability_profiles:
-            logger.warning(f"未知的能力: {capability_id}")
+            logger.warning(f"未知的能力: {capability_id}", exc_info=True)
             return
 
         profile = self.capability_profiles[capability_id]

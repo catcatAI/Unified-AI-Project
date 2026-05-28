@@ -111,7 +111,7 @@ class AgentMonitoringManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: monitoring loop wraps all collection failures
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error(f"Error in monitoring loop: {e}", exc_info=True)
 
     async def _collect_health_metrics(self) -> None:
         """Collect health metrics for all tracked agents."""
@@ -148,7 +148,7 @@ class AgentMonitoringManager:
                             report.error_count += 1
                             report.last_error = "Simulated task failure"
                 except Exception as e:  # broad exception acceptable: metrics collection wraps all agent report failures
-                    logger.error(f"Error collecting metrics for agent {agent_id}: {e}")
+                    logger.error(f"Error collecting metrics for agent {agent_id}: {e}", exc_info=True)
 
     async def _check_agent_status(self) -> None:
         """Check and update the status of all agents."""
@@ -190,7 +190,7 @@ class AgentMonitoringManager:
                     if report.last_error:
                         alert_message += f": {report.last_error}"
 
-                    logger.warning(alert_message)
+                    logger.warning(alert_message, exc_info=True)
 
                     # In a real implementation, we might send this to a monitoring system
                     # or notify administrators

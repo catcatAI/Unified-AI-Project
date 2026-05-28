@@ -22,7 +22,7 @@ class DistillationLoss:
             ):
                 loss = float((student_outputs - teacher_outputs) ** 2)
         except Exception as e:  # broad exception acceptable: loss calculation errors fall back to zero
-            logger.error(f"Error calculating DistillationLoss: {e}")
+            logger.error(f"Error calculating DistillationLoss: {e}", exc_info=True)
 
         logger.debug(f"DistillationLoss calculated: {loss}")
         return loss

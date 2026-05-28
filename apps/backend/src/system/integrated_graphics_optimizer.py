@@ -101,7 +101,7 @@ class IntegratedGraphicsOptimizer:
 
             return True
         except Exception as e:  # broad exception acceptable: optimization may fail due to various hardware constraints
-            logger.error(f"Failed to apply optimizations: {e}")
+            logger.error(f"Failed to apply optimizations: {e}", exc_info=True)
             return False
 
 

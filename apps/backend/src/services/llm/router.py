@@ -636,7 +636,7 @@ class AngelaLLMService:
                         )
                         return True
 
-                logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化")
+                logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化", exc_info=True)
             except Exception as e:
                 logger.warning(f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化", exc_info=True)
 
@@ -669,7 +669,7 @@ class AngelaLLMService:
             logger.info(f"可用後端: {[b.value for b in available_backends]}")
             return True
         else:
-            logger.warning("沒有可用的 LLM 後端，將使用備份回應機制")
+            logger.warning("沒有可用的 LLM 後端，將使用備份回應機制", exc_info=True)
             self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
             self.is_available = False
             return False
@@ -1199,7 +1199,7 @@ class AngelaLLMService:
                 )
 
             if response.error:
-                logger.warning(f"LLM 回應錯誤: {response.error}")
+                logger.warning(f"LLM 回應錯誤: {response.error}", exc_info=True)
                 if self._angela_fallback_chain:
                     return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
                 return await self._fallback_response(user_message, context)
@@ -1207,7 +1207,7 @@ class AngelaLLMService:
             return response
 
         except asyncio.TimeoutError:
-            logger.warning("LLM generation timeout")
+            logger.warning("LLM generation timeout", exc_info=True)
             self._record_route_learning(context, "timeout", timeout_seconds * 1000)
             # [auto] record timeout
             if self.llm_mode == "auto" and self.auto_selector is not None:
@@ -1637,7 +1637,7 @@ class AngelaLLMService:
             )
             return response.text if not response.error else ""
         except asyncio.TimeoutError:
-            logger.warning("generate_text timeout")
+            logger.warning("generate_text timeout", exc_info=True)
             return ""
         except Exception as e:
             logger.error(f"generate_text error: {e}", exc_info=True)
@@ -1701,7 +1701,7 @@ class AngelaLLMService:
             )
 
         except asyncio.TimeoutError:
-            logger.warning("chat_completion timeout")
+            logger.warning("chat_completion timeout", exc_info=True)
             return LLMResponse(text="", backend=self.active_backend.__class__.__name__, model="unknown", error="timeout")
         except Exception as e:
             logger.error(f"chat_completion error: {e}", exc_info=True)
@@ -1738,6 +1738,6 @@ async def angela_llm_response(
     response = await service.generate_response(user_message, context)
 
     if response.error:
-        logger.warning(f"LLM 響應錯誤: {response.error}")
+        logger.warning(f"LLM 響應錯誤: {response.error}", exc_info=True)
 
     return response.text

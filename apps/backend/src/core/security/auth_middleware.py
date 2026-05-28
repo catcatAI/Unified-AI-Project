@@ -25,7 +25,7 @@ try:
     JWT_AVAILABLE = True
 except ImportError:
     JWT_AVAILABLE = False
-    logging.warning("jwt module not available")
+    logging.warning("jwt module not available", exc_info=True)
 
 logger = logging.getLogger("auth_middleware")
 
@@ -79,10 +79,10 @@ class AuthMiddleware:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return payload
         except jwt.ExpiredSignatureError:
-            logger.warning("Token expired")
+            logger.warning("Token expired", exc_info=True)
             return None
         except jwt.InvalidTokenError as e:
-            logger.warning(f"Invalid token: {e}")
+            logger.warning(f"Invalid token: {e}", exc_info=True)
             return None
 
     def generate_api_key(self, user_id: str, scopes: List[str] = None) -> str:

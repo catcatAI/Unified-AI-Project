@@ -55,7 +55,7 @@ class BrainBridgeService:
             try:
                 await self.sync_metrics()
             except Exception as e:  # broad exception acceptable: sync loop should not crash on errors
-                logger.error(f"Error in Brain Bridge sync: {e}")
+                logger.error(f"Error in Brain Bridge sync: {e}", exc_info=True)
             await asyncio.sleep(self._update_interval)
 
     async def sync_metrics(self):

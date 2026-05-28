@@ -349,7 +349,7 @@ class ActionExecutor:
                 try:
                     callback(action)
                 except Exception as e:  # broad exception acceptable: callback errors should not break action execution
-                    logger.warning(f"Pre-execution callback failed: {e}")
+                    logger.warning(f"Pre-execution callback failed: {e}", exc_info=True)
 
             # Apply biological strain if possible
             strain_factor = 0.0
@@ -463,7 +463,7 @@ class ActionExecutor:
                 try:
                     callback(action, action.result)
                 except Exception as e:  # broad exception acceptable: callback errors should not break execution loop
-                    logger.warning(f"Post-execution callback failed: {e}")
+                    logger.warning(f"Post-execution callback failed: {e}", exc_info=True)
 
         except Exception as e:  # broad exception acceptable: action execution must be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
@@ -734,7 +734,7 @@ class ActionExecutor:
             return success_rate
 
         except Exception as e:  # broad exception acceptable: spatial calculation failure should fallback to default
-            logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback 0.85: {e}")
+            logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback 0.85: {e}", exc_info=True)
             return 0.85
 
     def _record_action_outcome(self, action: Action, success: bool):
@@ -747,7 +747,7 @@ class ActionExecutor:
                     intensity=0.5 if action.priority.level <= 1 else 0.3,
                 )
             except Exception as e:  # broad exception acceptable: recording failure should not affect action result
-                logger.warning(f"[ActionExecutor] Failed to record outcome: {e}")
+                logger.warning(f"[ActionExecutor] Failed to record outcome: {e}", exc_info=True)
 
     async def handle_autonomous_action(
         self, action_type: str, parameters: Dict[str, Any], priority: int = 5

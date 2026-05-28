@@ -116,7 +116,7 @@ class MemoryIntegrationLoop:
     async def start(self):
         """啟動整合循環"""
         if self.is_running:
-            logger.warning("MemoryIntegrationLoop is already running")
+            logger.warning("MemoryIntegrationLoop is already running", exc_info=True)
             return
 
         self.is_running = True

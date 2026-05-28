@@ -35,7 +35,7 @@ class LearningLogDB:
             conn.commit()
             logger.info(f"LearningLogDB initialized at {self.db_path}")
         except sqlite3.Error as e:
-            logger.error(f"Error initializing LearningLogDB at {self.db_path}: {e}")
+            logger.error(f"Error initializing LearningLogDB at {self.db_path}: {e}", exc_info=True)
             raise
         finally:
             if conn:
@@ -99,4 +99,4 @@ class LearningLogDB:
             os.remove(self.db_path)
             logger.info(f"LearningLogDB file deleted: {self.db_path}")
         else:
-            logger.warning(f"Attempted to delete non-existent LearningLogDB file: {self.db_path}")
+            logger.warning(f"Attempted to delete non-existent LearningLogDB file: {self.db_path}", exc_info=True)

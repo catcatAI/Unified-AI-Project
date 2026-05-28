@@ -100,13 +100,13 @@ class MQTTSubscriptionManager:
             是否订阅成功
         """
         if not self.mqtt_client:
-            logger.error("[MQTTSubManager] MQTT client not set")
+            logger.error("[MQTTSubManager] MQTT client not set", exc_info=True)
             return False
 
         async with self._lock:
             # 检查是否已订阅
             if topic in self._subscriptions:
-                logger.warning(f"[MQTTSubManager] Already subscribed to: {topic}")
+                logger.warning(f"[MQTTSubManager] Already subscribed to: {topic}", exc_info=True)
                 # 更新回调
                 if callback:
                     self._register_callback(topic, callback)
@@ -153,7 +153,7 @@ class MQTTSubscriptionManager:
                     else:
                         self.mqtt_client.subscribe(topic, qos)
                 else:
-                    logger.error("[MQTTSubManager] MQTT client has no subscribe method")
+                    logger.error("[MQTTSubManager] MQTT client has no subscribe method", exc_info=True)
                     return False
 
                 logger.info(f"[MQTTSubManager] Subscribed to: {topic} (QoS: {qos})")
@@ -163,11 +163,11 @@ class MQTTSubscriptionManager:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 last_error = e
 
-                logger.warning(f"[MQTTSubManager] Subscribe attempt {attempt + 1} failed: {e}")
+                logger.warning(f"[MQTTSubManager] Subscribe attempt {attempt + 1} failed: {e}", exc_info=True)
                 if attempt < retry - 1:
                     await asyncio.sleep(1 * (attempt + 1))  # 指数退避
 
-        logger.error(f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}")
+        logger.error(f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}", exc_info=True)
         return False
 
     async def unsubscribe(self, topic: str) -> bool:
@@ -185,7 +185,7 @@ class MQTTSubscriptionManager:
 
         async with self._lock:
             if topic not in self._subscriptions:
-                logger.warning(f"[MQTTSubManager] Not subscribed to: {topic}")
+                logger.warning(f"[MQTTSubManager] Not subscribed to: {topic}", exc_info=True)
                 return False
 
             subscription = self._subscriptions[topic]
@@ -209,7 +209,7 @@ class MQTTSubscriptionManager:
                 return True
 
             except Exception as e:  # broad exception acceptable: unsubscribe may fail with various errors
-                logger.error(f"[MQTTSubManager] Unsubscribe failed: {e}")
+                logger.error(f"[MQTTSubManager] Unsubscribe failed: {e}", exc_info=True)
                 return False
 
     async def unsubscribe_all(self) -> int:
@@ -244,7 +244,7 @@ class MQTTSubscriptionManager:
             self._register_callback(topic, callback)
             logger.info(f"[MQTTSubManager] Added callback for: {topic}")
         else:
-            logger.warning(f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}")
+            logger.warning(f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}", exc_info=True)
 
     def remove_callback(self, topic: str, callback: Callable):
         """移除回调函数"""
@@ -253,7 +253,7 @@ class MQTTSubscriptionManager:
                 self._callback_registry[topic].remove(callback)
                 logger.info(f"[MQTTSubManager] Removed callback for: {topic}")
             except ValueError:
-                logger.warning(f"[MQTTSubManager] Callback not found for: {topic}")
+                logger.warning(f"[MQTTSubManager] Callback not found for: {topic}", exc_info=True)
 
     # ================================================================
     # 消息处理
@@ -278,7 +278,7 @@ class MQTTSubscriptionManager:
             else:
                 message = json.loads(payload)
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            logger.error(f"[MQTTSubManager] Failed to parse message: {e}")
+            logger.error(f"[MQTTSubManager] Failed to parse message: {e}", exc_info=True)
             return
 
         # 查找匹配的订阅
@@ -309,7 +309,7 @@ class MQTTSubscriptionManager:
                     self.stats["callback_errors"] += 1
 
                     subscription.error_count += 1
-                    logger.error(f"[MQTTSubManager] Callback error for {matched_topic}: {e}")
+                    logger.error(f"[MQTTSubManager] Callback error for {matched_topic}: {e}", exc_info=True)
 
     def _find_matching_topics(self, received_topic: str) -> List[str]:
         """

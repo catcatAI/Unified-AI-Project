@@ -25,7 +25,7 @@ except ImportError:
     except ImportError:
         keras = None
         KERAS_AVAILABLE = False
-        logging.warning("Could not import Keras backend (neither tf_keras nor tensorflow.keras)")
+        logging.warning("Could not import Keras backend (neither tf_keras nor tensorflow.keras)", exc_info=True)
 
 
 def ensure_transformers_compatibility():

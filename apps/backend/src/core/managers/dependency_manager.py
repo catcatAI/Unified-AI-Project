@@ -75,10 +75,10 @@ class DependencyManager:
                     )
                     self._config = {}
             else:
-                logger.warning(f"Dependency configuration file not found: {config_path}")
+                logger.warning(f"Dependency configuration file not found: {config_path}", exc_info=True)
                 self._config = {}
         except Exception as e:  # broad exception acceptable: config load fallback
-            logger.error(f"Error loading dependency configuration: {e}")
+            logger.error(f"Error loading dependency configuration: {e}", exc_info=True)
             self._config = {}
 
     def _setup_dependency_statuses(self):
@@ -105,7 +105,7 @@ class DependencyManager:
         except ImportError as e:
             dep_status.is_available = False
             dep_status.error = str(e)
-            logger.warning(f"Failed to load dependency {name}: {e}")
+            logger.warning(f"Failed to load dependency {name}: {e}", exc_info=True)
 
             config = self._config.get("dependencies", {}).get(name, {})
             fallback_name = config.get("fallback")

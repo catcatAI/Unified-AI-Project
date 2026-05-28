@@ -59,7 +59,7 @@ ANGELA_KEY_C={secrets.token_hex(32)}
                 f.write(content)
             return True
         except Exception as e:
-            logger.error(f"Failed to generate .env: {e}")
+            logger.error(f"Failed to generate .env: {e}", exc_info=True)
             return False
 
     def create_shortcuts(self) -> bool:
@@ -88,7 +88,7 @@ $sc.Save()
             logger.info("✅ Desktop shortcut created.")
             return True
         except Exception as e:
-            logger.error(f"Failed to create shortcuts: {e}")
+            logger.error(f"Failed to create shortcuts: {e}", exc_info=True)
             return False
 
     def create_uninstaller(self) -> bool:
@@ -114,7 +114,7 @@ $sc.Save()
         """Verifies if the current Python meets requirements."""
         current = sys.version_info
         if current.major < min_version[0] or (current.major == min_version[0] and current.minor < min_version[1]):
-            logger.error(f"Python version mismatch: {sys.version}. Required: {min_version[0]}.{min_version[1]}+")
+            logger.error(f"Python version mismatch: {sys.version}. Required: {min_version[0]}.{min_version[1]}+", exc_info=True)
             return False
         return True
 

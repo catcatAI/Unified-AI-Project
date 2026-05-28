@@ -711,7 +711,7 @@ class Live2DAvatarGenerator:
 
                 avatar.texture_paths.append(str(base_image_path))
         except Exception as e:  # broad exception acceptable: image generation failure should not crash generation
-            logger.error(f"Image generation failed: {e}")
+            logger.error(f"Image generation failed: {e}", exc_info=True)
 
     def _build_generation_prompt(
         self, attributes: Optional[Dict[str, Any]], view_angle: ViewAngle
@@ -813,7 +813,7 @@ class Live2DAvatarGenerator:
             return
             
         except Exception as e:  # broad exception acceptable: layer generation fallback should not crash pipeline
-            logger.warning(f"Layer generation failed, using empty fallback: {e}")
+            logger.warning(f"Layer generation failed, using empty fallback: {e}", exc_info=True)
             
         layer.image_path = str(
             Path(self.output_path) / "placeholder_layers" / f"{layer.layer_name}.png"

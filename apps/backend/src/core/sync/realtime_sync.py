@@ -99,7 +99,7 @@ class SyncManager:
             try:
                 await callback(event)
             except Exception as e:  # broad exception acceptable: client callback errors should not stop broadcasting
-                logger.error(f"廣播事件失敗: {e}")
+                logger.error(f"廣播事件失敗: {e}", exc_info=True)
 
 
 # Lazy singleton pattern to avoid blocking on import

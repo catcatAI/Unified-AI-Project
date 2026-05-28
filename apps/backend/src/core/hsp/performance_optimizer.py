@@ -109,7 +109,7 @@ class HSPPerformanceOptimizer:
                 self.last_batch_send = current_time
                 logger.debug(f"批量发送 {len(batch_messages)} 条消息")
             except Exception as e:  # broad exception acceptable: batch send callback may fail with various errors
-                logger.error(f"批量发送消息失败: {e}")
+                logger.error(f"批量发送消息失败: {e}", exc_info=True)
                 # 将消息重新加入队列
                 self.message_queue = batch_messages + self.message_queue
 
@@ -119,7 +119,7 @@ class HSPPerformanceOptimizer:
             self.message_queue.append(message_data)
             logger.debug(f"消息已添加到批处理队列, 当前队列大小: {len(self.message_queue)}")
         else:
-            logger.warning("批处理已禁用, 消息未添加到队列")
+            logger.warning("批处理已禁用, 消息未添加到队列", exc_info=True)
 
     def compress_message(self, message: Dict[str, Any]) -> bytes:
         """压缩消息"""
@@ -141,7 +141,7 @@ class HSPPerformanceOptimizer:
             )
             return compressed
         except Exception as e:  # broad exception acceptable: compression may fail with various errors
-            logger.error(f"消息压缩失败: {e}")
+            logger.error(f"消息压缩失败: {e}", exc_info=True)
             return json.dumps(message).encode("utf-8")
 
     def decompress_message(self, compressed_data: bytes) -> Dict[str, Any]:
@@ -151,7 +151,7 @@ class HSPPerformanceOptimizer:
             message = json.loads(decompressed.decode("utf-8"))
             return message
         except Exception as e:  # broad exception acceptable: decompression may fail with various errors
-            logger.error(f"消息解压缩失败: {e}")
+            logger.error(f"消息解压缩失败: {e}", exc_info=True)
             # 如果解压缩失败, 假设数据未压缩
             try:
                 return json.loads(compressed_data.decode("utf-8"))
@@ -373,7 +373,7 @@ class HSPPerformanceEnhancer:
                 result = None
 
                 success = False
-                logger.error(f"消息发布失败: {e}")
+                logger.error(f"消息发布失败: {e}", exc_info=True)
 
             # 记录结束时间
             end_time = time.time()
@@ -414,7 +414,7 @@ class HSPPerformanceEnhancer:
                 result = None
 
                 success = False
-                logger.error(f"消息接收失败: {e}")
+                logger.error(f"消息接收失败: {e}", exc_info=True)
 
             # 记录结束时间
             end_time = time.time()

@@ -70,7 +70,7 @@ class AngelaConfigManager:
             logger.debug(f"YAML not found: {path}")
             return {}
         except yaml.YAMLError as e:
-            logger.warning(f"YAML parse error {path}: {e}")
+            logger.warning(f"YAML parse error {path}: {e}", exc_info=True)
             return {}
 
     def _load_all(self) -> None:
@@ -245,7 +245,7 @@ class AngelaConfigManager:
             self._load_all()
             return True
         except Exception as e:
-            logger.error(f"Failed to write learned config {fname}: {e}")
+            logger.error(f"Failed to write learned config {fname}: {e}", exc_info=True)
             return False
 
     def _update_watchers(self) -> None:
@@ -301,12 +301,12 @@ class AngelaConfigManager:
         }
         handler = handler_map.get(event_type)
         if not handler:
-            logger.warning(f"[Learning] Unknown event type: {event_type}")
+            logger.warning(f"[Learning] Unknown event type: {event_type}", exc_info=True)
             return False
         try:
             return handler(data)
         except Exception as e:
-            logger.error(f"[Learning] Handler {event_type} failed: {e}")
+            logger.error(f"[Learning] Handler {event_type} failed: {e}", exc_info=True)
             return False
 
     def _learn_intent_pattern(self, data: Dict[str, Any]) -> bool:
@@ -395,7 +395,7 @@ class AngelaConfigManager:
             stats["routes"]["success"] = len(routes.get("successful_routes", {}))
             stats["routes"]["fail"] = len(routes.get("failed_routes", {}))
         except Exception as e:
-            logger.warning(f"[Learning] Stats collection failed: {e}")
+            logger.warning(f"[Learning] Stats collection failed: {e}", exc_info=True)
         return stats
 
     def _check_and_auto_optimize(self) -> bool:
@@ -471,7 +471,7 @@ class AngelaConfigManager:
             }
             return template.format(**context_map)
         except Exception as e:
-            logger.warning(f"[AnchorContext] Failed to build context: {e}")
+            logger.warning(f"[AnchorContext] Failed to build context: {e}", exc_info=True)
             return ""
 
     def _interpret_axis(self, axis_data: Dict[str, Any], axis_rules: Dict[str, Any]) -> str:

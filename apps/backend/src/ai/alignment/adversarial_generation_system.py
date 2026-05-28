@@ -410,7 +410,7 @@ class AdversarialGenerationSystem:
                 )
                 results[test_type] = result
             except Exception as e:  # broad exception acceptable: comprehensive test wraps all type-specific test failures
-                logger.error(f"[{self.system_id}] 测试 {test_type} 失败: {e}")
+                logger.error(f"[{self.system_id}] 测试 {test_type} 失败: {e}", exc_info=True)
 
         return results
 

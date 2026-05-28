@@ -30,7 +30,7 @@ def cleanup_temp_files(project_root: Path = Path(".")):
                     shutil.rmtree(file_path)
                     logger.debug(f"刪除臨時目錄: {file_path}")
             except Exception as e:  # broad exception acceptable: file system operations may fail for many reasons (permissions, locked files, etc.)
-                logger.warning(f"刪除臨時文件失敗: {file_path}: {e}")
+                logger.warning(f"刪除臨時文件失敗: {file_path}: {e}", exc_info=True)
 
 
 def cleanup_cache_data(retention_days: int, project_root: Path = Path(".")):
@@ -53,7 +53,7 @@ def cleanup_cache_data(retention_days: int, project_root: Path = Path(".")):
                         file_path.unlink()
                         logger.debug(f"刪除過期緩存: {file_path}")
                 except Exception as e:  # broad exception acceptable: file system operations may fail for many reasons (permissions, locked files, etc.)
-                    logger.warning(f"刪除過期緩存失敗: {file_path}: {e}")
+                    logger.warning(f"刪除過期緩存失敗: {file_path}: {e}", exc_info=True)
 
 
 def cleanup_log_files(retention_days: int, project_root: Path = Path(".")):
@@ -71,7 +71,7 @@ def cleanup_log_files(retention_days: int, project_root: Path = Path(".")):
                     log_file.unlink()
                     logger.debug(f"刪除過期日誌: {log_file}")
             except Exception as e:  # broad exception acceptable: file system operations may fail for many reasons (permissions, locked files, etc.)
-                    logger.warning(f"刪除過期日誌失敗: {log_file}: {e}")
+                    logger.warning(f"刪除過期日誌失敗: {log_file}: {e}", exc_info=True)
 
 
 def cleanup_demo_artifacts(retention_days: int, storage_path: Path):
@@ -88,4 +88,4 @@ def cleanup_demo_artifacts(retention_days: int, storage_path: Path):
                     file_path.unlink()
                     logger.debug(f"刪除演示產物: {file_path}")
             except Exception as e:  # broad exception acceptable: file system operations may fail for many reasons (permissions, locked files, etc.)
-                    logger.warning(f"刪除演示產物失敗: {file_path}: {e}")
+                    logger.warning(f"刪除演示產物失敗: {file_path}: {e}", exc_info=True)

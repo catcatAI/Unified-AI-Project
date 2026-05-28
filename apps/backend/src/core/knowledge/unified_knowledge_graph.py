@@ -154,16 +154,16 @@ class UnifiedKnowledgeGraph:
 
                 logger.info("✅ AI组件初始化成功")
             else:
-                logger.warning("⚠️ scikit-learn不可用，将使用简化算法")
+                logger.warning("⚠️ scikit-learn不可用，将使用简化算法", exc_info=True)
         except Exception as e:  # broad exception acceptable: AI component initialization may fail with various errors
-            logger.error(f"❌ AI组件初始化失败: {e}")
+            logger.error(f"❌ AI组件初始化失败: {e}", exc_info=True)
 
     async def add_entity(self, entity: Entity) -> bool:
         """添加实体到知识图谱"""
         try:
             # 检查是否已存在
             if entity.entity_id in self.entities:
-                logger.warning(f"实体 {entity.entity_id} 已存在，将被覆盖")
+                logger.warning(f"实体 {entity.entity_id} 已存在，将被覆盖", exc_info=True)
 
             # 实体消歧
             resolved_entity = await self._resolve_entity_ambiguity(entity)
@@ -182,7 +182,7 @@ class UnifiedKnowledgeGraph:
             logger.info(f"✅ 成功添加实体: {entity.entity_id}")
             return True
         except Exception as e:  # broad exception acceptable: entity addition involves multiple operations that may fail
-            logger.error(f"❌ 添加实体失败: {e}")
+            logger.error(f"❌ 添加实体失败: {e}", exc_info=True)
             return False
 
     async def _resolve_entity_ambiguity(self, entity: Entity) -> Optional[Entity]:
@@ -269,7 +269,7 @@ class UnifiedKnowledgeGraph:
 
             return float(similarity)
         except Exception as e:  # broad exception acceptable: similarity calculation involves multiple operations that may fail
-            logger.warning(f"计算实体相似度失败: {e}")
+            logger.warning(f"计算实体相似度失败: {e}", exc_info=True)
             return 0.0
 
     def _string_similarity(self, str1: str, str2: str) -> float:
@@ -292,7 +292,7 @@ class UnifiedKnowledgeGraph:
         """添加关系到知识图谱"""
         try:
             if relation.relation_id in self.relations:
-                logger.warning(f"关系 {relation.relation_id} 已存在，将被覆盖")
+                logger.warning(f"关系 {relation.relation_id} 已存在，将被覆盖", exc_info=True)
 
             self.relations[relation.relation_id] = relation
 
@@ -312,7 +312,7 @@ class UnifiedKnowledgeGraph:
             logger.info(f"✅ 成功添加关系: {relation.relation_id}")
             return True
         except Exception as e:  # broad exception acceptable: relation addition involves multiple operations that may fail
-            logger.error(f"❌ 添加关系失败: {e}")
+            logger.error(f"❌ 添加关系失败: {e}", exc_info=True)
             return False
 
     async def query_knowledge(self, query: str, query_type: str = "entity") -> List[Dict[str, Any]]:
@@ -325,10 +325,10 @@ class UnifiedKnowledgeGraph:
             elif query_type == "triple":
                 return await self._query_triples(query)
             else:
-                logger.warning(f"未知的查询类型: {query_type}")
+                logger.warning(f"未知的查询类型: {query_type}", exc_info=True)
                 return []
         except Exception as e:  # broad exception acceptable: query operations involve multiple operations that may fail
-            logger.error(f"查询知识失败: {e}")
+            logger.error(f"查询知识失败: {e}", exc_info=True)
             return []
 
     async def _query_entities(self, query: str) -> List[Dict[str, Any]]:

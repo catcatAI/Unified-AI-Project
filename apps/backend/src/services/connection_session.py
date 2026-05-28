@@ -271,7 +271,7 @@ class SessionManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"[SessionManager] Heartbeat monitor error: {e}")
+                logger.error(f"[SessionManager] Heartbeat monitor error: {e}", exc_info=True)
                 break
     
     async def send_to_session(self, session_id: str, message: dict, buffer: bool = True) -> int:
@@ -301,7 +301,7 @@ class SessionManager:
                         self._message_buffers[session.client_id].clear()
                         
                 except Exception as e:
-                    logger.warning(f"[SessionManager] Send failed for {session.client_id}: {e}")
+                    logger.warning(f"[SessionManager] Send failed for {session.client_id}: {e}", exc_info=True)
                     self._stats.failed_messages += 1
                     if buffer:
                         self._buffer_message(session.client_id, message)
@@ -328,7 +328,7 @@ class SessionManager:
             self._stats.total_messages += 1
             return True
         except Exception as e:
-            logger.warning(f"[SessionManager] Send to {client_id} failed: {e}")
+            logger.warning(f"[SessionManager] Send to {client_id} failed: {e}", exc_info=True)
             self._stats.failed_messages += 1
             return False
     
@@ -360,7 +360,7 @@ class SessionManager:
                     sent_count += 1
                     self._stats.total_messages += 1
                 except Exception as e:
-                    logger.warning(f"[SessionManager] Broadcast to {session.client_id} failed: {e}")
+                    logger.warning(f"[SessionManager] Broadcast to {session.client_id} failed: {e}", exc_info=True)
                     self._stats.failed_messages += 1
                     await self._unregister_internal(session.client_id, f"Broadcast failed: {e}")
         

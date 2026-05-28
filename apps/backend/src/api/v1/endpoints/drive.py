@@ -298,10 +298,10 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
                     memorized_count += 1
                     synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": True})
                 except ImportError:
-                    logger.warning("HAMMemoryManager not available, skipping memory store")
+                    logger.warning("HAMMemoryManager not available, skipping memory store", exc_info=True)
                     synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})
                 except Exception as me:
-                    logger.warning(f"Memory store failed: {me}")
+                    logger.warning(f"Memory store failed: {me}", exc_info=True)
                     synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "memory_error": str(me)})
             else:
                 synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})

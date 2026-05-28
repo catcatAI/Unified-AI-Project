@@ -104,7 +104,7 @@ class DailyLanguageModel:
                 return self._simple_intent_recognition(text, available_tools)
 
         except Exception as e:  # broad exception acceptable: LLM call errors fall back to simple recognition
-            logger.error(f"Error in recognize_intent: {e}")
+            logger.error(f"Error in recognize_intent: {e}", exc_info=True)
             return self._simple_intent_recognition(text, available_tools)
 
     def _simple_intent_recognition(

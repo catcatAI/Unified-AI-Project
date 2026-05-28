@@ -128,7 +128,7 @@ if __name__ == "__main__":
         logger.info("\n\nDemo interrupted by user")
         sys.exit(0)
     except Exception as e:  # broad exception acceptable: demo main must handle any error gracefully
-        logger.error(f"\n\nError: {e}")
+        logger.error(f"\n\nError: {e}", exc_info=True)
         import traceback
 
         traceback.print_exc()

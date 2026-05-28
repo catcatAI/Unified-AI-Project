@@ -95,11 +95,11 @@ class AngelaRealVoice:
                 logger.info(f"✅ 语音已保存: {save_path}")
                 return save_path
             else:
-                logger.error("❌ 语音文件未生成")
+                logger.error("❌ 语音文件未生成", exc_info=True)
                 return None
 
         except Exception as e:  # broad exception acceptable: TTS may fail for various reasons
-            logger.error(f"❌ 语音生成失败: {e}")
+            logger.error(f"❌ 语音生成失败: {e}", exc_info=True)
             return None
 
     async def greet(self, name: str = "friend") -> Optional[Path]:
@@ -236,7 +236,7 @@ class AngelaRealVoice:
                 )
             return result
         except Exception as e:  # broad exception acceptable: list_voices API may be unavailable
-            logger.error(f"获取声音列表失败: {e}")
+            logger.error(f"获取声音列表失败: {e}", exc_info=True)
             return {}
 
 

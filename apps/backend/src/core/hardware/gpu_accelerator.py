@@ -134,7 +134,7 @@ class GPUAcceleratorService:
             return True
 
         except Exception as e:  # broad exception acceptable: initialization may fail due to various runtime conditions
-            logger.error(f"Failed to initialize GPU Accelerator: {e}")
+            logger.error(f"Failed to initialize GPU Accelerator: {e}", exc_info=True)
             return False
 
     async def _create_live2d_context(self) -> str:
@@ -184,7 +184,7 @@ class GPUAcceleratorService:
             return False
 
         except Exception as e:  # broad exception acceptable: quality setting may involve type/value conversions that could fail
-            logger.error(f"Failed to set quality: {e}")
+            logger.error(f"Failed to set quality: {e}", exc_info=True)
             return False
 
     async def set_priority(self, context_id: str, priority: str) -> bool:
@@ -215,7 +215,7 @@ class GPUAcceleratorService:
             return False
 
         except Exception as e:  # broad exception acceptable: priority mapping involves dict/type operations that could raise various errors
-            logger.error(f"Failed to set priority: {e}")
+            logger.error(f"Failed to set priority: {e}", exc_info=True)
             return False
 
     def get_gpu_info(self) -> Dict[str, Any]:

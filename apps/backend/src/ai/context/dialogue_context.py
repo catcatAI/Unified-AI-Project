@@ -86,7 +86,7 @@ class DialogueContextManager:
             logger.info(f"Started conversation {conversation_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to start conversation {conversation_id}: {e}")
+            logger.error(f"Failed to start conversation {conversation_id}: {e}", exc_info=True)
             return False
 
     def add_message(
@@ -95,7 +95,7 @@ class DialogueContextManager:
         """添加消息"""
         try:
             if conversation_id not in self.conversations:
-                logger.error(f"Conversation {conversation_id} not found")
+                logger.error(f"Conversation {conversation_id} not found", exc_info=True)
                 return False
 
             conversation = self.conversations[conversation_id]
@@ -118,7 +118,7 @@ class DialogueContextManager:
             logger.info(f"Added message to conversation {conversation_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to add message to conversation {conversation_id}: {e}")
+            logger.error(f"Failed to add message to conversation {conversation_id}: {e}", exc_info=True)
             return False
 
     def extract_key_points(self, text: str) -> List[str]:
@@ -191,7 +191,7 @@ class DialogueContextManager:
         """生成上下文摘要"""
         try:
             if conversation_id not in self.conversations:
-                logger.error(f"Conversation {conversation_id} not found")
+                logger.error(f"Conversation {conversation_id} not found", exc_info=True)
                 return None
 
             conversation = self.conversations[conversation_id]
@@ -243,7 +243,7 @@ class DialogueContextManager:
         """获取对话上下文"""
         try:
             if conversation_id not in self.conversations:
-                logger.error(f"Conversation {conversation_id} not found")
+                logger.error(f"Conversation {conversation_id} not found", exc_info=True)
                 return None
 
             conversation = self.conversations[conversation_id]
@@ -265,7 +265,7 @@ class DialogueContextManager:
             # }
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context for conversation {conversation_id}: {e}")
+            logger.error(f"Failed to get context for conversation {conversation_id}: {e}", exc_info=True)
             return None
 
     def get_recent_conversations(self, limit: int = 5) -> List[Dict[str, Any]]:
@@ -302,18 +302,18 @@ class DialogueContextManager:
 
             return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get recent conversations: {e}")
+            logger.error(f"Failed to get recent conversations: {e}", exc_info=True)
             return []
 
     def transfer_context(self, source_conversation_id: str, target_conversation_id: str) -> bool:
         """传递对话上下文"""
         try:
             if source_conversation_id not in self.conversations:
-                logger.error(f"Source conversation {source_conversation_id} not found")
+                logger.error(f"Source conversation {source_conversation_id} not found", exc_info=True)
                 return False
 
             if target_conversation_id not in self.conversations:
-                logger.error(f"Target conversation {target_conversation_id} not found")
+                logger.error(f"Target conversation {target_conversation_id} not found", exc_info=True)
                 return False
 
             source_conv = self.conversations[source_conversation_id]

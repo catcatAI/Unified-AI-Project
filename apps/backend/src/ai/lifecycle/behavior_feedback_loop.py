@@ -129,7 +129,7 @@ class BehaviorFeedbackLoop:
     async def start(self):
         """啟動反饋循環"""
         if self.is_running:
-            logger.warning("BehaviorFeedbackLoop is already running")
+            logger.warning("BehaviorFeedbackLoop is already running", exc_info=True)
             return
 
         self.is_running = True
@@ -168,7 +168,7 @@ class BehaviorFeedbackLoop:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
-                logger.error(f"Error in feedback loop: {e}")
+                logger.error(f"Error in feedback loop: {e}", exc_info=True)
                 await asyncio.sleep(1)  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
@@ -200,7 +200,7 @@ class BehaviorFeedbackLoop:
             await self._store_learning_results()
 
         except Exception as e:  # broad exception acceptable: process feedback should not fail the caller
-            logger.error(f"Error processing feedback: {e}")
+            logger.error(f"Error processing feedback: {e}", exc_info=True)
 
     def record_behavior(
         self,
@@ -287,7 +287,7 @@ class BehaviorFeedbackLoop:
             return max(0.0, min(1.0, score))
 
         except Exception as e:  # broad exception acceptable: evaluation should gracefully handle edge cases
-            logger.error(f"Error evaluating behavior: {e}")
+            logger.error(f"Error evaluating behavior: {e}", exc_info=True)
             return 0.5
 
     async def _analyze_patterns(self):
@@ -379,7 +379,7 @@ class BehaviorFeedbackLoop:
                 )
 
         except Exception as e:  # broad exception acceptable: storage failure should not crash the loop
-            logger.warning(f"Error storing learning results: {e}")
+            logger.warning(f"Error storing learning results: {e}", exc_info=True)
 
     def get_behavior_history(self, limit: int = 20) -> List[Dict[str, Any]]:
         """獲取行為歷史"""

@@ -23,7 +23,7 @@ try:
     FERNET_AVAILABLE = True
 except ImportError:
     FERNET_AVAILABLE = False
-    logging.warning("cryptography module not available")
+    logging.warning("cryptography module not available", exc_info=True)
 
 logger = logging.getLogger("encryption")
 
@@ -49,7 +49,7 @@ class EncryptionUtils:
                 encryption_key = Fernet.generate_key()
             else:
                 encryption_key = secrets.token_bytes(32)
-            logger.warning("生成了新的加密密钥, 生产环境应该使用预定义的密钥")
+            logger.warning("生成了新的加密密钥, 生产环境应该使用预定义的密钥", exc_info=True)
 
         # 设置Fernet加密器
         if FERNET_AVAILABLE:

@@ -46,7 +46,7 @@ class PerformanceOptimizer:
                 "current_latency": latest_metrics["latency_ms"],
                 "message": f"Component {component_id} experiencing high latency: {latest_metrics['latency_ms']}ms",
             }
-            logger.warning(f"Bottleneck detected for {component_id}: {bottleneck['message']}")
+            logger.warning(f"Bottleneck detected for {component_id}: {bottleneck['message']}", exc_info=True)
             return bottleneck
         return None
 

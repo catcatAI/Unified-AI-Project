@@ -55,7 +55,7 @@ class PDFExporter:
             logger.info(f"Exported {len(cards)} cards to {path}")
             return True
         except OSError as e:
-            logger.error(f"PDF-HTML export failed: {e}")
+            logger.error(f"PDF-HTML export failed: {e}", exc_info=True)
             return False
 
     def _render_card(self, card: Card) -> str:

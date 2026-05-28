@@ -42,7 +42,7 @@ class ABCKeyManager:
                 with open(self.key_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
-                logger.error(f"讀取密鑰檔案失敗: {e}")
+                logger.error(f"讀取密鑰檔案失敗: {e}", exc_info=True)
 
         keys = {
             "KeyA": Fernet.generate_key().decode(),
@@ -114,7 +114,7 @@ class SecurityTrayMonitor:
                     f"Angela 後端服務已啟動 (PID: {self.backend_process.pid})", "系統狀態"
                 )
         except Exception as e:  # broad exception acceptable: backend process launch may fail for many reasons
-            logger.error(f"啟動後端服務失敗: {e}")
+            logger.error(f"啟動後端服務失敗: {e}", exc_info=True)
             if self.icon:
                 self.icon.notify(f"啟動失敗: {e}", "錯誤")
             if self.backend_process:
@@ -150,7 +150,7 @@ class SecurityTrayMonitor:
             if self.icon:
                 self.icon.notify("Angela 後端服務已停止", "系統狀態")
         except Exception as e:  # broad exception acceptable: process termination may fail in various scenarios
-            logger.error(f"關閉後端服務失敗: {e}")
+            logger.error(f"關閉後端服務失敗: {e}", exc_info=True)
         finally:
             if hasattr(self, "log_stream") and self.log_stream:
                 try:

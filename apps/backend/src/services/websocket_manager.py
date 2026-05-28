@@ -160,7 +160,7 @@ async def broadcast_state_updates():
                 }
             )
         except Exception as e:
-            logger.error(f"Error broadcasting state update: {e}")
+            logger.error(f"Error broadcasting state update: {e}", exc_info=True)
 
         await asyncio.sleep(0.2)
 
@@ -280,7 +280,7 @@ async def websocket_handler(websocket: WebSocket):
                         "timestamp": datetime.now().isoformat(),
                     }, websocket)
                 except Exception as chat_err:
-                    logger.error(f"[WebSocket] Chat error: {chat_err}")
+                    logger.error(f"[WebSocket] Chat error: {chat_err}", exc_info=True)
                     await manager.send_personal_message({
                         "type": "chat_response",
                         "data": {
@@ -300,13 +300,13 @@ async def websocket_handler(websocket: WebSocket):
                 })
 
         except asyncio.TimeoutError:
-            logger.warning(f"[WebSocket] Heartbeat timeout: {client_id}")
+            logger.warning(f"[WebSocket] Heartbeat timeout: {client_id}", exc_info=True)
             break
         except WebSocketDisconnect:
             logger.info(f"[WebSocket] Disconnected: {client_id}")
             break
         except Exception as e:
-            logger.error(f"[WebSocket] Error for {client_id}: {e}")
+            logger.error(f"[WebSocket] Error for {client_id}: {e}", exc_info=True)
             continue
 
     asyncio.create_task(manager.unregister(client_id))

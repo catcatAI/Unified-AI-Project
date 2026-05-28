@@ -45,7 +45,7 @@ class AudioProcessing:
 
             return is_active
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"VAD Error: {e}")
+            logger.error(f"VAD Error: {e}", exc_info=True)
             return False
 
     def extract_features(self, audio_chunk: bytes) -> Dict[str, Any]:

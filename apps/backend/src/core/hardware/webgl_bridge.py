@@ -159,7 +159,7 @@ class WebGLBridge:
             return result
 
         except Exception as e:  # broad exception acceptable: GPU info processing involves multiple conversions that may fail
-            logger.error(f"Failed to process GPU info: {e}")
+            logger.error(f"Failed to process GPU info: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
     def get_gpu_info(self) -> Optional[WebGLGPUInfo]:

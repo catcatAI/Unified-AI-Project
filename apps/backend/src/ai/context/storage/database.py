@@ -30,7 +30,7 @@ class DatabaseStorage(Storage):
         """保存上下文到数据库"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage")
+                logger.warning("Database storage not connected, using mock storage", exc_info=True)
                 # 模拟数据库存储
                 context_data = {
                     "context_id": context.context_id,
@@ -59,7 +59,7 @@ class DatabaseStorage(Storage):
         """从数据库加载上下文"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage")
+                logger.warning("Database storage not connected, using mock storage", exc_info=True)
                 # 模拟数据库加载
                 if context_id in self._db:
                     context_data = self._db[context_id]
@@ -91,7 +91,7 @@ class DatabaseStorage(Storage):
         """从数据库删除上下文"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage")
+                logger.warning("Database storage not connected, using mock storage", exc_info=True)
                 # 模拟数据库删除
                 if context_id in self._db:
                     del self._db[context_id]
@@ -114,7 +114,7 @@ class DatabaseStorage(Storage):
         """列出数据库中的上下文ID"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage")
+                logger.warning("Database storage not connected, using mock storage", exc_info=True)
                 # 模拟数据库查询
                 if context_type is None:
                     context_ids = list(self._db.keys())
@@ -138,7 +138,7 @@ class DatabaseStorage(Storage):
         """更新上下文元数据"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage")
+                logger.warning("Database storage not connected, using mock storage", exc_info=True)
                 # 模拟数据库更新
                 if context_id in self._db:
                     self._db[context_id]["metadata"].update(metadata)
@@ -162,7 +162,7 @@ class DatabaseStorage(Storage):
         """获取存储信息"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage")
+                logger.warning("Database storage not connected, using mock storage", exc_info=True)
                 return {"total_contexts": len(self._db), "storage_type": "mock_database"}
             else:
                 # 实际的数据库信息查询

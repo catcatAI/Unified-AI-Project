@@ -273,7 +273,7 @@ class DynamicThresholdManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: update loop should continue on parameter errors
-                logger.error(f"[DynamicParams] Update error: {e}")
+                logger.error(f"[DynamicParams] Update error: {e}", exc_info=True)
                 await asyncio.sleep(10)
 
     def _build_context(self) -> Dict[str, float]:

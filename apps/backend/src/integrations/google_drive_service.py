@@ -177,7 +177,7 @@ class GoogleDriveService:
             service = self._get_service()
             path = Path(local_path)
             if not path.exists():
-                logger.error(f"File not found: {local_path}")
+                logger.error(f"File not found: {local_path}", exc_info=True)
                 return None
             guessed_mime = mime_type or self._guess_mime(path.suffix)
             media = MediaFileUpload(str(path), mimetype=guessed_mime, resumable=True)

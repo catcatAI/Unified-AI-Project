@@ -639,7 +639,7 @@ Returns:
             新创建的 DimensionState
         """
         if name in self.dimensions:
-            logger.warning(f"[Theta] Axis '{name}' already exists, returning existing")
+            logger.warning(f"[Theta] Axis '{name}' already exists, returning existing", exc_info=True)
             return self.dimensions[name]
 
         new_dim = DimensionState(
@@ -1080,7 +1080,7 @@ Returns:
             dim_state = self.dimensions[dimension_name]
             state_store.update_state(dimension_name, dim_state.values.copy())
         except Exception as e:
-            logger.error(f"[StateStore] Failed to sync {dimension_name}: {e}")
+            logger.error(f"[StateStore] Failed to sync {dimension_name}: {e}", exc_info=True)
 
         # Trigger callbacks
         dim_state = self.dimensions[dimension_name]

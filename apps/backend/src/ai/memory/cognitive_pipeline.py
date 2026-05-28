@@ -77,7 +77,7 @@ class CognitivePipeline:
                 from ai.memory.attractor_field import GradientField
                 self.attractor_field = GradientField()
             except ImportError:
-                logger.warning("[CognitivePipeline] GradientField not available")
+                logger.warning("[CognitivePipeline] GradientField not available", exc_info=True)
                 self.attractor_field = None
 
         if not self.math_engine:
@@ -85,7 +85,7 @@ class CognitivePipeline:
                 from ai.memory.math_ripple_engine import MathRippleEngine
                 self.math_engine = MathRippleEngine(self.state_matrix)
             except ImportError:
-                logger.warning("[CognitivePipeline] MathRippleEngine not available")
+                logger.warning("[CognitivePipeline] MathRippleEngine not available", exc_info=True)
                 self.math_engine = None
 
         if not self.code_inspector and self.root_path:
@@ -93,7 +93,7 @@ class CognitivePipeline:
                 from ai.code_inspection import CodeInspectorInterface
                 self.code_inspector = CodeInspectorInterface(self.root_path)
             except ImportError:
-                logger.warning("[CognitivePipeline] CodeInspector not available")
+                logger.warning("[CognitivePipeline] CodeInspector not available", exc_info=True)
                 self.code_inspector = None
 
     def get_current_state(self) -> List[float]:
@@ -151,7 +151,7 @@ class CognitivePipeline:
                             f"confidence={theta_decision.confidence:.2f} | "
                             f"reasoning: {theta_decision.reasoning}")
             except Exception as e:
-                logger.warning(f"θ [Pipeline] Meta-allocate failed: {e}")
+                logger.warning(f"θ [Pipeline] Meta-allocate failed: {e}", exc_info=True)
 
         current_state = self.get_current_state()
 

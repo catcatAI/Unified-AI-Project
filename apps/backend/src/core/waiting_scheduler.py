@@ -127,7 +127,7 @@ class WaitingScheduler:
             result = loop.run_until_complete(self._run_coro_with_timeout(task.coro, timeout))
             self._results[label] = result
         except Exception as e:
-            logger.warning(f"[WaitingScheduler] Task '{label}' failed: {e}")
+            logger.warning(f"[WaitingScheduler] Task '{label}' failed: {e}", exc_info=True)
             self._results[label] = None
         finally:
             if loop:
@@ -145,10 +145,10 @@ class WaitingScheduler:
         try:
             return await asyncio.wait_for(coro, timeout=timeout)
         except asyncio.TimeoutError:
-            logger.warning(f"[WaitingScheduler] Task timed out after {timeout}s")
+            logger.warning(f"[WaitingScheduler] Task timed out after {timeout}s", exc_info=True)
             return None
         except Exception as e:
-            logger.warning(f"[WaitingScheduler] Task error: {e}")
+            logger.warning(f"[WaitingScheduler] Task error: {e}", exc_info=True)
             return None
 
     def submit(
@@ -212,7 +212,7 @@ class WaitingScheduler:
         提交並確保工作者線程活著（自動重啟如果死了）
         """
         if not self.is_alive():
-            logger.warning("[WaitingScheduler] Worker dead, restarting...")
+            logger.warning("[WaitingScheduler] Worker dead, restarting...", exc_info=True)
             self._start_worker()
 
         return self.submit(coro, timeout=timeout, label=label)

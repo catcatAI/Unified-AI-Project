@@ -76,7 +76,7 @@ class LocalIPCTransport(HSPTransport):
     async def connect(self) -> bool:
         """建立連接（對於本地 IPC，主要是啟動監聽器）"""
         if self._connected:
-            logger.warning("Already connected")
+            logger.warning("Already connected", exc_info=True)
             return True
 
         self._connected = True
@@ -115,7 +115,7 @@ class LocalIPCTransport(HSPTransport):
             payload: 消息負載
         """
         if not self._connected or not self.send_queue:
-            logger.error("Not connected or send_queue not available")
+            logger.error("Not connected or send_queue not available", exc_info=True)
             return False
 
         message = {"topic": topic, "payload": payload}
@@ -127,7 +127,7 @@ class LocalIPCTransport(HSPTransport):
             logger.debug(f"Published message to topic: {topic}")
             return True
         except Exception as e:  # broad exception acceptable: IPC queue operations may raise various errors
-            logger.error(f"Failed to publish message: {e}")
+            logger.error(f"Failed to publish message: {e}", exc_info=True)
             return False
 
     async def subscribe(self, topic: str, callback: Callable) -> bool:
@@ -229,7 +229,7 @@ class MQTTTransport(HSPTransport):
             return result
 
         except Exception as e:  # broad exception acceptable: MQTT connection may fail with various errors
-            logger.error(f"Failed to connect to MQTT broker: {e}")
+            logger.error(f"Failed to connect to MQTT broker: {e}", exc_info=True)
             return False
 
     async def disconnect(self) -> bool:
@@ -248,7 +248,7 @@ class MQTTTransport(HSPTransport):
     async def publish(self, topic: str, payload: Dict[str, Any]) -> bool:
         """發布 MQTT 消息"""
         if not self._external_connector:
-            logger.error("Not connected to MQTT broker")
+            logger.error("Not connected to MQTT broker", exc_info=True)
             return False
 
         return await self._external_connector.publish(topic, payload)
@@ -256,7 +256,7 @@ class MQTTTransport(HSPTransport):
     async def subscribe(self, topic: str, callback: Callable, qos: int = 0) -> bool:
         """訂閱 MQTT 主題"""
         if not self._external_connector or not self._subscription_manager:
-            logger.error("Not connected to MQTT broker or subscription manager not initialized")
+            logger.error("Not connected to MQTT broker or subscription manager not initialized", exc_info=True)
             return False
 
         try:
@@ -264,36 +264,36 @@ class MQTTTransport(HSPTransport):
             if result:
                 logger.info(f"Successfully subscribed to topic: {topic}")
             else:
-                logger.error(f"Failed to subscribe to topic: {topic}")
+                logger.error(f"Failed to subscribe to topic: {topic}", exc_info=True)
             return result
         except Exception as e:  # broad exception acceptable: subscription manager may fail with various errors
-            logger.error(f"Error subscribing to topic {topic}: {e}")
+            logger.error(f"Error subscribing to topic {topic}: {e}", exc_info=True)
             return False
 
     async def unsubscribe(self, topic: str) -> bool:
         """取消訂閱 MQTT 主題"""
         if not self._subscription_manager:
-            logger.error("Subscription manager not initialized")
+            logger.error("Subscription manager not initialized", exc_info=True)
             return False
 
         try:
             result = await self._subscription_manager.unsubscribe(topic)
             return result
         except Exception as e:  # broad exception acceptable: unsubscription may fail with various errors
-            logger.error(f"Error unsubscribing from topic {topic}: {e}")
+            logger.error(f"Error unsubscribing from topic {topic}: {e}", exc_info=True)
             return False
 
     async def batch_subscribe(self, topics: list, callback: Callable, qos: int = 0) -> dict:
         """批量訂閱 MQTT 主題"""
         if not self._subscription_manager:
-            logger.error("Subscription manager not initialized")
+            logger.error("Subscription manager not initialized", exc_info=True)
             return {}
 
         try:
             results = await self._subscription_manager.batch_subscribe(topics, callback, qos)
             return results
         except Exception as e:  # broad exception acceptable: batch subscribe may fail with various errors
-            logger.error(f"Error in batch subscribe: {e}")
+            logger.error(f"Error in batch subscribe: {e}", exc_info=True)
             return {}
 
     def list_subscriptions(self) -> list:

@@ -108,7 +108,7 @@ class FormulaEngine:
                 self.formulas.sort(key=lambda f: f.get("priority", 999))
 
         except json.JSONDecodeError as e:
-            logger.error(f"FormulaEngine: Error decoding JSON from {self.formulas_file_path}: {e}")
+            logger.error(f"FormulaEngine: Error decoding JSON from {self.formulas_file_path}: {e}", exc_info=True)
             self.formulas = []
         except Exception as e:  # broad exception acceptable: any load error should fall back to empty list
             logger.error(
@@ -280,7 +280,7 @@ if __name__ == "__main__":
         else:
             logger.info("  No formulas loaded from default path, skipping default test.")
     except Exception as e:  # broad exception acceptable: default engine test errors are non-fatal
-        logger.error(f"  Error during default engine test: {e}")
+        logger.error(f"  Error during default engine test: {e}", exc_info=True)
 
     # Clean up dummy file and directory
     if dummy_formulas_file.exists():

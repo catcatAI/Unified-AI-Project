@@ -130,7 +130,7 @@ class ToolContextManager:
             logger.info(f"Created tool category {category_id} with context")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to create tool category {category_id}: {e}")
+            logger.error(f"Failed to create tool category {category_id}: {e}", exc_info=True)
             return False
 
     def register_tool(
@@ -158,7 +158,7 @@ class ToolContextManager:
             logger.info(f"Registered tool {tool_id} with context")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to register tool {tool_id}: {e}")
+            logger.error(f"Failed to register tool {tool_id}: {e}", exc_info=True)
             return False
 
     def record_tool_usage(
@@ -167,7 +167,7 @@ class ToolContextManager:
         """记录工具使用"""
         try:
             if tool_id not in self.tools:
-                logger.error(f"Tool {tool_id} not found for usage recording")
+                logger.error(f"Tool {tool_id} not found for usage recording", exc_info=True)
                 return False
 
             tool = self.tools[tool_id]
@@ -200,14 +200,14 @@ class ToolContextManager:
             logger.info(f"Recorded usage for tool {tool_id} with context")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to record usage for tool {tool_id}: {e}")
+            logger.error(f"Failed to record usage for tool {tool_id}: {e}", exc_info=True)
             return False
 
     def get_tool_context(self, tool_id: str) -> Optional[Dict[str, Any]]:
         """获取工具上下文"""
         try:
             if tool_id not in self.tools:
-                logger.error(f"Tool {tool_id} not found")
+                logger.error(f"Tool {tool_id} not found", exc_info=True)
                 return None
 
             # 搜索相关的上下文
@@ -227,14 +227,14 @@ class ToolContextManager:
             # }
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context for tool {tool_id}: {e}")
+            logger.error(f"Failed to get context for tool {tool_id}: {e}", exc_info=True)
             return None
 
     def get_category_tools(self, category_id: str) -> List[Dict[str, Any]]:
         """获取分类下的工具列表"""
         try:
             if category_id not in self.categories:
-                logger.error(f"Category {category_id} not found")
+                logger.error(f"Category {category_id} not found", exc_info=True)
                 return []
 
             category = self.categories[category_id]
@@ -255,5 +255,5 @@ class ToolContextManager:
 
             return tools_info
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get tools for category {category_id}: {e}")
+            logger.error(f"Failed to get tools for category {category_id}: {e}", exc_info=True)
             return []

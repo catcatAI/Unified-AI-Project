@@ -50,7 +50,7 @@ class UnifiedKeyManager:
             self.abc_km = ABCKeyManager()
         except ImportError:
             self.abc_km = None
-            logger.warning("ABCKeyManager 不可用，使用本地密钥管理")
+            logger.warning("ABCKeyManager 不可用，使用本地密钥管理", exc_info=True)
 
         # ========== 修复：持久化密钥管理 ==========
         self.keys_data: Dict[str, Any] = self._load_keys()
@@ -65,7 +65,7 @@ class UnifiedKeyManager:
                 with open(self.config_path, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
             except Exception as e:  # broad exception acceptable: ensure config loading errors fall back to empty dict
-                logger.error(f"載入配置失敗: {e}")
+                logger.error(f"載入配置失敗: {e}", exc_info=True)
         return {}
 
     def _load_keys(self) -> Dict[str, Any]:
@@ -78,7 +78,7 @@ class UnifiedKeyManager:
                 with open(self.keys_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:  # broad exception acceptable: ensure key file errors generate new keys, not crash
-                logger.warning(f"加载密钥文件失败: {e}，将创建新密钥")
+                logger.warning(f"加载密钥文件失败: {e}，将创建新密钥", exc_info=True)
 
         # 如果文件不存在，创建默认密钥
         return self._generate_default_keys()
@@ -119,7 +119,7 @@ class UnifiedKeyManager:
             # 设置文件权限（仅所有者可读写）
             os.chmod(self.keys_file, 0o600)
         except Exception as e:  # broad exception acceptable: ensure save errors are logged but don't crash
-            logger.error(f"保存密钥失败: {e}")
+            logger.error(f"保存密钥失败: {e}", exc_info=True)
 
     def _should_rotate_keys(self) -> bool:
         """检查是否需要轮换密钥"""
@@ -142,7 +142,7 @@ class UnifiedKeyManager:
             if old_key and self._hash_key(old_key) == self.keys_data["key_hashes"].get(key_name):
                 logger.info(f"验证旧密钥 {key_name} 成功，生成新密钥")
             else:
-                logger.warning(f"验证旧密钥 {key_name} 失败，直接生成新密钥")
+                logger.warning(f"验证旧密钥 {key_name} 失败，直接生成新密钥", exc_info=True)
 
             # 更新密钥
             self.keys_data["keys"][key_name] = new_key
@@ -273,11 +273,11 @@ class UnifiedKeyManager:
             is_valid = signature == expected_signature
 
             if not is_valid:
-                logger.warning(f"Signature verification failed for state hash {state_hash}")
+                logger.warning(f"Signature verification failed for state hash {state_hash}", exc_info=True)
 
             return is_valid
         except Exception as e:  # broad exception acceptable: ensure verification errors return False, not crash
-            logger.error(f"Signature verification error: {e}")
+            logger.error(f"Signature verification error: {e}", exc_info=True)
             return False
 
     def bind_state_hash(self, state_hash: int) -> Dict[str, Any]:
@@ -315,7 +315,7 @@ class UnifiedKeyManager:
         signature = binding.get("signature")
 
         if not state_hash or not signature:
-            logger.warning("Invalid binding record: missing state_hash or signature")
+            logger.warning("Invalid binding record: missing state_hash or signature", exc_info=True)
             return False
 
         return self.verify_signature_with_key_a(state_hash, signature)

@@ -178,7 +178,7 @@ class AIEditorService:
 
     def get_processed_data_from_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
         if not self.memory_manager:
-            logger.warning("Memory manager not available")
+            logger.warning("Memory manager not available", exc_info=True)
             return None
         return self.memory_manager.recall_gist(memory_id)
 

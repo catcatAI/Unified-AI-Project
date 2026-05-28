@@ -267,7 +267,7 @@ class AgentContextManager:
         """记录协作步骤"""
         try:
             if collaboration_id not in self.collaborations:
-                logger.error(f"Collaboration {collaboration_id} not found")
+                logger.error(f"Collaboration {collaboration_id} not found", exc_info=True)
                 return False
 
             collaboration = self.collaborations[collaboration_id]
@@ -300,7 +300,7 @@ class AgentContextManager:
         """完成协作"""
         try:
             if collaboration_id not in self.collaborations:
-                logger.error(f"Collaboration {collaboration_id} not found")
+                logger.error(f"Collaboration {collaboration_id} not found", exc_info=True)
                 return False
 
             collaboration = self.collaborations[collaboration_id]
@@ -329,7 +329,7 @@ class AgentContextManager:
         """获取协作上下文"""
         try:
             if collaboration_id not in self.collaborations:
-                logger.error(f"Collaboration {collaboration_id} not found")
+                logger.error(f"Collaboration {collaboration_id} not found", exc_info=True)
                 return None
 
             collaboration = self.collaborations[collaboration_id]

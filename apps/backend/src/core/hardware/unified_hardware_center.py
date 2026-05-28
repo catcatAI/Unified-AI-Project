@@ -240,7 +240,7 @@ class HardwareDetector:
             )
             return cpu_info
         except Exception as e:  # broad exception acceptable: proc/cpuinfo may not exist on all systems
-            logger.error(f"CPU detection failed: {e}")
+            logger.error(f"CPU detection failed: {e}", exc_info=True)
             return CPUInfo()
 
     @staticmethod
@@ -730,7 +730,7 @@ class UnifiedHardwareCenter:
         """加載模型"""
         resource = await self.get_best_resource(model_name)
         if not resource:
-            logger.error(f"No resource for {model_name}")
+            logger.error(f"No resource for {model_name}", exc_info=True)
             return False
 
         if model_name in self.loaded_models:
@@ -740,7 +740,7 @@ class UnifiedHardwareCenter:
         mem = self.hardware_profile.memory
         req = ModelRepository.get_requirement(model_name)
         if req and mem.available_mb < req.min_memory_mb:
-            logger.error(f"Not enough memory for {model_name}")
+            logger.error(f"Not enough memory for {model_name}", exc_info=True)
             return False
 
         # Ollama 加載
@@ -766,7 +766,7 @@ class UnifiedHardwareCenter:
                 logger.info(f"✓ {model_name} loaded on {resource.name}")
                 return True
         except Exception as e:  # broad exception acceptable: httpx operations may fail with various network/HTTP errors
-            logger.error(f"Model load failed: {e}")
+            logger.error(f"Model load failed: {e}", exc_info=True)
             return False
 
     async def generate(self, prompt: str, model: str = None, **kwargs) -> Dict[str, Any]:

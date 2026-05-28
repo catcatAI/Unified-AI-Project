@@ -118,7 +118,7 @@ class TokenValidator:
             # 验证单个token的合理性
             is_valid = await self._validate_single_token(token_info)
             if not is_valid:
-                logger.warning(f"Token {i} ('{token}') 验证失败，概率: {prob}")
+                logger.warning(f"Token {i} ('{token}') 验证失败，概率: {prob}", exc_info=True)
 
             output_tokens.append(token_info)
 
@@ -339,7 +339,7 @@ class TokenValidator:
             return True
 
         except Exception as e:  # broad exception acceptable: export failures return False to signal failure
-            logger.error(f"导出追踪数据失败: {e}")
+            logger.error(f"导出追踪数据失败: {e}", exc_info=True)
             return False
 
 
@@ -354,7 +354,7 @@ class TokenGenerationMonitor:
     async def start_monitoring(self, interval: float = 60.0):
         """开始监控"""
         if self.is_monitoring:
-            logger.warning("监控已在运行中")
+            logger.warning("监控已在运行中", exc_info=True)
             return
 
         self.is_monitoring = True
@@ -386,14 +386,14 @@ class TokenGenerationMonitor:
 
                 # 检查验证率是否过低
                 if report["validation_rate"] < 0.5:
-                    logger.warning("Token验证通过率过低，建议检查模型性能")
+                    logger.warning("Token验证通过率过低，建议检查模型性能", exc_info=True)
 
                 await asyncio.sleep(interval)
 
             except asyncio.CancelledError:
                 break
             except Exception as e:  # broad exception acceptable: monitoring loop errors should not stop the loop
-                logger.error(f"监控循环错误: {e}")
+                logger.error(f"监控循环错误: {e}", exc_info=True)
                 await asyncio.sleep(interval)
 
 

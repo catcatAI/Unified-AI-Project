@@ -137,7 +137,7 @@ class CausalTracer:
             if trace_id in self._active_traces:
                 self._active_traces[trace_id].data[key] = value
         except Exception as e:  # broad exception acceptable: dict assignment may fail for unexpected data types
-            logger.error(f"Error recording trace data: {e}")
+            logger.error(f"Error recording trace data: {e}", exc_info=True)
 
     def finish(self, trace_id: str, result: Optional[Any] = None) -> None:
         """
@@ -166,7 +166,7 @@ class CausalTracer:
                 else:
                     self.set_current_trace(None)
         except Exception as e:  # broad exception acceptable: trace cleanup may fail due to concurrent access or data corruption
-            logger.error(f"Error finishing trace: {e}")
+            logger.error(f"Error finishing trace: {e}", exc_info=True)
 
     def get_chain(self, trace_id: str) -> Optional[CausalChain]:
         """
@@ -185,7 +185,7 @@ class CausalTracer:
                 return self._chains.get(root_id)
             return self._chains.get(trace_id)
         except Exception as e:  # broad exception acceptable: chain traversal may fail due to concurrent modifications
-            logger.error(f"Error getting chain: {e}")
+            logger.error(f"Error getting chain: {e}", exc_info=True)
             return None
 
     def get_all_chains(self) -> List[CausalChain]:

@@ -81,7 +81,7 @@ class EconomyManager:
     def purchase_item(self, user_id: str, item_id: str) -> Dict[str, Any]:
         """Allows Angela to purchase an item from the registry."""
         if item_id not in self.item_registry:
-            logger.error(f"Purchase failed: Item '{item_id}' not found in registry.")
+            logger.error(f"Purchase failed: Item '{item_id}' not found in registry.", exc_info=True)
             return {"success": False, "reason": "Item not found"}
 
         item = self.item_registry[item_id]
@@ -139,7 +139,7 @@ class EconomyManager:
         if "daily_coin_allowance" in new_rules:
             allowance = new_rules["daily_coin_allowance"]
             if not (allowance >= 0.0):
-                logger.error(f"Invalid daily_coin_allowance: {allowance}. Must be non-negative.")
+                logger.error(f"Invalid daily_coin_allowance: {allowance}. Must be non-negative.", exc_info=True)
                 return
 
         self.rules.update(new_rules)
@@ -159,11 +159,11 @@ class EconomyManager:
         """
         try:
             if not user_id:
-                logger.error("Transaction failed: Missing user_id")
+                logger.error("Transaction failed: Missing user_id", exc_info=True)
                 return False
 
             if amount == 0:
-                logger.warning("Transaction amount is zero, skipping")
+                logger.warning("Transaction amount is zero, skipping", exc_info=True)
                 return True
 
             # 獲取當前餘額
@@ -194,7 +194,7 @@ class EconomyManager:
 
             return True
         except Exception as e:  # broad exception acceptable: transaction processing may fail due to DB or validation errors
-            logger.error(f"Error adding transaction for user '{user_id}': {e}")
+            logger.error(f"Error adding transaction for user '{user_id}': {e}", exc_info=True)
             return False
 
     async def shutdown(self) -> None:

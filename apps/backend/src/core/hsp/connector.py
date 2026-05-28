@@ -95,7 +95,7 @@ def get_schema_uri(schema_name: str) -> str:
         # This makes the path relative to the current working directory
         # In a real-world scenario, a more robust solution might be needed
         # like using an environment variable or a configuration setting.
-        logger.warning(f"Schema file not found: {schema_name}. Path was: {schema_path}")
+        logger.warning(f"Schema file not found: {schema_name}. Path was: {schema_path}", exc_info=True)
         return f"file:///{schema_name}_not_found"
     return schema_path.as_uri()
 
@@ -675,7 +675,7 @@ class HSPConnector:
             if success:
                 self.logger.info(f"Opinion {opinion_payload.get('id')} published successfully.")
             else:
-                self.logger.error(f"Failed to publish opinion {opinion_payload.get('id')}.")
+                logger.error(f"Failed to publish opinion {opinion_payload.get('id')}.", exc_info=True)
 
             return success
 
@@ -717,7 +717,7 @@ class HSPConnector:
             message
         )
         if not is_valid:
-            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
+            logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}", exc_info=True)
             return
 
         # 使用验证后的消息
@@ -776,7 +776,7 @@ class HSPConnector:
             message
         )
         if not is_valid:
-            self.logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}")
+            logger.warning(f"消息安全验证失败: {message.get('message_id', 'unknown')}", exc_info=True)
             return
 
         # 使用验证后的消息
@@ -936,7 +936,7 @@ class HSPConnector:
                 await self.external_connector.publish(topic, payload, qos)
                 return True
 
-            self.logger.error("ExternalConnector has neither 'send' nor 'publish' method")
+            logger.error("ExternalConnector has neither 'send' nor 'publish' method", exc_info=True)
             return False
         except Exception as e:  # broad exception acceptable: raw publish may fail with various errors
             self.logger.error(f"Error in _raw_publish_message: {e}", exc_info=True)
@@ -1065,7 +1065,7 @@ class HSPConnector:
                 await asyncio.sleep(2**retry_count)
                 return await self.publish_message(topic, envelope, qos)
             else:
-                self.logger.error(f"Max retries exceeded for message {correlation_id} after error.")
+                logger.error(f"Max retries exceeded for message {correlation_id} after error.", exc_info=True)
                 # 缓存结果
                 self._cache_message(message_id, False)
                 return False

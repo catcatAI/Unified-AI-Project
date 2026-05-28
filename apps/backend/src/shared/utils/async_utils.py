@@ -19,7 +19,7 @@ class AsyncManager:
         try:
             return await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
         except Exception as e:  # broad exception acceptable: asyncio.gather may fail for many reasons, must not crash async flow
-            logger.error(f"Async gather failed: {e}")
+            logger.error(f"Async gather failed: {e}", exc_info=True)
             raise
 
     @staticmethod
