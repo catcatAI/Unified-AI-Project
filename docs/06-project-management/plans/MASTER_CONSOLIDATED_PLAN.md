@@ -474,14 +474,13 @@ Remaining (審計後優先級調整):
 - **B7: singleton→DI cleanup** (移除死 `Singleton` 元類; `get_instance()` → `_create()` factory; 5 個 `_instance=None` 均 DI-ready via registry) ✅
 - **D9: 雙測試目錄整合** (根 pyproject.toml testpaths 統一、修復 11 個 A3 引起的壞 import 或 skip) ✅
 
-### 待完成
-- **實際導入** — 執行 `python run_card_import.py` 從 G Drive 卡片堆導入（需 Drive OAuth 授權一次）
-- **Phase 5.4 (Electron 前端雙視圖 UI)** — 獨立領域，Electron app 已存在 (`apps/desktop-app/`)，36 JS modules, ~90% scaffolded
-- **C4 Phase 5** — 持續擴大測試覆蓋（目前 289+ tests across 39 test files; 新增 code_learning 30 tests）
-- **source bugs 發現與修復**:
-  - `MathVerifier` 缺少 `_get_math_config` → 已修復
-  - `audit_logger.py` 缺少 `import os` → 已修復
-  - `secure_eval.py` 使用已刪除的 AST 節點 (`ast.Num`, `ast.Str`, `ast.NameConstant`) → 用相容性旗標修復
+### 修復計畫
+- **Phase 0: 即時安全** — 輪換洩漏的金鑰、修復路徑遍歷、啟用認證中介軟體 (4-6 hrs)
+- **Phase 1: 關鍵運行時** — 修復 13 個測試斷鏈、11 個 from src. 導入、173 個 F821 未定義名稱、4 個 eval()、mypy 配置 (40-60 hrs)
+- **Phase 2: 高優先級** — 廢棄 API 替換、硬編碼路徑修復、print→logging、pytest 配置統一 (24-36 hrs)
+- **Phase 3: 中優先級** — 圈複雜度、lint、sys.path 統一、測試覆蓋提升 (32-48 hrs)
+- **Phase 4: 低優先級** — 死代碼清除、版本字串更新、存檔清理 (16-24 hrs)
+- **總估計: 116-174 人時** — 見 `docs/06-project-management/plans/REPAIR_PLAN.md`
 
 ### 新增: D 級 (Debt — Audit Findings 2026-05-27)
 
