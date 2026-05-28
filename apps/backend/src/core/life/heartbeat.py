@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 from typing import Optional
 from core.bio.biological_integrator import BiologicalIntegrator
+from core.bio.endocrine_system import HormoneType
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)

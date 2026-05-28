@@ -14,7 +14,7 @@ import asyncio
 
 
 async def test_e2e_async():
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
     from core.ripple.node import MathOp
 
     print("=" * 60)

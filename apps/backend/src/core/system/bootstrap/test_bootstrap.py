@@ -8,7 +8,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.system.bootstrap import get_bootstrap_manager
+from core.system.bootstrap import get_bootstrap_manager
 
 def test_bootstrap():
     print("Testing BootstrapManager...")

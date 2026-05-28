@@ -14,7 +14,7 @@ import yaml
 import logging
 import threading
 from pathlib import Path
-from typing import Any, Dict, Optional, TypeVar, Generic, Union
+from typing import Any, Dict, List, Optional, TypeVar, Generic, Union
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from enum import Enum

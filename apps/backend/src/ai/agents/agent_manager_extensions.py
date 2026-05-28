@@ -46,7 +46,7 @@ class AgentManagerExtensions:
             process.start()
 
             # 記錄進程信息（包括入口函數）
-            from src.ai.agents.agent_manager import ProcessAgentInfo
+            from ai.agents.agent_manager import ProcessAgentInfo
 
             agent_manager.process_agents[agent_id] = ProcessAgentInfo(
                 agent_id=agent_id,

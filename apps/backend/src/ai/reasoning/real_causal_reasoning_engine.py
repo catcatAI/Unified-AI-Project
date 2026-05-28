@@ -58,7 +58,7 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
         # Simple Pearson correlation implementation
         try:
             return statistics.correlation(x, y)
-        except (ValueError, TypeError, AttributeError, StatisticsError) as e:
+        except (ValueError, TypeError, AttributeError, statistics.StatisticsError) as e:
             logger.debug(f"相關性計算失敗（可忽略）: {e}")
             return 0.0
 

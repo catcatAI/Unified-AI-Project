@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 
 _MODULE_MOCKS = {
     'core.autonomous.state_matrix': MagicMock(),
-    'core.autonomous.state_matrix_adapter': MagicMock(),
+    'core.engine.state_matrix_adapter': MagicMock(),
     'ai.security.ego_guard': MagicMock(),
     'services.angela_llm_service': MagicMock(),
 }

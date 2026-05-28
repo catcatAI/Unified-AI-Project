@@ -349,9 +349,10 @@ class LogicUnit:
             # 执行条件表达式
             import re
             safe = re.sub(r"[^a-zA-Z0-9\s_()\[\].,]", "", condition)
-            result = eval(safe, {"__builtins__": {}}, eval_context)
+            from core.security.secure_eval import safe_eval
+            result = safe_eval(safe, eval_context)
 
-            return bool(result)
+            return bool(result.result) if result.success else False
 
         except Exception as e:  # broad exception acceptable: condition evaluation failures return False, non-blocking
             logger.warning(f"Failed to evaluate condition for rule {rule_id}: {e}", exc_info=True)

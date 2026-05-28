@@ -18,6 +18,8 @@ from enum import Enum
 import uuid
 from dataclasses import dataclass, field
 
+from loguru import logger
+
 # from ..logging.enterprise_logger import  # Fixed: commented out incomplete import
 
 

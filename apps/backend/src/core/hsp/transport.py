@@ -208,7 +208,7 @@ class MQTTTransport(HSPTransport):
         """建立 MQTT 連接"""
         try:
             # 延遲導入以避免循環依賴
-            from src.core.hsp.external.external_connector import ExternalConnector
+            from core.hsp.external.external_connector import ExternalConnector
 
             self._external_connector = ExternalConnector(
                 ai_id=self.ai_id, broker_address=self.broker_address, broker_port=self.broker_port

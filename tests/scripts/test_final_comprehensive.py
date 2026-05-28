@@ -96,7 +96,7 @@ def test_math_model_module():
 def test_alpha_deep_model():
     """测试Alpha深度模型"""
     try:
-        import apps.backend.src.core_ai.compression.alpha_deep_model as alpha_deep_model_module
+        import apps.backend.src.ai.compression.alpha_deep_model as alpha_deep_model_module
         print("✓ alpha_deep_model imported successfully")
         return True
     except Exception as e:
@@ -106,7 +106,7 @@ def test_alpha_deep_model():
 def test_unified_symbolic_space():
     """测试统一符号空间"""
     try:
-        import apps.backend.src.core_ai.symbolic_space.unified_symbolic_space as unified_symbolic_space_module
+        import apps.backend.src.ai.symbolic_space.unified_symbolic_space as unified_symbolic_space_module
         print("✓ unified_symbolic_space imported successfully")
         return True
     except Exception as e:

@@ -12,7 +12,7 @@ import pytest
 @pytest.fixture(scope="module")
 def adapter():
     """Lazy import: StateMatrixAdapter triggers StateMatrix4D init."""
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
 
     return StateMatrixAdapter()
 

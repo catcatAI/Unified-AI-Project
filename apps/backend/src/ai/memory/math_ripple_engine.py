@@ -706,7 +706,9 @@ class MathRippleEngine:
         if not clean:
             return 0.0
         try:
-            return float(eval(clean, {"__builtins__": {}}, {}))
+            from core.security.secure_eval import safe_eval
+            result = safe_eval(clean)
+            return float(result.result) if result.success else 0.0
         except Exception:
             return 0.0
 

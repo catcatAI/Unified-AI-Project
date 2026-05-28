@@ -12,7 +12,7 @@ sys.path.insert(0, 'apps/backend/src')
 
 
 def test_persistence_basic():
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
     from core.autonomous.state_persistence import StatePersistence, PersistenceConfig
 
     print("=" * 60)

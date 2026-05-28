@@ -11,9 +11,13 @@ Version: 6.2.1
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, TYPE_CHECKING
 import math
 import time
+
+if TYPE_CHECKING:
+    from core.allocation.resonance import ResonanceEngine
+    from core.state.temporal import TemporalState
 
 
 @dataclass

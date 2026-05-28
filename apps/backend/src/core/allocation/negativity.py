@@ -156,7 +156,7 @@ class NegativityDetector:
                 count=0, items=[], negativity_level=self._negativity, audit_intensity=self._audit_intensity
             )
 
-        recent_snapshots = self._timeline.recent(fraction=audit_fraction)
+        recent_snapshots = self._timeline.recent(fraction=self._audit_intensity)
 
         if not recent_snapshots:
             return DetectionResult(

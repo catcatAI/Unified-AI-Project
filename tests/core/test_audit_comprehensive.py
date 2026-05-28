@@ -9,7 +9,7 @@ from core.state.temporal import TemporalState, SnapshotQuery
 from core.allocation.policy import AllocationPolicy, AllocationContext
 from core.allocation.resonance import ResonanceEngine
 from core.allocation.negativity import NegativityDetector
-from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+from core.engine.state_matrix_adapter import StateMatrixAdapter
 from core.autonomous.state_matrix import StateMatrix4D
 from core.autonomous.influence_applicator import InfluenceApplicator, INFLUENCE_RULES, get_applicator
 from core.autonomous.self_introspector_v2 import SelfIntrospectorV2

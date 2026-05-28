@@ -1,12 +1,15 @@
+from enum import Enum
+from typing import TypedDict, Dict, Any
+
+
 class MemoryType(Enum):
     """Enumeration of different memory types."""
 
-
-core
-episodic
-semantic
-procedural
-working
+    core = "core"
+    episodic = "episodic"
+    semantic = "semantic"
+    procedural = "procedural"
+    working = "working"
 
 
 class HAMDataPackageInternal(TypedDict):

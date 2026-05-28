@@ -10,6 +10,8 @@ import functools  # type: ignore
 import hashlib  # type: ignore
 import yaml  # type: ignore
 from collections import OrderedDict
+from dataclasses import dataclass
+from unittest.mock import Mock
 from pathlib import Path
 from typing import Dict, Any, Callable, Optional, List, Tuple, TypeVar, cast
 

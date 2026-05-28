@@ -3,10 +3,11 @@
 Google Drive 集成 API 端點
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query, Body
+from fastapi import APIRouter, HTTPException, Depends, Query, Body, UploadFile, File, Form
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import logging
+import tempfile
 from pathlib import Path
 
 from ._deps import get_drive_service
@@ -381,18 +382,26 @@ async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_dri
 
 @router.post("/files/upload")
 async def upload_file(
-    file_path: str = Body(..., embed=True),
-    folder_id: Optional[str] = Body(None, embed=True),
-    mime_type: Optional[str] = Body(None, embed=True),
+    file: UploadFile = File(...),
+    folder_id: Optional[str] = Form(None),
     svc=Depends(get_drive_service),
 ):
-    """上傳本地檔案到 Drive"""
+    """上傳檔案到 Drive"""
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
-    result = svc.upload_file(file_path, folder_id, mime_type)
-    if result is None:
-        raise HTTPException(status_code=400, detail="Upload failed")
-    return result
+    import os
+    suffix = Path(file.filename).suffix if file.filename else ".tmp"
+    fd, tmp_path = tempfile.mkstemp(suffix=suffix)
+    try:
+        content = await file.read()
+        with os.fdopen(fd, "wb") as f:
+            f.write(content)
+        result = svc.upload_file(tmp_path, folder_id)
+        if result is None:
+            raise HTTPException(status_code=400, detail="Upload failed")
+        return result
+    finally:
+        os.unlink(tmp_path)
 
 
 @router.post("/files/create")

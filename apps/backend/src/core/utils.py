@@ -20,6 +20,8 @@ from functools import wraps
 from contextlib import contextmanager
 import asyncio
 
+from loguru import logger
+
 T = TypeVar("T")
 
 

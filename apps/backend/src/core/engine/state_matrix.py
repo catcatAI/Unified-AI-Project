@@ -1076,7 +1076,7 @@ Returns:
 
         # --- Phase 2: Global State Store Integration ---
         try:
-            from src.core.system.state_store import state_store
+            from core.system.state_store import state_store
             dim_state = self.dimensions[dimension_name]
             state_store.update_state(dimension_name, dim_state.values.copy())
         except Exception as e:

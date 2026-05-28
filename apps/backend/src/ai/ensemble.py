@@ -296,7 +296,7 @@ class ModelEnsemble:
 
 # Convenience function for quick ensemble queries
 async def ensemble_query(
-    prompt: str, llm_service: MultiLLMService, strategy: str = "best_single"
+    prompt: str, llm_service: Any, strategy: str = "best_single"
 ) -> str:
     """Quick ensemble query returning just the text response"""
     ensemble = ModelEnsemble(llm_service)

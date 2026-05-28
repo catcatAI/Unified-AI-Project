@@ -37,6 +37,22 @@ import aiohttp
 from core.interfaces.service_registry import get_registry
 from core.interfaces.protocols import ChatMessage, LLMResponse, ModelProvider
 
+# LLM provider backends
+from services.llm.providers.base import BaseLLMBackend
+from services.llm.providers.registry import LLMBackend
+from services.llm.providers.llamacpp import LlamaCppBackend
+from services.llm.providers.ollama import OllamaBackend
+from services.llm.providers.openai import OpenAIAPIBackend
+from services.llm.providers.anthropic import AnthropicAPIBackend
+from services.llm.providers.google import GoogleAPIBackend
+
+# Prompt builder utilities
+from services.llm.prompt_builder import (
+    get_biological_state,
+    get_formula_summaries,
+    construct_angela_prompt,
+)
+
 # 簡單日誌設置
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

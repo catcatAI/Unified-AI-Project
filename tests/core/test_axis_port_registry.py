@@ -102,7 +102,7 @@ def test_port_registry_find_best_axis():
 
 
 def test_port_registry_find_best_axis_with_adapter():
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
     adapter = StateMatrixAdapter()
     registry = PortRegistry(state_adapter=adapter)
     port = registry.register(
@@ -117,7 +117,7 @@ def test_port_registry_find_best_axis_with_adapter():
 
 
 def test_port_registry_auto_bind_idle():
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
     adapter = StateMatrixAdapter()
     registry = PortRegistry(state_adapter=adapter)
     registry.register(name="p1", direction=PortDirection.IO, semantic_vector=make_vector(), auto_bind=False)
@@ -132,7 +132,7 @@ def test_port_registry_auto_bind_idle():
 
 
 def test_port_registry_report():
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
     adapter = StateMatrixAdapter()
     registry = PortRegistry(state_adapter=adapter)
     registry.register(name="p1", direction=PortDirection.OUT, semantic_vector=make_vector(), auto_bind=False)

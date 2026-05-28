@@ -125,7 +125,7 @@ class HAMQueryEngine:
                         if not keyword_match:
                             match = False
                     except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
-                        logger.error(f"Error processing memory {mem_id} for keyword search: {e} (Fallback also failed: {e2})", exc_info=True)
+                        logger.error(f"Error processing memory {mem_id} for keyword search: {e} (Fallback also failed)", exc_info=True)
                         match = False  # Exclude if there's an error processing
 
             if match and decompressed_data_str:
@@ -355,7 +355,7 @@ class HAMQueryEngine:
                             )
                         )
                 except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
-                    logger.error(f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed: {e2})", exc_info=True)
+                    logger.error(f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed)", exc_info=True)
                     continue
 
         # Sort by relevance and return top results

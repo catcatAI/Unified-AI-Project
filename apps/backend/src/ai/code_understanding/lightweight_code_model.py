@@ -5,6 +5,7 @@
 import ast
 import logging
 import os
+import glob
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
@@ -182,26 +183,12 @@ class LightweightCodeModel:
                 resolved_path = tool_name_or_filepath
                 logger.debug(f"Input '{tool_name_or_filepath}' is a direct file path.")
             else:
-                logger.warning(f"Input '{tool_name_or_filepath}' appears to be a path bu\
-    \
-    \
-    \
-    \
-    \
-    , exc_info=True
-    t was not found or is not a file.")
+                logger.warning(f"Input '{tool_name_or_filepath}' appears to be a path but was not found or is not a file.", exc_info=True)
                 return None
         else:
             # Input is a name.
             if not os.path.isdir(self.tools_directory):
-                logger.warning(f"Tools directory '{self.tools_directory}' is not valid. \
-    \
-    \
-    \
-    \
-    \
-    , exc_info=True
-    Cannot resolve tool by name: {tool_name_or_filepath}")
+                logger.warning(f"Tools directory '{self.tools_directory}' is not valid. Cannot resolve tool by name: {tool_name_or_filepath}", exc_info=True)
                 return None
 
             tool_name_input = tool_name_or_filepath
@@ -213,13 +200,7 @@ class LightweightCodeModel:
             potential_path_direct = os.path.join(self.tools_directory, name_to_check_direct)
             if os.path.isfile(potential_path_direct):
                 resolved_path = potential_path_direct
-                logger.info(f"Tool name '{tool_name_input}' resolved to '{resolved_path}\
-    \
-    \
-    \
-    \
-    \
-    ' by direct match in {self.tools_directory}.")
+                logger.info(f"Tool name '{tool_name_input}' resolved to '{resolved_path}' by direct match in {self.tools_directory}.")
             else:
                 base_name = os.path.splitext(tool_name_input)[0]
                 found_pattern_matches: List[str] = []
@@ -235,23 +216,12 @@ class LightweightCodeModel:
                         if module_part == f"tool_{base_name}" or module_part == f"{base_name}_tool":
                             found_pattern_matches.append(full_candidate_path)
                 except OSError as e:
-                    logger.error(f"Error listing tools directory '{self.tools_directory}\
-    \
-    \
-    \
-    \
-    ': {e}", exc_info=True)
+                    logger.error(f"Error listing tools directory '{self.tools_directory}': {e}", exc_info=True)
                     return None
 
                 if len(found_pattern_matches) == 1:
                     resolved_path = found_pattern_matches[0]
-                    logger.info(f"Tool name '{tool_name_input}' (base: '{base_name}') re\
-    \
-    \
-    \
-    \
-    \
-    solved to '{resolved_path}' by pattern search in {self.tools_directory}.")
+                    logger.info(f"Tool name '{tool_name_input}' (base: '{base_name}') resolved to '{resolved_path}' by pattern search in {self.tools_directory}.")
                 elif len(found_pattern_matches) > 1:
                     logger.warning(
                         f"Ambiguous tool name '{tool_name_input}' (base: '{base_name}'). Found multiple pattern matches in {self.tools_directory} {found_pattern_matches}. Please provide a more specific name or direct path."

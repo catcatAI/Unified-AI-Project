@@ -13,7 +13,7 @@ Version: 6.4.0
 """
 
 from __future__ import annotations
-from typing import Dict, Tuple, List, Any, Callable
+from typing import Dict, Tuple, List, Any, Callable, Optional
 from enum import Enum, auto
 import re
 import math

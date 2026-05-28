@@ -108,7 +108,7 @@ class TestMetacognitivePersistence:
 
 @pytest.fixture(scope="module")
 def sm_adapter():
-    from core.autonomous.state_matrix_adapter import StateMatrixAdapter
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
 
     return StateMatrixAdapter()
 

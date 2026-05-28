@@ -56,8 +56,8 @@ class ChatService:
         
         if any(kw in msg for kw in ["確認", "執行", "實施", "好的", "ok", "yes", "confirm", "approve"]):
             try:
-                from src.core.system.evolution.config_mutator import ConfigMutator
-                from src.core.system.bootstrap import get_bootstrap_manager
+                from core.system.evolution.config_mutator import ConfigMutator
+                from core.system.bootstrap import get_bootstrap_manager
                 from .angela_llm_service import get_llm_service
                 
                 mutator = ConfigMutator()
@@ -121,7 +121,7 @@ class ChatService:
 
         # 3. 處理特定意圖 (如：LLM 管理, 檔案操作等)
         if primary_intent == "llm_manage":
-            return await self._handle_llm_manage_intent(sanitized_message, primary_intent)
+            return await self._handle_llm_manage_intent(sanitized_message, user_name, primary_intent)
         elif primary_intent == "file_op":
             return await self._handle_file_intent(sanitized_message, primary_intent)
 
@@ -212,7 +212,7 @@ class ChatService:
 
     def _build_neuro_blend_state(self, text: str, bio_state: Dict[str, Any], empathy_analysis: Any) -> Dict[str, Any]:
         """Build state_dict for NeuroBlender from GlobalStateStore (Decoupled Phase 2)"""
-        from src.core.system.state_store import state_store
+        from core.system.state_store import state_store
         
         # Get latest states from Store instead of direct matrix access
         alpha = state_store.get_state("alpha")
@@ -238,12 +238,12 @@ class ChatService:
             "eta": {"execution_count": self.eta_state.execution_count if hasattr(self, "eta_state") else 0.5},
         }
 
-    async def _handle_llm_manage_intent(self, text: str, intent: str) -> str:
+    async def _handle_llm_manage_intent(self, text: str, user_name: str, intent: str) -> str:
         self.state_adapter.anchor_learning.on_axis_update("epsilon", {"precision": 0.02}, is_stable=True)
         try:
             import re
             from services.angela_llm_service import get_llm_service
-            from src.core.system.evolution.config_mutator import ConfigMutator
+            from core.system.evolution.config_mutator import ConfigMutator
             
             llm = await get_llm_service()
             

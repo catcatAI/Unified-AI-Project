@@ -299,8 +299,9 @@ class SpatialEngine:
             return 0.0
         allowed = set(allowed_chars)
         if all(c in allowed for c in clean):
-            result = eval(clean, {"__builtins__": {}}, {})
-            return float(result)
+            from core.security.secure_eval import safe_eval
+            result = safe_eval(clean)
+            return float(result.result) if result.success else 0.0
         return 0.0
 
 

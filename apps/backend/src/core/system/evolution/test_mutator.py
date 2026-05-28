@@ -10,7 +10,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.system.evolution.config_mutator import ConfigMutator
+from core.system.evolution.config_mutator import ConfigMutator
 
 def test_config_mutator():
     print("Testing ConfigMutator (Phase 6)...")

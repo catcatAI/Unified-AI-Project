@@ -6,7 +6,7 @@ from typing import List, Tuple, Dict, Optional, Any
 
 # Attempt to import sentence-transformers and faiss
 try:
-    from src.compat.transformers_compat import import_sentence_transformers
+    from compat.transformers_compat import import_sentence_transformers
 
     SentenceTransformer, SENTENCE_TRANSFORMERS_AVAILABLE = import_sentence_transformers()
 except ImportError as e:

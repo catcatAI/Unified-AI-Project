@@ -6,6 +6,7 @@ Transformers库兼容性模块
 import os
 import logging
 
+from loguru import logger
 
 
 KERAS_AVAILABLE = False

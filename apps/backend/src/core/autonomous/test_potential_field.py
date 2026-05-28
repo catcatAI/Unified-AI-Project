@@ -10,8 +10,8 @@ from typing import Dict, Any, Tuple
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.engine.state_matrix import StateMatrix4D
-from src.core.engine.cognitive_operations import PotentialFieldEngine
+from core.engine.state_matrix import StateMatrix4D
+from core.engine.cognitive_operations import PotentialFieldEngine
 
 def test_potential_field_mechanics():
     print("Testing Potential Field Mechanics (Phase 3)...")

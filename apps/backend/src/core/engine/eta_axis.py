@@ -214,7 +214,9 @@ class AtomicModule:
                 local_vars = dict(inputs)
                 import re
                 safe = re.sub(r"[^0-9+\-*/().%\s_a-zA-Z]", "", expr)
-                return eval(safe, {"__builtins__": {}}, local_vars)
+                from core.security.secure_eval import safe_eval
+                result = safe_eval(safe, local_vars)
+                return result.result if result.success else 0.0
             except Exception:
                 return 0.0
 

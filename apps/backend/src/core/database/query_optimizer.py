@@ -16,7 +16,7 @@ import time
 import hashlib
 import re
 from typing import Any, Dict, List, Optional, Union, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 

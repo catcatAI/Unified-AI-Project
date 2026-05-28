@@ -31,8 +31,12 @@ Version: 6.2.1
 from __future__ import annotations
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Callable
+from typing import Dict, List, Optional, Tuple, Any, Callable, TYPE_CHECKING
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from core.engine.eta_axis import EtaAxisState
+    from services.math_verifier import VerificationResult
 
 from core.system.config.async_io import async_json_dump, async_json_load
 from core.engine.anchor_learning import AnchorLearningEngine

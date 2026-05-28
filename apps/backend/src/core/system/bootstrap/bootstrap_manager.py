@@ -6,6 +6,7 @@ Integrates hardware probing and environment resolution.
 import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
+from datetime import datetime
 from .hardware_probe import HardwareProbe, HardwareSpecs
 from .env_resolver import EnvResolver
 
@@ -73,7 +74,7 @@ class BootstrapManager:
         self._persist_state()
         
         # 3. 透過 StateStore 廣播
-        from src.core.system.state_store import state_store
+        from core.system.state_store import state_store
         state_store.update_state("hardware", {"evolution_pending_reload": True})
         logger.info(f"✅ [Bootstrap] Evolution broadcast complete.")
 

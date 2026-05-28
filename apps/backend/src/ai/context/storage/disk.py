@@ -13,7 +13,7 @@ import os
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from .base import Context, Storage, ContextType
+from .base import Context, ContextStatus, Storage, ContextType
 
 logger = logging.getLogger(__name__)
 
