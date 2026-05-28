@@ -48,6 +48,7 @@ class RetryPolicy:
                     delay = min(self.max_delay, self.backoff_factor**attempt)
                     logger.warning(
                         f"Attempt {attempt + 1}/{self.max_attempts} failed for {func.__name__}: {e}. Retrying in {delay:.2f}s"
+                        , exc_info=True
                     )
                     await asyncio.sleep(delay)
                 except ProtocolError as e:
@@ -124,6 +125,7 @@ class CircuitBreaker:
             self.state = "OPEN"
             self.logger.warning(
                 f"Circuit Breaker transitioned to OPEN after {self.failures} failures."
+                , exc_info=True
             )
 
 

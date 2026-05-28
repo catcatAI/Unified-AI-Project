@@ -149,6 +149,7 @@ if __name__ == "__main__":
     else:
         logger.error(
             f"  Test failed or profile was unexpectedly loaded: {service_non_existent.profile}"
+            , exc_info=True
         )
 
     # Test with a malformed YAML file (requires creating one temporarily)
@@ -170,6 +171,7 @@ if __name__ == "__main__":
     else:
         logger.error(
             f"  Test failed for malformed YAML or profile was unexpectedly loaded: {service_malformed.profile}"
+            , exc_info=True
         )
 
     if os.path.exists(malformed_yaml_path):

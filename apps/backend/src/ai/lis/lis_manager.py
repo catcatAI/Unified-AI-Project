@@ -37,6 +37,7 @@ class LISManager:
         for anomaly in anomalies:
             logger.warning(
                 f"LIS Anomaly Detected: {anomaly['anomaly_type']} - {anomaly['description']}"
+                , exc_info=True
             )
             # Create an incident record
             incident: LIS_IncidentRecord = {

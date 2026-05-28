@@ -471,6 +471,7 @@ class HSPConnector:
             except Exception as e:  # broad exception acceptable: disconnect may raise various errors (already closed)
                 self.logger.warning(
                     f"HSPConnector: external disconnect raised (likely already closed) {e}"
+                    , exc_info=True
                 )
             finally:
                 # Reflect underlying state or force false
@@ -989,6 +990,7 @@ class HSPConnector:
             if not raw_result:
                 self.logger.warning(
                     f"Message {correlation_id} raw publish failed (e.g. target not found). Skipping ACK wait."
+                    , exc_info=True
                 )
                 self._cache_message(message_id, False)
                 return False
@@ -1010,6 +1012,7 @@ class HSPConnector:
                 except asyncio.TimeoutError:
                     self.logger.warning(
                         f"ACK timeout for message {correlation_id}. Trying fallback if enabled."
+                        , exc_info=True
                     )
                     # Try fallback first before retrying
                     if self.enable_fallback and self.fallback_manager:
@@ -1027,6 +1030,7 @@ class HSPConnector:
                         else:
                             self.logger.error(
                                 f"Fallback also failed for message {correlation_id} after ACK timeout."
+                                , exc_info=True
                             )
                     # Implement retry logic based on max_ack_retries for HSP attempts
                     retry_count = self._message_retry_counts.get(correlation_id, 0)
@@ -1041,6 +1045,7 @@ class HSPConnector:
                     else:
                         self.logger.error(
                             f"Max retries exceeded for message {correlation_id} after ACK timeout."
+                            , exc_info=True
                         )
                         # 缓存结果
                         self._cache_message(message_id, False)

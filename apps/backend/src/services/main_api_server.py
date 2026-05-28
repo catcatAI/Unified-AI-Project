@@ -95,6 +95,7 @@ try:
 except ImportError:
     logger.warning(
         "python-dotenv not installed, environment variables will not be loaded from .env file"
+        , exc_info=True
     )
 
 # ========== 修复：系统指标管理器 ==========

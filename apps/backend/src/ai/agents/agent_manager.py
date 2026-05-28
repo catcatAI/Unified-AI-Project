@@ -367,11 +367,13 @@ if __name__ == "__main__":
                         if attempt < max_retries - 1:
                             logger.warning(
                                 f"HSP Router health check attempt {attempt + 1} failed: {e}, retrying in {retry_delay}s..."
+                                , exc_info=True
                             )
                             time.sleep(retry_delay)
                         else:
                             logger.warning(
                                 f"HSP Router health check failed after {max_retries} attempts"
+                                , exc_info=True
                             )
             else:
                 logger.error("Failed to start HSP Router", exc_info=True)
@@ -688,6 +690,7 @@ if __name__ == "__main__":
             except subprocess.TimeoutExpired:
                 logger.warning(
                     f"[AgentManager] Agent '{agent_name}' did not terminate gracefully, killing."
+                    , exc_info=True
                 )
                 process.kill()  # Sends SIGKILL
             del self.active_agents[agent_name]
@@ -737,6 +740,7 @@ if __name__ == "__main__":
         if service_discovery is None:
             logger.warning(
                 "[AgentManager] wait_for_agent_ready is using placeholder sleep as no service_discovery provided."
+                , exc_info=True
             )
             await asyncio.sleep(2)
             logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after waiting.")
@@ -800,6 +804,7 @@ if __name__ == "__main__":
                     else:
                         logger.warning(
                             f"[AgentManager] No {agent_class_name} class in {agent_name}"
+                            , exc_info=True
                         )
             except Exception as e:  # broad exception acceptable: auto-load wraps all module import failures
                 logger.error(f"[AgentManager] Failed to load agent {agent_name}: {e}", exc_info=True)

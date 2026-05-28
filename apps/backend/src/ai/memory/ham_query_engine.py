@@ -67,6 +67,7 @@ class HAMQueryEngine:
                 if current_checksum != stored_checksum:
                     logger.critical(
                         f"Checksum mismatch during deserialization for memory ID {memory_id}! Data may be corrupted."
+                        , exc_info=True
                     )
             # Convert timestamp to datetime object
             timestamp_obj: datetime
@@ -115,6 +116,7 @@ class HAMQueryEngine:
                             except HAMMemoryError as e:
                                 logger.warning(
                                     f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}"
+                                    , exc_info=True
                                 )
 
                 logger.debug(
@@ -149,6 +151,7 @@ class HAMQueryEngine:
                 except HAMMemoryError as e:
                     logger.warning(
                         f"Skipping deserialization of memory {mem_id} from keyword search due to error: {e}"
+                        , exc_info=True
                     )
 
         logger.debug(f"Retrieved {len(keyword_memories)} keyword - based memories.")
@@ -201,6 +204,7 @@ class HAMQueryEngine:
                 except (ValueError, TypeError) as e:
                     logger.warning(
                         f"Failed to parse timestamp for memory {memory_id} or date_range {start_date} - {end_date}: {e}. Skipping this memory for date filter."
+                        , exc_info=True
                     )
                     continue
             return results
@@ -238,6 +242,7 @@ class HAMQueryEngine:
             if self.chroma_collection is None:
                 logger.warning(
                     "ChromaDB collection not initialized. Cannot perform semantic search."
+                    , exc_info=True
                 )
                 # Fallback to iterating all memories if semantic search is not available
                 candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
@@ -298,6 +303,7 @@ class HAMQueryEngine:
                 except (ValueError, TypeError) as e:
                     logger.warning(
                         f"Error parsing date for memory {mem_id} or date_range {date_range}: {e}. Skipping this memory for date filter."
+                        , exc_info=True
                     )
                     match = False  # Treat as non - match if date parsing fails
 

@@ -68,6 +68,7 @@ class EconomyManager:
         logger.warning(
             "DEPRECATED: process_transaction() is deprecated. "
             "Use add_transaction(user_id, amount, description) instead."
+            , exc_info=True
         )
 
         # Extract parameters from transaction_data
@@ -91,6 +92,7 @@ class EconomyManager:
         if current_balance < price:
             logger.warning(
                 f"Purchase failed for {user_id}: Insufficient funds ({current_balance} < {price})"
+                , exc_info=True
             )
             return {"success": False, "reason": "Insufficient funds"}
 
@@ -134,6 +136,7 @@ class EconomyManager:
             if not (0.0 <= tax_rate <= 1.0):
                 logger.error(
                     f"Invalid transaction_tax_rate: {tax_rate}. Must be between 0.0 and 1.0."
+                    , exc_info=True
                 )
                 return
         if "daily_coin_allowance" in new_rules:
@@ -173,6 +176,7 @@ class EconomyManager:
             if amount < 0 and current_balance < abs(amount):
                 logger.warning(
                     f"Transaction failed for {user_id}. Insufficient funds. Current: {current_balance}, Attempted: {abs(amount)}"
+                    , exc_info=True
                 )
                 return False
 

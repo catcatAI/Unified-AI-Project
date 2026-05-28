@@ -259,6 +259,7 @@ class MemoryLearningEngine:
                     # 成功率低且使用次数多，考虑降级或删除
                     logger.warning(
                         f"Template {template.id} has low success rate: {template.success_rate}"
+                        , exc_info=True
                     )
 
                     # 这里可以添加优化逻辑，例如：

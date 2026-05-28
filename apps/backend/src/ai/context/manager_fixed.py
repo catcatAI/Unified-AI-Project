@@ -153,6 +153,7 @@ class ContextManager:
             else:
                 logger.warning(
                     f"Failed to delete context {context_id} from one or more storage layers"
+                    , exc_info=True
                 )
 
             return success

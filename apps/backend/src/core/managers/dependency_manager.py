@@ -72,6 +72,7 @@ class DependencyManager:
                 else:
                     logger.warning(
                         f"YAML module not available, skipping config loading from {config_path}"
+                        , exc_info=True
                     )
                     self._config = {}
             else:
@@ -118,6 +119,7 @@ class DependencyManager:
                 except ImportError as fallback_error:
                     logger.error(
                         f"Failed to load fallback {fallback_name} for {name}: {fallback_error}"
+                        , exc_info=True
                     )
                     dep_status.fallback_available = False
                     dep_status.fallback_name = None

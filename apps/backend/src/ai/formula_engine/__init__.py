@@ -66,6 +66,7 @@ class FormulaEngine:
             if not self.formulas_file_path.exists():
                 logger.error(
                     f"FormulaEngine: Error - Formulas file not found at {self.formulas_file_path}"
+                    , exc_info=True
                 )
                 self.formulas = []
                 return
@@ -76,6 +77,7 @@ class FormulaEngine:
                 if not isinstance(loaded_data, list):
                     logger.error(
                         f"FormulaEngine: Error - Formulas file {self.formulas_file_path} does not contain a list."
+                        , exc_info=True
                     )
                     self.formulas = []
                     return
@@ -99,6 +101,7 @@ class FormulaEngine:
                     else:
                         logger.warning(
                             f"FormulaEngine: Warning - Skipping invalid/incomplete formula entry: {entry}"
+                            , exc_info=True
                         )
 
                 self.formulas = active_formulas
@@ -113,6 +116,7 @@ class FormulaEngine:
         except Exception as e:  # broad exception acceptable: any load error should fall back to empty list
             logger.error(
                 f"FormulaEngine: An unexpected error occurred while loading formulas from {self.formulas_file_path}: {e}"
+                , exc_info=True
             )
             self.formulas = []
 

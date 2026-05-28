@@ -49,12 +49,14 @@ class HAMCoreStorage:
             except InvalidToken:
                 logger.error(
                     "Failed to decrypt core memory file. MIKO_HAM_KEY might be incorrect or file corrupted. Starting with empty memory."
+                    , exc_info=True
                 )
                 core_memory_store = {}
                 next_memory_id = 0
             except Exception as e:  # broad exception acceptable: loading should start with empty memory on failure
                 logger.error(
                     f"Error loading core memory from file {self.core_storage_filepath}: {e}. Starting with empty memory."
+                    , exc_info=True
                 )
                 core_memory_store = {}
                 next_memory_id = 0

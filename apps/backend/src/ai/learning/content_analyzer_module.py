@@ -83,6 +83,7 @@ class ContentAnalyzerModule:
             except OSError:
                 logger.warning(
                     f"spaCy model '{spacy_model_name}' not found. Attempting to download it."
+                    , exc_info=True
                 )
                 try:
                     from spacy import cli

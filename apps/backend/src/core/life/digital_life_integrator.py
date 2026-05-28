@@ -421,6 +421,7 @@ class DigitalLifeIntegrator:
                 if self.introspection_report.get("dissonance_detected"):
                     logger.warning(
                         f"[DigitalLife] Cognitive dissonance detected: {self.introspection_report['anomalies']}"
+                        , exc_info=True
                     )
 
                 # [Task N.20.2] 更新模態閘控

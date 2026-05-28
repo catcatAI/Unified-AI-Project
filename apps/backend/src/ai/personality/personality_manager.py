@@ -36,6 +36,7 @@ class PersonalityManager:
         if not self.profiles_dir.exists():
             logger.warning(
                 f"PersonalityManager: Profiles directory {self.profiles_dir} does not exist."
+                , exc_info=True
             )
             return profiles
 
@@ -58,12 +59,14 @@ class PersonalityManager:
         if profile_name not in self.available_profiles:
             logger.warning(
                 f"PersonalityManager: Profile '{profile_name}' not found. Trying default."
+                , exc_info=True
             )
             if self.default_profile_name in self.available_profiles:
                 profile_name = self.default_profile_name
             else:
                 logger.error(
                     f"PersonalityManager: Default profile '{self.default_profile_name}' also not found."
+                    , exc_info=True
                 )
                 self.current_personality = None
                 return False
@@ -77,6 +80,7 @@ class PersonalityManager:
         except Exception as e:  # broad exception acceptable: profile loading errors return False, non-blocking
             logger.error(
                 f"PersonalityManager: Error loading profile '{profile_name}' from {profile_info['path']}: {e}"
+                , exc_info=True
             )
             self.current_personality = None
             return False

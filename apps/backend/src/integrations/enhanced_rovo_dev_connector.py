@@ -118,6 +118,7 @@ class EnhancedRovoDevConnector:
     async def _make_request_with_retry(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         logger.warning(
             f"SKELETON: _make_request_with_retry for {method} {url}, returning empty dict."
+            , exc_info=True
         )
         return {}
 

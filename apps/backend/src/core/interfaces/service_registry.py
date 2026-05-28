@@ -31,6 +31,7 @@ class ServiceRegistry:
                 logger.warning(
                     f"Service '{name}' type mismatch: "
                     f"expected {expected_type.__name__}, got {type(instance).__name__}"
+                    , exc_info=True
                 )
         return instance
 

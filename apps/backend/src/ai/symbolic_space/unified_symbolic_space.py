@@ -160,6 +160,7 @@ class UnifiedSymbolicSpace:
         if not source_symbol or not target_symbol:
             logger.error(
                 f"Error: Source symbol '{source_symbol_name}' or target symbol '{target_symbol_name}' not found."
+                , exc_info=True
             )
             return None
 

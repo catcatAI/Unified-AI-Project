@@ -48,15 +48,18 @@ class HAMVectorStoreManager:
                         except Exception as e:  # broad exception acceptable: collection initialization should not crash the manager
                             logger.error(
                                 f"Failed to initialize ChromaDB collection via VectorMemoryStore: {e}"
+                                , exc_info=True
                             )
                             self.chroma_collection = None
                     else:
                         logger.warning(
                             "VectorMemoryStore client not available for direct ChromaDB collection access."
+                            , exc_info=True
                         )
                 except Exception as e:  # broad exception acceptable: initialization failure should disable vector store gracefully
                     logger.warning(
                         f"VectorMemoryStore initialization failed (likely due to chromadb / numpy issue): {e}. Vector search will be disabled."
+                        , exc_info=True
                     )
                     self.vector_store = None
                     self.chroma_collection = None

@@ -193,6 +193,7 @@ class UnifiedControlCenter:
             if ethics_eval.score < 0.6:
                 logger.warning(
                     f"⚠️ Task [{task_id}] rejected due to low ethics score: {ethics_eval.score}"
+                    , exc_info=True
                 )
                 return {
                     "status": "rejected",

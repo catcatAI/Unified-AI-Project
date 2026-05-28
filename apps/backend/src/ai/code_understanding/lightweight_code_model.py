@@ -32,7 +32,7 @@ class LightweightCodeModel:
 
         if not os.path.isdir(tools_directory):
             logger.warning(f"Tools directory '{tools_directory}' does not exist or \
-    is not a directory.")
+    is not a directory.", exc_info=True)
             # Consider raising an error or
             # ensuring tools_directory is always valid upon instantiation.
             # For now, behavior relies on later checks in methods using this directory.
@@ -188,6 +188,7 @@ class LightweightCodeModel:
     \
     \
     \
+    , exc_info=True
     t was not found or is not a file.")
                 return None
         else:
@@ -199,6 +200,7 @@ class LightweightCodeModel:
     \
     \
     \
+    , exc_info=True
     Cannot resolve tool by name: {tool_name_or_filepath}")
                 return None
 
@@ -253,6 +255,7 @@ class LightweightCodeModel:
                 elif len(found_pattern_matches) > 1:
                     logger.warning(
                         f"Ambiguous tool name '{tool_name_input}' (base: '{base_name}'). Found multiple pattern matches in {self.tools_directory} {found_pattern_matches}. Please provide a more specific name or direct path."
+                        , exc_info=True
                     )
                     return None
 
@@ -265,6 +268,7 @@ class LightweightCodeModel:
         else:
             logger.warning(
                 f"Could not resolve tool '{tool_name_or_filepath}' to a Python file in '{self.tools_directory}' using supported conventions, nor as a direct path."
+                , exc_info=True
             )
             return None
 

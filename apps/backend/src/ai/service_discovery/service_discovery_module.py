@@ -91,12 +91,14 @@ class ServiceDiscoveryModule:
         if not capability_id:
             logger.error(
                 f"Received capability advertisement with no capability_id. Payload: {payload}"
+                , exc_info=True
             )
             return
 
         if not advertiser_ai_id:
             logger.error(
                 f"Received capability advertisement (ID: {capability_id}) with no 'ai_id'. Payload: {payload}"
+                , exc_info=True
             )
             return
 

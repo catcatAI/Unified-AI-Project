@@ -13,6 +13,7 @@ try:
 except ImportError:
     logging.warning(
         "Redis.asyncio not found. IntelligentOpsManager will run in in-memory mode for Redis-dependent features."
+        , exc_info=True
     )
 
 NUMPY_AVAILABLE = False
@@ -23,6 +24,7 @@ try:
 except ImportError:
     logging.warning(
         "Numpy not found. IntelligentOpsManager will use simpler calculations for numpy-dependent features."
+        , exc_info=True
     )
 
 from .ai_ops_engine import AIOpsEngine
@@ -519,6 +521,7 @@ class IntelligentOpsManager:
             if not self.performance_optimizer:
                 logger.warning(
                     "Performance Optimizer not initialized, skipping performance optimization."
+                    , exc_info=True
                 )
                 return False
 
@@ -569,6 +572,7 @@ class IntelligentOpsManager:
             if not self.predictive_maintenance:
                 logger.warning(
                     "Predictive Maintenance Engine not initialized, skipping maintenance action."
+                    , exc_info=True
                 )
                 return False
 
@@ -697,6 +701,7 @@ class IntelligentOpsManager:
             if not self.performance_optimizer or not self.capacity_planner:
                 logger.warning(
                     "Performance Optimizer or Capacity Planner not initialized, skipping trend analysis."
+                    , exc_info=True
                 )
                 return
 

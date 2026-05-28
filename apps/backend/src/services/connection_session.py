@@ -260,6 +260,7 @@ class SessionManager:
                     logger.warning(
                         f"[SessionManager] Heartbeat timeout for {session.client_id} "
                         f"(last: {time_since_heartbeat:.1f}s ago)"
+                        , exc_info=True
                     )
                     try:
                         await session.websocket.close(code=4002, reason="Heartbeat timeout")

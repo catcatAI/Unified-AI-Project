@@ -180,6 +180,7 @@ class AlignedBaseAgent(BaseAgent):
             if not alignment_result["is_aligned"]:
                 logger.warning(
                     f"[{self.agent_id}] 任务未通过对齐检查: {alignment_result['reason']}"
+                    , exc_info=True
                 )
                 await self._send_alignment_rejection(task_payload, sender_ai_id, alignment_result)
                 return

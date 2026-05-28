@@ -77,12 +77,14 @@ class DependencyManager:
             logger.warning(
                 f"Could not load dependency config from {config_path} {e}. "
                 f"Using default configuration."
+                , exc_info=True
             )
             self._config = self._get_default_config()
         except Exception as e:  # broad exception acceptable: config loading failures use defaults
             logger.warning(
                 f"Could not load dependency config from {config_path} {e}. "
                 f"Using default configuration."
+                , exc_info=True
             )
             self._config = self._get_default_config()
 
@@ -208,6 +210,7 @@ class DependencyManager:
             if status.error:
                 logger.warning(
                     f"Dependency '{name}' and fallbacks unavailable. Reason: {status.error}"
+                    , exc_info=True
                 )
             else:
                 logger.warning(f"Dependency '{name}' and fallbacks unavailable.", exc_info=True)

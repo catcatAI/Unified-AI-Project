@@ -27,6 +27,7 @@ class MergeEngine:
         if existing.qualified_id != incoming.qualified_id:
             logger.warning(
                 f"qualified_id mismatch: {existing.qualified_id} vs {incoming.qualified_id}"
+                , exc_info=True
             )
             return incoming
 

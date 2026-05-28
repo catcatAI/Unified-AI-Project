@@ -253,11 +253,13 @@ class ExecutionMonitor:
                 if memory_percent > self.config.memory_threshold:
                     self.logger.warning(
                         f"High memory usage: {memory_percent:.1f}% ({memory_info.used / (1024 * 1024):.0f} MB used)"
+                        , exc_info=True
                     )
 
                 if disk_percent > self.config.disk_threshold:
                     self.logger.warning(
                         f"High disk usage: {disk_percent:.1f}% ({disk_info.used / (1024 * 1024 * 1024):.1f} GB used)"
+                        , exc_info=True
                     )
 
                 time.sleep(self.config.check_interval)

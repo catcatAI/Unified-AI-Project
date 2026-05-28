@@ -173,6 +173,7 @@ class BaseAgent:
             if len(self.task_queue) >= self.max_queue_size:
                 logger.warning(
                     f"[{self.agent_id}] Task queue is full, rejecting task {queued_task.task_id}"
+                    , exc_info=True
                 )
                 await self._send_task_rejection(queued_task)
                 return
@@ -235,6 +236,7 @@ class BaseAgent:
             else:
                 logger.error(
                     f"[{self.agent_id}] Task {task.task_id} failed after {self.max_retries} retries."
+                    , exc_info=True
                 )
                 if task.payload.get("callback_address") and self.hsp_connector:
                     await self._send_task_failure(

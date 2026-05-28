@@ -582,6 +582,7 @@ class OntologySystem:
             if value is None:
                 logger.warning(
                     f"[{self.system_id}] 关系 {relationship.relationship_id} 属性 {key} 为空"
+                    , exc_info=True
                 )
                 return False
 

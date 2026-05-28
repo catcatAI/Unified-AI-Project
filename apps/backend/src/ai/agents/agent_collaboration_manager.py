@@ -127,6 +127,7 @@ class AgentCollaborationManager:
                 collaboration_task.error_message = "Failed to send task request via HSP"
                 logger.error(
                     f"Failed to delegate task '{task_id}' from '{requester_agent_id}' to '{target_agent_id}'"
+                    , exc_info=True
                 )
 
         except Exception as e:  # broad exception acceptable: HSP delegation wraps all external failures

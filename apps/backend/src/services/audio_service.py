@@ -33,6 +33,7 @@ except ImportError:
     WHISPER_AVAILABLE = False
     logger.warning(
         "whisper not installed. AudioService will use mock STT. Run `pip install openai-whisper` to enable."
+        , exc_info=True
     )
 
 try:
@@ -45,6 +46,7 @@ except ImportError:
     EDGE_TTS_AVAILABLE = False
     logger.warning(
         "edge-tts not installed. AudioService will use mock TTS. Run `pip install edge-tts` to enable."
+        , exc_info=True
     )
 
 

@@ -236,6 +236,7 @@ class DialogueContextManager:
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(
                 f"Failed to generate context summary for conversation {conversation_id}: {e}"
+                , exc_info=True
             )
             return None
 
@@ -343,5 +344,6 @@ class DialogueContextManager:
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(
                 f"Failed to transfer context from {source_conversation_id} to {target_conversation_id}: {e}"
+                , exc_info=True
             )
             return False
