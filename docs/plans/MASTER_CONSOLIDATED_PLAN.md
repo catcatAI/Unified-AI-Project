@@ -475,10 +475,10 @@ Remaining (審計後優先級調整):
 - **D9: 雙測試目錄整合** (根 pyproject.toml testpaths 統一、修復 11 個 A3 引起的壞 import 或 skip) ✅
 
 ### 待完成
+- **實際導入** — 執行 `python run_card_import.py` 從 G Drive 卡片堆導入（需 Drive OAuth 授權一次）
+- **Phase 5.4 (Electron 前端雙視圖 UI)** — 獨立領域，Electron app 已存在 (`apps/desktop-app/`)
 - **B10** (docs整理, 低優先) ~2天 — 181 docs/ 檔案需分類歸檔
-- **C4 Phase 2+** — 持續擴大測試覆蓋（180 tests, 0 warnings, 23.31s）
-- **Phase 5.4 (Electron 前端)** — 雙視圖 UI
-- **實際導入** — G 槽卡片堆整合測試（需您的 Drive 憑證）
+- **C4 Phase 2+** — 持續擴大測試覆蓋（目前 180+ tests, 0 warnings）
 
 ### 新增: D 級 (Debt — Audit Findings 2026-05-27)
 
