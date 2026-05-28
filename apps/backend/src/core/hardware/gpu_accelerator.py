@@ -11,7 +11,7 @@ GPU 加速服務模組，為 Live2D/WebGL 提供模擬獨顯功能
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import json
@@ -78,10 +78,10 @@ class GPUAcceleratorService:
             return
 
         self._initialized = True
-        self.active_contexts: Dict[str, GPUContext] = {}
-        self.metrics_history: List[GPUMetrics] = []
-        self.quality_profiles: Dict[str, RenderQuality] = {}
-        self._gpu_info: Dict[str, Any] = {}
+        self.active_contexts: dict[str, GPUContext] = {}
+        self.metrics_history: list[GPUMetrics] = []
+        self.quality_profiles: dict[str, RenderQuality] = {}
+        self._gpu_info: dict[str, Any] = {}
         self._performance_mode: str = "balanced"
         self._is_active: bool = False
 
@@ -97,7 +97,7 @@ class GPUAcceleratorService:
             "ultra": RenderQuality.ULTRA,
         }
 
-    async def initialize(self, gpu_info: Dict[str, Any] = None) -> bool:
+    async def initialize(self, gpu_info: dict[str, Any] = None) -> bool:
         """
         初始化 GPU 加速服務
 
@@ -218,7 +218,7 @@ class GPUAcceleratorService:
             logger.error(f"Failed to set priority: {e}", exc_info=True)
             return False
 
-    def get_gpu_info(self) -> Dict[str, Any]:
+    def get_gpu_info(self) -> dict[str, Any]:
         """獲取 GPU 信息"""
         return {
             "name": self._gpu_info.get("name", "Simulated GPU"),
@@ -235,7 +235,7 @@ class GPUAcceleratorService:
             },
         }
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         """獲取 GPU 能力"""
         return {
             "max_texture_size": 4096,
@@ -259,7 +259,7 @@ class GPUAcceleratorService:
             memory_used_mb=memory_mb,
             frame_time_ms=frame_time_ms,
             gpu_utilization=gpu_util,
-            timestamp=asyncio.get_event_loop().time(),
+            timestamp=asyncio.get_running_loop().time(),
         )
 
         self.metrics_history.append(metrics)
@@ -268,7 +268,7 @@ class GPUAcceleratorService:
         if len(self.metrics_history) > 100:
             self.metrics_history = self.metrics_history[-100:]
 
-    def get_metrics(self, context_id: str = None) -> List[GPUMetrics]:
+    def get_metrics(self, context_id: str = None) -> list[GPUMetrics]:
         """獲取 GPU 指標歷史"""
         if context_id:
             return [m for m in self.metrics_history if m.context_id == context_id]
@@ -300,7 +300,7 @@ class GPUAcceleratorService:
             return True
         return False
 
-    async def optimize_for_live2d(self) -> Dict[str, Any]:
+    async def optimize_for_live2d(self) -> dict[str, Any]:
         """
         優化 Live2D 渲染配置
 
@@ -359,7 +359,7 @@ def get_gpu_service() -> GPUAcceleratorService:
     return _gpu_service
 
 
-async def initialize_gpu_service(gpu_info: Dict[str, Any] = None) -> bool:
+async def initialize_gpu_service(gpu_info: dict[str, Any] = None) -> bool:
     """初始化 GPU 加速服務"""
     service = get_gpu_service()
     return await service.initialize(gpu_info)

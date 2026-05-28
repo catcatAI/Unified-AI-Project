@@ -1,13 +1,6 @@
 import asyncio
 import logging
 import sys
-import os
-from pathlib import Path
-
-project_root = Path(__file__).parent.parent
-monorepo_root = project_root.parent.parent
-sys.path.append(str(monorepo_root.absolute()))
-sys.path.append(str((project_root / "src").absolute()))
 
 from services.audio_service import AudioService, WHISPER_AVAILABLE, EDGE_TTS_AVAILABLE
 

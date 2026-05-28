@@ -184,7 +184,7 @@ class KeyManagerGUI:
                                         "configured": True,
                                         "source": f"Config File ({config_path.name})",
                                         "secure": False,
-                                        "warning": f"Key found in config file. For better security, move to environment variable.",
+                                        "warning": "Key found in config file. For better security, move to environment variable.",
                                     }
                 except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
                     # 配置文件讀取失敗，跳過
@@ -507,10 +507,10 @@ class KeyManagerGUI:
                     os.environ[env_var] = key
 
                     # Show instructions for permanent setup
-                    msg = f"Key saved to current session.\n\n"
-                    msg += f"To make it permanent, add to your system environment:\n"
+                    msg = "Key saved to current session.\n\n"
+                    msg += "To make it permanent, add to your system environment:\n"
                     msg += f"{env_var}=sk-...\n\n"
-                    msg += f"Or create a .env file with this content."
+                    msg += "Or create a .env file with this content."
 
                     messagebox.showinfo("Key Saved", msg)
 

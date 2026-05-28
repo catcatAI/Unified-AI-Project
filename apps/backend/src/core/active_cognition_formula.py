@@ -464,9 +464,9 @@ class ActiveCognitionFormula:
         if deviation > 0.5:
             outcome = f"强烈偏离原生秩序 (S_stress={s_stress:.3f} > O_order={o_order:.3f})"
         elif deviation > 0.2:
-            outcome = f"中度偏离原生秩序，主动建构新意义"
+            outcome = "中度偏离原生秩序，主动建构新意义"
         else:
-            outcome = f"轻微偏离，在秩序边缘探索"
+            outcome = "轻微偏离，在秩序边缘探索"
 
         construction = ActiveConstruction(
             construction_id=construction_id,
@@ -641,7 +641,7 @@ if __name__ == "__main__":
         complexity=0.6,
         description="核心算法秩序",
     )
-    logger.info(f"  算法秩序: 稳定性80%, 灵活性30%")
+    logger.info("  算法秩序: 稳定性80%, 灵活性30%")
 
     ac.add_order_baseline(
         OrderType.PATTERN_BASED,
@@ -650,7 +650,7 @@ if __name__ == "__main__":
         complexity=0.5,
         description="模式识别秩序",
     )
-    logger.info(f"  模式秩序: 稳定性70%, 灵活性50%")
+    logger.info("  模式秩序: 稳定性70%, 灵活性50%")
 
     # Calculate baseline O_order
     o_order = ac.calculate_o_order()

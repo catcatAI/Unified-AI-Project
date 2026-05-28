@@ -1,8 +1,9 @@
+from pathlib import Path
 #!/usr/bin/env python3
 """Final fix for ethics_manager.py"""
 
 # Read the file
-with open('/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/ethics/ethics_manager.py', 'r', encoding='utf-8') as f:
+with open(str(Path.home() / 'Desktop' / 'Unified-AI-Project' / 'apps' / 'backend' / 'src' / 'core' / 'ethics' / 'ethics_manager.py'), 'r', encoding='utf-8') as f:
     lines = f.readlines()
 
 # Fix specific lines
@@ -17,7 +18,7 @@ if len(lines) > 363:
     lines[363] = "    async def review_content(self, content: str, content_id: str, context: Dict[str, Any] = None) -> EthicsReviewResult:\n"
 
 # Write back
-with open('/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/ethics/ethics_manager.py', 'w', encoding='utf-8') as f:
+with open(str(Path.home() / 'Desktop' / 'Unified-AI-Project' / 'apps' / 'backend' / 'src' / 'core' / 'ethics' / 'ethics_manager.py'), 'w', encoding='utf-8') as f:
     f.writelines(lines)
 
 print("Fixed ethics_manager.py v2")

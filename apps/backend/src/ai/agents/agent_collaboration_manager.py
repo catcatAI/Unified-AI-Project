@@ -5,7 +5,7 @@ import sys
 import hashlib  # Added missing import
 import json  # Added missing import
 import time  # Added missing import
-from typing import Dict, List, Optional, Any, Union
+from typing import Optional, Any, Union
 from dataclasses import dataclass, field  # Added field import
 from enum import Enum
 
@@ -28,9 +28,9 @@ class CollaborationTask:
     requester_agent_id: str
     target_agent_id: str
     capability_id: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     status: CollaborationStatus = CollaborationStatus.PENDING
-    result: Optional[Dict[str, Any]] = None
+    result: Optional[dict[str, Any]] = None
     error_message: Optional[str] = None
 
 
@@ -43,8 +43,8 @@ class AgentCollaborationManager:
 
     def __init__(self, hsp_connector: HSPConnector) -> None:
         self.hsp_connector = hsp_connector
-        self.active_collaborations: Dict[str, CollaborationTask] = {}
-        self.agent_capabilities: Dict[str, List[str]] = {}
+        self.active_collaborations: dict[str, CollaborationTask] = {}
+        self.agent_capabilities: dict[str, list[str]] = {}
         self.collaboration_lock = asyncio.Lock()
 
         # Register callbacks for task results
@@ -74,7 +74,7 @@ class AgentCollaborationManager:
         requester_agent_id: str,
         target_agent_id: str,
         capability_id: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
     ) -> str:
         """
         Delegate a task from one agent to another.
@@ -165,8 +165,8 @@ class AgentCollaborationManager:
             return self.active_collaborations.get(task_id)
 
     async def orchestrate_multi_agent_task(
-        self, requester_agent_id: str, task_sequence: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, requester_agent_id: str, task_sequence: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """
         Orchestrate a sequence of tasks across multiple agents.
         """
@@ -207,9 +207,9 @@ class AgentCollaborationManager:
 
             # Wait for task completion (with timeout)
             timeout = task_def.get("timeout", 30)
-            start_time = asyncio.get_event_loop().time()
+            start_time = asyncio.get_running_loop().time()
 
-            while asyncio.get_event_loop().time() - start_time < timeout:
+            while asyncio.get_running_loop().time() - start_time < timeout:
                 task_status = await self.get_collaboration_status(task_id)
                 if task_status and task_status.status in [
                     CollaborationStatus.COMPLETED,

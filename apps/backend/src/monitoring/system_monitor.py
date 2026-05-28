@@ -221,13 +221,13 @@ if __name__ == "__main__":
 
     try:
         metrics = monitor.collect_metrics()
-        print(f"系统指标: {metrics}")
+        logger.info(f"系统指标: {metrics}")
 
         load = monitor.get_current_load()
-        print(f"当前负载: {load}")
+        logger.info(f"当前负载: {load}")
 
         recommendations = monitor.get_resource_recommendations()
-        print(f"资源建议: {recommendations}")
+        logger.info(f"资源建议: {recommendations}")
 
     except Exception as e:  # broad exception acceptable: ensure test errors are logged and don't crash the script
         logger.error(f"测试过程中发生错误: {e}", exc_info=True)

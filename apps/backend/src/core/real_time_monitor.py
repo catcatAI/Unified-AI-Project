@@ -949,7 +949,7 @@ if __name__ == "__main__":
 
         # Register some callbacks
         def on_mouse_move(data):
-            print(
+            logger.info(
                 f"[Mouse] Position: ({data['x']:.0f}, {data['y']:.0f}), "
                 f"Velocity: {data['velocity']:.1f}"
             )
@@ -958,7 +958,7 @@ if __name__ == "__main__":
             logger.info(f"[File] {data['type']}: {data['path']}")
 
         def on_user_activity(data):
-            print(f"[Activity] State: {data['state']}, " f"Focus: {data['focus_score']:.2f}")
+            logger.info(f"[Activity] State: {data['state']}, " f"Focus: {data['focus_score']:.2f}")
 
         monitor.register_callback("mouse_position", on_mouse_move)
         monitor.register_callback("file_change", on_file_change)
@@ -995,7 +995,7 @@ if __name__ == "__main__":
 
         system = monitor.get_system_state()
         if system:
-            print(f"System: CPU {system.cpu_percent:.1f}%, " f"Memory {system.memory_percent:.1f}%")
+            logger.info(f"System: CPU {system.cpu_percent:.1f}%, " f"Memory {system.memory_percent:.1f}%")
 
         await monitor.shutdown()
 

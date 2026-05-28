@@ -19,7 +19,6 @@ Author: Angela AI v6.2
 """
 
 import sys
-sys.path.insert(0, 'apps/backend/src')
 
 from core.engine.state_matrix_adapter import StateMatrixAdapter, StateMatrixFacade
 from core.autonomous.state_matrix import StateMatrix4D

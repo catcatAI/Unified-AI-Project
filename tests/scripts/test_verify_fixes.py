@@ -4,6 +4,7 @@
 """
 
 import requests
+from pathlib import Path
 import json
 from typing import Dict, Tuple
 import logging
@@ -136,10 +137,10 @@ def main():
         "results": results,
     }
 
-    with open("/home/cat/桌面/verify_fixes_results.json", "w", encoding="utf-8") as f:
+    with open(Path.home() / "Desktop" / "verify_fixes_results.json", "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
-    print(f"\n詳細結果已保存到: /home/cat/桌面/verify_fixes_results.json")
+    print(f"\n詳細結果已保存到: {Path.home() / 'Desktop' / 'verify_fixes_results.json'}")
 
     return all(r["success"] for r in results)
 

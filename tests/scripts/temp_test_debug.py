@@ -1,9 +1,6 @@
-import sys
-import os
 import logging
 
 logger = logging.getLogger(__name__)
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from dependency_manager import DependencyManager
 import yaml

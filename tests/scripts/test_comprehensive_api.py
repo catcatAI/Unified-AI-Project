@@ -4,6 +4,7 @@ Angela AI 系統全面 API 測試腳本
 """
 
 import requests
+from pathlib import Path
 import json
 import time
 from typing import Dict, List, Tuple
@@ -257,7 +258,7 @@ if __name__ == "__main__":
     results = tester.run_all_tests()
 
     # 保存結果到 JSON 文件
-    with open("/home/cat/桌面/api_comprehensive_test_results.json", "w", encoding="utf-8") as f:
+    with open(Path.home() / "Desktop" / "api_comprehensive_test_results.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n詳細結果已保存到: /home/cat/桌面/api_comprehensive_test_results.json")
+    print(f"\n詳細結果已保存到: {Path.home() / 'Desktop' / 'api_comprehensive_test_results.json'}")

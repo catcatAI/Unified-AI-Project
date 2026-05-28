@@ -2,21 +2,16 @@
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import List, Dict, Any, Optional
-import os
-import sys
 import msgpack
 import zlib
 import bz2
 import lzma
+import os
 from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Add project root to path to allow absolute imports
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
 from ai.memory.ham_memory.ham_types import HAMDataPackageInternal as HAMGist

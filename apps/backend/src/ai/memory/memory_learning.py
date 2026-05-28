@@ -11,8 +11,8 @@
 """
 
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any, Optional
+from datetime import datetime, timezone
 from collections import defaultdict
 
 from .memory_template import MemoryTemplate, ResponseCategory, AngelaState, UserImpression
@@ -37,10 +37,10 @@ class MemoryLearningEngine:
         self.memory_manager = memory_manager
 
         # 反馈历史
-        self.feedback_history: List[Dict[str, Any]] = []
+        self.feedback_history: list[dict[str, Any]] = []
 
         # 模式分析
-        self.patterns: Dict[str, Any] = {
+        self.patterns: dict[str, Any] = {
             "successful_templates": defaultdict(int),
             "failed_templates": defaultdict(int),
             "user_preferences": defaultdict(list),
@@ -59,7 +59,7 @@ class MemoryLearningEngine:
             "templates_optimized": 0,
         }
 
-    async def record_feedback(self, template_id: str, feedback: bool, context: Dict[str, Any]):
+    async def record_feedback(self, template_id: str, feedback: bool, context: dict[str, Any]):
         """
         记录用户反馈
         使用移动平均更新成功率（80% 历史 + 20% 新反馈）
@@ -96,7 +96,7 @@ class MemoryLearningEngine:
                 "template_id": template_id,
                 "feedback": feedback,
                 "context": context,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "previous_success_rate": template.success_rate,
             }
             self.feedback_history.append(feedback_record)
@@ -119,7 +119,7 @@ class MemoryLearningEngine:
             logger.error(f"Error recording feedback: {e}", exc_info=True)
 
     def _analyze_user_preferences(
-        self, template: MemoryTemplate, feedback: bool, context: Dict[str, Any]
+        self, template: MemoryTemplate, feedback: bool, context: dict[str, Any]
     ):
         """
         分析用户偏好
@@ -134,10 +134,10 @@ class MemoryLearningEngine:
             self.patterns["user_preferences"][template.category.value].append(feedback)
 
             # 记录时间模式
-            hour = datetime.utcnow().hour
+            hour = datetime.now(timezone.utc).hour
             self.patterns["time_patterns"][hour].append(feedback)
 
-    async def analyze_successful_responses(self, responses: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def analyze_successful_responses(self, responses: list[dict[str, Any]]) -> dict[str, Any]:
         """
         分析成功回應模式
 
@@ -145,7 +145,7 @@ class MemoryLearningEngine:
             responses: 回應列表
 
         Returns:
-            Dict[str, Any]: 分析结果
+            dict[str, Any]: 分析结果
         """
         analysis = {
             "common_patterns": [],
@@ -189,7 +189,7 @@ class MemoryLearningEngine:
 
         return analysis
 
-    async def suggest_new_templates(self, patterns: Dict[str, Any]) -> List[MemoryTemplate]:
+    async def suggest_new_templates(self, patterns: dict[str, Any]) -> list[MemoryTemplate]:
         """
         根据模式建议新模板
 
@@ -197,7 +197,7 @@ class MemoryLearningEngine:
             patterns: 分析结果
 
         Returns:
-            List[MemoryTemplate]: 建议的新模板列表
+            list[MemoryTemplate]: 建议的新模板列表
         """
         suggestions = []
 
@@ -281,12 +281,12 @@ class MemoryLearningEngine:
         except Exception as e:  # broad exception acceptable: optimization should not crash the system
             logger.error(f"Error optimizing templates: {e}", exc_info=True)
 
-    def get_learning_stats(self) -> Dict[str, Any]:
+    def get_learning_stats(self) -> dict[str, Any]:
         """
         获取学习统计信息
 
         Returns:
-            Dict[str, Any]: 统计信息
+            dict[str, Any]: 统计信息
         """
         return {
             **self.stats,

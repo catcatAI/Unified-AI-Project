@@ -1,7 +1,7 @@
 import asyncio
 import time
 import random
-from typing import Dict, List, Optional, Tuple, Union, Iterator, Any
+from typing import Optional, Union, Iterator, Any
 import logging
 from deep_translator import GoogleTranslator
 
@@ -21,7 +21,7 @@ class SimultaneousTranslationService:
 
     async def translate(
         self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None
-    ) -> Dict[str, Union[str, float, int]]:
+    ) -> dict[str, Union[str, float, int]]:
         """
         Performs REAL translation using GoogleTranslator via deep-translator.
         """
@@ -34,7 +34,7 @@ class SimultaneousTranslationService:
         start_time = time.time()
         try:
             # Running in thread to not block event loop if not using async-native lib
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             translated = await loop.run_in_executor(
                 None, 
                 lambda: GoogleTranslator(source=source_lang, target=mapped_tgt).translate(text)
@@ -59,7 +59,7 @@ class SimultaneousTranslationService:
 
     async def stream_translate(
         self, chunks: Iterator[str], source_lang: str = "auto", target_lang: Optional[str] = None
-    ) -> Iterator[Dict[str, Any]]:
+    ) -> Iterator[dict[str, Any]]:
         """
         Generator for streaming translation results.
         """
@@ -81,7 +81,7 @@ class SimultaneousTranslationService:
                 "confidence": 0.88,
             }
 
-    def _empty_result(self, src: str, tgt: Optional[str]) -> Dict[str, Any]:
+    def _empty_result(self, src: str, tgt: Optional[str]) -> dict[str, Any]:
         return {
             "source_lang": src,
             "target_lang": tgt or self.default_target_lang,

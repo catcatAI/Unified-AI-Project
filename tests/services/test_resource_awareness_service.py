@@ -1,9 +1,5 @@
 """Smoke test for apps.backend.src.services.resource_awareness_service."""
 import pytest
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 def test_resource_awareness_service_imports():
     """Smoke test: apps.backend.src.services.resource_awareness_service imports successfully."""

@@ -12,12 +12,8 @@ Tests:
 """
 
 import pytest
-import sys
 import tempfile
-import os
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from ai.code_inspection.code_inspector import (
     CodeInspector, ASTInspector, PatternMatcher, Issue,

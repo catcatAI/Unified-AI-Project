@@ -4,6 +4,7 @@ Angela Character Image Processor
 處理 Angela 立繪圖片，創建身體部位座標映射和透明背景版本
 """
 
+from pathlib import Path
 import os
 import json
 from PIL import Image, ImageDraw
@@ -11,8 +12,8 @@ from collections import defaultdict
 from datetime import datetime
 
 # 圖片路徑
-IMAGE_PATH = "/home/cat/桌面/Gemini_Generated_Image_hqq027hqq027hqq0.png"
-OUTPUT_DIR = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app"
+IMAGE_PATH = str(Path.home() / "Desktop" / "Gemini_Generated_Image_hqq027hqq027hqq0.png")
+OUTPUT_DIR = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app")
 
 def analyze_character_regions():
     """分析圖片，識別身體部位區域"""

@@ -8,9 +8,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Add apps/backend to path
-backend_path = os.path.join(os.path.dirname(__file__), "apps/backend")
-sys.path.insert(0, backend_path)
+
 
 
 async def test_cluster_manager_fixes():

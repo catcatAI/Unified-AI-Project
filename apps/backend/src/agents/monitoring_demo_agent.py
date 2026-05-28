@@ -1,14 +1,9 @@
 import asyncio
 import logging
-import os
-import sys
 import random
 import uuid  # Added missing import
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-# Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, project_root)
 
 try:
     from ..ai.agents.base.base_agent import BaseAgent
@@ -87,7 +82,7 @@ class MonitoringDemoAgent(BaseAgent):
                 request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e)
             )
 
-    async def _handle_monitoring_demo(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_monitoring_demo(self, parameters: dict[str, Any]) -> dict[str, Any]:
         """
         Handle monitoring demo requests.
         """
@@ -141,7 +136,7 @@ class MonitoringDemoAgent(BaseAgent):
         else:
             return {"status": "error", "message": f"Unknown action: {action}"}
 
-    async def _handle_health_check(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_health_check(self, parameters: dict[str, Any]) -> dict[str, Any]:
         """
         Handle health check requests.
         """
@@ -151,13 +146,13 @@ class MonitoringDemoAgent(BaseAgent):
         health_report = await self.get_health_report()
 
         # Add additional health information
-        health_info: Dict[str, Any] = {
+        health_info: dict[str, Any] = {
             "agent_id": self.agent_id,
             "agent_name": self.agent_name,
             "is_healthy": self.is_healthy,
             "is_running": self.is_running,
             "uptime_seconds": (
-                asyncio.get_event_loop().time() - self._start_time
+                asyncio.get_running_loop().time() - self._start_time
                 if hasattr(self, "_start_time")
                 else 0
             ),

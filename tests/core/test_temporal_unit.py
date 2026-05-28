@@ -5,8 +5,6 @@ Unit Tests — TemporalState
 Author: Angela AI v6.2
 """
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 from core.state.temporal import TemporalState, SnapshotQuery, TrendResult, AnomalyResult, CorrelationResult
 

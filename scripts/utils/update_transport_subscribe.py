@@ -1,3 +1,4 @@
+from pathlib import Path
 #!/usr/bin/env python3
 """
 更新transport.py以使用MQTT订阅管理器
@@ -5,7 +6,7 @@
 
 import re
 
-transport_file = '/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/hsp/transport.py'
+transport_file = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "backend" / "src" / "core" / "hsp" / "transport.py")
 
 # 读取文件内容
 with open(transport_file, 'r', encoding='utf-8') as f:

@@ -8,7 +8,7 @@ lifecycle management.
 import asyncio
 import logging
 import uuid
-from typing import Any, Dict, List, Callable, Optional
+from typing import Any, Callable, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -47,7 +47,7 @@ class BaseAgent:
     def __init__(
         self,
         agent_id: str,
-        capabilities: List[Dict[str, Any]] = None,
+        capabilities: list[dict[str, Any]] = None,
         agent_name: str = "BaseAgent",
         alignment_enabled: bool = False,
     ) -> None:
@@ -59,10 +59,10 @@ class BaseAgent:
         self.monitoring_manager: Optional[Any] = None
         self.agent_registry: Optional[Any] = None
         self.is_running = False
-        self.task_queue: List[QueuedTask] = []
+        self.task_queue: list[QueuedTask] = []
         self.max_queue_size = 100
         self.task_queue_lock: Optional[asyncio.Lock] = None
-        self.task_handlers: Dict[str, Callable] = {}
+        self.task_handlers: dict[str, Callable] = {}
         self.max_retries = 3
         self.retry_delay = 1.0
         self.services: Optional[Any] = None
@@ -111,7 +111,7 @@ class BaseAgent:
 
         logger.info(f"[{self.agent_id}] Setting is_running to True")
         self.is_running = True
-        self._start_time = asyncio.get_event_loop().time()
+        self._start_time = asyncio.get_running_loop().time()
 
         await self.initialize_full()
 
@@ -166,7 +166,7 @@ class BaseAgent:
             payload=task_payload,
             sender_id=sender_ai_id,
             envelope=envelope,
-            received_time=asyncio.get_event_loop().time(),
+            received_time=asyncio.get_running_loop().time(),
         )
 
         async with self.task_queue_lock:
@@ -204,7 +204,7 @@ class BaseAgent:
         logger.info(
             f"[{self.agent_id}] Processing task {task.task_id} with priority {task.priority.name}"
         )
-        task_start_time = asyncio.get_event_loop().time()
+        task_start_time = asyncio.get_running_loop().time()
         self._task_counter += 1
 
         try:
@@ -248,7 +248,7 @@ class BaseAgent:
         task_payload: HSPTaskRequestPayload,
         sender_ai_id: str,
         envelope: HSPMessageEnvelope,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Default task handler for unimplemented capabilities."""
         capability_id = task_payload.get("capability_id_filter", "")
         logger.warning(f"[{self.agent_id}] No specific handler for capability '{capability_id}'", exc_info=True)

@@ -1,13 +1,8 @@
 import asyncio
 import logging
-import os
-import sys
 import random
 from typing import Any, Dict, List, Optional
 
-# Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, project_root)
 
 try:
     from ..ai.agents.base.base_agent import BaseAgent

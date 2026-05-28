@@ -2,19 +2,10 @@
 
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system verification
 
-import sys
-import os
 import traceback
 import logging
 
 logger = logging.getLogger(__name__)
-# from system_test import  # Commented out - incomplete import
-# from diagnose_base_agent import  # Commented out - incomplete import
-
-# 添加项目根目录到Python路径
-project_root: str = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
-apps_backend_src: str = os.path.join(project_root, "apps", "backend", "src")
-sys.path.append(os.path.abspath(apps_backend_src))
 
 
 def verify_context_system():
@@ -119,4 +110,5 @@ def verify_context_system():
 
 if __name__ == "__main__":
     success = verify_context_system()
+    import sys
     sys.exit(0 if success else 1)

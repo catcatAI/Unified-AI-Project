@@ -6,7 +6,7 @@ HSP Transport Abstraction Layer
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Callable
+from typing import Any, Optional, Callable
 from enum import Enum
 from multiprocessing import Queue
 import asyncio
@@ -36,7 +36,7 @@ class HSPTransport(ABC):
         pass
 
     @abstractmethod
-    async def publish(self, topic: str, payload: Dict[str, Any]) -> bool:
+    async def publish(self, topic: str, payload: dict[str, Any]) -> bool:
         """發布消息"""
         pass
 
@@ -68,7 +68,7 @@ class LocalIPCTransport(HSPTransport):
         self.send_queue = send_queue
         self.recv_queue = recv_queue
         self._connected = False
-        self._subscriptions: Dict[str, Callable] = {}
+        self._subscriptions: dict[str, Callable] = {}
         self._listener_task: Optional[asyncio.Task] = None
 
         logger.info("LocalIPCTransport initialized")
@@ -106,7 +106,7 @@ class LocalIPCTransport(HSPTransport):
         logger.info("LocalIPCTransport disconnected")
         return True
 
-    async def publish(self, topic: str, payload: Dict[str, Any]) -> bool:
+    async def publish(self, topic: str, payload: dict[str, Any]) -> bool:
         """
         發布消息到隊列
 
@@ -122,7 +122,7 @@ class LocalIPCTransport(HSPTransport):
 
         try:
             # 使用 run_in_executor 避免阻塞
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, self.send_queue.put, message)
             logger.debug(f"Published message to topic: {topic}")
             return True
@@ -153,7 +153,7 @@ class LocalIPCTransport(HSPTransport):
         while self._connected:
             try:
                 # 非阻塞獲取消息
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 message = await loop.run_in_executor(
                     None, lambda: self.recv_queue.get(timeout=0.5) if self.recv_queue else None
                 )
@@ -245,7 +245,7 @@ class MQTTTransport(HSPTransport):
             return result
         return True
 
-    async def publish(self, topic: str, payload: Dict[str, Any]) -> bool:
+    async def publish(self, topic: str, payload: dict[str, Any]) -> bool:
         """發布 MQTT 消息"""
         if not self._external_connector:
             logger.error("Not connected to MQTT broker", exc_info=True)

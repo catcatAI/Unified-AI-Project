@@ -10,10 +10,6 @@ Angela AI v6.2.1 — StateMatrix 能力展示場 / Capability Playground
 Author: Angela AI v6.2.1
 """
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from core.engine.state_matrix_adapter import StateMatrixAdapter
 from core.state.text_to_vector import text_to_vector
@@ -165,7 +161,7 @@ def main():
 
     g = sm.compute_gradient()
     print(f"  Gradient strength: {g['gradient_strength']:.2f}")
-    print(f"  Nearest attractors:")
+    print("  Nearest attractors:")
     for a in g["nearest_attractors"][:3]:
         print(f"    - {a['description']} (tone={a['tone']}, dist={a['distance']:.3f})")
     print(f"  Blended tone: {g['blended_tone']}")

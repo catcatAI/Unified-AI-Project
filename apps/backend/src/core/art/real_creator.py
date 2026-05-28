@@ -245,7 +245,7 @@ class AngelaRealCreator:
             path = await self.voice._generate_audio(text=text)
             if path:
                 paths.append(path)
-                logger.info(f"✅ 语音已创建")
+                logger.info("✅ 语音已创建")
 
         return paths
 

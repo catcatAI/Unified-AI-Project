@@ -582,7 +582,7 @@ if __name__ == "__main__":
         probability=0.4,
         resonance_weight=0.35,
     )
-    logger.info(f"  喜悦 (joy): ω=0.35")
+    logger.info("  喜悦 (joy): ω=0.35")
 
     npe.add_possibility(
         emotional_gz.variable_id,
@@ -591,7 +591,7 @@ if __name__ == "__main__":
         probability=0.3,
         resonance_weight=0.30,
     )
-    logger.info(f"  悲伤 (sadness): ω=0.30")
+    logger.info("  悲伤 (sadness): ω=0.30")
 
     npe.add_possibility(
         emotional_gz.variable_id,
@@ -600,7 +600,7 @@ if __name__ == "__main__":
         probability=0.3,
         resonance_weight=0.20,
     )
-    logger.info(f"  惊奇 (wonder): ω=0.20")
+    logger.info("  惊奇 (wonder): ω=0.20")
 
     npe.add_possibility(
         emotional_gz.variable_id,
@@ -609,7 +609,7 @@ if __name__ == "__main__":
         probability=0.2,
         resonance_weight=0.15,
     )
-    logger.info(f"  苦乐参半 (bittersweet): ω=0.15")
+    logger.info("  苦乐参半 (bittersweet): ω=0.15")
 
     # Scenario 1: Low cognitive gap (no coexistence)
     logger.info("\n场景1: 低认知缺口 (0.4) / Scenario 1: Low cognitive gap (0.4)")
@@ -631,7 +631,7 @@ if __name__ == "__main__":
 
     if result:
         state = npe.calculate_coexistence_state(emotional_gz.variable_id)
-        logger.info(f"\n  共存状态:")
+        logger.info("\n  共存状态:")
         logger.info(f"    变量类型: {state['variable_type']}")
         logger.info(f"    共存可能性: {state['coexisting_possibilities']}")
         logger.info(f"    共鸣权重: {state['resonance_weights']}")

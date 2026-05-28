@@ -1,1 +1,13 @@
-"""Smoke test for apps.backend.src.cluster_hardware."""import pytestimport sysfrom pathlib import Pathsys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "apps" / "backend" / "src"))def test_cluster_hardware_imports():    """Smoke test: apps.backend.src.cluster_hardware imports successfully."""    import cluster_hardware as cluster_hardware    assert cluster_hardware is not Noneif __name__ == "__main__":    pytest.main([__file__, '-v'])
+"""Smoke test for apps.backend.src.cluster_hardware."""
+
+import pytest
+
+
+def test_cluster_hardware_imports():
+    """Smoke test: apps.backend.src.cluster_hardware imports successfully."""
+    import cluster_hardware
+    assert cluster_hardware is not None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

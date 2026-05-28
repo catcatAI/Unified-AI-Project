@@ -1,11 +1,5 @@
 """Test Main API Server - Standalone Tests"""
 import pytest
-import sys
-from pathlib import Path
-
-src_path = Path(__file__).parent.parent.parent / "apps" / "backend" / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
 async def test_main_api_server_import():
     """Test main API server module can be imported"""
     from services.main_api_server import app

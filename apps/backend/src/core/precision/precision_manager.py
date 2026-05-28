@@ -241,7 +241,7 @@ def demo():
 
     logger.info("\n📝 编码测试:")
     encoded = system.encode("test_1", 1.23456789, layer=1)
-    logger.info(f"  原始值: 1.23456789")
+    logger.info("  原始值: 1.23456789")
     logger.info(f"  整数部分: {encoded['integer_part']}")
     logger.info(f"  精度等级: DEC{encoded['precision']}")
     logger.info(

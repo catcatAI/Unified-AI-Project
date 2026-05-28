@@ -63,7 +63,7 @@ def initialize_all_services(manager) -> tuple:
 
     def bio_event_callback(event_name, event_data):
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             if loop.is_running():
                 asyncio.run_coroutine_threadsafe(
                     manager.broadcast(
@@ -92,7 +92,7 @@ def initialize_all_services(manager) -> tuple:
             def _plugin_aware_callback(event_name, event_data):
                 try:
                     import asyncio as _aio
-                    _aio.ensure_future(
+                    _aio.create_task(
                         plugin_manager.execute_hook("on_bio_event", {
                             "event": event_name, "data": event_data
                         })

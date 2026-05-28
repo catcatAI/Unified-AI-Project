@@ -12,10 +12,6 @@ Test suite for Attractor Field
 
 import pytest
 import math
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from ai.memory.attractor_field import (
     MemoryAttractor, GradientField, BehaviorTone, GradientResult

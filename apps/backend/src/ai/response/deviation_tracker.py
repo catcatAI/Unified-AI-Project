@@ -305,12 +305,12 @@ class DeviationTracker:
         report_lines.extend(
             [
                 "",
-                f"Token 使用情况:",
+                "Token 使用情况:",
                 f"  - 总消耗: {self.stats['total_tokens_used']}",
                 f"  - 总节省: {self.stats['total_tokens_saved']}",
                 f"  - 节省率: {self.stats['token_savings_rate']*100:.1f}%",
                 "",
-                f"性能指标:",
+                "性能指标:",
                 f"  - 平均匹配分数: {self.stats['average_match_score']:.2f}",
                 f"  - 平均响应时间: {self.stats['average_response_time']:.0f}ms",
                 f"  - 平均质量分数: {self.stats['average_quality_score']:.2f}",

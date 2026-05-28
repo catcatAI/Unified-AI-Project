@@ -232,13 +232,13 @@ if __name__ == "__main__":
 
     try:
         metrics = optimizer.collect_metrics()
-        print(f"性能指标: {metrics}")
+        logger.info(f"性能指标: {metrics}")
 
         load = optimizer.get_current_load()
-        print(f"当前负载: {load}")
+        logger.info(f"当前负载: {load}")
 
         recommendations = optimizer.get_resource_recommendations()
-        print(f"资源建议: {recommendations}")
+        logger.info(f"资源建议: {recommendations}")
 
     except Exception as e:  # broad exception acceptable: ensure test errors are logged and don't crash
         logger.error(f"测试过程中发生错误: {e}", exc_info=True)

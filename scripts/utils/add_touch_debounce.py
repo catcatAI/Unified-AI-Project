@@ -10,11 +10,12 @@
 """
 
 import re
+from pathlib import Path
 import os
 import logging
 logger = logging.getLogger(__name__)
 
-udm_file = '/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/unified-display-matrix.js'
+udm_file = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "js" / "unified-display-matrix.js")
 
 # 读取文件内容
 with open(udm_file, 'r', encoding='utf-8') as f:

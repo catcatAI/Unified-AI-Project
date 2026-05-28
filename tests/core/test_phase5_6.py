@@ -5,8 +5,7 @@ Phase 5-6 Smoke Tests: Ripple + Influence
 Author: Angela AI v6.2
 """
 
-import sys, math
-sys.path.insert(0, 'apps/backend/src')
+import math
 
 from core.ripple.node import (
     RippleNode, RippleDepth, MathOp,

@@ -4,14 +4,9 @@
 """
 
 import asyncio
-import sys
-import os
 import time
 import statistics
 from datetime import datetime
-
-# 添加项目路径
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend', 'src'))
 
 class EnterpriseBenchmark:
     """企业级性能基准"""

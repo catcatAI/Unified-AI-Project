@@ -7,7 +7,7 @@ import os
 import re
 import base64
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable, Tuple, Union
+from typing import Any, Optional, Callable, Union
 from collections import defaultdict, deque
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -45,7 +45,7 @@ class HSPConnectionPool:
     def __init__(self, max_connections: int = 10, connection_timeout: int = 30) -> None:
         self.max_connections = max_connections
         self.connection_timeout = connection_timeout
-        self.active_connections: Dict[int, Any] = {}  # 连接ID -> 连接对象
+        self.active_connections: dict[int, Any] = {}  # 连接ID -> 连接对象
         self.idle_connections: deque = deque()  # 空闲连接队列
         self.connection_lock = threading.RLock()
         self.connection_counter = 0
@@ -133,7 +133,7 @@ class HSPIntelligentCache:
     def __init__(self, max_size: int = 1000, ttl_seconds: int = 300) -> None:
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
-        self.cache: Dict[str, Tuple[Any, float, int]] = {}  # 键 -> (值, 过期时间, 访问计数)
+        self.cache: dict[str, tuple[Any, float, int]] = {}  # 键 -> (值, 过期时间, 访问计数)
         self.access_order: deque = deque()  # 访问顺序队列(用于LRU)
         self.cache_lock = threading.RLock()
         self.stats = {"hits": 0, "misses": 0, "evictions": 0}
@@ -210,7 +210,7 @@ class HSPIntelligentCache:
             self.access_order.remove(key)
         self.access_order.append(key)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取缓存统计信息"""
         with self.cache_lock:
             total_requests = self.stats["hits"] + self.stats["misses"]
@@ -230,7 +230,7 @@ class HSPLoadBalancer:
 
     def __init__(self, strategy: str = "round_robin") -> None:
         self.strategy = strategy
-        self.nodes: Dict[str, Any] = {}  # 节点ID -> 节点信息
+        self.nodes: dict[str, Any] = {}  # 节点ID -> 节点信息
         self.node_stats = defaultdict(
             lambda: {
                 "request_count": 0,
@@ -244,7 +244,7 @@ class HSPLoadBalancer:
 
         logger.info(f"HSP负载均衡器初始化, 策略: {strategy}")
 
-    def add_node(self, node_id: str, node_info: Dict[str, Any]):
+    def add_node(self, node_id: str, node_info: dict[str, Any]):
         """添加节点"""
         with self.lb_lock:
             self.nodes[node_id] = node_info
@@ -259,7 +259,7 @@ class HSPLoadBalancer:
                     del self.node_stats[node_id]
                 logger.debug(f"节点已移除: {node_id}")
 
-    def select_node(self, message: Dict[str, Any]):
+    def select_node(self, message: dict[str, Any]):
         """选择节点"""
         with self.lb_lock:
             if not self.nodes:
@@ -346,7 +346,7 @@ class HSPLoadBalancer:
 class HSPAdvancedPerformanceOptimizer:
     """HSP高级性能优化器"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: Optional[dict[str, Any]] = None) -> None:
         self.config = config or {}
 
         # 初始化组件
@@ -373,7 +373,7 @@ class HSPAdvancedPerformanceOptimizer:
 
         logger.info("HSP高级性能优化器初始化完成")
 
-    async def optimize_message_routing(self, message: Dict[str, Any]):
+    async def optimize_message_routing(self, message: dict[str, Any]):
         """优化消息路由"""
         start_time = time.time()
 
@@ -427,7 +427,7 @@ class HSPAdvancedPerformanceOptimizer:
         logger.debug(f"消息路由完成: {message_key} -> {target_node}")
         return routing_result, "routed"
 
-    def _generate_message_key(self, message: Dict[str, Any]) -> str:
+    def _generate_message_key(self, message: dict[str, Any]) -> str:
         """生成消息键用于缓存"""
         # 使用消息的关键属性生成键
         key_data = {
@@ -450,7 +450,7 @@ class HSPAdvancedPerformanceOptimizer:
         """归还连接"""
         self.connection_pool.return_connection(connection)
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """获取性能统计信息"""
         return {
             "connection_pool": asdict(self.connection_pool.get_stats()),
@@ -459,7 +459,7 @@ class HSPAdvancedPerformanceOptimizer:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def add_node_to_load_balancer(self, node_id: str, node_info: Dict[str, Any]):
+    def add_node_to_load_balancer(self, node_id: str, node_info: dict[str, Any]):
         """向负载均衡器添加节点"""
         self.load_balancer.add_node(node_id, node_info)
 
@@ -491,7 +491,7 @@ class HSPAdvancedPerformanceEnhancer:
                     result = await original_publish_func(*args, **kwargs)
                 else:
                     # 对于同步函数, 在线程池中执行
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
                     result = await loop.run_in_executor(
                         self.optimizer.executor, original_publish_func, *args, **kwargs
                     )
@@ -527,7 +527,7 @@ class HSPAdvancedPerformanceEnhancer:
                     result = await original_receive_func(*args, **kwargs)
                 else:
                     # 对于同步函数, 在线程池中执行
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
                     result = await loop.run_in_executor(
                         self.optimizer.executor, original_receive_func, *args, **kwargs
                     )

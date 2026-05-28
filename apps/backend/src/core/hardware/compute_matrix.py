@@ -450,7 +450,7 @@ def demo():
 
     logger.info("\n🔧 操作估算:")
     ops = matrix.estimate_operations("matrix_multiply", [(1024, 1024), (1024, 1024)], (1024, 1024))
-    logger.info(f"  矩阵乘法 (1024x1024):")
+    logger.info("  矩阵乘法 (1024x1024):")
     logger.info(f"    操作数: {ops['operations']:,.0f}")
     logger.info(f"    内存读取: {ops['memory_reads']:,.0f}")
     logger.info(f"    算术强度: {ops['arithmetic_intensity']:.2f}")

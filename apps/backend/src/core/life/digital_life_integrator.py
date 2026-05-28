@@ -20,7 +20,7 @@ Date: 2026-02-02
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any
+from typing import Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import logging
@@ -73,14 +73,14 @@ class ModalityGateway:
     Handles dynamic switching of output streams based on intent and arousal.
     """
     def __init__(self):
-        self.modalities: Dict[ModalityType, ModalityState] = {
+        self.modalities: dict[ModalityType, ModalityState] = {
             ModalityType.TEXT: ModalityState(ModalityType.TEXT, True, 10),
             ModalityType.AUDIO: ModalityState(ModalityType.AUDIO, True, 5),
             ModalityType.VISUAL_3D: ModalityState(ModalityType.VISUAL_3D, True, 8),
             ModalityType.CODE: ModalityState(ModalityType.CODE, False, 2),
         }
 
-    def update_gates(self, arousal: float, introspection_report: Optional[Dict[str, Any]] = None):
+    def update_gates(self, arousal: float, introspection_report: Optional[dict[str, Any]] = None):
         """根據喚醒度與意圖分析更新閘門狀態"""
         old_states = {m: s.is_active for m, s in self.modalities.items()}
         
@@ -148,8 +148,8 @@ class LifeStats:
     total_actions_executed: int = 0
     memories_formed: int = 0
     memories_consolidated: int = 0
-    skills_learned: List[str] = field(default_factory=list)
-    personality_traits: Dict[str, float] = field(default_factory=dict)
+    skills_learned: list[str] = field(default_factory=list)
+    personality_traits: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -173,7 +173,7 @@ class LifeEvent:
     description: str
     timestamp: datetime = field(default_factory=datetime.now)
     significance: float = 0.5  # 0-1, importance of the event
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class DigitalLifeIntegrator:
@@ -213,7 +213,7 @@ class DigitalLifeIntegrator:
         >>> print(f"State: {summary['current_state']}")
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = config or {}
 
         # Life cycle
@@ -253,15 +253,15 @@ class DigitalLifeIntegrator:
         self._last_params_log: datetime = datetime.now()
 
         # Health monitoring
-        self.systems_health: Dict[str, SystemHealth] = {}
+        self.systems_health: dict[str, SystemHealth] = {}
         self._health_check_interval: float = 60.0  # seconds
         self._update_interval: float = self.config.get(
             "update_interval", 1.0
         )  # Used for introspection loop
 
         # Life events
-        self.life_events: List[LifeEvent] = []
-        self._significant_events: List[LifeEvent] = []
+        self.life_events: list[LifeEvent] = []
+        self._significant_events: list[LifeEvent] = []
 
         # Activity tracking
         self._last_activity_time: datetime = datetime.now()
@@ -274,13 +274,13 @@ class DigitalLifeIntegrator:
         self._health_check_task: Optional[asyncio.Task] = None
 
         # Callbacks
-        self._state_change_callbacks: List[Callable[[LifeCycleState, LifeCycleState], None]] = []
-        self._event_callbacks: List[Callable[[LifeEvent], None]] = []
+        self._state_change_callbacks: list[Callable[[LifeCycleState, LifeCycleState], None]] = []
+        self._event_callbacks: list[Callable[[LifeEvent], None]] = []
 
         # Self-Introspection and State Matrix
         self.state_matrix = StateMatrix4D()
         self.self_introspector = SelfIntrospector(self.config.get("introspection", {}))
-        self.introspection_report: Optional[Dict[str, Any]] = None
+        self.introspection_report: Optional[dict[str, Any]] = None
 
         # [Task N.20.2] 模態閘控初始化
         self.modality_gateway = ModalityGateway()
@@ -560,7 +560,7 @@ class DigitalLifeIntegrator:
 
     async def _check_system_health(self):
         """Check health of all subsystems"""
-        systems: Dict[str, Any] = {
+        systems: dict[str, Any] = {
             "biological": self.biological_integrator,
             "action_executor": self.action_executor,
         }
@@ -571,10 +571,10 @@ class DigitalLifeIntegrator:
         for name, system in systems.items():
             try:
                 # Check if system responds
-                start_time = asyncio.get_event_loop().time()
+                start_time = asyncio.get_running_loop().time()
                 # Simple health check - would be more comprehensive in reality
                 is_healthy = True
-                response_time = (asyncio.get_event_loop().time() - start_time) * 1000
+                response_time = (asyncio.get_running_loop().time() - start_time) * 1000
 
                 self.systems_health[name] = SystemHealth(
                     system_name=name,
@@ -654,7 +654,7 @@ class DigitalLifeIntegrator:
         event_type: str,
         description: str,
         significance: float = 0.5,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """
         Record a significant life event
@@ -717,7 +717,7 @@ class DigitalLifeIntegrator:
         """Get age of Angela's digital life"""
         return datetime.now() - self.life_stats.birth_time
 
-    def get_life_summary(self) -> Dict[str, Any]:
+    def get_life_summary(self) -> dict[str, Any]:
         """Get comprehensive life summary"""
         age = self.get_age()
 
@@ -744,11 +744,11 @@ class DigitalLifeIntegrator:
             },
         }
 
-    def get_recent_events(self, limit: int = 10) -> List[LifeEvent]:
+    def get_recent_events(self, limit: int = 10) -> list[LifeEvent]:
         """Get recent life events"""
         return sorted(self.life_events, key=lambda e: e.timestamp, reverse=True)[:limit]
 
-    def get_significant_events(self) -> List[LifeEvent]:
+    def get_significant_events(self) -> list[LifeEvent]:
         """Get all significant life events"""
         return sorted(self._significant_events, key=lambda e: e.timestamp, reverse=True)
 
@@ -770,7 +770,7 @@ class DigitalLifeIntegrator:
         """Forcefully change to a specific state (for testing/emergencies)"""
         await self._transition_state(state)
 
-    def get_formula_metrics(self) -> Optional[Dict[str, Any]]:
+    def get_formula_metrics(self) -> Optional[dict[str, Any]]:
         """
         Get theoretical formula metrics if formula integration is enabled
 
@@ -781,7 +781,7 @@ class DigitalLifeIntegrator:
             return self.autonomous_lifecycle.get_lifecycle_summary()
         return None
 
-    def get_dynamic_parameters(self) -> Optional[Dict[str, Any]]:
+    def get_dynamic_parameters(self) -> Optional[dict[str, Any]]:
         """
         Get dynamic parameters summary if dynamic params integration is enabled
 
@@ -793,7 +793,7 @@ class DigitalLifeIntegrator:
         return None
 
     def get_dynamic_parameter(
-        self, param_name: str, context: Optional[Dict[str, float]] = None
+        self, param_name: str, context: Optional[dict[str, float]] = None
     ) -> float:
         """
         Get a specific dynamic parameter value

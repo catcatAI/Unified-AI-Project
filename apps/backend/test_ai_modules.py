@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """深度检查脚本"""
+import os
 import sys
 import logging
 logger = logging.getLogger(__name__)
-sys.path.insert(0, '/home/cat/桌面/Unified-AI-Project/apps/backend')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 print('=' * 60)
 print('深度检查: AI 模块导入测试')

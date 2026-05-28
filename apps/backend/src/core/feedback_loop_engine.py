@@ -951,7 +951,7 @@ if __name__ == "__main__":
         # Wait for cycle to complete
         completed = await engine.wait_for_cycle(cycle_id, timeout=2.0)
         if completed:
-            logger.info(f"   Cycle completed successfully")
+            logger.info("   Cycle completed successfully")
 
         # Show metrics
         logger.info("\n2. Performance metrics:")

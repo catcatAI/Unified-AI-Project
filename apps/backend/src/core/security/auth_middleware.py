@@ -16,8 +16,8 @@
 import hashlib
 import logging
 import secrets
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any
 
 try:
     import jwt
@@ -33,44 +33,44 @@ logger = logging.getLogger("auth_middleware")
 class AuthMiddleware:
     """认证中间件"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = config or {}
         self.secret_key = self.config.get("secret_key", self._generate_secret_key())
         self.algorithm = self.config.get("algorithm", "HS256")
         self.access_token_expire_minutes = self.config.get("access_token_expire_minutes", 30)
         self.refresh_token_expire_days = self.config.get("refresh_token_expire_days", 7)
-        self.api_keys: Dict[str, Dict[str, Any]] = {}
-        self.sessions: Dict[str, Dict[str, Any]] = {}
+        self.api_keys: dict[str, dict[str, Any]] = {}
+        self.sessions: dict[str, dict[str, Any]] = {}
 
     def _generate_secret_key(self) -> str:
         """生成密钥"""
         return secrets.token_urlsafe(32)
 
-    def create_access_token(self, data: Dict[str, Any]) -> str:
+    def create_access_token(self, data: dict[str, Any]) -> str:
         """创建访问令牌"""
         if not JWT_AVAILABLE:
             raise ValueError("JWT module not available")
 
-        expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=self.access_token_expire_minutes)
         to_encode = data.copy()
-        to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
 
         token = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return token
 
-    def create_refresh_token(self, data: Dict[str, Any]) -> str:
+    def create_refresh_token(self, data: dict[str, Any]) -> str:
         """创建刷新令牌"""
         if not JWT_AVAILABLE:
             raise ValueError("JWT module not available")
 
-        expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire_days)
+        expire = datetime.now(timezone.utc) + timedelta(days=self.refresh_token_expire_days)
         to_encode = data.copy()
-        to_encode.update({"exp": expire, "iat": datetime.utcnow(), "type": "refresh"})
+        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "type": "refresh"})
 
         token = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return token
 
-    def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
+    def verify_token(self, token: str) -> Optional[dict[str, Any]]:
         """验证令牌"""
         if not JWT_AVAILABLE:
             return None
@@ -85,7 +85,7 @@ class AuthMiddleware:
             logger.warning(f"Invalid token: {e}", exc_info=True)
             return None
 
-    def generate_api_key(self, user_id: str, scopes: List[str] = None) -> str:
+    def generate_api_key(self, user_id: str, scopes: list[str] = None) -> str:
         """生成 API 密钥"""
         if scopes is None:
             scopes = ["read", "write"]
@@ -95,47 +95,47 @@ class AuthMiddleware:
         self.api_keys[api_key] = {
             "user_id": user_id,
             "scopes": scopes,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "last_used": None,
         }
 
         logger.info(f"Generated API key for user {user_id}")
         return api_key
 
-    def verify_api_key(self, api_key: str) -> Optional[Dict[str, Any]]:
+    def verify_api_key(self, api_key: str) -> Optional[dict[str, Any]]:
         """验证 API 密钥"""
         if api_key not in self.api_keys:
             return None
 
         key_info = self.api_keys[api_key]
-        key_info["last_used"] = datetime.utcnow().isoformat()
+        key_info["last_used"] = datetime.now(timezone.utc).isoformat()
 
         return key_info
 
     def create_session(self, user_id: str) -> str:
         """创建会话"""
         session_id = secrets.token_urlsafe(32)
-        expires_at = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        expires_at = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
         self.sessions[session_id] = {
             "user_id": user_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "last_activity": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_activity": datetime.now(timezone.utc).isoformat(),
             "expires_at": expires_at,
         }
         return session_id
 
-    def verify_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def verify_session(self, session_id: str) -> Optional[dict[str, Any]]:
         """验证会话"""
         session = self.sessions.get(session_id)
         if session is None:
             return None
 
-        session["last_activity"] = datetime.utcnow().isoformat()
+        session["last_activity"] = datetime.now(timezone.utc).isoformat()
         expires_at_str = session.get("expires_at", "")
         if expires_at_str:
             try:
                 expires_at = datetime.fromisoformat(expires_at_str)
-                if datetime.utcnow() > expires_at:
+                if datetime.now(timezone.utc) > expires_at:
                     self.sessions.pop(session_id, None)
                     return None
             except (ValueError, TypeError):
@@ -153,7 +153,7 @@ class AuthMiddleware:
             return True
         return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             "active_sessions": len(self.sessions),
@@ -167,7 +167,7 @@ _auth_middleware: Optional[AuthMiddleware] = None
 
 
 # DORMANT FACTORY (not called externally)
-def get_auth_middleware(config: Optional[Dict[str, Any]] = None) -> AuthMiddleware:
+def get_auth_middleware(config: Optional[dict[str, Any]] = None) -> AuthMiddleware:
     """获取全局认证中间件实例"""
     global _auth_middleware
     if _auth_middleware is None:

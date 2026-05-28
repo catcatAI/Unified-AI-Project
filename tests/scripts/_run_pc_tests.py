@@ -4,11 +4,7 @@ Uses importlib.util to bypass ai.dialogue package import chain
 (which has a 11s+ import time due to slow dependencies.
 Direct file load takes ~2s.
 """
-import sys, time, importlib.util
-from pathlib import Path
-
-src = r"D:\Projects\Unified-AI-Project\apps\backend\src"
-sys.path.insert(0, src)
+import time, importlib.util
 
 print("Pre-loading slow dependencies...")
 t0 = time.time()

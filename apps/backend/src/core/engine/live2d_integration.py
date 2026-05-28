@@ -866,7 +866,7 @@ if __name__ == "__main__":
         # Look at point
         logger.info("\n视线跟踪 / Eye tracking:")
         live2d.look_at(0.5, -0.3)
-        logger.info(f"  看向: (0.5, -0.3)")
+        logger.info("  看向: (0.5, -0.3)")
         logger.info(f"  眼球X: {live2d.get_parameter('ParamEyeBallX'):.2f}")
         logger.info(f"  眼球Y: {live2d.get_parameter('ParamEyeBallY'):.2f}")
 

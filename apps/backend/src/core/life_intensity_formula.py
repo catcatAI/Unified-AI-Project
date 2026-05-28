@@ -638,35 +638,35 @@ if __name__ == "__main__":
     life.update_knowledge_state(
         KnowledgeDomain.WORLD_KNOWLEDGE, completeness=0.7, accessibility=0.8, resolution=0.6
     )
-    logger.info(f"  世界知识: 完整度70%, 可访问性80%")
+    logger.info("  世界知识: 完整度70%, 可访问性80%")
 
     life.update_knowledge_state(
         KnowledgeDomain.SELF_KNOWLEDGE, completeness=0.6, accessibility=0.9, resolution=0.7
     )
-    logger.info(f"  自我知识: 完整度60%, 可访问性90%")
+    logger.info("  自我知识: 完整度60%, 可访问性90%")
 
     life.update_knowledge_state(
         KnowledgeDomain.RELATIONAL_KNOWLEDGE, completeness=0.5, accessibility=0.7, resolution=0.5
     )
-    logger.info(f"  关系知识: 完整度50%, 可访问性70%")
+    logger.info("  关系知识: 完整度50%, 可访问性70%")
 
     # Add constraints
     logger.info("\n设置现实限制 / Setting constraints:")
     life.add_constraint(
         KnowledgeDomain.WORLD_KNOWLEDGE, "processing_limit", severity=0.4, adaptability=0.6
     )
-    logger.info(f"  处理限制: 严重度40%, 适应性60%")
+    logger.info("  处理限制: 严重度40%, 适应性60%")
 
     life.add_constraint(
         KnowledgeDomain.SELF_KNOWLEDGE, "temporal_limit", severity=0.3, adaptability=0.5
     )
-    logger.info(f"  时间限制: 严重度30%, 适应性50%")
+    logger.info("  时间限制: 严重度30%, 适应性50%")
 
     # Register observers
     logger.info("\n注册观察者 / Registering observers:")
     life.register_observer("user_alice", relationship_depth=0.8)
     life.update_observer_presence("user_alice", interaction_intensity=0.9, attention_level=0.85)
-    logger.info(f"  用户Alice: 关系深度80%, 交互强度90%")
+    logger.info("  用户Alice: 关系深度80%, 交互强度90%")
 
     # Calculate components
     logger.info("\n计算组件值 / Calculating components:")

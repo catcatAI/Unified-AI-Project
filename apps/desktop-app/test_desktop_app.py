@@ -174,9 +174,10 @@ class DesktopAppTester:
 
     def test_frontend_code(self):
         print_header("Frontend Code Tests")
-        import os
+        from pathlib import Path
+import os
 
-        base_path = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app"
+        base_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app")
 
         # Test critical files exist
         critical_files = [
@@ -243,9 +244,10 @@ class DesktopAppTester:
 
     def test_live2d_code(self):
         print_header("Live2D Code Tests")
-        import os
+        from pathlib import Path
+import os
 
-        live2d_js = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/live2d-manager.js"
+        live2d_js = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "js" / "live2d-manager.js")
 
         if not os.path.exists(live2d_js):
             self.add_result("live2d", False, "Live2D manager not found")
@@ -272,9 +274,10 @@ class DesktopAppTester:
 
     def test_main_js(self):
         print_header("Main Process (main.js) Tests")
-        import os
+        from pathlib import Path
+import os
 
-        main_js = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/main.js"
+        main_js = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "main.js")
 
         if not os.path.exists(main_js):
             self.add_result("ui", False, "main.js not found")
@@ -339,10 +342,10 @@ async def main():
     results = await tester.run_all_tests()
 
     # Save results
-    with open("/home/cat/桌面/Unified-AI-Project/test_results.json", 'w', encoding='utf-8') as f:
+    with open(str(Path.home() / "Desktop" / "Unified-AI-Project" / "test_results.json"), 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
-    print(f"\n{BOLD}Results saved to: /home/cat/桌面/Unified-AI-Project/test_results.json{RESET}")
+    print(f"\n{BOLD}Results saved to: {Path.home() / 'Desktop' / 'Unified-AI-Project' / 'test_results.json'}{RESET}")
 
 if __name__ == "__main__":
     asyncio.run(main())

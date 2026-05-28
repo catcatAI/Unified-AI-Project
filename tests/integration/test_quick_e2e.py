@@ -4,13 +4,8 @@
 """
 
 import asyncio
-import sys
-import os
 import time
 from datetime import datetime
-
-# 添加项目路径
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend', 'src'))
 
 async def test_basic_ops_flow():
     """测试基本运维流程"""

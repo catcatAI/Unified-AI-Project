@@ -10,10 +10,6 @@ Tests the integration between:
 """
 
 import pytest
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from core.autonomous.state_matrix import StateMatrix4D
 from ai.memory.math_ripple_engine import (

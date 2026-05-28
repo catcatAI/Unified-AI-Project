@@ -381,7 +381,7 @@ def demo():
     hw = HardwareManager()
     caps = hw.get_capabilities()
 
-    logger.info(f"\n📋 硬件信息:")
+    logger.info("\n📋 硬件信息:")
     logger.info(f"  架构: {caps.architecture.value}")
     logger.info(f"  指令集: {caps.instruction_set.value}")
     logger.info(f"  厂商: {caps.vendor.value}")
@@ -391,7 +391,7 @@ def demo():
     logger.info(f"  内存: {caps.memory_bytes / (1024**3):.1f} GB")
     logger.info(f"  向量宽度: {caps.vector_width} bit")
 
-    logger.info(f"\n🔢 特性支持:")
+    logger.info("\n🔢 特性支持:")
     logger.info(f"  FP16: {caps.fp16_support}")
     logger.info(f"  BF16: {caps.bf16_support}")
     logger.info(f"  AVX512: {caps.avx512_support}")
@@ -401,12 +401,12 @@ def demo():
     logger.info(f"\n⚡ 计算能力: {caps.compute_capability:.1f}")
     logger.info(f"  最优精度: {hw.get_optimal_precision().value}")
 
-    logger.info(f"\n🖥️ 可用计算单元:")
+    logger.info("\n🖥️ 可用计算单元:")
     units = hw.detect_compute_unit()
     for unit in units:
         logger.info(f"  ✅ {unit.value}")
 
-    logger.info(f"\n📊 当前指标:")
+    logger.info("\n📊 当前指标:")
     metrics = hw.get_current_metrics()
     logger.info(f"  CPU使用率: {metrics.cpu_usage_percent:.1f}%")
     logger.info(f"  内存使用率: {metrics.memory_usage_percent:.1f}%")

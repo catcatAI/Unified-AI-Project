@@ -1,3 +1,4 @@
+from pathlib import Path
 #!/usr/bin/env python3
 """
 修复 io_intelligence_orchestrator.py 的语法错误
@@ -83,7 +84,7 @@ def fix_syntax(file_path):
     return fixes
 
 if __name__ == '__main__':
-    file_path = '/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/io/io_intelligence_orchestrator.py'
+    file_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "backend" / "src" / "core" / "io" / "io_intelligence_orchestrator.py")
     fixes = fix_syntax(file_path)
     print(f'修复完成！共修复 {len(fixes)} 项：')
     for i, fix in enumerate(fixes, 1):

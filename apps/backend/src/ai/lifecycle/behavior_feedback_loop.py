@@ -481,13 +481,13 @@ if __name__ == "__main__":
         await asyncio.sleep(10)
 
         # 打印統計
-        logger.info(f"\n=== 行為反饋統計 ===")
+        logger.info("\n=== 行為反饋統計 ===")
         logger.info(json.dumps(feedback_loop.get_stats(), indent=2, ensure_ascii=False))
 
-        logger.info(f"\n=== 行為模式 ===")
+        logger.info("\n=== 行為模式 ===")
         logger.info(json.dumps(feedback_loop.get_patterns(), indent=2, ensure_ascii=False))
 
-        logger.info(f"\n=== 策略參數 ===")
+        logger.info("\n=== 策略參數 ===")
         logger.info(
             json.dumps(feedback_loop.get_strategy_parameters(), indent=2, ensure_ascii=False)
         )

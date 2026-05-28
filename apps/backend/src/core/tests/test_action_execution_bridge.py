@@ -18,12 +18,6 @@ import pytest
 from datetime import datetime
 from typing import Dict, Any, Optional
 from unittest.mock import Mock, AsyncMock, patch
-import sys
-from pathlib import Path
-
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
 from core.action_execution_bridge import (
     ActionExecutionBridge,
     ActionType,

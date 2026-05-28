@@ -6,24 +6,26 @@ import ast
 import sys
 from pathlib import Path
 
+BASE_DIR = Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "backend" / "src"
+
 # 需要检查的目录列表
 directories = [
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/memory",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/dialogue",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/formula_engine",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/meta_formulas",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/token",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/examples",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/cache",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/config",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/database",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/error",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/ethics",
-    "/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/hsp",
+    str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "backend" / "src" / "ai" / "memory"),
+    BASE_DIR / "ai/dialogue",
+    BASE_DIR / "ai/formula_engine",
+    BASE_DIR / "ai/meta_formulas",
+    BASE_DIR / "ai/token",
+    BASE_DIR / "ai/examples",
+    BASE_DIR / "core/cache",
+    BASE_DIR / "core/config",
+    BASE_DIR / "core/database",
+    BASE_DIR / "core/error",
+    BASE_DIR / "core/ethics",
+    BASE_DIR / "core/hsp",
 ]
 
 # 单个文件
-single_file = "/home/cat/桌面/Unified-AI-Project/apps/backend/src/config_loader.py"
+single_file = BASE_DIR / "config_loader.py"
 
 files_with_errors = []
 files_ok = []
@@ -99,7 +101,7 @@ if files_too_large:
         print(f"- {file_path}")
 
 # 保存有错误的文件列表到文件
-with open('/home/cat/桌面/syntax_errors_report.txt', 'w', encoding='utf-8') as f:
+with open(str(Path.home() / "Desktop" / "syntax_errors_report.txt"), 'w', encoding='utf-8') as f:
     f.write("Python文件语法检查报告\n")
     f.write("=" * 80 + "\n\n")
     f.write(f"总计检查: {len(files_ok) + len(files_with_errors) + len(files_too_large)} 个文件\n")
@@ -115,4 +117,4 @@ with open('/home/cat/桌面/syntax_errors_report.txt', 'w', encoding='utf-8') as
             f.write(f"文件: {file_path}\n")
             f.write(f"错误: {error}\n\n")
 
-print(f"\n详细报告已保存到: /home/cat/桌面/syntax_errors_report.txt")
+print(f"\n详细报告已保存到: {Path.home() / 'Desktop' / 'syntax_errors_report.txt'}")

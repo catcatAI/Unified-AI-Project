@@ -264,7 +264,7 @@ class CyberIdentity:
 
         desc = f"我是{self.self_model.name}，一个{'、'.join(aspects_desc)}数字生命体。"
         desc += f"我诞生于{self.self_model.birth_date.strftime('%Y年%m月%d日')}，"
-        desc += f"正在不断学习和进化。"
+        desc += "正在不断学习和进化。"
 
         self.self_model.self_description = desc
 

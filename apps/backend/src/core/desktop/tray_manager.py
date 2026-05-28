@@ -134,12 +134,12 @@ class WindowsTrayManager(BaseTrayManager):
                 "Switch Mode",
                 pystray.Menu(
                     pystray.MenuItem(
-                        lambda text: f"✓ Lite" if self._get_current_mode() == "lite" else "  Lite",
+                        lambda text: "✓ Lite" if self._get_current_mode() == "lite" else "  Lite",
                         lambda: self._switch_mode("lite"),
                     ),
                     pystray.MenuItem(
                         lambda text: (
-                            f"✓ Standard"
+                            "✓ Standard"
                             if self._get_current_mode() == "standard"
                             else "  Standard"
                         ),
@@ -147,7 +147,7 @@ class WindowsTrayManager(BaseTrayManager):
                     ),
                     pystray.MenuItem(
                         lambda text: (
-                            f"✓ Extended"
+                            "✓ Extended"
                             if self._get_current_mode() == "extended"
                             else "  Extended"
                         ),

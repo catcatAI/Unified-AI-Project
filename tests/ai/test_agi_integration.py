@@ -4,14 +4,10 @@ AGI系统整合测试脚本
 
 import asyncio
 import logging
-import sys
-import os
 from datetime import datetime
 from typing import Dict, List, Any
 
 import pytest
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 logging.basicConfig(
     level=logging.INFO,

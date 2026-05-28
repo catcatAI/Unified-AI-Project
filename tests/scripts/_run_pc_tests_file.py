@@ -1,9 +1,5 @@
 """Isolation tests - writes output to file."""
-import sys, time, importlib.util
-from pathlib import Path
-
-src = r"D:\Projects\Unified-AI-Project\apps\backend\src"
-sys.path.insert(0, src)
+import time, importlib.util
 
 log = []
 

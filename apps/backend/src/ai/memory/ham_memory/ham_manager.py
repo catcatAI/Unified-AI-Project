@@ -85,7 +85,7 @@ class HAMMemoryManager:
         self.query_engine = HAMQueryEngine(self.core_memory_store, self.vector_store_manager.chroma_collection, self.vector_store_manager, self.data_processor)
         self.background_tasks = HAMBackgroundTasks(self.core_memory_store, self.core_storage, self.query_engine, self.fernet, self.next_memory_id)
 
-        logger.info(f"HAMMemoryManager initialized.")
+        logger.info("HAMMemoryManager initialized.")
 
     async def initialize(self):
         """Async initialization for Memory systems."""

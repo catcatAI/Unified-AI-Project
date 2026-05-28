@@ -14,10 +14,6 @@ Test suite for Theta Meta-Cognitive Axis
 
 import pytest
 import math
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from core.autonomous.state_matrix import (
     StateMatrix4D, AllocateDecision, AxisSemanticAnchor, DimensionState

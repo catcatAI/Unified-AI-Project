@@ -10,6 +10,9 @@ import json
 import requests
 import os
 from pathlib import Path
+
+# Project root - auto-detected
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 import logging
 
 logger = logging.getLogger(__name__)
@@ -54,7 +57,7 @@ class AngelaTester:
 
     def test_live2d_model_files(self):
         """Test Live2D model files exist"""
-        model_dir = Path("/home/cat/桌面/Unified-AI-Project/resources/models/miara_pro")
+        model_dir = PROJECT_ROOT / "resources/models/miara_pro"
         assert model_dir.exists()
 
         # Check for required files
@@ -90,8 +93,8 @@ class AngelaTester:
     def test_file_permissions(self):
         """Test critical files have correct permissions"""
         critical_files = [
-            "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/main.js",
-            "/home/cat/桌面/Unified-AI-Project/apps/backend/src/services/main_api_server.py",
+            str(PROJECT_ROOT / "apps/desktop-app/electron_app/main.js"),
+            str(PROJECT_ROOT / "apps/backend/src/services/main_api_server.py"),
         ]
 
         for file_path in critical_files:
@@ -109,9 +112,7 @@ class AngelaTester:
 
     def test_node_dependencies(self):
         """Test Node.js dependencies are installed"""
-        package_json = Path(
-            "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/package.json"
-        )
+        package_json = PROJECT_ROOT / "apps/desktop-app/electron_app/package.json"
         if package_json.exists():
             node_modules = package_json.parent / "node_modules"
             assert node_modules.exists()

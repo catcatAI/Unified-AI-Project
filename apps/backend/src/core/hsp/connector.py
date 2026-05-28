@@ -689,7 +689,7 @@ class HSPConnector:
         self.register_on_fact_callback(callback)
 
         # Subscribe to the fact topic
-        topic = f"hsp/knowledge/facts/#"
+        topic = "hsp/knowledge/facts/#"
         await self.subscribe(topic)
 
     async def subscribe_to_opinions(self, callback: Callable[..., Any]):
@@ -698,7 +698,7 @@ class HSPConnector:
         self.register_on_fact_callback(callback)
 
         # Subscribe to the opinion topic
-        topic = f"hsp/knowledge/opinions/#"
+        topic = "hsp/knowledge/opinions/#"
         await self.subscribe(topic)
 
     def get_connector_status(self) -> Dict[str, Any]:

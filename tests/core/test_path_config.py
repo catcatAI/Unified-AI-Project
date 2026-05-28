@@ -4,12 +4,8 @@
 自动生成的测试模块,用于验证系统功能。
 """
 
-import sys
 import os
 from pathlib import Path
-
-# Add the src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from path_config import (  # noqa: E402
     PROJECT_ROOT,

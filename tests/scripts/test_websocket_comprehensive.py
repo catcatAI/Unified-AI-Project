@@ -3,6 +3,7 @@
 Angela AI WebSocket 全面測試腳本
 """
 
+from pathlib import Path
 import asyncio
 import websockets
 import json
@@ -255,11 +256,11 @@ async def main():
 
     # 保存結果到 JSON 文件
     with open(
-        "/home/cat/桌面/test_websocket_comprehensive_results.json", "w", encoding="utf-8"
+        str(Path.home() / "Desktop" / "test_websocket_comprehensive_results.json"), "w", encoding="utf-8"
     ) as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n詳細結果已保存到: /home/cat/桌面/test_websocket_comprehensive_results.json")
+    print(f"\n詳細結果已保存到: {Path.home() / 'Desktop' / 'test_websocket_comprehensive_results.json'}")
 
 
 if __name__ == "__main__":

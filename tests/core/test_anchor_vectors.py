@@ -1,9 +1,5 @@
 """Test improved semantic anchor vectors"""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from core.allocation.resonance import ResonanceEngine
 from core.state.text_to_vector import text_to_vector

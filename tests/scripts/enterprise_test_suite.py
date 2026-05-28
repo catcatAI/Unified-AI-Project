@@ -6,7 +6,6 @@ Phase 2, 提升测试覆盖率 (>90%后端, >80%前端, >70%桌面)
 
 import asyncio
 import sys
-import os
 import time
 import json
 import traceback
@@ -18,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent()
-sys.path.insert(0, str(project_root))
 
 class EnterpriseTestSuite:
     """企业级测试套件管理器"""

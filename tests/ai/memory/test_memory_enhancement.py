@@ -13,14 +13,9 @@
 """
 
 import asyncio
-import sys
-import os
 import time
 import logging
 from datetime import datetime
-
-# 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from apps.backend.src.ai.memory.memory_template import (
     MemoryTemplate,

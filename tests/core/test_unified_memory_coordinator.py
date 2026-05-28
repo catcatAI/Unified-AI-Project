@@ -1,7 +1,6 @@
 """C1 — UnifiedMemoryCoordinator unit tests"""
 
-import sys, asyncio
-sys.path.insert(0, 'apps/backend/src')
+import asyncio
 
 
 class TestUnifiedMemoryCoordinator:

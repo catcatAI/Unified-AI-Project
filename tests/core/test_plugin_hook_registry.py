@@ -1,7 +1,6 @@
 """C3 — HookRegistry unit tests"""
 
-import sys, asyncio
-sys.path.insert(0, 'apps/backend/src')
+import asyncio
 
 
 class TestHookRegistry:

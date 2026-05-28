@@ -433,10 +433,10 @@ if __name__ == "__main__":
         await asyncio.sleep(15)
 
         # 打印統計
-        logger.info(f"\n=== 記憶整合統計 ===")
+        logger.info("\n=== 記憶整合統計 ===")
         logger.info(json.dumps(integration_loop.get_stats(), indent=2, ensure_ascii=False))
 
-        logger.info(f"\n=== 知識模式 ===")
+        logger.info("\n=== 知識模式 ===")
         logger.info(json.dumps(integration_loop.get_patterns(), indent=2, ensure_ascii=False))
 
         # 停止

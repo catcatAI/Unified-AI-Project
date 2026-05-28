@@ -1,18 +1,11 @@
-import sys
-import os
 import time
 import hmac
 import hashlib
 import json
 import requests
-from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
-
-# 添加項目路徑
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 from system.security_monitor import ABCKeyManager
 

@@ -4,7 +4,6 @@ Angela AI Core Test Suite
 """
 
 import pytest
-import sys
 import os
 from pathlib import Path
 import logging
@@ -13,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 # 添加項目路徑
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 
 class TestAngelaCore:
@@ -45,7 +43,6 @@ class TestAngelaCore:
     def test_security_middleware(self):
         """測試安全中間件"""
         try:
-            sys.path.insert(0, str(project_root / "apps/backend"))
             from src.shared.security_middleware import SignedCommunicationMiddleware
             # 驗證中間件可用
             assert SignedCommunicationMiddleware is not None

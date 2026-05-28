@@ -1,8 +1,6 @@
 """
 Full system audit: comprehensive test of ALL Angela state system capabilities.
 """
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 from core.state.axis_field import AxisFieldRegistry
 from core.state.temporal import TemporalState, SnapshotQuery

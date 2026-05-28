@@ -5,6 +5,7 @@ Angela AI API 端點測試腳本
 """
 
 import requests
+from pathlib import Path
 import json
 import time
 from datetime import datetime
@@ -258,10 +259,10 @@ def run_tests():
     print("=" * 80)
 
     # 保存詳細結果
-    with open("/home/cat/桌面/api_test_results.json", "w", encoding="utf-8") as f:
+    with open(Path.home() / "Desktop" / "api_test_results.json", "w", encoding="utf-8") as f:
         json.dump(test_results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n詳細結果已保存到: /home/cat/桌面/api_test_results.json")
+    print(f"\n詳細結果已保存到: {Path.home() / 'Desktop' / 'api_test_results.json'}")
 
 
 if __name__ == "__main__":

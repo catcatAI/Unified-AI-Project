@@ -14,7 +14,7 @@ import hashlib
 import uuid
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Callable, TypeVar, Generic
+from typing import Any, Optional, Union, Callable, TypeVar, Generic, Dict
 from datetime import datetime
 from functools import wraps
 from contextlib import contextmanager
@@ -67,7 +67,7 @@ def safe_write_file(path: Union[str, Path], content: str, encoding: str = "utf-8
         return False
 
 
-def load_json(path: Union[str, Path]) -> Optional[Dict[str, Any]]:
+def load_json(path: Union[str, Path]) -> Optional[dict[str, Any]]:
     """加载 JSON 文件"""
     content = safe_read_file(path)
     if content:
@@ -78,7 +78,7 @@ def load_json(path: Union[str, Path]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def save_json(path: Union[str, Path], data: Dict[str, Any], indent: int = 2) -> bool:
+def save_json(path: Union[str, Path], data: dict[str, Any], indent: int = 2) -> bool:
     """保存 JSON 文件"""
     try:
         content = json.dumps(data, indent=indent, ensure_ascii=False)
@@ -296,7 +296,7 @@ def async_measure_time(func: Callable) -> Callable:
 
 def cache_result(ttl: float = 60.0) -> Callable:
     """缓存结果装饰器"""
-    cache: Dict[str, tuple] = {}
+    cache: dict[str, tuple] = {}
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -442,11 +442,11 @@ def setup_logger(
 
 async def run_sync(func: Callable, *args, **kwargs) -> Any:
     """在异步上下文中运行同步函数"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, func, *args, **kwargs)
 
 
-async def gather_with_errors(*coroutines) -> List[Any]:
+async def gather_with_errors(*coroutines) -> list[Any]:
     """收集所有协程结果，即使某些失败"""
     results = []
     for coro in asyncio.as_completed(coroutines):
@@ -555,7 +555,7 @@ def get_env_float(key: str, default: float = 0.0) -> float:
     return safe_cast(os.environ.get(key), float, default)
 
 
-def get_env_list(key: str, separator: str = ",", default: Optional[List[str]] = None) -> List[str]:
+def get_env_list(key: str, separator: str = ",", default: Optional[list[str]] = None) -> list[str]:
     """获取列表环境变量"""
     value = os.environ.get(key)
     if value:

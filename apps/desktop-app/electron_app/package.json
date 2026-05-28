@@ -25,6 +25,7 @@
   "dependencies": {
     "@pixi/utils": "^7.3.2",
     "axios": "^1.6.5",
+    "electron-log": "^5.0.0",
     "ws": "^8.16.0"
   },
   "build": {

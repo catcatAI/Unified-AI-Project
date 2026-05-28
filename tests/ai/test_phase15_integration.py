@@ -7,13 +7,7 @@ Phase 15 Integration Tests
 import asyncio
 import logging
 import sys
-import os
 import time
-
-# Add project root to path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-backend_src = os.path.join(project_root, "apps", "backend", "src")
-sys.path.insert(0, backend_src)
 
 from ai.integration.local_cluster_manager import LocalClusterManager, ClusterTask
 from ai.agents.agent_manager import AgentManager

@@ -5,8 +5,6 @@ Final Integration Test — All Refactored Modules
 Author: Angela AI v6.2
 """
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 from core.state.axis_field import AxisFieldRegistry
 from core.state.axis import Axis

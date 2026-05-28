@@ -7,15 +7,11 @@ running the full test suite.
 """
 
 import asyncio
-import sys
-import os
 import logging
+import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-# Add path for imports
-sys.path.insert(0, str(Path(__file__).parent))
 
 from feedback_loop_engine import (
     FeedbackLoopEngine,
@@ -94,7 +90,7 @@ async def main():
 
     # Show metrics
     metrics = engine.get_performance_metrics()
-    logger.info(f"\n[Performance Metrics]")
+    logger.info("\n[Performance Metrics]")
     logger.info(f"   • Average latency: {metrics['average_latency_ms']:.2f}ms")
     logger.info(f"   • Min latency: {metrics['min_latency_ms']:.2f}ms")
     logger.info(f"   • Max latency: {metrics['max_latency_ms']:.2f}ms")
@@ -113,12 +109,12 @@ async def main():
 
     # Verify requirements
     logger.info("\n[Requirements Verification]")
-    logger.info(f"   ✓ Feedback loop engine created and operational")
+    logger.info("   ✓ Feedback loop engine created and operational")
     logger.info(f"   ✓ Multi-layer feedback system working ({len(FeedbackLayer)} layers)")
-    logger.info(f"   ✓ Real-time monitoring active (target: 16ms)")
-    logger.info(f"   ✓ Event processing with priority queue")
-    logger.info(f"   ✓ HSM/CDM integration ready")
-    logger.info(f"   ✓ Closed-loop learning mechanism operational")
+    logger.info("   ✓ Real-time monitoring active (target: 16ms)")
+    logger.info("   ✓ Event processing with priority queue")
+    logger.info("   ✓ HSM/CDM integration ready")
+    logger.info("   ✓ Closed-loop learning mechanism operational")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 """C4+C5 — GlobalStateStore persistence unit tests"""
 
-import sys, asyncio, os
-sys.path.insert(0, 'apps/backend/src')
+import asyncio, os
 
 
 class TestGlobalStateStore:

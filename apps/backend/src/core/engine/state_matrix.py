@@ -1605,7 +1605,7 @@ if __name__ == "__main__":
 
     test_vector = matrix._text_to_vector("被老闆罵了", 32)
     decision = matrix.meta_allocate(test_vector, "boss_criticism")
-    logger.info(f"   Input: '被老闆罵了'")
+    logger.info("   Input: '被老闆罵了'")
     logger.info(f"   θ Decision: {decision.action} | confidence={decision.confidence:.2f}")
     logger.info(f"   Reasoning: {decision.reasoning}")
 

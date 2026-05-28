@@ -10,23 +10,13 @@
 """
 
 import os
-import sys
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
 
-# 添加项目路径
 project_root: str = Path(__file__).parent.parent / "apps" / "backend"
 src_dir = project_root / "src"
-
-# 添加到Python路径
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(src_dir))
-
-print("Python路径:")
-for path in sys.path:
-    print(f"  {path}")
 
 print(f"\n当前工作目录: {os.getcwd()}")
 
@@ -40,7 +30,6 @@ try:
     print("✓ FastAPI导入成功")
 
     # 尝试导入主应用
-    sys.path.insert(0, str(project_root))
     print("✓ 主应用导入成功")
 
     # 简单测试

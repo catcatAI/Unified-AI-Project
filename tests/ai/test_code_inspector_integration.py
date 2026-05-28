@@ -5,8 +5,6 @@ Unit Tests — CodeInspector Integration
 Author: Angela AI v6.2
 """
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 from core.engine.state_matrix_adapter import StateMatrixAdapter
 from ai.code_inspection.code_inspector_integration import (

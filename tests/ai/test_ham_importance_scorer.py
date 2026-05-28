@@ -13,11 +13,6 @@ Test suite for HAM Importance Scorer
 
 import pytest
 import asyncio
-import sys
-from pathlib import Path
-
-# 添加 src 目录到路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
 

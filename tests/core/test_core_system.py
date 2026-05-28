@@ -1,1 +1,13 @@
-"""Smoke test for apps.backend.src.core_system."""import pytestimport sysfrom pathlib import Pathsys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "apps" / "backend" / "src"))def test_core_system_imports():    """Smoke test: apps.backend.src.core_system imports successfully."""    import core_system as core_system    assert core_system is not Noneif __name__ == "__main__":    pytest.main([__file__, '-v'])
+"""Smoke test for apps.backend.src.core_system."""
+
+import pytest
+
+
+def test_core_system_imports():
+    """Smoke test: apps.backend.src.core_system imports successfully."""
+    import core_system
+    assert core_system is not None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

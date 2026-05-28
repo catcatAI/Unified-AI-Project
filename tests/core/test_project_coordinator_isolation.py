@@ -5,12 +5,6 @@ Covers B7/B8/B9/B10/B11 from ANGELA_SYSTEM_AUDIT_v6.2.5.md
 Uses importlib.util to bypass the slow ai.dialogue package import chain.
 """
 import pytest
-import sys
-from pathlib import Path
-
-src = Path(__file__).parent.parent.parent / "apps" / "backend" / "src"
-if str(src) not in sys.path:
-    sys.path.insert(0, str(src))
 
 
 @pytest.fixture(scope="module")

@@ -9,23 +9,11 @@
 测试类型修复是否有效
 """
 
-import sys
-import os
-from pathlib import Path
 import logging
 
 import pytest
 
 logger = logging.getLogger(__name__)
-
-# 添加项目路径
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent.parent.parent
-BACKEND_SRC = PROJECT_ROOT / "apps" / "backend" / "src"
-
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-if str(BACKEND_SRC) not in sys.path:
-    sys.path.insert(0, str(BACKEND_SRC))
 
 # Mocking necessary imports for tests that might not have all dependencies
 try:

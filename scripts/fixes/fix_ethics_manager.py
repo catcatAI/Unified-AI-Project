@@ -1,10 +1,11 @@
+from pathlib import Path
 #!/usr/bin/env python3
 """Script to fix syntax errors in ethics_manager.py"""
 
 import re
 
 # Read the file
-with open('/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/ethics/ethics_manager.py', 'r', encoding='utf-8') as f:
+with open(str(Path.home() / 'Desktop' / 'Unified-AI-Project' / 'apps' / 'backend' / 'src' / 'core' / 'ethics' / 'ethics_manager.py'), 'r', encoding='utf-8') as f:
     content = f.read()
 
 # Add Angela matrix annotation at the beginning
@@ -69,7 +70,7 @@ for pattern, replacement in replacements:
     content = re.sub(pattern, replacement, content)
 
 # Write the fixed content
-with open('/home/cat/桌面/Unified-AI-Project/apps/backend/src/core/ethics/ethics_manager.py', 'w', encoding='utf-8') as f:
+with open(str(Path.home() / 'Desktop' / 'Unified-AI-Project' / 'apps' / 'backend' / 'src' / 'core' / 'ethics' / 'ethics_manager.py'), 'w', encoding='utf-8') as f:
     f.write(content)
 
 print("Fixed ethics_manager.py")

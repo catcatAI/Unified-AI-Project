@@ -67,7 +67,7 @@ def main():
     print("为方法添加错误返回值")
     print("=" * 60)
     
-    base_dir = Path('/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js')
+    base_dir = Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "js"
     
     # 定义需要改进的方法
     files_to_improve = [

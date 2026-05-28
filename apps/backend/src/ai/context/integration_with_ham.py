@@ -158,7 +158,7 @@ class ContextHAMIntegration:
             #     context_content
             # )
 
-            logger.info(f"Created memory context from HAM data with context")
+            logger.info("Created memory context from HAM data with context")
             return "memory_id"  # Placeholder
         except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create memory context from HAM data: {e}", exc_info=True)
@@ -293,7 +293,7 @@ def example_usage():
     #     "metadata": {"source": "ham_integration_example"}
     # })
 
-    logger.info(f"Created memory context: memory_id")
+    logger.info("Created memory context: memory_id")
 
 
 if __name__ == "__main__":

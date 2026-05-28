@@ -2,7 +2,7 @@ import logging
 import json
 import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional, Dict
 from dataclasses import dataclass, asdict
 
 # 可选依赖导入
@@ -44,7 +44,7 @@ def get_utc_now() -> datetime:
         return datetime.now(timezone.utc)
     except (AttributeError, TypeError):
         # 回退到 UTC 偏移量
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
 
 @dataclass
@@ -56,8 +56,8 @@ class OpsInsight:
     severity: str  # low, medium, high, critical
     title: str
     description: str
-    affected_components: List[str]
-    recommendations: List[str]
+    affected_components: list[str]
+    recommendations: list[str]
     confidence: float
     timestamp: datetime
     auto_actionable: bool
@@ -93,15 +93,15 @@ class ComponentHealth:  # Placeholder for actual class
 class IntelligentOpsManager:
     """智能运维管理器"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = config or {}
         self.redis_client: Optional[redis.Redis] = None
         self.ai_ops_engine: Optional[AIOpsEngine] = None
         self.predictive_maintenance: Optional[PredictiveMaintenanceEngine] = None
         self.performance_optimizer: Optional[PerformanceOptimizer] = None
         self.capacity_planner: Optional[CapacityPlanner] = None
-        self.ops_insights: List[OpsInsight] = []  # In-memory storage for insights
-        self.action_history: List[Dict[str, Any]] = []  # In-memory storage for auto actions
+        self.ops_insights: list[OpsInsight] = []  # In-memory storage for insights
+        self.action_history: list[dict[str, Any]] = []  # In-memory storage for auto actions
 
         # 可用性标志
         self.redis_available = REDIS_AVAILABLE
@@ -186,7 +186,7 @@ class IntelligentOpsManager:
             raise
 
     async def collect_system_metrics(
-        self, component_id: str, component_type: str, metrics: Dict[str, float]
+        self, component_id: str, component_type: str, metrics: dict[str, float]
     ):
         """收集系统指标"""
         try:
@@ -230,11 +230,11 @@ class IntelligentOpsManager:
             logger.error(f"收集系统指标失败: {e}", exc_info=True)
 
     async def _generate_comprehensive_insights(
-        self, component_id: str, component_type: str, metrics: Dict[str, float]
+        self, component_id: str, component_type: str, metrics: dict[str, float]
     ):
         """生成综合运维洞察"""
         try:
-            insights: List[OpsInsight] = []
+            insights: list[OpsInsight] = []
 
             # 分析异常
             if self.ai_ops_engine:
@@ -273,10 +273,10 @@ class IntelligentOpsManager:
             logger.error(f"生成综合洞察失败: {e}", exc_info=True)
 
     async def _analyze_anomalies(
-        self, component_id: str, component_type: str, metrics: Dict[str, float]
-    ) -> List[OpsInsight]:
+        self, component_id: str, component_type: str, metrics: dict[str, float]
+    ) -> list[OpsInsight]:
         """分析异常"""
-        insights: List[OpsInsight] = []
+        insights: list[OpsInsight] = []
 
         try:
             if self.ai_ops_engine:
@@ -305,10 +305,10 @@ class IntelligentOpsManager:
         return insights
 
     async def _analyze_performance(
-        self, component_id: str, component_type: str, metrics: Dict[str, float]
-    ) -> List[OpsInsight]:
+        self, component_id: str, component_type: str, metrics: dict[str, float]
+    ) -> list[OpsInsight]:
         """分析性能"""
-        insights: List[OpsInsight] = []
+        insights: list[OpsInsight] = []
 
         try:
             if self.performance_optimizer:
@@ -343,10 +343,10 @@ class IntelligentOpsManager:
         return insights
 
     async def _analyze_capacity(
-        self, component_id: str, component_type: str, metrics: Dict[str, float]
-    ) -> List[OpsInsight]:
+        self, component_id: str, component_type: str, metrics: dict[str, float]
+    ) -> list[OpsInsight]:
         """分析容量"""
-        insights: List[OpsInsight] = []
+        insights: list[OpsInsight] = []
 
         try:
             if self.capacity_planner:
@@ -381,10 +381,10 @@ class IntelligentOpsManager:
         return insights
 
     async def _analyze_maintenance_needs(
-        self, component_id: str, component_type: str, metrics: Dict[str, float]
-    ) -> List[OpsInsight]:
+        self, component_id: str, component_type: str, metrics: dict[str, float]
+    ) -> list[OpsInsight]:
         """分析维护需求"""
-        insights: List[OpsInsight] = []
+        insights: list[OpsInsight] = []
 
         try:
             if self.predictive_maintenance:
@@ -665,7 +665,7 @@ class IntelligentOpsManager:
         except Exception as e:  # broad exception acceptable: insight generation failures should not block the system
             logger.error(f"生成系统级洞察失败: {e}", exc_info=True)
 
-    async def _analyze_system_health(self) -> Dict[str, Any]:
+    async def _analyze_system_health(self) -> dict[str, Any]:
         """分析系统健康状态"""
         try:
             if not self.predictive_maintenance:
@@ -735,9 +735,9 @@ class IntelligentOpsManager:
         except Exception as e:  # broad exception acceptable: trend analysis failures should not block the system
             logger.error(f"分析趋势和模式失败: {e}", exc_info=True)
 
-    def _identify_patterns(self, performance_report: Dict, capacity_report: Dict) -> List[Dict]:
+    def _identify_patterns(self, performance_report: Dict, capacity_report: Dict) -> list[Dict]:
         """识别模式和异常"""
-        patterns: List[Dict] = []
+        patterns: list[Dict] = []
 
         try:
             # 简化的模式识别逻辑
@@ -817,7 +817,7 @@ class IntelligentOpsManager:
 
     async def get_insights(
         self, insight_type: Optional[str] = None, severity: Optional[str] = None, limit: int = 50
-    ) -> List[OpsInsight]:
+    ) -> list[OpsInsight]:
         """获取洞察"""
         try:
             insights = sorted(self.ops_insights, key=lambda x: x.timestamp, reverse=True)[
@@ -836,7 +836,7 @@ class IntelligentOpsManager:
             logger.error(f"获取洞察失败: {e}", exc_info=True)
             return []
 
-    async def get_ops_dashboard_data(self) -> Dict[str, Any]:
+    async def get_ops_dashboard_data(self) -> dict[str, Any]:
         """获取运维仪表板数据"""
         try:
             # 系统健康状态
@@ -873,7 +873,7 @@ class IntelligentOpsManager:
             return {}
 
     async def execute_manual_action(
-        self, insight_id: str, action_type: str, parameters: Dict[str, Any]
+        self, insight_id: str, action_type: str, parameters: dict[str, Any]
     ) -> bool:
         """执行手动操作"""
         try:

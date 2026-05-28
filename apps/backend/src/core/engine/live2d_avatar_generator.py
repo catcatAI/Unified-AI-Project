@@ -1175,19 +1175,19 @@ if __name__ == "__main__":
         logger.info(f"   Quality: {avatar.generation_quality:.2%}")
 
         # Show body mappings
-        logger.info(f"\n3. Body mappings (18 parts):")
+        logger.info("\n3. Body mappings (18 parts):")
         for i, (body_part, mapping) in enumerate(avatar.body_mappings.items(), 1):
             params = mapping.get("parameters", [])
             logger.info(f"   {i:2d}. {body_part}: {len(params)} parameters")
 
         # Show touch response
-        logger.info(f"\n4. Touch response example (pat on head):")
+        logger.info("\n4. Touch response example (pat on head):")
         response = generator.get_touch_response("top_of_head", "pat", 0.7)
         for param, value in response.items():
             logger.info(f"   {param}: {value:.2f}")
 
         # Multi-angle generation
-        logger.info(f"\n5. Multi-angle avatar generation...")
+        logger.info("\n5. Multi-angle avatar generation...")
         multi_avatar = await generator.generate_multi_angle_avatar(
             model_name="angela_multi",
             angles=[ViewAngle.FRONT, ViewAngle.THREE_QUARTER],
@@ -1196,7 +1196,7 @@ if __name__ == "__main__":
         logger.info(f"   Generated {len(multi_avatar.view_angles)} angles")
 
         # Export for Desktop Pet
-        logger.info(f"\n6. Exporting for Desktop Pet...")
+        logger.info("\n6. Exporting for Desktop Pet...")
         export_path = await generator.export_for_desktop_pet(
             avatar, "./demo_models/desktop_pet_export"
         )

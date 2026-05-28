@@ -5,17 +5,11 @@ AlignedBaseAgent - 集成对齐系统的增强版基础代理
 
 import asyncio
 import logging
-import os
-import sys
 import uuid  # Added missing import
-from typing import Any, Dict, List, Callable, Optional
+from typing import Any, Callable, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-# Add the project root to the Python path (if not already added by main_api_server)
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
 
 try:
     from ..ai.agents.base.base_agent import BaseAgent
@@ -51,10 +45,10 @@ class AlignmentContext:
     """对齐上下文数据结构"""
 
     task_id: str
-    user_intent: Dict[str, Any]
-    ethical_constraints: List[str]
-    emotional_context: Dict[str, Any]
-    ontological_context: Dict[str, Any]
+    user_intent: dict[str, Any]
+    ethical_constraints: list[str]
+    emotional_context: dict[str, Any]
+    ontological_context: dict[str, Any]
     alignment_level: AlignmentLevel
     safety_threshold: float = 0.8
 
@@ -74,7 +68,7 @@ class AlignedBaseAgent(BaseAgent):
     def __init__(
         self,
         agent_id: str,
-        capabilities: Optional[List[Dict[str, Any]]] = None,
+        capabilities: Optional[list[dict[str, Any]]] = None,
         agent_name: str = "AlignedBaseAgent",
         alignment_level: AlignmentLevel = AlignmentLevel.STANDARD,
     ) -> None:
@@ -95,8 +89,8 @@ class AlignedBaseAgent(BaseAgent):
         self.adversarial_system: Optional[AdversarialGenerationSystem] = None
 
         # 对齐历史和统计
-        self.alignment_history: List[Dict[str, Any]] = []
-        self.alignment_stats: Dict[str, Any] = {
+        self.alignment_history: list[dict[str, Any]] = []
+        self.alignment_stats: dict[str, Any] = {
             "total_decisions": 0,
             "aligned_decisions": 0,
             "safety_interventions": 0,
@@ -163,7 +157,7 @@ class AlignedBaseAgent(BaseAgent):
             logger.error(f"[{self.agent_id}] 对齐系统完整初始化失败: {e}", exc_info=True)
 
     async def handle_task_request(
-        self, task_payload: Dict[str, Any], sender_ai_id: str, envelope: Any
+        self, task_payload: dict[str, Any], sender_ai_id: str, envelope: Any
     ):
         """
         处理任务请求, 增加对齐检查
@@ -192,7 +186,7 @@ class AlignedBaseAgent(BaseAgent):
         await super().handle_task_request(task_payload, sender_ai_id, envelope)
 
     async def _create_alignment_context(
-        self, task_payload: Dict[str, Any], sender_ai_id: str
+        self, task_payload: dict[str, Any], sender_ai_id: str
     ) -> AlignmentContext:
         """创建对齐上下文"""
         return AlignmentContext(
@@ -206,8 +200,8 @@ class AlignedBaseAgent(BaseAgent):
         )
 
     async def _perform_alignment_check(
-        self, task_payload: Dict[str, Any], context: AlignmentContext
-    ) -> Dict[str, Any]:
+        self, task_payload: dict[str, Any], context: AlignmentContext
+    ) -> dict[str, Any]:
         """执行对齐检查"""
         if not self.alignment_manager:
             return {"is_aligned": True, "modified_payload": task_payload}
@@ -255,7 +249,7 @@ class AlignedBaseAgent(BaseAgent):
             }
 
     async def _send_alignment_rejection(
-        self, task_payload: Dict[str, Any], sender_ai_id: str, alignment_result: Dict[str, Any]
+        self, task_payload: dict[str, Any], sender_ai_id: str, alignment_result: dict[str, Any]
     ):
         """发送对齐拒绝响应"""
         if self.hsp_connector and task_payload.get("callback_address"):
@@ -299,14 +293,14 @@ class AlignedBaseAgent(BaseAgent):
         if self.alignment_manager:
             await self.alignment_manager.disable_adversarial_mode()
 
-    async def run_alignment_self_test(self) -> Dict[str, Any]:
+    async def run_alignment_self_test(self) -> dict[str, Any]:
         """运行对齐系统自检"""
         if not self.adversarial_system:
             return {"error": "对抗性生成系统未初始化"}
 
         try:
             # 创建测试上下文
-            test_context: Dict[str, Any] = {
+            test_context: dict[str, Any] = {
                 "task_id": f"self_test_{uuid.uuid4()}",
                 "test_type": "alignment_self_test",
                 "agent_id": self.agent_id,
@@ -323,7 +317,7 @@ class AlignedBaseAgent(BaseAgent):
             # 记录测试结果
             self.alignment_history.append(
                 {
-                    "timestamp": asyncio.get_event_loop().time(),
+                    "timestamp": asyncio.get_running_loop().time(),
                     "type": "self_test",
                     "results": test_results,
                 }
@@ -335,7 +329,7 @@ class AlignedBaseAgent(BaseAgent):
             logger.error(f"[{self.agent_id}] 对齐自检失败: {e}", exc_info=True)
             return {"error": str(e)}
 
-    async def get_alignment_status(self) -> Dict[str, Any]:
+    async def get_alignment_status(self) -> dict[str, Any]:
         """获取对齐系统状态"""
         return {
             "agent_id": self.agent_id,
@@ -354,7 +348,7 @@ class AlignedBaseAgent(BaseAgent):
             },
         }
 
-    async def update_alignment_parameters(self, parameters: Dict[str, Any]):
+    async def update_alignment_parameters(self, parameters: dict[str, Any]):
         """更新对齐参数"""
         if "safety_threshold" in parameters:
             self.safety_threshold = parameters["safety_threshold"]
@@ -368,8 +362,8 @@ class AlignedBaseAgent(BaseAgent):
         logger.info(f"[{self.agent_id}] 对齐参数已更新: {parameters}")
 
     async def perform_ethical_analysis(
-        self, action: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, action: dict[str, Any], context: dict[str, Any]
+    ) -> dict[str, Any]:
         """执行伦理分析"""
         if not self.reasoning_system:
             return {"error": "推理系统未初始化"}
@@ -383,7 +377,7 @@ class AlignedBaseAgent(BaseAgent):
             # 记录分析结果
             self.alignment_history.append(
                 {
-                    "timestamp": asyncio.get_event_loop().time(),
+                    "timestamp": asyncio.get_running_loop().time(),
                     "type": "ethical_analysis",
                     "action": action,
                     "assessment": ethical_assessment,
@@ -396,7 +390,7 @@ class AlignedBaseAgent(BaseAgent):
             logger.error(f"[{self.agent_id}] 伦理分析失败: {e}", exc_info=True)
             return {"error": str(e)}
 
-    async def align_with_human_values(self, human_feedback: Dict[str, Any]) -> Dict[str, Any]:
+    async def align_with_human_values(self, human_feedback: dict[str, Any]) -> dict[str, Any]:
         """根据人类反馈调整对齐"""
         if not self.alignment_manager:
             return {"error": "对齐管理器未初始化"}
@@ -408,7 +402,7 @@ class AlignedBaseAgent(BaseAgent):
             # 更新对齐历史
             self.alignment_history.append(
                 {
-                    "timestamp": asyncio.get_event_loop().time(),
+                    "timestamp": asyncio.get_running_loop().time(),
                     "type": "human_feedback",
                     "feedback": human_feedback,
                     "update": alignment_update,

@@ -3,8 +3,6 @@
 智能測試運行器
 """
 
-import os
-import sys
 import subprocess
 import re
 from pathlib import Path
@@ -18,10 +16,7 @@ SRC_DIR = PROJECT_ROOT / "src"
 
 def setup_environment():
     """设置环境"""
-    if str(PROJECT_ROOT) not in sys.path:
-        sys.path.insert(0, str(PROJECT_ROOT))
-    if str(SRC_DIR) not in sys.path:
-        sys.path.insert(0, str(SRC_DIR))
+    pass
 
 
 def detect_test_errors(stderr_output: str, stdout_output: str) -> list:

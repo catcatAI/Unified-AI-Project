@@ -1,10 +1,5 @@
 """Verify all agents can be imported."""
 
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
-
 
 def test_all_agents():
     """Test that we can import all agent classes."""

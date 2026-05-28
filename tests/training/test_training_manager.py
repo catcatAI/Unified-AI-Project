@@ -1,9 +1,5 @@
 """Smoke test for apps.backend.src.training_manager."""
 import pytest
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 def test_training_manager_imports():
     """Smoke test: apps.backend.src.training_manager imports successfully."""

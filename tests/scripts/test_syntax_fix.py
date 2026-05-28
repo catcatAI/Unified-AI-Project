@@ -4,12 +4,7 @@
 自动生成的测试模块,用于验证系统功能。
 """
 
-import sys
-import os
 from unittest.mock import patch
-
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def test_basic_assertion():

@@ -721,7 +721,7 @@ if __name__ == "__main__":
             growth_stage="mature", mood="confident", maturity_level=0.8
         )
         logger.info(f"  进化后ID: {evolved.avatar_id}")
-        logger.info(f"  成熟度: 80%")
+        logger.info("  成熟度: 80%")
         logger.info(f"  表情: {evolved.attributes.expression}")
 
         # Mood adaptation

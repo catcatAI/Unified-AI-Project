@@ -8,7 +8,7 @@ import logging
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, Callable, Dict, Any, Awaitable, List
+from typing import Optional, Callable, Any, Awaitable
 from unittest.mock import Mock
 
 
@@ -94,7 +94,7 @@ class MCPConnector:
         mqtt_broker_address: str = "localhost",
         mqtt_broker_port: int = 1883,
         enable_fallback: bool = True,
-        fallback_config: Optional[Dict[str, Any]] = None,
+        fallback_config: Optional[dict[str, Any]] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
         self.ai_id = ai_id
@@ -103,7 +103,7 @@ class MCPConnector:
         self.broker_port = mqtt_broker_port
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
-        self.command_handlers: Dict[str, Callable[..., Awaitable[Any]]] = {}
+        self.command_handlers: dict[str, Callable[..., Awaitable[Any]]] = {}
 
         self.enable_fallback = enable_fallback
         self.fallback_config = fallback_config or {}
@@ -112,7 +112,7 @@ class MCPConnector:
         self.mcp_available = False
         self.is_connected = False
         self.logger = logging.getLogger(__name__)
-        self.loop = loop if loop else asyncio.get_event_loop()
+        self.loop = loop if loop else asyncio.new_event_loop()
 
     async def connect(self):
         self.logger.info(
@@ -144,7 +144,7 @@ class MCPConnector:
             self.logger.info("MCPConnector connected successfully.")
             self.is_connected = True
             self.mcp_available = True
-            client.subscribe(f"mcp/broadcast")
+            client.subscribe("mcp/broadcast")
             client.subscribe(f"mcp/unicast/{self.ai_id}")
         else:
             logger.warning(f"MCPConnector failed to connect, return code {rc}", exc_info=True)
@@ -173,7 +173,7 @@ class MCPConnector:
             project_error_handler(ProjectError(f"Error processing MCP message: {e}", code=500))
 
     async def send_command(
-        self, target_id: str, command_name: str, parameters: Dict[str, Any]
+        self, target_id: str, command_name: str, parameters: dict[str, Any]
     ) -> str:
         request_id = str(uuid.uuid4())
         if self.mcp_available and self.is_connected:
@@ -237,7 +237,7 @@ class MCPConnector:
             self.fallback_initialized = False
 
     async def _send_via_fallback(
-        self, target_id: str, command_name: str, parameters: Dict[str, Any], request_id: str
+        self, target_id: str, command_name: str, parameters: dict[str, Any], request_id: str
     ):
         if not self.fallback_manager:
             return False
@@ -267,8 +267,8 @@ class MCPConnector:
         if self.fallback_manager:
             self.fallback_manager.register_command_handler(command_name, handler)
 
-    def get_communication_status(self) -> Dict[str, Any]:
-        status: Dict[str, Any] = {
+    def get_communication_status(self) -> dict[str, Any]:
+        status: dict[str, Any] = {
             "mcp_available": self.mcp_available,
             "is_connected": self.is_connected,
             "fallback_enabled": self.enable_fallback,
@@ -279,8 +279,8 @@ class MCPConnector:
             status["fallback_status"] = fallback_status
         return status
 
-    async def health_check(self) -> Dict[str, Any]:
-        health: Dict[str, Any] = {
+    async def health_check(self) -> dict[str, Any]:
+        health: dict[str, Any] = {
             "mcp_healthy": False,
             "fallback_healthy": False,
             "overall_healthy": False,

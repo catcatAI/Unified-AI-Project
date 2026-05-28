@@ -1,7 +1,5 @@
 """C4 — ServiceRegistry unit tests"""
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 
 class TestServiceRegistry:

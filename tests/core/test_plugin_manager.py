@@ -1,7 +1,5 @@
 """C3 — PluginManager unit tests"""
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 
 class TestPluginManager:

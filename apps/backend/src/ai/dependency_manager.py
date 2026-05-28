@@ -6,11 +6,10 @@ dependencies are not available in the current environment.
 
 import asyncio
 import logging
-import os
-import sys
 import time
 import importlib
 import random  # Added missing import
+import os
 import yaml
 import psutil  # Added missing import
 from dataclasses import dataclass, field
@@ -18,9 +17,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-sys.path.insert(0, project_root)
 
 from core.hsp.types import HSPCapabilityAdvertisementPayload
 from core.hsp.connector import HSPConnector

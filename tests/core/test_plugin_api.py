@@ -1,7 +1,6 @@
 """C4+C3 — Plugin API endpoint integration tests"""
 
-import sys, os, json, asyncio, shutil, tempfile
-sys.path.insert(0, 'apps/backend/src')
+import os, json, asyncio, shutil, tempfile
 
 from fastapi.testclient import TestClient
 

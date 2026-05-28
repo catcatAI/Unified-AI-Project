@@ -10,45 +10,23 @@ const {
   Tray,
   nativeImage,
   protocol,
+  dialog,
 } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const log = require('electron-log')
 const securityManager = require('./js/security-manager')
 const TrayManager = require('./js/tray-manager')
 const WebSocket = require('./js/websocket-wrapper')
 
-// Define a log file path
-const LOG_FILE = path.join(__dirname, '..', '..', 'logs', 'electron_frontend_main.log')
-// Ensure the log directory exists
-const logDirPath = path.dirname(LOG_FILE)
-if (!fs.existsSync(logDirPath)) {
-  fs.mkdirSync(logDirPath, { recursive: true })
-}
-
 const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json')
-
-const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' })
-
-// Redirect console.log and console.error to the log file
-const originalConsoleLog = console.log
-const originalConsoleError = console.error
-
-console.log = (...args) => {
-  originalConsoleLog(...args)
-  logStream.write(`[LOG] ${new Date().toISOString()} ${args.join(' ')}\n`)
-}
-
-console.error = (...args) => {
-  originalConsoleError(...args)
-  logStream.write(`[ERROR] ${new Date().toISOString()} ${args.join(' ')}\n`)
-}
 
 // Global error handler for EPIPE (prevents crashes when writing to closed pipes)
 process.on('uncaughtException', (err) => {
   if (err.code === 'EPIPE' || err.code === 'ECONNRESET') {
-    console.warn('[Main] Ignored pipe error (renderer closed):', err.code)
+    log.warn('[Main] Ignored pipe error (renderer closed):', err.code)
   } else {
-    console.error('[Main] Uncaught Exception:', err)
+    log.error('[Main] Uncaught Exception:', err)
   }
 })
 
@@ -59,7 +37,7 @@ const LIVE2D_VERSION = '5.0.0'
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
-  console.log('[Main] Another instance is already running. Quitting...')
+  log.info('[Main] Another instance is already running. Quitting...')
   app.quit()
   process.exit(0)
 }
@@ -87,7 +65,7 @@ function sendToMainWindow(channel, data) {
       mainWindow.webContents.send(channel, data)
       return true
     } catch (e) {
-      console.warn(`[Main] Failed to send ${channel}:`, e.message)
+      log.warn(`[Main] Failed to send ${channel}:`, e.message)
       return false
     }
   }
@@ -101,7 +79,7 @@ function safeMainWindowCall(callback) {
       callback(mainWindow)
       return true
     } catch (e) {
-      console.warn('[Main] Failed to call method on mainWindow:', e.message)
+      log.warn('[Main] Failed to call method on mainWindow:', e.message)
       return false
     }
   }
@@ -116,7 +94,7 @@ function loadSettings() {
       return JSON.parse(data)
     }
   } catch (e) {
-    console.error('[Main] Failed to load settings:', e)
+    log.error('[Main] Failed to load settings:', e)
   }
   return {} // Default empty settings
 }
@@ -126,7 +104,7 @@ function saveSettings(settings) {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8')
     return true
   } catch (e) {
-    console.error('[Main] Failed to save settings:', e)
+    log.error('[Main] Failed to save settings:', e)
     return false
   }
 }
@@ -136,7 +114,7 @@ let globalSettings = loadSettings()
 
 // When a second instance tries to start, focus the existing window
 app.on('second-instance', (event, commandLine, workingDirectory) => {
-  console.log('[Main] Second instance detected, focusing existing window')
+  log.info('[Main] Second instance detected, focusing existing window')
 
   // FIX: Check if mainWindow exists and is valid before accessing
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -174,7 +152,7 @@ app.whenReady().then(async () => {
   ]
 
   protocol.registerFileProtocol('local', (request, callback) => {
-    console.log('[Main] Local protocol request:', request.url)
+    log.info('[Main] Local protocol request:', request.url)
 
     let urlPath = request.url
 
@@ -183,12 +161,12 @@ app.whenReady().then(async () => {
     try {
       urlPath = decodeURIComponent(urlPath)
     } catch (e) {
-      console.warn('[Main] Failed to decode URL:', urlPath)
+      log.warn('[Main] Failed to decode URL:', urlPath)
       callback({ error: -2 }) // Failed to decode
       return
     }
 
-    console.log('[Main] Decoded URL:', urlPath)
+    log.info('[Main] Decoded URL:', urlPath)
 
     // Handle local://, local:///, local://// etc. formats (variable slashes)
     // After decoding, we need to remove the 'local:' prefix and any leading slashes
@@ -213,7 +191,7 @@ app.whenReady().then(async () => {
     const normalizedPath = path.normalize(urlPath)
     const filePath = path.resolve(appDir, normalizedPath)
 
-    console.log('[Main] Local protocol resolved:', urlPath, '->', filePath)
+    log.info('[Main] Local protocol resolved:', urlPath, '->', filePath)
 
     // SECURITY: Verify path is within allowed directories
     const isAllowed = ALLOWED_DIRECTORIES.some((allowedDir) => {
@@ -223,8 +201,8 @@ app.whenReady().then(async () => {
     })
 
     if (!isAllowed) {
-      console.error('[Main] Path traversal attempt blocked:', filePath)
-      console.error('[Main] Requested path is outside allowed directories')
+      log.error('[Main] Path traversal attempt blocked:', filePath)
+      log.error('[Main] Requested path is outside allowed directories')
       callback({ error: -3 }) // Access denied
       return
     }
@@ -233,30 +211,30 @@ app.whenReady().then(async () => {
     if (require('fs').existsSync(filePath)) {
       callback({ path: filePath })
     } else {
-      console.error('[Main] File not found:', filePath)
+      log.error('[Main] File not found:', filePath)
 
       // Try alternative path resolution for Chinese characters
       // If the path contains Chinese characters that weren't decoded properly
       if (urlPath.includes('%')) {
-        console.warn('[Main] Trying alternative decode for remaining encoded characters...')
+        log.warn('[Main] Trying alternative decode for remaining encoded characters...')
         try {
           const altPath = decodeURIComponent(urlPath)
           const altFilePath = require('path').resolve(require('path').normalize(altPath))
-          console.warn('[Main] Alternative path:', altFilePath)
+          log.warn('[Main] Alternative path:', altFilePath)
 
           if (require('fs').existsSync(altFilePath)) {
             callback({ path: altFilePath })
             return
           }
         } catch (e2) {
-          console.warn('[Main] Alternative decode failed:', e2)
+          log.warn('[Main] Alternative decode failed:', e2)
         }
       }
 
       callback({ error: -6 }) // FILE_NOT_FOUND
     }
   })
-  console.log('[Main] Local file protocol registered')
+  log.info('[Main] Local file protocol registered')
 
   // Initialize security manager (Key C sync)
   const userDataPath = app.getPath('userData')
@@ -279,7 +257,7 @@ app.whenReady().then(async () => {
   // Auto-connect to backend WebSocket - DISABLED to avoid conflicts
   // Renderer process uses IPC bridge for WebSocket communication
   // const wsUrl = `ws://${backendIP}:8000/ws`
-  // console.log(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`)
+  // log.info(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`)
   // setTimeout(() => connectWebSocket(wsUrl), 0)
 
   app.on('activate', () => {
@@ -346,7 +324,7 @@ function createMainWindow() {
       webSecurity: true,
       // Force enable remote debugging for easier Playwright connection
       // This will ensure a CDP URL is available.
-      additionalArguments: ['--remote-debugging-port=9222'],
+      additionalArguments: process.argv.includes('--debug') ? ['--remote-debugging-port=9222'] : [],
       // Enable WebGL 2.0 and hardware acceleration
       webgl: true,
       enableWebGL2: true,
@@ -356,7 +334,7 @@ function createMainWindow() {
     },
   })
 
-  console.log('[Window] Creating window with bounds:', mainWindow.getBounds())
+  log.info('[Window] Creating window with bounds:', mainWindow.getBounds())
 
   // Set minimum size
   mainWindow.setMinimumSize(200, 300)
@@ -366,12 +344,12 @@ function createMainWindow() {
 
   // Load the app - use __dirname to resolve relative to electron_app directory
   const indexPath = path.join(__dirname, 'index.html')
-  console.log('[Window] Loading index.html from:', indexPath)
+  log.info('[Window] Loading index.html from:', indexPath)
   mainWindow.loadFile(indexPath)
 
   // Log when page is loaded
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('[Window] Page loaded successfully')
+    log.info('[Window] Page loaded successfully')
   })
 
   // Add right-click context menu for main window
@@ -380,7 +358,7 @@ function createMainWindow() {
 
     // Safety check
     if (!mainWindow || mainWindow.isDestroyed()) {
-      console.warn('[ContextMenu] mainWindow is null or destroyed')
+      log.warn('[ContextMenu] mainWindow is null or destroyed')
       return
     }
 
@@ -556,32 +534,34 @@ function createMainWindow() {
 
       contextMenu.popup(mainWindow)
     } catch (error) {
-      console.error('[ContextMenu] Error showing context menu:', error.message)
+      log.error('[ContextMenu] Error showing context menu:', error.message)
     }
   })
 
   // Log any page load errors
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-    console.error('[Window] Page load failed:', errorCode, errorDescription)
+    log.error('[Window] Page load failed:', errorCode, errorDescription)
   })
 
   // Log console messages from renderer
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
     // Skip if window is destroyed to avoid EPIPE error
     if (mainWindow.isDestroyed()) return
-    console.log(`[Renderer] ${message}`)
+    log.info(`[Renderer] ${message}`)
   })
 
   // Wait for ready-to-show before showing
   mainWindow.on('ready-to-show', () => {
-    console.log('[Window] Window ready to show, showing now...')
+    log.info('[Window] Window ready to show, showing now...')
     mainWindow.show()
     mainWindow.setAlwaysOnTop(true)
     mainWindow.focus()
-    console.log('[Window] Window shown with bounds:', mainWindow.getBounds())
+    log.info('[Window] Window shown with bounds:', mainWindow.getBounds())
 
-    // Open DevTools for debugging
-    mainWindow.webContents.openDevTools()
+    // Open DevTools for debugging (only in dev/unpacked mode)
+    if (!app.isPackaged) {
+      mainWindow.webContents.openDevTools()
+    }
 
     sendToMainWindow('window-ready', {
       bounds: safeMainWindowCall((w) => w.getBounds()) || mainWindow.getBounds(),
@@ -592,7 +572,7 @@ function createMainWindow() {
   // Handle window position saving
   mainWindow.on('moved', () => {
     const bounds = mainWindow.getBounds()
-    console.log('[Window] Window moved to:', bounds)
+    log.info('[Window] Window moved to:', bounds)
     saveWindowPosition(bounds)
   })
 
@@ -634,9 +614,9 @@ function createTray() {
     })
 
     // Additional menu items can be added via trayManager.updateMenu() if needed
-    console.log('[Main] TrayManager integrated and initialized')
+    log.info('[Main] TrayManager integrated and initialized')
   } else {
-    console.error('[Main] Failed to initialize TrayManager')
+    log.error('[Main] Failed to initialize TrayManager')
   }
 }
 
@@ -830,7 +810,7 @@ X-GNOME-Autostart-enabled=true
         }
         fs.writeFileSync(autostartFile, desktopEntry)
       } catch (e) {
-        console.error('Failed to create autostart file:', e)
+        log.error('Failed to create autostart file:', e)
       }
     } else {
       // Remove autostart file
@@ -839,7 +819,7 @@ X-GNOME-Autostart-enabled=true
           fs.unlinkSync(autostartFile)
         }
       } catch (e) {
-        console.error('Failed to remove autostart file:', e)
+        log.error('Failed to remove autostart file:', e)
       }
     }
   }
@@ -1034,16 +1014,16 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
         skipRegions: skipRegions,
       })
 
-      console.log('[Main] Click-through regions set:', skipRegions.length, 'regions')
+      log.info('[Main] Click-through regions set:', skipRegions.length, 'regions')
     } else {
       mainWindow.setIgnoreMouseEvents(false)
-      console.log('[Main] Click-through disabled')
+      log.info('[Main] Click-through disabled')
     }
 
     // Send regions to renderer for hit testing
     sendToMainWindow('click-through-regions-updated', regions)
   } catch (error) {
-    console.error('[Main] Failed to set click-through regions:', error)
+    log.error('[Main] Failed to set click-through regions:', error)
     // Restore default behavior on failure
     mainWindow.setIgnoreMouseEvents(false)
   }
@@ -1122,29 +1102,29 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
     }
 
     if (fs.existsSync(fullPath)) {
-      console.log(`[Main] Loading Live2D model from: ${fullPath}`)
+      log.info(`[Main] Loading Live2D model from: ${fullPath}`)
 
       // Convert file path to file URL for renderer
       const fileUrl = `file://${fullPath}`
-      console.log(`[Main] Converting to URL: ${fileUrl}`)
+      log.info(`[Main] Converting to URL: ${fileUrl}`)
 
       return { success: true, path: fullPath, url: fileUrl }
     }
 
-    console.warn(`[Main] Model path not found: ${fullPath}`)
+    log.warn(`[Main] Model path not found: ${fullPath}`)
     return { success: false, error: 'Model file not found' }
   } catch (error) {
-    console.error(`[Main] Error loading Live2D model: ${error.message}`)
+    log.error(`[Main] Error loading Live2D model: ${error.message}`)
     return { success: false, error: error.message }
   }
 })
 
 ipcMain.handle('live2d-get-models', () => {
   const modelsDir = path.join(__dirname, '..', '..', '..', 'resources', 'models')
-  console.log(`[Main] Searching for models in: ${modelsDir}`)
+  log.info(`[Main] Searching for models in: ${modelsDir}`)
 
   if (!fs.existsSync(modelsDir)) {
-    console.warn(`[Main] Models directory not found: ${modelsDir}`)
+    log.warn(`[Main] Models directory not found: ${modelsDir}`)
     return []
   }
 
@@ -1200,7 +1180,7 @@ ipcMain.handle('live2d-get-models', () => {
 
       if (result) {
         const relativePath = path.join('resources', 'models', dirent.name, result.foundPath)
-        console.log(`[Main] Found model: ${dirent.name}, relative path: ${relativePath}`)
+        log.info(`[Main] Found model: ${dirent.name}, relative path: ${relativePath}`)
 
         return {
           name: dirent.name,
@@ -1217,7 +1197,7 @@ ipcMain.handle('live2d-get-models', () => {
     })
     .filter((m) => m.path.endsWith('.model3.json'))
 
-  console.log(`[Main] Found ${models.length} models`)
+  log.info(`[Main] Found ${models.length} models`)
   return models
 })
 
@@ -1351,22 +1331,12 @@ ipcMain.handle('haptic-get-devices', async () => {
 
 // File operations
 ipcMain.handle('file-save-dialog', async (event, options) => {
-  const result = await mainWindow.webContents.executeJavaScript(`
-    new Promise((resolve) => {
-      const { dialog } = require('electron').remote;
-      dialog.showSaveDialog(mainWindow, ${JSON.stringify(options)}).then(resolve);
-    });
-  `)
+  const result = await dialog.showSaveDialog(mainWindow, options)
   return result
 })
 
 ipcMain.handle('file-open-dialog', async (event, options) => {
-  const result = await mainWindow.webContents.executeJavaScript(`
-    new Promise((resolve) => {
-      const { dialog } = require('electron').remote;
-      dialog.showOpenDialog(mainWindow, ${JSON.stringify(options)}).then(resolve);
-    });
-  `)
+  const result = await dialog.showOpenDialog(mainWindow, options)
   return result
 })
 
@@ -1380,22 +1350,22 @@ const WS_MAX_RECONNECT_ATTEMPTS = 5
 const WS_RECONNECT_DELAY = 3000
 
 function connectWebSocket(url, sessionInfo) {
-  console.log('[Main] connectWebSocket() called with:', url, 'session:', sessionInfo)
+  log.info('[Main] connectWebSocket() called with:', url, 'session:', sessionInfo)
   
   // Store session info for potential reconnect
   wsSessionInfo = sessionInfo || { sessionId: null, clientType: 'desktop', clientVersion: '6.2.1' }
   
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
-    console.log('[WebSocket] Already connected, skipping')
+    log.info('[WebSocket] Already connected, skipping')
     return
   }
 
   try {
-    console.log(`[Main] Creating new WebSocket connection to: ${url}`)
+    log.info(`[Main] Creating new WebSocket connection to: ${url}`)
     wsClient = new WebSocket(url)
 
     wsClient.on('open', () => {
-      console.log('[WebSocket] Connected successfully')
+      log.info('[WebSocket] Connected successfully')
       wsReconnectAttempts = 0
 
       // Send handshake with session info
@@ -1406,7 +1376,7 @@ function connectWebSocket(url, sessionInfo) {
         client_version: wsSessionInfo?.clientVersion || '6.2.1',
         timestamp: new Date().toISOString()
       }
-      console.log('[WebSocket] Sending handshake:', handshake)
+      log.info('[WebSocket] Sending handshake:', handshake)
       wsClient.send(JSON.stringify(handshake))
       
       // NOTE: Don't mark connected immediately. Wait for 'connected' message from backend.
@@ -1418,11 +1388,11 @@ function connectWebSocket(url, sessionInfo) {
 
       try {
         const message = JSON.parse(data.toString())
-        console.log('[WebSocket] Received:', message)
+        log.info('[WebSocket] Received:', message)
         
         // Handle 'connected' message - this is the session confirmation
         if (message.type === 'connected') {
-          console.log('[WebSocket] Session confirmed - client_id:', message.client_id, 'session_id:', message.session_id)
+          log.info('[WebSocket] Session confirmed - client_id:', message.client_id, 'session_id:', message.session_id)
           
           // Start heartbeat now
           if (wsHeartbeatInterval) clearInterval(wsHeartbeatInterval)
@@ -1437,19 +1407,19 @@ function connectWebSocket(url, sessionInfo) {
         } else {
           // Debug: log chat_response for tracing
           if (message.type === 'chat_response') {
-            console.log('[WebSocket] >>> chat_response received from backend, forwarding to renderer')
-            console.log('[WebSocket] >>> chat_response data:', JSON.stringify(message.data || {}).substring(0, 200))
+            log.info('[WebSocket] >>> chat_response received from backend, forwarding to renderer')
+            log.info('[WebSocket] >>> chat_response data:', JSON.stringify(message.data || {}).substring(0, 200))
           }
           // Forward other messages to renderer
           sendToMainWindow('websocket-message', message)
         }
       } catch (error) {
-        console.error('[WebSocket] Failed to parse message:', error)
+        log.error('[WebSocket] Failed to parse message:', error)
       }
     })
 
 wsClient.on('error', (error) => {
-      console.error(`[WebSocket] Error: ${error.message}`)
+      log.error(`[WebSocket] Error: ${error.message}`)
       
       // Clear reconnection state on error
       if (wsReconnectTimer) {
@@ -1472,7 +1442,7 @@ wsClient.on('error', (error) => {
     })
 
     wsClient.on('close', (code, reason) => {
-      console.log(`[WebSocket] Closed: ${code} - ${reason}`)
+      log.info(`[WebSocket] Closed: ${code} - ${reason}`)
       const oldClient = wsClient
       wsClient = null
 
@@ -1497,7 +1467,7 @@ wsClient.on('error', (error) => {
       // If renderer wants to reconnect, it will call websocket-connect IPC.
     })
   } catch (error) {
-    console.error('[WebSocket] Connection failed:', error)
+    log.error('[WebSocket] Connection failed:', error)
     sendToMainWindow('websocket-error', { error: error.message })
   }
 }
@@ -1523,22 +1493,22 @@ function disconnectWebSocket() {
 
 function sendWebSocketMessage(message) {
   if (!wsClient || wsClient.readyState !== WebSocket.OPEN) {
-    console.error('[WebSocket] Not connected')
+    log.error('[WebSocket] Not connected')
     return false
   }
 
   try {
     wsClient.send(JSON.stringify(message))
-    console.log('[Main] WebSocket send SUCCESS:', message.type || 'unknown')
+    log.info('[Main] WebSocket send SUCCESS:', message.type || 'unknown')
     return true
   } catch (error) {
-    console.error('[WebSocket] Failed to send message:', error)
+    log.error('[WebSocket] Failed to send message:', error)
     return false
   }
 }
 
 ipcMain.on('websocket-connect', (event, { url, sessionInfo }) => {
-  console.log('[Main] IPC: websocket-connect received, session:', sessionInfo)
+  log.info('[Main] IPC: websocket-connect received, session:', sessionInfo)
   connectWebSocket(url, sessionInfo)
 })
 
@@ -1617,9 +1587,9 @@ function startPluginWatcher() {
         sendToMainWindow('plugins-changed', { name, event: eventType === 'rename' ? 'rename' : 'change' })
       }, 500)
     })
-    console.log('[PluginWatcher] Started watching:', pluginDir)
+    log.info('[PluginWatcher] Started watching:', pluginDir)
   } catch (e) {
-    console.error('[PluginWatcher] Failed to start:', e)
+    log.error('[PluginWatcher] Failed to start:', e)
   }
 }
 

@@ -1,14 +1,8 @@
 """
 Verification test for Potential Field Spatial Gravity
 """
-import sys
 import math
-from pathlib import Path
 from typing import Dict, Any, Tuple
-
-# Add project root (apps/backend) to sys.path
-project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 from core.engine.state_matrix import StateMatrix4D
 from core.engine.cognitive_operations import PotentialFieldEngine

@@ -20,7 +20,7 @@ Date: 2026-02-02
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any, Set, TYPE_CHECKING
+from typing import Optional, Callable, Any, TYPE_CHECKING
 from datetime import datetime, timedelta
 import asyncio
 import uuid
@@ -114,17 +114,17 @@ class Action:
     category: ActionCategory
     priority: ActionPriority
     function: Callable[..., Any]
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
     status: ActionStatus = ActionStatus.PENDING
     created_at: datetime = field(default_factory=datetime.now)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     result: Optional[ActionResult] = None
-    dependencies: Set[str] = field(default_factory=set)
+    dependencies: set[str] = field(default_factory=set)
     timeout: float = 30.0  # seconds
     retry_count: int = 0
     max_retries: int = 3
-    safety_checks: List[str] = field(default_factory=list)  # Names of required checks
+    safety_checks: list[str] = field(default_factory=list)  # Names of required checks
 
     @classmethod
     def create(
@@ -133,7 +133,7 @@ class Action:
         category: ActionCategory,
         priority: ActionPriority,
         function: Callable[..., Any],
-        parameters: Optional[Dict[str, Any]] = None,
+        parameters: Optional[dict[str, Any]] = None,
         timeout: float = 30.0,
         max_retries: int = 3,
     ) -> Action:
@@ -159,10 +159,10 @@ class ActionQueue:
 
     def __init__(self, max_size: int = 1000):
         self.max_size = max_size
-        self._queue: List[Action] = []
-        self._completed: List[Action] = []
-        self._failed: List[Action] = []
-        self._action_map: Dict[str, Action] = {}
+        self._queue: list[Action] = []
+        self._completed: list[Action] = []
+        self._failed: list[Action] = []
+        self._action_map: dict[str, Action] = {}
 
     def enqueue(self, action: Action) -> bool:
         """Add action to queue"""
@@ -210,7 +210,7 @@ class ActionQueue:
         """Get action by ID"""
         return self._action_map.get(action_id)
 
-    def get_queue_status(self) -> Dict[str, int]:
+    def get_queue_status(self) -> dict[str, int]:
         """Get queue statistics"""
         return {
             "pending": len([a for a in self._queue if a.status == ActionStatus.PENDING]),
@@ -252,16 +252,16 @@ class ActionExecutor:
         >>> print(f"Success: {result.success}")
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = config or {}
 
         # Queue management
         self.queue = ActionQueue(max_size=self.config.get("max_queue_size", 1000))
-        self.active_actions: Dict[str, Action] = {}
+        self.active_actions: dict[str, Action] = {}
         self.max_concurrent = self.config.get("max_concurrent_actions", 5)
 
         # Safety system
-        self.safety_checks: Dict[str, SafetyCheck] = {}
+        self.safety_checks: dict[str, SafetyCheck] = {}
         self._register_default_safety_checks()
 
         # Execution control
@@ -273,9 +273,9 @@ class ActionExecutor:
         self.kinetic_validator = KineticValidator(self.config.get("kinetic", {}))
 
         # Callbacks
-        self._pre_execution_callbacks: List[Callable[[Action], None]] = []
-        self._post_execution_callbacks: List[Callable[[Action, ActionResult], None]] = []
-        self._status_change_callbacks: Dict[str, List[Callable[[ActionStatus], None]]] = {}
+        self._pre_execution_callbacks: list[Callable[[Action], None]] = []
+        self._post_execution_callbacks: list[Callable[[Action, ActionResult], None]] = []
+        self._status_change_callbacks: dict[str, list[Callable[[ActionStatus], None]]] = {}
 
         # Statistics
         self.execution_stats = {
@@ -389,7 +389,7 @@ class ActionExecutor:
             action.status = ActionStatus.EXECUTING
             self._notify_status_change(action)
 
-            start_time = asyncio.get_event_loop().time()
+            start_time = asyncio.get_running_loop().time()
 
             try:
                 # Get success rate from native spatial calculation
@@ -400,7 +400,7 @@ class ActionExecutor:
                     self._run_action_function(action), timeout=action.timeout
                 )
 
-                execution_time = asyncio.get_event_loop().time() - start_time
+                execution_time = asyncio.get_running_loop().time() - start_time
 
                 # Bernoulli sampling based on spatial success rate (principled randomness)
                 import random
@@ -443,7 +443,7 @@ class ActionExecutor:
                     )
 
             except asyncio.TimeoutError:
-                execution_time = asyncio.get_event_loop().time() - start_time
+                execution_time = asyncio.get_running_loop().time() - start_time
                 action.status = ActionStatus.FAILED
                 action.result = ActionResult(
                     success=False,
@@ -510,7 +510,7 @@ class ActionExecutor:
             return await action.function(**action.parameters)
         else:
             # Run sync function in thread pool
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             return await loop.run_in_executor(None, lambda: action.function(**action.parameters))
 
     async def _wait_for_action(self, action: Action):
@@ -659,7 +659,7 @@ class ActionExecutor:
         action = self.queue.get_action(action_id)
         return action.status if action else None
 
-    def get_execution_stats(self) -> Dict[str, Any]:
+    def get_execution_stats(self) -> dict[str, Any]:
         """Get execution statistics"""
         stats = self.execution_stats.copy()
         stats["queue_status"] = self.queue.get_queue_status()
@@ -753,7 +753,7 @@ class ActionExecutor:
                 logger.warning(f"[ActionExecutor] Failed to record outcome: {e}", exc_info=True)
 
     async def handle_autonomous_action(
-        self, action_type: str, parameters: Dict[str, Any], priority: int = 5
+        self, action_type: str, parameters: dict[str, Any], priority: int = 5
     ) -> "ExecutionResult":
         """
         Handle autonomous actions from the life cycle system.
@@ -780,13 +780,13 @@ class ActionExecutor:
             return await self._execute_fallback(action_type, parameters)
 
     async def _execute_fallback(
-        self, action_type: str, parameters: Dict[str, Any]
+        self, action_type: str, parameters: dict[str, Any]
     ) -> "ExecutionResult":
         """Fallback execution when bridge is not available"""
         from ..action_execution_bridge import ExecutionResult, ExecutionResultStatus, ActionType
 
         action_id = str(uuid.uuid4())
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Try to handle basic action types
@@ -794,7 +794,7 @@ class ActionExecutor:
                 message = parameters.get("message", "Hi!")
                 logger.info(f"[ActionExecutor] Fallback: {message}")
 
-                execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+                execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
                 return ExecutionResult(
                     action_id=action_id,
                     action_type=ActionType.INITIATE_CONVERSATION,
@@ -808,7 +808,7 @@ class ActionExecutor:
                 emotion = parameters.get("emotion", "neutral")
                 logger.info(f"[ActionExecutor] Fallback: Expressing {emotion}")
 
-                execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+                execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
                 return ExecutionResult(
                     action_id=action_id,
                     action_type=ActionType.EXPRESS_FEELING,
@@ -819,7 +819,7 @@ class ActionExecutor:
                 )
 
             else:
-                execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+                execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
                 return ExecutionResult(
                     action_id=action_id,
                     action_type=ActionType.SYSTEM_QUERY,
@@ -831,7 +831,7 @@ class ActionExecutor:
 
         except Exception as e:  # broad exception acceptable: fallback execution should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+            execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
 
             return ExecutionResult(
                 action_id=action_id,
@@ -911,8 +911,8 @@ class ActionExecutor:
     # ========== NEW: Batch Operations ==========
 
     async def execute_batch(
-        self, actions: List[Action], continue_on_error: bool = True
-    ) -> List[ActionResult]:
+        self, actions: list[Action], continue_on_error: bool = True
+    ) -> list[ActionResult]:
         """Execute multiple actions in batch"""
         results = []
 
@@ -943,7 +943,7 @@ class ActionExecutor:
     # ========== NEW: Result Validation ==========
 
     async def validate_result(
-        self, action: Action, result: Any, validators: List[Callable[[Any], bool]]
+        self, action: Action, result: Any, validators: list[Callable[[Any], bool]]
     ) -> tuple[bool, Optional[str]]:
         """Validate action execution result"""
         for validator in validators:

@@ -5,7 +5,7 @@ AlignedBaseAgent 使用示例
 
 import asyncio
 import logging
-from typing import Dict, Any
+from typing import Any
 
 from agents.aligned_base_agent import AlignedBaseAgent
 from core.hsp.types import HSPMessageEnvelope
@@ -58,8 +58,8 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
         self.register_task_handler("content_review", self.handle_content_review)
 
     async def handle_creative_writing(
-        self, payload: Dict[str, Any], sender_id: str, envelope: HSPMessageEnvelope
-    ) -> Dict[str, Any]:
+        self, payload: dict[str, Any], sender_id: str, envelope: HSPMessageEnvelope
+    ) -> dict[str, Any]:
         """处理创意写作任务"""
         try:
             prompt = payload.get("prompt", "")
@@ -104,8 +104,8 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
             return {"status": "error", "error_message": str(e)}
 
     async def handle_content_review(
-        self, payload: Dict[str, Any], sender_id: str, envelope: HSPMessageEnvelope
-    ) -> Dict[str, Any]:
+        self, payload: dict[str, Any], sender_id: str, envelope: HSPMessageEnvelope
+    ) -> dict[str, Any]:
         """处理内容审查任务"""
         try:
             content = payload.get("content", "")
@@ -167,7 +167,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
 
         return base_content
 
-    async def _assess_safety(self, content: str) -> Dict[str, Any]:
+    async def _assess_safety(self, content: str) -> dict[str, Any]:
         """评估内容安全性"""
         # 模拟安全评估
         dangerous_keywords = ["暴力", "仇恨", "歧视", "伤害"]
@@ -181,7 +181,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
             "assessment": "安全" if safety_score >= 0.8 else "需要注意",
         }
 
-    async def _assess_bias(self, content: str) -> Dict[str, Any]:
+    async def _assess_bias(self, content: str) -> dict[str, Any]:
         """评估内容偏见"""
         # 模拟偏见评估
         bias_indicators = ["性别歧视", "种族偏见", "年龄歧视", "地域偏见"]
@@ -229,7 +229,7 @@ async def main():
         # 创建模拟的信封
         envelope = HSPMessageEnvelope(
             message_id="test_msg_001",
-            timestamp=asyncio.get_event_loop().time(),
+            timestamp=asyncio.get_running_loop().time(),
             sender_id="test_client",
             recipient_id=agent.agent_id,
             message_type="task_request",

@@ -1,7 +1,5 @@
 """C6 — ValueRangeMapping and NeuroVocabulary mapping tests"""
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 
 class TestValueRangeMapping:

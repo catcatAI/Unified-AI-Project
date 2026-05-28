@@ -4,6 +4,7 @@
  * Provides secure IPC communication between main and renderer processes
  */
 
+const log = require('electron-log');
 const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose protected methods that allow the renderer process to use
@@ -147,5 +148,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   }
 });
 
-// Console.log for debugging in renderer process
-console.log('ElectronAPI preload loaded successfully');
+// Expose logging to renderer process
+contextBridge.exposeInMainWorld('electronLog', {
+  info: (...args) => log.info(...args),
+  warn: (...args) => log.warn(...args),
+  error: (...args) => log.error(...args),
+  debug: (...args) => log.debug(...args),
+});
+
+log.info('ElectronAPI preload loaded successfully');

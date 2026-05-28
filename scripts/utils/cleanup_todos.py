@@ -65,7 +65,7 @@ def process_file(file_path):
         new_lines = []
         
         for i, line in enumerate(lines, 1):
-            rel_path = str(file_path.relative_to('/home/cat/桌面/Unified-AI-Project/apps/backend/src'))
+            rel_path = str(file_path.relative_to(Path.home() / 'Desktop' / 'Unified-AI-Project' / 'apps' / 'backend' / 'src'))
             
             # 检查是否是需要保留的真实 TODO
             if (rel_path, i) in REAL_TODOS:
@@ -90,7 +90,7 @@ def process_file(file_path):
         return False
 
 def main():
-    base_path = Path('/home/cat/桌面/Unified-AI-Project/apps/backend/src')
+    base_path = Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "backend" / "src"
     
     # 查找所有 .py 文件
     py_files = list(base_path.rglob('*.py'))

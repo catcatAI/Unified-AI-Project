@@ -256,7 +256,7 @@ def is_compatible(required_version: str, current_version: str = None) -> bool:
 
 def get_changelog_url() -> str:
     """获取变更日志 URL"""
-    return f"https://github.com/catcatAI/Unified-AI-Project/blob/main/CHANGELOG.md"
+    return "https://github.com/catcatAI/Unified-AI-Project/blob/main/CHANGELOG.md"
 
 
 def get_release_notes_url(version: Optional[str] = None) -> str:

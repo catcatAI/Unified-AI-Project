@@ -462,7 +462,7 @@ class PetManager:
     def set_economy_manager(self, eco_manager):
         """Link the economy manager for autonomous spending."""
         self.economy_manager = eco_manager
-        logger.info(f"PetManager linked to EconomyManager.")
+        logger.info("PetManager linked to EconomyManager.")
 
     def get_pending_actions(self) -> List[Dict[str, Any]]:
         """Get and clear pending actions / 獲取並清除待執行動作"""

@@ -1,9 +1,5 @@
 """Tests for axis_port_registry.py"""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from core.autonomous.axis_port_registry import PortRegistry, PortDirection, Port
 

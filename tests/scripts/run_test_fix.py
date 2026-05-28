@@ -1,12 +1,7 @@
-import sys
-import os
 import logging
 import asyncio
 
 logger = logging.getLogger(__name__)
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 
 
 async def test_mock_core_services() -> None:

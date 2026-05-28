@@ -9,8 +9,7 @@ Angela AI 架構修復測試腳本
 4. P0-4: 記憶系統與情感系統整合
 """
 
-import sys
-import os
+from pathlib import Path
 import asyncio
 import json
 from datetime import datetime
@@ -20,11 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 添加項目路徑
-project_root = "/home/cat/桌面/Unified-AI-Project"
-backend_root = os.path.join(project_root, "apps", "backend")
-sys.path.insert(0, project_root)
-sys.path.insert(0, backend_root)
-sys.path.insert(0, os.path.join(backend_root, "src"))
+project_root = str(Path(__file__).resolve().parent.parent.parent)
 
 # 導入測試模塊
 try:
@@ -95,8 +90,8 @@ class ArchitectureFixTest:
 
         # 檢查前端文件是否包含必要的功能
         frontend_files = [
-            "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/backend-websocket.js",
-            "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/state-matrix.js",
+            project_root + "/apps/desktop-app/electron_app/js/backend-websocket.js",
+            project_root + "/apps/desktop-app/electron_app/js/state-matrix.js",
         ]
 
         for file_path in frontend_files:
@@ -164,7 +159,7 @@ class ArchitectureFixTest:
             self.log_test("P0-2 事件發布器", "fail", str(e))
 
         # 檢查前端生物事件監聽
-        frontend_file = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/app.js"
+        frontend_file = project_root + "/apps/desktop-app/electron_app/js/app.js"
         if os.path.exists(frontend_file):
             with open(frontend_file, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -224,7 +219,7 @@ class ArchitectureFixTest:
 
         # 檢查 AgentManager 是否集成了評估器
         agent_manager_file = (
-            "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/agents/agent_manager.py"
+            project_root + "/apps/backend/src/ai/agents/agent_manager.py"
         )
         if os.path.exists(agent_manager_file):
             with open(agent_manager_file, "r", encoding="utf-8") as f:
@@ -281,7 +276,7 @@ class ArchitectureFixTest:
 
         # 檢查決策循環是否集成了情感記憶
         llm_file = (
-            "/home/cat/桌面/Unified-AI-Project/apps/backend/src/ai/lifecycle/llm_decision_loop.py"
+            project_root + "/apps/backend/src/ai/lifecycle/llm_decision_loop.py"
         )
         if os.path.exists(llm_file):
             with open(llm_file, "r", encoding="utf-8") as f:
@@ -351,7 +346,7 @@ class ArchitectureFixTest:
         print(f"耗時: {report['summary']['duration_seconds']:.2f} 秒")
 
         # 保存報告
-        report_file = "/home/cat/桌面/test_architecture_fix_report.json"
+        report_file = str(Path.home() / "Desktop" / "test_architecture_fix_report.json")
         with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 

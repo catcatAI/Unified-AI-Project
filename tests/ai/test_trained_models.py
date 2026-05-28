@@ -9,9 +9,6 @@
 测试训练好的模型
 """
 
-import sys
-import os
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 from typing import Any
 import logging
@@ -19,14 +16,6 @@ import logging
 import pytest
 
 logger = logging.getLogger(__name__)
-
-# Add project root to path to allow absolute imports
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent
-BACKEND_PATH = PROJECT_ROOT / "apps" / "backend"
-if str(BACKEND_PATH) not in sys.path:
-    sys.path.insert(0, str(BACKEND_PATH))
-if str(BACKEND_PATH / "src") not in sys.path:
-    sys.path.insert(0, str(BACKEND_PATH / "src"))
 
 # Mock external dependencies if necessary
 try:

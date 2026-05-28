@@ -1,1 +1,13 @@
-"""Smoke test for apps.backend.src.message_bridge."""import pytestimport sysfrom pathlib import Pathsys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "apps" / "backend" / "src"))def test_message_bridge_imports():    """Smoke test: apps.backend.src.message_bridge imports successfully."""    import message_bridge as message_bridge    assert message_bridge is not Noneif __name__ == "__main__":    pytest.main([__file__, '-v'])
+"""Smoke test for apps.backend.src.message_bridge."""
+
+import pytest
+
+
+def test_message_bridge_imports():
+    """Smoke test: apps.backend.src.message_bridge imports successfully."""
+    import message_bridge
+    assert message_bridge is not None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

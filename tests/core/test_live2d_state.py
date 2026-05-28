@@ -1,7 +1,5 @@
 """C2 — Live2DIntegration get_live2d_state unit tests"""
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 
 class TestLive2DState:

@@ -6,7 +6,7 @@ Level 5 ASI 系统
 import asyncio
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from datetime import datetime
 
 # Assuming these are the correct import paths based on project structure
@@ -112,14 +112,14 @@ class Level5ASISystem:
         self.parameter_cluster: Optional[HyperlinkedParameterCluster] = None
 
         # 对齐代理
-        self.aligned_agents: Dict[str, AlignedBaseAgent] = {}
+        self.aligned_agents: dict[str, AlignedBaseAgent] = {}
 
         # 系统状态
         self.is_initialized: bool = False
         self.is_running: bool = False
 
         # 性能监控
-        self.performance_metrics: Dict[str, Any] = {
+        self.performance_metrics: dict[str, Any] = {
             "total_requests": 0,
             "successful_requests": 0,
             "alignment_score": 0.0,
@@ -128,7 +128,7 @@ class Level5ASISystem:
         }
 
         # 配置
-        self.config: Dict[str, Any] = {
+        self.config: dict[str, Any] = {
             "enable_autonomous_alignment": True,
             "enable_distributed_computing": True,
             "enable_adversarial_testing": True,
@@ -205,14 +205,14 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 停止失败: {e}", exc_info=True)
             return False
 
-    async def process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """处理系统请求"""
         if not self.is_running:
             return {"error": "系统未运行"}
 
         try:
             self.performance_metrics["total_requests"] += 1
-            start_time = asyncio.get_event_loop().time()
+            start_time = asyncio.get_running_loop().time()
 
             alignment_context = await self._create_alignment_context(request)
             alignment_result = await self._perform_alignment_check(request, alignment_context)
@@ -230,7 +230,7 @@ class Level5ASISystem:
 
             result = await self._process_with_agent(agent, request, alignment_context)
 
-            response_time = (asyncio.get_event_loop().time() - start_time) * 1000
+            response_time = (asyncio.get_running_loop().time() - start_time) * 1000
             self.performance_metrics["response_time_ms"] = response_time
             self.performance_metrics["successful_requests"] += 1
 
@@ -242,7 +242,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 请求处理失败: {e}", exc_info=True)
             return {"error": str(e)}
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """获取系统状态"""
         status = {
             "system_id": self.system_id,
@@ -271,12 +271,12 @@ class Level5ASISystem:
 
         return status
 
-    async def run_comprehensive_test(self) -> Dict[str, Any]:
+    async def run_comprehensive_test(self) -> dict[str, Any]:
         """运行综合测试"""
         try:
             logger.info(f"[{self.system_id}] 开始综合测试")
 
-            test_results: Dict[str, Any] = {
+            test_results: dict[str, Any] = {
                 "test_id": str(uuid.uuid4()),
                 "timestamp": datetime.now(),
                 "components": {},
@@ -415,7 +415,7 @@ class Level5ASISystem:
 
         logger.info(f"[{self.system_id}] 创建了 {len(self.aligned_agents)} 个对齐代理")
 
-    async def _create_alignment_context(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    async def _create_alignment_context(self, request: dict[str, Any]) -> dict[str, Any]:
         """创建对齐上下文"""
         return {
             "request_id": request.get("request_id", str(uuid.uuid4())),
@@ -431,8 +431,8 @@ class Level5ASISystem:
         }
 
     async def _perform_alignment_check(
-        self, request: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, request: dict[str, Any], context: dict[str, Any]
+    ) -> dict[str, Any]:
         """执行对齐检查"""
         if not self.alignment_manager:
             return {"is_aligned": True, "modified_payload": request}
@@ -472,7 +472,7 @@ class Level5ASISystem:
                 "safety_score": 0.0,
             }
 
-    async def _select_agent(self, request: Dict[str, Any]) -> Optional[AlignedBaseAgent]:
+    async def _select_agent(self, request: dict[str, Any]) -> Optional[AlignedBaseAgent]:
         """选择合适的代理"""
         capability_id = request.get("capability_id")
         if not capability_id:
@@ -486,8 +486,8 @@ class Level5ASISystem:
         return None
 
     async def _process_with_agent(
-        self, agent: AlignedBaseAgent, request: Dict[str, Any], context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, agent: AlignedBaseAgent, request: dict[str, Any], context: dict[str, Any]
+    ) -> dict[str, Any]:
         """使用代理处理请求"""
         try:
             envelope = HSPMessageEnvelope(
@@ -523,7 +523,7 @@ class Level5ASISystem:
             )
             self.performance_metrics["alignment_score"] = success_rate
 
-    async def _test_alignment_system(self) -> Dict[str, Any]:
+    async def _test_alignment_system(self) -> dict[str, Any]:
         """测试对齐系统"""
         try:
             test_request = {
@@ -542,7 +542,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 对齐系统测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": str(e)}
 
-    async def _test_distributed_system(self) -> Dict[str, Any]:
+    async def _test_distributed_system(self) -> dict[str, Any]:
         """测试分布式系统"""
         try:
             if not self.distributed_coordinator:
@@ -556,7 +556,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 分布式系统测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": str(e)}
 
-    async def _test_parameter_cluster(self) -> Dict[str, Any]:
+    async def _test_parameter_cluster(self) -> dict[str, Any]:
         """测试参数集群"""
         try:
             if not self.parameter_cluster:
@@ -570,7 +570,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 参数集群测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": str(e)}
 
-    async def _test_autonomous_alignment(self) -> Dict[str, Any]:
+    async def _test_autonomous_alignment(self) -> dict[str, Any]:
         """测试自主对齐"""
         try:
             if not self.autonomous_alignment:
@@ -584,7 +584,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 自主对齐测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": str(e)}
 
-    async def _test_aligned_agents(self) -> Dict[str, Any]:
+    async def _test_aligned_agents(self) -> dict[str, Any]:
         """测试对齐代理"""
         try:
             if not self.aligned_agents:

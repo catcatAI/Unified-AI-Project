@@ -17,7 +17,7 @@ Date: 2026-02-02
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any, Set, Union, TYPE_CHECKING
+from typing import Optional, Callable, Any, Union, TYPE_CHECKING
 from datetime import datetime, timedelta
 import asyncio
 import uuid
@@ -82,9 +82,9 @@ class ExecutionContext:
     trigger_source: str  # 'autonomous', 'user', 'system'
     priority: int
     timestamp: datetime = field(default_factory=datetime.now)
-    user_context: Dict[str, Any] = field(default_factory=dict)
-    system_context: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    user_context: dict[str, Any] = field(default_factory=dict)
+    system_context: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -95,13 +95,13 @@ class ExecutionResult:
     action_type: ActionType
     status: ExecutionResultStatus
     success: bool
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     error_message: Optional[str] = None
     execution_time_ms: int = 0
     timestamp: datetime = field(default_factory=datetime.now)
-    feedback_for_learning: Dict[str, Any] = field(default_factory=dict)
+    feedback_for_learning: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "action_id": self.action_id,
@@ -121,7 +121,7 @@ class ActionDependency:
     """动作依赖 / Dependency between actions"""
 
     action_id: str
-    depends_on: List[str]  # IDs of actions that must complete first
+    depends_on: list[str]  # IDs of actions that must complete first
     priority_boost: int = 0  # Priority boost when dependencies are satisfied
 
 
@@ -129,9 +129,9 @@ class FeedbackCollector:
     """反馈收集器 / Collects execution feedback for learning"""
 
     def __init__(self):
-        self.feedback_history: List[Dict[str, Any]] = []
-        self.success_patterns: Dict[str, int] = {}
-        self.failure_patterns: Dict[str, int] = {}
+        self.feedback_history: list[dict[str, Any]] = []
+        self.success_patterns: dict[str, int] = {}
+        self.failure_patterns: dict[str, int] = {}
 
     def collect(self, result: ExecutionResult):
         """收集执行反馈"""
@@ -151,7 +151,7 @@ class FeedbackCollector:
         else:
             self.failure_patterns[pattern_key] = self.failure_patterns.get(pattern_key, 0) + 1
 
-    def get_learning_data(self) -> Dict[str, Any]:
+    def get_learning_data(self) -> dict[str, Any]:
         """获取用于学习的数据"""
         return {
             "feedback_count": len(self.feedback_history),
@@ -210,7 +210,7 @@ class ActionExecutionBridge:
         hsm: Optional[Any] = None,
         cdm: Optional[Any] = None,
         live2d_integration: Optional[Any] = None,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
     ):
         self.config = config or {}
 
@@ -225,7 +225,7 @@ class ActionExecutionBridge:
         self.live2d_integration = live2d_integration
 
         # Action handlers
-        self._handlers: Dict[ActionType, Callable] = {
+        self._handlers: dict[ActionType, Callable] = {
             ActionType.INITIATE_CONVERSATION: self._handle_initiate_conversation,
             ActionType.EXPLORE_TOPIC: self._handle_explore_topic,
             ActionType.SATISFY_NEED: self._handle_satisfy_need,
@@ -238,10 +238,10 @@ class ActionExecutionBridge:
         }
 
         # Queue management
-        self._priority_queue: List[tuple[int, str, Dict[str, Any]]] = []
-        self._dependencies: Dict[str, ActionDependency] = {}
-        self._completed_actions: Dict[str, ExecutionResult] = {}
-        self._executing_actions: Set[str] = set()
+        self._priority_queue: list[tuple[int, str, dict[str, Any]]] = []
+        self._dependencies: dict[str, ActionDependency] = {}
+        self._completed_actions: dict[str, ExecutionResult] = {}
+        self._executing_actions: set[str] = set()
 
         # Feedback system
         self.feedback_collector = FeedbackCollector()
@@ -256,7 +256,7 @@ class ActionExecutionBridge:
         self._history_file = Path(
             self.config.get("history_path", "~/.angela/action_history.json")
         ).expanduser()
-        self._execution_history: List[Dict[str, Any]] = []
+        self._execution_history: list[dict[str, Any]] = []
         self._max_history_size = self.config.get("max_history_size", 1000)
 
         # Statistics
@@ -269,8 +269,8 @@ class ActionExecutionBridge:
         }
 
         # Callbacks
-        self._pre_execution_callbacks: List[Callable[[ExecutionContext], None]] = []
-        self._post_execution_callbacks: List[
+        self._pre_execution_callbacks: list[Callable[[ExecutionContext], None]] = []
+        self._post_execution_callbacks: list[
             Callable[[ExecutionContext, ExecutionResult], None]
         ] = []
 
@@ -306,9 +306,9 @@ class ActionExecutionBridge:
     async def execute_action(
         self,
         action_type: Union[ActionType, str],
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         priority: int = 5,
-        dependencies: Optional[List[str]] = None,
+        dependencies: Optional[list[str]] = None,
         trigger_source: str = "autonomous",
         wait_for_completion: bool = True,
     ) -> ExecutionResult:
@@ -416,18 +416,18 @@ class ActionExecutionBridge:
 
         return None
 
-    async def _execute_with_semaphore(self, action_id: str, item: Dict[str, Any]):
+    async def _execute_with_semaphore(self, action_id: str, item: dict[str, Any]):
         """Execute action with concurrency control"""
         async with self._semaphore:
             await self._execute_action(action_id, item)
 
-    async def _execute_action(self, action_id: str, item: Dict[str, Any]):
+    async def _execute_action(self, action_id: str, item: dict[str, Any]):
         """Execute a single action"""
         context: ExecutionContext = item["context"]
-        parameters: Dict[str, Any] = item["parameters"]
+        parameters: dict[str, Any] = item["parameters"]
 
         self._executing_actions.add(action_id)
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
         result: ExecutionResult
 
         try:
@@ -446,7 +446,7 @@ class ActionExecutionBridge:
             # Execute handler
             result_data = await handler(parameters, context)
 
-            execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+            execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
 
             # Create success result
             result = ExecutionResult(
@@ -464,7 +464,7 @@ class ActionExecutionBridge:
             )
 
         except asyncio.TimeoutError:
-            execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+            execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
             result = ExecutionResult(
                 action_id=action_id,
                 action_type=context.action_type,
@@ -475,7 +475,7 @@ class ActionExecutionBridge:
             )
         except Exception as e:  # broad exception acceptable: ensure all errors result in failure result
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+            execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
 
             result = ExecutionResult(
                 action_id=action_id,
@@ -518,7 +518,7 @@ class ActionExecutionBridge:
 
         return self._completed_actions[action_id]
 
-    async def _get_system_context(self) -> Dict[str, Any]:
+    async def _get_system_context(self) -> dict[str, Any]:
         """Get current system context"""
         return {
             "timestamp": datetime.now().isoformat(),
@@ -621,8 +621,8 @@ class ActionExecutionBridge:
     # ========== Action Handlers ==========
 
     async def _handle_initiate_conversation(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle initiate_conversation action"""
         message = parameters.get("message", "Hi there!")
         emotion = parameters.get("emotion", "neutral")
@@ -660,8 +660,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_explore_topic(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle explore_topic action"""
         topic = parameters.get("topic", "")
         depth = parameters.get("depth", "medium")  # shallow, medium, deep
@@ -710,8 +710,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_satisfy_need(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle satisfy_need action"""
         need_type = parameters.get("need_type", "")  # hunger, social, rest, curiosity, etc.
         urgency = parameters.get("urgency", 0.5)
@@ -756,8 +756,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_express_feeling(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle express_feeling action"""
         emotion = parameters.get("emotion", "neutral")
         intensity = parameters.get("intensity", 0.5)
@@ -806,8 +806,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_download_resource(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle download_resource action"""
         url = parameters.get("url", "")
         destination = parameters.get("destination", None)
@@ -856,8 +856,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_change_appearance(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle change_appearance action"""
         change_type = parameters.get("change_type", "expression")  # expression, outfit, pose
         value = parameters.get("value", "")
@@ -892,8 +892,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_file_operation(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle file_operation action"""
         operation = parameters.get("operation", "read")  # read, write, delete, list, move
         path = parameters.get("path", "")
@@ -942,8 +942,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_web_search(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle web_search action"""
         query = parameters.get("query", "")
         num_results = parameters.get("num_results", 5)
@@ -977,8 +977,8 @@ class ActionExecutionBridge:
         return result
 
     async def _handle_system_query(
-        self, parameters: Dict[str, Any], context: ExecutionContext
-    ) -> Dict[str, Any]:
+        self, parameters: dict[str, Any], context: ExecutionContext
+    ) -> dict[str, Any]:
         """Handle system_query action"""
         query_type = parameters.get("query_type", "status")  # status, stats, health, config
 
@@ -1032,7 +1032,7 @@ class ActionExecutionBridge:
         """Register callback to be called after action execution"""
         self._post_execution_callbacks.append(callback)
 
-    def get_execution_stats(self) -> Dict[str, Any]:
+    def get_execution_stats(self) -> dict[str, Any]:
         """Get execution statistics"""
         return {
             **self._stats,
@@ -1041,11 +1041,11 @@ class ActionExecutionBridge:
             "completed_count": len(self._completed_actions),
         }
 
-    def get_action_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_action_history(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get recent action execution history"""
         return self._execution_history[-limit:]
 
-    def get_feedback_data(self) -> Dict[str, Any]:
+    def get_feedback_data(self) -> dict[str, Any]:
         """Get feedback data for learning"""
         return self.feedback_collector.get_learning_data()
 
@@ -1082,7 +1082,7 @@ class ActionExecutionBridgeFactory:
     """Factory for creating ActionExecutionBridge with common configurations"""
 
     @staticmethod
-    def create_basic_bridge(config: Optional[Dict[str, Any]] = None) -> ActionExecutionBridge:
+    def create_basic_bridge(config: Optional[dict[str, Any]] = None) -> ActionExecutionBridge:
         """Create a basic bridge without external dependencies"""
         return ActionExecutionBridge(config=config)
 
@@ -1096,7 +1096,7 @@ class ActionExecutionBridgeFactory:
         hsm: Any,
         cdm: Any,
         live2d_integration: Any,
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[dict[str, Any]] = None,
     ) -> ActionExecutionBridge:
         """Create a fully configured bridge with all dependencies"""
         return ActionExecutionBridge(

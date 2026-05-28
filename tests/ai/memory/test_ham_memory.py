@@ -1,11 +1,5 @@
 """Test HAM Memory System"""
 import pytest
-import sys
-from pathlib import Path
-
-src_path = Path(__file__).parent.parent.parent.parent / "apps" / "backend" / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
 async def test_ham_types_import():
     """Test HAM types module can be imported"""
     from ai.memory.ham_memory.ham_types import (

@@ -88,7 +88,8 @@ const FrontendUtils = {
    */
   resolveModelPath(modelPath, options = {}) {
     const {
-      modelsDir = '/home/cat/桌面/Unified-AI-Project/resources/models',
+      // modelsDir default - consider using env var or config
+      // modelsDir = path.join(require('os').homedir(), 'Desktop', 'Unified-AI-Project', 'resources', 'models'),
       requiredPattern = '_t03.model3.json'
     } = options;
     

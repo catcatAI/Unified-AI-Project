@@ -1,1 +1,13 @@
-"""Smoke test for apps.backend.src.comprehensive_analysis."""import pytestimport sysfrom pathlib import Pathsys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "apps" / "backend" / "src"))def test_comprehensive_analysis_imports():    """Smoke test: apps.backend.src.comprehensive_analysis imports successfully."""    import comprehensive_analysis as comprehensive_analysis    assert comprehensive_analysis is not Noneif __name__ == "__main__":    pytest.main([__file__, '-v'])
+"""Smoke test for apps.backend.src.comprehensive_analysis."""
+
+import pytest
+
+
+def test_comprehensive_analysis_imports():
+    """Smoke test: apps.backend.src.comprehensive_analysis imports successfully."""
+    import comprehensive_analysis
+    assert comprehensive_analysis is not None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -116,7 +116,7 @@ def main():
     print("为组件的initialize方法添加幂等性保护")
     print("=" * 60)
     
-    base_dir = Path('/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js')
+    base_dir = Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "js"
     
     # 需要处理的组件
     components = [

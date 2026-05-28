@@ -9,7 +9,7 @@ import logging
 import sys
 import threading
 import time
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 
 def run_repl_mode():
@@ -37,8 +37,8 @@ async def _run_repl():
     print("[REPL] Angela ready! (exit/quit to stop)\n")
     print("[Hint] Type /help for commands, /state to view 8D matrix\n")
 
-    loop = asyncio.get_event_loop()
-    cmd_history: List[str] = []
+    loop = asyncio.get_running_loop()
+    cmd_history: list[str] = []
     while True:
         try:
             user_input = await loop.run_in_executor(None, lambda: input("\n\U0001F4AC  \u4f60: "))
@@ -67,7 +67,7 @@ async def _run_repl():
             cmd_history = cmd_history[-100:]
 
 
-def _handle_repl_command(text: str, service: Any, history: List[str]) -> Tuple[str, Optional[str]]:
+def _handle_repl_command(text: str, service: Any, history: list[str]) -> tuple[str, Optional[str]]:
     parts = text.lstrip("/:").split(maxsplit=1)
     cmd = parts[0].lower()
     args = parts[1] if len(parts) > 1 else ""
@@ -104,7 +104,7 @@ def _handle_repl_command(text: str, service: Any, history: List[str]) -> Tuple[s
 
     if cmd in ("hist", "history"):
         lines = [f"  {i+1}. {h[:60]}" for i, h in enumerate(history[-10:])]
-        return ("system", f"Recent history:\n" + "\n".join(lines) if lines else "(empty)")
+        return ("system", "Recent history:\n" + "\n".join(lines) if lines else "(empty)")
 
     return ("unknown", None)
 

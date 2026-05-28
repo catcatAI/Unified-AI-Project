@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, 'apps/backend/src')
 
 from core.engine.state_matrix_adapter import StateMatrixAdapter, StateMatrixFacade
 

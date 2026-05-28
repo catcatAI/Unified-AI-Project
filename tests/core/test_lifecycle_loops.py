@@ -1,1 +1,13 @@
-"""Smoke test for apps.backend.src.lifecycle_loops."""import pytestimport sysfrom pathlib import Pathsys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "apps" / "backend" / "src"))def test_lifecycle_loops_imports():    """Smoke test: apps.backend.src.lifecycle_loops imports successfully."""    import lifecycle_loops as lifecycle_loops    assert lifecycle_loops is not Noneif __name__ == "__main__":    pytest.main([__file__, '-v'])
+"""Smoke test for apps.backend.src.lifecycle_loops."""
+
+import pytest
+
+
+def test_lifecycle_loops_imports():
+    """Smoke test: apps.backend.src.lifecycle_loops imports successfully."""
+    import lifecycle_loops
+    assert lifecycle_loops is not None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

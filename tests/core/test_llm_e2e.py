@@ -8,8 +8,6 @@ P8 — LLM End-to-End Integration Test
 Author: Angela AI v6.2.1
 """
 
-import sys
-sys.path.insert(0, 'apps/backend/src')
 import asyncio
 
 

@@ -9,14 +9,9 @@
 测试和演示 \"int\" 类型调用表达式的结果未使用 问题的修复
 """
 
-import sys
-import os
 import logging
 
 logger = logging.getLogger(__name__)
-
-# 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "apps", "backend", "src"))
 
 
 def problematic_function() -> int:

@@ -17,7 +17,6 @@ def run_tests_with_compat() -> bool:
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
     project_root = os.path.dirname(os.path.abspath(__file__))
-    sys.path.insert(0, project_root)
 
     print("Setting up compatibility environment...")
     print(f"TF_USE_LEGACY_KERAS = {os.environ.get('TF_USE_LEGACY_KERAS', 'not set')}")

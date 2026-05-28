@@ -163,7 +163,7 @@ const ANGELA_CHARACTER_CONFIG = {
   },
   "metadata": {
     "generated_at": "2026-02-10 12:27:12.871132",
-    "source_image": "/home/cat/桌面/Gemini_Generated_Image_hqq027hqq027hqq0.png",
+    "source_image": ""  // source_image - configure via env var or settings,
     "description": "Angela character with body part mapping for tactile interaction",
     "notes": "Priority 1 = detail zones (face, eyes, mouth), Priority 10 = hair (fallback)"
   }

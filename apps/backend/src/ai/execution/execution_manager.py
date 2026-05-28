@@ -627,7 +627,7 @@ if __name__ == "__main__":
 
         result = manager.execute_command(args.command, timeout=args.timeout)
 
-        logger.info(f"\nExecution Result:")
+        logger.info("\nExecution Result:")
         logger.info(f"Status: {result.status.value}")
         logger.info(f"Return code: {result.returncode}")
         logger.info(f"Execution time: {result.execution_time:.2f}s")

@@ -1,13 +1,7 @@
 """
 Test script for GlobalStateStore and Decoupling
 """
-import sys
 import asyncio
-from pathlib import Path
-
-# Add project root (apps/backend) to sys.path
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 from core.system.state_store import state_store
 from core.engine.state_matrix import StateMatrix4D

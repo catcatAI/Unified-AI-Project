@@ -12,8 +12,7 @@ Author: Angela AI v6.2
 Version: 6.2.1
 """
 
-import sys, math
-sys.path.insert(0, 'apps/backend/src')
+import math
 
 from core.state.axis_field import AxisField, AxisFieldRegistry
 from core.state.axis import Axis

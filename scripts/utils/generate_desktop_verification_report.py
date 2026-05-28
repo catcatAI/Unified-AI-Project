@@ -3,6 +3,7 @@
 Angela AI - 桌面端问题检测与修复报告
 """
 
+from pathlib import Path
 import os
 import json
 from datetime import datetime
@@ -27,7 +28,7 @@ def generate_verification_report():
         "recommendations": []
     }
     
-    base_path = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app"
+    base_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app")
     
     # 1. 检查 index.html 中的脚本顺序
     index_path = os.path.join(base_path, "index.html")
@@ -82,8 +83,8 @@ def generate_verification_report():
             report["issues_found"].append("⚠️ 脚本加载顺序可能有问题")
     
     # 2. 检查 Live2D 模型
-    model_path = "/home/cat/桌面/Unified-AI-Project/resources/models/miara_pro_en/runtime/miara_pro_t03.model3.json"
-    model_path_alt = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/models/miara_pro_en/runtime/miara_pro_t03.model3.json"
+    model_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "resources" / "models" / "miara_pro_en" / "runtime" / "miara_pro_t03.model3.json")
+    model_path_alt = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "models" / "miara_pro_en" / "runtime" / "miara_pro_t03.model3.json")
     
     if os.path.exists(model_path):
         report["fixes_applied"].append("✅ Live2D 模型存在 (resources/models)")
@@ -136,7 +137,7 @@ def generate_verification_report():
         report["recommendations"].append("✅ 系统已完全验证，无需额外修复")
     
     # 保存报告
-    report_path = "/home/cat/桌面/Unified-AI-Project/desktop_verification_report.json"
+    report_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "desktop_verification_report.json")
     with open(report_path, 'w', encoding='utf-8') as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     

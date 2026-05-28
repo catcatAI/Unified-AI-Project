@@ -2,9 +2,11 @@
 
 **项目版本:** 7.5.0-dev  
 **创建日期:** 2026-05-28  
-**状态:** Phase 0/1 Active (63% complete)  
+**状态:** Phase 0 ✅ / Phase 1 ✅ / Phase 2 ✅ (Complete)  
 **负责人:** Agent  
-**最后更新:** 2026-05-28  
+**最后更新:** 2026-05-28
+
+> Phase 0-2 已完成（見 anchored summary）。Phase 3（中優先級）和 Phase 4（低優先級）尚未開始。  
 
 ---
 
@@ -26,14 +28,14 @@
 
 ### 1.1 总工作量估计
 
-| Phase | Effort (person-hours) | Risk Level | Dependencies |
-|-------|----------------------|------------|--------------|
-| Phase 0 | 4–6 | Critical | None |
-| Phase 1 | 40–60 | High | Phase 0 |
-| Phase 2 | 24–36 | Medium | Phase 1 |
-| Phase 3 | 32–48 | Low | Phase 2 |
-| Phase 4 | 16–24 | Low | Phase 3 |
-| **Total** | **116–174** | — | — |
+| Phase | Effort (person-hours) | Risk Level | Dependencies | Status |
+|-------|----------------------|------------|--------------|--------|
+| Phase 0 | 4–6 | Critical | None | ✅ Complete |
+| Phase 1 | 40–60 | High | Phase 0 | ✅ Complete |
+| Phase 2 | 24–36 | Medium | Phase 1 | ✅ Complete |
+| Phase 3 | 32–48 | Low | Phase 2 | ⬜ Not started |
+| Phase 4 | 16–24 | Low | Phase 3 | ⬜ Not started |
+| **Total** | **116–174** | — | — | **~60%** |
 
 ### 1.2 修复原则
 

@@ -1,3 +1,4 @@
+from pathlib import Path
 #!/usr/bin/env python3
 """
 Angela AI - Desktop Application Final Report
@@ -281,7 +282,7 @@ if __name__ == "__main__":
     print("=" * 70)
     
     # 保存 JSON 格式的报告
-    with open('/home/cat/桌面/Unified-AI-Project/desktop_app_verification_report.json', 'w', encoding='utf-8') as f:
+    with open(str(Path.home() / 'Desktop' / 'Unified-AI-Project' / 'desktop_app_verification_report.json'), 'w', encoding='utf-8') as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     
     print("详细报告已保存到: desktop_app_verification_report.json")

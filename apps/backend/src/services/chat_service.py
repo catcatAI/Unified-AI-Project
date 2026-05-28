@@ -74,9 +74,9 @@ class ChatService:
                         llm.reload_config()
                     
                     del self.pending_evolution_proposals[user_name]
-                    return f"（演化成功）我已經完成自我升級，新的配置已生效！✨"
+                    return "（演化成功）我已經完成自我升級，新的配置已生效！✨"
                 else:
-                    return f"（演化失敗）寫入配置時似乎遇到了點小麻煩..."
+                    return "（演化失敗）寫入配置時似乎遇到了點小麻煩..."
             except Exception as e:
                 logger.error(f"Evolution execution error: {e}", exc_info=True)
                 return f"（演化失敗）發生了意料之外的錯誤：{e}"

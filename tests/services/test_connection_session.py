@@ -9,9 +9,6 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
 from services.connection_session import (
     SessionManager,

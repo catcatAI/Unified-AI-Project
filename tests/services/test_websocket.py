@@ -1,12 +1,6 @@
 """Test WebSocket Connection Manager - Standalone Tests"""
 import pytest
 import asyncio
-import sys
-from pathlib import Path
-
-src_path = Path(__file__).parent.parent.parent / "apps" / "backend" / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
 async def test_websocket_manager_class_exists():
     """Test WebSocket manager can be created standalone"""
     from services.main_api_server import ConnectionManager

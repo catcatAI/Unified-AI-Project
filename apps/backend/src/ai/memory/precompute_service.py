@@ -13,8 +13,8 @@ import asyncio
 import logging
 import time
 import psutil
-from datetime import datetime
-from typing import Dict, Any, List, Optional, Callable
+from datetime import datetime, timezone
+from typing import Any, Optional, Callable
 from queue import Queue, Empty
 from dataclasses import dataclass
 
@@ -31,10 +31,10 @@ class PrecomputeTask:
 
     query: str
     category: ResponseCategory
-    keywords: List[str]
+    keywords: list[str]
     angela_state: AngelaState
     user_impression: UserImpression
-    context: Dict[str, Any]
+    context: dict[str, Any]
     priority: int = 1  # 优先级，数字越大优先级越高
 
 
@@ -248,7 +248,7 @@ class PrecomputeService:
                 user_impression=task.user_impression,
                 metadata={
                     "precomputed": True,
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
                     "llm_backend": response.backend,
                     "llm_model": response.model,
                     "response_time_ms": response.response_time_ms,
@@ -283,7 +283,7 @@ class PrecomputeService:
             self.failed_count += 1
             self.stats["failed_tasks"] += 1
 
-    async def _generate_with_timeout(self, query: str, context: Dict[str, Any], timeout: float):
+    async def _generate_with_timeout(self, query: str, context: dict[str, Any], timeout: float):
         """
         带超时的 LLM 生成
 
@@ -316,12 +316,12 @@ class PrecomputeService:
 
             return LLMResponse(text="", backend="error", model="", error=str(e))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取统计信息
 
         Returns:
-            Dict[str, Any]: 统计信息
+            dict[str, Any]: 统计信息
         """
         idle_time = time.time() - self.last_activity_time
         cpu_percent = psutil.cpu_percent(interval=0.1)

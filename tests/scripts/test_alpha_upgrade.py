@@ -2,15 +2,9 @@
 Test script to verify AlphaDeepModel functionality
 """
 
-import sys
-import os
 import logging
 
 logger = logging.getLogger(__name__)
-
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
-backend_path = os.path.join(project_root, 'apps', 'backend')
-sys.path.insert(0, backend_path)
 
 
 def test_alpha_deep_model_upgrade() -> bool:

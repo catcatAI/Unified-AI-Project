@@ -8,6 +8,7 @@ import asyncio
 import aiohttp
 import json
 import subprocess
+from pathlib import Path
 import os
 import sys
 from datetime import datetime
@@ -107,7 +108,7 @@ class AngelaAISystemTest:
         print("         测试 3: 前端代码完整性")
         print("=" * 60)
         
-        base_path = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app"
+        base_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app")
         
         # 检查关键文件
         key_files = {
@@ -157,7 +158,7 @@ class AngelaAISystemTest:
         print("         测试 4: 对话系统")
         print("=" * 60)
         
-        dialogue_path = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/dialogue-ui.js"
+        dialogue_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "js" / "dialogue-ui.js")
         
         if not os.path.exists(dialogue_path):
             self.add_result("对话", False, "文件不存在")
@@ -188,7 +189,7 @@ class AngelaAISystemTest:
         print("         测试 5: Live2D 系统")
         print("=" * 60)
         
-        live2d_path = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/live2d-manager.js"
+        live2d_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "js" / "live2d-manager.js")
         
         if not os.path.exists(live2d_path):
             self.add_result("Live2D", False, "文件不存在")
@@ -230,7 +231,7 @@ class AngelaAISystemTest:
         print("         测试 6: Electron 主进程")
         print("=" * 60)
         
-        main_path = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/main.js"
+        main_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "main.js")
         
         if not os.path.exists(main_path):
             self.add_result("主进程", False, "文件不存在")

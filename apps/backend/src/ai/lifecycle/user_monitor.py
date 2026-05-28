@@ -469,7 +469,7 @@ if __name__ == "__main__":
         await asyncio.sleep(3)
 
         # 打印狀態
-        logger.info(f"\n=== 用戶狀態 ===")
+        logger.info("\n=== 用戶狀態 ===")
         logger.info(json.dumps(monitor.get_user_state().to_dict(), indent=2, ensure_ascii=False))
 
         # 停止監控

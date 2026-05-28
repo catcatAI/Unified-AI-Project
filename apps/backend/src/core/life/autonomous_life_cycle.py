@@ -687,7 +687,7 @@ if __name__ == "__main__":
 
         # Get initial metrics
         metrics = lifecycle.get_current_metrics()
-        logger.info(f"\n初始指标 / Initial metrics:")
+        logger.info("\n初始指标 / Initial metrics:")
         logger.info(f"  HSM: {metrics.hsm_value:.4f}")
         logger.info(f"  C_Gap: {metrics.c_gap:.4f}")
         logger.info(f"  生命感强度: {metrics.life_intensity:.4f}")

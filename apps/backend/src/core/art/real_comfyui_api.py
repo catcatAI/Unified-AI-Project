@@ -347,7 +347,7 @@ async def test_comfyui():
 
     try:
         models = await client.get_models()
-        logger.info(f"✅ ComfyUI 连接成功!")
+        logger.info("✅ ComfyUI 连接成功!")
         logger.info(f"📦 可用模型: {len(models)} 个")
 
         painter = AngelaRealPainter()

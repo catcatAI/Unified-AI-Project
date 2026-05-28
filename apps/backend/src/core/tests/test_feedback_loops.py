@@ -20,12 +20,6 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 from dataclasses import dataclass
-import sys
-import os
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import pytest_asyncio
 
 from feedback_loop_engine import (
@@ -714,7 +708,7 @@ class TestPerformance:
             max_latency = max(latencies)
             min_latency = min(latencies)
 
-            logger.info(f"\nFeedback Loop Latency Stats:")
+            logger.info("\nFeedback Loop Latency Stats:")
             logger.info(f"  Average: {avg_latency:.2f}ms")
             logger.info(f"  Min: {min_latency:.2f}ms")
             logger.info(f"  Max: {max_latency:.2f}ms")
@@ -756,7 +750,7 @@ class TestPerformance:
         avg_latency = metrics.get("average_latency_ms", 0)
         max_latency = metrics.get("max_latency_ms", 0)
 
-        logger.info(f"\nEvent Loop Latency Stats:")
+        logger.info("\nEvent Loop Latency Stats:")
         logger.info(f"  Average: {avg_latency:.2f}ms")
         logger.info(f"  Max: {max_latency:.2f}ms")
         logger.info(f"  Events processed: {metrics.get('events_processed', 0)}")
@@ -797,14 +791,14 @@ class TestPerformance:
         elapsed = time.perf_counter() - start_time
         throughput = processed[0] / elapsed if elapsed > 0 else 0
 
-        logger.info(f"\nThroughput Test:")
+        logger.info("\nThroughput Test:")
         logger.info(f"  Events added: {event_count}")
         logger.info(f"  Events processed: {processed[0]}")
         logger.info(f"  Elapsed: {elapsed:.2f}s")
         logger.info(f"  Throughput: {throughput:.2f} events/second")
 
         # Verify high throughput
-        assert processed[0] >= event_count * 0.9, f"Should process at least 90% of events"
+        assert processed[0] >= event_count * 0.9, "Should process at least 90% of events"
         assert throughput > 50, f"Throughput {throughput:.2f} events/s too low"
 
     @pytest.mark.asyncio
@@ -835,7 +829,7 @@ class TestPerformance:
 
         elapsed = time.perf_counter() - start_time
 
-        logger.info(f"\nConcurrent Processing Test:")
+        logger.info("\nConcurrent Processing Test:")
         logger.info(f"  Cycles started: {cycle_count}")
         logger.info(f"  Cycles completed: {len(completed_cycles)}")
         logger.info(f"  Total time: {elapsed:.2f}s")
@@ -946,7 +940,7 @@ class TestIntegration:
         await asyncio.sleep(2.0)
 
         # Verify results
-        logger.info(f"\nIntegration Test Results:")
+        logger.info("\nIntegration Test Results:")
         logger.info(f"  Perception events: {len(perception_types)}")
         logger.info(f"  Cycles completed: {len(cycles_completed)}")
         logger.info(f"  HSM updates: {mock_hsm.update_count}")
@@ -954,7 +948,7 @@ class TestIntegration:
 
         # Get metrics
         metrics = engine.get_performance_metrics()
-        logger.info(f"\nPerformance Metrics:")
+        logger.info("\nPerformance Metrics:")
         logger.info(f"  Average latency: {metrics.get('average_latency_ms', 0):.2f}ms")
         logger.info(f"  Cycles completed (metrics): {metrics.get('cycles_completed', 0)}")
 

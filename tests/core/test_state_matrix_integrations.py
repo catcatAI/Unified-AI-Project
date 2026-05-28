@@ -1,9 +1,5 @@
 """Tests for StateMatrixAdapter integration features"""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend" / "src"))
 
 from core.engine.state_matrix_adapter import StateMatrixAdapter
 

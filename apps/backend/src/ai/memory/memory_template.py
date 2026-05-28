@@ -9,8 +9,8 @@
 3. 支持动态学习和优化
 """
 
-from datetime import datetime
-from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 from enum import Enum
 from dataclasses import dataclass, field
 import json
@@ -57,23 +57,23 @@ class AngelaState:
     """
 
     # Alpha (意识水平): 0-1, 高表示清醒活跃
-    alpha: Dict[str, float] = field(default_factory=dict)
+    alpha: dict[str, float] = field(default_factory=dict)
 
     # Beta (情绪状态): 情绪分布
-    beta: Dict[str, float] = field(default_factory=dict)
+    beta: dict[str, float] = field(default_factory=dict)
 
     # Gamma (认知负荷): 0-1, 高表示思考中
-    gamma: Dict[str, float] = field(default_factory=dict)
+    gamma: dict[str, float] = field(default_factory=dict)
 
     # Delta (生理状态): 0-1, 表示疲劳程度
-    delta: Dict[str, float] = field(default_factory=dict)
+    delta: dict[str, float] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {"alpha": self.alpha, "beta": self.beta, "gamma": self.gamma, "delta": self.delta}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AngelaState":
+    def from_dict(cls, data: dict[str, Any]) -> "AngelaState":
         """从字典创建"""
         return cls(
             alpha=data.get("alpha", {}),
@@ -100,9 +100,9 @@ class UserImpression:
     interaction_count: int = 0
 
     # 用户特征标签
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "relationship_level": self.relationship_level,
@@ -112,7 +112,7 @@ class UserImpression:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UserImpression":
+    def from_dict(cls, data: dict[str, Any]) -> "UserImpression":
         """从字典创建"""
         return cls(
             relationship_level=data.get("relationship_level", 0.3),
@@ -136,7 +136,7 @@ class MemoryTemplate:
     content: str
 
     # 检索关键词
-    keywords: List[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
 
     # Angela 状态（用于匹配）
     angela_state: AngelaState = field(default_factory=AngelaState)
@@ -154,9 +154,9 @@ class MemoryTemplate:
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 元数据
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -174,7 +174,7 @@ class MemoryTemplate:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MemoryTemplate":
+    def from_dict(cls, data: dict[str, Any]) -> "MemoryTemplate":
         """从字典创建"""
         # 解析类别
         category = ResponseCategory(data.get("category", "unknown"))
@@ -183,12 +183,12 @@ class MemoryTemplate:
         created_at = (
             datetime.fromisoformat(data["created_at"])
             if data.get("created_at")
-            else datetime.utcnow()
+            else datetime.now(timezone.utc)
         )
         updated_at = (
             datetime.fromisoformat(data["updated_at"])
             if data.get("updated_at")
-            else datetime.utcnow()
+            else datetime.now(timezone.utc)
         )
         last_used = datetime.fromisoformat(data["last_used"]) if data.get("last_used") else None
 
@@ -210,13 +210,13 @@ class MemoryTemplate:
     def record_usage(self, success: bool = True):
         """记录使用"""
         self.usage_count += 1
-        self.last_used = datetime.utcnow()
+        self.last_used = datetime.now(timezone.utc)
 
         # 更新成功率（移动平均：80% 历史 + 20% 新反馈）
         current_success = 1.0 if success else 0.0
         self.success_rate = (self.success_rate * 0.8) + (current_success * 0.2)
 
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def is_suitable_for(self, angela_state: AngelaState, user_impression: UserImpression) -> bool:
         """
@@ -325,17 +325,17 @@ def generate_template_id(content: str) -> str:
     import hashlib
 
     content_hash = hashlib.md5(content.encode()).hexdigest()[:8]
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     return f"tpl_{timestamp}_{content_hash}"
 
 
 def create_template(
     content: str,
     category: ResponseCategory,
-    keywords: List[str] = None,
+    keywords: list[str] = None,
     angela_state: AngelaState = None,
     user_impression: UserImpression = None,
-    metadata: Dict[str, Any] = None,
+    metadata: dict[str, Any] = None,
 ) -> MemoryTemplate:
     """
     创建新模板的便捷函数

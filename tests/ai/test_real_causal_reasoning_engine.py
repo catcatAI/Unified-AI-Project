@@ -5,14 +5,9 @@
 
 import asyncio
 import pytest
-import sys
-import os
 import logging
 
 logger = logging.getLogger(__name__)
-
-# Add project path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../../../"))
 
 # 测试新的真实AI引擎
 from ai.reasoning.real_causal_reasoning_engine import (
