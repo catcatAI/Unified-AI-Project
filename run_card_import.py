@@ -11,8 +11,8 @@ Usage:
 
 import argparse
 import asyncio
-import json
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import List, Optional
@@ -23,6 +23,38 @@ sys.path.insert(0, str(BACKEND_SRC))
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("card_import")
+
+
+CARD_ID_RE = re.compile(
+    r"(?:角色卡|規則卡|設定卡|劇情節點卡|場景卡)[：:\s]*"
+    r"(CC|RC|SL|EP|E)[-\s]*(\d+)",
+)
+
+CARD_ID_SHORT_RE = re.compile(r"(CC|RC|SL|EP|E)[-\s]*(\d+)")
+
+
+def _split_card_content(content: str) -> List[str]:
+    """Split content by card ID boundaries — works for any document format."""
+    text = content.strip()
+    if not text:
+        return []
+
+    # Find all card ID positions in content
+    matches = list(CARD_ID_RE.finditer(text))
+    if len(matches) < 2:
+        matches = list(CARD_ID_SHORT_RE.finditer(text))
+    if len(matches) < 2:
+        return [text]
+
+    # Split at each card ID boundary
+    sections = []
+    for i, m in enumerate(matches):
+        start = m.start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        section = text[start:end].strip()
+        if len(section) >= 30:
+            sections.append(section)
+    return sections if sections else [text]
 
 
 async def import_from_drive(args) -> int:
@@ -40,18 +72,46 @@ async def import_from_drive(args) -> int:
     folder_name = args.folder or "卡片堆"
     logger.info(f"Listing files in '{folder_name}'...")
 
-    files = service.list_files(query=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'")
-    if not files:
+    folders = service.list_files(query=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'")
+    if not folders:
         logger.error(f"Folder '{folder_name}' not found in Google Drive.")
         return 1
 
-    folder_id = files[0]["id"]
-    gdoc_files = service.list_files(query=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.document'")
+    root_id = folders[0]["id"]
 
-    logger.info(f"Found {len(gdoc_files)} Google Docs in '{folder_name}'.")
+    # Collect .gdoc files from all subfolders recursively
+    def collect_gdocs(folder_id: str) -> List[Dict]:
+        results = []
+        docs = service.list_files(query=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.document'")
+        results.extend(docs)
+        subfolders = service.list_files(query=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder'")
+        for sf in subfolders:
+            results.extend(collect_gdocs(sf["id"]))
+        return results
+
+    gdoc_files = collect_gdocs(root_id)
+
+    # Only skip obvious non-card files (novel chapters, version backups)
+    card_files = [
+        f for f in gdoc_files
+        if not f.get("name", "").startswith("Ver ")
+        and not f.get("name", "").startswith("V3.")
+        and f.get("name") != "desktop.ini"
+        and not re.search(r"第\s*\d+\s*章", f.get("name", ""))
+    ]
+
+    # Separate individual card files (named like "角色卡：...") from reference/group files
+    CARD_FILE_PREFIX = re.compile(r"^(角色卡|規則卡|設定卡|劇情節點卡|場景卡)[：:]")
+    individual_cards = [f for f in card_files if CARD_FILE_PREFIX.match(f.get("name", ""))]
+    other_files = [f for f in card_files if not CARD_FILE_PREFIX.match(f.get("name", ""))]
+
+    logger.info(
+        f"Found {len(gdoc_files)} Google Docs total: "
+        f"{len(individual_cards)} individual cards, {len(other_files)} reference/group files."
+    )
 
     if args.dry_run:
-        for f in gdoc_files:
+        for f in card_files:
             logger.info(f"  [{f.get('id', '?')}] {f.get('name', '?')}")
         return 0
 
@@ -61,23 +121,35 @@ async def import_from_drive(args) -> int:
     pipeline = CardImportPipeline()
     registry = CardRegistry()
 
-    for gf in gdoc_files:
+    def _process_file(gf, is_reference: bool = False) -> None:
         name = gf.get("name", "unnamed")
-        logger.info(f"Processing: {name}")
+        logger.info(f"Processing: {name}" + (" (reference)" if is_reference else ""))
         try:
             content = service.download_file_content(gf["id"])
             if not content:
                 logger.warning(f"  Empty content for {name}, skipping.")
-                continue
-            result = pipeline.run(content, source=f"gdrive://{gf['id']}")
-            if result.success:
-                for card in result.cards:
-                    registry.add(card)
-                logger.info(f"  Imported {len(result.cards)} card(s), {len(result.conflicts)} conflict(s).")
-            else:
-                logger.warning(f"  Pipeline returned no cards for {name}.")
+                return
+            sections = _split_card_content(content)
+            for section in sections:
+                result = pipeline.process(section, source_label=f"gdrive://{gf['id']}")
+                if result.card and result.card.card_id:
+                    key = result.card.qualified_id or f"{result.card.card_id}@{result.card.world_line}"
+                    if is_reference and registry.get(key) is not None:
+                        continue  # reference files never overwrite real card data
+                    registry.add(result.card)
+                    logger.info(f"  Imported card {result.card.qualified_id} (stage={result.stage}, confidence={result.confidence:.3f})")
+                    if result.conflicts_total:
+                        logger.info(f"    Conflicts: {result.conflicts_resolved}/{result.conflicts_total} resolved")
+                else:
+                    logger.warning(f"  No card from section in {name}.")
         except Exception as e:
             logger.error(f"  Failed to process {name}: {e}", exc_info=True)
+
+    # Process individual card files first, then reference files (non-overwriting)
+    for gf in individual_cards:
+        _process_file(gf, is_reference=False)
+    for gf in other_files:
+        _process_file(gf, is_reference=True)
 
     _print_summary(registry)
     return 0
@@ -93,7 +165,7 @@ async def import_from_local(args) -> int:
         logger.error(f"Directory not found: {local_dir}")
         return 1
 
-    md_files = list(local_dir.rglob("*.md")) + list(local_dir.rglob("*.txt"))
+    md_files = list(local_dir.rglob("*.md")) + list(local_dir.rglob("*.txt")) + list(local_dir.rglob("*.gdoc"))
     logger.info(f"Found {len(md_files)} markdown/text files in {local_dir}.")
 
     if args.dry_run:
@@ -109,13 +181,14 @@ async def import_from_local(args) -> int:
         logger.info(f"Processing: {rel}")
         try:
             content = fpath.read_text(encoding="utf-8")
-            result = pipeline.run(content, source=f"file://{fpath}")
-            if result.success:
-                for card in result.cards:
-                    registry.add(card)
-                logger.info(f"  Imported {len(result.cards)} card(s), {len(result.conflicts)} conflict(s).")
-            else:
-                logger.warning(f"  Pipeline returned no cards for {rel}.")
+            sections = _split_card_content(content)
+            for section in sections:
+                result = pipeline.process(section, source_label=f"file://{fpath}")
+                if result.card and result.card.card_id:
+                    registry.add(result.card)
+                    logger.info(f"  Imported card {result.card.qualified_id} (stage={result.stage}, confidence={result.confidence:.3f})")
+                else:
+                    logger.warning(f"  No card from section in {rel}.")
         except Exception as e:
             logger.error(f"  Failed to process {rel}: {e}", exc_info=True)
 
@@ -135,7 +208,7 @@ def _print_summary(registry) -> None:
     print("\n" + "=" * 50)
     print(f"IMPORT SUMMARY: {total} card(s) in registry")
     print("-" * 50)
-    for t, count in sorted(by_type.items()):
+    for t, count in sorted(by_type.items(), key=lambda x: str(x[0])):
         print(f"  {t}: {count}")
     print("=" * 50)
 

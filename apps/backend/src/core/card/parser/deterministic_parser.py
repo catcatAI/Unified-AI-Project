@@ -13,7 +13,7 @@ from core.card.card_types import Card, CardType, Conflict, Token
 logger = logging.getLogger(__name__)
 
 CARD_ID_PATTERN = re.compile(r"(CC|SL|E|RC)[-\s]?(\d+)")
-WORLD_LINE_PATTERN = re.compile(r"(?:世界線|world.line|WL)[:\s]*(W\d+|迴廊|[\w\u4e00-\u9fff]+)")
+WORLD_LINE_PATTERN = re.compile(r"(?:世界線|world.line|WL)[：:\s]*(W\d+|迴廊|(?![\u4e00-\u9fff]*(?:的|了|會|與|碎片|穩定性|測量))[\u4e00-\u9fff]{2,4})")
 KEY_VALUE_PATTERN = re.compile(r"^\s*(.+?)\s*[：:]\s*(.+?)\s*$", re.MULTILINE)
 TOKEN_PATTERN = re.compile(
     r"(?:Token|特質|trait)\s*[：:]\s*(\w+[\w\u4e00-\u9fff]*)\s*[（(]?\s*([\d.]+)\s*[)）]?"

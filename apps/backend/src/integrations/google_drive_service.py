@@ -109,20 +109,29 @@ class GoogleDriveService:
             return self._service
         if not self.is_authenticated():
             raise PermissionError("Not authenticated with Google Drive")
-        self._service = build("drive", "v3", credentials=self._creds, static_dll_errors=False)
+        self._service = build("drive", "v3", credentials=self._creds)
         return self._service
 
-    def list_files(self, page_size: int = 10, query: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_files(self, page_size: int = 200, query: Optional[str] = None) -> List[Dict[str, Any]]:
         try:
             service = self._get_service()
             params: Dict[str, Any] = {
-                "pageSize": page_size,
-                "fields": "files(id,name,mimeType,size,modifiedTime,webViewLink,parents)",
+                "pageSize": min(page_size, 1000),
+                "fields": "nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink,parents)",
             }
             if query:
                 params["q"] = query
-            results = service.files().list(**params).execute()
-            return results.get("files", [])
+            all_files: List[Dict[str, Any]] = []
+            page_token: Optional[str] = None
+            while True:
+                if page_token:
+                    params["pageToken"] = page_token
+                results = service.files().list(**params).execute()
+                all_files.extend(results.get("files", []))
+                page_token = results.get("nextPageToken")
+                if not page_token:
+                    break
+            return all_files
         except HttpError as e:
             logger.error(f"Drive list_files error: {e}", exc_info=True)
             raise
@@ -155,6 +164,23 @@ class GoogleDriveService:
         except Exception as e:
             logger.error(f"Unexpected download error: {e}", exc_info=True)
             return False
+
+    def download_file_content(self, file_id: str, mime_type: str = "text/plain") -> Optional[str]:
+        """Download file content as string, handling Google Docs and binary files."""
+        try:
+            service = self._get_service()
+            metadata = service.files().get(fileId=file_id, fields="mimeType").execute()
+            mime = metadata.get("mimeType", "")
+            if mime == "application/vnd.google-apps.document":
+                return self.export_gdoc(file_id, mime_type)
+            request = service.files().get_media(fileId=file_id)
+            content = request.execute()
+            if isinstance(content, bytes):
+                return content.decode("utf-8", errors="replace")
+            return str(content)
+        except Exception as e:
+            logger.error(f"Download content error for {file_id}: {e}", exc_info=True)
+            return None
 
     def export_gdoc(self, file_id: str, mime_type: str = "text/plain") -> Optional[str]:
         """Export a Google-native document (gdoc) content as text."""
