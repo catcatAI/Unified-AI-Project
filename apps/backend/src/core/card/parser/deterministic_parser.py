@@ -12,7 +12,12 @@ from core.card.card_types import Card, CardType, Conflict, Token
 
 logger = logging.getLogger(__name__)
 
-CARD_ID_PATTERN = re.compile(r"(CC|SL|E|RC)[-\s]?(\d+)")
+# Adaptive pattern: matches ANY letter-prefix card ID (CC-01, WC-09, ORG-04, SLex-01, …)
+# Two+ letters prefix, optional hyphen/space, then digits
+CARD_ID_PATTERN = re.compile(r"\b([A-Z][A-Za-z]+)[-\s]?(\d+)\b")
+# Single-letter prefix for Event codes (E-001, E002, …)
+EVENT_ID_PATTERN = re.compile(r"\b(E)[-\s]?(\d{3})\b")
+TEMPLATE_ID_PATTERN = re.compile(r"角色卡\s*([A-C])\s*[：:]\s*(.+?)(?:\s*\(|$)")
 WORLD_LINE_PATTERN = re.compile(r"(?:世界線|world.line|WL)[：:\s]*(W\d+|迴廊|(?![\u4e00-\u9fff]*(?:的|了|會|與|碎片|穩定性|測量))[\u4e00-\u9fff]{2,4})")
 KEY_VALUE_PATTERN = re.compile(r"^\s*(.+?)\s*[：:]\s*(.+?)\s*$", re.MULTILINE)
 TOKEN_PATTERN = re.compile(
@@ -29,11 +34,28 @@ class DeterministicParser:
     """
 
     def __init__(self):
+        # Known prefix → CardType mapping.
+        # Adaptive: unknown prefixes resolve to CHARACTER.
+        # The stats doc (265 cards) is used AFTER import to validate completeness,
+        # not to drive the regex. New card types in files are auto-discovered.
         self._card_type_map = {
             "CC": CardType.CHARACTER,
             "SL": CardType.STORY_LINE,
             "E": CardType.EVENT,
+            "EP": CardType.EVENT,
             "RC": CardType.RULE,
+            "TP": CardType.PLAYER_TEMPLATE,
+            "WC": CardType.WORLD_CORE,
+            "SC": CardType.SCENE,
+            "NAT": CardType.NATION,
+            "ORG": CardType.ORGANIZATION,
+            "UM": CardType.UNIVERSAL_MECHANISM,
+            "WT": CardType.WORK_TOOL,
+            "PM": CardType.PROJECT_MANAGEMENT,
+            "MF": CardType.META_FORMULA,
+            "SLex": CardType.SAFETY_LEXICON,
+            "CCK": CardType.META_SETTING,
+            "WL": CardType.META_SETTING,
         }
 
     def parse(self, text: str) -> Tuple[Card, Dict[str, float]]:
@@ -51,6 +73,7 @@ class DeterministicParser:
         return card, confidences
 
     def _parse_card_id(self, text: str, card: Card, confidences: Dict[str, float]) -> None:
+        # 1. Multi-letter prefix (CC, WC, ORG, SLex, …)
         match = CARD_ID_PATTERN.search(text)
         if match:
             prefix, num = match.group(1), match.group(2)
@@ -58,9 +81,33 @@ class DeterministicParser:
             card.card_type = self._card_type_map.get(prefix, CardType.CHARACTER)
             confidences["card_id"] = 0.98
             confidences["card_type"] = 0.95
-        else:
-            confidences["card_id"] = 0.0
-            confidences["card_type"] = 0.0
+            return
+        # 2. Single-letter Event prefix (E-001, E002)
+        ematch = EVENT_ID_PATTERN.search(text)
+        if ematch:
+            prefix, num = ematch.group(1), ematch.group(2)
+            card.card_id = f"{prefix}-{num}"
+            card.card_type = CardType.EVENT
+            confidences["card_id"] = 0.95
+            confidences["card_type"] = 0.95
+            return
+        # 3. Player template (角色卡 A：...)
+        tmatch = TEMPLATE_ID_PATTERN.search(text)
+        if tmatch:
+            letter = tmatch.group(1)
+            title = tmatch.group(2).strip()
+            card.card_id = f"TP-{letter}"
+            card.card_type = CardType.PLAYER_TEMPLATE
+            card.custom_fields["template_title"] = title
+            title_line = text[tmatch.start():tmatch.end()]
+            m_match = re.search(r"(M[1-6])", title_line)
+            if m_match:
+                card.custom_fields["m_value_alignment"] = m_match.group(1)
+            confidences["card_id"] = 0.95
+            confidences["card_type"] = 0.95
+            return
+        confidences["card_id"] = 0.0
+        confidences["card_type"] = 0.0
 
     def _parse_world_line(self, text: str, card: Card, confidences: Dict[str, float]) -> None:
         match = WORLD_LINE_PATTERN.search(text)

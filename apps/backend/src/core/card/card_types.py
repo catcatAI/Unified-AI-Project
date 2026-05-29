@@ -15,6 +15,19 @@ class CardType(Enum):
     STORY_LINE = auto()
     EVENT = auto()
     RULE = auto()
+    PLAYER_TEMPLATE = auto()
+    WORLD_CORE = auto()
+    SCENE = auto()
+    NATION = auto()
+    ORGANIZATION = auto()
+    SKILL = auto()
+    ITEM = auto()
+    UNIVERSAL_MECHANISM = auto()
+    WORK_TOOL = auto()
+    PROJECT_MANAGEMENT = auto()
+    META_FORMULA = auto()
+    SAFETY_LEXICON = auto()
+    META_SETTING = auto()
 
 
 class ConflictType(Enum):

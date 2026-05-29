@@ -25,24 +25,35 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("card_import")
 
 
+# Adaptive card ID patterns — discover prefixes dynamically instead of hard-coding
 CARD_ID_RE = re.compile(
-    r"(?:角色卡|規則卡|設定卡|劇情節點卡|場景卡)[：:\s]*"
-    r"(CC|RC|SL|EP|E)[-\s]*(\d+)",
+    r"(?:角色卡|規則卡|設定卡|劇情節點卡|場景卡|角色代碼|卡片代碼)[：:\s]*"
+    r"([A-Z][A-Za-z]+)[-\s]*(\d+)",
 )
 
-CARD_ID_SHORT_RE = re.compile(r"(CC|RC|SL|EP|E)[-\s]*(\d+)")
+CARD_ID_SHORT_RE = re.compile(r"([A-Z][A-Za-z]+)[-\s]*(\d+)")
+
+TEMPLATE_RE = re.compile(r"角色卡\s*([A-C])\s*[：:]")
+
+TEMPLATE_RE = re.compile(r"角色卡\s*([A-C])\s*[：:]")
 
 
 def _split_card_content(content: str) -> List[str]:
-    """Split content by card ID boundaries — works for any document format."""
+    """Split content by card ID boundaries — works for any document format.
+
+    Only splits on explicit card-type-prefixed IDs (角色卡：CC-43, 規則卡：RC-01)
+    or template patterns (角色卡 A：). Bare short IDs (CC-xx) inside reference
+    tables are ignored — they belong to the single card being described.
+    """
     text = content.strip()
     if not text:
         return []
 
-    # Find all card ID positions in content
+    # Primary: match card type prefix + ID (角色卡：CC-43, 規則卡：RC-01, etc.)
     matches = list(CARD_ID_RE.finditer(text))
+    # Fallback: template pattern (角色卡 A：, 角色卡 B：, 角色卡 C：)
     if len(matches) < 2:
-        matches = list(CARD_ID_SHORT_RE.finditer(text))
+        matches = list(TEMPLATE_RE.finditer(text))
     if len(matches) < 2:
         return [text]
 
