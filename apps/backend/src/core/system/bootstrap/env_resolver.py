@@ -74,7 +74,7 @@ ANGELA_KEY_C={secrets.token_hex(32)}
 
         try:
             # Attempt PowerShell-based creation to avoid win32com dependency during bootstrap
-            desktop = os.path.join(os.environ["USERPROFILE"], "Desktop")
+            desktop = str(Path.home() / "Desktop")
             ps = f'''
 $ws = New-Object -ComObject WScript.Shell
 $sc = $ws.CreateShortcut("{desktop}\\Angela AI.lnk")

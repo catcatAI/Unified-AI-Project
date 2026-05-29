@@ -44,8 +44,8 @@ def initialize_all_services(manager) -> tuple:
     try:
         from services.hot_reload_service import get_hot_reload_service
         from core.security.security_audit import get_security_audit
-        hot_reload = get_hot_reload_service()
-        sec_audit = get_security_audit()
+        get_hot_reload_service()
+        get_security_audit()
         logger.info("[Lifecycle] HotReloadService and SecurityAudit activated and ready.")
     except Exception as e:
         logger.warning(f"[Lifecycle] Failed to activate management assets: {e}", exc_info=True)

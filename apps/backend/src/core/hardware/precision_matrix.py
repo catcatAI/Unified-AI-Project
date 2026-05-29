@@ -153,7 +153,6 @@ class PrecisionMatrix:
     def _find_intermediate(self, source: str, target: str) -> str:
         """找中间精度 / Find intermediate precision"""
         candidates = ["fp32", "fp16", "int8"]
-        best = source
 
         for cand in candidates:
             if cand != source and cand != target:

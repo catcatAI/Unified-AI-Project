@@ -93,34 +93,59 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 # pytest - Python 测试框架配置
-testpaths = ['tests', 'apps/backend/tests']
-python_files = ['test_*.py']
+testpaths = ['tests', 'apps/backend/tests', 'apps/backend/src', 'scripts', 'tools']
+python_files = ['test_*.py', '*_test.py']
 python_classes = ['Test*']
 python_functions = ['test_*']
+filterwarnings = [
+    'ignore::DeprecationWarning',
+    'ignore::PendingDeprecationWarning',
+]
 addopts = [
     '-v',
     '--strict-markers',
+    '--strict-config',
     '--tb=short',
     '--cov=apps/backend/src',
     '--cov-report=term-missing',
     '--cov-report=html',
-    '--cov-fail-under=1'
+    '--cov-fail-under=50',
+    '--disable-warnings',
+    '--ignore=tests_backup',
+    '--ignore=../../tests_backup',
+]
+norecursedirs = [
+    '.git',
+    '.tox',
+    'dist',
+    'build',
+    '*.egg',
+    '__pycache__',
+    '.pytest_cache',
+    'node_modules',
+    'backup',
+    'backup_*',
+    'backup_archive',
+    'auto_fix_*',
 ]
 markers = [
-    'slow: 标记慢速测试',
-    'integration: 标记集成测试',
-    'unit: 标记单元测试',
-    'asyncio: 标记异步测试',
-    'online: 标记需要联网的测试',
-    'mcp: 标记 MCP 相关测试',
-    'context7: 标记 Context7 集成测试',
-    'ai_core: 标记核心 AI 功能测试',
-    'timeout: 标记有超时限制的测试',
-    'flaky: 标记不稳定的测试',
-    'system_integration: 标记系统集成测试',
-    'performance: 标记性能基准测试',
+    'slow: marks tests as slow (deselect with -m not slow)',
+    'integration: marks tests as integration tests',
+    'unit: marks tests as unit tests',
+    'asyncio: marks tests as async tests',
+    'online: marks tests that require an internet connection',
+    'mcp: marks tests related to MCP functionality',
+    'context7: marks tests related to Context7 integration',
+    'ai_core: marks tests for core AI functionality',
+    'timeout: marks tests with a timeout',
+    'flaky: marks tests as flaky (random failures)',
+    'system_integration: marks tests for system integration',
+    'performance: marks tests for performance benchmarking',
+    'benchmark: marks tests as benchmark tests',
 ]
 asyncio_mode = 'auto'
+asyncio_default_test_loop_scope = 'function'
+junit_family = 'xunit2'
 
 [tool.coverage.run]
 # coverage - Python 测试覆盖率配置

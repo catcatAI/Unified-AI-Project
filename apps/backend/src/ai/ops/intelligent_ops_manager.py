@@ -5,6 +5,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Dict
 from dataclasses import dataclass, asdict
 
+from .ai_ops_engine import AIOpsEngine
+from .predictive_maintenance import PredictiveMaintenanceEngine
+from .performance_optimizer import PerformanceOptimizer
+from .capacity_planner import CapacityPlanner
+
 # 可选依赖导入
 REDIS_AVAILABLE = False
 try:
@@ -27,11 +32,6 @@ except ImportError:
         "Numpy not found. IntelligentOpsManager will use simpler calculations for numpy-dependent features."
         , exc_info=True
     )
-
-from .ai_ops_engine import AIOpsEngine
-from .predictive_maintenance import PredictiveMaintenanceEngine
-from .performance_optimizer import PerformanceOptimizer
-from .capacity_planner import CapacityPlanner
 
 logger = logging.getLogger(__name__)
 

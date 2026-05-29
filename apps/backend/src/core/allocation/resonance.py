@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 import math
 import logging
+from core.state.axis import Axis
 
 logger = logging.getLogger("angela_resonance")
 
@@ -284,6 +285,3 @@ class ResonanceEngine:
 
     def __repr__(self) -> str:
         return f"ResonanceEngine(axes={list(self._axes.keys())})"
-
-
-from core.state.axis import Axis

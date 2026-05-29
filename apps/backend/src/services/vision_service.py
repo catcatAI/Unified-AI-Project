@@ -607,7 +607,7 @@ class VisionService:
 
         # 結合音頻上下文
         if context.get("audio_context"):
-            audio_context = context["audio_context"]
+            context["audio_context"]
             insights["audio_visual_sync"] = random.uniform(0.6, 0.95)
 
             # 如果有對等的音頻服務, 可以進行更深入的分析

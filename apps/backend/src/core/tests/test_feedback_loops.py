@@ -729,7 +729,7 @@ class TestPerformance:
         event_loop = event_loop_system
 
         # Add many events
-        start_time = time.perf_counter()
+        time.perf_counter()
 
         for i in range(100):
             event = Event(
@@ -822,7 +822,7 @@ class TestPerformance:
             event = PerceptionEvent.create(PerceptionType.MOUSE, "test", {"index": i}, priority=5)
             tasks.append(engine.process_perception_event(event))
 
-        cycle_ids = await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks)
 
         # Wait for all to complete
         await asyncio.sleep(2.0)

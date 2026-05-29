@@ -715,7 +715,7 @@ class ActionExecutionBridge:
         """Handle satisfy_need action"""
         need_type = parameters.get("need_type", "")  # hunger, social, rest, curiosity, etc.
         urgency = parameters.get("urgency", 0.5)
-        suggested_action = parameters.get("suggested_action", None)
+        parameters.get("suggested_action", None)
 
         result = {"need_type": need_type, "urgency": urgency, "action_taken": None}
 
@@ -861,7 +861,7 @@ class ActionExecutionBridge:
         """Handle change_appearance action"""
         change_type = parameters.get("change_type", "expression")  # expression, outfit, pose
         value = parameters.get("value", "")
-        duration = parameters.get("duration", None)  # Temporary change duration
+        parameters.get("duration", None)  # Temporary change duration
 
         result = {"change_type": change_type, "value": value, "applied": False}
 

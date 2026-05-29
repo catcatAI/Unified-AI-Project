@@ -265,7 +265,7 @@ class AutonomicNervousSystem:
         """
         part = data.get("part", "generic")
         intensity = data.get("intensity", 0.5)
-        touch_type = data.get("type", "pat")
+        data.get("type", "pat")
         origin = data.get("origin", "System")
         
         logger.info(f"🧠 [ANS] Processing tactile from {origin}: {part}")

@@ -516,7 +516,7 @@ class PhysiologicalTactileSystem:
         Returns:
             Dictionary of Live2D parameter names to values
         """
-        body_part_key = body_part.name.lower()
+        body_part.name.lower()
 
         # Map BodyPart enum names to mapping keys
         mapping_key = self._get_body_part_mapping_key(body_part)
@@ -1057,11 +1057,11 @@ class TrajectoryAnalyzer:
             return "insufficient_data", 0.0
 
         avg_velocity = sum(velocities) / len(velocities)
-        max_velocity = max(velocities)
-        min_velocity = min(velocities)
+        max(velocities)
+        min(velocities)
         velocity_variance = self._calculate_variance(velocities)
 
-        avg_acceleration = sum(accelerations) / len(accelerations) if accelerations else 0.0
+        sum(accelerations) / len(accelerations) if accelerations else 0.0
         accel_variance = self._calculate_variance(accelerations) if accelerations else 0.0
 
         # Count direction changes (for jitter detection)

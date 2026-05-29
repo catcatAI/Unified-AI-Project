@@ -87,5 +87,5 @@ class NLPProcessingAgent(BaseAgent):
     async def _handle_sentiment(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
-        text = payload.get("parameters", {}).get("text", "")
+        payload.get("parameters", {}).get("text", "")
         return {"sentiment": "neutral", "score": 0.5}

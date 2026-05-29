@@ -170,7 +170,7 @@ class UnifiedControlCenter:
         task_id = task.get("id", str(int(time.time())))
         logger.info(f"🚀 Processing complex task [{task_id}]: {task.get('name', 'unnamed')}")
 
-        start_time = time.time()
+        time.time()
 
         # 0. Cognitive Load Assessment
         if self.dli:
@@ -230,7 +230,7 @@ class UnifiedControlCenter:
             new_strategy = await controller.adapt_learning_strategy(task, history)
 
             # 8. Deep Memory Storage
-            model = self.components["alpha_deep_model"]
+            self.components["alpha_deep_model"]
 
             # 9. Resource Decay & Pet Sync (Phase 13)
             # If pet_manager is provided (usually from outer scope/orchestrator)
@@ -295,7 +295,6 @@ class UnifiedControlCenter:
 
             # 4. Publish Task via HSP protocol
             success = False
-            response_payload = {}
 
             if hsp:
                 # We use publish_task_request which returns correlation_id (str) or None?

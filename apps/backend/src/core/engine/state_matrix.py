@@ -699,7 +699,7 @@ Returns:
                     results["applied_to"].append(target)
 
         elif decision.action == "create_axis" and decision.proposed_name:
-            new_dim = self.create_axis(
+            self.create_axis(
                 name=decision.proposed_name,
                 label=decision.proposed_name,
                 semantic_vector=decision.semantic_anchor or input_vector,
@@ -1520,7 +1520,7 @@ Returns:
 
         avg_energy = self.alpha.values.get("energy", 0.5)
         avg_happiness = self.gamma.values.get("happiness", 0.5)
-        avg_calm = self.gamma.values.get("calm", 0.5)
+        self.gamma.values.get("calm", 0.5)
 
         guidance = []
         from core.system.config.tiered_loader import get_config

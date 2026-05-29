@@ -246,7 +246,7 @@ def main():
     after = len(sm.gradient_field.attractors)
     print(f"  Attractors: {before} → {after} (added 1)")
 
-    removed = sm.remove_attractor_by_tags(["creative"])
+    sm.remove_attractor_by_tags(["creative"])
     final = len(sm.gradient_field.attractors)
     print(f"  After remove: {after} → {final}")
 

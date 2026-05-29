@@ -101,7 +101,7 @@ class QueryOptimizer:
 
         try:
             # Simplified - actual implementation would execute the query
-            async with self.get_session() as session:
+            async with self.get_session():
                 # result = await session.execute(text(query), params or {})
                 # rows = result.fetchall()
                 # data = [dict(row._mapping) for row in rows]
@@ -164,7 +164,7 @@ class QueryOptimizer:
     async def _save_metrics_to_redis(self, query_hash: str, metrics: QueryMetrics):
         """保存指标到Redis"""
         try:
-            metrics_data = {
+            {
                 "execution_count": metrics.execution_count,
                 "total_time": metrics.total_time,
                 "avg_time": metrics.avg_time,
@@ -192,7 +192,7 @@ class QueryOptimizer:
         suggestions = self._generate_optimization_suggestions(query, issues)
 
         # 记录慢查询
-        slow_query_data = {
+        {
             "query": query,
             "execution_time": execution_time,
             "issues": issues,
@@ -236,7 +236,7 @@ class QueryOptimizer:
     async def get_query_plan(self, query: str) -> QueryPlan:
         """获取查询执行计划"""
         try:
-            async with self.get_session() as session:
+            async with self.get_session():
                 # Simplified - actual implementation would use EXPLAIN ANALYZE
                 execution_time = 0.0
                 rows_examined = 0
@@ -338,7 +338,7 @@ class QueryOptimizer:
         suggestions = []
 
         try:
-            async with self.get_session() as session:
+            async with self.get_session():
                 # Simplified - actual implementation would analyze table indexes
                 suggestions = ["需要实现实际的表索引分析"]
 
@@ -351,7 +351,7 @@ class QueryOptimizer:
     async def analyze_table_performance(self, table_name: str) -> Dict[str, Any]:
         """分析表性能"""
         try:
-            async with self.get_session() as session:
+            async with self.get_session():
                 # Simplified - actual implementation would analyze table performance
                 return {"table_name": table_name, "size": "N/A", "column_stats": []}
 

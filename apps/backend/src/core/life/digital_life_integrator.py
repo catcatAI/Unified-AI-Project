@@ -27,18 +27,15 @@ import logging
 from typing import TYPE_CHECKING
 from core.engine.state_matrix import StateMatrix4D
 from .self_introspector import SelfIntrospector
-
-logger = logging.getLogger(__name__)
-
 from core.bio.biological_integrator import BiologicalIntegrator
 from core.engine.action_executor import ActionExecutor
 from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
-
-# P0-4: AI Lifecycle imports
 from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
 from ai.lifecycle.user_monitor import UserMonitor
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ai.integration.unified_control_center import UnifiedControlCenter

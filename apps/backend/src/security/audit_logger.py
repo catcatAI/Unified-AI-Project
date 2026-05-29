@@ -5,7 +5,7 @@ Audit Logging System for AI Operations. (SKELETON)
 import logging
 import json
 import os
-import threading  # type: ignore
+import threading
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from enum import Enum

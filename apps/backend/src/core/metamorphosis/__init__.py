@@ -14,7 +14,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .soul_core import (
+from .soul_core import (  # noqa: E402
     SoulCore,
     SoulSignature,
     IdentityCore,
@@ -24,7 +24,7 @@ from .soul_core import (
     create_soul_core,
 )
 
-from .body_adapter import (
+from .body_adapter import (  # noqa: E402
     BodyAdapter,
     StateSnapshot,
     TransferRecord,
@@ -35,7 +35,7 @@ from .body_adapter import (
     create_body_adapter,
 )
 
-from .transition_anim import (
+from .transition_anim import (  # noqa: E402
     TransitionAnimator,
     TransitionManager,
     TransitionConfig,

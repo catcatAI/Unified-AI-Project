@@ -204,7 +204,7 @@ class BaseAgent:
         logger.info(
             f"[{self.agent_id}] Processing task {task.task_id} with priority {task.priority.name}"
         )
-        task_start_time = asyncio.get_running_loop().time()
+        asyncio.get_running_loop().time()
         self._task_counter += 1
 
         try:

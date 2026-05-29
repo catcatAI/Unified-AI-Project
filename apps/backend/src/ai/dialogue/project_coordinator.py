@@ -378,7 +378,7 @@ class ProjectCoordinator:
     def _fallback_decompose(self, query: str) -> List[Dict[str, Any]]:
         core = self._angela_config.get_authority("angela_core", {})
         patterns = core.get("fallback_patterns", {})
-        query_lower = query.lower()
+        query.lower()
 
         task_patterns = patterns.get("task_decompose", [])
         for p in task_patterns:

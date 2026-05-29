@@ -102,7 +102,7 @@ class HAMQueryEngine:
                             break
                     if not keyword_match:
                         match = False
-                except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
+                except Exception:  # broad exception acceptable: keyword search should skip unprocessable memories
                     # Fallback: Maybe it was double-base64 encoded?
                     try:
                         import base64
@@ -315,7 +315,7 @@ class HAMQueryEngine:
                         )
                     )
 
-            except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
+            except Exception:  # broad exception acceptable: keyword search should skip unprocessable memories
                 # Fallback for double-base64
                 try:
                     import base64

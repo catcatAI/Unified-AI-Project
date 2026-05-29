@@ -28,6 +28,7 @@ import shutil
 import json
 import subprocess
 import shlex
+import sys
 from core.system.config.async_io import async_write_text, async_write_file
 import logging
 
@@ -848,7 +849,7 @@ class DesktopInteraction:
         }
 
         try:
-            error_type = type(error).__name__
+            type(error).__name__
             error_message = str(error)
 
             # 1. 文件不存在时的优雅处理 / Graceful handling when file doesn't exist
@@ -894,7 +895,8 @@ class DesktopInteraction:
                     try:
                         import stat
 
-                        os.chmod(operation.source_path, stat.S_IWRITE | stat.S_IREAD)
+                        if sys.platform != "win32":
+                            os.chmod(operation.source_path, stat.S_IWRITE | stat.S_IREAD)
                         results["recovery_action"] = "attempt_permission_fix"
                         results["handled"] = True
                     except Exception as e:  # broad exception acceptable: permission fix errors should be logged

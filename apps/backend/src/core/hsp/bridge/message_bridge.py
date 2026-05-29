@@ -67,10 +67,10 @@ class MessageBridge:
 
         # Normalize payload
         if isinstance(payload, (dict, list)):
-            payload_bytes = json.dumps(payload).encode("utf-8")
+            json.dumps(payload).encode("utf-8")
         elif isinstance(payload, str):
-            payload_bytes = payload.encode("utf-8")
+            payload.encode("utf-8")
         else:
-            payload_bytes = str(payload).encode("utf-8")
+            str(payload).encode("utf-8")
 
         await self.external_connector.send(message)  # Stubbed send usually takes dict

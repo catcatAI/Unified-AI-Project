@@ -133,7 +133,7 @@ class ModelContextManager:
                 self.model_metrics[model_id].update_from_call(call_record)
 
             # 创建对应的上下文
-            context_content = {
+            {
                 "call_record": {
                     "record_id": call_record.record_id,
                     "caller_model_id": caller_model_id,
@@ -238,7 +238,7 @@ class AgentContextManager:
             self.collaborations[collaboration.collaboration_id] = collaboration
 
             # 创建对应的上下文
-            context_content = {
+            {
                 "collaboration": {
                     "collaboration_id": collaboration.collaboration_id,
                     "task_id": task_id,
@@ -276,7 +276,7 @@ class AgentContextManager:
             collaboration.add_step(step)
 
             # 更新上下文
-            context_content = {
+            {
                 "collaboration_step": {
                     "step_id": step.step_id,
                     "collaboration_id": collaboration_id,
@@ -307,7 +307,7 @@ class AgentContextManager:
             collaboration.complete()
 
             # 更新上下文
-            context_content = {
+            {
                 "collaboration_completion": {
                     "collaboration_id": collaboration_id,
                     "end_time": (
@@ -332,7 +332,7 @@ class AgentContextManager:
                 logger.error(f"Collaboration {collaboration_id} not found", exc_info=True)
                 return None
 
-            collaboration = self.collaborations[collaboration_id]
+            self.collaborations[collaboration_id]
 
             # 搜索相关的上下文
             # contexts = self.context_manager.search_contexts(collaboration_id, [ContextType.MODEL])  # Commented - needs proper import

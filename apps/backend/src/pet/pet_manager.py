@@ -187,7 +187,7 @@ class PetManager:
         try:
             import asyncio
 
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
             asyncio.create_task(self._notify_state_change("sync_bio"))
         except RuntimeError:
             # No running event loop during module import, skip notification

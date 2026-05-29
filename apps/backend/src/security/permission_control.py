@@ -6,7 +6,7 @@ Implements multi-level permission control for AI operations. (SKELETON)
 import logging
 import json
 import os  # For os.path.exists
-import fnmatch  # type: ignore
+import fnmatch
 from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass, field

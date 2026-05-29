@@ -3,6 +3,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum, auto
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -91,4 +92,3 @@ class AuditorySampler:
         }
 
 
-import random  # Added for internal mock logic

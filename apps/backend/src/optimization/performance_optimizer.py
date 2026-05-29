@@ -6,9 +6,9 @@
 import asyncio
 import logging
 import time
-import functools  # type: ignore
-import hashlib  # type: ignore
-import yaml  # type: ignore
+import functools
+import hashlib
+import yaml  # type: ignore[import-untyped]
 from collections import OrderedDict
 from dataclasses import dataclass
 from unittest.mock import Mock
@@ -19,7 +19,7 @@ from typing import Dict, Any, Callable, Optional, List, Tuple, TypeVar, cast
 try:
     import psutil
 except ImportError:
-    psutil = object()  # type: ignore
+    psutil = object()  # type: ignore[assignment]
     psutil.cpu_percent = lambda interval: 0.0
     psutil.virtual_memory = lambda: Mock(percent=0.0)
     psutil.disk_io_counters = lambda: Mock(read_bytes=0, write_bytes=0)

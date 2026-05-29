@@ -148,7 +148,7 @@ class EnterpriseMonitor:
         }
 
 
-from core.interfaces.service_registry import get_registry
+from core.interfaces.service_registry import get_registry  # noqa: E402
 
 # 全局監控器實例
 enterprise_monitor = EnterpriseMonitor()

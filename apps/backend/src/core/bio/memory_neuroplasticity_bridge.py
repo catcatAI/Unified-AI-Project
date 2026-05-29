@@ -24,11 +24,10 @@ from datetime import datetime, timedelta
 import asyncio
 import logging
 import math
+from .neuroplasticity import NeuroplasticitySystem
 
 
 logger = logging.getLogger(__name__)
-
-from .neuroplasticity import NeuroplasticitySystem
 
 
 @dataclass
@@ -195,7 +194,7 @@ class MemoryNeuroplasticityBridge:
         # Create neuroplasticity trace
         neuro_id = f"np_{memory_id}"
 
-        trace = self.neuroplasticity.create_memory_trace(
+        self.neuroplasticity.create_memory_trace(
             memory_id=neuro_id,
             content=content,
             initial_weight=initial_strength,

@@ -526,7 +526,7 @@ class CapacityPlanner:
                 return None
 
             # GPU使用通常有特定模式
-            avg_gpu = np.mean(gpu_history) if gpu_history else 0.0
+            np.mean(gpu_history) if gpu_history else 0.0
             max_gpu = np.max(gpu_history) if gpu_history else 0.0
 
             # 预测基于最大使用率

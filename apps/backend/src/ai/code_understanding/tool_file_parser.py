@@ -14,7 +14,7 @@ def extract_method_parameters(method_node: ast.FunctionDef) -> List[Dict[str, An
     args = method_node.args
     # Positional and keyword-only arguments
     all_args = args.posonlyargs + args.args + args.kwonlyargs
-    all_defaults = args.defaults + args.kw_defaults
+    args.defaults + args.kw_defaults
 
     # Defaults for positional/keyword arguments are at the end of args.defaults
     # For kwonlyargs, kw_defaults is a list of values, some can be None if no default

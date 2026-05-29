@@ -264,14 +264,14 @@ class MessageManager:
 # 创建全局消息管理器实例
 message_manager = MessageManager()
 
-from fastapi import (
+from fastapi import (  # noqa: E402
     FastAPI,
     Depends,
     Body,
 )
-from services.angela_llm_service import get_llm_service
+from services.angela_llm_service import get_llm_service  # noqa: E402
 
-from api.router import router as api_v1_router
+from api.router import router as api_v1_router  # noqa: E402
 
 app = FastAPI(
     title="Angela AI API",
@@ -279,24 +279,24 @@ app = FastAPI(
     version="6.0.4",
 )
 
-from api.lifespan import (
+from api.lifespan import (  # noqa: E402
     lifespan,
     setup_middleware,
 )
 
-from api.routes.chat_routes import router as chat_router
-from api.routes.desktop_routes import router as desktop_router
+from api.routes.chat_routes import router as chat_router  # noqa: E402
+from api.routes.desktop_routes import router as desktop_router  # noqa: E402
 
 setup_middleware(app)
 app.router.lifespan_context = lifespan
 
 
-from services.websocket_manager import websocket_handler, broadcast_state_updates, manager as ws_manager
+from services.websocket_manager import websocket_handler, broadcast_state_updates, manager as ws_manager  # noqa: E402
 
 app.websocket("/ws")(websocket_handler)
 
-from services.atlassian_api import atlassian_router
-from services.api.state_matrix_api import state_matrix_router
+from services.atlassian_api import atlassian_router  # noqa: E402
+from services.api.state_matrix_api import state_matrix_router  # noqa: E402
 
 # Include existing routers
 app.include_router(api_v1_router)

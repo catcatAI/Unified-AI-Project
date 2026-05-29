@@ -234,7 +234,7 @@ class ComputationMatrix:
         """获取最优块大小 / Get optimal block size"""
         rules = self.get_optimization_for_architecture(architecture)
         simd_width = rules.get("simd_width", 32)
-        cache_line = rules.get("cache_line", 64)
+        rules.get("cache_line", 64)
 
         block_size = int(np.sqrt(cache_size_bytes / 8 / 4))
         block_size = max(block_size, simd_width)

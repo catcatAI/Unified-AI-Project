@@ -188,14 +188,14 @@ class ExecutionMonitor:
             # 測試簡單命令的響應時間
             start_time = time.time()
             if os.name == "nt":  # Windows
-                result = subprocess.run(
+                subprocess.run(
                     ["echo", "test"],
                     capture_output=True,
                     timeout=5.0,
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
             else:  # Unix/Linux
-                result = subprocess.run(["echo", "test"], capture_output=True, timeout=5.0)
+                subprocess.run(["echo", "test"], capture_output=True, timeout=5.0)
 
             response_time = time.time() - start_time
 
@@ -406,13 +406,18 @@ class ExecutionMonitor:
             timeout: 超時時間(秒)
         """
 
-        def timeout_handler(signum, frame):
+        def timeout_handler(signum=None, frame=None):
             raise TimeoutError(f"Operation timed out after {timeout} seconds")
 
         # 設置信號處理器(僅在Unix系統上)
         if hasattr(signal, "SIGALRM"):
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(int(timeout))
+        else:
+            # Windows fallback using threading.Timer
+            timer = threading.Timer(timeout, timeout_handler)
+            timer.daemon = True
+            timer.start()
 
         try:
             yield
@@ -420,6 +425,8 @@ class ExecutionMonitor:
             if hasattr(signal, "SIGALRM"):
                 signal.alarm(0)
                 signal.signal(signal.SIGALRM, old_handler)
+            else:
+                timer.cancel()
 
     async def execute_async_command(
         self,

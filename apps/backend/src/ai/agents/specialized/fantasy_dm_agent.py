@@ -54,7 +54,7 @@ class FantasyDMAgent(BaseAgent):
         item2 = params.get("item2", {})
         
         # Meta-Prompt for Alchemy Logic
-        prompt = f"""
+        f"""
         Role: Alchemy System for 'Witch's Alchemy Chronicle'.
         Items: 1. {item1.get('name')} ({item1.get('description')}), 2. {item2.get('name')} ({item2.get('description')})
         Action: Determine the brewing result.

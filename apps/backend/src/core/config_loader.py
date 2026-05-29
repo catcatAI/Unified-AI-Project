@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, TypeVar, Generic, Union
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from enum import Enum
+from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -316,7 +317,7 @@ class AngelaConfigManager:
             return False
 
         learned = self.get_learned("patterns", {})
-        authority = self.get_authority("angela_core", {}).get("intents", {})
+        self.get_authority("angela_core", {}).get("intents", {})
 
         patterns = learned.get("intent_patterns", {})
         existing = patterns.get(intent_name, {})
@@ -552,8 +553,6 @@ class AngelaConfigManager:
 
 
 # ── 全域單例 ────────────────────────────────────────────────────────────────
-
-from core.interfaces.service_registry import get_registry
 
 _angela_config: Optional[AngelaConfigManager] = None
 

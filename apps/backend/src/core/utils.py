@@ -229,7 +229,7 @@ def retry(
             for attempt in range(max_attempts):
                 try:
                     return func(*args, **kwargs)
-                except exceptions as e:
+                except exceptions:
                     if attempt == max_attempts - 1:
                         raise
                     time.sleep(current_delay)
@@ -255,7 +255,7 @@ def async_retry(
             for attempt in range(max_attempts):
                 try:
                     return await func(*args, **kwargs)
-                except exceptions as e:
+                except exceptions:
                     if attempt == max_attempts - 1:
                         raise
                     await asyncio.sleep(current_delay)

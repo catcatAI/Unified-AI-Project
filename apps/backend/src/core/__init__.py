@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Action Execution Layer
-from .action_execution_bridge import (
+from .action_execution_bridge import (  # noqa: E402
     ActionExecutionBridge,
     ActionExecutionBridgeFactory,
     ActionType,
@@ -26,7 +26,7 @@ from .action_execution_bridge import (
 )
 
 # Autonomous Systems (refactored to core/engine/)
-from .engine.action_executor import (
+from .engine.action_executor import (  # noqa: E402
     ActionExecutor,
     ActionQueue,
     ActionPriority,
@@ -38,7 +38,7 @@ from .engine.action_executor import (
 )
 
 # Theoretical Formula Systems - Digital Life Frameworks
-from .hsm_formula_system import (
+from .hsm_formula_system import (  # noqa: E402
     HSMFormulaSystem,
     CognitiveGap,
     ExplorationEvent,
@@ -46,7 +46,7 @@ from .hsm_formula_system import (
     ExplorationResult,
 )
 
-from .cdm_dividend_model import (
+from .cdm_dividend_model import (  # noqa: E402
     CDMCognitiveDividendModel,
     CognitiveInvestment,
     LifeSenseOutput,
@@ -54,7 +54,7 @@ from .cdm_dividend_model import (
     DividendDistribution,
 )
 
-from .life_intensity_formula import (
+from .life_intensity_formula import (  # noqa: E402
     LifeIntensityFormula,
     KnowledgeState,
     ConstraintState,
@@ -63,7 +63,7 @@ from .life_intensity_formula import (
     LifeIntensitySnapshot,
 )
 
-from .active_cognition_formula import (
+from .active_cognition_formula import (  # noqa: E402
     ActiveCognitionFormula,
     StressVector,
     OrderBaseline,
@@ -72,7 +72,7 @@ from .active_cognition_formula import (
     OrderType,
 )
 
-from .non_paradox_existence import (
+from .non_paradox_existence import (  # noqa: E402
     NonParadoxExistence,
     GrayZoneVariable,
     PossibilityState,
@@ -81,7 +81,7 @@ from .non_paradox_existence import (
 )
 
 # Precision System - Memory-Precision Integration
-from .precision.precision_manager import (
+from .precision.precision_manager import (  # noqa: E402
     PrecisionManager,
     DecimalMemoryBank,
     HierarchicalPrecisionRouter,
@@ -91,7 +91,7 @@ from .precision.precision_manager import (
 )
 
 # Maturity System - L0 to L11 Growth
-from .maturity.maturity_system import (
+from .maturity.maturity_system import (  # noqa: E402
     MaturityLevel,
     MaturityManager,
     ExperienceTracker,
@@ -99,31 +99,31 @@ from .maturity.maturity_system import (
 )
 
 # Creative Systems - Real API Integration
-from .art.desktop_demo import (
+from .art.desktop_demo import (  # noqa: E402
     generate_and_save_to_desktop,
 )
 
-from .art.real_creator import (
+from .art.real_creator import (  # noqa: E402
     AngelaRealCreator,
     ComfyUIClient,
     AngelaRealVoice,
     AngelaRealBrowser,
 )
 
-from .art.real_comfyui_api import (
+from .art.real_comfyui_api import (  # noqa: E402
     AngelaRealPainter,
 )
 
-from .art.real_edge_tts import (
+from .art.real_edge_tts import (  # noqa: E402
     AngelaRealVoice,
 )
 
-from .art.real_playwright_browser import (
+from .art.real_playwright_browser import (  # noqa: E402
     AngelaRealBrowser,
 )
 
 # Metamorphosis Systems - Version Transition
-from .metamorphosis.soul_core import (
+from .metamorphosis.soul_core import (  # noqa: E402
     SoulCore,
     SoulSignature,
     IdentityCore,
@@ -133,7 +133,7 @@ from .metamorphosis.soul_core import (
     create_soul_core,
 )
 
-from .metamorphosis.body_adapter import (
+from .metamorphosis.body_adapter import (  # noqa: E402
     BodyAdapter,
     StateSnapshot,
     TransferRecord,
@@ -144,7 +144,7 @@ from .metamorphosis.body_adapter import (
     create_body_adapter,
 )
 
-from .metamorphosis.transition_anim import (
+from .metamorphosis.transition_anim import (  # noqa: E402
     TransitionAnimator,
     TransitionManager,
     TransitionConfig,
@@ -156,7 +156,7 @@ from .metamorphosis.transition_anim import (
 )
 
 # Internationalization (i18n)
-from .i18n.i18n_manager import (
+from .i18n.i18n_manager import (  # noqa: E402
     I18nManager,
     I18nConfig,
     I18nContext,
@@ -172,7 +172,7 @@ from .i18n.i18n_manager import (
 )
 
 # Cloud Sync
-from .sync.cloud_sync import (
+from .sync.cloud_sync import (  # noqa: E402
     CloudSyncManager,
     CloudSyncConfig,
     SyncItem,
@@ -186,7 +186,7 @@ from .sync.cloud_sync import (
 )
 
 # Hardware Support
-from .hardware.hal import (
+from .hardware.hal import (  # noqa: E402
     ArchitectureType,
     InstructionSet,
     HardwareVendor,
@@ -202,7 +202,7 @@ from .hardware.hal import (
     create_hardware_manager,
 )
 
-from .hardware.precision_matrix import (
+from .hardware.precision_matrix import (  # noqa: E402
     PrecisionConfig,
     PrecisionMatrix,
     PrecisionManager,
@@ -212,7 +212,7 @@ from .hardware.precision_matrix import (
     create_precision_manager,
 )
 
-from .hardware.compute_matrix import (
+from .hardware.compute_matrix import (  # noqa: E402
     OptimizationStrategy,
     MemoryLayout,
     KernelConfig,
@@ -224,7 +224,7 @@ from .hardware.compute_matrix import (
 )
 
 # Version Management
-from .version import (
+from .version import (  # noqa: E402
     get_version,
     get_version_info,
     __version__,

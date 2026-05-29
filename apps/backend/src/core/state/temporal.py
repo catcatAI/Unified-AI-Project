@@ -335,7 +335,7 @@ class TemporalState:
         variance = sum((v - mean) ** 2 for v in values) / len(values)
 
         n = len(values)
-        x_mean = (n - 1) / 2.0
+        (n - 1) / 2.0
         slope = 0.0
         if n >= 2:
             sum_xy = sum(i * v for i, v in enumerate(values))

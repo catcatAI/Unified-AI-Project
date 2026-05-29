@@ -56,7 +56,7 @@ class ContextHAMIntegration:
                 return False
 
             # 将上下文内容转换为HAM格式
-            ham_content = {
+            {
                 "context_id": context.context_id,
                 "context_type": context.context_type.value,
                 "content": context.content,
@@ -146,7 +146,7 @@ class ContextHAMIntegration:
             # )
 
             # 创建对应的上下文系统记录
-            context_content = {
+            {
                 "ham_memory_id": ham_memory_data.get("id"),
                 "ham_timestamp": ham_memory_data.get("timestamp"),
                 "sync_direction": "ham_to_context",
@@ -194,7 +194,7 @@ class ContextHAMIntegration:
             # )
 
             # 记录更新上下文
-            context_content = {
+            {
                 "memory_id": memory_id,
                 "updates": updates,
                 "update_time": datetime.now().isoformat(),
@@ -244,7 +244,7 @@ class ContextHAMIntegration:
                 pass
 
             # 记录转移操作
-            transfer_context = {
+            {
                 "source_context_id": source_context_id,
                 "target_memory_id": "new_memory_id",  # Placeholder
                 "source_type": source_context.context_type.value,

@@ -79,7 +79,7 @@ class HAMLISCache(LISCacheInterface):
     async def store_incident(self, incident_record: LIS_IncidentRecord) -> bool:
         """Stores incident into HAM using its rehydrated gist capability."""
         try:
-            mem_id = f"{LIS_INCIDENT_PREFIX}{incident_record['incident_id']}"
+            f"{LIS_INCIDENT_PREFIX}{incident_record['incident_id']}"
             metadata = {
                 "type": "lis_incident",
                 "anomaly_type": incident_record["anomaly_event"]["anomaly_type"],

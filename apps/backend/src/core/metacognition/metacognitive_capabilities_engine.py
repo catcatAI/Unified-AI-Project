@@ -414,7 +414,7 @@ class MetacognitiveCapabilitiesEngine:
             profiles_file = self.workspace_path / "capability_profiles.json"
 
             if state_file.exists():
-                    state_data = await async_json_load(str(state_file))
+                    await async_json_load(str(state_file))
 
             if profiles_file.exists():
                     profiles_data = await async_json_load(str(profiles_file))

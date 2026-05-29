@@ -160,7 +160,6 @@ class IntentRegistry:
 
     def detect_task_type(self, text: str) -> str:
         """DocumentBuilder._detect_task_type 兼容介面 — 僅匹配 task-type patterns"""
-        task_types = {"character_card", "document", "research", "plan", "general"}
         text_lower = text.lower()
         for ttype in ("character_card", "document", "research", "plan"):
             pattern = next((p for p in self.patterns if p.name == ttype), None)

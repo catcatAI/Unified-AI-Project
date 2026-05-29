@@ -272,7 +272,7 @@ class BrowserController:
                         for result_div in soup.find_all("div", class_="result__body", limit=max_results):
                             title_a = result_div.find("a", class_="result__title")
                             snippet_a = result_div.find("a", class_="result__snippet")
-                            url_a = result_div.find("a", class_="result__url")
+                            result_div.find("a", class_="result__url")
                             
                             if title_a and snippet_a:
                                 title = title_a.get_text(strip=True)

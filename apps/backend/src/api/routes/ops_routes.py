@@ -9,12 +9,9 @@ from fastapi.responses import JSONResponse
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
+from ai.ops.intelligent_ops_manager import IntelligentOpsManager, get_intelligent_ops_manager
 
 logger = logging.getLogger(__name__)
-
-import asyncio
-
-from ai.ops.intelligent_ops_manager import IntelligentOpsManager, get_intelligent_ops_manager
 
 router = APIRouter(prefix="/ops", tags=["AI运维"])
 

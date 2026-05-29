@@ -238,7 +238,7 @@ class ThetaRouter:
                 self._record_routing(port.name, decision)
 
             elif decision.action == RouteAction.CREATE_AXIS and decision.proposed_name:
-                new_axis = sm.create_axis(
+                sm.create_axis(
                     name=decision.proposed_name,
                     label=f"Auto-created for port: {port.name}",
                     semantic_vector=port.semantic_vector,

@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .i18n_manager import (
+from .i18n_manager import (  # noqa: E402
     I18nManager,
     I18nConfig,
     I18nContext,

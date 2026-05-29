@@ -1465,7 +1465,7 @@ class ExplicitImplicitLearning:
 
     def _apply_interference(self, new_event_id: str) -> None:
         """应用干扰 / Apply interference to existing explicit memories"""
-        new_event = self.explicit_memories[new_event_id]
+        self.explicit_memories[new_event_id]
 
         for event_id, event in self.explicit_memories.items():
             if event_id != new_event_id:

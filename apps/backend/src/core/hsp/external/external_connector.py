@@ -97,7 +97,7 @@ class MessageRouter:
                 # Forward message to target agent
                 try:
                     async with httpx.AsyncClient() as client:
-                        response = await client.post(
+                        await client.post(
                             f"http://{DEFAULT_HOST}:{target_port}/message", json=message, timeout=5.0
                         )
                     return {"status": "delivered", "target": target_id}
@@ -114,7 +114,7 @@ class MessageRouter:
             for agent_id, info in self.registry.items():
                 try:
                     async with httpx.AsyncClient() as client:
-                        response = await client.post(
+                        await client.post(
                             f"http://{DEFAULT_HOST}:{info['port']}/message", json=message, timeout=5.0
                         )
                         results.append({"agent": agent_id, "status": "delivered"})

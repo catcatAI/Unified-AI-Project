@@ -251,7 +251,7 @@ class KnowledgeGraph:
             try:
                 filepath = Path(node.file)
                 source = filepath.read_text(encoding="utf-8")
-                tree = ast.parse(source)
+                ast.parse(source)
             except Exception:
                 continue
 

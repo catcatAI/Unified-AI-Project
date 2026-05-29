@@ -23,7 +23,7 @@ except ImportError:
     psutil.net_io_counters.return_value = Mock(bytes_sent=0, bytes_recv=0)
 
 try:
-    import pynvml  # type: ignore
+    import pynvml  # type: ignore[import-untyped]
 except ImportError:
     pynvml = Mock()
     pynvml.nvmlInit.side_effect = ImportError

@@ -12,6 +12,7 @@
 from enum import Enum
 from typing import TypedDict, Dict, List, Optional, Any, Required
 from typing_extensions import Literal
+from dataclasses import dataclass
 import logging
 
 logger = logging.getLogger(__name__)
@@ -167,7 +168,6 @@ class LLMModelInfo(TypedDict, total=False):
 
 
 # HAM Memory Types
-from dataclasses import dataclass
 
 
 @dataclass

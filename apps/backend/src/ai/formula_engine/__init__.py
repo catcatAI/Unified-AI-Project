@@ -93,7 +93,7 @@ class FormulaEngine:
                     ):
                         # Only add if enabled (defaults to True if 'enabled' key is missing)
                         if entry.get("enabled", True):  # Default to enabled if key missing
-                            active_formulas.append(entry)  # type: ignore
+                            active_formulas.append(entry)  # type: ignore[arg-type]
                         else:
                             logger.info(
                                 f"FormulaEngine: Skipping disabled formula entry: {entry.get('name')}"
@@ -154,7 +154,7 @@ class FormulaEngine:
                 match_found = cond_lower in current_normalized_input
 
                 if match_found:
-                    return formula  # type: ignore
+                    return formula  # type: ignore[return-value]
         return None
 
     def execute_formula(

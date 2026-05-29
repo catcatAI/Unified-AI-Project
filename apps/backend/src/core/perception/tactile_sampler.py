@@ -53,7 +53,7 @@ class TactileSampler:
         # 模擬 AI 推斷過程
         texture_complexity = visual_features.get("texture_complexity", 0.5)
         specular_reflection = visual_features.get("specular_reflection", 0.5)  # 光澤度
-        color_warmth = visual_features.get("color_warmth", 0.5)
+        visual_features.get("color_warmth", 0.5)
 
         # 推斷材質類型
         material = self._classify_material(visual_features)

@@ -11,15 +11,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from fastapi import APIRouter, Body
-from api.routes.ops_routes import router as ops_router
-from api.routes.chat_routes import router as chat_router
-from api.routes.desktop_routes import router as desktop_router
+from fastapi import APIRouter, Body  # noqa: E402
+from api.routes.ops_routes import router as ops_router  # noqa: E402
+from api.routes.chat_routes import router as chat_router  # noqa: E402
+from api.routes.desktop_routes import router as desktop_router  # noqa: E402
 
 router = APIRouter(prefix="/api/v1")
 
 # Lazy-load endpoint routers
-from api.v1.endpoints import include_endpoint_routers
+from api.v1.endpoints import include_endpoint_routers  # noqa: E402
 include_endpoint_routers(router)
 
 router.include_router(ops_router)

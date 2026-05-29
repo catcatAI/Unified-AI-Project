@@ -21,7 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .unified_hardware_center import (
+from .unified_hardware_center import (  # noqa: E402
     UnifiedHardwareCenter,
     HardwareDetector,
     PrecisionManager,
@@ -40,7 +40,7 @@ from .unified_hardware_center import (
     create_hardware_center,
 )
 
-from .gpu_accelerator import (
+from .gpu_accelerator import (  # noqa: E402
     GPUAcceleratorService,
     GPUPriority,
     RenderQuality,
@@ -51,7 +51,7 @@ from .gpu_accelerator import (
     gpu_available,
 )
 
-from .webgl_bridge import WebGLBridge, WebGLGPUInfo, get_webgl_bridge, handle_gpu_info_message
+from .webgl_bridge import WebGLBridge, WebGLGPUInfo, get_webgl_bridge, handle_gpu_info_message  # noqa: E402
 
 __all__ = [
     # 類

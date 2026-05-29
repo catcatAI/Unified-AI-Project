@@ -52,7 +52,7 @@ class HAMQueryEngine:
     ) -> HAMMemory:
         """反序列化內部數據包為 HAMMemory 物件。"""
         timestamp = data_package.get("timestamp", "")
-        data_type = data_package.get("data_type", "")
+        data_package.get("data_type", "")
         metadata = data_package.get("metadata", {})
         encrypted_package = data_package["encrypted_package"]
 
@@ -91,7 +91,6 @@ class HAMQueryEngine:
         logger.debug(f"HAM: Retrieving relevant memories for query: '{query}'")
         semantic_results_ids = set()
         semantic_memories: List[HAMMemory] = []
-        fallback_semantic = False
 
         # 1. Perform Semantic Search
         if query and self.chroma_collection is not None:
@@ -125,12 +124,10 @@ class HAMQueryEngine:
             except Exception as e:  # broad exception acceptable: semantic search should fallback gracefully
                 logger.error(f"Error during semantic search for query '{query}': {e}", exc_info=True)
                 # Fallback if semantic search fails, proceed with only keyword search
-                fallback_semantic = True
         else:
             logger.info(
                 f"Vector / Chroma store disabled or no query, skipping semantic search for query: '{query}'"
             )
-            fallback_semantic = True
 
         # 2. Perform Keyword Search (and potential metadata filters)
         keyword_memories: List[HAMMemory] = []

@@ -287,7 +287,7 @@ class CognitivePipeline:
                 return f"答案是 {math_result:.4f}... 幾乎什麼都沒有了。"
 
         tone = gradient_result.blended_tone.value
-        attractor_desc = (
+        (
             gradient_result.nearest_attractors[0][0].description
             if gradient_result.nearest_attractors
             else ""

@@ -781,12 +781,8 @@ class Live2DAvatarGenerator:
             from PIL import Image, ImageDraw
 
             # API 端點 (預設使用本機 segmentation 服務)
-            seg_api_url = self.config.get("segmentation_api_url", "http://127.0.0.1:8000/segment")
+            self.config.get("segmentation_api_url", "http://127.0.0.1:8000/segment")
             
-            payload = {
-                "layer_name": layer.layer_name,
-                "style": style_preferences or {}
-            }
             
             # NOTE: 待分層微服務上線後可開啟此段（當前使用 Pillow fallback）
             # async with aiohttp.ClientSession() as session:

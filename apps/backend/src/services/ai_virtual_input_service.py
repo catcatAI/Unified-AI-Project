@@ -7,7 +7,7 @@ It logs these actions and maintains a simplified virtual state. (SKELETON)
 """
 
 import logging
-import copy  # type: ignore
+import copy
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any, Tuple, Literal
 from dataclasses import dataclass, field, asdict

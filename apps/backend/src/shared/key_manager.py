@@ -12,6 +12,7 @@ Angela AI v6.0 - Key Manager (Legacy Support & Refined)
 """
 
 import os
+import sys
 import logging
 import secrets
 import hashlib
@@ -117,7 +118,8 @@ class UnifiedKeyManager:
             with open(self.keys_file, "w", encoding="utf-8") as f:
                 json.dump(keys_data, f, indent=2)
             # 设置文件权限（仅所有者可读写）
-            os.chmod(self.keys_file, 0o600)
+            if sys.platform != "win32":
+                os.chmod(self.keys_file, 0o600)
         except Exception as e:  # broad exception acceptable: ensure save errors are logged but don't crash
             logger.error(f"保存密钥失败: {e}", exc_info=True)
 

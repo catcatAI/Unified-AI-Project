@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .cloud_sync import (
+from .cloud_sync import (  # noqa: E402
     CloudSyncManager,
     CloudSyncConfig,
     SyncItem,

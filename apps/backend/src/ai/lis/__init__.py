@@ -7,10 +7,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .lis_manager import LISManager
-from .lis_cache_interface import LISCacheInterface, HAMLISCache
-from .err_introspector import ERRIntrospector
-from .types import (
+from .lis_manager import LISManager  # noqa: E402
+from .lis_cache_interface import LISCacheInterface, HAMLISCache  # noqa: E402
+from .err_introspector import ERRIntrospector  # noqa: E402
+from .types import (  # noqa: E402
     LIS_AnomalyType,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_IncidentRecord,

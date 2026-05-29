@@ -4,9 +4,9 @@
 
 import logging
 import asyncio
-import hashlib  # type: ignore
-import wave  # type: ignore
-import numpy as np  # type: ignore
+import hashlib
+import wave
+import numpy as np  # type: ignore[import-untyped]
 import io
 from datetime import datetime
 from typing import Any, Dict, Optional, List, Tuple
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Optional dependencies for real STT/TTS
 try:
-    import whisper  # type: ignore
+    import whisper  # type: ignore[import-untyped]
     import tempfile
     import os
 
@@ -37,7 +37,7 @@ except ImportError:
     )
 
 try:
-    import edge_tts  # type: ignore
+    import edge_tts  # type: ignore[import-untyped]
     import tempfile
     import os
 

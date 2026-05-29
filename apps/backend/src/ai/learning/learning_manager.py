@@ -290,7 +290,7 @@ class LearningManager:
 
     async def _distill_strategy(self, project_case: Dict[str, Any], case_id: str):
         """Distills a reusable strategy from a project case using an LLM."""
-        prompt = self._create_distillation_prompt(project_case)
+        self._create_distillation_prompt(project_case)
         try:
             # Simplified for brevity. In actual code, calls LLM and parses JSON.
             logger.info(f"Distilling strategy for case {case_id}...")

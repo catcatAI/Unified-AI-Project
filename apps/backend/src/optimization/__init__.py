@@ -6,7 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .performance_optimizer import (
+from .performance_optimizer import (  # noqa: E402
     PerformanceOptimizer,
     get_performance_optimizer,
     cache_result,

@@ -215,17 +215,16 @@ class ChatService:
         from core.system.state_store import state_store
         
         # Get latest states from Store instead of direct matrix access
-        alpha = state_store.get_state("alpha")
+        state_store.get_state("alpha")
         beta = state_store.get_state("beta")
-        gamma = state_store.get_state("gamma")
+        state_store.get_state("gamma")
         delta = state_store.get_state("delta")
         epsilon = state_store.get_state("epsilon")
         theta = state_store.get_state("theta")
         zeta = state_store.get_state("zeta")
 
-        empathy_valence = 0.0
         if empathy_analysis and hasattr(empathy_analysis, "predicted_emotional_state"):
-            empathy_valence = getattr(empathy_analysis.predicted_emotional_state, "valence", 0.0)
+            getattr(empathy_analysis.predicted_emotional_state, "valence", 0.0)
             
         return {
             "alpha": {"energy": 1.0 - bio_state.get("stress_level", 0.0) * 0.5},

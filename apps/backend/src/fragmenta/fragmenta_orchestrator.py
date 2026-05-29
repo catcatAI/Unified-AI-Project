@@ -1,10 +1,8 @@
 from typing import Any, Dict, List
 import logging
+from fragmenta.core_ai.memory.ham_manager import HAMMemoryManager
 
 logger = logging.getLogger(__name__)
-
-# Assuming the import path is correct relative to the project structure
-from fragmenta.core_ai.memory.ham_manager import HAMMemoryManager
 
 
 class FragmentaOrchestrator:

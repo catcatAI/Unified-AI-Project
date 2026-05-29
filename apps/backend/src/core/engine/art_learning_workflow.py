@@ -9,6 +9,8 @@ import logging
 from enum import Enum
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+from dataclasses import dataclass, field
+import math
 from .art_learning_system import ArtLearningSystem
 from core.bio.biological_integrator import BiologicalIntegrator
 
@@ -39,10 +41,6 @@ class LearningObjective:
 # ANGELA-MATRIX: [L4] [βγ] [A] [L5+]
 # [Task N.22.1] 工作流資料類補完 / Workflow Data Class Completion
 # =============================================================================
-
-from dataclasses import dataclass, field
-from typing import Optional, List
-import math
 
 @dataclass
 class WorkflowProgress:

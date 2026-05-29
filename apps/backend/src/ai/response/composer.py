@@ -707,7 +707,7 @@ class NeuroVocabulary:
                 category = getattr(tmpl, "metadata", {}).get("category", "general")
             else:
                 category = category.value if hasattr(category, "value") else str(category)
-            metadata = getattr(tmpl, "metadata", {}) or {}
+            getattr(tmpl, "metadata", {}) or {}
             tmpl_id = getattr(tmpl, "id", "unknown")
 
             # 按标点拆分为句子（只分中句号/感叹/问号，不分英文句点避免打断省略号）
@@ -1044,7 +1044,7 @@ class NeuroBlender:
         for i, frag in enumerate(fragments):
             content = frag.content.strip()
             stype = frag.structural_type
-            is_last = i == len(fragments) - 1
+            i == len(fragments) - 1
 
             # Suppress duplicate structural types (only first instance passes)
             if stype == prev_type and stype in ("greeting", "closing_question", "transition"):

@@ -259,7 +259,7 @@ class DynamicThresholdManager:
                 # 更新所有参数
                 for param_name, param_state in self.parameters.items():
                     # 为当前参数构建特定的上下文
-                    param_context = self._build_context_for_parameter(param_name, context)
+                    self._build_context_for_parameter(param_name, context)
                     param_state.update(state_matrix=self.state_matrix)
 
                     # 记录参数变化（用于调试）

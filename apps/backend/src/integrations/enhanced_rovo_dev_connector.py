@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 try:
     import aiohttp
 except ImportError:
-    aiohttp = object()  # type: ignore
+    aiohttp = object()  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

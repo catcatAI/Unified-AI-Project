@@ -495,17 +495,15 @@ class HSPAdvancedPerformanceEnhancer:
                     result = await loop.run_in_executor(
                         self.optimizer.executor, original_publish_func, *args, **kwargs
                     )
-                success = True
             except Exception as e:  # broad exception acceptable: function execution may raise various runtime errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 
-                success = False
                 logger.error(f"消息发布失败: {e}", exc_info=True)
 
             # 记录结束时间
             end_time = time.time()
-            processing_time = (end_time - start_time) * 1000  # 转换为毫秒
+            (end_time - start_time) * 1000  # 转换为毫秒
 
             # 记录性能统计(如果可以获取节点信息)
             # 这里可以根据具体实现进行调整
@@ -531,17 +529,15 @@ class HSPAdvancedPerformanceEnhancer:
                     result = await loop.run_in_executor(
                         self.optimizer.executor, original_receive_func, *args, **kwargs
                     )
-                success = True
             except Exception as e:  # broad exception acceptable: function execution may raise various runtime errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 
-                success = False
                 logger.error(f"消息接收失败: {e}", exc_info=True)
 
             # 记录结束时间
             end_time = time.time()
-            processing_time = (end_time - start_time) * 1000  # 转换为毫秒
+            (end_time - start_time) * 1000  # 转换为毫秒
 
             # 记录性能统计(如果可以获取节点信息)
             # 这里可以根据具体实现进行调整

@@ -65,7 +65,7 @@ class EgoGuard:
             (filtered_response, was_modified)
         """
         output_mode = reflex_state.get("output_mode", "speak")
-        phase1_expression = reflex_state.get("animation", {}).get("expression", "")
+        reflex_state.get("animation", {}).get("expression", "")
 
         filtered = llm_response
         was_modified = False

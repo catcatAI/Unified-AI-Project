@@ -187,7 +187,7 @@ class HardwareDetector:
     @classmethod
     def _detect_instruction_set(cls, arch: ArchitectureType, info: Dict) -> InstructionSet:
         """检测指令集 / Detect instruction set"""
-        flags = info.get("flags", [])
+        info.get("flags", [])
 
         if arch in [ArchitectureType.X86_64, ArchitectureType.X86_32]:
             return InstructionSet.CISC
@@ -285,7 +285,6 @@ class HardwareManager:
 
     def detect_compute_unit(self) -> List[str]:
         """检测可用的计算单元 / Detect available compute units"""
-        units = ["cpu"]
 
         self._detect_gpu()
         self._detect_tpu()

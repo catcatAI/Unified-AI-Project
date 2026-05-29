@@ -389,7 +389,7 @@ class InfluenceSpace:
             source_dim = getattr(matrix, source_name, None)
             if source_dim is None:
                 continue
-            source_avg = source_dim.get_average()
+            source_dim.get_average()
 
             for target_name, influence in targets.items():
                 target_dim = getattr(matrix, target_name, None)

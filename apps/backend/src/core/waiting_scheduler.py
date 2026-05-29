@@ -178,7 +178,7 @@ class WaitingScheduler:
             self._active_count = len(self._queue) + 1
 
             if self._active_count > 1:
-                per_slot = max(1, self._active_count // max(1, int(remaining)))
+                max(1, self._active_count // max(1, int(remaining)))
                 for i, t in enumerate(self._queue):
                     remaining_seconds = max(0.1, t.deadline - now)
                     base_interval = remaining_seconds / self._active_count

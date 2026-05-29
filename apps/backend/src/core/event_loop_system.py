@@ -696,7 +696,7 @@ class EventLoopSystem:
         """Get list of pending events"""
         # This is a snapshot for external access
         status = await self.queue.get_status()
-        pending_count = status.get("等待中", 0)
+        status.get("等待中", 0)
         return []  # Actual implementation would return pending events
 
     def get_metrics(self) -> Dict[str, Any]:

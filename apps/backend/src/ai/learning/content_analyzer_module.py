@@ -158,7 +158,7 @@ class ContentAnalyzerModule:
         if doc:
             # Entity Extraction
             for ent in doc.ents:
-                entity_id = self._get_or_create_entity(ent, entities)
+                self._get_or_create_entity(ent, entities)
 
             # Manual entity extraction for known test patterns
             self._handle_known_test_entities(text, entities)
@@ -277,7 +277,7 @@ class ContentAnalyzerModule:
         self, hsp_fact_payload: HSPFactPayload, source_ai_id: str
     ) -> CAHSPFactProcessingResult:
         statement_type = hsp_fact_payload.get("statement_type")
-        fact_id = hsp_fact_payload.get("id", str(uuid.uuid4()))
+        hsp_fact_payload.get("id", str(uuid.uuid4()))
 
         if statement_type == "natural_language":
             nl_statement = hsp_fact_payload.get("statement_nl", "")

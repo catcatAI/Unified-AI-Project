@@ -73,7 +73,7 @@ class DialogueContextManager:
             self.conversations[conversation_id] = conversation
 
             # 创建对应的上下文
-            context_content = {
+            {
                 "conversation": {
                     "conversation_id": conversation_id,
                     "participants": participants,
@@ -103,7 +103,7 @@ class DialogueContextManager:
             conversation.add_message(message)
 
             # 创建对应的上下文
-            context_content = {
+            {
                 "message": {
                     "message_id": message.message_id,
                     "conversation_id": conversation_id,
@@ -219,7 +219,7 @@ class DialogueContextManager:
             conversation.context_summary = summary
 
             # 创建对应的上下文
-            context_content = {
+            {
                 "context_summary": {
                     "conversation_id": conversation_id,
                     "key_points": key_points,
@@ -247,7 +247,7 @@ class DialogueContextManager:
                 logger.error(f"Conversation {conversation_id} not found", exc_info=True)
                 return None
 
-            conversation = self.conversations[conversation_id]
+            self.conversations[conversation_id]
 
             # 搜索相关的上下文
             # contexts = self.context_manager.search_contexts(conversation_id, [ContextType.DIALOGUE])  # Commented - needs proper import
@@ -324,7 +324,7 @@ class DialogueContextManager:
             if source_conv.context_summary:
                 target_conv.context_summary = source_conv.context_summary
                 # 创建上下文记录传递
-                context_content = {
+                {
                     "context_transfer": {
                         "source_conversation_id": source_conversation_id,
                         "target_conversation_id": target_conversation_id,

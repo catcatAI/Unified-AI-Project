@@ -165,7 +165,7 @@ class LocalClusterManager:
                     if control_msg.get("command") == "shutdown":
                         logger.info(f"[Worker-{worker_id}] Received shutdown command")
                         break
-                except (queue.Empty, RuntimeError) as e:
+                except (queue.Empty, RuntimeError):
                     # 隊列空或運行時錯誤，繼續運行
                     pass
 
@@ -339,7 +339,7 @@ class LocalClusterManager:
         """執行推理任務"""
         payload = task.payload or {}
         model_id = payload.get("model_id", "unknown")
-        input_data = payload.get("input", {})
+        payload.get("input", {})
 
         logger.debug(f"[Worker-{worker_id}] Running inference on {model_id}")
 

@@ -23,15 +23,14 @@ from datetime import datetime
 import asyncio
 import logging
 from enum import Enum
-
-logger = logging.getLogger(__name__)
-
 from .physiological_tactile import PhysiologicalTactileSystem, TactileType, BodyPart
 from .endocrine_system import EndocrineSystem, HormoneType
 from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
 from .neuroplasticity import NeuroplasticitySystem
 from .emotional_blending import EmotionalBlendingSystem, BasicEmotion
 from utils.async_utils import safe_create_task
+
+logger = logging.getLogger(__name__)
 
 
 # P0-2: 生物事件定义

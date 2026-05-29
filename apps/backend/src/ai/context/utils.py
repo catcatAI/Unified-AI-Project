@@ -69,7 +69,7 @@ def deserialize_context(data: bytes):
     """
     try:
         json_str = data.decode("utf-8")
-        context_dict = json.loads(json_str)
+        json.loads(json_str)
 
         # context = Context(  # Commented - needs proper import
         #     context_id=context_dict["context_id"],

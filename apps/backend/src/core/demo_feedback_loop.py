@@ -10,9 +10,6 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-
-logger = logging.getLogger(__name__)
-
 from feedback_loop_engine import (
     FeedbackLoopEngine,
     FeedbackLoopEngineFactory,
@@ -20,6 +17,8 @@ from feedback_loop_engine import (
     PerceptionType,
     FeedbackLayer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 async def main():

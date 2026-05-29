@@ -178,7 +178,7 @@ class CodeLearningEngine:
     def _infer_pattern_id(self, feedback: str, correction: Optional[str]) -> Optional[str]:
         """從反饋推斷模式ID"""
         feedback_lower = feedback.lower()
-        correction_lower = (correction or "").lower()
+        (correction or "").lower()
 
         if "除零" in feedback or "divisor" in feedback_lower or "zero" in feedback_lower:
             return "PAT-001"
@@ -326,7 +326,7 @@ class CodeInspectorInterface:
 
     def fix_all_auto(self, dry_run: bool = True) -> Dict[str, Any]:
         """自動修復所有可自動修復的問題"""
-        report = self.project_inspector.check_all()
+        self.project_inspector.check_all()
         auto_fixable = self.inspector.get_auto_fixable()
 
         results = []

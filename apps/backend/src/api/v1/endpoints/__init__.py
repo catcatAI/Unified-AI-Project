@@ -1,4 +1,5 @@
 import logging
+from . import pet, economy
 
 logger = logging.getLogger(__name__)
 
@@ -19,5 +20,3 @@ def include_endpoint_routers(parent_router):
     parent_router.include_router(_plugins.router)
 
 
-# Eager module references for direct importers (main_api_server.py, wiring.py)
-from . import pet, economy

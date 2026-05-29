@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Deployment Management (Moved/Consolidated)
 
 # Integrated Graphics Optimization
-from .integrated_graphics_optimizer import (
+from .integrated_graphics_optimizer import (  # noqa: E402
     IntegratedGraphicsOptimizer,
     optimize_for_integrated_graphics,
 )

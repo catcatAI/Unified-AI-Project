@@ -55,7 +55,7 @@ class MemoryContextManager:
             self.memories[memory.memory_id] = memory
 
             # 创建对应的上下文
-            context_content = {
+            {
                 "memory": {
                     "memory_id": memory.memory_id,
                     "content": content,
@@ -83,7 +83,7 @@ class MemoryContextManager:
             memory.access()
 
             # 创建访问记录上下文
-            context_content = {
+            {
                 "memory_access": {
                     "memory_id": memory_id,
                     "access_time": memory.last_accessed.isoformat(),
@@ -117,7 +117,7 @@ class MemoryContextManager:
             memory.embedding = embedding
 
             # 更新上下文
-            context_content = {
+            {
                 "memory_embedding": {
                     "memory_id": memory_id,
                     "embedding_updated": datetime.now().isoformat(),
@@ -139,7 +139,7 @@ class MemoryContextManager:
                 logger.error(f"Memory {memory_id} not found", exc_info=True)
                 return None
 
-            memory = self.memories[memory_id]
+            self.memories[memory_id]
 
             # 搜索相关的上下文
             # contexts = self.context_manager.search_contexts(memory_id, [ContextType.MEMORY])  # Commented - needs proper import
@@ -213,7 +213,7 @@ class MemoryContextManager:
                 deleted_count += 1
 
                 # 创建删除记录上下文
-                context_content = {
+                {
                     "memory_cleanup": {
                         "memory_id": mem_id,
                         "cleanup_time": datetime.now().isoformat(),
@@ -251,7 +251,7 @@ class MemoryContextManager:
                 self.update_memory_embedding(new_memory_id, source_memory.embedding)
 
             # 创建转移记录上下文
-            context_content = {
+            {
                 "memory_transfer": {
                     "source_memory_id": source_memory_id,
                     "target_memory_id": new_memory_id,

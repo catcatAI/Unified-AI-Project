@@ -118,13 +118,6 @@ class ToolContextManager:
                 self.categories[parent_id].add_sub_category(category)
 
             # 创建对应的上下文
-            context_content = {
-                "category_id": category_id,
-                "name": name,
-                "description": description,
-                "parent_id": parent_id,
-                "type": "tool_category",
-            }
 
             # context_id = self.context_manager.create_context(ContextType.TOOL, context_content)  # Commented - needs proper import
             logger.info(f"Created tool category {category_id} with context")
@@ -146,13 +139,6 @@ class ToolContextManager:
                 self.categories[category_id].add_tool(tool)
 
             # 创建对应的上下文
-            context_content = {
-                "tool_id": tool_id,
-                "name": name,
-                "description": description,
-                "category_id": category_id,
-                "type": "tool",
-            }
 
             # context_id = self.context_manager.create_context(ContextType.TOOL, context_content)  # Commented - needs proper import
             logger.info(f"Registered tool {tool_id} with context")
@@ -175,7 +161,7 @@ class ToolContextManager:
             tool.record_usage(usage_record)
 
             # 更新工具上下文
-            context_content = {
+            {
                 "usage_record": {
                     "timestamp": usage_record.timestamp.isoformat(),
                     "parameters": parameters,

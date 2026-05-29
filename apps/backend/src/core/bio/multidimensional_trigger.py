@@ -411,7 +411,7 @@ class MultidimensionalTriggerSystem:
             value: Normalized value (0-1)
             raw_value: Original unnormalized value
         """
-        old_value = self.dimension_values.get(dimension)
+        self.dimension_values.get(dimension)
 
         self.dimension_values[dimension] = DimensionValue(
             dimension=dimension, value=max(0.0, min(1.0, value)), raw_value=raw_value

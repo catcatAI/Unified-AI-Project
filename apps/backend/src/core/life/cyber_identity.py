@@ -25,12 +25,10 @@ from datetime import datetime, timedelta
 import asyncio
 import logging
 from core.tracing import get_tracer
-
-logger = logging.getLogger(__name__)
-
-# Import theoretical frameworks
 from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain, LifeIntensitySnapshot
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType
+
+logger = logging.getLogger(__name__)
 
 
 class IdentityAspect(Enum):

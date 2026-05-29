@@ -264,7 +264,7 @@ class ExecutionManager:
         """Health monitoring loop"""
         while self._monitoring_active:
             try:
-                health = self.monitor.get_system_health()
+                self.monitor.get_system_health()
 
                 # Check resource usage
                 # Here can add more health check logic

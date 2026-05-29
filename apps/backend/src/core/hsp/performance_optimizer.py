@@ -408,17 +408,15 @@ class HSPPerformanceEnhancer:
             # 执行原始接收函数
             try:
                 result = await original_receive_func(*args, **kwargs)
-                success = True
             except Exception as e:  # broad exception acceptable: receive function execution may raise various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result = None
 
-                success = False
                 logger.error(f"消息接收失败: {e}", exc_info=True)
 
             # 记录结束时间
             end_time = time.time()
-            processing_time = (end_time - start_time) * 1000  # 转换为毫秒
+            (end_time - start_time) * 1000  # 转换为毫秒
 
             # 记录消息指标(如果可以获取消息信息)
             # 这里可以根据实际实现进行调整

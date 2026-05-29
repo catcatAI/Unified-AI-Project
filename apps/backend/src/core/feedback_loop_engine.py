@@ -970,7 +970,7 @@ if __name__ == "__main__":
             priority=3,
         )
 
-        cycle_id2 = await engine.process_perception_event(event2)
+        await engine.process_perception_event(event2)
         await asyncio.sleep(1)
 
         await engine.shutdown()
