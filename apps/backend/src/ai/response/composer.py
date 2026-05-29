@@ -849,72 +849,22 @@ class NeuroBlender:
                 confidence=0.0,
             )
 
-        scored = []
-        for frag in all_frags:
-            sim = self._cosine_similarity(target, frag.state_vector())
-            # Config fragments (ng_ prefix) get a naturalness bonus
-            if frag.fragment_id.startswith("ng_"):
-                sim = min(1.0, sim + 0.15)
-            scored.append((frag, sim))
+        scored = self._score_fragments(target, all_frags)
 
         # ---- Energy-aware fragment count ----
-        alpha_energy = None
-        alpha_state = state_dict.get("alpha", {})
-        if isinstance(alpha_state, dict):
-            alpha_energy = alpha_state.get("energy", 0.5)
-        else:
-            alpha_energy = getattr(alpha_state, "energy", 0.5)
-
-        from core.system.config.tiered_loader import get_config
-        _beh_conf = get_config("standard/behavior/behavior")
+        alpha_energy = self._extract_alpha_energy(state_dict)
+        _beh_conf = self._load_behavior_config()
         _bio_thresh = _beh_conf.get("biological_thresholds", {})
-        if alpha_energy < _bio_thresh.get("composer_energy_fragment_low", 0.2):
-            top_k_total = 2
-        elif alpha_energy < _bio_thresh.get("composer_energy_fragment_medium", 0.4):
-            top_k_total = 4
-        else:
-            top_k_total = 6
+        top_k_total = self._compute_top_k_count(alpha_energy, _bio_thresh)
 
         # 3. Group by structural_type and pick top-K per role
-        by_role: Dict[str, List[Tuple[NeuroFragment, float]]] = {}
-        for frag, sim in scored:
-            by_role.setdefault(frag.structural_type, []).append((frag, sim))
-
-        selected: List[NeuroFragment] = []
-        seen_contents: set = set()
-        def add_if_unique(frag: NeuroFragment) -> bool:
-            key = frag.content.strip()[:15]
-            if key not in seen_contents:
-                seen_contents.add(key)
-                selected.append(frag)
-                return True
-            return False
-
-        if alpha_energy < _bio_thresh.get("composer_energy_greeting", 0.3):
-            # Low energy: skip greeting entirely, prefer statement + one more
-            for role in ("statement", "closing_question", "transition"):
-                items = by_role.get(role, [])
-                items.sort(key=lambda x: x[1], reverse=True)
-                for frag, _ in items:
-                    if add_if_unique(frag):
-                        break
-            if len(selected) > top_k_total:
-                selected = selected[:top_k_total]
-        else:
-            for role, items in by_role.items():
-                items.sort(key=lambda x: x[1], reverse=True)
-                for frag, _ in items[:top_k_per_role * 2]:
-                    add_if_unique(frag)
-                    if len([f for f in selected if f.structural_type == role]) >= top_k_per_role:
-                        break
+        by_role = self._group_by_role(scored)
+        selected = self._select_top_fragments(
+            by_role, alpha_energy, _bio_thresh, top_k_total, top_k_per_role
+        )
 
         # 4. Structural exploration (beta.curiosity high → shuffle order)
-        beta_curiosity = None
-        beta_state = state_dict.get("beta", {})
-        if isinstance(beta_state, dict):
-            beta_curiosity = beta_state.get("curiosity", 0.5)
-        else:
-            beta_curiosity = getattr(beta_state, "curiosity", 0.5)
+        beta_curiosity = self._extract_beta_curiosity(state_dict)
 
         if beta_curiosity > curiosity_threshold and len(selected) >= 3:
             selected = self._structural_exploration(selected, beta_curiosity)
@@ -940,6 +890,80 @@ class NeuroBlender:
                 "empathy_valence": empathy_valence,
             },
         )
+
+    def _score_fragments(self, target: List[float], all_frags: List[NeuroFragment]) -> List[Tuple[NeuroFragment, float]]:
+        scored = []
+        for frag in all_frags:
+            sim = self._cosine_similarity(target, frag.state_vector())
+            if frag.fragment_id.startswith("ng_"):
+                sim = min(1.0, sim + 0.15)
+            scored.append((frag, sim))
+        return scored
+
+    def _extract_alpha_energy(self, state_dict: Dict[str, Any]) -> float:
+        alpha_state = state_dict.get("alpha", {})
+        if isinstance(alpha_state, dict):
+            return alpha_state.get("energy", 0.5)
+        return getattr(alpha_state, "energy", 0.5)
+
+    def _load_behavior_config(self) -> Dict[str, Any]:
+        from core.system.config.tiered_loader import get_config
+        return get_config("standard/behavior/behavior")
+
+    def _compute_top_k_count(self, alpha_energy: float, _bio_thresh: Dict[str, Any]) -> int:
+        if alpha_energy < _bio_thresh.get("composer_energy_fragment_low", 0.2):
+            return 2
+        elif alpha_energy < _bio_thresh.get("composer_energy_fragment_medium", 0.4):
+            return 4
+        return 6
+
+    def _group_by_role(self, scored: List[Tuple[NeuroFragment, float]]) -> Dict[str, List[Tuple[NeuroFragment, float]]]:
+        by_role: Dict[str, List[Tuple[NeuroFragment, float]]] = {}
+        for frag, sim in scored:
+            by_role.setdefault(frag.structural_type, []).append((frag, sim))
+        return by_role
+
+    def _select_top_fragments(
+        self,
+        by_role: Dict[str, List[Tuple[NeuroFragment, float]]],
+        alpha_energy: float,
+        _bio_thresh: Dict[str, Any],
+        top_k_total: int,
+        top_k_per_role: int,
+    ) -> List[NeuroFragment]:
+        selected: List[NeuroFragment] = []
+        seen_contents: set = set()
+        def add_if_unique(frag: NeuroFragment) -> bool:
+            key = frag.content.strip()[:15]
+            if key not in seen_contents:
+                seen_contents.add(key)
+                selected.append(frag)
+                return True
+            return False
+
+        if alpha_energy < _bio_thresh.get("composer_energy_greeting", 0.3):
+            for role in ("statement", "closing_question", "transition"):
+                items = by_role.get(role, [])
+                items.sort(key=lambda x: x[1], reverse=True)
+                for frag, _ in items:
+                    if add_if_unique(frag):
+                        break
+            if len(selected) > top_k_total:
+                selected = selected[:top_k_total]
+        else:
+            for role, items in by_role.items():
+                items.sort(key=lambda x: x[1], reverse=True)
+                for frag, _ in items[:top_k_per_role * 2]:
+                    add_if_unique(frag)
+                    if len([f for f in selected if f.structural_type == role]) >= top_k_per_role:
+                        break
+        return selected
+
+    def _extract_beta_curiosity(self, state_dict: Dict[str, Any]) -> float:
+        beta_state = state_dict.get("beta", {})
+        if isinstance(beta_state, dict):
+            return beta_state.get("curiosity", 0.5)
+        return getattr(beta_state, "curiosity", 0.5)
 
     def _build_target_vector(
         self,

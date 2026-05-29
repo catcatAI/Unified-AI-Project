@@ -44,6 +44,52 @@ class HAMQueryEngine:
             return date_input
         raise ValueError("Invalid date input type")
 
+    def _check_basic_filters(
+        self, data_package: Dict[str, Any], data_type_filter: Optional[str],
+        min_importance: float, date_range: Optional[Tuple[datetime, datetime]]
+    ) -> bool:
+        if data_type_filter and data_type_filter not in data_package["data_type"]:
+            return False
+        if data_package.get("relevance", 0.0) < min_importance:
+            return False
+        if date_range:
+            memory_timestamp = self._normalize_date(data_package["timestamp"])
+            start_date, end_date = date_range
+            if not (start_date <= memory_timestamp <= end_date):
+                return False
+        return True
+
+    def _search_keywords_in_memory(
+        self, data_package: Dict[str, Any], keywords: List[str]
+    ) -> tuple:
+        decompressed_data_str = ""
+        try:
+            decrypted_data = self.data_processor._decrypt(data_package["encrypted_package"])
+            decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+            decompressed_data_str = decompressed_data_bytes.decode("utf-8")
+            gist_content = self._extract_gist(data_package, decompressed_data_str)
+            keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
+            return decompressed_data_str, keyword_match
+        except Exception:
+            try:
+                import base64
+                decoded_payload = base64.b64decode(data_package["encrypted_package"])
+                decrypted_data = self.data_processor._decrypt(decoded_payload)
+                decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+                decompressed_data_str = decompressed_data_bytes.decode("utf-8")
+                gist_content = self._extract_gist(data_package, decompressed_data_str)
+                keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
+                return decompressed_data_str, keyword_match
+            except Exception as e:
+                logger.error(f"Error processing memory for keyword search: {e} (Fallback also failed)", exc_info=True)
+                return "", False
+
+    def _extract_gist(self, data_package: Dict[str, Any], decompressed_data_str: str) -> str:
+        if "dialogue_text" in data_package["data_type"]:
+            abstracted_gist = json.loads(decompressed_data_str)
+            return abstracted_gist.get("gist", "")
+        return decompressed_data_str
+
     async def query_core_memory(
         self,
         keywords: Optional[List[str]] = None,
@@ -57,76 +103,15 @@ class HAMQueryEngine:
         """
         results: List[HAMRecallResult] = []
 
-        # Simple filtering for now, can be enhanced with more sophisticated search
         for mem_id, data_package in self.core_memory_store.items():
-            match = True
+            match = self._check_basic_filters(data_package, data_type_filter, min_importance, date_range)
 
-            # Filter by data type
-            if data_type_filter and data_type_filter not in data_package["data_type"]:
-                match = False
+            decompressed_data_str = ""
 
-            # Filter by importance
-            if data_package.get("relevance", 0.0) < min_importance:
-                match = False
-
-            # Filter by date range
-            if date_range:
-                memory_timestamp = self._normalize_date(data_package["timestamp"])
-                start_date, end_date = date_range
-                if not (start_date <= memory_timestamp <= end_date):
-                    match = False
-
-            # Initialize variables
-            decompressed_data_str: str = ""
-            gist_content: str = ""
-
-            # Filter by keywords (simple check in gist for now)
             if keywords and match:
-                try:
-                    decrypted_data = self.data_processor._decrypt(data_package["encrypted_package"])
-                    decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
-                    decompressed_data_str = decompressed_data_bytes.decode("utf-8")
-
-                    if "dialogue_text" in data_package["data_type"]:
-                        abstracted_gist = json.loads(decompressed_data_str)
-                        gist_content = abstracted_gist.get("gist", "")
-                    else:
-                        gist_content = (
-                            decompressed_data_str  # For other types, use raw decompressed string
-                        )
-
-                    keyword_match = False
-                    for keyword in keywords:
-                        if keyword.lower() in gist_content.lower():
-                            keyword_match = True
-                            break
-                    if not keyword_match:
-                        match = False
-                except Exception:  # broad exception acceptable: keyword search should skip unprocessable memories
-                    # Fallback: Maybe it was double-base64 encoded?
-                    try:
-                        import base64
-                        decoded_payload = base64.b64decode(data_package["encrypted_package"])
-                        decrypted_data = self.data_processor._decrypt(decoded_payload)
-                        decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
-                        decompressed_data_str = decompressed_data_bytes.decode("utf-8")
-                        
-                        if "dialogue_text" in data_package["data_type"]:
-                            abstracted_gist = json.loads(decompressed_data_str)
-                            gist_content = abstracted_gist.get("gist", "")
-                        else:
-                            gist_content = decompressed_data_str
-                        
-                        keyword_match = False
-                        for keyword in keywords:
-                            if keyword.lower() in gist_content.lower():
-                                keyword_match = True
-                                break
-                        if not keyword_match:
-                            match = False
-                    except Exception as e:  # broad exception acceptable: keyword search should skip unprocessable memories
-                        logger.error(f"Error processing memory {mem_id} for keyword search: {e} (Fallback also failed)", exc_info=True)
-                        match = False  # Exclude if there's an error processing
+                decompressed_data_str, keyword_match = self._search_keywords_in_memory(data_package, keywords)
+                if not keyword_match:
+                    match = False
 
             if match and decompressed_data_str:
                 results.append(
@@ -148,7 +133,6 @@ class HAMQueryEngine:
             if len(results) >= limit:
                 break
 
-        # Sort by relevance (descending)
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:limit]
 

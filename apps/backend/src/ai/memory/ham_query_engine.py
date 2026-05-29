@@ -209,6 +209,101 @@ class HAMQueryEngine:
             logger.error(f"Failed to query date range: {e}", exc_info=True)
             raise Exception(f"Failed to query date range: {e}")
 
+    def _get_semantic_candidates(
+        self, semantic_query: str, limit: int
+    ) -> Tuple[List[str], bool]:
+        fallback_semantic = False
+        candidate_mem_ids: List[str] = []
+        if self.chroma_collection is None:
+            logger.warning(
+                "ChromaDB collection not initialized. Cannot perform semantic search."
+                , exc_info=True
+            )
+            candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
+            fallback_semantic = True
+        else:
+            try:
+                chroma_results = self.chroma_collection.query(
+                    query_texts=[semantic_query],
+                    n_results=limit * 2,
+                    include=["metadatas", "documents"],
+                )
+                if chroma_results and chroma_results["ids"]:
+                    candidate_mem_ids.extend(chroma_results["ids"][0])
+                logger.debug(
+                    f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query."
+                )
+            except Exception as e:
+                logger.error(f"Error querying ChromaDB: {e}", exc_info=True)
+                candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
+                fallback_semantic = True
+        return candidate_mem_ids, fallback_semantic
+
+    def _get_all_memory_ids(self) -> List[str]:
+        candidate_mem_ids = [
+            mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None
+        ]
+        return sorted(candidate_mem_ids, reverse=True)
+
+    def _filter_memory_item(
+        self,
+        item: Dict[str, Any],
+        item_metadata: Dict[str, Any],
+        data_type_filter: Optional[str],
+        date_range: Optional[Tuple[datetime, datetime]],
+        metadata_filters: Optional[Dict[str, Any]],
+        user_id_for_facts: Optional[str],
+        keywords: Optional[List[str]],
+    ) -> bool:
+        match = True
+        if data_type_filter:
+            if not item.get("data_type", "").startswith(data_type_filter):
+                match = False
+        if match and date_range:
+            try:
+                item_dt = self._normalize_date(item["timestamp"])
+                start_dt_normalized = self._normalize_date(date_range[0])
+                end_dt_normalized = self._normalize_date(date_range[1])
+                if not (start_dt_normalized <= item_dt <= end_dt_normalized):
+                    match = False
+            except (ValueError, TypeError) as e:
+                logger.warning(
+                    f"Error parsing date for memory or date_range {date_range}: {e}. Skipping this memory for date filter."
+                    , exc_info=True
+                )
+                match = False
+        if match and metadata_filters:
+            for key, value in metadata_filters.items():
+                if item_metadata.get(key) != value:
+                    match = False
+                    break
+        if match and user_id_for_facts and data_type_filter and data_type_filter.startswith("learned_fact"):
+            if item_metadata.get("user_id") != user_id_for_facts:
+                match = False
+        if match and keywords:
+            metadata_str = str(item_metadata).lower()
+            if not all(keyword.lower() in metadata_str for keyword in keywords):
+                match = False
+        return match
+
+    def _apply_fallback_semantic_ranking(
+        self, candidate_items_with_id: List[HAMRecallResult], semantic_query: str
+    ) -> None:
+        query_tokens = {
+            tok.strip(".,!?")
+            for tok in semantic_query.lower().split()
+            if len(tok.strip("., !?")) > 2
+        }
+        def _fallback_score(rec: HAMRecallResult) -> int:
+            text = str(rec.content).lower()
+            gist_tokens = {
+                tok.strip(".,!?") for tok in text.split() if len(tok.strip("., !?")) > 2
+            }
+            return len(query_tokens.intersection(gist_tokens))
+        candidate_items_with_id.sort(
+            key=lambda x: (_fallback_score(x), x.timestamp), reverse=True
+        )
+
     def query_core_memory(
         self,
         keywords: Optional[List[str]] = None,
@@ -236,125 +331,34 @@ class HAMQueryEngine:
         fallback_semantic = False
 
         if semantic_query:
-            if self.chroma_collection is None:
-                logger.warning(
-                    "ChromaDB collection not initialized. Cannot perform semantic search."
-                    , exc_info=True
-                )
-                # Fallback to iterating all memories if semantic search is not available
-                candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
-                fallback_semantic = True
-            else:
-                try:
-                    # Generate embedding for the semantic query using the collection's embedding function
-                    chroma_results = self.chroma_collection.query(
-                        query_texts=[semantic_query],
-                        n_results=limit
-                        * 2,  # Fetch more results from Chroma to allow for filtering
-                        include=["metadatas", "documents"],
-                    )
-                    # Extract memory_ids from Chroma results
-                    if chroma_results and chroma_results["ids"]:
-                        candidate_mem_ids.extend(chroma_results["ids"][0])
-                    logger.debug(
-                        f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query."
-                    )
-                except Exception as e:  # broad exception acceptable: ChromaDB query should fallback gracefully
-                    logger.error(f"Error querying ChromaDB: {e}", exc_info=True)
-                    # Fallback to iterating all memories if ChromaDB query fails
-                    candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
-                    fallback_semantic = True
+            candidate_mem_ids, fallback_semantic = self._get_semantic_candidates(
+                semantic_query, limit
+            )
         else:
-            # If no semantic query, iterate through all memories
-            candidate_mem_ids = [
-                mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None
-            ]
-            candidate_mem_ids = sorted(candidate_mem_ids, reverse=True)
+            candidate_mem_ids = self._get_all_memory_ids()
 
         # Candidate selection: Iterate through selected memory IDs
         candidate_items_with_id: List[HAMRecallResult] = []
 
         for mem_id in candidate_mem_ids:
             item = self.core_memory_store.get(mem_id)
-            if (
-                not item
-            ):  # Skip if memory not found in core store (e.g., filtered by Chroma but not in JSON):
+            if not item:
                 continue
 
             item_metadata = item.get("metadata", {})
-            match = True
-
-            if data_type_filter:
-                # Allow partial match for data_type_filter (e.g., "learned_fact_", matches all learned facts)
-                if not item.get("data_type", "").startswith(data_type_filter):
-                    match = False
-
-            if match and date_range:
-                try:
-                    item_dt = self._normalize_date(item["timestamp"])
-                    start_dt_normalized = self._normalize_date(date_range[0])
-                    end_dt_normalized = self._normalize_date(date_range[1])
-
-                    if not (start_dt_normalized <= item_dt <= end_dt_normalized):
-                        match = False
-                except (ValueError, TypeError) as e:
-                    logger.warning(
-                        f"Error parsing date for memory {mem_id} or date_range {date_range}: {e}. Skipping this memory for date filter."
-                        , exc_info=True
-                    )
-                    match = False  # Treat as non - match if date parsing fails
-
-            if match and metadata_filters:
-                for key, value in metadata_filters.items():
-                    # Support nested keys like "original_source_info.type" if needed, but simple for now,
-                    if item_metadata.get(key) != value:
-                        match = False
-                        break
-
-            if (
-                match
-                and user_id_for_facts
-                and data_type_filter
-                and data_type_filter.startswith("learned_fact")
-            ):
-                if item_metadata.get("user_id") != user_id_for_facts:
-                    match = False
-
-            if match and keywords:
-                metadata_str = str(item_metadata).lower()
-                if not all(keyword.lower() in metadata_str for keyword in keywords):
-                    match = False
+            match = self._filter_memory_item(
+                item, item_metadata, data_type_filter, date_range,
+                metadata_filters, user_id_for_facts, keywords
+            )
 
             if match:
-                # Assuming recall_gist is still in HAMMemoryManager and can be called
-                # Or, if recall_gist is also moved, it would be self.query_engine.recall_gist
-                # For now, we'll just deserialize and return basic HAMMemory objects
-                # The full recall_gist logic will remain in HAMMemoryManager for now
-                # and will call this query engine.
                 recalled_item = self._deserialize_memory(mem_id, item)
-                if recalled_item:  # recall_gist now returns Optional[HAMRecallResult]:
-                    # recalled_item already includes metadata if successful
+                if recalled_item:
                     candidate_items_with_id.append(recalled_item)
 
         # Apply fallback semantic ranking when needed
         if semantic_query and fallback_semantic and candidate_items_with_id:
-
-            def _fallback_score(rec: HAMRecallResult) -> int:
-                text = str(rec.content).lower()
-                gist_tokens = {
-                    tok.strip(".,!?") for tok in text.split() if len(tok.strip("., !?")) > 2
-                }
-                return len(query_tokens.intersection(gist_tokens))
-
-            query_tokens = {
-                tok.strip(".,!?")
-                for tok in semantic_query.lower().split()
-                if len(tok.strip("., !?")) > 2
-            }
-            # Sort by score desc, then by timestamp (newest first)
-            candidate_items_with_id.sort(
-                key=lambda x: (_fallback_score(x), x.timestamp), reverse=True
-            )
+            self._apply_fallback_semantic_ranking(candidate_items_with_id, semantic_query)
 
         # Sort by confidence if requested (primarily for facts)
         if sort_by_confidence and data_type_filter and data_type_filter.startswith("learned_fact"):

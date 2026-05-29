@@ -653,129 +653,27 @@ class BiologicalIntegrator:
 
             # 1. 生理系统影响内分泌系统 / Physiological system affects endocrine system
             if interaction_type == "arousal_to_adrenaline" and source_system == "nervous":
-                # Calculate adrenaline release based on arousal level
-                arousal = getattr(source, "arousal_level", 50.0)
-                adrenaline_increase = (arousal / 100.0) * intensity * 25.0  # Max 25 unit increase
-
-                if hasattr(target, "adjust_hormone"):
-                    await target.adjust_hormone(HormoneType.ADRENALINE, adrenaline_increase)
-                    results["changes"]["adrenaline"] = f"+{adrenaline_increase:.1f}"
-
-                    # Trigger cortisol for sustained arousal
-                    from core.system.config.tiered_loader import get_config as _get_bio3
-                    _beh3 = _get_bio3("standard/behavior/behavior")
-                    _cort_trigger = _beh3.get("biological_thresholds", {}).get("cortisol_trigger", 60)
-                    if arousal > _cort_trigger:
-                        cortisol_increase = ((arousal - _cort_trigger) / 40.0) * intensity * 15.0
-                        await target.adjust_hormone(HormoneType.CORTISOL, cortisol_increase)
-                        results["changes"]["cortisol"] = f"+{cortisol_increase:.1f}"
+                await self._handle_arousal_to_adrenaline(source, target, intensity, results)
 
             # 2. 内分泌系统影响情绪系统 / Endocrine system affects emotional system
             elif interaction_type == "hormonal_mood" and source_system == "endocrine":
-                # Calculate emotional influence from hormone levels
-                hormone_effects = {}
-
-                if hasattr(source, "get_hormone_level"):
-                    # Dopamine effect on pleasure/joy
-                    dopamine = source.get_hormone_level(HormoneType.DOPAMINE)
-                    dopamine_normalized = (dopamine - 20) / 80  # Normalize to -0.25 to 1.0
-                    hormone_effects["pleasure"] = dopamine_normalized * intensity * 0.6
-
-                    # Serotonin effect on mood stability
-                    serotonin = source.get_hormone_level(HormoneType.SEROTONIN)
-                    serotonin_normalized = (serotonin - 30) / 70
-                    hormone_effects["mood_stability"] = serotonin_normalized * intensity * 0.5
-
-                    # Adrenaline effect on arousal/anxiety
-                    adrenaline = source.get_hormone_level(HormoneType.ADRENALINE)
-                    if adrenaline > 50:
-                        hormone_effects["anxiety"] = ((adrenaline - 50) / 50) * intensity * 0.7
-
-                    # Oxytocin effect on bonding/trust
-                    oxytocin = source.get_hormone_level(HormoneType.OXYTOCIN)
-                    if oxytocin > 40:
-                        hormone_effects["trust"] = ((oxytocin - 40) / 60) * intensity * 0.5
-
-                    # Cortisol effect on stress/negative mood
-                    cortisol = source.get_hormone_level(HormoneType.CORTISOL)
-                    if cortisol > 30:
-                        hormone_effects["stress"] = ((cortisol - 30) / 70) * intensity * 0.8
-
-                # Apply emotional influence
-                if hasattr(target, "apply_influence"):
-                    for emotion, value in hormone_effects.items():
-                        if abs(value) > 0.1:  # Only apply significant effects
-                            target.apply_influence("hormonal", emotion, value, intensity)
-
-                results["changes"]["emotional_influences"] = hormone_effects
+                await self._handle_hormonal_mood(source, target, intensity, results)
 
             # 3. 自主神经系统调节生理状态 / Autonomic nervous system regulates physiological state
             elif interaction_type == "emotion_to_arousal" and source_system == "emotional":
-                # Calculate arousal change from emotional state
-                if hasattr(source, "get_dominant_emotion"):
-                    emotion, confidence = source.get_dominant_emotion()
-                    if emotion:
-                        # Emotion arousal affects nervous system
-                        arousal_impact = emotion.arousal * 30 * intensity  # -30 to +30
-
-                        if hasattr(target, "arousal_level") and hasattr(
-                            target, "set_arousal_directly"
-                        ):
-                            current_arousal = target.arousal_level
-                            new_arousal = max(0, min(100, current_arousal + arousal_impact))
-                            target.set_arousal_directly(new_arousal)
-                            results["changes"]["arousal"] = f"{new_arousal - current_arousal:+.1f}"
-
-                            # High arousal triggers sympathetic activation
-                            _symp_act = _beh3.get("biological_thresholds", {}).get("sympathetic_activation", 70)
-                            if new_arousal > _symp_act and hasattr(target, "apply_stimulus"):
-                                await target.apply_stimulus(
-                                    "emotional_arousal",
-                                    NerveType.SYMPATHETIC,
-                                    (new_arousal - _symp_act) / 30,
-                                    5.0,
-                                )
+                await self._handle_emotion_to_arousal(source, target, intensity, results)
 
             # 4. 触觉系统影响情绪系统 / Tactile system affects emotional system
             elif interaction_type == "touch_to_emotion" and source_system == "tactile":
-                # Calculate emotional response from tactile input
-                if hasattr(source, "get_sensitivity_level"):
-                    sensitivity = source.get_sensitivity_level()
-
-                    # High sensitivity increases emotional response
-                    if sensitivity > 0.6 and hasattr(target, "apply_influence"):
-                        target.apply_influence(
-                            "tactile", "sensitivity", sensitivity * intensity, 0.5
-                        )
-                        results["changes"]["tactile_sensitivity"] = f"{sensitivity * intensity:.2f}"
+                await self._handle_touch_to_emotion(source, target, intensity, results)
 
             # 5. 压力激素影响神经可塑性 / Stress hormones affect neuroplasticity
             elif interaction_type == "cortisol_to_memory" and source_system == "endocrine":
-                # Cortisol can impair memory formation under chronic stress
-                if hasattr(source, "get_hormone_level"):
-                    cortisol = source.get_hormone_level(HormoneType.CORTISOL)
-
-                    if cortisol > 50 and hasattr(target, "set_learning_rate"):
-                        # High cortisol reduces learning rate
-                        learning_impairment = ((cortisol - 50) / 50) * intensity * 0.4
-                        target.set_learning_rate(1.0 - learning_impairment)
-                        results["changes"]["learning_rate"] = f"{1.0 - learning_impairment:.2f}"
-                        results["changes"]["stress_impact"] = "impaired"
-                    elif hasattr(target, "set_learning_rate"):
-                        # Normal learning rate
-                        target.set_learning_rate(1.0)
+                await self._handle_cortisol_to_memory(source, target, intensity, results)
 
             # 6. 情绪记忆影响神经可塑性 / Emotional memories affect neuroplasticity
             elif interaction_type == "emotional_memory" and source_system == "emotional":
-                # Emotional intensity enhances memory consolidation
-                if hasattr(source, "get_emotional_intensity"):
-                    emotional_intensity = source.get_emotional_intensity()
-
-                    if emotional_intensity > 0.5 and hasattr(target, "enhance_consolidation"):
-                        # Strong emotions enhance memory consolidation
-                        enhancement = (emotional_intensity - 0.5) * 2 * intensity * 0.3
-                        target.enhance_consolidation(enhancement)
-                        results["changes"]["consolidation_enhancement"] = f"+{enhancement:.2f}"
+                await self._handle_emotional_memory(source, target, intensity, results)
 
             # Log successful interaction
             results["status"] = "success"
@@ -788,6 +686,91 @@ class BiologicalIntegrator:
             results["error_type"] = type(e).__name__
 
         return results
+
+    async def _handle_arousal_to_adrenaline(self, source, target, intensity, results):
+        arousal = getattr(source, "arousal_level", 50.0)
+        adrenaline_increase = (arousal / 100.0) * intensity * 25.0
+        if hasattr(target, "adjust_hormone"):
+            await target.adjust_hormone(HormoneType.ADRENALINE, adrenaline_increase)
+            results["changes"]["adrenaline"] = f"+{adrenaline_increase:.1f}"
+            from core.system.config.tiered_loader import get_config as _get_bio3
+            _beh3 = _get_bio3("standard/behavior/behavior")
+            _cort_trigger = _beh3.get("biological_thresholds", {}).get("cortisol_trigger", 60)
+            if arousal > _cort_trigger:
+                cortisol_increase = ((arousal - _cort_trigger) / 40.0) * intensity * 15.0
+                await target.adjust_hormone(HormoneType.CORTISOL, cortisol_increase)
+                results["changes"]["cortisol"] = f"+{cortisol_increase:.1f}"
+
+    async def _handle_hormonal_mood(self, source, target, intensity, results):
+        hormone_effects = {}
+        if hasattr(source, "get_hormone_level"):
+            dopamine = source.get_hormone_level(HormoneType.DOPAMINE)
+            dopamine_normalized = (dopamine - 20) / 80
+            hormone_effects["pleasure"] = dopamine_normalized * intensity * 0.6
+            serotonin = source.get_hormone_level(HormoneType.SEROTONIN)
+            serotonin_normalized = (serotonin - 30) / 70
+            hormone_effects["mood_stability"] = serotonin_normalized * intensity * 0.5
+            adrenaline = source.get_hormone_level(HormoneType.ADRENALINE)
+            if adrenaline > 50:
+                hormone_effects["anxiety"] = ((adrenaline - 50) / 50) * intensity * 0.7
+            oxytocin = source.get_hormone_level(HormoneType.OXYTOCIN)
+            if oxytocin > 40:
+                hormone_effects["trust"] = ((oxytocin - 40) / 60) * intensity * 0.5
+            cortisol = source.get_hormone_level(HormoneType.CORTISOL)
+            if cortisol > 30:
+                hormone_effects["stress"] = ((cortisol - 30) / 70) * intensity * 0.8
+        if hasattr(target, "apply_influence"):
+            for emotion, value in hormone_effects.items():
+                if abs(value) > 0.1:
+                    target.apply_influence("hormonal", emotion, value, intensity)
+        results["changes"]["emotional_influences"] = hormone_effects
+
+    async def _handle_emotion_to_arousal(self, source, target, intensity, results):
+        if hasattr(source, "get_dominant_emotion"):
+            emotion, confidence = source.get_dominant_emotion()
+            if emotion:
+                arousal_impact = emotion.arousal * 30 * intensity
+                if hasattr(target, "arousal_level") and hasattr(target, "set_arousal_directly"):
+                    current_arousal = target.arousal_level
+                    new_arousal = max(0, min(100, current_arousal + arousal_impact))
+                    target.set_arousal_directly(new_arousal)
+                    results["changes"]["arousal"] = f"{new_arousal - current_arousal:+.1f}"
+                    from core.system.config.tiered_loader import get_config as _get_bio3
+                    _beh3 = _get_bio3("standard/behavior/behavior")
+                    _symp_act = _beh3.get("biological_thresholds", {}).get("sympathetic_activation", 70)
+                    if new_arousal > _symp_act and hasattr(target, "apply_stimulus"):
+                        await target.apply_stimulus(
+                            "emotional_arousal",
+                            NerveType.SYMPATHETIC,
+                            (new_arousal - _symp_act) / 30,
+                            5.0,
+                        )
+
+    async def _handle_touch_to_emotion(self, source, target, intensity, results):
+        if hasattr(source, "get_sensitivity_level"):
+            sensitivity = source.get_sensitivity_level()
+            if sensitivity > 0.6 and hasattr(target, "apply_influence"):
+                target.apply_influence("tactile", "sensitivity", sensitivity * intensity, 0.5)
+                results["changes"]["tactile_sensitivity"] = f"{sensitivity * intensity:.2f}"
+
+    async def _handle_cortisol_to_memory(self, source, target, intensity, results):
+        if hasattr(source, "get_hormone_level"):
+            cortisol = source.get_hormone_level(HormoneType.CORTISOL)
+            if cortisol > 50 and hasattr(target, "set_learning_rate"):
+                learning_impairment = ((cortisol - 50) / 50) * intensity * 0.4
+                target.set_learning_rate(1.0 - learning_impairment)
+                results["changes"]["learning_rate"] = f"{1.0 - learning_impairment:.2f}"
+                results["changes"]["stress_impact"] = "impaired"
+            elif hasattr(target, "set_learning_rate"):
+                target.set_learning_rate(1.0)
+
+    async def _handle_emotional_memory(self, source, target, intensity, results):
+        if hasattr(source, "get_emotional_intensity"):
+            emotional_intensity = source.get_emotional_intensity()
+            if emotional_intensity > 0.5 and hasattr(target, "enhance_consolidation"):
+                enhancement = (emotional_intensity - 0.5) * 2 * intensity * 0.3
+                target.enhance_consolidation(enhancement)
+                results["changes"]["consolidation_enhancement"] = f"+{enhancement:.2f}"
 
     async def execute_system_interaction(
         self, interaction: SystemInteraction, intensity: float = 0.5

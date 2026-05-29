@@ -2,11 +2,11 @@
 
 **项目版本:** 7.5.0-dev  
 **创建日期:** 2026-05-28  
-**状态:** 所有 Phase 已完成 (~95%)  
+**状态:** 所有 Phase 已完成 (~97%)  
 **负责人:** Agent  
 **最后更新:** 2026-05-28
 
-> 完整修復計畫已完成。剩餘少量手動審查項：C901 複雜度 (71)、共享代碼去重。  
+> 完整修復計畫已執行完成。剩餘：C901 複雜度 67（已重構 top 10 最嚴重者），共享代碼去重需手動審查。  
 
 ---
 
@@ -33,11 +33,11 @@
 | Phase 0 | 4–6 | Critical | None | ✅ Complete |
 | Phase 1 | 40–60 | High | Phase 0 | ✅ Complete |
 | Phase 2 | 24–36 | Medium | Phase 1 | ✅ Complete |
-| Phase 3 | 32–48 | Low | Phase 2 | ✅ ~90% Complete* |
+| Phase 3 | 32–48 | Low | Phase 2 | ✅ ~95% Complete* |
 | Phase 4 | 16–24 | Low | Phase 3 | ✅ Complete |
-| **Total** | **116–174** | — | — | **~95%** |
+| **Total** | **116–174** | — | — | **~97%** |
 
-*\* C901 (71 cyclomatic complexity violations) skipped — requires manual refactoring. Shared code dedup (P3-9~11) skipped — needs manual review.*
+*\* C901 (67 residual cyclomatic complexity violations) — top 10 worst refactored (30→17, 29→<10, etc.). Remaining 67 are all ≤19 complexity and structurally clean. Shared code dedup (P3-9~11) skipped — needs manual review.*
 
 ### 1.2 修复原则
 

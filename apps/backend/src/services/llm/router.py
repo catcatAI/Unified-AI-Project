@@ -746,102 +746,9 @@ class AngelaLLMService:
                 self.conversation_history = self.conversation_history[-max_hist:]
 
         # ========== P0-2: Template Matching & Routing ==========
-        if hasattr(self, "template_matcher") and self.template_matcher:
-            try:
-                match_result = self.template_matcher.match(user_message, context)
-                match_score = match_result.score
-
-                tmpl_cfg = _get_llm_config("template_match", {})
-                composed_thresh = tmpl_cfg.get("composed", 0.8)
-                hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
-                if match_score > composed_thresh:
-                    composed_response = self.response_composer.compose_response(
-                        match_result.template_content, match_score, context
-                    )
-
-                    response_time = (time.time() - start_time) * 1000
-                    self.stats["composed_responses"] += 1
-
-                    if hasattr(self, "deviation_tracker"):
-                        self.deviation_tracker.record(
-                            user_input=user_message,
-                            match_score=match_score,
-                            route=self.ResponseRoute.COMPOSED,
-                            response_text=composed_response.text,
-                            tokens_used=50,
-                            response_time_ms=response_time,
-                            composition_time_ms=composed_response.composition_time_ms,
-                            match_time_ms=match_result.match_time_ms,
-                            quality_score=composed_response.confidence,
-                        )
-
-                    self.template_matcher.record_template_usage(match_result.template_id, True)
-
-                    logger.info(
-                        f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}"
-                    )
-
-                    return LLMResponse(
-                        text=composed_response.text,
-                        backend="composed-template",
-                        model="template-based",
-                        tokens_used=50,
-                        response_time_ms=response_time,
-                        confidence=composed_response.confidence,
-                        metadata={
-                            "route": "COMPOSED",
-                            "match_score": match_score,
-                            "template_id": match_result.template_id,
-                        },
-                    )
-
-                elif match_score > hybrid_thresh:
-                    composed_response = self.response_composer.compose_response(
-                        match_result.template_content, match_score, context
-                    )
-
-                    llm_response = await self._generate_with_llm(user_message, context)
-
-                    if not llm_response.error:
-                        hybrid_text = f"{composed_response.text} {llm_response.text}"
-                    else:
-                        hybrid_text = composed_response.text
-
-                    response_time = (time.time() - start_time) * 1000
-                    self.stats["hybrid_responses"] += 1
-
-                    if hasattr(self, "deviation_tracker"):
-                        self.deviation_tracker.record(
-                            user_input=user_message,
-                            match_score=match_score,
-                            route=self.ResponseRoute.HYBRID,
-                            response_text=hybrid_text,
-                            tokens_used=200,
-                            response_time_ms=response_time,
-                            composition_time_ms=composed_response.composition_time_ms,
-                            match_time_ms=match_result.match_time_ms,
-                        )
-
-                    logger.info(
-                        f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}"
-                    )
-
-                    return LLMResponse(
-                        text=hybrid_text,
-                        backend="hybrid",
-                        model="template+llm",
-                        tokens_used=200,
-                        response_time_ms=response_time,
-                        confidence=0.85,
-                        metadata={
-                            "route": "HYBRID",
-                            "match_score": match_score,
-                        },
-                    )
-
-            except Exception as e:
-                # broad exception acceptable: template matching is best-effort, fallback to LLM
-                logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
+        template_result = await self._try_template_match(user_message, context, start_time)
+        if template_result is not None:
+            return template_result
 
         # ========== 记忆检索（如果启用）==========
         if self.enable_memory_enhancement:
@@ -915,6 +822,105 @@ class AngelaLLMService:
             # broad exception acceptable: response generation must be resilient to any backend failure
             logger.error(f"生成回應時出錯: {e}", exc_info=True)
             return await self._fallback_response(user_message, context)
+
+    async def _try_template_match(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
+        if not hasattr(self, "template_matcher") or not self.template_matcher:
+            return None
+        try:
+            match_result = self.template_matcher.match(user_message, context)
+            match_score = match_result.score
+
+            tmpl_cfg = _get_llm_config("template_match", {})
+            composed_thresh = tmpl_cfg.get("composed", 0.8)
+            hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
+            if match_score > composed_thresh:
+                composed_response = self.response_composer.compose_response(
+                    match_result.template_content, match_score, context
+                )
+
+                response_time = (time.time() - start_time) * 1000
+                self.stats["composed_responses"] += 1
+
+                if hasattr(self, "deviation_tracker"):
+                    self.deviation_tracker.record(
+                        user_input=user_message,
+                        match_score=match_score,
+                        route=self.ResponseRoute.COMPOSED,
+                        response_text=composed_response.text,
+                        tokens_used=50,
+                        response_time_ms=response_time,
+                        composition_time_ms=composed_response.composition_time_ms,
+                        match_time_ms=match_result.match_time_ms,
+                        quality_score=composed_response.confidence,
+                    )
+
+                self.template_matcher.record_template_usage(match_result.template_id, True)
+
+                logger.info(
+                    f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}"
+                )
+
+                return LLMResponse(
+                    text=composed_response.text,
+                    backend="composed-template",
+                    model="template-based",
+                    tokens_used=50,
+                    response_time_ms=response_time,
+                    confidence=composed_response.confidence,
+                    metadata={
+                        "route": "COMPOSED",
+                        "match_score": match_score,
+                        "template_id": match_result.template_id,
+                    },
+                )
+
+            elif match_score > hybrid_thresh:
+                composed_response = self.response_composer.compose_response(
+                    match_result.template_content, match_score, context
+                )
+
+                llm_response = await self._generate_with_llm(user_message, context)
+
+                if not llm_response.error:
+                    hybrid_text = f"{composed_response.text} {llm_response.text}"
+                else:
+                    hybrid_text = composed_response.text
+
+                response_time = (time.time() - start_time) * 1000
+                self.stats["hybrid_responses"] += 1
+
+                if hasattr(self, "deviation_tracker"):
+                    self.deviation_tracker.record(
+                        user_input=user_message,
+                        match_score=match_score,
+                        route=self.ResponseRoute.HYBRID,
+                        response_text=hybrid_text,
+                        tokens_used=200,
+                        response_time_ms=response_time,
+                        composition_time_ms=composed_response.composition_time_ms,
+                        match_time_ms=match_result.match_time_ms,
+                    )
+
+                logger.info(
+                    f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}"
+                )
+
+                return LLMResponse(
+                    text=hybrid_text,
+                    backend="hybrid",
+                    model="template+llm",
+                    tokens_used=200,
+                    response_time_ms=response_time,
+                    confidence=0.85,
+                    metadata={
+                        "route": "HYBRID",
+                        "match_score": match_score,
+                    },
+                )
+
+        except Exception as e:
+            logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
+        return None
 
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
@@ -1455,6 +1461,102 @@ class AngelaLLMService:
 
     # ========== 情感识别系统（新增）==========
 
+    def _load_emotion_config(self) -> tuple:
+        try:
+            from core.config_loader import get_config_loader
+            _cfg = get_config_loader()
+            _em = _cfg.get_authority("angela_core", {}).get("llm", {}).get("emotion", {})
+        except Exception:
+            _em = {}
+        negation_words = _em.get("negation_words", ["不", "沒", "没", "别", "別", "非", "無", "无", "未"])
+        intensifier_words = _em.get("intensifier_words", [
+            "好", "很", "太", "非常", "超级", "特別", "特别", "真", "超", "極", "极", "格外", "尤其",
+        ])
+        return negation_words, intensifier_words
+
+    def _score_keyword_match(self, text: str, keyword: str, negation_words: list, intensifier_words: list) -> tuple:
+        keyword_pos = text.find(keyword)
+        has_negation = False
+        for neg_word in negation_words:
+            neg_pos = text.find(neg_word)
+            if neg_pos != -1 and neg_pos < keyword_pos and (keyword_pos - neg_pos) <= 3:
+                has_negation = True
+                break
+        has_intensifier = False
+        for int_word in intensifier_words:
+            int_pos = text.find(int_word)
+            if int_pos != -1 and int_pos < keyword_pos and (keyword_pos - int_pos) <= 3:
+                has_intensifier = True
+                break
+        return has_negation, has_intensifier
+
+    def _score_emotion_keywords(self, text: str, keywords_data: dict, negation_words: list, intensifier_words: list) -> tuple:
+        score = 0.0
+        match_count = 0
+        for keyword in keywords_data.get("positive", []):
+            if keyword in text:
+                has_negation, has_intensifier = self._score_keyword_match(text, keyword, negation_words, intensifier_words)
+                if has_negation:
+                    score -= 0.5
+                else:
+                    if has_intensifier:
+                        score += 1.5
+                    else:
+                        score += 1.0
+                    match_count += 1
+        for keyword in keywords_data.get("negative", []):
+            if keyword in text:
+                has_negation, has_intensifier = self._score_keyword_match(text, keyword, negation_words, intensifier_words)
+                if has_negation:
+                    score -= 0.5
+                else:
+                    if has_intensifier:
+                        score += 1.5
+                    else:
+                        score += 1.0
+                    match_count += 1
+        for keyword in keywords_data.get("neutral", []):
+            if keyword in text:
+                score += 0.8
+                match_count += 1
+        return score, match_count
+
+    def _compute_emotion_result(self, emotion_scores: Dict[str, float]) -> Dict[str, Any]:
+        if not emotion_scores or all(score <= 0 for score in emotion_scores.values()):
+            return {
+                "emotion": "calm",
+                "confidence": 0.5,
+                "intensity": 0.3,
+                "secondary_emotions": [],
+            }
+        positive_emotions = {k: v for k, v in emotion_scores.items() if v > 0}
+        if not positive_emotions:
+            return {
+                "emotion": "calm",
+                "confidence": 0.5,
+                "intensity": 0.3,
+                "secondary_emotions": [],
+            }
+        sorted_emotions = sorted(positive_emotions.items(), key=lambda x: x[1], reverse=True)
+        primary_emotion, primary_score = sorted_emotions[0]
+        if len(sorted_emotions) > 1:
+            second_score = sorted_emotions[1][1]
+            confidence = min(1.0, primary_score / (primary_score + second_score + 0.1))
+        else:
+            confidence = min(1.0, primary_score / (primary_score + 0.5))
+        intensity = min(1.0, primary_score / 3.0)
+        secondary_emotions = [
+            {"emotion": emotion, "score": score}
+            for emotion, score in sorted_emotions[1:3]
+            if score > 0.5
+        ]
+        return {
+            "emotion": primary_emotion,
+            "confidence": confidence,
+            "intensity": intensity,
+            "secondary_emotions": secondary_emotions,
+        }
+
     def analyze_emotion(self, text: str, response_text: str = None) -> Dict[str, Any]:
         """
         分析情感状态（基于关键词的多维情感分析）
@@ -1470,145 +1572,15 @@ class AngelaLLMService:
                 - intensity: 情感强度 (0-1)
                 - secondary_emotions: 次要情感列表
         """
-        # 从配置读取否定词/程度词（fallback 到内建列表）
-        try:
-            from core.config_loader import get_config_loader
-            _cfg = get_config_loader()
-            _em = _cfg.get_authority("angela_core", {}).get("llm", {}).get("emotion", {})
-        except Exception:
-            _em = {}
-        negation_words = _em.get("negation_words", ["不", "沒", "没", "别", "別", "非", "無", "无", "未"])
-        intensifier_words = _em.get("intensifier_words", [
-            "好", "很", "太", "非常", "超级", "特別", "特别", "真", "超", "極", "极", "格外", "尤其",
-        ])
+        negation_words, intensifier_words = self._load_emotion_config()
 
         emotion_scores = {}
-
-        # 分析用户输入的情感
         for emotion, keywords_data in self.emotion_keywords.items():
-            score = 0.0
-            match_count = 0
-
-            # 检查正面关键词
-            for keyword in keywords_data.get("positive", []):
-                if keyword in text:
-                    # 检查是否有否定词在关键词前面
-                    keyword_pos = text.find(keyword)
-                    has_negation = False
-                    for neg_word in negation_words:
-                        neg_pos = text.find(neg_word)
-                        if neg_pos != -1 and neg_pos < keyword_pos and (keyword_pos - neg_pos) <= 3:
-                            has_negation = True
-                            break
-
-                    # 检查是否有程度词在关键词前面
-                    has_intensifier = False
-                    for int_word in intensifier_words:
-                        int_pos = text.find(int_word)
-                        if int_pos != -1 and int_pos < keyword_pos and (keyword_pos - int_pos) <= 3:
-                            has_intensifier = True
-                            break
-
-                    if has_negation:
-                        # 如果有否定词，降低分数
-                        score -= 0.5
-                    else:
-                        if has_intensifier:
-                            # 如果有程度词，增加分数
-                            score += 1.5
-                        else:
-                            score += 1.0
-                        match_count += 1
-
-            # 检查负面关键词
-            for keyword in keywords_data.get("negative", []):
-                if keyword in text:
-                    # 检查是否有否定词在关键词前面
-                    keyword_pos = text.find(keyword)
-                    has_negation = False
-                    for neg_word in negation_words:
-                        neg_pos = text.find(neg_word)
-                        if neg_pos != -1 and neg_pos < keyword_pos and (keyword_pos - neg_pos) <= 3:
-                            has_negation = True
-                            break
-
-                    # 检查是否有程度词在关键词前面
-                    has_intensifier = False
-                    for int_word in intensifier_words:
-                        int_pos = text.find(int_word)
-                        if int_pos != -1 and int_pos < keyword_pos and (keyword_pos - int_pos) <= 3:
-                            has_intensifier = True
-                            break
-
-                    if has_negation:
-                        # 如果有否定词，降低分数（例如"不难过"应该减少sad的分数）
-                        score -= 0.5
-                    else:
-                        if has_intensifier:
-                            # 如果有程度词，增加分数
-                            score += 1.5
-                        else:
-                            score += 1.0
-                        match_count += 1
-
-            # 检查中性关键词
-            for keyword in keywords_data.get("neutral", []):
-                if keyword in text:
-                    # 中性关键词不受否定词影响
-                    score += 0.8
-                    match_count += 1
-
-            # 应用权重
+            score, match_count = self._score_emotion_keywords(text, keywords_data, negation_words, intensifier_words)
             if match_count > 0 or score != 0:
                 emotion_scores[emotion] = score * keywords_data["weight"]
 
-        # 如果没有匹配到任何情感，返回默认的 calm
-        if not emotion_scores or all(score <= 0 for score in emotion_scores.values()):
-            return {
-                "emotion": "calm",
-                "confidence": 0.5,
-                "intensity": 0.3,
-                "secondary_emotions": [],
-            }
-
-        # 排序情感分数（只保留正分数）
-        positive_emotions = {k: v for k, v in emotion_scores.items() if v > 0}
-        if not positive_emotions:
-            return {
-                "emotion": "calm",
-                "confidence": 0.5,
-                "intensity": 0.3,
-                "secondary_emotions": [],
-            }
-
-        sorted_emotions = sorted(positive_emotions.items(), key=lambda x: x[1], reverse=True)
-
-        # 主要情感
-        primary_emotion, primary_score = sorted_emotions[0]
-
-        # 计算置信度（基于主要情感与其他情感的差距）
-        if len(sorted_emotions) > 1:
-            second_score = sorted_emotions[1][1]
-            confidence = min(1.0, primary_score / (primary_score + second_score + 0.1))
-        else:
-            confidence = min(1.0, primary_score / (primary_score + 0.5))
-
-        # 计算强度（基于关键词数量和分数）
-        intensity = min(1.0, primary_score / 3.0)
-
-        # 次要情感
-        secondary_emotions = [
-            {"emotion": emotion, "score": score}
-            for emotion, score in sorted_emotions[1:3]
-            if score > 0.5
-        ]
-
-        return {
-            "emotion": primary_emotion,
-            "confidence": confidence,
-            "intensity": intensity,
-            "secondary_emotions": secondary_emotions,
-        }
+        return self._compute_emotion_result(emotion_scores)
 
     def analyze_response_emotion(self, response_text: str) -> Dict[str, Any]:
         """

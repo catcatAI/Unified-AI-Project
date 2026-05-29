@@ -481,6 +481,55 @@ class MathRippleEngine:
         self.algorithm_depth = algorithm_depth
         self.ripple_depth = ripple_depth
 
+    def _configure_depth(
+        self, expr: str, auto_detect: bool, force_depth: Optional[RippleDepth],
+        force_algo: Optional[AlgorithmDepth]
+    ) -> None:
+        if auto_detect:
+            config = RippleDepthConfig.from_expr(expr)
+            if force_depth:
+                config.depth = force_depth
+            if force_algo:
+                config.algorithm_depth = force_algo
+            self.set_depth(config.algorithm_depth, config.depth)
+
+    def _process_operator_chain(
+        self, tokens: List[str], i: int, current: float, ripples: List[RippleEffect]
+    ) -> Tuple[int, float]:
+        processed = False
+        while i + 1 < len(tokens):
+            op = tokens[i + 1]
+            if op not in ("+", "-", "*", "/", "^", "**"):
+                break
+            if op in ("+", "-") and processed:
+                break
+            if i + 2 >= len(tokens):
+                break
+            try:
+                operand = float(tokens[i + 2])
+            except (ValueError, IndexError):
+                break
+
+            result, ripple = self._compute_single(current, op, operand)
+            ripple.ripple_depth = self.ripple_depth
+            ripple.algorithm_depth = self.algorithm_depth
+            ripple.depth_level = self.ripple_depth.value
+            ripples.append(ripple)
+
+            if self.accumulator:
+                self.accumulator.add(ripple)
+                if ripple.overload_triggered:
+                    self._apply_cognitive_overload()
+                elif ripple.fear_triggered:
+                    self._apply_division_fear()
+                elif ripple.confusion_triggered:
+                    self._apply_order_confusion(op)
+
+            current = result
+            processed = True
+            i += 2
+        return i, current
+
     def compute(
         self,
         expr: str,
@@ -501,73 +550,24 @@ class MathRippleEngine:
               300 * 2 → 600 (ε.AMPLIFY, 漣漪累積)
               600 * 5 → 3000 (ε.OVERLOAD, 觸發認知過載)
         """
-        if auto_detect:
-            config = RippleDepthConfig.from_expr(expr)
-            if force_depth:
-                config.depth = force_depth
-            if force_algo:
-                config.algorithm_depth = force_algo
-            self.set_depth(config.algorithm_depth, config.depth)
+        self._configure_depth(expr, auto_detect, force_depth, force_algo)
 
         ripples = []
         tokens = self._tokenize(expr)
 
         i = 0
+        current = 0.0
         while i < len(tokens):
             token = tokens[i]
 
             if token.isdigit() or (token.replace(".", "").isdigit()):
                 current = float(token)
-                processed = False
-
-                while i + 1 < len(tokens):
-                    op = tokens[i + 1]
-                    if op not in ("+", "-", "*", "/", "^", "**"):
-                        break
-
-                    if op in ("+", "-") and processed:
-                        break
-
-                    if i + 2 >= len(tokens):
-                        break
-
-                    try:
-                        operand = float(tokens[i + 2])
-                    except (ValueError, IndexError):
-                        break
-
-                    result, ripple = self._compute_single(current, op, operand)
-                    ripple.ripple_depth = self.ripple_depth
-                    ripple.algorithm_depth = self.algorithm_depth
-                    ripple.depth_level = self.ripple_depth.value
-                    ripples.append(ripple)
-
-                    if self.accumulator:
-                        self.accumulator.add(ripple)
-
-                        if ripple.overload_triggered:
-                            self._apply_cognitive_overload()
-                        elif ripple.fear_triggered:
-                            self._apply_division_fear()
-                        elif ripple.confusion_triggered:
-                            self._apply_order_confusion(op)
-
-                    current = result
-                    processed = True
-                    i += 2
-
+                i, current = self._process_operator_chain(tokens, i, current, ripples)
                 i += 1
-            elif token == "+":
-                pass
-            elif token == "-":
-                pass
-            elif token == "(":
-                pass
-            elif token == ")":
-                pass
+            elif token in ("+", "-", "(", ")"):
+                i += 1
             else:
-                pass
-            i += 1
+                i += 1
 
         if ripples:
             final_result = current

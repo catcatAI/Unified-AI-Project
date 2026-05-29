@@ -234,127 +234,137 @@ class SafeEvaluator:
         self.complexity += 1
 
         if isinstance(node, ast.Expression):
-            return self._eval_node(node.body, context)
-
+            return self._eval_expression_node(node, context)
         elif isinstance(node, ast.Constant):
-            return node.value
-
+            return self._eval_constant_node(node, context)
         elif _HAS_NUM and isinstance(node, ast.Num):
-            return node.n
-
+            return self._eval_num_node(node, context)
         elif _HAS_STR and isinstance(node, ast.Str):
-            return node.s
-
+            return self._eval_str_node(node, context)
         elif _HAS_NAMECONST and isinstance(node, ast.NameConstant):
-            return node.value
-
+            return self._eval_nameconstant_node(node, context)
         elif isinstance(node, ast.Name):
-            # 檢查是否為常量
-            if node.id in self.ALLOWED_CONSTANTS:
-                return self.ALLOWED_CONSTANTS[node.id]
-
-            # 檢查是否為上下文變量
-            if node.id in context:
-                return context[node.id]
-
-            # 檢查是否為允許的函數
-            if node.id in self.ALLOWED_FUNCTIONS:
-                return self.ALLOWED_FUNCTIONS[node.id]
-
-            raise ValueError(f"不允許的變量或函數: {node.id}")
-
+            return self._eval_name_node(node, context)
         elif isinstance(node, ast.BinOp):
-            left = self._eval_node(node.left, context)
-            right = self._eval_node(node.right, context)
-            op_type = type(node.op)
-
-            if op_type in self.ALLOWED_OPERATORS:
-                return self.ALLOWED_OPERATORS[op_type](left, right)
-            else:
-                raise ValueError(f"不允許的操作符: {op_type}")
-
+            return self._eval_binop_node(node, context)
         elif isinstance(node, ast.UnaryOp):
-            operand = self._eval_node(node.operand, context)
-            op_type = type(node.op)
-
-            if op_type in self.ALLOWED_OPERATORS:
-                return self.ALLOWED_OPERATORS[op_type](operand)
-            else:
-                raise ValueError(f"不允許的一元操作符: {op_type}")
-
+            return self._eval_unaryop_node(node, context)
         elif isinstance(node, ast.Compare):
-            left = self._eval_node(node.left, context)
-            result = True
-
-            for op, comparator in zip(node.ops, node.comparators):
-                right = self._eval_node(comparator, context)
-                op_type = type(op)
-
-                if op_type in self.ALLOWED_OPERATORS:
-                    result = self.ALLOWED_OPERATORS[op_type](left, right)
-                else:
-                    raise ValueError(f"不允許的比較操作符: {op_type}")
-
-                if not result:
-                    break
-
-                left = right
-
-            return result
-
+            return self._eval_compare_node(node, context)
         elif isinstance(node, ast.BoolOp):
-            op_type = type(node.op)
-            values = [self._eval_node(v, context) for v in node.values]
-
-            if op_type == ast.And:
-                return all(values)
-            elif op_type == ast.Or:
-                return any(values)
-            else:
-                raise ValueError(f"不允許的布爾操作符: {op_type}")
-
+            return self._eval_boolop_node(node, context)
         elif isinstance(node, ast.Call):
-            func = self._eval_node(node.func, context)
-
-            if not callable(func):
-                raise ValueError(f"不可調用的對象: {func}")
-
-            args = [self._eval_node(arg, context) for arg in node.args]
-            kwargs = {kw.arg: self._eval_node(kw.value, context) for kw in node.keywords}
-
-            return func(*args, **kwargs)
-
+            return self._eval_call_node(node, context)
         elif isinstance(node, ast.List):
-            return [self._eval_node(e, context) for e in node.elts]
-
+            return self._eval_list_node(node, context)
         elif isinstance(node, ast.Tuple):
-            return tuple(self._eval_node(e, context) for e in node.elts)
-
+            return self._eval_tuple_node(node, context)
         elif isinstance(node, ast.Set):
-            return {self._eval_node(e, context) for e in node.elts}
-
+            return self._eval_set_node(node, context)
         elif isinstance(node, ast.Dict):
-            keys = [self._eval_node(k, context) for k in node.keys]
-            values = [self._eval_node(v, context) for v in node.values]
-            return dict(zip(keys, values))
-
+            return self._eval_dict_node(node, context)
         elif isinstance(node, ast.Subscript):
-            value = self._eval_node(node.value, context)
-
-            if isinstance(node.slice, ast.Index):
-                index = self._eval_node(node.slice.value, context)
-            elif isinstance(node.slice, ast.Slice):
-                start = self._eval_node(node.slice.lower, context) if node.slice.lower else None
-                stop = self._eval_node(node.slice.upper, context) if node.slice.upper else None
-                step = self._eval_node(node.slice.step, context) if node.slice.step else None
-                index = slice(start, stop, step)
-            else:
-                index = self._eval_node(node.slice, context)
-
-            return value[index]
-
+            return self._eval_subscript_node(node, context)
         else:
             raise ValueError(f"不允許的節點類型: {type(node).__name__}")
+
+    def _eval_expression_node(self, node: ast.Expression, context: Dict[str, Any]) -> Any:
+        return self._eval_node(node.body, context)
+
+    def _eval_constant_node(self, node: ast.Constant, context: Dict[str, Any]) -> Any:
+        return node.value
+
+    def _eval_num_node(self, node: ast.Num, context: Dict[str, Any]) -> Any:
+        return node.n
+
+    def _eval_str_node(self, node: ast.Str, context: Dict[str, Any]) -> Any:
+        return node.s
+
+    def _eval_nameconstant_node(self, node: ast.NameConstant, context: Dict[str, Any]) -> Any:
+        return node.value
+
+    def _eval_name_node(self, node: ast.Name, context: Dict[str, Any]) -> Any:
+        if node.id in self.ALLOWED_CONSTANTS:
+            return self.ALLOWED_CONSTANTS[node.id]
+        if node.id in context:
+            return context[node.id]
+        if node.id in self.ALLOWED_FUNCTIONS:
+            return self.ALLOWED_FUNCTIONS[node.id]
+        raise ValueError(f"不允許的變量或函數: {node.id}")
+
+    def _eval_binop_node(self, node: ast.BinOp, context: Dict[str, Any]) -> Any:
+        left = self._eval_node(node.left, context)
+        right = self._eval_node(node.right, context)
+        op_type = type(node.op)
+        if op_type in self.ALLOWED_OPERATORS:
+            return self.ALLOWED_OPERATORS[op_type](left, right)
+        raise ValueError(f"不允許的操作符: {op_type}")
+
+    def _eval_unaryop_node(self, node: ast.UnaryOp, context: Dict[str, Any]) -> Any:
+        operand = self._eval_node(node.operand, context)
+        op_type = type(node.op)
+        if op_type in self.ALLOWED_OPERATORS:
+            return self.ALLOWED_OPERATORS[op_type](operand)
+        raise ValueError(f"不允許的一元操作符: {op_type}")
+
+    def _eval_compare_node(self, node: ast.Compare, context: Dict[str, Any]) -> Any:
+        left = self._eval_node(node.left, context)
+        result = True
+        for op, comparator in zip(node.ops, node.comparators):
+            right = self._eval_node(comparator, context)
+            op_type = type(op)
+            if op_type in self.ALLOWED_OPERATORS:
+                result = self.ALLOWED_OPERATORS[op_type](left, right)
+            else:
+                raise ValueError(f"不允許的比較操作符: {op_type}")
+            if not result:
+                break
+            left = right
+        return result
+
+    def _eval_boolop_node(self, node: ast.BoolOp, context: Dict[str, Any]) -> Any:
+        op_type = type(node.op)
+        values = [self._eval_node(v, context) for v in node.values]
+        if op_type == ast.And:
+            return all(values)
+        elif op_type == ast.Or:
+            return any(values)
+        raise ValueError(f"不允許的布爾操作符: {op_type}")
+
+    def _eval_call_node(self, node: ast.Call, context: Dict[str, Any]) -> Any:
+        func = self._eval_node(node.func, context)
+        if not callable(func):
+            raise ValueError(f"不可調用的對象: {func}")
+        args = [self._eval_node(arg, context) for arg in node.args]
+        kwargs = {kw.arg: self._eval_node(kw.value, context) for kw in node.keywords}
+        return func(*args, **kwargs)
+
+    def _eval_list_node(self, node: ast.List, context: Dict[str, Any]) -> Any:
+        return [self._eval_node(e, context) for e in node.elts]
+
+    def _eval_tuple_node(self, node: ast.Tuple, context: Dict[str, Any]) -> Any:
+        return tuple(self._eval_node(e, context) for e in node.elts)
+
+    def _eval_set_node(self, node: ast.Set, context: Dict[str, Any]) -> Any:
+        return {self._eval_node(e, context) for e in node.elts}
+
+    def _eval_dict_node(self, node: ast.Dict, context: Dict[str, Any]) -> Any:
+        keys = [self._eval_node(k, context) for k in node.keys]
+        values = [self._eval_node(v, context) for v in node.values]
+        return dict(zip(keys, values))
+
+    def _eval_subscript_node(self, node: ast.Subscript, context: Dict[str, Any]) -> Any:
+        value = self._eval_node(node.value, context)
+        if isinstance(node.slice, ast.Index):
+            index = self._eval_node(node.slice.value, context)
+        elif isinstance(node.slice, ast.Slice):
+            start = self._eval_node(node.slice.lower, context) if node.slice.lower else None
+            stop = self._eval_node(node.slice.upper, context) if node.slice.upper else None
+            step = self._eval_node(node.slice.step, context) if node.slice.step else None
+            index = slice(start, stop, step)
+        else:
+            index = self._eval_node(node.slice, context)
+        return value[index]
 
     def evaluate_arithmetic(self, expression: str) -> EvalResult:
         """
