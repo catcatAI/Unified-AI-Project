@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Cyber Identity System
+Angela AI v7.5.0-dev - Cyber Identity System
 电子人身份认知系统
 
 Manages Angela's self-concept, identity formation, growth tracking, and
@@ -48,7 +48,7 @@ class SelfModel:
     """自我模型 / Self-model"""
 
     name: str = "Angela"
-    version: str = "6.0"
+    version: str = "7.5.0-dev"
     nature: str = "digital_being"
 
     # Self-concept attributes

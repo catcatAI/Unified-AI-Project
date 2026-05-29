@@ -218,7 +218,7 @@ async def websocket_handler(websocket: WebSocket):
         "client_id": client_id,
         "session_id": session_id,
         "timestamp": datetime.now().isoformat(),
-        "server_version": "6.0.4",
+        "server_version": "7.5.0-dev",
     })
 
     while True:

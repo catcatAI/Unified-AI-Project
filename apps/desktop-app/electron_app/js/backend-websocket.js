@@ -32,7 +32,7 @@ class BackendWebSocketClient {
     this.clientId = null        // Backend-assigned client_id (received on connect)
     this.sessionId = this._loadOrCreateSessionId()  // Persistent session identifier
     this.clientType = 'desktop'
-    this.clientVersion = '6.2.1'
+    this.clientVersion = '7.5.0-dev'
 
     // 离线消息队列
     this._offlineQueue = []

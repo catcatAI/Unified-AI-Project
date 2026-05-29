@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Mobile Endpoints
+Angela AI v7.5.0-dev - Mobile Endpoints
 行動端專用接口 (受 Key B 加密保護)
 """
 
@@ -42,7 +42,7 @@ async def get_mobile_status_get():
                 "mem": f"{memory.percent}%",
                 "nodes": cluster_status["cluster"]["active_nodes"],
             },
-            "backend_version": "6.0.4",
+            "backend_version": "7.5.0-dev",
             "server_time": datetime.now().isoformat(),
         }
     except ImportError as e:
@@ -50,7 +50,7 @@ async def get_mobile_status_get():
         return {
             "status": "partial",
             "metrics": {"cpu": "N/A", "mem": "N/A", "nodes": 0},
-            "backend_version": "6.0.4",
+            "backend_version": "7.5.0-dev",
             "server_time": datetime.now().isoformat(),
             "error": "Some modules not available",
         }
@@ -74,7 +74,7 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)):
                 "mem": f"{memory.percent}%",
                 "nodes": cluster_status["cluster"]["active_nodes"],
             },
-            "backend_version": "6.0.4",
+            "backend_version": "7.5.0-dev",
             "server_time": datetime.now().isoformat(),
         }
     except ImportError as e:
@@ -82,7 +82,7 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)):
         return {
             "status": "partial",
             "metrics": {"cpu": "N/A", "mem": "N/A", "nodes": 0},
-            "backend_version": "6.0.4",
+            "backend_version": "7.5.0-dev",
             "server_time": datetime.now().isoformat(),
             "error": "Some modules not available",
         }
@@ -112,7 +112,7 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)):
 
 @router.post("/chat")
 async def mobile_chat(data: Dict[str, Any] = Body(...)):
-    """行動端聊天代理 (NGR v6.3)"""
+    """行動端聊天代理 (NGR v7.5.0-dev)"""
     from api.routes.chat_routes import _handle_chat_request
 
     message = data.get("message", "")

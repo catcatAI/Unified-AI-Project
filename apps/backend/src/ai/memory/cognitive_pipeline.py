@@ -1,5 +1,5 @@
 """
-Angela Unified Cognitive Pipeline v6.2.1 - 統一認知管線
+Angela Unified Cognitive Pipeline v7.5.0-dev - 統一認知管線
 =====================================================
 
 核心流程：axis-first pathfinding + attractor hit + θ meta-allocation + code inspection
@@ -10,7 +10,7 @@ Angela Unified Cognitive Pipeline v6.2.1 - 統一認知管線
   5. GradientField 計算梯度，定位最近的吸引子
   6. 沿梯度導航，觸發行為輸出
   7. 觸發 epsilon-influence → γ 情緒漣漪
-  8. [v6.2.1] CodeInspector 原生代碼檢查（0 LLM）
+  8. [v7.5.0-dev] CodeInspector 原生代碼檢查（0 LLM）
 
 θ 軸職責：
   - 分析輸入與現有軸的語義相似度

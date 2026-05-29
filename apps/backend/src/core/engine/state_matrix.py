@@ -1,5 +1,5 @@
 """
-Angela AI v6.2 - 6D State Matrix System (αβγδεθ)
+Angela AI v7.5.0-dev - 6D State Matrix System (αβγδεθ)
 六維狀態矩陣系統
 
 獨立的狀態矩陣管理系統，整合所有維度的狀態。

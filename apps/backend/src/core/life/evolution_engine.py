@@ -13,7 +13,7 @@ P0.2-D 修復：將 stub 串入實體人格管理器 (PersonalityManager) 學習
 
 職責：根據情感/安全性反饋調整人格參數（ PersonalityManager）。
 
-Author: Angela AI v6.4.0
+Author: Angela AI v7.5.0-dev
 """
 
 import logging

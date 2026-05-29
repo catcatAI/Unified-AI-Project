@@ -1,8 +1,8 @@
 """
-Angela AI v6.0 - Integration Tests Package
+Angela AI v7.5.0-dev - Integration Tests Package
 整合测试包
 
-This package contains comprehensive integration tests for Angela AI v6.0,
+This package contains comprehensive integration tests for Angela AI v7.5.0-dev,
 verifying all system components work together correctly.
 
 测试模块：
@@ -46,9 +46,9 @@ Markers:
     - flaky: 不稳定测试
 
 Author: Angela AI Development Team
-Version: 6.0.0
+Version: 7.5.0-dev
 Date: 2026-02-02
 """
 
-__version__ = '6.0.0'
+__version__ = '7.5.0-dev'
 __author__ = 'Angela AI Development Team'

@@ -1,9 +1,9 @@
 """
-Angela AI v6.0 - Core Integration Tests
+Angela AI v7.5.0-dev - Core Integration Tests
 核心模块集成测试
 
 Author: Angela AI Development Team
-Version: 6.0.0
+Version: 7.5.0-dev
 Date: 2026-02-04
 """
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def run_tests():
     logger.info("=" * 60)
-    logger.info("Angela AI v6.0 - 核心模块集成测试")
+    logger.info("Angela AI v7.5.0-dev - 核心模块集成测试")
     logger.info("=" * 60)
     logger.info()
 

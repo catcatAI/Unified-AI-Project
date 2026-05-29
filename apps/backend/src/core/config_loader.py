@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class AngelaConfigManager:
     """
-    Angela 專用配置管理器（v6.3）
+    Angela 專用配置管理器（v7.5.0-dev）
     支援：YAML 多文件讀取、雙層配置合併（Authority + Learned）、熱重載
     """
 

@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Action Execution Bridge Tests
+Angela AI v7.5.0-dev - Action Execution Bridge Tests
 动作执行桥接器测试
 
 Comprehensive test suite for ActionExecutionBridge including:
@@ -9,7 +9,7 @@ Comprehensive test suite for ActionExecutionBridge including:
 - Feedback loops
 
 Author: Angela AI Development Team
-Version: 6.0.0
+Version: 7.5.0-dev
 Date: 2026-02-02
 """
 

@@ -1,5 +1,5 @@
 """
-Angela AI v6.1.0 - Brain Bridge Service
+Angela AI v7.5.0-dev - Brain Bridge Service
 Bridges the theoretical Brain/Body metrics to the user-facing status and documentation.
 """
 

@@ -972,8 +972,3 @@ class CapacityPlanner:
 
 
 # 全局容量规划引擎实例 (由外部统一管理, 此处不再创建)
-# capacity_planner = CapacityPlanner()
-
-# async def get_capacity_planner() -> CapacityPlanner:
-#     """获取容量规划引擎实例"""
-#     return capacity_planner

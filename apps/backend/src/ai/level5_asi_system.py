@@ -18,12 +18,6 @@ from .alignment.decision_theory_system import DecisionTheorySystem
 from .alignment.adversarial_generation_system import AdversarialGenerationSystem
 from .alignment.asi_autonomous_alignment import ASIAutonomousAlignment
 
-# Placeholder for distributed systems - assuming paths
-# from .distributed import DistributedCoordinator, HyperlinkedParameterCluster
-# from ..agents.aligned_base_agent import AlignedBaseAgent, AlignmentLevel
-# from ..core.hsp.types import HSPMessageEnvelope
-
-
 # Placeholder classes for missing imports to ensure syntactic validity
 class DistributedCoordinator:
     async def initialize(self):

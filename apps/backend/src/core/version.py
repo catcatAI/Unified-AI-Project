@@ -296,13 +296,13 @@ if __name__ == "__main__":
     logger.info(f"Release Notes URL: {get_release_notes_url()}")
 
     # 测试版本比较
-    logger.info(f"\nComparing 6.2.0 and 6.1.0: {compare_versions('6.2.0', '6.1.0')}")
-    logger.info(f"Comparing 6.1.0 and 6.2.0: {compare_versions('6.1.0', '6.2.0')}")
-    logger.info(f"Comparing 6.2.0 and 6.2.0: {compare_versions('6.2.0', '6.2.0')}")
+    logger.info(f"\nComparing 7.5.0-dev and 7.4.0: {compare_versions('7.5.0-dev', '7.4.0')}")
+    logger.info(f"Comparing 7.4.0 and 7.5.0-dev: {compare_versions('7.4.0', '7.5.0-dev')}")
+    logger.info(f"Comparing 7.5.0-dev and 7.5.0-dev: {compare_versions('7.5.0-dev', '7.5.0-dev')}")
 
     # 测试版本兼容性
-    logger.info(f"\nCompatible with 6.1.0: {is_compatible('6.1.0')}")
-    logger.info(f"Compatible with 6.3.0: {is_compatible('6.3.0')}")
+    logger.info(f"\nCompatible with 7.4.0: {is_compatible('7.4.0')}")
+    logger.info(f"Compatible with 7.5.0: {is_compatible('7.5.0')}")
 
     # 测试版本递增
     logger.info(f"\nNext major: {CURRENT_VERSION.increment_major()}")

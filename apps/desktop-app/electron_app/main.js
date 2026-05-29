@@ -1353,7 +1353,7 @@ function connectWebSocket(url, sessionInfo) {
   log.info('[Main] connectWebSocket() called with:', url, 'session:', sessionInfo)
   
   // Store session info for potential reconnect
-  wsSessionInfo = sessionInfo || { sessionId: null, clientType: 'desktop', clientVersion: '6.2.1' }
+  wsSessionInfo = sessionInfo || { sessionId: null, clientType: 'desktop', clientVersion: '7.5.0-dev' }
   
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
     log.info('[WebSocket] Already connected, skipping')

@@ -1,13 +1,15 @@
 """
-Angela AI v6.2.1 — StateMatrix 能力展示場 / Capability Playground
-================================================================
+Angela AI v7.5.0-dev — StateMatrix 能力展示場 / Capability Playground
+===============================================================
+
+Standalone development script (not imported by production code).
 
 展示 StateMatrixAdapter 所有能力。
 
 運行方式:
     python apps/backend/src/core/autonomous/playground.py
 
-Author: Angela AI v6.2.1
+Author: Angela AI v7.5.0-dev
 """
 
 
@@ -39,7 +41,7 @@ def section(text: str):
 
 
 def main():
-    banner("Angela AI v6.2.1 — StateMatrix Capability Playground")
+    banner("Angela AI v7.5.0-dev — StateMatrix Capability Playground")
 
     print("\n初始化 StateMatrixAdapter...")
     sm = StateMatrixAdapter()
@@ -145,7 +147,7 @@ def main():
     # 6. 漣漪級聯
     # =============================================================================
 
-    banner("6. Ripple Cascade")
+    banner("7. Ripple Cascade")
 
     nodes = sm.apply_ripple(MathOp.MUL, 1.1, cascade_targets=["alpha", "beta", "gamma"])
     print(f"  Cascade: {len(nodes)} nodes produced")

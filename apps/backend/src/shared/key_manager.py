@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Key Manager (Legacy Support & Refined)
+Angela AI v7.5.0-dev - Key Manager (Legacy Support & Refined)
 統一金鑰管理器
 
 提供對 A/B/C 密鑰體系的訪問，並保留對舊有配置的相容性。

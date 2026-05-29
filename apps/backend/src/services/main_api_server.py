@@ -1,5 +1,5 @@
 """
-Angela AI Backend API Server v6.0.4
+Angela AI Backend API Server v7.5.0-dev
 FastAPI-based backend with chat, health, and basic endpoints
 
 Usage:
@@ -276,7 +276,7 @@ from api.router import router as api_v1_router  # noqa: E402
 app = FastAPI(
     title="Angela AI API",
     description="Backend API for Angela AI Desktop Companion",
-    version="6.0.4",
+    version="7.5.0-dev",
 )
 
 from api.lifespan import (  # noqa: E402

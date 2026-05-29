@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Feedback Loop System Tests
+Angela AI v7.5.0-dev - Feedback Loop System Tests
 实时反馈循环系统测试
 
 Comprehensive tests for the real-time feedback loop system including:
@@ -10,7 +10,7 @@ Comprehensive tests for the real-time feedback loop system including:
 - Performance tests (latency < 16ms)
 
 Author: Angela AI Development Team
-Version: 6.0.0
+Version: 7.5.0-dev
 Date: 2026-02-02
 """
 

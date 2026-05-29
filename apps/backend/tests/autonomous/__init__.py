@@ -1,8 +1,8 @@
 """
-Angela AI v6.0 - Autonomous Systems Tests
+Angela AI v7.5.0-dev - Autonomous Systems Tests
 自主系统测试套件
 
-This package contains comprehensive test suites for Angela AI v6.0 core autonomous systems.
+This package contains comprehensive test suites for Angela AI v7.5.0-dev core autonomous systems.
 
 Test Modules:
 - test_physiological_tactile.py: Physiological tactile system tests
@@ -12,11 +12,11 @@ Test Modules:
 - test_desktop_interaction.py: Desktop interaction and file operations tests
 
 Author: Angela AI Development Team
-Version: 6.0.0
+Version: 7.5.0-dev
 Date: 2026-02-02
 """
 
 from __future__ import annotations
 
-__version__ = "6.0.0"
+__version__ = "7.5.0-dev"
 __author__ = "Angela AI Development Team"
