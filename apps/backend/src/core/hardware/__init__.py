@@ -37,7 +37,6 @@ from .unified_hardware_center import (  # noqa: E402
     HardwareProfile,
     ModelRequirement,
     get_hardware_center,
-    create_hardware_center,
 )
 
 from .gpu_accelerator import (  # noqa: E402
@@ -80,7 +79,6 @@ __all__ = [
     "WebGLGPUInfo",
     # 函數
     "get_hardware_center",
-    "create_hardware_center",
     "get_gpu_service",
     "initialize_gpu_service",
     "gpu_available",

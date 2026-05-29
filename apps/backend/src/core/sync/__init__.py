@@ -20,8 +20,6 @@ from .cloud_sync import (  # noqa: E402
     SyncStatus,
     ConflictResolution,
     SyncQueue,
-    CloudSyncFactory,
-    create_cloud_sync_manager,
 )
 
 __version__ = "7.5.0-dev"
@@ -36,6 +34,4 @@ __all__ = [
     "SyncStatus",
     "ConflictResolution",
     "SyncQueue",
-    "CloudSyncFactory",
-    "create_cloud_sync_manager",
 ]

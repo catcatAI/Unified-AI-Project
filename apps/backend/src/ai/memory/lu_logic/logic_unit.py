@@ -489,14 +489,4 @@ class LogicUnit:
         logger.info("All statistics reset")
 
 
-# 便捷函数
-def create_logic_unit(max_rules: int = 1000) -> LogicUnit:
-    """创建逻辑单元的便捷函数
 
-    Args:
-        max_rules: 最大规则数量
-
-    Returns:
-        LogicUnit 实例
-    """
-    return LogicUnit(max_rules)

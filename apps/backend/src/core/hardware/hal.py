@@ -364,14 +364,6 @@ def detect_hardware() -> HardwareCapabilities:
     return HardwareDetector.detect()
 
 
-def create_hardware_manager() -> HardwareManager:
-    """便捷函数：创建硬件管理器"""
-    # Use SystemHardwareProbe for underlying detection
-    from shared.utils.hardware_detector import SystemHardwareProbe
-
-    return HardwareFactory.get_manager()
-
-
 def demo():
     """演示 / Demo"""
     logger.info("🔧 硬件抽象层 (HAL) 演示")

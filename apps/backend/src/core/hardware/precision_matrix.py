@@ -366,11 +366,6 @@ def optimize_for_hardware(hardware_info: Dict[str, Any]) -> Dict[str, str]:
     return _get_manager().optimize_for_hardware(hardware_info)
 
 
-def create_precision_manager() -> PrecisionManager:
-    """便捷函数：创建精度管理器"""
-    return PrecisionManager()
-
-
 def demo():
     """演示 / Demo"""
     logger.info("🔢 精度转换矩阵演示")

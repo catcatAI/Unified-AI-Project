@@ -519,7 +519,4 @@ class AngelaTrayManager:
             self._manager.show_notification(title, message)
 
 
-# Convenience function
-def create_tray_manager(angela_core=None) -> AngelaTrayManager:
-    """Create and return tray manager"""
-    return AngelaTrayManager(angela_core)
+

@@ -395,11 +395,6 @@ def add_translation(key: str, language: str, translation: str):
     _get_manager().add_translation(key, language, translation)
 
 
-def create_i18n_manager(config: I18nConfig = None) -> I18nManager:
-    """创建i18n管理器 / Create i18n manager"""
-    return I18nManager(config)
-
-
 def demo():
     """演示 / Demo"""
     logger.info("🌐 i18n 多语言支持系统演示")

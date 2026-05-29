@@ -23,7 +23,6 @@ from .i18n_manager import (  # noqa: E402
     set_language,
     get_language,
     add_translation,
-    create_i18n_manager,
 )
 
 __version__ = "7.5.0-dev"
@@ -41,5 +40,4 @@ __all__ = [
     "set_language",
     "get_language",
     "add_translation",
-    "create_i18n_manager",
 ]

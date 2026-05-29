@@ -31,9 +31,11 @@ async def import_from_drive(args) -> int:
 
     service = GoogleDriveService._create()
     logger.info("Authenticating with Google Drive...")
-    if not service.authenticate():
-        logger.error("Authentication failed. Run again to open browser.")
-        return 1
+    if not service.is_authenticated():
+        logger.info("Opening browser for Google OAuth authorization...")
+        if not service.authenticate():
+            logger.error("Authentication failed or cancelled.")
+            return 1
 
     folder_name = args.folder or "卡片堆"
     logger.info(f"Listing files in '{folder_name}'...")

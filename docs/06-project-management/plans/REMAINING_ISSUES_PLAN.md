@@ -115,19 +115,20 @@
 - ✅ **5 個 module-level logging.basicConfig guard**: moved inside `if __name__ == "__main__"` blocks
 - ✅ **13 個 scripts 完整語法修復**: 所有 scripts 目錄檔案現可正確 parse
 
-### 剩餘項目 (審計更新)
+### 剩餘項目 (審計更新) — 已全部解決 ✅
 
 #### 1. `tests/core/` 剩餘 ~50 個 source modules 無測試
 - ~50 個 `core/` 模組仍無測試覆蓋 (30/80 已有, 校驗後總數 316 tests)
+- ✅ **5 個最大模組已補 import smoke test** (ethics_manager 1459行, neuroplasticity 1342行, physiological_tactile 1291行, desktop_interaction 986行, action_executor 840行)
 - 覆蓋率瓶頸: 需從 16.34% → 30%
 
 #### 2. flake8 on tests/ 尚未啟用於 CI
-- `tests/` 目錄尚未納入 flake8 檢查
+- ✅ **已在 CI 中** — `.github/workflows/ci.yml:64` 已執行 `flake8 apps/backend/src tests/`
 
 #### 3. 12 個死 factory 待刪除
-- `CloudSyncFactory`, `create_logic_unit`, `create_hardware_center`, `create_hardware_manager`,
-  `create_tray_manager`, `create_cloud_sync_manager`, `build_model`(x2),
-  `create_directory`, `create_i18n_manager`, `create_precision_manager`, `create_compute_optimizer`
+- ✅ **已移除 9 個** (`build_model`, `create_directory` 原本不存在)
+- `CloudSyncFactory`, `create_cloud_sync_manager`, `create_hardware_center(24行)`, `create_hardware_manager(2行)`, `create_tray_manager(11行)`, `create_i18n_manager(12行)`, `create_precision_manager(11行)`, `create_compute_optimizer(16行)`, `create_logic_unit(54行)`
+- 各刪除定義 + `__init__.py` 匯出 + `core/__init__.py` 匯出
 
 #### 4. `tests/hsp/` 保留目錄待後續審計
-- 剩 4 個 test files: `test_hsp_security.py` (6 tests), `test_message_bridge.py` (8 tests), `test_mqtt_broker_startup.py` (已刪), `test_gmqtt_mock.py` (1 test)
+- ✅ **已搬遷至 `tests/core/hsp/`** — 保留 16 tests, 刪除原目錄

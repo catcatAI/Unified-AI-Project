@@ -427,11 +427,6 @@ def get_optimization(architecture: str, strategy: str = "balanced") -> Dict[str,
     )
 
 
-def create_compute_optimizer() -> ComputeOptimizer:
-    """便捷函数：创建计算优化器"""
-    return ComputeOptimizer()
-
-
 def demo():
     """演示 / Demo"""
     logger.info("⚡ 计算优化矩阵演示")

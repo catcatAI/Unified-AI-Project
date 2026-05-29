@@ -168,7 +168,6 @@ from .i18n.i18n_manager import (  # noqa: E402
     set_language,
     get_language,
     add_translation,
-    create_i18n_manager,
 )
 
 # Cloud Sync
@@ -181,8 +180,6 @@ from .sync.cloud_sync import (  # noqa: E402
     SyncStatus,
     ConflictResolution,
     SyncQueue,
-    CloudSyncFactory,
-    create_cloud_sync_manager,
 )
 
 # Hardware Support
@@ -199,7 +196,6 @@ from .hardware.hal import (  # noqa: E402
     HardwareManager,
     HardwareFactory,
     detect_hardware,
-    create_hardware_manager,
 )
 
 from .hardware.precision_matrix import (  # noqa: E402
@@ -209,7 +205,6 @@ from .hardware.precision_matrix import (  # noqa: E402
     ConversionInfo,
     convert_precision,
     optimize_for_hardware,
-    create_precision_manager,
 )
 
 from .hardware.compute_matrix import (  # noqa: E402
@@ -220,7 +215,6 @@ from .hardware.compute_matrix import (  # noqa: E402
     ComputationMatrix,
     ComputeOptimizer,
     get_optimization,
-    create_compute_optimizer,
 )
 
 # Version Management
@@ -346,7 +340,6 @@ __all__ = [
     "set_language",
     "get_language",
     "add_translation",
-    "create_i18n_manager",
     # Cloud Sync
     "CloudSyncManager",
     "CloudSyncConfig",
@@ -356,8 +349,6 @@ __all__ = [
     "SyncStatus",
     "ConflictResolution",
     "SyncQueue",
-    "CloudSyncFactory",
-    "create_cloud_sync_manager",
     # Hardware Support
     # Architecture & Hardware
     "ArchitectureType",
@@ -372,7 +363,6 @@ __all__ = [
     "HardwareManager",
     "HardwareFactory",
     "detect_hardware",
-    "create_hardware_manager",
     # Precision Management
     "PrecisionConfig",
     "PrecisionMatrix",
@@ -380,7 +370,6 @@ __all__ = [
     "ConversionInfo",
     "convert_precision",
     "optimize_for_hardware",
-    "create_precision_manager",
     # Computation Optimization
     "OptimizationStrategy",
     "MemoryLayout",
@@ -389,5 +378,4 @@ __all__ = [
     "ComputationMatrix",
     "ComputeOptimizer",
     "get_optimization",
-    "create_compute_optimizer",
 ]

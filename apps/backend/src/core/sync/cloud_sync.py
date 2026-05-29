@@ -425,25 +425,6 @@ class CloudSyncManager:
         self._emit("offline_mode_changed", enabled)
 
 
-class CloudSyncFactory:
-    """云同步工厂 / Cloud sync factory"""
-
-    _instances: Dict[str, CloudSyncManager] = {}
-
-    @classmethod
-    def get_manager(cls, config: CloudSyncConfig = None) -> CloudSyncManager:
-        """获取管理器实例 / Get manager instance"""
-        key = config.server_url if config else "default"
-        if key not in cls._instances:
-            cls._instances[key] = CloudSyncManager(config)
-        return cls._instances[key]
-
-
-def create_cloud_sync_manager(config: CloudSyncConfig = None) -> CloudSyncManager:
-    """便捷函数：创建云同步管理器"""
-    return CloudSyncManager(config)
-
-
 def demo():
     """演示 / Demo"""
     logger.info("☁️ 云同步系统演示")

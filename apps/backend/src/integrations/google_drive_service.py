@@ -82,13 +82,26 @@ class GoogleDriveService:
         return auth_url
 
     def exchange_code(self, code: str) -> bool:
+        """Exchange authorization code for credentials (used by API /auth/callback)."""
         try:
             flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_PATH), SCOPES)
-            self._creds = flow.run_local_server(port=0, authorization_prompt_message=lambda url: code)
+            flow.fetch_token(code=code)
+            self._creds = flow.credentials
             self._save_token(self._creds)
             return True
         except Exception as e:
             logger.error(f"Token exchange failed: {e}", exc_info=True)
+            return False
+
+    def authenticate(self) -> bool:
+        """Run interactive OAuth flow — opens browser for user to authorize."""
+        try:
+            flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_PATH), SCOPES)
+            self._creds = flow.run_local_server(port=0)
+            self._save_token(self._creds)
+            return True
+        except Exception as e:
+            logger.error(f"Authentication failed: {e}", exc_info=True)
             return False
 
     def _get_service(self):

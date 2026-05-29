@@ -903,11 +903,6 @@ async def get_hardware_center() -> UnifiedHardwareCenter:
 # ============================================================
 
 
-def create_hardware_center() -> UnifiedHardwareCenter:
-    """創建硬件中心"""
-    return UnifiedHardwareCenter()
-
-
 # ============================================================
 # 導出
 # ============================================================
@@ -932,5 +927,4 @@ __all__ = [
     "ModelRequirement",
     # 函數
     "get_hardware_center",
-    "create_hardware_center",
 ]

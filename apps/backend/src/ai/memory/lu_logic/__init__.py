@@ -13,6 +13,6 @@
 L2层组件，提供规则管理和执行能力
 """
 
-from .logic_unit import LogicUnit, LogicRule, RulePriority, create_logic_unit
+from .logic_unit import LogicUnit, LogicRule, RulePriority
 
-__all__ = ["LogicUnit", "LogicRule", "RulePriority", "create_logic_unit"]
+__all__ = ["LogicUnit", "LogicRule", "RulePriority"]
