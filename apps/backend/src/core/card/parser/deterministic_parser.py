@@ -6,19 +6,23 @@ Extracts structured fields with confidence scores.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
-from core.card.card_types import Card, CardType, Conflict, Token
+from core.card.card_types import Card, CardType, Token
 
 logger = logging.getLogger(__name__)
 
-# Adaptive pattern: matches ANY letter-prefix card ID (CC-01, WC-09, ORG-04, SLex-01, …)
-# Two+ letters prefix, optional hyphen/space, then digits
+# Adaptive: match ANY letter-prefix card ID (CC-01, WC-09, ORG-04, …)
 CARD_ID_PATTERN = re.compile(r"\b([A-Z][A-Za-z]+)[-\s]?(\d+)\b")
-# Single-letter prefix for Event codes (E-001, E002, …)
-EVENT_ID_PATTERN = re.compile(r"\b(E)[-\s]?(\d{3})\b")
+# Single-letter Event prefix (E-05, E-001, E002, …)
+EVENT_ID_PATTERN = re.compile(r"\b(E)[-\s]?(\d{2,})\b")
 TEMPLATE_ID_PATTERN = re.compile(r"角色卡\s*([A-C])\s*[：:]\s*(.+?)(?:\s*\(|$)")
-WORLD_LINE_PATTERN = re.compile(r"(?:世界線|world.line|WL)[：:\s]*(W\d+|迴廊|(?![\u4e00-\u9fff]*(?:的|了|會|與|碎片|穩定性|測量))[\u4e00-\u9fff]{2,4})")
+# long regex: complex negation for Chinese world-line prefixes
+WORLD_LINE_PATTERN = re.compile(  # noqa: E501
+    r"(?:世界線|world\.line|WL)[：:\s]*(W\d+|迴廊|"
+    r"(?![\u4e00-\u9fff]*(?:的|了|會|與|碎片|穩定性|測量))"
+    r"[\u4e00-\u9fff]{2,4})"
+)
 KEY_VALUE_PATTERN = re.compile(r"^\s*(.+?)\s*[：:]\s*(.+?)\s*$", re.MULTILINE)
 TOKEN_PATTERN = re.compile(
     r"(?:Token|特質|trait)\s*[：:]\s*(\w+[\w\u4e00-\u9fff]*)\s*[（(]?\s*([\d.]+)\s*[)）]?"
@@ -68,7 +72,8 @@ class DeterministicParser:
         self._parse_tokens(text, card, confidences)
 
         if not card.qualified_id and card.card_id:
-            card.qualified_id = f"{card.card_id}@{card.world_line}" if card.world_line else card.card_id
+            wl = card.world_line
+            card.qualified_id = f"{card.card_id}@{wl}" if wl else card.card_id
 
         return card, confidences
 

@@ -7,6 +7,8 @@ Usage:
     python run_card_import.py                    # Full import with Drive auth
     python run_card_import.py --dry-run          # List files without importing
     python run_card_import.py --from-dir <path>  # Import from local directory
+    python run_card_import.py --save <path>      # Save registry to JSON after import
+    python run_card_import.py --load <path>      # Load existing registry before import
 """
 
 import argparse
@@ -15,7 +17,7 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List
 
 # Ensure backend src is in path
 BACKEND_SRC = Path(__file__).resolve().parent / "apps" / "backend" / "src"
@@ -32,8 +34,6 @@ CARD_ID_RE = re.compile(
 )
 
 CARD_ID_SHORT_RE = re.compile(r"([A-Z][A-Za-z]+)[-\s]*(\d+)")
-
-TEMPLATE_RE = re.compile(r"角色卡\s*([A-C])\s*[：:]")
 
 TEMPLATE_RE = re.compile(r"角色卡\s*([A-C])\s*[：:]")
 
@@ -83,7 +83,8 @@ async def import_from_drive(args) -> int:
     folder_name = args.folder or "卡片堆"
     logger.info(f"Listing files in '{folder_name}'...")
 
-    folders = service.list_files(query=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'")
+    q = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'"
+    folders = service.list_files(query=q)
     if not folders:
         logger.error(f"Folder '{folder_name}' not found in Google Drive.")
         return 1
@@ -93,9 +94,10 @@ async def import_from_drive(args) -> int:
     # Collect .gdoc files from all subfolders recursively
     def collect_gdocs(folder_id: str) -> List[Dict]:
         results = []
-        docs = service.list_files(query=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.document'")
-        results.extend(docs)
-        subfolders = service.list_files(query=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder'")
+        q_docs = f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.document'"
+        results.extend(service.list_files(query=q_docs))
+        q_sub = f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder'"
+        subfolders = service.list_files(query=q_sub)
         for sf in subfolders:
             results.extend(collect_gdocs(sf["id"]))
         return results
@@ -131,6 +133,8 @@ async def import_from_drive(args) -> int:
 
     pipeline = CardImportPipeline()
     registry = CardRegistry()
+    if args.load:
+        registry.load(Path(args.load))
 
     def _process_file(gf, is_reference: bool = False) -> None:
         name = gf.get("name", "unnamed")
@@ -144,13 +148,18 @@ async def import_from_drive(args) -> int:
             for section in sections:
                 result = pipeline.process(section, source_label=f"gdrive://{gf['id']}")
                 if result.card and result.card.card_id:
-                    key = result.card.qualified_id or f"{result.card.card_id}@{result.card.world_line}"
+                    cid, wl = result.card.card_id, result.card.world_line
+                    key = result.card.qualified_id or f"{cid}@{wl}"
                     if is_reference and registry.get(key) is not None:
-                        continue  # reference files never overwrite real card data
+                        continue
                     registry.add(result.card)
-                    logger.info(f"  Imported card {result.card.qualified_id} (stage={result.stage}, confidence={result.confidence:.3f})")
+                    logger.info(
+                        f"  Imported {result.card.qualified_id} "
+                        f"(stage={result.stage}, conf={result.confidence:.3f})"
+                    )
                     if result.conflicts_total:
-                        logger.info(f"    Conflicts: {result.conflicts_resolved}/{result.conflicts_total} resolved")
+                        r, t = result.conflicts_resolved, result.conflicts_total
+                        logger.info(f"    Conflicts: {r}/{t} resolved")
                 else:
                     logger.warning(f"  No card from section in {name}.")
         except Exception as e:
@@ -163,6 +172,8 @@ async def import_from_drive(args) -> int:
         _process_file(gf, is_reference=True)
 
     _print_summary(registry)
+    if args.save:
+        registry.save(Path(args.save))
     return 0
 
 
@@ -176,7 +187,11 @@ async def import_from_local(args) -> int:
         logger.error(f"Directory not found: {local_dir}")
         return 1
 
-    md_files = list(local_dir.rglob("*.md")) + list(local_dir.rglob("*.txt")) + list(local_dir.rglob("*.gdoc"))
+    md_files = (
+        list(local_dir.rglob("*.md"))
+        + list(local_dir.rglob("*.txt"))
+        + list(local_dir.rglob("*.gdoc"))
+    )
     logger.info(f"Found {len(md_files)} markdown/text files in {local_dir}.")
 
     if args.dry_run:
@@ -186,6 +201,8 @@ async def import_from_local(args) -> int:
 
     pipeline = CardImportPipeline()
     registry = CardRegistry()
+    if args.load:
+        registry.load(Path(args.load))
 
     for fpath in md_files:
         rel = fpath.relative_to(local_dir)
@@ -197,13 +214,18 @@ async def import_from_local(args) -> int:
                 result = pipeline.process(section, source_label=f"file://{fpath}")
                 if result.card and result.card.card_id:
                     registry.add(result.card)
-                    logger.info(f"  Imported card {result.card.qualified_id} (stage={result.stage}, confidence={result.confidence:.3f})")
+                    logger.info(
+                        f"  Imported {result.card.qualified_id} "
+                        f"(stage={result.stage}, conf={result.confidence:.3f})"
+                    )
                 else:
                     logger.warning(f"  No card from section in {rel}.")
         except Exception as e:
             logger.error(f"  Failed to process {rel}: {e}", exc_info=True)
 
     _print_summary(registry)
+    if args.save:
+        registry.save(Path(args.save))
     return 0
 
 
@@ -229,6 +251,8 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="List files without importing")
     parser.add_argument("--from-dir", help="Import from local directory instead of Drive")
     parser.add_argument("--folder", default="卡片堆", help="Google Drive folder name (default: 卡片堆)")
+    parser.add_argument("--save", help="Save registry to JSON file after import")
+    parser.add_argument("--load", help="Load existing registry from JSON file before import")
     args = parser.parse_args()
 
     if args.from_dir:
