@@ -33,31 +33,45 @@ CARD_ID_RE = re.compile(
     r"([A-Z][A-Za-z]+)[-\s]*(\d+)",
 )
 
-CARD_ID_SHORT_RE = re.compile(r"([A-Z][A-Za-z]+)[-\s]*(\d+)")
+# Line-start bare card ID (e.g. list-style reference docs)
+LINE_START_CARD_RE = re.compile(
+    r"^[\s*·\-•]*([A-Z][A-Za-z]+)[-\s]*(\d+)", re.MULTILINE
+)
+
+# Line-start single-letter C prefix (C01, C02, … — only at line start)
+LINE_START_C_RE = re.compile(
+    r"^[\s*·\-•]*C(\d{2})\b", re.MULTILINE
+)
 
 TEMPLATE_RE = re.compile(r"角色卡\s*([A-C])\s*[：:]")
 
 
 def _split_card_content(content: str) -> List[str]:
-    """Split content by card ID boundaries — works for any document format.
+    """Split content by card ID boundaries — adaptive to any document format.
 
-    Only splits on explicit card-type-prefixed IDs (角色卡：CC-43, 規則卡：RC-01)
-    or template patterns (角色卡 A：). Bare short IDs (CC-xx) inside reference
-    tables are ignored — they belong to the single card being described.
+    Priority:
+    1. card-type prefix + ID  (角色卡：CC-43 → split)
+    2. template pattern       (角色卡 A： → split)
+    3. line-start bare ID     (CC-20 冰喀啦 → split for reference lists)
+    4. line-start single C    (C01 霜 → split for 實證主義 cards)
+    5. no split               (return whole text as one section)
     """
     text = content.strip()
     if not text:
         return []
 
-    # Primary: match card type prefix + ID (角色卡：CC-43, 規則卡：RC-01, etc.)
     matches = list(CARD_ID_RE.finditer(text))
-    # Fallback: template pattern (角色卡 A：, 角色卡 B：, 角色卡 C：)
     if len(matches) < 2:
         matches = list(TEMPLATE_RE.finditer(text))
     if len(matches) < 2:
+        # Fallback: line-start bare card IDs (reference/list docs)
+        matches = list(LINE_START_CARD_RE.finditer(text))
+    if len(matches) < 2:
+        # Fallback: line-start single C prefix (實證主義 C-series)
+        matches = list(LINE_START_C_RE.finditer(text))
+    if len(matches) < 2:
         return [text]
 
-    # Split at each card ID boundary
     sections = []
     for i, m in enumerate(matches):
         start = m.start()
