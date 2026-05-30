@@ -199,12 +199,12 @@ name: card_pipeline
 version: 1.0.0
 kind: service
 depends_on:
-  required:
-    - intent_registry   # 依賴 IntentRegistry (v2 Phase 2)
+  required: []            # Phase 1: 不依賴任何 module，先獨立驗證
   optional:
-    - ham_memory        # 非必需，沒有時降級
+    - ham_memory          # 非必需，沒有時降級
     - personality_module
-    - llm_module        # Stage 3 LLM resolution
+    - llm_module          # Stage 3 LLM resolution
+    - intent_registry     # Phase 2 加入後自動啟用 intent dispatch
 provides:
   services:
     - name: card_import_handler
@@ -319,20 +319,42 @@ async def _analyze_intent(self, text: str) -> str:
     ...
 
 # After (透過 ModuleManager 取得 IntentRegistry singleton)
+# IntentRegistry.detect() 是 sync method，ModuleManager.call() 自動處理 sync/async
 async def _analyze_intent(self, text: str) -> str:
     registry = self._module_manager.get_module("intent_registry")
-    intent = await registry.detect(text)       # YAML-based + learned
+    # ModuleManager.call() 判斷 detect() 是 sync → 用 to_thread() 或在 event loop 執行
+    intent = await self._module_manager.call("intent_registry", "detect", text)
     if intent == "character_card" and self._module_manager.has("card_pipeline"):
         return "character_card"
     return intent
 ```
 
-### 6.6 解決的問題
+### 6.6 ModuleManager 注入方式
+
+ChatService 目前的建構子 `__init__()` 不接收 `module_manager`。改動方式：
+
+**選項 A（推薦，最小改動）**：ChatService 透過 ServiceRegistry 取得 ModuleManager：
+
+```python
+# chat_service.py: 在需要時 lazy 取得
+from core.interfaces.service_registry import get_registry
+
+class ChatService:
+    @property
+    def _module_manager(self):
+        return get_registry().get("module_manager")
+```
+
+**選項 B（當 ChatService 成為 module 後）**：ChatService 改用 ModuleManager init 建立，由 lifecycle 傳入 deps。
+
+Phase 2 先用選項 A，Phase 3 遷移到選項 B。
+
+### 6.7 解決的問題
 
 | 問題 | Before | After |
 |------|--------|-------|
 | H1/H3 (每次 new IntentRegistry) | `IntentRegistry()` per message | `ModuleManager.get("intent_registry")` singleton |
-| D4 (ChatService 不使用 IntentRegistry) | 手動 keyword match | `registry.detect()` |
+| D4 (ChatService 不使用 IntentRegistry) | 手動 keyword match | `module_manager.call("intent_registry", "detect", text)` |
 | D5 (無 character_card 分支) | 只有 2 個分支 | `detect()` 返回後 dispatch |
 | D10 (IntentRegistry 0 引用) | services/ 0 match | ModuleManager 注入 |
 
@@ -386,7 +408,10 @@ kind: service
 depends_on:
   optional:
     - ham_memory
-    - card_pipeline
+    # 注意: card_pipeline 依賴 llm_module (optional)，若 llm_module 也依賴 card_pipeline
+    # 則形成 cycle。因此 llm_module 不宣告對 card_pipeline 的依賴。
+    # card_pipeline 透過 ModuleManager.get("llm_service") 在執行時取得 LLM 服務，
+    # 不需要 llm_module 反過來依賴它。
 provides:
   services:
     - name: llm_service

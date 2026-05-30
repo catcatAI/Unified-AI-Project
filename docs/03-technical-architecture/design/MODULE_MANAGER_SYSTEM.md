@@ -135,12 +135,44 @@ config:
 | `depends_on.optional` | ❌ | 可選依賴，不存在時 module 降級運作 |
 | `provides.services` | ❌ | 註冊到 ServiceRegistry 的服務 |
 | `provides.adapters` | ❌ | 註冊到 AdapterRegistry 的轉接器 |
-| `lifecycle.init` | ✅ | 同步初始化函數，返回 module 實例 |
-| `lifecycle.start` | ❌ | 啟動函數（可 async），在依賴都 ready 後呼叫 |
-| `lifecycle.stop` | ❌ | 關閉函數（可 async），用於清理資源 |
-| `lifecycle.health` | ❌ | Health check 設定 |
-| `lifecycle.hooks` | ❌ | 事件驅動的 lifecyle hook |
-| `config` | ❌ | 預設配置，可被 angela_core.yaml 覆蓋 |
+| `lifecycle.init` | ✅ | 初始化函數（可 sync 或 async），返回 module 實例 |
+| `lifecycle.start` | ❌ | 啟動函數（可 sync 或 async），在 init 完成後呼叫 |
+| `lifecycle.stop` | ❌ | 關閉函數（可 sync 或 async），用於清理資源 |
+| `lifecycle.health` | ❌ | Health check 設定 (若無指定 endpoint，ModuleManager 用 `get_status()` 回應) |
+| `lifecycle.hooks` | ❌ | 事件驅動的 lifecycle hook |
+| `config` | ❌ | 預設配置。ModuleManager 啟動時會從 `angela_core.yaml` 讀取 `modules.{name}` 覆蓋此處的值 |
+
+### 3.2a 目錄慣例
+
+所有 module 放在 `apps/backend/src/modules/`（與 `core/`, `services/`, `api/` 同層級）：
+
+```
+apps/backend/src/
+  modules/
+    card_pipeline/
+      module.yaml
+      __init__.py
+    intent_registry/
+      module.yaml
+      __init__.py
+```
+
+這確保 `from modules.card_pipeline import init` 的 import path 可以在現有 `sys.path` 中正確解析。
+ModuleManager 的預設掃描路徑是 `[Path("apps/backend/src/modules/")]`。
+
+### 3.2b 配置覆蓋機制
+
+ModuleManager 啟動時讀取 `angela_core.yaml` 的 `modules` 區段：
+
+```yaml
+# angela_core.yaml
+modules:
+  card_pipeline:
+    pipeline:
+      resolution_threshold: 0.90  # 覆蓋 descriptor 的 0.85
+```
+
+合併規則：`angela_core.yaml` > `module.yaml config` > 程式碼內建的預設值。
 
 ### 3.3 依賴解析順序
 
@@ -213,10 +245,10 @@ ModuleManager.start()
   │     └── return init results
   │
   ├── 4. Lifecycle.start_all(resolved)
-  │     ├── for each module in reverse order:
+  │     ├── for each module in same order (deps first):
   │     │   ├── call module.start() (async aware)
   │     │   ├── fire on_ready event
-  │     │   └── if fail → flag as ERROR
+  │     │   └── if fail → flag as ERROR, skip dependents
   │     └── return start results
   │
   └── 5. Lifecycle.monitor()
@@ -244,10 +276,29 @@ ModuleManager.hotplug(module_path)
   ├── 2. Resolver.check_deps(descriptor, existing_modules)
   ├── 3. Lifecycle.init(descriptor)
   ├── 4. Lifecycle.start(descriptor)
-  └── 5. Update routing table
+  ├── 5a. Re-resolve dependents' hooks (新 module 的事件要註冊到已存在的 listener)
+  └── 5b. Update routing table
         ├── if descriptor provides API routes → register in router
         └── if descriptor provides hooks → register in event bus
 ```
+
+### 4.5 Sync/async boundary 與 thread safety
+
+當 ModuleManager 在 async context 中呼叫 sync method 時，預設使用 `asyncio.to_thread()`，
+但需注意 `concurrent.futures` 的要求：**傳入 `to_thread` 的函數和參數必須可 pickle**。
+
+若 module 有不可 pickle 的屬性（如 file handles, socket connections），應：
+
+1. **在 `init()` 中建立這些資源**（ModuleManager 在 async 環境中呼叫 init，不需 pickle）
+2. **`start()` 後才使用它們**
+3. **在 `module.yaml` 中標記**：
+   ```yaml
+   lifecycle:
+     thread_safe: false  # 若 false，ModuleManager 不在 thread pool 中執行此 module 的 sync method
+   ```
+
+若 `thread_safe: false`，ModuleManager 改為在 event loop 中直接呼叫 sync method
+（會短暫阻塞 event loop，適合少量快速操作）。長時間 CPU-bound 操作仍應提取到獨立的 thread/process。**不建議用在 pipeline.process() 這類長時間操作** — 這類 method 應宣告為 async。
 
 ---
 
@@ -263,11 +314,12 @@ class ModuleManager:
     def resolve(self, descriptors: list[ModuleDescriptor]) -> list[ModuleDescriptor]: ...
     async def init_all(self, resolved: list[ModuleDescriptor]) -> dict[str, InitResult]: ...
     async def start_all(self, resolved: list[ModuleDescriptor]) -> dict[str, StartResult]: ...
-    async def stop_all(self, reverse: bool = True) -> None: ...
+    async def stop_all(self) -> None: ...
     async def hotplug(self, path: Path) -> HotplugResult: ...
 
     # Registry
     def get_module(self, name: str) -> Optional[ModuleInstance]: ...
+    def has(self, name: str) -> bool: ...
     def list_modules(self) -> dict[str, ModuleStatus]: ...
     def get_status(self, name: str) -> ModuleStatus: ...
 
@@ -419,6 +471,17 @@ vision = module_manager.get_module("vision_service")
 - `modules/` — 根目錄，放置所有 module descriptor
 
 **不修改任何現有檔案**。ModuleManager 在這一階段是純新增，與現有系統並行運作。
+
+**測試目錄**: `tests/core/module_manager/`（與現有 `tests/core/` 結構一致）：
+```
+tests/core/module_manager/
+  test_models.py       — ModuleDescriptor dataclass 序列化/反序列化
+  test_scanner.py      — module.yaml 解析、schema 驗證、缺失欄位報錯
+  test_resolver.py     — topological sort、cycle detection、optional deps
+  test_lifecycle.py    — init→start→stop 順序、sync/async 感知
+  test_events.py       — event bus 發布/訂閱、health monitor
+  test_manager.py      — ModuleManager.start() 完整流程、hotplug
+```
 
 ### 7.3 M1: card_pipeline 示範
 
