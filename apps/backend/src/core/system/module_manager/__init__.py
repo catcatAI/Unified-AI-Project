@@ -102,6 +102,10 @@ class ModuleManager:
     def list_modules(self) -> dict[str, ModuleInstance]:
         return {inst.name: inst for inst in self._instances}
 
+    def get_status(self, name: str) -> Optional[ModuleStatus]:
+        inst = self.get_module(name)
+        return inst.status if inst is not None else None
+
     def get_dependency_graph(self) -> dict[str, dict]:
         graph: dict[str, dict] = {}
         for inst in self._instances:
@@ -114,9 +118,26 @@ class ModuleManager:
             }
         return graph
 
-    def get_status(self, name: str) -> Optional[ModuleStatus]:
-        inst = self.get_module(name)
-        return inst.status if inst is not None else None
+    def get_health_report(self) -> dict:
+        report: dict[str, dict] = {}
+        for inst in self._instances:
+            hs = self._health_monitor.get_status(inst.name)
+            report[inst.name] = {
+                "status": inst.status.value,
+                "alive": hs.alive if hs else (inst.status == ModuleStatus.RUNNING),
+                "latency_ms": hs.latency_ms if hs else 0.0,
+                "error": hs.error if hs else inst.error,
+                "consecutive_fails": hs.consecutive_fails if hs else 0,
+            }
+        return {
+            "modules": report,
+            "summary": {
+                "total": len(self._instances),
+                "running": sum(1 for i in self._instances if i.status == ModuleStatus.RUNNING),
+                "failed": sum(1 for i in self._instances if i.status in (ModuleStatus.INIT_FAILED, ModuleStatus.START_FAILED, ModuleStatus.DEAD)),
+                "started": self._started,
+            },
+        }
 
 
 __all__ = [

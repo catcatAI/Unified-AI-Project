@@ -194,6 +194,66 @@ async def chat_completions(request: Dict[str, Any] = Body(...)):
     }
 
 
+@router.get("/admin/modules")
+async def admin_modules():
+    """List all modules with status, deps, and health info."""
+    from core.interfaces.service_registry import get_registry
+    mm = get_registry().get("module_manager")
+    if mm is None:
+        return {"modules": {}, "summary": {"total": 0, "running": 0, "failed": 0, "started": False}}
+    report = mm.get_health_report()
+    report["graph"] = mm.get_dependency_graph()
+    return report
+
+
+@router.get("/admin/modules/{name}")
+async def admin_module_detail(name: str):
+    """Get detailed info about a specific module."""
+    from core.interfaces.service_registry import get_registry
+    mm = get_registry().get("module_manager")
+    if mm is None or not mm.has(name):
+        return {"error": f"Module '{name}' not found"}
+    entry = mm.get_module(name)
+    hs = mm.health_monitor.get_status(name)
+    return {
+        "name": entry.name,
+        "status": entry.status.value,
+        "version": entry.descriptor.version,
+        "kind": entry.descriptor.kind.value,
+        "description": entry.descriptor.description,
+        "depends_on": {
+            "required": list(entry.descriptor.depends_on.required),
+            "optional": list(entry.descriptor.depends_on.optional),
+        },
+        "provides": [s.name for s in entry.descriptor.provides.services],
+        "health": {
+            "alive": hs.alive if hs else (entry.status.value == "running"),
+            "latency_ms": hs.latency_ms if hs else 0.0,
+            "error": hs.error if hs else entry.error,
+            "consecutive_fails": hs.consecutive_fails if hs else 0,
+        } if hs else None,
+    }
+
+
+@router.get("/admin/modules/{name}/health")
+async def admin_module_health(name: str):
+    """Get health status of a specific module."""
+    from core.interfaces.service_registry import get_registry
+    mm = get_registry().get("module_manager")
+    if mm is None or not mm.has(name):
+        return {"error": f"Module '{name}' not found"}
+    hs = mm.health_monitor.get_status(name)
+    entry = mm.get_module(name)
+    return {
+        "name": name,
+        "status": entry.status.value,
+        "alive": hs.alive if hs else (entry.status.value == "running"),
+        "latency_ms": hs.latency_ms if hs else 0.0,
+        "error": hs.error if hs else entry.error,
+        "consecutive_fails": hs.consecutive_fails if hs else 0,
+    }
+
+
 @router.post("/angela/reload")
 async def reload_llm():
     """強制重新載入 LLM 服務（hot-reload 配置變更）"""
