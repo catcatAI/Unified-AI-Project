@@ -1463,7 +1463,7 @@ class AngelaLLMService:
 
     def _load_emotion_config(self) -> tuple:
         try:
-            from core.config_loader import get_config_loader
+            from core.hsp.utils.fallback_config_loader import get_config_loader
             _cfg = get_config_loader()
             _em = _cfg.get_authority("angela_core", {}).get("llm", {}).get("emotion", {})
         except Exception:

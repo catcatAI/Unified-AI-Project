@@ -254,7 +254,7 @@ class MemoryTemplate:
 
         # 从配置读取权重
         try:
-            from core.config_loader import get_config_loader
+            from core.hsp.utils.fallback_config_loader import get_config_loader
             _cfg = get_config_loader()
             _w = _cfg.get_authority("angela_core", {}).get("template_matching", {}).get("score_weights", {})
         except Exception:

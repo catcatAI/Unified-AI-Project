@@ -322,7 +322,7 @@ class ChatService:
     def _get_anchor_keywords(self) -> Dict[str, List[str]]:
         """從分層配置讀取維度關鍵詞 [Phase 7]"""
         try:
-            from core.config_loader import get_formula_config
+            from app_config_loader import get_formula_config
             matrix_conf = get_formula_config("matrix")
             dims = matrix_conf.get("dimensions", {})
             return {name: d.get("anchor_keywords", []) for name, d in dims.items()}
@@ -333,7 +333,7 @@ class ChatService:
     def _get_state_constants(self, key: str, default):
         """從分層配置讀取行為常量 [Phase 7]"""
         try:
-            from core.config_loader import get_formula_config
+            from app_config_loader import get_formula_config
             dyn_conf = get_formula_config("dynamic")
             return dyn_conf.get("state_constants", {}).get(key, default)
         except Exception:
