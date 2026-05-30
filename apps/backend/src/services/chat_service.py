@@ -119,8 +119,10 @@ class ChatService:
         # 2. 獲取當前生理與情緒狀態
         bio_state = self.state_matrix.get_analysis()
 
-        # 3. 處理特定意圖 (如：LLM 管理, 檔案操作等)
-        if primary_intent == "llm_manage":
+        # 3. 處理特定意圖 (如：LLM 管理, 檔案操作, 角色卡等)
+        if primary_intent == "character_card":
+            return await self._handle_character_card_intent(sanitized_message)
+        elif primary_intent == "llm_manage":
             return await self._handle_llm_manage_intent(sanitized_message, user_name, primary_intent)
         elif primary_intent == "file_op":
             return await self._handle_file_intent(sanitized_message, primary_intent)
@@ -152,19 +154,48 @@ class ChatService:
 
         return response
 
+    @property
+    def _module_manager(self):
+        from core.interfaces.service_registry import get_registry
+        return get_registry().get("module_manager")
+
     async def _analyze_intent(self, text: str) -> Dict[str, Any]:
-        """基礎意圖分析 (待升級為更強的 NLU)"""
         text_lower = text.lower()
         intent = "general"
+        confidence = 0.0
 
-        if any(kw in text_lower for kw in ["切換模型", "使用模型", "llm", "後端", "backend"]):
-            intent = "llm_manage"
-        elif any(kw in text_lower for kw in ["讀取檔案", "寫入檔案", "file", "存檔"]):
-            intent = "file_op"
-        elif any(kw in text_lower for kw in ["教你", "學習", "learn", "teach"]):
-            intent = "learning"
+        # IntentRegistry via ModuleManager
+        try:
+            mm = self._module_manager
+            if mm and mm.has("intent_registry"):
+                ireg = mm.get_module("intent_registry").instance
+                intent_name, conf = ireg.detect(text)
+                if intent_name and intent_name != "general":
+                    intent_map = {
+                        "character_card": "character_card",
+                        "llm_switch": "llm_manage",
+                        "task": "task",
+                        "code": "code",
+                        "math": "math",
+                        "document": "document",
+                        "research": "research",
+                        "plan": "plan",
+                    }
+                    intent = intent_map.get(intent_name, intent_name)
+                    confidence = conf
+        except Exception:
+            pass
 
-        return {"primary_intent": intent}
+        # Fallback: hardcoded keyword matching
+        if intent == "general":
+            if any(kw in text_lower for kw in ["切換模型", "使用模型", "llm", "後端", "backend"]):
+                intent = "llm_manage"
+            elif any(kw in text_lower for kw in ["讀取檔案", "寫入檔案", "file", "存檔"]):
+                intent = "file_op"
+            elif any(kw in text_lower for kw in ["教你", "學習", "learn", "teach"]):
+                intent = "learning"
+
+        return {"primary_intent": intent, "confidence": confidence}
 
     async def _call_llm(self, message: str, user_name: str, bio_state: Dict[str, Any], intent_analysis: Dict[str, Any]) -> str:
         """核心 LLM 調用封裝"""
@@ -272,6 +303,18 @@ class ChatService:
         except Exception as e:
             logger.warning(f"LLM manage intent failed: {e}", exc_info=True)
             return "（LLM 管理模組載入失敗）"
+
+    async def _handle_character_card_intent(self, text: str) -> str:
+        try:
+            mm = self._module_manager
+            if mm and mm.has("card_pipeline"):
+                pipeline = mm.get_module("card_pipeline").instance
+                result = pipeline.process(text, source_label="chat")
+                return f"（角色卡導入）已解析卡片 {result.card.card_id}，信心度 {result.confidence:.0%}，處理階段：{result.stage}"
+            return "（角色卡檢測）角色卡功能尚未就緒，請稍後再試。"
+        except Exception as e:
+            logger.error(f"Character card import failed: {e}", exc_info=True)
+            return "（角色卡導入）處理過程中發生錯誤，請檢查輸入格式。"
 
     async def _handle_file_intent(self, text: str, intent: str) -> str:
         return "（檔案操作功能正在對齊中，稍後為妳開啟...）"

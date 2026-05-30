@@ -32,18 +32,22 @@ class ModuleManager:
     def health_monitor(self) -> HealthMonitor:
         return self._health_monitor
 
+    def _build_deps_map(self, descriptors, instances):
+        return {
+            d.name: self._lifecycle._build_deps(d, instances, registry=self._registry)
+            for d in descriptors
+        }
+
     async def start(self) -> None:
         descriptors = self._scanner.discover()
         resolved = self._resolver.resolve(descriptors)
-        deps_map = {d.name: self._lifecycle._build_deps(d, self._instances) for d in resolved}
-        for d in resolved:
-            deps_map[d.name] = self._lifecycle._build_deps(d, self._instances)
+        deps_map = self._build_deps_map(resolved, self._instances)
         instances, init_results = await self._lifecycle.init_all(resolved, deps_map)
         self._instances = instances
         if self._registry is not None:
             for inst in instances:
                 self._registry.register(inst.name, inst.instance)
-        deps_map = {d.name: self._lifecycle._build_deps(d, self._instances) for d in resolved}
+        deps_map = self._build_deps_map(resolved, self._instances)
         start_results = await self._lifecycle.start_all(instances, deps_map)
         for inst in instances:
             self._health_monitor.check(
@@ -72,7 +76,7 @@ class ModuleManager:
             missing = self._resolver.check_deps(descriptor, [i.descriptor for i in self._instances])
             if missing:
                 return HotplugResult(name=descriptor.name, success=False, error=f"missing deps: {missing}")
-            deps = self._lifecycle._build_deps(descriptor, self._instances)
+            deps = self._lifecycle._build_deps(descriptor, self._instances, registry=self._registry)
             instances, init_results = await self._lifecycle.init_all([descriptor], {descriptor.name: deps})
             if not instances:
                 return HotplugResult(name=descriptor.name, success=False, error=init_results[0].error if init_results else "init failed")
@@ -80,7 +84,7 @@ class ModuleManager:
             self._instances.append(inst)
             if self._registry is not None:
                 self._registry.register(inst.name, inst.instance)
-            deps = self._lifecycle._build_deps(descriptor, self._instances)
+            deps = self._lifecycle._build_deps(descriptor, self._instances, registry=self._registry)
             await self._lifecycle.start_all([inst], {descriptor.name: deps})
             return HotplugResult(name=descriptor.name, success=True)
         except Exception as e:
@@ -95,8 +99,20 @@ class ModuleManager:
     def has(self, name: str) -> bool:
         return self.get_module(name) is not None
 
-    def list_modules(self) -> dict[str, ModuleStatus]:
-        return {inst.name: inst.status for inst in self._instances}
+    def list_modules(self) -> dict[str, ModuleInstance]:
+        return {inst.name: inst for inst in self._instances}
+
+    def get_dependency_graph(self) -> dict[str, dict]:
+        graph: dict[str, dict] = {}
+        for inst in self._instances:
+            d = inst.descriptor
+            graph[d.name] = {
+                "required": list(d.depends_on.required),
+                "optional": list(d.depends_on.optional),
+                "provides": [s.name for s in d.provides.services],
+                "status": inst.status.value,
+            }
+        return graph
 
     def get_status(self, name: str) -> Optional[ModuleStatus]:
         inst = self.get_module(name)

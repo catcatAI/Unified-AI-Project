@@ -5,6 +5,8 @@ import inspect
 from collections.abc import Callable
 from typing import Any
 
+from typing import Any, Optional
+
 from .models import ModuleDescriptor, ModuleInstance, ModuleStatus, InitResult, StartResult
 from .events import EventBus
 
@@ -122,13 +124,26 @@ class ModuleLifecycle:
         module = importlib.import_module(module_path)
         return getattr(module, func_name)
 
-    def _build_deps(self, descriptor: ModuleDescriptor, instances: list[ModuleInstance]) -> dict:
+    def _build_deps(
+        self,
+        descriptor: ModuleDescriptor,
+        instances: list[ModuleInstance],
+        registry: Any = None,
+    ) -> dict:
         deps: dict = {}
         name_map = {inst.name: inst.instance for inst in instances}
         for dep_name in descriptor.depends_on.required:
             if dep_name in name_map:
                 deps[dep_name] = name_map[dep_name]
+            elif registry is not None:
+                svc = registry.get(dep_name)
+                if svc is not None:
+                    deps[dep_name] = svc
         for dep_name in descriptor.depends_on.optional:
             if dep_name in name_map:
                 deps[dep_name] = name_map[dep_name]
+            elif registry is not None:
+                svc = registry.get(dep_name)
+                if svc is not None:
+                    deps[dep_name] = svc
         return deps

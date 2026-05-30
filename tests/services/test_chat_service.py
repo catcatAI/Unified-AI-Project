@@ -3,6 +3,7 @@
 # =============================================================================
 
 import sys
+import unittest.mock as um
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
@@ -118,21 +119,120 @@ class TestChatServiceEvolution:
 
 class TestChatServiceIntent:
 
+    async def _assert_intent(self, chat_service, text, expected_intent):
+        result = await chat_service._analyze_intent(text)
+        assert result['primary_intent'] == expected_intent, f"Expected {expected_intent}, got {result} for '{text}'"
+        assert 'confidence' in result
+
     async def test_analyze_intent_general(self, chat_service):
-        result = await chat_service._analyze_intent('how are you')
-        assert result == {'primary_intent': 'general'}
+        await self._assert_intent(chat_service, 'how are you', 'general')
 
     async def test_analyze_intent_llm(self, chat_service):
-        result = await chat_service._analyze_intent('切換模型 to gpt-4')
-        assert result == {'primary_intent': 'llm_manage'}
+        await self._assert_intent(chat_service, '切換模型 to gpt-4', 'llm_manage')
 
     async def test_analyze_intent_file(self, chat_service):
-        result = await chat_service._analyze_intent('讀取檔案 myfile.txt')
-        assert result == {'primary_intent': 'file_op'}
+        await self._assert_intent(chat_service, '讀取檔案 myfile.txt', 'file_op')
 
     async def test_analyze_intent_learning(self, chat_service):
-        result = await chat_service._analyze_intent('教你 something new')
-        assert result == {'primary_intent': 'learning'}
+        await self._assert_intent(chat_service, '教你 something new', 'learning')
+
+    async def test_analyze_intent_via_registry(self, chat_service):
+        mock_mm = MagicMock()
+        mock_ireg = MagicMock()
+        mock_ireg.instance.detect.return_value = ('task', 0.8)
+        mock_mm.has.return_value = True
+        mock_mm.get_module.return_value = mock_ireg
+        patcher = um.patch.object(type(chat_service), '_module_manager',
+                                   new_callable=um.PropertyMock(return_value=mock_mm))
+        patcher.start()
+        result = await chat_service._analyze_intent('生成一份報告')
+        patcher.stop()
+        assert result['primary_intent'] == 'task'
+        assert result['confidence'] == 0.8
+
+    async def test_analyze_intent_character_card_via_registry(self, chat_service):
+        mock_mm = MagicMock()
+        mock_ireg = MagicMock()
+        mock_ireg.instance.detect.return_value = ('character_card', 0.9)
+        mock_mm.has.return_value = True
+        mock_mm.get_module.return_value = mock_ireg
+        patcher = um.patch.object(type(chat_service), '_module_manager',
+                                   new_callable=um.PropertyMock(return_value=mock_mm))
+        patcher.start()
+        result = await chat_service._analyze_intent('生成一個角色卡')
+        patcher.stop()
+        assert result['primary_intent'] == 'character_card'
+
+    async def test_analyze_intent_registry_exception_falls_back(self, chat_service):
+        mock_mm = MagicMock()
+        mock_mm.has.side_effect = Exception("registry fail")
+        patcher = um.patch.object(type(chat_service), '_module_manager',
+                                   new_callable=um.PropertyMock(return_value=mock_mm))
+        patcher.start()
+        result = await chat_service._analyze_intent('how are you')
+        patcher.stop()
+        assert result['primary_intent'] == 'general'
+
+    async def test_analyze_intent_no_module_manager_falls_back(self, chat_service):
+        patcher = um.patch.object(type(chat_service), '_module_manager',
+                                   new_callable=um.PropertyMock(return_value=None))
+        patcher.start()
+        result = await chat_service._analyze_intent('切換模型 to gpt-4')
+        assert result['primary_intent'] == 'llm_manage'
+
+
+class TestChatServiceCharacterCard:
+
+    def _start_mm_mock(self, chat_service, mock_mm):
+        patcher = um.patch.object(type(chat_service), '_module_manager',
+                                   new_callable=um.PropertyMock(return_value=mock_mm))
+        patcher.start()
+        return patcher
+
+    async def test_character_card_with_pipeline(self, chat_service):
+        mock_card = MagicMock(card_id="CC-99")
+        mock_result = MagicMock(card=mock_card, confidence=0.85, stage="auto")
+        mock_mm = MagicMock()
+        mock_pipeline = MagicMock()
+        mock_pipeline.instance.process.return_value = mock_result
+        mock_mm.has.return_value = True
+        mock_mm.get_module.return_value = mock_pipeline
+        patcher = self._start_mm_mock(chat_service, mock_mm)
+        result = await chat_service._handle_character_card_intent("CC-99: Test")
+        patcher.stop()
+        assert "CC-99" in result
+        assert "85%" in result
+        assert "auto" in result
+
+    async def test_character_card_no_pipeline(self, chat_service):
+        mock_mm = MagicMock()
+        mock_mm.has.return_value = False
+        patcher = self._start_mm_mock(chat_service, mock_mm)
+        result = await chat_service._handle_character_card_intent("CC-99: Test")
+        patcher.stop()
+        assert "尚未就緒" in result
+
+    async def test_character_card_pipeline_error(self, chat_service):
+        mock_mm = MagicMock()
+        mock_pipeline = MagicMock()
+        mock_pipeline.instance.process.side_effect = Exception("parse error")
+        mock_mm.has.return_value = True
+        mock_mm.get_module.return_value = mock_pipeline
+        patcher = self._start_mm_mock(chat_service, mock_mm)
+        result = await chat_service._handle_character_card_intent("bad text")
+        patcher.stop()
+        assert "錯誤" in result
+
+    async def test_character_card_in_generate_response(self, chat_service):
+        chat_service._handle_character_card_intent = AsyncMock(return_value="card result")
+        mock_mm = MagicMock()
+        mock_ireg = MagicMock()
+        mock_ireg.instance.detect.return_value = ('character_card', 0.9)
+        mock_mm.has.return_value = True
+        mock_mm.get_module.return_value = mock_ireg
+        patcher = self._start_mm_mock(chat_service, mock_mm)
+        result = await chat_service.generate_response("生成一個角色卡", "User")
+        assert result == "card result"
 
 
 class TestChatServiceHelpers:

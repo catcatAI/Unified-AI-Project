@@ -6,7 +6,7 @@ from pathlib import Path
 from core.system.module_manager import ModuleManager, ModuleStatus
 from core.interfaces.service_registry import ServiceRegistry
 
-MODULES_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "apps/backend/src/modules"
+MODULES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "apps/backend/src/modules"
 
 
 @pytest.fixture

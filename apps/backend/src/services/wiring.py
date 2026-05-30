@@ -132,7 +132,8 @@ async def initialize_module_manager(
     await manager.start()
 
     # Wire modules that provide services into the ServiceRegistry
-    for name, instance in manager.list_modules().items():
-        registry.register(f"module.{name}", instance)
+    registry.register("module_manager", manager)
+    for name, entry in manager.list_modules().items():
+        registry.register(f"module.{name}", entry.instance)
     logger.info(f"[ModuleManager] {len(manager.list_modules())} modules started and registered")
     return manager
