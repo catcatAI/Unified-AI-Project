@@ -68,12 +68,12 @@
 | **Self-Evolution** | ✅ 5/6 | ConfigMutator, hot-reload, broadcast, StateStore done; 1 bug (`"User"` key hardcoded) |
 | **8D State Matrix** | ✅ | 34 endpoints, drives NGR + LLM context injection |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config at L869 |
-| **Wiring** | ✅ | `services/wiring.py` (4349 bytes) + `initialize_module_manager()`, DI via lifespan + ModuleManager |
+| **Wiring** | ✅ | `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | **Tests** | ✅ | ~1500+, 16.34% coverage, 0 layer violations |
 | **P7 Config** | 🟡 | TieredConfigLoader done; 150+ magic numbers not migrated |
-| **P8 Tech Debt** | ❌ | S1 BROKEN (chat_service import), S2-S4 partial |
+| **P8 Tech Debt** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
 
-See **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** for full 27-task breakdown.
+See **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 complete) and **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (quality finishing).
 
 ### Quick Start
 
@@ -108,7 +108,7 @@ npm start
 - **Self-Evolution** — ConfigMutator, hot-reload, broadcast, StateStore independently verified
 - **8D State Matrix** — 34 REST endpoints, drives NGR fragment synthesis + LLM context
 - **Config system** — `config_loader.py:get_config()` correctly returns Config at L869
-- **Wiring module** — `services/wiring.py` (4.3KB) initializes vision/audio/tactile/digital_life/economy/pet
+- **Wiring module** — `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 ModuleManager 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) 自動發現/啟動/註冊
 - **DI framework** — FastAPI `Depends` in 5 route files (ops_routes, mobile, drive, economy, atlassian)
 - **Economy + Pet** — lifecycle managers, WebSocket broadcast wired via lifespan
 - **Bootstrap** — hardware detection, directory scaffold, state persistence
@@ -120,11 +120,11 @@ See detailed breakdowns in linked analysis docs:
 
 | Category | Key Issues | Reference |
 |----------|-----------|-----------|
-| **Security** | ✅ KeyC leak fixed (`chat_routes.py:184`). `/eval` endpoint still exists | `FORENSIC_AUDIT`, `PROBLEM_ANALYSIS` |
-| **Functional** | Memory (HAM/LU/CDM) flow never connected; Persistence missing (reboot loses state); Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
+| **Security** | ✅ KeyC leak fixed (`chat_routes.py:184`). `/eval` endpoint removed | `FORENSIC_AUDIT`, `PROBLEM_ANALYSIS` |
+| **Functional** | Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
 | **God Modules (refactored)** | `main_api_server.py` 314 lines, `angela_llm_service.py` 40 lines (shim), `core/autonomous/` 2 files — **old 1668/2196/60+ sizes were from pre-refactor code** | `MODULARITY_ANALYSIS` (stale analysis) |
-| **Governance** | Version chaos (13 files, 31% consistent); Fake v7.x changelog; No version process | `FULL_ARCHITECTURE_ANALYSIS` |
-| **Wiring Gaps** | ChatService bypasses IntentRegistry (module exists but unwired); Plugin hooks defined but never called from hot path; 50+ stub implementations | `CARD_INTEGRATION_PLAN` |
+| **Governance** | ✅ 版本 13 檔已統一至 7.5.0-dev (S1-S3 完成); CI 含版本檢查; CHANGELOG 同步 | `FULL_ARCHITECTURE_ANALYSIS` |
+| **Wiring Gaps** | ✅ ChatService→IntentRegistry via ModuleManager (Phase 2, 21 tests); Plugin hooks 0 handler 註冊; 50+ stub 實作 | `CARD_INTEGRATION_PLAN`, `MASTER_CONSOLIDATED_PLAN` |
 
 ### Roadmap / Future Extensibility
 
@@ -133,7 +133,7 @@ Systems that are defined/stubbed but not yet implemented — ordered by estimate
 **Tier 1 — Core Infrastructure (foundational gaps)**
 - **Plugin System**: 5 hooks defined (`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`), **0 handlers registered**. Full CRUD API exists (`api/v1/endpoints/plugins.py`) but no plugins deployed.
 - **Config Handlers**: 5 YAML-defined handlers have **no code**: `FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler` (`angela_core.yaml:131-257`)
-- **Intent Dispatch**: ChatService has hardcoded 3-intent keyword matching, bypassing `IntentRegistry` which knows 12+ intents (`chat_service.py:155-167`). IntentRegistry module (`modules/intent_registry/`) exists but not wired to ChatService.
+- **Intent Dispatch**: ✅ ChatService 現已優先經 ModulerManager→IntentRegistry 偵測意圖 (Phase 2 完成)。回退至硬編碼 keyword match (`chat_service.py:162-198`, 21 tests)
 
 **Tier 2 — Memory & Persistence**
 - **HAM Database**: All 6 CRUD methods transparently fall back to mock storage (`database.py:33-165`)
@@ -190,8 +190,9 @@ See dedicated docs for full diagrams:
 | [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
 | [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 27 items, S/A/B/C tiers, code-verified status |
 | [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points |
-| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **Implemented** — M0 core (6 files + 59 tests) + M1 card_pipeline + M2 intent_registry modules |
+| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **Implemented** — M0-M5 (6 files + 100 tests) + 6 modules (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
+| [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
 
 ---
 
@@ -216,12 +217,12 @@ See dedicated docs for full diagrams:
 | **自演化** | ✅ 5/6 | ConfigMutator、熱重載、廣播、StateStore 正常；1 bug（`"User"` key 硬編碼） |
 | **8D 狀態矩陣** | ✅ | 34 REST 端點，驅動 NGR + LLM 上下文注入 |
 | **配置系統** | ✅ | `config_loader.py:get_config()` 正確回傳 Config（L869） |
-| **Wiring** | ✅ | `services/wiring.py`（4.3KB）+ `initialize_module_manager()`，透過 lifespan DI + ModuleManager |
+| **Wiring** | ✅ | `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | **測試** | ✅ | ~1500+ tests, 16.34% 覆蓋率, 0 層級違規 |
 | **P7 配置** | 🟡 | TieredConfigLoader 完成；150+ magic number 未遷移 |
-| **P8 技術債** | ❌ | S1 BROKEN（chat_service import 斷裂），S2-S4 部分 |
+| **P8 技術債** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
 
-詳見 **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)**。
+詳見 **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 完成) 與 **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (quality finishing)。
 
 ---
 
@@ -253,7 +254,7 @@ npm start
 - **自演化核心** — ConfigMutator、熱重載、廣播、StateStore 獨立驗證
 - **8D 狀態矩陣** — 34 REST 端點，驅動 NGR + LLM 上下文注入
 - **配置系統** — `config_loader.py:get_config()` 正確回傳 Config（L869）
-- **Wiring** — `services/wiring.py`（4.3KB）初始化 vision/audio/tactile/digital_life/economy/pet
+- **Wiring** — `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組自動發現/啟動/註冊至 ServiceRegistry
 - **DI 框架** — FastAPI `Depends` 用於 5 路由（ops_routes, mobile, drive, economy, atlassian）
 - **經濟 + 寵物** — WebSocket 廣播已接線，lifecycle managers 正常
 - **測試基礎設施** — ~1500+ tests, 16.34% 覆蓋率, 0 層級違規, 6 源碼 bug 已修復
@@ -262,11 +263,11 @@ npm start
 
 | 類別 | 主要問題 | 參考文件 |
 |------|---------|---------|
-| **安全性** | ✅ KeyC 洩漏已修復。`/eval` 端點仍存在 | `FORENSIC_AUDIT` |
-| **功能斷鏈** | 記憶鏈未接線；無持久層（重啟全丟）；桌面→Live2D 未完成；手機 stub；加密不完整 | `WIRING_MAP` |
-| **上帝模塊（已重構）** | `main_api_server.py` 314 行、`angela_llm_service.py` 40 行 (shim)、`core/autonomous/` 2 檔 — **舊的 1668/2196/60+ 是重構前的數字** | `MODULARITY_ANALYSIS`（已過時） |
-| **治理** | 版本號 13 檔僅 31% 一致；虛假 CHANGELOG；無版本管理流程 | `FULL_ARCHITECTURE_ANALYSIS` |
-| **接線缺口** | ChatService 繞過 IntentRegistry（模組已存在但未接線）；Plugin hooks 從未被熱路徑調用；50+ stub 實作 | `CARD_INTEGRATION_PLAN` |
+| **安全性** | ✅ KeyC 洩漏已修復。`/eval` 端點已移除 | `FORENSIC_AUDIT` |
+| **功能斷鏈** | 桌面→Live2D 未完成；手機 stub；加密不完整 | `WIRING_MAP` |
+| **上帝模塊（已重構）** | `main_api_server.py` 314 行、`angela_llm_service.py` 40 行 (shim)、`core/autonomous/` 2 檔 | `MODULARITY_ANALYSIS` |
+| **治理** | ✅ 版本 13 檔已統一至 7.5.0-dev (S1-S3 完成); CI 含版本檢查; CHANGELOG 同步 | `FULL_ARCHITECTURE_ANALYSIS` |
+| **接線缺口** | ✅ ChatService→IntentRegistry via ModuleManager (Phase 2, 21 tests); Plugin hooks 0 handler 註冊; 50+ stub 實作 | `CARD_INTEGRATION_PLAN` |
 
 ### 未來路線圖
 
@@ -331,8 +332,9 @@ npm start
 | [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
 | [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：27 項、S/A/B/C 分級、代碼審計驗證 |
 | [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動 |
-| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0 核心 (6 files + 59 tests) + M1 card_pipeline + M2 intent_registry 模組 |
+| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
+| [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移, Stub 清理 |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
 
