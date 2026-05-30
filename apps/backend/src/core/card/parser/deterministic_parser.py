@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 CARD_ID_PATTERN = re.compile(r"\b([A-Z][A-Za-z]+)[-\s]?(\d+)\b")
 # Single-letter Event prefix (E-05, E-001, E002, …)
 EVENT_ID_PATTERN = re.compile(r"\b(E)[-\s]?(\d{2,})\b")
-# Single-letter C prefix (C01, C02, … — 實證主義 character cards)
-SINGLE_C_PATTERN = re.compile(r"\bC(\d{2,})\b")
+# Single-letter prefix (C01, S01, W01, … — 實證主義 cards, 2+ digits for safety)
+SINGLE_LETTER_PATTERN = re.compile(r"\b([A-Z])(\d{2,})\b")
 TEMPLATE_ID_PATTERN = re.compile(r"角色卡\s*([A-C])\s*[：:]\s*(.+?)(?:\s*\(|$)")
 # long regex: complex negation for Chinese world-line prefixes
 WORLD_LINE_PATTERN = re.compile(  # noqa: E501
@@ -62,6 +62,10 @@ class DeterministicParser:
             "SLex": CardType.SAFETY_LEXICON,
             "CCK": CardType.META_SETTING,
             "WL": CardType.META_SETTING,
+            # Single-letter prefixes (實證主義)
+            "C": CardType.CHARACTER,
+            "S": CardType.SCENE,
+            "W": CardType.META_SETTING,
         }
 
     def parse(self, text: str) -> Tuple[Card, Dict[str, float]]:
@@ -98,11 +102,12 @@ class DeterministicParser:
             confidences["card_id"] = 0.95
             confidences["card_type"] = 0.95
             return
-        # 3. Single-letter C prefix (C01, C02 — 實證主義 character)
-        cmatch = SINGLE_C_PATTERN.search(text)
-        if cmatch:
-            card.card_id = f"C{cmatch.group(1)}"
-            card.card_type = CardType.CHARACTER
+        # 3. Single-letter prefix (C01, S01, W01, … — 實證主義)
+        smatch = SINGLE_LETTER_PATTERN.search(text)
+        if smatch:
+            prefix, num = smatch.group(1), smatch.group(2)
+            card.card_id = f"{prefix}{num}"
+            card.card_type = self._card_type_map.get(prefix, CardType.CHARACTER)
             confidences["card_id"] = 0.95
             confidences["card_type"] = 0.95
             return

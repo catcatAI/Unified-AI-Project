@@ -38,9 +38,9 @@ LINE_START_CARD_RE = re.compile(
     r"^[\s*·\-•]*([A-Z][A-Za-z]+)[-\s]*(\d+)", re.MULTILINE
 )
 
-# Line-start single-letter C prefix (C01, C02, … — only at line start)
-LINE_START_C_RE = re.compile(
-    r"^[\s*·\-•]*C(\d{2})\b", re.MULTILINE
+# Line-start single-letter prefix (C01, S01, W01, … — safe at line start, 2+ digits)
+LINE_START_SINGLE_RE = re.compile(
+    r"^[\s*·\-•]*([A-Z])(\d{2,})\b", re.MULTILINE
 )
 
 TEMPLATE_RE = re.compile(r"角色卡\s*([A-C])\s*[：:]")
@@ -52,8 +52,8 @@ def _split_card_content(content: str) -> List[str]:
     Priority:
     1. card-type prefix + ID  (角色卡：CC-43 → split)
     2. template pattern       (角色卡 A： → split)
-    3. line-start bare ID     (CC-20 冰喀啦 → split for reference lists)
-    4. line-start single C    (C01 霜 → split for 實證主義 cards)
+    3. line-start multi-let   (CC-20 冰喀啦 → split for reference lists)
+    4. line-start single-let  (C01, S01, W01 → split for single-letter prefixes)
     5. no split               (return whole text as one section)
     """
     text = content.strip()
@@ -67,8 +67,8 @@ def _split_card_content(content: str) -> List[str]:
         # Fallback: line-start bare card IDs (reference/list docs)
         matches = list(LINE_START_CARD_RE.finditer(text))
     if len(matches) < 2:
-        # Fallback: line-start single C prefix (實證主義 C-series)
-        matches = list(LINE_START_C_RE.finditer(text))
+        # Fallback: line-start single-letter prefix (C01, S01, W01)
+        matches = list(LINE_START_SINGLE_RE.finditer(text))
     if len(matches) < 2:
         return [text]
 
