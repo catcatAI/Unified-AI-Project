@@ -1,7 +1,7 @@
 # Angela Module Manager System
 
 > **Design Date**: 2026-05-30  
-> **Status**: Implemented — M0-M5 core (6 source files + 100 tests) deployed. M1 (card_pipeline) + M2 (intent_registry) modules active under `modules/`. wiring.py integration via `initialize_module_manager()`. Phase 5: version negotiation + unplug + hotplug rollback.  
+> **Status**: Implemented — M0-M5 core (6 source files + 100 tests) deployed. M1 (card_pipeline) + M2 (intent_registry) + M5 (vision, audio, tactile, google_drive) modules active under `modules/`. wiring.py integration via `initialize_module_manager()` in lifespan startup. Phase 5: version negotiation + unplug + hotplug rollback.  
 > **解决的问题**: 耦合集中度 35/100、共享可變狀態 35/100、God module 35/100 — 見 `MODULARITY_ANALYSIS.md`  
 > **與 8D Matrix 的關係**: 8D 管理 Angela 的執行時狀態；ModuleManager 管理程式碼的架構接線。兩者互補。
 
@@ -573,11 +573,14 @@ Week 4: M4 llm_module（router.py 拆分）⏳ 未開始
   └── router.py → modules/llm/router.py
   → 1522 行 router.py 分成 gateway + 模組內 routing
 
-Week 5: M5 其餘 service ⏳ 未開始
-  ├── vision, audio, tactile, drive
-  ├── 每個 service 建立 module.yaml
-  └── wiring.py 只剩 ModuleManager.start()
-  → 所有 service 統一管理
+Week 5: M5 其餘 service ✅ 已完成
+  ├── vision, audio, tactile, google_drive
+  ├── 每個 service 建立 module.yaml + __init__.py (init/start/stop)
+  ├── lifespan.py 工廠函數改為優先查 ServiceRegistry (fallback 保留)
+  ├── _deps.py 工廠函數改為優先查 ServiceRegistry (fallback 保留)
+  ├── initialize_module_manager() 接入 lifespan startup (ModuleManager 啟動後才初始化舊 wiring)
+  └── wiring.py 不須修改 — 透過 lifespan.py 工廠自動接 ServiceRegistry
+  → 所有 service 統一管理 (100 module_manager tests pass)
 ```
 
 ### 9.1 驗收標準

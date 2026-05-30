@@ -1,0 +1,15 @@
+name: tactile_service
+version: 1.0.0
+kind: service
+description: Touch simulation, material modeling, haptic feedback
+depends_on:
+  required: []
+  optional: []
+provides:
+  services:
+    - name: tactile_service
+      type: singleton
+lifecycle:
+  init: modules.tactile_service.init
+  health:
+    endpoint: /health/tactile

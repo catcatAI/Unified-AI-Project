@@ -1,0 +1,15 @@
+name: audio_service
+version: 1.0.0
+kind: service
+description: Speech recognition, voiceprint ID, auditory attention, TTS
+depends_on:
+  required: []
+  optional: []
+provides:
+  services:
+    - name: audio_service
+      type: singleton
+lifecycle:
+  init: modules.audio_service.init
+  health:
+    endpoint: /health/audio

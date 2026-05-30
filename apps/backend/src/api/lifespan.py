@@ -107,6 +107,9 @@ def get_action_executor() -> ActionExecutor:
 def get_vision_service() -> VisionService:
     global _vision_service
     if _vision_service is None:
+        from core.interfaces.service_registry import get_registry
+        _vision_service = get_registry().get("vision_service")
+    if _vision_service is None:
         _vision_service = VisionService()
     return _vision_service
 
@@ -114,12 +117,18 @@ def get_vision_service() -> VisionService:
 def get_audio_service() -> AudioService:
     global _audio_service
     if _audio_service is None:
+        from core.interfaces.service_registry import get_registry
+        _audio_service = get_registry().get("audio_service")
+    if _audio_service is None:
         _audio_service = AudioService()
     return _audio_service
 
 
 def get_tactile_service() -> TactileService:
     global _tactile_service
+    if _tactile_service is None:
+        from core.interfaces.service_registry import get_registry
+        _tactile_service = get_registry().get("tactile_service")
     if _tactile_service is None:
         _tactile_service = TactileService()
     return _tactile_service
@@ -192,6 +201,14 @@ async def lifespan(app: FastAPI):
                     logger.warning(f"[Lifecycle] Failed to pre-init {svc_name}: {e}", exc_info=True)
     except Exception as e:
         logger.warning(f"[Lifecycle] Startup config error: {e}", exc_info=True)
+
+    try:
+        from services.wiring import initialize_module_manager
+        from core.interfaces.service_registry import get_registry
+        _mm = await initialize_module_manager(registry=get_registry())
+        logger.info("[ModuleManager] Module system initialized with discovered modules")
+    except Exception as e:
+        logger.warning(f"[ModuleManager] Module system init failed (will use fallback factories): {e}", exc_info=True)
 
     try:
         from services.wiring import initialize_all_services
