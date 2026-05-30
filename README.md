@@ -238,6 +238,7 @@ See dedicated docs for full diagrams:
 | [FORENSIC_AUDIT](docs/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
 | [FULL_ARCHITECTURE_ANALYSIS](docs/FULL_ARCHITECTURE_ANALYSIS.md) | Full architecture map, version history, component version audit, consistency scoring |
 | [MASTER_CONSOLIDATED_PLAN](docs/plans/MASTER_CONSOLIDATED_PLAN.md) | Merged task plan (replaces P8 v1, P8 Corrected, P9): 27 tasks, S/A/B/C tiers, code-verified status |
+| [ANGELA_CARD_INTEGRATION_PLAN](ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring plan: 4 phases, 10 disconnection points, code-audited |
 
 ---
 
@@ -390,6 +391,7 @@ npm start
 | [測試重構與建立計畫](docs/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI integration、階段執行路線 |
 | [全量架構分析](docs/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本歷史、組件版本審計、一致性評分 |
 | [合併任務總計畫](docs/plans/MASTER_CONSOLIDATED_PLAN.md) | 27 項任務合併計畫 (取代 P8 v1/P8 Corrected/P9)，經代碼審計驗證狀態 |
+| [ANGELA 卡片整合計畫](ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線計畫：4 階段、10 斷開點、代碼審計確認 |
 
 ---
 
