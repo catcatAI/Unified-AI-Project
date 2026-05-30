@@ -59,15 +59,21 @@
 
 ---
 
-### Current Status
+### Current Status (code-verified)
 
-See **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** for the active 27-task plan with code-verified status. Key points:
+| Area | Status | Key evidence |
+|------|--------|-------------|
+| **Server starts** | ✅ | `main_api_server.py` 314 lines, imports valid, FastAPI lifespan at `api/lifespan.py:168` |
+| **Chat pipeline** | ✅ Core path | `generate_angela_response()` / `get_angela_chat_service()` at `chat_service.py:302-312`, used by `router.py:176` |
+| **Self-Evolution** | ✅ 5/6 | ConfigMutator, hot-reload, broadcast, StateStore done; 1 bug (`"User"` key hardcoded) |
+| **8D State Matrix** | ✅ | 34 endpoints, drives NGR + LLM context injection |
+| **Config system** | ✅ | `config_loader.py:get_config()` returns Config at L869 |
+| **Wiring** | ✅ | `services/wiring.py` (4349 bytes), DI via lifespan |
+| **Tests** | ✅ | ~1500+, 16.34% coverage, 0 layer violations |
+| **P7 Config** | 🟡 | TieredConfigLoader done; 150+ magic numbers not migrated |
+| **P8 Tech Debt** | ❌ | S1 BROKEN (chat_service import), S2-S4 partial |
 
-- P6 Self-Evolution: ✅ 5/6 deliverables done (1 bug: user gate hardcodes `"User"` key)
-- P6.5 Startup Wiring: ✅ 2/2 (heartbeat + service init in lifespan)
-- P7 Config: 🟡 Partial — TieredConfigLoader done, but 150+ magic numbers not migrated
-- P8 Tech Debt: ❌ S1 (chat_service import break) BROKEN, S2-S4 partial
-- Tests: ✅ ~1500+ tests, 16.34% coverage, 0 layer violations
+See **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** for full 27-task breakdown.
 
 ### Quick Start
 
@@ -96,16 +102,17 @@ npm start
 
 ### What Actually Works (Code-Verified)
 
-- **Backend server starts** — `main_api_server.py` imports are valid; `generate_angela_response` and `get_angela_chat_service` both exist in `chat_service.py`
-- **Biological Simulation** — heartbeat, emotions, endocrine, metabolic cycle (live in lifespan)
-- **Self-Evolution core** — ConfigMutator, hot-reload, broadcast, StateStore all independently verified
-- **8D State Matrix** — 34 endpoints (αβγδεθζη)
-- **Config system** — `config_loader.py:get_config()` correctly returns Config (L869)
-- **Wiring separation** — `services/wiring.py` exists with `initialize_all_services()`
-- **DI framework** — FastAPI `Depends` used in 4+ route handlers (ops_routes, mobile, drive, economy)
-- **Economy + Pet** — lifecycle managers, WebSocket broadcast wired
+- **Server starts** (`services/main_api_server.py:314` lines) — FastAPI with lifespan, WebSocket, state matrix, atlassian routes
+- **Chat pipeline** — `ChatService` at `services/chat_service.py:313` lines, `generate_angela_response()` at L302, used by `api/router.py:176`
+- **Biological simulation** — Heartbeat via `get_metabolic_heartbeat()`, emotions, endocrine, metabolic cycle in `api/lifespan.py`
+- **Self-Evolution** — ConfigMutator, hot-reload, broadcast, StateStore independently verified
+- **8D State Matrix** — 34 REST endpoints, drives NGR fragment synthesis + LLM context
+- **Config system** — `config_loader.py:get_config()` correctly returns Config at L869
+- **Wiring module** — `services/wiring.py` (4.3KB) initializes vision/audio/tactile/digital_life/economy/pet
+- **DI framework** — FastAPI `Depends` in 5 route files (ops_routes, mobile, drive, economy, atlassian)
+- **Economy + Pet** — lifecycle managers, WebSocket broadcast wired via lifespan
 - **Bootstrap** — hardware detection, directory scaffold, state persistence
-- **Test infrastructure** — ~1500+ tests, 16.34% coverage, 0 layer violations
+- **Test infrastructure** — ~1500+ tests, 16.34% coverage (`tests/` restructured, 0 layer violations, 6 source bugs fixed)
 
 ### What's Broken / Never Finished
 
@@ -115,7 +122,7 @@ See detailed breakdowns in linked analysis docs:
 |----------|-----------|-----------|
 | **Security** | ✅ KeyC leak fixed (`chat_routes.py:184`). `/eval` endpoint still exists | `FORENSIC_AUDIT`, `PROBLEM_ANALYSIS` |
 | **Functional** | Memory (HAM/LU/CDM) flow never connected; Persistence missing (reboot loses state); Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
-| **God Modules** | `main_api_server.py` 1668 lines, `angela_llm_service.py` 2196 lines, `core/autonomous/` 60+ files | `MODULARITY_ANALYSIS` |
+| **God Modules (refactored)** | `main_api_server.py` 314 lines, `angela_llm_service.py` 40 lines (shim), `core/autonomous/` 2 files — **old 1668/2196/60+ sizes were from pre-refactor code** | `MODULARITY_ANALYSIS` (stale analysis) |
 | **Governance** | Version chaos (13 files, 31% consistent); Fake v7.x changelog; No version process | `FULL_ARCHITECTURE_ANALYSIS` |
 | **Wiring Gaps** | ChatService bypasses IntentRegistry; Plugin hooks defined but never called from hot path; 50+ stub implementations | `CARD_INTEGRATION_PLAN` |
 
@@ -198,15 +205,21 @@ See dedicated docs for full diagrams:
 
 ---
 
-### 當前進度（獨立代理逐項代碼驗證）
+### 當前進度（代碼驗證）
 
-見 **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)**（27 項任務，代碼審計驗證狀態）：
+| 領域 | 狀態 | 關鍵證據 |
+|------|------|---------|
+| **伺服器啟動** | ✅ | `services/main_api_server.py` 314 行，FastAPI lifespan 在 `api/lifespan.py:168` |
+| **聊天管線** | ✅ 核心路徑 | `generate_angela_response()` / `get_angela_chat_service()` 在 `chat_service.py:302-312`，由 `router.py:176` 調用 |
+| **自演化** | ✅ 5/6 | ConfigMutator、熱重載、廣播、StateStore 正常；1 bug（`"User"` key 硬編碼） |
+| **8D 狀態矩陣** | ✅ | 34 REST 端點，驅動 NGR + LLM 上下文注入 |
+| **配置系統** | ✅ | `config_loader.py:get_config()` 正確回傳 Config（L869） |
+| **Wiring** | ✅ | `services/wiring.py`（4.3KB），透過 lifespan DI |
+| **測試** | ✅ | ~1500+ tests, 16.34% 覆蓋率, 0 層級違規 |
+| **P7 配置** | 🟡 | TieredConfigLoader 完成；150+ magic number 未遷移 |
+| **P8 技術債** | ❌ | S1 BROKEN（chat_service import 斷裂），S2-S4 部分 |
 
-- P6 自演化閉環：✅ 5/6 完成（1 bug：`"User"` key 硬編碼）
-- P6.5 啟動接線：✅ 2/2
-- P7 分層配置：🟡 部分完成 — 目錄 + loader 正確，150+ 魔法數字未遷移
-- P8 技術債清理：❌ S1 chat_service import 斷裂，S2-S4 部分
-- 測試基礎設施：✅ ~1500 tests, 16.34% 覆蓋率, 0 層級違規
+詳見 **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)**。
 
 ---
 
@@ -230,20 +243,18 @@ npm start
 
 ---
 
-### 什麼能跑（已驗證）
+### 什麼能跑（代碼驗證）
 
-**✅ 後端伺服器可正常啟動** — 所有 import 有效，chat_service 函數完整。
-
-**可正常運行：**
-- 生物模擬（心跳、情緒、荷爾蒙、代謝循環，在 lifespan 中常駐）
-- 自演化核心（ConfigMutator、熱重載、廣播、StateStore 均已獨立驗證）
-- 8D 狀態矩陣（34 端點）
-- 配置系統 — `get_config()` 正確回傳 Config
-- Wiring 分離 — `services/wiring.py` 含 `initialize_all_services()`
-- DI 框架 — FastAPI `Depends` 用於多個路由
-- 經濟 + 寵物系統（WebSocket 廣播已接線）
-- 引導流程（硬體偵測、目錄初始化、狀態持久化）
-- 測試基礎設施 — ~1500+ tests, 16.34% 覆蓋率, 0 層級違規
+- **伺服器啟動**（`services/main_api_server.py` 314 行）— FastAPI + lifespan + WebSocket + 34 state matrix endpoints
+- **聊天管線** — `ChatService`（313 行），`generate_angela_response()` 在 L302，由 `api/router.py:176` 調用
+- **生物模擬** — Heartbeat 透過 `get_metabolic_heartbeat()`，情緒、荷爾蒙、代謝循環在 `api/lifespan.py`
+- **自演化核心** — ConfigMutator、熱重載、廣播、StateStore 獨立驗證
+- **8D 狀態矩陣** — 34 REST 端點，驅動 NGR + LLM 上下文注入
+- **配置系統** — `config_loader.py:get_config()` 正確回傳 Config（L869）
+- **Wiring** — `services/wiring.py`（4.3KB）初始化 vision/audio/tactile/digital_life/economy/pet
+- **DI 框架** — FastAPI `Depends` 用於 5 路由（ops_routes, mobile, drive, economy, atlassian）
+- **經濟 + 寵物** — WebSocket 廣播已接線，lifecycle managers 正常
+- **測試基礎設施** — ~1500+ tests, 16.34% 覆蓋率, 0 層級違規, 6 源碼 bug 已修復
 
 ### 什麼不能用／斷鏈
 
@@ -251,7 +262,7 @@ npm start
 |------|---------|---------|
 | **安全性** | ✅ KeyC 洩漏已修復。`/eval` 端點仍存在 | `FORENSIC_AUDIT` |
 | **功能斷鏈** | 記憶鏈未接線；無持久層（重啟全丟）；桌面→Live2D 未完成；手機 stub；加密不完整 | `WIRING_MAP` |
-| **上帝模塊** | `main_api_server.py` 1668 行、`angela_llm_service.py` 2196 行、`core/autonomous/` 60+ 檔 | `MODULARITY_ANALYSIS` |
+| **上帝模塊（已重構）** | `main_api_server.py` 314 行、`angela_llm_service.py` 40 行 (shim)、`core/autonomous/` 2 檔 — **舊的 1668/2196/60+ 是重構前的數字** | `MODULARITY_ANALYSIS`（已過時） |
 | **治理** | 版本號 13 檔僅 31% 一致；虛假 CHANGELOG；無版本管理流程 | `FULL_ARCHITECTURE_ANALYSIS` |
 | **接線缺口** | ChatService 繞過 IntentRegistry；Plugin hooks 從未被熱路徑調用；50+ stub 實作 | `CARD_INTEGRATION_PLAN` |
 

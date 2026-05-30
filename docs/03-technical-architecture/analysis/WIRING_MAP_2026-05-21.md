@@ -4,58 +4,66 @@
 
 記錄整個專案中元件之間的呼叫、註冊、初始化關係，特別是隱晦的接線（模組層級代碼、間接依賴、背景執行緒）。
 
+> **⚠️ 過時警告（2026-05-30 審計）**: 此文件撰寫於 2026-05-21，其後 `main_api_server.py` 已從 ~1668 行重構至 314 行。約 30% 的具體宣告已過時。關鍵差異：
+> - Lifespan 已遷移至 `api/lifespan.py:168-237`（非 `main_api_server.py:341-395`）
+> - `_initialize_all_services()` → `initialize_all_services()` 在 `services/wiring.py:13`
+> - `EncryptedCommunicationMiddleware` → `SignedCommunicationMiddleware`
+> - `resource_pool.py` 已不存在
+> - 7 個被標為「無呼叫者」的 factory 實際上已有生產呼叫者（見下方各節標註）
+> - `broadcast_state_updates()` 現在已在 `api/lifespan.py:225` 被 active create_task
+> - `__all_` typo 在 `ai/trust/` 和 `ai/service_discovery/` 已修復
+
 ---
 
 ## 1. 伺服器生命週期接線
 
-### 1.1 `main_api_server.py` (`services/`) — 主要 AI 伺服器
+### 1.1 Lifespan & Startup Wiring（重構後）
 
 ```
-lifespan (lines 341-395, @asynccontextmanager)
-├── Startup:
-│   ├── 讀取 config lifecycle.services_to_preinit
-│   ├── 預初始化 AngelaChatService (config-driven)
-│   ├── 預初始化 AngelaLLMService (config-driven)
-│   ├── 預初始化 BiologicalIntegrator (config-driven)
-│   ├── _initialize_all_services() (lines 530-596)
-│   │   ├── get_desktop_interaction()
-│   │   ├── get_action_executor()
-│   │   ├── get_vision_service()
-│   │   ├── get_audio_service()
-│   │   ├── get_tactile_service()
-│   │   ├── get_abc_key_manager()
-│   │   ├── get_digital_life()
-│   │   ├── get_economy_manager()
-│   │   ├── pet.get_pet_manager()
-│   │   ├── digital_life.broadcast_callback = manager.broadcast  ← WebSocket hook
-│   │   ├── pet.set_biological_integrator(digital_life.biological_integrator)
-│   │   ├── pet.set_economy_manager(economy_manager)
-│   │   ├── economy.set_economy_manager(economy_manager)
-│   │   ├── pet_manager.broadcast_callback = pet_broadcast_wrapper
-│   │   └── bio_integrator.register_event_callback(bio_event_callback)
-│   ├── get_metabolic_heartbeat().start()
-│   │   ├── bio_integrator.initialize()
-│   │   ├── create_task(_run_loop())       ← 代謝循環
-│   │   └── create_task(_integration_loop()) ← 小腦循環
-│   └── (done)
-├── yield  ← 伺服器運行
-└── Shutdown:
-    ├── get_metabolic_heartbeat().stop()
-    │   ├── cancel(_task)
-    │   └── bio_integrator.shutdown()
-    └── (done)
+                        ┌─────────────────────────┐
+                        │  services/main_api_     │
+                        │  server.py (314 lines)  │
+                        │  App B                  │
+                        └───────────┬─────────────┘
+                                    │
+                        ┌───────────▼─────────────┐
+                        │  api/lifespan.py        │ ← lifespan 已遷移至此
+                        │  (lines 168-237)        │
+                        └───────────┬─────────────┘
+                                    │
+              ┌─────────────────────┼─────────────────────┐
+              │                     │                     │
+  ┌───────────▼──────────┐  ┌──────▼──────┐  ┌──────────▼──────────┐
+  │ services/wiring.py   │  │  Health     │  │  Heartbeat          │
+  │ initialize_all_      │  │  check &    │  │  get_metabolic_     │
+  │ services()           │  │  HotReload  │  │  heartbeat().start/ │
+  │ (lines 13-117)       │  │  service    │  │  stop()             │
+  │                      │  │             │  │  (await)            │
+  │ Wires:               │  │             │  │                     │
+  │ vision, audio,       │  │             │  │ bio_integrator      │
+  │ tactile, digital_    │  │             │  │ .initialize()       │
+  │ life, economy, pet   │  │             │  │ create_task(        │
+  │ plugin_manager       │  │             │  │   _run_loop())      │
+  │ security_audit       │  │             │  │ create_task(        │
+  └──────────────────────┘  └─────────────┘  │   _integration_     │
+                                             │   loop())           │
+                                             └─────────────────────┘
 
 Router registrations:
 ├── app.include_router(api_v1_router)     ← 共用路由 (api/router.py)
 │   ├── drive, pet, vision, audio, tactile
-│   ├── mobile, economy, trace, ops
+│   ├── mobile, economy, plugins          ← ops 在 router.py 直接加，非 endpoints/
 ├── app.include_router(atlassian_router)  ← Jira/Confluence
 └── app.include_router(state_matrix_router, prefix="/api/v1")
 
-Middleware:
-├── CORSMiddleware (config-driven origins)
-└── EncryptedCommunicationMiddleware (KeyB, HMAC-SHA256)
-    └── Protects: /api/v1/mobile/, /api/v1/system/status/detailed, /api/v1/system/module-control
+Middleware (in main_api_server.py):
+├── setup_middleware(app) at ~L290
+│   ├── CORSMiddleware (config-driven origins)
+│   └── SignedCommunicationMiddleware (KeyB, HMAC-SHA256)
+│       └── Protects: /api/v1/mobile/, /api/v1/system/status/detailed, /api/v1/system/module-control
+│
+└── (App A: main.py uses lifespan=lifespan + SignedCommunicationMiddleware + CORSMiddleware)
+```
 ```
 
 ### 1.2 `main.py` (`apps/backend/`) — 系統管理伺服器
@@ -153,6 +161,20 @@ get_angela_chat_service()  [function-attribute singleton]
 `get_context_manager`, `get_registry`, `get_profile`,
 `get_services` (core_services.py)
 
+> **⚠️ 2026-05-30 審計更正**: 上方列表中以下 factory **實際上有生產呼叫者**（原始審計遺漏）：
+> - `get_hot_reload_service` → `services/wiring.py:47`
+> - `get_learning_loop` → `services/chat_service.py:134`
+> - `get_art_workflow` → `core/bio/biological_integrator.py:161,248`
+> - `get_security_audit` → `api/lifespan.py:216`, `services/wiring.py:48`
+> - `get_waiting_scheduler` → `services/llm/router.py:1180`
+> - `get_registry` → 數十處呼叫（核心 DI 工具）
+> - `get_services` → `packages/cli/cli/main.py` 14+ 處
+>
+> 以下 factory **函數不存在**（原始審計誤報）：
+> - `get_core_service_manager` → 不存在
+> - `get_resource_manager` → 不存在
+> - `get_service_monitor` → 不存在
+
 ---
 
 ## 3. 隱晦接線 (Subtle Wiring)
@@ -161,29 +183,28 @@ get_angela_chat_service()  [function-attribute singleton]
 
 | 檔案 | 行 | 影響 |
 |------|----|------|
-| `compat/transformers_compat.py:58` | `ensure_transformers_compatibility()` 在 import 時立即執行 | 修改 os.environ、影響 TensorFlow 行為 |
-| `main.py:31` | `sys.path.insert(0, ...)` | 修改全域 import 路徑 |
-| `main.py:45,78` | `ABCKeyManager()` + `SystemManager()` | 在模組層級建立 singleton |
+| `compat/transformers_compat.py:58` | ⚠️ `ensure_transformers_compatibility()` 已被註解掉（2026-05-30 審計確認），不再於 import 時執行 | 無影響 |
+| `main.py:31-32` | `sys.path.insert(0, ...)` | 修改全域 import 路徑 |
+| `main.py:43,76` | `ABCKeyManager()` + `SystemManager()` | 在模組層級建立 singleton |
 
 ### 3.2 背景執行緒
 
 | 檔案 | 行 | 模式 | 說明 |
 |------|----|------|------|
-| `resource_pool.py:300` | `Thread(target=cleanup_loop, daemon=True)` | 每次 ResourcePool 實例化時啟動 |
-| `resource_pool.py:375` | `Thread(target=self._worker_loop, daemon=True)` | 在 ThreadPool.start() 時啟動 |
-| `waiting_scheduler.py:89` | `Thread(target=self._worker_loop, daemon=True)` | 在 _start_worker() 時啟動 |
+| ~~`resource_pool.py:300,375`~~ | **檔案已不存在**（2026-05-30 審計確認） | 已被重構移除 |
+| `waiting_scheduler.py:83` | `Thread(target=self._worker_loop, daemon=True)` | 在 _start_worker() 時啟動（原文件行 89 已偏移至 83） |
 | `tray_manager.py:189,297,412` | `Thread(target=lambda: asyncio.run(...)).start()` | 功能表回呼中啟動 async 任務 |
 
-### 3.3 58 個 `logging.basicConfig()` 在模組層級
+### 3.3 49 個 `logging.basicConfig()`（非全在模組層級）
 
-每個都在 import 時重新設定 root logger。最後 import 的檔案決定最終配置。
+原文件宣稱 58 個在模組層級。2026-05-30 審計確認 **49 個**在 `apps/backend/src/` 中，且許多在 `if __name__ == "__main__"` 防護內或函數範圍內（非模組層級）。約 30 個確實是模組層級，仍可能互相干擾。
 
-### 3.4 損壞的 `__init__.py`
+### 3.4 損壞的 `__init__.py` — ✅ 已修復
 
-| 檔案 | 問題 |
-|------|------|
-| `ai/trust/__init__.py:3` | `__all_["TrustManager"]` — 應為 `__all__ =`，import 時會 `NameError` |
-| `ai/service_discovery/__init__.py:3` | 同上 |
+| 檔案 | 原問題 | 2026-05-30 審計 |
+|------|--------|----------------|
+| `ai/trust/__init__.py:3` | `__all_["TrustManager"]` — import 時會 `NameError` | ✅ **已修復** — 正確語法 `__all__ = ["TrustManager"]` |
+| `ai/service_discovery/__init__.py:3` | 同上 | ✅ **已修復** — 正確語法 `__all__ = ["ServiceDiscoveryModule"]` |
 
 ### 3.5 在 `__init__.py` 中定義類別
 

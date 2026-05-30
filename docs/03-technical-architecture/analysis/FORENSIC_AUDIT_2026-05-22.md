@@ -1,8 +1,17 @@
 # Angela AI — 全面法醫審計報告
 
-**日期**: 2026-05-22  
+**日期**: 2026-05-22（2026-05-30 審計狀態更新）  
 **方法**: 獨立多輪代碼審計（執行路徑分析 + TCS 遷移審計 + 安全/死代碼審計）  
 **範圍**: `apps/backend/src/`, `apps/backend/configs/`, `apps/backend/src/config/`
+
+> **⚠️ 2026-05-30 狀態更新**: 本文件為 2026-05-22 的審計報告。以下項目已修復，部分仍待處理：
+> - **P0 chat_service wrappers** ✅ 已修復（`chat_service.py:302-312`）
+> - **P0 get_config() 返回 `{}`** 🔴 仍存在（`config_loader.py:864-868` — `load_config()` 返回值仍被丟棄）
+> - **P1 "User" 硬編碼** ✅ 已修復（`chat_service.py:261` 使用 `user_name`）
+> - **P2 logging.DEBUG()** ✅ 已修復（兩個檔案不再有 `()` 調用）
+> - **P2 /eval 端點** ✅ 未在 `api/` 或 `main_api_server.py` 中找到（可能已移除）
+> - **P3 logging.basicConfig** 49 次（從 57 略降）
+> - 詳見各章節註記。
 
 ---
 
@@ -188,17 +197,17 @@ logging.basicConfig(level=logging.DEBUG())  # TypeError: 'int' object is not cal
 
 ## 🎯 優先級修復順序
 
-| 優先級 | 任務 | 文件 | 行 | 風險 |
-|--------|------|------|-----|------|
-| P0 | 添加 chat_service 包裝函數 | chat_service.py | 末尾 | 🔴 ImportError 阻止啟動 |
-| P0 | 修復 get_config() 返回值 | config_loader.py | 52-58 | 🔴 所有調用者得到空字典 |
-| P1 | 修復 "User" 硬編碼 | chat_service.py | 270 | 🟡 演化確認被破壞 |
-| P1 | 修復 is_demo_mode() | config_loader.py | 87-89 | 🟡 演示模式被破壞 |
-| P2 | 修復 DEBUG() → TypeError | execution_monitor.py, execution_manager.py | 632,607 | 🔴 如果導入則崩潰 |
-| P2 | 移除 /eval 端點 | main_api_server.py | 待查找 | 🔴 任意程式碼執行 |
-| P3 | 清理 12 個已死 config 部分 | angela_core.yaml | 多個 | 🟢 僅維護 |
-| P3 | 移除 9 個已死工廠 | 多個 | 多個 | 🟢 僅清理 |
-| P3 | 遷移 50 個魔數到 TCS | 多個 | 多個 | 🟢 逐步清理 |
+| 優先級 | 任務 | 文件 | 行 | 2026-05-30 狀態 | 風險 |
+|--------|------|------|-----|-------------------|---|
+| P0 | 添加 chat_service 包裝函數 | chat_service.py | 末尾 | ✅ 已修復（L302-312） | 🔴 ImportError 阻止啟動 |
+| P0 | 修復 get_config() 返回值 | config_loader.py | 52-58 | 🔴 仍存在（L864-868） | 🔴 所有調用者得到空字典 |
+| P1 | 修復 "User" 硬編碼 | chat_service.py | 270 | ✅ 已修復（L261） | 🟡 演化確認被破壞 |
+| P1 | 修復 is_demo_mode() | config_loader.py | 87-89 | 🔴 受 get_config() 阻塞 | 🟡 演示模式被破壞 |
+| P2 | 修復 DEBUG() → TypeError | execution_monitor.py, execution_manager.py | 632,607 | ✅ 已修復 | 🔴 如果導入則崩潰 |
+| P2 | 移除 /eval 端點 | main_api_server.py | 待查找 | ✅ 未在 api/ 中找到 | 🔴 任意程式碼執行 |
+| P3 | 清理 12 個已死 config 部分 | angela_core.yaml | 多個 | 🟡 待確認 | 🟢 僅維護 |
+| P3 | 移除 9 個已死工廠 | 多個 | 多個 | 🟡 (WIRING_MAP 審計修正了 list) | 🟢 僅清理 |
+| P3 | 遷移 50 個魔數到 TCS | 多個 | 多個 | 🟡 待處理 | 🟢 逐步清理 |
 
 ---
 

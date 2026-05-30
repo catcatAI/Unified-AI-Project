@@ -1,18 +1,28 @@
 # Angela AI 模組化分析
 
-## 評分總覽
+> **⚠️ 過時警告（2026-05-30 審計）**: 此文件撰寫於 2026-05-21。其後 codebase 經歷大幅重構：
+> - `main_api_server.py` 從 1,452 → 314 行，`angela_llm_service.py` 從 2,287 → 36 行（shim），`chat_service.py` 從 1,416 → 313 行
+> - FastAPI `Depends` 現在用於 11 個路由檔案（42 次出現）
+> - `models/` 跨套件 import 已清理
+> - `__new__` singleton 模式已全部消除
+>
+> 以下為重構後的更新評分：
+
+## 評分總覽（2026-05-30 更新）
 
 ```
-模組邊界定義     ██████████ 85  — Protocols、ABCs、Factory 函數都到位
-Circular 防護    ████████░░ 70  — 有 cycle 但用 lazy import 撐住
-__init__.py 紀律  ████░░░░░░ 40  — models/ 跨套件 import services/
-耦合集中度       ██░░░░░░░░ 20  — 2 個 central hub 檔案引 5-7 個 package
-共享可變狀態     ██░░░░░░░░ 15  — 20+ singleton，80+ module-level 全域變數
-God module 問題   █░░░░░░░░░ 10  — 11 個檔案 >1000 行，前 4 個合計 7,177 行
-DI 框架          ░░░░░░░░░░  0  — 無 FastAPI Depends、無 inject、無 auto-register
+模組邊界定義     ██████████ 85  — Protocols、ABCs、Factory 函數都到位（不變）
+Circular 防護    ████████░░ 70  — 有 cycle 但用 lazy import 撐住（不變）
+__init__.py 紀律  ████████░░ 75  — ↑ 從 40 提升（models/ 跨套件 import 已修復）
+耦合集中度       ████░░░░░░ 35  — ↑ 從 20 提升（main_api_server/chat_service 大量瘦身，但 router.py 成為新 hotspot）
+共享可變狀態     ████░░░░░░ 35  — ↑ 從 15 提升（__new__ 模式已消除，~14 個 module-level globals）
+God module 問題   ████░░░░░░ 35  — ↑ 從 10 提升（11→9 個 >1000 行檔案，top4 從 7,177→5,714 行）
+DI 框架          █████░░░░░ 50  — ↑ 從 0 提升（FastAPI Depends 42 次、ServiceRegistry、wiring.py）
 ```
 
-**綜合分數：34/100**
+**重構後綜合分數：~55/100**（↑ 從 34/100）
+
+注意：原始 34/100 評分基於重構前的 codebase。實際模組化改善已發生，但 `services/llm/router.py`（1,522 行）成為新的耦合 hotspot。
 
 ---
 
@@ -87,46 +97,41 @@ core/autonomous/neuroplasticity.py      1,348 行
 core/autonomous/physiological_tactile.py 1,291 行
 core/autonomous/endocrine_system.py     1,053 行
 core/fusion/multimodal_fusion_engine.py 1,068 行
-core/autonomous/live2d_avatar_generator.py 1,036 行
-services/main_api_server.py            1,452 行
+core/engine/live2d_avatar_generator.py  1,032 行  (原 core/autonomous/)
+services/main_api_server.py               314 行  (↓ 重構後瘦身 78%)
 ```
 
 **這些檔案的共同問題**：一個 PR 可能同時改動聊天邏輯、意圖路由、LLM 呼叫、config 讀取、Google Drive 操作、數學驗證 — 都在同一份檔案裡。
 
-### 2.2 Central Hub Coupling
+**2026-05-30 更新**: 重構後 `main_api_server.py`（314 行）、`chat_service.py`（313 行）、`angela_llm_service.py`（36 行 shim）已大幅瘦身。但 `services/llm/router.py`（1,522 行）成為新的耦合 hotspot。
 
-**`main_api_server.py`** 直接依賴 7 個頂層 package：
+### 2.2 Central Hub Coupling（重構後）
 
+**2026-05-30 更新**: `main_api_server.py` 和 `chat_service.py` 的耦合已大幅降低（瘦身 78%/78%）。耦合轉移到：
+
+**`services/llm/router.py`**（1,522 行）— 新 hotspot：
 ```
-services/ (vision, audio, tactile, chat, llm, math_verifier, atlassian, state_matrix)
-core/     (config_loader, autonomous.*)
-api/      (router, endpoints)
-system/   (security_monitor)
-shared/   (security_middleware, key_manager)
-economy/  (economy_manager)
-integrations/ (os_bridge_adapter)
-```
-
-**`chat_service.py`** 直接依賴 5 個頂層 package：
-
-```
-core/     (config_loader, autonomous.*, gsi_governance, system.*, tools.*)
-ai/       (alignment.*, memory.*, security.*, personality.*, response.*)
-services/ (vision_service, angela_llm_service, math_verifier)
-integrations/ (google_drive_service)
-shared/   (standard_imports, error)
+services/ (angela_llm_service, chat_service, math_verifier, vision_service, audio_service)
+core/     (config_loader, engine/state_matrix, engine/state_matrix_adapter, tools/*)
+ai/       (memory/ham_memory, response/composer, alignment/ego_guard, context/*)
 ```
 
-**任何子系統的改動都需要檢查這兩份檔案** — 這是耦合的典型症狀。
+**`api/lifespan.py`**（237 行）— 12 個 module-level lazy-loaded singleton：
+```
+services/ (vision, audio, tactile, chat, llm, wiring, digital_life, economy)
+core/     (config_loader, life/heartbeat, bio/biological_integrator)
+```
 
-### 2.3 Pervasive Singleton 共享可變狀態
+**任何子系統的改動都需要檢查 `router.py`** — 這是新的耦合中心。
+
+### 2.3 Pervasive Singleton 共享可變狀態（重構後）
 
 | 型態 | 數量 | 範例 |
 |------|------|------|
-| `__new__` singleton | 10+ | AngelaLLMService, StateMatrix4D, BiologicalIntegrator, AngelaConfigLoader... |
-| Function-attribute singleton | 5+ | get_angela_chat_service._instance |
-| Module-level `_xxx = None` 全域 | 20+ | main_api_server.py 的 _desktop_interaction, _action_executor 等 |
-| Module-level 快取 | 8 | angela_llm_service.py 的 _MEMORY_ENHANCED, HAMMemoryManager... |
+| `__new__` singleton | **0**（↑ 已全部消除） | 原 AngelaLLMService, StateMatrix4D 等已改為 function-attribute 或 ServiceRegistry |
+| Function-attribute singleton | 5+ | get_angela_chat_service._instance, get_llm_service 等 |
+| Module-level `_xxx = None` 全域 | **~14**（↓ 從 20+ 減少） | lifespan.py 的 12 個 lazy-load + chat_service/config_loader/router |
+| Module-level 快取 | 5 | router.py 的 _llm_service, _MEMORY_ENHANCED 等 |
 
 **後果**：
 - 測試需要手動 reset singleton 狀態

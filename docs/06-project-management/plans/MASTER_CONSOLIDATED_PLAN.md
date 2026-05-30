@@ -49,7 +49,7 @@
 | `apps/backend/src/core/version.py` | 6.5.0-dev (major=6) | **7.5.0-dev (major=7)** |
 | `apps/backend/src/core/__init__.py` | 6.2.0 | **7.5.0-dev** |
 | `apps/desktop-app/package.json` | 0.1.0 | **4.1.0-dev** |
-| `apps/desktop-app/electron_app/package.json` | 6.5.0-dev | **4.1.0-dev** |
+| `apps/desktop-app/electron_app/package.json` | 6.5.0-dev | **7.5.0-dev**（原計畫誤寫為 4.1.0-dev，已更正） |
 | `apps/mobile-app/package.json` | 6.5.0-dev | **1.2.0-dev** |
 | `packages/cli/package.json` | 1.0.0 | **1.1.0** |
 | `core/version.py` dataclass defaults | major=6, phase=STABLE | **major=7, phase=DEV** |
