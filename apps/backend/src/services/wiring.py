@@ -6,6 +6,8 @@ Wiring module: cross-service dependency injection during startup.
 import asyncio
 import logging
 from datetime import datetime
+from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -115,3 +117,22 @@ def initialize_all_services(manager) -> tuple:
         digital_life,
         economy_manager,
     )
+
+
+async def initialize_module_manager(
+    registry,
+    scan_paths: Optional[list] = None,
+) -> "ModuleManager":
+    """Initialize ModuleManager and start all discovered modules."""
+    from core.system.module_manager import ModuleManager
+
+    if scan_paths is None:
+        scan_paths = [Path(__file__).resolve().parent.parent / "modules"]
+    manager = ModuleManager(registry=registry, scan_paths=scan_paths)
+    await manager.start()
+
+    # Wire modules that provide services into the ServiceRegistry
+    for name, instance in manager.list_modules().items():
+        registry.register(f"module.{name}", instance)
+    logger.info(f"[ModuleManager] {len(manager.list_modules())} modules started and registered")
+    return manager

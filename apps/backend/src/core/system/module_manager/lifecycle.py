@@ -64,11 +64,13 @@ class ModuleLifecycle:
                         await handler(inst.instance, deps)
                     else:
                         handler(inst.instance, deps)
+                inst.status = ModuleStatus.RUNNING
                 elapsed = (time.perf_counter() - start) * 1000
                 results.append(StartResult(name=inst.name, success=True, elapsed_ms=elapsed))
                 self._event_bus.emit(f"{inst.name}.ready")
             except Exception as e:
                 elapsed = (time.perf_counter() - start) * 1000
+                inst.status = ModuleStatus.START_FAILED
                 results.append(StartResult(name=inst.name, success=False, error=str(e), elapsed_ms=elapsed))
                 self._event_bus.emit(f"{inst.name}.failed", error=str(e))
 

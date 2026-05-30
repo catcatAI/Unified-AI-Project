@@ -43,8 +43,15 @@ class CardImportPipeline:
     Stage 3 (LLM): final adjudication
     """
 
-    def __init__(self, registry: Optional[CardRegistry] = None):
+    def __init__(
+        self,
+        registry: Optional[CardRegistry] = None,
+        memory_adapter: Any = None,
+        llm_service: Any = None,
+    ):
         self.registry = registry or CardRegistry()
+        self.memory_adapter = memory_adapter
+        self.llm_service = llm_service
         self.parser = DeterministicParser()
         self.merge_engine = MergeEngine()
         self.conflict_detector = ConflictDetector()
