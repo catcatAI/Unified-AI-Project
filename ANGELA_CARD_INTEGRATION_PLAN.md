@@ -1,7 +1,7 @@
 # Angela 卡片導入管道與聊天系統整合計畫
 
 > **目標**: 將現有 `core/card/` 卡片導入管道（CardImportPipeline）接入 Angela 的聊天系統（ChatService → AngelaLLMService），實現三級分發（Program → Angela HAM → LLM）與學習閉環。
-> **基於**: 實際代碼審計（2026-05-30）
+> **基於**: 實際代碼審計（2026-05-30）+ README.md 已知問題比對
 > **狀態**: 計畫階段 — 全部代碼已存在但彼此孤立
 
 ---
@@ -61,7 +61,21 @@
 | D9 | `run_card_import.py` 是獨立 CLI | `run_card_import.py:280-281` | `if __name__ == "__main__"`，無法被 API 或服務觸發 |
 | D10 | 無異步任務隊列（CardImport專屬） | 缺失 | 大規模導入會阻塞事件循環。注意：專案已有 `asyncio.Queue` 模式在 `unified_control_center.py:50` 和 `feedback_processor.py:174`，可復用 |
 
-### 1.3 現有置信度/類型系統
+### 1.3 README.md 對照 — 已知功能斷鏈
+
+根目錄 `README.md`（v7.5.0-dev）已明確列出與本計畫相關的已知問題：
+
+| 本計畫斷開點 | README 對應條目 | 一致？ |
+|-------------|----------------|--------|
+| D1: MemoryAdapter 無呼叫 | 「記憶鏈（HAM/LU/CDM）— 類別完整但查詢/存儲 flow 從未接上」 | ✅ 一致 — 都是 adapter 存在但未接 |
+| D4-D5: ChatService 硬編碼 | 未明確列出（ChatService 拆分後 S1 標示 BROKEN） | 🟡 README 更關注拆分問題而非意圖分發 |
+| D6: CardRegistry 未註冊 | 無提及（`core/card/` 子系統在 README 中完全未記錄） | 🟡 新子系統，README 需補充 |
+| D8: ConfigLoader 未接入學習 | 「5 大理論公式未整合到 LLM Prompt」 | 🟡 相近問題但不同系統 |
+| D10: 無 async 任務隊列 | 「記憶鏈未接」間接相關 | 🟡 間接 |
+
+**關鍵洞察**: `core/card/` 是完全未被主 README 記錄的子系統。README 的「功能斷鏈」清單確認了記憶系統未接線 — 與 D1 完全一致。
+
+### 1.4 現有置信度/類型系統
 
 ```
 PipelineResult.stage: "auto" | "angela" | "llm"
@@ -633,7 +647,7 @@ except Exception:
 
 #### 3.4.2 在 wiring 中預先註冊服務
 
-**修改 `services/wiring.py`** — 在 `initialize_all_services()` 結尾（第 107 行之前）新增：
+**修改 `services/wiring.py`** — 在 `initialize_all_services()` 結尾（第 107 行之前）新增。注意：`README.md` 已確認 `services/wiring.py` 是正確的 startup DI 注入點。
 ```python
 # CardRegistry — 在 startup 中註冊，確保 Pipeline 和 API 端點可用
 try:
