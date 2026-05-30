@@ -19,44 +19,24 @@
 <summary><b>English</b></summary>
 
 - [English Version](#english-version)
-  - [Current Status (Code-Verified)](#current-status-code-verified-by-independent-audit)
-    - [Phase 6 — Self-Evolution Loop](#current-status-code-verified-by-independent-audit)
-    - [Phase 6.5 — Startup Wiring](#current-status-code-verified-by-independent-audit)
-    - [Phase 7 — Tiered Config](#current-status-code-verified-by-independent-audit)
-    - [Phase 8 — Tech Debt Cleanup](#current-status-code-verified-by-independent-audit)
-    - [Test Infrastructure](#current-status-code-verified-by-independent-audit)
+  - [Current Status](#current-status)
   - [Quick Start](#quick-start)
   - [What Actually Works](#what-actually-works-code-verified)
   - [What's Broken / Never Finished](#whats-broken--never-finished)
-    - [Security](#whats-broken--never-finished)
-    - [Functional Gaps](#whats-broken--never-finished)
-    - [God Modules](#whats-broken--never-finished)
-    - [Architecture & Governance](#whats-broken--never-finished)
-    - [Code Quality](#whats-broken--never-finished)
-  - [Architecture Documents](#architecture)
-  - [Analysis Documents](#analysis-documents)
+  - [Roadmap / Future Extensibility](#roadmap--future-extensibility)
+  - [Documentation Index](#architecture)
 </details>
 
 <details>
 <summary><b>繁體中文</b></summary>
 
 - [繁體中文版](#繁體中文版)
-  - [當前進度 (獨立代理逐項代碼驗證)](#當前進度獨立代理逐項代碼驗證)
-    - [P6 自演化閉環](#當前進度獨立代理逐項代碼驗證)
-    - [P6.5 啟動接線](#當前進度獨立代理逐項代碼驗證)
-    - [P7 分層配置](#當前進度獨立代理逐項代碼驗證)
-    - [P8 技術債清理](#當前進度獨立代理逐項代碼驗證)
-    - [測試基礎設施](#當前進度獨立代理逐項代碼驗證)
+  - [當前進度](#當前進度獨立代理逐項代碼驗證)
   - [快速啟動](#快速啟動)
-  - [什麼能跑 (已驗證)](#什麼能跑已驗證)
+  - [什麼能跑](#什麼能跑已驗證)
   - [什麼不能用／斷鏈](#什麼不能用斷鏈)
-    - [安全性](#什麼不能用斷鏈)
-    - [架構與治理](#什麼不能用斷鏈)
-    - [大型上帝模塊](#什麼不能用斷鏈)
-    - [功能斷鏈](#什麼不能用斷鏈)
-    - [代碼品質](#什麼不能用斷鏈)
-  - [架構文件](#架構文件)
-  - [分析文件](#分析文件)
+  - [未來路線圖](#未來路線圖)
+  - [文件索引](#架構文件)
 </details>
 
 ---
@@ -79,64 +59,15 @@
 
 ---
 
-### Current Status (Code-Verified by Independent Audit)
+### Current Status
 
-**▶ Phase 6 — Self-Evolution Loop**
+See **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** for the active 27-task plan with code-verified status. Key points:
 
-| Deliverable | Evidence (file:line) | Status |
-|-------------|---------------------|--------|
-| ConfigMutator | `core/system/evolution/config_mutator.py` — full class, schema validation (L41-79), atomic write (L100-102), targets `*.evolved.yaml` (L110-136) | ✅ Done |
-| Hot-reload | `angela_llm_service.py` — `reload_config()` at L945-963, clears backends, re-inits | ✅ Done |
-| User confirmation gate | `chat_service.py` — `_handle_evolution_proposal()` at L54-96, checks confirm keywords, calls `mutator.apply_mutation()` | 🟡 Has bug: L270 hardcodes `"User"` key, fails for other usernames |
-| Evolution broadcast | `bootstrap_manager.py` — `broadcast_evolution()` at L58-78, writes to state + StateStore | ✅ Done |
-| StateStore | `core/system/state_store/global_store.py` — full pub-sub with domains, subscribers (86 lines) | ✅ Implementation complete; 🟡 Not integrated into main state matrix update loop |
-
-**▶ Phase 6.5 — Startup Wiring**
-
-| Deliverable | Evidence | Status |
-|-------------|----------|--------|
-| Heartbeat in lifespan | `main_api_server.py` — `.start()` at L376-378, `.stop()` at L405-406 | ✅ Done |
-| `_initialize_all_services()` | `main_api_server.py` — L370 called in lifespan startup; L547-623 wires vision/audio/tactile/digital_life/economy/pet + WebSocket hooks | ✅ Done |
-
-**▶ Phase 7 — Tiered Config Architecture**
-
-| Deliverable | Evidence | Status |
-|-------------|----------|--------|
-| TieredConfigLoader class | `core/system/config/tiered_loader.py` — implements Default→User→Angela merge chain correctly (L27-48) | ✅ Done |
-| S-level defaults | `configs/system/`: 4 `.default.yaml` files | ✅ Done |
-| A-level defaults | `configs/standard/`: 6 `.default.yaml` across science/behavior/matrix/narrative | ✅ Done |
-| M-level defaults | `configs/mods/`: `active_mods.default.yaml` | ✅ Done |
-| config_loader.py → TCS redirect | `config_loader.py` — `load_config()` calls TCS (L20-25); `get_config()` at L869 assigns `_config = Config.load()` — **works correctly** | ✅ **Working** |
-| `.user.yaml` overlays | rg search: **0 files** in entire configs/ tree | ❌ Missing |
-| `.evolved.yaml` overlays | rg search: **1 demo file** (`standard/behavior/demo.evolved.yaml`), 0 production | ❌ Missing |
-| Hardcoded thresholds → config | rg search: `arousal >` x15, `random.random()` x29, `target_fps` x24, `if.*>.*0.x` x150+ | ❌ Not done |
-| Legacy config deprecated | `angela_core.yaml` (27 sections, 12 DEAD) still primary runtime source | ❌ Still primary |
-| ConfigMutator writes `*.evolved.yaml` | `config_mutator.py` L110-136 — correctly maps to evolved paths | ✅ Done |
-| DEAD sections cleaned | 12 `# DEAD` sections still in `angela_core.yaml` | ❌ Not cleaned |
-
-**▶ Phase 8 — Tech Debt Cleanup (S1-S4 still broken)**
-
-| Task | Evidence | Status |
-|------|----------|--------|
-| S1: Split chat_service | `chat_service.py` now 306 lines (was 1281); BUT `generate_angela_response()` and `get_angela_chat_service()` removed — `main_api_server.py:292,695,1370` and `router.py:175` still import them → **ImportError at server start** | ❌ **BROKEN** |
-| S2: Split wiring to independent file | No `wiring.py` exists; `_initialize_all_services()` still embedded in `main_api_server.py` L547-623 | ❌ Not started |
-| S3: Security fixes | Pickle commented out (cache_manager.py L156-167); command injection `/eval` endpoint still exists (main_api_server.py L1467); KeyC leak via localhost endpoint | 🟡 Partial |
-| S4: DI framework | `Depends` used in 5 route files (atlassian, drive, mobile, ops, economy); all core services still use manual lazy singletons | 🟡 Partial |
-
-**▶ Test Infrastructure (Completed in this session — code-audited)**
-
-| Task | Detail | Status |
-|------|--------|--------|
-| Source bugs found & verified fixed | 6 in source (Pearson, 2× NameError, 2× TypeError, missing param); 1 (health_check_service imports) only test-mocked | ✅ **6 fixed** |
-| Architecture layer violations (ai/ → services/) | 0 (4 lazy imports in methods, acceptable) | ✅ |
-| Root directory cleaned | 62 scripts → tests/scripts/, only conftest.py + __init__.py remain | ✅ |
-| Legacy subdirectories removed | 6 (creation, economy, evaluation, interfaces, meta, security) | ✅ |
-| Legacy tests migrated to correct layers | 40 files (services 6, core 22, ai 5, memory 3, agents 2, shared 2) | ✅ |
-| SMOKE→REAL, WEAK→STRONG upgrades | 8 subdirs, 70+ assertions upgraded, 24 files | ✅ |
-| New tests created | ai/meta/ 48, core/ 222 across 13 modules | ✅ |
-| Total test count | ~1500+ (audited) | ✅ |
-| Coverage | 16.34% (was ~12.64%) | 🟡 Target 30% |
-| File structure errors corrected in docs | 4 dirs→files, all counts updated | ✅ |
+- P6 Self-Evolution: ✅ 5/6 deliverables done (1 bug: user gate hardcodes `"User"` key)
+- P6.5 Startup Wiring: ✅ 2/2 (heartbeat + service init in lifespan)
+- P7 Config: 🟡 Partial — TieredConfigLoader done, but 150+ magic numbers not migrated
+- P8 Tech Debt: ❌ S1 (chat_service import break) BROKEN, S2-S4 partial
+- Tests: ✅ ~1500+ tests, 16.34% coverage, 0 layer violations
 
 ### Quick Start
 
@@ -178,67 +109,80 @@ npm start
 
 ### What's Broken / Never Finished
 
-**Security:**
-- **KeyC leak** — `/sync-key-c` endpoint returns `{"key_c": key_c}` in JSON response (main_api_server.py:697)
+See detailed breakdowns in linked analysis docs:
 
-**Functional gaps:**
-- **Memory Chain (HAM/LU/CDM)** — classes defined, query/storage flow never connected
-- **P8 LLM Flow** — MathVerifier / CodeInspector / StateMatrixAdapter: 3 isolated classes, 0 connections between them
-- **Persistence** — save_state/load_state doesn't exist. Reboot loses all state
-- **Desktop → Live2D** — backend WebSocket control chain to Electron never completed
-- **Mobile App** — React Native stub, encryption stripped
-- **Plugin System** — frontend JS exists, backend hooks absent
-- **Encryption** — HMAC-SHA256 signature only, no body encryption. Key A/C unused
-- **User evolution gate** — hardcodes `"User"` key at chat_service.py:270; non-default usernames can't confirm evolution
-- **5 theoretical formulas defined but not integrated** — HSM, CDM, Life Intensity, Active Cognition, Non-Paradox all compute results that never reach the LLM prompt. See [§5.4](docs/FULL_ARCHITECTURE_ANALYSIS.md#54-理論公式系統).
+| Category | Key Issues | Reference |
+|----------|-----------|-----------|
+| **Security** | ✅ KeyC leak fixed (`chat_routes.py:184`). `/eval` endpoint still exists | `FORENSIC_AUDIT`, `PROBLEM_ANALYSIS` |
+| **Functional** | Memory (HAM/LU/CDM) flow never connected; Persistence missing (reboot loses state); Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
+| **God Modules** | `main_api_server.py` 1668 lines, `angela_llm_service.py` 2196 lines, `core/autonomous/` 60+ files | `MODULARITY_ANALYSIS` |
+| **Governance** | Version chaos (13 files, 31% consistent); Fake v7.x changelog; No version process | `FULL_ARCHITECTURE_ANALYSIS` |
+| **Wiring Gaps** | ChatService bypasses IntentRegistry; Plugin hooks defined but never called from hot path; 50+ stub implementations | `CARD_INTEGRATION_PLAN` |
 
-**God modules (Major):**
-- **`main_api_server.py`** — 1668 lines mixing API entry, WebSocket, and lifecycle
-- **`angela_llm_service.py`** — 2196 lines mixing LLM routing, multi-backend switching, and prompt construction
-- **`core/autonomous/`** — 60+ files, over-broad boundary. See [§4.3](docs/FULL_ARCHITECTURE_ANALYSIS.md#43-核心層-core-分析--30-子包).
+### Roadmap / Future Extensibility
 
-**Architecture & Governance (Critical):**
-- **Version chaos** — 13 files declare versions, only 4 (31%) are consistent; `VERSION` and `configs/angela_config.json` **107 days stale**. See [full audit](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).
-- **Fake v7.x changelog** — AI agent self-assigned v7.2.0~v7.4.0 in `CHANGELOG.md` without any corresponding git tag or source code version change. See [analysis](docs/FULL_ARCHITECTURE_ANALYSIS.md#72-中度問題-major).
-- **No version management process** — all version bumps happen in blind "Fix and update" AI commits, never human-reviewed.
-- **Dual config dirs** — `config/` vs `configs/` coexisted with overlapping purposes — ✅ **已修復 (merged → `configs/`)**
+Systems that are defined/stubbed but not yet implemented — ordered by estimated impact:
 
-**Code quality:**
-- **16 Factories: 9 truly dead + 6 dormant + 1 alive** — forensic audit: `DEAD_FACTORY_FORENSICS.md`
-- **57 logging.basicConfig()** — module-level, fight for root logger
-- **2 Broken \_\_init\_\_.py** — `__all_` typo in ai/trust/ and ai/service_discovery/
-- **150+ hardcoded magic numbers** — `arousal >` x15, `random.random()` x29, `target_fps` x24, `> 0.x` comparisons x150+
-- **health_check_service.py** — 2/3 import targets don't exist (`ham_memory_manager.py`, `multi_llm_service.py`), caught by try/except
+**Tier 1 — Core Infrastructure (foundational gaps)**
+- **Plugin System**: 5 hooks defined (`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`), **0 handlers registered**. Full CRUD API exists (`api/v1/endpoints/plugins.py`) but no plugins deployed.
+- **Config Handlers**: 5 YAML-defined handlers have **no code**: `FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler` (`angela_core.yaml:131-257`)
+- **Intent Dispatch**: ChatService has hardcoded 3-intent keyword matching, bypassing `IntentRegistry` which knows 12+ intents (`chat_service.py:155-167`)
+
+**Tier 2 — Memory & Persistence**
+- **HAM Database**: All 6 CRUD methods transparently fall back to mock storage (`database.py:33-165`)
+- **Memory Chain**: HAM/LU/CDM classes defined but query/storage flow never wired
+- **State Persistence**: `save_state()`/`load_state()` do not exist — reboot loses all runtime state
+- **Importance Scorer**: Returns hardcoded `0.5` placeholder (`importance_scorer.py:10`)
+
+**Tier 3 — Specialized Agents (all stub)**
+- ImageGeneration, AudioProcessing, WebSearch, KnowledgeGraph, VisionProcessing, DataAnalysis, NLPProcessing, CodeUnderstanding, FantasyDM, CreativeWriting agents — all return hardcoded/placeholder data
+- **Planning agent** explicitly marked deprecated (`planning_agent.py:35-36`)
+
+**Tier 4 — Reasoning & Causality**
+- Causal reasoning engine: `_analyze_observation_causality()` uses random correlation placeholder (`real_causal_reasoning_engine.py:26`)
+- `RealInterventionPlanner` and `RealCounterfactualReasoner` are empty `pass` classes
+- **Ripple Axis Applicators**: Only 3/9 exist (Alpha, Delta, Pi). Missing: Beta, Theta, Epsilon, Zeta, Eta, Kappa (`ripple/node.py:290-292`)
+
+**Tier 5 — Alignment & Safety**
+- 6 stub classes in `ai/alignment/`: `EmotionSystem`, `OntologySystem`, `AlignmentManager`, `DecisionTheorySystem`, `AdversarialGenerationSystem`, `ASIAutonomousAlignment` — all `pass`
+- 5 theoretical formulas (HSM, CDM, Life Intensity, Active Cognition, Non-Paradox) compute but never reach LLM prompt
+
+**Tier 6 — Monitoring & Ops (all placeholder)**
+- Predictive maintenance, performance optimizer, AI ops engine — all return hardcoded values
+- Desktop tray: `BaseTrayManager` abstract, `WindowsTrayManager` partial
+
+**Tier 7 — Infrastructure Sketches**
+- `Fragmenta` processing pipeline: stub orchestrator, placeholder element layer, stub vision tone inverter
+- `ClusterManager`: mock implementation, `distribute_task()` sleeps 0.01s
+- `AtlassianBridge`: skeleton, all 15+ methods return empty dicts
+- `core_services.py`: CLI standalone stub
+- `code_understanding_tool.py`: all methods return "temporarily unavailable"
+
+**Tier 8 — Code Quality (known but not prioritized)**
+- 16 Factories: 9 dead + 6 dormant + 1 alive (see `DEAD_FACTORY_FORENSICS.md`)
+- 57 `logging.basicConfig()` module-level calls fighting for root logger
+- 2 broken `__init__.py` with `__all_` typo (`ai/trust/`, `ai/service_discovery/`)
+- 150+ hardcoded magic numbers (`arousal >` x15, `random.random()` x29, `> 0.x` x150+)
+- `health_check_service.py`: 2/3 import targets don't exist (caught by try/except)
 
 ---
 
-### Architecture
+### Documentation Index
 
 See dedicated docs for full diagrams:
 
 | Document | Contents |
 |----------|----------|
-| [DUAL_SERVER](docs/architecture/DUAL_SERVER_ARCHITECTURE.md) | App A (main.py) vs App B (main_api_server.py), port conflict, middleware |
-| [6_LAYER_LIFE](docs/architecture/6_LAYER_LIFE_ARCHITECTURE.md) | L1 Biology → L6 Execution |
-| [PROJECT_STRUCTURE](docs/architecture/PROJECT_STRUCTURE.md) | Directory tree |
-| [FULL_ARCHITECTURE_ANALYSIS](docs/FULL_ARCHITECTURE_ANALYSIS.md) | Full architecture map, version trace, component audit, 6-layer consistency scoring |
-
----
-
-### Analysis Documents
-
-| Document | What It Covers |
-|----------|---------------|
-| [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) | Server lifecycle, factory chains, subtle wiring, dead code registry |
-| [CODE_STATISTICS](docs/analysis/CODE_STATISTICS_2026-05-21.md) | Live vs dead vs semi-finished code by directory |
-| [MODULARITY_ANALYSIS](docs/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God modules, central hub coupling, 20+ singletons |
-| [PROBLEM_ANALYSIS](docs/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 3-perspective audit, security issues, CTO roadmap |
-| [PHASE_8_PLAN](docs/plans/PHASE_8_DEBT_CLEANUP.md) | 6-week cleanup roadmap |
-| [CONFIG_ARCHITECTURE.md](CONFIG_ARCHITECTURE.md) | TCS spec and migration plan |
-| [FORENSIC_AUDIT](docs/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
-| [FULL_ARCHITECTURE_ANALYSIS](docs/FULL_ARCHITECTURE_ANALYSIS.md) | Full architecture map, version history, component version audit, consistency scoring |
-| [MASTER_CONSOLIDATED_PLAN](docs/plans/MASTER_CONSOLIDATED_PLAN.md) | Merged task plan (replaces P8 v1, P8 Corrected, P9): 27 tasks, S/A/B/C tiers, code-verified status |
-| [ANGELA_CARD_INTEGRATION_PLAN](ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring plan: 4 phases, 10 disconnection points, code-audited |
+| [PROJECT_CHARTER](docs/00-overview/PROJECT_CHARTER.md) | Project mission, scope, principles |
+| [GLOSSARY](docs/00-overview/GLOSSARY.md) | Full project terminology reference |
+| [UNIFIED_DOC_INDEX](docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md) | Comprehensive doc inventory |
+| [WIRING_MAP](docs/03-technical-architecture/analysis/WIRING_MAP_2026-05-21.md) | Server lifecycle, factory chains, subtle wiring, dead code registry |
+| [CODE_STATISTICS](docs/03-technical-architecture/analysis/CODE_STATISTICS_2026-05-21.md) | Live vs dead vs semi-finished code by directory |
+| [MODULARITY_ANALYSIS](docs/03-technical-architecture/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God modules, central hub coupling, 20+ singletons |
+| [PROBLEM_ANALYSIS](docs/03-technical-architecture/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 3-perspective audit, security issues, CTO roadmap |
+| [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
+| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 27 items, S/A/B/C tiers, code-verified status |
+| [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points |
 
 ---
 
@@ -256,22 +200,13 @@ See dedicated docs for full diagrams:
 
 ### 當前進度（獨立代理逐項代碼驗證）
 
-| Phase | 狀態 | 關鍵發現 |
-|-------|------|---------|
-| **P6 自演化閉環** | ✅ 5 項完成，1 項有 bug | ConfigMutator、熱重載、廣播、StateStore 全部正常。**用戶確認閘門：L270 硬編碼 `"User"` key，非預設使用者名會靜默失敗** |
-| **P6.5 啟動接線** | ✅ 2/2 | Heartbeat.start/stop + _initialize_all_services() 全在 lifespan 中 |
-| **P7 分層配置** | 🟡 部分完成 | 目錄 + loader 完整。**config_loader.py:get_config() 正確回傳**（審計確認 L869）。150+ 個硬編碼魔法數字未遷移 |
-| **P8 技術債清理** | ❌ S1 broken, S2 未開始, S3/S4 partial | **S1 chat_service 拆分後 import 斷裂** — `generate_angela_response()` 已不存在但 `main_api_server.py` 仍引用。S2 wiring.py 也不存在。S3 KeyC leak 未修 |
-| **測試基礎設施** | ✅ **完成** | ~1500+ tests, 16.34% 覆蓋率, 0 層級違規, 6 源碼 bug 修復 |
+見 **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)**（27 項任務，代碼審計驗證狀態）：
 
-**P8 明細**：
-
-| 項目 | 審計結果 |
-|------|---------|
-| S1 chat_service（拆分後 `generate_angela_response()` 消失，但 main_api_server.py 仍 import） | ❌ **BROKEN** |
-| S2 wiring 拆分（wiring.py 不存在，`_initialize_all_services()` 仍在 main_api_server.py L547-623） | ❌ **未開始** |
-| S3 pickle（已註解）；`/eval` 仍存在 (main_api_server.py:1467)；KeyC 洩漏 | 🟡 **Partial** |
-| S4 DI 框架（Depends 用於 ops_routes + 4 檔案；核心服務仍用 lazy singleton） | 🟡 **Partial** |
+- P6 自演化閉環：✅ 5/6 完成（1 bug：`"User"` key 硬編碼）
+- P6.5 啟動接線：✅ 2/2
+- P7 分層配置：🟡 部分完成 — 目錄 + loader 正確，150+ 魔法數字未遷移
+- P8 技術債清理：❌ S1 chat_service import 斷裂，S2-S4 部分
+- 測試基礎設施：✅ ~1500 tests, 16.34% 覆蓋率, 0 層級違規
 
 ---
 
@@ -291,7 +226,7 @@ npm start
 
 **環境需求**：Python 3.9+、Node.js 16+、Ollama（LLM 後端，CPU 約 120 秒/次）
 
-> ⚠️ 後端有兩台 FastAPI 伺服器，均預設 port 8000。同一時間只能一台綁定 8000，另一台需用 `--port`。詳見 [雙伺服器架構](docs/architecture/DUAL_SERVER_ARCHITECTURE.md)。
+> ⚠️ 後端有兩台 FastAPI 伺服器，均預設 port 8000。同一時間只能一台綁定 8000，另一台需用 `--port`。詳見 [ARCHITECTURE_MAP](docs/03-technical-architecture/analysis/ARCHITECTURE_MAP_2026-05-20.md)（Server topology, port conflict）。
 
 ---
 
@@ -312,60 +247,52 @@ npm start
 
 ### 什麼不能用／斷鏈
 
-**🔴 安全性：**
-- ~~**KeyC 洩漏** — `/sync-key-c` 端點回傳 `{"key_c": key_c}` (main_api_server.py:697)~~ ✅ **已修復** — 改為只回傳 `{"key_available": true}`
-- *(無其他已知安全性問題)*
+| 類別 | 主要問題 | 參考文件 |
+|------|---------|---------|
+| **安全性** | ✅ KeyC 洩漏已修復。`/eval` 端點仍存在 | `FORENSIC_AUDIT` |
+| **功能斷鏈** | 記憶鏈未接線；無持久層（重啟全丟）；桌面→Live2D 未完成；手機 stub；加密不完整 | `WIRING_MAP` |
+| **上帝模塊** | `main_api_server.py` 1668 行、`angela_llm_service.py` 2196 行、`core/autonomous/` 60+ 檔 | `MODULARITY_ANALYSIS` |
+| **治理** | 版本號 13 檔僅 31% 一致；虛假 CHANGELOG；無版本管理流程 | `FULL_ARCHITECTURE_ANALYSIS` |
+| **接線缺口** | ChatService 繞過 IntentRegistry；Plugin hooks 從未被熱路徑調用；50+ stub 實作 | `CARD_INTEGRATION_PLAN` |
 
-**功能斷鏈：**
-- 記憶鏈（HAM/LU/CDM）— 類別完整但查詢/存儲 flow 從未接上
-- P8 LLM 閉環 — MathVerifier / CodeInspector / StateMatrixAdapter 三者孤立
-- 持久層 — save_state/load_state 不存在，重啟全丟
-- 桌面→Live2D 控制鏈 — 後端到 Electron 的控制流從未完成
-- 用戶演化確認閘門 — L270 硬編碼 `"User"`，非預設使用者無法確認演化
-- 手機端 — 純 stub，加密層已拆
-- 插件系統 — 前端有 JS，後端無 hooks
-- 加密 — 只驗 HMAC 簽名不加密，Key A/C 未用
+### 未來路線圖
 
-**架構與治理（嚴重）：**
-- **版本號混亂** — 13 個文件僅 4 個 (31%) 一致；`VERSION` 和 `configs/angela_config.json` **107 天未更新**。見[完整審計](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析)
-- **虛假 v7.x CHANGELOG** — AI agent 自行分配 v7.2.0~v7.4.0，無對應 git tag 或代碼版本
-- **無版本管理流程** — 所有版本變更在盲目 AI 提交中自動完成
-- **雙 config 目錄** — `config/` vs `configs/` 已合併 ✅ → `configs/`
+已定義但未實作／未接線的系統 — 依影響力排序：
 
-**大型上帝模塊（Major）：**
-- **`main_api_server.py`** — 1668 行，混合 API/WebSocket/生命週期
-- **`angela_llm_service.py`** — 2196 行，混合 LLM 路由/多後端/Prompt 構建
-- **`core/autonomous/`** — 60+ 文件，邊界過寬
+**Tier 1 — 核心基礎設施**
+- **Plugin 系統**：5 hooks 已定義（`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`），**0 handler 註冊**。CRUD API 完整但無任何 plugin 部署
+- **Config Handler**：5 個 YAML handler 無對應代碼：`FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler`（`angela_core.yaml:131-257`）
+- **意圖分發**：ChatService 硬編碼 3 種 intent 的 keyword match，繞過可辨識 12+ intents 的 `IntentRegistry`
 
-**功能斷鏈：**
-- 記憶鏈（HAM/LU/CDM）— 類別完整但查詢/存儲 flow 從未接上
-- P8 LLM 閉環 — MathVerifier / CodeInspector / StateMatrixAdapter 三者孤立
-- 5 大理論公式（HSM/CDM/Life Intensity/Active Cognition/Non-Paradox）定義完整但未真正注入 LLM Prompt
-- 持久層 — save_state/load_state 不存在，重啟全丟
-- 桌面→Live2D 控制鏈 — 後端到 Electron 的控制流從未完成
-- 用戶演化確認閘門 — L270 硬編碼 `"User"`，非預設使用者無法確認演化
-- 手機端 — 純 stub，加密層已拆
-- 插件系統 — 前端有 JS，後端無 hooks
-- 加密 — 只驗 HMAC 簽名不加密，Key A/C 未用
+**Tier 2 — 記憶與持久層**
+- **HAM 資料庫**：6 個 CRUD 方法全部透明降級到 mock 儲存
+- **記憶鏈**：HAM/LU/CDM 類別完整但查詢/儲存流程從未接線
+- **狀態持久化**：`save_state()`/`load_state()` 不存在，重啟丟失所有狀態
+- **重要性評分**：回傳硬編碼 `0.5`
 
-**代碼品質：**
-- 12 個死 factory（已識別待清理）、58 個 logging 互搶（已修復主要衝突）、2 個 `__init__` typo（不存在，原為誤判）
-- 150+ 硬編碼魔法數字：`random.random()` x29、`> 0.x` 比較 x150+
-- `health_check_service.py` — 2/3 import targets 不存在（已修復指向正確路徑）
-- 6 個源碼 bug 已修復（審計 verified）
-- 13 個 scripts 語法錯誤已修復
-- 5 個 module-level logging.basicConfig 已移至 `if __name__` guard
-- 12 個 conftest fixtures 已清理（root 3 + integration 9 全未使用）
-- `tests/game/` 已刪除（全部 3 個測試指向不存在模組）
-- `tests/hsp/` 已清理：刪除 3 個 stub、1 個 broken import、1 個 dead script
-- `test_gmqtt_mock.py` 已修復（缺少 AsyncMock import + 檔名改為 test_ 前綴）
-- 6 個源碼 bug 已修復（審計 verified）
-- 13 個 scripts 語法錯誤已修復
-- 5 個 module-level logging.basicConfig 已移至 `if __name__` guard
-- 12 個 conftest fixtures 已清理（root 3 + integration 9 全未使用）
-- `tests/game/` 已刪除（全部 3 個測試指向不存在模組）
-- `tests/hsp/` 已清理：刪除 3 個 stub、1 個 broken import、1 個 dead script
-- `test_gmqtt_mock.py` 已修復（缺少 AsyncMock import + 檔名改為 test_ 前綴）
+**Tier 3 — 專業代理（全部 stub）**
+- 10+ agents（影像生成、語音、網路搜尋、知識圖譜、視覺、資料分析、NLP、程式碼理解、Fantasy DM、創意寫作）— 全部回傳硬編碼或 mock 資料
+- Planning agent 已標記為可棄用
+
+**Tier 4 — 推理與因果**
+- 因果推理引擎使用隨機相關性 placeholder
+- `RealInterventionPlanner` 和 `RealCounterfactualReasoner` 是空的 `pass` 類別
+- Ripple Axis Applicators：僅 3/9 存在（Alpha, Delta, Pi），缺 Beta/Theta/Epsilon/Zeta/Eta/Kappa
+
+**Tier 5 — 對齊與安全性**
+- `ai/alignment/` 中 6 個 stub 類別：`EmotionSystem`, `OntologySystem`, `AlignmentManager` 等 — 全是 `pass`
+- 5 大理論公式（HSM/CDM/Life Intensity/Active Cognition/Non-Paradox）計算結果從未注入 LLM Prompt
+
+**Tier 6 — 監控與維運（全部 placeholder）**
+- 預測維護、效能優化器、AI Ops Engine — 全部回傳硬編碼值
+- Desktop tray：`BaseTrayManager` 抽象，`WindowsTrayManager` 部分實作
+
+**Tier 7 — 基礎設施草稿**
+- Fragmenta 處理管線：stub orchestrator + placeholder element layer + stub vision inverter
+- `ClusterManager`：mock 實作，`distribute_task()` 只 sleep 0.01s
+- `AtlassianBridge`：skeleton，15+ 方法全部回傳空 dict
+- `core_services.py`：CLI standalone stub
+- `code_understanding_tool.py`：全部回傳 "temporarily unavailable"
 
 ---
 
@@ -373,25 +300,26 @@ npm start
 
 | 文件 | 內容 |
 |------|------|
-| [雙伺服器架構](docs/architecture/DUAL_SERVER_ARCHITECTURE.md) | App A vs App B、port 衝突、中介層 |
-| [六層生命架構](docs/architecture/6_LAYER_LIFE_ARCHITECTURE.md) | L1 生物層 → L6 執行層 |
-| [專案結構](docs/architecture/PROJECT_STRUCTURE.md) | 目錄樹 |
-| [全量架構分析](docs/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本溯源、組件審計、六層一致性評分 |
+| [專案憲章](docs/00-overview/PROJECT_CHARTER.md) | 專案使命、範圍、原則 |
+| [詞彙表](docs/00-overview/GLOSSARY.md) | 完整名詞解釋 |
+| [統一文件索引](docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md) | 所有文件導覽 |
+| [技術架構概覽](docs/03-technical-architecture/README.md) | HSP、HAM、NGR、8D Matrix、多模態代理、通訊層、安全性 |
+| [ARCHITECTURE_MAP](docs/03-technical-architecture/analysis/ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照 |
+| [全量架構分析](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本溯源、六層一致性評分 |
 
-### 分析文件
+### 分析與計畫文件
 
 | 文件 | 內容 |
 |------|------|
-| [WIRING_MAP](docs/analysis/WIRING_MAP_2026-05-21.md) | 接線圖、工廠鏈、死代碼 |
-| [CODE_STATISTICS](docs/analysis/CODE_STATISTICS_2026-05-21.md) | 代碼統計、活/死/半成品 |
-| [MODULARITY_ANALYSIS](docs/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God module、耦合、singleton |
-| [PROBLEM_ANALYSIS](docs/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 三重視角審計、安全問題、優先級 |
-| [PHASE_8_PLAN](docs/plans/PHASE_8_DEBT_CLEANUP.md) | 6 週清理路線圖 |
-| [遺留問題修復計畫](docs/plans/REMAINING_ISSUES_PLAN.md) | 架構違規修復、placeholder 清除、unittest→pytest 遷移 |
-| [測試重構與建立計畫](docs/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI integration、階段執行路線 |
-| [全量架構分析](docs/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本歷史、組件版本審計、一致性評分 |
-| [合併任務總計畫](docs/plans/MASTER_CONSOLIDATED_PLAN.md) | 27 項任務合併計畫 (取代 P8 v1/P8 Corrected/P9)，經代碼審計驗證狀態 |
-| [ANGELA 卡片整合計畫](ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線計畫：4 階段、10 斷開點、代碼審計確認 |
+| [WIRING_MAP](docs/03-technical-architecture/analysis/WIRING_MAP_2026-05-21.md) | 接線圖、工廠鏈、死代碼 |
+| [CODE_STATISTICS](docs/03-technical-architecture/analysis/CODE_STATISTICS_2026-05-21.md) | 代碼統計、活/死/半成品 |
+| [MODULARITY_ANALYSIS](docs/03-technical-architecture/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God module、耦合、singleton |
+| [PROBLEM_ANALYSIS](docs/03-technical-architecture/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 三重視角審計、安全問題、優先級 |
+| [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
+| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：27 項、S/A/B/C 分級、代碼審計驗證 |
+| [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線：4 階段、10 斷開點 |
+| [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
+| [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
 
 ---
 
