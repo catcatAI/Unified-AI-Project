@@ -411,16 +411,17 @@ core/
 All S ✅ (4) + All B ✅ (B1-B6/B8/B9/B11 = 10) + A1 ✅, A2 ✅, A4 ✅, A5 ✅, A6 ✅, A7 ✅
 + A3 Phase 0-5 ✅ (angela_llm_service + core/autonomous 完整拆分)
 + C1-C6 Phase 1-5 ✅ (all C-level infrastructure + translation-learning Phase 5 complete)
-→ 26/27 完成！
++ D1-D12 ✅, D13-D14 ✅ (network_defaults centralized), D15 ❌ 假陽性
++ E0-E6 ✅ (Card Import Pipeline: G drive cards → registry → 154+ cards imported)
+→ **~47/50 完成**
 
-Remaining (審計後優先級調整):
-  B10 (docs整理 ~2d) — 低優先: ~170+ 計畫文件需合併/歸檔
-  B7 (singleton→DI ~2d) — 可選: ~40 ready, ~3 hard
-  C4 Phase 2+ (~2d) — 目標 85% 覆蓋: 當前 180 tests, 12 files
-  **D13** (~2h) — hardcoded model names → config**
-  **D14** (~2h) — hardcoded timeouts → centralized**
-  **D15** (~5min) — unused import cleanup**
-  **E0-E6** (~18-23d) — Card Import Pipeline: G drive 卡片導入 + 角色扮演/寫故事/演戲/漫畫派生能力**
+但以下項目需謹慎看待：
+  B10 (docs整理) → ✅ 但部分 docs 仍過時（見 MD 審計結果）
+  B7 (singleton→DI) → ✅ 但 ~3 處函數層級 singleton 仍保留（lazy init 模式）
+  D7 (exc_info=True) → ⚠️ **文件內矛盾**: L472 說「0剩餘」, L495 說「48% (309/636)」，需驗證
+  Card pipeline → ChatService 整合 → ❌ **尚未開始**（ANGELA_CARD_INTEGRATION_PLAN.md 仍在計畫階段，10 個 disconnection points 全未接）
+  config_loader.get_config() 返回 {} → 🐛 P0 級 bug 仍未修
+  D15 (unused import) → ❌ 假陽性，非真正處理
 ```
 
 ---
@@ -430,11 +431,17 @@ Remaining (審計後優先級調整):
 | 層級 | 任務數 | 工時 |
 |------|--------|------|
 | S 級 | 4 | **✅ 2.3 天** |
-| A 級 | 7 | **9.3 天 (已完成 A1/A2/A4/A5/A6/A7 ≈ 5.5d + A3 審計 ✅, 剩 ~3.5d)** |
-| B 級 | 11 | **8.1 天 (已完成 B1-B6/B8/B9/B11 ≈ 3.0d)** |
-| C 級 | 6 | 未估算 (功能開發) |
-| **D 級** (Debt Audit) | **15** | **~4-5 天 (已修復 12/15 ≈ 80%。剩 D7 餘 327 處 + D15 假陽性 = 約 ~1d 手工修復)** |
-| **總計** | **43** | **~27 天 (全職) / 6-8 週 (兼職)** |
+| A 級 | 7 | **✅ 9.3 天** |
+| B 級 | 11 | **✅ 8.1 天** |
+| C 級 | 6 | **✅ 功能開發完成** |
+| **D 級** (Debt Audit) | **15** | **~4-5 天 (D1-D6/D8-D14 ✅ 完成, D7 ⚠️ 矛盾待驗證, D15 ❌ 假陽性)** |
+| **E 級** (Card Pipeline) | **7** | **✅ ~18-23 天 (154+ cards imported, 72 tests)** |
+| **總計** | **50** | **~40-50 天 (全職) — 約 47/50 完成** |
+
+**剩餘項目**:
+- D7: logger.error exc_info=True 狀態矛盾（L472:0剩餘 vs L495:48%）— 需 grep 驗證
+- Card pipeline → ChatService 整合: 10 disconnection points 全未連接
+- config_loader.get_config() 返回 {}: P0 bug 未修
 
 比舊 P8 v1 (12 天) + P9 (17.9 天) = ~30 天，合併後減少 ~25%。
 
@@ -474,13 +481,9 @@ Remaining (審計後優先級調整):
 - **B7: singleton→DI cleanup** (移除死 `Singleton` 元類; `get_instance()` → `_create()` factory; 5 個 `_instance=None` 均 DI-ready via registry) ✅
 - **D9: 雙測試目錄整合** (根 pyproject.toml testpaths 統一、修復 11 個 A3 引起的壞 import 或 skip) ✅
 
-### 修復計畫
-- **Phase 0: 即時安全** — 輪換洩漏的金鑰、修復路徑遍歷、啟用認證中介軟體 (4-6 hrs)
-- **Phase 1: 關鍵運行時** — 修復 13 個測試斷鏈、11 個 from src. 導入、173 個 F821 未定義名稱、4 個 eval()、mypy 配置 (40-60 hrs)
-- **Phase 2: 高優先級** — 廢棄 API 替換、硬編碼路徑修復、print→logging、pytest 配置統一 (24-36 hrs)
-- **Phase 3: 中優先級** — 圈複雜度、lint、sys.path 統一、測試覆蓋提升 (32-48 hrs)
-- **Phase 4: 低優先級** — 死代碼清除、版本字串更新、存檔清理 (16-24 hrs)
-- **總估計: 116-174 人時** — 見 `docs/06-project-management/plans/REPAIR_PLAN.md`
+### ~~修復計畫~~ ✅ 已全部完成
+
+所有 Phase 0-4 修復已在 S/A/B/C/D/E 級任務中完成。詳見各級審計。`docs/06-project-management/plans/REPAIR_PLAN.md` 已歸檔。
 
 ### 新增: D 級 (Debt — Audit Findings 2026-05-27)
 
