@@ -3,7 +3,7 @@
 > **目標**: ModuleManager 驅動的架構接線 — card pipeline + ChatService + IntentRegistry + LLM 在統一模組系統下協作  
 > **基於**: 代碼審計（2026-05-30）+ ModuleManager 設計（`docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md`）  
 > **審計**: 25 個問題（6 HIGH）已在設計階段標記，非等到執行才發現  
-> **狀態**: 設計階段 — 待 M0 實作後啟動
+> **狀態**: 執行中 — M0 (ModuleManager 核心) + M1 (card_pipeline 模組) + M2 (intent_registry 模組) 已實作。Phase 2 (ChatService→IntentRegistry 接線) 為下個目標。
 
 ---
 
@@ -137,30 +137,30 @@ Manual wiring (舊方案, 25 issues):         ModuleManager (新方案):
 
 ---
 
-## 4. Phase 0: ModuleManager 核心
+## 4. Phase 0: ModuleManager 核心 ✅ **已完成**
 
 ### 4.1 目標
 建立 ModuleManager 基礎設施，不影響任何現有程式碼。
 
 ### 4.2 新增檔案
 
-| 檔案 | 說明 |
-|------|------|
-| `core/system/module_manager/models.py` | ModuleDescriptor, DependencySpec, LifecycleHooks dataclasses |
-| `core/system/module_manager/scanner.py` | 掃描 `modules/*/module.yaml`，回傳 descriptor list |
-| `core/system/module_manager/resolver.py` | topological sort + cycle detection |
-| `core/system/module_manager/lifecycle.py` | init/start/stop orchestration |
-| `core/system/module_manager/events.py` | Event bus + health monitor |
-| `core/system/module_manager/__init__.py` | ModuleManager facade |
-| `modules/.gitkeep` | Module 根目錄 |
+| 檔案 | 說明 | 狀態 |
+|------|------|------|
+| `core/system/module_manager/models.py` | ModuleDescriptor, DependencySpec, LifecycleHooks dataclasses | ✅ 已實作 |
+| `core/system/module_manager/scanner.py` | 掃描 `modules/*/module.yaml`，回傳 descriptor list | ✅ 已實作 |
+| `core/system/module_manager/resolver.py` | topological sort + cycle detection | ✅ 已實作 |
+| `core/system/module_manager/lifecycle.py` | init/start/stop orchestration | ✅ 已實作 |
+| `core/system/module_manager/events.py` | Event bus + health monitor | ✅ 已實作 |
+| `core/system/module_manager/__init__.py` | ModuleManager facade | ✅ 已實作 |
+| `modules/.gitkeep` | Module 根目錄 | ✅ 已存在 |
 
 ### 4.3 不修改
 現有檔案（wiring.py, lifespan.py, router.py, ChatService）全部不動。
 
-### 4.4 驗收
+### 4.4 驗收 ✅ **通過 (59 tests)**
 
 ```
-pytest tests/core/module_manager/  — 50+ tests
+pytest tests/core/module_manager/  — 59 tests, all pass
   ├── scanner: 解析 module.yaml, schema 驗證
   ├── resolver: topological sort, cycle detection
   ├── lifecycle: init → start → stop 順序正確
@@ -178,7 +178,7 @@ pytest tests/core/module_manager/  — 50+ tests
 
 ---
 
-## 5. Phase 1: card_pipeline module
+## 5. Phase 1: card_pipeline module ✅ **已完成**
 
 ### 5.1 目標
 CardImportPipeline + CardRegistry 成為第一個 ModuleManager 管理的 module。
@@ -187,12 +187,12 @@ CardImportPipeline + CardRegistry 成為第一個 ModuleManager 管理的 module
 
 ```
 modules/card_pipeline/
-  module.yaml        — descriptor
-  __init__.py        — init/start/stop functions
-  adapter.py         — MemoryAdapter + PersonalityAdapter factory (via ModuleManager)
+  module.yaml        — descriptor ✅ 已建立
+  __init__.py        — init/start/stop functions ✅ 已建立
+  adapter.py         — MemoryAdapter + PersonalityAdapter factory → ⏳ Phase 3 時建立
 ```
 
-### 5.3 module.yaml
+### 5.3 module.yaml（實際內容與計畫一致）
 
 ```yaml
 name: card_pipeline
@@ -217,24 +217,20 @@ lifecycle:
     endpoint: /health/card-pipeline
 ```
 
-### 5.4 init 函數
+### 5.4 init 函數（實際實作，回傳 CardImportPipeline 而非 CardImportHandler）
 
 ```python
-async def init(deps: dict) -> CardImportHandler:
-    """ModuleManager 在依賴都 ready 後呼叫。"""
+async def init(deps: dict = None) -> CardImportPipeline:
     registry = CardRegistry()
-
-    memory_adapter = None
-    if "ham_memory" in deps:
-        memory_adapter = MemoryAdapter(deps["ham_memory"])
-
+    deps = deps or {}
+    memory_adapter = deps.get("ham_memory")
+    llm_service = deps.get("llm_module")
     pipeline = CardImportPipeline(
         registry=registry,
         memory_adapter=memory_adapter,
-        llm_service=deps.get("llm_module"),
+        llm_service=llm_service,
     )
-
-    return CardImportHandler(pipeline=pipeline, registry=registry)
+    return pipeline
 ```
 
 ### 5.5 解決的 D-points

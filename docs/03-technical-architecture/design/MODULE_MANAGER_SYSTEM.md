@@ -1,7 +1,7 @@
 # Angela Module Manager System
 
 > **Design Date**: 2026-05-30  
-> **Status**: Design Phase  
+> **Status**: Implemented — M0 core (6 source files + 59 tests) deployed. M1 (card_pipeline) + M2 (intent_registry) modules active under `modules/`. wiring.py integration via `initialize_module_manager()`.  
 > **解决的问题**: 耦合集中度 35/100、共享可變狀態 35/100、God module 35/100 — 見 `MODULARITY_ANALYSIS.md`  
 > **與 8D Matrix 的關係**: 8D 管理 Angela 的執行時狀態；ModuleManager 管理程式碼的架構接線。兩者互補。
 
@@ -450,14 +450,14 @@ vision = module_manager.get_module("vision_service")
 
 ### 7.1 階段規劃
 
-| Phase | 內容 | 目標 | 影響 |
-|-------|------|------|------|
-| **M0** | ModuleManager 核心 + descriptor schema | Scanner, Resolver, Lifecycle, Events | 新建，不影響現有 |
-| **M1** | card_pipeline 成為第一個 module | `modules/card_pipeline/module.yaml` | 驗證整個流程 |
-| **M2** | intent_registry module | 解決 intent 學習回饋問題 | 修復 HIGH 8/8 |
-| **M3** | chat_service module | ChatService 不再直接 import | 降耦合 |
-| **M4** | llm_module (取代 router.py hotspot) | `modules/llm/module.yaml` | 1522→拆分 |
-| **M5** | 其餘 service → module | vision, audio, tactile, drive | 全面覆蓋 |
+| Phase | 內容 | 目標 | 影響 | 狀態 |
+|-------|------|------|------|------|
+| **M0** | ModuleManager 核心 + descriptor schema | Scanner, Resolver, Lifecycle, Events | 新建，不影響現有 | ✅ **59 tests pass** |
+| **M1** | card_pipeline 成為第一個 module | `modules/card_pipeline/module.yaml` | 驗證整個流程 | ✅ **已實作 (w/o adapter.py)** |
+| **M2** | intent_registry module | 解決 intent 學習回饋問題 | 修復 HIGH 8/8 | 🟡 **module 已實作, hook 為 stub** |
+| **M3** | chat_service module | ChatService 不再直接 import | 降耦合 | ⏳ 未開始 |
+| **M4** | llm_module (取代 router.py hotspot) | `modules/llm/module.yaml` | 1522→拆分 | ⏳ 未開始 |
+| **M5** | 其餘 service → module | vision, audio, tactile, drive | 全面覆蓋 | ⏳ 未開始 |
 
 ### 7.2 M0: ModuleManager 核心
 
@@ -542,38 +542,38 @@ ModuleManager 可以獨立啟動 card_pipeline，不需要改任何現有 wiring
 ## 9. 路線圖
 
 ```
-Week 1: M0 ModuleManager 核心
+Week 1: M0 ModuleManager 核心 ✅ 已實作
   ├── models.py (ModuleDescriptor dataclasses)
   ├── scanner.py (module.yaml 解析 + 驗證)
   ├── resolver.py (topological sort + cycle detection)
   ├── lifecycle.py (init/start/stop/hooks)
   ├── events.py (event bus + health monitor)
   └── __init__.py (ModuleManager facade)
-  → test: 50+ tests, 0 external dependencies
+  → 59 tests, all pass
 
-Week 2: M1 card_pipeline + M2 intent_registry
-  ├── modules/card_pipeline/module.yaml
-  ├── modules/card_pipeline/init.py
-  ├── modules/intent_registry/module.yaml
-  ├── modules/intent_registry/init.py
-  └── 更新 wiring.py 加入 ModuleManager
-  → 卡片導入 + IntentRegistry singleton 可運作
+Week 2: M1 card_pipeline + M2 intent_registry ✅ 已實作
+  ├── modules/card_pipeline/module.yaml ✅
+  ├── modules/card_pipeline/__init__.py ✅ (無 adapter.py, Phase 3 補)
+  ├── modules/intent_registry/module.yaml ✅
+  ├── modules/intent_registry/init.py ✅ (on_card_pipeline_ready 為 stub)
+  └── wiring.py initialize_module_manager() ✅
+  → (尚未接入 lifespan，僅供手動調用)
 
-Week 3: M3 chat_service module
+Week 3: M3 chat_service module ⏳ 未開始
   ├── modules/chat_service/module.yaml
   ├── modules/chat_service/init.py
   ├── 從 lifespan.py 移除 ChatService 手動 import
   └── 更新 router.py 用 module_manager.get()
   → ChatService 改由 ModuleManager 管理
 
-Week 4: M4 llm_module（router.py 拆分）
+Week 4: M4 llm_module（router.py 拆分）⏳ 未開始
   ├── modules/llm/module.yaml
   ├── modules/llm/providers/
   ├── modules/llm/prompt_builder/
-  └── router.py → modules/llm/router.py (縮小到 200 行)
-  → 1522 行 router.py 變成 200 行 gateway + 模組內 routing
+  └── router.py → modules/llm/router.py
+  → 1522 行 router.py 分成 gateway + 模組內 routing
 
-Week 5: M5 其餘 service
+Week 5: M5 其餘 service ⏳ 未開始
   ├── vision, audio, tactile, drive
   ├── 每個 service 建立 module.yaml
   └── wiring.py 只剩 ModuleManager.start()

@@ -68,7 +68,7 @@
 | **Self-Evolution** | ✅ 5/6 | ConfigMutator, hot-reload, broadcast, StateStore done; 1 bug (`"User"` key hardcoded) |
 | **8D State Matrix** | ✅ | 34 endpoints, drives NGR + LLM context injection |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config at L869 |
-| **Wiring** | ✅ | `services/wiring.py` (4349 bytes), DI via lifespan |
+| **Wiring** | ✅ | `services/wiring.py` (4349 bytes) + `initialize_module_manager()`, DI via lifespan + ModuleManager |
 | **Tests** | ✅ | ~1500+, 16.34% coverage, 0 layer violations |
 | **P7 Config** | 🟡 | TieredConfigLoader done; 150+ magic numbers not migrated |
 | **P8 Tech Debt** | ❌ | S1 BROKEN (chat_service import), S2-S4 partial |
@@ -124,7 +124,7 @@ See detailed breakdowns in linked analysis docs:
 | **Functional** | Memory (HAM/LU/CDM) flow never connected; Persistence missing (reboot loses state); Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
 | **God Modules (refactored)** | `main_api_server.py` 314 lines, `angela_llm_service.py` 40 lines (shim), `core/autonomous/` 2 files — **old 1668/2196/60+ sizes were from pre-refactor code** | `MODULARITY_ANALYSIS` (stale analysis) |
 | **Governance** | Version chaos (13 files, 31% consistent); Fake v7.x changelog; No version process | `FULL_ARCHITECTURE_ANALYSIS` |
-| **Wiring Gaps** | ChatService bypasses IntentRegistry; Plugin hooks defined but never called from hot path; 50+ stub implementations | `CARD_INTEGRATION_PLAN` |
+| **Wiring Gaps** | ChatService bypasses IntentRegistry (module exists but unwired); Plugin hooks defined but never called from hot path; 50+ stub implementations | `CARD_INTEGRATION_PLAN` |
 
 ### Roadmap / Future Extensibility
 
@@ -133,7 +133,7 @@ Systems that are defined/stubbed but not yet implemented — ordered by estimate
 **Tier 1 — Core Infrastructure (foundational gaps)**
 - **Plugin System**: 5 hooks defined (`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`), **0 handlers registered**. Full CRUD API exists (`api/v1/endpoints/plugins.py`) but no plugins deployed.
 - **Config Handlers**: 5 YAML-defined handlers have **no code**: `FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler` (`angela_core.yaml:131-257`)
-- **Intent Dispatch**: ChatService has hardcoded 3-intent keyword matching, bypassing `IntentRegistry` which knows 12+ intents (`chat_service.py:155-167`)
+- **Intent Dispatch**: ChatService has hardcoded 3-intent keyword matching, bypassing `IntentRegistry` which knows 12+ intents (`chat_service.py:155-167`). IntentRegistry module (`modules/intent_registry/`) exists but not wired to ChatService.
 
 **Tier 2 — Memory & Persistence**
 - **HAM Database**: All 6 CRUD methods transparently fall back to mock storage (`database.py:33-165`)
@@ -190,7 +190,7 @@ See dedicated docs for full diagrams:
 | [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
 | [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 27 items, S/A/B/C tiers, code-verified status |
 | [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points |
-| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | Module IoC container: auto-discovery, dependency resolution, lifecycle management |
+| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **Implemented** — M0 core (6 files + 59 tests) + M1 card_pipeline + M2 intent_registry modules |
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
 
 ---
@@ -216,7 +216,7 @@ See dedicated docs for full diagrams:
 | **自演化** | ✅ 5/6 | ConfigMutator、熱重載、廣播、StateStore 正常；1 bug（`"User"` key 硬編碼） |
 | **8D 狀態矩陣** | ✅ | 34 REST 端點，驅動 NGR + LLM 上下文注入 |
 | **配置系統** | ✅ | `config_loader.py:get_config()` 正確回傳 Config（L869） |
-| **Wiring** | ✅ | `services/wiring.py`（4.3KB），透過 lifespan DI |
+| **Wiring** | ✅ | `services/wiring.py`（4.3KB）+ `initialize_module_manager()`，透過 lifespan DI + ModuleManager |
 | **測試** | ✅ | ~1500+ tests, 16.34% 覆蓋率, 0 層級違規 |
 | **P7 配置** | 🟡 | TieredConfigLoader 完成；150+ magic number 未遷移 |
 | **P8 技術債** | ❌ | S1 BROKEN（chat_service import 斷裂），S2-S4 部分 |
@@ -266,7 +266,7 @@ npm start
 | **功能斷鏈** | 記憶鏈未接線；無持久層（重啟全丟）；桌面→Live2D 未完成；手機 stub；加密不完整 | `WIRING_MAP` |
 | **上帝模塊（已重構）** | `main_api_server.py` 314 行、`angela_llm_service.py` 40 行 (shim)、`core/autonomous/` 2 檔 — **舊的 1668/2196/60+ 是重構前的數字** | `MODULARITY_ANALYSIS`（已過時） |
 | **治理** | 版本號 13 檔僅 31% 一致；虛假 CHANGELOG；無版本管理流程 | `FULL_ARCHITECTURE_ANALYSIS` |
-| **接線缺口** | ChatService 繞過 IntentRegistry；Plugin hooks 從未被熱路徑調用；50+ stub 實作 | `CARD_INTEGRATION_PLAN` |
+| **接線缺口** | ChatService 繞過 IntentRegistry（模組已存在但未接線）；Plugin hooks 從未被熱路徑調用；50+ stub 實作 | `CARD_INTEGRATION_PLAN` |
 
 ### 未來路線圖
 
@@ -275,7 +275,7 @@ npm start
 **Tier 1 — 核心基礎設施**
 - **Plugin 系統**：5 hooks 已定義（`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`），**0 handler 註冊**。CRUD API 完整但無任何 plugin 部署
 - **Config Handler**：5 個 YAML handler 無對應代碼：`FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler`（`angela_core.yaml:131-257`）
-- **意圖分發**：ChatService 硬編碼 3 種 intent 的 keyword match，繞過可辨識 12+ intents 的 `IntentRegistry`
+- **意圖分發**：ChatService 硬編碼 3 種 intent 的 keyword match，繞過可辨識 12+ intents 的 `IntentRegistry`（`modules/intent_registry/` 模組已存在但未接線）
 
 **Tier 2 — 記憶與持久層**
 - **HAM 資料庫**：6 個 CRUD 方法全部透明降級到 mock 儲存
@@ -331,7 +331,7 @@ npm start
 | [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
 | [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：27 項、S/A/B/C 分級、代碼審計驗證 |
 | [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動 |
-| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | Module IoC 容器：自動發現、依賴解析、生命週期管理 |
+| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0 核心 (6 files + 59 tests) + M1 card_pipeline + M2 intent_registry 模組 |
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |

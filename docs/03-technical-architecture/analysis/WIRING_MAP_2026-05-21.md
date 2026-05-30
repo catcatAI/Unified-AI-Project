@@ -12,6 +12,12 @@
 > - 7 個被標為「無呼叫者」的 factory 實際上已有生產呼叫者（見下方各節標註）
 > - `broadcast_state_updates()` 現在已在 `api/lifespan.py:225` 被 active create_task
 > - `__all_` typo 在 `ai/trust/` 和 `ai/service_discovery/` 已修復
+> - **ModuleManager 已新增**（2026-05-30）: `core/system/module_manager/` 6 個源檔案 + 59 測試。Module IoC 容器，管理 `modules/` 目錄下的模組。
+>   - `services/wiring.py` 新增 `initialize_module_manager()` (L122-138) — ModuleManager 啟動 + 模組註冊到 ServiceRegistry
+>   - M0 核心: scanner, resolver, lifecycle, events, models
+>   - M1 模組: `modules/card_pipeline/` — CardImportPipeline 包裝
+>   - M2 模組: `modules/intent_registry/` — IntentRegistry 包裝
+> - 此文件中尚未繪製 ModuleManager 接線圖。見下方 §1.3。
 
 ---
 
@@ -105,6 +111,36 @@ Middleware:
 | 生物心跳 | ✅ 啟動 + 關閉 | ❌ 不存在 |
 | shutdown timeout | 可配置 (default 10s) | 硬編碼 |
 | lifespan 註冊方式 | `app.router.lifespan_context = lifespan` | `FastAPI(lifespan=lifespan)` |
+
+### 1.4 ModuleManager 接線（2026-05-30 新增）
+
+```
+services/wiring.py
+├── initialize_module_manager()  (L122-138, async)
+│   ├── 建立 ModuleManager (scan_paths=[modules/])
+│   ├── ModuleManager.start()
+│   │   ├── scanner.discover() → [card_pipeline, intent_registry, ...]
+│   │   ├── resolver.resolve() → 拓撲排序 + 循環檢測
+│   │   ├── lifecycle.init_all() → 依序初始化模組（傳入 deps）
+│   │   │   ├── card_pipeline: 建立 CardImportPipeline(registry, memory_adapter=None, llm_service=None)
+│   │   │   └── intent_registry: 建立 IntentRegistry()
+│   │   ├── 註冊到 ServiceRegistry (inst.name → inst.instance)
+│   │   └── lifecycle.start_all() → 啟動模組 → status=RUNNING
+│   └── 回傳 manager (尚未被 lifespan 使用，僅供手動調用)
+│
+modules/card_pipeline/
+├── module.yaml: name=card_pipeline, kind=service, required=[], optional=[ham_memory, personality_module, llm_module, intent_registry]
+└── __init__.py: init(deps)→CardImportPipeline, start/stop=noop
+
+modules/intent_registry/
+├── module.yaml: name=intent_registry, kind=service, optional=[card_pipeline]
+└── __init__.py: init(deps)→IntentRegistry, on_card_pipeline_ready=stub
+
+尚未接線:
+├── ChatService._analyze_intent() → IntentRegistry (Phase 2 目標)
+├── Pipeline 結果 → MemoryAdapter / PersonalityAdapter (Phase 3)
+└── Pipeline 結果 → ConfigLoader.learn() (Phase 4)
+```
 
 ---
 
