@@ -28,8 +28,8 @@
 │       └──► LLMFallback              (Stage 3: 硬編碼，非真正LLM)     │
 │                                                                     │
 │  ⚠ MemoryAdapter (81行)       → 存在但無人呼叫                       │
-│  ⚠ PersonalityAdapter (59行)  → 存在但無人呼叫                       │
-│  ⚠ CardRegistry (203行)      → 僅 pipeline._finalize() 內部使用    │
+│  ⚠ PersonalityAdapter (59行)  → RoleplayEngine 已用，但 Pipeline 未接│
+│  ⚠ CardRegistry (203行)      → pipeline + run_card_import 使用      │
 │  ⚠ IntentRegistry (168行)    → character_card intent 存在但無 handler│
 │  ⚠ ConfigLoader.learn()      → 從未接收卡片導入質量數據               │
 │                                                                     │
@@ -38,7 +38,7 @@
 │       ├──► generate_response() → 走 LLM, 從不調用 CardImportPipeline│
 │       └──► IntentRegistry 從未被 ChatService 使用                    │
 │                                                                     │
-│  AngelaLLMService (1731行)                                           │
+│  AngelaLLMService / LLM Router (1522行)                             │
 │       ├──► HAMMemoryManager    → 用於 memory retrieval              │
 │       ├──► MemoryAdapter       → 從未傳入 HAMManager                 │
 │       ├──► TemplateMatcher     → P0-2 模板匹配                      │
@@ -51,15 +51,15 @@
 | # | 斷開點 | 位置 | 說明 |
 |---|--------|------|------|
 | D1 | `MemoryAdapter` 從未實例化 | `memory_adapter.py:21-22` | `__init__` 接收 `ham_manager=None`，但永遠沒人傳入 |
-| D2 | `PersonalityAdapter` 從未實例化 | `personality_adapter.py:20-21` | `__init__` 接收 `personality_manager=None`，永遠沒人傳入 |
+| D2 | `PersonalityAdapter` RoleplayEngine 已用但 Pipeline 未接 | `roleplay_engine.py:22-23` | `RoleplayEngine.__init__` 自動建立 `PersonalityAdapter()` 實例，但 `CardImportPipeline` 完全不使用它 |
 | D3 | `CardImportPipeline` 不接收 adapters | `pipeline_orchestrator.py:46-54` | 建構子只接收 `registry`，沒有 memory/personality adapter 掛鉤 |
 | D4 | `ChatService._analyze_intent()` 不使用 IntentRegistry | `chat_service.py:155-167` | 硬編碼 keyword match，忽略了 `IntentRegistry` 和 YAML 定義的 `character_card` intent |
 | D5 | ChatService 沒有 `character_card` 意圖處理分支 | `chat_service.py:122-127` | 只有 `llm_manage` 和 `file_op` 兩個分支 |
-| D6 | `CardRegistry` 未註冊到 ServiceRegistry | 全域 | 無任何地方 `get_registry().register("card_registry", ...)` |
+| D6 | `CardRegistry` 未註冊到 ServiceRegistry（但 CLI 有使用） | 全域 | 無任何地方 `get_registry().register("card_registry", ...)`。注意：`run_card_import.py:149-242` 已直接使用 `CardRegistry()` — 證明 pattern 已驗證 |
 | D7 | `LLMFallback` 硬編碼而非使用真實 LLM | `llm_fallback.py:39-63` | 所有 `_resolve_*` 方法都是字串拼接，從未調用 `AngelaLLMService` |
 | D8 | `ConfigLoader.learn()` 從未接收卡片數據 | `config_loader.py:285-311` | `learn()` 支援四種事件類型，但無任何代碼從 pipeline 調用它 |
 | D9 | `run_card_import.py` 是獨立 CLI | `run_card_import.py:280-281` | `if __name__ == "__main__"`，無法被 API 或服務觸發 |
-| D10 | 無異步任務隊列 | 缺失 | 大規模導入會阻塞事件循環 |
+| D10 | 無異步任務隊列（CardImport專屬） | 缺失 | 大規模導入會阻塞事件循環。注意：專案已有 `asyncio.Queue` 模式在 `unified_control_center.py:50` 和 `feedback_processor.py:174`，可復用 |
 
 ### 1.3 現有置信度/類型系統
 
@@ -195,6 +195,8 @@ async def _handle_card_import_intent(self, text: str, user_name: str, intent: st
     memory_id = await memory_adapter.store_card(result.card)
     
     # 4. 裝載到 PersonalityManager
+    # 注意: RoleplayEngine (capabilities/roleplay_engine.py:22-23) 已有 PersonalityAdapter 實例。
+    # 此處建立新的實例用於卡片導入專用，兩者互不衝突。
     try:
         from ai.personality.personality_manager import PersonalityManager
         pm = PersonalityManager()
@@ -230,12 +232,9 @@ async def _handle_card_import_intent(self, text: str, user_name: str, intent: st
 
 **確保 character_card intent 可被 detect() 捕獲:**
 
-YAML 已定義 `character_card` keywords（`angela_core.yaml:264-273`），`IntentRegistry._register_defaults()` 已從 YAML 載入（`intent_registry.py:54-69`）。但 fallback hardcoded 模式（`intent_registry.py:71-84`）缺少 `character_card` 條目。
+YAML 已定義 `character_card` keywords（`angela_core.yaml:264-273`），`IntentRegistry._register_defaults()` 已從 YAML 載入（`intent_registry.py:54-69`）。Hardcoded fallback（`intent_registry.py:79`）也已包含 `character_card` 條目 — **無需修改**。
 
-`intent_registry.py:79` — 在 fallback 中補上 character_card：
-```python
-IntentPattern("character_card", ["角色卡", "人物", "建立角色", "character", "角色", "生成角色"], "character_card", priority=6),
-```
+需確認 ChatService 的 `_analyze_intent()` 調用 `IntentRegistry.detect()` 後，返回的 `character_card` intent 能被 Phase 1 的 handler 捕獲。這屬於 Phase 1.1 的修改範疇。
 
 #### 3.1.3 驗證 Phase 1
 
@@ -294,14 +293,16 @@ def _run_angela_stage(self, card: Card) -> Card:
     if self.ham_manager and unresolved_texts:
         try:
             import asyncio
-            memories = asyncio.run_coroutine_threadsafe(
+            loop = asyncio.get_running_loop()
+            future = asyncio.run_coroutine_threadsafe(
                 self.ham_manager.query_core_memory(
                     keywords=[card.core_trait] if card.core_trait else [],
                     data_type_filter="character_card",
                     limit=3,
                 ),
-                None,  # 如果已有事件循環則使用
+                loop,
             )
+            memories = future.result(timeout=5.0)
             # HAM 結果注入到衝突解決
         except Exception:
             pass
@@ -413,6 +414,8 @@ print(resolved[0].resolution)
 **目標**: 新增 REST API 端點觸發導入，非同步執行，支援進度查詢。
 
 #### 3.3.1 新建 `core/card/integration/card_import_task.py`
+
+> **設計選擇**: 專案已有 `asyncio.Queue` 模式在 `unified_control_center.py:50` 和 `feedback_processor.py:174`，以及 `HAMBackgroundTasks`（`ham_background_tasks.py`）。CardImportTaskManager 直接使用 `asyncio.create_task` 更輕量且足夠；若未來需要更複雜的佇列管理，可抽換為共用模式。
 
 ```python
 """
@@ -628,20 +631,22 @@ except Exception:
     pass
 ```
 
-#### 3.4.2 在 lifespan 中預先註冊服務
+#### 3.4.2 在 wiring 中預先註冊服務
 
-**修改 `api/lifespan.py:168-228`** — 在 startup 中預初始化：
+**修改 `services/wiring.py`** — 在 `initialize_all_services()` 結尾（第 107 行之前）新增：
 ```python
-# 在現有 lifecycle startup 中新增（約第 191 行之後）
+# CardRegistry — 在 startup 中註冊，確保 Pipeline 和 API 端點可用
 try:
     from core.card.card_store import CardRegistry
     from core.interfaces.service_registry import get_registry
     if get_registry().get("card_registry") is None:
         get_registry().register("card_registry", CardRegistry())
-        logger.info("[Lifecycle] CardRegistry initialized")
+        logger.info("[Lifecycle] CardRegistry initialized in wiring")
 except Exception as e:
     logger.warning(f"[Lifecycle] CardRegistry init failed: {e}", exc_info=True)
 ```
+
+> **注意**: 選擇 `wiring.py` 而非 `lifespan.py`，因為 `wiring.py` 是預設的 DI 注入點。`lifespan.py` 的 service preinit loop（`lifespan.py:168-228`）結構不同，不適合插入 CardRegistry 初始化。
 
 #### 3.4.3 驗證 Phase 4
 
@@ -745,7 +750,7 @@ print(f'Stats: {stats}')
 | R3 | 大文本導入（>10K tokens）阻塞事件循環 | 使用者體驗下降 | 中 | Phase 3 的 TaskManager 使用 `asyncio.create_task` 避免阻塞 |
 | R4 | `PersonalityManager.apply_personality_adjustment()` 不存在或介面不同 | 裝載失敗 | 低 | 程式碼審計確認 `personality_adapter.py:51` 呼叫此方法。如果運行時缺失，PersonalityAdapter 有 try/except |
 | R5 | `LLMFallback` 被其他地方直接 import 使用 | 替換後遺漏 import | 低 | `__all__` 和 import 分析確認僅 `pipeline_orchestrator.py.py` 使用 |
-| R6 | YAML 意圖配置不包含所有 `character_card` keywords | 部分中文意圖無法捕獲 | 低 | `IntentRegistry.fallback` 已包含完整列表，且 `learn()` 會自動補充 |
+| R6 | YAML 和 hardcoded fallback 的 `character_card` keywords 不全 | 部分中文意圖無法捕獲 | 低 | Existing fallback + `learn()` 自動補充，Phase 1.1 後 ChatService 會使用 IntentRegistry |
 
 ---
 
@@ -820,7 +825,7 @@ curl http://localhost:8000/api/v1/cards/registry
 ```
 聊天導入流程:
   POST /api/v1/chat/completions
-    → api/router.py:167 chat_completions()
+    → api/router.py:168 chat_completions()
     → services/chat_service.py:102 generate_response()
     → chat_service.py:116 _analyze_intent()
     → core/intent_registry.py:106 detect()
