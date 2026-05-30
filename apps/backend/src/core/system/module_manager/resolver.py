@@ -1,3 +1,4 @@
+import operator
 from collections import deque
 from typing import Optional
 
@@ -77,9 +78,44 @@ class DependencyResolver:
                     return result
         return None
 
+    @staticmethod
+    def _check_constraint(actual: str, constraint: str) -> bool:
+        if not constraint:
+            return True
+        constraint = constraint.strip()
+        ops = {
+            ">=": operator.ge, "<=": operator.le,
+            ">": operator.gt, "<": operator.lt,
+            "==": operator.eq,
+        }
+        op = operator.eq
+        ver = constraint
+        for prefix in (">=", "<=", ">", "<", "=="):
+            if constraint.startswith(prefix):
+                op = ops[prefix]
+                ver = constraint[len(prefix):].strip()
+                break
+        try:
+            actual_parts = tuple(int(x) for x in actual.split("."))
+            ver_parts = tuple(int(x) for x in ver.split("."))
+            max_len = max(len(actual_parts), len(ver_parts))
+            actual_parts = actual_parts + (0,) * (max_len - len(actual_parts))
+            ver_parts = ver_parts + (0,) * (max_len - len(ver_parts))
+            return op(actual_parts, ver_parts)
+        except (ValueError, TypeError):
+            return actual == ver
+
     def check_deps(self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]) -> list[str]:
-        existing_names = {d.name for d in existing}
-        return [dep for dep in descriptor.depends_on.required if dep not in existing_names]
+        existing_map = {d.name: d for d in existing}
+        missing: list[str] = []
+        for dep in descriptor.depends_on.required:
+            if dep not in existing_map:
+                missing.append(dep)
+            else:
+                constraint = descriptor.constraints.get(dep)
+                if constraint and not self._check_constraint(existing_map[dep].version, constraint):
+                    missing.append(f"{dep} (needs {constraint}, has {existing_map[dep].version})")
+        return missing
 
     def missing_optional(self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]) -> list[str]:
         existing_names = {d.name for d in existing}

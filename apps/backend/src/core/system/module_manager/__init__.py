@@ -85,10 +85,33 @@ class ModuleManager:
             if self._registry is not None:
                 self._registry.register(inst.name, inst.instance)
             deps = self._lifecycle._build_deps(descriptor, self._instances, registry=self._registry)
-            await self._lifecycle.start_all([inst], {descriptor.name: deps})
+            start_results = await self._lifecycle.start_all([inst], {descriptor.name: deps})
+            if not start_results or not start_results[0].success:
+                self._instances = [i for i in self._instances if i.name != inst.name]
+                if self._registry is not None:
+                    self._registry.unregister(inst.name)
+                error = start_results[0].error if start_results else "start failed"
+                return HotplugResult(name=descriptor.name, success=False, error=error)
             return HotplugResult(name=descriptor.name, success=True)
         except Exception as e:
             return HotplugResult(name=path.name, success=False, error=str(e))
+
+    async def unplug(self, name: str) -> HotplugResult:
+        inst = self.get_module(name)
+        if inst is None:
+            return HotplugResult(name=name, success=False, error="not found")
+        for other in self._instances:
+            if other.name != name and name in other.descriptor.depends_on.required:
+                return HotplugResult(name=name, success=False, error=f"module in use by {other.name}")
+        try:
+            await self._lifecycle.stop_all([inst])
+        except Exception:
+            pass
+        self._instances = [i for i in self._instances if i.name != name]
+        if self._registry is not None:
+            self._registry.unregister(name)
+        self._event_bus.emit(f"{name}.stopped")
+        return HotplugResult(name=name, success=True)
 
     def get_module(self, name: str) -> Optional[ModuleInstance]:
         for inst in self._instances:

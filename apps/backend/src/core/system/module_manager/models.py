@@ -79,6 +79,7 @@ class ModuleDescriptor:
     provides: ProvidedServices = field(default_factory=ProvidedServices)
     lifecycle: LifecycleHooks = field(default_factory=LifecycleHooks)
     config: dict = field(default_factory=dict)
+    constraints: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

@@ -186,3 +186,29 @@ class TestDiscover:
             scanner = _scanner(tmpdir)
             result = scanner.discover()
             assert result[0].lifecycle.thread_safe is False
+
+    def test_discover_dict_depends_with_versions(self):
+        with TemporaryDirectory() as tmpdir:
+            data = {
+                "name": "versioned_mod",
+                "version": "1.0.0",
+                "kind": "service",
+                "depends_on": {
+                    "required": [
+                        {"name": "core", "version": ">=1.0.0"},
+                        "legacy",
+                    ],
+                    "optional": [
+                        {"name": "logging", "version": ">=2.0.0"},
+                    ],
+                },
+                "lifecycle": {"init": "versioned_mod.init"},
+            }
+            _write_module(tmpdir, "versioned_mod", data)
+            scanner = _scanner(tmpdir)
+            result = scanner.discover()
+            assert len(result) == 1
+            desc = result[0]
+            assert desc.depends_on.required == ["core", "legacy"]
+            assert desc.depends_on.optional == ["logging"]
+            assert desc.constraints == {"core": ">=1.0.0", "logging": ">=2.0.0"}

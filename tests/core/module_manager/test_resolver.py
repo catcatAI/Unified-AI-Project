@@ -101,3 +101,65 @@ class TestMissingOptional:
         b = create_descriptor("B")
         missing = DependencyResolver().missing_optional(a, [b])
         assert missing == ["C"]
+
+
+class TestVersionConstraint:
+    def test_check_constraint_empty(self):
+        assert DependencyResolver._check_constraint("1.0.0", "") is True
+
+    def test_check_constraint_exact(self):
+        assert DependencyResolver._check_constraint("1.0.0", "1.0.0") is True
+        assert DependencyResolver._check_constraint("1.0.0", "==1.0.0") is True
+        assert DependencyResolver._check_constraint("1.0.0", "==2.0.0") is False
+
+    def test_check_constraint_greater_equal(self):
+        assert DependencyResolver._check_constraint("1.0.0", ">=1.0.0") is True
+        assert DependencyResolver._check_constraint("2.0.0", ">=1.0.0") is True
+        assert DependencyResolver._check_constraint("0.9.0", ">=1.0.0") is False
+
+    def test_check_constraint_less_equal(self):
+        assert DependencyResolver._check_constraint("1.0.0", "<=1.0.0") is True
+        assert DependencyResolver._check_constraint("0.9.0", "<=1.0.0") is True
+        assert DependencyResolver._check_constraint("1.1.0", "<=1.0.0") is False
+
+    def test_check_constraint_greater_than(self):
+        assert DependencyResolver._check_constraint("1.0.1", ">1.0.0") is True
+        assert DependencyResolver._check_constraint("1.0.0", ">1.0.0") is False
+
+    def test_check_constraint_less_than(self):
+        assert DependencyResolver._check_constraint("0.9.9", "<1.0.0") is True
+        assert DependencyResolver._check_constraint("1.0.0", "<1.0.0") is False
+
+    def test_check_constraint_multi_part(self):
+        assert DependencyResolver._check_constraint("1.2.3", ">=1.2.3") is True
+        assert DependencyResolver._check_constraint("1.2.4", ">=1.2.3") is True
+        assert DependencyResolver._check_constraint("1.2.2", ">=1.2.3") is False
+
+    def test_check_constraint_different_part_count(self):
+        assert DependencyResolver._check_constraint("2.0", ">=1.0.0") is True
+        assert DependencyResolver._check_constraint("2.0.0.1", ">=2.0.0") is True
+
+    def test_check_deps_version_mismatch(self):
+        resolver = DependencyResolver()
+        a = create_descriptor("A", required=["B"])
+        a.constraints["B"] = ">=2.0.0"
+        b = ModuleDescriptor(
+            name="B",
+            version="1.0.0",
+            depends_on=DependencySpec(),
+        )
+        missing = resolver.check_deps(a, [b])
+        assert len(missing) == 1
+        assert ">=2.0.0" in missing[0] and "1.0.0" in missing[0]
+
+    def test_check_deps_version_match(self):
+        resolver = DependencyResolver()
+        a = create_descriptor("A", required=["B"])
+        a.constraints["B"] = ">=1.0.0"
+        b = ModuleDescriptor(
+            name="B",
+            version="2.0.0",
+            depends_on=DependencySpec(),
+        )
+        missing = resolver.check_deps(a, [b])
+        assert missing == []

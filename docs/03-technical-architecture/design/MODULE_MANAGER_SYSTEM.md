@@ -1,7 +1,7 @@
 # Angela Module Manager System
 
 > **Design Date**: 2026-05-30  
-> **Status**: Implemented — M0 core (6 source files + 59 tests) deployed. M1 (card_pipeline) + M2 (intent_registry) modules active under `modules/`. wiring.py integration via `initialize_module_manager()`.  
+> **Status**: Implemented — M0-M5 core (6 source files + 100 tests) deployed. M1 (card_pipeline) + M2 (intent_registry) modules active under `modules/`. wiring.py integration via `initialize_module_manager()`. Phase 5: version negotiation + unplug + hotplug rollback.  
 > **解决的问题**: 耦合集中度 35/100、共享可變狀態 35/100、God module 35/100 — 見 `MODULARITY_ANALYSIS.md`  
 > **與 8D Matrix 的關係**: 8D 管理 Angela 的執行時狀態；ModuleManager 管理程式碼的架構接線。兩者互補。
 
@@ -131,8 +131,8 @@ config:
 | `name` | ✅ | 模組名稱，同時作為 ServiceRegistry key |
 | `version` | ✅ | 語意化版本 |
 | `kind` | ✅ | `service`（常駐服務）、`adapter`（純轉接層）、`provider`（後端實作）、`cli`（命令列工具） |
-| `depends_on.required` | ❌ | 啟動時必須存在的依賴，缺少則 fail fast |
-| `depends_on.optional` | ❌ | 可選依賴，不存在時 module 降級運作 |
+| `depends_on.required` | ❌ | 啟動時必須存在的依賴，缺少則 fail fast。支援字串 `"mod_name"` 或 dict `{name: "mod_name", version: ">=1.0.0"}` |
+| `depends_on.optional` | ❌ | 可選依賴，不存在時 module 降級運作。支援同上 dict 格式解析約束 |
 | `provides.services` | ❌ | 註冊到 ServiceRegistry 的服務 |
 | `provides.adapters` | ❌ | 註冊到 AdapterRegistry 的轉接器 |
 | `lifecycle.init` | ✅ | 初始化函數（可 sync 或 async），返回 module 實例 |

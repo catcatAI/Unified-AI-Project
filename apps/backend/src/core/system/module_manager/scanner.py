@@ -54,9 +54,26 @@ class ModuleScanner:
             raise ValidationError(f"unknown kind: {raw_kind}")
 
         raw_depends = data.get("depends_on", {}) or {}
+        required_deps: list[str] = []
+        optional_deps: list[str] = []
+        constraints: dict[str, str] = {}
+        for item in raw_depends.get("required", []) or []:
+            if isinstance(item, dict):
+                required_deps.append(item["name"])
+                if "version" in item:
+                    constraints[item["name"]] = str(item["version"])
+            else:
+                required_deps.append(item)
+        for item in raw_depends.get("optional", []) or []:
+            if isinstance(item, dict):
+                optional_deps.append(item["name"])
+                if "version" in item:
+                    constraints[item["name"]] = str(item["version"])
+            else:
+                optional_deps.append(item)
         depends_on = DependencySpec(
-            required=raw_depends.get("required", []) or [],
-            optional=raw_depends.get("optional", []) or [],
+            required=required_deps,
+            optional=optional_deps,
         )
 
         raw_provides = data.get("provides", {}) or {}
@@ -109,6 +126,7 @@ class ModuleScanner:
             provides=provides,
             lifecycle=lifecycle,
             config=data.get("config", {}),
+            constraints=constraints,
         )
 
     def watch(self, callback: Callable) -> None:
