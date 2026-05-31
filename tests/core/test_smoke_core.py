@@ -115,7 +115,56 @@ def test_import_behavior_executor():
     assert behavior_executor("nonexistent", 99) == 99
 
 
+def test_import_timing_value():
+    from core.system.config.magic_numbers import timing_value
+    assert timing_value("nonexistent", 1.5) == 1.5
+    assert timing_value("timeout.llm") is not None
+
+
+def test_import_llm_param():
+    from core.system.config.magic_numbers import llm_param
+    assert llm_param("nonexistent", 0.7) == 0.7
+
+
 def test_import_heartbeat_value():
     from core.system.config.magic_numbers import heartbeat_value
     assert heartbeat_value("heartbeat.max_interval") is not None
     assert heartbeat_value("nonexistent", 99) == 99
+
+
+def test_import_error_handler():
+    from core.error.error_handler import ErrorCategory, ErrorSeverity, RecoveryStrategy
+    assert ErrorCategory.SYSTEM is not None
+    assert ErrorSeverity.CRITICAL is not None
+    assert RecoveryStrategy.RESTART is not None
+
+
+def test_import_circuit_breaker():
+    from core.error.error_handler import CircuitBreaker
+    cb = CircuitBreaker("test_service")
+    assert cb is not None
+    assert cb.service_name == "test_service"
+
+
+def test_import_error_handler_context():
+    from core.error.error_handler import ErrorHandler
+    eh = ErrorHandler()
+    assert eh is not None
+
+
+def test_import_waiting_scheduler():
+    from core.waiting_scheduler import WaitingScheduler, ScheduledTask
+    assert ScheduledTask is not None
+    task = ScheduledTask(
+        deadline=1.0,
+        submit_time=0.0,
+        label="test",
+        timeout=8.0,
+    )
+    assert task.label == "test"
+
+
+def test_import_event_loop_enums():
+    from core.event_loop_system import EventPriority, EventCategory
+    assert EventPriority.NORMAL is not None
+    assert EventCategory.USER_INTERACTION is not None

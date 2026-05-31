@@ -23,6 +23,7 @@ from services.audio_service import AudioService
 from services.tactile_service import TactileService
 from services.angela_llm_service import get_llm_service
 from economy.economy_manager import EconomyManager
+from core.system.config.magic_numbers import loop_sleep, timeout_value, heartbeat_value
 from core.life.digital_life_integrator import DigitalLifeIntegrator
 from system.security_monitor import ABCKeyManager
 from shared.security_middleware import SignedCommunicationMiddleware
@@ -86,7 +87,7 @@ def get_abc_key_manager() -> ABCKeyManager:
 def get_metabolic_heartbeat() -> MetabolicHeartbeat:
     global _metabolic_heartbeat
     if _metabolic_heartbeat is None:
-        _metabolic_heartbeat = MetabolicHeartbeat(update_interval=30.0)
+        _metabolic_heartbeat = MetabolicHeartbeat(update_interval=heartbeat_value("heartbeat.update_interval", 30.0))
     return _metabolic_heartbeat
 
 
@@ -249,12 +250,12 @@ async def lifespan(app: FastAPI):
                 state_store.update_state("hardware", {"security_score": results.get("score", 0)})
             except Exception as e:
                 logger.error(f"[Security] Audit task failed: {e}", exc_info=True)
-            await asyncio.sleep(3600)
+            await asyncio.sleep(loop_sleep("security_audit", 3600))
 
     # P7: periodic on_tick hook for plugin system (every 30s)
     async def run_on_tick():
         while True:
-            await asyncio.sleep(30)
+            await asyncio.sleep(loop_sleep("plugin_tick", 30))
             try:
                 from core.plugin import plugin_manager as _pm
                 await _pm.execute_pipeline('on_tick', {'tick_interval': 30})
@@ -269,7 +270,7 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("[Lifecycle] Shutting down...")
-    _sd_timeout = _lc.get("shutdown_timeout", 10.0) if _angela_cfg else 10.0
+    _sd_timeout = _lc.get("shutdown_timeout", timeout_value("timeout.shutdown", 10.0)) if _angela_cfg else timeout_value("timeout.shutdown", 10.0)
     try:
         hb = get_metabolic_heartbeat()
         await hb.stop()

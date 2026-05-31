@@ -6,6 +6,7 @@ import asyncio
 from datetime import datetime
 from typing import Any, Dict, Optional, List, Tuple
 
+from core.system.config.magic_numbers import timing_value
 from core.perception.visual_sampler import VisualSampler, SamplingDistribution
 from core.perception.perceptual_memory import PerceptualMemory
 from core.perception.attention_controller import AttentionController, AttentionMode
@@ -415,7 +416,7 @@ class VisionService:
 
     async def _generate_image_caption(self, image_data: bytes, context: Dict[str, Any]) -> str:
         """生成圖像描述(模擬實現)"""
-        await asyncio.sleep(0.1)  # 模擬處理時間
+        await asyncio.sleep(timing_value("vision.processing_slow", 0.1))
 
         # 基於上下文生成更智能的描述
         base_captions = [
@@ -442,7 +443,7 @@ class VisionService:
         task_id = await cluster_manager.distribute_task("Vision", feature_vector)
         logger.debug(f"Vision Matrix Task distributed: {task_id}")
 
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(timing_value("vision.processing_medium", 0.05))
 
         possible_objects = [
             {
@@ -501,7 +502,7 @@ class VisionService:
 
     async def _detect_faces(self, image_data: bytes) -> List[Dict[str, Any]]:
         """臉部檢測(模擬實現)"""
-        await asyncio.sleep(0.06)
+        await asyncio.sleep(timing_value("vision.processing_ocr", 0.06))
 
         # 模擬臉部檢測結果
         num_faces = random.randint(0, 3)
@@ -528,7 +529,7 @@ class VisionService:
 
     async def _analyze_scene(self, image_data: bytes) -> Dict[str, Any]:
         """場景分析(模擬實現)"""
-        await asyncio.sleep(0.04)
+        await asyncio.sleep(timing_value("vision.processing_caption", 0.04))
 
         scenes = ["indoor", "outdoor", "urban", "nature", "workplace", "home", "street"]
         activities = [
@@ -553,7 +554,7 @@ class VisionService:
 
     async def _detect_emotions(self, image_data: bytes) -> Dict[str, Any]:
         """情緒檢測(模擬實現)"""
-        await asyncio.sleep(0.03)
+        await asyncio.sleep(timing_value("vision.processing_classify", 0.03))
 
         emotions = ["joy", "sadness", "anger", "fear", "surprise", "neutral"]
         detected_emotion = random.choice(emotions)
@@ -566,7 +567,7 @@ class VisionService:
 
     async def _analyze_colors(self, image_data: bytes) -> Dict[str, Any]:
         """顏色分析(模擬實現)"""
-        await asyncio.sleep(0.02)
+        await asyncio.sleep(timing_value("vision.processing_fast", 0.02))
 
         colors = [
             "red",
@@ -591,7 +592,7 @@ class VisionService:
         self, visual_analysis: Dict[str, Any], context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """執行多模態分析, 結合視覺、文本和音頻上下文"""
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(timing_value("vision.processing_medium", 0.05))
         insights: Dict[str, Any] = {
             "multimodal_confidence": random.uniform(0.7, 0.95),
             "cross_modal_consistency": random.uniform(0.6, 0.9),
@@ -621,7 +622,7 @@ class VisionService:
         self, image_data1: bytes, image_data2: bytes
     ) -> List[Dict[str, Any]]:
         """識別兩張圖像之間的差異區域"""
-        await asyncio.sleep(0.07)
+        await asyncio.sleep(timing_value("vision.processing_detect", 0.07))
 
         # 模擬差異區域
         num_differences = random.randint(0, 3)
@@ -651,7 +652,7 @@ class VisionService:
 
     async def _match_image_features(self, image_data1: bytes, image_data2: bytes) -> Dict[str, Any]:
         """配對兩張圖像的特徵點"""
-        await asyncio.sleep(0.06)
+        await asyncio.sleep(timing_value("vision.processing_ocr", 0.06))
 
         return {
             "keypoints_matched": random.randint(10, 100),

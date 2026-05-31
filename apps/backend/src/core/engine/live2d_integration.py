@@ -26,6 +26,7 @@ import asyncio
 import math
 import random
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -300,7 +301,7 @@ class Live2DIntegration:
             await self._update_motion()
             await self._update_breathing()
             await self._update_lip_sync()
-            await asyncio.sleep(0.033)  # ~30 FPS
+            await asyncio.sleep(loop_sleep("live2d_update", 0.033))  # ~30 FPS
 
     async def _update_expression_blending(self):
         """Update expression parameter blending"""
@@ -844,13 +845,13 @@ if __name__ == "__main__":
         for expr in [ExpressionType.HAPPY, ExpressionType.SURPRISED, ExpressionType.SHY]:
             live2d.set_expression(expr)
             logger.info(f"  设置表情: {expr.value[0]} ({expr.value[1]})")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(loop_sleep("demo_wait", 0.5))
 
         # Play motion
         logger.info("\n动作播放 / Motion playback:")
         await live2d.play_motion(MotionType.GREETING)
         logger.info(f"  播放动作: {MotionType.GREETING.value[0]}")
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(loop_sleep("demo_wait", 0.5))
 
         # Lip sync
         logger.info("\n口型同步 / Lip sync:")
@@ -860,7 +861,7 @@ if __name__ == "__main__":
             logger.info(
                 f"  音素: {phoneme}, 嘴型开放度: {live2d.get_parameter('ParamMouthOpenY'):.2f}"
             )
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(loop_sleep("demo_wait", 0.3))
         live2d.stop_lip_sync()
 
         # Look at point

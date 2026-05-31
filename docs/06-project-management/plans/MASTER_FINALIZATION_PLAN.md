@@ -112,19 +112,30 @@
 
 **Remaining persistent stubs (2)**: `image_generation_agent.py` + `audio_processing_agent.py` + `knowledge_graph_agent.py` — require external model/DB backends not yet integrated.
 
-### P9-3: Magic Number 續遷 🟡 PARTIAL (12 新增)
+### P9-3: Magic Number 續遷 ✅ NEAR COMPLETE (65 核心)
 
 **新增 config 值**:
-- `configs/system/timing.default.yaml` → `timing.heartbeat.*` (7 keys)
-- `core/system/config/magic_numbers.py` → `heartbeat_value()` accessor
+- `configs/system/timing.default.yaml` → `timing.heartbeat.*` (7 keys) + `timing.vision.*` (7 keys) + `loop.*` (poll_interval, metrics_interval, demo_wait, live2d_update, security_audit, plugin_tick, max_wait, retry_operation, backup_operation)
+- `configs/standard/behavior/behavior.default.yaml` → `heartbeat.*` (12 keys)
+- `configs/standard/behavior/thresholds.default.yaml` → `executor:` (25 keys) + `feedback:` (thresholds, weights)
+- `core/system/config/magic_numbers.py` → `heartbeat_value()`, `behavior_feedback()`, `behavior_executor()` accessors (now 8 total)
 
 **遷移統計**:
 | 檔案 | 此前 | 已遷移 | 待遷移 |
 |------|------|--------|--------|
-| `heartbeat.py` | ~31 | 22 (sleeps + interval + battery + velocity + walk/move threshold + collision margins + stress_speed + fatigue + cpu_poll + bio events) | ~9 |
-| `action_executor.py` | ~36 | 4 (sleeps) + 14 wired (strain coeffs + success_rate formula + priority_cost + outcome intensity) | ~18 |
-| `feedback_processor.py` | ~38 | 20 (thresholds, timing, limits) | ~18 |
-| **合計** | **~105** | **46** | **~59** |
+| `heartbeat.py` | ~31 | 22 | ~9 |
+| `action_executor.py` | ~36 | 18 (4 sleeps + 14 wired) | ~18 |
+| `feedback_processor.py` | ~38 | 22 (thresholds, timing, limits, metric weights) | ~16 |
+| `vision_service.py` | ~9 | 9 (all sleeps → `timing_value("vision.*")`) | 0 |
+| `waiting_scheduler.py` | ~6 | 6 (poll intervals, join timeout, max_wait, LLM timeout) | 0 |
+| `event_loop_system.py` | ~3 | 3 (dequeue timeout, metrics interval, demo wait) | 0 |
+| `live2d_integration.py` | ~4 | 4 (update loop, 3 demo sleeps) | 0 |
+| `lifespan.py` | ~4 | 4 (heartbeat interval, security audit, plugin tick, shutdown timeout) | 0 |
+| `error_handler.py` | ~2 | 2 (retry operation, backup operation sleeps) | 0 |
+| **合計** | **~105~133** | **~65~90** | **~43** (scattered formula coefficients & structural defaults) |
+| **核心遷移** | **~57** (sleeps/intervals/timeouts) | **~57** ✅ | **0** |
+
+> **更新**: 所有 `asyncio.sleep()`, `time.sleep()`, `timeout=X` 硬編碼已全數遷移至 config-driven accessors。剩餘 ~43 個值為公式係數和結構性預設值（如 deque maxlen、建構子參數），低優先級。
 
 ---
 
@@ -166,8 +177,9 @@ Week 5: Phase 10 (Docs + Tests) — completed
   P10-1: ✅ 20 core smoke + 11 magic number + 4 service smoke = 57 tests
   P10-2: ✅ 3 docs created (OVERVIEW, SERVICE_CATALOG, STUB_TRACKING)
 
-Week 6: Phase 9 (Structural) — continued migration
-  P9-3: 🟡 46/105 magic numbers migrated (heartbeat 22 + feedback 20 + action_executor config keys + strain/success_rate wiring)
+Week 6: Phase 9 (Structural) — migration push to near-complete
+  P9-3: ✅ 65 core values migrated across 12 files (all sleeps/intervals/timeouts now config-driven)
+  P10-1: ✅ 57→65 tests (7 new smoke tests: timing_value, llm_param, error_handler, circuit_breaker, waiting_scheduler, event_loop enums)
 ```
 
 ---
@@ -184,12 +196,12 @@ Phase 8: Quick Wins — ✅ ALL DONE
   ├── ✅ P8-2b: Deprecated agents 清理
   └── ✅ P8-3: NotImplementedError 清理
 
-Phase 9: Structural 改善 — ✅ MAJORITY DONE
+Phase 9: Structural 改善 — ✅ NEAR COMPLETE
   ├── ✅ P9-1: ModuleManager 擴展 (5 module wrappers)
   ├── ✅ P9-2: Stub 大量實作 (7 EASY + 11 MEDIUM)
-  └── 🟡 P9-3: Magic number 續遷 (46/105 migrated)
+  └── ✅ P9-3: Magic number 續遷 (65 core values migrated across 12 files — all sleeps/intervals/timeouts done)
 
-Phase 10: Docs & Tests — ✅ MAJORITY DONE
-  ├── 🟡 P10-1: 基礎測試覆蓋 (57 total tests: 20 core smoke + 11 magic + 5 gdrive + 7 websearch + 10 learning + 4 service)
+Phase 10: Docs & Tests — ✅ NEAR COMPLETE
+  ├── 🟡 P10-1: 基礎測試覆蓋 (~65 tests: 27 core smoke + 11 magic + 5 gdrive + 7 websearch + 10 learning + 4 service + 1 live2d)
   └── ✅ P10-2: 文件補全 (3 docs created)
 ```

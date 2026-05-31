@@ -30,6 +30,7 @@ from collections import defaultdict, deque
 import json
 from pathlib import Path
 import logging
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -536,7 +537,7 @@ class EventLoopSystem:
             try:
                 # Get event from queue
                 event = await asyncio.wait_for(
-                    self.queue.dequeue(), timeout=0.001  # 1ms timeout for responsiveness
+                    self.queue.dequeue(), timeout=timeout_value("timeout.queue_dequeue", 0.001)  # 1ms timeout for responsiveness
                 )
 
                 if event:
@@ -595,7 +596,7 @@ class EventLoopSystem:
                 self.metrics["max_latency_ms"] = max(self._latency_samples)
                 self._latency_samples.clear()
 
-            await asyncio.sleep(1.0)  # Update every second
+            await asyncio.sleep(loop_sleep("metrics_interval", 1.0))  # Update every second
 
     async def add_event(self, event: Event) -> bool:
         """
@@ -768,7 +769,7 @@ if __name__ == "__main__":
         await event_loop.add_event(file_event)
 
         # Wait for processing
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(loop_sleep("demo_wait", 0.5))
 
         # Show metrics
         logger.info("\n2. Event loop metrics:")

@@ -13,6 +13,7 @@ import asyncio
 import logging
 import traceback
 from typing import Dict, Any, Optional, List, Callable, Type
+from core.system.config.magic_numbers import loop_sleep
 from datetime import datetime, timedelta
 from enum import Enum
 import uuid
@@ -387,12 +388,12 @@ class EnterpriseErrorHandler:
     async def _retry_network_operation(self):
         """重試網絡操作(示例)"""
         # 這裡應該實現實際的重試邏輯
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(loop_sleep("retry_operation", 0.1))
 
     async def _use_backup_resource(self):
         """使用後備資源(示例)"""
         # 這裡應該實現實際的後備邏輯
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(loop_sleep("backup_operation", 0.1))
 
     def get_error_stats(self) -> Dict[str, Any]:
         """獲取錯誤統計"""

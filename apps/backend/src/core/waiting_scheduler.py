@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from collections import deque
 import heapq
 from core.interfaces.service_registry import get_registry
+from core.system.config.magic_numbers import loop_sleep, timeout_value, timing_value
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class ScheduledTask:
     deadline: float = field(compare=True)
     submit_time: float = field(compare=True)
     label: str = ""
-    timeout: float = 8.0
+    timeout: float = timeout_value("timeout.llm", 8.0)
     coro: Optional[Coroutine] = field(default=None, compare=False)
     future: Optional[asyncio.Future] = field(default=None, compare=False)
     slot_index: int = 0
@@ -58,7 +59,7 @@ class WaitingScheduler:
       - 單一工作者線程，不阻塞主 event loop
     """
 
-    def __init__(self, max_wait_seconds: float = 30.0):
+    def __init__(self, max_wait_seconds: float = timing_value("loop.max_wait", 30.0)):
         if getattr(self, "_initialized", False):
             return
 
@@ -91,7 +92,7 @@ class WaitingScheduler:
 
             with self._lock:
                 while len(self._queue) == 0 and not self._stop_event.is_set():
-                    self._cond.wait(timeout=0.5)
+                    self._cond.wait(timeout=loop_sleep("poll_interval", 0.5))
 
                 if self._stop_event.is_set():
                     break
@@ -107,7 +108,7 @@ class WaitingScheduler:
 
                 if wait_remaining > 0:
                     heapq.heappush(self._queue, task)
-                    self._cond.wait(timeout=min(wait_remaining, 0.5))
+                    self._cond.wait(timeout=min(wait_remaining, loop_sleep("poll_interval", 0.5)))
                     continue
 
                 task_to_run = task
@@ -237,7 +238,7 @@ class WaitingScheduler:
         with self._lock:
             self._cond.notify_all()
         if self._thread:
-            self._thread.join(timeout=2.0)
+            self._thread.join(timeout=timeout_value("timeout.shutdown", 2.0))
         logger.info("[WaitingScheduler] Worker thread stopped")
 
 
@@ -248,6 +249,6 @@ def get_waiting_scheduler() -> WaitingScheduler:
     """取得全域 WaitingScheduler 實例"""
     global _scheduler_instance
     if _scheduler_instance is None:
-        _scheduler_instance = WaitingScheduler(max_wait_seconds=30.0)
+        _scheduler_instance = WaitingScheduler(max_wait_seconds=timing_value("loop.max_wait", 30.0))
         get_registry().register("waiting_scheduler", _scheduler_instance)
     return _scheduler_instance

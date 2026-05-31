@@ -35,3 +35,12 @@ timing:
     stress_divisor: 50.0
     stress_multiplier: 2
     low_battery_threshold: 20
+
+  vision:
+    processing_fast: 0.02
+    processing_medium: 0.05
+    processing_slow: 0.1
+    processing_ocr: 0.06
+    processing_detect: 0.07
+    processing_caption: 0.04
+    processing_classify: 0.03
