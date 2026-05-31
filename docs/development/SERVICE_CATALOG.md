@@ -24,6 +24,9 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 | `intent_registry` | `modules/intent_registry/` | ✅ | init |
 | `chat_service` | `modules/chat_service/` | ✅ NEW | init/start/stop |
 | `llm_service` | `modules/llm_service/` | ✅ NEW | init/start/stop |
+| `hot_reload_service` | `modules/hot_reload_service/` | ✅ NEW | init/start/stop |
+| `math_verifier` | `modules/math_verifier/` | ✅ NEW | init/start/stop |
+| `resource_awareness_service` | `modules/resource_awareness_service/` | ✅ NEW | init/start/stop (also fixed `_load_profile`) |
 
 ## Intent Handlers
 

@@ -1,0 +1,18 @@
+name: math_verifier
+version: 1.0.0
+kind: service
+description: Dual-track math verification — LLM extraction + deterministic spatial engine
+depends_on:
+  required: []
+  optional:
+    - llm_service
+provides:
+  services:
+    - name: math_verifier
+      type: singleton
+lifecycle:
+  init: modules.math_verifier.init
+  start: modules.math_verifier.start
+  stop: modules.math_verifier.stop
+  health:
+    endpoint: /health/math_verifier

@@ -1,0 +1,17 @@
+name: hot_reload_service
+version: 1.0.0
+kind: service
+description: Hot-reload service — drain/status management for graceful service shutdown
+depends_on:
+  required: []
+  optional: []
+provides:
+  services:
+    - name: hot_reload_service
+      type: singleton
+lifecycle:
+  init: modules.hot_reload_service.init
+  start: modules.hot_reload_service.start
+  stop: modules.hot_reload_service.stop
+  health:
+    endpoint: /health/hot_reload

@@ -81,9 +81,9 @@
 |------|------|------|
 | P1 | `ChatService` | ✅ `modules/chat_service/module.yaml` + `__init__.py` |
 | P2 | `AngelaLLMService` | ✅ `modules/llm_service/module.yaml` + `__init__.py` |
-| P3 | `HotReloadService` | ⬜ 待建立 |
-| P4 | `MathVerifier` | ⬜ 待建立 |
-| P5 | `ResourceAwarenessService` | ⬜ 待建立 |
+| P3 | `HotReloadService` | ✅ `modules/hot_reload_service/module.yaml` + `__init__.py` |
+| P4 | `MathVerifier` | ✅ `modules/math_verifier/module.yaml` + `__init__.py` |
+| P5 | `ResourceAwarenessService` | ✅ `modules/resource_awareness_service/module.yaml` + `__init__.py` + fixed `_load_profile()` |
 
 **注意**: module wrappers 使用 deferred init 模式 (init → start → initialize)，實際初始化仍由 lifespan.py 管理。模組啟動不會建立重複實例。
 
@@ -123,7 +123,7 @@
 
 | 優先 | 目標 | 策略 |
 |------|------|------|
-| P1 | `tests/core/` 基礎測試 | ✅ 11 smoke tests (import + instantiation for top modules) |
+| P1 | `tests/core/` 基礎測試 | ✅ 16 smoke tests (14 existing + ChatService + AngelaLLMService) |
 | P2 | `tests/services/` 基礎測試 | ✅ 4 smoke tests (ConnectionManager, MathVerifier, Vision, Tactile) |
 | P3 | plugin system tests | ✅ 已完成 (30 tests) |
 | P4 | handler tests | ✅ 已完成 (22 tests: 7+7+10) |
@@ -147,7 +147,7 @@ Week 1-2: Phase 8 (Quick Wins) — P8-1a ✅
   P8-3: NotImplementedError → stub return ✅
 
 Week 3-4: Phase 9 (Structural) — all progressed
-  P9-1: ✅ 2 new ModuleManager modules (ChatService, LLMService)
+  P9-1: ✅ 5 new ModuleManager modules (ChatService, LLMService, HotReload, MathVerifier, ResourceAwareness)
   P9-2: ✅ Stub 批量實作 (20 EASY items — logging + standard returns)
   P9-3: 🟡 Partial — 12 numbers migrated (heartbeat 8 + action_executor 4), ~93 deferred
 
@@ -171,11 +171,11 @@ Week 5: Phase 10 (Docs + Tests) — completed
   └── ✅ P8-3: NotImplementedError 清理 (5 files → log warning + stub return)
 
 ⬜ Phase 9: Structural 改善
-  ├── ✅ P9-1: ModuleManager 擴展 (ChatService + LLMService module wrappers)
+  ├── ✅ P9-1: ModuleManager 擴展 (ChatService + LLMService + HotReload + MathVerifier + ResourceAwareness — 5 module wrappers)
   ├── ✅ P9-2: Stub 大量實作 (20 EASY stubs → logging + standard returns)
   └── 🟡 P9-3: Magic number 續遷 (12 values migrated: heartbeat 8 + action_executor 4)
 
 ⬜ Phase 10: Docs & Tests
-  ├── 🟡 P10-1: 基礎測試覆蓋 (15 smoke tests: 11 core + 4 services)
+  ├── 🟡 P10-1: 基礎測試覆蓋 (20 smoke tests: 16 core + 4 services)
   └── ✅ P10-2: 文件補全 (OVERVIEW.md + SERVICE_CATALOG.md + STUB_TRACKING.md)
 ```

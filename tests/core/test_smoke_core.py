@@ -64,3 +64,33 @@ def test_import_google_drive_handler():
     from services.handlers.google_drive_handler import GoogleDriveHandler
     h = GoogleDriveHandler()
     assert h is not None
+
+
+def test_import_hot_reload_module():
+    from modules.hot_reload_service import HotReloadService
+    h = HotReloadService()
+    assert h is not None
+
+
+def test_import_math_verifier_module():
+    from modules.math_verifier import MathVerifier
+    v = MathVerifier()
+    assert v is not None
+
+
+def test_import_resource_awareness_module():
+    from modules.resource_awareness_service import ResourceAwarenessService
+    r = ResourceAwarenessService()
+    assert r is not None
+
+
+def test_import_chat_service():
+    from services.chat_service import ChatService
+    c = ChatService()
+    assert c is not None
+
+
+def test_import_llm_router():
+    from services.llm.router import AngelaLLMService
+    l = AngelaLLMService()
+    assert l is not None

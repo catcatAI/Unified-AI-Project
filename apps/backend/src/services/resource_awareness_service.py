@@ -57,9 +57,35 @@ class ResourceAwarenessService:
         except ImportError:
             self.psutil = None
 
+        self.config_filepath = config_filepath or DEFAULT_CONFIG_PATH
         self.profile: Optional[SimulatedHardwareProfile] = None
-        # ... (keep existing init logic for config path)
         self._load_profile()
+
+    def _load_profile(self) -> None:
+        try:
+            backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            full_path = os.path.join(backend_root, self.config_filepath)
+            if not os.path.exists(full_path):
+                logger.warning("Simulated resources config not found: %s", full_path)
+                return
+            with open(full_path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+            if not data or "simulated_hardware_profile" not in data:
+                logger.warning("No simulated_hardware_profile in config")
+                return
+            profile_data = data["simulated_hardware_profile"]
+            disk = SimulatedDiskConfig(**profile_data.get("disk", {}))
+            cpu = SimulatedCPUConfig(**profile_data.get("cpu", {}))
+            ram = SimulatedRAMConfig(**profile_data.get("ram", {}))
+            self.profile = SimulatedHardwareProfile(
+                profile_name=profile_data.get("profile_name", "DefaultProfile"),
+                disk=disk,
+                cpu=cpu,
+                ram=ram,
+                gpu_available=profile_data.get("gpu_available", False),
+            )
+        except Exception as e:
+            logger.warning("Failed to load simulated resources: %s", e)
 
     def get_realtime_metrics(self) -> Dict[str, Any]:
         """獲取真實硬體指標"""
