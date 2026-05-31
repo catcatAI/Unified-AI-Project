@@ -230,6 +230,7 @@ intents:
       - "切到"
       - "model"
     priority: 6
+    handler: "ChatService._handle_llm_manage"
   fantasy_dm:
     keywords:
       - "跑團"

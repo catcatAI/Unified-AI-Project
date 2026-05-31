@@ -1,3 +1,8 @@
+"""
+DEPRECATED — No production code imports this module. Kept for reference only.
+Scheduled for removal in a future cleanup pass. See MASTER_FINALIZATION_PLAN.md P8-2b.
+"""
+
 import asyncio
 import logging
 import random

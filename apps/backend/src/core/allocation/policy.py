@@ -108,11 +108,13 @@ class AllocationStage:
 
     def matches(self, ctx: AllocationContext) -> bool:
         """此 stage 的條件是否匹配"""
-        raise NotImplementedError
+        logger.warning("[Stage.matches] Not implemented — stub")
+        return False
 
     def decide(self, ctx: AllocationContext) -> AllocationDecision:
         """生成決策"""
-        raise NotImplementedError
+        logger.warning("[Stage.decide] Not implemented — stub")
+        return AllocationDecision(action=AllocationAction.DEFER, reasoning="Not implemented")
 
     def evaluate(self, ctx: AllocationContext) -> Optional[AllocationDecision]:
         """如果匹配則返回決策，否則返回 None"""

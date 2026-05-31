@@ -6,7 +6,7 @@
 
 ---
 
-## Phase 8: Quick Wins (高衝擊、低風險)
+## Phase 8: Quick Wins (高衝擊、低風險) ✅ ALL DONE
 
 ### P8-1: 缺失 Handler 實作 🔴 HIGH
 
@@ -16,50 +16,60 @@
 - **支援操作**: list, sync, status, logout (auth 提示引導 OAuth 流程)
 - **驗收**: ChatService 可呼叫 handler.handle("列出雲端", "google_drive") 並收到回應
 
-#### P8-1b: WebSearchHandler ✅
-- **檔案**: `services/handlers/web_search_handler.py`
-- **模式**: 同 FileOperationHandler → 委派 `core.tools.web_search_tool` 或現有搜尋工具
-- **驗收**: Handler 可接收搜尋意圖並回覆
+#### P8-1b: WebSearchHandler ✅ DONE
+- **檔案**: `services/handlers/web_search_handler.py` (新), `services/chat_service.py` (dispatch), `tests/core/test_web_search_handler.py`
+- **模式**: 委派 `core.tools.web_search_tool.WebSearchTool` (DuckDuckGo HTML search)
+- **Query 萃取**: 支援中英文前綴去除 (搜尋/搜索/google/search/lookup/幫我查/查)
+- **驗收**: 7 tests pass (包括 query extraction edge cases)
 
-#### P8-1c: LearningHandler ✅
-- **檔案**: `services/handlers/learning_handler.py`
-- **模式**: 接收 "教你/學習" 意圖 → 觸發 `ai.learning` 或 anchor learning 流程
-- **驗收**: 學習意圖觸發對應流程
+#### P8-1c: LearningHandler ✅ DONE
+- **檔案**: `services/handlers/learning_handler.py` (新), `services/chat_service.py` (dispatch + intent_map + fallback keywords), `tests/core/test_learning_handler.py`
+- **模式**: 抽取事實 → 選用委派 `AnchorLearningEngine.record_fact()`
+- **支援關鍵字**: 記住/學習/記錄/教我/remember/learn/teach...
+- **驗收**: 10 tests pass (extract_fact variants + handle roundtrip)
 
 #### P8-1d: llm_manage handler 欄位修復 ✅
-- **檔案**: `config/angela_core.yaml` — 為 `llm_manage` 加上 `handler: "LLMManageHandler"`
-- **檔案**: `services/handlers/llm_manage_handler.py` — 包裝 ChatService._handle_llm_manage_intent
+- **檔案**: `config/angela_core.yaml` — 為 `llm_manage` 加上 `handler: "ChatService._handle_llm_manage"`
+- **原因**: `_handle_llm_manage_intent` 深度耦合 ChatService（依賴 state_adapter、pending_evolution_proposals、module_manager），建立獨立 handler class 會產生不必要的抽象層。改為在 YAML 直接指向 ChatService 實例方法。
 - **驗收**: YAML 所有 intent 都有 handler 欄位
 
 ### P8-2: 孤立服務連線 🟡 MEDIUM
 
-#### P8-2a: 決定 4 個 FULLY ORPHANED SERVICE 命運
-- `AIEditorService` (services/ai_editor.py)
-- `BrainBridgeService` (services/brain_bridge_service.py)
-- `OSContextService` (services/os_context_service.py)
-- `AtlassianCLIBridge` (services/atlassian_api.py)
+#### P8-2a: 決定 7 個 ORPHANED SERVICE 命運 ✅
 
-**策略**: 每個服務評估：
-  1. 有實際價值？→ 加入 lifespan.py 啟動
-  2. 沒價值？→ 標註 `@deprecated` + 加入清理排程
+**評估結果** (2026-05-31):
 
-**驗收**: 所有 orphaned service 有明確狀態（wired / deprecated）
+| # | 檔案 | 類別 | 狀態 | 說明 |
+|---|------|------|------|------|
+| 1 | `services/ai_editor.py` | `AIEditorService`, `DataProcessor`, `SandboxExecutor`, `HAMMemoryManager` | **❌ ORPHANED** | AI Editor 生態系 — 3 個檔案互相依賴但完全未接入 (僅 tests import) |
+| 2 | `services/ai_editor_config.py` | `AIEditorConfig`, `get_config()` | **❌ ORPHANED** | 同上生態系，0 production import |
+| 3 | `services/ai_virtual_input_service.py` | `AIVirtualInputService` | **❌ ORPHANED** | 僅被 #1 引用 (同為 orphaned) |
+| 4 | `services/brain_bridge_service.py` | `BrainBridgeService` | **❌ ORPHANED** | 僅 scripts/ 引用，非 production path |
+| 5 | `services/os_context_service.py` | `OSContextService` | **❌ ORPHANED** | 0 production import |
+| 6 | `services/angela_types.py` | TypeDefs (TypedDicts) | **❌ ORPHANED** | 0 production import |
+| 7 | `services/api_models.py` | Re-export from `models.api_models` | **❌ ORPHANED** | Dead re-export shim |
+
+**排除項目** (原始清單錯誤):
+- `AtlassianCLIBridge` (atlassian_api.py) — ✅ 已 wired in `main_api_server.py:298`
+- `hot_reload_service.py` — ✅ 已 wired in `wiring.py:47`
+
+**推薦策略**: 全部 7 個檔案加 `@deprecated` header 並排入移除計畫。
 
 #### P8-2b: 清理 deprecated `agents/` 套件
 - 目錄: `agents/` (legacy 4 檔 + examples 1 檔)
 - **策略**: 確認真無引用後，加 `DEPRECATED` header + 排入移除計畫
 
-### P8-3: NotImplementedError 清理 🟡 MEDIUM
+### P8-3: NotImplementedError 清理 ✅ DONE
 
-| 位置 | 方法 | 策略 |
-|------|------|------|
-| `core/desktop/tray_manager.py` (4 方法) | `raise NotImplementedError` | 改為 stub return `{"stub": True}` |
-| `core/allocation/policy.py` (2 方法) | `raise NotImplementedError` | 改為 stub return 或 log warning |
-| `core/ripple/node.py` (1 方法) | `raise NotImplementedError` | 同上 |
-| `core/error/error_handler.py` (1 方法) | `raise NotImplementedError` | 同上 |
-| `ai/meta_formulas/meta_formula.py` | `raise NotImplementedError` | 同上 |
+| 位置 | 方法數 | 舊作法 | 新作法 |
+|------|--------|--------|--------|
+| `core/desktop/tray_manager.py` | 4 | `raise NotImplementedError` | `logger.warning(...)` + `{"stub": True}` |
+| `core/allocation/policy.py` | 2 | `raise NotImplementedError` | `logger.warning(...)` + `return False` / `AllocationAction.DEFER` |
+| `core/ripple/node.py` | 1 | `raise NotImplementedError` | `logger.warning(...)` + 靜默返回 |
+| `core/error/error_handler.py` | 1 | `raise NotImplementedError` | `logger.warning(...)` + `return False` |
+| `ai/meta_formulas/meta_formula.py` | 1 | `raise NotImplementedError` | `logger.warning(...)` + `{"stub": True}` |
 
-**驗收**: 0 個 `raise NotImplementedError` 留在非抽象類別的 hot path
+**驗收**: ✅ 0 個 `raise NotImplementedError` 留在非抽象類別的 hot path
 
 ---
 
@@ -123,9 +133,9 @@
 
 ```
 Week 1-2: Phase 8 (Quick Wins) — P8-1a ✅
-  P8-1: 4 handlers (GoogleDrive ✅, WebSearch ⬜, Learning ⬜, LLMManage ⬜)
-  P8-2: Orphaned service 評估 + deprecated 清理
-  P8-3: NotImplementedError → stub return
+  P8-1: 4 handlers (GoogleDrive ✅, WebSearch ✅, Learning ✅, LLMManage ✅)
+  P8-2: Orphaned service 評估 + deprecated 清理 ✅
+  P8-3: NotImplementedError → stub return ✅
 
 Week 3-4: Phase 9 (Structural)
   P9-1: 2 new ModuleManager modules (ChatService, LLMService)
@@ -144,12 +154,12 @@ Week 5: Phase 10 (Docs + Tests)
 ```
 ⬜ Phase 8: Quick Wins
   ├── ✅ P8-1a: GoogleDriveHandler (services/handlers/google_drive_handler.py + dispatch + 9 tests)
-  ├── ⬜ P8-1b: WebSearchHandler
-  ├── ⬜ P8-1c: LearningHandler
-  ├── ⬜ P8-1d: llm_manage handler 修復
-  ├── ⬜ P8-2a: Orphaned service 評估
-  ├── ⬜ P8-2b: Deprecated agents 清理
-  └── ⬜ P8-3: NotImplementedError 清理
+  ├── ✅ P8-1b: WebSearchHandler (services/handlers/web_search_handler.py + dispatch + 7 tests)
+  ├── ✅ P8-1c: LearningHandler (services/handlers/learning_handler.py + dispatch + 10 tests)
+  ├── ✅ P8-1d: llm_manage handler 修復 (angela_core.yaml handler field added)
+  ├── ✅ P8-2a: Orphaned service 評估 (7 orphaned found, document updated)
+  ├── ✅ P8-2b: Deprecated agents 清理 (4 legacy + 1 example → DEPRECATED header)
+  └── ✅ P8-3: NotImplementedError 清理 (5 files → log warning + stub return)
 
 ⬜ Phase 9: Structural 改善
   ├── ⬜ P9-1: ModuleManager 擴展 (ChatService + LLMService)

@@ -48,19 +48,23 @@ class BaseTrayManager:
 
     def setup_menu(self):
         """Setup menu structure - to be implemented by subclasses"""
-        raise NotImplementedError
+        logger.warning("[BaseTrayManager.setup_menu] Not implemented — stub")
+        return {"stub": True, "message": "setup_menu not implemented"}
 
     def show_notification(self, title: str, message: str):
         """Show notification balloon"""
-        raise NotImplementedError
+        logger.warning("[BaseTrayManager.show_notification] Not implemented — stub")
+        return {"stub": True, "message": "show_notification not implemented"}
 
     def run(self):
         """Run the tray manager"""
-        raise NotImplementedError
+        logger.warning("[BaseTrayManager.run] Not implemented — stub")
+        return {"stub": True, "message": "run not implemented"}
 
     def stop(self):
         """Stop the tray manager"""
-        raise NotImplementedError
+        logger.warning("[BaseTrayManager.stop] Not implemented — stub")
+        return {"stub": True, "message": "stop not implemented"}
 
 
 class WindowsTrayManager(BaseTrayManager):

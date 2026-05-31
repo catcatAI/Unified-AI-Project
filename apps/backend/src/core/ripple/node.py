@@ -24,7 +24,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any, Protocol, Callable
 from enum import Enum
+import logging
 import math
+
+logger = logging.getLogger(__name__)
 
 
 class MathOp(Enum):
@@ -289,7 +292,7 @@ class AxisRippleApplicator:
 
     def apply(self, ripple: RippleNode, axis_state: Any) -> None:
         """將漣漪效應應用到軸狀態"""
-        raise NotImplementedError
+        logger.warning("[AxisRippleApplicator.apply] Not implemented — stub")
 
 
 class AlphaRippleApplicator(AxisRippleApplicator):

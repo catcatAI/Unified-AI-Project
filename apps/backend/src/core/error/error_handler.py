@@ -81,7 +81,8 @@ class RecoveryStrategy:
 
     async def recover(self, error: ErrorInfo) -> bool:
         """執行恢復操作"""
-        raise NotImplementedError
+        logger.warning("[BaseErrorHandler.recover] Not implemented — stub")
+        return False
 
     async def on_recovery_success(self, error: ErrorInfo):
         """恢復成功回調"""

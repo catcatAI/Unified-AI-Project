@@ -1,4 +1,7 @@
 """
+DEPRECATED — No production code imports this module. Kept for reference only.
+Scheduled for removal in a future cleanup pass. See MASTER_FINALIZATION_PLAN.md P8-2b.
+
 AlignedBaseAgent - 集成对齐系统的增强版基础代理
 实现Level 5 ASI对齐能力, 包括三大支柱系统(理智、感性、存在)
 """

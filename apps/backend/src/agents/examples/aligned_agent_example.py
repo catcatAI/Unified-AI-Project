@@ -1,4 +1,7 @@
 """
+DEPRECATED — No production code imports this module. Kept for reference only.
+Scheduled for removal in a future cleanup pass. See MASTER_FINALIZATION_PLAN.md P8-2b.
+
 AlignedBaseAgent 使用示例
 展示如何创建和使用集成对齐系统的代理
 """

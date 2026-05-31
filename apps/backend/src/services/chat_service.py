@@ -128,6 +128,10 @@ class ChatService:
             return await self._handle_file_intent(sanitized_message, primary_intent)
         elif primary_intent == "google_drive":
             return await self._handle_google_drive_intent(sanitized_message, primary_intent)
+        elif primary_intent == "web_search":
+            return await self._handle_web_search_intent(sanitized_message, primary_intent)
+        elif primary_intent == "learning":
+            return await self._handle_learning_intent(sanitized_message, primary_intent)
 
         # 4. 調用 LLM 生成智慧回應
         response = await self._call_llm(sanitized_message, user_name, bio_state, intent_analysis)
@@ -156,6 +160,15 @@ class ChatService:
 
         return response
 
+    async def _handle_learning_intent(self, text: str, intent: str) -> str:
+        try:
+            from services.handlers.learning_handler import LearningHandler
+            handler = LearningHandler()
+            return await handler.handle(text, intent)
+        except Exception as e:
+            logger.error(f"[ChatService] LearningHandler failed: {e}", exc_info=True)
+            return "（學習）我好像沒能好好記住這個，能再跟我說一次嗎？"
+
     @property
     def _module_manager(self):
         from core.interfaces.service_registry import get_registry
@@ -175,6 +188,7 @@ class ChatService:
                 if intent_name and intent_name != "general":
                     intent_map = {
                         "character_card": "character_card",
+                        "learning": "learning",
                         "llm_switch": "llm_manage",
                         "task": "task",
                         "code": "code",
@@ -196,7 +210,7 @@ class ChatService:
                 intent = "file_op"
             elif any(kw in text_lower for kw in ["谷歌硬碟", "google硬碟", "google drive", "雲端硬碟", "我的雲端", "drive同步"]):
                 intent = "google_drive"
-            elif any(kw in text_lower for kw in ["教你", "學習", "learn", "teach"]):
+            elif any(kw in text_lower for kw in ["教你", "學習", "learn", "teach", "記住", "教我", "記錄"]):
                 intent = "learning"
 
         return {"primary_intent": intent, "confidence": confidence}
@@ -328,6 +342,15 @@ class ChatService:
         except Exception as e:
             logger.error(f"[ChatService] FileOperationHandler failed: {e}", exc_info=True)
             return "（檔案操作）處理檔案請求時發生錯誤。"
+
+    async def _handle_web_search_intent(self, text: str, intent: str) -> str:
+        try:
+            from services.handlers.web_search_handler import WebSearchHandler
+            handler = WebSearchHandler()
+            return await handler.handle(text, intent)
+        except Exception as e:
+            logger.error(f"[ChatService] WebSearchHandler failed: {e}", exc_info=True)
+            return "（網路搜尋）處理搜尋請求時發生錯誤。"
 
     async def _handle_google_drive_intent(self, text: str, intent: str) -> str:
         try:
