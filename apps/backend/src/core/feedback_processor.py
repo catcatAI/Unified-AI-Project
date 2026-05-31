@@ -275,7 +275,6 @@ class FeedbackProcessor:
                         callback(learning_signal)
                     except Exception as e:  # broad exception acceptable: learning callbacks should be resilient
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
                 # Update HSM and CDM
                 await self._update_memory_systems(learning_signal)
@@ -293,7 +292,6 @@ class FeedbackProcessor:
                             callback(adjustment)
                         except Exception as e:  # broad exception acceptable: strategy callbacks should be resilient
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                            pass
 
         except Exception as e:  # broad exception acceptable: feedback processing must be resilient to any error
             logger.error(f"[FeedbackProcessor] Error processing feedback: {e}", exc_info=True)

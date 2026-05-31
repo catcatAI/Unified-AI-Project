@@ -231,7 +231,6 @@ class ActiveCognitionFormula:
                 callback(vector)
             except Exception as e:  # broad exception acceptable: user-defined callback, prevent crash
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return vector
 
@@ -493,7 +492,6 @@ class ActiveCognitionFormula:
                 callback(construction)
             except Exception as e:  # broad exception acceptable: user callback, prevent crash
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return construction
 

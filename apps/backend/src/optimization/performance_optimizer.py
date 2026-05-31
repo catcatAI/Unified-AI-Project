@@ -163,7 +163,7 @@ class PerformanceOptimizer:
         )
 
     def _check_resource_thresholds(self, metrics: PerformanceMetrics) -> None:
-        pass
+        logger.warning(f"{type(self).__name__}._check_resource_thresholds not implemented")
 
     def cache_result(self, func: F) -> F:
         @functools.wraps(func)

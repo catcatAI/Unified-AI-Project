@@ -21,7 +21,7 @@ class MCPMessage:
         timestamp: Optional[datetime] = None,
         priority: Optional[int] = None,
     ):
-        pass
+        logger.debug(f"{type(self).__name__}.__init__ not implemented")
 
 
 class MCPResponse:
@@ -33,7 +33,7 @@ class MCPResponse:
         error: Optional[str] = None,
         timestamp: Optional[datetime] = None,
     ):
-        pass
+        logger.debug(f"{type(self).__name__}.__init__ not implemented")
 
 
 @dataclass

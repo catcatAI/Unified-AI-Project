@@ -200,14 +200,12 @@ class IntelligentOpsManager:
                     )
                 except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
             if self.predictive_maintenance:
                 try:
                     await self.predictive_maintenance.collect_component_metrics(component_id)
                 except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
             if self.performance_optimizer:
                 try:
@@ -216,14 +214,12 @@ class IntelligentOpsManager:
                     )
                 except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
             if self.capacity_planner:
                 try:
                     await self.capacity_planner.collect_resource_usage(metrics)
                 except Exception as e:  # broad exception acceptable: metric collection failures are non-critical, continue processing
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
             # 生成综合洞察
             await self._generate_comprehensive_insights(component_id, component_type, metrics)

@@ -83,7 +83,7 @@
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config at L869 |
 | **Wiring** | ✅ | `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | **Tests** | ✅ | ~1500+, 16.34% coverage, 0 layer violations |
-| **P7 Config** | 🟡 | TieredConfigLoader done; 150+ magic numbers not migrated |
+| **P7 Config** | 🟡 | TieredConfigLoader done; core sleeps/intervals/timeouts migrated, ~43 formula/structural values remain |
 | **P8 Tech Debt** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
 
 See **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 complete), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10, 0-task target), and **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit).
@@ -156,47 +156,49 @@ See detailed breakdowns in linked analysis docs:
 
 Systems that are defined/stubbed but not yet implemented — ordered by estimated impact:
 
+> **⚠️ 注意**: 以下清單基於 2026-05-31 全面審計。完整詳細報告請見 **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)**。
+>
+> 綜合完成度約 **45%**。核心服務器/聊天可運行，但大量子系統為 stub/placeholder 狀態。
+
 **Tier 1 — Core Infrastructure (foundational gaps)**
-- **Plugin System**: 5 hooks defined (`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`), **0 handlers registered**. Full CRUD API exists (`api/v1/endpoints/plugins.py`) but no plugins deployed.
-- **Config Handlers**: 5 YAML-defined handlers have **no code**: `FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler` (`angela_core.yaml:131-257`)
-- **Intent Dispatch**: ✅ ChatService 現已優先經 ModulerManager→IntentRegistry 偵測意圖 (Phase 2 完成)。回退至硬編碼 keyword match (`chat_service.py:162-198`, 21 tests)
+- **Plugin System**: 5 hooks defined, **0 handlers deployed**. Full CRUD API exists but no production plugins.
+- **Intent Dispatch**: ✅ Migrated to ModuleManager→IntentRegistry. ChatService hardcoded fallback still present.
 
 **Tier 2 — Memory & Persistence**
-- **HAM Database**: All 6 CRUD methods transparently fall back to mock storage (`database.py:33-165`)
-- **Memory Chain**: HAM/LU/CDM classes defined but query/storage flow never wired
-- **State Persistence**: `save_state()`/`load_state()` do not exist — reboot loses all runtime state
-- **Importance Scorer**: Returns hardcoded `0.5` placeholder (`importance_scorer.py:10`)
+- **HAM Database**: 6 CRUD methods fall back to mock storage
+- **State Persistence**: `save_state()`/`load_state()` missing — reboot loses runtime state
+- **Importance Scorer**: Returns hardcoded `0.5` (`ai/memory/importance_scorer.py:17`)
 
-**Tier 3 — Specialized Agents (all stub)**
-- ImageGeneration, AudioProcessing, WebSearch, KnowledgeGraph, VisionProcessing, DataAnalysis, NLPProcessing, CodeUnderstanding, FantasyDM, CreativeWriting agents — all return hardcoded/placeholder data
-- **Planning agent** explicitly marked deprecated (`planning_agent.py:35-36`)
+**Tier 3 — Specialized Agents (3 persistent stubs)**
+- `ImageGenerationAgent`, `AudioProcessingAgent`, `KnowledgeGraphAgent` — return `{"stub": True}` (need external model backends)
+- 6 other agents (WebSearch, VisionProcessing, NLPProcessing, CodeUnderstanding, DataAnalysis, FantasyDM) — basic keyword/rule implementations, no ML
+- `PlanningAgent` explicitly marked deprecated
 
 **Tier 4 — Reasoning & Causality**
-- Causal reasoning engine: `_analyze_observation_causality()` uses random correlation placeholder (`real_causal_reasoning_engine.py:26`)
-- `RealInterventionPlanner` and `RealCounterfactualReasoner` are empty `pass` classes
-- **Ripple Axis Applicators**: Only 3/9 exist (Alpha, Delta, Pi). Missing: Beta, Theta, Epsilon, Zeta, Eta, Kappa (`ripple/node.py:290-292`)
+- `real_causal_reasoning_engine.py`: random correlation placeholder, `pass` classes
+- **Ripple Axis Applicators**: Only 3/9 implemented (Alpha, Delta, Pi)
 
 **Tier 5 — Alignment & Safety**
-- 6 stub classes in `ai/alignment/`: `EmotionSystem`, `OntologySystem`, `AlignmentManager`, `DecisionTheorySystem`, `AdversarialGenerationSystem`, `ASIAutonomousAlignment` — all `pass`
-- 5 theoretical formulas (HSM, CDM, Life Intensity, Active Cognition, Non-Paradox) compute but never reach LLM prompt
+- 6 stub classes in `ai/alignment/` — all `pass`
+- 5 theoretical formulas (HSM, CDM, Life Intensity, Active Cognition, Non-Paradox) compute but never reach LLM
 
 **Tier 6 — Monitoring & Ops (all placeholder)**
-- Predictive maintenance, performance optimizer, AI ops engine — all return hardcoded values
-- Desktop tray: `BaseTrayManager` abstract, `WindowsTrayManager` partial
+- Predictive maintenance, performance optimizer, AI ops engine — hardcoded values
+- Desktop tray: abstract/partial
 
 **Tier 7 — Infrastructure Sketches**
-- `Fragmenta` processing pipeline: stub orchestrator, placeholder element layer, stub vision tone inverter
-- `ClusterManager`: mock implementation, `distribute_task()` sleeps 0.01s
-- `AtlassianBridge`: skeleton, all 15+ methods return empty dicts
-- `core_services.py`: CLI standalone stub
-- `code_understanding_tool.py`: all methods return "temporarily unavailable"
+- `Fragmenta` pipeline: stub orchestrator, placeholder element layer
+- `ClusterManager`: mock `distribute_task()` sleeps 0.01s
+- `AtlassianBridge`: 15/15 methods return empty dicts (5% complete)
+- `Level5ASISystem`: 4 inline stub sub-systems — flagship ASI is hollow
 
-**Tier 8 — Code Quality (known but not prioritized)**
-- 16 Factories: 9 dead + 6 dormant + 1 alive (see `DEAD_FACTORY_FORENSICS.md`)
-- 57 `logging.basicConfig()` module-level calls fighting for root logger
-- 2 broken `__init__.py` with `__all_` typo (`ai/trust/`, `ai/service_discovery/`)
-- 150+ hardcoded magic numbers (`arousal >` x15, `random.random()` x29, `> 0.x` x150+)
-- `health_check_service.py`: 2/3 import targets don't exist (caught by try/except)
+**Tier 8 — Code Quality (known gaps)**
+- 78 `pass` statements across 50+ files (unimplemented bodies)
+- ~233 functions missing return type annotations
+- 8 pairs of shadowed/duplicate module paths (`shared/` vs `core/shared/`)
+- 2 config systems (TieredConfigLoader + AngelaConfigManager) not unified
+- 3 config systems with 30 orphaned YAML keys and 13 missing keys
+- `health_check_service.py`: 2/3 import targets don't exist
 
 ---
 
@@ -247,7 +249,7 @@ See dedicated docs for full diagrams:
 | **配置系統** | ✅ | `config_loader.py:get_config()` 正確回傳 Config（L869） |
 | **Wiring** | ✅ | `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | **測試** | ✅ | ~1500+ tests, 16.34% 覆蓋率, 0 層級違規 |
-| **P7 配置** | 🟡 | TieredConfigLoader 完成；150+ magic number 未遷移 |
+| **P7 配置** | 🟡 | TieredConfigLoader 完成；核心 sleeps/intervals/timeouts 已遷移，~43 公式/結構值殘留 |
 | **P8 技術債** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
 
 詳見 **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 完成)、**[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 完成)、**[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10，0 剩餘任務目標)、與 **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (全面審計報告)。

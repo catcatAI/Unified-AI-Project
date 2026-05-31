@@ -1,6 +1,10 @@
 """Module wrapper for AngelaLLMService — initialized via lifespan.py, not module auto-start."""
 
+import logging
+
 from services.llm.router import AngelaLLMService
+
+logger = logging.getLogger(__name__)
 
 
 async def init(deps: dict = None) -> AngelaLLMService:
@@ -12,4 +16,4 @@ async def start(instance: AngelaLLMService, deps: dict = None) -> None:
 
 
 async def stop(instance: AngelaLLMService) -> None:
-    pass
+    logger.debug("AngelaLLMService stop — deferred-init wrapper (no-op)")

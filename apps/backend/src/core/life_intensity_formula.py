@@ -517,7 +517,6 @@ class LifeIntensityFormula:
                         callback(prev_l_s, l_s)
                     except Exception as e:  # broad exception acceptable: threshold callbacks should be resilient
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
         # Notify callbacks
         for callback in self._intensity_callbacks:
@@ -525,7 +524,6 @@ class LifeIntensityFormula:
                 callback(snapshot)
             except Exception as e:  # broad exception acceptable: intensity callbacks should be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return l_s
 

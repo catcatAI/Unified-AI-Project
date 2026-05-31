@@ -382,7 +382,6 @@ class FileSystemMonitor:
 
                     except Exception as e:  # broad exception acceptable: path check errors should be logged
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
             # Check for deleted files
             for old_file in list(self._file_states.keys()):

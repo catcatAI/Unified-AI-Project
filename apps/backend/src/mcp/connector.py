@@ -12,18 +12,22 @@ from typing import Optional, Callable, Any, Awaitable
 from unittest.mock import Mock
 
 
+logger = logging.getLogger(__name__)
+
+
 # Mock dependencies for syntax validation
 class ProjectError(Exception):
     pass
 
 
 def project_error_handler(error):
-    pass
+    logger.warning("project_error_handler is a stub - error: %s", error)
 
 
 class MCPEnvelope:
     def __init__(self, **kwargs):
-        pass
+        self.__dict__.update(kwargs)
+        logger.warning("MCPEnvelope is a stub - kwargs: %s", kwargs)
 
 
 class MCPMessagePriority:
@@ -32,7 +36,7 @@ class MCPMessagePriority:
 
 class FallbackManager:
     def register_command_handler(self, command_name, handler):
-        pass
+        logger.warning("FallbackManager.register_command_handler stub: %s", command_name)
 
     async def send_command(self, sender_id, recipient_id, command_name, parameters, priority):
         return True
@@ -52,37 +56,36 @@ async def initialize_mcp_fallback_protocols(is_multiprocess: bool):
 # Mock paho.mqtt.client
 class MockMQTTClient:
     def __init__(self, client_id):
-        pass
+        self.client_id = client_id
+        logger.warning("MockMQTTClient stub created: client_id=%s", client_id)
 
     def on_connect(self, client, userdata, flags, rc):
-        pass
+        logger.warning("MockMQTTClient.on_connect stub: rc=%s", rc)
 
     def on_message(self, client, userdata, msg):
-        pass
+        logger.warning("MockMQTTClient.on_message stub")
 
     def connect(self, host, port, keepalive):
-        pass
+        logger.warning("MockMQTTClient.connect stub: %s:%s", host, port)
 
     def loop_start(self):
-        pass
+        logger.warning("MockMQTTClient.loop_start stub")
 
     def loop_stop(self):
-        pass
+        logger.warning("MockMQTTClient.loop_stop stub")
 
     def disconnect(self):
-        pass
+        logger.warning("MockMQTTClient.disconnect stub")
 
     def subscribe(self, topic):
-        pass
+        logger.warning("MockMQTTClient.subscribe stub: %s", topic)
 
     def publish(self, topic, payload):
-        pass
+        logger.warning("MockMQTTClient.publish stub: %s", topic)
 
 
 mqtt = Mock()
 mqtt.Client = MockMQTTClient
-
-logger = logging.getLogger(__name__)
 
 
 class MCPConnector:

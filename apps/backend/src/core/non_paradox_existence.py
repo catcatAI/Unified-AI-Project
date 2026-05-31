@@ -372,7 +372,6 @@ class NonParadoxExistence:
                 callback(variable_id, True)
             except Exception as e:  # broad exception acceptable: callback errors should not block coexistence activation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return True
 
@@ -391,7 +390,6 @@ class NonParadoxExistence:
                     callback(variable_id, False)
                 except Exception as e:  # broad exception acceptable: callback errors should not block deactivation
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
         return True
 

@@ -1,6 +1,10 @@
 """Module wrapper for ChatService — initialized via lifespan.py, not module auto-start."""
 
+import logging
+
 from services.chat_service import ChatService
+
+logger = logging.getLogger(__name__)
 
 
 async def init(deps: dict = None) -> ChatService:
@@ -12,4 +16,4 @@ async def start(instance: ChatService, deps: dict = None) -> None:
 
 
 async def stop(instance: ChatService) -> None:
-    pass
+    logger.debug("ChatService stop — deferred-init wrapper (no-op)")

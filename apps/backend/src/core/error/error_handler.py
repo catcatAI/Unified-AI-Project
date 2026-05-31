@@ -87,11 +87,11 @@ class RecoveryStrategy:
 
     async def on_recovery_success(self, error: ErrorInfo):
         """恢復成功回調"""
-        pass
+        logger.debug(f"{type(self).__name__}.on_recovery_success not implemented")
 
     async def on_recovery_failure(self, error: ErrorInfo):
         """恢復失敗回調"""
-        pass
+        logger.debug(f"{type(self).__name__}.on_recovery_failure not implemented")
 
 
 class RetryRecoveryStrategy(RecoveryStrategy):

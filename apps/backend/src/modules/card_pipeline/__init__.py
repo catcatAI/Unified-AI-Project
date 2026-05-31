@@ -1,5 +1,9 @@
+import logging
+
 from core.card.card_store import CardRegistry
 from core.card.resolver.pipeline_orchestrator import CardImportPipeline
+
+logger = logging.getLogger(__name__)
 
 
 async def init(deps: dict = None) -> CardImportPipeline:
@@ -16,8 +20,8 @@ async def init(deps: dict = None) -> CardImportPipeline:
 
 
 async def start(instance: CardImportPipeline, deps: dict = None) -> None:
-    pass
+    logger.debug("CardImportPipeline start — deferred-init wrapper (no-op)")
 
 
 async def stop(instance: CardImportPipeline) -> None:
-    pass
+    logger.debug("CardImportPipeline stop — deferred-init wrapper (no-op)")

@@ -296,7 +296,6 @@ class HSMFormulaSystem:
                 callback(gap)
             except Exception as e:  # broad exception acceptable: gap callbacks should be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return gap
 
@@ -427,7 +426,6 @@ class HSMFormulaSystem:
                 callback(exploration)
             except Exception as e:  # broad exception acceptable: exploration callbacks should be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return exploration
 
@@ -471,7 +469,6 @@ class HSMFormulaSystem:
                 callback(blueprint)
             except Exception as e:  # broad exception acceptable: governance callbacks should be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return blueprint
 

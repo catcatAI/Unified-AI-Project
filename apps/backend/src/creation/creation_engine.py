@@ -1,10 +1,15 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class CreationEngine:
     """
     A class for creating models and tools.
     """
 
     def __init__(self) -> None:
-        pass
+        logger.debug(f"{type(self).__name__}.__init__ not implemented")
 
     def create(self, query: str):
         """

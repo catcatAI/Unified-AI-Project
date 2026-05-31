@@ -11,7 +11,7 @@ class Evaluator:
     """
 
     def __init__(self) -> None:
-        pass
+        logger.debug(f"{type(self).__name__}.__init__ not implemented")
 
     def evaluate(self, model_or_tool: Any, dataset: Iterable[Tuple[Any, Any]]) -> Dict[str, float]:
         """
@@ -84,6 +84,5 @@ class Evaluator:
                 no_exception += 1
             except Exception as e:  # broad exception acceptable: evaluate() may raise various exceptions; we count them for robustness
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return no_exception / len(dataset_list)

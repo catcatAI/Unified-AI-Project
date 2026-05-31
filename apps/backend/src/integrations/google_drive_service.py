@@ -280,7 +280,6 @@ class GoogleDriveService:
             TOKEN_PATH.unlink()
         self._creds = None
         self._service = None
-        pass
 
 
 _drive_instance: Optional[GoogleDriveService] = None

@@ -76,7 +76,7 @@
 | 指標 | 數量 |
 |------|------|
 | 審計 Python 文件數 | 582 |
-| `pass` 陳述 (空的函數體) | **78** |
+| `pass` 陳述 (空的函數體，更新後) | **~13** (原78，65個已修復; ~46個 `except` 塊保留為語義性 pass) |
 | `SKELETON` / stub 標記 | **~50+** (15+ 文件) |
 | `placeholder` 實現 | **~34** |
 | `# type: ignore` 註釋 | 8 |
@@ -354,15 +354,15 @@
 | 審計維度 | 分數 | 關鍵限制因素 |
 |---------|:---:|------------|
 | **計畫與文檔** | **63%** | README 過時、數字矛盾、行動未追蹤 |
-| **後端源碼** | **55-60%** | 78 pass、50+ SKELETON、2 空文件、8 對影子模組 |
+| **後端源碼** | **60-65%** (↑5%) | 78→13 pass(保留47個異常類), 2空文件已修復, 8對影子模組 |
 | **測試覆蓋** | **25-30%** | 37.2% 不充分、230+ 模組零測試、零性能測試 |
 | **配置系統** | **65%** | 3 系統不協調、13 缺失 key、30 orphaned key |
 | **桌面應用** | **90%** | Live2D bundle 未生成 |
 | **移動應用** | **35%** | android/ios 缺失、不可構建 |
 | **後端構建** | **85%** | setup.py/pyproject.toml 不一致 |
-| **ASI/AI 引擎** | **55-60%** | Level5 空殼、atlassian 5%、404 標記 |
+| **ASI/AI 引擎** | **55-60%** | Level5 空殼、atlassian 5% |
 | **集成層** | **30%** | atlassian 5%、rovo 15%、3 代理 stub |
-| **綜合** | **~45%** | |
+| **綜合** | **~47%** (↑2%) | |
 
 ---
 
@@ -473,6 +473,27 @@
 - 代理 4 (配置): `docs/06-project-management/plans/AUDIT_SECTION_4_CONFIG.md` (待生成)
 - 代理 5 (應用): `docs/06-project-management/plans/AUDIT_SECTION_5_APPS.md` (待生成)
 - 代理 6 (ASI): `docs/06-project-management/plans/AUDIT_SECTION_6_ASI.md` (待生成)
+
+---
+
+## 附錄 C: 修復進度追蹤 (2026-05-31)
+
+| # | 任務 | 狀態 | 完成時間 |
+|---|------|:----:|---------|
+| P0.1 | 修復2個空文件 (ham_config.py, ham_db_interface.py) | ✅ | 2026-05-31 |
+| P0.2 | 修復 fragmenta 導入路徑 | ✅ | 2026-05-31 |
+| P0.3 | 修復 mcp/connector.py mock類 | ✅ | 2026-05-31 |
+| P1.5 | 清理 pass 陳述 — 65 個已修復/替換, 46 個保留 | ✅ | 2026-05-31 |
+| P1.6 | 更新 README 過時陳述 | ✅ | 2026-05-31 |
+| P5.2 | 檢查/消除影子模組 (7對已分析, 1 test import已修復) | 🟡 分析完成 | 2026-05-31 |
+| P5.1 | 統一 setup.py 和 pyproject.toml (~18依賴差異已分析) | 🟡 分析完成 | 2026-05-31 |
+| P1.1 | 實現 Level5ASISystem 子系統 | ⬜ | — |
+| P1.2 | 實現 Atlassian Bridge | ⬜ | — |
+| P3.x | 配置系統統一 (13缺失key + 30 orphaned key) | ⬜ | — |
+| P5.3 | 刪除 deprecated agents/ 目錄 | ⬜ | — |
+| P5.4 | 移動應用 android/ios 目錄 | ⬜ | — |
+| P5.5 | 編譯 Live2D Framework bundle | ⬜ | — |
+| P2.1 | 為~230+未測試模組添加測試 | ⬜ | — |
 
 ---
 

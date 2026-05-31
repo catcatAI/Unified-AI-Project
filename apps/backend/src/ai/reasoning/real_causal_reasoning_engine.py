@@ -106,8 +106,10 @@ class RealCausalGraph:
 
 
 class RealInterventionPlanner:
-    pass
+    def __init__(self, *args, **kwargs):
+        logger.warning("RealInterventionPlanner is a stub - not yet implemented")
 
 
 class RealCounterfactualReasoner:
-    pass
+    def __init__(self, *args, **kwargs):
+        logger.warning("RealCounterfactualReasoner is a stub - not yet implemented")

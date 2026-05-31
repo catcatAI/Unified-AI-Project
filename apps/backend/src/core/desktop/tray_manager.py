@@ -305,13 +305,11 @@ class MacOSTrayManager(BaseTrayManager):
         """Open key manager"""
         logger.info("Opening key manager")
         # Similar to Windows implementation
-        pass
 
     def _open_settings(self):
         """Open settings"""
         logger.info("Opening settings")
         # Similar to Windows implementation
-        pass
 
     def _exit(self):
         """Exit"""
@@ -417,11 +415,11 @@ class LinuxTrayManager(BaseTrayManager):
 
     def _open_key_manager(self):
         """Open key manager"""
-        pass
+        logger.warning(f"{type(self).__name__}._open_key_manager not implemented")
 
     def _open_settings(self):
         """Open settings"""
-        pass
+        logger.warning(f"{type(self).__name__}._open_settings not implemented")
 
     def _exit(self):
         """Exit"""

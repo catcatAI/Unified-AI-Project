@@ -450,7 +450,6 @@ class FeedbackLoopEngine:
                 context = await self.hsm.get_relevant_context(perception_event.data)
             except Exception as e:  # broad exception acceptable: HSM context retrieval must be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         # Use CDM for decision making if available
         if self.cdm and hasattr(self.cdm, "generate_decision"):
@@ -470,7 +469,6 @@ class FeedbackLoopEngine:
                 )
             except Exception as e:  # broad exception acceptable: CDM decision generation must be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         # Fallback: simple rule-based decision
         return await self._generate_fallback_decision(perception_event)
@@ -754,8 +752,8 @@ class FeedbackLoopEngine:
 
     async def _generate_feedback(self):
         """Generate system-wide feedback (periodic health checks, etc.)"""
-        # This runs periodically to generate feedback from system state
-        pass
+        logger.warning(f"{type(self).__name__}._generate_feedback not implemented")
+        return None
 
     def _handle_perception(self, perception_type: PerceptionType, data: Dict[str, Any]):
         """Handle perception data from monitors"""

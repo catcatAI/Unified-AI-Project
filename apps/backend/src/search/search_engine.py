@@ -20,7 +20,7 @@ class SearchEngine:
     """A class for searching for models and tools."""
 
     def __init__(self) -> None:
-        pass
+        logger.debug(f"{type(self).__name__}.__init__ not implemented")
 
     def search(self, query: str) -> List[str]:
         """

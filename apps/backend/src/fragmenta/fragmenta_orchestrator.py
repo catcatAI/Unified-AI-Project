@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 import logging
-from fragmenta.core_ai.memory.ham_manager import HAMMemoryManager
+from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
 logger = logging.getLogger(__name__)
 

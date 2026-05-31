@@ -1,4 +1,8 @@
+import logging
+
 from core.intent_registry import IntentRegistry
+
+logger = logging.getLogger(__name__)
 
 
 async def init(deps: dict = None) -> IntentRegistry:
@@ -6,4 +10,4 @@ async def init(deps: dict = None) -> IntentRegistry:
 
 
 def on_card_pipeline_ready(**data):
-    pass
+    logger.debug("on_card_pipeline_ready received: %s", data)

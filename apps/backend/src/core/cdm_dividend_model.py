@@ -235,7 +235,6 @@ class CDMCognitiveDividendModel:
                 callback(investment)
             except Exception as e:  # broad exception acceptable: investment callback errors should not block recording
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return investment
 
@@ -352,7 +351,6 @@ class CDMCognitiveDividendModel:
                 callback(output)
             except Exception as e:  # broad exception acceptable: output callback errors should not block processing
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return output
 

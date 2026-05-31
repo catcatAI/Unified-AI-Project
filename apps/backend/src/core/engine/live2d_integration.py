@@ -327,7 +327,7 @@ class Live2DIntegration:
             # Check if motion should end
             if not self._current_motion_obj.loop:
                 # This would integrate with actual motion playback
-                pass
+                ...
 
     async def _update_breathing(self):
         """Update breathing animation"""
@@ -408,7 +408,6 @@ class Live2DIntegration:
                 callback(expression)
             except Exception as e:  # broad exception acceptable: expression callbacks should not break execution
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
         # C2: notify Live2D state change for WebSocket broadcast
         self._notify_live2d_state()
 
@@ -512,7 +511,6 @@ class Live2DIntegration:
                 callback(motion)
             except Exception as e:  # broad exception acceptable: motion callbacks should not break playback
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
         # C2: notify Live2D state change for WebSocket broadcast
         self._notify_live2d_state()
 
@@ -568,7 +566,6 @@ class Live2DIntegration:
                         callback(value)
                     except Exception as e:  # broad exception acceptable: parameter callbacks should not break setting
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
     def get_parameter(self, name: str) -> float:
         """Get current parameter value"""

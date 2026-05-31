@@ -1089,7 +1089,6 @@ Returns:
                 callback(dimension_name, dim_state.values.copy())
             except Exception as e:  # broad exception acceptable: callback errors should not break state updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         # Check thresholds
         self._check_thresholds(dimension_name)
@@ -1143,7 +1142,6 @@ Returns:
                     callback()
                 except Exception as e:  # broad exception acceptable: threshold callbacks should not break checks
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
     # =============================================================================
     # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
