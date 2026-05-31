@@ -71,3 +71,11 @@ def llm_param(key: str, default: Any = None) -> Any:
 def heartbeat_value(key: str, default: Any = None) -> Any:
     """Get a heartbeat parameter from timing config (e.g. 'heartbeat.max_interval')."""
     return timing_value(key, default)
+
+
+# ── Executor parameters ─────────────────────────────────────────────────
+
+def behavior_executor(key: str, default: Any = None) -> Any:
+    """Get an executor parameter from thresholds config (behavior.executor.*)."""
+    cfg = _get_tiered_config("standard/behavior/thresholds")
+    return _nested_get(cfg, f"executor.{key}", default)

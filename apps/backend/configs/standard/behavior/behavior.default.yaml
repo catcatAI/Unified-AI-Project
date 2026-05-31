@@ -57,6 +57,29 @@ movement:
   velocity_scaling: 1.0
   stress_impact: 0.8
   collision_damage: 0.7
+  base_velocity: 0.05
+  walk_threshold: 5.0
+  move_threshold: 1.0
+  stress_speed_factor: 0.5
+  border_margin_left: 20
+  border_margin_right: 150
+  whiteboard_left: 1450
+  whiteboard_right: 1700
+  max_x_offset: 100
+
+heartbeat:
+  cpu_poll_interval: 1
+  fatigue_scale: 0.1
+  default_arousal: 50.0
+  default_stress: 0.5
+  low_battery_stress_intensity: 0.3
+  low_battery_stress_duration: 10.0
+  gaming_stress_intensity: 0.2
+  gaming_stress_duration: 10.0
+  coding_stress_intensity: 0.1
+  coding_stress_duration: 30.0
+  media_relaxation_intensity: 0.3
+  social_oxytocin_adjust: 10.0
 
 state_constants:
   # Migrated from chat_service.py

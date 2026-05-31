@@ -26,6 +26,30 @@ allocation:
   policy_threshold_medium: 0.6
   policy_threshold_high: 0.7
 
+executor:
+  default_action_timeout: 30.0
+  default_max_retries: 3
+  max_queue_size: 1000
+  max_concurrent_actions: 5
+  arousal_default: 0.5
+  strain_stress_weight: 0.7
+  strain_arousal_inverse_weight: 0.3
+  strain_factor_threshold: 0.6
+  strain_delay_multiplier: 2.0
+  success_rate_base: 0.5
+  success_rate_tension_multiplier: 0.8
+  success_rate_min: 0.3
+  success_rate_max: 0.99
+  success_rate_fallback: 0.85
+  priority_cost_default: 0.3
+  priority_cost_critical: 0.9
+  priority_cost_high: 0.6
+  priority_cost_normal: 0.3
+  priority_cost_low: 0.15
+  priority_cost_background: 0.05
+  outcome_high_intensity: 0.5
+  outcome_low_intensity: 0.3
+
 feedback:
   success_threshold: 0.7
   learning_trigger_threshold: 0.5

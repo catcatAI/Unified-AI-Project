@@ -121,10 +121,10 @@
 **遷移統計**:
 | 檔案 | 此前 | 已遷移 | 待遷移 |
 |------|------|--------|--------|
-| `heartbeat.py` | ~31 | 8 (sleeps + interval + battery) | ~23 |
-| `action_executor.py` | ~36 | 4 (sleeps) | ~32 |
+| `heartbeat.py` | ~31 | 22 (sleeps + interval + battery + velocity + walk/move threshold + collision margins + stress_speed + fatigue + cpu_poll + bio events) | ~9 |
+| `action_executor.py` | ~36 | 4 (sleeps) + 20 config keys added (strain, success_rate, priority_cost) | ~12 |
 | `feedback_processor.py` | ~38 | 20 (thresholds, timing, limits) | ~18 |
-| **合計** | **~105** | **34** (12 + 22 feedback) | **~71** |
+| **合計** | **~105** | **46** | **~59** |
 
 ---
 
@@ -184,9 +184,9 @@ Phase 8: Quick Wins — ✅ ALL DONE
 Phase 9: Structural 改善 — ✅ MAJORITY DONE
   ├── ✅ P9-1: ModuleManager 擴展 (5 module wrappers)
   ├── ✅ P9-2: Stub 大量實作 (7 EASY + 11 MEDIUM)
-  └── 🟡 P9-3: Magic number 續遷 (34/105 migrated)
+  └── 🟡 P9-3: Magic number 續遷 (46/105 migrated)
 
 Phase 10: Docs & Tests — ✅ MAJORITY DONE
-  ├── 🟡 P10-1: 基礎測試覆蓋 (51 total tests)
+  ├── 🟡 P10-1: 基礎測試覆蓋 (53 total tests)
   └── ✅ P10-2: 文件補全 (3 docs created)
 ```

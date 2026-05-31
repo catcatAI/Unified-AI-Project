@@ -47,3 +47,13 @@ class TestMagicNumbers:
         from core.system.config.magic_numbers import behavior_feedback
         val = behavior_feedback("success_threshold")
         assert val is not None
+
+    def test_behavior_executor_returns_default(self):
+        from core.system.config.magic_numbers import behavior_executor
+        val = behavior_executor("nonexistent_key", 42)
+        assert val == 42
+
+    def test_behavior_executor_reads_config(self):
+        from core.system.config.magic_numbers import behavior_executor
+        val = behavior_executor("default_action_timeout")
+        assert val is not None

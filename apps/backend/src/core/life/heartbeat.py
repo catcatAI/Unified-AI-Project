@@ -34,21 +34,21 @@ class MetabolicHeartbeat:
         self.start_time = datetime.now()
         
         # --- Spatial State (Angela's physical presence) ---
-        self.screen_w = 1920 
+        self.screen_w = 1920
         self.screen_h = 1080
         self.x = 200.0
-        self.y = 0.0 
+        self.y = 0.0
         self.target_x = 200.0
-        self.velocity = 0.05
+        from core.system.config.tiered_loader import get_config as _gc
+        self._beh_cfg = _gc("standard/behavior/behavior")
+        self.velocity = self._beh_cfg.get("movement", {}).get("base_velocity", 0.05)
         self.posture = {"spine_bend": 0.0, "theta_matrix": [0.0]*9}
 
     async def _integration_loop(self):
         while self._running:
             try:
-                # 1. [Task N.16.1.c] Cerebellum Pose Execution
-                # 根據移動狀態決定意圖標籤 (Intent Label)
                 dist_to_target = abs(self.target_x - self.x)
-                intent_pose = "walking" if dist_to_target > 5.0 else "standing"
+                intent_pose = "walking" if dist_to_target > self._beh_cfg.get("movement", {}).get("walk_threshold", 5.0) else "standing"
                 
                 bio_state = self.bio_integrator.get_biological_state()
                 
@@ -70,10 +70,11 @@ class MetabolicHeartbeat:
                     "tremor_active": cerebellum_res.get("tremor_active", False)
                 }
                 
-                # 3. Spatial Movement Execution
-                if dist_to_target > 1.0:
+                move_th = self._beh_cfg.get("movement", {}).get("move_threshold", 1.0)
+                if dist_to_target > move_th:
                     stress = bio_state.get("stress_level", 0.0)
-                    speed = self.velocity * (1.0 - stress * 0.5)
+                    stress_speed_factor = self._beh_cfg.get("movement", {}).get("stress_speed_factor", 0.5)
+                    speed = self.velocity * (1.0 - stress * stress_speed_factor)
                     self.x += (self.target_x - self.x) * speed
                 
                 await asyncio.sleep(loop_sleep("sleep_short", 0.1))
@@ -103,10 +104,10 @@ class MetabolicHeartbeat:
     async def _run_loop(self):
         while self._running:
             try:
-                # 0. ANS Modulation
+                hb_cfg = self._beh_cfg.get("heartbeat", {})
                 state = self.bio_integrator.get_biological_state()
-                stress = state.get("stress_level", 0.5)
-                arousal = state.get("arousal", 50.0)
+                stress = state.get("stress_level", hb_cfg.get("default_stress", 0.5))
+                arousal = state.get("arousal", hb_cfg.get("default_arousal", 50.0))
                 
                 # Dynamic Interval
                 min_int = _hb("heartbeat.min_interval", 5.0)
@@ -129,16 +130,9 @@ class MetabolicHeartbeat:
                 await asyncio.sleep(loop_sleep("sleep_very_long", 10.0))
 
     async def _update_spatial_state(self, arousal, stress):
-        """
-        [Task N.26.3] 位能場驅動的空間決策。
-        從分層配置 (Standard/Behavior) 讀取參數。
-        """
         import random
-        from core.system.config.tiered_loader import get_config
-        beh_conf = get_config("standard/behavior/behavior")
-        mov_conf = beh_conf.get("movement", {})
+        mov_conf = self._beh_cfg.get("movement", {})
         
-        # Decision: 喚醒度驅動
         arousal_thresh = mov_conf.get("arousal_threshold", 0.7)
         jump_prob = mov_conf.get("jump_probability", 0.1)
         
@@ -146,7 +140,8 @@ class MetabolicHeartbeat:
             from app_config_loader import get_formula_config
             spatial_conf = get_formula_config("spatial")
             max_x = spatial_conf.get("screen", {}).get("width", 1920)
-            self.target_x = random.randint(50, max_x - 100)
+            offset = mov_conf.get("max_x_offset", 100)
+            self.target_x = random.randint(50, max_x - offset)
             logger.info(f"🚶 [Spatial] Intent Jump: Target set to x={self.target_x} (Arousal: {arousal:.2f})")
         
         from core.engine.cognitive_operations import PotentialFieldEngine
@@ -174,16 +169,18 @@ class MetabolicHeartbeat:
                 self.target_x = self.x
 
     def _check_collision(self, next_x):
-        # 1. 螢幕邊界檢查
-        if next_x < 20 or next_x > (self.screen_w - 150):
+        mov = self._beh_cfg.get("movement", {})
+        left = mov.get("border_margin_left", 20)
+        right = mov.get("border_margin_right", 150)
+        if next_x < left or next_x > (self.screen_w - right):
             return True
-            
-        # 2. 實體物件碰撞檢查 (2030 Standard)
-        # 假設白板在 1500px, 寬度 200px
-        if 1450 < next_x < 1700:
+
+        wb_left = mov.get("whiteboard_left", 1450)
+        wb_right = mov.get("whiteboard_right", 1700)
+        if wb_left < next_x < wb_right:
             logger.info("🚧 [Collision] Angela touched the Whiteboard.")
             return True
-            
+
         return False
 
     async def _process_metabolism(self):
@@ -193,10 +190,9 @@ class MetabolicHeartbeat:
         """
         import psutil
         
-        # 1. CPU Load -> Fatigue
-        cpu_usage = psutil.cpu_percent(interval=1)
-        # If CPU is consistently over 70%, increase fatigue rapidly
-        fatigue_impact = (cpu_usage / 100.0) * 0.1
+        hb_cfg = self._beh_cfg.get("heartbeat", {})
+        cpu_usage = psutil.cpu_percent(interval=hb_cfg.get("cpu_poll_interval", 1))
+        fatigue_impact = (cpu_usage / 100.0) * hb_cfg.get("fatigue_scale", 0.1)
         
         # 2. Battery Level -> Energy/Hunger
         battery = psutil.sensors_battery()
@@ -213,7 +209,10 @@ class MetabolicHeartbeat:
             
             if energy_level < _hb("heartbeat.low_battery_threshold", 20):
                 logger.warning(f"🔋 [Metabolism] Critical Energy Low: {energy_level}%. Angela is starving.", exc_info=True)
-                await self.bio_integrator.process_stress_event(intensity=0.3, duration=10.0)
+                await self.bio_integrator.process_stress_event(
+                    intensity=hb_cfg.get("low_battery_stress_intensity", 0.3),
+                    duration=hb_cfg.get("low_battery_stress_duration", 10.0),
+                )
             
             logger.debug(f"[Metabolism] Hardware Pulse - CPU: {cpu_usage}%, Battery: {energy_level}%")
         except Exception as e:  # broad exception acceptable: metabolism processing should be resilient to hardware errors
@@ -229,24 +228,25 @@ class MetabolicHeartbeat:
         metrics = self.input_sensor.get_activity_metrics()
         category = metrics.get("active_category", "neutral")
         
-        # 2. 根據類別觸發生物事件
+        hb_cfg = self._beh_cfg.get("heartbeat", {})
         if category == "gaming":
-            # 遊戲中：增加喚醒度與愉悅感
-            await self.bio_integrator.process_stress_event(intensity=0.2, duration=10.0)
+            await self.bio_integrator.process_stress_event(
+                intensity=hb_cfg.get("gaming_stress_intensity", 0.2),
+                duration=hb_cfg.get("gaming_stress_duration", 10.0),
+            )
             self.bio_integrator.emotional_system.apply_influence("external", "joy", 0.3, 0.5)
-        
         elif category == "coding":
-            # 寫程式中：增加專注度 (微壓)
-            await self.bio_integrator.process_stress_event(intensity=0.1, duration=30.0)
-        
+            await self.bio_integrator.process_stress_event(
+                intensity=hb_cfg.get("coding_stress_intensity", 0.1),
+                duration=hb_cfg.get("coding_stress_duration", 30.0),
+            )
         elif category == "media":
-            # 看片/聽音樂：觸發放鬆
-            await self.bio_integrator.process_relaxation_event(intensity=0.3)
-            
+            await self.bio_integrator.process_relaxation_event(
+                intensity=hb_cfg.get("media_relaxation_intensity", 0.3)
+            )
         elif category == "social":
-            # 社交中：提高共鳴
             await self.bio_integrator.endocrine_system.adjust_hormone(
-                HormoneType.OXYTOCIN, 10.0
+                HormoneType.OXYTOCIN, hb_cfg.get("social_oxytocin_adjust", 10.0)
             )
 
         logger.debug(f"🌍 [Environment] Activity: {category}, BPM: {metrics['input_density_bpm']:.1f}")
