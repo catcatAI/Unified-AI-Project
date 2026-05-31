@@ -126,6 +126,8 @@ class ChatService:
             return await self._handle_llm_manage_intent(sanitized_message, user_name, primary_intent)
         elif primary_intent == "file_op":
             return await self._handle_file_intent(sanitized_message, primary_intent)
+        elif primary_intent == "google_drive":
+            return await self._handle_google_drive_intent(sanitized_message, primary_intent)
 
         # 4. 調用 LLM 生成智慧回應
         response = await self._call_llm(sanitized_message, user_name, bio_state, intent_analysis)
@@ -192,6 +194,8 @@ class ChatService:
                 intent = "llm_manage"
             elif any(kw in text_lower for kw in ["讀取檔案", "寫入檔案", "file", "存檔"]):
                 intent = "file_op"
+            elif any(kw in text_lower for kw in ["谷歌硬碟", "google硬碟", "google drive", "雲端硬碟", "我的雲端", "drive同步"]):
+                intent = "google_drive"
             elif any(kw in text_lower for kw in ["教你", "學習", "learn", "teach"]):
                 intent = "learning"
 
@@ -324,6 +328,15 @@ class ChatService:
         except Exception as e:
             logger.error(f"[ChatService] FileOperationHandler failed: {e}", exc_info=True)
             return "（檔案操作）處理檔案請求時發生錯誤。"
+
+    async def _handle_google_drive_intent(self, text: str, intent: str) -> str:
+        try:
+            from services.handlers.google_drive_handler import GoogleDriveHandler
+            handler = GoogleDriveHandler()
+            return await handler.handle(text, intent)
+        except Exception as e:
+            logger.error(f"[ChatService] GoogleDriveHandler failed: {e}", exc_info=True)
+            return "（Google Drive）處理請求時發生錯誤。"
 
     def _get_anchor_keywords(self) -> Dict[str, List[str]]:
         """從分層配置讀取維度關鍵詞 [Phase 7]"""

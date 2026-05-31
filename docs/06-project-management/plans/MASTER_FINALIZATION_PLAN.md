@@ -10,9 +10,10 @@
 
 ### P8-1: 缺失 Handler 實作 🔴 HIGH
 
-#### P8-1a: GoogleDriveHandler ✅
-- **檔案**: `services/handlers/google_drive_handler.py`
+#### P8-1a: GoogleDriveHandler ✅ DONE
+- **檔案**: `services/handlers/google_drive_handler.py` (新), `services/chat_service.py` (dispatch), `tests/core/test_google_drive_handler.py`
 - **模式**: 同 P6-2 FileOperationHandler → 委派 `integrations.google_drive_service.GoogleDriveService`
+- **支援操作**: list, sync, status, logout (auth 提示引導 OAuth 流程)
 - **驗收**: ChatService 可呼叫 handler.handle("列出雲端", "google_drive") 並收到回應
 
 #### P8-1b: WebSearchHandler ✅
@@ -121,8 +122,8 @@
 ## 執行路線
 
 ```
-Week 1-2: Phase 8 (Quick Wins)
-  P8-1: 4 handlers (GoogleDrive, WebSearch, Learning, LLMManage)
+Week 1-2: Phase 8 (Quick Wins) — P8-1a ✅
+  P8-1: 4 handlers (GoogleDrive ✅, WebSearch ⬜, Learning ⬜, LLMManage ⬜)
   P8-2: Orphaned service 評估 + deprecated 清理
   P8-3: NotImplementedError → stub return
 
@@ -142,7 +143,7 @@ Week 5: Phase 10 (Docs + Tests)
 
 ```
 ⬜ Phase 8: Quick Wins
-  ├── ⬜ P8-1a: GoogleDriveHandler
+  ├── ✅ P8-1a: GoogleDriveHandler (services/handlers/google_drive_handler.py + dispatch + 9 tests)
   ├── ⬜ P8-1b: WebSearchHandler
   ├── ⬜ P8-1c: LearningHandler
   ├── ⬜ P8-1d: llm_manage handler 修復
