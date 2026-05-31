@@ -71,7 +71,9 @@
   ├── ⬜ 剩餘 ~120 個 magic numbers (分散在 core/ + services/ + ai/)
   └── 驗收: 階段性完成，其餘可持續遷移
 
-⬜ Week 5: P6-4 Stub 清理 (待執行)
-  ├── 10+ agents 標準化 stub 格式
-  └── 驗收: 統一回傳格式
+✅ Week 5: P6-4 Stub 清理 (完成)
+  ├── 6 個 TRUE STUB 標準化: ImageGen, Audio, WebSearch, KnowledgeGraph, Vision, NLP sentiment
+  ├── 3 個 PARTIAL STUB 標準化: NLP summarization, CodeUnderstanding doc gen + fix
+  ├── 所有 stub 回傳統一含 `stub: True, "message": "..."` 格式
+  └── 向後相容: 保留原有 keys (如 image_data, results 等)
 ```

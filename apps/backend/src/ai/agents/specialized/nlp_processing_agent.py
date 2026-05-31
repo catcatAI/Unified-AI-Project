@@ -82,10 +82,9 @@ class NLPProcessingAgent(BaseAgent):
         text = payload.get("parameters", {}).get("text", "")
         if not text:
             return {"summary": "", "error": "No text"}
-        return {"summary": text[:100] + "...", "original_length": len(text)}
+        return {"stub": True, "message": "Summarization not yet implemented (truncation fallback)", "summary": text[:100] + "...", "original_length": len(text)}
 
     async def _handle_sentiment(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
-        payload.get("parameters", {}).get("text", "")
-        return {"sentiment": "neutral", "score": 0.5}
+        return {"stub": True, "message": "Sentiment analysis not yet implemented", "sentiment": "neutral", "score": 0.5}

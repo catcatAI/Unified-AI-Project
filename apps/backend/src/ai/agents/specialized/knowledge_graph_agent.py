@@ -60,4 +60,4 @@ class KnowledgeGraphAgent(BaseAgent):
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
         params = payload.get("parameters", {})
-        return {"results": [], "query": params.get("query", "")}
+        return {"stub": True, "message": "Knowledge graph not yet implemented", "results": [], "query": params.get("query", "")}

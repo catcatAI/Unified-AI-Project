@@ -59,4 +59,4 @@ class ImageGenerationAgent(BaseAgent):
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
         params = payload.get("parameters", {})
-        return {"image_data": "base64_placeholder", "prompt": params.get("prompt", "")}
+        return {"stub": True, "message": "Image generation not yet implemented", "image_data": "base64_placeholder", "prompt": params.get("prompt", "")}

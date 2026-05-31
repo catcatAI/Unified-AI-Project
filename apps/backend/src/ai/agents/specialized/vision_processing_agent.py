@@ -72,4 +72,4 @@ class VisionProcessingAgent(BaseAgent):
         if not image_data:
             return {"error": "No image data"}
 
-        return {"predicted_category": "unknown", "confidence": 0.0}
+        return {"stub": True, "message": "Vision processing not yet implemented", "predicted_category": "unknown", "confidence": 0.0}

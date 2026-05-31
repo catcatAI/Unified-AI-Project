@@ -57,4 +57,4 @@ class WebSearchAgent(BaseAgent):
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
         params = payload.get("parameters", {})
-        return {"results": [], "query": params.get("query", ""), "source": "mock_search"}
+        return {"stub": True, "message": "Web search not yet implemented", "results": [], "query": params.get("query", ""), "source": "mock_search"}

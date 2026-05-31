@@ -59,4 +59,4 @@ class AudioProcessingAgent(BaseAgent):
     async def _handle_stt(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> str:
-        return "This is a transcribed text placeholder."
+        return {"stub": True, "message": "Speech-to-text not yet implemented", "text": "This is a transcribed text placeholder."}
