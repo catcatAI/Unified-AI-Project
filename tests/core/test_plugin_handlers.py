@@ -68,3 +68,21 @@ class TestPluginHandlerDeployment:
         )
         assert len(results) >= 1
         assert results[0].success is True
+
+    def test_on_response_pipeline_executes(self):
+        """on_response pipeline executes via registered handler."""
+        self.pm.add_handler("test_logger", "on_response", self.handler)
+        modified = asyncio.run(
+            self.pm.execute_pipeline("on_response", {"response_text": "hello world", "model_id": "gpt4", "tokens_used": 42})
+        )
+        assert "plugin_logged_at" in modified
+        assert modified["response_text"] == "hello world"
+
+    def test_on_tick_pipeline_executes(self):
+        """on_tick pipeline executes via registered handler."""
+        self.pm.add_handler("test_logger", "on_tick", self.handler)
+        modified = asyncio.run(
+            self.pm.execute_pipeline("on_tick", {"tick_interval": 30})
+        )
+        assert "plugin_logged_at" in modified
+        assert modified["tick_interval"] == 30

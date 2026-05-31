@@ -50,8 +50,40 @@
 
 ---
 
+## Phase 7: Hook Completions
+
+### P7-1: on_response 連線 🟢 LOW ✅ DONE
+- **現狀**: on_response hook 已定義、handler 已註冊，但從未被觸發
+- **目標**: 在 LLM 生成回應後觸發 on_response pipeline
+- **實作**:
+  - `services/llm/router.py:1679-1689` — `chat_completion()` 中在 `return LLMResponse` 前 fire `on_response`
+  - 數據: response_text, model_id, tokens_used
+  - `api/lifespan.py:219` — message_logger 同時註冊 on_response handler
+- **測試**: `test_on_response_pipeline_executes` — 驗證 handler 接收 response 並 annotate
+
+### P7-2: on_tick 連線 🟢 LOW ✅ DONE
+- **現狀**: on_tick hook 已定義但從未被觸發，也無 handler 註冊
+- **目標**: 建立 30 秒定時器觸發 on_tick pipeline
+- **實作**:
+  - `api/lifespan.py:256-264` — run_on_tick() 定時任務 (每 30s fire on_tick)
+  - `api/lifespan.py:219` — message_logger 同時註冊 on_tick handler
+  - 數據: tick_interval=30
+- **測試**: `test_on_tick_pipeline_executes` — 驗證 handler 接收 tick 事件並 annotate
+
 ## 執行進度
 
+```
+✅ Phase 6: Quality Finishing (全部完成)
+  ├── P6-1: Plugin handler 部署 (13 新 tests)
+  ├── P6-2: FileOperationHandler 實作 (7 tests)
+  ├── P6-3: Magic Number 遷移 (階段性，27 thresholds + config schema)
+  └── P6-4: Stub 清理 (9 agents 標準化)
+
+✅ Phase 7: Hook Completions (全部完成)
+  ├── P7-1: on_response 連線 (router.py 回應路徑)
+  └── P7-2: on_tick 連線 (lifespan.py 30s 定時器)
+  
+  總 tests: 30 plugin tests + 7 file_op tests = 37 全部通過
 ```
 ✅ Week 1: P6-1 Plugin handler 部署 (完成)
   ├── MessageLoggerHandler 建立 + MessageLoggerHandler 登錄

@@ -210,7 +210,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"[ModuleManager] Module system init failed (will use fallback factories): {e}", exc_info=True)
 
-    # P6-1: Register built-in plugin handlers
+    # P6-1 / P7: Register built-in plugin handlers
     try:
         from core.plugin.plugin_manager import plugin_manager as _pm
         from core.plugin.handlers import MessageLoggerHandler
@@ -218,9 +218,10 @@ async def lifespan(app: FastAPI):
         _pm.register_plugin("message_logger", "1.0", "Logs and annotates incoming messages")
         _pm.add_handler("message_logger", "on_message", _handler)
         _pm.add_handler("message_logger", "on_response", _handler)
-        logger.info("[P6-1] Built-in plugin handlers registered (message_logger)")
+        _pm.add_handler("message_logger", "on_tick", _handler)
+        logger.info("[P6-1/P7] Built-in plugin handlers registered (message_logger)")
     except Exception as e:
-        logger.warning(f"[P6-1] Plugin handler registration failed: {e}", exc_info=True)
+        logger.warning(f"[P6-1/P7] Plugin handler registration failed: {e}", exc_info=True)
 
     try:
         from services.wiring import initialize_all_services
@@ -250,8 +251,19 @@ async def lifespan(app: FastAPI):
                 logger.error(f"[Security] Audit task failed: {e}", exc_info=True)
             await asyncio.sleep(3600)
 
+    # P7: periodic on_tick hook for plugin system (every 30s)
+    async def run_on_tick():
+        while True:
+            await asyncio.sleep(30)
+            try:
+                from core.plugin import plugin_manager as _pm
+                await _pm.execute_pipeline('on_tick', {'tick_interval': 30})
+            except Exception:
+                pass
+
     asyncio.create_task(run_security_audit_task(), name="Security-Audit-Task")
     asyncio.create_task(broadcast_state_updates(), name="WS-State-Broadcast")
+    asyncio.create_task(run_on_tick(), name="Plugin-OnTick")
 
     logger.info("[Lifecycle] Server startup complete")
     yield

@@ -1676,6 +1676,17 @@ class AngelaLLMService:
                 timeout=60.0,
             )
 
+            # P7: fire on_response pipeline for plugin system
+            try:
+                from core.plugin import plugin_manager as _pm
+                await _pm.execute_pipeline('on_response', {
+                    'response_text': text.text if not text.error else "",
+                    'model_id': model_id,
+                    'tokens_used': text.tokens_used,
+                })
+            except Exception:
+                pass
+
             return LLMResponse(
                 text=text.text if not text.error else "",
                 backend=text.backend,

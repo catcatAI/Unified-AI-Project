@@ -124,7 +124,7 @@ See detailed breakdowns in linked analysis docs:
 | **Functional** | Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
 | **God Modules (refactored)** | `main_api_server.py` 314 lines, `angela_llm_service.py` 40 lines (shim), `core/autonomous/` 2 files — **old 1668/2196/60+ sizes were from pre-refactor code** | `MODULARITY_ANALYSIS` (stale analysis) |
 | **Governance** | ✅ 版本 13 檔已統一至 7.5.0-dev (S1-S3 完成); CI 含版本檢查; CHANGELOG 同步 | `FULL_ARCHITECTURE_ANALYSIS` |
-| **Wiring Gaps** | ✅ 9 agents standard stub format (`stub: True, message: ...`); 50+ stub 實作 | `PHASE6_NEXT_PLAN` |
+| **Wiring Gaps** | ✅ 9 agents standard stub format (`stub: True, message: ...`); ✅ 5/5 plugin hooks connected; 50+ stub 實作 | `PHASE6_NEXT_PLAN` |
 
 ### Roadmap / Future Extensibility
 
@@ -267,7 +267,7 @@ npm start
 | **功能斷鏈** | 桌面→Live2D 未完成；手機 stub；加密不完整 | `WIRING_MAP` |
 | **上帝模塊（已重構）** | `main_api_server.py` 314 行、`angela_llm_service.py` 40 行 (shim)、`core/autonomous/` 2 檔 | `MODULARITY_ANALYSIS` |
 | **治理** | ✅ 版本 13 檔已統一至 7.5.0-dev (S1-S3 完成); CI 含版本檢查; CHANGELOG 同步 | `FULL_ARCHITECTURE_ANALYSIS` |
-| **接線缺口** | ✅ 9 agents 標準化 stub 格式 (`stub: True, message: ...`); 50+ stub 實作 | `PHASE6_NEXT_PLAN` |
+| **接線缺口** | ✅ 9 agents 標準化 stub 格式; ✅ 5/5 plugin hooks 全線連接; 50+ stub 實作 | `PHASE6_NEXT_PLAN` |
 
 ### 未來路線圖
 
