@@ -68,7 +68,9 @@ Unified AI Project的AI代理系统是一个模块化的多代理架构，基于
 ### 启动代理
 
 ```python
-from agents.creative_writing_agent import CreativeWritingAgent
+# Legacy reference (deprecated): from agents.creative_writing_agent import CreativeWritingAgent
+# Current location: ai.agents.specialized.fantasy_dm_agent
+from ai.agents.specialized.fantasy_dm_agent import FantasyDMAgent
 import asyncio
 
 async def main():

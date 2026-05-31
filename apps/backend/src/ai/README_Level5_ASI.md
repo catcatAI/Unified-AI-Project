@@ -103,7 +103,8 @@ python apps/backend/src/ai/examples/level5_asi_demo.py interactive
 ### 3. 使用对齐代理
 
 ```python
-from agents.aligned_base_agent import AlignedBaseAgent, AlignmentLevel
+# agents/ directory was deprecated and removed. See ai/alignment/ for alignment classes.
+# Legacy reference: from agents.aligned_base_agent import AlignedBaseAgent, AlignmentLevel
 
 # 创建对齐代理
 agent = AlignedBaseAgent(
@@ -148,7 +149,8 @@ asi_system.config = config
 ### 对齐级别
 
 ```python
-from agents.aligned_base_agent import AlignmentLevel
+# agents/ directory was deprecated and removed. See ai/alignment/ for alignment classes.
+# Legacy reference: from agents.aligned_base_agent import AlignmentLevel
 
 # 可用的对齐级别
 AlignmentLevel.BASIC            # 基础对齐
