@@ -49,6 +49,9 @@ executor:
   priority_cost_background: 0.05
   outcome_high_intensity: 0.5
   outcome_low_intensity: 0.3
+  energy_default: 0.5
+  comfort_default: 0.5
+  default_autonomous_priority: 5
 
 feedback:
   success_threshold: 0.7

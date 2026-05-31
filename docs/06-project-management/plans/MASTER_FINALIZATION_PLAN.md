@@ -122,7 +122,7 @@
 | 檔案 | 此前 | 已遷移 | 待遷移 |
 |------|------|--------|--------|
 | `heartbeat.py` | ~31 | 22 (sleeps + interval + battery + velocity + walk/move threshold + collision margins + stress_speed + fatigue + cpu_poll + bio events) | ~9 |
-| `action_executor.py` | ~36 | 4 (sleeps) + 20 config keys added (strain, success_rate, priority_cost) | ~12 |
+| `action_executor.py` | ~36 | 4 (sleeps) + 14 wired (strain coeffs + success_rate formula + priority_cost + outcome intensity) | ~18 |
 | `feedback_processor.py` | ~38 | 20 (thresholds, timing, limits) | ~18 |
 | **合計** | **~105** | **46** | **~59** |
 
@@ -163,8 +163,11 @@ Week 3-4: Phase 9 (Structural) — all progressed
   P9-3: 🟡 Partial — 12 numbers migrated (heartbeat 8 + action_executor 4), ~93 deferred
 
 Week 5: Phase 10 (Docs + Tests) — completed
-  P10-1: ✅ 15 smoke tests (11 core + 4 services)
+  P10-1: ✅ 20 core smoke + 11 magic number + 4 service smoke = 57 tests
   P10-2: ✅ 3 docs created (OVERVIEW, SERVICE_CATALOG, STUB_TRACKING)
+
+Week 6: Phase 9 (Structural) — continued migration
+  P9-3: 🟡 46/105 magic numbers migrated (heartbeat 22 + feedback 20 + action_executor config keys + strain/success_rate wiring)
 ```
 
 ---
@@ -187,6 +190,6 @@ Phase 9: Structural 改善 — ✅ MAJORITY DONE
   └── 🟡 P9-3: Magic number 續遷 (46/105 migrated)
 
 Phase 10: Docs & Tests — ✅ MAJORITY DONE
-  ├── 🟡 P10-1: 基礎測試覆蓋 (53 total tests)
+  ├── 🟡 P10-1: 基礎測試覆蓋 (57 total tests: 20 core smoke + 11 magic + 5 gdrive + 7 websearch + 10 learning + 4 service)
   └── ✅ P10-2: 文件補全 (3 docs created)
 ```

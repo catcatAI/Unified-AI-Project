@@ -94,3 +94,28 @@ def test_import_llm_router():
     from services.llm.router import AngelaLLMService
     l = AngelaLLMService()
     assert l is not None
+
+
+def test_import_feedback_processor():
+    from core.feedback_processor import FeedbackProcessor
+    f = FeedbackProcessor()
+    assert f is not None
+    assert f.success_threshold == 0.7
+
+
+def test_import_behavior_feedback():
+    from core.system.config.magic_numbers import behavior_feedback
+    assert behavior_feedback("success_threshold") is not None
+    assert behavior_feedback("nonexistent", 99) == 99
+
+
+def test_import_behavior_executor():
+    from core.system.config.magic_numbers import behavior_executor
+    assert behavior_executor("default_action_timeout") is not None
+    assert behavior_executor("nonexistent", 99) == 99
+
+
+def test_import_heartbeat_value():
+    from core.system.config.magic_numbers import heartbeat_value
+    assert heartbeat_value("heartbeat.max_interval") is not None
+    assert heartbeat_value("nonexistent", 99) == 99

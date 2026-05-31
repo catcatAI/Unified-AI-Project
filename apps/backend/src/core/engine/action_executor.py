@@ -29,7 +29,7 @@ from pathlib import Path
 import logging
 from core.bio.kinetic_validator import KineticValidator
 from core.system.config.async_io import async_json_dump, async_json_load
-from core.system.config.magic_numbers import loop_sleep
+from core.system.config.magic_numbers import loop_sleep, behavior_executor
 
 logger = logging.getLogger(__name__)
 
@@ -357,13 +357,12 @@ class ActionExecutor:
             if self._dli:
                 bio = self._dli.biological_integrator.get_biological_state()
                 stress = bio.get("stress_level", 0.0)
-                arousal = bio.get("arousal", 0.5)
-                # Fatigue is high if stress is high and arousal is low
-                strain_factor = (stress * 0.7) + ((1.0 - arousal) * 0.3)
+                arousal = bio.get("arousal", behavior_executor("arousal_default", 0.5))
+                strain_factor = (stress * behavior_executor("strain_stress_weight", 0.7)) + ((1.0 - arousal) * behavior_executor("strain_arousal_inverse_weight", 0.3))
 
-                # Apply delay based on strain
-                if strain_factor > 0.6:
-                    delay = strain_factor * 2.0
+                thresh = behavior_executor("strain_factor_threshold", 0.6)
+                if strain_factor > thresh:
+                    delay = strain_factor * behavior_executor("strain_delay_multiplier", 2.0)
                     logger.info(f"[ActionExecutor] Applying behavioral strain delay: {delay:.2f}s")
                     await asyncio.sleep(delay)
 
@@ -710,36 +709,44 @@ class ActionExecutor:
         health_tension = (energy + comfort) / 2 - tension - priority_cost
         """
         if not self._dli:
-            return 0.85  # 安全保底：無生命體時回到預設
+            return behavior_executor("success_rate_fallback", 0.85)
 
         try:
             sm = self._dli.state_matrix
             alpha = sm.alpha.values
 
-            energy  = alpha.get("energy",  0.5)
-            comfort = alpha.get("comfort", 0.5)
+            energy  = alpha.get("energy",  behavior_executor("energy_default", 0.5))
+            comfort = alpha.get("comfort", behavior_executor("comfort_default", 0.5))
             tension = alpha.get("tension", 0.0)
 
-            # 動作消耗係數：優先級越體能耗越體
-            priority_cost = 0.3  # 預設消耗 (NORMAL)
+            priority_cost = behavior_executor("priority_cost_default", 0.3)
             if action is not None:
-                cost_map = {0: 0.9, 1: 0.6, 2: 0.3, 3: 0.15, 4: 0.05}
-                priority_cost = cost_map.get(action.priority.level, 0.3)
+                cost_map = {
+                    0: behavior_executor("priority_cost_critical", 0.9),
+                    1: behavior_executor("priority_cost_high", 0.6),
+                    2: behavior_executor("priority_cost_normal", 0.3),
+                    3: behavior_executor("priority_cost_low", 0.15),
+                    4: behavior_executor("priority_cost_background", 0.05),
+                }
+                priority_cost = cost_map.get(action.priority.level, behavior_executor("priority_cost_default", 0.3))
 
-            # 以 state_matrix 內建的空間數學引擎計算健康張力
             health_tension = sm.evaluate_math_spatially(
                 f"({energy:.4f} + {comfort:.4f}) / 2 - {tension:.4f} - {priority_cost:.4f}"
             )
 
-            success_rate = max(0.3, min(0.99, 0.5 + health_tension * 0.8))
+            success_rate_min = behavior_executor("success_rate_min", 0.3)
+            success_rate_max = behavior_executor("success_rate_max", 0.99)
+            success_rate_base = behavior_executor("success_rate_base", 0.5)
+            success_rate_mult = behavior_executor("success_rate_tension_multiplier", 0.8)
+            success_rate = max(success_rate_min, min(success_rate_max, success_rate_base + health_tension * success_rate_mult))
             logger.debug(
                 f"[動作引擎] 居體張力={health_tension:.3f} → 成功率={success_rate:.2%}"
             )
             return success_rate
 
         except Exception as e:  # broad exception acceptable: spatial calculation failure should fallback to default
-            logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback 0.85: {e}", exc_info=True)
-            return 0.85
+            logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback: {e}", exc_info=True)
+            return behavior_executor("success_rate_fallback", 0.85)
 
     def _record_action_outcome(self, action: Action, success: bool):
         """Record action outcome to dynamic parameters manager"""
@@ -748,7 +755,7 @@ class ActionExecutor:
                 self._dynamic_params_manager.record_outcome(
                     action_type=action.category.value[1],  # English name
                     success=success,
-                    intensity=0.5 if action.priority.level <= 1 else 0.3,
+                    intensity=behavior_executor("outcome_high_intensity", 0.5) if action.priority.level <= 1 else behavior_executor("outcome_low_intensity", 0.3),
                 )
             except Exception as e:  # broad exception acceptable: recording failure should not affect action result
                 logger.warning(f"[ActionExecutor] Failed to record outcome: {e}", exc_info=True)
