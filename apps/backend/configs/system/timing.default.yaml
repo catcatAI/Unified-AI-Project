@@ -27,3 +27,11 @@ timing:
     project_temperature: 0.5
     project_max_tokens: 1024
     generate_timeout: 60.0
+
+  heartbeat:
+    max_interval: 60.0
+    min_interval: 5.0
+    base_rate: 30.0
+    stress_divisor: 50.0
+    stress_multiplier: 2
+    low_battery_threshold: 20

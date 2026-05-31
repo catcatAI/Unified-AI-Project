@@ -20,21 +20,27 @@ from .alignment.asi_autonomous_alignment import ASIAutonomousAlignment
 
 # Placeholder classes for missing imports to ensure syntactic validity
 class DistributedCoordinator:
+    """STUB: Real implementation at .alignment.distributed_coordinator"""
+
     async def initialize(self):
-        pass
+        logger.warning("[DistributedCoordinator.initialize] Stub — not implemented")
 
     async def shutdown(self):
-        pass
+        logger.warning("[DistributedCoordinator.shutdown] Stub — not implemented")
 
     async def get_cluster_status(self):
+        logger.warning("[DistributedCoordinator.get_cluster_status] Stub — returning {}")
         return {}
 
 
 class HyperlinkedParameterCluster:
+    """STUB: Real implementation at .alignment.hyperlinked_parameter_cluster"""
+
     async def initialize(self):
-        pass
+        logger.warning("[HyperlinkedParameterCluster.initialize] Stub — not implemented")
 
     async def get_cluster_status(self):
+        logger.warning("[HyperlinkedParameterCluster.get_cluster_status] Stub — returning {}")
         return {}
 
 
@@ -44,6 +50,8 @@ class AlignmentLevel:
 
 
 class AlignedBaseAgent:
+    """STUB: Real implementation at .alignment.aligned_base_agent"""
+
     def __init__(self, agent_id, capabilities, agent_name, alignment_level):
         self.agent_id = agent_id
         self.capabilities = capabilities
@@ -51,24 +59,27 @@ class AlignedBaseAgent:
         self.alignment_level = alignment_level
 
     async def initialize_alignment_full(self):
-        pass
+        logger.warning("[AlignedBaseAgent.initialize_alignment_full] Stub — not implemented")
 
     async def start(self):
-        pass
+        logger.warning("[AlignedBaseAgent.start] Stub — not implemented")
 
     async def stop(self):
-        pass
+        logger.warning("[AlignedBaseAgent.stop] Stub — not implemented")
 
     async def get_alignment_status(self):
+        logger.warning("[AlignedBaseAgent.get_alignment_status] Stub — returning {}")
         return {}
 
     async def handle_task_request(self, request, sender_id, envelope):
-        pass
+        logger.warning("[AlignedBaseAgent.handle_task_request] Stub — not implemented")
 
 
 class HSPMessageEnvelope:
+    """STUB: Real implementation at .core.hsp.types"""
+
     def __init__(self, message_id, timestamp, sender_id, recipient_id, message_type):
-        pass
+        logger.warning("[HSPMessageEnvelope] Stub — not implemented")
 
 
 logger = logging.getLogger(__name__)

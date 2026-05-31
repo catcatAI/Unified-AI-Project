@@ -1,10 +1,13 @@
 import asyncio
+import logging
 from typing import Any, Dict
+
+logger = logging.getLogger(__name__)
 
 
 class ImportanceScorer:
     def __init__(self):
-        pass
+        logger.debug("[ImportanceScorer] Initialized")
 
     async def calculate(self, content: Any, metadata: Dict[str, Any]) -> float:
         """Placeholder for importance scoring logic."""

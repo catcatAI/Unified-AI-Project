@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Optional
 from core.bio.biological_integrator import BiologicalIntegrator
 from core.bio.endocrine_system import HormoneType
+from core.system.config.magic_numbers import loop_sleep, heartbeat_value as _hb
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
@@ -75,10 +76,10 @@ class MetabolicHeartbeat:
                     speed = self.velocity * (1.0 - stress * 0.5)
                     self.x += (self.target_x - self.x) * speed
                 
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(loop_sleep("sleep_short", 0.1))
             except Exception as e:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}", exc_info=True)
-                await asyncio.sleep(1)
+                await asyncio.sleep(loop_sleep("sleep_long", 1.0))
 
     async def start(self):
         if self._running:
@@ -108,7 +109,12 @@ class MetabolicHeartbeat:
                 arousal = state.get("arousal", 50.0)
                 
                 # Dynamic Interval
-                dynamic_interval = max(5.0, min(60.0, 30.0 / (stress * 2 + (arousal / 50.0))))
+                min_int = _hb("heartbeat.min_interval", 5.0)
+                max_int = _hb("heartbeat.max_interval", 60.0)
+                base_rate = _hb("heartbeat.base_rate", 30.0)
+                div = _hb("heartbeat.stress_divisor", 50.0)
+                mul = _hb("heartbeat.stress_multiplier", 2)
+                dynamic_interval = max(min_int, min(max_int, base_rate / (stress * mul + (arousal / div))))
                 
                 # --- NEW: Spatial Decision Making ---
                 await self._update_spatial_state(arousal, stress)
@@ -120,7 +126,7 @@ class MetabolicHeartbeat:
                 await asyncio.sleep(dynamic_interval)
             except Exception as e:  # broad exception acceptable: heartbeat loop must be resilient to errors
                 logger.error(f"[Pulse] Cardiac Arrhythmia: {e}", exc_info=True)
-                await asyncio.sleep(10)
+                await asyncio.sleep(loop_sleep("sleep_very_long", 10.0))
 
     async def _update_spatial_state(self, arousal, stress):
         """
@@ -205,7 +211,7 @@ class MetabolicHeartbeat:
                 duration=self.update_interval
             )
             
-            if energy_level < 20:
+            if energy_level < _hb("heartbeat.low_battery_threshold", 20):
                 logger.warning(f"🔋 [Metabolism] Critical Energy Low: {energy_level}%. Angela is starving.", exc_info=True)
                 await self.bio_integrator.process_stress_event(intensity=0.3, duration=10.0)
             

@@ -1214,7 +1214,7 @@ Returns:
 
     def _apply_influence_fallback(self, source: str, target: str, amount: float) -> None:
         """Deprecated: influence applicator handles all cases now"""
-        pass
+        logger.warning("[_apply_influence_fallback] Deprecated method called — no-op")
 
     def get_state(self, dimension: Optional[str] = None) -> Dict[str, Any]:
         """

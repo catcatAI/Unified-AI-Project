@@ -29,6 +29,7 @@ from pathlib import Path
 import logging
 from core.bio.kinetic_validator import KineticValidator
 from core.system.config.async_io import async_json_dump, async_json_load
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +331,7 @@ class ActionExecutor:
                 asyncio.create_task(self._execute_with_semaphore(action))
             else:
                 # No actions available, wait a bit
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(loop_sleep("sleep_short", 0.1))
 
     async def _execute_with_semaphore(self, action: Action):
         """Execute action with concurrency control"""
@@ -520,7 +521,7 @@ class ActionExecutor:
             ActionStatus.VALIDATING,
             ActionStatus.EXECUTING,
         ]:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(loop_sleep("sleep_short", 0.1))
 
     def _update_stats(self, execution_time: float, success: bool):
         """Update execution statistics"""
@@ -611,7 +612,7 @@ class ActionExecutor:
             ActionStatus.FAILED,
             ActionStatus.CANCELLED,
         ]:
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(loop_sleep("sleep_fps", 0.05))
 
         return action.result or ActionResult(
             success=False, action_id=action.action_id, error="No result available"
@@ -898,7 +899,7 @@ class ActionExecutor:
 
                     # Wait for completion
                     while action.status not in [ActionStatus.COMPLETED, ActionStatus.FAILED]:
-                        await asyncio.sleep(0.05)
+                        await asyncio.sleep(loop_sleep("sleep_fps", 0.05))
 
                     return action.result
                 else:

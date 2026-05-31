@@ -1,7 +1,10 @@
+import logging
 from pathlib import Path
 from typing import Callable, Optional
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     AdapterDecl,
@@ -130,4 +133,4 @@ class ModuleScanner:
         )
 
     def watch(self, callback: Callable) -> None:
-        pass
+        logger.warning("[ModuleScanner.watch] Not implemented — file watching disabled")

@@ -99,10 +99,10 @@ class EnhancedRovoDevConnector:
         logger.info("EnhancedRovoDevConnector Skeleton Initialized")
 
     async def start(self):
-        pass
+        logger.info("[EnhancedRovoDevConnector] start — SKELETON (not implemented)")
 
     async def close(self):
-        pass
+        logger.info("[EnhancedRovoDevConnector] close — SKELETON (not implemented)")
 
     async def __aenter__(self):
         await self.start()
@@ -112,8 +112,7 @@ class EnhancedRovoDevConnector:
         await self.close()
 
     async def _authenticate(self):
-        self.authenticated = True  # Mock success
-        pass
+        self.authenticated = True  # Mock stub
 
     async def _make_request_with_retry(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         logger.warning(

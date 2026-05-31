@@ -54,10 +54,10 @@ class AtlassianBridge:
         logger.info("AtlassianBridge Skeleton Initialized")
 
     async def start(self):
-        pass
+        logger.info("[AtlassianBridge] start — SKELETON (not implemented)")
 
     async def close(self):
-        pass
+        logger.info("[AtlassianBridge] close — SKELETON (not implemented)")
 
     async def __aenter__(self):
         await self.start()

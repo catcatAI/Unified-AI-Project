@@ -66,10 +66,11 @@ class OpsInsight:
 @dataclass
 class PredictiveMaintenanceEngine:  # Placeholder for actual class
     def initialize(self):
-        pass
+        logger.warning("[PredictiveMaintenanceEngine.initialize] Stub — not implemented")
 
     async def collect_component_metrics(self, component_id: str):
-        pass
+        logger.warning("[PredictiveMaintenanceEngine.collect_component_metrics] Stub — not implemented")
+        return {}
 
     async def get_component_health(self, component_id: str):
         return ComponentHealth(
@@ -80,7 +81,8 @@ class PredictiveMaintenanceEngine:  # Placeholder for actual class
         return []
 
     async def approve_maintenance(self, schedule_id: str, approver: str):
-        pass
+        logger.warning("[PredictiveMaintenanceEngine.approve_maintenance] Stub — not implemented")
+        return {"stub": True, "message": f"Maintenance {schedule_id} approval not implemented"}
 
 
 @dataclass

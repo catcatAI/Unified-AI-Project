@@ -58,3 +58,10 @@ def timeout_value(key: str, default: float = 5.0) -> float:
 def llm_param(key: str, default: Any = None) -> Any:
     """Get an LLM parameter (e.g. 'llm.default_temperature')."""
     return timing_value(key, default)
+
+
+# ── Heartbeat parameters ──────────────────────────────────────────────
+
+def heartbeat_value(key: str, default: Any = None) -> Any:
+    """Get a heartbeat parameter from timing config (e.g. 'heartbeat.max_interval')."""
+    return timing_value(key, default)
