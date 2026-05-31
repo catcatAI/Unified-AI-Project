@@ -18,6 +18,8 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
+
+from core.system.config.magic_numbers import behavior_threshold as _bt
 from enum import Enum, auto
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
@@ -207,7 +209,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.IDLE,
                 priority=BehaviorPriority.BACKGROUND,
                 duration=0.3,
-                triggers=[BehaviorTrigger("random", "blink", threshold=0.3, cooldown=3.0)],
+                triggers=[BehaviorTrigger("random", "blink", threshold=_bt("trigger_threshold_tiny", 0.3), cooldown=3.0)],
                 description="Random blinking while idle",
             )
         )
@@ -220,7 +222,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.IDLE,
                 priority=BehaviorPriority.BACKGROUND,
                 duration=3.0,
-                triggers=[BehaviorTrigger("random", "look_around", threshold=0.2, cooldown=10.0)],
+                triggers=[BehaviorTrigger("random", "look_around", threshold=_bt("trigger_threshold_very_low", 0.2), cooldown=10.0)],
                 description="Randomly look around when idle",
             )
         )
@@ -261,7 +263,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.HIGH,
                 duration=2.5,
                 triggers=[
-                    BehaviorTrigger("proximity", "user_detected", threshold=1.0, cooldown=10.0)
+                    BehaviorTrigger("proximity", "user_detected", threshold=_bt("trigger_threshold_default", 1.0), cooldown=10.0)
                 ],
                 description="Wave hello when user approaches",
             )
@@ -276,7 +278,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.HIGH,
                 duration=2.0,
                 triggers=[
-                    BehaviorTrigger("proximity", "user_detected", threshold=1.0, cooldown=10.0)
+                    BehaviorTrigger("proximity", "user_detected", threshold=_bt("trigger_threshold_default", 1.0), cooldown=10.0)
                 ],
                 description="Polite bow greeting",
             )
@@ -292,7 +294,7 @@ class ExtendedBehaviorLibrary:
                 duration=0,
                 loop=True,
                 triggers=[
-                    BehaviorTrigger("stimulus", "user_speaking", threshold=1.0, cooldown=1.0)
+                    BehaviorTrigger("stimulus", "user_speaking", threshold=_bt("trigger_threshold_default", 1.0), cooldown=1.0)
                 ],
                 description="Nod while listening to user",
             )
@@ -306,7 +308,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.SOCIAL,
                 priority=BehaviorPriority.NORMAL,
                 duration=5.0,
-                triggers=[BehaviorTrigger("stimulus", "processing", threshold=1.0, cooldown=5.0)],
+                triggers=[BehaviorTrigger("stimulus", "processing", threshold=_bt("trigger_threshold_default", 1.0), cooldown=5.0)],
                 description="Thinking pose while processing complex requests",
             )
         )
@@ -319,7 +321,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.SOCIAL,
                 priority=BehaviorPriority.NORMAL,
                 duration=2.0,
-                triggers=[BehaviorTrigger("emotion", "empathy", threshold=0.6, cooldown=5.0)],
+                triggers=[BehaviorTrigger("emotion", "empathy", threshold=_bt("trigger_threshold_low", 0.6), cooldown=5.0)],
                 description="Encouraging gestures when user is struggling",
             )
         )
@@ -332,7 +334,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.SOCIAL,
                 priority=BehaviorPriority.HIGH,
                 duration=5.0,
-                triggers=[BehaviorTrigger("stimulus", "success", threshold=1.0, cooldown=30.0)],
+                triggers=[BehaviorTrigger("stimulus", "success", threshold=_bt("trigger_threshold_default", 1.0), cooldown=30.0)],
                 description="Happy dance when user achieves something",
             )
         )
@@ -346,7 +348,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.HIGH,
                 duration=4.0,
                 triggers=[
-                    BehaviorTrigger("emotion", "sadness_detected", threshold=0.7, cooldown=10.0)
+                    BehaviorTrigger("emotion", "sadness_detected", threshold=_bt("trigger_threshold_medium", 0.7), cooldown=10.0)
                 ],
                 description="Comforting gestures when user seems sad",
             )
@@ -362,7 +364,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.HIGH,
                 duration=2.0,
                 triggers=[
-                    BehaviorTrigger("stimulus", "sudden_change", threshold=1.0, cooldown=3.0)
+                    BehaviorTrigger("stimulus", "sudden_change", threshold=_bt("trigger_threshold_default", 1.0), cooldown=3.0)
                 ],
                 description="React with surprise to unexpected events",
             )
@@ -377,7 +379,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.NORMAL,
                 duration=2.5,
                 triggers=[
-                    BehaviorTrigger("stimulus", "unclear_input", threshold=1.0, cooldown=5.0)
+                    BehaviorTrigger("stimulus", "unclear_input", threshold=_bt("trigger_threshold_default", 1.0), cooldown=5.0)
                 ],
                 description="Head tilt when confused",
             )
@@ -408,7 +410,7 @@ class ExtendedBehaviorLibrary:
                 duration=0,
                 loop=True,
                 triggers=[
-                    BehaviorTrigger("proximity", "mouse_nearby", threshold=1.0, cooldown=0.0)
+                    BehaviorTrigger("proximity", "mouse_nearby", threshold=_bt("trigger_threshold_default", 1.0), cooldown=0.0)
                 ],
                 description="Follow mouse cursor with eyes/head",
             )
@@ -423,7 +425,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.EXPRESSION,
                 priority=BehaviorPriority.NORMAL,
                 duration=3.0,
-                triggers=[BehaviorTrigger("emotion", "joy", threshold=0.6, cooldown=5.0)],
+                triggers=[BehaviorTrigger("emotion", "joy", threshold=_bt("trigger_threshold_low", 0.6), cooldown=5.0)],
                 description="Big happy smile",
             )
         )
@@ -436,7 +438,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.EXPRESSION,
                 priority=BehaviorPriority.NORMAL,
                 duration=1.0,
-                triggers=[BehaviorTrigger("emotion", "playfulness", threshold=0.5, cooldown=10.0)],
+                triggers=[BehaviorTrigger("emotion", "playfulness", threshold=_bt("trigger_threshold_minimal", 0.5), cooldown=10.0)],
                 description="Playful wink expression",
             )
         )
@@ -450,7 +452,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.NORMAL,
                 duration=4.0,
                 triggers=[
-                    BehaviorTrigger("emotion", "embarrassment", threshold=0.5, cooldown=15.0)
+                    BehaviorTrigger("emotion", "embarrassment", threshold=_bt("trigger_threshold_minimal", 0.5), cooldown=15.0)
                 ],
                 description="Blushing when complimented or embarrassed",
             )
@@ -464,7 +466,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.EXPRESSION,
                 priority=BehaviorPriority.NORMAL,
                 duration=3.0,
-                triggers=[BehaviorTrigger("stimulus", "novelty", threshold=0.7, cooldown=5.0)],
+                triggers=[BehaviorTrigger("stimulus", "novelty", threshold=_bt("trigger_threshold_medium", 0.7), cooldown=5.0)],
                 description="Curious expression when encountering something new",
             )
         )
@@ -477,7 +479,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.EXPRESSION,
                 priority=BehaviorPriority.NORMAL,
                 duration=3.0,
-                triggers=[BehaviorTrigger("stimulus", "challenge", threshold=0.8, cooldown=10.0)],
+                triggers=[BehaviorTrigger("stimulus", "challenge", threshold=_bt("trigger_threshold_high", 0.8), cooldown=10.0)],
                 description="Determined expression when facing challenges",
             )
         )
@@ -492,7 +494,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.BACKGROUND,
                 duration=0,
                 loop=True,
-                triggers=[BehaviorTrigger("emotion", "energy", threshold=0.6, cooldown=0.0)],
+                triggers=[BehaviorTrigger("emotion", "energy", threshold=_bt("trigger_threshold_low", 0.6), cooldown=0.0)],
                 description="Subtle bouncing when energetic",
             )
         )
@@ -506,7 +508,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.BACKGROUND,
                 duration=0,
                 loop=True,
-                triggers=[BehaviorTrigger("emotion", "relaxation", threshold=0.5, cooldown=0.0)],
+                triggers=[BehaviorTrigger("emotion", "relaxation", threshold=_bt("trigger_threshold_minimal", 0.5), cooldown=0.0)],
                 description="Gentle swaying when relaxed",
             )
         )
@@ -519,7 +521,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.MOVEMENT,
                 priority=BehaviorPriority.NORMAL,
                 duration=5.0,
-                triggers=[BehaviorTrigger("emotion", "affection", threshold=0.7, cooldown=30.0)],
+                triggers=[BehaviorTrigger("emotion", "affection", threshold=_bt("trigger_threshold_medium", 0.7), cooldown=30.0)],
                 description="Move closer to user",
             )
         )
@@ -532,7 +534,7 @@ class ExtendedBehaviorLibrary:
                 category=BehaviorCategory.MOVEMENT,
                 priority=BehaviorPriority.HIGH,
                 duration=2.0,
-                triggers=[BehaviorTrigger("stimulus", "collision", threshold=1.0, cooldown=1.0)],
+                triggers=[BehaviorTrigger("stimulus", "collision", threshold=_bt("trigger_threshold_default", 1.0), cooldown=1.0)],
                 description="Quick movement to avoid collision",
             )
         )
@@ -547,7 +549,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.CRITICAL,
                 duration=0,
                 loop=True,
-                triggers=[BehaviorTrigger("time", "inactivity", threshold=600.0, cooldown=0.0)],
+                triggers=[BehaviorTrigger("time", "inactivity", threshold=_bt("inactivity_threshold", 600.0), cooldown=0.0)],
                 description="Enter sleep mode after long inactivity",
                 interruptible=True,
             )
@@ -562,7 +564,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.CRITICAL,
                 duration=3.0,
                 triggers=[
-                    BehaviorTrigger("stimulus", "user_activity", threshold=1.0, cooldown=0.0)
+                    BehaviorTrigger("stimulus", "user_activity", threshold=_bt("trigger_threshold_default", 1.0), cooldown=0.0)
                 ],
                 description="Wake up from sleep mode",
             )
@@ -577,7 +579,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.NORMAL,
                 duration=180.0,
                 triggers=[
-                    BehaviorTrigger("stimulus", "user_request", threshold=1.0, cooldown=300.0)
+                    BehaviorTrigger("stimulus", "user_request", threshold=_bt("trigger_threshold_default", 1.0), cooldown=300.0)
                 ],
                 description="Full singing performance with lyrics",
             )
@@ -592,7 +594,7 @@ class ExtendedBehaviorLibrary:
                 priority=BehaviorPriority.NORMAL,
                 duration=60.0,
                 triggers=[
-                    BehaviorTrigger("stimulus", "user_request", threshold=1.0, cooldown=300.0)
+                    BehaviorTrigger("stimulus", "user_request", threshold=_bt("trigger_threshold_default", 1.0), cooldown=300.0)
                 ],
                 description="Dance performance animation",
             )

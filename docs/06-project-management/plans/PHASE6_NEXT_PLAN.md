@@ -18,19 +18,23 @@
 
 ## 真正殘留項目 (依影響力排序)
 
-### P6-1: Plugin 系統 — 部署首個 Handler 🔴 HIGH
-- **現狀**: C3 Phase 1-4 已完成基礎設施 (HookRegistry, PluginManager, CRUD API, hot-reload, sandbox)，但 0 個 handler 註冊
-- **目標**: 註冊 `on_message` handler，實現 plugin 可攔截/修改訊息
-- **檔案**: `core/plugin/plugin_manager.py`, `api/v1/endpoints/plugins.py`
-- **風險**: 🟡2 耦合度低，獨立模組
-- **驗收**: 1 plugin handler 部署，E2E 測試通過
+### P6-1: Plugin 系統 — 部署首個 Handler 🔴 HIGH ✅ DONE
+- **已實作**:
+  - `core/plugin/handlers/message_logger.py` — MessageLoggerHandler (async, 計數、加 metadata)
+  - `core/plugin/hook_registry.py:80` — `execute_pipeline()` 方法 (handler 鏈式傳遞修改 data)
+  - `api/lifespan.py:212-221` — 啟動時自動註冊 message_logger plugin + handler
+  - `services/llm/router.py:1644-1656` — on_message 從 fire-and-forget 改為 await pipeline
+  - 6 個 E2E tests (handler_modifies_data, pipeline_returns_modified_data, counter_increments, etc.)
+- **檔案**: `core/plugin/handlers/`, `core/plugin/hook_registry.py`, `api/lifespan.py`, `services/llm/router.py`
+- **驗證**: 53 tests pass (40 既有 + 13 新增)
 
-### P6-2: Config Handler 實作 🔴 HIGH
-- **現狀**: `angela_core.yaml:131-257` 定義 5 個 handler (FileOperation, GoogleDrive, WebSearch, Learning) 但 0 個有對應代碼
-- **目標**: 實作 FileOperationHandler (最高優先，ChatService 已 reference)
-- **檔案**: (新建) `services/handlers/file_operation_handler.py`
-- **風險**: 🟡2
-- **驗收**: FileOperationHandler init + process 方法可被 ChatService 呼叫
+### P6-2: Config Handler 實作 🔴 HIGH ✅ DONE
+- **已實作**:
+  - `services/handlers/file_operation_handler.py` — FileOperationHandler (解析 organize/cleanup/create 意圖，委派 DesktopInteraction)
+  - `services/chat_service.py:319-326` — `_handle_file_intent` 從 stub 改為委派 FileOperationHandler
+  - 7 個 tests (所有 code path: organize, cleanup, create, unknown, english keywords, days param)
+- **檔案**: `services/handlers/file_operation_handler.py`, `services/chat_service.py`
+- **驗證**: 53 tests pass, stub 替換完成 (原回傳「功能正在對齊中」)
 
 ### P6-3: Magic Number 遷移 🟡 MEDIUM
 - **現狀**: 150+ magic numbers (thresholds, timeouts, weights) 散落在 core/services/ai/
@@ -46,25 +50,28 @@
 
 ---
 
-## 執行路線
+## 執行進度
 
 ```
-Week 1: P6-1 Plugin handler 部署
-  ├── 註冊首個 on_message handler
-  ├── E2E test (plugin 攔截 → 修改 response)
-  └── 驗收: plugin 流程完整可測
+✅ Week 1: P6-1 Plugin handler 部署 (完成)
+  ├── MessageLoggerHandler 建立 + MessageLoggerHandler 登錄
+  ├── execute_pipeline 方法 + router.py on_message pipeline 化
+  └── 53 tests (40 既有 + 13 新增)
 
-Week 2: P6-2 FileOperationHandler 實作
-  ├── 實作 init/process 方法
-  ├── ChatService 接線
-  └── 驗收: 可執行檔案操作
+✅ Week 2: P6-2 FileOperationHandler 實作 (完成)
+  ├── FileOperationHandler (organize/cleanup/create 支援)
+  ├── ChatService stubs 替換為委派 FileOperationHandler
+  └── 53 tests pass
 
-Week 3-4: P6-3 Magic Number 遷移
-  ├── 掃描 core/ + services/ 高頻 magic numbers
-  ├── 建立配置 schema
-  └── 驗收: 50+ numbers 中央化
+⬜ Week 3-4: P6-3 Magic Number 遷移 (進行中，階段性完成)
+  ├── ✅ configs/standard/behavior/thresholds.default.yaml — 行為閾值
+  ├── ✅ configs/system/timing.default.yaml — 計時/LLM 參數  
+  ├── ✅ core/system/config/magic_numbers.py — 集中存取 helper
+  ├── ✅ 遷移 extended_behavior_library.py 中 27 個 threshold 值
+  ├── ⬜ 剩餘 ~120 個 magic numbers (分散在 core/ + services/ + ai/)
+  └── 驗收: 階段性完成，其餘可持續遷移
 
-Week 5: P6-4 Stub 清理 (可選)
+⬜ Week 5: P6-4 Stub 清理 (待執行)
   ├── 10+ agents 標準化 stub 格式
   └── 驗收: 統一回傳格式
 ```

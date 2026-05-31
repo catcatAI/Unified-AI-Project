@@ -77,6 +77,21 @@ class HookRegistry:
         ]
         return len(self._handlers[hook_name]) < before
 
+    async def execute_pipeline(self, hook_name: str, initial_data: Any = None) -> Any:
+        """Execute all handlers in sequence, passing modified data through the chain."""
+        if hook_name not in self._handlers:
+            return initial_data
+        current = initial_data
+        for handler_name, handler in self._handlers[hook_name]:
+            try:
+                result = handler(current)
+                if inspect.iscoroutine(result):
+                    result = await result
+                current = result
+            except Exception as e:
+                logger.error(f"[HookRegistry] Pipeline handler '{handler_name}' failed: {e}", exc_info=True)
+        return current
+
     async def execute_hook(self, hook_name: str, data: Any = None) -> List[HookResult]:
         """Execute all registered handlers for a hook asynchronously."""
         if hook_name not in self._handlers:
@@ -84,10 +99,9 @@ class HookRegistry:
         results = []
         for handler_name, handler in self._handlers[hook_name]:
             try:
-                if inspect.iscoroutinefunction(handler):
-                    result = await handler(data)
-                else:
-                    result = handler(data)
+                result = handler(data)
+                if inspect.iscoroutine(result):
+                    result = await result
                 results.append(HookResult(
                     hook_name=hook_name,
                     handler_name=handler_name,

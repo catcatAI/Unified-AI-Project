@@ -95,6 +95,10 @@ class PluginManager:
     async def execute_hook(self, hook_name: str, data: Any = None):
         return await self._hook_registry.execute_hook(hook_name, data)
 
+    async def execute_pipeline(self, hook_name: str, initial_data: Any = None) -> Any:
+        """Execute all handlers in pipeline mode — each receives and returns data."""
+        return await self._hook_registry.execute_pipeline(hook_name, initial_data)
+
     def get_stats(self) -> Dict[str, Any]:
         plugins = self.list_plugins()
         return {

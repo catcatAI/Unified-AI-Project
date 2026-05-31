@@ -1,5 +1,5 @@
 """
-C3: Backend plugin system — hook registry, plugin manager, and API.
+C3: Backend plugin system — hook registry, plugin manager, handlers, and API.
 """
 
 from core.plugin.hook_registry import HookRegistry, hook_registry

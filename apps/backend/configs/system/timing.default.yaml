@@ -1,0 +1,29 @@
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# Timing parameters — centralized durations for P6-3 magic number migration
+
+timing:
+  loop:
+    sleep_short: 0.1
+    sleep_medium: 0.5
+    sleep_long: 1.0
+    sleep_very_long: 10.0
+    sleep_extreme: 60.0
+    sleep_fps: 0.033
+    sleep_circuit_breaker: 300.0
+
+  timeout:
+    short: 5.0
+    medium: 10.0
+    long: 30.0
+    very_long: 60.0
+    extreme: 120.0
+    circuit_breaker_recovery: 300.0
+
+  llm:
+    default_temperature: 0.7
+    default_max_tokens: 512
+    math_temperature: 0.3
+    math_max_tokens: 256
+    project_temperature: 0.5
+    project_max_tokens: 1024
+    generate_timeout: 60.0

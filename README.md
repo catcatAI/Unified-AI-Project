@@ -124,7 +124,7 @@ See detailed breakdowns in linked analysis docs:
 | **Functional** | Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
 | **God Modules (refactored)** | `main_api_server.py` 314 lines, `angela_llm_service.py` 40 lines (shim), `core/autonomous/` 2 files — **old 1668/2196/60+ sizes were from pre-refactor code** | `MODULARITY_ANALYSIS` (stale analysis) |
 | **Governance** | ✅ 版本 13 檔已統一至 7.5.0-dev (S1-S3 完成); CI 含版本檢查; CHANGELOG 同步 | `FULL_ARCHITECTURE_ANALYSIS` |
-| **Wiring Gaps** | ✅ ChatService→IntentRegistry via ModuleManager (Phase 2, 21 tests); Plugin hooks 0 handler 註冊; 50+ stub 實作 | `CARD_INTEGRATION_PLAN`, `MASTER_CONSOLIDATED_PLAN` |
+| **Wiring Gaps** | ✅ ChatService→IntentRegistry via ModuleManager (Phase 2, 21 tests); ✅ 1 plugin handler 部署 (message_logger); ✅ FileOperationHandler 已實作; 50+ stub 實作 | `CARD_INTEGRATION_PLAN`, `MASTER_CONSOLIDATED_PLAN`, `PHASE6_NEXT_PLAN` |
 
 ### Roadmap / Future Extensibility
 
@@ -267,7 +267,7 @@ npm start
 | **功能斷鏈** | 桌面→Live2D 未完成；手機 stub；加密不完整 | `WIRING_MAP` |
 | **上帝模塊（已重構）** | `main_api_server.py` 314 行、`angela_llm_service.py` 40 行 (shim)、`core/autonomous/` 2 檔 | `MODULARITY_ANALYSIS` |
 | **治理** | ✅ 版本 13 檔已統一至 7.5.0-dev (S1-S3 完成); CI 含版本檢查; CHANGELOG 同步 | `FULL_ARCHITECTURE_ANALYSIS` |
-| **接線缺口** | ✅ ChatService→IntentRegistry via ModuleManager (Phase 2, 21 tests); Plugin hooks 0 handler 註冊; 50+ stub 實作 | `CARD_INTEGRATION_PLAN` |
+| **接線缺口** | ✅ Plugin handler 1 個已部署 (message_logger); ✅ FileOperationHandler 已實作; 50+ stub 實作 | `CARD_INTEGRATION_PLAN`, `PHASE6_NEXT_PLAN` |
 
 ### 未來路線圖
 

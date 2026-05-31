@@ -76,7 +76,7 @@ class MetabolicHeartbeat:
                     self.x += (self.target_x - self.x) * speed
                 
                 await asyncio.sleep(0.1)
-            except Exception as e:  # broad exception acceptable: integration loop should be resilient to errors
+            except Exception as e:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}", exc_info=True)
                 await asyncio.sleep(1)
 

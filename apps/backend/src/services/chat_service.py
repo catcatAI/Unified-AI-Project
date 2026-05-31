@@ -317,7 +317,13 @@ class ChatService:
             return "（角色卡導入）處理過程中發生錯誤，請檢查輸入格式。"
 
     async def _handle_file_intent(self, text: str, intent: str) -> str:
-        return "（檔案操作功能正在對齊中，稍後為妳開啟...）"
+        try:
+            from services.handlers import FileOperationHandler
+            handler = FileOperationHandler()
+            return await handler.handle(text, intent)
+        except Exception as e:
+            logger.error(f"[ChatService] FileOperationHandler failed: {e}", exc_info=True)
+            return "（檔案操作）處理檔案請求時發生錯誤。"
 
     def _get_anchor_keywords(self) -> Dict[str, List[str]]:
         """從分層配置讀取維度關鍵詞 [Phase 7]"""

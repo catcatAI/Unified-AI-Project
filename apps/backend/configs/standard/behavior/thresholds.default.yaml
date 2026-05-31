@@ -1,0 +1,27 @@
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# Behavioral thresholds — centralized defaults for P6-3 magic number migration
+
+behavior:
+  triggers:
+    cooldown_short: 5.0
+    cooldown_medium: 10.0
+    cooldown_long: 30.0
+    cooldown_extreme: 300.0
+    trigger_threshold_default: 1.0
+    trigger_threshold_high: 0.8
+    trigger_threshold_medium: 0.7
+    trigger_threshold_low: 0.6
+    trigger_threshold_minimal: 0.5
+    trigger_threshold_tiny: 0.3
+    trigger_threshold_very_low: 0.2
+    inactivity_threshold: 600.0
+
+state:
+  anomaly_threshold: 0.3
+  defer_threshold: 0.6
+  port_channel_threshold: 0.3
+
+allocation:
+  policy_threshold_low: 0.3
+  policy_threshold_medium: 0.6
+  policy_threshold_high: 0.7

@@ -1641,17 +1641,15 @@ class AngelaLLMService:
         if not self.is_available or self.active_backend is None:
             return LLMResponse(text="", backend="none", model="unknown", error="No backend available")
 
-        # C3 Phase 2: fire on_message hook for plugin system
+        # P6-1: fire on_message pipeline for plugin system (handlers can annotate/modify data)
         try:
             from core.plugin import plugin_manager as _pm
             user_text = messages[-1].content if isinstance(messages[-1], ChatMessage) else str(messages[-1]) if messages else ""
             if user_text:
-                asyncio.ensure_future(
-                    _pm.execute_hook('on_message', {
-                        'user_message': user_text,
-                        'model_id': model_id,
-                    })
-                )
+                await _pm.execute_pipeline('on_message', {
+                    'user_message': user_text,
+                    'model_id': model_id,
+                })
         except Exception:
             pass
 

@@ -210,6 +210,18 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"[ModuleManager] Module system init failed (will use fallback factories): {e}", exc_info=True)
 
+    # P6-1: Register built-in plugin handlers
+    try:
+        from core.plugin.plugin_manager import plugin_manager as _pm
+        from core.plugin.handlers import MessageLoggerHandler
+        _handler = MessageLoggerHandler()
+        _pm.register_plugin("message_logger", "1.0", "Logs and annotates incoming messages")
+        _pm.add_handler("message_logger", "on_message", _handler)
+        _pm.add_handler("message_logger", "on_response", _handler)
+        logger.info("[P6-1] Built-in plugin handlers registered (message_logger)")
+    except Exception as e:
+        logger.warning(f"[P6-1] Plugin handler registration failed: {e}", exc_info=True)
+
     try:
         from services.wiring import initialize_all_services
         from services.websocket_manager import manager as _ws_manager
