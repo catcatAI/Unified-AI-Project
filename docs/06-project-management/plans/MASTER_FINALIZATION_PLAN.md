@@ -123,18 +123,18 @@
 
 | 優先 | 目標 | 策略 |
 |------|------|------|
-| P1 | `tests/core/` 基礎測試 | 為 top 10 core modules 加 smoke test |
-| P2 | `tests/services/` 基礎測試 | 為 top 5 services 加 smoke test |
-| P3 | plugin system tests | 已完成 (30 tests) |
-| P4 | handler tests | 已完成 (7 tests) |
+| P1 | `tests/core/` 基礎測試 | ✅ 11 smoke tests (import + instantiation for top modules) |
+| P2 | `tests/services/` 基礎測試 | ✅ 4 smoke tests (ConnectionManager, MathVerifier, Vision, Tactile) |
+| P3 | plugin system tests | ✅ 已完成 (30 tests) |
+| P4 | handler tests | ✅ 已完成 (22 tests: 7+7+10) |
 
 ### P10-2: 文件補全 🟢 LOW
 
-| 文件 | 內容 |
-|------|------|
-| `docs/architecture/OVERVIEW.md` | 系統架構圖 + 服務依賴圖 |
-| `docs/development/SERVICE_CATALOG.md` | 所有服務/模組列表與狀態 |
-| `docs/development/STUB_TRACKING.md` | 所有 stub 位置與實作狀態 |
+| 文件 | 內容 | Status |
+|------|------|--------|
+| `docs/architecture/OVERVIEW.md` | 系統架構圖 + 服務依賴圖 | ✅ Created |
+| `docs/development/SERVICE_CATALOG.md` | 所有服務/模組列表與狀態 | ✅ Created |
+| `docs/development/STUB_TRACKING.md` | 所有 stub 位置與實作狀態 | ✅ Created |
 
 ---
 
@@ -151,9 +151,9 @@ Week 3-4: Phase 9 (Structural) — all progressed
   P9-2: ✅ Stub 批量實作 (20 EASY items — logging + standard returns)
   P9-3: 🟡 Partial — 12 numbers migrated (heartbeat 8 + action_executor 4), ~93 deferred
 
-Week 5: Phase 10 (Docs + Tests)
-  P10-1: Core smoke tests
-  P10-2: Architecture overview + service catalog
+Week 5: Phase 10 (Docs + Tests) — completed
+  P10-1: ✅ 15 smoke tests (11 core + 4 services)
+  P10-2: ✅ 3 docs created (OVERVIEW, SERVICE_CATALOG, STUB_TRACKING)
 ```
 
 ---
@@ -176,6 +176,6 @@ Week 5: Phase 10 (Docs + Tests)
   └── 🟡 P9-3: Magic number 續遷 (12 values migrated: heartbeat 8 + action_executor 4)
 
 ⬜ Phase 10: Docs & Tests
-  ├── ⬜ P10-1: 基礎測試覆蓋
-  └── ⬜ P10-2: 文件補全
+  ├── 🟡 P10-1: 基礎測試覆蓋 (15 smoke tests: 11 core + 4 services)
+  └── ✅ P10-2: 文件補全 (OVERVIEW.md + SERVICE_CATALOG.md + STUB_TRACKING.md)
 ```

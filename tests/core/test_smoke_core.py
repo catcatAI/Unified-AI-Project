@@ -1,0 +1,66 @@
+"""P10-1: Smoke tests for top core modules — verify importability."""
+
+
+def test_import_intent_registry():
+    from core.intent_registry import IntentRegistry
+    r = IntentRegistry()
+    assert r is not None
+
+
+def test_import_tiered_loader():
+    from core.system.config.tiered_loader import get_config
+    cfg = get_config("standard/behavior/thresholds")
+    assert cfg is not None
+
+
+def test_import_magic_numbers():
+    from core.system.config.magic_numbers import behavior_threshold, loop_sleep, timeout_value
+    assert behavior_threshold("nonexistent", 42) == 42
+    assert loop_sleep("nonexistent", 0.5) == 0.5
+    assert timeout_value("nonexistent", 99) == 99
+
+
+def test_import_module_manager_models():
+    from core.system.module_manager.models import ModuleDescriptor, ModuleInstance, ModuleStatus
+    assert ModuleStatus is not None
+
+
+def test_import_hook_registry():
+    from core.plugin.hook_registry import HookRegistry
+    r = HookRegistry()
+    assert r is not None
+
+
+def test_import_plugin_manager():
+    from core.plugin.plugin_manager import PluginManager
+    assert PluginManager is not None
+
+
+def test_import_message_logger_handler():
+    from core.plugin.handlers.message_logger import MessageLoggerHandler
+    h = MessageLoggerHandler()
+    assert h is not None
+
+
+def test_import_file_operation_handler():
+    from services.handlers.file_operation_handler import FileOperationHandler
+    h = FileOperationHandler()
+    assert h is not None
+
+
+def test_import_web_search_handler():
+    from services.handlers.web_search_handler import WebSearchHandler
+    h = WebSearchHandler()
+    assert h is not None
+
+
+def test_import_learning_handler():
+    from services.handlers.learning_handler import LearningHandler
+    h = LearningHandler()
+    assert h is not None
+
+
+def test_import_google_drive_handler():
+    from services.handlers.google_drive_handler import GoogleDriveHandler
+    h = GoogleDriveHandler()
+    assert h is not None
