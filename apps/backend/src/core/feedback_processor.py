@@ -31,6 +31,7 @@ from collections import deque
 import logging
 
 from core.system.config.async_io import async_json_dump, async_json_load
+from core.system.config.magic_numbers import behavior_feedback
 
 logger = logging.getLogger(__name__)
 
@@ -163,9 +164,11 @@ class FeedbackProcessor:
         self.feedback_loop_engine = feedback_loop_engine
 
         # Feedback tracking
+        self.recent_evaluations_max = int(behavior_feedback("recent_evaluations_maxlen", 1000))
+        self.learning_signals_max = int(behavior_feedback("learning_signals_maxlen", 500))
         self.feedback_history: Dict[str, FeedbackHistory] = {}
-        self.recent_evaluations: deque = deque(maxlen=1000)
-        self.learning_signals: deque = deque(maxlen=500)
+        self.recent_evaluations: deque = deque(maxlen=self.recent_evaluations_max)
+        self.learning_signals: deque = deque(maxlen=self.learning_signals_max)
         self.strategy_adjustments: List[StrategyAdjustment] = []
 
         # Processing state
@@ -174,9 +177,9 @@ class FeedbackProcessor:
         self._pending_feedback: asyncio.Queue = asyncio.Queue()
 
         # Thresholds
-        self.success_threshold = self.config.get("success_threshold", 0.7)
-        self.learning_trigger_threshold = self.config.get("learning_trigger_threshold", 0.5)
-        self.strategy_adjustment_threshold = self.config.get("strategy_adjustment_threshold", 0.3)
+        self.success_threshold = behavior_feedback("success_threshold", 0.7)
+        self.learning_trigger_threshold = behavior_feedback("learning_trigger_threshold", 0.5)
+        self.strategy_adjustment_threshold = behavior_feedback("strategy_adjustment_threshold", 0.3)
 
         # Callbacks
         self._learning_callbacks: List[Callable[[LearningSignal], None]] = []
@@ -228,8 +231,7 @@ class FeedbackProcessor:
         """Background processing loop"""
         while self._running:
             try:
-                # Get pending feedback (with timeout)
-                feedback = await asyncio.wait_for(self._pending_feedback.get(), timeout=1.0)
+                feedback = await asyncio.wait_for(self._pending_feedback.get(), timeout=behavior_feedback("processing_loop_timeout", 1.0))
 
                 # Process feedback
                 await self._process_single_feedback(feedback)
@@ -325,30 +327,28 @@ class FeedbackProcessor:
         # Success rate metric
         metrics[EvaluationMetric.SUCCESS_RATE] = 1.0 if success else 0.0
 
-        # Execution time metric (faster is better, up to a point)
-        if execution_time_ms < 100:  # < 100ms is excellent
+        exec_excellent = behavior_feedback("execution_time_excellent_ms", 100)
+        exec_good = behavior_feedback("execution_time_good_ms", 500)
+        exec_acceptable = behavior_feedback("execution_time_acceptable_ms", 1000)
+        if execution_time_ms < exec_excellent:
             metrics[EvaluationMetric.EXECUTION_TIME] = 1.0
-        elif execution_time_ms < 500:  # < 500ms is good
+        elif execution_time_ms < exec_good:
             metrics[EvaluationMetric.EXECUTION_TIME] = 0.8
-        elif execution_time_ms < 1000:  # < 1s is acceptable
+        elif execution_time_ms < exec_acceptable:
             metrics[EvaluationMetric.EXECUTION_TIME] = 0.6
         else:
             metrics[EvaluationMetric.EXECUTION_TIME] = 0.4
 
-        # User satisfaction (from feedback value)
         metrics[EvaluationMetric.USER_SATISFACTION] = feedback.value
 
-        # Context adequacy (simplified)
-        metrics[EvaluationMetric.CONTEXT_ADEQUACY] = 0.7
+        metrics[EvaluationMetric.CONTEXT_ADEQUACY] = behavior_feedback("context_adequacy_default", 0.7)
 
-        # Timeliness (based on feedback type)
         if feedback.feedback_type.value[0] == "即时反馈":
-            metrics[EvaluationMetric.TIMELINESS] = 1.0
+            metrics[EvaluationMetric.TIMELINESS] = behavior_feedback("timeliness_immediate", 1.0)
         else:
-            metrics[EvaluationMetric.TIMELINESS] = 0.7
+            metrics[EvaluationMetric.TIMELINESS] = behavior_feedback("timeliness_delayed", 0.7)
 
-        # Resource efficiency (placeholder)
-        metrics[EvaluationMetric.RESOURCE_EFFICIENCY] = 0.8
+        metrics[EvaluationMetric.RESOURCE_EFFICIENCY] = behavior_feedback("resource_efficiency_default", 0.8)
 
         return ActionEvaluation(
             action_id=action_id,
@@ -389,12 +389,13 @@ class FeedbackProcessor:
         if not evaluation:
             return None
 
-        # Determine signal type
-        if evaluation.success and evaluation.overall_score > 0.8:
+        pos_threshold = behavior_feedback("pos_reinforcement_threshold", 0.8)
+        error_threshold = behavior_feedback("error_recovery_threshold", 0.5)
+        if evaluation.success and evaluation.overall_score > pos_threshold:
             signal_type = LearningSignalType.POSITIVE_REINFORCEMENT
         elif not evaluation.success:
             signal_type = LearningSignalType.NEGATIVE_CORRECTION
-        elif evaluation.overall_score < 0.5:
+        elif evaluation.overall_score < error_threshold:
             signal_type = LearningSignalType.ERROR_RECOVERY
         else:
             signal_type = LearningSignalType.STRATEGY_OPTIMIZATION
@@ -471,24 +472,25 @@ class FeedbackProcessor:
         """Generate behavior strategy adjustment"""
         action_type = evaluation.action_type
 
-        # Get history for this action type
+        min_feedback = int(behavior_feedback("min_feedback_for_strategy", 3))
         history = self.feedback_history.get(action_type)
-        if not history or history.feedback_count < 3:
-            return None  # Not enough data
+        if not history or history.feedback_count < min_feedback:
+            return None
 
-        # Determine adjustment type
-        if history.average_score < 0.3:
+        replace_th = behavior_feedback("strategy_replace_threshold", 0.3)
+        modify_th = behavior_feedback("strategy_modify_threshold", 0.5)
+        if history.average_score < replace_th:
             adjustment_type = "replace"
-            adjustment_value = -0.5
-        elif history.average_score < 0.5:
+            adjustment_value = behavior_feedback("strategy_replace_value", -0.5)
+        elif history.average_score < modify_th:
             adjustment_type = "modify"
-            adjustment_value = -0.3
+            adjustment_value = behavior_feedback("strategy_modify_value", -0.3)
         elif evaluation.success:
             adjustment_type = "increase"
-            adjustment_value = 0.2
+            adjustment_value = behavior_feedback("strategy_increase_value", 0.2)
         else:
             adjustment_type = "decrease"
-            adjustment_value = -0.2
+            adjustment_value = behavior_feedback("strategy_decrease_value", -0.2)
 
         # Generate expected outcome
         if adjustment_type in ["increase", "modify"]:
@@ -535,7 +537,7 @@ class FeedbackProcessor:
                         "expected_outcome": adj.expected_outcome,
                         "timestamp": adj.timestamp.isoformat(),
                     }
-                    for adj in self.strategy_adjustments[-100:]  # Last 100
+                    for adj in self.strategy_adjustments[-int(behavior_feedback("strategy_adjustments_save_limit", 100)):]
                 ],
                 "metrics": self.processing_metrics,
                 "saved_at": datetime.now().isoformat(),
@@ -589,9 +591,10 @@ class FeedbackProcessor:
         """Get learning recommendations based on feedback history"""
         recommendations = []
 
-        # Find action types with low performance
+        min_fb = int(behavior_feedback("min_feedback_for_recommendation", 5))
+        high_priority_th = behavior_feedback("strategy_replace_threshold", 0.3)
         for action_type, history in self.feedback_history.items():
-            if history.feedback_count >= 5 and history.average_score < self.success_threshold:
+            if history.feedback_count >= min_fb and history.average_score < self.success_threshold:
                 recommendations.append(
                     {
                         "action_type": action_type,
@@ -599,7 +602,7 @@ class FeedbackProcessor:
                         "current_score": history.average_score,
                         "success_rate": history.success_count / history.feedback_count,
                         "recommendation": "review_and_improve",
-                        "priority": "high" if history.average_score < 0.3 else "medium",
+                        "priority": "high" if history.average_score < high_priority_th else "medium",
                     }
                 )
 
@@ -645,19 +648,19 @@ class FeedbackProcessor:
         }
 
     def _calculate_trend(self, scores: List[float]) -> str:
-        """Calculate trend from score history"""
-        if len(scores) < 10:
+        min_scores = int(behavior_feedback("min_scores_for_trend", 10))
+        if len(scores) < min_scores:
             return "insufficient_data"
 
-        # Compare first half to second half
         mid = len(scores) // 2
         first_half = sum(scores[:mid]) / mid
         second_half = sum(scores[mid:]) / (len(scores) - mid)
 
+        trend_th = behavior_feedback("trend_improvement_threshold", 0.1)
         diff = second_half - first_half
-        if diff > 0.1:
+        if diff > trend_th:
             return "improving"
-        elif diff < -0.1:
+        elif diff < -trend_th:
             return "declining"
         else:
             return "stable"

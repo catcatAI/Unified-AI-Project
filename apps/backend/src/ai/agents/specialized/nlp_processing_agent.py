@@ -82,9 +82,24 @@ class NLPProcessingAgent(BaseAgent):
         text = payload.get("parameters", {}).get("text", "")
         if not text:
             return {"summary": "", "error": "No text"}
-        return {"stub": True, "message": "Summarization not yet implemented (truncation fallback)", "summary": text[:100] + "...", "original_length": len(text)}
+        summary = text[:200] + "..." if len(text) > 200 else text
+        return {"summary": summary, "original_length": len(text), "method": "truncation"}
 
     async def _handle_sentiment(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
-        return {"stub": True, "message": "Sentiment analysis not yet implemented", "sentiment": "neutral", "score": 0.5}
+        text = payload.get("parameters", {}).get("text", "")
+        if not text:
+            return {"sentiment": "neutral", "score": 0.5, "error": "No text"}
+        positive_words = {"good", "great", "excellent", "happy", "wonderful", "love", "amazing", "fantastic", "positive", "beautiful", "nice"}
+        negative_words = {"bad", "terrible", "awful", "hate", "horrible", "ugly", "worst", "poor", "negative", "sad", "angry"}
+        words = set(text.lower().split())
+        pos_count = len(words & positive_words)
+        neg_count = len(words & negative_words)
+        total = pos_count + neg_count
+        if total == 0:
+            sentiment, score = "neutral", 0.5
+        else:
+            score = pos_count / total
+            sentiment = "positive" if score > 0.6 else "negative" if score < 0.4 else "neutral"
+        return {"sentiment": sentiment, "score": round(score, 3), "method": "keyword"}

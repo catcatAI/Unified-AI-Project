@@ -72,4 +72,23 @@ class VisionProcessingAgent(BaseAgent):
         if not image_data:
             return {"error": "No image data"}
 
-        return {"stub": True, "message": "Vision processing not yet implemented", "predicted_category": "unknown", "confidence": 0.0}
+        if Image is None:
+            return {"predicted_category": "unknown", "confidence": 0.0, "error": "PIL not available"}
+
+        try:
+            raw = base64.b64decode(image_data)
+            img = Image.open(io.BytesIO(raw))
+            width, height = img.size
+            mode = img.mode
+            return {
+                "predicted_category": "unknown",
+                "confidence": 0.0,
+                "width": width,
+                "height": height,
+                "mode": mode,
+                "format": img.format,
+                "info": "Image loaded. Real classification requires a model (e.g. torchvision).",
+            }
+        except Exception as e:
+            logger.warning("Image processing failed: %s", e)
+            return {"predicted_category": "unknown", "confidence": 0.0, "error": str(e)}

@@ -21,6 +21,7 @@ from typing import Dict, Any, List, Optional
 
 from ai.agents.base.base_agent import BaseAgent
 from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from core.tools.web_search_tool import WebSearchTool
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class WebSearchAgent(BaseAgent):
             }
         ]
         super().__init__(agent_id=agent_id, capabilities=capabilities, agent_name="WebSearchAgent")
+        self._tool = WebSearchTool()
 
         # Register handlers
         self.register_task_handler(f"{agent_id}_web_search_v1.0", self._handle_web_search)
@@ -57,4 +59,12 @@ class WebSearchAgent(BaseAgent):
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
         params = payload.get("parameters", {})
-        return {"stub": True, "message": "Web search not yet implemented", "results": [], "query": params.get("query", ""), "source": "mock_search"}
+        query = params.get("query", "")
+        if not query:
+            return {"error": "No query provided", "results": []}
+        try:
+            results = await asyncio.to_thread(self._tool.search, query)
+            return {"results": results, "query": query, "source": "web_search", "count": len(results)}
+        except Exception as e:
+            logger.warning("Web search failed: %s", e)
+            return {"error": str(e), "query": query, "results": []}

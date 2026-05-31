@@ -25,3 +25,31 @@ allocation:
   policy_threshold_low: 0.3
   policy_threshold_medium: 0.6
   policy_threshold_high: 0.7
+
+feedback:
+  success_threshold: 0.7
+  learning_trigger_threshold: 0.5
+  strategy_adjustment_threshold: 0.3
+  processing_loop_timeout: 1.0
+  execution_time_excellent_ms: 100
+  execution_time_good_ms: 500
+  execution_time_acceptable_ms: 1000
+  context_adequacy_default: 0.7
+  timeliness_immediate: 1.0
+  timeliness_delayed: 0.7
+  resource_efficiency_default: 0.8
+  pos_reinforcement_threshold: 0.8
+  error_recovery_threshold: 0.5
+  strategy_replace_threshold: 0.3
+  strategy_modify_threshold: 0.5
+  strategy_increase_value: 0.2
+  strategy_decrease_value: -0.2
+  strategy_modify_value: -0.3
+  strategy_replace_value: -0.5
+  min_feedback_for_strategy: 3
+  min_feedback_for_recommendation: 5
+  min_scores_for_trend: 10
+  trend_improvement_threshold: 0.1
+  recent_evaluations_maxlen: 1000
+  learning_signals_maxlen: 500
+  strategy_adjustments_save_limit: 100

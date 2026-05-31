@@ -67,20 +67,62 @@ class AtlassianBridge:
         await self.close()
 
     def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
-        # This should load from self.config, returning a placeholder
-        return {}
+        cfgs: Dict[str, EndpointConfig] = {}
+        for service_name, svc_cfg in self.config.items():
+            if not isinstance(svc_cfg, dict):
+                continue
+            primary = svc_cfg.get("url", "") or svc_cfg.get("primary_url", "")
+            backups = svc_cfg.get("backup_urls", [])
+            timeout = svc_cfg.get("timeout", 30.0)
+            max_retries = svc_cfg.get("max_retries", 3)
+            retry_delay = svc_cfg.get("retry_delay", 1.0)
+            health_interval = svc_cfg.get("health_check_interval", 60)
+            cfgs[service_name] = EndpointConfig(
+                primary_url=str(primary),
+                backup_urls=list(backups) if isinstance(backups, list) else [],
+                timeout=float(timeout),
+                max_retries=int(max_retries),
+                retry_delay=float(retry_delay),
+                health_check_interval=int(health_interval),
+            )
+        return cfgs
 
     async def _make_request_with_fallback(
         self, service: str, method: str, endpoint: str, **kwargs
     ) -> Dict[str, Any]:
-        logger.warning("SKELETON: _make_request_with_fallback called, returning empty dict.", exc_info=True)
-        return {}
+        if service not in self.endpoints:
+            logger.warning("No endpoint config for service '%s'", service)
+            return {"error": f"No endpoint config for service '{service}'"}
+        ep = self.endpoints[service]
+        urls = [ep.primary_url] + ep.backup_urls
+        last_error = None
+        for url in urls:
+            full_url = f"{url.rstrip('/')}/{endpoint.lstrip('/')}"
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.request(method, full_url, timeout=aiohttp.ClientTimeout(total=ep.timeout), **kwargs) as resp:
+                        data = await resp.json()
+                        return {"success": True, "data": data, "url": full_url}
+            except Exception as e:
+                logger.warning("Request to %s failed: %s", full_url, e)
+                last_error = str(e)
+        return {"success": False, "error": last_error}
 
     async def create_confluence_page(
         self, space_key: str, title: str, content: str, parent_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        logger.warning("SKELETON: create_confluence_page called, returning empty dict.", exc_info=True)
-        return {}
+        body = {
+            "type": "page",
+            "title": title,
+            "space": {"key": space_key},
+            "body": {"storage": {"value": content, "representation": "storage"}},
+        }
+        if parent_id:
+            body["ancestors"] = [{"id": parent_id}]
+        result = await self._make_request_with_fallback(
+            "confluence", "POST", "rest/api/content", json=body
+        )
+        return result
 
     async def update_confluence_page(
         self, page_id: str, title: str, content: str, version: Optional[int] = None

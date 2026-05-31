@@ -115,11 +115,32 @@ class EnhancedRovoDevConnector:
         self.authenticated = True  # Mock stub
 
     async def _make_request_with_retry(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
-        logger.warning(
-            f"SKELETON: _make_request_with_retry for {method} {url}, returning empty dict."
-            , exc_info=True
-        )
-        return {}
+        if self.session is None or (hasattr(self.session, 'closed') and self.session.closed):
+            self.session = aiohttp.ClientSession()
+        if not self.authenticated:
+            await self._authenticate()
+        last_error = None
+        for attempt in range(1, self.retry_config.max_retries + 1):
+            try:
+                async with self.semaphore:
+                    async with self.session.request(
+                        method, url, timeout=aiohttp.ClientTimeout(total=self.retry_config.max_delay), **kwargs
+                    ) as resp:
+                        if resp.status in self.retry_config.retry_on_status and attempt < self.retry_config.max_retries:
+                            delay = self.retry_config.base_delay * (self.retry_config.backoff_factor ** (attempt - 1))
+                            logger.info("Retry %d/%d for %s %s (status %d), waiting %.1fs", attempt, self.retry_config.max_retries, method, url, resp.status, delay)
+                            await asyncio.sleep(min(delay, self.retry_config.max_delay))
+                            continue
+                        resp.raise_for_status()
+                        data = await resp.json()
+                        return {"success": True, "data": data, "status": resp.status}
+            except Exception as e:
+                last_error = str(e)
+                if attempt < self.retry_config.max_retries:
+                    delay = self.retry_config.base_delay * (self.retry_config.backoff_factor ** (attempt - 1))
+                    logger.warning("Request %s %s failed (attempt %d/%d): %s, retrying in %.1fs", method, url, attempt, self.retry_config.max_retries, last_error, delay)
+                    await asyncio.sleep(min(delay, self.retry_config.max_delay))
+        return {"success": False, "error": last_error}
 
     async def get_user_info(self) -> Dict[str, Any]:
         return await self._make_request_with_retry("GET", "/myself")

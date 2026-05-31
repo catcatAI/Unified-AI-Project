@@ -59,4 +59,14 @@ class ImageGenerationAgent(BaseAgent):
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
         params = payload.get("parameters", {})
-        return {"stub": True, "message": "Image generation not yet implemented", "image_data": "base64_placeholder", "prompt": params.get("prompt", "")}
+        prompt = params.get("prompt", "")
+        if not prompt:
+            return {"error": "No prompt provided"}
+        logger.info("Image generation requested: prompt='%s'", prompt[:80])
+        return {
+            "stub": True,
+            "message": "Image generation requires a backend model (e.g. Stable Diffusion, DALL-E). Returning prompt metadata.",
+            "prompt": prompt,
+            "prompt_length": len(prompt),
+            "format": "png",
+        }

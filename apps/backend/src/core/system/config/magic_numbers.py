@@ -35,6 +35,12 @@ def behavior_threshold(key: str, default: Any = None) -> Any:
     return _nested_get(cfg, f"behavior.triggers.{key}", default)
 
 
+def behavior_feedback(key: str, default: Any = None) -> Any:
+    """Get a feedback-related threshold from thresholds config (behavior.feedback.*)."""
+    cfg = _get_tiered_config("standard/behavior/thresholds")
+    return _nested_get(cfg, f"feedback.{key}", default)
+
+
 # ── Timing / sleep durations ──────────────────────────────────────────
 
 def timing_value(dotted_key: str, default: Any = None) -> Any:
