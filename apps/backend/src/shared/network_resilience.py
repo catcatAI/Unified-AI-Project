@@ -58,7 +58,7 @@ class RetryPolicy:
                     logger.error(f"Non-retryable error during {func.__name__}: {e}", exc_info=True)
                     raise
 
-            logger.error(f"Max retries exceeded for {func.__name__}.", exc_info=True)
+            logger.error(f"Max retries exceeded for {func.__name__}.")
             raise NetworkError(
                 f"Operation failed after {self.max_attempts} attempts. Last error: {last_err}"
             )
@@ -125,7 +125,6 @@ class CircuitBreaker:
             self.state = "OPEN"
             self.logger.warning(
                 f"Circuit Breaker transitioned to OPEN after {self.failures} failures."
-                , exc_info=True
             )
 
 

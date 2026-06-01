@@ -234,7 +234,7 @@ class ChatService:
             
             if response.error:
                 # 失敗時嘗試使用 NeuroBlender 降級
-                logger.warning(f"LLM Error, falling back to NeuroBlender: {response.error}", exc_info=True)
+                logger.warning(f"LLM Error, falling back to NeuroBlender: {response.error}")
                 return await self._try_neuro_fallback(message, bio_state)
                 
             return response.text

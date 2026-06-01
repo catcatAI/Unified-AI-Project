@@ -1,5 +1,9 @@
 """
-AI Editor Service
+AI Editor Service — DEPRECATED
+
+No production imports. Only consumed by self-referencing test(s).
+Schedule removal after test coverage is migrated.
+See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P8-2
 
 This service provides data processing and transformation capabilities for the AI editor.
 It integrates with the AI Virtual Input Service and Sandbox Executor to provide a complete
@@ -178,7 +182,7 @@ class AIEditorService:
 
     def get_processed_data_from_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
         if not self.memory_manager:
-            logger.warning("Memory manager not available", exc_info=True)
+            logger.warning("Memory manager not available")
             return None
         return self.memory_manager.recall_gist(memory_id)
 

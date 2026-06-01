@@ -306,7 +306,7 @@ class AngelaConfigManager:
         }
         handler = handler_map.get(event_type)
         if not handler:
-            logger.warning(f"[Learning] Unknown event type: {event_type}", exc_info=True)
+            logger.warning(f"[Learning] Unknown event type: {event_type}")
             return False
         try:
             return handler(data)

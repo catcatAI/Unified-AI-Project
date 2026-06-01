@@ -45,7 +45,7 @@
 | 1 | `services/ai_editor.py` | `AIEditorService`, `DataProcessor`, `SandboxExecutor`, `HAMMemoryManager` | **❌ ORPHANED** | AI Editor 生態系 — 3 個檔案互相依賴但完全未接入 (僅 tests import) |
 | 2 | `services/ai_editor_config.py` | `AIEditorConfig`, `get_config()` | **❌ ORPHANED** | 同上生態系，0 production import |
 | 3 | `services/ai_virtual_input_service.py` | `AIVirtualInputService` | **❌ ORPHANED** | 僅被 #1 引用 (同為 orphaned) |
-| 4 | `services/brain_bridge_service.py` | `BrainBridgeService` | **❌ ORPHANED** | 僅 scripts/ 引用，非 production path |
+| 4 | `services/brain_bridge_service.py` | `BrainBridgeService` | **✅ ACTIVE** | 2 consumers (verify_behavioral_impact.py, check_logging.py) — KEEP |
 | 5 | `services/os_context_service.py` | `OSContextService` | **❌ ORPHANED** | 0 production import |
 | 6 | `services/angela_types.py` | TypeDefs (TypedDicts) | **❌ ORPHANED** | 0 production import |
 | 7 | `services/api_models.py` | Re-export from `models.api_models` | **❌ ORPHANED** | Dead re-export shim |
@@ -54,7 +54,7 @@
 - `AtlassianCLIBridge` (atlassian_api.py) — ✅ 已 wired in `main_api_server.py:298`
 - `hot_reload_service.py` — ✅ 已 wired in `wiring.py:47`
 
-**推薦策略**: 全部 7 個檔案加 `@deprecated` header 並排入移除計畫。
+**推薦策略**: ✅ 已執行 — 5 個 orphaned 檔案已加 DEPRECATED header (ai_editor, ai_editor_config, ai_virtual_input_service, os_context_service, angela_types)。brain_bridge_service.py 保留 (有 active consumers)。models/api_models.py 保留 (package 結構的一部分)。
 
 #### P8-2b: 清理 deprecated `agents/` 套件
 - 目錄: `agents/` (legacy 4 檔 + examples 1 檔)

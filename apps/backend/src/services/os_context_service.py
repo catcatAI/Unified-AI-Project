@@ -1,3 +1,10 @@
+"""
+OS Context Service — DEPRECATED
+
+Zero imports anywhere (production + tests). No consumers.
+See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P8-2
+"""
+
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 class OSContextService:

@@ -990,7 +990,6 @@ class HSPConnector:
             if not raw_result:
                 self.logger.warning(
                     f"Message {correlation_id} raw publish failed (e.g. target not found). Skipping ACK wait."
-                    , exc_info=True
                 )
                 self._cache_message(message_id, False)
                 return False

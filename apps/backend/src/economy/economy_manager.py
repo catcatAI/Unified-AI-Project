@@ -68,7 +68,6 @@ class EconomyManager:
         logger.warning(
             "DEPRECATED: process_transaction() is deprecated. "
             "Use add_transaction(user_id, amount, description) instead."
-            , exc_info=True
         )
 
         # Extract parameters from transaction_data
@@ -82,7 +81,7 @@ class EconomyManager:
     def purchase_item(self, user_id: str, item_id: str) -> Dict[str, Any]:
         """Allows Angela to purchase an item from the registry."""
         if item_id not in self.item_registry:
-            logger.error(f"Purchase failed: Item '{item_id}' not found in registry.", exc_info=True)
+            logger.error(f"Purchase failed: Item '{item_id}' not found in registry.")
             return {"success": False, "reason": "Item not found"}
 
         item = self.item_registry[item_id]
@@ -92,7 +91,6 @@ class EconomyManager:
         if current_balance < price:
             logger.warning(
                 f"Purchase failed for {user_id}: Insufficient funds ({current_balance} < {price})"
-                , exc_info=True
             )
             return {"success": False, "reason": "Insufficient funds"}
 
@@ -136,13 +134,12 @@ class EconomyManager:
             if not (0.0 <= tax_rate <= 1.0):
                 logger.error(
                     f"Invalid transaction_tax_rate: {tax_rate}. Must be between 0.0 and 1.0."
-                    , exc_info=True
                 )
                 return
         if "daily_coin_allowance" in new_rules:
             allowance = new_rules["daily_coin_allowance"]
             if not (allowance >= 0.0):
-                logger.error(f"Invalid daily_coin_allowance: {allowance}. Must be non-negative.", exc_info=True)
+                logger.error(f"Invalid daily_coin_allowance: {allowance}. Must be non-negative.")
                 return
 
         self.rules.update(new_rules)
@@ -162,11 +159,11 @@ class EconomyManager:
         """
         try:
             if not user_id:
-                logger.error("Transaction failed: Missing user_id", exc_info=True)
+                logger.error("Transaction failed: Missing user_id")
                 return False
 
             if amount == 0:
-                logger.warning("Transaction amount is zero, skipping", exc_info=True)
+                logger.warning("Transaction amount is zero, skipping")
                 return True
 
             # 獲取當前餘額
@@ -176,7 +173,6 @@ class EconomyManager:
             if amount < 0 and current_balance < abs(amount):
                 logger.warning(
                     f"Transaction failed for {user_id}. Insufficient funds. Current: {current_balance}, Attempted: {abs(amount)}"
-                    , exc_info=True
                 )
                 return False
 

@@ -119,6 +119,6 @@ if __name__ == "__main__":
     if recovered == genesis_secret:
         logger.info("✅ Recovery successful!")
     else:
-        logger.error("❌ Recovery failed!", exc_info=True)
+        logger.error("❌ Recovery failed!")
 
     logger.info("--- Test Complete ---")

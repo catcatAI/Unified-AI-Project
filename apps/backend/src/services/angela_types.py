@@ -1,3 +1,11 @@
+"""
+ANGELA Types — DEPRECATED
+
+Zero imports anywhere (production + tests). ai_virtual_input_service.py defines
+its own VirtualInputElementDescription rather than importing from here.
+See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P8-2
+"""
+
 from typing import TypedDict, Required, Optional, List, Dict, Any, Literal
 import logging
 

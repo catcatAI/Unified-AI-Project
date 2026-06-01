@@ -1,5 +1,8 @@
 """
-AI Virtual Input Service (AVIS)
+AI Virtual Input Service (AVIS) — DEPRECATED
+
+No production imports. Transitively orphaned (only imported by ai_editor.py, itself orphaned).
+See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P8-2
 
 This service provides a simulated environment for the AI to interact with
 graphical user interfaces (GUIs) by sending virtual mouse and keyboard commands.

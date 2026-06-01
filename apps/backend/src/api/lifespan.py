@@ -170,9 +170,9 @@ def _validate_environment_variables():
             missing_keys.append(key)
     if missing_keys:
         if len(missing_keys) == 3:
-            logger.warning("All Angela keys missing — running in demo mode", exc_info=True)
+            logger.warning("All Angela keys missing — running in demo mode")
         else:
-            logger.warning(f"Missing keys: {', '.join(missing_keys)} — some features may be limited", exc_info=True)
+            logger.warning(f"Missing keys: {', '.join(missing_keys)} — some features may be limited")
 
 
 @asynccontextmanager

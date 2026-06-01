@@ -124,7 +124,7 @@ class DependencyManager:
 
         # OS-specific check for tensorflow
         if dep_name == "tensorflow" and os.name == "nt":
-            logger.warning("Skipping direct import of 'tensorflow' on Windows.", exc_info=True)
+            logger.warning("Skipping direct import of 'tensorflow' on Windows.")
             status.error = "Direct import skipped on Windows."
         else:
             try:
@@ -178,7 +178,7 @@ class DependencyManager:
                 self._dependencies[name] = DependencyStatus(name)
                 self._check_dependency_availability(name, dep_config)
             else:
-                logger.warning(f"Unknown dependency '{name}' requested", exc_info=True)
+                logger.warning(f"Unknown dependency '{name}' requested")
                 return None
 
         status = self._dependencies[name]
@@ -194,7 +194,7 @@ class DependencyManager:
             if dep_config:
                 self._check_dependency_availability(name, dep_config)
             else:
-                logger.error(f"Configuration for dependency '{name}' not found.", exc_info=True)
+                logger.error(f"Configuration for dependency '{name}' not found.")
                 status.error = "Configuration not found"
 
         if status.is_available:
@@ -206,10 +206,9 @@ class DependencyManager:
             if status.error:
                 logger.warning(
                     f"Dependency '{name}' and fallbacks unavailable. Reason: {status.error}"
-                    , exc_info=True
                 )
             else:
-                logger.warning(f"Dependency '{name}' and fallbacks unavailable.", exc_info=True)
+                logger.warning(f"Dependency '{name}' and fallbacks unavailable.")
             return None
 
     def is_available(self, name: str) -> bool:

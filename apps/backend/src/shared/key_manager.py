@@ -275,7 +275,7 @@ class UnifiedKeyManager:
             is_valid = signature == expected_signature
 
             if not is_valid:
-                logger.warning(f"Signature verification failed for state hash {state_hash}", exc_info=True)
+                logger.warning(f"Signature verification failed for state hash {state_hash}")
 
             return is_valid
         except Exception as e:  # broad exception acceptable: ensure verification errors return False, not crash
@@ -317,7 +317,7 @@ class UnifiedKeyManager:
         signature = binding.get("signature")
 
         if not state_hash or not signature:
-            logger.warning("Invalid binding record: missing state_hash or signature", exc_info=True)
+            logger.warning("Invalid binding record: missing state_hash or signature")
             return False
 
         return self.verify_signature_with_key_a(state_hash, signature)

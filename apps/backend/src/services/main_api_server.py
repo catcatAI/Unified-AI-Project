@@ -91,7 +91,7 @@ try:
         logger.info(f"Environment variables loaded from: {env_path}")
     else:
         if env_path:
-            logger.warning(f".env file not found at: {env_path}", exc_info=True)
+            logger.warning(f".env file not found at: {env_path}")
 except ImportError:
     logger.warning(
         "python-dotenv not installed, environment variables will not be loaded from .env file"

@@ -41,7 +41,6 @@ def ensure_transformers_compatibility():
         if not KERAS_AVAILABLE:
             logging.warning(
                 "Keras backend not available, some features of Transformers may be limited"
-                , exc_info=True
             )
 
         return True

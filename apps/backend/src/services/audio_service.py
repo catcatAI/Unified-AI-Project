@@ -300,7 +300,7 @@ class AudioService:
             return None
 
         if not EDGE_TTS_AVAILABLE:
-            logger.error("TTS Failed: edge-tts not installed. Cannot generate audio.", exc_info=True)
+            logger.error("TTS Failed: edge-tts not installed. Cannot generate audio.")
             return None
 
         logger.info(f"Audio Service (EdgeTTS): Synthesizing '{text[:30]}...'")

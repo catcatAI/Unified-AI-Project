@@ -511,6 +511,9 @@
 | MC-D7 | 修復 MASTER_CONSOLIDATED_PLAN.md 中D7自相矛盾 (0剩餘 vs 48%) | ✅ | 2026-05-31 |
 | P1.4 | 3個persistent stub代理改善(類型安全+日誌) | ✅ | 2026-05-31 |
 | P3.2 | 30個orphaned YAML key — 保留為參考, 非碼農錯誤 | 🟡 保留 | 2026-05-31 |
+| P8-2 | 5個孤兒服務加DEPRECATED header (ai_editor, ai_editor_config, ai_virtual_input_service, os_context_service, angela_types) | ✅ | 2026-06-01 |
+| P8-2 | MASTER_FINALIZATION_PLAN.md路徑修正 (brain_bridge_service標記ACTIVE) | ✅ | 2026-06-01 |
+| D7 | 刪除47個過期exc_info=True跨24個文件 (7個合法保留) | ✅ | 2026-06-01 |
 | P5.4 | 移動應用 android/ios 目錄 | ⬜ | — |
 | P2.1 | 為~230+未測試模組添加測試 | ⬜ | — |
 

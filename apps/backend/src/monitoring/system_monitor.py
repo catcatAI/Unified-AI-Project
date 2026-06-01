@@ -189,9 +189,9 @@ class SystemMonitor:
                     f"系统指标: CPU={metrics.cpu_percent:.1f}%, 内存={metrics.memory_percent:.1f}%"
                 )
                 if metrics.cpu_percent > 90:
-                    logger.warning(f"CPU使用率过高: {metrics.cpu_percent:.1f}%", exc_info=True)
+                    logger.warning(f"CPU使用率过高: {metrics.cpu_percent:.1f}%")
                 if metrics.memory_percent > 90:
-                    logger.warning(f"内存使用率过高: {metrics.memory_percent:.1f}%", exc_info=True)
+                    logger.warning(f"内存使用率过高: {metrics.memory_percent:.1f}%")
                 await asyncio.sleep(self.monitoring_interval)
             except Exception as e:  # broad exception acceptable: ensure monitoring loop continues even on collection errors
                 logger.error(f"监控过程中发生错误: {e}", exc_info=True)

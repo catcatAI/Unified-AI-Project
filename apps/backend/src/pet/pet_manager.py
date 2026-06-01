@@ -398,7 +398,7 @@ class PetManager:
         - 记录状态变更
         """
         if not self.economy_manager:
-            logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!", exc_info=True)
+            logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!")
             return
 
         logger.info(

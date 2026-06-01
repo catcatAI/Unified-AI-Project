@@ -213,7 +213,7 @@ class WaitingScheduler:
         提交並確保工作者線程活著（自動重啟如果死了）
         """
         if not self.is_alive():
-            logger.warning("[WaitingScheduler] Worker dead, restarting...", exc_info=True)
+            logger.warning("[WaitingScheduler] Worker dead, restarting...")
             self._start_worker()
 
         return self.submit(coro, timeout=timeout, label=label)

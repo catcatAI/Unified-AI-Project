@@ -727,7 +727,7 @@ if __name__ == "__main__":
             timestamp=datetime.now(),
         )
         await processor.process_feedback(failure_signal)
-        logger.error("   Processed failure feedback", exc_info=True)
+        logger.error("   Processed failure feedback")
 
         # Wait for processing
         await asyncio.sleep(0.5)

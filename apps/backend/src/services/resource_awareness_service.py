@@ -151,11 +151,11 @@ if __name__ == "__main__":
         disk_conf = service_default.get_simulated_disk_config()
         if disk_conf:
             logger.info(f"  Disk Space (GB): {disk_conf.space_gb}")
-            logger.warning(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}", exc_info=True)
+            logger.warning(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}")
         else:
             logger.info("  No disk config found in default profile.")
     else:
-        logger.error("  Failed to load default profile.", exc_info=True)
+        logger.error("  Failed to load default profile.")
 
     # Test with a non-existent config file path
     logger.info("\n2. Testing with non-existent config file:")
@@ -175,7 +175,6 @@ if __name__ == "__main__":
     else:
         logger.error(
             f"  Test failed or profile was unexpectedly loaded: {service_non_existent.profile}"
-            , exc_info=True
         )
 
     # Test with a malformed YAML file (requires creating one temporarily)
@@ -197,7 +196,6 @@ if __name__ == "__main__":
     else:
         logger.error(
             f"  Test failed for malformed YAML or profile was unexpectedly loaded: {service_malformed.profile}"
-            , exc_info=True
         )
 
     if os.path.exists(malformed_yaml_path):
