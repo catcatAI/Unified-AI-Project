@@ -5,6 +5,8 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
+from core.system.config.magic_numbers import loop_sleep
+
 # Core AI Component Imports
 from ai.compression.alpha_deep_model import (
     AlphaDeepModel,
@@ -178,7 +180,7 @@ class UnifiedControlCenter:
             # If cognitive gap is too high, Angela is 'overwhelmed'
             gap = metrics.get("current_metrics", {}).get("cognitive_gap", 0.0)
             if gap > 0.8:
-                await asyncio.sleep(2.0)  # Cognitive delay
+                await asyncio.sleep(loop_sleep("ucc_cognitive_delay", 2.0))  # Cognitive delay
                 logger.warning(f"Angela is overwhelmed (Gap: {gap:.2f}), delaying task.", exc_info=True)
 
         try:
@@ -324,7 +326,7 @@ class UnifiedControlCenter:
             else:
                 output = "HSP Dispatch failed or mocked."
                 # Fallback to local simulation if HSP fails or not configured
-                await asyncio.sleep(0.05)
+                await asyncio.sleep(loop_sleep("ucc_fast_poll", 0.05))
 
             return {
                 "success": success,
@@ -351,7 +353,7 @@ class UnifiedControlCenter:
                 break
             except Exception as e:  # broad exception acceptable: worker loop must survive any task error
                 logger.error(f"Worker [{worker_id}] encountered error: {e}", exc_info=True)
-                await asyncio.sleep(1)  # Prevent tight loop on persistent errors
+                await asyncio.sleep(loop_sleep("ucc_error_backoff", 1))  # Prevent tight loop on persistent errors
 
     async def submit_task(self, task: Dict[str, Any]) -> str:
         """提交任務到隊列並立即返回任務 ID"""

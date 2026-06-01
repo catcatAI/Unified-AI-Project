@@ -9,6 +9,8 @@ import time
 import logging
 import random
 import multiprocessing as mp
+
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 from multiprocessing import Process, Queue, Event
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
@@ -267,7 +269,7 @@ class LocalClusterManager:
 
         # 模式3：默認模擬執行（向後兼容）
         logger.debug(f"[Worker-{worker_id}] Using default simulator for {task.task_id}")
-        time.sleep(0.1)  # 模擬工作負載
+        time.sleep(loop_sleep("cluster_work_sim", 0.1))  # 模擬工作負載
 
         return {
             "status": "success",
@@ -318,7 +320,7 @@ class LocalClusterManager:
         logger.debug(f"[Worker-{worker_id}] Training model {model_id} for {epochs} epochs")
 
         # 模擬訓練
-        time.sleep(0.2)  # 訓練通常需要更長時間
+        time.sleep(loop_sleep("cluster_train_sim", 0.2))  # 訓練通常需要更長時間
 
         return {
             "status": "success",
@@ -344,7 +346,7 @@ class LocalClusterManager:
         logger.debug(f"[Worker-{worker_id}] Running inference on {model_id}")
 
         # 模擬推理
-        time.sleep(0.05)
+        time.sleep(loop_sleep("cluster_fast_sim", 0.05))
 
         return {
             "status": "success",
@@ -403,7 +405,7 @@ class LocalClusterManager:
         # 等待所有 Worker 進程結束
         for worker_info in self.workers.values():
             if worker_info.process:
-                worker_info.process.join(timeout=5.0)
+                worker_info.process.join(timeout=timeout_value("cluster_worker_join", 5.0))
                 if worker_info.process.is_alive():
                     logger.warning(f"Force terminating worker {worker_info.worker_id}", exc_info=True)
                     worker_info.process.terminate()
@@ -444,7 +446,7 @@ if __name__ == "__main__":
 
         # 收集結果
         for _ in range(3):
-            result = cluster.get_result(timeout=5.0)
+            result = cluster.get_result(timeout=timeout_value("cluster_result", 5.0))
             if result:
                 logger.info(
                     f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})"
@@ -490,7 +492,7 @@ if __name__ == "__main__":
 
         # 收集結果
         for _ in range(3):
-            result = cluster.get_result(timeout=5.0)
+            result = cluster.get_result(timeout=timeout_value("cluster_result", 5.0))
             if result:
                 logger.info(
                     f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})"

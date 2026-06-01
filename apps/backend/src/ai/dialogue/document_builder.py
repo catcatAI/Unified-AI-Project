@@ -26,6 +26,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional, Callable, TYPE_CHECKING
 
+from core.system.config.magic_numbers import batch_value, llm_param
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -102,7 +104,7 @@ class DocumentBuilder:
             results = await self.memory_manager.query_core_memory(
                 keywords=["trpg_codex", query],
                 data_type_filter="trpg_codex",
-                limit=10,
+                limit=int(batch_value("document_context", 10)),
             )
             codex_data = {}
             for m in results:
@@ -346,7 +348,7 @@ class DocumentBuilder:
                     self.llm_generate(
                         prompt=user_prompt,
                         max_tokens=self.tokens_per_segment,
-                        temperature=0.75,
+                        temperature=llm_param("document_builder_temp", 0.75),
                         system_prompt=system_prompt,
                     ),
                     timeout=self._segment_timeout_seconds,

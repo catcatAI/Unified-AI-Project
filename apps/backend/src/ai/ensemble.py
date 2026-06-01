@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, AsyncGenerator
 from datetime import datetime
 
 from core.interfaces.protocols import ChatMessage, LLMResponse
+from core.system.config.magic_numbers import llm_param
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +250,7 @@ class ModelEnsemble:
         """Query a single model with error handling"""
         try:
             response = await self.llm_service.chat_completion(
-                messages=messages, model_id=model_id, max_tokens=2048
+                messages=messages, model_id=model_id, max_tokens=int(llm_param("ensemble_max_tokens", 2048))
             )
             return response
         except Exception as e:  # broad exception acceptable: model query wraps all API and network failures

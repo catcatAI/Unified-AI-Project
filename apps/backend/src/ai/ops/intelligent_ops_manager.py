@@ -5,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Dict
 from dataclasses import dataclass, asdict
 
+from core.system.config.magic_numbers import batch_value, loop_sleep
+
 from .ai_ops_engine import AIOpsEngine
 from .predictive_maintenance import PredictiveMaintenanceEngine
 from .performance_optimizer import PerformanceOptimizer
@@ -112,7 +114,7 @@ class IntelligentOpsManager:
         # 配置参数
         self.insight_retention_days = self.config.get("insight_retention_days", 30)
         self.auto_healing_enabled = self.config.get("auto_healing_enabled", True)
-        self.monitoring_interval = self.config.get("monitoring_interval", 300)  # 秒
+        self.monitoring_interval = self.config.get("monitoring_interval", loop_sleep("ops_monitor", 300.0))  # 秒
         self.auto_action_threshold = self.config.get("auto_action_threshold", 0.8)
 
         logger.info("智能运维管理器初始化完成")
@@ -507,7 +509,7 @@ class IntelligentOpsManager:
             logger.info(f"执行异常恢复: {insight.insight_id}")
 
             # 模拟恢复操作
-            await asyncio.sleep(1)
+            await asyncio.sleep(loop_sleep("ops_tick", 1.0))
 
             return True
         except Exception as e:  # broad exception acceptable: recovery failures return False to signal failure
@@ -786,7 +788,7 @@ class IntelligentOpsManager:
         """定期清理洞察"""
         while True:
             try:
-                await asyncio.sleep(86400)  # 每天执行一次
+                await asyncio.sleep(loop_sleep("ops_daily", 86400.0))  # 每天执行一次
 
                 # 清理过期洞察
                 cutoff_time = datetime.now(timezone.utc) - timedelta(
@@ -841,7 +843,7 @@ class IntelligentOpsManager:
             system_health = await self._analyze_system_health()
 
             # 最近洞察
-            recent_insights = await self.get_insights(limit=10)
+            recent_insights = await self.get_insights(limit=int(batch_value("ops_recent_insights", 10)))
 
             # 活跃告警
             active_alerts = len(

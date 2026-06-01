@@ -18,6 +18,8 @@ from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
 
+from core.system.config.magic_numbers import batch_value, llm_param
+
 logger = logging.getLogger(__name__)
 
 # =============================================================================
@@ -50,9 +52,9 @@ class AutoDecision:
     model: str = ""
     time_budget_ms: int = 30000
     use_thinking: bool = False
-    temperature: float = 0.7
-    max_tokens: int = 512
-    context_window: int = 4096
+    temperature: float = llm_param("neuro_selector_temp", 0.7)
+    max_tokens: int = int(llm_param("neuro_selector_tokens", 512))
+    context_window: int = int(batch_value("neuro_context", 4096))
     reason: str = ""
     hw_score: float = 0.0
     load_factor: float = 1.0
@@ -74,7 +76,7 @@ class TaskBudget:
     demand_score: float = 0.0
     needs_reasoning: bool = False
     min_quality: bool = False
-    preferred_context_window: int = 4096
+    preferred_context_window: int = int(batch_value("neuro_preferred_context", 4096))
 
 
 # =============================================================================
@@ -330,8 +332,8 @@ class StateInterpreter:
         decision = AutoDecision(
             time_budget_ms=budget,
             use_thinking=task.needs_reasoning,
-            temperature=0.7,
-            max_tokens=512,
+            temperature=llm_param("neuro_selector_temp", 0.7),
+            max_tokens=int(llm_param("neuro_selector_tokens", 512)),
             context_window=task.preferred_context_window,
         )
 
@@ -345,12 +347,12 @@ class StateInterpreter:
         # epsilon.precision high → force thinking, lower temperature
         if precision > 0.7:
             decision.use_thinking = True
-            decision.temperature = 0.3
+            decision.temperature = llm_param("neuro_precise_temp", 0.3)
 
         # delta.happiness low → shorter, comfort-oriented
         if happiness < 0.35:
-            decision.max_tokens = 256
-            decision.temperature = 0.8
+            decision.max_tokens = int(llm_param("neuro_precise_tokens", 256))
+            decision.temperature = llm_param("neuro_comfort_temp", 0.8)
             decision.reason = "low_happiness_comfort_mode"
 
         # alpha.energy low → reduce resource consumption
@@ -366,7 +368,7 @@ class StateInterpreter:
         # theta.negativity high → careful, precise
         if negativity > 0.6:
             decision.use_thinking = True
-            decision.temperature = 0.4
+            decision.temperature = llm_param("neuro_careful_temp", 0.4)
 
         # eta.success_rate low → be conservative
         if success_rate < 0.6:

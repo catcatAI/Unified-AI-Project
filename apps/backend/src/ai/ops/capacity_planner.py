@@ -9,6 +9,8 @@ import redis
 import json
 import asyncio
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 # Redis可用性检查
@@ -728,7 +730,7 @@ class CapacityPlanner:
         """定期容量检查"""
         while True:
             try:
-                await asyncio.sleep(3600)  # 每小时检查一次
+                await asyncio.sleep(loop_sleep("capacity_check", 3600.0))  # 每小时检查一次
 
                 # 检查即将执行的扩容计划
                 current_time = datetime.now(timezone.utc())
@@ -765,7 +767,7 @@ class CapacityPlanner:
             logger.info(f"执行扩容计划: {plan.plan_id}")
 
             # 模拟扩容延迟
-            await asyncio.sleep(2)
+            await asyncio.sleep(loop_sleep("capacity_retry", 2.0))
 
             # 记录执行结果
             execution_record = {

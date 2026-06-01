@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 from core.hsp.connector import HSPConnector
+from core.system.config.magic_numbers import llm_param
 from core.hsp.types import (
     HSPTaskRequestPayload,
     HSPTaskResultPayload,
@@ -137,8 +138,8 @@ class ProjectCoordinator:
     async def _llm_generate_async(
         self,
         prompt: str,
-        max_tokens: int = 512,
-        temperature: float = 0.7,
+        max_tokens: int = int(llm_param("coordinator_summary_tokens", 512)),
+        temperature: float = llm_param("coordinator_temp", 0.7),
         system_prompt: str = "",
     ) -> str:
         llm = await self._ensure_llm_service()
@@ -314,7 +315,7 @@ class ProjectCoordinator:
     async def _execute_llm_direct(self, params: Dict[str, Any]) -> Dict[str, Any]:
         prompt = params.get("prompt", params.get("query", str(params)))
         llm = await self._ensure_llm_service()
-        text = await llm.generate_text(prompt=prompt, max_tokens=512)
+        text = await llm.generate_text(prompt=prompt, max_tokens=int(llm_param("coordinator_direct_tokens", 512)))
         return {"text": text}
 
     def _substitute_dependencies(self, params: Dict[str, Any], results: Dict[int, Any]) -> Dict[str, Any]:
@@ -345,7 +346,7 @@ class ProjectCoordinator:
             )
 
         prompt = prompt_tmpl.format(capabilities=cap_str, user_query=user_query)
-        raw = await llm.generate_text(prompt=prompt, max_tokens=768, temperature=0.3)
+        raw = await llm.generate_text(prompt=prompt, max_tokens=int(llm_param("coordinator_decompose_tokens", 768)), temperature=llm_param("coordinator_decompose_temp", 0.3))
 
         if not raw:
             logger.warning("[ProjectCoordinator] Empty LLM response for decomposition", exc_info=True)
@@ -425,7 +426,7 @@ class ProjectCoordinator:
 
         results_str = json.dumps(results, ensure_ascii=False, indent=2)
         prompt = prompt_tmpl.format(original_query=original_query, results=results_str)
-        return await llm.generate_text(prompt=prompt, max_tokens=1024, temperature=0.5)
+        return await llm.generate_text(prompt=prompt, max_tokens=int(llm_param("coordinator_integrate_tokens", 1024)), temperature=llm_param("coordinator_integrate_temp", 0.5))
 
     def handle_task_result(
         self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope

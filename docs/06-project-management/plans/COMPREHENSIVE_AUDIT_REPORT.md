@@ -11,11 +11,11 @@
 
 | 維度 | 滿分定義 | 當前分數 |
 |------|---------|---------|
-| **完整性** | 所有功能、模組、配置、測試完整實現 | ~72% (+17%) |
-| **完美性** | 無stub、placeholder、pass、TODO、FIXME | ~50% (+10%) |
-| **全面性** | 覆蓋所有邊界條件、錯誤路徑、邊緣案例 | ~42% (+7%) |
-| **細緻度** | 類型提示、文檔字串、錯誤訊息、日誌完整 | ~65% (+5%) |
-| **穩定性** | 所有測試通過，無運行時崩潰風險 | ~62% (+12%) |
+| **完整性** | 所有功能、模組、配置、測試完整實現 | ~75% (+20%) |
+| **完美性** | 無stub、placeholder、pass、TODO、FIXME | ~52% (+12%) |
+| **全面性** | 覆蓋所有邊界條件、錯誤路徑、邊緣案例 | ~44% (+9%) |
+| **細緻度** | 類型提示、文檔字串、錯誤訊息、日誌完整 | ~66% (+6%) |
+| **穩定性** | 所有測試通過，無運行時崩潰風險 | ~65% (+15%) |
 | **快速性** | 性能測試存在，負載測試存在，無明顯瓶頸 | ~20% |
 | **清晰度** | 代碼可讀，命名一致，結構合理 | ~70% |
 | **有序度** | 文件組織、依賴管理、版本控制規範 | ~65% |
@@ -533,15 +533,12 @@
 | P2.2 | 效能測試修復 — test_stress.py 33+語法錯誤修復, 轉換為pytest-benchmark; test_benchmark.py +pytest裝飾器 | ✅ | 2026-06-01 |
 | P2.3 | E2E測試改善 — 2文件重寫 (共222行), @pytest.mark.e2e + @skip("Requires live server"), 結構化斷言 | ✅ | 2026-06-01 |
 | P5.4 | 移動應用 android/ios 目錄 | ⬜ 需原生構建環境 | — |
-| P2.1 | 為~230+未測試模組添加測試 (67個已完成: 57批1-4 + 10 mock-based: resource_awareness, brain_bridge, os_context, encryption, auth_middleware, web_search_tool, system_monitor, key_generator, key_validator, security_audit) | 🟡 67/230+ 完成 | 2026-06-01 |
-| P6-3 | 46 magic numbers遷移跨10 ai/文件 (agents/base, agent_manager, dynamic_agent_registry, agent_monitoring, user_monitor, proactive_interaction, memory_integration_loop, behavior_feedback_loop, ham_manager, execution_manager) + 82前一輪 | ✅ 128/~200 | 2026-06-01 |
-| Px6 | Legacy清理: 刪除ai/meta_formulas/死代碼(4文件) + 修復level5_asi_demo.py重複ASI類 | ✅ | 2026-06-01 |
+| P2.1 | 為~230+未測試模組添加測試 (77個已完成: 67批1-5 + 10批6: kinetic_validator, input_sensor, env_dynamics, digital_life_constants, bio_reflex_manager, evolution_engine, art_learning_workflow, webgl_bridge, gravity_calibration, card_types) | 🟡 77/230+ 完成 | 2026-06-01 |
+| P6-3 | 36 magic numbers遷移跨10 ai/文件 (neuro_auto_selector, project_coordinator, document_builder, unified_control_center, level5_asi_system, local_cluster_manager, intelligent_ops_manager, capacity_planner, service_discovery_module, ensemble) + 128前一輪 | ✅ 164/~200 | 2026-06-01 |
+| Px6 | Legacy清理: 刪除ai/meta_formulas/死代碼 + 修復level5_asi_demo.py重複ASI類 | ✅ | 2026-06-01 |
 | P2.1e | 10個mock-based測試 (security/tools/monitoring/services) | ✅ | 2026-06-01 |
-| P3.3e | AngelaConfigManager數據遷移 | ✅ | 2026-06-01 |
-| P2.1c | 15個新測試 (predictive_maintenance→event_loop_system) | ✅ | 2026-06-01 |
-| P2.1d | 15個新測試 (hot_reload_service→chain_validator) | ✅ | 2026-06-01 |
-| Px4 | CHANGELOG.md [7.5.0-dev] header添加 | ✅ | 2026-06-01 |
-| Px5 | Version修復: 6處不一致 (sync/metamorphosis/i18n docstrings, main.py, create-release.sh, MASTER doc +angela_config.yaml追蹤) | ✅ | 2026-06-01 |
+| P2.1f | 10個測試 (bio/kinetic+input, life/constants+reflex+evolution+env, engine/art_learning, hardware/webgl, card/gravity+types) | ✅ | 2026-06-01 |
+| P6-3批5 | 36 magic numbers (ai/response, dialogue, integration, level5, ops, service_discovery, ensemble) | ✅ | 2026-06-01 |
 
 ---
 

@@ -9,6 +9,8 @@ import uuid
 from typing import Any, Optional
 from datetime import datetime
 
+from core.system.config.magic_numbers import batch_value, loop_sleep
+
 # Assuming these are the correct import paths based on project structure
 from .alignment.reasoning_system import ReasoningSystem
 from .alignment.emotion_system import EmotionSystem
@@ -249,7 +251,7 @@ class Level5ASISystem:
             "enable_autonomous_alignment": True,
             "enable_distributed_computing": True,
             "enable_adversarial_testing": True,
-            "max_concurrent_agents": 10,
+            "max_concurrent_agents": int(batch_value("level5_concurrent_agents", 10)),
             "safety_threshold": 0.8,
         }
 
@@ -616,7 +618,7 @@ class Level5ASISystem:
             )
 
             await agent.handle_task_request(request, self.system_id, envelope)
-            await asyncio.sleep(1.0)  # Simulate processing time
+            await asyncio.sleep(loop_sleep("level5_process", 1.0))  # Simulate processing time
 
             return {
                 "status": "success",

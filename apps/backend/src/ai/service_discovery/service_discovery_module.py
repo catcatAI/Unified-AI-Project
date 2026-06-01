@@ -6,6 +6,7 @@ from typing import Dict, Optional, List, Tuple, Any
 
 from core.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 from ai.trust.trust_manager_module import TrustManager
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class ServiceDiscoveryModule:
             f"HSP ServiceDiscoveryModule initialized. Staleness threshold: {self.staleness_threshold_seconds} seconds."
         )
 
-    def start_cleanup_task(self, cleanup_interval_seconds: int = 60):
+    def start_cleanup_task(self, cleanup_interval_seconds: int = loop_sleep("service_cleanup", 60.0)):
         """Starts the periodic cleanup task in a background thread."""
         if self._cleanup_thread is None:
             self._stop_event.clear()
@@ -53,7 +54,7 @@ class ServiceDiscoveryModule:
         """Stops the periodic cleanup task."""
         if self._cleanup_thread is not None:
             self._stop_event.set()
-            self._cleanup_thread.join(timeout=5)
+            self._cleanup_thread.join(timeout=timeout_value("cleanup_thread_join", 5.0))
             self._cleanup_thread = None
             logger.info("ServiceDiscoveryModule cleanup task stopped.")
 
