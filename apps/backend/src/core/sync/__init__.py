@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Sync Module
+Angela AI 7.5.0-dev - Sync Module
 同步模块
 
 Author: Angela AI Development Team

@@ -15,6 +15,7 @@
 import logging
 import asyncio
 from datetime import datetime
+from core.system.config.magic_numbers import loop_sleep
 from typing import Dict, Any, Optional
 
 from core.bio.biological_integrator import BiologicalIntegrator
@@ -95,10 +96,10 @@ class AngelaModelCore:
                     # 執行姿勢
                     self.motor.execute_command(best_pose, bio_state)
                 
-                await asyncio.sleep(2.0) # 代謝頻率：2秒一次
+                await asyncio.sleep(loop_sleep("metabolic_interval", 2.0)) # 代謝頻率：2秒一次
             except Exception as e:  # broad exception acceptable: metabolic loop should be resilient to errors
                 logger.error(f"❌ [Model-Core] Metabolic loop error: {e}", exc_info=True)
-                await asyncio.sleep(5.0)
+                await asyncio.sleep(loop_sleep("model_interval", 5.0))
 
     def get_consciousness_snapshot(self) -> Dict[str, Any]:
         """

@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Internationalization Module
+Angela AI 7.5.0-dev - Internationalization Module
 国际化模块
 
 Author: Angela AI Development Team

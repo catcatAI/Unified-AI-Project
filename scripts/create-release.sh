@@ -4,7 +4,7 @@
 
 set -e
 
-VERSION="6.0.0"
+VERSION="7.5.0-dev"
 RELEASE_NAME="angela-ai-v${VERSION}"
 RELEASE_DIR="releases"
 

@@ -24,6 +24,7 @@ from typing import Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import logging
+from core.system.config.magic_numbers import loop_sleep
 from typing import TYPE_CHECKING
 from core.engine.state_matrix import StateMatrix4D
 from .self_introspector import SelfIntrospector
@@ -245,13 +246,13 @@ class DigitalLifeIntegrator:
         self.dynamic_params: Optional[DynamicThresholdManager] = None
         self._dynamic_params_enabled: bool = self.config.get("enable_dynamic_params", True)
         self._dynamic_params_update_interval: float = self.config.get(
-            "dynamic_params_update_interval", 60.0
+            "dynamic_params_update_interval", loop_sleep("life_integrator_params", 60.0)
         )
         self._last_params_log: datetime = datetime.now()
 
         # Health monitoring
         self.systems_health: dict[str, SystemHealth] = {}
-        self._health_check_interval: float = 60.0  # seconds
+        self._health_check_interval: float = loop_sleep("life_health_check", 60.0)  # seconds
         self._update_interval: float = self.config.get(
             "update_interval", 1.0
         )  # Used for introspection loop
@@ -394,7 +395,7 @@ class DigitalLifeIntegrator:
             await self._process_life_cycle_transitions()
             await self._update_statistics()
             await self._update_dynamic_parameters()
-            await asyncio.sleep(10)  # Check every 10 seconds
+            await asyncio.sleep(loop_sleep("life_check_interval", 10.0))  # Check every 10 seconds
 
     async def _health_check_loop(self):
         """System health monitoring loop"""

@@ -36,12 +36,13 @@
 
 ## S 級（本週 — 版本統一陣線 + 安全殘留）
 
-### ~~S1. 統一全部 13 個版本號位置~~ ✅ 已完成
+### ~~S1. 統一全部 14 個版本號位置~~ ✅ 已完成
 
 | 文件 | 舊值 | 新值 |
 |------|------|------|
 | `VERSION` | 6.2.0 | **7.5.0-dev** |
 | `config/angela_config.json` | 6.1.0 | **7.5.0-dev** |
+| `configs/angela_config.yaml` | — | **7.5.0-dev** |
 | `config/project-config/PROJECT_FILE_RELATIONSHIPS.json` | 6.2.0 | **7.5.0-dev** |
 | `apps/backend/pyproject.toml` | 0.1.0 | **7.5.0-dev** |
 | `apps/backend/setup.py` | 0.1.0 | **7.5.0-dev** |
@@ -54,7 +55,7 @@
 | `packages/cli/package.json` | 1.0.0 | **1.1.0** |
 | `core/version.py` dataclass defaults | major=6, phase=STABLE | **major=7, phase=DEV** |
 
-執行: 2026-05-25, 12 個文件已更新。
+執行: 2026-05-25, 13 個文件已更新。
 
 ### ~~S2. 修復 CHANGELOG v7.x 虛構版本~~ ✅ 已完成
 

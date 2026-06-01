@@ -25,6 +25,7 @@ from pathlib import Path
 import asyncio
 import logging
 from core.tracing import get_tracer
+from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
 tracer = get_tracer()
@@ -400,7 +401,7 @@ class SelfGeneration:
             sd_api_url = self.config.get("sd_api_url", "http://127.0.0.1:7860/sdapi/v1/txt2img")
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(sd_api_url, json=payload, timeout=5) as response:
+                async with session.post(sd_api_url, json=payload, timeout=timeout_value("sd_api", 5.0)) as response:
                     if response.status == 200:
                         data = await response.json()
                         if "images" in data and data["images"]:

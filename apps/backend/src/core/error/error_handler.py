@@ -13,7 +13,7 @@ import asyncio
 import logging
 import traceback
 from typing import Dict, Any, Optional, List, Callable, Type
-from core.system.config.magic_numbers import loop_sleep
+from core.system.config.magic_numbers import loop_sleep, retry_value, threshold_value
 from datetime import datetime, timedelta
 from enum import Enum
 import uuid
@@ -66,13 +66,13 @@ class ErrorInfo:
     resolved: bool = False
     resolution: Optional[str] = None
     recovery_attempts: int = 0
-    max_recovery_attempts: int = 3
+    max_recovery_attempts: int = retry_value("error_recovery_attempts", 3)
 
 
 class RecoveryStrategy:
     """恢復策略基類"""
 
-    def __init__(self, name: str, max_attempts: int = 3):
+    def __init__(self, name: str, max_attempts: int = retry_value("error_recovery_attempts", 3)):
         self.name = name
         self.max_attempts = max_attempts
 
@@ -97,7 +97,7 @@ class RecoveryStrategy:
 class RetryRecoveryStrategy(RecoveryStrategy):
     """重試恢復策略"""
 
-    def __init__(self, retry_func: Callable, max_attempts: int = 3, delay: float = 1.0):
+    def __init__(self, retry_func: Callable, max_attempts: int = retry_value("error_recovery_attempts", 3), delay: float = 1.0):
         super().__init__("retry", max_attempts)
         self.retry_func = retry_func
         self.delay = delay
@@ -137,7 +137,7 @@ class FallbackRecoveryStrategy(RecoveryStrategy):
 class CircuitBreakerRecoveryStrategy(RecoveryStrategy):
     """斷路器恢復策略"""
 
-    def __init__(self, service_name: str, failure_threshold: int = 5, timeout: float = 60.0):
+    def __init__(self, service_name: str, failure_threshold: int = int(threshold_value("circuit_breaker_failures", 5)), timeout: float = 60.0):
         super().__init__("circuit_breaker", 1)
         self.service_name = service_name
         self.failure_threshold = failure_threshold
@@ -205,13 +205,13 @@ class EnterpriseErrorHandler:
         # 網絡錯誤使用重試策略
         self.register_strategy(
             ErrorCategory.NETWORK,
-            RetryRecoveryStrategy(retry_func=self._retry_network_operation, max_attempts=3),
+            RetryRecoveryStrategy(retry_func=self._retry_network_operation, max_attempts=retry_value("error_recovery_attempts", 3)),
         )
 
         # 外部服務使用斷路器
         self.register_strategy(
             ErrorCategory.EXTERNAL_SERVICE,
-            CircuitBreakerRecoveryStrategy(service_name="external_api", failure_threshold=5),
+            CircuitBreakerRecoveryStrategy(service_name="external_api", failure_threshold=int(threshold_value("circuit_breaker_failures", 5))),
         )
 
         # 資源錯誤使用後備策略

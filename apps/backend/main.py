@@ -220,7 +220,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Unified AI Project - Level 5 AGI",
         description="完整的Level 5 AGI系统实现",
-        version="1.0.0",
+        version="7.5.0-dev",
         lifespan=lifespan,
     )
 

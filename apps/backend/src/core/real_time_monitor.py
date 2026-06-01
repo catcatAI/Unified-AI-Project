@@ -32,6 +32,7 @@ import json
 from pathlib import Path
 from collections import deque
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +272,7 @@ class FileSystemMonitor:
     Tracks file creation, modification, deletion, and moves.
     """
 
-    def __init__(self, watch_paths: Optional[List[Path]] = None, poll_interval: float = 1.0):
+    def __init__(self, watch_paths: Optional[List[Path]] = None, poll_interval: float = loop_sleep("file_poll", 1.0)):
         self.watch_paths = watch_paths or [Path.home() / "Desktop"]
         self.poll_interval = poll_interval
 
@@ -504,7 +505,7 @@ class SystemStateMonitor:
     Monitors system resources: CPU, memory, disk, network.
     """
 
-    def __init__(self, update_interval: float = 5.0):
+    def __init__(self, update_interval: float = loop_sleep("system_monitor_update", 5.0)):
         self.update_interval = update_interval
 
         self._running = False
@@ -981,7 +982,7 @@ if __name__ == "__main__":
 
         # Run for 5 seconds
         logger.info("\nMonitoring for 5 seconds...")
-        await asyncio.sleep(5)
+        await asyncio.sleep(loop_sleep("monitor_cycle", 5.0))
 
         # Show current state
         logger.info("\n--- Current State ---")

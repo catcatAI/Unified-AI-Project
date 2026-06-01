@@ -27,6 +27,7 @@ from .advanced_performance_optimizer import (
 from .security import HSPSecurityManager, HSPSecurityContext
 from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
 from .utils.fallback_config_loader import FallbackConfigLoader
+from core.system.config.magic_numbers import cache_value, threshold_value, timeout_value
 
 # from .retry_policy import RetryPolicy
 # from .circuit_breaker import CircuitBreaker
@@ -126,7 +127,7 @@ class HSPConnector:
 
         # 性能优化参数
         self.message_cache: Dict[str, Any] = {}  # 消息缓存
-        self.cache_ttl = 300  # 缓存有效期(秒)
+        self.cache_ttl = cache_value("hsp_cache_ttl", 300)  # 缓存有效期(秒)
         self.batch_send_enabled = True  # 批量发送
         self.batch_size = 10  # 批量大小
         self.message_batch: List[Dict[str, Any]] = []  # 消息批处理队列
@@ -215,7 +216,7 @@ class HSPConnector:
             max_attempts=self.max_ack_retries, backoff_factor=2
         )  # Initialize retry policy
         self.circuit_breaker = CircuitBreaker(
-            failure_threshold=5, recovery_timeout=300
+            failure_threshold=int(threshold_value("hsp_failure_threshold", 5)), recovery_timeout=timeout_value("hsp_recovery_timeout", 300.0)
         )  # Initialize circuit breaker
 
         # New Callback to get capabilities

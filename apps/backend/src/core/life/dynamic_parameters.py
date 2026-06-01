@@ -24,6 +24,7 @@ import random
 import math
 import asyncio
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class ParameterState:
     inertia_mass: float = 1.0 # 慣性質量 (AL: 質量越大越難被引力拖曳)
     
     last_update: datetime = field(default_factory=datetime.now)
-    update_interval: float = 60.0  # 更新间隔（秒）
+    update_interval: float = loop_sleep("dynamic_params_update", 60.0)  # 更新间隔（秒）
     history: List[float] = field(default_factory=list)  # 历史值
     influence_map: Dict[str, float] = field(default_factory=dict)  # Legacy rules
 
@@ -274,7 +275,7 @@ class DynamicThresholdManager:
                 break
             except Exception as e:  # broad exception acceptable: update loop should continue on parameter errors
                 logger.error(f"[DynamicParams] Update error: {e}", exc_info=True)
-                await asyncio.sleep(10)
+                await asyncio.sleep(loop_sleep("params_emergency", 10.0))
 
     def _build_context(self) -> Dict[str, float]:
         """构建全局上下文"""
@@ -425,7 +426,7 @@ async def demo_dynamic_parameters():
 
     # 等待并观察参数变化
     logger.info("\n4. 等待参数自然波动（60秒）...")
-    await asyncio.sleep(60)
+    await asyncio.sleep(loop_sleep("params_maintenance", 60.0))
 
     logger.info("\n5. 参数变化后：")
     for name, param in manager.parameters.items():

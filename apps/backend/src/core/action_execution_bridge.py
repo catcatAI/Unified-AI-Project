@@ -24,6 +24,7 @@ import uuid
 import json
 from pathlib import Path
 import logging
+from core.system.config.magic_numbers import loop_sleep, batch_value, cache_value
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +249,7 @@ class ActionExecutionBridge:
 
         # Execution control
         self._running = False
-        self._max_concurrent = self.config.get("max_concurrent", 3)
+        self._max_concurrent = self.config.get("max_concurrent", batch_value("execution_bridge_concurrent", 3))
         self._semaphore = asyncio.Semaphore(self._max_concurrent)
         self._execution_task: Optional[asyncio.Task] = None
 
@@ -257,7 +258,7 @@ class ActionExecutionBridge:
             self.config.get("history_path", "~/.angela/action_history.json")
         ).expanduser()
         self._execution_history: list[dict[str, Any]] = []
-        self._max_history_size = self.config.get("max_history_size", 1000)
+        self._max_history_size = self.config.get("max_history_size", cache_value("execution_history", 1000))
 
         # Statistics
         self._stats = {
@@ -398,7 +399,7 @@ class ActionExecutionBridge:
                 asyncio.create_task(self._execute_with_semaphore(action_id, item))
             else:
                 # No executable actions, wait a bit
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(loop_sleep("bridge_poll", 0.1))
 
     def _get_next_executable_action(self) -> Optional[tuple]:
         """Get the next action that can be executed (dependencies satisfied)"""
@@ -514,7 +515,7 @@ class ActionExecutionBridge:
     async def _wait_for_completion(self, action_id: str) -> ExecutionResult:
         """Wait for an action to complete"""
         while action_id in self._executing_actions or action_id not in self._completed_actions:
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(loop_sleep("bridge_fast", 0.05))
 
         return self._completed_actions[action_id]
 

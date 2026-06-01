@@ -30,6 +30,7 @@ except Exception:
 import math
 import os
 import warnings
+from core.system.config.magic_numbers import cache_value, threshold_value
 
 
 @dataclass
@@ -157,7 +158,7 @@ class StateConfig:
 
         sm_data = data.get("state_matrix", {})
         self.state_matrix = StateMatrixConfig(
-            max_history=sm_data.get("max_history", 500),
+            max_history=sm_data.get("max_history", cache_value("state_matrix_history", 500)),
             max_misallocation_log=sm_data.get("max_misallocation_log", 100),
             max_audit_trail=sm_data.get("max_audit_trail", 50),
             default_precision=sm_data.get("default_precision", 1.0),
@@ -239,7 +240,7 @@ class StateConfig:
         self.epsilon_ripple = EpsilonRippleConfig(
             surprise_weight=eps_data.get("surprise_weight", 0.2),
             happiness_weight=eps_data.get("happiness_weight", 0.15),
-            fatigue_threshold=eps_data.get("fatigue_threshold", 0.7),
+            fatigue_threshold=eps_data.get("fatigue_threshold", threshold_value("fatigue_threshold", 0.7)),
             focus_drain_per_fatigue=eps_data.get("focus_drain_per_fatigue", 0.1),
             calm_drain_per_fatigue=eps_data.get("calm_drain_per_fatigue", 0.05),
         )

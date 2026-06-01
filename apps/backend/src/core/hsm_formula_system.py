@@ -27,6 +27,7 @@ import random
 import math
 from enum import Enum
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +164,7 @@ class HSMFormulaSystem:
         # System state
         self._running = False
         self._monitoring_task: Optional[asyncio.Task] = None
-        self._monitoring_interval: float = 60.0  # seconds
+        self._monitoring_interval: float = loop_sleep("hsm_monitor", 60.0)  # seconds
 
         # Callbacks
         self._gap_callbacks: List[Callable[[CognitiveGap], None]] = []
@@ -230,7 +231,7 @@ class HSMFormulaSystem:
     async def _simulate_discovery(self, exploration: ExplorationEvent):
         """Simulate exploration discovery process"""
         # Wait a bit to simulate exploration time
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(loop_sleep("hsm_tick", 0.1))
 
         # Generate random discoveries based on exploration
         discovery_types = [
@@ -592,7 +593,7 @@ if __name__ == "__main__":
         logger.info(f"  探索向量: {exploration.exploration_vector}")
 
         # Wait for simulated discoveries
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(loop_sleep("hsm_operation", 0.5))
 
         logger.info(f"\n发现数量: {len(exploration.discoveries)}")
         for i, discovery in enumerate(exploration.discoveries, 1):

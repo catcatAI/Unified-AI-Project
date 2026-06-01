@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Tuple, Callable, Any
 from datetime import datetime
 import asyncio
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +238,7 @@ class DesktopPresence:
             await self._update_collision_detection()
             await self._apply_intent_gravity()
             await self._enforce_screen_boundaries()
-            await asyncio.sleep(0.033)  # ~30 FPS
+            await asyncio.sleep(loop_sleep("fps_30", 0.033))  # ~30 FPS
 
     async def _apply_intent_gravity(self):
         """
@@ -544,7 +545,7 @@ class MouseTracker:
             # This would integrate with OS-level mouse tracking
             # For now, simulate tracking
             await self._update_mouse_position()
-            await asyncio.sleep(0.033)  # ~30 FPS
+            await asyncio.sleep(loop_sleep("fps_30", 0.033))  # ~30 FPS
 
     async def _update_mouse_position(self):
         """Update current mouse position"""

@@ -32,6 +32,7 @@ import json
 import time
 from pathlib import Path
 import logging
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -867,7 +868,7 @@ class FeedbackLoopEngine:
                 if cycle.cycle_id == cycle_id:
                     return cycle
 
-            await asyncio.sleep(0.01)  # 10ms check interval
+            await asyncio.sleep(loop_sleep("feedback_check", 0.01))  # 10ms check interval
 
         return None
 
@@ -947,7 +948,7 @@ if __name__ == "__main__":
         logger.info(f"   Cycle ID: {cycle_id}")
 
         # Wait for cycle to complete
-        completed = await engine.wait_for_cycle(cycle_id, timeout=2.0)
+        completed = await engine.wait_for_cycle(cycle_id, timeout=timeout_value("feedback_cycle_wait", 2.0))
         if completed:
             logger.info("   Cycle completed successfully")
 
@@ -969,7 +970,7 @@ if __name__ == "__main__":
         )
 
         await engine.process_perception_event(event2)
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("feedback_poll", 1.0))
 
         await engine.shutdown()
 

@@ -11,6 +11,7 @@ from enum import Enum
 from multiprocessing import Queue
 import asyncio
 from .mqtt_subscription_manager import MQTTSubscriptionManager
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +178,7 @@ class LocalIPCTransport(HSPTransport):
                 if self._connected:
                     # 只在連接時記錄錯誤
                     logger.debug(f"Listener error (may be timeout): {e}")
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(loop_sleep("transport_poll", 0.1))
 
         logger.info("Message listener stopped")
 
@@ -381,7 +382,7 @@ if __name__ == "__main__":
         await transport_a.publish("test_topic", {"message": "Hello from A"})
 
         # 等待消息處理
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("transport_retry", 1.0))
 
         # 斷開連接
         await transport_a.disconnect()

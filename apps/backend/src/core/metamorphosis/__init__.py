@@ -1,5 +1,5 @@
 """
-Angela AI v6.0 - Metamorphosis Module
+Angela AI 7.5.0-dev - Metamorphosis Module
 蜕变模块
 
 Version transition system for Angela AI.
