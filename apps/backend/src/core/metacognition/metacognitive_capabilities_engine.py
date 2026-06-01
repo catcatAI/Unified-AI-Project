@@ -37,6 +37,7 @@ from pathlib import Path
 from core.interfaces.persistence import StatePersistence
 from core.interfaces.service_registry import get_registry
 from core.system.config.async_io import async_json_dump, async_json_load
+from core.system.config.magic_numbers import batch_value, threshold_value
 
 # 尝试导入AI库
 try:
@@ -128,11 +129,11 @@ class MetacognitiveCapabilitiesEngine:
 
         # 性能预测模型
         self.learning_models["performance"] = GradientBoostingRegressor(
-            n_estimators=100, learning_rate=0.1, max_depth=5
+            n_estimators=batch_value("meta_performance_n_estimators", 100), learning_rate=threshold_value("meta_performance_learning_rate", 0.1), max_depth=int(threshold_value("meta_performance_max_depth", 5.0))
         )
 
         # 能力分类模型
-        self.learning_models["capability"] = RandomForestClassifier(n_estimators=100, max_depth=10)
+        self.learning_models["capability"] = RandomForestClassifier(n_estimators=batch_value("meta_capability_n_estimators", 100), max_depth=int(threshold_value("meta_capability_max_depth", 10.0)))
 
     def _initialize_capability_profiles(self):
         """初始化能力画像"""

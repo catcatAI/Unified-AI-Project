@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, List
 
 logger = logging.getLogger(__name__)
+from core.system.config.magic_numbers import loop_sleep
 
 
 class HAMBackgroundTasks:
@@ -36,7 +37,7 @@ class HAMBackgroundTasks:
         - Always keep at least minimum number of recent memories
         """
         while True:
-            await asyncio.sleep(3600)  # Run once every hour
+            await asyncio.sleep(loop_sleep("ham_hourly", 3600.0))  # Run once every hour
             logger.info("Running background task: Cleaning old experiences...")
 
             try:

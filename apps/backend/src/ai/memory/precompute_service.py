@@ -19,6 +19,7 @@ from queue import Queue, Empty
 from dataclasses import dataclass
 
 from .memory_template import MemoryTemplate, ResponseCategory, AngelaState, UserImpression
+from core.system.config.magic_numbers import cache_value, loop_sleep, llm_param
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class PrecomputeService:
         memory_manager,
         idle_threshold: float = 5.0,
         cpu_threshold: float = 70.0,
-        max_queue_size: int = 50,
+        max_queue_size: int = cache_value("precompute_queue", 50),
         llm_timeout: float = 180.0,
     ):
         """
@@ -169,13 +170,13 @@ class PrecomputeService:
         while self.is_running:
             try:
                 if not self._should_precompute():
-                    await asyncio.sleep(1.0)
+                    await asyncio.sleep(loop_sleep("precompute_retry", 1.0))
                     continue
 
                 async with sem:
                     await self._process_next_task()
 
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(loop_sleep("precompute_throttle", 0.5))
 
             except asyncio.CancelledError:
                 logger.info("Precompute loop cancelled")
@@ -298,7 +299,7 @@ class PrecomputeService:
         try:
             # 使用 asyncio.wait_for 设置超时
             text = await asyncio.wait_for(
-                self.llm_service.generate_text(query, max_tokens=256, temperature=0.7), timeout=timeout
+                self.llm_service.generate_text(query, max_tokens=int(llm_param("precompute_max_tokens", 256)), temperature=llm_param("precompute_temperature", 0.7)), timeout=timeout
             )
             from ..services.angela_llm_service import LLMResponse
             return LLMResponse(text=text, backend="precompute", model="", tokens_used=0,

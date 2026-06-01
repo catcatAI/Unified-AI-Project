@@ -13,6 +13,7 @@ from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 
 from core.interfaces.service_registry import get_registry
+from core.system.config.magic_numbers import llm_param
 
 logger = logging.getLogger(__name__)
 
@@ -300,7 +301,7 @@ class TickleReflexSystem:
         from services.angela_llm_service import get_llm_service
         llm = await get_llm_service()
         return await asyncio.wait_for(
-            llm.generate_text(prompt, max_tokens=256, temperature=0.7),
+            llm.generate_text(prompt, max_tokens=int(llm_param("tickle_max_tokens", 256)), temperature=llm_param("tickle_temperature", 0.7)),
             timeout=timeout_seconds,
         )
 

@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 from pathlib import Path
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +157,7 @@ class Level5SystemMonitor:
         self.metrics = Level5PerformanceMetrics()
         self.monitoring_active = False
         self.start_time = datetime.now()
-        self.update_interval = 5.0  # 5秒更新间隔
+        self.update_interval = loop_sleep("level5_update", 5.0)  # 5秒更新间隔
 
     async def start_monitoring(self):
         """开始系统监控"""

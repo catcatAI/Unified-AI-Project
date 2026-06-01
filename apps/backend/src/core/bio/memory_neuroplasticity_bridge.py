@@ -25,6 +25,7 @@ import asyncio
 import logging
 import math
 from .neuroplasticity import NeuroplasticitySystem
+from core.system.config.magic_numbers import loop_sleep
 
 
 logger = logging.getLogger(__name__)
@@ -141,7 +142,7 @@ class MemoryNeuroplasticityBridge:
         while self._running:
             await self._update_reinforcement_stats()
             await self._check_forgetting()
-            await asyncio.sleep(300)  # Every 5 minutes
+            await asyncio.sleep(loop_sleep("neuro_bridge_interval", 300.0))  # Every 5 minutes
 
     async def _update_reinforcement_stats(self):
         """Update reinforcement statistics"""

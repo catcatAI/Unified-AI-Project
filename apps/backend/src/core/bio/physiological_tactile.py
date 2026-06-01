@@ -26,6 +26,7 @@ import asyncio
 import random
 import math
 import logging
+from core.system.config.magic_numbers import cache_value, loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +197,7 @@ class PhysiologicalTactileSystem:
         self.active_stimuli: List[TactileStimulus] = []
         self.emotional_mappings: Dict[str, EmotionalTactileMapping] = {}
         self._stimulus_history: List[TactileStimulus] = []
-        self._max_history_size = 1000
+        self._max_history_size = cache_value("tactile_history", 1000)
         self._running = False
         self._update_task: Optional[asyncio.Task] = None
 
@@ -331,7 +332,7 @@ class PhysiologicalTactileSystem:
         while self._running:
             await self._adapt_receptors()
             await self._decay_stimuli()
-            await asyncio.sleep(0.1)  # 100ms update interval
+            await asyncio.sleep(loop_sleep("tactile_update", 0.1))  # 100ms update interval
 
     async def _adapt_receptors(self):
         """Adapt receptor sensitivity based on continuous stimulation"""
@@ -1250,7 +1251,7 @@ class AdaptationMechanism:
 
         # Stimulus history for pattern detection
         self.stimulus_history: Dict[str, List[Tuple[str, datetime]]] = {}
-        self.max_history: int = self.config.get("max_history", 50)
+        self.max_history: int = self.config.get("max_history", cache_value("tactile_stimulus_history", 50))
 
     def register_receptor(
         self, receptor_id: str, base_sensitivity: float = 0.5, initial_habituation: float = 0.0

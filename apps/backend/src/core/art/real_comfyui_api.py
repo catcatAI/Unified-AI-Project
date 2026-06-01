@@ -17,6 +17,7 @@ from typing import Optional, Dict, Any, List
 from PIL import Image
 import io
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,7 @@ class ComfyUIClient:
 
             output_images = []
             for _ in range(100):
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(loop_sleep("comfyui_poll", 0.5))
                 history = await self.get_history(prompt_id)
                 if prompt_id in history:
                     outputs = history[prompt_id].get("outputs", {})

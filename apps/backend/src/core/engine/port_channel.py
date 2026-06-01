@@ -24,6 +24,7 @@ from collections import deque
 from typing import Dict, List, Optional, Any, TYPE_CHECKING
 import logging
 import time
+from core.system.config.magic_numbers import cache_value
 
 if TYPE_CHECKING:
     from core.engine.axis_port_registry import PortRegistry, Port
@@ -48,7 +49,7 @@ class PortChannel:
         last_pull: 最後讀取時間
     """
     port_name: str
-    max_buffer: int = 100
+    max_buffer: int = cache_value("port_channel_buffer", 100)
     buffer: deque = field(default_factory=lambda: deque(maxlen=100))
     byte_size: int = 0
     push_count: int = 0

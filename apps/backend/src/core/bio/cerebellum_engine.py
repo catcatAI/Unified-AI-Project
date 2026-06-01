@@ -11,6 +11,7 @@ import os
 import numpy as np
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from core.system.config.magic_numbers import threshold_value
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ class CerebellumEngine:
             spine = np.array(pose.get("spine", [0.0]*9))
             
             # 計算梯度：誤差越大，微調幅度越大
-            learning_rate = 0.05
+            learning_rate = threshold_value("cerebellum_learning_rate", 0.05)
             gradient = avg_error * learning_rate
             
             # 關節隨機微擾動 (Simulated Gradient)

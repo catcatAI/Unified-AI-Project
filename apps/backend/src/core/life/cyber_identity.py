@@ -27,6 +27,7 @@ import logging
 from core.tracing import get_tracer
 from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain, LifeIntensitySnapshot
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +162,7 @@ class CyberIdentity:
 
         # Reflection configuration
         self._reflection_interval: float = 3600  # Reflect every hour
-        self._narrative_update_interval: float = 86400  # Update narrative daily
+        self._narrative_update_interval = loop_sleep("narrative_update", 86400.0)  # Update narrative daily
 
         # Theoretical framework integration
         self.life_intensity_formula: Optional[LifeIntensityFormula] = None

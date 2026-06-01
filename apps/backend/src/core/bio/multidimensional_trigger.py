@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Callable, Any, Tuple
 from datetime import datetime, timedelta
 import asyncio
 import logging
+from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +218,7 @@ class MultidimensionalTriggerSystem:
                 behavior_id="greeting_wave",
                 conditions=[
                     TriggerCondition(
-                        TriggerDimension.TIME, "range", 0.25, weight=2.0, cooldown=3600
+                        TriggerDimension.TIME, "range", 0.25, weight=2.0, cooldown=timeout_value("trigger_rare_cooldown", 3600.0)
                     ),  # ~6am
                     TriggerCondition(TriggerDimension.EMOTION, "gte", 0.3, weight=1.0),
                 ],
@@ -321,7 +322,7 @@ class MultidimensionalTriggerSystem:
                 behavior_id="attention_seek",
                 conditions=[
                     TriggerCondition(
-                        TriggerDimension.SOCIAL, "lte", 0.2, weight=2.0, cooldown=180
+                        TriggerDimension.SOCIAL, "lte", 0.2, weight=2.0, cooldown=timeout_value("trigger_social_cooldown", 180.0)
                     ),  # Lonely
                     TriggerCondition(
                         TriggerDimension.EMOTION, "gte", 0.4, weight=1.0
@@ -340,7 +341,7 @@ class MultidimensionalTriggerSystem:
                 behavior_id="playful_wink",
                 conditions=[
                     TriggerCondition(
-                        TriggerDimension.RANDOM, "gte", 0.95, weight=2.0, cooldown=300
+                        TriggerDimension.RANDOM, "gte", 0.95, weight=2.0, cooldown=timeout_value("trigger_random_cooldown", 300.0)
                     ),  # Rare random
                     TriggerCondition(TriggerDimension.EMOTION, "gte", 0.5, weight=1.0),  # Good mood
                 ],

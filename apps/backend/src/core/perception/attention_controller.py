@@ -3,6 +3,7 @@ from typing import Dict, List, Any, Optional, Tuple
 import time
 import random
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class AttentionController:
         self.current_target_id: Optional[str] = None
         self.last_focus_pos: Tuple[float, float] = (0.5, 0.5)
         self.focus_start_time: float = 0
-        self.saccade_cooldown: float = 0.2  # 眼跳 (Saccade) 冷卻時間 (秒)
+        self.saccade_cooldown: float = loop_sleep("attention_saccade", 0.2)  # 眼跳 (Saccade) 冷卻時間 (秒)
         self.last_saccade_time: float = 0
 
         # 參數

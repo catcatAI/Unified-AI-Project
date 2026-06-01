@@ -26,6 +26,7 @@ from typing import Dict, List, Optional, Tuple, Any, Protocol, Callable
 from enum import Enum
 import logging
 import math
+from core.system.config.magic_numbers import threshold_value
 
 logger = logging.getLogger(__name__)
 
@@ -416,7 +417,7 @@ class RippleAccumulator:
     cumulative_excitement: float = 0.0
     fatigue: float = 0.0
     chain_broken: bool = False
-    max_depth: int = 3
+    max_depth: int = int(threshold_value("ripple_max_depth", 3.0))
 
     def add(self, ripple: RippleNode) -> None:
         self.ripples.append(ripple)
