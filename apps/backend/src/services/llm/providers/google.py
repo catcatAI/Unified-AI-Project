@@ -22,10 +22,10 @@ class GoogleAPIBackend(BaseLLMBackend):
 
     GEMINI_BASE = GOOGLE_API_BASE
 
-    def __init__(self, api_key: str, model: str = DEFAULT_GOOGLE_MODEL):
+    def __init__(self, api_key: str, model: str = DEFAULT_GOOGLE_MODEL, timeout: float = GOOGLE_TIMEOUT):
         self.api_key = api_key
         self.model = model
-        self.timeout = GOOGLE_TIMEOUT
+        self.timeout = timeout
 
     async def check_health(self) -> bool:
         if not self.api_key:

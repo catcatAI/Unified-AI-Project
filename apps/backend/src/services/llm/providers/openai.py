@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 class OpenAIAPIBackend(BaseLLMBackend):
     """OpenAI API 後端 (GPT-4, GPT-3.5 等)"""
 
-    def __init__(self, api_key: str, base_url: str = OPENAI_API_BASE, model: str = DEFAULT_OPENAI_MODEL):
+    def __init__(self, api_key: str, base_url: str = OPENAI_API_BASE, model: str = DEFAULT_OPENAI_MODEL, timeout: float = OPENAI_TIMEOUT):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.timeout = OPENAI_TIMEOUT
+        self.timeout = timeout
 
     async def check_health(self) -> bool:
         if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:

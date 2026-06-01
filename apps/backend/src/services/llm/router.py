@@ -581,6 +581,7 @@ class AngelaLLMService:
                 self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
                     base_url=base_url or LLAMACPP_HOST,
                     model=model_name,
+                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
                 )
                 logger.info(f"已注冊 llama.cpp 後端: {model_name}")
 
@@ -599,6 +600,7 @@ class AngelaLLMService:
                     api_key=api_key,
                     base_url=base_url or OPENAI_API_BASE,
                     model=model_name or DEFAULT_OPENAI_MODEL,
+                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
                 )
                 logger.info(f"已注冊 OpenAI 後端: {model_name}")
 
@@ -607,6 +609,7 @@ class AngelaLLMService:
                     api_key=api_key,
                     base_url=base_url or ANTHROPIC_API_BASE,
                     model=model_name or DEFAULT_ANTHROPIC_MODEL,
+                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
                 )
                 logger.info(f"已注冊 Anthropic 後端: {model_name}")
 
@@ -614,6 +617,7 @@ class AngelaLLMService:
                 self.backends[LLMBackend.GOOGLE] = GoogleAPIBackend(
                     api_key=api_key,
                     model=model_name or DEFAULT_GOOGLE_MODEL,
+                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
                 )
                 logger.info(f"已注冊 Google Gemini 後端: {model_name}")
 

@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 class LlamaCppBackend(BaseLLMBackend):
     """llama.cpp 後端"""
 
-    def __init__(self, base_url: str = LLAMACPP_HOST, model: str = None):
+    def __init__(self, base_url: str = LLAMACPP_HOST, model: str = None, timeout: float = LLM_REQUEST_TIMEOUT):
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.timeout = LLM_REQUEST_TIMEOUT
+        self.timeout = timeout
 
     async def check_health(self) -> bool:
         try:

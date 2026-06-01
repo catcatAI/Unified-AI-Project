@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 class AnthropicAPIBackend(BaseLLMBackend):
     """Anthropic API 後端 (Claude 系列)"""
 
-    def __init__(self, api_key: str, base_url: str = ANTHROPIC_API_BASE, model: str = DEFAULT_ANTHROPIC_MODEL):
+    def __init__(self, api_key: str, base_url: str = ANTHROPIC_API_BASE, model: str = DEFAULT_ANTHROPIC_MODEL, timeout: float = ANTHROPIC_TIMEOUT):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self.timeout = ANTHROPIC_TIMEOUT
+        self.timeout = timeout
 
     async def check_health(self) -> bool:
         if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:
