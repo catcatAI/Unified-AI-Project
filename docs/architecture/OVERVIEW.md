@@ -43,7 +43,7 @@
 ```
 lifespan() entry
   ├── 1. Pre-init services (ChatService, LLMService, BioIntegrator)
-  ├── 2. Init ModuleManager → discovers 8 modules (6 core + 2 new)
+  ├── 2. Init ModuleManager → discovers 11 modules
   ├── 3. Cross-service wiring (plugin system, bio events, broadcast)
   └── 4. Background tasks (heartbeat, ws broadcast, on_tick timer)
 ```
@@ -66,7 +66,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 
 ## Key Design Decisions
 
-1. **ModuleManager** manages lifecycle of discoverable service modules (8 total)
+1. **ModuleManager** manages lifecycle of discoverable service modules (11 total)
 2. **ChatService** handles intent routing → dedicated handlers
 3. **Plugin Pipeline** (5 hooks) provides cross-cutting observability
 4. **TieredConfigLoader** manages config across Default → User → Evolved layers
@@ -79,9 +79,9 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | API/Server | ✅ Stable | — |
 | Chat Service | ✅ Stable | — |
 | LLM Service | ✅ Stable | — |
-| Module System | ✅ 8 modules | 3 more planned |
+| Module System | ✅ 11 modules | — |
 | Plugin System | ✅ 5 hooks | — |
 | Handlers | ✅ 4 handlers | — |
-| Magic Numbers | 🟡 Partial | ~93 values remaining |
-| Stubs | 🟡 44 remaining | ~20 MEDIUM, ~24 HARD |
+| Magic Numbers | 🟡 Partial | ~43 values remaining |
+| Stubs | 🟡 2 persistent stubs | image gen, audio STT
 | Docs | 🟡 In progress | SERVICE_CATALOG, STUB_TRACKING |

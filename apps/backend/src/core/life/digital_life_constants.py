@@ -1,6 +1,9 @@
 """
-Angela AI 2030 - Digital Life Constants
-Provides the 'Why' behind the numbers. Baseline biological and governance thresholds.
+ANGELA-MATRIX: [L2] [βδ] [C] [L1]
+DEPRECATED: This file defines constants that are NOT imported by any production code.
+Zero imports found across entire codebase (grep 2026-05-31).
+These values were intended for config-driven migration but never wired.
+File kept for reference only; values have no runtime effect.
 """
 
 class MetabolicConstants:

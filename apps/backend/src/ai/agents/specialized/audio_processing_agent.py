@@ -58,5 +58,11 @@ class AudioProcessingAgent(BaseAgent):
 
     async def _handle_stt(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
-    ) -> str:
-        return {"stub": True, "message": "Speech-to-text not yet implemented", "text": "This is a transcribed text placeholder."}
+    ) -> Dict[str, Any]:
+        params = payload.get("parameters", {})
+        logger.warning("STT stub: speech-to-text requires external backend (e.g. Whisper, Google STT)")
+        return {
+            "stub": True,
+            "message": "Speech-to-text not yet implemented — needs external STT backend model",
+            "params_received": params,
+        }

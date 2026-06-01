@@ -63,7 +63,7 @@
 ┌──────────┐     HTTP/WS     ┌──────────────────┐
 │  Desktop  │◄──────────────►│  main_api_server  │
 │  /Mobile  │                │  (FastAPI)        │
-│  /CLI     │                │  1668 lines       │
+│  /CLI     │                │  ~314 lines       │
 └──────────┘                 └─────────┬──────────┘
                                        │
                           ┌────────────┼────────────┐
@@ -79,7 +79,7 @@
                    │       core/              │
                    │  (infrastructure + domain)│
                    │                         │
-                   │ autonomous │ hsp         │
+                   │ life │ bio │ engine │ hsp         │
                    │ config     │ security    │
                    │ state      │ hardware    │
                    │ (8D matrix)│ (GPU/ACC)   │
@@ -104,7 +104,7 @@ User Input → Desktop App (Electron)
   → FastAPI Router (CORS → SignedCommunicationMiddleware)
   → AngelaChatService
       ├→ StateMatrix8D.update() (αβγδ εθζη)
-      ├→ IntentRouter (Math | Code | General → LLM)
+      ├→ IntentRegistry (Math | Code | General → LLM)
       ├→ ThetaRouter (meta-cognitive routing)
       ├→ HAMMemoryManager.store()
       ├→ LIS (ErrIntrospector) — detect bias
@@ -121,6 +121,10 @@ User Input → Desktop App (Electron)
       └→ ChatPanel.showResponse(text)
 ```
 
+> **ModuleManager**: The `ModuleManager` (in `core/managers/module_manager.py`) orchestrates lifecycle management
+> for all discoverable service modules. It handles dynamic registration, dependency wiring, and graceful
+> shutdown of modules such as ChatService, LLMService, BioIntegrator, and the Plugin Pipeline system.
+
 ---
 
 ## 4. Directory Structure
@@ -132,7 +136,7 @@ unified-ai-project/
 │   │   └── src/
 │   │       ├── api/           Route handlers (v1/endpoints/*)
 │   │       ├── services/      Business logic (chat, LLM, vision, audio, tactile)
-│   │       ├── core/          Infrastructure (config, security, state, autonomous)
+│   │       ├── core/          Infrastructure (life, bio, engine, config, security, state)
 │   │       ├── ai/            AGI/ASI engine (memory, agents, learning, LIS)
 │   │       ├── economy/       Economy system
 │   │       ├── integrations/  External integrations (Google Drive, Atlassian)

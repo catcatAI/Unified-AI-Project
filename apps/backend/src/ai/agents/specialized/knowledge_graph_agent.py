@@ -60,4 +60,11 @@ class KnowledgeGraphAgent(BaseAgent):
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
         params = payload.get("parameters", {})
-        return {"stub": True, "message": "Knowledge graph not yet implemented", "results": [], "query": params.get("query", "")}
+        query = params.get("query", "")
+        logger.warning("KG stub: knowledge graph query requires external backend (e.g. Neo4j, RDF store)")
+        return {
+            "stub": True,
+            "message": "Knowledge graph not yet implemented — needs external graph database backend",
+            "results": [],
+            "query": query,
+        }

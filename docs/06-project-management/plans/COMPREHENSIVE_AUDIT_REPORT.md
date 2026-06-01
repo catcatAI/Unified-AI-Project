@@ -362,8 +362,8 @@
 | **後端構建** | **85%** | setup.py/pyproject.toml 不一致 (已分析) |
 | **ASI/AI 引擎** | **55-60%** | Level5 空殼、atlassian 5% |
 | **集成層** | **30%** | atlassian 5%、rovo 15%、3 代理 stub |
-| **文檔** | **68%** (↑5%) | README更新、INDEX擴充、過時計劃棄用、狀態文件歸檔 |
-| **綜合** | **~50%** (↑3%) | |
+| **文檔** | **72%** (↑9%) | README更新、INDEX擴充、ARCHITECTURE/OVERVIEW修復、MASTER_CONSOLIDATED D7矛盾解決、過時計劃棄用、狀態文件歸檔 |
+| **綜合** | **~53%** (↑6%) | |
 
 ---
 
@@ -490,14 +490,20 @@
 | P5.1 | 統一 setup.py 和 pyproject.toml (~18依賴差異已分析) | 🟡 分析完成 | 2026-05-31 |
 | P1.1 | 實現 Level5ASISystem 子系統 | ⬜ | — |
 | P1.2 | 實現 Atlassian Bridge | ⬜ | — |
-| P3.x | 配置系統統一 (13缺失key + 30 orphaned key) | ⬜ | — |
 | P3.1 | 添加13個缺失的timing key到YAML | ✅ | 2026-05-31 |
+| P3.4 | digital_life_constants.py 10個常量 — 零生產導入, 標記DEPRECATED | ✅ | 2026-05-31 |
 | P4.1 | 棄用 PHASE_2_DEVELOPMENT_PLAN.md | ✅ | 2026-05-31 |
 | P4.2 | 解決 MASTER_FINALIZATION_PLAN.md 數字矛盾 | ✅ | 2026-05-31 |
+| P4.3 | 修復 ARCHITECTURE.md 和 OVERVIEW.md 過時數字 | ✅ | 2026-05-31 |
 | P4.4 | 更新 INDEX.md 加入遺漏連結 | ✅ | 2026-05-31 |
 | P4.5 | 歸檔4個過時狀態文件到 09-archive/status-files/ | ✅ | 2026-05-31 |
 | P5.3 | 刪除 deprecated agents/ 目錄 | ✅ | 2026-05-31 |
 | P5.2b | 更新docs中舊的agents.*導入引用 | ✅ | 2026-05-31 |
+| MC-D7 | 修復 MASTER_CONSOLIDATED_PLAN.md 中D7自相矛盾 (0剩餘 vs 48%) | ✅ | 2026-05-31 |
+| P1.4 | 3個persistent stub代理改善(類型安全+日誌) | ✅ | 2026-05-31 |
+| P1.1 | 實現 Level5ASISystem 子系統 | ⬜ | — |
+| P1.2 | 實現 Atlassian Bridge | ⬜ | — |
+| P3.2 | 30個orphaned YAML key — 保留為參考, 非碼農錯誤 | 🟡 保留 | 2026-05-31 |
 | P5.4 | 移動應用 android/ios 目錄 | ⬜ | — |
 | P5.5 | 編譯 Live2D Framework bundle | ⬜ | — |
 | P2.1 | 為~230+未測試模組添加測試 | ⬜ | — |
