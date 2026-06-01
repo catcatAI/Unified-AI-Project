@@ -203,16 +203,16 @@ The plan suggests running `pytest tests/core/test_intent_registry.py -v -k "char
 
 ### Required Fixes in the Plan
 
-| # | Severity | Fix |
-|---|----------|-----|
-| A1 | **HIGH** | Remove claim that "PersonalityAdapter is never called". Add note that `roleplay_engine.py:22-23` already instantiates it. The plan should discuss whether to reuse existing RoleplayEngine callers or create a new instance in ChatService. |
-| A2 | **MEDIUM** | Remove Phase 1.2 (adding `character_card` to `intent_registry.py:79`) — it already exists in the hardcoded fallback. |
-| A3 | **MEDIUM** | Fix `asyncio.run_coroutine_threadsafe(None, ...)` bug in Phase 2 code. Must pass `asyncio.get_event_loop()` or the running loop. |
-| A4 | **MEDIUM** | Update lifespan modification plan to use `services/wiring.py` instead of directly patching `lifespan.py` at a misleading line reference. The actual location logic in lifespan.py is different from what the plan assumes. |
-| A5 | **LOW** | Correct file attribution: AngelaLLMService is 40 lines (shim); actual implementation is `services/llm/router.py:1522` lines. |
-| A6 | **LOW** | Update the line reference for `api/router.py:167` to `api/router.py:168` (function definition is one line after decorator). |
-| A7 | **LOW** | Consider existing `ham_background_tasks.py` as a reuse candidate instead of building CardImportTaskManager from scratch. |
-| A8 | **LOW** | Add note about `wiring.py` as the proper DI wiring point for CardRegistry, not just lifespan. |
+| # | Severity | Status | Fix |
+|---|----------|--------|-----|
+| A1 | **HIGH** | 🟡 Doc fix needed | Remove claim that "PersonalityAdapter is never called". Add note that `roleplay_engine.py:22-23` already instantiates it. The plan should discuss whether to reuse existing RoleplayEngine callers or create a new instance in ChatService. |
+| A2 | **MEDIUM** | 🟡 Doc fix needed | Remove Phase 1.2 (adding `character_card` to `intent_registry.py:79`) — it already exists in the hardcoded fallback. |
+| A3 | **MEDIUM** | ⬜ Code fix needed | Fix `asyncio.run_coroutine_threadsafe(None, ...)` bug in Phase 2 code. Must pass `asyncio.get_event_loop()` or the running loop. |
+| A4 | **MEDIUM** | 🟡 Doc fix needed | Update lifespan modification plan to use `services/wiring.py` instead of directly patching `lifespan.py` at a misleading line reference. The actual location logic in lifespan.py is different from what the plan assumes. |
+| A5 | **LOW** | 🟡 Doc fix needed | Correct file attribution: AngelaLLMService is 40 lines (shim); actual implementation is `services/llm/router.py:1522` lines. |
+| A6 | **LOW** | 🟡 Doc fix needed | Update the line reference for `api/router.py:167` to `api/router.py:168` (function definition is one line after decorator). |
+| A7 | **LOW** | 🟡 Doc fix needed | Consider existing `ham_background_tasks.py` as a reuse candidate instead of building CardImportTaskManager from scratch. |
+| A8 | **LOW** | 🟡 Doc fix needed | Add note about `wiring.py` as the proper DI wiring point for CardRegistry, not just lifespan. |
 
 ### Suggested Improvements
 

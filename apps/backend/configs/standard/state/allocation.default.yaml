@@ -1,0 +1,36 @@
+# Allocation and Negativity Configuration
+# Migrated from configs/angela_state.yaml
+
+allocation:
+  assign_threshold: 0.7
+  composite_threshold: 0.3
+  composite_min_axes: 2
+  create_novelty_threshold: 0.6
+  buffer_max_size: 50
+  buffer_track_count: 5
+  buffer_creation_urge_boost: 0.05
+  simulation_weight: 0.5
+  defer_confidence: 0.3
+  influence_min_threshold: 0.1
+  influence_max_iterations: 100
+
+negativity:
+  trigger_threshold: 0.5
+  correction_urge_threshold: 0.6
+  detection_drift_threshold: 0.3
+  detection_drift_correction: 0.15
+  detection_drift_reset: 0.4
+  detection_window_min: 3
+  detection_window_max: 50
+  correction_delta: 0.1
+
+epsilon_ripple:
+  surprise_weight: 0.2
+  happiness_weight: 0.15
+  fatigue_threshold: 0.7
+  fatigue_drain_alpha: 0.2
+  fatigue_drain_beta: 0.1
+  fatigue_drain_gamma: 0.3
+  fatigue_drain_delta: 0.1
+  fatigue_drain_epsilon: 0.1
+  fatigue_drain_theta: 0.2

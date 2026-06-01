@@ -2,6 +2,10 @@
 # ==================================
 # Phase 4: Configuration Externalization
 # Replaces all hardcoded values in state_matrix.py
+# DEPRECATED: Values migrated to apps/backend/configs/standard/state/allocation.default.yaml
+# and apps/backend/configs/standard/state/influence.default.yaml.
+# The tiered loader is now the source of truth.
+# See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P3.3
 
 state_matrix:
   max_history: 500

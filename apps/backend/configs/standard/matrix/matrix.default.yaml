@@ -40,8 +40,8 @@ dimensions:
   theta:
     cn_name: "元認知維度"
     initial_values: {novelty: 0.5, complexity: 0.5, ambiguity: 0.5, abstraction_level: 0.5, dimension_fit: 0.5, creation_urge: 0.0, theta_negativity: 0.0, correction_urge: 0.0, audit_intensity: 0.0}
-    weight: 0.2
-    initial_coordinate: [0.0, 0.0, 0.0]
+    weight: 0.8
+    initial_coordinate: [0.0, 5.0, 5.0]
     anchor_keywords: ["複雜", "新穎", "創造", "策略", "分析", "元認知", "complex", "novel", "create", "strategy", "analyze"]
     
   zeta:
@@ -55,3 +55,5 @@ system_limits:
   max_misallocation_log: 100
   max_audit_trail: 50
   max_history: 1000
+  default_precision: 1.0
+  history_interval: 1.0

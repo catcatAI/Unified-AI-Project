@@ -1,0 +1,26 @@
+# Influence, Intent Gravity, and Inter-Dimensional Drag Configuration
+# Migrated from configs/angela_state.yaml
+
+influence:
+  softening: 10.0
+  factor_min: 0.5
+  factor_max: 2.0
+  default_matrix:
+    alpha: { alpha: 0.2, beta: 0.3, gamma: 0.5, delta: 0.1, epsilon: 0.3, theta: 0.1, zeta: 0.0 }
+    beta: { alpha: 0.3, beta: 0.2, gamma: 0.4, delta: 0.4, epsilon: 0.0, theta: 0.1, zeta: 0.0 }
+    gamma: { alpha: 0.4, beta: 0.3, gamma: 0.2, delta: 0.5, epsilon: 0.0, theta: 0.0, zeta: 0.0 }
+    delta: { alpha: 0.1, beta: 0.6, gamma: 0.4, delta: 0.3, epsilon: 0.1, theta: 0.0, zeta: 0.0 }
+    epsilon: { alpha: 0.2, beta: 0.3, gamma: 0.4, delta: 0.5, epsilon: 0.1, theta: 0.3, zeta: 0.1 }
+    theta: { alpha: 0.1, beta: 0.3, gamma: 0.4, delta: 0.5, epsilon: 0.1, theta: 0.2, zeta: 0.0 }
+    zeta: { alpha: 0.0, beta: 0.0, gamma: 0.0, delta: 0.0, epsilon: 0.0, theta: 0.0, zeta: 0.0 }
+
+intent_gravity:
+  base_strength: 0.05
+  max_shift: 0.1
+  decay: 0.95
+  stability: 0.01
+
+inter_dimensional_drag:
+  drag_coefficient: 0.02
+  min_weight: 0.001
+  max_cascade_depth: 3

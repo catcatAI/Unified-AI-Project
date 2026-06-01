@@ -29,6 +29,7 @@ except Exception:
 
 import math
 import os
+import warnings
 
 
 @dataclass
@@ -147,17 +148,12 @@ class StateConfig:
             return
         self._loaded = True
 
-        if config_path is None:
-            d = os.path.dirname(os.path.abspath(__file__))
-            for _ in range(5):
-                d = os.path.dirname(d)
-            config_path = os.path.join(d, "configs", "angela_state.yaml")
+        warnings.warn(
+            "StateConfig is deprecated. Use core.system.config.tiered_loader.get_config() instead.",
+            DeprecationWarning, stacklevel=2,
+        )
 
-        with open(config_path, "r", encoding="utf-8") as f:
-            if _HAS_YAML:
-                data = yaml.safe_load(f)
-            else:
-                data = _json.load(f)
+        data = self._load_config(config_path)
 
         sm_data = data.get("state_matrix", {})
         self.state_matrix = StateMatrixConfig(
@@ -259,6 +255,147 @@ class StateConfig:
         self.influence_matrix: Dict[str, Dict[str, float]] = data.get("influence", {}).get("matrix", {})
 
         self._raw = data
+
+    def _load_config(self, config_path: Optional[str] = None) -> dict:
+        """Try tiered loader first, fall back to direct YAML reading."""
+        try:
+            from core.system.config.tiered_loader import get_config
+            matrix = get_config("standard/matrix/matrix") or {}
+            allocation = get_config("standard/state/allocation") or {}
+            influence = get_config("standard/state/influence") or {}
+            spatial = get_config("standard/science/spatial") or {}
+            return self._merge_tiered_configs(matrix, allocation, influence, spatial)
+        except ImportError:
+            pass
+
+        if config_path is None:
+            d = os.path.dirname(os.path.abspath(__file__))
+            for _ in range(5):
+                d = os.path.dirname(d)
+            config_path = os.path.join(d, "configs", "angela_state.yaml")
+
+        with open(config_path, "r", encoding="utf-8") as f:
+            if _HAS_YAML:
+                data = yaml.safe_load(f)
+            else:
+                data = _json.load(f)
+
+        return data
+
+    def _merge_tiered_configs(self, matrix: dict, allocation: dict, influence: dict, spatial: dict) -> dict:
+        """Merge tiered config sections into the legacy angela_state.yaml structure."""
+        data = {}
+
+        # state_matrix from matrix.system_limits
+        sm = matrix.get("system_limits", {})
+        data["state_matrix"] = {
+            "max_history": sm.get("max_history", 500),
+            "max_misallocation_log": sm.get("max_misallocation_log", 100),
+            "max_audit_trail": sm.get("max_audit_trail", 50),
+            "default_precision": sm.get("default_precision", 1.0),
+            "history_interval": sm.get("history_interval", 1.0),
+        }
+
+        # axes from matrix.dimensions (convert initial_values -> fields list)
+        data["axes"] = {}
+        for axis_name, axis_data in matrix.get("dimensions", {}).items():
+            fields = [
+                {"name": fname, "label": fname, "default": fdefault, "range": [0.0, 1.0], "description": ""}
+                for fname, fdefault in axis_data.get("initial_values", {}).items()
+            ]
+            data["axes"][axis_name] = {
+                "label": axis_data.get("cn_name", axis_name),
+                "weight": axis_data.get("weight", 1.0),
+                "coordinate": list(axis_data.get("initial_coordinate", [0.0, 0.0, 0.0])),
+                "description": "",
+                "fields": fields,
+            }
+
+        # allocation (flatten buffer sub-section)
+        alloc = allocation.get("allocation", {})
+        data["allocation"] = {
+            "assign_threshold": alloc.get("assign_threshold", 0.7),
+            "composite_threshold": alloc.get("composite_threshold", 0.3),
+            "composite_min_axes": alloc.get("composite_min_axes", 2),
+            "create_novelty_threshold": alloc.get("create_novelty_threshold", 0.6),
+            "create_complexity_min": alloc.get("create_complexity_min", 2),
+            "create_confidence": alloc.get("create_confidence", 0.5),
+            "defer_confidence": alloc.get("defer_confidence", 0.3),
+            "high_similarity_threshold": alloc.get("high_similarity_threshold", 0.5),
+            "buffer": {
+                "max_size": alloc.get("buffer_max_size", 50),
+                "track_threshold": alloc.get("buffer_track_count", 5),
+                "creation_urge_boost": alloc.get("buffer_creation_urge_boost", 0.05),
+            },
+        }
+
+        # negativity (expand detection/correction sub-sections)
+        neg = allocation.get("negativity", {})
+        data["negativity"] = {
+            "trigger_threshold": neg.get("trigger_threshold", 0.5),
+            "correction_urge_threshold": neg.get("correction_urge_threshold", 0.6),
+            "audit_intensity_base": neg.get("audit_intensity_base", 0.5),
+            "max_misallocation_log": 100,
+            "max_audit_trail": 50,
+            "detection": {
+                "drift_threshold_base": neg.get("detection_drift_threshold", 0.3),
+                "drift_threshold_min": neg.get("detection_drift_correction", 0.15),
+                "drift_threshold_max": neg.get("detection_drift_reset", 0.4),
+                "min_window": neg.get("detection_window_min", 3),
+                "max_window": neg.get("detection_window_max", 50),
+            },
+            "correction": {
+                "delta_amount": neg.get("correction_delta", 0.1),
+                "negativity_reduction": 0.05,
+                "correction_urge_reduction": 0.10,
+            },
+        }
+
+        # epsilon_ripple (remap drain fields)
+        eps = allocation.get("epsilon_ripple", {})
+        data["epsilon_ripple"] = {
+            "surprise_weight": eps.get("surprise_weight", 0.2),
+            "happiness_weight": eps.get("happiness_weight", 0.15),
+            "fatigue_threshold": eps.get("fatigue_threshold", 0.7),
+            "focus_drain_per_fatigue": eps.get("fatigue_drain_alpha", 0.1),
+            "calm_drain_per_fatigue": eps.get("fatigue_drain_beta", 0.05),
+        }
+
+        # intent_gravity (remap field names)
+        ig = influence.get("intent_gravity", {})
+        data["intent_gravity"] = {
+            "base_strength": ig.get("base_strength", 0.05),
+            "max_shift_per_update": ig.get("max_shift", 0.1),
+            "decay_rate": ig.get("decay", 0.95),
+            "stability_threshold": ig.get("stability", 0.01),
+        }
+
+        # inter_dimensional_drag (direct mapping)
+        idd = influence.get("inter_dimensional_drag", {})
+        data["inter_dimensional_drag"] = {
+            "drag_coefficient": idd.get("drag_coefficient", 0.02),
+            "min_weight": idd.get("min_weight", 0.001),
+            "max_cascade_depth": idd.get("max_cascade_depth", 3),
+        }
+
+        # influence matrix + softening params
+        inf = influence.get("influence", {})
+        data["influence"] = {
+            "softening": inf.get("softening", 10.0),
+            "influence_factor_min": inf.get("factor_min", 0.5),
+            "influence_factor_max": inf.get("factor_max", 2.0),
+            "matrix": inf.get("default_matrix", {}),
+        }
+
+        # spatial (gravity from spatial.default.yaml, softening from influence)
+        data["spatial"] = {
+            "gravity_constant": spatial.get("gravity", {}).get("intent_gravity_pull", 25.0),
+            "softening_parameter": inf.get("softening", 10.0),
+            "influence_min": inf.get("factor_min", 0.5),
+            "influence_max": inf.get("factor_max", 2.0),
+        }
+
+        return data
 
     def get_axis(self, name: str) -> Optional[AxisConfig]:
         return self.axes.get(name)

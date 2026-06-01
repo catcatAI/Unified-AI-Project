@@ -131,21 +131,39 @@ class StateMatrixAdapter:
             self._eta.register_module(config)
 
     def _init_config(self) -> None:
-        """初始化配置"""
+        """初始化配置 — 優先使用 tiered loader，後備 StateConfig"""
         try:
-            self._config = StateConfig()
+            from core.system.config.tiered_loader import get_config as _get_tiered_config
+            matrix_cfg = _get_tiered_config("standard/matrix/matrix") or {}
+            influence_cfg = _get_tiered_config("standard/state/influence") or {}
+            sm_limits = matrix_cfg.get("system_limits", {})
+
+            class _ConfigProxy:
+                pass
+
+            self._config = _ConfigProxy()
+            self._config.state_matrix = _ConfigProxy()
+            self._config.state_matrix.max_history = sm_limits.get("max_history", 1000)
+            self._config.influence_matrix = influence_cfg.get("influence", {}).get("default_matrix", {})
         except Exception:
-            self._config = None
+            try:
+                self._config = StateConfig()
+            except Exception:
+                self._config = None
 
     def _init_temporal(self) -> None:
         """初始化時間查詢引擎"""
         max_size = 500
-        if self._config:
-            max_size = self._config.state_matrix.max_history
+        try:
+            from core.system.config.tiered_loader import get_config
+            max_size = get_config("standard/matrix/matrix").get("system_limits", {}).get("max_history", 1000)
+        except Exception:
+            if self._config:
+                max_size = self._config.state_matrix.max_history
         self._temporal = TemporalState(max_size=max_size)
 
     def _init_influence(self) -> None:
-        """初始化影響空間"""
+        """初始化影響空間 — 優先使用 tiered loader"""
         base_matrix = {
             'alpha': {'beta': 0.4, 'gamma': 0.2, 'delta': 0.1, 'epsilon': 0.3, 'theta': 0.2, 'zeta': 0.05},
             'beta': {'alpha': 0.3, 'gamma': 0.5, 'delta': 0.2, 'epsilon': 0.4, 'theta': 0.3, 'zeta': 0.1},
@@ -156,8 +174,14 @@ class StateMatrixAdapter:
             'zeta': {'alpha': 0.05, 'beta': 0.1, 'gamma': 0.1, 'delta': 0.05, 'epsilon': 0.05, 'theta': 0.05},
         }
 
-        if self._config and self._config.influence_matrix:
-            base_matrix = self._config.influence_matrix
+        try:
+            from core.system.config.tiered_loader import get_config
+            influence_matrix = get_config("standard/state/influence").get("influence", {}).get("default_matrix", {})
+            if influence_matrix:
+                base_matrix = influence_matrix
+        except Exception:
+            if self._config and self._config.influence_matrix:
+                base_matrix = self._config.influence_matrix
 
         self._influence_space = InfluenceSpace(
             axes={

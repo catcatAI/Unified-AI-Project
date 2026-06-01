@@ -21,7 +21,7 @@
 | **有序度** | 文件組織、依賴管理、版本控制規範 | ~65% |
 | **真實服務** | 所有集成提供真實外部服務，非mock/stub | ~30% |
 
-**綜合完成度: ~50%** (上輪45%, 本輪↑5%) — 距離「完美完成」有極大差距。
+**綜合完成度: ~58%** (上輪45%, 跨3輪↑13%) — 距離「完美完成」有極大差距。
 
 ---
 
@@ -432,6 +432,7 @@
 | 3.3a | ✅ AngelaConfigManager 已標記 DEPRECATED (src/config/ 路徑) | `core/config_loader.py` |
 | 3.3b | ✅ system_config.py 已標記 DEPRECATED (0 consumers) | `core/config/system_config.py` |
 | 3.3c | ✅ network_defaults.py 遷移至YAML (timeout加至llm.default.yaml, 6 providers支援config timeout, router.py傳遞, deprecation header) | `network_defaults.py`, `llm.default.yaml`, 6 provider files, `router.py` |
+| 3.3d | ✅ StateConfig 遷移至 tiered system (2新YAML, matrix衝突解析, config_loader.py委派, adapter直讀, deprecation) | `state/config_loader.py`, `state_matrix_adapter.py`, `matrix.default.yaml`, 2 new state YAMLs |
 | 3.4 | 將 10 個 digital_life_constants.py 常量遷移到配置 | `core/life/digital_life_constants.py` |
 
 ### P4 — 文檔一致性
@@ -516,6 +517,9 @@
 | P8-2 | MASTER_FINALIZATION_PLAN.md路徑修正 (brain_bridge_service標記ACTIVE) | ✅ | 2026-06-01 |
 | D7 | 刪除47個過期exc_info=True跨24個文件 (7個合法保留) | ✅ | 2026-06-01 |
 | P3.3c | network_defaults.py 遷移至YAML — 6 providers加timeout參數, llm.default.yaml加timeout key, router.py傳遞YAML timeout, deprecation header | ✅ | 2026-06-01 |
+| P3.3d | StateConfig 遷移至 tiered system — 2新YAML (allocation, influence), matrix.default.yaml衝突解析, config_loader.py委派, state_matrix_adapter.py直接使用tiered loader, deprecation warning | ✅ | 2026-06-01 |
+| Px2 | AGENTS.md版本同步 6.5.0→7.5.0-dev | ✅ | 2026-06-01 |
+| Px3 | PLAN_REVIEW.md A1-A8狀態追蹤欄位加 (6 doc-fix, 1 code-fix) | ✅ | 2026-06-01 |
 | P5.4 | 移動應用 android/ios 目錄 | ⬜ | — |
 | P2.1 | 為~230+未測試模組添加測試 | ⬜ | — |
 
