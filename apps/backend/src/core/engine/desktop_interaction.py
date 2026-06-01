@@ -645,6 +645,16 @@ class DesktopInteraction:
 
         return False
 
+    def _set_wallpaper_windows(self, image_path: Path) -> None:
+        import ctypes
+        import typing
+
+        SPI_SETDESKWALLPAPER = 20
+        _ctypes = typing.cast(typing.Any, ctypes)
+        _ctypes.windll.user32.SystemParametersInfoW(
+            SPI_SETDESKWALLPAPER, 0, str(image_path.absolute()), 3
+        )
+
     async def set_wallpaper(self, image_path: Path) -> bool:
         """
         Set desktop wallpaper
@@ -665,12 +675,7 @@ class DesktopInteraction:
             system = platform.system()
 
             if system == "Windows":
-                import ctypes
-
-                SPI_SETDESKWALLPAPER = 20
-                ctypes.windll.user32.SystemParametersInfoW(  # type: ignore[attr-defined]
-                    SPI_SETDESKWALLPAPER, 0, str(image_path.absolute()), 3
-                )
+                self._set_wallpaper_windows(image_path)
                 return True
 
             elif system == "Darwin":  # macOS

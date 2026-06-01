@@ -5,7 +5,7 @@
 # δ (Delta): Volition - Formula execution and action selection
 
 # from tests.test_json_fix import  # Fixed: commented out incomplete import
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, cast
 from pathlib import Path
 import json
 import logging
@@ -82,7 +82,7 @@ class FormulaEngine:
                     self.formulas = []
                     return
 
-                active_formulas = []
+                active_formulas: List[Dict[str, Any]] = []
                 for entry in loaded_data:
                     # Basic structural check
                     if (
@@ -93,7 +93,7 @@ class FormulaEngine:
                     ):
                         # Only add if enabled (defaults to True if 'enabled' key is missing)
                         if entry.get("enabled", True):  # Default to enabled if key missing
-                            active_formulas.append(entry)  # type: ignore[arg-type]
+                            active_formulas.append(entry)
                         else:
                             logger.info(
                                 f"FormulaEngine: Skipping disabled formula entry: {entry.get('name')}"
@@ -154,7 +154,7 @@ class FormulaEngine:
                 match_found = cond_lower in current_normalized_input
 
                 if match_found:
-                    return formula  # type: ignore[return-value]
+                    return cast(Dict[str, Any], formula)
         return None
 
     def execute_formula(

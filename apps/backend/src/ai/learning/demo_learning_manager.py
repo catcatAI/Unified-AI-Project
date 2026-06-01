@@ -65,10 +65,9 @@ class DemoLearningManager:
     async def start_learning(self, model_id: str, config: Dict[str, Any]) -> Any:
         """開始學習"""
         # 如果有model_trainer, 使用它進行訓練
-        if self.model_trainer and hasattr(self.model_trainer, "train"):
-            # 修复类型检查问题：添加类型注解
-            train_result = await self.model_trainer.train(model_id, config)  # type: ignore[union-attr]
-            return train_result  # type: ignore[return-value]
+        if self.model_trainer is not None and hasattr(self.model_trainer, "train"):
+            train_result = await self.model_trainer.train(model_id, config)
+            return train_result
 
         # 模擬學習過程
         self.model_registry[model_id] = {
@@ -81,10 +80,9 @@ class DemoLearningManager:
     async def stop_learning(self, model_id: str) -> bool:
         """停止學習"""
         # 如果有model_trainer, 使用它停止訓練
-        if self.model_trainer and hasattr(self.model_trainer, "stop"):
-            # 修复类型检查问题：添加类型注解
-            stop_result = await self.model_trainer.stop(model_id)  # type: ignore[union-attr]
-            return stop_result  # type: ignore[return-value]
+        if self.model_trainer is not None and hasattr(self.model_trainer, "stop"):
+            stop_result = await self.model_trainer.stop(model_id)
+            return bool(stop_result)
 
         # 模擬停止學習
         if model_id in self.model_registry:

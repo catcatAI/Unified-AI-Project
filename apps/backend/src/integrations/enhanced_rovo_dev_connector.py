@@ -6,14 +6,14 @@
 import asyncio
 import logging
 import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, cast
 from dataclasses import dataclass, field
 
 # Mock aiohttp for syntax validation
 try:
     import aiohttp
 except ImportError:
-    aiohttp = object()  # type: ignore[assignment]
+    aiohttp = cast(Any, object())
 
 logger = logging.getLogger(__name__)
 

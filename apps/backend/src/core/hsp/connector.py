@@ -5,7 +5,7 @@ import uuid
 import time
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 from typing_extensions import Literal
 
 from .types import (
@@ -234,7 +234,7 @@ class HSPConnector:
         callback = self.performance_enhancer.enhance_receive(enhanced_handler)
         # 确保callback是正确的类型
         if callable(callback):
-            self.external_connector.on_message_callback = callback  # type: ignore[assignment]
+            self.external_connector.on_message_callback = cast(Callable, callback)
 
         # Subscribe to internal bus messages that need to go external
         self.internal_bus.subscribe("hsp.internal.message", self._handle_internal_message)
@@ -366,7 +366,7 @@ class HSPConnector:
         async def wrapper(topic: str, message: str):
             await callback(None, topic, message, 1, None)
 
-        self.external_connector.on_message_callback = wrapper  # type: ignore[assignment]
+        self.external_connector.on_message_callback = cast(Callable, wrapper)
 
     def register_on_fact_callback(self, callback: Callable):
         """注册事实消息回调"""
@@ -726,7 +726,7 @@ class HSPConnector:
         sender_ai_id = validated_message.get("sender_ai_id")
 
         if payload and sender_ai_id:
-            result_payload = HSPTaskResultPayload(**payload)  # type: ignore[arg-type]
+            result_payload = HSPTaskResultPayload(**cast(Dict[str, Any], payload))
             for callback in self._task_result_callbacks:
                 self.logger.debug(f"Calling on_task_result_callback: {callback}")
                 if asyncio.iscoroutinefunction(callback):
@@ -785,7 +785,7 @@ class HSPConnector:
         sender_ai_id = validated_message.get("sender_ai_id")
 
         if payload and sender_ai_id:
-            ack_payload = HSPAcknowledgementPayload(**payload)  # type: ignore[arg-type]
+            ack_payload = HSPAcknowledgementPayload(**cast(Dict[str, Any], payload))
             correlation_id = validated_message.get("correlation_id")
 
             # Resolve pending ACK if any
@@ -955,8 +955,8 @@ class HSPConnector:
 
         # 性能优化：优化消息路由
         _optimized_message = await self.performance_optimizer.optimize_message_routing(
-            dict(envelope)
-        )  # type: ignore[arg-type]
+            cast(Dict[str, Any], envelope)
+        )
 
         # 性能优化：检查消息缓存
         if not requires_ack:

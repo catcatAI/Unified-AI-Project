@@ -19,7 +19,7 @@ from typing import Dict, Any, Callable, Optional, List, Tuple, TypeVar, cast
 try:
     import psutil
 except ImportError:
-    psutil = object()  # type: ignore[assignment]
+    psutil = cast(Any, object())
     psutil.cpu_percent = lambda interval: 0.0
     psutil.virtual_memory = lambda: Mock(percent=0.0)
     psutil.disk_io_counters = lambda: Mock(read_bytes=0, write_bytes=0)

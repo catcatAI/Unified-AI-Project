@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 # Core dependencies - synced with pyproject.toml (source of truth)
 core_requirements = [
     "numpy>=1.21.0",
-    "cryptography>=3.4.0",
+    "cryptography>=41.0.0",
     "requests>=2.25.0",
     "python-dotenv>=0.19.0",
     "PyYAML>=6.0",
@@ -91,7 +91,8 @@ optional_requirements = {
 # Convenience groups
 optional_requirements["standard"] = (
     optional_requirements["web"] +
-    optional_requirements["testing"]
+    optional_requirements["testing"] +
+    ["chromadb"]
 )
 optional_requirements["full"] = (
     optional_requirements["ai"] +

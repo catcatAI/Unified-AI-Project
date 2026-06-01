@@ -51,13 +51,37 @@ class AtlassianBridge:
         self.endpoints: Dict[str, EndpointConfig] = {}
         self.cache: Dict[str, CacheEntry] = {}
         self.offline_queue: List[Dict[str, Any]] = []
+        self._running: bool = False
+        self._loaded: bool = False
+        self._session: Optional[aiohttp.ClientSession] = None
+        self._load_endpoint_configs()
         logger.info("AtlassianBridge Skeleton Initialized")
 
-    async def start(self):
-        logger.info("[AtlassianBridge] start — SKELETON (not implemented)")
+    async def start(self) -> None:
+        if self._running:
+            logger.warning("[AtlassianBridge] start called but already running")
+            return
+        self._running = True
+        self._loaded = True
+        self._session = aiohttp.ClientSession()
+        self._load_endpoint_configs()
+        logger.info("[AtlassianBridge] Started — %d endpoints loaded", len(self.endpoints))
 
-    async def close(self):
-        logger.info("[AtlassianBridge] close — SKELETON (not implemented)")
+    async def close(self) -> None:
+        if not self._running:
+            logger.warning("[AtlassianBridge] close called but not running")
+            return
+        self._running = False
+        self._loaded = False
+        if self.health_monitoring_task:
+            self.health_monitoring_task.cancel()
+            self.health_monitoring_task = None
+        if self._session:
+            await self._session.close()
+            self._session = None
+        self.cache.clear()
+        self.offline_queue.clear()
+        logger.info("[AtlassianBridge] Closed")
 
     async def __aenter__(self):
         await self.start()
@@ -72,6 +96,8 @@ class AtlassianBridge:
             if not isinstance(svc_cfg, dict):
                 continue
             primary = svc_cfg.get("url", "") or svc_cfg.get("primary_url", "")
+            if not primary:
+                continue
             backups = svc_cfg.get("backup_urls", [])
             timeout = svc_cfg.get("timeout", 30.0)
             max_retries = svc_cfg.get("max_retries", 3)
@@ -111,6 +137,7 @@ class AtlassianBridge:
     async def create_confluence_page(
         self, space_key: str, title: str, content: str, parent_id: Optional[str] = None
     ) -> Dict[str, Any]:
+        logger.info("create_confluence_page: space_key=%s title=%s parent_id=%s", space_key, title, parent_id)
         body = {
             "type": "page",
             "title": title,
@@ -127,17 +154,23 @@ class AtlassianBridge:
     async def update_confluence_page(
         self, page_id: str, title: str, content: str, version: Optional[int] = None
     ) -> Dict[str, Any]:
-        logger.warning("SKELETON: update_confluence_page called, returning empty dict.", exc_info=True)
-        return {}
+        logger.info("SKELETON: update_confluence_page called with page_id=%s", page_id)
+        return {
+            "success": False,
+            "message": "SKELETON: update_confluence_page not implemented. Provide Confluence API auth tokens and endpoint URLs in config.",
+        }
 
     async def get_confluence_page(self, page_id: str) -> Dict[str, Any]:
-        logger.warning("SKELETON: get_confluence_page called, returning empty dict.", exc_info=True)
-        return {}
+        logger.info("SKELETON: get_confluence_page called with page_id=%s", page_id)
+        return {
+            "success": False,
+            "message": "SKELETON: get_confluence_page not implemented. Provide Confluence API auth tokens and endpoint URLs in config.",
+        }
 
     async def search_confluence_pages(
         self, space_key: str, query: str, limit: int = 25
     ) -> List[Dict[str, Any]]:
-        logger.warning("SKELETON: search_confluence_pages called, returning empty list.", exc_info=True)
+        logger.info("SKELETON: search_confluence_pages called with space_key=%s query=%s", space_key, query)
         return []
 
     async def create_jira_issue(
@@ -149,41 +182,53 @@ class AtlassianBridge:
         priority: str = "Medium",
         assignee: Optional[str] = None,
     ) -> Dict[str, Any]:
-        logger.warning("SKELETON: create_jira_issue called, returning empty dict.", exc_info=True)
-        return {}
+        logger.info("SKELETON: create_jira_issue called with project_key=%s summary=%s", project_key, summary)
+        return {
+            "success": False,
+            "message": "SKELETON: create_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
+        }
 
     async def update_jira_issue(self, issue_key: str, fields: Dict[str, Any]) -> Dict[str, Any]:
-        logger.warning("SKELETON: update_jira_issue called, returning empty dict.", exc_info=True)
-        return {}
+        logger.info("SKELETON: update_jira_issue called with issue_key=%s", issue_key)
+        return {
+            "success": False,
+            "message": "SKELETON: update_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
+        }
 
     async def get_jira_issue(self, issue_key: str) -> Dict[str, Any]:
-        logger.warning("SKELETON: get_jira_issue called, returning empty dict.", exc_info=True)
-        return {}
+        logger.info("SKELETON: get_jira_issue called with issue_key=%s", issue_key)
+        return {
+            "success": False,
+            "message": "SKELETON: get_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
+        }
 
     async def search_jira_issues(self, jql: str, max_results: int = 50) -> List[Dict[str, Any]]:
-        logger.warning("SKELETON: search_jira_issues called, returning empty list.", exc_info=True)
+        logger.info("SKELETON: search_jira_issues called with jql=%s", jql)
         return []
 
     async def transition_jira_issue(
         self, issue_key: str, transition_id: str, comment: Optional[str] = None
     ) -> Dict[str, Any]:
-        logger.warning("SKELETON: transition_jira_issue called, returning empty dict.", exc_info=True)
-        return {}
+        logger.info("SKELETON: transition_jira_issue called with issue_key=%s transition_id=%s", issue_key, transition_id)
+        return {
+            "success": False,
+            "message": "SKELETON: transition_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
+        }
 
     async def get_bitbucket_repositories(self, workspace: str) -> List[Dict[str, Any]]:
-        logger.warning("SKELETON: get_bitbucket_repositories called, returning empty list.", exc_info=True)
+        logger.info("SKELETON: get_bitbucket_repositories called with workspace=%s", workspace)
         return []
 
     async def get_bitbucket_pull_requests(
         self, workspace: str, repo_slug: str, state: str = "OPEN"
     ) -> List[Dict[str, Any]]:
-        logger.warning("SKELETON: get_bitbucket_pull_requests called, returning empty list.", exc_info=True)
+        logger.info("SKELETON: get_bitbucket_pull_requests called with workspace=%s repo_slug=%s", workspace, repo_slug)
         return []
 
     async def get_confluence_spaces(self) -> List[Dict[str, Any]]:
-        logger.warning("SKELETON: get_confluence_spaces called, returning empty list.", exc_info=True)
+        logger.info("SKELETON: get_confluence_spaces called")
         return []
 
     async def get_jira_projects(self) -> List[Dict[str, Any]]:
-        logger.warning("SKELETON: get_jira_projects called, returning empty list.", exc_info=True)
+        logger.info("SKELETON: get_jira_projects called")
         return []
