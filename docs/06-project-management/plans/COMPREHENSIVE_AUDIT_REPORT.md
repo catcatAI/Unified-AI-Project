@@ -409,15 +409,15 @@
 | 1.1 | 實現 Level5ASISystem 的真實子系統 | `ai/level5_asi_system.py` |
 | 1.2 | 實現 Atlassian Bridge 的真實 API 調用 | `integrations/atlassian_bridge.py` |
 | 1.3 | 實現 Rovo Dev Connector 真實認證和 API | `integrations/enhanced_rovo_dev_connector.py` |
-| 1.4 | 實現 3 個 persistent stub 代理 | `ai/agents/specialized/audio_processing_agent.py` + others |
-| 1.5 | 清理 78 個 pass 陳述 | 全代碼庫 |
+| 1.4 | ✅ 3 個 persistent stub 代理已改善 (類型安全+日誌) | `ai/agents/specialized/` |
+| 1.5 | ✅ 65/78 個 pass 已修復 | 全代碼庫 |
 | 1.6 | 修復 README.md 中的過時陳述 | `README.md` |
 
 ### P2 — 測試基礎建設
 
 | # | 任務 | 文件/位置 |
 |---|------|----------|
-| 2.1 | 為 ~230+ 未測試模組添加基本測試 | 全代碼庫 |
+| 2.1 | 為 ~230+ 未測試模組添加基本測試 (首批9個已完成: Level5ASI, 6 LLM, heartbeat, scheduler, executor) | `tests/unit/test_*.py` |
 | 2.2 | ✅ 性能測試修復 (33+語法錯誤, pytest-benchmark轉換) | `tests/performance/` |
 | 2.3 | ✅ E2E測試重寫 (結構化斷言, @pytest.mark.e2e, 需live server) | `tests/e2e/` |
 | 2.4 | ✅ tests/scripts/清理 (58文件→unit/integration/api/utils/examples, 6刪除) | `tests/scripts/` |
@@ -453,7 +453,16 @@
 | 5.2 | 消除 8 對影子模組 | `shared/` + `core/shared/` |
 | 5.3 | 刪除 deprecated agents/ 目錄 | `agents/` |
 | 5.4 | 添加 android/ 和 ios/ 目錄到移動應用 | `apps/mobile-app/` |
-| 5.5 | 編譯 Live2D Framework bundle | `apps/desktop-app/` |
+| 5.5 | 編譯 Live2D Framework bundle (dist/已存在~36KB, build script已修復) | `apps/desktop-app/` |
+
+### P6 — 品質打磨
+
+| # | 任務 | 文件/位置 |
+|---|------|----------|
+| 6.1 | ✅ Plugin handler 部署完成 | — |
+| 6.2 | ✅ FileOperationHandler 實作完成 | — |
+| 6.3 | ✅ Magic number 遷移 (新增4個accessor, 5文件16處遷移; 階段性完成) | `core/system/config/magic_numbers.py` |
+| 6.4 | ✅ Stub 清理完成 (9 stub 標準化) | — |
 
 ---
 
@@ -524,7 +533,8 @@
 | P2.2 | 效能測試修復 — test_stress.py 33+語法錯誤修復, 轉換為pytest-benchmark; test_benchmark.py +pytest裝飾器 | ✅ | 2026-06-01 |
 | P2.3 | E2E測試改善 — 2文件重寫 (共222行), @pytest.mark.e2e + @skip("Requires live server"), 結構化斷言 | ✅ | 2026-06-01 |
 | P5.4 | 移動應用 android/ios 目錄 | ⬜ | — |
-| P2.1 | 為~230+未測試模組添加測試 | ⬜ | — |
+| P2.1 | 為~230+未測試模組添加測試 (首批9個最高優先: Level5ASI, 6 LLM providers, heartbeat, scheduler, executor已完成) | 🟡 9/230+ 完成 | 2026-06-01 |
+| P6-3 | magic_numbers.py新增4個accessor (retry/batch/cache/threshold) + 5文件16處遷移 | ✅ | 2026-06-01 |
 
 ---
 

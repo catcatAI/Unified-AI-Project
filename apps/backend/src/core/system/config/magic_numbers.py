@@ -79,3 +79,26 @@ def behavior_executor(key: str, default: Any = None) -> Any:
     """Get an executor parameter from thresholds config (behavior.executor.*)."""
     cfg = _get_tiered_config("standard/behavior/thresholds")
     return _nested_get(cfg, f"executor.{key}", default)
+
+
+# ── Retry / batch / cache / threshold helpers ─────────────────────────
+
+def retry_value(key: str, default: int = 3) -> int:
+    """Get retry count from timing config"""
+    result = timing_value(key, default)
+    return int(result)
+
+def batch_value(key: str, default: int = 32) -> int:
+    """Get batch size from timing config"""
+    result = timing_value(key, default)
+    return int(result)
+
+def cache_value(key: str, default: int = 100) -> int:
+    """Get cache/queue limit from timing config"""
+    result = timing_value(key, default)
+    return int(result)
+
+def threshold_value(key: str, default: float = 0.5) -> float:
+    """Get generic threshold from behavior thresholds"""
+    result = behavior_threshold(key, default)
+    return float(result)

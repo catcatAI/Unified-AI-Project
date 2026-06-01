@@ -14,6 +14,7 @@ from .angela_llm_service import get_llm_service
 from core.engine.state_matrix import StateMatrix4D
 from core.engine.state_matrix_adapter import StateMatrixAdapter
 from ai.security.ego_guard import EgoGuard
+from core.system.config.magic_numbers import cache_value
 
 logger = logging.getLogger(__name__)
 
@@ -155,8 +156,9 @@ class ChatService:
         self._conversation_history.append({"role": "assistant", "content": response})
 
         # 保持歷史長度
-        if len(self._conversation_history) > 20:
-            self._conversation_history = self._conversation_history[-20:]
+        max_history = int(cache_value("conversation_history_maxlen", 20))
+        if len(self._conversation_history) > max_history:
+            self._conversation_history = self._conversation_history[-max_history:]
 
         return response
 

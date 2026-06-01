@@ -30,7 +30,7 @@ from collections import defaultdict, deque
 import json
 from pathlib import Path
 import logging
-from core.system.config.magic_numbers import loop_sleep, timeout_value
+from core.system.config.magic_numbers import loop_sleep, timeout_value, cache_value
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ class EventQueue:
     Uses heapq for efficient priority ordering.
     """
 
-    def __init__(self, max_size: int = 10000):
+    def __init__(self, max_size: int = cache_value("queue_max_size", 10000)):
         self.max_size = max_size
         self._queue: List[Tuple[int, float, Event]] = []  # (priority, seq, event)
         self._sequence = 0
@@ -448,7 +448,7 @@ class EventLoopSystem:
         }
 
         # Latency tracking
-        self._latency_samples: deque = deque(maxlen=1000)
+        self._latency_samples: deque = deque(maxlen=cache_value("latency_samples_maxlen", 1000))
 
     async def initialize(self):
         """Initialize the event loop system"""

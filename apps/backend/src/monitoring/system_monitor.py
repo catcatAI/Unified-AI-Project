@@ -10,6 +10,8 @@ import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
+
+from core.system.config.magic_numbers import threshold_value
 from unittest.mock import Mock
 
 # Mock dependencies for syntax validation
@@ -153,7 +155,7 @@ class SystemMonitor:
             "avg_memory_load": avg_memory,
             "recommendations": [],
         }
-        if avg_cpu > 80:
+        if avg_cpu > threshold_value("cpu_warning", 80):
             recommendations["recommendations"].append(
                 {
                     "type": "cpu",
@@ -161,11 +163,11 @@ class SystemMonitor:
                     "message": "CPU负载过高, 建议减少并行任务或优化算法",
                 }
             )
-        elif avg_cpu > 60:
+        elif avg_cpu > threshold_value("cpu_medium", 60):
             recommendations["recommendations"].append(
                 {"type": "cpu", "severity": "medium", "message": "CPU负载中等, 可以适当增加任务"}
             )
-        if avg_memory > 85:
+        if avg_memory > threshold_value("memory_warning", 85):
             recommendations["recommendations"].append(
                 {
                     "type": "memory",
@@ -173,7 +175,7 @@ class SystemMonitor:
                     "message": "内存使用率过高, 建议释放不必要的内存或增加内存资源",
                 }
             )
-        elif avg_memory > 70:
+        elif avg_memory > threshold_value("memory_medium", 70):
             recommendations["recommendations"].append(
                 {"type": "memory", "severity": "medium", "message": "内存使用率中等, 注意内存管理"}
             )
@@ -188,9 +190,9 @@ class SystemMonitor:
                 logger.debug(
                     f"系统指标: CPU={metrics.cpu_percent:.1f}%, 内存={metrics.memory_percent:.1f}%"
                 )
-                if metrics.cpu_percent > 90:
+                if metrics.cpu_percent > threshold_value("cpu_critical", 90):
                     logger.warning(f"CPU使用率过高: {metrics.cpu_percent:.1f}%")
-                if metrics.memory_percent > 90:
+                if metrics.memory_percent > threshold_value("memory_critical", 90):
                     logger.warning(f"内存使用率过高: {metrics.memory_percent:.1f}%")
                 await asyncio.sleep(self.monitoring_interval)
             except Exception as e:  # broad exception acceptable: ensure monitoring loop continues even on collection errors

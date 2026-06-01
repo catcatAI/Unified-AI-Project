@@ -29,7 +29,7 @@ from pathlib import Path
 import logging
 from core.bio.kinetic_validator import KineticValidator
 from core.system.config.async_io import async_json_dump, async_json_load
-from core.system.config.magic_numbers import loop_sleep, behavior_executor
+from core.system.config.magic_numbers import loop_sleep, behavior_executor, retry_value, cache_value, timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -135,8 +135,8 @@ class Action:
         priority: ActionPriority,
         function: Callable[..., Any],
         parameters: Optional[dict[str, Any]] = None,
-        timeout: float = 30.0,
-        max_retries: int = 3,
+        timeout: float = timeout_value("action_timeout", 30.0),
+        max_retries: int = retry_value("action_max_retries", 3),
     ) -> Action:
         """Factory method to create an action"""
         return cls(
@@ -158,7 +158,7 @@ class ActionQueue:
     Manages actions with priority-based scheduling and dependency resolution.
     """
 
-    def __init__(self, max_size: int = 1000):
+    def __init__(self, max_size: int = cache_value("queue_max_size", 1000)):
         self.max_size = max_size
         self._queue: list[Action] = []
         self._completed: list[Action] = []

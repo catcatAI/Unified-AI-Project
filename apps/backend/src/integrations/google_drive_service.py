@@ -17,6 +17,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from core.interfaces.service_registry import get_registry
+from core.system.config.magic_numbers import batch_value
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ class GoogleDriveService:
         self._service = build("drive", "v3", credentials=self._creds)
         return self._service
 
-    def list_files(self, page_size: int = 200, query: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_files(self, page_size: int = batch_value("drive_list_page_size", 200), query: Optional[str] = None) -> List[Dict[str, Any]]:
         try:
             service = self._get_service()
             params: Dict[str, Any] = {
@@ -194,7 +195,7 @@ class GoogleDriveService:
             logger.error(f"Export gdoc error for {file_id}: {e}", exc_info=True)
             return None
 
-    def search_files(self, query: str, page_size: int = 10) -> List[Dict[str, Any]]:
+    def search_files(self, query: str, page_size: int = batch_value("drive_search_page_size", 10)) -> List[Dict[str, Any]]:
         return self.list_files(page_size=page_size, query=query)
 
     def get_storage_info(self) -> Dict[str, Any]:
