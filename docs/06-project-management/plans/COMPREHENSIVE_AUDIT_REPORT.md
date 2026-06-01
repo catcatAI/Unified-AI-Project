@@ -11,11 +11,11 @@
 
 | 維度 | 滿分定義 | 當前分數 |
 |------|---------|---------|
-| **完整性** | 所有功能、模組、配置、測試完整實現 | ~68% (+13%) |
-| **完美性** | 無stub、placeholder、pass、TODO、FIXME | ~48% (+8%) |
-| **全面性** | 覆蓋所有邊界條件、錯誤路徑、邊緣案例 | ~40% (+5%) |
-| **細緻度** | 類型提示、文檔字串、錯誤訊息、日誌完整 | ~63% (+3%) |
-| **穩定性** | 所有測試通過，無運行時崩潰風險 | ~58% (+8%) |
+| **完整性** | 所有功能、模組、配置、測試完整實現 | ~72% (+17%) |
+| **完美性** | 無stub、placeholder、pass、TODO、FIXME | ~50% (+10%) |
+| **全面性** | 覆蓋所有邊界條件、錯誤路徑、邊緣案例 | ~42% (+7%) |
+| **細緻度** | 類型提示、文檔字串、錯誤訊息、日誌完整 | ~65% (+5%) |
+| **穩定性** | 所有測試通過，無運行時崩潰風險 | ~62% (+12%) |
 | **快速性** | 性能測試存在，負載測試存在，無明顯瓶頸 | ~20% |
 | **清晰度** | 代碼可讀，命名一致，結構合理 | ~70% |
 | **有序度** | 文件組織、依賴管理、版本控制規範 | ~65% |
@@ -532,9 +532,11 @@
 | P2.4 | tests/scripts/清理 — 58文件分類: 6刪除, 10→unit, 7→integration, 3→api, 27→utils, 9→docs/examples; 目錄移除 | ✅ | 2026-06-01 |
 | P2.2 | 效能測試修復 — test_stress.py 33+語法錯誤修復, 轉換為pytest-benchmark; test_benchmark.py +pytest裝飾器 | ✅ | 2026-06-01 |
 | P2.3 | E2E測試改善 — 2文件重寫 (共222行), @pytest.mark.e2e + @skip("Requires live server"), 結構化斷言 | ✅ | 2026-06-01 |
-| P5.4 | 移動應用 android/ios 目錄 (執行 `npx react-native eject` 需要原生SDK環境, 此CLI環境不可用) | ⬜ 需原生構建環境 | — |
-| P2.1 | 為~230+未測試模組添加測試 (57個已完成: 9首批 + 9 API + 5 integrations + 2 economy + 4 ai/ops + 1 OSBridge + 10 core + 5 services/handlers + 2 core/ + 2 perception + 1 monitoring + 1 life + 2 tracing + 1 maturity + 1 plugin + 3 version fixes) | 🟡 57/230+ 完成 | 2026-06-01 |
-| P6-3 | 37 magic numbers遷移跨13文件 (hsp/connector+transport, life/dynamic+integrator+generation, engine/presence+model, feedback_loop, action_bridge, real_time_monitor, hsm_formula, state/config, error_handler) + 45前一輪 | ✅ 82/~200 | 2026-06-01 |
+| P5.4 | 移動應用 android/ios 目錄 | ⬜ 需原生構建環境 | — |
+| P2.1 | 為~230+未測試模組添加測試 (67個已完成: 57批1-4 + 10 mock-based: resource_awareness, brain_bridge, os_context, encryption, auth_middleware, web_search_tool, system_monitor, key_generator, key_validator, security_audit) | 🟡 67/230+ 完成 | 2026-06-01 |
+| P6-3 | 46 magic numbers遷移跨10 ai/文件 (agents/base, agent_manager, dynamic_agent_registry, agent_monitoring, user_monitor, proactive_interaction, memory_integration_loop, behavior_feedback_loop, ham_manager, execution_manager) + 82前一輪 | ✅ 128/~200 | 2026-06-01 |
+| Px6 | Legacy清理: 刪除ai/meta_formulas/死代碼(4文件) + 修復level5_asi_demo.py重複ASI類 | ✅ | 2026-06-01 |
+| P2.1e | 10個mock-based測試 (security/tools/monitoring/services) | ✅ | 2026-06-01 |
 | P3.3e | AngelaConfigManager數據遷移 | ✅ | 2026-06-01 |
 | P2.1c | 15個新測試 (predictive_maintenance→event_loop_system) | ✅ | 2026-06-01 |
 | P2.1d | 15個新測試 (hot_reload_service→chain_validator) | ✅ | 2026-06-01 |

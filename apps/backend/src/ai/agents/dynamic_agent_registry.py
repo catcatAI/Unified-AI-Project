@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 
 from core.hsp.connector import HSPConnector
 from core.hsp.types import HSPCapabilityAdvertisementPayload
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 
 
 @dataclass
@@ -34,8 +35,8 @@ class DynamicAgentRegistry:
         self.registered_agents: Dict[str, RegisteredAgent] = {}
         self.registry_lock = asyncio.Lock()
         self.discovery_callbacks: List[Callable[[RegisteredAgent], None]] = []
-        self.agent_timeout = 60  # seconds
-        self.cleanup_interval = 30  # seconds
+        self.agent_timeout = timeout_value("agent_lifetime", 60.0)  # seconds
+        self.cleanup_interval = loop_sleep("agent_cleanup", 30.0)  # seconds
         self.is_running = False
         self.registry_task: Optional[asyncio.Task] = None
 

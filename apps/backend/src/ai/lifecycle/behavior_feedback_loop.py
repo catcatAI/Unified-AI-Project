@@ -12,6 +12,8 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 import json
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 
@@ -169,7 +171,7 @@ class BehaviorFeedbackLoop:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in feedback loop: {e}", exc_info=True)
-                await asyncio.sleep(1)  # 防止緊密循環
+                await asyncio.sleep(loop_sleep("behavior_loop_tight", 1.0))  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
         """動態計算循環間隔"""
@@ -457,7 +459,7 @@ if __name__ == "__main__":
             user_emotion="happy",
         )
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("behavior_loop_tight", 1.0))
 
         feedback_loop.record_behavior(
             action="comfort",
@@ -467,7 +469,7 @@ if __name__ == "__main__":
             user_emotion="neutral",
         )
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("behavior_loop_tight", 1.0))
 
         feedback_loop.record_behavior(
             action="greet",
@@ -478,7 +480,7 @@ if __name__ == "__main__":
         )
 
         # 運行一段時間
-        await asyncio.sleep(10)
+        await asyncio.sleep(loop_sleep("behavior_feedback_slow", 10.0))
 
         # 打印統計
         logger.info("\n=== 行為反饋統計 ===")

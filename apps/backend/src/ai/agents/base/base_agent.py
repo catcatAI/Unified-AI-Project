@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload, HSPTaskResultPayload
+from core.system.config.magic_numbers import cache_value, loop_sleep, retry_value
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +61,11 @@ class BaseAgent:
         self.agent_registry: Optional[Any] = None
         self.is_running = False
         self.task_queue: list[QueuedTask] = []
-        self.max_queue_size = 100
+        self.max_queue_size = cache_value("agent_queue_size", 100)
         self.task_queue_lock: Optional[asyncio.Lock] = None
         self.task_handlers: dict[str, Callable] = {}
-        self.max_retries = 3
-        self.retry_delay = 1.0
+        self.max_retries = retry_value("agent_task_retries", 3)
+        self.retry_delay = loop_sleep("agent_retry_delay", 1.0)
         self.services: Optional[Any] = None
         self._task_counter = 0
         self._start_time: Optional[float] = None

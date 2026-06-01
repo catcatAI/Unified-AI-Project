@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from core.hsp.types import HSPCapabilityAdvertisementPayload
 from core.hsp.connector import HSPConnector
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class AgentMonitoringManager:
 
         self.monitoring_lock = asyncio.Lock()
 
-        self.monitoring_interval: int = 10  # seconds
+        self.monitoring_interval: int = loop_sleep("agent_monitor", 10.0)  # seconds
 
         self.is_monitoring: bool = False
 

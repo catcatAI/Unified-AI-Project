@@ -17,42 +17,9 @@ import sys
 # from tests.tools.test_tool_dispatcher_logging import  # Fixed: commented out incomplete import
 # from tests.test_json_fix import  # Fixed: commented out incomplete import
 from datetime import datetime
+from ai.level5_asi_system import Level5ASISystem
 
 logger = logging.getLogger(__name__)
-
-
-# Placeholder for Level5ASISystem class (since original import is incomplete)
-class Level5ASISystem:
-    """Placeholder for Level5ASISystem"""
-
-    def __init__(self, name: str):
-        self.name = name
-        self.autonomous_alignment = None
-        self.distributed_coordinator = None
-        self.parameter_cluster = None
-
-    async def initialize(self):
-        logger.info(f"Initializing {self.name}")
-        return True
-
-    async def start(self):
-        logger.info(f"Starting {self.name}")
-        return True
-
-    async def stop(self):
-        logger.info(f"Stopping {self.name}")
-
-    async def get_system_status(self):
-        return {
-            "status": "operational",
-            "performance_metrics": {"cpu_usage": 23.5, "memory_usage": 45.7},
-        }
-
-    async def run_comprehensive_test(self):
-        return {"status": "passed", "tests": 9, "passed": 9}
-
-    async def process_request(self, request):
-        return {"status": "success", "result": f"Processed request {request.get('request_id')}"}
 
 
 async def main():

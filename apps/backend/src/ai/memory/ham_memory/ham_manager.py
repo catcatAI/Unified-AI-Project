@@ -19,6 +19,7 @@ from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
 from ai.memory.ham_memory.ham_query_engine import HAMQueryEngine
 from ai.memory.ham_memory.ham_background_tasks import HAMBackgroundTasks
 from core.system.config.async_io import async_json_load
+from core.system.config.magic_numbers import batch_value
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +202,7 @@ class HAMMemoryManager:
         
         # 1. Fetch all templates from core memory
         # Templates are stored with data_type="response_template"
-        raw_results = await self.query_core_memory(data_type_filter="response_template", limit=100)
+        raw_results = await self.query_core_memory(data_type_filter="response_template", limit=batch_value("ham_response_template", 100))
         
         scored_templates = []
         for res in raw_results:
@@ -227,7 +228,7 @@ class HAMMemoryManager:
     async def get_template(self, template_id: str) -> Optional[Any]:
         """Retrieve a template by ID from core memory"""
         try:
-            results = await self.query_core_memory(data_type_filter="response_template", limit=50)
+            results = await self.query_core_memory(data_type_filter="response_template", limit=batch_value("ham_response_limited", 50))
             for res in results:
                 try:
                     data = json.loads(res["content"])

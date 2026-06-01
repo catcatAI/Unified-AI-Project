@@ -12,6 +12,8 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 import json
 
+from core.system.config.magic_numbers import batch_value, cache_value, loop_sleep
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,7 +95,7 @@ class MemoryIntegrationLoop:
 
         # 記憶信息
         self.memory_infos: List[MemoryInfo] = []
-        self.max_infos = 1000
+        self.max_infos = cache_value("memory_loop_history", 1000)
 
         # 知識模式
         self.knowledge_patterns: Dict[str, KnowledgePattern] = {}
@@ -156,7 +158,7 @@ class MemoryIntegrationLoop:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in integration loop: {e}", exc_info=True)
-                await asyncio.sleep(1)  # 防止緊密循環
+                await asyncio.sleep(loop_sleep("memory_loop_tight", 1.0))  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
         """動態計算循環間隔"""
@@ -194,7 +196,7 @@ class MemoryIntegrationLoop:
         try:
             # 從記憶管理器獲取最近的記憶
             if hasattr(self.memory_manager, "get_recent_memories"):
-                recent_memories = await self.memory_manager.get_recent_memories(limit=20)
+                recent_memories = await self.memory_manager.get_recent_memories(limit=batch_value("recent_memories", 20))
 
                 for mem in recent_memories:
                     # 檢查是否已經處理
@@ -430,7 +432,7 @@ if __name__ == "__main__":
         integration_loop.add_memory("用戶問了關於AI的問題", "question", 0.6)
 
         # 運行一段時間
-        await asyncio.sleep(15)
+        await asyncio.sleep(loop_sleep("memory_loop_slow", 15.0))
 
         # 打印統計
         logger.info("\n=== 記憶整合統計 ===")

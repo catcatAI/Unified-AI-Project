@@ -50,6 +50,7 @@ from enum import Enum
 from abc import ABC, abstractmethod
 
 from core.system.config.network_defaults import DEFAULT_HOST
+from core.system.config.magic_numbers import loop_sleep, retry_value, timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -223,8 +224,8 @@ class AgentManager:
         # Phase 15: 進程代理支持
         self.enable_process_agents = enable_process_agents
         self.process_agents: Dict[str, ProcessAgentInfo] = {}
-        self.health_check_interval = 10.0  # 秒
-        self.max_restart_attempts = 3
+        self.health_check_interval = loop_sleep("agent_health_check", 10.0)  # 秒
+        self.max_restart_attempts = retry_value("agent_restart_attempts", 3)
         self._health_monitor_task: Optional[asyncio.Task] = None
 
         # HSP Message Router
@@ -302,7 +303,7 @@ async def send_message(data: dict):
         target = registry[target_id]
         try:
             async with httpx.AsyncClient() as client:
-                    await client.post(f"http://{DEFAULT_HOST}:{target['port']}/message", json=message, timeout=5.0)
+                    await client.post(f"http://{DEFAULT_HOST}:{target['port']}/message", json=message, timeout=timeout_value("agent_message", 5.0))
             return {"status": "delivered", "target": target_id}
         except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
@@ -317,7 +318,7 @@ async def broadcast_message(data: dict):
     for agent_id, info in registry.items():
         try:
             async with httpx.AsyncClient() as client:
-                    await client.post(f"http://{DEFAULT_HOST}:{info['port']}/message", json=message, timeout=5.0)
+                    await client.post(f"http://{DEFAULT_HOST}:{info['port']}/message", json=message, timeout=timeout_value("agent_message", 5.0))
             results.append({"agent": agent_id, "status": "delivered"})
         except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
@@ -354,12 +355,12 @@ if __name__ == "__main__":
                 logger.info(f"HSP Router started on port {self.router_port}")
 
                 # Verify router is responding with retries
-                max_retries = 5
-                retry_delay = 1
+                max_retries = retry_value("router_health_retries", 5)
+                retry_delay = loop_sleep("router_health_delay", 1.0)
 
                 for attempt in range(max_retries):
                     try:
-                        response = httpx.get(f"{self.router_url}/health", timeout=2)
+                        response = httpx.get(f"{self.router_url}/health", timeout=timeout_value("router_health", 2.0))
                         if response.status_code == 200:
                             logger.info("HSP Router health check passed")
                             break
@@ -685,7 +686,7 @@ if __name__ == "__main__":
             logger.info(f"[AgentManager] Shutting down '{agent_name}' (PID: {process.pid})...")
             process.terminate()  # Sends SIGTERM
             try:
-                process.wait(timeout=5)  # Wait for the process to terminate
+                process.wait(timeout=timeout_value("agent_process_wait", 5.0))  # Wait for the process to terminate
                 logger.info(f"[AgentManager] Agent '{agent_name}' terminated.")
             except subprocess.TimeoutExpired:
                 logger.warning(
@@ -712,7 +713,7 @@ if __name__ == "__main__":
             logger.info("[AgentManager] Shutting down HSP Router...")
             self.router_process.terminate()
             try:
-                self.router_process.wait(timeout=5)
+                self.router_process.wait(timeout=timeout_value("agent_process_wait", 5.0))
             except subprocess.TimeoutExpired:
                 self.router_process.kill()
             logger.info("[AgentManager] HSP Router stopped")
@@ -742,7 +743,7 @@ if __name__ == "__main__":
                 "[AgentManager] wait_for_agent_ready is using placeholder sleep as no service_discovery provided."
                 , exc_info=True
             )
-            await asyncio.sleep(2)
+            await asyncio.sleep(loop_sleep("agent_wait_retry", 2.0))
             logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after waiting.")
             return
 
@@ -764,7 +765,7 @@ if __name__ == "__main__":
             logger.debug(
                 f"[AgentManager] Still waiting for agent '{agent_name}'. Retry {i + 1} / {max_retries}"
             )
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(loop_sleep("agent_poll", 0.5))
 
         logger.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.", exc_info=True)
 

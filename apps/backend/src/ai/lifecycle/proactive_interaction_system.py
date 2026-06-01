@@ -14,6 +14,7 @@ from dataclasses import dataclass
 import json
 
 from .user_monitor import UserMonitor, UserState
+from core.system.config.magic_numbers import cache_value, loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +76,9 @@ class ProactiveInteractionSystem:
         state_manager: Any,
         memory_manager: Any,
         user_monitor: UserMonitor,
-        check_interval: float = 15.0,  # 檢查間隔（秒）
-        min_check_interval: float = 10.0,
-        max_check_interval: float = 30.0,
+        check_interval: float = loop_sleep("proactive_check", 15.0),  # 檢查間隔（秒）
+        min_check_interval: float = loop_sleep("proactive_min_check", 10.0),
+        max_check_interval: float = loop_sleep("proactive_max_check", 30.0),
         broadcast_callback: Optional[callable] = None,
     ):
         self.llm_service = llm_service
@@ -95,7 +96,7 @@ class ProactiveInteractionSystem:
 
         # 交互計劃隊列
         self.interaction_queue: List[InteractionPlan] = []
-        self.max_queue_size = 20
+        self.max_queue_size = cache_value("proactive_queue", 20)
 
         # 統計信息
         self.stats = {
@@ -154,7 +155,7 @@ class ProactiveInteractionSystem:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in proactive loop: {e}", exc_info=True)
-                await asyncio.sleep(1)  # 防止緊密循環
+                await asyncio.sleep(loop_sleep("proactive_tight", 1.0))  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
         """動態計算檢查間隔"""
@@ -548,7 +549,7 @@ if __name__ == "__main__":
         await proactive_system.start()
 
         # 運行一段時間
-        await asyncio.sleep(15)
+        await asyncio.sleep(loop_sleep("proactive_slow", 15.0))
 
         # 打印統計
         logger.info("\n=== 主動交互統計 ===")

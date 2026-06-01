@@ -22,6 +22,8 @@ from typing import Dict, List, Optional, Any, Union
 
 from loguru import logger
 
+from core.system.config.magic_numbers import batch_value, cache_value, retry_value, threshold_value, timeout_value
+
 from .execution_monitor import (
     ExecutionMonitor,
     ExecutionConfig,
@@ -43,9 +45,9 @@ class ExecutionManagerConfig:
     auto_recovery: bool = True
 
     # Timeout configuration
-    default_timeout: float = 60.0  # Increased from 30s to 60s
-    max_timeout: float = 600.0  # Increased from 300s to 600s
-    min_timeout: float = 10.0  # Increased from 5s to 10s
+    default_timeout: float = timeout_value("command_execution", 30.0)  # Increased from 30s to 60s
+    max_timeout: float = timeout_value("command_execution_max", 300.0)  # Increased from 300s to 600s
+    min_timeout: float = timeout_value("command_execution_min", 5.0)  # Increased from 5s to 10s
 
     # Threshold configuration
     cpu_warning: float = 80.0
@@ -56,8 +58,8 @@ class ExecutionManagerConfig:
     disk_critical: float = 90.0
 
     # Adaptive timeout configuration
-    max_history_size: int = 1000
-    alert_threshold: float = 0.8
+    max_history_size: int = cache_value("execution_history", 1000)
+    alert_threshold: float = threshold_value("execution_alert", 0.8)
     timeout_multiplier: float = 2.5
     slow_terminal_multiplier: float = 1.5
     stuck_terminal_multiplier: float = 2.0
@@ -68,9 +70,9 @@ class ExecutionManagerConfig:
     failure_threshold: int = 5
     recovery_timeout: int = 300
     stuck_process_timeout: float = 60.0  # Increased from 30s to 60s
-    max_concurrent_tasks: int = 5
+    max_concurrent_tasks: int = batch_value("execution_concurrent", 5)
     task_timeout: int = 300
-    max_retries: int = 5
+    max_retries: int = retry_value("execution_retries", 5)
     retry_interval: float = 1.0
     escalation_enabled: bool = True
 

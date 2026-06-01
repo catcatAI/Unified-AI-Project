@@ -13,6 +13,8 @@ from typing import Optional, Dict, Any, List, Callable
 from enum import Enum
 import json
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,7 +87,7 @@ class UserMonitor:
     def __init__(
         self,
         user_id: str = "default_user",
-        check_interval: float = 5.0,
+        check_interval: float = loop_sleep("user_monitor_check", 5.0),
         idle_threshold: float = 300.0,  # 5分鐘
         return_threshold: float = 1800.0,  # 30分鐘
     ):
@@ -153,7 +155,7 @@ class UserMonitor:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in monitor loop: {e}", exc_info=True)
-                await asyncio.sleep(1)  # 防止緊密循環
+                await asyncio.sleep(loop_sleep("user_monitor_tight", 1.0))  # 防止緊密循環
 
     async def _check_user_status(self):
         """檢查用戶狀態"""
@@ -460,20 +462,20 @@ if __name__ == "__main__":
         # 模擬用戶輸入
         logger.info("\n=== 模擬用戶交互 ===")
         monitor.record_input("你好！今天心情不错", {"type": "greeting"})
-        await asyncio.sleep(3)
+        await asyncio.sleep(loop_sleep("user_monitor_phase", 3.0))
 
         monitor.record_input("我很兴奋！", {"type": "emotion"})
-        await asyncio.sleep(3)
+        await asyncio.sleep(loop_sleep("user_monitor_phase", 3.0))
 
         monitor.record_input("这是什么意思？", {"type": "question"})
-        await asyncio.sleep(3)
+        await asyncio.sleep(loop_sleep("user_monitor_phase", 3.0))
 
         # 打印狀態
         logger.info("\n=== 用戶狀態 ===")
         logger.info(json.dumps(monitor.get_user_state().to_dict(), indent=2, ensure_ascii=False))
 
         # 停止監控
-        await asyncio.sleep(2)
+        await asyncio.sleep(loop_sleep("user_monitor_fast", 2.0))
         await monitor.stop()
 
     asyncio.run(test_user_monitor())
