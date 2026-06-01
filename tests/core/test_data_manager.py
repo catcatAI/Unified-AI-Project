@@ -14,7 +14,7 @@ def test_economy_db_import():
 def test_shared_types_import():
     """Test shared types module can be imported"""
     try:
-        from core.shared.types.mappable_data_object import MappableDataObject
+        from shared.types.mappable_data_object import MappableDataObject
         assert MappableDataObject is not None
     except ImportError as e:
         pytest.skip(f"Shared types not available: {e}")

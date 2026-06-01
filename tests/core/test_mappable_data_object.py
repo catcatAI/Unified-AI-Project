@@ -1,6 +1,6 @@
 """C4 — MappableDataObject unit tests"""
 
-from core.shared.types.mappable_data_object import MappableDataObject
+from shared.types.mappable_data_object import MappableDataObject
 
 
 class TestMappableDataObject:

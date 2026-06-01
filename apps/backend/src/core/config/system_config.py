@@ -1,5 +1,9 @@
 """
 系统配置模块
+
+DEPRECATED: 此模組無已知消費者 (0 active imports)。所有 env-var 回退值應透過
+TieredConfigLoader (core.system.config.tiered_loader) 管理，並在 core.default.yaml 中提供默認值。
+遷移進度追蹤: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P3.3
 """
 
 import os

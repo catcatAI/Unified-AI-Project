@@ -429,6 +429,8 @@
 | 3.1 | 添加 13 個缺失的 timing key 到 YAML | `configs/system/timing.default.yaml` |
 | 3.2 | 刪除或接入 30 個 orphaned YAML key | `configs/` |
 | 3.3 | 統一 3 個配置系統為單一事實來源 | `config_loader.py` |
+| 3.3a | ✅ AngelaConfigManager 已標記 DEPRECATED (src/config/ 路徑) | `core/config_loader.py` |
+| 3.3b | ✅ system_config.py 已標記 DEPRECATED (0 consumers) | `core/config/system_config.py` |
 | 3.4 | 將 10 個 digital_life_constants.py 常量遷移到配置 | `core/life/digital_life_constants.py` |
 
 ### P4 — 文檔一致性
@@ -488,6 +490,9 @@
 | P1.5 | 清理 pass 陳述 — 65 個已修復/替換, 46 個保留 | ✅ | 2026-05-31 |
 | P1.6 | 更新 README 過時陳述 | ✅ | 2026-05-31 |
 | P5.2 | 檢查/消除影子模組 (7對已分析, 1 test import已修復) | 🟡 分析完成 | 2026-05-31 |
+| P5.2b | 實際合併7個影子模組 — 刪除core/shared/下7文件, 更新4個導入 | ✅ | 2026-06-01 |
+| P3.3a | AngelaConfigManager標記DEPRECATED (src/config/路徑 → tiered_loader) | ✅ | 2026-06-01 |
+| P3.3b | system_config.py標記DEPRECATED (0 consumers, env-var應由tiered管理) | ✅ | 2026-06-01 |
 | P5.1 | 統一 setup.py 和 pyproject.toml (~18依賴差異已分析, 後續已修復) | ✅ | 2026-06-01 |
 | P5.1b | 修復重複依賴(cryptography, python-dotenv)，版本同步，chromadb加入standard extras | ✅ | 2026-06-01 |
 | P1.1 | Level5ASISystem — 4 inline stub類加入完整__init__、類型安全返回值、狀態追蹤 (40%→65%) | 🟡 改善完成 | 2026-06-01 |
@@ -502,7 +507,7 @@
 | P4.4 | 更新 INDEX.md 加入遺漏連結 | ✅ | 2026-05-31 |
 | P4.5 | 歸檔4個過時狀態文件到 09-archive/status-files/ | ✅ | 2026-05-31 |
 | P5.3 | 刪除 deprecated agents/ 目錄 | ✅ | 2026-05-31 |
-| P5.2b | 更新docs中舊的agents.*導入引用 | ✅ | 2026-05-31 |
+
 | MC-D7 | 修復 MASTER_CONSOLIDATED_PLAN.md 中D7自相矛盾 (0剩餘 vs 48%) | ✅ | 2026-05-31 |
 | P1.4 | 3個persistent stub代理改善(類型安全+日誌) | ✅ | 2026-05-31 |
 | P3.2 | 30個orphaned YAML key — 保留為參考, 非碼農錯誤 | 🟡 保留 | 2026-05-31 |

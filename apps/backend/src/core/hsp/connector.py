@@ -37,7 +37,7 @@ from shared.network_resilience import (
     RetryPolicy,
     CircuitBreaker,
 )
-from core.shared.error import ErrorHandler
+from shared.error import ErrorHandler
 from .internal.internal_bus import InternalBus
 from .bridge.message_bridge import MessageBridge
 from .bridge.data_aligner import DataAligner

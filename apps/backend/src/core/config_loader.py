@@ -29,6 +29,10 @@ class AngelaConfigManager:
     """
     Angela 專用配置管理器（v7.5.0-dev）
     支援：YAML 多文件讀取、雙層配置合併（Authority + Learned）、熱重載
+
+    DEPRECATED: 此管理器讀取 src/config/ 路徑的 YAML，與 TieredConfigLoader (configs/) 重疊。
+    請遷移至 TieredConfigLoader (core.system.config.tiered_loader) + magic_numbers.py。
+    遷移進度追蹤: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P3.3
     """
 
     def __init__(self):
