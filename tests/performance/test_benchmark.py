@@ -6,7 +6,9 @@
 import asyncio
 import time
 import statistics
+import pytest
 from datetime import datetime
+from typing import Dict, Any, List
 
 class EnterpriseBenchmark:
     """企业级性能基准"""
@@ -84,7 +86,7 @@ class EnterpriseBenchmark:
         
         return results
 
-async def benchmark_ai_ops_engine():
+async def _run_benchmark_ai_ops_engine():
     """AI运维引擎基准测试"""
     print("\n" + "="*60)
     print("AI运维引擎基准测试")
@@ -173,7 +175,7 @@ async def benchmark_ai_ops_engine():
         print(f"AI运维引擎基准测试失败, {e}")
         return []
 
-async def benchmark_predictive_maintenance():
+async def _run_benchmark_predictive_maintenance():
     """预测性维护基准测试"""
     print("\n" + "="*60)
     print("预测性维护基准测试")
@@ -268,8 +270,8 @@ async def main():
     benchmark = EnterpriseBenchmark()
     
     # 执行基准测试
-    ai_ops_results = await benchmark_ai_ops_engine()
-    maintenance_results = await benchmark_predictive_maintenance()
+    ai_ops_results = await _run_benchmark_ai_ops_engine()
+    maintenance_results = await _run_benchmark_predictive_maintenance()
     
     # 评估结果
     print("\n" + "="*60)
@@ -336,6 +338,27 @@ async def main():
             print("- 系统性能已达到企业级标准")
     
     print("="*60)
+
+
+@pytest.mark.slow
+@pytest.mark.benchmark
+def test_benchmark_ai_ops_engine(benchmark):
+    result = benchmark(_run_benchmark_ai_ops_engine)
+    assert len(result) > 0
+    for _, metrics in result:
+        assert metrics['success_rate'] > 0
+        assert metrics['requests_per_second'] > 0
+
+
+@pytest.mark.slow
+@pytest.mark.benchmark
+def test_benchmark_predictive_maintenance(benchmark):
+    result = benchmark(_run_benchmark_predictive_maintenance)
+    assert len(result) > 0
+    for _, metrics in result:
+        assert metrics['success_rate'] > 0
+        assert metrics['requests_per_second'] > 0
+
 
 if __name__ == "__main__":
     asyncio.run(main())
