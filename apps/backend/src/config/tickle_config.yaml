@@ -1,10 +1,10 @@
 # =============================================================================
-# ANGELA v6.3 - Tickle Reflex Configuration
+# ANGELA v6.3 - Tickle Reflex Configuration (DEPRECATED)
 # =============================================================================
-# Authority 配置（人寫，搔癢反射安全配置）
-# ⚠️ 所有 allowed_responses 為「允許列表」非「唯一列表」
-# 版本: 6.3
-# 更新: 2026-05-17
+# DEPRECATED: Migrated to tiered system. See P3.3e
+# Migrated to configs/standard/behavior/tickle_config.default.yaml
+#
+# Kept as fallback for backward compatibility only.
 # =============================================================================
 
 # ── 強度分級 ────────────────────────────────────────────────────────────────

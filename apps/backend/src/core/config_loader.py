@@ -60,6 +60,23 @@ class AngelaConfigManager:
             "learned_routes.yaml",
         ]
 
+        # P3.3e: Try tiered config loader first
+        self._tiered_loader = None
+        try:
+            from core.system.config.tiered_loader import get_config as _load_tiered
+            self._tiered_loader = _load_tiered
+        except ImportError:
+            pass
+
+        # Map authority key -> tiered path (P3.3e)
+        self._tiered_path_map = {
+            "angela_core": "standard/behavior/angela_core",
+            "llm_providers": "system/llm_providers",
+            "file_ops": "standard/behavior/file_ops",
+            "anchor_rules": "standard/behavior/anchor_rules",
+            "tickle_config": "standard/behavior/tickle_config",
+        }
+
         self._watch_lock = threading.Lock()
         self._watchers: Dict[str, float] = {}
 
@@ -82,9 +99,33 @@ class AngelaConfigManager:
         """載入所有配置（Authority + Learned）"""
         self._authority = {}
         for fname in self._authority_files:
+            key = fname.replace(".yaml", "")
+            data: Dict[str, Any] = {}
+
+            # P3.3e: Try tiered config loader first
+            tiered_path = self._tiered_path_map.get(key)
+            if tiered_path and self._tiered_loader:
+                tiered_data = self._tiered_loader(tiered_path)
+                data = tiered_data
+
+            # Fall back to old YAML for missing top-level keys
             path = self._base_dir / fname
-            data = self._load_yaml(path)
-            self._authority[fname.replace(".yaml", "")] = data
+            old_data = self._load_yaml(path)
+            for k, v in old_data.items():
+                if k not in data:
+                    data[k] = v
+
+            # P3.3e: For angela_core, merge state_constants from behavior.default.yaml
+            if key == "angela_core" and self._tiered_loader:
+                behavior_data = self._tiered_loader("standard/behavior/behavior")
+                behavior_sc = behavior_data.get("state_constants", {})
+                if "state_constants" not in data:
+                    data["state_constants"] = {}
+                for sc_k, sc_v in behavior_sc.items():
+                    if sc_k not in data["state_constants"]:
+                        data["state_constants"][sc_k] = sc_v
+
+            self._authority[key] = data
 
         self._learned = {}
         for fname in self._learned_files:

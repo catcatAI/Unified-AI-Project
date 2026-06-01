@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from loguru import logger
 
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 
 import psutil
 
@@ -59,11 +60,11 @@ class TerminalStatus(Enum):
 class ExecutionConfig:
     """執行配置"""
 
-    default_timeout: float = 60.0  # 增加默認超時時間從30秒到60秒
-    max_timeout: float = 600.0  # 增加最大超時時間從300秒到600秒
-    min_timeout: float = 10.0  # 增加最小超時時間從5秒到10秒
-    check_interval: float = 1.0
-    terminal_check_interval: float = 5.0
+    default_timeout: float = timeout_value("execution_default", 60.0)
+    max_timeout: float = timeout_value("execution_max", 600.0)
+    min_timeout: float = timeout_value("execution_min", 10.0)
+    check_interval: float = loop_sleep("execution_check", 1.0)
+    terminal_check_interval: float = loop_sleep("terminal_check", 5.0)
     cpu_threshold: float = 90.0
     memory_threshold: float = 85.0
     adaptive_timeout: bool = True
@@ -188,11 +189,11 @@ class ExecutionMonitor:
                 subprocess.run(
                     ["echo", "test"],
                     capture_output=True,
-                    timeout=5.0,
+                    timeout=timeout_value("terminal_test", 5.0),
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
             else:  # Unix/Linux
-                subprocess.run(["echo", "test"], capture_output=True, timeout=5.0)
+                subprocess.run(["echo", "test"], capture_output=True, timeout=timeout_value("terminal_test", 5.0))
 
             response_time = time.time() - start_time
 
@@ -358,7 +359,7 @@ class ExecutionMonitor:
                 # 嘗試優雅終止
                 self._current_process.terminate()
                 try:
-                    self._current_process.wait(timeout=5.0)
+                    self._current_process.wait(timeout=timeout_value("terminal_test", 5.0))
                 except subprocess.TimeoutExpired:
                     # 強制終止
                     self._current_process.kill()
@@ -497,7 +498,7 @@ class ExecutionMonitor:
                 # 終止進程
                 process.terminate()
                 try:
-                    await asyncio.wait_for(process.wait(), timeout=5.0)
+                    await asyncio.wait_for(process.wait(), timeout=timeout_value("terminal_test", 5.0))
                 except asyncio.TimeoutError:
                     process.kill()
                     await process.wait()

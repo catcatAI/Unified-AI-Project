@@ -50,6 +50,7 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 import logging
+from core.system.config.magic_numbers import loop_sleep
 from core.tracing import get_tracer
 
 logger = logging.getLogger(__name__)
@@ -217,7 +218,7 @@ class EndocrineSystem:
             await self._update_circadian_rhythm()
             
             last_run = now
-            await asyncio.sleep(5)  # 提高採樣頻率以保證數值演化平滑 (5秒一跳)
+            await asyncio.sleep(loop_sleep("endocrine_update", 5.0))  # 提高採樣頻率以保證數值演化平滑 (5秒一跳)
 
     async def _update_hormones(self):
         """(已由 advance_time 整合) 保持兼容性"""

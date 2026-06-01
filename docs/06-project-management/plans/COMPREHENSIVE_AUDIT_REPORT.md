@@ -11,11 +11,11 @@
 
 | 維度 | 滿分定義 | 當前分數 |
 |------|---------|---------|
-| **完整性** | 所有功能、模組、配置、測試完整實現 | ~55% |
-| **完美性** | 無stub、placeholder、pass、TODO、FIXME | ~40% |
-| **全面性** | 覆蓋所有邊界條件、錯誤路徑、邊緣案例 | ~35% |
-| **細緻度** | 類型提示、文檔字串、錯誤訊息、日誌完整 | ~60% |
-| **穩定性** | 所有測試通過，無運行時崩潰風險 | ~50% |
+| **完整性** | 所有功能、模組、配置、測試完整實現 | ~65% (+10%) |
+| **完美性** | 無stub、placeholder、pass、TODO、FIXME | ~45% (+5%) |
+| **全面性** | 覆蓋所有邊界條件、錯誤路徑、邊緣案例 | ~38% (+3%) |
+| **細緻度** | 類型提示、文檔字串、錯誤訊息、日誌完整 | ~62% (+2%) |
+| **穩定性** | 所有測試通過，無運行時崩潰風險 | ~55% (+5%) |
 | **快速性** | 性能測試存在，負載測試存在，無明顯瓶頸 | ~20% |
 | **清晰度** | 代碼可讀，命名一致，結構合理 | ~70% |
 | **有序度** | 文件組織、依賴管理、版本控制規範 | ~65% |
@@ -533,8 +533,11 @@
 | P2.2 | 效能測試修復 — test_stress.py 33+語法錯誤修復, 轉換為pytest-benchmark; test_benchmark.py +pytest裝飾器 | ✅ | 2026-06-01 |
 | P2.3 | E2E測試改善 — 2文件重寫 (共222行), @pytest.mark.e2e + @skip("Requires live server"), 結構化斷言 | ✅ | 2026-06-01 |
 | P5.4 | 移動應用 android/ios 目錄 | ⬜ | — |
-| P2.1 | 為~230+未測試模組添加測試 (首批9個最高優先: Level5ASI, 6 LLM providers, heartbeat, scheduler, executor已完成) | 🟡 9/230+ 完成 | 2026-06-01 |
-| P6-3 | magic_numbers.py新增4個accessor (retry/batch/cache/threshold) + 5文件16處遷移 | ✅ | 2026-06-01 |
+| P2.1 | 為~230+未測試模組添加測試 (40個已完成: 9首批 + 9 API + 5 integrations + 2 economy + 4 ai/ops + 1 OSBridge + 10 core) | 🟡 40/230+ 完成 | 2026-06-01 |
+| P6-3 | 29 magic numbers遷移跨11文件 (desktop_interaction, audio_system, browser_controller, theta_router, state_persistence, neuroplasticity, endocrine_system, emotional_blending, biological_integrator, autonomic_nervous_system, execution_monitor) + 16前一輪 | ✅ 45/~200 | 2026-06-01 |
+| P3.3e | AngelaConfigManager數據遷移 — 5個新tiered YAML, 29個unique常量加入behavior.default.yaml, 8個src/config/文件DEPRECATED, config_loader.py委派tiered loader | ✅ | 2026-06-01 |
+| P2.1c | 15個新測試 (predictive_maintenance, performance_optimizer, capacity_planner, intelligent_ops_manager, os_bridge_adapter, config_validator, intent_registry, version, angela_error, active_cognition_formula, cdm_dividend_model, hsm_formula_system, life_intensity_formula, non_paradox_existence, event_loop_system) | ✅ | 2026-06-01 |
+| Px4 | CHANGELOG.md [7.5.0-dev] header添加, 整合所有session記錄 | ✅ | 2026-06-01 |
 
 ---
 

@@ -1,11 +1,7 @@
-# =============================================================================
-# ANGELA v6.4 - LLM Providers Configuration (DEPRECATED)
-# =============================================================================
-# DEPRECATED: Migrated to tiered system. See P3.3e
-# Migrated to configs/system/llm_providers.default.yaml
-#
-# Kept as fallback for backward compatibility only.
-# =============================================================================
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# LLM Providers Configuration — migrated from src/config/llm_providers.yaml (P3.3e)
+# Provider definitions, routing policy, fallback chains, and performance tracking.
+# Note: Provider endpoint configs (keys, URLs) live in llm.default.yaml and keys.*.yaml.
 
 providers:
   ollama:
@@ -34,23 +30,16 @@ providers:
         context_window: 8192
         description: "備用通用模型"
 
-# 路由策略（配置驅動，非硬編）
 routing_policy:
-  # 意圖路由
   math: "deepseek-r1:latest"
   code: "qwen2.5-coder:latest"
   task: "deepseek-r1:latest"
   general: "phi:latest"
-
-  # 複雜度路由
   complexity_high: "deepseek-r1:latest"
   complexity_medium: "phi:latest"
   complexity_low: "phi:latest"
-
-  # 備用路由
   fallback: "llama3.2:latest"
 
-# 降級鏈
 fallback_chain:
   phi:latest:
     - "ollama:llama3.2:latest"
@@ -61,13 +50,11 @@ fallback_chain:
     - "ollama:deepseek-coder:latest"
     - "ollama:llama3.2:latest"
 
-# 性能追蹤
 performance_tracking:
-  success_rate_threshold: 0.70   # 成功率 < 70% 觸發降級
-  latency_threshold_ms: 30000     # 延遲 > 30s 觸發降級
-  tracking_window: 50             # 追蹤最近 50 次請求
+  success_rate_threshold: 0.70
+  latency_threshold_ms: 30000
+  tracking_window: 50
 
-# Prompt 模板
 prompt_templates:
   general: |
     你是一個 AI 助手。請根據用戶輸入給出回應。

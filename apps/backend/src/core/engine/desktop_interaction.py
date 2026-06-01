@@ -30,6 +30,7 @@ import subprocess
 import shlex
 import sys
 from core.system.config.async_io import async_write_text, async_write_file
+from core.system.config.magic_numbers import loop_sleep
 import logging
 
 logger = logging.getLogger(__name__)
@@ -164,7 +165,7 @@ class DesktopBrowserIntegration:
         """
         if self.browser_window:
             self.browser_window.load_url(tutorial_url)
-            await asyncio.sleep(3)  # 等待页面加载
+            await asyncio.sleep(loop_sleep("page_load_wait", 3.0))  # 等待页面加载
 
             # 执行JavaScript提取内容
             content = await self._extract_page_content()
@@ -212,7 +213,7 @@ class DesktopBrowserIntegration:
 
         if self.browser_window:
             self.browser_window.load_url(gallery_url)
-            await asyncio.sleep(3)
+            await asyncio.sleep(loop_sleep("page_load_wait", 3.0))
 
             # 提取作品图片URL
             js_code = """
@@ -405,7 +406,7 @@ class DesktopInteraction:
         while self._running:
             await self._scan_desktop()
             await self._check_auto_organize()
-            await asyncio.sleep(30)  # Scan every 30 seconds
+            await asyncio.sleep(loop_sleep("scan_interval", 30.0))  # Scan every 30 seconds
 
     async def _scan_desktop(self):
         """Scan desktop and update state"""
@@ -1128,7 +1129,7 @@ class DesktopInteraction:
                 # Check if we can retry
                 if error_results.get("can_retry") and attempt < max_retries + 1:
                     # Wait a bit before retry
-                    await asyncio.sleep(0.5)
+                    await asyncio.sleep(loop_sleep("short_pause", 0.5))
                     continue
 
                 # If error was handled, mark as completed with warning

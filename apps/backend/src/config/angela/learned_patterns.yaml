@@ -1,3 +1,4 @@
+# DEPRECATED: Runtime learning data. See P3.3e
 intent_patterns:
   general:
     count: 5

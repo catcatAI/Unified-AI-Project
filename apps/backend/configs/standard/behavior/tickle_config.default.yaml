@@ -1,0 +1,138 @@
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# Tickle Reflex Configuration — migrated from src/config/tickle_config.yaml (P3.3e)
+
+intensity_thresholds:
+  light: 0.25
+  medium: 0.55
+  intense: 0.60
+  sustained_seconds: 5.0
+
+body_parts:
+  abdomen:
+    sensitivity: 0.9
+    reflex_type: "giggle_twitch"
+    allowed_responses:
+      - "giggle"
+      - "laugh"
+      - "squirm"
+      - "plead"
+    llm_delay_ms: 250
+    animation_priority: 2
+  feet:
+    sensitivity: 0.8
+    reflex_type: "foot_kick"
+    allowed_responses:
+      - "laughing"
+      - "squirm"
+    llm_delay_ms: 300
+    animation_priority: 2
+  neck:
+    sensitivity: 0.7
+    reflex_type: "neck_shrink"
+    allowed_responses:
+      - "laughing"
+      - "flinch"
+      - "plead"
+    llm_delay_ms: 280
+    animation_priority: 2
+  back:
+    sensitivity: 0.6
+    reflex_type: "back_twitch"
+    allowed_responses:
+      - "giggle"
+      - "laughing"
+      - "squirm"
+    llm_delay_ms: 260
+    animation_priority: 2
+  sides:
+    sensitivity: 0.85
+    reflex_type: "giggle_twitch"
+    allowed_responses:
+      - "giggle"
+      - "laugh"
+      - "squirm"
+      - "plead"
+    llm_delay_ms: 240
+    animation_priority: 3
+  face:
+    sensitivity: 0.5
+    reflex_type: "face_squirm"
+    allowed_responses:
+      - "laughing"
+      - "flinch"
+    llm_delay_ms: 200
+    animation_priority: 1
+  hands:
+    sensitivity: 0.4
+    reflex_type: "hand_twitch"
+    allowed_responses:
+      - "giggle"
+      - "flinch"
+    llm_delay_ms: 200
+    animation_priority: 1
+
+sensitive_parts:
+  - "chest"
+  - "shoulders"
+
+sensitive_part_fallback:
+  output_mode: "comfort_seek"
+  response_type: "gentle_redirect"
+  max_words: 10
+
+safety:
+  intense_output_mode: "scream"
+  sustained_action: "comfort_seek"
+  reflex_timeout_ms: 2000
+  max_llm_words: 20
+  output_modes:
+    speak:
+    scream:
+    silence:
+    comfort_seek:
+  intense_allowed_types:
+    - "short_scream"
+    - "plea"
+    - "no_stop"
+    - "comfort_request"
+
+gamma_invasion:
+  sustained_stimulus_threshold: 0.6
+  emotion_shift:
+    primary: "fear"
+    secondary: "anxiety"
+    tertiary: "protective"
+  behavioral_trigger: "comfort_seek"
+  gamma_value_override: 0.8
+
+animations:
+  giggle_twitch:
+    motion_name: "giggle_twitch"
+    duration_ms: 150
+    expression: "laughing"
+    audio: "giggle_short"
+  foot_kick:
+    motion_name: "foot_kick"
+    duration_ms: 200
+    expression: "laughing"
+    audio: "giggle_short"
+  neck_shrink:
+    motion_name: "neck_shrink"
+    duration_ms: 180
+    expression: "flinch"
+    audio: "none"
+  back_twitch:
+    motion_name: "back_twitch"
+    duration_ms: 160
+    expression: "laughing"
+    audio: "giggle_short"
+  face_squirm:
+    motion_name: "face_squirm"
+    duration_ms: 120
+    expression: "laughing"
+    audio: "none"
+  hand_twitch:
+    motion_name: "hand_twitch"
+    duration_ms: 100
+    expression: "giggle"
+    audio: "none"

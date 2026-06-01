@@ -1,16 +1,9 @@
-# =============================================================================
-# ANGELA v6.5 - Core Authority Configuration (DEPRECATED)
-# =============================================================================
-# DEPRECATED: Migrated to tiered system. See P3.3e
-# All sections migrated to configs/standard/behavior/angela_core.default.yaml
-# state_constants section migrated to configs/standard/behavior/behavior.default.yaml
-# spatial_math partials migrated to configs/standard/science/spatial.default.yaml
-#
-# Kept as fallback for backward compatibility only.
-# =============================================================================
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# Angela Core Configuration — migrated from src/config/angela_core.yaml (P3.3e)
+# Contains unique sections not present in other tiered configs.
+# state_constants section is in behavior.default.yaml — do not duplicate here.
 
-# ── 聊天流與請求處理 ──────────────────────────────────────────────────────
-
+# ── Chat Flow ────────────────────────────────────────────────────────────────
 chat_flow:
   default_flow: "angela_chat_service"
   http_timeout: 30.0
@@ -19,8 +12,7 @@ chat_flow:
   truncation_message: "（訊息已截斷至 {max} 字元）"
   response_schema_version: "2.0"
 
-# ── 中間件配置 ─────────────────────────────────────────────────────────────
-
+# ── Middleware ───────────────────────────────────────────────────────────────
 middleware:
   cors:
     enabled: true
@@ -29,17 +21,14 @@ middleware:
     allow_headers: ["*"]
     allow_credentials: true
 
-
-# ── 工作階段管理 ───────────────────────────────────────────────────────────
-
+# ── Session Manager ──────────────────────────────────────────────────────────
 session_manager:
   ttl_seconds: 3600
   max_sessions: 1000
   cleanup_interval: 300
   eviction_policy: "lru"
 
-# ── 意圖關鍵字 ─────────────────────────────────────────────────────────────
-
+# ── Intent Keywords ──────────────────────────────────────────────────────────
 intents:
   math:
     keywords:
@@ -223,6 +212,7 @@ intents:
       - "model"
     priority: 6
     handler: "ChatService._handle_llm_manage"
+
   fantasy_dm:
     keywords:
       - "跑團"
@@ -275,8 +265,7 @@ intents:
     priority: 5
     handler: "DocumentBuilder"
 
-# ── 服務層配置 ─────────────────────────────────────────────────────────────
-
+# ── Services ─────────────────────────────────────────────────────────────────
 services:
   google_drive:
     real_service: true
@@ -290,15 +279,12 @@ services:
     num_results: 3
     timeout: 15
 
-# ── 複雜度閾值 ─────────────────────────────────────────────────────────────
-
+# ── Complexity Thresholds ────────────────────────────────────────────────────
 complexity:
   thresholds:
     high: 100
     low: 20
   neuro_blender:
-    # NeuroBlender 直接輸出門檻：complexity 低於此值時跳過 LLM
-    # LLM 可用時自動減半，讓更多對話走 LLM
     bypass_threshold: 0.4
     bypass_min_confidence: 0.3
   high_complexity_keywords:
@@ -373,8 +359,7 @@ complexity:
         - "find"
       aliases: ["search", "find", "s", "f"]
 
-# ── 狀態→自然語言轉換 ─────────────────────────────────────────────────────
-
+# ── State → LLM Natural Language ─────────────────────────────────────────────
 state_to_llm:
   alpha_energy:
     high: "精力充沛"
@@ -393,8 +378,7 @@ state_to_llm:
     medium: "相處自在"
     low: "保持距離"
 
-# ── Fallback 模式 ───────────────────────────────────────────────────────────
-
+# ── Fallback Patterns ────────────────────────────────────────────────────────
 fallback_patterns:
   task_decompose:
     - "幫我"
@@ -422,19 +406,15 @@ fallback_patterns:
     - "安排"
     - "plan"
 
-# ── 模板匹配權重 ──────────────────────────────────────────────────────────
-
+# ── Template Matching Weights ────────────────────────────────────────────────
 template_matching:
   score_weights:
     content_similarity: 0.30
     state_similarity: 0.40
     impression_similarity: 0.20
 
-# ── 神經片段（NeuroVocabulary 初始詞庫）────────────────────────────────
-# 這些是 Angela 的「語感片段」——讓 she 的每一句話都像人一樣自然
-
+# ── Neuro Fragments ──────────────────────────────────────────────────────────
 neuro_fragments:
-  # ── 日常開場 ──
   - id: "ng_morning_bright"
     content: "早安～今天天氣真好呢！"
     category: "greeting"
@@ -465,8 +445,6 @@ neuro_fragments:
     structural_type: "greeting"
     weights: { alpha_energy: 0.9, delta_intimacy: 0.6, gamma_valence: 0.8 }
     context_tags: ["playful", "excited"]
-
-  # ── 過渡句 ──
   - id: "ng_trans_hmm"
     content: "嗯…讓我想一下喔。"
     category: "transition"
@@ -497,8 +475,6 @@ neuro_fragments:
     structural_type: "transition"
     weights: { beta_curiosity: 0.7, alpha_energy: 0.5, theta_meta: 0.4 }
     context_tags: ["topic_switch", "curious"]
-
-  # ── 陳述句 ──
   - id: "ng_state_agree"
     content: "我也是這麼想的！"
     category: "affirmation"
@@ -535,8 +511,6 @@ neuro_fragments:
     structural_type: "statement"
     weights: { epsilon_precision: 0.4, delta_intimacy: 0.4, gamma_valence: 0.3 }
     context_tags: ["acknowledge", "neutral"]
-
-  # ── 感嘆句 ──
   - id: "ng_exclaim_happy"
     content: "哇，好棒！"
     category: "emotion"
@@ -561,8 +535,6 @@ neuro_fragments:
     structural_type: "exclamation"
     weights: { theta_meta: 0.5, gamma_valence: 0.4, beta_curiosity: 0.4 }
     context_tags: ["realization", "insight"]
-
-  # ── 收尾提問 ──
   - id: "ng_close_warm"
     content: "還有什麼想聊的嗎？"
     category: "closing"
@@ -587,8 +559,6 @@ neuro_fragments:
     structural_type: "closing_question"
     weights: { eta_execution: 0.6, delta_intimacy: 0.5, epsilon_precision: 0.5 }
     context_tags: ["helpful", "polite"]
-
-  # ── 低能量語句 ──
   - id: "ng_tired_gentle"
     content: "嗯…我在聽。"
     category: "filler"
@@ -607,8 +577,6 @@ neuro_fragments:
     structural_type: "statement"
     weights: { alpha_energy: 0.15, gamma_valence: -0.1, delta_intimacy: 0.5, zeta_temporal: 0.5 }
     context_tags: ["low_energy", "caring"]
-
-  # ── 數學/代碼語氣碎片 ──
   - id: "ng_math_lets"
     content: "我來算算看喔。"
     category: "math"
@@ -633,8 +601,6 @@ neuro_fragments:
     structural_type: "statement"
     weights: { gamma_valence: 0.5, epsilon_precision: 0.5, delta_intimacy: 0.3 }
     context_tags: ["code", "praise"]
-
-  # ── 學術/教育語氣 ──
   - id: "ng_study_encourage"
     content: "加油，你可以的！"
     category: "emotional"
@@ -648,8 +614,7 @@ neuro_fragments:
     weights: { delta_intimacy: 0.6, alpha_energy: 0.3, gamma_valence: 0.3, zeta_temporal: 0.5 }
     context_tags: ["break", "caring"]
 
-# ── 用戶資訊提取 ──────────────────────────────────────────────────────────
-
+# ── User Profile Extraction ──────────────────────────────────────────────────
 user_profile:
   patterns:
     - name: "my_name_is"
@@ -667,8 +632,7 @@ user_profile:
       regex: '我的\s*(.+?)\s*(?:是|叫)\s*(.+?)(?:[，。,\.]|$)'
       field: "custom"
 
-# ── 空間數學引擎 ──────────────────────────────────────────────────────────
-
+# ── Spatial Math (unique keys not in spatial.default.yaml / influence.default.yaml) ──
 spatial_math:
   operator_precedence:
     "+": 1
@@ -681,105 +645,13 @@ spatial_math:
     - 0.3
     - 0.15
   influence_factor_numerator: 25.0
-  influence_factor_softening: 10.0
   complexity_divisor: 20.0
   certainty_base: 0.5
   certainty_per_char: 0.05
   fatigue_increment: 0.02
-  intent_gravity_pull: 0.05
   intent_gravity_threshold: 0.001
-  inter_dimensional_drag: 0.02
 
-# ── 狀態更新常量 ──────────────────────────────────────────────────────────
-
-state_constants:
-  visual_refresh_interval: 30
-  memory_query_limit: 2
-  bypass_threshold_multiplier: 0.5
-  evolution_sentiment_default: 0.5
-  theta_negativity_threshold: 0.5
-  theta_correction_urge_threshold: 0.6
-  correction_strength_max: 0.3
-  correction_strength_per_point: 0.1
-  novelty_decay_after_response: 0.05
-  negativity_decay_after_response: 0.02
-  correction_urge_decay_after_response: 0.05
-  eta_success_rate_gain: 0.002
-  eta_structural_drift_gain: 0.0005
-  eta_parameter_tuning_gain: 0.001
-  temporal_coherence_base: 0.5
-  temporal_coherence_max: 0.9
-  temporal_coherence_decay: 0.01
-  memory_depth_gain: 0.001
-  narrative_flow_low: 0.7
-  narrative_flow_high: 0.5
-  identity_continuity_threshold: 0.75
-  identity_continuity_bound: 0.6
-  identity_continuity_count: 5
-  focus_length_threshold_short: 20
-  focus_length_threshold_long: 50
-  focus_delta_short: 0.01
-  focus_delta_medium: 0.03
-  focus_delta_long: 0.06
-  curiosity_gain: 0.02
-  creativity_gain_positive: 0.03
-  creativity_loss_negative: 0.02
-  empathy_to_learning_gain: 0.02
-  gamma_delta_happy: 0.05
-  gamma_delta_sad: 0.03
-  gamma_delta_angry: 0.01
-  trust_gain: 0.01
-  delta_attention_base: 0.8
-  delta_attention_min: 0.3
-  delta_attention_decay: 0.02
-  bond_gain: 0.01
-  presence_gain: 0.02
-  engagement_gain: 0.01
-  epsilon_certainty_decrease: 0.15
-  epsilon_certainty_increase: 0.1
-  epsilon_fatigue_increase: 0.05
-  buffer_pressure_default: 0.3
-  dim_fit_threshold: 0.15
-  anchor_learning_boost: 0.01
-  abstraction_level_low: 0.3
-  abstraction_level_high: 0.4
-  creation_urge_gain: 0.05
-  correction_urge_gain: 0.03
-  creation_urge_decay: 0.01
-  alpha_min_energy: 0.3
-  alpha_stress_drain: 0.05
-  stress_to_rest_gain: 0.03
-  comfort_formula_stress_weight: 0.5
-  tension_formula_positive_weight: 0.8
-  tension_formula_negative_weight: 0.2
-  min_response_length_to_learn: 2
-  max_drive_file_id_count: 5
-  drive_api_base_url: "http://127.0.0.1:8000/api/v1"
-  drive_page_size: 10
-  drive_api_timeout: 30
-  drive_download_timeout: 60
-  drive_auth_timeout: 10
-  drive_download_folder: "data/drive_downloads"
-  web_search_num_results: 3
-  web_search_timeout: 15
-  drive_default_mime: "text/markdown"
-  code_quality_threshold: 0.7
-  memory_truncation_length: 200
-  screen_content_truncation: 500
-  file_content_truncation: 1500
-  history_items_to_include: 2
-  max_conversation_history: 50
-  template_match_composed_threshold: 0.8
-  template_match_hybrid_threshold: 0.5
-  template_storage_confidence: 0.5
-  max_keywords: 5
-  emotion_confidence_base: 0.1
-  emotion_confidence_max: 0.5
-  emotion_intensity_normalizer: 3.0
-  emotion_secondary_threshold: 0.5
-
-# ── 數學驗證器 ─────────────────────────────────────────────────────────────
-
+# ── Math Verifier ────────────────────────────────────────────────────────────
 math_verifier:
   keywords:
     contains_math:
@@ -861,17 +733,15 @@ math_verifier:
     high_confidence_threshold: 0.8
   allowed_chars: "0123456789.+-*/()"
 
-# ── 段落下載 Timeout ──────────────────────────────────────────────────────
-
+# ── Document Builder ─────────────────────────────────────────────────────────
 document_builder:
   segment_timeout_seconds: 15.0
   max_segments: 10
   learning_threshold:
-    success_count: 3   # 成功 >= 3 次才學習格式
-    keyword_match_count: 2  # keyword 匹配 >= 2 次才學習
+    success_count: 3
+    keyword_match_count: 2
 
-# ── LLM 服務配置 ───────────────────────────────────────────────────────────
-
+# ── LLM Service (unique keys not in llm.default.yaml / timing.default.yaml) ──
 llm:
   defaults:
     temperature: 0.7
@@ -915,17 +785,12 @@ llm:
     negation_words: ["不", "沒", "没", "别", "別", "非", "無", "无", "未"]
     intensifier_words: ["很", "非常", "太", "超", "極", "極其", "好", "真", "挺", "有點", "比較", "比較", "相當", "十分"]
 
-# ── [auto] LLM Mode ──────────────────────────────────────────────────────
-# 控制 NeuroAutoSelector 的行為
-# 當 llm_mode = "auto" 時生效
-
+# ── [auto] LLM Mode ──────────────────────────────────────────────────────────
 auto_mode:
   enabled: true
   default_if_unknown: "ollama:phi:latest"
-  min_time_budget_ms: 5000        # 低於此直接 NeuroBlender
-  max_time_budget_ms: 60000       # 最高預算上限
-
-  # 意圖對應的計算成本 (0.0-1.0)
+  min_time_budget_ms: 5000
+  max_time_budget_ms: 60000
   intent_cost:
     math: 0.9
     code: 0.8
@@ -934,16 +799,12 @@ auto_mode:
     general: 0.4
     smalltalk: 0.2
     emotion: 0.3
-
-  # 硬體等級對應的時間預算 (ms)
   time_budget_table:
     extreme: 60000
     high: 30000
     medium: 20000
     low: 10000
     critical: 3000
-
-  # 本地模型 RAM/VRAM 門檻
   local_model_ram_thresholds:
     - min_ram_gb: 16
       min_vram_gb: 8
@@ -954,8 +815,6 @@ auto_mode:
     - min_ram_gb: 4
       min_vram_gb: 0
       recommend: "phi:latest"
-
-  # 雲端供應商優先順序
   cloud_providers_priority:
     - "openai"
     - "anthropic"

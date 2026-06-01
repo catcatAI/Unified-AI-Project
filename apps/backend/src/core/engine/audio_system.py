@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import asyncio
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -370,7 +371,8 @@ class AudioSystem:
                     await self.next_track()
                     break
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(loop_sleep("audio_poll", 0.1))
+
 
     async def sing(self, track: MusicTrack, lyrics: LyricsSync) -> bool:
         """
@@ -427,7 +429,8 @@ class AudioSystem:
 
                     last_line = current_line
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(loop_sleep("audio_poll", 0.1))
+
 
     def _show_subtitle(self, subtitle: Subtitle):
         """Display subtitle"""

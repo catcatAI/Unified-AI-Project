@@ -23,6 +23,7 @@ from datetime import datetime
 import asyncio
 import logging
 from enum import Enum
+from core.system.config.magic_numbers import loop_sleep
 from .physiological_tactile import PhysiologicalTactileSystem, TactileType, BodyPart
 from .endocrine_system import EndocrineSystem, HormoneType
 from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
@@ -814,7 +815,7 @@ if __name__ == "__main__":
         # Process stress
         logger.info("\n处理压力事件 / Processing stress event:")
         await integrator.process_stress_event(intensity=0.7)
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("bio_integrate_tick", 1.0))
 
         state = integrator.get_biological_state()
         logger.info(f"  唤醒水平: {state['arousal']:.1f}")
@@ -824,7 +825,7 @@ if __name__ == "__main__":
         # Process relaxation
         logger.info("\n处理放松事件 / Processing relaxation event:")
         await integrator.process_relaxation_event(intensity=0.6)
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("bio_integrate_tick", 1.0))
 
         state = integrator.get_biological_state()
         logger.info(f"  唤醒水平: {state['arousal']:.1f}")

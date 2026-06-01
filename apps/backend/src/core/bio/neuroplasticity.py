@@ -26,6 +26,7 @@ import asyncio
 import math
 import random
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -315,7 +316,7 @@ class NeuroplasticitySystem:
         while self._running:
             await self._decay_synaptic_weights()
             await self._update_memory_consolidation()
-            await asyncio.sleep(60)  # Update every minute
+            await asyncio.sleep(loop_sleep("neuroplasticity_update", 60.0))  # Update every minute
 
     async def _decay_synaptic_weights(self):
         """Apply natural decay to synaptic weights"""

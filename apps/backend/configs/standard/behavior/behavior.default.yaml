@@ -148,3 +148,33 @@ state_constants:
   abstraction_level_high: 0.4
   dim_fit_threshold: 0.15
   anchor_learning_boost: 0.01
+
+  # P3.3e: Migrated from angela_core.yaml (unique keys not in src/config/)
+  evolution_sentiment_default: 0.5
+  theta_negativity_threshold: 0.5
+  theta_correction_urge_threshold: 0.6
+  correction_strength_max: 0.3
+  correction_strength_per_point: 0.1
+  epsilon_certainty_decrease: 0.15
+  epsilon_certainty_increase: 0.1
+  epsilon_fatigue_increase: 0.05
+  buffer_pressure_default: 0.3
+  min_response_length_to_learn: 2
+  max_drive_file_id_count: 5
+  drive_page_size: 10
+  drive_api_timeout: 30
+  drive_download_folder: "data/drive_downloads"
+  web_search_num_results: 3
+  web_search_timeout: 15
+  drive_default_mime: "text/markdown"
+  code_quality_threshold: 0.7
+  screen_content_truncation: 500
+  history_items_to_include: 2
+  template_match_composed_threshold: 0.8
+  template_match_hybrid_threshold: 0.5
+  template_storage_confidence: 0.5
+  max_keywords: 5
+  emotion_confidence_base: 0.1
+  emotion_confidence_max: 0.5
+  emotion_intensity_normalizer: 3.0
+  emotion_secondary_threshold: 0.5

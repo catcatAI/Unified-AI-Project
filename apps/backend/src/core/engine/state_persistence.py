@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, TYPE_CHECKING
 
 from core.system.config.async_io import async_write_text, async_read_text
+from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger("angela_persistence")
 
@@ -115,7 +116,7 @@ class StatePersistence:
                 db=self.config.redis_db,
                 password=self.config.redis_password,
                 decode_responses=True,
-                socket_connect_timeout=5,
+                socket_connect_timeout=timeout_value("socket_connect", 5.0),
             )
             await self._redis_client.ping()
             self._redis_available = True

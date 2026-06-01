@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +196,7 @@ class AutonomicNervousSystem:
             await self._apply_homeostasis()
             await self._calculate_tones()
             await self._detect_state_change()
-            await asyncio.sleep(0.5)  # 500ms update interval
+            await asyncio.sleep(loop_sleep("ans_update", 0.5))  # 500ms update interval
 
     async def _decay_stimuli(self):
         """Decay active stimuli over time"""
@@ -491,7 +492,7 @@ if __name__ == "__main__":
         # Apply stress
         logger.info("\n应用压力刺激 / Applying stress stimulus:")
         await ans.apply_stimulus(*StimulusTemplates.stress(intensity=0.8))
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("ans_tick", 1.0))
 
         phys, emo, cog = ans.get_current_effects()
         logger.info(f"  唤醒水平: {ans.arousal_level:.1f}")
@@ -502,7 +503,7 @@ if __name__ == "__main__":
         # Apply meditation
         logger.info("\n应用冥想刺激 / Applying meditation stimulus:")
         await ans.apply_stimulus(*StimulusTemplates.meditation(intensity=0.7))
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("ans_tick", 1.0))
 
         phys, emo, cog = ans.get_current_effects()
         logger.info(f"  唤醒水平: {ans.arousal_level:.1f}")

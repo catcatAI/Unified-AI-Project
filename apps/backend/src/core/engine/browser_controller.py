@@ -25,6 +25,7 @@ import asyncio
 import logging
 import aiohttp
 from bs4 import BeautifulSoup
+from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +264,7 @@ class BrowserController:
 
         try:
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.post(url, data=data, timeout=10) as response:
+                async with session.post(url, data=data, timeout=timeout_value("http_post", 10.0)) as response:
                     if response.status == 200:
                         html = await response.text()
                         soup = BeautifulSoup(html, "html.parser")
@@ -327,7 +328,7 @@ class BrowserController:
         }
         try:
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url, timeout=15) as response:
+                async with session.get(url, timeout=timeout_value("http_get", 15.0)) as response:
                     if response.status == 200:
                         html = await response.text()
                         soup = BeautifulSoup(html, "html.parser")

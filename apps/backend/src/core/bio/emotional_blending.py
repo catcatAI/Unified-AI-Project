@@ -26,6 +26,7 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 import logging
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -274,7 +275,7 @@ class EmotionalBlendingSystem:
             await self._update_emotion()
             await self._decay_influences()
             await self._update_expression()
-            await asyncio.sleep(1.0)  # 1 second update interval
+            await asyncio.sleep(loop_sleep("emotion_update", 1.0))  # 1 second update interval
 
     async def _update_emotion(self):
         """Update current emotion toward target or baseline"""
@@ -1032,7 +1033,7 @@ if __name__ == "__main__":
         # Set emotion
         logger.info("\n设置情绪状态 / Setting emotional state:")
         eb_system.set_emotion_from_basic(BasicEmotion.JOY, intensity=0.8)
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
 
         summary = eb_system.get_emotion_summary()
         logger.info(f"  主要情绪: {summary['dominant_emotion_cn']}")
@@ -1062,7 +1063,7 @@ if __name__ == "__main__":
         logger.info("\n应用影响因素 / Applying influences:")
         eb_system.apply_influence("physiological", "heart_rate", 0.6, 0.5)
         eb_system.apply_influence("hormonal", "dopamine", 0.7, 0.6)
-        await asyncio.sleep(1)
+        await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
 
         summary = eb_system.get_emotion_summary()
         print(

@@ -5,6 +5,35 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.5.0-dev] - 2026-06-01 — Internal/Unreleased
+
+> ⚠️ **Note**: Current source code version. All 7.x entries below this are historical AI agent self-assigned versions that exist in the codebase under 7.5.0-dev.
+
+### Added
+- 🧪 **P2.1**: 40 module smoke tests created (Level5ASI, 6 LLM providers, heartbeat, scheduler, executor, 9 API endpoints, 5 integrations, 4 ai/ops, 10 core formula modules)
+- 🧪 **P2.2-P2.4**: Test infrastructure cleanup — 58 files organized, performance/E2E tests fixed
+- 🧪 **AngelaConfigManager data migration** (P3.3e): 8 src/config/ YAML files → tiered system; 29 unique state constants merged into behavior.default.yaml; 5 new tiered YAML files created
+- 🧪 **P6-3**: 45 magic numbers migrated across 16 files; 4 new accessor functions (retry/batch/cache/threshold)
+- 🧪 **D7**: 47 stale `exc_info=True` removed across 24 files
+
+### Changed
+- 🔄 **P3.3c**: network_defaults.py → YAML timeout migration
+- 🔄 **P3.3d**: StateConfig → tiered system (allocation, influence YAMLs)
+- 🔄 **P8-2**: 5 orphaned services marked DEPRECATED; brain_bridge_service reclassified ACTIVE (2 consumers)
+
+### Fixed
+- 🐛 **AGENTS.md**: Version 6.5.0-dev → 7.5.0-dev
+- 🐛 **matrix.default.yaml**: theta weight/coordinate conflict resolved
+
+### Removed
+- 🗑️ **P5.2**: 7 shadow module pairs eliminated (deleted from core/shared/)
+- 🗑️ **tests/scripts/**: 58 files reorganized, legacy directory removed
+
+### Status
+- **Overall completion**: ~65% (up from 50%)
+- **P2.1 progress**: 40/230+ modules tested
+- **P6-3 progress**: 45/~200 magic numbers migrated
+
 ## [6.2.2] - 2026-05-16
 
 ### Added

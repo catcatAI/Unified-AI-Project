@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Any, Tuple, TYPE_CHECKING
 import logging
+from core.system.config.magic_numbers import cache_value
 
 if TYPE_CHECKING:
     from core.engine.state_matrix_adapter import StateMatrixAdapter
@@ -122,7 +123,7 @@ class ThetaRouter:
         self._state_adapter = state_adapter
         self._port_registry = port_registry
         self._routing_history: List[Dict[str, Any]] = []
-        self._max_history = 100
+        self._max_history = cache_value("routing_history", 100)
 
     @property
     def theta_values(self) -> Dict[str, float]:
