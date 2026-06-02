@@ -65,10 +65,11 @@
 
 **Angela AI** is a digital life system with biological simulation, self-evolution, and real execution capabilities.
 
-**Quick facts**: 515 Python files, ~116K lines (84% live, 9% dead, 7% semi-finished). Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~1500+ tests, 16.34% coverage, 0 layer violations.**  
-**Component versions (code-verified)**: backend `7.5.0-dev` · desktop `4.1.0-dev` · mobile `1.2.0-dev` · cli `1.1.0` · biology-core `1.0.0` — [full audit](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).  
-**Architecture consistency score**: **62.6%** — [full breakdown](docs/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表) (version 31% · shallow 65% · module 66% · algorithm 74%).  
-**Total project files**: ~2,761 (1,001 Python · 140 JS/TS · 805 docs · 577 config · 238 test).
+**Quick facts**: 562 Python files, ~127K lines. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~360+ unit tests, 0 TODO/FIXME/NotImplementedError, 14/14 version consistency.**  
+**Component versions (code-verified)**: backend `7.5.0-dev` · desktop `4.1.0-dev` · mobile `1.2.0-dev` · cli `1.1.0` · biology-core `1.0.0` — [full version audit](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).  
+**Architecture consistency score**: **62.6%** — [full breakdown](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表) (version 31% · shallow 65% · module 66% · algorithm 74%).  
+**Total project files**: ~2,950 (1,001 Python · 140 JS/TS · 805 docs · 577 config · 238 test · ~190 other).  
+See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ---
 
@@ -86,7 +87,7 @@
 | **P7 Config** | 🟡 | TieredConfigLoader done; core sleeps/intervals/timeouts migrated, ~43 formula/structural values remain |
 | **P8 Tech Debt** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
 
-See **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 complete), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10, 0-task target), and **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit).
+See **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 complete), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10, 0-task target), **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit), and **[PHASE_REVIEW.md](docs/06-project-management/plans/PHASE_REVIEW.md)** (latest phase review with 10-dimension scoring).
 
 ### Quick Start
 
@@ -350,6 +351,8 @@ npm start
 | [技術架構概覽](docs/03-technical-architecture/README.md) | HSP、HAM、NGR、8D Matrix、多模態代理、通訊層、安全性 |
 | [ARCHITECTURE_MAP](docs/03-technical-architecture/analysis/ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照 |
 | [全量架構分析](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本溯源、六層一致性評分 |
+| [AGENTS.md](AGENTS.md) | 代理開發指南 — 構建/測試/代碼規範 |
+| [CHANGELOG.md](CHANGELOG.md) | 版本歷史與變更記錄 |
 
 ### 分析與計畫文件
 
@@ -367,6 +370,7 @@ npm start
 | [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移, Stub 清理 |
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError, docs, tests |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告**: 計畫、文檔、代碼、測試、配置、應用的完美完成度判定 |
+| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **最新階段審查**: 3代理並行審計，10維度評分，深層品質現狀 |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
 

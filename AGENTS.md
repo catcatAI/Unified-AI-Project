@@ -196,7 +196,7 @@ tests/               # Test suite
 
 ## Technology Stack
 
-- **Python**: 3.8+ with FastAPI, pytest, Black, isort, flake8, mypy
+- **Python**: 3.9+ with FastAPI, pytest, Black, isort, flake8, mypy
 - **JavaScript**: ES6+ with Electron, ESLint, Prettier
 - **Package Manager**: pnpm (monorepo)
 - **Pre-commit**: Automated linting/formatting

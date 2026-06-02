@@ -35,7 +35,8 @@
 
 | # | 問題 | 文件 |
 |---|------|------|
-| 1 | **README.md「What's Broken」章節完全過時** — 聲稱 Plugin System 有 0 handlers、Memory Chain 未接線、State Persistence 缺失、ImportanceScorer 返回 0.5，但這些都已修復 | `README.md:133-143` |
+| 1 | **README.md 連結錯誤** — `docs/FULL_ARCHITECTURE_ANALYSIS.md` ❌ 應為 `docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md`；缺少 AGENTS.md 與 CHANGELOG.md 引用 | `README.md:69-70` |
+| 2 | **README.md「What's Broken」章節完全過時** — 聲稱 Plugin System 有 0 handlers、Memory Chain 未接線、State Persistence 缺失、ImportanceScorer 返回 0.5，但這些都已修復 | `README.md:133-143` |
 | 2 | **PHASE_2_DEVELOPMENT_PLAN.md** — 4.5個月未更新，引用已不存在技術棧 (Three.js, Next.js, HybridBrain)，無完成標記，無棄用標記 | `PHASE_2_DEVELOPMENT_PLAN.md` |
 | 3 | **MASTER_CONSOLIDATED_PLAN.md D7 自相矛盾** — 同一文件 L472 說「0剩餘」而 L495 說「48% (309/636)」，自己標註了矛盾但從未解決 | `MASTER_CONSOLIDATED_PLAN.md:421` |
 | 4 | **測試數量在各文件混亂** — 不同文檔報告 37、53、57、65、76+21、89、180、316、535、1300+ 個測試，完全無法確定真實數字 | 跨文件 |
@@ -364,7 +365,7 @@
 | **ASI/AI 引擎** | **55-60%** | Level5 空殼、atlassian 5% |
 | **集成層** | **30%** | atlassian 5%、rovo 15%、3 代理 stub |
 | **文檔** | **72%** (↑9%) | README更新、INDEX擴充、ARCHITECTURE/OVERVIEW修復、MASTER_CONSOLIDATED D7矛盾解決、過時計劃棄用、狀態文件歸檔 |
-| **綜合** | **~53%** (↑6%) | |
+| **綜合** | **~58%** (↑13%) | |
 
 ---
 
@@ -387,7 +388,7 @@
 > | 有序 | ⚠️ 部分 | 3 配置系統不協調, 8 影子模組 |
 > | 真實服務 | ❌ | atlassian bridge 5%, 3 代理 stub |
 >
-> **綜合完成度: ~45%**。距離「完美完成」仍需要大量系統性工作。
+> **綜合完成度: ~58%**。距離「完美完成」仍需要大量系統性工作。
 
 ---
 

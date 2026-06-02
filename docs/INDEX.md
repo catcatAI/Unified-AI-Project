@@ -12,7 +12,9 @@
 
 ## Root Files
 
+- **`AGENTS.md`** — 代理開發指南 (構建/測試/代碼規範)
 - **`ARCHITECTURE.md`** — System architecture overview (SSOT, outdated)
+- **`CHANGELOG.md`** — 版本歷史與變更記錄
 - **`QUICK_START.md`** — Getting started guide
 - **`INDEX.md`** — This file
 
@@ -22,6 +24,7 @@
 | 文件 | 說明 |
 |------|------|
 | **[COMPREHENSIVE_AUDIT_REPORT.md](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** | **全面審計報告 (2026-05-31)** — 6代理審計結果, 完成度判定, 修復路線圖 |
+| **[PHASE_REVIEW.md](06-project-management/plans/PHASE_REVIEW.md)** | **最新階段審查 (2026-06-02)** — 3代理並行審計, 10維度深層評分, 258+pass/16 stub發現 |
 | **[MASTER_CONSOLIDATED_PLAN.md](06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** | 主執行計畫 — 27項 S/A/B/C 分級任務 |
 | **[MASTER_FINALIZATION_PLAN.md](06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** | 最終消滅計畫 — P8-P10 結構改善 + 文檔/測試 |
 | **[PHASE6_NEXT_PLAN.md](06-project-management/plans/PHASE6_NEXT_PLAN.md)** | Quality finishing — Plugin, Config handler, Magic number, Stub |
@@ -29,6 +32,8 @@
 | **[TEST_RESTRUCTURE_PLAN.md](06-project-management/plans/TEST_RESTRUCTURE_PLAN.md)** | 測試層級架構重組 |
 | **[CARD_IMPORT_PIPELINE_PLAN.md](06-project-management/plans/CARD_IMPORT_PIPELINE_PLAN.md)** | 卡片導入管線 |
 | **[ANGELA_CARD_INTEGRATION_PLAN.md](06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md)** | Card pipeline → ChatService 接線 |
+| **[REMAINING_ISSUES_PLAN.md](06-project-management/plans/REMAINING_ISSUES_PLAN.md)** | placeholder 清除、unittest→pytest 遷移 |
+| **[CARD_INTEGRATION_PLAN_REVIEW.md](06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md)** | 事前審計：執行前發現 25 問題 |
 
 ### Architecture & Design
 - `03-technical-architecture/communication/hsp-specification/` — HSP protocol spec
@@ -48,4 +53,4 @@
 - `packages/cli/` — CLI tools
 
 ---
-_Last Updated: 2026-05-31_ | [README.md](../README.md) | [Comprehensive Audit](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)
+_Last Updated: 2026-06-02_ | [README.md](../README.md) | [Comprehensive Audit](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Phase Review](06-project-management/plans/PHASE_REVIEW.md)
