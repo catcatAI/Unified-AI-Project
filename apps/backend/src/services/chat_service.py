@@ -371,7 +371,7 @@ class ChatService:
             dims = matrix_conf.get("dimensions", {})
             return {name: d.get("anchor_keywords", []) for name, d in dims.items()}
         except Exception:
-            # 極簡回退
+            logger.warning("Failed to load anchor keywords from config, using fallback", exc_info=True)
             return {"alpha": ["energy"], "beta": ["think"]}
 
     def _get_state_constants(self, key: str, default):
@@ -381,6 +381,7 @@ class ChatService:
             dyn_conf = get_formula_config("dynamic")
             return dyn_conf.get("state_constants", {}).get(key, default)
         except Exception:
+            logger.warning("Failed to load state constant '%s', using default", key, exc_info=True)
             return default
 
 # Module-level exports for backward compatibility (Phase 7 fix)

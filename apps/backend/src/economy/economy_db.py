@@ -95,6 +95,7 @@ class EconomyDB:
                 self.conn.commit()
                 return True
             except sqlite3.Error:
+                logger.warning("Database transaction failed, rolling back", exc_info=True)
                 self.conn.rollback()
                 return False
         return False

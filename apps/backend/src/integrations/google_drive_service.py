@@ -66,6 +66,7 @@ class GoogleDriveService:
             try:
                 self._creds.refresh()
             except Exception:
+                logger.warning("Failed to refresh Google Drive credentials", exc_info=True)
                 return False
             if not self._creds.valid:
                 return False

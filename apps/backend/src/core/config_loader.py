@@ -594,6 +594,7 @@ class AngelaConfigManager:
                 return "能量低，需要休息"
             return "狀態平穩"
         except Exception:
+            logger.warning("Failed to build anchor context, returning fallback", exc_info=True)
             return "狀態平穩"
 
 
@@ -889,6 +890,7 @@ def _get_int(key: str, default: int = 0) -> int:
     try:
         return int(value)
     except ValueError:
+        logger.warning("Invalid int value for key '%s', using default", key, exc_info=True)
         return default
 
 

@@ -42,23 +42,18 @@ class TestNonParadoxExistence:
 
     def test_create_gray_zone_method(self):
         """Verify create_gray_zone method works end-to-end"""
-        try:
-            from core.non_paradox_existence import (
-                NonParadoxExistence, GrayZoneVariableType,
-            )
-            instance = NonParadoxExistence()
-            gz = instance.create_gray_zone(
-                GrayZoneVariableType.EMOTIONAL,
-                "Ambiguous emotional state",
-            )
-            assert gz is not None
-            assert gz.variable_id.startswith("gz_")
-            assert gz.variable_type == GrayZoneVariableType.EMOTIONAL
-            assert gz.description == "Ambiguous emotional state"
-            assert gz.coexistence_active is False
-            assert gz.cognitive_gap_threshold == 0.6
-            assert gz.variable_id in instance.gray_zones
-        except ImportError as e:
-            pytest.skip(f"NonParadoxExistence not available: {e}")
-        except Exception as e:
-            pytest.skip(f"NonParadoxExistence init failed (expected in CI): {e}")
+        from core.non_paradox_existence import (
+            NonParadoxExistence, GrayZoneVariableType,
+        )
+        instance = NonParadoxExistence()
+        gz = instance.create_gray_zone(
+            GrayZoneVariableType.EMOTIONAL,
+            "Ambiguous emotional state",
+        )
+        assert gz is not None
+        assert gz.variable_id.startswith("gz_")
+        assert gz.variable_type == GrayZoneVariableType.EMOTIONAL
+        assert gz.description == "Ambiguous emotional state"
+        assert gz.coexistence_active is False
+        assert gz.cognitive_gap_threshold == 0.6
+        assert gz.variable_id in instance.gray_zones

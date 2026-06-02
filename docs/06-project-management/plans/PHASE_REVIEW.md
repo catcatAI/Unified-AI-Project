@@ -152,13 +152,16 @@
 
 > **會話 2**: 2 並行代理 (沉默 except 分析 + 測試品質分析) → 2 修復代理 (40 except 修復 + 5 測試升級)
 > **會話 3**: 2 並行代理 (5 測試升級 + 13 MEDIUM except 修復)
+> **會話 4**: 2 並行代理 (5 測試升級 + 12 LOW except 修復)
 
 | 任務 | 修復內容 | 數量 | 狀態 |
 |------|---------|:----:|:----:|
 | **R3 HIGH** | `except Exception: pass` → `logger.warning(exc_info=True)` | 40 處, 20 檔案 | ✅ |
 | **R3 MEDIUM** | `except SpecificError: pass` → `logger.warning(exc_info=True)` | 13 處, 11 檔案 | ✅ |
-| **R5 批1** | 煙霧測試 → 實質測試 (enterprise_monitor, intent_registry, attention_controller, kinetic_validator, webgl_bridge) | 5 檔案, 19 測試 | ✅ |
-| **R5 批2** | 煙霧測試 → 實質測試 (active_cognition_formula, life_intensity_formula, non_paradox_existence, causal_chain, capacity_planner) | 5 檔案, 13 測試 | ✅ |
+| **R3 LOW** | 沉默 except+fallback → 加 logging | 12 處, 8 檔案 | ✅ |
+| **R5 批1** | 煙霧→實質 (enterprise_monitor, intent_registry, attention_controller, kinetic_validator, webgl_bridge) | 5 檔案, 19 測試 | ✅ |
+| **R5 批2** | 煙霧→實質 (active_cognition, life_intensity, non_paradox, causal_chain, capacity_planner) | 5 檔案, 13 測試 | ✅ |
+| **R5 批3** | 煙霧→實質 (angela_error, art_learning_workflow, life_intensity II, causal_chain II, non_paradox II) | 5 檔案, 10 測試 | ✅ |
 
 ---
 
@@ -172,7 +175,7 @@
 | R2 | **為 259 pass 語句增加實作** | 僅 18 真實未完成, 已全部消除 | **✅ 0/18** |
 | R3 | **消除 HIGH `except Exception:pass`** | 40 HIGH 沉默吞異常 (302 沉默總數, 含可接受) | **✅ 40/40** |
 | R4 | **修復 3 處 async 阻塞** | `subprocess.run` 在 async 函數中會阻塞 event loop | **✅ 已修復** |
-| R5 | **升級煙霧測試** | 10 檔案 32 測試已升級, 剩 235 煙霧測試 | 🟡 32/267 |
+| R5 | **升級煙霧測試** | 15 檔案 42 測試已升級, 剩 225 煙霧測試 | 🟡 42/267 |
 
 ### P1 — 品質性缺陷 (2-3 個會話)
 

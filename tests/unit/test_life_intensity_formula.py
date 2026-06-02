@@ -49,12 +49,28 @@ class TestLifeIntensityFormula:
         assert instance._intensity_threshold == 0.6
 
     def test_calculate_life_intensity_method(self):
-        """Verify calculate_life_intensity method exists and returns valid float"""
-        try:
-            from core.life_intensity_formula import LifeIntensityFormula
-            instance = LifeIntensityFormula()
-            assert hasattr(instance, "calculate_life_intensity")
-        except ImportError as e:
-            pytest.skip(f"LifeIntensityFormula not available: {e}")
-        except Exception as e:
-            pytest.skip(f"LifeIntensityFormula init failed (expected in CI): {e}")
+        """Verify life intensity calculation produces valid 0-1 result with all components"""
+        from core.life_intensity_formula import (
+            LifeIntensityFormula, KnowledgeDomain,
+        )
+        instance = LifeIntensityFormula()
+        l_s = instance.calculate_life_intensity()
+        assert 0.0 <= l_s <= 1.0
+        assert isinstance(l_s, float)
+        assert len(instance.intensity_history) == 1
+        snapshot = instance.intensity_history[0]
+        assert 0.0 <= snapshot.c_inf <= 1.0
+        assert 0.0 <= snapshot.c_limit <= 1.0
+        assert 0.0 <= snapshot.m_f <= 1.0
+        assert 0.0 <= snapshot.time_integral <= 1.0
+        assert snapshot.dominant_domain is None
+        instance.update_knowledge_state(
+            KnowledgeDomain.WORLD_KNOWLEDGE, completeness=0.9, accessibility=0.9
+        )
+        instance.add_constraint(
+            KnowledgeDomain.WORLD_KNOWLEDGE, "processing_limit", severity=0.3
+        )
+        l_s2 = instance.calculate_life_intensity()
+        assert l_s2 > l_s
+        snapshot2 = instance.intensity_history[-1]
+        assert snapshot2.dominant_domain == KnowledgeDomain.WORLD_KNOWLEDGE

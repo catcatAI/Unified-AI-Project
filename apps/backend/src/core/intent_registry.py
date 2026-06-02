@@ -1,16 +1,12 @@
 """
 IntentRegistry — 統一意圖檢測系統（B12）
-
-三處 hardcoded keyword intent 檢測統一：
-1. ChatService._detect_task_intent()
-2. ProjectCoordinator._detect_complex_task()
-3. DocumentBuilder._detect_task_type()
-
-所有意圖關鍵字集中管理，支援擴展。
 """
+import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Tuple, Callable
 import re
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -66,6 +62,7 @@ class IntentRegistry:
                     IntentPattern(name, keywords, category, priority)
                 )
         except Exception:
+            logger.warning("Failed to load intents from config, using hardcoded defaults", exc_info=True)
             self._register_defaults_hardcoded()
 
     def _register_defaults_hardcoded(self) -> None:

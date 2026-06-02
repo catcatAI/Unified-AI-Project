@@ -206,6 +206,7 @@ def is_valid_uuid(uuid_str: str) -> bool:
         uuid.UUID(uuid_str)
         return True
     except ValueError:
+        logger.warning("Invalid UUID string: '%s'", uuid_str, exc_info=True)
         return False
 
 

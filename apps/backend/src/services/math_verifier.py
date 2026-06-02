@@ -248,6 +248,7 @@ class MathExtractor:
         try:
             return float(value)
         except (TypeError, ValueError):
+            logger.warning("Failed to parse numeric value, returning None", exc_info=True)
             return None
 
 
@@ -288,6 +289,7 @@ class SpatialEngine:
             from core.config_loader import get_angela_config
             return get_angela_config().get_authority("angela_core", {}).get("math_verifier", {}).get(key, default)
         except Exception:
+            logger.warning("Failed to load math config key '%s', using default", key, exc_info=True)
             return default
 
     def _eval_simple(self, expression: str) -> float:

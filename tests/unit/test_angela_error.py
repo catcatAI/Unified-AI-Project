@@ -1,40 +1,60 @@
-"""Smoke tests for core/angela_error.py"""
+"""Tests for core/angela_error.py"""
 import pytest
 
 
 class TestAngelaError:
-    """Basic smoke tests for AngelaError hierarchy"""
+    """Tests for AngelaError hierarchy"""
 
     def test_import_angela_error(self):
-        """Verify AngelaError can be imported"""
-        try:
-            from core.angela_error import AngelaError
-            assert AngelaError is not None
-        except ImportError as e:
-            pytest.skip(f"AngelaError not available: {e}")
+        """Verify AngelaError is a proper Exception subclass with expected hierarchy"""
+        from core.angela_error import AngelaError, ErrorSeverity, ErrorCategory, ErrorHandler
+        assert issubclass(AngelaError, Exception)
+        assert AngelaError.DEFAULT_CODE == "ANGELA_ERROR"
+        assert AngelaError.DEFAULT_MESSAGE == "An error occurred in Angela AI"
+        assert AngelaError.DEFAULT_CATEGORY == ErrorCategory.UNKNOWN
+        assert AngelaError.DEFAULT_SEVERITY == ErrorSeverity.ERROR
+        assert hasattr(ErrorHandler, 'handle')
+        assert hasattr(ErrorHandler, 'register_handler')
 
     def test_angela_error_instantiation(self):
-        """Verify AngelaError can be raised with default args"""
-        try:
-            from core.angela_error import AngelaError
-            err = AngelaError()
-            assert isinstance(err, Exception)
-            assert str(err) is not None
-        except ImportError as e:
-            pytest.skip(f"AngelaError not available: {e}")
-        except Exception as e:
-            pytest.skip(f"AngelaError init failed (expected in CI): {e}")
+        """Verify AngelaError default instantiation sets correct defaults"""
+        from core.angela_error import AngelaError, ErrorSeverity, ErrorCategory
+        err = AngelaError()
+        assert isinstance(err, Exception)
+        assert err.message == "An error occurred in Angela AI"
+        assert err.code == "ANGELA_ERROR"
+        assert err.category == ErrorCategory.UNKNOWN
+        assert err.severity == ErrorSeverity.ERROR
+        assert err.cause is None
+        assert err.context is not None
+        assert str(err) == "[ANGELA_ERROR] An error occurred in Angela AI (unknown)"
+        assert repr(err).startswith("AngelaError(code='ANGELA_ERROR'")
 
     def test_angela_error_with_message(self):
-        """Verify AngelaError with custom message"""
-        try:
-            from core.angela_error import AngelaError
-            err = AngelaError(message="test error")
-            assert str(err) is not None
-        except ImportError as e:
-            pytest.skip(f"AngelaError not available: {e}")
-        except Exception as e:
-            pytest.skip(f"AngelaError init failed (expected in CI): {e}")
+        """Verify AngelaError accepts custom params, serializes correctly, and chains causes"""
+        from core.angela_error import AngelaError, ErrorCategory, ErrorSeverity
+        err = AngelaError(
+            message="test error",
+            code="TEST_CODE",
+            category=ErrorCategory.CONFIGURATION,
+            severity=ErrorSeverity.WARNING,
+        )
+        assert err.message == "test error"
+        assert err.code == "TEST_CODE"
+        assert err.category == ErrorCategory.CONFIGURATION
+        assert err.severity == ErrorSeverity.WARNING
+        assert "[TEST_CODE]" in str(err)
+        d = err.to_dict()
+        assert d["error"]["code"] == "TEST_CODE"
+        assert d["error"]["category"] == "configuration"
+        assert d["error"]["severity"] == "warning"
+        json_str = err.to_json()
+        assert "TEST_CODE" in json_str
+        cause = ValueError("original cause")
+        chained = AngelaError(message="wrapped", cause=cause)
+        assert chained.cause is cause
+        extra = AngelaError(message="extra", extra_field="value")
+        assert extra.context.additional_info["extra_field"] == "value"
 
     def test_configuration_error(self):
         """Verify ConfigurationError can be imported and raised"""

@@ -21,22 +21,17 @@ class TestCausalChain:
 
     def test_instantiation(self):
         """Verify basic instantiation and node operations"""
-        try:
-            from core.tracing.causal_chain import CausalChain, CausalNode, LayerType
-            instance = CausalChain(root_id="test-root")
-            assert instance.root_id == "test-root"
-            assert instance.nodes == []
-            node = CausalNode(layer=LayerType.L2, module="test", action="process")
-            instance.add_node(node)
-            assert len(instance.nodes) == 1
-            assert instance.get_node(node.id) is node
-            assert instance.has_layer(LayerType.L2) is True
-            assert instance.has_layer(LayerType.L1) is False
-            assert instance.get_layer_nodes(LayerType.L2) == [node]
-        except ImportError as e:
-            pytest.skip(f"CausalChain not available: {e}")
-        except Exception as e:
-            pytest.skip(f"CausalChain init failed (expected in CI): {e}")
+        from core.tracing.causal_chain import CausalChain, CausalNode, LayerType
+        instance = CausalChain(root_id="test-root")
+        assert instance.root_id == "test-root"
+        assert instance.nodes == []
+        node = CausalNode(layer=LayerType.L2, module="test", action="process")
+        instance.add_node(node)
+        assert len(instance.nodes) == 1
+        assert instance.get_node(node.id) is node
+        assert instance.has_layer(LayerType.L2) is True
+        assert instance.has_layer(LayerType.L1) is False
+        assert instance.get_layer_nodes(LayerType.L2) == [node]
 
     def test_import_layer_type(self):
         """Verify LayerType enum values and from_string parsing"""
@@ -52,27 +47,22 @@ class TestCausalChain:
 
     def test_import_causal_node(self):
         """Verify CausalNode dataclass and its to_dict/from_dict round-trip"""
-        try:
-            from core.tracing.causal_chain import CausalNode, LayerType
-            node = CausalNode(
-                layer=LayerType.L3,
-                module="identity",
-                action="update",
-                data={"key": "value"},
-            )
-            assert node.action == "update"
-            assert node.module == "identity"
-            assert node.layer == LayerType.L3
-            assert node.data == {"key": "value"}
-            d = node.to_dict()
-            assert d["layer"] == "L3"
-            assert d["action"] == "update"
-            restored = CausalNode.from_dict(d)
-            assert restored.id == node.id
-            assert restored.layer == node.layer
-            assert restored.action == node.action
-            assert restored.data == node.data
-        except ImportError as e:
-            pytest.skip(f"CausalNode not available: {e}")
-        except Exception as e:
-            pytest.skip(f"CausalNode init failed (expected in CI): {e}")
+        from core.tracing.causal_chain import CausalNode, LayerType
+        node = CausalNode(
+            layer=LayerType.L3,
+            module="identity",
+            action="update",
+            data={"key": "value"},
+        )
+        assert node.action == "update"
+        assert node.module == "identity"
+        assert node.layer == LayerType.L3
+        assert node.data == {"key": "value"}
+        d = node.to_dict()
+        assert d["layer"] == "L3"
+        assert d["action"] == "update"
+        restored = CausalNode.from_dict(d)
+        assert restored.id == node.id
+        assert restored.layer == node.layer
+        assert restored.action == node.action
+        assert restored.data == node.data
