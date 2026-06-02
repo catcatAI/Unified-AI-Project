@@ -15,7 +15,7 @@ Status: ✅ Fixed / 🟡 Persistent / ❌ Needs Fix / 🗑️ Deprecated
 | 7 | `ai/agents/specialized/nlp_processing_agent.py` | _handle_summarization() | ✅ | Truncation-based summarization (first 200 chars) |
 | 8 | `ai/agents/specialized/code_understanding_agent.py` | _generate_documentation() | ✅ | AST-based documentation generation |
 | 9 | `ai/agents/specialized/code_understanding_agent.py` | _fix_code_issues() | ✅ | Regex + length-based code analysis and fix suggestions |
-| 10 | `ai/meta_formulas/meta_formula.py` | MetaFormula.execute() | ✅ | Fixed in P8-3 |
+| 10 | ~~`ai/meta_formulas/meta_formula.py`~~ | ~~MetaFormula.execute()~~ | 🗑️ | File deleted in Px6 (dead code cleanup) |
 | 11 | `core/desktop/tray_manager.py` | BaseTrayManager (4 methods) | ✅ | Fixed in P8-3 |
 
 ## Methods with Logged Stubs (fixed in P9-2)
@@ -26,9 +26,9 @@ Status: ✅ Fixed / 🟡 Persistent / ❌ Needs Fix / 🗑️ Deprecated
 | 13 | `core/engine/state_matrix.py` | _apply_influence_fallback() | ✅ | `logger.warning` |
 | 14 | `ai/memory/importance_scorer.py` | __init__() | ✅ | `logger.debug` |
 | 15 | `ai/ops/intelligent_ops_manager.py` | PredictiveMaintenanceEngine (3 methods) | ✅ | `logger.warning` + return |
-| 16 | `ai/level5_asi_system.py` | DistributedCoordinator (3 methods) | ✅ | `logger.warning` + docstrings |
-| 17 | `ai/level5_asi_system.py` | HyperlinkedParameterCluster (2 methods) | ✅ | `logger.warning` + docstrings |
-| 18 | `ai/level5_asi_system.py` | AlignedBaseAgent (5 methods) | ✅ | `logger.warning` + docstrings |
+| 16 | `ai/level5_asi_system.py` | DistributedCoordinator (3 methods) | 🟡 | Logged stub — STUB docstrings remain; no real alignment module exists (P1.1) |
+| 17 | `ai/level5_asi_system.py` | HyperlinkedParameterCluster (2 methods) | 🟡 | Logged stub — STUB docstrings remain; no real cluster module exists (P1.1) |
+| 18 | `ai/level5_asi_system.py` | AlignedBaseAgent (5 methods) | 🟡 | Logged stub — STUB docstrings remain; no real agent module exists (P1.1) |
 | 19 | `integrations/atlassian_bridge.py` | start() / close() | ✅ | `logger.info` |
 | 20 | `integrations/enhanced_rovo_dev_connector.py` | start() / close() / _authenticate() | ✅ | `logger.info` |
 
@@ -52,9 +52,9 @@ Status: ✅ Fixed / 🟡 Persistent / ❌ Needs Fix / 🗑️ Deprecated
 
 | # | File | Method | Status | Notes |
 |---|------|--------|--------|-------|
-| 27 | `integrations/atlassian_bridge.py` | _load_endpoint_configs() | ✅ | Parses self.config into EndpointConfig dict |
-| 28 | `integrations/atlassian_bridge.py` | _make_request_with_fallback() | ✅ | Primary + backup URL failover via aiohttp |
-| 29 | `integrations/atlassian_bridge.py` | create_confluence_page() | ✅ | Confluence REST API payload + delegate to _make_request_with_fallback |
+| 27 | `integrations/atlassian_bridge.py` | _load_endpoint_configs() (+ base_url fix) | ✅ | Parses self.config into EndpointConfig dict; now supports base_url |
+| 28 | `integrations/atlassian_bridge.py` | _make_request_with_fallback() (reuse session + auth) | ✅ | Primary + backup URL failover via aiohttp; reuse self._session; adds Authorization header |
+| 29 | `integrations/atlassian_bridge.py` | **All 15 API methods** (P1.2) | ✅ | Confluence(3) + Jira(5) + Bitbucket(2) + Lists(4) + Lifecycle(1) — all implemented |
 | 30 | `integrations/enhanced_rovo_dev_connector.py` | _make_request_with_retry() | ✅ | Exponential backoff retry via aiohttp + semaphore |
 
 ## Not ImplementedError (all resolved in P8-3)
@@ -67,7 +67,9 @@ Status: ✅ Fixed / 🟡 Persistent / ❌ Needs Fix / 🗑️ Deprecated
 |----------|-------|--------|
 | Agent stubs with real logic | 7 | ✅ |
 | Agent stubs needing backend (no service available) | 2 | 🟡 Image gen + audio STT need model backends |
-| Fixed abstract base stubs | 8 | ✅ |
+| Atlessian Bridge fully implemented (P1.2) | 15 methods | ✅ |
+| Logged stubs — Level5ASI inline (P1.1 pending) | 4 classes | 🟡 Await real alignment modules |
 | Fallback placeholder classes | 11 | 🗑️ Acceptable |
-| Skeleton integration stubs (with real HTTP logic) | 4 | ✅ |
-| **Remaining persistent stubs** | **2** | 🟡 Requires external service/model backends |
+| Abstract base stubs | 3 | 🟡 Subclass overrides |
+| Dead code removed (meta_formulas, genesis, examples) | 3 packages | 🗑️ Cleaned in Px6 |
+| **Remaining persistent stubs** | **9** | 🟡 Requires external service/model backends or new modules |
