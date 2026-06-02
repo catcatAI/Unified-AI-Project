@@ -26,6 +26,7 @@ import logging
 import aiohttp
 from bs4 import BeautifulSoup
 from core.system.config.magic_numbers import timeout_value
+from core.system.config.async_io import async_write_text, async_read_text
 
 logger = logging.getLogger(__name__)
 
@@ -186,13 +187,29 @@ class BrowserController:
 
     async def _load_bookmarks(self):
         """Load bookmarks from storage"""
-        # This would load from a database or file
-        pass
+        bookmarks_path = Path.home() / ".angela_ai" / "browser_bookmarks.json"
+        try:
+            if bookmarks_path.exists():
+                import json as _json
+                data = _json.loads(await async_read_text(bookmarks_path))
+                self.bookmarks = {
+                    bid: Bookmark(**bd) for bid, bd in data.items()
+                }
+                logger.info(f"Loaded {len(self.bookmarks)} bookmarks")
+        except Exception as e:
+            logger.warning(f"Failed to load bookmarks: {e}")
 
     async def _save_bookmarks(self):
         """Save bookmarks to storage"""
-        # This would save to a database or file
-        pass
+        bookmarks_path = Path.home() / ".angela_ai" / "browser_bookmarks.json"
+        try:
+            bookmarks_path.parent.mkdir(parents=True, exist_ok=True)
+            import json as _json
+            data = {bid: bd.__dict__ for bid, bd in self.bookmarks.items()}
+            await async_write_text(bookmarks_path, _json.dumps(data, indent=2, default=str))
+            logger.info(f"Saved {len(self.bookmarks)} bookmarks")
+        except Exception as e:
+            logger.warning(f"Failed to save bookmarks: {e}")
 
     def _set_state(self, new_state: BrowserState):
         """Set browser state with notifications"""

@@ -590,7 +590,8 @@ class LLMDecisionLoop:
 
     def record_activity(self):
         """記錄活動（用於調整決策頻率）"""
-        pass
+        self.last_activity_time = time.monotonic()
+        self.stats["total_decisions"] += 1
 
     def get_decision_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """獲取決策歷史"""

@@ -258,10 +258,13 @@ class HSPVersionConverter:
             if "metadata" not in payload:
                 payload["metadata"] = {}
 
-            # 更新时间戳格式(示例)
+            # 更新时间戳格式
             if "timestamp_sent" in converted:
-                # 假设新版本需要不同的时间戳格式
-                pass
+                ts = converted["timestamp_sent"]
+                if isinstance(ts, (int, float)):
+                    converted["timestamp_sent"] = datetime.fromtimestamp(ts).isoformat()
+                elif isinstance(ts, str) and ts.isdigit():
+                    converted["timestamp_sent"] = datetime.fromtimestamp(float(ts)).isoformat()
 
         logger.debug("0.1.0到0.2.0版本转换完成")
         return converted

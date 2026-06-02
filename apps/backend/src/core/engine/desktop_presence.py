@@ -549,9 +549,21 @@ class MouseTracker:
 
     async def _update_mouse_position(self):
         """Update current mouse position"""
-        # Platform-specific mouse tracking would go here
-        # For demonstration, keeping position static
-        pass
+        import platform as _platform
+        if _platform.system() == "Windows":
+            import ctypes
+            point = ctypes.wintypes.POINT()
+            ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
+            self.current_position = Position(x=point.x, y=point.y)
+        else:
+            import os
+            data = os.popen("xdotool getmouselocation 2>/dev/null").read().strip()
+            if data:
+                parts = dict(p.split(":") for p in data.split() if ":" in p)
+                self.current_position = Position(
+                    x=int(parts.get("x", self.current_position.x)),
+                    y=int(parts.get("y", self.current_position.y))
+                )
 
     def get_position(self) -> Position:
         """Get current mouse position"""

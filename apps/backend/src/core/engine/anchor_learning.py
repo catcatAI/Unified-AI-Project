@@ -14,6 +14,9 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, TYPE_CHECKING
 import math
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from core.allocation.resonance import ResonanceEngine
@@ -126,7 +129,10 @@ class AnchorLearningEngine:
         self._resonance._semantic_vectors[axis_name] = new_anchor
 
         if new_nonzero != prev_nonzero:
-            pass
+            logger.debug(
+                f"Axis {axis_name} sparsity changed: {prev_nonzero} -> {new_nonzero} nonzero components"
+            )
+            self._resonance._sparsity_shift(axis_name, new_nonzero - prev_nonzero)
 
     # =========================================================================
     # 觸發點 2: 分配決策 → 反饋學習

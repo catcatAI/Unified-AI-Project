@@ -234,10 +234,14 @@ class ContextHAMIntegration:
             # )
 
             # 如果源上下文有关联的HAM记忆, 也进行转移
-            if "ham_memory_id" in source_context.content:
-                # 在HAM系统中也进行记忆转移
-                # self.ham_manager.transfer_memory(...)
-                pass
+            if "ham_memory_id" in source_context.content and self.ham_manager:
+                ham_id = source_context.content["ham_memory_id"]
+                transfer_method = getattr(self.ham_manager, "transfer_memory", None)
+                if transfer_method:
+                    try:
+                        transfer_method(ham_id, target_memory_type)
+                    except Exception as e:
+                        logger.warning(f"HAM memory transfer failed for {ham_id}: {e}")
 
             # 记录转移操作
             {

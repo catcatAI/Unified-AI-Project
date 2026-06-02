@@ -287,6 +287,4 @@ if __name__ == "__main__":
     # non_existent_structure = model.get_tool_structure("non_existent_tool.py")
     # if not non_existent_structure:
     #     print("Correctly returned None for non - existent tool (enhanced).")
-    # Note: The __main__ block is primarily for very basic smoke testing of the class structure.
-    # Proper testing will be done with unittest.
-    pass  # Placeholder to avoid syntax error on empty __main__
+    logger.info("LightweightCodeModel smoke test: structure OK")

@@ -1,6 +1,6 @@
 """
 MCPConnector - 多代理通信協議連接器
-支持容錯機制、重試邏輯和備用端點 (SKELETON)
+支持容錯機制、重試邏輯和備用端點
 """
 
 import asyncio

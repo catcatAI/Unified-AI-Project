@@ -1,6 +1,6 @@
 """
 Permission Control System for AI Editor.
-Implements multi-level permission control for AI operations. (SKELETON)
+Implements multi-level permission control for AI operations.
 """
 
 import logging

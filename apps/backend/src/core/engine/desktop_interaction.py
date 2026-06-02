@@ -681,10 +681,12 @@ class DesktopInteraction:
 
             elif system == "Darwin":  # macOS
                 script = f'tell application "Finder" to set desktop picture to POSIX file "{image_path.absolute()}"'
-                # 使用 subprocess.run() 替代 os.system() 防止命令注入
+                loop = asyncio.get_running_loop()
                 try:
-                    subprocess.run(
-                        ["osascript", "-e", script], check=True, capture_output=True, text=True
+                    await loop.run_in_executor(
+                        None, lambda: subprocess.run(
+                            ["osascript", "-e", script], check=True, capture_output=True, text=True
+                        )
                     )
                     return True
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -692,27 +694,27 @@ class DesktopInteraction:
                     return False
 
             elif system == "Linux":
-                # Try various desktop environments
                 de = os.environ.get("DESKTOP_SESSION", "").lower()
+                loop = asyncio.get_running_loop()
                 try:
                     if "gnome" in de or "unity" in de:
-                        # 使用 subprocess.run() 替代 os.system() 防止命令注入
                         image_uri = f"file://{image_path.absolute()}"
-                        subprocess.run(
-                            [
-                                "gsettings",
-                                "set",
-                                "org.gnome.desktop.background",
-                                "picture-uri",
-                                image_uri,
-                            ],
-                            check=True,
-                            capture_output=True,
-                            text=True,
+                        await loop.run_in_executor(
+                            None, lambda: subprocess.run(
+                                [
+                                    "gsettings",
+                                    "set",
+                                    "org.gnome.desktop.background",
+                                    "picture-uri",
+                                    image_uri,
+                                ],
+                                check=True,
+                                capture_output=True,
+                                text=True,
+                            )
                         )
                         return True
                     elif "kde" in de:
-                        # 使用 subprocess.run() 替代 os.system() 防止命令注入
                         image_path_str = str(image_path.absolute())
                         kde_script = (
                             "var allDesktops = desktops(); "
@@ -723,17 +725,19 @@ class DesktopInteraction:
                             'd.writeConfig("Image", "file://' + image_path_str + '") '
                             "}"
                         )
-                        subprocess.run(
-                            [
-                                "qdbus",
-                                "org.kde.plasmashell",
-                                "/PlasmaShell",
-                                "org.kde.PlasmaShell.evaluateScript",
-                                kde_script,
-                            ],
-                            check=True,
-                            capture_output=True,
-                            text=True,
+                        await loop.run_in_executor(
+                            None, lambda: subprocess.run(
+                                [
+                                    "qdbus",
+                                    "org.kde.plasmashell",
+                                    "/PlasmaShell",
+                                    "org.kde.PlasmaShell.evaluateScript",
+                                    kde_script,
+                                ],
+                                check=True,
+                                capture_output=True,
+                                text=True,
+                            )
                         )
                         return True
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:

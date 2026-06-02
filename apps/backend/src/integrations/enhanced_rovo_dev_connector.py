@@ -1,6 +1,6 @@
 """
 增強版 Rovo Dev Agents 連接器
-支持容錯機制、重試邏輯和備用端點 (SKELETON)
+支持容錯機制、重試邏輯和備用端點
 """
 
 import asyncio

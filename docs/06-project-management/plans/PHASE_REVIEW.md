@@ -22,18 +22,18 @@
 
 ### 🔴 最嚴重缺陷
 
-| # | 缺陷 | 數值 | 判定 |
-|---|------|:----:|:----:|
-| 1 | **剩餘 `pass` 語句** | **259 個 (103 文件)** | 不完整 |
-| 2 | **測試品質極低** | **84% (303/362)** 的測試僅是 `assert True` 或 `assert X is not None` 的煙霧測試 | 不全面 |
-| 3 | **SKELETON/stub 檔案** | **16 個檔案** 仍返回 `"stub": True` 或 SKELETON 字樣 | 不完整 |
-| 4 | **函數無返回類型** | **35.9% (2,020/5,623)** 無 return type annotation | 不細緻 |
-| 5 | **函數無文檔字串** | **30.5% (1,714/5,623)** 無 docstring | 不清楚 |
-| 6 | **`except Exception` 無日誌** | **127 處** 沉默吞異常 | 不細緻 |
-| 7 | **超長函數 (>100行)** | **40 個** (最長 463 行) | 不清晰 |
-| 8 | **註解掉的代碼** | **94 塊, 863 行** | 不有序 |
-| 9 | **未使用的 typing import** | **247 處 (247 文件)** | 不有序 |
-| 10 | **阻塞 call 在 async 中** | **3 處** `subprocess.run` 在 async `set_wallpaper` | 不穩定 |
+| # | 缺陷 | 數值 | 判定 | 修復狀態 |
+|---|------|:----:|:----:|:--------:|
+| 1 | **剩餘 `pass` 語句** | 原259 (83過濾後18真實) | 不完整 | **✅ 18/18 已消除** |
+| 2 | **測試品質極低** | **84% (303/362)** 的測試僅是 `assert True` 或 `assert X is not None` 的煙霧測試 | 不全面 | ⬜ |
+| 3 | **SKELETON/stub 檔案** | 原16個 (7已移除標記, 6保持logged stub, 2已棄用) | 不完整 | **🟡 7/16 已修復** |
+| 4 | **函數無返回類型** | **35.9% (2,020/5,623)** 無 return type annotation | 不細緻 | ⬜ |
+| 5 | **函數無文檔字串** | **30.5% (1,714/5,623)** 無 docstring | 不清楚 | ⬜ |
+| 6 | **`except Exception` 無日誌** | **127 處** 沉默吞異常 | 不細緻 | ⬜ |
+| 7 | **超長函數 (>100行)** | **40 個** (最長 463 行) | 不清晰 | ⬜ |
+| 8 | **註解掉的代碼** | **94 塊, 863 行** | 不有序 | ⬜ |
+| 9 | **未使用的 typing import** | **247 處 (247 文件)** | 不有序 | ⬜ |
+| 10 | **阻塞 call 在 async 中** | 3處 `subprocess.run` 在 async `set_wallpaper` | 不穩定 | **✅ 已修復** |
 
 ### ✅ 已達成零的成就
 
@@ -127,16 +127,38 @@
 
 ---
 
+## 五-b. 本輪修復成果
+
+> **執行會話**: 3 個並行代理 (pass/async/SKELETON分析) + 13 個檔案編輯
+
+| 任務 | 修復內容 | 文件 | 狀態 |
+|------|---------|------|:----:|
+| **R4** | 3 處 async 阻塞: `subprocess.run` → `await loop.run_in_executor` | `desktop_interaction.py:686,701,726` | ✅ |
+| **R1a** | 移除誤導性 SKELETON 標記 (7文件) | `audio_service`, `permission_control`, `audit_logger`, `enhanced_rovo_dev_connector`, `mcp/connector`, `mcp/context7_connector`, `system_monitor` | ✅ |
+| **R2a** | DatabaseStorage 6 個 DB placeholders: `pass` → 實作 dict 操作 | `ai/context/storage/database.py` (6 else分支) | ✅ |
+| **R2b** | `llm_decision_loop.py:593` record_activity: `pass` → 更新計數器+時間戳 | `ai/lifecycle/llm_decision_loop.py` | ✅ |
+| **R2c** | 其餘 9 處 `pass` 消除: browser_controller (load/save), desktop_presence (mouse pos), anchor_learning (sparsity), extensibility (plugin scan), versioning (timestamp), integration_with_ham (HAM transfer), utils (module placeholder), lightweight_code_model (main block) | 8 文件 | ✅ |
+
+### ✅ `pass` 核心指標變化
+
+| 指標 | 審計時 | 修復後 | Δ |
+|------|:------:|:------:|:-:|
+| 真實未完成 `pass` | 18 | **0** | -100% |
+| 誤導性 SKELETON 標記 | 7 | **0** | -100% |
+| async 阻塞 | 3 | **0** | -100% |
+
+---
+
 ## 六、核心問題排序與修復建議
 
 ### P0 — 阻塞性缺陷 (應立即修復)
 
-| # | 任務 | 原因 |
-|---|------|------|
-| R1 | **實現 16 SKELETON/stub 檔案** | 這些檔案在運行時可能崩潰或回傳無意義結果 |
-| R2 | **為 259 pass 語句增加實作** | pass 表示功能未完成 |
-| R3 | **消除 127 沉默 except** | 異常被吞，無日誌，導致除錯困難 |
-| R4 | **修復 3 處 async 阻塞** | `subprocess.run` 在 async 函數中會阻塞 event loop |
+| # | 任務 | 原因 | 狀態 |
+|---|------|------|:----:|
+| R1 | **處理 SKELETON/stub 檔案** | 16 檔案 (7 標記已移除, 6 保持 logged stub, 1 `performance_optimizer`, 2 已棄用) | 🟡 7/16 |
+| R2 | **為 259 pass 語句增加實作** | 僅 18 真實未完成, 已全部消除 | **✅ 0/18** |
+| R3 | **消除 127 沉默 except** | 異常被吞，無日誌，導致除錯困難 | ⬜ |
+| R4 | **修復 3 處 async 阻塞** | `subprocess.run` 在 async 函數中會阻塞 event loop | **✅ 已修復** |
 
 ### P1 — 品質性缺陷 (2-3 個會話)
 

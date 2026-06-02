@@ -433,9 +433,18 @@ class HSPPluginLoader:
         # 从指定路径发现插件
         for path in self.plugin_paths:
             try:
-                # 这里应该实现实际的插件发现逻辑
-                # 例如扫描目录中的Python模块
-                pass
+                _path_obj = Path(path)
+                if not _path_obj.exists():
+                    continue
+                for _entry in _path_obj.iterdir():
+                    if _entry.suffix == ".py" and not _entry.name.startswith("_"):
+                        plugin_name = _entry.stem
+                        if plugin_name not in plugins:
+                            plugins[plugin_name] = {"path": str(_entry), "enabled": True}
+                    elif _entry.is_dir() and (_entry / "__init__.py").exists():
+                        plugin_name = _entry.name
+                        if plugin_name not in plugins:
+                            plugins[plugin_name] = {"path": str(_entry), "enabled": True}
             except Exception as e:  # broad exception acceptable: dynamic import may raise various errors
                 logger.error(f"插件发现失败: {path} 错误: {e}", exc_info=True)
 
