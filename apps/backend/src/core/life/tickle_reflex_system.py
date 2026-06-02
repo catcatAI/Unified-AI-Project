@@ -62,6 +62,7 @@ class TickleReflexSystem:
             from core.bio.cerebellum_engine import CerebellumEngine
             self._cerebellum = CerebellumEngine()
         except Exception:
+            logger.warning("Failed to initialize CerebellumEngine, running without it", exc_info=True)
             self._cerebellum = None
 
         logger.info("[TickleReflex] Initialized. Body parts: %s, Sensitive: %s",

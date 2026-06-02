@@ -575,6 +575,7 @@ def module_execute(name: str = Query(...), inputs: str = "{}"):
     try:
         parsed_inputs = json.loads(inputs)
     except Exception:
+        logger.warning("Failed to parse module inputs JSON, using empty dict", exc_info=True)
         parsed_inputs = {}
     result = sm._eta.execute(name, parsed_inputs)
     return {"module": name, "result": result, "execution_count": sm._eta.execution_count}

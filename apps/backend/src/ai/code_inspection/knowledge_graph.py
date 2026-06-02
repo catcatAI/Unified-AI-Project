@@ -254,6 +254,7 @@ class KnowledgeGraph:
                 source = filepath.read_text(encoding="utf-8")
                 ast.parse(source)
             except Exception:
+                logger.warning("Failed to read/parse file %s, skipping", node.file if hasattr(node, 'file') else 'unknown', exc_info=True)
                 continue
 
             source_lines = source.split('\n')
@@ -264,6 +265,7 @@ class KnowledgeGraph:
             try:
                 func_tree = ast.parse(func_source)
             except Exception:
+                logger.warning("Failed to parse function source for %s", node.name if hasattr(node, 'name') else 'unknown', exc_info=True)
                 continue
 
             for child in ast.walk(func_tree):

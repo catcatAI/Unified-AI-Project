@@ -218,6 +218,7 @@ class BudgetScheduler:
             load_factor = svc.get_throttling_factor()
             self._load_factor = load_factor
         except Exception:
+            logger.warning("Failed to get resource throttling factor, using 1.0", exc_info=True)
             self._load_factor = 1.0
 
         budget = int(raw_budget * load_factor)
@@ -733,6 +734,7 @@ class NeuroAutoSelector:
                         except ValueError:
                             logger.warning("Invalid AutoBackendChoice name", exc_info=True)
                 except Exception:
+                    logger.warning("Failed to check backend health for %s", backend_type, exc_info=True)
                     continue
         except Exception as e:
             logger.warning(f"Failed to list available providers: {e}", exc_info=True)

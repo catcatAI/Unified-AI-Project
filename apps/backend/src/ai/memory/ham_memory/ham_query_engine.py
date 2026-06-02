@@ -72,6 +72,7 @@ class HAMQueryEngine:
             keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
             return decompressed_data_str, keyword_match
         except Exception:
+            logger.warning("Keyword search decryption failed, trying base64 fallback", exc_info=True)
             try:
                 import base64
                 decoded_payload = base64.b64decode(data_package["encrypted_package"])

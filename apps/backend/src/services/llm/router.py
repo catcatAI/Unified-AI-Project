@@ -1277,6 +1277,11 @@ class AngelaLLMService:
                         logger.info(f"[Fallback] Switched from {prev} to {btype.name}")
                         return response
                     except Exception:
+                        logger.warning(
+                            "[Fallback] Backend %s failed, trying next fallback",
+                            btype.name,
+                            exc_info=True,
+                        )
                         continue
         return await self._fallback_response(user_message, context)
 
@@ -1471,6 +1476,7 @@ class AngelaLLMService:
             _cfg = get_config_loader()
             _em = _cfg.get_authority("angela_core", {}).get("llm", {}).get("emotion", {})
         except Exception:
+            logger.warning("_load_emotion_config failed, using empty config", exc_info=True)
             _em = {}
         negation_words = _em.get("negation_words", ["不", "沒", "没", "别", "別", "非", "無", "无", "未"])
         intensifier_words = _em.get("intensifier_words", [

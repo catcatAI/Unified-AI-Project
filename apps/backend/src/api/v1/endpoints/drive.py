@@ -34,6 +34,7 @@ class DriveDeduplication:
                 with open(self._db_path, "r", encoding="utf-8") as f:
                     self._syncs = json.load(f)
             except Exception:
+                logger.warning("Failed to load sync DB, starting fresh", exc_info=True)
                 self._syncs = {}
 
     def _save(self):

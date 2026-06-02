@@ -927,6 +927,7 @@ class ProjectInspector:
                             function_map[key] = []
                         function_map[key].append((str(f), node.lineno))
             except Exception:
+                logger.warning("Failed to parse file %s for duplicate functions", str(f), exc_info=True)
                 continue
 
         for name, locations in function_map.items():

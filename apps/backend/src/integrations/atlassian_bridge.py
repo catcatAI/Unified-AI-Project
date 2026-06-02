@@ -144,6 +144,7 @@ class AtlassianBridge:
                     try:
                         data = await resp.json()
                     except Exception:
+                        logger.warning("Failed to parse JSON response from %s, using raw text", full_url, exc_info=True)
                         data = {"raw": await resp.text()}
                     return {"success": True, "data": data, "url": full_url}
             except asyncio.TimeoutError:

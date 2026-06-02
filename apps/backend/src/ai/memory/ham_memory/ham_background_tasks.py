@@ -76,6 +76,7 @@ class HAMBackgroundTasks:
                     timestamp = datetime.fromisoformat(timestamp_str)
                     age_days = (now - timestamp).days
                 except ValueError:
+                    logger.warning("Failed to parse timestamp '%s', skipping memory", timestamp_str, exc_info=True)
                     continue
 
                 should_delete = False

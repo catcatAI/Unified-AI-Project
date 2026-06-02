@@ -46,7 +46,7 @@ def extract_method_parameters(method_node: ast.FunctionDef) -> List[Dict[str, An
                         ast.unparse(default_val_node) if hasattr(ast, "unparse") else "DefaultValue"
                     )
             except ValueError:
-                pass  # Should not happen if arg_node is from args.kwonlyargs
+                logger.warning("Failed to unparse default value node", exc_info=True)
         params_details.append(param_info)
 
     if args.vararg:

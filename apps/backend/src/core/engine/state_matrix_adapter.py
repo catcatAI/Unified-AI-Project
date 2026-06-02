@@ -123,6 +123,7 @@ class StateMatrixAdapter:
             )
             self._persistence = StatePersistence(config)
         except Exception:
+            logger.warning("StateConfig init failed, using default StatePersistence", exc_info=True)
             self._persistence = StatePersistence()
 
     def _init_eta(self) -> None:
@@ -149,9 +150,11 @@ class StateMatrixAdapter:
             self._config.state_matrix.max_history = sm_limits.get("max_history", 1000)
             self._config.influence_matrix = influence_cfg.get("influence", {}).get("default_matrix", {})
         except Exception:
+            logger.warning("Tiered config init failed, falling back to StateConfig", exc_info=True)
             try:
                 self._config = StateConfig()
             except Exception:
+                logger.warning("StateConfig init also failed, using None config", exc_info=True)
                 self._config = None
 
     def _init_temporal(self) -> None:
@@ -161,6 +164,7 @@ class StateMatrixAdapter:
             from core.system.config.tiered_loader import get_config
             max_size = get_config("standard/matrix/matrix").get("system_limits", {}).get("max_history", 1000)
         except Exception:
+            logger.warning("Failed to load tiered config for max_history, using fallback", exc_info=True)
             if self._config:
                 max_size = self._config.state_matrix.max_history
         self._temporal = TemporalState(max_size=max_size)
@@ -183,6 +187,7 @@ class StateMatrixAdapter:
             if influence_matrix:
                 base_matrix = influence_matrix
         except Exception:
+            logger.warning("Failed to load influence matrix from config, using default", exc_info=True)
             if self._config and self._config.influence_matrix:
                 base_matrix = self._config.influence_matrix
 
@@ -449,6 +454,7 @@ class StateMatrixAdapter:
                     else:
                         analysis = {}
             except Exception:
+                logger.warning("Failed to parse LLM analysis JSON, using raw text", exc_info=True)
                 analysis = {"raw": text[:200]}
 
             adjustments = analysis.get("adjustments", {})
@@ -1135,6 +1141,7 @@ class StateMatrixAdapter:
             else:
                 tone_enum = "warm"
         except (ValueError, TypeError):
+            logger.warning("Invalid BehaviorTone value '%s', defaulting to 'warm'", tone, exc_info=True)
             tone_enum = "warm"
 
         from ai.memory.attractor_field import MemoryAttractor

@@ -154,16 +154,18 @@
 > **會話 3**: 2 並行代理 (5 測試升級 + 13 MEDIUM except 修復)
 > **會話 4**: 2 並行代理 (5 測試升級 + 12 LOW except 修復)
 > **會話 5**: 2 並行代理 (5 測試深度升級 + 50 LOW except 修復)
+> **會話 6**: 2 並行代理 (5 測試升級 + 33 LOW except 修復)
 
 | 任務 | 修復內容 | 數量 | 狀態 |
 |------|---------|:----:|:----:|
 | **R3 HIGH** | `except Exception: pass` → `logger.warning(exc_info=True)` | 40 處, 20 檔案 | ✅ |
 | **R3 MEDIUM** | `except SpecificError: pass` → `logger.warning(exc_info=True)` | 13 處, 11 檔案 | ✅ |
-| **R3 LOW** | 沉默 except+fallback → 加 logging (累計 62 處) | 62 處, 42 檔案 | 🟡 |
+| **R3 LOW** | 沉默 except+fallback → 加 logging (累計 95 處) | 95 處, 64 檔案 | ✅ **~100%** |
 | **R5 批1** | 煙霧→實質 (enterprise_monitor, intent_registry, attention_controller, kinetic_validator, webgl_bridge) | 5 檔案, 19 測試 | ✅ |
 | **R5 批2** | 煙霧→實質 (active_cognition, life_intensity, non_paradox, causal_chain, capacity_planner) | 5 檔案, 13 測試 | ✅ |
 | **R5 批3** | 煙霧→實質 (angela_error, art_learning_workflow, life_intensity II, causal_chain II, non_paradox II) | 5 檔案, 10 測試 | ✅ |
-| **R5 批4** | 深度升級 (non_paradox/causal_chain 擴充 + deep_mapper/axis/axis_field) | 5 檔案, 73 新增測試 | ✅ |
+| **R5 批4** | 深度升級 (non_paradox/causal_chain 擴充 + deep_mapper/axis/axis_field) | 5 檔案, 73 測試 | ✅ |
+| **R5 批5** | 煙霧→實質 (lis_manager, code_learning, context_storage_memory, value_assessment, symbolic_space) | 5 檔案, 62 測試 | ✅ |
 
 ---
 
@@ -175,9 +177,9 @@
 |---|------|------|:----:|
 | R1 | **處理 SKELETON/stub 檔案** | 16 檔案 (7 標記已移除, 6 保持 logged stub, 1 `performance_optimizer`, 2 已棄用) | 🟡 7/16 |
 | R2 | **為 259 pass 語句增加實作** | 僅 18 真實未完成, 已全部消除 | **✅ 0/18** |
-| R3 | **消除沉默 except** | 55+105 已修復 (40HIGH+13MEDIUM+52LOW), 剩~50 LOW | 🟡 105/155 |
+| R3 | **消除沉默 except** | 40+13+95 已修復, 剩零 | ✅ **~100%** |
 | R4 | **修復 3 處 async 阻塞** | `subprocess.run` 在 async 函數中會阻塞 event loop | **✅ 已修復** |
-| R5 | **升級煙霧測試** | 20 檔案 115 測試已升級/新增, 剩 152 煙霧測試 | 🟡 115/267 |
+| R5 | **升級煙霧測試** | 25 檔案 177 測試已升級/新增, 剩 90 煙霧測試 | 🟡 177/267 |
 
 ### P1 — 品質性缺陷 (2-3 個會話)
 

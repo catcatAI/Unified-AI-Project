@@ -172,6 +172,7 @@ class DeterministicParser:
             try:
                 strength = float(strength_str)
             except ValueError:
+                logger.warning("Failed to parse trait strength '%s', defaulting to 1.0", strength_str, exc_info=True)
                 strength = 1.0
             card.tokens.append(Token(category="trait", name=name.strip(), strength=strength))
         confidences["tokens"] = 0.95 if card.tokens else 0.0

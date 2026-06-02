@@ -118,6 +118,7 @@ class MathExtractor:
                 result.is_valid = bool(result.expression)
 
         except json.JSONDecodeError:
+            logger.warning("JSON decode failed for raw input, using fallback extraction", exc_info=True)
             result.expression = self._fallback_extract_expression(raw)
             result.understanding = "從文本推斷的計算"
             result.confidence = 0.2

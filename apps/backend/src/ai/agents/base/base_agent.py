@@ -159,6 +159,7 @@ class BaseAgent:
         try:
             priority = TaskPriority(task_payload.get("priority", 2))
         except ValueError:
+            logger.warning("Invalid task priority value, using NORMAL", exc_info=True)
             priority = TaskPriority.NORMAL
 
         queued_task = QueuedTask(

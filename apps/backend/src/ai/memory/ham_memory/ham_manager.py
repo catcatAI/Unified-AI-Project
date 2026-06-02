@@ -236,6 +236,7 @@ class HAMMemoryManager:
                         from ai.memory.memory_template import MemoryTemplate
                         return MemoryTemplate.from_dict(data)
                 except Exception:
+                    logger.warning("Failed to parse template from store, skipping", exc_info=True)
                     continue
             return None
         except Exception as e:

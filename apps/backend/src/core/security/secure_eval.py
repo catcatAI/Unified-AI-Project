@@ -213,6 +213,7 @@ class SafeEvaluator:
             return EvalResult(success=True, result=result, expression=expression)
 
         except RecursionError:
+            logger.warning("Expression recursion depth exceeded", exc_info=True)
             return EvalResult(success=False, error="表達式過深（遞歸限制）", expression=expression)
         except Exception as e:  # broad exception acceptable: expression evaluation fallback
             logger.error(f"Error in {__name__}: {e}", exc_info=True)

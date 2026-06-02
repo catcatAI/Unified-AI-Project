@@ -110,7 +110,7 @@ class ModuleManager:
         try:
             await self._lifecycle.stop_all([inst])
         except Exception:
-            pass
+            logger.warning("Failed to stop module %s on uninstall", name, exc_info=True)
         self._instances = [i for i in self._instances if i.name != name]
         if self._registry is not None:
             self._registry.unregister(name)

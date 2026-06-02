@@ -258,6 +258,7 @@ class MemoryTemplate:
             _cfg = get_config_loader()
             _w = _cfg.get_authority("angela_core", {}).get("template_matching", {}).get("score_weights", {})
         except Exception:
+            logger.warning("Failed to load score weights from config, using defaults", exc_info=True)
             _w = {}
         _kw_w = _w.get("content_similarity", 0.30)
         _st_w = _w.get("state_similarity", 0.40)

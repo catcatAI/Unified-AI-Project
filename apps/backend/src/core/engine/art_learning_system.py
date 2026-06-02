@@ -315,6 +315,7 @@ class ArtLearningSystem:
         try:
             gamma_avg = state_matrix.gamma.get_average()
         except AttributeError:
+            logger.warning("learn_from_feedback_spatial: state_matrix missing gamma axis", exc_info=True)
             gamma_avg = 0.5
 
         pull_factor = sentiment_score * 0.05  # Learning rate

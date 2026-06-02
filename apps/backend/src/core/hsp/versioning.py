@@ -124,7 +124,7 @@ class HSPVersionManager:
             target = semver.VersionInfo.parse(target_version)
             return target > current
         except ValueError:
-            # 如果版本号不符合semver格式, 进行字符串比较
+            logger.warning("Semver parse failed, falling back to string comparison: %s vs %s", current_version, target_version, exc_info=True)
             return target_version > current_version
 
     def register_converter(self, version_pair: str, converter: Callable):
@@ -184,7 +184,7 @@ class HSPVersionManager:
                 server = semver.VersionInfo.parse(server_version)
                 return client_version if client <= server else server_version
             except ValueError:
-                # 如果版本号不符合semver格式, 选择客户端版本
+                logger.warning("Semver parse failed for compatibility check, using client version", exc_info=True)
                 return client_version
         else:
             logger.warning(f"版本不兼容: {client_version} <-> {server_version}", exc_info=True)
@@ -312,7 +312,7 @@ class HSPVersionNegotiator:
             )
             return sorted_versions[0]
         except ValueError:
-            # 如果版本号不符合semver格式, 返回第一个共同版本
+            logger.warning("Semver parse failed for version sorting, returning first common version", exc_info=True)
             return list(common_versions)[0]
 
     def get_upgrade_recommendation(self, current_version: str) -> Optional[str]:

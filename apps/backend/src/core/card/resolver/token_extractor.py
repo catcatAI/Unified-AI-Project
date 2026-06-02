@@ -45,6 +45,7 @@ class TokenExtractor:
             try:
                 strength = float(match.group(2))
             except (ValueError, TypeError):
+                logger.warning("Failed to parse token strength '%s', defaulting to 1.0", match.group(2), exc_info=True)
                 strength = 1.0
             tokens.append(Token(category="trait", name=name, strength=strength))
         return tokens
