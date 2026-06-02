@@ -123,8 +123,8 @@ class GlobalStateStore:
                 'domain': domain,
                 'data': data,
             }))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to execute plugin hook on_state_change: {e}", exc_info=True)
 
     def get_state(self, domain: Optional[str] = None) -> Dict[str, Any]:
         """Retrieve state for a domain or the entire system."""

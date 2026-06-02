@@ -270,8 +270,8 @@ class StateInterpreter:
             state = self._state_matrix.get_state("alpha")
             if state and "energy" in state:
                 return float(state["energy"])
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to get alpha energy from state matrix: {e}", exc_info=True)
         return 0.5
 
     def get_state_dict(self) -> Dict[str, float]:
@@ -309,10 +309,10 @@ class StateInterpreter:
                 full = self._state_matrix.export_for_llm()
                 eta_data = full.get("eta", {})
                 result["eta_success_rate"] = float(eta_data.get("success_rate", 0.85))
-            except Exception:
-                pass
-        except Exception:
-            pass
+            except Exception as e:
+                logger.warning(f"Failed to get eta success_rate from export_for_llm: {e}", exc_info=True)
+        except Exception as e:
+            logger.warning(f"Failed to get state dict from state matrix: {e}", exc_info=True)
 
         # Fill defaults for missing keys
         for key in ["alpha_energy", "epsilon_precision", "delta_happiness"]:
@@ -396,8 +396,8 @@ class LearnRecorder:
                 from core.config_loader import get_angela_config
 
                 self._config_loader = get_angela_config()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to load config_loader: {e}", exc_info=True)
         return self._config_loader
 
     def record(self, decision: AutoDecision, actual_ms: float, success: bool):
@@ -734,8 +734,8 @@ class NeuroAutoSelector:
                             pass
                 except Exception:
                     continue
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to list available providers: {e}", exc_info=True)
         return available
 
     # ── Phase 6: Recording ─────────────────────────────────────────────────

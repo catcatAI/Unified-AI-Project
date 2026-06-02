@@ -462,7 +462,7 @@ async def initialize_all_systems() -> dict:
         try:
             from core.interfaces.service_registry import get_registry
             get_registry().register("live2d_integration", live2d_reg)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to register live2d_integration service: {e}", exc_info=True)
 
     return systems

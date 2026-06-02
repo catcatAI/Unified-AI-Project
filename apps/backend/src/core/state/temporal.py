@@ -148,8 +148,8 @@ class TemporalState:
         for cb in self._callbacks:
             try:
                 cb(snapshot)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Snapshot callback notification failed: {e}", exc_info=True)
 
         return idx
 
@@ -265,8 +265,8 @@ class TemporalState:
                         ts = datetime.fromisoformat(ts_str)
                         if start_time <= ts <= end_time:
                             filtered.add(i)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"Failed to parse timestamp {ts_str}: {e}", exc_info=True)
             candidates = filtered
 
         result = [self._snapshots[i] for i in sorted(candidates)]

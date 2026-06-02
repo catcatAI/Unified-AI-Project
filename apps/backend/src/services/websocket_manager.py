@@ -149,8 +149,8 @@ async def broadcast_state_updates():
                 reg_live2d = get_registry().get("live2d_integration")
                 if reg_live2d is not None and hasattr(reg_live2d, 'get_live2d_state'):
                     state_data["live2d"] = reg_live2d.get_live2d_state()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to get live2d state for broadcast: {e}", exc_info=True)
 
             await manager.broadcast(
                 {
@@ -195,9 +195,10 @@ async def websocket_handler(websocket: WebSocket):
     except asyncio.TimeoutError:
         try:
             await websocket.close(code=4001, reason="Handshake timeout")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to close websocket on handshake timeout: {e}", exc_info=True)
         return
+
     except WebSocketDisconnect:
         return
 

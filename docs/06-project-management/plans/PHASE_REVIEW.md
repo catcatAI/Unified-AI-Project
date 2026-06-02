@@ -29,7 +29,7 @@
 | 3 | **SKELETON/stub 檔案** | 原16個 (7已移除標記, 6保持logged stub, 2已棄用) | 不完整 | **🟡 7/16 已修復** |
 | 4 | **函數無返回類型** | **35.9% (2,020/5,623)** 無 return type annotation | 不細緻 | ⬜ |
 | 5 | **函數無文檔字串** | **30.5% (1,714/5,623)** 無 docstring | 不清楚 | ⬜ |
-| 6 | **`except Exception` 無日誌** | **127 處** 沉默吞異常 | 不細緻 | ⬜ |
+| 6 | **`except Exception` 無日誌** | 原302沉默, 40 HIGH `except Exception:pass` | 不細緻 | **🟡 40/40 HIGH 已修復** |
 | 7 | **超長函數 (>100行)** | **40 個** (最長 463 行) | 不清晰 | ⬜ |
 | 8 | **註解掉的代碼** | **94 塊, 863 行** | 不有序 | ⬜ |
 | 9 | **未使用的 typing import** | **247 處 (247 文件)** | 不有序 | ⬜ |
@@ -146,6 +146,16 @@
 | 真實未完成 `pass` | 18 | **0** | -100% |
 | 誤導性 SKELETON 標記 | 7 | **0** | -100% |
 | async 阻塞 | 3 | **0** | -100% |
+| HIGH `except Exception:pass` | 40 | **0** | -100% |
+
+### ✅ 本輪修復成果
+
+> **會話 2**: 2 並行代理 (沉默 except 分析 + 測試品質分析) → 2 修復代理 (40 except 修復 + 5 測試升級)
+
+| 任務 | 修復內容 | 數量 | 狀態 |
+|------|---------|:----:|:----:|
+| **R3 HIGH** | `except Exception: pass` → `logger.warning(exc_info=True)` | 40 處, 20 檔案 | ✅ |
+| **R5** | 煙霧測試 → 實質測試 (enterprise_monitor, intent_registry, attention_controller, kinetic_validator, webgl_bridge) | 5 檔案, 19 測試升級 | ✅ |
 
 ---
 
@@ -157,8 +167,9 @@
 |---|------|------|:----:|
 | R1 | **處理 SKELETON/stub 檔案** | 16 檔案 (7 標記已移除, 6 保持 logged stub, 1 `performance_optimizer`, 2 已棄用) | 🟡 7/16 |
 | R2 | **為 259 pass 語句增加實作** | 僅 18 真實未完成, 已全部消除 | **✅ 0/18** |
-| R3 | **消除 127 沉默 except** | 異常被吞，無日誌，導致除錯困難 | ⬜ |
+| R3 | **消除 HIGH `except Exception:pass`** | 40 HIGH 沉默吞異常 (302 沉默總數, 含可接受) | **✅ 40/40** |
 | R4 | **修復 3 處 async 阻塞** | `subprocess.run` 在 async 函數中會阻塞 event loop | **✅ 已修復** |
+| R5 | **升級煙霧測試** | 5 檔案 19 測試已升級, 剩 262 煙霧測試 | 🟡 19/267 |
 
 ### P1 — 品質性缺陷 (2-3 個會話)
 

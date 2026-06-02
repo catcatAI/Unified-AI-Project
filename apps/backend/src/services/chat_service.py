@@ -201,8 +201,8 @@ class ChatService:
                     }
                     intent = intent_map.get(intent_name, intent_name)
                     confidence = conf
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Intent detection failed: {e}", exc_info=True)
 
         # Fallback: hardcoded keyword matching
         if intent == "general":

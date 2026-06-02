@@ -243,13 +243,13 @@ class AngelaLLMService:
                     try:
                         from ai.memory.lu_logic.logic_unit import LogicUnit
                         logic_unit = LogicUnit(max_rules=500)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning("Failed to import LogicUnit: %s", e, exc_info=True)
                     try:
                         from core.cdm_dividend_model import CDMCognitiveDividendModel
                         cdm_model = CDMCognitiveDividendModel()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning("Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True)
                     self.memory_coordinator = UnifiedMemoryCoordinator(
                         memory_manager=self.memory_manager,
                         logic_unit=logic_unit,
@@ -1295,8 +1295,8 @@ class AngelaLLMService:
                 cfg.learn("route_fail", {
                     "provider": provider, "intent": intent, "error": status
                 })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to learn route_fail: %s", e, exc_info=True)
 
     async def _store_response_as_template(
         self, user_message: str, response: LLMResponse, context: Dict[str, Any]
@@ -1371,8 +1371,8 @@ class AngelaLLMService:
                         intensity=response.confidence,
                         context={"user_message": user_message},
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("Failed to record cognitive activity: %s", e, exc_info=True)
 
             logger.debug(f"Stored new template for query: '{user_message}'")
 
@@ -1654,8 +1654,8 @@ class AngelaLLMService:
                     'user_message': user_text,
                     'model_id': model_id,
                 })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to execute on_message plugin pipeline: %s", e, exc_info=True)
 
         try:
             converted_messages = []
@@ -1688,8 +1688,8 @@ class AngelaLLMService:
                     'model_id': model_id,
                     'tokens_used': text.tokens_used,
                 })
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to execute on_response plugin pipeline: %s", e, exc_info=True)
 
             return LLMResponse(
                 text=text.text if not text.error else "",

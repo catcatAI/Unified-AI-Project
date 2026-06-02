@@ -144,8 +144,8 @@ async def get_drive_status(svc=Depends(get_drive_service)):
                     "total": storage.get("total", "0"),
                     "user": storage.get("user", "unknown"),
                 }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to parse drive storage info: {e}", exc_info=True)
         return info
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))

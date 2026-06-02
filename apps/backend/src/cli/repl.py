@@ -11,6 +11,8 @@ import threading
 import time
 from typing import Any, Optional
 
+logger = logging.getLogger(__name__)
+
 
 def run_repl_mode():
     server_thread = threading.Thread(target=_run_uvicorn_in_thread, daemon=True)
@@ -371,8 +373,8 @@ def _handle_drive_command(args: str) -> str:
                 from core.config_loader import get_angela_config
                 _cfg = get_angela_config()
                 _trunc = _cfg.get_authority("angela_core", {}).get("state_constants", {}).get("file_content_truncation", 1500)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to get config for truncation: {e}", exc_info=True)
             return f"\U0001f4ca \u5206\u6790\u7d50\u679c\uff1a\n{r.get('analysis', '\u7121\u6cd5\u5206\u6790')[:_trunc]}"
 
         return (

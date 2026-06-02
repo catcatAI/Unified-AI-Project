@@ -259,8 +259,8 @@ async def lifespan(app: FastAPI):
             try:
                 from core.plugin import plugin_manager as _pm
                 await _pm.execute_pipeline('on_tick', {'tick_interval': 30})
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Plugin on_tick pipeline failed: {e}", exc_info=True)
 
     asyncio.create_task(run_security_audit_task(), name="Security-Audit-Task")
     asyncio.create_task(broadcast_state_updates(), name="WS-State-Broadcast")
@@ -274,6 +274,6 @@ async def lifespan(app: FastAPI):
     try:
         hb = get_metabolic_heartbeat()
         await hb.stop()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to stop metabolic heartbeat: {e}", exc_info=True)
     logger.info(f"[Lifecycle] Shutdown complete (timeout={_sd_timeout}s)")

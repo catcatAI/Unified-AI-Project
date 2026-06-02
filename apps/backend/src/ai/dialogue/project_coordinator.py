@@ -169,8 +169,8 @@ class ProjectCoordinator:
         if self.personality_manager:
             try:
                 ai_name = self.personality_manager.get_current_personality_trait("display_name", "Angela")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to get personality display name: {e}", exc_info=True)
 
         llm = await self._ensure_llm_service()
 

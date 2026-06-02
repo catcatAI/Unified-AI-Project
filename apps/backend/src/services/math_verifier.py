@@ -137,8 +137,8 @@ class MathExtractor:
         try:
             from core.config_loader import get_angela_config
             cfg = get_angela_config().get_authority("angela_core", {}).get("math_verifier", {})
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to load math_verifier config: {e}", exc_info=True)
         math_keywords = cfg.get("keywords", {}).get("contains_math", []) if cfg else []
         if not math_keywords:
             math_keywords = [
@@ -211,8 +211,8 @@ class MathExtractor:
         try:
             from core.config_loader import get_angela_config
             cfg = get_angela_config().get_authority("angela_core", {}).get("math_verifier", {}).get("word_problem_operators", {})
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to load word problem operators config: {e}", exc_info=True)
 
         pow_ops = tuple(cfg.get("pow", [])) if cfg else ("次方", "次幂", "幂")
         for kw in pow_ops:

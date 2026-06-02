@@ -244,8 +244,8 @@ class TickleReflexSystem:
                 filtered, modified = ego.check_tickle_phase2(response_text, dummy_phase1)
                 if modified:
                     response_text = filtered
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"EgoGuard check failed in tickle reflex: {e}", exc_info=True)
             return {
                 "triggered": True,
                 "response": response_text[:200],
@@ -291,8 +291,8 @@ class TickleReflexSystem:
                     fear = gamma.values.get("fear", 0)
                     if fear > 0.3:
                         base += f"（當前 γ 軸：恐懼={fear:.2f}，信任={trust:.2f}，考慮安撫）"
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to read gamma axis from state matrix for reflex prompt: {e}", exc_info=True)
 
         return base
 

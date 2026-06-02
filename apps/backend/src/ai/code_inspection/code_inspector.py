@@ -714,8 +714,8 @@ class CodeInspector:
                     for issue in PatternMatcher.match_line(line, lineno, str(filepath)):
                         issue.id = f"{issue.id}-{self.issue_counter}"
                         self.issues.append(issue)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to scan file {filepath}: {e}", exc_info=True)
 
     def _add_issue(
         self,
@@ -903,8 +903,8 @@ class ProjectInspector:
                         suggestion="Sync frontend with backend: add theta dimension support",
                         confidence=0.92,
                     ))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Frontend state-matrix sync check failed: {e}", exc_info=True)
 
         return issues
 

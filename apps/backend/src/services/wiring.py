@@ -99,8 +99,8 @@ def initialize_all_services(manager) -> tuple:
                             "event": event_name, "data": event_data
                         })
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Plugin bio event callback failed for {event_name}: {e}", exc_info=True)
                 original_callback(event_name, event_data)
             digital_life.biological_integrator.register_event_callback(_plugin_aware_callback)
         logger.info("[C3] Plugin system registered and bio hooks wired")

@@ -266,8 +266,8 @@ class StatePersistence:
         if index_file.exists():
             try:
                 return json.loads(await async_read_text(index_file))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to load checkpoint index from {index_file}: {e}", exc_info=True)
         return {"checkpoints": [], "last_checkpoint": None}
 
     async def load_checkpoint(
@@ -393,8 +393,8 @@ class StatePersistence:
                             "timestamp": snap["timestamp"],
                             "update_count": snap["update_count"],
                         })
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to list checkpoint snapshots: {e}", exc_info=True)
 
         if not checkpoints:
             try:
@@ -407,8 +407,8 @@ class StatePersistence:
                         "timestamp": entry["timestamp"],
                         "update_count": entry.get("update_count", 0),
                     })
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to load checkpoint JSON index: {e}", exc_info=True)
 
         return checkpoints
 

@@ -107,7 +107,8 @@ $sc.Save()
                     content = f.read().lower()
                     for d in ["ubuntu", "debian", "arch", "centos", "rhel"]:
                         if d in content: return d
-            except Exception: pass
+            except Exception:
+                logger.warning("Failed to read /etc/os-release", exc_info=True)
         return "unknown"
 
     def check_python_compliance(self, min_version: Tuple[int, int] = (3, 9)) -> bool:

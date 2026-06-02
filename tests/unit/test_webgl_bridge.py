@@ -4,11 +4,12 @@ import pytest
 
 class TestWebGLGPUInfo:
     def test_import(self):
-        try:
-            from core.hardware.webgl_bridge import WebGLGPUInfo
-            assert WebGLGPUInfo is not None
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
+        from core.hardware.webgl_bridge import WebGLGPUInfo
+        assert hasattr(WebGLGPUInfo, 'from_dict')
+        assert hasattr(WebGLGPUInfo, 'to_uhrc_format')
+        assert hasattr(WebGLGPUInfo, '_detect_gpu_type')
+        assert hasattr(WebGLGPUInfo, '_estimate_memory')
+        assert hasattr(WebGLGPUInfo, '_get_capabilities')
 
     def test_instantiation(self):
         try:
@@ -50,18 +51,21 @@ class TestWebGLGPUInfo:
 
 class TestWebGLBridge:
     def test_import(self):
-        try:
-            from core.hardware.webgl_bridge import WebGLBridge
-            assert WebGLBridge is not None
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
+        from core.hardware.webgl_bridge import WebGLBridge
+        assert hasattr(WebGLBridge, 'process_gpu_info')
+        assert hasattr(WebGLBridge, 'get_gpu_info')
+        assert hasattr(WebGLBridge, 'is_synced')
+        assert hasattr(WebGLBridge, 'get_summary')
 
     def test_instantiation(self):
-        try:
-            from core.hardware.webgl_bridge import WebGLBridge
-            instance = WebGLBridge()
-            assert instance is not None
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        from core.hardware.webgl_bridge import WebGLBridge
+        instance = WebGLBridge()
+        assert instance._initialized is True
+        assert instance._gpu_info is None
+        assert instance._is_synced is False
+
+        summary = instance.get_summary()
+        assert summary["gpu_name"] is None
+        assert summary["gpu_type"] is None
+        assert summary["vendor"] is None
+        assert summary["is_synced"] is False

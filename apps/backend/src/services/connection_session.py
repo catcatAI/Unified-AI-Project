@@ -174,8 +174,8 @@ class SessionManager:
                     for old_session in existing_sessions:
                         try:
                             await old_session.websocket.close(code=1001, reason="Replaced by new connection")
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.warning(f"Failed to close old websocket {old_session.client_id}: {e}", exc_info=True)
                         await self._unregister_internal(old_session.client_id)
             
             # Create new session
@@ -263,8 +263,8 @@ class SessionManager:
                     )
                     try:
                         await session.websocket.close(code=4002, reason="Heartbeat timeout")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"Failed to close timed-out websocket {session.client_id}: {e}", exc_info=True)
                     await self._unregister_internal(session.client_id, "Heartbeat timeout")
                     break
                     

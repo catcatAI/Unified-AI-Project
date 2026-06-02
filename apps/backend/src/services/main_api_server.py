@@ -60,7 +60,7 @@ except ImportError:
     pass
 except Exception:
     # broad exception acceptable: env file may not exist, non-critical setup
-    pass
+    logger.warning("Failed to load .env file", exc_info=True)
 
 logger = logging.getLogger(__name__)
 

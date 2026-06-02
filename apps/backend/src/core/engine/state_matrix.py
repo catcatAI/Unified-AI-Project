@@ -1484,8 +1484,8 @@ Returns:
                 if value >= threshold:
                     try:
                         callback()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"Threshold callback failed for {dimension}: {e}", exc_info=True)
 
     def export_for_llm(self, eta_state: Optional[Any] = None) -> Dict[str, Any]:
         """導出完整 7 維狀態 + θ + η，供 LLM prompt 使用。"""
