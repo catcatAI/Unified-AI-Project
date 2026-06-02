@@ -95,7 +95,7 @@ class AtlassianBridge:
         for service_name, svc_cfg in self.config.items():
             if not isinstance(svc_cfg, dict):
                 continue
-            primary = svc_cfg.get("url", "") or svc_cfg.get("primary_url", "")
+            primary = svc_cfg.get("url", "") or svc_cfg.get("primary_url", "") or svc_cfg.get("base_url", "")
             if not primary:
                 continue
             backups = svc_cfg.get("backup_urls", [])
@@ -121,14 +121,34 @@ class AtlassianBridge:
             return {"error": f"No endpoint config for service '{service}'"}
         ep = self.endpoints[service]
         urls = [ep.primary_url] + ep.backup_urls
+        headers = kwargs.pop("headers", {})
+        headers.setdefault("Accept", "application/json")
+        headers.setdefault("Content-Type", "application/json")
+        # Add auth token if available
+        token = self.config.get("api_token") or self.config.get("token")
+        if token:
+            headers.setdefault("Authorization", f"Bearer {token}")
         last_error = None
         for url in urls:
             full_url = f"{url.rstrip('/')}/{endpoint.lstrip('/')}"
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.request(method, full_url, timeout=aiohttp.ClientTimeout(total=ep.timeout), **kwargs) as resp:
+                async with self._session.request(
+                    method, full_url, headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=ep.timeout), **kwargs
+                ) as resp:
+                    if resp.status >= 400:
+                        text = await resp.text()
+                        logger.warning("HTTP %d from %s: %s", resp.status, full_url, text[:200])
+                        last_error = f"HTTP {resp.status}: {text[:200]}"
+                        continue
+                    try:
                         data = await resp.json()
-                        return {"success": True, "data": data, "url": full_url}
+                    except Exception:
+                        data = {"raw": await resp.text()}
+                    return {"success": True, "data": data, "url": full_url}
+            except asyncio.TimeoutError:
+                logger.warning("Timeout requesting %s", full_url)
+                last_error = f"Timeout requesting {full_url}"
             except Exception as e:
                 logger.warning("Request to %s failed: %s", full_url, e)
                 last_error = str(e)
@@ -154,23 +174,27 @@ class AtlassianBridge:
     async def update_confluence_page(
         self, page_id: str, title: str, content: str, version: Optional[int] = None
     ) -> Dict[str, Any]:
-        logger.info("SKELETON: update_confluence_page called with page_id=%s", page_id)
-        return {
-            "success": False,
-            "message": "SKELETON: update_confluence_page not implemented. Provide Confluence API auth tokens and endpoint URLs in config.",
+        body = {
+            "title": title,
+            "body": {"storage": {"value": content, "representation": "storage"}},
+            "version": {"number": version or 1},
         }
+        return await self._make_request_with_fallback(
+            "confluence", "PUT", f"rest/api/content/{page_id}", json=body
+        )
 
     async def get_confluence_page(self, page_id: str) -> Dict[str, Any]:
-        logger.info("SKELETON: get_confluence_page called with page_id=%s", page_id)
-        return {
-            "success": False,
-            "message": "SKELETON: get_confluence_page not implemented. Provide Confluence API auth tokens and endpoint URLs in config.",
-        }
+        return await self._make_request_with_fallback("confluence", "GET", f"rest/api/content/{page_id}")
 
     async def search_confluence_pages(
         self, space_key: str, query: str, limit: int = 25
     ) -> List[Dict[str, Any]]:
-        logger.info("SKELETON: search_confluence_pages called with space_key=%s query=%s", space_key, query)
+        result = await self._make_request_with_fallback(
+            "confluence", "GET",
+            f"rest/api/content?spaceKey={space_key}&cql={query}&limit={limit}"
+        )
+        if result.get("success"):
+            return result["data"].get("results", [])
         return []
 
     async def create_jira_issue(
@@ -182,53 +206,65 @@ class AtlassianBridge:
         priority: str = "Medium",
         assignee: Optional[str] = None,
     ) -> Dict[str, Any]:
-        logger.info("SKELETON: create_jira_issue called with project_key=%s summary=%s", project_key, summary)
-        return {
-            "success": False,
-            "message": "SKELETON: create_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
+        body = {
+            "fields": {
+                "project": {"key": project_key},
+                "summary": summary,
+                "description": description,
+                "issuetype": {"name": issue_type},
+                "priority": {"name": priority},
+            }
         }
+        if assignee:
+            body["fields"]["assignee"] = {"accountId": assignee}
+        return await self._make_request_with_fallback("jira", "POST", "rest/api/3/issue", json=body)
 
     async def update_jira_issue(self, issue_key: str, fields: Dict[str, Any]) -> Dict[str, Any]:
-        logger.info("SKELETON: update_jira_issue called with issue_key=%s", issue_key)
-        return {
-            "success": False,
-            "message": "SKELETON: update_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
-        }
+        body = {"fields": fields}
+        return await self._make_request_with_fallback("jira", "PUT", f"rest/api/3/issue/{issue_key}", json=body)
 
     async def get_jira_issue(self, issue_key: str) -> Dict[str, Any]:
-        logger.info("SKELETON: get_jira_issue called with issue_key=%s", issue_key)
-        return {
-            "success": False,
-            "message": "SKELETON: get_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
-        }
+        return await self._make_request_with_fallback("jira", "GET", f"rest/api/3/issue/{issue_key}")
 
     async def search_jira_issues(self, jql: str, max_results: int = 50) -> List[Dict[str, Any]]:
-        logger.info("SKELETON: search_jira_issues called with jql=%s", jql)
+        result = await self._make_request_with_fallback("jira", "GET", f"rest/api/3/search?jql={jql}&maxResults={max_results}")
+        if result.get("success"):
+            return result["data"].get("issues", [])
         return []
 
     async def transition_jira_issue(
         self, issue_key: str, transition_id: str, comment: Optional[str] = None
     ) -> Dict[str, Any]:
-        logger.info("SKELETON: transition_jira_issue called with issue_key=%s transition_id=%s", issue_key, transition_id)
-        return {
-            "success": False,
-            "message": "SKELETON: transition_jira_issue not implemented. Provide Jira API auth tokens and endpoint URLs in config.",
-        }
+        body = {"transition": {"id": transition_id}}
+        if comment:
+            body["update"] = {"comment": [{"add": {"body": comment}}]}
+        return await self._make_request_with_fallback("jira", "POST", f"rest/api/3/issue/{issue_key}/transitions", json=body)
 
     async def get_bitbucket_repositories(self, workspace: str) -> List[Dict[str, Any]]:
-        logger.info("SKELETON: get_bitbucket_repositories called with workspace=%s", workspace)
+        result = await self._make_request_with_fallback("bitbucket", "GET", f"2.0/repositories/{workspace}")
+        if result.get("success"):
+            return result["data"].get("values", [])
         return []
 
     async def get_bitbucket_pull_requests(
         self, workspace: str, repo_slug: str, state: str = "OPEN"
     ) -> List[Dict[str, Any]]:
-        logger.info("SKELETON: get_bitbucket_pull_requests called with workspace=%s repo_slug=%s", workspace, repo_slug)
+        result = await self._make_request_with_fallback(
+            "bitbucket", "GET",
+            f"2.0/repositories/{workspace}/{repo_slug}/pullrequests?state={state}"
+        )
+        if result.get("success"):
+            return result["data"].get("values", [])
         return []
 
     async def get_confluence_spaces(self) -> List[Dict[str, Any]]:
-        logger.info("SKELETON: get_confluence_spaces called")
+        result = await self._make_request_with_fallback("confluence", "GET", "rest/api/space")
+        if result.get("success"):
+            return result["data"].get("results", [])
         return []
 
     async def get_jira_projects(self) -> List[Dict[str, Any]]:
-        logger.info("SKELETON: get_jira_projects called")
+        result = await self._make_request_with_fallback("jira", "GET", "rest/api/3/project")
+        if result.get("success"):
+            return result["data"].get("values", result["data"])
         return []
