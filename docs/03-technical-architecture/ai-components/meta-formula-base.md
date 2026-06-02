@@ -1,5 +1,7 @@
 # MetaFormulaBase: Base Class for Executable AI Logic
 
+> **[DEPRECATED]** — The `meta_formulas/` package has been deleted. See Px6.
+
 ## Overview
 
 This document provides an overview of the `meta_formula.py` module (`src/core_ai/meta_formulas/meta_formula.py`). This module defines the `MetaFormula` class, which serves as the abstract base class for all executable AI logic or "meta-formulas" within the system.

@@ -1,5 +1,7 @@
 ﻿# MetaFormulas: The Rules Governing the Rules
 
+> **[DEPRECATED]** — The `meta_formulas/` package has been deleted. See Px6.
+
 ## Overview
 
 MetaFormulas represent a highly advanced and conceptual layer within the Unified-AI-Project's architecture, as outlined in the `PHILOSOPHY_AND_VISION.md`. They are not merely static rules but **dynamic principles or schemata that define how semantic modules (like Angela or Fragmenta) learn, adapt, and reorganize their own structures and narrative generation capabilities.** In essence, MetaFormulas are the "rules that govern the changing of rules," enabling the AI's self-modifying and evolving nature.

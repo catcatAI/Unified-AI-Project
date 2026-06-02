@@ -144,7 +144,7 @@ The following structured approach is used to identify and resolve issues within 
 *   **Action**:
     *   Scanned Python files in `apps/backend/src`.
     *   Scanned Markdown files in `docs/`.
-    *   Reviewed `UNIFIED_DOCUMENTATION_INDEX.md` and specific technical architecture documents (`linguistic-immune-system.md`, `deep-mapping-personality.md`, `ai-virtual-input.md`, `knowledge-graph.md`, `meta-formulas.md`, `alpha-deep-model.md`, `fragmenta-orchestrator.md`, `simultaneous-translation.md`, `audio-processing.md`, `task_evaluator.py`, `adaptive_learning_controller.py`).
+    *   Reviewed `UNIFIED_DOCUMENTATION_INDEX.md` and specific technical architecture documents (`linguistic-immune-system.md`, `deep-mapping-personality.md`, `ai-virtual-input.md`, `knowledge-graph.md`, `meta-formulas.md` **[DEPRECATED]**, `alpha-deep-model.md`, `fragmenta-orchestrator.md`, `simultaneous-translation.md`, `audio-processing.md`, `task_evaluator.py`, `adaptive_learning_controller.py`).
     *   Compiled a comprehensive list of unimplemented/partially implemented features.
 *   **Status**:
     *   **Completed**: Summary compiled.

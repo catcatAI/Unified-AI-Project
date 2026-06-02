@@ -1,5 +1,7 @@
 # MetaFormulasErrX: Semantic Error Variables for Meta-Formulas
 
+> **[DEPRECATED]** — The `meta_formulas/` package has been deleted. See Px6.
+
 ## Overview
 
 This document provides an overview of the `errx.py` module (`src/core_ai/meta_formulas/errx.py`). This module defines the `ErrX` class, which represents a semantic error variable specifically designed for handling and propagating errors within the meta-formula evaluation and processing system.

@@ -29,6 +29,8 @@ Agents communicate using standardized protocols that ensure interoperability:
 
 ## Meta-Formulas
 
+> **[DEPRECATED]** — The `meta_formulas/` package has been deleted. See Px6.
+
 Meta-formulas are higher-order abstractions that guide the behavior and learning of AI agents. They represent principles and strategies that agents can use to improve their performance and adapt to new situations.
 
 ### Types of Meta-Formulas

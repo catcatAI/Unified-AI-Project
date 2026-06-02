@@ -41,6 +41,8 @@ Placeholder values are markers in the code or configuration that indicate someth
 ### Backend (`apps/backend`)
 
 - **TODO Comments:** The project uses a specific format for `TODO` comments, like `TODO(type): description`, to mark areas that need implementation. The `apps/backend/scan_placeholders.py` script is designed to find these.
+> **[DEPRECATED]** — The `meta_formulas/` package has been deleted. See Px6.
+
 - **`NotImplementedError`:** In base classes like `apps/backend/src/core_ai/meta_formulas/meta_formula.py`, this error correctly indicates that a method must be implemented by subclasses.
 - **Configuration Placeholders:** In `apps/backend/configs/api_keys.yaml`, strings like `GEMINI_API_KEY_PLACEHOLDER` are placeholders that the system expects to be replaced by actual values from the environment.
 - **Placeholder Logic Comments:** In files like `apps/backend/src/core_ai/agent_manager.py`, comments like `# This is a placeholder for a more robust health check mechanism.` indicate areas for future improvement.

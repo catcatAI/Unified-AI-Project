@@ -1,5 +1,7 @@
 # MetaFormulasUndefinedField: Representing Unknown Semantic Space
 
+> **[DEPRECATED]** — The `meta_formulas/` package has been deleted. See Px6.
+
 ## Overview
 
 This document provides an overview of the `undefined_field.py` module (`src/core_ai/meta_formulas/undefined_field.py`). This module defines the `UndefinedField` class, which is designed to represent an unknown semantic space within the context of meta-formulas, providing a mechanism to probe for boundary information.

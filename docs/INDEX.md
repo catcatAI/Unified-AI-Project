@@ -5,7 +5,7 @@
 - **`00-overview/`** — Project vision, goals, roadmap, glossary
 - **`02-game-design/`** — Game components, workflow, game-design docs
 - **`03-technical-architecture/`** — Architecture, HSP, HAM, AI components, API, testing, security, analysis
-- **`04-advanced-concepts/`** — Agent collaboration, meta-formulas, advanced features
+- **`04-advanced-concepts/`** — Agent collaboration, meta-formulas (deprecated — package deleted, see Px6), advanced features
 - **`05-development/`** — Dev guides, deployment, environment setup, debugging
 - **`06-project-management/`** — Plans, status, audit reports
 - **`09-archive/`** — Historical/completed/obsolete docs
