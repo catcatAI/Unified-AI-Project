@@ -259,7 +259,7 @@ class EmotionalBlendingSystem:
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
         if self._update_task:
@@ -277,7 +277,7 @@ class EmotionalBlendingSystem:
             await self._update_expression()
             await asyncio.sleep(loop_sleep("emotion_update", 1.0))  # 1 second update interval
 
-    async def _update_emotion(self):
+    async def _update_emotion(self) -> None:
         """Update current emotion toward target or baseline"""
         if self.target_emotion:
             # Move toward target emotion
@@ -329,7 +329,7 @@ class EmotionalBlendingSystem:
                 remaining.append(influence)
         self.influences = remaining
 
-    async def _update_expression(self):
+    async def _update_expression(self) -> None:
         """Update emotional expression based on current emotion"""
         self.current_expression = self._calculate_expression(self.current_emotion)
 
@@ -536,7 +536,7 @@ class EmotionalBlendingSystem:
         """Register callback for emotion changes"""
         self._emotion_change_callbacks.append(callback)
 
-    def register_expression_callback(self, callback: Callable[[EmotionalExpression], None]):
+    def register_expression_callback(self, callback: Callable[[EmotionalExpression], None]) -> None:
         """Register callback for expression updates"""
         self._expression_callbacks.append(callback)
 

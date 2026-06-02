@@ -43,7 +43,7 @@ class Conversation:
         """添加消息"""
         self.messages.append(message)
 
-    def complete(self):
+    def complete(self) -> None:
         """完成对话"""
         self.end_time = datetime.now()
 

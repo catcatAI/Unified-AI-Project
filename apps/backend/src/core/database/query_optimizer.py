@@ -80,7 +80,7 @@ class QueryOptimizer:
         logger.info("查询优化器初始化完成")
 
     @asynccontextmanager
-    async def get_session(self):
+    async def get_session(self) -> None:
         """获取数据库会话"""
         # Simplified - actual implementation would use SQLAlchemy session
         yield None

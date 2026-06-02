@@ -70,7 +70,7 @@ class GlobalInputSensor:
         if self.mouse_listener: self.mouse_listener.stop()
         if self.key_listener: self.key_listener.stop()
 
-    def sniff_environment(self):
+    def sniff_environment(self) -> None:
         """
         [N.6.1] 嗅探環境：識別用戶目前所在的應用類別。
         這將直接影響 Angela 的生物平衡。

@@ -51,7 +51,7 @@ class BaseTrayManager:
         logger.warning("[BaseTrayManager.setup_menu] Not implemented — stub")
         return {"stub": True, "message": "setup_menu not implemented"}
 
-    def show_notification(self, title: str, message: str):
+    def show_notification(self, title: str, message: str) -> dict:
         """Show notification balloon"""
         logger.warning("[BaseTrayManager.show_notification] Not implemented — stub")
         return {"stub": True, "message": "show_notification not implemented"}
@@ -61,7 +61,7 @@ class BaseTrayManager:
         logger.warning("[BaseTrayManager.run] Not implemented — stub")
         return {"stub": True, "message": "run not implemented"}
 
-    def stop(self):
+    def stop(self) -> dict:
         """Stop the tray manager"""
         logger.warning("[BaseTrayManager.stop] Not implemented — stub")
         return {"stub": True, "message": "stop not implemented"}
@@ -246,7 +246,7 @@ class WindowsTrayManager(BaseTrayManager):
         if self._tray_icon:
             self._tray_icon.notify(message, title)
 
-    def run(self):
+    def run(self) -> None:
         """Run the tray icon"""
         if self._tray_icon:
             self._tray_icon.run()
@@ -306,7 +306,7 @@ class MacOSTrayManager(BaseTrayManager):
         logger.info("Opening key manager")
         # Similar to Windows implementation
 
-    def _open_settings(self):
+    def _open_settings(self) -> None:
         """Open settings"""
         logger.info("Opening settings")
         # Similar to Windows implementation
@@ -323,7 +323,7 @@ class MacOSTrayManager(BaseTrayManager):
 
         rumps.notification(title, "", message)
 
-    def run(self):
+    def run(self) -> None:
         """Run the app"""
         if self._app:
             self._app.run()
@@ -417,7 +417,7 @@ class LinuxTrayManager(BaseTrayManager):
         """Open key manager"""
         logger.warning(f"{type(self).__name__}._open_key_manager not implemented")
 
-    def _open_settings(self):
+    def _open_settings(self) -> None:
         """Open settings"""
         logger.warning(f"{type(self).__name__}._open_settings not implemented")
 
@@ -446,7 +446,7 @@ class LinuxTrayManager(BaseTrayManager):
 
         Gtk.main()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the tray"""
         from gi.repository import Gtk
 
@@ -495,7 +495,7 @@ class AngelaTrayManager:
         if self._manager:
             self._manager.setup_menu()
 
-    def run(self):
+    def run(self) -> None:
         """Run the tray manager"""
         if self._manager:
             self._manager.run()
@@ -515,7 +515,7 @@ class AngelaTrayManager:
         if self._manager:
             self._manager.stop()
 
-    def notify(self, title: str, message: str):
+    def notify(self, title: str, message: str) -> None:
         """Show notification"""
         if self._manager:
             self._manager.show_notification(title, message)

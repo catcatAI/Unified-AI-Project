@@ -149,7 +149,7 @@ class ConfigMutator:
         with open(path, 'w', encoding='utf-8') as f:
             yaml.safe_dump(data, f, sort_keys=False)
 
-    def _deep_update(self, base: Dict[str, Any], updates: Dict[str, Any]):
+    def _deep_update(self, base: Dict[str, Any], updates: Dict[str, Any]) -> None:
         """Recursively updates a dictionary."""
         for k, v in updates.items():
             if isinstance(v, dict) and k in base and isinstance(base[k], dict):

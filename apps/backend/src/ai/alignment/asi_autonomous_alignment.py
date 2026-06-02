@@ -392,7 +392,7 @@ class ASIAutonomousAlignment:
         self.goal_progress[goal_id] = priority
         logger.info(f"[{self.system_id}] 添加对齐目标: {goal_id}")
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """清空学习历史"""
         self.learning_history = []
         logger.info(f"[{self.system_id}] 学习历史已清空")

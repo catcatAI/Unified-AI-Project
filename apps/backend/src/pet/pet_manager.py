@@ -305,7 +305,7 @@ class PetManager:
             f"Pet '{self.pet_id}' position updated to ({x}, {y}), scale: {self.state['scale']}"
         )
 
-    def add_action(self, action_type: str, data: Dict[str, Any] = None):
+    def add_action(self, action_type: str, data: Dict[str, Any] = None) -> None:
         """Add an action for the desktop pet to perform / 為桌面端添加待執行動作"""
         action = {
             "action_id": str(uuid.uuid4()),

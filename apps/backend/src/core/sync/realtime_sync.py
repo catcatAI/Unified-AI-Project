@@ -71,7 +71,7 @@ class SyncManager:
         logger.info("同步管理器初始化完成")
         return True
 
-    async def shutdown(self):
+    async def shutdown(self) -> bool:
         """關閉 / Shutdown"""
         self._clients.clear()
         self._event_queue.clear()
@@ -82,7 +82,7 @@ class SyncManager:
         logger.info(f"同步系統狀態: {system_id}")
         return True
 
-    async def register_client(self, client_id: str, callback: Callable):
+    async def register_client(self, client_id: str, callback: Callable) -> bool:
         """註冊客戶端 / Register client"""
         self._clients[client_id] = callback
         logger.info(f"客戶端已註冊: {client_id}")
@@ -93,7 +93,7 @@ class SyncManager:
             del self._clients[client_id]
         logger.info(f"客戶端已註銷: {client_id}")
 
-    async def broadcast_event(self, event: SyncEvent):
+    async def broadcast_event(self, event: SyncEvent) -> None:
         """廣播事件 / Broadcast event"""
         for client_id, callback in self._clients.items():
             try:

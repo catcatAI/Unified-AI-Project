@@ -407,7 +407,7 @@ class BiologicalIntegrator:
             await self._synchronize_states()
             await asyncio.sleep(self._update_interval)  # Configurable update interval
 
-    async def _apply_homeostasis(self):
+    async def _apply_homeostasis(self) -> None:
         """Apply homeostatic regulation and hormonal decay (Metabolism)."""
         # 1. Autonomic Nervous System Recovery
         current_arousal = self.nervous_system.arousal_level

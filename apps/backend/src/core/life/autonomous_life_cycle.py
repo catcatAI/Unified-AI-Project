@@ -586,7 +586,7 @@ class AutonomousLifeCycle:
         """Register an observer for life intensity"""
         self.life_intensity.register_observer(observer_id, relationship_depth)
 
-    def update_observer_interaction(self, observer_id: str, intensity: float):
+    def update_observer_interaction(self, observer_id: str, intensity: float) -> None:
         """Update observer interaction intensity"""
         self.life_intensity.update_observer_presence(
             observer_id, interaction_intensity=intensity, increment_interactions=True
@@ -643,7 +643,7 @@ class AutonomousLifeCycle:
         """Register callback for phase transitions"""
         self._phase_callbacks.append(callback)
 
-    def register_decision_callback(self, callback: Callable[[LifeDecision], None]):
+    def register_decision_callback(self, callback: Callable[[LifeDecision], None]) -> None:
         """Register callback for life decisions"""
         self._decision_callbacks.append(callback)
 
@@ -655,7 +655,7 @@ class AutonomousLifeCycle:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
         lifecycle = AutonomousLifeCycle()
         await lifecycle.initialize()
 

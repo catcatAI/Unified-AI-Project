@@ -74,7 +74,7 @@ async def actions_execute(action_data: Dict[str, Any] = Body(...)):
 
 
 @router.post("/tactile/touch")
-async def tactile_touch(touch_data: Dict[str, Any] = Body(...)):
+async def tactile_touch(touch_data: Dict[str, Any] = Body(...)) -> dict:
     object_id = touch_data.get("object_id", "default")
     contact_point = touch_data.get("contact_point", {"body_part": "generic", "pressure": 0.5})
     origin = touch_data.get("origin", "System")

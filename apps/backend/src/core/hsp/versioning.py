@@ -70,7 +70,7 @@ class HSPVersionManager:
         )
         self._set_compatibility(compatibility)
 
-    def register_version(self, version_info: HSPVersionInfo):
+    def register_version(self, version_info: HSPVersionInfo) -> None:
         """注册新版本"""
         self.version_history.append(version_info)
         if version_info.version not in self.supported_versions:

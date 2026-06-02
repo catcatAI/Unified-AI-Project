@@ -305,7 +305,7 @@ class HSPExtensionManager:
         self.message_handlers.append(handler)
         logger.debug(f"消息处理器已注册: {type(handler).__name__}")
 
-    def register_middleware(self, middleware: HSPProtocolMiddleware):
+    def register_middleware(self, middleware: HSPProtocolMiddleware) -> None:
         """注册中间件"""
         self.middlewares.append(middleware)
         logger.debug(f"中间件已注册: {type(middleware).__name__}")

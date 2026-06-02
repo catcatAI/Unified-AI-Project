@@ -607,7 +607,7 @@ class ActiveCognitionFormula:
         """Register callback for construction events"""
         self._construction_callbacks.append(callback)
 
-    def register_stress_callback(self, callback: Callable[[StressVector], None]):
+    def register_stress_callback(self, callback: Callable[[StressVector], None]) -> None:
         """Register callback for stress vector additions"""
         self._stress_callbacks.append(callback)
 

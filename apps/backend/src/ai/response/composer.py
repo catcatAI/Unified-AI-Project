@@ -1165,7 +1165,7 @@ class ResponseComposer:
         """获取统计信息"""
         return self.fragment_composer.get_stats()
 
-    def load_neuro_fragments_from_config(self, config_data: List[Dict[str, Any]]):
+    def load_neuro_fragments_from_config(self, config_data: List[Dict[str, Any]]) -> None:
         """从配置加载神经片段"""
         self.neuro_vocabulary.load_from_config(config_data)
 

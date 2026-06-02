@@ -183,7 +183,7 @@ class HSMFormulaSystem:
         # Start monitoring loop
         self._monitoring_task = asyncio.create_task(self._monitoring_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown HSM system"""
         self._running = False
 
@@ -537,7 +537,7 @@ class HSMFormulaSystem:
         """Register callback for cognitive gap detection"""
         self._gap_callbacks.append(callback)
 
-    def register_exploration_callback(self, callback: Callable[[ExplorationEvent], None]):
+    def register_exploration_callback(self, callback: Callable[[ExplorationEvent], None]) -> None:
         """Register callback for exploration events"""
         self._exploration_callbacks.append(callback)
 
@@ -549,7 +549,7 @@ class HSMFormulaSystem:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
         hsm = HSMFormulaSystem()
         await hsm.initialize()
 

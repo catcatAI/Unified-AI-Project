@@ -581,7 +581,7 @@ class FeedbackProcessor:
         """Register callback for learning signals"""
         self._learning_callbacks.append(callback)
 
-    def register_strategy_callback(self, callback: Callable[[StrategyAdjustment], None]):
+    def register_strategy_callback(self, callback: Callable[[StrategyAdjustment], None]) -> None:
         """Register callback for strategy adjustments"""
         self._strategy_callbacks.append(callback)
 

@@ -183,7 +183,7 @@ class Level5SystemMonitor:
         self.monitoring_active = False
         logger.info("🛑 Level 5 AGI 系统监控已停止")
 
-    async def _simulate_workload(self):
+    async def _simulate_workload(self) -> None:
         """模拟工作负载以生成真实性能数据"""
         try:
             import random

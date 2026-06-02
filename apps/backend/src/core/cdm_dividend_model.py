@@ -500,7 +500,7 @@ class CDMCognitiveDividendModel:
         """Register callback for investment recording"""
         self._investment_callbacks.append(callback)
 
-    def register_output_callback(self, callback: Callable[[LifeSenseOutput], None]):
+    def register_output_callback(self, callback: Callable[[LifeSenseOutput], None]) -> None:
         """Register callback for output generation"""
         self._output_callbacks.append(callback)
 

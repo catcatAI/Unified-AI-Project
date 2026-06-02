@@ -31,7 +31,7 @@ def banner(text: str, width: int = 70):
     print(f"{'=' * width}")
 
 
-def section(text: str):
+def section(text: str) -> None:
     print(f"\n## {text}")
 
 

@@ -641,7 +641,7 @@ if __name__ == "__main__":
                 return {"alpha": 0.6, "beta": 0.5, "gamma": 0.7, "delta": 0.5}
 
         class MockMemoryManager:
-            async def get_recent_memories(self, limit=5):
+            async def get_recent_memories(self, limit=5) -> dict:
                 return ["用戶剛才問了關於AI的問題", "用戶表示對機器學習感興趣"]
 
         # 創建組件

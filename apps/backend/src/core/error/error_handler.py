@@ -89,7 +89,7 @@ class RecoveryStrategy:
         """恢復成功回調"""
         logger.debug(f"{type(self).__name__}.on_recovery_success not implemented")
 
-    async def on_recovery_failure(self, error: ErrorInfo):
+    async def on_recovery_failure(self, error: ErrorInfo) -> None:
         """恢復失敗回調"""
         logger.debug(f"{type(self).__name__}.on_recovery_failure not implemented")
 
@@ -385,7 +385,7 @@ class EnterpriseErrorHandler:
 
         self.logger.info(f"註冊恢復策略: {strategy.name} for {category.value}")
 
-    async def _retry_network_operation(self):
+    async def _retry_network_operation(self) -> None:
         """重試網絡操作(示例)"""
         # 這裡應該實現實際的重試邏輯
         await asyncio.sleep(loop_sleep("retry_operation", 0.1))

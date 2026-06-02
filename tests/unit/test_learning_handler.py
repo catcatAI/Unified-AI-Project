@@ -1,25 +1,31 @@
-"""Smoke tests for LearningHandler"""
+"""Tests for LearningHandler"""
 import pytest
 
 
 class TestLearningHandler:
-    """Basic smoke tests for LearningHandler"""
+    """Tests for LearningHandler"""
 
     def test_import(self):
-        """Verify module can be imported"""
-        try:
-            from services.handlers.learning_handler import LearningHandler
-            assert LearningHandler is not None
-        except ImportError as e:
-            pytest.skip(f"LearningHandler not available: {e}")
+        from services.handlers.learning_handler import LearningHandler
+        assert LearningHandler is not None
 
     def test_instantiation(self):
-        """Verify basic instantiation"""
-        try:
-            from services.handlers.learning_handler import LearningHandler
-            instance = LearningHandler()
-            assert instance is not None
-        except ImportError as e:
-            pytest.skip(f"LearningHandler not available: {e}")
-        except Exception as e:
-            pytest.skip(f"LearningHandler init failed (expected in CI): {e}")
+        from services.handlers.learning_handler import LearningHandler
+        instance = LearningHandler()
+        assert instance is not None
+        assert instance._anchor is None
+
+    def test_handle_no_fact(self):
+        from services.handlers.learning_handler import LearningHandler
+        import asyncio
+        instance = LearningHandler()
+        result = asyncio.run(instance.handle("", "learning"))
+        assert "記住" in result
+
+    def test_handle_with_fact(self):
+        from services.handlers.learning_handler import LearningHandler
+        import asyncio
+        instance = LearningHandler()
+        result = asyncio.run(instance.handle("記住 2+2=4", "learning"))
+        assert "記住" in result
+        assert isinstance(result, str)

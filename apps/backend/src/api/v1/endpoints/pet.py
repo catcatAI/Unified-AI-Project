@@ -37,7 +37,7 @@ def set_biological_integrator(integrator):
     pm.sync_with_biological_state()
 
 
-def set_economy_manager(manager):
+def set_economy_manager(manager) -> None:
     """設置經濟管理器"""
     get_pet_manager().set_economy_manager(manager)
 
@@ -87,7 +87,7 @@ async def trigger_action(action_data: Dict[str, Any] = Body(...), pm: PetManager
 
 
 @router.post("/mood/update")
-async def update_mood(mood_data: Dict[str, Any] = Body(...)):
+async def update_mood(mood_data: Dict[str, Any] = Body(...)) -> dict:
     """更新寵物情緒 (由 AI 核心調用)"""
     mood = mood_data.get("mood")
     intensity = mood_data.get("intensity", 0.5)

@@ -58,7 +58,7 @@ class ServiceDiscoveryModule:
             self._cleanup_thread = None
             logger.info("ServiceDiscoveryModule cleanup task stopped.")
 
-    def _periodic_cleanup(self, cleanup_interval_seconds: int):
+    def _periodic_cleanup(self, cleanup_interval_seconds: int) -> None:
         """The target function for the cleanup thread."""
         while not self._stop_event.is_set():
             self.remove_stale_capabilities()

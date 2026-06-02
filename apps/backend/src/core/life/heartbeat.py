@@ -101,7 +101,7 @@ class MetabolicHeartbeat:
         await self.bio_integrator.shutdown()
         logger.info("🛑 Heartbeat stopped.")
 
-    async def _run_loop(self):
+    async def _run_loop(self) -> None:
         while self._running:
             try:
                 hb_cfg = self._beh_cfg.get("heartbeat", {})

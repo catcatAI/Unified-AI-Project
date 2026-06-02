@@ -214,7 +214,7 @@ class AudioSystem:
         """Initialize the audio system"""
         self._running = True
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the audio system"""
         self._running = False
 
@@ -457,7 +457,7 @@ class AudioSystem:
         ]:
             self._set_state(AudioState.PAUSED)
 
-    async def resume(self):
+    async def resume(self) -> None:
         """Resume playback"""
         if self.current_state == AudioState.PAUSED:
             if self.current_track:
@@ -475,7 +475,7 @@ class AudioSystem:
         self.current_lyrics = None
         self.current_playback_time = 0.0
 
-    async def stop_all(self):
+    async def stop_all(self) -> None:
         """Stop all audio activities"""
         await self.stop()
         self.active_subtitles.clear()
@@ -510,7 +510,7 @@ class AudioSystem:
         """Set master volume (0-1)"""
         self.master_volume = max(0.0, min(1.0, volume))
 
-    def mute(self):
+    def mute(self) -> None:
         """Mute audio"""
         self.is_muted = True
 
@@ -518,7 +518,7 @@ class AudioSystem:
         """Unmute audio"""
         self.is_muted = False
 
-    def add_to_playlist(self, track: MusicTrack):
+    def add_to_playlist(self, track: MusicTrack) -> None:
         """Add track to playlist"""
         self.playlist.append(track)
 
@@ -534,7 +534,7 @@ class AudioSystem:
         """Clear playlist"""
         self.playlist.clear()
 
-    def set_loop(self, enabled: bool):
+    def set_loop(self, enabled: bool) -> None:
         """Enable/disable loop mode"""
         self.is_looping = enabled
 
@@ -542,7 +542,7 @@ class AudioSystem:
         """Enable/disable shuffle mode"""
         self.is_shuffled = enabled
 
-    def register_state_callback(self, callback: Callable[[AudioState, AudioState], None]):
+    def register_state_callback(self, callback: Callable[[AudioState, AudioState], None]) -> None:
         """Register state change callback"""
         self._state_callbacks.append(callback)
 
@@ -550,7 +550,7 @@ class AudioSystem:
         """Register lyrics synchronization callback"""
         self.lyrics_callbacks.append(callback)
 
-    def register_subtitle_callback(self, callback: Callable[[Subtitle], None]):
+    def register_subtitle_callback(self, callback: Callable[[Subtitle], None]) -> None:
         """Register subtitle callback"""
         self.subtitle_callbacks.append(callback)
 

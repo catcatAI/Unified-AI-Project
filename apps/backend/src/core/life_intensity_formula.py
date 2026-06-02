@@ -611,7 +611,7 @@ class LifeIntensityFormula:
         """Register callback for intensity calculations"""
         self._intensity_callbacks.append(callback)
 
-    def register_threshold_callback(self, callback: Callable[[float, float], None]):
+    def register_threshold_callback(self, callback: Callable[[float, float], None]) -> None:
         """Register callback for threshold crossings"""
         self._threshold_callbacks.append(callback)
 

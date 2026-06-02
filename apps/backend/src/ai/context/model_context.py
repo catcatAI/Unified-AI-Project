@@ -52,7 +52,7 @@ class AgentCollaboration:
         """添加协作步骤"""
         self.collaboration_steps.append(step)
 
-    def complete(self):
+    def complete(self) -> None:
         """完成协作"""
         self.end_time = datetime.now()
         self.status = "completed"

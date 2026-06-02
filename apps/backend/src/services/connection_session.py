@@ -214,7 +214,7 @@ class SessionManager:
         async with self._lock:
             await self._unregister_internal(client_id, reason)
     
-    async def _unregister_internal(self, client_id: str, reason: str = "Normal close"):
+    async def _unregister_internal(self, client_id: str, reason: str = "Normal close") -> None:
         """Internal unregister (called with lock held)"""
         if client_id not in self._sessions:
             return

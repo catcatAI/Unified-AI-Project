@@ -47,7 +47,7 @@ class TactileService:
         except Exception as e:  # broad exception acceptable: sync registration should not crash
             logger.error(f"Failed to register Tactile Service to sync manager: {e}", exc_info=True)
 
-    async def _handle_sync_event(self, event: SyncEvent):
+    async def _handle_sync_event(self, event: SyncEvent) -> None:
         """處理同步事件"""
         if event.type == "module_control":
             module = event.data.get("module")

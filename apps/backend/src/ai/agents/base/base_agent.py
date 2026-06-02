@@ -82,7 +82,7 @@ class BaseAgent:
         self._initialized = True
         logger.info(f"[{self.agent_id}] BaseAgent basic initialization complete.")
 
-    async def initialize_full(self):
+    async def initialize_full(self) -> None:
         """Full asynchronous initialization including all services."""
         if self._initialized and self.hsp_connector:  # Avoid re-init
             return

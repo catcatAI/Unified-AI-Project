@@ -38,14 +38,14 @@ class FallbackManager:
     def register_command_handler(self, command_name, handler):
         logger.warning("FallbackManager.register_command_handler stub: %s", command_name)
 
-    async def send_command(self, sender_id, recipient_id, command_name, parameters, priority):
+    async def send_command(self, sender_id, recipient_id, command_name, parameters, priority) -> None:
         return True
 
-    def get_status(self):
+    def get_status(self) -> None:
         return {"active_protocol": "mock"}
 
 
-def get_mcp_fallback_manager():
+def get_mcp_fallback_manager() -> dict:
     return FallbackManager()
 
 
@@ -62,25 +62,25 @@ class MockMQTTClient:
     def on_connect(self, client, userdata, flags, rc):
         logger.warning("MockMQTTClient.on_connect stub: rc=%s", rc)
 
-    def on_message(self, client, userdata, msg):
+    def on_message(self, client, userdata, msg) -> None:
         logger.warning("MockMQTTClient.on_message stub")
 
-    def connect(self, host, port, keepalive):
+    def connect(self, host, port, keepalive) -> None:
         logger.warning("MockMQTTClient.connect stub: %s:%s", host, port)
 
-    def loop_start(self):
+    def loop_start(self) -> None:
         logger.warning("MockMQTTClient.loop_start stub")
 
     def loop_stop(self):
         logger.warning("MockMQTTClient.loop_stop stub")
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         logger.warning("MockMQTTClient.disconnect stub")
 
-    def subscribe(self, topic):
+    def subscribe(self, topic) -> None:
         logger.warning("MockMQTTClient.subscribe stub: %s", topic)
 
-    def publish(self, topic, payload):
+    def publish(self, topic, payload) -> None:
         logger.warning("MockMQTTClient.publish stub: %s", topic)
 
 
@@ -142,7 +142,7 @@ class MCPConnector:
         self.client.disconnect()
         self.logger.info("MCPConnector disconnected.")
 
-    def _on_connect(self, client, userdata, flags, rc):
+    def _on_connect(self, client, userdata, flags, rc) -> None:
         if rc == 0:
             self.logger.info("MCPConnector connected successfully.")
             self.is_connected = True

@@ -23,7 +23,7 @@ except ImportError:
             return {"ethical_score": 0.5}
 
     class EmotionSystem:
-        async def assess_values(self, option, context):
+        async def assess_values(self, option, context) -> dict:
             return {"value_alignment": 0.5}
 
     class EmotionalState:
@@ -39,7 +39,7 @@ except ImportError:
         async def assess_relationship_impact(self, option, context):
             return {}
 
-        async def assess_worldview_consistency(self, option, context):
+        async def assess_worldview_consistency(self, option, context) -> dict:
             return 0.5
 
 
@@ -124,7 +124,7 @@ class AlignmentManager:
             f"[{self.system_id}] Enabled adversarial mode with intensity {self.adversarial_intensity}"
         )
 
-    async def disable_adversarial_mode(self):
+    async def disable_adversarial_mode(self) -> None:
         """禁用对抗性生成模式"""
         self.adversarial_mode = False
         self.adversarial_intensity = 0.0

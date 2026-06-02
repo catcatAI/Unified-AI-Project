@@ -28,7 +28,7 @@ class RovoDevAgent:
         self.is_active = True
         logger.info("Rovo Dev Agent 已启动")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止 Rovo Dev Agent"""
         self.is_active = False
         logger.info("Rovo Dev Agent 已停止")

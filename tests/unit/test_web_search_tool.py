@@ -1,27 +1,36 @@
-"""Smoke tests for core/tools/web_search_tool.py with mock patching"""
-from unittest.mock import patch, MagicMock, mock_open
+"""Tests for core/tools/web_search_tool.py"""
 import pytest
 
 
 class TestWebSearchTool:
-    """Smoke tests for WebSearchTool"""
+    """Tests for WebSearchTool"""
 
     def test_import(self):
-        """Verify module can be imported"""
-        try:
-            from core.tools.web_search_tool import WebSearchTool
-            assert WebSearchTool is not None
-        except ImportError as e:
-            pytest.skip(f"WebSearchTool not available: {e}")
+        from core.tools.web_search_tool import WebSearchTool
+        assert WebSearchTool is not None
 
-    @patch('core.tools.web_search_tool.requests')
-    def test_instantiation(self, mock_requests):
-        """Verify basic instantiation with mock patching"""
+    def test_instantiation_defaults(self):
+        from core.tools.web_search_tool import WebSearchTool
+        instance = WebSearchTool()
+        assert instance.search_url_template is not None
+        assert instance.user_agent is not None
+
+    def test_search_url_template(self):
+        from core.tools.web_search_tool import WebSearchTool
+        instance = WebSearchTool()
+        url = instance.search_url_template.format(query="test")
+        assert "test" in url
+
+    def test_search_no_requests_returns_error_list(self):
+        from core.tools.web_search_tool import WebSearchTool
+        import core.tools.web_search_tool as wst
+        original = wst.REQUESTS_AVAILABLE
+        wst.REQUESTS_AVAILABLE = False
         try:
-            from core.tools.web_search_tool import WebSearchTool
             instance = WebSearchTool()
-            assert instance is not None
-        except ImportError as e:
-            pytest.skip(f"WebSearchTool not available: {e}")
-        except Exception as e:
-            pytest.skip(f"WebSearchTool init failed (expected in CI): {e}")
+            result = instance.search("test")
+            assert isinstance(result, list)
+            assert "error" in result[0]
+            assert "requests" in result[0]["error"]
+        finally:
+            wst.REQUESTS_AVAILABLE = original

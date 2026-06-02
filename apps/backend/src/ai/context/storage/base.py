@@ -51,7 +51,7 @@ class Context:
         self.content.update(new_content)
         self.updated_at = datetime.now()
 
-    def add_tag(self, tag: str):
+    def add_tag(self, tag: str) -> None:
         """添加标签"""
         if tag not in self.tags:
             self.tags.append(tag)

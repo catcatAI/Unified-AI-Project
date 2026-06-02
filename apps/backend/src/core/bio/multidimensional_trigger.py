@@ -355,7 +355,7 @@ class MultidimensionalTriggerSystem:
         self._running = True
         self._evaluation_task = asyncio.create_task(self._evaluation_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the trigger system"""
         self._running = False
         if self._evaluation_task:
@@ -372,7 +372,7 @@ class MultidimensionalTriggerSystem:
             await self._update_random_dimension()
             await asyncio.sleep(self.evaluation_interval)
 
-    async def _update_time_dimension(self):
+    async def _update_time_dimension(self) -> None:
         """Update time-based dimension"""
         now = datetime.now()
 
@@ -388,7 +388,7 @@ class MultidimensionalTriggerSystem:
 
         self.update_dimension(TriggerDimension.RANDOM, random.random(), raw_value=None)
 
-    def add_trigger(self, trigger: MultidimensionalTrigger):
+    def add_trigger(self, trigger: MultidimensionalTrigger) -> None:
         """Add a new trigger"""
         self.triggers.append(trigger)
 

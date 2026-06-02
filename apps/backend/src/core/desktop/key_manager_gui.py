@@ -712,7 +712,7 @@ Windows (System):
         self.root.mainloop()
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     app = KeyManagerGUI()
     app.run()

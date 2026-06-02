@@ -38,7 +38,7 @@ class BrainBridgeService:
         self._task = asyncio.create_task(self._sync_loop())
         logger.info("Brain Bridge Service started.")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the bridge sync service"""
         self._running = False
         if self._task:
@@ -58,7 +58,7 @@ class BrainBridgeService:
                 logger.error(f"Error in Brain Bridge sync: {e}", exc_info=True)
             await asyncio.sleep(self._update_interval)
 
-    async def sync_metrics(self):
+    async def sync_metrics(self) -> None:
         """Sync internal brain metrics to metrics.md and system state"""
         # Prepare full status record
         full_status = self.get_current_status()

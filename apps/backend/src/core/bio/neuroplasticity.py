@@ -301,7 +301,7 @@ class NeuroplasticitySystem:
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
         if self._update_task:
@@ -318,7 +318,7 @@ class NeuroplasticitySystem:
             await self._update_memory_consolidation()
             await asyncio.sleep(loop_sleep("neuroplasticity_update", 60.0))  # Update every minute
 
-    async def _decay_synaptic_weights(self):
+    async def _decay_synaptic_weights(self) -> None:
         """Apply natural decay to synaptic weights"""
         current_time = datetime.now()
 
@@ -614,7 +614,7 @@ class NeuroplasticitySystem:
             self._memory_callbacks[memory_id] = []
         self._memory_callbacks[memory_id].append(callback)
 
-    def register_consolidation_callback(self, callback: Callable[[str], None]):
+    def register_consolidation_callback(self, callback: Callable[[str], None]) -> None:
         """Register callback for memory consolidation"""
         self._consolidation_callbacks.append(callback)
 

@@ -206,7 +206,7 @@ class SystemMonitor:
     def get_metrics_history(self, limit: int = 100) -> List[Dict[str, Any]]:
         return [m.to_dict() for m in self.metrics_history[-limit:]]
 
-    def export_metrics_to_file(self, filepath: str):
+    def export_metrics_to_file(self, filepath: str) -> None:
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(

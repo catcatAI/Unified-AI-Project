@@ -118,7 +118,7 @@ class CircuitBreaker:
             self.state = "CLOSED"
         self.failures = 0
 
-    def _on_failure(self):
+    def _on_failure(self) -> None:
         self.failures += 1
         self.last_failure_time = time.time()
         if self.failures >= self.failure_threshold:

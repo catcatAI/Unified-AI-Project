@@ -1,26 +1,41 @@
-"""Smoke tests for HotReloadService"""
+"""Tests for HotReloadService"""
 import pytest
 
 
 class TestHotReloadService:
-    """Basic smoke tests for HotReloadService"""
+    """Tests for HotReloadService"""
 
     def test_import(self):
-        """Verify module can be imported"""
-        try:
-            from services.hot_reload_service import HotReloadService
-            assert HotReloadService is not None
-        except ImportError as e:
-            pytest.skip(f"HotReloadService not available: {e}")
+        from services.hot_reload_service import HotReloadService
+        assert HotReloadService is not None
 
     def test_instantiation(self):
-        """Verify basic instantiation"""
-        try:
-            from services.hot_reload_service import HotReloadService
-            instance = HotReloadService()
-            assert instance is not None
-            assert instance._draining is False
-        except ImportError as e:
-            pytest.skip(f"HotReloadService not available: {e}")
-        except Exception as e:
-            pytest.skip(f"HotReloadService init failed (expected in CI): {e}")
+        from services.hot_reload_service import HotReloadService
+        instance = HotReloadService()
+        assert instance is not None
+        assert instance._draining is False
+
+    @pytest.mark.asyncio
+    async def test_begin_draining(self):
+        from services.hot_reload_service import HotReloadService
+        instance = HotReloadService()
+        result = await instance.begin_draining()
+        assert result["draining"] is True
+        assert instance._draining is True
+
+    @pytest.mark.asyncio
+    async def test_end_draining(self):
+        from services.hot_reload_service import HotReloadService
+        instance = HotReloadService()
+        await instance.begin_draining()
+        result = await instance.end_draining()
+        assert result["draining"] is False
+        assert instance._draining is False
+
+    @pytest.mark.asyncio
+    async def test_status(self):
+        from services.hot_reload_service import HotReloadService
+        instance = HotReloadService()
+        status = await instance.status()
+        assert isinstance(status, dict)
+        assert "status" in status

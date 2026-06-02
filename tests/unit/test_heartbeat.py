@@ -1,26 +1,29 @@
-"""Smoke tests for MetabolicHeartbeat"""
+"""Tests for MetabolicHeartbeat"""
 import pytest
 
 
 class TestMetabolicHeartbeat:
-    """Basic smoke tests for MetabolicHeartbeat"""
+    """Tests for MetabolicHeartbeat"""
 
     def test_import(self):
-        """Verify module can be imported"""
-        try:
-            from core.life.heartbeat import MetabolicHeartbeat
-            assert MetabolicHeartbeat is not None
-        except ImportError as e:
-            pytest.skip(f"MetabolicHeartbeat not available: {e}")
+        from core.life.heartbeat import MetabolicHeartbeat
+        assert MetabolicHeartbeat is not None
 
     def test_instantiation(self):
-        """Verify basic instantiation"""
-        try:
-            from core.life.heartbeat import MetabolicHeartbeat
-            instance = MetabolicHeartbeat(update_interval=60.0)
-            assert instance is not None
-            assert instance.update_interval == 60.0
-        except ImportError as e:
-            pytest.skip(f"MetabolicHeartbeat not available: {e}")
-        except Exception as e:
-            pytest.skip(f"MetabolicHeartbeat init failed (expected in CI): {e}")
+        from core.life.heartbeat import MetabolicHeartbeat
+        instance = MetabolicHeartbeat(update_interval=60.0)
+        assert instance is not None
+        assert instance.update_interval == 60.0
+        assert instance._running is False
+
+    def test_instantiation_default_interval(self):
+        from core.life.heartbeat import MetabolicHeartbeat
+        instance = MetabolicHeartbeat()
+        assert instance.update_interval == 30.0
+
+    def test_initial_position(self):
+        from core.life.heartbeat import MetabolicHeartbeat
+        instance = MetabolicHeartbeat()
+        assert instance.x == 200.0
+        assert instance.y == 0.0
+        assert instance.screen_w == 1920

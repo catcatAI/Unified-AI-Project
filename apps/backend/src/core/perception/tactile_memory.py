@@ -20,7 +20,7 @@ class TactileMemory:
         """學習並記住一種新材質的觸覺特徵"""
         self.material_profiles[name] = props
 
-    def update_object_map(self, object_id: str, contact_data: Dict[str, Any]):
+    def update_object_map(self, object_id: str, contact_data: Dict[str, Any]) -> None:
         """更新特定物體的觸覺地圖 (如：發現桌子的左上角比右下角更粗糙)"""
         if object_id not in self.object_tactile_maps:
             self.object_tactile_maps[object_id] = {"last_interaction": datetime.now(), "points": []}

@@ -536,7 +536,7 @@ class Live2DAvatarGenerator:
         """Initialize the generator"""
         pass  # No async initialization needed
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the generator"""
         pass
 

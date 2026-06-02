@@ -1,27 +1,62 @@
-"""Smoke tests for core/security/key_generator.py with mock patching"""
-from unittest.mock import patch, MagicMock, mock_open
+"""Tests for core/security/key_generator.py"""
+from unittest.mock import patch, mock_open, MagicMock
 import pytest
 
 
 class TestKeyGenerator:
-    """Smoke tests for KeyGenerator"""
+    """Tests for KeyGenerator"""
 
     def test_import(self):
-        """Verify module can be imported"""
-        try:
-            from core.security.key_generator import KeyGenerator
-            assert KeyGenerator is not None
-        except ImportError as e:
-            pytest.skip(f"KeyGenerator not available: {e}")
+        from core.security.key_generator import KeyGenerator
+        assert KeyGenerator is not None
+
+    def test_instantiation(self):
+        from core.security.key_generator import KeyGenerator
+        instance = KeyGenerator()
+        assert instance is not None
+
+    def test_generate_secure_key_default_length(self):
+        from core.security.key_generator import KeyGenerator
+        key = KeyGenerator.generate_secure_key()
+        assert len(key) == 32
+
+    def test_generate_secure_key_custom_length(self):
+        from core.security.key_generator import KeyGenerator
+        key = KeyGenerator.generate_secure_key(48)
+        assert len(key) == 48
+
+    def test_generate_secure_key_min_length(self):
+        from core.security.key_generator import KeyGenerator
+        key = KeyGenerator.generate_secure_key(8)
+        assert len(key) == 8
+
+    def test_generated_key_contains_alphanumeric(self):
+        from core.security.key_generator import KeyGenerator
+        key = KeyGenerator.generate_secure_key(64)
+        assert any(c.isalpha() for c in key)
+        assert any(c.isdigit() for c in key)
+        assert any(c in "!@#$%^&*" for c in key)
+
+    def test_multiple_keys_unique(self):
+        from core.security.key_generator import KeyGenerator
+        keys = {KeyGenerator.generate_secure_key() for _ in range(10)}
+        assert len(keys) == 10
 
     @patch('builtins.open', new_callable=mock_open, read_data='')
-    def test_instantiation(self, mock_file):
-        """Verify basic instantiation with mock patching"""
-        try:
-            from core.security.key_generator import KeyGenerator
-            instance = KeyGenerator()
-            assert instance is not None
-        except ImportError as e:
-            pytest.skip(f"KeyGenerator not available: {e}")
-        except Exception as e:
-            pytest.skip(f"KeyGenerator init failed (expected in CI): {e}")
+    def test_update_env_file_new(self, mock_file):
+        from core.security.key_generator import KeyGenerator
+        import os
+        instance = KeyGenerator()
+        instance.update_env_file({"TEST_KEY": "testvalue"}, "/tmp/nonexistent/.env")
+        mock_file.assert_called_once()
+
+    @patch('builtins.open', new_callable=mock_open, read_data='EXISTING=old\n')
+    def test_update_env_file_existing(self, mock_file):
+        from core.security.key_generator import KeyGenerator
+        import os
+        instance = KeyGenerator()
+        instance.update_env_file({"EXISTING": "newvalue"}, "/tmp/.env")
+        handle = mock_file()
+        handle.readlines.return_value = ["EXISTING=old\n"]
+        handle.__iter__.return_value = ["EXISTING=old\n"]
+        assert instance is not None

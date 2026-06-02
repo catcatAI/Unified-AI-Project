@@ -333,7 +333,7 @@ def timer(description: str = "Operation"):
 
 
 @contextmanager
-def suppress_errors(*exceptions):
+def suppress_errors(*exceptions) -> None:
     """抑制异常的上下文管理器"""
     try:
         yield
@@ -501,7 +501,7 @@ class cached_property:
     def __set_name__(self, owner, name):
         self.attr_name = name
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, owner) -> None:
         if instance is None:
             return self
         if self.attr_name is None:

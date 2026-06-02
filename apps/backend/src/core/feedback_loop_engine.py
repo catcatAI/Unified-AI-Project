@@ -636,7 +636,7 @@ class FeedbackLoopEngine:
             except Exception as e:  # broad exception acceptable: feedback callbacks should be resilient
                 logger.error(f"[FeedbackLoopEngine] Feedback callback error: {e}", exc_info=True)
 
-    async def _update_active_cycles(self):
+    async def _update_active_cycles(self) -> None:
         """Update active cycles and complete finished ones"""
         completed_cycles = []
 
@@ -756,7 +756,7 @@ class FeedbackLoopEngine:
         logger.warning(f"{type(self).__name__}._generate_feedback not implemented")
         return None
 
-    def _handle_perception(self, perception_type: PerceptionType, data: Dict[str, Any]):
+    def _handle_perception(self, perception_type: PerceptionType, data: Dict[str, Any]) -> None:
         """Handle perception data from monitors"""
         # Create and process perception event
         event = PerceptionEvent.create(
@@ -786,7 +786,7 @@ class FeedbackLoopEngine:
         """Register callback for cycle start"""
         self._cycle_start_callbacks.append(callback)
 
-    def register_cycle_end_callback(self, callback: Callable[[PerceptionActionCycle], None]):
+    def register_cycle_end_callback(self, callback: Callable[[PerceptionActionCycle], None]) -> None:
         """Register callback for cycle end"""
         self._cycle_end_callbacks.append(callback)
 
@@ -928,7 +928,7 @@ if __name__ == "__main__":
             logger.info(f"\n[Cycle Started] ID: {cycle.cycle_id}")
             logger.info(f"  Perception: {cycle.perception_event.perception_type.value[0]}")
 
-        def on_cycle_end(cycle):
+        def on_cycle_end(cycle) -> None:
             logger.info(f"\n[Cycle Completed] ID: {cycle.cycle_id}")
             logger.info(f"  Latency: {cycle.latency_ms:.2f}ms")
             logger.info(

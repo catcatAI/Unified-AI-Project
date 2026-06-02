@@ -233,7 +233,7 @@ class CyberIdentity:
             await self._perform_self_reflection()
             await asyncio.sleep(self._reflection_interval)
 
-    async def _perform_self_reflection(self):
+    async def _perform_self_reflection(self) -> None:
         """Perform periodic self-reflection"""
         reflection = {
             "timestamp": datetime.now(),

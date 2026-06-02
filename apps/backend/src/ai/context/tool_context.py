@@ -32,7 +32,7 @@ class ToolCategory:
         """添加子分类"""
         self.sub_categories.append(sub_category)
 
-    def add_tool(self, tool: "Tool"):
+    def add_tool(self, tool: "Tool") -> None:
         """添加工具"""
         self.tools.append(tool)
 

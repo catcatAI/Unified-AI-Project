@@ -387,7 +387,7 @@ if __name__ == "__main__":
         """注册代理工厂"""
         self.agent_factories[agent_type] = factory
 
-    async def create_agent(self, agent_type: str, name: str):
+    async def create_agent(self, agent_type: str, name: str) -> None:
         """创建代理"""
         if agent_type in self.agent_factories:
             return self.agent_factories[agent_type](name)

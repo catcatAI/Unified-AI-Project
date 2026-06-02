@@ -245,7 +245,7 @@ class ReasoningSystem:
         self.logical_constraints[constraint.constraint_id] = constraint
         logger.info(f"[{self.system_id}] 添加约束: {constraint.constraint_id}")
 
-    def update_ethical_principle_weight(self, principle: EthicalPrinciple, weight: float):
+    def update_ethical_principle_weight(self, principle: EthicalPrinciple, weight: float) -> None:
         """更新伦理原则权重"""
         if 0.0 <= weight <= 2.0:  # 允许权重在0 - 2之间
             self.ethical_principles[principle] = weight

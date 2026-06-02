@@ -135,7 +135,7 @@ class KnowledgeGraph:
         if node.id not in self.nodes:
             self.nodes[node.id] = node
 
-    def _add_edge(self, edge: GraphEdge):
+    def _add_edge(self, edge: GraphEdge) -> None:
         self.edges.append(edge)
         if edge.source not in self._edge_map:
             self._edge_map[edge.source] = []

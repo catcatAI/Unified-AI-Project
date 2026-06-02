@@ -17,13 +17,11 @@ def test_python_version():
 
 def test_basic_imports():
     """测试基础导入"""
-    try:
-        import json
-        import asyncio
+    import json
+    import asyncio
 
-        assert True
-    except ImportError as e:
-        pytest.fail(f"基础模块导入失败: {e}")
+    assert json.dumps({"a": 1}) == '{"a": 1}'
+    assert asyncio is not None
 
 
 def test_project_structure():
@@ -47,11 +45,8 @@ def test_slow_example():
 
 def test_environment_variables():
     """测试环境变量"""
-    # 在测试环境中,这些应该有默认值或被设置
     testing_env = os.getenv("TESTING", "false").lower() == "true"
-    # 不强制要求,但记录状态
-    print(f"Testing environment: {testing_env}")
-    assert True  # 总是通过,只是用于验证环境
+    assert isinstance(testing_env, bool)
 
 
 if __name__ == "__main__":

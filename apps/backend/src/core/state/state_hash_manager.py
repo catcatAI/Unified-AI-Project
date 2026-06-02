@@ -322,7 +322,7 @@ class StateHashManager:
         self.change_log.clear()
         logger.info("Change log cleared")
 
-    def clear_all(self):
+    def clear_all(self) -> None:
         """清空所有狀態"""
         self.integer_table.clear()
         self.decimal_table.clear()

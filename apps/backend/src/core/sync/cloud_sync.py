@@ -198,7 +198,7 @@ class CloudSyncManager:
         """注册回调 / Register callback"""
         self._callbacks[event] = callback
 
-    def _emit(self, event: str, data: Any = None):
+    def _emit(self, event: str, data: Any = None) -> None:
         """触发事件 / Emit event"""
         if event in self._callbacks:
             self._callbacks[event](data)
@@ -425,7 +425,7 @@ class CloudSyncManager:
         self._emit("offline_mode_changed", enabled)
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("☁️ 云同步系统演示")
     logger.info("=" * 50)

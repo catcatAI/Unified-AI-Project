@@ -248,7 +248,7 @@ class RippleAccumulator:
             logger.info(f"[RippleAcc] Chain broken by {op_type.value}")
         self.chain_broken = True
 
-    def reset(self):
+    def reset(self) -> None:
         self.total_ripples.clear()
         self.cumulative_epsilon = 0.0
         self.cumulative_arousal = 0.0

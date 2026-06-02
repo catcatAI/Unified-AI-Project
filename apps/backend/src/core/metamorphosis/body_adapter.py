@@ -118,7 +118,7 @@ class TransferRecord:
         self.status = TransferStatus.COMPLETED
         self.completed_at = datetime.now()
 
-    def mark_failed(self, error: str):
+    def mark_failed(self, error: str) -> None:
         """标记失败 / Mark failed"""
         self.status = TransferStatus.FAILED
         self.errors.append(error)

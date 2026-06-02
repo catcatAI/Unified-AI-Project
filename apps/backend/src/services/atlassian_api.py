@@ -84,7 +84,7 @@ class AtlassianCLIBridge:
         exists = shutil.which(self.acli_path) is not None or os.path.exists(self.acli_path)
         return {"acli_available": exists, "configured": self.config is not None}
 
-    async def get_confluence_spaces(self):
+    async def get_confluence_spaces(self) -> dict:
         return await self._run_acli(["confluence", "getSpaceList"])
 
     async def search_confluence_content(self, query: str):
@@ -121,7 +121,7 @@ async def configure_atlassian(config: AtlassianConfig):
         raise HTTPException(status_code=500, detail=str(e))
 
 @atlassian_router.get("/status")
-async def get_atlassian_status():
+async def get_atlassian_status() -> dict:
     return atlassian_bridge.get_status()
 
 @atlassian_router.get("/confluence/spaces")

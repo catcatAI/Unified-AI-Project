@@ -422,7 +422,7 @@ class ActionExecutionBridge:
         async with self._semaphore:
             await self._execute_action(action_id, item)
 
-    async def _execute_action(self, action_id: str, item: dict[str, Any]):
+    async def _execute_action(self, action_id: str, item: dict[str, Any]) -> None:
         """Execute a single action"""
         context: ExecutionContext = item["context"]
         parameters: dict[str, Any] = item["parameters"]
@@ -583,7 +583,7 @@ class ActionExecutionBridge:
         try:
             await asyncio.to_thread(self._history_file.parent.mkdir, parents=True, exist_ok=True)
             
-            def write_history():
+            def write_history() -> None:
                 with open(self._history_file, "w", encoding="utf-8") as f:
                     json.dump(self._execution_history, f, ensure_ascii=False, indent=2)
             

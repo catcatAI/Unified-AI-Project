@@ -74,7 +74,7 @@ class Live2DParameter:
     def __post_init__(self):
         self.value = max(self.min_value, min(self.max_value, self.value))
 
-    def set_value(self, value: float):
+    def set_value(self, value: float) -> None:
         """Set parameter value with clamping"""
         self.value = max(self.min_value, min(self.max_value, value))
 
@@ -284,7 +284,7 @@ class Live2DIntegration:
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
         if self._update_task:
@@ -303,7 +303,7 @@ class Live2DIntegration:
             await self._update_lip_sync()
             await asyncio.sleep(loop_sleep("live2d_update", 0.033))  # ~30 FPS
 
-    async def _update_expression_blending(self):
+    async def _update_expression_blending(self) -> None:
         """Update expression parameter blending"""
         if self._target_expression and self._expression_blend_progress < 1.0:
             self._expression_blend_progress += 0.05  # Blend speed
@@ -329,7 +329,7 @@ class Live2DIntegration:
                 # This would integrate with actual motion playback
                 ...
 
-    async def _update_breathing(self):
+    async def _update_breathing(self) -> None:
         """Update breathing animation"""
         # Sine wave breathing
         import time
@@ -343,7 +343,7 @@ class Live2DIntegration:
             # Update mouth parameters based on current phoneme
             self._apply_phoneme_to_mouth(self.lip_sync.current_phoneme)
 
-    def _apply_phoneme_to_mouth(self, phoneme: str):
+    def _apply_phoneme_to_mouth(self, phoneme: str) -> None:
         """Apply phoneme to mouth parameters"""
         phoneme_shapes = {
             "silence": {"ParamMouthOpenY": 0.0, "ParamMouthForm": 0.0},
@@ -522,7 +522,7 @@ class Live2DIntegration:
         self._current_motion_obj = None
         self._motion_queue.clear()
 
-    def start_lip_sync(self):
+    def start_lip_sync(self) -> None:
         """Start lip synchronization"""
         self._lip_sync_active = True
         self.lip_sync.is_active = True
@@ -581,7 +581,7 @@ class Live2DIntegration:
         if self.coordinate_engine:
             self.coordinate_engine.apply_spatial_token(x, y, z, t)
 
-    def look_at(self, x: float, y: float):
+    def look_at(self, x: float, y: float) -> None:
         """
         Make model look at a point
 
@@ -610,7 +610,7 @@ class Live2DIntegration:
         """Register expression change callback"""
         self._expression_callbacks.append(callback)
 
-    def register_motion_callback(self, callback: Callable[[MotionType], None]):
+    def register_motion_callback(self, callback: Callable[[MotionType], None]) -> None:
         """Register motion change callback"""
         self._motion_callbacks.append(callback)
 
@@ -636,7 +636,7 @@ class Live2DIntegration:
         """Register a callback that fires on any Live2D state change with the full state bundle."""
         self._live2d_state_callbacks.append(callback)
 
-    def _notify_live2d_state(self):
+    def _notify_live2d_state(self) -> None:
         """Notify registered callbacks of current Live2D state."""
         state = self.get_live2d_state()
         for cb in self._live2d_state_callbacks:

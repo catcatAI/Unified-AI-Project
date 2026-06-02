@@ -221,7 +221,7 @@ class SelfGeneration:
         """Set art learning system for knowledge-based generation"""
         self.art_learning = art_learning
 
-    def set_live2d_generator(self, generator: Any):
+    def set_live2d_generator(self, generator: Any) -> None:
         """Set Live2D avatar generator for actual model creation"""
         self.live2d_generator = generator
 
@@ -229,7 +229,7 @@ class SelfGeneration:
         """Set art learning workflow for orchestrated generation"""
         self.learning_workflow = workflow
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the self-generation system"""
         self._running = True
 
@@ -241,7 +241,7 @@ class SelfGeneration:
         """Shutdown the system"""
         self._running = False
 
-    async def _create_default_avatar(self):
+    async def _create_default_avatar(self) -> None:
         """Create default avatar"""
         default_attrs = VisualAttributes(
             hair_color="pink",

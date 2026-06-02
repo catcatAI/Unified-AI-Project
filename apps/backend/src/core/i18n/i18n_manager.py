@@ -111,7 +111,7 @@ class TranslationCache:
         if len(self._cache[lang]) < self._max_size:
             self._cache[lang][key] = value
 
-    def clear(self, lang: str = None):
+    def clear(self, lang: str = None) -> None:
         """清除缓存 / Clear cache"""
         if lang:
             self._cache.pop(lang, None)
@@ -396,7 +396,7 @@ def add_translation(key: str, language: str, translation: str):
     _get_manager().add_translation(key, language, translation)
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("🌐 i18n 多语言支持系统演示")
     logger.info("=" * 50)

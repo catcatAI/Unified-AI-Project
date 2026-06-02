@@ -148,7 +148,7 @@ class ExtendedBehaviorLibrary:
         """Initialize the behavior library"""
         self._running = True
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the behavior library"""
         self._running = False
         self.active_behavior = None
@@ -744,7 +744,7 @@ class ExtendedBehaviorLibrary:
             self._behavior_start_callbacks[behavior_id] = []
         self._behavior_start_callbacks[behavior_id].append(callback)
 
-    def register_behavior_end_callback(self, behavior_id: str, callback: Callable[[], None]):
+    def register_behavior_end_callback(self, behavior_id: str, callback: Callable[[], None]) -> None:
         """Register callback for when a behavior ends"""
         if behavior_id not in self._behavior_end_callbacks:
             self._behavior_end_callbacks[behavior_id] = []

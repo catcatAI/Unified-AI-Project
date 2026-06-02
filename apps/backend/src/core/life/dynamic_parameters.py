@@ -236,7 +236,7 @@ class DynamicThresholdManager:
             self._running = True
             self._update_task = asyncio.create_task(self._update_loop())
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止动态更新循环"""
         self._running = False
         if self._update_task:
@@ -333,7 +333,7 @@ class DynamicThresholdManager:
         if name in self.parameters:
             self.parameters[name].base_value = base_value
 
-    def adjust_parameter_volatility(self, name: str, delta: float):
+    def adjust_parameter_volatility(self, name: str, delta: float) -> None:
         """调整参数波动性（例如：压力大时波动性增加）"""
         if name in self.parameters:
             self.parameters[name].volatility = max(

@@ -111,7 +111,7 @@ class CerebellumEngine:
         except (IOError, OSError) as e:
             logger.error(f"Persistence failed: {e}", exc_info=True)
 
-    def update_proprioception(self, actual_theta: List[float], external_force: float = 0.0):
+    def update_proprioception(self, actual_theta: List[float], external_force: float = 0.0) -> None:
         """
         [Proprioception] 身體自覺反饋：比較預期與實際姿勢。
         """

@@ -168,7 +168,7 @@ class MouseMonitor:
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown mouse monitoring"""
         self._running = False
         if self._monitor_task:
@@ -409,7 +409,7 @@ class FileSystemMonitor:
             except Exception as e:  # broad exception acceptable: file event callback errors should be logged
                 logger.error(f"[FileSystemMonitor] Callback error: {e}", exc_info=True)
 
-    def register_callback(self, callback: Callable[[FileSystemEvent], None]):
+    def register_callback(self, callback: Callable[[FileSystemEvent], None]) -> None:
         """Register file change callback"""
         self._callbacks.append(callback)
 
@@ -418,7 +418,7 @@ class FileSystemMonitor:
         if path not in self.watch_paths:
             self.watch_paths.append(path)
 
-    def remove_watch_path(self, path: Path):
+    def remove_watch_path(self, path: Path) -> None:
         """Remove a watched path"""
         if path in self.watch_paths:
             self.watch_paths.remove(path)
@@ -447,7 +447,7 @@ class TimeMonitor:
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown time monitoring"""
         self._running = False
         if self._monitor_task:
@@ -488,7 +488,7 @@ class TimeMonitor:
         # Sort by trigger time
         self._scheduled_events.sort(key=lambda e: e.trigger_time)
 
-    def register_callback(self, callback: Callable[[TimeEvent], None]):
+    def register_callback(self, callback: Callable[[TimeEvent], None]) -> None:
         """Register time event callback"""
         self._callbacks.append(callback)
 
@@ -521,7 +521,7 @@ class SystemStateMonitor:
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown system monitoring"""
         self._running = False
         if self._monitor_task:
@@ -647,7 +647,7 @@ class UserActivityMonitor:
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown user activity monitoring"""
         self._running = False
         if self._monitor_task:
@@ -733,7 +733,7 @@ class UserActivityMonitor:
         self._last_input_time = datetime.now()
         self._input_events.append(datetime.now())
 
-    def register_callback(self, callback: Callable[[UserActivityData], None]):
+    def register_callback(self, callback: Callable[[UserActivityData], None]) -> None:
         """Register activity change callback"""
         self._callbacks.append(callback)
 
@@ -891,7 +891,7 @@ class RealTimeMonitor:
             except Exception as e:  # broad exception acceptable: dispatch callback errors should be logged
                 logger.error(f"[RealTimeMonitor] Dispatch error: {e}", exc_info=True)
 
-    def register_callback(self, event_type: str, callback: Callable[[Any], None]):
+    def register_callback(self, event_type: str, callback: Callable[[Any], None]) -> None:
         """
         Register callback for specific event type
 
@@ -954,7 +954,7 @@ if __name__ == "__main__":
                 f"Velocity: {data['velocity']:.1f}"
             )
 
-        def on_file_change(data):
+        def on_file_change(data) -> None:
             logger.info(f"[File] {data['type']}: {data['path']}")
 
         def on_user_activity(data):

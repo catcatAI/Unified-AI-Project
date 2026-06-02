@@ -397,7 +397,7 @@ class DigitalLifeIntegrator:
             await self._update_dynamic_parameters()
             await asyncio.sleep(loop_sleep("life_check_interval", 10.0))  # Check every 10 seconds
 
-    async def _health_check_loop(self):
+    async def _health_check_loop(self) -> None:
         """System health monitoring loop"""
         while self._running:
             await self._check_system_health()
@@ -597,7 +597,7 @@ class DigitalLifeIntegrator:
             session_duration = datetime.now() - self._last_activity_time
             self.life_stats.total_active_time += session_duration
 
-    async def _update_statistics(self):
+    async def _update_statistics(self) -> None:
         """Update life statistics"""
         # Update memory stats if available
         if self.memory_bridge:
@@ -764,7 +764,7 @@ class DigitalLifeIntegrator:
         """Check if all systems are healthy"""
         return all(health.is_healthy for health in self.systems_health.values())
 
-    async def force_state(self, state: LifeCycleState):
+    async def force_state(self, state: LifeCycleState) -> None:
         """Forcefully change to a specific state (for testing/emergencies)"""
         await self._transition_state(state)
 

@@ -296,7 +296,7 @@ class ActionExecutor:
         self._running = True
         self._executor_task = asyncio.create_task(self._execution_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the executor"""
         self._running = False
 
@@ -338,7 +338,7 @@ class ActionExecutor:
         async with self._semaphore:
             await self._execute_action(action)
 
-    async def _execute_action(self, action: Action):
+    async def _execute_action(self, action: Action) -> None:
         """Execute a single action with full lifecycle"""
         action.status = ActionStatus.VALIDATING
         action.started_at = datetime.now()
@@ -522,7 +522,7 @@ class ActionExecutor:
         ]:
             await asyncio.sleep(loop_sleep("sleep_short", 0.1))
 
-    def _update_stats(self, execution_time: float, success: bool):
+    def _update_stats(self, execution_time: float, success: bool) -> None:
         """Update execution statistics"""
         self.execution_stats["total_executed"] += 1
 
@@ -638,7 +638,7 @@ class ActionExecutor:
         """Register a safety check"""
         self.safety_checks[check.check_name] = check
 
-    def register_pre_execution_callback(self, callback: Callable[[Action], None]):
+    def register_pre_execution_callback(self, callback: Callable[[Action], None]) -> None:
         """Register pre-execution callback"""
         self._pre_execution_callbacks.append(callback)
 
@@ -672,7 +672,7 @@ class ActionExecutor:
         """Set the ActionExecutionBridge for integration"""
         self._bridge = bridge
 
-    def set_digital_life_integrator(self, dli: Any):
+    def set_digital_life_integrator(self, dli: Any) -> None:
         """設置數位生命整合器"""
         self._dli = dli
         logger.info("[ActionExecutor] DigitalLifeIntegrator connected")

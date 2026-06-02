@@ -34,7 +34,7 @@ async def root():
 
 
 @router.get("/system/emergency")
-async def trigger_emergency_mode():
+async def trigger_emergency_mode() -> dict:
     """強制進入緊急純文字模式，關閉所有重型組件"""
     return {
         "status": "emergency_active",
@@ -50,7 +50,7 @@ async def health_check():
 
 
 @router.get("/status")
-async def app_status():
+async def app_status() -> dict:
     """桌面端狀態查詢"""
     return {"health": 100, "energy": 100, "mood": "happy", "status": "idle"}
 
@@ -62,7 +62,7 @@ async def system_status():
 
 
 @router.get("/agents", response_model=List[Dict[str, Any]])
-async def get_ai_agents():
+async def get_ai_agents() -> dict:
     """获取所有AI代理 (Dynamic Discovery)"""
     # In a real scenario, this would call AgentManager or HSP Service Discovery
     # For now, we simulate this while keeping the structure ready for integration

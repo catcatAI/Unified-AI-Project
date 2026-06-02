@@ -287,7 +287,7 @@ class DebounceThrottleManager:
         """Register debounce configuration"""
         self.debounce_configs[config.event_type] = config
 
-    def register_throttle(self, config: ThrottleConfig):
+    def register_throttle(self, config: ThrottleConfig) -> None:
         """Register throttle configuration"""
         self.throttle_configs[config.event_type] = config
 
@@ -677,7 +677,7 @@ class EventLoopSystem:
         """Register default handler for unhandled event types"""
         self.default_handler = handler
 
-    def add_filter(self, filter_config: EventFilter):
+    def add_filter(self, filter_config: EventFilter) -> None:
         """Add event filter"""
         self.filters.append(filter_config)
 
@@ -685,7 +685,7 @@ class EventLoopSystem:
         """Register custom aggregation rule"""
         self.aggregator.register_rule(rule)
 
-    def register_debounce(self, config: DebounceConfig):
+    def register_debounce(self, config: DebounceConfig) -> None:
         """Register debounce configuration"""
         self.debounce_throttle.register_debounce(config)
 
@@ -720,7 +720,7 @@ class EventLoopSystem:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
         logger.info("=" * 70)
         logger.info("Angela AI v6.0 - Event Loop System Demo")
         logger.info("事件循环系统演示")
@@ -737,7 +737,7 @@ if __name__ == "__main__":
             processed_events.append(event.event_type)
             logger.info(f"[Handler] Mouse move: {event.data.get('x')}, {event.data.get('y')}")
 
-        def handle_file_change(event):
+        def handle_file_change(event) -> None:
             processed_events.append(event.event_type)
             logger.info(f"[Handler] File change: {event.data.get('path')}")
 

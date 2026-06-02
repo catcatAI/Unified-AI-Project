@@ -173,7 +173,7 @@ class ArtLearningWorkflow:
 
 # 單例模式初始化 (由 BiologicalIntegrator 驅動)
 _instance = None
-def get_art_workflow(bio=None):
+def get_art_workflow(bio=None) -> None:
     global _instance
     if _instance is None and bio is not None:
         _instance = ArtLearningWorkflow(bio)

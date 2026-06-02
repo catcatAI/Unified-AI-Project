@@ -37,7 +37,7 @@ class DistributedCoordinator:
         self.active_nodes = list(self.cluster_nodes)
         logger.info(f"[DistributedCoordinator] Initialized coordinator={self.coordinator_id} nodes={len(self.active_nodes)}")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         self.is_initialized = False
         self.active_nodes = []
         logger.info(f"[DistributedCoordinator] Shutdown coordinator={self.coordinator_id}")
@@ -84,7 +84,7 @@ class HyperlinkedParameterCluster:
         self.parameters = {"learning_rate": 0.001, "batch_size": 32, "epochs": 10}
         logger.info(f"[HyperlinkedParameterCluster] Initialized cluster={self.cluster_id} params={self.total_parameters}")
 
-    async def get_cluster_status(self):
+    async def get_cluster_status(self) -> None:
         return {
             "cluster_id": self.cluster_id,
             "is_initialized": self.is_initialized,
@@ -128,7 +128,7 @@ class AlignedBaseAgent:
         self.is_initialized = True
         logger.info(f"[AlignedBaseAgent] Initialized agent={self.agent_name}")
 
-    async def start(self):
+    async def start(self) -> None:
         self.is_running = True
         logger.info(f"[AlignedBaseAgent] Started agent={self.agent_name}")
 
@@ -136,7 +136,7 @@ class AlignedBaseAgent:
         self.is_running = False
         logger.info(f"[AlignedBaseAgent] Stopped agent={self.agent_name}")
 
-    async def get_alignment_status(self):
+    async def get_alignment_status(self) -> None:
         return {
             "agent_id": self.agent_id,
             "agent_name": self.agent_name,

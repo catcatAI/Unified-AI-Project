@@ -73,7 +73,7 @@ def _ensure_src_in_path():
         sys.path.insert(0, _src_path)
 
 
-def _init_logging():
+def _init_logging() -> None:
     """Initialize the unified logging system (called once at module init)."""
     from core.logging.setup import setup_logging
     setup_logging(level=logging.INFO, log_file="angela_ai.log")

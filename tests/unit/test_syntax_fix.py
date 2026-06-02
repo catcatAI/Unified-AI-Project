@@ -1,20 +1,14 @@
-"""
-测试模块 - test_syntax_fix
-
-自动生成的测试模块,用于验证系统功能。
-"""
-
+"""Tests for syntax correctness and basic Python patterns."""
 from unittest.mock import patch
+import pytest
 
 
 def test_basic_assertion():
-    """测试函数 - 自动添加断言"""
-    assert True
+    assert 1 + 1 == 2
+    assert isinstance("hello", str)
 
 
 def test_function_syntax():
-    """Test a function with correct syntax."""
-
     def function_with_correct_syntax():
         if True:
             return "Correct"
@@ -24,8 +18,6 @@ def test_function_syntax():
 
 
 def test_another_function_syntax():
-    """Test another function with correct syntax."""
-
     def another_function_with_correct_syntax():
         return "Correct"
 
@@ -33,8 +25,6 @@ def test_another_function_syntax():
 
 
 def test_third_function_syntax():
-    """Test a third function with correct syntax."""
-
     def third_function_with_correct_syntax():
         return "Correct"
 
@@ -42,8 +32,6 @@ def test_third_function_syntax():
 
 
 def test_mixed_indent_syntax():
-    """Test mixed indentation syntax."""
-
     def mixed_indent_function():
         if True:
             return "Mixed Indent"
@@ -54,20 +42,38 @@ def test_mixed_indent_syntax():
 
 @patch("builtins.print")
 def test_async_function_call(mock_print):
-    """Test calling an async function (mocked)."""
-
     async def async_function_mock():
-        pass
+        return "done"
 
     assert callable(async_function_mock)
 
 
 def test_class_method_syntax():
-    """Test class method syntax."""
-
     class TestClassCorrect:
         def method(self):
             return "Class Method"
 
     instance = TestClassCorrect()
     assert instance.method() == "Class Method"
+
+
+def test_lambda_syntax():
+    double = lambda x: x * 2
+    assert double(5) == 10
+    assert double(0) == 0
+
+
+def test_list_comprehension():
+    squares = [x ** 2 for x in range(5)]
+    assert squares == [0, 1, 4, 9, 16]
+
+
+def test_exception_handling():
+    def divide(a, b):
+        if b == 0:
+            raise ValueError("Cannot divide by zero")
+        return a / b
+
+    with pytest.raises(ValueError):
+        divide(1, 0)
+    assert divide(10, 2) == 5

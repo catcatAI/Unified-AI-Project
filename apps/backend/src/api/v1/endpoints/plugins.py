@@ -21,7 +21,7 @@ async def list_hooks():
 
 
 @router.get("/plugins")
-async def list_plugins(enabled_only: bool = False):
+async def list_plugins(enabled_only: bool = False) -> dict:
     """List registered plugins."""
     return {"plugins": plugin_manager.list_plugins(enabled_only=enabled_only)}
 
@@ -66,7 +66,7 @@ async def register_plugin(name: str, version: str = "1.0", description: str = ""
 
 
 @router.get("/stats")
-async def plugin_stats():
+async def plugin_stats() -> dict:
     """Get plugin system statistics."""
     return plugin_manager.get_stats()
 

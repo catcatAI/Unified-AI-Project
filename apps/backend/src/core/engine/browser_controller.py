@@ -180,7 +180,7 @@ class BrowserController:
         # Load bookmarks if available
         await self._load_bookmarks()
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the browser controller"""
         # Save bookmarks
         await self._save_bookmarks()

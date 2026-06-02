@@ -202,7 +202,7 @@ class GradientField:
         self.attractors.append(attractor)
         logger.debug(f"[GradientField] 新增吸引子: {attractor.description}")
 
-    def remove_attractor(self, tags: List[str]):
+    def remove_attractor(self, tags: List[str]) -> None:
         self.attractors = [a for a in self.attractors if not any(t in a.tags for t in tags)]
 
     def compute_gradient(self, current_state: List[float]) -> GradientResult:

@@ -274,7 +274,7 @@ class EmotionSystem:
         """外部激素或事件對情緒的影響"""
         logger.debug(f"[{self.system_id}] Influence from {source}: {type} = {value}")
 
-    def update_value_weight(self, dimension: ValueDimension, weight: float):
+    def update_value_weight(self, dimension: ValueDimension, weight: float) -> None:
         self.value_weights[dimension] = weight
 
     def get_emotion_history(self, limit: int = 100) -> List[EmotionalState]:

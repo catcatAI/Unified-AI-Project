@@ -364,7 +364,7 @@ class HSPConnector:
         """Allows setting message callback for test compatibility."""
 
         # Wrap a test-provided callback (client, topic, payload, qos, properties)
-        async def wrapper(topic: str, message: str):
+        async def wrapper(topic: str, message: str) -> None:
             await callback(None, topic, message, 1, None)
 
         self.external_connector.on_message_callback = cast(Callable, wrapper)
@@ -373,7 +373,7 @@ class HSPConnector:
         """注册事实消息回调"""
         self._fact_callbacks.append(callback)
 
-    def register_on_capability_advertisement_callback(self, callback: Callable):
+    def register_on_capability_advertisement_callback(self, callback: Callable) -> None:
         """注册能力广告消息回调"""
         self._capability_advertisement_callbacks.append(callback)
 
@@ -381,7 +381,7 @@ class HSPConnector:
         """注册任务请求消息回调"""
         self._task_request_callbacks.append(callback)
 
-    def register_on_task_result_callback(self, callback: Callable):
+    def register_on_task_result_callback(self, callback: Callable) -> None:
         """注册任务结果消息回调"""
         self._task_result_callbacks.append(callback)
 
@@ -389,7 +389,7 @@ class HSPConnector:
         """注册确认消息回调"""
         self._acknowledgement_callbacks.append(callback)
 
-    def register_on_connect_callback(self, callback: Callable):
+    def register_on_connect_callback(self, callback: Callable) -> None:
         """注册连接回调"""
         self._connect_callbacks.append(callback)
 
@@ -398,7 +398,7 @@ class HSPConnector:
         self._disconnect_callbacks.append(callback)
 
     # - - - Backward compatibility methods -
-    def on_fact_received(self, callback: Callable):
+    def on_fact_received(self, callback: Callable) -> None:
         """Backward compatibility method for registering fact callbacks."""
         self.register_on_fact_callback(callback)
 
@@ -406,7 +406,7 @@ class HSPConnector:
         """Backward compatibility method for registering command callbacks (maps to task_request)."""
         self.register_on_task_request_callback(callback)
 
-    def on_connect_callback(self, callback: Callable):
+    def on_connect_callback(self, callback: Callable) -> None:
         """Backward compatibility method for registering connect callbacks."""
         self.register_on_connect_callback(callback)
 
@@ -414,7 +414,7 @@ class HSPConnector:
         """Backward compatibility method for registering disconnect callbacks."""
         self.register_on_disconnect_callback(callback)
 
-    async def mqtt_subscribe(self, topic: str, qos: int = 1):
+    async def mqtt_subscribe(self, topic: str, qos: int = 1) -> None:
         """Direct MQTT subscription for test compatibility."""
         if self.mock_mode:
             # In mock mode, just add to subscribed topics
@@ -693,7 +693,7 @@ class HSPConnector:
         topic = "hsp/knowledge/facts/#"
         await self.subscribe(topic)
 
-    async def subscribe_to_opinions(self, callback: Callable[..., Any]):
+    async def subscribe_to_opinions(self, callback: Callable[..., Any]) -> None:
         # Register the callback for opinion messages
         # Note: We'll treat opinions as a special type of fact for now
         self.register_on_fact_callback(callback)

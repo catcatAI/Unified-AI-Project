@@ -45,7 +45,7 @@ class MessageRouter:
     def reset_instance(cls):
         """No-op (deprecated)."""
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the HTTP server for the message router."""
         if self._running:
             return
@@ -82,7 +82,7 @@ class MessageRouter:
             raise HTTPException(status_code=404, detail="Agent not found")
 
         @app.get("/registry")
-        async def get_registry():
+        async def get_registry() -> dict:
             return {"agents": self.registry}
 
         @app.post("/send")
@@ -198,7 +198,7 @@ class ExternalConnector:
                 return {"status": "healthy", "agent_id": self.ai_id}
 
             @app.get("/stats")
-            async def get_stats():
+            async def get_stats() -> dict:
                 return self.stats
 
             self._app = app

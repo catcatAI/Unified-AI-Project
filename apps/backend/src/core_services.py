@@ -27,7 +27,7 @@ async def initialize_services(config=None, ai_id=None, use_mock_ham=False, opera
         logger.info(f"CLI configured with AI ID: {ai_id}")
 
 
-def get_services():
+def get_services() -> None:
     return _services
 
 

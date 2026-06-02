@@ -405,7 +405,7 @@ class ExecutionMonitor:
             timeout: 超時時間(秒)
         """
 
-        def timeout_handler(signum=None, frame=None):
+        def timeout_handler(signum=None, frame=None) -> None:
             raise TimeoutError(f"Operation timed out after {timeout} seconds")
 
         # 設置信號處理器(僅在Unix系統上)

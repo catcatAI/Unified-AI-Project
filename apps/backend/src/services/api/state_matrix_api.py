@@ -261,7 +261,7 @@ def theta_trigger(req: ThetaTriggerRequest):
 
 
 @state_matrix_router.get("/theta/detect")
-def theta_detect():
+def theta_detect() -> dict:
     """檢測錯配點位"""
     sm = get_state_matrix()
     sm.trigger_negativity(0.5)
@@ -331,7 +331,7 @@ async def delete_checkpoint(checkpoint_id: str):
 
 
 @state_matrix_router.get("/checkpoint/stats")
-async def checkpoint_stats():
+async def checkpoint_stats() -> dict:
     """獲取持久化層狀態"""
     sm = get_state_matrix()
     await sm.init_persistence()
@@ -612,7 +612,7 @@ def activate_module(name: str = Query(...)):
 
 
 @state_matrix_router.post("/module/deactivate")
-def deactivate_module(name: str = Query(...)):
+def deactivate_module(name: str = Query(...)) -> dict:
     """停用模組"""
     sm = get_state_matrix()
     success = sm._eta.deactivate_module(name)

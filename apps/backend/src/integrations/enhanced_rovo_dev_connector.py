@@ -75,7 +75,7 @@ class CircuitBreaker:
         if self.failure_count >= self.failure_threshold:
             self.state = "open"
 
-    def reset(self):
+    def reset(self) -> None:
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "closed"
@@ -101,7 +101,7 @@ class EnhancedRovoDevConnector:
     async def start(self):
         logger.info("[EnhancedRovoDevConnector] start — SKELETON (not implemented)")
 
-    async def close(self):
+    async def close(self) -> None:
         logger.info("[EnhancedRovoDevConnector] close — SKELETON (not implemented)")
 
     async def __aenter__(self):

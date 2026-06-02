@@ -238,7 +238,7 @@ class MQTTSubscriptionManager:
             self._callback_registry[topic] = []
         self._callback_registry[topic].append(callback)
 
-    def add_callback(self, topic: str, callback: Callable):
+    def add_callback(self, topic: str, callback: Callable) -> None:
         """为已订阅的主题添加额外的回调"""
         if topic in self._subscriptions:
             self._register_callback(topic, callback)

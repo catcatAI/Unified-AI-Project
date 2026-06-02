@@ -117,7 +117,7 @@ class UserMonitor:
         """添加狀態變化回調"""
         self._state_change_callbacks.append(callback)
 
-    async def start(self):
+    async def start(self) -> None:
         """啟動監控"""
         if self.is_running:
             logger.warning("UserMonitor is already running", exc_info=True)
@@ -452,7 +452,7 @@ if __name__ == "__main__":
         monitor = UserMonitor(check_interval=2.0)
 
         # 添加狀態變化回調
-        def on_state_change(event_type, data):
+        def on_state_change(event_type, data) -> None:
             logger.info(f"[STATE CHANGE] {event_type}: {data}")
 
         monitor.add_state_change_callback(on_state_change)

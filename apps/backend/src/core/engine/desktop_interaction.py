@@ -408,7 +408,7 @@ class DesktopInteraction:
             await self._check_auto_organize()
             await asyncio.sleep(loop_sleep("scan_interval", 30.0))  # Scan every 30 seconds
 
-    async def _scan_desktop(self):
+    async def _scan_desktop(self) -> None:
         """Scan desktop and update state"""
         if not self.desktop_path.exists():
             return
@@ -476,7 +476,7 @@ class DesktopInteraction:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    async def _check_auto_organize(self):
+    async def _check_auto_organize(self) -> None:
         """Check if auto-organization is needed"""
         if self.watcher_config.auto_organize:
             if self.current_state.total_files > self.watcher_config.organize_threshold:
@@ -793,7 +793,7 @@ class DesktopInteraction:
         """Register callback for file changes"""
         self._file_change_callbacks.append(callback)
 
-    def register_operation_callback(self, callback: Callable[[FileOperation], None]):
+    def register_operation_callback(self, callback: Callable[[FileOperation], None]) -> None:
         """Register callback for file operations"""
         self._operation_callbacks.append(callback)
 

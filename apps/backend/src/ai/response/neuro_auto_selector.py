@@ -746,6 +746,6 @@ class NeuroAutoSelector:
         """Record result for learning."""
         self.recorder.record(decision, actual_ms, success)
 
-    def flush_records(self):
+    def flush_records(self) -> None:
         """Flush pending learn records."""
         self.recorder.flush_sync()

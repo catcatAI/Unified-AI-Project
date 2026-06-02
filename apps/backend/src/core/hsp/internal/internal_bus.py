@@ -39,7 +39,7 @@ class InternalBus:
             self.subscriptions[channel] = []
         self.subscriptions[channel].append(callback)
 
-    def unsubscribe(self, channel: str, callback: Callable[[Any], None]):
+    def unsubscribe(self, channel: str, callback: Callable[[Any], None]) -> None:
         if channel in self.subscriptions:
             if callback in self.subscriptions[channel]:
                 self.subscriptions[channel].remove(callback)

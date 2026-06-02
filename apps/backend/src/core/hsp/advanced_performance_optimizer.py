@@ -250,7 +250,7 @@ class HSPLoadBalancer:
             self.nodes[node_id] = node_info
             logger.debug(f"节点已添加: {node_id}")
 
-    def remove_node(self, node_id: str):
+    def remove_node(self, node_id: str) -> None:
         """移除节点"""
         with self.lb_lock:
             if node_id in self.nodes:
@@ -333,7 +333,7 @@ class HSPLoadBalancer:
         with self.lb_lock:
             self.node_stats[node_id]["request_count"] += 1
 
-    def record_response(self, node_id: str, response_time: float, success: bool = True):
+    def record_response(self, node_id: str, response_time: float, success: bool = True) -> None:
         """记录响应"""
         with self.lb_lock:
             stats = self.node_stats[node_id]
@@ -463,7 +463,7 @@ class HSPAdvancedPerformanceOptimizer:
         """向负载均衡器添加节点"""
         self.load_balancer.add_node(node_id, node_info)
 
-    def remove_node_from_load_balancer(self, node_id: str):
+    def remove_node_from_load_balancer(self, node_id: str) -> None:
         """从负载均衡器移除节点"""
         self.load_balancer.remove_node(node_id)
 

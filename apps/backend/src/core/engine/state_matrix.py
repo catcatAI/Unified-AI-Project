@@ -1295,7 +1295,7 @@ Returns:
     def apply_intent_gravity(self, pull_factor: float = 0.05):
         apply_intent_gravity(self.dimensions, pull_factor)
 
-    def set_intent_target(self, dimension: str, target: Tuple[float, float, float]):
+    def set_intent_target(self, dimension: str, target: Tuple[float, float, float]) -> None:
         set_intent_target(self.dimensions, dimension, target)
 
     def apply_inter_dimensional_drag(self, trigger_dim: str, drag_factor: float = 0.02):

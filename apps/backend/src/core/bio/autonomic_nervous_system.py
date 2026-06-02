@@ -179,7 +179,7 @@ class AutonomicNervousSystem:
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
         if self._update_task:
@@ -198,7 +198,7 @@ class AutonomicNervousSystem:
             await self._detect_state_change()
             await asyncio.sleep(loop_sleep("ans_update", 0.5))  # 500ms update interval
 
-    async def _decay_stimuli(self):
+    async def _decay_stimuli(self) -> None:
         """Decay active stimuli over time"""
         current_time = datetime.now()
         remaining_stimuli = []
@@ -221,7 +221,7 @@ class AutonomicNervousSystem:
         self.arousal_level += adjustment
         self.arousal_level = max(0, min(100, self.arousal_level))
 
-    async def _calculate_tones(self):
+    async def _calculate_tones(self) -> None:
         """Calculate sympathetic and parasympathetic tones"""
         # Base calculation from arousal level
         # High arousal = high sympathetic, low parasympathetic
@@ -403,7 +403,7 @@ class AutonomicNervousSystem:
         """Register callback for ANS state changes"""
         self._state_change_callbacks.append(callback)
 
-    def register_arousal_callback(self, callback: Callable[[float], None]):
+    def register_arousal_callback(self, callback: Callable[[float], None]) -> None:
         """Register callback for arousal level changes"""
         self._arousal_callbacks.append(callback)
 

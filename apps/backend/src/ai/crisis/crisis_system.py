@@ -186,7 +186,7 @@ class CrisisSystem:
         )
         self.crisis_level = 0
 
-    def _load_config_from_file(self):
+    def _load_config_from_file(self) -> None:
         """Loads configuration from a JSON file."""
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))

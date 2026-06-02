@@ -54,7 +54,7 @@ class IntentManager:
         self.intents.append(intent)
         logger.info(f"🎯 [Intent] New intent added: {intent.category.name} -> {intent.target_dimension} @ {intent.target_coordinate}")
 
-    def update_intents(self, delta_time: float = 1.0):
+    def update_intents(self, delta_time: float = 1.0) -> None:
         """更新意圖強度 (非線性衰減) 並移除過期意圖"""
         for intent in self.intents:
             # [Task N.21.5] 非線性衰減 (Exponential Decay)

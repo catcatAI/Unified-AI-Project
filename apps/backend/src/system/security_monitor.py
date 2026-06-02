@@ -165,7 +165,7 @@ class SecurityTrayMonitor:
         time.sleep(1)
         self.on_start_backend()
 
-    def on_exit(self, icon, item):
+    def on_exit(self, icon, item) -> None:
         self.on_stop_backend()
         self._running = False
         icon.stop()
@@ -174,7 +174,7 @@ class SecurityTrayMonitor:
         logger.info("Key display disabled for security")
         icon.notify("金鑰顯示已停用以保護安全。請透過安全管道取得金鑰。", "Angela 安全資訊")
 
-    def on_generate_qr(self, icon, item):
+    def on_generate_qr(self, icon, item) -> None:
         logger.info("QR code key display disabled for security")
         icon.notify("QR Code 金鑰顯示已停用以保護安全。請透過安全管道取得金鑰。", "Angela 安全資訊")
 

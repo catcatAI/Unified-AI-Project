@@ -41,7 +41,7 @@ async def main():
     def on_cycle_start(cycle):
         cycles_started.append(cycle.cycle_id)
 
-    def on_cycle_end(cycle):
+    def on_cycle_end(cycle) -> None:
         cycles_completed.append(cycle.cycle_id)
         logger.info(
             f"   ✓ Cycle completed: {cycle.cycle_id[:8]}... (latency: {cycle.latency_ms:.1f}ms)"

@@ -104,7 +104,7 @@ class Hormone:
         """獲取歸一化水平 (0-1)"""
         return (self.current_level - self.min_level) / (self.max_level - self.min_level)
 
-    def update(self, dt_minutes: float = 1.0):
+    def update(self, dt_minutes: float = 1.0) -> None:
         """
         使用指數衰減模型更新激素水平
         公式: C(t) = C_ss + (C0 - C_ss) * e^(-k * t)
@@ -224,7 +224,7 @@ class EndocrineSystem:
         """(已由 advance_time 整合) 保持兼容性"""
         pass
 
-    async def _apply_feedback_loops(self):
+    async def _apply_feedback_loops(self) -> None:
         """應用激素間的反饋調節"""
         for (source, target), factor in self.feedback_loops.items():
             source_hormone = self.hormones[source]

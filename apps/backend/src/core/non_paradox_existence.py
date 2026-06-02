@@ -538,7 +538,7 @@ class NonParadoxExistence:
         """Register callback for coexistence activation/deactivation"""
         self._coexistence_callbacks.append(callback)
 
-    def register_gap_threshold_callback(self, callback: Callable[[float, bool], None]):
+    def register_gap_threshold_callback(self, callback: Callable[[float, bool], None]) -> None:
         """Register callback for cognitive gap threshold crossings"""
         self._gap_threshold_callbacks.append(callback)
 

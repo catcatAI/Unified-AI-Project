@@ -24,7 +24,7 @@ class SandboxExecutor:
 
 
 class HAMMemoryManager:
-    def store_experience(self, data, type, metadata):
+    def store_experience(self, data, type, metadata) -> tuple:
         return "mock_memory_id"
 
     def recall_gist(self, memory_id):

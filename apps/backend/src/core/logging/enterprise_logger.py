@@ -166,7 +166,7 @@ class EnterpriseLogger:
         """記錄 DEBUG 級別日誌"""
         self._log(LogLevel.DEBUG, category, message, extra)
 
-    def info(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra):
+    def info(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra) -> None:
         """記錄 INFO 級別日誌"""
         self._log(LogLevel.INFO, category, message, extra)
 

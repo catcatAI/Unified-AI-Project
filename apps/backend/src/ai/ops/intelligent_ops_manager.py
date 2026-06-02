@@ -71,7 +71,7 @@ class PredictiveMaintenanceEngine:  # Placeholder for actual class
     def initialize(self):
         logger.warning("[PredictiveMaintenanceEngine.initialize] Stub — not implemented")
 
-    async def collect_component_metrics(self, component_id: str):
+    async def collect_component_metrics(self, component_id: str) -> None:
         logger.warning("[PredictiveMaintenanceEngine.collect_component_metrics] Stub — not implemented")
         return {}
 
@@ -83,7 +83,7 @@ class PredictiveMaintenanceEngine:  # Placeholder for actual class
     async def get_maintenance_schedules(self, component_id: str):
         return []
 
-    async def approve_maintenance(self, schedule_id: str, approver: str):
+    async def approve_maintenance(self, schedule_id: str, approver: str) -> list:
         logger.warning("[PredictiveMaintenanceEngine.approve_maintenance] Stub — not implemented")
         return {"stub": True, "message": f"Maintenance {schedule_id} approval not implemented"}
 

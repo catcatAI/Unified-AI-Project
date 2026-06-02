@@ -391,7 +391,7 @@ if __name__ == "__main__":
 
         # Mock 服務
         class MockMemoryManager:
-            async def get_recent_memories(self, limit=20):
+            async def get_recent_memories(self, limit=20) -> list:
                 return [
                     "用戶喜歡聽音樂",
                     "用戶問了關於AI的問題",
@@ -404,7 +404,7 @@ if __name__ == "__main__":
             async def store_structured_memory(self, content, structured_data):
                 pass
 
-            async def add_to_knowledge_base(self, content, importance):
+            async def add_to_knowledge_base(self, content, importance) -> None:
                 pass
 
             async def generate_template(self, template):

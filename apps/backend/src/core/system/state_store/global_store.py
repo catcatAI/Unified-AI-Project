@@ -145,7 +145,7 @@ class GlobalStateStore:
         else:
             self._global_subscribers.append(callback)
 
-    def _notify_subscribers(self, domain: str):
+    def _notify_subscribers(self, domain: str) -> None:
         """Notify subscribers of a domain change."""
         data = self._states[domain]
         # Notify domain-specific subscribers

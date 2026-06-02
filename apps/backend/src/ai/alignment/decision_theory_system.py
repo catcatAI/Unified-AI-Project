@@ -118,7 +118,7 @@ class BayesianModel(ProbabilityModel):
                 0.0, min(1.0, self.prior_beliefs[outcome_key] + adjustment)
             )
 
-    def set_prior(self, outcome_key: str, probability: float):
+    def set_prior(self, outcome_key: str, probability: float) -> None:
         """设置先验概率"""
         self.prior_beliefs[outcome_key] = max(0.0, min(1.0, probability))
 

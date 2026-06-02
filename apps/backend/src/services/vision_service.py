@@ -66,7 +66,7 @@ class VisionService:
         except Exception as e:  # broad exception acceptable: sync registration should not crash
             logger.error(f"Failed to register Vision Service to sync manager: {e}", exc_info=True)
 
-    async def _handle_sync_event(self, event: SyncEvent):
+    async def _handle_sync_event(self, event: SyncEvent) -> None:
         """處理同步事件"""
         if event.type == "module_control":
             module = event.data.get("module")
@@ -487,7 +487,7 @@ class VisionService:
         logger.info("[Vision] Realized Vision System Online.")
         return True
 
-    async def shutdown(self):
+    async def shutdown(self) -> bool:
         logger.info("[Vision] Powered down.")
 
     async def _extract_text_ocr(self, image_data: bytes) -> Dict[str, Any]:

@@ -240,7 +240,7 @@ class DesktopPresence:
             await self._enforce_screen_boundaries()
             await asyncio.sleep(loop_sleep("fps_30", 0.033))  # ~30 FPS
 
-    async def _apply_intent_gravity(self):
+    async def _apply_intent_gravity(self) -> None:
         """
         [Task N.22/E3] Native AI 桌面意圖引力
         依據意圖管理器計算對滑鼠座標的引力或斥力，實現主動靠近或預測性避障。
@@ -352,7 +352,7 @@ class DesktopPresence:
         if x != self.current_position.x or y != self.current_position.y:
             self.set_position(Position(x, y))
 
-    def _on_mouse_move(self, position: Position):
+    def _on_mouse_move(self, position: Position) -> None:
         """Handle mouse movement"""
         if self.last_mouse_position:
             velocity = Position(
@@ -454,7 +454,7 @@ class DesktopPresence:
         """Set opacity level (0-1)"""
         self.opacity = max(0.0, min(1.0, opacity))
 
-    def register_collision_object(self, name: str, bounds: BoundingBox):
+    def register_collision_object(self, name: str, bounds: BoundingBox) -> None:
         """Register an object for collision detection"""
         self.collision_objects[name] = bounds
 
@@ -480,7 +480,7 @@ class DesktopPresence:
         """Register callback for position changes"""
         self._position_callbacks.append(callback)
 
-    def register_collision_callback(self, callback: Callable[[CollisionInfo], None]):
+    def register_collision_callback(self, callback: Callable[[CollisionInfo], None]) -> None:
         """Register callback for collision events"""
         self.collision_callbacks.append(callback)
 
@@ -529,7 +529,7 @@ class MouseTracker:
         self.is_tracking = True
         self._tracking_task = asyncio.create_task(self._track_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown mouse tracking"""
         self.is_tracking = False
         if self._tracking_task:
@@ -547,7 +547,7 @@ class MouseTracker:
             await self._update_mouse_position()
             await asyncio.sleep(loop_sleep("fps_30", 0.033))  # ~30 FPS
 
-    async def _update_mouse_position(self):
+    async def _update_mouse_position(self) -> None:
         """Update current mouse position"""
         import platform as _platform
         if _platform.system() == "Windows":
@@ -573,7 +573,7 @@ class MouseTracker:
         """Register position update callback"""
         self._callbacks.append(callback)
 
-    def update_position(self, position: Position):
+    def update_position(self, position: Position) -> None:
         """Update position (called by OS integration)"""
         if position != self.current_position:
             self.current_position = position

@@ -124,7 +124,7 @@ class MemoryNeuroplasticityBridge:
         # Start maintenance loop
         self._maintenance_task = asyncio.create_task(self._maintenance_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the memory bridge"""
         self._running = False
 
@@ -144,7 +144,7 @@ class MemoryNeuroplasticityBridge:
             await self._check_forgetting()
             await asyncio.sleep(loop_sleep("neuro_bridge_interval", 300.0))  # Every 5 minutes
 
-    async def _update_reinforcement_stats(self):
+    async def _update_reinforcement_stats(self) -> None:
         """Update reinforcement statistics"""
         for memory_id, reinforcement in self.reinforcement_map.items():
             # Decay access frequency over time
@@ -840,7 +840,7 @@ class MemoryNeuroplasticityBridge:
         """Register callback for memory consolidation events"""
         self._consolidation_callbacks.append(callback)
 
-    def register_forgetting_callback(self, callback: Callable[[str, float], None]):
+    def register_forgetting_callback(self, callback: Callable[[str, float], None]) -> None:
         """Register callback for memory forgetting events"""
         self._forgetting_callbacks.append(callback)
 

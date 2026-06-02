@@ -111,6 +111,6 @@ class PerceptualMemory:
         if obj.label in self.label_index:
             self.label_index[obj.label].remove(oldest_id)
 
-    def clear(self):
+    def clear(self) -> None:
         self.objects.clear()
         self.label_index.clear()

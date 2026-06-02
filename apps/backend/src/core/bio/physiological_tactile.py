@@ -317,7 +317,7 @@ class PhysiologicalTactileSystem:
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the tactile system"""
         self._running = False
         if self._update_task:
@@ -334,7 +334,7 @@ class PhysiologicalTactileSystem:
             await self._decay_stimuli()
             await asyncio.sleep(loop_sleep("tactile_update", 0.1))  # 100ms update interval
 
-    async def _adapt_receptors(self):
+    async def _adapt_receptors(self) -> None:
         """Adapt receptor sensitivity based on continuous stimulation"""
         for body_part, receptors in self.receptors.items():
             for receptor in receptors:
@@ -465,7 +465,7 @@ class PhysiologicalTactileSystem:
         """Register a callback for stimulus events"""
         self._on_stimulus_callbacks.append(callback)
 
-    def register_threshold_callback(self, body_part: BodyPart, callback: Callable[[float], None]):
+    def register_threshold_callback(self, body_part: BodyPart, callback: Callable[[float], None]) -> None:
         """Register a callback for threshold events on a specific body part"""
         if body_part not in self._on_threshold_callbacks:
             self._on_threshold_callbacks[body_part] = []
