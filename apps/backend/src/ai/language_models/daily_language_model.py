@@ -100,6 +100,7 @@ class DailyLanguageModel:
                     result["tool_name"] = None
                 return result
             except json.JSONDecodeError:
+                logger.warning("Intent recognition JSON decode failed, falling back to simple matching", exc_info=True)
                 # Fallback to simple matching
                 return self._simple_intent_recognition(text, available_tools)
 

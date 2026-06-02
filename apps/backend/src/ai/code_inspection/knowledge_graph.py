@@ -99,6 +99,7 @@ class KnowledgeGraph:
             source = filepath.read_text(encoding="utf-8")
             tree = ast.parse(source)
         except Exception:
+            logger.warning(f"[KnowledgeGraph] Failed to parse {filepath}: fallback skip", exc_info=True)
             return
 
         file_node = GraphNode(

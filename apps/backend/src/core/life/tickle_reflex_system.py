@@ -253,6 +253,7 @@ class TickleReflexSystem:
                 "words_used": len(response_text.split()),
             }
         except asyncio.TimeoutError:
+            logger.warning("Tickle reflex LLM call timed out", exc_info=True)
             return {"triggered": False, "response": None, "reason": "llm_timeout"}
         except Exception as e:
             logger.warning(f"[TickleReflex] LLM response failed: {e}", exc_info=True)

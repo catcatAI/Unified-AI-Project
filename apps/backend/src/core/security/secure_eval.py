@@ -196,6 +196,7 @@ class SafeEvaluator:
             try:
                 tree = ast.parse(expression, mode="eval")
             except SyntaxError as e:
+                logger.warning(f"Expression syntax error: {e}", exc_info=True)
                 return EvalResult(success=False, error=f"語法錯誤: {e}", expression=expression)
 
             # 4. 驗證並評估 AST

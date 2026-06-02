@@ -1,8 +1,11 @@
+import logging
 import operator
 from collections import deque
 from typing import Optional
 
 from .models import ModuleDescriptor, ModuleStatus, ModuleInstance, DependencySpec
+
+logger = logging.getLogger(__name__)
 
 
 class CycleError(Exception):
@@ -103,6 +106,7 @@ class DependencyResolver:
             ver_parts = ver_parts + (0,) * (max_len - len(ver_parts))
             return op(actual_parts, ver_parts)
         except (ValueError, TypeError):
+            logger.warning(f"Version constraint check failed for actual={actual}, ver={ver}", exc_info=True)
             return actual == ver
 
     def check_deps(self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]) -> list[str]:

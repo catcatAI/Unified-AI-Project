@@ -255,6 +255,7 @@ class HAMMemoryManager:
             content = json.dumps(template.to_dict(), ensure_ascii=False)
             return await self.store_experience(content, "response_template", {"is_template": True}) is not None
         except Exception:  # broad exception acceptable: template storage should be resilient to errors
+            logger.warning("store_template failed", exc_info=True)
             return False
 
 if __name__ == "__main__":

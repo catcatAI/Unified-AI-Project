@@ -69,10 +69,12 @@ class AtlassianCLIBridge:
                     data = json.loads(out_str)
                     return {"success": True, "data": data}
                 except json.JSONDecodeError:
+                    logger.warning(f"Atlassian CLI JSON decode failed, returning raw output", exc_info=True)
                     return {"success": True, "raw_output": out_str}
             else:
                 return {"success": False, "error": stderr.decode() or "Command failed"}
         except asyncio.TimeoutError:
+            logger.warning("Atlassian CLI operation timed out", exc_info=True)
             return {"success": False, "error": "Atlassian CLI operation timed out."}
         except Exception as e:  # broad exception acceptable: CLI execution should be resilient
             return {"success": False, "error": str(e)}

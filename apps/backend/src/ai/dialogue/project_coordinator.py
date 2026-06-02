@@ -309,6 +309,7 @@ class ProjectCoordinator:
                 await asyncio.wait_for(completion_event.wait(), timeout=self.turn_timeout_seconds)
                 return self.task_results.get(correlation_id, {"error": "No result captured"})
             except asyncio.TimeoutError:
+                logger.warning(f"Task timeout after {self.turn_timeout_seconds}s for capability {capability}", exc_info=True)
                 return {"error": f"Task timeout after {self.turn_timeout_seconds}s"}
         return {"error": "HSP Connector not available"}
 

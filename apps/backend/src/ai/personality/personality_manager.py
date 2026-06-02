@@ -97,6 +97,7 @@ class PersonalityManager:
                 value = value[key]
             return value
         except (KeyError, TypeError):
+            logger.warning(f"get_current_personality_trait failed for {trait_name}", exc_info=True)
             return default_value
 
     def get_initial_prompt(self) -> str:

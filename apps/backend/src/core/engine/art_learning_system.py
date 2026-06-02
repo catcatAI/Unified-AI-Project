@@ -250,6 +250,7 @@ class ArtLearningSystem:
         try:
             gamma = state_matrix.gamma.values
         except AttributeError:
+            logger.warning("get_color_overrides_spatial: state_matrix missing gamma axis", exc_info=True)
             return self.get_color_overrides({})
 
         # Warm axis: happiness, love, anticipation

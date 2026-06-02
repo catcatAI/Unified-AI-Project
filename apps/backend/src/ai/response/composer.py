@@ -698,6 +698,7 @@ class NeuroVocabulary:
         try:
             templates = library.get_all_templates()
         except Exception:
+            logger.warning("decompose_from_templates: failed to get templates", exc_info=True)
             return 0
 
         for tmpl in templates:

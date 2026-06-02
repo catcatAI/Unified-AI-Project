@@ -298,6 +298,7 @@ class MemoryTemplate:
                 return 0.5
             return max(0.0, 1.0 - sum(diffs) / len(diffs))
         except Exception:
+            logger.warning("_calculate_state_similarity failed", exc_info=True)
             return 0.5
 
     def _calculate_impression_similarity(self, current_impression: UserImpression) -> float:
@@ -317,6 +318,7 @@ class MemoryTemplate:
                 return 0.5
             return max(0.0, 1.0 - sum(diffs) / len(diffs))
         except Exception:
+            logger.warning("_calculate_impression_similarity failed", exc_info=True)
             return 0.5
 
 

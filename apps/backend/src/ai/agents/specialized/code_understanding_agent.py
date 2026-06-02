@@ -220,6 +220,7 @@ class CodeUnderstandingAgent(BaseAgent):
                 docs.append("No functions or classes found in provided code.")
             return "# Generated Documentation\n\n" + "\n".join(docs)
         except SyntaxError as e:
+            logger.warning(f"Documentation generation failed: {e}", exc_info=True)
             return f"# Documentation Generation Failed\n\nUnable to parse code: {e}"
 
     def _perform_code_review(self, params: Dict[str, Any]) -> Dict[str, Any]:

@@ -4,7 +4,10 @@ P6-3: Centralized access to previously-hardcoded magic numbers.
 All values loaded from TieredConfigLoader with inline fallback defaults.
 """
 
+import logging
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 
 def _get_tiered_config(path: str) -> Dict[str, Any]:
@@ -12,6 +15,7 @@ def _get_tiered_config(path: str) -> Dict[str, Any]:
         from core.system.config.tiered_loader import get_config
         return get_config(path)
     except Exception:
+        logger.warning(f"_get_tiered_config({path}) failed, returning empty config", exc_info=True)
         return {}
 
 

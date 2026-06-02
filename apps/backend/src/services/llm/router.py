@@ -1712,6 +1712,7 @@ def _get_llm_config(key: str, default=None):
         from core.config_loader import get_angela_config
         return get_angela_config().get_authority("angela_core", {}).get("llm", {}).get(key, default)
     except Exception:
+        logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default
 
 # 全局實例

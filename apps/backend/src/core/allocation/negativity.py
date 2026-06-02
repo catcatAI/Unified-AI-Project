@@ -248,6 +248,7 @@ class NegativityDetector:
             source_axis = parts[2]
             field_name = "_".join(parts[3:]) if len(parts) > 4 else parts[3]
         except (ValueError, IndexError):
+            logger.warning(f"negativity: cannot parse point_id: {point_id}", exc_info=True)
             return CorrectionResult(status="error", reasoning=f"cannot parse point_id: {point_id}")
 
         snapshot = self._timeline.get_at(hist_idx)

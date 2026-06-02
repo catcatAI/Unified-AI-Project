@@ -218,6 +218,7 @@ class AtomicModule:
                 result = safe_eval(safe, local_vars)
                 return result.result if result.success else 0.0
             except Exception:
+                logger.warning(f"eta_axis CUSTOM_EXPR failed for expr: {safe}", exc_info=True)
                 return 0.0
 
         return 0.0

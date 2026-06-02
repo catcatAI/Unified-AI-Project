@@ -17,6 +17,7 @@ def _get_llm_config(key: str, default: Any = None) -> Any:
         cfg = get_angela_config()
         return cfg.get("llm", {}).get(key, default)
     except Exception:
+        logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default
 
 

@@ -207,6 +207,7 @@ class ExecutionMonitor:
                 return TerminalStatus.UNRESPONSIVE
 
         except subprocess.TimeoutExpired:
+            self.logger.warning("Terminal check timed out", exc_info=True)
             return TerminalStatus.UNRESPONSIVE
         except Exception as e:  # broad exception acceptable: terminal check fallback
             self.logger.warning(f"Terminal check failed: {e}", exc_info=True)

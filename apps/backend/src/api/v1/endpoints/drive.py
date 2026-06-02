@@ -86,6 +86,7 @@ class DocumentParser:
                 with open(path, "r", encoding="utf-8") as f:
                     return f.read()
             except Exception:
+                logger.warning(f"Failed to read text file: {path}", exc_info=True)
                 return ""
 
         if suffix in (".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".html", ".css", ".xml"):
@@ -93,6 +94,7 @@ class DocumentParser:
                 with open(path, "r", encoding="utf-8") as f:
                     return f.read()
             except Exception:
+                logger.warning(f"Failed to read source file: {path}", exc_info=True)
                 return ""
 
         if suffix in (".docx",):
@@ -103,6 +105,7 @@ class DocumentParser:
             except ImportError:
                 return f"[Binary file: {path.name}]"
             except Exception:
+                logger.warning(f"Failed to parse docx: {path}", exc_info=True)
                 return ""
 
         if suffix in (".xlsx", ".xls"):
@@ -120,6 +123,7 @@ class DocumentParser:
             except ImportError:
                 return f"[Spreadsheet: {path.name}]"
             except Exception:
+                logger.warning(f"Failed to parse spreadsheet: {path}", exc_info=True)
                 return ""
 
         return f"[File: {path.name} ({suffix})]"

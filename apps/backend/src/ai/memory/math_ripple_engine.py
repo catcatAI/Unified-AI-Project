@@ -710,6 +710,7 @@ class MathRippleEngine:
             result = safe_eval(clean)
             return float(result.result) if result.success else 0.0
         except Exception:
+            logger.warning(f"safe_eval failed for expression: {expr}", exc_info=True)
             return 0.0
 
     def _apply_cognitive_overload(self):

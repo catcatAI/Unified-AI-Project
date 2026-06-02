@@ -146,6 +146,7 @@ def _format_state_snapshot(service: Any) -> str:
             lines.append(f"  [theta] novelty={theta.values.get('novelty',0):.2f}, correction={theta.values.get('correction_urge',0):.2f}")
         return "\n".join(lines)
     except Exception as e:
+        logger.warning(f"State snapshot failed: {e}", exc_info=True)
         return f"State unavailable: {e}"
 
 
@@ -163,6 +164,7 @@ def _format_memory_summary(service: Any, search: str) -> str:
             return "\n".join(lines)
         return "(memory manager not initialized)"
     except Exception as e:
+        logger.warning(f"Memory summary failed: {e}", exc_info=True)
         return f"Memory error: {e}"
 
 
@@ -177,6 +179,7 @@ def _format_config_summary(service: Any) -> str:
         chain = routing.get("fallback_chain", [])
         return f"Intents: {intents}\nComplexity thresholds: {thresholds}\nLLM providers: {providers}\nFallback chain: {chain}"
     except Exception as e:
+        logger.warning(f"Config summary failed: {e}", exc_info=True)
         return f"Config error: {e}"
 
 
@@ -189,6 +192,7 @@ def _format_intent_registry() -> str:
             lines.append(f"  {p.name} (pri={p.priority}): {p.keywords[:5]}")
         return "\n".join(lines)
     except Exception as e:
+        logger.warning(f"Intent registry failed: {e}", exc_info=True)
         return f"Intent registry error: {e}"
 
 
@@ -202,6 +206,7 @@ def _format_llm_routing(service: Any) -> str:
         stats = getattr(llm_svc, "stats", {})
         return f"Backends: {backends}\nActive: {active}\nFallback chain: {chain}\nStats: {stats}"
     except Exception as e:
+        logger.warning(f"LLM routing failed: {e}", exc_info=True)
         return f"LLM routing error: {e}"
 
 

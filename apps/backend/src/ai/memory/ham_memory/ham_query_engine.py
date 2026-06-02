@@ -34,6 +34,7 @@ class HAMQueryEngine:
                     dt = dt.replace(tzinfo=timezone.utc)
                 return dt
             except ValueError:
+                logger.warning(f"Date parse failed for {date_input}, trying fallback format", exc_info=True)
                 # Fallback for simpler date strings, assume UTC
                 return datetime.strptime(date_input, "%Y-%m-%dT%H:%M:%S.%f").replace(
                     tzinfo=timezone.utc

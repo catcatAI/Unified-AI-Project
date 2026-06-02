@@ -74,6 +74,7 @@ def load_json(path: Union[str, Path]) -> Optional[dict[str, Any]]:
         try:
             return json.loads(content)
         except json.JSONDecodeError:
+            logger.warning(f"load_json failed for {path}", exc_info=True)
             return None
     return None
 
@@ -384,6 +385,7 @@ def safe_cast(value: Any, target_type: type, default: Any = None) -> Any:
     try:
         return target_type(value)
     except (ValueError, TypeError):
+        logger.warning(f"safe_cast failed for {value} -> {target_type}", exc_info=True)
         return default
 
 

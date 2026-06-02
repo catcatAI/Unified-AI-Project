@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -6,6 +7,8 @@ from .scanner import ModuleScanner
 from .resolver import DependencyResolver, CycleError
 from .events import EventBus, HealthMonitor
 from .lifecycle import ModuleLifecycle
+
+logger = logging.getLogger(__name__)
 
 
 class ModuleManager:
@@ -94,6 +97,7 @@ class ModuleManager:
                 return HotplugResult(name=descriptor.name, success=False, error=error)
             return HotplugResult(name=descriptor.name, success=True)
         except Exception as e:
+            logger.warning(f"hotplug failed for {path.name}: {e}", exc_info=True)
             return HotplugResult(name=path.name, success=False, error=str(e))
 
     async def unplug(self, name: str) -> HotplugResult:

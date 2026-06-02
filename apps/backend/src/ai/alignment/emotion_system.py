@@ -245,6 +245,7 @@ class EmotionSystem:
                 analysis = TextBlob(text)
                 features["sentiment"] = analysis.sentiment.polarity
             except Exception:
+                logger.warning("TextBlob sentiment analysis failed", exc_info=True)
                 features["sentiment"] = 0.0
         else:
             features["sentiment"] = 0.0

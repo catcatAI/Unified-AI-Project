@@ -409,9 +409,11 @@ class ASTInspector:
             self.tree = ast.parse(self.source)
             return True
         except SyntaxError as e:
+            logger.warning(f"Parse syntax error in {self.filepath}: {e}", exc_info=True)
             self.errors.append(f"SyntaxError at line {e.lineno}: {e.msg}")
             return False
         except Exception as e:
+            logger.warning(f"Parse error in {self.filepath}: {e}", exc_info=True)
             self.errors.append(f"Parse error: {e}")
             return False
 
@@ -746,6 +748,7 @@ class CodeInspector:
             with open(filepath, "r", encoding="utf-8") as f:
                 return len(f.readlines())
         except Exception:
+            logger.warning(f"Failed to count lines in {filepath}", exc_info=True)
             return 0
 
     def _group_by_category(self) -> Dict[str, int]:

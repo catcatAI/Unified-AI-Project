@@ -245,6 +245,7 @@ class SystemHardwareProbe:
 
             return shutil.disk_usage(".").free / (1024**3)
         except Exception:  # broad exception acceptable: disk usage query may fail in restricted environments
+            logger.warning("Failed to detect disk space", exc_info=True)
             return 0.0
 
     def _calculate_tier(self, profile: HardwareProfile):

@@ -267,6 +267,7 @@ class I18nManager:
         try:
             return text.format(**kwargs) if kwargs else text
         except KeyError:
+            logger.warning(f"i18n format_text failed for text: {text[:50]}", exc_info=True)
             return text
 
     def add_translation(self, key: str, language: str, translation: str, category: str = "general"):

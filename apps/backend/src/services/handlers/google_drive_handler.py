@@ -111,4 +111,5 @@ class GoogleDriveHandler:
             else:
                 return f"{size / 1024 ** 3:.1f} GB"
         except (ValueError, TypeError):
+            logger.warning(f"_fmt_size failed for {size_bytes}", exc_info=True)
             return "unknown"

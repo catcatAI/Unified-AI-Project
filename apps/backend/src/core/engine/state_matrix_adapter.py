@@ -30,9 +30,12 @@ Version: 6.2.1
 
 from __future__ import annotations
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Callable, TYPE_CHECKING
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from core.engine.eta_axis import EtaAxisState
@@ -1218,6 +1221,7 @@ class StateMatrixAdapter:
             await async_json_dump(data, str(filepath), ensure_ascii=False, default=str)
             return True
         except Exception:
+            logger.warning(f"save_state({key}) failed", exc_info=True)
             return False
 
     async def load_state(self, key: str) -> Optional[Dict[str, Any]]:
@@ -1229,6 +1233,7 @@ class StateMatrixAdapter:
                 return await async_json_load(str(filepath))
             return None
         except Exception:
+            logger.warning(f"load_state({key}) failed", exc_info=True)
             return None
 
     async def delete_state(self, key: str) -> bool:
@@ -1241,6 +1246,7 @@ class StateMatrixAdapter:
                 return True
             return False
         except Exception:
+            logger.warning(f"delete_state({key}) failed", exc_info=True)
             return False
 
     async def list_keys(self, prefix: str = "") -> list:
@@ -1257,6 +1263,7 @@ class StateMatrixAdapter:
                         keys.append(k)
             return sorted(keys)
         except Exception:
+            logger.warning(f"list_keys({prefix}) failed", exc_info=True)
             return []
 
     def _get_protocol_data_dir(self) -> Path:
@@ -1346,6 +1353,7 @@ class StateMatrixAdapter:
         except ImportError:
             return {"status": "skip", "reason": "code_inspector_integration not available"}
         except Exception as e:
+            logger.warning(f"integrate_inspect failed: {e}", exc_info=True)
             return {"status": "error", "reason": str(e)}
 
     # === Math Verifier Integration ===

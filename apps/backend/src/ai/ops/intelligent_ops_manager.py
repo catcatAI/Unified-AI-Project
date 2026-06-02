@@ -45,6 +45,7 @@ def get_utc_now() -> datetime:
         # 优先使用 timezone.utc
         return datetime.now(timezone.utc)
     except (AttributeError, TypeError):
+        logger.warning("get_utc_now fallback to timezone.utc", exc_info=True)
         # 回退到 UTC 偏移量
         return datetime.now(timezone.utc)
 

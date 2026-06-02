@@ -45,6 +45,7 @@ def _get_spatial_config(key: str, default):
         from core.config_loader import get_angela_config
         return get_angela_config().get_authority("angela_core", {}).get("spatial_math", {}).get(key, default)
     except Exception:
+        logger.warning(f"_get_spatial_config({key}) failed, using default", exc_info=True)
         return default
 
 
@@ -232,6 +233,7 @@ def _get_spatial_config(key: str, default: Any) -> Any:
         spatial_conf = get_formula_config("spatial")
         return spatial_conf.get("gravity", {}).get(key, default)
     except Exception:
+        logger.warning(f"_get_spatial_config({key}) from formula config failed, using default", exc_info=True)
         return default
 
 

@@ -3,6 +3,9 @@ import json
 import os
 import sys
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 class OSBridgeAdapter:
     """
@@ -37,6 +40,7 @@ class OSBridgeAdapter:
                 return json.loads(stdout.decode('utf-8'))
             return {"status": "error", "message": stderr.decode('utf-8')}
         except Exception as e:
+            logger.warning(f"_execute_async failed for {command}: {e}", exc_info=True)
             return {"status": "error", "message": str(e)}
 
     def _execute(self, command, *args):
@@ -48,6 +52,7 @@ class OSBridgeAdapter:
                 return json.loads(result.stdout)
             return {"status": "error", "message": result.stderr}
         except Exception as e:
+            logger.warning(f"_execute failed for {command}: {e}", exc_info=True)
             return {"status": "error", "message": str(e)}
 
     async def get_summary(self):
