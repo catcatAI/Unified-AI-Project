@@ -271,20 +271,5 @@ if __name__ == "__main__":
     # tool_files = model.list_tool_files()
     # print(f"Found tool files (enhanced): {tool_files}")
 
-    # math_tool_path_rel = "src / tools / math_tool.py" # Relative to project root
-    # if os.path.exists(math_tool_path_rel):
-    #     print(f"\nAnalyzing (enhanced) {math_tool_path_rel}")
-    #     structure = model.get_tool_structure(math_tool_path_rel)
-    #     if structure:
-    #         print(json.dumps(asdict(structure), indent = 2, default = str))
-    #     else:
-    #         print("Could not analyze tool structure (enhanced).")
-    # else:
-    #     print(f"Test math_tool.py not found at {math_tool_path_rel} from current working directory.")
 
-    # # Example for a non - existent tool
-    # print("\nAnalyzing non - existent tool (enhanced)")
-    # non_existent_structure = model.get_tool_structure("non_existent_tool.py")
-    # if not non_existent_structure:
-    #     print("Correctly returned None for non - existent tool (enhanced).")
     logger.info("LightweightCodeModel smoke test: structure OK")

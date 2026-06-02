@@ -53,14 +53,6 @@ def demo_tool_context(context_manager):
     # tool_manager.register_tool("tool_001", "代码生成器", "生成代码片段", "cat_001")
     # tool_manager.register_tool("tool_002", "文件阅读器", "读取文件内容", "cat_002")
 
-    # 记录工具使用
-    # tool_manager.record_tool_usage(
-    #     "tool_001",
-    #     {"input": "生成一个Python函数"},
-    #     "def hello():\n    print('Hello World')",
-    #     0.5,
-    #     True
-    # )
 
     # 获取工具上下文
     # tool_context = tool_manager.get_tool_context("tool_001")
@@ -75,36 +67,13 @@ def demo_model_agent_context(context_manager):
     # model_manager = ModelContextManager(context_manager)  # Commented - needs proper import
     # agent_manager = AgentContextManager(context_manager)  # Commented - needs proper import
 
-    # 记录模型调用
-    # model_manager.record_model_call(
-    #     "model_A",
-    #     "model_B",
-    #     {"task": "文本摘要"},
-    #     "这是摘要内容",
-    #     1.2,
-    #     True
-    # )
 
     # 获取模型上下文
     # model_context = model_manager.get_model_context("model_A")
     # if model_context:
     #     logger.info(f"模型上下文: {model_context}")
 
-    # 开始代理协作
-    # collaboration_id = agent_manager.start_collaboration(
-    #     "task_001",
-    #     ["agent_001", "agent_002"]
-    # )
 
-    # 记录协作步骤
-    # agent_manager.record_collaboration_step(
-    #     collaboration_id,
-    #     "agent_001",
-    #     "数据收集",
-    #     {"source": "database"},
-    #     {"data": "sample data"},
-    #     0.8
-    # )
 
     # 完成协作
     # agent_manager.complete_collaboration(collaboration_id)
@@ -125,18 +94,7 @@ def demo_dialogue_context(context_manager):
     # conversation_id = "conv_001"
     # dialogue_manager.start_conversation(conversation_id, ["user", "ai"])
 
-    # 添加消息
-    # dialogue_manager.add_message(conversation_id, "user", "你好, 我想了解AI技术")
-    # dialogue_manager.add_message(conversation_id, "ai", "您好！AI技术是一个很广泛的领域, 包括机器学习、深度学习等")
-    # dialogue_manager.add_message(conversation_id, "user", "能详细介绍一下机器学习吗？")
-    # dialogue_manager.add_message(conversation_id, "ai", "机器学习是AI的一个分支, 它让计算机能够从数据中学习...")
 
-    # 生成上下文摘要
-    # summary = dialogue_manager.generate_context_summary(conversation_id)
-    # if summary:
-    #     logger.info(f"对话摘要 - 关键点: {summary.key_points}")
-    #     logger.info(f"对话摘要 - 实体: {summary.entities}")
-    #     logger.info(f"对话摘要 - 情感: {summary.sentiment}")
 
     # 获取对话上下文
     # conv_context = dialogue_manager.get_conversation_context(conversation_id)
@@ -150,18 +108,7 @@ def demo_memory_context(context_manager):
     """演示记忆上下文"""
     # memory_manager = MemoryContextManager(context_manager)  # Commented - needs proper import
 
-    # 创建记忆
-    # memory_id_1 = memory_manager.create_memory(
-    #     "用户对AI技术表现出浓厚兴趣",
-    #     "short_term",
-    #     {"importance": 0.8}
-    # )
 
-    # memory_id_2 = memory_manager.create_memory(
-    #     "AI技术包括机器学习、深度学习等分支",
-    #     "long_term",
-    #     {"category": "technical_knowledge"}
-    # )
 
     # 访问记忆
     # memory_data = memory_manager.access_memory(memory_id_1)
@@ -186,11 +133,6 @@ def demo_memory_context(context_manager):
 
 def demo_context_retrieval(context_manager):
     """演示上下文检索"""
-    # 创建一些测试上下文
-    # context_id_1 = context_manager.create_context(
-    #     ContextType.TOOL,
-    #     {"name": "测试工具", "description": "用于演示检索功能"}
-    # )
 
     # context_id_2 = context_manager.create_context(
     #     ContextType.MODEL,

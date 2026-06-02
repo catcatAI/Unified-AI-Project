@@ -61,17 +61,6 @@ class ContextHAMIntegration:
                 "updated_at": context.updated_at.isoformat(),
             }
 
-            # 存储到HAM系统
-            # 注意：这里需要根据HAM系统的实际API进行调整
-            # ham_memory_id = self.ham_manager.store_experience(
-            #     raw_data=str(ham_content),
-            #     data_type=f"context_{context.context_type.value}",
-            #     metadata={
-            #         "context_id": context.context_id,
-            #         "source": "context_system",
-            #         "timestamp": datetime.now().isoformat()
-            #     }
-            # )
 
             logger.info(f"Synced context {context_id} to HAM memory")
             return True
@@ -94,27 +83,8 @@ class ContextHAMIntegration:
                 logger.warning("HAM manager not available, skipping sync", exc_info=True)
                 return None
 
-            # 从HAM系统获取记忆
-            # 注意：这里需要根据HAM系统的实际API进行调整
-            # ham_memory = self.ham_manager.recall_gist(ham_memory_id)
-            # if not ham_memory:
-            #     logger.error(f"HAM memory {ham_memory_id} not found")
-            #     return None
 
-            # 解析HAM记忆内容
-            # ham_content = ham_memory.get("rehydrated_gist")
-            # if isinstance(ham_content, str):
-            #     try:
-            #         import json
-            #         ham_content = json.loads(ham_content)
-            #     except json.JSONDecodeError:
-            #         ham_content = {"content": ham_content}
 
-            # 创建上下文
-            # context_id = self.context_manager.create_context(
-            #     ContextType.MEMORY,  # 或根据HAM记忆类型确定
-            #     ham_content
-            # )
 
             # logger.info(f"Synced HAM memory {ham_memory_id} to context {context_id}")
             # return context_id
@@ -134,12 +104,6 @@ class ContextHAMIntegration:
             str: 创建的记忆上下文ID
         """
         try:
-            # 创建记忆上下文
-            # memory_id = self.memory_context_manager.create_memory(
-            #     content=ham_memory_data.get("content", ""),
-            #     memory_type=ham_memory_data.get("type", "short_term"),
-            #     metadata=ham_memory_data.get("metadata")
-            # )
 
             # 创建对应的上下文系统记录
             {
@@ -176,18 +140,7 @@ class ContextHAMIntegration:
                 logger.warning("HAM manager not available, skipping update", exc_info=True)
                 return False
 
-            # 获取记忆上下文
-            # memory_data = self.memory_context_manager.access_memory(memory_id)
-            # if not memory_data:
-            #     logger.error(f"Memory {memory_id} not found")
-            #     return False
 
-            # 更新记忆内容
-            # 注意：这里需要根据HAM系统的实际API进行调整
-            # success = self.ham_manager.update_memory(
-            #     memory_id=memory_data.get("ham_memory_id", memory_id),
-            #     updates=updates
-            # )
 
             # 记录更新上下文
             {
@@ -226,12 +179,6 @@ class ContextHAMIntegration:
                 logger.error(f"Source context {source_context_id} not found", exc_info=True)
                 return False
 
-            # 创建新的记忆上下文
-            # new_memory_id = self.memory_context_manager.create_memory(
-            #     content=str(source_context.content),
-            #     memory_type=target_memory_type,
-            #     metadata=source_context.metadata.copy() if source_context.metadata else {}
-            # )
 
             # 如果源上下文有关联的HAM记忆, 也进行转移
             if "ham_memory_id" in source_context.content and self.ham_manager:
@@ -275,23 +222,10 @@ def example_usage():
     # 创建集成实例(HAM管理器在实际使用中需要传入)
     # integration = ContextHAMIntegration(context_manager, ham_manager=None)
 
-    # 创建上下文
-    # context_id = context_manager.create_context(
-    #     ContextType.MEMORY,
-    #     {"test": "data", "purpose": "integration_example"}
-    # )
 
     # 同步到HAM(在HAM管理器可用时)
     # success = integration.sync_context_to_ham(context_id)
 
-    # 创建记忆上下文
-    # memory_id = integration.create_memory_context_from_ham({
-    #     "id": "ham_mem_001",
-    #     "content": "这是来自HAM的记忆数据",
-    #     "type": "long_term",
-    #     "timestamp": datetime.now().isoformat(),
-    #     "metadata": {"source": "ham_integration_example"}
-    # })
 
     logger.info("Created memory context: memory_id")
 

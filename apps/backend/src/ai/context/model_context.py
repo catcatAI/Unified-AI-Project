@@ -175,14 +175,6 @@ class ModelContextManager:
             #     logger.debug(f"No context found for model {model_id}")
             #     return None
 
-            # 返回最新的上下文
-            # latest_context = max(contexts, key=lambda c: c.updated_at)
-            # return {
-            #     "context_id": latest_context.context_id,
-            #     "content": latest_context.content,
-            #     "metadata": latest_context.metadata,
-            #     "updated_at": latest_context.updated_at.isoformat()
-            # }
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for model {model_id}: {e}", exc_info=True)
@@ -341,14 +333,6 @@ class AgentContextManager:
             #     logger.debug(f"No context found for collaboration {collaboration_id}")
             #     return None
 
-            # 返回最新的上下文
-            # latest_context = max(contexts, key=lambda c: c.updated_at)
-            # return {
-            #     "context_id": latest_context.context_id,
-            #     "content": latest_context.content,
-            #     "metadata": latest_context.metadata,
-            #     "updated_at": latest_context.updated_at.isoformat()
-            # }
             return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}", exc_info=True)

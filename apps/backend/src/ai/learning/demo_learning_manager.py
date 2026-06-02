@@ -316,13 +316,6 @@ class DemoLearningManager:
     def _get_memory_usage(self) -> Dict[str, Any]:
         """獲取內存使用情況"""
         try:
-            # import psutil # Uncomment if psutil is installed
-            # process = psutil.Process()
-            # return {
-            #     'rss': process.memory_info().rss,
-            #     'vms': process.memory_info().vms,
-            #     'percent': process.memory_percent()
-            # }
             return {"error": "psutil not available or not implemented"}  # Placeholder
         except ImportError:
             return {"error": "psutil not available"}

@@ -111,9 +111,4 @@ class HAMCoreStorage:
         if self.resource_awareness_service:
             return self.resource_awareness_service.get_available_disk_space_gb(self.storage_dir)
 
-        # Fallback / mock implementation if service is not provided
-        # psutil is not available in the sandbox, so we'll mock it.
-        # In a real environment, you would use:
-        # total, used, free = psutil.disk_usage(self.storage_dir)
-        # return used / (1024**3) # Convert bytes to GB
         return 0.0  # Mock value for sandbox environment

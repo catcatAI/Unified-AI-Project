@@ -76,13 +76,6 @@ def deserialize_context(data: bytes):
         #     context_type=ContextType(context_dict["context_type"])
         # )
 
-        # context.created_at = datetime.fromisoformat(context_dict["created_at"])
-        # context.updated_at = datetime.fromisoformat(context_dict["updated_at"])
-        # context.status = ContextStatus(context_dict["status"])
-        # context.metadata = context_dict["metadata"]
-        # context.content = context_dict["content"]
-        # context.version = context_dict["version"]
-        # context.tags = context_dict["tags"]
 
         # return context
         return None  # Placeholder
@@ -249,11 +242,6 @@ def merge_contexts(context1, context2):
         Context: 合并后的上下文对象
     """
     try:
-        # 创建新的上下文对象, 使用较新的ID和类型
-        # merged_context = Context(  # Commented - needs proper import
-        #     context_id=context2.context_id if context2.updated_at > context1.updated_at else context1.context_id,
-        #     context_type=context2.context_type if context2.updated_at > context1.updated_at else context1.context_type
-        # )
 
         # 合并时间戳(取较新的)
         # merged_context.created_at = min(context1.created_at, context2.created_at)
@@ -305,11 +293,6 @@ if __name__ == "__main__":
     # 测试工具函数
     # from .storage.base import Context, ContextType  # Commented - needs proper import
 
-    # 创建测试上下文
-    # test_context = Context("test_001", ContextType.TOOL)
-    # test_context.content = {"test": "data", "value": 123}
-    # test_context.metadata = {"source": "test", "priority": 1}
-    # test_context.tags = ["test", "example"]
 
     # 测试序列化和反序列化
     # serialized = serialize_context(test_context)

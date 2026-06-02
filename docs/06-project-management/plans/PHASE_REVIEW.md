@@ -31,7 +31,7 @@
 | 5 | **函數無文檔字串** | **30.5% (1,714/5,623)** 無 docstring | 不清楚 | ⬜ |
 | 6 | **`except Exception` 無日誌** | 原302沉默, 40 HIGH `except Exception:pass` | 不細緻 | **🟡 40/40 HIGH 已修復** |
 | 7 | **超長函數 (>100行)** | **40 個** (最長 463 行) | 不清晰 | ⬜ |
-| 8 | **註解掉的代碼** | **94 塊, 863 行** | 不有序 | ⬜ |
+| 8 | **註解掉的代碼** | 原94塊 (40已刪=279行, 54保留=文件頭) | 不有序 | **🟡 40/40 可刪的已清理** |
 | 9 | **未使用的 typing import** | **247 處 (247 文件)** | 不有序 | ⬜ |
 | 10 | **阻塞 call 在 async 中** | 3處 `subprocess.run` 在 async `set_wallpaper` | 不穩定 | **✅ 已修復** |
 
@@ -155,6 +155,7 @@
 > **會話 4**: 2 並行代理 (5 測試升級 + 12 LOW except 修復)
 > **會話 5**: 2 並行代理 (5 測試深度升級 + 50 LOW except 修復)
 > **會話 6**: 2 並行代理 (5 測試升級 + 33 LOW except 修復)
+> **會話 7**: 2 並行代理 (5 測試升級 + 40 註解塊清理)
 
 | 任務 | 修復內容 | 數量 | 狀態 |
 |------|---------|:----:|:----:|
@@ -166,6 +167,8 @@
 | **R5 批3** | 煙霧→實質 (angela_error, art_learning_workflow, life_intensity II, causal_chain II, non_paradox II) | 5 檔案, 10 測試 | ✅ |
 | **R5 批4** | 深度升級 (non_paradox/causal_chain 擴充 + deep_mapper/axis/axis_field) | 5 檔案, 73 測試 | ✅ |
 | **R5 批5** | 煙霧→實質 (lis_manager, code_learning, context_storage_memory, value_assessment, symbolic_space) | 5 檔案, 62 測試 | ✅ |
+| **R5 批6** | 煙霧→實質 (influence_applicator, precision_matrix, code_analysis_types, importance_scorer, input_sensor) | 5 檔案, 35 測試 | ✅ |
+| **R8** | 清理註解掉的代碼區塊 | 40 區塊, 279 行 (54 區塊保留=文件頭) | ✅ |
 
 ---
 
@@ -179,7 +182,7 @@
 | R2 | **為 259 pass 語句增加實作** | 僅 18 真實未完成, 已全部消除 | **✅ 0/18** |
 | R3 | **消除沉默 except** | 40+13+95 已修復, 剩零 | ✅ **~100%** |
 | R4 | **修復 3 處 async 阻塞** | `subprocess.run` 在 async 函數中會阻塞 event loop | **✅ 已修復** |
-| R5 | **升級煙霧測試** | 25 檔案 177 測試已升級/新增, 剩 90 煙霧測試 | 🟡 177/267 |
+| R5 | **升級煙霧測試** | 30 檔案 212 測試已升級/新增, 剩 55 煙霧測試 | 🟡 212/267 |
 
 ### P1 — 品質性缺陷 (2-3 個會話)
 
