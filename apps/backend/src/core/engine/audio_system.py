@@ -488,7 +488,7 @@ class AudioSystem:
                 try:
                     current_index = self.playlist.index(self.current_track)
                 except ValueError:
-                    pass
+                    logger.warning("Current track not found in playlist", exc_info=True)
 
             next_index = (current_index + 1) % len(self.playlist)
             await self.play_music(self.playlist[next_index])
@@ -501,7 +501,7 @@ class AudioSystem:
                 try:
                     current_index = self.playlist.index(self.current_track)
                 except ValueError:
-                    pass
+                    logger.warning("Current track not found in playlist", exc_info=True)
 
             prev_index = (current_index - 1) % len(self.playlist)
             await self.play_music(self.playlist[prev_index])

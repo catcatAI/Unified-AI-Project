@@ -332,7 +332,7 @@ class HSPVersionNegotiator:
                 )
                 return sorted_newer[0]
         except ValueError:
-            pass
+            logger.warning("Failed to parse versions for sorting", exc_info=True)
 
         return None
 

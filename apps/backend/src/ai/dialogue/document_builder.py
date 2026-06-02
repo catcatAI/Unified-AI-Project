@@ -115,7 +115,7 @@ class DocumentBuilder:
                         json_str = json_str.split("):", 1)[1] if "):" in json_str else json_str
                         codex_data = json.loads(json_str)
                     except (json.JSONDecodeError, IndexError):
-                        pass
+                        logger.warning("Failed to parse codex data", exc_info=True)
             return codex_data
         except Exception as e:
             logger.debug(f"[DocumentBuilder] Codex query failed: {e}")

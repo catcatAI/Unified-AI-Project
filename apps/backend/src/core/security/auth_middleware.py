@@ -139,7 +139,7 @@ class AuthMiddleware:
                     self.sessions.pop(session_id, None)
                     return None
             except (ValueError, TypeError):
-                pass
+                logger.warning("Failed to parse session expiry", exc_info=True)
         return session
 
     def revoke_session(self, session_id: str) -> bool:

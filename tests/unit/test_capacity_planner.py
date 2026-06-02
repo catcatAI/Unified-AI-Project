@@ -1,28 +1,34 @@
-"""Smoke tests for ai/ops/capacity_planner.py"""
+"""Tests for ai/ops/capacity_planner.py"""
 import pytest
 
 
 class TestCapacityPlanner:
-    """Basic smoke tests for CapacityPlanner"""
+    """Tests for CapacityPlanner"""
 
     def test_import(self):
-        """Verify module can be imported"""
-        try:
-            from ai.ops.capacity_planner import CapacityPlanner
-            assert CapacityPlanner is not None
-        except ImportError as e:
-            pytest.skip(f"CapacityPlanner not available: {e}")
+        """Verify module exposes expected classes"""
+        from ai.ops.capacity_planner import (
+            CapacityPlanner, ResourceUsage, CapacityPrediction,
+            ScalingPlan,
+        )
+        assert CapacityPlanner is not None
+        assert hasattr(CapacityPlanner, 'collect_resource_usage')
+        assert hasattr(CapacityPlanner, 'get_capacity_predictions')
+        assert hasattr(CapacityPlanner, 'get_scaling_plans')
+        assert hasattr(CapacityPlanner, 'get_capacity_report')
+        assert hasattr(CapacityPlanner, 'approve_scaling_plan')
 
     def test_instantiation(self):
-        """Verify basic instantiation"""
-        try:
-            from ai.ops.capacity_planner import CapacityPlanner
-            instance = CapacityPlanner()
-            assert instance is not None
-        except ImportError as e:
-            pytest.skip(f"CapacityPlanner not available: {e}")
-        except Exception as e:
-            pytest.skip(f"CapacityPlanner init failed (expected in CI): {e}")
+        """Verify basic instantiation and default config"""
+        from ai.ops.capacity_planner import CapacityPlanner
+        instance = CapacityPlanner()
+        assert instance.usage_history == []
+        assert instance.capacity_plans == {}
+        assert instance.prediction_window == 24
+        assert instance.scaling_threshold == 0.8
+        assert instance.min_data_points == 168
+        assert instance.cost_per_cpu == 0.05
+        assert instance.cost_per_gb == 0.01
 
     def test_instantiation_with_config(self):
         """Verify instantiation with config"""

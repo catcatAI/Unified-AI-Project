@@ -125,7 +125,8 @@ $sc.Save()
             res = subprocess.run(["node", "--version"], capture_output=True, text=True)
             if res.returncode == 0:
                 return res.stdout.strip()
-        except FileNotFoundError: pass
+        except FileNotFoundError:
+            logger.warning("Node.js not found", exc_info=True)
         return None
 
     def resolve_pnpm_workspace(self) -> bool:

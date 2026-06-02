@@ -1,7 +1,10 @@
+import logging
 from collections.abc import Callable
 from typing import Optional
 
 from .models import ModuleStatus, HealthStatus
+
+logger = logging.getLogger(__name__)
 
 
 class EventBus:
@@ -19,7 +22,7 @@ class EventBus:
             try:
                 handlers.remove(handler)
             except ValueError:
-                pass
+                logger.warning("Handler not found in subscribers list", exc_info=True)
             if not handlers:
                 del self._subscribers[event]
 

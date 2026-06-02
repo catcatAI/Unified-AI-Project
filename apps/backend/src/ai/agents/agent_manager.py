@@ -727,7 +727,7 @@ if __name__ == "__main__":
                 ):
                     os.unlink(self._router_path)
             except OSError:
-                pass
+                logger.warning("Failed to unlink router path", exc_info=True)
 
     async def wait_for_agent_ready(
         self,

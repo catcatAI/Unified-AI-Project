@@ -117,7 +117,7 @@ class HAMBackgroundTasks:
                     del self.core_memory_store[mem_id]
                     logger.debug(f"Deleted memory: {mem_id}")
                 except KeyError:
-                    pass
+                    logger.warning("Memory ID not found in store", exc_info=True)
             if hasattr(self.core_storage, "_save_core_memory_to_file"):
                 await self.core_storage._save_core_memory_to_file(
                     self.core_memory_store, self.next_memory_id, self.fernet

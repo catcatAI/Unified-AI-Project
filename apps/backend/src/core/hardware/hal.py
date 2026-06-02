@@ -303,7 +303,7 @@ class HardwareManager:
                     "memory": torch.cuda.get_device_properties(0).total_memory,
                 }
         except (ImportError, NameError):
-            pass
+            logger.warning("Failed to detect CUDA GPU", exc_info=True)
 
     def _detect_tpu(self):
         """检测TPU / Detect TPU"""
@@ -314,7 +314,7 @@ class HardwareManager:
                 "devices": torch_xla._XLAC._xla_num_devices(),
             }
         except (ImportError, AttributeError):
-            pass
+            logger.warning("Failed to detect TPU", exc_info=True)
 
     def get_optimal_precision(self) -> PrecisionLevel:
         """获取最优精度 / Get optimal precision"""

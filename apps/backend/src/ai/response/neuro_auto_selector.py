@@ -731,7 +731,7 @@ class NeuroAutoSelector:
                         try:
                             available.append(AutoBackendChoice(name))
                         except ValueError:
-                            pass
+                            logger.warning("Invalid AutoBackendChoice name", exc_info=True)
                 except Exception:
                     continue
         except Exception as e:

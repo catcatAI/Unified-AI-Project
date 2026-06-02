@@ -327,7 +327,7 @@ class ArtLearningSystem:
         try:
             calm = state_matrix.gamma.values.get("calm", 0.5)
         except AttributeError:
-            pass
+            logger.warning("Failed to get calm value from state matrix", exc_info=True)
         self.aesthetic_preferences["saturation"] = max(
             0.5, min(2.0,
                 self.aesthetic_preferences.get("saturation", 1.0)
