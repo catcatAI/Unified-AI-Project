@@ -61,7 +61,8 @@ class Axis:
 
     _registry: AxisFieldRegistry = field(default_factory=AxisFieldRegistry)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if not self._values:
             self._init_from_registry()
 

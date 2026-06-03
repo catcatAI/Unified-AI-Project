@@ -38,7 +38,7 @@ class RetryPolicy:
         self.max_delay = max_delay
 
     def __call__(self, func: Callable) -> Callable:
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs) -> str:
             last_err = None
             for attempt in range(self.max_attempts):
                 try:
@@ -84,7 +84,7 @@ class CircuitBreaker:
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def __call__(self, func: Callable) -> Callable:
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs) -> str:
             if self.state == "OPEN":
                 if (time.time() - self.last_failure_time) > self.recovery_timeout:
                     self.state = "HALF_OPEN"
@@ -112,7 +112,7 @@ class CircuitBreaker:
 
         return wrapper
 
-    def _on_success(self):
+    def _on_success(self) -> None:
         if self.state == "HALF_OPEN":
             self.logger.info("Circuit Breaker transitioned to CLOSED. Service recovered.")
             self.state = "CLOSED"

@@ -17,7 +17,7 @@ class LearningLogDB:
         self.db_path = db_path
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Initializes the SQLite database and creates the 'strategy_logs' table if it doesn't exist."""
         conn = None
         try:
@@ -93,7 +93,7 @@ class LearningLogDB:
             )
         return log_entries
 
-    def delete_db_file(self):
+    def delete_db_file(self) -> None:
         """Deletes the database file. Use with caution, primarily for testing."""
         if os.path.exists(self.db_path):
             os.remove(self.db_path)

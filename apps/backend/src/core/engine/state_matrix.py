@@ -62,6 +62,7 @@ class AllocateDecision:
     reasoning: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict format."""
         return {
             "action": self.action,
             "target": self.target,
@@ -83,6 +84,7 @@ class AxisSemanticAnchor:
     keywords: List[str]
 
     def compute_resonance(self, input_vector: List[float]) -> float:
+        """Compute resonance."""
         if len(input_vector) != len(self.semantic_vector):
             return 0.0
         norm_in = np.linalg.norm(input_vector)
@@ -304,7 +306,7 @@ class StateMatrix4D:
         self._setup_systems()
         self._setup_history()
 
-    def _setup_dimensions(self):
+    def _setup_dimensions(self) -> None:
         """設置維度初始狀態 (從分層配置讀取)"""
         from app_config_loader import get_formula_config
         matrix_conf = get_formula_config("matrix")
@@ -323,7 +325,7 @@ class StateMatrix4D:
             setattr(self, name, state) # 保持 self.alpha 等屬性兼容性
             self.dimensions[name] = state
 
-    def _setup_systems(self):
+    def _setup_systems(self) -> None:
         """設置子系統與矩陣常數"""
         from app_config_loader import get_formula_config
         matrix_conf = get_formula_config("matrix")
@@ -347,7 +349,7 @@ class StateMatrix4D:
         self.semantic_anchors = {}
         self._init_semantic_anchors()
 
-    def _setup_history(self):
+    def _setup_history(self) -> None:
         """設置歷史紀錄與追蹤"""
         from app_config_loader import get_formula_config
         matrix_conf = get_formula_config("matrix")
@@ -1045,6 +1047,7 @@ Returns:
         logger.info("[Theta-Neg] Negativity system reset")
 
     def migrate_buffer_to_axis(self, axis_name: str) -> int:
+        """Log a diagnostic message."""
         if axis_name not in self.dimensions:
             return 0
         count = 0
@@ -1110,7 +1113,7 @@ Returns:
         if len(self.history) > self.max_history:
             self.history.pop(0)
 
-    def _get_temporal_state(self):
+    def _get_temporal_state(self) -> str:
         """獲取關聯的 TemporalState（用於雙軌整合）"""
         if not hasattr(self, "_temporal_state"):
             from core.state.temporal import TemporalState
@@ -1259,12 +1262,15 @@ Returns:
     def perform_spatial_reasoning(
         self, target_dim: str, op: "CognitiveOp", magnitude: float
     ) -> Tuple[float, float, float]:
+        """Execute the perform spatial reasoning operation."""
         return _psr(self.dimensions, target_dim, op, magnitude)
 
     def get_dimension_value(self, dim_name: str) -> float:
+        """Get the dimension value by self."""
         return _gdv(self.dimensions, dim_name)
 
     def get_position(self) -> Dict[str, Any]:
+        """Get the position by self."""
         return _gp(self.dimensions)
 
     def get_coordinates(self) -> Dict[str, Any]:
@@ -1292,13 +1298,16 @@ Returns:
         self.apply_epsilon_influence()
         return result
 
-    def apply_intent_gravity(self, pull_factor: float = 0.05):
+    def apply_intent_gravity(self, pull_factor: float = 0.05) -> None:
+        """Execute the apply intent gravity operation."""
         apply_intent_gravity(self.dimensions, pull_factor)
 
     def set_intent_target(self, dimension: str, target: Tuple[float, float, float]) -> None:
+        """Set the intent target."""
         set_intent_target(self.dimensions, dimension, target)
 
-    def apply_inter_dimensional_drag(self, trigger_dim: str, drag_factor: float = 0.02):
+    def apply_inter_dimensional_drag(self, trigger_dim: str, drag_factor: float = 0.02) -> None:
+        """Execute the apply inter dimensional drag operation."""
         apply_inter_dimensional_drag(self.dimensions, trigger_dim, drag_factor)
 
     def compute_wellbeing(self) -> float:

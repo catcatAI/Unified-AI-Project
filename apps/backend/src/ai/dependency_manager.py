@@ -64,7 +64,7 @@ class DependencyManager:
         self._load_config(config_path)
         self._setup_dependency_statuses()
 
-    def _load_config(self, config_path: Union[str, Path]):
+    def _load_config(self, config_path: Union[str, Path]) -> None:
         """Load dependency configuration from YAML file."""
         try:
             with open(config_path, "r", encoding="utf-8") as f:
@@ -102,7 +102,7 @@ class DependencyManager:
             },
         }
 
-    def _setup_dependency_statuses(self):
+    def _setup_dependency_statuses(self) -> None:
         """Set up dependency status objects without loading them."""
         all_deps = self._config.get("dependencies", {}).get("core", []) + self._config.get(
             "dependencies", {}
@@ -114,7 +114,7 @@ class DependencyManager:
                 if dep_name:
                     self._dependencies[dep_name] = DependencyStatus(dep_name)
 
-    def _check_dependency_availability(self, dep_name: str, config: Dict[str, Any]):
+    def _check_dependency_availability(self, dep_name: str, config: Dict[str, Any]) -> None:
         """Check if a dependency and its fallbacks are available (on-demand)."""
         status = self._dependencies[dep_name]
 
@@ -260,6 +260,6 @@ class DependencyManager:
 dependency_manager = DependencyManager()
 
 
-def print_dependency_report():
+def print_dependency_report() -> None:
     """Print the dependency status report."""
     logger.info(dependency_manager.get_dependency_report())

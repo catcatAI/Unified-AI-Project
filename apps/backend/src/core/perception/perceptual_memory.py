@@ -104,7 +104,7 @@ class PerceptualMemory:
                     return obj_id
         return None
 
-    def _evict_oldest(self):
+    def _evict_oldest(self) -> None:
         """淘汰最舊的記憶"""
         oldest_id = min(self.objects.keys(), key=lambda k: self.objects[k].last_seen)
         obj = self.objects.pop(oldest_id)
@@ -112,5 +112,6 @@ class PerceptualMemory:
             self.label_index[obj.label].remove(oldest_id)
 
     def clear(self) -> None:
+        """Clear all objects and indices from memory."""
         self.objects.clear()
         self.label_index.clear()

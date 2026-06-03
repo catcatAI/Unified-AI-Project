@@ -65,7 +65,7 @@ except Exception:
 logger = logging.getLogger(__name__)
 
 
-def _ensure_src_in_path():
+def _ensure_src_in_path() -> None:
     """Ensure src directory is in Python path (called once at module init)."""
     _backend_dir = Path(__file__).parent.parent.parent
     _src_path = str(_backend_dir / "src")
@@ -143,7 +143,7 @@ class SystemMetricsManager:
         if not PSUTIL_AVAILABLE:
             return 0.0
 
-        def compute():
+        def compute() -> str:
             return psutil.cpu_percent(interval=0.1)
 
         return self._get_cached_or_compute("cpu_percent", compute)
@@ -153,7 +153,7 @@ class SystemMetricsManager:
         if not PSUTIL_AVAILABLE:
             return 0.0
 
-        def compute():
+        def compute() -> str:
             return psutil.virtual_memory().percent
 
         return self._get_cached_or_compute("memory_percent", compute)
@@ -163,7 +163,7 @@ class SystemMetricsManager:
         if not PSUTIL_AVAILABLE:
             return 0.0
 
-        def compute():
+        def compute() -> str:
             return psutil.disk_usage("/").percent
 
         return self._get_cached_or_compute("disk_percent", compute)
@@ -176,7 +176,7 @@ class SystemMetricsManager:
             "disk_percent": self.get_disk_percent(),
         }
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """清除缓存"""
         self._cache.clear()
         self._cache_timestamp.clear()
@@ -212,7 +212,7 @@ class MessageManager:
         """检查消息是否重复"""
         return message_id in self.message_cache
 
-    def cache_message(self, message_id: str, message_data: Dict[str, Any]):
+    def cache_message(self, message_id: str, message_data: Dict[str, Any]) -> None:
         """缓存消息"""
         self.message_cache[message_id] = {
             "data": message_data,
@@ -243,7 +243,7 @@ class MessageManager:
 
         return merged
 
-    def record_state(self, state_id: str, state_data: Dict[str, Any]):
+    def record_state(self, state_id: str, state_data: Dict[str, Any]) -> None:
         """记录状态历史"""
         if state_id not in self.state_history:
             self.state_history[state_id] = []

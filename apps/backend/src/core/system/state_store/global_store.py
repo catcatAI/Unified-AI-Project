@@ -42,7 +42,7 @@ class GlobalStateStore:
         self._dirty: Dict[str, bool] = {k: False for k in self._states.keys()}
         self._persistence: Optional[Any] = None
 
-    def set_persistence(self, backend: Any):
+    def set_persistence(self, backend: Any) -> None:
         """Attach a persistence backend (must implement StatePersistence protocol)."""
         self._persistence = backend
         logger.info(f"[StateStore] Persistence backend attached: {backend.__class__.__name__}")
@@ -98,7 +98,7 @@ class GlobalStateStore:
                 count += 1
         return count
 
-    def update_state(self, domain: str, data: Dict[str, Any], notify: bool = True):
+    def update_state(self, domain: str, data: Dict[str, Any], notify: bool = True) -> None:
         """Update state for a specific domain."""
         if domain not in self._states:
             logger.warning(f"[StateStore] Attempted to update unknown domain: {domain}", exc_info=True)
@@ -114,7 +114,7 @@ class GlobalStateStore:
             self._notify_subscribers(domain)
         self._fire_state_change_hook(domain, data)
 
-    def _fire_state_change_hook(self, domain: str, data: Dict[str, Any]):
+    def _fire_state_change_hook(self, domain: str, data: Dict[str, Any]) -> None:
         """Fire on_state_change plugin hook (non-blocking)."""
         try:
             from core.plugin import plugin_manager as _pm
@@ -138,7 +138,7 @@ class GlobalStateStore:
             return self._dirty.get(domain, False)
         return any(self._dirty.values())
 
-    def subscribe(self, domain: str, callback: Callable):
+    def subscribe(self, domain: str, callback: Callable) -> None:
         """Subscribe to changes in a specific domain."""
         if domain in self._subscribers:
             self._subscribers[domain].append(callback)

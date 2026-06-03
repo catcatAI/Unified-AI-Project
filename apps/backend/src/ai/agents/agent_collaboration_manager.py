@@ -51,7 +51,7 @@ class AgentCollaborationManager:
         if self.hsp_connector:
             self.hsp_connector.register_on_task_result_callback(self._handle_task_result)
 
-    async def register_agent_capability(self, agent_id: str, capability_id: str):
+    async def register_agent_capability(self, agent_id: str, capability_id: str) -> None:
         """Register an agent's capability for collaboration."""
         async with self.collaboration_lock:
             if agent_id not in self.agent_capabilities:
@@ -229,7 +229,7 @@ class AgentCollaborationManager:
 
         return {"status": "success", "results": results}
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the collaboration manager and clean up resources."""
         logger.info("Shutting down AgentCollaborationManager")
         # In a more complex implementation, we might want to cancel pending tasks

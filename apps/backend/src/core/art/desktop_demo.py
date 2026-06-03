@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-async def generate_and_save_to_desktop():
+async def generate_and_save_to_desktop() -> str:
     """生成 Angela 作品并保存到桌面"""
     desktop = Path.home() / "OneDrive" / "Desktop"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

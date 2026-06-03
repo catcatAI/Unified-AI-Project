@@ -66,7 +66,7 @@ class ReasoningSystem:
         self._initialize_core_constraints()
         self._seed_symbolic_ethics()
 
-    def _initialize_core_constraints(self):
+    def _initialize_core_constraints(self) -> None:
         """初始化核心逻辑约束"""
         core_constraints = [
             LogicalConstraint(
@@ -87,7 +87,7 @@ class ReasoningSystem:
         for constraint in core_constraints:
             self.logical_constraints[constraint.constraint_id] = constraint
 
-    def _seed_symbolic_ethics(self):
+    def _seed_symbolic_ethics(self) -> None:
         """在符號空間中種下基本的倫理節點，用於圖路徑偵測。"""
         sensitive_nodes = ["Harm", "Violence", "Deception", "Policy_Violation", "Unethical"]
         for node in sensitive_nodes:
@@ -240,7 +240,7 @@ class ReasoningSystem:
             base_confidence += 0.2
         return min(1.0, base_confidence)
 
-    def add_constraint(self, constraint: LogicalConstraint):
+    def add_constraint(self, constraint: LogicalConstraint) -> None:
         """添加新的逻辑约束"""
         self.logical_constraints[constraint.constraint_id] = constraint
         logger.info(f"[{self.system_id}] 添加约束: {constraint.constraint_id}")
@@ -257,7 +257,7 @@ class ReasoningSystem:
         """获取推理历史"""
         return self.reasoning_history[-limit:]
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """清空推理历史"""
         self.reasoning_history.clear()
         logger.info(f"[{self.system_id}] 推理历史已清空")

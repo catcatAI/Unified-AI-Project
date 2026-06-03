@@ -113,7 +113,8 @@ class Receptor:
     last_stimulus: Optional[datetime] = None
     current_activation: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if self.density < 0 or self.density > 1:
             raise ValueError("Density must be between 0 and 1")
         if self.sensitivity < 0 or self.sensitivity > 1:
@@ -133,7 +134,8 @@ class TactileStimulus:
     source: str = "unknown"
     emotional_tag: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if not self.receptor_types:
             self.receptor_types = self._get_receptors_for_tactile()
 
@@ -208,7 +210,7 @@ class PhysiologicalTactileSystem:
         self._initialize_receptors()
         self._initialize_emotional_mappings()
 
-    def _initialize_receptors(self):
+    def _initialize_receptors(self) -> None:
         """初始化所有身体部位的受体"""
         receptor_configs = {
             ReceptorType.MEISSNER: {"density": 0.8, "adaptation": 0.9},
@@ -265,7 +267,7 @@ class PhysiologicalTactileSystem:
                 )
                 self.receptors[body_part].append(receptor)
 
-    def _initialize_emotional_mappings(self):
+    def _initialize_emotional_mappings(self) -> None:
         """初始化情绪-触觉映射"""
         self.emotional_mappings = {
             "joy": EmotionalTactileMapping(
@@ -312,7 +314,7 @@ class PhysiologicalTactileSystem:
             ),
         }
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the tactile system"""
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
@@ -327,7 +329,7 @@ class PhysiologicalTactileSystem:
             except asyncio.CancelledError:
                 pass
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """Background update loop for receptor adaptation"""
         while self._running:
             await self._adapt_receptors()
@@ -346,7 +348,7 @@ class PhysiologicalTactileSystem:
                         if receptor.current_activation < 0.01:
                             receptor.current_activation = 0.0
 
-    async def _decay_stimuli(self):
+    async def _decay_stimuli(self) -> None:
         """Decay active stimuli over time"""
         current_time = datetime.now()
         remaining_stimuli = []
@@ -358,7 +360,7 @@ class PhysiologicalTactileSystem:
 
         self.active_stimuli = remaining_stimuli
 
-    def set_arousal_level(self, level: float):
+    def set_arousal_level(self, level: float) -> None:
         """
         Set the arousal level which affects tactile sensitivity
 
@@ -368,7 +370,7 @@ class PhysiologicalTactileSystem:
         self.arousal_level = max(0.0, min(100.0, level))
         self._update_sensitivities()
 
-    def _update_sensitivities(self):
+    def _update_sensitivities(self) -> None:
         """Update receptor sensitivities based on arousal"""
         # Higher arousal = increased sensitivity for most receptors
         arousal_factor = 0.5 + (self.arousal_level / 100.0) * 1.0
@@ -451,7 +453,7 @@ class PhysiologicalTactileSystem:
             spatial_token=(*stimulus.location.coordinate, datetime.now().timestamp())
         )
 
-    def _check_thresholds(self, body_part: BodyPart, intensity: float):
+    def _check_thresholds(self, body_part: BodyPart, intensity: float) -> None:
         """Check if any thresholds are exceeded"""
         if body_part in self._on_threshold_callbacks:
             for callback in self._on_threshold_callbacks[body_part]:
@@ -461,7 +463,7 @@ class PhysiologicalTactileSystem:
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
-    def register_stimulus_callback(self, callback: Callable[[TactileStimulus], None]):
+    def register_stimulus_callback(self, callback: Callable[[TactileStimulus], None]) -> None:
         """Register a callback for stimulus events"""
         self._on_stimulus_callbacks.append(callback)
 
@@ -487,7 +489,7 @@ class PhysiologicalTactileSystem:
         receptors = self.receptors.get(body_part, [])
         return {r.receptor_type: r.current_activation for r in receptors}
 
-    def apply_emotional_context(self, emotion: str, intensity: float = 1.0):
+    def apply_emotional_context(self, emotion: str, intensity: float = 1.0) -> None:
         """
         Apply emotional context to tactile processing
 
@@ -1449,8 +1451,9 @@ class AdaptationMechanism:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
         # Initialize the system
+        """Run a demonstration."""
         system = PhysiologicalTactileSystem()
         await system.initialize()
 

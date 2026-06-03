@@ -240,7 +240,7 @@ class AngelaRealVoice:
             return {}
 
 
-async def test_voice():
+async def test_voice() -> None:
     """测试语音生成"""
     logger.info("🧪 测试 Edge TTS...")
 

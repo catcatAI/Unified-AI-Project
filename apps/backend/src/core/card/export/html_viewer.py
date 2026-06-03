@@ -52,6 +52,7 @@ class HTMLViewer:
     """
 
     def render(self, cards: List[Card], title: str = "Card Viewer") -> str:
+        """Render the content for output."""
         cards_html = "\n".join(self._render_card(c) for c in cards)
         return HTML_TEMPLATE.format(
             title=title,
@@ -60,6 +61,7 @@ class HTMLViewer:
         )
 
     def render_to_file(self, cards: List[Card], path: str, title: str = "Card Viewer") -> bool:
+        """Log a diagnostic message."""
         try:
             dest = Path(path)
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -90,7 +92,7 @@ class HTMLViewer:
 
         conflicts_html = ""
         if card.conflicts:
-            def _render_conflict(c):
+            def _render_conflict(c) -> str:
                 parts = [f'<div class="conflict">{c.type.name}: {c.description}']
                 if c.resolution:
                     parts.append(f" → {c.resolution}")

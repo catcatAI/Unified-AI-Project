@@ -39,7 +39,7 @@ class TactileService:
 
         logger.info("Tactile Service initialized with material modeling capabilities")
 
-    async def _init_sync_listener(self):
+    async def _init_sync_listener(self) -> None:
         """初始化同步監聽器"""
         try:
             await sync_manager.register_client("tactile_service", self._handle_sync_event)
@@ -56,7 +56,7 @@ class TactileService:
                 self.enabled = enabled
                 logger.info(f"Tactile Service enabled status changed to: {enabled}")
 
-    def _init_standard_materials(self):
+    def _init_standard_materials(self) -> None:
         """初始化一些標準材質的記憶"""
         self.memory.learn_material(
             "polished_steel",

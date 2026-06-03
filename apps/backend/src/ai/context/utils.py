@@ -57,7 +57,7 @@ def serialize_context(context) -> bytes:
         raise
 
 
-def deserialize_context(data: bytes):
+def deserialize_context(data: bytes) -> None:
     """
     反序列化上下文对象
 
@@ -230,7 +230,7 @@ def validate_context(context) -> bool:
         return False
 
 
-def merge_contexts(context1, context2):
+def merge_contexts(context1, context2) -> None:
     """
     合并两个上下文对象
 

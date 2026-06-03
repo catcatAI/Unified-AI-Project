@@ -74,7 +74,7 @@ class BaseAgent:
         self.alignment_system: Optional[Any] = None
         self.initialize_basic()
 
-    def initialize_basic(self):
+    def initialize_basic(self) -> None:
         """Basic synchronous initialization to avoid complex dependencies."""
         if self._initialized:
             return
@@ -105,7 +105,7 @@ class BaseAgent:
             logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}", exc_info=True)
             self.initialize_basic()
 
-    async def start(self):
+    async def start(self) -> None:
         """Starts the agent's main loop and connects to the HSP network."""
         if self.is_running:
             return
@@ -129,7 +129,7 @@ class BaseAgent:
 
         logger.info(f"[{self.agent_id}] is running and listening for tasks.")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stops the agent and shuts down its services."""
         logger.info(f"[{self.agent_id}] Stopping...")
         self.is_running = False
@@ -189,7 +189,7 @@ class BaseAgent:
 
         asyncio.create_task(self._process_task_queue())
 
-    async def _process_task_queue(self):
+    async def _process_task_queue(self) -> None:
         """Processes tasks from the queue one by one."""
         if not self.task_queue:
             return
@@ -201,7 +201,7 @@ class BaseAgent:
 
         await self._process_single_task(task)
 
-    async def _process_single_task(self, task: QueuedTask):
+    async def _process_single_task(self, task: QueuedTask) -> None:
         """Processes a single task."""
         logger.info(
             f"[{self.agent_id}] Processing task {task.task_id} with priority {task.priority.name}"
@@ -262,7 +262,7 @@ class BaseAgent:
             },
         }
 
-    async def _send_task_rejection(self, task: QueuedTask):
+    async def _send_task_rejection(self, task: QueuedTask) -> None:
         """Sends a rejection response for a task that couldn't be queued."""
         if self.hsp_connector and task.payload.get("callback_address"):
             result_payload = HSPTaskResultPayload(
@@ -278,7 +278,7 @@ class BaseAgent:
                 result_payload, task.payload["callback_address"], task.task_id
             )
 
-    async def _send_task_failure(self, task: QueuedTask, error_message: str):
+    async def _send_task_failure(self, task: QueuedTask, error_message: str) -> None:
         """Sends a failure response for a task that failed during execution."""
         if self.hsp_connector and task.payload.get("callback_address"):
             result_payload = HSPTaskResultPayload(
@@ -294,7 +294,7 @@ class BaseAgent:
                 result_payload, task.payload["callback_address"], task.task_id
             )
 
-    def register_task_handler(self, capability_id: str, handler: Callable):
+    def register_task_handler(self, capability_id: str, handler: Callable) -> None:
         """Register a specific handler for a capability."""
         self.task_handlers[capability_id] = handler
         logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_id}'")

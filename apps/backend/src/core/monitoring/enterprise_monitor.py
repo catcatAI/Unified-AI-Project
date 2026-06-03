@@ -50,7 +50,7 @@ class MetricsCollector:
     def __init__(self):
         self._metrics: Dict[str, List] = {}
 
-    def record(self, metric_name: str, value: float):
+    def record(self, metric_name: str, value: float) -> None:
         """記錄指標 / Record metric"""
         if metric_name not in self._metrics:
             self._metrics[metric_name] = []
@@ -94,7 +94,7 @@ class EnterpriseMonitor:
         """檢查是否運行中 / Check if running"""
         return self._running
 
-    def record_metric(self, name: str, value: float):
+    def record_metric(self, name: str, value: float) -> None:
         """記錄指標 / Record metric"""
         self._metrics.record(name, value)
 
@@ -133,7 +133,7 @@ class EnterpriseMonitor:
                 return True
         return False
 
-    def on_alert(self, callback: Callable[[Alert], None]):
+    def on_alert(self, callback: Callable[[Alert], None]) -> None:
         """註冊告警回調 / Register alert callback"""
         self._alert_callbacks.append(callback)
 

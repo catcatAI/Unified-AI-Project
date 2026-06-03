@@ -75,7 +75,7 @@ class MQTTSubscriptionManager:
 
         logger.info("[MQTTSubManager] Initialized")
 
-    async def set_mqtt_client(self, mqtt_client):
+    async def set_mqtt_client(self, mqtt_client) -> None:
         """设置MQTT客户端"""
         self.mqtt_client = mqtt_client
         logger.info("[MQTTSubManager] MQTT client set")
@@ -232,7 +232,7 @@ class MQTTSubscriptionManager:
     # 回调管理
     # ================================================================
 
-    def _register_callback(self, topic: str, callback: Callable):
+    def _register_callback(self, topic: str, callback: Callable) -> None:
         """注册回调函数"""
         if topic not in self._callback_registry:
             self._callback_registry[topic] = []
@@ -246,7 +246,7 @@ class MQTTSubscriptionManager:
         else:
             logger.warning(f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}", exc_info=True)
 
-    def remove_callback(self, topic: str, callback: Callable):
+    def remove_callback(self, topic: str, callback: Callable) -> None:
         """移除回调函数"""
         if topic in self._callback_registry:
             try:
@@ -259,7 +259,7 @@ class MQTTSubscriptionManager:
     # 消息处理
     # ================================================================
 
-    async def on_message(self, topic: str, payload: bytes, qos: int, retain: bool = False):
+    async def on_message(self, topic: str, payload: bytes, qos: int, retain: bool = False) -> None:
         """
         处理收到的MQTT消息
 
@@ -448,7 +448,7 @@ class MQTTSubscriptionManager:
     # 销毁
     # ================================================================
 
-    async def destroy(self):
+    async def destroy(self) -> None:
         """销毁管理器"""
         await self.unsubscribe_all()
         self._subscriptions.clear()

@@ -95,7 +95,7 @@ class CapacityPlanner:
 
         logger.info("容量规划引擎初始化完成")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """初始化引擎"""
         try:
             # 连接Redis(如果可用)
@@ -128,7 +128,7 @@ class CapacityPlanner:
             logger.error(f"容量规划引擎初始化失败: {e}", exc_info=True)
             raise
 
-    async def _load_usage_data(self):
+    async def _load_usage_data(self) -> None:
         """加载使用数据"""
         try:
             if self.redis_available and self.redis_client:
@@ -139,7 +139,7 @@ class CapacityPlanner:
         except Exception as e:  # broad exception acceptable: data loading failures are non-critical, continue with empty data
             logger.warning(f"加载使用数据失败: {e}", exc_info=True)
 
-    async def collect_resource_usage(self, resource_data: Dict[str, float]):
+    async def collect_resource_usage(self, resource_data: Dict[str, float]) -> None:
         """收集资源使用数据"""
         try:
             timestamp = datetime.now(timezone.utc())
@@ -178,7 +178,7 @@ class CapacityPlanner:
         except Exception as e:  # broad exception acceptable: collection failures should not block the main workflow
             logger.error(f"收集资源使用数据失败: {e}", exc_info=True)
 
-    async def _analyze_capacity_needs(self, current_usage: ResourceUsage):
+    async def _analyze_capacity_needs(self, current_usage: ResourceUsage) -> None:
         """分析容量需求"""
         try:
             if len(self.usage_history) < self.min_data_points:
@@ -620,7 +620,7 @@ class CapacityPlanner:
             logger.error(f"计算请求增长率失败: {e}", exc_info=True)
             return 0.0
 
-    async def _create_scaling_plan(self, prediction: CapacityPrediction):
+    async def _create_scaling_plan(self, prediction: CapacityPrediction) -> None:
         """创建扩容计划"""
         try:
             # 确定扩容动作
@@ -704,7 +704,7 @@ class CapacityPlanner:
             logger.error(f"计算扩容成本失败: {e}", exc_info=True)
             return 0.0
 
-    async def _send_scaling_notification(self, plan: ScalingPlan, prediction: CapacityPrediction):
+    async def _send_scaling_notification(self, plan: ScalingPlan, prediction: CapacityPrediction) -> None:
         """发送扩容通知"""
         try:
             notification = {
@@ -726,7 +726,7 @@ class CapacityPlanner:
         except Exception as e:  # broad exception acceptable: notification failures are non-critical
             logger.error(f"发送扩容通知失败: {e}", exc_info=True)
 
-    async def _periodic_capacity_check(self):
+    async def _periodic_capacity_check(self) -> None:
         """定期容量检查"""
         while True:
             try:
@@ -760,7 +760,7 @@ class CapacityPlanner:
             except Exception as e:  # broad exception acceptable: periodic check errors should not stop the loop
                 logger.error(f"定期容量检查失败: {e}", exc_info=True)
 
-    async def _execute_scaling_plan(self, plan: ScalingPlan):
+    async def _execute_scaling_plan(self, plan: ScalingPlan) -> None:
         """执行扩容计划"""
         try:
             # 这里应该调用实际的扩容API

@@ -258,6 +258,7 @@ class LinearCascade:
         self.base_decay = base_decay
 
     def compute_decay(self, step: int, base_effect: float = 1.0) -> float:
+        """Compute decay."""
         return self.base_decay ** step
 
 
@@ -268,6 +269,7 @@ class ExponentialCascade:
         self.rate = rate
 
     def compute_decay(self, step: int, base_effect: float = 1.0) -> float:
+        """Compute decay."""
         return math.exp(-step * self.rate)
 
 
@@ -279,6 +281,7 @@ class AdaptiveCascade:
         self._state_getter = state_getter or (lambda: 0.5)
 
     def compute_decay(self, step: int, base_effect: float = 1.0) -> float:
+        """Compute decay."""
         emotion_state = self._state_getter()
         adaptive_factor = 1.0 + emotion_state * 0.1
         return (self.base_decay * adaptive_factor) ** step
@@ -298,6 +301,7 @@ class AxisRippleApplicator:
 
 class AlphaRippleApplicator(AxisRippleApplicator):
     def apply(self, ripple: RippleNode, axis_state: Any) -> None:
+        """Execute the apply operation."""
         if not axis_state or not hasattr(axis_state, "values"):
             return
         if ripple.alpha_arousal > 0:
@@ -311,6 +315,7 @@ class AlphaRippleApplicator(AxisRippleApplicator):
 
 class BetaRippleApplicator(AxisRippleApplicator):
     def apply(self, ripple: RippleNode, axis_state: Any) -> None:
+        """Execute the apply operation."""
         if not axis_state or not hasattr(axis_state, "values"):
             return
         if ripple.beta_focus > 0:
@@ -324,6 +329,7 @@ class BetaRippleApplicator(AxisRippleApplicator):
 
 class GammaRippleApplicator(AxisRippleApplicator):
     def apply(self, ripple: RippleNode, axis_state: Any) -> None:
+        """Execute the apply operation."""
         if not axis_state or not hasattr(axis_state, "values"):
             return
         if ripple.gamma_excitement > 0:
@@ -340,6 +346,7 @@ class GammaRippleApplicator(AxisRippleApplicator):
 
 class DeltaRippleApplicator(AxisRippleApplicator):
     def apply(self, ripple: RippleNode, axis_state: Any) -> None:
+        """Execute the apply operation."""
         if not axis_state or not hasattr(axis_state, "values"):
             return
         if ripple.delta_engagement > 0:
@@ -353,6 +360,7 @@ class DeltaRippleApplicator(AxisRippleApplicator):
 
 class ThetaRippleApplicator(AxisRippleApplicator):
     def apply(self, ripple: RippleNode, axis_state: Any) -> None:
+        """Execute the apply operation."""
         if not axis_state or not hasattr(axis_state, "values"):
             return
         if ripple.theta_delta > 0:
@@ -362,6 +370,7 @@ class ThetaRippleApplicator(AxisRippleApplicator):
 
 class EpsilonRippleApplicator(AxisRippleApplicator):
     def apply(self, ripple: RippleNode, axis_state: Any) -> None:
+        """Execute the apply operation."""
         if not axis_state or not hasattr(axis_state, "values"):
             return
         if ripple.epsilon_delta > 0:
@@ -385,6 +394,7 @@ class RippleApplicatorRegistry:
 
     @classmethod
     def get(cls, axis: str) -> Optional[AxisRippleApplicator]:
+        """Execute the get operation."""
         return cls._registry.get(axis)
 
     @classmethod
@@ -420,6 +430,7 @@ class RippleAccumulator:
     max_depth: int = int(threshold_value("ripple_max_depth", 3.0))
 
     def add(self, ripple: RippleNode) -> None:
+        """Execute the add operation."""
         self.ripples.append(ripple)
         self.cumulative_epsilon += abs(ripple.epsilon_delta)
         self.cumulative_arousal += ripple.alpha_arousal
@@ -429,6 +440,7 @@ class RippleAccumulator:
             self.max_depth = ripple.cascade_step
 
     def reset(self) -> None:
+        """Reset to initial state."""
         self.ripples.clear()
         self.cumulative_epsilon = 0.0
         self.cumulative_arousal = 0.0
@@ -438,6 +450,7 @@ class RippleAccumulator:
         self.max_depth = 3
 
     def summary(self) -> Dict[str, Any]:
+        """Execute the summary operation."""
         return {
             "count": len(self.ripples),
             "cumulative_epsilon": self.cumulative_epsilon,

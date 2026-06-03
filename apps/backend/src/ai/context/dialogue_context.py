@@ -39,7 +39,7 @@ class Conversation:
         self.end_time: Optional[datetime] = None
         self.context_summary: Optional["ContextSummary"] = None
 
-    def add_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         """添加消息"""
         self.messages.append(message)
 

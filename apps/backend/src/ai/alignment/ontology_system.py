@@ -108,7 +108,7 @@ class OntologySystem:
         # 初始化核心存在原则
         self._initialize_existence_principles()
 
-    def _initialize_existence_principles(self):
+    def _initialize_existence_principles(self) -> None:
         """初始化核心存在原则"""
         self.worldview_principles = {
             "human_dignity": {"description": "人类尊严不可侵犯", "priority": 10, "weight": 1.0},

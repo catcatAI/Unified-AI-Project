@@ -39,7 +39,7 @@ class DailyLanguageModel:
         else:
             logger.info("DailyLanguageModel: Initialized with LLMInterface.")
 
-    def set_llm_service(self, llm_service):
+    def set_llm_service(self, llm_service) -> None:
         """Inject or replace the LLM service at runtime (used by hot reload)."""
         self.llm_service = llm_service
 

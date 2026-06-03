@@ -28,7 +28,7 @@ router.include_router(desktop_router)
 
 
 @router.get("/")
-async def root():
+async def root() -> dict:
     """根路径"""
     return {"message": "Unified AI Project API"}
 
@@ -44,7 +44,7 @@ async def trigger_emergency_mode() -> dict:
 
 
 @router.get("/health")
-async def health_check():
+async def health_check() -> dict:
     """健康检查"""
     return {"status": "healthy"}
 
@@ -56,7 +56,7 @@ async def app_status() -> dict:
 
 
 @router.post("/system/status")
-async def system_status():
+async def system_status() -> dict:
     """系統狀態 (行動端/桌面端通用)"""
     return {"status": "online", "stats": {"cpu": "N/A", "mem": "N/A", "nodes": 0}}
 
@@ -103,7 +103,7 @@ async def get_ai_agent(agent_id: str):
 
 
 @router.get("/models", response_model=List[Dict[str, Any]])
-async def get_models():
+async def get_models() -> str:
     """获取所有模型"""
     models = [
         {
@@ -122,7 +122,7 @@ async def get_models():
 
 
 @router.get("/system/metrics/detailed", response_model=Dict[str, Any])
-async def get_detailed_system_metrics():
+async def get_detailed_system_metrics() -> str:
     """获取详细 system 指标"""
     cpu_usage = psutil.cpu_percent(interval=1)
     memory = psutil.virtual_memory()
@@ -159,13 +159,13 @@ async def get_detailed_system_metrics():
 
 
 @router.get("/system/cluster/status", response_model=Dict[str, Any])
-async def get_cluster_status():
+async def get_cluster_status() -> str:
     """獲取集群與硬體探針狀態"""
     return cluster_manager.get_cluster_status()
 
 
 @router.post("/chat/completions")
-async def chat_completions(request: Dict[str, Any] = Body(...)):
+async def chat_completions(request: Dict[str, Any] = Body(...)) -> dict:
     """聊天完成接口 — 代理至 AngelaChatService"""
     messages = request.get("messages", [])
     user_message = messages[-1].get("content", "") if messages else request.get("prompt", "")
@@ -207,7 +207,7 @@ async def admin_modules():
 
 
 @router.get("/admin/modules/{name}")
-async def admin_module_detail(name: str):
+async def admin_module_detail(name: str) -> dict:
     """Get detailed info about a specific module."""
     from core.interfaces.service_registry import get_registry
     mm = get_registry().get("module_manager")
@@ -236,7 +236,7 @@ async def admin_module_detail(name: str):
 
 
 @router.get("/admin/modules/{name}/health")
-async def admin_module_health(name: str):
+async def admin_module_health(name: str) -> dict:
     """Get health status of a specific module."""
     from core.interfaces.service_registry import get_registry
     mm = get_registry().get("module_manager")
@@ -255,7 +255,7 @@ async def admin_module_health(name: str):
 
 
 @router.post("/angela/reload")
-async def reload_llm():
+async def reload_llm() -> dict:
     """強制重新載入 LLM 服務（hot-reload 配置變更）"""
     from services.angela_llm_service import get_llm_service
     svc = await get_llm_service(force_reload=True)

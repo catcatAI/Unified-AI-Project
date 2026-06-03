@@ -20,7 +20,7 @@ class ProjectError(Exception):
     pass
 
 
-def project_error_handler(error):
+def project_error_handler(error) -> None:
     logger.warning("project_error_handler is a stub - error: %s", error)
 
 
@@ -35,7 +35,7 @@ class MCPMessagePriority:
 
 
 class FallbackManager:
-    def register_command_handler(self, command_name, handler):
+    def register_command_handler(self, command_name, handler) -> None:
         logger.warning("FallbackManager.register_command_handler stub: %s", command_name)
 
     async def send_command(self, sender_id, recipient_id, command_name, parameters, priority) -> None:
@@ -49,7 +49,7 @@ def get_mcp_fallback_manager() -> dict:
     return FallbackManager()
 
 
-async def initialize_mcp_fallback_protocols(is_multiprocess: bool):
+async def initialize_mcp_fallback_protocols(is_multiprocess: bool) -> bool:
     return True
 
 
@@ -59,7 +59,7 @@ class MockMQTTClient:
         self.client_id = client_id
         logger.warning("MockMQTTClient stub created: client_id=%s", client_id)
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, client, userdata, flags, rc) -> None:
         logger.warning("MockMQTTClient.on_connect stub: rc=%s", rc)
 
     def on_message(self, client, userdata, msg) -> None:
@@ -71,7 +71,7 @@ class MockMQTTClient:
     def loop_start(self) -> None:
         logger.warning("MockMQTTClient.loop_start stub")
 
-    def loop_stop(self):
+    def loop_stop(self) -> None:
         logger.warning("MockMQTTClient.loop_stop stub")
 
     def disconnect(self) -> None:
@@ -117,7 +117,7 @@ class MCPConnector:
         self.logger = logging.getLogger(__name__)
         self.loop = loop if loop else asyncio.new_event_loop()
 
-    async def connect(self):
+    async def connect(self) -> None:
         self.logger.info(
             f"MCPConnector for {self.ai_id} connecting to {self.broker_address}:{self.broker_port}"
         )
@@ -137,7 +137,7 @@ class MCPConnector:
             if self.enable_fallback:
                 self.logger.info("MCP將使用fallback協議")
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.client.loop_stop()
         self.client.disconnect()
         self.logger.info("MCPConnector disconnected.")
@@ -154,7 +154,7 @@ class MCPConnector:
             self.is_connected = False
             self.mcp_available = False
 
-    def _on_message(self, client, userdata, msg):
+    def _on_message(self, client, userdata, msg) -> None:
         self.logger.info(f"MCP message received on topic {msg.topic}: {msg.payload.decode()}")
         try:
             data = json.loads(msg.payload)
@@ -216,7 +216,7 @@ class MCPConnector:
         logger.error(f"無法發送MCP命令 '{command_name}' 到 {target_id}")
         return request_id
 
-    async def _initialize_fallback_protocols(self):
+    async def _initialize_fallback_protocols(self) -> None:
         if not self.enable_fallback:
             return
         try:
@@ -261,7 +261,7 @@ class MCPConnector:
             self.logger.error(f"Error sending MCP command via fallback: {e}", exc_info=True)
             return False
 
-    def register_command_handler(self, command_name: str, handler: Callable[..., Awaitable[Any]]):
+    def register_command_handler(self, command_name: str, handler: Callable[..., Awaitable[Any]]) -> None:
         self.command_handlers[command_name] = handler
         if self.is_connected:
             topic = f"mcp/cmd/{self.ai_id}/{command_name}"

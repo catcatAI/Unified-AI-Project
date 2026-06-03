@@ -68,7 +68,8 @@ class PADEmotion:
     intensity: float = 1.0  # Overall intensity 0-1
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         self.pleasure = max(-1.0, min(1.0, self.pleasure))
         self.arousal = max(-1.0, min(1.0, self.arousal))
         self.dominance = max(-1.0, min(1.0, self.dominance))
@@ -133,7 +134,8 @@ class FacialExpression:
     mouth_open: float = 0.0  # 张嘴 (0 to 1)
     blush: float = 0.0  # 脸红 (0 to 1)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         self.smile = max(-1.0, min(1.0, self.smile))
         self.eyebrow_raise = max(-1.0, min(1.0, self.eyebrow_raise))
         self.eye_widening = max(-1.0, min(1.0, self.eye_widening))
@@ -151,7 +153,8 @@ class VocalTone:
     tremor: float = 0.0  # 颤抖 (0 to 1)
     warmth: float = 0.5  # 温暖度 (-1 to 1)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         self.pitch = max(0.5, min(1.5, self.pitch))
         self.speed = max(0.5, min(1.5, self.speed))
         self.volume = max(0.5, min(1.5, self.volume))
@@ -254,7 +257,7 @@ class EmotionalBlendingSystem:
         self._emotion_change_callbacks: List[Callable[[PADEmotion, PADEmotion], None]] = []
         self._expression_callbacks: List[Callable[[EmotionalExpression], None]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the emotional blending system"""
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
@@ -269,7 +272,7 @@ class EmotionalBlendingSystem:
             except asyncio.CancelledError:
                 pass
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """Background update loop for emotion dynamics"""
         while self._running:
             await self._update_emotion()
@@ -320,7 +323,7 @@ class EmotionalBlendingSystem:
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
                         pass
 
-    async def _decay_influences(self):
+    async def _decay_influences(self) -> None:
         """Decay influence strengths over time"""
         remaining = []
         for influence in self.influences:
@@ -353,7 +356,7 @@ class EmotionalBlendingSystem:
             intensity=from_emotion.intensity * (1 - t) + to_emotion.intensity * t,
         )
 
-    def _apply_physiological_influence(self, influence: EmotionalInfluence):
+    def _apply_physiological_influence(self, influence: EmotionalInfluence) -> None:
         """Apply physiological influence to emotion"""
         # High arousal physiological states increase arousal dimension
         if influence.factor_type in ["heart_rate", "blood_pressure", "cortisol"]:
@@ -367,7 +370,7 @@ class EmotionalBlendingSystem:
         if influence.factor_type in ["endorphins", "comfort", "relaxation"]:
             self.current_emotion.pleasure += influence.value * influence.weight * 0.5
 
-    def _apply_cognitive_influence(self, influence: EmotionalInfluence):
+    def _apply_cognitive_influence(self, influence: EmotionalInfluence) -> None:
         """Apply cognitive influence to emotion"""
         # Positive/negative thoughts affect pleasure
         if influence.factor_type in ["positive_thought", "achievement", "success"]:
@@ -386,7 +389,7 @@ class EmotionalBlendingSystem:
         if influence.factor_type == "uncertainty":
             self.current_emotion.dominance -= abs(influence.value) * influence.weight * 0.4
 
-    def _apply_hormonal_influence(self, influence: EmotionalInfluence):
+    def _apply_hormonal_influence(self, influence: EmotionalInfluence) -> None:
         """Apply hormonal influence to emotion"""
         # Dopamine increases pleasure
         if influence.factor_type == "dopamine":
@@ -487,7 +490,7 @@ class EmotionalBlendingSystem:
         else:
             self.current_emotion = target
 
-    def set_emotion_direct(self, emotion: PADEmotion, transition: bool = True):
+    def set_emotion_direct(self, emotion: PADEmotion, transition: bool = True) -> None:
         """Set emotional state directly"""
         if transition:
             self.target_emotion = emotion
@@ -500,7 +503,7 @@ class EmotionalBlendingSystem:
         """Blend two emotions together"""
         return emotion1.blend_with(emotion2, ratio)
 
-    def apply_influence(self, source: str, factor_type: str, value: float, weight: float = 1.0):
+    def apply_influence(self, source: str, factor_type: str, value: float, weight: float = 1.0) -> None:
         """
         Apply an emotional influence
 
@@ -532,7 +535,7 @@ class EmotionalBlendingSystem:
         cutoff = datetime.now() - duration
         return [e for e in self.emotion_history if e.timestamp > cutoff]
 
-    def register_emotion_change_callback(self, callback: Callable[[PADEmotion, PADEmotion], None]):
+    def register_emotion_change_callback(self, callback: Callable[[PADEmotion, PADEmotion], None]) -> None:
         """Register callback for emotion changes"""
         self._emotion_change_callbacks.append(callback)
 
@@ -1021,7 +1024,8 @@ class MultidimensionalStateMatrix:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         eb_system = EmotionalBlendingSystem()
         await eb_system.initialize()
 

@@ -17,7 +17,7 @@ class UnifiedSymbolicSpace:
         self.db_path = db_path
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("""
@@ -46,6 +46,7 @@ class UnifiedSymbolicSpace:
     def add_symbol(
         self, symbol_name: str, symbol_type: str, properties: Optional[Dict[str, Any]] = None
     ) -> int:
+        """Add a symbol."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         props_json = json.dumps(properties) if properties else ""
@@ -84,6 +85,7 @@ class UnifiedSymbolicSpace:
                 conn.close()
 
     def get_symbol(self, symbol_name: str) -> Optional[Dict[str, Any]]:
+        """Get the symbol by self."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute(
@@ -109,6 +111,7 @@ class UnifiedSymbolicSpace:
         properties: Optional[Dict[str, Any]] = None,
     ):
         # Get current properties first to avoid connection issues
+        """Update the symbol."""
         current_props = {}
         if properties:
             current_symbol = self.get_symbol(symbol_name)
@@ -154,6 +157,7 @@ class UnifiedSymbolicSpace:
         properties: Optional[Dict[str, Any]] = None,
     ) -> Optional[int]:
         # Get symbols first to avoid connection issues
+        """Add a relationship."""
         source_symbol = self.get_symbol(source_symbol_name)
         target_symbol = self.get_symbol(target_symbol_name)
 
@@ -178,6 +182,7 @@ class UnifiedSymbolicSpace:
 
     def get_relationships(self, symbol_name: str) -> List[Dict[str, Any]]:
         # Get symbol first to avoid connection issues
+        """Get the relationships by self."""
         symbol = self.get_symbol(symbol_name)
         if not symbol:
             return []
@@ -210,6 +215,7 @@ class UnifiedSymbolicSpace:
         return relationships
 
     def delete_symbol(self, symbol_name: str) -> bool:
+        """Delete a symbol."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         symbol = self.get_symbol(symbol_name)
@@ -229,6 +235,7 @@ class UnifiedSymbolicSpace:
         return rows_affected > 0
 
     def delete_relationship(self, rel_id: int) -> bool:
+        """Delete a relationship."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("DELETE FROM relationships WHERE id = ?", (rel_id,))

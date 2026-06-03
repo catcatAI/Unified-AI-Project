@@ -15,7 +15,7 @@ router = APIRouter(prefix="/plugins", tags=["Plugins"])
 
 
 @router.get("/hooks")
-async def list_hooks():
+async def list_hooks() -> dict:
     """List all available backend hooks."""
     return {"hooks": hook_registry.list_hooks()}
 
@@ -27,7 +27,7 @@ async def list_plugins(enabled_only: bool = False) -> dict:
 
 
 @router.post("/plugins/{name}/enable")
-async def enable_plugin(name: str):
+async def enable_plugin(name: str) -> dict:
     """Enable a plugin."""
     if not plugin_manager.enable_plugin(name):
         raise HTTPException(status_code=404, detail=f"Plugin '{name}' not found")
@@ -35,7 +35,7 @@ async def enable_plugin(name: str):
 
 
 @router.post("/plugins/{name}/disable")
-async def disable_plugin(name: str):
+async def disable_plugin(name: str) -> dict:
     """Disable a plugin."""
     if not plugin_manager.disable_plugin(name):
         raise HTTPException(status_code=404, detail=f"Plugin '{name}' not found")
@@ -43,7 +43,7 @@ async def disable_plugin(name: str):
 
 
 @router.post("/hooks/{hook_name}/execute")
-async def execute_hook(hook_name: str, data: Dict[str, Any] = {}):
+async def execute_hook(hook_name: str, data: Dict[str, Any] = {}) -> dict:
     """Execute a hook with the given data."""
     hook = hook_registry.get_hook(hook_name)
     if not hook:
@@ -59,7 +59,7 @@ async def execute_hook(hook_name: str, data: Dict[str, Any] = {}):
 
 
 @router.post("/register")
-async def register_plugin(name: str, version: str = "1.0", description: str = ""):
+async def register_plugin(name: str, version: str = "1.0", description: str = "") -> dict:
     """Register a plugin with the backend system."""
     info = plugin_manager.register_plugin(name, version, description)
     return {"status": "registered", "name": info.name, "version": info.version}
@@ -74,7 +74,7 @@ async def plugin_stats() -> dict:
 # ── Plugin data persistence ──────────────────────────────────────────────
 
 @router.post("/data/{plugin_name}")
-async def set_plugin_data(plugin_name: str, data: Dict[str, Any] = {}):
+async def set_plugin_data(plugin_name: str, data: Dict[str, Any] = {}) -> dict:
     """Store key-value data for a plugin."""
     try:
         from core.interfaces.persistence import JsonFileStateStore
@@ -87,7 +87,7 @@ async def set_plugin_data(plugin_name: str, data: Dict[str, Any] = {}):
 
 
 @router.get("/data/{plugin_name}")
-async def get_plugin_data(plugin_name: str):
+async def get_plugin_data(plugin_name: str) -> dict:
     """Retrieve all stored data for a plugin."""
     try:
         from core.interfaces.persistence import JsonFileStateStore
@@ -104,7 +104,7 @@ async def get_plugin_data(plugin_name: str):
 
 
 @router.delete("/data/{plugin_name}/{key}")
-async def delete_plugin_data(plugin_name: str, key: str):
+async def delete_plugin_data(plugin_name: str, key: str) -> dict:
     """Delete a specific data key for a plugin."""
     try:
         from core.interfaces.persistence import JsonFileStateStore

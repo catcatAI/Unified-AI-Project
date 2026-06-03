@@ -59,6 +59,7 @@ class GoogleDriveService:
             f.write(creds.to_json())
 
     def is_authenticated(self) -> bool:
+        """Check if authenticated."""
         self._creds = self._load_token()
         if self._creds is None:
             return False
@@ -74,6 +75,7 @@ class GoogleDriveService:
         return True
 
     def get_auth_url(self) -> str:
+        """Get the auth url by self."""
         if not CREDENTIALS_PATH.exists():
             raise FileNotFoundError(
                 f"credentials.json not found at {CREDENTIALS_PATH}. "
@@ -106,7 +108,7 @@ class GoogleDriveService:
             logger.error(f"Authentication failed: {e}", exc_info=True)
             return False
 
-    def _get_service(self):
+    def _get_service(self) -> str:
         if self._service is not None:
             return self._service
         if not self.is_authenticated():
@@ -115,6 +117,7 @@ class GoogleDriveService:
         return self._service
 
     def list_files(self, page_size: int = batch_value("drive_list_page_size", 200), query: Optional[str] = None) -> List[Dict[str, Any]]:
+        """List files items."""
         try:
             service = self._get_service()
             params: Dict[str, Any] = {
@@ -141,6 +144,7 @@ class GoogleDriveService:
             raise
 
     def get_file_metadata(self, file_id: str) -> Dict[str, Any]:
+        """Get the file metadata by self."""
         service = self._get_service()
         return service.files().get(
             fileId=file_id,
@@ -148,6 +152,7 @@ class GoogleDriveService:
         ).execute()
 
     def download_file(self, file_id: str, dest_path: str) -> bool:
+        """Log a diagnostic message."""
         try:
             service = self._get_service()
             dest = Path(dest_path)
@@ -197,9 +202,11 @@ class GoogleDriveService:
             return None
 
     def search_files(self, query: str, page_size: int = batch_value("drive_search_page_size", 10)) -> List[Dict[str, Any]]:
+        """Search for files."""
         return self.list_files(page_size=page_size, query=query)
 
     def get_storage_info(self) -> Dict[str, Any]:
+        """Get the storage info by self."""
         try:
             about = self._get_service().about().get(fields="storageQuota,user").execute()
             quota = about.get("storageQuota", {})
@@ -278,6 +285,7 @@ class GoogleDriveService:
         return mapping.get(suffix.lower(), "text/plain")
 
     def logout(self) -> None:
+        """Execute the logout operation."""
         if TOKEN_PATH.exists():
             TOKEN_PATH.unlink()
         self._creds = None
@@ -288,6 +296,7 @@ _drive_instance: Optional[GoogleDriveService] = None
 
 
 def get_drive_service() -> GoogleDriveService:
+    """Get the drive service."""
     global _drive_instance
     if _drive_instance is None:
         _drive_instance = GoogleDriveService()

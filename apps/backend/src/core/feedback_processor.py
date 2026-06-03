@@ -73,7 +73,7 @@ class ActionEvaluation:
     timestamp: datetime
     overall_score: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate overall score from metrics"""
         if self.metrics:
             self.overall_score = sum(self.metrics.values()) / len(self.metrics)
@@ -194,7 +194,7 @@ class FeedbackProcessor:
             "cdm_updates": 0,
         }
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the feedback processor"""
         logger.info("[FeedbackProcessor] Initializing...")
 
@@ -208,7 +208,7 @@ class FeedbackProcessor:
 
         logger.info("[FeedbackProcessor] Initialization complete")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the feedback processor"""
         logger.info("[FeedbackProcessor] Shutting down...")
 
@@ -227,7 +227,7 @@ class FeedbackProcessor:
 
         logger.info("[FeedbackProcessor] Shutdown complete")
 
-    async def _processing_loop(self):
+    async def _processing_loop(self) -> None:
         """Background processing loop"""
         while self._running:
             try:
@@ -242,7 +242,7 @@ class FeedbackProcessor:
             except Exception as e:  # broad exception acceptable: processing loop must be resilient to any error
                 logger.error(f"[FeedbackProcessor] Processing error: {e}", exc_info=True)
 
-    async def process_feedback(self, feedback: "FeedbackSignal"):
+    async def process_feedback(self, feedback: "FeedbackSignal") -> None:
         """
         Process a feedback signal
 
@@ -252,7 +252,7 @@ class FeedbackProcessor:
         await self._pending_feedback.put(feedback)
         self.processing_metrics["feedback_processed"] += 1
 
-    async def _process_single_feedback(self, feedback: "FeedbackSignal"):
+    async def _process_single_feedback(self, feedback: "FeedbackSignal") -> None:
         """Process a single feedback signal"""
         try:
             # Step 1: Evaluate action effectiveness
@@ -434,7 +434,7 @@ class FeedbackProcessor:
             timestamp=datetime.now(),
         )
 
-    async def _update_memory_systems(self, learning_signal: LearningSignal):
+    async def _update_memory_systems(self, learning_signal: LearningSignal) -> None:
         """Update HSM and CDM with learning signal"""
         # Update HSM
         if self.hsm and learning_signal.hsm_update:
@@ -507,7 +507,7 @@ class FeedbackProcessor:
             timestamp=datetime.now(),
         )
 
-    async def _save_history(self):
+    async def _save_history(self) -> None:
         """Save feedback history to file"""
         try:
             history_path = Path("~/.angela/feedback_history.json").expanduser()
@@ -546,7 +546,7 @@ class FeedbackProcessor:
         except Exception as e:  # broad exception acceptable: history save must be resilient, non-critical
             logger.error(f"[FeedbackProcessor] Save history error: {e}", exc_info=True)
 
-    async def _load_history(self):
+    async def _load_history(self) -> None:
         """Load feedback history from file"""
         try:
             history_path = Path("~/.angela/feedback_history.json").expanduser()
@@ -577,7 +577,7 @@ class FeedbackProcessor:
 
     # ========== Public API ==========
 
-    def register_learning_callback(self, callback: Callable[[LearningSignal], None]):
+    def register_learning_callback(self, callback: Callable[[LearningSignal], None]) -> None:
         """Register callback for learning signals"""
         self._learning_callbacks.append(callback)
 
@@ -671,7 +671,7 @@ class FeedbackProcessor:
         """Get recent strategy adjustments"""
         return self.strategy_adjustments[-limit:]
 
-    async def clear_history(self):
+    async def clear_history(self) -> None:
         """Clear all feedback history"""
         self.feedback_history.clear()
         self.recent_evaluations.clear()
@@ -689,7 +689,8 @@ class FeedbackProcessor:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         logger.info("=" * 70)
         logger.info("Angela AI v6.0 - Feedback Processor Demo")
         logger.info("反馈处理器演示")

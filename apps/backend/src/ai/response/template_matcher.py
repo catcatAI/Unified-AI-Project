@@ -344,7 +344,7 @@ class TemplateMatcher:
 
         return min(0.95, jaccard * 1.2)
 
-    def _update_stats(self, match_level: MatchLevel, match_time: float):
+    def _update_stats(self, match_level: MatchLevel, match_time: float) -> None:
         """更新统计信息"""
         self.stats["total_matches"] += 1
 
@@ -366,7 +366,7 @@ class TemplateMatcher:
         """获取统计信息"""
         return self.stats.copy()
 
-    def record_template_usage(self, template_id: str, success: bool):
+    def record_template_usage(self, template_id: str, success: bool) -> None:
         """记录模板使用情况"""
         template = self.templates.get(template_id)
         if not template:

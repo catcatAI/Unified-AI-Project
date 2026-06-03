@@ -214,7 +214,7 @@ class ContextHAMIntegration:
 
 
 # 使用示例
-def example_usage():
+def example_usage() -> None:
     """使用示例"""
     # 创建上下文管理器
     # context_manager = ContextManager()  # Commented - needs proper import

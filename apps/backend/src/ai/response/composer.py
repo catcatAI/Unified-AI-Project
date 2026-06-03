@@ -84,7 +84,7 @@ class FragmentComposer:
 
         self._init_default_fragments()
 
-    def _init_default_fragments(self):
+    def _init_default_fragments(self) -> None:
         """初始化默认片段库"""
         default_fragments = [
             Fragment(
@@ -148,7 +148,7 @@ class FragmentComposer:
         for fragment in default_fragments:
             self.add_fragment(fragment)
 
-    def add_fragment(self, fragment: Fragment):
+    def add_fragment(self, fragment: Fragment) -> None:
         """添加片段到组合器"""
         self.fragments[fragment.id] = fragment
         self.fragment_index[fragment.type].append(fragment.id)
@@ -362,7 +362,7 @@ class FragmentComposer:
 
         return min(1.0, base + type_bonus)
 
-    def _update_stats(self, composition_time: float, fragments_count: int):
+    def _update_stats(self, composition_time: float, fragments_count: int) -> None:
         """更新统计信息"""
         self.stats["total_compositions"] += 1
         self.stats["fragments_used"] += fragments_count
@@ -440,9 +440,11 @@ class ValueRangeMapping:
     last_used_at: Optional[datetime] = None
 
     def covers(self, value: float) -> bool:
+        """Execute the covers operation."""
         return self.range_lo <= value <= self.range_hi
 
-    def narrow(self, value: float):
+    def narrow(self, value: float) -> None:
+        """Execute the narrow operation."""
         self.range_lo = max(self.range_lo, value - 0.01)
         self.range_hi = min(self.range_hi, value + 0.01)
 
@@ -461,24 +463,30 @@ class NeuroVocabulary:
         self._structural_index: Dict[str, List[str]] = {}
         self._value_range_mappings: Dict[str, List[ValueRangeMapping]] = {}
 
-    def add_fragment(self, fragment: NeuroFragment):
+    def add_fragment(self, fragment: NeuroFragment) -> None:
+        """Add a fragment."""
         self._fragments[fragment.fragment_id] = fragment
         self._category_index.setdefault(fragment.category, []).append(fragment.fragment_id)
         self._structural_index.setdefault(fragment.structural_type, []).append(fragment.fragment_id)
 
     def get_by_id(self, fid: str) -> Optional[NeuroFragment]:
+        """Get the by id by self."""
         return self._fragments.get(fid)
 
     def get_by_category(self, category: str) -> List[NeuroFragment]:
+        """Get the by category by self."""
         return [self._fragments[fid] for fid in self._category_index.get(category, []) if fid in self._fragments]
 
     def get_by_structural_type(self, stype: str) -> List[NeuroFragment]:
+        """Get the by structural type by self."""
         return [self._fragments[fid] for fid in self._structural_index.get(stype, []) if fid in self._fragments]
 
     def all_fragments(self) -> List[NeuroFragment]:
+        """Execute the all fragments operation."""
         return list(self._fragments.values())
 
     def total_count(self) -> int:
+        """Execute the total count operation."""
         return len(self._fragments)
 
     # ── 數值區間映射（C6 翻譯學習層）────────────────────────────────────
@@ -494,7 +502,7 @@ class NeuroVocabulary:
         candidates.sort(key=lambda x: x[0], reverse=True)
         return candidates[0][1]
 
-    def learn_mapping(self, axis_field: str, value: float, description: str):
+    def learn_mapping(self, axis_field: str, value: float, description: str) -> None:
         """學習或更新數值→語意映射"""
         now = datetime.now()
         existing = self._value_range_mappings.get(axis_field, [])
@@ -556,7 +564,7 @@ class NeuroVocabulary:
             del self._value_range_mappings[f]
         return result
 
-    def load_mappings_from_config(self, config_data: List[Dict[str, Any]]):
+    def load_mappings_from_config(self, config_data: List[Dict[str, Any]]) -> None:
         """從配置加載映射"""
         if not config_data:
             return
@@ -608,7 +616,7 @@ class NeuroVocabulary:
                     uncovered.append({"axis_field": field, "value": v})
         return uncovered
 
-    def decay_confidences(self, hours: float = 24.0, decay_rate: float = 0.01):
+    def decay_confidences(self, hours: float = 24.0, decay_rate: float = 0.01) -> None:
         """降低長時間未使用的 mapping 信心度"""
         now = datetime.now()
         for field_name, mappings in list(self._value_range_mappings.items()):
@@ -644,7 +652,7 @@ class NeuroVocabulary:
                 })
         return overlaps
 
-    def sync_to_state_store(self):
+    def sync_to_state_store(self) -> None:
         """同步數值映射到 GlobalStateStore（C5+C6 整合）"""
         self.decay_confidences()
         serialized = self.serialize_mappings()
@@ -654,7 +662,7 @@ class NeuroVocabulary:
         except Exception as e:
             logger.warning(f"[NeuroVocabulary] sync_to_state_store failed: {e}", exc_info=True)
 
-    def restore_from_state_store(self):
+    def restore_from_state_store(self) -> None:
         """從 GlobalStateStore 恢復數值映射"""
         try:
             from core.system.state_store.global_store import state_store
@@ -665,7 +673,7 @@ class NeuroVocabulary:
         except Exception as e:
             logger.warning(f"[NeuroVocabulary] restore_from_state_store failed: {e}", exc_info=True)
 
-    def load_from_config(self, config_data: List[Dict[str, Any]]):
+    def load_from_config(self, config_data: List[Dict[str, Any]]) -> None:
         """从配置加载片段"""
         if not config_data:
             return
@@ -935,6 +943,7 @@ class NeuroBlender:
         selected: List[NeuroFragment] = []
         seen_contents: set = set()
         def add_if_unique(frag: NeuroFragment) -> bool:
+            """Add a if unique."""
             key = frag.content.strip()[:15]
             if key not in seen_contents:
                 seen_contents.add(key)
@@ -1114,7 +1123,7 @@ class NeuroBlender:
 
         return response
 
-    def _update_stats(self, elapsed_ms: float):
+    def _update_stats(self, elapsed_ms: float) -> None:
         self.stats["total_syntheses"] += 1
         total = self.stats["total_syntheses"]
         self.stats["avg_time_ms"] = (
@@ -1157,7 +1166,7 @@ class ResponseComposer:
          """
         return self.fragment_composer.compose_from_template(template_content, match_score, context)
 
-    def add_fragment(self, fragment: Fragment):
+    def add_fragment(self, fragment: Fragment) -> None:
         """添加自定义片段"""
         self.fragment_composer.add_fragment(fragment)
 

@@ -153,7 +153,7 @@ class ModelEnsemble:
             ModelWeight("mixtral-local", 0.2, priority=2),
         ]
 
-    def configure_ensemble(self, models: List[ModelWeight]):
+    def configure_ensemble(self, models: List[ModelWeight]) -> None:
         """Configure ensemble with specific models and weights"""
         total_weight = sum(m.weight for m in models)
 

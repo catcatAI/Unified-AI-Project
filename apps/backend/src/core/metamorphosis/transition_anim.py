@@ -313,7 +313,7 @@ class TransitionAnimator:
         }
         return messages.get(phase, "")
 
-    def stop_animation(self):
+    def stop_animation(self) -> None:
         """停止动画 / Stop animation"""
         self._is_animating = False
 
@@ -388,7 +388,7 @@ def create_transition_manager() -> TransitionManager:
     return TransitionManager()
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("✨ 过渡动画系统演示")
     logger.info("=" * 50)

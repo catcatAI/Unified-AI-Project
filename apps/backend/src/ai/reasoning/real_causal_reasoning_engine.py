@@ -40,16 +40,19 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
         self.causal_graph = RealCausalGraph()
 
     async def learn_causal_relationships(self, observations: List[Dict[str, Any]]) -> List[Any]:
+        """Execute the learn causal relationships operation."""
         return [{"relationship": "example", "strength": 0.8}]
 
     async def perform_counterfactual_reasoning(
         self, scenario: Dict[str, Any], intervention: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Execute the perform counterfactual reasoning operation."""
         return {"counterfactual_outcome": 150.0, "confidence": 0.85}
 
     async def plan_intervention(
         self, desired_outcome: Dict[str, Any], current_state: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Execute the plan intervention operation."""
         return {"variable": "temperature", "value": 30.0, "confidence": 0.9}
 
     def _calculate_real_correlation(self, x: List[float], y: List[float]) -> float:
@@ -98,6 +101,7 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
 class RealCausalGraph:
     async def calculate_semantic_similarity(self, text1: str, text2: str) -> float:
         # Placeholder semantic similarity (ratio of common words)
+        """Execute the calculate semantic similarity operation."""
         words1 = set(text1.lower())
         words2 = set(text2.lower())
         if not words1 or not words2:

@@ -28,7 +28,7 @@ class ResourceError(ProjectError):
         super().__init__(f"Resource Error: {message}", code)
 
 
-def project_error_handler(error: ProjectError):
+def project_error_handler(error: ProjectError) -> None:
     """處理項目錯誤的中央函數"""
     import logging
 
@@ -40,7 +40,7 @@ class ErrorHandler:
     """中央錯誤處理器 (Phase 14 Restoration)"""
 
     @staticmethod
-    def handle_error(error: Exception, context: str = "Unknown"):
+    def handle_error(error: Exception, context: str = "Unknown") -> None:
         import logging
 
         logger = logging.getLogger(__name__)

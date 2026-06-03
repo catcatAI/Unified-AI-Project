@@ -14,6 +14,7 @@ class DistillationLoss:
     def __call__(self, student_outputs: Any, teacher_outputs: Any, labels: Optional[Any]) -> float:
         # In a real scenario, this would involve softmax, KL divergence, etc.
         # For now, a simple placeholder.
+        """Log a diagnostic message."""
         loss = 0.0
         # Example: simple squared error for demonstration
         try:
@@ -36,7 +37,7 @@ class KnowledgeDistillationManager:
         self.student_model = student_model
         self.distillation_loss = DistillationLoss(temperature=4.0)
 
-    async def distill_knowledge(self, training_data: List[Any], epochs: int = 10):
+    async def distill_knowledge(self, training_data: List[Any], epochs: int = 10) -> None:
         """執行知識蒸餾"""
         for epoch in range(epochs):
             total_loss = 0.0

@@ -59,9 +59,11 @@ class Position:
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
 
     def __add__(self, other: Position) -> Position:
+        """Execute the   add   operation."""
         return Position(self.x + other.x, self.y + other.y)
 
     def __sub__(self, other: Position) -> Position:
+        """Execute the   sub   operation."""
         return Position(self.x - other.x, self.y - other.y)
 
 
@@ -208,7 +210,7 @@ class DesktopPresence:
         self._position_callbacks: List[Callable[[Position, Position], None]] = []
         self._mode_change_callbacks: List[Callable[[Any, Any], None]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the desktop presence system"""
         self._running = True
 
@@ -219,7 +221,7 @@ class DesktopPresence:
         # Start update loop
         self._update_task = asyncio.create_task(self._update_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
 
@@ -232,7 +234,7 @@ class DesktopPresence:
             except asyncio.CancelledError:
                 pass
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """Background update loop"""
         while self._running:
             await self._update_collision_detection()
@@ -288,7 +290,7 @@ class DesktopPresence:
             
             self.move_by(Position(dx * pull_magnitude, dy * pull_magnitude))
 
-    async def _update_collision_detection(self):
+    async def _update_collision_detection(self) -> None:
         """Update collision detection"""
         if not self.collision_enabled:
             return
@@ -344,7 +346,7 @@ class DesktopPresence:
             normal=Position(dx, dy),
         )
 
-    async def _enforce_screen_boundaries(self):
+    async def _enforce_screen_boundaries(self) -> None:
         """Keep Angela within screen boundaries"""
         x = max(0, min(self.current_position.x, self.screen_bounds.width - self.body_size.width))
         y = max(0, min(self.current_position.y, self.screen_bounds.height - self.body_size.height))
@@ -362,7 +364,7 @@ class DesktopPresence:
 
         self.last_mouse_position = position
 
-    def set_position(self, position: Position):
+    def set_position(self, position: Position) -> None:
         """
         Set Angela's position on screen
 
@@ -381,7 +383,7 @@ class DesktopPresence:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    def move_by(self, delta: Position):
+    def move_by(self, delta: Position) -> None:
         """Move by relative amount"""
         new_position = Position(
             self.current_position.x + delta.x, self.current_position.y + delta.y
@@ -397,7 +399,7 @@ class DesktopPresence:
             height=self.body_size.height,
         )
 
-    def set_presence_mode(self, mode: PresenceMode):
+    def set_presence_mode(self, mode: PresenceMode) -> None:
         """
         Set presence mode
 
@@ -431,7 +433,7 @@ class DesktopPresence:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    def set_layer_mode(self, mode: LayerMode):
+    def set_layer_mode(self, mode: LayerMode) -> None:
         """
         Set layer mode (affects mouse interaction)
 
@@ -450,7 +452,7 @@ class DesktopPresence:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    def set_opacity(self, opacity: float):
+    def set_opacity(self, opacity: float) -> None:
         """Set opacity level (0-1)"""
         self.opacity = max(0.0, min(1.0, opacity))
 
@@ -458,7 +460,7 @@ class DesktopPresence:
         """Register an object for collision detection"""
         self.collision_objects[name] = bounds
 
-    def unregister_collision_object(self, name: str):
+    def unregister_collision_object(self, name: str) -> None:
         """Unregister a collision object"""
         if name in self.collision_objects:
             del self.collision_objects[name]
@@ -476,7 +478,7 @@ class DesktopPresence:
         """Check if a point is inside Angela's body"""
         return self.get_bounding_box().contains(point)
 
-    def register_position_callback(self, callback: Callable[[Position, Position], None]):
+    def register_position_callback(self, callback: Callable[[Position, Position], None]) -> None:
         """Register callback for position changes"""
         self._position_callbacks.append(callback)
 
@@ -484,7 +486,7 @@ class DesktopPresence:
         """Register callback for collision events"""
         self.collision_callbacks.append(callback)
 
-    def register_mode_change_callback(self, callback: Callable[[Any, Any], None]):
+    def register_mode_change_callback(self, callback: Callable[[Any, Any], None]) -> None:
         """Register callback for mode changes"""
         self._mode_change_callbacks.append(callback)
 
@@ -495,7 +497,7 @@ class DesktopPresence:
             self.screen_bounds.height / 2 - self.body_size.height / 2,
         )
 
-    def snap_to_edge(self, edge: str):
+    def snap_to_edge(self, edge: str) -> None:
         """Snap Angela to screen edge"""
         if edge == "left":
             self.set_position(Position(0, self.current_position.y))
@@ -524,7 +526,7 @@ class MouseTracker:
         self._callbacks: List[Callable[[Position], None]] = []
         self._tracking_task: Optional[asyncio.Task] = None
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize mouse tracking"""
         self.is_tracking = True
         self._tracking_task = asyncio.create_task(self._track_loop())
@@ -539,7 +541,7 @@ class MouseTracker:
             except asyncio.CancelledError:
                 pass
 
-    async def _track_loop(self):
+    async def _track_loop(self) -> None:
         """Track mouse position"""
         while self.is_tracking:
             # This would integrate with OS-level mouse tracking
@@ -569,7 +571,7 @@ class MouseTracker:
         """Get current mouse position"""
         return self.current_position
 
-    def register_callback(self, callback: Callable[[Position], None]):
+    def register_callback(self, callback: Callable[[Position], None]) -> None:
         """Register position update callback"""
         self._callbacks.append(callback)
 
@@ -589,7 +591,8 @@ class MouseTracker:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         presence = DesktopPresence()
         await presence.initialize()
 

@@ -45,7 +45,7 @@ _economy_manager = None
 _metabolic_heartbeat = None
 
 
-def setup_middleware(app: FastAPI):
+def setup_middleware(app: FastAPI) -> None:
     """Configure CORS and signed-communication middleware."""
     global _angela_cfg
     try:
@@ -73,7 +73,7 @@ def setup_middleware(app: FastAPI):
         logger.warning(f"[Middleware] EncryptedCommunication setup skipped: {e}", exc_info=True)
 
 
-def _get_abc_key_manager():
+def _get_abc_key_manager() -> str:
     global _abc_key_manager
     if _abc_key_manager is None:
         _abc_key_manager = ABCKeyManager()
@@ -81,10 +81,12 @@ def _get_abc_key_manager():
 
 
 def get_abc_key_manager() -> ABCKeyManager:
+    """Get the abc key manager."""
     return _get_abc_key_manager()
 
 
 def get_metabolic_heartbeat() -> MetabolicHeartbeat:
+    """Get the metabolic heartbeat."""
     global _metabolic_heartbeat
     if _metabolic_heartbeat is None:
         _metabolic_heartbeat = MetabolicHeartbeat(update_interval=heartbeat_value("heartbeat.update_interval", 30.0))
@@ -92,6 +94,7 @@ def get_metabolic_heartbeat() -> MetabolicHeartbeat:
 
 
 def get_desktop_interaction() -> DesktopInteraction:
+    """Get the desktop interaction."""
     global _desktop_interaction
     if _desktop_interaction is None:
         _desktop_interaction = DesktopInteraction()
@@ -99,6 +102,7 @@ def get_desktop_interaction() -> DesktopInteraction:
 
 
 def get_action_executor() -> ActionExecutor:
+    """Get the action executor."""
     global _action_executor
     if _action_executor is None:
         _action_executor = ActionExecutor()
@@ -106,6 +110,7 @@ def get_action_executor() -> ActionExecutor:
 
 
 def get_vision_service() -> VisionService:
+    """Get the vision service."""
     global _vision_service
     if _vision_service is None:
         from core.interfaces.service_registry import get_registry
@@ -116,6 +121,7 @@ def get_vision_service() -> VisionService:
 
 
 def get_audio_service() -> AudioService:
+    """Get the audio service."""
     global _audio_service
     if _audio_service is None:
         from core.interfaces.service_registry import get_registry
@@ -126,6 +132,7 @@ def get_audio_service() -> AudioService:
 
 
 def get_tactile_service() -> TactileService:
+    """Get the tactile service."""
     global _tactile_service
     if _tactile_service is None:
         from core.interfaces.service_registry import get_registry
@@ -136,6 +143,7 @@ def get_tactile_service() -> TactileService:
 
 
 def get_digital_life() -> DigitalLifeIntegrator:
+    """Get the digital life."""
     global _digital_life
     if _digital_life is None:
         _digital_life = DigitalLifeIntegrator()
@@ -143,13 +151,14 @@ def get_digital_life() -> DigitalLifeIntegrator:
 
 
 def get_economy_manager() -> EconomyManager:
+    """Get the economy manager."""
     global _economy_manager
     if _economy_manager is None:
         _economy_manager = EconomyManager({})
     return _economy_manager
 
 
-async def _get_chat_service():
+async def _get_chat_service() -> str:
     """Lazy-init chat service via registry (replaces direct import)."""
     global _chat_service_instance
     if _chat_service_instance is None:
@@ -161,7 +170,7 @@ async def _get_chat_service():
     return _chat_service_instance
 
 
-def _validate_environment_variables():
+def _validate_environment_variables() -> None:
     required_keys = ["ANGELA_KEY_A", "ANGELA_KEY_B", "ANGELA_KEY_C"]
     missing_keys = []
     for key in required_keys:
@@ -176,7 +185,7 @@ def _validate_environment_variables():
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> None:
     """Startup: pre-init core services. Shutdown: cleanup resources."""
     from services.websocket_manager import broadcast_state_updates
 
@@ -239,7 +248,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"[Lifecycle] Heartbeat start failed: {e}", exc_info=True)
 
-    async def run_security_audit_task():
+    async def run_security_audit_task() -> None:
+        """Log a diagnostic message."""
         while True:
             try:
                 from core.security.security_audit import get_security_audit
@@ -253,7 +263,8 @@ async def lifespan(app: FastAPI):
             await asyncio.sleep(loop_sleep("security_audit", 3600))
 
     # P7: periodic on_tick hook for plugin system (every 30s)
-    async def run_on_tick():
+    async def run_on_tick() -> None:
+        """Log a diagnostic message."""
         while True:
             await asyncio.sleep(loop_sleep("plugin_tick", 30))
             try:

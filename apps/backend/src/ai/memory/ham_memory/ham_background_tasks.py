@@ -22,7 +22,7 @@ class HAMBackgroundTasks:
         self.fernet = fernet
         self.next_memory_id = next_memory_id
 
-    async def _delete_old_experiences(self):
+    async def _delete_old_experiences(self) -> None:
         """
         Periodically deletes old experiences from memory based on:
         1. Age (memories older than threshold)
@@ -110,7 +110,7 @@ class HAMBackgroundTasks:
             memories_to_delete = [m[0] for m in memories_with_relevance[:memories_to_keep]]
         return memories_to_delete
 
-    async def _execute_deletion(self, memories_to_delete: List[str]):
+    async def _execute_deletion(self, memories_to_delete: List[str]) -> None:
         if memories_to_delete:
             logger.info(f"Deleting {len(memories_to_delete)} old memories...")
             for mem_id in memories_to_delete:

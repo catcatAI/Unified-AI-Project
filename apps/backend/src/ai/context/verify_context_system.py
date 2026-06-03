@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def verify_context_system():
+def verify_context_system() -> bool:
     """验证上下文系统的基本功能"""
     logger.info("开始验证上下文系统...")
 

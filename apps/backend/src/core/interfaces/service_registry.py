@@ -53,6 +53,7 @@ _registry = ServiceRegistry()
 
 
 def get_registry() -> ServiceRegistry:
+    """Get the global ServiceRegistry singleton."""
     return _registry
 
 

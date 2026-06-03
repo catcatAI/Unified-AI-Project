@@ -134,7 +134,7 @@ class FeedbackCollector:
         self.success_patterns: dict[str, int] = {}
         self.failure_patterns: dict[str, int] = {}
 
-    def collect(self, result: ExecutionResult):
+    def collect(self, result: ExecutionResult) -> None:
         """收集执行反馈"""
         feedback = {
             "action_type": result.action_type.value,
@@ -275,7 +275,7 @@ class ActionExecutionBridge:
             Callable[[ExecutionContext, ExecutionResult], None]
         ] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the action execution bridge"""
         self._running = True
 
@@ -287,7 +287,7 @@ class ActionExecutionBridge:
 
         logger.info("[ActionExecutionBridge] Initialized successfully")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the bridge"""
         self._running = False
 
@@ -385,7 +385,7 @@ class ActionExecutionBridge:
                 data={"status": "queued"},
             )
 
-    async def _execution_loop(self):
+    async def _execution_loop(self) -> None:
         """Main execution loop - processes actions from the queue"""
         while self._running:
             # Find next executable action
@@ -417,7 +417,7 @@ class ActionExecutionBridge:
 
         return None
 
-    async def _execute_with_semaphore(self, action_id: str, item: dict[str, Any]):
+    async def _execute_with_semaphore(self, action_id: str, item: dict[str, Any]) -> None:
         """Execute action with concurrency control"""
         async with self._semaphore:
             await self._execute_action(action_id, item)
@@ -528,7 +528,7 @@ class ActionExecutionBridge:
             "completed_count": len(self._completed_actions),
         }
 
-    def _update_stats(self, result: ExecutionResult):
+    def _update_stats(self, result: ExecutionResult) -> None:
         """Update execution statistics"""
         self._stats["total_executed"] += 1
 
@@ -554,7 +554,7 @@ class ActionExecutionBridge:
         else:
             self._stats["action_type_counts"][type_key]["failure"] += 1
 
-    async def _persist_result(self, result: ExecutionResult):
+    async def _persist_result(self, result: ExecutionResult) -> None:
         """Persist execution result to history"""
         self._execution_history.append(result.to_dict())
 
@@ -566,11 +566,12 @@ class ActionExecutionBridge:
         if len(self._execution_history) % 10 == 0:
             await self._save_history()
 
-    async def _load_history(self):
+    async def _load_history(self) -> str:
         """Load execution history from file"""
         try:
             if await asyncio.to_thread(self._history_file.exists):
-                def read_history():
+                def read_history() -> str:
+                    """Execute the read history operation."""
                     with open(self._history_file, "r", encoding="utf-8") as f:
                         return json.load(f)
                 
@@ -578,12 +579,13 @@ class ActionExecutionBridge:
         except Exception as e:  # broad exception acceptable: non-critical history load, continue without it
             logger.error(f"[ActionExecutionBridge] Failed to load history: {e}", exc_info=True)
 
-    async def _save_history(self):
+    async def _save_history(self) -> None:
         """Save execution history to file"""
         try:
             await asyncio.to_thread(self._history_file.parent.mkdir, parents=True, exist_ok=True)
             
             def write_history() -> None:
+                """Execute the write history operation."""
                 with open(self._history_file, "w", encoding="utf-8") as f:
                     json.dump(self._execution_history, f, ensure_ascii=False, indent=2)
             
@@ -591,7 +593,7 @@ class ActionExecutionBridge:
         except Exception as e:  # broad exception acceptable: non-critical history save, log and continue
             logger.error(f"[ActionExecutionBridge] Failed to save history: {e}", exc_info=True)
 
-    async def _send_feedback_to_cdm(self, result: ExecutionResult):
+    async def _send_feedback_to_cdm(self, result: ExecutionResult) -> None:
         """Send execution feedback to CDM for learning"""
         if not self.cdm:
             return
@@ -1023,7 +1025,7 @@ class ActionExecutionBridge:
 
     # ========== Public API ==========
 
-    def register_pre_execution_callback(self, callback: Callable[[ExecutionContext], None]):
+    def register_pre_execution_callback(self, callback: Callable[[ExecutionContext], None]) -> None:
         """Register callback to be called before action execution"""
         self._pre_execution_callbacks.append(callback)
 
@@ -1070,7 +1072,7 @@ class ActionExecutionBridge:
 
         return False
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear execution history"""
         self._execution_history.clear()
         self._completed_actions.clear()
@@ -1116,7 +1118,8 @@ class ActionExecutionBridgeFactory:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         logger.info("=" * 70)
         logger.info("Angela AI v6.0 - Action Execution Bridge Demo")
         logger.info("动作执行桥接器演示")

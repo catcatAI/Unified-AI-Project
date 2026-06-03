@@ -32,6 +32,7 @@ class MemoryAdapter:
         self._ham = manager
 
     async def store_card(self, card: Card, is_strategic: bool = False) -> Optional[str]:
+        """Store a card."""
         card_dict = self._card_to_dict(card)
         metadata = {
             "world_line": card.world_line,
@@ -55,6 +56,7 @@ class MemoryAdapter:
     async def store_batch(
         self, cards: list, is_strategic: bool = False
     ) -> Dict[str, Optional[str]]:
+        """Store a batch."""
         results: Dict[str, Optional[str]] = {}
         for card in cards:
             mid = await self.store_card(card, is_strategic=is_strategic)

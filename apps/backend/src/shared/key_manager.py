@@ -112,7 +112,7 @@ class UnifiedKeyManager:
         """计算密钥哈希（用于验证）"""
         return hashlib.sha256(key.encode()).hexdigest()
 
-    def _save_keys(self, keys_data: Dict[str, Any]):
+    def _save_keys(self, keys_data: Dict[str, Any]) -> None:
         """保存密钥数据"""
         try:
             with open(self.keys_file, "w", encoding="utf-8") as f:
@@ -131,7 +131,7 @@ class UnifiedKeyManager:
         next_rotation = last_rotation + timedelta(days=self.key_rotation_days)
         return datetime.now() >= next_rotation
 
-    def _rotate_keys(self):
+    def _rotate_keys(self) -> None:
         """轮换密钥"""
         logger.info("开始轮换密钥...")
 
@@ -204,7 +204,7 @@ class UnifiedKeyManager:
         # 否則作為 API 金鑰或環境變量處理
         return os.environ.get(key_name) or self.config.get(key_name)
 
-    def setup_environment(self):
+    def setup_environment(self) -> None:
         """設置運行環境金鑰"""
         # 检查是否需要轮换密钥
         if self._should_rotate_keys():

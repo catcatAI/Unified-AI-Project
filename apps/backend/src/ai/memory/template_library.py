@@ -124,7 +124,7 @@ class TemplateLibrary:
         self._initialized: bool = False
         self._initialize_predefined_templates()
 
-    def _initialize_predefined_templates(self):
+    def _initialize_predefined_templates(self) -> None:
         """初始化所有预定义模板"""
         logger.info("Initializing predefined response templates...")
 
@@ -589,7 +589,7 @@ class TemplateLibrary:
 
         logger.info(f"Initialized {len(self._templates)} predefined templates")
 
-    def _add_template(self, template: MemoryTemplate):
+    def _add_template(self, template: MemoryTemplate) -> None:
         """添加模板到库中"""
         self._templates[template.id] = template
 
@@ -626,7 +626,7 @@ class TemplateLibrary:
         """
         return [template for template in self._templates.values() if template.category == category]
 
-    def add_custom_template(self, template: MemoryTemplate):
+    def add_custom_template(self, template: MemoryTemplate) -> None:
         """
         添加自定义模板
 
@@ -639,7 +639,7 @@ class TemplateLibrary:
             self._templates[template.id] = template
         logger.info(f"Added custom template: {template.id}")
 
-    async def add_custom_template_async(self, template: MemoryTemplate):
+    async def add_custom_template_async(self, template: MemoryTemplate) -> None:
         """async 版本添加自定義模板（使用 asyncio.Lock）"""
         async with self._write_lock:
             self._templates[template.id] = template

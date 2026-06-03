@@ -64,7 +64,7 @@ class AngelaRealCreator:
             logger.info("✅ Angela 创作系统已初始化")
         return success
 
-    async def close(self):
+    async def close(self) -> None:
         """关闭系统"""
         await self.browser.close()
         logger.info("✅ Angela 系统已关闭")
@@ -382,7 +382,7 @@ class AngelaRealCreator:
         return showcase_path
 
 
-async def quick_demo():
+async def quick_demo() -> None:
     """快速演示"""
     logger.info("=" * 60)
     logger.info("🎨 Angela 真实创作系统演示")
@@ -425,7 +425,7 @@ async def quick_demo():
         await creator.close()
 
 
-async def full_demo():
+async def full_demo() -> None:
     """完整演示"""
     logger.info("=" * 60)
     logger.info("🎨 Angela 完整创作流程")

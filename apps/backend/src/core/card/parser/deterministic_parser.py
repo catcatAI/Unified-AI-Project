@@ -69,6 +69,7 @@ class DeterministicParser:
         }
 
     def parse(self, text: str) -> Tuple[Card, Dict[str, float]]:
+        """Parse the input data."""
         card = Card()
         confidences: Dict[str, float] = {}
 
@@ -178,6 +179,7 @@ class DeterministicParser:
         confidences["tokens"] = 0.95 if card.tokens else 0.0
 
     def classify_confidence(self, confidences: Dict[str, float]) -> Dict[str, Any]:
+        """Execute the classify confidence operation."""
         overall = sum(confidences.values()) / max(len(confidences), 1)
         return {
             "overall": overall,

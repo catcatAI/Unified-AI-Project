@@ -78,7 +78,7 @@ class ModalityGateway:
             ModalityType.CODE: ModalityState(ModalityType.CODE, False, 2),
         }
 
-    def update_gates(self, arousal: float, introspection_report: Optional[dict[str, Any]] = None):
+    def update_gates(self, arousal: float, introspection_report: Optional[dict[str, Any]] = None) -> None:
         """根據喚醒度與意圖分析更新閘門狀態"""
         old_states = {m: s.is_active for m, s in self.modalities.items()}
         
@@ -116,6 +116,7 @@ class ModalityGateway:
                 logger.info(f"🔮 [Modality] {m.name} is now {'ACTIVE' if s.is_active else 'INACTIVE'}")
 
     def is_active(self, modality: ModalityType) -> bool:
+        """Check if a given modality is currently active."""
         return self.modalities.get(modality, ModalityState(modality)).is_active
 
 
@@ -283,7 +284,7 @@ class DigitalLifeIntegrator:
         # [Task N.20.2] 模態閘控初始化
         self.modality_gateway = ModalityGateway()
 
-    async def initialize(self):
+    async def initialize(self) -> bool:
         """
         Initialize digital life with 2030-standard robust error handling.
         Ensures partial survival even if high-level modules fail.
@@ -341,7 +342,7 @@ class DigitalLifeIntegrator:
         logger.info(f"✨ Angela has awakened in {self.life_cycle_state.en_name} state.")
         return True
 
-    def _on_formula_decision(self, decision):
+    def _on_formula_decision(self, decision) -> None:
         """Callback for formula-driven life decisions"""
         # Record as life event if significant
         if decision.confidence > 0.6:
@@ -356,7 +357,7 @@ class DigitalLifeIntegrator:
                 },
             )
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown digital life and all subsystems"""
         self._running = False
 
@@ -388,7 +389,7 @@ class DigitalLifeIntegrator:
         # Record final stats
         self._update_active_time()
 
-    async def _life_cycle_loop(self):
+    async def _life_cycle_loop(self) -> None:
         """Main life cycle management loop"""
         while self._running:
             await self._check_activity_status()
@@ -434,7 +435,7 @@ class DigitalLifeIntegrator:
 
             await asyncio.sleep(self._update_interval)
 
-    async def _check_activity_status(self):
+    async def _check_activity_status(self) -> None:
         """Check and update activity status"""
         time_since_activity = (datetime.now() - self._last_activity_time).total_seconds()
 
@@ -449,7 +450,7 @@ class DigitalLifeIntegrator:
             if self.life_cycle_state == LifeCycleState.RESTING:
                 await self._transition_state(LifeCycleState.MATURE)
 
-    async def _process_life_cycle_transitions(self):
+    async def _process_life_cycle_transitions(self) -> None:
         """以空間成熟度取代固定時間閾值 / Spatial maturity replaces fixed thresholds"""
         maturity = self._compute_maturity_score()
 
@@ -492,7 +493,7 @@ class DigitalLifeIntegrator:
 
         return max(0.0, min(1.0, maturity))
 
-    async def _transition_state(self, new_state: LifeCycleState):
+    async def _transition_state(self, new_state: LifeCycleState) -> None:
         """Transition to a new life cycle state"""
         if new_state == self.life_cycle_state:
             return
@@ -522,7 +523,7 @@ class DigitalLifeIntegrator:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    async def _apply_state_behaviors(self, state: LifeCycleState):
+    async def _apply_state_behaviors(self, state: LifeCycleState) -> None:
         """Apply behaviors specific to life cycle state"""
         if state == LifeCycleState.RESTING:
             # Slow down biological processes
@@ -556,7 +557,7 @@ class DigitalLifeIntegrator:
                 )
             logger.info("✨ [DigitalLife] MATURE: Formula evaluation applied to beta clarity.")
 
-    async def _check_system_health(self):
+    async def _check_system_health(self) -> None:
         """Check health of all subsystems"""
         systems: dict[str, Any] = {
             "biological": self.biological_integrator,
@@ -591,7 +592,7 @@ class DigitalLifeIntegrator:
                     status_message=str(e),
                 )
 
-    def _update_active_time(self):
+    def _update_active_time(self) -> None:
         """Update total active time tracking"""
         if self._is_active:
             session_duration = datetime.now() - self._last_activity_time
@@ -609,7 +610,7 @@ class DigitalLifeIntegrator:
                 logger.debug(f"記憶統計更新失敗（可忽略）: {e}")
                 pass
 
-    async def _update_dynamic_parameters(self):
+    async def _update_dynamic_parameters(self) -> None:
         """Update and log dynamic parameters periodically"""
         if not self.dynamic_params:
             return
@@ -635,7 +636,7 @@ class DigitalLifeIntegrator:
             # broad exception acceptable: dynamic params update is non-critical, graceful degradation
             logger.error(f"[DigitalLife] Error updating dynamic parameters: {e}", exc_info=True)
 
-    def record_activity(self, activity_type: str):
+    def record_activity(self, activity_type: str) -> None:
         """Record user activity"""
         self._last_activity_time = datetime.now()
         self._is_active = True
@@ -698,7 +699,7 @@ class DigitalLifeIntegrator:
             combined_state, lifecycle_metrics
         )
 
-    def _record_event(self, event: LifeEvent):
+    def _record_event(self, event: LifeEvent) -> None:
         """Internal method to record an event"""
         self.life_events.append(event)
 
@@ -756,7 +757,7 @@ class DigitalLifeIntegrator:
         """Register callback for life cycle state changes"""
         self._state_change_callbacks.append(callback)
 
-    def register_event_callback(self, callback: Callable[[LifeEvent], None]):
+    def register_event_callback(self, callback: Callable[[LifeEvent], None]) -> None:
         """Register callback for life events"""
         self._event_callbacks.append(callback)
 
@@ -807,7 +808,7 @@ class DigitalLifeIntegrator:
             return self.dynamic_params.get_parameter(param_name, context)
         return 0.5
 
-    def record_user_interaction_for_formulas(self, user_id: str, intensity: float = 0.5):
+    def record_user_interaction_for_formulas(self, user_id: str, intensity: float = 0.5) -> None:
         """
         Record user interaction for formula calculations
 
@@ -827,7 +828,8 @@ class DigitalLifeIntegrator:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         life = DigitalLifeIntegrator()
         await life.initialize()
 

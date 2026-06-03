@@ -68,7 +68,7 @@ class CodeLearningEngine:
 
         self._init_builtin_patterns()
 
-    def _init_builtin_patterns(self):
+    def _init_builtin_patterns(self) -> None:
         """初始化內置模式"""
         builtin_patterns = [
             LearnedPattern(
@@ -198,12 +198,15 @@ class CodeLearningEngine:
         return None
 
     def get_pattern_by_id(self, pattern_id: str) -> Optional[LearnedPattern]:
+        """Get the pattern by id by self."""
         return self.patterns.get(pattern_id)
 
     def get_all_patterns(self) -> List[LearnedPattern]:
+        """Get the all patterns by self."""
         return list(self.patterns.values())
 
     def get_high_confidence_patterns(self, threshold: float = 0.8) -> List[LearnedPattern]:
+        """Get the high confidence patterns by self."""
         return [p for p in self.patterns.values() if p.confidence >= threshold]
 
     def get_feedback_stats(self) -> Dict[str, Any]:
@@ -235,7 +238,7 @@ class CodeLearningEngine:
             for p in self.patterns.values()
         ]
 
-    def import_patterns(self, patterns_data: List[Dict[str, Any]]):
+    def import_patterns(self, patterns_data: List[Dict[str, Any]]) -> None:
         """從持久化數據導入模式"""
         for data in patterns_data:
             pat = LearnedPattern(

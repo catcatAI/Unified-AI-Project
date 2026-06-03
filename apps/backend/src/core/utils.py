@@ -225,8 +225,10 @@ def retry(
     """重试装饰器"""
 
     def decorator(func: Callable) -> Callable:
+        """Apply retry logic to the function."""
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> str:
+            """Wrap the decorated function."""
             current_delay = delay
             for attempt in range(max_attempts):
                 try:
@@ -251,8 +253,10 @@ def async_retry(
     """异步重试装饰器"""
 
     def decorator(func: Callable) -> Callable:
+        """Apply async retry logic to the function."""
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs) -> str:
+            """Wrap the decorated function."""
             current_delay = delay
             for attempt in range(max_attempts):
                 try:
@@ -272,7 +276,8 @@ def measure_time(func: Callable) -> Callable:
     """测量函数执行时间"""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs) -> str:
+        """Wrap the decorated function."""
         start_time = time.time()
         result = func(*args, **kwargs)
         elapsed = time.time() - start_time
@@ -286,7 +291,8 @@ def async_measure_time(func: Callable) -> Callable:
     """测量异步函数执行时间"""
 
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs) -> str:
+        """Wrap the decorated function."""
         start_time = time.time()
         result = await func(*args, **kwargs)
         elapsed = time.time() - start_time
@@ -301,8 +307,10 @@ def cache_result(ttl: float = 60.0) -> Callable:
     cache: dict[str, tuple] = {}
 
     def decorator(func: Callable) -> Callable:
+        """Apply caching logic to the function."""
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> str:
+            """Wrap the decorated function."""
             key = f"{func.__name__}:{args}:{kwargs}"
             if key in cache:
                 result, timestamp = cache[key]
@@ -324,7 +332,7 @@ def cache_result(ttl: float = 60.0) -> Callable:
 
 
 @contextmanager
-def timer(description: str = "Operation"):
+def timer(description: str = "Operation") -> None:
     """计时上下文管理器"""
     start = time.time()
     yield
@@ -342,7 +350,7 @@ def suppress_errors(*exceptions) -> None:
 
 
 @contextmanager
-def change_dir(path: Union[str, Path]):
+def change_dir(path: Union[str, Path]) -> None:
     """临时切换工作目录"""
     old_dir = os.getcwd()
     try:
@@ -484,6 +492,7 @@ class LazyProperty:
         self.name = func.__name__
 
     def __get__(self, obj: Any, type: type = None) -> Any:
+        """Execute the   get   operation."""
         if obj is None:
             return self
         if self.name not in obj.__dict__:
@@ -498,10 +507,12 @@ class cached_property:
         self.func = func
         self.attr_name = None
 
-    def __set_name__(self, owner, name):
+    def __set_name__(self, owner, name) -> None:
+        """Execute the   set name   operation."""
         self.attr_name = name
 
     def __get__(self, instance, owner) -> None:
+        """Execute the   get   operation."""
         if instance is None:
             return self
         if self.attr_name is None:

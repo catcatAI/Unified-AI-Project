@@ -351,7 +351,7 @@ class TokenGenerationMonitor:
         self.is_monitoring = False
         self.monitoring_task: Optional[asyncio.Task] = None
 
-    async def start_monitoring(self, interval: float = 60.0):
+    async def start_monitoring(self, interval: float = 60.0) -> None:
         """开始监控"""
         if self.is_monitoring:
             logger.warning("监控已在运行中", exc_info=True)
@@ -361,7 +361,7 @@ class TokenGenerationMonitor:
         self.monitoring_task = asyncio.create_task(self._monitoring_loop(interval))
         logger.info(f"Token生成监控已启动，检查间隔: {interval}秒")
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """停止监控"""
         if not self.is_monitoring:
             return
@@ -376,7 +376,7 @@ class TokenGenerationMonitor:
 
         logger.info("Token生成监控已停止")
 
-    async def _monitoring_loop(self, interval: float):
+    async def _monitoring_loop(self, interval: float) -> None:
         """监控循环"""
         while self.is_monitoring:
             try:

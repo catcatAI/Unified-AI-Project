@@ -17,7 +17,7 @@ def load_yaml(file_path: str) -> Dict[str, Any]:
         return yaml.safe_load(f) or {}
 
 
-def load_config(config_path="system/core"):
+def load_config(config_path="system/core") -> str:
     """
     Redirects to TieredConfigLoader.
     """
@@ -50,7 +50,7 @@ def get_bootstrap_config() -> Dict[str, Any]:
 
 
 # DORMANT FACTORY (not called externally)
-def get_config():
+def get_config() -> str:
     """
     Returns the loaded configuration.
     """
@@ -60,7 +60,7 @@ def get_config():
     return _config if _config is not None else {}
 
 
-def load_simulated_resources(config_path="configs/simulated_resources.yaml"):
+def load_simulated_resources(config_path="configs/simulated_resources.yaml") -> str:
     """
     Loads the simulated resources configuration file.
     """
@@ -74,7 +74,7 @@ def load_simulated_resources(config_path="configs/simulated_resources.yaml"):
 
 
 # DORMANT FACTORY (not called externally)
-def get_simulated_resources():
+def get_simulated_resources() -> str:
     """
     Returns the loaded simulated resources.
     """
@@ -83,7 +83,7 @@ def get_simulated_resources():
     return _simulated_resources if _simulated_resources is not None else {}
 
 
-def is_demo_mode():
+def is_demo_mode() -> str:
     """
     Checks if the application is running in demo mode.
     """
@@ -92,7 +92,7 @@ def is_demo_mode():
     return ai_models_config.get("use_simulated_resources", False)
 
 
-def get_mock_placeholder_value(placeholder_type, placeholder_key):
+def get_mock_placeholder_value(placeholder_type, placeholder_key) -> str:
     """
     Retrieves a mock value for a given placeholder type and key from the
     simulated resources configuration.

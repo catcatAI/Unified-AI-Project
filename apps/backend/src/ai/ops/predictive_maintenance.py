@@ -15,7 +15,7 @@ class PredictiveMaintenanceEngine:
         self.sensor_data_history: Dict[str, List[Dict[str, Any]]] = {}
         logger.info("PredictiveMaintenanceEngine initialized.")
 
-    def ingest_sensor_data(self, sensor_id: str, data: Dict[str, Any]):
+    def ingest_sensor_data(self, sensor_id: str, data: Dict[str, Any]) -> None:
         """Ingests new sensor data for analysis."""
         if sensor_id not in self.sensor_data_history:
             self.sensor_data_history[sensor_id] = []

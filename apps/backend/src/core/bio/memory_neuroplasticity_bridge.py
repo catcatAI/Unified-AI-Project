@@ -116,7 +116,7 @@ class MemoryNeuroplasticityBridge:
         self._consolidation_callbacks: List[Callable[[str], None]] = []
         self._forgetting_callbacks: List[Callable[[str, float], None]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the memory bridge"""
         self._running = True
         await self.neuroplasticity.initialize()
@@ -137,7 +137,7 @@ class MemoryNeuroplasticityBridge:
 
         await self.neuroplasticity.shutdown()
 
-    async def _maintenance_loop(self):
+    async def _maintenance_loop(self) -> None:
         """Background maintenance for memory health"""
         while self._running:
             await self._update_reinforcement_stats()
@@ -150,7 +150,7 @@ class MemoryNeuroplasticityBridge:
             # Decay access frequency over time
             reinforcement.access_frequency *= 0.95
 
-    async def _check_forgetting(self):
+    async def _check_forgetting(self) -> None:
         """Check memories for forgetting"""
         if not self._forgetting_curve_enabled:
             return
@@ -312,7 +312,7 @@ class MemoryNeuroplasticityBridge:
                     nearby_memories.append(mem_id)
         return nearby_memories
 
-    def trigger_consolidation(self, memory_ids: Optional[List[str]] = None):
+    def trigger_consolidation(self, memory_ids: Optional[List[str]] = None) -> None:
         """
         Trigger memory consolidation (e.g., during rest/sleep)
 
@@ -462,7 +462,7 @@ class MemoryNeuroplasticityBridge:
         neuro_id = self._external_to_neuro[memory_id]
         return self.neuroplasticity.get_optimal_review_schedule(neuro_id)
 
-    def reinforce_memory(self, memory_id: str, strength: float = 0.1):
+    def reinforce_memory(self, memory_id: str, strength: float = 0.1) -> None:
         """
         Manually reinforce a memory
 
@@ -836,7 +836,7 @@ class MemoryNeuroplasticityBridge:
 
         return results
 
-    def register_consolidation_callback(self, callback: Callable[[str], None]):
+    def register_consolidation_callback(self, callback: Callable[[str], None]) -> None:
         """Register callback for memory consolidation events"""
         self._consolidation_callbacks.append(callback)
 
@@ -862,7 +862,8 @@ class MemoryNeuroplasticityBridge:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         bridge = MemoryNeuroplasticityBridge()
         await bridge.initialize()
 

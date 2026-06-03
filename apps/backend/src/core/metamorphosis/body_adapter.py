@@ -113,7 +113,7 @@ class TransferRecord:
     errors: List[str] = field(default_factory=list)
     rollback_point: Optional[StateSnapshot] = None
 
-    def mark_completed(self):
+    def mark_completed(self) -> None:
         """标记完成 / Mark completed"""
         self.status = TransferStatus.COMPLETED
         self.completed_at = datetime.now()
@@ -242,7 +242,7 @@ class BodyAdapter:
 
         return adapted
 
-    def _apply_field_mappings(self, state: StateSnapshot, source_version: str, target_version: str):
+    def _apply_field_mappings(self, state: StateSnapshot, source_version: str, target_version: str) -> None:
         """应用字段映射 / Apply field mappings"""
         version_specific_mappings = {
             ("6.0.0", "6.0.0"): {
@@ -325,7 +325,7 @@ def create_body_adapter(version: str = "6.0.0") -> BodyAdapter:
     return BodyAdapterFactory.get_adapter(version)
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("🦾 肉身适配器系统演示")
     logger.info("=" * 50)

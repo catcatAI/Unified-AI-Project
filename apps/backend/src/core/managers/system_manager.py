@@ -40,7 +40,7 @@ class SystemManager:
         self.initialized = False
         logger.info("系统管理器已关闭")
 
-    def register_component(self, name: str, component: Any):
+    def register_component(self, name: str, component: Any) -> None:
         """注册组件"""
         self.components[name] = component
         logger.info(f"Component registered: {name}")

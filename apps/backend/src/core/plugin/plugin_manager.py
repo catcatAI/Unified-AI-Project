@@ -31,6 +31,7 @@ class PluginManager:
         self._define_standard_hooks()
 
     def _define_standard_hooks(self):
+        """Define and register the standard set of hooks."""
         standard_hooks = {
             "on_message": "Triggered when a user message is received",
             "on_response": "Triggered when a response is generated",
@@ -43,6 +44,7 @@ class PluginManager:
 
     def register_plugin(self, name: str, version: str, description: str = "",
                         hooks: Optional[List[str]] = None) -> PluginInfo:
+        """Register a new plugin with the manager."""
         if name in self._plugins:
             logger.info(f"[PluginManager] Re-registering plugin: {name}")
         info = PluginInfo(
@@ -54,27 +56,32 @@ class PluginManager:
         return info
 
     def unregister_plugin(self, name: str) -> bool:
+        """Unregister a plugin by name."""
         if name not in self._plugins:
             return False
         del self._plugins[name]
         return True
 
     def enable_plugin(self, name: str) -> bool:
+        """Enable a plugin by name."""
         if name not in self._plugins:
             return False
         self._plugins[name].enabled = True
         return True
 
     def disable_plugin(self, name: str) -> bool:
+        """Disable a plugin by name."""
         if name not in self._plugins:
             return False
         self._plugins[name].enabled = False
         return True
 
     def get_plugin(self, name: str) -> Optional[PluginInfo]:
+        """Get a plugin's info by name."""
         return self._plugins.get(name)
 
     def list_plugins(self, enabled_only: bool = False) -> List[Dict[str, Any]]:
+        """List all registered plugins, optionally filtering by enabled."""
         plugins = self._plugins.values()
         if enabled_only:
             plugins = [p for p in plugins if p.enabled]
@@ -85,6 +92,7 @@ class PluginManager:
         ]
 
     def add_handler(self, plugin_name: str, hook_name: str, handler) -> bool:
+        """Add a handler to a plugin's hook."""
         if plugin_name not in self._plugins:
             return False
         ok = self._hook_registry.register_handler(hook_name, plugin_name, handler)
@@ -93,6 +101,7 @@ class PluginManager:
         return ok
 
     async def execute_hook(self, hook_name: str, data: Any = None):
+        """Execute all handlers for a given hook."""
         return await self._hook_registry.execute_hook(hook_name, data)
 
     async def execute_pipeline(self, hook_name: str, initial_data: Any = None) -> Any:
@@ -100,6 +109,7 @@ class PluginManager:
         return await self._hook_registry.execute_pipeline(hook_name, initial_data)
 
     def get_stats(self) -> Dict[str, Any]:
+        """Get statistics about registered plugins and hooks."""
         plugins = self.list_plugins()
         return {
             "plugin_count": len(plugins),

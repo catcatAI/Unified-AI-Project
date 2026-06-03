@@ -88,7 +88,7 @@ class HAMMemoryManager:
 
         logger.info("HAMMemoryManager initialized.")
 
-    async def initialize(self):
+    async def initialize(self) -> bool:
         """Async initialization for Memory systems."""
         logger.info("[Memory] Hierarchical Associative Memory online.")
         
@@ -127,6 +127,7 @@ class HAMMemoryManager:
         return mem_id
 
     async def store_experience(self, raw_data: Any, data_type: str, metadata: Optional[Dict[str, Any]] = None, is_strategic: bool = False) -> Optional[str]:
+        """Store a experience."""
         current_metadata = dict(metadata) if metadata else {}
         memory_id = self._generate_memory_id()
         
@@ -170,7 +171,8 @@ class HAMMemoryManager:
 
         return memory_id if await asyncio.to_thread(self.core_storage._save_core_memory_to_file, self.core_memory_store, self.next_memory_id, self.fernet) else None
 
-    async def consolidate_memories(self, limit: int = 50):
+    async def consolidate_memories(self, limit: int = 50) -> str:
+        """Execute the consolidate memories operation."""
         recent = await self.query_core_memory(data_type_filter="ai_dialogue_text", limit=limit)
         if len(recent) < 5: return None
         combined = "\n".join([f"{m['metadata'].get('speaker', 'Unknown')}: {m['content']}" for m in recent])
@@ -178,6 +180,7 @@ class HAMMemoryManager:
         return await self.store_experience(json.dumps(abstract), "long_term_gist", {"source": "consolidation"}, is_strategic=True)
 
     async def query_core_memory(self, keywords: Optional[List[str]] = None, data_type_filter: Optional[str] = None, limit: int = 10, min_importance: float = 0.0) -> List[HAMRecallResult]:
+        """Execute the query core memory operation."""
         if self.query_engine: 
             return await self.query_engine.query_core_memory(
                 keywords=keywords, 
@@ -252,6 +255,7 @@ class HAMMemoryManager:
             return False
 
     async def store_template(self, template) -> bool:
+        """Store a template."""
         try:
             content = json.dumps(template.to_dict(), ensure_ascii=False)
             return await self.store_experience(content, "response_template", {"is_template": True}) is not None

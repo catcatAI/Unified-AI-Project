@@ -38,7 +38,7 @@ class GlobalInputSensor:
             "browsing": ["chrome", "edge", "firefox", "safari", "google"]
         }
 
-    def _on_activity(self, *args):
+    def _on_activity(self, *args) -> None:
         """通用活動回饋"""
         with self._lock:
             self.last_activity_time = time.time()
@@ -48,7 +48,8 @@ class GlobalInputSensor:
             # 2030 Standard: Real-time user presence pulse
             self.user_monitor.record_input("[Hardware Pulse]", {"type": "activity_event"})
 
-    def start(self):
+    def start(self) -> None:
+        """Start the global input sensor listeners."""
         if self.running: return
         self.running = True
         
@@ -65,7 +66,8 @@ class GlobalInputSensor:
         
         logger.info("📡 [Sensory] Global Input Sensor active. Angela is feeling your pace.")
 
-    def stop(self):
+    def stop(self) -> None:
+        """Stop the global input sensor listeners."""
         self.running = False
         if self.mouse_listener: self.mouse_listener.stop()
         if self.key_listener: self.key_listener.stop()

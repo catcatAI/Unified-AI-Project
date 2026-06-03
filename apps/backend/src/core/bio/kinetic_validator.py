@@ -26,6 +26,7 @@ class KineticValidator:
         return True, ""
 
     def _validate_movement(self, params: Dict[str, Any]) -> Tuple[bool, str]:
+        """Validate movement parameters against physics constraints."""
         import time
         current_time = time.time()
         tx, ty = params.get("x", 0), params.get("y", 0)

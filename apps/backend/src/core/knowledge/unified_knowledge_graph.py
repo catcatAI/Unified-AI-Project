@@ -54,7 +54,8 @@ class Entity:
     source: str
     timestamp: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if not isinstance(self.timestamp, datetime):
             self.timestamp = datetime.fromisoformat(self.timestamp)
 
@@ -74,7 +75,8 @@ class Relation:
     is_temporal: bool = False
     temporal_properties: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if not isinstance(self.timestamp, datetime):
             self.timestamp = datetime.fromisoformat(self.timestamp)
 
@@ -140,7 +142,7 @@ class UnifiedKnowledgeGraph:
 
         logger.info("🧠 统一知识图谱初始化完成")
 
-    def _initialize_ai_components(self):
+    def _initialize_ai_components(self) -> None:
         """初始化AI组件"""
         try:
             if SKLEARN_AVAILABLE:
@@ -232,7 +234,7 @@ class UnifiedKnowledgeGraph:
             entity1.timestamp = datetime.now()
             return entity1
 
-    async def _update_entity_linking(self, entity: Entity):
+    async def _update_entity_linking(self, entity: Entity) -> None:
         """更新实体链接映射"""
         # 添加实体ID到映射
         self.entity_linking_map[entity.name.lower()].add(entity.entity_id)

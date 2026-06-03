@@ -117,7 +117,7 @@ class DesktopBrowserIntegration:
         self.learning_mode = False
         self.collected_resources = []
 
-    async def open_browser_in_background(self, url: str = "about:blank"):
+    async def open_browser_in_background(self, url: str = "about:blank") -> None:
         """
         在桌面背景层打开浏览器窗口
         浏览器位于桌面图标下方，Angela专用
@@ -150,7 +150,7 @@ class DesktopBrowserIntegration:
 
             webbrowser.open(url)
 
-    async def _run_browser(self):
+    async def _run_browser(self) -> None:
         """运行浏览器线程"""
         try:
             import webview
@@ -374,7 +374,7 @@ class DesktopInteraction:
         self._file_change_callbacks: List[Callable[[Path, str], None]] = []
         self._operation_callbacks: List[Callable[[FileOperation], None]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the desktop interaction system"""
         self._running = True
 
@@ -391,7 +391,7 @@ class DesktopInteraction:
         # Start monitoring
         self._monitor_task = asyncio.create_task(self._monitor_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
         if self._monitor_task:
@@ -401,7 +401,7 @@ class DesktopInteraction:
             except asyncio.CancelledError:
                 pass
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Background monitoring loop"""
         while self._running:
             await self._scan_desktop()
@@ -467,7 +467,7 @@ class DesktopInteraction:
 
         return FileCategory.OTHER
 
-    def _notify_file_change(self, file_path: Path, change_type: str):
+    def _notify_file_change(self, file_path: Path, change_type: str) -> None:
         """Notify file change callbacks"""
         for callback in self._file_change_callbacks:
             try:
@@ -789,7 +789,7 @@ class DesktopInteraction:
 
         return files
 
-    def register_file_change_callback(self, callback: Callable[[Path, str], None]):
+    def register_file_change_callback(self, callback: Callable[[Path, str], None]) -> None:
         """Register callback for file changes"""
         self._file_change_callbacks.append(callback)
 
@@ -1168,7 +1168,8 @@ class DesktopInteraction:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         desktop = DesktopInteraction()
         await desktop.initialize()
 

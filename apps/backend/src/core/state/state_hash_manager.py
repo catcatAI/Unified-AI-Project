@@ -55,7 +55,7 @@ class StateHashManager:
             f"auto_adapt={auto_adapt}"
         )
 
-    def set_key_manager(self, key_manager):
+    def set_key_manager(self, key_manager) -> None:
         """設置密鑰管理器
 
         Args:
@@ -274,7 +274,7 @@ class StateHashManager:
         """
         return self.precision_matrix.get_precision_mode()
 
-    def set_ram_limit(self, ram_str: str):
+    def set_ram_limit(self, ram_str: str) -> None:
         """設置 RAM 限制 (觸發精度調整)
 
         Args:
@@ -317,7 +317,7 @@ class StateHashManager:
             "precision_matrix": self.precision_matrix.get_stats(),
         }
 
-    def clear_change_log(self):
+    def clear_change_log(self) -> None:
         """清空變更日誌"""
         self.change_log.clear()
         logger.info("Change log cleared")

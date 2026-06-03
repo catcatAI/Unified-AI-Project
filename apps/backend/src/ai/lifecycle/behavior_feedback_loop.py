@@ -128,7 +128,7 @@ class BehaviorFeedbackLoop:
 
         logger.info("BehaviorFeedbackLoop initialized")
 
-    async def start(self):
+    async def start(self) -> None:
         """啟動反饋循環"""
         if self.is_running:
             logger.warning("BehaviorFeedbackLoop is already running", exc_info=True)
@@ -138,7 +138,7 @@ class BehaviorFeedbackLoop:
         self._feedback_task = asyncio.create_task(self._feedback_loop())
         logger.info("BehaviorFeedbackLoop started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止反饋循環"""
         if not self.is_running:
             return
@@ -154,7 +154,7 @@ class BehaviorFeedbackLoop:
 
         logger.info("BehaviorFeedbackLoop stopped")
 
-    async def _feedback_loop(self):
+    async def _feedback_loop(self) -> None:
         """反饋循環"""
         logger.info("Behavior feedback loop started")
 
@@ -183,7 +183,7 @@ class BehaviorFeedbackLoop:
         else:
             return self.max_loop_interval
 
-    async def _process_feedback(self):
+    async def _process_feedback(self) -> None:
         """處理反饋流程"""
         try:
             # 1. 收集新的行為記錄（已通過 record_behavior 方法收集）
@@ -231,7 +231,7 @@ class BehaviorFeedbackLoop:
 
         logger.debug(f"Recorded behavior: {action}")
 
-    async def _evaluate_behaviors(self):
+    async def _evaluate_behaviors(self) -> None:
         """評估行為效果"""
         for record in self.behavior_records:
             if record.effectiveness_score == 0.0:  # 只評估未評估的記錄
@@ -292,7 +292,7 @@ class BehaviorFeedbackLoop:
             logger.error(f"Error evaluating behavior: {e}", exc_info=True)
             return 0.5
 
-    async def _analyze_patterns(self):
+    async def _analyze_patterns(self) -> None:
         """分析行為模式"""
         # 按動作類型分組
         action_groups: Dict[str, List[BehaviorRecord]] = {}
@@ -332,7 +332,7 @@ class BehaviorFeedbackLoop:
 
             self.stats["pattern_updates"] += 1
 
-    async def _update_strategy(self):
+    async def _update_strategy(self) -> None:
         """更新策略參數"""
         # 根據模式分析結果更新策略
 
@@ -364,7 +364,7 @@ class BehaviorFeedbackLoop:
 
                 self.stats["strategy_updates"] += 1
 
-    async def _store_learning_results(self):
+    async def _store_learning_results(self) -> None:
         """存儲學習結果到記憶"""
         try:
             # 存儲行為模式
@@ -417,7 +417,8 @@ class BehaviorFeedbackLoop:
 
 if __name__ == "__main__":
     # 測試行為反饋循環
-    async def test_behavior_feedback_loop():
+    async def test_behavior_feedback_loop() -> None:
+        """Log a diagnostic message."""
         from dataclasses import dataclass
 
         logging.basicConfig(level=logging.INFO)
@@ -427,7 +428,8 @@ if __name__ == "__main__":
             pass
 
         class MockMemoryManager:
-            async def store_experience(self, raw_data, data_type):
+            async def store_experience(self, raw_data, data_type) -> None:
+                """Store a experience."""
                 pass
 
         class MockLearningEngine:

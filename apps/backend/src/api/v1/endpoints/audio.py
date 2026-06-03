@@ -15,7 +15,7 @@ router = APIRouter(prefix="/audio", tags=["Audio"])
 
 
 @router.post("/scan")
-async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0, svc=Depends(get_audio_service)):
+async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0, svc=Depends(get_audio_service)) -> str:
     """模擬雞尾酒會效應：聆聽、識別並聚焦"""
     try:
         result = await svc.scan_and_identify(audio_data, duration)
@@ -26,7 +26,7 @@ async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0, svc=D
 
 
 @router.post("/register_user")
-async def audio_register_user(audio_data: bytes = Body(...), svc=Depends(get_audio_service)):
+async def audio_register_user(audio_data: bytes = Body(...), svc=Depends(get_audio_service)) -> str:
     """註冊用戶聲紋"""
     try:
         result = await svc.register_user_voice(audio_data)
@@ -37,7 +37,7 @@ async def audio_register_user(audio_data: bytes = Body(...), svc=Depends(get_aud
 
 
 @router.post("/control")
-async def audio_control(params: Dict[str, Any] = Body(...)):
+async def audio_control(params: Dict[str, Any] = Body(...)) -> dict:
     """控制音頻模組開關"""
     enabled = params.get("enabled", True)
     try:
@@ -48,7 +48,7 @@ async def audio_control(params: Dict[str, Any] = Body(...)):
 
 
 @router.get("/control")
-async def audio_control_get(enabled: bool = True):
+async def audio_control_get(enabled: bool = True) -> dict:
     """控制音頻模組開關（GET 方法支持）"""
     try:
         return {"status": "success", "module": "audio", "enabled": enabled, "mode": "get_method"}

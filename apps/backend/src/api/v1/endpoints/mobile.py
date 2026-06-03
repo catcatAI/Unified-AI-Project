@@ -14,7 +14,7 @@ router = APIRouter(prefix="/mobile", tags=["Mobile"])
 
 
 @router.post("/sync")
-async def mobile_sync(data: Dict[str, Any] = Body(...)):
+async def mobile_sync(data: Dict[str, Any] = Body(...)) -> dict:
     """行動端同步數據接口"""
     return {
         "status": "synchronized",
@@ -25,7 +25,7 @@ async def mobile_sync(data: Dict[str, Any] = Body(...)):
 
 
 @router.get("/status")
-async def get_mobile_status_get():
+async def get_mobile_status_get() -> dict:
     """獲取移動端狀態 (GET 方法支持)"""
     try:
         import psutil
@@ -57,7 +57,7 @@ async def get_mobile_status_get():
 
 
 @router.post("/status")
-async def get_mobile_status(data: Dict[str, Any] = Body(...)):
+async def get_mobile_status(data: Dict[str, Any] = Body(...)) -> dict:
     """獲取實時系統狀態 (CPU, Memory, Cluster)"""
     try:
         import psutil
@@ -89,7 +89,7 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)):
 
 
 @router.post("/module-control")
-async def mobile_module_control(data: Dict[str, Any] = Body(...)):
+async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
     """行動端控制後端模組"""
     module = data.get("module")
     enabled = data.get("enabled")
@@ -111,7 +111,7 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)):
 
 
 @router.post("/chat")
-async def mobile_chat(data: Dict[str, Any] = Body(...)):
+async def mobile_chat(data: Dict[str, Any] = Body(...)) -> str:
     """行動端聊天代理 (NGR v7.5.0-dev)"""
     from api.routes.chat_routes import _handle_chat_request
 

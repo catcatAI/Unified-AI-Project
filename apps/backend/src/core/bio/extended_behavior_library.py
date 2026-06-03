@@ -67,7 +67,7 @@ class BehaviorTrigger:
         elapsed = (datetime.now() - self.last_triggered).total_seconds()
         return elapsed >= self.cooldown
 
-    def mark_triggered(self):
+    def mark_triggered(self) -> None:
         """Mark trigger as just fired"""
         self.last_triggered = datetime.now()
 
@@ -144,7 +144,7 @@ class ExtendedBehaviorLibrary:
         # Initialize built-in behaviors
         self._initialize_behaviors()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the behavior library"""
         self._running = True
 
@@ -154,7 +154,7 @@ class ExtendedBehaviorLibrary:
         self.active_behavior = None
         self.behavior_queue.clear()
 
-    def set_dynamic_params_manager(self, manager: Any):
+    def set_dynamic_params_manager(self, manager: Any) -> None:
         """Set the DynamicThresholdManager for dynamic threshold integration"""
         self._dynamic_params_manager = manager
 
@@ -183,7 +183,7 @@ class ExtendedBehaviorLibrary:
         """Get dynamic social initiative threshold"""
         return self._get_dynamic_threshold("social_initiative_threshold", 0.5, context)
 
-    def _initialize_behaviors(self):
+    def _initialize_behaviors(self) -> None:
         """Initialize all 25+ predefined behaviors"""
 
         # === IDLE BEHAVIORS (待机行为) ===
@@ -600,7 +600,7 @@ class ExtendedBehaviorLibrary:
             )
         )
 
-    def _add_behavior(self, behavior: BehaviorDefinition):
+    def _add_behavior(self, behavior: BehaviorDefinition) -> None:
         """Add a behavior to the library"""
         self.behaviors[behavior.behavior_id] = behavior
 
@@ -710,7 +710,7 @@ class ExtendedBehaviorLibrary:
 
         return True
 
-    async def _end_behavior(self, behavior: BehaviorDefinition):
+    async def _end_behavior(self, behavior: BehaviorDefinition) -> None:
         """End a behavior"""
         # Notify callbacks
         if behavior.behavior_id in self._behavior_end_callbacks:
@@ -738,7 +738,7 @@ class ExtendedBehaviorLibrary:
             return self.behavior_queue.pop(0)
         return None
 
-    def register_behavior_start_callback(self, behavior_id: str, callback: Callable[[], None]):
+    def register_behavior_start_callback(self, behavior_id: str, callback: Callable[[], None]) -> None:
         """Register callback for when a behavior starts"""
         if behavior_id not in self._behavior_start_callbacks:
             self._behavior_start_callbacks[behavior_id] = []
@@ -769,7 +769,8 @@ class ExtendedBehaviorLibrary:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         library = ExtendedBehaviorLibrary()
         await library.initialize()
 

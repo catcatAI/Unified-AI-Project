@@ -66,7 +66,7 @@ class SyncManager:
         self._clients: Dict[str, Any] = {}
         self._event_queue: List[SyncEvent] = []
 
-    async def initialize(self):
+    async def initialize(self) -> bool:
         """初始化 / Initialize"""
         logger.info("同步管理器初始化完成")
         return True
@@ -77,7 +77,7 @@ class SyncManager:
         self._event_queue.clear()
         logger.info("同步管理器已關閉")
 
-    async def sync_system_status(self, system_id: str, status: Dict[str, Any]):
+    async def sync_system_status(self, system_id: str, status: Dict[str, Any]) -> bool:
         """同步系統狀態 / Sync system status"""
         logger.info(f"同步系統狀態: {system_id}")
         return True
@@ -87,7 +87,7 @@ class SyncManager:
         self._clients[client_id] = callback
         logger.info(f"客戶端已註冊: {client_id}")
 
-    async def unregister_client(self, client_id: str):
+    async def unregister_client(self, client_id: str) -> None:
         """註銷客戶端 / Unregister client"""
         if client_id in self._clients:
             del self._clients[client_id]
@@ -118,7 +118,8 @@ def get_sync_manager() -> SyncManager:
 
 # Backward compatibility: access via attribute
 class _LazySyncManagerProxy:
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> str:
+        """Execute the   getattr   operation."""
         return getattr(get_sync_manager(), name)
 
 

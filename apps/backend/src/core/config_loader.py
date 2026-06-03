@@ -641,6 +641,7 @@ class BackendConfig:
     url: str = "http://127.0.0.1:8000"
 
     def get_base_url(self) -> str:
+        """Get the base url by self."""
         return f"http://{self.host}:{self.port}"
 
 
@@ -666,6 +667,7 @@ class DatabaseConfig:
     max_overflow: int = 20
 
     def get_engine_args(self) -> Dict[str, Any]:
+        """Get the engine args by self."""
         return {
             "pool_size": self.pool_size,
             "max_overflow": self.max_overflow,
@@ -680,6 +682,7 @@ class Live2DConfig:
     sdk_cdn: str = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"
 
     def get_model_path(self) -> Optional[Path]:
+        """Get the model path by self."""
         if self.model_path:
             return Path(self.model_path).resolve()
         return None
@@ -694,6 +697,7 @@ class PerformanceConfig:
     enable_hardware_acceleration: bool = True
 
     def get_fps_settings(self) -> Dict[str, Any]:
+        """Get the fps settings by self."""
         mode_settings = {
             PerformanceMode.LOW: {"target_fps": 30, "effects": "basic"},
             PerformanceMode.MEDIUM: {"target_fps": 45, "effects": "standard"},
@@ -713,6 +717,7 @@ class LoggingConfig:
     backup_count: int = 5
 
     def get_log_level(self) -> int:
+        """Get the log level by self."""
         levels = {"debug": 10, "info": 20, "warning": 30, "error": 40, "critical": 50}
         return levels.get(self.level.lower(), 20)
 
@@ -728,6 +733,7 @@ class FeatureFlags:
 
     @classmethod
     def from_env(cls) -> "FeatureFlags":
+        """Execute the from env operation."""
         return cls(
             enable_voice_recognition=_get_bool("ENABLE_VOICE_RECOGNITION", True),
             enable_tts=_get_bool("ENABLE_TTS", True),

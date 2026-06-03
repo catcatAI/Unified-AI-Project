@@ -77,7 +77,7 @@ class Event:
     handler: Optional[Callable] = None
     deferred_until: Optional[datetime] = None
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> str:
         """Compare for priority queue ordering"""
         return self.priority.level < other.priority.level
 
@@ -179,7 +179,7 @@ class EventQueue:
                     return True
             return False
 
-    async def defer(self, event_id: str, until: datetime):
+    async def defer(self, event_id: str, until: datetime) -> None:
         """Defer event processing until specified time"""
         async with self._lock:
             if event_id in self._event_map:
@@ -213,7 +213,7 @@ class EventAggregator:
         self.pending_events: Dict[str, List[Event]] = defaultdict(list)
         self.aggregation_timers: Dict[str, asyncio.Task] = {}
 
-    def register_rule(self, rule: AggregationRule):
+    def register_rule(self, rule: AggregationRule) -> None:
         """Register aggregation rule"""
         self.rules[rule.event_type] = rule
 
@@ -242,7 +242,7 @@ class EventAggregator:
 
         return None
 
-    async def _aggregation_timer(self, event_type: str, delay_ms: int):
+    async def _aggregation_timer(self, event_type: str, delay_ms: int) -> None:
         """Timer to trigger aggregation after time window"""
         await asyncio.sleep(delay_ms / 1000)
 
@@ -283,7 +283,7 @@ class DebounceThrottleManager:
         self.throttle_last_emit: Dict[str, float] = {}
         self.throttle_pending: Dict[str, Event] = {}
 
-    def register_debounce(self, config: DebounceConfig):
+    def register_debounce(self, config: DebounceConfig) -> None:
         """Register debounce configuration"""
         self.debounce_configs[config.event_type] = config
 
@@ -331,7 +331,7 @@ class DebounceThrottleManager:
 
         return None
 
-    async def _debounce_timer(self, event_type: str, delay_ms: int):
+    async def _debounce_timer(self, event_type: str, delay_ms: int) -> None:
         """Debounce timer"""
         await asyncio.sleep(delay_ms / 1000)
 
@@ -366,7 +366,7 @@ class DebounceThrottleManager:
 
             return None
 
-    async def _throttle_emit_timer(self, event_type: str, delay_ms: float):
+    async def _throttle_emit_timer(self, event_type: str, delay_ms: float) -> None:
         """Throttle emission timer"""
         await asyncio.sleep(delay_ms / 1000)
 
@@ -450,7 +450,7 @@ class EventLoopSystem:
         # Latency tracking
         self._latency_samples: deque = deque(maxlen=cache_value("latency_samples_maxlen", 1000))
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the event loop system"""
         logger.info(
             f"[EventLoopSystem] Initializing with {self.latency_target_ms}ms target latency..."
@@ -468,7 +468,7 @@ class EventLoopSystem:
 
         logger.info("[EventLoopSystem] Initialization complete")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the event loop system"""
         logger.info("[EventLoopSystem] Shutting down...")
 
@@ -491,11 +491,12 @@ class EventLoopSystem:
 
         logger.info("[EventLoopSystem] Shutdown complete")
 
-    def _setup_default_aggregations(self):
+    def _setup_default_aggregations(self) -> str:
         """Setup default event aggregation rules"""
 
         # Mouse move aggregation - combine rapid mouse movements
         def aggregate_mouse_moves(events: List[Event]) -> Event:
+            """Execute the aggregate mouse moves operation."""
             if not events:
                 return events[0] if events else None
 
@@ -519,7 +520,7 @@ class EventLoopSystem:
             )
         )
 
-    def _setup_default_debounce_throttle(self):
+    def _setup_default_debounce_throttle(self) -> None:
         """Setup default debounce and throttle configurations"""
         # Debounce rapid file changes
         self.debounce_throttle.register_debounce(
@@ -531,7 +532,7 @@ class EventLoopSystem:
             ThrottleConfig(event_type="system_state", interval_ms=1000, leading=True, trailing=True)
         )
 
-    async def _event_processor(self):
+    async def _event_processor(self) -> None:
         """Main event processing loop"""
         while self._running:
             try:
@@ -569,7 +570,7 @@ class EventLoopSystem:
                 logger.error(f"[EventLoopSystem] Processor error: {e}", exc_info=True)
                 self.metrics["processing_errors"] += 1
 
-    async def _process_event(self, event: Event):
+    async def _process_event(self, event: Event) -> None:
         """Process a single event"""
         try:
             # Get handler
@@ -586,7 +587,7 @@ class EventLoopSystem:
             logger.error(f"[EventLoopSystem] Event processing error: {e}", exc_info=True)
             event.status = EventStatus.FAILED
 
-    async def _metrics_collector(self):
+    async def _metrics_collector(self) -> None:
         """Collect and update metrics periodically"""
         while self._running:
             if self._latency_samples:
@@ -663,7 +664,7 @@ class EventLoopSystem:
 
         return True
 
-    def register_handler(self, event_type: str, handler: Callable[[Event], Any]):
+    def register_handler(self, event_type: str, handler: Callable[[Event], Any]) -> None:
         """
         Register event handler
 
@@ -673,7 +674,7 @@ class EventLoopSystem:
         """
         self.handlers[event_type] = handler
 
-    def register_default_handler(self, handler: Callable[[Event], Any]):
+    def register_default_handler(self, handler: Callable[[Event], Any]) -> None:
         """Register default handler for unhandled event types"""
         self.default_handler = handler
 
@@ -681,7 +682,7 @@ class EventLoopSystem:
         """Add event filter"""
         self.filters.append(filter_config)
 
-    def register_aggregation_rule(self, rule: AggregationRule):
+    def register_aggregation_rule(self, rule: AggregationRule) -> None:
         """Register custom aggregation rule"""
         self.aggregator.register_rule(rule)
 
@@ -689,7 +690,7 @@ class EventLoopSystem:
         """Register debounce configuration"""
         self.debounce_throttle.register_debounce(config)
 
-    def register_throttle(self, config: ThrottleConfig):
+    def register_throttle(self, config: ThrottleConfig) -> None:
         """Register throttle configuration"""
         self.debounce_throttle.register_throttle(config)
 
@@ -712,7 +713,7 @@ class EventLoopSystem:
         """Cancel a pending event"""
         return await self.queue.cancel(event_id)
 
-    async def defer_event(self, event_id: str, until: datetime):
+    async def defer_event(self, event_id: str, until: datetime) -> None:
         """Defer event processing"""
         await self.queue.defer(event_id, until)
 
@@ -721,6 +722,7 @@ class EventLoopSystem:
 if __name__ == "__main__":
 
     async def demo() -> None:
+        """Run a demonstration."""
         logger.info("=" * 70)
         logger.info("Angela AI v6.0 - Event Loop System Demo")
         logger.info("事件循环系统演示")
@@ -733,11 +735,13 @@ if __name__ == "__main__":
         # Register handlers
         processed_events = []
 
-        def handle_mouse_move(event):
+        def handle_mouse_move(event) -> None:
+            """Handle mouse move."""
             processed_events.append(event.event_type)
             logger.info(f"[Handler] Mouse move: {event.data.get('x')}, {event.data.get('y')}")
 
         def handle_file_change(event) -> None:
+            """Handle file change."""
             processed_events.append(event.event_type)
             logger.info(f"[Handler] File change: {event.data.get('path')}")
 

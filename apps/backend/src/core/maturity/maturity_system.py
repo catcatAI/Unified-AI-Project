@@ -31,7 +31,8 @@ class MaturityLevel:
     ]
 
     @classmethod
-    def from_memory(cls, memory_count: int):
+    def from_memory(cls, memory_count: int) -> dict:
+        """Get maturity level info from a memory count."""
         for i, (cn, en, min_mem, max_mem) in enumerate(cls.LEVELS):
             if min_mem <= memory_count < (max_mem or float("inf")):
                 return {
@@ -106,7 +107,8 @@ class ExperienceTracker:
         self.start_date = datetime.now()
         self.experiences = []
 
-    def add_experience(self, exp_type: str, memory_impact: int = 10, emotional: float = 0.5):
+    def add_experience(self, exp_type: str, memory_impact: int = 10, emotional: float = 0.5) -> None:
+        """Add an experience and update memory count."""
         self.memory_count += memory_impact
         self.interaction_count += 1
         self.relationship_days = (datetime.now() - self.start_date).days
@@ -120,6 +122,7 @@ class ExperienceTracker:
         )
 
     def get_status(self) -> Dict:
+        """Get current maturity status with level info and capabilities."""
         level_info = MaturityLevel.from_memory(self.memory_count)
         level_num = level_info["level"]
         caps = CAPABILITIES.get(level_num, CAPABILITIES[0])
@@ -145,7 +148,8 @@ class MaturityManager:
         self.current_level = 0
         self.level_history = []
 
-    def interact(self, interaction_type: str, memory_impact: int = 10):
+    def interact(self, interaction_type: str, memory_impact: int = 10) -> str:
+        """Process an interaction and check for level up."""
         self.tracker.add_experience(interaction_type, memory_impact)
 
         level_info = MaturityLevel.from_memory(self.tracker.memory_count)
@@ -167,14 +171,17 @@ class MaturityManager:
         return self.tracker.get_status()
 
     def get_status(self) -> Dict:
+        """Get current maturity status from the tracker."""
         return self.tracker.get_status()
 
 
 def create_maturity_system() -> MaturityManager:
+    """Create and return a new MaturityManager instance."""
     return MaturityManager()
 
 
-def demo():
+def demo() -> None:
+    """Run a demonstration."""
     logger.info("🎚️ 成熟度等级系统演示")
     logger.info("=" * 50)
 

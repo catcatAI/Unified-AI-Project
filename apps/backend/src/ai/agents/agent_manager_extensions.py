@@ -65,7 +65,7 @@ class AgentManagerExtensions:
             return False
 
     @staticmethod
-    async def start_health_monitoring(agent_manager):
+    async def start_health_monitoring(agent_manager) -> None:
         """啟動健康監控任務"""
         if agent_manager._health_monitor_task:
             logger.warning("Health monitor already running", exc_info=True)
@@ -77,7 +77,7 @@ class AgentManagerExtensions:
         logger.info("Health monitoring started")
 
     @staticmethod
-    async def stop_health_monitoring(agent_manager):
+    async def stop_health_monitoring(agent_manager) -> None:
         """停止健康監控任務"""
         if agent_manager._health_monitor_task:
             agent_manager._health_monitor_task.cancel()
@@ -89,7 +89,7 @@ class AgentManagerExtensions:
             logger.info("Health monitoring stopped")
 
     @staticmethod
-    async def _health_monitor_loop(agent_manager):
+    async def _health_monitor_loop(agent_manager) -> bool:
         """健康監控循環"""
         logger.info("Health monitor loop started")
 
@@ -140,7 +140,7 @@ class AgentManagerExtensions:
         }
 
     @staticmethod
-    async def shutdown_all_process_agents(agent_manager):
+    async def shutdown_all_process_agents(agent_manager) -> None:
         """關閉所有進程代理"""
         logger.info(f"Shutting down {len(agent_manager.process_agents)} process agents...")
 
@@ -159,7 +159,7 @@ class AgentManagerExtensions:
 
 
 # 示例代理入口函數
-def example_agent_entry_point(agent_id: str):
+def example_agent_entry_point(agent_id: str) -> None:
     """
     示例代理入口函數（在新進程中運行）
 
@@ -197,7 +197,7 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-    async def test_process_agents():
+    async def test_process_agents() -> None:
         """測試進程代理管理"""
         logger.info("=== Testing Process Agent Management ===\n")
 

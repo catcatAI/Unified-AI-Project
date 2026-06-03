@@ -95,7 +95,8 @@ class Hormone:
     max_level: float = 100.0
     last_update: datetime = field(default_factory=datetime.now)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         self.current_level = max(self.min_level, min(self.max_level, self.current_level))
         # 計算消除常數 k = ln(2) / t1/2
         self._k = math.log(2) / max(0.1, self.half_life_minutes)
@@ -118,7 +119,7 @@ class Hormone:
         self.current_level = max(self.min_level, min(self.max_level, self.current_level))
         self.last_update = datetime.now()
 
-    def adjust(self, amount: float):
+    def adjust(self, amount: float) -> None:
         """瞬時調整激素水平 (例如情緒衝擊)"""
         self.current_level = max(self.min_level, min(self.max_level, self.current_level + amount))
 
@@ -174,7 +175,7 @@ class EndocrineSystem:
 
         self._initialize_hormones()
 
-    def _initialize_hormones(self):
+    def _initialize_hormones(self) -> None:
         """Initialize all hormone instances from configuration"""
         configs = self.formula_config.get("hormones", {})
         for ht in HormoneType:
@@ -191,7 +192,7 @@ class EndocrineSystem:
                 half_life_minutes=h_conf.get("half_life", 60.0),
             )
 
-    async def advance_time(self, seconds: float):
+    async def advance_time(self, seconds: float) -> None:
         """
         推進內分泌系統時間 (2030 Standard).
         使用藥代動力學模型進行連續演化。
@@ -207,7 +208,7 @@ class EndocrineSystem:
         k_stress = math.log(2) / stress_conf.get("half_life", 30.0)
         self.stress_level = self.stress_level * math.exp(-k_stress * dt_min)
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """核心代謝循環"""
         last_run = datetime.now()
         while self._running:
@@ -220,7 +221,7 @@ class EndocrineSystem:
             last_run = now
             await asyncio.sleep(loop_sleep("endocrine_update", 5.0))  # 提高採樣頻率以保證數值演化平滑 (5秒一跳)
 
-    async def _update_hormones(self):
+    async def _update_hormones(self) -> None:
         """(已由 advance_time 整合) 保持兼容性"""
         pass
 
@@ -237,7 +238,7 @@ class EndocrineSystem:
             
             target_hormone.adjust(adjustment)
 
-    async def _update_circadian_rhythm(self):
+    async def _update_circadian_rhythm(self) -> None:
         """Update circadian phase and melatonin levels"""
         self.circadian_phase = (self.circadian_phase + 1 / 60) % 24  # Advance 1 minute
 
@@ -261,7 +262,7 @@ class EndocrineSystem:
         cortisol_curve = 20 + 30 * math.exp(-((hour - 8) ** 2) / 50)
         self.hormones[HormoneType.CORTISOL].base_level = cortisol_curve
 
-    async def trigger_emotional_response(self, emotion: str, intensity: float):
+    async def trigger_emotional_response(self, emotion: str, intensity: float) -> None:
         """
         Trigger hormone changes based on emotional state
 
@@ -340,7 +341,7 @@ class EndocrineSystem:
         finally:
             tracer.finish(trace_id)
 
-    async def trigger_activity_response(self, activity_type: str, intensity: float):
+    async def trigger_activity_response(self, activity_type: str, intensity: float) -> None:
         """
         Adjust hormones based on physical/mental activity
 
@@ -385,7 +386,7 @@ class EndocrineSystem:
             for hormone_type, change in activity_effects[activity_type].items():
                 await self.adjust_hormone(hormone_type, change)
 
-    async def trigger_social_response(self, interaction_type: str, intensity: float):
+    async def trigger_social_response(self, interaction_type: str, intensity: float) -> None:
         """
         Adjust hormones based on social interactions
 
@@ -425,7 +426,7 @@ class EndocrineSystem:
             for hormone_type, change in social_effects[interaction_type].items():
                 await self.adjust_hormone(hormone_type, change)
 
-    async def trigger_stress_response(self, stress_level: float, stress_type: str = "acute"):
+    async def trigger_stress_response(self, stress_level: float, stress_type: str = "acute") -> None:
         """
         Trigger stress-related hormone changes
 
@@ -446,7 +447,7 @@ class EndocrineSystem:
             await self.adjust_hormone(HormoneType.ADRENALINE, 15.0 * stress_level)
             await self.adjust_hormone(HormoneType.SEROTONIN, -15.0 * stress_level)
 
-    async def adjust_hormone(self, hormone_type: HormoneType, amount: float):
+    async def adjust_hormone(self, hormone_type: HormoneType, amount: float) -> None:
         """
         瞬時調節特定激素 (具備追蹤與回調)
         """
@@ -562,7 +563,7 @@ class EndocrineSystem:
 
         return effects
 
-    def register_change_callback(self, callback: Callable[[HormoneType, float, float], None]):
+    def register_change_callback(self, callback: Callable[[HormoneType, float, float], None]) -> None:
         """Register callback for hormone level changes"""
         self._callbacks.append(callback)
 
@@ -1155,7 +1156,8 @@ class FeedbackLoop:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         system = EndocrineSystem()
         await system.initialize()
 

@@ -35,13 +35,14 @@ class ModuleManager:
     def health_monitor(self) -> HealthMonitor:
         return self._health_monitor
 
-    def _build_deps_map(self, descriptors, instances):
+    def _build_deps_map(self, descriptors, instances) -> str:
         return {
             d.name: self._lifecycle._build_deps(d, instances, registry=self._registry)
             for d in descriptors
         }
 
     async def start(self) -> None:
+        """Start the component."""
         descriptors = self._scanner.discover()
         resolved = self._resolver.resolve(descriptors)
         deps_map = self._build_deps_map(resolved, self._instances)
@@ -61,6 +62,7 @@ class ModuleManager:
         self._started = True
 
     async def stop(self) -> None:
+        """Stop the component."""
         await self._lifecycle.stop_all(self._instances)
         if self._registry is not None:
             for inst in self._instances:
@@ -70,6 +72,7 @@ class ModuleManager:
         self._started = False
 
     async def hotplug(self, path: Path) -> HotplugResult:
+        """Log a diagnostic message."""
         try:
             scanner = ModuleScanner([path.parent if path.is_file() else path])
             descriptors = scanner.discover()
@@ -101,6 +104,7 @@ class ModuleManager:
             return HotplugResult(name=path.name, success=False, error=str(e))
 
     async def unplug(self, name: str) -> HotplugResult:
+        """Log a diagnostic message."""
         inst = self.get_module(name)
         if inst is None:
             return HotplugResult(name=name, success=False, error="not found")
@@ -118,22 +122,27 @@ class ModuleManager:
         return HotplugResult(name=name, success=True)
 
     def get_module(self, name: str) -> Optional[ModuleInstance]:
+        """Get the module by self."""
         for inst in self._instances:
             if inst.name == name:
                 return inst
         return None
 
     def has(self, name: str) -> bool:
+        """Execute the has operation."""
         return self.get_module(name) is not None
 
     def list_modules(self) -> dict[str, ModuleInstance]:
+        """List modules items."""
         return {inst.name: inst for inst in self._instances}
 
     def get_status(self, name: str) -> Optional[ModuleStatus]:
+        """Get the status by self."""
         inst = self.get_module(name)
         return inst.status if inst is not None else None
 
     def get_dependency_graph(self) -> dict[str, dict]:
+        """Get the dependency graph by self."""
         graph: dict[str, dict] = {}
         for inst in self._instances:
             d = inst.descriptor
@@ -146,6 +155,7 @@ class ModuleManager:
         return graph
 
     def get_health_report(self) -> dict:
+        """Get the health report by self."""
         report: dict[str, dict] = {}
         for inst in self._instances:
             hs = self._health_monitor.get_status(inst.name)

@@ -58,7 +58,7 @@ class VisionService:
 
         logger.info("Vision Service initialized with enhanced capabilities")
 
-    async def _init_sync_listener(self):
+    async def _init_sync_listener(self) -> None:
         """初始化同步監聽器"""
         try:
             await sync_manager.register_client("vision_service", self._handle_sync_event)
@@ -75,7 +75,7 @@ class VisionService:
                 self.enabled = enabled
                 logger.info(f"Vision Service enabled status changed to: {enabled}")
 
-    def set_peer_services(self, peer_services: Dict[str, Any]):
+    def set_peer_services(self, peer_services: Dict[str, Any]) -> None:
         """設置其他多模態服務的引用"""
         self.peer_services = peer_services
         logger.debug(f"Vision Service connected to peer services: {list(peer_services.keys())}")
@@ -482,7 +482,7 @@ class VisionService:
         detected_objects = [obj for obj in detected_objects if obj["confidence"] >= threshold]
         return detected_objects
 
-    async def initialize(self):
+    async def initialize(self) -> bool:
         """Boot cognitive perception layers."""
         logger.info("[Vision] Realized Vision System Online.")
         return True
@@ -683,7 +683,7 @@ class VisionService:
 
 if __name__ == "__main__":
 
-    async def main():
+    async def main() -> None:
         vision_config = {}  # Placeholder for actual config
         service = VisionService(config=vision_config)
 

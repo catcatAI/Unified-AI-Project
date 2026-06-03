@@ -38,7 +38,7 @@ class ServiceDiscoveryModule:
             f"HSP ServiceDiscoveryModule initialized. Staleness threshold: {self.staleness_threshold_seconds} seconds."
         )
 
-    def start_cleanup_task(self, cleanup_interval_seconds: int = loop_sleep("service_cleanup", 60.0)):
+    def start_cleanup_task(self, cleanup_interval_seconds: int = loop_sleep("service_cleanup", 60.0)) -> None:
         """Starts the periodic cleanup task in a background thread."""
         if self._cleanup_thread is None:
             self._stop_event.clear()
@@ -50,7 +50,7 @@ class ServiceDiscoveryModule:
                 f"ServiceDiscoveryModule cleanup task started with interval {cleanup_interval_seconds}s."
             )
 
-    def stop_cleanup_task(self):
+    def stop_cleanup_task(self) -> None:
         """Stops the periodic cleanup task."""
         if self._cleanup_thread is not None:
             self._stop_event.set()
@@ -64,7 +64,7 @@ class ServiceDiscoveryModule:
             self.remove_stale_capabilities()
             self._stop_event.wait(cleanup_interval_seconds)
 
-    def remove_stale_capabilities(self):
+    def remove_stale_capabilities(self) -> None:
         """Removes capabilities that have exceeded the staleness threshold."""
         with self.lock:
             current_time = datetime.now(timezone.utc)

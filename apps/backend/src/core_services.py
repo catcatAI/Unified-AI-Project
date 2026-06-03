@@ -11,17 +11,17 @@ DEFAULT_OPERATIONAL_CONFIGS = {}
 
 
 class _Services:
-    def get(self, key, default=None):
+    def get(self, key, default=None) -> str:
         return default
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         return False
 
 
 _services = _Services()
 
 
-async def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational_configs=None):
+async def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational_configs=None) -> None:
     logger.info("CLI standalone mode: services will be loaded when backend starts")
     if ai_id:
         logger.info(f"CLI configured with AI ID: {ai_id}")
@@ -31,5 +31,5 @@ def get_services() -> None:
     return _services
 
 
-async def shutdown_services():
+async def shutdown_services() -> None:
     logger.info("CLI standalone mode: no services to shut down")

@@ -16,6 +16,7 @@ class CycleError(Exception):
 
 class DependencyResolver:
     def resolve(self, descriptors: list[ModuleDescriptor]) -> list[ModuleDescriptor]:
+        """Resolve the given request."""
         graph = self._build_graph(descriptors)
         sorted_names = self._topological_sort(graph)
         name_map = {d.name: d for d in descriptors}
@@ -59,6 +60,7 @@ class DependencyResolver:
         rec_stack: set[str] = set()
 
         def dfs(node: str, path: list[str]) -> Optional[list[str]]:
+            """Execute the dfs operation."""
             visited.add(node)
             rec_stack.add(node)
             path.append(node)
@@ -110,6 +112,7 @@ class DependencyResolver:
             return actual == ver
 
     def check_deps(self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]) -> list[str]:
+        """Execute the check deps operation."""
         existing_map = {d.name: d for d in existing}
         missing: list[str] = []
         for dep in descriptor.depends_on.required:
@@ -122,5 +125,6 @@ class DependencyResolver:
         return missing
 
     def missing_optional(self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]) -> list[str]:
+        """Execute the missing optional operation."""
         existing_names = {d.name for d in existing}
         return [dep for dep in descriptor.depends_on.optional if dep not in existing_names]

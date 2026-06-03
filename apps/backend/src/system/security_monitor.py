@@ -71,14 +71,14 @@ class SecurityTrayMonitor:
         self._running = True
         self.backend_script = Path(__file__).parent.parent.parent / "main.py"
 
-    def _create_image(self, width=64, height=64, color1="blue", color2="white"):
+    def _create_image(self, width=64, height=64, color1="blue", color2="white") -> str:
         # 創建一個簡單的 Angela 圖示
         image = Image.new("RGB", (width, height), color1)
         dc = ImageDraw.Draw(image)
         dc.rectangle((width // 4, height // 4, width * 3 // 4, height * 3 // 4), fill=color2)
         return image
 
-    def on_start_backend(self):
+    def on_start_backend(self) -> None:
         if self.backend_process and self.backend_process.poll() is None:
             logger.info("後端服務已在運行中。")
             return
@@ -120,7 +120,7 @@ class SecurityTrayMonitor:
             if self.backend_process:
                 self.on_stop_backend()
 
-    def on_stop_backend(self):
+    def on_stop_backend(self) -> None:
         if not self.backend_process:
             logger.info("後端服務未運行。")
             return
@@ -159,7 +159,7 @@ class SecurityTrayMonitor:
                     logger.debug(f"關閉日誌流時發生錯誤（可忽略）: {e}")
             self.backend_process = None
 
-    def on_restart_backend(self):
+    def on_restart_backend(self) -> None:
         logger.info("正在重啟後端服務...")
         self.on_stop_backend()
         time.sleep(1)
@@ -170,7 +170,7 @@ class SecurityTrayMonitor:
         self._running = False
         icon.stop()
 
-    def on_show_key_b(self, icon, item):
+    def on_show_key_b(self, icon, item) -> None:
         logger.info("Key display disabled for security")
         icon.notify("金鑰顯示已停用以保護安全。請透過安全管道取得金鑰。", "Angela 安全資訊")
 
@@ -178,8 +178,8 @@ class SecurityTrayMonitor:
         logger.info("QR code key display disabled for security")
         icon.notify("QR Code 金鑰顯示已停用以保護安全。請透過安全管道取得金鑰。", "Angela 安全資訊")
 
-    def update_menu(self):
-        def get_status():
+    def update_menu(self) -> str:
+        def get_status() -> str:
             if self.backend_process:
                 poll = self.backend_process.poll()
                 if poll is None:
@@ -204,7 +204,7 @@ class SecurityTrayMonitor:
             pystray.MenuItem("❌ 結束監控", self.on_exit),
         )
 
-    def run(self):
+    def run(self) -> None:
         """啟動系統匣圖示"""
         self.icon = pystray.Icon(
             "AngelaSecurity", self._create_image(), "Angela 安全監控", self.update_menu()

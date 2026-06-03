@@ -123,7 +123,7 @@ class KeyManagerGUI:
         self._create_widgets()
         self._refresh_display()
 
-    def _scan_keys(self):
+    def _scan_keys(self) -> None:
         """Scan for existing keys in all sources"""
         # Load .env file
         try:
@@ -157,7 +157,7 @@ class KeyManagerGUI:
         # Also check config file
         self._check_config_file()
 
-    def _check_config_file(self):
+    def _check_config_file(self) -> None:
         """Check for keys in config file"""
         config_paths = [
             Path(__file__).parent.parent.parent.parent / "configs" / "api_keys.yaml",
@@ -191,7 +191,7 @@ class KeyManagerGUI:
                     logger.debug(f"配置文件讀取失敗（可忽略）: {e}")
                     pass
 
-    def _create_widgets(self):
+    def _create_widgets(self) -> None:
         """Create GUI widgets"""
         # Title
         title_frame = tk.Frame(self.root, padx=20, pady=10)
@@ -298,7 +298,7 @@ class KeyManagerGUI:
             pady=8,
         ).pack(side="right")
 
-    def _refresh_display(self):
+    def _refresh_display(self) -> None:
         """Refresh the provider display"""
         # Clear existing widgets
         for widget in self.scrollable_frame.winfo_children():
@@ -311,7 +311,7 @@ class KeyManagerGUI:
         for i, (provider_id, config) in enumerate(self.providers.items()):
             self._create_provider_row(i, provider_id, config)
 
-    def _create_provider_row(self, index: int, provider_id: str, config: Dict):
+    def _create_provider_row(self, index: int, provider_id: str, config: Dict) -> None:
         """Create a row for a provider"""
         row = tk.Frame(self.scrollable_frame, padx=5, pady=5)
         row.pack(fill="x", pady=2)
@@ -427,7 +427,7 @@ class KeyManagerGUI:
                 fg="white",
             ).pack(side="left")
 
-    def _add_key_dialog(self):
+    def _add_key_dialog(self) -> None:
         """Open dialog to add a new key"""
         dialog = tk.Toplevel(self.root)
         dialog.title("Add API Key")
@@ -482,7 +482,8 @@ class KeyManagerGUI:
         btn_frame = tk.Frame(dialog, pady=20)
         btn_frame.pack()
 
-        def save():
+        def save() -> None:
+            """Save the current state."""
             key = key_entry.get().strip()
             if not key:
                 messagebox.showerror("Error", "Please enter an API key")
@@ -557,7 +558,7 @@ class KeyManagerGUI:
             btn_frame, text="Cancel", command=dialog.destroy, font=("Arial", 11), padx=30
         ).pack(side="left", padx=5)
 
-    def _edit_key_dialog(self, provider_id: str):
+    def _edit_key_dialog(self, provider_id: str) -> None:
         """Open dialog to edit an existing key"""
         config = self.providers[provider_id]
         dialog = tk.Toplevel(self.root)
@@ -601,7 +602,8 @@ class KeyManagerGUI:
         btn_frame = tk.Frame(dialog, pady=20)
         btn_frame.pack()
 
-        def save():
+        def save() -> None:
+            """Save the current state."""
             key = key_entry.get().strip()
             if key:
                 # Update key (same logic as add)
@@ -638,7 +640,7 @@ class KeyManagerGUI:
             btn_frame, text="Cancel", command=dialog.destroy, font=("Arial", 11), padx=30
         ).pack(side="left", padx=5)
 
-    def _remove_key(self, provider_id: str):
+    def _remove_key(self, provider_id: str) -> None:
         """Remove a key"""
         config = self.providers[provider_id]
 
@@ -665,7 +667,7 @@ class KeyManagerGUI:
             self._refresh_display()
             messagebox.showinfo("Success", f"{config['name']} key removed.")
 
-    def _show_help(self):
+    def _show_help(self) -> None:
         """Show help dialog"""
         help_text = """
 Angela AI - API Key Manager Help
@@ -707,7 +709,7 @@ Windows (System):
 
         messagebox.showinfo("Help", help_text)
 
-    def run(self):
+    def run(self) -> None:
         """Run the GUI"""
         self.root.mainloop()
 

@@ -23,10 +23,12 @@ class JSONExporter:
     """
 
     def export_json(self, card: Card, indent: int = 2) -> str:
+        """Execute the export json operation."""
         data = self._card_to_export_dict(card)
         return json.dumps(data, ensure_ascii=False, indent=indent, default=str)
 
     def export_to_file(self, card: Card, path: str, indent: int = 2) -> bool:
+        """Log a diagnostic message."""
         try:
             dest = Path(path)
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -42,6 +44,7 @@ class JSONExporter:
         self, cards: List[Card], zip_path: str,
         image_paths: Optional[Dict[str, str]] = None,
     ) -> bool:
+        """Log a diagnostic message."""
         try:
             dest = Path(zip_path)
             dest.parent.mkdir(parents=True, exist_ok=True)

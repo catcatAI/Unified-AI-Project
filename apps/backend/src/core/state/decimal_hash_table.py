@@ -248,7 +248,7 @@ class DecimalHashTable:
             "precision_mode": self._stats["precision_mode"],
         }
 
-    def clear(self):
+    def clear(self) -> None:
         """清空哈希表"""
         self.entries.clear()
         self.hash_chain.clear()

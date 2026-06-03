@@ -104,14 +104,14 @@ def get_state_matrix() -> Any:
 
 
 @state_matrix_router.get("/summary")
-def get_summary():
+def get_summary() -> str:
     """完整狀態報告"""
     sm = get_state_matrix()
     return sm.full_report()
 
 
 @state_matrix_router.get("/axis/{axis_name}")
-def get_axis(axis_name: str):
+def get_axis(axis_name: str) -> dict:
     """獲取單個軸的 values"""
     sm = get_state_matrix()
     if axis_name not in sm._sm.dimensions:
@@ -125,7 +125,7 @@ def get_axis(axis_name: str):
 
 
 @state_matrix_router.post("/axis/{axis_name}/update")
-def update_axis(axis_name: str, req: AxisUpdateRequest):
+def update_axis(axis_name: str, req: AxisUpdateRequest) -> dict:
     """更新軸值"""
     sm = get_state_matrix()
     if axis_name not in sm._sm.dimensions:
@@ -140,7 +140,7 @@ def update_axis(axis_name: str, req: AxisUpdateRequest):
 
 
 @state_matrix_router.get("/gradient")
-def get_gradient():
+def get_gradient() -> str:
     """獲取吸引子場梯度"""
     sm = get_state_matrix()
     result = sm.compute_gradient()
@@ -150,7 +150,7 @@ def get_gradient():
 
 
 @state_matrix_router.post("/navigate")
-def navigate(req: NavigateRequest):
+def navigate(req: NavigateRequest) -> str:
     """沿梯度導航到吸引子"""
     sm = get_state_matrix()
     result = sm.navigate_to_attractor(
@@ -189,7 +189,7 @@ def temporal_anomalies(
 
 
 @state_matrix_router.post("/port/register")
-def register_port(req: PortRegisterRequest):
+def register_port(req: PortRegisterRequest) -> dict:
     """註冊端口"""
     sm = get_state_matrix()
     port = sm.register_port(
@@ -204,7 +204,7 @@ def register_port(req: PortRegisterRequest):
 
 
 @state_matrix_router.post("/port/unregister")
-def unregister_port(req: PortUnregisterRequest):
+def unregister_port(req: PortUnregisterRequest) -> dict:
     """註銷端口"""
     sm = get_state_matrix()
     result = sm.unregister_port(req.name)
@@ -223,7 +223,7 @@ def list_ports(
 
 
 @state_matrix_router.post("/ripple")
-def apply_ripple(req: RippleRequest):
+def apply_ripple(req: RippleRequest) -> dict:
     """應用漣漪"""
     sm = get_state_matrix()
     from core.ripple.node import MathOp
@@ -239,7 +239,7 @@ def apply_ripple(req: RippleRequest):
 
 
 @state_matrix_router.post("/allocation")
-def allocation_decide(req: AllocationRequest):
+def allocation_decide(req: AllocationRequest) -> dict:
     """分配決策"""
     sm = get_state_matrix()
     decision = sm.allocation_decide(req.vector, req.label)
@@ -252,7 +252,7 @@ def allocation_decide(req: AllocationRequest):
 
 
 @state_matrix_router.post("/theta/trigger")
-def theta_trigger(req: ThetaTriggerRequest):
+def theta_trigger(req: ThetaTriggerRequest) -> dict:
     """觸發 θ 軸負值"""
     sm = get_state_matrix()
     sm.trigger_negativity(req.strength)
@@ -270,7 +270,7 @@ def theta_detect() -> dict:
 
 
 @state_matrix_router.post("/theta/correct")
-def theta_correct(point_id: str = Query(...), target_axis: Optional[str] = Query(default=None)):
+def theta_correct(point_id: str = Query(...), target_axis: Optional[str] = Query(default=None)) -> str:
     """校正錯配點位"""
     sm = get_state_matrix()
     result = sm.correct_misallocation(point_id, target_axis=target_axis)
@@ -278,7 +278,7 @@ def theta_correct(point_id: str = Query(...), target_axis: Optional[str] = Query
 
 
 @state_matrix_router.get("/negativity/report")
-def negativity_report():
+def negativity_report() -> str:
     """θ 自糾狀態報告"""
     sm = get_state_matrix()
     return sm.get_negativity_report()
@@ -296,7 +296,7 @@ def influence_compute(
 
 
 @state_matrix_router.post("/save")
-async def save_state(req: SaveStateRequest):
+async def save_state(req: SaveStateRequest) -> str:
     """保存狀態快照到 Redis/JSON（持久化層）"""
     sm = get_state_matrix()
     await sm.init_persistence()
@@ -305,7 +305,7 @@ async def save_state(req: SaveStateRequest):
 
 
 @state_matrix_router.post("/load")
-async def load_state(req: LoadStateRequest):
+async def load_state(req: LoadStateRequest) -> str:
     """從 Redis/JSON 加載狀態快照"""
     sm = get_state_matrix()
     await sm.init_persistence()
@@ -314,7 +314,7 @@ async def load_state(req: LoadStateRequest):
 
 
 @state_matrix_router.get("/checkpoint/list")
-async def list_checkpoints(limit: int = Query(default=10)):
+async def list_checkpoints(limit: int = Query(default=10)) -> str:
     """列舉最近的快照"""
     sm = get_state_matrix()
     await sm.init_persistence()
@@ -322,7 +322,7 @@ async def list_checkpoints(limit: int = Query(default=10)):
 
 
 @state_matrix_router.delete("/checkpoint/{checkpoint_id}")
-async def delete_checkpoint(checkpoint_id: str):
+async def delete_checkpoint(checkpoint_id: str) -> dict:
     """刪除指定快照"""
     sm = get_state_matrix()
     await sm.init_persistence()
@@ -339,14 +339,14 @@ async def checkpoint_stats() -> dict:
 
 
 @state_matrix_router.get("/code-inspect/report")
-def code_inspect_report():
+def code_inspect_report() -> str:
     """代碼檢查狀態報告"""
     sm = get_state_matrix()
     return sm.code_inspect_report()
 
 
 @state_matrix_router.get("/attractor/list")
-def list_attractors():
+def list_attractors() -> dict:
     """列舉所有吸引子"""
     sm = get_state_matrix()
     gf = sm.gradient_field
@@ -400,7 +400,7 @@ class CodeInspectRequest(BaseModel):
 
 
 @state_matrix_router.post("/math/verify")
-async def math_verify(req: MathVerifyRequest):
+async def math_verify(req: MathVerifyRequest) -> dict:
     """數學驗證 + 狀態反饋"""
     sm = get_state_matrix()
     from services.math_verifier import MathVerifier
@@ -425,7 +425,7 @@ async def math_verify(req: MathVerifyRequest):
 
 
 @state_matrix_router.post("/code/inspect")
-def code_inspect(req: CodeInspectRequest):
+def code_inspect(req: CodeInspectRequest) -> dict:
     """代碼檢查 + 軸狀態更新"""
     sm = get_state_matrix()
     from ai.code_inspection.code_inspector import CodeInspector
@@ -442,7 +442,7 @@ class ThetaAnalysisRequest(BaseModel):
 
 
 @state_matrix_router.post("/theta/analyze")
-async def theta_analyze(req: ThetaAnalysisRequest):
+async def theta_analyze(req: ThetaAnalysisRequest) -> str:
     """θ 觸發的 LLM 分析（當 doubt/negativity 高時）"""
     sm = get_state_matrix()
     result = await sm.ask_theta_for_analysis(req.context)
@@ -475,14 +475,14 @@ class EtaCycleRequest(BaseModel):
 
 
 @state_matrix_router.get("/eta/report")
-def eta_report():
+def eta_report() -> str:
     """η 軸完整報告"""
     sm = get_state_matrix()
     return sm.get_eta_report()
 
 
 @state_matrix_router.post("/eta/update")
-def eta_update(req: EtaUpdateRequest):
+def eta_update(req: EtaUpdateRequest) -> dict:
     """更新 η 軸字段"""
     sm = get_state_matrix()
     sm.update_eta(
@@ -494,7 +494,7 @@ def eta_update(req: EtaUpdateRequest):
 
 
 @state_matrix_router.post("/eta/invoke")
-def eta_invoke(req: EtaInvokeRequest):
+def eta_invoke(req: EtaInvokeRequest) -> dict:
     """調用 η 模組"""
     sm = get_state_matrix()
     results = sm.invoke_eta_modules(req.inputs, req.count)
@@ -505,7 +505,7 @@ def eta_invoke(req: EtaInvokeRequest):
 
 
 @state_matrix_router.post("/eta/register-module")
-def eta_register_module(req: EtaRegisterModuleRequest):
+def eta_register_module(req: EtaRegisterModuleRequest) -> dict:
     """註冊新的 η 模組"""
     sm = get_state_matrix()
     success = sm.register_eta_module(
@@ -519,28 +519,28 @@ def eta_register_module(req: EtaRegisterModuleRequest):
 
 
 @state_matrix_router.get("/eta/signals")
-def eta_signals():
+def eta_signals() -> str:
     """從 θ 提取 η 觸發信號"""
     sm = get_state_matrix()
     return sm.eta_signals_from_theta()
 
 
 @state_matrix_router.post("/eta/apply")
-def eta_apply():
+def eta_apply() -> str:
     """應用 θ 信號到 η"""
     sm = get_state_matrix()
     return sm.apply_theta_to_eta()
 
 
 @state_matrix_router.post("/eta/cycle")
-def eta_cycle(req: EtaCycleRequest):
+def eta_cycle(req: EtaCycleRequest) -> str:
     """執行完整 θ → η → θ 迴路"""
     sm = get_state_matrix()
     return sm.theta_to_eta_cycle(req.context)
 
 
 @state_matrix_router.post("/eta/execute-loop")
-def eta_execute_loop(input_data: Optional[Dict[str, Any]] = None):
+def eta_execute_loop(input_data: Optional[Dict[str, Any]] = None) -> str:
     """執行 θ-η 主迴路"""
     sm = get_state_matrix()
     return sm.execute_theta_eta_loop(input_data)
@@ -549,7 +549,7 @@ def eta_execute_loop(input_data: Optional[Dict[str, Any]] = None):
 # === Module API ===
 
 @state_matrix_router.get("/module/list")
-def list_modules():
+def list_modules() -> dict:
     """列舉所有 η 模組"""
     sm = get_state_matrix()
     modules = []
@@ -568,7 +568,7 @@ def list_modules():
 
 
 @state_matrix_router.post("/module/execute")
-def module_execute(name: str = Query(...), inputs: str = "{}"):
+def module_execute(name: str = Query(...), inputs: str = "{}") -> dict:
     """執行指定模組"""
     sm = get_state_matrix()
     import json
@@ -594,7 +594,7 @@ def module_adjust(
 
 
 @state_matrix_router.get("/module/active")
-def list_active_modules():
+def list_active_modules() -> dict:
     """列舉活躍模組"""
     sm = get_state_matrix()
     return {
@@ -604,7 +604,7 @@ def list_active_modules():
 
 
 @state_matrix_router.post("/module/activate")
-def activate_module(name: str = Query(...)):
+def activate_module(name: str = Query(...)) -> dict:
     """激活模組"""
     sm = get_state_matrix()
     success = sm._eta.activate_module(name)
@@ -620,7 +620,7 @@ def deactivate_module(name: str = Query(...)) -> dict:
 
 
 @state_matrix_router.get("/health")
-def health_check():
+def health_check() -> dict:
     """健康檢查"""
     sm = get_state_matrix()
     return {

@@ -176,7 +176,7 @@ class SecurityAudit:
 
         return recommendations
 
-    def generate_report(self, output_file: Optional[str] = None):
+    def generate_report(self, output_file: Optional[str] = None) -> str:
         """生成安全审计报告"""
         import json
 

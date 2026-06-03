@@ -1,4 +1,5 @@
 """
+from __future__ import annotations
 Atlassian 服务桥接层
 提供统一的 Atlassian 服务接口, 包括 Confluence、Jira、Bitbucket
 """
@@ -58,6 +59,7 @@ class AtlassianBridge:
         logger.info("AtlassianBridge Skeleton Initialized")
 
     async def start(self) -> None:
+        """Start the component."""
         if self._running:
             logger.warning("[AtlassianBridge] start called but already running")
             return
@@ -68,6 +70,7 @@ class AtlassianBridge:
         logger.info("[AtlassianBridge] Started — %d endpoints loaded", len(self.endpoints))
 
     async def close(self) -> None:
+        """Close and release resources."""
         if not self._running:
             logger.warning("[AtlassianBridge] close called but not running")
             return
@@ -83,11 +86,13 @@ class AtlassianBridge:
         self.offline_queue.clear()
         logger.info("[AtlassianBridge] Closed")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'AtlassianBridge':
+        """Execute the   aenter   operation."""
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Execute the   aexit   operation."""
         await self.close()
 
     def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
@@ -158,6 +163,7 @@ class AtlassianBridge:
     async def create_confluence_page(
         self, space_key: str, title: str, content: str, parent_id: Optional[str] = None
     ) -> Dict[str, Any]:
+        """Create a confluence page."""
         logger.info("create_confluence_page: space_key=%s title=%s parent_id=%s", space_key, title, parent_id)
         body = {
             "type": "page",
@@ -175,6 +181,7 @@ class AtlassianBridge:
     async def update_confluence_page(
         self, page_id: str, title: str, content: str, version: Optional[int] = None
     ) -> Dict[str, Any]:
+        """Update the confluence page."""
         body = {
             "title": title,
             "body": {"storage": {"value": content, "representation": "storage"}},
@@ -185,11 +192,13 @@ class AtlassianBridge:
         )
 
     async def get_confluence_page(self, page_id: str) -> Dict[str, Any]:
+        """Get the confluence page by self."""
         return await self._make_request_with_fallback("confluence", "GET", f"rest/api/content/{page_id}")
 
     async def search_confluence_pages(
         self, space_key: str, query: str, limit: int = 25
     ) -> List[Dict[str, Any]]:
+        """Search for confluence pages."""
         result = await self._make_request_with_fallback(
             "confluence", "GET",
             f"rest/api/content?spaceKey={space_key}&cql={query}&limit={limit}"
@@ -207,6 +216,7 @@ class AtlassianBridge:
         priority: str = "Medium",
         assignee: Optional[str] = None,
     ) -> Dict[str, Any]:
+        """Create a jira issue."""
         body = {
             "fields": {
                 "project": {"key": project_key},
@@ -221,13 +231,16 @@ class AtlassianBridge:
         return await self._make_request_with_fallback("jira", "POST", "rest/api/3/issue", json=body)
 
     async def update_jira_issue(self, issue_key: str, fields: Dict[str, Any]) -> Dict[str, Any]:
+        """Update the jira issue."""
         body = {"fields": fields}
         return await self._make_request_with_fallback("jira", "PUT", f"rest/api/3/issue/{issue_key}", json=body)
 
     async def get_jira_issue(self, issue_key: str) -> Dict[str, Any]:
+        """Get the jira issue by self."""
         return await self._make_request_with_fallback("jira", "GET", f"rest/api/3/issue/{issue_key}")
 
     async def search_jira_issues(self, jql: str, max_results: int = 50) -> List[Dict[str, Any]]:
+        """Search for jira issues."""
         result = await self._make_request_with_fallback("jira", "GET", f"rest/api/3/search?jql={jql}&maxResults={max_results}")
         if result.get("success"):
             return result["data"].get("issues", [])
@@ -236,12 +249,14 @@ class AtlassianBridge:
     async def transition_jira_issue(
         self, issue_key: str, transition_id: str, comment: Optional[str] = None
     ) -> Dict[str, Any]:
+        """Execute the transition jira issue operation."""
         body = {"transition": {"id": transition_id}}
         if comment:
             body["update"] = {"comment": [{"add": {"body": comment}}]}
         return await self._make_request_with_fallback("jira", "POST", f"rest/api/3/issue/{issue_key}/transitions", json=body)
 
     async def get_bitbucket_repositories(self, workspace: str) -> List[Dict[str, Any]]:
+        """Get the bitbucket repositories by self."""
         result = await self._make_request_with_fallback("bitbucket", "GET", f"2.0/repositories/{workspace}")
         if result.get("success"):
             return result["data"].get("values", [])
@@ -250,6 +265,7 @@ class AtlassianBridge:
     async def get_bitbucket_pull_requests(
         self, workspace: str, repo_slug: str, state: str = "OPEN"
     ) -> List[Dict[str, Any]]:
+        """Get the bitbucket pull requests by self."""
         result = await self._make_request_with_fallback(
             "bitbucket", "GET",
             f"2.0/repositories/{workspace}/{repo_slug}/pullrequests?state={state}"
@@ -259,12 +275,14 @@ class AtlassianBridge:
         return []
 
     async def get_confluence_spaces(self) -> List[Dict[str, Any]]:
+        """Get the confluence spaces by self."""
         result = await self._make_request_with_fallback("confluence", "GET", "rest/api/space")
         if result.get("success"):
             return result["data"].get("results", [])
         return []
 
     async def get_jira_projects(self) -> List[Dict[str, Any]]:
+        """Get the jira projects by self."""
         result = await self._make_request_with_fallback("jira", "GET", "rest/api/3/project")
         if result.get("success"):
             return result["data"].get("values", result["data"])

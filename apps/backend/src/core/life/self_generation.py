@@ -217,7 +217,7 @@ class SelfGeneration:
         # Version tracking
         self._version_counter: Dict[str, int] = {}
 
-    def set_art_learning_system(self, art_learning: Any):
+    def set_art_learning_system(self, art_learning: Any) -> None:
         """Set art learning system for knowledge-based generation"""
         self.art_learning = art_learning
 
@@ -225,7 +225,7 @@ class SelfGeneration:
         """Set Live2D avatar generator for actual model creation"""
         self.live2d_generator = generator
 
-    def set_learning_workflow(self, workflow: Any):
+    def set_learning_workflow(self, workflow: Any) -> None:
         """Set art learning workflow for orchestrated generation"""
         self.learning_workflow = workflow
 
@@ -237,7 +237,7 @@ class SelfGeneration:
         if not self.current_avatar:
             await self._create_default_avatar()
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
 
@@ -317,7 +317,7 @@ class SelfGeneration:
 
         return avatar
 
-    async def _simulate_generation(self, avatar: GeneratedAvatar):
+    async def _simulate_generation(self, avatar: GeneratedAvatar) -> None:
         """
         Generate avatar using art learning and Live2D generator
 
@@ -666,7 +666,7 @@ class SelfGeneration:
 
         return self._version_counter[base_id]
 
-    def register_generation_callback(self, callback: Callable[[GeneratedAvatar], None]):
+    def register_generation_callback(self, callback: Callable[[GeneratedAvatar], None]) -> None:
         """Register callback for avatar generation"""
         self._generation_callbacks.append(callback)
 
@@ -690,7 +690,8 @@ class SelfGeneration:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         gen = SelfGeneration()
         await gen.initialize()
 

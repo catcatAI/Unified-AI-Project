@@ -68,6 +68,7 @@ class RouteDecision:
     reasoning: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert RouteDecision to a dictionary representation."""
         return {
             "action": self.action.value,
             "port_name": self.port_name,

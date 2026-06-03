@@ -48,7 +48,7 @@ class AgentCollaboration:
         self.end_time: Optional[datetime] = None
         self.status = "active"  # active, completed, failed
 
-    def add_step(self, step: "CollaborationStep"):
+    def add_step(self, step: "CollaborationStep") -> None:
         """添加协作步骤"""
         self.collaboration_steps.append(step)
 
@@ -57,7 +57,7 @@ class AgentCollaboration:
         self.end_time = datetime.now()
         self.status = "completed"
 
-    def fail(self):
+    def fail(self) -> None:
         """标记协作失败"""
         self.end_time = datetime.now()
         self.status = "failed"
@@ -85,7 +85,7 @@ class ModelPerformanceMetrics:
         self.average_duration = 0.0
         self.last_called: Optional[datetime] = None
 
-    def update_from_call(self, call_record: ModelCallRecord):
+    def update_from_call(self, call_record: ModelCallRecord) -> None:
         """根据调用记录更新性能指标"""
         self.total_calls += 1
         self.last_called = call_record.timestamp

@@ -50,7 +50,7 @@ class HSPVersionManager:
 
         logger.info(f"HSP版本管理器初始化完成, 当前版本: {self.current_version}")
 
-    def _initialize_version_history(self):
+    def _initialize_version_history(self) -> None:
         """初始化版本历史"""
         version_0_1_0 = HSPVersionInfo(
             version="0.1.0",
@@ -62,7 +62,7 @@ class HSPVersionManager:
         )
         self.version_history.append(version_0_1_0)
 
-    def _initialize_compatibility_matrix(self):
+    def _initialize_compatibility_matrix(self) -> None:
         """初始化兼容性矩阵"""
         # 版本0.1.0与自身兼容
         compatibility = HSPVersionCompatibility(
@@ -92,7 +92,7 @@ class HSPVersionManager:
         """获取所有受支持的版本"""
         return self.supported_versions.copy()
 
-    def _set_compatibility(self, compatibility: HSPVersionCompatibility):
+    def _set_compatibility(self, compatibility: HSPVersionCompatibility) -> None:
         """设置版本兼容性"""
         from_ver = compatibility.from_version
         to_ver = compatibility.to_version
@@ -127,7 +127,7 @@ class HSPVersionManager:
             logger.warning("Semver parse failed, falling back to string comparison: %s vs %s", current_version, target_version, exc_info=True)
             return target_version > current_version
 
-    def register_converter(self, version_pair: str, converter: Callable):
+    def register_converter(self, version_pair: str, converter: Callable) -> None:
         """注册版本转换器"""
         self.version_converters[version_pair] = converter
         logger.debug(f"版本转换器已注册: {version_pair}")
@@ -225,7 +225,7 @@ class HSPVersionConverter:
         self.version_manager = version_manager
         self._register_converters()
 
-    def _register_converters(self):
+    def _register_converters(self) -> None:
         """注册版本转换器"""
         # 注册0.1.0到0.2.0的转换器(示例)
         self.version_manager.register_converter("0.1.0->0.2.0", self._convert_0_1_0_to_0_2_0)

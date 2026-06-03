@@ -112,7 +112,7 @@ class ProactiveInteractionSystem:
 
         logger.info("ProactiveInteractionSystem initialized")
 
-    async def start(self):
+    async def start(self) -> None:
         """啟動主動交互系統"""
         if self.is_running:
             logger.warning("ProactiveInteractionSystem is already running", exc_info=True)
@@ -122,7 +122,7 @@ class ProactiveInteractionSystem:
         self._proactive_task = asyncio.create_task(self._proactive_loop())
         logger.info("ProactiveInteractionSystem started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止主動交互系統"""
         if not self.is_running:
             return
@@ -138,7 +138,7 @@ class ProactiveInteractionSystem:
 
         logger.info("ProactiveInteractionSystem stopped")
 
-    async def _proactive_loop(self):
+    async def _proactive_loop(self) -> None:
         """主動交互循環"""
         logger.info("Proactive interaction loop started")
 
@@ -172,7 +172,7 @@ class ProactiveInteractionSystem:
             # 默認間隔
             return self.check_interval
 
-    async def _process_proactive_interaction(self):
+    async def _process_proactive_interaction(self) -> None:
         """處理主動交互"""
         try:
             # 1. 檢測用戶狀態
@@ -271,7 +271,7 @@ class ProactiveInteractionSystem:
 
         return opportunities
 
-    async def _check_time_based_opportunities(self, opportunities: List[Dict[str, Any]]):
+    async def _check_time_based_opportunities(self, opportunities: List[Dict[str, Any]]) -> None:
         """檢查基於時間的機會"""
         now = datetime.now()
 
@@ -308,7 +308,7 @@ class ProactiveInteractionSystem:
             )
             self.stats["total_opportunities"] += 1
 
-    async def _check_memory_triggers(self, opportunities: List[Dict[str, Any]]):
+    async def _check_memory_triggers(self, opportunities: List[Dict[str, Any]]) -> None:
         """檢查記憶觸發"""
         try:
             # 從記憶中查找重要事件
@@ -425,7 +425,7 @@ class ProactiveInteractionSystem:
             return f"我記得我們之前談過：{events[0][:50]}..."
         return "我想起了我們之前的一些對話。"
 
-    async def _execute_planned_actions(self):
+    async def _execute_planned_actions(self) -> None:
         """執行計劃的行動"""
         if not self.interaction_queue:
             return
@@ -479,7 +479,7 @@ class ProactiveInteractionSystem:
             logger.error(f"Error executing proactive action: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
-    def _cleanup_queue(self):
+    def _cleanup_queue(self) -> None:
         """清理隊列"""
         # 移除已執行的計劃
         self.interaction_queue = [p for p in self.interaction_queue if not p.executed]
@@ -510,7 +510,8 @@ class ProactiveInteractionSystem:
 
 if __name__ == "__main__":
     # 測試主動交互系統
-    async def test_proactive_interaction_system():
+    async def test_proactive_interaction_system() -> list:
+        """Log a diagnostic message."""
         from dataclasses import dataclass
 
         logging.basicConfig(level=logging.INFO)
@@ -523,7 +524,8 @@ if __name__ == "__main__":
             pass
 
         class MockMemoryManager:
-            async def get_important_events(self, limit=3):
+            async def get_important_events(self, limit=3) -> list:
+                """Get the important events by self."""
                 return ["用戶的生日快到了", "會議提醒"]
 
         # 創建組件

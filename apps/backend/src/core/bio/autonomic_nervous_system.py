@@ -174,7 +174,7 @@ class AutonomicNervousSystem:
         # Last state for change detection
         self._last_state: ANSState = ANSState.BALANCED
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the autonomic nervous system"""
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
@@ -189,7 +189,7 @@ class AutonomicNervousSystem:
             except asyncio.CancelledError:
                 pass
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """Background update loop"""
         while self._running:
             await self._decay_stimuli()
@@ -213,7 +213,7 @@ class AutonomicNervousSystem:
 
         self.active_stimuli = remaining_stimuli
 
-    async def _apply_homeostasis(self):
+    async def _apply_homeostasis(self) -> None:
         """Apply homeostatic drive toward baseline"""
         # Gradually return to homeostatic target
         diff = self.homeostatic_target - self.arousal_level
@@ -239,7 +239,7 @@ class AutonomicNervousSystem:
                 self.parasympathetic_tone = min(100, self.parasympathetic_tone + boost)
                 self.sympathetic_tone = max(0, self.sympathetic_tone - boost * 0.5)
 
-    async def _detect_state_change(self):
+    async def _detect_state_change(self) -> None:
         """Detect and notify state changes"""
         current_state = ANSState.from_arousal(self.arousal_level)
         if current_state != self._last_state:
@@ -260,7 +260,7 @@ class AutonomicNervousSystem:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    async def process_tactile_input(self, data: Dict[str, Any]):
+    async def process_tactile_input(self, data: Dict[str, Any]) -> None:
         """
         Processes real-time tactile stimuli with Social Bias (2030 Standard).
         """
@@ -318,7 +318,7 @@ class AutonomicNervousSystem:
 
         self.arousal_level = max(0, min(100, self.arousal_level))
 
-    def set_arousal_directly(self, level: float):
+    def set_arousal_directly(self, level: float) -> None:
         """
         Directly set the arousal level (bypassing stimuli)
 
@@ -399,7 +399,7 @@ class AutonomicNervousSystem:
         """Get list of currently active stimuli"""
         return self.active_stimuli.copy()
 
-    def register_state_change_callback(self, callback: Callable[[ANSState, ANSState], None]):
+    def register_state_change_callback(self, callback: Callable[[ANSState, ANSState], None]) -> None:
         """Register callback for ANS state changes"""
         self._state_change_callbacks.append(callback)
 
@@ -474,7 +474,8 @@ class StimulusTemplates:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         ans = AutonomicNervousSystem()
         await ans.initialize()
 

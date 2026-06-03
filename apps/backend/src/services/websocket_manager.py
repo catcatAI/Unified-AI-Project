@@ -58,18 +58,18 @@ class ConnectionManager:
     def heartbeat_timeout(self):
         return self._sm.heartbeat_timeout
 
-    async def connect(self, websocket: WebSocket, session_id: str = None, metadata: dict = None):
+    async def connect(self, websocket: WebSocket, session_id: str = None, metadata: dict = None) -> str:
         await websocket.accept()
         session = await self._sm.register(websocket, session_id, metadata, single_device_mode=True)
         return session
 
-    def disconnect(self, websocket: WebSocket):
+    def disconnect(self, websocket: WebSocket) -> None:
         for client_id, session in list(self._sm._sessions.items()):
             if session.websocket == websocket:
                 asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
                 break
 
-    async def broadcast(self, message: dict):
+    async def broadcast(self, message: dict) -> str:
         return await self._sm.broadcast(message)
 
     async def send_personal_message(self, message: dict, websocket: WebSocket):
@@ -78,13 +78,13 @@ class ConnectionManager:
                 return await self._sm.send_to_client(client_id, message)
         return False
 
-    async def send_to_session(self, session_id: str, message: dict):
+    async def send_to_session(self, session_id: str, message: dict) -> str:
         return await self._sm.send_to_session(session_id, message)
 
-    async def unregister(self, client_id: str):
+    async def unregister(self, client_id: str) -> str:
         return await self._sm.unregister(client_id)
 
-    def get_all_connections_info(self):
+    def get_all_connections_info(self) -> str:
         return self._sm.get_all_connections_info()
 
     def get_connection_stats(self) -> Dict[str, Any]:
@@ -110,7 +110,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-async def broadcast_state_updates():
+async def broadcast_state_updates() -> None:
     """Periodically broadcast state updates (bio + Live2D) to all connected clients."""
     while True:
         try:
@@ -165,7 +165,7 @@ async def broadcast_state_updates():
         await asyncio.sleep(0.2)
 
 
-async def websocket_handler(websocket: WebSocket):
+async def websocket_handler(websocket: WebSocket) -> str:
     """
     WebSocket endpoint handler for real-time communication with desktop app.
     Handles handshake, message routing, heartbeat, and chat.
@@ -173,7 +173,7 @@ async def websocket_handler(websocket: WebSocket):
     await websocket.accept()
 
     orig_receive = websocket._receive
-    async def debug_receive():
+    async def debug_receive() -> str:
         msg = await orig_receive()
         if msg.get('type') == 'websocket.receive':
             text = msg.get('text')

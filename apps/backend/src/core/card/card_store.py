@@ -27,29 +27,36 @@ class CardRegistry:
         self._cards: Dict[str, Card] = {}
 
     def add(self, card: Card) -> None:
+        """Log a diagnostic message."""
         key = card.qualified_id or f"{card.card_id}@{card.world_line}"
         self._cards[key] = card
         logger.info(f"CardRegistry: added {key}")
 
     def get(self, qualified_id: str) -> Optional[Card]:
+        """Execute the get operation."""
         return self._cards.get(qualified_id)
 
     def get_by_card_id(self, card_id: str, world_line: str) -> Optional[Card]:
+        """Get the by card id by self."""
         return self._cards.get(f"{card_id}@{world_line}")
 
     def remove(self, qualified_id: str) -> bool:
+        """Execute the remove operation."""
         return self._cards.pop(qualified_id, None) is not None
 
     def list_all(self) -> List[Card]:
+        """List all items."""
         return list(self._cards.values())
 
     def list_by_world_line(self, world_line: str) -> List[Card]:
+        """List by world line items."""
         return [
             card for card in self._cards.values()
             if card.world_line == world_line
         ]
 
     def clear(self) -> None:
+        """Clear all entries."""
         self._cards.clear()
 
     @property
@@ -57,12 +64,14 @@ class CardRegistry:
         return len(self._cards)
 
     def save(self, path: Path) -> None:
+        """Save the current state."""
         data = {key: _card_to_dict(card) for key, card in self._cards.items()}
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         logger.info(f"CardRegistry: saved {len(data)} cards to {path}")
 
     def load(self, path: Path) -> None:
+        """Load state from storage."""
         if not path.exists():
             logger.warning(f"CardRegistry: {path} not found, starting empty")
             return

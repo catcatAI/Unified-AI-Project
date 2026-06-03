@@ -607,7 +607,7 @@ class LifeIntensityFormula:
             },
         }
 
-    def register_intensity_callback(self, callback: Callable[[LifeIntensitySnapshot], None]):
+    def register_intensity_callback(self, callback: Callable[[LifeIntensitySnapshot], None]) -> None:
         """Register callback for intensity calculations"""
         self._intensity_callbacks.append(callback)
 

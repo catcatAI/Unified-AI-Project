@@ -61,10 +61,12 @@ class AutoDecision:
     task_demand: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict format."""
         return asdict(self)
 
     @classmethod
     def neuroblender_fallback(cls, reason: str = "") -> "AutoDecision":
+        """Execute the neuroblender fallback operation."""
         return cls(
             backend=AutoBackendChoice.NEUROBLENDER,
             reason=reason or "No available LLM backend, falling back to NeuroBlender",
@@ -121,7 +123,7 @@ class HardwareAnalyzer:
     def __init__(self):
         self._probe = None
 
-    def _get_probe(self):
+    def _get_probe(self) -> str:
         if self._probe is None:
             from shared.utils.hardware_detector import SystemHardwareProbe
 
@@ -181,7 +183,7 @@ class BudgetScheduler:
         self.config = config or {}
         self._resource_service = None
 
-    def _get_resource_service(self):
+    def _get_resource_service(self) -> str:
         if self._resource_service is None:
             from services.resource_awareness_service import ResourceAwarenessService
 
@@ -253,7 +255,7 @@ class StateInterpreter:
         self._state_matrix = None
         self._state_adapter = None
 
-    def _ensure_loaded(self):
+    def _ensure_loaded(self) -> None:
         if self._state_matrix is None:
             try:
                 from core.engine.state_matrix import StateMatrix4D
@@ -391,7 +393,7 @@ class LearnRecorder:
         self._config_loader = None
         self._pending: List[Dict[str, Any]] = []
 
-    def _get_config_loader(self):
+    def _get_config_loader(self) -> str:
         if self._config_loader is None:
             try:
                 from core.config_loader import get_angela_config
@@ -401,7 +403,7 @@ class LearnRecorder:
                 logger.warning(f"Failed to load config_loader: {e}", exc_info=True)
         return self._config_loader
 
-    def record(self, decision: AutoDecision, actual_ms: float, success: bool):
+    def record(self, decision: AutoDecision, actual_ms: float, success: bool) -> None:
         """Record one auto decision result."""
         record = {
             "timestamp": time.time(),
@@ -421,7 +423,7 @@ class LearnRecorder:
         if len(self._pending) >= 100:
             self._flush()
 
-    def _flush(self):
+    def _flush(self) -> None:
         """Flush buffered records to learned_routes.yaml via config_loader."""
         cfg = self._get_config_loader()
         if cfg is None or not self._pending:
@@ -434,7 +436,7 @@ class LearnRecorder:
         except Exception:
             logger.warning("[LearnRecorder] Flush failed, will retry later", exc_info=True)
 
-    def flush_sync(self):
+    def flush_sync(self) -> None:
         """Force flush (called on shutdown)."""
         self._flush()
 
@@ -539,7 +541,7 @@ class NeuroAutoSelector:
             self._last_hw_time = now
         return self._hw_score, self._hw_tier, self._hw_details
 
-    def refresh_hardware(self):
+    def refresh_hardware(self) -> None:
         """Force hardware re-detection."""
         self._last_hw_time = 0
 
@@ -628,7 +630,7 @@ class NeuroAutoSelector:
             decision.backend = AutoBackendChoice.NEUROBLENDER
             decision.reason = "no_compatible_backend"
 
-    def _apply_force_backend(self, decision: AutoDecision, force: str):
+    def _apply_force_backend(self, decision: AutoDecision, force: str) -> None:
         """Handle force_backend override."""
         force = force.lower().replace("-", "_")
         if force in ("neuroblender", "none"):
@@ -742,7 +744,7 @@ class NeuroAutoSelector:
 
     # ── Phase 6: Recording ─────────────────────────────────────────────────
 
-    def record_result(self, decision: AutoDecision, actual_ms: float, success: bool):
+    def record_result(self, decision: AutoDecision, actual_ms: float, success: bool) -> None:
         """Record result for learning."""
         self.recorder.record(decision, actual_ms, success)
 

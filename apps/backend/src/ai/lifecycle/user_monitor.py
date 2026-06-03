@@ -113,7 +113,7 @@ class UserMonitor:
 
         logger.info(f"UserMonitor initialized for user {user_id}")
 
-    def add_state_change_callback(self, callback: Callable):
+    def add_state_change_callback(self, callback: Callable) -> None:
         """添加狀態變化回調"""
         self._state_change_callbacks.append(callback)
 
@@ -127,7 +127,7 @@ class UserMonitor:
         self._monitor_task = asyncio.create_task(self._monitor_loop())
         logger.info("UserMonitor started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止監控"""
         if not self.is_running:
             return
@@ -143,7 +143,7 @@ class UserMonitor:
 
         logger.info("UserMonitor stopped")
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """監控循環"""
         logger.info("User monitor loop started")
 
@@ -157,7 +157,7 @@ class UserMonitor:
                 logger.error(f"Error in monitor loop: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("user_monitor_tight", 1.0))  # 防止緊密循環
 
-    async def _check_user_status(self):
+    async def _check_user_status(self) -> None:
         """檢查用戶狀態"""
         now = datetime.now()
 
@@ -213,7 +213,7 @@ class UserMonitor:
         if len(self.user_state.activity_history) > 100:
             self.user_state.activity_history = self.user_state.activity_history[-100:]
 
-    async def _update_activity_level(self):
+    async def _update_activity_level(self) -> None:
         """更新活動水平"""
         now = datetime.now()
 
@@ -238,7 +238,7 @@ class UserMonitor:
         else:
             self.user_state.activity_level = UserActivityLevel.IDLE.value
 
-    async def _notify_state_change(self, event_type: str, data: Dict[str, Any]):
+    async def _notify_state_change(self, event_type: str, data: Dict[str, Any]) -> None:
         """通知狀態變化"""
         for callback in self._state_change_callbacks:
             try:
@@ -249,7 +249,7 @@ class UserMonitor:
             except Exception as e:  # broad exception acceptable: callback failures should not crash notification loop
                 logger.error(f"Error in state change callback: {e}", exc_info=True)
 
-    def record_input(self, input_text: str, metadata: Optional[Dict[str, Any]] = None):
+    def record_input(self, input_text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """記錄用戶輸入"""
         now = datetime.now()
 
@@ -446,13 +446,15 @@ class UserMonitor:
 
 if __name__ == "__main__":
     # 測試用戶監控系統
-    async def test_user_monitor():
+    async def test_user_monitor() -> None:
+        """Log a diagnostic message."""
         logging.basicConfig(level=logging.INFO)
 
         monitor = UserMonitor(check_interval=2.0)
 
         # 添加狀態變化回調
         def on_state_change(event_type, data) -> None:
+            """Handle the state change event."""
             logger.info(f"[STATE CHANGE] {event_type}: {data}")
 
         monitor.add_state_change_callback(on_state_change)

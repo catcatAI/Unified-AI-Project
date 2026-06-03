@@ -14,6 +14,7 @@ class FallbackProtocols:
         pass
 
     def get_fallback_channel(self, target_id: str) -> str:
+        """Get the fallback channel for a given target ID."""
         return "local_fallback"
 
 

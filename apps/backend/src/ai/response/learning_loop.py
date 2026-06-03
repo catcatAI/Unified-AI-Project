@@ -66,7 +66,8 @@ class LearningLoop:
         self.extraction_count = 0
         self.learning_rate = 0.05
 
-    def bind_vocabulary(self, neuro_vocabulary):
+    def bind_vocabulary(self, neuro_vocabulary) -> None:
+        """Execute the bind vocabulary operation."""
         self._neuro_vocabulary = neuro_vocabulary
 
     def process_llm_response(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> int:
@@ -103,7 +104,7 @@ class LearningLoop:
 
         return count
 
-    def record_user_engagement(self, positive: bool):
+    def record_user_engagement(self, positive: bool) -> None:
         """Adjust learning rate based on user engagement signal."""
         if positive:
             self.learning_rate = min(0.15, self.learning_rate + 0.01)
@@ -115,6 +116,7 @@ _default_loop: Optional[LearningLoop] = None
 
 
 def get_learning_loop() -> LearningLoop:
+    """Get the learning loop."""
     global _default_loop
     if _default_loop is None:
         _default_loop = LearningLoop()

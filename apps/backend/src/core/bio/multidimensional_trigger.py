@@ -207,7 +207,7 @@ class MultidimensionalTriggerSystem:
         # Initialize with default triggers
         self._initialize_default_triggers()
 
-    def _initialize_default_triggers(self):
+    def _initialize_default_triggers(self) -> None:
         """Initialize default triggers for common behaviors"""
 
         # Morning greeting trigger
@@ -350,7 +350,7 @@ class MultidimensionalTriggerSystem:
             )
         )
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the trigger system"""
         self._running = True
         self._evaluation_task = asyncio.create_task(self._evaluation_loop())
@@ -365,7 +365,7 @@ class MultidimensionalTriggerSystem:
             except asyncio.CancelledError:
                 pass
 
-    async def _evaluation_loop(self):
+    async def _evaluation_loop(self) -> None:
         """Background evaluation loop"""
         while self._running:
             await self._update_time_dimension()
@@ -382,7 +382,7 @@ class MultidimensionalTriggerSystem:
 
         self.update_dimension(TriggerDimension.TIME, day_progress, raw_value=now)
 
-    async def _update_random_dimension(self):
+    async def _update_random_dimension(self) -> None:
         """Update random dimension"""
         import random
 
@@ -403,7 +403,7 @@ class MultidimensionalTriggerSystem:
                 return True
         return False
 
-    def update_dimension(self, dimension: TriggerDimension, value: float, raw_value: Any = None):
+    def update_dimension(self, dimension: TriggerDimension, value: float, raw_value: Any = None) -> None:
         """
         Update a dimension value
 
@@ -427,7 +427,7 @@ class MultidimensionalTriggerSystem:
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     pass
 
-    def update_dimensions(self, values: Dict[TriggerDimension, Tuple[float, Any]]):
+    def update_dimensions(self, values: Dict[TriggerDimension, Tuple[float, Any]]) -> None:
         """Update multiple dimensions at once"""
         for dimension, (value, raw) in values.items():
             self.update_dimension(dimension, value, raw)
@@ -487,7 +487,7 @@ class MultidimensionalTriggerSystem:
         results.sort(key=lambda x: x[2], reverse=True)
         return results
 
-    def register_trigger_callback(self, trigger_id: str, callback: Callable[[float], None]):
+    def register_trigger_callback(self, trigger_id: str, callback: Callable[[float], None]) -> None:
         """Register callback for when a trigger is evaluated"""
         if trigger_id not in self._trigger_callbacks:
             self._trigger_callbacks[trigger_id] = []
@@ -520,7 +520,8 @@ class MultidimensionalTriggerSystem:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         trigger_system = MultidimensionalTriggerSystem()
         await trigger_system.initialize()
 

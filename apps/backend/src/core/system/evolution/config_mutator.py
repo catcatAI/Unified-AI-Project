@@ -144,7 +144,7 @@ class ConfigMutator:
             logger.warning(f"Failed to load {path}, returning empty config", exc_info=True)
             return {}
 
-    def _write_file(self, path: Path, data: Dict[str, Any]):
+    def _write_file(self, path: Path, data: Dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w', encoding='utf-8') as f:
             yaml.safe_dump(data, f, sort_keys=False)

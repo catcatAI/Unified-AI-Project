@@ -71,7 +71,7 @@ get_template_library = None
 TaskGenerator = None
 
 
-def _load_memory_modules():
+def _load_memory_modules() -> str:
     """Lazy load memory enhancement modules on first access"""
     global _memory_modules_loaded, _MEMORY_ENHANCED
     global HAMMemoryManager, AngelaState, UserImpression, MemoryTemplate
@@ -115,7 +115,7 @@ def _load_memory_modules():
     return _MEMORY_ENHANCED
 
 
-def is_memory_enhanced():
+def is_memory_enhanced() -> str:
     """Lazy check if memory enhancement is available"""
     if _MEMORY_ENHANCED is None:
         _load_memory_modules()
@@ -186,7 +186,7 @@ class AngelaLLMService:
         self._angela_fallback_chain = self.config.get("_fallback_chain", [])
         self._angela_intent_routing = self.config.get("_intent_routing", {})
 
-    def _init_response_system(self):
+    def _init_response_system(self) -> None:
         """初始化 P0-2 响应组合与匹配系统"""
         try:
             from ai.response.template_matcher import TemplateMatcher
@@ -207,7 +207,7 @@ class AngelaLLMService:
             self.response_composer = None
             self.deviation_tracker = None
 
-    def _load_templates_to_matcher(self):
+    def _load_templates_to_matcher(self) -> None:
         """加载模板库到匹配器"""
         if not hasattr(self, "template_matcher"):
             return
@@ -285,7 +285,7 @@ class AngelaLLMService:
         else:
             self.enable_memory_enhancement = False
 
-    def _init_emotion_recognition(self):
+    def _init_emotion_recognition(self) -> None:
         """初始化情感识别系统"""
         # 基于关键词的情感识别（备选方案）- 支持简繁体中文
         self.emotion_keywords = {
@@ -544,7 +544,7 @@ class AngelaLLMService:
 
         return config
 
-    def reload_config(self, new_config: Optional[Dict[str, Any]] = None):
+    def reload_config(self, new_config: Optional[Dict[str, Any]] = None) -> None:
         """
         [Phase 6] 熱加載配置。
         允許在不重啟進程的情況下演化 LLM 後端。
@@ -564,7 +564,7 @@ class AngelaLLMService:
         state_store.update_state("hardware", {"active_llm": getattr(self.active_backend, "model", "unknown")})
         logger.info("✅ [LLMService] Configuration hot-reloaded.")
 
-    def _init_backends(self):
+    def _init_backends(self) -> None:
         """初始化可用的後端（支援所有 provider 類型）"""
         for backend_id, backend_config in self.config.items():
             if not isinstance(backend_config, dict):
@@ -1406,13 +1406,13 @@ class AngelaLLMService:
         keywords = [w for w in words if w not in stopwords and len(w) > 1]
         return keywords[:5]
 
-    async def start_precompute(self):
+    async def start_precompute(self) -> None:
         """启动预计算服务"""
         if self.enable_memory_enhancement and hasattr(self, "precompute_service"):
             await self.precompute_service.start()
             logger.info("Precompute service started")
 
-    async def stop_precompute(self):
+    async def stop_precompute(self) -> None:
         """停止预计算服务"""
         if self.enable_memory_enhancement and hasattr(self, "precompute_service"):
             await self.precompute_service.stop()
@@ -1713,7 +1713,7 @@ class AngelaLLMService:
         except Exception as e:
             logger.error(f"chat_completion error: {e}", exc_info=True)
             return LLMResponse(text="", backend="unknown", model="unknown", error=str(e))
-def _get_llm_config(key: str, default=None):
+def _get_llm_config(key: str, default=None) -> str:
     try:
         from core.config_loader import get_angela_config
         return get_angela_config().get_authority("angela_core", {}).get("llm", {}).get(key, default)

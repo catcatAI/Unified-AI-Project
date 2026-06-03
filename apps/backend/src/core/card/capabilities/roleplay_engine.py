@@ -28,6 +28,7 @@ class RoleplayEngine:
         return self._active_card
 
     def activate(self, card: Card, persist: bool = True) -> bool:
+        """Activate the component."""
         ok = self.adapter.load_card(card, persist=persist)
         if ok:
             self._active_card = card
@@ -35,6 +36,7 @@ class RoleplayEngine:
         return ok
 
     def deactivate(self) -> None:
+        """Deactivate the component."""
         self._active_card = None
         logger.info("Roleplay deactivated")
 

@@ -21,7 +21,7 @@ class KeyGenerator:
         alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
         return "".join(secrets.choice(alphabet) for _ in range(length))
 
-    def update_env_file(self, keys: Dict[str, str], env_path: str = ".env"):
+    def update_env_file(self, keys: Dict[str, str], env_path: str = ".env") -> None:
         """更新 .env 文件中的密鑰"""
         if not os.path.exists(env_path):
             logger.info(f"創建新的 {env_path} 文件")
@@ -57,7 +57,8 @@ class KeyGenerator:
         
         logger.info(f"成功更新 {env_path} 文件")
 
-def main():
+def main() -> None:
+    """Generate and update system core keys in the .env file."""
     logging.basicConfig(level=logging.INFO)
     gen = KeyGenerator()
     

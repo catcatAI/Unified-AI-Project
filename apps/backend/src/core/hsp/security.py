@@ -29,7 +29,7 @@ class HSPSecurityManager:
 
         logger.info("HSP安全管理器初始化完成")
 
-    def _setup_keys(self):
+    def _setup_keys(self) -> None:
         """设置加密和签名密钥"""
         # 对称加密密钥(用于消息加密)
         self.encryption_key = os.environ.get("HSP_ENCRYPTION_KEY")
@@ -188,7 +188,7 @@ class HSPSecurityManager:
         )
         return pem.decode("utf-8")
 
-    def load_public_key_from_pem(self, pem_data: str):
+    def load_public_key_from_pem(self, pem_data: str) -> None:
         """从PEM数据加载公钥"""
         self.public_key = serialization.load_pem_public_key(pem_data.encode("utf-8"))
 

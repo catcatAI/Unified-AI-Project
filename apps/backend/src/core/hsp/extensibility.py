@@ -108,6 +108,7 @@ class HSPLoadBalancerMiddleware(HSPProtocolMiddleware):
         self, message: Dict[str, Any], next_middleware: Callable
     ) -> Optional[Dict[str, Any]]:
         # 选择目标节点
+        """Execute the process request operation."""
         target_node = self.load_balancer.select_node(message)
         if target_node:
             message["target_node"] = target_node
@@ -120,6 +121,7 @@ class HSPLoadBalancerMiddleware(HSPProtocolMiddleware):
         self, response: Dict[str, Any], next_middleware: Callable
     ) -> Optional[Dict[str, Any]]:
         # 记录响应统计
+        """Execute the process response operation."""
         target_node = response.get("target_node")
         if target_node:
             # 这里应该从响应中提取实际的响应时间
@@ -139,6 +141,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
         self, message: Dict[str, Any], next_middleware: Callable
     ) -> Optional[Dict[str, Any]]:
         # 安全验证
+        """Log a diagnostic message."""
         sender_id = message.get("sender_ai_id", "unknown")
         auth_token = message.get("security_parameters", {}).get("auth_token")
 
@@ -168,6 +171,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
         self, response: Dict[str, Any], next_middleware: Callable
     ) -> Optional[Dict[str, Any]]:
         # 安全处理响应
+        """Execute the process response operation."""
         sender_id = response.get("sender_ai_id", "unknown")
 
         # 添加安全参数
@@ -201,6 +205,7 @@ class HSPPerformanceMiddleware(HSPProtocolMiddleware):
         self, message: Dict[str, Any], next_middleware: Callable
     ) -> Optional[Dict[str, Any]]:
         # 性能优化：检查缓存
+        """Log a diagnostic message."""
         message_key = self._generate_message_key(message)
         cached_result = self.performance_optimizer.intelligent_cache.get(message_key)
 
@@ -220,6 +225,7 @@ class HSPPerformanceMiddleware(HSPProtocolMiddleware):
         self, response: Dict[str, Any], next_middleware: Callable
     ) -> Optional[Dict[str, Any]]:
         # 调用下一个中间件
+        """Execute the process response operation."""
         result = await next_middleware(response)
         return result
 
@@ -252,7 +258,7 @@ class HSPExtensionManager:
 
         logger.info("HSP扩展管理器初始化完成")
 
-    def register_extension(self, extension_info: HSPExtensionInfo):
+    def register_extension(self, extension_info: HSPExtensionInfo) -> None:
         """注册扩展"""
         self.extensions[extension_info.extension_id] = extension_info
         logger.debug(f"扩展已注册: {extension_info.extension_id}")
@@ -300,7 +306,7 @@ class HSPExtensionManager:
             logger.error(f"扩展卸载失败: {extension_id} 错误: {e}", exc_info=True)
             return False
 
-    def register_message_handler(self, handler: HSPMessageHandler):
+    def register_message_handler(self, handler: HSPMessageHandler) -> None:
         """注册消息处理器"""
         self.message_handlers.append(handler)
         logger.debug(f"消息处理器已注册: {type(handler).__name__}")
@@ -310,7 +316,7 @@ class HSPExtensionManager:
         self.middlewares.append(middleware)
         logger.debug(f"中间件已注册: {type(middleware).__name__}")
 
-    def register_message_type(self, message_type: str, handler: HSPMessageHandler):
+    def register_message_type(self, message_type: str, handler: HSPMessageHandler) -> None:
         """注册消息类型处理器"""
         if message_type not in self.message_type_registry:
             self.message_type_registry[message_type] = []
@@ -359,6 +365,7 @@ class HSPExtensionManager:
 
         # 创建中间件调用链
         async def call_next(index: int, msg: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+            """Execute the call next operation."""
             if index >= len(self.middlewares):
                 return msg
 
@@ -507,6 +514,7 @@ class ExampleFactHandler(HSPMessageHandler):
     async def handle_message(
         self, message: Dict[str, Any], context: Optional[Dict[str, Any]] = None
     ) -> Optional[Any]:
+        """Handle message."""
         if message.get("message_type") == "HSP.Fact_v0.1":
             # 处理事实消息
             fact_content = message.get("payload", {}).get("statement_nl", "")
@@ -522,6 +530,7 @@ class ExampleFactHandler(HSPMessageHandler):
         return None
 
     def can_handle(self, message_type: str) -> bool:
+        """Determine if handle."""
         return message_type == "HSP.Fact_v0.1"
 
 
@@ -531,6 +540,7 @@ class ExampleTaskHandler(HSPMessageHandler):
     async def handle_message(
         self, message: Dict[str, Any], context: Optional[Dict[str, Any]] = None
     ) -> Optional[Any]:
+        """Handle message."""
         if message.get("message_type") == "HSP.TaskRequest_v0.1":
             # 处理任务请求消息
             task_params = message.get("payload", {}).get("parameters", {})
@@ -549,6 +559,7 @@ class ExampleTaskHandler(HSPMessageHandler):
         return None
 
     def can_handle(self, message_type: str) -> bool:
+        """Determine if handle."""
         return message_type == "HSP.TaskRequest_v0.1"
 
 
@@ -589,6 +600,7 @@ if __name__ == "__main__":
     # 测试消息处理
     async def test_message_processing() -> None:
         # 测试事实消息
+        """Log a diagnostic message."""
         fact_message = {
             "message_id": "fact_001",
             "message_type": "HSP.Fact_v0.1",

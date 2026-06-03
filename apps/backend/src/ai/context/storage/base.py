@@ -46,7 +46,7 @@ class Context:
         self.version = "1.0"
         self.tags: List[str] = []
 
-    def update_content(self, new_content: Dict[str, Any]):
+    def update_content(self, new_content: Dict[str, Any]) -> None:
         """更新上下文内容"""
         self.content.update(new_content)
         self.updated_at = datetime.now()
@@ -56,7 +56,7 @@ class Context:
         if tag not in self.tags:
             self.tags.append(tag)
 
-    def remove_tag(self, tag: str):
+    def remove_tag(self, tag: str) -> None:
         """移除标签"""
         if tag in self.tags:
             self.tags.remove(tag)

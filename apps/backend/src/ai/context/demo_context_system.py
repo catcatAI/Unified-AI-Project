@@ -10,7 +10,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def demo_context_system():
+def demo_context_system() -> None:
     """演示上下文系统功能"""
     logger.info("=== 上下文系统演示开始 ===")
 
@@ -41,7 +41,7 @@ def demo_context_system():
     logger.info("=== 上下文系统演示结束 ===")
 
 
-def demo_tool_context(context_manager):
+def demo_tool_context(context_manager) -> None:
     """演示工具上下文"""
     # tool_manager = ToolContextManager(context_manager)  # Commented - needs proper import
 
@@ -62,7 +62,7 @@ def demo_tool_context(context_manager):
     logger.info("工具上下文演示完成")
 
 
-def demo_model_agent_context(context_manager):
+def demo_model_agent_context(context_manager) -> None:
     """演示模型与代理上下文"""
     # model_manager = ModelContextManager(context_manager)  # Commented - needs proper import
     # agent_manager = AgentContextManager(context_manager)  # Commented - needs proper import
@@ -86,7 +86,7 @@ def demo_model_agent_context(context_manager):
     logger.info("模型与代理上下文演示完成")
 
 
-def demo_dialogue_context(context_manager):
+def demo_dialogue_context(context_manager) -> None:
     """演示对话上下文"""
     # dialogue_manager = DialogueContextManager(context_manager)  # Commented - needs proper import
 
@@ -104,7 +104,7 @@ def demo_dialogue_context(context_manager):
     logger.info("对话上下文演示完成")
 
 
-def demo_memory_context(context_manager):
+def demo_memory_context(context_manager) -> None:
     """演示记忆上下文"""
     # memory_manager = MemoryContextManager(context_manager)  # Commented - needs proper import
 
@@ -131,7 +131,7 @@ def demo_memory_context(context_manager):
     logger.info("记忆上下文演示完成")
 
 
-def demo_context_retrieval(context_manager):
+def demo_context_retrieval(context_manager) -> None:
     """演示上下文检索"""
 
     # context_id_2 = context_manager.create_context(

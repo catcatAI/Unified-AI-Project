@@ -88,11 +88,13 @@ class ChatMessage:
     name: Optional[str] = None
     timestamp: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if self.timestamp is None:
             self.timestamp = datetime.now()
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize chat message to a dictionary."""
         return {
             "role": self.role,
             "content": self.content,
@@ -102,6 +104,7 @@ class ChatMessage:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ChatMessage":
+        """Deserialize a chat message from a dictionary."""
         return cls(
             role=data.get("role", "user"),
             content=data.get("content", ""),

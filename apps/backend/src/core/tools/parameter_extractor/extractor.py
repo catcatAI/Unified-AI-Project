@@ -76,7 +76,7 @@ class ParameterExtractor:
 
         return mapped_params
 
-    def load_parameters_to_model(self, model: Any, params: Dict[str, Any]):
+    def load_parameters_to_model(self, model: Any, params: Dict[str, Any]) -> None:
         """
         将参数加载到模型中
 

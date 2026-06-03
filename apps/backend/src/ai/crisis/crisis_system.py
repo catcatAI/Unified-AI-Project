@@ -128,7 +128,7 @@ class CrisisSystem:
 
         return self.crisis_level
 
-    def _trigger_protocol(self, level: int, details: Dict[str, Any]):
+    def _trigger_protocol(self, level: int, details: Dict[str, Any]) -> None:
         """
         Triggers a protocol based on the crisis level.
         Simulates basic actions for now.
@@ -179,7 +179,7 @@ class CrisisSystem:
         """Returns the current crisis level."""
         return self.crisis_level
 
-    def resolve_crisis(self, resolution_details: str):
+    def resolve_crisis(self, resolution_details: str) -> None:
         """Manually or automatically resolves/de-escalates a crisis."""
         logging.info(
             f"CrisisSystem: Crisis level {self.crisis_level} resolved. Details: {resolution_details}"

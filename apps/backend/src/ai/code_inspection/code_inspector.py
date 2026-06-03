@@ -69,6 +69,7 @@ class Issue:
     fix_kwargs: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict format."""
         return {
             "id": self.id,
             "file": self.file,
@@ -175,7 +176,8 @@ class PatternMatcher:
     RULES: List[PatternRule] = []
 
     @classmethod
-    def init_rules(cls):
+    def init_rules(cls) -> None:
+        """Initialize rules."""
         if cls.RULES:
             return
 
@@ -509,7 +511,8 @@ class ASTInspector:
                 self.current_depth = 0
                 self.max_node_line = 0
 
-            def visit(self, node):
+            def visit(self, node) -> None:
+                """Visit an AST node for inspection."""
                 self.current_depth += 1
                 if self.current_depth > self.max_depth:
                     self.max_depth = self.current_depth
@@ -675,7 +678,7 @@ class CodeInspector:
         logger.info(f"[Inspector] Scanned {len(self._python_files)} files, found {len(self.issues)} issues")
         return report
 
-    def _inspect_python_file(self, filepath: Path):
+    def _inspect_python_file(self, filepath: Path) -> None:
         """檢查單個 Python 文件"""
         self.issue_counter += 1
 
@@ -763,12 +766,15 @@ class CodeInspector:
         return datetime.now().isoformat()
 
     def get_issues_by_severity(self, severity: Severity) -> List[Issue]:
+        """Get the issues by severity by self."""
         return [i for i in self.issues if i.severity == severity]
 
     def get_issues_by_category(self, category: IssueCategory) -> List[Issue]:
+        """Get the issues by category by self."""
         return [i for i in self.issues if i.category == category]
 
     def get_auto_fixable(self) -> List[Issue]:
+        """Get the auto fixable by self."""
         return [i for i in self.issues if i.auto_fixable]
 
 
@@ -781,7 +787,8 @@ class CodeFixer:
     FIX_TEMPLATES: Dict[str, Callable] = {}
 
     @classmethod
-    def register_template(cls, name: str, func: Callable):
+    def register_template(cls, name: str, func: Callable) -> None:
+        """Register a template."""
         cls.FIX_TEMPLATES[name] = func
 
     @classmethod
@@ -804,7 +811,8 @@ class CodeFixer:
             return False, f"Fix failed: {e}"
 
     @classmethod
-    def register_builtin_templates(cls):
+    def register_builtin_templates(cls) -> None:
+        """Register a builtin templates."""
         cls.FIX_TEMPLATES = {
             "wrap_with_none_check": cls._fix_none_check,
             "replace_with_env_get": cls._fix_env_variable,

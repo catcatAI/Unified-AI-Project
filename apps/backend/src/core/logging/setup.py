@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from .enterprise_logger import get_logger, LogCategory
 
-def setup_logging(level=logging.INFO, log_file="backend.log"):
+def setup_logging(level=logging.INFO, log_file="backend.log") -> str:
     """
     Initializes the global logging system.
     Should only be called once from entry points (main.py, main_api_server.py).

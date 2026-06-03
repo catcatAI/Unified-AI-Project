@@ -44,7 +44,7 @@ class MetabolicHeartbeat:
         self.velocity = self._beh_cfg.get("movement", {}).get("base_velocity", 0.05)
         self.posture = {"spine_bend": 0.0, "theta_matrix": [0.0]*9}
 
-    async def _integration_loop(self):
+    async def _integration_loop(self) -> None:
         while self._running:
             try:
                 dist_to_target = abs(self.target_x - self.x)
@@ -82,7 +82,8 @@ class MetabolicHeartbeat:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("sleep_long", 1.0))
 
-    async def start(self):
+    async def start(self) -> None:
+        """Start the metabolic heartbeat loop."""
         if self._running:
             return
         logger.info("💓 [Heartbeat] Starting MetabolicHeartbeat...")
@@ -94,7 +95,8 @@ class MetabolicHeartbeat:
         self._integration_task = asyncio.create_task(self._integration_loop())
         logger.info(f"💓 Angela's Heartbeat started. Birth: {self.start_time}")
 
-    async def stop(self):
+    async def stop(self) -> None:
+        """Stop the metabolic heartbeat loop."""
         self._running = False
         if self._task:
             self._task.cancel()
@@ -129,7 +131,8 @@ class MetabolicHeartbeat:
                 logger.error(f"[Pulse] Cardiac Arrhythmia: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("sleep_very_long", 10.0))
 
-    async def _update_spatial_state(self, arousal, stress):
+    async def _update_spatial_state(self, arousal, stress) -> None:
+        """Update spatial position based on arousal and stress levels."""
         import random
         mov_conf = self._beh_cfg.get("movement", {})
         
@@ -168,7 +171,8 @@ class MetabolicHeartbeat:
                 asyncio.create_task(reflex_mgr.trigger_physical_trauma("leg", damage))
                 self.target_x = self.x
 
-    def _check_collision(self, next_x):
+    def _check_collision(self, next_x) -> bool:
+        """Check if the next position collides with screen boundaries."""
         mov = self._beh_cfg.get("movement", {})
         left = mov.get("border_margin_left", 20)
         right = mov.get("border_margin_right", 150)
@@ -183,7 +187,7 @@ class MetabolicHeartbeat:
 
         return False
 
-    async def _process_metabolism(self):
+    async def _process_metabolism(self) -> None:
         """
         Simulates 2030-standard Data Metabolism.
         Links hardware resources (CPU/Battery) to biological decay.
@@ -218,7 +222,7 @@ class MetabolicHeartbeat:
         except Exception as e:  # broad exception acceptable: metabolism processing should be resilient to hardware errors
             logger.error(f"Metabolic injection failed: {e}", exc_info=True)
 
-    async def _observe_environment(self):
+    async def _observe_environment(self) -> None:
         """
         [N.6.1] Angela autonomously looks at what the user is doing via GlobalInputSensor.
         Maps categorized activities to biological triggers.
@@ -252,7 +256,8 @@ class MetabolicHeartbeat:
         logger.debug(f"🌍 [Environment] Activity: {category}, BPM: {metrics['input_density_bpm']:.1f}")
 
 if __name__ == "__main__":
-    async def test():
+    async def test() -> None:
+        """Run a quick test of the MetabolicHeartbeat."""
         heart = MetabolicHeartbeat(update_interval=5.0)
         await heart.start()
         await asyncio.sleep(15)

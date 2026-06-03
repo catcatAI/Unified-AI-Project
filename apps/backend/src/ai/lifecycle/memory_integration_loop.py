@@ -115,7 +115,7 @@ class MemoryIntegrationLoop:
 
         logger.info("MemoryIntegrationLoop initialized")
 
-    async def start(self):
+    async def start(self) -> None:
         """啟動整合循環"""
         if self.is_running:
             logger.warning("MemoryIntegrationLoop is already running", exc_info=True)
@@ -125,7 +125,7 @@ class MemoryIntegrationLoop:
         self._integration_task = asyncio.create_task(self._integration_loop())
         logger.info("MemoryIntegrationLoop started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止整合循環"""
         if not self.is_running:
             return
@@ -141,7 +141,7 @@ class MemoryIntegrationLoop:
 
         logger.info("MemoryIntegrationLoop stopped")
 
-    async def _integration_loop(self):
+    async def _integration_loop(self) -> None:
         """整合循環"""
         logger.info("Memory integration loop started")
 
@@ -170,7 +170,7 @@ class MemoryIntegrationLoop:
         else:
             return self.max_loop_interval
 
-    async def _process_integration(self):
+    async def _process_integration(self) -> None:
         """處理整合流程"""
         try:
             # 1. 收集新信息
@@ -191,7 +191,7 @@ class MemoryIntegrationLoop:
         except Exception as e:  # broad exception acceptable: integration process should not crash the loop
             logger.error(f"Error processing integration: {e}", exc_info=True)
 
-    async def _collect_new_info(self):
+    async def _collect_new_info(self) -> None:
         """收集新信息"""
         try:
             # 從記憶管理器獲取最近的記憶
@@ -218,7 +218,7 @@ class MemoryIntegrationLoop:
         except Exception as e:  # broad exception acceptable: collecting new info should not crash integration loop
             logger.warning(f"Error collecting new info: {e}", exc_info=True)
 
-    async def _analyze_patterns(self):
+    async def _analyze_patterns(self) -> None:
         """分析模式"""
         try:
             # 簡單的模式分析
@@ -259,7 +259,7 @@ class MemoryIntegrationLoop:
         except Exception as e:  # broad exception acceptable: pattern analysis should not crash the loop
             logger.warning(f"Error analyzing patterns: {e}", exc_info=True)
 
-    async def _structure_memory(self):
+    async def _structure_memory(self) -> None:
         """結構化記憶"""
         for info in self.integration_queue[:10]:  # 每次處理10個
             if not info.structured:
@@ -293,7 +293,7 @@ class MemoryIntegrationLoop:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def _update_knowledge_base(self):
+    async def _update_knowledge_base(self) -> None:
         """更新知識庫"""
         try:
             # 將結構化的記憶整合到知識庫
@@ -317,7 +317,7 @@ class MemoryIntegrationLoop:
         except Exception as e:  # broad exception acceptable: knowledge base updates should be fault-tolerant
             logger.warning(f"Error updating knowledge base: {e}", exc_info=True)
 
-    async def _generate_templates(self):
+    async def _generate_templates(self) -> None:
         """生成新模板"""
         try:
             # 基於模式生成模板
@@ -342,7 +342,7 @@ class MemoryIntegrationLoop:
         except Exception as e:  # broad exception acceptable: template generation failures should not crash the loop
             logger.warning(f"Error generating templates: {e}", exc_info=True)
 
-    def add_memory(self, content: str, memory_type: str = "general", importance: float = 0.5):
+    def add_memory(self, content: str, memory_type: str = "general", importance: float = 0.5) -> None:
         """添加記憶"""
         info = MemoryInfo(
             content=content, type=memory_type, timestamp=datetime.now(), importance=importance
@@ -384,7 +384,8 @@ class MemoryIntegrationLoop:
 
 if __name__ == "__main__":
     # 測試記憶整合循環
-    async def test_memory_integration_loop():
+    async def test_memory_integration_loop() -> list:
+        """Log a diagnostic message."""
         from dataclasses import dataclass
 
         logging.basicConfig(level=logging.INFO)
@@ -392,6 +393,7 @@ if __name__ == "__main__":
         # Mock 服務
         class MockMemoryManager:
             async def get_recent_memories(self, limit=20) -> list:
+                """Get the recent memories by self."""
                 return [
                     "用戶喜歡聽音樂",
                     "用戶問了關於AI的問題",
@@ -401,13 +403,16 @@ if __name__ == "__main__":
                     "用戶對機器學習感興趣",
                 ]
 
-            async def store_structured_memory(self, content, structured_data):
+            async def store_structured_memory(self, content, structured_data) -> None:
+                """Store a structured memory."""
                 pass
 
             async def add_to_knowledge_base(self, content, importance) -> None:
+                """Add a to knowledge base."""
                 pass
 
-            async def generate_template(self, template):
+            async def generate_template(self, template) -> None:
+                """Execute the generate template operation."""
                 pass
 
         class MockLearningEngine:

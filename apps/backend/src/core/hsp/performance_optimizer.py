@@ -363,6 +363,7 @@ class HSPPerformanceEnhancer:
 
         async def enhanced_publish(*args, **kwargs) -> Any:
             # 记录开始时间
+            """Log a diagnostic message."""
             start_time = time.time()
             # 执行原始发布函数
             try:
@@ -404,6 +405,7 @@ class HSPPerformanceEnhancer:
 
         async def enhanced_receive(*args, **kwargs) -> Any:
             # 记录开始时间
+            """Log a diagnostic message."""
             start_time = time.time()
             # 执行原始接收函数
             try:
@@ -431,6 +433,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     async def test_hsp_optimizer() -> None:
+        """Log a diagnostic message."""
         optimizer = HSPPerformanceOptimizer()
 
         # 测试消息缓存

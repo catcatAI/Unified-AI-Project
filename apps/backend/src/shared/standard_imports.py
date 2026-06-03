@@ -223,7 +223,8 @@ try:
     from .logger import get_logger
 except ImportError:
 
-    def get_logger(name: str):
+    def get_logger(name: str) -> str:
+        """Get a logger instance by name."""
         return logging.getLogger(name)
 
 

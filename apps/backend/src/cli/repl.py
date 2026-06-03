@@ -14,7 +14,8 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 
-def run_repl_mode():
+def run_repl_mode() -> None:
+    """Execute the run repl mode operation."""
     server_thread = threading.Thread(target=_run_uvicorn_in_thread, daemon=True)
     server_thread.start()
     print("[REPL] Backend starting on http://127.0.0.1:8000 ...")
@@ -22,13 +23,13 @@ def run_repl_mode():
     asyncio.run(_run_repl())
 
 
-def _run_uvicorn_in_thread():
+def _run_uvicorn_in_thread() -> None:
     from services.main_api_server import app
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
 
 
-async def _run_repl():
+async def _run_repl() -> None:
     from api.lifespan import _get_chat_service
 
     logging.disable(logging.WARNING)
@@ -229,7 +230,8 @@ def _handle_tickle_command(args: str) -> str:
 
     reflex = get_reflex_system()
 
-    async def run_tickles():
+    async def run_tickles() -> str:
+        """Execute the run tickles operation."""
         return await reflex.trigger_tickles(
             body_part=body_part,
             intensity=intensity,
@@ -305,6 +307,7 @@ def _handle_drive_command(args: str) -> str:
     ops = cfg.get_drive_all_operations()
 
     def resolve_op(cmd: str) -> Optional[str]:
+        """Execute the resolve op operation."""
         for op_name, op_cfg in ops.items():
             if cmd in op_cfg.get("aliases", []):
                 return op_name

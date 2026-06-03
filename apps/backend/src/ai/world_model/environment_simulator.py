@@ -11,6 +11,7 @@ class StatePredictor:
     async def predict(
         self, current_state: Dict[str, Any], proposed_action: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Log a diagnostic message."""
         logger.debug("Predicting next state (conceptual)...")
         await asyncio.sleep(0.01)
         next_state = current_state.copy()
@@ -21,6 +22,7 @@ class StatePredictor:
     async def predict_optimistic(
         self, current_state: Dict[str, Any], proposed_action: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Log a diagnostic message."""
         logger.debug("Predicting optimistic state (conceptual)...")
         await asyncio.sleep(0.01)
         next_state = await self.predict(current_state, proposed_action)
@@ -30,6 +32,7 @@ class StatePredictor:
     async def predict_pessimistic(
         self, current_state: Dict[str, Any], proposed_action: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Log a diagnostic message."""
         logger.debug("Predicting pessimistic state (conceptual)...")
         await asyncio.sleep(0.01)
         next_state = await self.predict(current_state, proposed_action)
@@ -39,6 +42,7 @@ class StatePredictor:
     async def update(
         self, state: Dict[str, Any], action: Dict[str, Any], next_state: Dict[str, Any]
     ):
+        """Log a diagnostic message."""
         logger.debug("Updating state predictor model (conceptual)...")
         await asyncio.sleep(0.005)
 
@@ -46,7 +50,8 @@ class StatePredictor:
 class ActionEffectModel:
     """Models the effects of actions."""
 
-    async def update(self, action: Dict[str, Any], effect: Any):
+    async def update(self, action: Dict[str, Any], effect: Any) -> None:
+        """Log a diagnostic message."""
         logger.debug("Updating action effect model (conceptual)...")
         await asyncio.sleep(0.005)
 
@@ -60,11 +65,13 @@ class UncertaintyEstimator:
         proposed_action: Dict[str, Any],
         predicted_state: Dict[str, Any],
     ) -> float:
+        """Log a diagnostic message."""
         logger.debug("Estimating uncertainty (conceptual)...")
         await asyncio.sleep(0.01)
         return 0.1
 
-    async def update(self, prediction_error: float):
+    async def update(self, prediction_error: float) -> None:
+        """Log a diagnostic message."""
         logger.debug("Updating uncertainty estimator (conceptual)...")
         await asyncio.sleep(0.005)
 
@@ -143,7 +150,7 @@ class EnvironmentSimulator:
 
         return scenarios
 
-    async def update_model_from_experience(self, experience: Dict[str, Any]):
+    async def update_model_from_experience(self, experience: Dict[str, Any]) -> None:
         """從經驗更新模型"""
         # 更新狀態預測器
         await self.state_predictor.update(

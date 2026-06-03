@@ -23,7 +23,7 @@ class RovoDevAgent:
         self.agent_manager = agent_manager
         self.is_active = False
 
-    async def start(self):
+    async def start(self) -> None:
         """启动 Rovo Dev Agent"""
         self.is_active = True
         logger.info("Rovo Dev Agent 已启动")
@@ -33,7 +33,7 @@ class RovoDevAgent:
         self.is_active = False
         logger.info("Rovo Dev Agent 已停止")
 
-    async def process_task(self, task: Dict[str, Any]):
+    async def process_task(self, task: Dict[str, Any]) -> dict:
         """处理任务"""
         if not self.is_active:
             raise Exception("Agent 未启动")

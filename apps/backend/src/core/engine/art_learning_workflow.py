@@ -34,7 +34,8 @@ class LearningObjective:
         self.progress = 0.0
         self.milestones = []
 
-    def update_progress(self, increment: float):
+    def update_progress(self, increment: float) -> None:
+        """Update progress by a given increment, capped at 1.0."""
         self.progress = min(1.0, self.progress + increment)
 
 # =============================================================================
@@ -64,9 +65,11 @@ class WorkflowProgress:
         return min(1.0, sum(self.stage_completion.values()) / max(1, total_stages))
 
     def record_quality(self, score: float) -> None:
+        """Record a quality score, clamped to [0, 1]."""
         self.quality_scores.append(max(0.0, min(1.0, score)))
 
     def average_quality(self) -> float:
+        """Calculate the average quality score."""
         if not self.quality_scores:
             return 0.0
         return sum(self.quality_scores) / len(self.quality_scores)
@@ -120,9 +123,11 @@ class GenerationResult:
     timestamp: datetime = field(default_factory=datetime.now)
 
     def is_positive(self) -> bool:
+        """Check if user feedback is positive."""
         return self.user_feedback is not None and self.user_feedback > 0.1
 
     def is_negative(self) -> bool:
+        """Check if user feedback is negative."""
         return self.user_feedback is not None and self.user_feedback < -0.1
 
 
@@ -165,7 +170,7 @@ class ArtLearningWorkflow:
         
         return self.current_overrides
 
-    def process_user_aesthetic_feedback(self, feedback_text: str):
+    def process_user_aesthetic_feedback(self, feedback_text: str) -> None:
         """
         [L4-Evolution] 根據用戶在對話中對外觀的評價進行學習。
         """
@@ -174,6 +179,7 @@ class ArtLearningWorkflow:
 # 單例模式初始化 (由 BiologicalIntegrator 驅動)
 _instance = None
 def get_art_workflow(bio=None) -> None:
+    """Get the art workflow by bio."""
     global _instance
     if _instance is None and bio is not None:
         _instance = ArtLearningWorkflow(bio)

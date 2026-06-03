@@ -70,7 +70,7 @@ class PermissionControlSystem:
             self._set_default_rules()
         logger.info("PermissionControlSystem Skeleton Initialized")
 
-    def _load_configuration(self):
+    def _load_configuration(self) -> None:
         try:
             path = Path(self.config_path)
             if path.exists():
@@ -104,7 +104,7 @@ class PermissionControlSystem:
         except Exception as e:  # broad exception acceptable: ensure config loading errors fall back to defaults
             logger.error(f"Error loading permission configuration: {e}", exc_info=True)
 
-    def _set_default_rules(self):
+    def _set_default_rules(self) -> None:
         self.default_rules = [
             PermissionRule(
                 permission_type=PermissionType.FILE_ACCESS,
@@ -146,7 +146,7 @@ class PermissionControlSystem:
         ]
         logger.info("Set default permission rules")
 
-    def add_user_rule(self, user_id: str, rule: PermissionRule):
+    def add_user_rule(self, user_id: str, rule: PermissionRule) -> None:
         if user_id not in self.rules:
             self.rules[user_id] = []
         self.rules[user_id].append(rule)
@@ -195,7 +195,7 @@ class PermissionControlSystem:
     def _evaluate_rule(self, rule: PermissionRule, context: PermissionContext) -> bool:
         return rule.level != PermissionLevel.NONE
 
-    def _log_audit_event(self, context: PermissionContext, granted: bool):
+    def _log_audit_event(self, context: PermissionContext, granted: bool) -> None:
         if not self.audit_log_enabled:
             return
         audit_event = {
@@ -208,7 +208,7 @@ class PermissionControlSystem:
         }
         logger.info(f"Permission audit: {json.dumps(audit_event)}")
 
-    def save_configuration(self, config_path: Optional[str] = None):
+    def save_configuration(self, config_path: Optional[str] = None) -> None:
         try:
             config_path = config_path or self.config_path
             config_dir = Path(config_path).parent

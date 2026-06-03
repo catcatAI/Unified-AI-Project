@@ -58,7 +58,7 @@ class FormulaEngine:
         # Navigate up __init__.py -> formula_engine -> core_ai -> src -> Unified-AI-Project (project_root)
         return current_script_path.parent.parent.parent.parent
 
-    def _load_formulas(self):
+    def _load_formulas(self) -> None:
         """
         Loads formula definitions from the JSON file specified by self.formulas_file_path.
         """

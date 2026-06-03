@@ -263,7 +263,7 @@ class LearningManager:
         )
         return stored_id
 
-    async def learn_from_project_case(self, project_case: Dict[str, Any]):
+    async def learn_from_project_case(self, project_case: Dict[str, Any]) -> None:
         """Analyzes a completed project case and distills a strategy."""
         query = project_case.get("user_query", "Unknown")
         logger.info(f"Learning from project case: '{query}'")
@@ -288,7 +288,7 @@ class LearningManager:
         ):
             await self._distill_strategy(project_case, case_id)
 
-    async def _distill_strategy(self, project_case: Dict[str, Any], case_id: str):
+    async def _distill_strategy(self, project_case: Dict[str, Any], case_id: str) -> None:
         """Distills a reusable strategy from a project case using an LLM."""
         self._create_distillation_prompt(project_case)
         try:

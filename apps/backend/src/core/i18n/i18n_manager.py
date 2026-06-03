@@ -103,7 +103,7 @@ class TranslationCache:
             return self._cache[lang].get(key)
         return None
 
-    def set(self, lang: str, key: str, value: str):
+    def set(self, lang: str, key: str, value: str) -> None:
         """设置缓存翻译 / Set cached translation"""
         if lang not in self._cache:
             self._cache[lang] = {}
@@ -140,7 +140,7 @@ class I18nManager:
 
         self._load_default_translations()
 
-    def _load_default_translations(self):
+    def _load_default_translations(self) -> None:
         """加载默认翻译 / Load default translations"""
         self._register_translations(
             "greeting",
@@ -197,7 +197,7 @@ class I18nManager:
             },
         )
 
-    def _register_translations(self, category: str, translations: Dict[str, str]):
+    def _register_translations(self, category: str, translations: Dict[str, str]) -> None:
         """注册翻译 / Register translations"""
         if category not in self.translations:
             self.translations[category] = {}
@@ -207,7 +207,7 @@ class I18nManager:
             entry = TranslationEntry(key=key, translations={lang: text})
             self.translations[category][key] = entry
 
-    def set_language(self, language: str):
+    def set_language(self, language: str) -> None:
         """设置当前语言 / Set current language"""
         if language in self.config.supported_languages:
             self._current_language = language
@@ -270,7 +270,7 @@ class I18nManager:
             logger.warning(f"i18n format_text failed for text: {text[:50]}", exc_info=True)
             return text
 
-    def add_translation(self, key: str, language: str, translation: str, category: str = "general"):
+    def add_translation(self, key: str, language: str, translation: str, category: str = "general") -> None:
         """添加翻译 / Add translation"""
         if category not in self.translations:
             self.translations[category] = {}
@@ -346,8 +346,10 @@ class I18nContext:
     def use_language(self, language: str) -> Callable:
         """使用语言上下文 / Use language context"""
 
-        def decorator(func):
-            def wrapper(*args, **kwargs):
+        def decorator(func) -> str:
+            """Apply the decorator logic."""
+            def wrapper(*args, **kwargs) -> str:
+                """Wrap the decorated function."""
                 old_lang = self.manager.get_language()
                 self.manager.set_language(language)
                 try:
@@ -381,7 +383,7 @@ def t(key: str, language: str = None, **kwargs) -> str:
     return _get_manager().t(key, language, **kwargs)
 
 
-def set_language(language: str):
+def set_language(language: str) -> None:
     """设置语言 / Set language"""
     _get_manager().set_language(language)
 
@@ -391,7 +393,7 @@ def get_language() -> str:
     return _get_manager().get_language()
 
 
-def add_translation(key: str, language: str, translation: str):
+def add_translation(key: str, language: str, translation: str) -> None:
     """添加翻译 / Add translation"""
     _get_manager().add_translation(key, language, translation)
 

@@ -26,7 +26,7 @@ class TaskScheduler:
         future = asyncio.Future()
 
         # 模拟任务完成
-        async def _complete_task():
+        async def _complete_task() -> None:
             await asyncio.sleep(0.1)
             future.set_result(
                 {"id": subtask.get("id"), "status": "completed", "output": f"来自 {node} 的结果"}

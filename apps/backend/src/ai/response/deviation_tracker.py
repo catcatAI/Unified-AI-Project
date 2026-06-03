@@ -152,7 +152,7 @@ class DeviationTracker:
         if record_time > 0.5:
             logger.warning(f"Deviation tracking took {record_time:.2f}ms (slow)", exc_info=True)
 
-    def _update_stats(self, metrics: ResponseMetrics):
+    def _update_stats(self, metrics: ResponseMetrics) -> None:
         """更新统计信息"""
         self.stats["total_responses"] += 1
         total = self.stats["total_responses"]
@@ -183,7 +183,7 @@ class DeviationTracker:
             expected_tokens = total * baseline_tokens
             self.stats["token_savings_rate"] = self.stats["total_tokens_saved"] / expected_tokens
 
-    def record_user_feedback(self, metrics_index: int, positive: bool):
+    def record_user_feedback(self, metrics_index: int, positive: bool) -> None:
         """
         记录用户反馈
 
@@ -257,7 +257,7 @@ class DeviationTracker:
 
         return suggestions
 
-    def _persist_metrics(self):
+    def _persist_metrics(self) -> None:
         """持久化指标到文件"""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -328,7 +328,7 @@ class DeviationTracker:
 
         return "\n".join(report_lines)
 
-    def export_metrics(self, filepath: str):
+    def export_metrics(self, filepath: str) -> None:
         """
         导出指标到文件
 

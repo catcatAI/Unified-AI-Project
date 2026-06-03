@@ -37,7 +37,7 @@ class ChatService:
         self._initialized = True
         self.pending_evolution_proposals: Dict[str, Any] = {} # [Phase 6]
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """非同步初始化服務"""
         logger.info("正在初始化 ChatService...")
         # 確保 LLM 服務已就緒
@@ -88,7 +88,7 @@ class ChatService:
             
         return None
 
-    def _get_neuro_blender(self):
+    def _get_neuro_blender(self) -> str:
         """獲取 NeuroBlender 實例（用於備份回應）"""
         try:
             from ai.response.composer import NeuroVocabulary, NeuroBlender
@@ -374,7 +374,7 @@ class ChatService:
             logger.warning("Failed to load anchor keywords from config, using fallback", exc_info=True)
             return {"alpha": ["energy"], "beta": ["think"]}
 
-    def _get_state_constants(self, key: str, default):
+    def _get_state_constants(self, key: str, default) -> str:
         """從分層配置讀取行為常量 [Phase 7]"""
         try:
             from app_config_loader import get_formula_config
@@ -387,7 +387,7 @@ class ChatService:
 # Module-level exports for backward compatibility (Phase 7 fix)
 _chat_service_instance = None
 
-async def get_angela_chat_service():
+async def get_angela_chat_service() -> str:
     global _chat_service_instance
     if _chat_service_instance is None:
         _chat_service_instance = ChatService()
@@ -396,6 +396,6 @@ async def get_angela_chat_service():
         get_registry().register("chat_service", _chat_service_instance)
     return _chat_service_instance
 
-async def generate_angela_response(user_message, user_name="User"):
+async def generate_angela_response(user_message, user_name="User") -> str:
     svc = await get_angela_chat_service()
     return await svc.generate_response(user_message, user_name)

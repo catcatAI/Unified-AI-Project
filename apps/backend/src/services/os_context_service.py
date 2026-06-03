@@ -11,7 +11,7 @@ class OSContextService:
     def __init__(self):
         self.adapter = OSBridgeAdapter()
 
-    def get_current_state_for_ai(self):
+    def get_current_state_for_ai(self) -> dict:
         """
         Gathers a clean summary of the OS state for the AI to understand user context.
         """

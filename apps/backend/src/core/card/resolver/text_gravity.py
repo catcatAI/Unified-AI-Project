@@ -51,6 +51,7 @@ class TextGravityField:
         candidates: List[str],
         trait_mass: Optional[float] = None,
     ) -> List[Tuple[str, float]]:
+        """Compute gravity."""
         if not core_trait or not candidates:
             return [(c, 0.0) for c in candidates]
 
@@ -86,6 +87,7 @@ class TextGravityField:
         return entropy * ENTROPY_STRENGTH
 
     def reset_history(self) -> None:
+        """Execute the reset history operation."""
         self._recent_choices.clear()
 
 

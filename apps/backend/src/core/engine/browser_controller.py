@@ -175,7 +175,7 @@ class BrowserController:
         self._state_change_callbacks: List[Callable[[BrowserState, BrowserState], None]] = []
         self._game_detection_callbacks: List[Callable[[GameSession], None]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the browser controller"""
         # Load bookmarks if available
         await self._load_bookmarks()
@@ -185,7 +185,7 @@ class BrowserController:
         # Save bookmarks
         await self._save_bookmarks()
 
-    async def _load_bookmarks(self):
+    async def _load_bookmarks(self) -> None:
         """Load bookmarks from storage"""
         bookmarks_path = Path.home() / ".angela_ai" / "browser_bookmarks.json"
         try:
@@ -199,7 +199,7 @@ class BrowserController:
         except Exception as e:
             logger.warning(f"Failed to load bookmarks: {e}")
 
-    async def _save_bookmarks(self):
+    async def _save_bookmarks(self) -> None:
         """Save bookmarks to storage"""
         bookmarks_path = Path.home() / ".angela_ai" / "browser_bookmarks.json"
         try:
@@ -211,7 +211,7 @@ class BrowserController:
         except Exception as e:
             logger.warning(f"Failed to save bookmarks: {e}")
 
-    def _set_state(self, new_state: BrowserState):
+    def _set_state(self, new_state: BrowserState) -> None:
         """Set browser state with notifications"""
         if new_state != self.current_state:
             old_state = self.current_state
@@ -419,7 +419,7 @@ class BrowserController:
 
         return False
 
-    def end_game_session(self):
+    def end_game_session(self) -> None:
         """End current game session"""
         if self.current_game and self.current_game.is_active:
             self.current_game.is_active = False
@@ -521,7 +521,7 @@ class BrowserController:
 
         return results
 
-    def record_bookmark_visit(self, bookmark_id: str):
+    def record_bookmark_visit(self, bookmark_id: str) -> None:
         """Record a visit to a bookmark"""
         if bookmark_id in self.bookmarks:
             bookmark = self.bookmarks[bookmark_id]
@@ -551,7 +551,7 @@ class BrowserController:
         """Register callback for state changes"""
         self._state_change_callbacks.append(callback)
 
-    def register_game_detection_callback(self, callback: Callable[[GameSession], None]):
+    def register_game_detection_callback(self, callback: Callable[[GameSession], None]) -> None:
         """Register callback for game detection"""
         self._game_detection_callbacks.append(callback)
 
@@ -579,7 +579,8 @@ class BrowserController:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         browser = BrowserController()
         await browser.initialize()
 

@@ -35,13 +35,16 @@ class ValidationResult:
     info: List[str] = field(default_factory=list)
 
     def add_error(self, message: str) -> None:
+        """Add an error message to the result."""
         self.errors.append(message)
         self.valid = False
 
     def add_warning(self, message: str) -> None:
+        """Add a warning message to the result."""
         self.warnings.append(message)
 
     def add_info(self, message: str) -> None:
+        """Add an info message to the result."""
         self.info.append(message)
 
 
@@ -323,7 +326,7 @@ class ConfigValidator:
         sys.exit(0 if self.result.valid else 1)
 
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
 

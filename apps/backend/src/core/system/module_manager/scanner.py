@@ -28,6 +28,7 @@ class ModuleScanner:
         self.scan_paths = scan_paths
 
     def discover(self) -> list[ModuleDescriptor]:
+        """Discover available modules."""
         descriptors: list[ModuleDescriptor] = []
         for base_path in self.scan_paths:
             resolved = Path(base_path).resolve()
@@ -133,4 +134,5 @@ class ModuleScanner:
         )
 
     def watch(self, callback: Callable) -> None:
+        """Watch for file system changes."""
         logger.warning("[ModuleScanner.watch] Not implemented — file watching disabled")

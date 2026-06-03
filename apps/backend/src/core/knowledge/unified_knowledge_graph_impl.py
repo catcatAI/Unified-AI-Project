@@ -17,7 +17,7 @@ class UnifiedKnowledgeGraph:
         self.initialized = False
         logger.info("统一知识图谱实例已创建")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """初始化知识图谱"""
         logger.info("✅ AI组件初始化成功")
         logger.info("🧠 统一知识图谱初始化完成")

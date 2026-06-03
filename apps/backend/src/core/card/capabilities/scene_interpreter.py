@@ -22,6 +22,7 @@ class SceneInterpreter:
         self.gravity = gravity or TextGravityField()
 
     def interpret(self, card: Card) -> Dict[str, Any]:
+        """Interpret the incoming request."""
         scene: Dict[str, Any] = {
             "scene_type": self._detect_scene_type(card),
             "tone": self._determine_tone(card),

@@ -19,19 +19,22 @@ from core.ripple.node import MathOp
 
 
 def make_vector(val: float = 0.5, nonzero: int = 8) -> list:
+    """Execute the make vector operation."""
     vec = [0.0] * 32
     for i in range(nonzero):
         vec[i] = val
     return vec
 
 
-def banner(text: str, width: int = 70):
+def banner(text: str, width: int = 70) -> None:
+    """Execute the banner operation."""
     print(f"\n{'=' * width}")
     print(f"  {text}")
     print(f"{'=' * width}")
 
 
 def section(text: str) -> None:
+    """Execute the section operation."""
     print(f"\n## {text}")
 
 
@@ -40,7 +43,8 @@ def section(text: str) -> None:
 # =============================================================================
 
 
-def main():
+def main() -> None:
+    """Main entry point."""
     banner("Angela AI v7.5.0-dev — StateMatrix Capability Playground")
 
     print("\n初始化 StateMatrixAdapter...")

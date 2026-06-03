@@ -37,7 +37,7 @@ class DeepMapper:
         """
         self.mapping_rules = mapping_rules or {}
 
-    def load_mapping_rules(self, filepath: str):
+    def load_mapping_rules(self, filepath: str) -> None:
         """
         Loads mapping rules from a file.
 

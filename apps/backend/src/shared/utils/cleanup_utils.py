@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 logger: Any = logging.getLogger(__name__)
 
 
-def cleanup_temp_files(project_root: Path = Path(".")):
+def cleanup_temp_files(project_root: Path = Path(".")) -> None:
     """清除臨時文件"""
     temp_patterns = [
         "tmp_*",
@@ -34,7 +34,7 @@ def cleanup_temp_files(project_root: Path = Path(".")):
                 logger.warning(f"刪除臨時文件失敗: {file_path}: {e}", exc_info=True)
 
 
-def cleanup_cache_data(retention_days: int, project_root: Path = Path(".")):
+def cleanup_cache_data(retention_days: int, project_root: Path = Path(".")) -> None:
     """清除緩存數據"""
     cutoff_date = datetime.now() - timedelta(days=retention_days)
     cache_dirs = [
@@ -57,7 +57,7 @@ def cleanup_cache_data(retention_days: int, project_root: Path = Path(".")):
                     logger.warning(f"刪除過期緩存失敗: {file_path}: {e}", exc_info=True)
 
 
-def cleanup_log_files(retention_days: int, project_root: Path = Path(".")):
+def cleanup_log_files(retention_days: int, project_root: Path = Path(".")) -> None:
     """清除日誌文件"""
     cutoff_date = datetime.now() - timedelta(days=retention_days)
     log_patterns = ["logs/*.log", "*.log", "logs/*.log.*"]
@@ -75,7 +75,7 @@ def cleanup_log_files(retention_days: int, project_root: Path = Path(".")):
                     logger.warning(f"刪除過期日誌失敗: {log_file}: {e}", exc_info=True)
 
 
-def cleanup_demo_artifacts(retention_days: int, storage_path: Path):
+def cleanup_demo_artifacts(retention_days: int, storage_path: Path) -> None:
     """清除演示產物"""
     cutoff_date = datetime.now() - timedelta(days=retention_days)
 

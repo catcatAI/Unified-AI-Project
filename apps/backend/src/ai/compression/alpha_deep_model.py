@@ -33,7 +33,7 @@ class DNADataChain:
     branches: Dict[str, "DNADataChain"] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def add_node(self, memory_id: str):
+    def add_node(self, memory_id: str) -> None:
         """Add a memory node to the chain."""
         if memory_id not in self.nodes:
             self.nodes.append(memory_id)
@@ -191,7 +191,7 @@ class AlphaDeepModel:
         logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}")
         return None
 
-    def _adjust_model_parameters(self, deep_parameter: DeepParameter, feedback: Dict[str, Any]):
+    def _adjust_model_parameters(self, deep_parameter: DeepParameter, feedback: Dict[str, Any]) -> None:
         """Adjust model parameters based on feedback."""
         # This is a placeholder for more complex parameter adjustment logic,
         # In a real implementation, this would adjust compression or learning strategies

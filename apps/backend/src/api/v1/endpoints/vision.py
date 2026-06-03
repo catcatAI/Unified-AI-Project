@@ -15,7 +15,7 @@ router = APIRouter(prefix="/vision", tags=["Vision"])
 
 
 @router.post("/sampling")
-async def get_vision_sampling(params: Dict[str, Any] = Body(...), svc=Depends(get_vision_service)):
+async def get_vision_sampling(params: Dict[str, Any] = Body(...), svc=Depends(get_vision_service)) -> str:
     """獲取視覺採樣分析"""
     center = params.get("center", [0.5, 0.5])
     scale = params.get("scale", 1.0)
@@ -36,7 +36,7 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...), svc=Depends(ge
 
 
 @router.post("/perceive")
-async def vision_perceive(image_data: bytes = Body(...), svc=Depends(get_vision_service)):
+async def vision_perceive(image_data: bytes = Body(...), svc=Depends(get_vision_service)) -> str:
     """模擬發現-聚焦-記憶循環"""
     try:
         result = await svc.perceive_and_focus(image_data)
@@ -47,7 +47,7 @@ async def vision_perceive(image_data: bytes = Body(...), svc=Depends(get_vision_
 
 
 @router.post("/control")
-async def vision_control(params: Dict[str, Any] = Body(...)):
+async def vision_control(params: Dict[str, Any] = Body(...)) -> dict:
     """控制視覺模組開關"""
     enabled = params.get("enabled", True)
     try:
@@ -59,7 +59,7 @@ async def vision_control(params: Dict[str, Any] = Body(...)):
 
 
 @router.get("/control")
-async def vision_control_get(enabled: bool = True):
+async def vision_control_get(enabled: bool = True) -> dict:
     """控制視覺模組開關（GET 方法支持）"""
     try:
         # 返回簡單的狀態，不依賴 sync_manager

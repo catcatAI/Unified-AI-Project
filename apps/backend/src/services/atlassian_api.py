@@ -43,7 +43,7 @@ class AtlassianCLIBridge:
         self.acli_path = acli_path
         self.config: Optional[Dict[str, str]] = None
 
-    def set_config(self, domain: str, email: str, token: str):
+    def set_config(self, domain: str, email: str, token: str) -> None:
         self.config = {
             "domain": domain,
             "email": email,
@@ -79,7 +79,7 @@ class AtlassianCLIBridge:
         except Exception as e:  # broad exception acceptable: CLI execution should be resilient
             return {"success": False, "error": str(e)}
 
-    def get_status(self):
+    def get_status(self) -> dict:
         import shutil
         exists = shutil.which(self.acli_path) is not None or os.path.exists(self.acli_path)
         return {"acli_available": exists, "configured": self.config is not None}
@@ -87,20 +87,20 @@ class AtlassianCLIBridge:
     async def get_confluence_spaces(self) -> dict:
         return await self._run_acli(["confluence", "getSpaceList"])
 
-    async def search_confluence_content(self, query: str):
+    async def search_confluence_content(self, query: str) -> str:
         return await self._run_acli(["confluence", "getContentList", "--search", query])
 
-    async def get_jira_projects(self):
+    async def get_jira_projects(self) -> str:
         return await self._run_acli(["jira", "getProjectList"])
 
-    async def get_jira_issues(self, jql: Optional[str] = None, limit: int = 50):
+    async def get_jira_issues(self, jql: Optional[str] = None, limit: int = 50) -> str:
         args = ["jira", "getIssueList"]
         if jql:
             args.extend(["--jql", jql])
         args.extend(["--limit", str(limit)])
         return await self._run_acli(args)
 
-    async def create_jira_issue(self, project_key: str, summary: str, description: str = "", issue_type: str = "Task"):
+    async def create_jira_issue(self, project_key: str, summary: str, description: str = "", issue_type: str = "Task") -> str:
         return await self._run_acli([
             "jira", "createIssue", 
             "--project", project_key, 
@@ -113,7 +113,7 @@ atlassian_bridge = AtlassianCLIBridge()
 atlassian_router = APIRouter(prefix="/api/v1/atlassian", tags=["Atlassian"])
 
 @atlassian_router.post("/configure")
-async def configure_atlassian(config: AtlassianConfig):
+async def configure_atlassian(config: AtlassianConfig) -> dict:
     try:
         atlassian_bridge.set_config(config.domain, config.user_email, config.api_token)
         return {"status": "configured", "domain": config.domain}
@@ -125,21 +125,21 @@ async def get_atlassian_status() -> dict:
     return atlassian_bridge.get_status()
 
 @atlassian_router.get("/confluence/spaces")
-async def get_spaces():
+async def get_spaces() -> str:
     result = await atlassian_bridge.get_confluence_spaces()
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
     return result
 
 @atlassian_router.get("/jira/projects")
-async def get_projects():
+async def get_projects() -> str:
     result = await atlassian_bridge.get_jira_projects()
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
     return result
 
 @atlassian_router.post("/jira/issues")
-async def create_issue(issue: JiraIssueCreate):
+async def create_issue(issue: JiraIssueCreate) -> str:
     result = await atlassian_bridge.create_jira_issue(
         issue.project_key, 
         issue.summary, 
@@ -151,7 +151,7 @@ async def create_issue(issue: JiraIssueCreate):
     return result
 
 @atlassian_router.get("/rovo/agents")
-async def get_rovo_agents():
+async def get_rovo_agents() -> dict:
     # Final production-ready listing
     return {
         "agents": [

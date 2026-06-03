@@ -33,6 +33,7 @@ class TokenExtractor:
     """
 
     def extract(self, text: str) -> List[Token]:
+        """Extract information from input."""
         tokens = self._extract_explicit(text)
         if not tokens:
             tokens = self._extract_implicit(text)

@@ -43,9 +43,11 @@ class AxisFieldConfig:
     description: str = ""
 
     def in_range(self, value: float) -> bool:
+        """Check if a value is within the field range."""
         return self.min_val <= value <= self.max_val
 
     def clamp(self, value: float) -> float:
+        """Clamp a value to the field range."""
         return max(self.min_val, min(self.max_val, value))
 
 
@@ -59,6 +61,7 @@ class AxisConfig:
     fields: List[AxisFieldConfig]
 
     def get_field(self, name: str) -> Optional[AxisFieldConfig]:
+        """Get a field config by name."""
         for f in self.fields:
             if f.name == name:
                 return f
@@ -399,9 +402,11 @@ class StateConfig:
         return data
 
     def get_axis(self, name: str) -> Optional[AxisConfig]:
+        """Get an axis config by name."""
         return self.axes.get(name)
 
     def get_all_axis_names(self) -> List[str]:
+        """Get names of all configured axes."""
         return list(self.axes.keys())
 
     def to_dict(self) -> Dict[str, Any]:

@@ -92,13 +92,13 @@ class PetManager:
 
     # ========== 修复：状态管理辅助方法 ==========
 
-    def _validate_state(self):
+    def _validate_state(self) -> None:
         """验证并修正状态值在合理范围内"""
         for key, (min_val, max_val) in self.state_limits.items():
             if key in self.state:
                 self.state[key] = max(min_val, min(max_val, self.state[key]))
 
-    def _record_state_change(self, reason: str):
+    def _record_state_change(self, reason: str) -> None:
         """记录状态变更历史"""
         state_snapshot = {
             "timestamp": datetime.now().isoformat(),
@@ -144,7 +144,7 @@ class PetManager:
 
         return max(0, min(100, overall))
 
-    def sync_with_biological_state(self):
+    def sync_with_biological_state(self) -> None:
         """Syncs pet state with internal biological simulation (hormones, arousal)."""
         if not self.biological_integrator:
             return
@@ -193,7 +193,7 @@ class PetManager:
             # No running event loop during module import, skip notification
             pass
 
-    async def _notify_state_change(self, reason: str):
+    async def _notify_state_change(self, reason: str) -> None:
         """Notifies external clients about pet state changes (e.g., via WebSocket)."""
         if self.broadcast_callback:
             try:
@@ -296,7 +296,7 @@ class PetManager:
         """Returns the current state of the pet."""
         return self.state
 
-    def update_position(self, x: float, y: float, scale: float = None):
+    def update_position(self, x: float, y: float, scale: float = None) -> None:
         """Update pet's desktop position and scale / 更新寵物在桌面上的位置和縮放"""
         self.state["position"] = {"x": x, "y": y}
         if scale is not None:
@@ -318,7 +318,7 @@ class PetManager:
             self.action_queue.pop(0)
         logger.info(f"Added action '{action_type}' to queue for pet '{self.pet_id}'")
 
-    async def apply_resource_decay(self, delta_time_factor: float = 1.0):
+    async def apply_resource_decay(self, delta_time_factor: float = 1.0) -> None:
         """
         Simulates the passage of time on pet needs (Hunger, Energy, Happiness, Health).
 
@@ -388,7 +388,7 @@ class PetManager:
         await self.check_survival_needs()
         await self._notify_state_change("decay")
 
-    async def check_survival_needs(self):
+    async def check_survival_needs(self) -> None:
         """
         Proactively checks survival bars and triggers economic activity if needed.
 
@@ -459,7 +459,7 @@ class PetManager:
         # ========== 修复：记录状态变更 ==========
         self._record_state_change("survival_check")
 
-    def set_economy_manager(self, eco_manager):
+    def set_economy_manager(self, eco_manager) -> None:
         """Link the economy manager for autonomous spending."""
         self.economy_manager = eco_manager
         logger.info("PetManager linked to EconomyManager.")
@@ -470,7 +470,7 @@ class PetManager:
         self.action_queue.clear()
         return actions
 
-    def update_behavior(self, new_behaviors: Dict[str, Any]):
+    def update_behavior(self, new_behaviors: Dict[str, Any]) -> None:
         """Allows the core AI to dynamically update the pet's behavior rules."""
         logger.info(
             f"Updating behavior for pet '{self.pet_id}' from {self.behavior_rules} to {new_behaviors}"

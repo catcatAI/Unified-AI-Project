@@ -22,7 +22,7 @@ class SignedCommunicationMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.key_b = key_b.encode()
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> str:
         # 檢查是否為測試模式
         is_testing = os.environ.get("ANGELA_TESTING", "").lower() == "true"
 

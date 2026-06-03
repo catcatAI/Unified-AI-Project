@@ -16,7 +16,7 @@ class TactileMemory:
         # 物體觸覺地圖 (特定物體 ID 及其表面的觸覺分佈)
         self.object_tactile_maps: Dict[str, Dict[str, Any]] = {}
 
-    def learn_material(self, name: str, props: TactileProperties):
+    def learn_material(self, name: str, props: TactileProperties) -> None:
         """學習並記住一種新材質的觸覺特徵"""
         self.material_profiles[name] = props
 
@@ -36,6 +36,7 @@ class TactileMemory:
         """獲取對特定物體的歷史觸覺經驗"""
         return self.object_tactile_maps.get(object_id)
 
-    def clear(self):
+    def clear(self) -> None:
+        """Clear all material profiles and tactile maps."""
         self.material_profiles.clear()
         self.object_tactile_maps.clear()

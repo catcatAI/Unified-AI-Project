@@ -85,7 +85,7 @@ class RecoveryStrategy:
         logger.warning("[BaseErrorHandler.recover] Not implemented — stub")
         return False
 
-    async def on_recovery_success(self, error: ErrorInfo):
+    async def on_recovery_success(self, error: ErrorInfo) -> None:
         """恢復成功回調"""
         logger.debug(f"{type(self).__name__}.on_recovery_success not implemented")
 
@@ -200,7 +200,7 @@ class EnterpriseErrorHandler:
         # 註冊默認恢復策略
         self._register_default_strategies()
 
-    def _register_default_strategies(self):
+    def _register_default_strategies(self) -> None:
         """註冊默認恢復策略"""
         # 網絡錯誤使用重試策略
         self.register_strategy(
@@ -265,7 +265,7 @@ class EnterpriseErrorHandler:
 
         return error
 
-    def _log_error(self, error: ErrorInfo):
+    def _log_error(self, error: ErrorInfo) -> None:
         """記錄錯誤日誌"""
         log_level = {
             ErrorSeverity.LOW: logging.WARNING,
@@ -286,7 +286,7 @@ class EnterpriseErrorHandler:
             exc_info=error.exception,
         )
 
-    def _update_stats(self, error: ErrorInfo):
+    def _update_stats(self, error: ErrorInfo) -> None:
         """更新錯誤統計"""
         self.error_stats["total_errors"] += 1
         self.error_stats["by_category"][error.category.value] += 1
@@ -297,7 +297,7 @@ class EnterpriseErrorHandler:
         else:
             self.error_stats["unresolved_errors"] += 1
 
-    async def _attempt_recovery(self, error: ErrorInfo):
+    async def _attempt_recovery(self, error: ErrorInfo) -> None:
         """嘗試自動恢復"""
         if error.category not in self.recovery_strategies:
             return
@@ -335,7 +335,7 @@ class EnterpriseErrorHandler:
                     extra={"error_id": error.id, "strategy": strategy.name},
                 )
 
-    async def _check_alert_conditions(self, error: ErrorInfo):
+    async def _check_alert_conditions(self, error: ErrorInfo) -> None:
         """檢查警報條件"""
         # 檢查嚴重程度警報
         if error.severity in self.alert_thresholds:
@@ -364,7 +364,7 @@ class EnterpriseErrorHandler:
 
         return count
 
-    async def _send_alert(self, error: ErrorInfo, reason: str):
+    async def _send_alert(self, error: ErrorInfo, reason: str) -> None:
         """發送警報"""
         alert_data = {
             "error_id": error.id,
@@ -377,7 +377,7 @@ class EnterpriseErrorHandler:
 
         logger.critical(f"系統警報: {reason}", extra=alert_data, exc_info=True)
 
-    def register_strategy(self, category: ErrorCategory, strategy: RecoveryStrategy):
+    def register_strategy(self, category: ErrorCategory, strategy: RecoveryStrategy) -> None:
         """註冊恢復策略"""
         if category not in self.recovery_strategies:
             self.recovery_strategies[category] = []
@@ -390,7 +390,7 @@ class EnterpriseErrorHandler:
         # 這裡應該實現實際的重試邏輯
         await asyncio.sleep(loop_sleep("retry_operation", 0.1))
 
-    async def _use_backup_resource(self):
+    async def _use_backup_resource(self) -> None:
         """使用後備資源(示例)"""
         # 這裡應該實現實際的後備邏輯
         await asyncio.sleep(loop_sleep("backup_operation", 0.1))
@@ -467,7 +467,9 @@ def handle_errors(
     """裝飾器：自動處理函數錯誤"""
 
     def decorator(func):
+        """Apply the decorator logic."""
         async def async_wrapper(*args, **kwargs):
+            """Log a diagnostic message."""
             try:
                 return await func(*args, **kwargs)
             except Exception as e:  # broad exception acceptable: async function decorator may fail with various errors
@@ -484,6 +486,7 @@ def handle_errors(
                 return {"error": error.message, "error_id": error.id}
 
         def sync_wrapper(*args, **kwargs):
+            """Log a diagnostic message."""
             try:
                 return func(*args, **kwargs)
             except Exception as e:  # broad exception acceptable: sync function decorator may fail with various errors

@@ -206,6 +206,7 @@ _default_applicator: Optional[InfluenceApplicator] = None
 
 
 def get_applicator() -> InfluenceApplicator:
+    """Get the singleton InfluenceApplicator instance."""
     global _default_applicator
     if _default_applicator is None:
         _default_applicator = InfluenceApplicator()

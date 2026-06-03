@@ -11,7 +11,9 @@ class DataAligner:
     """
 
     def align_outgoing(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Align outgoing data format for external transmission."""
         return payload
 
     def align_incoming(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Align incoming data format for internal processing."""
         return payload

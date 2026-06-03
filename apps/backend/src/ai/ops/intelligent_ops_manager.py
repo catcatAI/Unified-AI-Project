@@ -68,22 +68,27 @@ class OpsInsight:
 
 @dataclass
 class PredictiveMaintenanceEngine:  # Placeholder for actual class
-    def initialize(self):
+    def initialize(self) -> None:
+        """Initialize the component."""
         logger.warning("[PredictiveMaintenanceEngine.initialize] Stub — not implemented")
 
     async def collect_component_metrics(self, component_id: str) -> None:
+        """Log a diagnostic message."""
         logger.warning("[PredictiveMaintenanceEngine.collect_component_metrics] Stub — not implemented")
         return {}
 
-    async def get_component_health(self, component_id: str):
+    async def get_component_health(self, component_id: str) -> str:
+        """Get the component health by self."""
         return ComponentHealth(
             component_id=component_id, health_score=70, maintenance_recommendation="None"
         )
 
-    async def get_maintenance_schedules(self, component_id: str):
+    async def get_maintenance_schedules(self, component_id: str) -> list:
+        """Get the maintenance schedules by self."""
         return []
 
     async def approve_maintenance(self, schedule_id: str, approver: str) -> list:
+        """Log a diagnostic message."""
         logger.warning("[PredictiveMaintenanceEngine.approve_maintenance] Stub — not implemented")
         return {"stub": True, "message": f"Maintenance {schedule_id} approval not implemented"}
 
@@ -120,7 +125,7 @@ class IntelligentOpsManager:
 
         logger.info("智能运维管理器初始化完成")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """初始化管理器"""
         try:
             # 连接Redis
@@ -154,7 +159,7 @@ class IntelligentOpsManager:
             logger.error(f"智能运维管理器初始化失败: {e}", exc_info=True)
             raise
 
-    async def _initialize_components(self):
+    async def _initialize_components(self) -> None:
         """初始化AI运维组件"""
         try:
             # 初始化AI运维引擎
@@ -412,7 +417,7 @@ class IntelligentOpsManager:
 
         return insights
 
-    async def _save_insight(self, insight: OpsInsight):
+    async def _save_insight(self, insight: OpsInsight) -> None:
         """保存洞察"""
         try:
             # 保存到内存
@@ -435,7 +440,7 @@ class IntelligentOpsManager:
         except Exception as e:  # broad exception acceptable: save failures should not block the workflow
             logger.error(f"保存洞察失败: {e}", exc_info=True)
 
-    async def _send_insight_notification(self, insight: OpsInsight):
+    async def _send_insight_notification(self, insight: OpsInsight) -> None:
         """发送洞察通知"""
         try:
             notification = {
@@ -462,7 +467,7 @@ class IntelligentOpsManager:
         except Exception as e:  # broad exception acceptable: notification failures are non-critical
             logger.error(f"发送洞察通知失败: {e}", exc_info=True)
 
-    async def _execute_auto_action(self, insight: OpsInsight):
+    async def _execute_auto_action(self, insight: OpsInsight) -> None:
         """执行自动操作"""
         try:
             action_record = {
@@ -594,7 +599,7 @@ class IntelligentOpsManager:
             logger.error(f"维护操作失败: {e}", exc_info=True)
             return False
 
-    async def _periodic_comprehensive_analysis(self):
+    async def _periodic_comprehensive_analysis(self) -> None:
         """定期综合分析"""
         while True:
             try:
@@ -612,7 +617,7 @@ class IntelligentOpsManager:
             except Exception as e:  # broad exception acceptable: periodic task errors should not stop the loop
                 logger.error(f"定期综合分析失败: {e}", exc_info=True)
 
-    async def _collect_all_components_metrics(self):
+    async def _collect_all_components_metrics(self) -> None:
         """收集所有组件指标"""
         try:
             # 这里应该从监控系统获取所有组件的指标
@@ -640,7 +645,7 @@ class IntelligentOpsManager:
         except Exception as e:  # broad exception acceptable: collection failures should not block the workflow
             logger.error(f"收集所有组件指标失败: {e}", exc_info=True)
 
-    async def _generate_system_level_insights(self):
+    async def _generate_system_level_insights(self) -> None:
         """生成系统级洞察"""
         try:
             # 分析系统整体健康状况
@@ -697,7 +702,7 @@ class IntelligentOpsManager:
             logger.error(f"分析系统健康状态失败: {e}", exc_info=True)
             return {"overall_score": 75.0, "unhealthy_components": []}
 
-    async def _analyze_trends_and_patterns(self):
+    async def _analyze_trends_and_patterns(self) -> None:
         """分析趋势和模式"""
         try:
             if not self.performance_optimizer or not self.capacity_planner:
@@ -785,7 +790,7 @@ class IntelligentOpsManager:
 
         return patterns
 
-    async def _periodic_insight_cleanup(self):
+    async def _periodic_insight_cleanup(self) -> None:
         """定期清理洞察"""
         while True:
             try:

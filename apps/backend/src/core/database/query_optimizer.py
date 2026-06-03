@@ -74,7 +74,7 @@ class QueryOptimizer:
 
         logger.info("查询优化器初始化完成")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """初始化连接"""
         # Simplified version - actual implementation would use SQLAlchemy
         logger.info("查询优化器初始化完成")
@@ -122,7 +122,7 @@ class QueryOptimizer:
         normalized_query = re.sub(r"\s+", " ", query.strip().upper())
         return hashlib.md5(normalized_query.encode()).hexdigest()
 
-    async def _record_query_metrics(self, query_hash: str, execution_time: float, success: bool):
+    async def _record_query_metrics(self, query_hash: str, execution_time: float, success: bool) -> None:
         """记录查询指标"""
         if query_hash not in self.query_metrics:
             self.query_metrics[query_hash] = QueryMetrics(
@@ -152,7 +152,7 @@ class QueryOptimizer:
         # 保存到Redis
         await self._save_metrics_to_redis(query_hash, metrics)
 
-    async def _save_metrics_to_redis(self, query_hash: str, metrics: QueryMetrics):
+    async def _save_metrics_to_redis(self, query_hash: str, metrics: QueryMetrics) -> None:
         """保存指标到Redis"""
         try:
             {
@@ -169,7 +169,7 @@ class QueryOptimizer:
         except Exception as e:  # broad exception acceptable: Redis operations may fail with connection or serialization errors
             logger.error(f"保存指标到Redis失败: {e}", exc_info=True)
 
-    async def _analyze_slow_query(self, query: str, execution_time: float):
+    async def _analyze_slow_query(self, query: str, execution_time: float) -> None:
         """分析慢查询"""
         logger.warning(f"检测到慢查询 ({execution_time:.2f}s): {query[:100]}...", exc_info=True)
 

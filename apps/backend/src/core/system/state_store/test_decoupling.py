@@ -6,7 +6,8 @@ import asyncio
 from core.system.state_store import state_store
 from core.engine.state_matrix import StateMatrix4D
 
-async def test_state_decoupling():
+async def test_state_decoupling() -> None:
+    """Test state decoupling behavior."""
     print("Testing State Decoupling Phase 2...")
     
     # 1. Initialize StateMatrix (which now syncs to Store)
@@ -14,7 +15,8 @@ async def test_state_decoupling():
     
     # 2. Define a subscriber to verify broadcast
     received_updates = []
-    def on_alpha_update(domain, data):
+    def on_alpha_update(domain, data) -> None:
+        """Handle the alpha update event."""
         received_updates.append((domain, data))
         print(f"   [Subscriber] Received {domain} update: {data}")
 

@@ -57,7 +57,7 @@ class TieredConfigLoader:
             logger.error(f"[ConfigLoader] Failed to load {path}: {e}", exc_info=True)
             return {}
 
-    def _deep_merge(self, base: Dict[str, Any], overrides: Dict[str, Any]):
+    def _deep_merge(self, base: Dict[str, Any], overrides: Dict[str, Any]) -> None:
         """Recursively merges overrides into base."""
         for k, v in overrides.items():
             if isinstance(v, dict) and k in base and isinstance(base[k], dict):
@@ -65,11 +65,13 @@ class TieredConfigLoader:
             else:
                 base[k] = v
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
+        """Clear all entries."""
         self._cache = {}
 
 # Singleton instance
 loader = TieredConfigLoader()
 
 def get_config(tier_path: str) -> Dict[str, Any]:
+    """Get the config by tier_path."""
     return loader.get_config(tier_path)

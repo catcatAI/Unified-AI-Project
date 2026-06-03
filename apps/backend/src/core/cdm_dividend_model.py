@@ -104,7 +104,7 @@ class DividendDistribution:
         )
         return abs(total - 1.0) < 0.01
 
-    def normalize(self):
+    def normalize(self) -> None:
         """Normalize ratios to sum to 1.0"""
         total = (
             self.learning_ratio
@@ -179,7 +179,7 @@ class CDMCognitiveDividendModel:
         self.total_output: float = 0.0
         self.conversion_history: List[float] = []
 
-    def reset_daily_resources(self):
+    def reset_daily_resources(self) -> None:
         """Reset daily cognitive resources"""
         now = datetime.now()
         if (now - self.last_reset).days >= 1:
@@ -496,7 +496,7 @@ class CDMCognitiveDividendModel:
             "output_count": len(self.outputs),
         }
 
-    def register_investment_callback(self, callback: Callable[[CognitiveInvestment], None]):
+    def register_investment_callback(self, callback: Callable[[CognitiveInvestment], None]) -> None:
         """Register callback for investment recording"""
         self._investment_callbacks.append(callback)
 

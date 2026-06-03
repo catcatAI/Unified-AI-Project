@@ -118,7 +118,8 @@ class UnifiedControlCenter:
             # 10. LLM Service (Phase 15)
             # 使用 angela_llm_service 而非 multi_llm_adapter
             from services.angela_llm_service import get_llm_service
-            async def init_llm():
+            async def init_llm() -> str:
+                """Initialize llm."""
                 return await get_llm_service()
             self.components["llm_service"] = await init_llm()
 
@@ -335,7 +336,7 @@ class UnifiedControlCenter:
                 "agent_id": target_agent_id,
             }
 
-    async def _worker_loop(self, worker_id: int):
+    async def _worker_loop(self, worker_id: int) -> None:
         """Worker 循環，從隊列中提取任務並執行"""
         logger.info(f"Worker [{worker_id}] started.")
         while self.is_running:
@@ -473,7 +474,7 @@ class UnifiedControlCenter:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def start(self):
+    def start(self) -> None:
         """啟動控制中心與 Worker 池"""
         if self.is_running:
             return
@@ -486,7 +487,7 @@ class UnifiedControlCenter:
 
         logger.info(f"Unified Control Center ACTIVE with {self.max_workers} workers.")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止控制中心與所有 Worker"""
         self.is_running = False
 
@@ -503,7 +504,8 @@ class UnifiedControlCenter:
 
 if __name__ == "__main__":
     # Test UCC basic loop
-    async def main():
+    async def main() -> None:
+        """Main entry point."""
         ucc = UnifiedControlCenter()
         ucc.start()
 

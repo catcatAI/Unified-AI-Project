@@ -93,7 +93,8 @@ class EthicsRule:
     updated_at: datetime = None
     metadata: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if self.created_at is None:
             self.created_at = datetime.now()
         if self.updated_at is None:
@@ -120,7 +121,8 @@ class EthicsReviewResult:
     processing_time_ms: float = 0.0
     ai_model_used: str = "ethics_ai_v1"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if self.review_timestamp is None:
             self.review_timestamp = datetime.now()
 
@@ -137,7 +139,8 @@ class BiasDetectionResult:
     suggested_corrections: List[str]
     metadata: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if self.metadata is None:
             self.metadata = {}
 
@@ -178,7 +181,7 @@ class EthicsManager:
 
         logger.info("🛡️ 伦理管理器初始化完成")
 
-    def _initialize_ai_models(self):
+    def _initialize_ai_models(self) -> None:
         """初始化AI模型以支持高级伦理分析"""
         if AI_AVAILABLE:
             try:
@@ -417,7 +420,7 @@ class EthicsManager:
             "individual_fairness": "相似个体应获得相似处理",
         }
 
-    def _load_default_rules(self):
+    def _load_default_rules(self) -> None:
         """加载默认伦理规则"""
         default_rules = [
             {

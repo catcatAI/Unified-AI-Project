@@ -64,7 +64,8 @@ class HAMVectorStoreManager:
                     self.vector_store = None
                     self.chroma_collection = None
 
-    async def add_semantic_vector(self, memory_id: str, content: str, metadata: Dict[str, Any]):
+    async def add_semantic_vector(self, memory_id: str, content: str, metadata: Dict[str, Any]) -> None:
+        """Add a semantic vector."""
         try:
             if self.chroma_collection is not None:
                 self.chroma_collection.add(
@@ -85,7 +86,8 @@ class HAMVectorStoreManager:
         except Exception as e:  # broad exception acceptable: storage failure should be logged gracefully
             logger.error(f"Error storing semantic vector for {memory_id}: {e}", exc_info=True)
 
-    def close(self):
+    def close(self) -> None:
+        """Close and release resources."""
         if self.vector_store and hasattr(self.vector_store, "client") and self.vector_store.client:
             try:
                 self.vector_store.client = None

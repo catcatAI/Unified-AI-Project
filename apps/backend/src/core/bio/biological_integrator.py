@@ -70,7 +70,7 @@ class BiologicalEventPublisher:
     def __init__(self):
         self.subscribers: Dict[str, List[Callable]] = {}
 
-    def subscribe(self, event_type: str, callback: Callable):
+    def subscribe(self, event_type: str, callback: Callable) -> None:
         """
         订阅生物事件
 
@@ -83,7 +83,7 @@ class BiologicalEventPublisher:
         self.subscribers[event_type].append(callback)
         logger.debug(f"Subscribed to event: {event_type}")
 
-    def unsubscribe(self, event_type: str, callback: Callable):
+    def unsubscribe(self, event_type: str, callback: Callable) -> None:
         """
         取消订阅
 
@@ -95,7 +95,7 @@ class BiologicalEventPublisher:
             self.subscribers[event_type].remove(callback)
             logger.debug(f"Unsubscribed from event: {event_type}")
 
-    async def publish(self, event: BiologicalEvent, data: Dict[str, Any]):
+    async def publish(self, event: BiologicalEvent, data: Dict[str, Any]) -> None:
         """
         发布生物事件
 
@@ -190,20 +190,21 @@ class BiologicalIntegrator:
         # Callbacks
         self._state_callbacks: List[Callable[[Dict[str, Any]], None]] = []
 
-    def register_event_callback(self, callback: Callable[[str, Dict[str, Any]], None]):
+    def register_event_callback(self, callback: Callable[[str, Dict[str, Any]], None]) -> str:
         """
         Register a callback for all biological events.
         Convenience method to bridge to external systems like WebSocket.
         """
         for event in BiologicalEvent:
             # Define a closure to capture the callback and event name
-            def create_wrapper(target_callback, event_name):
+            def create_wrapper(target_callback, event_name) -> str:
                 # The publisher calls the callback with (event_enum, data)
+                """Create a wrapper."""
                 return lambda event_obj, data: target_callback(event_name, data)
 
             self.event_publisher.subscribe(event.value, create_wrapper(callback, event.value))
 
-    def _setup_default_interactions(self):
+    def _setup_default_interactions(self) -> None:
         """Set up default system interactions"""
         self.interactions = [
             # Nervous system influences hormones
@@ -224,7 +225,7 @@ class BiologicalIntegrator:
             SystemInteraction("emotional", "neuroplasticity", "emotional_memory", 0.7),
         ]
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize all biological systems"""
         if self._running:
             logger.info("🧬 [Bio] Already running, skipping initialize.")
@@ -257,7 +258,7 @@ class BiologicalIntegrator:
             self._integration_loop(), name="Bio-Integration-Loop"
         )
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown all biological systems"""
         self._running = False
 
@@ -275,7 +276,7 @@ class BiologicalIntegrator:
         await self.neuroplasticity_system.shutdown()
         await self.emotional_system.shutdown()
 
-    def _setup_cross_system_callbacks(self):
+    def _setup_cross_system_callbacks(self) -> None:
         """Set up callbacks for cross-system communication"""
         # Nervous system arousal changes affect endocrine system
         self.nervous_system.register_arousal_callback(self._on_arousal_change)
@@ -286,7 +287,7 @@ class BiologicalIntegrator:
         # Emotional changes affect nervous system
         self.emotional_system.register_emotion_change_callback(self._on_emotion_change)
 
-    def _on_arousal_change(self, arousal: float):
+    def _on_arousal_change(self, arousal: float) -> None:
         """Handle arousal level changes"""
         # Affect tactile sensitivity
         self.tactile_system.set_arousal_level(arousal)
@@ -327,7 +328,7 @@ class BiologicalIntegrator:
             )
         )
 
-    def _on_hormone_change(self, hormone_type: HormoneType, old_val: float, new_val: float):
+    def _on_hormone_change(self, hormone_type: HormoneType, old_val: float, new_val: float) -> None:
         """Handle hormone level changes"""
         # Dopamine and serotonin affect emotions
         if hormone_type in [HormoneType.DOPAMINE, HormoneType.SEROTONIN]:
@@ -355,7 +356,7 @@ class BiologicalIntegrator:
             )
         )
 
-    def _on_emotion_change(self, old_emotion, new_emotion):
+    def _on_emotion_change(self, old_emotion, new_emotion) -> None:
         """Handle emotional state changes"""
         # Affect nervous system based on emotion arousal
         arousal_impact = new_emotion.arousal * 30  # -30 to 30
@@ -400,7 +401,7 @@ class BiologicalIntegrator:
             )
         )
 
-    async def _integration_loop(self):
+    async def _integration_loop(self) -> None:
         """Background loop for system integration - Configurable"""
         while self._running:
             await self._apply_homeostasis()
@@ -434,7 +435,7 @@ class BiologicalIntegrator:
         if current_arousal > arousal_clamp_max or current_arousal < arousal_clamp_min:
             self.nervous_system.set_arousal_directly(target_arousal)
 
-    async def _synchronize_states(self):
+    async def _synchronize_states(self) -> None:
         """Synchronize states across all biological systems (2030 Standard)"""
         # Calculate integrated state
         integrated_state = self.get_biological_state()
@@ -453,7 +454,8 @@ class BiologicalIntegrator:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    async def process_stress_event(self, intensity: float, duration: float = 10.0):
+    async def process_stress_event(self, intensity: float, duration: float = 10.0) -> None:
+        """Execute the process stress event operation."""
         import math
         if not math.isfinite(intensity): intensity = 0.0
         
@@ -465,7 +467,8 @@ class BiologicalIntegrator:
         )
         self.emotional_system.apply_influence("physiological", "stress", intensity, 0.8)
 
-    async def process_relaxation_event(self, intensity: float = 0.5):
+    async def process_relaxation_event(self, intensity: float = 0.5) -> None:
+        """Execute the process relaxation event operation."""
         import math
         if not math.isfinite(intensity): intensity = 0.0
         
@@ -512,7 +515,7 @@ class BiologicalIntegrator:
         if emotional_context in ["comfort", "love", "joy"]:
             await self.endocrine_system.adjust_hormone(HormoneType.OXYTOCIN, 15.0 * intensity)
 
-    async def process_visual_stimulus(self, stimulus_type: str, intensity: float, description: str):
+    async def process_visual_stimulus(self, stimulus_type: str, intensity: float, description: str) -> None:
         """
         Process a visual stimulus (e.g., seeing the user, seeing a gift).
         """
@@ -533,7 +536,7 @@ class BiologicalIntegrator:
             {"type": stimulus_type, "intensity": intensity, "description": description},
         )
 
-    async def process_auditory_stimulus(self, volume: float, content: str):
+    async def process_auditory_stimulus(self, volume: float, content: str) -> None:
         """
         Process an auditory stimulus (e.g., loud noise, soft music).
         """
@@ -584,7 +587,7 @@ class BiologicalIntegrator:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def register_state_callback(self, callback: Callable[[Dict[str, Any]], None]):
+    def register_state_callback(self, callback: Callable[[Dict[str, Any]], None]) -> None:
         """Register callback for integrated state updates"""
         self._state_callbacks.append(callback)
 
@@ -688,7 +691,7 @@ class BiologicalIntegrator:
 
         return results
 
-    async def _handle_arousal_to_adrenaline(self, source, target, intensity, results):
+    async def _handle_arousal_to_adrenaline(self, source, target, intensity, results) -> None:
         arousal = getattr(source, "arousal_level", 50.0)
         adrenaline_increase = (arousal / 100.0) * intensity * 25.0
         if hasattr(target, "adjust_hormone"):
@@ -702,7 +705,7 @@ class BiologicalIntegrator:
                 await target.adjust_hormone(HormoneType.CORTISOL, cortisol_increase)
                 results["changes"]["cortisol"] = f"+{cortisol_increase:.1f}"
 
-    async def _handle_hormonal_mood(self, source, target, intensity, results):
+    async def _handle_hormonal_mood(self, source, target, intensity, results) -> None:
         hormone_effects = {}
         if hasattr(source, "get_hormone_level"):
             dopamine = source.get_hormone_level(HormoneType.DOPAMINE)
@@ -726,7 +729,7 @@ class BiologicalIntegrator:
                     target.apply_influence("hormonal", emotion, value, intensity)
         results["changes"]["emotional_influences"] = hormone_effects
 
-    async def _handle_emotion_to_arousal(self, source, target, intensity, results):
+    async def _handle_emotion_to_arousal(self, source, target, intensity, results) -> None:
         if hasattr(source, "get_dominant_emotion"):
             emotion, confidence = source.get_dominant_emotion()
             if emotion:
@@ -747,14 +750,14 @@ class BiologicalIntegrator:
                             5.0,
                         )
 
-    async def _handle_touch_to_emotion(self, source, target, intensity, results):
+    async def _handle_touch_to_emotion(self, source, target, intensity, results) -> None:
         if hasattr(source, "get_sensitivity_level"):
             sensitivity = source.get_sensitivity_level()
             if sensitivity > 0.6 and hasattr(target, "apply_influence"):
                 target.apply_influence("tactile", "sensitivity", sensitivity * intensity, 0.5)
                 results["changes"]["tactile_sensitivity"] = f"{sensitivity * intensity:.2f}"
 
-    async def _handle_cortisol_to_memory(self, source, target, intensity, results):
+    async def _handle_cortisol_to_memory(self, source, target, intensity, results) -> None:
         if hasattr(source, "get_hormone_level"):
             cortisol = source.get_hormone_level(HormoneType.CORTISOL)
             if cortisol > 50 and hasattr(target, "set_learning_rate"):
@@ -765,7 +768,7 @@ class BiologicalIntegrator:
             elif hasattr(target, "set_learning_rate"):
                 target.set_learning_rate(1.0)
 
-    async def _handle_emotional_memory(self, source, target, intensity, results):
+    async def _handle_emotional_memory(self, source, target, intensity, results) -> None:
         if hasattr(source, "get_emotional_intensity"):
             emotional_intensity = source.get_emotional_intensity()
             if emotional_intensity > 0.5 and hasattr(target, "enhance_consolidation"):
@@ -797,7 +800,8 @@ class BiologicalIntegrator:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         integrator = BiologicalIntegrator()
         await integrator.initialize()
 

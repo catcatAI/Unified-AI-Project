@@ -88,7 +88,7 @@ class GPUAcceleratorService:
         # 初始化質量配置
         self._init_quality_profiles()
 
-    def _init_quality_profiles(self):
+    def _init_quality_profiles(self) -> None:
         """初始化渲染質量配置"""
         self.quality_profiles = {
             "battery": RenderQuality.LOW,
@@ -338,7 +338,7 @@ class GPUAcceleratorService:
         """檢查 GPU 加速是否可用"""
         return self._is_active
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """關閉 GPU 加速服務"""
         self.active_contexts.clear()
         self.metrics_history.clear()

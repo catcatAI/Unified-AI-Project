@@ -21,7 +21,8 @@ from feedback_loop_engine import (
 logger = logging.getLogger(__name__)
 
 
-async def main():
+async def main() -> None:
+    """Main entry point."""
     logger.info("=" * 70)
     logger.info("Angela AI v6.0 - Real-Time Feedback Loop System Demo")
     logger.info("实时反馈循环系统演示")
@@ -38,16 +39,19 @@ async def main():
     cycles_completed = []
     feedback_received = []
 
-    def on_cycle_start(cycle):
+    def on_cycle_start(cycle) -> None:
+        """Handle the cycle start event."""
         cycles_started.append(cycle.cycle_id)
 
     def on_cycle_end(cycle) -> None:
+        """Handle the cycle end event."""
         cycles_completed.append(cycle.cycle_id)
         logger.info(
             f"   ✓ Cycle completed: {cycle.cycle_id[:8]}... (latency: {cycle.latency_ms:.1f}ms)"
         )
 
-    def on_feedback(signal):
+    def on_feedback(signal) -> None:
+        """Handle the feedback event."""
         feedback_received.append(signal)
 
     engine.register_cycle_start_callback(on_cycle_start)

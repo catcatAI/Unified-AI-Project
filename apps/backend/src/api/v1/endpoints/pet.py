@@ -30,7 +30,7 @@ def get_pet_manager() -> PetManager:
     return _pet_manager
 
 
-def set_biological_integrator(integrator):
+def set_biological_integrator(integrator) -> None:
     """設置生理整合器並同步"""
     pm = get_pet_manager()
     pm.biological_integrator = integrator
@@ -43,7 +43,7 @@ def set_economy_manager(manager) -> None:
 
 
 @router.get("/status")
-async def get_pet_status(pm: PetManager = Depends(get_pet_manager)):
+async def get_pet_status(pm: PetManager = Depends(get_pet_manager)) -> dict:
     """獲取寵物當前狀態 (同步生理數據後)"""
     pm.sync_with_biological_state()
     return {
@@ -55,7 +55,7 @@ async def get_pet_status(pm: PetManager = Depends(get_pet_manager)):
 
 
 @router.post("/interaction")
-async def handle_interaction(interaction: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)):
+async def handle_interaction(interaction: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)) -> dict:
     """處理用戶與寵物的交互"""
     interaction_type = interaction.get("type", interaction.get("action", "unknown"))
     interaction_data = interaction.get("data", interaction)
@@ -68,7 +68,7 @@ async def handle_interaction(interaction: Dict[str, Any] = Body(...), pm: PetMan
 
 
 @router.post("/position")
-async def update_position(pos_data: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)):
+async def update_position(pos_data: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)) -> dict:
     """更新寵物在桌面上的位置"""
     x = pos_data.get("x", 0)
     y = pos_data.get("y", 0)
@@ -78,7 +78,7 @@ async def update_position(pos_data: Dict[str, Any] = Body(...), pm: PetManager =
 
 
 @router.post("/action/trigger")
-async def trigger_action(action_data: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)):
+async def trigger_action(action_data: Dict[str, Any] = Body(...), pm: PetManager = Depends(get_pet_manager)) -> dict:
     """手動觸發寵物動作 (用於測試或外部調用)"""
     action_type = action_data.get("type", "idle")
     data = action_data.get("data", {})
@@ -96,7 +96,7 @@ async def update_mood(mood_data: Dict[str, Any] = Body(...)) -> dict:
 
 
 @router.get("/config")
-async def get_pet_config():
+async def get_pet_config() -> dict:
     """獲取寵物配置"""
     return {
         "name": "Angela",

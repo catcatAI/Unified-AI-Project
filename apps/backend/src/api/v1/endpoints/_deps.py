@@ -6,7 +6,8 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-async def get_tactile_service():
+async def get_tactile_service() -> str:
+    """Get the tactile service."""
     from core.interfaces.service_registry import get_registry
     svc = get_registry().get("tactile_service")
     if svc is not None:
@@ -17,7 +18,8 @@ async def get_tactile_service():
     return get_tactile_service._instance
 
 
-async def get_vision_service():
+async def get_vision_service() -> str:
+    """Get the vision service."""
     from core.interfaces.service_registry import get_registry
     svc = get_registry().get("vision_service")
     if svc is not None:
@@ -28,7 +30,8 @@ async def get_vision_service():
     return get_vision_service._instance
 
 
-async def get_audio_service():
+async def get_audio_service() -> str:
+    """Get the audio service."""
     from core.interfaces.service_registry import get_registry
     svc = get_registry().get("audio_service")
     if svc is not None:
@@ -39,7 +42,8 @@ async def get_audio_service():
     return get_audio_service._instance
 
 
-async def get_drive_service():
+async def get_drive_service() -> str:
+    """Get the drive service."""
     from core.interfaces.service_registry import get_registry
     svc = get_registry().get("google_drive_service")
     if svc is not None:
@@ -48,14 +52,15 @@ async def get_drive_service():
     return _get_drive_svc()
 
 
-async def get_economy_manager():
+async def get_economy_manager() -> str:
+    """Get the economy manager."""
     if not hasattr(get_economy_manager, "_instance"):
         from economy.economy_manager import EconomyManager
         get_economy_manager._instance = EconomyManager()
     return get_economy_manager._instance
 
 
-def set_economy_manager(manager):
+def set_economy_manager(manager) -> None:
     """Set economy manager instance externally (for startup wiring)."""
     get_economy_manager._instance = manager
     logger.info("EconomyManager instance set via set_economy_manager()")

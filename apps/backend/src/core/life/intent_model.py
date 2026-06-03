@@ -34,6 +34,7 @@ class SelfIntent:
     decay_rate: float = 0.01   # 每秒衰減速度
     
     def is_expired(self) -> bool:
+        """Check if expired."""
         return self.strength <= 0
 
 class IntentManager:
@@ -49,7 +50,7 @@ class IntentManager:
             "delta": (0.0, 0.0, 0.0)
         }
 
-    def add_intent(self, intent: SelfIntent):
+    def add_intent(self, intent: SelfIntent) -> None:
         """新增一個意圖點"""
         self.intents.append(intent)
         logger.info(f"🎯 [Intent] New intent added: {intent.category.name} -> {intent.target_dimension} @ {intent.target_coordinate}")
@@ -68,7 +69,7 @@ class IntentManager:
         # 重新計算當前意圖合力向量 (Weighted average of intent targets)
         self._calculate_active_vectors()
 
-    def _calculate_active_vectors(self):
+    def _calculate_active_vectors(self) -> None:
         """計算所有活躍意圖對各個維度的合成重力場"""
         new_vectors = {dim: [0.0, 0.0, 0.0] for dim in ["alpha", "beta", "gamma", "delta"]}
         counts = {dim: 0 for dim in ["alpha", "beta", "gamma", "delta"]}
@@ -93,7 +94,7 @@ class IntentManager:
         """獲取特定維度受到的意圖吸引力方向"""
         return self.active_intent_vector.get(dimension, (0.0, 0.0, 0.0))
 
-    def generate_homeostatic_intents(self, state_summary: Dict[str, Any]):
+    def generate_homeostatic_intents(self, state_summary: Dict[str, Any]) -> None:
         """
         [N.21.2] 根據當前狀態自動生成維護穩態與探索的意圖。
         Generate self-drive intents based on state matrix summary.
@@ -142,7 +143,7 @@ class IntentManager:
 
         logger.debug(f"🧬 [IntentManager] Homeostatic check complete. Active intents: {len(self.intents)}")
 
-    def scan_memory_proximity(self, memory_bridge: Any, current_states: Dict[str, Any]):
+    def scan_memory_proximity(self, memory_bridge: Any, current_states: Dict[str, Any]) -> None:
         """
         [Task N.21.6] 空間記憶自動激活
         當座標接近某個記憶錨點時，自動產生「聯想意圖」。

@@ -60,7 +60,7 @@ class DependencyManager:
         self._load_config(config_path)
         self._setup_dependency_statuses()
 
-    def _load_config(self, config_path: Union[str, Path]):
+    def _load_config(self, config_path: Union[str, Path]) -> None:
         """Load dependency configuration from YAML file."""
         try:
             config_path = Path(config_path)
@@ -82,7 +82,7 @@ class DependencyManager:
             logger.error(f"Error loading dependency configuration: {e}", exc_info=True)
             self._config = {}
 
-    def _setup_dependency_statuses(self):
+    def _setup_dependency_statuses(self) -> None:
         """Initialize dependency status tracking from the loaded config."""
         dependencies = self._config.get("dependencies", {})
         for name, config in dependencies.items():

@@ -27,7 +27,7 @@ class Memory:
         self.embedding: Optional[List[float]] = None  # 向量表示
         self.metadata: Dict[str, Any] = {}
 
-    def access(self):
+    def access(self) -> None:
         """访问记忆"""
         self.last_accessed = datetime.now()
         self.access_count += 1

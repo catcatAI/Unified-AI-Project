@@ -31,6 +31,7 @@ class PersonalityAdapter:
         self._pm = manager
 
     def load_card(self, card: Card, persist: bool = True) -> bool:
+        """Load state from storage."""
         if not card.core_trait and not card.tokens:
             logger.warning(f"No traits to load for {card.qualified_id}", exc_info=True)
             return False

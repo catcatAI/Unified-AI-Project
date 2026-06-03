@@ -28,6 +28,7 @@ class ValidationResult:
     warnings: List[str]
 
     def __bool__(self) -> bool:
+        """Execute the   bool   operation."""
         return self.valid
 
 

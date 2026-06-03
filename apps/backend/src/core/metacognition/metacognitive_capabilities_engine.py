@@ -122,7 +122,7 @@ class MetacognitiveCapabilitiesEngine:
 
         logger.info("元认知能力引擎初始化完成")
 
-    def _initialize_learning_models(self):
+    def _initialize_learning_models(self) -> None:
         """初始化学习模型"""
         if not SKLEARN_AVAILABLE:
             return
@@ -135,7 +135,7 @@ class MetacognitiveCapabilitiesEngine:
         # 能力分类模型
         self.learning_models["capability"] = RandomForestClassifier(n_estimators=batch_value("meta_capability_n_estimators", 100), max_depth=int(threshold_value("meta_capability_max_depth", 10.0)))
 
-    def _initialize_capability_profiles(self):
+    def _initialize_capability_profiles(self) -> None:
         """初始化能力画像"""
         initial_capabilities = [
             ("deep_understanding", "深度理解", "cognitive"),

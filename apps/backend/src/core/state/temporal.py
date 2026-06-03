@@ -523,6 +523,7 @@ class TemporalState:
         self._callbacks.append(callback)
 
     def __len__(self) -> int:
+        """Execute the   len   operation."""
         return len(self._snapshots)
 
     def __repr__(self) -> str:

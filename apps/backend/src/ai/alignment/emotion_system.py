@@ -84,7 +84,7 @@ class EmotionSystem:
         self.is_active = True
         self._initialize_emotion_value_mapping()
 
-    def _initialize_emotion_value_mapping(self):
+    def _initialize_emotion_value_mapping(self) -> None:
         """初始化情感与价值的映射关系"""
         self.emotion_value_impact = {
             EmotionType.JOY: {ValueDimension.WELL_BEING: 0.8, ValueDimension.BEAUTY: 0.6},
@@ -158,19 +158,19 @@ class EmotionSystem:
             reasoning=reasoning,
         )
 
-    def _calculate_dimension_score(self, action, context, state, dimension):
+    def _calculate_dimension_score(self, action, context, state, dimension) -> str:
         # 實施 v6.0 標準的權重投影
         base = 0.5
         impact = self.emotion_value_impact.get(state.primary_emotion, {}).get(dimension, 0.0)
         return max(0.0, min(1.0, base + impact * state.emotion_intensity))
 
-    def _calculate_overall_value(self, scores):
+    def _calculate_overall_value(self, scores) -> str:
         return sum(scores.values()) / len(scores)
 
-    def _generate_value_reasoning(self, action, context, scores):
+    def _generate_value_reasoning(self, action, context, scores) -> str:
         return f"基於情感狀態與 {len(scores)} 個價值維度的權重映射，判定行動符合 Angela 的演化目標。"
 
-    def _calculate_value_confidence(self, action, context, state):
+    def _calculate_value_confidence(self, action, context, state) -> str:
         return (state.emotion_intensity + 0.8) / 2.0
 
     def analyze_empathy(self, target_entity: str, context: Dict[str, Any]) -> EmpathyAnalysis:
@@ -270,14 +270,16 @@ class EmotionSystem:
     def _calculate_arousal(self, features: Dict[str, float]) -> float:
         return features.get("stress_level", 0.5)
 
-    def apply_influence(self, source: str, type: str, value: float, intensity: float):
+    def apply_influence(self, source: str, type: str, value: float, intensity: float) -> None:
         """外部激素或事件對情緒的影響"""
         logger.debug(f"[{self.system_id}] Influence from {source}: {type} = {value}")
 
     def update_value_weight(self, dimension: ValueDimension, weight: float) -> None:
+        """Update the value weight."""
         self.value_weights[dimension] = weight
 
     def get_emotion_history(self, limit: int = 100) -> List[EmotionalState]:
+        """Get the emotion history by self."""
         return self.emotion_history[-limit:]
 
     async def get_current_emotion_state(self) -> str:

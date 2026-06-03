@@ -15,7 +15,7 @@ router = APIRouter(prefix="/tactile", tags=["Tactile"])
 
 
 @router.post("/model")
-async def tactile_model(visual_data: Dict[str, Any] = Body(...), svc=Depends(get_tactile_service)):
+async def tactile_model(visual_data: Dict[str, Any] = Body(...), svc=Depends(get_tactile_service)) -> str:
     """基於視覺數據建模觸覺反饋"""
     try:
         result = await svc.model_tactile_feedback(visual_data)
@@ -26,7 +26,7 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...), svc=Depends(get
 
 
 @router.get("/model")
-async def tactile_model_get():
+async def tactile_model_get() -> dict:
     """獲取觸覺模型狀態（GET 方法支持）"""
     try:
         return {"status": "active", "model": "tactile_feedback_v1", "enabled": True}
@@ -36,7 +36,7 @@ async def tactile_model_get():
 
 
 @router.post("/trigger")
-async def trigger_tactile(trigger_data: Dict[str, Any] = Body(...), svc=Depends(get_tactile_service)):
+async def trigger_tactile(trigger_data: Dict[str, Any] = Body(...), svc=Depends(get_tactile_service)) -> str:
     """觸發物理觸覺設備"""
     try:
         device_id = trigger_data.get("device_id")
@@ -51,7 +51,7 @@ async def trigger_tactile(trigger_data: Dict[str, Any] = Body(...), svc=Depends(
 
 
 @router.post("/control")
-async def tactile_control(params: Dict[str, Any] = Body(...)):
+async def tactile_control(params: Dict[str, Any] = Body(...)) -> dict:
     """控制觸覺模組開關"""
     enabled = params.get("enabled", True)
     try:

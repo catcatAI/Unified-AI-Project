@@ -291,7 +291,7 @@ class HardwareManager:
 
         return list(self._compute_units.keys())
 
-    def _detect_gpu(self):
+    def _detect_gpu(self) -> None:
         """检测GPU / Detect GPU"""
         try:
             import torch
@@ -305,7 +305,7 @@ class HardwareManager:
         except (ImportError, NameError):
             logger.warning("Failed to detect CUDA GPU", exc_info=True)
 
-    def _detect_tpu(self):
+    def _detect_tpu(self) -> None:
         """检测TPU / Detect TPU"""
         try:
             import torch_xla
@@ -364,7 +364,7 @@ def detect_hardware() -> HardwareCapabilities:
     return HardwareDetector.detect()
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("🔧 硬件抽象层 (HAL) 演示")
     logger.info("=" * 50)

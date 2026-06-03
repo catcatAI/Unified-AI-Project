@@ -61,7 +61,8 @@ class TTSConfig:
     volume: float = 1.0  # 0.0 to 1.0
     emotion: str = "neutral"  # neutral, happy, sad, excited, calm
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         self.speed = max(0.5, min(2.0, self.speed))
         self.pitch = max(0.5, min(2.0, self.pitch))
         self.volume = max(0.0, min(1.0, self.volume))
@@ -210,7 +211,7 @@ class AudioSystem:
         # State callbacks
         self._state_callbacks: List[Callable[[AudioState, AudioState], None]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the audio system"""
         self._running = True
 
@@ -235,7 +236,7 @@ class AudioSystem:
             except asyncio.CancelledError:
                 pass
 
-    def _set_state(self, new_state: AudioState):
+    def _set_state(self, new_state: AudioState) -> None:
         """Set audio state with notifications"""
         if new_state != self.current_state:
             old_state = self.current_state
@@ -359,7 +360,7 @@ class AudioSystem:
 
         return True
 
-    async def _music_playback_loop(self, duration: float):
+    async def _music_playback_loop(self, duration: float) -> None:
         """Simulate music playback"""
         while self._running and self.current_state == AudioState.PLAYING_MUSIC:
             self.current_playback_time += 0.1
@@ -399,7 +400,7 @@ class AudioSystem:
 
         return True
 
-    async def _lyrics_sync_loop(self):
+    async def _lyrics_sync_loop(self) -> None:
         """Synchronize lyrics with playback"""
         last_line: Optional[LyricLine] = None
 
@@ -432,7 +433,7 @@ class AudioSystem:
             await asyncio.sleep(loop_sleep("audio_poll", 0.1))
 
 
-    def _show_subtitle(self, subtitle: Subtitle):
+    def _show_subtitle(self, subtitle: Subtitle) -> None:
         """Display subtitle"""
         self.active_subtitles.append(subtitle)
 
@@ -448,7 +449,7 @@ class AudioSystem:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    async def pause(self):
+    async def pause(self) -> None:
         """Pause current playback"""
         if self.current_state in [
             AudioState.PLAYING_MUSIC,
@@ -468,7 +469,7 @@ class AudioSystem:
             else:
                 self._set_state(AudioState.IDLE)
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop current playback"""
         self._set_state(AudioState.IDLE)
         self.current_track = None
@@ -480,7 +481,7 @@ class AudioSystem:
         await self.stop()
         self.active_subtitles.clear()
 
-    async def next_track(self):
+    async def next_track(self) -> None:
         """Play next track in playlist"""
         if self.playlist:
             current_index = -1
@@ -493,7 +494,7 @@ class AudioSystem:
             next_index = (current_index + 1) % len(self.playlist)
             await self.play_music(self.playlist[next_index])
 
-    async def previous_track(self):
+    async def previous_track(self) -> None:
         """Play previous track in playlist"""
         if self.playlist:
             current_index = 0
@@ -506,7 +507,7 @@ class AudioSystem:
             prev_index = (current_index - 1) % len(self.playlist)
             await self.play_music(self.playlist[prev_index])
 
-    def set_volume(self, volume: float):
+    def set_volume(self, volume: float) -> None:
         """Set master volume (0-1)"""
         self.master_volume = max(0.0, min(1.0, volume))
 
@@ -514,7 +515,7 @@ class AudioSystem:
         """Mute audio"""
         self.is_muted = True
 
-    def unmute(self):
+    def unmute(self) -> None:
         """Unmute audio"""
         self.is_muted = False
 
@@ -530,7 +531,7 @@ class AudioSystem:
                 return True
         return False
 
-    def clear_playlist(self):
+    def clear_playlist(self) -> None:
         """Clear playlist"""
         self.playlist.clear()
 
@@ -538,7 +539,7 @@ class AudioSystem:
         """Enable/disable loop mode"""
         self.is_looping = enabled
 
-    def set_shuffle(self, enabled: bool):
+    def set_shuffle(self, enabled: bool) -> None:
         """Enable/disable shuffle mode"""
         self.is_shuffled = enabled
 
@@ -546,7 +547,7 @@ class AudioSystem:
         """Register state change callback"""
         self._state_callbacks.append(callback)
 
-    def register_lyrics_callback(self, callback: Callable[[LyricLine, Optional[LyricLine]], None]):
+    def register_lyrics_callback(self, callback: Callable[[LyricLine, Optional[LyricLine]], None]) -> None:
         """Register lyrics synchronization callback"""
         self.lyrics_callbacks.append(callback)
 
@@ -576,7 +577,8 @@ class AudioSystem:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         audio = AudioSystem()
         await audio.initialize()
 

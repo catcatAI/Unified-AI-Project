@@ -176,7 +176,7 @@ class HSMFormulaSystem:
         self.successful_explorations: int = 0
         self.rules_solidified: int = 0
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize HSM system"""
         self._running = True
 
@@ -194,7 +194,7 @@ class HSMFormulaSystem:
             except asyncio.CancelledError:
                 pass
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Background monitoring for cognitive gaps"""
         while self._running:
             # Recalculate pressures for all gaps
@@ -210,7 +210,7 @@ class HSMFormulaSystem:
 
             await asyncio.sleep(self._monitoring_interval)
 
-    async def _auto_explore(self):
+    async def _auto_explore(self) -> None:
         """Automatically trigger exploration for highest pressure gap"""
         unresolved_gaps = [
             g for g in self.cognitive_gaps.values() if g.resolution_status == "unresolved"
@@ -228,7 +228,7 @@ class HSMFormulaSystem:
         # Simulate discovery (in real implementation, this would be actual exploration)
         await self._simulate_discovery(exploration)
 
-    async def _simulate_discovery(self, exploration: ExplorationEvent):
+    async def _simulate_discovery(self, exploration: ExplorationEvent) -> None:
         """Simulate exploration discovery process"""
         # Wait a bit to simulate exploration time
         await asyncio.sleep(loop_sleep("hsm_tick", 0.1))
@@ -533,7 +533,7 @@ class HSMFormulaSystem:
             "governance": self.get_governance_summary(),
         }
 
-    def register_gap_callback(self, callback: Callable[[CognitiveGap], None]):
+    def register_gap_callback(self, callback: Callable[[CognitiveGap], None]) -> None:
         """Register callback for cognitive gap detection"""
         self._gap_callbacks.append(callback)
 
@@ -541,7 +541,7 @@ class HSMFormulaSystem:
         """Register callback for exploration events"""
         self._exploration_callbacks.append(callback)
 
-    def register_governance_callback(self, callback: Callable[[GovernanceBlueprint], None]):
+    def register_governance_callback(self, callback: Callable[[GovernanceBlueprint], None]) -> None:
         """Register callback for governance blueprint creation"""
         self._governance_callbacks.append(callback)
 
@@ -550,6 +550,7 @@ class HSMFormulaSystem:
 if __name__ == "__main__":
 
     async def demo() -> None:
+        """Run a demonstration."""
         hsm = HSMFormulaSystem()
         await hsm.initialize()
 

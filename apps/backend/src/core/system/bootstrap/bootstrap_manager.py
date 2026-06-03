@@ -56,7 +56,7 @@ class BootstrapManager:
         logger.info("✅ [Bootstrap] Persistence complete. State saved to system_status.json")
         return self.state
 
-    def broadcast_evolution(self, config_type: str, details: Dict[str, Any]):
+    def broadcast_evolution(self, config_type: str, details: Dict[str, Any]) -> None:
         """
         [Phase 6] 廣播演化事件。
         更新系統狀態並通知客戶端。
@@ -78,7 +78,7 @@ class BootstrapManager:
         state_store.update_state("hardware", {"evolution_pending_reload": True})
         logger.info("✅ [Bootstrap] Evolution broadcast complete.")
 
-    def _persist_state(self):
+    def _persist_state(self) -> None:
         """Saves bootstrap state to a JSON file for cross-platform access."""
         import json
         status_path = self.resolver.project_root / "system_status.json"
@@ -108,6 +108,7 @@ class BootstrapManager:
 # Singleton Access
 _manager = None
 def get_bootstrap_manager() -> BootstrapManager:
+    """Get the bootstrap manager."""
     global _manager
     if _manager is None:
         _manager = BootstrapManager()

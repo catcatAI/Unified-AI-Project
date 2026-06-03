@@ -15,7 +15,8 @@ class InternalBus:
     def __init__(self):
         self.subscriptions: Dict[str, List[Callable[[Any], None]]] = {}
 
-    def publish(self, channel: str, message: Any):
+    def publish(self, channel: str, message: Any) -> None:
+        """Publish a message to a channel."""
         logger.debug(f"InternalBus.publish - Channel: {channel}, Message: {message}")
         if channel in self.subscriptions:
             for callback in self.subscriptions[channel]:
@@ -24,7 +25,7 @@ class InternalBus:
                 else:
                     callback(message)
 
-    async def publish_async(self, channel: str, message: Any):
+    async def publish_async(self, channel: str, message: Any) -> None:
         """Awaitable version of publish."""
         logger.debug(f"InternalBus.publish_async - Channel: {channel}, Message: {message}")
         if channel in self.subscriptions:
@@ -34,12 +35,14 @@ class InternalBus:
                 else:
                     callback(message)
 
-    def subscribe(self, channel: str, callback: Callable[[Any], None]):
+    def subscribe(self, channel: str, callback: Callable[[Any], None]) -> None:
+        """Subscribe a callback to a channel."""
         if channel not in self.subscriptions:
             self.subscriptions[channel] = []
         self.subscriptions[channel].append(callback)
 
     def unsubscribe(self, channel: str, callback: Callable[[Any], None]) -> None:
+        """Unsubscribe a callback from a channel."""
         if channel in self.subscriptions:
             if callback in self.subscriptions[channel]:
                 self.subscriptions[channel].remove(callback)

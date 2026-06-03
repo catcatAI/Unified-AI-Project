@@ -159,7 +159,7 @@ class Level5SystemMonitor:
         self.start_time = datetime.now()
         self.update_interval = loop_sleep("level5_update", 5.0)  # 5秒更新间隔
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """开始系统监控"""
         self.monitoring_active = True
         logger.info("🚀 Level 5 AGI 系统监控已启动")
@@ -178,7 +178,7 @@ class Level5SystemMonitor:
                 logger.error(f"系统监控循环错误: {e}", exc_info=True)
                 await asyncio.sleep(self.update_interval)
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """停止系统监控"""
         self.monitoring_active = False
         logger.info("🛑 Level 5 AGI 系统监控已停止")

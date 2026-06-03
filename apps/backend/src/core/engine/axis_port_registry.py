@@ -77,6 +77,7 @@ class Port:
         return self.axis is not None
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert port to a dictionary representation."""
         return {
             "name": self.name,
             "direction": self.direction.value,

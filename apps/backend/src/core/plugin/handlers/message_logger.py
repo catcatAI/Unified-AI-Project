@@ -33,6 +33,7 @@ class MessageLoggerHandler:
         self.counter = 0
 
     async def __call__(self, data: dict) -> dict:
+        """Log a diagnostic message."""
         self.counter += 1
         user_text = data.get("user_message", "")
         model_id = data.get("model_id", "unknown")

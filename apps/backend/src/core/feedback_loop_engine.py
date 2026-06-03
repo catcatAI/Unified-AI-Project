@@ -275,7 +275,7 @@ class FeedbackLoopEngine:
         self.latency_threshold_ms = self.config.get("latency_threshold_ms", 16.0)
         self.feedback_sensitivity = self.config.get("feedback_sensitivity", 0.5)
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the feedback loop engine and all subsystems"""
         if self._initialized:
             return
@@ -321,7 +321,7 @@ class FeedbackLoopEngine:
         self._initialized = True
         logger.info("[FeedbackLoopEngine] Initialization complete")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the feedback loop engine"""
         logger.info("[FeedbackLoopEngine] Shutting down...")
 
@@ -347,7 +347,7 @@ class FeedbackLoopEngine:
 
         logger.info("[FeedbackLoopEngine] Shutdown complete")
 
-    def _register_monitor_callbacks(self):
+    def _register_monitor_callbacks(self) -> None:
         """Register callbacks with the real-time monitor"""
         if self.real_time_monitor:
             self.real_time_monitor.register_callback(
@@ -369,14 +369,14 @@ class FeedbackLoopEngine:
                 lambda data: self._handle_perception(PerceptionType.USER_ACTIVITY, data),
             )
 
-    def _register_bridge_callbacks(self):
+    def _register_bridge_callbacks(self) -> None:
         """Register callbacks with the action bridge"""
         if self.action_bridge:
             # Register post-execution callback for feedback collection
             if hasattr(self.action_bridge, "register_post_execution_callback"):
                 self.action_bridge.register_post_execution_callback(self._handle_action_result)
 
-    async def _main_loop(self):
+    async def _main_loop(self) -> None:
         """Main feedback loop - runs continuously"""
         while self._running:
             loop_start = time.perf_counter()
@@ -398,7 +398,7 @@ class FeedbackLoopEngine:
                 sleep_time = (self.latency_threshold_ms - loop_duration_ms) / 1000
                 await asyncio.sleep(sleep_time)
 
-    async def _process_pending_events(self):
+    async def _process_pending_events(self) -> None:
         """Process pending perception events from the event loop system"""
         if not self.event_loop_system:
             return
@@ -410,7 +410,7 @@ class FeedbackLoopEngine:
             if isinstance(event, PerceptionEvent):
                 await self._start_cycle(event)
 
-    async def _start_cycle(self, perception_event: PerceptionEvent):
+    async def _start_cycle(self, perception_event: PerceptionEvent) -> None:
         """Start a new perception-action cycle"""
         # Create cycle
         cycle = PerceptionActionCycle(cycle_id=str(uuid.uuid4()), perception_event=perception_event)
@@ -534,7 +534,7 @@ class FeedbackLoopEngine:
 
         return None
 
-    async def _handle_action_result(self, context: Any, result: Any):
+    async def _handle_action_result(self, context: Any, result: Any) -> None:
         """Handle action execution result from action bridge"""
         # Find matching cycle
         action_id = getattr(context, "action_id", None)
@@ -553,7 +553,7 @@ class FeedbackLoopEngine:
                 await self._generate_cycle_feedback(cycle, result)
                 break
 
-    async def _generate_cycle_feedback(self, cycle: PerceptionActionCycle, result: Any):
+    async def _generate_cycle_feedback(self, cycle: PerceptionActionCycle, result: Any) -> None:
         """Generate feedback signals for completed cycle"""
         # Multi-layer feedback generation
 
@@ -627,7 +627,7 @@ class FeedbackLoopEngine:
             for signal in cycle.feedback_signals:
                 await self.feedback_processor.process_feedback(signal)
 
-    async def _notify_feedback(self, signal: FeedbackSignal):
+    async def _notify_feedback(self, signal: FeedbackSignal) -> None:
         """Notify feedback callbacks"""
         callbacks = self._feedback_callbacks.get(signal.layer, [])
         for callback in callbacks:
@@ -669,7 +669,7 @@ class FeedbackLoopEngine:
         if len(self.completed_cycles) > self.max_completed_history:
             self.completed_cycles = self.completed_cycles[-self.max_completed_history :]
 
-    async def _generate_learning_update(self, cycle: PerceptionActionCycle):
+    async def _generate_learning_update(self, cycle: PerceptionActionCycle) -> None:
         """Generate learning update from completed cycle"""
         if not cycle.decision or not cycle.execution_result:
             return
@@ -733,7 +733,7 @@ class FeedbackLoopEngine:
 
         self.performance_metrics["learning_updates"] += 1
 
-    def _update_performance_metrics(self, cycle: PerceptionActionCycle):
+    def _update_performance_metrics(self, cycle: PerceptionActionCycle) -> None:
         """Update performance metrics from completed cycle"""
         self.performance_metrics["cycles_completed"] += 1
 
@@ -751,7 +751,7 @@ class FeedbackLoopEngine:
         if latency > self.performance_metrics["max_latency_ms"]:
             self.performance_metrics["max_latency_ms"] = latency
 
-    async def _generate_feedback(self):
+    async def _generate_feedback(self) -> None:
         """Generate system-wide feedback (periodic health checks, etc.)"""
         logger.warning(f"{type(self).__name__}._generate_feedback not implemented")
         return None
@@ -782,7 +782,7 @@ class FeedbackLoopEngine:
         await self._start_cycle(event)
         return list(self.active_cycles.keys())[-1] if self.active_cycles else ""
 
-    def register_cycle_start_callback(self, callback: Callable[[PerceptionActionCycle], None]):
+    def register_cycle_start_callback(self, callback: Callable[[PerceptionActionCycle], None]) -> None:
         """Register callback for cycle start"""
         self._cycle_start_callbacks.append(callback)
 
@@ -825,7 +825,7 @@ class FeedbackLoopEngine:
         """Get recently completed cycles"""
         return self.completed_cycles[-limit:]
 
-    async def force_feedback(self, action_id: str, layer: FeedbackLayer, value: float):
+    async def force_feedback(self, action_id: str, layer: FeedbackLayer, value: float) -> None:
         """
         Force manual feedback for an action
 
@@ -913,7 +913,8 @@ class FeedbackLoopEngineFactory:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         logger.info("=" * 70)
         logger.info("Angela AI v6.0 - Feedback Loop Engine Demo")
         logger.info("实时反馈循环引擎演示")
@@ -924,11 +925,13 @@ if __name__ == "__main__":
         await engine.initialize()
 
         # Register some callbacks
-        def on_cycle_start(cycle):
+        def on_cycle_start(cycle) -> None:
+            """Handle the cycle start event."""
             logger.info(f"\n[Cycle Started] ID: {cycle.cycle_id}")
             logger.info(f"  Perception: {cycle.perception_event.perception_type.value[0]}")
 
         def on_cycle_end(cycle) -> None:
+            """Handle the cycle end event."""
             logger.info(f"\n[Cycle Completed] ID: {cycle.cycle_id}")
             logger.info(f"  Latency: {cycle.latency_ms:.2f}ms")
             logger.info(

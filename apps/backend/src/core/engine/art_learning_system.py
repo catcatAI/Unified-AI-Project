@@ -61,9 +61,11 @@ class Live2DParameter:
     body_part: Optional[str] = None
 
     def normalize_value(self, value: float) -> float:
+        """Normalize a value to the [0, 1] range."""
         return (value - self.min_value) / (self.max_value - self.min_value)
 
     def denormalize_value(self, normalized: float) -> float:
+        """Convert a normalized value back to the original parameter range."""
         return normalized * (self.max_value - self.min_value) + self.min_value
 
 @dataclass
@@ -209,7 +211,7 @@ class ArtLearningSystem:
         self.image_analyses: Dict[str, ImageAnalysis] = {}
         self.learning_sessions: List[LearningSession] = []
 
-    def _load_preferences(self):
+    def _load_preferences(self) -> None:
         if os.path.exists(self.storage_path):
             try:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
@@ -217,7 +219,7 @@ class ArtLearningSystem:
             except Exception as e:  # broad exception acceptable: config loading failure should not block system startup
                 logger.error(f"Failed to load aesthetics: {e}", exc_info=True)
 
-    def _save_preferences(self):
+    def _save_preferences(self) -> None:
         try:
             os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
             with open(self.storage_path, 'w', encoding='utf-8') as f:
@@ -295,7 +297,7 @@ class ArtLearningSystem:
             "C_EYE": [0.15, 0.65 + calm * 0.10, 0.95 - vivid * 0.05],
         }
 
-    def learn_from_feedback(self, reaction: str, current_style: str):
+    def learn_from_feedback(self, reaction: str, current_style: str) -> None:
         """Legacy keyword-based feedback."""
         if any(k in reaction for k in ["好看", "喜歡", "beautiful", "love it"]):
             self.aesthetic_preferences["brightness"] = min(

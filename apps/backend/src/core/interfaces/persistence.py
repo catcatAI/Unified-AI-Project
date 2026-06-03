@@ -53,10 +53,12 @@ class JsonFileStateStore:
         self._data_dir.mkdir(parents=True, exist_ok=True)
 
     def _resolve_path(self, key: str) -> Path:
+        """Resolve a state key to a file path."""
         safe = key.replace("/", "_").replace("\\", "_")
         return self._data_dir / f"{safe}.json"
 
     async def save_state(self, key: str, data: Dict[str, Any]) -> bool:
+        """Persist state data under the given key."""
         try:
             path = self._resolve_path(key)
             await async_json_dump(data, str(path), ensure_ascii=False, default=str)
@@ -66,6 +68,7 @@ class JsonFileStateStore:
             return False
 
     async def load_state(self, key: str) -> Optional[Dict[str, Any]]:
+        """Load state data by key, returning None if not found."""
         try:
             path = self._resolve_path(key)
             if path.exists():
@@ -76,6 +79,7 @@ class JsonFileStateStore:
             return None
 
     async def delete_state(self, key: str) -> bool:
+        """Remove persisted state by key."""
         try:
             path = self._resolve_path(key)
             if path.exists():
@@ -86,6 +90,7 @@ class JsonFileStateStore:
             return False
 
     async def list_keys(self, prefix: str = "") -> list:
+        """List all keys matching the given prefix."""
         try:
             pattern = f"{prefix.replace('/', '_')}*.json"
             return sorted(

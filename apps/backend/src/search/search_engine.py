@@ -10,7 +10,7 @@ try:
 except ImportError:
 
     class MockHfApi:
-        def list_models(self, search: str):
+        def list_models(self, search: str) -> str:
             return [Mock(id=f"mock-model-{i}") for i in range(3)]
 
     HfApi = MockHfApi

@@ -207,7 +207,7 @@ class MemoryTemplate:
             metadata=data.get("metadata", {}),
         )
 
-    def record_usage(self, success: bool = True):
+    def record_usage(self, success: bool = True) -> None:
         """记录使用"""
         self.usage_count += 1
         self.last_used = datetime.now(timezone.utc)

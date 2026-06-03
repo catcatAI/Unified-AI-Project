@@ -5,7 +5,7 @@ import sys
 from services.audio_service import AudioService, WHISPER_AVAILABLE, EDGE_TTS_AVAILABLE
 
 
-async def test():
+async def test() -> None:
     print(f"WHISPER_AVAILABLE: {WHISPER_AVAILABLE}")
     print(f"EDGE_TTS_AVAILABLE: {EDGE_TTS_AVAILABLE}")
 

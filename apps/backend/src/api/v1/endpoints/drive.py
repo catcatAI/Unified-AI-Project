@@ -27,7 +27,7 @@ class DriveDeduplication:
         self._syncs: Dict[str, Dict[str, Any]] = {}
         self._load()
 
-    def _load(self):
+    def _load(self) -> None:
         if self._db_path.exists():
             try:
                 import json
@@ -37,13 +37,14 @@ class DriveDeduplication:
                 logger.warning("Failed to load sync DB, starting fresh", exc_info=True)
                 self._syncs = {}
 
-    def _save(self):
+    def _save(self) -> None:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         import json
         with open(self._db_path, "w", encoding="utf-8") as f:
             json.dump(self._syncs, f, ensure_ascii=False, indent=2)
 
     def should_download(self, metadata: Dict[str, Any]) -> bool:
+        """Execute the should download operation."""
         key = metadata.get("id", "")
         content_hash = metadata.get("content_hash", "")
         if not key:
@@ -52,7 +53,8 @@ class DriveDeduplication:
             return True
         return self._syncs[key].get("content_hash") != content_hash
 
-    def record_sync(self, metadata: Dict[str, Any], content_hash: str):
+    def record_sync(self, metadata: Dict[str, Any], content_hash: str) -> None:
+        """Execute the record sync operation."""
         key = metadata.get("id", "")
         if not key:
             return
@@ -64,6 +66,7 @@ class DriveDeduplication:
         self._save()
 
     def compute_content_hash(self, file_path: str) -> str:
+        """Compute content hash."""
         import hashlib
         path = Path(file_path)
         if not path.exists():
@@ -79,6 +82,7 @@ class DocumentParser:
     """解析常見文件格式為純文字"""
 
     def parse_document(self, file_path: str) -> str:
+        """Parse the input data."""
         path = Path(file_path)
         suffix = path.suffix.lower()
 
@@ -160,7 +164,7 @@ async def get_drive_status(svc=Depends(get_drive_service)):
 
 
 @router.get("/auth/status")
-async def get_auth_status(svc=Depends(get_drive_service)):
+async def get_auth_status(svc=Depends(get_drive_service)) -> dict:
     """獲取認證狀態"""
     try:
         return {"authenticated": svc.is_authenticated()}
@@ -172,7 +176,7 @@ async def get_auth_status(svc=Depends(get_drive_service)):
 
 
 @router.get("/auth/url")
-async def get_oauth_url(svc=Depends(get_drive_service)):
+async def get_oauth_url(svc=Depends(get_drive_service)) -> dict:
     """獲取 OAuth 授權 URL"""
     try:
         url = svc.get_auth_url()
@@ -185,7 +189,7 @@ async def get_oauth_url(svc=Depends(get_drive_service)):
 
 
 @router.post("/auth/callback")
-async def oauth_callback(code: str = Body(..., embed=True), svc=Depends(get_drive_service)):
+async def oauth_callback(code: str = Body(..., embed=True), svc=Depends(get_drive_service)) -> dict:
     """用授權碼換取 Token"""
     try:
         success = svc.exchange_code(code)
@@ -200,7 +204,7 @@ async def oauth_callback(code: str = Body(..., embed=True), svc=Depends(get_driv
 
 
 @router.post("/auth/logout")
-async def logout(svc=Depends(get_drive_service)):
+async def logout(svc=Depends(get_drive_service)) -> dict:
     """登出 Google Drive"""
     try:
         svc.logout()
@@ -230,7 +234,7 @@ async def list_files(
 
 
 @router.get("/files/{file_id}/metadata")
-async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)):
+async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> str:
     """獲取文件元數據"""
     try:
         metadata = svc.get_file_metadata(file_id)
@@ -243,7 +247,7 @@ async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)):
 
 
 @router.post("/files/sync")
-async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)):
+async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)) -> dict:
     """同步選定的文件到本地並存入記憶"""
     file_ids = request.get("file_ids", [])
     folder_path = request.get("folder_path", "data/drive_downloads")
@@ -346,7 +350,7 @@ async def search_and_list(
 
 
 @router.post("/analyze")
-async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)):
+async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)) -> dict:
     """分析 Drive 文件並總結內容（需下載 + 解析）"""
     limit = request.get("limit", 5)
     folder_path = request.get("folder_path", "data/drive_downloads")

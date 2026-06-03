@@ -113,7 +113,7 @@ class ExecutionMonitor:
         self._execution_history: List[float] = []
         self._adaptive_timeout_cache: Dict[str, float] = {}
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """設置日誌"""
         if not self.logger.handlers:
             handler = logging.StreamHandler()
@@ -213,7 +213,7 @@ class ExecutionMonitor:
             self.logger.warning(f"Terminal check failed: {e}", exc_info=True)
             return TerminalStatus.UNRESPONSIVE
 
-    def _monitor_terminal(self):
+    def _monitor_terminal(self) -> None:
         """終端機狀態監控線程"""
         while self._is_monitoring:
             try:
@@ -224,7 +224,7 @@ class ExecutionMonitor:
                 self.logger.error(f"Terminal monitoring error: {e}", exc_info=True)
                 time.sleep(self.config.terminal_check_interval)
 
-    def _monitor_resources(self):
+    def _monitor_resources(self) -> None:
         """資源使用監控線程"""
         while self._is_monitoring:
             try:
@@ -270,7 +270,7 @@ class ExecutionMonitor:
                 self.logger.error(f"Resource monitoring error: {e}", exc_info=True)
                 time.sleep(self.config.check_interval)
 
-    def _start_monitoring(self):
+    def _start_monitoring(self) -> None:
         """開始監控"""
         self._is_monitoring = True
 
@@ -286,7 +286,7 @@ class ExecutionMonitor:
             )
             self._resource_monitor_thread.start()
 
-    def _stop_monitoring(self):
+    def _stop_monitoring(self) -> None:
         """停止監控"""
         self._is_monitoring = False
 
@@ -397,7 +397,7 @@ class ExecutionMonitor:
         return result
 
     @contextmanager
-    def timeout_context(self, timeout: float):
+    def timeout_context(self, timeout: float) -> None:
         """
         超時上下文管理器
 
@@ -406,6 +406,7 @@ class ExecutionMonitor:
         """
 
         def timeout_handler(signum=None, frame=None) -> None:
+            """Execute the timeout handler operation."""
             raise TimeoutError(f"Operation timed out after {timeout} seconds")
 
         # 設置信號處理器(僅在Unix系統上)

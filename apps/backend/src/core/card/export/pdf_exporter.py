@@ -43,10 +43,12 @@ class PDFExporter:
     """
 
     def render_html(self, cards: List[Card], title: str = "Card Export") -> str:
+        """Execute the render html operation."""
         cards_html = "\n".join(self._render_card(c) for c in cards)
         return PDF_HTML_TEMPLATE.format(title=title, cards_html=cards_html)
 
     def render_to_file(self, cards: List[Card], path: str, title: str = "Card Export") -> bool:
+        """Log a diagnostic message."""
         try:
             dest = Path(path)
             dest.parent.mkdir(parents=True, exist_ok=True)

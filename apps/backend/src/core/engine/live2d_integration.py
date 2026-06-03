@@ -71,7 +71,8 @@ class Live2DParameter:
     max_value: float = 1.0
     default_value: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         self.value = max(self.min_value, min(self.max_value, self.value))
 
     def set_value(self, value: float) -> None:
@@ -124,7 +125,7 @@ class CoordinateMappingEngine:
         self.integration = integration
         self.last_sync_t: float = 0.0
 
-    def apply_spatial_token(self, x: float, y: float, z: float, t: float):
+    def apply_spatial_token(self, x: float, y: float, z: float, t: float) -> None:
         """將空間 Token 應用於 Live2D 模型"""
         # 防止時序倒流
         if t < self.last_sync_t:
@@ -230,7 +231,7 @@ class Live2DIntegration:
         self.coordinate_engine = CoordinateMappingEngine(self)
 
 
-    def _default_parameters(self):
+    def _default_parameters(self) -> None:
         """Initialize default Live2D parameters"""
         # Facial angle
         self.parameters["ParamAngleX"] = Live2DParameter("ParamAngleX", 0.0, -30.0, 30.0)
@@ -279,7 +280,7 @@ class Live2DIntegration:
         self.parameters["ParamArmLA"] = Live2DParameter("ParamArmLA", 0.0, -1.0, 1.0)
         self.parameters["ParamArmRA"] = Live2DParameter("ParamArmRA", 0.0, -1.0, 1.0)
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the Live2D integration"""
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
@@ -294,7 +295,7 @@ class Live2DIntegration:
             except asyncio.CancelledError:
                 pass
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """Background update loop for animations and blending"""
         while self._running:
             await self._update_expression_blending()
@@ -321,7 +322,7 @@ class Live2DIntegration:
                         new_value = current_value + (target_value - current_value) * 0.05
                         self.parameters[param_name].set_value(new_value)
 
-    async def _update_motion(self):
+    async def _update_motion(self) -> None:
         """Update motion playback"""
         if self.is_motion_playing and self._current_motion_obj:
             # Check if motion should end
@@ -337,7 +338,7 @@ class Live2DIntegration:
         breath = (math.sin(time.time() * 2) + 1) / 2  # 0 to 1
         self.parameters["ParamBreath"].set_value(breath * 0.3)  # Subtle breathing
 
-    async def _update_lip_sync(self):
+    async def _update_lip_sync(self) -> None:
         """Update lip sync animation"""
         if self._lip_sync_active and self.lip_sync.is_active:
             # Update mouth parameters based on current phoneme
@@ -379,7 +380,7 @@ class Live2DIntegration:
         self.model_loaded = True
         return True
 
-    def set_expression(self, expression: ExpressionType, blend_duration: float = 0.3):
+    def set_expression(self, expression: ExpressionType, blend_duration: float = 0.3) -> None:
         """
         Set facial expression
 
@@ -516,7 +517,7 @@ class Live2DIntegration:
 
         return True
 
-    def stop_motion(self):
+    def stop_motion(self) -> None:
         """Stop current motion"""
         self.is_motion_playing = False
         self._current_motion_obj = None
@@ -527,7 +528,7 @@ class Live2DIntegration:
         self._lip_sync_active = True
         self.lip_sync.is_active = True
 
-    def stop_lip_sync(self):
+    def stop_lip_sync(self) -> None:
         """Stop lip synchronization"""
         self._lip_sync_active = False
         self.lip_sync.is_active = False
@@ -537,7 +538,7 @@ class Live2DIntegration:
         # Reset mouth
         self.parameters["ParamMouthOpenY"].set_value(0.0)
 
-    def update_lip_sync(self, phoneme: str, mouth_openness: float = 1.0):
+    def update_lip_sync(self, phoneme: str, mouth_openness: float = 1.0) -> None:
         """
         Update lip sync with current phoneme
 
@@ -548,7 +549,7 @@ class Live2DIntegration:
         self.lip_sync.current_phoneme = phoneme
         self.lip_sync.mouth_openness = max(0.0, min(1.0, mouth_openness))
 
-    def set_parameter(self, name: str, value: float):
+    def set_parameter(self, name: str, value: float) -> None:
         """
         Set a specific parameter value
 
@@ -573,7 +574,7 @@ class Live2DIntegration:
             return self.parameters[name].value
         return 0.0
 
-    def sync_with_coordinate(self, x: float, y: float, z: float, t: float):
+    def sync_with_coordinate(self, x: float, y: float, z: float, t: float) -> None:
         """
         [Task N.20.3] 同步座標系 AI 數據
         將後端的 [x, y, z, t] 映射到模型骨骼
@@ -599,14 +600,14 @@ class Live2DIntegration:
         self.set_parameter("ParamAngleX", x * 15)  # Subtle head movement
         self.set_parameter("ParamAngleY", y * 10)
 
-    def reset_pose(self):
+    def reset_pose(self) -> None:
         """Reset all parameters to default values"""
         for param in self.parameters.values():
             param.set_value(param.default_value)
 
         self.current_expression = ExpressionType.NEUTRAL
 
-    def register_expression_callback(self, callback: Callable[[ExpressionType], None]):
+    def register_expression_callback(self, callback: Callable[[ExpressionType], None]) -> None:
         """Register expression change callback"""
         self._expression_callbacks.append(callback)
 
@@ -614,7 +615,7 @@ class Live2DIntegration:
         """Register motion change callback"""
         self._motion_callbacks.append(callback)
 
-    def register_parameter_callback(self, param_name: str, callback: Callable[[float], None]):
+    def register_parameter_callback(self, param_name: str, callback: Callable[[float], None]) -> None:
         """Register parameter change callback"""
         if param_name not in self._parameter_callbacks:
             self._parameter_callbacks[param_name] = []
@@ -632,7 +633,7 @@ class Live2DIntegration:
             "parameters": self.get_all_parameters(),
         }
 
-    def register_live2d_state_callback(self, callback: Callable[[Dict[str, Any]], None]):
+    def register_live2d_state_callback(self, callback: Callable[[Dict[str, Any]], None]) -> None:
         """Register a callback that fires on any Live2D state change with the full state bundle."""
         self._live2d_state_callbacks.append(callback)
 
@@ -691,7 +692,7 @@ class Live2DIntegration:
 
         return params
 
-    def apply_emotion_to_expression(self, emotion: str, intensity: float = 0.8):
+    def apply_emotion_to_expression(self, emotion: str, intensity: float = 0.8) -> None:
         """
         Apply emotion to Live2D expression parameters
 
@@ -718,7 +719,7 @@ class Live2DIntegration:
         if expr_type:
             self.set_expression(expr_type, blend_duration=0.3 * intensity)
 
-    def set_body_angle_from_touch(self, body_part: str, touch_intensity: float = 0.5):
+    def set_body_angle_from_touch(self, body_part: str, touch_intensity: float = 0.5) -> None:
         """
         Set body angle parameters based on touch location
 
@@ -823,7 +824,8 @@ class Live2DIntegration:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         live2d = Live2DIntegration()
         await live2d.initialize()
 

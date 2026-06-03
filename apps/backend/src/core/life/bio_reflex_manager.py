@@ -13,7 +13,7 @@ class BiogenicReflexManager:
     def __init__(self, bio_integrator):
         self.bio = bio_integrator
 
-    async def trigger_physical_trauma(self, location: str, severity: float):
+    async def trigger_physical_trauma(self, location: str, severity: float) -> dict:
         """處理突發撞擊（踢到桌腳）"""
         logger.warning(f"⚠️ [Reflex] Angela collided with {location} (Severity: {severity})", exc_info=True)
         
@@ -29,7 +29,7 @@ class BiogenicReflexManager:
         
         return {"reflex": "pain_reaction", "expression": "pained"}
 
-    async def trigger_metabolic_fatigue(self, intensity: float):
+    async def trigger_metabolic_fatigue(self, intensity: float) -> dict:
         """處理持續性的代謝疲勞（如長時間對話後的流汗）"""
         logger.info(f"💧 [Reflex] Angela is sweating due to exhaustion (Intensity: {intensity})")
         # 影響情緒與喚醒水平

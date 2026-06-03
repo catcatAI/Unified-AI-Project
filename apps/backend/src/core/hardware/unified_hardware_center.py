@@ -94,6 +94,7 @@ class ComputeResource:
     vendor: str = "unknown"
 
     def to_dict(self) -> Dict:
+        """Convert to dict format."""
         return {
             "type": self.type.value,
             "name": self.name,
@@ -117,6 +118,7 @@ class CPUInfo:
     flags: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict:
+        """Convert to dict format."""
         return {
             "brand": self.brand,
             "cores_physical": self.cores_physical,
@@ -140,6 +142,7 @@ class GPUInfo:
     vendor: str = "unknown"
 
     def to_dict(self) -> Dict:
+        """Convert to dict format."""
         return {
             "name": self.name,
             "memory_total_mb": self.memory_total_mb,
@@ -161,6 +164,7 @@ class MemoryInfo:
     percent_used: float = 0.0
 
     def to_dict(self) -> Dict:
+        """Convert to dict format."""
         return {
             "total_mb": self.total_mb,
             "available_mb": self.available_mb,
@@ -180,6 +184,7 @@ class HardwareProfile:
     ai_capability_score: float = 0.0
 
     def to_dict(self) -> Dict:
+        """Convert to dict format."""
         return {
             "cpu": {
                 "brand": self.cpu.brand,
@@ -875,7 +880,7 @@ class UnifiedHardwareCenter:
             "metrics": self.get_system_metrics(),
         }
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """清理"""
         self._running = False
         logger.info("Unified Hardware Resource Center cleanup complete")

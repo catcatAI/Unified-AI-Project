@@ -110,7 +110,7 @@ class ContentAnalyzerModule:
 
         logger.info("ContentAnalyzerModule initialized.")
 
-    def _load_ontology_mappings(self, filepath: Optional[str] = None):
+    def _load_ontology_mappings(self, filepath: Optional[str] = None) -> None:
         if filepath is None:
             current_script_dir = os.path.dirname(os.path.abspath(__file__))
             filepath = os.path.join(
@@ -129,7 +129,7 @@ class ContentAnalyzerModule:
             except Exception as e:  # broad exception acceptable: ontology load failures are non-fatal
                 logger.error(f"Error loading ontology mappings: {e}", exc_info=True)
 
-    def _add_custom_matcher_patterns(self):
+    def _add_custom_matcher_patterns(self) -> None:
         # Example patterns
         self.matcher.add("LOCATED_IN", [[{"LEMMA": "be"}, {"LOWER": "located"}, {"LOWER": "in"}]])
         self.matcher.add("WORKS_FOR", [[{"LEMMA": "work"}, {"LOWER": "for"}]])
@@ -149,6 +149,7 @@ class ContentAnalyzerModule:
         )
 
     def analyze_content(self, text: str) -> Tuple[KnowledgeGraph, nx.DiGraph]:
+        """Analyze content."""
         logger.debug(f"Analyzing content: {text}")
         doc = self.nlp(text) if self.nlp else None
 
@@ -215,7 +216,7 @@ class ContentAnalyzerModule:
 
         return entity_id
 
-    def _handle_known_test_entities(self, text: str, entities: Dict[str, KGEntity]):
+    def _handle_known_test_entities(self, text: str, entities: Dict[str, KGEntity]) -> None:
         # Consolidate test patterns from corrupted code
         known_entities = [
             ("Apple Inc.", "ORG"),
@@ -243,7 +244,7 @@ class ContentAnalyzerModule:
 
                 self._get_or_create_entity(MockSpan(label, etype, pos, pos + len(label)), entities)
 
-    def _add_svo_relationship(self, subj, verb, obj, entities, relationships):
+    def _add_svo_relationship(self, subj, verb, obj, entities, relationships) -> None:
         s_id = self._get_or_create_entity_from_token(subj, entities)
         o_id = self._get_or_create_entity_from_token(obj, entities)
         if s_id and o_id:
@@ -257,7 +258,7 @@ class ContentAnalyzerModule:
             relationships.append(rel)
             self.graph.add_edge(s_id, o_id, type=verb.lemma_)
 
-    def _get_or_create_entity_from_token(self, token, entities):
+    def _get_or_create_entity_from_token(self, token, entities) -> str:
         # Find if token belongs to an entity
         for eid, edata in entities.items():
             if (
@@ -269,13 +270,14 @@ class ContentAnalyzerModule:
         # Create a new one if not found
         return self._get_or_create_entity(token, entities)
 
-    def _handle_matcher_match(self, rule_id, span, doc, entities, relationships):
+    def _handle_matcher_match(self, rule_id, span, doc, entities, relationships) -> None:
         # Simplified handler for matcher rules
         pass  # Implement logic for specific rules if needed
 
     def process_hsp_fact_content(
         self, hsp_fact_payload: HSPFactPayload, source_ai_id: str
     ) -> CAHSPFactProcessingResult:
+        """Execute the process hsp fact content operation."""
         statement_type = hsp_fact_payload.get("statement_type")
         hsp_fact_payload.get("id", str(uuid.uuid4()))
 

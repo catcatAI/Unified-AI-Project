@@ -28,7 +28,7 @@ class ToolCategory:
         self.tools: List["Tool"] = []
         self.created_at = datetime.now()
 
-    def add_sub_category(self, sub_category: "ToolCategory"):
+    def add_sub_category(self, sub_category: "ToolCategory") -> None:
         """添加子分类"""
         self.sub_categories.append(sub_category)
 
@@ -51,7 +51,7 @@ class Tool:
         self.performance_metrics: "ToolPerformanceMetrics" = ToolPerformanceMetrics()
         self.created_at = datetime.now()
 
-    def record_usage(self, usage_record: "ToolUsageRecord"):
+    def record_usage(self, usage_record: "ToolUsageRecord") -> None:
         """记录工具使用"""
         self.usage_history.append(usage_record)
         # 更新性能指标
@@ -80,7 +80,7 @@ class ToolPerformanceMetrics:
         self.average_duration = 0.0
         self.last_used: Optional[datetime] = None
 
-    def update_from_usage(self, usage_record: ToolUsageRecord):
+    def update_from_usage(self, usage_record: ToolUsageRecord) -> None:
         """根据使用记录更新性能指标"""
         self.total_calls += 1
         self.last_used = usage_record.timestamp

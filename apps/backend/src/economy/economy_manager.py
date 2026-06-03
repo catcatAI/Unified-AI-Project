@@ -126,7 +126,7 @@ class EconomyManager:
         logger.debug(f"Getting balance for user: {user_id}")
         return self.db.get_balance(user_id)
 
-    def update_rules(self, new_rules: Dict[str, Any]):
+    def update_rules(self, new_rules: Dict[str, Any]) -> None:
         """Allows the core AI to dynamically update the economic rules."""
         logger.info(f"Updating economic rules from {self.rules} to {new_rules}")
         if "transaction_tax_rate" in new_rules:

@@ -35,7 +35,7 @@ class RealSystemMaintenance:
         bridge_path = str(Path(__file__).parent.parent.parent.parent.parent / "apps/gemini-os-bridge/bridge.py")
         return os.path.exists(bridge_path)
 
-    async def auto_repair(self):
+    async def auto_repair(self) -> None:
         """Attempts to fix pathing and missing storage."""
         logger.info("🔧 Self-Repair initiated...")
         self._check_paths()

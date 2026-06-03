@@ -35,7 +35,7 @@ class MappableDataObject:
         self.compressed_data: Optional[bytes] = None
         self.layers: Dict[str, Any] = {}
 
-    def compress(self):
+    def compress(self) -> None:
         """
         Compresses the data using zlib.
         """
@@ -52,7 +52,7 @@ class MappableDataObject:
             return json.loads(decompressed_data.decode("utf-8"))
         return None
 
-    def add_layer(self, layer_name: str, layer_data: Any):
+    def add_layer(self, layer_name: str, layer_data: Any) -> None:
         """
         Adds a new layer to the data object.
 
@@ -74,7 +74,7 @@ class MappableDataObject:
         """
         return self.layers.get(layer_name)
 
-    def remove_layer(self, layer_name: str):
+    def remove_layer(self, layer_name: str) -> None:
         """
         Removes a layer from the data object.
 

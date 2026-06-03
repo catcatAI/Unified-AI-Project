@@ -1,4 +1,5 @@
 """
+from __future__ import annotations
 增強版 Rovo Dev Agents 連接器
 支持容錯機制、重試邏輯和備用端點
 """
@@ -48,7 +49,7 @@ class CircuitBreaker:
         self.last_failure_time: Optional[float] = None
         self.state = "closed"  # closed, open, half-open
 
-    async def call(self, func):
+    async def call(self, func) -> str:
         """執行函數調用"""
         if self.state == "open":
             if (
@@ -69,13 +70,15 @@ class CircuitBreaker:
 
             raise e
 
-    def record_failure(self):
+    def record_failure(self) -> None:
+        """Execute the record failure operation."""
         self.failure_count += 1
         self.last_failure_time = time.time()
         if self.failure_count >= self.failure_threshold:
             self.state = "open"
 
     def reset(self) -> None:
+        """Reset to initial state."""
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "closed"
@@ -98,20 +101,24 @@ class EnhancedRovoDevConnector:
         self.semaphore = asyncio.Semaphore(5)
         logger.info("EnhancedRovoDevConnector Skeleton Initialized")
 
-    async def start(self):
+    async def start(self) -> None:
+        """Start the component."""
         logger.info("[EnhancedRovoDevConnector] start — SKELETON (not implemented)")
 
     async def close(self) -> None:
+        """Close and release resources."""
         logger.info("[EnhancedRovoDevConnector] close — SKELETON (not implemented)")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'EnhancedRovoDevConnector':
+        """Execute the   aenter   operation."""
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Execute the   aexit   operation."""
         await self.close()
 
-    async def _authenticate(self):
+    async def _authenticate(self) -> None:
         self.authenticated = True  # Mock stub
 
     async def _make_request_with_retry(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
@@ -143,28 +150,34 @@ class EnhancedRovoDevConnector:
         return {"success": False, "error": last_error}
 
     async def get_user_info(self) -> Dict[str, Any]:
+        """Get the user info by self."""
         return await self._make_request_with_retry("GET", "/myself")
 
     async def create_jira_issue(
         self, project_key: str, issue_type: str, summary: str, description: str = "", **kwargs
     ) -> Dict[str, Any]:
+        """Create a jira issue."""
         return await self._make_request_with_retry("POST", "/issue")
 
     async def get_jira_issue(self, issue_key: str) -> Dict[str, Any]:
+        """Get the jira issue by self."""
         return await self._make_request_with_retry("GET", f"/issue/{issue_key}")
 
     async def create_confluence_page(
         self, space_key: str, title: str, content: str, parent_id: Optional[str] = None
     ) -> Dict[str, Any]:
+        """Create a confluence page."""
         return await self._make_request_with_retry("POST", "/content")
 
     async def get_confluence_page(self, page_id: str) -> Dict[str, Any]:
+        """Get the confluence page by self."""
         return await self._make_request_with_retry("GET", f"/content/{page_id}")
 
 
 async def create_enhanced_connector(
     config: Dict[str, Any], retry_config: Optional[RetryConfig] = None
 ) -> EnhancedRovoDevConnector:
+    """Create a enhanced connector."""
     connector = EnhancedRovoDevConnector(config, retry_config)
     await connector.start()
     return connector

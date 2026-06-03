@@ -94,7 +94,7 @@ class GrayZoneVariable:
         """Check if this variable can enter coexistence state"""
         return cognitive_gap >= self.cognitive_gap_threshold
 
-    def normalize_resonance_weights(self):
+    def normalize_resonance_weights(self) -> None:
         """Normalize resonance weights across all possibilities"""
         if not self.possibilities:
             return
@@ -215,7 +215,7 @@ class NonParadoxExistence:
         # Global context for weight calculations
         self.global_context: Dict[str, Any] = {}
 
-    def update_cognitive_gap(self, gap_value: float):
+    def update_cognitive_gap(self, gap_value: float) -> None:
         """
         Update the global cognitive gap value
 
@@ -534,7 +534,7 @@ class NonParadoxExistence:
             ],
         }
 
-    def register_coexistence_callback(self, callback: Callable[[str, bool], None]):
+    def register_coexistence_callback(self, callback: Callable[[str, bool], None]) -> None:
         """Register callback for coexistence activation/deactivation"""
         self._coexistence_callbacks.append(callback)
 

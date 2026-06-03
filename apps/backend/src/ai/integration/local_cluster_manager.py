@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+from __future__ import annotations
 Local Cluster Manager - Simulates distributed cluster on a single machine
 使用 multiprocessing 在本地模擬分佈式集群環境
 """
@@ -102,7 +103,7 @@ class LocalClusterManager:
         logger.info(f"Detected {cpu_count} CPU cores, using {optimal} workers")
         return optimal
 
-    def start(self):
+    def start(self) -> None:
         """啟動集群（同步方法）"""
         logger.info(f"Starting local cluster with {self.max_workers} workers...")
 
@@ -111,7 +112,7 @@ class LocalClusterManager:
 
         logger.info(f"Local cluster started successfully with {len(self.workers)} workers")
 
-    def _start_worker(self, worker_id: int):
+    def _start_worker(self, worker_id: int) -> None:
         """啟動單個 Worker 進程"""
         process = Process(
             target=self._worker_loop,
@@ -359,7 +360,7 @@ class LocalClusterManager:
             "executor": "inference_builtin",
         }
 
-    def submit_task(self, task: ClusterTask):
+    def submit_task(self, task: ClusterTask) -> None:
         """提交任務到集群"""
         if task.timestamp == 0.0:
             task.timestamp = time.time()
@@ -391,7 +392,7 @@ class LocalClusterManager:
             "results_pending": self.result_queue.qsize(),
         }
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """關閉集群"""
         logger.info("Shutting down local cluster...")
 
@@ -412,12 +413,12 @@ class LocalClusterManager:
 
         logger.info("Local cluster shutdown complete")
 
-    def __enter__(self):
+    def __enter__(self) -> 'LocalClusterManager':
         """支持 with 語句"""
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """支持 with 語句"""
         self.shutdown()
 

@@ -231,7 +231,8 @@ class RippleAccumulator:
     max_ripple_depth: int = 3
     max_algorithm_depth: AlgorithmDepth = AlgorithmDepth.LIGHT
 
-    def add(self, ripple: RippleEffect):
+    def add(self, ripple: RippleEffect) -> None:
+        """Execute the add operation."""
         self.total_ripples.append(ripple)
         self.cumulative_epsilon += abs(ripple.epsilon_delta)
         self.cumulative_arousal += ripple.alpha_arousal
@@ -243,12 +244,14 @@ class RippleAccumulator:
         if ripple.algorithm_depth.value > self.max_algorithm_depth.value:
             self.max_algorithm_depth = ripple.algorithm_depth
 
-    def chain_broken_by(self, op_type: Optional[MathOp] = None):
+    def chain_broken_by(self, op_type: Optional[MathOp] = None) -> None:
+        """Log a diagnostic message."""
         if op_type:
             logger.info(f"[RippleAcc] Chain broken by {op_type.value}")
         self.chain_broken = True
 
     def reset(self) -> None:
+        """Reset to initial state."""
         self.total_ripples.clear()
         self.cumulative_epsilon = 0.0
         self.cumulative_arousal = 0.0
@@ -413,7 +416,7 @@ class RippleCascade:
         return feedback_list
 
     @staticmethod
-    def _apply_ripple_to_axis(axis_state: Any, ripple: RippleEffect, axis_name: str):
+    def _apply_ripple_to_axis(axis_state: Any, ripple: RippleEffect, axis_name: str) -> None:
         """將漣漪效果應用到軸狀態"""
         if not axis_state or not hasattr(axis_state, "values"):
             return
@@ -713,7 +716,7 @@ class MathRippleEngine:
             logger.warning(f"safe_eval failed for expression: {expr}", exc_info=True)
             return 0.0
 
-    def _apply_cognitive_overload(self):
+    def _apply_cognitive_overload(self) -> None:
         if not self.state_matrix:
             return
 
@@ -743,7 +746,7 @@ class MathRippleEngine:
 
         logger.info("[MathRipple] Cognitive overload triggered")
 
-    def _apply_division_fear(self):
+    def _apply_division_fear(self) -> None:
         if not self.state_matrix:
             return
 
@@ -767,7 +770,7 @@ class MathRippleEngine:
 
         logger.info("[MathRipple] Division fear triggered")
 
-    def _apply_order_confusion(self, op: str):
+    def _apply_order_confusion(self, op: str) -> None:
         if not self.state_matrix:
             return
 

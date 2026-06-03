@@ -532,7 +532,7 @@ class Live2DAvatarGenerator:
             texture_height=self.config.get("texture_height", 2048),
         )
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the generator"""
         pass  # No async initialization needed
 
@@ -540,7 +540,7 @@ class Live2DAvatarGenerator:
         """Shutdown the generator"""
         pass
 
-    def register_progress_callback(self, callback: Callable[[GenerationProgress], None]):
+    def register_progress_callback(self, callback: Callable[[GenerationProgress], None]) -> None:
         """Register callback for generation progress updates"""
         self._progress_callbacks.append(callback)
 
@@ -673,7 +673,7 @@ class Live2DAvatarGenerator:
 
         return avatar
 
-    async def _initialize_generation(self, avatar: GeneratedAvatar):
+    async def _initialize_generation(self, avatar: GeneratedAvatar) -> None:
         """Initialize generation directory and structure"""
         output_dir = Path(avatar.output_directory)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -815,7 +815,7 @@ class Live2DAvatarGenerator:
             Path(self.output_path) / "placeholder_layers" / f"{layer.layer_name}.png"
         )
 
-    async def _setup_rigging(self, avatar: GeneratedAvatar):
+    async def _setup_rigging(self, avatar: GeneratedAvatar) -> None:
         """Setup Live2D rigging with body mappings"""
         # Create parameters
         for param_id, config in self.STANDARD_PARAMETERS.items():
@@ -838,7 +838,7 @@ class Live2DAvatarGenerator:
         # Store body mappings
         avatar.body_mappings = self.BODY_PART_MAPPING.copy()
 
-    async def _configure_model(self, avatar: GeneratedAvatar):
+    async def _configure_model(self, avatar: GeneratedAvatar) -> None:
         """Generate model3.json configuration"""
         model_config = {
             "Version": 3,
@@ -907,7 +907,7 @@ class Live2DAvatarGenerator:
                 # Generate angle-specific image
                 # (Implementation would generate or transform the image)
 
-    async def _finalize_generation(self, avatar: GeneratedAvatar):
+    async def _finalize_generation(self, avatar: GeneratedAvatar) -> None:
         """Finalize generation and create output files"""
         # Generate physics configuration
         await self._generate_physics_config(avatar)
@@ -918,7 +918,7 @@ class Live2DAvatarGenerator:
         # Calculate quality score
         avatar.generation_quality = self._calculate_quality_score(avatar)
 
-    async def _generate_physics_config(self, avatar: GeneratedAvatar):
+    async def _generate_physics_config(self, avatar: GeneratedAvatar) -> None:
         """Generate physics3.json for hair and accessories"""
         physics_config = {
             "Version": 3,
@@ -1000,7 +1000,7 @@ class Live2DAvatarGenerator:
         with open(physics_path, "w", encoding="utf-8") as f:
             json.dump(physics_config, f, indent=2)
 
-    async def _generate_display_info(self, avatar: GeneratedAvatar):
+    async def _generate_display_info(self, avatar: GeneratedAvatar) -> None:
         """Generate cdi3.json (Cubism Display Information)"""
         display_info = {"Version": 3, "Parameters": [], "Parts": []}
 
@@ -1130,14 +1130,16 @@ class Live2DAvatarGenerator:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> str:
+        """Run a demonstration."""
         logger.info("=" * 60)
         logger.info("Angela AI v6.0 - Live2D Avatar Generator Demo")
         logger.info("=" * 60)
 
         # Mock image generator
         class MockImageGenerator:
-            async def generate_image(self, prompt, width=2048, height=2048, style="anime"):
+            async def generate_image(self, prompt, width=2048, height=2048, style="anime") -> str:
+                """Log a diagnostic message."""
                 logger.info(f"   Generating: {prompt[:50]}...")
                 return type("Image", (), {"save": lambda path: print(f"   Saved to {path}")})()
 
@@ -1147,7 +1149,8 @@ if __name__ == "__main__":
         )
 
         # Progress callback
-        def on_progress(progress):
+        def on_progress(progress) -> None:
+            """Handle the progress event."""
             logger.info(f"[{progress.progress_percent:3.0f}%] {progress.message}")
 
         generator.register_progress_callback(on_progress)

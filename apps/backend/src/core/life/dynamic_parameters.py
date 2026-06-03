@@ -53,7 +53,8 @@ class ParameterState:
     history: List[float] = field(default_factory=list)  # 历史值
     influence_map: Dict[str, float] = field(default_factory=dict)  # Legacy rules
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if not self.history:
             self.history = [self.base_value]
 
@@ -130,7 +131,7 @@ class ParameterState:
 
         return factor_value * weight * self.volatility
 
-    def update(self, time_delta: Optional[float] = None, state_matrix: Any = None):
+    def update(self, time_delta: Optional[float] = None, state_matrix: Any = None) -> None:
         """
         更新参数值（結合空間引力與向心力）
         """
@@ -205,7 +206,7 @@ class DynamicThresholdManager:
         self._running = False
         self._update_interval = self.config.get("update_interval", 60.0)
 
-    def _initialize_from_config(self):
+    def _initialize_from_config(self) -> None:
         """從 YAML 配置初始化動態參數"""
         # 加載動態閾值專用配置 (如果有的話，否則使用預設)
         # 此處展示如何從 biological_parameters.yaml 中擴展動態閾值定義
@@ -230,7 +231,7 @@ class DynamicThresholdManager:
                 influence_map=p.get("influence_map", {})
             )
 
-    async def start(self):
+    async def start(self) -> None:
         """启动动态更新循环"""
         if self._update_task is None:
             self._running = True
@@ -247,7 +248,7 @@ class DynamicThresholdManager:
                 pass
             self._update_task = None
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """后台更新循环 - Configurable"""
         while self._running:
             try:
@@ -281,6 +282,7 @@ class DynamicThresholdManager:
         """构建全局上下文"""
 
         def get_val(name: str, default: float = 0.5) -> float:
+            """Get the val by name."""
             param = self.parameters.get(name)
             return param.current_value if param else default
 
@@ -328,7 +330,7 @@ class DynamicThresholdManager:
 
         return self.parameters[name].get_value(context, self.state_matrix)
 
-    def set_parameter_base(self, name: str, base_value: float):
+    def set_parameter_base(self, name: str, base_value: float) -> None:
         """设置参数基础值（长期调整）"""
         if name in self.parameters:
             self.parameters[name].base_value = base_value
@@ -340,7 +342,7 @@ class DynamicThresholdManager:
                 0.0, min(1.0, self.parameters[name].volatility + delta)
             )
 
-    def record_outcome(self, action_type: str, success: bool, intensity: float = 1.0):
+    def record_outcome(self, action_type: str, success: bool, intensity: float = 1.0) -> None:
         """
         记录行为结果，影响相关参数
 
@@ -389,7 +391,7 @@ class DynamicThresholdManager:
 
 
 # 使用示例和演示
-async def demo_dynamic_parameters():
+async def demo_dynamic_parameters() -> None:
     """动态参数系统演示"""
     logger.info("=" * 60)
     logger.info("Angela AI 动态参数系统演示")

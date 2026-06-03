@@ -82,7 +82,7 @@ class AuditoryMemory:
 
         return best_id
 
-    def _evict_oldest(self):
+    def _evict_oldest(self) -> None:
         """淘汰最久未聽見的記憶"""
         oldest_id = min(self.profiles.keys(), key=lambda k: self.profiles[k].last_heard)
         self.profiles.pop(oldest_id)

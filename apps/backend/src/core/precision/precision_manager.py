@@ -31,6 +31,7 @@ class PrecisionMode:
 
     @classmethod
     def to_scale(cls, mode: int) -> int:
+        """Convert to scale format."""
         return 10**mode
 
 
@@ -45,6 +46,7 @@ class PrecisionCell:
     timestamp: datetime = field(default_factory=datetime.now)
 
     def split_value(self, full_value: float) -> int:
+        """Execute the split value operation."""
         scale = PrecisionMode.to_scale(self.precision_level)
         self.integer_part = int(full_value * scale) // scale
         decimal_part = int(full_value * scale) % scale
@@ -53,6 +55,7 @@ class PrecisionCell:
         return self.integer_part
 
     def reconstruct(self, decimal_value: int = 0) -> float:
+        """Execute the reconstruct operation."""
         scale = PrecisionMode.to_scale(self.precision_level)
         return self.integer_part + decimal_value / scale
 
@@ -68,6 +71,7 @@ class PrecisionManager:
         self.metrics = {"total_cells": 0, "cells_with_memory": 0, "avg_precision": 0.0}
 
     def register_cell(self, cell_id: str, initial_value: float = 0.0) -> PrecisionCell:
+        """Register a cell."""
         if cell_id in self.cells:
             return self.cells[cell_id]
 
@@ -78,6 +82,7 @@ class PrecisionManager:
         return cell
 
     def get_value(self, cell_id: str, context: Dict = None) -> float:
+        """Get the value by self."""
         if cell_id not in self.cells:
             return 0.0
 
@@ -88,6 +93,7 @@ class PrecisionManager:
         return cell.reconstruct(decimal_value)
 
     def set_precision(self, cell_id: str, level: int) -> bool:
+        """Set the precision."""
         if cell_id not in self.cells:
             return False
         self.cells[cell_id].precision_level = level
@@ -96,6 +102,7 @@ class PrecisionManager:
         return True
 
     def get_metrics(self) -> Dict:
+        """Get the metrics by self."""
         precisions = [c.precision_level for c in self.cells.values()]
         self.metrics["avg_precision"] = sum(precisions) / max(1, len(precisions))
         self.metrics["cells_with_memory"] = sum(1 for c in self.cells.values() if c.memory_ref)
@@ -112,6 +119,7 @@ class DecimalMemoryBank:
         self.access_stats: Dict[str, int] = {}
 
     def store(self, cell_id: str, residual_data: int, precision_level: int, context: str) -> str:
+        """Execute the store operation."""
         ref_id = f"{cell_id}_{datetime.now().timestamp()}"
         entry = {
             "cell_id": cell_id,
@@ -127,6 +135,7 @@ class DecimalMemoryBank:
         return ref_id
 
     def recall(self, ref_id: str) -> Optional[int]:
+        """Execute the recall operation."""
         if ref_id not in self.residual_store:
             return None
         entry = self.residual_store[ref_id]
@@ -135,6 +144,7 @@ class DecimalMemoryBank:
         return entry["residual"]
 
     def contextual_recall(self, query_context: str, cell_hint: str) -> Optional[int]:
+        """Execute the contextual recall operation."""
         if query_context not in self.context_index:
             return None
 
@@ -165,6 +175,7 @@ class HierarchicalPrecisionRouter:
         self.pm = pm
 
     def get_precision_for_layer(self, layer_id: int) -> int:
+        """Get the precision for layer by self."""
         for (l_min, l_max), config in self.LAYER_STRATEGY.items():
             if l_min <= layer_id <= l_max:
                 if config["policy"] == "high":
@@ -176,6 +187,7 @@ class HierarchicalPrecisionRouter:
         return PrecisionMode.DEC4
 
     def route_value(self, layer_id: int, value: float) -> Tuple[int, int, str]:
+        """Execute the route value operation."""
         precision = self.get_precision_for_layer(layer_id)
         cell_id = f"layer_{layer_id}_{hash(str(value)) % 1000000}"
         cell = self.pm.register_cell(cell_id, value)
@@ -191,6 +203,7 @@ class PrecisionMemorySystem:
         self.router = HierarchicalPrecisionRouter(self.pm)
 
     def encode(self, data_id: str, value: float, layer: int = 1) -> Dict:
+        """Encode data into the target format."""
         integer_part, precision, cell_id = self.router.route_value(layer, value)
         scale = PrecisionMode.to_scale(precision)
         decimal_part = int(value * scale) % scale
@@ -207,6 +220,7 @@ class PrecisionMemorySystem:
         }
 
     def decode(self, encoded: Dict, context: Dict = None) -> float:
+        """Decode data from the source format."""
         integer_part = encoded["integer_part"]
         scale = encoded["scale"]
         decimal_value = 0
@@ -215,9 +229,11 @@ class PrecisionMemorySystem:
         return integer_part + decimal_value / scale
 
     def compress(self, data_id: str, target_precision: int) -> bool:
+        """Execute the compress operation."""
         return self.pm.set_precision(data_id, target_precision)
 
     def get_metrics(self) -> Dict:
+        """Get the metrics by self."""
         pm_metrics = self.pm.get_metrics()
         return {
             "total_cells": pm_metrics["total_cells"],
@@ -232,7 +248,7 @@ def create_precision_system(max_cells: int = 1000000) -> PrecisionMemorySystem:
     return PrecisionMemorySystem(max_cells)
 
 
-def demo():
+def demo() -> str:
     """演示"""
     logger.info("🎯 精度-记忆联动系统演示")
     logger.info("=" * 50)

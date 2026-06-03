@@ -43,6 +43,7 @@ class ImportQualityChecker:
     """
 
     def check(self, original_text: str, card: Card) -> QualityScore:
+        """Execute the check operation."""
         structural = self._structural_score(card)
         semantic = self._semantic_score(original_text, card)
         conflict = self._conflict_score(card)

@@ -35,6 +35,7 @@ class ComicComposer:
         self._painter = value
 
     async def compose_portrait(self, card: Card) -> Optional[Any]:
+        """Execute the compose portrait operation."""
         prompt = self._build_prompt(card)
         style = self._pick_style(card)
         return await self.painter.paint_portrait(

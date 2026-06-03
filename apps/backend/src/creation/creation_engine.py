@@ -11,7 +11,7 @@ class CreationEngine:
     def __init__(self) -> None:
         logger.debug(f"{type(self).__name__}.__init__ not implemented")
 
-    def create(self, query: str):
+    def create(self, query: str) -> str:
         """
         Creates a model or tool that matches a query.
 

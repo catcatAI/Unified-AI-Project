@@ -59,7 +59,7 @@ class PrecisionMatrix:
     def __init__(self):
         self._initialize_matrix()
 
-    def _initialize_matrix(self):
+    def _initialize_matrix(self) -> None:
         """初始化矩阵 / Initialize matrix"""
         self.conversion_table: Dict[Tuple[str, str], ConversionInfo] = {}
 
@@ -366,7 +366,7 @@ def optimize_for_hardware(hardware_info: Dict[str, Any]) -> Dict[str, str]:
     return _get_manager().optimize_for_hardware(hardware_info)
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("🔢 精度转换矩阵演示")
     logger.info("=" * 50)

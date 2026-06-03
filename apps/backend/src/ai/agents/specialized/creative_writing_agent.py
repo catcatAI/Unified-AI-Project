@@ -84,7 +84,8 @@ class CreativeWritingAgent(BaseAgent):
             from ai.dialogue.document_builder import DocumentBuilder
             from services.angela_llm_service import get_llm_service
             from core.engine.eta_axis import EtaAxisState
-            async def get_llm():
+            async def get_llm() -> str:
+                """Get the llm."""
                 return await get_llm_service()
             self._builder = DocumentBuilder(
                 llm_generate_fn=self._make_llm_wrapper(),
@@ -96,6 +97,7 @@ class CreativeWritingAgent(BaseAgent):
 
     def _make_llm_wrapper(self) -> Any:
         async def llm_wrapper(prompt: str, **kwargs) -> str:
+            """Log a diagnostic message."""
             from services.angela_llm_service import get_llm_service
             try:
                 llm = await get_llm_service()

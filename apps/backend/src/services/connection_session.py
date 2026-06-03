@@ -209,7 +209,7 @@ class SessionManager:
             
             return session
     
-    async def unregister(self, client_id: str, reason: str = "Normal close"):
+    async def unregister(self, client_id: str, reason: str = "Normal close") -> None:
         """Unregister a session by client_id"""
         async with self._lock:
             await self._unregister_internal(client_id, reason)
@@ -245,7 +245,7 @@ class SessionManager:
         
         logger.info(f"[SessionManager] Unregistered: client_id={client_id}, reason={reason}")
     
-    async def _heartbeat_monitor(self, session: ConnectionSession):
+    async def _heartbeat_monitor(self, session: ConnectionSession) -> None:
         """Background task to monitor heartbeat for a session"""
         while session.client_id in self._sessions:
             try:
@@ -366,7 +366,7 @@ class SessionManager:
         
         return sent_count
     
-    def _buffer_message(self, client_id: str, message: dict):
+    def _buffer_message(self, client_id: str, message: dict) -> None:
         """Buffer a message for a disconnected client"""
         if client_id not in self._message_buffers:
             self._message_buffers[client_id] = []
@@ -382,7 +382,7 @@ class SessionManager:
         """Get buffered messages for a client (on reconnect)"""
         return self._message_buffers.get(client_id, []).copy()
     
-    def clear_buffer(self, client_id: str):
+    def clear_buffer(self, client_id: str) -> None:
         """Clear buffered messages for a client"""
         if client_id in self._message_buffers:
             self._message_buffers[client_id].clear()
@@ -419,7 +419,7 @@ class SessionManager:
             for session in self._sessions.values()
         ]
     
-    async def update_heartbeat(self, client_id: str):
+    async def update_heartbeat(self, client_id: str) -> None:
         """Update last heartbeat time for a client"""
         if client_id in self._sessions:
             self._sessions[client_id].last_heartbeat = datetime.now()
@@ -444,7 +444,7 @@ def get_session_manager() -> SessionManager:
     return _session_manager
 
 
-async def shutdown_session_manager():
+async def shutdown_session_manager() -> None:
     """Gracefully shutdown the session manager"""
     global _session_manager
     if _session_manager:

@@ -171,7 +171,7 @@ class AutonomousLifeCycle:
         self.coexistence_activated: int = 0
         self.decisions_made: int = 0
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize autonomous life cycle and all formula systems"""
         self._running = True
 
@@ -190,7 +190,7 @@ class AutonomousLifeCycle:
         # Initial metrics calculation
         self._update_metrics()
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown autonomous life cycle"""
         self._running = False
 
@@ -203,7 +203,7 @@ class AutonomousLifeCycle:
 
         await self.hsm.shutdown()
 
-    def set_dynamic_params_manager(self, manager: Any):
+    def set_dynamic_params_manager(self, manager: Any) -> None:
         """Set the DynamicThresholdManager for dynamic threshold integration"""
         self._dynamic_params_manager = manager
 
@@ -223,7 +223,7 @@ class AutonomousLifeCycle:
             return self._dynamic_params_manager.get_parameter("risk_tolerance", context)
         return 0.5  # Default risk tolerance
 
-    def _initialize_knowledge_domains(self):
+    def _initialize_knowledge_domains(self) -> None:
         """Initialize knowledge domains for life intensity formula"""
         domains = [
             (KnowledgeDomain.WORLD_KNOWLEDGE, 0.5, 0.7, 0.4),
@@ -239,7 +239,7 @@ class AutonomousLifeCycle:
                 domain, completeness, accessibility, resolution
             )
 
-    def _initialize_order_baselines(self):
+    def _initialize_order_baselines(self) -> None:
         """Initialize order baselines for active cognition formula"""
         orders = [
             (OrderType.ALGORITHMIC, 0.7, 0.4),
@@ -250,7 +250,7 @@ class AutonomousLifeCycle:
         for order_type, stability, flexibility in orders:
             self.active_cognition.add_order_baseline(order_type, stability, flexibility)
 
-    async def _lifecycle_loop(self):
+    async def _lifecycle_loop(self) -> None:
         """Main autonomous life cycle loop"""
         while self._running:
             # Update all metrics
@@ -501,7 +501,7 @@ class AutonomousLifeCycle:
             confidence=0.7,
         )
 
-    def _record_decision(self, decision: LifeDecision):
+    def _record_decision(self, decision: LifeDecision) -> None:
         """Record a life decision"""
         self.decision_history.append(decision)
         self.decisions_made += 1
@@ -514,7 +514,7 @@ class AutonomousLifeCycle:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 pass
 
-    async def _check_phase_transition(self, metrics: FormulaMetrics):
+    async def _check_phase_transition(self, metrics: FormulaMetrics) -> None:
         """Check if life phase should transition"""
         old_phase = self.current_phase
         new_phase = old_phase
@@ -582,7 +582,7 @@ class AutonomousLifeCycle:
 
         return investment
 
-    def register_observer(self, observer_id: str, relationship_depth: float):
+    def register_observer(self, observer_id: str, relationship_depth: float) -> None:
         """Register an observer for life intensity"""
         self.life_intensity.register_observer(observer_id, relationship_depth)
 
@@ -639,7 +639,7 @@ class AutonomousLifeCycle:
             },
         }
 
-    def register_phase_callback(self, callback: Callable[[LifePhase, LifePhase], None]):
+    def register_phase_callback(self, callback: Callable[[LifePhase, LifePhase], None]) -> None:
         """Register callback for phase transitions"""
         self._phase_callbacks.append(callback)
 
@@ -647,7 +647,7 @@ class AutonomousLifeCycle:
         """Register callback for life decisions"""
         self._decision_callbacks.append(callback)
 
-    def register_metrics_callback(self, callback: Callable[[FormulaMetrics], None]):
+    def register_metrics_callback(self, callback: Callable[[FormulaMetrics], None]) -> None:
         """Register callback for metrics updates"""
         self._metrics_callbacks.append(callback)
 
@@ -656,6 +656,7 @@ class AutonomousLifeCycle:
 if __name__ == "__main__":
 
     async def demo() -> None:
+        """Run a demonstration."""
         lifecycle = AutonomousLifeCycle()
         await lifecycle.initialize()
 

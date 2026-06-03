@@ -51,7 +51,8 @@ class AxisField:
     default: float = 0.5
     description: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if self.min_val >= self.max_val:
             raise ValueError(f"AxisField '{self.name}': min_val ({self.min_val}) >= max_val ({self.max_val})")
 
@@ -76,6 +77,7 @@ class AxisField:
         return hash((self.axis, self.name))
 
     def __eq__(self, other: object) -> bool:
+        """Check equality based on axis and field name."""
         if not isinstance(other, AxisField):
             return NotImplemented
         return self.axis == other.axis and self.name == other.name
@@ -373,4 +375,5 @@ class AxisFieldEnum(Enum):
 
     @classmethod
     def get(cls, axis: str, name: str) -> Optional[AxisField]:
+        """Execute the get operation."""
         return cls._registry.get(axis, name)

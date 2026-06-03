@@ -17,6 +17,7 @@ class PerformanceTracker:
     """分析性能趨勢，為控制器提供優化依據。"""
 
     async def analyze_trend(self, performance_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze trend."""
         if not performance_history or len(performance_history) < 3:
             return {"direction": "stable", "magnitude": 0.0, "slope": 0.0}
 
@@ -139,6 +140,7 @@ class AdaptiveLearningController:
         return updates
 
     def get_current_configuration(self) -> Dict[str, Any]:
+        """Get the current configuration by self."""
         return {
             "strategy": self.current_strategy,
             "learning_rate": self.learning_rate,

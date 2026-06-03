@@ -163,7 +163,7 @@ class MouseMonitor:
         self.last_movement_time = datetime.now()
         self.is_moving = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize mouse monitoring"""
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
@@ -178,7 +178,7 @@ class MouseMonitor:
             except asyncio.CancelledError:
                 pass
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Main monitoring loop - updates every 16ms"""
         last_x, last_y = 0.0, 0.0
 
@@ -234,7 +234,7 @@ class MouseMonitor:
             return self.current_position.x, self.current_position.y
         return 0.0, 0.0
 
-    def register_callback(self, callback: Callable[[MouseData], None]):
+    def register_callback(self, callback: Callable[[MouseData], None]) -> None:
         """Register position update callback"""
         self._callbacks.append(callback)
 
@@ -284,7 +284,7 @@ class FileSystemMonitor:
         self._file_states: Dict[str, Dict[str, Any]] = {}
         self._ignored_patterns = ["*.tmp", "*.log", ".*", "~*"]
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize file system monitoring"""
         self._running = True
 
@@ -294,7 +294,7 @@ class FileSystemMonitor:
         # Start monitoring
         self._monitor_task = asyncio.create_task(self._monitor_loop())
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown file system monitoring"""
         self._running = False
         if self._monitor_task:
@@ -304,13 +304,13 @@ class FileSystemMonitor:
             except asyncio.CancelledError:
                 pass
 
-    async def _scan_all_paths(self):
+    async def _scan_all_paths(self) -> None:
         """Initial scan of all watched paths"""
         for path in self.watch_paths:
             if path.exists():
                 await self._scan_path(path)
 
-    async def _scan_path(self, path: Path):
+    async def _scan_path(self, path: Path) -> None:
         """Scan a specific path and update state"""
         try:
             for item in path.iterdir():
@@ -330,7 +330,7 @@ class FileSystemMonitor:
                 return True
         return False
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Main monitoring loop"""
         while self._running:
             for path in self.watch_paths:
@@ -339,7 +339,7 @@ class FileSystemMonitor:
 
             await asyncio.sleep(self.poll_interval)
 
-    async def _check_path_changes(self, path: Path):
+    async def _check_path_changes(self, path: Path) -> None:
         """Check for changes in a path"""
         try:
             current_files = set()
@@ -401,7 +401,7 @@ class FileSystemMonitor:
         except Exception as e:  # broad exception acceptable: path change check errors should be logged
             logger.error(f"[FileSystemMonitor] Check error: {e}", exc_info=True)
 
-    async def _emit_event(self, event: FileSystemEvent):
+    async def _emit_event(self, event: FileSystemEvent) -> None:
         """Emit file system event to callbacks"""
         for callback in self._callbacks:
             try:
@@ -413,7 +413,7 @@ class FileSystemMonitor:
         """Register file change callback"""
         self._callbacks.append(callback)
 
-    def add_watch_path(self, path: Path):
+    def add_watch_path(self, path: Path) -> None:
         """Add a path to watch"""
         if path not in self.watch_paths:
             self.watch_paths.append(path)
@@ -442,7 +442,7 @@ class TimeMonitor:
         self._scheduled_events: List[TimeEvent] = []
         self._last_check_time = datetime.now()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize time monitoring"""
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
@@ -457,7 +457,7 @@ class TimeMonitor:
             except asyncio.CancelledError:
                 pass
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Main monitoring loop"""
         while self._running:
             current_time = datetime.now()
@@ -482,7 +482,7 @@ class TimeMonitor:
             self._last_check_time = current_time
             await asyncio.sleep(self.check_interval)
 
-    def schedule_event(self, event: TimeEvent):
+    def schedule_event(self, event: TimeEvent) -> None:
         """Schedule a new time event"""
         self._scheduled_events.append(event)
         # Sort by trigger time
@@ -516,7 +516,7 @@ class SystemStateMonitor:
         self._state_history: deque = deque(maxlen=100)
         self._start_time = datetime.now()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize system monitoring"""
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
@@ -531,7 +531,7 @@ class SystemStateMonitor:
             except asyncio.CancelledError:
                 pass
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Main monitoring loop"""
         while self._running:
             try:
@@ -604,7 +604,7 @@ class SystemStateMonitor:
                 timestamp=datetime.now(),
             )
 
-    def register_callback(self, callback: Callable[[SystemStateData], None]):
+    def register_callback(self, callback: Callable[[SystemStateData], None]) -> None:
         """Register state update callback"""
         self._callbacks.append(callback)
 
@@ -642,7 +642,7 @@ class UserActivityMonitor:
         # Pattern analysis
         self._activity_patterns: Dict[str, List[datetime]] = {}
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize user activity monitoring"""
         self._running = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
@@ -657,7 +657,7 @@ class UserActivityMonitor:
             except asyncio.CancelledError:
                 pass
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Main monitoring loop"""
         while self._running:
             try:
@@ -728,7 +728,7 @@ class UserActivityMonitor:
         # Platform-specific implementation would go here
         return None
 
-    def record_input_event(self):
+    def record_input_event(self) -> None:
         """Record an input event (keyboard, mouse)"""
         self._last_input_time = datetime.now()
         self._input_events.append(datetime.now())
@@ -797,7 +797,7 @@ class RealTimeMonitor:
 
         self._running = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize all monitoring subsystems"""
         logger.info("[RealTimeMonitor] Initializing monitoring subsystems...")
 
@@ -814,7 +814,7 @@ class RealTimeMonitor:
         self._running = True
         logger.info("[RealTimeMonitor] All subsystems initialized")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown all monitoring subsystems"""
         logger.info("[RealTimeMonitor] Shutting down...")
 
@@ -828,7 +828,7 @@ class RealTimeMonitor:
 
         logger.info("[RealTimeMonitor] Shutdown complete")
 
-    def _setup_callback_bridges(self):
+    def _setup_callback_bridges(self) -> None:
         """Setup bridges between sub-monitors and unified callbacks"""
         # Mouse position -> unified callback
         self.mouse_monitor.register_callback(
@@ -882,7 +882,7 @@ class RealTimeMonitor:
             )
         )
 
-    def _dispatch(self, event_type: str, data: Dict[str, Any]):
+    def _dispatch(self, event_type: str, data: Dict[str, Any]) -> None:
         """Dispatch event to registered callbacks"""
         callbacks = self._callbacks.get(event_type, [])
         for callback in callbacks:
@@ -926,7 +926,7 @@ class RealTimeMonitor:
         """Get current system state"""
         return self.system_monitor.get_current_state()
 
-    def schedule_time_event(self, event: TimeEvent):
+    def schedule_time_event(self, event: TimeEvent) -> None:
         """Schedule a time-based event"""
         self.time_monitor.schedule_event(event)
 
@@ -938,7 +938,8 @@ class RealTimeMonitor:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         logger.info("=" * 70)
         logger.info("Angela AI v6.0 - Real-Time Monitor Demo")
         logger.info("实时监测器演示")
@@ -948,16 +949,19 @@ if __name__ == "__main__":
         await monitor.initialize()
 
         # Register some callbacks
-        def on_mouse_move(data):
+        def on_mouse_move(data) -> None:
+            """Handle the mouse move event."""
             logger.info(
                 f"[Mouse] Position: ({data['x']:.0f}, {data['y']:.0f}), "
                 f"Velocity: {data['velocity']:.1f}"
             )
 
         def on_file_change(data) -> None:
+            """Handle the file change event."""
             logger.info(f"[File] {data['type']}: {data['path']}")
 
-        def on_user_activity(data):
+        def on_user_activity(data) -> None:
+            """Handle the user activity event."""
             logger.info(f"[Activity] State: {data['state']}, " f"Focus: {data['focus_score']:.2f}")
 
         monitor.register_callback("mouse_position", on_mouse_move)
@@ -975,7 +979,8 @@ if __name__ == "__main__":
         )
         monitor.schedule_time_event(future_event)
 
-        def on_time_event(data):
+        def on_time_event(data) -> None:
+            """Handle the time event event."""
             logger.info(f"[Time] Event: {data['description']}")
 
         monitor.register_callback("time_event", on_time_event)

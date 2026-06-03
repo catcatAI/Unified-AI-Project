@@ -65,7 +65,7 @@ class SyncItem:
     sync_priority: int = 0
     checksum: str = ""
 
-    def compute_checksum(self):
+    def compute_checksum(self) -> None:
         """计算校验和 / Compute checksum"""
         data = json.dumps(self.local_data, sort_keys=True)
         self.checksum = hashlib.sha256(data.encode()).hexdigest()
@@ -128,7 +128,7 @@ class SyncQueue:
         self._priority_queue: List[str] = []
         self._max_size = max_size
 
-    def add(self, item: SyncItem):
+    def add(self, item: SyncItem) -> None:
         """添加同步项 / Add sync item"""
         if len(self._queue) >= self._max_size:
             oldest = min(self._queue.values(), key=lambda x: x.last_modified)
@@ -145,7 +145,7 @@ class SyncQueue:
         item_id = self._priority_queue.pop(0)
         return self._queue.get(item_id)
 
-    def remove(self, item_id: str):
+    def remove(self, item_id: str) -> None:
         """移除项 / Remove item"""
         if item_id in self._queue:
             del self._queue[item_id]
@@ -156,7 +156,7 @@ class SyncQueue:
         """队列大小 / Queue size"""
         return len(self._queue)
 
-    def _update_priority_queue(self):
+    def _update_priority_queue(self) -> None:
         """更新优先级队列 / Update priority queue"""
         self._priority_queue = sorted(
             self._queue.keys(),
@@ -194,7 +194,7 @@ class CloudSyncManager:
         self.last_sync: Optional[datetime] = None
         self._callbacks: Dict[str, Callable] = {}
 
-    def register_callback(self, event: str, callback: Callable):
+    def register_callback(self, event: str, callback: Callable) -> None:
         """注册回调 / Register callback"""
         self._callbacks[event] = callback
 
@@ -203,7 +203,7 @@ class CloudSyncManager:
         if event in self._callbacks:
             self._callbacks[event](data)
 
-    def add_to_sync(self, item_id: str, item_type: str, data: Dict[str, Any], priority: int = 0):
+    def add_to_sync(self, item_id: str, item_type: str, data: Dict[str, Any], priority: int = 0) -> None:
         """添加到同步队列 / Add to sync queue"""
         item = SyncItem(
             item_id=item_id,
@@ -330,7 +330,7 @@ class CloudSyncManager:
 
         return False
 
-    def _handle_conflicts(self, conflicts: List[SyncConflict]):
+    def _handle_conflicts(self, conflicts: List[SyncConflict]) -> None:
         """处理冲突 / Handle conflicts"""
         for conflict in conflicts:
             if conflict.resolution == ConflictResolution.LOCAL_WINS:
@@ -345,7 +345,7 @@ class CloudSyncManager:
             elif conflict.resolution == ConflictResolution.MANUAL:
                 continue
 
-    def resolve_conflict(self, item_id: str, data: Dict[str, Any]):
+    def resolve_conflict(self, item_id: str, data: Dict[str, Any]) -> None:
         """解决冲突 / Resolve conflict"""
         for conflict in self.conflicts:
             if conflict.item_id == item_id:
@@ -396,7 +396,7 @@ class CloudSyncManager:
             "exported_at": datetime.now().isoformat(),
         }
 
-    def import_sync_data(self, data: Dict[str, Any], merge: bool = True):
+    def import_sync_data(self, data: Dict[str, Any], merge: bool = True) -> None:
         """导入同步数据 / Import sync data"""
         for item_data in data.get("items", []):
             if merge and item_data["id"] in self.local_store:
@@ -419,7 +419,7 @@ class CloudSyncManager:
                 )
                 self.local_store[item_data["id"]] = item
 
-    def set_offline_mode(self, enabled: bool):
+    def set_offline_mode(self, enabled: bool) -> None:
         """设置离线模式 / Set offline mode"""
         self.status = SyncStatus.OFFLINE if enabled else SyncStatus.IDLE
         self._emit("offline_mode_changed", enabled)

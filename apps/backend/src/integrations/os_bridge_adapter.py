@@ -55,14 +55,17 @@ class OSBridgeAdapter:
             logger.warning(f"_execute failed for {command}: {e}", exc_info=True)
             return {"status": "error", "message": str(e)}
 
-    async def get_summary(self):
+    async def get_summary(self) -> str:
+        """Get the summary by self."""
         return await self._execute_async("summary")
 
-    async def take_action(self, action_name, args=None):
+    async def take_action(self, action_name, args=None) -> str:
+        """Execute the take action operation."""
         task = [{"name": action_name, "args": args or []}]
         return await self._execute_async("task", json.dumps(task))
 
-    async def get_screen_text(self):
+    async def get_screen_text(self) -> str:
+        """Get the screen text by self."""
         return await self._execute_async("ocr")
 
 if __name__ == "__main__":

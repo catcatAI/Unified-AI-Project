@@ -131,9 +131,11 @@ class AssignStage(AllocationStage):
         self.threshold = threshold
 
     def matches(self, ctx: AllocationContext) -> bool:
+        """Execute the matches operation."""
         return ctx.max_resonance > self.threshold and ctx.best_axis is not None
 
     def decide(self, ctx: AllocationContext) -> AllocationDecision:
+        """Execute the decide operation."""
         return AllocationDecision(
             action=AllocationAction.ASSIGN,
             target=ctx.best_axis,
@@ -151,9 +153,11 @@ class CompositeStage(AllocationStage):
         self.min_axes = min_axes
 
     def matches(self, ctx: AllocationContext) -> bool:
+        """Execute the matches operation."""
         return ctx.num_high_sim >= self.min_axes and ctx.max_resonance > self.threshold
 
     def decide(self, ctx: AllocationContext) -> AllocationDecision:
+        """Execute the decide operation."""
         top_axes = sorted(
             [(n, s) for n, s in ctx.similarities.items() if s > self.threshold],
             key=lambda x: -x[1]
@@ -184,9 +188,11 @@ class CreateStage(AllocationStage):
         self.complexity_min = complexity_min
 
     def matches(self, ctx: AllocationContext) -> bool:
+        """Execute the matches operation."""
         return ctx.novelty > self.novelty_threshold and ctx.active_dims >= self.complexity_min
 
     def decide(self, ctx: AllocationContext) -> AllocationDecision:
+        """Execute the decide operation."""
         proposed = ctx.label if ctx.label else "new_axis"
 
         if ctx.label and ctx.label in ctx.buffer_tracking:
@@ -211,9 +217,11 @@ class DeferStage(AllocationStage):
         self.fallback = fallback
 
     def matches(self, ctx: AllocationContext) -> bool:
+        """Execute the matches operation."""
         return self.fallback
 
     def decide(self, ctx: AllocationContext) -> AllocationDecision:
+        """Execute the decide operation."""
         return AllocationDecision(
             action=AllocationAction.DEFER,
             buffer="unclassified_experiences",

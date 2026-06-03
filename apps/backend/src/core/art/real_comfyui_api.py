@@ -341,7 +341,7 @@ class AngelaRealPainter:
         return None
 
 
-async def test_comfyui():
+async def test_comfyui() -> None:
     """测试 ComfyUI 连接"""
     logger.info("🧪 测试 ComfyUI API...")
     client = ComfyUIClient()

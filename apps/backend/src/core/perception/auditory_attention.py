@@ -86,7 +86,8 @@ class AuditoryAttentionController:
 
         return base_priority * intensity
 
-    def reset(self):
+    def reset(self) -> None:
+        """Reset auditory attention controller to default state."""
         self.mode = AuditoryAttentionMode.SCAN
         self.current_focus_id = None
         self.focus_start_time = 0

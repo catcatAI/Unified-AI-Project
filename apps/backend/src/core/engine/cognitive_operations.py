@@ -40,7 +40,7 @@ class CognitiveOp(Enum):
 # Can be overridden per operation via state_matrix config
 SPATIAL_RATIO: Tuple[float, float, float] = (1.0, 0.3, 0.15)
 
-def _get_spatial_config(key: str, default):
+def _get_spatial_config(key: str, default) -> str:
     try:
         from core.config_loader import get_angela_config
         return get_angela_config().get_authority("angela_core", {}).get("spatial_math", {}).get(key, default)
@@ -145,6 +145,7 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
     Returns a closure that evaluates math expressions using epsilon dimension.
     """
     def evaluator(expression: str) -> float:
+        """Log a diagnostic message."""
         logger.info(f"[SpatialMath] Resolving expression: {expression}")
 
         tokens = re.findall(r"\d+\.?\d*|\*\*|[\+\-\*\/\(\)]", expression)

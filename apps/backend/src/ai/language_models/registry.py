@@ -25,6 +25,7 @@ class ModelProfile:
     capabilities: Dict[str, Any]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict format."""
         return asdict(self)
 
 
@@ -90,7 +91,7 @@ class ModelRegistry:
             )
         return profiles
 
-    def list_models(self):
+    def list_models(self) -> str:
         """Alias for list_profiles for compatibility"""
         return self.list_profiles()
 

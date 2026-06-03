@@ -61,6 +61,7 @@ class CardImportPipeline:
         self.llm_fallback = LLMFallback()
 
     def process(self, raw_text: str, source_label: str = "unknown") -> PipelineResult:
+        """Process incoming data."""
         stage_log: List[Dict[str, Any]] = []
         card, confidences = self.parser.parse(raw_text)
         stage_log.append({"stage": "parse", "card_id": card.card_id, "confidence": confidences})

@@ -42,6 +42,7 @@ class IntentRegistry:
     _initialized: bool = field(default=False, repr=False)
 
     def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if not self._initialized:
             self._register_defaults()
             self._build_index()

@@ -25,6 +25,7 @@ class LLMFallback:
         self._llm = None
 
     def resolve(self, card: Card, unresolved_conflicts: List[Conflict]) -> List[Conflict]:
+        """Resolve the given request."""
         resolved: List[Conflict] = []
         for conflict in unresolved_conflicts:
             if conflict.suppressed or conflict.user_intent == IntentFlag.CONFIRMED_KEEP:

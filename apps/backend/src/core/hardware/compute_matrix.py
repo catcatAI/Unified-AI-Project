@@ -77,7 +77,7 @@ class ComputationMatrix:
         self._initialize_kernels()
         self._initialize_rules()
 
-    def _initialize_kernels(self):
+    def _initialize_kernels(self) -> None:
         """初始化内核 / Initialize kernels"""
         self.kernel_library: Dict[str, KernelConfig] = {
             "matrix_multiply": KernelConfig(
@@ -133,7 +133,7 @@ class ComputationMatrix:
             ),
         }
 
-    def _initialize_rules(self):
+    def _initialize_rules(self) -> None:
         """初始化规则 / Initialize rules"""
         self.optimization_rules: Dict[str, Dict[str, Any]] = {
             "x86_64": {
@@ -320,7 +320,7 @@ class ComputeOptimizer:
         self.matrix = ComputationMatrix()
         self.current_strategy = OptimizationStrategy.BALANCED
 
-    def set_strategy(self, strategy: OptimizationStrategy):
+    def set_strategy(self, strategy: OptimizationStrategy) -> None:
         """设置策略 / Set strategy"""
         self.current_strategy = strategy
 
@@ -427,7 +427,7 @@ def get_optimization(architecture: str, strategy: str = "balanced") -> Dict[str,
     )
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("⚡ 计算优化矩阵演示")
     logger.info("=" * 50)

@@ -49,7 +49,7 @@ class RAGManager:
         else:
             logger.warning("RAGManager initialized without a functional embedding model.", exc_info=True)
 
-    def add_document(self, text: str, doc_id: Optional[str] = None):
+    def add_document(self, text: str, doc_id: Optional[str] = None) -> None:
         """Adds a document to the RAG manager and generates its vector embedding."""
         if not self.model or not self.index:
             logger.error("RAGManager: Model or Index not available.", exc_info=True)

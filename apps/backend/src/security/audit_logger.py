@@ -60,7 +60,7 @@ class AuditLogger:
         log_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"AuditLogger initialized with log file: {self.log_file_path}")
 
-    def log_event(self, event: AuditEvent):
+    def log_event(self, event: AuditEvent) -> None:
         try:
             with self.buffer_lock:
                 self.log_buffer.append(event)
@@ -328,7 +328,7 @@ class AuditLogger:
         )
         self.log_event(event)
 
-    def _flush_buffer(self):
+    def _flush_buffer(self) -> None:
         try:
             with self.buffer_lock:
                 if not self.log_buffer:
@@ -347,7 +347,7 @@ class AuditLogger:
         except Exception as e:  # broad exception acceptable: ensure flush errors don't crash the buffer management
             logger.error(f"Error flushing audit log buffer: {e}", exc_info=True)
 
-    def _rotate_log_if_needed(self):
+    def _rotate_log_if_needed(self) -> None:
         try:
             if os.path.exists(self.log_file_path):
                 file_size = os.path.getsize(self.log_file_path)

@@ -10,12 +10,12 @@ _loaded_models: Dict[str, Any] = {}
 _model_load_errors: Dict[str, str] = {}
 
 
-def _get_project_root():
+def _get_project_root() -> str:
     """获取项目根目录"""
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
-def load_math_model():
+def load_math_model() -> str:
     """加载算术模型"""
     model_name = "math_model"
     if model_name in _loaded_models or model_name in _model_load_errors:
@@ -32,7 +32,7 @@ def load_math_model():
         return None
 
 
-def load_logic_model():
+def load_logic_model() -> str:
     """加载逻辑模型"""
     model_name = "logic_model"
     if model_name in _loaded_models or model_name in _model_load_errors:

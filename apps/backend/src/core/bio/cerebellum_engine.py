@@ -63,7 +63,7 @@ class CerebellumEngine:
 
         logger.info("🧠 [Cerebellum] Pose-based AI Engine initialized.")
 
-    def _load_memory(self):
+    def _load_memory(self) -> None:
         """讀取已學習的姿勢數據"""
         if os.path.exists(self.storage_path):
             try:
@@ -73,7 +73,7 @@ class CerebellumEngine:
             except (IOError, OSError, json.JSONDecodeError) as e:
                 logger.error(f"Failed to load motor memory: {e}", exc_info=True)
 
-    def refine_pose(self, name: str, adjustments: Dict[str, Any]):
+    def refine_pose(self, name: str, adjustments: Dict[str, Any]) -> None:
         """
         [Optimization] 大腦對現有姿態進行微調。
         adjustments: {"spine": [index, value], "stiffness": delta}
@@ -89,7 +89,7 @@ class CerebellumEngine:
             logger.info(f"📈 [Cerebellum] Optimized pose '{name}': index {adjustments.get('spine')} updated.")
             self._save_memory()
 
-    def capture_current_state(self, new_name: str, current_full_state: Dict[str, Any]):
+    def capture_current_state(self, new_name: str, current_full_state: Dict[str, Any]) -> None:
         """
         [New Pose] 大腦捕捉目前的物理快照並定義為新姿態標籤。
         """
@@ -102,7 +102,7 @@ class CerebellumEngine:
         logger.info(f"🆕 [Cerebellum] New pose learned via Brain capture: '{new_name}'")
         self._save_memory()
 
-    def _save_memory(self):
+    def _save_memory(self) -> None:
         """持久化姿態庫到硬碟"""
         try:
             os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
@@ -129,7 +129,7 @@ class CerebellumEngine:
             
         self.record_movement_error(np.mean(self.active_theta), np.mean(actual_np))
 
-    def record_movement_error(self, expected_pos: float, actual_pos: float):
+    def record_movement_error(self, expected_pos: float, actual_pos: float) -> None:
         """
         [+N16.1.1] 誤差反饋與里程累積。
         """
@@ -148,7 +148,7 @@ class CerebellumEngine:
             self._evolve_gait()
             self.total_distance = 0.0 # 重置里程
 
-    def _evolve_gait(self):
+    def _evolve_gait(self) -> None:
         """
         [Task N.22/E4] 神經可塑性演化：基於 Loss 的梯度微調
         """
@@ -241,6 +241,7 @@ class CerebellumEngine:
         }
 
     def get_posture_snapshot(self) -> Dict[str, Any]:
+        """Get the current posture snapshot including pose and spine state."""
         return {
             "current_pose": self.current_pose_name,
             "spine_state": self.active_theta.tolist()

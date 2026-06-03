@@ -61,10 +61,12 @@ else:
         def __init__(self, *args, **kwargs):
             pass
 
-        def __getattr__(self, name):
+        def __getattr__(self, name) -> str:
+            """Execute the   getattr   operation."""
             return MagicMock()
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args, **kwargs) -> str:
+            """Execute the   call   operation."""
             return MagicMock()
 
     class AsyncMock:
@@ -73,10 +75,12 @@ else:
         def __init__(self, *args, **kwargs):
             pass
 
-        def __getattr__(self, name):
+        def __getattr__(self, name) -> str:
+            """Execute the   getattr   operation."""
             return AsyncMock()
 
-        async def __call__(self, *args, **kwargs):
+        async def __call__(self, *args, **kwargs) -> None:
+            """Execute the   call   operation."""
             return None
 
 
@@ -351,6 +355,7 @@ class HSPConnector:
         # Tests expect signature on_message(client, topic, payload, qos, properties)
         # MessageBridge.handle_external_message expects handle_external_message(topic, message)
         async def test_compatible_on_message(client, topic, payload, qos, properties) -> None:
+            """Execute the test compatible on message operation."""
             topic_str = topic.decode() if isinstance(topic, (bytes, bytearray)) else topic
             payload_str = payload.decode() if isinstance(payload, (bytes, bytearray)) else payload
             # 直接调用回调函数而不是创建任务
@@ -365,11 +370,12 @@ class HSPConnector:
 
         # Wrap a test-provided callback (client, topic, payload, qos, properties)
         async def wrapper(topic: str, message: str) -> None:
+            """Wrap the decorated function."""
             await callback(None, topic, message, 1, None)
 
         self.external_connector.on_message_callback = cast(Callable, wrapper)
 
-    def register_on_fact_callback(self, callback: Callable):
+    def register_on_fact_callback(self, callback: Callable) -> None:
         """注册事实消息回调"""
         self._fact_callbacks.append(callback)
 
@@ -377,7 +383,7 @@ class HSPConnector:
         """注册能力广告消息回调"""
         self._capability_advertisement_callbacks.append(callback)
 
-    def register_on_task_request_callback(self, callback: Callable):
+    def register_on_task_request_callback(self, callback: Callable) -> None:
         """注册任务请求消息回调"""
         self._task_request_callbacks.append(callback)
 
@@ -385,7 +391,7 @@ class HSPConnector:
         """注册任务结果消息回调"""
         self._task_result_callbacks.append(callback)
 
-    def register_on_acknowledgement_callback(self, callback: Callable):
+    def register_on_acknowledgement_callback(self, callback: Callable) -> None:
         """注册确认消息回调"""
         self._acknowledgement_callbacks.append(callback)
 
@@ -393,7 +399,7 @@ class HSPConnector:
         """注册连接回调"""
         self._connect_callbacks.append(callback)
 
-    def register_on_disconnect_callback(self, callback: Callable):
+    def register_on_disconnect_callback(self, callback: Callable) -> None:
         """注册断开连接回调"""
         self._disconnect_callbacks.append(callback)
 
@@ -402,7 +408,7 @@ class HSPConnector:
         """Backward compatibility method for registering fact callbacks."""
         self.register_on_fact_callback(callback)
 
-    def on_command_received(self, callback: Callable):
+    def on_command_received(self, callback: Callable) -> None:
         """Backward compatibility method for registering command callbacks (maps to task_request)."""
         self.register_on_task_request_callback(callback)
 
@@ -410,7 +416,7 @@ class HSPConnector:
         """Backward compatibility method for registering connect callbacks."""
         self.register_on_connect_callback(callback)
 
-    def on_disconnect_callback(self, callback: Callable):
+    def on_disconnect_callback(self, callback: Callable) -> None:
         """Backward compatibility method for registering disconnect callbacks."""
         self.register_on_disconnect_callback(callback)
 
@@ -438,7 +444,7 @@ class HSPConnector:
                     # For synchronous subscribe methods, just call directly
                     self.external_connector.subscribe(topic, qos)
 
-    async def close(self):
+    async def close(self) -> None:
         """Disconnects the external connector and cleans up resources."""
         self.logger.info("HSPConnector: Disconnecting external connector...")
         if self.external_connector and hasattr(self.external_connector, "disconnect"):
@@ -462,7 +468,8 @@ class HSPConnector:
         self.is_connected = False
         self.hsp_available = False
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
+        """Disconnect from the service."""
         if self.mock_mode:
             self.logger.info("HSPConnector: Mock disconnect successful.")
             self.is_connected = False
@@ -617,7 +624,7 @@ class HSPConnector:
         return health
 
     # 添加subscribe方法以解决测试中的AttributeError
-    async def subscribe(self, topic: str, qos: int = 1):
+    async def subscribe(self, topic: str, qos: int = 1) -> None:
         """
         Subscribe to a topic.
 
@@ -685,8 +692,9 @@ class HSPConnector:
             self.logger.error(f"Error publishing opinion: {e}", exc_info=True)
             return False
 
-    async def subscribe_to_facts(self, callback: Callable[..., Any]):
+    async def subscribe_to_facts(self, callback: Callable[..., Any]) -> None:
         # Subscribe to fact messages
+        """Execute the subscribe to facts operation."""
         self.register_on_fact_callback(callback)
 
         # Subscribe to the fact topic
@@ -696,6 +704,7 @@ class HSPConnector:
     async def subscribe_to_opinions(self, callback: Callable[..., Any]) -> None:
         # Register the callback for opinion messages
         # Note: We'll treat opinions as a special type of fact for now
+        """Execute the subscribe to opinions operation."""
         self.register_on_fact_callback(callback)
 
         # Subscribe to the opinion topic
@@ -704,9 +713,10 @@ class HSPConnector:
 
     def get_connector_status(self) -> Dict[str, Any]:
         # Get the connector status
+        """Get the connector status by self."""
         return self.get_communication_status()
 
-    async def _dispatch_task_result_to_callbacks(self, message: Dict[str, Any]):
+    async def _dispatch_task_result_to_callbacks(self, message: Dict[str, Any]) -> None:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
@@ -765,7 +775,7 @@ class HSPConnector:
                 ack_topic = f"hsp/acks/{sender_ai_id}"
                 await self.publish_message(ack_topic, ack_envelope, qos=1)
 
-    async def _dispatch_acknowledgement_to_callbacks(self, message: Dict[str, Any]):
+    async def _dispatch_acknowledgement_to_callbacks(self, message: Dict[str, Any]) -> None:
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
@@ -803,7 +813,7 @@ class HSPConnector:
                 else:
                     callback(ack_payload, sender_ai_id, validated_message)
 
-    async def _handle_fact_message(self, fact_message: Dict[str, Any]):
+    async def _handle_fact_message(self, fact_message: Dict[str, Any]) -> None:
         """
         Handle a fact message.
 
@@ -813,7 +823,7 @@ class HSPConnector:
         # Dispatch the fact message to callbacks
         await self._dispatch_fact_to_callbacks(fact_message)
 
-    async def _handle_opinion_message(self, opinion_message: Dict[str, Any]):
+    async def _handle_opinion_message(self, opinion_message: Dict[str, Any]) -> None:
         """
         Handle an opinion message.
 
@@ -945,6 +955,7 @@ class HSPConnector:
             return False
 
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
+        """Log a diagnostic message."""
         self.logger.debug("HSPConnector: publish_message called.")
 
         message_id = envelope.get("message_id")

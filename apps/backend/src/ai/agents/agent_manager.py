@@ -65,7 +65,8 @@ class StateImpact:
     gamma: Dict[str, float] = None  # 情感维度影响
     delta: Dict[str, float] = None  # 社交维度影响
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if self.alpha is None:
             self.alpha = {}
         if self.beta is None:
@@ -250,7 +251,7 @@ class AgentManager:
         logger.info(f"Router enabled: {self.enable_router} (port {self.router_port})")
         logger.info(f"State manager: {state_manager is not None}")
 
-    def _start_router(self):
+    def _start_router(self) -> None:
         """Start the HSP Message Router as a background process."""
         try:
             # Create a simple router script
@@ -383,7 +384,7 @@ if __name__ == "__main__":
             logger.error(f"Error starting router: {e}", exc_info=True)
             self.enable_router = False
 
-    def register_agent_factory(self, agent_type: str, factory: Any):
+    def register_agent_factory(self, agent_type: str, factory: Any) -> None:
         """注册代理工厂"""
         self.agent_factories[agent_type] = factory
 
@@ -485,7 +486,7 @@ if __name__ == "__main__":
             return result
 
     # P0-3: 应用状态影响
-    async def _apply_state_impact(self, impact: StateImpact):
+    async def _apply_state_impact(self, impact: StateImpact) -> None:
         """
         应用状态影响
 
@@ -518,7 +519,7 @@ if __name__ == "__main__":
             logger.error(f"Error applying state impact: {e}", exc_info=True)
 
     # P0-3: 设置自定义评估器
-    def set_result_evaluator(self, evaluator: AgentResultEvaluator):
+    def set_result_evaluator(self, evaluator: AgentResultEvaluator) -> None:
         """
         设置自定义结果评估器
 
@@ -529,7 +530,7 @@ if __name__ == "__main__":
         logger.info(f"Custom result evaluator set: {evaluator.__class__.__name__}")
 
     # P0-3: 设置状态管理器
-    def set_state_manager(self, state_manager: Any):
+    def set_state_manager(self, state_manager: Any) -> None:
         """
         设置状态管理器
 
@@ -700,7 +701,7 @@ if __name__ == "__main__":
             logger.warning(f"[AgentManager] Agent '{agent_name}' not found or not running.", exc_info=True)
             return False
 
-    def shutdown_all_agents(self):
+    def shutdown_all_agents(self) -> None:
         """
         Shuts down all active sub - agent processes managed by this manager.
         """

@@ -31,7 +31,7 @@ class TTLSessionManager:
         self._ttl = self._config.get("ttl_seconds", 3600)
         self._max_sessions = self._config.get("max_sessions", 1000)
 
-    def _purge_expired(self):
+    def _purge_expired(self) -> None:
         now = datetime.now()
         expired = [sid for sid, s in self._sessions.items()
                     if (now - datetime.fromisoformat(s.get("created_at", now.isoformat()))).total_seconds() > self._ttl]
@@ -43,10 +43,12 @@ class TTLSessionManager:
                 del self._sessions[sid]
 
     def get(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Execute the get operation."""
         self._purge_expired()
         return self._sessions.get(session_id)
 
-    def set(self, session_id: str, data: Dict[str, Any]):
+    def set(self, session_id: str, data: Dict[str, Any]) -> None:
+        """Execute the set operation."""
         self._purge_expired()
         if len(self._sessions) >= self._max_sessions:
             oldest = min(self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", ""))
@@ -54,10 +56,12 @@ class TTLSessionManager:
         self._sessions[session_id] = data
 
     def __contains__(self, session_id: str) -> bool:
+        """Execute the   contains   operation."""
         self._purge_expired()
         return session_id in self._sessions
 
-    def items(self):
+    def items(self) -> str:
+        """Execute the items operation."""
         self._purge_expired()
         return self._sessions.items()
 
@@ -172,7 +176,8 @@ def _build_math_response(verification, matrix, user_message: str, session_id: st
 
 
 @router.get("/security/sync-key-c")
-async def sync_key_c(request: Request):
+async def sync_key_c(request: Request) -> dict:
+    """Log a diagnostic message."""
     client_host = request.client.host
     if client_host not in ["127.0.0.1", "::1", "localhost"]:
         logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}", exc_info=True)
@@ -185,7 +190,8 @@ async def sync_key_c(request: Request):
 
 
 @router.post("/session/start")
-async def start_session(request: Dict[str, Any] = Body(default={})):
+async def start_session(request: Dict[str, Any] = Body(default={})) -> dict:
+    """Execute the start session operation."""
     session_id = f"sess-{uuid.uuid4().hex[:8]}"
     sessions.set(session_id, {
         "created_at": datetime.now().isoformat(),
@@ -196,7 +202,8 @@ async def start_session(request: Dict[str, Any] = Body(default={})):
 
 
 @router.post("/session/{session_id}/send")
-async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
+async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> dict:
+    """Execute the send message operation."""
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
     user_message = request.get("text", request.get("message", ""))
@@ -216,7 +223,8 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
 
 
 @router.post("/angela/chat")
-async def angela_chat(request: Dict[str, Any] = Body(...)):
+async def angela_chat(request: Dict[str, Any] = Body(...)) -> str:
+    """Execute the angela chat operation."""
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "\u670b\u53cb")
@@ -226,7 +234,8 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
 
 
 @router.post("/dialogue")
-async def dialogue(request: Dict[str, Any] = Body(...)):
+async def dialogue(request: Dict[str, Any] = Body(...)) -> str:
+    """Execute the dialogue operation."""
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "\u670b\u53cb")
@@ -236,7 +245,8 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
 
 
 @router.post("/chat/unified")
-async def unified_chat(request: Dict[str, Any] = Body(...)):
+async def unified_chat(request: Dict[str, Any] = Body(...)) -> str:
+    """Execute the unified chat operation."""
     user_message = request.get("message", request.get("text", ""))
     context = {
         "user_id": request.get("user_name", request.get("user_id", "User")),

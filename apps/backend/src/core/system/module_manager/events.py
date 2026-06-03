@@ -12,11 +12,13 @@ class EventBus:
         self._subscribers: dict[str, list[Callable]] = {}
 
     def on(self, event: str, handler: Callable) -> None:
+        """Execute the on operation."""
         if event not in self._subscribers:
             self._subscribers[event] = []
         self._subscribers[event].append(handler)
 
     def off(self, event: str, handler: Callable) -> None:
+        """Log a diagnostic message."""
         handlers = self._subscribers.get(event)
         if handlers is not None:
             try:
@@ -27,12 +29,14 @@ class EventBus:
                 del self._subscribers[event]
 
     def emit(self, event: str, **data) -> None:
+        """Execute the emit operation."""
         handlers = self._subscribers.get(event)
         if handlers is not None:
             for handler in handlers:
                 handler(**data)
 
     def clear(self) -> None:
+        """Clear all entries."""
         self._subscribers.clear()
 
 
@@ -50,6 +54,7 @@ class HealthMonitor:
         error: str = None,
         consecutive_fails: int = 0,
     ) -> None:
+        """Execute the check operation."""
         hs = HealthStatus(
             name=name,
             status=status,
@@ -63,9 +68,11 @@ class HealthMonitor:
         self._event_bus.emit(event, status=hs)
 
     def get_status(self, name: str) -> Optional[HealthStatus]:
+        """Get the status by self."""
         return self._statuses.get(name)
 
     def get_all_statuses(self) -> dict[str, HealthStatus]:
+        """Get the all statuses by self."""
         return dict(self._statuses)
 
 

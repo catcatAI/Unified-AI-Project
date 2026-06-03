@@ -36,7 +36,8 @@ except ImportError:
             self.action = action
             for k, v in kwargs.items():
                 setattr(self, k, v)
-        def to_dict(self):
+        def to_dict(self) -> dict:
+            """Convert to dict format."""
             return {"action": self.action}
 
 logger = logging.getLogger("angela_cognitive_pipeline")
@@ -71,7 +72,7 @@ class CognitivePipeline:
 
         self._init_subsystems()
 
-    def _init_subsystems(self):
+    def _init_subsystems(self) -> None:
         if not self.attractor_field:
             try:
                 from ai.memory.attractor_field import GradientField
@@ -222,7 +223,7 @@ class CognitivePipeline:
             "allocation_results": allocation_results,
         }
 
-    def _apply_ripple_to_state(self, ripple: Dict[str, Any]):
+    def _apply_ripple_to_state(self, ripple: Dict[str, Any]) -> None:
         if not self.state_matrix:
             return
 
@@ -252,7 +253,7 @@ class CognitivePipeline:
         if ripple.get("fear"):
             self._apply_division_fear()
 
-    def _apply_cognitive_overload(self):
+    def _apply_cognitive_overload(self) -> None:
         if not self.state_matrix:
             return
         if hasattr(self.state_matrix, "beta"):
@@ -260,7 +261,7 @@ class CognitivePipeline:
                 1.0, self.state_matrix.beta.values.get("confusion", 0.0) + 0.3
             )
 
-    def _apply_division_fear(self):
+    def _apply_division_fear(self) -> None:
         if not self.state_matrix:
             return
         if hasattr(self.state_matrix, "gamma"):

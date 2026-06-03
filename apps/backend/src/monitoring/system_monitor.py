@@ -46,7 +46,8 @@ class SystemMetrics:
     network_bytes_recv: int
     gpu_info: List[Dict[str, Any]]
 
-    def to_dict(self):
+    def to_dict(self) -> str:
+        """Convert to dict format."""
         return asdict(self)
 
 
@@ -73,6 +74,7 @@ class SystemMonitor:
             return False
 
     def get_gpu_info(self) -> List[Dict[str, Any]]:
+        """Get the gpu info by self."""
         if not self.gpu_available:
             return []
         try:
@@ -91,6 +93,7 @@ class SystemMonitor:
             return []
 
     def collect_metrics(self) -> SystemMetrics:
+        """Execute the collect metrics operation."""
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
@@ -118,6 +121,7 @@ class SystemMonitor:
         return metrics
 
     def get_current_load(self) -> Dict[str, Any]:
+        """Get the current load by self."""
         metrics = self.collect_metrics()
         load_info = {
             "cpu_load": metrics.cpu_percent,
@@ -144,6 +148,7 @@ class SystemMonitor:
         return load_info
 
     def get_resource_recommendations(self) -> Dict[str, Any]:
+        """Get the resource recommendations by self."""
         if not self.metrics_history:
             return {}
         recent_metrics = self.metrics_history[-10:]
@@ -181,7 +186,8 @@ class SystemMonitor:
             )
         return recommendations
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
+        """Log a diagnostic message."""
         self.is_monitoring = True
         logger.info("开始系统监控")
         while self.is_monitoring:
@@ -199,14 +205,17 @@ class SystemMonitor:
                 logger.error(f"监控过程中发生错误: {e}", exc_info=True)
                 await asyncio.sleep(self.monitoring_interval)
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
+        """Log a diagnostic message."""
         self.is_monitoring = False
         logger.info("停止系统监控")
 
     def get_metrics_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get the metrics history by self."""
         return [m.to_dict() for m in self.metrics_history[-limit:]]
 
     def export_metrics_to_file(self, filepath: str) -> None:
+        """Log a diagnostic message."""
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(

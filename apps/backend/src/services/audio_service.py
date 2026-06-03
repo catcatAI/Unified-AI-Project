@@ -89,7 +89,7 @@ class AudioService:
 
         logger.info("Audio Service Skeleton Initialized")
 
-    async def _init_sync_listener(self):
+    async def _init_sync_listener(self) -> None:
         """初始化同步監聽器"""
         try:
             await sync_manager.register_client("audio_service", self._handle_sync_event)
@@ -106,7 +106,7 @@ class AudioService:
                 self.enabled = enabled
                 logger.info(f"Audio Service enabled status changed to: {enabled}")
 
-    def set_peer_services(self, peer_services: Dict[str, Any]):
+    def set_peer_services(self, peer_services: Dict[str, Any]) -> None:
         self.peer_services = peer_services
         logger.debug(f"Audio Service connected to peer services: {list(peer_services.keys())}")
 
@@ -253,7 +253,7 @@ class AudioService:
 
             try:
                 # Transcribe
-                def _transcribe():
+                def _transcribe() -> str:
                     return self.whisper_model.transcribe(
                         temp_path, language=language.split("-")[0] if language else None
                     )

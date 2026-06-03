@@ -42,7 +42,7 @@ class AngelaModelCore:
         self._heartbeat_active = False
         self._heartbeat_task = None
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """啟動所有底層系統 / Start all underlying systems"""
         logger.info("🧬 [Model-Core] Awakening biological and spatial layers...")
         
@@ -59,7 +59,7 @@ class AngelaModelCore:
         
         logger.info("✨ [Model-Core] Angela's Embryo is now ACTIVE.")
 
-    async def _metabolic_loop(self):
+    async def _metabolic_loop(self) -> None:
         """核心代謝循環：持續同步生理與空間狀態"""
         while self._heartbeat_active:
             try:

@@ -31,7 +31,7 @@ class AttentionController:
         self.min_focus_duration = 0.5  # 最短聚焦時間
         self.max_focus_duration = 3.0  # 最長聚焦時間
 
-    def update_target(self, pos: Tuple[float, float], target_id: Optional[str] = None):
+    def update_target(self, pos: Tuple[float, float], target_id: Optional[str] = None) -> bool:
         """主動切換焦點"""
         now = time.time()
         if now - self.last_saccade_time < self.saccade_cooldown:
@@ -87,7 +87,8 @@ class AttentionController:
         # 否則隨機探索
         return (random.uniform(0.1, 0.9), random.uniform(0.1, 0.9)), None
 
-    def reset(self):
+    def reset(self) -> None:
+        """Reset attention controller to default state."""
         self.mode = AttentionMode.EXPLORE
         self.current_target_id = None
         self.last_focus_pos = (0.5, 0.5)

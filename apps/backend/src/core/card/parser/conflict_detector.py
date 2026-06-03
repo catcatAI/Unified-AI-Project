@@ -20,6 +20,7 @@ class ConflictDetector:
     """
 
     def detect(self, card: Card) -> List[Conflict]:
+        """Detect patterns in the input."""
         conflicts: List[Conflict] = []
         conflicts.extend(self._detect_physical(card))
         conflicts.extend(self._detect_numerical(card))
@@ -27,6 +28,7 @@ class ConflictDetector:
         return conflicts
 
     def detect_between(self, cards: List[Card]) -> List[Tuple[str, str, Conflict]]:
+        """Execute the detect between operation."""
         cross_conflicts: List[Tuple[str, str, Conflict]] = []
         for i in range(len(cards)):
             for j in range(i + 1, len(cards)):

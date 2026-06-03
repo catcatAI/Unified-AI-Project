@@ -296,7 +296,7 @@ class ContextManager:
 _context_manager: Optional[Any] = None
 
 
-def get_context_manager(memory_storage=None, disk_storage=None):
+def get_context_manager(memory_storage=None, disk_storage=None) -> str:
     """获取上下文管理器实例"""
     global _context_manager
     if _context_manager is None:

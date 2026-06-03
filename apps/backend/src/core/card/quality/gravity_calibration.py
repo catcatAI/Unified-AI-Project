@@ -31,6 +31,7 @@ class GravityCalibrator:
     def measure_effectiveness(
         self, core_trait: str, candidates: List[str], chosen: List[str]
     ) -> float:
+        """Execute the measure effectiveness operation."""
         if not chosen:
             return 0.0
         self.field.reset_history()
@@ -47,6 +48,7 @@ class GravityCalibrator:
         candidates: List[str],
         chosen: List[str],
     ) -> dict:
+        """Calibrate system parameters."""
         best_score = -1.0
         best_params = {}
 

@@ -31,18 +31,21 @@ class DistributedCoordinator:
         self.active_nodes: list[str] = []
         self.task_queue: list[dict[str, Any]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
+        """Initialize the component."""
         self.is_initialized = True
         self.cluster_nodes = [f"node_{i}" for i in range(3)]
         self.active_nodes = list(self.cluster_nodes)
         logger.info(f"[DistributedCoordinator] Initialized coordinator={self.coordinator_id} nodes={len(self.active_nodes)}")
 
     async def shutdown(self) -> None:
+        """Shut down the component."""
         self.is_initialized = False
         self.active_nodes = []
         logger.info(f"[DistributedCoordinator] Shutdown coordinator={self.coordinator_id}")
 
-    async def get_cluster_status(self):
+    async def get_cluster_status(self) -> dict:
+        """Get the cluster status by self."""
         return {
             "coordinator_id": self.coordinator_id,
             "is_initialized": self.is_initialized,
@@ -54,6 +57,7 @@ class DistributedCoordinator:
         }
 
     async def distribute_task(self, task: dict[str, Any]) -> dict[str, Any]:
+        """Execute the distribute task operation."""
         return {
             "status": "distributed",
             "task_id": task.get("task_id", str(uuid.uuid4())),
@@ -62,6 +66,7 @@ class DistributedCoordinator:
         }
 
     async def coordinate(self, task: dict[str, Any]) -> dict[str, Any]:
+        """Execute the coordinate operation."""
         return {
             "status": "coordinated",
             "task_id": task.get("task_id", str(uuid.uuid4())),
@@ -79,12 +84,14 @@ class HyperlinkedParameterCluster:
         self.parameters: dict[str, Any] = {}
         self.total_parameters = 1000
 
-    async def initialize(self):
+    async def initialize(self) -> None:
+        """Initialize the component."""
         self.is_initialized = True
         self.parameters = {"learning_rate": 0.001, "batch_size": 32, "epochs": 10}
         logger.info(f"[HyperlinkedParameterCluster] Initialized cluster={self.cluster_id} params={self.total_parameters}")
 
     async def get_cluster_status(self) -> None:
+        """Get the cluster status by self."""
         return {
             "cluster_id": self.cluster_id,
             "is_initialized": self.is_initialized,
@@ -95,6 +102,7 @@ class HyperlinkedParameterCluster:
         }
 
     async def update_parameters(self, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update the parameters."""
         self.parameters.update(updates)
         return {
             "status": "updated",
@@ -124,19 +132,23 @@ class AlignedBaseAgent:
         self.messages_processed = 0
         self.performance_score = 1.0
 
-    async def initialize_alignment_full(self):
+    async def initialize_alignment_full(self) -> None:
+        """Log a diagnostic message."""
         self.is_initialized = True
         logger.info(f"[AlignedBaseAgent] Initialized agent={self.agent_name}")
 
     async def start(self) -> None:
+        """Start the component."""
         self.is_running = True
         logger.info(f"[AlignedBaseAgent] Started agent={self.agent_name}")
 
-    async def stop(self):
+    async def stop(self) -> None:
+        """Stop the component."""
         self.is_running = False
         logger.info(f"[AlignedBaseAgent] Stopped agent={self.agent_name}")
 
     async def get_alignment_status(self) -> None:
+        """Get the alignment status by self."""
         return {
             "agent_id": self.agent_id,
             "agent_name": self.agent_name,
@@ -151,7 +163,8 @@ class AlignedBaseAgent:
             "status": "active" if self.is_running else "inactive",
         }
 
-    async def handle_task_request(self, request, sender_id, envelope):
+    async def handle_task_request(self, request, sender_id, envelope) -> dict:
+        """Handle task request."""
         self.task_count += 1
         self.messages_processed += 1
         return {
@@ -161,6 +174,7 @@ class AlignedBaseAgent:
         }
 
     async def process(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Process incoming data."""
         self.task_count += 1
         return {
             "status": "completed",
@@ -169,6 +183,7 @@ class AlignedBaseAgent:
         }
 
     async def update_alignment(self, alignment_data: dict[str, Any]) -> dict[str, Any]:
+        """Update the alignment."""
         self.alignment_enabled = alignment_data.get("alignment_enabled", self.alignment_enabled)
         self.performance_score = alignment_data.get("performance_score", self.performance_score)
         return {
@@ -177,7 +192,8 @@ class AlignedBaseAgent:
             "alignment_enabled": self.alignment_enabled,
         }
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
+        """Shut down the component."""
         self.is_running = False
         self.is_initialized = False
         logger.info(f"[AlignedBaseAgent] Shutdown agent={self.agent_name}")
@@ -438,7 +454,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 综合测试失败: {e}", exc_info=True)
             return {"error": str(e)}
 
-    async def _initialize_alignment_systems(self):
+    async def _initialize_alignment_systems(self) -> None:
         """初始化对齐系统"""
         self.reasoning_system = ReasoningSystem(f"{self.system_id}_reasoning")
         self.emotion_system = EmotionSystem(f"{self.system_id}_emotion")
@@ -453,7 +469,7 @@ class Level5ASISystem:
         await self.alignment_manager.initialize()
         logger.info(f"[{self.system_id}] 对齐系统初始化完成")
 
-    async def _initialize_advanced_components(self):
+    async def _initialize_advanced_components(self) -> None:
         """初始化高级组件"""
         self.decision_system = DecisionTheorySystem(system_id=f"{self.system_id}_decision_system")
         await self.decision_system.initialize()
@@ -466,7 +482,7 @@ class Level5ASISystem:
 
         logger.info(f"[{self.system_id}] 高级组件初始化完成")
 
-    async def _initialize_distributed_system(self):
+    async def _initialize_distributed_system(self) -> None:
         """初始化分布式系统"""
         self.distributed_coordinator = DistributedCoordinator(
             coordinator_id=f"{self.system_id}_distributed_coordinator"
@@ -480,7 +496,7 @@ class Level5ASISystem:
 
         logger.info(f"[{self.system_id}] 分布式系统初始化完成")
 
-    async def _initialize_autonomous_alignment(self):
+    async def _initialize_autonomous_alignment(self) -> None:
         """初始化自主对齐系统"""
         self.autonomous_alignment = ASIAutonomousAlignment(
             system_id=f"{self.system_id}_autonomous_alignment",
@@ -491,7 +507,7 @@ class Level5ASISystem:
         await self.autonomous_alignment.initialize()
         logger.info(f"[{self.system_id}] 自主对齐系统初始化完成")
 
-    async def _create_aligned_agents(self):
+    async def _create_aligned_agents(self) -> None:
         """创建对齐代理"""
         creative_agent = AlignedBaseAgent(
             agent_id=f"{self.system_id}_creative_agent",
@@ -631,7 +647,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 代理处理失败: {e}", exc_info=True)
             return {"status": "error", "error_message": str(e)}
 
-    async def _update_alignment_score(self):
+    async def _update_alignment_score(self) -> None:
         """更新对齐分数"""
         if self.autonomous_alignment:
             status = await self.autonomous_alignment.get_alignment_status()

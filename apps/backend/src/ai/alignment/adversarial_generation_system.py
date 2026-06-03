@@ -299,7 +299,7 @@ class AdversarialGenerationSystem:
 
         logger.info(f"[{self.system_id}] 对抗性生成系统初始化完成")
 
-    def register_generator(self, name: str, generator: AdversarialGenerator):
+    def register_generator(self, name: str, generator: AdversarialGenerator) -> None:
         """注册对抗性生成器"""
         self.generators[name] = generator
         logger.info(f"[{self.system_id}] 生成器已注册: {name}")
@@ -433,7 +433,7 @@ class AdversarialGenerationSystem:
             "recent_tests": self.test_history[-10:],
         }
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """清空测试历史"""
         self.test_history = []
         self.weakness_patterns = {}

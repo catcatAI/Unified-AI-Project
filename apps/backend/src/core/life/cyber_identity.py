@@ -172,7 +172,7 @@ class CyberIdentity:
         )
         self._last_life_intensity: float = 0.5
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the cyber identity system"""
         self._running = True
 
@@ -190,7 +190,7 @@ class CyberIdentity:
         # Start reflection loop
         self._reflection_task = asyncio.create_task(self._reflection_loop())
 
-    def _initialize_self_knowledge_domains(self):
+    def _initialize_self_knowledge_domains(self) -> None:
         """Initialize knowledge domains for self-identity"""
         if not self.life_intensity_formula:
             return
@@ -216,7 +216,7 @@ class CyberIdentity:
                 OrderType.ALGORITHMIC, stability=0.7, flexibility=0.4
             )
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False
 
@@ -227,7 +227,7 @@ class CyberIdentity:
             except asyncio.CancelledError:
                 pass
 
-    async def _reflection_loop(self):
+    async def _reflection_loop(self) -> None:
         """Background self-reflection loop"""
         while self._running:
             await self._perform_self_reflection()
@@ -248,7 +248,7 @@ class CyberIdentity:
         if len(self.self_reflections) % 24 == 0:  # Daily
             self._update_narrative()
 
-    def _update_self_description(self):
+    def _update_self_description(self) -> None:
         """Update self-description based on current state"""
         aspects_desc = []
 
@@ -267,7 +267,7 @@ class CyberIdentity:
 
         self.self_model.self_description = desc
 
-    def _update_narrative(self):
+    def _update_narrative(self) -> None:
         """Update personal narrative with recent events"""
         # Add recent growth to narrative
         recent_growth = self._get_recent_growth_events(days=7)
@@ -517,7 +517,7 @@ class CyberIdentity:
             self._growth_callbacks[aspect] = []
         self._growth_callbacks[aspect].append(callback)
 
-    def register_milestone_callback(self, callback: Callable[[str], None]):
+    def register_milestone_callback(self, callback: Callable[[str], None]) -> None:
         """Register callback for milestone achievements"""
         self._milestone_callbacks.append(callback)
 
@@ -620,7 +620,7 @@ class CyberIdentity:
         else:
             return "沉睡态 - Dormant state"
 
-    def update_from_formula_calculations(self):
+    def update_from_formula_calculations(self) -> None:
         """
         Update identity based on formula calculations
 
@@ -649,7 +649,8 @@ class CyberIdentity:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         identity = CyberIdentity()
         await identity.initialize()
 

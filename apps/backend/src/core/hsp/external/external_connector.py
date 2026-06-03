@@ -42,7 +42,7 @@ class MessageRouter:
         return cls(port=port)
 
     @classmethod
-    def reset_instance(cls):
+    def reset_instance(cls) -> None:
         """No-op (deprecated)."""
 
     async def start(self) -> None:
@@ -57,7 +57,8 @@ class MessageRouter:
         app = FastAPI()
 
         @app.post("/register")
-        async def register_agent(data: Dict[str, Any]):
+        async def register_agent(data: Dict[str, Any]) -> dict:
+            """Register a agent."""
             agent_id = data.get("agent_id")
             port = data.get("port")
             capabilities = data.get("capabilities", [])
@@ -73,7 +74,8 @@ class MessageRouter:
             raise HTTPException(status_code=400, detail="Missing agent_id")
 
         @app.post("/unregister")
-        async def unregister_agent(data: Dict[str, Any]):
+        async def unregister_agent(data: Dict[str, Any]) -> dict:
+            """Log a diagnostic message."""
             agent_id = data.get("agent_id")
             if agent_id and agent_id in self.registry:
                 del self.registry[agent_id]
@@ -83,10 +85,12 @@ class MessageRouter:
 
         @app.get("/registry")
         async def get_registry() -> dict:
+            """Get the registry."""
             return {"agents": self.registry}
 
         @app.post("/send")
-        async def send_message(data: Dict[str, Any]):
+        async def send_message(data: Dict[str, Any]) -> dict:
+            """Log a diagnostic message."""
             target_id = data.get("target_id")
             message = data.get("message", {})
 
@@ -108,7 +112,8 @@ class MessageRouter:
                 return {"status": "failed", "error": "Target not found"}
 
         @app.post("/broadcast")
-        async def broadcast_message(data: Dict[str, Any]):
+        async def broadcast_message(data: Dict[str, Any]) -> dict:
+            """Log a diagnostic message."""
             message = data.get("message", {})
             results = []
             for agent_id, info in self.registry.items():
@@ -129,7 +134,7 @@ class MessageRouter:
         )
         await self._server.serve()
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the HTTP server."""
         if self._server:
             self._running = False
@@ -175,7 +180,8 @@ class ExternalConnector:
             app = FastAPI()
 
             @app.post("/message")
-            async def receive_message(data: Dict[str, Any]):
+            async def receive_message(data: Dict[str, Any]) -> dict:
+                """Log a diagnostic message."""
                 self.stats["messages_received"] += 1
                 logger.debug(
                     f"[{self.ai_id}] Received message: {data.get('message_id', 'unknown')}"
@@ -194,11 +200,13 @@ class ExternalConnector:
                 return {"status": "received"}
 
             @app.get("/health")
-            async def health_check():
+            async def health_check() -> dict:
+                """Execute the health check operation."""
                 return {"status": "healthy", "agent_id": self.ai_id}
 
             @app.get("/stats")
             async def get_stats() -> dict:
+                """Get the stats."""
                 return self.stats
 
             self._app = app
@@ -306,7 +314,7 @@ class ExternalConnector:
             logger.error(f"[{self.ai_id}] Broadcast failed: {e}", exc_info=True)
             return {"status": "failed", "error": str(e)}
 
-    def on_message(self, callback: Callable):
+    def on_message(self, callback: Callable) -> str:
         """Register a callback for incoming messages."""
         self._message_callbacks.append(callback)
         return callback
@@ -323,7 +331,7 @@ class ExternalConnector:
             logger.error(f"[{self.ai_id}] Failed to get registry: {e}", exc_info=True)
             return {"agents": {}}
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         """Unregister from router and shutdown."""
         try:
             async with httpx.AsyncClient() as client:

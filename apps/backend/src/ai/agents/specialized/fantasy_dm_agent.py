@@ -18,7 +18,7 @@ class FantasyDMAgent(BaseAgent):
         self.codex_path = "apps/backend/data/trpg/ai-trpg-codex.json"
         self._codex_cache = None
 
-    def _load_codex(self):
+    def _load_codex(self) -> str:
         if self._codex_cache is None:
             try:
                 import os
@@ -37,6 +37,7 @@ class FantasyDMAgent(BaseAgent):
         return self._codex_cache
 
     async def execute(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the requested operation."""
         action = task.get("action")
         params = task.get("parameters", {})
 

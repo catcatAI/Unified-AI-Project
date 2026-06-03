@@ -603,7 +603,7 @@ class ActiveCognitionFormula:
                 "description_cn": "极端压力。存在系统超载或崩溃风险。",
             }
 
-    def register_construction_callback(self, callback: Callable[[ActiveConstruction], None]):
+    def register_construction_callback(self, callback: Callable[[ActiveConstruction], None]) -> None:
         """Register callback for construction events"""
         self._construction_callbacks.append(callback)
 
@@ -611,7 +611,7 @@ class ActiveCognitionFormula:
         """Register callback for stress vector additions"""
         self._stress_callbacks.append(callback)
 
-    def register_threshold_callback(self, callback: Callable[[float, bool], None]):
+    def register_threshold_callback(self, callback: Callable[[float, bool], None]) -> None:
         """Register callback for threshold crossings"""
         self._threshold_callbacks.append(callback)
 

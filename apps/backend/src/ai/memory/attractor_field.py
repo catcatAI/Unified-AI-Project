@@ -71,7 +71,8 @@ class MemoryAttractor:
     tags: List[str] = field(default_factory=list)
     description: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         if len(self.coord) < 5:
             self.coord = list(self.coord) + [0.0] * (5 - len(self.coord))
 
@@ -110,7 +111,7 @@ class GradientField:
         self.attractors: List[MemoryAttractor] = []
         self._default_attractors()
 
-    def _default_attractors(self):
+    def _default_attractors(self) -> None:
         """預設記憶吸引子——涵蓋基本情感與行為"""
 
         empathy = MemoryAttractor(
@@ -198,11 +199,13 @@ class GradientField:
             math_overload, math_fear, calm_reassure, lonely
         ]
 
-    def add_attractor(self, attractor: MemoryAttractor):
+    def add_attractor(self, attractor: MemoryAttractor) -> None:
+        """Add a attractor."""
         self.attractors.append(attractor)
         logger.debug(f"[GradientField] 新增吸引子: {attractor.description}")
 
     def remove_attractor(self, tags: List[str]) -> None:
+        """Remove a attractor."""
         self.attractors = [a for a in self.attractors if not any(t in a.tags for t in tags)]
 
     def compute_gradient(self, current_state: List[float]) -> GradientResult:
@@ -317,6 +320,7 @@ class GradientField:
         return math.sqrt(sum((a[i] - b[i]) ** 2 for i in range(len(a))))
 
     def export_attractors(self) -> List[Dict[str, Any]]:
+        """Execute the export attractors operation."""
         return [
             {
                 "coord": list(a.coord),
@@ -330,7 +334,8 @@ class GradientField:
             for a in self.attractors
         ]
 
-    def import_attractors(self, data: List[Dict[str, Any]]):
+    def import_attractors(self, data: List[Dict[str, Any]]) -> None:
+        """Execute the import attractors operation."""
         self.attractors = []
         for item in data:
             self.attractors.append(MemoryAttractor(

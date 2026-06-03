@@ -94,7 +94,8 @@ class FactExtractorModule:
 if __name__ == "__main__":
     # Quick standalone test
     class MockLLM:
-        async def chat_completion(self, messages, model_id, **kwargs):
+        async def chat_completion(self, messages, model_id, **kwargs) -> str:
+            """Complete a chat interaction via LLM."""
             from collections import namedtuple
 
             Response = namedtuple("Response", ["content"])
@@ -102,7 +103,8 @@ if __name__ == "__main__":
                 content='[{"fact_type": "user_preference", "content": {"category": "color", "preference": "green"}, "confidence": 0.9}]'
             )
 
-    async def test():
+    async def test() -> None:
+        """Log a diagnostic message."""
         extractor = FactExtractorModule(MockLLM())
         facts = await extractor.extract_facts("My favorite color is green.")
         logger.info(f"Extracted facts: {facts}")

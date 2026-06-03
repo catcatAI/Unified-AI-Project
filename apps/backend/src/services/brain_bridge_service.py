@@ -32,7 +32,7 @@ class BrainBridgeService:
             5.0  # Sync every 5 seconds (Increased for real-time dialogue awareness)
         )
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the bridge sync service"""
         self._running = True
         self._task = asyncio.create_task(self._sync_loop())
@@ -49,7 +49,7 @@ class BrainBridgeService:
                 pass
         logger.info("Brain Bridge Service stopped.")
 
-    async def _sync_loop(self):
+    async def _sync_loop(self) -> None:
         """Periodic sync loop"""
         while self._running:
             try:

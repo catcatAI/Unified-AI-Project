@@ -59,7 +59,7 @@ class MemoryLearningEngine:
             "templates_optimized": 0,
         }
 
-    async def record_feedback(self, template_id: str, feedback: bool, context: dict[str, Any]):
+    async def record_feedback(self, template_id: str, feedback: bool, context: dict[str, Any]) -> None:
         """
         记录用户反馈
         使用移动平均更新成功率（80% 历史 + 20% 新反馈）
@@ -242,7 +242,7 @@ class MemoryLearningEngine:
         logger.info(f"Suggested {len(suggestions)} new templates")
         return suggestions
 
-    async def optimize_templates(self):
+    async def optimize_templates(self) -> None:
         """
         优化模板
         基于反馈历史优化现有模板
@@ -298,7 +298,7 @@ class MemoryLearningEngine:
             },
         }
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """清空反馈历史"""
         self.feedback_history.clear()
         logger.info("Feedback history cleared")

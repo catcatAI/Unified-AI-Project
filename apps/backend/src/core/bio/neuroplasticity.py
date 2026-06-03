@@ -76,7 +76,8 @@ class SynapticWeight:
     activation_count: int = 0
     state: SynapticState = SynapticState.BASELINE
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Execute the   post init   operation."""
         self.weight = max(0.0, min(1.0, self.weight))
 
 
@@ -296,7 +297,7 @@ class NeuroplasticitySystem:
         self._memory_callbacks: Dict[str, List[Callable[[MemoryTrace], None]]] = {}
         self._consolidation_callbacks: List[Callable[[str], None]] = []
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the neuroplasticity system"""
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
@@ -311,7 +312,7 @@ class NeuroplasticitySystem:
             except asyncio.CancelledError:
                 pass
 
-    async def _update_loop(self):
+    async def _update_loop(self) -> None:
         """Background update loop"""
         while self._running:
             await self._decay_synaptic_weights()
@@ -338,7 +339,7 @@ class NeuroplasticitySystem:
                 else:
                     synapse.state = SynapticState.BASELINE
 
-    async def _update_memory_consolidation(self):
+    async def _update_memory_consolidation(self) -> None:
         """Update memory consolidation status"""
         for memory_id, trace in self.memory_traces.items():
             age_minutes = trace.get_age_minutes()
@@ -391,7 +392,7 @@ class NeuroplasticitySystem:
 
         return trace
 
-    def apply_ltp(self, memory_id: str, frequency: float, duration: float = 5.0):
+    def apply_ltp(self, memory_id: str, frequency: float, duration: float = 5.0) -> None:
         """
         Apply Long-Term Potentiation to strengthen a memory
 
@@ -420,7 +421,7 @@ class NeuroplasticitySystem:
             # Update synaptic connections for associated neurons
             self._potentiate_associated_synapses(memory_id, potentiation)
 
-    def apply_ltd(self, memory_id: str, frequency: float = 0.5, duration: float = 10.0):
+    def apply_ltd(self, memory_id: str, frequency: float = 0.5, duration: float = 10.0) -> None:
         """
         Apply Long-Term Depression to weaken a memory
 
@@ -440,7 +441,7 @@ class NeuroplasticitySystem:
 
             trace.current_weight = max(0.0, trace.current_weight - depression)
 
-    def _potentiate_associated_synapses(self, memory_id: str, amount: float):
+    def _potentiate_associated_synapses(self, memory_id: str, amount: float) -> None:
         """Strengthen synapses associated with a memory"""
         # This is a simplified model - in reality, memories involve complex networks
         trace = self.memory_traces[memory_id]
@@ -503,7 +504,7 @@ class NeuroplasticitySystem:
 
         return trace
 
-    def _apply_hebbian_update(self, memory_id_1: str, memory_id_2: str):
+    def _apply_hebbian_update(self, memory_id_1: str, memory_id_2: str) -> None:
         """Apply Hebbian learning between two memories"""
         # Treat memories as "co-firing" when one is accessed and they're associated
         sorted_ids = sorted([memory_id_1, memory_id_2])
@@ -551,7 +552,7 @@ class NeuroplasticitySystem:
 
         return retention
 
-    def consolidate_memories(self, memory_ids: Optional[List[str]] = None):
+    def consolidate_memories(self, memory_ids: Optional[List[str]] = None) -> None:
         """
         Trigger memory consolidation (typically during sleep/rest)
 
@@ -580,7 +581,7 @@ class NeuroplasticitySystem:
                                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                                 pass
 
-    def associate_memories(self, memory_id_1: str, memory_id_2: str):
+    def associate_memories(self, memory_id_1: str, memory_id_2: str) -> None:
         """
         Create an association between two memories
 
@@ -608,7 +609,7 @@ class NeuroplasticitySystem:
                 weak.append(trace)
         return weak
 
-    def register_memory_callback(self, memory_id: str, callback: Callable[[MemoryTrace], None]):
+    def register_memory_callback(self, memory_id: str, callback: Callable[[MemoryTrace], None]) -> None:
         """Register callback for memory access"""
         if memory_id not in self._memory_callbacks:
             self._memory_callbacks[memory_id] = []
@@ -1255,7 +1256,7 @@ class TraumaMemorySystem:
 
         return results
 
-    def _validate_trauma_input(self, memory_id: str, coping_strategy: str):
+    def _validate_trauma_input(self, memory_id: str, coping_strategy: str) -> str:
         if memory_id not in self.trauma_memories:
             raise ValueError(f"Trauma memory {memory_id} not found in system")
         valid_strategies = ["default", "grounding", "reframing", "distraction", "extinction"]
@@ -1266,7 +1267,7 @@ class TraumaMemorySystem:
             )
         return self.trauma_memories[memory_id]
 
-    def _handle_flashback(self, trauma, memory_id, trigger_context, intrusion_likelihood, current_stress_level, results):
+    def _handle_flashback(self, trauma, memory_id, trigger_context, intrusion_likelihood, current_stress_level, results) -> None:
         import math
         if intrusion_likelihood > 0.3:
             results["reactivation_occurred"] = True
@@ -1289,7 +1290,7 @@ class TraumaMemorySystem:
         else:
             results["flashback_intensity"] = 0.0
 
-    def _apply_emotional_regulation(self, coping_strategy, current_stress_level, results):
+    def _apply_emotional_regulation(self, coping_strategy, current_stress_level, results) -> str:
         regulation_effects = {
             "default": 0.2,
             "grounding": 0.4,
@@ -1306,7 +1307,7 @@ class TraumaMemorySystem:
             results["flashback_intensity"] = reduced_intensity
         return effectiveness
 
-    def _prevent_over_activation(self, current_stress_level, results):
+    def _prevent_over_activation(self, current_stress_level, results) -> None:
         if results["flashback_intensity"] > 0.7 and current_stress_level > 0.6:
             dampening = min(0.3, current_stress_level * 0.4)
             results["flashback_intensity"] = max(0.0, results["flashback_intensity"] - dampening)
@@ -1316,7 +1317,7 @@ class TraumaMemorySystem:
         else:
             results["over_activation_prevented"] = False
 
-    def _handle_trauma_extinction(self, trauma, coping_strategy, effectiveness, results):
+    def _handle_trauma_extinction(self, trauma, coping_strategy, effectiveness, results) -> None:
         if coping_strategy == "extinction":
             if results["reactivation_occurred"] and results["flashback_intensity"] < 0.5:
                 extinction_boost = 0.05 + (effectiveness * 0.1)
@@ -1332,7 +1333,7 @@ class TraumaMemorySystem:
                 natural_extinction = min(0.3, trauma.reactivation_count * 0.01)
                 results["extinction_progress"] = natural_extinction
 
-    def _generate_recommended_actions(self, trauma, current_stress_level, results):
+    def _generate_recommended_actions(self, trauma, current_stress_level, results) -> None:
         if not results["recommended_actions"]:
             if results["flashback_intensity"] > 0.5:
                 results["recommended_actions"].append("apply_emotional_regulation")
@@ -1344,7 +1345,7 @@ class TraumaMemorySystem:
             if not results["recommended_actions"]:
                 results["recommended_actions"].append("continue_monitoring")
 
-    def _log_processing_result(self, memory_id, trigger_context, current_stress_level, coping_strategy, results):
+    def _log_processing_result(self, memory_id, trigger_context, current_stress_level, coping_strategy, results) -> None:
         processing_record = {
             "timestamp": datetime.now().isoformat(),
             "memory_id": memory_id,
@@ -1514,7 +1515,8 @@ class ExplicitImplicitLearning:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> None:
+        """Run a demonstration."""
         np_system = NeuroplasticitySystem()
         await np_system.initialize()
 

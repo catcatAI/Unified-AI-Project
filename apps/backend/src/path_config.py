@@ -70,7 +70,7 @@ def resolve_path(path_str: str) -> Path:
         return PROJECT_ROOT / path
 
 
-def ensure_directories():
+def ensure_directories() -> None:
     """Create required directories. Call explicitly during startup, not on import."""
     for directory in [DATA_DIR, TRAINING_DIR, MODELS_DIR, CHECKPOINTS_DIR, CONFIGS_DIR]:
         directory.mkdir(parents=True, exist_ok=True)

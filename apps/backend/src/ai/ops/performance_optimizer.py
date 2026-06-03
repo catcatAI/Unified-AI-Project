@@ -15,7 +15,7 @@ class PerformanceOptimizer:
         self.performance_metrics: Dict[str, List[Dict[str, Any]]] = {}
         logger.info("PerformanceOptimizer initialized.")
 
-    def ingest_metrics(self, component_id: str, metrics: Dict[str, Any]):
+    def ingest_metrics(self, component_id: str, metrics: Dict[str, Any]) -> None:
         """Ingests performance metrics for a given component."""
         if component_id not in self.performance_metrics:
             self.performance_metrics[component_id] = []

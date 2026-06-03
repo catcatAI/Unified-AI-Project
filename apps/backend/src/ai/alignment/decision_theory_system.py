@@ -110,7 +110,7 @@ class BayesianModel(ProbabilityModel):
 
         return posterior
 
-    async def update_beliefs(self, new_evidence: Dict[str, Any]):
+    async def update_beliefs(self, new_evidence: Dict[str, Any]) -> None:
         """根据新证据更新先验信念"""
         for outcome_key in self.prior_beliefs:
             adjustment = 0.1 * new_evidence.get("impact", 0)
@@ -122,7 +122,7 @@ class BayesianModel(ProbabilityModel):
         """设置先验概率"""
         self.prior_beliefs[outcome_key] = max(0.0, min(1.0, probability))
 
-    def set_likelihood_function(self, outcome_key: str, likelihood_func: Callable):
+    def set_likelihood_function(self, outcome_key: str, likelihood_func: Callable) -> None:
         """设置似然函数"""
         self.likelihood_functions[outcome_key] = likelihood_func
 
@@ -146,7 +146,7 @@ class CausalModel(ProbabilityModel):
 
         return 0.5
 
-    async def update_beliefs(self, new_evidence: Dict[str, Any]):
+    async def update_beliefs(self, new_evidence: Dict[str, Any]) -> None:
         """根据新证据更新因果信念"""
         cause = new_evidence.get("cause")
         effect = new_evidence.get("effect")
@@ -156,7 +156,7 @@ class CausalModel(ProbabilityModel):
             if effect not in self.causal_graph[cause]:
                 self.causal_graph[cause].append(effect)
 
-    def add_causal_link(self, cause: str, effect: str, probability: float):
+    def add_causal_link(self, cause: str, effect: str, probability: float) -> None:
         """添加因果链接"""
         if cause not in self.causal_graph:
             self.causal_graph[cause] = []
@@ -458,7 +458,7 @@ class DecisionTheorySystem:
         """获取决策历史"""
         return self.decision_history
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """清空决策历史"""
         self.decision_history = []
         logger.info(f"[{self.system_id}] 决策历史已清空")

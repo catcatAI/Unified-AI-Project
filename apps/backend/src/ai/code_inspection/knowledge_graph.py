@@ -93,7 +93,7 @@ class KnowledgeGraph:
         logger.info(f"[KnowledgeGraph] Built graph with {len(self.nodes)} nodes, {len(self.edges)} edges")
         return len(self.nodes)
 
-    def _build_file_graph(self, filepath: Path):
+    def _build_file_graph(self, filepath: Path) -> None:
         """為單個文件構建圖譜"""
         try:
             source = filepath.read_text(encoding="utf-8")
@@ -131,7 +131,7 @@ class KnowledgeGraph:
             self._add_node(func)
             self._add_edge(GraphEdge(source=file_node.id, target=func.id, type="CONTAINS"))
 
-    def _add_node(self, node: GraphNode):
+    def _add_node(self, node: GraphNode) -> None:
         if node.id not in self.nodes:
             self.nodes[node.id] = node
 
@@ -141,7 +141,7 @@ class KnowledgeGraph:
             self._edge_map[edge.source] = []
         self._edge_map[edge.source].append(edge.target)
 
-    def _track_file_node(self, filepath: Path, node_id: str):
+    def _track_file_node(self, filepath: Path, node_id: str) -> None:
         key = str(filepath)
         if key not in self._file_to_node_ids:
             self._file_to_node_ids[key] = set()
@@ -243,7 +243,7 @@ class KnowledgeGraph:
 
         return functions
 
-    def _build_call_relationships(self):
+    def _build_call_relationships(self) -> None:
         """遍歷所有函數，建立調用關係"""
         for node_id, node in self.nodes.items():
             if node.type not in ("function", "method"):
@@ -313,7 +313,8 @@ class KnowledgeGraph:
         visited = set()
         rec_stack = set()
 
-        def dfs(node_id: str, path: List[str]):
+        def dfs(node_id: str, path: List[str]) -> None:
+            """Execute the dfs operation."""
             visited.add(node_id)
             rec_stack.add(node_id)
 

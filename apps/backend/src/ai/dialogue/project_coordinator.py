@@ -165,6 +165,7 @@ class ProjectCoordinator:
     async def handle_project(
         self, project_query: str, session_id: Optional[str] = None, user_id: Optional[str] = None
     ) -> str:
+        """Handle project."""
         ai_name = "Angela"
         if self.personality_manager:
             try:
@@ -432,6 +433,7 @@ class ProjectCoordinator:
     def handle_task_result(
         self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope
     ) -> None:
+        """Handle task result."""
         correlation_id = envelope.get("correlation_id")
         if not correlation_id:
             return

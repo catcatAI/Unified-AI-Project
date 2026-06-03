@@ -29,7 +29,7 @@ except ImportError:
         logging.warning("Could not import Keras backend (neither tf_keras nor tensorflow.keras)", exc_info=True)
 
 
-def ensure_transformers_compatibility():
+def ensure_transformers_compatibility() -> bool:
     """
     确保Transformers库的兼容性
     """
@@ -58,7 +58,7 @@ def ensure_transformers_compatibility():
 # ensure_transformers_compatibility()
 
 
-def safe_import_sentence_transformer():
+def safe_import_sentence_transformer() -> tuple:
     """安全导入SentenceTransformer"""
     try:
         # 确保环境变量已设置
@@ -71,7 +71,7 @@ def safe_import_sentence_transformer():
         return None, False
 
 
-def safe_import_pipeline():
+def safe_import_pipeline() -> tuple:
     """安全导入Transformers pipeline"""
     try:
         # 确保环境变量已设置

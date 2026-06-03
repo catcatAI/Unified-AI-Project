@@ -117,7 +117,7 @@ class LLMDecisionLoop:
 
         logger.info("LLMDecisionLoop initialized")
 
-    async def start(self):
+    async def start(self) -> None:
         """啟動決策循環"""
         if self.is_running:
             logger.warning("LLMDecisionLoop is already running", exc_info=True)
@@ -127,7 +127,7 @@ class LLMDecisionLoop:
         self._decision_task = asyncio.create_task(self._decision_loop())
         logger.info("LLMDecisionLoop started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """停止決策循環"""
         if not self.is_running:
             return
@@ -143,7 +143,7 @@ class LLMDecisionLoop:
 
         logger.info("LLMDecisionLoop stopped")
 
-    async def _decision_loop(self):
+    async def _decision_loop(self) -> None:
         """決策循環"""
         logger.info("Decision loop started")
 
@@ -177,7 +177,7 @@ class LLMDecisionLoop:
             # 默認間隔
             return self.loop_interval
 
-    async def _make_decision(self):
+    async def _make_decision(self) -> None:
         """執行一次決策"""
         try:
             # 1. 獲取當前狀態
@@ -573,7 +573,7 @@ class LLMDecisionLoop:
         # 只記錄，不發送
         return {"success": True, "observed": True}
 
-    def _record_decision(self, decision: Decision):
+    def _record_decision(self, decision: Decision) -> None:
         """記錄決策"""
         self.decision_history.append(decision)
         self.stats["total_decisions"] += 1
@@ -588,7 +588,7 @@ class LLMDecisionLoop:
         if len(self.decision_history) > self.max_history_size:
             self.decision_history = self.decision_history[-self.max_history_size :]
 
-    def record_activity(self):
+    def record_activity(self) -> None:
         """記錄活動（用於調整決策頻率）"""
         self.last_activity_time = time.monotonic()
         self.stats["total_decisions"] += 1
@@ -613,13 +613,15 @@ class LLMDecisionLoop:
 if __name__ == "__main__":
     # 測試 LLM 決策循環
     async def test_llm_decision_loop():
+        """Log a diagnostic message."""
         from dataclasses import dataclass
 
         logging.basicConfig(level=logging.INFO)
 
         # Mock 服務
         class MockLLMService:
-            async def chat_completion(self, messages):
+            async def chat_completion(self, messages) -> str:
+                """Complete a chat interaction via LLM."""
                 @dataclass
                 class MockResponse:
                     content: str
@@ -637,11 +639,13 @@ if __name__ == "__main__":
                 )
 
         class MockStateManager:
-            async def get_state_matrix(self):
+            async def get_state_matrix(self) -> dict:
+                """Get the state matrix by self."""
                 return {"alpha": 0.6, "beta": 0.5, "gamma": 0.7, "delta": 0.5}
 
         class MockMemoryManager:
             async def get_recent_memories(self, limit=5) -> dict:
+                """Get the recent memories by self."""
                 return ["用戶剛才問了關於AI的問題", "用戶表示對機器學習感興趣"]
 
         # 創建組件

@@ -23,7 +23,7 @@ async def get_ops_manager() -> IntelligentOpsManager:
 
 
 @router.get("/dashboard")
-async def get_ops_dashboard(ops_manager: IntelligentOpsManager = Depends(get_ops_manager)):
+async def get_ops_dashboard(ops_manager: IntelligentOpsManager = Depends(get_ops_manager)) -> str:
     """获取运维仪表板数据"""
     try:
         dashboard_data = await ops_manager.get_ops_dashboard_data()

@@ -211,7 +211,7 @@ class IntegerHashTable:
             "hash_collisions": self._stats["hash_collisions"],
         }
 
-    def clear(self):
+    def clear(self) -> None:
         """清空哈希表"""
         self.entries.clear()
         self.hash_chain.clear()

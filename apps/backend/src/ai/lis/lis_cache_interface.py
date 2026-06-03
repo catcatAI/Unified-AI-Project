@@ -98,6 +98,7 @@ class HAMLISCache(LISCacheInterface):
 
     async def get_incident_by_id(self, incident_id: str) -> Optional[LIS_IncidentRecord]:
         # Querying HAM by metadata filter
+        """Get the incident by id by self."""
         results = await self.ham_manager.query_core_memory(
             metadata_filters={"incident_id": incident_id}, data_type_filter="lis_incident", limit=1
         )
@@ -111,6 +112,7 @@ class HAMLISCache(LISCacheInterface):
         status: Optional[LIS_IncidentStatus] = None,
         limit: int = 10,
     ) -> List[LIS_IncidentRecord]:
+        """Execute the query incidents operation."""
         filters = {}
         if anomaly_type:
             filters["anomaly_type"] = anomaly_type
@@ -127,9 +129,11 @@ class HAMLISCache(LISCacheInterface):
     ) -> List[LIS_IncidentRecord]:
         # In a real system, this would use vector similarity.
         # Here we fallback to type matching in HAM.
+        """Find related incidents."""
         return await self.query_incidents(anomaly_type=event["anomaly_type"], limit=top_n)
 
     async def store_antibody(self, antibody: NarrativeAntibodyObject) -> bool:
+        """Store a antibody."""
         try:
             metadata = {
                 "type": "lis_antibody",
@@ -152,6 +156,7 @@ class HAMLISCache(LISCacheInterface):
     async def get_learned_antibodies(
         self, for_anomaly_type: Optional[LIS_AnomalyType] = None, limit: int = 5
     ) -> List[NarrativeAntibodyObject]:
+        """Get the learned antibodies by self."""
         filters = {}
         if for_anomaly_type:
             filters["primary_type"] = for_anomaly_type

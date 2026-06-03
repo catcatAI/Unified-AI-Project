@@ -17,7 +17,7 @@ class EvaluationDB:
         self.db_path = db_path
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Initializes the SQLite database and creates the 'evaluations' table if it doesn't exist."""
         conn = None
         try:

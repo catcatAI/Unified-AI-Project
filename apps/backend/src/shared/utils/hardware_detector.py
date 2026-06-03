@@ -248,7 +248,7 @@ class SystemHardwareProbe:
             logger.warning("Failed to detect disk space", exc_info=True)
             return 0.0
 
-    def _calculate_tier(self, profile: HardwareProfile):
+    def _calculate_tier(self, profile: HardwareProfile) -> None:
         score = 0.0
         score += profile.cpu_cores_logical * 2
         score += profile.ram_total_gb * 4

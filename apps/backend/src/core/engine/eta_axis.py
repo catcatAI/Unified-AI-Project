@@ -93,6 +93,7 @@ class ModuleConfig:
     adjusted_count: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert module config to a dictionary representation."""
         return {
             "name": self.name,
             "module_type": self.module_type.name,
@@ -106,6 +107,7 @@ class ModuleConfig:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> ModuleConfig:
+        """Create a ModuleConfig from a dictionary representation."""
         mt = AtomicModuleType[data.get("module_type", "LOGIC_GATE")]
         st = data.get("sub_type", "AND")
         if mt == AtomicModuleType.LOGIC_GATE:
@@ -146,6 +148,7 @@ class AtomicModule:
         return None
 
     def _execute_logic_gate(self, inputs: Dict[str, Any]) -> bool:
+        """Execute a logic gate operation based on sub type."""
         gate_type = self.config.sub_type
         params = self.config.parameters
 
@@ -184,6 +187,7 @@ class AtomicModule:
         return False
 
     def _execute_arithmetic_op(self, inputs: Dict[str, Any]) -> float:
+        """Execute an arithmetic operation based on sub type."""
         op_type = self.config.sub_type
         params = self.config.parameters
 
@@ -224,6 +228,7 @@ class AtomicModule:
         return 0.0
 
     def _execute_aggregator(self, inputs: Dict[str, Any]) -> float:
+        """Execute an aggregator operation based on sub type."""
         agg_type = self.config.sub_type
         params = self.config.parameters
         values = inputs.get("values", [])
@@ -253,6 +258,7 @@ class AtomicModule:
         return 0.0
 
     def _execute_router(self, inputs: Dict[str, Any]) -> List[str]:
+        """Execute a router operation based on sub type."""
         router_type = self.config.sub_type
         params = self.config.parameters
         targets = params.get("targets", [])
@@ -320,6 +326,7 @@ class ComposedModule:
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert composed module to a dictionary representation."""
         return {
             "name": self.name,
             "atoms": [a.config.to_dict() for a in self.atoms],
@@ -330,6 +337,7 @@ class ComposedModule:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> ComposedModule:
+        """Create a ComposedModule from a dictionary representation."""
         atoms = [AtomicModule(ModuleConfig.from_dict(a)) for a in data.get("atoms", [])]
         return cls(
             name=data["name"],
@@ -425,6 +433,7 @@ class UpdateOp:
     timestamp: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert update operation to a dictionary representation."""
         return {
             "module_name": self.module_name,
             "parameter": self.parameter,

@@ -36,7 +36,8 @@ class MessageBridge:
         # self.internal_bus.subscribe("hsp.internal.message", self.handle_internal_message)
         logger.info("MessageBridge initialized.")
 
-    async def handle_external_message(self, topic: str, message: str):
+    async def handle_external_message(self, topic: str, message: str) -> None:
+        """Handle an incoming message from the external connector."""
         logger.debug(f"MessageBridge.handle_external_message - Incoming topic: {topic}")
         try:
             message_dict = json.loads(message)
@@ -59,7 +60,8 @@ class MessageBridge:
                 else:
                     self.internal_bus.publish(internal_channel, aligned_message)
 
-    async def handle_internal_message(self, message: Dict[str, Any]):
+    async def handle_internal_message(self, message: Dict[str, Any]) -> None:
+        """Handle an outgoing message from the internal bus."""
         topic = message.get("topic")
         payload = message.get("payload")
         if not topic:

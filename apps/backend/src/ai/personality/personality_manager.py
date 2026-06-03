@@ -111,7 +111,7 @@ class PersonalityManager:
             for name, info in self.available_profiles.items()
         ]
 
-    def apply_personality_adjustment(self, adjustment: Dict[str, Any], persist: bool = True):
+    def apply_personality_adjustment(self, adjustment: Dict[str, Any], persist: bool = True) -> None:
         """
         Applies and optionally persists personality adjustments.
         """
@@ -131,7 +131,7 @@ class PersonalityManager:
         if persist:
             self._save_current_personality()
 
-    def _save_current_personality(self):
+    def _save_current_personality(self) -> None:
         """Persists the current personality state to disk."""
         profile_name = self.current_personality.get("profile_name")
         if not profile_name or profile_name not in self.available_profiles:

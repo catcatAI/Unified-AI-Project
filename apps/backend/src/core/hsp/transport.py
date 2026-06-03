@@ -147,7 +147,7 @@ class LocalIPCTransport(HSPTransport):
         """檢查連接狀態"""
         return self._connected
 
-    async def _message_listener(self):
+    async def _message_listener(self) -> None:
         """消息監聽器（在後台運行）"""
         logger.info("Message listener started")
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-    async def test_local_ipc():
+    async def test_local_ipc() -> None:
         """測試本地 IPC 傳輸"""
         logger.info("=== Testing Local IPC Transport ===\n")
 
@@ -372,7 +372,8 @@ if __name__ == "__main__":
         # 訂閱
         received_messages = []
 
-        async def on_message(payload):
+        async def on_message(payload) -> None:
+            """Handle the message event."""
             received_messages.append(payload)
             logger.info(f"Received: {payload}")
 

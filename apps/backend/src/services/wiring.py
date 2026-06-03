@@ -52,7 +52,7 @@ def initialize_all_services(manager) -> tuple:
     except Exception as e:
         logger.warning(f"[Lifecycle] Failed to activate management assets: {e}", exc_info=True)
 
-    async def pet_broadcast_wrapper(event_type, data):
+    async def pet_broadcast_wrapper(event_type, data) -> None:
         await manager.broadcast(
             {
                 "type": event_type,
@@ -63,7 +63,7 @@ def initialize_all_services(manager) -> tuple:
 
     pet_manager.broadcast_callback = pet_broadcast_wrapper
 
-    def bio_event_callback(event_name, event_data):
+    def bio_event_callback(event_name, event_data) -> None:
         try:
             loop = asyncio.get_running_loop()
             if loop.is_running():
@@ -91,7 +91,7 @@ def initialize_all_services(manager) -> tuple:
 
         if hasattr(digital_life.biological_integrator, "register_event_callback"):
             original_callback = bio_event_callback
-            def _plugin_aware_callback(event_name, event_data):
+            def _plugin_aware_callback(event_name, event_data) -> None:
                 try:
                     import asyncio as _aio
                     _aio.create_task(

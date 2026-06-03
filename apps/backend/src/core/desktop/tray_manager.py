@@ -46,7 +46,7 @@ class BaseTrayManager:
         self.menu = []
         self._callbacks: Dict[str, Callable] = {}
 
-    def setup_menu(self):
+    def setup_menu(self) -> dict:
         """Setup menu structure - to be implemented by subclasses"""
         logger.warning("[BaseTrayManager.setup_menu] Not implemented — stub")
         return {"stub": True, "message": "setup_menu not implemented"}
@@ -56,7 +56,7 @@ class BaseTrayManager:
         logger.warning("[BaseTrayManager.show_notification] Not implemented — stub")
         return {"stub": True, "message": "show_notification not implemented"}
 
-    def run(self):
+    def run(self) -> dict:
         """Run the tray manager"""
         logger.warning("[BaseTrayManager.run] Not implemented — stub")
         return {"stub": True, "message": "run not implemented"}
@@ -74,7 +74,7 @@ class WindowsTrayManager(BaseTrayManager):
         super().__init__(angela_core)
         self._tray_icon = None
 
-    def setup_menu(self):
+    def setup_menu(self) -> None:
         """Setup Windows tray menu"""
         try:
             import pystray
@@ -99,7 +99,7 @@ class WindowsTrayManager(BaseTrayManager):
             logger.error(f"pystray not installed: {e}", exc_info=True)
             raise
 
-    def _create_default_icon(self):
+    def _create_default_icon(self) -> str:
         """Create default Angela icon"""
         from PIL import Image, ImageDraw
 
@@ -123,7 +123,7 @@ class WindowsTrayManager(BaseTrayManager):
 
         return image
 
-    def _build_menu_items(self):
+    def _build_menu_items(self) -> str:
         """Build menu items for pystray"""
         import pystray
 
@@ -184,7 +184,7 @@ class WindowsTrayManager(BaseTrayManager):
             return getattr(self.angela, "current_mode", "standard")
         return "standard"
 
-    def _switch_mode(self, mode: str):
+    def _switch_mode(self, mode: str) -> None:
         """Switch Angela mode"""
         logger.info(f"User requested mode switch to: {mode}")
         if self.angela and hasattr(self.angela, "switch_mode"):
@@ -196,7 +196,7 @@ class WindowsTrayManager(BaseTrayManager):
                 logger.error(f"Error switching mode: {e}", exc_info=True)
                 self.show_notification("Angela AI", f"Failed to switch mode: {e}")
 
-    def _open_key_manager(self):
+    def _open_key_manager(self) -> None:
         """Open key management window"""
         logger.info("Opening key manager")
         try:
@@ -212,7 +212,7 @@ class WindowsTrayManager(BaseTrayManager):
         except Exception as e:  # broad exception acceptable: key manager launch may fail with subprocess or file system errors
             logger.error(f"Error opening key manager: {e}", exc_info=True)
 
-    def _open_settings(self):
+    def _open_settings(self) -> None:
         """Open settings window"""
         logger.info("Opening settings")
         try:
@@ -227,7 +227,7 @@ class WindowsTrayManager(BaseTrayManager):
         except Exception as e:  # broad exception acceptable: settings GUI launch may fail with subprocess or file system errors
             logger.error(f"Error opening settings: {e}", exc_info=True)
 
-    def _exit(self):
+    def _exit(self) -> None:
         """Exit Angela"""
         logger.info("User requested exit")
         if self.angela and hasattr(self.angela, "shutdown"):
@@ -241,7 +241,7 @@ class WindowsTrayManager(BaseTrayManager):
 
         sys.exit(0)
 
-    def show_notification(self, title: str, message: str):
+    def show_notification(self, title: str, message: str) -> None:
         """Show notification balloon"""
         if self._tray_icon:
             self._tray_icon.notify(message, title)
@@ -251,7 +251,7 @@ class WindowsTrayManager(BaseTrayManager):
         if self._tray_icon:
             self._tray_icon.run()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the tray icon"""
         if self._tray_icon:
             self._tray_icon.stop()
@@ -264,7 +264,7 @@ class MacOSTrayManager(BaseTrayManager):
         super().__init__(angela_core)
         self._app = None
 
-    def setup_menu(self):
+    def setup_menu(self) -> None:
         """Setup macOS menu bar"""
         try:
             import rumps
@@ -294,14 +294,14 @@ class MacOSTrayManager(BaseTrayManager):
             logger.error("rumps not installed", exc_info=True)
             raise
 
-    def _switch_mode(self, mode: str):
+    def _switch_mode(self, mode: str) -> None:
         """Switch mode"""
         logger.info(f"Switching to mode: {mode}")
         if self.angela and hasattr(self.angela, "switch_mode"):
             threading.Thread(target=lambda: asyncio.run(self.angela.switch_mode(mode))).start()
             rumps.notification("Angela AI", "Mode Switch", f"Switching to {mode.title()} mode...")
 
-    def _open_key_manager(self):
+    def _open_key_manager(self) -> None:
         """Open key manager"""
         logger.info("Opening key manager")
         # Similar to Windows implementation
@@ -311,13 +311,13 @@ class MacOSTrayManager(BaseTrayManager):
         logger.info("Opening settings")
         # Similar to Windows implementation
 
-    def _exit(self):
+    def _exit(self) -> None:
         """Exit"""
         if self.angela and hasattr(self.angela, "shutdown"):
             asyncio.run(self.angela.shutdown())
         rumps.quit_application()
 
-    def show_notification(self, title: str, message: str):
+    def show_notification(self, title: str, message: str) -> None:
         """Show notification"""
         import rumps
 
@@ -328,7 +328,7 @@ class MacOSTrayManager(BaseTrayManager):
         if self._app:
             self._app.run()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the app"""
         import rumps
 
@@ -342,7 +342,7 @@ class LinuxTrayManager(BaseTrayManager):
         super().__init__(angela_core)
         self._indicator = None
 
-    def setup_menu(self):
+    def setup_menu(self) -> None:
         """Setup Linux system tray"""
         try:
             from gi.repository import Gtk, AppIndicator3
@@ -407,13 +407,13 @@ class LinuxTrayManager(BaseTrayManager):
             logger.error("GTK3/GI not available", exc_info=True)
             raise
 
-    def _switch_mode(self, mode: str):
+    def _switch_mode(self, mode: str) -> None:
         """Switch mode"""
         logger.info(f"Switching to mode: {mode}")
         if self.angela and hasattr(self.angela, "switch_mode"):
             threading.Thread(target=lambda: asyncio.run(self.angela.switch_mode(mode))).start()
 
-    def _open_key_manager(self):
+    def _open_key_manager(self) -> None:
         """Open key manager"""
         logger.warning(f"{type(self).__name__}._open_key_manager not implemented")
 
@@ -421,13 +421,13 @@ class LinuxTrayManager(BaseTrayManager):
         """Open settings"""
         logger.warning(f"{type(self).__name__}._open_settings not implemented")
 
-    def _exit(self):
+    def _exit(self) -> None:
         """Exit"""
         if self.angela and hasattr(self.angela, "shutdown"):
             asyncio.run(self.angela.shutdown())
         Gtk.main_quit()
 
-    def show_notification(self, title: str, message: str):
+    def show_notification(self, title: str, message: str) -> None:
         """Show notification"""
         try:
             from gi.repository import Notify
@@ -440,7 +440,7 @@ class LinuxTrayManager(BaseTrayManager):
             logger.debug(f"通知顯示失敗（可忽略）: {e}")
             logger.info(f"通知: {title} - {message}")
 
-    def run(self):
+    def run(self) -> None:
         """Run the tray"""
         from gi.repository import Gtk
 
@@ -465,7 +465,7 @@ class AngelaTrayManager:
         self._manager: Optional[BaseTrayManager] = None
         self._init_manager()
 
-    def _init_manager(self):
+    def _init_manager(self) -> None:
         """Initialize platform-specific manager"""
         system = platform.system()
 
@@ -490,7 +490,7 @@ class AngelaTrayManager:
             except ImportError:
                 logger.warning("GTK not available, falling back to console mode", exc_info=True)
 
-    def setup(self):
+    def setup(self) -> None:
         """Setup the tray menu"""
         if self._manager:
             self._manager.setup_menu()
@@ -510,7 +510,7 @@ class AngelaTrayManager:
             except KeyboardInterrupt:
                 logger.info("Interrupted by user")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the tray manager"""
         if self._manager:
             self._manager.stop()

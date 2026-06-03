@@ -19,7 +19,7 @@ from services.ai_virtual_input_service import AIVirtualInputService
 
 
 class SandboxExecutor:
-    def run(self, script, name, action, params):
+    def run(self, script, name, action, params) -> tuple:
         return None, None
 
 
@@ -27,7 +27,7 @@ class HAMMemoryManager:
     def store_experience(self, data, type, metadata) -> tuple:
         return "mock_memory_id"
 
-    def recall_gist(self, memory_id):
+    def recall_gist(self, memory_id) -> dict:
         return {"rehydrated_gist": "mock_data"}
 
 
@@ -145,7 +145,7 @@ class AIEditorService:
         self.memory_manager: Optional[HAMMemoryManager] = None
         logger.info("AIEditorService Skeleton Initialized")
 
-    def set_memory_manager(self, memory_manager: HAMMemoryManager):
+    def set_memory_manager(self, memory_manager: HAMMemoryManager) -> None:
         self.memory_manager = memory_manager
         logger.info("Memory manager set for AIEditorService")
 

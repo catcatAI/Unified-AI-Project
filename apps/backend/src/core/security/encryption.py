@@ -40,7 +40,7 @@ class EncryptionUtils:
 
         logger.info("加密工具初始化完成")
 
-    def _setup_encryption_keys(self):
+    def _setup_encryption_keys(self) -> None:
         """设置加密密钥"""
         # 从环境变量或配置获取密钥
         encryption_key = self.config.get("encryption_key")

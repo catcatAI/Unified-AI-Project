@@ -9,6 +9,7 @@
 #
 # =============================================================================
 
+from __future__ import annotations
 import asyncio
 import traceback
 import uuid
@@ -70,7 +71,7 @@ class EnterpriseLogger:
         # 添加控制台處理器
         self._add_console_handler()
 
-    def _add_file_handler(self):
+    def _add_file_handler(self) -> None:
         """添加文件處理器"""
         from logging.handlers import RotatingFileHandler
 
@@ -103,7 +104,7 @@ class EnterpriseLogger:
         self.logger.addHandler(error_handler)
         self.logger.addHandler(audit_handler)
 
-    def _add_console_handler(self):
+    def _add_console_handler(self) -> None:
         """添加控制台處理器"""
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
@@ -162,7 +163,7 @@ class EnterpriseLogger:
             log_level_map[level], json.dumps(log_record, ensure_ascii=False), extra=log_record
         )
 
-    def debug(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra):
+    def debug(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra) -> None:
         """記錄 DEBUG 級別日誌"""
         self._log(LogLevel.DEBUG, category, message, extra)
 
@@ -170,7 +171,7 @@ class EnterpriseLogger:
         """記錄 INFO 級別日誌"""
         self._log(LogLevel.INFO, category, message, extra)
 
-    def warning(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra):
+    def warning(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra) -> None:
         """記錄 WARNING 級別日誌"""
         self._log(LogLevel.WARNING, category, message, extra)
 
@@ -194,7 +195,7 @@ class EnterpriseLogger:
         """記錄 CRITICAL 級別日誌"""
         self._log(LogLevel.CRITICAL, category, message, extra, exc_info)
 
-    def audit(self, action: str, user_id: Optional[str] = None, **details):
+    def audit(self, action: str, user_id: Optional[str] = None, **details) -> None:
         """記錄審計日誌"""
         if user_id:
             user_id_var.set(user_id)
@@ -216,7 +217,8 @@ class LogContext:
         self.session_id = session_id
         self.tokens = []
 
-    def __enter__(self):
+    def __enter__(self) -> 'LogContext':
+        """Execute the   enter   operation."""
         if self.request_id:
             self.tokens.append(request_id_var.set(self.request_id))
         if self.user_id:
@@ -225,7 +227,8 @@ class LogContext:
             self.tokens.append(session_id_var.set(self.session_id))
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        """Execute the   exit   operation."""
         for token in self.tokens:
             request_id_var.reset(token)
         return False
@@ -254,7 +257,7 @@ def set_request_context(
         session_id_var.set(session_id)
 
 
-def clear_request_context():
+def clear_request_context() -> None:
     """清除請求上下文"""
     request_id_var.set(None)
     user_id_var.set(None)

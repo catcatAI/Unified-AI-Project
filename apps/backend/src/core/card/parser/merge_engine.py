@@ -21,6 +21,7 @@ class MergeEngine:
     """
 
     def merge(self, existing: Optional[Card], incoming: Card) -> Card:
+        """Merge data from multiple sources."""
         if existing is None:
             return incoming
 

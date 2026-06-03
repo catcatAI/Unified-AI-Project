@@ -19,6 +19,7 @@ class TimelineResolver:
     """
 
     def resolve(self, card: Card) -> Card:
+        """Resolve the given request."""
         if not card.source_files:
             return card
 

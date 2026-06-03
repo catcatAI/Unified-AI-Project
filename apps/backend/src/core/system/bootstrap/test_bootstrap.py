@@ -3,7 +3,8 @@ Test script for BootstrapManager
 """
 from core.system.bootstrap import get_bootstrap_manager
 
-def test_bootstrap():
+def test_bootstrap() -> None:
+    """Test bootstrap behavior."""
     print("Testing BootstrapManager...")
     manager = get_bootstrap_manager()
     state = manager.run_full_bootstrap()

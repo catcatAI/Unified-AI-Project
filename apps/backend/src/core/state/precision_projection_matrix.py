@@ -121,7 +121,7 @@ class PrecisionProjectionMatrix:
 
         return False
 
-    def set_ram_limit(self, ram_str: str):
+    def set_ram_limit(self, ram_str: str) -> None:
         """設置 RAM 限制 (用於測試)
 
         Args:

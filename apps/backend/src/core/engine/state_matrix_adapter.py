@@ -313,56 +313,69 @@ class StateMatrixAdapter:
         return self._gradient_field
 
     def update_alpha(self, **kwargs) -> None:
+        """Update the alpha."""
         self._sm.update_alpha(**kwargs)
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("alpha", kwargs, is_stable=False)
 
     def update_beta(self, **kwargs) -> None:
+        """Update the beta."""
         self._sm.update_beta(**kwargs)
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("beta", kwargs, is_stable=False)
 
     def update_gamma(self, **kwargs) -> None:
+        """Update the gamma."""
         self._sm.update_gamma(**kwargs)
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("gamma", kwargs, is_stable=False)
 
     def update_delta(self, **kwargs) -> None:
+        """Update the delta."""
         self._sm.update_delta(**kwargs)
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("delta", kwargs, is_stable=False)
 
     def update_epsilon(self, **kwargs) -> None:
+        """Update the epsilon."""
         self._sm.update_epsilon(**kwargs)
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("epsilon", kwargs, is_stable=False)
 
     def update_theta(self, **kwargs) -> None:
+        """Update the theta."""
         self._sm.update_theta(**kwargs)
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("theta", kwargs, is_stable=False)
 
     def update_zeta(self, **kwargs) -> None:
+        """Update the zeta."""
         self._sm.update_zeta(**kwargs)
         self._record_to_temporal()
         self._anchor_learning.on_axis_update("zeta", kwargs, is_stable=False)
 
     def compute_influences(self) -> Dict[str, Dict[str, float]]:
+        """Compute influences."""
         return self._sm.compute_influences()
 
     def get_state(self, dimension: Optional[str] = None) -> Dict[str, Any]:
+        """Get the state by self."""
         return self._sm.get_state(dimension)
 
     def get_analysis(self) -> Dict[str, Any]:
+        """Get the analysis by self."""
         return self._sm.get_analysis()
 
     def export_to_dict(self) -> Dict[str, Any]:
+        """Execute the export to dict operation."""
         return self._sm.export_to_dict()
 
     def import_from_dict(self, data: Dict[str, Any]) -> None:
+        """Execute the import from dict operation."""
         self._sm.import_from_dict(data)
 
     def meta_allocate(self, semantic_vector: List[float], label: str = "") -> Any:
+        """Execute the meta allocate operation."""
         result = self._sm.meta_allocate(semantic_vector, label)
         action_map = {
             "assign_to_axis": "ASSIGN",
@@ -384,10 +397,12 @@ class StateMatrixAdapter:
         return result
 
     def trigger_theta_negativity(self, strength: float = 0.1) -> None:
+        """Execute the trigger theta negativity operation."""
         self._sm.trigger_theta_negativity(strength)
         self._negativity_detector.trigger(strength)
 
     def trigger_negativity(self, strength: float = 0.1) -> None:
+        """Execute the trigger negativity operation."""
         self.trigger_theta_negativity(strength)
 
     async def ask_theta_for_analysis(self, context: str = "") -> Dict[str, Any]:
@@ -491,9 +506,11 @@ class StateMatrixAdapter:
         return "\n".join(lines)
 
     def detect_misallocated_points(self) -> List[Dict[str, Any]]:
+        """Execute the detect misallocated points operation."""
         return self._sm.detect_misallocated_points()
 
     def correct_misallocation(self, point_id: str, target_axis: Optional[str] = None, dry_run: bool = False) -> Dict[str, Any]:
+        """Execute the correct misallocation operation."""
         result = self._sm.correct_misallocation(point_id, target_axis, dry_run)
         if result.get("status") == "corrected":
             source_axis = result.get("source_axis", "")
@@ -507,6 +524,7 @@ class StateMatrixAdapter:
         return result
 
     def auto_correct_all(self, min_confidence: float = 0.5) -> Dict[str, Any]:
+        """Execute the auto correct all operation."""
         result = self._sm.auto_correct_all(min_confidence)
         corrected = result.get("corrected", 0)
         if corrected > 0:
@@ -520,6 +538,7 @@ class StateMatrixAdapter:
         return result
 
     def get_negativity_report(self) -> Dict[str, Any]:
+        """Get the negativity report by self."""
         return self._sm.get_negativity_report()
 
     # === 新 API ===
@@ -1520,13 +1539,17 @@ class StateMatrixFacade:
         return result
 
     def trend(self, axis: str, field: str, window: int = 50) -> Any:
+        """Execute the trend operation."""
         return self._adapter.temporal_trend(axis, field, window)
 
     def influence(self, source: str, target: str) -> float:
+        """Execute the influence operation."""
         return self._adapter.influence_compute(source, target)
 
     def allocate(self, vector: List[float], label: str = "") -> AllocationDecision:
+        """Execute the allocate operation."""
         return self._adapter.allocation_decide(vector, label)
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> str:
+        """Execute the   getattr   operation."""
         return getattr(self._adapter, name)

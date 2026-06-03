@@ -14,7 +14,7 @@ class AsyncManager:
     """統一異步操作管理器"""
 
     @staticmethod
-    async def safe_gather(*coroutines, return_exceptions=True):
+    async def safe_gather(*coroutines, return_exceptions=True) -> str:
         """安全的並發執行"""
         try:
             return await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
@@ -23,12 +23,12 @@ class AsyncManager:
             raise
 
     @staticmethod
-    def timeout(timeout: float):
+    def timeout(timeout: float) -> str:
         """超時裝飾器"""
 
-        def decorator(func: Callable):
+        def decorator(func: Callable) -> str:
             @functools.wraps(func)
-            async def wrapper(*args, **kwargs):
+            async def wrapper(*args, **kwargs) -> str:
                 try:
                     return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
                 except asyncio.TimeoutError:

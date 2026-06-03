@@ -19,11 +19,13 @@ try:
 except ImportError:
     # Fallback for skeletal implementations if needed during repair
     class ReasoningSystem:
-        async def assess_ethical_implications(self, option, context):
+        async def assess_ethical_implications(self, option, context) -> dict:
+            """Execute the assess ethical implications operation."""
             return {"ethical_score": 0.5}
 
     class EmotionSystem:
         async def assess_values(self, option, context) -> dict:
+            """Execute the assess values operation."""
             return {"value_alignment": 0.5}
 
     class EmotionalState:
@@ -36,10 +38,12 @@ except ImportError:
             self.arousal = arousal
 
     class OntologySystem:
-        async def assess_relationship_impact(self, option, context):
+        async def assess_relationship_impact(self, option, context) -> dict:
+            """Execute the assess relationship impact operation."""
             return {}
 
         async def assess_worldview_consistency(self, option, context) -> dict:
+            """Execute the assess worldview consistency operation."""
             return 0.5
 
 
@@ -100,7 +104,7 @@ class AlignmentManager:
 
         logger.info(f"[{self.system_id}] Alignment Manager initialized")
 
-    async def set_alignment_priority(self, context: str, priority: AlignmentPriority):
+    async def set_alignment_priority(self, context: str, priority: AlignmentPriority) -> None:
         """设置特定上下文的对齐优先级"""
         self.alignment_priorities[context] = priority
         logger.info(f"[{self.system_id}] Set alignment priority for '{context}' to {priority.name}")
@@ -116,7 +120,7 @@ class AlignmentManager:
         }
         logger.info(f"[{self.system_id}] Updated balance thresholds")
 
-    async def enable_adversarial_mode(self, intensity: float = 0.5):
+    async def enable_adversarial_mode(self, intensity: float = 0.5) -> None:
         """启用对抗性生成模式"""
         self.adversarial_mode = True
         self.adversarial_intensity = max(0.0, min(1.0, intensity))
@@ -519,7 +523,7 @@ class AlignmentManager:
             "priority_usage": priority_counts,
         }
 
-    async def self_improve(self):
+    async def self_improve(self) -> None:
         """自我改进机制"""
         logger.info(f"[{self.system_id}] Starting self-improvement process")
 

@@ -516,11 +516,13 @@ def capture_exception(
 
 
 # 装饰器
-def handle_errors(default_return: Any = None, log_errors: bool = True, reraise: bool = False):
+def handle_errors(default_return: Any = None, log_errors: bool = True, reraise: bool = False) -> str:
     """错误处理装饰器"""
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func) -> str:
+        """Apply the decorator logic."""
+        def wrapper(*args, **kwargs) -> str:
+            """Wrap the decorated function."""
             try:
                 return func(*args, **kwargs)
             except Exception as e:  # broad exception acceptable: error handling decorator must be resilient

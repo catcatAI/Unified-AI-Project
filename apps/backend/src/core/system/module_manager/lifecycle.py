@@ -18,6 +18,7 @@ class ModuleLifecycle:
     async def init_all(
         self, descriptors: list[ModuleDescriptor], deps_map: dict[str, dict]
     ) -> tuple[list[ModuleInstance], list[InitResult]]:
+        """Initialize all."""
         instances: list[ModuleInstance] = []
         results: list[InitResult] = []
 
@@ -54,6 +55,7 @@ class ModuleLifecycle:
     async def start_all(
         self, instances: list[ModuleInstance], deps_map: dict[str, dict]
     ) -> list[StartResult]:
+        """Execute the start all operation."""
         results: list[StartResult] = []
 
         for inst in instances:
@@ -79,6 +81,7 @@ class ModuleLifecycle:
         return results
 
     async def stop_all(self, instances: list[ModuleInstance]) -> list[StartResult]:
+        """Execute the stop all operation."""
         results: list[StartResult] = []
 
         for inst in reversed(instances):
@@ -107,6 +110,7 @@ class ModuleLifecycle:
         *args: Any,
         **kwargs: Any,
     ) -> Any:
+        """Execute the call operation."""
         for inst in instances:
             if inst.name == module_name:
                 func = getattr(inst.instance, method)

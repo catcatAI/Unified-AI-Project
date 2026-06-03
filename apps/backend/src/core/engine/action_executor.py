@@ -291,7 +291,7 @@ class ActionExecutor:
         self._dynamic_params_enabled: bool = self.config.get("enable_dynamic_params", True)
         self._dli: Optional[Any] = None
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the action executor"""
         self._running = True
         self._executor_task = asyncio.create_task(self._execution_loop())
@@ -320,7 +320,7 @@ class ActionExecutor:
             finally:
                 self._executor_task = None
 
-    async def _execution_loop(self):
+    async def _execution_loop(self) -> None:
         """Main execution loop"""
         while self._running:
             # Get next action
@@ -333,7 +333,7 @@ class ActionExecutor:
                 # No actions available, wait a bit
                 await asyncio.sleep(loop_sleep("sleep_short", 0.1))
 
-    async def _execute_with_semaphore(self, action: Action):
+    async def _execute_with_semaphore(self, action: Action) -> None:
         """Execute action with concurrency control"""
         async with self._semaphore:
             await self._execute_action(action)
@@ -513,7 +513,7 @@ class ActionExecutor:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(None, lambda: action.function(**action.parameters))
 
-    async def _wait_for_action(self, action: Action):
+    async def _wait_for_action(self, action: Action) -> None:
         """Wait for an action to complete"""
         while action.status in [
             ActionStatus.PENDING,
@@ -536,7 +536,7 @@ class ActionExecutor:
             current_avg * (n - 1) + execution_time
         ) / n
 
-    def _notify_status_change(self, action: Action):
+    def _notify_status_change(self, action: Action) -> None:
         """Notify status change callbacks"""
         if action.action_id in self._status_change_callbacks:
             for callback in self._status_change_callbacks[action.action_id]:
@@ -548,7 +548,7 @@ class ActionExecutor:
                         , exc_info=True
                     )
 
-    def _register_default_safety_checks(self):
+    def _register_default_safety_checks(self) -> None:
         """Register default safety checks"""
         self.register_safety_check(
             SafetyCheck(
@@ -634,7 +634,7 @@ class ActionExecutor:
         """Cancel a pending or executing action"""
         return self.queue.cancel_action(action_id)
 
-    def register_safety_check(self, check: SafetyCheck):
+    def register_safety_check(self, check: SafetyCheck) -> None:
         """Register a safety check"""
         self.safety_checks[check.check_name] = check
 
@@ -642,7 +642,7 @@ class ActionExecutor:
         """Register pre-execution callback"""
         self._pre_execution_callbacks.append(callback)
 
-    def register_post_execution_callback(self, callback: Callable[[Action, ActionResult], None]):
+    def register_post_execution_callback(self, callback: Callable[[Action, ActionResult], None]) -> None:
         """Register post-execution callback"""
         self._post_execution_callbacks.append(callback)
 
@@ -668,7 +668,7 @@ class ActionExecutor:
 
     # ========== NEW: Integration with ActionExecutionBridge ==========
 
-    def set_bridge(self, bridge: "ActionExecutionBridge"):
+    def set_bridge(self, bridge: "ActionExecutionBridge") -> None:
         """Set the ActionExecutionBridge for integration"""
         self._bridge = bridge
 
@@ -679,7 +679,7 @@ class ActionExecutor:
 
     # ========== NEW: Integration with Dynamic Parameters ==========
 
-    def set_dynamic_params_manager(self, manager: Any):
+    def set_dynamic_params_manager(self, manager: Any) -> None:
         """Set the DynamicThresholdManager for integration"""
         self._dynamic_params_manager = manager
         logger.info("[ActionExecutor] Dynamic parameters manager connected")
@@ -748,7 +748,7 @@ class ActionExecutor:
             logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback: {e}", exc_info=True)
             return behavior_executor("success_rate_fallback", 0.85)
 
-    def _record_action_outcome(self, action: Action, success: bool):
+    def _record_action_outcome(self, action: Action, success: bool) -> None:
         """Record action outcome to dynamic parameters manager"""
         if self._dynamic_params_manager and self._dynamic_params_enabled:
             try:
@@ -852,7 +852,7 @@ class ActionExecutor:
 
     # ========== NEW: Execution History Persistence ==========
 
-    async def save_execution_history(self, filepath: Optional[str] = None):
+    async def save_execution_history(self, filepath: Optional[str] = None) -> None:
         """Save execution history to file"""
         path = Path(filepath or "~/.angela/executor_history.json").expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -968,7 +968,8 @@ class ActionExecutor:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo():
+    async def demo() -> str:
+        """Run a demonstration."""
         executor = ActionExecutor()
         await executor.initialize()
 
@@ -978,11 +979,13 @@ if __name__ == "__main__":
         logger.info("=" * 60)
 
         # Create sample actions
-        async def sample_action_1(name: str):
+        async def sample_action_1(name: str) -> str:
+            """Execute the sample action 1 operation."""
             await asyncio.sleep(0.5)
             return f"Hello, {name}!"
 
-        async def sample_action_2(value: int):
+        async def sample_action_2(value: int) -> str:
+            """Execute the sample action 2 operation."""
             await asyncio.sleep(0.3)
             return value * 2
 

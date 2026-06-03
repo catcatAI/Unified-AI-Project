@@ -56,7 +56,7 @@ class AngelaRealBrowser:
         self.context = None
         self.page = None
 
-    async def initialize(self):
+    async def initialize(self) -> bool:
         """初始化浏览器"""
         try:
             from playwright.async_api import async_playwright
@@ -82,7 +82,7 @@ class AngelaRealBrowser:
             logger.error(f"❌ 浏览器初始化失败: {e}", exc_info=True)
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         """关闭浏览器"""
         if self.browser:
             await self.browser.close()
@@ -286,7 +286,7 @@ class AngelaRealBrowser:
         return await self.page.content()
 
 
-async def test_browser():
+async def test_browser() -> None:
     """测试浏览器"""
     logger.info("🧪 测试 Playwright 浏览器...")
 

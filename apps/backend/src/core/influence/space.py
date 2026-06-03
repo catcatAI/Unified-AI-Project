@@ -87,6 +87,7 @@ class GravityRule(InfluenceRule):
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> float:
+        """Compute a result from inputs."""
         dist = self._distance(source, target)
         raw = self.gravity_constant / (dist * dist + self.softening)
         return max(self.min_factor, min(self.max_factor, raw))
@@ -114,6 +115,7 @@ class EntropyRule(InfluenceRule):
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> float:
+        """Compute a result from inputs."""
         source_entropy = self._compute_entropy(source)
         if source_entropy > self.entropy_threshold:
             return base_strength * (1.0 + self.weight)
@@ -145,6 +147,7 @@ class MemoryRule(InfluenceRule):
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> float:
+        """Compute a result from inputs."""
         if context and 'history_trend' in context:
             trend = context['history_trend']
             if trend > 0.05:
@@ -168,6 +171,7 @@ class WeightRule(InfluenceRule):
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> float:
+        """Compute a result from inputs."""
         source_w = getattr(source, 'weight', 1.0)
         target_w = getattr(target, 'weight', 1.0)
         weight_factor = (source_w ** self.weight_power) * (target_w ** self.weight_power)
@@ -198,11 +202,13 @@ class InfluenceRuleSet:
         self._weights: Dict[str, float] = {}
 
     def add(self, rule: InfluenceRule, weight: float = 1.0) -> "InfluenceRuleSet":
+        """Execute the add operation."""
         self._rules.append(rule)
         self._weights[rule.name] = weight
         return self
 
     def remove(self, rule_name: str) -> bool:
+        """Execute the remove operation."""
         for i, r in enumerate(self._rules):
             if r.name == rule_name:
                 self._rules.pop(i)
@@ -217,6 +223,7 @@ class InfluenceRuleSet:
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> Tuple[float, List[str]]:
+        """Compute all."""
         if not self._rules:
             return base_strength, []
 
@@ -295,11 +302,13 @@ class InfluenceSpace:
         self._cache.clear()
 
     def add_rule(self, rule: InfluenceRule, weight: float = 1.0) -> "InfluenceSpace":
+        """Add a rule."""
         self._rules.add(rule, weight)
         self._cache.clear()
         return self
 
     def remove_rule(self, rule_name: str) -> bool:
+        """Remove a rule."""
         result = self._rules.remove(rule_name)
         self._cache.clear()
         return result

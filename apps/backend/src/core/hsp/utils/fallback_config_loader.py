@@ -139,7 +139,7 @@ class FallbackConfigLoader:
         fallback_config = self.get_fallback_config()
         return fallback_config.get("logging")
 
-    def save_config(self, config: Dict[str, Any], path: Optional[str] = None):
+    def save_config(self, config: Dict[str, Any], path: Optional[str] = None) -> None:
         """保存配置到文件"""
         save_path = path or self.config_path or "hsp_fallback_config.yaml"
 

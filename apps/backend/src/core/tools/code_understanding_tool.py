@@ -15,12 +15,15 @@ class CodeUnderstandingTool:
         logger.info(f"CodeUnderstandingTool initialized with directory: {tools_directory}")
 
     def list_tools(self) -> str:
+        """List tools items."""
         return "Tool listing temporarily unavailable due to system restoration."
 
     def describe_tool(self, tool_name: str) -> str:
+        """Execute the describe tool operation."""
         return f"Description for {tool_name} temporarily unavailable."
 
     def execute(self, action: str, tool_name: Optional[str] = None) -> str:
+        """Execute the requested operation."""
         if action == "list_tools":
             return self.list_tools()
         elif action == "describe_tool":

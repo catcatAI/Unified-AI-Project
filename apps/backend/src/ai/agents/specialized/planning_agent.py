@@ -37,6 +37,7 @@ class PlanningAgent(BaseAgent):
 
     @staticmethod
     def deprecate() -> str:
+        """Execute the deprecate operation."""
         return (
             "PlanningAgent 已在 v6.2.5 棄用。功能已被 "
             "ProjectCoordinator + DocumentBuilder 的任務規劃取代。"

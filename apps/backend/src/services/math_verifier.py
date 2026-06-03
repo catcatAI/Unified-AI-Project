@@ -285,7 +285,7 @@ class SpatialEngine:
             logger.warning(f"[SpatialEngine] Evaluation failed for '{expression}': {e}", exc_info=True)
             return 0.0, False
 
-    def _get_math_config(self, key: str, default):
+    def _get_math_config(self, key: str, default) -> str:
         try:
             from core.config_loader import get_angela_config
             return get_angela_config().get_authority("angela_core", {}).get("math_verifier", {}).get(key, default)

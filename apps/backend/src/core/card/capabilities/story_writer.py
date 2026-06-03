@@ -31,6 +31,7 @@ class StoryWriter:
         self._builder = value
 
     async def write(self, card: Card, query: str = "") -> Optional[str]:
+        """Log a diagnostic message."""
         if not card.history_events:
             logger.warning(f"No history events for {card.qualified_id}", exc_info=True)
             return None

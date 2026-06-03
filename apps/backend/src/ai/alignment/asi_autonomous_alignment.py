@@ -125,7 +125,7 @@ class ASIAutonomousAlignment:
 
         logger.info(f"[{self.system_id}] ASI自主对齐机制初始化完成")
 
-    def _initialize_core_values(self):
+    def _initialize_core_values(self) -> None:
         """初始化核心人类价值"""
         core_values = [
             {
@@ -180,7 +180,7 @@ class ASIAutonomousAlignment:
 
         logger.info(f"[{self.system_id}] 核心人类价值初始化完成: {len(core_values)} 个价值")
 
-    def register_core_system(self, system_type: str, system: Any):
+    def register_core_system(self, system_type: str, system: Any) -> None:
         """注册核心系统组件"""
         if system_type == "reasoning":
             self.reasoning_system = system
@@ -386,7 +386,7 @@ class ASIAutonomousAlignment:
             "goal_progress": self.goal_progress,
         }
 
-    def add_alignment_goal(self, goal_id: str, goal: AlignmentGoal, priority: float = 0.5):
+    def add_alignment_goal(self, goal_id: str, goal: AlignmentGoal, priority: float = 0.5) -> None:
         """添加对齐目标"""
         self.alignment_goals[goal_id] = goal
         self.goal_progress[goal_id] = priority

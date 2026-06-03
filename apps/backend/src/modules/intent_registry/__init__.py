@@ -9,5 +9,5 @@ async def init(deps: dict = None) -> IntentRegistry:
     return IntentRegistry()
 
 
-def on_card_pipeline_ready(**data):
+def on_card_pipeline_ready(**data) -> None:
     logger.debug("on_card_pipeline_ready received: %s", data)

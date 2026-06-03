@@ -95,7 +95,7 @@ class PrecomputeService:
             "total_processing_time": 0.0,
         }
 
-    async def start(self):
+    async def start(self) -> None:
         """
         启动预计算服务（后台任务）
         """
@@ -107,7 +107,7 @@ class PrecomputeService:
         self.worker_task = asyncio.create_task(self._precompute_loop())
         logger.info("Precompute service started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """
         停止预计算服务
         """
@@ -125,7 +125,7 @@ class PrecomputeService:
 
         logger.info("Precompute service stopped")
 
-    def record_activity(self):
+    def record_activity(self) -> None:
         """
         记录用户活动
         """
@@ -157,7 +157,7 @@ class PrecomputeService:
             logger.error(f"Error adding precompute task: {e}", exc_info=True)
             return False
 
-    async def _precompute_loop(self):
+    async def _precompute_loop(self) -> None:
         """
         预计算循环
         ==========
@@ -216,7 +216,7 @@ class PrecomputeService:
 
         return True
 
-    async def _process_next_task(self):
+    async def _process_next_task(self) -> None:
         """
         处理预计算任务
         ==============
@@ -284,7 +284,7 @@ class PrecomputeService:
             self.failed_count += 1
             self.stats["failed_tasks"] += 1
 
-    async def _generate_with_timeout(self, query: str, context: dict[str, Any], timeout: float):
+    async def _generate_with_timeout(self, query: str, context: dict[str, Any], timeout: float) -> str:
         """
         带超时的 LLM 生成
 
@@ -337,7 +337,7 @@ class PrecomputeService:
             "failed_count": self.failed_count,
         }
 
-    def clear_queue(self):
+    def clear_queue(self) -> None:
         """
         清空任务队列
         """

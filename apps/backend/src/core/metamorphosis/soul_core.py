@@ -135,7 +135,7 @@ class SoulCore:
     signature: SoulSignature
     version_history: List[Tuple[str, datetime]] = field(default_factory=list)
 
-    def add_version_record(self, version: str):
+    def add_version_record(self, version: str) -> None:
         """添加版本记录 / Add version record"""
         self.version_history.append((version, datetime.now()))
         self.signature.version_created = version
@@ -288,7 +288,7 @@ def create_soul_core(
     )
 
 
-def demo():
+def demo() -> None:
     """演示 / Demo"""
     logger.info("🎭 灵魂核心系统演示")
     logger.info("=" * 50)

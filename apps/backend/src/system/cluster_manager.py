@@ -27,7 +27,7 @@ class ClusterManager:
     def __init__(self):
         self.nodes = []
 
-    async def distribute_task(self, task_type: str, data: list):
+    async def distribute_task(self, task_type: str, data: list) -> str:
         """Mock task distribution."""
         task_id = str(uuid.uuid4())
         logger.debug(f"Mock distribute_task: {task_type} -> {task_id}")
