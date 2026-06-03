@@ -201,9 +201,12 @@ class PerformanceOptimizer:
         return hashlib.md5(key_string.encode()).hexdigest()
 
     async def run_parallel_tasks(self, tasks: List[Callable[..., Any]]) -> List[Any]:
-        """Log a diagnostic message."""
-        logger.warning("SKELETON: run_parallel_tasks, returning empty list.")
-        return []
+        """Execute multiple tasks in parallel using asyncio.gather."""
+        if not tasks:
+            return []
+        coros = [task() for task in tasks]
+        results = await asyncio.gather(*coros)
+        return list(results)
 
     def get_performance_report(self) -> Dict[str, Any]:
         """Get the performance report by self."""

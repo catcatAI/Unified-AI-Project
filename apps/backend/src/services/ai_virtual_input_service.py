@@ -16,6 +16,7 @@ from typing import List, Optional, Dict, Any, Tuple, Literal
 from dataclasses import dataclass, field, asdict
 
 logger = logging.getLogger(__name__)
+logger.warning("ai_virtual_input_service is deprecated and scheduled for removal per P8-2")
 
 
 # Mock types for syntax validation

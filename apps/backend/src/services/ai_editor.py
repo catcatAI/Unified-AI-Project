@@ -33,6 +33,7 @@ class HAMMemoryManager:
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+logger.warning("ai_editor is deprecated and scheduled for removal per P8-2")
 
 
 class DataProcessor:
