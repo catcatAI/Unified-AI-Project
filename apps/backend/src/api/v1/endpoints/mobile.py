@@ -3,7 +3,7 @@ Angela AI v7.5.0-dev - Mobile Endpoints
 行動端專用接口 (受 Key B 加密保護)
 """
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body
 from typing import Dict, Any
 from datetime import datetime
 import logging

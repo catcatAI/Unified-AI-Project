@@ -8,11 +8,9 @@ WebGL GPU 信息橋接模組
 - 同步 GPU 加速服務配置
 """
 
-import asyncio
 import logging
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
-import json
 from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)

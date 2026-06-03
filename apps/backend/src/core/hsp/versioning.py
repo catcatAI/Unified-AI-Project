@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import re
 import semver  # Assuming 'semver' is intended to be used and is installed
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime

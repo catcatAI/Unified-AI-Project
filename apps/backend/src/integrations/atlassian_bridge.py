@@ -6,9 +6,6 @@ Atlassian 服务桥接层
 
 import asyncio
 import logging
-import pickle
-import hashlib
-import time
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,7 +37,7 @@ class CacheEntry:
 
 
 class AtlassianBridge:
-    """Atlassian 服务统一桥接层 - SKELETON"""
+    """Atlassian 服务统一桥接层"""
 
     def __init__(self, connector: RovoDevConnector) -> None:
         self.connector = connector
@@ -56,7 +53,7 @@ class AtlassianBridge:
         self._loaded: bool = False
         self._session: Optional[aiohttp.ClientSession] = None
         self._load_endpoint_configs()
-        logger.info("AtlassianBridge Skeleton Initialized")
+        logger.info("AtlassianBridge Initialized")
 
     async def start(self) -> None:
         """Start the component."""

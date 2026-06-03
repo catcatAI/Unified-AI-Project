@@ -1,5 +1,4 @@
 import logging
-import json
 import zlib
 import hashlib
 import re

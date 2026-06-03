@@ -19,14 +19,12 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Callable, Any, Set
+from enum import Enum
+from typing import Dict, List, Optional, Tuple, Callable, Any
 from datetime import datetime
 from pathlib import Path
 import asyncio
 import json
-import math
-import random
 import logging
 
 logger = logging.getLogger(__name__)
@@ -538,7 +536,6 @@ class Live2DAvatarGenerator:
 
     async def shutdown(self) -> None:
         """Shutdown the generator"""
-        pass
 
     def register_progress_callback(self, callback: Callable[[GenerationProgress], None]) -> None:
         """Register callback for generation progress updates"""
@@ -775,9 +772,6 @@ class Live2DAvatarGenerator:
         # [Phase 18.4] 真實圖層切割與動態生成
         # 1. 嘗試呼叫外部去背/分層 API (如 rembg 或自定義的 segmentation API)
         try:
-            import aiohttp
-            import base64
-            from io import BytesIO
             from PIL import Image, ImageDraw
 
             # API 端點 (預設使用本機 segmentation 服務)

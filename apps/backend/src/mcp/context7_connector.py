@@ -4,7 +4,3 @@ This module provides integration with Context7's MCP for enhanced AI model
 communication and context management within the unified AI ecosystem.
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional

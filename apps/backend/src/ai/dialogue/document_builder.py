@@ -165,7 +165,7 @@ class DocumentBuilder:
             self._learned_format_keys.add(dedup_key)
 
             self._format_counter += 1
-            from ai.memory.memory_template import MemoryTemplate, ResponseCategory, create_template
+            from ai.memory.memory_template import ResponseCategory, create_template
 
             category_map = {
                 "character_card": ResponseCategory.CHARACTER_CARD,

@@ -19,13 +19,13 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import logging
 from core.tracing import get_tracer
-from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain, LifeIntensitySnapshot
+from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType
 from core.system.config.magic_numbers import loop_sleep
 
@@ -357,7 +357,6 @@ class CyberIdentity:
                         callback(milestone)
                     except Exception as e:  # broad exception acceptable: milestone callbacks should not block growth recording
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
             # Record in history
             self.growth_history.append(
@@ -377,7 +376,6 @@ class CyberIdentity:
                         callback(growth_record.previous_level, growth_record.level)
                     except Exception as e:  # broad exception acceptable: growth callbacks should not block updates
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
             # Update self-description if significant growth
             if growth_record.level - growth_record.previous_level > 0.1:

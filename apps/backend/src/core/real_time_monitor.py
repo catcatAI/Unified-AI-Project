@@ -23,12 +23,11 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any, Set, Tuple
+from enum import Enum
+from typing import Dict, List, Optional, Callable, Any, Tuple
 from datetime import datetime, timedelta
 import asyncio
 import time
-import json
 from pathlib import Path
 from collections import deque
 import logging
@@ -577,7 +576,6 @@ class SystemStateMonitor:
                 load_avg = psutil.getloadavg()
             except (AttributeError, OSError) as e:
                 logger.debug(f"負載平均值獲取失敗（可忽略）: {e}")
-                pass
 
             # Process count
             process_count = len(psutil.pids())

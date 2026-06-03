@@ -6,7 +6,6 @@ Extracted from main_api_server.py (A3 god module split).
 
 import asyncio
 import logging
-import sys
 import threading
 import time
 from typing import Any, Optional

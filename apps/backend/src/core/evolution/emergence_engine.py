@@ -20,9 +20,3 @@ Level 5 AGI核心組件 - 實現真正的自進化能力
 - 安全性評估
 """
 
-import asyncio
-import hashlib
-import logging
-import random
-from datetime import datetime
-from typing import Dict, List, Any, Optional

@@ -10,11 +10,9 @@ Automatically selects LLM backend, model, and parameters based on:
 - Phase 6: Decision recording & learning
 """
 
-import os
 import time
-import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
 

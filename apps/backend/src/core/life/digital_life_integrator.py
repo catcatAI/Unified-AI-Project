@@ -40,8 +40,6 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ai.integration.unified_control_center import UnifiedControlCenter
-    from services.angela_llm_service import AngelaLLMService
-    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
 
 # =============================================================================
@@ -384,7 +382,6 @@ class DigitalLifeIntegrator:
             except Exception as e:
                 # broad exception acceptable: dynamic params stop is cleanup, graceful degradation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         # Record final stats
         self._update_active_time()
@@ -521,7 +518,6 @@ class DigitalLifeIntegrator:
             except Exception as e:
                 # broad exception acceptable: callback errors should not break the loop
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     async def _apply_state_behaviors(self, state: LifeCycleState) -> None:
         """Apply behaviors specific to life cycle state"""
@@ -608,7 +604,6 @@ class DigitalLifeIntegrator:
                 self.life_stats.memories_consolidated = stats.get("consolidated_memories", 0)
             except (AttributeError, KeyError, RuntimeError) as e:
                 logger.debug(f"記憶統計更新失敗（可忽略）: {e}")
-                pass
 
     async def _update_dynamic_parameters(self) -> None:
         """Update and log dynamic parameters periodically"""
@@ -710,7 +705,6 @@ class DigitalLifeIntegrator:
             except Exception as e:
                 # broad exception acceptable: callback errors should not break event handling
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     def get_age(self) -> timedelta:
         """Get age of Angela's digital life"""

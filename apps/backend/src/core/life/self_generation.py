@@ -18,7 +18,7 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime
 from pathlib import Path
@@ -350,7 +350,6 @@ class SelfGeneration:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                 # Fallback to simple generation if workflow fails
-                pass
 
         # Use Live2D generator directly if available
         if self.live2d_generator and self._use_live2d_generator:
@@ -376,7 +375,6 @@ class SelfGeneration:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                 # Fallback to placeholder
-                pass
 
         # [Phase 18.3] 實作真實的圖像生成 API 通訊介面
         # 取代原有的 await asyncio.sleep(0.5) 佔位符
@@ -602,7 +600,6 @@ class SelfGeneration:
                     callback(self.current_avatar, avatar)
                 except Exception as e:  # broad exception acceptable: callback errors should not break evolution
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
         return avatar
 

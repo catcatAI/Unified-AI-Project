@@ -6,10 +6,9 @@ Formalized from install_angela.py
 import os
 import sys
 import platform
-import subprocess
 import logging
 from typing import Dict, Any, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 

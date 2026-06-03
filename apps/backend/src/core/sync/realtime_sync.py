@@ -3,5 +3,3 @@
 Real-time sync system for inter-system data and state synchronization
 """
 
-import logging
-from typing import Dict, List, Any, Callable

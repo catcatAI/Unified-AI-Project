@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from enum import Enum
 from dataclasses import dataclass, field
-import json
 import logging
 
 logger = logging.getLogger(__name__)

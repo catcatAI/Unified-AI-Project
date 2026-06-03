@@ -1,8 +1,6 @@
 import logging
 import os
 import uuid
-import json
-from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple, TypedDict
 
 try:
@@ -27,7 +25,6 @@ from ai.knowledge_graph.types import (
     KnowledgeGraph,
     KGEntity,
     KGRelationship,
-    KnowledgeGraphMetadata,
 )
 from core.hsp.types import HSPFactPayload
 

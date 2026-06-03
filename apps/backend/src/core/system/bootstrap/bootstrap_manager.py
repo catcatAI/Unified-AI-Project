@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
 from datetime import datetime
-from .hardware_probe import HardwareProbe, HardwareSpecs
+from .hardware_probe import HardwareProbe
 from .env_resolver import EnvResolver
 
 logger = logging.getLogger(__name__)

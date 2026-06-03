@@ -14,11 +14,10 @@ import hashlib
 import struct
 from typing import Dict, Any, Optional, List, Union
 from datetime import datetime
-from decimal import Decimal
 
 from .integer_hash_table import IntegerHashTable
 from .decimal_hash_table import DecimalHashTable
-from .precision_projection_matrix import PrecisionProjectionMatrix, PrecisionMode
+from .precision_projection_matrix import PrecisionProjectionMatrix
 
 logger = logging.getLogger(__name__)
 

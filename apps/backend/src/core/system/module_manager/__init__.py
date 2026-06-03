@@ -52,7 +52,7 @@ class ModuleManager:
             for inst in instances:
                 self._registry.register(inst.name, inst.instance)
         deps_map = self._build_deps_map(resolved, self._instances)
-        start_results = await self._lifecycle.start_all(instances, deps_map)
+        await self._lifecycle.start_all(instances, deps_map)
         for inst in instances:
             self._health_monitor.check(
                 name=inst.name,

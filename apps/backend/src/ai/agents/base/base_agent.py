@@ -9,7 +9,7 @@ import asyncio
 import logging
 import uuid
 from typing import Any, Callable, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload, HSPTaskResultPayload

@@ -1,6 +1,6 @@
 """
 性能优化器模块
-负责系统性能监控、优化和资源管理 (SKELETON)
+负责系统性能监控、优化和资源管理
 """
 
 import asyncio
@@ -77,7 +77,7 @@ class LRUCache:
 
 
 class PerformanceOptimizer:
-    """性能优化器 (SKELETON)"""
+    """性能优化器"""
 
     def __init__(self, config_path: str = "configs/performance_config.yaml") -> None:
         self.config_path = config_path
@@ -91,7 +91,7 @@ class PerformanceOptimizer:
         self._last_net_io = psutil.net_io_counters()
         self.is_monitoring = False
         self.monitoring_task: Optional[asyncio.Task] = None
-        logger.info("性能优化器 Skeleton 初始化完成")
+        logger.info("性能优化器 初始化完成")
 
     def _load_config(self) -> Dict[str, Any]:
         """Load config."""
@@ -116,6 +116,7 @@ class PerformanceOptimizer:
                     "lru_enabled": True,
                 },
                 "parallel_processing": {"max_workers": 4, "task_queue_size": 100, "timeout": 30},
+                "thresholds": {"cpu_warning": 70.0, "cpu_critical": 90.0, "memory_warning": 80.0, "memory_critical": 90.0, "disk_warning": 85.0, "disk_critical": 95.0},
             }
         }
 
@@ -158,20 +159,46 @@ class PerformanceOptimizer:
                 await asyncio.sleep(check_interval)
 
     def collect_metrics(self) -> PerformanceMetrics:
-        # Mock metrics collection
-        """Execute the collect metrics operation."""
+        cpu_percent = psutil.cpu_percent(interval=0)
+        memory = psutil.virtual_memory()
+        disk_io = psutil.disk_io_counters()
+        net_io = psutil.net_io_counters()
+
+        disk_read = disk_io.read_bytes - self._last_disk_io.read_bytes
+        disk_write = disk_io.write_bytes - self._last_disk_io.write_bytes
+        net_sent = net_io.bytes_sent - self._last_net_io.bytes_sent
+        net_recv = net_io.bytes_recv - self._last_net_io.bytes_recv
+
+        self._last_disk_io = disk_io
+        self._last_net_io = net_io
+
         return PerformanceMetrics(
             timestamp=time.time(),
-            cpu_percent=0.0,
-            memory_percent=0.0,
-            disk_io_read=0,
-            disk_io_write=0,
-            network_bytes_sent=0,
-            network_bytes_recv=0,
+            cpu_percent=cpu_percent,
+            memory_percent=memory.percent,
+            disk_io_read=max(disk_read, 0),
+            disk_io_write=max(disk_write, 0),
+            network_bytes_sent=max(net_sent, 0),
+            network_bytes_recv=max(net_recv, 0),
         )
 
     def _check_resource_thresholds(self, metrics: PerformanceMetrics) -> None:
-        logger.warning(f"{type(self).__name__}._check_resource_thresholds not implemented")
+        thresholds = self.config.get("performance", {}).get("thresholds", {})
+        cpu_warn = thresholds.get("cpu_warning", 70.0)
+        cpu_crit = thresholds.get("cpu_critical", 90.0)
+        mem_warn = thresholds.get("memory_warning", 80.0)
+        mem_crit = thresholds.get("memory_critical", 90.0)
+        disk_warn = thresholds.get("disk_warning", 85.0)
+
+        if metrics.cpu_percent >= cpu_crit:
+            logger.warning(f"CPU使用率临界: {metrics.cpu_percent:.1f}% >= {cpu_crit}%")
+        elif metrics.cpu_percent >= cpu_warn:
+            logger.warning(f"CPU使用率警告: {metrics.cpu_percent:.1f}% >= {cpu_warn}%")
+
+        if metrics.memory_percent >= mem_crit:
+            logger.warning(f"内存使用率临界: {metrics.memory_percent:.1f}% >= {mem_crit}%")
+        elif metrics.memory_percent >= mem_warn:
+            logger.warning(f"内存使用率警告: {metrics.memory_percent:.1f}% >= {mem_warn}%")
 
     def cache_result(self, func: F) -> F:
         """Log a diagnostic message."""
@@ -209,8 +236,19 @@ class PerformanceOptimizer:
         return list(results)
 
     def get_performance_report(self) -> Dict[str, Any]:
-        """Get the performance report by self."""
-        return {}
+        if not self.metrics_history:
+            return {}
+        latest = self.metrics_history[-1]
+        return {
+            "timestamp": latest.timestamp,
+            "cpu_percent": latest.cpu_percent,
+            "memory_percent": latest.memory_percent,
+            "disk_io_read": latest.disk_io_read,
+            "disk_io_write": latest.disk_io_write,
+            "network_bytes_sent": latest.network_bytes_sent,
+            "network_bytes_recv": latest.network_bytes_recv,
+            "total_collections": len(self.metrics_history),
+        }
 
     def cleanup(self) -> None:
         """Log a diagnostic message."""
@@ -255,11 +293,8 @@ if __name__ == "__main__":
         metrics = optimizer.collect_metrics()
         logger.info(f"性能指标: {metrics}")
 
-        load = optimizer.get_current_load()
-        logger.info(f"当前负载: {load}")
-
-        recommendations = optimizer.get_resource_recommendations()
-        logger.info(f"资源建议: {recommendations}")
+        report = optimizer.get_performance_report()
+        logger.info(f"性能报告: {report}")
 
     except Exception as e:  # broad exception acceptable: ensure test errors are logged and don't crash
         logger.error(f"测试过程中发生错误: {e}", exc_info=True)

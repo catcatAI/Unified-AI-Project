@@ -44,9 +44,9 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Tuple, Callable, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 import asyncio
 import math
 import logging
@@ -223,7 +223,6 @@ class EndocrineSystem:
 
     async def _update_hormones(self) -> None:
         """(已由 advance_time 整合) 保持兼容性"""
-        pass
 
     async def _apply_feedback_loops(self) -> None:
         """應用激素間的反饋調節"""

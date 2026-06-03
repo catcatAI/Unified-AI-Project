@@ -48,7 +48,7 @@ class AuditEvent:
 
 
 class AuditLogger:
-    """Main audit logging system (SKELETON)"""
+    """Main audit logging system"""
 
     def __init__(self, log_file_path: Optional[str] = None, max_log_size: int = 10000) -> None:
         self.log_file_path = log_file_path or "logs/audit.log"

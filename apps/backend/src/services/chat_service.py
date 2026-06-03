@@ -5,6 +5,3 @@
 # 管理 Angela 的對話邏輯、意圖識別與回應合成。
 # =============================================================================
 
-import asyncio
-import logging
-from typing import Dict, Any, List, Optional

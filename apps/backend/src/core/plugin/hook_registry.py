@@ -3,7 +3,6 @@ HookRegistry — C3: backend hook system for plugins.
 Defines named hooks, registers handlers, executes them asynchronously.
 """
 
-import asyncio
 import inspect
 import logging
 from typing import Any, Callable, Dict, List, Optional

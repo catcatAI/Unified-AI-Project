@@ -20,8 +20,8 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Callable, Any, Set
+from enum import Enum
+from typing import Dict, List, Optional, Tuple, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import math
@@ -321,7 +321,6 @@ class EmotionalBlendingSystem:
                         callback(prev, curr)
                     except Exception as e:  # broad exception acceptable: emotion change callbacks should not break updates
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
     async def _decay_influences(self) -> None:
         """Decay influence strengths over time"""
@@ -342,7 +341,6 @@ class EmotionalBlendingSystem:
                 callback(self.current_expression)
             except Exception as e:  # broad exception acceptable: expression callbacks should not break updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     def _interpolate_emotions(
         self, from_emotion: PADEmotion, to_emotion: PADEmotion, t: float

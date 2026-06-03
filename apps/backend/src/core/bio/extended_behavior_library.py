@@ -20,9 +20,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from core.system.config.magic_numbers import behavior_threshold as _bt
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 import asyncio
 import logging
 

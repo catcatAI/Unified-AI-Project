@@ -1,11 +1,10 @@
 import logging
 import os
 import json
-import asyncio
 from typing import Any, Dict, Optional, Tuple
 from cryptography.fernet import Fernet, InvalidToken
 
-from .ham_types import HAMDataPackageInternal, HAMMemoryError
+from .ham_types import HAMDataPackageInternal
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +107,13 @@ class HAMCoreStorage:
     def _get_current_disk_usage_gb(self) -> float:
         """
         Returns the current disk usage of the storage directory in GB.
-        This is a placeholder for actual disk usage monitoring.
         """
         if self.resource_awareness_service:
             return self.resource_awareness_service.get_available_disk_space_gb(self.storage_dir)
 
-        return 0.0  # Mock value for sandbox environment
+        try:
+            import shutil
+            usage = shutil.disk_usage(self.storage_dir)
+            return usage.used / (1024 ** 3)
+        except (ImportError, AttributeError, OSError):
+            return 0.0  # Fallback value

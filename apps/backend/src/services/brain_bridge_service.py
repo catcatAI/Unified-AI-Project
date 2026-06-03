@@ -5,7 +5,6 @@ Bridges the theoretical Brain/Body metrics to the user-facing status and documen
 
 import asyncio
 import logging
-import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any

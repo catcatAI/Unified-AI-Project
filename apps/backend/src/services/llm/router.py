@@ -11,7 +11,6 @@ Angela LLM Service - Angela 的智能對話引擎
 """
 
 import asyncio
-import json
 import os
 from core.system.config.network_defaults import (
     OLLAMA_HOST,
@@ -27,15 +26,10 @@ from core.system.config.network_defaults import (
 import time
 import random
 import logging
-from datetime import datetime
 from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, field
-from enum import Enum
-from abc import ABC, abstractmethod
 
-import aiohttp
 from core.interfaces.service_registry import get_registry
-from core.interfaces.protocols import ChatMessage, LLMResponse, ModelProvider
+from core.interfaces.protocols import ChatMessage, LLMResponse
 
 # LLM provider backends
 from services.llm.providers.base import BaseLLMBackend

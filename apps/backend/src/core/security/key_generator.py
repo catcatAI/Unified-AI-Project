@@ -4,8 +4,3 @@
 # 職責: 生成強隨機系統密鑰並更新環境變量
 # =============================================================================
 
-import os
-import secrets
-import string
-import logging
-from typing import Dict

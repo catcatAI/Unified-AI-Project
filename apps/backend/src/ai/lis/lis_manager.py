@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
-from .types import LIS_SemanticAnomalyDetectedEvent, LIS_IncidentRecord, LIS_IncidentStatus
+from .types import LIS_SemanticAnomalyDetectedEvent, LIS_IncidentRecord
 from .err_introspector import ERRIntrospector
 from .lis_cache_interface import HAMLISCache
 

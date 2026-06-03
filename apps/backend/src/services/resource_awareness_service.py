@@ -2,7 +2,6 @@
 
 import os
 import yaml  # type: ignore[import-untyped]
-from pathlib import Path
 from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 import logging
@@ -131,13 +130,15 @@ class ResourceAwarenessService:
     def get_available_ram_mb(self) -> float:
         """獲取可用 RAM（MB）"""
         if not self.psutil:
+            # No reliable cross-platform way to query available RAM without psutil;
+            # 512 MB is a conservative safe fallback.
             return 512.0
         return self.psutil.virtual_memory().available / (1024 * 1024)
 
     def get_cpu_count(self) -> int:
         """獲取 CPU 邏輯核心數"""
         if not self.psutil:
-            return 1
+            return os.cpu_count() or 1
         return self.psutil.cpu_count(logical=True)
 
 

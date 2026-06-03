@@ -17,14 +17,13 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Callable, Any, TYPE_CHECKING
-from datetime import datetime, timedelta
+from datetime import datetime
 import asyncio
-import math
 from enum import Enum
 import logging
-from core.hsm_formula_system import HSMFormulaSystem, CognitiveGap, ExplorationResult
+from core.hsm_formula_system import HSMFormulaSystem
 from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveActivity, CognitiveInvestment
 from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain
 from core.active_cognition_formula import ActiveCognitionFormula, StressSource, OrderType
@@ -33,7 +32,7 @@ from core.non_paradox_existence import NonParadoxExistence, GrayZoneVariableType
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from .dynamic_parameters import DynamicThresholdManager
+    pass
 
 
 class LifePhase(Enum):
@@ -326,7 +325,6 @@ class AutonomousLifeCycle:
                 callback(metrics)
             except Exception as e:  # broad exception acceptable: metrics callbacks should not block updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         return metrics
 
@@ -512,7 +510,6 @@ class AutonomousLifeCycle:
                 callback(decision)
             except Exception as e:  # broad exception acceptable: decision callbacks should not block recording
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     async def _check_phase_transition(self, metrics: FormulaMetrics) -> None:
         """Check if life phase should transition"""
@@ -540,7 +537,6 @@ class AutonomousLifeCycle:
                     callback(old_phase, new_phase)
                 except Exception as e:  # broad exception acceptable: phase callbacks should not block transition
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
     def get_current_metrics(self) -> FormulaMetrics:
         """Get current formula metrics"""

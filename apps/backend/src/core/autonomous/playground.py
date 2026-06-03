@@ -14,7 +14,6 @@ Author: Angela AI v7.5.0-dev
 
 
 from core.engine.state_matrix_adapter import StateMatrixAdapter
-from core.state.text_to_vector import text_to_vector
 from core.ripple.node import MathOp
 
 

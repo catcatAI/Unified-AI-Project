@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 import logging
-import uuid
 from typing import List, Dict, Any, Optional
 
 try:

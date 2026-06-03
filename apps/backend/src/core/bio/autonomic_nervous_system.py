@@ -19,11 +19,10 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Tuple, Callable, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 import asyncio
-import math
 import logging
 from core.system.config.magic_numbers import loop_sleep
 
@@ -248,7 +247,6 @@ class AutonomicNervousSystem:
                     callback(self._last_state, current_state)
                 except Exception as e:  # broad exception acceptable: state change callbacks should not block detection
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
             self._last_state = current_state
 
@@ -258,7 +256,6 @@ class AutonomicNervousSystem:
                 callback(self.arousal_level)
             except Exception as e:  # broad exception acceptable: arousal callbacks should not block updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     async def process_tactile_input(self, data: Dict[str, Any]) -> None:
         """

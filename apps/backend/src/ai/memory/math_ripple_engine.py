@@ -583,7 +583,6 @@ class MathRippleEngine:
 
     def _tokenize(self, expr: str) -> List[str]:
         """Tokenize."""
-        import re
         tokens = []
         num_buffer = ""
 

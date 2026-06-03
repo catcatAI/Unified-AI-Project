@@ -12,10 +12,3 @@ Features:
 - Exit
 """
 
-import os
-import sys
-import platform
-import logging
-import threading
-import asyncio
-from typing import Optional, Dict, Callable

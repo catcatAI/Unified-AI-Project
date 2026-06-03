@@ -64,19 +64,31 @@ class SimultaneousTranslationService:
         Generator for streaming translation results.
         """
         tgt = target_lang or self.default_target_lang
+        mapped_tgt = self.lang_map.get(tgt, tgt)
+        loop = asyncio.get_running_loop()
+
         for idx, chunk in enumerate(chunks):
             if not chunk:
                 continue
 
-            latency = (self.base_latency_ms // 2) + random.randint(10, 50)
-            await asyncio.sleep(latency / 1000.0)
+            start_time = time.time()
+            try:
+                translated = await loop.run_in_executor(
+                    None,
+                    lambda c=chunk: GoogleTranslator(source=source_lang, target=mapped_tgt).translate(c)
+                )
+            except Exception as e:
+                logger.error(f"Stream translation error: {e}", exc_info=True)
+                translated = chunk
+
+            latency = int((time.time() - start_time) * 1000)
 
             yield {
                 "index": idx,
                 "source_lang": source_lang,
                 "target_lang": tgt,
                 "original_text": chunk,
-                "translated_text": f"~{chunk}",  # Mock stream marker
+                "translated_text": translated,
                 "is_final": False,
                 "confidence": 0.88,
             }

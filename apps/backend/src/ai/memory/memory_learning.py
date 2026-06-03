@@ -10,5 +10,3 @@
 4. 建议新的回應模板
 """
 
-import logging
-from typing import Any

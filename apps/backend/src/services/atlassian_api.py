@@ -3,13 +3,12 @@ Atlassian API - Real Implementation for Atlassian CLI Integration
 Handles Jira and Confluence operations via acli.exe.
 """
 
-import subprocess
 import json
 import logging
 import os
 import asyncio
 from typing import Dict, Any, Optional, List
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)

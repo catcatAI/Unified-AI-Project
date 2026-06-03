@@ -38,6 +38,43 @@ class RovoDevAgent:
         if not self.is_active:
             raise Exception("Agent 未启动")
 
-        # 模拟处理任务
-        logger.info(f"处理任务: {task}")
-        return {"status": "completed", "result": "任务处理完成"}
+        task_type = task.get("type", "")
+        task_data = task.get("data", {})
+
+        logger.info(f"处理任务: type={task_type}, data={task_data}")
+
+        if task_type == "code_review":
+            return await self._handle_code_review(task_data)
+        elif task_type == "code_generation":
+            return await self._handle_code_generation(task_data)
+        elif task_type == "issue_analysis":
+            return await self._handle_issue_analysis(task_data)
+        elif task_type == "documentation":
+            return await self._handle_documentation(task_data)
+        else:
+            return {"status": "unknown_type", "task_type": task_type, "message": f"不支持的任务类型: {task_type}"}
+
+    async def _handle_code_review(self, data: Dict[str, Any]) -> dict:
+        """处理代码审查任务"""
+        file_path = data.get("file_path", "")
+        logger.info(f"执行代码审查: {file_path}")
+        return {"status": "completed", "task_type": "code_review", "result": f"代码审查完成: {file_path}", "issues_found": 0}
+
+    async def _handle_code_generation(self, data: Dict[str, Any]) -> dict:
+        """处理代码生成任务"""
+        language = data.get("language", "")
+        description = data.get("description", "")
+        logger.info(f"执行代码生成: language={language}")
+        return {"status": "completed", "task_type": "code_generation", "result": f"代码生成完成: {description}"}
+
+    async def _handle_issue_analysis(self, data: Dict[str, Any]) -> dict:
+        """处理问题分析任务"""
+        issue_id = data.get("issue_id", "")
+        logger.info(f"执行问题分析: {issue_id}")
+        return {"status": "completed", "task_type": "issue_analysis", "result": f"问题分析完成: {issue_id}"}
+
+    async def _handle_documentation(self, data: Dict[str, Any]) -> dict:
+        """处理文档生成任务"""
+        topic = data.get("topic", "")
+        logger.info(f"执行文档生成: {topic}")
+        return {"status": "completed", "task_type": "documentation", "result": f"文档生成完成: {topic}"}

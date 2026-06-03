@@ -6,11 +6,9 @@
 # =============================================================================
 
 import logging
-import os
 import json
 from pathlib import Path
 from typing import Dict, Any, Optional, List
-from datetime import datetime
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build

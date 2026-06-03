@@ -14,11 +14,9 @@ import os
 import platform
 import logging
 import subprocess
-import json
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
-from pathlib import Path
 
 # Attempt to import psutil, provide fallback if not available
 try:

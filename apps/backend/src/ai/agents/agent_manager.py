@@ -104,7 +104,6 @@ class AgentResultEvaluator(ABC):
         Returns:
             StateImpact: 状态影响对象
         """
-        pass
 
 
 # P0-3: 默认评估器实现

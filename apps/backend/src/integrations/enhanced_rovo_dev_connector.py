@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from typing import Dict, Any, Optional, List, cast
 from dataclasses import dataclass, field
@@ -99,15 +100,22 @@ class EnhancedRovoDevConnector:
         self.session: Optional[aiohttp.ClientSession] = None
         self.authenticated = False
         self.semaphore = asyncio.Semaphore(5)
-        logger.info("EnhancedRovoDevConnector Skeleton Initialized")
+        logger.info("EnhancedRovoDevConnector Initialized")
 
     async def start(self) -> None:
-        """Start the component."""
-        logger.info("[EnhancedRovoDevConnector] start — SKELETON (not implemented)")
+        """Start the component — establish HTTP session."""
+        if self.session is None or (hasattr(self.session, 'closed') and self.session.closed):
+            self.session = aiohttp.ClientSession()
+        await self._authenticate()
+        logger.info("EnhancedRovoDevConnector started")
 
     async def close(self) -> None:
         """Close and release resources."""
-        logger.info("[EnhancedRovoDevConnector] close — SKELETON (not implemented)")
+        if self.session and not self.session.closed:
+            await self.session.close()
+        self.session = None
+        self.authenticated = False
+        logger.info("EnhancedRovoDevConnector closed")
 
     async def __aenter__(self) -> 'EnhancedRovoDevConnector':
         """Execute the   aenter   operation."""
@@ -119,8 +127,16 @@ class EnhancedRovoDevConnector:
         await self.close()
 
     async def _authenticate(self) -> None:
-        """Authenticate."""
-        self.authenticated = True  # Mock stub
+        """Authenticate using API key from config or environment."""
+        api_key = self.config.get("api_key") or os.environ.get("ROVO_API_KEY")
+        if not api_key:
+            logger.warning("No API key configured — running in unauthenticated mode")
+            self.authenticated = False
+            return
+
+        self.session.headers.update({"Authorization": f"Bearer {api_key}"})
+        self.authenticated = True
+        logger.info("Authentication configured with API key")
 
     async def _make_request_with_retry(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         """Make request with retry."""

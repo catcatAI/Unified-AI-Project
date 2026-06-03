@@ -16,9 +16,9 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Optional, Callable, Any, Union, TYPE_CHECKING
-from datetime import datetime, timedelta
+from datetime import datetime
 import asyncio
 import uuid
 import json
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # Type imports to avoid circular dependencies
 if TYPE_CHECKING:
-    from .action_executor import ActionExecutor, Action, ActionResult, ActionPriority, ActionStatus
+    pass
 
 
 class ActionType(Enum):

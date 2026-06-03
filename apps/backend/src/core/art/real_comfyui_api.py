@@ -7,10 +7,3 @@ Angela Real Image Generator - ComfyUI API Integration
 2. 安装了必要的模型 (SDXL/SD1.5)
 """
 
-import asyncio
-import aiohttp
-import base64
-import json
-import time
-from pathlib import Path
-from typing import Optional, Dict, List

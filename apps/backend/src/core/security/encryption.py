@@ -11,7 +11,6 @@
 
 """加密工具模块 - 提供数据加密、解密和哈希功能"""
 
-import base64
 import hashlib
 import hmac
 import logging

@@ -6,10 +6,9 @@ Angela AI - Version Management
 提供统一的版本号管理和版本信息查询。
 """
 
-import os
 from pathlib import Path
 from typing import Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 import logging
 

@@ -10,10 +10,3 @@ Angela AI v6.0 - Security & Communication Monitor
 包含系統匣監控功能，可常駐並啟停後端服務。
 """
 
-import os
-import json
-import logging
-import threading
-import time
-from pathlib import Path
-from typing import Dict, Optional

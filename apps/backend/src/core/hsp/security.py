@@ -9,8 +9,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization
-from datetime import datetime, timezone
-from dataclasses import dataclass, asdict
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

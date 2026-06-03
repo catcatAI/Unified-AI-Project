@@ -10,9 +10,6 @@ from core.system.config.magic_numbers import loop_sleep
 # Core AI Component Imports
 from ai.compression.alpha_deep_model import (
     AlphaDeepModel,
-    DeepParameter,
-    RelationalContext,
-    Modalities,
 )
 from ai.world_model.environment_simulator import EnvironmentSimulator
 from ai.evaluation.task_evaluator import TaskExecutionEvaluator

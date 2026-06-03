@@ -1,8 +1,6 @@
 """
 Test script for ConfigMutator
 """
-import json
-import yaml
 
 from core.system.evolution.config_mutator import ConfigMutator
 

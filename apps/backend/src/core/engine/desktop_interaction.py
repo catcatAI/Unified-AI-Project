@@ -18,16 +18,14 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Callable, Any, Set
 from datetime import datetime, timedelta
 from pathlib import Path
 import asyncio
 import os
 import shutil
-import json
 import subprocess
-import shlex
 import sys
 from core.system.config.async_io import async_write_text, async_write_file
 from core.system.config.magic_numbers import loop_sleep
@@ -435,7 +433,6 @@ class DesktopInteraction:
                     total_size += file_path.stat().st_size
                 except (OSError, AttributeError) as e:
                     logger.debug(f"文件大小獲取失敗（可忽略）: {e}")
-                    pass
 
                 # Update cache
                 self._file_cache[file_str] = {
@@ -474,7 +471,6 @@ class DesktopInteraction:
                 callback(file_path, change_type)
             except Exception as e:  # broad exception acceptable: callback errors should not block file change notifications
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     async def _check_auto_organize(self) -> None:
         """Check if auto-organization is needed"""
@@ -630,7 +626,6 @@ class DesktopInteraction:
                 return True
         except Exception as e:  # broad exception acceptable: file deletion errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            pass
 
         return False
 
@@ -642,7 +637,6 @@ class DesktopInteraction:
                 return True
         except Exception as e:  # broad exception acceptable: file move errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            pass
 
         return False
 
@@ -748,7 +742,6 @@ class DesktopInteraction:
 
         except Exception as e:  # broad exception acceptable: wallpaper setting errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            pass
 
         return False
 
@@ -772,7 +765,6 @@ class DesktopInteraction:
 
         except Exception as e:  # broad exception acceptable: wallpaper rotation errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            pass
 
         return False
 
@@ -999,7 +991,6 @@ class DesktopInteraction:
                     callback(operation)
                 except Exception as e:  # broad exception acceptable: operation callback errors should be logged
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
         except Exception as handling_error:  # broad exception acceptable: error handling errors should be logged
             # Error handling itself failed
@@ -1109,7 +1100,6 @@ class DesktopInteraction:
                         callback(operation)
                     except Exception as e:  # broad exception acceptable: operation callback errors should not block execution
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        pass
 
                 return results
 

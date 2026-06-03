@@ -9,6 +9,3 @@
 #
 # =============================================================================
 
-import logging
-import psutil
-from typing import Dict, Any, Optional

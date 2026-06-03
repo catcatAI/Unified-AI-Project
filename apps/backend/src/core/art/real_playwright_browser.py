@@ -8,11 +8,9 @@ Angela Real Browser - Playwright Integration
 """
 
 import asyncio
-from pathlib import Path
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 import logging
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -323,6 +321,6 @@ async def test_browser() -> None:
 
 
 if __name__ == "__main__":
-    import sys
+    pass
 
     asyncio.run(test_browser())

@@ -29,27 +29,22 @@ class HSPTransport(ABC):
     @abstractmethod
     async def connect(self) -> bool:
         """建立連接"""
-        pass
 
     @abstractmethod
     async def disconnect(self) -> bool:
         """斷開連接"""
-        pass
 
     @abstractmethod
     async def publish(self, topic: str, payload: dict[str, Any]) -> bool:
         """發布消息"""
-        pass
 
     @abstractmethod
     async def subscribe(self, topic: str, callback: Callable) -> bool:
         """訂閱主題"""
-        pass
 
     @abstractmethod
     def is_connected(self) -> bool:
         """檢查連接狀態"""
-        pass
 
 
 class LocalIPCTransport(HSPTransport):

@@ -3,7 +3,7 @@ import operator
 from collections import deque
 from typing import Optional
 
-from .models import ModuleDescriptor, ModuleStatus, ModuleInstance, DependencySpec
+from .models import ModuleDescriptor
 
 logger = logging.getLogger(__name__)
 

@@ -19,9 +19,8 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime, timedelta
 from pathlib import Path
 import asyncio
 import logging
@@ -247,7 +246,6 @@ class AudioSystem:
                     callback(old_state, new_state)
                 except Exception as e:  # broad exception acceptable: state callback errors should not block state changes
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
     async def speak(
         self, text: str, config: Optional[TTSConfig] = None, show_subtitles: bool = True
@@ -426,7 +424,6 @@ class AudioSystem:
                             callback(current_line, next_line)
                         except Exception as e:  # broad exception acceptable: lyrics callback errors should not break sync
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                            pass
 
                     last_line = current_line
 
@@ -447,7 +444,6 @@ class AudioSystem:
                 callback(subtitle)
             except Exception as e:  # broad exception acceptable: subtitle callback errors should not break display
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     async def pause(self) -> None:
         """Pause current playback"""

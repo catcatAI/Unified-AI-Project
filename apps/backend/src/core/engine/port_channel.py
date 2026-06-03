@@ -27,7 +27,7 @@ import time
 from core.system.config.magic_numbers import cache_value
 
 if TYPE_CHECKING:
-    from core.engine.axis_port_registry import PortRegistry, Port
+    from core.engine.axis_port_registry import PortRegistry
     from core.engine.state_matrix_adapter import StateMatrixAdapter
 
 logger = logging.getLogger("angela_port_channel")

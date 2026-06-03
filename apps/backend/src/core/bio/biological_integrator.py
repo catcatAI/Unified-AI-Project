@@ -17,7 +17,7 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime
 import asyncio
@@ -452,7 +452,6 @@ class BiologicalIntegrator:
                 callback(integrated_state)
             except Exception as e:  # broad exception acceptable: state callback errors should not block synchronization
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
     async def process_stress_event(self, intensity: float, duration: float = 10.0) -> None:
         """Execute the process stress event operation."""

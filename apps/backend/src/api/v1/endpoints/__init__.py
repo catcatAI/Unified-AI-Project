@@ -1,5 +1,4 @@
 import logging
-from . import pet, economy
 
 logger = logging.getLogger(__name__)
 

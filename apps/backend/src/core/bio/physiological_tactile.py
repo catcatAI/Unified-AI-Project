@@ -23,7 +23,6 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
-import random
 import math
 import logging
 from core.system.config.magic_numbers import cache_value, loop_sleep
@@ -439,7 +438,6 @@ class PhysiologicalTactileSystem:
                 callback(stimulus)
             except Exception as e:  # broad exception acceptable: stimulus callbacks should not break stimulus processing
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                pass
 
         # Check thresholds
         self._check_thresholds(stimulus.location, perceived_intensity)
@@ -461,7 +459,6 @@ class PhysiologicalTactileSystem:
                     callback(intensity)
                 except Exception as e:  # broad exception acceptable: threshold callbacks should not break threshold checking
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
     def register_stimulus_callback(self, callback: Callable[[TactileStimulus], None]) -> None:
         """Register a callback for stimulus events"""

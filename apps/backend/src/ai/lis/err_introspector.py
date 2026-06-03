@@ -15,7 +15,7 @@ try:
 except ImportError:
     np = None
 
-from .types import LIS_SemanticAnomalyDetectedEvent, LIS_AnomalyType, LIS_SeverityScore
+from .types import LIS_SemanticAnomalyDetectedEvent
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,6 @@ with portrait images as a ZIP archive.
 import json
 import logging
 import zipfile
-from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional

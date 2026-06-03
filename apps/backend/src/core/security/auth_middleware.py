@@ -13,7 +13,6 @@
 提供JWT令牌认证、API密钥验证和会话管理
 """
 
-import hashlib
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone

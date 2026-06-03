@@ -6,7 +6,7 @@ Conflict detector — detects physical, numerical, and tone conflicts across car
 import logging
 from typing import List, Tuple
 
-from core.card.card_types import Card, Conflict, ConflictType, IntentFlag
+from core.card.card_types import Card, Conflict, ConflictType
 
 logger = logging.getLogger(__name__)
 

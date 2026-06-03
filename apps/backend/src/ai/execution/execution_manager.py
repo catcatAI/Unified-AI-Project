@@ -8,7 +8,6 @@ Execution Manager for Unified AI Project
 Unified execution monitoring and management system
 """
 
-import asyncio
 import logging
 import threading
 import time

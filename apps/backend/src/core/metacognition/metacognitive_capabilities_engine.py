@@ -23,10 +23,3 @@ Level 5 AGI Phase 4 - 实现深度自我理解与调控能力
 - 智能内省能力 (Intelligent Introspection)
 """
 
-import asyncio
-import hashlib
-import random
-import logging
-import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional

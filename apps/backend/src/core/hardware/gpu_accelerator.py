@@ -12,9 +12,8 @@ GPU 加速服務模組，為 Live2D/WebGL 提供模擬獨顯功能
 import asyncio
 import logging
 from typing import Optional, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-import json
 from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)

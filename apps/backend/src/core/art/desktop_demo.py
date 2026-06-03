@@ -14,7 +14,6 @@ import asyncio
 from pathlib import Path
 from datetime import datetime
 from PIL import Image, ImageDraw
-import shutil
 import logging
 
 logger = logging.getLogger(__name__)

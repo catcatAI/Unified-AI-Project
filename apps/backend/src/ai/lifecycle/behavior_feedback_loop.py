@@ -419,7 +419,6 @@ if __name__ == "__main__":
     # 測試行為反饋循環
     async def test_behavior_feedback_loop() -> None:
         """Log a diagnostic message."""
-        from dataclasses import dataclass
 
         logging.basicConfig(level=logging.INFO)
 
@@ -430,7 +429,6 @@ if __name__ == "__main__":
         class MockMemoryManager:
             async def store_experience(self, raw_data, data_type) -> None:
                 """Store a experience."""
-                pass
 
         class MockLearningEngine:
             pass

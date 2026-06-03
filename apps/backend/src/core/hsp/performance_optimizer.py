@@ -12,7 +12,7 @@ import zlib
 from typing import Dict, Any, List, Optional, Callable
 from collections import defaultdict, deque
 from datetime import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 

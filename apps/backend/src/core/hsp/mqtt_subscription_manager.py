@@ -13,7 +13,7 @@ import asyncio
 import logging
 import json
 from typing import Callable, Dict, List, Set, Optional, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 

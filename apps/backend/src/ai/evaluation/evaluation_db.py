@@ -1,7 +1,6 @@
 import sqlite3
 import logging
 import json
-import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 

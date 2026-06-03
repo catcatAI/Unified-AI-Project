@@ -5,7 +5,3 @@ Alignment Manager - 协调三大支柱系统的核心管理器
 并通过决策论系统将三者的输出转化为最终行动。
 """
 
-import logging
-import asyncio
-from enum import Enum
-from typing import Dict, Any, List, Tuple

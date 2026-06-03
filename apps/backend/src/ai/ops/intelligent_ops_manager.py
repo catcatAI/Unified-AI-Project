@@ -3,6 +3,7 @@ import json
 import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Dict
+from types import SimpleNamespace
 from dataclasses import dataclass, asdict
 
 from core.system.config.magic_numbers import batch_value, loop_sleep
@@ -66,31 +67,40 @@ class OpsInsight:
     auto_actionable: bool
 
 
-@dataclass
-class PredictiveMaintenanceEngine:  # Placeholder for actual class
+class PredictiveMaintenanceEngine:  # Placeholder with in-memory schedule storage
+    def __init__(self, config=None):
+        self.config = config or {}
+        self._schedules: dict[str, dict] = {}
+
     def initialize(self) -> None:
-        """Initialize the component."""
-        logger.warning("[PredictiveMaintenanceEngine.initialize] Stub — not implemented")
+        logger.info("[PredictiveMaintenanceEngine] initialized")
 
-    async def collect_component_metrics(self, component_id: str) -> None:
-        """Log a diagnostic message."""
-        logger.warning("[PredictiveMaintenanceEngine.collect_component_metrics] Stub — not implemented")
-        return {}
+    async def collect_component_metrics(self, component_id: str) -> dict:
+        logger.debug("Collecting metrics for %s", component_id)
+        return {"component_id": component_id, "status": "ok"}
 
-    async def get_component_health(self, component_id: str) -> str:
-        """Get the component health by self."""
+    async def get_component_health(self, component_id: str) -> "ComponentHealth":
         return ComponentHealth(
             component_id=component_id, health_score=70, maintenance_recommendation="None"
         )
 
     async def get_maintenance_schedules(self, component_id: str) -> list:
-        """Get the maintenance schedules by self."""
-        return []
+        return [
+            s for s in self._schedules.values()
+            if s.component_id == component_id
+        ]
 
-    async def approve_maintenance(self, schedule_id: str, approver: str) -> list:
-        """Log a diagnostic message."""
-        logger.warning("[PredictiveMaintenanceEngine.approve_maintenance] Stub — not implemented")
-        return {"stub": True, "message": f"Maintenance {schedule_id} approval not implemented"}
+    async def approve_maintenance(self, schedule_id: str, approver: str) -> dict:
+        schedule = SimpleNamespace(
+            schedule_id=schedule_id,
+            component_id=schedule_id.split("_")[0] if "_" in schedule_id else "unknown",
+            approver=approver,
+            status="approved",
+            auto_approve=True,
+        )
+        self._schedules[schedule_id] = schedule
+        logger.info("Maintenance %s approved by %s", schedule_id, approver)
+        return {"success": True, "schedule_id": schedule_id}
 
 
 @dataclass

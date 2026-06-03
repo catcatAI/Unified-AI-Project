@@ -58,7 +58,7 @@ class PermissionContext:
 
 
 class PermissionControlSystem:
-    """Main permission control system (SKELETON)"""
+    """Main permission control system"""
 
     def __init__(self, config_path: Optional[str] = None) -> None:
         self.rules: Dict[str, List[PermissionRule]] = {}
@@ -68,7 +68,7 @@ class PermissionControlSystem:
         self._load_configuration()
         if not self.default_rules:
             self._set_default_rules()
-        logger.info("PermissionControlSystem Skeleton Initialized")
+        logger.info("PermissionControlSystem Initialized")
 
     def _load_configuration(self) -> None:
         """Load configuration."""

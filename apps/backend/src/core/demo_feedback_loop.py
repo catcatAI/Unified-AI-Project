@@ -9,9 +9,7 @@ running the full test suite.
 import asyncio
 import logging
 import sys
-from pathlib import Path
 from feedback_loop_engine import (
-    FeedbackLoopEngine,
     FeedbackLoopEngineFactory,
     PerceptionEvent,
     PerceptionType,

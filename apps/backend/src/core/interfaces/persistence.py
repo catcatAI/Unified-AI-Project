@@ -3,7 +3,6 @@ ANGELA-MATRIX: [L2-L3] [α] [A] [L2]
 State persistence protocol for save/load operations.
 """
 
-import json
 import logging
 from abc import abstractmethod
 from pathlib import Path

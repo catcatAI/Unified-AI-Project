@@ -204,7 +204,7 @@ class DatabaseStorage(Storage):
         try:
             if not self._connected:
                 logger.warning("Database storage not connected, using mock storage", exc_info=True)
-                return {"total_contexts": len(self._db), "storage_type": "mock_database"}
+                return {"total_contexts": len(self._db), "storage_type": "database", "error": "not connected"}
             else:
                 logger.debug("从数据库获取存储信息 (connected mode)", exc_info=True)
                 return {"total_contexts": len(self._db), "storage_type": "connected_database"}

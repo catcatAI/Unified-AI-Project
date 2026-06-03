@@ -4,10 +4,10 @@
 dependencies:
   # Core/Essential Dependencies - Project cannot run without these
   core:
-    - name: "Flask"
-      description: "Web framework for basic HTTP services"
+    - name: "FastAPI"
+      description: "Primary web framework for HTTP services"
       essential: true
-      fallbacks: ["fastapi", "tornado"]
+      fallbacks: ["flask", "tornado"]
     - name: "numpy"
       description: "Numerical computing library"
       essential: true

@@ -32,4 +32,3 @@ class HAMRecallResult(TypedDict):
 class HAMMemoryError(Exception):
     """Custom exception for HAM memory operations."""
 
-    pass

@@ -19,9 +19,9 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Callable, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime
 import asyncio
 import logging
 from core.system.config.magic_numbers import timeout_value
@@ -425,7 +425,6 @@ class MultidimensionalTriggerSystem:
                     callback(self.dimension_values[dimension])
                 except Exception as e:  # broad exception acceptable: dimension callbacks should not break dimension updates
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
     def update_dimensions(self, values: Dict[TriggerDimension, Tuple[float, Any]]) -> None:
         """Update multiple dimensions at once"""
@@ -454,7 +453,6 @@ class MultidimensionalTriggerSystem:
                             callback(score)
                         except Exception as e:  # broad exception acceptable: trigger callbacks should not break evaluation
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                            pass
 
         # Sort by score descending
         results.sort(key=lambda x: x[1], reverse=True)

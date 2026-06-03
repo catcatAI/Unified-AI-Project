@@ -4,5 +4,3 @@ FileOperationHandler — processes file_op intents from ChatService dispatch.
 Delegates to DesktopInteraction for actual file system operations.
 """
 
-import logging
-import re

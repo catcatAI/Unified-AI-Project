@@ -386,7 +386,6 @@ if __name__ == "__main__":
     # 測試記憶整合循環
     async def test_memory_integration_loop() -> list:
         """Log a diagnostic message."""
-        from dataclasses import dataclass
 
         logging.basicConfig(level=logging.INFO)
 
@@ -405,15 +404,12 @@ if __name__ == "__main__":
 
             async def store_structured_memory(self, content, structured_data) -> None:
                 """Store a structured memory."""
-                pass
 
             async def add_to_knowledge_base(self, content, importance) -> None:
                 """Add a to knowledge base."""
-                pass
 
             async def generate_template(self, template) -> None:
                 """Execute the generate template operation."""
-                pass
 
         class MockLearningEngine:
             pass

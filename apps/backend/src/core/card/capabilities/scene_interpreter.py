@@ -6,7 +6,7 @@ Scene interpreter — interprets Card tokens + social_distance as a dramatic sce
 import logging
 from typing import Any, Dict, List, Optional
 
-from core.card.card_types import Card, Relation, Token
+from core.card.card_types import Card, Relation
 from core.card.resolver.text_gravity import TextGravityField
 
 logger = logging.getLogger(__name__)

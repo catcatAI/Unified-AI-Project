@@ -10,8 +10,6 @@ from typing_extensions import Literal
 
 from .types import (
     HSPMessageEnvelope,
-    HSPFactPayload,
-    HSPTaskRequestPayload,
     HSPTaskResultPayload,
     HSPCapabilityAdvertisementPayload,
     HSPAcknowledgementPayload,
@@ -26,19 +24,14 @@ from .advanced_performance_optimizer import (
 )
 from .security import HSPSecurityManager, HSPSecurityContext
 from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
-from .utils.fallback_config_loader import FallbackConfigLoader
 from core.system.config.magic_numbers import cache_value, threshold_value, timeout_value
 
 # from .retry_policy import RetryPolicy
 # from .circuit_breaker import CircuitBreaker
-from .utils.fallback_config_loader import get_config_loader
 from shared.network_resilience import (
-    NetworkResilienceManager,
-    NetworkError,
     RetryPolicy,
     CircuitBreaker,
 )
-from shared.error import ErrorHandler
 from .internal.internal_bus import InternalBus
 from .bridge.message_bridge import MessageBridge
 from .bridge.data_aligner import DataAligner
@@ -893,7 +886,7 @@ class HSPConnector:
 
         # 应用安全处理
         try:
-            _secured_envelope = self.security_context.secure_message(dict(envelope), self.ai_id)
+            self.security_context.secure_message(dict(envelope), self.ai_id)
             # 确保返回类型正确
             return envelope
         except Exception as e:  # broad exception acceptable: security processing involves multiple operations that may fail

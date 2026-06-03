@@ -4,5 +4,3 @@ LLM fallback — final adjudicator for conflicts that Stage 1 and Stage 2
 cannot resolve.
 """
 
-import logging
-from typing import List

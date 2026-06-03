@@ -15,4 +15,3 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
-from typing import Dict, List, Any, TYPE_CHECKING

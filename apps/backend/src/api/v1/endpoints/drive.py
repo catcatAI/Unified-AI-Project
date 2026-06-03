@@ -4,7 +4,7 @@ Google Drive 集成 API 端點
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Body, UploadFile, File, Form
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime
 import logging
 import tempfile

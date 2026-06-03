@@ -9,7 +9,8 @@ import json
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, Callable, Any, Awaitable
-from unittest.mock import Mock
+
+import paho.mqtt.client as mqtt
 
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,9 @@ logger = logging.getLogger(__name__)
 
 # Mock dependencies for syntax validation
 class ProjectError(Exception):
-    pass
+    def __init__(self, message, code=500):
+        super().__init__(message)
+        self.code = code
 
 
 def project_error_handler(error) -> None:
@@ -27,7 +30,9 @@ def project_error_handler(error) -> None:
 class MCPEnvelope:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
-        logger.warning("MCPEnvelope is a stub - kwargs: %s", kwargs)
+
+    def to_dict(self):
+        return self.__dict__
 
 
 class MCPMessagePriority:
@@ -35,14 +40,25 @@ class MCPMessagePriority:
 
 
 class FallbackManager:
-    def register_command_handler(self, command_name, handler) -> None:
-        logger.warning("FallbackManager.register_command_handler stub: %s", command_name)
+    def __init__(self):
+        self._handlers: dict = {}
+        self._command_log: list = []
 
-    async def send_command(self, sender_id, recipient_id, command_name, parameters, priority) -> None:
+    def register_command_handler(self, command_name, handler) -> None:
+        self._handlers[command_name] = handler
+
+    async def send_command(self, sender_id, recipient_id, command_name, parameters, priority) -> bool:
+        self._command_log.append({
+            "sender_id": sender_id,
+            "recipient_id": recipient_id,
+            "command_name": command_name,
+            "parameters": parameters,
+            "priority": priority,
+        })
         return True
 
-    def get_status(self) -> None:
-        return {"active_protocol": "mock"}
+    def get_status(self) -> dict:
+        return {"active_protocol": "fallback", "queued_commands": len(self._command_log)}
 
 
 def get_mcp_fallback_manager() -> dict:
@@ -53,43 +69,11 @@ async def initialize_mcp_fallback_protocols(is_multiprocess: bool) -> bool:
     return True
 
 
-# Mock paho.mqtt.client
-class MockMQTTClient:
-    def __init__(self, client_id):
-        self.client_id = client_id
-        logger.warning("MockMQTTClient stub created: client_id=%s", client_id)
-
-    def on_connect(self, client, userdata, flags, rc) -> None:
-        logger.warning("MockMQTTClient.on_connect stub: rc=%s", rc)
-
-    def on_message(self, client, userdata, msg) -> None:
-        logger.warning("MockMQTTClient.on_message stub")
-
-    def connect(self, host, port, keepalive) -> None:
-        logger.warning("MockMQTTClient.connect stub: %s:%s", host, port)
-
-    def loop_start(self) -> None:
-        logger.warning("MockMQTTClient.loop_start stub")
-
-    def loop_stop(self) -> None:
-        logger.warning("MockMQTTClient.loop_stop stub")
-
-    def disconnect(self) -> None:
-        logger.warning("MockMQTTClient.disconnect stub")
-
-    def subscribe(self, topic) -> None:
-        logger.warning("MockMQTTClient.subscribe stub: %s", topic)
-
-    def publish(self, topic, payload) -> None:
-        logger.warning("MockMQTTClient.publish stub: %s", topic)
-
-
-mqtt = Mock()
-mqtt.Client = MockMQTTClient
+# Real paho.mqtt.client is imported above
 
 
 class MCPConnector:
-    """MCPConnector - 多代理通信協議連接器 (SKELETON)"""
+    """MCPConnector - 多代理通信協議連接器"""
 
     def __init__(
         self,
@@ -199,7 +183,7 @@ class MCPConnector:
                     correlation_id=None,
                 )
                 topic = f"mcp/cmd/{target_id}/{command_name}"
-                self.client.publish(topic, json.dumps(envelope))
+                self.client.publish(topic, json.dumps(envelope.to_dict()))
                 self.logger.info(
                     f"Sent MCP command '{command_name}' to {target_id} via MQTT with request_id {request_id}"
                 )
@@ -300,9 +284,8 @@ class MCPConnector:
         }
         if self.mcp_available and self.is_connected:
             try:
-                # Simulate a ping or simple check
-                # self.client.publish("mcp/ping", "ping")
-                health["mcp_healthy"] = True
+                info = self.client.publish("mcp/ping", "ping")
+                health["mcp_healthy"] = info.rc == 0
             except Exception as e:  # broad exception acceptable: ensure health check errors do not crash the health report
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 health["mcp_healthy"] = False

@@ -5,7 +5,6 @@
 
 import logging
 import asyncio
-import time
 import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional
@@ -52,7 +51,7 @@ class SystemMetrics:
 
 
 class SystemMonitor:
-    """系统监控器 (SKELETON)"""
+    """系统监控器"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
@@ -62,7 +61,7 @@ class SystemMonitor:
         self.is_monitoring = False
         self._last_net_io = psutil.net_io_counters()
         self.gpu_available = self._init_gpu_monitoring()
-        logger.info("系统监控器 Skeleton 初始化完成")
+        logger.info("系统监控器 初始化完成")
 
     def _init_gpu_monitoring(self) -> bool:
         """Init gpu monitoring."""
@@ -75,21 +74,26 @@ class SystemMonitor:
             return False
 
     def get_gpu_info(self) -> List[Dict[str, Any]]:
-        """Get the gpu info by self."""
         if not self.gpu_available:
             return []
         try:
-            # Mock GPU info
-            return [
-                {
-                    "id": 0,
-                    "name": "Mock GPU",
-                    "memory_total_gb": 8.0,
-                    "memory_used_gb": 2.0,
-                    "gpu_utilization": 25.0,
-                }
-            ]
-        except Exception as e:  # broad exception acceptable: ensure GPU info errors don't crash metrics collection
+            device_count = pynvml.nvmlDeviceGetCount()
+            gpus = []
+            for i in range(device_count):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                name = pynvml.nvmlDeviceGetName(handle)
+                mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                util = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                gpus.append({
+                    "id": i,
+                    "name": name,
+                    "memory_total_gb": mem_info.total / (1024**3),
+                    "memory_used_gb": mem_info.used / (1024**3),
+                    "memory_utilization": mem_info.used / mem_info.total * 100 if mem_info.total > 0 else 0.0,
+                    "gpu_utilization": util.gpu,
+                })
+            return gpus
+        except Exception as e:
             logger.warning(f"获取GPU信息失败: {e}", exc_info=True)
             return []
 

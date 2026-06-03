@@ -13,7 +13,7 @@ from enum import Enum
 from dataclasses import dataclass
 import json
 
-from .user_monitor import UserMonitor, UserState
+from .user_monitor import UserMonitor
 from core.system.config.magic_numbers import cache_value, loop_sleep
 
 logger = logging.getLogger(__name__)
@@ -512,7 +512,6 @@ if __name__ == "__main__":
     # 測試主動交互系統
     async def test_proactive_interaction_system() -> list:
         """Log a diagnostic message."""
-        from dataclasses import dataclass
 
         logging.basicConfig(level=logging.INFO)
 

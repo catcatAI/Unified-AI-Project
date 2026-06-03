@@ -4,9 +4,7 @@ Centralizes logging configuration to prevent 'log-jacking' by submodules.
 """
 
 import logging
-import os
 from pathlib import Path
-from .enterprise_logger import get_logger, LogCategory
 
 def setup_logging(level=logging.INFO, log_file="backend.log") -> str:
     """

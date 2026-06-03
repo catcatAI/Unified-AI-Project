@@ -14,7 +14,7 @@ from typing import Dict, Any
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from services.connection_session import get_session_manager, SessionState
+from services.connection_session import get_session_manager
 
 logger = logging.getLogger(__name__)
 

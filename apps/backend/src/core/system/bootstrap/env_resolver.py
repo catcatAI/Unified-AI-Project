@@ -3,7 +3,6 @@ Environment Resolver & OS Detection
 Formalized from auto_install.py
 """
 
-import os
 import sys
 import platform
 import subprocess

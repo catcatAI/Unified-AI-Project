@@ -12,7 +12,6 @@ Level 5 AGI 动态配置系统
 
 import asyncio
 import logging
-import json
 
 try:
     import numpy as np
@@ -20,8 +19,7 @@ except ImportError:
     np = None
 from datetime import datetime
 from typing import Dict, Any, Optional
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)

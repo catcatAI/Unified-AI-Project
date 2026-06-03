@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from core.card.card_types import Card, Conflict, ConflictType, IntentFlag
+from core.card.card_types import Card
 from core.card.card_store import CardRegistry
 from core.card.parser.conflict_detector import ConflictDetector
 from core.card.parser.deterministic_parser import DeterministicParser

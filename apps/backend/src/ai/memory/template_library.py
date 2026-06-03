@@ -15,7 +15,7 @@ import threading
 from typing import Dict, List, Optional
 from enum import Enum
 
-from .memory_template import MemoryTemplate, ResponseCategory, AngelaState, UserImpression
+from .memory_template import MemoryTemplate, ResponseCategory
 
 logger = logging.getLogger(__name__)
 

@@ -19,12 +19,11 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Dict, List, Optional, Tuple, Callable, Any, Set
 from datetime import datetime, timedelta
 import asyncio
 import math
-import random
 import logging
 from core.system.config.magic_numbers import loop_sleep
 
@@ -500,7 +499,6 @@ class NeuroplasticitySystem:
                     callback(trace)
                 except Exception as e:  # broad exception acceptable: memory access callbacks should not break access
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    pass
 
         return trace
 
@@ -579,7 +577,6 @@ class NeuroplasticitySystem:
                                 callback(memory_id)
                             except Exception as e:  # broad exception acceptable: consolidation callbacks should not break memory consolidation
                                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                                pass
 
     def associate_memories(self, memory_id_1: str, memory_id_2: str) -> None:
         """
@@ -1201,7 +1198,6 @@ class TraumaMemorySystem:
             >>> print(f"Flashback intensity: {result['flashback_intensity']:.2%}")
             >>> print(f"Over-activation prevented: {result['over_activation_prevented']}")
         """
-        import math
 
         results = {
             "memory_id": memory_id,

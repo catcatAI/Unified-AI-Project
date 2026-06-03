@@ -3,10 +3,9 @@
 Provides daily conversation language model capabilities.
 """
 
-import re
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import logging
 
 logger = logging.getLogger(__name__)

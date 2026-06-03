@@ -18,24 +18,20 @@ Date: 2026-05-13
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Any, Callable
 
 from core.engine.cognitive_operations import (
     CognitiveOp as _CognitiveOp,
-    compute_spatial_influence_factor,
     perform_spatial_reasoning as _psr,
     get_dimension_value as _gdv,
     get_position as _gp,
-    execute_thought_chain as _etc,
     evaluate_math_spatially,
     apply_intent_gravity,
     set_intent_target,
     apply_inter_dimensional_drag,
 )
 
-from datetime import datetime, timedelta
-import asyncio
+from datetime import datetime
 import json
 import logging
 import math

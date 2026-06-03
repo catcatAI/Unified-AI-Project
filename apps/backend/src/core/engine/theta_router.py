@@ -31,7 +31,7 @@ from core.system.config.magic_numbers import cache_value
 
 if TYPE_CHECKING:
     from core.engine.state_matrix_adapter import StateMatrixAdapter
-    from core.engine.axis_port_registry import PortRegistry, Port
+    from core.engine.axis_port_registry import PortRegistry
 
 logger = logging.getLogger("angela_theta_router")
 

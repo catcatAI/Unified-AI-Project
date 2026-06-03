@@ -4,4 +4,3 @@ Central service registry for explicit dependency injection.
 Replaces implicit singleton patterns across the system.
 """
 
-from typing import Dict, Any, Optional, TypeVar, Type
