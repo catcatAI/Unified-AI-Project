@@ -169,7 +169,7 @@ try {
 
 1. **No AI self-assigned MAJOR versions**: Any version bump to MAJOR or MINOR must be explicitly approved by a human. AI agents may increment PATCH only.
 2. **CHANGELOG must match real versions**: Every CHANGELOG entry must correspond to a real git tag or source code version change. Fictional/unreleased versions must be marked `Internal/Unreleased`.
-3. **All 13 version locations must stay in sync**: Before any commit that changes `package.json` version, run a consistency check across all version files. See `MASTER_CONSOLIDATED_PLAN.md` for the full file list.
+3. **All 14 version locations must stay in sync**: Before any commit that changes `package.json` version, run a consistency check across all version files. See `docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md` for the full file list.
 4. **No bare "Fix and update" commits**: Every commit that touches a version field must explain WHY in the commit message body.
 
 ## Git Workflow

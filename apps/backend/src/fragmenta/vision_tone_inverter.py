@@ -6,38 +6,43 @@ logger = logging.getLogger(__name__)
 
 class VisionToneInverter:
     """
-    Placeholder for Fragmenta Vision Tone Inverter.
-    This module, inspired by Fragmenta's concepts, might adjust visual representations
-    or interpretations based on desired "tone" or context.
+    Adjusts visual representations based on desired tone or context.
+    Supports tone transformations such as brightening, simplifying, and contrast inversion.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        print("VisionToneInverter: Placeholder initialized.")
+        logger.debug("VisionToneInverter initialized.")
 
     def invert_visual_tone(self, visual_data: Dict[str, Any], target_tone: str) -> Dict[str, Any]:
         """
         Adjusts visual data based on a target tone.
-        'visual_data' could be a description of visual elements, image metadata, etc.
-        'target_tone' e.g., "brighter", "more serious", "minimalist".
-        Placeholder logic, returns original data with a note.
+
+        'visual_data' can contain keys like 'color_palette', 'layout_elements',
+        'brightness', 'contrast', etc.
+        'target_tone' e.g., "brighter", "darker", "minimalist", "invert_contrast".
         """
-        print(
-            f"VisionToneInverter: Inverting tone for visual data (keys: {list(visual_data.keys()) if visual_data else 'N/A'}) to '{target_tone}' (Placeholder)."
+        logger.info(
+            f"Inverting tone for visual data (keys: {list(visual_data.keys()) if visual_data else 'N/A'}) to '{target_tone}'"
         )
         processed_visual_data = visual_data.copy() if visual_data else {}
-        processed_visual_data["tone_adjustment_note"] = (
-            f"Placeholder: Tone inverted to '{target_tone}'."
-        )
+        processed_visual_data["tone_adjustment_note"] = f"Tone inverted to '{target_tone}'."
 
-        # Example logic
         if target_tone == "brighter" and "color_palette" in processed_visual_data:
             processed_visual_data["color_palette"] = self._make_brighter(
+                processed_visual_data["color_palette"]
+            )
+        elif target_tone == "darker" and "color_palette" in processed_visual_data:
+            processed_visual_data["color_palette"] = self._make_darker(
                 processed_visual_data["color_palette"]
             )
         elif target_tone == "minimalist" and "layout_elements" in processed_visual_data:
             processed_visual_data["layout_elements"] = self._simplify_layout(
                 processed_visual_data["layout_elements"]
+            )
+        elif target_tone == "invert_contrast":
+            processed_visual_data["contrast"] = self._invert_contrast(
+                processed_visual_data.get("contrast", 1.0)
             )
 
         return processed_visual_data
@@ -59,11 +64,32 @@ class VisionToneInverter:
         return new_palette
 
     def _simplify_layout(self, elements: List[Any]) -> List[Any]:
-        """Mock implementation to simplify a layout."""
+        """Simplifies a layout by keeping only the first half of elements."""
         return elements[: len(elements) // 2] if elements else []
+
+    def _make_darker(self, palette: List[str]) -> List[str]:
+        """Reduces brightness of each hex color in the palette."""
+        new_palette: List[str] = []
+        for color in palette:
+            try:
+                hex_color = color.lstrip("#")
+                rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+                dark_rgb = tuple(max(0, c - 50) for c in rgb)
+                new_palette.append("#%02x%02x%02x" % dark_rgb)
+            except Exception as e:  # broad exception acceptable: hex color parsing
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                new_palette.append(color)
+        return new_palette
+
+    def _invert_contrast(self, contrast: float) -> float:
+        """Inverts contrast value around 1.0."""
+        if contrast <= 0:
+            return 2.0
+        return 1.0 / contrast
 
 
 if __name__ == "__main__":
+    logger.info("--- VisionToneInverter Example ---")
     inverter = VisionToneInverter()
     sample_visuals = {
         "type": "ui_theme",
@@ -72,11 +98,11 @@ if __name__ == "__main__":
     }
 
     adjusted_visuals = inverter.invert_visual_tone(sample_visuals, "brighter")
-    print(f"Adjusted visuals (brighter): {adjusted_visuals}")
+    logger.info(f"Adjusted visuals (brighter): {adjusted_visuals}")
 
     adjusted_visuals_minimal = inverter.invert_visual_tone(
         {"layout_elements": ["header", "sidebar", "content", "footer"]}, "minimalist"
     )
-    print(f"Adjusted visuals (minimalist): {adjusted_visuals_minimal}")
+    logger.info(f"Adjusted visuals (minimalist): {adjusted_visuals_minimal}")
 
-    print("VisionToneInverter placeholder script finished.")
+    logger.info("VisionToneInverter example finished.")

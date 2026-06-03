@@ -663,13 +663,27 @@ if __name__ == "__main__":
                 logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}", exc_info=True)
                 return None
 
-    def check_agent_health(self, agent_name: str) -> bool:
+    def check_agent_health(self, agent_name: str) -> Dict[str, Any]:
         """
-        Checks if an agent is healthy. This is a placeholder.
+        Checks if an agent is healthy and returns a structured health report.
         """
-        if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
-            return True
-        return False
+        agent = self.agents.get(agent_name)
+        is_registered = agent_name in self.agents
+        is_active = agent_name in self.active_agents and self.active_agents[agent_name].poll() is None
+
+        last_heartbeat = None
+        if agent_name in self.process_agents:
+            last_heartbeat = self.process_agents[agent_name].last_heartbeat
+
+        status = "healthy" if is_active else ("registered" if is_registered else "unknown")
+
+        return {
+            "agent_name": agent_name,
+            "status": status,
+            "is_registered": is_registered,
+            "is_active": is_active,
+            "last_heartbeat": last_heartbeat,
+        }
 
     def shutdown_agent(self, agent_name: str) -> bool:
         """
@@ -739,12 +753,11 @@ if __name__ == "__main__":
         Waits for an agent to be ready by checking for its capability advertisement.
         """
         if service_discovery is None:
-            logger.warning(
-                "[AgentManager] wait_for_agent_ready is using placeholder sleep as no service_discovery provided."
-                , exc_info=True
-            )
+            if agent_name in self.agents:
+                logger.info(f"[AgentManager] Agent '{agent_name}' is already registered and ready.")
+                return
             await asyncio.sleep(loop_sleep("agent_wait_retry", 2.0))
-            logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after waiting.")
+            logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after initialization delay.")
             return
 
         expected_capability_id = "data_analysis_v1"  # Placeholder

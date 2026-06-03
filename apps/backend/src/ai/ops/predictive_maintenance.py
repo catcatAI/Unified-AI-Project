@@ -27,7 +27,7 @@ class PredictiveMaintenanceEngine:
     def analyze_for_anomalies(self, sensor_id: str) -> Optional[Dict[str, Any]]:
         """
         Analyzes historical sensor data for anomalies indicating potential failures.
-        This is a placeholder for actual anomaly detection algorithms.
+        Uses deviation-from-mean detection on the sensor's value history.
         """
         history = self.sensor_data_history.get(sensor_id)
         if not history or len(history) < self.config.get("min_history_for_analysis", 5):
@@ -58,23 +58,51 @@ class PredictiveMaintenanceEngine:
     def predict_failure(self, sensor_id: str) -> Optional[Dict[str, Any]]:
         """
         Predicts potential future failures based on current and historical data.
-        This is a placeholder for more advanced predictive models.
+        Computes likelihood from anomaly frequency and deviation magnitude.
         """
-        anomaly = self.analyze_for_anomalies(sensor_id)
-        if anomaly:
-            # Simple prediction: if anomaly, predict failure soon
-            prediction_time = datetime.now() + timedelta(
-                hours=self.config.get("prediction_horizon_hours", 24)
-            )
-            prediction = {
-                "sensor_id": sensor_id,
-                "predicted_failure_time": prediction_time.isoformat(),
-                "likelihood": 0.8,  # High likelihood due to anomaly
-                "details": anomaly["message"],
-            }
-            logger.critical(f"Failure predicted for sensor {sensor_id}: {prediction['details']}", exc_info=True)
-            return prediction
-        return None
+        history = self.sensor_data_history.get(sensor_id)
+        if not history:
+            return None
+
+        total_readings = len(history)
+        anomaly_count = 0
+        latest_deviation = 0.0
+
+        for i, entry in enumerate(history):
+            data = entry["data"]
+            if "value" not in data:
+                continue
+            vals = [h["data"]["value"] for h in history[:i] if "value" in h["data"]]
+            if not vals:
+                continue
+            avg = sum(vals) / len(vals)
+            deviation = abs(data["value"] - avg)
+            threshold = self.config.get("anomaly_threshold", 20)
+            if deviation > threshold:
+                anomaly_count += 1
+                if i == len(history) - 1:
+                    latest_deviation = deviation
+
+        if anomaly_count == 0:
+            return None
+
+        anomaly_freq = anomaly_count / total_readings
+        deviation_ratio = min(latest_deviation / max(self.config.get("anomaly_threshold", 20), 1), 5.0)
+        likelihood = min(anomaly_freq * 0.5 + deviation_ratio * 0.1, 0.95)
+
+        prediction_time = datetime.now() + timedelta(
+            hours=self.config.get("prediction_horizon_hours", 24)
+        )
+        prediction = {
+            "sensor_id": sensor_id,
+            "predicted_failure_time": prediction_time.isoformat(),
+            "likelihood": round(likelihood, 2),
+            "anomaly_count": anomaly_count,
+            "total_readings": total_readings,
+            "details": f"{anomaly_count}/{total_readings} readings deviated from mean (latest deviation: {latest_deviation:.2f})",
+        }
+        logger.critical(f"Failure predicted for sensor {sensor_id}: {prediction['details']}", exc_info=True)
+        return prediction
 
 
 if __name__ == "__main__":

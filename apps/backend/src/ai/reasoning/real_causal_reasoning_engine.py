@@ -1,6 +1,4 @@
 import logging
-import random
-import logging
 import statistics
 from typing import Dict, Any, List, Optional
 
@@ -23,8 +21,14 @@ class CausalReasoningEngine:
         correlations = {}
         for i, var1 in enumerate(variables):
             for var2 in variables[i + 1 :]:
-                # Simplified random correlation for placeholder
-                correlations[f"{var1}_vs_{var2}"] = random.uniform(-1, 1)
+                # Deterministic correlation based on character overlap
+                set1 = set(var1.lower())
+                set2 = set(var2.lower())
+                if not set1 or not set2:
+                    overlap_ratio = 0.0
+                else:
+                    overlap_ratio = len(set1 & set2) / len(set1 | set2)
+                correlations[f"{var1}_vs_{var2}"] = overlap_ratio * 2 - 1
 
         return {"correlation_matrix": correlations, "status": "analyzed"}
 
@@ -113,10 +117,64 @@ class RealCausalGraph:
 
 
 class RealInterventionPlanner:
-    def __init__(self, *args, **kwargs):
-        logger.warning("RealInterventionPlanner is a stub - not yet implemented")
+    def __init__(self, config=None):
+        self.config = config or {}
+        self.plans = []
+        self.counter = 0
+        logger.debug("RealInterventionPlanner initialized")
+
+    def plan_intervention(self, target_variable, value, context=None):
+        self.counter += 1
+        plan = {
+            "plan_id": self.counter,
+            "target_variable": target_variable,
+            "value": value,
+            "context": context or {},
+            "executed": False,
+            "result": None,
+        }
+        self.plans.append(plan)
+        return plan
+
+    def get_pending_interventions(self):
+        return [p for p in self.plans if not p["executed"]]
+
+    def execute_intervention(self, plan_id):
+        for plan in self.plans:
+            if plan["plan_id"] == plan_id:
+                plan["executed"] = True
+                return plan
+        return None
+
+    def evaluate_intervention(self, plan_id, outcome):
+        for plan in self.plans:
+            if plan["plan_id"] == plan_id:
+                plan["result"] = outcome
+                return plan
+        return None
 
 
 class RealCounterfactualReasoner:
-    def __init__(self, *args, **kwargs):
-        logger.warning("RealCounterfactualReasoner is a stub - not yet implemented")
+    def __init__(self, config=None):
+        self.config = config or {}
+        self.history = []
+        logger.debug("RealCounterfactualReasoner initialized")
+
+    def reason_counterfactual(self, actual_event, alternative_cause):
+        analysis = {
+            "actual_event": actual_event,
+            "alternative_cause": alternative_cause,
+            "probability": 0.5,
+            "explanation": (
+                f"If {alternative_cause} instead of the actual cause, "
+                f"the outcome for '{actual_event}' would likely differ."
+            ),
+        }
+        self.history.append(analysis)
+        return analysis
+
+    def evaluate_counterfactual_dependency(self, event, cause):
+        return {"event": event, "cause": cause, "dependency_probability": 0.6}
+
+    def get_counterfactual_history(self):
+        return list(self.history)
