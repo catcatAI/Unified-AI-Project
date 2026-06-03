@@ -225,6 +225,7 @@ def compare_versions(v1: str, v2: str) -> int:
 
     # 比较发布阶段
     phase_order = {
+        ReleasePhase.DEV: -1,
         ReleasePhase.ALPHA: 0,
         ReleasePhase.BETA: 1,
         ReleasePhase.RC: 2,

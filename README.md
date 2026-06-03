@@ -233,9 +233,9 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、自演化與真實執行能力。
 
-**Quick facts**：515 個 Python 檔案、~116K 行（84% 活、9% 死、7% 半成品）。兩台 FastAPI 伺服器、Electron + Live2D 桌面端、手機 stub。  
-**架構一致性評分**: **62.6%** (版本 31% · 結構 65% · 模塊 66% · 算法 74%) — [評分明細](docs/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表)  
-**專案總文件**: ~2,761 (Python 1,001 · JS/TS 140 · 文檔 805 · 配置 577 · 測試 238)
+**Quick facts**：562 個 Python 檔案、~127K 行。兩台 FastAPI 伺服器、Electron + Live2D 桌面端、手機 stub。  
+**架構一致性評分**: **62.6%** (版本 31% · 結構 65% · 模塊 66% · 算法 74%) — [評分明細](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表)  
+**專案總文件**: ~2,950 (Python 1,001 · JS/TS 140 · 文檔 805 · 配置 577 · 測試 238 · 其他 ~190)
 
 ---
 
@@ -370,10 +370,11 @@ npm start
 | [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移, Stub 清理 |
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError, docs, tests |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告**: 計畫、文檔、代碼、測試、配置、應用的完美完成度判定 |
-| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **最新階段審查**: 3代理並行審計，10維度評分，深層品質現狀 |
+| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
+| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 11會話後追蹤審計，~70% 綜合分數 |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 515 Python files, ~116K lines (84% live, 9% dead, 7% semi-finished) | [Version Audit](docs/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析)
+**Version**: 7.5.0-dev | **Code Stats**: 562 Python files, ~127K lines | [Version Audit](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析) | [Phase Review 2](docs/06-project-management/plans/PHASE_REVIEW2.md)
