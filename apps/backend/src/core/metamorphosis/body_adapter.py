@@ -264,7 +264,7 @@ class BodyAdapter:
 
     def _apply_transformations(
         self, state: StateSnapshot, source_version: str, target_version: str
-    ):
+    ) -> None:
         """应用转换 / Apply transformations"""
         if source_version == target_version:
             return

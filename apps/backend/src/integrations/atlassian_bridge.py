@@ -96,6 +96,7 @@ class AtlassianBridge:
         await self.close()
 
     def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
+        """Load endpoint configs."""
         cfgs: Dict[str, EndpointConfig] = {}
         for service_name, svc_cfg in self.config.items():
             if not isinstance(svc_cfg, dict):
@@ -121,6 +122,7 @@ class AtlassianBridge:
     async def _make_request_with_fallback(
         self, service: str, method: str, endpoint: str, **kwargs
     ) -> Dict[str, Any]:
+        """Make request with fallback."""
         if service not in self.endpoints:
             logger.warning("No endpoint config for service '%s'", service)
             return {"error": f"No endpoint config for service '{service}'"}

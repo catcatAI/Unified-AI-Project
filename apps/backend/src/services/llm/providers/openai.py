@@ -23,6 +23,7 @@ class OpenAIAPIBackend(BaseLLMBackend):
         self.timeout = timeout
 
     async def check_health(self) -> bool:
+        """Check health."""
         if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:
             return False
         try:
@@ -38,6 +39,7 @@ class OpenAIAPIBackend(BaseLLMBackend):
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
+        """Generate."""
         start_time = time.time()
         messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
         payload = {

@@ -148,7 +148,7 @@ class BaseAgent:
         task_payload: HSPTaskRequestPayload,
         sender_ai_id: str,
         envelope: HSPMessageEnvelope,
-    ):
+    ) -> None:
         """The primary handler for incoming HSP task requests."""
         request_id = task_payload.get("request_id", str(uuid.uuid4()))
         capability_id = task_payload.get("capability_id_filter", "")

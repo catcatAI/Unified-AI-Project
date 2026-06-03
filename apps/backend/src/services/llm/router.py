@@ -828,6 +828,7 @@ class AngelaLLMService:
             return await self._fallback_response(user_message, context)
 
     async def _try_template_match(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
+        """Try template match."""
         if not hasattr(self, "template_matcher") or not self.template_matcher:
             return None
         try:
@@ -1305,7 +1306,7 @@ class AngelaLLMService:
 
     async def _store_response_as_template(
         self, user_message: str, response: LLMResponse, context: Dict[str, Any]
-    ):
+    ) -> None:
         """
         将新回應存储为模板候选，并从中萃取數值→語意映射（C6）
 
@@ -1418,7 +1419,7 @@ class AngelaLLMService:
             await self.precompute_service.stop()
             logger.info("Precompute service stopped")
 
-    async def add_precompute_task(self, task: "PrecomputeTask"):
+    async def add_precompute_task(self, task: "PrecomputeTask") -> bool:
         """添加预计算任务"""
         if self.enable_memory_enhancement and hasattr(self, "precompute_service"):
             return self.precompute_service.add_precompute_task(task)
@@ -1471,6 +1472,7 @@ class AngelaLLMService:
     # ========== 情感识别系统（新增）==========
 
     def _load_emotion_config(self) -> tuple:
+        """Load emotion config."""
         try:
             from core.hsp.utils.fallback_config_loader import get_config_loader
             _cfg = get_config_loader()
@@ -1485,6 +1487,7 @@ class AngelaLLMService:
         return negation_words, intensifier_words
 
     def _score_keyword_match(self, text: str, keyword: str, negation_words: list, intensifier_words: list) -> tuple:
+        """Score keyword match."""
         keyword_pos = text.find(keyword)
         has_negation = False
         for neg_word in negation_words:
@@ -1501,6 +1504,7 @@ class AngelaLLMService:
         return has_negation, has_intensifier
 
     def _score_emotion_keywords(self, text: str, keywords_data: dict, negation_words: list, intensifier_words: list) -> tuple:
+        """Score emotion keywords."""
         score = 0.0
         match_count = 0
         for keyword in keywords_data.get("positive", []):
@@ -1532,6 +1536,7 @@ class AngelaLLMService:
         return score, match_count
 
     def _compute_emotion_result(self, emotion_scores: Dict[str, float]) -> Dict[str, Any]:
+        """Compute emotion result."""
         if not emotion_scores or all(score <= 0 for score in emotion_scores.values()):
             return {
                 "emotion": "calm",
@@ -1714,6 +1719,7 @@ class AngelaLLMService:
             logger.error(f"chat_completion error: {e}", exc_info=True)
             return LLMResponse(text="", backend="unknown", model="unknown", error=str(e))
 def _get_llm_config(key: str, default=None) -> str:
+    """Get llm config."""
     try:
         from core.config_loader import get_angela_config
         return get_angela_config().get_authority("angela_core", {}).get("llm", {}).get(key, default)

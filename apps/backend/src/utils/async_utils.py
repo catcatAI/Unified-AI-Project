@@ -27,7 +27,8 @@ def safe_create_task(coro: Coroutine[Any, Any, Any],
     task = asyncio.create_task(coro, name=name)
     _background_tasks.add(task)
     
-    def _handle_result(t: asyncio.Task):
+    def _handle_result(t: asyncio.Task) -> None:
+        """Handle result request."""
         _background_tasks.discard(t)
         try:
             t.result()
@@ -41,25 +42,28 @@ def safe_create_task(coro: Coroutine[Any, Any, Any],
     task.add_done_callback(_handle_result)
     return task
 
-def run_in_executor(executor=None):
+def run_in_executor(executor=None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     裝飾器：將同步阻塞函數運行在執行器中。
     """
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        """Decorator wrapper."""
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Inner wrapper function."""
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(executor, functools.partial(func, *args, **kwargs))
         return wrapper
     return decorator
 
-async def gather_with_concurrency(n: int, *coros: Coroutine):
+async def gather_with_concurrency(n: int, *coros: Coroutine) -> List[Any]:
     """
     限制併發數量的 gather。
     """
     semaphore = asyncio.Semaphore(n)
 
-    async def sem_coro(coro):
+    async def sem_coro(coro: Coroutine) -> Any:
+        """Semaphore-wrapped coroutine."""
         async with semaphore:
             return await coro
 

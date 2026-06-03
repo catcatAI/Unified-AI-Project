@@ -134,6 +134,7 @@ class TaskExecutionEvaluator:
     def _generate_suggestions(
         self, metrics: Dict[str, Any], feedback: Dict[str, Any], consistency: Dict[str, Any]
     ) -> List[str]:
+        """Generate suggestions."""
         suggestions = []
         if metrics["coherence_score"] < 0.5:
             suggestions.append("提高輸出的表達多樣性與連貫性")

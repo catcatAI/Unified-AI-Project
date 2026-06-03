@@ -322,7 +322,7 @@ class I18nManager:
 
     def import_translations(
         self, translations: Dict[str, str], language: str, overwrite: bool = False
-    ):
+    ) -> None:
         """导入翻译 / Import translations"""
         for key, text in translations.items():
             if overwrite or not self._lookup_translation(key, language):

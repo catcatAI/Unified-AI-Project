@@ -273,7 +273,7 @@ class PrecisionManager:
         computation: str = None,
         cache: str = None,
         network: str = None,
-    ):
+    ) -> None:
         """设置精度配置 / Set precision config"""
         if working:
             self.config.working_precision = working

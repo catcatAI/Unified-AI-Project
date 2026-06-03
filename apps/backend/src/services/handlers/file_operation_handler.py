@@ -43,6 +43,7 @@ class FileOperationHandler:
         return "（檔案操作）請告訴我妳想做什麼：整理桌面、清理舊檔案、或創建新檔案？"
 
     async def _organize(self) -> str:
+        """Organize."""
         di = self._desktop_interaction
         if not di:
             return "（檔案操作）桌面互動服務尚未就緒。"
@@ -55,6 +56,7 @@ class FileOperationHandler:
             return "（檔案操作）整理桌面時發生錯誤。"
 
     async def _cleanup(self, text_lower: str) -> str:
+        """Cleanup."""
         di = self._desktop_interaction
         if not di:
             return "（檔案操作）桌面互動服務尚未就緒。"
@@ -69,6 +71,7 @@ class FileOperationHandler:
             return "（檔案操作）清理桌面時發生錯誤。"
 
     async def _create(self, text: str) -> str:
+        """Create."""
         di = self._desktop_interaction
         if not di:
             return "（檔案操作）桌面互動服務尚未就緒。"

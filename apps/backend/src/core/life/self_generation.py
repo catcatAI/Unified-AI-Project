@@ -672,7 +672,7 @@ class SelfGeneration:
 
     def register_evolution_callback(
         self, callback: Callable[[GeneratedAvatar, GeneratedAvatar], None]
-    ):
+    ) -> None:
         """Register callback for avatar evolution"""
         self._evolution_callbacks.append(callback)
 

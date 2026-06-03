@@ -480,7 +480,7 @@ class BiologicalIntegrator:
 
     async def process_touch_interaction(
         self, body_part: BodyPart, intensity: float, emotional_context: Optional[str] = None
-    ):
+    ) -> None:
         """
         Process a touch interaction through biological systems
 
@@ -692,6 +692,7 @@ class BiologicalIntegrator:
         return results
 
     async def _handle_arousal_to_adrenaline(self, source, target, intensity, results) -> None:
+        """Handle arousal to adrenaline request."""
         arousal = getattr(source, "arousal_level", 50.0)
         adrenaline_increase = (arousal / 100.0) * intensity * 25.0
         if hasattr(target, "adjust_hormone"):
@@ -706,6 +707,7 @@ class BiologicalIntegrator:
                 results["changes"]["cortisol"] = f"+{cortisol_increase:.1f}"
 
     async def _handle_hormonal_mood(self, source, target, intensity, results) -> None:
+        """Handle hormonal mood request."""
         hormone_effects = {}
         if hasattr(source, "get_hormone_level"):
             dopamine = source.get_hormone_level(HormoneType.DOPAMINE)
@@ -730,6 +732,7 @@ class BiologicalIntegrator:
         results["changes"]["emotional_influences"] = hormone_effects
 
     async def _handle_emotion_to_arousal(self, source, target, intensity, results) -> None:
+        """Handle emotion to arousal request."""
         if hasattr(source, "get_dominant_emotion"):
             emotion, confidence = source.get_dominant_emotion()
             if emotion:
@@ -751,6 +754,7 @@ class BiologicalIntegrator:
                         )
 
     async def _handle_touch_to_emotion(self, source, target, intensity, results) -> None:
+        """Handle touch to emotion request."""
         if hasattr(source, "get_sensitivity_level"):
             sensitivity = source.get_sensitivity_level()
             if sensitivity > 0.6 and hasattr(target, "apply_influence"):
@@ -758,6 +762,7 @@ class BiologicalIntegrator:
                 results["changes"]["tactile_sensitivity"] = f"{sensitivity * intensity:.2f}"
 
     async def _handle_cortisol_to_memory(self, source, target, intensity, results) -> None:
+        """Handle cortisol to memory request."""
         if hasattr(source, "get_hormone_level"):
             cortisol = source.get_hormone_level(HormoneType.CORTISOL)
             if cortisol > 50 and hasattr(target, "set_learning_rate"):
@@ -769,6 +774,7 @@ class BiologicalIntegrator:
                 target.set_learning_rate(1.0)
 
     async def _handle_emotional_memory(self, source, target, intensity, results) -> None:
+        """Handle emotional memory request."""
         if hasattr(source, "get_emotional_intensity"):
             emotional_intensity = source.get_emotional_intensity()
             if emotional_intensity > 0.5 and hasattr(target, "enhance_consolidation"):

@@ -792,7 +792,7 @@ class FeedbackLoopEngine:
 
     def register_feedback_callback(
         self, layer: FeedbackLayer, callback: Callable[[FeedbackSignal], None]
-    ):
+    ) -> None:
         """Register feedback callback for specific layer"""
         if layer in self._feedback_callbacks:
             self._feedback_callbacks[layer].append(callback)

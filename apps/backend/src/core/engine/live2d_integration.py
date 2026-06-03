@@ -798,7 +798,7 @@ class Live2DIntegration:
 
     def sync_with_physiological_state(
         self, arousal_level: float, active_body_parts: Optional[List[str]] = None
-    ):
+    ) -> None:
         """
         Sync Live2D with physiological state
 

@@ -76,6 +76,7 @@ class AIVirtualInputService:
         self.logger.info(f"AIVirtualInputService initialized in '{self.mode}' mode.")
 
     def load_virtual_ui(self, elements: List[VirtualInputElementDescription]) -> None:
+        """Load virtual ui."""
         self.virtual_ui_elements = copy.deepcopy(elements)
         self.logger.info(
             f"AVIS: Virtual UI loaded with {len(self.virtual_ui_elements)} top-level elements."
@@ -97,6 +98,7 @@ class AIVirtualInputService:
         command_details: Dict[str, Any],
         outcome: Dict[str, Any],
     ) -> None:
+        """Log action."""
         log_entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "command_type": command_type,
@@ -107,11 +109,13 @@ class AIVirtualInputService:
         self.action_log.append(log_entry)
 
     def process_mouse_command(self, command: VirtualMouseCommand) -> Dict[str, Any]:
+        """Process mouse command."""
         self.logger.info(f"AVIS: Processing mouse command (SKELETON): {command.action_type}")
         self._log_action("mouse", asdict(command), {"status": "simulated"})
         return {"status": "simulated", "action": command.action_type}
 
     def process_keyboard_command(self, command: VirtualKeyboardCommand) -> Dict[str, Any]:
+        """Process keyboard command."""
         self.logger.info(f"AVIS: Processing keyboard command (SKELETON): {command.action_type}")
         self._log_action("keyboard", asdict(command), {"status": "simulated"})
         return {"status": "simulated", "action": command.action_type}

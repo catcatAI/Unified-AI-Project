@@ -547,7 +547,7 @@ class BrowserController:
 
     def register_state_change_callback(
         self, callback: Callable[[BrowserState, BrowserState], None]
-    ):
+    ) -> None:
         """Register callback for state changes"""
         self._state_change_callbacks.append(callback)
 

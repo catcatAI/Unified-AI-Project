@@ -26,11 +26,13 @@ class RealSystemMaintenance:
         return results
 
     def _check_paths(self) -> bool:
+        """Check paths."""
         for p in self.data_paths:
             os.makedirs(p, exist_ok=True)
         return True
 
     def _verify_bridge_script(self) -> bool:
+        """Verify bridge script."""
         from pathlib import Path
         bridge_path = str(Path(__file__).parent.parent.parent.parent.parent / "apps/gemini-os-bridge/bridge.py")
         return os.path.exists(bridge_path)

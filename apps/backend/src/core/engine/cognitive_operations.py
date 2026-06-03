@@ -41,6 +41,7 @@ class CognitiveOp(Enum):
 SPATIAL_RATIO: Tuple[float, float, float] = (1.0, 0.3, 0.15)
 
 def _get_spatial_config(key: str, default) -> str:
+    """Get spatial config."""
     try:
         from core.config_loader import get_angela_config
         return get_angela_config().get_authority("angela_core", {}).get("spatial_math", {}).get(key, default)

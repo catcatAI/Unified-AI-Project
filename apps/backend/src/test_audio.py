@@ -6,6 +6,7 @@ from services.audio_service import AudioService, WHISPER_AVAILABLE, EDGE_TTS_AVA
 
 
 async def test() -> None:
+    """Run test."""
     print(f"WHISPER_AVAILABLE: {WHISPER_AVAILABLE}")
     print(f"EDGE_TTS_AVAILABLE: {EDGE_TTS_AVAILABLE}")
 

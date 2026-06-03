@@ -276,7 +276,7 @@ class MetacognitiveCapabilitiesEngine:
 
     async def practice_capability(
         self, capability_id: str, outcome: bool, context: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """练习能力"""
         if capability_id not in self.capability_profiles:
             logger.warning(f"未知的能力: {capability_id}", exc_info=True)

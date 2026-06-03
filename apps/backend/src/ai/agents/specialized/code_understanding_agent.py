@@ -146,28 +146,33 @@ class CodeUnderstandingAgent(BaseAgent):
     async def _handle_analyze_code(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle analyze code request."""
         params = payload.get("parameters", {})
         return self._analyze_code(params)
 
     async def _handle_generate_documentation(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> str:
+        """Handle generate documentation request."""
         params = payload.get("parameters", {})
         return self._generate_documentation(params)
 
     async def _handle_code_review(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle code review request."""
         params = payload.get("parameters", {})
         return self._perform_code_review(params)
 
     async def _handle_fix_code(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle fix code request."""
         params = payload.get("parameters", {})
         return self._fix_code_issues(params)
 
     def _analyze_code(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze code."""
         code = params.get("code", "")
         language = params.get("language", "python")
         if not code:
@@ -202,6 +207,7 @@ class CodeUnderstandingAgent(BaseAgent):
         return analysis
 
     def _generate_documentation(self, params: Dict[str, Any]) -> str:
+        """Generate documentation."""
         code = params.get("code", "")
         if not code:
             return "No code provided"
@@ -224,6 +230,7 @@ class CodeUnderstandingAgent(BaseAgent):
             return f"# Documentation Generation Failed\n\nUnable to parse code: {e}"
 
     def _perform_code_review(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform code review."""
         code = params.get("code", "")
         findings = []
         if len(code) > 1000:
@@ -231,6 +238,7 @@ class CodeUnderstandingAgent(BaseAgent):
         return {"stub": False, "findings": findings, "score": 90}
 
     def _fix_code_issues(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Fix code issues."""
         code = params.get("code", "")
         if not code:
             return {"fixed_code": "", "applied_fixes": [], "error": "No code provided"}

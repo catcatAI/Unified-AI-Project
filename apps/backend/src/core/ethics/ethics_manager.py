@@ -194,7 +194,7 @@ class EthicsManager:
             except Exception as e:  # broad exception acceptable: AI model initialization may fail with library loading errors
                 logger.warning(f"⚠️ AI伦理模型初始化失败: {e}", exc_info=True)
 
-    def _create_bias_detection_model(self):
+    def _create_bias_detection_model(self) -> Any:
         """创建偏见检测模型"""
 
         class SimpleBiasDetector:

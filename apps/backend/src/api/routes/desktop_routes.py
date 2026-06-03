@@ -27,7 +27,7 @@ router = APIRouter()
 @router.get("/desktop/state")
 async def desktop_state(
     interaction: DesktopInteraction = Depends(get_desktop_interaction),
-):
+) -> dict:
     """Execute the desktop state operation."""
     state = interaction.get_desktop_state()
     return {"success": True, "state": {
@@ -62,7 +62,7 @@ async def desktop_cleanup(days_old: int = 30) -> dict:
 @router.get("/actions/status")
 async def actions_status(
     executor: ActionExecutor = Depends(get_action_executor),
-):
+) -> dict:
     """Execute the actions status operation."""
     stats = executor.get_execution_stats()
     return {"success": True, "stats": stats}
@@ -91,14 +91,14 @@ async def tactile_touch(touch_data: Dict[str, Any] = Body(...)) -> dict:
 @router.post("/brain/metrics")
 async def brain_metrics(
     digital_life: DigitalLifeIntegrator = Depends(get_digital_life),
-):
+) -> dict:
     """Execute the brain metrics operation."""
     summary = digital_life.get_formula_metrics()
     return {"success": True, "metrics": summary.get("formula_status", {}) if summary else {}}
 
 
 @router.post("/brain/dividend")
-async def brain_dividend():
+async def brain_dividend() -> dict:
     """Execute the brain dividend operation."""
     digital_life = get_digital_life()
     summary = digital_life.get_formula_metrics()

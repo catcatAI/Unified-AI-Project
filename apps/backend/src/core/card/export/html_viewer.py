@@ -74,6 +74,7 @@ class HTMLViewer:
             return False
 
     def _render_card(self, card: Card) -> str:
+        """Render card."""
         tokens_html = ""
         if card.tokens:
             token_spans = "".join(
@@ -93,6 +94,7 @@ class HTMLViewer:
         conflicts_html = ""
         if card.conflicts:
             def _render_conflict(c) -> str:
+                """Render conflict."""
                 parts = [f'<div class="conflict">{c.type.name}: {c.description}']
                 if c.resolution:
                     parts.append(f" → {c.resolution}")

@@ -28,6 +28,7 @@ class DriveDeduplication:
         self._load()
 
     def _load(self) -> None:
+        """Load."""
         if self._db_path.exists():
             try:
                 import json
@@ -38,6 +39,7 @@ class DriveDeduplication:
                 self._syncs = {}
 
     def _save(self) -> None:
+        """Save."""
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         import json
         with open(self._db_path, "w", encoding="utf-8") as f:
@@ -135,7 +137,7 @@ class DocumentParser:
 
 
 @router.get("/status")
-async def get_drive_status(svc=Depends(get_drive_service)):
+async def get_drive_status(svc=Depends(get_drive_service)) -> dict:
     """獲取 Google Drive 服務狀態"""
     try:
         authenticated = svc.is_authenticated()
@@ -219,7 +221,7 @@ async def list_files(
     page_size: int = Query(10, ge=1, le=100),
     query: Optional[str] = Query(None, description='Drive search query (e.g. \'name contains "report"\')'),
     svc=Depends(get_drive_service),
-):
+) -> dict:
     """列出文件"""
     try:
         files = svc.list_files(page_size=page_size, query=query)
@@ -331,7 +333,7 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
 async def search_and_list(
     request: Dict[str, Any] = Body(...),
     svc=Depends(get_drive_service),
-):
+) -> dict:
     """搜尋文件並返回列表（不下載）"""
     query = request.get("query", "")
     page_size = request.get("page_size", 10)
@@ -394,7 +396,7 @@ async def upload_file(
     file: UploadFile = File(...),
     folder_id: Optional[str] = Form(None),
     svc=Depends(get_drive_service),
-):
+) -> Dict[str, Any]:
     """上傳檔案到 Drive"""
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -420,7 +422,7 @@ async def create_file(
     mime_type: str = Body("text/plain"),
     folder_id: Optional[str] = Body(None),
     svc=Depends(get_drive_service),
-):
+) -> Dict[str, Any]:
     """建立文字檔案並上傳到 Drive"""
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")

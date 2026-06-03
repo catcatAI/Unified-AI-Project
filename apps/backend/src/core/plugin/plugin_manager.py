@@ -2,6 +2,7 @@
 PluginManager — C3: backend plugin lifecycle and hook integration.
 """
 
+from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
@@ -30,7 +31,7 @@ class PluginManager:
         self._plugins: Dict[str, PluginInfo] = {}
         self._define_standard_hooks()
 
-    def _define_standard_hooks(self):
+    def _define_standard_hooks(self) -> None:
         """Define and register the standard set of hooks."""
         standard_hooks = {
             "on_message": "Triggered when a user message is received",
@@ -100,7 +101,7 @@ class PluginManager:
             self._plugins[plugin_name].hooks.append(hook_name)
         return ok
 
-    async def execute_hook(self, hook_name: str, data: Any = None):
+    async def execute_hook(self, hook_name: str, data: Any = None) -> List[HookResult]:
         """Execute all handlers for a given hook."""
         return await self._hook_registry.execute_hook(hook_name, data)
 

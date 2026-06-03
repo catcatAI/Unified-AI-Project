@@ -109,7 +109,7 @@ class DeviationTracker:
         match_time_ms: float = 0.0,
         quality_score: float = 0.0,
         metadata: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         记录响应指标
 

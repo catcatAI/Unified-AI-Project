@@ -29,7 +29,7 @@ class ExperienceReplayBuffer:
         next_state: Any,
         done: bool,
         error: Optional[Any] = None,
-    ):
+    ) -> None:
         """添加經驗"""
         experience = {
             "state": state,

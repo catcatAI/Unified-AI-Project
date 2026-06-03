@@ -25,6 +25,7 @@ class HAMQueryEngine:
         self.data_processor = data_processor
 
     def _normalize_date(self, date_input: Union[str, datetime]) -> datetime:
+        """Normalize date."""
         if isinstance(date_input, str):
             try:
                 # Attempt to parse with timezone info
@@ -49,6 +50,7 @@ class HAMQueryEngine:
         self, data_package: Dict[str, Any], data_type_filter: Optional[str],
         min_importance: float, date_range: Optional[Tuple[datetime, datetime]]
     ) -> bool:
+        """Check basic filters."""
         if data_type_filter and data_type_filter not in data_package["data_type"]:
             return False
         if data_package.get("relevance", 0.0) < min_importance:
@@ -63,6 +65,7 @@ class HAMQueryEngine:
     def _search_keywords_in_memory(
         self, data_package: Dict[str, Any], keywords: List[str]
     ) -> tuple:
+        """Search keywords in memory."""
         decompressed_data_str = ""
         try:
             decrypted_data = self.data_processor._decrypt(data_package["encrypted_package"])
@@ -87,6 +90,7 @@ class HAMQueryEngine:
                 return "", False
 
     def _extract_gist(self, data_package: Dict[str, Any], decompressed_data_str: str) -> str:
+        """Extract gist."""
         if "dialogue_text" in data_package["data_type"]:
             abstracted_gist = json.loads(decompressed_data_str)
             return abstracted_gist.get("gist", "")

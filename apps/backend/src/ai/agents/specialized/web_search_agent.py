@@ -58,6 +58,7 @@ class WebSearchAgent(BaseAgent):
     async def _handle_web_search(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle web search request."""
         params = payload.get("parameters", {})
         query = params.get("query", "")
         if not query:

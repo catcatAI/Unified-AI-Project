@@ -123,7 +123,7 @@ class EnterpriseLogger:
         message: str,
         extra: Optional[Dict[str, Any]] = None,
         exc_info: Optional[Exception] = None,
-    ):
+    ) -> None:
         """記錄日誌"""
         # 獲取上下文
         request_id = request_id_var.get()
@@ -181,7 +181,7 @@ class EnterpriseLogger:
         category: LogCategory = LogCategory.SYSTEM,
         exc_info: Optional[Exception] = None,
         **extra,
-    ):
+    ) -> None:
         """記錄 ERROR 級別日誌"""
         self._log(LogLevel.ERROR, category, message, extra, exc_info)
 
@@ -191,7 +191,7 @@ class EnterpriseLogger:
         category: LogCategory = LogCategory.SYSTEM,
         exc_info: Optional[Exception] = None,
         **extra,
-    ):
+    ) -> None:
         """記錄 CRITICAL 級別日誌"""
         self._log(LogLevel.CRITICAL, category, message, extra, exc_info)
 
@@ -247,7 +247,7 @@ def get_logger(name: str) -> EnterpriseLogger:
 
 def set_request_context(
     request_id: str, user_id: Optional[str] = None, session_id: Optional[str] = None
-):
+) -> None:
     """設置請求上下文"""
     if request_id:
         request_id_var.set(request_id)

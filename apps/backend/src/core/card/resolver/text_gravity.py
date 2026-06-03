@@ -18,6 +18,7 @@ ENTROPY_STRENGTH = 0.05
 
 
 def _ngram_jaccard_distance(a: str, b: str, n: int = 3) -> float:
+    """Ngram jaccard distance."""
     if not a and not b:
         return 0.0
     if not a or not b:
@@ -72,12 +73,14 @@ class TextGravityField:
         return scored
 
     def _repulsion_factor(self, candidate: str) -> float:
+        """Repulsion factor."""
         count = self._recent_choices.get(candidate, 0)
         if count == 0:
             return 0.0
         return (REPULSION_DECAY ** count) * count * 0.1
 
     def _entropy_bonus(self, candidate: str, candidates: List[str]) -> float:
+        """Entropy bonus."""
         if len(candidates) <= 1:
             return 0.0
         total = sum(self._recent_choices.values()) + 1

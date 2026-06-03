@@ -118,6 +118,7 @@ class MCPConnector:
         self.loop = loop if loop else asyncio.new_event_loop()
 
     async def connect(self) -> None:
+        """Establish connection."""
         self.logger.info(
             f"MCPConnector for {self.ai_id} connecting to {self.broker_address}:{self.broker_port}"
         )
@@ -138,11 +139,13 @@ class MCPConnector:
                 self.logger.info("MCP將使用fallback協議")
 
     def disconnect(self) -> None:
+        """Close connection."""
         self.client.loop_stop()
         self.client.disconnect()
         self.logger.info("MCPConnector disconnected.")
 
     def _on_connect(self, client, userdata, flags, rc) -> None:
+        """On connect."""
         if rc == 0:
             self.logger.info("MCPConnector connected successfully.")
             self.is_connected = True
@@ -155,6 +158,7 @@ class MCPConnector:
             self.mcp_available = False
 
     def _on_message(self, client, userdata, msg) -> None:
+        """On message."""
         self.logger.info(f"MCP message received on topic {msg.topic}: {msg.payload.decode()}")
         try:
             data = json.loads(msg.payload)
@@ -178,6 +182,7 @@ class MCPConnector:
     async def send_command(
         self, target_id: str, command_name: str, parameters: dict[str, Any]
     ) -> str:
+        """Send command."""
         request_id = str(uuid.uuid4())
         if self.mcp_available and self.is_connected:
             try:
@@ -217,6 +222,7 @@ class MCPConnector:
         return request_id
 
     async def _initialize_fallback_protocols(self) -> None:
+        """Initialize fallback protocols."""
         if not self.enable_fallback:
             return
         try:
@@ -241,7 +247,8 @@ class MCPConnector:
 
     async def _send_via_fallback(
         self, target_id: str, command_name: str, parameters: dict[str, Any], request_id: str
-    ):
+    ) -> bool:
+        """Send via fallback."""
         if not self.fallback_manager:
             return False
         try:
@@ -262,6 +269,7 @@ class MCPConnector:
             return False
 
     def register_command_handler(self, command_name: str, handler: Callable[..., Awaitable[Any]]) -> None:
+        """Register command handler."""
         self.command_handlers[command_name] = handler
         if self.is_connected:
             topic = f"mcp/cmd/{self.ai_id}/{command_name}"
@@ -271,6 +279,7 @@ class MCPConnector:
             self.fallback_manager.register_command_handler(command_name, handler)
 
     def get_communication_status(self) -> dict[str, Any]:
+        """Get communication status."""
         status: dict[str, Any] = {
             "mcp_available": self.mcp_available,
             "is_connected": self.is_connected,
@@ -283,6 +292,7 @@ class MCPConnector:
         return status
 
     async def health_check(self) -> dict[str, Any]:
+        """Check service health."""
         health: dict[str, Any] = {
             "mcp_healthy": False,
             "fallback_healthy": False,

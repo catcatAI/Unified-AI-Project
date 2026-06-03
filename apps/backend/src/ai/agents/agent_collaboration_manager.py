@@ -140,7 +140,7 @@ class AgentCollaborationManager:
 
     async def _handle_task_result(
         self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope
-    ):
+    ) -> None:
         """Handle task results from collaborating agents."""
         task_id = result_payload.get("request_id", "")
 

@@ -61,6 +61,7 @@ class AuditLogger:
         logger.info(f"AuditLogger initialized with log file: {self.log_file_path}")
 
     def log_event(self, event: AuditEvent) -> None:
+        """Log event."""
         try:
             with self.buffer_lock:
                 self.log_buffer.append(event)
@@ -80,7 +81,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log operation."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.OPERATION,
@@ -106,7 +108,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log file access."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.FILE_ACCESS,
@@ -132,7 +135,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log network access."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.NETWORK_ACCESS,
@@ -157,7 +161,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log system command."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.SYSTEM_COMMAND,
@@ -183,7 +188,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log application control."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.APPLICATION_CONTROL,
@@ -209,7 +215,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log data processing."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.DATA_PROCESSING,
@@ -234,7 +241,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log sandbox execution."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.SANDBOX_EXECUTION,
@@ -261,7 +269,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log permission check."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.PERMISSION_CHECK,
@@ -286,7 +295,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log security violation."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.SECURITY_VIOLATION,
@@ -312,7 +322,8 @@ class AuditLogger:
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ):
+    ) -> None:
+        """Log error."""
         event = AuditEvent(
             timestamp=datetime.now().isoformat(),
             event_type=AuditEventType.ERROR,
@@ -329,6 +340,7 @@ class AuditLogger:
         self.log_event(event)
 
     def _flush_buffer(self) -> None:
+        """Flush buffer."""
         try:
             with self.buffer_lock:
                 if not self.log_buffer:
@@ -348,6 +360,7 @@ class AuditLogger:
             logger.error(f"Error flushing audit log buffer: {e}", exc_info=True)
 
     def _rotate_log_if_needed(self) -> None:
+        """Rotate log if needed."""
         try:
             if os.path.exists(self.log_file_path):
                 file_size = os.path.getsize(self.log_file_path)
@@ -361,6 +374,7 @@ class AuditLogger:
             logger.error(f"Error rotating audit log file: {e}", exc_info=True)
 
     def get_recent_events(self, limit: int = 100) -> List[AuditEvent]:
+        """Get recent events."""
         try:
             events: List[AuditEvent] = []
             with self.buffer_lock:
@@ -390,6 +404,7 @@ class AuditLogger:
         start_time: Optional[str] = None,
         end_time: Optional[str] = None,
     ) -> List[AuditEvent]:
+        """Search events."""
         try:
             events: List[AuditEvent] = []
             with self.buffer_lock:
@@ -426,6 +441,7 @@ class AuditLogger:
         start_time: Optional[str] = None,
         end_time: Optional[str] = None,
     ) -> bool:
+        """Event matches criteria."""
         if user_id and event.user_id != user_id:
             return False
         if event_type and event.event_type != event_type:

@@ -24,12 +24,14 @@ def run_repl_mode() -> None:
 
 
 def _run_uvicorn_in_thread() -> None:
+    """Run uvicorn in thread."""
     from services.main_api_server import app
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
 
 
 async def _run_repl() -> None:
+    """Run repl."""
     from api.lifespan import _get_chat_service
 
     logging.disable(logging.WARNING)
@@ -71,6 +73,7 @@ async def _run_repl() -> None:
 
 
 def _handle_repl_command(text: str, service: Any, history: list[str]) -> tuple[str, Optional[str]]:
+    """Handle repl command request."""
     parts = text.lstrip("/:").split(maxsplit=1)
     cmd = parts[0].lower()
     args = parts[1] if len(parts) > 1 else ""
@@ -130,6 +133,7 @@ def _build_help_text() -> str:
 
 
 def _format_state_snapshot(service: Any) -> str:
+    """Format state snapshot."""
     try:
         sm = service.state_matrix
         lines = ["--- 8D State Matrix ---"]
@@ -152,6 +156,7 @@ def _format_state_snapshot(service: Any) -> str:
 
 
 def _format_memory_summary(service: Any, search: str) -> str:
+    """Format memory summary."""
     try:
         if hasattr(service, "memory_manager") and service.memory_manager:
             loop = asyncio.new_event_loop()
@@ -170,6 +175,7 @@ def _format_memory_summary(service: Any, search: str) -> str:
 
 
 def _format_config_summary(service: Any) -> str:
+    """Format config summary."""
     try:
         cfg = service._angela_config
         intents = list(cfg.get_intents().keys())
@@ -185,6 +191,7 @@ def _format_config_summary(service: Any) -> str:
 
 
 def _format_intent_registry() -> str:
+    """Format intent registry."""
     try:
         from core.intent_registry import IntentRegistry
         reg = IntentRegistry()
@@ -198,6 +205,7 @@ def _format_intent_registry() -> str:
 
 
 def _format_llm_routing(service: Any) -> str:
+    """Format llm routing."""
     try:
         from services.angela_llm_service import get_llm_service
         llm_svc = get_llm_service()
@@ -212,6 +220,7 @@ def _format_llm_routing(service: Any) -> str:
 
 
 def _handle_tickle_command(args: str) -> str:
+    """Handle tickle command request."""
     parts = args.strip().split()
     if not parts:
         from core.life.tickle_reflex_system import get_reflex_system
@@ -258,6 +267,7 @@ def _handle_tickle_command(args: str) -> str:
 
 
 def _handle_model_command(args: str, service: Any) -> str:
+    """Handle model command request."""
     parts = args.strip().split(maxsplit=1)
     subcmd = parts[0].lower() if parts else "list"
     subarg = parts[1] if len(parts) > 1 else ""
@@ -296,6 +306,7 @@ def _handle_model_command(args: str, service: Any) -> str:
 
 
 def _handle_drive_command(args: str) -> str:
+    """Handle drive command request."""
     import httpx
     from core.config_loader import get_angela_config
 

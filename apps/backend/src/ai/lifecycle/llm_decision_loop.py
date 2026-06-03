@@ -612,7 +612,7 @@ class LLMDecisionLoop:
 
 if __name__ == "__main__":
     # 測試 LLM 決策循環
-    async def test_llm_decision_loop():
+    async def test_llm_decision_loop() -> None:
         """Log a diagnostic message."""
         from dataclasses import dataclass
 

@@ -159,6 +159,7 @@ class EmotionSystem:
         )
 
     def _calculate_dimension_score(self, action, context, state, dimension) -> str:
+        """Calculate dimension score."""
         # 實施 v6.0 標準的權重投影
         base = 0.5
         impact = self.emotion_value_impact.get(state.primary_emotion, {}).get(dimension, 0.0)
@@ -202,6 +203,7 @@ class EmotionSystem:
         )
 
     def _predict_entity_emotion(self, target_entity: str, context: Dict[str, Any]) -> EmotionalState:
+        """Predict entity emotion."""
         # 基於 context 模擬目標實體的情緒投影
         features = self._extract_emotion_features(context)
         # 根據 target_entity 類型（預設為 Human）調整預測傾向
@@ -219,12 +221,14 @@ class EmotionSystem:
         return max(0.0, min(1.0, 0.5 + abs(state.valence) * 0.3 + state.emotion_intensity * 0.2))
 
     def _calculate_compassion_level(self, state: EmotionalState, context: Dict[str, Any]) -> float:
+        """Calculate compassion level."""
         # 對負面情緒（FEAR, SADNESS）產生更高層級的同情
         negativity_map = {EmotionType.FEAR: 0.8, EmotionType.SADNESS: 0.9, EmotionType.ANGER: 0.4}
         base = negativity_map.get(state.primary_emotion, 0.3)
         return max(0.0, min(1.0, base * (0.7 + state.emotion_intensity * 0.3)))
 
     def _generate_empathetic_response(self, state: EmotionalState, level: float) -> str:
+        """Generate empathetic response."""
         templates = {
             EmotionType.FEAR: "表示理解並提供數位安全感",
             EmotionType.SADNESS: "表達深切同情並提供虛擬陪伴",
@@ -237,6 +241,7 @@ class EmotionSystem:
         return f"{prefix}：{base}"
 
     def _extract_emotion_features(self, context: Dict[str, Any]) -> Dict[str, float]:
+        """Extract emotion features."""
         from textblob import TextBlob
         text = context.get("text", "")
         features = {"stress_level": context.get("stress_level", 0.0)}

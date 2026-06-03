@@ -197,7 +197,7 @@ class IntelligentOpsManager:
 
     async def collect_system_metrics(
         self, component_id: str, component_type: str, metrics: dict[str, float]
-    ):
+    ) -> None:
         """收集系统指标"""
         try:
             # 分发到各个组件
@@ -237,7 +237,7 @@ class IntelligentOpsManager:
 
     async def _generate_comprehensive_insights(
         self, component_id: str, component_type: str, metrics: dict[str, float]
-    ):
+    ) -> None:
         """生成综合运维洞察"""
         try:
             insights: list[OpsInsight] = []

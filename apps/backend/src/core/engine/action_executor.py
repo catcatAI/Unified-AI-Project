@@ -648,7 +648,7 @@ class ActionExecutor:
 
     def register_status_change_callback(
         self, action_id: str, callback: Callable[[ActionStatus], None]
-    ):
+    ) -> None:
         """Register status change callback for specific action"""
         if action_id not in self._status_change_callbacks:
             self._status_change_callbacks[action_id] = []
@@ -881,7 +881,7 @@ class ActionExecutor:
 
         await async_json_dump(history, str(path), ensure_ascii=False, indent=2)
 
-    async def load_execution_history(self, filepath: Optional[str] = None):
+    async def load_execution_history(self, filepath: Optional[str] = None) -> list:
         """Load execution history from file"""
         path = Path(filepath or "~/.angela/executor_history.json").expanduser()
 
@@ -940,7 +940,7 @@ class ActionExecutor:
         check_name: str,
         check_function: Callable[[Action], tuple[bool, Optional[str]]],
         is_critical: bool = False,
-    ):
+    ) -> None:
         """Add a custom safety check"""
         self.register_safety_check(
             SafetyCheck(

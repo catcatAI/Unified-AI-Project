@@ -49,6 +49,7 @@ class ConflictDetector:
         return cross_conflicts
 
     def _detect_physical(self, card: Card) -> List[Conflict]:
+        """Detect physical."""
         conflicts = []
         for sf in card.source_files:
             if not sf.path.endswith(".gdoc") and not sf.path.endswith(".txt"):
@@ -60,6 +61,7 @@ class ConflictDetector:
         return conflicts
 
     def _detect_numerical(self, card: Card) -> List[Conflict]:
+        """Detect numerical."""
         conflicts = []
         for token in card.tokens:
             if token.strength < 0.0 or token.strength > 10.0:
@@ -71,6 +73,7 @@ class ConflictDetector:
         return conflicts
 
     def _detect_tone(self, card: Card) -> List[Conflict]:
+        """Detect tone."""
         conflicts = []
         if card.source_files and len(card.source_files) > 1:
             core_traits = set()

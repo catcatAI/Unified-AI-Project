@@ -257,7 +257,7 @@ class CloudSyncManager:
         data = json.dumps(item.remote_data, sort_keys=True)
         return hashlib.sha256(data.encode()).hexdigest()
 
-    async def sync(self, progress_callback: Callable[[SyncProgress], None] = None):
+    async def sync(self, progress_callback: Callable[[SyncProgress], None] = None) -> bool:
         """执行同步 / Execute sync"""
         if self.status == SyncStatus.OFFLINE:
             return False

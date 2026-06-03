@@ -48,6 +48,7 @@ class TieredConfigLoader:
         return config
 
     def _load_file(self, path: Path) -> Dict[str, Any]:
+        """Load file."""
         if not path.exists():
             return {}
         try:

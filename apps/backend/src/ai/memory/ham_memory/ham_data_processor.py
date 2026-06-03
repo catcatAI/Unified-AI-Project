@@ -20,11 +20,13 @@ class HAMDataProcessor:
         return zlib.decompress(data)
 
     def _encrypt(self, data: bytes) -> bytes:
+        """Encrypt."""
         if self.fernet:
             return self.fernet.encrypt(data)
         return data
 
     def _decrypt(self, data: bytes) -> bytes:
+        """Decrypt."""
         if self.fernet:
             try:
                 return self.fernet.decrypt(data)

@@ -50,6 +50,7 @@ class HAMBackgroundTasks:
             logger.info("Background task: Old experiences cleanup complete.")
 
     def _identify_memories_to_delete(self) -> List[str]:
+        """Identify memories to delete."""
         HIGH_IMPORTANCE_THRESHOLD = 0.7
         MEDIUM_IMPORTANCE_THRESHOLD = 0.3
         LOW_IMPORTANCE_AGE_DAYS = 30
@@ -96,6 +97,7 @@ class HAMBackgroundTasks:
         return memories_to_delete
 
     def _trim_to_minimum(self, memories_to_delete: List[str]) -> List[str]:
+        """Trim to minimum."""
         MIN_MEMORIES_TO_KEEP = 100
         total_memories = len(self.core_memory_store)
         memories_to_keep = total_memories - MIN_MEMORIES_TO_KEEP
@@ -111,6 +113,7 @@ class HAMBackgroundTasks:
         return memories_to_delete
 
     async def _execute_deletion(self, memories_to_delete: List[str]) -> None:
+        """Execute eletion."""
         if memories_to_delete:
             logger.info(f"Deleting {len(memories_to_delete)} old memories...")
             for mem_id in memories_to_delete:

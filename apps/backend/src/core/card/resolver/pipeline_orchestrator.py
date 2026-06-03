@@ -97,6 +97,7 @@ class CardImportPipeline:
         return result
 
     def _run_angela_stage(self, card: Card) -> Card:
+        """Run angela stage."""
         unresolved_texts = [c.description for c in card.conflicts if not c.suppressed]
         if card.core_trait and unresolved_texts:
             scored = self.text_gravity.compute_gravity(card.core_trait, unresolved_texts)
@@ -121,6 +122,7 @@ class CardImportPipeline:
         overall: float,
         confidences: Dict[str, float],
     ) -> PipelineResult:
+        """Finalize."""
         total = len(card.conflicts)
         resolved = sum(1 for c in card.conflicts if c.resolution or c.suppressed)
         unresolved = [k for k, v in confidences.items() if v < 0.5]

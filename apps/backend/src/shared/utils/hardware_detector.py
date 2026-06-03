@@ -125,6 +125,7 @@ class SystemHardwareProbe:
         return profile
 
     def _detect_cpu_flags(self) -> List[str]:
+        """Detect cpu flags."""
         flags = []
         if self.platform_name == "linux":
             try:
@@ -149,6 +150,7 @@ class SystemHardwareProbe:
         return flags
 
     def _detect_ram(self) -> Tuple[float, float]:
+        """Detect ram."""
         if psutil:
             mem = psutil.virtual_memory()
             return mem.total / (1024**3), mem.available / (1024**3)
@@ -156,6 +158,7 @@ class SystemHardwareProbe:
 
     def _detect_gpu(self) -> Tuple[AcceleratorType, str, int]:
         # 1. NVIDIA
+        """Detect gpu."""
         try:
             result = subprocess.run(
                 ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
@@ -218,6 +221,7 @@ class SystemHardwareProbe:
         return AcceleratorType.NONE, "None", 0
 
     def _refine_cpu_acceleration(self, flags: List[str]) -> Tuple[AcceleratorType, str]:
+        """Refine cpu acceleration."""
         if "avx512f" in flags or "avx512" in flags:
             return AcceleratorType.CPU_AVX512, "CPU AVX-512"
         if "avx2" in flags:
@@ -227,12 +231,14 @@ class SystemHardwareProbe:
         return AcceleratorType.NONE, "CPU Baseline"
 
     def _detect_laptop(self) -> bool:
+        """Detect laptop."""
         if psutil and hasattr(psutil, "sensors_battery"):
             if psutil.sensors_battery() is not None:
                 return True
         return False
 
     def _detect_virtual(self) -> bool:
+        """Detect virtual."""
         indicators = ["/proc/vz", "/proc/bc", ".dockerenv", "/sys/hypervisor"]
         for i in indicators:
             if os.path.exists(i):
@@ -240,6 +246,7 @@ class SystemHardwareProbe:
         return False
 
     def _detect_disk_space(self) -> float:
+        """Detect disk space."""
         try:
             import shutil
 
@@ -249,6 +256,7 @@ class SystemHardwareProbe:
             return 0.0
 
     def _calculate_tier(self, profile: HardwareProfile) -> None:
+        """Calculate tier."""
         score = 0.0
         score += profile.cpu_cores_logical * 2
         score += profile.ram_total_gb * 4
@@ -352,6 +360,7 @@ class ModeRecommender:
     def _meets_requirements(
         self, profile: HardwareProfile, requirements: Dict[str, Any]
     ) -> Tuple[bool, str]:
+        """Meets requirements."""
         if profile.ram_total_gb < requirements.get("min_ram_gb", 0):
             return (
                 False,

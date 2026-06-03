@@ -27,8 +27,10 @@ class AsyncManager:
         """超時裝飾器"""
 
         def decorator(func: Callable) -> str:
+            """Decorator wrapper."""
             @functools.wraps(func)
             async def wrapper(*args, **kwargs) -> str:
+                """Inner wrapper function."""
                 try:
                     return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
                 except asyncio.TimeoutError:

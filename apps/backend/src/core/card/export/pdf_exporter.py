@@ -61,6 +61,7 @@ class PDFExporter:
             return False
 
     def _render_card(self, card: Card) -> str:
+        """Render card."""
         lines = [f'<div class="card"><h1>{card.name or "—"}</h1>']
         lines.append(f'<div class="field"><span class="label">ID:</span> {card.card_id}</div>')
         lines.append(f'<div class="field"><span class="label">世界線:</span> {card.world_line}</div>')

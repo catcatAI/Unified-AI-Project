@@ -119,9 +119,11 @@ class EnhancedRovoDevConnector:
         await self.close()
 
     async def _authenticate(self) -> None:
+        """Authenticate."""
         self.authenticated = True  # Mock stub
 
     async def _make_request_with_retry(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
+        """Make request with retry."""
         if self.session is None or (hasattr(self.session, 'closed') and self.session.closed):
             self.session = aiohttp.ClientSession()
         if not self.authenticated:

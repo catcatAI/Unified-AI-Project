@@ -194,12 +194,14 @@ def _dict_to_conflict(d: Dict[str, Any]) -> Conflict:
 
 
 def _visual_to_dict(v: Optional[Visual]) -> Optional[Dict[str, Any]]:
+    """Visual to dict."""
     if v is None:
         return None
     return {"image_path": v.image_path, "prompt": v.prompt, "style": v.style}
 
 
 def _dict_to_visual(d: Optional[Dict[str, Any]]) -> Optional[Visual]:
+    """Dict to visual."""
     if d is None:
         return None
     return Visual(

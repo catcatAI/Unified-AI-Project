@@ -463,12 +463,12 @@ def handle_errors(
     category: ErrorCategory = ErrorCategory.SYSTEM,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     reraise: bool = True,
-):
+) -> Callable[..., Any]:
     """裝飾器：自動處理函數錯誤"""
 
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         """Apply the decorator logic."""
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args, **kwargs) -> dict:
             """Log a diagnostic message."""
             try:
                 return await func(*args, **kwargs)
@@ -485,7 +485,7 @@ def handle_errors(
                     raise
                 return {"error": error.message, "error_id": error.id}
 
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs) -> dict:
             """Log a diagnostic message."""
             try:
                 return func(*args, **kwargs)

@@ -33,6 +33,7 @@ class SceneInterpreter:
         return scene
 
     def _detect_scene_type(self, card: Card) -> str:
+        """Detect scene type."""
         if not card.tokens:
             return "general"
         high_strength = [t for t in card.tokens if t.strength >= 0.8]
@@ -45,6 +46,7 @@ class SceneInterpreter:
         return "general"
 
     def _determine_tone(self, card: Card) -> str:
+        """Determine tone."""
         if card.core_trait:
             candidates = ["serious", "lighthearted", "dramatic", "contemplative"]
             scored = self.gravity.compute_gravity(card.core_trait, candidates)
@@ -52,6 +54,7 @@ class SceneInterpreter:
         return "neutral"
 
     def _extract_key_traits(self, card: Card) -> List[Dict[str, Any]]:
+        """Extract key traits."""
         sorted_tokens = sorted(card.tokens, key=lambda t: t.strength, reverse=True)
         return [
             {"name": t.name, "strength": t.strength, "category": t.category}
@@ -65,6 +68,7 @@ class SceneInterpreter:
         ]
 
     def _find_nucleus(self, card: Card) -> str:
+        """Find nucleus."""
         if card.core_trait:
             return card.core_trait
         if card.tokens:

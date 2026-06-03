@@ -25,7 +25,7 @@ import math
 from enum import Enum
 import logging
 from core.hsm_formula_system import HSMFormulaSystem, CognitiveGap, ExplorationResult
-from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveActivity
+from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveActivity, CognitiveInvestment
 from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain
 from core.active_cognition_formula import ActiveCognitionFormula, StressSource, OrderType
 from core.non_paradox_existence import NonParadoxExistence, GrayZoneVariableType
@@ -562,7 +562,7 @@ class AutonomousLifeCycle:
         duration_seconds: float,
         intensity: float,
         context: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> Optional[CognitiveInvestment]:
         """Record a cognitive investment"""
         investment = self.cdm.record_investment(
             activity_type=activity_type,

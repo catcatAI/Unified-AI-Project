@@ -193,6 +193,7 @@ class DocumentBuilder:
             return ""
 
     def _extract_keywords(self, text: str) -> List[str]:
+        """Extract keywords."""
         words = re.findall(r"[\w\u4e00-\u9fff]{2,}", text)
         stop = {"的", "是", "了", "在", "和", "與", "或", "但", "之", "於", "被", "為", "有", "我", "你", "他", "她", "它", "這", "那", "個", "一", "不", "就", "也", "都", "可以", "要", "會", "能", "一個", "什麼", "怎麼", "如何", "為什麼"}
         return [w for w in words if w not in stop and len(w) > 1][:10]

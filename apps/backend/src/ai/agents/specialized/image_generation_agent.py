@@ -58,6 +58,7 @@ class ImageGenerationAgent(BaseAgent):
     async def _handle_generate_image(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle generate image request."""
         params = payload.get("parameters", {})
         prompt = params.get("prompt", "")
         if not prompt:

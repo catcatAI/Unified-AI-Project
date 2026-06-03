@@ -27,6 +27,7 @@ class HAMCoreStorage:
         next_memory_id: int,
         fernet: Optional[Fernet],
     ) -> Tuple[Dict[str, HAMDataPackageInternal], int]:
+        """Load core memory from file."""
         if os.path.exists(self.core_storage_filepath):
             try:
                 with open(self.core_storage_filepath, "rb") as f:
@@ -70,6 +71,7 @@ class HAMCoreStorage:
         next_memory_id: int,
         fernet: Optional[Fernet],
     ) -> bool:
+        """Save core memory to file."""
         try:
             # Simulate I/O delay
             # await asyncio.sleep(self.BASE_SAVE_DELAY_SECONDS)

@@ -246,6 +246,7 @@ class MathExtractor:
         return None
 
     def _safe_float(self, value) -> Optional[float]:
+        """Safe float."""
         try:
             return float(value)
         except (TypeError, ValueError):
@@ -286,6 +287,7 @@ class SpatialEngine:
             return 0.0, False
 
     def _get_math_config(self, key: str, default) -> str:
+        """Get math config."""
         try:
             from core.config_loader import get_angela_config
             return get_angela_config().get_authority("angela_core", {}).get("math_verifier", {}).get(key, default)

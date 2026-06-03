@@ -43,6 +43,7 @@ class ComicComposer:
         )
 
     def _build_prompt(self, card: Card) -> str:
+        """Build prompt."""
         parts: List[str] = []
         if card.visual_data and card.visual_data.prompt:
             parts.append(card.visual_data.prompt)
@@ -56,6 +57,7 @@ class ComicComposer:
         return ", ".join(parts) if parts else card.name
 
     def _pick_style(self, card: Card) -> str:
+        """Pick style."""
         if card.visual_data and card.visual_data.style:
             return card.visual_data.style
         return DEFAULT_STYLE

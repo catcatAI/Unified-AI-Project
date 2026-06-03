@@ -64,6 +64,7 @@ def initialize_all_services(manager) -> tuple:
     pet_manager.broadcast_callback = pet_broadcast_wrapper
 
     def bio_event_callback(event_name, event_data) -> None:
+        """Bio event callback."""
         try:
             loop = asyncio.get_running_loop()
             if loop.is_running():
@@ -92,6 +93,7 @@ def initialize_all_services(manager) -> tuple:
         if hasattr(digital_life.biological_integrator, "register_event_callback"):
             original_callback = bio_event_callback
             def _plugin_aware_callback(event_name, event_data) -> None:
+                """Plugin aware callback."""
                 try:
                     import asyncio as _aio
                     _aio.create_task(

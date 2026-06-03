@@ -40,7 +40,7 @@ class VectorMemoryStore:
 
     async def add_memory(
         self, memory_id: str, content: str, metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """
         Adds a memory to the vector store.
 
@@ -61,7 +61,7 @@ class VectorMemoryStore:
         except Exception as e:  # broad exception acceptable: add memory should not crash caller
             logger.error(f"Error adding memory {memory_id} to vector store: {e}", exc_info=True)
 
-    async def semantic_search(self, query: str, limit: int = 10):
+    async def semantic_search(self, query: str, limit: int = 10) -> dict:
         """
         Performs semantic search on the vector store.
 

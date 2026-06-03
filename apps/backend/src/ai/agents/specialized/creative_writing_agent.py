@@ -80,6 +80,7 @@ class CreativeWritingAgent(BaseAgent):
         self._builder: Optional[Any] = None
 
     def _ensure_builder(self) -> Any:
+        """Ensure builder."""
         if self._builder is None:
             from ai.dialogue.document_builder import DocumentBuilder
             from services.angela_llm_service import get_llm_service
@@ -96,6 +97,7 @@ class CreativeWritingAgent(BaseAgent):
         return self._builder
 
     def _make_llm_wrapper(self) -> Any:
+        """Make llm wrapper."""
         async def llm_wrapper(prompt: str, **kwargs) -> str:
             """Log a diagnostic message."""
             from services.angela_llm_service import get_llm_service
@@ -117,6 +119,7 @@ class CreativeWritingAgent(BaseAgent):
     async def _handle_write_story(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> str:
+        """Handle write story request."""
         params = payload.get("parameters", {})
         query = params.get("prompt", "寫一個故事")
         user_feedback = params.get("user_feedback")
@@ -132,6 +135,7 @@ class CreativeWritingAgent(BaseAgent):
     async def _handle_character_card(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> str:
+        """Handle character card request."""
         params = payload.get("parameters", {})
         query = params.get("character_query", "創建一個角色")
         try:
@@ -146,6 +150,7 @@ class CreativeWritingAgent(BaseAgent):
     async def _handle_article(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> str:
+        """Handle article request."""
         params = payload.get("parameters", {})
         query = params.get("topic", "寫一篇文章")
         style = params.get("style", "")

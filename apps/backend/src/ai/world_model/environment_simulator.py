@@ -41,7 +41,7 @@ class StatePredictor:
 
     async def update(
         self, state: Dict[str, Any], action: Dict[str, Any], next_state: Dict[str, Any]
-    ):
+    ) -> None:
         """Log a diagnostic message."""
         logger.debug("Updating state predictor model (conceptual)...")
         await asyncio.sleep(0.005)

@@ -70,6 +70,7 @@ class Context7MCPConnector:
         self.logger = logging.getLogger(__name__)
 
     async def connect(self) -> bool:
+        """Establish connection."""
         self.logger.info(f"Connecting to Context7 MCP at {self.config.endpoint}")
         self.session_id = f"unified-ai-{datetime.now().isoformat()}"
         await self._discover_capabilities()
@@ -78,6 +79,7 @@ class Context7MCPConnector:
         return True
 
     async def disconnect(self) -> None:
+        """Close connection."""
         if self._connected:
             self.logger.info("Disconnecting from Context7 MCP")
             self.session_id = None
@@ -87,6 +89,7 @@ class Context7MCPConnector:
     async def send_context(
         self, context_data: Dict[str, Any], context_type: str = "dialogue", priority: int = 1
     ) -> MCPResponse:
+        """Send context."""
         if not self._connected:
             raise RuntimeError("Not connected to Context7 MCP")
         message = MCPMessage(
@@ -104,6 +107,7 @@ class Context7MCPConnector:
     async def request_context(
         self, context_query: str, max_results: int = 10
     ) -> List[Dict[str, Any]]:
+        """Request context."""
         if not self._connected:
             raise RuntimeError("Not connected to Context7 MCP")
         message = MCPMessage(
@@ -117,6 +121,7 @@ class Context7MCPConnector:
     async def collaborate_with_model(
         self, model_id: str, task_description: str, shared_context: Dict[str, Any]
     ) -> MCPResponse:
+        """Collaborate with model."""
         if not self._connected:
             raise RuntimeError("Not connected to Context7 MCP")
         message = MCPMessage(
@@ -133,6 +138,7 @@ class Context7MCPConnector:
         return await self._send_message(message)
 
     async def compress_context(self, context_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Compress context."""
         if len(str(context_data)) < self.config.compression_threshold:
             return context_data
         message = MCPMessage(
@@ -144,6 +150,7 @@ class Context7MCPConnector:
         return response.data.get("compressed_context", context_data)
 
     async def _discover_capabilities(self) -> None:
+        """Discover capabilities."""
         message = MCPMessage(
             type="capability_discovery", session_id=self.session_id or "", payload={}
         )
@@ -153,6 +160,7 @@ class Context7MCPConnector:
         self.logger.info(f"Discovered {len(self.capabilities)} MCP capabilities")
 
     async def _send_message(self, message: MCPMessage) -> MCPResponse:
+        """Send message."""
         self.logger.debug(f"Sending MCP message: {message.type}")
         await asyncio.sleep(0.01)  # Simulate processing delay
         return MCPResponse(success=True, message_id=message.session_id, data={})
@@ -175,6 +183,7 @@ class MCPIntegration:
     async def integrate_with_dialogue_manager(
         self, dialogue_context: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Integrate with dialogue manager."""
         await self.mcp.send_context(
             context_data=dialogue_context, context_type="dialogue", priority=1
         )
@@ -186,6 +195,7 @@ class MCPIntegration:
         return enhanced_context
 
     async def integrate_with_ham_memory(self, memory_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Integrate with HAM memory."""
         compressed_memory = await self.mcp.compress_context(memory_data)
         await self.mcp.send_context(
             context_data=compressed_memory, context_type="memory", priority=2

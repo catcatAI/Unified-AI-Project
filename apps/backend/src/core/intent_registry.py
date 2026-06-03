@@ -49,6 +49,7 @@ class IntentRegistry:
             self._initialized = True
 
     def _register_defaults(self) -> None:
+        """Register defaults."""
         try:
             from core.config_loader import get_angela_config
             cfg = get_angela_config()
@@ -82,6 +83,7 @@ class IntentRegistry:
         ]
 
     def _build_index(self) -> None:
+        """Build index."""
         self._keyword_to_patterns.clear()
         for pattern in self.patterns:
             if not pattern.keywords:

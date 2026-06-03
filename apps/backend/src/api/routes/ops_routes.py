@@ -39,7 +39,7 @@ async def get_insights(
     severity: Optional[str] = None,
     limit: int = 50,
     ops_manager: IntelligentOpsManager = Depends(get_ops_manager),
-):
+) -> JSONResponse:
     """获取运维洞察"""
     try:
         insights = await ops_manager.get_insights(
@@ -76,7 +76,7 @@ async def execute_manual_action(
     insight_id: str,
     action_data: Dict[str, Any],
     ops_manager: IntelligentOpsManager = Depends(get_ops_manager),
-):
+) -> JSONResponse:
     """执行手动操作"""
     try:
         action_type = action_data.get("action_type")
@@ -98,7 +98,7 @@ async def collect_system_metrics(
     metrics_data: Dict[str, Any],
     background_tasks: BackgroundTasks,
     ops_manager: IntelligentOpsManager = Depends(get_ops_manager),
-):
+) -> dict:
     """收集系统指标"""
     try:
         component_id = metrics_data.get("component_id")

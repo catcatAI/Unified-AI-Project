@@ -735,7 +735,7 @@ if __name__ == "__main__":
         agent_name: str,
         timeout: int = 10,
         service_discovery: Optional[Any] = None,
-    ):
+    ) -> None:
         """
         Waits for an agent to be ready by checking for its capability advertisement.
         """

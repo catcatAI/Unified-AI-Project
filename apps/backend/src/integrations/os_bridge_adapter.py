@@ -26,7 +26,8 @@ class OSBridgeAdapter:
             if os.path.exists(alt_root):
                 self.bridge_path = alt_root
 
-    async def _execute_async(self, command, *args):
+    async def _execute_async(self, command, *args) -> dict:
+        """Execute sync."""
         cmd = [self.python_exe, self.bridge_path, command] + list(args)
         try:
             process = await asyncio.create_subprocess_exec(
@@ -43,7 +44,7 @@ class OSBridgeAdapter:
             logger.warning(f"_execute_async failed for {command}: {e}", exc_info=True)
             return {"status": "error", "message": str(e)}
 
-    def _execute(self, command, *args):
+    def _execute(self, command, *args) -> dict:
         """Legacy synchronous execute - use _execute_async whenever possible"""
         cmd = [self.python_exe, self.bridge_path, command] + list(args)
         try:

@@ -19,6 +19,7 @@ class FantasyDMAgent(BaseAgent):
         self._codex_cache = None
 
     def _load_codex(self) -> str:
+        """Load codex."""
         if self._codex_cache is None:
             try:
                 import os
@@ -51,6 +52,7 @@ class FantasyDMAgent(BaseAgent):
             return {"status": "error", "message": f"Unknown action: {action}"}
 
     async def _handle_alchemy(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle alchemy request."""
         item1 = params.get("item1", {})
         item2 = params.get("item2", {})
         
@@ -72,6 +74,7 @@ class FantasyDMAgent(BaseAgent):
         }
 
     async def _handle_narration(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle narration request."""
         location = params.get("location_name", "Unknown")
         description = params.get("base_description", "")
         
@@ -83,6 +86,7 @@ class FantasyDMAgent(BaseAgent):
         }
 
     def _handle_codex_lookup(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle codex lookup request."""
         query = params.get("query", "").lower()
         codex = self._load_codex()
         

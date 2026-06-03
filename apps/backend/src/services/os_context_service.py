@@ -24,7 +24,7 @@ class OSContextService:
             }
         return {"error": "OS Bridge unreachable"}
 
-    def perform_intelligent_action(self, intent_description, target_text=None):
+    def perform_intelligent_action(self, intent_description, target_text=None) -> dict:
         """
         Maps a high-level AI intent to an OS action.
         """

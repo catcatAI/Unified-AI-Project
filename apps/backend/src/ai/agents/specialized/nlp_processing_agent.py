@@ -79,6 +79,7 @@ class NLPProcessingAgent(BaseAgent):
     async def _handle_summarization(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle summarization request."""
         text = payload.get("parameters", {}).get("text", "")
         if not text:
             return {"summary": "", "error": "No text"}
@@ -88,6 +89,7 @@ class NLPProcessingAgent(BaseAgent):
     async def _handle_sentiment(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle sentiment request."""
         text = payload.get("parameters", {}).get("text", "")
         if not text:
             return {"sentiment": "neutral", "score": 0.5, "error": "No text"}

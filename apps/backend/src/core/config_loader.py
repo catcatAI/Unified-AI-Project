@@ -356,6 +356,7 @@ class AngelaConfigManager:
             return False
 
     def _learn_intent_pattern(self, data: Dict[str, Any]) -> bool:
+        """Learn intent pattern."""
         intent_name = data.get("intent", "unknown")
         keywords = data.get("keywords", [])
         if not intent_name or intent_name == "unknown":
@@ -378,6 +379,7 @@ class AngelaConfigManager:
         return self.write_learned("patterns", learned)
 
     def _learn_threshold_adjust(self, data: Dict[str, Any]) -> bool:
+        """Learn threshold adjust."""
         metric = data.get("metric", "")
         value = data.get("value", 0.5)
         learned = self.get_learned("thresholds", {})
@@ -391,6 +393,7 @@ class AngelaConfigManager:
         return self.write_learned("thresholds", learned)
 
     def _learn_route_success(self, data: Dict[str, Any]) -> bool:
+        """Learn route success."""
         provider = data.get("provider", "")
         intent = data.get("intent", "general")
         latency_ms = data.get("latency_ms", 0)
@@ -408,6 +411,7 @@ class AngelaConfigManager:
         return self.write_learned("routes", learned)
 
     def _learn_route_fail(self, data: Dict[str, Any]) -> bool:
+        """Learn route fail."""
         provider = data.get("provider", "")
         intent = data.get("intent", "general")
         error = data.get("error", "unknown")

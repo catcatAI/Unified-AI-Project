@@ -488,6 +488,7 @@ class MathRippleEngine:
         self, expr: str, auto_detect: bool, force_depth: Optional[RippleDepth],
         force_algo: Optional[AlgorithmDepth]
     ) -> None:
+        """Configure depth."""
         if auto_detect:
             config = RippleDepthConfig.from_expr(expr)
             if force_depth:
@@ -499,6 +500,7 @@ class MathRippleEngine:
     def _process_operator_chain(
         self, tokens: List[str], i: int, current: float, ripples: List[RippleEffect]
     ) -> Tuple[int, float]:
+        """Process operator chain."""
         processed = False
         while i + 1 < len(tokens):
             op = tokens[i + 1]
@@ -580,6 +582,7 @@ class MathRippleEngine:
         return final_result, ripples
 
     def _tokenize(self, expr: str) -> List[str]:
+        """Tokenize."""
         import re
         tokens = []
         num_buffer = ""
@@ -717,6 +720,7 @@ class MathRippleEngine:
             return 0.0
 
     def _apply_cognitive_overload(self) -> None:
+        """Apply cognitive overload."""
         if not self.state_matrix:
             return
 
@@ -747,6 +751,7 @@ class MathRippleEngine:
         logger.info("[MathRipple] Cognitive overload triggered")
 
     def _apply_division_fear(self) -> None:
+        """Apply division fear."""
         if not self.state_matrix:
             return
 
@@ -771,6 +776,7 @@ class MathRippleEngine:
         logger.info("[MathRipple] Division fear triggered")
 
     def _apply_order_confusion(self, op: str) -> None:
+        """Apply order confusion."""
         if not self.state_matrix:
             return
 

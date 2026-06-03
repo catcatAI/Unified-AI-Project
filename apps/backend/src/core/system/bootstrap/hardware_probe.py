@@ -76,6 +76,7 @@ class HardwareProbe:
             )
 
     def _assign_tier(self, score: float) -> str:
+        """Assign tier."""
         tiers = self.bootstrap_config.get("hardware_tiers", {})
         # Sort tiers by threshold descending to find the highest match
         sorted_tiers = sorted(tiers.items(), key=lambda x: x[1].get("score_threshold", 0), reverse=True)

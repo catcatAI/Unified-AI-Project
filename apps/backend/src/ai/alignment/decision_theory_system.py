@@ -195,7 +195,7 @@ class DecisionTheorySystem:
         function: Callable[[Dict[str, Any]], float],
         weight: float,
         constraints: List[Callable[[Dict[str, Any]], bool]] = None,
-    ):
+    ) -> None:
         """添加效用函数"""
         utility_func = UtilityFunction(
             name=name, function=function, weight=weight, constraints=constraints or []

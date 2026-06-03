@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 _hot_reload_service_singleton: Optional["HotReloadService"] = None
 
 def get_hot_reload_service() -> "HotReloadService":
+    """Get hot reload service."""
     global _hot_reload_service_singleton
     if _hot_reload_service_singleton is None:
         _hot_reload_service_singleton = HotReloadService()
@@ -33,12 +34,14 @@ class HotReloadService:
         self._draining: bool = False
 
     async def begin_draining(self) -> Dict[str, Any]:
+        """Begin draining connections."""
         async with self._lock:
             self._draining = True
             logger.info("📡 [HotReload] System entering drain mode.")
             return {"draining": self._draining, "status": "accepting_no_new_tasks"}
 
     async def end_draining(self) -> Dict[str, Any]:
+        """End draining connections."""
         async with self._lock:
             self._draining = False
             logger.info("📡 [HotReload] System exit drain mode.")

@@ -166,7 +166,7 @@ class LearningManager:
         session_id: Optional[str],
         interaction_ref: Optional[str],
         source_text: str,
-    ):
+    ) -> None:
         """Shares a learned fact via the HSP network."""
         hsp_fact_id = f"hspfact_{self.ai_id.replace(':', '_')}_{uuid.uuid4().hex[:6]}"
         payload = HSPFactPayload(

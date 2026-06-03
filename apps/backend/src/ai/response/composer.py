@@ -901,6 +901,7 @@ class NeuroBlender:
         )
 
     def _score_fragments(self, target: List[float], all_frags: List[NeuroFragment]) -> List[Tuple[NeuroFragment, float]]:
+        """Score fragments."""
         scored = []
         for frag in all_frags:
             sim = self._cosine_similarity(target, frag.state_vector())
@@ -910,16 +911,19 @@ class NeuroBlender:
         return scored
 
     def _extract_alpha_energy(self, state_dict: Dict[str, Any]) -> float:
+        """Extract alpha energy."""
         alpha_state = state_dict.get("alpha", {})
         if isinstance(alpha_state, dict):
             return alpha_state.get("energy", 0.5)
         return getattr(alpha_state, "energy", 0.5)
 
     def _load_behavior_config(self) -> Dict[str, Any]:
+        """Load behavior config."""
         from core.system.config.tiered_loader import get_config
         return get_config("standard/behavior/behavior")
 
     def _compute_top_k_count(self, alpha_energy: float, _bio_thresh: Dict[str, Any]) -> int:
+        """Compute top k count."""
         if alpha_energy < _bio_thresh.get("composer_energy_fragment_low", 0.2):
             return 2
         elif alpha_energy < _bio_thresh.get("composer_energy_fragment_medium", 0.4):
@@ -927,6 +931,7 @@ class NeuroBlender:
         return 6
 
     def _group_by_role(self, scored: List[Tuple[NeuroFragment, float]]) -> Dict[str, List[Tuple[NeuroFragment, float]]]:
+        """Group by role."""
         by_role: Dict[str, List[Tuple[NeuroFragment, float]]] = {}
         for frag, sim in scored:
             by_role.setdefault(frag.structural_type, []).append((frag, sim))
@@ -940,6 +945,7 @@ class NeuroBlender:
         top_k_total: int,
         top_k_per_role: int,
     ) -> List[NeuroFragment]:
+        """Select top fragments."""
         selected: List[NeuroFragment] = []
         seen_contents: set = set()
         def add_if_unique(frag: NeuroFragment) -> bool:
@@ -970,6 +976,7 @@ class NeuroBlender:
         return selected
 
     def _extract_beta_curiosity(self, state_dict: Dict[str, Any]) -> float:
+        """Extract beta curiosity."""
         beta_state = state_dict.get("beta", {})
         if isinstance(beta_state, dict):
             return beta_state.get("curiosity", 0.5)
@@ -1023,11 +1030,13 @@ class NeuroBlender:
         ]
 
     def _dict_val(self, d: Any, key: str, default: float) -> float:
+        """Dict val."""
         if isinstance(d, dict):
             return d.get(key, default)
         return getattr(d, key, default)
 
     def _cosine_similarity(self, v1: List[float], v2: List[float]) -> float:
+        """Cosine similarity."""
         if len(v1) != len(v2) or not v1:
             return 0.0
         dot = sum(a * b for a, b in zip(v1, v2))
@@ -1124,6 +1133,7 @@ class NeuroBlender:
         return response
 
     def _update_stats(self, elapsed_ms: float) -> None:
+        """Update stats."""
         self.stats["total_syntheses"] += 1
         total = self.stats["total_syntheses"]
         self.stats["avg_time_ms"] = (

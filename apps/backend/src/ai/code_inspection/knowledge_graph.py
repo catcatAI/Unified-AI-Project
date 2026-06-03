@@ -132,22 +132,26 @@ class KnowledgeGraph:
             self._add_edge(GraphEdge(source=file_node.id, target=func.id, type="CONTAINS"))
 
     def _add_node(self, node: GraphNode) -> None:
+        """Add node."""
         if node.id not in self.nodes:
             self.nodes[node.id] = node
 
     def _add_edge(self, edge: GraphEdge) -> None:
+        """Add edge."""
         self.edges.append(edge)
         if edge.source not in self._edge_map:
             self._edge_map[edge.source] = []
         self._edge_map[edge.source].append(edge.target)
 
     def _track_file_node(self, filepath: Path, node_id: str) -> None:
+        """Track file node."""
         key = str(filepath)
         if key not in self._file_to_node_ids:
             self._file_to_node_ids[key] = set()
         self._file_to_node_ids[key].add(node_id)
 
     def _extract_imports(self, tree: ast.AST, filepath: str) -> List[GraphNode]:
+        """Extract imports."""
         imports = []
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -171,6 +175,7 @@ class KnowledgeGraph:
         return imports
 
     def _extract_classes(self, tree: ast.AST, filepath: str) -> List[GraphNode]:
+        """Extract classes."""
         classes = []
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
@@ -209,6 +214,7 @@ class KnowledgeGraph:
         return classes
 
     def _extract_functions(self, tree: ast.AST, filepath: str) -> List[GraphNode]:
+        """Extract functions."""
         functions = []
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and not isinstance(node.parent, ast.ClassDef) if hasattr(node, 'parent') else True:

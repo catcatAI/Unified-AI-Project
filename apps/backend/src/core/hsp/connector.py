@@ -330,7 +330,7 @@ class HSPConnector:
         return self.external_connector.mqtt_client
 
     @mqtt_client.setter
-    def mqtt_client(self, value):
+    def mqtt_client(self, value) -> None:
         """Allows tests to set the mock MQTT client."""
         self.external_connector.mqtt_client = value
 
@@ -365,7 +365,7 @@ class HSPConnector:
         return test_compatible_on_message
 
     @on_message.setter
-    def on_message(self, callback: Callable):
+    def on_message(self, callback: Callable) -> None:
         """Allows setting message callback for test compatibility."""
 
         # Wrap a test-provided callback (client, topic, payload, qos, properties)
@@ -717,6 +717,7 @@ class HSPConnector:
         return self.get_communication_status()
 
     async def _dispatch_task_result_to_callbacks(self, message: Dict[str, Any]) -> None:
+        """Dispatch request."""
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 
@@ -776,6 +777,7 @@ class HSPConnector:
                 await self.publish_message(ack_topic, ack_envelope, qos=1)
 
     async def _dispatch_acknowledgement_to_callbacks(self, message: Dict[str, Any]) -> None:
+        """Dispatch request."""
         payload = message.get("payload")
         sender_ai_id = message.get("sender_ai_id")
 

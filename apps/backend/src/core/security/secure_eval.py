@@ -286,6 +286,7 @@ class SafeEvaluator:
         return node.value
 
     def _eval_name_node(self, node: ast.Name, context: Dict[str, Any]) -> Any:
+        """Eval name node."""
         if node.id in self.ALLOWED_CONSTANTS:
             return self.ALLOWED_CONSTANTS[node.id]
         if node.id in context:
@@ -295,6 +296,7 @@ class SafeEvaluator:
         raise ValueError(f"不允許的變量或函數: {node.id}")
 
     def _eval_binop_node(self, node: ast.BinOp, context: Dict[str, Any]) -> Any:
+        """Eval binop node."""
         left = self._eval_node(node.left, context)
         right = self._eval_node(node.right, context)
         op_type = type(node.op)
@@ -303,6 +305,7 @@ class SafeEvaluator:
         raise ValueError(f"不允許的操作符: {op_type}")
 
     def _eval_unaryop_node(self, node: ast.UnaryOp, context: Dict[str, Any]) -> Any:
+        """Eval unaryop node."""
         operand = self._eval_node(node.operand, context)
         op_type = type(node.op)
         if op_type in self.ALLOWED_OPERATORS:
@@ -310,6 +313,7 @@ class SafeEvaluator:
         raise ValueError(f"不允許的一元操作符: {op_type}")
 
     def _eval_compare_node(self, node: ast.Compare, context: Dict[str, Any]) -> Any:
+        """Eval compare node."""
         left = self._eval_node(node.left, context)
         result = True
         for op, comparator in zip(node.ops, node.comparators):
@@ -325,6 +329,7 @@ class SafeEvaluator:
         return result
 
     def _eval_boolop_node(self, node: ast.BoolOp, context: Dict[str, Any]) -> Any:
+        """Eval boolop node."""
         op_type = type(node.op)
         values = [self._eval_node(v, context) for v in node.values]
         if op_type == ast.And:
@@ -334,6 +339,7 @@ class SafeEvaluator:
         raise ValueError(f"不允許的布爾操作符: {op_type}")
 
     def _eval_call_node(self, node: ast.Call, context: Dict[str, Any]) -> Any:
+        """Eval call node."""
         func = self._eval_node(node.func, context)
         if not callable(func):
             raise ValueError(f"不可調用的對象: {func}")
@@ -351,11 +357,13 @@ class SafeEvaluator:
         return {self._eval_node(e, context) for e in node.elts}
 
     def _eval_dict_node(self, node: ast.Dict, context: Dict[str, Any]) -> Any:
+        """Eval dict node."""
         keys = [self._eval_node(k, context) for k in node.keys]
         values = [self._eval_node(v, context) for v in node.values]
         return dict(zip(keys, values))
 
     def _eval_subscript_node(self, node: ast.Subscript, context: Dict[str, Any]) -> Any:
+        """Eval subscript node."""
         value = self._eval_node(node.value, context)
         if isinstance(node.slice, ast.Index):
             index = self._eval_node(node.slice.value, context)

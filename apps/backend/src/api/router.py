@@ -93,7 +93,7 @@ async def get_ai_agents() -> dict:
 
 
 @router.get("/agents/{agent_id}", response_model=Dict[str, Any])
-async def get_ai_agent(agent_id: str):
+async def get_ai_agent(agent_id: str) -> dict:
     """获取特定AI代理"""
     agents = await get_ai_agents()
     for agent in agents:
@@ -195,7 +195,7 @@ async def chat_completions(request: Dict[str, Any] = Body(...)) -> dict:
 
 
 @router.get("/admin/modules")
-async def admin_modules():
+async def admin_modules() -> dict:
     """List all modules with status, deps, and health info."""
     from core.interfaces.service_registry import get_registry
     mm = get_registry().get("module_manager")

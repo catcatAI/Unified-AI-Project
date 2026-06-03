@@ -654,7 +654,7 @@ class DigitalLifeIntegrator:
         description: str,
         significance: float = 0.5,
         metadata: Optional[dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         Record a significant life event
 
@@ -753,7 +753,7 @@ class DigitalLifeIntegrator:
 
     def register_state_change_callback(
         self, callback: Callable[[LifeCycleState, LifeCycleState], None]
-    ):
+    ) -> None:
         """Register callback for life cycle state changes"""
         self._state_change_callbacks.append(callback)
 

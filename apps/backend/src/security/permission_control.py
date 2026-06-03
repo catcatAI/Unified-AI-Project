@@ -71,6 +71,7 @@ class PermissionControlSystem:
         logger.info("PermissionControlSystem Skeleton Initialized")
 
     def _load_configuration(self) -> None:
+        """Load configuration."""
         try:
             path = Path(self.config_path)
             if path.exists():
@@ -105,6 +106,7 @@ class PermissionControlSystem:
             logger.error(f"Error loading permission configuration: {e}", exc_info=True)
 
     def _set_default_rules(self) -> None:
+        """Set default rules."""
         self.default_rules = [
             PermissionRule(
                 permission_type=PermissionType.FILE_ACCESS,
@@ -147,12 +149,14 @@ class PermissionControlSystem:
         logger.info("Set default permission rules")
 
     def add_user_rule(self, user_id: str, rule: PermissionRule) -> None:
+        """Add user rule."""
         if user_id not in self.rules:
             self.rules[user_id] = []
         self.rules[user_id].append(rule)
         logger.info(f"Added permission rule for user {user_id}: {rule}")
 
     def check_permission(self, context: PermissionContext) -> bool:
+        """Check permission."""
         try:
             if context.user_id in self.rules:
                 for rule in self.rules[context.user_id]:
@@ -175,6 +179,7 @@ class PermissionControlSystem:
             return False
 
     def _rule_matches_context(self, rule: PermissionRule, context: PermissionContext) -> bool:
+        """Rule matches context."""
         if rule.permission_type.value != context.operation:
             return False
         if rule.resource_pattern != "*" and not self._matches_pattern(
@@ -188,6 +193,7 @@ class PermissionControlSystem:
         return True
 
     def _matches_pattern(self, resource: str, pattern: str) -> bool:
+        """Matches pattern."""
         if pattern == "*":
             return True
         return fnmatch.fnmatch(resource, pattern)
@@ -196,6 +202,7 @@ class PermissionControlSystem:
         return rule.level != PermissionLevel.NONE
 
     def _log_audit_event(self, context: PermissionContext, granted: bool) -> None:
+        """Log audit event."""
         if not self.audit_log_enabled:
             return
         audit_event = {
@@ -209,6 +216,7 @@ class PermissionControlSystem:
         logger.info(f"Permission audit: {json.dumps(audit_event)}")
 
     def save_configuration(self, config_path: Optional[str] = None) -> None:
+        """Save configuration."""
         try:
             config_path = config_path or self.config_path
             config_dir = Path(config_path).parent

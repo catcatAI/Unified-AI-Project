@@ -43,6 +43,7 @@ class ModuleScanner:
         return descriptors
 
     def _validate(self, descriptor: ModuleDescriptor) -> None:
+        """Validate."""
         if not descriptor.name:
             raise ValidationError("name is required and must be non-empty")
         if not descriptor.version:
@@ -51,6 +52,7 @@ class ModuleScanner:
             raise ValidationError("lifecycle.init is required")
 
     def _parse_descriptor(self, data: dict) -> ModuleDescriptor:
+        """Parse descriptor."""
         raw_kind = data.get("kind", "service")
         try:
             kind = ModuleKind(raw_kind)

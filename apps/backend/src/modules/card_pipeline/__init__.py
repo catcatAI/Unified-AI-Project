@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 async def init(deps: dict = None) -> CardImportPipeline:
+    """Init."""
     registry = CardRegistry()
     deps = deps or {}
     memory_adapter = deps.get("ham_memory")

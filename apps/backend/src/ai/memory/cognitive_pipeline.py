@@ -73,6 +73,7 @@ class CognitivePipeline:
         self._init_subsystems()
 
     def _init_subsystems(self) -> None:
+        """Init subsystems."""
         if not self.attractor_field:
             try:
                 from ai.memory.attractor_field import GradientField
@@ -224,6 +225,7 @@ class CognitivePipeline:
         }
 
     def _apply_ripple_to_state(self, ripple: Dict[str, Any]) -> None:
+        """Apply ripple to state."""
         if not self.state_matrix:
             return
 
@@ -254,6 +256,7 @@ class CognitivePipeline:
             self._apply_division_fear()
 
     def _apply_cognitive_overload(self) -> None:
+        """Apply cognitive overload."""
         if not self.state_matrix:
             return
         if hasattr(self.state_matrix, "beta"):
@@ -262,6 +265,7 @@ class CognitivePipeline:
             )
 
     def _apply_division_fear(self) -> None:
+        """Apply division fear."""
         if not self.state_matrix:
             return
         if hasattr(self.state_matrix, "gamma"):
@@ -360,6 +364,7 @@ class CognitivePipeline:
         }
 
     def _summarize_issues(self, issues: List) -> Dict[str, int]:
+        """Summarize issues."""
         by_cat = {}
         for issue in issues:
             cat = getattr(issue, "category", "unknown").value if hasattr(getattr(issue, "category", None), "value") else str(getattr(issue, "category", "unknown"))

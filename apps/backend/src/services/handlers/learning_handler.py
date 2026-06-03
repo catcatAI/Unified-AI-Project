@@ -29,6 +29,7 @@ class LearningHandler:
         return self._anchor
 
     async def handle(self, text: str, intent: str) -> str:
+        """Handle."""
         fact = self._extract_fact(text)
         if not fact:
             return "（學習）想讓我記住什麼呢？請告訴我一些你想讓我學習的事情。"
@@ -39,6 +40,7 @@ class LearningHandler:
         )
 
     async def _store_fact(self, fact: str) -> bool:
+        """Store fact."""
         engine = self._anchor_engine
         if not engine:
             return False
@@ -54,6 +56,7 @@ class LearningHandler:
         return False
 
     def _extract_fact(self, text: str) -> Optional[str]:
+        """Extract fact."""
         prefixes = sorted(
             ["記住這個", "記住", "學習", "記錄", "教我", "調整", "理解",
              "please remember", "please learn", "remember", "learn", "teach"],

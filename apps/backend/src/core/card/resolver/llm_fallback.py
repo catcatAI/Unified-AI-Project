@@ -38,6 +38,7 @@ class LLMFallback:
         return resolved
 
     def _llm_resolve(self, card: Card, conflict: Conflict) -> str:
+        """Llm resolve."""
         if conflict.type == ConflictType.HARD_ERROR:
             return self._resolve_hard_error(card, conflict)
         if conflict.type == ConflictType.MULTIVERSE:
@@ -47,6 +48,7 @@ class LLMFallback:
         return self._resolve_generic(card, conflict)
 
     def _resolve_hard_error(self, card: Card, conflict: Conflict) -> str:
+        """Resolve hard error."""
         if conflict.dimension == "format":
             return f"Skip unsupported source: {conflict.description}"
         if conflict.dimension == "numerical":
@@ -57,6 +59,7 @@ class LLMFallback:
         return f"Record as alternate self: {conflict.description}"
 
     def _resolve_narrative(self, card: Card, conflict: Conflict) -> str:
+        """Resolve narrative."""
         preferred = card.core_trait or "unknown"
         return f"Prefer core trait '{preferred}': {conflict.description}"
 

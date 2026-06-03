@@ -40,6 +40,7 @@ class TokenExtractor:
         return tokens
 
     def _extract_explicit(self, text: str) -> List[Token]:
+        """Extract explicit."""
         tokens: List[Token] = []
         for match in TOKEN_LINE.finditer(text):
             name = match.group(1).strip()
@@ -52,6 +53,7 @@ class TokenExtractor:
         return tokens
 
     def _extract_implicit(self, text: str) -> List[Token]:
+        """Extract implicit."""
         tokens: List[Token] = []
         seen: set = set()
         for match in STRENGTH_WORD.finditer(text):

@@ -211,7 +211,7 @@ class BehaviorFeedbackLoop:
         priority: str,
         user_response: Optional[str] = None,
         user_emotion: Optional[str] = None,
-    ):
+    ) -> None:
         """記錄行為"""
         record = BehaviorRecord(
             action=action,

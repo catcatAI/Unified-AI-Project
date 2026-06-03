@@ -145,7 +145,7 @@ class LocalClusterManager:
         control_queue: Queue,
         shutdown_event: Event,
         task_executor: Optional[Callable] = None,
-    ):
+    ) -> None:
         """
         Worker 進程主循環
         在獨立進程中運行，處理任務隊列中的任務

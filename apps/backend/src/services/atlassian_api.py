@@ -44,6 +44,7 @@ class AtlassianCLIBridge:
         self.config: Optional[Dict[str, str]] = None
 
     def set_config(self, domain: str, email: str, token: str) -> None:
+        """Set config."""
         self.config = {
             "domain": domain,
             "email": email,
@@ -51,6 +52,7 @@ class AtlassianCLIBridge:
         }
 
     async def _run_acli(self, args: List[str]) -> Dict[str, Any]:
+        """Run acli."""
         if not self.config:
             return {"success": False, "error": "Atlassian CLI not configured."}
         
@@ -80,6 +82,7 @@ class AtlassianCLIBridge:
             return {"success": False, "error": str(e)}
 
     def get_status(self) -> dict:
+        """Get status."""
         import shutil
         exists = shutil.which(self.acli_path) is not None or os.path.exists(self.acli_path)
         return {"acli_available": exists, "configured": self.config is not None}
@@ -94,6 +97,7 @@ class AtlassianCLIBridge:
         return await self._run_acli(["jira", "getProjectList"])
 
     async def get_jira_issues(self, jql: Optional[str] = None, limit: int = 50) -> str:
+        """Get jira issues."""
         args = ["jira", "getIssueList"]
         if jql:
             args.extend(["--jql", jql])
@@ -114,6 +118,7 @@ atlassian_router = APIRouter(prefix="/api/v1/atlassian", tags=["Atlassian"])
 
 @atlassian_router.post("/configure")
 async def configure_atlassian(config: AtlassianConfig) -> dict:
+    """Configure atlassian."""
     try:
         atlassian_bridge.set_config(config.domain, config.user_email, config.api_token)
         return {"status": "configured", "domain": config.domain}
@@ -126,6 +131,7 @@ async def get_atlassian_status() -> dict:
 
 @atlassian_router.get("/confluence/spaces")
 async def get_spaces() -> str:
+    """Get spaces."""
     result = await atlassian_bridge.get_confluence_spaces()
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -133,6 +139,7 @@ async def get_spaces() -> str:
 
 @atlassian_router.get("/jira/projects")
 async def get_projects() -> str:
+    """Get projects."""
     result = await atlassian_bridge.get_jira_projects()
     if not result["success"]:
         raise HTTPException(status_code=500, detail=result.get("error"))
@@ -140,6 +147,7 @@ async def get_projects() -> str:
 
 @atlassian_router.post("/jira/issues")
 async def create_issue(issue: JiraIssueCreate) -> str:
+    """Create issue."""
     result = await atlassian_bridge.create_jira_issue(
         issue.project_key, 
         issue.summary, 

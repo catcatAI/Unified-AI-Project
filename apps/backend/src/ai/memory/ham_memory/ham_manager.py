@@ -122,6 +122,7 @@ class HAMMemoryManager:
         return True
 
     def _generate_memory_id(self) -> str:
+        """Generate memory id."""
         mem_id = f"mem_{self.next_memory_id:06d}"
         self.next_memory_id += 1
         return mem_id

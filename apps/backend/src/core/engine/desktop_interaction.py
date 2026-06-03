@@ -647,6 +647,7 @@ class DesktopInteraction:
         return False
 
     def _set_wallpaper_windows(self, image_path: Path) -> None:
+        """Set wallpaper windows."""
         import ctypes
         import typing
 

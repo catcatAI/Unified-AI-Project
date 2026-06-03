@@ -107,6 +107,7 @@ class AudioService:
                 logger.info(f"Audio Service enabled status changed to: {enabled}")
 
     def set_peer_services(self, peer_services: Dict[str, Any]) -> None:
+        """Set peer services."""
         self.peer_services = peer_services
         logger.debug(f"Audio Service connected to peer services: {list(peer_services.keys())}")
 
@@ -208,6 +209,7 @@ class AudioService:
         language: str = "en-US",
         enhanced_features: bool = False,
     ) -> Dict[str, Any]:
+        """Convert speech to text."""
         processing_id = self._generate_processing_id(audio_data)
         logger.info(
             f"Audio Service: Converting speech to text (ID: {processing_id}) for language '{language}'"
@@ -216,10 +218,12 @@ class AudioService:
         return dict(list(result.items()) + [("processing_id", processing_id)])
 
     def _generate_processing_id(self, audio_data: bytes) -> str:
+        """Generate processing id."""
         hash_object = hashlib.md5(audio_data if audio_data else b"")
         return f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
 
     async def _perform_speech_recognition(self, audio_data: bytes, language: str) -> Dict[str, Any]:
+        """Perform speech recognition."""
         if not WHISPER_AVAILABLE:
             # 2030 Standard: Basic VAD Fallback instead of Mock text
             try:
@@ -270,6 +274,7 @@ class AudioService:
             return {"text": "STT Error", "confidence": 0.0}
 
     async def _analyze_sentiment(self, text: str, audio_data: bytes) -> Dict[str, Any]:
+        """Analyze sentiment."""
         emotion_system = self.peer_services.get("emotion_system")
         if emotion_system and hasattr(emotion_system, "analyze_emotional_context"):
             try:
@@ -284,10 +289,12 @@ class AudioService:
         return {"sentiment": "neutral", "confidence": 0.7}
 
     async def _detect_audio_emotion(self, audio_data: bytes) -> Dict[str, Any]:
+        """Detect audio emotion."""
         await asyncio.sleep(0.04)
         return {"primary_emotion": "calm", "confidence": 0.6}
 
     async def process(self, input_data: Any) -> Dict[str, Any]:
+        """Process request."""
         if isinstance(input_data, dict) and "audio_data" in input_data:
             return await self.speech_to_text(
                 input_data["audio_data"], input_data.get("language", "en-US")

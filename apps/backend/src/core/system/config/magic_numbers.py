@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def _get_tiered_config(path: str) -> Dict[str, Any]:
+    """Get tiered config."""
     try:
         from core.system.config.tiered_loader import get_config
         return get_config(path)

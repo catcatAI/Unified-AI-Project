@@ -124,6 +124,7 @@ class HardwareAnalyzer:
         self._probe = None
 
     def _get_probe(self) -> str:
+        """Get probe."""
         if self._probe is None:
             from shared.utils.hardware_detector import SystemHardwareProbe
 
@@ -184,6 +185,7 @@ class BudgetScheduler:
         self._resource_service = None
 
     def _get_resource_service(self) -> str:
+        """Get resource service."""
         if self._resource_service is None:
             from services.resource_awareness_service import ResourceAwarenessService
 
@@ -191,6 +193,7 @@ class BudgetScheduler:
         return self._resource_service
 
     def _get_time_budget_table(self) -> Dict[str, int]:
+        """Get time budget table."""
         cfg = self.config.get("time_budget_table", {})
         return {
             HardwareTier.EXTREME.value: cfg.get("extreme", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.EXTREME]),
@@ -256,6 +259,7 @@ class StateInterpreter:
         self._state_adapter = None
 
     def _ensure_loaded(self) -> None:
+        """Ensure loaded."""
         if self._state_matrix is None:
             try:
                 from core.engine.state_matrix import StateMatrix4D
@@ -394,6 +398,7 @@ class LearnRecorder:
         self._pending: List[Dict[str, Any]] = []
 
     def _get_config_loader(self) -> str:
+        """Get config loader."""
         if self._config_loader is None:
             try:
                 from core.config_loader import get_angela_config
@@ -532,6 +537,7 @@ class NeuroAutoSelector:
     # ── Phase 1: Hardware ───────────────────────────────────────────────────
 
     def _get_hardware(self) -> Tuple[float, HardwareTier, Dict[str, Any]]:
+        """Get hardware."""
         now = time.time()
         if now - self._last_hw_time > 30.0:  # Refresh every 30s max
             score, tier, details = self.hardware.analyze()
@@ -548,6 +554,7 @@ class NeuroAutoSelector:
     # ── Phase 3: Task Analysis ──────────────────────────────────────────────
 
     def _analyze_task(self, context: Dict[str, Any]) -> TaskBudget:
+        """Analyze task."""
         intent = context.get("intent", "general")
         complexity = context.get("complexity", 0.5)
         user_message = context.get("user_message", "")
@@ -582,7 +589,7 @@ class NeuroAutoSelector:
         task: TaskBudget,
         state: Dict[str, float],
         context: Dict[str, Any],
-    ):
+    ) -> None:
         """
         Select backend and model based on all prior analysis.
         Priority:
@@ -658,7 +665,7 @@ class NeuroAutoSelector:
 
     def _select_local(
         self, decision: AutoDecision, hw_details: Dict[str, Any], task: TaskBudget
-    ):
+    ) -> None:
         """Select local Ollama model."""
         decision.backend = AutoBackendChoice.OLLAMA
         decision.model = self._recommend_ollama_model(hw_details)
@@ -674,7 +681,7 @@ class NeuroAutoSelector:
 
     def _select_cloud(
         self, decision: AutoDecision, available: List[AutoBackendChoice], task: TaskBudget
-    ):
+    ) -> None:
         """Select cloud backend by priority."""
         priority = DEFAULT_CLOUD_PRIORITY
         for name in priority:

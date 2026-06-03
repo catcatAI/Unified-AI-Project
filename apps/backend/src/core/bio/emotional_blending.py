@@ -474,7 +474,7 @@ class EmotionalBlendingSystem:
 
     def set_emotion_from_basic(
         self, emotion: BasicEmotion, intensity: float = 1.0, transition: bool = True
-    ):
+    ) -> None:
         """
         Set emotional state from a basic emotion
 

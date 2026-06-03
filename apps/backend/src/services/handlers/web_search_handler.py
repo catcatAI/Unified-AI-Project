@@ -34,6 +34,7 @@ class WebSearchHandler:
         return await self._search(query)
 
     async def _search(self, query: str) -> str:
+        """Search."""
         tool = self._search_tool
         if not tool:
             return "（網路搜尋）搜尋工具尚未就緒。"

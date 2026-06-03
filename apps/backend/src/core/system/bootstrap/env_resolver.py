@@ -100,6 +100,7 @@ $sc.Save()
         return True
 
     def _detect_distro(self) -> str:
+        """Detect distro."""
         # ... (rest of class) ...
         if self.os_type == "linux":
             try:

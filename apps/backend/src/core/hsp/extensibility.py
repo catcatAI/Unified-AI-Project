@@ -400,7 +400,7 @@ class HSPMessageRegistry:
 
     def register_message_type(
         self, message_type: str, message_class: Type, schema: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """注册消息类型"""
         self.message_types[message_type] = message_class
         if schema:

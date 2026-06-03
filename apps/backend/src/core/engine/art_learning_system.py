@@ -212,6 +212,7 @@ class ArtLearningSystem:
         self.learning_sessions: List[LearningSession] = []
 
     def _load_preferences(self) -> None:
+        """Load preferences."""
         if os.path.exists(self.storage_path):
             try:
                 with open(self.storage_path, 'r', encoding='utf-8') as f:
@@ -220,6 +221,7 @@ class ArtLearningSystem:
                 logger.error(f"Failed to load aesthetics: {e}", exc_info=True)
 
     def _save_preferences(self) -> None:
+        """Save preferences."""
         try:
             os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
             with open(self.storage_path, 'w', encoding='utf-8') as f:

@@ -45,6 +45,7 @@ class MetabolicHeartbeat:
         self.posture = {"spine_bend": 0.0, "theta_matrix": [0.0]*9}
 
     async def _integration_loop(self) -> None:
+        """Integration loop."""
         while self._running:
             try:
                 dist_to_target = abs(self.target_x - self.x)
@@ -104,6 +105,7 @@ class MetabolicHeartbeat:
         logger.info("🛑 Heartbeat stopped.")
 
     async def _run_loop(self) -> None:
+        """Run loop."""
         while self._running:
             try:
                 hb_cfg = self._beh_cfg.get("heartbeat", {})

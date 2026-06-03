@@ -101,6 +101,7 @@ class ChatService:
             return None
 
     async def generate_response(self, user_message: str, user_name: str = "User", origin: str = "Human") -> str:
+        """Generate response."""
         if not self._initialized: await self.initialize()
 
         # [Phase 6] 優先檢查是否有待處理的演化提案確認
@@ -163,6 +164,7 @@ class ChatService:
         return response
 
     async def _handle_learning_intent(self, text: str, intent: str) -> str:
+        """Handle learning intent request."""
         try:
             from services.handlers.learning_handler import LearningHandler
             handler = LearningHandler()
@@ -177,6 +179,7 @@ class ChatService:
         return get_registry().get("module_manager")
 
     async def _analyze_intent(self, text: str) -> Dict[str, Any]:
+        """Analyze intent."""
         text_lower = text.lower()
         intent = "general"
         confidence = 0.0
@@ -289,6 +292,7 @@ class ChatService:
         }
 
     async def _handle_llm_manage_intent(self, text: str, user_name: str, intent: str) -> str:
+        """Handle llm manage intent request."""
         self.state_adapter.anchor_learning.on_axis_update("epsilon", {"precision": 0.02}, is_stable=True)
         try:
             import re
@@ -325,6 +329,7 @@ class ChatService:
             return "（LLM 管理模組載入失敗）"
 
     async def _handle_character_card_intent(self, text: str) -> str:
+        """Handle character card intent request."""
         try:
             mm = self._module_manager
             if mm and mm.has("card_pipeline"):
@@ -337,6 +342,7 @@ class ChatService:
             return "（角色卡導入）處理過程中發生錯誤，請檢查輸入格式。"
 
     async def _handle_file_intent(self, text: str, intent: str) -> str:
+        """Handle file intent request."""
         try:
             from services.handlers import FileOperationHandler
             handler = FileOperationHandler()
@@ -346,6 +352,7 @@ class ChatService:
             return "（檔案操作）處理檔案請求時發生錯誤。"
 
     async def _handle_web_search_intent(self, text: str, intent: str) -> str:
+        """Handle web search intent request."""
         try:
             from services.handlers.web_search_handler import WebSearchHandler
             handler = WebSearchHandler()
@@ -355,6 +362,7 @@ class ChatService:
             return "（網路搜尋）處理搜尋請求時發生錯誤。"
 
     async def _handle_google_drive_intent(self, text: str, intent: str) -> str:
+        """Handle google drive intent request."""
         try:
             from services.handlers.google_drive_handler import GoogleDriveHandler
             handler = GoogleDriveHandler()
@@ -388,6 +396,7 @@ class ChatService:
 _chat_service_instance = None
 
 async def get_angela_chat_service() -> str:
+    """Get angela chat service."""
     global _chat_service_instance
     if _chat_service_instance is None:
         _chat_service_instance = ChatService()
@@ -397,5 +406,6 @@ async def get_angela_chat_service() -> str:
     return _chat_service_instance
 
 async def generate_angela_response(user_message, user_name="User") -> str:
+    """Generate angela response."""
     svc = await get_angela_chat_service()
     return await svc.generate_response(user_message, user_name)

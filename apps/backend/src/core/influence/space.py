@@ -93,6 +93,7 @@ class GravityRule(InfluenceRule):
         return max(self.min_factor, min(self.max_factor, raw))
 
     def _distance(self, source: Any, target: Any) -> float:
+        """Distance."""
         if hasattr(source, 'coordinate') and hasattr(target, 'coordinate'):
             sc = source.coordinate
             tc = target.coordinate
@@ -122,6 +123,7 @@ class EntropyRule(InfluenceRule):
         return base_strength
 
     def _compute_entropy(self, axis: Any) -> float:
+        """Compute entropy."""
         if hasattr(axis, 'values') and axis.values:
             values = list(axis.values.values())
             total = sum(values)
@@ -239,6 +241,7 @@ class InfluenceRuleSet:
         return final, rule_names
 
     def _resolve(self, factors: List[float], context: Optional[Dict[str, Any]]) -> float:
+        """Resolve."""
         if not factors:
             return 0.0
 

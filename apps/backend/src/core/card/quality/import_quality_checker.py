@@ -50,6 +50,7 @@ class ImportQualityChecker:
         return QualityScore(structural, semantic, conflict)
 
     def _structural_score(self, card: Card) -> float:
+        """Structural score."""
         total = 0
         matched = 0
 
@@ -73,6 +74,7 @@ class ImportQualityChecker:
         return matched / total if total > 0 else 0.0
 
     def _semantic_score(self, original: str, card: Card) -> float:
+        """Semantic score."""
         if not original.strip():
             return 1.0 if card.name or card.core_trait else 0.0
 
@@ -92,6 +94,7 @@ class ImportQualityChecker:
         return ngram_score * 0.7 + entity_retention * 0.3
 
     def _conflict_score(self, card: Card) -> float:
+        """Conflict score."""
         total = len(card.conflicts)
         if total == 0:
             return 1.0

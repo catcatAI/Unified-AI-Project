@@ -64,6 +64,7 @@ class MemoryAdapter:
         return results
 
     def _card_to_dict(self, card: Card) -> dict:
+        """Card to dict."""
         base = asdict(card)
         base["card_type"] = card.card_type.name if card.card_type else None
         base["conflicts"] = [

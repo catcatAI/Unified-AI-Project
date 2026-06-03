@@ -70,6 +70,7 @@ class DataAnalysisAgent(BaseAgent):
     async def _handle_stat_analysis(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle stat analysis request."""
         data = payload.get("parameters", {}).get("data", [])
         if not data:
             return {"error": "No data"}

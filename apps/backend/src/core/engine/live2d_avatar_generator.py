@@ -546,7 +546,7 @@ class Live2DAvatarGenerator:
 
     def _notify_progress(
         self, stage: GenerationStage, progress: float, message: str, details: Dict = None
-    ):
+    ) -> None:
         """Notify progress callbacks"""
         progress_obj = GenerationProgress(
             stage=stage, progress_percent=progress, message=message, details=details or {}
@@ -684,7 +684,7 @@ class Live2DAvatarGenerator:
 
     async def _generate_base_images(
         self, avatar: GeneratedAvatar, attributes: Optional[Dict[str, Any]], view_angle: ViewAngle
-    ):
+    ) -> None:
         """Generate base anime-style images"""
         if not self.image_generator:
             return
@@ -745,7 +745,7 @@ class Live2DAvatarGenerator:
 
     async def _create_layers(
         self, avatar: GeneratedAvatar, style_preferences: Optional[Dict[str, Any]]
-    ):
+    ) -> None:
         """Create Live2D-compatible layers"""
         layers = []
 
@@ -770,7 +770,7 @@ class Live2DAvatarGenerator:
 
     async def _generate_layer_image(
         self, layer: GeneratedLayer, style_preferences: Optional[Dict[str, Any]]
-    ):
+    ) -> None:
         """Generate or extract individual layer image"""
         # [Phase 18.4] 真實圖層切割與動態生成
         # 1. 嘗試呼叫外部去背/分層 API (如 rembg 或自定義的 segmentation API)
@@ -889,7 +889,7 @@ class Live2DAvatarGenerator:
 
     async def _generate_angle_specific_layers(
         self, avatar: GeneratedAvatar, angle: ViewAngle, attributes: Optional[Dict[str, Any]]
-    ):
+    ) -> None:
         """Generate layers for specific view angle"""
         # Generate angle-specific images for key layers
         angle_suffix = f"_{angle.en_name}"

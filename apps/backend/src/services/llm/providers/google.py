@@ -28,11 +28,13 @@ class GoogleAPIBackend(BaseLLMBackend):
         self.timeout = timeout
 
     async def check_health(self) -> bool:
+        """Check health."""
         if not self.api_key:
             return False
         return True
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
+        """Generate."""
         start_time = time.time()
         messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
         contents = []

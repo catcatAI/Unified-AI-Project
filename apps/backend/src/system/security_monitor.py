@@ -37,6 +37,7 @@ class ABCKeyManager:
         self.keys = self._load_or_generate_keys()
 
     def _load_or_generate_keys(self) -> Dict[str, str]:
+        """Load or generate keys."""
         if self.key_file.exists():
             try:
                 with open(self.key_file, "r", encoding="utf-8") as f:
@@ -72,6 +73,7 @@ class SecurityTrayMonitor:
         self.backend_script = Path(__file__).parent.parent.parent / "main.py"
 
     def _create_image(self, width=64, height=64, color1="blue", color2="white") -> str:
+        """Create image."""
         # 創建一個簡單的 Angela 圖示
         image = Image.new("RGB", (width, height), color1)
         dc = ImageDraw.Draw(image)
@@ -79,6 +81,7 @@ class SecurityTrayMonitor:
         return image
 
     def on_start_backend(self) -> None:
+        """Handle backend start event."""
         if self.backend_process and self.backend_process.poll() is None:
             logger.info("後端服務已在運行中。")
             return
@@ -121,6 +124,7 @@ class SecurityTrayMonitor:
                 self.on_stop_backend()
 
     def on_stop_backend(self) -> None:
+        """Handle backend stop event."""
         if not self.backend_process:
             logger.info("後端服務未運行。")
             return
@@ -160,12 +164,14 @@ class SecurityTrayMonitor:
             self.backend_process = None
 
     def on_restart_backend(self) -> None:
+        """Handle backend restart event."""
         logger.info("正在重啟後端服務...")
         self.on_stop_backend()
         time.sleep(1)
         self.on_start_backend()
 
     def on_exit(self, icon, item) -> None:
+        """Handle exit event."""
         self.on_stop_backend()
         self._running = False
         icon.stop()
@@ -179,7 +185,9 @@ class SecurityTrayMonitor:
         icon.notify("QR Code 金鑰顯示已停用以保護安全。請透過安全管道取得金鑰。", "Angela 安全資訊")
 
     def update_menu(self) -> str:
+        """Update menu."""
         def get_status() -> str:
+            """Get status."""
             if self.backend_process:
                 poll = self.backend_process.poll()
                 if poll is None:

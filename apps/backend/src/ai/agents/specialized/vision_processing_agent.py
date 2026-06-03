@@ -68,6 +68,7 @@ class VisionProcessingAgent(BaseAgent):
     async def _handle_classification(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle classification request."""
         image_data = payload.get("parameters", {}).get("image_data", "")
         if not image_data:
             return {"error": "No image data"}

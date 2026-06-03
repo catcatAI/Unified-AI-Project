@@ -32,6 +32,7 @@ class TTLSessionManager:
         self._max_sessions = self._config.get("max_sessions", 1000)
 
     def _purge_expired(self) -> None:
+        """Purge expired."""
         now = datetime.now()
         expired = [sid for sid, s in self._sessions.items()
                     if (now - datetime.fromisoformat(s.get("created_at", now.isoformat()))).total_seconds() > self._ttl]
@@ -72,6 +73,7 @@ sessions = TTLSessionManager()
 async def _handle_chat_request(
     user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human"
 ) -> Dict[str, Any]:
+    """Handle chat request request."""
     logger.info(f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
 
     if not user_message or not user_message.strip():
@@ -145,6 +147,7 @@ async def _handle_chat_request(
 
 
 def _build_math_response(verification, matrix, user_message: str, session_id: str) -> Dict[str, Any]:
+    """Build math response."""
     if verification.needs_clarification:
         emotion, emotion_confidence, emotion_intensity = "confused", 0.7, 0.6
     elif not verification.matches:

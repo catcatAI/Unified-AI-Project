@@ -732,7 +732,8 @@ class CodeInspector:
         description: str,
         suggestion: str,
         confidence: float,
-    ):
+    ) -> None:
+        """Add issue."""
         self.issue_counter += 1
         self.issues.append(Issue(
             id=f"GEN-{self.issue_counter:04d}",
@@ -747,6 +748,7 @@ class CodeInspector:
         ))
 
     def _count_lines(self, filepath: Path) -> int:
+        """Count lines."""
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 return len(f.readlines())
@@ -755,6 +757,7 @@ class CodeInspector:
             return 0
 
     def _group_by_category(self) -> Dict[str, int]:
+        """Group by category."""
         counts = {}
         for issue in self.issues:
             cat = issue.category.value
@@ -762,6 +765,7 @@ class CodeInspector:
         return counts
 
     def _timestamp(self) -> str:
+        """Timestamp."""
         from datetime import datetime
         return datetime.now().isoformat()
 
@@ -824,6 +828,7 @@ class CodeFixer:
 
     @staticmethod
     def _fix_none_check(issue: Issue, dry_run: bool) -> str:
+        """Fix none check."""
         line = issue.line
         filename = issue.file
         if dry_run:
@@ -832,30 +837,35 @@ class CodeFixer:
 
     @staticmethod
     def _fix_env_variable(issue: Issue, dry_run: bool) -> str:
+        """Fix env variable."""
         if dry_run:
             return f"[DRY] Would replace hardcoded credential at {issue.file}:{issue.line} with os.getenv()"
         return f"[APPLIED] Replaced with os.getenv() at {issue.file}:{issue.line}"
 
     @staticmethod
     def _fix_print_sensitive(issue: Issue, dry_run: bool) -> str:
+        """Fix print sensitive."""
         if dry_run:
             return f"[DRY] Would mask sensitive data in print at {issue.file}:{issue.line}"
         return f"[APPLIED] Masked sensitive data at {issue.file}:{issue.line}"
 
     @staticmethod
     def _fix_divisor_check(issue: Issue, dry_run: bool) -> str:
+        """Fix divisor check."""
         if dry_run:
             return f"[DRY] Would add divisor zero check at {issue.file}:{issue.line}"
         return f"[APPLIED] Added divisor zero check at {issue.file}:{issue.line}"
 
     @staticmethod
     def _fix_empty_except(issue: Issue, dry_run: bool) -> str:
+        """Fix empty except."""
         if dry_run:
             return f"[DRY] Would add logging to empty except at {issue.file}:{issue.line}"
         return f"[APPLIED] Added logging to except at {issue.file}:{issue.line}"
 
     @staticmethod
     def _fix_remove_import(issue: Issue, dry_run: bool) -> str:
+        """Fix remove import."""
         if dry_run:
             return f"[DRY] Would remove unused import at {issue.file}:{issue.line}"
         return f"[APPLIED] Removed unused import at {issue.file}:{issue.line}"

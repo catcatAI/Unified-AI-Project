@@ -274,7 +274,7 @@ class TransitionAnimator:
         source_version: str,
         target_version: str,
         progress_callback: Callable[[TransitionProgress], None] = None,
-    ):
+    ) -> None:
         """异步执行动画 / Execute animation asynchronously"""
         self._is_animating = True
 
@@ -374,7 +374,7 @@ class TransitionManager:
         source_version: str,
         target_version: str,
         progress_callback: Callable[[TransitionProgress], None] = None,
-    ):
+    ) -> Dict[str, Any]:
         """执行完整过渡 / Execute full transition"""
         await self.animator.animate_async(
             transition_type, source_version, target_version, progress_callback

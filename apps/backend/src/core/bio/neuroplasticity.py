@@ -1257,6 +1257,7 @@ class TraumaMemorySystem:
         return results
 
     def _validate_trauma_input(self, memory_id: str, coping_strategy: str) -> str:
+        """Validate trauma input."""
         if memory_id not in self.trauma_memories:
             raise ValueError(f"Trauma memory {memory_id} not found in system")
         valid_strategies = ["default", "grounding", "reframing", "distraction", "extinction"]
@@ -1268,6 +1269,7 @@ class TraumaMemorySystem:
         return self.trauma_memories[memory_id]
 
     def _handle_flashback(self, trauma, memory_id, trigger_context, intrusion_likelihood, current_stress_level, results) -> None:
+        """Handle flashback request."""
         import math
         if intrusion_likelihood > 0.3:
             results["reactivation_occurred"] = True
@@ -1291,6 +1293,7 @@ class TraumaMemorySystem:
             results["flashback_intensity"] = 0.0
 
     def _apply_emotional_regulation(self, coping_strategy, current_stress_level, results) -> str:
+        """Apply emotional regulation."""
         regulation_effects = {
             "default": 0.2,
             "grounding": 0.4,
@@ -1308,6 +1311,7 @@ class TraumaMemorySystem:
         return effectiveness
 
     def _prevent_over_activation(self, current_stress_level, results) -> None:
+        """Prevent over activation."""
         if results["flashback_intensity"] > 0.7 and current_stress_level > 0.6:
             dampening = min(0.3, current_stress_level * 0.4)
             results["flashback_intensity"] = max(0.0, results["flashback_intensity"] - dampening)
@@ -1318,6 +1322,7 @@ class TraumaMemorySystem:
             results["over_activation_prevented"] = False
 
     def _handle_trauma_extinction(self, trauma, coping_strategy, effectiveness, results) -> None:
+        """Handle trauma extinction request."""
         if coping_strategy == "extinction":
             if results["reactivation_occurred"] and results["flashback_intensity"] < 0.5:
                 extinction_boost = 0.05 + (effectiveness * 0.1)
@@ -1334,6 +1339,7 @@ class TraumaMemorySystem:
                 results["extinction_progress"] = natural_extinction
 
     def _generate_recommended_actions(self, trauma, current_stress_level, results) -> None:
+        """Generate recommended actions."""
         if not results["recommended_actions"]:
             if results["flashback_intensity"] > 0.5:
                 results["recommended_actions"].append("apply_emotional_regulation")
@@ -1346,6 +1352,7 @@ class TraumaMemorySystem:
                 results["recommended_actions"].append("continue_monitoring")
 
     def _log_processing_result(self, memory_id, trigger_context, current_stress_level, coping_strategy, results) -> None:
+        """Log processing result."""
         processing_record = {
             "timestamp": datetime.now().isoformat(),
             "memory_id": memory_id,

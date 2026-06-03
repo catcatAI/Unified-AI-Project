@@ -251,7 +251,7 @@ class GPUAcceleratorService:
 
     async def record_metrics(
         self, context_id: str, fps: float, memory_mb: float, frame_time_ms: float, gpu_util: float
-    ):
+    ) -> None:
         """記錄 GPU 指標"""
         metrics = GPUMetrics(
             context_id=context_id,

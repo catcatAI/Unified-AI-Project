@@ -23,7 +23,7 @@ async def process_transaction(
     amount: float = Body(...),
     description: str = Body("Manual Transaction"),
     manager: EconomyManager = Depends(get_economy_manager),
-):
+) -> dict:
     """Execute the process transaction operation."""
     success = manager.add_transaction(user_id, amount, description)
     if success:

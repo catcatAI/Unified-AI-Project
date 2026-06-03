@@ -43,6 +43,7 @@ class GoogleDriveService:
         return cls()
 
     def _load_token(self) -> Optional[Credentials]:
+        """Load token."""
         if not TOKEN_PATH.exists():
             return None
         try:
@@ -54,6 +55,7 @@ class GoogleDriveService:
             return None
 
     def _save_token(self, creds: Credentials) -> None:
+        """Save token."""
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with open(TOKEN_PATH, "w", encoding="utf-8") as f:
             f.write(creds.to_json())
@@ -109,6 +111,7 @@ class GoogleDriveService:
             return False
 
     def _get_service(self) -> str:
+        """Get service."""
         if self._service is not None:
             return self._service
         if not self.is_authenticated():
@@ -262,6 +265,7 @@ class GoogleDriveService:
 
     @staticmethod
     def _guess_mime(suffix: str) -> str:
+        """Guess mime."""
         mapping = {
             ".txt": "text/plain",
             ".md": "text/markdown",

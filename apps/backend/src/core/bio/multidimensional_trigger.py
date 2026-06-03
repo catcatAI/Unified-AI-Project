@@ -495,7 +495,7 @@ class MultidimensionalTriggerSystem:
 
     def register_dimension_callback(
         self, dimension: TriggerDimension, callback: Callable[[DimensionValue], None]
-    ):
+    ) -> None:
         """Register callback for dimension value changes"""
         if dimension not in self._dimension_change_callbacks:
             self._dimension_change_callbacks[dimension] = []

@@ -212,6 +212,7 @@ class HAMQueryEngine:
     def _get_semantic_candidates(
         self, semantic_query: str, limit: int
     ) -> Tuple[List[str], bool]:
+        """Get semantic candidates."""
         fallback_semantic = False
         candidate_mem_ids: List[str] = []
         if self.chroma_collection is None:
@@ -240,6 +241,7 @@ class HAMQueryEngine:
         return candidate_mem_ids, fallback_semantic
 
     def _get_all_memory_ids(self) -> List[str]:
+        """Get all memory ids."""
         candidate_mem_ids = [
             mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None
         ]
@@ -255,6 +257,7 @@ class HAMQueryEngine:
         user_id_for_facts: Optional[str],
         keywords: Optional[List[str]],
     ) -> bool:
+        """Filter memory item."""
         match = True
         if data_type_filter:
             if not item.get("data_type", "").startswith(data_type_filter):
@@ -289,12 +292,14 @@ class HAMQueryEngine:
     def _apply_fallback_semantic_ranking(
         self, candidate_items_with_id: List[HAMRecallResult], semantic_query: str
     ) -> None:
+        """Apply fallback semantic ranking."""
         query_tokens = {
             tok.strip(".,!?")
             for tok in semantic_query.lower().split()
             if len(tok.strip("., !?")) > 2
         }
         def _fallback_score(rec: HAMRecallResult) -> int:
+            """Fallback score."""
             text = str(rec.content).lower()
             gist_tokens = {
                 tok.strip(".,!?") for tok in text.split() if len(tok.strip("., !?")) > 2

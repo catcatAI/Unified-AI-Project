@@ -111,6 +111,7 @@ class ContentAnalyzerModule:
         logger.info("ContentAnalyzerModule initialized.")
 
     def _load_ontology_mappings(self, filepath: Optional[str] = None) -> None:
+        """Load ontology mappings."""
         if filepath is None:
             current_script_dir = os.path.dirname(os.path.abspath(__file__))
             filepath = os.path.join(
@@ -130,6 +131,7 @@ class ContentAnalyzerModule:
                 logger.error(f"Error loading ontology mappings: {e}", exc_info=True)
 
     def _add_custom_matcher_patterns(self) -> None:
+        """Add custom matcher patterns."""
         # Example patterns
         self.matcher.add("LOCATED_IN", [[{"LEMMA": "be"}, {"LOWER": "located"}, {"LOWER": "in"}]])
         self.matcher.add("WORKS_FOR", [[{"LEMMA": "work"}, {"LOWER": "for"}]])
@@ -191,6 +193,7 @@ class ContentAnalyzerModule:
         return kg_result, self.graph.copy()
 
     def _get_or_create_entity(self, token: Any, entities: Dict[str, KGEntity]) -> str:
+        """Get or create entity."""
         label = token.text if hasattr(token, "text") else str(token)
         etype = token.label_ if hasattr(token, "label_") else "UNKNOWN"
         start = token.start_char if hasattr(token, "start_char") else 0
@@ -217,6 +220,7 @@ class ContentAnalyzerModule:
         return entity_id
 
     def _handle_known_test_entities(self, text: str, entities: Dict[str, KGEntity]) -> None:
+        """Handle known test entities request."""
         # Consolidate test patterns from corrupted code
         known_entities = [
             ("Apple Inc.", "ORG"),
@@ -245,6 +249,7 @@ class ContentAnalyzerModule:
                 self._get_or_create_entity(MockSpan(label, etype, pos, pos + len(label)), entities)
 
     def _add_svo_relationship(self, subj, verb, obj, entities, relationships) -> None:
+        """Add svo relationship."""
         s_id = self._get_or_create_entity_from_token(subj, entities)
         o_id = self._get_or_create_entity_from_token(obj, entities)
         if s_id and o_id:
@@ -259,6 +264,7 @@ class ContentAnalyzerModule:
             self.graph.add_edge(s_id, o_id, type=verb.lemma_)
 
     def _get_or_create_entity_from_token(self, token, entities) -> str:
+        """Get or create entity from token."""
         # Find if token belongs to an entity
         for eid, edata in entities.items():
             if (

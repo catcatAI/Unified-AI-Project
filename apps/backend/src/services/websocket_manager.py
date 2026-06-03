@@ -59,11 +59,13 @@ class ConnectionManager:
         return self._sm.heartbeat_timeout
 
     async def connect(self, websocket: WebSocket, session_id: str = None, metadata: dict = None) -> str:
+        """Establish connection."""
         await websocket.accept()
         session = await self._sm.register(websocket, session_id, metadata, single_device_mode=True)
         return session
 
     def disconnect(self, websocket: WebSocket) -> None:
+        """Close connection."""
         for client_id, session in list(self._sm._sessions.items()):
             if session.websocket == websocket:
                 asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
@@ -72,7 +74,8 @@ class ConnectionManager:
     async def broadcast(self, message: dict) -> str:
         return await self._sm.broadcast(message)
 
-    async def send_personal_message(self, message: dict, websocket: WebSocket):
+    async def send_personal_message(self, message: dict, websocket: WebSocket) -> bool:
+        """Send personal message."""
         for client_id, session in self._sm._sessions.items():
             if session.websocket == websocket:
                 return await self._sm.send_to_client(client_id, message)
@@ -88,6 +91,7 @@ class ConnectionManager:
         return self._sm.get_all_connections_info()
 
     def get_connection_stats(self) -> Dict[str, Any]:
+        """Get connection stats."""
         stats = self._sm.get_stats()
         connections = self._sm.get_all_connections_info()
         return {
@@ -174,6 +178,7 @@ async def websocket_handler(websocket: WebSocket) -> str:
 
     orig_receive = websocket._receive
     async def debug_receive() -> str:
+        """Debug receive."""
         msg = await orig_receive()
         if msg.get('type') == 'websocket.receive':
             text = msg.get('text')

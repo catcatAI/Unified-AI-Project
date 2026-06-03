@@ -22,6 +22,7 @@ class LlamaCppBackend(BaseLLMBackend):
         self.timeout = timeout
 
     async def check_health(self) -> bool:
+        """Check health."""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
@@ -36,6 +37,7 @@ class LlamaCppBackend(BaseLLMBackend):
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
+        """Generate."""
         start_time = time.time()
         messages = kwargs.get("messages", [{"role": "user", "content": prompt}])
         payload = {

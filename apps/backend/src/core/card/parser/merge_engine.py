@@ -65,11 +65,13 @@ class MergeEngine:
         return merged
 
     def _latest_time(self, card: Card) -> datetime:
+        """Latest time."""
         if not card.source_files:
             return datetime.min
         return max(sf.last_write_time for sf in card.source_files)
 
     def _merge_tokens(self, existing: list, incoming: list) -> list:
+        """Merge tokens."""
         seen = {t.name for t in existing}
         merged = list(existing)
         for token in incoming:
@@ -79,6 +81,7 @@ class MergeEngine:
         return merged
 
     def _merge_relations(self, existing: list, incoming: list) -> list:
+        """Merge relations."""
         seen = {r.target_id for r in existing}
         merged = list(existing)
         for rel in incoming:
@@ -88,6 +91,7 @@ class MergeEngine:
         return merged
 
     def _merge_events(self, existing: list, incoming: list) -> list:
+        """Merge events."""
         seen = {(e.timestamp.isoformat(), e.title) for e in existing}
         merged = list(existing)
         for event in incoming:
@@ -98,6 +102,7 @@ class MergeEngine:
         return sorted(merged, key=lambda e: e.timestamp)
 
     def _merge_conflicts(self, existing: list, incoming: list) -> list:
+        """Merge conflicts."""
         seen_descriptions = {c.description for c in existing if not c.suppressed}
         merged = [c for c in existing if c.suppressed or c.user_intent.value > 0]
         for conflict in incoming:

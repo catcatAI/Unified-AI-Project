@@ -294,7 +294,7 @@ class AutonomicNervousSystem:
 
     async def apply_stimulus(
         self, name: str, nerve_type: NerveType, intensity: float, duration: float = 10.0
-    ):
+    ) -> None:
         """
         Apply a stimulus to the nervous system
 

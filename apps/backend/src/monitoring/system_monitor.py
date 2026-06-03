@@ -65,6 +65,7 @@ class SystemMonitor:
         logger.info("系统监控器 Skeleton 初始化完成")
 
     def _init_gpu_monitoring(self) -> bool:
+        """Init gpu monitoring."""
         try:
             pynvml.nvmlInit()
             logger.info("GPU监控初始化成功")

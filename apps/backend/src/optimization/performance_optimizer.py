@@ -94,6 +94,7 @@ class PerformanceOptimizer:
         logger.info("性能优化器 Skeleton 初始化完成")
 
     def _load_config(self) -> Dict[str, Any]:
+        """Load config."""
         try:
             config_path = Path(self.config_path)
             if not config_path.exists():
@@ -138,6 +139,7 @@ class PerformanceOptimizer:
         logger.info("性能监控已停止")
 
     async def _monitor_loop(self) -> None:
+        """Monitor loop."""
         check_interval = (
             self.config.get("performance", {})
             .get("resource_monitoring", {})
@@ -194,6 +196,7 @@ class PerformanceOptimizer:
     def _generate_cache_key(
         self, func_name: str, args: Tuple[Any, ...], kwargs: Dict[str, Any]
     ) -> str:
+        """Generate cache key."""
         key_string = f"{func_name}{str(args)}{str(sorted(kwargs.items()))}"
         return hashlib.md5(key_string.encode()).hexdigest()
 

@@ -52,6 +52,7 @@ class GoogleDriveHandler:
         return "（Google Drive）請告訴我妳想做什麼：列出檔案、同步到本地、或查看狀態？"
 
     async def _list_files(self) -> str:
+        """List files."""
         svc = self._service
         if not svc:
             return "（Google Drive）Google Drive 服務尚未就緒。"
@@ -71,6 +72,7 @@ class GoogleDriveHandler:
         return "（Google Drive）同步功能需要指定要下載的檔案名稱或 ID。"
 
     async def _status(self) -> str:
+        """Status."""
         svc = self._service
         if not svc:
             return "（Google Drive）Google Drive 服務尚未就緒。"
@@ -85,6 +87,7 @@ class GoogleDriveHandler:
             return "（Google Drive）獲取狀態時發生錯誤。"
 
     async def _logout(self) -> str:
+        """Logout."""
         svc = self._service
         if not svc:
             return "（Google Drive）Google Drive 服務尚未就緒。"
@@ -100,6 +103,7 @@ class GoogleDriveHandler:
 
     @staticmethod
     def _fmt_size(size_bytes) -> str:
+        """Fmt size."""
         try:
             size = int(size_bytes)
             if size < 1024:

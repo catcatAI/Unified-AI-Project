@@ -59,6 +59,7 @@ class KnowledgeGraphAgent(BaseAgent):
     async def _handle_graph_query(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle graph query request."""
         params = payload.get("parameters", {})
         query = params.get("query", "")
         logger.warning("KG stub: knowledge graph query requires external backend (e.g. Neo4j, RDF store)")

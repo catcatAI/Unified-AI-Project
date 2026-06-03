@@ -85,6 +85,7 @@ class DeterministicParser:
         return card, confidences
 
     def _parse_card_id(self, text: str, card: Card, confidences: Dict[str, float]) -> None:
+        """Parse card id."""
         # 1. Multi-letter prefix (CC, WC, ORG, SLex, …)
         match = CARD_ID_PATTERN.search(text)
         if match:
@@ -131,6 +132,7 @@ class DeterministicParser:
         confidences["card_type"] = 0.0
 
     def _parse_world_line(self, text: str, card: Card, confidences: Dict[str, float]) -> None:
+        """Parse world line."""
         match = WORLD_LINE_PATTERN.search(text)
         if match:
             card.world_line = match.group(1).strip()
@@ -139,6 +141,7 @@ class DeterministicParser:
             confidences["world_line"] = 0.0
 
     def _parse_key_values(self, text: str, card: Card, confidences: Dict[str, float]) -> None:
+        """Parse key values."""
         matches = KEY_VALUE_PATTERN.findall(text)
         field_map: Dict[str, str] = {
             "name": "name",
@@ -167,6 +170,7 @@ class DeterministicParser:
         confidences["key_values"] = min(0.95, 0.5 + parsed_count * 0.1) if parsed_count > 0 else 0.0
 
     def _parse_tokens(self, text: str, card: Card, confidences: Dict[str, float]) -> None:
+        """Parse tokens."""
         matches = TOKEN_PATTERN.findall(text)
         card.tokens = []
         for name, strength_str in matches:

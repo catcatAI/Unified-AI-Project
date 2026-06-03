@@ -23,6 +23,7 @@ class DependencyResolver:
         return [name_map[name] for name in sorted_names]
 
     def _build_graph(self, descriptors: list[ModuleDescriptor]) -> dict[str, set[str]]:
+        """Build graph."""
         names = {d.name for d in descriptors}
         graph: dict[str, set[str]] = {d.name: set() for d in descriptors}
         for descriptor in descriptors:
@@ -32,6 +33,7 @@ class DependencyResolver:
         return graph
 
     def _topological_sort(self, graph: dict[str, set[str]]) -> list[str]:
+        """Topological sort."""
         in_degree: dict[str, int] = {node: 0 for node in graph}
         for node in graph:
             for neighbor in graph[node]:
@@ -56,6 +58,7 @@ class DependencyResolver:
         return sorted_nodes
 
     def _detect_cycle(self, graph: dict[str, set[str]]) -> Optional[list[str]]:
+        """Detect cycle."""
         visited: set[str] = set()
         rec_stack: set[str] = set()
 
@@ -85,6 +88,7 @@ class DependencyResolver:
 
     @staticmethod
     def _check_constraint(actual: str, constraint: str) -> bool:
+        """Check constraint."""
         if not constraint:
             return True
         constraint = constraint.strip()

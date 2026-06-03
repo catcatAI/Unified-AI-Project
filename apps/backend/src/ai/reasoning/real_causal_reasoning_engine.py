@@ -56,6 +56,7 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
         return {"variable": "temperature", "value": 30.0, "confidence": 0.9}
 
     def _calculate_real_correlation(self, x: List[float], y: List[float]) -> float:
+        """Calculate real correlation."""
         if len(x) != len(y) or len(x) < 2:
             return 0.0
         # Simple Pearson correlation implementation
@@ -66,6 +67,7 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
             return 0.0
 
     async def _detect_temporal_patterns(self, observation: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect temporal patterns."""
         patterns = {}
         for var, data in observation.get("data", {}).items():
             if len(data) > 1:
@@ -80,6 +82,7 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
     async def _calculate_real_causal_strength(
         self, cause: str, effect: str, data: Dict[str, Any]
     ) -> float:
+        """Calculate real causal strength."""
         cause_vals = data.get(cause, [])
         effect_vals = data.get(effect, [])
         if len(cause_vals) < 2 or len(effect_vals) < 2:

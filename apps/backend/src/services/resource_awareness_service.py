@@ -62,6 +62,7 @@ class ResourceAwarenessService:
         self._load_profile()
 
     def _load_profile(self) -> None:
+        """Load profile."""
         try:
             backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
             full_path = os.path.join(backend_root, self.config_filepath)

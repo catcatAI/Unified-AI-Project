@@ -41,6 +41,7 @@ class ErrorHandler:
 
     @staticmethod
     def handle_error(error: Exception, context: str = "Unknown") -> None:
+        """Handle error request."""
         import logging
 
         logger = logging.getLogger(__name__)

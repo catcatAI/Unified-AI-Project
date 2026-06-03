@@ -74,6 +74,7 @@ def setup_middleware(app: FastAPI) -> None:
 
 
 def _get_abc_key_manager() -> str:
+    """Get abc key manager."""
     global _abc_key_manager
     if _abc_key_manager is None:
         _abc_key_manager = ABCKeyManager()
@@ -171,6 +172,7 @@ async def _get_chat_service() -> str:
 
 
 def _validate_environment_variables() -> None:
+    """Validate environment variables."""
     required_keys = ["ANGELA_KEY_A", "ANGELA_KEY_B", "ANGELA_KEY_C"]
     missing_keys = []
     for key in required_keys:

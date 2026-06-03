@@ -111,7 +111,7 @@ class AlignmentManager:
 
     async def configure_balance_thresholds(
         self, ethical_min: float, emotional_min: float, existential_min: float
-    ):
+    ) -> None:
         """配置平衡阈值"""
         self.balance_thresholds = {
             "ethical_min": ethical_min,

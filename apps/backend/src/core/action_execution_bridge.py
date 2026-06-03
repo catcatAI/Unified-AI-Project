@@ -1031,7 +1031,7 @@ class ActionExecutionBridge:
 
     def register_post_execution_callback(
         self, callback: Callable[[ExecutionContext, ExecutionResult], None]
-    ):
+    ) -> None:
         """Register callback to be called after action execution"""
         self._post_execution_callbacks.append(callback)
 

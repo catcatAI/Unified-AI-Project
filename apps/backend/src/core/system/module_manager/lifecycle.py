@@ -122,6 +122,7 @@ class ModuleLifecycle:
         raise ValueError(f"Module '{module_name}' not found")
 
     def _resolve_handler(self, dotted_path: str) -> Callable:
+        """Resolve handler."""
         parts = dotted_path.split(".")
         module_path = ".".join(parts[:-1])
         func_name = parts[-1]
@@ -134,6 +135,7 @@ class ModuleLifecycle:
         instances: list[ModuleInstance],
         registry: Any = None,
     ) -> dict:
+        """Build deps."""
         deps: dict = {}
         name_map = {inst.name: inst.instance for inst in instances}
         for dep_name in descriptor.depends_on.required:

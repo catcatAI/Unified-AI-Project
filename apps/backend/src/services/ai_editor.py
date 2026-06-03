@@ -49,6 +49,7 @@ class DataProcessor:
     def process_data(
         self, data: Any, data_type: str, transformation_rules: Optional[Dict] = None
     ) -> Dict[str, Any]:
+        """Process data."""
         logger.info(f"Processing {data_type} data (SKELETON)")
         processor = self.processors.get(data_type)
         if not processor:
@@ -146,34 +147,40 @@ class AIEditorService:
         logger.info("AIEditorService Skeleton Initialized")
 
     def set_memory_manager(self, memory_manager: HAMMemoryManager) -> None:
+        """Set memory manager."""
         self.memory_manager = memory_manager
         logger.info("Memory manager set for AIEditorService")
 
     def process_application_data(self, app_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process application data."""
         logger.info("Processing application data (SKELETON)")
         return self.data_processor.process_data(app_data, "application")
 
     def process_text_content(
         self, text: str, transformation_rules: Optional[Dict] = None
     ) -> Dict[str, Any]:
+        """Process text content."""
         logger.info("Processing text content (SKELETON)")
         return self.data_processor.process_data(text, "text", transformation_rules)
 
     def process_code_content(
         self, code: str, transformation_rules: Optional[Dict] = None
     ) -> Dict[str, Any]:
+        """Process code content."""
         logger.info("Processing code content (SKELETON)")
         return self.data_processor.process_data(code, "code", transformation_rules)
 
     def process_structured_data(
         self, data: Union[Dict, List], transformation_rules: Optional[Dict] = None
     ) -> Dict[str, Any]:
+        """Process structured data."""
         logger.info("Processing structured data (SKELETON)")
         return self.data_processor.process_data(data, "structured", transformation_rules)
 
     def execute_data_transformation_script(
         self, script: str, params: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Execute ata transformation script."""
         logger.info("Executing data transformation script in sandbox (SKELETON)")
         result, error = self.sandbox_executor.run(script, "DataTransformer", "transform", params)
         if error:
@@ -181,6 +188,7 @@ class AIEditorService:
         return {"execution_result": result}
 
     def get_processed_data_from_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
+        """Get processed data from memory."""
         if not self.memory_manager:
             logger.warning("Memory manager not available")
             return None

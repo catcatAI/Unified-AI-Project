@@ -102,16 +102,19 @@ class PlanningAgent(BaseAgent):
     async def _handle_task_planning(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle task planning request."""
         params = payload.get("parameters", {})
         return self._create_task_plan(params)
 
     async def _handle_schedule_optimization(
         self, payload: HSPTaskRequestPayload, sender_id: str, envelope: HSPMessageEnvelope
     ) -> Dict[str, Any]:
+        """Handle schedule optimization request."""
         params = payload.get("parameters", {})
         return self._optimize_schedule(params)
 
     def _create_task_plan(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Create task plan."""
         goal = params.get("goal", "")
         if not goal:
             raise ValueError("No goal provided")
@@ -129,5 +132,6 @@ class PlanningAgent(BaseAgent):
         return plan
 
     def _optimize_schedule(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize schedule."""
         tasks = params.get("tasks", [])
         return {"optimized_tasks": tasks, "status": "optimized"}

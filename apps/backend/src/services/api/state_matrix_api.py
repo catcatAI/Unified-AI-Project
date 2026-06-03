@@ -93,6 +93,7 @@ _sm_instance: Optional[Any] = None
 
 
 def get_state_matrix() -> Any:
+    """Get state matrix."""
     global _sm_instance
     if _sm_instance is None:
         from core.engine.state_matrix_adapter import StateMatrixAdapter
@@ -169,7 +170,7 @@ def temporal_trend(
     axis: str = Query(...),
     field: str = Query(...),
     window: int = Query(default=50),
-):
+) -> dict:
     """時間趨勢查詢"""
     sm = get_state_matrix()
     result = sm.temporal_trend(axis, field, window)
@@ -181,7 +182,7 @@ def temporal_anomalies(
     axis: str = Query(...),
     field: str = Query(...),
     threshold: float = Query(default=0.3),
-):
+) -> dict:
     """異常檢測"""
     sm = get_state_matrix()
     result = sm.temporal_anomalies(axis, field, threshold)
@@ -215,7 +216,7 @@ def unregister_port(req: PortUnregisterRequest) -> dict:
 def list_ports(
     direction: Optional[str] = Query(default=None),
     bound: Optional[bool] = Query(default=None),
-):
+) -> dict:
     """列舉端口"""
     sm = get_state_matrix()
     ports = sm.list_ports(direction=direction, bound=bound)
@@ -288,7 +289,7 @@ def negativity_report() -> str:
 def influence_compute(
     source: str = Query(...),
     target: str = Query(...),
-):
+) -> dict:
     """軸間影響計算"""
     sm = get_state_matrix()
     result = sm.influence_compute(source, target)
@@ -375,7 +376,7 @@ def add_attractor(
     mass: float = 1.0,
     radius: float = 0.4,
     tags: Optional[List[str]] = None,
-):
+) -> dict:
     """添加自定義吸引子"""
     sm = get_state_matrix()
     result = sm.add_attractor(
@@ -586,7 +587,7 @@ def module_adjust(
     name: str = Query(...),
     parameter: str = Query(...),
     delta: float = Query(...),
-):
+) -> dict:
     """調整模組參數"""
     sm = get_state_matrix()
     sm._eta.adjust_parameter(name, parameter, delta)

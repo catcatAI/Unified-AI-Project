@@ -360,7 +360,7 @@ class FeedbackProcessor:
 
     async def _update_history(
         self, feedback: "FeedbackSignal", evaluation: Optional[ActionEvaluation]
-    ):
+    ) -> None:
         """Update feedback history"""
         if not evaluation:
             return
@@ -646,6 +646,7 @@ class FeedbackProcessor:
         }
 
     def _calculate_trend(self, scores: List[float]) -> str:
+        """Calculate trend."""
         min_scores = int(behavior_feedback("min_scores_for_trend", 10))
         if len(scores) < min_scores:
             return "insufficient_data"

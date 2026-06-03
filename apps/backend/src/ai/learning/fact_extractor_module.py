@@ -25,6 +25,7 @@ class FactExtractorModule:
         logger.info(f"FactExtractorModule initialized with model_id: {self.model_id}")
 
     def _construct_fact_extraction_prompt(self, text: str, user_id: Optional[str] = None) -> str:
+        """Construct fact extraction prompt."""
         prompt = "You are an expert at identifying simple facts and preferences stated by a user in their message.\n"
         prompt += "Analyze the following user message and extract any clear statements of preference (likes, dislikes, favorites) or factual assertions the user makes about themselves (e.g., their name, occupation, location, possessions, etc.).\n\n"
         prompt += f'User Message: "{text}"\n\n'

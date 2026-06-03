@@ -307,7 +307,7 @@ class CyberIdentity:
 
     def record_growth(
         self, aspect: IdentityAspect, new_level: float, milestone: Optional[str] = None
-    ):
+    ) -> None:
         """
         Record growth in an identity aspect
 
@@ -429,7 +429,7 @@ class CyberIdentity:
         closeness_delta: float = 0.0,
         trust_delta: float = 0.0,
         shared_memory: Optional[str] = None,
-    ):
+    ) -> None:
         """Update an existing relationship"""
         if entity_id not in self.relationships:
             return
@@ -511,7 +511,7 @@ class CyberIdentity:
 
     def register_growth_callback(
         self, aspect: IdentityAspect, callback: Callable[[float, float], None]
-    ):
+    ) -> None:
         """Register callback for growth in specific aspect"""
         if aspect not in self._growth_callbacks:
             self._growth_callbacks[aspect] = []

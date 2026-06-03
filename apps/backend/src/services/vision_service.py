@@ -684,6 +684,7 @@ class VisionService:
 if __name__ == "__main__":
 
     async def main() -> None:
+        """Main entry point."""
         vision_config = {}  # Placeholder for actual config
         service = VisionService(config=vision_config)
 

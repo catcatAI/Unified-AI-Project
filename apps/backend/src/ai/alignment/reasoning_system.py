@@ -173,6 +173,7 @@ class ReasoningSystem:
         return None
 
     def _check_constraints(self, action: Dict[str, Any], context: Dict[str, Any]) -> List[str]:
+        """Check constraints."""
         violations = []
         for constraint_id, constraint in self.logical_constraints.items():
             if not constraint.is_active:
@@ -203,6 +204,7 @@ class ReasoningSystem:
     def _calculate_overall_score(
         self, violations: List[str], ethical_scores: Dict[EthicalPrinciple, float]
     ) -> float:
+        """Calculate overall score."""
         penalty = len(violations) * 0.25
         avg_score = sum(ethical_scores.values()) / len(ethical_scores)
         return max(0.0, min(1.0, avg_score - penalty))
@@ -220,6 +222,7 @@ class ReasoningSystem:
         ethical_scores: Dict[EthicalPrinciple, float],
         graph_risks: List[str],
     ) -> str:
+        """Generate reasoning."""
         parts = [f"評估: {action.get('description', '未知行動')}"]
         if graph_risks:
             parts.append("🛑 圖路徑風險提醒:")
@@ -235,6 +238,7 @@ class ReasoningSystem:
         self, action: Dict[str, Any], context: Dict[str, Any], graph_risks: List[str]
     ) -> float:
         # 如果有圖證據，置信度更高
+        """Calculate confidence."""
         base_confidence = 0.7
         if graph_risks:
             base_confidence += 0.2

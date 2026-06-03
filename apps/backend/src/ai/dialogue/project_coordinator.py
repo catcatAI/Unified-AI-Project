@@ -91,6 +91,7 @@ class ProjectCoordinator:
         logger.info("ProjectCoordinator initialized.")
 
     def _load_prompts(self) -> None:
+        """Load prompts."""
         prompts_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "configs", "prompts.yaml")
         try:
             with open(prompts_path, "r", encoding="utf-8") as f:
@@ -100,12 +101,14 @@ class ProjectCoordinator:
             self.prompts = {}
 
     async def _ensure_llm_service(self) -> Any:
+        """Ensure llm service."""
         if self._llm_service is None:
             from services.angela_llm_service import get_llm_service
             self._llm_service = await get_llm_service()
         return self._llm_service
 
     def _get_web_search(self) -> Any:
+        """Get web search."""
         if self._web_search is None:
             try:
                 from core.tools.web_search_tool import WebSearchTool
@@ -115,6 +118,7 @@ class ProjectCoordinator:
         return self._web_search
 
     def _get_template_library(self) -> Any:
+        """Get template library."""
         if self._template_library is None:
             try:
                 from ai.memory.template_library import TemplateLibrary
@@ -124,6 +128,7 @@ class ProjectCoordinator:
         return self._template_library
 
     async def _get_document_builder(self) -> Any:
+        """Get document builder."""
         if self._document_builder is None:
             from ai.dialogue.document_builder import DocumentBuilder
             self._document_builder = DocumentBuilder(
@@ -142,6 +147,7 @@ class ProjectCoordinator:
         temperature: float = llm_param("coordinator_temp", 0.7),
         system_prompt: str = "",
     ) -> str:
+        """Llm generate async."""
         llm = await self._ensure_llm_service()
         return await llm.generate_text(
             prompt=prompt,
@@ -151,6 +157,7 @@ class ProjectCoordinator:
         )
 
     def _detect_capability_type(self, capability: str) -> str:
+        """Detect capability type."""
         cap_lower = capability.lower()
         if "search" in cap_lower or "web" in cap_lower:
             return "web_search"
@@ -257,6 +264,7 @@ class ProjectCoordinator:
         return task_results
 
     async def _dispatch_single_subtask(self, subtask_data: Dict[str, Any]) -> Any:
+        """Dispatch request."""
         capability = subtask_data.get("capability_needed", "")
         params = subtask_data.get("task_parameters", {})
         cap_type = self._detect_capability_type(capability)
@@ -273,6 +281,7 @@ class ProjectCoordinator:
             return await self._execute_llm_direct(params)
 
     async def _execute_web_search(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute eb search."""
         web = self._get_web_search()
         if not web:
             return {"error": "WebSearchTool not available"}
@@ -282,6 +291,7 @@ class ProjectCoordinator:
         return {"query": query, "results": results, "count": len(results)}
 
     async def _execute_document_task(self, params: Dict[str, Any], task_type: str) -> Dict[str, Any]:
+        """Execute ocument task."""
         query = params.get("query", params.get("prompt", params.get("content", "")))
         if not query:
             return {"error": "No query provided for document task"}
@@ -296,6 +306,7 @@ class ProjectCoordinator:
         }
 
     async def _execute_via_hsp(self, capability: str, params: Dict[str, Any]) -> Any:
+        """Execute ia hsp."""
         correlation_id = str(uuid.uuid4())
         completion_event = asyncio.Event()
         self.task_completion_events[correlation_id] = completion_event
@@ -315,12 +326,14 @@ class ProjectCoordinator:
         return {"error": "HSP Connector not available"}
 
     async def _execute_llm_direct(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute lm direct."""
         prompt = params.get("prompt", params.get("query", str(params)))
         llm = await self._ensure_llm_service()
         text = await llm.generate_text(prompt=prompt, max_tokens=int(llm_param("coordinator_direct_tokens", 512)))
         return {"text": text}
 
     def _substitute_dependencies(self, params: Dict[str, Any], results: Dict[int, Any]) -> Dict[str, Any]:
+        """Substitute dependencies."""
         new_params = params.copy()
         for key, value in new_params.items():
             if isinstance(value, str):
@@ -333,6 +346,7 @@ class ProjectCoordinator:
     async def _decompose_user_intent_into_subtasks(
         self, user_query: str, available_capabilities: List[Dict[str, Any]], llm: Any
     ) -> List[Dict[str, Any]]:
+        """Decompose user intent into subtasks."""
         cap_str = json.dumps(available_capabilities[:10], ensure_ascii=False, indent=2)
         prompt_tmpl = self.prompts.get("decompose_user_intent", "")
         if not prompt_tmpl:
@@ -372,6 +386,7 @@ class ProjectCoordinator:
         return []
 
     def _detect_complex_task(self, query: str) -> bool:
+        """Detect complex task."""
         if _intent_registry:
             return _intent_registry.detect_complex_task(query)
         keywords = ["生成", "建立", "創建", "整理", "彙整", "搜尋", "研究", "規劃", "角色", "文件", "報告"]
@@ -379,6 +394,7 @@ class ProjectCoordinator:
         return score >= 1 or len(query) > 50
 
     def _fallback_decompose(self, query: str) -> List[Dict[str, Any]]:
+        """Fallback decompose."""
         core = self._angela_config.get_authority("angela_core", {})
         patterns = core.get("fallback_patterns", {})
         query.lower()
@@ -411,12 +427,14 @@ class ProjectCoordinator:
         ]
 
     def _clean_json_response(self, text: str) -> str:
+        """Clean json response."""
         match = re.search(r"\[.*\]|\{.*\}", text, re.DOTALL)
         return match.group(0) if match else text
 
     async def _integrate_subtask_results(
         self, original_query: str, results: Dict[int, Any], llm: Any
     ) -> str:
+        """Integrate subtask results."""
         prompt_tmpl = self.prompts.get("integrate_subtask_results", "")
         if not prompt_tmpl:
             prompt_tmpl = (

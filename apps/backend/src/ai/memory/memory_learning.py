@@ -120,7 +120,7 @@ class MemoryLearningEngine:
 
     def _analyze_user_preferences(
         self, template: MemoryTemplate, feedback: bool, context: dict[str, Any]
-    ):
+    ) -> None:
         """
         分析用户偏好
 

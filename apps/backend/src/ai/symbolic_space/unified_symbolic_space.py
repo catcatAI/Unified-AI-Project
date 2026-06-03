@@ -18,6 +18,7 @@ class UnifiedSymbolicSpace:
         self._init_db()
 
     def _init_db(self) -> None:
+        """Init db."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("""
@@ -109,7 +110,7 @@ class UnifiedSymbolicSpace:
         new_symbol_name: Optional[str] = None,
         new_type: Optional[str] = None,
         properties: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> bool:
         # Get current properties first to avoid connection issues
         """Update the symbol."""
         current_props = {}

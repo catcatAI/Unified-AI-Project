@@ -136,6 +136,7 @@ class ConfigMutator:
         return paths.get(config_type)
 
     def _load_current(self, path: Path) -> Dict[str, Any]:
+        """Load current."""
         if not path.exists(): return {}
         try:
             with open(path, 'r', encoding='utf-8') as f:
@@ -145,6 +146,7 @@ class ConfigMutator:
             return {}
 
     def _write_file(self, path: Path, data: Dict[str, Any]) -> None:
+        """Write file."""
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w', encoding='utf-8') as f:
             yaml.safe_dump(data, f, sort_keys=False)

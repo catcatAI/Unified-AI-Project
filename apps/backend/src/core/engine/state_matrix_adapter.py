@@ -1503,6 +1503,7 @@ class StateMatrixFacade:
                 self._adapter.update_zeta(**values)
 
     def _group_kwargs_by_axis(self, kwargs: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """Group kwargs by axis."""
         key_map = {
             # Alpha
             'energy': 'alpha', 'comfort': 'alpha', 'arousal': 'alpha', 'tension': 'alpha',
