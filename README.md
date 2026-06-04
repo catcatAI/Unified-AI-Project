@@ -224,6 +224,8 @@ See dedicated docs for full diagrams:
 | [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **Full completion audit**: Plans, docs, code, tests, config, apps — completeness judged against "perfect" standard |
+| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~85% composite |
+| [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
 
 ---
 
@@ -377,10 +379,11 @@ npm start
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError, docs, tests |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告**: 計畫、文檔、代碼、測試、配置、應用的完美完成度判定 |
 | [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
-| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 12會話後追蹤審計，~79% 綜合分數 |
+| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~85% 綜合分數 |
+| [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定，23+殘留問題 |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 562 Python files, ~127K lines | [Version Audit](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析) | [Phase Review 2](docs/06-project-management/plans/PHASE_REVIEW2.md)
+**Version**: 7.5.0-dev | **Code Stats**: 562 Python files, ~127K lines | [Version Audit](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析) | [Phase Review 2](docs/06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](docs/06-project-management/plans/PHASE_REVIEW3.md)
