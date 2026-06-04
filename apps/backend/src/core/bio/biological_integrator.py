@@ -24,6 +24,7 @@ import asyncio
 import logging
 from enum import Enum
 from core.system.config.magic_numbers import loop_sleep
+from utils.async_utils import safe_create_task_sync
 from .physiological_tactile import PhysiologicalTactileSystem, TactileType, BodyPart
 from .endocrine_system import EndocrineSystem, HormoneType
 from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
@@ -298,14 +299,14 @@ class BiologicalIntegrator:
         stress_thresh = beh_conf.get("biological_thresholds", {}).get("arousal_stress_trigger", 70.0)
 
         if arousal > stress_thresh:
-            asyncio.create_task(
+            safe_create_task_sync(
                 self.endocrine_system.trigger_stress_response(
                     (arousal - stress_thresh) / 30, stress_type="acute"
-                )
+                ), name="Bio-stress-response"
             )
 
         # P0-2: 发布唤醒水平变化事件
-        asyncio.create_task(
+        safe_create_task_sync(
             self.event_publisher.publish(
                 BiologicalEvent.AROUSAL_CHANGED,
                 {
@@ -313,11 +314,11 @@ class BiologicalIntegrator:
                     "energy": arousal / 100.0,  # 归一化到 0-1
                     "timestamp": datetime.now().isoformat(),
                 },
-            )
+            ), name="Bio-arousal-change"
         )
 
         # P0-2: 发布能量变化事件
-        asyncio.create_task(
+        safe_create_task_sync(
             self.event_publisher.publish(
                 BiologicalEvent.ENERGY_CHANGED,
                 {
@@ -325,7 +326,7 @@ class BiologicalIntegrator:
                     "arousal": arousal,
                     "timestamp": datetime.now().isoformat(),
                 },
-            )
+            ), name="Bio-energy-change"
         )
 
     def _on_hormone_change(self, hormone_type: HormoneType, old_val: float, new_val: float) -> None:
@@ -344,7 +345,7 @@ class BiologicalIntegrator:
             self.nervous_system.set_arousal_directly(min(100, current_arousal + arousal_boost))
 
         # P0-2: 发布激素变化事件
-        asyncio.create_task(
+        safe_create_task_sync(
             self.event_publisher.publish(
                 BiologicalEvent.HORMONE_CHANGED,
                 {
@@ -353,7 +354,7 @@ class BiologicalIntegrator:
                     "new_value": new_val,
                     "timestamp": datetime.now().isoformat(),
                 },
-            )
+            ), name="Bio-hormone-change"
         )
 
     def _on_emotion_change(self, old_emotion, new_emotion) -> None:
@@ -372,7 +373,7 @@ class BiologicalIntegrator:
             self.tactile_system.apply_emotional_context("anxiety", new_emotion.intensity)
 
         # P0-2: 发布情绪变化事件
-        asyncio.create_task(
+        safe_create_task_sync(
             self.event_publisher.publish(
                 BiologicalEvent.EMOTION_CHANGED,
                 {
@@ -385,11 +386,11 @@ class BiologicalIntegrator:
                     "intensity": new_emotion.intensity,
                     "timestamp": datetime.now().isoformat(),
                 },
-            )
+            ), name="Bio-emotion-change"
         )
 
         # P0-2: 发布心情变化事件
-        asyncio.create_task(
+        safe_create_task_sync(
             self.event_publisher.publish(
                 BiologicalEvent.MOOD_CHANGED,
                 {
@@ -398,7 +399,7 @@ class BiologicalIntegrator:
                     "dominant_emotion": new_emotion.to_basic_emotions()[0][0].en_name,
                     "timestamp": datetime.now().isoformat(),
                 },
-            )
+            ), name="Bio-mood-change"
         )
 
     async def _integration_loop(self) -> None:

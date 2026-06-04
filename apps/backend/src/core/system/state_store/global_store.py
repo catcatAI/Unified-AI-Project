@@ -5,10 +5,12 @@ C5: Now with async persistence via JsonFileStateStore.
 """
 
 import asyncio
+import threading
 import logging
 from typing import Dict, Any, List, Callable, Optional
 from datetime import datetime
 from core.interfaces.service_registry import get_registry
+from utils.async_utils import safe_create_task_sync
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,7 @@ class GlobalStateStore:
             return
         self._initialized = True
         self._lock = asyncio.Lock()
+        self._sync_lock = threading.Lock()
         self._states: Dict[str, Any] = {
             "alpha": {},  # Biological
             "beta": {},   # Cognitive
@@ -100,15 +103,16 @@ class GlobalStateStore:
 
     def update_state(self, domain: str, data: Dict[str, Any], notify: bool = True) -> None:
         """Update state for a specific domain."""
-        if domain not in self._states:
-            logger.warning(f"[StateStore] Attempted to update unknown domain: {domain}", exc_info=True)
-            self._states[domain] = {}
-            self._subscribers[domain] = []
+        with self._sync_lock:
+            if domain not in self._states:
+                logger.warning(f"[StateStore] Attempted to update unknown domain: {domain}", exc_info=True)
+                self._states[domain] = {}
+                self._subscribers[domain] = []
 
-        # Selective update to prevent full overwrite
-        self._states[domain].update(data)
-        self._last_update[domain] = datetime.now()
-        self._dirty[domain] = True
+            # Selective update to prevent full overwrite
+            self._states[domain].update(data)
+            self._last_update[domain] = datetime.now()
+            self._dirty[domain] = True
 
         if notify:
             self._notify_subscribers(domain)
@@ -118,11 +122,12 @@ class GlobalStateStore:
         """Fire on_state_change plugin hook (non-blocking)."""
         try:
             from core.plugin import plugin_manager as _pm
-            import asyncio as _aio
-            _aio.ensure_future(_pm.execute_hook('on_state_change', {
-                'domain': domain,
-                'data': data,
-            }))
+            safe_create_task_sync(
+                _pm.execute_hook('on_state_change', {
+                    'domain': domain,
+                    'data': data,
+                }), name="StateStore-on_state_change"
+            )
         except Exception as e:
             logger.warning(f"Failed to execute plugin hook on_state_change: {e}", exc_info=True)
 
@@ -148,15 +153,15 @@ class GlobalStateStore:
     def _notify_subscribers(self, domain: str) -> None:
         """Notify subscribers of a domain change."""
         data = self._states[domain]
-        # Notify domain-specific subscribers
-        for callback in self._subscribers.get(domain, []):
+        # Notify domain-specific subscribers (iterate over copy for safety)
+        for callback in list(self._subscribers.get(domain, [])):
             try:
                 callback(domain, data)
             except Exception as e:
                 logger.error(f"[StateStore] Error in subscriber callback for {domain}: {e}", exc_info=True)
 
-        # Notify global subscribers
-        for callback in self._global_subscribers:
+        # Notify global subscribers (iterate over copy for safety)
+        for callback in list(self._global_subscribers):
             try:
                 callback(domain, data)
             except Exception as e:

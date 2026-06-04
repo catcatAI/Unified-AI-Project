@@ -342,7 +342,7 @@
 
 ---
 
-## 九、已修復項目（動態分析 P0）
+## 九、已修復項目
 
 | # | 檔案 | 問題 | 修復 |
 |:-:|------|------|------|
@@ -359,6 +359,15 @@
 | 11 | `core/tracing/chain_validator.py` | 僅 docstring，無 `ChainValidator` | 新增最小驗證器類別 |
 | 12 | `api/routes/ops_routes.py` | 僅 docstring，無 `router` | 新增 `APIRouter()` |
 
+### P1 執行緒安全修復
+
+| # | 檔案 | 問題 | 修復 |
+|:-:|------|------|------|
+| 1 | `core/bio/biological_integrator.py` | 6× `asyncio.create_task()` 在 sync callback 中 → RuntimeError | 改為 `safe_create_task_sync()` (try/except RuntimeError guard) |
+| 2 | `core/system/state_store/global_store.py` | `asyncio.ensure_future()` 在 sync context；無 threading lock 保護 `update_state()` | 改為 `safe_create_task_sync()`；新增 `_sync_lock` threading.Lock 包裹寫入+快照 |
+| 3 | `ai/memory/template_library.py` | 雙鎖 (asyncio.Lock + threading.Lock) 各自保護 `_templates` 但不互相排除 | 統一為 `threading.RLock`，sync/async 方法共用同一鎖 |
+| 4 | `core/managers/execution_monitor.py` | 6 項跨執行緒競爭：`_is_monitoring` bool (daemon thread loop condition)、`_terminal_status`(thread→async 讀寫)、`_resource_usage`(thread→async 讀寫)；另有 `contextmanager` 未匯入(P0 bug) | 全部改用 `threading.Event` + `threading.Lock` 保護；新增 `signal`、`contextmanager` 匯入 |
+
 ### 啟動時間改善
 
 | 指標 | 修復前 | 修復後 | 提升 |
@@ -369,4 +378,4 @@
 
 ---
 
-_建立: 2026-06-04 | 3 代理並行審計 + 動態驗證 | 基於 17 會話修復後狀態 | P0 動態分析阻塞全部清除_
+_建立: 2026-06-04 | 3 代理並行審計 + 動態驗證 | 基於 17 會話修復後狀態 | P0 動態分析阻塞 + P1 執行緒安全全部清除_

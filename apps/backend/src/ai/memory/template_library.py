@@ -119,8 +119,7 @@ class TemplateLibrary:
     def __init__(self):
         """初始化模板库"""
         self._templates: Dict[str, MemoryTemplate] = {}
-        self._write_lock: asyncio.Lock = asyncio.Lock()
-        self._thread_lock: threading.Lock = threading.Lock()
+        self._lock: threading.RLock = threading.RLock()
         self._initialized: bool = False
         self._initialize_predefined_templates()
 
@@ -177,18 +176,15 @@ class TemplateLibrary:
         """
         添加自定义模板
 
-        B4 修復：使用 threading.Lock 保護寫入。
-        - 同步安全：threading.Lock 在 sync 上下文和多線程環境都安全
-        - get_template_library() 單例在多線程啟動時可能被並發初始化
-        - add_custom_template / remove_template 被多線程同時調用
+        使用 RLock 保護寫入 — 同步/非同步上下文皆安全。
         """
-        with self._thread_lock:
+        with self._lock:
             self._templates[template.id] = template
         logger.info(f"Added custom template: {template.id}")
 
     async def add_custom_template_async(self, template: MemoryTemplate) -> None:
-        """async 版本添加自定義模板（使用 asyncio.Lock）"""
-        async with self._write_lock:
+        """async 版本添加自定義模板（使用同一個 RLock）"""
+        with self._lock:
             self._templates[template.id] = template
         logger.info(f"Added custom template (async): {template.id}")
 
@@ -202,7 +198,7 @@ class TemplateLibrary:
         Returns:
             bool: 是否成功移除
         """
-        with self._thread_lock:
+        with self._lock:
             if template_id in self._templates:
                 del self._templates[template_id]
                 logger.info(f"Removed template: {template_id}")

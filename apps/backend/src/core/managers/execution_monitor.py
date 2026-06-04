@@ -18,11 +18,11 @@ Angela Matrix Annotation:
 
 import argparse
 import asyncio
+import threading
 import logging
 import os
 import signal
 import subprocess
-import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -96,10 +96,14 @@ class ExecutionMonitor:
         self._setup_logging()
 
         # 監控狀態
-        self._is_monitoring = False
+        self._stop_event = threading.Event()
+        self._stop_event.set()  # initially stopped
         self._current_process: Optional[subprocess.Popen] = None
         self._start_time: float = 0.0
         self._last_activity: float = 0.0
+
+        # 跨執行緒共享狀態鎖
+        self._monitor_lock = threading.Lock()
 
         # 終端機狀態監控
         self._terminal_status = TerminalStatus.RESPONSIVE
@@ -147,9 +151,13 @@ class ExecutionMonitor:
             self.logger.debug(f"Using cached timeout {cached_timeout}s for command")
             return cached_timeout
 
-        # 基於歷史執行時間計算
-        if self._execution_history:
-            avg_time = sum(self._execution_history) / len(self._execution_history)
+        # 基於歷史執行時間計算（複製快照避免跨執行緒競爭）
+        with self._monitor_lock:
+            history = list(self._execution_history)
+            terminal_status = self._terminal_status
+
+        if history:
+            avg_time = sum(history) / len(history)
             # 設置為平均時間的2-3倍, 但不超過最大值
             adaptive_timeout = min(avg_time * 2.5, self.config.max_timeout)
             adaptive_timeout = max(adaptive_timeout, self.config.min_timeout)
@@ -157,11 +165,11 @@ class ExecutionMonitor:
             adaptive_timeout = base_timeout or self.config.default_timeout
 
         # 根據終端機狀態調整
-        if self._terminal_status == TerminalStatus.SLOW:
+        if terminal_status == TerminalStatus.SLOW:
             adaptive_timeout *= 1.5
-        elif self._terminal_status == TerminalStatus.STUCK:
+        elif terminal_status == TerminalStatus.STUCK:
             adaptive_timeout *= 2.0
-        elif self._terminal_status == TerminalStatus.UNRESPONSIVE:
+        elif terminal_status == TerminalStatus.UNRESPONSIVE:
             adaptive_timeout = self.config.min_timeout  # 快速失敗
 
         # 限制在合理範圍內
@@ -215,10 +223,12 @@ class ExecutionMonitor:
 
     def _monitor_terminal(self) -> None:
         """終端機狀態監控線程"""
-        while self._is_monitoring:
+        while not self._stop_event.is_set():
             try:
-                self._terminal_status = self.check_terminal_responsiveness()
-                self.logger.debug(f"Terminal status: {self._terminal_status.value}")
+                status = self.check_terminal_responsiveness()
+                with self._monitor_lock:
+                    self._terminal_status = status
+                self.logger.debug(f"Terminal status: {status.value}")
                 time.sleep(self.config.terminal_check_interval)
             except Exception as e:  # broad exception acceptable: terminal monitoring resilience
                 self.logger.error(f"Terminal monitoring error: {e}", exc_info=True)
@@ -226,7 +236,7 @@ class ExecutionMonitor:
 
     def _monitor_resources(self) -> None:
         """資源使用監控線程"""
-        while self._is_monitoring:
+        while not self._stop_event.is_set():
             try:
                 # 使用 psutil 獲取真實的資源使用情況
                 cpu_percent = psutil.cpu_percent(interval=0.5)
@@ -237,16 +247,17 @@ class ExecutionMonitor:
                 disk_info = psutil.disk_usage(os.getcwd())
                 disk_percent = (disk_info.used / disk_info.total) * 100
 
-                self._resource_usage = {
-                    "cpu_percent": cpu_percent,
-                    "memory_percent": memory_percent,
-                    "disk_percent": disk_percent,
-                    "memory_used_mb": memory_info.used / (1024 * 1024),
-                    "memory_total_mb": memory_info.total / (1024 * 1024),
-                    "disk_used_gb": disk_info.used / (1024 * 1024 * 1024),
-                    "disk_total_gb": disk_info.total / (1024 * 1024 * 1024),
-                    "timestamp": time.time(),
-                }
+                with self._monitor_lock:
+                    self._resource_usage = {
+                        "cpu_percent": cpu_percent,
+                        "memory_percent": memory_percent,
+                        "disk_percent": disk_percent,
+                        "memory_used_mb": memory_info.used / (1024 * 1024),
+                        "memory_total_mb": memory_info.total / (1024 * 1024),
+                        "disk_used_gb": disk_info.used / (1024 * 1024 * 1024),
+                        "disk_total_gb": disk_info.total / (1024 * 1024 * 1024),
+                        "timestamp": time.time(),
+                    }
 
                 # 檢查資源警告
                 if cpu_percent > self.config.cpu_threshold:
@@ -272,7 +283,7 @@ class ExecutionMonitor:
 
     def _start_monitoring(self) -> None:
         """開始監控"""
-        self._is_monitoring = True
+        self._stop_event.clear()
 
         if self.config.enable_terminal_check:
             self._terminal_check_thread = threading.Thread(
@@ -288,7 +299,7 @@ class ExecutionMonitor:
 
     def _stop_monitoring(self) -> None:
         """停止監控"""
-        self._is_monitoring = False
+        self._stop_event.set()
 
         if self._terminal_check_thread:
             self._terminal_check_thread.join(timeout=1.0)
@@ -377,8 +388,9 @@ class ExecutionMonitor:
         finally:
             # 計算執行時間
             result.execution_time = time.time() - self._start_time
-            result.terminal_status = self._terminal_status
-            result.resource_usage = self._resource_usage.copy()
+            with self._monitor_lock:
+                result.terminal_status = self._terminal_status
+                result.resource_usage = self._resource_usage.copy()
 
             # 更新執行歷史
             if result.status == ExecutionStatus.COMPLETED:

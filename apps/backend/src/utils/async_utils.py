@@ -15,6 +15,36 @@ logger = logging.getLogger(__name__)
 # 全域任務追蹤，防止垃圾回收導致任務中斷
 _background_tasks: Set[asyncio.Task] = set()
 
+def safe_create_task_sync(coro: Coroutine[Any, Any, Any],
+                          name: Optional[str] = None,
+                          on_error: Optional[Callable[[Exception], None]] = None) -> Optional[asyncio.Task]:
+    """
+    [Thread-Safe] 從同步上下文安全建立 async 任務。
+    若無 running event loop 則靜默跳過（不崩潰）。
+    """
+    try:
+        loop = asyncio.get_running_loop()
+        task = loop.create_task(coro, name=name)
+        _background_tasks.add(task)
+
+        def _handle_result(t: asyncio.Task) -> None:
+            _background_tasks.discard(t)
+            try:
+                t.result()
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                logger.error(f"❌ [Async-Task] Task '{name or 'unnamed'}' failed: {e}", exc_info=True)
+                if on_error:
+                    on_error(e)
+
+        task.add_done_callback(_handle_result)
+        return task
+    except RuntimeError:
+        logger.debug(f"[Async-Task] No running event loop, skipping task '{name or 'unnamed'}'")
+        return None
+
+
 def safe_create_task(coro: Coroutine[Any, Any, Any], 
                      name: Optional[str] = None,
                      on_error: Optional[Callable[[Exception], None]] = None) -> asyncio.Task:
