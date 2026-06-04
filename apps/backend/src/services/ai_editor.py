@@ -1,17 +1,9 @@
 """
-AI Editor Service — DEPRECATED
-
-No production imports. Only consumed by self-referencing test(s).
-Schedule removal after test coverage is migrated.
-See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P8-2
-
-This service provides data processing and transformation capabilities for the AI editor.
-It integrates with the AI Virtual Input Service and Sandbox Executor to provide a complete
-editing environment for the AI system. (SKELETON)
+DEPRECATED (P8-2): This module has been replaced with a minimal shim.
+Only AIEditorService and DataProcessor are preserved for test backward compatibility.
 """
 
 import logging
-import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Union
 from services.ai_virtual_input_service import AIVirtualInputService
@@ -194,37 +186,3 @@ class AIEditorService:
             return None
         return self.memory_manager.recall_gist(memory_id)
 
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    editor = AIEditorService()
-
-    sample_text = "This is a sample text for processing. It contains multiple sentences. This is the third sentence."
-    text_result = editor.process_text_content(sample_text)
-    logger.info("Text processing result:", json.dumps(text_result, indent=2, ensure_ascii=False))
-
-    sample_code = """
-def sample_function():
-    # This is a simple function
-    logger.info("Hello, World!")
-
-class SampleClass:
-    def __init__(self):
-        self.value = 42
-"""
-    code_result = editor.process_code_content(sample_code)
-    logger.info("Code processing result:", json.dumps(code_result, indent=2, ensure_ascii=False))
-
-    sample_app_data = {
-        "ui_elements": [
-            {"id": "btn1", "type": "button", "text": "Click me"},
-            {"id": "txt1", "type": "textbox", "value": "Sample text"},
-        ],
-        "screen_size": {"width": 1920, "height": 1080},
-        "focused_element": "txt1",
-    }
-    app_result = editor.process_application_data(sample_app_data)
-    logger.info(
-        "Application data processing result:",
-        json.dumps(app_result, indent=2, ensure_ascii=False),
-    )
