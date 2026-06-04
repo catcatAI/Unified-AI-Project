@@ -316,10 +316,29 @@ class DemoLearningManager:
     def _get_memory_usage(self) -> Dict[str, Any]:
         """獲取內存使用情況"""
         try:
-            return {"error": "psutil not available or not implemented"}  # Placeholder
+            import psutil
+            proc = psutil.Process()
+            mem = proc.memory_info()
+            return {
+                "rss_bytes": mem.rss,
+                "rss_mb": round(mem.rss / (1024 * 1024), 2),
+                "percent": psutil.virtual_memory().percent,
+                "vms_bytes": mem.vms,
+                "vms_mb": round(mem.vms / (1024 * 1024), 2),
+            }
         except ImportError:
-            return {"error": "psutil not available"}
-        except Exception as e:  # broad exception acceptable: memory usage errors fall back gracefully
+            record_count = len(self.learning_data.get("performance_metrics", []))
+            approx_bytes = sum(
+                len(str(v)) for v in self.learning_data.values()
+            ) if self.learning_data else 0
+            return {
+                "record_count": record_count,
+                "approx_size_bytes": approx_bytes,
+                "approx_size_mb": round(approx_bytes / (1024 * 1024), 4),
+                "recent_activity": len(self.learning_data.get("user_interactions", [])),
+                "note": "psutil not available, using estimated sizes",
+            }
+        except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"error": str(e)}
 

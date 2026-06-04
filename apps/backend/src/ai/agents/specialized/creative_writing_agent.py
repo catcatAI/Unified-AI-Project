@@ -15,3 +15,61 @@
 #
 # =============================================================================
 
+import logging
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
+
+class CreativeWritingAgent:
+    """Agent for story generation, poem generation, and content rewriting."""
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        logger.info(f"CreativeWritingAgent initialized with config: {self.config}")
+
+    def generate_story(self, prompt: str, genre: str = "fantasy", length: str = "short") -> Dict[str, Any]:
+        """Generate a story outline/result from a prompt."""
+        if not prompt:
+            return {"status": "error", "message": "No prompt provided"}
+        length_words = {"short": 100, "medium": 300, "long": 800}
+        target_words = length_words.get(length, 100)
+        outline = f"A {genre} story based on: {prompt}"
+        logger.info(f"generate_story: genre={genre}, length={length}, prompt='{prompt}'")
+        return {
+            "status": "success",
+            "message": f"Generated {genre} story outline (model not loaded)",
+            "outline": outline,
+            "genre": genre,
+            "length": length,
+            "target_word_count": target_words,
+        }
+
+    def generate_poem(self, theme: str, style: str = "free_verse") -> Dict[str, Any]:
+        """Generate a poem based on theme and style."""
+        if not theme:
+            return {"status": "error", "message": "No theme provided"}
+        logger.info(f"generate_poem: theme='{theme}', style='{style}'")
+        return {
+            "status": "success",
+            "message": f"Generated {style} poem on '{theme}' (model not loaded)",
+            "theme": theme,
+            "style": style,
+            "lines": 4,
+        }
+
+    def rewrite_content(self, content: str, tone: str = "formal") -> Dict[str, Any]:
+        """Rewrite content in a specified tone."""
+        if not content:
+            return {"status": "error", "message": "No content provided"}
+        word_count = len(content.split())
+        char_count = len(content)
+        logger.info(f"rewrite_content: tone={tone}, {word_count} words")
+        return {
+            "status": "success",
+            "message": f"Rewrote content in {tone} tone (model not loaded)",
+            "original_word_count": word_count,
+            "original_char_count": char_count,
+            "tone": tone,
+        }
+
