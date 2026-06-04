@@ -1,0 +1,496 @@
+[
+  {
+    "behavior_id": "idle_breathing",
+    "name": "Idle Breathing",
+    "name_cn": "待机呼吸",
+    "category": "IDLE",
+    "priority": "BACKGROUND",
+    "duration": 0,
+    "triggers": [],
+    "description": "Subtle breathing animation while idle",
+    "interruptible": true,
+    "loop": true
+  },
+  {
+    "behavior_id": "idle_blinking",
+    "name": "Idle Blinking",
+    "name_cn": "待机眨眼",
+    "category": "IDLE",
+    "priority": "BACKGROUND",
+    "duration": 0.3,
+    "triggers": [
+      {
+        "trigger_type": "random",
+        "condition": "blink",
+        "threshold": 0.3,
+        "cooldown": 3.0
+      }
+    ],
+    "description": "Random blinking while idle"
+  },
+  {
+    "behavior_id": "idle_looking_around",
+    "name": "Idle Looking Around",
+    "name_cn": "待机环顾",
+    "category": "IDLE",
+    "priority": "BACKGROUND",
+    "duration": 3.0,
+    "triggers": [
+      {
+        "trigger_type": "random",
+        "condition": "look_around",
+        "threshold": 0.2,
+        "cooldown": 10.0
+      }
+    ],
+    "description": "Randomly look around when idle"
+  },
+  {
+    "behavior_id": "idle_stretching",
+    "name": "Idle Stretching",
+    "name_cn": "待机伸懒腰",
+    "category": "IDLE",
+    "priority": "LOW",
+    "duration": 4.0,
+    "triggers": [
+      {
+        "trigger_type": "time",
+        "condition": "idle_duration",
+        "threshold": 30.0,
+        "cooldown": 60.0
+      }
+    ],
+    "description": "Stretch after being idle for a while"
+  },
+  {
+    "behavior_id": "idle_yawning",
+    "name": "Idle Yawning",
+    "name_cn": "待机打哈欠",
+    "category": "IDLE",
+    "priority": "LOW",
+    "duration": 3.0,
+    "triggers": [
+      {
+        "trigger_type": "time",
+        "condition": "low_activity",
+        "threshold": 120.0,
+        "cooldown": 300.0
+      }
+    ],
+    "description": "Yawn when bored or tired"
+  },
+  {
+    "behavior_id": "greeting_wave",
+    "name": "Greeting Wave",
+    "name_cn": "问候挥手",
+    "category": "SOCIAL",
+    "priority": "HIGH",
+    "duration": 2.5,
+    "triggers": [
+      {
+        "trigger_type": "proximity",
+        "condition": "user_detected",
+        "threshold": 1.0,
+        "cooldown": 10.0
+      }
+    ],
+    "description": "Wave hello when user approaches"
+  },
+  {
+    "behavior_id": "greeting_bow",
+    "name": "Greeting Bow",
+    "name_cn": "问候鞠躬",
+    "category": "SOCIAL",
+    "priority": "HIGH",
+    "duration": 2.0,
+    "triggers": [
+      {
+        "trigger_type": "proximity",
+        "condition": "user_detected",
+        "threshold": 1.0,
+        "cooldown": 10.0
+      }
+    ],
+    "description": "Polite bow greeting"
+  },
+  {
+    "behavior_id": "listening_nod",
+    "name": "Listening Nod",
+    "name_cn": "倾听点头",
+    "category": "SOCIAL",
+    "priority": "NORMAL",
+    "duration": 0,
+    "loop": true,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "user_speaking",
+        "threshold": 1.0,
+        "cooldown": 1.0
+      }
+    ],
+    "description": "Nod while listening to user"
+  },
+  {
+    "behavior_id": "thinking_pose",
+    "name": "Thinking Pose",
+    "name_cn": "思考姿势",
+    "category": "SOCIAL",
+    "priority": "NORMAL",
+    "duration": 5.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "processing",
+        "threshold": 1.0,
+        "cooldown": 5.0
+      }
+    ],
+    "description": "Thinking pose while processing complex requests"
+  },
+  {
+    "behavior_id": "encouraging_gesture",
+    "name": "Encouraging Gesture",
+    "name_cn": "鼓励手势",
+    "category": "SOCIAL",
+    "priority": "NORMAL",
+    "duration": 2.0,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "empathy",
+        "threshold": 0.6,
+        "cooldown": 5.0
+      }
+    ],
+    "description": "Encouraging gestures when user is struggling"
+  },
+  {
+    "behavior_id": "celebration_dance",
+    "name": "Celebration Dance",
+    "name_cn": "庆祝舞蹈",
+    "category": "SOCIAL",
+    "priority": "HIGH",
+    "duration": 5.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "success",
+        "threshold": 1.0,
+        "cooldown": 30.0
+      }
+    ],
+    "description": "Happy dance when user achieves something"
+  },
+  {
+    "behavior_id": "comforting_gesture",
+    "name": "Comforting Gesture",
+    "name_cn": "安慰手势",
+    "category": "SOCIAL",
+    "priority": "HIGH",
+    "duration": 4.0,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "sadness_detected",
+        "threshold": 0.7,
+        "cooldown": 10.0
+      }
+    ],
+    "description": "Comforting gestures when user seems sad"
+  },
+  {
+    "behavior_id": "surprise_reaction",
+    "name": "Surprise Reaction",
+    "name_cn": "惊讶反应",
+    "category": "REACTION",
+    "priority": "HIGH",
+    "duration": 2.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "sudden_change",
+        "threshold": 1.0,
+        "cooldown": 3.0
+      }
+    ],
+    "description": "React with surprise to unexpected events"
+  },
+  {
+    "behavior_id": "confused_tilt",
+    "name": "Confused Head Tilt",
+    "name_cn": "困惑歪头",
+    "category": "REACTION",
+    "priority": "NORMAL",
+    "duration": 2.5,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "unclear_input",
+        "threshold": 1.0,
+        "cooldown": 5.0
+      }
+    ],
+    "description": "Head tilt when confused"
+  },
+  {
+    "behavior_id": "attention_seek",
+    "name": "Attention Seeking",
+    "name_cn": "寻求注意",
+    "category": "REACTION",
+    "priority": "LOW",
+    "duration": 3.0,
+    "triggers": [
+      {
+        "trigger_type": "time",
+        "condition": "no_interaction",
+        "threshold": 300.0,
+        "cooldown": 180.0
+      }
+    ],
+    "description": "Subtle movements to get user's attention"
+  },
+  {
+    "behavior_id": "follow_mouse",
+    "name": "Follow Mouse",
+    "name_cn": "跟随鼠标",
+    "category": "REACTION",
+    "priority": "NORMAL",
+    "duration": 0,
+    "loop": true,
+    "triggers": [
+      {
+        "trigger_type": "proximity",
+        "condition": "mouse_nearby",
+        "threshold": 1.0,
+        "cooldown": 0.0
+      }
+    ],
+    "description": "Follow mouse cursor with eyes/head"
+  },
+  {
+    "behavior_id": "happy_smile",
+    "name": "Happy Smile",
+    "name_cn": "开心微笑",
+    "category": "EXPRESSION",
+    "priority": "NORMAL",
+    "duration": 3.0,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "joy",
+        "threshold": 0.6,
+        "cooldown": 5.0
+      }
+    ],
+    "description": "Big happy smile"
+  },
+  {
+    "behavior_id": "playful_wink",
+    "name": "Playful Wink",
+    "name_cn": "俏皮眨眼",
+    "category": "EXPRESSION",
+    "priority": "NORMAL",
+    "duration": 1.0,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "playfulness",
+        "threshold": 0.5,
+        "cooldown": 10.0
+      }
+    ],
+    "description": "Playful wink expression"
+  },
+  {
+    "behavior_id": "shy_blush",
+    "name": "Shy Blush",
+    "name_cn": "害羞脸红",
+    "category": "EXPRESSION",
+    "priority": "NORMAL",
+    "duration": 4.0,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "embarrassment",
+        "threshold": 0.5,
+        "cooldown": 15.0
+      }
+    ],
+    "description": "Blushing when complimented or embarrassed"
+  },
+  {
+    "behavior_id": "curious_look",
+    "name": "Curious Look",
+    "name_cn": "好奇观察",
+    "category": "EXPRESSION",
+    "priority": "NORMAL",
+    "duration": 3.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "novelty",
+        "threshold": 0.7,
+        "cooldown": 5.0
+      }
+    ],
+    "description": "Curious expression when encountering something new"
+  },
+  {
+    "behavior_id": "determined_expression",
+    "name": "Determined Expression",
+    "name_cn": "坚定表情",
+    "category": "EXPRESSION",
+    "priority": "NORMAL",
+    "duration": 3.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "challenge",
+        "threshold": 0.8,
+        "cooldown": 10.0
+      }
+    ],
+    "description": "Determined expression when facing challenges"
+  },
+  {
+    "behavior_id": "bounce_idle",
+    "name": "Idle Bounce",
+    "name_cn": "待机弹跳",
+    "category": "MOVEMENT",
+    "priority": "BACKGROUND",
+    "duration": 0,
+    "loop": true,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "energy",
+        "threshold": 0.6,
+        "cooldown": 0.0
+      }
+    ],
+    "description": "Subtle bouncing when energetic"
+  },
+  {
+    "behavior_id": "sway_gentle",
+    "name": "Gentle Sway",
+    "name_cn": "轻轻摇摆",
+    "category": "MOVEMENT",
+    "priority": "BACKGROUND",
+    "duration": 0,
+    "loop": true,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "relaxation",
+        "threshold": 0.5,
+        "cooldown": 0.0
+      }
+    ],
+    "description": "Gentle swaying when relaxed"
+  },
+  {
+    "behavior_id": "approach_user",
+    "name": "Approach User",
+    "name_cn": "靠近用户",
+    "category": "MOVEMENT",
+    "priority": "NORMAL",
+    "duration": 5.0,
+    "triggers": [
+      {
+        "trigger_type": "emotion",
+        "condition": "affection",
+        "threshold": 0.7,
+        "cooldown": 30.0
+      }
+    ],
+    "description": "Move closer to user"
+  },
+  {
+    "behavior_id": "avoid_obstacle",
+    "name": "Avoid Obstacle",
+    "name_cn": "避开障碍",
+    "category": "MOVEMENT",
+    "priority": "HIGH",
+    "duration": 2.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "collision",
+        "threshold": 1.0,
+        "cooldown": 1.0
+      }
+    ],
+    "description": "Quick movement to avoid collision"
+  },
+  {
+    "behavior_id": "sleep_mode",
+    "name": "Sleep Mode",
+    "name_cn": "睡眠模式",
+    "category": "SPECIAL",
+    "priority": "CRITICAL",
+    "duration": 0,
+    "loop": true,
+    "triggers": [
+      {
+        "trigger_type": "time",
+        "condition": "inactivity",
+        "threshold": 600.0,
+        "cooldown": 0.0
+      }
+    ],
+    "description": "Enter sleep mode after long inactivity",
+    "interruptible": true
+  },
+  {
+    "behavior_id": "wake_up",
+    "name": "Wake Up",
+    "name_cn": "醒来",
+    "category": "SPECIAL",
+    "priority": "CRITICAL",
+    "duration": 3.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "user_activity",
+        "threshold": 1.0,
+        "cooldown": 0.0
+      }
+    ],
+    "description": "Wake up from sleep mode"
+  },
+  {
+    "behavior_id": "singing_performance",
+    "name": "Singing Performance",
+    "name_cn": "唱歌表演",
+    "category": "SPECIAL",
+    "priority": "NORMAL",
+    "duration": 180.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "user_request",
+        "threshold": 1.0,
+        "cooldown": 300.0
+      }
+    ],
+    "description": "Full singing performance with lyrics"
+  },
+  {
+    "behavior_id": "dance_performance",
+    "name": "Dance Performance",
+    "name_cn": "舞蹈表演",
+    "category": "SPECIAL",
+    "priority": "NORMAL",
+    "duration": 60.0,
+    "triggers": [
+      {
+        "trigger_type": "stimulus",
+        "condition": "user_request",
+        "threshold": 1.0,
+        "cooldown": 300.0
+      }
+    ],
+    "description": "Dance performance animation"
+  }
+]

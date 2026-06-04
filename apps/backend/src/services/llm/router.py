@@ -281,223 +281,105 @@ class AngelaLLMService:
 
     def _init_emotion_recognition(self) -> None:
         """初始化情感识别系统"""
-        # 基于关键词的情感识别（备选方案）- 支持简繁体中文
         self.emotion_keywords = {
-            "happy": {
-                "positive": [
-                    # 简体
-                    "开心",
-                    "快乐",
-                    "高兴",
-                    "喜欢",
-                    "爱",
-                    "棒",
-                    "好",
-                    "赞",
-                    "哈哈",
-                    "美好",
-                    "幸福",
-                    "满意",
-                    "欣赏",
-                    "感谢",
-                    "谢谢",
-                    # 繁体
-                    "開心",
-                    "快樂",
-                    "高興",
-                    "喜歡",
-                    "愛",
-                    "棒",
-                    "好",
-                    "讚",
-                    "哈哈",
-                    "美好",
-                    "幸福",
-                    "滿意",
-                    "欣賞",
-                    "感謝",
-                    "謝謝",
-                    # 程度词
-                    "好开心",
-                    "好喜欢",
-                    "太开心",
-                    "太喜欢",
-                    "真开心",
-                    "真喜欢",
-                    "好開心",
-                    "好喜歡",
-                    "太開心",
-                    "太喜歡",
-                    "真開心",
-                    "真喜歡",
-                    # 表情
-                    "😊",
-                    "😄",
-                    "🎉",
-                ],
-                "weight": 1.0,
-            },
-            "sad": {
-                "negative": [
-                    # 简体
-                    "难过",
-                    "伤心",
-                    "悲伤",
-                    "哭",
-                    "痛苦",
-                    "难受",
-                    "失望",
-                    "遗憾",
-                    "郁闷",
-                    "糟糕",
-                    "不开心",
-                    "不喜欢",
-                    "讨厌",
-                    # 繁体
-                    "難過",
-                    "傷心",
-                    "悲傷",
-                    "哭",
-                    "痛苦",
-                    "難受",
-                    "失望",
-                    "遺憾",
-                    "鬱悶",
-                    "糟糕",
-                    "不開心",
-                    "不喜歡",
-                    "討厭",
-                    # 程度词
-                    "好难过",
-                    "好伤心",
-                    "好悲伤",
-                    "好難過",
-                    "好傷心",
-                    "好悲傷",
-                    # 表情
-                    "😢",
-                    "😭",
-                ],
-                "weight": 1.0,
-            },
-            "angry": {
-                "negative": [
-                    # 简体
-                    "生气",
-                    "愤怒",
-                    "讨厌",
-                    "恨",
-                    "烦",
-                    "气死",
-                    "火大",
-                    "愤怒",
-                    "生气",
-                    "讨厌",
-                    # 繁体
-                    "生氣",
-                    "憤怒",
-                    "討厭",
-                    "恨",
-                    "煩",
-                    "氣死",
-                    "火大",
-                    "憤怒",
-                    "生氣",
-                    "討厭",
-                    # 程度词
-                    "好生气",
-                    "好愤怒",
-                    "好生氣",
-                    "好憤怒",
-                    # 表情
-                    "😡",
-                    "😠",
-                ],
-                "weight": 1.2,  # 愤怒情感权重更高
-            },
-            "fear": {
-                "negative": [
-                    # 简体
-                    "害怕",
-                    "恐惧",
-                    "担心",
-                    "焦虑",
-                    "紧张",
-                    # 繁体
-                    "害怕",
-                    "恐懼",
-                    "擔心",
-                    "焦慮",
-                    "緊張",
-                    # 表情
-                    "😨",
-                    "😱",
-                ],
-                "weight": 1.1,
-            },
-            "surprise": {
-                "neutral": [
-                    # 简体
-                    "惊讶",
-                    "意外",
-                    "哇",
-                    "天哪",
-                    # 繁体
-                    "驚訝",
-                    "意外",
-                    "哇",
-                    "天哪",
-                    # 表情
-                    "😲",
-                    "😮",
-                ],
-                "weight": 0.9,
-            },
-            "curious": {
-                "neutral": [
-                    # 简体
-                    "好奇",
-                    "想知道",
-                    "问",
-                    "什么",
-                    "怎么",
-                    "为什么",
-                    "想了解",
-                    "好奇宝宝",
-                    "很好奇",
-                    # 繁体
-                    "好奇",
-                    "想知道",
-                    "問",
-                    "什麼",
-                    "怎麼",
-                    "為什麼",
-                    "想了解",
-                    "好奇寶寶",
-                    "很好奇",
-                ],
-                "weight": 1.0,  # 提高权重，避免被误识别为 happy
-            },
-            "calm": {
-                "neutral": [
-                    # 简体
-                    "平静",
-                    "安静",
-                    "放松",
-                    "休息",
-                    # 繁体
-                    "平靜",
-                    "安靜",
-                    "放鬆",
-                    "休息",
-                ],
-                "weight": 0.7,
-            },
+            "happy": self._init_happy_keywords(),
+            "sad": self._init_sad_keywords(),
+            "angry": self._init_angry_keywords(),
+            "fear": self._init_fear_keywords(),
+            "surprise": self._init_surprise_keywords(),
+            "curious": self._init_curious_keywords(),
+            "calm": self._init_calm_keywords(),
         }
 
         logger.info(
             "Emotion recognition system initialized (supporting Simplified and Traditional Chinese)"
         )
+
+    def _init_happy_keywords(self) -> dict:
+        """Initialize happy emotion keywords."""
+        return {
+            "positive": [
+                "开心", "快乐", "高兴", "喜欢", "爱", "棒", "好", "赞", "哈哈",
+                "美好", "幸福", "满意", "欣赏", "感谢", "谢谢",
+                "開心", "快樂", "高興", "喜歡", "愛", "棒", "好", "讚", "哈哈",
+                "美好", "幸福", "滿意", "欣賞", "感謝", "謝謝",
+                "好开心", "好喜欢", "太开心", "太喜欢", "真开心", "真喜欢",
+                "好開心", "好喜歡", "太開心", "太喜歡", "真開心", "真喜歡",
+                "😊", "😄", "🎉",
+            ],
+            "weight": 1.0,
+        }
+
+    def _init_sad_keywords(self) -> dict:
+        """Initialize sad emotion keywords."""
+        return {
+            "negative": [
+                "难过", "伤心", "悲伤", "哭", "痛苦", "难受", "失望",
+                "遗憾", "郁闷", "糟糕", "不开心", "不喜欢", "讨厌",
+                "難過", "傷心", "悲傷", "哭", "痛苦", "難受", "失望",
+                "遺憾", "鬱悶", "糟糕", "不開心", "不喜歡", "討厭",
+                "好难过", "好伤心", "好悲伤",
+                "好難過", "好傷心", "好悲傷",
+                "😢", "😭",
+            ],
+            "weight": 1.0,
+        }
+
+    def _init_angry_keywords(self) -> dict:
+        """Initialize angry emotion keywords."""
+        return {
+            "negative": [
+                "生气", "愤怒", "讨厌", "恨", "烦", "气死", "火大",
+                "生氣", "憤怒", "討厭", "恨", "煩", "氣死", "火大",
+                "好生气", "好愤怒", "好生氣", "好憤怒",
+                "😡", "😠",
+            ],
+            "weight": 1.2,
+        }
+
+    def _init_fear_keywords(self) -> dict:
+        """Initialize fear emotion keywords."""
+        return {
+            "negative": [
+                "害怕", "恐惧", "担心", "焦虑", "紧张",
+                "害怕", "恐懼", "擔心", "焦慮", "緊張",
+                "😨", "😱",
+            ],
+            "weight": 1.1,
+        }
+
+    def _init_surprise_keywords(self) -> dict:
+        """Initialize surprise emotion keywords."""
+        return {
+            "neutral": [
+                "惊讶", "意外", "哇", "天哪",
+                "驚訝", "意外", "哇", "天哪",
+                "😲", "😮",
+            ],
+            "weight": 0.9,
+        }
+
+    def _init_curious_keywords(self) -> dict:
+        """Initialize curious emotion keywords."""
+        return {
+            "neutral": [
+                "好奇", "想知道", "问", "什么", "怎么", "为什么",
+                "想了解", "好奇宝宝", "很好奇",
+                "好奇", "想知道", "問", "什麼", "怎麼", "為什麼",
+                "想了解", "好奇寶寶", "很好奇",
+            ],
+            "weight": 1.0,
+        }
+
+    def _init_calm_keywords(self) -> dict:
+        """Initialize calm emotion keywords."""
+        return {
+            "neutral": [
+                "平静", "安静", "放松", "休息",
+                "平靜", "安靜", "放鬆", "休息",
+            ],
+            "weight": 0.7,
+        }
 
     def _get_default_config(self) -> Dict[str, Any]:
         """從分層配置系統讀取 LLM 配置 [Phase 7]"""

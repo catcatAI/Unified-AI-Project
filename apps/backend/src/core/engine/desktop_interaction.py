@@ -797,20 +797,114 @@ class DesktopInteraction:
 
         return [op for op in self.operation_history if op.timestamp > since]
 
+    async def _categorize_file_error(
+        self, error: Exception, operation: FileOperation, results: Dict[str, Any]
+    ) -> None:
+        """Categorize error type and determine recovery action."""
+        import errno
+
+        error_message = str(error)
+
+        if isinstance(error, FileNotFoundError) or (
+            hasattr(error, "errno") and error.errno == errno.ENOENT
+        ):
+            results["error_type"] = "FileNotFoundError"
+            source_exists = operation.source_path.exists() if operation.source_path else False
+            target_exists = operation.target_path.exists() if operation.target_path else False
+
+            if not source_exists and operation.operation_type in [
+                FileOperationType.MOVE,
+                FileOperationType.COPY,
+            ]:
+                results["recovery_action"] = "mark_as_failed"
+                operation.status = "failed"
+                operation.error_message = f"Source file not found: {operation.source_path}"
+            elif not target_exists and operation.operation_type == FileOperationType.DELETE:
+                results["recovery_action"] = "mark_as_completed"
+                operation.status = "completed"
+                results["handled"] = True
+            else:
+                results["recovery_action"] = "create_placeholder"
+                operation.error_message = f"File not found: {error_message}"
+            results["handled"] = True
+
+        elif isinstance(error, PermissionError) or (
+            hasattr(error, "errno") and error.errno in [errno.EACCES, errno.EPERM]
+        ):
+            results["error_type"] = "PermissionError"
+            if operation.source_path and operation.source_path.exists():
+                try:
+                    import stat
+                    if sys.platform != "win32":
+                        os.chmod(operation.source_path, stat.S_IWRITE | stat.S_IREAD)
+                    results["recovery_action"] = "attempt_permission_fix"
+                    results["handled"] = True
+                except Exception as e:
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                    results["recovery_action"] = "permission_fix_failed"
+            if not results["handled"]:
+                results["recovery_action"] = "logged_for_manual_intervention"
+                operation.error_message = f"Permission denied: {error_message}"
+                operation.status = "failed"
+            results["handled"] = True
+
+        elif (
+            isinstance(error, OSError)
+            and hasattr(error, "errno")
+            and error.errno == errno.ENOSPC
+        ):
+            results["error_type"] = "DiskSpaceError"
+            freed_space = await self._cleanup_temp_files()
+            if freed_space > 100 * 1024 * 1024:
+                results["recovery_action"] = "cleaned_temp_files"
+                results["freed_space_mb"] = freed_space / (1024 * 1024)
+                results["handled"] = True
+                results["can_retry"] = True
+            else:
+                results["recovery_action"] = "insufficient_space_after_cleanup"
+                results["freed_space_mb"] = freed_space / (1024 * 1024)
+                operation.error_message = f"Insufficient disk space: {error_message}"
+                operation.status = "failed"
+                results["handled"] = True
+
+        elif isinstance(error, OSError):
+            results["error_type"] = f"OSError({error.errno if hasattr(error, 'errno') else 'unknown'})"
+            results["recovery_action"] = "logged_os_error"
+            operation.error_message = f"OS error: {error_message}"
+            operation.status = "failed"
+            results["handled"] = True
+
+    def _attempt_file_rollback(
+        self, context: Dict[str, Any], operation: FileOperation, results: Dict[str, Any]
+    ) -> None:
+        """Attempt to rollback file operation from backup."""
+        import shutil
+
+        if not context.get("backup_path") or not operation.source_path:
+            return
+
+        try:
+            backup_path = Path(context["backup_path"])
+            if backup_path.exists():
+                if operation.source_path.exists():
+                    shutil.copy2(str(backup_path), str(operation.source_path))
+                else:
+                    shutil.move(str(backup_path), str(operation.source_path))
+                results["rollback_successful"] = True
+                results["recovery_action"] = (
+                    results.get("recovery_action", "") + " + rollback"
+                )
+        except Exception as rollback_error:
+            results["rollback_error"] = str(rollback_error)
+            results["rollback_successful"] = False
+
     async def _handle_file_error(
         self, error: Exception, operation: FileOperation, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         实现文件操作错误处理 / Implement file operation error handling
 
-        关键错误处理功能：
-        - 文件不存在时的优雅处理（创建占位符或返回友好错误）
-        - 权限不足时的处理（尝试提升权限或记录失败）
-        - 磁盘空间不足时的处理（检查空间并清理临时文件）
-        - 添加操作回滚机制（恢复到操作前状态）
-        - 记录错误日志到系统（详细错误信息）
-
-        Critical error handling features:
+        Key error handling features:
         - Graceful handling when file doesn't exist (placeholder or friendly error)
         - Permission denied handling (attempt elevation or log failure)
         - Disk space full handling (check space and cleanup temp files)
@@ -829,19 +923,7 @@ class DesktopInteraction:
             - recovery_action: Action taken to recover
             - rollback_successful: Whether rollback was performed successfully
             - log_entry: Error log entry details
-
-        Example:
-            >>> result = await desktop._handle_file_error(
-            ...     error=e,
-            ...     operation=failed_op,
-            ...     context={"backup_path": backup, "original_path": original}
-            ... )
-            >>> if not result["handled"]:
-            ...     print(f"Failed to handle error: {result['error_type']}")
         """
-        import errno
-        import shutil
-
         results = {
             "handled": False,
             "error_type": type(error).__name__,
@@ -852,127 +934,15 @@ class DesktopInteraction:
         }
 
         try:
-            type(error).__name__
-            error_message = str(error)
+            await self._categorize_file_error(error, operation, results)
+            self._attempt_file_rollback(context, operation, results)
 
-            # 1. 文件不存在时的优雅处理 / Graceful handling when file doesn't exist
-            if isinstance(error, FileNotFoundError) or (
-                hasattr(error, "errno") and error.errno == errno.ENOENT
-            ):
-                results["error_type"] = "FileNotFoundError"
-
-                # Check if it's the source or target that doesn't exist
-                source_exists = operation.source_path.exists() if operation.source_path else False
-                target_exists = operation.target_path.exists() if operation.target_path else False
-
-                if not source_exists and operation.operation_type in [
-                    FileOperationType.MOVE,
-                    FileOperationType.COPY,
-                ]:
-                    # Source file missing - operation cannot proceed
-                    results["recovery_action"] = "mark_as_failed"
-                    operation.status = "failed"
-                    operation.error_message = f"Source file not found: {operation.source_path}"
-
-                elif not target_exists and operation.operation_type == FileOperationType.DELETE:
-                    # Already deleted - mark as completed
-                    results["recovery_action"] = "mark_as_completed"
-                    operation.status = "completed"
-                    results["handled"] = True
-
-                else:
-                    # Create placeholder for missing file if needed
-                    results["recovery_action"] = "create_placeholder"
-                    operation.error_message = f"File not found: {error_message}"
-
-                results["handled"] = True
-
-            # 2. 权限不足时的处理 / Permission denied handling
-            elif isinstance(error, PermissionError) or (
-                hasattr(error, "errno") and error.errno in [errno.EACCES, errno.EPERM]
-            ):
-                results["error_type"] = "PermissionError"
-
-                # Attempt to make file writable if it exists
-                if operation.source_path and operation.source_path.exists():
-                    try:
-                        import stat
-
-                        if sys.platform != "win32":
-                            os.chmod(operation.source_path, stat.S_IWRITE | stat.S_IREAD)
-                        results["recovery_action"] = "attempt_permission_fix"
-                        results["handled"] = True
-                    except Exception as e:  # broad exception acceptable: permission fix errors should be logged
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                        results["recovery_action"] = "permission_fix_failed"
-
-                if not results["handled"]:
-                    # Log the permission error for manual intervention
-                    results["recovery_action"] = "logged_for_manual_intervention"
-                    operation.error_message = f"Permission denied: {error_message}"
-                    operation.status = "failed"
-
-                results["handled"] = True
-
-            # 3. 磁盘空间不足时的处理 / Disk space full handling
-            elif (
-                isinstance(error, OSError)
-                and hasattr(error, "errno")
-                and error.errno == errno.ENOSPC
-            ):
-                results["error_type"] = "DiskSpaceError"
-
-                # Try to free up space by cleaning temp files
-                freed_space = await self._cleanup_temp_files()
-
-                if freed_space > 100 * 1024 * 1024:  # If freed > 100MB
-                    results["recovery_action"] = "cleaned_temp_files"
-                    results["freed_space_mb"] = freed_space / (1024 * 1024)
-                    results["handled"] = True
-                    # Retry the operation
-                    results["can_retry"] = True
-                else:
-                    results["recovery_action"] = "insufficient_space_after_cleanup"
-                    results["freed_space_mb"] = freed_space / (1024 * 1024)
-                    operation.error_message = f"Insufficient disk space: {error_message}"
-                    operation.status = "failed"
-                    results["handled"] = True
-
-            # 4. 其他操作系统错误 / Other OS errors
-            elif isinstance(error, OSError):
-                results["error_type"] = (
-                    f"OSError({error.errno if hasattr(error, 'errno') else 'unknown'})"
-                )
-                results["recovery_action"] = "logged_os_error"
-                operation.error_message = f"OS error: {error_message}"
-                operation.status = "failed"
-                results["handled"] = True
-
-            # 5. 回滚机制 / Rollback mechanism
-            if context.get("backup_path") and operation.source_path:
-                try:
-                    backup_path = Path(context["backup_path"])
-                    if backup_path.exists():
-                        # Restore from backup
-                        if operation.source_path.exists():
-                            shutil.copy2(str(backup_path), str(operation.source_path))
-                        else:
-                            shutil.move(str(backup_path), str(operation.source_path))
-                        results["rollback_successful"] = True
-                        results["recovery_action"] = (
-                            results.get("recovery_action", "") + " + rollback"
-                        )
-                except Exception as rollback_error:  # broad exception acceptable: rollback errors should be logged
-                    results["rollback_error"] = str(rollback_error)
-                    results["rollback_successful"] = False
-
-            # 6. 记录错误日志到系统 / Error logging to system
             log_entry = {
                 "timestamp": datetime.now().isoformat(),
                 "operation_id": operation.operation_id,
                 "operation_type": operation.operation_type.en_name,
                 "error_type": results["error_type"],
-                "error_message": error_message,
+                "error_message": str(error),
                 "source_path": str(operation.source_path) if operation.source_path else None,
                 "target_path": str(operation.target_path) if operation.target_path else None,
                 "recovery_action": results["recovery_action"],
@@ -980,20 +950,16 @@ class DesktopInteraction:
                 "handled": results["handled"],
             }
 
-            # Store in operation history for tracking
             self.operation_history.append(operation)
-
             results["log_entry"] = log_entry
 
-            # Notify error callbacks if any
             for callback in self._operation_callbacks:
                 try:
                     callback(operation)
-                except Exception as e:  # broad exception acceptable: operation callback errors should be logged
+                except Exception as e:
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
-        except Exception as handling_error:  # broad exception acceptable: error handling errors should be logged
-            # Error handling itself failed
+        except Exception as handling_error:
             results["error"] = str(handling_error)
             results["error_type"] = f"ErrorHandlingFailed ({type(handling_error).__name__})"
             results["recovery_action"] = "error_handling_failed"
