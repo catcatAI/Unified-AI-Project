@@ -4,12 +4,40 @@ Defines formal communication contracts and shared types for the system.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
+
+@dataclass
+class ChatMessage:
+    """A single message in a conversation"""
+    role: str = "user"
+    content: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class LLMResponse:
+    """Response from an LLM call"""
+    text: str = ""
+    backend: str = "unknown"
+    model: str = "unknown"
+    error: str = ""
+    confidence: float = 0.0
+    tokens_used: Optional[int] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def content(self) -> str:
+        """Alias for text — used by ensemble and other consumers"""
+        return self.text
+
+    @content.setter
+    def content(self, value: str) -> None:
+        self.text = value
 
 @dataclass
 class L1Biological:
