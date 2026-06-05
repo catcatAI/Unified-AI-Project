@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-  LAST_MODIFIED: 2026-02-19
+  LAST_MODIFIED: 2026-06-05
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -196,7 +196,7 @@ tests/               # Test suite
 
 ## Technology Stack
 
-- **Python**: 3.9+ with FastAPI, pytest, Black, isort, flake8, mypy
+- **Python**: 3.10+ with FastAPI, pytest, Black, isort, flake8, mypy
 - **JavaScript**: ES6+ with Electron, ESLint, Prettier
 - **Package Manager**: pnpm (monorepo)
 - **Pre-commit**: Automated linting/formatting

@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-05-25
+  LAST_MODIFIED: 2026-06-05
   =============================================================================
 -->
 
@@ -25,19 +25,7 @@
   - [What's Broken / Never Finished](#whats-broken--never-finished)
   - [Roadmap / Future Extensibility](#roadmap--future-extensibility)
   - [Comprehensive Audit Report](#comprehensive-audit-report)
-  - [Documentation Index](#architecture)
-</details>
-
-<details>
-<summary><b>繁體中文</b></summary>
-
-- [繁體中文版](#繁體中文版)
-  - [當前狀態](#當前狀態)
-  - [快速開始](#快速開始)
-  - [實際可用功能](#實際可用功能代碼已驗證)
-  - [損壞/未完成功能](#損壞未完成功能)
-  - [全面審計報告](#全面審計報告)
-  - [文件索引](#文件索引)
+  - [Documentation Index](#documentation-index)
 </details>
 
 <details>
@@ -58,14 +46,14 @@
 
 ## English Version
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-yellow.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
 
 **Angela AI** is a digital life system with biological simulation, self-evolution, and real execution capabilities.
 
-**Quick facts**: 562 Python files, ~127K lines. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~360+ unit tests, 0 TODO/FIXME/NotImplementedError, 14/14 version consistency.**  
+**Quick facts**: 562 Python files, ~127K lines. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~1500+ unit tests, 0 TODO/FIXME/NotImplementedError, 14/14 version consistency.**  
 **Component versions (code-verified)**: backend `7.5.0-dev` · desktop `4.1.0-dev` · mobile `1.2.0-dev` · cli `1.1.0` · biology-core `1.0.0` — [full version audit](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).  
 **Architecture consistency score**: **62.6%** — [full breakdown](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表) (version 31% · shallow 65% · module 66% · algorithm 74%).  
 **Total project files**: ~2,950 (1,001 Python · 140 JS/TS · 805 docs · 577 config · 238 test · ~190 other).  
@@ -87,7 +75,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **P7 Config** | 🟡 | TieredConfigLoader done; core sleeps/intervals/timeouts migrated, ~43 formula/structural values remain |
 | **P8 Tech Debt** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
 
-See **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 complete), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10, 0-task target), **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit), and **[PHASE_REVIEW.md](docs/06-project-management/plans/PHASE_REVIEW.md)** (latest phase review with 10-dimension scoring).
+See **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 complete), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10, 0-task target), **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit), and **[PHASE_REVIEW.md](docs/06-project-management/plans/PHASE_REVIEW.md)** (Phase Review 1 (06-02) with 10-dimension scoring).
 
 ### Quick Start
 
@@ -142,7 +130,7 @@ See detailed breakdowns in linked analysis docs:
 
 ### Comprehensive Audit Report
 
-> **⚠️ 重要: 本項目目前綜合完成度約 45%，未達到完美完成標準。** 
+> **⚠️ 重要: 本項目目前綜合完成度約 70%，未達到完美完成標準。** 
 > 詳細審計覆蓋計畫、文檔、代碼、測試、配置、應用、ASI/AI引擎等所有方面。
 > 完整報告: **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)**
 
@@ -159,10 +147,10 @@ Systems that are defined/stubbed but not yet implemented — ordered by estimate
 
 > **⚠️ 注意**: 以下清單基於 2026-05-31 全面審計。完整詳細報告請見 **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)**。
 >
-> 綜合完成度約 **45%**。核心服務器/聊天可運行，但大量子系統為 stub/placeholder 狀態。
+> 綜合完成度約 **70%**。核心服務器/聊天可運行，P0-P2 阻塞已全部清除。
 
 **Tier 1 — Core Infrastructure (foundational gaps)**
-- **Plugin System**: 5 hooks defined, **0 handlers deployed**. Full CRUD API exists but no production plugins.
+- **Plugin System**: 5 hooks defined, **3 handlers registered** (message_logger, metrics_collector, audit_logger). Full CRUD API exists.
 - **Intent Dispatch**: ✅ Migrated to ModuleManager→IntentRegistry. ChatService hardcoded fallback still present.
 
 **Tier 2 — Memory & Persistence**
@@ -217,14 +205,14 @@ See dedicated docs for full diagrams:
 | [MODULARITY_ANALYSIS](docs/03-technical-architecture/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God modules, central hub coupling, 20+ singletons |
 | [PROBLEM_ANALYSIS](docs/03-technical-architecture/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 3-perspective audit, security issues, CTO roadmap |
 | [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
-| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 27 items, S/A/B/C tiers, code-verified status |
+| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 53 items, S/A/B/C tiers, 53/53 complete |
 | [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points |
 | [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **Implemented** — M0-M5 (6 files + 100 tests) + 6 modules (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
 | [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **Full completion audit**: Plans, docs, code, tests, config, apps — completeness judged against "perfect" standard |
-| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~85% composite |
+| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite |
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
 
 ---
@@ -297,7 +285,7 @@ npm start
 | 類別 | 主要問題 | 參考文件 |
 |------|---------|---------|
 | **功能斷鏈** | 桌面→Live2D 未完成；手機 stub | `WIRING_MAP` |
-| **Plugin 空接** | 5 hooks 已定義，0 handler 註冊 | `PHASE6_NEXT_PLAN` |
+| **Plugin 空接** | 5 hooks 已定義，3 handler 註冊 | `PHASE6_NEXT_PLAN` |
 | **Agent stub** | ~5 agents 仍為 stub 回傳 mock 資料 | `AGENT_DESIGN` |
 | **Ripple Axis** | 僅 3/9 applicators 存在 (Alpha/Delta/Pi) | `RIPPLE_AXIS_DESIGN` |
 
@@ -306,7 +294,7 @@ npm start
 已定義但未實作／未接線的系統 — 依影響力排序：
 
 **Tier 1 — 核心基礎設施**
-- **Plugin 系統**：5 hooks 已定義（`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`），**0 handler 註冊**。CRUD API 完整但無任何 plugin 部署
+- **Plugin 系統**：5 hooks 已定義（`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`），**3 handler 註冊**（message_logger, metrics_collector, audit_logger）。CRUD API 完整
 - **Config Handler**：5 個 YAML handler 無對應代碼：`FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler`（`angela_core.yaml:131-257`）
 - **意圖分發**：🟡 已部分修復 — `IntentRegistry` 已存在並由 ModuleManager 管理，但 ChatService 仍使用硬編碼 fallback
 
@@ -371,7 +359,7 @@ npm start
 | [MODULARITY_ANALYSIS](docs/03-technical-architecture/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God module、耦合、singleton |
 | [PROBLEM_ANALYSIS](docs/03-technical-architecture/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 三重視角審計、安全問題、優先級 |
 | [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
-| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：27 項、S/A/B/C 分級、代碼審計驗證 |
+| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：53 項、S/A/B/C 分級、53/53 完成 |
 | [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動 |
 | [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
@@ -379,7 +367,7 @@ npm start
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError, docs, tests |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告**: 計畫、文檔、代碼、測試、配置、應用的完美完成度判定 |
 | [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
-| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~85% 綜合分數 |
+| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數 |
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定，23+殘留問題 |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |

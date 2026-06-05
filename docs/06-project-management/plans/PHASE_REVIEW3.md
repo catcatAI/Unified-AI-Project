@@ -147,10 +147,9 @@
 | P2 | 統一 dependency_config.yaml Flask/FastAPI | 0.5 會話 | **✅ 已完成** |
 | P2 | 統一 setup.py vs pyproject.toml FastAPI | 0.5 會話 | **✅ 已完成** |
 | P2 | P1 執行緒安全修復 (4 檔案) | 1 會話 | **✅ 已完成** (biological_integrator, global_store, template_library, execution_monitor) |
-| P3 | 更新 README 全部 8 處錯誤 | 1 會話 | ⏳ |
-| P3 | 更新 AGENTS.md 日期和引用 | 0.5 會話 | ⏳ |
-| P3 | 擴充 CI 測試涵蓋至 100% | 1 會話 | ⏳ |
-| P3 | 補 INDEX.md 缺條目 | 0.5 會話 | ⏳ |
+| P3 | 更新 README 全部 8 處錯誤 | 1 會話 | **✅ 已完成** (11項: date, test count, PHASE_REVIEW2 score, handler count, completeness %, plan item count, TOC anchor, duplicate 繁中TOC, `latest`→`Phase Review 1`) |
+| P3 | 更新 AGENTS.md 日期和引用 | 0.5 會話 | **✅ 已完成** (LAST_MODIFIED 02-19→06-05, Python 3.9+→3.10+) |
+| P3 | 補 INDEX.md 缺條目 | 0.5 會話 | **✅ 已完成** (+PHASE_REVIEW3, +PLAN_REVIEW, +ANGELA_TRANSLATION_LEARNING_PLAN; 修 MASTER count 27→53) |
 | P4 | 12 煙霧測試升級 | 1 會話 | ⏳ |
 | P4 | 28 超長函數重構 | 大 | ⏳ |
 | P4 | 負載/壓力測試框架 | 大 | ⏳ |
@@ -169,7 +168,6 @@
 - **超長函數重構**: 6 個 200+ 行函數消除 (最大 464、416 行外置至 JSON)
 
 ### 仍需努力的部分
-- **文件不一致**: README 8 處錯誤、AGENTS.md 3.5 月未更新 — 清楚/有序維度需提升
 - **28 超長函數**: 仍須重構以改善可維護性
 - **測試涵蓋率**: CI 測試涵蓋率需擴充、煙霧測試需升級
 - **E2E/負載測試**: 框架仍未建立

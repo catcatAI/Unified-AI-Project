@@ -26,7 +26,7 @@
 | **[COMPREHENSIVE_AUDIT_REPORT.md](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** | **全面審計報告 (2026-05-31)** — 6代理審計結果, 完成度判定, 修復路線圖 |
 | **[PHASE_REVIEW.md](06-project-management/plans/PHASE_REVIEW.md)** | **階段審查 1 (2026-06-02)** — 首次3代理審計, 10維度深層評分 |
 | **[PHASE_REVIEW2.md](06-project-management/plans/PHASE_REVIEW2.md)** | **階段審查 2 (2026-06-03)** — 17會話後追蹤, ~96%綜合, 全域匯入鏈修復 |
-| **[MASTER_CONSOLIDATED_PLAN.md](06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** | 主執行計畫 — 27項 S/A/B/C 分級任務 |
+| **[MASTER_CONSOLIDATED_PLAN.md](06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** | 主執行計畫 — 53項 S/A/B/C 分級, 53/53 完成 |
 | **[MASTER_FINALIZATION_PLAN.md](06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** | 最終消滅計畫 — P8-P10 結構改善 + 文檔/測試 |
 | **[PHASE6_NEXT_PLAN.md](06-project-management/plans/PHASE6_NEXT_PLAN.md)** | Quality finishing — Plugin, Config handler, Magic number, Stub |
 | **[REPAIR_PLAN.md](06-project-management/plans/REPAIR_PLAN.md)** | 修復計畫 — 源碼bug修復 + 測試重構 |
@@ -35,6 +35,9 @@
 | **[ANGELA_CARD_INTEGRATION_PLAN.md](06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md)** | Card pipeline → ChatService 接線 |
 | **[REMAINING_ISSUES_PLAN.md](06-project-management/plans/REMAINING_ISSUES_PLAN.md)** | placeholder 清除、unittest→pytest 遷移 |
 | **[CARD_INTEGRATION_PLAN_REVIEW.md](06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md)** | 事前審計：執行前發現 25 問題 |
+| **[PHASE_REVIEW3.md](06-project-management/plans/PHASE_REVIEW3.md)** | **階段審查 3 (2026-06-05)** — P0-P2 全部清除後狀態, 10維度判定 |
+| **[PLAN_REVIEW.md](06-project-management/plans/PLAN_REVIEW.md)** | **計畫審查** — 跨計畫一致性與完整性審查 |
+| **[ANGELA_TRANSLATION_LEARNING_PLAN.md](06-project-management/plans/ANGELA_TRANSLATION_LEARNING_PLAN.md)** | **Angela 翻譯學習計畫** — 多語言翻譯能力建置 |
 
 ### Architecture & Design
 - `03-technical-architecture/communication/hsp-specification/` — HSP protocol spec
