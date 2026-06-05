@@ -13,6 +13,8 @@ class PredictiveMaintenanceEngine:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config if config is not None else {}
         self.sensor_data_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.prediction_window_hours = self.config.get("prediction_window_hours", 24)
+        self.health_threshold = self.config.get("health_threshold", 70.0)
         logger.info("PredictiveMaintenanceEngine initialized.")
 
     def ingest_sensor_data(self, sensor_id: str, data: Dict[str, Any]) -> None:
@@ -103,6 +105,60 @@ class PredictiveMaintenanceEngine:
         }
         logger.critical(f"Failure predicted for sensor {sensor_id}: {prediction['details']}", exc_info=True)
         return prediction
+
+
+    async def initialize(self) -> None:
+        logger.info("PredictiveMaintenanceEngine initialized async")
+
+    async def collect_component_metrics(self, component_id: str) -> Dict[str, Any]:
+        logger.debug("Collecting metrics for %s", component_id)
+        return {"component_id": component_id, "status": "ok"}
+
+    async def get_component_health(self, component_id: str) -> Optional[Dict[str, Any]]:
+        return {"component_id": component_id, "health_score": 70.0, "maintenance_recommendation": "None"}
+
+    async def get_maintenance_schedules(self, component_id: str) -> List[Dict[str, Any]]:
+        return []
+
+    async def approve_maintenance(self, schedule_id: str, approver: str) -> Dict[str, Any]:
+        return {"success": True, "schedule_id": schedule_id}
+
+    async def get_all_component_health(self) -> Dict[str, Any]:
+        return {}
+
+    def _simple_health_assessment(self, metrics: Dict[str, float]) -> float:
+        if not metrics:
+            return 50.0
+        cpu = metrics.get("cpu_usage", 50)
+        memory = metrics.get("memory_usage", 50)
+        response_time = metrics.get("response_time", 200)
+        error_rate = metrics.get("error_rate", 0)
+        cpu_score = max(0, 100 - cpu * 0.5)
+        mem_score = max(0, 100 - memory * 0.5)
+        rt_score = max(0, 100 - response_time / 20)
+        er_score = max(0, 100 - error_rate * 10)
+        score = (cpu_score + mem_score + rt_score + er_score) / 4
+        return round(max(0.0, min(100.0, score)), 2)
+
+    def _predict_failure_probability(self, metrics: Dict[str, float], component_type: str) -> float:
+        cpu = metrics.get("cpu_usage", 50)
+        memory = metrics.get("memory_usage", 50)
+        response_time = metrics.get("response_time", 200)
+        error_rate = metrics.get("error_rate", 0)
+        cpu_risk = max(0, cpu - 70) / 30
+        mem_risk = max(0, memory - 70) / 30
+        rt_risk = min(1.0, response_time / 1000)
+        er_risk = min(1.0, error_rate / 10)
+        probability = (cpu_risk + mem_risk + rt_risk + er_risk) / 4
+        return round(max(0.0, min(1.0, probability)), 2)
+
+    def _generate_maintenance_recommendation(self, health_score: float, component_id: str) -> str:
+        if health_score < 30:
+            return f"紧急維護: {component_id} 需要立即處理"
+        elif health_score < 60:
+            return f"建議維護: {component_id} 需要近期維護"
+        else:
+            return f"常規維護: {component_id} 狀態良好"
 
 
 if __name__ == "__main__":

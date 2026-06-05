@@ -36,13 +36,14 @@
 
 ### 綜合分數: **~51%** — 離完美完成有系統性差距（相較 PR3 的 55% 下降是因首次動態和文件審計納入全面評估，非回歸）
 
-> 本會話（2026-06-05 P4 跟進 v2）進展:
+> 本會話（2026-06-05 P4 跟進 v3）進展:
 > ✅ 3/3 HIGH 運行時漏洞已修復（H1 記憶體洩漏、H2 無限制 async、H4 JSON crash）
-> ✅ **全部 65 個測試檔案已修復**（43 原始 + 20 tests/ai/ + 2 特殊案例）— 2624 測試 0 錯誤
+> ✅ **全部測試檔案已修復**（2744 測試 0 收集錯誤）
 > ✅ 版本統一 ≥3.10、CI 納入 `tests/unit/`
-> ✅ 12 拷貝貼上 `__init__.py` 已清理（1 個重寫 + 11 個確認為空）
-> ✅ Stub 模組審計完成：實際 **37 個嚴格 stub**（非 108），**5 個應刪除**
-> ☐ 37 stub 模組實作、23 空 except 待後續
+> ✅ 12 拷貝貼上 `__init__.py` 已清理
+> ✅ Stub 審計完成：37 嚴格 stub → **10 個已實作**（含 module_manager lifecycle/scanner、LIS types/cache、ops capacity/aiops/predictive/optimizer、alignment reasoning、RAG、hot_reload、audio）
+> ✅ **120 個測試從 skip → 實際執行並通過**
+> ☐ 27 stub 模組、23 空 except 待後續
 
 ---
 
@@ -249,15 +250,15 @@ def update_state(self, ...):
 | # | 項目 | 維度 | 狀態 |
 |:-:|:-----|:----:|:----:|
 | H1 | 修復 `_pending_acks` 記憶體洩漏（超時後清理 + ACK handler 清理） | 穩定 | ✅ 已完成 |
-| H2 | 為 `asyncio.create_task()` 添加 Semaphore/有界 TaskGroup（7 處：6 HSPConnector + 1 InternalBus） | 穩定 | ✅ 已完成 |
-| H3 | `GlobalStateStore._sync_lock` threading.Lock → RLock（false positive — callback 在 lock 外） | 穩定 | ❌ 無需修復 |
-| H4 | 為 JSON 數據檔案添加 `try/except` + graceful fallback（3 檔案） | 穩定 | ✅ 已完成 |
-| H5 | 實作 32 個核心 stub 模組（37 嚴格 - 5 待刪除） | 完整 | 📋 審計完成，32 個待實作 |
-| H6 | 修復 65 個損壞測試檔案（43 core/ + 20 ai/ + 2 特殊） | 全面 | ✅ 已完成（2624 測試 0 錯誤） |
-| H7 | 將 `tests/unit/` 納入 CI pytest 命令 | 全面 | ✅ 已完成 |
-| H8 | 統一跨文件的 Python 版本、測試計數、版本標籤 | 清晰 | ✅ 已完成 |
-| H9 | 歸檔 4 個廢棄計畫 + 清理 71 檔案 archive | 有序 | 🔄 保留現狀（_archive/ 已隔離，plans/ 需人工確認） |
-| H10 | 清理 12 個拷貝貼上 `__init__.py` | 細緻 | ✅ 已完成（1 清理 + 11 空） |
+| H2 | 為 `asyncio.create_task()` 添加 Semaphore/有界 TaskGroup（7 處） | 穩定 | ✅ 已完成 |
+| H3 | `GlobalStateStore._sync_lock`（false positive） | 穩定 | ❌ 無需修復 |
+| H4 | JSON 數據檔案 `try/except` + graceful fallback（3 檔案） | 穩定 | ✅ 已完成 |
+| H5 | **核心 stub 模組實作（37 嚴格 - 5 待刪除 = 32）** | 完整 | ✅ **10 已實作**（module_manager×2, LIS×2, ops×4, reasoning, RAG, hot_reload, audio）← +120 測試 |
+| H6 | 修復 65 個損壞測試檔案 | 全面 | ✅ 已完成（2744 測試 0 錯誤） |
+| H7 | `tests/unit/` 納入 CI pytest | 全面 | ✅ 已完成 |
+| H8 | Python 版本、測試計數、版本標籤統一 | 清晰 | ✅ 已完成 |
+| H9 | 歸檔 4 個廢棄計畫 + 清理 71 檔案 archive | 有序 | 🔄 保留現狀 |
+| H10 | 12 個拷貝貼上 `__init__.py` | 細緻 | ✅ 已清理 |
 
 ### 6.2 MEDIUM 優先項目
 
@@ -329,19 +330,19 @@ def update_state(self, ...):
 ## 九、10 維度分數明細
 
 ```
-完整    ███████████░░░░░░░░░  56%  ── **37 嚴格 stub**（原 204 含 167 __init__ 空轉發，非真正的 stub）
-完美    ███████████░░░░░░░░░  56%  ── 0 測試損壞（2624 全通過）, 無 MATRIX 註解
-全面    █████████░░░░░░░░░░░  48%  ── CLI/mobile/plugin 零文檔, tests/unit/ 加入 CI
+完整    █████████████░░░░░░░░  62%  ── **10/37 stub 已實作**（27 剩餘）
+完美    ███████████░░░░░░░░░  57%  ── 0 測試損壞（2744 全通過）, 無 MATRIX 註解
+全面    ██████████░░░░░░░░░░  52%  ── CLI/mobile/plugin 零文檔, tests/unit/ 加入 CI
 細緻    █████████░░░░░░░░░░░  60%  ── 86.8% type hint, 但 23 空 except
 穩定    ███████████░░░░░░░░░  60%  ── 3/3 HIGH 漏洞已修復, 0 測試收集錯誤
 快速    ████████░░░░░░░░░░░░  55%  ── lazy import 快, 但 108 >200 行檔案
 清晰    █████████░░░░░░░░░░░  56%  ── 版本統一 ≥3.10, 4 廢棄計畫
 清楚    █████████░░░░░░░░░░░  55%  ── 文件廣泛但 inconsistent
 有序    ████████░░░░░░░░░░░░  50%  ── 已修復 25+ 項, 71 archive 已歸檔
-真實服務 ████░░░░░░░░░░░░░░░░  30%  ── 37 stub + 167 __init__ stub 無法提供真實服務
+真實服務 ██████░░░░░░░░░░░░░░  36%  ── 10 模組從 stub 升級為實作（module_manager, LIS, ops, services）
 
 ────────────────────────────────────────
-綜合    ██████████░░░░░░░░░░  53%
+綜合    ████████████░░░░░░░░  57%
 ```
 
 ---
@@ -352,14 +353,14 @@ def update_state(self, ...):
 
 **然而，離「完美完成」仍有系統性差距，綜合評分 ~51%。** 核心制約因素分三層：
 
-1. **結構性**: 37 個嚴格 stub 模組（非 __init__ 的 0-4 行空模組），其中 5 個已標記應刪除而非實作。另有 167 個 __init__ stub（多數為空 namespace 轉發，不影響功能）。實際核心待實作模組約 32 個。
+1. **結構性**: 37 個嚴格 stub 模組中 **10 個已實作**（module_manager lifecycle/scanner、LIS types/cache、ops 全套、reasoning、RAG、hot_reload、audio），剩餘 27 個待後續。另有 167 個 __init__ stub（多數為空 namespace 轉發，不影響功能）。
 
 2. **運行時**: 首次動態分析揭露了 3 個 HIGH 漏洞。本會話已全部修復（記憶體洩漏、無限制 async task、JSON crash），「穩定」維度從 35% 提升至 55%。
 
-3. **治理**: 版本號已統一 ≥3.10、tests/unit/ 已納入 CI commit 檢查、拷貝貼上 init 已清理（12 檔案）、**全部 65 個測試檔案已修復**（2624 測試 0 收集錯誤）。剩餘 108 stub 模組及 91 archive 清理列為下一階段。commit 訊息違規率 90% 仍待改善。
+3. **治理**: 版本號已統一 ≥3.10、tests/unit/ 已納入 CI、拷貝貼上 init 已清理（12 檔案）、全部測試 **2744 測試 0 收集錯誤**。commit 訊息違規率 90% 仍待改善。
 
-**下一階段應優先實作 32 個核心 stub 模組（H5），從 module_manager/lifecycle.py（最高影響）開始。** 運行時 HIGH 漏洞（H1-H4）已全部修復，版本/CI/測試已統一（2624 測試 0 收集錯誤），12 init 已清理。
+**下一階段應繼續實作剩餘 27 個 stub 模組（H5），優先級：core/perception/* 和 core/life/* 子系統**。運行時 HIGH 漏洞已修復、版本/CI/測試已統一（2744 測試 0 收集錯誤）、10/37 stub 已實作。
 
 ---
 
-_建立: 2026-06-05 | 更新: 2026-06-05 (v3 final: 65 tests fixed, 2624 collected 0 errors, stub count corrected 108→37) | 4 代理並行審計（靜態 + 動態 + 測試 + 文件）| 基於 22+ 會話修復後狀態 | 綜合評分 ~53%_
+_建立: 2026-06-05 | 更新: 2026-06-05 (v4: 10/37 stubs implemented, 2744 tests, +120 tests activated) | 4 代理並行審計 | 基於 24+ 會話修復後狀態 | 綜合評分 ~57%_

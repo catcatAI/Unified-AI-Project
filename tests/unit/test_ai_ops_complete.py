@@ -129,7 +129,7 @@ class TestAIOpsEngine:
             state = {
                 "component_id": "test",
                 "component_type": "server",
-                "timestamp": datetime.now(timezone.utc()).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "state": {
                     "cpu_usage": 50 + i * 0.5,
                     "memory_usage": 60,
@@ -230,7 +230,7 @@ class TestPerformanceOptimizer:
         for i in range(10):
             performance_data.append(
                 {
-                    "timestamp": datetime.now(timezone.utc()).isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "component_id": "test_server",
                     "component_type": "server",
                     "metrics": {
@@ -260,7 +260,7 @@ class TestPerformanceOptimizer:
         # 添加性能歷史
         performance_optimizer.performance_history = [
             {
-                "timestamp": datetime.now(timezone.utc()).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "component_id": "test_server",
                 "component_type": "server",
                 "metrics": {
@@ -291,7 +291,7 @@ class TestCapacityPlanner:
     async def test_predict_cpu_needs_insufficient_data(self, capacity_planner):
         """測試CPU需求預測數據不足"""
         usage = ResourceUsage(
-            timestamp=datetime.now(timezone.utc()),
+            timestamp=datetime.now(timezone.utc),
             cpu_cores=4,
             memory_gb=8,
             disk_gb=100,
@@ -308,7 +308,7 @@ class TestCapacityPlanner:
         # 添加歷史數據
         for i in range(20):
             usage = ResourceUsage(
-                timestamp=datetime.now(timezone.utc()) - timedelta(hours=i),
+                timestamp=datetime.now(timezone.utc) - timedelta(hours=i),
                 cpu_cores=4 + i * 0.1,
                 memory_gb=8,
                 disk_gb=100,
@@ -320,7 +320,7 @@ class TestCapacityPlanner:
             )
 
         current_usage = ResourceUsage(
-            timestamp=datetime.now(timezone.utc()),
+            timestamp=datetime.now(timezone.utc),
             cpu_cores=6,
             memory_gb=8,
             disk_gb=100,
@@ -348,7 +348,7 @@ class TestCapacityPlanner:
         # 添加歷史數據
         for i in range(10):
             usage = ResourceUsage(
-                timestamp=datetime.now(timezone.utc()) - timedelta(hours=i),
+                timestamp=datetime.now(timezone.utc) - timedelta(hours=i),
                 cpu_cores=4 + i * 0.1,
                 memory_gb=8 + i * 0.2,
                 disk_gb=100 + i,
@@ -414,7 +414,7 @@ class TestIntelligentOpsManager:
             affected_components=["test_server"],
             recommendations=["測試建議"],
             confidence=0.9,
-            timestamp=datetime.now(timezone.utc()),
+            timestamp=datetime.now(timezone.utc),
             auto_actionable=True,
         )
 
@@ -474,7 +474,7 @@ class TestIntegration:
         # 添加性能數據
         optimizer.performance_history = [
             {
-                "timestamp": datetime.now(timezone.utc()).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "component_id": "test_component",
                 "component_type": "server",
                 "metrics": metrics,
@@ -487,7 +487,7 @@ class TestIntegration:
 
         # 創建資源使用記錄
         usage = ResourceUsage(
-            timestamp=datetime.now(timezone.utc()),
+            timestamp=datetime.now(timezone.utc),
             cpu_cores=4,
             memory_gb=8,
             disk_gb=100,
@@ -498,7 +498,7 @@ class TestIntegration:
         # 添加歷史數據
         for i in range(20):
             historical_usage = ResourceUsage(
-                timestamp=datetime.now(timezone.utc()) - timedelta(hours=i),
+                timestamp=datetime.now(timezone.utc) - timedelta(hours=i),
                 cpu_cores=4 + i * 0.1,
                 memory_gb=8,
                 disk_gb=100,

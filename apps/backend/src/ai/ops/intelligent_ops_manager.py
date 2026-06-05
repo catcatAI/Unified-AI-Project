@@ -836,7 +836,13 @@ class IntelligentOpsManager:
     ) -> list[OpsInsight]:
         """获取洞察"""
         try:
-            insights = sorted(self.ops_insights, key=lambda x: x.timestamp, reverse=True)[
+            normalized = []
+            for item in self.ops_insights:
+                if isinstance(item, dict):
+                    normalized.append(OpsInsight(**item))
+                else:
+                    normalized.append(item)
+            insights = sorted(normalized, key=lambda x: x.timestamp, reverse=True)[
                 :limit
             ]  # 获取最近的洞察
 
