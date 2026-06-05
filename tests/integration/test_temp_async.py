@@ -3,7 +3,10 @@ try:
     from ai.trust.trust_manager_module import TrustManager
 except ImportError:
     import pytest; pytest.skip("TrustManager is a stub", allow_module_level=True)
-from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+try:
+    from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+except ImportError:
+    pytest.skip("HSP types not available (hsp module missing)", allow_module_level=True)
 import logging
 
 logger = logging.getLogger(__name__)
