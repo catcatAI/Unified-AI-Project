@@ -46,7 +46,6 @@ optional_requirements = {
         "transformers",
     ],
     "web": [
-        "fastapi",
         "uvicorn[standard]",
         "pydantic",
         "httpx>=0.23.0",

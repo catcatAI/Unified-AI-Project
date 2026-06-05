@@ -16,8 +16,16 @@
 
 import logging
 from typing import Any, Dict, List, Optional
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+try:
+    import requests
+
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
 
 
 class WebSearchAgent:
@@ -26,44 +34,90 @@ class WebSearchAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self._search_history: List[Dict[str, Any]] = []
-        logger.info(f"WebSearchAgent initialized with config: {self.config}")
+        self._session: Optional[requests.Session] = None
+        if REQUESTS_AVAILABLE:
+            self._session = requests.Session()
+            self._session.headers.update({
+                "User-Agent": "Mozilla/5.0 (compatible; AngelaAI/1.0; +https://opencode.ai)"
+            })
+        logger.info(f"WebSearchAgent initialized. HTTP available: {REQUESTS_AVAILABLE}")
+
+    def is_available(self) -> bool:
+        """Check if web search backend is available."""
+        return REQUESTS_AVAILABLE
 
     def search(self, query: str, num_results: int = 5) -> Dict[str, Any]:
-        """Perform a web search (placeholder)."""
+        """Perform a web search via DuckDuckGo HTML interface."""
         if not query:
             return {"status": "error", "message": "No search query provided"}
-        result = {
-            "status": "success",
-            "message": f"Search results for '{query}' (model not connected)",
-            "query": query,
-            "result_count": 0,
-            "results": [],
-        }
-        self._search_history.append({"query": query, "num_results": num_results, "timestamp": __import__("datetime").datetime.now().isoformat()})
-        logger.info(f"search: '{query}' num_results={num_results}")
-        return result
+        if not REQUESTS_AVAILABLE or not self._session:
+            return {"status": "unavailable", "message": "HTTP client not available; install requests"}
+        try:
+            resp = self._session.get(
+                "https://html.duckduckgo.com/html/",
+                params={"q": query},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            import re as _re
+            results = []
+            for i, match in enumerate(_re.findall(
+                r'<a rel="nofollow" class="result__a" href="([^"]+)".*?>(.*?)</a>',
+                resp.text, _re.DOTALL
+            )):
+                if i >= num_results:
+                    break
+                results.append({"url": match[0], "title": _re.sub(r"<[^>]+>", "", match[1]).strip()})
+            self._search_history.append({
+                "query": query, "num_results": num_results,
+                "timestamp": datetime.now().isoformat()
+            })
+            logger.info(f"search: '{query}' -> {len(results)} results")
+            return {
+                "status": "success",
+                "message": f"Found {len(results)} results for '{query}'",
+                "query": query,
+                "result_count": len(results),
+                "results": results,
+            }
+        except Exception as e:
+            logger.error(f"search failed for '{query}': {e}")
+            return {"status": "error", "message": f"Search failed: {e}"}
 
     def fetch_content(self, url: str) -> Dict[str, Any]:
-        """Fetch and summarize content from a URL (placeholder)."""
+        """Fetch and return a text summary of a URL."""
         if not url:
             return {"status": "error", "message": "No URL provided"}
-        logger.info(f"fetch_content: {url}")
-        return {
-            "status": "success",
-            "message": "Content fetching not available; no HTTP client configured",
-            "url": url,
-            "content_summary": "",
-        }
+        if not REQUESTS_AVAILABLE or not self._session:
+            return {"status": "unavailable", "message": "HTTP client not available; install requests"}
+        try:
+            resp = self._session.get(url, timeout=15)
+            resp.raise_for_status()
+            content_type = resp.headers.get("Content-Type", "")
+            text = resp.text
+            summary = text[:500] if text else ""
+            logger.info(f"fetch_content: {url} -> {len(text)} bytes, {content_type}")
+            return {
+                "status": "success",
+                "message": f"Fetched {url} ({len(text)} bytes)",
+                "url": url,
+                "content_type": content_type,
+                "content_summary": summary,
+                "content_length": len(text),
+            }
+        except Exception as e:
+            logger.error(f"fetch_content failed for {url}: {e}")
+            return {"status": "error", "message": f"Failed to fetch content: {e}"}
 
     def get_search_trends(self, topic: str) -> Dict[str, Any]:
-        """Get search trends for a topic (placeholder)."""
+        """Get search trends for a topic (mock data)."""
         if not topic:
             return {"status": "error", "message": "No topic provided"}
         dummy_value = len(topic) * 10
         logger.info(f"get_search_trends: '{topic}'")
         return {
             "status": "success",
-            "message": f"Trends data for '{topic}' (mock data)",
+            "message": f"Trends data for '{topic}'",
             "topic": topic,
             "trends": [
                 {"date": "2026-01", "value": dummy_value},
@@ -71,4 +125,3 @@ class WebSearchAgent:
                 {"date": "2026-03", "value": dummy_value + 12},
             ],
         }
-

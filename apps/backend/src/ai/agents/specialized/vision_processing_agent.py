@@ -23,13 +23,24 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
+try:
+    import pytesseract
+
+    PYTESSERACT_AVAILABLE = True
+except ImportError:
+    PYTESSERACT_AVAILABLE = False
+
 
 class VisionProcessingAgent:
     """Agent for image analysis, object detection, and text extraction."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        logger.info(f"VisionProcessingAgent initialized with config: {self.config}")
+        logger.info(f"VisionProcessingAgent initialized. OCR available: {PYTESSERACT_AVAILABLE}")
+
+    def is_available(self) -> Dict[str, bool]:
+        """Check which backends are available."""
+        return {"pytesseract": PYTESSERACT_AVAILABLE}
 
     def analyze_image(self, image_path: str) -> Dict[str, Any]:
         """Analyze image and return dimensions, format, analysis result."""
@@ -61,28 +72,35 @@ class VisionProcessingAgent:
             return {"status": "error", "message": f"Failed to analyze image: {e}"}
 
     def detect_objects(self, image_path: str) -> Dict[str, Any]:
-        """Detect objects in image (placeholder implementation)."""
+        """Detect objects in image (placeholder — no object detection model loaded)."""
         if not image_path:
             return {"status": "error", "message": "No image path provided"}
         if not os.path.isfile(image_path):
             return {"status": "error", "message": f"Image not found: {image_path}"}
         logger.info(f"detect_objects: {image_path}")
         return {
-            "status": "success",
-            "message": "Object detection model not loaded; returning empty results",
+            "status": "unavailable",
+            "message": "Object detection model not loaded; install torchvision or YOLO",
             "objects": [],
         }
 
     def extract_text(self, image_path: str) -> Dict[str, Any]:
-        """Extract text from image (placeholder implementation)."""
+        """Extract text from image using Tesseract OCR."""
         if not image_path:
             return {"status": "error", "message": "No image path provided"}
         if not os.path.isfile(image_path):
             return {"status": "error", "message": f"Image not found: {image_path}"}
-        logger.info(f"extract_text: {image_path}")
-        return {
-            "status": "success",
-            "message": "OCR model not loaded; returning empty text",
-            "extracted_text": "",
-        }
-
+        if not PYTESSERACT_AVAILABLE:
+            return {"status": "unavailable", "message": "pytesseract not installed"}
+        try:
+            text = pytesseract.image_to_string(Image.open(image_path))
+            logger.info(f"extract_text: {image_path} -> {len(text)} chars")
+            return {
+                "status": "success",
+                "message": f"Extracted {len(text)} characters from image",
+                "extracted_text": text.strip(),
+                "char_count": len(text),
+            }
+        except Exception as e:
+            logger.error(f"extract_text failed for {image_path}: {e}")
+            return {"status": "error", "message": f"OCR failed: {e}"}

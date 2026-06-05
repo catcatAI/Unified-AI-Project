@@ -84,7 +84,10 @@ async def tactile_touch(touch_data: Dict[str, Any] = Body(...)) -> dict:
     object_id = touch_data.get("object_id", "default")
     contact_point = touch_data.get("contact_point", {"body_part": "generic", "pressure": 0.5})
     origin = touch_data.get("origin", "System")
-    result = await get_tactile_service().simulate_touch(object_id, contact_point, origin)
+    service = get_tactile_service()
+    if not service:
+        return {"success": False, "error": "TactileService not available"}
+    result = await service.simulate_touch(object_id, contact_point, origin)
     return {"success": True, "feedback": result}
 
 

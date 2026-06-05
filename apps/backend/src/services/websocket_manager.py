@@ -252,6 +252,9 @@ async def websocket_handler(websocket: WebSocket) -> str:
                 from api.lifespan import get_tactile_service
                 tactile_data = data.get("data", {})
                 tactile_service = get_tactile_service()
+                if not tactile_service:
+                    logger.warning("TactileService unavailable for tactile_event")
+                    continue
                 res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
                 await manager.send_personal_message({
                     "type": "biological_feedback",

@@ -4,7 +4,7 @@
 
 import logging
 
-# from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
+# (removed incomplete import: from tests.tools.test_tool_dispatcher_logging import)
 from typing import Dict, Any, Optional
 from datetime import datetime
 
@@ -51,17 +51,6 @@ class ContextHAMIntegration:
                 logger.error(f"Context {context_id} not found", exc_info=True)
                 return False
 
-            # 将上下文内容转换为HAM格式
-            {
-                "context_id": context.context_id,
-                "context_type": context.context_type.value,
-                "content": context.content,
-                "metadata": context.metadata,
-                "created_at": context.created_at.isoformat(),
-                "updated_at": context.updated_at.isoformat(),
-            }
-
-
             logger.info(f"Synced context {context_id} to HAM memory")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
@@ -82,6 +71,11 @@ class ContextHAMIntegration:
             if not self.ham_manager:
                 logger.warning("HAM manager not available, skipping sync", exc_info=True)
                 return None
+            logger.warning("sync_ham_to_context: context creation not wired up")
+            return None
+        except Exception as e:  # broad exception acceptable: graceful degradation on failure
+            logger.error(f"Failed to sync HAM memory {ham_memory_id} to context: {e}", exc_info=True)
+            return None
 
 
 
@@ -93,7 +87,7 @@ class ContextHAMIntegration:
             logger.error(f"Failed to sync HAM memory {ham_memory_id} to context: {e}", exc_info=True)
             return None
 
-    def create_memory_context_from_ham(self, ham_memory_data: Dict[str, Any]) -> str:
+    def create_memory_context_from_ham(self, ham_memory_data: Dict[str, Any]) -> Optional[str]:
         """
         基于HAM记忆数据创建记忆上下文
 
@@ -101,25 +95,11 @@ class ContextHAMIntegration:
             ham_memory_data: HAM记忆数据
 
         Returns:
-            str: 创建的记忆上下文ID
+            Optional[str]: 创建的记忆上下文ID, 如果不可用则返回None
         """
         try:
-
-            # 创建对应的上下文系统记录
-            {
-                "ham_memory_id": ham_memory_data.get("id"),
-                "ham_timestamp": ham_memory_data.get("timestamp"),
-                "sync_direction": "ham_to_context",
-                "sync_time": datetime.now().isoformat(),
-            }
-
-            # context_id = self.context_manager.create_context(
-            #     ContextType.MEMORY,
-            #     context_content
-            # )
-
-            logger.info("Created memory context from HAM data with context")
-            return "memory_id"  # Placeholder
+            logger.warning("create_memory_context_from_ham: context creation not wired up")
+            return None
         except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create memory context from HAM data: {e}", exc_info=True)
             raise
@@ -140,22 +120,7 @@ class ContextHAMIntegration:
                 logger.warning("HAM manager not available, skipping update", exc_info=True)
                 return False
 
-
-
-            # 记录更新上下文
-            {
-                "memory_id": memory_id,
-                "updates": updates,
-                "update_time": datetime.now().isoformat(),
-                "target_system": "ham",
-            }
-
-            # context_id = self.context_manager.create_context(
-            #     ContextType.MEMORY,
-            #     context_content
-            # )
-
-            logger.info(f"Updated HAM from memory context {memory_id} with context")
+            logger.info(f"Updated HAM from memory context {memory_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to update HAM from memory context {memory_id}: {e}", exc_info=True)
@@ -190,22 +155,8 @@ class ContextHAMIntegration:
                     except Exception as e:
                         logger.warning(f"HAM memory transfer failed for {ham_id}: {e}")
 
-            # 记录转移操作
-            {
-                "source_context_id": source_context_id,
-                "target_memory_id": "new_memory_id",  # Placeholder
-                "source_type": source_context.context_type.value,
-                "target_type": target_memory_type,
-                "transfer_time": datetime.now().isoformat(),
-            }
-
-            # transfer_context_id = self.context_manager.create_context(
-            #     ContextType.MEMORY,
-            #     transfer_context
-            # )
-
             logger.info(
-                f"Transferred context memory from {source_context_id} to new_memory_id with context"
+                f"Transferred context memory from {source_context_id}"
             )
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure

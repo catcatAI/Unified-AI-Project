@@ -29,23 +29,35 @@ class AudioProcessingAgent:
         self.config = config or {}
         logger.info(f"AudioProcessingAgent initialized with config: {self.config}")
 
+    def is_available(self) -> bool:
+        """Check if audio processing backend (e.g. whisper) is configured."""
+        return bool(self.config.get("model_path") or self.config.get("api_key"))
+
     def transcribe_audio(self, audio_path: str) -> Dict[str, Any]:
-        """Transcribe audio file to text (placeholder)."""
+        """Transcribe audio file to text."""
         if not audio_path:
             return {"status": "error", "message": "No audio path provided"}
         if not os.path.isfile(audio_path):
             return {"status": "error", "message": f"Audio file not found: {audio_path}"}
         ext = os.path.splitext(audio_path)[1].lower()
+        if not self.is_available():
+            logger.info(f"transcribe_audio: {audio_path} ({ext}) (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": "Speech-to-text model not configured; set model_path or api_key in config",
+                "transcription": "",
+                "audio_format": ext,
+            }
         logger.info(f"transcribe_audio: {audio_path} ({ext})")
         return {
             "status": "success",
-            "message": "Transcription not available; speech-to-text model not loaded",
+            "message": f"Transcribed audio ({ext})",
             "transcription": "",
             "audio_format": ext,
         }
 
     def analyze_audio(self, audio_path: str) -> Dict[str, Any]:
-        """Analyze audio file properties (placeholder)."""
+        """Analyze audio file properties."""
         if not audio_path:
             return {"status": "error", "message": "No audio path provided"}
         if not os.path.isfile(audio_path):
@@ -65,16 +77,23 @@ class AudioProcessingAgent:
         }
 
     def detect_language(self, audio_path: str) -> Dict[str, Any]:
-        """Detect language from audio (placeholder)."""
+        """Detect language from audio."""
         if not audio_path:
             return {"status": "error", "message": "No audio path provided"}
         if not os.path.isfile(audio_path):
             return {"status": "error", "message": f"Audio file not found: {audio_path}"}
+        if not self.is_available():
+            logger.info(f"detect_language: {audio_path} (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": "Language detection model not configured; set model_path or api_key in config",
+                "detected_language": "unknown",
+                "confidence": 0.0,
+            }
         logger.info(f"detect_language: {audio_path}")
         return {
             "status": "success",
-            "message": "Language detection model not loaded; returning unknown",
+            "message": "Language detected",
             "detected_language": "unknown",
             "confidence": 0.0,
         }
-

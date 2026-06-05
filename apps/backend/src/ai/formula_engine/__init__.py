@@ -4,7 +4,7 @@
 # γ (Gamma): Perception - Pattern recognition in user input
 # δ (Delta): Volition - Formula execution and action selection
 
-# from tests.test_json_fix import  # Fixed: commented out incomplete import
+# (removed incomplete import: from tests.test_json_fix import)
 from typing import List, Optional, Dict, Any, cast
 from pathlib import Path
 import json
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Consistent import assuming 'src' is in PYTHONPATH,
 # making 'shared' a top-level package.
-# from .types import FormulaEngine,  # Fixed: commented out incomplete import
+# (removed incomplete import: from .types import FormulaEngine,)
 
 
 class FormulaEngine:

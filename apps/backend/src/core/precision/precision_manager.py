@@ -29,7 +29,17 @@ class PrecisionManager:
         return self._precision_levels.get(key, default)
 
     def convert(self, value: Any, target_precision: float) -> Any:
-        return value
+        if not isinstance(value, (int, float)):
+            return value
+        # Map precision level to decimal places: 1.0→INT(0), 0.5→DEC4(4), 0.0→full
+        if target_precision >= 0.999:
+            return int(round(value))
+        if target_precision >= 0.499:
+            return round(value, 4)
+        if target_precision <= 0.001:
+            return value
+        places = max(0, int(8 * (1.0 - target_precision)))
+        return round(value, places)
 
 
 class DecimalMemoryBank:

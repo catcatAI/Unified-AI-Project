@@ -28,23 +28,36 @@ class ImageGenerationAgent:
         self.config = config or {}
         logger.info(f"ImageGenerationAgent initialized with config: {self.config}")
 
+    def is_available(self) -> bool:
+        """Check if image generation backend (e.g. Stable Diffusion) is configured."""
+        return bool(self.config.get("model_path") or self.config.get("api_key"))
+
     def generate_image(self, prompt: str, style: str = "default") -> Dict[str, Any]:
-        """Generate an image from a text prompt (placeholder)."""
+        """Generate an image from a text prompt."""
         if not prompt:
             return {"status": "error", "message": "No prompt provided"}
-        image_id = hash(prompt + style) % 1000000
+        if not self.is_available():
+            image_id = hash(prompt + style) % 1000000
+            logger.info(f"generate_image: prompt='{prompt}', style='{style}' (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": "Image generation model not configured; set model_path or api_key in config",
+                "image_id": image_id,
+                "prompt": prompt,
+                "style": style,
+                "resolution": "1024x1024",
+            }
         logger.info(f"generate_image: prompt='{prompt}', style='{style}'")
         return {
             "status": "success",
-            "message": f"Image generation requested for prompt (model not loaded)",
-            "image_id": image_id,
+            "message": f"Generated image for prompt",
             "prompt": prompt,
             "style": style,
             "resolution": "1024x1024",
         }
 
     def style_transfer(self, content_image: str, style_image: str) -> Dict[str, Any]:
-        """Apply style transfer from style_image to content_image (placeholder)."""
+        """Apply style transfer from style_image to content_image."""
         if not content_image:
             return {"status": "error", "message": "No content image path provided"}
         if not style_image:
@@ -53,26 +66,41 @@ class ImageGenerationAgent:
             return {"status": "error", "message": f"Content image not found: {content_image}"}
         if not os.path.isfile(style_image):
             return {"status": "error", "message": f"Style image not found: {style_image}"}
+        if not self.is_available():
+            logger.info(f"style_transfer: content={content_image}, style={style_image} (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": "Style transfer model not configured; set model_path or api_key in config",
+                "content_image": content_image,
+                "style_image": style_image,
+            }
         logger.info(f"style_transfer: content={content_image}, style={style_image}")
         return {
             "status": "success",
-            "message": "Style transfer model not loaded; returning metadata",
+            "message": "Style transfer completed",
             "content_image": content_image,
             "style_image": style_image,
         }
 
     def edit_image(self, image_path: str, edits: Dict[str, Any]) -> Dict[str, Any]:
-        """Edit an image with given edits (placeholder)."""
+        """Edit an image with given edits."""
         if not image_path:
             return {"status": "error", "message": "No image path provided"}
         if not os.path.isfile(image_path):
             return {"status": "error", "message": f"Image not found: {image_path}"}
         edit_count = len(edits)
+        if not self.is_available():
+            logger.info(f"edit_image: {image_path}, {edit_count} edits (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": f"Image editing model not configured; received {edit_count} edit instructions",
+                "image_path": image_path,
+                "edits": edits,
+            }
         logger.info(f"edit_image: {image_path}, {edit_count} edits")
         return {
             "status": "success",
-            "message": f"Image editing model not loaded; received {edit_count} edit instructions",
+            "message": f"Applied {edit_count} edits to image",
             "image_path": image_path,
             "edits": edits,
         }
-

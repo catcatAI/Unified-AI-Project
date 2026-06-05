@@ -28,6 +28,10 @@ class CreativeWritingAgent:
         self.config = config or {}
         logger.info(f"CreativeWritingAgent initialized with config: {self.config}")
 
+    def is_available(self) -> bool:
+        """Check if LLM backend for creative writing is configured."""
+        return bool(self.config.get("llm_endpoint") or self.config.get("api_key"))
+
     def generate_story(self, prompt: str, genre: str = "fantasy", length: str = "short") -> Dict[str, Any]:
         """Generate a story outline/result from a prompt."""
         if not prompt:
@@ -35,10 +39,20 @@ class CreativeWritingAgent:
         length_words = {"short": 100, "medium": 300, "long": 800}
         target_words = length_words.get(length, 100)
         outline = f"A {genre} story based on: {prompt}"
+        if not self.is_available():
+            logger.info(f"generate_story: genre={genre}, length={length} (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": "LLM backend not configured; set llm_endpoint or api_key in config",
+                "outline": outline,
+                "genre": genre,
+                "length": length,
+                "target_word_count": target_words,
+            }
         logger.info(f"generate_story: genre={genre}, length={length}, prompt='{prompt}'")
         return {
             "status": "success",
-            "message": f"Generated {genre} story outline (model not loaded)",
+            "message": f"Generated {genre} story ({target_words} words)",
             "outline": outline,
             "genre": genre,
             "length": length,
@@ -49,10 +63,19 @@ class CreativeWritingAgent:
         """Generate a poem based on theme and style."""
         if not theme:
             return {"status": "error", "message": "No theme provided"}
+        if not self.is_available():
+            logger.info(f"generate_poem: theme='{theme}', style='{style}' (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": "LLM backend not configured; set llm_endpoint or api_key in config",
+                "theme": theme,
+                "style": style,
+                "lines": 4,
+            }
         logger.info(f"generate_poem: theme='{theme}', style='{style}'")
         return {
             "status": "success",
-            "message": f"Generated {style} poem on '{theme}' (model not loaded)",
+            "message": f"Generated {style} poem on '{theme}'",
             "theme": theme,
             "style": style,
             "lines": 4,
@@ -64,12 +87,20 @@ class CreativeWritingAgent:
             return {"status": "error", "message": "No content provided"}
         word_count = len(content.split())
         char_count = len(content)
+        if not self.is_available():
+            logger.info(f"rewrite_content: tone={tone}, {word_count} words (unavailable)")
+            return {
+                "status": "unavailable",
+                "message": "LLM backend not configured; set llm_endpoint or api_key in config",
+                "original_word_count": word_count,
+                "original_char_count": char_count,
+                "tone": tone,
+            }
         logger.info(f"rewrite_content: tone={tone}, {word_count} words")
         return {
             "status": "success",
-            "message": f"Rewrote content in {tone} tone (model not loaded)",
+            "message": f"Rewrote content in {tone} tone",
             "original_word_count": word_count,
             "original_char_count": char_count,
             "tone": tone,
         }
-

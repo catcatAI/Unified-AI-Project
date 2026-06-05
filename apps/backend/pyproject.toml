@@ -46,6 +46,9 @@ dependencies = [
   "websockets>=10.4",
   "py-cpuinfo>=9.0.0",
   "cryptography>=41.0.0",
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic",
 ]
 
 [[project.authors]]

@@ -7,7 +7,7 @@ dependencies:
     - name: "FastAPI"
       description: "Primary web framework for HTTP services"
       essential: true
-      fallbacks: ["flask", "tornado"]
+      fallbacks: ["tornado"]
     - name: "numpy"
       description: "Numerical computing library"
       essential: true
@@ -70,7 +70,7 @@ dependencies:
     - name: "fastapi"
       description: "Modern web framework for APIs"
       essential: false
-      fallbacks: ["Flask", "tornado"]
+      fallbacks: ["uvicorn", "tornado"]
       features: ["modern_api", "async_web"]
     - name: "uvicorn"
       description: "ASGI server for FastAPI"
@@ -182,8 +182,8 @@ fallback_strategies:
     - fallback_message: "Advanced NLP features disabled. Using basic text processing."
   # When FastAPI is not available
   fastapi_unavailable:
-    - use_alternatives: ["Flask"]
-    - fallback_message: "Using Flask instead of FastAPI for web services."
+    - use_alternatives: ["uvicorn", "tornado"]
+    - fallback_message: "FastAPI unavailable. Using alternative web server."
   # When MQTT client is not available
   mqtt_unavailable:
     - disable_features: ["hsp_communication", "distributed_ai"]
@@ -225,7 +225,7 @@ installation:
     description: "Minimal installation for basic functionality"
     packages:
       [
-        "Flask",
+        "fastapi",
         "numpy",
         "cryptography",
         "requests",
@@ -243,7 +243,7 @@ installation:
     description: "Standard installation with common optional features"
     packages:
       [
-        "Flask",
+        "fastapi",
         "numpy",
         "cryptography",
         "requests",
@@ -266,7 +266,7 @@ installation:
     description: "Full installation with all features, including game and GUI installer"
     packages:
       [
-        "Flask",
+        "fastapi",
         "numpy",
         "cryptography",
         "requests",
@@ -323,7 +323,7 @@ installation:
     description: "AI and ML focused installation"
     packages:
       [
-        "Flask",
+        "fastapi",
         "numpy",
         "cryptography",
         "requests",
@@ -346,7 +346,7 @@ installation:
     description: "Installation with game client"
     packages:
       [
-        "Flask",
+        "fastapi",
         "numpy",
         "cryptography",
         "requests",

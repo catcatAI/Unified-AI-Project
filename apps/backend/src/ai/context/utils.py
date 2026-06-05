@@ -14,11 +14,8 @@ try:
 except ImportError:
     FERNET_AVAILABLE = False
     logging.warning("cryptography module not available, context encryption disabled", exc_info=True)
-# from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-
-# from .storage.base import  # Commented out - incomplete import
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +54,7 @@ def serialize_context(context) -> bytes:
         raise
 
 
-def deserialize_context(data: bytes) -> None:
+def deserialize_context(data: bytes) -> Optional['Context']:
     """
     反序列化上下文对象
 
@@ -68,17 +65,24 @@ def deserialize_context(data: bytes) -> None:
         Context: 反序列化后的上下文对象
     """
     try:
+        from .storage.base import Context, ContextType, ContextStatus
+
         json_str = data.decode("utf-8")
-        json.loads(json_str)
+        context_dict = json.loads(json_str)
 
-        # context = Context(  # Commented - needs proper import
-        #     context_id=context_dict["context_id"],
-        #     context_type=ContextType(context_dict["context_type"])
-        # )
+        context = Context(
+            context_id=context_dict["context_id"],
+            context_type=ContextType(context_dict["context_type"])
+        )
+        context.created_at = datetime.fromisoformat(context_dict["created_at"])
+        context.updated_at = datetime.fromisoformat(context_dict["updated_at"])
+        context.status = ContextStatus(context_dict["status"])
+        context.metadata = context_dict.get("metadata", {})
+        context.content = context_dict.get("content", {})
+        context.version = context_dict.get("version", "1.0")
+        context.tags = context_dict.get("tags", [])
 
-
-        # return context
-        return None  # Placeholder
+        return context
     except Exception as e:  # broad exception acceptable: data parsing should be resilient
         logger.error(f"Failed to deserialize context: {e}", exc_info=True)
         raise
@@ -230,7 +234,7 @@ def validate_context(context) -> bool:
         return False
 
 
-def merge_contexts(context1, context2) -> None:
+def merge_contexts(context1, context2) -> 'Context':
     """
     合并两个上下文对象
 
@@ -242,25 +246,30 @@ def merge_contexts(context1, context2) -> None:
         Context: 合并后的上下文对象
     """
     try:
+        from .storage.base import Context
+
+        merged_context = Context(
+            context_id=f"{context1.context_id}+{context2.context_id}",
+            context_type=context1.context_type,
+        )
 
         # 合并时间戳(取较新的)
-        # merged_context.created_at = min(context1.created_at, context2.created_at)
-        # merged_context.updated_at = max(context1.updated_at, context2.updated_at)
+        merged_context.created_at = min(context1.created_at, context2.created_at)
+        merged_context.updated_at = max(context1.updated_at, context2.updated_at)
 
         # 合并元数据
-        # merged_context.metadata = {**context1.metadata, **context2.metadata}
+        merged_context.metadata = {**context1.metadata, **context2.metadata}
 
         # 合并内容
-        # merged_context.content = {**context1.content, **context2.content}
+        merged_context.content = {**context1.content, **context2.content}
 
         # 合并标签
-        # merged_context.tags = list(set(context1.tags + context2.tags))
+        merged_context.tags = list(set(context1.tags + context2.tags))
 
         # 合并版本信息
-        # merged_context.version = f"{context1.version}-{context2.version}"
+        merged_context.version = f"{context1.version}-{context2.version}"
 
-        # return merged_context
-        return None  # Placeholder
+        return merged_context
     except Exception as e:  # broad exception acceptable: graceful degradation on failure
         logger.error(f"Failed to merge contexts: {e}", exc_info=True)
         raise
@@ -288,25 +297,21 @@ def filter_context_content(content: Dict[Any, Any], allowed_keys: List[Any]) -> 
         raise
 
 
-# 使用示例
 if __name__ == "__main__":
-    # 测试工具函数
-    # from .storage.base import Context, ContextType  # Commented - needs proper import
+    from .storage.base import Context, ContextType
 
+    test_context = Context("test-1", ContextType.MEMORY)
+    serialized = serialize_context(test_context)
+    print(f"Serialized context size: {len(serialized)} bytes")
 
-    # 测试序列化和反序列化
-    # serialized = serialize_context(test_context)
-    # print(f"Serialized context size: {len(serialized)} bytes")
+    deserialized = deserialize_context(serialized)
+    print(f"Deserialized context ID: {deserialized.context_id}")
 
-    # deserialized = deserialize_context(serialized)
-    # print(f"Deserialized context ID: {deserialized.context_id}")
+    context_hash = calculate_context_hash(test_context)
+    print(f"Context hash: {context_hash}")
 
-    # 测试哈希计算
-    # context_hash = calculate_context_hash(test_context)
-    # print(f"Context hash: {context_hash}")
+    is_valid = validate_context(test_context)
+    print(f"Context is valid: {is_valid}")
 
-    # 测试验证
-    # is_valid = validate_context(test_context)
-    # print(f"Context is valid: {is_valid}")
-
-    logger.info("context utils __main__ smoke test placeholder")
+    merged = merge_contexts(test_context, deserialized)
+    print(f"Merged context ID: {merged.context_id}")

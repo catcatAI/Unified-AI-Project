@@ -3,4 +3,4 @@
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system demonstration
 
 
-# from tests.tools.test_tool_dispatcher_logging import  # Commented out - incomplete import
+# (removed incomplete import: from tests.tools.test_tool_dispatcher_logging import)
