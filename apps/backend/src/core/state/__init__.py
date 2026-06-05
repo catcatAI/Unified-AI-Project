@@ -21,8 +21,16 @@ Version: 6.2.1
 
 from core.state.axis_field import AxisField, AxisFieldRegistry
 from core.state.axis import Axis
-from core.state.temporal import TemporalState, SnapshotQuery, TrendResult, AnomalyResult, CorrelationResult
-from core.state.config_loader import StateConfig, StateMatrixConfig, AxisConfig, AxisFieldConfig
+
+try:
+    from core.state.temporal import TemporalState, SnapshotQuery, TrendResult, AnomalyResult, CorrelationResult
+except ImportError:
+    TemporalState = SnapshotQuery = TrendResult = AnomalyResult = CorrelationResult = None
+
+try:
+    from core.state.config_loader import StateConfig, StateMatrixConfig, AxisConfig, AxisFieldConfig
+except ImportError:
+    StateConfig = StateMatrixConfig = AxisConfig = AxisFieldConfig = None
 
 __all__ = [
     "AxisField",

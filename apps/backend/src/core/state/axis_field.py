@@ -23,6 +23,8 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
+import json
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Any
@@ -115,191 +117,12 @@ class AxisFieldRegistry:
         self._by_name[f"{axis}.{name}"] = field
 
     def _register_all_fields(self) -> None:
-        """註冊所有預定義的 field"""
-
-        # === α (Alpha) — 生理維度 ===
-        self._register(AxisField(
-            axis="alpha", name="energy", label="能量",
-            default=0.5, description="生理能量水平"
-        ))
-        self._register(AxisField(
-            axis="alpha", name="comfort", label="舒適",
-            default=0.5, description="身體舒適程度"
-        ))
-        self._register(AxisField(
-            axis="alpha", name="arousal", label="喚醒",
-            default=0.5, description="生理喚醒水平"
-        ))
-        self._register(AxisField(
-            axis="alpha", name="rest_need", label="休息需求",
-            default=0.5, description="需要休息的程度"
-        ))
-        self._register(AxisField(
-            axis="alpha", name="vitality", label="活力",
-            default=0.5, description="生命力與活力"
-        ))
-        self._register(AxisField(
-            axis="alpha", name="tension", label="張力",
-            default=0.0, description="肌肉/生理緊張程度"
-        ))
-
-        # === β (Beta) — 認知維度 ===
-        self._register(AxisField(
-            axis="beta", name="curiosity", label="好奇心",
-            default=0.5, description="對新事物的探索慾望"
-        ))
-        self._register(AxisField(
-            axis="beta", name="focus", label="專注",
-            default=0.5, description="注意力集中程度"
-        ))
-        self._register(AxisField(
-            axis="beta", name="confusion", label="困惑",
-            default=0.0, description="認知模糊/不理解程度"
-        ))
-        self._register(AxisField(
-            axis="beta", name="learning", label="學習",
-            default=0.5, description="學習狀態與意願"
-        ))
-        self._register(AxisField(
-            axis="beta", name="clarity", label="清晰",
-            default=0.5, description="思維清晰程度"
-        ))
-        self._register(AxisField(
-            axis="beta", name="creativity", label="創造",
-            default=0.5, description="創造性思維活躍度"
-        ))
-
-        # === γ (Gamma) — 情感維度 ===
-        self._register(AxisField(
-            axis="gamma", name="happiness", label="快樂",
-            default=0.5, description="正向情感"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="sadness", label="悲傷",
-            default=0.0, description="悲傷程度"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="anger", label="憤怒",
-            default=0.0, description="憤怒程度"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="fear", label="恐懼",
-            default=0.0, description="恐懼程度"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="disgust", label="厭惡",
-            default=0.0, description="厭惡程度"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="surprise", label="驚訝",
-            default=0.0, description="驚訝程度"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="trust", label="信任",
-            default=0.5, description="對人或事的信任程度"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="anticipation", label="期待",
-            default=0.5, description="對未來的期待程度"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="love", label="愛",
-            default=0.0, description="愛/親密情感"
-        ))
-        self._register(AxisField(
-            axis="gamma", name="calm", label="平靜",
-            default=0.5, description="內心平靜程度"
-        ))
-
-        # === δ (Delta) — 社交維度 ===
-        self._register(AxisField(
-            axis="delta", name="attention", label="注意力",
-            default=0.5, description="對環境/他人的關注程度"
-        ))
-        self._register(AxisField(
-            axis="delta", name="bond", label="連結",
-            default=0.5, description="社交連結/依附程度"
-        ))
-        self._register(AxisField(
-            axis="delta", name="trust", label="社交信任",
-            default=0.5, description="社交場景中的信任"
-        ))
-        self._register(AxisField(
-            axis="delta", name="presence", label="存在",
-            default=0.5, description="社交存在感"
-        ))
-        self._register(AxisField(
-            axis="delta", name="intimacy", label="親密",
-            default=0.0, description="社交親密程度"
-        ))
-        self._register(AxisField(
-            axis="delta", name="engagement", label="投入",
-            default=0.5, description="社交活動投入程度"
-        ))
-
-        # === ε (Epsilon) — 數理維度 ===
-        self._register(AxisField(
-            axis="epsilon", name="logic", label="邏輯",
-            default=0.5, description="邏輯推理能力"
-        ))
-        self._register(AxisField(
-            axis="epsilon", name="precision", label="精確",
-            default=0.5, description="精確計算程度"
-        ))
-        self._register(AxisField(
-            axis="epsilon", name="abstraction", label="抽象",
-            default=0.5, description="抽象思維能力"
-        ))
-        self._register(AxisField(
-            axis="epsilon", name="certainty", label="確定",
-            default=0.5, description="對結論的確信程度"
-        ))
-        self._register(AxisField(
-            axis="epsilon", name="complexity", label="複雜",
-            default=0.0, description="處理的複雜度水平"
-        ))
-        self._register(AxisField(
-            axis="epsilon", name="fatigue", label="認知疲勞",
-            default=0.0, description="數學運算帶來的疲勞"
-        ))
-
-        # === θ (Theta) — 元認知維度 ===
-        self._register(AxisField(
-            axis="theta", name="novelty", label="新穎",
-            default=0.5, description="對新事物的感知程度"
-        ))
-        self._register(AxisField(
-            axis="theta", name="complexity", label="認知複雜",
-            default=0.5, description="任務/輸入的認知複雜度"
-        ))
-        self._register(AxisField(
-            axis="theta", name="ambiguity", label="模糊",
-            default=0.5, description="輸入的不確定程度"
-        ))
-        self._register(AxisField(
-            axis="theta", name="abstraction_level", label="抽象層",
-            default=0.5, description="處理的抽象層次"
-        ))
-        self._register(AxisField(
-            axis="theta", name="dimension_fit", label="維度匹配",
-            default=0.5, description="與現有軸的匹配程度"
-        ))
-        self._register(AxisField(
-            axis="theta", name="creation_urge", label="創造慾",
-            default=0.0, description="創建新軸的驅動程度"
-        ))
-        self._register(AxisField(
-            axis="theta", name="theta_negativity", label="負值懷疑",
-            default=0.0, description="對當前分配的懷疑程度"
-        ))
-        self._register(AxisField(
-            axis="theta", name="correction_urge", label="修正慾",
-            default=0.0, description="驅動自動修正的程度"
-        ))
-        self._register(AxisField(
-            axis="theta", name="audit_intensity", label="審計強度",
-            default=0.0, description="歷史掃描的深度"
-        ))
+        _dir = os.path.dirname(os.path.abspath(__file__))
+        _path = os.path.join(_dir, "axis_fields.json")
+        with open(_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for item in data:
+            self._register(AxisField(**item))
 
     def get(self, axis: str, name: str) -> Optional[AxisField]:
         """取得特定軸的特定 field"""

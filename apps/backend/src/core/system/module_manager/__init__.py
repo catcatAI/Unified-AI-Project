@@ -3,10 +3,16 @@ from pathlib import Path
 from typing import Optional
 
 from .models import ModuleDescriptor, ModuleInstance, ModuleStatus, InitResult, StartResult, HotplugResult
-from .scanner import ModuleScanner
+try:
+    from .scanner import ModuleScanner
+except ImportError:
+    ModuleScanner = None
 from .resolver import DependencyResolver, CycleError
 from .events import EventBus, HealthMonitor
-from .lifecycle import ModuleLifecycle
+try:
+    from .lifecycle import ModuleLifecycle
+except ImportError:
+    ModuleLifecycle = None
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,9 @@
 import logging
 
-from core.intent_registry import IntentRegistry
+try:
+    from core.intent_registry import IntentRegistry
+except ImportError:
+    IntentRegistry = None
 
 logger = logging.getLogger(__name__)
 

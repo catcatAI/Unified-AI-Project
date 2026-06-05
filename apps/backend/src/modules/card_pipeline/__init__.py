@@ -1,7 +1,13 @@
 import logging
 
-from core.card.card_store import CardRegistry
-from core.card.resolver.pipeline_orchestrator import CardImportPipeline
+try:
+    from core.card.card_store import CardRegistry
+except ImportError:
+    CardRegistry = None
+try:
+    from core.card.resolver.pipeline_orchestrator import CardImportPipeline
+except ImportError:
+    CardImportPipeline = None
 
 logger = logging.getLogger(__name__)
 

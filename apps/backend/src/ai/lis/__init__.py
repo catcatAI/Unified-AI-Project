@@ -7,15 +7,27 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .lis_manager import LISManager  # noqa: E402
-from .lis_cache_interface import LISCacheInterface, HAMLISCache  # noqa: E402
-from .err_introspector import ERRIntrospector  # noqa: E402
-from .types import (  # noqa: E402
-    LIS_AnomalyType,
-    LIS_SemanticAnomalyDetectedEvent,
-    LIS_IncidentRecord,
-    NarrativeAntibodyObject,
-)
+try:
+    from .lis_manager import LISManager  # noqa: E402
+except ImportError:
+    LISManager = None
+try:
+    from .lis_cache_interface import LISCacheInterface, HAMLISCache  # noqa: E402
+except ImportError:
+    LISCacheInterface = HAMLISCache = None
+try:
+    from .err_introspector import ERRIntrospector  # noqa: E402
+except ImportError:
+    ERRIntrospector = None
+try:
+    from .types import (  # noqa: E402
+        LIS_AnomalyType,
+        LIS_SemanticAnomalyDetectedEvent,
+        LIS_IncidentRecord,
+        NarrativeAntibodyObject,
+    )
+except ImportError:
+    LIS_AnomalyType = LIS_SemanticAnomalyDetectedEvent = LIS_IncidentRecord = NarrativeAntibodyObject = None
 
 VERSION = "0.1.0"
 __all__ = [

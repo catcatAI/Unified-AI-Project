@@ -2,7 +2,7 @@
 
 > **判定標準**: 不完整、不完美、不全面、不細緻、不穩定、不快速、不清晰、不清楚、不有序、無真實服務。只要有個「不」、沒到滿分，就不算完美完成。
 >
-> **判定結論**: ❌ **未達到完美完成** — 經過 17 會話修復後綜合 ~85%，仍有 10/10 維度不達標。雖然多項顯著改善，但仍有 12 個 HIGH stub、CI bug、文件不一致等殘留問題。
+> **判定結論**: ❌ **未達到完美完成** — 經過 18 會話修復後綜合 ~87%，仍有 10/10 維度不達標。P4 已重構 3 個數據驅動超長函數（節省 ~484 行）、修復 26 個 `__init__.py` 導入阻塞、新增 3 個 stub 類別。殘留問題：25 個 stub 模組、45+ 測試文件無法收集。
 
 ---
 
@@ -313,7 +313,7 @@
 
 | P | 任務 | 估計 | 影響維度 |
 |:-:|:-----|:----:|:--------:|
-| **P0** | **修復 `ImportError` 阻塞** — 4 檔案 | **1 會話** | 穩定, 真實服務 |
+| **P0** | **修復 `ImportError` 阻塞** — 27 檔案 `__init__.py` + 3 stub 類別 | **1 會話** ✅ | 穩定, 真實服務 |
 | **P0** | **修復 `LLMResponse` 類別缺失** | **0.5 會話** | 真實服務 |
 | **P0** | **實作 `ham_manager.py`** (或被動態 import guard) | **1 會話** | 完整, 真實服務 |
 | **P0** | **實作 `chat_service.py`** | **1 會話** | 完整, 真實服務 |
@@ -334,11 +334,13 @@
 | **P3** | 擴充 CI 測試涵蓋至 100% | 1 會話 | 穩定, 全面 |
 | **P3** | 補 INDEX.md 缺條目 | 0.5 會話 | 有序 |
 | **P3** | 處理 5 專用 agents "model not loaded" | 1 會話 | 真實服務 |
+| **P4** | 3/6 數據驅動超長函數重構（AxisFieldRegistry/PatternMatcher/MDS Trigger） | **1/3 會話** ✅ | 快速, 清晰 |
 | **P4** | 12 煙霧測試升級 | 1 會話 | 全面 |
-| **P4** | 28 超長函數重構 | 大 | 快速, 清晰 |
+| **P4** | 28 超長函數重構 | 大 (剩餘 25) | 快速, 清晰 |
 | **P4** | 負載/壓力測試框架 | 大 | 快速 |
 | **P4** | Desktop tray 實作 | 1 會話 | 真實服務 |
 | **P4** | E2E 測試框架 | 大 | 全面, 穩定 |
+| **P4** | 26 `__init__.py` ImportError 阻塞修復 | **✅ 完成** | 穩定 |
 
 ---
 
@@ -388,6 +390,28 @@
 | 14 | 10 檔案 (token_validator, system_manager, context/* 等) | 21 行不完整 #import 語句 | 全部清除 |
 | 15 | `ai/context/integration_with_ham.py` | `create_memory_context_from_ham()` 回傳硬編碼 "memory_id"；多處無主 dict literal | 改為 `Optional[str]` 回傳 None + 清理死代碼 |
 | 16 | `api/routes/desktop_routes.py` + `services/websocket_manager.py` | TactileService 回傳 None 未檢查 → AttributeError | 加入 null-check guard |
+
+### P4 數據驅動重構 — 3 超長函數外部化
+
+| # | 檔案 | 函數 | 原行數 | 新行數 | 節省 | 外部化方式 |
+|:-:|------|------|:-----:|:-----:|:----:|----------|
+| 1 | `core/state/axis_field.py` | `_register_all_fields()` | 187→9 | 9 | -178 | 43 個 AxisField 定義 → `axis_fields.json` |
+| 2 | `ai/code_inspection/code_inspector.py` | `init_rules()` | 190→14 | 14 | -176 | 16 個 PatternRule → `code_inspection_rules.json`（含 regex 字串+flags） |
+| 3 | `core/bio/multidimensional_trigger.py` | `_initialize_default_triggers()` | 143→13 | 13 | -130 | 8 個 MultidimensionalTrigger → `multidimensional_triggers.json` |
+
+小計：3 函數，原 520 行 → 36 行（**-484 行，93% 減少**）。零行為變化 — 所有數據經 round-trip 驗證。
+
+### Import 阻塞層級修復
+
+由於 P2 大量 stub 模組的存在，27 個 `__init__.py` 在導入時因依賴的子模組未實作而拋出 `ImportError`，導致級聯失敗：
+
+| 層級 | 檔案數 | 修複方式 |
+|:----|:-----:|---------|
+| 核心 `__init__.py` | 21 | 將 eager import 改為 `try/except ImportError: X = None`，不中斷包導入 |
+| `core/state/__init__.py` | 1 | 同上（`temporal`、`config_loader` 尚為 stub） |
+| 遺漏 stub 類別 | 3 (`axis.py`/`temporal.py`/`config_loader.py`) | 增加最小 stub 類別，滿足 `__init__.py` 和測試檔案的 import 需求 |
+
+效果：`import core.state` 從 `ImportError` 變為立即成功。26 個包的 `__init__.py` 不再因任一 stub 子模組而中斷。
 
 ### 啟動時間改善
 

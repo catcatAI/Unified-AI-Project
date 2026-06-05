@@ -18,13 +18,14 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
+import json
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Callable, Any, Tuple
 from datetime import datetime
 import asyncio
 import logging
-from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
 
@@ -208,147 +209,30 @@ class MultidimensionalTriggerSystem:
         self._initialize_default_triggers()
 
     def _initialize_default_triggers(self) -> None:
-        """Initialize default triggers for common behaviors"""
-
-        # Morning greeting trigger
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="morning_greeting",
-                name="Morning Greeting",
-                behavior_id="greeting_wave",
-                conditions=[
-                    TriggerCondition(
-                        TriggerDimension.TIME, "range", 0.25, weight=2.0, cooldown=timeout_value("trigger_rare_cooldown", 3600.0)
-                    ),  # ~6am
-                    TriggerCondition(TriggerDimension.EMOTION, "gte", 0.3, weight=1.0),
-                ],
-                min_score=0.6,
-                priority=5,
-            )
-        )
-
-        # Sleepy evening behavior
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="evening_sleepy",
-                name="Evening Sleepy",
-                behavior_id="idle_yawning",
-                conditions=[
-                    TriggerCondition(TriggerDimension.TIME, "gte", 0.8, weight=2.0),  # Evening
-                    TriggerCondition(
-                        TriggerDimension.PHYSIOLOGY, "lte", 0.4, weight=1.5
-                    ),  # Low energy
-                ],
-                min_score=0.5,
-                priority=3,
-            )
-        )
-
-        # Happy celebration trigger
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="happy_celebration",
-                name="Happy Celebration",
-                behavior_id="celebration_dance",
-                conditions=[
-                    TriggerCondition(
-                        TriggerDimension.EMOTION, "gte", 0.8, weight=2.0
-                    ),  # Very happy
-                    TriggerCondition(
-                        TriggerDimension.SOCIAL, "gte", 0.5, weight=1.0
-                    ),  # Social context
-                ],
-                min_score=0.7,
-                priority=8,
-            )
-        )
-
-        # Stress relief trigger
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="stress_relief",
-                name="Stress Relief",
-                behavior_id="comforting_gesture",
-                conditions=[
-                    TriggerCondition(TriggerDimension.EMOTION, "lte", 0.3, weight=2.0),  # Low mood
-                    TriggerCondition(
-                        TriggerDimension.PHYSIOLOGY, "gte", 0.7, weight=1.5
-                    ),  # High arousal
-                ],
-                min_score=0.6,
-                priority=9,
-            )
-        )
-
-        # Idle stretch trigger
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="idle_stretch",
-                name="Idle Stretch",
-                behavior_id="idle_stretching",
-                conditions=[
-                    TriggerCondition(TriggerDimension.TIME, "gte", 0.5, weight=1.0),  # Been idle
-                    TriggerCondition(
-                        TriggerDimension.PHYSIOLOGY, "range", 0.5, weight=1.0
-                    ),  # Normal energy
-                ],
-                min_score=0.4,
-                priority=2,
-            )
-        )
-
-        # Surprise reaction trigger
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="surprise_reaction",
-                name="Surprise Reaction",
-                behavior_id="surprise_reaction",
-                conditions=[
-                    TriggerCondition(
-                        TriggerDimension.ENVIRONMENT, "gte", 0.8, weight=2.0
-                    ),  # Sudden change
-                    TriggerCondition(TriggerDimension.COGNITIVE, "gte", 0.6, weight=1.0),  # Alert
-                ],
-                min_score=0.7,
-                priority=10,
-            )
-        )
-
-        # Attention seeking trigger
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="attention_seek",
-                name="Attention Seeking",
-                behavior_id="attention_seek",
-                conditions=[
-                    TriggerCondition(
-                        TriggerDimension.SOCIAL, "lte", 0.2, weight=2.0, cooldown=timeout_value("trigger_social_cooldown", 180.0)
-                    ),  # Lonely
-                    TriggerCondition(
-                        TriggerDimension.EMOTION, "gte", 0.4, weight=1.0
-                    ),  # Wants interaction
-                ],
-                min_score=0.5,
-                priority=4,
-            )
-        )
-
-        # Random playful behavior
-        self.add_trigger(
-            MultidimensionalTrigger(
-                trigger_id="random_playful",
-                name="Random Playful",
-                behavior_id="playful_wink",
-                conditions=[
-                    TriggerCondition(
-                        TriggerDimension.RANDOM, "gte", 0.95, weight=2.0, cooldown=timeout_value("trigger_random_cooldown", 300.0)
-                    ),  # Rare random
-                    TriggerCondition(TriggerDimension.EMOTION, "gte", 0.5, weight=1.0),  # Good mood
-                ],
-                min_score=0.8,
-                priority=3,
-            )
-        )
+        _dim_map = {d.name: d for d in TriggerDimension}
+        _dir = os.path.dirname(os.path.abspath(__file__))
+        _path = os.path.join(_dir, "multidimensional_triggers.json")
+        with open(_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for item in data:
+            conds = [
+                TriggerCondition(
+                    dimension=_dim_map[c["dimension"]],
+                    operator=c["operator"],
+                    threshold=c["threshold"],
+                    weight=c.get("weight", 1.0),
+                    cooldown=c.get("cooldown", 0.0),
+                )
+                for c in item["conditions"]
+            ]
+            self.add_trigger(MultidimensionalTrigger(
+                trigger_id=item["trigger_id"],
+                name=item["name"],
+                behavior_id=item["behavior_id"],
+                conditions=conds,
+                min_score=item["min_score"],
+                priority=item["priority"],
+            ))
 
     async def initialize(self) -> None:
         """Initialize the trigger system"""

@@ -1,0 +1,303 @@
+[
+  {
+    "axis": "alpha",
+    "name": "energy",
+    "label": "能量",
+    "default": 0.5,
+    "description": "生理能量水平"
+  },
+  {
+    "axis": "alpha",
+    "name": "comfort",
+    "label": "舒適",
+    "default": 0.5,
+    "description": "身體舒適程度"
+  },
+  {
+    "axis": "alpha",
+    "name": "arousal",
+    "label": "喚醒",
+    "default": 0.5,
+    "description": "生理喚醒水平"
+  },
+  {
+    "axis": "alpha",
+    "name": "rest_need",
+    "label": "休息需求",
+    "default": 0.5,
+    "description": "需要休息的程度"
+  },
+  {
+    "axis": "alpha",
+    "name": "vitality",
+    "label": "活力",
+    "default": 0.5,
+    "description": "生命力與活力"
+  },
+  {
+    "axis": "alpha",
+    "name": "tension",
+    "label": "張力",
+    "default": 0.0,
+    "description": "肌肉/生理緊張程度"
+  },
+  {
+    "axis": "beta",
+    "name": "curiosity",
+    "label": "好奇心",
+    "default": 0.5,
+    "description": "對新事物的探索慾望"
+  },
+  {
+    "axis": "beta",
+    "name": "focus",
+    "label": "專注",
+    "default": 0.5,
+    "description": "注意力集中程度"
+  },
+  {
+    "axis": "beta",
+    "name": "confusion",
+    "label": "困惑",
+    "default": 0.0,
+    "description": "認知模糊/不理解程度"
+  },
+  {
+    "axis": "beta",
+    "name": "learning",
+    "label": "學習",
+    "default": 0.5,
+    "description": "學習狀態與意願"
+  },
+  {
+    "axis": "beta",
+    "name": "clarity",
+    "label": "清晰",
+    "default": 0.5,
+    "description": "思維清晰程度"
+  },
+  {
+    "axis": "beta",
+    "name": "creativity",
+    "label": "創造",
+    "default": 0.5,
+    "description": "創造性思維活躍度"
+  },
+  {
+    "axis": "gamma",
+    "name": "happiness",
+    "label": "快樂",
+    "default": 0.5,
+    "description": "正向情感"
+  },
+  {
+    "axis": "gamma",
+    "name": "sadness",
+    "label": "悲傷",
+    "default": 0.0,
+    "description": "悲傷程度"
+  },
+  {
+    "axis": "gamma",
+    "name": "anger",
+    "label": "憤怒",
+    "default": 0.0,
+    "description": "憤怒程度"
+  },
+  {
+    "axis": "gamma",
+    "name": "fear",
+    "label": "恐懼",
+    "default": 0.0,
+    "description": "恐懼程度"
+  },
+  {
+    "axis": "gamma",
+    "name": "disgust",
+    "label": "厭惡",
+    "default": 0.0,
+    "description": "厭惡程度"
+  },
+  {
+    "axis": "gamma",
+    "name": "surprise",
+    "label": "驚訝",
+    "default": 0.0,
+    "description": "驚訝程度"
+  },
+  {
+    "axis": "gamma",
+    "name": "trust",
+    "label": "信任",
+    "default": 0.5,
+    "description": "對人或事的信任程度"
+  },
+  {
+    "axis": "gamma",
+    "name": "anticipation",
+    "label": "期待",
+    "default": 0.5,
+    "description": "對未來的期待程度"
+  },
+  {
+    "axis": "gamma",
+    "name": "love",
+    "label": "愛",
+    "default": 0.0,
+    "description": "愛/親密情感"
+  },
+  {
+    "axis": "gamma",
+    "name": "calm",
+    "label": "平靜",
+    "default": 0.5,
+    "description": "內心平靜程度"
+  },
+  {
+    "axis": "delta",
+    "name": "attention",
+    "label": "注意力",
+    "default": 0.5,
+    "description": "對環境/他人的關注程度"
+  },
+  {
+    "axis": "delta",
+    "name": "bond",
+    "label": "連結",
+    "default": 0.5,
+    "description": "社交連結/依附程度"
+  },
+  {
+    "axis": "delta",
+    "name": "trust",
+    "label": "社交信任",
+    "default": 0.5,
+    "description": "社交場景中的信任"
+  },
+  {
+    "axis": "delta",
+    "name": "presence",
+    "label": "存在",
+    "default": 0.5,
+    "description": "社交存在感"
+  },
+  {
+    "axis": "delta",
+    "name": "intimacy",
+    "label": "親密",
+    "default": 0.0,
+    "description": "社交親密程度"
+  },
+  {
+    "axis": "delta",
+    "name": "engagement",
+    "label": "投入",
+    "default": 0.5,
+    "description": "社交活動投入程度"
+  },
+  {
+    "axis": "epsilon",
+    "name": "logic",
+    "label": "邏輯",
+    "default": 0.5,
+    "description": "邏輯推理能力"
+  },
+  {
+    "axis": "epsilon",
+    "name": "precision",
+    "label": "精確",
+    "default": 0.5,
+    "description": "精確計算程度"
+  },
+  {
+    "axis": "epsilon",
+    "name": "abstraction",
+    "label": "抽象",
+    "default": 0.5,
+    "description": "抽象思維能力"
+  },
+  {
+    "axis": "epsilon",
+    "name": "certainty",
+    "label": "確定",
+    "default": 0.5,
+    "description": "對結論的確信程度"
+  },
+  {
+    "axis": "epsilon",
+    "name": "complexity",
+    "label": "複雜",
+    "default": 0.0,
+    "description": "處理的複雜度水平"
+  },
+  {
+    "axis": "epsilon",
+    "name": "fatigue",
+    "label": "認知疲勞",
+    "default": 0.0,
+    "description": "數學運算帶來的疲勞"
+  },
+  {
+    "axis": "theta",
+    "name": "novelty",
+    "label": "新穎",
+    "default": 0.5,
+    "description": "對新事物的感知程度"
+  },
+  {
+    "axis": "theta",
+    "name": "complexity",
+    "label": "認知複雜",
+    "default": 0.5,
+    "description": "任務/輸入的認知複雜度"
+  },
+  {
+    "axis": "theta",
+    "name": "ambiguity",
+    "label": "模糊",
+    "default": 0.5,
+    "description": "輸入的不確定程度"
+  },
+  {
+    "axis": "theta",
+    "name": "abstraction_level",
+    "label": "抽象層",
+    "default": 0.5,
+    "description": "處理的抽象層次"
+  },
+  {
+    "axis": "theta",
+    "name": "dimension_fit",
+    "label": "維度匹配",
+    "default": 0.5,
+    "description": "與現有軸的匹配程度"
+  },
+  {
+    "axis": "theta",
+    "name": "creation_urge",
+    "label": "創造慾",
+    "default": 0.0,
+    "description": "創建新軸的驅動程度"
+  },
+  {
+    "axis": "theta",
+    "name": "theta_negativity",
+    "label": "負值懷疑",
+    "default": 0.0,
+    "description": "對當前分配的懷疑程度"
+  },
+  {
+    "axis": "theta",
+    "name": "correction_urge",
+    "label": "修正慾",
+    "default": 0.0,
+    "description": "驅動自動修正的程度"
+  },
+  {
+    "axis": "theta",
+    "name": "audit_intensity",
+    "label": "審計強度",
+    "default": 0.0,
+    "description": "歷史掃描的深度"
+  }
+]

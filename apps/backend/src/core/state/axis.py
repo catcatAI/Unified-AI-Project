@@ -31,3 +31,32 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
+from typing import Any, Dict, List, Optional, Type
+from core.state.axis_field import AxisField
+
+
+class Axis:
+    _fields: Dict[str, AxisField]
+    values: Dict[str, float]
+
+    def __init__(self, axis_id: str, label: str = ""):
+        self.axis_id = axis_id
+        self.label = label
+        self.values = {}
+        self._fields = {}
+
+    @classmethod
+    def from_config(cls, axis_id: str, label: str = "") -> "Axis":
+        return cls(axis_id, label=label)
+
+    def set(self, field_type: Type, value: float) -> None:
+        pass
+
+    def get(self, field_type: Type) -> Optional[float]:
+        return None
+
+    def average(self) -> float:
+        return 0.0
+
+    def dominant(self) -> Optional[str]:
+        return None

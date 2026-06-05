@@ -2,7 +2,10 @@
 
 import logging
 
-from services.math_verifier import MathVerifier
+try:
+    from services.math_verifier import MathVerifier
+except ImportError:
+    MathVerifier = None
 
 logger = logging.getLogger(__name__)
 

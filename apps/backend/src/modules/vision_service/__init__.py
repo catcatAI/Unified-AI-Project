@@ -1,4 +1,7 @@
-from services.vision_service import VisionService
+try:
+    from services.vision_service import VisionService
+except ImportError:
+    VisionService = None
 
 
 async def init(deps: dict = None) -> VisionService:

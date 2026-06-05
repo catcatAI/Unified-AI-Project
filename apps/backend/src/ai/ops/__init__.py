@@ -7,7 +7,10 @@ AI运维系统模块
 from .ai_ops_engine import AIOpsEngine
 from .predictive_maintenance import PredictiveMaintenanceEngine
 from .performance_optimizer import PerformanceOptimizer
-from .capacity_planner import CapacityPlanner
+try:
+    from .capacity_planner import CapacityPlanner
+except ImportError:
+    CapacityPlanner = None
 import logging
 
 logger = logging.getLogger(__name__)

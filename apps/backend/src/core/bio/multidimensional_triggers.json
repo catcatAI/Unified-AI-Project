@@ -1,0 +1,173 @@
+[
+  {
+    "trigger_id": "morning_greeting",
+    "name": "Morning Greeting",
+    "behavior_id": "greeting_wave",
+    "conditions": [
+      {
+        "dimension": "TIME",
+        "operator": "range",
+        "threshold": 0.25,
+        "weight": 2.0,
+        "cooldown": 3600.0
+      },
+      {
+        "dimension": "EMOTION",
+        "operator": "gte",
+        "threshold": 0.3,
+        "weight": 1.0
+      }
+    ],
+    "min_score": 0.6,
+    "priority": 5
+  },
+  {
+    "trigger_id": "evening_sleepy",
+    "name": "Evening Sleepy",
+    "behavior_id": "idle_yawning",
+    "conditions": [
+      {
+        "dimension": "TIME",
+        "operator": "gte",
+        "threshold": 0.8,
+        "weight": 2.0
+      },
+      {
+        "dimension": "PHYSIOLOGY",
+        "operator": "lte",
+        "threshold": 0.4,
+        "weight": 1.5
+      }
+    ],
+    "min_score": 0.5,
+    "priority": 3
+  },
+  {
+    "trigger_id": "happy_celebration",
+    "name": "Happy Celebration",
+    "behavior_id": "celebration_dance",
+    "conditions": [
+      {
+        "dimension": "EMOTION",
+        "operator": "gte",
+        "threshold": 0.8,
+        "weight": 2.0
+      },
+      {
+        "dimension": "SOCIAL",
+        "operator": "gte",
+        "threshold": 0.5,
+        "weight": 1.0
+      }
+    ],
+    "min_score": 0.7,
+    "priority": 8
+  },
+  {
+    "trigger_id": "stress_relief",
+    "name": "Stress Relief",
+    "behavior_id": "comforting_gesture",
+    "conditions": [
+      {
+        "dimension": "EMOTION",
+        "operator": "lte",
+        "threshold": 0.3,
+        "weight": 2.0
+      },
+      {
+        "dimension": "PHYSIOLOGY",
+        "operator": "gte",
+        "threshold": 0.7,
+        "weight": 1.5
+      }
+    ],
+    "min_score": 0.6,
+    "priority": 9
+  },
+  {
+    "trigger_id": "idle_stretch",
+    "name": "Idle Stretch",
+    "behavior_id": "idle_stretching",
+    "conditions": [
+      {
+        "dimension": "TIME",
+        "operator": "gte",
+        "threshold": 0.5,
+        "weight": 1.0
+      },
+      {
+        "dimension": "PHYSIOLOGY",
+        "operator": "range",
+        "threshold": 0.5,
+        "weight": 1.0
+      }
+    ],
+    "min_score": 0.4,
+    "priority": 2
+  },
+  {
+    "trigger_id": "surprise_reaction",
+    "name": "Surprise Reaction",
+    "behavior_id": "surprise_reaction",
+    "conditions": [
+      {
+        "dimension": "ENVIRONMENT",
+        "operator": "gte",
+        "threshold": 0.8,
+        "weight": 2.0
+      },
+      {
+        "dimension": "COGNITIVE",
+        "operator": "gte",
+        "threshold": 0.6,
+        "weight": 1.0
+      }
+    ],
+    "min_score": 0.7,
+    "priority": 10
+  },
+  {
+    "trigger_id": "attention_seek",
+    "name": "Attention Seeking",
+    "behavior_id": "attention_seek",
+    "conditions": [
+      {
+        "dimension": "SOCIAL",
+        "operator": "lte",
+        "threshold": 0.2,
+        "weight": 2.0,
+        "cooldown": 180.0
+      },
+      {
+        "dimension": "EMOTION",
+        "operator": "gte",
+        "threshold": 0.4,
+        "weight": 1.0
+      }
+    ],
+    "min_score": 0.5,
+    "priority": 4
+  },
+  {
+    "trigger_id": "random_playful",
+    "name": "Random Playful",
+    "behavior_id": "playful_wink",
+    "conditions": [
+      {
+        "dimension": "RANDOM",
+        "operator": "gte",
+        "threshold": 0.95,
+        "weight": 2.0,
+        "cooldown": 300.0
+      },
+      {
+        "dimension": "EMOTION",
+        "operator": "gte",
+        "threshold": 0.5,
+        "weight": 1.0
+      }
+    ],
+    "min_score": 0.8,
+    "priority": 3
+  }
+]

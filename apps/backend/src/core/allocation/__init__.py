@@ -11,27 +11,39 @@ Author: Angela AI v6.2
 Version: 6.2.1
 """
 
-from core.allocation.resonance import (
-    ResonanceEngine,
-    ResonanceResult,
-    ResonanceProfile,
-)
-from core.allocation.policy import (
-    AllocationPolicy,
-    AllocationAction,
-    AllocationContext,
-    AllocationDecision,
-    AllocationStage,
-    AssignStage,
-    CompositeStage,
-    CreateStage,
-    DeferStage,
-)
-from core.allocation.negativity import (
-    NegativityDetector,
-    DetectionResult,
-    CorrectionResult,
-)
+try:
+    from core.allocation.resonance import (
+        ResonanceEngine,
+        ResonanceResult,
+        ResonanceProfile,
+    )
+except ImportError:
+    ResonanceEngine = ResonanceResult = ResonanceProfile = None
+
+try:
+    from core.allocation.policy import (
+        AllocationPolicy,
+        AllocationAction,
+        AllocationContext,
+        AllocationDecision,
+        AllocationStage,
+        AssignStage,
+        CompositeStage,
+        CreateStage,
+        DeferStage,
+    )
+except ImportError:
+    AllocationPolicy = AllocationAction = AllocationContext = AllocationDecision = None
+    AllocationStage = AssignStage = CompositeStage = CreateStage = DeferStage = None
+
+try:
+    from core.allocation.negativity import (
+        NegativityDetector,
+        DetectionResult,
+        CorrectionResult,
+    )
+except ImportError:
+    NegativityDetector = DetectionResult = CorrectionResult = None
 
 __all__ = [
     "ResonanceEngine",

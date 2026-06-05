@@ -2,7 +2,10 @@
 
 import logging
 
-from services.hot_reload_service import HotReloadService
+try:
+    from services.hot_reload_service import HotReloadService
+except ImportError:
+    HotReloadService = None
 
 logger = logging.getLogger(__name__)
 

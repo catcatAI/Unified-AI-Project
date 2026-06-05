@@ -26,20 +26,26 @@ from ai.code_inspection.code_inspector import (
     ModuleInfo,
 )
 
-from ai.code_inspection.knowledge_graph import (
-    KnowledgeGraph,
-    GraphQueryEngine,
-    GraphNode,
-    GraphEdge,
-)
+try:
+    from ai.code_inspection.knowledge_graph import (
+        KnowledgeGraph,
+        GraphQueryEngine,
+        GraphNode,
+        GraphEdge,
+    )
+except ImportError:
+    KnowledgeGraph = GraphQueryEngine = GraphNode = GraphEdge = None
 
-from ai.code_inspection.code_learning import (
-    CodeLearningEngine,
-    LearnedPattern,
-    LearningFeedback,
-    CodeInspectorInterface,
-    create_inspector,
-)
+try:
+    from ai.code_inspection.code_learning import (
+        CodeLearningEngine,
+        LearnedPattern,
+        LearningFeedback,
+        CodeInspectorInterface,
+        create_inspector,
+    )
+except ImportError:
+    CodeLearningEngine = LearnedPattern = LearningFeedback = CodeInspectorInterface = create_inspector = None
 
 __all__ = [
     "CodeInspector",

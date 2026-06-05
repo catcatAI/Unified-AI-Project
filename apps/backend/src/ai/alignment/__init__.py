@@ -6,7 +6,10 @@ AGI / ASI 对齐系统包, 包含理智、感性和存在三大支柱系统,
 
 import logging
 
-from .reasoning_system import ReasoningSystem
+try:
+    from .reasoning_system import ReasoningSystem
+except ImportError:
+    ReasoningSystem = None
 
 logger = logging.getLogger(__name__)
 

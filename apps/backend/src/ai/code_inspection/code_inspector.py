@@ -21,6 +21,8 @@ Version: 6.2.1
 
 from __future__ import annotations
 import ast
+import json
+import os
 import re
 import logging
 from dataclasses import dataclass, field
@@ -175,194 +177,21 @@ class PatternMatcher:
 
     @classmethod
     def init_rules(cls) -> None:
-        """Initialize rules."""
+        """Initialize rules from JSON data file."""
         if cls.RULES:
             return
-
-        cls.RULES = [
-            # === 類型錯誤 ===
-            PatternRule(
-                id="TYP-001",
-                name="未使用的 import",
-                category=IssueCategory.TYPE,
-                severity=Severity.LOW,
-                pattern=re.compile(r"^import\s+(\w+)|from\s+(\w+)\s+import", re.M),
-                description="Module imported but never used",
-                suggestion="Remove unused import or prefix with _",
-                confidence=0.90,
-            ),
-            PatternRule(
-                id="TYP-002",
-                name="可能為 None 的引用",
-                category=IssueCategory.TYPE,
-                severity=Severity.HIGH,
-                pattern=re.compile(r"\.(get|values|items|keys)\(\)"),
-                description="Dictionary method call without None check",
-                suggestion="Add 'if dict is not None:' before access",
-                confidence=0.85,
-                auto_fixable=True,
-                fix_template="wrap_with_none_check",
-            ),
-            PatternRule(
-                id="TYP-003",
-                name="IndexError 風險",
-                category=IssueCategory.TYPE,
-                severity=Severity.MEDIUM,
-                pattern=re.compile(r"\[-?\d+\]"),
-                description="Negative index access without bounds check",
-                suggestion="Check 'if len(list) > abs(index):' before access",
-                confidence=0.80,
-            ),
-
-            # === 安全問題 ===
-            PatternRule(
-                id="SEC-001",
-                name="硬編碼密鑰/密碼",
-                category=IssueCategory.SECURITY,
-                severity=Severity.CRITICAL,
-                pattern=re.compile(r"(password|secret|key|token)\s*=\s*['\"][^'\"]{4,}['\"]", re.IGNORECASE),
-                description="Hardcoded credential found",
-                suggestion="Use environment variables: os.getenv('KEY')",
-                confidence=0.95,
-                auto_fixable=True,
-                fix_template="replace_with_env_get",
-            ),
-            PatternRule(
-                id="SEC-002",
-                name="eval() 使用",
-                category=IssueCategory.SECURITY,
-                severity=Severity.CRITICAL,
-                pattern=re.compile(r"\beval\s*\("),
-                description="Use of eval() is a security risk",
-                suggestion="Use ast.literal_eval() or explicit parsing instead",
-                confidence=0.98,
-            ),
-            PatternRule(
-                id="SEC-003",
-                name="SQL 注入風險",
-                category=IssueCategory.SECURITY,
-                severity=Severity.CRITICAL,
-                pattern=re.compile(r'(execute|query|cursor)\s*\([^)]*\%[^)]*\)|f["\'][^"\']*\{[^}]*\}["\']',
-                                      re.IGNORECASE),
-                description="Potential SQL injection vulnerability",
-                suggestion="Use parameterized queries: cursor.execute(?, [params])",
-                confidence=0.88,
-            ),
-            PatternRule(
-                id="SEC-004",
-                name="print/日志敏感信息",
-                category=IssueCategory.SECURITY,
-                severity=Severity.MEDIUM,
-                pattern=re.compile(r'print\s*\(\s*(password|secret|key|token|api_key)\s*[,)]', re.IGNORECASE),
-                description="Sensitive information in print/log statement",
-                suggestion="Remove or mask sensitive data in output",
-                confidence=0.95,
-                auto_fixable=True,
-                fix_template="mask_sensitive_in_print",
-            ),
-
-            # === 邏輯錯誤 ===
-            PatternRule(
-                id="LOG-001",
-                name="除零風險",
-                category=IssueCategory.LOGIC,
-                severity=Severity.HIGH,
-                pattern=re.compile(r"/\s*(?!0)(?:\d+(?:\.\d*)?|\.\d+)"),
-                description="Division by non-constant zero possible",
-                suggestion="Check 'if divisor != 0:' before division",
-                confidence=0.92,
-                auto_fixable=True,
-                fix_template="wrap_divisor_check",
-            ),
-            PatternRule(
-                id="LOG-002",
-                name="死代碼",
-                category=IssueCategory.LOGIC,
-                severity=Severity.LOW,
-                pattern=re.compile(r"(return|break|continue)\s*;[^\n]*\n\s*(?:def|class|if|for|while)"),
-                description="Unreachable code after control statement",
-                suggestion="Remove code after return/break/continue",
-                confidence=0.90,
-            ),
-            PatternRule(
-                id="LOG-003",
-                name="空 except 塊",
-                category=IssueCategory.LOGIC,
-                severity=Severity.MEDIUM,
-                pattern=re.compile(r"except\s*[^\n]*:\s*\n\s*(?:pass|\n\s*\n\s*(?:[^\n]))", re.M),
-                description="Empty except block silently swallows errors",
-                suggestion="Add logging or re-raise: 'except Exception as e: logger.error(e)'",
-                confidence=0.88,
-                auto_fixable=True,
-                fix_template="add_logging_to_except",
-            ),
-
-            # === 樣式問題 ===
-            PatternRule(
-                id="STY-001",
-                name="過長函數",
-                category=IssueCategory.STYLE,
-                severity=Severity.MEDIUM,
-                pattern=re.compile(r"def\s+\w+\([^)]*\):"),
-                description="Function exceeds recommended length (100 lines)",
-                suggestion="Consider splitting into smaller functions",
-                confidence=0.80,
-            ),
-            PatternRule(
-                id="STY-002",
-                name="過長行",
-                category=IssueCategory.STYLE,
-                severity=Severity.LOW,
-                pattern=re.compile(r".{101,}"),
-                description="Line exceeds 100 characters",
-                suggestion="Split line or wrap expression",
-                confidence=0.98,
-            ),
-            PatternRule(
-                id="STY-003",
-                name="缺少 docstring",
-                category=IssueCategory.STYLE,
-                severity=Severity.LOW,
-                pattern=re.compile(r"def\s+(\w+)\s*\([^)]*\)\s*(?:->\s*\w+)?\s*:\s*\n(?!\s*[\"\"\"'''])"),
-                description="Function/class missing docstring",
-                suggestion="Add docstring: '''Description'''",
-                confidence=0.85,
-            ),
-
-            # === 一致性問題 ===
-            PatternRule(
-                id="CON-001",
-                name="命名不一致",
-                category=IssueCategory.CONSISTENCY,
-                severity=Severity.MEDIUM,
-                pattern=re.compile(r"(?:snake_case|camelCase)"),
-                description="Inconsistent naming convention",
-                suggestion="Use snake_case for Python: 'my_function' not 'myFunction'",
-                confidence=0.75,
-            ),
-            PatternRule(
-                id="CON-002",
-                name="重複代碼",
-                category=IssueCategory.CONSISTENCY,
-                severity=Severity.MEDIUM,
-                pattern=re.compile(r"(.{50,})\1{3,}"),
-                description="Potential repeated code pattern",
-                suggestion="Extract to function or use loop",
-                confidence=0.70,
-            ),
-
-            # === 棄用警告 ===
-            PatternRule(
-                id="DEP-001",
-                name="使用 deprecated API",
-                category=IssueCategory.DEPRECATION,
-                severity=Severity.MEDIUM,
-                pattern=re.compile(r"(logging\.(warn|info)|__init__\.py)", re.IGNORECASE),
-                description="Usage of deprecated pattern",
-                suggestion="Use 'logging.warning' instead of 'logging.warn'",
-                confidence=0.92,
-            ),
-        ]
+        _flag_map = {0: 0, 2: re.I, 8: re.M, 16: re.S, 10: re.I | re.M, 18: re.I | re.S}
+        _dir = os.path.dirname(os.path.abspath(__file__))
+        _path = os.path.join(_dir, "code_inspection_rules.json")
+        with open(_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        cls.RULES = []
+        for item in data:
+            flags = _flag_map.get(item.pop("flags", 0), 0)
+            pattern_str = item.pop("pattern")
+            item["severity"] = Severity(item["severity"].lower())
+            item["category"] = IssueCategory(item["category"].lower())
+            cls.RULES.append(PatternRule(pattern=re.compile(pattern_str, flags), **item))
 
     @classmethod
     def match_line(cls, line: str, lineno: int, filepath: str) -> List[Issue]:
