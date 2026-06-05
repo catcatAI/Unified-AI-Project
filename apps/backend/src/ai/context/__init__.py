@@ -10,3 +10,7 @@
 # =============================================================================
 
 """Context system module initialization"""
+
+from ai.context.demo_context_system import DemoContextSystem
+
+__all__ = ["DemoContextSystem"]

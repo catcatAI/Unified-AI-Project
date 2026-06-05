@@ -6,3 +6,110 @@ Angela AI - Common Utilities
 提供项目中常用的工具函数和类，减少代码重复。
 """
 
+import hashlib
+import json
+import logging
+import re
+import time
+from typing import Any, Dict, List, Optional, Union
+
+logger = logging.getLogger(__name__)
+
+
+def sha256_hash(data: Union[str, bytes]) -> str:
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    return hashlib.sha256(data).hexdigest()
+
+
+def md5_hash(data: Union[str, bytes]) -> str:
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    return hashlib.md5(data).hexdigest()
+
+
+def truncate_text(text: str, max_length: int = 1000, suffix: str = "...") -> str:
+    if len(text) <= max_length:
+        return text
+    return text[:max_length].rstrip() + suffix
+
+
+def safe_json_parse(text: str, default: Any = None) -> Any:
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+
+def extract_urls(text: str) -> List[str]:
+    pattern = r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+[-\w/?%&=+#]*"
+    return re.findall(pattern, text)
+
+
+def extract_emails(text: str) -> List[str]:
+    pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+    return re.findall(pattern, text)
+
+
+def now_timestamp() -> float:
+    return time.time()
+
+
+def format_duration(seconds: float) -> str:
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    minutes = seconds / 60
+    if minutes < 60:
+        return f"{minutes:.1f}m"
+    hours = minutes / 60
+    return f"{hours:.1f}h"
+
+
+def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    result = base.copy()
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+def chunk_list(items: List[Any], chunk_size: int = 100) -> List[List[Any]]:
+    return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
+
+
+class Timer:
+    """Simple context manager / utility for timing operations."""
+
+    def __init__(self, label: str = ""):
+        self.label = label
+        self.start_time: float = 0.0
+        self.elapsed: float = 0.0
+
+    def __enter__(self):
+        self.start_time = time.perf_counter()
+        return self
+
+    def __exit__(self, *args):
+        self.elapsed = time.perf_counter() - self.start_time
+        if self.label:
+            logger.debug(f"Timer [{self.label}]: {self.elapsed:.4f}s")
+
+    def get_elapsed_ms(self) -> float:
+        return self.elapsed * 1000
+
+
+__all__ = [
+    "sha256_hash",
+    "md5_hash",
+    "truncate_text",
+    "safe_json_parse",
+    "extract_urls",
+    "extract_emails",
+    "now_timestamp",
+    "format_duration",
+    "deep_merge",
+    "chunk_list",
+    "Timer",
+]

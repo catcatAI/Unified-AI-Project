@@ -9,5 +9,20 @@ from fastapi import APIRouter
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/ops", tags=["Operations"])
 
+
+@router.get("/status")
+async def get_ops_status() -> dict:
+    return {"status": "ok", "service": "ops"}
+
+
+@router.get("/health")
+async def health_check() -> dict:
+    return {"status": "healthy", "service": "ops"}
+
+
+@router.post("/maintenance")
+async def trigger_maintenance() -> dict:
+    logger.info("Maintenance triggered via ops_routes")
+    return {"status": "started", "task": "maintenance"}

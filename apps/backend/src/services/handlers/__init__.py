@@ -8,6 +8,12 @@ try:
 except ImportError:
     FileOperationHandler = None
 
+try:
+    from services.handlers.google_drive_handler import GoogleDriveHandler
+except ImportError:
+    GoogleDriveHandler = None
+
 __all__ = [
     "FileOperationHandler",
+    "GoogleDriveHandler",
 ]
