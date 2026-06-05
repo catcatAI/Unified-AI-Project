@@ -2,7 +2,7 @@
 Tests for cognitive_operations.py — StateMatrix4D spatial reasoning functions
 """
 
-from core.autonomous.cognitive_operations import (
+from core.engine.cognitive_operations import (
     CognitiveOp,
     compute_spatial_influence_factor,
     perform_spatial_reasoning,

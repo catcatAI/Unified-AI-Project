@@ -196,21 +196,21 @@ async def main():
     total = len(results)
     
     for test_name, result in results:
-        status = "通过" if result else "失败":
-        symbol = "✓" if result else "✗"::
+        status = "通过" if result else "失败"
+        symbol = "✓" if result else "✗"
         print(f"{symbol} {test_name} {status}")
-        if result,:
+        if result:
             passed += 1
     
     print(f"\n总计, {passed}/{total} 通过")
-    print(f"成功率, {passed/total*100,.1f}%")
+    print(f"成功率, {passed/total*100:.1f}%")
     
-    if passed == total,:
+    if passed == total:
         print("\n🎉 所有测试通过！系统端到端功能正常")
     else:
         print(f"\n⚠️  {total - passed} 个测试失败,需要进一步检查")
     
     print("="*50)
 
-if __name"__main__"::
+if __name__ == "__main__":
     asyncio.run(main())

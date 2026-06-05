@@ -183,8 +183,12 @@ class PatternMatcher:
         _flag_map = {0: 0, 2: re.I, 8: re.M, 16: re.S, 10: re.I | re.M, 18: re.I | re.S}
         _dir = os.path.dirname(os.path.abspath(__file__))
         _path = os.path.join(_dir, "code_inspection_rules.json")
-        with open(_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        try:
+            with open(_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.warning("code_inspection_rules.json not found or invalid: %s", e)
+            data = []
         cls.RULES = []
         for item in data:
             flags = _flag_map.get(item.pop("flags", 0), 0)

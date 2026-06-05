@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import inspect
+import threading
 from typing import Dict, List, Callable, Any
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,19 @@ class InternalBus:
 
     def __init__(self):
         self.subscriptions: Dict[str, List[Callable[[Any], None]]] = {}
+        self._task_semaphore = threading.Semaphore(200)
+
+    def _run_task(self, callback, message):
+        """Run an async callback with bounded concurrency."""
+        if not self._task_semaphore.acquire(blocking=False):
+            logger.warning("Dropping internal bus task: too many pending")
+            return
+        async def _wrapped():
+            try:
+                await callback(message)
+            finally:
+                self._task_semaphore.release()
+        asyncio.create_task(_wrapped())
 
     def publish(self, channel: str, message: Any) -> None:
         """Publish a message to a channel."""
@@ -21,7 +35,7 @@ class InternalBus:
         if channel in self.subscriptions:
             for callback in self.subscriptions[channel]:
                 if inspect.iscoroutinefunction(callback):
-                    asyncio.create_task(callback(message))
+                    self._run_task(callback, message)
                 else:
                     callback(message)
 

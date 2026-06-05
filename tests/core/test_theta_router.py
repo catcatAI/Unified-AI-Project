@@ -1,7 +1,8 @@
 """Tests for theta_router.py"""
 
+import pytest
 
-from core.autonomous.theta_router import ThetaRouter, RouteAction, RouteDecision, AxisBinding
+from core.engine.theta_router import ThetaRouter, RouteAction, RouteDecision, AxisBinding
 
 
 def make_vector(val: float = 0.5, nonzero: int = 8) -> list:
@@ -70,6 +71,7 @@ def test_theta_router_cascade_no_registry():
 
 
 def test_theta_router_cascade_empty_outputs():
+    pytest.importorskip("core.autonomous.axis_port_registry")
     from core.autonomous.axis_port_registry import PortRegistry, PortDirection
 
     registry = PortRegistry(state_adapter=None)

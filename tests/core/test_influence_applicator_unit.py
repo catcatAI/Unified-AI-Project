@@ -6,7 +6,7 @@ Author: Angela AI v6.2
 """
 
 
-from core.autonomous.influence_applicator import (
+from core.engine.influence_applicator import (
     InfluenceApplicator, get_applicator,
     INFLUENCE_RULES, apply_influence_to_axis,
 )

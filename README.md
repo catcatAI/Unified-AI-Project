@@ -98,7 +98,7 @@ npm install
 npm start
 ```
 
-**Prerequisites**: Python 3.9+, Node.js 16+, Ollama (LLM backend, CPU ~120s/inference).
+**Prerequisites**: Python 3.10+, Node.js 16+, Ollama (LLM backend, CPU ~120s/inference).
 
 ---
 
@@ -261,7 +261,7 @@ npm install
 npm start
 ```
 
-**環境需求**：Python 3.9+、Node.js 16+、Ollama（LLM 後端，CPU 約 120 秒/次）
+**環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端，CPU 約 120 秒/次）
 
 > ⚠️ 後端有兩台 FastAPI 伺服器，均預設 port 8000。同一時間只能一台綁定 8000，另一台需用 `--port`。詳見 [ARCHITECTURE_MAP](docs/03-technical-architecture/analysis/ARCHITECTURE_MAP_2026-05-20.md)（Server topology, port conflict）。
 

@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import json
+import threading
 import uuid
 import time
 import os
@@ -121,6 +122,10 @@ class HSPConnector:
         self.logger = logging.getLogger(__name__)
         self.hsp_available = False  # Track HSP availability
         self._is_connected = False  # Initialize instance variable
+
+        # Bounded task tracking for backpressure
+        self._task_semaphore = threading.Semaphore(100)
+        self._max_concurrent_tasks = 100
 
         # 性能优化参数
         self.message_cache: Dict[str, Any] = {}  # 消息缓存
@@ -254,29 +259,41 @@ class HSPConnector:
             self._dispatch_acknowledgement_to_callbacks_sync,
         )  # New subscription
 
+    def _run_bounded_task(self, coro_factory):
+        """Run an async coroutine with bounded concurrency."""
+        if not self._task_semaphore.acquire(blocking=False):
+            self.logger.warning("Dropping task: too many pending HSP tasks (%s)", self._max_concurrent_tasks)
+            return
+        async def _run():
+            try:
+                await coro_factory()
+            finally:
+                self._task_semaphore.release()
+        asyncio.create_task(_run())
+
     def _handle_internal_message(self, message: Any) -> None:
         """处理内部消息的同步包装器"""
-        asyncio.create_task(self.message_bridge.handle_internal_message(message))
+        self._run_bounded_task(lambda: self.message_bridge.handle_internal_message(message))
 
     def _dispatch_fact_to_callbacks_sync(self, message: Any) -> None:
         """同步包装器用于分发事实消息到回调"""
-        asyncio.create_task(self._dispatch_fact_to_callbacks(message))
+        self._run_bounded_task(lambda: self._dispatch_fact_to_callbacks(message))
 
     def _dispatch_capability_advertisement_to_callbacks_sync(self, message: Any) -> None:
         """同步包装器用于分发能力广告消息到回调"""
-        asyncio.create_task(self._dispatch_capability_advertisement_to_callbacks(message))
+        self._run_bounded_task(lambda: self._dispatch_capability_advertisement_to_callbacks(message))
 
     def _dispatch_task_request_to_callbacks_sync(self, message: Any) -> None:
         """同步包装器用于分发任务请求消息到回调"""
-        asyncio.create_task(self._dispatch_task_request_to_callbacks(message))
+        self._run_bounded_task(lambda: self._dispatch_task_request_to_callbacks(message))
 
     def _dispatch_task_result_to_callbacks_sync(self, message: Any) -> None:
         """同步包装器用于分发任务结果消息到回调"""
-        asyncio.create_task(self._dispatch_task_result_to_callbacks(message))
+        self._run_bounded_task(lambda: self._dispatch_task_result_to_callbacks(message))
 
     def _dispatch_acknowledgement_to_callbacks_sync(self, message: Any) -> None:
         """同步包装器用于分发确认消息到回调"""
-        asyncio.create_task(self._dispatch_acknowledgement_to_callbacks(message))
+        self._run_bounded_task(lambda: self._dispatch_acknowledgement_to_callbacks(message))
 
     async def _dispatch_fact_to_callbacks(self, message: Any) -> None:
         """异步分发事实消息到回调"""
@@ -800,6 +817,7 @@ class HSPConnector:
                 if not ack_future.done():
                     ack_future.set_result(ack_payload)
                     self.logger.debug(f"Resolved pending ACK for correlation_id: {correlation_id}")
+                del self._pending_acks[correlation_id]
 
             for callback in self._acknowledgement_callbacks:
                 self.logger.debug(f"Calling on_acknowledgement_callback: {callback}")
@@ -1009,10 +1027,10 @@ class HSPConnector:
                 try:
                     await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
                     self.logger.info(f"ACK received for message {correlation_id}.")
-                    # Clear retry count on success
+                    if correlation_id in self._pending_acks:
+                        del self._pending_acks[correlation_id]
                     if correlation_id in self._message_retry_counts:
                         del self._message_retry_counts[correlation_id]
-                    # 缓存结果
                     self._cache_message(message_id, True)
                     return True
                 except asyncio.TimeoutError:
@@ -1020,17 +1038,18 @@ class HSPConnector:
                         f"ACK timeout for message {correlation_id}. Trying fallback if enabled."
                         , exc_info=True
                     )
-                    # Try fallback first before retrying
+                    if self._pending_acks.get(correlation_id):
+                        del self._pending_acks[correlation_id]
                     if self.enable_fallback and self.fallback_manager:
                         fallback_success = await self._send_via_fallback(topic, dict(envelope), qos)
                         if fallback_success:
                             self.logger.info(
                                 f"Message {correlation_id} sent via fallback after ACK timeout."
                             )
-                            # Clear retry count on success
+                            if correlation_id in self._pending_acks:
+                                del self._pending_acks[correlation_id]
                             if correlation_id in self._message_retry_counts:
                                 del self._message_retry_counts[correlation_id]
-                            # 缓存结果
                             self._cache_message(message_id, True)
                             return True
                         else:
@@ -1053,7 +1072,8 @@ class HSPConnector:
                             f"Max retries exceeded for message {correlation_id} after ACK timeout."
                             , exc_info=True
                         )
-                        # 缓存结果
+                        if correlation_id in self._pending_acks:
+                            del self._pending_acks[correlation_id]
                         self._cache_message(message_id, False)
                         return False
             else:
@@ -1077,6 +1097,7 @@ class HSPConnector:
                 return await self.publish_message(topic, envelope, qos)
             else:
                 logger.error(f"Max retries exceeded for message {correlation_id} after error.", exc_info=True)
-                # 缓存结果
+                if correlation_id in self._pending_acks:
+                    del self._pending_acks[correlation_id]
                 self._cache_message(message_id, False)
                 return False

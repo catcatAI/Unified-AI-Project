@@ -24,10 +24,13 @@ Version: 6.2.1
 
 from __future__ import annotations
 import json
+import logging
 import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -119,8 +122,12 @@ class AxisFieldRegistry:
     def _register_all_fields(self) -> None:
         _dir = os.path.dirname(os.path.abspath(__file__))
         _path = os.path.join(_dir, "axis_fields.json")
-        with open(_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        try:
+            with open(_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.warning("axis_fields.json not found or invalid: %s", e)
+            data = []
         for item in data:
             self._register(AxisField(**item))
 

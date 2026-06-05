@@ -1,7 +1,7 @@
 """Tests for port_channel.py"""
 
 
-from core.autonomous.port_channel import PortChannel, AxisOutputManager
+from core.engine.port_channel import PortChannel, AxisOutputManager
 
 
 def test_port_channel_push_pull():

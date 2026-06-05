@@ -70,7 +70,7 @@ jobs:
           mypy apps/backend/src
       - name: Tests (Python)
         run: |
-          pytest tests/core/ tests/shared/ tests/services/ tests/ai/agents/ tests/api/ tests/ai/memory/test_type_fixes.py tests/ai/test_real_causal_reasoning_engine.py --cov=apps/backend/src --cov-report=term-missing -v
+          pytest tests/unit/ tests/core/ tests/shared/ tests/services/ tests/ai/agents/ tests/api/ tests/ai/memory/test_type_fixes.py tests/ai/test_real_causal_reasoning_engine.py --cov=apps/backend/src --cov-report=term-missing -v
 
   secrets_scan:
     runs-on: ubuntu-latest

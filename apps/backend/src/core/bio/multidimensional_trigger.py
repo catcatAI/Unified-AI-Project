@@ -212,8 +212,12 @@ class MultidimensionalTriggerSystem:
         _dim_map = {d.name: d for d in TriggerDimension}
         _dir = os.path.dirname(os.path.abspath(__file__))
         _path = os.path.join(_dir, "multidimensional_triggers.json")
-        with open(_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        try:
+            with open(_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.warning("multidimensional_triggers.json not found or invalid: %s", e)
+            data = []
         for item in data:
             conds = [
                 TriggerCondition(
