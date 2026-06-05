@@ -335,7 +335,7 @@
 | **P3** | 補 INDEX.md 缺條目 | 0.5 會話 | 有序 |
 | **P3** | 處理 5 專用 agents "model not loaded" | 1 會話 | 真實服務 |
 | **P4** | 3/6 數據驅動超長函數重構（AxisFieldRegistry/PatternMatcher/MDS Trigger） | **1/3 會話** ✅ | 快速, 清晰 |
-| **P4** | 12 煙霧測試升級 | 1 會話 | 全面 |
+| **P4** | 2/12 煙霧測試升級（tactile + code_inspector + 新增 7 測試函數） | **1 會話** ✅ | 全面 |
 | **P4** | 28 超長函數重構 | 大 (剩餘 25) | 快速, 清晰 |
 | **P4** | 負載/壓力測試框架 | 大 | 快速 |
 | **P4** | Desktop tray 實作 | 1 會話 | 真實服務 |
