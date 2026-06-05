@@ -53,7 +53,7 @@
 
 **Angela AI** is a digital life system with biological simulation, self-evolution, and real execution capabilities.
 
-**Quick facts**: 562 Python files, ~127K lines. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~1500+ unit tests, 0 TODO/FIXME/NotImplementedError, 14/14 version consistency.**  
+**Quick facts**: 564 Python files, ~69K LOC. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~948 collectable tests, 0 TODO/FIXME/NotImplementedError, 14/14 version consistency.**  
 **Component versions (code-verified)**: backend `7.5.0-dev` · desktop `4.1.0-dev` · mobile `1.2.0-dev` · cli `1.1.0` · biology-core `1.0.0` — [full version audit](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).  
 **Architecture consistency score**: **62.6%** — [full breakdown](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表) (version 31% · shallow 65% · module 66% · algorithm 74%).  
 **Total project files**: ~2,950 (1,001 Python · 140 JS/TS · 805 docs · 577 config · 238 test · ~190 other).  
@@ -75,7 +75,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **P7 Config** | 🟡 | TieredConfigLoader done; core sleeps/intervals/timeouts migrated, ~43 formula/structural values remain |
 | **P8 Tech Debt** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
 
-See **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 complete), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10, 0-task target), **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit), and **[PHASE_REVIEW.md](docs/06-project-management/plans/PHASE_REVIEW.md)** (Phase Review 1 (06-02) with 10-dimension scoring).
+See **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (tracking), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10), **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit), **[PHASE_REVIEW.md](docs/06-project-management/plans/PHASE_REVIEW.md)** (Phase Review 1), **[PHASE_REVIEW2.md](docs/06-project-management/plans/PHASE_REVIEW2.md)** (Phase Review 2), **[PHASE_REVIEW3.md](docs/06-project-management/plans/PHASE_REVIEW3.md)** (Phase Review 3), and **[PHASE_REVIEW4.md](docs/06-project-management/plans/PHASE_REVIEW4.md)** (Phase Review 4 — latest, comprehensive).
 
 ### Quick Start
 
