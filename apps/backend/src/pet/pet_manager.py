@@ -190,8 +190,7 @@ class PetManager:
             asyncio.get_running_loop()
             asyncio.create_task(self._notify_state_change("sync_bio"))
         except RuntimeError:
-            # No running event loop during module import, skip notification
-            pass
+            logger.debug("No running event loop during module import, skip notification")
 
     async def _notify_state_change(self, reason: str) -> None:
         """Notifies external clients about pet state changes (e.g., via WebSocket)."""

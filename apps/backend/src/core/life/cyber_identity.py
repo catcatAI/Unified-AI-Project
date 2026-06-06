@@ -225,7 +225,7 @@ class CyberIdentity:
             try:
                 await self._reflection_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Reflection task cancelled during shutdown")
 
     async def _reflection_loop(self) -> None:
         """Background self-reflection loop"""

@@ -268,7 +268,7 @@ class BiologicalIntegrator:
             try:
                 await self._integration_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Integration task cancelled during shutdown")
 
         # Shutdown subsystems
         await self.tactile_system.shutdown()

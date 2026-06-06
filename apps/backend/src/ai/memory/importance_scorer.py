@@ -64,7 +64,7 @@ class ImportanceScorer:
                 score += p * 0.15
                 factors += 1
             except (ValueError, TypeError):
-                pass
+                logger.warning("Failed to parse priority value: %s", priority)
 
         source = metadata.get("source", "internal")
         src_weight = SOURCE_WEIGHTS.get(source, 0.5)

@@ -198,7 +198,7 @@ class AutonomousLifeCycle:
             try:
                 await self._lifecycle_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Lifecycle task cancelled during shutdown")
 
         await self.hsm.shutdown()
 

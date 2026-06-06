@@ -226,14 +226,14 @@ class AudioSystem:
             try:
                 await self._playback_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Playback task cancelled during shutdown")
 
         if self._lyrics_task:
             self._lyrics_task.cancel()
             try:
                 await self._lyrics_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Lyrics task cancelled during shutdown")
 
     def _set_state(self, new_state: AudioState) -> None:
         """Set audio state with notifications"""

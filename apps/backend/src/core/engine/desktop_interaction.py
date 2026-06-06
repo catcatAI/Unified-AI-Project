@@ -397,7 +397,7 @@ class DesktopInteraction:
             try:
                 await self._monitor_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Monitor task cancelled during shutdown")
 
     async def _monitor_loop(self) -> None:
         """Background monitoring loop"""

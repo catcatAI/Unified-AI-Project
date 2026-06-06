@@ -45,7 +45,7 @@ class BrainBridgeService:
             try:
                 await self._task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Bridge sync task cancelled")
         logger.info("Brain Bridge Service stopped.")
 
     async def _sync_loop(self) -> None:

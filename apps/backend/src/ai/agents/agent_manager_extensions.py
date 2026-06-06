@@ -84,7 +84,7 @@ class AgentManagerExtensions:
             try:
                 await agent_manager._health_monitor_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Health monitoring task cancelled")
             agent_manager._health_monitor_task = None
             logger.info("Health monitoring stopped")
 

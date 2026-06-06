@@ -251,7 +251,7 @@ class MultidimensionalTriggerSystem:
             try:
                 await self._evaluation_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Evaluation task cancelled during shutdown")
 
     async def _evaluation_loop(self) -> None:
         """Background evaluation loop"""

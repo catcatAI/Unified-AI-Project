@@ -97,7 +97,7 @@ class LocalIPCTransport(HSPTransport):
             try:
                 await self._listener_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Listener task cancelled during shutdown")
 
         logger.info("LocalIPCTransport disconnected")
         return True

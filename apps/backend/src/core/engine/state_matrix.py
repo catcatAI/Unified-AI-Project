@@ -1207,7 +1207,7 @@ Returns:
                 amount
             )
         except Exception:
-            pass  # No fallback — influence_applicator handles all cases
+            logger.warning("Failed to apply influence from %s to %s", source, target)
 
     def _apply_influence_fallback(self, source: str, target: str, amount: float) -> None:
         """Deprecated: influence applicator handles all cases now"""

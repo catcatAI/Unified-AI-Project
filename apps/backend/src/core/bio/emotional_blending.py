@@ -270,7 +270,7 @@ class EmotionalBlendingSystem:
             try:
                 await self._update_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Update task cancelled during shutdown")
 
     async def _update_loop(self) -> None:
         """Background update loop for emotion dynamics"""

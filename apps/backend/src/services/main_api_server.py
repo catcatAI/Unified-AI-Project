@@ -56,7 +56,7 @@ try:
     if env_path.exists():
         load_dotenv(env_path, override=False)
 except ImportError:
-    pass
+    logger.warning("python-dotenv not installed, skipping .env loading")
 except Exception:
     # broad exception acceptable: env file may not exist, non-critical setup
     logger.warning("Failed to load .env file", exc_info=True)

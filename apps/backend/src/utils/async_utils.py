@@ -32,7 +32,7 @@ def safe_create_task_sync(coro: Coroutine[Any, Any, Any],
             try:
                 t.result()
             except asyncio.CancelledError:
-                pass
+                logger.debug(f"[Async-Task] Task '{name or 'unnamed'}' was cancelled")
             except Exception as e:
                 logger.error(f"❌ [Async-Task] Task '{name or 'unnamed'}' failed: {e}", exc_info=True)
                 if on_error:
@@ -63,7 +63,7 @@ def safe_create_task(coro: Coroutine[Any, Any, Any],
         try:
             t.result()
         except asyncio.CancelledError:
-            pass
+            logger.debug(f"[Async-Task] Safe task '{name or 'unnamed'}' was cancelled")
         except Exception as e:  # broad exception acceptable: task result handling must not crash background workers
             logger.error(f"❌ [Async-Task] Task '{name or 'unnamed'}' failed: {e}", exc_info=True)
             if on_error:

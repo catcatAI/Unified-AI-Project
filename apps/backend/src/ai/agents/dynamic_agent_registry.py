@@ -61,7 +61,7 @@ class DynamicAgentRegistry:
                 try:
                     await self.registry_task
                 except asyncio.CancelledError:
-                    pass
+                    logger.debug("Registry task cancelled")
             logger.info("Dynamic agent registry stopped")
 
     async def _registry_loop(self) -> None:

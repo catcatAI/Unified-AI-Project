@@ -297,7 +297,7 @@ class ActionExecutionBridge:
             try:
                 await self._execution_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Execution task cancelled during shutdown")
 
         # Save history
         await self._save_history()

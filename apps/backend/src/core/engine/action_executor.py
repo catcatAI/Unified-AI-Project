@@ -315,7 +315,7 @@ class ActionExecutor:
             try:
                 await self._executor_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Executor task cancelled during shutdown")
             finally:
                 self._executor_task = None
 

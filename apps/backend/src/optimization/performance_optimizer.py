@@ -136,7 +136,7 @@ class PerformanceOptimizer:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Monitoring task cancelled")
         logger.info("性能监控已停止")
 
     async def _monitor_loop(self) -> None:
