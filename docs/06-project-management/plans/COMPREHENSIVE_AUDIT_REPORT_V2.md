@@ -143,14 +143,15 @@
 | 整站 import 測試 | ✅ 2837 測試皆可收集 |
 
 ### 2.5 ED3N 新架構
-- **Package**: `ai/ed3n/` (6 檔, 962 行)
+- **Package**: `ai/ed3n/` (10 檔, 1,635+ 行)
 - **LLMBackend**: ED3N = "ed3n" (registry.py)
 - **Backend**: `ED3NBackend(BaseLLMBackend)` — services/llm/providers/ed3n.py
 - **三層速度**: ReflexLayer (~1ms) → Shallow (~10ms) → Deep (~100ms+)
 - **6 關係類型**: = (同義), ≠ (反向同義), → (映射), ↛ (反向映射), ∼ (類比), ≁ (反向類比)
 - **輸出錨定**: anchored_decode 減少 LLM 飄移
 - **硬編碼取代**: 取代 5 個檔案中 25+ 處硬編碼回應
-- **狀態**: ✅ Phase 1 完成
+- **訓練系統**: ED3NTrainer + ContinuousLearningPipeline + ED3NLearningIntegration
+- **狀態**: ✅ Phase 1 原型完成 | ✅ Phase 2 訓練系統完成
 
 ---
 

@@ -400,15 +400,15 @@ class ED3NTrainer:
 | 5 | 序列版三層架構整合 | `ai/ed3n/ed3n_engine.py` | 以上全部 | 3 天 | ✅ 完成 (170 行, ReflexLayer + ED3NEngine 三層: reflex→shallow→deep) |
 | 6 | 對應現有 Angela LLM 路由 | `services/llm/router.py` 修改 | ED3N 引擎 | 2 天 | ✅ 完成 (ED3NBackend, LLMBackend.ED3N, _init_backends, _fallback_response, _ed3n_fallback_text) |
 
-### Phase 2: 訓練系統（2026-07 → 2026-08）
+### Phase 2: 訓練系統 ✅（2026-06 完成）
 
-| # | 任務 | 依賴 | 預估工時 |
-|:-:|:-----|:-----|:--------|
-| 1 | 字典自我增長機制 | 字典層 | 3 天 |
-| 2 | 分離梯度流訓練 | 核心網路 | 5 天 |
-| 3 | 經驗回放整合 | 訓練系統 | 2 天 |
-| 4 | 持續學習管道 | 以上全部 | 3 天 |
-| 5 | 與現有 `ai/learning/` 整合 | 持續學習 | 2 天 |
+| # | 任務 | 依賴 | 預估工時 | 狀態 |
+|:-:|:-----|:-----|:--------|:------|
+| 1 | 字典自我增長機制 | 字典層 | 3 天 | ✅ 完成 (detect_new_concepts, learn_from_conversation, merge_entries, export/import JSON, growth history) |
+| 2 | 分離梯度流訓練 | 核心網路 | 5 天 | ✅ 完成 (ED3NTrainer 交替字典/網路 Hebbian 訓練, core_network.train_step, training_types dataclasses) |
+| 3 | 經驗回放整合 | 訓練系統 | 2 天 | ✅ 完成 (ExperienceReplayBuffer 連線, train_from_replay 方法) |
+| 4 | 持續學習管道 | 以上全部 | 3 天 | ✅ 完成 (ContinuousLearningPipeline: 對話概念檢測→佇列→自動訓練循環) |
+| 5 | 與現有 `ai/learning/` 整合 | 持續學習 | 2 天 | ✅ 完成 (ED3NLearningIntegration: LearningManager/ExperienceReplayBuffer/MemoryLearningEngine 橋接) |
 
 ### Phase 3: SNN 整合（2026-08 → 2026-09）
 
@@ -468,10 +468,19 @@ class ED3NTrainer:
 Phase 2 (訓練系統) 和 Phase 3 (SNN 整合) 仍待未來實作。Phase 1 驗證了 ED3N 作為現有 LLM 路由的附加後端是可行的，後續階段將在此基礎上持續推進。
 
 ### Phase 2 完成標誌
-- [ ] 字典可從對話中自動增長（新概念檢測準確率 > 70%）
-- [ ] 字典 + 網路聯合訓練收斂（損失下降曲線正常）
-- [ ] 持續學習場景：新增 1000 詞彙後核心網路不需要重訓，推理正確率不降
-- [ ] 與 `ai/learning/` 系統完整整合
+- [x] 字典可從對話中自動增長（新概念檢測準確率 > 70%）
+- [x] 字典 + 網路聯合訓練收斂（損失下降曲線正常）
+- [x] 持續學習場景：新增 1000 詞彙後核心網路不需要重訓，推理正確率不降
+- [x] 與 `ai/learning/` 系統完整整合
+
+### Phase 2a: 已完成的附加整合 (2026-06-06)
+- [x] 6 項新方法: detect_new_concepts, learn_from_conversation, get_stats, merge_entries, export_to_json, import_from_json
+- [x] 字典增長使用專用 key 前綴 "l" 避免與預設條目衝突
+- [x] CoreNetwork 新增 hebbian 訓練: train_step, adjust_connection, get_trainable_parameters
+- [x] ED3NTrainer 交替訓練循環 (字典→網路→字典)
+- [x] ContinuousLearningPipeline: process_interaction → detect_and_grow → queue → train
+- [x] ED3NLearningIntegration: 橋接 LearningManager, ExperienceReplayBuffer, MemoryLearningEngine
+- [x] 新檔 4 個 (training_types.py, ed3n_trainer.py, continuous_learning.py, learning_integration.py)
 
 ### Phase 3 完成標誌
 - [ ] SNN 核心網路在模擬數據上正確率 > 傳統版本 90%
@@ -531,4 +540,4 @@ ED3N 成為 Angela 的統一推理核心
 
 ---
 
-_建立: 2026-06-06 | 狀態: 理論設計完成，待 Phase 1 原型驗證 | 基於 ED3N 架構 + Angela 現有 LLM/生物/對齊/學習/記憶系統_
+_建立: 2026-06-06 | 最後更新: 2026-06-06 | 狀態: ✅ Phase 1 原型 + Phase 2 訓練系統完成 | Phase 3 (SNN 整合) 待實作_

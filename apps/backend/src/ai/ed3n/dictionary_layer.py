@@ -3,9 +3,11 @@
 # =============================================================================
 
 import copy
+import datetime
+import json
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,7 @@ class DictionaryLayer:
         self._keyword_index: Dict[str, List[str]] = {}
         self._bigram_index: Dict[str, List[str]] = {}
         self._rebuilt_index: bool = False
+        self._growth_history: List[Dict[str, Any]] = []
 
     def _assign_key(self, prefix: str = "c") -> str:
         key = f"{prefix}{self._next_key_id}"
@@ -134,7 +137,7 @@ class DictionaryLayer:
                 self.growth_threshold,
             )
             return ""
-        key = self._assign_key()
+        key = self._assign_key(prefix="l")
         entry = DictionaryEntry(
             key=key,
             surface_forms={"zh": surface_form, "en": text},
@@ -142,6 +145,13 @@ class DictionaryLayer:
         )
         self.entries[key] = entry
         self._rebuild_index()
+        self._growth_history.append({
+            "timestamp": datetime.datetime.now().isoformat(),
+            "key": key,
+            "surface_form": surface_form,
+            "source_text": text,
+            "confidence": confidence,
+        })
         logger.info("Grew new entry: %s -> %s (%s)", key, surface_form, text)
         return key
 
@@ -187,6 +197,143 @@ class DictionaryLayer:
             self.add_entry(**preset)
         self._rebuild_index()
         logger.info("Loaded %d preset entries.", len(presets))
+
+    def get_stats(self) -> Dict[str, Any]:
+        total_relations = sum(len(e.relations) for e in self.entries.values())
+        avg_confidence = (
+            sum(e.confidence for e in self.entries.values()) / len(self.entries)
+            if self.entries else 0.0
+        )
+        type_dist: Dict[str, int] = {}
+        for e in self.entries.values():
+            for lang in e.surface_forms:
+                type_dist[lang] = type_dist.get(lang, 0) + 1
+        return {
+            "entry_count": len(self.entries),
+            "relation_count": total_relations,
+            "avg_confidence": round(avg_confidence, 4),
+            "language_distribution": type_dist,
+            "growth_history_count": len(self._growth_history),
+        }
+
+    def detect_new_concepts(self, text: str, known_keys: List[str]) -> List[Dict[str, Any]]:
+        known_surfaces: set = set()
+        for k in known_keys:
+            entry = self.entries.get(k)
+            if entry:
+                for s in entry.surface_forms.values():
+                    known_surfaces.add(s.lower().strip())
+        for e in self.entries.values():
+            for s in e.surface_forms.values():
+                known_surfaces.add(s.lower().strip())
+        text_lower = text.lower().strip()
+        candidates: List[Dict[str, Any]] = []
+        tokens = re.findall(r"[\w\u4e00-\u9fff]{2,}", text_lower)
+        seen: set = set()
+        for token in tokens:
+            if token in known_surfaces or token in seen:
+                continue
+            seen.add(token)
+            is_chinese = bool(re.match(r"[\u4e00-\u9fff]", token))
+            if is_chinese and len(token) >= 2:
+                confidence = 0.4 + min(len(token) * 0.05, 0.3)
+            elif not is_chinese and len(token) >= 4:
+                confidence = 0.4 + min(len(token) * 0.03, 0.3)
+            else:
+                confidence = 0.2
+            candidates.append({
+                "text": token,
+                "surface_form": token if is_chinese else f"en:{token}",
+                "confidence": round(confidence, 2),
+                "source_position": text_lower.find(token),
+            })
+        return candidates
+
+    def learn_from_conversation(
+        self, utterances: List[str], min_confidence: float = 0.4
+    ) -> List[str]:
+        new_keys: List[str] = []
+        all_text = " ".join(utterances)
+        known_keys = list(self.entries.keys())
+        candidates = self.detect_new_concepts(all_text, known_keys)
+        threshold = max(self.growth_threshold, min_confidence)
+        batch_new: List[str] = []
+        for c in candidates:
+            if c["confidence"] >= threshold:
+                key = self.grow(c["text"], c["surface_form"], c["confidence"])
+                if key:
+                    new_keys.append(key)
+                    batch_new.append(key)
+        for i, k1 in enumerate(batch_new):
+            for k2 in batch_new[i + 1:]:
+                self.entries[k1].relations.setdefault("mapping", []).append(k2)
+                self.entries[k2].relations.setdefault("mapping", []).append(k1)
+        if batch_new:
+            self._rebuild_index()
+        return new_keys
+
+    def merge_entries(self, source_key: str, target_key: str) -> bool:
+        if source_key not in self.entries or target_key not in self.entries:
+            logger.warning("Cannot merge: one or both keys not found (%s, %s)", source_key, target_key)
+            return False
+        if source_key == target_key:
+            return False
+        source = self.entries[source_key]
+        target = self.entries[target_key]
+        for lang, form in source.surface_forms.items():
+            if lang not in target.surface_forms:
+                target.surface_forms[lang] = form
+        for rel_type, targets in source.relations.items():
+            existing = target.relations.setdefault(rel_type, [])
+            for t in targets:
+                if t not in existing and t != target_key:
+                    existing.append(t)
+        target.confidence = max(target.confidence, source.confidence)
+        for e in self.entries.values():
+            for rels in e.relations.values():
+                if source_key in rels:
+                    rels[rels.index(source_key)] = target_key
+        del self.entries[source_key]
+        self._rebuild_index()
+        logger.info("Merged %s -> %s", source_key, target_key)
+        return True
+
+    def export_to_json(self, filepath: str) -> None:
+        data = {
+            "version": "1.0",
+            "exported_at": datetime.datetime.now().isoformat(),
+            "entries": [
+                {
+                    "key": e.key,
+                    "surface_forms": e.surface_forms,
+                    "contexts": e.contexts,
+                    "relations": e.relations,
+                    "confidence": e.confidence,
+                }
+                for e in self.entries.values()
+            ],
+            "growth_history": self._growth_history,
+        }
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def import_from_json(self, filepath: str) -> int:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        count = 0
+        for entry_data in data.get("entries", []):
+            if entry_data["key"] not in self.entries:
+                self.add_entry(
+                    key=entry_data["key"],
+                    surface_forms=entry_data["surface_forms"],
+                    contexts=entry_data.get("contexts"),
+                    relations=entry_data.get("relations"),
+                    confidence=entry_data.get("confidence", 1.0),
+                )
+                count += 1
+        self._rebuild_index()
+        logger.info("Imported %d entries from %s", count, filepath)
+        return count
 
     def _rebuild_index(self) -> None:
         self._keyword_index.clear()

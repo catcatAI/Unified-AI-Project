@@ -194,6 +194,71 @@ class CoreNetwork:
         group.activate(key1, w)
         group.activate(key2, w)
 
+    def train_step(
+        self, examples: List[Tuple[str, str, float]]
+    ) -> Dict[str, float]:
+        correct = 0
+        total_loss = 0.0
+        changes = 0
+
+        for key1, key2, expected_strength in examples:
+            self.reset()
+            self.forward([key1])
+            actual = self.get_activation(key2)
+            error = expected_strength - actual
+            total_loss += abs(error)
+
+            if (actual > 0.3 and expected_strength > 0.5) or (
+                actual <= 0.3 and expected_strength <= 0.5
+            ):
+                correct += 1
+
+            delta = self._compute_hebbian_delta(key1, key2, expected_strength)
+            self.adjust_connection(key1, key2, delta)
+            changes += 1
+
+        n = len(examples)
+        return {
+            "loss": total_loss / max(n, 1),
+            "accuracy": correct / max(n, 1),
+            "connection_changes": changes,
+        }
+
+    def adjust_connection(self, key1: str, key2: str, delta: float) -> None:
+        for group in self.groups.values():
+            n1 = group.neurons.get(key1)
+            n2 = group.neurons.get(key2)
+            if n1 is None or n2 is None:
+                continue
+            current = n1.connections.get(key2, 0.0)
+            updated = min(max(current + delta, 0.0), 1.0)
+            n1.connections[key2] = updated
+            n2.connections[key1] = updated
+
+    def get_trainable_parameters(self) -> Dict[str, Any]:
+        params: Dict[str, Any] = {"neurons": {}, "connections": []}
+        for group_name, group in self.groups.items():
+            for n_key, neuron in group.neurons.items():
+                params["neurons"][n_key] = {
+                    "threshold": neuron.threshold,
+                    "activation": neuron.activation,
+                    "group": group_name,
+                }
+                for t_key, weight in neuron.connections.items():
+                    params["connections"].append(
+                        {"from": n_key, "to": t_key, "weight": weight, "group": group_name}
+                    )
+        return params
+
+    def _compute_hebbian_delta(
+        self, key1: str, key2: str, expected_strength: float
+    ) -> float:
+        pre_act = self.get_activation(key1)
+        post_act = self.get_activation(key2)
+        hebbian = pre_act * post_act
+        lr = 0.05
+        return lr * (expected_strength * hebbian - 0.01)
+
     def _group_for_type(self, rel_type: RelationType) -> Optional[RelationGroup]:
         mapping = {
             RelationType.SYNONYM: "synonym",

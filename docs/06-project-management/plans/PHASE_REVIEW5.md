@@ -148,6 +148,15 @@
 - **配置文件**: `ed3n.default.yaml`, `llm.default.yaml` 加入 ed3n-v1, `llm_providers.default.yaml` 加入 ed3n provider, `angela_core.default.yaml` 加入 backend_priority
 - **下階段**: Phase 2 (訓練系統, 字典自我增長, 梯度流), Phase 3 (SNN 整合)
 
+### H7.6 ED3N Phase 2 訓練系統
+- **狀態**: ✅ 完成
+- **新檔案**: `ai/ed3n/training_types.py`, `ed3n_trainer.py`, `continuous_learning.py`, `learning_integration.py`
+- **字典增長**: detect_new_concepts, learn_from_conversation, merge_entries, JSON 匯入匯出
+- **訓練系統**: ED3NTrainer 交替字典/網路 Hebbian 訓練, CoreNetwork.train_step
+- **學習管道**: ContinuousLearningPipeline 對話→概念檢測→佇列→自動訓練
+- **系統整合**: ED3NLearningIntegration 橋接 LearningManager, ExperienceReplayBuffer, MemoryLearningEngine
+- **下階段**: Phase 3 SNN 整合 (LIF 神經元, 批次重排序, 荷爾蒙調製)
+
 ### 🟡 文檔一致性
 
 | # | 問題 | 優先級 |
