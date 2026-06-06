@@ -121,7 +121,7 @@ User Input → Desktop App (Electron)
       └→ ChatPanel.showResponse(text)
 ```
 
-> **ModuleManager**: The `ModuleManager` (in `core/managers/module_manager.py`) orchestrates lifecycle management
+> **ModuleManager**: The `ModuleManager` (in `core/system/module_manager/`) orchestrates lifecycle management
 > for all discoverable service modules. It handles dynamic registration, dependency wiring, and graceful
 > shutdown of modules such as ChatService, LLMService, BioIntegrator, and the Plugin Pipeline system.
 
@@ -153,7 +153,7 @@ unified-ai-project/
 ├── configs/               Runtime configuration (angela_config, MCP, credentials)
 ├── docs/                  Documentation
 ├── scripts/               Utility scripts
-├── tests/                 Test suite (24 subdirectories)
+├── tests/                 Test suite (26 subdirectories)
 ├── reports/               Analysis reports
 └── Root configs: package.json, pyproject.toml, docker-compose.yml, VERSION
 ```
@@ -221,6 +221,6 @@ unified-ai-project/
 |----------|---------|
 | `AGENTS.md` | Development guide, build/test/lint commands |
 | `ANGELA_MATRIX_ANNOTATION_GUIDE.md` | Matrix annotation standards (L1-L6, αβγδ εθζη, A/B/C, L0-L11) |
-| `MASTER_CONSOLIDATED_PLAN.md` | Active task plan (27 items, S/A/B/C graded) |
+| `MASTER_CONSOLIDATED_PLAN.md` | Consolidated master plan (S/A/B/C/D graded) |
 | `FULL_ARCHITECTURE_ANALYSIS.md` | Comprehensive architecture audit (1201 lines) |
 | `CHANGELOG.md` | Release history |

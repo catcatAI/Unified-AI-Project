@@ -66,22 +66,22 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 
 ## Key Design Decisions
 
-1. **ModuleManager** manages lifecycle of discoverable service modules (11 total)
+1. **ModuleManager** manages lifecycle of discoverable service modules (dynamically discovered)
 2. **ChatService** handles intent routing → dedicated handlers
 3. **Plugin Pipeline** (5 hooks) provides cross-cutting observability
 4. **TieredConfigLoader** manages config across Default → User → Evolved layers
 5. **Magic Numbers** centralized in `magic_numbers.py` with config-backed defaults
 
-## Current Status (2026-05-31)
+## Current Status (2026-06-06)
 
 | Layer | Status | Remaining Work |
 |-------|--------|----------------|
 | API/Server | ✅ Stable | — |
 | Chat Service | ✅ Stable | — |
 | LLM Service | ✅ Stable | — |
-| Module System | ✅ 11 modules | — |
+| Module System | ✅ Dynamic discovery | — |
 | Plugin System | ✅ 5 hooks | — |
 | Handlers | ✅ 4 handlers | — |
 | Magic Numbers | 🟡 Partial | ~43 values remaining |
-| Stubs | 🟡 2 persistent stubs | image gen, audio STT
-| Docs | 🟡 In progress | SERVICE_CATALOG, STUB_TRACKING |
+| Stubs | ✅ 36/37 strict stubs implemented | 3 true stubs remain (1 functional, 2 deprecated)
+| Docs | 🟡 In progress | See COMPREHENSIVE_AUDIT_REPORT_V2.md, PHASE_REVIEW5.md |

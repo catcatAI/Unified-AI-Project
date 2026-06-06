@@ -362,7 +362,7 @@ def update_state(self, ...):
 **後續待辦：**
 - H7: 重構 108 檔案 >200 行（LLM router.py 1416 行最優先）
 - H7.1: 文件一致性（CLI/mobile/plugin 文件、ARCHITECTURE.md 更新）
-- H7.2: 4 廢棄計畫歸檔（PHASE_9, PHASE_8_DEBT, PHASE_8_CORRECTED, PHASE_2_DEVELOPMENT）
+- ✅ H7.2: 4 廢棄計畫已歸檔至 docs/09-archive/（PHASE_9, PHASE_8_DEBT, PHASE_8_CORRECTED, PHASE_2_DEVELOPMENT）
 - 型別 annotation 覆蓋率從 86.8% 提升至 95%+
 
 ---

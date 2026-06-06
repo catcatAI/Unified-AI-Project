@@ -1468,20 +1468,6 @@ Returns:
         data = json.loads(json_str)
         self.import_from_dict(data)
 
-    def set_dimension_weight(self, dimension: str, weight: float) -> None:
-        """设置维度权重 / Set dimension weight"""
-        if dimension in self.dimensions:
-            self.dimensions[dimension].weight = weight
-
-    def set_influence_strength(self, source: str, target: str, strength: float) -> None:
-        """设置影响强度 / Set influence strength between dimensions"""
-        if source in self.influence_matrix and target in self.influence_matrix[source]:
-            self.influence_matrix[source][target] = max(0.0, min(1.0, strength))
-
-    def register_change_callback(self, callback: Callable[[str, Dict[str, float]], None]) -> None:
-        """注册变化回调 / Register change callback"""
-        self._change_callbacks.append(callback)
-
     def trigger_threshold_callback(self, dimension: str, value: float) -> None:
         """触发阈值回调 / Trigger threshold callback"""
         if dimension in self._threshold_callbacks:

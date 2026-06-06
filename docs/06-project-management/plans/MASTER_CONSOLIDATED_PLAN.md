@@ -2,7 +2,7 @@
 
 > **代碼審計日期**: 2026-05-25  
 > **基於實際代碼驗證**, 合併 Phase 8 v1 / Phase 8 Corrected v2 / Phase 9  
-> **取代以下過時文件**: PHASE_8_DEBT_CLEANUP.md, PHASE_8_CORRECTED.md, PHASE_9_CONSISTENCY_PLAN.md  
+> **取代以下過時文件**: PHASE_8_DEBT_CLEANUP.md, PHASE_8_CORRECTED.md, PHASE_9_CONSISTENCY_PLAN.md (現已歸檔至 docs/09-archive/)  
 > **最終目標**: 架構一致性 62.6% → 85%+, 版本一致性 31% → 100%
 
 ---

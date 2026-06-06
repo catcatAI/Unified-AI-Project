@@ -163,15 +163,13 @@ Phase          Focus                          Score Target  Priority
 ### 立即行動項目
 
 ```bash
-# 1. 超長檔案重構（優先 router.py + neuroplasticity.py）
-# 2. 文檔一致性校對
-#    - ARCHITECTURE.md: 更新行數、模組數
-#    - OVERVIEW.md: 修正模組 8→11+, stub 數
-#    - AGENTS.md: 更新日期、版本路徑
-# 3. 廢棄計畫歸檔
-#    mv PHASE_9_CONSISTENCY_PLAN.md PHASE_8_DEBT_CLEANUP.md \
-#       PHASE_8_CORRECTED.md PHASE_2_DEVELOPMENT_PLAN.md \
-#       docs/09-archive/
+# ✅ 已執行（06-06）
+# 1. 超長檔案重構 — neuroplasticity.py ✅ 已拆分為 5 子模組（1671→637+189+176+396+179）
+#    endocrine_system.py ✅ 已修復 2 missing methods + 6 未初始化屬性
+#    state_matrix.py ✅ 已移除 3 個重複方法
+# 2. 文檔一致性校對— ✅ 已更新 ARCHITECTURE.md, OVERVIEW.md
+# 3. 廢棄計畫歸檔— ✅ 4 檔案已搬移至 docs/09-archive/
+# 待執行: router.py 拆分, physiological_tactile.py 拆分, endocrine_system.py 拆分
 ```
 
 ---

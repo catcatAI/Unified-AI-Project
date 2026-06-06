@@ -270,9 +270,9 @@ npm start
 
 | 類別 | 主要問題 | 參考文件 |
 |------|---------|---------|
-| **超長檔案** | 132 檔案 >200 行，3 檔案 >1500 行（neuroplasticity 1671, router 1633, state_matrix 1625） | H7 待重構 |
-| **文檔過時** | ARCHITECTURE.md、OVERVIEW.md 仍為舊版資料 | H7.1 待校對 |
-| **廢棄計畫** | 4 廢棄計畫（PHASE_9, PHASE_8_DEBT, PHASE_8_CORRECTED, PHASE_2_DEVELOPMENT）未歸檔 | H7.2 |
+| **超長檔案** | ✅ neuroplasticity 已拆分 5 子模組（1671→637+189+176+396+179），router 已拆分（1633→1284+282+183），physiological_tactile 已拆分（1575→233+456+546），endocrine_system 已拆分（1267→121+516+309+309），state_matrix 重複清理（1625→1611） | H7 進行中 |
+| **文檔過時** | ARCHITECTURE.md、OVERVIEW.md 已更新 | ✅ H7.1 完成 |
+| **廢棄計畫** | 4 廢棄計畫已歸檔至 docs/09-archive/（PHASE_9, PHASE_8_DEBT, PHASE_8_CORRECTED, PHASE_2_DEVELOPMENT） | ✅ H7.2 完成 |
 | **測試品質** | 無邊界/性能/並發測試，覆蓋率 ~6.8% | H8 |
 | **手機 stub** | mobile-app 僅 scaffold | 長期 |
 | **Agent stub** | ImageGen/Audio/KnowledgeGraph 代理回傳 stub 資料 | 需外部模型 |
@@ -281,10 +281,11 @@ npm start
 
 | Phase | 目標 | 分數目標 |
 |:------|:-----|:--------:|
-| ⬜ H7 | 超長檔案重構 132→50 檔案 | 62% → 68% |
-| ⬜ H7.1 | 文檔一致性校對 + ARCHITECTURE.md 更新 | 68% → 72% |
-| ⬜ H7.2 | 廢棄計畫歸檔至 `09-archive/` | 72% → 73% |
-| ⬜ H8 | 測試品質提升（邊界/基準/並發） | 73% → 78% |
+| ✅ H7 | 超長檔案重構 — ⬜ top 5 files 已完成 4 | 62% → ~66% |
+| ✅ H7.1 | 文檔一致性校對 + ARCHITECTURE.md 更新 | 已完成 |
+| ✅ H7.2 | 廢棄計畫歸檔至 `09-archive/` | 已完成 |
+| ⬜ H7.3 | 剩餘 127 檔案 >200 行（目標 <100） | 66% → 68% |
+| ⬜ H8 | 測試品質提升（邊界/基準/並發） | 68% → 78% |
 
 **Tier 2 — 記憶與持久層**
 - **HAM 資料庫**：✅ 已實作 — `HAMCoreStorage` 具備真實檔案 I/O、Fernet 加密、查詢引擎（`ham_core_storage.py` + `ham_query_engine.py`）
