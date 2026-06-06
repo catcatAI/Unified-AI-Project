@@ -67,14 +67,22 @@ class ED3NLearningIntegration:
     def _get_memory_learning(self):
         if self._memory_learning is None:
             try:
-                from ai.learning.memory_learning_engine import (
+                from apps.backend.src.ai.learning.memory_learning_engine import (
                     MemoryLearningEngine,
                 )
 
                 self._memory_learning = MemoryLearningEngine()
                 self._connected_systems["memory_learning"] = True
             except ImportError:
-                logger.warning("MemoryLearningEngine not available.")
+                try:
+                    from ai.learning.memory_learning_engine import (
+                        MemoryLearningEngine,
+                    )
+
+                    self._memory_learning = MemoryLearningEngine()
+                    self._connected_systems["memory_learning"] = True
+                except ImportError:
+                    logger.warning("MemoryLearningEngine not available.")
         return self._memory_learning
 
     def extract_concepts_from_interaction(self, text: str) -> List[Dict]:

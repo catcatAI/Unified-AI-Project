@@ -25,10 +25,17 @@ class AudioEncoder:
         if self._audio_system is not None:
             return self._audio_system
         try:
-            from core.engine.audio_system import AudioSystem
+            from apps.backend.src.core.engine.audio_system import AudioSystem
             self._audio_system = AudioSystem()
+        except ImportError:
+            try:
+                from core.engine.audio_system import AudioSystem
+                self._audio_system = AudioSystem()
+            except ImportError:
+                logger.warning("AudioSystem not available")
+                self._audio_system = None
         except Exception as e:
-            logger.warning("AudioSystem not available: %s", e)
+            logger.warning("AudioSystem error: %s", e)
             self._audio_system = None
         return self._audio_system
 
@@ -37,10 +44,17 @@ class AudioEncoder:
         if self._audio_processing is not None:
             return self._audio_processing
         try:
-            from ai.audio.audio_processing import AudioProcessing
+            from apps.backend.src.ai.audio.audio_processing import AudioProcessing
             self._audio_processing = AudioProcessing()
+        except ImportError:
+            try:
+                from ai.audio.audio_processing import AudioProcessing
+                self._audio_processing = AudioProcessing()
+            except ImportError:
+                logger.warning("AudioProcessing not available")
+                self._audio_processing = None
         except Exception as e:
-            logger.warning("AudioProcessing not available: %s", e)
+            logger.warning("AudioProcessing error: %s", e)
             self._audio_processing = None
         return self._audio_processing
 
@@ -49,10 +63,17 @@ class AudioEncoder:
         if self._real_voice is not None:
             return self._real_voice
         try:
-            from core.art.real_edge_tts import AngelaRealVoice
+            from apps.backend.src.core.art.real_edge_tts import AngelaRealVoice
             self._real_voice = AngelaRealVoice()
+        except ImportError:
+            try:
+                from core.art.real_edge_tts import AngelaRealVoice
+                self._real_voice = AngelaRealVoice()
+            except ImportError:
+                logger.warning("AngelaRealVoice not available")
+                self._real_voice = None
         except Exception as e:
-            logger.warning("AngelaRealVoice not available: %s", e)
+            logger.warning("AngelaRealVoice error: %s", e)
             self._real_voice = None
         return self._real_voice
 

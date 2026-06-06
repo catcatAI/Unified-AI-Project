@@ -30,6 +30,8 @@ class ED3NTrainer:
         self.network_lr = network_lr
         self.replay_buffer: Optional[Any] = None
         self.training_history: List[TrainMetrics] = []
+        self.current_epoch: int = 0
+        self.best_accuracy: float = 0.0
 
     def train_step(self, batch: TrainingBatch) -> TrainMetrics:
         start = time.perf_counter()
@@ -163,6 +165,55 @@ class ED3NTrainer:
             samples=n,
             duration_ms=(time.perf_counter() - start) * 1000.0,
         )
+
+    def save(self, path: str) -> None:
+        """Save trainer state (dictionary export + network params)."""
+        import json, os
+        from apps.backend.src.ai.ed3n.training_types import TrainMetrics
+
+        def _serialize(m):
+            if isinstance(m, TrainMetrics):
+                return {"phase": m.phase, "loss": m.loss, "accuracy": m.accuracy,
+                        "learning_rate": m.learning_rate, "epoch": m.epoch,
+                        "samples": m.samples, "duration_ms": m.duration_ms}
+            return str(m)
+
+        state = {
+            "training_history": [_serialize(m) for m in self.training_history],
+            "current_epoch": self.current_epoch,
+            "best_accuracy": self.best_accuracy,
+        }
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        dict_path = path.replace(".json", "_dictionary.json")
+        self.dictionary.export_to_json(dict_path)
+        logger.info("Trainer saved to %s (dict: %s)", path, dict_path)
+
+    @classmethod
+    def load(cls, path: str, dictionary_layer=None, core_network=None) -> "ED3NTrainer":
+        """Load trainer state. Requires pre-configured dictionary and network."""
+        import json, os
+        from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
+
+        with open(path, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        engine = ED3NEngine()
+        if dictionary_layer:
+            engine.dictionary = dictionary_layer
+        if core_network:
+            engine.network = core_network
+        trainer = ED3NTrainer(engine)
+        trainer.training_history = [
+            TrainMetrics(**h) if isinstance(h, dict) else h
+            for h in state.get("training_history", [])
+        ]
+        trainer.current_epoch = state.get("current_epoch", 0)
+        trainer.best_accuracy = state.get("best_accuracy", 0.0)
+        dict_path = path.replace(".json", "_dictionary.json")
+        if os.path.exists(dict_path):
+            engine.dictionary.import_from_json(dict_path)
+        return trainer
 
     def train_from_replay(self, batch_size: int = 32) -> Optional[TrainMetrics]:
         if self.replay_buffer is None:

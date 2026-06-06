@@ -10,6 +10,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from apps.backend.src.ai.ed3n.training_types import (
+    TrainingBatch,
+    TrainingExample as TTTrainingExample,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -173,10 +178,36 @@ class ContinuousLearningPipeline:
         start = time.time()
         examples = self._training_buffer[:]
         try:
+            tt_examples = []
+            for ex in examples:
+                input_keys = (
+                    self.engine.dictionary.encode(ex.user_text)
+                    if self.engine and self.engine.dictionary
+                    else []
+                )
+                output_keys = (
+                    self.engine.dictionary.encode(ex.response_text)
+                    if self.engine and self.engine.dictionary
+                    else []
+                )
+                tt_ex = TTTrainingExample(
+                    input_text=ex.user_text,
+                    expected_output=ex.response_text,
+                    input_keys=input_keys,
+                    output_keys=output_keys,
+                    relation_pairs=[],
+                    confidence=0.8,
+                    metadata=ex.context if isinstance(ex.context, dict) else {},
+                )
+                tt_examples.append(tt_ex)
+            batch = TrainingBatch(
+                examples=tt_examples,
+                batch_id=f"cl_{int(time.time())}_{self._interaction_count}",
+            )
             if hasattr(self.trainer, "train_step"):
-                raw = self.trainer.train_step(examples=examples)
+                raw = self.trainer.train_step(batch)
             else:
-                raw = self.trainer(examples=examples)
+                raw = self.trainer(batch)
         except Exception as e:
             logger.exception("Training step failed: %s", e)
             return None

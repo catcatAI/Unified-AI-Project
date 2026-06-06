@@ -21,10 +21,11 @@ logger = logging.getLogger(__name__)
 
 
 class ReflexLayer:
-    def __init__(self, max_cache: int = 128):
+    def __init__(self, max_cache: int = 128, threshold: float = 0.5):
         self.patterns: Dict[str, str] = OrderedDict()
         self.lru_cache: OrderedDict[str, str] = OrderedDict()
         self.max_cache = max_cache
+        self.threshold = threshold
 
     def process(self, input_text: str) -> Optional[str]:
         normalized = input_text.strip().lower()
@@ -283,6 +284,84 @@ class ED3NEngine:
             return fallback or response
 
         return response
+
+    def save(self, path: str) -> None:
+        """Save full ED3N engine state."""
+        import json
+        import os
+
+        state = {
+            "snn_mode": self.snn_mode,
+            "reflex_threshold": self.reflex.threshold,
+            "reflex_patterns": list(self.reflex.patterns.items()),
+        }
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        dict_path = path.replace(".json", "_dictionary.json")
+        self.dictionary.export_to_json(dict_path)
+        logger.info("ED3NEngine saved to %s", path)
+
+    def load(self, path: str) -> None:
+        """Load full ED3N engine state."""
+        import json
+        import os
+
+        self.load_presets()
+        with open(path, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        self.snn_mode = state.get("snn_mode", False)
+        if "reflex_threshold" in state:
+            self.reflex.threshold = state["reflex_threshold"]
+        if "reflex_patterns" in state:
+            self.reflex.patterns.clear()
+            for pattern, response in state["reflex_patterns"]:
+                self.reflex.patterns[pattern] = response
+            logger.info("Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"]))
+        dict_path = path.replace(".json", "_dictionary.json")
+        if os.path.exists(dict_path):
+            self.dictionary.import_from_json(dict_path)
+        logger.info("ED3NEngine loaded from %s", path)
+
+    def train(
+        self,
+        examples: List[Any],
+        epochs: int = 5,
+        lr: float = 0.01,
+        dictionary_epochs: int = 3,
+        network_epochs: int = 3,
+    ) -> Any:
+        """High-level training API. Accepts list of dicts with 'input', 'output', 'context'."""
+        from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
+        from apps.backend.src.ai.ed3n.training_types import (
+            TrainingBatch,
+            TrainingExample,
+        )
+
+        trainer = ED3NTrainer(self)
+        training_examples = []
+        for ex in examples:
+            if isinstance(ex, dict):
+                training_examples.append(
+                    TrainingExample(
+                        input_text=ex.get("input", ex.get("user_text", "")),
+                        expected_output=ex.get("output", ex.get("response_text", "")),
+                        input_keys=ex.get("input_keys", []),
+                        output_keys=ex.get("output_keys", []),
+                        relation_pairs=ex.get("relation_pairs", []),
+                        confidence=ex.get("confidence", 0.8),
+                        metadata=ex.get("context", ex.get("conversation_id", {})),
+                    )
+                )
+            else:
+                training_examples.append(ex)
+
+        batch = TrainingBatch(
+            examples=training_examples,
+            batch_id=f"train_{int(__import__('time').time())}",
+        )
+        metrics = trainer.train_step(batch)
+        return metrics
 
     def load_presets(self) -> None:
         self.reflex.load_presets()

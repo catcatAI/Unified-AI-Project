@@ -250,6 +250,42 @@ class CoreNetwork:
                     )
         return params
 
+    def save_connections(self, path: str) -> None:
+        """Save network connections to JSON."""
+        import json, os
+
+        conns = []
+        for group_name, group in self.groups.items():
+            for src_key, neuron in group.neurons.items():
+                for tgt_key, weight in neuron.connections.items():
+                    conns.append({
+                        "source": src_key,
+                        "target": tgt_key,
+                        "weight": round(weight, 6),
+                        "group": group_name,
+                    })
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(conns, f, ensure_ascii=False, indent=2)
+
+    def load_connections(self, path: str) -> int:
+        """Load network connections from JSON."""
+        import json
+
+        with open(path, "r", encoding="utf-8") as f:
+            conns = json.load(f)
+        count = 0
+        group_rel_map = {
+            "synonym": RelationType.SYNONYM,
+            "mapping": RelationType.MAPPING,
+            "analogy": RelationType.ANALOGY,
+        }
+        for c in conns:
+            rel_type = group_rel_map.get(c.get("group", "mapping"), RelationType.MAPPING)
+            self.add_relation(c["source"], rel_type, c["target"], c.get("weight", 0.5))
+            count += 1
+        return count
+
     def _compute_hebbian_delta(
         self, key1: str, key2: str, expected_strength: float
     ) -> float:

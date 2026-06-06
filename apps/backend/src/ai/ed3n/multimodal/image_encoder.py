@@ -23,10 +23,17 @@ class ImageEncoder:
         if self._vision_service is not None:
             return self._vision_service
         try:
-            from services.vision_service import VisionService
+            from apps.backend.src.services.vision_service import VisionService
             self._vision_service = VisionService()
+        except ImportError:
+            try:
+                from services.vision_service import VisionService
+                self._vision_service = VisionService()
+            except ImportError:
+                logger.warning("VisionService not available")
+                self._vision_service = None
         except Exception as e:
-            logger.warning("VisionService not available: %s", e)
+            logger.warning("VisionService error: %s", e)
             self._vision_service = None
         return self._vision_service
 
