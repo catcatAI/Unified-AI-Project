@@ -422,12 +422,14 @@ class ED3NTrainer:
 
 ### Phase 4: 模態擴充（2026-09 → 2026-10）
 
-| # | 任務 | 依賴 | 預估工時 |
-|:-:|:-----|:-----|:--------|
-| 1 | 圖像編碼器作為字典模組 | 字典層 | 3 天 |
-| 2 | 音訊編碼器作為字典模組 | 字典層 | 3 天 |
-| 3 | 跨模態映射訓練 | 以上全部 | 5 天 |
-| 4 | 現有 Angela 服務整合 | 以上全部 | 3 天 |
+| # | 任務 | 依賴 | 預估工時 | 狀態 |
+|:-:|:-----|:-----|:--------|:------|
+| 1 | 圖像編碼器作為字典模組 | 字典層 | 3 天 | ✅ 完成 (ImageEncoder) |
+| 2 | 音訊編碼器作為字典模組 | 字典層 | 3 天 | ✅ 完成 (AudioEncoder) |
+| 3 | 跨模態映射訓練 | 以上全部 | 5 天 | ✅ 完成 (CrossModalTrainer) |
+| 4 | 現有 Angela 服務整合 | 以上全部 | 3 天 | ✅ 完成 (ED3NEngine multimodal integration) |
+
+| `ai/ed3n/multimodal/` | Phase 4 — 模态扩充 | 3 files (image_encoder, audio_encoder, cross_modal_trainer) + ED3NEngine multimodal integration |
 
 ---
 

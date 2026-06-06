@@ -162,6 +162,7 @@ See detailed reports in linked analysis docs:
 | ⬜ H7.2 | Deprecated archive cleanup | 72% → 73% | 🟡 MEDIUM |
 | ✅ H7.5 | ED3N Phase 1+2+3 原型+訓練系統+SNN | ✅ 完成 | 16 檔, 2,135+ 行 |
 | ✅ H7.6 | ED3N 持續學習管道 | ✅ 完成 | ContinuousLearningPipeline + ED3NLearningIntegration |
+| ✅ H7.8 | ai/ed3n/multimodal/ | ✅ | Phase 4 — 模态扩充 (Image/audio encoders + cross-modal trainer) | 2026-06-06 |
 | ⬜ H8 | Test quality (boundary/perf) | 73% → 78% | 🟡 MEDIUM |
 | ⬜ H9 | MATRIX annotation + plugin docs | 78% → 82% | 🟢 LOW |
 

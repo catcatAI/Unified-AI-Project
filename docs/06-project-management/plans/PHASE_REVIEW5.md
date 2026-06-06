@@ -168,6 +168,14 @@
 - **引擎整合**: ED3NEngine.snn_mode, process_snn(), depth="snn"
 - **下階段**: Phase 4 模態擴充 (圖像, 音訊編碼器)
 
+### H7.8 ED3N Phase 4 模態擴充
+- **狀態**: ✅ 完成
+- **新模組**: `ai/ed3n/multimodal/image_encoder.py`, `audio_encoder.py`, `cross_modal_trainer.py`
+- **圖像編碼器**: ImageEncoder (CNN 特徵提取, 注意力池化, 語義投影至 ED3N 字典空間)
+- **音訊編碼器**: AudioEncoder (頻譜特徵, 時序建模, 跨模態對齊)
+- **跨模態訓練**: CrossModalTrainer (配對/未配對學習, 對比損失, 模態一致校驗)
+- **引擎整合**: ED3NEngine 支援 `process_multimodal(image, audio, text)` 統一入口, 三模態融合推論
+
 ### 🟡 文檔一致性
 
 | # | 問題 | 優先級 |

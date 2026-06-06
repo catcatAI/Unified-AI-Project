@@ -9,6 +9,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from apps.backend.src.ai.ed3n.core_network import CoreNetwork
 from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryLayer
+from apps.backend.src.ai.ed3n.multimodal.audio_encoder import AudioEncoder
+from apps.backend.src.ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+from apps.backend.src.ai.ed3n.multimodal.image_encoder import ImageEncoder
 from apps.backend.src.ai.ed3n.output_anchor import anchored_decode, ResponseAnchorValidator
 from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier
 from apps.backend.src.ai.ed3n.snn.snn_core import SNNCore
@@ -109,6 +112,9 @@ class ED3NEngine:
         self.modulator = modulator or HormonalModulator()
         self.snn_mode = snn_mode
         self._validator: Optional[ResponseAnchorValidator] = None
+        self.image_encoder: Optional[ImageEncoder] = None
+        self.audio_encoder: Optional[AudioEncoder] = None
+        self.cross_modal_trainer: Optional[CrossModalTrainer] = None
 
     @property
     def validator(self) -> ResponseAnchorValidator:
@@ -192,6 +198,91 @@ class ED3NEngine:
             return self.process_deep(input_text, context)
         finally:
             self.snn_mode = was_snn
+
+    def enable_multimodal(self, enable_image=True, enable_audio=True) -> None:
+        if enable_image:
+            self.image_encoder = ImageEncoder(dictionary_layer=self.dictionary)
+            self.dictionary.modality_encoders["image"] = self.image_encoder
+        if enable_audio:
+            self.audio_encoder = AudioEncoder(dictionary_layer=self.dictionary)
+            self.dictionary.modality_encoders["audio"] = self.audio_encoder
+        self.cross_modal_trainer = CrossModalTrainer(
+            dictionary_layer=self.dictionary,
+            core_network=self.network,
+        )
+        logger.info("ED3N multimodal enabled (image=%s, audio=%s)", enable_image, enable_audio)
+
+    def _process_image_input(self, image_data) -> List[str]:
+        if self.image_encoder is None:
+            return []
+        return self.image_encoder.encode(image_data)
+
+    def _process_audio_input(self, audio_data) -> List[str]:
+        if self.audio_encoder is None:
+            return []
+        return self.audio_encoder.encode(audio_data)
+
+    def is_multimodal_available(self) -> bool:
+        return self.image_encoder is not None or self.audio_encoder is not None
+
+    def process_multimodal(
+        self,
+        text: Optional[str] = None,
+        image_data: Optional[Any] = None,
+        audio_data: Optional[Any] = None,
+        context: Optional[Dict] = None,
+        depth: str = "auto",
+    ) -> str:
+        text_keys: List[str] = []
+        image_keys: List[str] = []
+        audio_keys: List[str] = []
+
+        if text:
+            text_keys = self.dictionary.encode(text)
+
+        if image_data:
+            image_keys = self._process_image_input(image_data)
+
+        if audio_data:
+            audio_keys = self._process_audio_input(audio_data)
+
+        combined_keys = list(set(text_keys + image_keys + audio_keys))
+
+        if not combined_keys:
+            return "抱歉，我没理解你的意思。"
+
+        if self.cross_modal_trainer:
+            for tk in text_keys or [""]:
+                ik = image_keys[0] if image_keys else None
+                ak = audio_keys[0] if audio_keys else None
+                if tk:
+                    self.cross_modal_trainer.record_co_occurrence(tk, ik, ak)
+
+        if depth == "shallow" or (depth == "auto" and not context and not text):
+            decoded = self.dictionary.decode(combined_keys, context)
+            return decoded or "抱歉，我没理解你的意思。"
+
+        if self.snn_mode:
+            network_output = self.snn_network.forward(combined_keys, context=context)
+        else:
+            network_output = self.network.forward(combined_keys, context=context)
+
+        response = anchored_decode(
+            network_output=network_output,
+            original_input_keys=combined_keys,
+            dictionary=self.dictionary,
+            top_k_anchors=3,
+            top_k_network=5,
+        )
+
+        if not response:
+            return self.dictionary.decode(combined_keys, context) or "抱歉，我没理解你的意思。"
+
+        if not self.validator.validate(response, anchored_keys=combined_keys):
+            fallback = self.dictionary.decode(combined_keys, context)
+            return fallback or response
+
+        return response
 
     def load_presets(self) -> None:
         self.reflex.load_presets()
