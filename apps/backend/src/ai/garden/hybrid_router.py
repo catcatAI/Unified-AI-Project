@@ -185,21 +185,21 @@ class HybridRouter:
 
             if garden_result.confidence >= self.garden_threshold:
                 elapsed = (time.time() - t_start) * 1000
-            results_dict: Dict[str, TierResult] = {}
-            if ed3n_result is not None and ed3n_result.text:
-                results_dict["ed3n"] = ed3n_result
-            results_dict["garden"] = garden_result
-            decision = RoutingDecision(
-                query=text[:50],
-                selected_tier="garden",
-                results=results_dict,
-                total_latency_ms=elapsed,
-                confidence=garden_result.confidence,
-                decision_reason=(
-                    f"GARDEN confidence {garden_result.confidence:.2f} >= threshold {self.garden_threshold}"
-                ),
-            )
-            self._decisions.append(decision)
+                results_dict: Dict[str, TierResult] = {}
+                if ed3n_result is not None and ed3n_result.text:
+                    results_dict["ed3n"] = ed3n_result
+                results_dict["garden"] = garden_result
+                decision = RoutingDecision(
+                    query=text[:50],
+                    selected_tier="garden",
+                    results=results_dict,
+                    total_latency_ms=elapsed,
+                    confidence=garden_result.confidence,
+                    decision_reason=(
+                        f"GARDEN confidence {garden_result.confidence:.2f} >= threshold {self.garden_threshold}"
+                    ),
+                )
+                self._decisions.append(decision)
                 garden_result.latency_ms = elapsed
                 return garden_result
         else:

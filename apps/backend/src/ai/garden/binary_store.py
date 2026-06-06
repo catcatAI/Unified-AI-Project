@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 # File format constants
 MAGIC = 0x47415244           # "GARD" in little-endian
 VERSION = 1
-HEADER_SIZE = 32             # bytes
+HEADER_SIZE = 28             # bytes (matches HEADER_FORMAT: 4+4+4+16=28)
 HEADER_FORMAT = "<I2I16s"     # magic (4B) + version (4B) + V (4B) + pad (16B)
 
 
