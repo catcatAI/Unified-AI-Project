@@ -202,6 +202,7 @@ See dedicated docs for full diagrams:
 | [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
 | [PHASE_REVIEW5](docs/06-project-management/plans/PHASE_REVIEW5.md) | **Phase Review 5 (06-06, NEW)**: H5 sprint final, 2837 tests, 0 HIGH vulns, H7 roadmap |
 | [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N Architecture Plan (06-06, NEW)**: External Dictionary Decoupled Neural Network — LLM + SNN design, training pipeline, 4-phase roadmap |
+| [GARDEN_MODEL_PLAN](docs/06-project-management/plans/GARDEN_MODEL_PLAN.md) | **GARDEN Scale Plan (06-06, NEW)**: Giant Associative Relation Decoupled Evolutionary Network — Lightweight 1GB model and 5-tier scaling plan |
 | [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md) | **ED3N Training Guide (06-06, NEW)**: How to train, evaluate, and deploy ED3N with real data — terminal commands, data format, troubleshooting |
 
 ---
@@ -365,6 +366,7 @@ npm start
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
 | [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N 架構計畫 (06-06, NEW)**: 外部字典解耦神經網路 — LLM + SNN 設計、訓練管線、4 階段路線圖、與 30+ 現有組件對應 |
+| [GARDEN_MODEL_PLAN](docs/06-project-management/plans/GARDEN_MODEL_PLAN.md) | **GARDEN 擴展計畫 (06-06, NEW)**: 1GB 輕量級本地模型與五級擴展架構實作計畫 |
 
 ---
 
