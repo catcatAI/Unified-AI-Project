@@ -355,7 +355,8 @@ class ProactiveInteractionSystem:
             elif opp_type == InteractionOpportunity.MEMORY_TRIGGER.value:
                 message = await self._generate_memory_message(opportunity)
             else:
-                message = "你好，我注意到一些事情想和你分享。"
+                engine = self._get_ed3n_engine()
+                message = engine.process("unknown_opportunity", context={"opp_type": opp_type}, depth="reflex")
 
             plan = InteractionPlan(
                 opportunity=opp_type,
@@ -371,59 +372,42 @@ class ProactiveInteractionSystem:
             logger.error(f"Error planning proactive action: {e}", exc_info=True)
             return None
 
+    def _get_ed3n_engine(self):
+        if not hasattr(self.__class__, '_ed3n_engine'):
+            from ai.ed3n.ed3n_engine import ED3NEngine
+            engine = ED3NEngine()
+            engine.reflex.load_presets()
+            self.__class__._ed3n_engine = engine
+        return self.__class__._ed3n_engine
+
     async def _generate_return_message(self, opportunity: Dict[str, Any]) -> str:
         """生成返回消息"""
-        messages = [
-            "歡迎回來！我一直在等你。",
-            "你回來了！開心見到你。",
-            "嘿，你回來了！今天過得怎麼樣？",
-            "歡迎回家！我準備好了，你想聊什麼？",
-        ]
-        import random
-
-        return random.choice(messages)
+        engine = self._get_ed3n_engine()
+        return engine.process("welcome_back", context={"type": "return"}, depth="reflex")
 
     async def _generate_idle_message(self, opportunity: Dict[str, Any]) -> str:
         """生成閒置消息"""
         idle_time = opportunity.get("data", {}).get("idle_time", 0)
-
-        if idle_time > 300:  # 5分鐘
-            return "你在忙嗎？需要我幫忙嗎？"
-        else:
-            return "嘿，你在做什麼呢？"
+        engine = self._get_ed3n_engine()
+        return engine.process("idle_check", context={"idle_time": idle_time}, depth="reflex")
 
     async def _generate_emotional_message(self, opportunity: Dict[str, Any]) -> str:
         """生成情緒消息"""
         emotion = opportunity.get("data", {}).get("emotion", "neutral")
-
-        if emotion == "sad":
-            return "你看上去有點難過，需要我陪陪你嗎？"
-        elif emotion == "frustrated":
-            return "感覺你有點煩惱，想說說嗎？"
-        elif emotion == "anxious":
-            return "別擔心，我在這裡陪你。"
-        else:
-            return "你今天心情怎麼樣？"
+        engine = self._get_ed3n_engine()
+        return engine.process("emotional_response", context={"emotion": emotion}, depth="reflex")
 
     async def _generate_time_based_message(self, opportunity: Dict[str, Any]) -> str:
         """生成基於時間的消息"""
         time_type = opportunity.get("data", {}).get("time_type", "")
-
-        if time_type == "morning_greeting":
-            return "早上好！新的一天開始了，今天有什麼計劃嗎？"
-        elif time_type == "evening_greeting":
-            return "晚上好！今天過得怎麼樣？"
-        elif time_type == "sleep_reminder":
-            return "時間不早了，該休息了嗎？"
-        else:
-            return "時間過得真快啊。"
+        engine = self._get_ed3n_engine()
+        return engine.process("time_greeting", context={"time_type": time_type}, depth="reflex")
 
     async def _generate_memory_message(self, opportunity: Dict[str, Any]) -> str:
         """生成記憶消息"""
         events = opportunity.get("data", {}).get("events", [])
-        if events:
-            return f"我記得我們之前談過：{events[0][:50]}..."
-        return "我想起了我們之前的一些對話。"
+        engine = self._get_ed3n_engine()
+        return engine.process("memory_trigger", context={"events": events}, depth="reflex")
 
     async def _execute_planned_actions(self) -> None:
         """執行計劃的行動"""

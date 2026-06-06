@@ -39,6 +39,7 @@ from services.llm.providers.ollama import OllamaBackend
 from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.anthropic import AnthropicAPIBackend
 from services.llm.providers.google import GoogleAPIBackend
+from services.llm.providers.ed3n import ED3NBackend
 
 # Prompt builder utilities
 from services.llm.prompt_builder import (
@@ -402,6 +403,13 @@ class AngelaLLMService:
                 )
                 logger.info(f"已注冊 Google Gemini 後端: {model_name}")
 
+            elif provider == "ed3n":
+                self.backends[LLMBackend.ED3N] = ED3NBackend(
+                    base_url=base_url or "",
+                    model=model_name or "ed3n-v1",
+                    timeout=backend_config.get("timeout", 30.0),
+                )
+                logger.info(f"已注冊 ED3N 後端: {model_name or 'ed3n-v1'}")
 
     async def initialize(self) -> bool:
         """初始化服務，檢測可用的後端
@@ -711,17 +719,33 @@ class AngelaLLMService:
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         備份回應機制
-        當沒有可用的 LLM 後端時，使用 NeuroBlender 或簡單模板。
+        優先使用 ED3N 引擎，降級至 NeuroBlender，最後使用純模板。
         """
+        # Tier 1: ED3N engine
         try:
-            # Try NeuroBlender first
+            from ai.ed3n.ed3n_engine import ED3NEngine
+            engine = ED3NEngine()
+            text = engine.process(user_message, context=context, depth="shallow")
+            if text:
+                return LLMResponse(
+                    text=text,
+                    backend="ed3n-fallback",
+                    model="ed3n-v1",
+                    confidence=0.7,
+                    metadata={"fallback": True, "tier": "ed3n"},
+                )
+        except Exception as e:
+            logger.warning(f"ED3N fallback failed: {e}", exc_info=True)
+
+        # Tier 2: NeuroBlender
+        try:
             result = await self._try_neuro_blender(user_message, context)
             if result:
                 return result
         except Exception as e:
             logger.warning(f"NeuroBlender fallback failed: {e}", exc_info=True)
 
-        # Ultimate fallback: pure template
+        # Tier 3: pure template
         try:
             from ai.memory.template_library import get_template_library
             from ai.memory.memory_template import ResponseCategory
@@ -796,23 +820,29 @@ class AngelaLLMService:
 
         vocab, blender = self.__class__._neuro_vocab_instance
 
-        # Build state_dict from context
+        # Build state_dict from context with dynamic values
         bio = context.get("bio_state", {})
+        axes = context.get("state_for_llm", {}).get("axes", {})
         state_dict = {
-            "alpha": {"energy": 0.6 - 0.3 * bio.get("stress_level", 0.0)},
-            "beta": {"curiosity": 0.5},
-            "gamma": {"valence": bio.get("valence", 0.0)},
-            "delta": {"intimacy": 0.4},
-            "epsilon": {"precision": 0.4},
-            "zeta": {"temporal_coherence": 0.5},
-            "theta": {"novelty": 0.3},
-            "eta": {"execution_count": 0.5},
+            "alpha": {"energy": axes.get("alpha", {}).get("values", {}).get("energy", 0.6 - 0.3 * bio.get("stress_level", 0.0))},
+            "beta": {"curiosity": axes.get("beta", {}).get("values", {}).get("curiosity", 0.5)},
+            "gamma": {"valence": axes.get("gamma", {}).get("values", {}).get("valence", bio.get("valence", 0.0))},
+            "delta": {"intimacy": axes.get("delta", {}).get("values", {}).get("intimacy", 0.4)},
+            "epsilon": {"precision": axes.get("epsilon", {}).get("values", {}).get("precision", 0.4)},
+            "zeta": {"temporal_coherence": axes.get("zeta", {}).get("values", {}).get("temporal_coherence", 0.5)},
+            "theta": {"novelty": axes.get("theta", {}).get("values", {}).get("novelty", 0.3)},
+            "eta": {"execution_count": axes.get("eta", {}).get("values", {}).get("execution_count", 0.5)},
         }
 
-        # Build intent_vec from user_message keywords
+        # Build intent_vec dynamically from user_message keywords
         intent_vec = {"casual": 0.5}
-        math_kws = ["計算", "數學", "積分", "微分"]
-        code_kws = ["代碼", "程式", "python", "function"]
+        emotion = bio.get("dominant_emotion", "").lower()
+        if emotion in ("sad", "fear", "angry"):
+            intent_vec["support"] = 0.7
+        if emotion in ("happy", "surprise"):
+            intent_vec["excited"] = 0.6
+        math_kws = ["計算", "數學", "積分", "微分", "math", "calculate"]
+        code_kws = ["代碼", "程式", "python", "function", "code", "program"]
         for kw in math_kws:
             if kw in user_message:
                 intent_vec["math"] = 0.8
@@ -1132,9 +1162,16 @@ class AngelaLLMService:
         keywords = [w for w in words if w not in stopwords and len(w) > 1]
         return keywords[:5]
 
-
-
-
+    def _ed3n_fallback_text(self, text: str) -> str:
+        """Fallback text generation via ED3N engine"""
+        try:
+            from ai.ed3n.ed3n_engine import ED3NEngine
+            engine = ED3NEngine()
+            result = engine.process(text, depth="shallow")
+            return result if result else ""
+        except Exception as e:
+            logger.warning(f"ED3N fallback text failed: {e}", exc_info=True)
+            return ""
 
     async def generate_text(
         self,
@@ -1153,7 +1190,8 @@ class AngelaLLMService:
         messages.append({"role": "user", "content": prompt})
 
         if not self.is_available or self.active_backend is None:
-            return ""
+            ed3n_text = self._ed3n_fallback_text(prompt)
+            return ed3n_text
 
         try:
             response = await asyncio.wait_for(
@@ -1165,13 +1203,13 @@ class AngelaLLMService:
                 ),
                 timeout=60.0,
             )
-            return response.text if not response.error else ""
+            return response.text if not response.error else self._ed3n_fallback_text(prompt)
         except asyncio.TimeoutError:
             logger.warning("generate_text timeout", exc_info=True)
-            return ""
+            return self._ed3n_fallback_text(prompt)
         except Exception as e:
             logger.error(f"generate_text error: {e}", exc_info=True)
-            return ""
+            return self._ed3n_fallback_text(prompt)
 
     async def chat_completion(
         self, messages: List[ChatMessage], model_id: Optional[str] = None, **kwargs
@@ -1181,7 +1219,9 @@ class AngelaLLMService:
         用於向後相容需要 chat_completion() 的消費者。
         """
         if not self.is_available or self.active_backend is None:
-            return LLMResponse(text="", backend="none", model="unknown", error="No backend available")
+            last_content = messages[-1].content if isinstance(messages[-1], ChatMessage) else (str(messages[-1]) if messages else "")
+            text = self._ed3n_fallback_text(last_content)
+            return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
 
         # P6-1: fire on_message pipeline for plugin system (handlers can annotate/modify data)
         try:
@@ -1241,10 +1281,14 @@ class AngelaLLMService:
 
         except asyncio.TimeoutError:
             logger.warning("chat_completion timeout", exc_info=True)
-            return LLMResponse(text="", backend=self.active_backend.__class__.__name__, model="unknown", error="timeout")
+            last_content = messages[-1].content if isinstance(messages[-1], ChatMessage) else (str(messages[-1]) if messages else "")
+            text = self._ed3n_fallback_text(last_content)
+            return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
         except Exception as e:
             logger.error(f"chat_completion error: {e}", exc_info=True)
-            return LLMResponse(text="", backend="unknown", model="unknown", error=str(e))
+            last_content = messages[-1].content if isinstance(messages[-1], ChatMessage) else (str(messages[-1]) if messages else "")
+            text = self._ed3n_fallback_text(last_content)
+            return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
 def _get_llm_config(key: str, default=None) -> str:
     """Get llm config."""
     try:

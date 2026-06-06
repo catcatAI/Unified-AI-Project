@@ -30,6 +30,7 @@ class ResponseRoute(Enum):
     COMPOSED = "composed"
     HYBRID = "hybrid"
     LLM_FULL = "llm_full"
+    ED3N = "ed3n"
     FALLBACK = "fallback"
 
 
@@ -80,6 +81,7 @@ class DeviationTracker:
                 ResponseRoute.COMPOSED.value: 0,
                 ResponseRoute.HYBRID.value: 0,
                 ResponseRoute.LLM_FULL.value: 0,
+                ResponseRoute.ED3N.value: 0,
                 ResponseRoute.FALLBACK.value: 0,
             },
             "total_tokens_used": 0,
@@ -94,6 +96,7 @@ class DeviationTracker:
             ResponseRoute.COMPOSED: {"tokens": 50, "time": 5.0},
             ResponseRoute.HYBRID: {"tokens": 200, "time": 500.0},
             ResponseRoute.LLM_FULL: {"tokens": 600, "time": 1500.0},
+            ResponseRoute.ED3N: {"tokens": 100, "time": 50.0},
             ResponseRoute.FALLBACK: {"tokens": 0, "time": 1.0},
         }
 

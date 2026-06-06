@@ -1,0 +1,37 @@
+# =============================================================================
+# ED3N Default Configuration
+# External Dictionary Decoupled Neural Network
+# =============================================================================
+# ANGELA-MATRIX: [L3] [γ] [C] [L0-L2]
+
+ed3n:
+  enabled: true
+  version: "1.0.0"
+  
+  # Three-layer architecture
+  reflex:
+    enabled: true
+    cache_size: 100
+    lru_ttl_seconds: 3600
+    
+  dictionary:
+    growth_threshold: 0.5
+    max_entries: 10000
+    preset_language: "zh-TW"
+    
+  core_network:
+    enabled: true
+    max_spike_hops: 3
+    spike_decay: 0.5
+    default_threshold: 0.7
+    
+  output_anchor:
+    top_k_anchors: 3
+    top_k_network: 5
+    max_drift: 0.8
+    
+  # Integration with existing Angela systems
+  integration:
+    templates_as_presets: true
+    neuro_blender_fallback: true
+    auto_sync_dictionary: true

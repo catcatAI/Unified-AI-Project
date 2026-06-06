@@ -751,6 +751,7 @@ llm:
     max_conversation_history: 50
     default_response_max_tokens: 256
   backend_priority:
+    - "ed3n"
     - "ollama"
     - "google"
     - "openai"

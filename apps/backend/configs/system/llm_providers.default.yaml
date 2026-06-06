@@ -50,6 +50,17 @@ fallback_chain:
     - "ollama:deepseek-coder:latest"
     - "ollama:llama3.2:latest"
 
+  ed3n:
+    endpoint: "internal://ed3n"
+    default_timeout_ms: 30000
+    retry_attempts: 1
+    models:
+      - name: "ed3n-v1"
+        capability: "general"
+        latency_ms: 5
+        context_window: 0
+        description: "ED3N 反射式字典網路，無需 LLM 推理"
+
 performance_tracking:
   success_rate_threshold: 0.70
   latency_threshold_ms: 30000

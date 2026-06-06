@@ -149,10 +149,18 @@ class DailyLanguageModel:
                 record.response = response
             except Exception as e:  # broad exception acceptable: LLM errors return error response gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                record.response = f"Sorry, I encountered an error: {str(e)}"
+                from ai.ed3n.ed3n_engine import ED3NEngine
+                try:
+                    engine = ED3NEngine()
+                    record.response = engine.process("error_response", context={"error": str(e)}, depth="reflex")
+                except Exception:
+                    record.response = f"Sorry, I encountered an error: {str(e)}"
 
         else:
-            record.response = "I'm listening, but I don't have a language model connected yet."
+            from ai.ed3n.ed3n_engine import ED3NEngine
+            engine = ED3NEngine()
+            engine.reflex.load_presets()
+            record.response = engine.process("no_llm", depth="reflex")
 
         self.interaction_history.append(record)
         self.total_interactions += 1

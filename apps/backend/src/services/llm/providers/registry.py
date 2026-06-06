@@ -12,5 +12,6 @@ class LLMBackend(Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
+    ED3N = "ed3n"
     LOCAL = "local"
     NONE = "none"

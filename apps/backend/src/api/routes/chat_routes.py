@@ -5,7 +5,6 @@ Chat & session API routes extracted from main_api_server.py (A3 god module split
 
 import asyncio
 import logging
-import random
 import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
@@ -68,6 +67,18 @@ class TTLSessionManager:
 
 
 sessions = TTLSessionManager()
+
+_ed3n_engine = None
+
+
+def _get_ed3n_engine():
+    global _ed3n_engine
+    if _ed3n_engine is None:
+        from ai.ed3n.ed3n_engine import ED3NEngine
+        engine = ED3NEngine()
+        engine.reflex.load_presets()
+        _ed3n_engine = engine
+    return _ed3n_engine
 
 
 async def _handle_chat_request(
@@ -134,7 +145,7 @@ async def _handle_chat_request(
     except asyncio.TimeoutError:
         logger.warning(f"LLM response timeout for message: {user_message[:50]}...", exc_info=True)
         return {
-            "response_text": "\uff08\u6211\u7684\u5927\u8166\u4f3c\u4e4e\u9047\u5230\u4e86\u4e00\u9ede\u9ede\u5c0f\u5e72\u6270\uff0c\u80fd\u518d\u8aaa\u4e00\u6b21\u55ce\uff1f\uff09",
+            "response_text": _get_ed3n_engine().process("timeout_response", context={"fallback": True}, depth="reflex"),
             "source": "fallback-timeout",
             "emotion": "neutral",
             "emotion_confidence": 0.5,
@@ -201,7 +212,7 @@ async def start_session(request: Dict[str, Any] = Body(default={})) -> dict:
         "messages": [],
         "user_name": request.get("user_name", "User"),
     })
-    return {"session_id": session_id, "message": "Welcome to Angela AI!"}
+    return {"session_id": session_id, "message": _get_ed3n_engine().process("welcome", context={"session_id": session_id}, depth="reflex")}
 
 
 @router.post("/session/{session_id}/send")
@@ -213,14 +224,7 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
     session = sessions.get(session_id)
     messages = session.get("messages", [])
     messages.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat()})
-    responses = [
-        "\u6211\u660e\u767d\u4e86\uff01\u8ba9\u6211\u5e2e\u4f60\u60f3\u60f3...",
-        "\u8fd9\u662f\u4e2a\u5f88\u6709\u8da3\u7684\u60f3\u6cd5\uff01",
-        "\u6211\u53ef\u4ee5\u5e2e\u4f60\u5904\u7406\u8fd9\u4e2a\u3002",
-        "\u8ba9\u6211\u5206\u6790\u4e00\u4e0b...",
-        "\u6ca1\u95ee\u9898\uff0c\u6211\u8fd9\u5c31\u5e2e\u4f60\u505a\uff01",
-    ]
-    ai_response = random.choice(responses)
+    ai_response = _get_ed3n_engine().process("session_response", context={"user_message": user_message}, depth="reflex")
     messages.append({"role": "assistant", "content": ai_response, "timestamp": datetime.now().isoformat()})
     return {"session_id": session_id, "response_text": ai_response}
 

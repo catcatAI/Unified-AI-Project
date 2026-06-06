@@ -160,6 +160,7 @@ See detailed reports in linked analysis docs:
 | ⬜ H7 | Long file refactoring (132→50 files) | 62% → 68% | 🔴 HIGH |
 | ⬜ H7.1 | Doc consistency (5 core documents) | 68% → 72% | 🔴 HIGH |
 | ⬜ H7.2 | Deprecated archive cleanup | 72% → 73% | 🟡 MEDIUM |
+| ✅ H7.5 | ED3N Phase 1 原型 | ✅ 完成 | 6 檔, 962 行 |
 | ⬜ H8 | Test quality (boundary/perf) | 73% → 78% | 🟡 MEDIUM |
 | ⬜ H9 | MATRIX annotation + plugin docs | 78% → 82% | 🟢 LOW |
 

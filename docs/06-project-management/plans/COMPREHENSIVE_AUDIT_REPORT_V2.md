@@ -96,6 +96,8 @@
 | 10 | `core/real_time_monitor.py` | 1,009 | 即時監控 | ⬜ 待分析 |
 
 > **H7 已拆分**: neuroplasticity.py(1671→35 shim), router.py(1633→1284), physiological_tactile.py(1575→125 shim), endocrine_system.py(1267→130 shim) — 4/5 原 top-5 已完成拆分。剩餘 `state_matrix.py(1611)` 為唯一 >1500 行檔案。
+>
+> **ED3N 新 Package**: `ai/ed3n/` — 6 檔, 962 行總計 (Phase 1 完成, 非單一檔案, 不計入 top-10 長檔)
 
 ### 1.5 版本一致性
 
@@ -139,6 +141,16 @@
 | `import core` 耗時 | ~0.5s（lazy import） |
 | 循環導入 | 未發現 |
 | 整站 import 測試 | ✅ 2837 測試皆可收集 |
+
+### 2.5 ED3N 新架構
+- **Package**: `ai/ed3n/` (6 檔, 962 行)
+- **LLMBackend**: ED3N = "ed3n" (registry.py)
+- **Backend**: `ED3NBackend(BaseLLMBackend)` — services/llm/providers/ed3n.py
+- **三層速度**: ReflexLayer (~1ms) → Shallow (~10ms) → Deep (~100ms+)
+- **6 關係類型**: = (同義), ≠ (反向同義), → (映射), ↛ (反向映射), ∼ (類比), ≁ (反向類比)
+- **輸出錨定**: anchored_decode 減少 LLM 飄移
+- **硬編碼取代**: 取代 5 個檔案中 25+ 處硬編碼回應
+- **狀態**: ✅ Phase 1 完成
 
 ---
 

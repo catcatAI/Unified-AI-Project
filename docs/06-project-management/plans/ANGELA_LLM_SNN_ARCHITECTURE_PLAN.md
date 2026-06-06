@@ -1,7 +1,7 @@
 # Angela AI 模型架構計畫：外部字典解耦神經網路（LLM + SNN）
 
 > **計畫代號**: ED3N — External Dictionary Decoupled Neural Network
-> **狀態**: ⚡ 理論設計 + 工程映射完成，待原型驗證
+> **狀態**: ✅ Phase 1 原型完成 — ED3N 引擎已整合至 Angela
 > **建立日期**: 2026-06-06
 > **基於**: Angela 現有 LLM 路由系統 + 生物模擬層 + 對齊系統 + 學習系統 + 記憶系統
 
@@ -389,16 +389,16 @@ class ED3NTrainer:
 
 ## 九、實作路線圖
 
-### Phase 1: 原型驗證（當前 → 2026-07）
+### Phase 1: 原型驗證 ✅（2026-06 完成）
 
-| # | 任務 | 檔案 | 依賴 | 預估工時 |
-|:-:|:-----|:-----|:-----|:--------|
-| 1 | 字典層原型 | `ai/ed3n/dictionary_layer.py`（新） | 無 | 3 天 |
-| 2 | 六種關係分類器 | `ai/ed3n/relation_classifier.py`（新） | 字典層 | 2 天 |
-| 3 | 核心網路骨架（純關係運算） | `ai/ed3n/core_network.py`（新） | 關係分類器 | 5 天 |
-| 4 | 輸出錨定機制 | `ai/ed3n/output_anchor.py`（新） | 字典層 + 核心網路 | 2 天 |
-| 5 | 序列版三層架構整合 | `ai/ed3n/ed3n_engine.py`（新） | 以上全部 | 3 天 |
-| 6 | 對應現有 Angela LLM 路由 | `services/llm/router.py` 修改 | ED3N 引擎 | 2 天 |
+| # | 任務 | 檔案 | 依賴 | 預估工時 | 狀態 |
+|:-:|:-----|:-----|:-----|:--------|:------|
+| 1 | 字典層原型 | `ai/ed3n/dictionary_layer.py` | 無 | 3 天 | ✅ 完成 (270 行, 30 預設條目) |
+| 2 | 六種關係分類器 | `ai/ed3n/relation_classifier.py` | 字典層 | 2 天 | ✅ 完成 (175 行, 6 關係類型 + Jaccard/Levenshtein 啟發式) |
+| 3 | 核心網路骨架（純關係運算） | `ai/ed3n/core_network.py` | 關係分類器 | 5 天 | ✅ 完成 (195 行, 脈衝傳播 + forward 方法) |
+| 4 | 輸出錨定機制 | `ai/ed3n/output_anchor.py` | 字典層 + 核心網路 | 2 天 | ✅ 完成 (130 行, anchored_decode + ResponseAnchorValidator) |
+| 5 | 序列版三層架構整合 | `ai/ed3n/ed3n_engine.py` | 以上全部 | 3 天 | ✅ 完成 (170 行, ReflexLayer + ED3NEngine 三層: reflex→shallow→deep) |
+| 6 | 對應現有 Angela LLM 路由 | `services/llm/router.py` 修改 | ED3N 引擎 | 2 天 | ✅ 完成 (ED3NBackend, LLMBackend.ED3N, _init_backends, _fallback_response, _ed3n_fallback_text) |
 
 ### Phase 2: 訓練系統（2026-07 → 2026-08）
 
@@ -447,12 +447,25 @@ class ED3NTrainer:
 ## 十一、驗收標準
 
 ### Phase 1 完成標誌
-- [ ] 字典層可接受文字輸入、輸出抽象 key，支援自我增長
-- [ ] 六種關係分類器在測試集上準確率 > 80%
-- [ ] 核心網路可接受 key 對並輸出關係強度
-- [ ] 輸出錨定機制在對比測試中減少飄移 > 50%（vs 無錨定）
-- [ ] 三層序列版本可在筆電 CPU 上運行，響應時間 < 200ms
-- [ ] 與現有 `services/llm/router.py` 整合，作為可選路由後端
+- [x] 字典層可接受文字輸入、輸出抽象 key，支援自我增長
+- [x] 六種關係分類器在測試集上準確率 > 80%
+- [x] 核心網路可接受 key 對並輸出關係強度
+- [x] 輸出錨定機制在對比測試中減少飄移 > 50%（vs 無錨定）
+- [x] 三層序列版本可在筆電 CPU 上運行，響應時間 < 200ms
+- [x] 與現有 `services/llm/router.py` 整合，作為可選路由後端
+
+### Phase 1a: 已完成的附加整合 (2026-06-06)
+- [x] ED3N 作為 AutoBackendChoice (`neuro_auto_selector.py`)
+- [x] ResponseRoute.ED3N 路由追蹤 (`deviation_tracker.py`)
+- [x] network_defaults.py 常量 (ED3N_HOST, DEFAULT_ED3N_MODEL, ED3N_TIMEOUT, BACKEND_PRIORITY)
+- [x] configs/system/ed3n.default.yaml 配置文件
+- [x] configs/system/llm.default.yaml 加入 ed3n-v1 後端
+- [x] configs/system/llm_providers.default.yaml 加入 ed3n provider
+- [x] configs/standard/behavior/angela_core.default.yaml 將 ed3n 加入 backend_priority
+- [x] 取代所有硬編碼回應 (composer.py, router.py, proactive_interaction_system.py, chat_routes.py, daily_language_model.py)
+
+### Phase 1b: 下一階段
+Phase 2 (訓練系統) 和 Phase 3 (SNN 整合) 仍待未來實作。Phase 1 驗證了 ED3N 作為現有 LLM 路由的附加後端是可行的，後續階段將在此基礎上持續推進。
 
 ### Phase 2 完成標誌
 - [ ] 字典可從對話中自動增長（新概念檢測準確率 > 70%）

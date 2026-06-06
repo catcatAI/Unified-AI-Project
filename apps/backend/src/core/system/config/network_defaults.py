@@ -25,6 +25,11 @@ OPENAI_API_BASE: str = "https://api.openai.com/v1"
 ANTHROPIC_API_BASE: str = "https://api.anthropic.com/v1"
 GOOGLE_API_BASE: str = "https://generativelanguage.googleapis.com/v1beta"
 
+# ED3N runs in-process; no external host needed
+ED3N_HOST: str = "http://127.0.0.1:0"
+DEFAULT_ED3N_MODEL: str = "ed3n-v1"
+ED3N_TIMEOUT: float = 30.0
+
 # Model name defaults (backends)
 DEFAULT_OPENAI_MODEL: str = "gpt-4"
 DEFAULT_ANTHROPIC_MODEL: str = "claude-3-opus-20240229"
@@ -44,6 +49,7 @@ HEALTH_CHECK_TIMEOUT: float = 5.0
 
 # LLM routing
 BACKEND_PRIORITY: Dict[str, int] = {
+    "ed3n": 5,
     "llamacpp": 10,
     "ollama": 20,
     "openai": 30,
@@ -61,6 +67,9 @@ __all__ = [
     "OPENAI_API_BASE",
     "ANTHROPIC_API_BASE",
     "GOOGLE_API_BASE",
+    "ED3N_HOST",
+    "DEFAULT_ED3N_MODEL",
+    "ED3N_TIMEOUT",
     "DEFAULT_OPENAI_MODEL",
     "DEFAULT_ANTHROPIC_MODEL",
     "DEFAULT_OLLAMA_MODEL",

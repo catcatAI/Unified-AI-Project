@@ -1,0 +1,207 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγ] [B] [L2]
+# =============================================================================
+
+import copy
+import logging
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
+
+if TYPE_CHECKING:
+    from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryLayer
+
+from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier, RelationType
+
+logger = logging.getLogger(__name__)
+
+
+class Neuron:
+    def __init__(
+        self,
+        key: str,
+        activation: float = 0.0,
+        threshold: float = 0.3,
+        connections: Optional[Dict[str, float]] = None,
+        group_type: str = "",
+    ):
+        self.key = key
+        self.activation = min(max(activation, 0.0), 1.0)
+        self.threshold = threshold
+        self.connections = connections or {}
+        self.group_type = group_type
+
+    def __repr__(self) -> str:
+        return f"Neuron(key={self.key!r}, activation={self.activation:.2f}, group={self.group_type!r})"
+
+
+class RelationGroup:
+    def __init__(
+        self,
+        group_type: str,
+        neurons: Optional[Dict[str, Neuron]] = None,
+        activation_pattern: Optional[Callable[..., None]] = None,
+    ):
+        self.group_type = group_type
+        self.neurons = neurons or {}
+        self.activation_pattern = activation_pattern or self._default_activation_pattern
+
+    def _default_activation_pattern(self, source_key: str, strength: float) -> None:
+        neuron = self.neurons.get(source_key)
+        if neuron is None:
+            return
+        for target_key, weight in neuron.connections.items():
+            target = self.neurons.get(target_key)
+            if target is None:
+                continue
+            signal = strength * weight
+            target.activation = min(target.activation + signal, 1.0)
+
+    def add_neuron(self, neuron: Neuron) -> None:
+        self.neurons[neuron.key] = neuron
+
+    def activate(self, key: str, strength: float = 1.0) -> None:
+        neuron = self.neurons.get(key)
+        if neuron is None:
+            return
+        neuron.activation = min(neuron.activation + strength, 1.0)
+        self.activation_pattern(key, strength)
+
+
+class CoreNetwork:
+    def __init__(self, classifier: Optional[RelationClassifier] = None):
+        self.groups: Dict[str, RelationGroup] = {}
+        self.classifier = classifier or RelationClassifier()
+        self._synonym_group = RelationGroup(group_type="synonym")
+        self._mapping_group = RelationGroup(group_type="mapping")
+        self._analogy_group = RelationGroup(group_type="analogy")
+        self.groups["synonym"] = self._synonym_group
+        self.groups["mapping"] = self._mapping_group
+        self.groups["analogy"] = self._analogy_group
+
+    def forward(
+        self,
+        input_keys: List[str],
+        context: Optional[Dict[str, object]] = None,
+    ) -> Dict[str, float]:
+        self.reset()
+        activations: Dict[str, float] = {}
+
+        for key in input_keys:
+            for group_name, group in self.groups.items():
+                if key in group.neurons:
+                    group.activate(key, 1.0)
+
+        for key in input_keys:
+            for other_key in input_keys:
+                if key >= other_key:
+                    continue
+                rel_type, confidence = self.classifier.classify_pair(
+                    key, other_key, context=context
+                )
+                self._apply_relation_activation(
+                    key, other_key, rel_type, confidence
+                )
+
+        propagated = self.compute_spike_propagation(
+            active_keys=input_keys, max_hops=3, decay=0.5
+        )
+        activations.update(propagated)
+
+        for group in self.groups.values():
+            for n_key, neuron in group.neurons.items():
+                if neuron.activation > neuron.threshold:
+                    activations[n_key] = max(
+                        activations.get(n_key, 0.0), neuron.activation
+                    )
+
+        return activations
+
+    def add_relation(
+        self, key1: str, relation_type: RelationType, key2: str, weight: float = 1.0
+    ) -> None:
+        group = self._group_for_type(relation_type)
+        if group is None:
+            return
+        for n_key in (key1, key2):
+            if n_key not in group.neurons:
+                group.add_neuron(Neuron(key=n_key, group_type=group.group_type))
+        group.neurons[key1].connections[key2] = weight
+        group.neurons[key2].connections[key1] = weight
+
+    def get_activation(self, key: str) -> float:
+        max_act = 0.0
+        for group in self.groups.values():
+            neuron = group.neurons.get(key)
+            if neuron is not None and neuron.activation > max_act:
+                max_act = neuron.activation
+        return max_act
+
+    def reset(self) -> None:
+        for group in self.groups.values():
+            for neuron in group.neurons.values():
+                neuron.activation = 0.0
+
+    def compute_spike_propagation(
+        self,
+        active_keys: List[str],
+        max_hops: int = 3,
+        decay: float = 0.5,
+    ) -> Dict[str, float]:
+        propagations: Dict[str, float] = {}
+        queue: List[Tuple[str, float, int]] = [
+            (k, 1.0, 0) for k in active_keys
+        ]
+        visited: Set[str] = set()
+
+        while queue:
+            current_key, current_strength, hop = queue.pop(0)
+            if hop >= max_hops:
+                continue
+            visited.add(current_key)
+
+            for group in self.groups.values():
+                neuron = group.neurons.get(current_key)
+                if neuron is None:
+                    continue
+                for target_key, weight in neuron.connections.items():
+                    if target_key in visited:
+                        continue
+                    new_strength = current_strength * weight * decay
+                    if new_strength < 0.05:
+                        continue
+                    propagations[target_key] = max(
+                        propagations.get(target_key, 0.0), new_strength
+                    )
+                    queue.append((target_key, new_strength, hop + 1))
+
+        return propagations
+
+    def _apply_relation_activation(
+        self,
+        key1: str,
+        key2: str,
+        rel_type: RelationType,
+        confidence: float,
+    ) -> None:
+        group = self._group_for_type(rel_type)
+        if group is None:
+            return
+        for n_key in (key1, key2):
+            if n_key not in group.neurons:
+                group.add_neuron(Neuron(key=n_key, group_type=group.group_type))
+        w = confidence
+        group.neurons[key1].connections[key2] = w
+        group.neurons[key2].connections[key1] = w
+        group.activate(key1, w)
+        group.activate(key2, w)
+
+    def _group_for_type(self, rel_type: RelationType) -> Optional[RelationGroup]:
+        mapping = {
+            RelationType.SYNONYM: "synonym",
+            RelationType.ANTI_SYNONYM: "synonym",
+            RelationType.MAPPING: "mapping",
+            RelationType.ANTI_MAPPING: "mapping",
+            RelationType.ANALOGY: "analogy",
+            RelationType.ANTI_ANALOGY: "analogy",
+        }
+        group_name = mapping.get(rel_type)
+        return self.groups.get(group_name) if group_name else None

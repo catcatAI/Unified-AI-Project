@@ -35,6 +35,7 @@ class HardwareTier(str, Enum):
 
 class AutoBackendChoice(str, Enum):
     NEUROBLENDER = "neuroblender"
+    ED3N = "ed3n"
     LLAMA_CPP = "llamacpp"
     OLLAMA = "ollama"
     OPENAI = "openai"

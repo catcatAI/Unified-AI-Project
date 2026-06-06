@@ -1,0 +1,399 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [αδ] [B] [L2]
+# =============================================================================
+
+import copy
+import logging
+import re
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
+
+class DictionaryEntry:
+    def __init__(
+        self,
+        key: str,
+        surface_forms: Dict[str, str],
+        contexts: Optional[List[Dict[str, Any]]] = None,
+        relations: Optional[Dict[str, List[str]]] = None,
+        confidence: float = 1.0,
+    ):
+        self.key = key
+        self.surface_forms = surface_forms
+        self.contexts = contexts or []
+        self.relations = relations or {}
+        self.confidence = min(max(confidence, 0.0), 1.0)
+
+    def __repr__(self) -> str:
+        return (
+            f"DictionaryEntry(key={self.key!r}, "
+            f"surface={list(self.surface_forms.keys())}, "
+            f"confidence={self.confidence:.2f})"
+        )
+
+
+class DictionaryLayer:
+    def __init__(self, growth_threshold: float = 0.5):
+        self.entries: Dict[str, DictionaryEntry] = {}
+        self.modality_encoders: Dict[str, Any] = {"text": None, "image": None, "audio": None}
+        self.growth_threshold = growth_threshold
+        self._next_key_id: int = 1
+        self._keyword_index: Dict[str, List[str]] = {}
+        self._bigram_index: Dict[str, List[str]] = {}
+        self._rebuilt_index: bool = False
+
+    def _assign_key(self, prefix: str = "c") -> str:
+        key = f"{prefix}{self._next_key_id}"
+        self._next_key_id += 1
+        return key
+
+    def lookup(
+        self, keys: List[str], anchors: Optional[List[DictionaryEntry]] = None
+    ) -> Dict[str, Any]:
+        result: Dict[str, Any] = {}
+        anchor_keys = {e.key for e in (anchors or [])}
+        for key in keys:
+            entry = self.entries.get(key)
+            if entry is None:
+                result[key] = None
+                continue
+            if anchors and key not in anchor_keys:
+                confidence_boost = 0.1
+                boosted = copy.copy(entry)
+                boosted.confidence = min(boosted.confidence + confidence_boost, 1.0)
+                result[key] = boosted
+            else:
+                result[key] = entry
+        return result
+
+    def encode(self, text: str, modality: str = "text") -> List[str]:
+        if modality != "text":
+            logger.warning("Only 'text' modality is supported; falling back to text encoding.")
+        self._rebuild_index()
+        text_lower = text.lower().strip()
+        tokens = re.findall(r"[\w]+", text_lower)
+        matched_keys: List[str] = []
+
+        for kw, keys in self._keyword_index.items():
+            if kw in text_lower:
+                matched_keys.extend(keys)
+
+        for bigram, keys in self._bigram_index.items():
+            if bigram in text_lower:
+                matched_keys.extend(keys)
+
+        seen: set = set()
+        unique_keys: List[str] = []
+        for k in matched_keys:
+            if k not in seen:
+                seen.add(k)
+                unique_keys.append(k)
+        return unique_keys
+
+    def decode(self, keys: List[str], context: Optional[Dict[str, Any]] = None) -> str:
+        parts: List[str] = []
+        for key in keys:
+            entry = self.entries.get(key)
+            if entry is None:
+                continue
+            zh = entry.surface_forms.get("zh")
+            en = entry.surface_forms.get("en")
+            surface = zh or en or key
+            parts.append(surface)
+        return " ".join(parts)
+
+    def add_entry(
+        self,
+        key: str,
+        surface_forms: Dict[str, str],
+        contexts: Optional[List[Dict[str, Any]]] = None,
+        relations: Optional[Dict[str, List[str]]] = None,
+        confidence: float = 1.0,
+    ) -> DictionaryEntry:
+        if key in self.entries:
+            logger.warning("Overwriting existing entry with key=%s", key)
+        entry = DictionaryEntry(
+            key=key,
+            surface_forms=surface_forms,
+            contexts=contexts,
+            relations=relations,
+            confidence=confidence,
+        )
+        self.entries[key] = entry
+        self._rebuild_index()
+        return entry
+
+    def grow(
+        self, text: str, surface_form: str, confidence: float = 0.5
+    ) -> str:
+        if confidence < self.growth_threshold:
+            logger.debug(
+                "Confidence %.2f below growth threshold %.2f; skipping growth",
+                confidence,
+                self.growth_threshold,
+            )
+            return ""
+        key = self._assign_key()
+        entry = DictionaryEntry(
+            key=key,
+            surface_forms={"zh": surface_form, "en": text},
+            confidence=confidence,
+        )
+        self.entries[key] = entry
+        self._rebuild_index()
+        logger.info("Grew new entry: %s -> %s (%s)", key, surface_form, text)
+        return key
+
+    def get_synonyms(self, key: str) -> List[str]:
+        entry = self.entries.get(key)
+        if entry is None:
+            return []
+        syns = entry.relations.get("synonym", [])
+        transitive: List[str] = []
+        for s in syns:
+            if s in self.entries:
+                transitive.extend(
+                    self.entries[s].relations.get("synonym", [])
+                )
+        merged: List[str] = []
+        seen: set = set()
+        for k in syns + transitive:
+            if k not in seen and k != key:
+                seen.add(k)
+                merged.append(k)
+        return merged
+
+    def get_related(
+        self, key: str, relation_type: Optional[str] = None
+    ) -> List[str]:
+        entry = self.entries.get(key)
+        if entry is None:
+            return []
+        if relation_type:
+            return entry.relations.get(relation_type, [])
+        all_related: List[str] = []
+        seen: set = set()
+        for rels in entry.relations.values():
+            for k in rels:
+                if k not in seen:
+                    seen.add(k)
+                    all_related.append(k)
+        return all_related
+
+    def load_preset_responses(self) -> None:
+        presets = self._build_presets()
+        for preset in presets:
+            self.add_entry(**preset)
+        self._rebuild_index()
+        logger.info("Loaded %d preset entries.", len(presets))
+
+    def _rebuild_index(self) -> None:
+        self._keyword_index.clear()
+        self._bigram_index.clear()
+        for key, entry in self.entries.items():
+            for lang, surface in entry.surface_forms.items():
+                surface_lower = surface.lower().strip()
+
+                tokens = re.findall(r"[\w]+", surface_lower)
+                for token in tokens:
+                    self._keyword_index.setdefault(token, []).append(key)
+
+                if len(surface_lower) >= 4:
+                    for i in range(len(surface_lower) - 1):
+                        bigram = surface_lower[i : i + 2]
+                        if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
+                            self._bigram_index.setdefault(bigram, []).append(key)
+        self._rebuilt_index = True
+
+    def _build_presets(self) -> List[Dict[str, Any]]:
+        return [
+            # ========== Greetings ==========
+            {
+                "key": "g1",
+                "surface_forms": {"zh": "你好", "en": "hello"},
+                "contexts": [{"context_id": "greeting", "formality": "neutral"}],
+                "relations": {"synonym": ["g2", "g3"], "mapping": ["e1", "p1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "g2",
+                "surface_forms": {"zh": "早上好", "en": "good morning"},
+                "contexts": [{"context_id": "greeting", "formality": "formal", "time": "morning"}],
+                "relations": {"synonym": ["g1"], "mapping": ["g5"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "g3",
+                "surface_forms": {"zh": "晚上好", "en": "good evening"},
+                "contexts": [{"context_id": "greeting", "formality": "formal", "time": "evening"}],
+                "relations": {"synonym": ["g1"], "mapping": ["g5"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "g4",
+                "surface_forms": {"zh": "欢迎", "en": "welcome"},
+                "contexts": [{"context_id": "greeting", "formality": "formal"}],
+                "relations": {"synonym": ["g1"], "mapping": ["p1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "g5",
+                "surface_forms": {"zh": "嗨", "en": "hi"},
+                "contexts": [{"context_id": "greeting", "formality": "casual"}],
+                "relations": {"synonym": ["g1", "g6"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "g6",
+                "surface_forms": {"zh": "哈喽", "en": "hey"},
+                "contexts": [{"context_id": "greeting", "formality": "casual"}],
+                "relations": {"synonym": ["g1", "g5"]},
+                "confidence": 1.0,
+            },
+            # ========== Farewells ==========
+            {
+                "key": "f1",
+                "surface_forms": {"zh": "再见", "en": "goodbye"},
+                "contexts": [{"context_id": "farewell", "formality": "neutral"}],
+                "relations": {"synonym": ["f2"], "mapping": ["p1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "f2",
+                "surface_forms": {"zh": "明天见", "en": "see you tomorrow"},
+                "contexts": [{"context_id": "farewell", "formality": "casual"}],
+                "relations": {"synonym": ["f1"], "mapping": ["g2"]},
+                "confidence": 1.0,
+            },
+            # ========== Politeness ==========
+            {
+                "key": "p1",
+                "surface_forms": {"zh": "谢谢", "en": "thank you"},
+                "contexts": [{"context_id": "politeness", "formality": "neutral"}],
+                "relations": {"synonym": ["p4"], "mapping": ["e1", "r1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "p2",
+                "surface_forms": {"zh": "对不起", "en": "sorry"},
+                "contexts": [{"context_id": "politeness", "formality": "neutral", "sentiment": "apology"}],
+                "relations": {"synonym": ["r2"], "mapping": ["r1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "p3",
+                "surface_forms": {"zh": "没关系", "en": "no problem"},
+                "contexts": [{"context_id": "politeness", "formality": "neutral", "sentiment": "forgiveness"}],
+                "relations": {"synonym": ["r3"], "mapping": ["p2"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "p4",
+                "surface_forms": {"zh": "请", "en": "please"},
+                "contexts": [{"context_id": "politeness", "formality": "formal"}],
+                "relations": {"synonym": [], "mapping": ["g1", "p1"]},
+                "confidence": 1.0,
+            },
+            # ========== Common Patterns ==========
+            {
+                "key": "c1",
+                "surface_forms": {"zh": "在忙吗", "en": "are you busy"},
+                "contexts": [{"context_id": "small_talk", "topic": "status"}],
+                "relations": {"mapping": ["e5", "r1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "c2",
+                "surface_forms": {"zh": "心情", "en": "mood"},
+                "contexts": [{"context_id": "small_talk", "topic": "emotion"}],
+                "relations": {"mapping": ["e1", "e2", "e3", "e5"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "c3",
+                "surface_forms": {"zh": "今天", "en": "today"},
+                "contexts": [{"context_id": "small_talk", "topic": "time"}],
+                "relations": {"mapping": ["g2", "g3", "c1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "c4",
+                "surface_forms": {"zh": "名字", "en": "name"},
+                "contexts": [{"context_id": "small_talk", "topic": "identity"}],
+                "relations": {"mapping": ["g1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "c5",
+                "surface_forms": {"zh": "做什么", "en": "what are you doing"},
+                "contexts": [{"context_id": "small_talk", "topic": "activity"}],
+                "relations": {"mapping": ["c1", "e5"]},
+                "confidence": 1.0,
+            },
+            # ========== Emotional States ==========
+            {
+                "key": "e1",
+                "surface_forms": {"zh": "开心", "en": "happy"},
+                "contexts": [{"context_id": "emotion", "valence": "positive", "arousal": "high"}],
+                "relations": {"synonym": ["e5"], "mapping": ["c2"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "e2",
+                "surface_forms": {"zh": "难过", "en": "sad"},
+                "contexts": [{"context_id": "emotion", "valence": "negative", "arousal": "low"}],
+                "relations": {"mapping": ["p2", "c2"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "e3",
+                "surface_forms": {"zh": "烦恼", "en": "annoyed"},
+                "contexts": [{"context_id": "emotion", "valence": "negative", "arousal": "high"}],
+                "relations": {"mapping": ["e2", "c2"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "e4",
+                "surface_forms": {"zh": "无聊", "en": "bored"},
+                "contexts": [{"context_id": "emotion", "valence": "negative", "arousal": "low"}],
+                "relations": {"mapping": ["e2", "c1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "e5",
+                "surface_forms": {"zh": "兴奋", "en": "excited"},
+                "contexts": [{"context_id": "emotion", "valence": "positive", "arousal": "high"}],
+                "relations": {"synonym": ["e1"], "mapping": ["c2"]},
+                "confidence": 1.0,
+            },
+            # ========== Responses ==========
+            {
+                "key": "r1",
+                "surface_forms": {"zh": "嗯", "en": "uh-huh"},
+                "contexts": [{"context_id": "response", "type": "acknowledgment"}],
+                "relations": {"synonym": ["r2", "r3"], "mapping": ["p1"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "r2",
+                "surface_forms": {"zh": "好的", "en": "okay"},
+                "contexts": [{"context_id": "response", "type": "agreement"}],
+                "relations": {"synonym": ["r1", "r3", "r4"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "r3",
+                "surface_forms": {"zh": "明白", "en": "understood"},
+                "contexts": [{"context_id": "response", "type": "acknowledgment"}],
+                "relations": {"synonym": ["r1", "r2", "r4"]},
+                "confidence": 1.0,
+            },
+            {
+                "key": "r4",
+                "surface_forms": {"zh": "可以", "en": "sure"},
+                "contexts": [{"context_id": "response", "type": "agreement"}],
+                "relations": {"synonym": ["r2"]},
+                "confidence": 1.0,
+            },
+        ]

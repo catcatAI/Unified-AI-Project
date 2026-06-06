@@ -123,6 +123,31 @@
 | P4 | `core/engine/desktop_interaction.py` | 1,168 |
 | P5 | `core/action_execution_bridge.py` | 1,167 |
 
+### H7.5 ED3N Phase 1 原型
+- **狀態**: ✅ 完成
+- **檔案**: `ai/ed3n/` (6 檔, 962 行總計)
+- **核心元件**:
+  - `dictionary_layer.py` — DictionaryLayer (270 行, 30 預設條目, 中英雙語表面形式, 自動增長)
+  - `relation_classifier.py` — RelationClassifier (175 行, 6 關係類型, Jaccard/Levenshtein 啟發式)
+  - `core_network.py` — CoreNetwork (195 行, 脈衝傳播, forward 方法)
+  - `output_anchor.py` — anchored_decode + ResponseAnchorValidator (130 行)
+  - `ed3n_engine.py` — ReflexLayer + ED3NEngine (170 行, 三層速度: reflex→shallow→deep)
+- **整合點**:
+  - `LLMBackend.ED3N` 枚舉值 (`registry.py`)
+  - `ED3NBackend` LLM 提供者 (`services/llm/providers/ed3n.py`)
+  - `AngelaLLMService._init_backends()` 支援 ed3n 後端
+  - `AutoBackendChoice.ED3N` (`neuro_auto_selector.py`)
+  - `ResponseRoute.ED3N` (`deviation_tracker.py`)
+  - `BACKEND_PRIORITY` 加入 ed3n (priority=5, 最高)
+- **硬編碼取代**:
+  - `router.py` — 3 處 fallback 回應改為 ED3N 生成, 4 處 `return ""` 改為 `_ed3n_fallback_text()`, 3 處 error 回傳改為 ED3N
+  - `composer.py` — 4 處 fallback 字串改為 `_ED3NEngine().process()`
+  - `proactive_interaction_system.py` — 6 組硬編碼訊息 (15+ 字串) 改為 ED3N reflex layer
+  - `chat_routes.py` — timeout 回應、歡迎訊息、隨機回應池改為 ED3N
+  - `daily_language_model.py` — error/fallback 回應改為 ED3N
+- **配置文件**: `ed3n.default.yaml`, `llm.default.yaml` 加入 ed3n-v1, `llm_providers.default.yaml` 加入 ed3n provider, `angela_core.default.yaml` 加入 backend_priority
+- **下階段**: Phase 2 (訓練系統, 字典自我增長, 梯度流), Phase 3 (SNN 整合)
+
 ### 🟡 文檔一致性
 
 | # | 問題 | 優先級 |

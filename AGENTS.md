@@ -187,6 +187,7 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 ```
 apps/
   backend/           # Python FastAPI + AI systems
+    ai/ed3n/         # ED3N 外部字典解耦神經網路 (Phase 1)
   desktop-app/       # Electron + Live2D
   mobile-app/        # React Native bridge
 packages/
