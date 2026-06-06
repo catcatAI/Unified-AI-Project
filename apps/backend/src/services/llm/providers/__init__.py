@@ -9,6 +9,7 @@ from .openai import OpenAIAPIBackend
 from .anthropic import AnthropicAPIBackend
 from .google import GoogleAPIBackend
 from .ed3n import ED3NBackend
+from .garden import GARDENBackend
 
 __all__ = [
     "BaseLLMBackend",
@@ -19,4 +20,5 @@ __all__ = [
     "AnthropicAPIBackend",
     "GoogleAPIBackend",
     "ED3NBackend",
+    "GARDENBackend",
 ]

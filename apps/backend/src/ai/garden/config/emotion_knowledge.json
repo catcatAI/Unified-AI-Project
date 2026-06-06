@@ -1,0 +1,49 @@
+{
+  "description": "Emotion-related concept entries for GARDEN-1G",
+  "reflex_patterns": {},
+  "dictionary_entries": [
+    {
+      "key": "emo_joy",
+      "surface_forms": {"zh": "快乐", "en": "joy"},
+      "relations": {"synonym": ["e1", "e5"], "mapping": ["c2", "emo_happy"]},
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_happy",
+      "surface_forms": {"zh": "高兴", "en": "happy"},
+      "relations": {"synonym": ["e1", "e5", "emo_joy"], "mapping": ["c2"]},
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_sadness",
+      "surface_forms": {"zh": "悲伤", "en": "sadness"},
+      "relations": {"synonym": ["e2"], "antonym": ["e1"]},
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_anger",
+      "surface_forms": {"zh": "生气", "en": "anger"},
+      "relations": {"mapping": ["e3", "c2"]},
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_fear",
+      "surface_forms": {"zh": "害怕", "en": "fear"},
+      "relations": {"mapping": ["e2", "c2"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "emo_surprise",
+      "surface_forms": {"zh": "惊讶", "en": "surprise"},
+      "relations": {"mapping": ["e1", "e5", "c2"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "emo_disgust",
+      "surface_forms": {"zh": "厌恶", "en": "disgust"},
+      "relations": {"mapping": ["e3", "e4"]},
+      "confidence": 0.90
+    }
+  ],
+  "garden_config": {}
+}

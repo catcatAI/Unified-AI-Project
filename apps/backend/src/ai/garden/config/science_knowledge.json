@@ -1,0 +1,133 @@
+{
+  "description": "Basic science concept entries for GARDEN-1G",
+  "reflex_patterns": {},
+  "dictionary_entries": [
+    {
+      "key": "sci_physics",
+      "surface_forms": {"zh": "物理", "en": "physics"},
+      "relations": {"mapping": ["sci_force", "sci_energy", "sci_motion"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_force",
+      "surface_forms": {"zh": "力", "en": "force"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_energy",
+      "surface_forms": {"zh": "能量", "en": "energy"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_motion",
+      "surface_forms": {"zh": "运动", "en": "motion"},
+      "relations": {"synonym": ["sci_move"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_move",
+      "surface_forms": {"zh": "移动", "en": "move"},
+      "relations": {},
+      "confidence": 0.85
+    },
+    {
+      "key": "sci_gravity",
+      "surface_forms": {"zh": "重力", "en": "gravity"},
+      "relations": {"mapping": ["sci_force", "sci_physics"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_light",
+      "surface_forms": {"zh": "光", "en": "light"},
+      "relations": {"mapping": ["sci_energy"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_sound",
+      "surface_forms": {"zh": "声音", "en": "sound"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_heat",
+      "surface_forms": {"zh": "热", "en": "heat"},
+      "relations": {"mapping": ["sci_energy"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_biology",
+      "surface_forms": {"zh": "生物", "en": "biology"},
+      "relations": {"mapping": ["sci_animal", "sci_plant", "sci_cell"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_animal",
+      "surface_forms": {"zh": "动物", "en": "animal"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_plant",
+      "surface_forms": {"zh": "植物", "en": "plant"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_cell",
+      "surface_forms": {"zh": "细胞", "en": "cell"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_chemistry",
+      "surface_forms": {"zh": "化学", "en": "chemistry"},
+      "relations": {"mapping": ["sci_atom", "sci_molecule"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_atom",
+      "surface_forms": {"zh": "原子", "en": "atom"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_molecule",
+      "surface_forms": {"zh": "分子", "en": "molecule"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_computer",
+      "surface_forms": {"zh": "计算机", "en": "computer"},
+      "relations": {"mapping": ["sci_ai", "sci_program"]},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_ai",
+      "surface_forms": {"zh": "人工智能", "en": "artificial intelligence"},
+      "relations": {"synonym": ["id2"]},
+      "confidence": 0.95
+    },
+    {
+      "key": "sci_program",
+      "surface_forms": {"zh": "程序", "en": "program"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_data",
+      "surface_forms": {"zh": "数据", "en": "data"},
+      "relations": {},
+      "confidence": 0.90
+    },
+    {
+      "key": "sci_network",
+      "surface_forms": {"zh": "网络", "en": "network"},
+      "relations": {"mapping": ["sci_computer"]},
+      "confidence": 0.90
+    }
+  ],
+  "garden_config": {}
+}
