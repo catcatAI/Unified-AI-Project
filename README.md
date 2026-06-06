@@ -76,7 +76,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **Runtime Vulns** | ✅ | **0 HIGH** (3 original resolved: memory leak, unbounded create_task, JSON crash) |
 | **Empty excepts** | ✅ | **24 fixed** + 20 intentional remaining (lifecycle/monitor resilience) |
 
-See **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (full audit V2), **[PHASE_REVIEW5.md](docs/06-project-management/plans/PHASE_REVIEW5.md)** (Phase Review 5 — latest), **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[PHASE_REVIEW4.md](docs/06-project-management/plans/PHASE_REVIEW4.md)** (Phase Review 4), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (tracking).
+See **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (full audit V2), **[PHASE_REVIEW5.md](docs/06-project-management/plans/PHASE_REVIEW5.md)** (Phase Review 5 — latest), **[ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md)** (LLM/SNN architecture plan), **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history).
 
 ### Quick Start
 
@@ -198,6 +198,7 @@ See dedicated docs for full diagrams:
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
 | [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
 | [PHASE_REVIEW5](docs/06-project-management/plans/PHASE_REVIEW5.md) | **Phase Review 5 (06-06, NEW)**: H5 sprint final, 2837 tests, 0 HIGH vulns, H7 roadmap |
+| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N Architecture Plan (06-06, NEW)**: External Dictionary Decoupled Neural Network — LLM + SNN design, training pipeline, 4-phase roadmap |
 
 ---
 
@@ -226,7 +227,7 @@ See dedicated docs for full diagrams:
 | **文檔一致性** | ⚠️ | ARCHITECTURE.md/OVERVIEW.md 待更新 |
 | **廢棄計畫** | ⬜ | 4 廢棄計畫待歸檔至 `09-archive/` |
 
-詳見 **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (全面審計 V2) 與 **[PHASE_REVIEW5.md](docs/06-project-management/plans/PHASE_REVIEW5.md)** (階段審查 5)。
+詳見 **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (全面審計 V2)、**[PHASE_REVIEW5.md](docs/06-project-management/plans/PHASE_REVIEW5.md)** (階段審查 5)、與 **[ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md)** (LLM/SNN 架構計畫)。
 
 ---
 
@@ -358,6 +359,7 @@ npm start
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定，23+殘留問題 |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
+| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N 架構計畫 (06-06, NEW)**: 外部字典解耦神經網路 — LLM + SNN 設計、訓練管線、4 階段路線圖、與 30+ 現有組件對應 |
 
 ---
 
