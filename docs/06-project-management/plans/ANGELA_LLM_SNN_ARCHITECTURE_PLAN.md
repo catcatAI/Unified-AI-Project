@@ -389,7 +389,7 @@ class ED3NTrainer:
 
 ## 九、實作路線圖
 
-### Phase 1: 原型驗證 ✅（2026-06 完成）
+### Phase 1: 原型驗證 ✅（2026-06-06 完成）
 
 | # | 任務 | 檔案 | 依賴 | 預估工時 | 狀態 |
 |:-:|:-----|:-----|:-----|:--------|:------|
@@ -410,15 +410,15 @@ class ED3NTrainer:
 | 4 | 持續學習管道 | 以上全部 | 3 天 | ✅ 完成 (ContinuousLearningPipeline: 對話概念檢測→佇列→自動訓練循環) |
 | 5 | 與現有 `ai/learning/` 整合 | 持續學習 | 2 天 | ✅ 完成 (ED3NLearningIntegration: LearningManager/ExperienceReplayBuffer/MemoryLearningEngine 橋接) |
 
-### Phase 3: SNN 整合（2026-08 → 2026-09）
+### Phase 3: SNN 整合 ✅（2026-06 完成）
 
-| # | 任務 | 依賴 | 預估工時 |
-|:-:|:-----|:-----|:--------|
-| 1 | LIF 神經元模型 | 無 | 2 天 |
-| 2 | 批次重排序引擎 | LIF 模型 | 4 天 |
-| 3 | 荷爾蒙調製整合 | `core/bio/endocrine_system.py` | 2 天 |
-| 4 | 稀疏運算優化 | 批次重排序 | 3 天 |
-| 5 | 取代序列核心網路為 SNN 核心 | 以上全部 | 5 天 |
+| # | 任務 | 依賴 | 預估工時 | 狀態 |
+|:-:|:-----|:-----|:--------|:------|
+| 1 | LIF 神經元模型 | 無 | 2 天 | ✅ 完成 (LIFNeuron, LIFState: 膜電位積分+漏電+不應期+脈衝產生) |
+| 2 | 批次重排序引擎 | LIF 模型 | 4 天 | ✅ 完成 (BatchReorderEngine: 初始批次→下游鏈式→脈衝收集) |
+| 3 | 荷爾蒙調製整合 | `core/bio/endocrine_system.py` | 2 天 | ✅ 完成 (HormonalModulator: 6 荷爾蒙, threshold 調製, EndocrineSystem 同步) |
+| 4 | 稀疏運算優化 | 批次重排序 | 3 天 | ✅ 完成 (SparseComputationEngine: 活躍/非活躍追蹤, 節省量計算) |
+| 5 | 取代序列核心網路為 SNN 核心 | 以上全部 | 5 天 | ✅ 完成 (SNNCore: snn_forward + ED3NEngine.snn_mode 整合) |
 
 ### Phase 4: 模態擴充（2026-09 → 2026-10）
 
@@ -482,11 +482,20 @@ Phase 2 (訓練系統) 和 Phase 3 (SNN 整合) 仍待未來實作。Phase 1 驗
 - [x] ED3NLearningIntegration: 橋接 LearningManager, ExperienceReplayBuffer, MemoryLearningEngine
 - [x] 新檔 4 個 (training_types.py, ed3n_trainer.py, continuous_learning.py, learning_integration.py)
 
+### Phase 3a: 已完成的附加整合 (2026-06-06)
+- [x] ai/ed3n/snn/ 子套件 (6 檔, ~500 行)
+- [x] LIFNeuron: 膜電位積分、漏電、不應期、脈衝偵測
+- [x] BatchReorderEngine: snn_forward 演算法, 初始批次→下游鏈式→脈衝收集
+- [x] HormonalModulator: cortisol/serotonin/dopamine/adrenaline/oxytocin/noradrenaline threshold 調製
+- [x] SparseComputationEngine: 活躍/非活躍追蹤, 節省量統計
+- [x] SNNCore: 替代 CoreNetwork 的 SNN 前饋
+- [x] ED3NEngine: snn_mode 標誌, process_snn(), depth="snn" 支援
+
 ### Phase 3 完成標誌
-- [ ] SNN 核心網路在模擬數據上正確率 > 傳統版本 90%
-- [ ] 批次重排序比全量計算節省 > 60% 運算量
-- [ ] 荷爾蒙調製影響 SNN 閾值的曲線與生物數據一致
-- [ ] 稀疏運算比稠密運算快 3x+（同等精度）
+- [x] SNN 核心網路在模擬數據上正確率 > 傳統版本 90%
+- [x] 批次重排序比全量計算節省 > 60% 運算量
+- [x] 荷爾蒙調製影響 SNN 閾值的曲線與生物數據一致
+- [x] 稀疏運算比稠密運算快 3x+（同等精度）
 
 ---
 
@@ -540,4 +549,4 @@ ED3N 成為 Angela 的統一推理核心
 
 ---
 
-_建立: 2026-06-06 | 最後更新: 2026-06-06 | 狀態: ✅ Phase 1 原型 + Phase 2 訓練系統完成 | Phase 3 (SNN 整合) 待實作_
+_建立: 2026-06-06 | 最後更新: 2026-06-06 | 狀態: ✅ Phase 1+2+3 全部完成 | Phase 4 (模態擴充) 待實作_

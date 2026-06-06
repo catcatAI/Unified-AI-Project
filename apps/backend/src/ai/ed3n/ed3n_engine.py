@@ -11,6 +11,8 @@ from apps.backend.src.ai.ed3n.core_network import CoreNetwork
 from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryLayer
 from apps.backend.src.ai.ed3n.output_anchor import anchored_decode, ResponseAnchorValidator
 from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier
+from apps.backend.src.ai.ed3n.snn.snn_core import SNNCore
+from apps.backend.src.ai.ed3n.snn.hormonal_modulator import HormonalModulator
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +97,17 @@ class ED3NEngine:
         classifier: Optional[RelationClassifier] = None,
         network: Optional[CoreNetwork] = None,
         reflex: Optional[ReflexLayer] = None,
+        snn_network: Optional[SNNCore] = None,
+        modulator: Optional[HormonalModulator] = None,
+        snn_mode: bool = False,
     ):
         self.reflex = reflex or ReflexLayer()
         self.dictionary = dictionary or DictionaryLayer()
         self.classifier = classifier or RelationClassifier(dictionary=self.dictionary)
         self.network = network or CoreNetwork(classifier=self.classifier)
+        self._snn_network = snn_network
+        self.modulator = modulator or HormonalModulator()
+        self.snn_mode = snn_mode
         self._validator: Optional[ResponseAnchorValidator] = None
 
     @property
@@ -121,6 +129,9 @@ class ED3NEngine:
         if depth == "shallow" or (depth == "auto" and not context):
             return self.process_shallow(input_text, context)
 
+        if depth == "snn":
+            return self.process_snn(input_text, context)
+
         return self.process_deep(input_text, context)
 
     def process_reflex(self, input_text: str) -> Optional[str]:
@@ -135,6 +146,13 @@ class ED3NEngine:
         decoded = self.dictionary.decode(keys, context)
         return decoded if decoded else "抱歉，我没理解你的意思。"
 
+    @property
+    def snn_network(self) -> SNNCore:
+        if self._snn_network is None:
+            self._snn_network = SNNCore(classifier=self.classifier)
+            self._snn_network.connect_modulator(self.modulator)
+        return self._snn_network
+
     def process_deep(
         self, input_text: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
@@ -142,7 +160,10 @@ class ED3NEngine:
         if not keys:
             return "抱歉，我没理解你的意思。"
 
-        network_output = self.network.forward(keys, context=context)
+        if self.snn_mode:
+            network_output = self.snn_network.forward(keys, context=context)
+        else:
+            network_output = self.network.forward(keys, context=context)
 
         response = anchored_decode(
             network_output=network_output,
@@ -161,7 +182,28 @@ class ED3NEngine:
 
         return response
 
+    def process_snn(
+        self, input_text: str, context: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """Deep processing with SNN core (regardless of self.snn_mode)."""
+        was_snn = self.snn_mode
+        self.snn_mode = True
+        try:
+            return self.process_deep(input_text, context)
+        finally:
+            self.snn_mode = was_snn
+
     def load_presets(self) -> None:
         self.reflex.load_presets()
         self.dictionary.load_preset_responses()
         logger.info("ED3NEngine loaded all presets.")
+
+    def get_snn_stats(self) -> Dict[str, Any]:
+        if self._snn_network is None:
+            return {"snn_mode": self.snn_mode, "snn_initialized": False}
+        return {
+            "snn_mode": self.snn_mode,
+            "snn_initialized": True,
+            "sparsity": self._snn_network.get_sparsity_report(),
+            "modulation": self.modulator.get_profile_summary(),
+        }

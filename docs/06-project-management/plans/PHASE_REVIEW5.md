@@ -157,6 +157,17 @@
 - **系統整合**: ED3NLearningIntegration 橋接 LearningManager, ExperienceReplayBuffer, MemoryLearningEngine
 - **下階段**: Phase 3 SNN 整合 (LIF 神經元, 批次重排序, 荷爾蒙調製)
 
+### H7.7 ED3N Phase 3 SNN 整合
+- **狀態**: ✅ 完成
+- **新子套件**: `ai/ed3n/snn/` (6 檔, ~500 行)
+- **LIF 神經元**: LIFNeuron, LIFState (膜電位積分, 漏電, 不應期, 脈衝)
+- **批次重排序**: BatchReorderEngine, SNNBatch (初始→下游鏈式→脈衝收集)
+- **荷爾蒙調製**: HormonalModulator (6 荷爾蒙, EndocrineSystem 同步, threshold 調製)
+- **稀疏優化**: SparseComputationEngine (活躍/非活躍追蹤)
+- **SNN 核心**: SNNCore, SNNRelationGroup (snn_forward 演算法)
+- **引擎整合**: ED3NEngine.snn_mode, process_snn(), depth="snn"
+- **下階段**: Phase 4 模態擴充 (圖像, 音訊編碼器)
+
 ### 🟡 文檔一致性
 
 | # | 問題 | 優先級 |
