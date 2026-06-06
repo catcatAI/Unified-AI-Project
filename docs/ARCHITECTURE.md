@@ -1,7 +1,7 @@
 # Angela AI Architecture
 
 > **Source of Truth**: This document is the authoritative reference for Angela AI system architecture.
-> **Last Updated**: 2026-05-26
+> **Last Updated**: 2026-06-06
 > **Derived from**: `docs/FULL_ARCHITECTURE_ANALYSIS.md`
 
 ---
@@ -208,8 +208,8 @@ unified-ai-project/
 
 ## 9. Version Governance
 
-- Version is defined in 13 locations (see `MASTER_CONSOLIDATED_PLAN.md` S1)
-- CI validates all 13 version locations are in sync
+- Version is defined in 14 locations (see `MASTER_CONSOLIDATED_PLAN.md` S1)
+- CI validates all 14 version locations are in sync
 - Only PATCH bumps allowed without human approval
 - CHANGELOG must match real git tags (unreleased = `Internal/Unreleased`)
 

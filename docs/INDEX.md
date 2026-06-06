@@ -23,7 +23,8 @@
 ### Plans (優先閱讀順序)
 | 文件 | 說明 |
 |------|------|
-| **[COMPREHENSIVE_AUDIT_REPORT.md](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** | **全面審計報告 (2026-05-31)** — 6代理審計結果, 完成度判定, 修復路線圖 |
+| **[COMPREHENSIVE_AUDIT_REPORT.md](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** | **全面審計報告 V1 (2026-05-31)** — 6代理審計結果, 原始完成度判定 |
+| **[COMPREHENSIVE_AUDIT_REPORT_V2.md](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** | **全面審計報告 V2 (2026-06-06, 新)** — H5 衝刺後全量掃描, 3 true stubs, 20 intentional excepts, 132 超長檔案 |
 | **[PHASE_REVIEW.md](06-project-management/plans/PHASE_REVIEW.md)** | **階段審查 1 (2026-06-02)** — 首次3代理審計, 10維度深層評分 |
 | **[PHASE_REVIEW2.md](06-project-management/plans/PHASE_REVIEW2.md)** | **階段審查 2 (2026-06-03)** — 17會話後追蹤, ~96%綜合, 全域匯入鏈修復 |
 | **[MASTER_CONSOLIDATED_PLAN.md](06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** | 主執行計畫 — 53項 S/A/B/C 分級, 53/53 完成 |
@@ -36,6 +37,8 @@
 | **[REMAINING_ISSUES_PLAN.md](06-project-management/plans/REMAINING_ISSUES_PLAN.md)** | placeholder 清除、unittest→pytest 遷移 |
 | **[CARD_INTEGRATION_PLAN_REVIEW.md](06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md)** | 事前審計：執行前發現 25 問題 |
 | **[PHASE_REVIEW3.md](06-project-management/plans/PHASE_REVIEW3.md)** | **階段審查 3 (2026-06-05)** — P0-P2 全部清除後狀態, 10維度判定 |
+| **[PHASE_REVIEW4.md](06-project-management/plans/PHASE_REVIEW4.md)** | **階段審查 4 (2026-06-05, v5)** — H5 stub 衝刺, 36/37 stub 實作, 24 空 except 修復, ~62% |
+| **[PHASE_REVIEW5.md](06-project-management/plans/PHASE_REVIEW5.md)** | **階段審查 5 (2026-06-06, 新)** — H5 衝刺完成版, 2837 測試, 0 HIGH 漏洞, 下一階段 H7 路線 |
 | **[PLAN_REVIEW.md](06-project-management/plans/PLAN_REVIEW.md)** | **計畫審查** — 跨計畫一致性與完整性審查 |
 | **[ANGELA_TRANSLATION_LEARNING_PLAN.md](06-project-management/plans/ANGELA_TRANSLATION_LEARNING_PLAN.md)** | **Angela 翻譯學習計畫** — 多語言翻譯能力建置 |
 
@@ -57,4 +60,4 @@
 - `packages/cli/` — CLI tools
 
 ---
-_Last Updated: 2026-06-03_ | [README.md](../README.md) | [Comprehensive Audit](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Phase Review](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md)
+_Last Updated: 2026-06-06_ | [README.md](../README.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)

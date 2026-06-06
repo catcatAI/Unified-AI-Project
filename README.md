@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-06-05
+  LAST_MODIFIED: 2026-06-06
   =============================================================================
 -->
 
@@ -65,17 +65,18 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 
 | Area | Status | Key evidence |
 |------|--------|-------------|
-| **Server starts** | ✅ | `main_api_server.py` 314 lines, imports valid, FastAPI lifespan at `api/lifespan.py:168` |
+| **Server starts** | ✅ | `main_api_server.py`, imports valid, FastAPI lifespan, WebSocket, state matrix |
 | **Chat pipeline** | ✅ Core path | `generate_angela_response()` / `get_angela_chat_service()` at `chat_service.py:302-312`, used by `router.py:176` |
 | **Self-Evolution** | ✅ 5/6 | ConfigMutator, hot-reload, broadcast, StateStore done; 1 bug (`"User"` key hardcoded) |
 | **8D State Matrix** | ✅ | 34 endpoints, drives NGR + LLM context injection |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config at L869 |
 | **Wiring** | ✅ | `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
-| **Tests** | ✅ | ~1500+, 16.34% coverage, 0 layer violations |
-| **P7 Config** | 🟡 | TieredConfigLoader done; core sleeps/intervals/timeouts migrated, ~43 formula/structural values remain |
-| **P8 Tech Debt** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
+| **Tests** | ✅ | **2837 tests, 0 collection errors**, tests/unit/ 已納入 CI |
+| **Stub Modules** | ✅ | **36/37 strict stubs implemented** (H5 sprint — perception, life, bio, card, alignment, memory, api endpoints, etc.) |
+| **Runtime Vulns** | ✅ | **0 HIGH** (3 original resolved: memory leak, unbounded create_task, JSON crash) |
+| **Empty excepts** | ✅ | **24 fixed** + 20 intentional remaining (lifecycle/monitor resilience) |
 
-See **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (tracking), **[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 done), **[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10), **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (full completion audit), **[PHASE_REVIEW.md](docs/06-project-management/plans/PHASE_REVIEW.md)** (Phase Review 1), **[PHASE_REVIEW2.md](docs/06-project-management/plans/PHASE_REVIEW2.md)** (Phase Review 2), **[PHASE_REVIEW3.md](docs/06-project-management/plans/PHASE_REVIEW3.md)** (Phase Review 3), and **[PHASE_REVIEW4.md](docs/06-project-management/plans/PHASE_REVIEW4.md)** (Phase Review 4 — latest, comprehensive).
+See **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (full audit V2), **[PHASE_REVIEW5.md](docs/06-project-management/plans/PHASE_REVIEW5.md)** (Phase Review 5 — latest), **[AGENTS.md](AGENTS.md)** (dev guidelines), **[CHANGELOG.md](CHANGELOG.md)** (history), **[PHASE_REVIEW4.md](docs/06-project-management/plans/PHASE_REVIEW4.md)** (Phase Review 4), **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (tracking).
 
 ### Quick Start
 
@@ -104,8 +105,8 @@ npm start
 
 ### What Actually Works (Code-Verified)
 
-- **Server starts** (`services/main_api_server.py:314` lines) — FastAPI with lifespan, WebSocket, state matrix, atlassian routes
-- **Chat pipeline** — `ChatService` at `services/chat_service.py:313` lines, `generate_angela_response()` at L302, used by `api/router.py:176`
+- **Server starts** (`services/main_api_server.py`, FastAPI with lifespan, WebSocket, state matrix, atlassian routes)
+- **Chat pipeline** — `ChatService` at `services/chat_service.py`, `generate_angela_response()` used by `api/router.py`
 - **Biological simulation** — Heartbeat via `get_metabolic_heartbeat()`, emotions, endocrine, metabolic cycle in `api/lifespan.py`
 - **Self-Evolution** — ConfigMutator, hot-reload, broadcast, StateStore independently verified
 - **8D State Matrix** — 34 REST endpoints, drives NGR fragment synthesis + LLM context
@@ -114,80 +115,60 @@ npm start
 - **DI framework** — FastAPI `Depends` in 5 route files (ops_routes, mobile, drive, economy, atlassian)
 - **Economy + Pet** — lifecycle managers, WebSocket broadcast wired via lifespan
 - **Bootstrap** — hardware detection, directory scaffold, state persistence
-- **Test infrastructure** — ~1500+ tests, 16.34% coverage (`tests/` restructured, 0 layer violations, 6 source bugs fixed)
+- **Test infrastructure** — **2837 tests collected, 0 errors** (all test files restored, `tests/unit/` included in CI, +93 tests activated by H5 stub implementation)
 
-### What's Broken / Never Finished
+### Current Status (2026-06-06 H5 衝刺完成)
 
-See detailed breakdowns in linked analysis docs:
+See detailed reports in linked analysis docs:
 
-| Category | Key Issues | Reference |
-|----------|-----------|-----------|
-| **Security** | ✅ KeyC leak fixed (`chat_routes.py:184`). `/eval` endpoint removed | `FORENSIC_AUDIT`, `PROBLEM_ANALYSIS` |
-| **Functional** | Desktop→Live2D chain incomplete; Mobile stub; Encryption partial | `WIRING_MAP` |
-| **God Modules (refactored)** | `main_api_server.py` 314 lines, `angela_llm_service.py` 40 lines (shim), `core/autonomous/` 2 files — **old 1668/2196/60+ sizes were from pre-refactor code** | `MODULARITY_ANALYSIS` (stale analysis) |
-| **Governance** | ✅ 版本 13 檔已統一至 7.5.0-dev (S1-S3 完成); CI 含版本檢查; CHANGELOG 同步 | `FULL_ARCHITECTURE_ANALYSIS` |
-| **Wiring Gaps** | ✅ 9 agents standard stub format (`stub: True, message: ...`); ✅ 5/5 plugin hooks connected; 50+ stub 實作 | `PHASE6_NEXT_PLAN` |
+| Category | Status | Reference |
+|----------|--------|-----------|
+| **Stub Modules** | ✅ **36/37 strict stubs implemented** (core perception/life/bio/card/tools/sync/config, ai alignment/learning/memory/multimodal/security, api/v1/endpoints, services/handlers, etc.) | `PHASE_REVIEW5.md` |
+| **Tests** | ✅ **2837 tests, 0 collection errors** (previously 43 broken test files → all fixed) | `COMPREHENSIVE_AUDIT_REPORT_V2.md` |
+| **Runtime Vulns** | ✅ **0 HIGH** (3 original vulns: memory leak, unbounded create_task, JSON crash — all fixed) | `PHASE_REVIEW4.md` |
+| **Version** | ✅ **14/14 locations consistent** at 7.5.0-dev | Version governance |
+| **CI** | ✅ **tests/unit/ included**, Python ≥3.10 unified | CI workflow |
+| **Empty excepts** | ✅ **24 fixed** + 20 intentional remaining (lifecycle/monitor resilience) | `COMPREHENSIVE_AUDIT_REPORT_V2.md` |
+| **Long files >200 lines** | ⚠️ 132 files (3 over 1500: neuroplasticity 1671, router 1633, state_matrix 1625) | H7 pending refactor |
+| **Doc consistency** | ⚠️ ARCHITECTURE.md, OVERVIEW.md still outdated | H7.1 pending |
 
-### Comprehensive Audit Report
+### Comprehensive Audit Reports
 
-> **⚠️ 重要: 本項目目前綜合完成度約 70%，未達到完美完成標準。** 
-> 詳細審計覆蓋計畫、文檔、代碼、測試、配置、應用、ASI/AI引擎等所有方面。
-> 完整報告: **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)**
+> **⚠️ 重要: 本項目目前綜合完成度約 62%，未達到完美完成標準。** 
+> H5 stub 衝刺（06-06）已完成 36/37 嚴格 stub 實作、2837 測試 0 收集錯誤、3 HIGH 漏洞全數清除。
+> 完整報告 V1: **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)**
+> 完整報告 V2: **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)**
 
-關鍵發現:
-- **測試**: 37.2% 測試文件不充分，~230+ 模組零測試，零性能測試 (25-30%)
-- **代碼**: 78 個 `pass`、50+ SKELETON 標記、2 個空文件、8 對影子模組 (55-60%)
-- **文檔**: README 過時、計劃間數字矛盾、行動項目無追蹤 (63%)
-- **集成**: Atlassian bridge 5% 完成、3 代理純 stub、Level5 ASI 空殼 (30-40%)
-- **配置**: 3 獨立系統不協調、13 缺失 key、30 orphaned key (65%)
+當前關鍵指標 (V2):
+- **測試**: **2837 tests, 0 collection errors**, tests/unit/ 已納入 CI。無邊界/性能/並發測試 (55%)
+- **代碼**: **36/37 嚴格 stub 已實作**, 24 空 except 已修復, 20 intentional 剩餘 (65% 完整)
+- **運行時**: **0 HIGH 漏洞**, 3 原始漏洞全數修復 (65% 穩定)
+- **文檔**: 版本一致 14/14, 但 ARCHITECTURE.md/OVERVIEW.md 過時 (55% 清楚)
+- **超長檔案**: 132 檔案 >200 行, 最長 1671 行 — H7 待重構 (55% 快速)
+- **綜合評分**: **~62%**（較 PR4 提升 7pp）
 
-### Roadmap / Future Extensibility
+### Roadmap / Future Phases
 
-Systems that are defined/stubbed but not yet implemented — ordered by estimated impact:
-
-> **⚠️ 注意**: 以下清單基於 2026-05-31 全面審計。完整詳細報告請見 **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)**。
+> **⚠️ 注意**: H5 stub 衝刺（06-06）已完成 36/37 嚴格 stub 實作。以下為基於 **COMPREHENSIVE_AUDIT_REPORT_V2.md** 和 **PHASE_REVIEW5.md** 的下一階段路線。
 >
-> 綜合完成度約 **70%**。核心服務器/聊天可運行，P0-P2 阻塞已全部清除。
+> 綜合完成度 **~62%**。核心服務器/聊天/感知/記憶/推理/安全管理器已全部實作。
 
-**Tier 1 — Core Infrastructure (foundational gaps)**
-- **Plugin System**: 5 hooks defined, **3 handlers registered** (message_logger, metrics_collector, audit_logger). Full CRUD API exists.
-- **Intent Dispatch**: ✅ Migrated to ModuleManager→IntentRegistry. ChatService hardcoded fallback still present.
+| Phase | Focus | Score Target | Priority |
+|:------|:------|:------------:|:--------:|
+| ✅ H1-H4 | HIGH vulns + test repairs | 51% → 55% | 🔴 DONE |
+| ✅ H5 | Stub implementation (36/37) | 55% → 62% | 🔴 DONE |
+| ⬜ H7 | Long file refactoring (132→50 files) | 62% → 68% | 🔴 HIGH |
+| ⬜ H7.1 | Doc consistency (5 core documents) | 68% → 72% | 🔴 HIGH |
+| ⬜ H7.2 | Deprecated archive cleanup | 72% → 73% | 🟡 MEDIUM |
+| ⬜ H8 | Test quality (boundary/perf) | 73% → 78% | 🟡 MEDIUM |
+| ⬜ H9 | MATRIX annotation + plugin docs | 78% → 82% | 🟢 LOW |
 
-**Tier 2 — Memory & Persistence**
-- **HAM Database**: 6 CRUD methods fall back to mock storage
-- **State Persistence**: `save_state()`/`load_state()` missing — reboot loses runtime state
-- **Importance Scorer**: Returns hardcoded `0.5` (`ai/memory/importance_scorer.py:17`)
-
-**Tier 3 — Specialized Agents (3 persistent stubs)**
-- `ImageGenerationAgent`, `AudioProcessingAgent`, `KnowledgeGraphAgent` — return `{"stub": True}` (need external model backends)
-- 6 other agents (WebSearch, VisionProcessing, NLPProcessing, CodeUnderstanding, DataAnalysis, FantasyDM) — basic keyword/rule implementations, no ML
-- `PlanningAgent` explicitly marked deprecated
-
-**Tier 4 — Reasoning & Causality**
-- `real_causal_reasoning_engine.py`: random correlation placeholder, `pass` classes
-- **Ripple Axis Applicators**: Only 3/9 implemented (Alpha, Delta, Pi)
-
-**Tier 5 — Alignment & Safety**
-- 6 stub classes in `ai/alignment/` — all `pass`
-- 5 theoretical formulas (HSM, CDM, Life Intensity, Active Cognition, Non-Paradox) compute but never reach LLM
-
-**Tier 6 — Monitoring & Ops (all placeholder)**
-- Predictive maintenance, performance optimizer, AI ops engine — hardcoded values
-- Desktop tray: abstract/partial
-
-**Tier 7 — Infrastructure Sketches**
-- `Fragmenta` pipeline: stub orchestrator, placeholder element layer
-- `ClusterManager`: mock `distribute_task()` sleeps 0.01s
-- `AtlassianBridge`: 15/15 methods return empty dicts (5% complete)
-- `Level5ASISystem`: 4 inline stub sub-systems — flagship ASI is hollow
-
-**Tier 8 — Code Quality (known gaps)**
-- 78 `pass` statements across 50+ files (unimplemented bodies)
-- ~233 functions missing return type annotations
-- 8 pairs of shadowed/duplicate module paths (`shared/` vs `core/shared/`)
-- 2 config systems (TieredConfigLoader + AngelaConfigManager) not unified
-- 3 config systems with 30 orphaned YAML keys and 13 missing keys
-- `health_check_service.py`: 2/3 import targets don't exist
+**H7 Priority Targets**:
+1. **`core/bio/neuroplasticity.py`** (1671 lines) → split: plasticity_rules, synaptic_optimizer
+2. **`services/llm/router.py`** (1633 lines) → split: llm_routing/ package
+3. **`core/engine/state_matrix.py`** (1625 lines) → split: matrix_operations, state_queries
+4. **Doc sweep**: ARCHITECTURE.md, OVERVIEW.md, AGENTS.md, INDEX.md
+5. **Archive**: 4 deprecated plans → `09-archive/`
 
 ---
 
@@ -211,9 +192,12 @@ See dedicated docs for full diagrams:
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
 | [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
-| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **Full completion audit**: Plans, docs, code, tests, config, apps — completeness judged against "perfect" standard |
+| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **Audit V1 (05-31)**: Plans, docs, code, tests, config, apps — original completion audit |
+| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **Audit V2 (06-06)**: H5 post-sprint full scan — 3 true stubs, 20 intentional excepts, 132 long files |
 | [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite |
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
+| [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
+| [PHASE_REVIEW5](docs/06-project-management/plans/PHASE_REVIEW5.md) | **Phase Review 5 (06-06, NEW)**: H5 sprint final, 2837 tests, 0 HIGH vulns, H7 roadmap |
 
 ---
 
@@ -223,27 +207,26 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、自演化與真實執行能力。
 
-**Quick facts**：562 個 Python 檔案、~127K 行。兩台 FastAPI 伺服器、Electron + Live2D 桌面端、手機 stub。  
-**架構一致性評分**: **62.6%** (版本 31% · 結構 65% · 模塊 66% · 算法 74%) — [評分明細](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表)  
-**專案總文件**: ~2,950 (Python 1,001 · JS/TS 140 · 文檔 805 · 配置 577 · 測試 238 · 其他 ~190)
+**Quick facts**：564 個 Python 檔案、~87K 行。兩台 FastAPI 伺服器、Electron + Live2D 桌面端、手機 stub。  
+**H5 衝刺完成**: 36/37 嚴格 stub 已實作, 2837 測試 0 收集錯誤。  
+**綜合評分**: **~62%** — 詳見 **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)**。
 
 ---
 
-### 當前進度（代碼驗證）
+### 當前進度（H5 衝刺後狀態）
 
-| 領域 | 狀態 | 關鍵證據 |
-|------|------|---------|
-| **伺服器啟動** | ✅ | `services/main_api_server.py` 314 行，FastAPI lifespan 在 `api/lifespan.py:168` |
-| **聊天管線** | ✅ 核心路徑 | `generate_angela_response()` / `get_angela_chat_service()` 在 `chat_service.py:302-312`，由 `router.py:176` 調用 |
-| **自演化** | ✅ 5/6 | ConfigMutator、熱重載、廣播、StateStore 正常；1 bug（`"User"` key 硬編碼） |
-| **8D 狀態矩陣** | ✅ | 34 REST 端點，驅動 NGR + LLM 上下文注入 |
-| **配置系統** | ✅ | `config_loader.py:get_config()` 正確回傳 Config（L869） |
-| **Wiring** | ✅ | `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
-| **測試** | ✅ | ~1500+ tests, 16.34% 覆蓋率, 0 層級違規 |
-| **P7 配置** | 🟡 | TieredConfigLoader 完成；核心 sleeps/intervals/timeouts 已遷移，~43 公式/結構值殘留 |
-| **P8 技術債** | ✅ | S1-S4 已完成 — chat_service import 正常, wiring 統一, 安全修復, DI 框架 |
+| 領域 | 狀態 | 說明 |
+|:-----|:----:|:------|
+| **測試** | ✅ | **2837 tests, 0 errors**, tests/unit/ 已納入 CI |
+| **暫存模組** | ✅ | **36/37 嚴格 stub 已實作**（core perception/life/bio/card/tools/sync/config、ai 全系列、api 端點、服務 handlers） |
+| **運行時漏洞** | ✅ | **0 HIGH**（3 原始漏洞全數修復） |
+| **版本一致性** | ✅ | **14/14 完全一致** 7.5.0-dev |
+| **空 except** | ✅ | **24 已修復**, 20 intentional 剩餘（生命週期/監控 resilience） |
+| **超長檔案** | ⚠️ | 132 檔案 >200 行（最長 1671），H7 待重構 |
+| **文檔一致性** | ⚠️ | ARCHITECTURE.md/OVERVIEW.md 待更新 |
+| **廢棄計畫** | ⬜ | 4 廢棄計畫待歸檔至 `09-archive/` |
 
-詳見 **[MASTER_CONSOLIDATED_PLAN.md](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md)** (53/53 完成)、**[PHASE6_NEXT_PLAN.md](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md)** (P6+P7 完成)、**[MASTER_FINALIZATION_PLAN.md](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md)** (P8-P10，0 剩餘任務目標)、與 **[COMPREHENSIVE_AUDIT_REPORT.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** (全面審計報告)。
+詳見 **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (全面審計 V2) 與 **[PHASE_REVIEW5.md](docs/06-project-management/plans/PHASE_REVIEW5.md)** (階段審查 5)。
 
 ---
 
@@ -267,36 +250,40 @@ npm start
 
 ---
 
-### 什麼能跑（代碼驗證）
+### 什麼能跑（H5 衝刺後）
 
-- **伺服器啟動**（`services/main_api_server.py` 314 行）— FastAPI + lifespan + WebSocket + 34 state matrix endpoints
-- **聊天管線** — `ChatService`（313 行），`generate_angela_response()` 在 L302，由 `api/router.py:176` 調用
-- **生物模擬** — Heartbeat 透過 `get_metabolic_heartbeat()`，情緒、荷爾蒙、代謝循環在 `api/lifespan.py`
-- **自演化核心** — ConfigMutator、熱重載、廣播、StateStore 獨立驗證
+- **伺服器啟動** — FastAPI + lifespan + WebSocket + 34 state matrix endpoints
+- **聊天管線** — ChatService（generate_angela_response / get_angela_chat_service），IntentRegistry 已實作
+- **生物模擬** — Heartbeat、情緒、荷爾蒙、代謝循環、神經可塑性、內分泌
+- **感知系統** — 注意力控制、觸覺記憶、聽覺注意力、聽覺記憶、輸入感知器 ✅ H5 新實作
+- **生命系統** — 意圖模型、生物反射管理、環境動力學 ✅ H5 新實作
+- **推理引擎** — CausalReasoningEngine 因果推理（含 Pearson 相關計算）✅ H5 新實作
+- **記憶系統** — VectorStore、HAMQueryEngine、MemoryLearning、PrecomputeService ✅ H5 新實作
+- **安全管理器** — EgoGuard、TrustManager、ServiceDiscovery ✅ H5 新實作
+- **卡片管線** — MergeEngine、ImportQualityChecker、LLMFallback、TextGravity、ComicComposer ✅ H5 新實作
 - **8D 狀態矩陣** — 34 REST 端點，驅動 NGR + LLM 上下文注入
-- **配置系統** — `config_loader.py:get_config()` 正確回傳 Config（L869）
-- **Wiring** — `services/wiring.py` + `initialize_module_manager()` in lifespan; 6 模組自動發現/啟動/註冊至 ServiceRegistry
-- **DI 框架** — FastAPI `Depends` 用於 5 路由（ops_routes, mobile, drive, economy, atlassian）
-- **經濟 + 寵物** — WebSocket 廣播已接線，lifecycle managers 正常
-- **測試基礎設施** — ~1500+ tests, 16.34% 覆蓋率, 0 層級違規, 6 源碼 bug 已修復
+- **錯誤處理** — AngelaError 完整層次（ErrorSeverity enum、ErrorCategory enum、18 子類、ErrorHandler）✅ H5 新實作
+- **測試** — **2837 tests, 0 收集錯誤**（+93 從 skip→執行）
 
 ### 什麼不能用／斷鏈
 
 | 類別 | 主要問題 | 參考文件 |
 |------|---------|---------|
-| **功能斷鏈** | 桌面→Live2D 未完成；手機 stub | `WIRING_MAP` |
-| **Plugin 空接** | 5 hooks 已定義，3 handler 註冊 | `PHASE6_NEXT_PLAN` |
-| **Agent stub** | ~5 agents 仍為 stub 回傳 mock 資料 | `AGENT_DESIGN` |
-| **Ripple Axis** | 僅 3/9 applicators 存在 (Alpha/Delta/Pi) | `RIPPLE_AXIS_DESIGN` |
+| **超長檔案** | 132 檔案 >200 行，3 檔案 >1500 行（neuroplasticity 1671, router 1633, state_matrix 1625） | H7 待重構 |
+| **文檔過時** | ARCHITECTURE.md、OVERVIEW.md 仍為舊版資料 | H7.1 待校對 |
+| **廢棄計畫** | 4 廢棄計畫（PHASE_9, PHASE_8_DEBT, PHASE_8_CORRECTED, PHASE_2_DEVELOPMENT）未歸檔 | H7.2 |
+| **測試品質** | 無邊界/性能/並發測試，覆蓋率 ~6.8% | H8 |
+| **手機 stub** | mobile-app 僅 scaffold | 長期 |
+| **Agent stub** | ImageGen/Audio/KnowledgeGraph 代理回傳 stub 資料 | 需外部模型 |
 
-### 未來路線圖
+### 未來路線圖（H7+）
 
-已定義但未實作／未接線的系統 — 依影響力排序：
-
-**Tier 1 — 核心基礎設施**
-- **Plugin 系統**：5 hooks 已定義（`on_message`, `on_response`, `on_bio_event`, `on_state_change`, `on_tick`），**3 handler 註冊**（message_logger, metrics_collector, audit_logger）。CRUD API 完整
-- **Config Handler**：5 個 YAML handler 無對應代碼：`FileOperationHandler`, `GoogleDriveHandler`, `WebSearchHandler`, `LearningHandler`（`angela_core.yaml:131-257`）
-- **意圖分發**：🟡 已部分修復 — `IntentRegistry` 已存在並由 ModuleManager 管理，但 ChatService 仍使用硬編碼 fallback
+| Phase | 目標 | 分數目標 |
+|:------|:-----|:--------:|
+| ⬜ H7 | 超長檔案重構 132→50 檔案 | 62% → 68% |
+| ⬜ H7.1 | 文檔一致性校對 + ARCHITECTURE.md 更新 | 68% → 72% |
+| ⬜ H7.2 | 廢棄計畫歸檔至 `09-archive/` | 72% → 73% |
+| ⬜ H8 | 測試品質提升（邊界/基準/並發） | 73% → 78% |
 
 **Tier 2 — 記憶與持久層**
 - **HAM 資料庫**：✅ 已實作 — `HAMCoreStorage` 具備真實檔案 I/O、Fernet 加密、查詢引擎（`ham_core_storage.py` + `ham_query_engine.py`）
