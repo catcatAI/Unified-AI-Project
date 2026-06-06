@@ -27,6 +27,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 from core.system.config.async_io import async_write_text, async_write_file
 from core.system.config.magic_numbers import loop_sleep
 import logging
@@ -137,7 +138,7 @@ class DesktopBrowserIntegration:
             )
 
             self.current_url = url
-            logger.info(f"Angela浏览器已在桌面背景打开: {url}")
+            logger.info("Angela浏览器已在桌面背景打开: %s", url)
 
             # 启动webview（非阻塞）
             asyncio.create_task(self._run_browser())
@@ -364,6 +365,9 @@ class DesktopInteraction:
         self._file_cache: Dict[str, Dict[str, Any]] = {}
         self._watched_files: Set[str] = set()
 
+        # Thread safety
+        self._lock = threading.Lock()
+
         # Running state
         self._running = False
         self._monitor_task: Optional[asyncio.Task] = None
@@ -430,29 +434,32 @@ class DesktopInteraction:
 
                 # Get size
                 try:
-                    total_size += file_path.stat().st_size
+                    fstat = file_path.stat()
+                    total_size += fstat.st_size
                 except (OSError, AttributeError) as e:
                     logger.debug(f"文件大小獲取失敗（可忽略）: {e}")
+                    fstat = None
 
                 # Update cache
                 self._file_cache[file_str] = {
-                    "size": total_size,
-                    "mtime": file_path.stat().st_mtime,
+                    "size": fstat.st_size if fstat else 0,
+                    "mtime": fstat.st_mtime if fstat else 0,
                 }
 
-        # Check for deleted files
-        for cached_file in list(self._file_cache.keys()):
-            if cached_file not in current_files:
-                self._notify_file_change(Path(cached_file), "deleted")
-                del self._file_cache[cached_file]
+        with self._lock:
+            # Check for deleted files
+            for cached_file in list(self._file_cache.keys()):
+                if cached_file not in current_files:
+                    self._notify_file_change(Path(cached_file), "deleted")
+                    del self._file_cache[cached_file]
 
-        # Update state
-        self.current_state.total_files = len(current_files)
-        self.current_state.total_size = total_size
-        self.current_state.files_by_category = files_by_category
+            # Update state
+            self.current_state.total_files = len(current_files)
+            self.current_state.total_size = total_size
+            self.current_state.files_by_category = files_by_category
 
-        # Calculate clutter level
-        self.current_state.clutter_level = min(1.0, len(current_files) / 50.0)
+            # Calculate clutter level
+            self.current_state.clutter_level = min(1.0, len(current_files) / 50.0)
 
     def _categorize_file(self, file_path: Path) -> FileCategory:
         """Categorize a file by extension"""
@@ -470,6 +477,14 @@ class DesktopInteraction:
             try:
                 callback(file_path, change_type)
             except Exception as e:  # broad exception acceptable: callback errors should not block file change notifications
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+    def _notify_operation_callbacks(self, operation: FileOperation) -> None:
+        """Notify all registered operation callbacks"""
+        for callback in self._operation_callbacks:
+            try:
+                callback(operation)
+            except Exception as e:  # broad exception acceptable: callback errors should not block notifications
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def _check_auto_organize(self) -> None:
@@ -953,11 +968,7 @@ class DesktopInteraction:
             self.operation_history.append(operation)
             results["log_entry"] = log_entry
 
-            for callback in self._operation_callbacks:
-                try:
-                    callback(operation)
-                except Exception as e:
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            self._notify_operation_callbacks(operation)
 
         except Exception as handling_error:
             results["error"] = str(handling_error)
@@ -969,15 +980,17 @@ class DesktopInteraction:
     async def _cleanup_temp_files(self) -> int:
         """Helper method to cleanup temporary files and return freed space in bytes"""
         import tempfile
+        import shutil
         freed_space = 0
         try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                for item in Path(tmpdir).iterdir():
-                    try:
+            temp_dir = Path(tempfile.gettempdir())
+            for item in temp_dir.iterdir():
+                try:
+                    if item.is_file():
                         freed_space += item.stat().st_size
                         item.unlink()
-                    except Exception as e:  # broad exception acceptable: file cleanup errors should be logged
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                except Exception as e:  # broad exception acceptable: file cleanup errors should be logged
+                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
         except Exception as e:  # broad exception acceptable: temp file cleanup errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return freed_space
@@ -1061,11 +1074,7 @@ class DesktopInteraction:
                 self.operation_history.append(operation)
 
                 # Notify success
-                for callback in self._operation_callbacks:
-                    try:
-                        callback(operation)
-                    except Exception as e:  # broad exception acceptable: operation callback errors should not block execution
-                        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                self._notify_operation_callbacks(operation)
 
                 return results
 

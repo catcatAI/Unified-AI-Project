@@ -80,22 +80,22 @@
 | >1000 行 | **12** | 新計數 |
 | >1500 行 | **3** | 新計數 |
 
-**前 10 最長檔案**:
+**前 10 最長檔案（H7 拆分後）**:
 
-| # | 檔案 | 行數 | 說明 |
-|:-:|------|:----:|------|
-| 1 | `core/bio/neuroplasticity.py` | 1,671 | 生物模擬 — 神經可塑性 |
-| 2 | `services/llm/router.py` | 1,633 | LLM 路由 — 1416→1633 (H5 增加) |
-| 3 | `core/engine/state_matrix.py` | 1,625 | 狀態矩陣引擎 |
-| 4 | `core/bio/physiological_tactile.py` | 1,575 | 觸覺生理系統 |
-| 5 | `core/bio/endocrine_system.py` | 1,251 | 內分泌系統 |
-| 6 | `ai/response/composer.py` | 1,208 | 回應合成器 |
-| 7 | `core/engine/live2d_avatar_generator.py` | 1,200 | Live2D 頭像 |
-| 8 | `core/engine/desktop_interaction.py` | 1,168 | 桌面互動 |
-| 9 | `core/action_execution_bridge.py` | 1,167 | 行為執行橋接 |
-| 10 | `core/bio/emotional_blending.py` | 1,122 | 情緒混合 |
+| # | 檔案 | 行數 | 說明 | 狀態 |
+|:-:|------|:----:|------|:----:|
+| 1 | `core/engine/state_matrix.py` | 1,611 | 狀態矩陣引擎 | ⬜ 待拆分 |
+| 2 | `services/llm/router.py` | 1,284 | LLM 路由（原 1633，-349） | ✅ 已拆出 emotion/memory |
+| 3 | `ai/response/composer.py` | 1,208 | 回應合成器 | ⬜ 待分析 |
+| 4 | `core/engine/live2d_avatar_generator.py` | 1,200 | Live2D 頭像 | ⬜ 待分析 |
+| 5 | `core/engine/desktop_interaction.py` | 1,168 | 桌面互動 | ⬜ 待分析 |
+| 6 | `core/action_execution_bridge.py` | 1,167 | 行為執行橋接 | ⬜ 待分析 |
+| 7 | `core/bio/emotional_blending.py` | 1,122 | 情緒混合 | ⬜ 待分析 |
+| 8 | `core/hsp/connector.py` | 1,103 | HSP 連接器 | ⬜ 待分析 |
+| 9 | `core/engine/action_executor.py` | 1,034 | 行為執行器 | ⬜ 待分析 |
+| 10 | `core/real_time_monitor.py` | 1,009 | 即時監控 | ⬜ 待分析 |
 
-> **建議**: H7 應優先重構 `services/llm/router.py`（1633 行）和 `core/bio/neuroplasticity.py`（1671 行），透過職責分離削減至 <800 行。
+> **H7 已拆分**: neuroplasticity.py(1671→35 shim), router.py(1633→1284), physiological_tactile.py(1575→125 shim), endocrine_system.py(1267→130 shim) — 4/5 原 top-5 已完成拆分。剩餘 `state_matrix.py(1611)` 為唯一 >1500 行檔案。
 
 ### 1.5 版本一致性
 

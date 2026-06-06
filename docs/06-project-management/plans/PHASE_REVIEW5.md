@@ -29,8 +29,8 @@
 | 空 except | 302 | ~15 | ~15 | 23 待修復 | **24 已修復**，20 intentional |
 | HIGH 漏洞 | — | — | — | 3 | **0 ✅**（全部修復） |
 | 版本一致性 | 6/14 | 14/14 | 14/14 | 14/14 | **14/14 ✅** |
-| 超長檔案 >200 行 | ~6 | ~24 | 28+1 | 108 | **132** |
-| 最長檔案（行） | — | — | 323 (live2d) | 1416 (router.py) | **1671 (neuroplasticity.py)** |
+| 超長檔案 >200 行 | ~6 | ~24 | 28+1 | 108 | **138**（+6 來自拆分新檔） |
+| 最長檔案（行） | — | — | 323 (live2d) | 1416 (router.py) | **1611 (state_matrix.py)**（H5 原 1671→經拆分後） |
 | CI 納入 tests/unit/ | ❌ | ❌ | ❌ | ✅ | **✅** |
 | 綜合評分 | ~58% | ~96% | ~85% | ~55% | **~62%** |
 
@@ -105,22 +105,32 @@
 
 ### 🔴 H7：超長檔案重構
 
-| 優先 | 檔案 | 行數 | 建議策略 |
-|:----:|------|:----:|:---------|
-| P1 | `core/bio/neuroplasticity.py` | 1,671 | 拆出 plasticity_rules.py, synaptic_optimizer.py |
-| P2 | `services/llm/router.py` | 1,633 | 拆出 llm_routing/ 套件（router, handler, provider） |
-| P3 | `core/engine/state_matrix.py` | 1,625 | 拆出 matrix_operations.py, state_queries.py |
-| P4 | `core/bio/physiological_tactile.py` | 1,575 | 拆出 tactile_receptors.py, tactile_processing.py |
-| P5 | `core/bio/endocrine_system.py` | 1,251 | 拆出 hormone_regulation.py, gland_simulation.py |
+**已拆分（06-06 完成）**:
+| 原檔案 | 原行數 | 現狀 | 子模組 |
+|:------|:------:|:-----|:-------|
+| `core/bio/neuroplasticity.py` | 1,671 | ✅ 35 行 shim | `neuroplasticity_core`(637), `skill_acquisition`(189), `habit_formation`(176), `trauma_memory`(396), `explicit_implicit_learning`(179) |
+| `services/llm/router.py` | 1,633 | ✅ 1,284 行 | `emotion_analyzer`(282), `memory_integration`(183) |
+| `core/engine/state_matrix.py` | 1,625 | ⬜ 1,611 行（僅清理 3 重複） | 待拆分為 4 子模組 |
+| `core/bio/physiological_tactile.py` | 1,575 | ✅ 125 行 shim | `physiological_tactile_types`(233), `_system`(456), `_analysis`(546) |
+| `core/bio/endocrine_system.py` | 1,251 | ✅ 130 行 shim | `endocrine_types`(121), `_system_core`(516), `hormone_kinetics`(309), `feedback_loop`(309) |
+
+**新前 5 長檔案（待處理）**:
+| 優先 | 檔案 | 行數 |
+|:----:|------|:----:|
+| P1 | `core/engine/state_matrix.py` | 1,611 |
+| P2 | `ai/response/composer.py` | 1,208 |
+| P3 | `core/engine/live2d_avatar_generator.py` | 1,200 |
+| P4 | `core/engine/desktop_interaction.py` | 1,168 |
+| P5 | `core/action_execution_bridge.py` | 1,167 |
 
 ### 🟡 文檔一致性
 
 | # | 問題 | 優先級 |
 |:-:|------|:------:|
-| 1 | ARCHITECTURE.md 行數/模組數過時 | 🔴 HIGH |
-| 2 | OVERVIEW.md 數字錯誤（模組 8→11+） | 🔴 HIGH |
-| 3 | AGENTS.md 日期 2026-02-19 | 🟡 MEDIUM |
-| 4 | 4 廢棄計畫未歸檔 | 🟡 MEDIUM |
+| 1 | ARCHITECTURE.md 行數/模組數過時 | ✅ 已更新 |
+| 2 | OVERVIEW.md 數字錯誤（模組 8→11+） | ✅ 已更新 |
+| 3 | AGENTS.md 日期 2026-02-19 | ✅ 已為 2026-06-06 |
+| 4 | 4 廢棄計畫未歸檔 | ✅ 已歸檔至 docs/09-archive/ |
 
 ### 🟢 測試品質
 

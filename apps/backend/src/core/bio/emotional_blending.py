@@ -26,6 +26,7 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 import logging
+import copy
 from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
@@ -307,7 +308,7 @@ class EmotionalBlendingSystem:
                 self._apply_hormonal_influence(influence)
 
         # Record history
-        self.emotion_history.append(self.current_emotion)
+        self.emotion_history.append(copy.deepcopy(self.current_emotion))
         if len(self.emotion_history) > self.history_limit:
             self.emotion_history.pop(0)
 
@@ -1099,10 +1100,10 @@ if __name__ == "__main__":
         matrix.set_gamma_dimension(happiness=0.85, sadness=0.1, trust=0.8, anger=0.05)
         matrix.set_delta_dimension(attention=0.9, bond=0.7, trust=0.8, presence=0.6)
 
-        logger.info("   α生理维度 / Physiological:", matrix.get_dimension_state("alpha"))
-        logger.info("   β认知维度 / Cognitive:", matrix.get_dimension_state("beta"))
-        logger.info("   γ情感维度 / Emotional:", matrix.get_dimension_state("gamma"))
-        logger.info("   δ社交维度 / Social:", matrix.get_dimension_state("delta"))
+        logger.info("   α生理维度 / Physiological: %s", matrix.get_dimension_state("alpha"))
+        logger.info("   β认知维度 / Cognitive: %s", matrix.get_dimension_state("beta"))
+        logger.info("   γ情感维度 / Emotional: %s", matrix.get_dimension_state("gamma"))
+        logger.info("   δ社交维度 / Social: %s", matrix.get_dimension_state("delta"))
 
         logger.info("\n10. 计算维度间影响 / Computing inter-dimensional influences:")
         influences = matrix.compute_inter_influences()

@@ -271,7 +271,7 @@ class FragmentComposer:
                 content=sentence,
                 type=ftype,
                 keywords=self._extract_keywords(sentence),
-                context_tags=[],
+                context_tags=list(context.keys()) if context else [],
                 priority=5,
             )
             fragments.append(fragment)
@@ -343,6 +343,11 @@ class FragmentComposer:
 
         response = "".join(parts)
 
+        if context:
+            user_name = context.get("user_name") or context.get("name")
+            if user_name:
+                response = response.replace("{user_name}", user_name)
+
         response = response.replace("。。", "。")
         response = response.replace("！！", "！")
         response = response.replace("？？", "？")
@@ -360,7 +365,9 @@ class FragmentComposer:
         types_used = len(set(f.type for f in fragments))
         type_bonus = min(0.2, types_used * 0.05)
 
-        return min(1.0, base + type_bonus)
+        context_bonus = min(0.1, len(context) * 0.02) if context else 0.0
+
+        return min(1.0, base + type_bonus + context_bonus)
 
     def _update_stats(self, composition_time: float, fragments_count: int) -> None:
         """更新统计信息"""
@@ -716,7 +723,6 @@ class NeuroVocabulary:
                 category = getattr(tmpl, "metadata", {}).get("category", "general")
             else:
                 category = category.value if hasattr(category, "value") else str(category)
-            getattr(tmpl, "metadata", {}) or {}
             tmpl_id = getattr(tmpl, "id", "unknown")
 
             # 按标点拆分为句子（只分中句号/感叹/问号，不分英文句点避免打断省略号）
@@ -1087,7 +1093,6 @@ class NeuroBlender:
         for i, frag in enumerate(fragments):
             content = frag.content.strip()
             stype = frag.structural_type
-            i == len(fragments) - 1
 
             # Suppress duplicate structural types (only first instance passes)
             if stype == prev_type and stype in ("greeting", "closing_question", "transition"):
@@ -1096,16 +1101,11 @@ class NeuroBlender:
             # --- Natural flow connectors ---
             if i > 0 and parts:
                 prev = parts[-1]
-                # No connector needed if previous ends with punctuation
-                if _re.search(r'[。！？!?）)]$', prev):
-                    pass  # already ended
-                elif stype == "closing_question":
-                    # Question doesn't need connector if preceding is natural
-                    pass
-                elif stype in ("statement", "exclamation"):
-                    # Short natural pause
-                    if not _re.search(r'[，、，]$', prev):
-                        content = content[0].lower() + content[1:] if content and content[0].isalpha() else content
+                # Add natural connector for statement/exclamation fragments
+                if (not _re.search(r'[。！？!?）)]$', prev)
+                        and stype in ("statement", "exclamation")
+                        and not _re.search(r'[，、，]$', prev)):
+                    content = content[0].lower() + content[1:] if content and content[0].isalpha() else content
 
             parts.append(content)
             prev_type = stype

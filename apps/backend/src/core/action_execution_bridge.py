@@ -28,6 +28,15 @@ from core.system.config.magic_numbers import loop_sleep, batch_value, cache_valu
 
 logger = logging.getLogger(__name__)
 
+# Module-level constants
+_LOG_PREFIX = "[ActionExecutionBridge]"
+_DEFAULT_URGENCY = 0.5
+_DEFAULT_INTENSITY = 0.5
+_DEFAULT_EXPRESSION_INTENSITY = 0.8
+_DEFAULT_SEARCH_RESULTS = 5
+_DEFAULT_MEDIUM_LIMIT = 10
+_DEFAULT_DEEP_LIMIT = 20
+
 # Type imports to avoid circular dependencies
 if TYPE_CHECKING:
     pass
@@ -285,7 +294,7 @@ class ActionExecutionBridge:
         # Start execution loop
         self._execution_task = asyncio.create_task(self._execution_loop())
 
-        logger.info("[ActionExecutionBridge] Initialized successfully")
+        logger.info(f"{_LOG_PREFIX} Initialized successfully")
 
     async def shutdown(self) -> None:
         """Shutdown the bridge"""
@@ -302,7 +311,7 @@ class ActionExecutionBridge:
         # Save history
         await self._save_history()
 
-        logger.info("[ActionExecutionBridge] Shutdown complete")
+        logger.info(f"{_LOG_PREFIX} Shutdown complete")
 
     async def execute_action(
         self,
@@ -431,25 +440,23 @@ class ActionExecutionBridge:
         start_time = asyncio.get_running_loop().time()
         result: ExecutionResult
 
+        # === Pre-execution phase ===
         try:
-            # Pre-execution callbacks
             for callback in self._pre_execution_callbacks:
                 try:
                     callback(context)
                 except Exception as e:  # broad exception acceptable: callbacks are user-defined, prevent crash
-                    logger.error(f"[ActionExecutionBridge] Pre-execution callback error: {e}", exc_info=True)
+                    logger.error(f"{_LOG_PREFIX} Pre-execution callback error: {e}", exc_info=True)
 
-            # Get handler
+            # === Handler execution phase ===
             handler = self._handlers.get(context.action_type)
             if not handler:
                 raise ValueError(f"No handler for action type: {context.action_type}")
 
-            # Execute handler
             result_data = await handler(parameters, context)
-
             execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
 
-            # Create success result
+            # === Success result construction ===
             result = ExecutionResult(
                 action_id=action_id,
                 action_type=context.action_type,
@@ -487,28 +494,22 @@ class ActionExecutionBridge:
                 execution_time_ms=execution_time,
             )
 
+        # === Cleanup and feedback phase ===
         finally:
             self._executing_actions.discard(action_id)
             if "result" in locals():
                 self._completed_actions[action_id] = result
 
-                # Update statistics
                 self._update_stats(result)
-
-                # Collect feedback
                 self.feedback_collector.collect(result)
-
-                # Persist to history
                 await self._persist_result(result)
 
-                # Post-execution callbacks
                 for callback in self._post_execution_callbacks:
                     try:
                         callback(context, result)
                     except Exception as e:  # broad exception acceptable: prevent callback errors from breaking flow
-                        logger.error(f"[ActionExecutionBridge] Post-execution callback error: {e}", exc_info=True)
+                        logger.error(f"{_LOG_PREFIX} Post-execution callback error: {e}", exc_info=True)
 
-                # Send feedback to CDM for learning (if available)
                 if self.cdm:
                     await self._send_feedback_to_cdm(result)
 
@@ -566,7 +567,7 @@ class ActionExecutionBridge:
         if len(self._execution_history) % 10 == 0:
             await self._save_history()
 
-    async def _load_history(self) -> str:
+    async def _load_history(self) -> None:
         """Load execution history from file"""
         try:
             if await asyncio.to_thread(self._history_file.exists):
@@ -577,7 +578,7 @@ class ActionExecutionBridge:
                 
                 self._execution_history = await asyncio.to_thread(read_history)
         except Exception as e:  # broad exception acceptable: non-critical history load, continue without it
-            logger.error(f"[ActionExecutionBridge] Failed to load history: {e}", exc_info=True)
+            logger.error(f"{_LOG_PREFIX} Failed to load history: {e}", exc_info=True)
 
     async def _save_history(self) -> None:
         """Save execution history to file"""
@@ -591,7 +592,7 @@ class ActionExecutionBridge:
             
             await asyncio.to_thread(write_history)
         except Exception as e:  # broad exception acceptable: non-critical history save, log and continue
-            logger.error(f"[ActionExecutionBridge] Failed to save history: {e}", exc_info=True)
+            logger.error(f"{_LOG_PREFIX} Failed to save history: {e}", exc_info=True)
 
     async def _send_feedback_to_cdm(self, result: ExecutionResult) -> None:
         """Send execution feedback to CDM for learning"""
@@ -619,7 +620,7 @@ class ActionExecutionBridge:
                         if hasattr(self.cdm, "integrate_knowledge"):
                             self.cdm.integrate_knowledge(feedback_delta, delta)
         except Exception as e:  # broad exception acceptable: non-critical CDM update, log and continue
-            logger.error(f"[ActionExecutionBridge] Failed to send feedback to CDM: {e}", exc_info=True)
+            logger.error(f"{_LOG_PREFIX} Failed to send feedback to CDM: {e}", exc_info=True)
 
     # ========== Action Handlers ==========
 
@@ -677,7 +678,7 @@ class ActionExecutionBridge:
             try:
                 search_results = await self.web_search_tool.search(
                     query=topic,
-                    num_results=5 if depth == "shallow" else 10 if depth == "medium" else 20,
+                    num_results=_DEFAULT_SEARCH_RESULTS if depth == "shallow" else _DEFAULT_MEDIUM_LIMIT if depth == "medium" else _DEFAULT_DEEP_LIMIT,
                 )
                 result["exploration_data"]["search_results"] = search_results
             except Exception as e:  # broad exception acceptable: optional search, handle gracefully
@@ -717,7 +718,7 @@ class ActionExecutionBridge:
     ) -> dict[str, Any]:
         """Handle satisfy_need action"""
         need_type = parameters.get("need_type", "")  # hunger, social, rest, curiosity, etc.
-        urgency = parameters.get("urgency", 0.5)
+        urgency = parameters.get("urgency", _DEFAULT_URGENCY)
         parameters.get("suggested_action", None)
 
         result = {"need_type": need_type, "urgency": urgency, "action_taken": None}
@@ -763,7 +764,7 @@ class ActionExecutionBridge:
     ) -> dict[str, Any]:
         """Handle express_feeling action"""
         emotion = parameters.get("emotion", "neutral")
-        intensity = parameters.get("intensity", 0.5)
+        intensity = parameters.get("intensity", _DEFAULT_INTENSITY)
         reason = parameters.get("reason", None)
 
         result = {"emotion": emotion, "intensity": intensity, "reason": reason}
@@ -875,7 +876,7 @@ class ActionExecutionBridge:
         try:
             if change_type == "expression":
                 if hasattr(self.live2d_integration, "set_expression"):
-                    await self.live2d_integration.set_expression(value, intensity=0.8)
+                    await self.live2d_integration.set_expression(value, intensity=_DEFAULT_EXPRESSION_INTENSITY)
                     result["applied"] = True
 
             elif change_type == "outfit":
@@ -949,7 +950,7 @@ class ActionExecutionBridge:
     ) -> dict[str, Any]:
         """Handle web_search action"""
         query = parameters.get("query", "")
-        num_results = parameters.get("num_results", 5)
+        num_results = parameters.get("num_results", _DEFAULT_SEARCH_RESULTS)
         search_engine = parameters.get("search_engine", "duckduckgo")
 
         result = {

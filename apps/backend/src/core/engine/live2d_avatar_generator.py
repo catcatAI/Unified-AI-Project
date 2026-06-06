@@ -536,6 +536,7 @@ class Live2DAvatarGenerator:
 
     async def shutdown(self) -> None:
         """Shutdown the generator"""
+        logger.info("Live2D avatar generator shut down")
 
     def register_progress_callback(self, callback: Callable[[GenerationProgress], None]) -> None:
         """Register callback for generation progress updates"""
@@ -775,7 +776,7 @@ class Live2DAvatarGenerator:
             from PIL import Image, ImageDraw
 
             # API 端點 (預設使用本機 segmentation 服務)
-            self.config.get("segmentation_api_url", "http://127.0.0.1:8000/segment")
+            seg_api_url = self.config.get("segmentation_api_url", "http://127.0.0.1:8000/segment")
             
             
             # NOTE: 待分層微服務上線後可開啟此段（當前使用 Pillow fallback）
@@ -793,21 +794,19 @@ class Live2DAvatarGenerator:
             draw.rectangle([100, 100, 400, 400], fill=color, outline=(0, 0, 0, 255), width=2)
             draw.text((150, 250), layer.layer_name, fill=(0, 0, 0, 255))
             
-            output_dir = Path(self.output_path) / "layers"
-            output_dir.mkdir(parents=True, exist_ok=True)
-            
-            real_image_path = output_dir / f"{layer.layer_name}.png"
-            img.save(real_image_path)
-            
-            layer.image_path = str(real_image_path)
+            # Derive output path from the layer's original path (set by _create_layers)
+            output_path = Path(layer.image_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            img.save(output_path)
+
+            layer.image_path = str(output_path)
             return
             
         except Exception as e:  # broad exception acceptable: layer generation fallback should not crash pipeline
             logger.warning(f"Layer generation failed, using empty fallback: {e}", exc_info=True)
             
-        layer.image_path = str(
-            Path(self.output_path) / "placeholder_layers" / f"{layer.layer_name}.png"
-        )
+        # Keep the image_path as originally set by _create_layers (actual file may be missing)
 
     async def _setup_rigging(self, avatar: GeneratedAvatar) -> None:
         """Setup Live2D rigging with body mappings"""
