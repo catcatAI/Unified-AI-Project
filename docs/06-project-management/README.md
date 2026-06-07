@@ -1,230 +1,84 @@
 # Project Management
 
-This section covers project planning, status reports, and management insights for the Unified AI Project.
+> **Version**: 7.5.0-dev | **Status**: Active Development (H5 complete, ~62% maturity)
 
-## Project Planning
+This section covers project planning, status, and management for the **Angela AI / Unified AI Project** — a hybrid AGI ecosystem with closed-loop learning architecture.
 
-### Vision and Goals
+## Active Plan Files
 
-The Unified AI Project aims to create a hybrid AI ecosystem that can evolve towards AGI (Artificial General Intelligence) Level 3-4 through a closed-loop learning architecture. The project is designed with the philosophy of "Data Life," enabling true autonomous learning and evolution through continuous cognitive cycles.
+All plans live in `docs/06-project-management/plans/`:
 
-### Phase-Based Development Approach
+| Plan File | Focus |
+|-----------|-------|
+| `MASTER_CONSOLIDATED_PLAN.md` | Consolidated master plan — version governance, security, modularization |
+| `MASTER_FINALIZATION_PLAN.md` | Finalization roadmap |
+| `ED3N_MATURITY_PLAN.md` | ED3N external dictionary decoupling neural network — Phase 1-4 production-readiness |
+| `GARDEN_MODEL_PLAN.md` | GARDEN-1G lightweight local model architecture |
+| `CARD_IMPORT_PIPELINE_PLAN.md` | Card import pipeline (222+ cards from G-slot) |
+| `CARD_INTEGRATION_PLAN_REVIEW.md` | Card integration audit/review |
+| `ANGELA_CARD_INTEGRATION_PLAN.md` | Angela card system integration |
+| `ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md` | LLM + SNN hybrid architecture |
+| `ANGELA_TRANSLATION_LEARNING_PLAN.md` | Translation learning layer |
+| `REPAIR_PLAN.md` | Systematic debt/security repair |
+| `REMAINING_ISSUES_PLAN.md` | Outstanding issues tracking |
+| `TEST_RESTRUCTURE_PLAN.md` | Test suite restructure |
+| `PHASE6_NEXT_PLAN.md` | Phase 6 / next sprint planning |
+| `PHASE_REVIEW.md` — `PHASE_REVIEW5.md` | Phase review reports (PR1-PR5) |
+| `COMPREHENSIVE_AUDIT_REPORT.md` | Full codebase audit (V1-V3) |
+| `PLAN_REVIEW.md` | Cross-plan review |
 
-The project follows a phased development approach to ensure steady progress and manageable milestones:
+## Development Roadmap (H1-H9)
 
-#### Phase 1 (MVP / Level 3 Initial Implementation)
-- **Duration**: 6-8 weeks
-- **Objective**: Complete a minimum viable product with a "desktop pet + economic system" scenario
-- **Key Deliverables**:
-  - Functional AI character with basic autonomous behavior
-  - Working economic system simulation
-  - Core closed-loop learning architecture validation
+The project uses **H-level milestones** (not phases). Current status per H-level:
 
-#### Phase 2 (Closed Testing and Iteration)
-- **Duration**: 4 weeks
-- **Objective**: Invite small group of users for testing and iterate based on feedback
-- **Key Activities**:
-  - User testing with 10-50 participants
-  - Data collection and analysis
-  - Model and interaction logic refinement
+| Level | Focus | Status | Score Target |
+|-------|-------|--------|:------------:|
+| **H1-H4** | HIGH vulnerability repair + test fixes | ✅ Complete | 51% → 55% |
+| **H5** | Stub implementation (36/37 strict stubs, 2837 tests) | ✅ Complete | 55% → 62% |
+| **H6** | (Combined into H5/H7) | — | — |
+| **H7** | Long file refactoring (132→50 files), doc consistency | 🔴 Active | 62% → 68% |
+| **H7.1** | Core documentation alignment (5 docs) | 🔴 Active | 68% → 72% |
+| **H7.2** | Deprecated archive cleanup | 🟡 Planned | 72% → 73% |
+| **H8** | Test quality (boundary/perf/coverage) | 🟡 Planned | 73% → 78% |
+| **H9** | ANGELA-MATRIX annotation + plugin docs | 🟢 Planned | 78% → 82% |
 
-#### Phase 3 (Open Testing and Ecosystem Start)
-- **Duration**: 8 weeks
-- **Objective**: Expand user base and validate economic system stability
-- **Key Activities**:
-  - User base expansion to 100-500 participants
-  - Economic system stability validation
-  - Introduction of advanced multi-modal capabilities
+## Active AI Systems
 
-#### Phase 4 (Challenge Level 4)
-- **Duration**: Ongoing
-- **Objective**: Introduce self-evolution mechanisms for true AGI capabilities
-- **Key Features**:
-  - Self-evolution mechanism implementation
-  - Autonomous knowledge acquisition
-  - Core logic self-correction capabilities
+| System | Description | Status |
+|--------|-------------|--------|
+| **ED3N** | External Dictionary Decoupling Neural Network — trie-based reflex + SNN spiking core, 4 phases complete | ✅ Phase 1-4 |
+| **GARDEN-1G** | Giant Associative Relation Decoupled Evolutionary Network — lightweight ~1GB local model | ✅ Implemented |
+| **Model Bus** | Capability-based routing (greeting→ED3N, math→ED3N, knowledge→GARDEN, creative→cloud) | ✅ Wired |
+| **Query Classifier** | 22 rules → 8 domains (REFLEX/GREETING/MATH/LOGIC/KNOWLEDGE/CREATIVE/COMMAND/UNKNOWN) | ✅ Active |
+| **Training Coordinator** | Domain ownership, deconfliction, reflex pattern sync | ✅ Active |
 
-### Resource Allocation
+## Current State
 
-#### Human Resources
-- **AI Research Team**: Focus on algorithm development and model training
-- **Software Engineering Team**: Handle system architecture and implementation
-- **UI/UX Design Team**: Create engaging user interfaces and experiences
-- **Quality Assurance Team**: Ensure system reliability and performance
-- **Documentation Team**: Maintain comprehensive project documentation
+- **Version**: 7.5.0-dev — all 14 version locations synchronized
+- **Tests**: 2837 tests, 0 collection errors
+- **HIGH vulnerabilities**: 0 remaining (all repaired in H1-H4)
+- **Modules**: 564 Python files (~69K lines), 204 stub modules (36%)
+- **CI**: 9 workflows, `tests/unit/` integrated
+- **Architecture**: ModuleManager hotplug system, HSP protocol, HAM memory, 5-tier model scaling (ED3N→ECOSYSTEM)
 
-#### Technical Resources
-- **Computing Infrastructure**: Cloud and local computing resources for training and deployment
-- **Data Storage**: Scalable storage solutions for training data and model artifacts
-- **Development Tools**: Licenses and access to necessary development tools
-- **Testing Environments**: Dedicated environments for different testing phases
+## Key Metrics Dashboard
 
-## Status Reports
-
-### Current Status
-
-As of the latest update, the project has reached its first major milestone with the release of version 1.0.0. This release represents a fully functional hybrid AI ecosystem designed for AGI (Level 3-4) development.
-
-#### Completed Features
-- Complete AI architecture with HAM memory system and HSP protocol
-- Multi-modal AI agent system (Creative Writing, Image Generation, Web Search)
-- Concept models (Environment Simulator, Causal Reasoning Engine, Adaptive Learning Controller, Alpha Deep Model)
-- Full training system with multiple scenarios
-- Automated data processing pipeline
-- Unified management tools (unified-ai.bat, ai-runner.bat)
-- CLI tools for AI interaction
-- Desktop game client "Angela's World"
-- Web-based dashboard for monitoring and management
-
-#### Recent Improvements
-- Optimized for low-resource deployment
-- Enhanced resource management for better performance on constrained systems
-- PowerShell compatibility fixes for batch scripts
-- Improved model training efficiency
-
-#### Recent Bug Fixes
-- Audio service import path issues
-- ChromaDB configuration problems
-- Various integration issues between components
-
-### Upcoming Milestones
-
-#### Short-term Goals (Next 3 Months)
-1. **Performance Optimization**: Further optimize system performance and resource usage
-2. **User Experience Enhancement**: Improve the desktop application and web dashboard interfaces
-3. **Documentation Completion**: Finalize comprehensive documentation for all system components
-4. **Community Building**: Establish channels for user feedback and community contributions
-
-#### Medium-term Goals (3-6 Months)
-1. **Advanced AI Capabilities**: Implement more sophisticated AI models and algorithms
-2. **Extended Multi-modal Support**: Add support for additional data types and modalities
-3. **Scalability Improvements**: Enhance system scalability for larger user bases
-4. **Integration Partnerships**: Explore partnerships for integrating with external services
-
-#### Long-term Vision (6+ Months)
-1. **AGI Level 4 Achievement**: Realize the project's vision of Level 4 AGI capabilities
-2. **Ecosystem Development**: Foster a thriving ecosystem of AI applications and services
-3. **Research Contributions**: Contribute findings and innovations to the broader AI research community
-4. **Commercial Viability**: Explore opportunities for commercial applications and sustainability
+| Metric | Value |
+|--------|-------|
+| Test count | 2837 (+93 from H5 sprint) |
+| Stub modules | 36/37 strict stubs implemented |
+| Empty except blocks | 0 (20 remainder are intentional) |
+| Files >200 lines | 138 (target: 50 in H7) |
+| Type annotation coverage | ~87% |
+| Version consistency | 14/14 |
+| `import core` time | ~0.5s (lazy imports) |
 
 ## Risk Management
 
-### Identified Risks
+Key technical risks currently tracked:
+- **132 files >200 lines** — H7 refactoring in progress (neuroplasticity, endocrine, state_matrix, router)
+- **Coverage ~6.8%** — H8 will add boundary/perf/coverage gates
+- **ANGELA-MATRIX annotation 0/6** — H9 will enforce standard
+- **70+ uncommitted changes** — ordered cleanup planned
 
-#### Technical Risks
-1. **Model Training Complexity**: Training advanced AI models may require more computational resources than anticipated
-2. **Integration Challenges**: Integrating multiple AI components and systems may present unexpected difficulties
-3. **Performance Bottlenecks**: System performance may not meet expectations under load
-4. **Security Vulnerabilities**: As an AI system, security is paramount and potential vulnerabilities must be addressed
-
-#### Resource Risks
-1. **Funding Constraints**: Limited funding may impact the project's ability to acquire necessary resources
-2. **Talent Retention**: Competition for skilled AI researchers and engineers may affect team stability
-3. **Infrastructure Limitations**: Access to sufficient computing resources may be constrained
-
-#### Market Risks
-1. **Competition**: Rapid advancements in the AI field may create strong competition
-2. **User Adoption**: Gaining user adoption may be more challenging than anticipated
-3. **Regulatory Changes**: Changes in AI regulations may impact project direction
-
-### Mitigation Strategies
-
-#### Technical Mitigation
-1. **Modular Architecture**: Design modular systems to isolate and address issues independently
-2. **Continuous Testing**: Implement comprehensive testing to identify and resolve issues early
-3. **Performance Monitoring**: Establish monitoring systems to track and optimize performance
-4. **Security Audits**: Conduct regular security audits and implement best practices
-
-#### Resource Mitigation
-1. **Diversified Funding**: Pursue multiple funding sources to reduce dependency on single sources
-2. **Knowledge Sharing**: Implement knowledge sharing practices to reduce dependency on individual team members
-3. **Cloud Flexibility**: Utilize cloud services for scalable infrastructure when needed
-
-#### Market Mitigation
-1. **User Feedback Integration**: Regularly collect and integrate user feedback to stay aligned with market needs
-2. **Competitive Analysis**: Continuously monitor competitors and adapt strategies accordingly
-3. **Regulatory Awareness**: Stay informed about regulatory developments and adapt proactively
-
-## Communication Plan
-
-### Internal Communication
-
-#### Team Meetings
-- **Daily Standups**: Brief daily meetings to synchronize team activities
-- **Weekly Planning**: Weekly meetings to plan upcoming work and review progress
-- **Monthly Reviews**: Monthly comprehensive reviews of project status and direction
-
-#### Documentation
-- **Shared Wikis**: Maintain up-to-date wikis for project knowledge sharing
-- **Meeting Notes**: Document key decisions and action items from meetings
-- **Progress Reports**: Regular progress reports to keep all stakeholders informed
-
-### External Communication
-
-#### Community Engagement
-- **GitHub Repository**: Maintain active GitHub repository with regular updates
-- **Social Media**: Use social media channels to share project updates and engage with the community
-- **Blog Posts**: Publish regular blog posts about project progress and technical insights
-
-#### User Communication
-- **Release Notes**: Detailed release notes for each version update
-- **User Guides**: Comprehensive user guides and documentation
-- **Support Channels**: Establish support channels for user questions and feedback
-
-## Quality Assurance
-
-### Testing Strategy
-
-#### Automated Testing
-- **Unit Tests**: Comprehensive unit tests for all individual components
-- **Integration Tests**: Tests for component interactions and system integration
-- **End-to-End Tests**: Tests for complete user workflows and scenarios
-- **Performance Tests**: Tests to ensure system performance meets requirements
-
-#### Manual Testing
-- **User Acceptance Testing**: Regular user acceptance testing with real users
-- **Exploratory Testing**: Unstructured testing to discover unexpected issues
-- **Cross-platform Testing**: Testing on different platforms and environments
-
-### Code Quality Standards
-
-#### Code Reviews
-- **Mandatory Reviews**: All code changes must be reviewed before merging
-- **Review Guidelines**: Established guidelines for code review processes
-- **Automated Checks**: Automated linting and formatting checks
-
-#### Documentation Standards
-- **API Documentation**: Comprehensive documentation for all APIs
-- **User Documentation**: Clear and accessible user guides
-- **Technical Documentation**: Detailed technical documentation for developers
-
-## Budget and Resource Tracking
-
-### Budget Allocation
-
-#### Development Costs
-- **Personnel**: Salaries and benefits for team members
-- **Infrastructure**: Computing resources, storage, and networking
-- **Tools and Licenses**: Development tools, software licenses, and services
-- **Training**: Professional development and training for team members
-
-#### Operational Costs
-- **Hosting**: Cloud hosting and server costs
-- **Maintenance**: System maintenance and support
-- **Marketing**: Community engagement and promotional activities
-
-### Resource Tracking
-
-#### Time Tracking
-- **Project Management Tools**: Use project management tools to track time spent on tasks
-- **Milestone Tracking**: Track progress against planned milestones
-- **Resource Utilization**: Monitor resource utilization to optimize allocation
-
-#### Performance Metrics
-- **Development Velocity**: Track team velocity and productivity
-- **Quality Metrics**: Monitor defect rates and code quality metrics
-- **User Engagement**: Track user adoption and engagement metrics
-
-## Conclusion
-
-The Unified AI Project represents an ambitious endeavor to create a next-generation AI ecosystem. Through careful planning, risk management, and continuous improvement, the project aims to achieve its vision of Level 4 AGI capabilities while maintaining a strong focus on quality, security, and user experience. Regular status reporting and communication will ensure that all stakeholders remain informed and engaged throughout the project lifecycle.
+For detailed risk register see `MASTER_CONSOLIDATED_PLAN.md` (S/A/B/C/D/E task hierarchy).

@@ -53,7 +53,7 @@
 
 **Angela AI** is a digital life system with biological simulation, self-evolution, and real execution capabilities.
 
-**Quick facts**: 564 Python files, ~69K LOC. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~948 collectable tests, 0 TODO/FIXME/NotImplementedError, 14/14 version consistency.**  
+**Quick facts**: 562 Python files, ~127K LOC. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **~948 collectable tests, 0 TODO/FIXME/NotImplementedError, 14/14 version consistency.**  
 **Component versions (code-verified)**: backend `7.5.0-dev` · desktop `4.1.0-dev` · mobile `1.2.0-dev` · cli `1.1.0` · biology-core `1.0.0` — [full version audit](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#17-各組件正確子版本號分析).  
 **Architecture consistency score**: **62.6%** — [full breakdown](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md#6-一致性綜合評分表) (version 31% · shallow 65% · module 66% · algorithm 74%).  
 **Total project files**: ~2,950 (1,001 Python · 140 JS/TS · 805 docs · 577 config · 238 test · ~190 other).  
@@ -130,7 +130,7 @@ See detailed reports in linked analysis docs:
 | **CI** | ✅ **tests/unit/ included**, Python ≥3.10 unified | CI workflow |
 | **Empty excepts** | ✅ **24 fixed** + 20 intentional remaining (lifecycle/monitor resilience) | `COMPREHENSIVE_AUDIT_REPORT_V2.md` |
 | **Long files >200 lines** | ⚠️ 132 files (3 over 1500: neuroplasticity 1671, router 1633, state_matrix 1625) | H7 pending refactor |
-| **Doc consistency** | ⚠️ ARCHITECTURE.md, OVERVIEW.md still outdated | H7.1 pending |
+| **Doc consistency** | ✅ ARCHITECTURE.md, OVERVIEW.md updated | H7.1 completed |
 
 ### Comprehensive Audit Reports
 
@@ -143,7 +143,7 @@ See detailed reports in linked analysis docs:
 - **測試**: **2837 tests, 0 collection errors**, tests/unit/ 已納入 CI。無邊界/性能/並發測試 (55%)
 - **代碼**: **36/37 嚴格 stub 已實作**, 24 空 except 已修復, 20 intentional 剩餘 (65% 完整)
 - **運行時**: **0 HIGH 漏洞**, 3 原始漏洞全數修復 (65% 穩定)
-- **文檔**: 版本一致 14/14, 但 ARCHITECTURE.md/OVERVIEW.md 過時 (55% 清楚)
+- **文檔**: 版本一致 14/14, ARCHITECTURE.md/OVERVIEW.md 已更新 (72% 清楚)
 - **超長檔案**: 132 檔案 >200 行, 最長 1671 行 — H7 待重構 (55% 快速)
 - **綜合評分**: **~62%**（較 PR4 提升 7pp）
 
@@ -158,7 +158,7 @@ See detailed reports in linked analysis docs:
 | ✅ H1-H4 | HIGH vulns + test repairs | 51% → 55% | 🔴 DONE |
 | ✅ H5 | Stub implementation (36/37) | 55% → 62% | 🔴 DONE |
 | ⬜ H7 | Long file refactoring (132→50 files) | 62% → 68% | 🔴 HIGH |
-| ⬜ H7.1 | Doc consistency (5 core documents) | 68% → 72% | 🔴 HIGH |
+| ✅ H7.1 | Doc consistency (5 core documents) | 68% → 72% | 🟡 MEDIUM |
 | ⬜ H7.2 | Deprecated archive cleanup | 72% → 73% | 🟡 MEDIUM |
 | ✅ H7.5 | ED3N Phase 1+2+3 原型+訓練系統+SNN | ✅ 完成 | 16 檔, 2,135+ 行 |
 | ✅ H7.6 | ED3N 持續學習管道 | ✅ 完成 | ContinuousLearningPipeline + ED3NLearningIntegration |

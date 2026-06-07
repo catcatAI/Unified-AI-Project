@@ -71,6 +71,8 @@ class TelemetryCollector:
                 if stage_name not in self._stage_times:
                     self._stage_times[stage_name] = []
                 self._stage_times[stage_name].append(latency_ms)
+                if len(self._stage_times[stage_name]) > self.max_history:
+                    self._stage_times[stage_name].pop(0)
         return record
 
     def get_summary(self) -> dict:

@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import re
+import threading
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -46,9 +47,10 @@ class DictionaryLayer:
         self._keyword_index: Dict[str, List[str]] = {}
         self._bigram_index: Dict[str, List[str]] = {}
         self._rebuilt_index: bool = False
+        self._lock = threading.RLock()
         self._growth_history: List[Dict[str, Any]] = []
         self._index_version: int = 0
-        self._encode_cache: Dict[Tuple[str, int], List[str]] = {}
+        self._encode_cache: OrderedDict = OrderedDict()
         self._encode_cache_max: int = 256
 
     def _assign_key(self, prefix: str = "c") -> str:
@@ -78,6 +80,10 @@ class DictionaryLayer:
         return result
 
     def encode(self, text: str, modality: str = "text") -> List[str]:
+        with self._lock:
+            return self._encode_locked(text, modality)
+
+    def _encode_locked(self, text: str, modality: str = "text") -> List[str]:
         if not text or not isinstance(text, str):
             return []
         if len(text) > 10000:
@@ -107,7 +113,7 @@ class DictionaryLayer:
                 seen.add(k)
                 unique_keys.append(k)
         if len(self._encode_cache) > self._encode_cache_max:
-            self._encode_cache.clear()
+            self._encode_cache.popitem(last=False)
         self._encode_cache[cache_key] = unique_keys
         return unique_keys
 
@@ -176,6 +182,8 @@ class DictionaryLayer:
             "source_text": text,
             "confidence": confidence,
         })
+        if len(self._growth_history) > 5000:
+            self._growth_history.pop(0)
         logger.info("Grew new entry: %s -> %s (%s)", key, surface_form, text)
         return key
 
@@ -417,24 +425,25 @@ class DictionaryLayer:
         return count
 
     def _rebuild_index(self) -> None:
-        self._keyword_index.clear()
-        self._bigram_index.clear()
-        for key, entry in self.entries.items():
-            for lang, surface in entry.surface_forms.items():
-                surface_lower = surface.lower().strip()
+        with self._lock:
+            self._keyword_index.clear()
+            self._bigram_index.clear()
+            for key, entry in self.entries.items():
+                for lang, surface in entry.surface_forms.items():
+                    surface_lower = surface.lower().strip()
 
-                tokens = re.findall(r"[\w]+", surface_lower)
-                for token in tokens:
-                    self._keyword_index.setdefault(token, []).append(key)
+                    tokens = re.findall(r"[\w]+", surface_lower)
+                    for token in tokens:
+                        self._keyword_index.setdefault(token, []).append(key)
 
-                if len(surface_lower) >= 4:
-                    for i in range(len(surface_lower) - 1):
-                        bigram = surface_lower[i : i + 2]
-                        if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
-                            self._bigram_index.setdefault(bigram, []).append(key)
-        self._rebuilt_index = True
-        self._index_version += 1
-        self._encode_cache.clear()
+                    if len(surface_lower) >= 4:
+                        for i in range(len(surface_lower) - 1):
+                            bigram = surface_lower[i : i + 2]
+                            if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
+                                self._bigram_index.setdefault(bigram, []).append(key)
+            self._rebuilt_index = True
+            self._index_version += 1
+            self._encode_cache.clear()
 
     def _build_presets(self) -> List[Dict[str, Any]]:
         return [

@@ -432,3 +432,90 @@ class TestContinuousLearningPipeline:
         metrics = cl.train_step()
         assert metrics is not None
         assert isinstance(metrics.loss, float)
+
+    def test_none_input_process(self, engine: ED3NEngine):
+        assert engine.process(None) == ""
+
+    def test_none_input_encode(self, engine: ED3NEngine):
+        assert engine.dictionary.encode(None) == []
+
+    def test_corrupted_load(self, engine: ED3NEngine):
+        import json
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "corrupt.json")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("{not json")
+            engine.load(path)
+            assert engine is not None
+
+    def test_prune_empty(self, engine: ED3NEngine):
+        dl = DictionaryLayer()
+        before = len(dl.entries)
+        dl.prune(min_confidence=0.0)
+        assert len(dl.entries) == before
+
+    def test_prune_near_empty(self, engine: ED3NEngine):
+        dl = DictionaryLayer()
+        dl.add_entry(key="p1", surface_forms={"en": "test"})
+        dl.entries["p1"].confidence = 0.01
+        pruned = dl.prune(min_confidence=0.5, max_age_days=365)
+        assert pruned == 1
+        assert "p1" not in dl.entries
+
+    def test_telemetry_empty(self, engine: ED3NEngine):
+        from apps.backend.src.ai.ed3n.telemetry import TelemetryCollector
+        tc = TelemetryCollector()
+        summary = tc.get_summary()
+        assert summary["total_queries"] == 0
+
+    def test_io_analyzer_empty(self, engine: ED3NEngine):
+        from apps.backend.src.ai.ed3n.io_analyzer import IOAnalyzer
+        from apps.backend.src.ai.ed3n.telemetry import TelemetryCollector
+        tc = TelemetryCollector()
+        analyzer = IOAnalyzer(tc)
+        report = analyzer.generate_report()
+        assert "no data" in report
+
+    def test_telemetry_percentiles(self, engine: ED3NEngine):
+        from apps.backend.src.ai.ed3n.telemetry import TelemetryCollector
+        tc = TelemetryCollector()
+        tc.record_query("t1", "hi", stages={"reflex": 1.0}, reflex_match=None,
+                        cache_hit=False, matched_keys=[], output_text="hi",
+                        confidence=0.5, is_fallback=False)
+        tc.record_query("t2", "hello", stages={"reflex": 2.0}, reflex_match="hello",
+                        cache_hit=True, matched_keys=["g1"], output_text="hello",
+                        confidence=0.9, is_fallback=False)
+        summary = tc.get_summary()
+        assert summary["total_queries"] == 2
+
+    def test_thread_safety_encode(self, engine: ED3NEngine):
+        import concurrent.futures
+        dl = engine.dictionary
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+            futures = [pool.submit(dl.encode, t) for t in ["你好", "hello", "再见", "谢谢"] * 8]
+            results = [f.result() for f in futures]
+        assert len(results) == 32
+        assert all(isinstance(r, list) for r in results)
+
+    def test_thread_safety_process(self, engine: ED3NEngine):
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+            futures = [pool.submit(engine.process, t) for t in ["你好", "hello", "再见", "谢谢"] * 8]
+            results = [f.result() for f in futures]
+        assert len(results) == 32
+        assert all(isinstance(r, str) for r in results)
+
+    def test_thread_safety_cl(self, engine: ED3NEngine):
+        import concurrent.futures
+        cl = ContinuousLearningPipeline(engine=engine, auto_grow=False)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+            futures = [pool.submit(cl.process_interaction, f"test_{i}", f"resp_{i}", {}) for i in range(20)]
+            results = [f.result() for f in futures]
+        assert len(results) == 20
+        assert cl._interaction_count == 20
+
+    def test_cl_history_maxlen(self, engine: ED3NEngine):
+        cl = ContinuousLearningPipeline(engine=engine, auto_grow=False)
+        for i in range(2000):
+            cl.process_interaction(f"test_{i}", f"resp_{i}", {})
+        assert len(cl._history) <= 1000

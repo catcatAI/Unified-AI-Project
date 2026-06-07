@@ -4,6 +4,7 @@
 
 import copy
 import logging
+import threading
 import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
@@ -30,25 +31,27 @@ class ReflexLayer:
         self.max_cache = max_cache
         self.threshold = threshold
         self.min_pattern_len = min_pattern_len
+        self._lock = threading.RLock()
 
     def process(self, input_text: str) -> Optional[str]:
-        normalized = input_text.strip().lower()
+        with self._lock:
+            normalized = input_text.strip().lower()
 
-        if normalized in self.lru_cache:
-            result = self.lru_cache.pop(normalized)
-            self.lru_cache[normalized] = result
-            return result
+            if normalized in self.lru_cache:
+                result = self.lru_cache.pop(normalized)
+                self.lru_cache[normalized] = result
+                return result
 
-        for pattern, response in self.patterns.items():
-            if len(pattern) < self.min_pattern_len:
-                continue
-            if pattern in normalized:
-                if self.min_pattern_len >= 3 or len(pattern) >= 3:
-                    self._add_to_cache(normalized, response)
-                    return response
-                if self._is_word_boundary_match(normalized, pattern):
-                    self._add_to_cache(normalized, response)
-                    return response
+            for pattern, response in self.patterns.items():
+                if len(pattern) < self.min_pattern_len:
+                    continue
+                if pattern in normalized:
+                    if self.min_pattern_len >= 3 or len(pattern) >= 3:
+                        self._add_to_cache(normalized, response)
+                        return response
+                    if self._is_word_boundary_match(normalized, pattern):
+                        self._add_to_cache(normalized, response)
+                        return response
 
         return None
 
@@ -62,7 +65,8 @@ class ReflexLayer:
         return before and after
 
     def add_pattern(self, pattern: str, response: str) -> None:
-        self.patterns[pattern.lower().strip()] = response
+        with self._lock:
+            self.patterns[pattern.lower().strip()] = response
 
     def load_presets(self) -> None:
         presets = self._build_presets()
@@ -134,6 +138,7 @@ class ED3NEngine:
         self._snn_network = snn_network
         self.modulator = modulator or HormonalModulator()
         self.snn_mode = snn_mode
+        self._process_lock = threading.RLock()
         self._validator: Optional[ResponseAnchorValidator] = None
         self.image_encoder: Optional[ImageEncoder] = None
         self.audio_encoder: Optional[AudioEncoder] = None
@@ -149,6 +154,12 @@ class ED3NEngine:
         return self._validator
 
     def process(
+        self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
+    ) -> str:
+        with self._process_lock:
+            return self._process_unlocked(input_text, context, depth)
+
+    def _process_unlocked(
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
         if not input_text or not isinstance(input_text, str):
@@ -376,12 +387,13 @@ class ED3NEngine:
         self, input_text: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
         """Deep processing with SNN core (regardless of self.snn_mode)."""
-        was_snn = self.snn_mode
-        self.snn_mode = True
-        try:
-            return self.process_deep(input_text, context)
-        finally:
-            self.snn_mode = was_snn
+        with self._process_lock:
+            was_snn = self.snn_mode
+            self.snn_mode = True
+            try:
+                return self.process_deep(input_text, context)
+            finally:
+                self.snn_mode = was_snn
 
     def enable_multimodal(self, enable_image=True, enable_audio=True) -> None:
         if not hasattr(self.dictionary, "modality_encoders"):

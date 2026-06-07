@@ -41,6 +41,10 @@
 | **[PHASE_REVIEW5.md](06-project-management/plans/PHASE_REVIEW5.md)** | **階段審查 5 (2026-06-06, 新)** — H5 衝刺完成版, 2837 測試, 0 HIGH 漏洞, 下一階段 H7 路線 |
 | **[PLAN_REVIEW.md](06-project-management/plans/PLAN_REVIEW.md)** | **計畫審查** — 跨計畫一致性與完整性審查 |
 | **[ANGELA_TRANSLATION_LEARNING_PLAN.md](06-project-management/plans/ANGELA_TRANSLATION_LEARNING_PLAN.md)** | **Angela 翻譯學習計畫** — 多語言翻譯能力建置 |
+| **[ED3N_MATURITY_PLAN.md](06-project-management/plans/ED3N_MATURITY_PLAN.md)** | **ED3N 成熟度計畫 (06-06)** — 4階段路線圖, Model Bus, Query Classifier, Training Coordinator |
+| **[GARDEN_MODEL_PLAN.md](06-project-management/plans/GARDEN_MODEL_PLAN.md)** | **GARDEN 擴展計畫 (06-06)** — 1GB 輕量級本地模型與五級擴展架構 |
+| **[ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md](06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md)** | **ED3N + SNN 架構計畫** — 30+ 現有組件對應 |
+| **[COMPREHENSIVE_AUDIT_V3.md](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md)** | **全面審計 V3 (06-07)** — ED3N/GARDEN/Model Bus/Router 深度審計, 16 HIGH + 16 MEDIUM 問題, P0-P4 修復計畫 |
 
 ### Architecture & Design
 - `03-technical-architecture/communication/hsp-specification/` — HSP protocol spec
@@ -60,4 +64,4 @@
 - `packages/cli/` — CLI tools
 
 ---
-_Last Updated: 2026-06-06_ | [README.md](../README.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)
+_Last Updated: 2026-06-07_ | [README.md](../README.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Comprehensive Audit V3](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)

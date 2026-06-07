@@ -81,6 +81,18 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 | `FantasyDMAgent` | `ai/agents/specialized/fantasy_dm_agent.py` | ✅ |
 | `PlanningAgent` | `ai/agents/specialized/planning_agent.py` | ✅ |
 
+## AI Core Systems (NEW)
+
+| System | File | Status |
+|--------|------|--------|
+| `ModelBus` | `ai/core/model_bus.py` | ✅ central registry + capability routing |
+| `QueryClassifier` | `ai/core/query_classifier.py` | ✅ 8-domain rule-based classification |
+| `TrainingCoordinator` | `ai/core/training_coordinator.py` | ✅ domain ownership + deconfliction |
+| `ED3NEngine` | `ai/ed3n/ed3n_engine.py` | ✅ reflex + deep + SNN pipeline |
+| `ED3NTrainer` | `ai/ed3n/ed3n_trainer.py` | ✅ Hebbian + topographic training |
+| `GARDENEngine` | `ai/garden/garden_engine.py` | ✅ vector dictionary + TensorSNN |
+| `ContinuousLearningPipeline` | `ai/ed3n/continuous_learning.py` | ✅ auto-growth + training loop |
+
 ## Integration Services
 
 | Service | File | Status |

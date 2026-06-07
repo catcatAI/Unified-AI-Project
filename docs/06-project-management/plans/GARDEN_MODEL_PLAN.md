@@ -2,7 +2,7 @@
 
 > **計畫代號**: **GARDEN** — Giant Associative Relation Decoupled Evolutionary Network
 > **定位**: 輕量級本地模型，屬於 Angela AI 五級擴展模型架構中的「輕量級」層，為本地端側提供高性能的向量語意與稀疏 SNN 推理。
-> **狀態**: ✅ **已完成實作** (2026-06-06)
+> **狀態**: 🔶 **部分完成 — 核心實作完成，部分項目待補** (2026-06-06)
 > **建立日期**: 2026-06-06
 > **完成日期**: 2026-06-06
 
@@ -32,7 +32,7 @@
 ## 二、 GARDEN-1G (輕量級) 核心設計
 
 ### 2.1 向量化字典層 (Vectorized Dictionary Layer)
-*   **技術實現**：整合一個約 100M-150M 參數的輕量級雙語 Sentence-Transformer（如 `MiniLM-L6-v2` 或 `paraphrase-multilingual`），作為字典的「語意網關」。
+*   **技術實現**：整合一個約 22M-33M 參數的輕量級雙語 Sentence-Transformer（如 `MiniLM-L6-v2` 或 `paraphrase-multilingual`），作為字典的「語意網關」。
 *   **運作機制**：將任意輸入的自然語言，通過語意空間近鄰檢索（Cosine Similarity），映射到最接近的抽象 Concept Keys。
 *   **優勢**：不再害怕口語化、拼寫錯誤或換詞表達，解決了 ED3N 精確匹配能力弱的痛點。
 *   **實作**：✅ `dictionary.py` — `VectorDictionary` 類，支援 SentenceTransformer + CharBag 降級編碼器
@@ -56,23 +56,23 @@
 *   整合 Hugging Face `transformers`，載入 `MiniLM` 作為編碼器。✅
 *   設計雙語（中/英）混合概念語意檢索，建立 `Top-K` 模糊對應機制。✅
 
-**文件**: `apps/backend/src/ai/garden/dictionary.py` (510 行)
+**文件**: `apps/backend/src/ai/garden/dictionary.py` (443 行)
 
-### ✅ Phase 2: PyTorch SNN 核心矩陣化
+### 🔶 Phase 2: PyTorch SNN 核心矩陣化
 *   在 `ai/garden/snn/` 下開發 `TensorSNNCore`。✅
-*   將 LIF 神經元行為矩陣化，以 `torch.sparse` 儲存百萬實體關係。✅
+*   將 LIF 神經元行為矩陣化，以 `torch.sparse` 儲存百萬實體關係。⏳ **待實作**（當前使用 dense float32 矩陣 `[V, V]`）
 *   實作 PyTorch Hebbian 訓練模組，支援批次反向傳播梯度。✅
 
-**文件**: `apps/backend/src/ai/garden/snn_core.py` (310 行)
+**文件**: `apps/backend/src/ai/garden/snn_core.py` (343 行)
 
-### ✅ Phase 3: 百萬級語意圖譜導入
-*   編寫數據導入管線，將 ConceptNet / Wikidata 蒸餾過濾。✅
+### 🔶 Phase 3: 百萬級語意圖譜導入
+*   編寫數據導入管線，將 ConceptNet / Wikidata 蒸餾過濾。⏳ **解析器骨架完成，需真實數據集驗證**
 *   支援合成知識圖譜生成（用於測試/展示）。✅
 *   將數據寫入二進位矩陣權重文件，實作快速 Memory-Mapped (mmap) 載入。✅
 
 **文件**: 
-* `apps/backend/src/ai/garden/kg_import.py` (460 行)
-* `apps/backend/src/ai/garden/binary_store.py` (270 行)
+* `apps/backend/src/ai/garden/kg_import.py` (668 行)
+* `apps/backend/src/ai/garden/binary_store.py` (268 行)
 
 ### ✅ Phase 4: API 服務整合與混合路由測試
 *   在後端 `providers/garden.py` 中實作 `GARDENBackend` (LLM 後端驅動)。✅
@@ -80,24 +80,24 @@
 *   支援自適應路由（根據歷史成功率動態調整閾值）。✅
 
 **文件**:
-* `apps/backend/src/services/llm/providers/garden.py` (75 行)
-* `apps/backend/src/ai/garden/hybrid_router.py` (320 行)
+* `apps/backend/src/services/llm/providers/garden.py` (73 行)
+* `apps/backend/src/ai/garden/hybrid_router.py` (430 行)
 
 ### 實作總覽
 
 | 文件 | 行數 | 功能 |
 |:-----|:----:|:-----|
-| `dictionary.py` | 510 | VectorDictionary: 向量語意編碼、雙語概念檢索 |
-| `snn_core.py` | 310 | TensorSNNCore: PyTorch LIF SNN、Hebbian 學習 |
-| `garden_engine.py` | 370 | GARDENEngine: 三階段推理管線、持續學習 |
-| `binary_store.py` | 270 | BinaryStore: mmap 二進位權重矩陣 |
-| `kg_import.py` | 460 | KGImporter: 知識圖譜導入管線 |
-| `hybrid_router.py` | 320 | HybridRouter: ED3N/GARDEN/Cloud 混合路由 |
-| `__init__.py` | 30 | 模組匯出 |
-| `__main__.py` | 180 | CLI: query/stats/serve/save/load/learn |
-| `garden.py` (provider) | 75 | GARDENBackend: LLM 服務後端 |
-| 配置 JSON (3個) | 200 | 對話/情緒/科學知識配置 |
-| **測試套件** (6個文件) | ~1500 | 6 個測試文件，~150 測試用例 |
+| `dictionary.py` | 443 | VectorDictionary: 向量語意編碼、雙語概念檢索 |
+| `snn_core.py` | 343 | TensorSNNCore: PyTorch LIF SNN、Hebbian 學習 |
+| `garden_engine.py` | 379 | GARDENEngine: 三階段推理管線、持續學習 |
+| `binary_store.py` | 268 | BinaryStore: mmap 二進位權重矩陣 |
+| `kg_import.py` | 668 | KGImporter: 知識圖譜導入管線 |
+| `hybrid_router.py` | 430 | HybridRouter: ED3N/GARDEN/Cloud 混合路由 |
+| `__init__.py` | 32 | 模組匯出 |
+| `__main__.py` | 171 | CLI: query/stats/serve/save/load/learn |
+| `garden.py` (provider) | 73 | GARDENBackend: LLM 服務後端 |
+| 配置 JSON (3個) | 224 | 對話/情緒/科學知識配置 |
+| **測試套件** (6個文件) | 1573 | 6 個測試文件，~150 測試用例 |
 
 ---
 
@@ -117,7 +117,7 @@
 - 使用 SentenceTransformer (`paraphrase-multilingual-MiniLM-L12-v2`) 進行語意編碼
 - 自動降級至 CharBag 編碼器（當 sentence-transformers 不可用時）
 - Cosine Similarity Top-K 模糊匹配
-- 支援即時學習：`grow()`、`learn_from_interaction()`
+- 支援即時學習：`grow()`（新增概念條目）
 - 完整序列化：`export_to_json()` / `import_from_json()`
 - 內建 50+ 預設概念（問候、情緒、邏輯、數學、身份、疑問詞）
 
@@ -127,7 +127,7 @@
 - 荷爾蒙調製：皮質醇/血清素/腎上腺素影響放電閾值
 - Hebbian 學習（Oja's rule 變體）
 - `save()` / `load()` 完整狀態持久化
-- 稀疏傳播（僅活躍神經元參與計算）
+- 稀疏傳播（僅活躍神經元參與計算；⏳ `torch.sparse` 矩陣儲存待實作，當前為 dense）
 
 ### 5.3 GARDENEngine (`garden_engine.py`)
 - 三階段管線：Reflex → Vector Encode → SNN Forward → Anchored Decode
@@ -141,7 +141,7 @@
 ### 5.4 BinaryStore (`binary_store.py`)
 - numpy memmap 二進位矩陣格式
 - 標頭：magic(0x47415244) + version + V + pad
-- 支援 `create(V)` / `open(path, mode)` / `close()`
+- 支援 `create(V)` / `close()`（⏳ `open(path, mode)` 待實作 — 當前僅支援由路徑構造新實例）
 - 單元格讀寫：`store[i, j] = value`
 - 切片讀取：`store[row, :]` / `store[:, col]`
 - `import_from_torch()` / `export_to_torch()` PyTorch 橋接

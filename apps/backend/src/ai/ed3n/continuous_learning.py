@@ -5,6 +5,7 @@
 import asyncio
 import logging
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -52,6 +53,7 @@ class ContinuousLearningPipeline:
         self.min_examples_for_train = min_examples_for_train
         self.auto_grow = auto_grow
 
+        self._lock = threading.RLock()
         self._interaction_count: int = 0
         self._training_buffer: List[TrainingExample] = []
         self._history: List[Dict[str, Any]] = []
@@ -65,6 +67,12 @@ class ContinuousLearningPipeline:
         }
 
     def process_interaction(
+        self, user_text: str, response_text: str, context: Dict
+    ) -> Dict:
+        with self._lock:
+            return self._process_interaction_locked(user_text, response_text, context)
+
+    def _process_interaction_locked(
         self, user_text: str, response_text: str, context: Dict
     ) -> Dict:
         self._interaction_count += 1
@@ -102,6 +110,8 @@ class ContinuousLearningPipeline:
                 "new_concepts": new_concepts,
             }
         )
+        if len(self._history) > 1000:
+            self._history.pop(0)
 
         return result
 
@@ -287,13 +297,14 @@ class ContinuousLearningPipeline:
         )
 
     def save(self, save_dir: str) -> str:
-        import json, os
-        os.makedirs(save_dir, exist_ok=True)
-        state = {
-            "interaction_count": self._interaction_count,
-            "stats": self._stats,
-            "history": self._history[-100:],
-            "buffer": [
+        with self._lock:
+            import json, os
+            os.makedirs(save_dir, exist_ok=True)
+            state = {
+                "interaction_count": self._interaction_count,
+                "stats": self._stats,
+                "history": self._history[-100:],
+                "buffer": [
                 {
                     "user_text": ex.user_text,
                     "response_text": ex.response_text,
