@@ -4,24 +4,30 @@
 
 | Metric | Value |
 |--------|-------|
-| Modules | 20+ files (includes snn/, multimodal/, config/), ~3,000+ lines |
-| Tests | **45 tests** ✅ (123s) |
+| Modules | 25+ files (includes core/, snn/, multimodal/, config/), ~4,000+ lines |
+| Tests | **45 tests** ✅ (83s) |
 | Edge cases | **19 guard clauses** across 6 files ✅ |
 | CLI | `python -m ai.ed3n query/train/serve/stats/save` ✅ |
 | Config | `presets.json` + `math_presets.json` ✅ |
 | Query latency | ~5-50ms (measured) ✅ |
-| Checkpoint size | ~500 KB ✅ |
-| Training time | 5 min for 12K samples ✅ |
-| Training accuracy | 77.7% (unseen logic generalization works) |
-| Reflex patterns | 12,063 (word-boundary matching + min length) ✅ |
-| Pipeline wiring | ED3N+GARDEN registered in router.py, fallback chain uses backends ✅ |
-| Continuous learning | Wired into ChatService.generate_response() ✅ |
+| Checkpoint size | ~500 KB (ED3N) + ~2MB (GARDEN) ✅ |
+| Training time | 7 min for 12.7K samples ✅ |
+| Training accuracy | 77.69% ED3N (math/logic) + 550 knowledge samples (GARDEN) |
+| Reflex patterns | 12,204 (word-boundary matching + min len + sync'd to GARDEN) ✅ |
+| Pipeline wiring | **Model Bus** replaces sequential fallback — capability-based routing ✅ |
+| Continuous learning | Wired into ChatService.generate_response() + **save/load persistence** ✅ |
 | Multimodal | Auto-enabled in ED3NEngine.__init__() ✅ |
 | Dictionary pruning | `prune()` method with min_confidence + max_age ✅ |
 | Encode caching | Versioned LRU cache on DictionaryLayer.encode() ✅ |
 | Absolute imports | All 17 files fixed (ED3N 13 + GARDEN 4) ✅ |
 | GARDEN import path | Fixed in providers/garden.py + registered in router.py ✅ |
-| GARDEN config | `garden-1g` entry in llm.default.yaml ✅ |
+| GARDEN config | `garden-1g` entry in llm.default.yaml + **compatibility_mode** (no torch needed) ✅ |
+| I/O telemetry | **TelemetryCollector** + **IOAnalyzer** wired into ED3NEngine.process() ✅ |
+| CL persistence | **save()/load()** on ContinuousLearningPipeline, auto-save in ChatService.shutdown() ✅ |
+| GARDEN compat mode | Lazy torch import + `compatibility_mode=True` skips sentence-transformers ✅ |
+| Query Classifier | 22 rules → 8 domains (REFLEX/GREETING/MATH/LOGIC/KNOWLEDGE/CREATIVE/COMMAND/UNKNOWN) ✅ |
+| Training Coordinator | Domain ownership map, deconfliction, reflex pattern sync ✅ |
+| Model Bus | Central routing: greeting→ED3N, math→ED3N, knowledge→GARDEN, creative→cloud ✅ |
 
 ## Maturity Tiers
 
@@ -37,8 +43,9 @@
 | # | Task | Status |
 |---|------|--------|
 | 2.1 | **Wiring: ED3N/GARDEN → app pipeline** — both registered in router.py, in fallback chain priority, in config | DONE |
-| 2.2 | **Continuous learning loop** — `ContinuousLearningPipeline` wired into `ChatService.generate_response()` | DONE |
+| 2.2 | **Continuous learning loop** — `ContinuousLearningPipeline` wired into `ChatService.generate_response()` + save/load persistence | DONE |
 | 2.3 | **Multimodal integration** — `enable_multimodal()` called in `ED3NEngine.__init__()` | DONE |
+| 2.4 | **Model Bus pipeline** — `ModelBus` + `QueryClassifier` + `TrainingCoordinator` replacing sequential fallback | DONE |
 
 ### Tier 3 — Polish (DONE ✅)
 | # | Task | Status |
@@ -46,39 +53,29 @@
 | 3.1 | **Reflex deconfliction** — `min_pattern_len=2` + `_is_word_boundary_match()` | DONE |
 | 3.2 | **Dictionary pruning** — `prune()` with min_confidence + max_age_days | DONE |
 | 3.3 | **Caching** — versioned LRU cache on `DictionaryLayer.encode()` (invalidated on index rebuild) | DONE |
-| 3.4 | **Performance telemetry** | ⏳ PENDING — basic logging exists, no timing decorators yet |
+| 3.4 | **Performance telemetry** — `TelemetryCollector` + `IOAnalyzer` wired into `ED3NEngine.process()` | DONE |
 | 3.5 | **API documentation** | ⏳ PENDING |
+| 3.6 | **GARDEN compatibility mode** — lazy torch + `compatibility_mode` flag | DONE |
+| 3.7 | **CL persistence** — `save()`/`load()` on `ContinuousLearningPipeline`, auto-save in `ChatService.shutdown()` | DONE |
 
 ## Gaps Remaining
 
 ### Pipeline Completeness
 | Gap | Impact | Priority |
 |-----|--------|----------|
-| `AngelaLLMService.generate_response()` creates `context` with only `user_name` — too thin for Emotional Layer, biochemical state, GARDEN's context-dependent routing | MEDIUM — ED3N works, but GARDEN routing quality degrades | Medium |
-| `GARDENBackend` registered but `enabled: false` by default (needs torch) | LOW — opt-in is correct for now | Low |
-| No test coverage for router.py (0%), garden.py, chat_service.py changes | MEDIUM — regression risk | Medium |
-| Performance telemetry decorators not added to `process()` pipeline stages | LOW — latency logging exists | Low |
-| Cross-modal trainer not connected to `process_interaction` in chat flow | LOW — available via `enable_multimodal()` | Low |
-| ED3NBackend uses synchronous `_engine.process()` inside async `generate()` — blocks event loop | MEDIUM — should use `asyncio.to_thread()` | Medium |
-
-### Full Model-Side Completeness Check
-```
-ED3N (~100KB / reflex)     → ✅ Registered, tested, trained, wired as Tier 1 fallback
-GARDEN (~1GB / local)      → ✅ Registered, configured, importable, enabled: false
-LLM backends (ollama etc.) → ✅ Standard providers, priority-ordered
-HybridRouter (ED3N→GARDEN→Cloud) → ✅ Defined, importable, NOT yet wired into Gemini/FastAPI flow
-ChatService → ContinuousLearning → ✅ Wired
-Multimodal (image/audio)   → ✅ Auto-enabled in ED3NEngine
-```
+| Context too thin (only `user_name`) for Emotional Layer / biochemical state | MEDIUM — Model Bus works, but GARDEN context-dependent routing degrades | Medium |
+| No test coverage for `router.py` (0%), `model_bus.py`, `query_classifier.py`, `training_coordinator.py` | MEDIUM — regression risk | Medium |
+| Cross-modal trainer not triggered from real user interactions | LOW — auto-enabled, just not wired to production chat | Low |
+| GARDEN knowledge accuracy weak under CharBag encoder (256-dim n-gram vs 384-dim sentence-transformers) | MEDIUM — knowledge queries return broad concept matches | Medium |
+| Training pipeline uses pre-generated knowledge data; no live knowledge base ingestion | LOW — synthetic data covers basic Q&A | Low |
 
 ### What Full Completeness Looks Like
-1. **End-to-end test from chat input → response** hitting every tier (stub external deps)
-2. **HybridRouter actually invoked** during the main generate path (not just in fallback)
-3. **Context carries bio_state, emotion, user profile** through the pipeline (for GARDEN)
-4. **Async ED3N** (move `_engine.process()` off the event loop)
-5. **Coverage >50%** on ED3N + router + chat_service + providers
-6. **Telemetry dashboard** — latency p50/p95/p99 per tier, cache hit rates, pruning stats
-7. **Cross-modal training triggers** from real user interactions
+1. **End-to-end test from chat input → response** hitting Model Bus + all backends (stub external deps)
+2. **Context carries bio_state, emotion, user profile** through the pipeline (for GARDEN)
+3. **Coverage >50%** on core + ed3n + garden + router + chat_service + providers
+4. **Telemetry dashboard** — latency p50/p95/p99 per tier, cache hit rates, pruning stats
+5. **Knowledge base ingestion** — GARDEN learns from real docs instead of synthetic Q&A
+6. **Adaptive routing** — Model Bus tunes thresholds based on telemetry
 
 ## Execution Order
 
@@ -98,3 +95,12 @@ Tier 1 (DONE) → Tier 2 (DONE) → Tier 3 (DONE) → Remaining gaps
 | `apps/backend/src/ai/ed3n/ed3n_engine.py` | Auto-`enable_multimodal()`; reflex word-boundary matching + min_pattern_len |
 | `apps/backend/src/ai/ed3n/dictionary_layer.py` | `prune()` method; versioned encode LRU cache; max_entries limit |
 | `apps/backend/src/ai/ed3n/__init__.py` | Relative imports (fixes 13 files in ED3N + 4 in GARDEN) |
+| `apps/backend/src/ai/core/model_bus.py` | NEW — Central model registry + capability-based routing |
+| `apps/backend/src/ai/core/query_classifier.py` | NEW — 8-domain query classification (22 rules) |
+| `apps/backend/src/ai/core/training_coordinator.py` | NEW — Domain deconfliction + training recording |
+| `apps/backend/src/ai/ed3n/telemetry.py` | NEW — Per-query latency/cache/reflex telemetry |
+| `apps/backend/src/ai/ed3n/io_analyzer.py` | NEW — Structured I/O analysis reports |
+| `apps/backend/src/ai/garden/dictionary.py` | Lazy torch + `compatibility_mode` parameter |
+| `apps/backend/src/ai/garden/snn_core.py` | Lazy torch import |
+| `apps/backend/src/ai/garden/garden_engine.py` | `compatibility_mode` passthrough to VectorDictionary |
+| `scripts/train_pipeline.py` | NEW — Unified ED3N+GARDEN training pipeline (12.7K samples, 7 min) |
