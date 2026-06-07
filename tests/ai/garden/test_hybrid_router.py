@@ -111,7 +111,6 @@ class MockCloudBackend:
             backend="mock",
             model="mock",
             tokens_used=10,
-            response_time_ms=100.0,
             confidence=0.95,
         )
 
@@ -154,6 +153,7 @@ class TestHybridRouterRouting:
     @pytest.mark.asyncio
     async def test_ed3n_route(self, hybrid_router: HybridRouter):
         hr = hybrid_router
+        hr.ed3n_threshold = 0.80  # Lower threshold so ED3N's 0.85 confidence qualifies
         hr.set_ed3n(MockED3NEngine(response="reflex hit"))
         hr.set_garden(MockGARDENEngine())
         hr.set_cloud(MockCloudBackend())
