@@ -28,6 +28,7 @@ class LLMResponse:
     error: str = ""
     confidence: float = 0.0
     tokens_used: Optional[int] = None
+    response_time_ms: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property

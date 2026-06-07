@@ -120,6 +120,7 @@ class ED3NEngine:
         snn_network: Optional[SNNCore] = None,
         modulator: Optional[HormonalModulator] = None,
         snn_mode: bool = False,
+        auto_load_presets: bool = True,
     ):
         self.reflex = reflex or ReflexLayer()
         self.dictionary = dictionary or DictionaryLayer()
@@ -133,6 +134,8 @@ class ED3NEngine:
         self.audio_encoder: Optional[AudioEncoder] = None
         self.cross_modal_trainer: Optional[CrossModalTrainer] = None
         self.enable_multimodal()
+        if auto_load_presets:
+            self.load_presets()
 
     @property
     def validator(self) -> ResponseAnchorValidator:

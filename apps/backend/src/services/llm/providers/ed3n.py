@@ -1,6 +1,7 @@
 # ANGELA-MATRIX: L3 [γ] [B] [L0]
 """ED3N LLM backend — three-layer cognitive architecture provider"""
 
+import asyncio
 import logging
 import time
 
@@ -8,13 +9,6 @@ from core.interfaces.protocols import LLMResponse
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)
-
-PRESET_MAP = {
-    "reflex": "reflex",
-    "shallow": "default",
-    "deep": "deep",
-    "auto": "default",
-}
 
 
 class ED3NBackend(BaseLLMBackend):
@@ -33,7 +27,6 @@ class ED3NBackend(BaseLLMBackend):
         start_time = time.time()
         depth = kwargs.pop("depth", self.depth)
         context = kwargs.get("context")
-        preset = PRESET_MAP.get(depth, "default")
         self._kwargs_store = {
             "max_tokens": kwargs.get("max_tokens"),
             "temperature": kwargs.get("temperature"),
@@ -47,17 +40,13 @@ class ED3NBackend(BaseLLMBackend):
                 self._engine = ED3NEngine()
 
             if depth == "reflex":
-                from ai.ed3n.dictionary_layer import DictionaryLayer
-
-                layer = DictionaryLayer(preset=preset)
-                text = layer.process(prompt)
+                text = self._engine.process_reflex(prompt)
             else:
-                text = await self._engine.process(prompt, context=context, depth=depth, preset=preset)
-                if text is None:
-                    from ai.ed3n.dictionary_layer import DictionaryLayer
-
-                    layer = DictionaryLayer(preset=preset)
-                    text = layer.process(prompt)
+                text = await asyncio.to_thread(
+                    self._engine.process, prompt, context=context, depth=depth
+                )
+                if not text:
+                    text = self._engine.process_shallow(prompt, context)
 
             return LLMResponse(
                 text=text,
