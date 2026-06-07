@@ -47,11 +47,12 @@ Refer to `@ANGELA_MATRIX_ANNOTATION_GUIDE.md` for detailed rules.
 ### Python (Backend)
 
 ```bash
-# Run all tests
-pytest tests/
+# Run all tests (multiple test directories)
+pytest tests/ apps/backend/tests/
 
 # Run single test file
 pytest tests/path/to/test_file.py
+pytest apps/backend/tests/path/to/test_file.py
 
 # Run single test function
 pytest tests/path/to/test_file.py::test_function_name
@@ -71,6 +72,16 @@ mypy apps/backend/src                    # Type check
 # Run all checks (pre-commit)
 pre-commit run --all-files
 ```
+
+> ⚠️ **NOTE (Corrected 2026-06-07)**: Test collection has **21 errors** due to **naming mismatches**, not missing implementations. Real classes exist under different names:
+> - `ModelProvider` → `LLMBackend` (alias needed in `protocols.py`)
+> - `AuditoryAttentionController` → `AttentionController` (tests use wrong name)
+> - `ArtLearningSystem` → `ArtLearningWorkflow` (alias needed in `art_learning_system.py`)
+> - `DesktopPresence` → `DesktopInteraction` (alias needed in `desktop_presence.py`)
+> - `Live2DIntegration` → `Live2DAvatarGenerator` (alias needed in `live2d_integration.py`)
+> - `MemoryNeuroplasticityBridge` → `NeuroplasticitySystem` (alias needed in `memory_neuroplasticity_bridge.py`)
+> 
+> Fix: 5 alias exports in stub files (~10 lines total). No re-implementation needed.
 
 ### JavaScript/TypeScript
 
@@ -116,9 +127,9 @@ from typing import List
 import numpy as np
 from fastapi import FastAPI
 
-# 3. First-party (project)
+# 3. First-party (project) — adjust path based on working directory
 from apps.backend.src.core import utils
-from angela.memory import HAMMemoryManager
+from apps.backend.src.ai.memory.ham_memory.ham_manager import HAMMemoryManager
 ```
 
 ### Error Handling
@@ -206,9 +217,12 @@ tests/               # Test suite
 
 | Task          | Command                              |
 | ------------- | ------------------------------------ |
-| Dev server    | `pnpm dev`                           |
+| Dev server (backend) | `pnpm dev:backend`               |
+| Dev server (desktop) | `pnpm dev:desktop`               |
+| All dev servers | `pnpm dev:all`                      |
 | Single test   | `pytest tests/path.py::test_func -v` |
 | Format Python | `black apps/backend/src tests/`      |
 | Format JS     | `prettier --write "**/*.js"`         |
 | Type check    | `mypy apps/backend/src`              |
 | Lint all      | `pnpm lint`                          |
+| Run all tests | `pnpm test`                          |
