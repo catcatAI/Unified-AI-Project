@@ -34,3 +34,20 @@ class TrainMetrics:
     epoch: int
     samples: int
     duration_ms: float
+
+
+@dataclass
+class SequenceExample:
+    input_text: str
+    target_text: str
+    input_key_seq: List[str]
+    target_key_seq: List[str]
+    confidence: float = 0.8
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class SeqBatch:
+    examples: List[SequenceExample]
+    batch_id: str
+    created_at: datetime = field(default_factory=datetime.now)

@@ -132,6 +132,24 @@ class CoreNetwork:
         group.neurons[key1].connections[key2] = weight
         group.neurons[key2].connections[key1] = weight
 
+    def add_directed(
+        self, source_key: str, target_key: str, weight: float = 1.0
+    ) -> None:
+        if not source_key or not target_key:
+            logger.warning("Cannot add directed connection: empty key")
+            return
+        group = self.groups.get("mapping")
+        if group is None:
+            return
+        if source_key not in group.neurons:
+            group.add_neuron(Neuron(key=source_key, group_type="mapping"))
+        if target_key not in group.neurons:
+            group.add_neuron(Neuron(key=target_key, group_type="mapping"))
+        old = group.neurons[source_key].connections.get(target_key, 0.0)
+        group.neurons[source_key].connections[target_key] = min(1.0, old + weight)
+        if old > 0:
+            group.neurons[target_key].connections[source_key] = max(0.0, old - 0.05)
+
     def get_activation(self, key: str) -> float:
         max_act = 0.0
         for group in self.groups.values():
@@ -316,3 +334,23 @@ class CoreNetwork:
         }
         group_name = mapping.get(rel_type)
         return self.groups.get(group_name) if group_name else None
+
+    def sync_from_dictionary(self, dictionary: "DictionaryLayer") -> int:
+        count = 0
+        rel_map = {
+            "synonym": RelationType.SYNONYM,
+            "mapping": RelationType.MAPPING,
+            "analogy": RelationType.ANALOGY,
+            "antonym": RelationType.ANTI_SYNONYM,
+        }
+        for key, entry in dictionary.entries.items():
+            for rel_type_str, targets in entry.relations.items():
+                rel_type = rel_map.get(rel_type_str)
+                if rel_type is None:
+                    continue
+                for target in targets:
+                    if target in dictionary.entries:
+                        self.add_relation(key, rel_type, target, weight=0.5)
+                        count += 1
+        logger.info("Synced %d relations from dictionary to network", count)
+        return count

@@ -226,11 +226,25 @@ for step in range(len(target_sequence)):
 
 #### 里程碑 1
 
-- [ ] `StepDecoder` 實作 + 測試
-- [ ] 序列數據格式定義
-- [ ] 在簡單序列（0-9 數字序列）上驗證生成
-- [ ] P(2\|1,+) > P(5\|1,+) 之類的條件機率合理
-- [ ] 57 現有測試仍全部通過
+- [x] `StepDecoder` 實作 + 測試 (`apps/backend/src/ai/ed3n/step_decoder.py`)
+- [x] 序列數據格式定義 (`SequenceExample`, `SeqBatch` in `training_types.py`)
+- [x] `engine.generate()` API 整合 (reflex→StepDecoder fallback)
+- [x] `SequenceTrainer` 實作 (非對稱權重 + Hebbian 序列學習)
+- [x] `sync_from_dictionary()` 將字典關係同步至網路
+- [x] 57 現有測試仍全部通過
+
+#### Phase 1 發現
+
+| 問題 | 狀態 | 說明 |
+|:-----|:----:|:------|
+| **StepDecoder 可產生序列** | ✅ | 給定 key 分布和上下文，能逐步產生有序 key 序列 |
+| **序列解碼 > 簡單拼接** | ✅ | StepDecoder 會過濾重複 surface，比 `anchored_decode` 更緊湊 |
+| **Heuristic scoring 有效** | ✅ | 網路激活 + 字典關係 + 溫度採樣 = 可控的隨機性 |
+| **SequenceTrainer 學習非對稱權重** | ✅ | `add_directed()` 建立單向連接，前向權重高於反向 |
+| **密集圖導致全域激活** | ❌ | 46 preset 條目密集互連，從任何節點出發都走到所有節點 → 需要 Phase 2 因果遮罩 |
+| **足量序列數據可改善** | ⚠️ | 471 樣本訓練讓 accuracy 達 0.9958，但密集圖稀釋了學習效果 |
+
+**核心教訓**: 當前圖結構是語意關聯（同義/映射/類比），不是序列關聯（A→B→C）。StepDecoder + SequenceTrainer 的機制正確，但需要 Phase 2（位置感知 + 因果遮罩）才能真正做到序列生成。在不遮罩的圖上，激活會從輸入節點擴散到整個圖。
 
 ---
 
@@ -521,20 +535,20 @@ assert output == "five"  # 或 "two plus three equals five"
 
 ## 八、檔案變更索引
 
-| 檔案 | 預估變更 | Phase |
-|:-----|:---------|:-----:|
-| `apps/backend/src/ai/ed3n/ed3n_engine.py` | 新增 generate() 方法 | 1 |
-| `apps/backend/src/ai/ed3n/step_decoder.py` | **NEW** — StepDecoder 類 | 1 |
-| `apps/backend/src/ai/ed3n/output_anchor.py` | 擴充 anchored_decode → anchored_generate | 1 |
-| `apps/backend/src/ai/ed3n/core_network.py` | 新增位置編碼 + 因果遮罩 | 2 |
-| `apps/backend/src/ai/ed3n/ed3n_trainer.py` | 新增 SequenceTrainer | 3 |
-| `apps/backend/src/ai/ed3n/training_types.py` | 新增 SequenceExample, SeqBatch | 3 |
-| `scripts/generate_training_data.py` | 新增序列格式輸出 | 3 |
-| `apps/backend/src/ai/ed3n/dictionary_layer.py` | 新增 soft_encode() 可微分近似 | 4 |
-| `apps/backend/src/ai/garden/garden_engine.py` | 新增 VectorDecoder 整合 | 5 |
-| `apps/backend/src/ai/garden/vector_decoder.py` | **NEW** — 向量解碼器 | 5 |
-| `tests/ai/ed3n/test_generation.py` | **NEW** — 生成能力測試套件 | 1-5 |
-| `docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md` | 更新 Phase 5 狀態 | 全 |
+| 檔案 | 變更 | Phase | 狀態 |
+|:-----|:------|:----:|:----:|
+| `apps/backend/src/ai/ed3n/step_decoder.py` | **NEW** — StepDecoder 類 (generate + generate_text + scoring + sampling) | 1 | ✅ |
+| `apps/backend/src/ai/ed3n/ed3n_engine.py` | 新增 `generate()` 方法 + `step_decoder` property + `_step_decoder` 屬性 | 1 | ✅ |
+| `apps/backend/src/ai/ed3n/output_anchor.py` | 無變更 (`anchored_decode` 保留作為傳統路徑) | 1 | ✅ |
+| `apps/backend/src/ai/ed3n/core_network.py` | 新增 `sync_from_dictionary()` + `add_directed()` 非對稱連接 | 1 | ✅ |
+| `apps/backend/src/ai/ed3n/ed3n_trainer.py` | 新增 `SequenceTrainer` 類 + `RelationType` 導入 | 1 | ✅ |
+| `apps/backend/src/ai/ed3n/training_types.py` | 新增 `SequenceExample`, `SeqBatch` dataclasses | 1 | ✅ |
+| `apps/backend/src/ai/ed3n/__init__.py` | 新增 `StepDecoder` 匯出 | 1 | ✅ |
+| `apps/backend/src/ai/ed3n/dictionary_layer.py` | 新增 position encoding（Phase 2 預備）、soft encode 骨架（Phase 4 預備） | 2-4 | ⏳ |
+| `apps/backend/src/ai/garden/garden_engine.py` | VectorDecoder 整合 | 5 | ⏳ |
+| `apps/backend/src/ai/garden/vector_decoder.py` | **NEW** — 向量解碼器 | 5 | ⏳ |
+| `tests/ai/ed3n/test_generation.py` | **NEW** — 生成能力測試套件 | 1-5 | ⏳ |
+| `docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md` | Phase 5 GENESIS 更新 | 全 | ⏳ |
 
 ---
 

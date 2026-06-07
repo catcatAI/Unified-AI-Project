@@ -9,8 +9,14 @@ from typing import Any, Dict, List, Optional, Tuple
 from .core_network import CoreNetwork
 from .dictionary_layer import DictionaryLayer
 from .ed3n_engine import ED3NEngine
-from .relation_classifier import RelationClassifier
-from .training_types import TrainMetrics, TrainingBatch, TrainingExample
+from .relation_classifier import RelationClassifier, RelationType
+from .training_types import (
+    SeqBatch,
+    SequenceExample,
+    TrainMetrics,
+    TrainingBatch,
+    TrainingExample,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -279,3 +285,86 @@ class ED3NTrainer:
             if neuron is not None:
                 return neuron
         return None
+
+
+class SequenceTrainer:
+    def __init__(
+        self,
+        engine: "ED3NEngine",
+        seq_lr: float = 0.1,
+    ):
+        self.engine = engine
+        self.dictionary: DictionaryLayer = engine.dictionary
+        self.network: CoreNetwork = engine.network
+        self.seq_lr = seq_lr
+        self.history: List[float] = []
+
+    def train_step(self, batch: SeqBatch) -> TrainMetrics:
+        if not batch or not batch.examples:
+            return TrainMetrics(
+                phase="sequence", loss=0.0, accuracy=0.0,
+                learning_rate=self.seq_lr, epoch=0, samples=0, duration_ms=0.0,
+            )
+
+        start = time.perf_counter()
+        total_loss = 0.0
+        correct = 0
+        total_steps = 0
+
+        for ex in batch.examples:
+            context = list(ex.input_key_seq)
+
+            for target_key in ex.target_key_seq:
+                total_steps += 1
+
+                self.network.reset()
+                activations = self.network.forward(context)
+
+                actual = activations.get(target_key, 0.0)
+                error = 1.0 - actual
+                total_loss += abs(error)
+
+                if actual > 0.3:
+                    correct += 1
+
+                rel_key = None
+                for ck in reversed(context):
+                    if ck != target_key:
+                        rel_key = ck
+                        break
+                if rel_key is not None:
+                    self.network.add_directed(
+                        rel_key, target_key,
+                        weight=self.seq_lr * (1.0 - actual) * 0.5,
+                    )
+                    self.network.adjust_connection(
+                        rel_key, target_key, self.seq_lr * error * 0.3,
+                    )
+
+                entry = self.dictionary.entries.get(target_key)
+                if entry is not None:
+                    entry.confidence = min(
+                        entry.confidence + self.seq_lr * (1.0 - entry.confidence),
+                        1.0,
+                    )
+
+                context.append(target_key)
+                if len(context) > 8:
+                    context = context[-8:]
+
+        n = total_steps or 1
+        avg_loss = total_loss / n
+        accuracy = correct / n
+        self.history.append(avg_loss)
+
+        self.dictionary._rebuild_index()
+
+        return TrainMetrics(
+            phase="sequence",
+            loss=avg_loss,
+            accuracy=accuracy,
+            learning_rate=self.seq_lr,
+            epoch=0,
+            samples=len(batch.examples),
+            duration_ms=(time.perf_counter() - start) * 1000.0,
+        )

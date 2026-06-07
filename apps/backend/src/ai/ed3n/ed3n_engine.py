@@ -20,6 +20,7 @@ from .output_anchor import anchored_decode, ResponseAnchorValidator
 from .relation_classifier import RelationClassifier
 from .snn.snn_core import SNNCore
 from .snn.hormonal_modulator import HormonalModulator
+from .step_decoder import StepDecoder
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +141,7 @@ class ED3NEngine:
         self.snn_mode = snn_mode
         self._process_lock = threading.RLock()
         self._validator: Optional[ResponseAnchorValidator] = None
+        self._step_decoder: Optional[StepDecoder] = None
         self.image_encoder: Optional[ImageEncoder] = None
         self.audio_encoder: Optional[AudioEncoder] = None
         self.cross_modal_trainer: Optional[CrossModalTrainer] = None
@@ -483,6 +485,38 @@ class ED3NEngine:
 
         return response
 
+    @property
+    def step_decoder(self) -> StepDecoder:
+        if self._step_decoder is None:
+            self._step_decoder = StepDecoder(
+                dictionary=self.dictionary, network=self.network
+            )
+        return self._step_decoder
+
+    def generate(
+        self,
+        input_text: str,
+        temperature: Optional[float] = None,
+        max_length: Optional[int] = None,
+    ) -> str:
+        with self._process_lock:
+            if not input_text or not isinstance(input_text, str):
+                return ""
+
+            reflex_result = self.process_reflex(input_text)
+            if reflex_result is not None:
+                return reflex_result
+
+            decoder = self.step_decoder
+            if max_length is not None:
+                old = decoder.max_length
+                decoder.max_length = max_length
+                try:
+                    return decoder.generate_text(input_text, temperature)
+                finally:
+                    decoder.max_length = old
+            return decoder.generate_text(input_text, temperature)
+
     def save(self, path: str) -> None:
         """Save full ED3N engine state."""
         import json
@@ -568,6 +602,7 @@ class ED3NEngine:
     def load_presets(self) -> None:
         self.reflex.load_presets()
         self.dictionary.load_preset_responses()
+        self.network.sync_from_dictionary(self.dictionary)
         logger.info("ED3NEngine loaded all presets.")
 
     def load_presets_from_config(self, config_dir: Optional[str] = None) -> None:
