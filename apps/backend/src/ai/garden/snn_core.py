@@ -309,7 +309,7 @@ class TensorSNNCore:
     def load(self, path: str) -> None:
         """Load weight matrix and key registry from a .pt checkpoint."""
         torch, _ = _lazy_torch()
-        state = torch.load(path, map_location="cpu", weights_only=False)
+        state = torch.load(path, map_location="cpu", weights_only=True)
         self._W                    = state["W"]
         self._key_to_idx           = state["key_to_idx"]
         self._idx_to_key           = state["idx_to_key"]

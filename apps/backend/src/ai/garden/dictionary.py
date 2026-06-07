@@ -19,6 +19,7 @@ import logging
 import math
 import os
 import re
+import zlib
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -76,7 +77,7 @@ class _CharBagEncoder:
             # bigrams
             for i in range(len(lower) - 1):
                 bigram = lower[i:i+2]
-                idx = (hash(bigram) & 0x7FFFFFFF) % self.DIM
+                idx = (zlib.adler32(bigram.encode()) & 0x7FFFFFFF) % self.DIM
                 v[idx] += 0.5
             norm = v.norm()
             if norm > 0:

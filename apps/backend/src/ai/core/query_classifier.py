@@ -50,7 +50,7 @@ class QueryClassifier:
                 QueryType.MATH,
                 re.compile(
                     r"(\d+\s*[\+\-\*\/]\s*\d+|"
-                    r"等于|计算|加|减|乘|除|多少|"
+                    r"等于|计算|加|减|乘|除|"
                     r"\b(plus|minus|times|divided\s*by|calculate|solve|equation)\b)",
                     re.IGNORECASE,
                 ),
@@ -71,7 +71,7 @@ class QueryClassifier:
                     r"(什么是|是什么|what\s+is|how\s+(does|do|can|to)|"
                     r"why\s+(is|does|do|can)|"
                     r"\b(define|explain)\b|"
-                    r"什么|谁|哪里|为什么|怎么|how\s+many|what\s+are)",
+                    r"什么|谁|哪里|为什么|怎么|多少|how\s+many|what\s+are)",
                     re.IGNORECASE,
                 ),
                 0.7,

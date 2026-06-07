@@ -33,7 +33,7 @@ class GARDENBackend(BaseLLMBackend):
     def _get_engine(self):
         if self._engine is None:
             from ai.garden.garden_engine import GARDENEngine
-            engine = GARDENEngine()
+            engine = GARDENEngine(compatibility_mode=True)
             if self.checkpoint and os.path.isdir(self.checkpoint):
                 engine.load(self.checkpoint)
                 logger.info("GARDEN backend: loaded checkpoint from %s", self.checkpoint)

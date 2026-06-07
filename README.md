@@ -197,6 +197,7 @@ See dedicated docs for full diagrams:
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **Audit V1 (05-31)**: Plans, docs, code, tests, config, apps — original completion audit |
 | [COMPREHENSIVE_AUDIT_REPORT_V2](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **Audit V2 (06-06)**: H5 post-sprint full scan — 3 true stubs, 20 intentional excepts, 132 long files |
+| [COMPREHENSIVE_AUDIT_V3](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | **Audit V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫 |
 | [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite |
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
 | [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
@@ -359,7 +360,8 @@ npm start
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
 | [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移, Stub 清理 |
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError, docs, tests |
-| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告**: 計畫、文檔、代碼、測試、配置、應用的完美完成度判定 |
+| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告 V1**: 計畫、文檔、代碼、測試、配置、應用 |
+| [COMPREHENSIVE_AUDIT_V3](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | **全面審計報告 V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫 |
 | [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
 | [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數 |
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定，23+殘留問題 |

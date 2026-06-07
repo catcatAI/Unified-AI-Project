@@ -494,8 +494,12 @@ class ED3NEngine:
         import os
 
         self.load_presets()
-        with open(path, "r", encoding="utf-8") as f:
-            state = json.load(f)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.error("ED3NEngine: failed to load checkpoint %s: %s", path, e)
+            return
         self.snn_mode = state.get("snn_mode", False)
         if "reflex_threshold" in state:
             self.reflex.threshold = state["reflex_threshold"]

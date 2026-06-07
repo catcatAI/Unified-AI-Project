@@ -51,9 +51,10 @@ class ModelBus:
     - Sync knowledge between models (high-signal patterns)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, default_timeout: float = 30.0) -> None:
         self._registry: Dict[str, Tuple[Any, ModelCapability]] = {}
         self._query_classifier: Any = None
+        self.default_timeout = default_timeout
 
     # ------------------------------------------------------------------
     # Registration
@@ -92,7 +93,25 @@ class ModelBus:
         self.register("garden", engine, cap)
 
     def register_cloud(self, backend: Any) -> None:
-        """Convenience: register cloud LLM backend."""
+        """Convenience: register cloud LLM backend.
+
+        Wraps backends that expose ``generate()`` instead of ``process()``
+        so the internal ``_try_model`` dispatch can call ``process()`` uniformly.
+        """
+        if not hasattr(backend, 'process'):
+            original = backend
+
+            class _CloudAdapter:
+                def __init__(self, b):
+                    self._backend = b
+
+                async def process(self, query: str, context=None) -> str:
+                    from core.interfaces.protocols import LLMResponse
+                    kwargs = {"context": context} if context else {}
+                    result: LLMResponse = await self._backend.generate(query, **kwargs)
+                    return result.text if result else ""
+
+            backend = _CloudAdapter(original)
         cap = ModelCapability(
             tier="cloud",
             domain="creative",
@@ -302,9 +321,19 @@ class ModelBus:
 
         try:
             if asyncio.iscoroutinefunction(engine.process):
-                raw = await engine.process(query, context=context)
+                raw = await asyncio.wait_for(
+                    engine.process(query, context=context),
+                    timeout=self.default_timeout,
+                )
             else:
-                raw = engine.process(query, context=context)
+                raw = await asyncio.wait_for(
+                    asyncio.to_thread(engine.process, query, context=context),
+                    timeout=self.default_timeout,
+                )
+        except asyncio.TimeoutError:
+            raw = ""
+            error = f"Timeout after {self.default_timeout}s"
+            logger.error("Model '%s' timed out after %.1fs", model_id, self.default_timeout)
         except Exception as exc:
             raw = ""
             error = str(exc)
