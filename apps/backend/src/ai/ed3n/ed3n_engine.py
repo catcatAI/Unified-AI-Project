@@ -126,6 +126,8 @@ class ED3NEngine:
     def process(
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
+        if not input_text or not isinstance(input_text, str):
+            return ""
         reflex_result = self.process_reflex(input_text)
         if reflex_result is not None:
             return reflex_result
@@ -147,6 +149,8 @@ class ED3NEngine:
     def process_shallow(
         self, input_text: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
+        if not input_text:
+            return "抱歉，我没理解你的意思。"
         keys = self.dictionary.encode(input_text)
         if not keys:
             return "抱歉，我没理解你的意思。"
@@ -163,6 +167,8 @@ class ED3NEngine:
     def process_deep(
         self, input_text: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
+        if not input_text:
+            return "抱歉，我没理解你的意思。"
         keys = self.dictionary.encode(input_text)
         if not keys:
             return "抱歉，我没理解你的意思。"
@@ -201,6 +207,9 @@ class ED3NEngine:
             self.snn_mode = was_snn
 
     def enable_multimodal(self, enable_image=True, enable_audio=True) -> None:
+        if not hasattr(self.dictionary, "modality_encoders"):
+            logger.warning("Dictionary missing modality_encoders; cannot enable multimodal")
+            return
         if enable_image:
             self.image_encoder = ImageEncoder(dictionary_layer=self.dictionary)
             self.dictionary.modality_encoders["image"] = self.image_encoder
@@ -367,6 +376,29 @@ class ED3NEngine:
         self.reflex.load_presets()
         self.dictionary.load_preset_responses()
         logger.info("ED3NEngine loaded all presets.")
+
+    def load_presets_from_config(self, config_dir: Optional[str] = None) -> None:
+        """Load all presets from JSON config files instead of hardcoded Python."""
+        import json, os
+        if config_dir is None:
+            config_dir = os.path.join(os.path.dirname(__file__), "config")
+
+        # Load reflex patterns from JSON
+        reflex_patterns = {}
+        for fname in os.listdir(config_dir):
+            if not fname.endswith(".json"):
+                continue
+            fpath = os.path.join(config_dir, fname)
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if "reflex_patterns" in data:
+                for pattern, response in data["reflex_patterns"].items():
+                    self.reflex.add_pattern(pattern, response)
+
+        # Load dictionary entries from JSON
+        loaded = self.dictionary.load_preset_responses_from_dir(config_dir)
+        logger.info("ED3NEngine loaded %d entries and %d reflex patterns from config dir: %s",
+                    loaded, len(self.reflex.patterns), config_dir)
 
     def get_snn_stats(self) -> Dict[str, Any]:
         if self._snn_network is None:

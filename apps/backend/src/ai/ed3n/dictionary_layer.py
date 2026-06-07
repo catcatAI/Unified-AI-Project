@@ -54,6 +54,8 @@ class DictionaryLayer:
     def lookup(
         self, keys: List[str], anchors: Optional[List[DictionaryEntry]] = None
     ) -> Dict[str, Any]:
+        if not keys:
+            return {}
         result: Dict[str, Any] = {}
         anchor_keys = {e.key for e in (anchors or [])}
         for key in keys:
@@ -71,6 +73,10 @@ class DictionaryLayer:
         return result
 
     def encode(self, text: str, modality: str = "text") -> List[str]:
+        if not text or not isinstance(text, str):
+            return []
+        if len(text) > 10000:
+            text = text[:10000]
         if modality != "text":
             logger.warning("Only 'text' modality is supported; falling back to text encoding.")
         self._rebuild_index()
@@ -95,6 +101,8 @@ class DictionaryLayer:
         return unique_keys
 
     def decode(self, keys: List[str], context: Optional[Dict[str, Any]] = None) -> str:
+        if not keys:
+            return ""
         parts: List[str] = []
         for key in keys:
             entry = self.entries.get(key)
@@ -114,6 +122,8 @@ class DictionaryLayer:
         relations: Optional[Dict[str, List[str]]] = None,
         confidence: float = 1.0,
     ) -> DictionaryEntry:
+        if not key or not isinstance(key, str):
+            raise ValueError(f"Invalid key: {key}")
         if key in self.entries:
             logger.warning("Overwriting existing entry with key=%s", key)
         entry = DictionaryEntry(
@@ -130,6 +140,9 @@ class DictionaryLayer:
     def grow(
         self, text: str, surface_form: str, confidence: float = 0.5
     ) -> str:
+        if not text or not isinstance(text, str):
+            logger.warning("Cannot grow entry from empty text")
+            return ""
         if confidence < self.growth_threshold:
             logger.debug(
                 "Confidence %.2f below growth threshold %.2f; skipping growth",
@@ -197,6 +210,34 @@ class DictionaryLayer:
             self.add_entry(**preset)
         self._rebuild_index()
         logger.info("Loaded %d preset entries.", len(presets))
+
+    def load_preset_responses_from_dir(self, config_dir: Optional[str] = None) -> int:
+        """Load dictionary entries + reflex from config JSON files."""
+        import json, os
+        if config_dir is None:
+            config_dir = os.path.join(os.path.dirname(__file__), "config")
+        loaded = 0
+        patterns_loaded = 0
+
+        # Load dictionary presets from JSON files
+        for fname in os.listdir(config_dir):
+            if not fname.endswith(".json"):
+                continue
+            fpath = os.path.join(config_dir, fname)
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            # Load reflex patterns if present
+            if "reflex_patterns" in data:
+                # These are loaded into the engine's reflex layer separately
+                patterns_loaded += len(data["reflex_patterns"])
+            # Load dictionary entries if present
+            for entry_data in data.get("dictionary_entries", []):
+                if entry_data["key"] not in self.entries:
+                    self.add_entry(**entry_data)
+                    loaded += 1
+        self._rebuild_index()
+        logger.info("Loaded %d entries and %d reflex patterns from %s", loaded, patterns_loaded, config_dir)
+        return loaded
 
     def get_stats(self) -> Dict[str, Any]:
         total_relations = sum(len(e.relations) for e in self.entries.values())
@@ -277,6 +318,7 @@ class DictionaryLayer:
             logger.warning("Cannot merge: one or both keys not found (%s, %s)", source_key, target_key)
             return False
         if source_key == target_key:
+            logger.warning("Cannot merge entry with itself")
             return False
         source = self.entries[source_key]
         target = self.entries[target_key]

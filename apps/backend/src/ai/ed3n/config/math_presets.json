@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "dictionary_entries": [
+    {"key": "m1", "surface_forms": {"zh": "零", "en": "0"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m2", "surface_forms": {"zh": "一", "en": "1"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m3", "surface_forms": {"zh": "二", "en": "2"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m4", "surface_forms": {"zh": "三", "en": "3"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m5", "surface_forms": {"zh": "四", "en": "4"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m6", "surface_forms": {"zh": "五", "en": "5"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m7", "surface_forms": {"zh": "六", "en": "6"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m8", "surface_forms": {"zh": "七", "en": "7"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m9", "surface_forms": {"zh": "八", "en": "8"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m10", "surface_forms": {"zh": "九", "en": "9"}, "contexts": [{"context_id": "arithmetic", "type": "number"}], "relations": {}, "confidence": 1.0},
+    {"key": "m11", "surface_forms": {"zh": "加", "en": "plus"}, "contexts": [{"context_id": "arithmetic", "type": "operator"}], "relations": {}, "confidence": 1.0},
+    {"key": "m12", "surface_forms": {"zh": "减", "en": "minus"}, "contexts": [{"context_id": "arithmetic", "type": "operator"}], "relations": {}, "confidence": 1.0},
+    {"key": "m13", "surface_forms": {"zh": "乘", "en": "times"}, "contexts": [{"context_id": "arithmetic", "type": "operator"}], "relations": {}, "confidence": 1.0},
+    {"key": "m14", "surface_forms": {"zh": "除", "en": "divided"}, "contexts": [{"context_id": "arithmetic", "type": "operator"}], "relations": {}, "confidence": 1.0},
+    {"key": "m15", "surface_forms": {"zh": "等於", "en": "equals"}, "contexts": [{"context_id": "arithmetic", "type": "operator"}], "relations": {}, "confidence": 1.0},
+    {"key": "b1", "surface_forms": {"zh": "真", "en": "true"}, "contexts": [{"context_id": "logic", "type": "boolean"}], "relations": {"antonym": ["b2"]}, "confidence": 1.0},
+    {"key": "b2", "surface_forms": {"zh": "假", "en": "false"}, "contexts": [{"context_id": "logic", "type": "boolean"}], "relations": {"antonym": ["b1"]}, "confidence": 1.0},
+    {"key": "b3", "surface_forms": {"zh": "且", "en": "and"}, "contexts": [{"context_id": "logic", "type": "operator"}], "relations": {}, "confidence": 1.0},
+    {"key": "b4", "surface_forms": {"zh": "或", "en": "or"}, "contexts": [{"context_id": "logic", "type": "operator"}], "relations": {}, "confidence": 1.0},
+    {"key": "b5", "surface_forms": {"zh": "非", "en": "not"}, "contexts": [{"context_id": "logic", "type": "operator"}], "relations": {}, "confidence": 1.0}
+  ]
+}

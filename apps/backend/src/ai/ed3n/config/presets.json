@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "reflex_patterns": {
+    "你好": "你好！很高兴见到你！",
+    "早上好": "早上好！祝你今天愉快！",
+    "晚上好": "晚上好！祝你今晚愉快！",
+    "欢迎": "欢迎！很高兴你能来！",
+    "再见": "再见！期待下次见面！",
+    "明天见": "明天见！到时候聊！",
+    "谢谢": "不客气！很高兴能帮到你！",
+    "对不起": "没关系，别放在心上。",
+    "没关系": "嗯，谢谢你理解！",
+    "请": "请说，我在听。",
+    "在忙吗": "不忙，随时为你服务！",
+    "心情": "我心情不错！希望你也开心！",
+    "今天": "今天是个好日子！",
+    "名字": "我是Angela AI，很高兴认识你！",
+    "做什么": "我在这里帮助你完成各种任务！",
+    "开心": "开心真好！希望你一直保持好心情！",
+    "难过": "别难过，我在这里陪着你。",
+    "烦恼": "别烦恼了，我们一起想办法。",
+    "无聊": "无聊的话，我们可以聊聊天！",
+    "兴奋": "太棒了！你的热情感染了我！",
+    "嗯": "嗯嗯，在听。",
+    "好的": "好的，马上处理！",
+    "明白": "明白，交给我吧。",
+    "可以": "可以，没问题！",
+    "help": "I'm here to help! How can I assist you?",
+    "hello": "Hello! Nice to meet you!",
+    "hi": "Hi there! How can I help you today?",
+    "good morning": "Good morning! Hope you have a great day!",
+    "goodbye": "Goodbye! Take care!",
+    "thank you": "You're welcome! Happy to help!"
+  },
+  "dictionary_entries": [
+    {
+      "key": "g1",
+      "surface_forms": {"zh": "你好", "en": "hello"},
+      "contexts": [{"context_id": "greeting", "formality": "neutral"}],
+      "relations": {"synonym": ["g2", "g3"], "mapping": ["e1", "p1"]},
+      "confidence": 1.0
+    },
+    {
+      "key": "g2",
+      "surface_forms": {"zh": "早上好", "en": "good morning"},
+      "contexts": [{"context_id": "greeting", "formality": "formal", "time": "morning"}],
+      "relations": {"synonym": ["g1"], "mapping": ["g5"]},
+      "confidence": 1.0
+    },
+    {
+      "key": "g3",
+      "surface_forms": {"zh": "晚上好", "en": "good evening"},
+      "contexts": [{"context_id": "greeting", "formality": "formal", "time": "evening"}],
+      "relations": {"synonym": ["g1"], "mapping": ["g5"]},
+      "confidence": 1.0
+    },
+    {
+      "key": "g4",
+      "surface_forms": {"zh": "欢迎", "en": "welcome"},
+      "contexts": [{"context_id": "greeting", "formality": "formal"}],
+      "relations": {"synonym": ["g1"], "mapping": ["p1"]},
+      "confidence": 1.0
+    },
+    {
+      "key": "g5",
+      "surface_forms": {"zh": "嗨", "en": "hi"},
+      "contexts": [{"context_id": "greeting", "formality": "casual"}],
+      "relations": {"synonym": ["g1", "g6"]},
+      "confidence": 1.0
+    },
+    {
+      "key": "g6",
+      "surface_forms": {"zh": "哈喽", "en": "hey"},
+      "contexts": [{"context_id": "greeting", "formality": "casual"}],
+      "relations": {"synonym": ["g1", "g5"]},
+      "confidence": 1.0
+    },
+    {"key": "f1", "surface_forms": {"zh": "再见", "en": "goodbye"}, "contexts": [{"context_id": "farewell", "formality": "neutral"}], "relations": {"synonym": ["f2"], "mapping": ["p1"]}, "confidence": 1.0},
+    {"key": "f2", "surface_forms": {"zh": "明天见", "en": "see you tomorrow"}, "contexts": [{"context_id": "farewell", "formality": "casual"}], "relations": {"synonym": ["f1"], "mapping": ["g2"]}, "confidence": 1.0},
+    {"key": "p1", "surface_forms": {"zh": "谢谢", "en": "thank you"}, "contexts": [{"context_id": "politeness", "formality": "neutral"}], "relations": {"synonym": ["p4"], "mapping": ["e1", "r1"]}, "confidence": 1.0},
+    {"key": "p2", "surface_forms": {"zh": "对不起", "en": "sorry"}, "contexts": [{"context_id": "politeness", "formality": "neutral", "sentiment": "apology"}], "relations": {"synonym": ["r2"], "mapping": ["r1"]}, "confidence": 1.0},
+    {"key": "p3", "surface_forms": {"zh": "没关系", "en": "no problem"}, "contexts": [{"context_id": "politeness", "formality": "neutral", "sentiment": "forgiveness"}], "relations": {"synonym": ["r3"], "mapping": ["p2"]}, "confidence": 1.0},
+    {"key": "p4", "surface_forms": {"zh": "请", "en": "please"}, "contexts": [{"context_id": "politeness", "formality": "formal"}], "relations": {"synonym": [], "mapping": ["g1", "p1"]}, "confidence": 1.0},
+    {"key": "c1", "surface_forms": {"zh": "在忙吗", "en": "are you busy"}, "contexts": [{"context_id": "small_talk", "topic": "status"}], "relations": {"mapping": ["e5", "r1"]}, "confidence": 1.0},
+    {"key": "c2", "surface_forms": {"zh": "心情", "en": "mood"}, "contexts": [{"context_id": "small_talk", "topic": "emotion"}], "relations": {"mapping": ["e1", "e2", "e3", "e5"]}, "confidence": 1.0},
+    {"key": "c3", "surface_forms": {"zh": "今天", "en": "today"}, "contexts": [{"context_id": "small_talk", "topic": "time"}], "relations": {"mapping": ["g2", "g3", "c1"]}, "confidence": 1.0},
+    {"key": "c4", "surface_forms": {"zh": "名字", "en": "name"}, "contexts": [{"context_id": "small_talk", "topic": "identity"}], "relations": {"mapping": ["g1"]}, "confidence": 1.0},
+    {"key": "c5", "surface_forms": {"zh": "做什么", "en": "what are you doing"}, "contexts": [{"context_id": "small_talk", "topic": "activity"}], "relations": {"mapping": ["c1", "e5"]}, "confidence": 1.0},
+    {"key": "e1", "surface_forms": {"zh": "开心", "en": "happy"}, "contexts": [{"context_id": "emotion", "valence": "positive", "arousal": "high"}], "relations": {"synonym": ["e5"], "mapping": ["c2"]}, "confidence": 1.0},
+    {"key": "e2", "surface_forms": {"zh": "难过", "en": "sad"}, "contexts": [{"context_id": "emotion", "valence": "negative", "arousal": "low"}], "relations": {"mapping": ["p2", "c2"]}, "confidence": 1.0},
+    {"key": "e3", "surface_forms": {"zh": "烦恼", "en": "annoyed"}, "contexts": [{"context_id": "emotion", "valence": "negative", "arousal": "high"}], "relations": {"mapping": ["e2", "c2"]}, "confidence": 1.0},
+    {"key": "e4", "surface_forms": {"zh": "无聊", "en": "bored"}, "contexts": [{"context_id": "emotion", "valence": "negative", "arousal": "low"}], "relations": {"mapping": ["e2", "c1"]}, "confidence": 1.0},
+    {"key": "e5", "surface_forms": {"zh": "兴奋", "en": "excited"}, "contexts": [{"context_id": "emotion", "valence": "positive", "arousal": "high"}], "relations": {"synonym": ["e1"], "mapping": ["c2"]}, "confidence": 1.0},
+    {"key": "r1", "surface_forms": {"zh": "嗯", "en": "uh-huh"}, "contexts": [{"context_id": "response", "type": "acknowledgment"}], "relations": {"synonym": ["r2", "r3"], "mapping": ["p1"]}, "confidence": 1.0},
+    {"key": "r2", "surface_forms": {"zh": "好的", "en": "okay"}, "contexts": [{"context_id": "response", "type": "agreement"}], "relations": {"synonym": ["r1", "r3", "r4"]}, "confidence": 1.0},
+    {"key": "r3", "surface_forms": {"zh": "明白", "en": "understood"}, "contexts": [{"context_id": "response", "type": "acknowledgment"}], "relations": {"synonym": ["r1", "r2", "r4"]}, "confidence": 1.0},
+    {"key": "r4", "surface_forms": {"zh": "可以", "en": "sure"}, "contexts": [{"context_id": "response", "type": "agreement"}], "relations": {"synonym": ["r2"]}, "confidence": 1.0}
+  ]
+}

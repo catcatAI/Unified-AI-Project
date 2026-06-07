@@ -82,6 +82,8 @@ class CoreNetwork:
         input_keys: List[str],
         context: Optional[Dict[str, object]] = None,
     ) -> Dict[str, float]:
+        if not input_keys:
+            return {}
         self.reset()
         activations: Dict[str, float] = {}
 
@@ -118,6 +120,9 @@ class CoreNetwork:
     def add_relation(
         self, key1: str, relation_type: RelationType, key2: str, weight: float = 1.0
     ) -> None:
+        if not key1 or not key2:
+            logger.warning("Cannot add connection: empty key")
+            return
         group = self._group_for_type(relation_type)
         if group is None:
             return
@@ -225,6 +230,11 @@ class CoreNetwork:
         }
 
     def adjust_connection(self, key1: str, key2: str, delta: float) -> None:
+        if not any(
+            key1 in group.neurons and key2 in group.neurons[key1].connections
+            for group in self.groups.values()
+        ):
+            return
         for group in self.groups.values():
             n1 = group.neurons.get(key1)
             n2 = group.neurons.get(key2)

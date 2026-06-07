@@ -20,6 +20,7 @@ class RelationType(Enum):
     ANTI_MAPPING = "\u219b"
     ANALOGY = "\u223c"
     ANTI_ANALOGY = "\u2241"
+    UNRELATED = "?"
 
     def __str__(self) -> str:
         return self.value
@@ -45,6 +46,8 @@ class RelationClassifier:
         context: Optional[Dict[str, Any]] = None,
         dictionary: Optional["DictionaryLayer"] = None,
     ) -> Tuple[RelationType, float]:
+        if not key1 or not key2:
+            return RelationType.UNRELATED
         d = dictionary or self.dictionary
 
         if d is None:

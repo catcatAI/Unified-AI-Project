@@ -34,6 +34,9 @@ class ED3NTrainer:
         self.best_accuracy: float = 0.0
 
     def train_step(self, batch: TrainingBatch) -> TrainMetrics:
+        if not batch or not batch.examples:
+            return TrainMetrics(phase="combined", loss=0.0, accuracy=0.0, learning_rate=(self.dictionary_lr+self.network_lr)/2, epoch=0, samples=0, duration_ms=0.0)
+
         start = time.perf_counter()
 
         metrics_a = self.train_dictionary_phase(batch.examples)
@@ -57,6 +60,9 @@ class ED3NTrainer:
     def train_dictionary_phase(
         self, examples: List[TrainingExample]
     ) -> TrainMetrics:
+        if not examples:
+            return TrainMetrics(phase="dictionary", loss=0.0, accuracy=0.0, learning_rate=self.dictionary_lr, epoch=0, samples=0, duration_ms=0.0)
+
         start = time.perf_counter()
         correct = 0
         total_loss = 0.0
@@ -124,6 +130,9 @@ class ED3NTrainer:
     def train_network_phase(
         self, examples: List[TrainingExample]
     ) -> TrainMetrics:
+        if not examples:
+            return TrainMetrics(phase="network", loss=0.0, accuracy=0.0, learning_rate=self.network_lr, epoch=0, samples=0, duration_ms=0.0)
+
         start = time.perf_counter()
         total_loss = 0.0
         total_correct = 0

@@ -18,6 +18,10 @@ def anchored_decode(
     top_k_anchors: int = 3,
     top_k_network: int = 5,
 ) -> str:
+    if not network_output:
+        network_output = {}
+    if not original_input_keys:
+        original_input_keys = []
     anchor_pool: List[Dict[str, Any]] = []
     seen_keys: set = set()
 
