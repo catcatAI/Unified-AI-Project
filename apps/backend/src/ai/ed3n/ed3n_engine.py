@@ -4,8 +4,11 @@
 
 import copy
 import logging
+import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
+
+from .telemetry import TelemetryCollector
 
 from .core_network import CoreNetwork
 from .dictionary_layer import DictionaryLayer
@@ -121,8 +124,10 @@ class ED3NEngine:
         modulator: Optional[HormonalModulator] = None,
         snn_mode: bool = False,
         auto_load_presets: bool = True,
+        telemetry: Optional[TelemetryCollector] = None,
     ):
         self.reflex = reflex or ReflexLayer()
+        self.telemetry = telemetry or TelemetryCollector()
         self.dictionary = dictionary or DictionaryLayer()
         self.classifier = classifier or RelationClassifier(dictionary=self.dictionary)
         self.network = network or CoreNetwork(classifier=self.classifier)
@@ -148,20 +153,172 @@ class ED3NEngine:
     ) -> str:
         if not input_text or not isinstance(input_text, str):
             return ""
+
+        query_id = f"{id(input_text)}_{time.time_ns()}"
+        stages: Dict[str, float] = {}
+
+        # Stage 1: Reflex
+        t0 = time.perf_counter()
         reflex_result = self.process_reflex(input_text)
+        stages["reflex"] = (time.perf_counter() - t0) * 1000
+
         if reflex_result is not None:
+            self.telemetry.record_query(
+                query_id=query_id,
+                input_text=input_text,
+                stages=stages,
+                reflex_match=reflex_result,
+                cache_hit=False,
+                matched_keys=[],
+                output_text=reflex_result,
+                confidence=1.0,
+                is_fallback=False,
+            )
             return reflex_result
 
         if depth == "reflex":
-            return reflex_result or ""
+            self.telemetry.record_query(
+                query_id=query_id,
+                input_text=input_text,
+                stages=stages,
+                reflex_match=None,
+                cache_hit=False,
+                matched_keys=[],
+                output_text="",
+                confidence=0.0,
+                is_fallback=False,
+            )
+            return ""
+
+        # Stage 2: Encode
+        FALLBACK_STR = "抱歉，我没理解你的意思。"
+        _cache_key = (input_text.lower().strip(), self.dictionary._index_version)
+        cache_hit = _cache_key in self.dictionary._encode_cache
+        t1 = time.perf_counter()
+        keys = self.dictionary.encode(input_text)
+        stages["encode"] = (time.perf_counter() - t1) * 1000
+
+        if not keys:
+            self.telemetry.record_query(
+                query_id=query_id,
+                input_text=input_text,
+                stages=stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=[],
+                output_text=FALLBACK_STR,
+                confidence=0.0,
+                is_fallback=True,
+            )
+            return FALLBACK_STR
+
+        confidence = self._compute_confidence(keys)
 
         if depth == "shallow" or (depth == "auto" and not context):
-            return self.process_shallow(input_text, context)
+            # Stage 3: Decode (shallow)
+            t3 = time.perf_counter()
+            decoded = self.dictionary.decode(keys, context)
+            stages["decode"] = (time.perf_counter() - t3) * 1000
+            output = decoded if decoded else FALLBACK_STR
+            self.telemetry.record_query(
+                query_id=query_id,
+                input_text=input_text,
+                stages=stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=keys,
+                output_text=output,
+                confidence=confidence,
+                is_fallback=(not decoded),
+            )
+            return output
 
+        # Stage 3: Network forward
         if depth == "snn":
-            return self.process_snn(input_text, context)
+            was_snn = self.snn_mode
+            self.snn_mode = True
+            t3 = time.perf_counter()
+            try:
+                network_output = self.snn_network.forward(keys, context=context)
+            finally:
+                self.snn_mode = was_snn
+            stages["network_forward"] = (time.perf_counter() - t3) * 1000
+        else:
+            t3 = time.perf_counter()
+            network_output = self.network.forward(keys, context=context)
+            stages["network_forward"] = (time.perf_counter() - t3) * 1000
 
-        return self.process_deep(input_text, context)
+        # Stage 4: Decode (anchored)
+        t4 = time.perf_counter()
+        response = anchored_decode(
+            network_output=network_output,
+            original_input_keys=keys,
+            dictionary=self.dictionary,
+            top_k_anchors=3,
+            top_k_network=5,
+        )
+        stages["decode"] = (time.perf_counter() - t4) * 1000
+
+        if not response:
+            fallback = self.dictionary.decode(keys, context) or FALLBACK_STR
+            self.telemetry.record_query(
+                query_id=query_id,
+                input_text=input_text,
+                stages=stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=keys,
+                output_text=fallback,
+                confidence=confidence,
+                is_fallback=True,
+            )
+            return fallback
+
+        # Stage 5: Validate
+        t5 = time.perf_counter()
+        valid = self.validator.validate(response, anchored_keys=keys)
+        stages["validate"] = (time.perf_counter() - t5) * 1000
+
+        if not valid:
+            fallback = self.dictionary.decode(keys, context)
+            output = fallback or response
+            self.telemetry.record_query(
+                query_id=query_id,
+                input_text=input_text,
+                stages=stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=keys,
+                output_text=output,
+                confidence=confidence,
+                is_fallback=True,
+            )
+            return output
+
+        self.telemetry.record_query(
+            query_id=query_id,
+            input_text=input_text,
+            stages=stages,
+            reflex_match=None,
+            cache_hit=cache_hit,
+            matched_keys=keys,
+            output_text=response,
+            confidence=confidence,
+            is_fallback=False,
+        )
+        return response
+
+    def _compute_confidence(self, keys: List[str]) -> float:
+        if not keys:
+            return 0.0
+        confidences = []
+        for k in keys:
+            entry = self.dictionary.entries.get(k)
+            if entry is not None:
+                confidences.append(entry.confidence)
+        if not confidences:
+            return 0.0
+        return round(sum(confidences) / len(confidences), 4)
 
     def process_reflex(self, input_text: str) -> Optional[str]:
         return self.reflex.process(input_text)

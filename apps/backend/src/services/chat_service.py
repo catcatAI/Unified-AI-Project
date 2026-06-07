@@ -6,6 +6,7 @@
 # =============================================================================
 
 import logging
+import os
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,9 @@ class ChatService:
         self._llm_service = llm_service
         self._initialized = False
         self._continuous_learning = None
+        self._cl_state_dir = os.path.join(
+            os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
+        )
 
     async def initialize(self) -> None:
         if self._initialized:
@@ -31,12 +35,19 @@ class ChatService:
             from ai.ed3n.ed3n_engine import ED3NEngine
             engine = ED3NEngine()
             engine.load_presets()
-            self._continuous_learning = ContinuousLearningPipeline(
-                engine=engine,
-                growth_interval=15,
-                train_interval=50,
-                min_examples_for_train=30,
-            )
+            state_path = os.path.join(self._cl_state_dir, "cl_state.json")
+            if os.path.exists(state_path):
+                self._continuous_learning = ContinuousLearningPipeline.load(
+                    self._cl_state_dir, engine=engine
+                )
+                logger.info("Loaded CL state from %s", state_path)
+            else:
+                self._continuous_learning = ContinuousLearningPipeline(
+                    engine=engine,
+                    growth_interval=15,
+                    train_interval=50,
+                    min_examples_for_train=30,
+                )
         except Exception as e:
             logger.warning("Continuous learning init skipped: %s", e)
         self._initialized = True
@@ -62,5 +73,9 @@ class ChatService:
         if self._continuous_learning:
             report = self._continuous_learning.get_learning_report()
             logger.info("Continuous learning final report:\n%s", report)
+            try:
+                self._continuous_learning.save(self._cl_state_dir)
+            except Exception as e:
+                logger.warning("Failed to save CL state: %s", e)
         logger.info("ChatService shutdown")
 

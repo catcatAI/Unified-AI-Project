@@ -34,10 +34,21 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-import torch
-import torch.nn.functional as F
-
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Lazy torch import (compatible with Python 3.14 where torch may be absent)
+# ---------------------------------------------------------------------------
+
+_torch = None
+
+def _lazy_torch():
+    global _torch
+    if _torch is None:
+        import torch
+        import torch.nn.functional as F
+        _torch = (torch, F)
+    return _torch
 
 # ---------------------------------------------------------------------------
 # LIF parameters (defaults)
@@ -140,6 +151,7 @@ class TensorSNNCore:
         return self._key_to_idx[key]
 
     def _grow_matrix(self, new_size: int) -> None:
+        torch, _ = _lazy_torch()
         if self._W is None:
             self._W = torch.zeros(new_size, new_size, dtype=torch.float32)
             return
@@ -197,6 +209,7 @@ class TensorSNNCore:
         if not input_keys or self._W is None or self.vocab_size == 0:
             return {}
 
+        torch, _ = _lazy_torch()
         V = self.vocab_size
         W = self._W  # [V, V]
 
@@ -289,11 +302,13 @@ class TensorSNNCore:
             "total_steps": self.total_steps,
             "total_hebbian_updates": self.total_hebbian_updates,
         }
+        torch, _ = _lazy_torch()
         torch.save(state, path)
         logger.info("GARDEN SNN: saved checkpoint to %s (V=%d)", path, self.vocab_size)
 
     def load(self, path: str) -> None:
         """Load weight matrix and key registry from a .pt checkpoint."""
+        torch, _ = _lazy_torch()
         state = torch.load(path, map_location="cpu", weights_only=False)
         self._W                    = state["W"]
         self._key_to_idx           = state["key_to_idx"]

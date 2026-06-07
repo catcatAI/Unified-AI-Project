@@ -22,10 +22,21 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-import torch
-import torch.nn.functional as F
-
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Lazy torch import (compatible with Python 3.14 where torch may be absent)
+# ---------------------------------------------------------------------------
+
+_torch = None
+
+def _lazy_torch():
+    global _torch
+    if _torch is None:
+        import torch
+        import torch.nn.functional as F
+        _torch = (torch, F)
+    return _torch
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -54,6 +65,7 @@ class _CharBagEncoder:
     DIM = 256
 
     def encode(self, texts: List[str]) -> torch.Tensor:
+        torch, _ = _lazy_torch()
         vecs = []
         for text in texts:
             v = torch.zeros(self.DIM)
@@ -111,11 +123,13 @@ class VectorDictionary:
         top_k: int = 8,
         similarity_threshold: float = 0.30,
         device: str = "cpu",
+        compatibility_mode: bool = False,
     ):
         self.model_name = model_name
         self.top_k = top_k
         self.similarity_threshold = similarity_threshold
         self.device = device
+        self.compatibility_mode = compatibility_mode
 
         self.entries: Dict[str, ConceptEntry] = {}
         self._encoder = self._build_encoder(model_name)
@@ -129,6 +143,9 @@ class VectorDictionary:
     # ------------------------------------------------------------------
 
     def _build_encoder(self, model_name: str):
+        if self.compatibility_mode:
+            logger.info("GARDEN: compatibility mode enabled; using char-bag encoder")
+            return _CharBagEncoder()
         try:
             enc = _STEncoder(model_name)
             logger.info("GARDEN: using SentenceTransformer encoder (semantic mode)")
@@ -183,6 +200,7 @@ class VectorDictionary:
     # ------------------------------------------------------------------
 
     def _rebuild_index(self) -> None:
+        _, F = _lazy_torch()
         if not self.entries:
             self._matrix = None
             self._key_order = []
@@ -220,6 +238,7 @@ class VectorDictionary:
         if self._matrix is None or len(self._key_order) == 0:
             return []
 
+        _, F = _lazy_torch()
         query_vec = self._encoder.encode([text])          # [1, D]
         query_vec = F.normalize(query_vec, dim=-1)        # [1, D]
         scores = (self._matrix @ query_vec.T).squeeze(-1) # [N]

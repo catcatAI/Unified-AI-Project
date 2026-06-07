@@ -142,6 +142,7 @@ class GARDENEngine:
         similarity_threshold: float = 0.30,
         snn_timesteps: int = 6,
         device: str = "cpu",
+        compatibility_mode: bool = False,
     ):
         self.model_name = model_name
         self.device = device
@@ -152,6 +153,7 @@ class GARDENEngine:
             top_k=top_k,
             similarity_threshold=similarity_threshold,
             device=device,
+            compatibility_mode=compatibility_mode,
         )
         self.snn = TensorSNNCore(timesteps=snn_timesteps, device=device)
 
