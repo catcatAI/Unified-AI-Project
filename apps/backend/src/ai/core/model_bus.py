@@ -1,0 +1,362 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
+import asyncio
+import logging
+import time
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ModelCapability:
+    tier: str
+    domain: str
+    latency_ms: float
+    min_confidence: float
+
+
+@dataclass
+class ModelRouteResult:
+    model_id: str
+    text: str
+    confidence: float
+    latency_ms: float
+    domain: str
+    error: Optional[str] = None
+
+
+@dataclass
+class RouteDecision:
+    query: str
+    query_type: str
+    selected_model: str
+    results: Dict[str, ModelRouteResult]
+    total_latency_ms: float
+    confidence: float
+    reason: str
+
+
+class ModelBus:
+    """Central registry + router for all AI models in the system.
+
+    Instead of sequential fallback (try ED3N, then GARDEN, then Cloud),
+    the bus can:
+    - Route by query type (reflex -> ED3N, math -> ED3N, knowledge -> GARDEN, creative -> LLM)
+    - Fan-out to multiple models in parallel when domain overlaps
+    - Track which domains each model owns (for training deconfliction)
+    - Sync knowledge between models (high-signal patterns)
+    """
+
+    def __init__(self) -> None:
+        self._registry: Dict[str, Tuple[Any, ModelCapability]] = {}
+        self._query_classifier: Any = None
+
+    # ------------------------------------------------------------------
+    # Registration
+    # ------------------------------------------------------------------
+
+    def register(self, model_id: str, engine: Any, capability: ModelCapability) -> None:
+        """Register a model with its capability descriptor."""
+        self._registry[model_id] = (engine, capability)
+        logger.info(
+            "Registered model '%s'  tier=%s  domain=%s  latency=%.2fms  min_conf=%.2f",
+            model_id,
+            capability.tier,
+            capability.domain,
+            capability.latency_ms,
+            capability.min_confidence,
+        )
+
+    def register_ed3n(self, engine: Any) -> None:
+        """Convenience: register ED3N reflex engine (fastest tier)."""
+        cap = ModelCapability(
+            tier="reflex",
+            domain="reflex",
+            latency_ms=0.1,
+            min_confidence=0.95,
+        )
+        self.register("ed3n", engine, cap)
+
+    def register_garden(self, engine: Any) -> None:
+        """Convenience: register GARDEN lightweight reasoning engine."""
+        cap = ModelCapability(
+            tier="lightweight",
+            domain="knowledge",
+            latency_ms=10.0,
+            min_confidence=0.70,
+        )
+        self.register("garden", engine, cap)
+
+    def register_cloud(self, backend: Any) -> None:
+        """Convenience: register cloud LLM backend."""
+        cap = ModelCapability(
+            tier="cloud",
+            domain="creative",
+            latency_ms=500.0,
+            min_confidence=0.60,
+        )
+        self.register("cloud", backend, cap)
+
+    # ------------------------------------------------------------------
+    # Routing
+    # ------------------------------------------------------------------
+
+    async def route(
+        self,
+        query: str,
+        query_type: str,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> RouteDecision:
+        """Route query through best model(s) for the given type.
+
+        If *query_type* is ``"auto"`` the internal ``QueryClassifier`` is
+        loaded lazily and used to determine the type before routing.
+        """
+        if query_type == "auto":
+            classifier = self._get_classifier()
+            qtype, _ = classifier.classify(query)
+            query_type = qtype.value
+
+        candidates = self._resolve_candidates(query_type)
+        results: Dict[str, ModelRouteResult] = {}
+        start = time.perf_counter()
+
+        if query_type in ("reflex", "greeting"):
+            # ED3N only — fastest path
+            r = await self._try_model("ed3n", query, context, "reflex")
+            results[r.model_id] = r
+
+        elif query_type == "math":
+            # ED3N first (trained 77.7%), GARDEN fallback
+            r1 = await self._try_model("ed3n", query, context, "math")
+            results[r1.model_id] = r1
+            if r1.confidence < 0.70 and "garden" in self._registry:
+                r2 = await self._try_model("garden", query, context, "math")
+                results[r2.model_id] = r2
+
+        elif query_type == "knowledge":
+            # GARDEN first, cloud fallback
+            r1 = await self._try_model("garden", query, context, "knowledge")
+            results[r1.model_id] = r1
+            if r1.confidence < 0.60 and "cloud" in self._registry:
+                r2 = await self._try_model("cloud", query, context, "knowledge")
+                results[r2.model_id] = r2
+
+        elif query_type == "creative":
+            # Cloud LLM only
+            r = await self._try_model("cloud", query, context, "creative")
+            results[r.model_id] = r
+
+        else:
+            # general / unknown / opinion / command — try all eligible, pick best
+            tasks = [
+                self._try_model(mid, query, context, query_type)
+                for mid in candidates
+            ]
+            for coro in asyncio.as_completed(tasks):
+                r = await coro
+                results[r.model_id] = r
+
+        elapsed = (time.perf_counter() - start) * 1000
+        best = self._pick_best(results)
+
+        return RouteDecision(
+            query=query,
+            query_type=query_type,
+            selected_model=best["model_id"],
+            results=results,
+            total_latency_ms=round(elapsed, 2),
+            confidence=best["confidence"],
+            reason=best["reason"],
+        )
+
+    # ------------------------------------------------------------------
+    # Domain queries
+    # ------------------------------------------------------------------
+
+    def get_models_for_domain(self, domain: str) -> List[str]:
+        """Return all model IDs that handle the given domain."""
+        return [
+            mid
+            for mid, (_, cap) in self._registry.items()
+            if cap.domain == domain
+        ]
+
+    def get_training_assignment(self, domain: str) -> Optional[str]:
+        """Return which model should train on this domain (deconfliction).
+
+        The first model registered with a matching domain wins.
+        """
+        for mid, (_, cap) in self._registry.items():
+            if cap.domain == domain:
+                return mid
+        return None
+
+    # ------------------------------------------------------------------
+    # Knowledge sync
+    # ------------------------------------------------------------------
+
+    def sync_knowledge(
+        self,
+        source_model: str,
+        target_model: str,
+        patterns: List[Tuple[str, str]],
+    ) -> int:
+        """Copy high-signal reflex patterns between models.
+
+        Each pattern is a ``(trigger, response)`` tuple.  Returns the
+        number of patterns successfully transferred.
+        """
+        source_engine, _ = self._registry.get(source_model, (None, None))
+        target_engine, _ = self._registry.get(target_model, (None, None))
+        if source_engine is None or target_engine is None:
+            logger.warning("sync_knowledge: unknown model %s or %s", source_model, target_model)
+            return 0
+
+        count = 0
+        for trigger, response in patterns:
+            if self._inject_pattern(target_engine, trigger, response):
+                count += 1
+
+        logger.info(
+            "sync_knowledge: %d / %d patterns synced %s -> %s",
+            count,
+            len(patterns),
+            source_model,
+            target_model,
+        )
+        return count
+
+    # ------------------------------------------------------------------
+    # Diagnostics
+    # ------------------------------------------------------------------
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return diagnostic information about the bus and all registered models."""
+        return {
+            "registered_models": list(self._registry.keys()),
+            "capabilities": {
+                mid: {
+                    "tier": cap.tier,
+                    "domain": cap.domain,
+                    "latency_ms": cap.latency_ms,
+                    "min_confidence": cap.min_confidence,
+                }
+                for mid, (_, cap) in self._registry.items()
+            },
+        }
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _get_classifier(self) -> Any:
+        """Lazy-import and cache the query classifier."""
+        if self._query_classifier is None:
+            from ai.core.query_classifier import QueryClassifier
+
+            self._query_classifier = QueryClassifier()
+        return self._query_classifier
+
+    def _resolve_candidates(self, query_type: str) -> List[str]:
+        """Map a query type to an ordered list of candidate model IDs."""
+        mapping: Dict[str, List[str]] = {
+            "reflex": ["ed3n"],
+            "greeting": ["ed3n"],
+            "math": ["ed3n", "garden"],
+            "logic": ["ed3n", "garden"],
+            "knowledge": ["garden", "cloud"],
+            "creative": ["cloud"],
+            "opinion": ["cloud"],
+            "command": ["ed3n", "garden"],
+        }
+        candidates = mapping.get(query_type, list(self._registry.keys()))
+        return [mid for mid in candidates if mid in self._registry]
+
+    async def _try_model(
+        self,
+        model_id: str,
+        query: str,
+        context: Optional[Dict[str, Any]],
+        domain: str,
+    ) -> ModelRouteResult:
+        """Try to process a query with a single model, measuring latency."""
+        entry = self._registry.get(model_id)
+        if entry is None:
+            return ModelRouteResult(
+                model_id=model_id,
+                text="",
+                confidence=0.0,
+                latency_ms=0.0,
+                domain=domain,
+                error=f"Model '{model_id}' not registered",
+            )
+
+        engine, cap = entry
+        t0 = time.perf_counter()
+        error: Optional[str] = None
+
+        try:
+            if asyncio.iscoroutinefunction(engine.process):
+                raw = await engine.process(query, context=context)
+            else:
+                raw = engine.process(query, context=context)
+        except Exception as exc:
+            raw = ""
+            error = str(exc)
+            logger.exception("Model '%s' raised during process(): %s", model_id, exc)
+
+        elapsed = (time.perf_counter() - t0) * 1000
+
+        if raw is not None and isinstance(raw, str) and len(raw) > 0:
+            confidence = cap.min_confidence
+        else:
+            confidence = 0.0
+
+        return ModelRouteResult(
+            model_id=model_id,
+            text=raw if isinstance(raw, str) else "",
+            confidence=confidence,
+            latency_ms=round(elapsed, 3),
+            domain=domain,
+            error=error,
+        )
+
+    @staticmethod
+    def _pick_best(results: Dict[str, ModelRouteResult]) -> Dict[str, Any]:
+        """Pick the result with the highest confidence."""
+        best_id: Optional[str] = None
+        best_conf = -1.0
+
+        for mid, r in results.items():
+            if r.confidence > best_conf:
+                best_conf = r.confidence
+                best_id = mid
+
+        if best_id is None:
+            return {
+                "model_id": "none",
+                "confidence": 0.0,
+                "reason": "no models produced a result",
+            }
+
+        return {
+            "model_id": best_id,
+            "confidence": best_conf,
+            "reason": f"best confidence ({best_conf:.2f}) across {len(results)} model(s)",
+        }
+
+    @staticmethod
+    def _inject_pattern(engine: Any, trigger: str, response: str) -> bool:
+        """Try to add a reflex pattern to an engine that supports it."""
+        reflex = getattr(engine, "reflex", None)
+        if reflex is not None:
+            add = getattr(reflex, "add_pattern", None) or getattr(reflex, "add", None)
+            if add is not None:
+                add(trigger, response)
+                return True
+        return False

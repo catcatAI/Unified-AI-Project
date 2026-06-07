@@ -42,6 +42,10 @@ from services.llm.providers.google import GoogleAPIBackend
 from services.llm.providers.ed3n import ED3NBackend
 from services.llm.providers.garden import GARDENBackend
 
+# Model Bus pipeline
+from ai.core.model_bus import ModelBus
+from ai.core.query_classifier import QueryClassifier
+
 # Prompt builder utilities
 from services.llm.prompt_builder import (
     get_biological_state,
@@ -153,6 +157,10 @@ class AngelaLLMService:
         self.auto_selector = None
 
         self._initialized = True
+
+        # Model Bus capability-based routing
+        self.model_bus: Optional[ModelBus] = None
+        self.query_classifier: Optional[QueryClassifier] = None
 
         # 初始化各後端
         self._init_backends()
@@ -483,6 +491,41 @@ class AngelaLLMService:
                     self.active_backend_type = backend_type
                     break
 
+            # Initialize Model Bus
+            try:
+                self.model_bus = ModelBus()
+                self.query_classifier = QueryClassifier()
+
+                # Register ED3N if available
+                if LLMBackend.ED3N in self.backends:
+                    ed3n_backend = self.backends[LLMBackend.ED3N]
+                    from ai.ed3n.ed3n_engine import ED3NEngine
+                    if hasattr(ed3n_backend, '_engine') and ed3n_backend._engine:
+                        self.model_bus.register_ed3n(ed3n_backend._engine)
+                    else:
+                        engine = ED3NEngine()
+                        engine.load_presets()
+                        self.model_bus.register_ed3n(engine)
+
+                # Register GARDEN if available
+                if LLMBackend.GARDEN in self.backends:
+                    garden_backend = self.backends[LLMBackend.GARDEN]
+                    if hasattr(garden_backend, '_engine') and garden_backend._engine:
+                        self.model_bus.register_garden(garden_backend._engine)
+                    else:
+                        from ai.garden.garden_engine import GARDENEngine
+                        engine = GARDENEngine(compatibility_mode=True)
+                        engine.load_presets()
+                        self.model_bus.register_garden(engine)
+
+                # Register active backend as cloud
+                if self.active_backend:
+                    self.model_bus.register_cloud(self.active_backend)
+
+                logger.info("Model Bus initialized with %d models", len(self.model_bus._models))
+            except Exception as e:
+                logger.warning(f"Model Bus initialization skipped: {e}")
+
             self.is_available = True
             backend_name = self.active_backend_type.value if self.active_backend_type else "none"
             logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
@@ -580,8 +623,11 @@ class AngelaLLMService:
                 # broad exception acceptable: memory retrieval is best-effort, fallback to LLM
                 logger.warning(f"Memory retrieval failed: {e}", exc_info=True)
 
-        # 如果沒有可用的後端，使用備份機制
+        # 如果沒有可用的後端，使用備份機制 (try Model Bus first)
         if not self.is_available or self.active_backend is None:
+            bus_result = await self._try_model_bus(user_message, context)
+            if bus_result is not None:
+                return bus_result
             return await self._fallback_response(user_message, context)
 
         # ========== LLM 生成 ==========
@@ -625,6 +671,9 @@ class AngelaLLMService:
         except Exception as e:
             # broad exception acceptable: response generation must be resilient to any backend failure
             logger.error(f"生成回應時出錯: {e}", exc_info=True)
+            bus_result = await self._try_model_bus(user_message, context)
+            if bus_result is not None:
+                return bus_result
             return await self._fallback_response(user_message, context)
 
     async def _try_template_match(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
@@ -727,11 +776,37 @@ class AngelaLLMService:
             logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
         return None
 
+    async def _try_model_bus(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+        """Try Model Bus for capability-based routing, returns None if unavailable or fails"""
+        if self.model_bus and self.query_classifier:
+            try:
+                query_type, _ = self.query_classifier.classify(user_message)
+                decision = await self.model_bus.route(user_message, query_type.value, context)
+                if decision.selected_model != "none":
+                    result = decision.results[decision.selected_model]
+                    return LLMResponse(
+                        text=result.text,
+                        backend=result.model_id,
+                        model=result.model_id,
+                        tokens_used=0,
+                        response_time_ms=result.latency_ms,
+                        confidence=result.confidence,
+                        metadata={"bus_route": True, "query_type": query_type.value, "route_reason": decision.reason},
+                    )
+            except Exception as e:
+                logger.warning(f"Model Bus route failed: {e}", exc_info=True)
+        return None
+
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         備份回應機制
-        優先使用已註冊的 ED3N 或 GARDEN 後端，降級至 NeuroBlender，最後使用純模板。
+        優先使用 Model Bus 路由，其次已註冊的 ED3N 或 GARDEN 後端，降級至 NeuroBlender，最後使用純模板。
         """
+        # Tier 0: Model Bus capability-based routing
+        bus_result = await self._try_model_bus(user_message, context)
+        if bus_result is not None:
+            return bus_result
+
         # Tier 1: Registered ED3N/GARDEN backends (reuse singleton to avoid redundant init)
         for tier_backend, tier_name in [(LLMBackend.ED3N, "ed3n"), (LLMBackend.GARDEN, "garden")]:
             backend = self.backends.get(tier_backend)
