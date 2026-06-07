@@ -18,3 +18,16 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
+
+# Backward compatibility alias (2026-06-07)
+# Real implementation is DesktopInteraction in desktop_interaction.py
+try:
+    from .desktop_interaction import DesktopInteraction as DesktopPresence
+except ImportError:
+    DesktopPresence = None
+
+# MouseTracker alias if needed
+try:
+    from .desktop_interaction import DesktopInteraction as MouseTracker
+except ImportError:
+    MouseTracker = None

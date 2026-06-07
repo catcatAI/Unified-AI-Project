@@ -5,16 +5,16 @@ Integration tests for end-to-end causal tracing through L1-L6 layers
 import pytest
 import asyncio
 
-from apps.backend.src.core.tracing import (
+from core.tracing import (
     get_tracer,
     ChainValidator,
     LayerType,
 )
-from apps.backend.src.core.autonomous.endocrine_system import (
+from core.autonomous.endocrine_system import (
     EndocrineSystem,
     HormoneType,
 )
-from apps.backend.src.core.autonomous.cyber_identity import (
+from core.autonomous.cyber_identity import (
     CyberIdentity,
     IdentityAspect,
 )

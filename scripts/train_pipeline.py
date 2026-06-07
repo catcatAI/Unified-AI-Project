@@ -116,25 +116,28 @@ def load_all_data() -> List[Dict]:
     datasets_info: List[Tuple[str, str, str, str]] = [
         ("arithmetic_train_dataset.json", "problem", "answer", "math"),
         ("logic_test.json", "proposition", "answer", "logic"),
+        ("logic_train.json", "proposition", "answer", "logic"),
+        ("knowledge_extra.json", "input", "output", "knowledge"),
     ]
 
     for fname, inp_key, out_key, domain in datasets_info:
         path = os.path.join(DATA_DIR, fname)
         if not os.path.exists(path):
             continue
-        if fname == "logic_test.json":
-            data = _load_json(path)
+        data = _load_json(path)
+        count_before = sum(1 for s in samples if s["domain"] == domain)
+        if domain == "logic":
             for item in data:
                 inp = item.get(inp_key, "")
                 out = str(item.get(out_key, "")).lower() if isinstance(item.get(out_key), bool) else str(item.get(out_key, ""))
                 samples.append({"input": inp, "output": out, "domain": domain})
         else:
-            data = _load_json(path)
             for item in data:
                 inp = item.get(inp_key, "")
                 out = str(item.get(out_key, ""))
                 samples.append({"input": inp, "output": out, "domain": domain})
-        logger.info("  Loaded %-35s -> %d %s samples", fname, sum(1 for s in samples if s["domain"] == domain), domain)
+        count_added = sum(1 for s in samples if s["domain"] == domain) - count_before
+        logger.info("  Loaded %-35s -> %d %s samples", fname, count_added, domain)
 
     # CSV
     csv_path = os.path.join(DATA_DIR, "arithmetic_test_dataset.csv")
@@ -145,18 +148,6 @@ def load_all_data() -> List[Dict]:
                 samples.append({"input": row["problem"], "output": row["answer"], "domain": "math"})
                 csv_count += 1
         logger.info("  Loaded %-35s -> %d %s samples", "arithmetic_test_dataset.csv", csv_count, "math")
-
-    # Malformed logic_train.json (UTF-16 LE)
-    logic_train_path = os.path.join(DATA_DIR, "logic_train.json")
-    if os.path.exists(logic_train_path):
-        with open(logic_train_path, encoding="utf-16-le") as f:
-            raw = f.read()
-        parsed = _parse_malformed_logic_json(raw)
-        for item in parsed:
-            out_val = item.get("answer", "")
-            out_val = str(out_val).lower() if isinstance(out_val, bool) else str(out_val)
-            samples.append({"input": item.get("proposition", ""), "output": out_val, "domain": "logic"})
-        logger.info("  Loaded %-35s -> %d %s samples", "logic_train.json", len(parsed), "logic")
 
     logger.info("  Total samples loaded: %d", len(samples))
     return samples
@@ -316,7 +307,7 @@ def generate_knowledge_data() -> List[Dict]:
             seen_inputs.add(inp)
 
     # Expand templates to reach 500+ samples
-    target = 550
+    target = 1000
     prev = len(pairs)
     # English pass
     for template, tmpl_out in templates_en:
@@ -512,15 +503,15 @@ def main() -> None:
         ))
     print(f"  Examples created: {len(examples)} ({skip} skipped)")
 
-    # 4d: Train 3 epochs
+    # 4d: Train 2 epochs (accuracy plateaus after 1st; Hebbian ceiling ~77.69%)
     if examples:
-        print("  Training network (3 epochs)...")
+        print(f"  Training network (2 epochs, {len(examples)} examples)...")
         trainer = ED3NTrainer(ed3n_engine, dictionary_lr=0.05, network_lr=0.05)
-        for epoch in range(3):
+        for epoch in range(2):
             t0 = time.time()
             batch = TrainingBatch(examples=examples, batch_id=f"ed3n_ep{epoch}")
             m = trainer.train_step(batch)
-            print(f"    Epoch {epoch+1}/3: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
+            print(f"    Epoch {epoch+1}/2: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
             # Record with coordinator
             coordinator.record_training(
                 domain="math" if any(e.metadata.get("domain") == "math" for e in batch.examples) else "logic",
@@ -529,6 +520,8 @@ def main() -> None:
                 accuracy=m.accuracy,
                 examples=[{"input": e.input_text, "output": e.expected_output} for e in examples[:50]],
             )
+            # Save mid-training checkpoint
+            ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
 
     # 4e: Add reflex patterns from training data
     print("  Adding reflex patterns from training data...")

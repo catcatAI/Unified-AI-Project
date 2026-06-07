@@ -39,9 +39,9 @@ class QueryClassifier:
             (
                 QueryType.GREETING,
                 re.compile(
-                    r"(你好|hello|hi|hey|早上好|上午好|中午好|下午好|晚上好|晚安|"
-                    r"good\s*morning|good\s*afternoon|good\s*evening|good\s*bye|"
-                    r"再见|拜拜|谢谢|感谢|thanks?|bye)",
+                    r"(你好|早上好|上午好|中午好|下午好|晚上好|晚安|"
+                    r"再见|拜拜|谢谢|感谢|"
+                    r"\b(hello|hi|hey|good\s*morning|good\s*afternoon|good\s*evening|good\s*bye|thanks?|bye)\b)",
                     re.IGNORECASE,
                 ),
                 0.9,

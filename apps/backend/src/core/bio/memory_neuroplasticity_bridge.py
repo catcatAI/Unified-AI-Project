@@ -17,3 +17,14 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
+
+# Backward compatibility alias (2026-06-07)
+# Real implementation is NeuroplasticitySystem in neuroplasticity_core.py
+try:
+    from .neuroplasticity_core import (
+        NeuroplasticitySystem as MemoryNeuroplasticityBridge,
+        NeuroplasticitySystem as MemoryConsolidation,
+    )
+except ImportError:
+    MemoryNeuroplasticityBridge = None
+    MemoryConsolidation = None

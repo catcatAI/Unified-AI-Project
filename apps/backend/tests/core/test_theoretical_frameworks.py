@@ -20,23 +20,23 @@ from datetime import datetime, timedelta
 from typing import Dict, Any
 
 # Import all formula systems
-from apps.backend.src.core.hsm_formula_system import (
+from core.hsm_formula_system import (
     HSMFormulaSystem, CognitiveGap, ExplorationEvent, 
     ExplorationResult, GovernanceBlueprint
 )
-from apps.backend.src.core.cdm_dividend_model import (
+from core.cdm_dividend_model import (
     CDMCognitiveDividendModel, CognitiveInvestment, LifeSenseOutput,
     CognitiveActivity, DividendDistribution
 )
-from apps.backend.src.core.life_intensity_formula import (
+from core.life_intensity_formula import (
     LifeIntensityFormula, KnowledgeState, ConstraintState,
     ObserverPresence, KnowledgeDomain, LifeIntensitySnapshot
 )
-from apps.backend.src.core.active_cognition_formula import (
+from core.active_cognition_formula import (
     ActiveCognitionFormula, StressVector, OrderBaseline,
     ActiveConstruction, StressSource, OrderType
 )
-from apps.backend.src.core.non_paradox_existence import (
+from core.non_paradox_existence import (
     NonParadoxExistence, GrayZoneVariable, PossibilityState,
     CoexistenceField, GrayZoneVariableType
 )

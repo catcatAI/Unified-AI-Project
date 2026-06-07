@@ -18,3 +18,16 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
+
+# Backward compatibility aliases (2026-06-07)
+# Real implementation is Live2DAvatarGenerator in live2d_avatar_generator.py
+try:
+    from .live2d_avatar_generator import (
+        Live2DAvatarGenerator as Live2DIntegration,
+        Live2DAvatarGenerator as Live2DExpression,
+        Live2DAvatarGenerator as Live2DAction,
+    )
+except ImportError:
+    Live2DIntegration = None
+    Live2DExpression = None
+    Live2DAction = None

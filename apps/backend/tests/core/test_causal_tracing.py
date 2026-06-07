@@ -6,7 +6,7 @@ import pytest
 from datetime import datetime
 import asyncio
 
-from apps.backend.src.core.tracing import (
+from core.tracing import (
     CausalNode,
     CausalChain,
     LayerType,

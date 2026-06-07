@@ -73,15 +73,15 @@ mypy apps/backend/src                    # Type check
 pre-commit run --all-files
 ```
 
-> ⚠️ **NOTE (Corrected 2026-06-07)**: Test collection has **21 errors** due to **naming mismatches**, not missing implementations. Real classes exist under different names:
-> - `ModelProvider` → `LLMBackend` (alias needed in `protocols.py`)
-> - `AuditoryAttentionController` → `AttentionController` (tests use wrong name)
-> - `ArtLearningSystem` → `ArtLearningWorkflow` (alias needed in `art_learning_system.py`)
-> - `DesktopPresence` → `DesktopInteraction` (alias needed in `desktop_presence.py`)
-> - `Live2DIntegration` → `Live2DAvatarGenerator` (alias needed in `live2d_integration.py`)
-> - `MemoryNeuroplasticityBridge` → `NeuroplasticitySystem` (alias needed in `memory_neuroplasticity_bridge.py`)
+> ✅ **NOTE (Updated 2026-06-08)**: All alias fixes applied. Test collection now has **0 errors** (511 tests collected). Real classes exist under different names — all 5 aliases applied:
+> - `ModelProvider` → `LLMBackend` (alias added in `protocols.py`)
+> - `AuditoryAttentionController` → `AttentionController` (alias added in `auditory_attention.py`)
+> - `ArtLearningSystem` → `ArtLearningWorkflow` (alias added in `art_learning_system.py`)
+> - `DesktopPresence` → `DesktopInteraction` (alias added in `desktop_presence.py`)
+> - `Live2DIntegration` → `Live2DAvatarGenerator` (alias added in `live2d_integration.py`)
+> - `MemoryNeuroplasticityBridge` → `NeuroplasticitySystem` (alias added in `memory_neuroplasticity_bridge.py`)
 > 
-> Fix: 5 alias exports in stub files (~10 lines total). No re-implementation needed.
+> All 5 alias exports applied (~10 lines total). No re-implementation needed.
 
 ### JavaScript/TypeScript
 

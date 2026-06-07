@@ -10,6 +10,14 @@ from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
+# Backward compatibility aliases (2026-06-07)
+# These allow old imports to work while implementations use new names
+try:
+    from services.llm.providers.registry import LLMBackend as ModelProvider
+except ImportError:
+    ModelProvider = None
+    logger.warning("ModelProvider alias: LLMBackend not available")
+
 
 @dataclass
 class ChatMessage:

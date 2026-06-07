@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from apps.backend.src.services.tactile_service import TactileService
+from services.tactile_service import TactileService
 async def test_tactile_perception_chain():
     tactile_service = TactileService()
     

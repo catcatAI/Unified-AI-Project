@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from apps.backend.src.core.perception.visual_sampler import VisualSampler, SamplingDistribution
+from core.perception.visual_sampler import VisualSampler, SamplingDistribution
 
 def test_sampler_initialization():
     sampler = VisualSampler()
