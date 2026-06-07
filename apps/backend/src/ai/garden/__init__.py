@@ -13,12 +13,12 @@ Hierarchy:
   [Ultra-Heavy]       ECOSYSTEM-1T (~1TB, cluster)
 """
 
-from apps.backend.src.ai.garden.dictionary import VectorDictionary
-from apps.backend.src.ai.garden.snn_core import TensorSNNCore
-from apps.backend.src.ai.garden.garden_engine import GARDENEngine
-from apps.backend.src.ai.garden.binary_store import BinaryStore
-from apps.backend.src.ai.garden.kg_import import KGImporter
-from apps.backend.src.ai.garden.hybrid_router import HybridRouter, TierResult, RoutingDecision
+from .dictionary import VectorDictionary
+from .snn_core import TensorSNNCore
+from .garden_engine import GARDENEngine
+from .binary_store import BinaryStore
+from .kg_import import KGImporter
+from .hybrid_router import HybridRouter, TierResult, RoutingDecision
 
 __all__ = [
     "VectorDictionary",

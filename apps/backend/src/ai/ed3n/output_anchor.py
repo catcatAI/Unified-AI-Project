@@ -6,7 +6,7 @@ import copy
 import logging
 from typing import Any, Dict, List, Optional
 
-from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryEntry, DictionaryLayer
+from .dictionary_layer import DictionaryEntry, DictionaryLayer
 
 logger = logging.getLogger(__name__)
 

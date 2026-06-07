@@ -61,5 +61,14 @@
       "depth": "auto",
       "reflex_threshold": 0.8
     }
+  },
+  "garden-1g": {
+    "provider": "garden",
+    "enabled": false,
+    "model": "garden-1g",
+    "priority": 6,
+    "timeout": 30.0,
+    "checkpoint": "",
+    "note": "GARDEN-1G 本地輕量模型 (PyTorch SNN + VectorDict)。啟用需安裝 torch。"
   }
 }

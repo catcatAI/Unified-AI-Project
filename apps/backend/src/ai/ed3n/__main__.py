@@ -16,9 +16,9 @@ import argparse, json, logging, os, sys, time
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
 
-from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
-from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
-from apps.backend.src.ai.ed3n.training_types import TrainingExample, TrainingBatch
+from .ed3n_engine import ED3NEngine
+from .ed3n_trainer import ED3NTrainer
+from .training_types import TrainingExample, TrainingBatch
 
 
 def get_engine(path: str = "") -> ED3NEngine:

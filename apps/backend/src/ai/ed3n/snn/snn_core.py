@@ -7,19 +7,19 @@ SNN-based core network replacing sequential CoreNetwork.
 
 from typing import Any, Dict, List, Optional
 
-from apps.backend.src.ai.ed3n.snn.hormonal_modulator import HormonalModulator
-from apps.backend.src.ai.ed3n.snn.lif_neuron import LIFNeuron
+from .hormonal_modulator import HormonalModulator
+from .lif_neuron import LIFNeuron
 
 try:
-    from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier
+    from ..relation_classifier import RelationClassifier
 except ImportError:
     RelationClassifier = None
 
 try:
-    from apps.backend.src.ai.ed3n.snn.batch_reorder import (
+    from .batch_reorder import (
         BatchReorderEngine,
     )
-    from apps.backend.src.ai.ed3n.snn.sparse_engine import (
+    from .sparse_engine import (
         SparseComputationEngine,
     )
 except ImportError:

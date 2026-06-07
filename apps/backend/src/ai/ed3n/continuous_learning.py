@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from apps.backend.src.ai.ed3n.training_types import (
+from .training_types import (
     TrainingBatch,
     TrainingExample as TTTrainingExample,
 )

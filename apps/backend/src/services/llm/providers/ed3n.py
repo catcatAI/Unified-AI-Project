@@ -32,6 +32,7 @@ class ED3NBackend(BaseLLMBackend):
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
         start_time = time.time()
         depth = kwargs.pop("depth", self.depth)
+        context = kwargs.get("context")
         preset = PRESET_MAP.get(depth, "default")
         self._kwargs_store = {
             "max_tokens": kwargs.get("max_tokens"),
@@ -51,7 +52,7 @@ class ED3NBackend(BaseLLMBackend):
                 layer = DictionaryLayer(preset=preset)
                 text = layer.process(prompt)
             else:
-                text = await self._engine.process(prompt, depth=depth, preset=preset)
+                text = await self._engine.process(prompt, context=context, depth=depth, preset=preset)
                 if text is None:
                     from ai.ed3n.dictionary_layer import DictionaryLayer
 

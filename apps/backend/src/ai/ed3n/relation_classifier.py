@@ -8,7 +8,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 if TYPE_CHECKING:
-    from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryEntry, DictionaryLayer
+    from .dictionary_layer import DictionaryEntry, DictionaryLayer
 
 logger = logging.getLogger(__name__)
 

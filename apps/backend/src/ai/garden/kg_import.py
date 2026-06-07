@@ -17,7 +17,7 @@ Pipeline steps:
   4. Export to BinaryStore .bin file + key registry JSON
 
 Usage:
-    from apps.backend.src.ai.garden.kg_import import KGImporter
+    from ai.garden.kg_import import KGImporter
     importer = KGImporter()
     # Generate synthetic graph (for testing)
     importer.generate_synthetic(num_entities=5000)
@@ -510,7 +510,7 @@ class KGImporter:
         Returns:
             Statistics dict.
         """
-        from apps.backend.src.ai.garden.binary_store import BinaryStore
+        from .binary_store import BinaryStore
 
         if not key_registry_path:
             key_registry_path = bin_path.replace(".bin", "_keys.json")

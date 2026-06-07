@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import re
+from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -36,15 +37,19 @@ class DictionaryEntry:
 
 
 class DictionaryLayer:
-    def __init__(self, growth_threshold: float = 0.5):
+    def __init__(self, growth_threshold: float = 0.5, max_entries: int = 50000):
         self.entries: Dict[str, DictionaryEntry] = {}
         self.modality_encoders: Dict[str, Any] = {"text": None, "image": None, "audio": None}
         self.growth_threshold = growth_threshold
+        self.max_entries = max_entries
         self._next_key_id: int = 1
         self._keyword_index: Dict[str, List[str]] = {}
         self._bigram_index: Dict[str, List[str]] = {}
         self._rebuilt_index: bool = False
         self._growth_history: List[Dict[str, Any]] = []
+        self._index_version: int = 0
+        self._encode_cache: Dict[Tuple[str, int], List[str]] = {}
+        self._encode_cache_max: int = 256
 
     def _assign_key(self, prefix: str = "c") -> str:
         key = f"{prefix}{self._next_key_id}"
@@ -80,8 +85,11 @@ class DictionaryLayer:
         if modality != "text":
             logger.warning("Only 'text' modality is supported; falling back to text encoding.")
         self._rebuild_index()
+        cache_key = (text.lower().strip(), self._index_version)
+        cached = self._encode_cache.get(cache_key)
+        if cached is not None:
+            return cached
         text_lower = text.lower().strip()
-        tokens = re.findall(r"[\w]+", text_lower)
         matched_keys: List[str] = []
 
         for kw, keys in self._keyword_index.items():
@@ -98,6 +106,9 @@ class DictionaryLayer:
             if k not in seen:
                 seen.add(k)
                 unique_keys.append(k)
+        if len(self._encode_cache) > self._encode_cache_max:
+            self._encode_cache.clear()
+        self._encode_cache[cache_key] = unique_keys
         return unique_keys
 
     def decode(self, keys: List[str], context: Optional[Dict[str, Any]] = None) -> str:
@@ -257,6 +268,34 @@ class DictionaryLayer:
             "growth_history_count": len(self._growth_history),
         }
 
+    def prune(self, min_confidence: float = 0.1, max_age_days: int = 365) -> int:
+        pruned = 0
+        now = datetime.datetime.now()
+        keys_to_delete = []
+        for key, entry in self.entries.items():
+            if entry.confidence < min_confidence:
+                keys_to_delete.append(key)
+                continue
+            if entry.contexts:
+                timestamps = [c.get("timestamp", "") for c in entry.contexts if "timestamp" in c]
+                if timestamps:
+                    last_used = max(timestamps)
+                    try:
+                        age = (now - datetime.datetime.fromisoformat(last_used)).days
+                        if age > max_age_days:
+                            keys_to_delete.append(key)
+                            continue
+                    except ValueError:
+                        pass
+        for key in keys_to_delete:
+            del self.entries[key]
+            pruned += 1
+        if keys_to_delete:
+            self._rebuild_index()
+            logger.info("Pruned %d low-confidence/stale entries (min_conf=%.2f, max_age=%dd)",
+                        pruned, min_confidence, max_age_days)
+        return pruned
+
     def detect_new_concepts(self, text: str, known_keys: List[str]) -> List[Dict[str, Any]]:
         known_surfaces: set = set()
         for k in known_keys:
@@ -394,6 +433,8 @@ class DictionaryLayer:
                         if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
                             self._bigram_index.setdefault(bigram, []).append(key)
         self._rebuilt_index = True
+        self._index_version += 1
+        self._encode_cache.clear()
 
     def _build_presets(self) -> List[Dict[str, Any]]:
         return [

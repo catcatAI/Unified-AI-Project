@@ -6,11 +6,11 @@ import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from apps.backend.src.ai.ed3n.core_network import CoreNetwork
-from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryLayer
-from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
-from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier
-from apps.backend.src.ai.ed3n.training_types import TrainMetrics, TrainingBatch, TrainingExample
+from .core_network import CoreNetwork
+from .dictionary_layer import DictionaryLayer
+from .ed3n_engine import ED3NEngine
+from .relation_classifier import RelationClassifier
+from .training_types import TrainMetrics, TrainingBatch, TrainingExample
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,7 @@ class ED3NTrainer:
     def save(self, path: str) -> None:
         """Save trainer state (dictionary export + network params)."""
         import json, os
-        from apps.backend.src.ai.ed3n.training_types import TrainMetrics
+        from .training_types import TrainMetrics
 
         def _serialize(m):
             if isinstance(m, TrainMetrics):
@@ -203,7 +203,7 @@ class ED3NTrainer:
     def load(cls, path: str, dictionary_layer=None, core_network=None) -> "ED3NTrainer":
         """Load trainer state. Requires pre-configured dictionary and network."""
         import json, os
-        from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
+        from .ed3n_engine import ED3NEngine
 
         with open(path, "r", encoding="utf-8") as f:
             state = json.load(f)

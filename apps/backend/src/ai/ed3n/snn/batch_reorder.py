@@ -9,7 +9,7 @@ Only neurons that receive spikes participate in the next batch.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-from apps.backend.src.ai.ed3n.snn.lif_neuron import LIFNeuron
+from .lif_neuron import LIFNeuron
 
 
 @dataclass

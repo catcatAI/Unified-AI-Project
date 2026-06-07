@@ -175,7 +175,7 @@ class ED3NLearningIntegration:
         if self.engine is not None and hasattr(self.engine, "dictionary"):
             return self.engine.dictionary
         try:
-            from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryLayer
+            from .dictionary_layer import DictionaryLayer
 
             return DictionaryLayer()
         except ImportError:

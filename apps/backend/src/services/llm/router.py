@@ -40,6 +40,7 @@ from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.anthropic import AnthropicAPIBackend
 from services.llm.providers.google import GoogleAPIBackend
 from services.llm.providers.ed3n import ED3NBackend
+from services.llm.providers.garden import GARDENBackend
 
 # Prompt builder utilities
 from services.llm.prompt_builder import (
@@ -411,6 +412,14 @@ class AngelaLLMService:
                 )
                 logger.info(f"已注冊 ED3N 後端: {model_name or 'ed3n-v1'}")
 
+            elif provider == "garden":
+                self.backends[LLMBackend.GARDEN] = GARDENBackend(
+                    model=model_name or "garden-1g",
+                    checkpoint=backend_config.get("checkpoint", ""),
+                    timeout=backend_config.get("timeout", 30.0),
+                )
+                logger.info(f"已注冊 GARDEN 後端: {model_name or 'garden-1g'}")
+
     async def initialize(self) -> bool:
         """初始化服務，檢測可用的後端
         返回: 是否至少有一個可用的後端
@@ -465,6 +474,8 @@ class AngelaLLMService:
                 LLMBackend.OPENAI,
                 LLMBackend.ANTHROPIC,
                 LLMBackend.GOOGLE,
+                LLMBackend.GARDEN,
+                LLMBackend.ED3N,
             ]
             for backend_type in priority:
                 if backend_type in available_backends:
@@ -719,23 +730,21 @@ class AngelaLLMService:
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         """
         備份回應機制
-        優先使用 ED3N 引擎，降級至 NeuroBlender，最後使用純模板。
+        優先使用已註冊的 ED3N 或 GARDEN 後端，降級至 NeuroBlender，最後使用純模板。
         """
-        # Tier 1: ED3N engine
-        try:
-            from ai.ed3n.ed3n_engine import ED3NEngine
-            engine = ED3NEngine()
-            text = engine.process(user_message, context=context, depth="shallow")
-            if text:
-                return LLMResponse(
-                    text=text,
-                    backend="ed3n-fallback",
-                    model="ed3n-v1",
-                    confidence=0.7,
-                    metadata={"fallback": True, "tier": "ed3n"},
-                )
-        except Exception as e:
-            logger.warning(f"ED3N fallback failed: {e}", exc_info=True)
+        # Tier 1: Registered ED3N/GARDEN backends (reuse singleton to avoid redundant init)
+        for tier_backend, tier_name in [(LLMBackend.ED3N, "ed3n"), (LLMBackend.GARDEN, "garden")]:
+            backend = self.backends.get(tier_backend)
+            if backend:
+                try:
+                    result = await backend.generate(user_message, context=context)
+                    if result and result.text:
+                        result.metadata = result.metadata or {}
+                        result.metadata["fallback"] = True
+                        result.metadata["tier"] = tier_name
+                        return result
+                except Exception as e:
+                    logger.warning(f"{tier_name} fallback failed: {e}", exc_info=True)
 
         # Tier 2: NeuroBlender
         try:

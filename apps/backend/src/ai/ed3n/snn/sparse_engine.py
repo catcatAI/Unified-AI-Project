@@ -8,7 +8,7 @@ Only active neurons participate in each batch.
 
 from typing import Any, Dict, List, Set
 
-from apps.backend.src.ai.ed3n.snn.lif_neuron import LIFNeuron
+from .lif_neuron import LIFNeuron
 
 
 class SparseComputationEngine:

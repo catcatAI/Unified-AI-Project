@@ -7,9 +7,9 @@ import logging
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
 
 if TYPE_CHECKING:
-    from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryLayer
+    from .dictionary_layer import DictionaryLayer
 
-from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier, RelationType
+from .relation_classifier import RelationClassifier, RelationType
 
 logger = logging.getLogger(__name__)
 

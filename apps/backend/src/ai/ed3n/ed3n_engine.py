@@ -7,25 +7,26 @@ import logging
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
-from apps.backend.src.ai.ed3n.core_network import CoreNetwork
-from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryLayer
-from apps.backend.src.ai.ed3n.multimodal.audio_encoder import AudioEncoder
-from apps.backend.src.ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
-from apps.backend.src.ai.ed3n.multimodal.image_encoder import ImageEncoder
-from apps.backend.src.ai.ed3n.output_anchor import anchored_decode, ResponseAnchorValidator
-from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier
-from apps.backend.src.ai.ed3n.snn.snn_core import SNNCore
-from apps.backend.src.ai.ed3n.snn.hormonal_modulator import HormonalModulator
+from .core_network import CoreNetwork
+from .dictionary_layer import DictionaryLayer
+from .multimodal.audio_encoder import AudioEncoder
+from .multimodal.cross_modal_trainer import CrossModalTrainer
+from .multimodal.image_encoder import ImageEncoder
+from .output_anchor import anchored_decode, ResponseAnchorValidator
+from .relation_classifier import RelationClassifier
+from .snn.snn_core import SNNCore
+from .snn.hormonal_modulator import HormonalModulator
 
 logger = logging.getLogger(__name__)
 
 
 class ReflexLayer:
-    def __init__(self, max_cache: int = 128, threshold: float = 0.5):
+    def __init__(self, max_cache: int = 128, threshold: float = 0.5, min_pattern_len: int = 2):
         self.patterns: Dict[str, str] = OrderedDict()
         self.lru_cache: OrderedDict[str, str] = OrderedDict()
         self.max_cache = max_cache
         self.threshold = threshold
+        self.min_pattern_len = min_pattern_len
 
     def process(self, input_text: str) -> Optional[str]:
         normalized = input_text.strip().lower()
@@ -36,11 +37,26 @@ class ReflexLayer:
             return result
 
         for pattern, response in self.patterns.items():
+            if len(pattern) < self.min_pattern_len:
+                continue
             if pattern in normalized:
-                self._add_to_cache(normalized, response)
-                return response
+                if self.min_pattern_len >= 3 or len(pattern) >= 3:
+                    self._add_to_cache(normalized, response)
+                    return response
+                if self._is_word_boundary_match(normalized, pattern):
+                    self._add_to_cache(normalized, response)
+                    return response
 
         return None
+
+    @staticmethod
+    def _is_word_boundary_match(text: str, pattern: str) -> bool:
+        idx = text.find(pattern)
+        if idx == -1:
+            return False
+        before = idx == 0 or not text[idx - 1].isalnum()
+        after = idx + len(pattern) >= len(text) or not text[idx + len(pattern)].isalnum()
+        return before and after
 
     def add_pattern(self, pattern: str, response: str) -> None:
         self.patterns[pattern.lower().strip()] = response
@@ -116,6 +132,7 @@ class ED3NEngine:
         self.image_encoder: Optional[ImageEncoder] = None
         self.audio_encoder: Optional[AudioEncoder] = None
         self.cross_modal_trainer: Optional[CrossModalTrainer] = None
+        self.enable_multimodal()
 
     @property
     def validator(self) -> ResponseAnchorValidator:
@@ -341,8 +358,8 @@ class ED3NEngine:
         network_epochs: int = 3,
     ) -> Any:
         """High-level training API. Accepts list of dicts with 'input', 'output', 'context'."""
-        from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
-        from apps.backend.src.ai.ed3n.training_types import (
+        from .ed3n_trainer import ED3NTrainer
+        from .training_types import (
             TrainingBatch,
             TrainingExample,
         )

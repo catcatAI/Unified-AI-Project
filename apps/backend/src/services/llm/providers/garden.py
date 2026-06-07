@@ -32,7 +32,7 @@ class GARDENBackend(BaseLLMBackend):
 
     def _get_engine(self):
         if self._engine is None:
-            from apps.backend.src.ai.garden.garden_engine import GARDENEngine
+            from ai.garden.garden_engine import GARDENEngine
             engine = GARDENEngine()
             if self.checkpoint and os.path.isdir(self.checkpoint):
                 engine.load(self.checkpoint)

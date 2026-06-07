@@ -24,8 +24,8 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 
-from apps.backend.src.ai.garden.dictionary import VectorDictionary
-from apps.backend.src.ai.garden.snn_core import TensorSNNCore
+from .dictionary import VectorDictionary
+from .snn_core import TensorSNNCore
 
 logger = logging.getLogger(__name__)
 
