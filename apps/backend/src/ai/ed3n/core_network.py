@@ -168,12 +168,14 @@ class CoreNetwork:
         active_keys: List[str],
         max_hops: int = 3,
         decay: float = 0.5,
+        groups_scope: Optional[Dict[str, "RelationGroup"]] = None,
     ) -> Dict[str, float]:
         propagations: Dict[str, float] = {}
         queue: List[Tuple[str, float, int]] = [
             (k, 1.0, 0) for k in active_keys
         ]
         visited: Set[str] = set()
+        scope = self.groups if groups_scope is None else groups_scope
 
         while queue:
             current_key, current_strength, hop = queue.pop(0)
@@ -181,7 +183,7 @@ class CoreNetwork:
                 continue
             visited.add(current_key)
 
-            for group in self.groups.values():
+            for group in scope.values():
                 neuron = group.neurons.get(current_key)
                 if neuron is None:
                     continue
@@ -339,9 +341,16 @@ class CoreNetwork:
         self,
         input_keys: List[str],
         current_position: int,
+        path_type: str = "semantic",
     ) -> Dict[str, float]:
         if not input_keys or current_position < 0:
             return {}
+
+        groups_scope = (
+            {k: g for k, g in self.groups.items() if k == "mapping"}
+            if path_type == "sequence"
+            else self.groups
+        )
 
         self.reset()
         activations: Dict[str, float] = {}
@@ -349,7 +358,7 @@ class CoreNetwork:
         visible_keys = input_keys[: current_position + 1]
 
         for key in visible_keys:
-            for group in self.groups.values():
+            for group in groups_scope.values():
                 if key in group.neurons:
                     group.activate(key, 1.0)
 
@@ -357,17 +366,18 @@ class CoreNetwork:
         if num_visible > 0:
             for pos, key in enumerate(visible_keys):
                 recency = 1.0 + 0.15 * pos / max(num_visible, 1)
-                for group in self.groups.values():
+                for group in groups_scope.values():
                     neuron = group.neurons.get(key)
                     if neuron is not None:
                         neuron.activation = min(neuron.activation * recency, 1.0)
 
         propagated = self.compute_spike_propagation(
-            active_keys=visible_keys, max_hops=2, decay=0.3
+            active_keys=visible_keys, max_hops=2, decay=0.3,
+            groups_scope=groups_scope if path_type == "sequence" else None,
         )
         activations.update(propagated)
 
-        for group in self.groups.values():
+        for group in groups_scope.values():
             for n_key, neuron in group.neurons.items():
                 if neuron.activation > neuron.threshold:
                     activations[n_key] = max(

@@ -50,7 +50,7 @@ class StepDecoder:
 
         for step in range(self.max_length):
             seq_output = self.network.forward_sequential(
-                context, current_position=len(context) - 1
+                context, current_position=len(context) - 1, path_type="sequence"
             )
             sorted_seq = sorted(
                 seq_output.items(), key=lambda x: x[1], reverse=True

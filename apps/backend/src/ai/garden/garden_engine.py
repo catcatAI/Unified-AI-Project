@@ -207,6 +207,13 @@ class GARDENEngine:
             if loaded_from_config > 0:
                 logger.info("GARDEN: loaded %d additional concepts from config/", loaded_from_config)
 
+        # Collect all unique keys (entries + relation targets) for pre-allocation
+        all_keys: set = set(self.dictionary.entries.keys())
+        for entry in self.dictionary.entries.values():
+            for targets in entry.relations.values():
+                all_keys.update(targets)
+        self.snn._pre_allocate(list(all_keys))
+
         # Wire dictionary relations into the SNN weight matrix
         for entry in self.dictionary.entries.values():
             self.snn.add_relations_from_entry(entry.key, entry.relations)

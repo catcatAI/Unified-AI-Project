@@ -58,10 +58,113 @@ class ConceptEntry:
 # Encoder backend (sentence-transformers or fallback)
 # ---------------------------------------------------------------------------
 
+class _TfidfEncoder:
+    """
+    Pure-Python TF-IDF encoder with zero external dependencies.
+    Tokenizes English words + Chinese unigrams/bigrams into a sparse vocab,
+    then produces dense TF-IDF vectors normalized to unit length.
+
+    Fits vocabulary on first encode() call.  Re-fit by calling fit() again.
+    """
+
+    def __init__(self):
+        self.vocab: Dict[str, int] = {}
+        self.idf: Optional[torch.Tensor] = None
+        self.N: int = 0
+        self._fitted = False
+
+    # ------------------------------------------------------------------
+    # Tokenisation (English words + Chinese chars/bigrams)
+    # ------------------------------------------------------------------
+
+    def _tokenize(self, text: str) -> List[str]:
+        tokens: List[str] = []
+        lower = text.lower().strip()
+        if not lower:
+            return tokens
+        # English words (split on whitespace)
+        for word in lower.split():
+            cleaned = word.strip(",.!?;:\"'()[]{}")
+            if cleaned and all(c.isalpha() or c in "'-" for c in cleaned):
+                tokens.append(cleaned)
+        # Chinese unigrams
+        cjk_chars: List[str] = []
+        for ch in lower:
+            if '\u4e00' <= ch <= '\u9fff' or '\u3040' <= ch <= '\u30ff':
+                tokens.append(ch)
+                cjk_chars.append(ch)
+        # Chinese bigrams
+        for i in range(len(cjk_chars) - 1):
+            tokens.append(cjk_chars[i] + cjk_chars[i + 1])
+        return tokens
+
+    # ------------------------------------------------------------------
+    # Fit / build vocabulary
+    # ------------------------------------------------------------------
+
+    def fit(self, texts: List[str]) -> None:
+        torch, _ = _lazy_torch()
+        # Build vocabulary from corpus
+        vocab_set: set = set()
+        doc_freq: Dict[str, int] = {}
+        for text in texts:
+            toks = self._tokenize(text)
+            seen = set()
+            for t in toks:
+                vocab_set.add(t)
+                if t not in seen:
+                    seen.add(t)
+                    doc_freq[t] = doc_freq.get(t, 0) + 1
+        self.vocab = {t: i for i, t in enumerate(sorted(vocab_set))}
+        self.N = len(texts)
+        V = len(self.vocab)
+        # IDF: log(N / df) + 1  (smooth)
+        idf_list = [0.0] * V
+        for token, idx in self.vocab.items():
+            df = doc_freq.get(token, 1)
+            idf_list[idx] = math.log(self.N / df) + 1.0 if self.N > 0 else 1.0
+        self.idf = torch.tensor(idf_list, dtype=torch.float32)
+        self._fitted = True
+        logger.info(
+            "GARDEN TF-IDF: fitted on %d documents, vocab=%d",
+            self.N, V,
+        )
+
+    # ------------------------------------------------------------------
+    # Encode
+    # ------------------------------------------------------------------
+
+    def encode(self, texts: List[str]) -> torch.Tensor:
+        torch, _ = _lazy_torch()
+        if not self._fitted:
+            self.fit(texts)
+        V = len(self.vocab)
+        if V == 0:
+            return torch.zeros(len(texts), 1)
+        N = len(texts)
+        # Build TF-IDF matrix [N, V]
+        matrix = torch.zeros(N, V, dtype=torch.float32)
+        for i, text in enumerate(texts):
+            toks = self._tokenize(text)
+            for t in toks:
+                idx = self.vocab.get(t)
+                if idx is not None:
+                    matrix[i, idx] += 1.0  # raw TF (will be weighted by IDF)
+            # Apply IDF weights
+            if self.idf is not None:
+                matrix[i] *= self.idf
+        # L2 normalize
+        norms = matrix.norm(dim=1, keepdim=True)
+        norms[norms == 0] = 1.0
+        matrix = matrix / norms
+        return matrix
+
+
 class _CharBagEncoder:
     """
     CPU-only fallback encoder that produces a deterministic dense vector from text
     using character n-gram hashing into a fixed-dim space.  No internet required.
+    Kept as fallback when TF-IDF vocabulary is empty.
     """
     DIM = 256
 
@@ -74,7 +177,6 @@ class _CharBagEncoder:
             for i, ch in enumerate(lower):
                 idx = (ord(ch) * 31 + i) % self.DIM
                 v[idx] += 1.0
-            # bigrams
             for i in range(len(lower) - 1):
                 bigram = lower[i:i+2]
                 idx = (zlib.adler32(bigram.encode()) & 0x7FFFFFFF) % self.DIM
@@ -145,15 +247,15 @@ class VectorDictionary:
 
     def _build_encoder(self, model_name: str):
         if self.compatibility_mode:
-            logger.info("GARDEN: compatibility mode enabled; using char-bag encoder")
-            return _CharBagEncoder()
+            logger.info("GARDEN: using TF-IDF encoder (compatibility mode)")
+            return _TfidfEncoder()
         try:
             enc = _STEncoder(model_name)
             logger.info("GARDEN: using SentenceTransformer encoder (semantic mode)")
             return enc
         except Exception as e:
-            logger.warning("GARDEN: SentenceTransformer not available (%s); using char-bag fallback", e)
-            return _CharBagEncoder()
+            logger.warning("GARDEN: SentenceTransformer not available (%s); using TF-IDF fallback", e)
+            return _TfidfEncoder()
 
     # ------------------------------------------------------------------
     # Entry management
@@ -209,16 +311,16 @@ class VectorDictionary:
             return
 
         self._key_order = list(self.entries.keys())
-        # Build one text per entry: combine all surface forms
         texts = []
         for key in self._key_order:
             entry = self.entries[key]
             forms = list(entry.surface_forms.values())
             texts.append(" ".join(forms))
 
+        if hasattr(self._encoder, 'fit'):
+            self._encoder.fit(texts)
         embeddings = self._encoder.encode(texts)  # [N, D]
 
-        # Store per-entry
         for i, key in enumerate(self._key_order):
             self.entries[key].embedding = embeddings[i]
 

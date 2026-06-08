@@ -79,9 +79,23 @@ class DictionaryLayer:
                 result[key] = entry
         return result
 
+    # Cap on encode results to prevent bigram explosion
+    MAX_ENCODE_KEYS: int = 5
+    MIN_ENCODE_SCORE: float = 0.25
+
     def encode(self, text: str, modality: str = "text") -> List[str]:
+        raw: List[str]
         with self._lock:
-            return self._encode_locked(text, modality)
+            raw = self._encode_locked(text, modality)
+        if len(raw) <= self.MAX_ENCODE_KEYS:
+            return raw
+        soft = self.encode_soft(text)
+        scored = [(k, soft.get(k, 0.0)) for k in raw]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        filtered = [k for k, s in scored if s >= self.MIN_ENCODE_SCORE]
+        if not filtered:
+            return raw[:self.MAX_ENCODE_KEYS]
+        return filtered[:self.MAX_ENCODE_KEYS]
 
     def encode_soft(self, text: str) -> Dict[str, float]:
         if not text or not isinstance(text, str):

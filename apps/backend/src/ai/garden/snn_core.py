@@ -150,8 +150,20 @@ class TensorSNNCore:
             self._grow_matrix(idx + 1)
         return self._key_to_idx[key]
 
+    def _pre_allocate(self, keys: List[str]) -> None:
+        torch, _ = _lazy_torch()
+        for key in keys:
+            if key not in self._key_to_idx:
+                idx = len(self._idx_to_key)
+                self._key_to_idx[key] = idx
+                self._idx_to_key.append(key)
+        V = len(self._idx_to_key)
+        self._W = torch.zeros(V, V, dtype=torch.float32)
+
     def _grow_matrix(self, new_size: int) -> None:
         torch, _ = _lazy_torch()
+        if self._W is not None and new_size <= self._W.shape[0]:
+            return
         if self._W is None:
             self._W = torch.zeros(new_size, new_size, dtype=torch.float32)
             return
