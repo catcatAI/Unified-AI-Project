@@ -48,12 +48,15 @@ class StepDecoder:
         output_keys: List[str] = []
         seen: set = set(context)
 
-        sorted_net = sorted(
-            network_output.items(), key=lambda x: x[1], reverse=True
-        )
-        net_only = {k: v for k, v in sorted_net[:5]}
-
         for step in range(self.max_length):
+            seq_output = self.network.forward_sequential(
+                context, current_position=len(context) - 1
+            )
+            sorted_seq = sorted(
+                seq_output.items(), key=lambda x: x[1], reverse=True
+            )
+            net_only = {k: v for k, v in sorted_seq[:5]}
+
             candidates = self._score_candidates(
                 context, net_only, seen
             )
@@ -79,14 +82,6 @@ class StepDecoder:
             context.append(next_key)
             if len(context) > self.context_window:
                 context = context[-self.context_window:]
-
-            fresh = {
-                k: v
-                for k, v in candidates.items()
-                if k not in seen and k != next_key
-            }
-            if not fresh:
-                break
 
         return output_keys
 

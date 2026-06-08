@@ -248,51 +248,90 @@ for step in range(len(target_sequence)):
 
 ---
 
-### Phase 2: 核心網路升級 — 序列感知
+### Phase 2: 核心網路升級 — 序列感知 (✅ 完成 2026-06-08)
 
 目前 CoreNetwork 將輸入視為**無序 key 集合**。生成需要**有序 token 序列**。
 
-#### 2a. 位置編碼
+#### 2a. 位置感知（Position-Aware Activation）
 
-在 key 進入網路前附加位置資訊：
+在 `CoreNetwork.forward_sequential()` 中加入位置感知權重，較晚的位置獲得輕微的近期增益：
 
 ```python
-def forward_with_positions(self, input_key_sequence):
-    # 每個 key 附加其在序列中的位置編碼
-    encoded = []
-    for i, key in enumerate(input_key_sequence):
-        pos_vec = self.position_encoding(i, dim=16)
-        encoded.append((key, pos_vec))
-    # 網路同時看到 "什麼(key)" 和 "位置=第3個"
-    return self.forward(encoded)
+recency = 1.0 + 0.15 * pos / max(num_visible, 1)
+neuron.activation = min(neuron.activation * recency, 1.0)
 ```
+
+- **為什麼不是正弦編碼**：ED3N 的 key 是語義標籤（字串），不是連續向量。在無嵌入層的符號網路中，近期增益（recency boost）比正弦編碼更直接有效。
+- **實作**：`core_network.py:200-210` — 迭代 `visible_keys`，對每個位置 `pos` 計算 `recency` 因子，乘到激活值上。
 
 #### 2b. 因果遮罩（Causal Masking）
 
-生成時，每個 key 只能看到自己之前的 key：
+`forward_sequential()` 的核心機制 — 限制可見 key 集合：
 
 ```python
-def generate_step(self, context_keys, target_position):
-    # target_position 之前的 key 可見
-    mask = [i < target_position for i in range(len(context_keys))]
-    return self.forward(context_keys, attention_mask=mask)
+visible_keys = input_keys[:current_position + 1]
 ```
+
+- 與 `forward()` 的關鍵差異：
+  1. **不呼叫 `classifier.classify_pair()`** — 避免生成時動態修改圖結構
+  2. **可見範圍限於 `visible_keys`** — 所有激活/傳播操作只在 `input_keys[0..current_position]` 範圍內
+  3. **傳播深度縮短** — `max_hops=2, decay=0.3`（vs `forward()` 的 `max_hops=3, decay=0.5`），減少密集圖的快速全域擴散
+- **實作**：`core_network.py:188-237`
 
 #### 2c. 上下文滑窗
 
-當前 `compute_spike_propagation` 用 3 hops 固定深度。替換為可配置滑窗：
+StepDecoder 原有的 `context_window` 參數（預設 4）已在 Phase 1 實作。`forward_sequential()` 不新增額外滑窗，而是通過 `max_hops=2` 的傳播限制達到類似效果。
+
+#### 2d. StepDecoder 整合
+
+`StepDecoder.generate()` 改為**每一步**呼叫 `network.forward_sequential()` → 取得當前位置的因果遮罩激活 → 用新鮮激活進行候選評分：
 
 ```python
-max_context = 8  # 或 16, 32
-context = context[-(max_context):]  # 只保留最近 N 個 key
+# 不再使用 generate() 開頭的靜態 network_output
+seq_output = self.network.forward_sequential(
+    context, current_position=len(context) - 1
+)
+sorted_seq = sorted(seq_output.items(), key=lambda x: x[1], reverse=True)
+net_only = {k: v for k, v in sorted_seq[:5]}
 ```
 
-#### 里程碑 2
+- 移除了原本 `context_window` 壓縮後的 `fresh` 檢查（因 `forward_sequential` 每次回傳完整遮罩激活，不再需要手動追蹤剩餘候選）
+- `network_output` 參數保留但不再使用（向後相容）
+- **實作**：`step_decoder.py:49-72`
 
-- [ ] 位置編碼實作
-- [ ] 因果遮罩集成到 CoreNetwork.forward()
-- [ ] 滑窗上下文替代固定 hop
-- [ ] 驗證：重複序列識別（ABAB → 預測下一個是 A 還是 B）
+#### 2e. SequenceTrainer 整合
+
+`SequenceTrainer.train_step()` 改用 `forward_sequential()` 取代 `forward()`：
+
+```python
+activations = self.network.forward_sequential(
+    context, current_position=len(context) - 1
+)
+```
+
+- 訓練時因果遮罩確保：每個預測步驟只看 `keys[0..pos]`，不能預覽後續的 ground truth key
+- 強迫網路學習真正的序列預測（而非 cheat by looking ahead）
+- **實作**：`ed3n_trainer.py:316-318`
+
+#### 里程碑 2 — 驗證
+
+- [x] 位置感知（recency weighting）實作
+- [x] 因果遮罩集成到 `CoreNetwork.forward_sequential()`
+- [x] 滑窗上下文（原有 `context_window` + `max_hops=2`）
+- [x] StepDecoder 整合 — 每一步使用新鮮因果遮罩激活
+- [x] SequenceTrainer 整合 — 訓練時使用因果遮罩
+- [x] 57/57 現有測試全部通過（Phase 2 零衰退）
+
+#### Phase 2 發現
+
+| 問題 | 狀態 | 說明 |
+|:-----|:----:|:------|
+| **因果遮罩減少全域激活** | ✅ | `forward_sequential()` 將可見範 */
+| **生成時不修改圖結構** | ✅ | 不呼叫 `classifier.classify_pair()`，避免生成期副作用 |
+| **訓練面向序列預測而非關聯配對** | ✅ | `forward_sequential()` 確保訓練時網路不能看到未來 key |
+| **密集圖仍需 Phase 3 稀疏化** | ⏳ | 因果遮罩緩解但未解決根本問題 → 需要顯式序列/語義路徑分離 |
+
+**核心教訓**: 因果遮罩是序列生成的必要前提，但不是充分條件。遮罩阻止了「窺視未來」，但密集的語意圖仍會在每個步驟產生大量雜訊激活。Phase 3 的路徑分離（序列路徑 vs 語意路徑）是真正的解決方案。
 
 ---
 

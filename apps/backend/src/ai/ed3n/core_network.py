@@ -335,6 +335,47 @@ class CoreNetwork:
         group_name = mapping.get(rel_type)
         return self.groups.get(group_name) if group_name else None
 
+    def forward_sequential(
+        self,
+        input_keys: List[str],
+        current_position: int,
+    ) -> Dict[str, float]:
+        if not input_keys or current_position < 0:
+            return {}
+
+        self.reset()
+        activations: Dict[str, float] = {}
+
+        visible_keys = input_keys[: current_position + 1]
+
+        for key in visible_keys:
+            for group in self.groups.values():
+                if key in group.neurons:
+                    group.activate(key, 1.0)
+
+        num_visible = len(visible_keys)
+        if num_visible > 0:
+            for pos, key in enumerate(visible_keys):
+                recency = 1.0 + 0.15 * pos / max(num_visible, 1)
+                for group in self.groups.values():
+                    neuron = group.neurons.get(key)
+                    if neuron is not None:
+                        neuron.activation = min(neuron.activation * recency, 1.0)
+
+        propagated = self.compute_spike_propagation(
+            active_keys=visible_keys, max_hops=2, decay=0.3
+        )
+        activations.update(propagated)
+
+        for group in self.groups.values():
+            for n_key, neuron in group.neurons.items():
+                if neuron.activation > neuron.threshold:
+                    activations[n_key] = max(
+                        activations.get(n_key, 0.0), neuron.activation
+                    )
+
+        return activations
+
     def sync_from_dictionary(self, dictionary: "DictionaryLayer") -> int:
         count = 0
         rel_map = {

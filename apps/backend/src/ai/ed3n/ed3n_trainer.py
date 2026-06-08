@@ -318,7 +318,9 @@ class SequenceTrainer:
                 total_steps += 1
 
                 self.network.reset()
-                activations = self.network.forward(context)
+                activations = self.network.forward_sequential(
+                    context, current_position=len(context) - 1
+                )
 
                 actual = activations.get(target_key, 0.0)
                 error = 1.0 - actual
