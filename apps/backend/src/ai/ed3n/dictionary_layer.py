@@ -83,6 +83,34 @@ class DictionaryLayer:
         with self._lock:
             return self._encode_locked(text, modality)
 
+    def encode_soft(self, text: str) -> Dict[str, float]:
+        if not text or not isinstance(text, str):
+            return {}
+        if len(text) > 10000:
+            text = text[:10000]
+        self._rebuild_index()
+        text_lower = text.lower().strip()
+        scores: Dict[str, float] = {}
+        max_len = max(len(text_lower), 1)
+        for key, entry in self.entries.items():
+            best = 0.0
+            for sf in entry.surface_forms.values():
+                sf_lower = sf.lower().strip()
+                if not sf_lower:
+                    continue
+                if sf_lower == text_lower:
+                    best = 1.0
+                    break
+                if sf_lower in text_lower:
+                    ratio = len(sf_lower) / max_len
+                    best = max(best, ratio * 0.85)
+                if text_lower in sf_lower:
+                    ratio = len(text_lower) / max(len(sf_lower), 1)
+                    best = max(best, ratio * 0.6)
+            if best > 0:
+                scores[key] = round(best * entry.confidence, 4)
+        return scores
+
     def _encode_locked(self, text: str, modality: str = "text") -> List[str]:
         if not text or not isinstance(text, str):
             return []

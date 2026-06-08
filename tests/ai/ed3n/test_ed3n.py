@@ -12,10 +12,11 @@ from apps.backend.src.ai.ed3n.continuous_learning import (
 from apps.backend.src.ai.ed3n.core_network import CoreNetwork
 from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryEntry, DictionaryLayer
 from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine, ReflexLayer
-from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
+from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
 from apps.backend.src.ai.ed3n.output_anchor import (
     ResponseAnchorValidator,
     anchored_decode,
+    compute_anchor_drift,
 )
 from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier, RelationType
 from apps.backend.src.ai.ed3n.training_types import (
@@ -27,7 +28,6 @@ from apps.backend.src.ai.ed3n.training_types import (
     seq_batch_from_examples,
     training_example_to_sequence,
 )
-from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer
 
 # ===========================================================================
 # DictionaryLayer tests
@@ -664,3 +664,94 @@ class TestGeneration:
         assert decoder is not None
         assert decoder.dictionary is engine.dictionary
         assert decoder.network is engine.network
+
+
+# ===========================================================================
+# Phase 4: Soft encoding, anchor drift, joint training tests
+# ===========================================================================
+
+
+class TestSoftEncoding:
+    def test_encode_soft_empty(self, engine: ED3NEngine):
+        assert engine.dictionary.encode_soft("") == {}
+        assert engine.dictionary.encode_soft(None) == {}
+
+    def test_encode_soft_returns_dict(self, engine: ED3NEngine):
+        result = engine.dictionary.encode_soft("hello")
+        assert isinstance(result, dict)
+        assert all(isinstance(v, float) for v in result.values())
+
+    def test_encode_soft_scores_nonzero(self, engine: ED3NEngine):
+        result = engine.dictionary.encode_soft("hello")
+        if result:
+            for v in result.values():
+                assert 0 < v <= 1.0
+
+    def test_encode_soft_exact_match(self, engine: ED3NEngine):
+        result = engine.dictionary.encode_soft("hello")
+        assert "g1" in result
+        assert result["g1"] == 1.0
+
+    def test_encode_soft_substring_scored_below_one(self, engine: ED3NEngine):
+        result = engine.dictionary.encode_soft("ello")
+        if "g1" in result:
+            assert 0 < result["g1"] < 1.0
+
+
+class TestAnchorDrift:
+    def test_anchor_drift_no_drift(self, engine: ED3NEngine):
+        drift = compute_anchor_drift(["g1"], ["g1"], engine.dictionary)
+        assert drift == 0.0
+
+    def test_anchor_drift_full_drift(self, engine: ED3NEngine):
+        drift = compute_anchor_drift(["g1"], ["nonexistent_key"], engine.dictionary)
+        assert drift > 0.0
+
+    def test_anchor_drift_empty_input(self, engine: ED3NEngine):
+        assert compute_anchor_drift([], ["g1"], engine.dictionary) == 1.0
+        assert compute_anchor_drift(["g1"], [], engine.dictionary) == 1.0
+
+    def test_anchor_drift_partial(self, engine: ED3NEngine):
+        drift = compute_anchor_drift(["g1", "g2"], ["g1", "unknown"], engine.dictionary)
+        assert 0 < drift < 1.0
+
+
+class TestJointTrainer:
+    def test_joint_trainer_basic(self, engine: ED3NEngine):
+        trainer = JointTrainer(engine)
+        batch = TrainingBatch(
+            examples=[TrainingExample("hi", "hello", ["g1"], ["g5"], [], 0.8)],
+            batch_id="test",
+        )
+        metrics = trainer.train_step(batch)
+        assert metrics.phase == "joint"
+        assert isinstance(metrics.loss, float)
+
+    def test_joint_trainer_with_seq(self, engine: ED3NEngine):
+        trainer = JointTrainer(engine)
+        batch = TrainingBatch(
+            examples=[TrainingExample("hi", "hello", ["g1"], ["g5"], [], 0.8)],
+            batch_id="test",
+        )
+        seq_batch = make_synthetic_seq_batch([(["g1"], ["g5"])])
+        metrics = trainer.train_step(batch, seq_batch)
+        assert metrics.phase == "joint"
+        assert metrics.samples > 0
+
+    def test_joint_trainer_empty_batch(self, engine: ED3NEngine):
+        trainer = JointTrainer(engine)
+        batch = TrainingBatch(examples=[], batch_id="empty")
+        metrics = trainer.train_step(batch)
+        assert metrics.loss >= 0.0
+
+    def test_joint_trainer_summary(self, engine: ED3NEngine):
+        trainer = JointTrainer(engine)
+        assert trainer.get_summary()["status"] == "no_training"
+        batch = TrainingBatch(
+            examples=[TrainingExample("hi", "hello", ["g1"], ["g5"], [], 0.8)],
+            batch_id="test",
+        )
+        trainer.train_step(batch)
+        summary = trainer.get_summary()
+        assert summary["status"] == "active"
+        assert summary["steps"] == 1

@@ -391,3 +391,84 @@ class SequenceTrainer:
 
     def reset_scheduled_sampling(self) -> None:
         self.scheduled_sampling_prob = self.scheduled_sampling_start
+
+
+class JointTrainer:
+    def __init__(
+        self,
+        engine: "ED3NEngine",
+        dict_lr: float = 0.1,
+        network_lr: float = 0.05,
+        seq_lr: float = 0.1,
+        anchor_weight: float = 0.15,
+    ):
+        self.engine = engine
+        self.dictionary: DictionaryLayer = engine.dictionary
+        self.ed3n_trainer = ED3NTrainer(engine, dict_lr, network_lr)
+        self.seq_trainer = SequenceTrainer(engine, seq_lr)
+        self.anchor_weight = anchor_weight
+        self.history: List[Dict[str, float]] = []
+
+    def train_step(
+        self,
+        batch: TrainingBatch,
+        seq_batch: Optional[SeqBatch] = None,
+    ) -> TrainMetrics:
+        start = time.perf_counter()
+
+        metrics = self.ed3n_trainer.train_step(batch)
+
+        seq_metrics = None
+        if seq_batch is not None and seq_batch.examples:
+            seq_metrics = self.seq_trainer.train_step(seq_batch)
+
+        anchor_loss = self._compute_anchor_loss(batch)
+
+        loss = metrics.loss
+        if seq_metrics is not None:
+            loss = (loss + seq_metrics.loss) * 0.5
+        loss += anchor_loss * self.anchor_weight
+
+        combined = TrainMetrics(
+            phase="joint",
+            loss=round(loss, 6),
+            accuracy=metrics.accuracy,
+            learning_rate=(self.ed3n_trainer.dictionary_lr + self.ed3n_trainer.network_lr) * 0.5,
+            epoch=self.ed3n_trainer.current_epoch,
+            samples=len(batch.examples) + (len(seq_batch.examples) if seq_batch else 0),
+            duration_ms=(time.perf_counter() - start) * 1000.0,
+        )
+        self.history.append({
+            "phase": "joint",
+            "loss": combined.loss,
+            "accuracy": combined.accuracy,
+            "anchor_loss": anchor_loss,
+            "samples": combined.samples,
+        })
+        return combined
+
+    def _compute_anchor_loss(self, batch: TrainingBatch) -> float:
+        from .output_anchor import compute_anchor_drift
+
+        if not batch or not batch.examples:
+            return 0.0
+        total_drift = 0.0
+        for ex in batch.examples:
+            if ex.input_keys and ex.output_keys:
+                total_drift += compute_anchor_drift(
+                    ex.input_keys, ex.output_keys, self.dictionary
+                )
+        return round(total_drift / max(len(batch.examples), 1), 4)
+
+    def get_summary(self) -> Dict[str, Any]:
+        if not self.history:
+            return {"status": "no_training", "steps": 0}
+        last = self.history[-1]
+        return {
+            "status": "active",
+            "steps": len(self.history),
+            "last_loss": last["loss"],
+            "last_accuracy": last["accuracy"],
+            "last_anchor_loss": last.get("anchor_loss", 0.0),
+            "anchor_weight": self.anchor_weight,
+        }

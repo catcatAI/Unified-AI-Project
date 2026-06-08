@@ -91,6 +91,31 @@ def anchored_decode(
     return " ".join(parts) if parts else ""
 
 
+def compute_anchor_drift(
+    input_keys: List[str],
+    output_keys: List[str],
+    dictionary: DictionaryLayer,
+) -> float:
+    if not input_keys or not output_keys:
+        return 1.0
+    input_set = set(input_keys)
+    output_set = set(output_keys)
+    overlap = input_set & output_set
+    if overlap:
+        return round(1.0 - len(overlap) / max(len(input_set), 1), 4)
+    input_relations: set = set()
+    for k in input_set:
+        entry = dictionary.entries.get(k)
+        if entry:
+            for rels in entry.relations.values():
+                input_relations.update(rels)
+    expanded = input_set | input_relations
+    overlap = output_set & expanded
+    if overlap:
+        return round(1.0 - len(overlap) / max(len(input_set), 1), 4)
+    return 1.0
+
+
 class ResponseAnchorValidator:
     def __init__(self, dictionary: DictionaryLayer, max_drift: float = 0.5):
         self.dictionary = dictionary
