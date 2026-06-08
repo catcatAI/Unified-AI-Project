@@ -287,3 +287,96 @@ class TestGARDENEnginePersistence:
                 meta = json.load(f)
         assert meta["tier"] == "GARDEN-1G"
         assert meta["query_count"] >= 1
+
+
+# ===========================================================================
+# Phase 5: VectorDecoder tests
+# ===========================================================================
+
+
+class TestVectorDecoderInit:
+    def test_init_defaults(self, engine: GARDENEngine):
+        vd = engine.vector_decoder
+        assert vd.dictionary is engine.dictionary
+        assert vd.snn is engine.snn
+        assert vd.max_steps == 10
+        assert vd.min_score == 0.15
+        assert vd.temperature == 0.3
+
+    def test_init_custom_construction(self, engine: GARDENEngine):
+        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+
+        vd = VectorDecoder(
+            dictionary=engine.dictionary,
+            snn=engine.snn,
+            max_steps=5,
+            min_score=0.3,
+            temperature=0.5,
+        )
+        assert vd.max_steps == 5
+        assert vd.min_score == 0.3
+        assert vd.temperature == 0.5
+
+    def test_engine_generate_method_exists(self, engine: GARDENEngine):
+        assert hasattr(engine, "generate")
+        assert callable(engine.generate)
+
+
+class TestVectorDecoderGenerate:
+    def test_generate_empty_input(self, engine: GARDENEngine):
+        result = engine.generate("")
+        assert result == ""
+
+    def test_generate_none_input(self, engine: GARDENEngine):
+        result = engine.generate(None)
+        assert result == ""
+
+    def test_generate_returns_string(self, engine: GARDENEngine):
+        # Force first encode to build index (reflex may short-circuit)
+        result = engine.generate("good morning")
+        assert isinstance(result, str)
+
+    def test_generate_unknown_input(self, engine: GARDENEngine):
+        result = engine.generate("zxvqwybpqxz")
+        assert isinstance(result, str)
+
+    def test_generate_with_temperature(self, engine: GARDENEngine):
+        result = engine.generate("hello", temperature=0.0)
+        assert isinstance(result, str)
+
+    def test_generate_with_custom_steps(self, engine: GARDENEngine):
+        result = engine.generate("happy", max_steps=3)
+        assert isinstance(result, str)
+
+
+class TestVectorDecoderSampling:
+    def test_sample_deterministic_at_zero_temp(self, engine: GARDENEngine):
+        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+
+        vd = VectorDecoder(
+            dictionary=engine.dictionary,
+            snn=engine.snn,
+            temperature=0.0,
+        )
+        # Deterministic: always picks the max
+        result = vd._sample({"a": 0.9, "b": 0.5})
+        assert result == "a"
+
+    def test_sample_single_candidate(self, engine: GARDENEngine):
+        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+
+        vd = VectorDecoder(
+            dictionary=engine.dictionary,
+            snn=engine.snn,
+        )
+        result = vd._sample({"only_key": 0.8})
+        assert result == "only_key"
+
+    def test_sample_empty_candidates(self, engine: GARDENEngine):
+        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+
+        vd = VectorDecoder(
+            dictionary=engine.dictionary,
+            snn=engine.snn,
+        )
+        assert vd._sample({}) is None

@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional
 
 from .dictionary import VectorDictionary
 from .snn_core import TensorSNNCore
+from .vector_decoder import VectorDecoder
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +143,7 @@ class GARDENEngine:
         similarity_threshold: float = 0.30,
         snn_timesteps: int = 6,
         device: str = "cpu",
-        compatibility_mode: bool = False,
+        compatibility_mode: bool = True,
     ):
         self.model_name = model_name
         self.device = device
@@ -259,6 +260,29 @@ class GARDENEngine:
             return "抱歉，我暂时无法理解你的意思。"
 
         return response
+
+    # ------------------------------------------------------------------
+    # VectorDecoder (iterative generation)
+    # ------------------------------------------------------------------
+
+    @property
+    def vector_decoder(self) -> VectorDecoder:
+        if not hasattr(self, "_vector_decoder"):
+            self._vector_decoder = VectorDecoder(
+                dictionary=self.dictionary,
+                snn=self.snn,
+            )
+        return self._vector_decoder
+
+    def generate(
+        self,
+        input_text: str,
+        temperature: Optional[float] = None,
+        max_steps: Optional[int] = None,
+    ) -> str:
+        return self.vector_decoder.generate_text(
+            input_text, temperature=temperature, max_steps=max_steps
+        )
 
     # ------------------------------------------------------------------
     # Continuous learning

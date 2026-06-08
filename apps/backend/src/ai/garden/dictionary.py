@@ -124,7 +124,7 @@ class VectorDictionary:
         top_k: int = 8,
         similarity_threshold: float = 0.30,
         device: str = "cpu",
-        compatibility_mode: bool = False,
+        compatibility_mode: bool = True,
     ):
         self.model_name = model_name
         self.top_k = top_k
