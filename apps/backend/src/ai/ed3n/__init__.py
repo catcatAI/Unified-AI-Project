@@ -9,7 +9,16 @@ from .output_anchor import ResponseAnchorValidator, anchored_decode
 from .ed3n_engine import ED3NEngine, ReflexLayer
 from .io_analyzer import IOAnalyzer
 from .telemetry import TelemetryCollector
-from .training_types import TrainMetrics, TrainingBatch, TrainingExample, SequenceExample, SeqBatch
+from .training_types import (
+    TrainMetrics,
+    TrainingBatch,
+    TrainingExample,
+    SequenceExample,
+    SeqBatch,
+    training_example_to_sequence,
+    seq_batch_from_examples,
+    make_synthetic_seq_batch,
+)
 from .ed3n_trainer import ED3NTrainer
 
 from .step_decoder import StepDecoder

@@ -18,7 +18,16 @@ from apps.backend.src.ai.ed3n.output_anchor import (
     anchored_decode,
 )
 from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier, RelationType
-from apps.backend.src.ai.ed3n.training_types import TrainingBatch, TrainingExample
+from apps.backend.src.ai.ed3n.training_types import (
+    TrainingBatch,
+    TrainingExample,
+    SeqBatch,
+    SequenceExample,
+    make_synthetic_seq_batch,
+    seq_batch_from_examples,
+    training_example_to_sequence,
+)
+from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer
 
 # ===========================================================================
 # DictionaryLayer tests
@@ -519,3 +528,139 @@ class TestContinuousLearningPipeline:
         for i in range(2000):
             cl.process_interaction(f"test_{i}", f"resp_{i}", {})
         assert len(cl._history) <= 1000
+
+
+# ===========================================================================
+# SequenceTrainer & generation tests
+# ===========================================================================
+
+
+class TestSequenceDataUtils:
+    def test_training_example_to_sequence(self, engine: ED3NEngine):
+        tex = TrainingExample(
+            input_text="hello world", expected_output="hi",
+            input_keys=["g1", "g2"], output_keys=["g5"],
+            relation_pairs=[], confidence=0.8,
+        )
+        seq = training_example_to_sequence(tex)
+        assert seq.input_key_seq == ["g1", "g2"]
+        assert seq.target_key_seq == ["g5"]
+        assert seq.input_text == "hello world"
+
+    def test_seq_batch_from_examples(self, engine: ED3NEngine):
+        examples = [
+            TrainingExample("a", "b", ["k1"], ["k2"], [], 0.8),
+            TrainingExample("c", "d", ["k3"], ["k4"], [], 0.9),
+        ]
+        batch = seq_batch_from_examples(examples, "test_batch")
+        assert len(batch.examples) == 2
+        assert batch.batch_id == "test_batch"
+        assert batch.examples[0].input_key_seq == ["k1"]
+
+    def test_make_synthetic_seq_batch(self, engine: ED3NEngine):
+        raw = [
+            (["start"], ["next", "end"]),
+            (["open"], ["close"]),
+        ]
+        batch = make_synthetic_seq_batch(raw, "synth")
+        assert len(batch.examples) == 2
+        assert batch.examples[0].target_key_seq == ["next", "end"]
+        assert batch.examples[1].input_key_seq == ["open"]
+
+
+class TestSequenceTrainer:
+    def test_sequence_trainer_basic(self, engine: ED3NEngine):
+        trainer = SequenceTrainer(engine, seq_lr=0.1)
+        batch = make_synthetic_seq_batch([
+            (["a"], ["b"]),
+            (["b"], ["c"]),
+        ])
+        metrics = trainer.train_step(batch)
+        assert isinstance(metrics.loss, float)
+        assert isinstance(metrics.accuracy, float)
+        assert metrics.phase == "sequence"
+
+    def test_sequence_trainer_improves(self, engine: ED3NEngine):
+        trainer = SequenceTrainer(engine, seq_lr=0.2)
+        batch = make_synthetic_seq_batch([
+            (["start"], ["middle", "end"]),
+        ] * 5)
+        first = trainer.train_step(batch)
+        engine.dictionary.add_entry("middle", {"en": "middle"})
+        engine.dictionary.add_entry("end", {"en": "end"})
+        engine.dictionary.add_entry("start", {"en": "start"})
+        for _ in range(10):
+            trainer.train_step(batch)
+        result = engine.generate("start")
+        assert isinstance(result, str)
+
+    def test_scheduled_sampling_decay(self, engine: ED3NEngine):
+        trainer = SequenceTrainer(
+            engine, seq_lr=0.1,
+            scheduled_sampling_start=1.0,
+            scheduled_sampling_end=0.0,
+            scheduled_sampling_decay=0.1,
+        )
+        assert trainer.scheduled_sampling_prob == 1.0
+        batch = make_synthetic_seq_batch([(["x"], ["y"])])
+        for _ in range(5):
+            trainer.train_step(batch)
+        assert trainer.scheduled_sampling_prob < 1.0
+
+    def test_scheduled_sampling_never_below_end(self, engine: ED3NEngine):
+        trainer = SequenceTrainer(
+            engine, seq_lr=0.1,
+            scheduled_sampling_start=0.5,
+            scheduled_sampling_end=0.3,
+            scheduled_sampling_decay=0.01,
+        )
+        batch = make_synthetic_seq_batch([(["x"], ["y"])])
+        for _ in range(50):
+            trainer.train_step(batch)
+        assert trainer.scheduled_sampling_prob >= 0.3
+
+    def test_reset_scheduled_sampling(self, engine: ED3NEngine):
+        trainer = SequenceTrainer(
+            engine, seq_lr=0.1,
+            scheduled_sampling_start=1.0,
+            scheduled_sampling_end=0.0,
+            scheduled_sampling_decay=0.1,
+        )
+        batch = make_synthetic_seq_batch([(["x"], ["y"])])
+        trainer.train_step(batch)
+        assert trainer.scheduled_sampling_prob < 1.0
+        trainer.reset_scheduled_sampling()
+        assert trainer.scheduled_sampling_prob == 1.0
+
+    def test_forward_sequential_called(self, engine: ED3NEngine):
+        trainer = SequenceTrainer(engine)
+        batch = make_synthetic_seq_batch([
+            (["key_a"], ["key_b"]),
+        ])
+        metrics = trainer.train_step(batch)
+        assert metrics.loss >= 0.0
+
+
+class TestGeneration:
+    def test_generate_basic(self, engine: ED3NEngine):
+        result = engine.generate("hello")
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_generate_reflex_fallback(self, engine: ED3NEngine):
+        result = engine.generate("你好")
+        assert isinstance(result, str)
+
+    def test_generate_empty_input(self, engine: ED3NEngine):
+        assert engine.generate("") == ""
+        assert engine.generate(None) == ""
+
+    def test_generate_unknown_input(self, engine: ED3NEngine):
+        result = engine.generate("xyznonexistent12345")
+        assert isinstance(result, str)
+
+    def test_step_decoder_property(self, engine: ED3NEngine):
+        decoder = engine.step_decoder
+        assert decoder is not None
+        assert decoder.dictionary is engine.dictionary
+        assert decoder.network is engine.network

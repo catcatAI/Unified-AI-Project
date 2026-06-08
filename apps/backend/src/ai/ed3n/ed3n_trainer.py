@@ -3,6 +3,7 @@
 # =============================================================================
 
 import logging
+import random
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -292,12 +293,19 @@ class SequenceTrainer:
         self,
         engine: "ED3NEngine",
         seq_lr: float = 0.1,
+        scheduled_sampling_start: float = 1.0,
+        scheduled_sampling_end: float = 0.0,
+        scheduled_sampling_decay: float = 0.02,
     ):
         self.engine = engine
         self.dictionary: DictionaryLayer = engine.dictionary
         self.network: CoreNetwork = engine.network
         self.seq_lr = seq_lr
         self.history: List[float] = []
+        self.scheduled_sampling_prob = scheduled_sampling_start
+        self.scheduled_sampling_end = scheduled_sampling_end
+        self.scheduled_sampling_decay = scheduled_sampling_decay
+        self.scheduled_sampling_start = scheduled_sampling_start
 
     def train_step(self, batch: SeqBatch) -> TrainMetrics:
         if not batch or not batch.examples:
@@ -350,9 +358,19 @@ class SequenceTrainer:
                         1.0,
                     )
 
-                context.append(target_key)
+                if random.random() < self.scheduled_sampling_prob:
+                    context.append(target_key)
+                else:
+                    predicted = max(activations, key=activations.get) if activations else target_key
+                    context.append(predicted)
+
                 if len(context) > 8:
                     context = context[-8:]
+
+        self.scheduled_sampling_prob = max(
+            self.scheduled_sampling_end,
+            self.scheduled_sampling_prob - self.scheduled_sampling_decay,
+        )
 
         n = total_steps or 1
         avg_loss = total_loss / n
@@ -370,3 +388,6 @@ class SequenceTrainer:
             samples=len(batch.examples),
             duration_ms=(time.perf_counter() - start) * 1000.0,
         )
+
+    def reset_scheduled_sampling(self) -> None:
+        self.scheduled_sampling_prob = self.scheduled_sampling_start
