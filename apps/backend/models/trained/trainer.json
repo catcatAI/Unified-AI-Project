@@ -1,0 +1,51 @@
+{
+  "training_history": [
+    {
+      "phase": "combined",
+      "loss": 0.5293134898278563,
+      "accuracy": 0.47887323943661975,
+      "learning_rate": 0.11499999999999999,
+      "epoch": 0,
+      "samples": 90,
+      "duration_ms": 432.4412001296878
+    },
+    {
+      "phase": "combined",
+      "loss": 0.46044798623577954,
+      "accuracy": 0.5105633802816901,
+      "learning_rate": 0.11499999999999999,
+      "epoch": 0,
+      "samples": 90,
+      "duration_ms": 364.58880035206676
+    },
+    {
+      "phase": "combined",
+      "loss": 0.45618189469838066,
+      "accuracy": 0.5105633802816901,
+      "learning_rate": 0.11499999999999999,
+      "epoch": 0,
+      "samples": 90,
+      "duration_ms": 434.89040015265346
+    },
+    {
+      "phase": "combined",
+      "loss": 0.4524138207333046,
+      "accuracy": 0.5105633802816901,
+      "learning_rate": 0.11499999999999999,
+      "epoch": 0,
+      "samples": 90,
+      "duration_ms": 365.94449961557984
+    },
+    {
+      "phase": "combined",
+      "loss": 0.4494786719270163,
+      "accuracy": 0.5105633802816901,
+      "learning_rate": 0.11499999999999999,
+      "epoch": 0,
+      "samples": 90,
+      "duration_ms": 391.7219000868499
+    }
+  ],
+  "current_epoch": 0,
+  "best_accuracy": 0.0
+}

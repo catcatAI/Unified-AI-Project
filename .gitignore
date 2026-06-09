@@ -88,14 +88,34 @@ $RECYCLE.BIN/
 *.zip
 *.model3.json
 
+# Model Files — only allow small trained exports
+models/**/*.bin
+models/**/*.gguf
+models/**/*.onnx
+models/**/*.pth
+models/**/checkpoint-*
+models/**/*.safetensors
+models/**/pytorch_model*.bin
+# Allow small trained exports (< 1MB)
+!apps/backend/models/trained/
+!apps/backend/models/trained/*.json
+!apps/backend/models/trained/*.pt
+!apps/backend/models/trained/README.md
+
 # Temp
 temp/
 tmp/
 .cache/
 *.bak
 
+# Task tracking artifacts
+.zenflow/
+
 # Test files in scripts/
 scripts/tests/
+
+# Root binary (Angela CLI)
+/acli.exe
 game/
 apps/backend/test_results/
 

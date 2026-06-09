@@ -1,0 +1,988 @@
+{
+  "version": "garden-1.0",
+  "entries": [
+    {
+      "key": "g1",
+      "surface_forms": {
+        "zh": "你好",
+        "en": "hello"
+      },
+      "relations": {
+        "synonym": [
+          "g2",
+          "g3",
+          "g5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "g2",
+      "surface_forms": {
+        "zh": "早上好",
+        "en": "good morning"
+      },
+      "relations": {
+        "synonym": [
+          "g1"
+        ],
+        "mapping": [
+          "g5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "g3",
+      "surface_forms": {
+        "zh": "晚上好",
+        "en": "good evening"
+      },
+      "relations": {
+        "synonym": [
+          "g1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "g4",
+      "surface_forms": {
+        "zh": "欢迎",
+        "en": "welcome"
+      },
+      "relations": {
+        "synonym": [
+          "g1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "g5",
+      "surface_forms": {
+        "zh": "嗨",
+        "en": "hi"
+      },
+      "relations": {
+        "synonym": [
+          "g1",
+          "g6"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "g6",
+      "surface_forms": {
+        "zh": "哈喽",
+        "en": "hey"
+      },
+      "relations": {
+        "synonym": [
+          "g1",
+          "g5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "f1",
+      "surface_forms": {
+        "zh": "再见",
+        "en": "goodbye"
+      },
+      "relations": {
+        "synonym": [
+          "f2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "f2",
+      "surface_forms": {
+        "zh": "明天见",
+        "en": "see you tomorrow"
+      },
+      "relations": {
+        "synonym": [
+          "f1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "p1",
+      "surface_forms": {
+        "zh": "谢谢",
+        "en": "thank you"
+      },
+      "relations": {
+        "synonym": [
+          "p4"
+        ],
+        "mapping": [
+          "e1",
+          "r1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "p2",
+      "surface_forms": {
+        "zh": "对不起",
+        "en": "sorry"
+      },
+      "relations": {
+        "synonym": [
+          "r2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "p3",
+      "surface_forms": {
+        "zh": "没关系",
+        "en": "no problem"
+      },
+      "relations": {
+        "synonym": [
+          "r3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "p4",
+      "surface_forms": {
+        "zh": "请",
+        "en": "please"
+      },
+      "relations": {
+        "mapping": [
+          "g1",
+          "p1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "e1",
+      "surface_forms": {
+        "zh": "开心",
+        "en": "happy"
+      },
+      "relations": {
+        "synonym": [
+          "e5"
+        ],
+        "mapping": [
+          "c2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "e2",
+      "surface_forms": {
+        "zh": "难过",
+        "en": "sad"
+      },
+      "relations": {
+        "mapping": [
+          "p2",
+          "c2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "e3",
+      "surface_forms": {
+        "zh": "烦恼",
+        "en": "annoyed"
+      },
+      "relations": {
+        "mapping": [
+          "e2",
+          "c2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "e4",
+      "surface_forms": {
+        "zh": "无聊",
+        "en": "bored"
+      },
+      "relations": {
+        "mapping": [
+          "e2",
+          "c1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "e5",
+      "surface_forms": {
+        "zh": "兴奋",
+        "en": "excited"
+      },
+      "relations": {
+        "synonym": [
+          "e1"
+        ],
+        "mapping": [
+          "c2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "c1",
+      "surface_forms": {
+        "zh": "在忙吗",
+        "en": "are you busy"
+      },
+      "relations": {
+        "mapping": [
+          "e5",
+          "r1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "c2",
+      "surface_forms": {
+        "zh": "心情",
+        "en": "mood"
+      },
+      "relations": {
+        "mapping": [
+          "e1",
+          "e2",
+          "e3",
+          "e5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "c3",
+      "surface_forms": {
+        "zh": "今天",
+        "en": "today"
+      },
+      "relations": {
+        "mapping": [
+          "g2",
+          "g3",
+          "c1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "c4",
+      "surface_forms": {
+        "zh": "名字",
+        "en": "name"
+      },
+      "relations": {
+        "mapping": [
+          "g1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "c5",
+      "surface_forms": {
+        "zh": "做什么",
+        "en": "what are you doing"
+      },
+      "relations": {
+        "mapping": [
+          "c1",
+          "e5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "r1",
+      "surface_forms": {
+        "zh": "嗯",
+        "en": "uh-huh"
+      },
+      "relations": {
+        "synonym": [
+          "r2",
+          "r3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "r2",
+      "surface_forms": {
+        "zh": "好的",
+        "en": "okay"
+      },
+      "relations": {
+        "synonym": [
+          "r1",
+          "r3",
+          "r4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "r3",
+      "surface_forms": {
+        "zh": "明白",
+        "en": "understood"
+      },
+      "relations": {
+        "synonym": [
+          "r1",
+          "r2",
+          "r4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "r4",
+      "surface_forms": {
+        "zh": "可以",
+        "en": "sure"
+      },
+      "relations": {
+        "synonym": [
+          "r2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "b1",
+      "surface_forms": {
+        "zh": "真",
+        "en": "true"
+      },
+      "relations": {
+        "antonym": [
+          "b2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "b2",
+      "surface_forms": {
+        "zh": "假",
+        "en": "false"
+      },
+      "relations": {
+        "antonym": [
+          "b1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "b3",
+      "surface_forms": {
+        "zh": "且",
+        "en": "and"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "b4",
+      "surface_forms": {
+        "zh": "或",
+        "en": "or"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "b5",
+      "surface_forms": {
+        "zh": "非",
+        "en": "not"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m0",
+      "surface_forms": {
+        "zh": "零",
+        "en": "zero"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m1",
+      "surface_forms": {
+        "zh": "一",
+        "en": "one"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m2",
+      "surface_forms": {
+        "zh": "二",
+        "en": "two"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m3",
+      "surface_forms": {
+        "zh": "三",
+        "en": "three"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m4",
+      "surface_forms": {
+        "zh": "四",
+        "en": "four"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m5",
+      "surface_forms": {
+        "zh": "五",
+        "en": "five"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m6",
+      "surface_forms": {
+        "zh": "六",
+        "en": "six"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m7",
+      "surface_forms": {
+        "zh": "七",
+        "en": "seven"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m8",
+      "surface_forms": {
+        "zh": "八",
+        "en": "eight"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "m9",
+      "surface_forms": {
+        "zh": "九",
+        "en": "nine"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "op1",
+      "surface_forms": {
+        "zh": "加",
+        "en": "plus"
+      },
+      "relations": {
+        "antonym": [
+          "op2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "op2",
+      "surface_forms": {
+        "zh": "减",
+        "en": "minus"
+      },
+      "relations": {
+        "antonym": [
+          "op1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "op3",
+      "surface_forms": {
+        "zh": "乘",
+        "en": "multiply"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "op4",
+      "surface_forms": {
+        "zh": "除",
+        "en": "divide"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "op5",
+      "surface_forms": {
+        "zh": "等于",
+        "en": "equals"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "id1",
+      "surface_forms": {
+        "zh": "Angela",
+        "en": "angela"
+      },
+      "relations": {
+        "mapping": [
+          "id2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "id2",
+      "surface_forms": {
+        "zh": "AI助手",
+        "en": "AI assistant"
+      },
+      "relations": {
+        "mapping": [
+          "id1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "q1",
+      "surface_forms": {
+        "zh": "什么",
+        "en": "what"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "q2",
+      "surface_forms": {
+        "zh": "为什么",
+        "en": "why"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "q3",
+      "surface_forms": {
+        "zh": "怎么",
+        "en": "how"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "q4",
+      "surface_forms": {
+        "zh": "哪里",
+        "en": "where"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "q5",
+      "surface_forms": {
+        "zh": "谁",
+        "en": "who"
+      },
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "emo_joy",
+      "surface_forms": {
+        "zh": "快乐",
+        "en": "joy"
+      },
+      "relations": {
+        "synonym": [
+          "e1",
+          "e5"
+        ],
+        "mapping": [
+          "c2",
+          "emo_happy"
+        ]
+      },
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_happy",
+      "surface_forms": {
+        "zh": "高兴",
+        "en": "happy"
+      },
+      "relations": {
+        "synonym": [
+          "e1",
+          "e5",
+          "emo_joy"
+        ],
+        "mapping": [
+          "c2"
+        ]
+      },
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_sadness",
+      "surface_forms": {
+        "zh": "悲伤",
+        "en": "sadness"
+      },
+      "relations": {
+        "synonym": [
+          "e2"
+        ],
+        "antonym": [
+          "e1"
+        ]
+      },
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_anger",
+      "surface_forms": {
+        "zh": "生气",
+        "en": "anger"
+      },
+      "relations": {
+        "mapping": [
+          "e3",
+          "c2"
+        ]
+      },
+      "confidence": 0.95
+    },
+    {
+      "key": "emo_fear",
+      "surface_forms": {
+        "zh": "害怕",
+        "en": "fear"
+      },
+      "relations": {
+        "mapping": [
+          "e2",
+          "c2"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "emo_surprise",
+      "surface_forms": {
+        "zh": "惊讶",
+        "en": "surprise"
+      },
+      "relations": {
+        "mapping": [
+          "e1",
+          "e5",
+          "c2"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "emo_disgust",
+      "surface_forms": {
+        "zh": "厌恶",
+        "en": "disgust"
+      },
+      "relations": {
+        "mapping": [
+          "e3",
+          "e4"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_physics",
+      "surface_forms": {
+        "zh": "物理",
+        "en": "physics"
+      },
+      "relations": {
+        "mapping": [
+          "sci_force",
+          "sci_energy",
+          "sci_motion"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_force",
+      "surface_forms": {
+        "zh": "力",
+        "en": "force"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_energy",
+      "surface_forms": {
+        "zh": "能量",
+        "en": "energy"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_motion",
+      "surface_forms": {
+        "zh": "运动",
+        "en": "motion"
+      },
+      "relations": {
+        "synonym": [
+          "sci_move"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_move",
+      "surface_forms": {
+        "zh": "移动",
+        "en": "move"
+      },
+      "relations": {},
+      "confidence": 0.85
+    },
+    {
+      "key": "sci_gravity",
+      "surface_forms": {
+        "zh": "重力",
+        "en": "gravity"
+      },
+      "relations": {
+        "mapping": [
+          "sci_force",
+          "sci_physics"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_light",
+      "surface_forms": {
+        "zh": "光",
+        "en": "light"
+      },
+      "relations": {
+        "mapping": [
+          "sci_energy"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_sound",
+      "surface_forms": {
+        "zh": "声音",
+        "en": "sound"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_heat",
+      "surface_forms": {
+        "zh": "热",
+        "en": "heat"
+      },
+      "relations": {
+        "mapping": [
+          "sci_energy"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_biology",
+      "surface_forms": {
+        "zh": "生物",
+        "en": "biology"
+      },
+      "relations": {
+        "mapping": [
+          "sci_animal",
+          "sci_plant",
+          "sci_cell"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_animal",
+      "surface_forms": {
+        "zh": "动物",
+        "en": "animal"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_plant",
+      "surface_forms": {
+        "zh": "植物",
+        "en": "plant"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_cell",
+      "surface_forms": {
+        "zh": "细胞",
+        "en": "cell"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_chemistry",
+      "surface_forms": {
+        "zh": "化学",
+        "en": "chemistry"
+      },
+      "relations": {
+        "mapping": [
+          "sci_atom",
+          "sci_molecule"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_atom",
+      "surface_forms": {
+        "zh": "原子",
+        "en": "atom"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_molecule",
+      "surface_forms": {
+        "zh": "分子",
+        "en": "molecule"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_computer",
+      "surface_forms": {
+        "zh": "计算机",
+        "en": "computer"
+      },
+      "relations": {
+        "mapping": [
+          "sci_ai",
+          "sci_program"
+        ]
+      },
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_ai",
+      "surface_forms": {
+        "zh": "人工智能",
+        "en": "artificial intelligence"
+      },
+      "relations": {
+        "synonym": [
+          "id2"
+        ]
+      },
+      "confidence": 0.95
+    },
+    {
+      "key": "sci_program",
+      "surface_forms": {
+        "zh": "程序",
+        "en": "program"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_data",
+      "surface_forms": {
+        "zh": "数据",
+        "en": "data"
+      },
+      "relations": {},
+      "confidence": 0.9
+    },
+    {
+      "key": "sci_network",
+      "surface_forms": {
+        "zh": "网络",
+        "en": "network"
+      },
+      "relations": {
+        "mapping": [
+          "sci_computer"
+        ]
+      },
+      "confidence": 0.9
+    }
+  ]
+}
