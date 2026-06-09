@@ -22,11 +22,11 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 | `google_drive_service` | `modules/google_drive_service/` | ✅ | init |
 | `card_pipeline` | `modules/card_pipeline/` | ✅ | init/start/stop |
 | `intent_registry` | `modules/intent_registry/` | ✅ | init |
-| `chat_service` | `modules/chat_service/` | ✅ NEW | init/start/stop |
-| `llm_service` | `modules/llm_service/` | ✅ NEW | init/start/stop |
-| `hot_reload_service` | `modules/hot_reload_service/` | ✅ NEW | init/start/stop |
-| `math_verifier` | `modules/math_verifier/` | ✅ NEW | init/start/stop |
-| `resource_awareness_service` | `modules/resource_awareness_service/` | ✅ NEW | init/start/stop (also fixed `_load_profile`) |
+| `chat_service` | `modules/chat_service/` | ✅ | init/start/stop |
+| `llm_service` | `modules/llm_service/` | ✅ | init/start/stop |
+| `hot_reload_service` | `modules/hot_reload_service/` | ✅ | init/start/stop |
+| `math_verifier` | `modules/math_verifier/` | ✅ | init/start/stop |
+| `resource_awareness_service` | `modules/resource_awareness_service/` | ✅ | init/start/stop |
 
 ## Intent Handlers
 
@@ -81,17 +81,17 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 | `FantasyDMAgent` | `ai/agents/specialized/fantasy_dm_agent.py` | ✅ |
 | `PlanningAgent` | `ai/agents/specialized/planning_agent.py` | ✅ |
 
-## AI Core Systems (NEW)
+## AI Core Systems
 
-| System | File | Status |
-|--------|------|--------|
-| `ModelBus` | `ai/core/model_bus.py` | ✅ central registry + capability routing |
-| `QueryClassifier` | `ai/core/query_classifier.py` | ✅ 8-domain rule-based classification |
-| `TrainingCoordinator` | `ai/core/training_coordinator.py` | ✅ domain ownership + deconfliction |
-| `ED3NEngine` | `ai/ed3n/ed3n_engine.py` | ✅ reflex + deep + SNN pipeline |
-| `ED3NTrainer` | `ai/ed3n/ed3n_trainer.py` | ✅ Hebbian + topographic training |
-| `GARDENEngine` | `ai/garden/garden_engine.py` | ✅ vector dictionary + TensorSNN |
-| `ContinuousLearningPipeline` | `ai/ed3n/continuous_learning.py` | ✅ auto-growth + training loop |
+| System | File | Status | Wiring |
+|--------|------|--------|--------|
+| `ModelBus` | `ai/core/model_bus.py` | ✅ central registry + capability routing | GARDENBackend registered at priority 6; fallback Tier 1; hot-reload re-registers |
+| `QueryClassifier` | `ai/core/query_classifier.py` | ✅ 8-domain rule-based classification | Feeds into ModelBus capability routing |
+| `TrainingCoordinator` | `ai/core/training_coordinator.py` | ✅ domain ownership + deconfliction | Manages SequenceTrainer + JointTrainer lifecycle |
+| `ED3NEngine` | `ai/ed3n/ed3n_engine.py` | ✅ reflex + deep + SNN pipeline | Wired to GARDENBackend via `garden_aware: bool` |
+| `ED3NTrainer` | `ai/ed3n/ed3n_trainer.py` | ✅ Hebbian + topographic + SequenceTrainer + JointTrainer | Called by `scripts/train_pipeline.py` (steps 4f/4g); wired to 8 data sources (53,342 samples) |
+| `GARDENEngine` | `ai/garden/garden_engine.py` | ✅ vector dictionary + TensorSNN + TF-IDF/CharBag fallback | Connected to AngelaLLMService for emotional context; 3 active routing paths to chat flow |
+| `ContinuousLearningPipeline` | `ai/ed3n/continuous_learning.py` | ✅ auto-growth + training loop | Wired to ModelBus for capability publication |
 
 ## Integration Services
 

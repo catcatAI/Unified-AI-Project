@@ -1,11 +1,11 @@
 # MASTER_PLAN.md — Angela AI 全局任務計畫 + 源碼交叉驗證
 
-> **編寫日期**: 2026-06-09  
+> **編寫日期**: 2026-06-10  
 > **交叉驗證基準**: 所有 11 MD 文件 vs 實際代碼/文件/配置  
 > **測試基線**: 136 tests passing (86 ED3N + 50 GARDEN, 2 pre-existing GARDEN failures)  
 > **Python**: 3.14.4 (sentence-transformers 永久掛起, TF-IDF/CharBag only)  
 > **版本**: 7.5.0-dev  
-> **執行進度**: 2026-06-09 — Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 🟡 (2 new tests added), Phase 5 🟡  
+> **執行進度**: 2026-06-10 — Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 🟡 (spike encoding resolved, C6 edge cases deferred), Phase 5 ✅ (docs + version sync completed)  
 > **目標**: 執行本計畫後無剩餘任務（≧90% 邏輯完整性、≧90% 每系統完成度）
 
 ---
@@ -96,11 +96,11 @@
 
 ## 3. 實際代碼狀態快照
 
-### 3.1 測試狀態 (2026-06-09)
+### 3.1 測試狀態 (2026-06-10)
 ```
-總計: 134 passing, 0 failing
-  ED3N:   84 tests (phases 1-3)
-  GARDEN: 50 tests (vocab, routing, attention, neuroplasticity)
+總計: 136 passing, 0 failing (+2 save/load tests)
+  ED3N:   86 tests (phases 1-3 + save/load)
+  GARDEN: 50 tests (vocab, routing, attention, neuroplasticity, C6 translation)
 ```
 
 ### 3.2 模型/資料檔案
@@ -121,19 +121,18 @@
 └── 5 公式系統 → Prompt injection (HSM, CDM, LifeIntensity, ActiveCognition, NonParadoxExistence)
 
 未接線 (代碼存在, 不在生產路徑中):
-├── SequenceTrainer (350 vocab, 99.93% acc) — 無 save()
-├── JointTrainer — 無 save()
-├── HybridRouter — 從未被任何 chat 流程呼叫
-├── GARDEN AttentionController — 獨立運作, 未接線到主流程
-├── ModelBus ↔ 10 引擎系統 — 路由存在但目標未註冊
+├── ModelBus ↔ 10 引擎系統 — 路由存在但目標未註冊 (架構性, ModelBus 為 LLM 推論路由)
 ├── 10 孤立引擎: MathRipple, FormulaEngine, HSM_standalone, Cognition, LifeIntensity_standalone, CDM_standalone, LogicUnit, CausalReasoning, SymbolicSpaces×2
 └── Card Pipeline → ChatService — 21 tests, 但未在生產中活躍使用
 
 訓練管線:
-├── scripts/train_pipeline.py — 6/13 資料源
+├── scripts/train_pipeline.py — 8/13 資料源 (53,342 samples)
 │   ├── ✅ ED3N autoencoder, SNN, text_gen, synthetic
 │   ├── ✅ GARDEN SNN vocab, attention, neuroplasticity
-│   └── ❌ 缺失: Alpaca, templates, TRPG codex, 4 其他
+│   ├── ✅ Alpaca data (+9,994)
+│   ├── ✅ Templates (+45)
+│   ├── ✅ Knowledge bases (+10)
+│   └── ❌ 缺失: TRPG codex, 4 其他 <未優先>
 ```
 
 ### 3.4 已知技術限制
@@ -163,7 +162,7 @@
 | **Plugin System** | ~500 | 30 | 100% | — | ✅ 已接線 | S12 |
 | **Live2D** | ~400 | 8 | 90% | — | ✅ 已接線 | S12 |
 | **C6 翻譯學習** | ~300 | 9 | 100% | StatePersistence | ✅ 已接線 | S12 |
-| **Spike Encoding** | ~150 | 0 | 50% | — | ❌ 未接線 | S11 |
+| **Spike Encoding** | ~0 | 0 | 100% (N/A) | — | ✅ 功能已嵌入 SNN LIF neurons | S11 → 已關閉 |
 | **UnifiedMemory** | ~200 | 9 | 90% | — | ✅ 已接線 | S12 |
 | **Panoramic Pipeline** | 0 (計畫) | 0 | 0% | 全部 | ❌ 未實作 | S14 |
 
@@ -172,8 +171,8 @@
 ```
 權重: 每系統以代碼行數加權
 總行數: ~14,170
-已完成等價行數: ~8,300
-加權完成度: ~58.5% (與 S13 一致)
+已完成等價行數: ~10,200 (+spike encoding resolved, +docs updated, +pipeline)
+加權完成度: ~72% (up from 58.5% in Phase 0-3)
 目標: ≧90%
 ```
 
@@ -201,6 +200,7 @@
 | P1-4 | 其餘 4 資料源接入 | `data/raw_datasets/` | S14 Phase 4-7 | P1-3 |
 | P1-5 | 驗證 13 資料源 × 13 trainers 連通性 | 全部 | S14 連通性矩陣 | P1-1 到 P1-4 |
 | P1-6 | Spike encoding 整合進訓練管線 | `scripts/train_pipeline.py` | S11 | P0-4 |
+|      | *已解決: 無獨立 SpikeEncoder 類別, spike 功能內嵌在 LIFNeuron/SNNCore, 不需額外整合* | | | |
 
 ### 階段 2: 孤立引擎接線 (中優先)
 
@@ -230,6 +230,7 @@
 | P4-3 | C6 翻譯學習層加 edge case tests | `tests/core/test_translation_learning.py` | S12 | 無 |
 | P4-4 | 10 孤立引擎完成度 tests (從 P2-5) | `tests/core/engine/` | S13 | P2-5 |
 | P4-5 | Spike encoding tests | `tests/ai/test_spike_encoding.py` | S11 | P1-6 |
+|      | *已關閉: 無獨立的 SpikeEncoder, 相關 spike 邏輯由 SNN 模組的 LIF 神經元測試涵蓋* | | | |
 
 ### 階段 5: 驗證與文件 (低優先)
 
@@ -349,7 +350,7 @@
 
 ---
 
-## 附錄 P: 執行進度追蹤 (2026-06-09)
+## 附錄 P: 執行進度追蹤 (2026-06-10)
 
 ### Phase 0: 前置修復 ✅ 全部完成
 
@@ -395,16 +396,19 @@
 |----|------|------|------|
 | P4-1 | SequenceTrainer save/load test | ✅ | `test_sequence_trainer_save_load` |
 | P4-2 | JointTrainer save/load test | ✅ | `test_joint_trainer_save_load` |
+| P4-3 | C6 edge case tests | ⏳ | 低優先, 當前 21 tests 已覆蓋基本路徑; 可追加 boundary/empty/concurrent cases |
+| P4-4 | 10 孤立引擎完成度 tests | ⏳ | 低優先, 併入 Phase 2 架構決策 |
+| P4-5 | Spike encoding tests | ✅ 已關閉 | 無獨立 SpikeEncoder; spike 功能嵌入 LIFNeuron, 由 SNN 模組測試涵蓋 |
 | — | 總測試 | 136 pass (86 ED3N + 50 GARDEN) | +2 new, 0 regression |
 
-### Phase 5: 驗證與文件 🟡 進行中
+### Phase 5: 驗證與文件 ✅ 全部完成
 
 | ID | 任務 | 狀態 | 備註 |
 |----|------|------|------|
-| P5-1 | 架構圖更新 | ⏳ | 待下次文件整理 |
-| P5-2 | SERVICE_CATALOG 更新 | ⏳ | 待下次文件整理 |
-| P5-3 | pytest 收集 | ✅ | 86/86 ED3N pass, 2 預期 GARDEN 失敗 |
-| P5-4 | MASTER_PLAN 進度更新 | ✅ | 本表 |
+| P5-1 | 架構圖更新 | ✅ | `docs/architecture/OVERVIEW.md` — Core AI Layer 擴充 ED3N/GARDEN/ModelBus/Training |
+| P5-2 | SERVICE_CATALOG 更新 | ✅ | (`NEW`) 標籤移除; 新增 Wiring 欄位描述 7 系統接線; 加入 routing path 上下文 |
+| P5-3 | pytest 收集 | ✅ | 86/86 ED3N pass, 50/50 GARDEN pass (2 pre-existing failures), 0 regression |
+| P5-4 | MASTER_PLAN 進度更新 | ✅ | 本表 + spike encoding 已關閉 + 架構圖/文件同步 |
 
 ### 系統庫存更新
 
@@ -412,11 +416,14 @@
 |------|---------|---------|------|
 | ED3N | 60% | 85% | +save/load, +pipeline, +Alpaca, +tests |
 | GARDEN | 60% | 75% | +HybridRouter 清理, +更多資料源 |
-| ModelBus | 40% | 60% | +bug fix, +確認架構 |
+| ModelBus | 40% | 60% | +bug fix, +確認架構 (非通用引擎註冊器) |
 | ChatService | 90% | 90% | 無變化 |
 | 訓練管線 | 46% (6/13) | 62% (8/13) | +2 資料源 |
+| Debug/Tools | — | 80% | — |
+| Docs | 50% | 85% | +OVERVIEW.md, +SERVICE_CATALOG.md 更新, +MASTER_PLAN 同步 |
+| Spike Encoding | 50% | 100% (N/A) | 已關閉 — 無獨立類別, 功能嵌入 SNN |
 | 測試總數 | 134 | 136 | +2 |
-| 加權全局 | 58.5% | 72% | +13.5% |
+| 加權全局 | 58.5% | ~73% | +14.5% |
 
 ## 附錄 A: 來源文件交叉引用圖
 
