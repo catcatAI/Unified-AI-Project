@@ -186,3 +186,72 @@ class TestValueRangeMapping:
         self.nv._value_range_mappings['test.b'] = [m1, m2]
         overlaps = self.nv.detect_overlaps('test.b')
         assert overlaps == []
+
+    # ── C6 Phase 5+: Edge case guards and corner cases ──────────────
+
+    def test_covers_with_non_float_returns_false(self):
+        from ai.response.composer import ValueRangeMapping
+        from datetime import datetime
+        m = ValueRangeMapping('test.axis', 0.0, 1.0, 'all', 0.5, last_used_at=datetime.now())
+        assert m.covers(None) is False
+        assert m.covers('string') is False
+
+    def test_find_axis_values_empty_string_returns_empty(self):
+        self.nv.learn_mapping('alpha.energy', 0.8, '高能量')
+        results = self.nv.find_axis_values('')
+        assert results == []
+
+    def test_decay_confidences_zero_hours_no_crash(self):
+        from ai.response.composer import ValueRangeMapping
+        from datetime import datetime
+        m = ValueRangeMapping('test.axis', 0.0, 1.0, 'any', 0.5, last_used_at=datetime.now())
+        self.nv._value_range_mappings['test.axis'] = [m]
+        self.nv.decay_confidences(hours=0)
+        assert 'test.axis' in self.nv._value_range_mappings
+
+    def test_decay_confidences_negative_hours_does_not_invert(self):
+        from ai.response.composer import ValueRangeMapping
+        from datetime import datetime, timedelta
+        m = ValueRangeMapping('test.axis', 0.0, 1.0, 'old', 0.5, usage_count=1, last_used_at=datetime.now() - timedelta(hours=48))
+        self.nv._value_range_mappings['test.axis'] = [m]
+        self.nv.decay_confidences(hours=-1, decay_rate=0.5)
+        assert m.confidence <= 0.5
+
+    def test_decay_confidences_negative_rate_does_not_invert(self):
+        from ai.response.composer import ValueRangeMapping
+        from datetime import datetime, timedelta
+        m = ValueRangeMapping('test.axis', 0.0, 1.0, 'old', 0.5, usage_count=1, last_used_at=datetime.now() - timedelta(hours=48))
+        self.nv._value_range_mappings['test.axis'] = [m]
+        self.nv.decay_confidences(hours=1, decay_rate=-0.5)
+        assert m.confidence <= 0.5
+
+    def test_decay_confidences_none_last_used_preserved(self):
+        from ai.response.composer import ValueRangeMapping
+        m = ValueRangeMapping('test.axis', 0.0, 1.0, 'orphan', 0.5, usage_count=0, last_used_at=None)
+        self.nv._value_range_mappings['test.axis'] = [m]
+        self.nv.decay_confidences(hours=1, decay_rate=1.0)
+        assert 'test.axis' in self.nv._value_range_mappings
+        assert m.confidence == 0.5
+
+    def test_confidence_capped_at_1_0(self):
+        for i in range(20):
+            self.nv.learn_mapping('alpha.energy', 0.8, '高能量')
+        m = self.nv.get_value_range_mappings('alpha.energy')[0]
+        assert m.confidence == 1.0
+
+    def test_detect_overlaps_single_mapping_no_error(self):
+        from ai.response.composer import ValueRangeMapping
+        from datetime import datetime
+        m = ValueRangeMapping('test.axis', 0.2, 0.8, 'single', 0.5, last_used_at=datetime.now())
+        self.nv._value_range_mappings['test.axis'] = [m]
+        overlaps = self.nv.detect_overlaps('test.axis')
+        assert overlaps == []
+
+    def test_get_uncovered_values_non_dict_skipped(self):
+        state = {
+            'alpha': 'not_a_dict',
+            'beta': None,
+            'gamma': 42,
+        }
+        uncovered = self.nv.get_uncovered_values(state)
+        assert uncovered == []

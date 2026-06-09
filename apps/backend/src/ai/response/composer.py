@@ -450,6 +450,8 @@ class ValueRangeMapping:
 
     def covers(self, value: float) -> bool:
         """Execute the covers operation."""
+        if not isinstance(value, (int, float)):
+            return False
         return self.range_lo <= value <= self.range_hi
 
     def narrow(self, value: float) -> None:
@@ -594,6 +596,8 @@ class NeuroVocabulary:
 
     def find_axis_values(self, description: str, threshold: float = 0.3) -> List[Dict[str, Any]]:
         """反向映射：從語意描述找出對應的軸點位數值區間"""
+        if not description:
+            return []
         results = []
         desc_lower = description.lower()
         for field_name, mappings in self._value_range_mappings.items():
@@ -627,11 +631,15 @@ class NeuroVocabulary:
 
     def decay_confidences(self, hours: float = 24.0, decay_rate: float = 0.01) -> None:
         """降低長時間未使用的 mapping 信心度"""
+        if hours <= 0:
+            return
+        decay_rate = abs(decay_rate)
         now = datetime.now()
         for field_name, mappings in list(self._value_range_mappings.items()):
             alive = []
             for m in mappings:
                 if m.last_used_at is None:
+                    alive.append(m)
                     continue
                 elapsed = (now - m.last_used_at).total_seconds() / 3600.0
                 if elapsed > hours:

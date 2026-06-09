@@ -210,9 +210,23 @@ def load_knowledge_bases() -> List[Dict]:
         if not fname.endswith((".json", ".yaml", ".yml")):
             continue
         fpath = os.path.join(KB_DIR, fname)
+        data = None
         try:
             data = _load_json(fpath)
         except Exception:
+            if fname.endswith((".yaml", ".yml")):
+                try:
+                    with open(fpath, encoding="utf-8") as _fy:
+                        raw = _fy.read()
+                    parsed = _parse_simple_yaml(raw)
+                    data = []
+                    for category, attrs in parsed.items():
+                        desc = attrs.get("text_ending") or attrs.get("description") or ""
+                        if desc:
+                            data.append({"input": f"emotion {category}", "output": str(desc), "domain": "knowledge"})
+                except Exception:
+                    pass
+        if data is None:
             logger.debug("Skipping knowledge base %s (unparseable)", fname)
             continue
         if isinstance(data, dict):
@@ -234,7 +248,140 @@ def load_knowledge_bases() -> List[Dict]:
 
 
 # ---------------------------------------------------------------------------
-# Step 1d — generate knowledge data
+# Step 1d — additional data sources (presets, TRPG, secondary, YAML KB)
+# ---------------------------------------------------------------------------
+
+ED3N_PRESETS_PATH = os.path.join(ROOT, "apps/backend/src/ai/ed3n/config/presets.json")
+ED3N_MATH_PRESETS_PATH = os.path.join(ROOT, "apps/backend/src/ai/ed3n/config/math_presets.json")
+GARDEN_CONFIG_DIR = os.path.join(ROOT, "apps/backend/src/ai/garden/config")
+TRPG_CODEX_PATH = os.path.join(ROOT, "apps/backend/data/trpg/ai-trpg-codex.json")
+RAW_DIR = os.path.join(ROOT, "apps/backend/data/raw_datasets")
+
+
+def _parse_simple_yaml(text: str) -> dict:
+    """Minimal YAML parser for flat key: value blocks.
+    
+    Handles the LingCat_emotion_map.yaml format:
+        key:
+          subkey: value
+          subkey: value
+    """
+    result = {}
+    current_key = None
+    for line in text.splitlines():
+        if not line.strip() or line.strip().startswith("#"):
+            continue
+        if not line.startswith(" "):
+            current_key = line.rstrip(":").strip()
+            result[current_key] = {}
+        elif current_key is not None:
+            parts = line.strip().split(":", 1)
+            if len(parts) == 2:
+                k = parts[0].strip()
+                v = parts[1].strip().strip('"').strip("'")
+                result[current_key][k] = v
+    return result
+
+
+def load_presets_data() -> List[Dict]:
+    """Convert ED3N + GARDEN config presets into training samples."""
+    samples: List[Dict] = []
+
+    # ED3N presets.json (reflex patterns + dict entries)
+    for path, domain_prefix, source_name in [
+        (ED3N_PRESETS_PATH, "reflex", "ED3N presets"),
+        (ED3N_MATH_PRESETS_PATH, "math", "ED3N math presets"),
+    ]:
+        if not os.path.exists(path):
+            continue
+        data = _load_json(path)
+        for trigger, response in data.get("reflex_patterns", {}).items():
+            if trigger and response:
+                samples.append({"input": trigger, "output": response, "domain": domain_prefix})
+        for entry in data.get("dictionary_entries", []):
+            if isinstance(entry, dict):
+                inp = entry.get("key") or entry.get("input") or entry.get("term") or ""
+                sfs = entry.get("surface_forms") or {}
+                if isinstance(sfs, dict):
+                    sfs = list(sfs.values())
+                out = sfs[0] if sfs else entry.get("value") or entry.get("definition") or ""
+                if inp and out:
+                    samples.append({"input": str(inp), "output": str(out), "domain": "knowledge"})
+        logger.info("  Loaded %-35s -> %d samples", source_name, len(samples))
+        prev = len(samples)
+
+    # GARDEN configs (conversation.json, science_knowledge.json, emotion_knowledge.json)
+    if os.path.isdir(GARDEN_CONFIG_DIR):
+        for fname in os.listdir(GARDEN_CONFIG_DIR):
+            if not fname.endswith(".json"):
+                continue
+            fpath = os.path.join(GARDEN_CONFIG_DIR, fname)
+            data = _load_json(fpath)
+            sub_samples = []
+            for trigger, response in data.get("reflex_patterns", {}).items():
+                if trigger and response:
+                    sub_samples.append({"input": trigger, "output": response, "domain": "reflex"})
+            for entry in data.get("dictionary_entries", []):
+                if isinstance(entry, dict):
+                    inp = entry.get("key") or entry.get("input") or entry.get("term") or ""
+                    sfs = entry.get("surface_forms") or {}
+                    if isinstance(sfs, dict):
+                        sfs = list(sfs.values())
+                    out = sfs[0] if sfs else entry.get("value") or entry.get("definition") or ""
+                    if inp and out:
+                        sub_samples.append({"input": str(inp), "output": str(out), "domain": "knowledge"})
+            if sub_samples:
+                samples.extend(sub_samples)
+                logger.info("  Loaded GARDEN config %-25s -> %d samples", fname, len(sub_samples))
+
+    return samples
+
+
+def load_trpg_codex() -> List[Dict]:
+    """Flatten TRPG codex entries into world-domain training samples."""
+    if not os.path.exists(TRPG_CODEX_PATH):
+        logger.warning("TRPG codex not found at %s", TRPG_CODEX_PATH)
+        return []
+    data = _load_json(TRPG_CODEX_PATH)
+    samples: List[Dict] = []
+    for category, items in data.items():
+        if isinstance(items, dict):
+            for cname, cdata in items.items():
+                if isinstance(cdata, dict):
+                    desc = cdata.get("description") or cdata.get("desc") or cdata.get("flavor") or ""
+                    if desc:
+                        samples.append({"input": f"what is {cname}", "output": str(desc), "domain": "world"})
+        elif isinstance(items, list):
+            for item in items[:200]:
+                if isinstance(item, dict):
+                    name = item.get("name") or item.get("id") or ""
+                    desc = item.get("description") or item.get("desc") or item.get("flavor") or ""
+                    if name and desc:
+                        samples.append({"input": f"describe {name}", "output": str(desc), "domain": "world"})
+    logger.info("  Loaded TRPG codex: %d world samples", len(samples))
+    return samples
+
+
+def load_secondary_raw() -> List[Dict]:
+    """Load small secondary datasets (formula log, DummyModel)."""
+    samples: List[Dict] = []
+    for fname in ["ollama_cat_formulas_log.json", "DummyModel.json"]:
+        fpath = os.path.join(RAW_DIR, fname)
+        if not os.path.exists(fpath):
+            continue
+        data = _load_json(fpath)
+        if isinstance(data, list):
+            for item in data:
+                inp = item.get("prompt") or item.get("input") or ""
+                out = item.get("response") or item.get("output") or ""
+                if inp and out:
+                    samples.append({"input": str(inp), "output": str(out), "domain": "knowledge"})
+        logger.info("  Loaded secondary %-30s -> %d samples", fname, len([s for s in samples if "knowledge" in s.get("domain", "")]))
+    return samples
+
+
+# ---------------------------------------------------------------------------
+# Step 1e — generate knowledge data
 # ---------------------------------------------------------------------------
 
 def generate_knowledge_data() -> List[Dict]:
@@ -494,12 +641,18 @@ def main() -> None:
     alpaca_samples = load_alpaca_data()
     template_samples = load_templates_data()
     kb_samples = load_knowledge_bases()
+    presets_samples = load_presets_data()
+    trpg_samples = load_trpg_codex()
+    secondary_samples = load_secondary_raw()
     knowledge_samples = generate_knowledge_data()
-    all_samples = dataset_samples + alpaca_samples + template_samples + kb_samples + knowledge_samples
+    all_samples = dataset_samples + alpaca_samples + template_samples + kb_samples + presets_samples + trpg_samples + secondary_samples + knowledge_samples
     print(f"  Dataset samples:       {len(dataset_samples)}")
     print(f"  Alpaca samples:        {len(alpaca_samples)}")
     print(f"  Template samples:      {len(template_samples)}")
     print(f"  Knowledge base samples:{len(kb_samples)}")
+    print(f"  Preset samples:        {len(presets_samples)}")
+    print(f"  TRPG codex samples:    {len(trpg_samples)}")
+    print(f"  Secondary samples:     {len(secondary_samples)}")
     print(f"  Generated knowledge:   {len(knowledge_samples)}")
     print(f"  Total:                 {len(all_samples)}")
 
