@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
+from ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,24 +34,6 @@ class EthicalEvaluation:
     conflicting_principles: list
     reasoning: str
     confidence: float
-
-
-class UnifiedSymbolicSpace:
-    def __init__(self):
-        self.symbols: dict = {}
-        self.relationships: list = []
-
-    def add_symbol(self, name: str, node_type: str, properties: dict) -> None:
-        self.symbols[name] = {"type": node_type, "properties": properties}
-
-    def get_symbol(self, name: str) -> Optional[dict]:
-        return self.symbols.get(name)
-
-    def get_relationships(self, source: str) -> list:
-        return [r for r in self.relationships if r["source"] == source]
-
-    def add_relationship(self, source: str, target: str) -> None:
-        self.relationships.append({"source": source, "target": target})
 
 
 class ReasoningSystem:

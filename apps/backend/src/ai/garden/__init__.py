@@ -18,7 +18,6 @@ from .snn_core import TensorSNNCore
 from .garden_engine import GARDENEngine
 from .binary_store import BinaryStore
 from .kg_import import KGImporter
-from .hybrid_router import HybridRouter, TierResult, RoutingDecision
 from .vector_decoder import VectorDecoder
 
 __all__ = [
@@ -27,8 +26,5 @@ __all__ = [
     "GARDENEngine",
     "BinaryStore",
     "KGImporter",
-    "HybridRouter",
-    "TierResult",
-    "RoutingDecision",
     "VectorDecoder",
 ]

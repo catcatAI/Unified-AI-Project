@@ -522,7 +522,7 @@ class AngelaLLMService:
                 if self.active_backend:
                     self.model_bus.register_cloud(self.active_backend)
 
-                logger.info("Model Bus initialized with %d models", len(self.model_bus._models))
+                logger.info("Model Bus initialized with %d models", len(self.model_bus._registry))
             except Exception as e:
                 logger.warning(f"Model Bus initialization skipped: {e}")
 

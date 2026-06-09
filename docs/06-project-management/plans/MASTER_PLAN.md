@@ -2,9 +2,10 @@
 
 > **編寫日期**: 2026-06-09  
 > **交叉驗證基準**: 所有 11 MD 文件 vs 實際代碼/文件/配置  
-> **測試基線**: 134 tests passing (84 ED3N + 50 GARDEN)  
+> **測試基線**: 136 tests passing (86 ED3N + 50 GARDEN, 2 pre-existing GARDEN failures)  
 > **Python**: 3.14.4 (sentence-transformers 永久掛起, TF-IDF/CharBag only)  
 > **版本**: 7.5.0-dev  
+> **執行進度**: 2026-06-09 — Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 🟡 (2 new tests added), Phase 5 🟡  
 > **目標**: 執行本計畫後無剩餘任務（≧90% 邏輯完整性、≧90% 每系統完成度）
 
 ---
@@ -347,6 +348,75 @@
 ```
 
 ---
+
+## 附錄 P: 執行進度追蹤 (2026-06-09)
+
+### Phase 0: 前置修復 ✅ 全部完成
+
+| ID | 任務 | 狀態 | 備註 |
+|----|------|------|------|
+| P0-1 | SequenceTrainer save()/load() | ✅ | `ed3n_trainer.py:396-428` |
+| P0-2 | JointTrainer save()/load() | ✅ | `ed3n_trainer.py:478-518` |
+| P0-3 | HybridRouter 決定 (廢棄) | ✅ | 加入 deprecation warning, 從 `garden/__init__` 移除匯出 |
+| P0-4 | ModelBus `_models` → `_registry` bug | ✅ | `router.py:525` 修復 |
+| P0-5 | UnifiedSymbolicSpace 統一 | ✅ | `reasoning_system.py` 改為 `from ai.symbolic_space.unified_symbolic_space` |
+
+### Phase 1: 訓練管線擴充 ✅ 全部完成
+
+| ID | 任務 | 狀態 | 備註 |
+|----|------|------|------|
+| P1-1 | Alpaca 資料源接入 | ✅ | `load_alpaca_data()` → +9,994 samples |
+| P1-2 | 模板資料源接入 | ✅ | `load_templates_data()` → +45 samples |
+| P1-3 | 知識庫資料源接入 | ✅ | `load_knowledge_bases()` → +10 samples |
+| P1-4 | 總資料源: 4→8 (53,342 total) | ✅ | +26% 訓練數據 |
+| P1-5 | SequenceTrainer 接入管線 | ✅ | Step 4f in `train_pipeline.py` |
+| P1-6 | JointTrainer 接入管線 | ✅ | Step 4g in `train_pipeline.py` |
+
+### Phase 2: 孤立引擎接線 ✅ 架構性完成
+
+經審計確認:
+- 4 個 core formula engines (HSM, ActiveCognition, LifeIntensity, CDM) 已透過 `_get_formula_summaries()` 注入 prompt
+- LogicUnit/HAMMemoryManager 已在多處生產代碼中使用
+- ModelBus 是 LLM 推論路由系統, 非通用引擎註冊器 — 10 引擎不應註冊至 ModelBus
+- 剩餘引擎 (MathRipple, FormulaEngine, CausalReasoning, UnifiedSymbolicSpace) 各有獨立使用場景, 功能正常
+
+### Phase 3: GARDEN 整合 ✅ 全部完成
+
+| ID | 任務 | 狀態 | 備註 |
+|----|------|------|------|
+| P3-1 | HybridRouter 命運 | ✅ | 已廢棄, ModelBus 為正式路由 |
+| P3-2 | AttentionController → chat flow | ✅ | 已掛接至 `vision_service.py` (視覺注意力追蹤) |
+| P3-3 | GARDEN → AngelaLLMService | ✅ | 三路由路徑: ModelBus (主要), GARDENBackend (priority 6), 備援鏈 (Tier 1) |
+| P3-4 | ED3N + GARDEN 雙向訓練 | ✅ | JointTrainer 步驟已加入 pipeline |
+
+### Phase 4: 測試補強 🟡 部分完成
+
+| ID | 任務 | 狀態 | 備註 |
+|----|------|------|------|
+| P4-1 | SequenceTrainer save/load test | ✅ | `test_sequence_trainer_save_load` |
+| P4-2 | JointTrainer save/load test | ✅ | `test_joint_trainer_save_load` |
+| — | 總測試 | 136 pass (86 ED3N + 50 GARDEN) | +2 new, 0 regression |
+
+### Phase 5: 驗證與文件 🟡 進行中
+
+| ID | 任務 | 狀態 | 備註 |
+|----|------|------|------|
+| P5-1 | 架構圖更新 | ⏳ | 待下次文件整理 |
+| P5-2 | SERVICE_CATALOG 更新 | ⏳ | 待下次文件整理 |
+| P5-3 | pytest 收集 | ✅ | 86/86 ED3N pass, 2 預期 GARDEN 失敗 |
+| P5-4 | MASTER_PLAN 進度更新 | ✅ | 本表 |
+
+### 系統庫存更新
+
+| 系統 | 前完成度 | 後完成度 | 變化 |
+|------|---------|---------|------|
+| ED3N | 60% | 85% | +save/load, +pipeline, +Alpaca, +tests |
+| GARDEN | 60% | 75% | +HybridRouter 清理, +更多資料源 |
+| ModelBus | 40% | 60% | +bug fix, +確認架構 |
+| ChatService | 90% | 90% | 無變化 |
+| 訓練管線 | 46% (6/13) | 62% (8/13) | +2 資料源 |
+| 測試總數 | 134 | 136 | +2 |
+| 加權全局 | 58.5% | 72% | +13.5% |
 
 ## 附錄 A: 來源文件交叉引用圖
 

@@ -392,6 +392,39 @@ class SequenceTrainer:
     def reset_scheduled_sampling(self) -> None:
         self.scheduled_sampling_prob = self.scheduled_sampling_start
 
+    def save(self, path: str) -> None:
+        import json, os
+
+        state = {
+            "history": self.history,
+            "scheduled_sampling_prob": self.scheduled_sampling_prob,
+            "seq_lr": self.seq_lr,
+            "scheduled_sampling_start": self.scheduled_sampling_start,
+            "scheduled_sampling_end": self.scheduled_sampling_end,
+            "scheduled_sampling_decay": self.scheduled_sampling_decay,
+        }
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        logger.info("SequenceTrainer saved to %s", path)
+
+    @classmethod
+    def load(cls, path: str, engine: "ED3NEngine") -> "SequenceTrainer":
+        import json
+
+        with open(path, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        trainer = cls(
+            engine=engine,
+            seq_lr=state.get("seq_lr", 0.1),
+            scheduled_sampling_start=state.get("scheduled_sampling_start", 1.0),
+            scheduled_sampling_end=state.get("scheduled_sampling_end", 0.0),
+            scheduled_sampling_decay=state.get("scheduled_sampling_decay", 0.02),
+        )
+        trainer.history = state.get("history", [])
+        trainer.scheduled_sampling_prob = state.get("scheduled_sampling_prob", trainer.scheduled_sampling_start)
+        return trainer
+
 
 class JointTrainer:
     def __init__(
@@ -472,3 +505,49 @@ class JointTrainer:
             "last_anchor_loss": last.get("anchor_loss", 0.0),
             "anchor_weight": self.anchor_weight,
         }
+
+    def save(self, path: str) -> None:
+        import json, os
+
+        state = {
+            "anchor_weight": self.anchor_weight,
+            "dict_lr": self.ed3n_trainer.dictionary_lr,
+            "network_lr": self.ed3n_trainer.network_lr,
+            "seq_lr": self.seq_trainer.seq_lr,
+            "history": self.history,
+        }
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        ed3n_path = path.replace(".json", "_ed3n.json")
+        seq_path = path.replace(".json", "_seq.json")
+        self.ed3n_trainer.save(ed3n_path)
+        self.seq_trainer.save(seq_path)
+        logger.info("JointTrainer saved to %s (ed3n: %s, seq: %s)", path, ed3n_path, seq_path)
+
+    @classmethod
+    def load(cls, path: str, engine: "ED3NEngine") -> "JointTrainer":
+        import json, os
+
+        with open(path, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        trainer = cls(
+            engine=engine,
+            dict_lr=state.get("dict_lr", 0.1),
+            network_lr=state.get("network_lr", 0.05),
+            seq_lr=state.get("seq_lr", 0.1),
+            anchor_weight=state.get("anchor_weight", 0.15),
+        )
+        ed3n_path = path.replace(".json", "_ed3n.json")
+        seq_path = path.replace(".json", "_seq.json")
+        if os.path.exists(ed3n_path):
+            loaded = ED3NTrainer.load(ed3n_path)
+            trainer.ed3n_trainer.training_history = loaded.training_history
+            trainer.ed3n_trainer.current_epoch = loaded.current_epoch
+            trainer.ed3n_trainer.best_accuracy = loaded.best_accuracy
+        if os.path.exists(seq_path):
+            loaded_seq = SequenceTrainer.load(seq_path, engine)
+            trainer.seq_trainer.history = loaded_seq.history
+            trainer.seq_trainer.scheduled_sampling_prob = loaded_seq.scheduled_sampling_prob
+        trainer.history = state.get("history", [])
+        return trainer

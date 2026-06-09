@@ -80,6 +80,10 @@ class HybridRouter:
         max_latency_ms: float = 1000.0,
         enable_adaptive_routing: bool = True,
     ):
+        logger.warning(
+            "DEPRECATED: HybridRouter is superseded by ModelBus (ai.core.model_bus). "
+            "This class will be removed in a future cleanup cycle."
+        )
         self.ed3n_threshold = ed3n_threshold
         self.garden_threshold = garden_threshold
         self.max_latency_ms = max_latency_ms

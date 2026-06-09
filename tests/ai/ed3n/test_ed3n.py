@@ -640,6 +640,22 @@ class TestSequenceTrainer:
         metrics = trainer.train_step(batch)
         assert metrics.loss >= 0.0
 
+    def test_sequence_trainer_save_load(self, engine: ED3NEngine):
+        import tempfile, os
+        trainer = SequenceTrainer(engine, seq_lr=0.2)
+        batch = make_synthetic_seq_batch([
+            (["start", "middle"], ["end"]),
+        ])
+        trainer.train_step(batch)
+        trainer.train_step(batch)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "seq.json")
+            trainer.save(path)
+            trainer2 = SequenceTrainer.load(path, engine)
+        assert trainer.history == trainer2.history
+        assert trainer.scheduled_sampling_prob == trainer2.scheduled_sampling_prob
+        assert trainer2.seq_lr == 0.2
+
 
 class TestGeneration:
     def test_generate_basic(self, engine: ED3NEngine):
@@ -755,3 +771,21 @@ class TestJointTrainer:
         summary = trainer.get_summary()
         assert summary["status"] == "active"
         assert summary["steps"] == 1
+
+    def test_joint_trainer_save_load(self, engine: ED3NEngine):
+        import tempfile, os
+        trainer = JointTrainer(engine, dict_lr=0.05, network_lr=0.05, seq_lr=0.1, anchor_weight=0.2)
+        batch = TrainingBatch(
+            examples=[TrainingExample("hi", "hello", ["g1"], ["g5"], [], 0.8)],
+            batch_id="test",
+        )
+        seq_batch = make_synthetic_seq_batch([(["g1"], ["g5"])])
+        trainer.train_step(batch, seq_batch)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "joint.json")
+            trainer.save(path)
+            trainer2 = JointTrainer.load(path, engine)
+        assert trainer.history == trainer2.history
+        assert trainer2.anchor_weight == 0.2
+        assert trainer2.ed3n_trainer.dictionary_lr == 0.05
+        assert trainer2.seq_trainer.seq_lr == 0.1

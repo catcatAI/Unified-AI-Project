@@ -45,8 +45,11 @@ from apps.backend.src.ai.core.model_bus import ModelBus, ModelCapability
 from apps.backend.src.ai.core.query_classifier import QueryClassifier, QueryType
 from apps.backend.src.ai.core.training_coordinator import TrainingCoordinator
 from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
-from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
-from apps.backend.src.ai.ed3n.training_types import TrainingExample, TrainingBatch
+from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
+from apps.backend.src.ai.ed3n.training_types import (
+    TrainingExample, TrainingBatch, SeqBatch,
+    make_synthetic_seq_batch,
+)
 from apps.backend.src.ai.garden.garden_engine import GARDENEngine
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -154,7 +157,84 @@ def load_all_data() -> List[Dict]:
 
 
 # ---------------------------------------------------------------------------
-# Step 1c — generate knowledge data
+# Step 1c — additional data source loaders
+# ---------------------------------------------------------------------------
+
+ALPACA_PATH = os.path.join(DATA_DIR, "alpaca_data.json")
+TEMPLATES_PATH = os.path.join(ROOT, "apps/backend/src/ai/memory/templates_data.json")
+KB_DIR = os.path.join(ROOT, "apps/backend/data/knowledge_bases")
+
+
+def load_alpaca_data(max_samples: int = 10000) -> List[Dict]:
+    """Load Alpaca-style instruction dataset as knowledge-domain samples."""
+    if not os.path.exists(ALPACA_PATH):
+        logger.warning("Alpaca data not found at %s", ALPACA_PATH)
+        return []
+    data = _load_json(ALPACA_PATH)
+    samples: List[Dict] = []
+    for item in data[:max_samples]:
+        inp = item.get("instruction", "")
+        extra = item.get("input", "")
+        if extra:
+            inp = inp + " " + extra
+        out = item.get("output", "")
+        if inp and out:
+            samples.append({"input": inp.strip(), "output": out.strip(), "domain": "knowledge"})
+    logger.info("  Loaded Alpaca data: %d samples (capped at %d)", len(samples), max_samples)
+    return samples
+
+
+def load_templates_data() -> List[Dict]:
+    """Load conversation templates as reflex-pattern samples."""
+    if not os.path.exists(TEMPLATES_PATH):
+        logger.warning("Templates data not found at %s", TEMPLATES_PATH)
+        return []
+    data = _load_json(TEMPLATES_PATH)
+    samples: List[Dict] = []
+    for item in data:
+        inp = " ".join(item.get("keywords", []))
+        out = item.get("content", "")
+        if inp and out:
+            samples.append({"input": inp, "output": out, "domain": "reflex"})
+    logger.info("  Loaded template patterns: %d", len(samples))
+    return samples
+
+
+def load_knowledge_bases() -> List[Dict]:
+    """Load knowledge base files (JSON/YAML) as knowledge-domain samples."""
+    if not os.path.isdir(KB_DIR):
+        logger.warning("Knowledge bases dir not found at %s", KB_DIR)
+        return []
+    samples: List[Dict] = []
+    for fname in os.listdir(KB_DIR):
+        if not fname.endswith((".json", ".yaml", ".yml")):
+            continue
+        fpath = os.path.join(KB_DIR, fname)
+        try:
+            data = _load_json(fpath)
+        except Exception:
+            logger.debug("Skipping knowledge base %s (unparseable)", fname)
+            continue
+        if isinstance(data, dict):
+            for key, val in data.items():
+                if isinstance(val, str):
+                    samples.append({"input": str(key), "output": val, "domain": "knowledge"})
+                elif isinstance(val, list):
+                    for v in val[:5]:
+                        if isinstance(v, str):
+                            samples.append({"input": str(key), "output": v, "domain": "knowledge"})
+        elif isinstance(data, list):
+            for item in data[:100]:
+                inp = item.get("input") or item.get("question") or item.get("keyword") or ""
+                out = item.get("output") or item.get("answer") or item.get("response") or ""
+                if inp and out:
+                    samples.append({"input": str(inp), "output": str(out), "domain": "knowledge"})
+    logger.info("  Loaded knowledge bases: %d samples from %s", len(samples), KB_DIR)
+    return samples
+
+
+# ---------------------------------------------------------------------------
+# Step 1d — generate knowledge data
 # ---------------------------------------------------------------------------
 
 def generate_knowledge_data() -> List[Dict]:
@@ -411,11 +491,17 @@ def main() -> None:
     # -----------------------------------------------------------------------
     print("\n[1/8] Loading and generating data...")
     dataset_samples = load_all_data()
+    alpaca_samples = load_alpaca_data()
+    template_samples = load_templates_data()
+    kb_samples = load_knowledge_bases()
     knowledge_samples = generate_knowledge_data()
-    all_samples = dataset_samples + knowledge_samples
-    print(f"  Dataset samples:   {len(dataset_samples)}")
-    print(f"  Knowledge samples: {len(knowledge_samples)}")
-    print(f"  Total:             {len(all_samples)}")
+    all_samples = dataset_samples + alpaca_samples + template_samples + kb_samples + knowledge_samples
+    print(f"  Dataset samples:       {len(dataset_samples)}")
+    print(f"  Alpaca samples:        {len(alpaca_samples)}")
+    print(f"  Template samples:      {len(template_samples)}")
+    print(f"  Knowledge base samples:{len(kb_samples)}")
+    print(f"  Generated knowledge:   {len(knowledge_samples)}")
+    print(f"  Total:                 {len(all_samples)}")
 
     # Fast-path: dry-run check mode (just imports + data + deconfliction)
     dry_run = os.environ.get("TRAIN_DRY_RUN", "0") == "1"
@@ -534,6 +620,32 @@ def main() -> None:
         reflex_count += 1
     print(f"    Added {reflex_count} reflex patterns")
 
+    # 4f: Sequence training (optional — improves next-token prediction)
+    print("  Training SequenceTrainer (next-token prediction)...")
+    if examples:
+        seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=0.1)
+        seq_batch = make_synthetic_seq_batch(
+            [(e.input_keys[:3], e.output_keys[:2]) for e in examples[:1000] if e.input_keys and e.output_keys],
+            "pipeline_seq",
+        )
+        if seq_batch and seq_batch.examples:
+            seq_metrics = seq_trainer.train_step(seq_batch)
+            print(f"    Sequence loss={seq_metrics.loss:.4f} acc={seq_metrics.accuracy:.4f}")
+            seq_trainer.save(os.path.join(CKPT_DIR, "sequence_trainer.json"))
+
+    # 4g: Joint training (combines ED3N + sequence)
+    print("  Training JointTrainer (combined)...")
+    if examples:
+        joint_trainer = JointTrainer(ed3n_engine, dict_lr=0.05, network_lr=0.05, seq_lr=0.1)
+        joint_batch = TrainingBatch(examples=examples[:500], batch_id="joint_pipeline")
+        joint_seq_batch = make_synthetic_seq_batch(
+            [(e.input_keys[:3], e.output_keys[:2]) for e in examples[:500] if e.input_keys and e.output_keys],
+            "joint_seq",
+        )
+        joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
+        print(f"    Joint loss={joint_metrics.loss:.4f} acc={joint_metrics.accuracy:.4f}")
+        joint_trainer.save(os.path.join(CKPT_DIR, "joint_trainer.json"))
+
     # -----------------------------------------------------------------------
     # Step 5: Train GARDEN on knowledge/general domain
     # -----------------------------------------------------------------------
@@ -620,6 +732,12 @@ def main() -> None:
     with open(os.path.join(CKPT_DIR, "reflex_patterns.json"), "w", encoding="utf-8") as f:
         json.dump(reflex_data, f, ensure_ascii=False, indent=2)
     print(f"  ED3N saved to {CKPT_DIR}")
+
+    # SequenceTrainer / JointTrainer (saved in training steps above if run)
+    for ckpt_name in ("sequence_trainer.json", "joint_trainer.json"):
+        ckpt_path = os.path.join(CKPT_DIR, ckpt_name)
+        if os.path.exists(ckpt_path):
+            print(f"  {ckpt_name} already saved to {CKPT_DIR}")
 
     # GARDEN
     if garden_engine is not None:
