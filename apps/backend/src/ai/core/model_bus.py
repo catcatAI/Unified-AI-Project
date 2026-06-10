@@ -8,6 +8,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.system.config.magic_numbers import confidence_value, latency_value, timeout_value
+
 logger = logging.getLogger(__name__)
 
 
@@ -54,7 +56,7 @@ class ModelBus:
     def __init__(self, default_timeout: float = 30.0) -> None:
         self._registry: Dict[str, Tuple[Any, ModelCapability]] = {}
         self._query_classifier: Any = None
-        self.default_timeout = default_timeout
+        self.default_timeout = timeout_value("ai.model_bus.default_timeout", default_timeout)
 
     # ------------------------------------------------------------------
     # Registration
@@ -77,8 +79,8 @@ class ModelBus:
         cap = ModelCapability(
             tier="reflex",
             domain="reflex",
-            latency_ms=0.1,
-            min_confidence=0.95,
+            latency_ms=latency_value("ai.model_bus.ed3n.latency_ms", 0.1),
+            min_confidence=confidence_value("ai.model_bus.ed3n.min_confidence", 0.95),
         )
         self.register("ed3n", engine, cap)
 
@@ -87,8 +89,8 @@ class ModelBus:
         cap = ModelCapability(
             tier="lightweight",
             domain="knowledge",
-            latency_ms=10.0,
-            min_confidence=0.70,
+            latency_ms=latency_value("ai.model_bus.garden.latency_ms", 10.0),
+            min_confidence=confidence_value("ai.model_bus.garden.min_confidence", 0.70),
         )
         self.register("garden", engine, cap)
 
@@ -115,8 +117,8 @@ class ModelBus:
         cap = ModelCapability(
             tier="cloud",
             domain="creative",
-            latency_ms=500.0,
-            min_confidence=0.60,
+            latency_ms=latency_value("ai.model_bus.cloud.latency_ms", 500.0),
+            min_confidence=confidence_value("ai.model_bus.cloud.min_confidence", 0.60),
         )
         self.register("cloud", backend, cap)
 
@@ -153,7 +155,7 @@ class ModelBus:
             # ED3N first (trained 77.7%), GARDEN fallback
             r1 = await self._try_model("ed3n", query, context, "math")
             results[r1.model_id] = r1
-            if r1.confidence < 0.70 and "garden" in self._registry:
+            if r1.confidence < confidence_value("ai.model_bus.route.math_threshold", 0.70) and "garden" in self._registry:
                 r2 = await self._try_model("garden", query, context, "math")
                 results[r2.model_id] = r2
 
@@ -161,7 +163,7 @@ class ModelBus:
             # GARDEN first, cloud fallback
             r1 = await self._try_model("garden", query, context, "knowledge")
             results[r1.model_id] = r1
-            if r1.confidence < 0.60 and "cloud" in self._registry:
+            if r1.confidence < confidence_value("ai.model_bus.route.knowledge_threshold", 0.60) and "cloud" in self._registry:
                 r2 = await self._try_model("cloud", query, context, "knowledge")
                 results[r2.model_id] = r2
 

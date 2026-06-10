@@ -11,12 +11,18 @@ Response Composer - 响应片段组合系统
 性能目标：组合时间 < 2ms
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+
+from core.system.config.magic_numbers import confidence_value, learning_rate, limit_value, threshold_value
 
 from ai.ed3n.ed3n_engine import ED3NEngine as _ED3NEngine
 
@@ -398,16 +404,32 @@ class NeuroFragment:
         content: str,
         category: str,
         structural_type: str = "statement",
-        alpha_energy: float = 0.5,
-        beta_curiosity: float = 0.5,
-        gamma_valence: float = 0.0,
-        delta_intimacy: float = 0.3,
-        epsilon_precision: float = 0.5,
-        zeta_temporal: float = 0.5,
-        theta_meta: float = 0.3,
-        eta_execution: float = 0.5,
+        alpha_energy: Optional[float] = None,
+        beta_curiosity: Optional[float] = None,
+        gamma_valence: Optional[float] = None,
+        delta_intimacy: Optional[float] = None,
+        epsilon_precision: Optional[float] = None,
+        zeta_temporal: Optional[float] = None,
+        theta_meta: Optional[float] = None,
+        eta_execution: Optional[float] = None,
         context_tags: Optional[List[str]] = None,
     ):
+        if alpha_energy is None:
+            alpha_energy = confidence_value("ai.composer.fragment.alpha_energy", 0.5)
+        if beta_curiosity is None:
+            beta_curiosity = confidence_value("ai.composer.fragment.beta_curiosity", 0.5)
+        if gamma_valence is None:
+            gamma_valence = confidence_value("ai.composer.fragment.gamma_valence", 0.0)
+        if delta_intimacy is None:
+            delta_intimacy = confidence_value("ai.composer.fragment.delta_intimacy", 0.3)
+        if epsilon_precision is None:
+            epsilon_precision = confidence_value("ai.composer.fragment.epsilon_precision", 0.5)
+        if zeta_temporal is None:
+            zeta_temporal = confidence_value("ai.composer.fragment.zeta_temporal", 0.5)
+        if theta_meta is None:
+            theta_meta = confidence_value("ai.composer.fragment.theta_meta", 0.3)
+        if eta_execution is None:
+            eta_execution = confidence_value("ai.composer.fragment.eta_execution", 0.5)
         self.fragment_id = fragment_id
         self.content = content
         self.category = category
@@ -456,8 +478,9 @@ class ValueRangeMapping:
 
     def narrow(self, value: float) -> None:
         """Execute the narrow operation."""
-        self.range_lo = max(self.range_lo, value - 0.01)
-        self.range_hi = min(self.range_hi, value + 0.01)
+        delta = threshold_value("ai.composer.narrow.delta", 0.01)
+        self.range_lo = max(self.range_lo, value - delta)
+        self.range_hi = min(self.range_hi, value + delta)
 
 
 class NeuroVocabulary:
@@ -522,21 +545,19 @@ class NeuroVocabulary:
             if m.covers(value):
                 m.narrow(value)
                 m.usage_count += 1
-                m.confidence = min(1.0, m.confidence + 0.05)
+                m.confidence = min(confidence_value("ai.composer.learn_mapping.max_confidence", 1.0), m.confidence + learning_rate("ai.composer.learn_mapping.confidence_increment", 0.05))
                 m.last_used_at = now
-                # 若新描述更長（更精確），取代舊描述
                 if len(description) > len(m.description):
                     m.description = description
                 return
 
-        # 新增 mapping
         mappings = self._value_range_mappings.setdefault(axis_field, [])
         mappings.append(ValueRangeMapping(
             axis_field=axis_field,
             range_lo=value,
             range_hi=value,
             description=description,
-            confidence=0.3,
+            confidence=confidence_value("ai.composer.learn_mapping.confidence_init", 0.3),
             usage_count=1,
             created_at=now,
             last_used_at=now,
@@ -546,8 +567,10 @@ class NeuroVocabulary:
         """回傳指定軸點位的所有 mapping"""
         return list(self._value_range_mappings.get(axis_field, []))
 
-    def serialize_mappings(self, max_age_days: float = 90.0) -> List[Dict[str, Any]]:
+    def serialize_mappings(self, max_age_days: Optional[float] = None) -> List[Dict[str, Any]]:
         """序列化所有映射（用於持久化），可選清除過舊項目"""
+        max_age = max_age_days if max_age_days is not None else confidence_value("ai.composer.serialize.max_age_days", 90.0)
+        min_usage = limit_value("ai.composer.serialize.min_usage_count", 2)
         now = datetime.now()
         result = []
         stale_fields = []
@@ -555,7 +578,7 @@ class NeuroVocabulary:
             alive = []
             for m in mappings:
                 age = (now - m.created_at).days
-                if age > max_age_days and m.usage_count < 2:
+                if age > max_age and m.usage_count < min_usage:
                     continue
                 alive.append({
                     "axis_field": m.axis_field,
@@ -585,7 +608,7 @@ class NeuroVocabulary:
                 range_lo=item["range_lo"],
                 range_hi=item["range_hi"],
                 description=item["description"],
-                confidence=item.get("confidence", 0.3),
+                confidence=item.get("confidence", confidence_value("ai.composer.load_mappings.confidence", 0.3)),
                 usage_count=item.get("usage_count", 0),
                 created_at=datetime.fromisoformat(item["created_at"]) if "created_at" in item else datetime.now(),
                 last_used_at=datetime.fromisoformat(item["last_used_at"]) if item.get("last_used_at") else None,
@@ -594,8 +617,10 @@ class NeuroVocabulary:
 
     # ── C6 Phase 5+：反向映射 + 信心衰減 ────────────────────────────────
 
-    def find_axis_values(self, description: str, threshold: float = 0.3) -> List[Dict[str, Any]]:
+    def find_axis_values(self, description: str, threshold: Optional[float] = None) -> List[Dict[str, Any]]:
         """反向映射：從語意描述找出對應的軸點位數值區間"""
+        if threshold is None:
+            threshold = confidence_value("ai.composer.find_axis_values.threshold", 0.3)
         if not description:
             return []
         results = []
@@ -629,11 +654,16 @@ class NeuroVocabulary:
                     uncovered.append({"axis_field": field, "value": v})
         return uncovered
 
-    def decay_confidences(self, hours: float = 24.0, decay_rate: float = 0.01) -> None:
+    def decay_confidences(self, hours: Optional[float] = None, decay_rate: Optional[float] = None) -> None:
         """降低長時間未使用的 mapping 信心度"""
+        if hours is None:
+            hours = confidence_value("ai.composer.decay.hours", 24.0)
+        if decay_rate is None:
+            decay_rate = threshold_value("ai.composer.decay.rate", 0.01)
         if hours <= 0:
             return
         decay_rate = abs(decay_rate)
+        min_confidence = threshold_value("ai.composer.decay.min_confidence", 0.01)
         now = datetime.now()
         for field_name, mappings in list(self._value_range_mappings.items()):
             alive = []
@@ -645,7 +675,7 @@ class NeuroVocabulary:
                 if elapsed > hours:
                     decay = decay_rate * (elapsed / hours)
                     m.confidence = max(0.0, m.confidence - decay)
-                if m.confidence > 0.01:
+                if m.confidence > min_confidence:
                     alive.append(m)
             if alive:
                 self._value_range_mappings[field_name] = alive
@@ -701,14 +731,14 @@ class NeuroVocabulary:
                 content=item["content"],
                 category=item.get("category", "general"),
                 structural_type=item.get("structural_type", "statement"),
-                alpha_energy=weights.get("alpha_energy", 0.5),
-                beta_curiosity=weights.get("beta_curiosity", 0.5),
-                gamma_valence=weights.get("gamma_valence", 0.0),
-                delta_intimacy=weights.get("delta_intimacy", 0.3),
-                epsilon_precision=weights.get("epsilon_precision", 0.5),
-                zeta_temporal=weights.get("zeta_temporal", 0.5),
-                theta_meta=weights.get("theta_meta", 0.3),
-                eta_execution=weights.get("eta_execution", 0.5),
+                alpha_energy=weights.get("alpha_energy", confidence_value("ai.composer.fragment.alpha_energy", 0.5)),
+                beta_curiosity=weights.get("beta_curiosity", confidence_value("ai.composer.fragment.beta_curiosity", 0.5)),
+                gamma_valence=weights.get("gamma_valence", confidence_value("ai.composer.fragment.gamma_valence", 0.0)),
+                delta_intimacy=weights.get("delta_intimacy", confidence_value("ai.composer.fragment.delta_intimacy", 0.3)),
+                epsilon_precision=weights.get("epsilon_precision", confidence_value("ai.composer.fragment.epsilon_precision", 0.5)),
+                zeta_temporal=weights.get("zeta_temporal", confidence_value("ai.composer.fragment.zeta_temporal", 0.5)),
+                theta_meta=weights.get("theta_meta", confidence_value("ai.composer.fragment.theta_meta", 0.3)),
+                eta_execution=weights.get("eta_execution", confidence_value("ai.composer.fragment.eta_execution", 0.5)),
                 context_tags=item.get("context_tags"),
             )
             self.add_fragment(frag)

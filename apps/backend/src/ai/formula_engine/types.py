@@ -1,3 +1,7 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 from typing import TypedDict, List, Optional, Dict, Any, Required
 
 class FormulaConfigEntry(TypedDict, total=False):

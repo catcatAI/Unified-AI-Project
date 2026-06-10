@@ -9,6 +9,10 @@
 3. 根据系统资源动态调整预计算策略
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional

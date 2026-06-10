@@ -23,6 +23,8 @@ import zlib
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.system.config.magic_numbers import confidence_value, threshold_value
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -224,10 +226,11 @@ class VectorDictionary:
         self,
         model_name: str = "paraphrase-multilingual-MiniLM-L12-v2",
         top_k: int = 8,
-        similarity_threshold: float = 0.30,
+        similarity_threshold: Optional[float] = None,
         device: str = "cpu",
         compatibility_mode: bool = True,
     ):
+        similarity_threshold = similarity_threshold if similarity_threshold is not None else threshold_value("ai.garden.dictionary.similarity_threshold", 0.30)
         self.model_name = model_name
         self.top_k = top_k
         self.similarity_threshold = similarity_threshold
@@ -239,7 +242,7 @@ class VectorDictionary:
         self._matrix: Optional[torch.Tensor] = None   # shape [N, D]
         self._key_order: List[str] = []               # maps row index -> key
         self._dirty = True                             # re-index flag
-        self.growth_threshold = 0.6                      # minimum confidence for grow()
+        self.growth_threshold = threshold_value("ai.garden.dictionary.growth_threshold", 0.6)
 
     # ------------------------------------------------------------------
     # Encoder setup
@@ -266,8 +269,9 @@ class VectorDictionary:
         key: str,
         surface_forms: Dict[str, str],
         relations: Optional[Dict[str, List[str]]] = None,
-        confidence: float = 1.0,
+        confidence: Optional[float] = None,
     ) -> ConceptEntry:
+        confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.add_confidence", 1.0)
         entry = ConceptEntry(
             key=key,
             surface_forms=surface_forms,
@@ -278,9 +282,10 @@ class VectorDictionary:
         self._dirty = True
         return entry
 
-    def grow(self, text: str, surface_form: str, confidence: float = 0.6) -> str:
+    def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
         """Add a new entry learned from conversation."""
-        existing = self._find_similar_key(text, threshold=0.85)
+        confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
+        existing = self._find_similar_key(text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85))
         if existing:
             return existing
         idx = len(self.entries) + 1
@@ -289,8 +294,9 @@ class VectorDictionary:
         logger.info("GARDEN: grew new concept key=%s surface=%s", key, surface_form)
         return key
 
-    def _find_similar_key(self, text: str, threshold: float = 0.85) -> Optional[str]:
+    def _find_similar_key(self, text: str, threshold: Optional[float] = None) -> Optional[str]:
         """Return existing key if text is very similar to an existing surface form."""
+        threshold = threshold if threshold is not None else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.85)
         lower = text.lower().strip()
         for key, entry in self.entries.items():
             for sf in entry.surface_forms.values():

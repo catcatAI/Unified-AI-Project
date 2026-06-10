@@ -10,6 +10,10 @@ Angela Response Composition & Matching System
 4. DeviationTracker - 偏差追踪器
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 from .template_matcher import TemplateMatcher, MatchResult
 from .composer import (
     ResponseComposer,

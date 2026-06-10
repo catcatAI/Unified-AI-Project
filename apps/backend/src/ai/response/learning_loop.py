@@ -7,6 +7,10 @@ Extracts new vocabulary, emoji, and sentence patterns from LLM responses.
 Reinforces fragment weights based on user engagement signals.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 import re
 from typing import Dict, Any, List, Optional

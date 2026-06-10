@@ -10,6 +10,10 @@ Automatically selects LLM backend, model, and parameters based on:
 - Phase 6: Decision recording & learning
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import time
 import logging
 from dataclasses import dataclass, asdict

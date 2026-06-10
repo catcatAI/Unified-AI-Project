@@ -3,6 +3,10 @@ Vector Memory Store
 Handles vector storage and retrieval using ChromaDB.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 from typing import Any, Dict, Optional
 

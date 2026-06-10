@@ -1,3 +1,7 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 # Angela Matrix - 4D State: αβγδ (Cognitive-Emotional-Volitional-Memory)
 # File: __init__.py
 # State: L5-Mature-Agentic (Mature Agent Capabilities)

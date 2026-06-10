@@ -3,6 +3,10 @@ LIS (Linguistic Immune System) Sub-package.
 Responsible for detecting, diagnosing, and responding to semantic anomalies.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 
 logger = logging.getLogger(__name__)

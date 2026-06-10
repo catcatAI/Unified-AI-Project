@@ -8,6 +8,10 @@ Angela Matrix Annotation:
 - δ: 1.0 (稳定性)
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime

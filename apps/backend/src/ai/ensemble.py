@@ -8,6 +8,10 @@ Implements ensemble computing for Angela AI Extended Mode:
 - Support for GPT-4, Claude-3-Opus, and local models
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import asyncio
 import logging
 from dataclasses import dataclass, field

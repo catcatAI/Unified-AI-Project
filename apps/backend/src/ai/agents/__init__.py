@@ -3,6 +3,10 @@ AI Agents Module
 Contains base agent classes and specialized agent implementations.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 from .base.base_agent import BaseAgent
 from .specialized.creative_writing_agent import CreativeWritingAgent
 from .specialized.web_search_agent import WebSearchAgent

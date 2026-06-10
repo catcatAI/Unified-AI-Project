@@ -9,6 +9,10 @@ Angela AI 生命循環系統
 - 記憶整合循環：主動記憶結構化
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 from .llm_decision_loop import LLMDecisionLoop
 from .proactive_interaction_system import ProactiveInteractionSystem
 from .user_monitor import UserMonitor, UserState

@@ -3,6 +3,10 @@ Agent Manager Extensions for Phase 15
 進程代理管理、健康監控和自動重啟功能
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import asyncio
 import logging
 import multiprocessing as mp

@@ -7,6 +7,14 @@ import random
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.system.config.magic_numbers import (
+    confidence_value,
+    learning_rate,
+    limit_value,
+    threshold_value,
+    batch_value,
+)
+
 from .core_network import CoreNetwork
 from .dictionary_layer import DictionaryLayer
 from .ed3n_engine import ED3NEngine
@@ -26,9 +34,11 @@ class ED3NTrainer:
     def __init__(
         self,
         engine: ED3NEngine,
-        dictionary_lr: float = 0.1,
-        network_lr: float = 0.05,
+        dictionary_lr: Optional[float] = None,
+        network_lr: Optional[float] = None,
     ):
+        dictionary_lr = dictionary_lr if dictionary_lr is not None else learning_rate("ai.ed3n.trainer.dictionary_lr", 0.1)
+        network_lr = network_lr if network_lr is not None else learning_rate("ai.ed3n.trainer.network_lr", 0.05)
         self.engine = engine
         self.dictionary: DictionaryLayer = engine.dictionary
         self.network: CoreNetwork = engine.network
@@ -90,7 +100,7 @@ class ED3NTrainer:
                     new_key = self.dictionary.grow(
                         text=surface,
                         surface_form=surface,
-                        confidence=ex.confidence * 0.6,
+                        confidence=ex.confidence * confidence_value("ai.ed3n.trainer.confidence_scaling", 0.6),
                     )
                     if new_key:
                         logger.debug("Grew entry %s for missing key", new_key)
@@ -155,7 +165,7 @@ class ED3NTrainer:
                 error = expected - actual
                 total_loss += abs(error)
 
-                if actual > 0.3 and expected > 0.5:
+                if actual > threshold_value("ai.ed3n.trainer.activation_threshold", 0.3) and expected > confidence_value("ai.ed3n.trainer.expected_confidence", 0.5):
                     total_correct += 1
 
                 for input_key in ex.input_keys:
@@ -165,7 +175,7 @@ class ED3NTrainer:
 
                 neuron = self._find_neuron(expected_key)
                 if neuron is not None:
-                    delta = self.network_lr * (actual - 0.5) * 0.1
+                    delta = self.network_lr * (actual - confidence_value("ai.ed3n.trainer.midpoint_bias", 0.5)) * learning_rate("ai.ed3n.trainer.delta_scaling", 0.1)
                     neuron.threshold -= delta
 
         n = len(examples)
@@ -231,7 +241,8 @@ class ED3NTrainer:
             engine.dictionary.import_from_json(dict_path)
         return trainer
 
-    def train_from_replay(self, batch_size: int = 32) -> Optional[TrainMetrics]:
+    def train_from_replay(self, batch_size: Optional[int] = None) -> Optional[TrainMetrics]:
+        batch_size = batch_size if batch_size is not None else batch_value("ai.ed3n.trainer.replay_batch_size", 32)
         if self.replay_buffer is None:
             logger.warning("No replay buffer set; skipping replay training")
             return None
@@ -248,7 +259,7 @@ class ED3NTrainer:
                 input_keys=exp.get("input_keys", []),
                 output_keys=exp.get("output_keys", []),
                 relation_pairs=exp.get("relation_pairs", []),
-                confidence=min(max(float(exp.get("reward", 0.5)), 0.0), 1.0),
+                confidence=min(max(float(exp.get("reward", confidence_value("ai.ed3n.trainer.default_reward", 0.5))), 0.0), 1.0),
             )
             examples.append(example)
 
@@ -292,11 +303,15 @@ class SequenceTrainer:
     def __init__(
         self,
         engine: "ED3NEngine",
-        seq_lr: float = 0.1,
-        scheduled_sampling_start: float = 1.0,
-        scheduled_sampling_end: float = 0.0,
-        scheduled_sampling_decay: float = 0.02,
+        seq_lr: Optional[float] = None,
+        scheduled_sampling_start: Optional[float] = None,
+        scheduled_sampling_end: Optional[float] = None,
+        scheduled_sampling_decay: Optional[float] = None,
     ):
+        seq_lr = seq_lr if seq_lr is not None else learning_rate("ai.ed3n.sequence.seq_lr", 0.1)
+        scheduled_sampling_start = scheduled_sampling_start if scheduled_sampling_start is not None else confidence_value("ai.ed3n.sequence.sampling_start", 1.0)
+        scheduled_sampling_end = scheduled_sampling_end if scheduled_sampling_end is not None else confidence_value("ai.ed3n.sequence.sampling_end", 0.0)
+        scheduled_sampling_decay = scheduled_sampling_decay if scheduled_sampling_decay is not None else learning_rate("ai.ed3n.sequence.sampling_decay", 0.02)
         self.engine = engine
         self.dictionary: DictionaryLayer = engine.dictionary
         self.network: CoreNetwork = engine.network
@@ -334,7 +349,7 @@ class SequenceTrainer:
                 error = 1.0 - actual
                 total_loss += abs(error)
 
-                if actual > 0.3:
+                if actual > threshold_value("ai.ed3n.sequence.activation_threshold", 0.3):
                     correct += 1
 
                 rel_key = None
@@ -345,17 +360,17 @@ class SequenceTrainer:
                 if rel_key is not None:
                     self.network.add_directed(
                         rel_key, target_key,
-                        weight=self.seq_lr * (1.0 - actual) * 0.5,
+                        weight=self.seq_lr * (1.0 - actual) * confidence_value("ai.ed3n.sequence.connection_weight", 0.5),
                     )
                     self.network.adjust_connection(
-                        rel_key, target_key, self.seq_lr * error * 0.3,
+                        rel_key, target_key, self.seq_lr * error * learning_rate("ai.ed3n.sequence.connection_adjust", 0.3),
                     )
 
                 entry = self.dictionary.entries.get(target_key)
                 if entry is not None:
                     entry.confidence = min(
                         entry.confidence + self.seq_lr * (1.0 - entry.confidence),
-                        1.0,
+                        confidence_value("ai.ed3n.sequence.max_confidence", 1.0),
                     )
 
                 if random.random() < self.scheduled_sampling_prob:
@@ -364,8 +379,8 @@ class SequenceTrainer:
                     predicted = max(activations, key=activations.get) if activations else target_key
                     context.append(predicted)
 
-                if len(context) > 8:
-                    context = context[-8:]
+                if len(context) > limit_value("ai.ed3n.sequence.context_window", 8):
+                    context = context[-limit_value("ai.ed3n.sequence.context_truncation", 8):]
 
         self.scheduled_sampling_prob = max(
             self.scheduled_sampling_end,
@@ -430,11 +445,15 @@ class JointTrainer:
     def __init__(
         self,
         engine: "ED3NEngine",
-        dict_lr: float = 0.1,
-        network_lr: float = 0.05,
-        seq_lr: float = 0.1,
-        anchor_weight: float = 0.15,
+        dict_lr: Optional[float] = None,
+        network_lr: Optional[float] = None,
+        seq_lr: Optional[float] = None,
+        anchor_weight: Optional[float] = None,
     ):
+        dict_lr = dict_lr if dict_lr is not None else learning_rate("ai.ed3n.joint.dict_lr", 0.1)
+        network_lr = network_lr if network_lr is not None else learning_rate("ai.ed3n.joint.network_lr", 0.05)
+        seq_lr = seq_lr if seq_lr is not None else learning_rate("ai.ed3n.joint.seq_lr", 0.1)
+        anchor_weight = anchor_weight if anchor_weight is not None else confidence_value("ai.ed3n.joint.anchor_weight", 0.15)
         self.engine = engine
         self.dictionary: DictionaryLayer = engine.dictionary
         self.ed3n_trainer = ED3NTrainer(engine, dict_lr, network_lr)

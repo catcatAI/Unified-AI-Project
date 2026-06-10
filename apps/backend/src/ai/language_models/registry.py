@@ -3,6 +3,10 @@
 Provides model registration and profile management.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 from dataclasses import dataclass, asdict
 from typing import Dict, Any, List
 import logging

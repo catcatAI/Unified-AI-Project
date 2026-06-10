@@ -1,3 +1,7 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 # Angela Matrix Annotation:
 # α (Alpha): Cognition - Formula pattern matching and configuration management
 # β (Beta): Emotion - Neutral (config processing)

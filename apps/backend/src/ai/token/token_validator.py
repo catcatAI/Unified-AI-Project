@@ -1,3 +1,7 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 # Angela Matrix Annotation:
 # α (Alpha): Cognition - Token-level validation and reasoning tracking
 # β (Beta): Emotion - Neutral (validation process)

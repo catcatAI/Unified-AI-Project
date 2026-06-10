@@ -3,6 +3,10 @@ Agent Monitoring Manager for Unified AI Project.
 Manages monitoring and health checking for AI agents.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 from typing import Dict, Optional, Any
 from dataclasses import dataclass, field

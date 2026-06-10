@@ -19,6 +19,10 @@ Author: Angela AI Development Team
 Version: 6.2.1
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 from __future__ import annotations
 import ast
 import json

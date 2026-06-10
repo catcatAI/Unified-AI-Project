@@ -4,6 +4,10 @@ Responsible for Dungeon Master narration, Alchemy logic, and Fantasy RPG mechani
 Migrated from 'Witch's Alchemy Chronicle' and 'TRPG Game' frontend logic.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 from typing import Any, Dict, List, Optional
 

@@ -3,6 +3,10 @@ Personality Manager
 Handles loading and managing different personality profiles for the AI.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 import json
 from pathlib import Path

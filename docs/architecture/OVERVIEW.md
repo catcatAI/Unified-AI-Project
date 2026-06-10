@@ -1,5 +1,7 @@
 # System Architecture Overview
 
+> **Last Updated**: 2026-06-10 — Updated training pipeline (13 sources/53,654 samples), Magic Numbers (84 values centralized), added Integration Testing and Code Quality Metrics sections
+
 ## High-Level Architecture
 
 ```
@@ -83,7 +85,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 5. **Magic Numbers** centralized in `magic_numbers.py` with config-backed defaults
 6. **ModelBus** is the LLM tier router (not a general engine registry) — 10 isolated engines remain directly invoked
 7. **ED3N → GARDEN** pipeline: dictionary layer (text→keys) → SNN (LIF neurons) → GARDENBackend (vector dict + TF-IDF/CharBag)
-8. **Training pipeline** expands 4→8 data sources (Alpaca, templates, knowledge bases) with 53,342 total samples
+8. **Training pipeline** expands 4→13 data sources (Alpaca, templates, knowledge bases, SEO, KG, etc.) with 53,654 total samples
 
 ## Current Status (2026-06-10)
 
@@ -97,8 +99,10 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | Handlers | ✅ 4 handlers | — |
 | ED3N Engine | ✅ 86/86 tests | Reflex → Deep → SNN pipeline |
 | GARDEN Engine | ✅ 50/50 tests | 3 active routing paths, TF-IDF fallback |
-| Training Pipeline | ✅ 53,342 samples (8 sources) | SequenceTrainer + JointTrainer |
-| ModelBus | ✅ | GARDENBackend registered, HybridRouter deprecated |
-| Magic Numbers | 🟡 Partial | ~43 values remaining |
+| Training Pipeline | ✅ 53,654 samples (13 sources) | SequenceTrainer + JointTrainer |
+| ModelBus | ✅ 34 tests | Registration, 7 routing paths, domain queries, timeout, edge cases |
+| Magic Numbers | ✅ Full | 84 values centralized across 6 files via magic_numbers.py |
+| Integration Testing | ✅ 33 e2e tests | ED3NEngine + GARDENEngine + ModelBus + NeuroVocabulary pipeline |
+| Code Quality Metrics | ✅ ANGELA-MATRIX: 99% | 156/157 annotated; total 180+ tests across 3 test files (test_model_bus.py + test_composer_c6.py + test_integration_ai_pipeline.py) |
 | Stubs | ✅ 36/37 strict stubs implemented | 3 true stubs remain (1 functional, 2 deprecated)
-| Docs | 🟡 Updated | SERVICE_CATALOG.md + OVERVIEW.md current |
+| Docs | ✅ Updated | SERVICE_CATALOG.md + OVERVIEW.md current |

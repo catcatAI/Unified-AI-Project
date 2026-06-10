@@ -5,6 +5,10 @@ Provides common functionality for HSP connectivity, task handling, and
 lifecycle management.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import asyncio
 import logging
 import uuid

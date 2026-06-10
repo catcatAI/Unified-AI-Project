@@ -94,3 +94,23 @@ def timing_value(key: str, default: float = 0.1) -> float:
     """Return a timing value (seconds) for the given key."""
     return float(_get(key, default))
 
+
+def confidence_value(key: str, default: float = 0.7) -> float:
+    """Return a confidence threshold for the given key."""
+    return float(_get(key, default))
+
+
+def learning_rate(key: str, default: float = 0.05) -> float:
+    """Return a learning rate for the given key."""
+    return float(_get(key, default))
+
+
+def latency_value(key: str, default: float = 10.0) -> float:
+    """Return a latency value (ms) for the given key."""
+    return float(_get(key, default))
+
+
+def limit_value(key: str, default: int = 100) -> int:
+    """Return a maximum limit/cap for the given key."""
+    return int(_get(key, default))
+

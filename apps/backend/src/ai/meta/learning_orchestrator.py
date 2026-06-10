@@ -3,6 +3,10 @@ Angela AI v6.0 - Learning Orchestrator (學習編排器)
  ASI Core: 協調評估器與控制器，實現閉環自我演化。
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime

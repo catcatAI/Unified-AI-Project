@@ -41,6 +41,8 @@ for n in ("ed3n_engine", "garden_engine", "dictionary_layer", "VectorDictionary"
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from apps.backend.src.core.system.config.magic_numbers import confidence_value, learning_rate, limit_value
+
 from apps.backend.src.ai.core.model_bus import ModelBus, ModelCapability
 from apps.backend.src.ai.core.query_classifier import QueryClassifier, QueryType
 from apps.backend.src.ai.core.training_coordinator import TrainingCoordinator
@@ -165,8 +167,9 @@ TEMPLATES_PATH = os.path.join(ROOT, "apps/backend/src/ai/memory/templates_data.j
 KB_DIR = os.path.join(ROOT, "apps/backend/data/knowledge_bases")
 
 
-def load_alpaca_data(max_samples: int = 10000) -> List[Dict]:
+def load_alpaca_data(max_samples: Optional[int] = None) -> List[Dict]:
     """Load Alpaca-style instruction dataset as knowledge-domain samples."""
+    max_samples = max_samples if max_samples is not None else limit_value("train.alpaca.max_samples", 10000)
     if not os.path.exists(ALPACA_PATH):
         logger.warning("Alpaca data not found at %s", ALPACA_PATH)
         return []
@@ -234,11 +237,11 @@ def load_knowledge_bases() -> List[Dict]:
                 if isinstance(val, str):
                     samples.append({"input": str(key), "output": val, "domain": "knowledge"})
                 elif isinstance(val, list):
-                    for v in val[:5]:
+                    for v in val[:limit_value("train.knowledge.max_per_key", 5)]:
                         if isinstance(v, str):
                             samples.append({"input": str(key), "output": v, "domain": "knowledge"})
         elif isinstance(data, list):
-            for item in data[:100]:
+            for item in data[:limit_value("train.knowledge.max_per_list", 100)]:
                 inp = item.get("input") or item.get("question") or item.get("keyword") or ""
                 out = item.get("output") or item.get("answer") or item.get("response") or ""
                 if inp and out:
@@ -352,7 +355,7 @@ def load_trpg_codex() -> List[Dict]:
                     if desc:
                         samples.append({"input": f"what is {cname}", "output": str(desc), "domain": "world"})
         elif isinstance(items, list):
-            for item in items[:200]:
+            for item in items[:limit_value("train.trpg.max_per_category", 200)]:
                 if isinstance(item, dict):
                     name = item.get("name") or item.get("id") or ""
                     desc = item.get("description") or item.get("desc") or item.get("flavor") or ""
@@ -534,7 +537,7 @@ def generate_knowledge_data() -> List[Dict]:
             seen_inputs.add(inp)
 
     # Expand templates to reach 500+ samples
-    target = 1000
+    target = limit_value("train.generate.target", 1000)
     prev = len(pairs)
     # English pass
     for template, tmpl_out in templates_en:
@@ -566,7 +569,7 @@ def generate_knowledge_data() -> List[Dict]:
     # Fill remaining with enumerated variants if still under target
     if len(pairs) < target:
         remaining = target - len(pairs)
-        for i in range(remaining + 10):
+        for i in range(remaining + limit_value("train.generate.buffer_extra", 10)):
             topic = f"concept_{i}"
             inp = f"what is {topic}"
             out = f"{topic} is a conceptual unit in knowledge representation"
@@ -627,16 +630,15 @@ def evaluate(
 # Main pipeline
 # ---------------------------------------------------------------------------
 
-def main() -> None:
-    print("=" * 60)
-    print("  UNIFIED ED3N + GARDEN TRAINING PIPELINE")
-    print("=" * 60)
-    t_start = time.time()
 
-    # -----------------------------------------------------------------------
-    # Step 1: Load + generate data
-    # -----------------------------------------------------------------------
-    print("\n[1/8] Loading and generating data...")
+def _step1_setup():
+    model_bus = ModelBus()
+    query_classifier = QueryClassifier()
+    coordinator = TrainingCoordinator(bus=model_bus)
+    return model_bus, query_classifier, coordinator
+
+
+def _step2_load_datasets():
     dataset_samples = load_all_data()
     alpaca_samples = load_alpaca_data()
     template_samples = load_templates_data()
@@ -644,52 +646,15 @@ def main() -> None:
     presets_samples = load_presets_data()
     trpg_samples = load_trpg_codex()
     secondary_samples = load_secondary_raw()
-    knowledge_samples = generate_knowledge_data()
-    all_samples = dataset_samples + alpaca_samples + template_samples + kb_samples + presets_samples + trpg_samples + secondary_samples + knowledge_samples
-    print(f"  Dataset samples:       {len(dataset_samples)}")
-    print(f"  Alpaca samples:        {len(alpaca_samples)}")
-    print(f"  Template samples:      {len(template_samples)}")
-    print(f"  Knowledge base samples:{len(kb_samples)}")
-    print(f"  Preset samples:        {len(presets_samples)}")
-    print(f"  TRPG codex samples:    {len(trpg_samples)}")
-    print(f"  Secondary samples:     {len(secondary_samples)}")
-    print(f"  Generated knowledge:   {len(knowledge_samples)}")
-    print(f"  Total:                 {len(all_samples)}")
+    return (dataset_samples, alpaca_samples, template_samples, kb_samples,
+            presets_samples, trpg_samples, secondary_samples)
 
-    # Fast-path: dry-run check mode (just imports + data + deconfliction)
-    dry_run = os.environ.get("TRAIN_DRY_RUN", "0") == "1"
 
-    # -----------------------------------------------------------------------
-    # Step 2: Initialize ModelBus + QueryClassifier + TrainingCoordinator
-    # -----------------------------------------------------------------------
-    print("\n[2/8] Initializing ModelBus, QueryClassifier, TrainingCoordinator...")
-    model_bus = ModelBus()
-    query_classifier = QueryClassifier()
-    coordinator = TrainingCoordinator(bus=model_bus)
-    print(f"  ModelBus: ready | QueryClassifier: ready | Coordinator: ready")
+def _step3_generate_knowledge():
+    return generate_knowledge_data()
 
-    # -----------------------------------------------------------------------
-    # Step 3: Deconflict samples by domain
-    # -----------------------------------------------------------------------
-    print("\n[3/8] Deconflicting samples by domain...")
-    batches = coordinator.deconflict_samples(all_samples)
-    for model_id, batch in sorted(batches.items()):
-        print(f"  {model_id:15s} -> {len(batch):5d} samples")
-    total_deconflicted = sum(len(v) for v in batches.values())
-    print(f"  Total deconflicted: {total_deconflicted}")
 
-    # Dry-run check: stop here
-    if dry_run:
-        print("\n" + "=" * 60)
-        print("  DRY-RUN COMPLETE — imports, data loading, deconfliction OK")
-        print("=" * 60)
-        elapsed = time.time() - t_start
-        print(f"  Elapsed: {elapsed:.1f}s")
-        # Show domain report
-        print(coordinator.get_domain_report())
-        return
-
-    # -----------------------------------------------------------------------
+def _step4_train_ed3n(coordinator, batches):
     # Step 4: Train ED3N on reflex/math/logic domain
     # -----------------------------------------------------------------------
     print("\n[4/8] Training ED3N...")
@@ -712,7 +677,7 @@ def main() -> None:
     for token in sorted(all_tokens):
         if not ed3n_engine.dictionary.encode(token):
             try:
-                ed3n_engine.dictionary.grow(token, token, confidence=0.7)
+                ed3n_engine.dictionary.grow(token, token, confidence=confidence_value("train.ed3n.grow_confidence", 0.7))
                 grown += 1
             except Exception:
                 pass
@@ -730,14 +695,14 @@ def main() -> None:
         if not ik or not ok_:
             skip += 1
             continue
-        pairs = [(a, "mapping", b) for a in ik[:5] for b in ok_[:3]]
+        pairs = [(a, "mapping", b) for a in ik[:limit_value("train.ed3n.max_input_keys", 5)] for b in ok_[:limit_value("train.ed3n.max_output_keys", 3)]]
         examples.append(TrainingExample(
             input_text=s["input"],
             expected_output=s["output"],
             input_keys=ik,
             output_keys=ok_,
             relation_pairs=pairs,
-            confidence=0.8,
+            confidence=confidence_value("train.ed3n.example_confidence", 0.8),
             metadata={"domain": s["domain"]},
         ))
     print(f"  Examples created: {len(examples)} ({skip} skipped)")
@@ -745,19 +710,19 @@ def main() -> None:
     # 4d: Train 2 epochs (accuracy plateaus after 1st; Hebbian ceiling ~77.69%)
     if examples:
         print(f"  Training network (2 epochs, {len(examples)} examples)...")
-        trainer = ED3NTrainer(ed3n_engine, dictionary_lr=0.05, network_lr=0.05)
-        for epoch in range(2):
+        trainer = ED3NTrainer(ed3n_engine, dictionary_lr=learning_rate("train.ed3n.dictionary_lr", 0.05), network_lr=learning_rate("train.ed3n.network_lr", 0.05))
+        for epoch in range(limit_value("train.ed3n.epochs", 2)):
             t0 = time.time()
             batch = TrainingBatch(examples=examples, batch_id=f"ed3n_ep{epoch}")
             m = trainer.train_step(batch)
-            print(f"    Epoch {epoch+1}/2: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
+            print(f"    Epoch {epoch+1}/{limit_value('train.ed3n.epochs', 2)}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
             # Record with coordinator
             coordinator.record_training(
                 domain="math" if any(e.metadata.get("domain") == "math" for e in batch.examples) else "logic",
                 model_id="ed3n",
                 count=len(examples),
                 accuracy=m.accuracy,
-                examples=[{"input": e.input_text, "output": e.expected_output} for e in examples[:50]],
+                examples=[{"input": e.input_text, "output": e.expected_output} for e in examples[:limit_value("train.ed3n.max_examples_per_epoch", 50)]],
             )
             # Save mid-training checkpoint
             ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
@@ -776,9 +741,9 @@ def main() -> None:
     # 4f: Sequence training (optional — improves next-token prediction)
     print("  Training SequenceTrainer (next-token prediction)...")
     if examples:
-        seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=0.1)
+        seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1))
         seq_batch = make_synthetic_seq_batch(
-            [(e.input_keys[:3], e.output_keys[:2]) for e in examples[:1000] if e.input_keys and e.output_keys],
+            [(e.input_keys[:limit_value("train.ed3n.seq_input_keys", 3)], e.output_keys[:limit_value("train.ed3n.seq_output_keys", 2)]) for e in examples[:limit_value("train.ed3n.seq_max_examples", 1000)] if e.input_keys and e.output_keys],
             "pipeline_seq",
         )
         if seq_batch and seq_batch.examples:
@@ -789,10 +754,10 @@ def main() -> None:
     # 4g: Joint training (combines ED3N + sequence)
     print("  Training JointTrainer (combined)...")
     if examples:
-        joint_trainer = JointTrainer(ed3n_engine, dict_lr=0.05, network_lr=0.05, seq_lr=0.1)
-        joint_batch = TrainingBatch(examples=examples[:500], batch_id="joint_pipeline")
+        joint_trainer = JointTrainer(ed3n_engine, dict_lr=learning_rate("train.joint.dict_lr", 0.05), network_lr=learning_rate("train.joint.network_lr", 0.05), seq_lr=learning_rate("train.joint.seq_lr", 0.1))
+        joint_batch = TrainingBatch(examples=examples[:limit_value("train.joint.max_examples", 500)], batch_id="joint_pipeline")
         joint_seq_batch = make_synthetic_seq_batch(
-            [(e.input_keys[:3], e.output_keys[:2]) for e in examples[:500] if e.input_keys and e.output_keys],
+            [(e.input_keys[:limit_value("train.joint.seq_input_keys", 3)], e.output_keys[:limit_value("train.joint.seq_output_keys", 2)]) for e in examples[:limit_value("train.joint.seq_max_examples", 500)] if e.input_keys and e.output_keys],
             "joint_seq",
         )
         joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
@@ -800,6 +765,10 @@ def main() -> None:
         joint_trainer.save(os.path.join(CKPT_DIR, "joint_trainer.json"))
 
     # -----------------------------------------------------------------------
+    return ed3n_engine, examples
+
+
+def _step5_train_garden(coordinator, batches):
     # Step 5: Train GARDEN on knowledge/general domain
     # -----------------------------------------------------------------------
     print("\n[5/8] Training GARDEN...")
@@ -819,7 +788,7 @@ def main() -> None:
                 garden_engine.learn_from_interaction(
                     user_text=s["input"],
                     response_text=s["output"],
-                    confidence=0.7,
+                    confidence=confidence_value("train.garden.learn_confidence", 0.7),
                 )
                 learn_count += 1
                 if learn_count % 100 == 0:
@@ -833,7 +802,7 @@ def main() -> None:
             domain="knowledge",
             model_id="garden",
             count=learn_count,
-            accuracy=0.7,
+            accuracy=confidence_value("train.garden.record_accuracy", 0.7),
             examples=[{"input": s["input"], "output": s["output"]} for s in garden_samples[:50]],
         )
 
@@ -842,6 +811,10 @@ def main() -> None:
         print(f"  [WARNING] GARDEN training skipped: {e}")
 
     # -----------------------------------------------------------------------
+    return garden_engine
+
+
+def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples):
     # Step 6: Sync knowledge — copy high-confidence ED3N patterns to GARDEN
     # -----------------------------------------------------------------------
     print("\n[6/8] Syncing knowledge (ED3N -> GARDEN)...")
@@ -854,19 +827,19 @@ def main() -> None:
         ed3n_patterns: List[Tuple[str, str]] = []
         seen_triggers: set = set()
         for trigger, response in ed3n_engine.reflex.patterns.items():
-            if trigger not in seen_triggers and len(response) > 2:
+            if trigger not in seen_triggers and len(response) > limit_value("train.sync.min_response_length", 2):
                 ed3n_patterns.append((trigger, response))
                 seen_triggers.add(trigger)
 
         synced = coordinator.sync_reflex_patterns(
             source_engine=ed3n_engine,
             target_engine=garden_engine,
-            top_n=min(200, len(ed3n_patterns)),
+            top_n=min(limit_value("train.sync.pattern_limit", 200), len(ed3n_patterns)),
         )
         print(f"  Synced {synced} reflex patterns via coordinator")
 
         # Also use ModelBus.sync_knowledge
-        bus_synced = model_bus.sync_knowledge("ed3n", "garden", ed3n_patterns[:200])
+        bus_synced = model_bus.sync_knowledge("ed3n", "garden", ed3n_patterns[:limit_value("train.sync.modelbus_limit", 200)])
         print(f"  Synced {bus_synced} patterns via ModelBus")
     else:
         model_bus.register_ed3n(ed3n_engine)
@@ -930,6 +903,76 @@ def main() -> None:
         ("999 + 1",        "math", None),
         ("50 * 50",        "math", None),
     ], "Mixed queries (bus routing + direct)")
+
+
+def main() -> None:
+    print("=" * 60)
+    print("  UNIFIED ED3N + GARDEN TRAINING PIPELINE")
+    print("=" * 60)
+    t_start = time.time()
+
+    # -----------------------------------------------------------------------
+    # Step 1: Load + generate data
+    # -----------------------------------------------------------------------
+    print("\n[1/8] Loading and generating data...")
+    dataset_samples, alpaca_samples, template_samples, kb_samples, presets_samples, trpg_samples, secondary_samples = _step2_load_datasets()
+    knowledge_samples = _step3_generate_knowledge()
+    all_samples = dataset_samples + alpaca_samples + template_samples + kb_samples + presets_samples + trpg_samples + secondary_samples + knowledge_samples
+    print(f"  Dataset samples:       {len(dataset_samples)}")
+    print(f"  Alpaca samples:        {len(alpaca_samples)}")
+    print(f"  Template samples:      {len(template_samples)}")
+    print(f"  Knowledge base samples:{len(kb_samples)}")
+    print(f"  Preset samples:        {len(presets_samples)}")
+    print(f"  TRPG codex samples:    {len(trpg_samples)}")
+    print(f"  Secondary samples:     {len(secondary_samples)}")
+    print(f"  Generated knowledge:   {len(knowledge_samples)}")
+    print(f"  Total:                 {len(all_samples)}")
+
+    # Fast-path: dry-run check mode (just imports + data + deconfliction)
+    dry_run = os.environ.get("TRAIN_DRY_RUN", "0") == "1"
+
+    # -----------------------------------------------------------------------
+    # Step 2: Initialize ModelBus + QueryClassifier + TrainingCoordinator
+    # -----------------------------------------------------------------------
+    print("\n[2/8] Initializing ModelBus, QueryClassifier, TrainingCoordinator...")
+    model_bus, query_classifier, coordinator = _step1_setup()
+    print(f"  ModelBus: ready | QueryClassifier: ready | Coordinator: ready")
+
+    # -----------------------------------------------------------------------
+    # Step 3: Deconflict samples by domain
+    # -----------------------------------------------------------------------
+    print("\n[3/8] Deconflicting samples by domain...")
+    batches = coordinator.deconflict_samples(all_samples)
+    for model_id, batch in sorted(batches.items()):
+        print(f"  {model_id:15s} -> {len(batch):5d} samples")
+    total_deconflicted = sum(len(v) for v in batches.values())
+    print(f"  Total deconflicted: {total_deconflicted}")
+
+    # Dry-run check: stop here
+    if dry_run:
+        print("\n" + "=" * 60)
+        print("  DRY-RUN COMPLETE — imports, data loading, deconfliction OK")
+        print("=" * 60)
+        elapsed = time.time() - t_start
+        print(f"  Elapsed: {elapsed:.1f}s")
+        # Show domain report
+        print(coordinator.get_domain_report())
+        return
+
+    # -----------------------------------------------------------------------
+    # Step 4: Train ED3N on reflex/math/logic domain
+    # -----------------------------------------------------------------------
+    ed3n_engine, examples = _step4_train_ed3n(coordinator, batches)
+
+    # -----------------------------------------------------------------------
+    # Step 5: Train GARDEN on knowledge/general domain
+    # -----------------------------------------------------------------------
+    garden_engine = _step5_train_garden(coordinator, batches)
+
+    # -----------------------------------------------------------------------
+    # Steps 6-8: Sync knowledge — Save checkpoints — Evaluation
+    # -----------------------------------------------------------------------
+    _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples)
 
     print("\n" + "=" * 60)
     elapsed = time.time() - t_start

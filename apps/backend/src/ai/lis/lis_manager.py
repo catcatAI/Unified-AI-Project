@@ -2,6 +2,10 @@
 LIS Manager: Orchestrator of the Linguistic Immune System.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 import uuid
 from datetime import datetime, timezone

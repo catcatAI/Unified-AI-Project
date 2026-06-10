@@ -2,6 +2,10 @@
 Unified Memory Coordinator — C1: connect HAM + LU + CDM into a single query/storage flow.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 from typing import Any, Dict, List, Optional
 

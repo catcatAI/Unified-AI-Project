@@ -3,6 +3,10 @@ ERR-INTROSPECTOR: Semantic Anomaly Detector
 Detects repetition, tonal shifts, and narrative divergence in AI outputs.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 import logging
 import uuid
 import time

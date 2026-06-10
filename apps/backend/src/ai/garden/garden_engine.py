@@ -24,6 +24,14 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 
+from core.system.config.magic_numbers import (
+    cache_value,
+    confidence_value,
+    learning_rate,
+    limit_value,
+    threshold_value,
+)
+
 from .dictionary import VectorDictionary
 from .snn_core import TensorSNNCore
 from .vector_decoder import VectorDecoder
@@ -59,7 +67,8 @@ class _ReflexTable:
         "help": "I'm here to help! What do you need?",
     }
 
-    def __init__(self, max_cache: int = 256):
+    def __init__(self, max_cache: Optional[int] = None):
+        max_cache = max_cache if max_cache is not None else cache_value("ai.garden.reflex.max_cache", 256)
         self.patterns: Dict[str, str] = dict(self.PRESETS)
         self._cache: Dict[str, str] = {}
         self._max_cache = max_cache
@@ -89,13 +98,14 @@ def _anchored_decode(
     network_output: Dict[str, float],
     input_keys: List[str],
     dictionary: VectorDictionary,
-    top_k: int = 6,
+    top_k: Optional[int] = None,
 ) -> str:
     """
     Combine highest-scored network output keys with top anchor input keys,
     then decode to text.  Anchoring prevents the response from drifting
     entirely away from the user's original intent.
     """
+    top_k = top_k if top_k is not None else limit_value("ai.garden.decode.top_k", 6)
     if not network_output and not input_keys:
         return ""
 
@@ -104,7 +114,7 @@ def _anchored_decode(
     output_keys = [k for k, _ in sorted_output[:top_k]]
 
     # Anchors = top-3 input keys (preserve intent)
-    anchors = input_keys[:3]
+    anchors = input_keys[:limit_value("ai.garden.decode.anchor_keys", 3)]
 
     # Merge: anchors first, then new output keys (deduplicated)
     seen: set = set(anchors)
@@ -139,12 +149,15 @@ class GARDENEngine:
     def __init__(
         self,
         model_name: str = "paraphrase-multilingual-MiniLM-L12-v2",
-        top_k: int = 8,
-        similarity_threshold: float = 0.30,
-        snn_timesteps: int = 6,
+        top_k: Optional[int] = None,
+        similarity_threshold: Optional[float] = None,
+        snn_timesteps: Optional[int] = None,
         device: str = "cpu",
         compatibility_mode: bool = True,
     ):
+        top_k = top_k if top_k is not None else limit_value("ai.garden.engine.top_k", 8)
+        similarity_threshold = similarity_threshold if similarity_threshold is not None else threshold_value("ai.garden.engine.similarity_threshold", 0.30)
+        snn_timesteps = snn_timesteps if snn_timesteps is not None else limit_value("ai.garden.engine.snn_timesteps", 6)
         self.model_name = model_name
         self.device = device
 
@@ -199,7 +212,7 @@ class GARDENEngine:
                                 key=key,
                                 surface_forms=entry_data.get("surface_forms", {}),
                                 relations=entry_data.get("relations"),
-                                confidence=entry_data.get("confidence", 0.9),
+                                confidence=entry_data.get("confidence", confidence_value("ai.garden.engine.preset_confidence", 0.9)),
                             )
                             loaded_from_config += 1
                 except Exception as e:
@@ -261,7 +274,7 @@ class GARDENEngine:
 
         if not response:
             # Fallback: decode input keys directly
-            response = self.dictionary.decode(input_keys[:4])
+            response = self.dictionary.decode(input_keys[:limit_value("ai.garden.engine.fallback_decode_keys", 4)])
 
         if not response:
             return "抱歉，我暂时无法理解你的意思。"
@@ -299,7 +312,7 @@ class GARDENEngine:
         self,
         user_text: str,
         response_text: str,
-        confidence: float = 0.7,
+        confidence: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Online learning from a single interaction.
@@ -307,6 +320,7 @@ class GARDENEngine:
         2. Run Hebbian weight update in SNN between input and response keys
         Returns a summary dict.
         """
+        confidence = confidence if confidence is not None else confidence_value("ai.garden.engine.learn_confidence", 0.7)
         if not self._presets_loaded:
             self.load_presets()
 
@@ -314,9 +328,9 @@ class GARDENEngine:
 
         # Grow dictionary with any novel concepts from user text
         new_keys: List[str] = []
-        tokens = [t for t in user_text.lower().split() if len(t) >= 3]
+        tokens = [t for t in user_text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
         for token in tokens:
-            existing = self.dictionary._find_similar_key(token, threshold=0.90)
+            existing = self.dictionary._find_similar_key(token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90))
             if not existing and confidence >= self.dictionary.growth_threshold:
                 new_key = self.dictionary.grow(token, token, confidence=confidence)
                 if new_key:
@@ -331,7 +345,7 @@ class GARDENEngine:
         delta = 0.0
         if input_keys and output_keys:
             delta = self.snn.hebbian_update(
-                input_keys, output_keys, lr=0.05, target_strength=0.7
+                input_keys, output_keys, lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05), target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7)
             )
 
         return {
