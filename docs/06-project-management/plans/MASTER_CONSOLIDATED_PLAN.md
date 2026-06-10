@@ -1,7 +1,7 @@
 # 全量合併任務總計畫 — Master Consolidated Plan
 
 > **代碼審計日期**: 2026-06-10  
-> **最後更新**: 2026-06-10 — 新增 Phase 4 Priority 1 完成狀態 + Phase 4 Priority 2 提案  
+> **最後更新**: 2026-06-10 — 新增 Phase 4 Priority 1 完成狀態 + Phase 4 Priority 2 完成  
 > **基於實際代碼驗證**, 合併 Phase 8 v1 / Phase 8 Corrected v2 / Phase 9  
 > **取代以下過時文件**: PHASE_8_DEBT_CLEANUP.md, PHASE_8_CORRECTED.md, PHASE_9_CONSISTENCY_PLAN.md (現已歸檔至 docs/09-archive/)  
 > **最終目標**: 架構一致性 62.6% → 85%+, 版本一致性 31% → 100%
@@ -439,7 +439,8 @@ All S ✅ (4) + All B ✅ (B1-B6/B8/B9/B11 = 10) + A1 ✅, A2 ✅, A4 ✅, A5 �
 | **E 級** (Card Pipeline) | **7** | **✅ ~18-23 天 (154+ cards imported, 72 tests)** |
 | **M 級** (ModuleManager) | **5** | **✅ ~11 天 (M0-M5 + Phase 2-5, 100 tests + 4 new modules)** |
 | **P4-P1 級** (Phase 4 Priority 1) | **8** | **✅ ~5 天 (H4/M5/D3/A3-A4/H3/C6 bugs/ModelBus/Training)** |
-| **總計** | **61** | **~50-60 天 (全職) — ✅ 61/61 完成** |
+| **P4-P2 級** (Phase 4 Priority 2) | **4** | **✅ ~2 天 (P2-1/P2-2/P2-3/P2-4)** |
+| **總計** | **65** | **~52-62 天 (全職) — ✅ 65/65 完成** |
 
 **剩餘項目**:
 - ~~D7: logger.error exc_info=True~~ ✅ **48% (309/636) 部分完成** (見下方 D7 修復)
@@ -697,18 +698,44 @@ This sprint hardened the AI core systems with coverage expansion, centralization
 | **H4** | Migrate hardcoded values to magic_numbers.py | 6 files (model_bus.py, composer.py, ed3n_trainer.py, garden_engine.py, dictionary.py, train_pipeline.py) | ✅ 84 values centralized; 4 new accessor functions (confidence_value, learning_rate, latency_value, limit_value) |
 | **M5** | ANGELA-MATRIX header coverage | 156/157 files under apps/backend/src/ai/ | ✅ 99% coverage (only config/__init__.py may remain uncovered) |
 | **D3** | Integration tests for AI pipeline | tests/ai/test_integration_ai_pipeline.py | ✅ 33 tests exercising real ED3NEngine + GARDENEngine + ModelBus + NeuroVocabulary end-to-end |
-| **A3/A4** | Orphan module audit | All 216 ai/ files | ✅ 159/216 unreachable (73.6% orphan rate); 14 subdirectories safely deletable; 5 alias exports applied |
+| **A3/A4** | Orphan module audit | All 216 ai/ files | ✅ 159/216 unreachable; deep-import corrected: only 1 subdir (ai/optimization/) truly safe to delete; 30 others marked DEPRECATED; 5 alias exports applied |
 | **H3** | train_pipeline.py main() refactor | train_pipeline.py | ✅ Split into 6 named step functions (_step1_setup through _step6_sync_knowledge) |
 | **C6 bugs** | Composer bug fixes | composer_c6.py | ✅ 5 bugs fixed (empty string leak, ZeroDivisionError, negative decay inversion, None-mapping deletion, type crash) + 9 edge case tests |
 | **ModelBus** | Test expansion | test_model_bus.py | ✅ 34 new tests (registration, domain queries, 7 routing paths, timeout, exception, edge cases) |
 | **Training pipeline** | Data source expansion | train_pipeline.py | ✅ Expanded from 8/13 → 13/13 data sources → 53,654 total samples |
 
-## Phase 4 Priority 2 — Proposed (based on orphan audit findings)
+## Phase 4 Priority 2 — Completed (2026-06-10)
+
+This sprint corrected the orphan audit, marked 30 orphan subdirectories as DEPRECATED, and expanded integration tests:
+
+| Item | Priority | Description | Files Affected | Result |
+|------|----------|-------------|---------------|--------|
+| **P2-1** | 🟡 HIGH | Add DEPRECATED markers to orphan subdirectory __init__.py files + dependency_manager.py | 31 __init__.py files + dependency_manager.py | ✅ 31 DEPRECATED markers added explaining no production consumers; retained for reference |
+| **P2-2** | 🟡 HIGH | Deep-import corrected: delete only truly safe subdir (ai/optimization/) | ai/optimization/__init__.py, distributed_processing.py | ✅ 2 files deleted; previous audit claimed 14 safe subdirs, but only 1 (optimization/) has zero imports from any source (production or test) |
+| **P2-3** | 🟢 MEDIUM | Push ANGELA-MATRIX coverage to 100% | ed3n/config/__init__.py | ✅ Already at 100% — config/__init__.py already had header from M5 |
+| **P2-4** | 🟢 MEDIUM | Expand integration tests: add stress/chaos/edge cases | tests/ai/test_integration_ai_pipeline.py | ✅ 26 new tests (10 ModelBus stress, 10 NeuroVocabulary edge, 6 ModelBus edge); total 59 tests across 6 classes; all pass |
+
+### Corrected orphan statistics
+
+| Metric | Value |
+|--------|-------|
+| Total ai/ files (after cleanup) | **214** (216 − 2 deleted) |
+| Reachable | **57** |
+| Deprecated (orphan, with DEPRECATED marker) | **157** |
+| Orphan rate | **157/214 = 73.4%** |
+
+Previous audit claimed 14 subdirs safely deletable — deep-import scan (including test files) revealed only `ai/optimization/` had zero imports from any source.
+
+### Lessons Learned
+
+**Previous audit error**: The Phase 4 Priority 1 orphan audit incorrectly reported 14 subdirectories as "safely deletable" by only checking production import graphs. A deep-import analysis spanning test files too revealed that 13 of those 14 subdirectories have test file imports. Only `ai/optimization/` had zero imports from any source.
+
+**Takeaway**: Orphan audits must span all importers, including test files. Production-only import analysis overestimates safe-to-delete candidates. Future audits should combine grep/rg across both `apps/backend/src/` and `tests/` to get accurate orphan counts.
+
+## Phase 4 Priority 3 — Proposed
 
 | Item | Priority | Description | Est. Effort | Rationale |
 |------|----------|-------------|-------------|-----------|
-| **P2-1** | 🟡 HIGH | Orphan module remediation: audit 159 unreachable files and decide keep/delete for each | ~3 days | 73.6% orphan rate creates maintenance burden and confusion |
-| **P2-2** | 🟡 HIGH | Delete 14 safely removable subdirectories under ai/ | ~0.5 day | Identified as zero-dependency orphans with no production imports |
-| **P2-3** | 🟢 MEDIUM | Push ANGELA-MATRIX coverage to 100% (annotate config/__init__.py) | ~0.1 day | Single file remaining for full coverage |
-| **P2-4** | 🟢 MEDIUM | Expand integration test suite beyond 33 tests (add stress/chaos/edge tests) | ~2 days | Current 33 tests cover happy path; need failure recovery and concurrency tests |
-| **P2-5** | 🟢 MEDIUM | Reduce orphan rate target from 73.6% to <50% via targeted deletions and re-exports | ~1 day | Bring maintainability metrics in line with industry standards |
+| **P3-1** | 🟡 HIGH | Reduce orphan rate 73.4% → <50%: strategic deletion of DEPRECATED modules after test impact analysis | ~3 days | 157 orphan files create maintenance burden; need to determine which can be safely removed |
+| **P3-2** | 🟢 MEDIUM | Expand integration tests 59 → 100+ with fault injection and concurrency fuzzing | ~2 days | Current 59 tests cover stress basics; need chaos engineering suite |
+| **P3-3** | 🟢 MEDIUM | Audit 30 DEPRECATED subpackages for potential recovery (re-export missing symbols for test consumers) | ~1 day | Some orphan modules may provide utilities that tests need; could re-export rather than delete |

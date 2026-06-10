@@ -3,6 +3,12 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
+# =============================================================================
+# DEPRECATED: This subpackage has no production consumers.
+# Retained for reference — not wired into the running system.
+# See MASTER_CONSOLIDATED_PLAN.md § Phase 4 Priority 2.
+# =============================================================================
+
 """
 AI运维系统模块
 包含AI驱动的自动化运维、预测性维护、性能优化和容量规划

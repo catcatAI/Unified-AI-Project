@@ -15,6 +15,12 @@ Version: 6.2.1
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
+# =============================================================================
+# DEPRECATED: This subpackage has no production consumers.
+# Retained for reference — not wired into the running system.
+# See MASTER_CONSOLIDATED_PLAN.md § Phase 4 Priority 2.
+# =============================================================================
+
 from ai.code_inspection.code_inspector import (
     CodeInspector,
     CodeFixer,

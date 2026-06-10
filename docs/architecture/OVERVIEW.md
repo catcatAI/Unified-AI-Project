@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-10 — Updated training pipeline (13 sources/53,654 samples), Magic Numbers (84 values centralized), added Integration Testing and Code Quality Metrics sections
+> **Last Updated**: 2026-06-10 — Added Phase 4 Priority 2: integration tests 33→59, orphan rate 73.4% (157/214), ai/optimization/ deleted
 
 ## High-Level Architecture
 
@@ -102,7 +102,8 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | Training Pipeline | ✅ 53,654 samples (13 sources) | SequenceTrainer + JointTrainer |
 | ModelBus | ✅ 34 tests | Registration, 7 routing paths, domain queries, timeout, edge cases |
 | Magic Numbers | ✅ Full | 84 values centralized across 6 files via magic_numbers.py |
-| Integration Testing | ✅ 33 e2e tests | ED3NEngine + GARDENEngine + ModelBus + NeuroVocabulary pipeline |
-| Code Quality Metrics | ✅ ANGELA-MATRIX: 99% | 156/157 annotated; total 180+ tests across 3 test files (test_model_bus.py + test_composer_c6.py + test_integration_ai_pipeline.py) |
+| Integration Testing | ✅ 59 e2e tests | 6 test classes (33 original + 26 new edge/stress); ED3NEngine + GARDENEngine + ModelBus + NeuroVocabulary pipeline |
+| Code Quality Metrics | ✅ ANGELA-MATRIX: 100% | All 157 annotated files complete; total 180+ tests across 3 test files |
+| Orphan Modules | ✅ 73.4% orphan rate (157/214) | All 157 orphan files marked DEPRECATED; ai/optimization/ (2 files) deleted; 30 subpackage __init__.py annotated |
 | Stubs | ✅ 36/37 strict stubs implemented | 3 true stubs remain (1 functional, 2 deprecated)
 | Docs | ✅ Updated | SERVICE_CATALOG.md + OVERVIEW.md current |

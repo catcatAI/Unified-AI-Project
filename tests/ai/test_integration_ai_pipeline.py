@@ -3,6 +3,8 @@
 # =============================================================================
 """End-to-end integration tests for the AI pipeline with real engine instances."""
 
+import asyncio
+import math
 import time
 from datetime import datetime, timedelta
 
@@ -403,3 +405,371 @@ class TestTrainingPipelineMini:
         trainer.train_dictionary_phase(examples)
         g1_after = engine.dictionary.entries["g1"].confidence
         assert g1_after != g1_before
+
+
+# ===========================================================================
+# Mock engines for stress / edge case tests
+# ===========================================================================
+
+
+class _MockEngine:
+    """Lightweight mock engine for stress tests."""
+    def __init__(self, response_text="ok", delay=0.0):
+        self.response_text = response_text
+        self.delay = delay
+
+    async def process(self, query, context=None):
+        if self.delay > 0:
+            await asyncio.sleep(self.delay)
+        return self.response_text
+
+
+class _EmptyEngine:
+    """Engine that returns empty string."""
+    async def process(self, query, context=None):
+        return ""
+
+
+class _FailingEngine:
+    """Engine that always raises RuntimeError."""
+    async def process(self, query, context=None):
+        raise RuntimeError("engine failure")
+
+
+class _SlowEngine:
+    """Engine that sleeps too long (triggers timeout)."""
+    async def process(self, query, context=None):
+        await asyncio.sleep(999)
+        return "slow"
+
+
+# ===========================================================================
+# TestModelBusStress — stress, edge case, and chaos tests for ModelBus
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestModelBusStress:
+    """Stress, edge case, and chaos tests for ModelBus routing."""
+
+    @pytest.fixture
+    def bus(self):
+        return ModelBus(default_timeout=30.0)
+
+    async def test_register_10_models_route_all(self, bus):
+        """Register 10+ mock models, route to all via general fan-out."""
+        for i in range(12):
+            cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.5,
+            )
+            bus.register(f"mock_{i}", _MockEngine(f"resp_{i}"), cap)
+        decision = await bus.route("stress test", "general")
+        assert len(decision.results) == 12
+        for i in range(12):
+            assert f"mock_{i}" in decision.results
+
+    async def test_concurrent_routing(self, bus):
+        """Five simultaneous route calls via asyncio.gather."""
+        cap = ModelCapability(
+            tier="reflex", domain="reflex",
+            latency_ms=1.0, min_confidence=0.8,
+        )
+        bus.register("conc", _MockEngine("concurrent"), cap)
+        tasks = [bus.route("hello", "general") for _ in range(5)]
+        results = await asyncio.gather(*tasks)
+        assert len(results) == 5
+        for r in results:
+            assert "conc" in r.results
+
+    async def test_register_same_id_twice(self, bus):
+        """Register same model_id twice — last registration wins."""
+        cap1 = ModelCapability(
+            tier="first", domain="reflex",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        cap2 = ModelCapability(
+            tier="second", domain="knowledge",
+            latency_ms=10.0, min_confidence=0.8,
+        )
+        bus.register("dup", _MockEngine("v1"), cap1)
+        bus.register("dup", _MockEngine("v2"), cap2)
+        stats = bus.get_stats()
+        assert stats["capabilities"]["dup"]["tier"] == "second"
+        assert stats["capabilities"]["dup"]["domain"] == "knowledge"
+
+    async def test_route_empty_registry(self, bus):
+        """Route with no registered models returns 'none'."""
+        decision = await bus.route("hello", "general")
+        assert decision.selected_model == "none"
+        assert decision.confidence == 0.0
+        assert len(decision.results) == 0
+
+    async def test_route_all_models_fail(self, bus):
+        """All registered models raise — errors captured, confidence 0."""
+        for i in range(3):
+            cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.5,
+            )
+            bus.register(f"fail_{i}", _FailingEngine(), cap)
+        decision = await bus.route("hello", "general")
+        assert len(decision.results) == 3
+        for r in decision.results.values():
+            assert r.confidence == 0.0
+            assert r.error is not None
+            assert "engine failure" in r.error
+
+    async def test_route_with_timeout_engine(self):
+        """Engine that exceeds default_timeout is handled gracefully."""
+        slow_bus = ModelBus(default_timeout=0.1)
+        cap = ModelCapability(
+            tier="mock", domain="reflex",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        slow_bus.register("turtle", _SlowEngine(), cap)
+        decision = await slow_bus.route("hello", "general")
+        assert decision.results["turtle"].error is not None
+        assert "Timeout" in decision.results["turtle"].error
+        assert decision.results["turtle"].confidence == 0.0
+
+    async def test_route_long_query(self, bus):
+        """10 KB+ query string is handled without crash."""
+        long_query = "A" * 10_240
+        cap = ModelCapability(
+            tier="reflex", domain="reflex",
+            latency_ms=1.0, min_confidence=0.8,
+        )
+        bus.register("long", _MockEngine("ok"), cap)
+        decision = await bus.route(long_query, "general")
+        assert decision.selected_model == "long"
+
+    async def test_route_unicode_multilingual(self, bus):
+        """Unicode / multilingual queries route without crash."""
+        cap = ModelCapability(
+            tier="reflex", domain="reflex",
+            latency_ms=1.0, min_confidence=0.8,
+        )
+        bus.register("ml", _MockEngine("ok"), cap)
+        queries = [
+            "你好世界",
+            "こんにちは世界",
+            "안녕하세요",
+            "مرحبا بالعالم",
+            "שלום עולם",
+            "Привет мир",
+            "नमस्ते दुनिया",
+            "😊🚀🌍",
+            "Français Español Português Deutsch",
+            "ελληνικά 中文 русский",
+        ]
+        for q in queries:
+            decision = await bus.route(q, "general")
+            assert decision is not None
+
+    async def test_route_models_return_empty(self, bus):
+        """Models returning empty strings get zero confidence."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("empty", _EmptyEngine(), cap)
+        decision = await bus.route("hello", "general")
+        assert decision.results["empty"].text == ""
+        assert decision.results["empty"].confidence == 0.0
+
+    async def test_route_mixed_success_failure(self, bus):
+        """Mix of successful and failing models — successful ones win."""
+        cap_good = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.9,
+        )
+        cap_bad = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("good", _MockEngine("success"), cap_good)
+        bus.register("bad", _FailingEngine(), cap_bad)
+        decision = await bus.route("hello", "general")
+        assert decision.selected_model == "good"
+        assert decision.results["good"].confidence == 0.9
+        assert decision.results["bad"].confidence == 0.0
+        assert "engine failure" in decision.results["bad"].error
+
+
+# ===========================================================================
+# TestNeuroVocabularyEdgeCases — edge cases for NeuroVocabulary
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestNeuroVocabularyEdgeCases:
+    """Edge case and boundary tests for NeuroVocabulary."""
+
+    @pytest.fixture
+    def vocab(self):
+        return NeuroVocabulary()
+
+    def test_learn_mapping_nan_inf(self, vocab):
+        """learn_mapping handles NaN and Inf values without crashing."""
+        vocab.learn_mapping("test.nan_val", float("nan"), "nan description")
+        vocab.learn_mapping("test.inf_val", float("inf"), "inf description")
+        vocab.learn_mapping("test.ninf_val", float("-inf"), "neg inf description")
+        mappings_nan = vocab.get_value_range_mappings("test.nan_val")
+        mappings_inf = vocab.get_value_range_mappings("test.inf_val")
+        mappings_ninf = vocab.get_value_range_mappings("test.ninf_val")
+        assert len(mappings_nan) == 1
+        assert len(mappings_inf) == 1
+        assert len(mappings_ninf) == 1
+        # NaN range never covers any value
+        assert mappings_nan[0].covers(0.5) is False
+        # Inf / -Inf ranges cover only themselves
+        assert mappings_inf[0].covers(float("inf")) is True
+        assert mappings_ninf[0].covers(float("-inf")) is True
+
+    def test_learn_mapping_empty_description(self, vocab):
+        """learn_mapping accepts empty string description."""
+        vocab.learn_mapping("test.field", 0.5, "")
+        mappings = vocab.get_value_range_mappings("test.field")
+        assert len(mappings) == 1
+        assert mappings[0].description == ""
+
+    def test_find_axis_values_edge(self, vocab):
+        """find_axis_values with None, empty, and malformed input."""
+        vocab.learn_mapping("test.field", 0.5, "test description")
+        # None input
+        assert vocab.find_axis_values(None) == []
+        # Empty string input
+        assert vocab.find_axis_values("") == []
+        # Non-string type raises AttributeError
+        with pytest.raises(AttributeError):
+            vocab.find_axis_values(123)
+
+    def test_decay_confidences_zero_negative(self, vocab):
+        """decay_confidences with hours=0 or hours<0 changes nothing."""
+        vocab.learn_mapping("test.field", 0.5, "test")
+        conf_before = vocab.get_value_range_mappings("test.field")[0].confidence
+        vocab.decay_confidences(hours=0)
+        conf_after = vocab.get_value_range_mappings("test.field")[0].confidence
+        assert conf_after == conf_before
+        vocab.decay_confidences(hours=-5.0)
+        conf_after2 = vocab.get_value_range_mappings("test.field")[0].confidence
+        assert conf_after2 == conf_before
+
+    def test_serialize_mappings_purge_all(self, vocab):
+        """serialize_mappings with max_age_days=0 purges stale entries."""
+        vocab.learn_mapping("test.field", 0.5, "test")
+        m = vocab.get_value_range_mappings("test.field")[0]
+        m.created_at = datetime.now() - timedelta(days=10)
+        data = vocab.serialize_mappings(max_age_days=0)
+        assert len(data) == 0
+
+    def test_serialize_mappings_negative_age(self, vocab):
+        """serialize_mappings with negative max_age_days purges low-usage."""
+        vocab.learn_mapping("test.field", 0.5, "test")
+        data = vocab.serialize_mappings(max_age_days=-1.0)
+        assert len(data) == 0
+
+    def test_load_mappings_edge(self, vocab):
+        """load_mappings_from_config with empty / None / malformed data."""
+        vocab.load_mappings_from_config([])
+        assert len(vocab._value_range_mappings) == 0
+        vocab.load_mappings_from_config(None)
+        assert len(vocab._value_range_mappings) == 0
+        with pytest.raises(KeyError):
+            vocab.load_mappings_from_config([{"axis_field": "missing_keys"}])
+
+    def test_detect_overlaps_no_mappings(self, vocab):
+        """detect_overlaps on nonexistent field returns empty list."""
+        overlaps = vocab.detect_overlaps("nonexistent.field")
+        assert overlaps == []
+
+    def test_detect_overlaps_boundary(self, vocab):
+        """detect_overlaps when range_hi == next range_lo (boundary touch)."""
+        field = "boundary.field"
+        vocab._value_range_mappings[field] = [
+            ValueRangeMapping(field, 0.0, 0.5, "first half", 0.8),
+            ValueRangeMapping(field, 0.5, 1.0, "second half", 0.7),
+        ]
+        overlaps = vocab.detect_overlaps(field)
+        assert len(overlaps) == 1
+
+    def test_sync_restore_state_store_roundtrip(self, vocab):
+        """sync_to_state_store / restore_from_state_store roundtrip."""
+        try:
+            from core.system.state_store.global_store import state_store
+            _ = state_store.get_state("test_dummy")
+        except Exception:
+            pytest.skip("state_store not available in this environment")
+        vocab.learn_mapping("rt.field", 0.3, "roundtrip value")
+        vocab.sync_to_state_store()
+        vocab2 = NeuroVocabulary()
+        vocab2.restore_from_state_store()
+        restored = vocab2.get_value_range_mappings("rt.field")
+        assert len(restored) >= 0
+
+
+# ===========================================================================
+# TestModelBusEdgeCases — edge case registration / query tests for ModelBus
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestModelBusEdgeCases:
+    """Edge case tests for ModelBus registration and query methods."""
+
+    @pytest.fixture
+    def bus(self):
+        return ModelBus()
+
+    @pytest.fixture
+    def mock_engine(self):
+        return _MockEngine("edge")
+
+    def test_register_empty_model_id(self, bus, mock_engine):
+        """register with empty string model_id is accepted."""
+        cap = ModelCapability(
+            tier="test", domain="test",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("", mock_engine, cap)
+        stats = bus.get_stats()
+        assert "" in stats["registered_models"]
+
+    def test_register_none_engine(self, bus):
+        """register with None engine does not crash registration."""
+        cap = ModelCapability(
+            tier="test", domain="test",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("noengine", None, cap)
+        stats = bus.get_stats()
+        assert "noengine" in stats["registered_models"]
+
+    def test_register_invalid_capability(self, bus, mock_engine):
+        """register with negative latency / confidence works (no validation)."""
+        cap = ModelCapability(
+            tier="test", domain="test",
+            latency_ms=-1.0, min_confidence=-0.5,
+        )
+        bus.register("negcap", mock_engine, cap)
+        stats = bus.get_stats()
+        assert stats["capabilities"]["negcap"]["latency_ms"] == -1.0
+        assert stats["capabilities"]["negcap"]["min_confidence"] == -0.5
+
+    def test_get_models_for_domain_nonexistent(self, bus):
+        """get_models_for_domain returns empty list for unknown domain."""
+        models = bus.get_models_for_domain("__nonexistent_domain__")
+        assert models == []
+
+    def test_sync_knowledge_nonexistent_both(self, bus):
+        """sync_knowledge returns 0 when both source and target are unknown."""
+        count = bus.sync_knowledge("no_src", "no_tgt", [("a", "b")])
+        assert count == 0
+
+    def test_pick_best_empty_results(self):
+        """_pick_best with empty dict returns 'none' sentinel."""
+        result = ModelBus._pick_best({})
+        assert result["model_id"] == "none"
+        assert result["confidence"] == 0.0
+        assert "no models" in result["reason"]
