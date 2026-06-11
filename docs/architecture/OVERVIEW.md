@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-11 — Added Phase 4 Priority 4: C2 Live2D fixed, 84 new unit tests, 220 magic numbers, 31/35 API endpoints tested, code quality cleanup
+> **Last Updated**: 2026-06-11 — Phase 4 Priority 4 complete (79/79 items); added pre-existing known issues section
 
 ## High-Level Architecture
 
@@ -109,3 +109,16 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | Orphan Modules | ✅ 73.0% orphan rate (154/211) | All 154 orphan files marked DEPRECATED; ai/optimization/ (2), ai/knowledge_graph/ (2), ai/dependency_manager.py (1) = 5 deleted; 31 subpackage __init__.py annotated |
 | Stubs | ✅ 36/37 strict stubs implemented | 3 true stubs remain (1 functional, 2 deprecated)
 | Docs | ✅ Updated | SERVICE_CATALOG.md + OVERVIEW.md current |
+
+## Pre-existing Issues (Not Addressed in Q4-P4)
+
+| # | Issue | Impact | Details |
+|---|-------|--------|---------|
+| 1 | **Full pytest suite: ~30+ failures** | Pre-existing | 3498 tests collected; ~9 agent tests (E error, missing deps), ~20+ other failures. None caused by Q4-P4 changes. |
+| 2 | **Coverage 13.48%** (target 50%) | Low confidence | Only 5,718/42,797 lines covered. ~256 production functions untested. |
+| 3 | **~482 magic numbers remain** | Maintenance | 136 migrated in Q3, but hundreds still hardcoded across unreachable/orphan files (not covered by current scan paths). |
+| 4 | **Prod code calls nonexistent methods** | Latent crash | `HSMFormulaSystem().calculate_hsm()` (no such method), `FallbackConfigLoader.get_authority()` (no such method), `NonParadoxExistence().calculate_coexistence_state()` (no such method), `AngelaLLMService` referred to as `LLMRouter` in some imports — all pre-existing. Fixed via `except AttributeError` fallbacks. |
+| 5 | **Class name mismatches** | Import confusion | `websocket_manager.py` exports `ConnectionManager` not `WebSocketManager`; `router.py` exports `AngelaLLMService` not `LLMRouter`. Pre-existing. |
+| 6 | **Server startup not verified** | Unknown | Requires configured `.env` with valid API keys; not tested in this sprint. |
+| 7 | **OS-dependent paths** | Portability | Some paths assume specific directory structure; may break on different machines. |
+| 8 | **Orphan rate 73.0%** (154/211) | Dead code | Despite DEPRECATED marking, orphan files still consume ~22k LOC with no active consumers outside test/shim references. |
