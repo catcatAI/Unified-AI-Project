@@ -122,3 +122,22 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | 6 | **Server startup not verified** | Unknown | Requires configured `.env` with valid API keys; not tested in this sprint. |
 | 7 | **OS-dependent paths** | Portability | Some paths assume specific directory structure; may break on different machines. |
 | 8 | **Orphan rate 73.0%** (154/211) | Dead code | Despite DEPRECATED marking, orphan files still consume ~22k LOC with no active consumers outside test/shim references. |
+
+### CI Pipeline Failures (All Pre-existing)
+
+All 7 CI failures are **infrastructure/config issues**, not code bugs:
+
+| Job | Failure Time | Root Cause |
+|-----|-------------|------------|
+| `CI / js` | 15s | No ESLint config (`.eslintrc` missing); `pnpm lint:js` fails immediately |
+| `CI / python (3.14)` | 22s | `pip install -e ./apps/backend[standard,testing]` fails because root `pyproject.toml` has no `[project]` section (only `[tool]`) — no package metadata for editable install |
+| `CI / python (3.11)` | Cancelled | Dependency of python matrix; 3.14 failure cascades |
+| `CI / secrets_scan` | 13s | `zricethezav/gitleaks-action@v2.3.2` may not exist or `--no-git` flag unsupported |
+| `Integration Tests / integration-tests (3.10, 3.11)` | 23-24s | `pip install -e ".[test]"` fails (same root cause — no `[project]` in root `pyproject.toml`); also `tests/integration/` dir exists but pytest cannot collect without deps |
+| `Integration Tests / integration-tests (3.8, 3.9)` | Cancelled | Cascaded from 3.10/3.11 failures |
+| `测试自动化流程 / test-suite (3.10)` | 12s | Wrong test paths: `tests/core_ai/memory/` does not exist (real: `tests/ai/memory/`); `tests/e2e/` does not exist; `scripts/test_coverage_monitor.py` does not exist |
+| `测试自动化流程 / test-suite (3.8, 3.9)` | Cancelled | Cascaded |
+| `测试自动化流程 / test-quality-gate` | 8s | `scripts/test_coverage_monitor.py` does not exist |
+| `测试自动化流程 / notification` | Skipped | Conditional on failure — skipped when quality-gate never ran properly |
+
+**To fix**: (a) Add `[project]` section to root `pyproject.toml` for editable installs, (b) Create ESLint config, (c) Fix CI test paths (`core_ai`→`ai/memory`, remove e2e), (d) Remove or fix broken gitleaks action + missing coverage script.
