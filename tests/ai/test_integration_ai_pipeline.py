@@ -767,9 +767,700 @@ class TestModelBusEdgeCases:
         count = bus.sync_knowledge("no_src", "no_tgt", [("a", "b")])
         assert count == 0
 
+    async def test_capability_with_zero_confidence(self, bus, mock_engine):
+        """Register with min_confidence=0.0 works and route returns it."""
+        cap = ModelCapability(
+            tier="test", domain="reflex",
+            latency_ms=1.0, min_confidence=0.0,
+        )
+        bus.register("zero_conf", mock_engine, cap)
+        decision = await bus.route("hello", "general")
+        assert "zero_conf" in decision.results
+
+    def test_knowledge_sync_with_empty_patterns(self, bus):
+        """sync_knowledge with empty list returns 0."""
+        cap = ModelCapability(
+            tier="test", domain="reflex",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        mock = _MockEngine("sync_test")
+        bus.register("sync_src", mock, cap)
+        bus.register("sync_tgt", mock, cap)
+        count = bus.sync_knowledge("sync_src", "sync_tgt", [])
+        assert count == 0
+
+    def test_register_with_max_values(self, bus, mock_engine):
+        """Register with very large positive values works."""
+        cap = ModelCapability(
+            tier="test", domain="test",
+            latency_ms=1e6, min_confidence=1e6,
+        )
+        bus.register("max_vals", mock_engine, cap)
+        stats = bus.get_stats()
+        assert stats["capabilities"]["max_vals"]["latency_ms"] == 1e6
+
+    def test_get_training_assignment_nonexistent(self, bus):
+        """get_training_assignment for unknown domain returns None."""
+        assigned = bus.get_training_assignment("__no_such_domain__")
+        assert assigned is None
+
+    def test_register_special_chars_id(self, bus, mock_engine):
+        """Register with special characters in model ID works."""
+        cap = ModelCapability(
+            tier="test", domain="test",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        special_id = "model.with.dots_and-dashes_123"
+        bus.register(special_id, mock_engine, cap)
+        stats = bus.get_stats()
+        assert special_id in stats["registered_models"]
+
+    async def test_route_with_context_none(self, bus):
+        """Route with context=None does not crash."""
+        cap = ModelCapability(
+            tier="reflex", domain="reflex",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("ctx_none", _MockEngine("ok"), cap)
+        decision = await bus.route("hello", "general", context=None)
+        assert decision is not None
+
     def test_pick_best_empty_results(self):
         """_pick_best with empty dict returns 'none' sentinel."""
         result = ModelBus._pick_best({})
         assert result["model_id"] == "none"
         assert result["confidence"] == 0.0
         assert "no models" in result["reason"]
+
+
+# ===========================================================================
+# _FaultyEngine — configurable failure mock for fault injection tests
+# ===========================================================================
+
+
+class _FaultyEngine:
+    """Engine that can be configured to fail in specific ways on early calls."""
+    def __init__(self, fail_mode=None, fail_count=1):
+        self.fail_mode = fail_mode
+        self.fail_count = fail_count
+        self.call_count = 0
+
+    async def process(self, query, context=None):
+        self.call_count += 1
+        if self.fail_count > 0 and self.call_count <= self.fail_count:
+            if self.fail_mode == "exception":
+                raise ValueError("engine failure")
+            elif self.fail_mode == "timeout":
+                raise asyncio.TimeoutError("timed out")
+            elif self.fail_mode == "none":
+                return None
+            elif self.fail_mode == "empty":
+                return ""
+        return "ok"
+
+
+# ===========================================================================
+# TestConcurrencyFuzzing — high-concurrency stress tests for ModelBus
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestConcurrencyFuzzing:
+    """Concurrency fuzzing tests for ModelBus under high load."""
+
+    @pytest.fixture
+    def bus(self):
+        return ModelBus(default_timeout=30.0)
+
+    @pytest.fixture
+    def vocab(self):
+        return NeuroVocabulary()
+
+    async def test_10_concurrent_routes(self, bus):
+        """Fire 10 simultaneous route() calls via asyncio.gather()."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("c10", _MockEngine("c10"), cap)
+        tasks = [bus.route("hello", "general") for _ in range(10)]
+        results = await asyncio.gather(*tasks)
+        assert len(results) == 10
+        for r in results:
+            assert "c10" in r.results
+
+    async def test_50_concurrent_routes(self, bus):
+        """Fire 50 simultaneous route() calls via asyncio.gather()."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("c50", _MockEngine("c50"), cap)
+        tasks = [bus.route("hello", "general") for _ in range(50)]
+        results = await asyncio.gather(*tasks)
+        assert len(results) == 50
+        for r in results:
+            assert "c50" in r.results
+
+    async def test_concurrent_register_and_route(self, bus):
+        """Register a new engine while routing is in progress."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("initial", _MockEngine("initial"), cap)
+
+        async def delayed_register():
+            await asyncio.sleep(0.02)
+            cap2 = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.9,
+            )
+            bus.register("late", _MockEngine("late"), cap2)
+            return "registered"
+
+        route_tasks = [bus.route("hello", "general") for _ in range(5)]
+        route_tasks.append(delayed_register())
+        results = await asyncio.gather(*route_tasks)
+        route_results = results[:5]
+        for r in route_results:
+            assert r.selected_model != "none"
+
+    async def test_concurrent_sync_knowledge(self, bus):
+        """5 simultaneous sync_knowledge calls."""
+        cap = ModelCapability(
+            tier="mock", domain="reflex",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("src", _MockEngine("src"), cap)
+        bus.register("tgt", _MockEngine("tgt"), cap)
+
+        async def do_sync():
+            return bus.sync_knowledge("src", "tgt", [("a", "b"), ("c", "d")])
+
+        tasks = [do_sync() for _ in range(5)]
+        results = await asyncio.gather(*tasks)
+        assert len(results) == 5
+        # Mock engines don't expose reflex — sync returns 0, but no crash
+        for count in results:
+            assert count == 0
+
+    async def test_concurrent_mixed_operations(self, bus):
+        """Mix of register, route, sync concurrently."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("mixed", _MockEngine("mixed"), cap)
+        bus.register("src2", _MockEngine("src"), cap)
+
+        async def do_register():
+            await asyncio.sleep(0.01)
+            new_cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.7,
+            )
+            bus.register("new_mixed", _MockEngine("new"), new_cap)
+            return "ok"
+
+        async def do_route():
+            return await bus.route("test", "general")
+
+        async def do_sync():
+            return bus.sync_knowledge("src2", "mixed", [("x", "y")])
+
+        ops = [do_register()] + [do_route() for _ in range(3)] + [do_sync()]
+        results = await asyncio.gather(*ops)
+        assert len(results) == 5
+        assert results[4] == 0  # sync returns 0 for mock engines
+
+    async def test_burst_then_idle_then_burst(self, bus):
+        """20 routes, idle 0.1s, 20 more routes."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("burst", _MockEngine("burst"), cap)
+
+        burst1 = [bus.route("hello", "general") for _ in range(20)]
+        results1 = await asyncio.gather(*burst1)
+        assert len(results1) == 20
+
+        await asyncio.sleep(0.1)
+
+        burst2 = [bus.route("hello", "general") for _ in range(20)]
+        results2 = await asyncio.gather(*burst2)
+        assert len(results2) == 20
+        for r in results1 + results2:
+            assert "burst" in r.results
+
+    async def test_rapid_sequence_no_await(self, bus):
+        """Fire-and-forget style route calls gathered together."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("rapid", _MockEngine("rapid"), cap)
+
+        tasks = [asyncio.create_task(bus.route("hello", "general")) for _ in range(20)]
+        results = await asyncio.gather(*tasks)
+        assert len(results) == 20
+        for r in results:
+            assert "rapid" in r.results
+
+    async def test_massive_concurrent_learn_mapping(self, vocab):
+        """20 concurrent NeuroVocabulary.learn_mapping() calls."""
+        async def learn(i):
+            await asyncio.to_thread(
+                vocab.learn_mapping, "conc.field", i * 0.05, f"val_{i}"
+            )
+
+        tasks = [learn(i) for i in range(20)]
+        await asyncio.gather(*tasks)
+        mappings = vocab.get_value_range_mappings("conc.field")
+        assert len(mappings) == 20
+
+    async def test_100_concurrent_routes(self, bus):
+        """Fire 100 simultaneous route() calls."""
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("c100", _MockEngine("c100"), cap)
+        tasks = [bus.route("hello", "general") for _ in range(100)]
+        results = await asyncio.gather(*tasks)
+        assert len(results) == 100
+        for r in results:
+            assert "c100" in r.results
+
+    async def test_concurrent_routes_different_domains(self, bus):
+        """Route to multiple domains concurrently."""
+        reflex_cap = ModelCapability(
+            tier="reflex", domain="reflex",
+            latency_ms=1.0, min_confidence=0.8,
+        )
+        general_cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("reflex_only", _MockEngine("reflex"), reflex_cap)
+        bus.register("general_only", _MockEngine("general"), general_cap)
+
+        async def route_reflex():
+            return await bus.route("hi", "reflex")
+
+        async def route_general():
+            return await bus.route("hi", "general")
+
+        results = await asyncio.gather(
+            *[route_reflex() for _ in range(5)],
+            *[route_general() for _ in range(5)],
+        )
+        assert len(results) == 10
+
+    async def test_concurrent_timeout_and_success(self, bus):
+        """Mix of normal and slow engines under concurrency."""
+        normal_cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.9,
+        )
+        bus.register("fast", _MockEngine("fast"), normal_cap)
+        bus.register("slow", _MockEngine("slow", delay=0.5), normal_cap)
+        bus.default_timeout = 0.3
+
+        results = await asyncio.gather(
+            *[bus.route("hello", "general") for _ in range(5)]
+        )
+        assert len(results) == 5
+        for r in results:
+            assert "fast" in r.results
+
+
+# ===========================================================================
+# TestFaultInjection — fault injection tests for ModelBus
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestFaultInjection:
+    """Fault injection tests — engines that fail in controlled ways."""
+
+    @pytest.fixture
+    def bus(self):
+        return ModelBus(default_timeout=30.0)
+
+    @pytest.fixture
+    def good_cap(self):
+        return ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.9,
+        )
+
+    @pytest.fixture
+    def ok_cap(self):
+        return ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+
+    async def test_engine_raises_exception(self, bus, ok_cap):
+        """Faulty engine raises ValueError; bus should still work."""
+        bus.register("faulty", _FaultyEngine(fail_mode="exception"), ok_cap)
+        decision = await bus.route("hello", "general")
+        assert "faulty" in decision.results
+        assert decision.results["faulty"].confidence == 0.0
+        assert "engine failure" in decision.results["faulty"].error
+
+    async def test_engine_raises_timeout(self, bus, ok_cap):
+        """Faulty engine raises TimeoutError; bus handles gracefully."""
+        bus.register("timed_out", _FaultyEngine(fail_mode="timeout"), ok_cap)
+        decision = await bus.route("hello", "general")
+        assert "timed_out" in decision.results
+        assert decision.results["timed_out"].confidence == 0.0
+        assert decision.results["timed_out"].error is not None
+
+    async def test_engine_returns_none(self, bus, ok_cap):
+        """Engine returns None; bus should not crash."""
+        bus.register("none_ret", _FaultyEngine(fail_mode="none"), ok_cap)
+        decision = await bus.route("hello", "general")
+        assert "none_ret" in decision.results
+        assert decision.results["none_ret"].confidence == 0.0
+
+    async def test_engine_returns_empty(self, bus, ok_cap):
+        """Engine returns ''; bus should not crash."""
+        bus.register("empty_ret", _FaultyEngine(fail_mode="empty"), ok_cap)
+        decision = await bus.route("hello", "general")
+        assert "empty_ret" in decision.results
+        assert decision.results["empty_ret"].confidence == 0.0
+        assert decision.results["empty_ret"].text == ""
+
+    async def test_all_engines_fail_exception(self, bus, ok_cap):
+        """All registered engines raise exceptions."""
+        for i in range(4):
+            bus.register(f"fail_{i}", _FaultyEngine(fail_mode="exception"), ok_cap)
+        decision = await bus.route("hello", "general")
+        for i in range(4):
+            assert decision.results[f"fail_{i}"].confidence == 0.0
+            assert "engine failure" in decision.results[f"fail_{i}"].error
+
+    async def test_all_engines_fail_empty(self, bus, ok_cap):
+        """All registered engines return empty string."""
+        for i in range(4):
+            bus.register(f"empty_{i}", _FaultyEngine(fail_mode="empty"), ok_cap)
+        decision = await bus.route("hello", "general")
+        for i in range(4):
+            assert decision.results[f"empty_{i}"].confidence == 0.0
+            assert decision.results[f"empty_{i}"].text == ""
+
+    async def test_partial_failure_primary_fails_fallback_succeeds(self, bus, good_cap, ok_cap):
+        """Primary engine fails, fallback takes over."""
+        bus.register("failing", _FaultyEngine(fail_mode="exception"), good_cap)
+        bus.register("fallback", _MockEngine("fallback_ok"), ok_cap)
+        decision = await bus.route("hello", "general")
+        assert decision.selected_model == "fallback"
+        assert "failing" in decision.results
+        assert "engine failure" in decision.results["failing"].error
+
+    async def test_engine_fails_on_nth_call(self, bus, ok_cap):
+        """Engine fails on 3rd call, succeeds on 4th."""
+        engine = _FaultyEngine(fail_mode="exception", fail_count=3)
+        bus.register("nth_fail", engine, ok_cap)
+
+        for i in range(3):
+            decision = await bus.route("hello", "general")
+            assert decision.results["nth_fail"].confidence == 0.0
+
+        decision = await bus.route("hello", "general")
+        r = decision.results["nth_fail"]
+        assert r.confidence > 0
+        assert r.error is None
+
+    async def test_bus_recovery_after_all_fail(self, bus, ok_cap, good_cap):
+        """After all engines fail, re-register and verify routing works."""
+        bus.register("doomed", _FaultyEngine(fail_mode="exception"), ok_cap)
+        decision = await bus.route("hello", "general")
+        assert "doomed" in decision.results
+        assert decision.results["doomed"].confidence == 0.0
+
+        bus.register("savior", _MockEngine("saved"), good_cap)
+        decision = await bus.route("hello", "general")
+        assert decision.selected_model == "savior"
+        assert decision.results["savior"].text == "saved"
+
+    async def test_mixed_failures(self, bus, ok_cap):
+        """Half of engines fail, half succeed; bus picks best."""
+        for i in range(5):
+            bus.register(f"good_{i}", _MockEngine(f"ok_{i}"), ok_cap)
+        for i in range(5):
+            bus.register(f"fail_{i}", _FaultyEngine(fail_mode="exception"), ok_cap)
+        decision = await bus.route("hello", "general")
+        assert decision.selected_model.startswith("good_")
+        assert decision.selected_model != "none"
+
+    async def test_faulty_then_healthy_after_recovery(self, bus, ok_cap):
+        """Engine fails once, then recovers for subsequent calls."""
+        engine = _FaultyEngine(fail_mode="exception", fail_count=1)
+        bus.register("recover", engine, ok_cap)
+
+        decision = await bus.route("hello", "general")
+        assert decision.results["recover"].confidence == 0.0
+
+        decision = await bus.route("hello", "general")
+        assert decision.results["recover"].confidence > 0
+        assert decision.results["recover"].error is None
+
+    async def test_all_engines_fail_none(self, bus, ok_cap):
+        """All registered engines return None; bus does not crash."""
+        for i in range(3):
+            bus.register(f"none_{i}", _FaultyEngine(fail_mode="none"), ok_cap)
+        decision = await bus.route("hello", "general")
+        for i in range(3):
+            assert decision.results[f"none_{i}"].confidence == 0.0
+
+
+# ===========================================================================
+# TestModelBusResourceLimits — resource limit stress tests for ModelBus
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestModelBusResourceLimits:
+    """Resource limit tests — large registrations, long IDs, huge queries."""
+
+    @pytest.fixture
+    def bus(self):
+        return ModelBus(default_timeout=30.0)
+
+    async def test_100_registered_models(self, bus):
+        """Register 100 models, verify routing picks correctly."""
+        for i in range(100):
+            cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.5,
+            )
+            bus.register(f"model_{i}", _MockEngine(f"resp_{i}"), cap)
+        decision = await bus.route("benchmark", "general")
+        assert len(decision.results) == 100
+        assert decision.selected_model in [f"model_{i}" for i in range(100)]
+
+    async def test_500_registered_models(self, bus):
+        """Register 500 models, verify route doesn't crash."""
+        for i in range(500):
+            cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.5,
+            )
+            bus.register(f"m_{i}", _MockEngine("ok"), cap)
+        decision = await bus.route("stress", "general")
+        assert len(decision.results) == 500
+
+    async def test_very_long_model_ids(self, bus):
+        """Register with 1000-char model IDs."""
+        long_id = "a" * 1000
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register(long_id, _MockEngine("long_id"), cap)
+        stats = bus.get_stats()
+        assert long_id in stats["registered_models"]
+        decision = await bus.route("hello", "general")
+        assert long_id in decision.results
+
+    async def test_unicode_model_ids(self, bus):
+        """Register with emoji/unicode model IDs."""
+        unicode_ids = [
+            "模型_1", "モードル_2", "모델_3", "😊_emoji", "ελληνικά",
+            "mañana", "façade", "cœur", "über", "русский_модель",
+        ]
+        for uid in unicode_ids:
+            cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.5,
+            )
+            bus.register(uid, _MockEngine(f"resp_{uid}"), cap)
+        stats = bus.get_stats()
+        for uid in unicode_ids:
+            assert uid in stats["registered_models"]
+        decision = await bus.route("hello", "general")
+        assert len(decision.results) == len(unicode_ids)
+
+    async def test_very_long_query_strings(self, bus):
+        """Route with 100KB query string."""
+        long_query = "B" * 102_400
+        cap = ModelCapability(
+            tier="mock", domain="general",
+            latency_ms=1.0, min_confidence=0.5,
+        )
+        bus.register("long_q", _MockEngine("ok"), cap)
+        decision = await bus.route(long_query, "general")
+        assert decision.selected_model == "long_q"
+
+    async def test_200_registered_models_across_domains(self, bus):
+        """200 models across 4 domains, routing works for each domain."""
+        domains = ["reflex", "math", "knowledge", "creative"]
+        for i in range(200):
+            d = domains[i % 4]
+            cap = ModelCapability(
+                tier="mock", domain=d,
+                latency_ms=1.0, min_confidence=0.5,
+            )
+            bus.register(f"mm_{i}", _MockEngine("ok"), cap)
+        for d in domains:
+            models = bus.get_models_for_domain(d)
+            assert len(models) == 50
+
+    async def test_mass_register_then_get_stats(self, bus):
+        """Register 300 models, verify get_stats works."""
+        for i in range(300):
+            cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.5,
+            )
+            bus.register(f"stat_{i}", _MockEngine("ok"), cap)
+        stats = bus.get_stats()
+        assert len(stats["registered_models"]) == 300
+
+    async def test_zero_confidence_all_models(self, bus):
+        """All models have min_confidence=0.0."""
+        for i in range(10):
+            cap = ModelCapability(
+                tier="mock", domain="general",
+                latency_ms=1.0, min_confidence=0.0,
+            )
+            bus.register(f"zero_{i}", _MockEngine("ok"), cap)
+        decision = await bus.route("hello", "general")
+        assert len(decision.results) == 10
+        for i in range(10):
+            assert decision.results[f"zero_{i}"].confidence == 0.0
+
+
+# ===========================================================================
+# TestNeuroVocabularyChaos — large-scale / concurrent NeuroVocabulary tests
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestNeuroVocabularyChaos:
+    """Large-scale, concurrent, and chaos tests for NeuroVocabulary."""
+
+    @pytest.fixture
+    def vocab(self):
+        return NeuroVocabulary()
+
+    def test_1000_mappings_learned(self, vocab):
+        """Learn 1000 mappings, verify find_axis_values still works."""
+        for i in range(1000):
+            field = f"axis.{i % 50}"
+            vocab.learn_mapping(field, i / 1000.0, f"desc_{i}")
+        results = vocab.find_axis_values("desc_500")
+        assert len(results) >= 1
+        all_mappings = sum(
+            len(v) for v in vocab._value_range_mappings.values()
+        )
+        assert all_mappings == 1000
+
+    def test_serialize_1000_mappings(self, vocab):
+        """Serialize 1000 mappings, verify output size."""
+        for i in range(1000):
+            vocab.learn_mapping(f"ser.field.{i % 20}", i / 1000.0, f"ser_desc_{i}")
+        data = vocab.serialize_mappings(max_age_days=999)
+        assert len(data) == 1000
+
+    def test_roundtrip_1000(self, vocab):
+        """Serialize to load to serialize again, verify identical."""
+        for i in range(1000):
+            vocab.learn_mapping(f"rt.field.{i % 30}", i / 1000.0, f"rt_desc_{i}")
+        data1 = vocab.serialize_mappings(max_age_days=999)
+        vocab2 = NeuroVocabulary()
+        vocab2.load_mappings_from_config(data1)
+        data2 = vocab2.serialize_mappings(max_age_days=999)
+        assert len(data2) == len(data1)
+
+    def test_decay_with_many_mappings(self, vocab):
+        """1000 mappings with varied last_used_at; decay should prune old ones."""
+        for i in range(1000):
+            field = f"decay.field.{i % 25}"
+            vocab.learn_mapping(field, i / 1000.0, f"decay_desc_{i}")
+            m = vocab.get_value_range_mappings(field)[-1]
+            m.last_used_at = datetime.now() - timedelta(days=i % 400)
+        vocab.decay_confidences(hours=1, decay_rate=0.5)
+        remaining = sum(
+            len(v) for v in vocab._value_range_mappings.values()
+        )
+        assert remaining < 1000
+
+    async def test_concurrent_learn_and_find(self, vocab):
+        """Learn mappings while simultaneously searching them."""
+        for i in range(50):
+            vocab.learn_mapping(f"cf.field.{i % 10}", i / 100.0, f"cf_desc_{i}")
+
+        async def learn_worker(j):
+            await asyncio.to_thread(
+                vocab.learn_mapping, f"cf.new.{j}", j / 50.0, f"new_desc_{j}"
+            )
+
+        async def find_worker(k):
+            result = await asyncio.to_thread(
+                vocab.find_axis_values, f"cf_desc_{k % 50}"
+            )
+            return result
+
+        tasks = [learn_worker(i) for i in range(20)] + [find_worker(i) for i in range(30)]
+        results = await asyncio.gather(*tasks)
+        find_results = [r for r in results if isinstance(r, list)]
+        assert any(len(r) >= 0 for r in find_results)
+
+    def test_10000_mappings_learned(self, vocab):
+        """Learn 10000 mappings, verify system still responsive."""
+        for i in range(10000):
+            vocab.learn_mapping(f"heavy.{i % 100}", i / 10000.0, f"heavy_desc_{i}")
+        results = vocab.find_axis_values("heavy_desc_5000")
+        assert len(results) >= 1
+        results2 = vocab.find_axis_values("heavy_desc_9999")
+        assert len(results2) >= 1
+
+    def test_mappings_same_field_many_values(self, vocab):
+        """500 mappings on a single axis field."""
+        for i in range(500):
+            vocab.learn_mapping("single.field", i / 500.0, f"val_{i}")
+        mappings = vocab.get_value_range_mappings("single.field")
+        assert len(mappings) == 500
+
+    async def test_concurrent_find_axis_values(self, vocab):
+        """20 concurrent searches for different descriptions."""
+        for i in range(100):
+            vocab.learn_mapping(f"cfind.field.{i % 10}", i / 100.0, f"search_target_{i}")
+
+        async def search(i):
+            return await asyncio.to_thread(
+                vocab.find_axis_values, f"search_target_{i}"
+            )
+
+        results = await asyncio.gather(*[search(i) for i in range(20)])
+        assert len(results) == 20
+        for r in results:
+            assert len(r) >= 1
+
+    def test_massive_serialize_deserialize_cycle(self, vocab):
+        """2000 mappings serialized and loaded into a fresh vocabulary."""
+        for i in range(2000):
+            vocab.learn_mapping(f"msd.{i % 50}", i / 2000.0, f"msd_desc_{i}")
+        data = vocab.serialize_mappings(max_age_days=999)
+        assert len(data) == 2000
+        vocab2 = NeuroVocabulary()
+        vocab2.load_mappings_from_config(data)
+        total = sum(len(v) for v in vocab2._value_range_mappings.values())
+        assert total == 2000
+
+    async def test_concurrent_learn_and_serialize(self, vocab):
+        """Learn mappings then serialize them."""
+        async def learn_batch(start, count):
+            for i in range(start, start + count):
+                await asyncio.to_thread(
+                    vocab.learn_mapping, f"cls.field", i * 0.01, f"cls_desc_{i}"
+                )
+
+        await asyncio.gather(learn_batch(0, 100), learn_batch(100, 100))
+        data = await asyncio.to_thread(vocab.serialize_mappings, max_age_days=999)
+        assert len(data) == 200

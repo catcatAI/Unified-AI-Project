@@ -25,11 +25,6 @@ try:
 except ImportError:
     yaml = None
 
-from ai.knowledge_graph.types import (
-    KnowledgeGraph,
-    KGEntity,
-    KGRelationship,
-)
 from core.hsp.types import HSPFactPayload
 
 logger = logging.getLogger(__name__)
