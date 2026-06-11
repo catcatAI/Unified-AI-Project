@@ -742,3 +742,125 @@ Previous audit claimed 14 subdirs safely deletable — deep-import scan (includi
 
 ### P3-1 (DEFERRED)
 Reduce orphan rate 73% → 50% was deferred pending human review of P3-3 audit findings. Strategic deletion requires sign-off on which of the 30 DEPRECATED subpackages can be safely removed.
+
+---
+
+## 多維審計報告 (2026-06-11) — 4 代理 × 4 視角
+
+> 在 67/67 任務標記完成後，啟動 4 個獨立代理從不同視角審視所有完成度宣稱。
+> 審計範圍：計畫完整性、代碼品質、整合架構、覆蓋率與缺口。
+
+### 審計摘要
+
+| 審計維度 | 代理 | 審計項目 | ✅ 確認 | ⚠️ 部分 | ❌ 未完成 | ❓ 不可驗證 |
+|---------|------|---------|---------|---------|----------|-----------|
+| 計畫完整性 | Plan Integrity Auditor | 32 | 17 | 11 | 2 | 2 |
+| 代碼品質 | Code Quality Auditor | 368 檔案 | — | — | — | — |
+| 整合架構 | Integration Architect Auditor | 10 整合 | 4 | 5 | 1 | 0 |
+| 覆蓋率缺口 | Coverage & Gap Auditor | 606 函數 | — | — | — | — |
+
+### 一、關鍵發現：⚠️ 已完成但實際有問題的項目
+
+#### 🟥 C2 Live2D State Broadcast — ❌ 實際已斷裂
+| 維度 | 細節 |
+|------|------|
+| 宣稱 | `live2d_integration → registry → websocket_manager → desktop handler` 完整鏈路 |
+| 實際 | `Live2DAvatarGenerator` 沒有 `get_live2d_state()` 方法！`Live2DIntegration` 是 33 行別名 shim，指向 `Live2DAvatarGenerator`（1199 行），但該類別缺少 `get_live2d_state()`/`set_expression()`/`get_all_parameters()`/`register_live2d_state_callback()`。`websocket_manager.py:154` 的 `hasattr` 檢查**靜默失敗**。8 個測試全部 TypeError。 |
+| 影響 | **生產危害** — 呼叫鏈斷在 `websocket_manager.py:154`，Live2D 狀態不會廣播。 |
+| 修復 | 需要向 `Live2DAvatarGenerator` 添加缺失方法，或恢復原始 `live2d_integration.py` 的兼容性。 |
+
+#### 🟧 A3 core/autonomous 拆分 — 數據不一致
+| 維度 | 細節 |
+|------|------|
+| 宣稱 | 計畫內兩處矛盾：line 205 說「21 行 shim」、line 600 說「430 行 shim」 |
+| 實際 | `__init__.py` 是 **468 行** 重新導出 shim；`playground.py`（214 行）是完整模組仍在 `autonomous/` 中。life(13/3700)、bio(12/7800)、engine(20/11000) 的檔案/行數聲稱全部錯誤：實際 life(14/3022)、bio(27/7420)、engine(23/9144)。 |
+| 修復 | 統一數據，說明 `playground.py` 的狀態。 |
+
+#### 🟧 D7 logger.error exc_info=True — 指標嚴重過時
+| 維度 | 細節 |
+|------|------|
+| 宣稱 | 48% (309/636) 部分完成 |
+| 實際 | **93.2% (552/592)** 在 `apps/backend/src/` 中。測試目錄仍有 46/65（70.8%）未修復。分母應為 592 非 636。 |
+| 修復 | 更新指標至 93%（src/），修復測試目錄中剩餘的 46 處。 |
+
+#### 🟧 B9 根目錄清理 — 嚴重超標
+| 維度 | 細節 |
+|------|------|
+| 宣稱 | 50 條目（計畫內兩處矛盾：50 vs 54） |
+| 實際 | **75 條目**（含 13 個底線前綴 card pipeline 暫存檔、`.venv`、`myenv`、`venv_py311`、`node_modules` 等） |
+| 修復 | 清理暫存檔或更新目標值。 |
+
+#### 🟧 C3 Plugin 系統 — 僅 Phase 1-2 確認
+| 維度 | 細節 |
+|------|------|
+| 宣稱 | HookRegistry + PluginManager + API + Electron IPC bridge (Phase 1-4) |
+| 實際 | HookRegistry 和 PluginManager 確認存在。**無 Plugin API 檔案**。**無 Electron IPC bridge**。Phase 3-4 不可驗證。 |
+| 修復 | 更新文檔反映實際範圍，或實作缺失的 Phase 3-4。 |
+
+### 二、代碼品質發現
+
+| 指標 | 計數 | 備註 |
+|------|------|------|
+| 遺漏 magic numbers | **482 處** | `composer.py:122`、`neuro_auto_selector.py:92` 最高 — H4 僅覆蓋 6 檔案，但其餘 reachable 檔案 (尤其 lifecycle/, garden/) 仍有大量硬編碼值 |
+| 超長函數 >50 行 | **142 個** | 其中 35 個 >100 行。最長: `dictionary_layer.py:_build_presets` (334 行) |
+| `print()` 在正式碼中 | **68 處** | `emotional_blending.py:8`、`trauma_memory.py:3`、`browser_controller.py:3` 等應改用 logger |
+| 未使用 import | **11 處** | `model_bus.py:field`、`core_network.py:copy`、`ed3n_engine.py:copy/Tuple`、`garden_engine.py:time` 等 |
+| 缺失 return type | **77 函數** | 另 420 個 `__init__` 缺 `-> None` |
+| `pass` 主體方法 | **5 個** | `lifecycle/` 中全部 5 個 `stop()` 方法都是 `pass` |
+| 過寬 `except Exception` | **24 處** | 分佈在 `neuro_auto_selector.py:4`、`memory_template.py:3`、`router.py:2` 等 |
+| 零測試模組 | **10+ 個** | `learning_loop.py`、`prompt_builder.py`、`emotion_analyzer.py`、`query_classifier.py`、`training_coordinator.py`、`composer.py (NeuroVocabulary/NeuroBlender)`、`ed3n.py` provider、`garden.py` provider |
+
+### 三、覆蓋率缺口
+
+| 類別 | 計數 | 說明 |
+|------|------|------|
+| 生產函數總數 | **606** | reachable 非 deprecated 檔案 |
+| 有測試的函數 | **350** | 約 58% |
+| 無測試函數 | **256** | 約 42% |
+| API endpoint 測試 | **3/41** | 僅 3 個通用 `module_importable` 測試，剩 34 個 endpoint 完全無測試 |
+| WebSocket 中斷處理 | **缺失** | `chat_routes.py:128` 未包裝 `WebSocketDisconnect` 取消 — LLM 呼叫在客戶端斷線後仍繼續浪費資源 |
+| `.env.example` 遺漏 | **4+ keys** | `ANTHROPIC_API_KEY`, `LLAMACPP_HOST`, `BACKEND_CORS_ORIGINS`, `WAITING_SCHEDULER_*` |
+
+### 四、整合確認
+
+| 元件 | 宣稱 | 狀態 | 證據 |
+|------|------|------|------|
+| C5 GlobalStateStore | 統一持久層 | ✅ 確認 | 存在、可用、composer.py/router.py/state_matrix.py 等使用 |
+| C1 UnifiedMemoryCoordinator | HAM+LU+CDM 橋 | ✅ 確認 | 檔案存在、router.py 延遲導入、5 測試 |
+| ModuleManager Phase 2-5 | 100 測試 + 4 新模組 | ✅ 確認 | 恰好 100 測試函數、12 模組目錄 |
+| ModelBus | 34 測試、7 路由路徑 | ✅ 確認 | 恰好 34 測試函數、8 查詢類型映射 |
+| D10 版本一致性 | 4 子包 `7.5.0-dev` | ✅ 確認 | 全部 4 子包確認 |
+| E0-E6 Card Pipeline | 154+ cards, 72 tests | ⚠️ 部分 | 測試數可信（87>72），但 154 cards 無法獨立驗證 |
+| D8 Async I/O | 9 檔案更新 | ⚠️ 部分 | 僅 6 消費檔案確認，非 9 |
+| 訓練管線 | 13/13 資料源 → 53,654 | ⚠️ 部分 | 結構完整，但 sentence-transformers 限制無法執行 dry-run 驗證數量 |
+| C3 Plugin 系統 | Phase 1-4 | ⚠️ 僅 Phase 1-2 確認 | 無 Plugin API 檔案、無 Electron IPC bridge |
+| C2 Live2D 廣播 | 完整鏈路 | ❌ 斷裂 | **生產危害** — 方法缺失，6 測試失敗 |
+
+### 五、Phase 4 Priority 4 — 新任務 (基於多維審計)
+
+| Item | Pri | 描述 | 估計工時 | 根因 |
+|------|-----|------|---------|------|
+| **Q1** 🟥 | **CRITICAL** | 修復 C2 Live2D State Broadcast 斷裂 | ~0.5 天 | `Live2DAvatarGenerator` 缺少 `get_live2d_state()` — 8 測試失敗 |
+| **Q2** 🟥 | **CRITICAL** | 更新 MASTER_PLAN 中 14 項過時/矛盾的指標 (D7/B9/A3/life/bio/engine 等) | ~0.5 天 | 指標嚴重過時或內部矛盾 |
+| **Q3** 🟡 | HIGH | 清除 reachable 檔案中 482 處遺漏 magic numbers (`composer.py:122`, `neuro_auto_selector.py:92` 等) | ~3 天 | H4 僅覆蓋 6 檔案，其餘 reachable 檔案未處理 |
+| **Q4** 🟡 | HIGH | 添加缺失的測試檔案 (10+ 零測試模組) | ~3 天 | `learning_loop.py`、`prompt_builder.py`、`emotion_analyzer.py`、`query_classifier.py` 等完全無測試 |
+| **Q5** 🟡 | HIGH | 添加 API endpoint 測試 (34 個未覆蓋 endpoint) | ~2 天 | 41 個 endpoint 僅 3 個通用測試 |
+| **Q6** 🟢 | MEDIUM | 重構 10 個最長函數 (334/159/158/150/145/136 行) | ~2 天 | 142 函數 >50 行，35 個 >100 行 |
+| **Q7** 🟢 | MEDIUM | 移除 11 處未使用 import + 68 處 `print()`→logger | ~1 天 | 正式碼品質 |
+| **Q8** 🟢 | MEDIUM | 新增 WebSocket 中斷取消傳播 (`chat_routes.py`) | ~0.5 天 | 客戶端斷線後 LLM 繼續浪費資源 |
+| **Q9** 🟢 | MEDIUM | 補全 `.env.example` 遺漏 keys (4+) | ~0.3 天 | 配置缺口 |
+| **Q10** 🟢 | MEDIUM | 為 lifecycle/ 中 5 個 `pass` `stop()` 方法添加實作 | ~0.5 天 | 佔位符號方法 |
+| **Q11** 🟡 | HIGH | 收窄 24 處過寬 `except Exception` | ~1 天 | 可吞沒真實錯誤 |
+| **Q12** 🟢 | MEDIUM | 補全 77 函數 + 420 `__init__` 的 return type hints | ~1 天 | 類型覆蓋率 88%→100% |
+
+### 多維審計結論
+
+**67/67 任務標記完成，但多維審計發現：**
+
+- **1 個生產危害** (C2 Live2D 斷裂) — 鏈路靜默失敗
+- **14+ 處過時或矛盾的指標** — 需要立即更新以反映真實狀態
+- **~256 個無測試的生產函數** — 覆蓋率約 58%
+- **482 處遺漏 magic numbers** — H4 僅是開始
+- **42% 的生產函數無對應測試** — 尤其在 `router.py`、`composer.py`、`prompt_builder.py` 等關鍵路徑
+
+**建議優先級**: Q1 (修 Live2D) → Q2 (修 MASTER_PLAN 指標) → Q4 (補測試) → Q3 (magic numbers) → Q5 (API 測試)
