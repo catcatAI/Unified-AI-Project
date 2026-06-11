@@ -32,7 +32,7 @@ class ImageEncoder:
             except ImportError:
                 logger.warning("VisionService not available")
                 self._vision_service = None
-        except Exception as e:
+        except (ImportError, RuntimeError, AttributeError) as e:
             logger.warning("VisionService error: %s", e)
             self._vision_service = None
         return self._vision_service
@@ -56,7 +56,7 @@ class ImageEncoder:
                     logger.warning("VisionService error: %s", analysis["error"])
                     return self._fallback_encode(image_data)
                 return self._analyze_to_entries(analysis)
-            except Exception as e:
+            except (ConnectionError, TimeoutError, ValueError, RuntimeError) as e:
                 logger.warning("VisionService analysis failed: %s", e)
                 return self._fallback_encode(image_data)
         return self._fallback_encode(image_data)
@@ -147,9 +147,9 @@ class ImageEncoder:
                             keys.append(self._key_for_concept("dark", "color"))
                         else:
                             keys.append(self._key_for_concept(f"rgb_{r}_{g}_{b}", "color"))
-                except Exception:
-                    pass
-        except Exception as e:
+                except (ValueError, OSError, TypeError):
+                    logger.debug("PIL color quantization failed")
+        except (IOError, ValueError, TypeError, AttributeError) as e:
             logger.debug("PIL fallback failed: %s", e)
             keys.append(self._key_for_concept("unrecognized", "format"))
         return keys

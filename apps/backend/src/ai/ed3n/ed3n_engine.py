@@ -2,7 +2,6 @@
 # ANGELA-MATRIX: [L3] [γδ] [C] [L2]
 # =============================================================================
 
-import copy
 import logging
 import threading
 import time
@@ -10,6 +9,12 @@ from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
 from .telemetry import TelemetryCollector
+
+from core.system.config.magic_numbers import (
+    batch_value,
+    learning_rate,
+    limit_value,
+)
 
 from .core_network import CoreNetwork
 from .dictionary_layer import DictionaryLayer
@@ -47,7 +52,7 @@ class ReflexLayer:
                 if len(pattern) < self.min_pattern_len:
                     continue
                 if pattern in normalized:
-                    if self.min_pattern_len >= 3 or len(pattern) >= 3:
+                    if self.min_pattern_len >= limit_value("ai.ed3n_engine.reflex_min_match_len", 3) or len(pattern) >= limit_value("ai.ed3n_engine.reflex_min_match_len", 3):
                         self._add_to_cache(normalized, response)
                         return response
                     if self._is_word_boundary_match(normalized, pattern):
@@ -161,6 +166,36 @@ class ED3NEngine:
         with self._process_lock:
             return self._process_unlocked(input_text, context, depth)
 
+    def _reflex_match(self, input_text: str) -> Optional[str]:
+        return self.process_reflex(input_text)
+
+    def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:
+        _cache_key = (input_text.lower().strip(), self.dictionary._index_version)
+        cache_hit = _cache_key in self.dictionary._encode_cache
+        keys = self.dictionary.encode(input_text)
+        return keys, cache_hit
+
+    def _snn_process(self, keys: List[str], context: Optional[Dict[str, Any]], depth: str) -> object:
+        if depth == "snn":
+            was_snn = self.snn_mode
+            self.snn_mode = True
+            try:
+                network_output = self.snn_network.forward(keys, context=context)
+            finally:
+                self.snn_mode = was_snn
+        else:
+            network_output = self.network.forward(keys, context=context)
+        return network_output
+
+    def _output_anchor_decode(self, network_output: object, keys: List[str]) -> str:
+        return anchored_decode(
+            network_output=network_output,
+            original_input_keys=keys,
+            dictionary=self.dictionary,
+            top_k_anchors=batch_value("ai.ed3n_engine.top_k_anchors", 3),
+            top_k_network=batch_value("ai.ed3n_engine.top_k_network", 5),
+        )
+
     def _process_unlocked(
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
@@ -172,7 +207,7 @@ class ED3NEngine:
 
         # Stage 1: Reflex
         t0 = time.perf_counter()
-        reflex_result = self.process_reflex(input_text)
+        reflex_result = self._reflex_match(input_text)
         stages["reflex"] = (time.perf_counter() - t0) * 1000
 
         if reflex_result is not None:
@@ -205,10 +240,8 @@ class ED3NEngine:
 
         # Stage 2: Encode
         FALLBACK_STR = "抱歉，我没理解你的意思。"
-        _cache_key = (input_text.lower().strip(), self.dictionary._index_version)
-        cache_hit = _cache_key in self.dictionary._encode_cache
         t1 = time.perf_counter()
-        keys = self.dictionary.encode(input_text)
+        keys, cache_hit = self._perform_encode(input_text)
         stages["encode"] = (time.perf_counter() - t1) * 1000
 
         if not keys:
@@ -247,29 +280,13 @@ class ED3NEngine:
             return output
 
         # Stage 3: Network forward
-        if depth == "snn":
-            was_snn = self.snn_mode
-            self.snn_mode = True
-            t3 = time.perf_counter()
-            try:
-                network_output = self.snn_network.forward(keys, context=context)
-            finally:
-                self.snn_mode = was_snn
-            stages["network_forward"] = (time.perf_counter() - t3) * 1000
-        else:
-            t3 = time.perf_counter()
-            network_output = self.network.forward(keys, context=context)
-            stages["network_forward"] = (time.perf_counter() - t3) * 1000
+        t3 = time.perf_counter()
+        network_output = self._snn_process(keys, context, depth)
+        stages["network_forward"] = (time.perf_counter() - t3) * 1000
 
         # Stage 4: Decode (anchored)
         t4 = time.perf_counter()
-        response = anchored_decode(
-            network_output=network_output,
-            original_input_keys=keys,
-            dictionary=self.dictionary,
-            top_k_anchors=3,
-            top_k_network=5,
-        )
+        response = self._output_anchor_decode(network_output, keys)
         stages["decode"] = (time.perf_counter() - t4) * 1000
 
         if not response:
@@ -372,8 +389,8 @@ class ED3NEngine:
             network_output=network_output,
             original_input_keys=keys,
             dictionary=self.dictionary,
-            top_k_anchors=3,
-            top_k_network=5,
+            top_k_anchors=batch_value("ai.ed3n_engine.top_k_anchors", 3),
+            top_k_network=batch_value("ai.ed3n_engine.top_k_network", 5),
         )
 
         if not response:
@@ -472,8 +489,8 @@ class ED3NEngine:
             network_output=network_output,
             original_input_keys=combined_keys,
             dictionary=self.dictionary,
-            top_k_anchors=3,
-            top_k_network=5,
+            top_k_anchors=batch_value("ai.ed3n_engine.top_k_anchors", 3),
+            top_k_network=batch_value("ai.ed3n_engine.top_k_network", 5),
         )
 
         if not response:
@@ -562,10 +579,10 @@ class ED3NEngine:
     def train(
         self,
         examples: List[Any],
-        epochs: int = 5,
-        lr: float = 0.01,
-        dictionary_epochs: int = 3,
-        network_epochs: int = 3,
+        epochs: int = batch_value("ai.ed3n_engine.train_epochs", 5),
+        lr: float = learning_rate("ai.ed3n_engine.train_lr", 0.01),
+        dictionary_epochs: int = batch_value("ai.ed3n_engine.dictionary_epochs", 3),
+        network_epochs: int = batch_value("ai.ed3n_engine.network_epochs", 3),
     ) -> Any:
         """High-level training API. Accepts list of dicts with 'input', 'output', 'context'."""
         from .ed3n_trainer import ED3NTrainer

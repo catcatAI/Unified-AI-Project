@@ -93,7 +93,7 @@ class ModuleLifecycle:
                 )
         return results
 
-    async def stop_all(self, instances):
+    async def stop_all(self, instances) -> list:
         results = []
         for inst in reversed(instances):
             t0 = time.monotonic()
@@ -131,24 +131,24 @@ class ModuleLifecycle:
                 return None
         raise ValueError(f"module '{name}' not found")
 
-    def _call_init(self, desc, deps):
+    def _call_init(self, desc, deps) -> Any:
         fn = self._import_fn(desc.lifecycle.init)
         return fn(deps=deps)
 
-    def _call_start(self, inst, deps):
+    def _call_start(self, inst, deps) -> Optional[Any]:
         if not inst.descriptor.lifecycle.start:
-            return
+            return None
         fn = self._import_fn(inst.descriptor.lifecycle.start)
         return fn(inst.instance, deps=deps)
 
-    def _call_stop(self, inst):
+    def _call_stop(self, inst) -> Optional[Any]:
         if not inst.descriptor.lifecycle.stop:
-            return
+            return None
         fn = self._import_fn(inst.descriptor.lifecycle.stop)
         return fn(inst.instance)
 
     @staticmethod
-    def _import_fn(dotted_path):
+    def _import_fn(dotted_path) -> Any:
         parts = dotted_path.split(".")
         module_path = ".".join(parts[:-1])
         fn_name = parts[-1]

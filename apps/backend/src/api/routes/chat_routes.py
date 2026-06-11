@@ -145,8 +145,22 @@ async def _handle_chat_request(
     except asyncio.TimeoutError:
         logger.warning(f"LLM response timeout for message: {user_message[:50]}...", exc_info=True)
         return {
-            "response_text": _get_ed3n_engine().process("timeout_response", context={"fallback": True}, depth="reflex"),
+            "response_text": _get_ed3n_engine().process(
+                "timeout_response", context={"fallback": True}, depth="reflex"
+            ),
             "source": "fallback-timeout",
+            "emotion": "neutral",
+            "emotion_confidence": 0.5,
+            "emotion_intensity": 0.5,
+            "session_id": session_id,
+        }
+    except asyncio.CancelledError:
+        logger.info("Client disconnected mid-response, cancelling")
+        return {
+            "response_text": _get_ed3n_engine().process(
+                "timeout_response", context={"fallback": True}, depth="reflex"
+            ),
+            "source": "fallback-disconnect",
             "emotion": "neutral",
             "emotion_confidence": 0.5,
             "emotion_intensity": 0.5,

@@ -58,7 +58,7 @@ try:
 except ImportError:
     logger.warning("python-dotenv not installed, skipping .env loading")
 except Exception:
-    # broad exception acceptable: env file may not exist, non-critical setup
+    # broad except acceptable: startup env loading is unpredictable; may fail for many reasons
     logger.warning("Failed to load .env file", exc_info=True)
 
 logger = logging.getLogger(__name__)

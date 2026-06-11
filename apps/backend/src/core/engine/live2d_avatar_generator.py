@@ -30,6 +30,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class ExpressionType(str, Enum):
+    """面部表情类型 / Facial expression types"""
+    NEUTRAL = "neutral"
+    HAPPY = "happy"
+    SAD = "sad"
+    ANGRY = "angry"
+    SURPRISED = "surprised"
+    DISGUSTED = "disgusted"
+    FEARFUL = "fearful"
+
+
 class GenerationStage(Enum):
     """生成阶段 / Generation stages"""
 
@@ -522,6 +533,14 @@ class Live2DAvatarGenerator:
         self._current_generation: Optional[GeneratedAvatar] = None
         self._generation_stage: GenerationStage = GenerationStage.INITIALIZING
         self._progress_callbacks: List[Callable[[GenerationProgress], None]] = []
+
+        # Runtime state (for Live2DIntegration compatibility)
+        self._expression: str = "neutral"
+        self._motion: str = "idle"
+        self._runtime_parameters: Dict[str, float] = {
+            k: v["default"] for k, v in self.STANDARD_PARAMETERS.items()
+        }
+        self._state_callbacks: List[Callable[[Dict[str, Any]], None]] = []
 
         # Default configuration
         self.default_config = Live2DModelConfig(
@@ -1118,6 +1137,44 @@ class Live2DAvatarGenerator:
             }
 
         return zones
+
+    # =========================================================================
+    # Runtime state methods (for Live2DIntegration / C2 state broadcast chain)
+    # =========================================================================
+
+    def get_live2d_state(self) -> Dict[str, Any]:
+        """Return current Live2D model state (expression, motion, parameters)."""
+        return {
+            "expression": self._expression,
+            "motion": self._motion,
+            "parameters": dict(self._runtime_parameters),
+        }
+
+    def set_expression(self, expr_name: str) -> bool:
+        """Set a named expression and notify state callbacks."""
+        if hasattr(expr_name, "value"):
+            expr_name = expr_name.value
+        self._expression = str(expr_name)
+        self._notify_state_change()
+        return True
+
+    def get_all_parameters(self) -> Dict[str, float]:
+        """Return all current model parameter values."""
+        return dict(self._runtime_parameters)
+
+    def register_live2d_state_callback(self, callback: Callable[[Dict[str, Any]], None]) -> None:
+        """Register a callback invoked on every state change."""
+        if callback not in self._state_callbacks:
+            self._state_callbacks.append(callback)
+
+    def _notify_state_change(self) -> None:
+        """Fire all registered state callbacks with the current state."""
+        state = self.get_live2d_state()
+        for cb in self._state_callbacks:
+            try:
+                cb(state)
+            except Exception as e:
+                logger.error(f"Error in state callback: {e}", exc_info=True)
 
 
 # Example usage

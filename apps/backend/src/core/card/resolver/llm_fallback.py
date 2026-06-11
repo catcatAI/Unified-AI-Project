@@ -34,6 +34,7 @@ class LLMFallback:
                 prompt = f"Resolve card conflict: {conflict.description}"
                 return self.llm_service.generate(prompt)
             except Exception:
+                # broad except acceptable: LLM calls are unpredictable; fallback on any failure
                 logger.warning("LLM resolution failed, using fallback", exc_info=True)
         return f"LLM fallback resolved: {conflict.description}"
 

@@ -13,6 +13,8 @@ import re
 from enum import Enum
 from typing import List, Pattern, Tuple
 
+from core.system.config.magic_numbers import confidence_value, limit_value, threshold_value
+
 
 class QueryType(Enum):
     REFLEX = "reflex"
@@ -105,8 +107,8 @@ class QueryClassifier:
         if not text:
             return QueryType.UNKNOWN, 0.0
 
-        if len(text) > 200:
-            return QueryType.KNOWLEDGE, 0.85
+        if len(text) > limit_value("ai.query_classifier.max_direct_len", 200):
+            return QueryType.KNOWLEDGE, confidence_value("ai.query_classifier.long_text_conf", 0.85)
 
         best_type = QueryType.UNKNOWN
         best_conf = 0.0
@@ -117,13 +119,13 @@ class QueryClassifier:
                     best_type = query_type
                     best_conf = confidence
 
-        if text.lower() in self._reflex_words or (len(text) < 2 and best_conf < 0.5):
-            return QueryType.REFLEX, 0.95
+        if text.lower() in self._reflex_words or (len(text) < limit_value("ai.query_classifier.reflex_min_len", 2) and best_conf < threshold_value("ai.query_classifier.reflex_conf_threshold", 0.5)):
+            return QueryType.REFLEX, confidence_value("ai.query_classifier.reflex_conf", 0.95)
 
-        if best_conf < 0.5 and text.rstrip().endswith("?"):
-            return QueryType.KNOWLEDGE, 0.65
+        if best_conf < threshold_value("ai.query_classifier.question_conf_threshold", 0.5) and text.rstrip().endswith("?"):
+            return QueryType.KNOWLEDGE, confidence_value("ai.query_classifier.question_conf", 0.65)
 
-        if best_conf > 0.5:
+        if best_conf > threshold_value("ai.query_classifier.min_accept_conf", 0.5):
             return best_type, best_conf
 
-        return QueryType.UNKNOWN, 0.3
+        return QueryType.UNKNOWN, confidence_value("ai.query_classifier.unknown_conf", 0.3)

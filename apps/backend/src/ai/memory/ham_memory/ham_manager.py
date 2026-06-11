@@ -5,7 +5,6 @@ HAM (Hierarchical Associative Memory) Manager — minimal JSON-backed implementa
 
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -31,7 +30,7 @@ class HAMMemoryManager:
             try:
                 with open(self.memory_file, "r", encoding="utf-8") as f:
                     self._data = json.load(f)
-            except Exception:
+            except (json.JSONDecodeError, FileNotFoundError, IOError):
                 self._data = {"templates": [], "conversations": [], "metadata": {}}
 
     def _save(self) -> None:
@@ -41,7 +40,7 @@ class HAMMemoryManager:
             self.memory_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.memory_file, "w", encoding="utf-8") as f:
                 json.dump(self._data, f, ensure_ascii=False, indent=2)
-        except Exception as e:
+        except (IOError, OSError, TypeError) as e:
             logger.warning(f"HAMMemoryManager save failed: {e}")
 
     async def store_template(self, template: Any) -> None:

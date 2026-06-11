@@ -286,16 +286,8 @@ class UserMonitor:
         if len(self.user_state.emotion_history) > 50:
             self.user_state.emotion_history = self.user_state.emotion_history[-50:]
 
-    def _estimate_emotion_from_text(self, text: str) -> tuple[str, float]:
-        """
-        從文本估計情緒
-
-        返回: (emotion, intensity)
-        """
-        text_lower = text.lower()
-
-        # 簡單情緒關鍵詞匹配
-        emotion_keywords = {
+    def _extract_emotion_keywords(self) -> Dict[UserEmotion, List[str]]:
+        return {
             UserEmotion.HAPPY: [
                 "开心",
                 "高兴",
@@ -387,22 +379,26 @@ class UserMonitor:
             ],
         }
 
-        # 計算每種情緒的匹配度
-        emotion_scores = {}
+    def _score_emotion_categories(self, text_lower: str) -> Dict[UserEmotion, int]:
+        emotion_keywords = self._extract_emotion_keywords()
+        scores = {}
         for emotion, keywords in emotion_keywords.items():
             score = sum(1 for keyword in keywords if keyword in text_lower)
             if score > 0:
-                emotion_scores[emotion] = score
+                scores[emotion] = score
+        return scores
 
-        # 如果沒有匹配，返回中性
+    def _select_dominant_emotion(self, emotion_scores: Dict[UserEmotion, int]) -> tuple[str, float]:
         if not emotion_scores:
             return UserEmotion.NEUTRAL.value, 0.0
-
-        # 返回得分最高的情緒
         best_emotion = max(emotion_scores.items(), key=lambda x: x[1])
-        intensity = min(best_emotion[1] / 3.0, 1.0)  # 限制在0-1之間
-
+        intensity = min(best_emotion[1] / 3.0, 1.0)
         return best_emotion[0].value, intensity
+
+    def _estimate_emotion_from_text(self, text: str) -> tuple[str, float]:
+        text_lower = text.lower()
+        scores = self._score_emotion_categories(text_lower)
+        return self._select_dominant_emotion(scores)
 
     def get_user_state(self) -> UserState:
         """獲取用戶狀態"""

@@ -40,7 +40,7 @@ class ErrorContext:
     def __init__(self, **kwargs):
         self.additional_info: Dict[str, Any] = dict(kwargs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"ErrorContext({self.additional_info})"
 
 
@@ -70,10 +70,10 @@ class AngelaError(Exception):
             self.context.additional_info[k] = v
         super().__init__(message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"[{self.code}] {self.message} ({self.category.value})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"AngelaError(code='{self.code}', message='{self.message}', category={self.category}, severity={self.severity})"
 
     def to_dict(self) -> Dict[str, Any]:

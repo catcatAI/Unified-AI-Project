@@ -5,7 +5,7 @@
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.system.config.magic_numbers import confidence_value, latency_value, timeout_value

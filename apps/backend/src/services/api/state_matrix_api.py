@@ -179,7 +179,7 @@ async def navigate(request: Dict[str, Any]):
 
 
 @state_matrix_router.get("/temporal/trend")
-async def get_temporal_trend(axis: str, key: str, window: int = 30):
+async def get_temporal_trend(axis: str, key: str, window: int = 30) -> dict:
     """Get temporal trend for an axis key."""
     matrix = get_state_matrix()
     if hasattr(matrix, "temporal") and hasattr(matrix.temporal, "trend"):
@@ -189,7 +189,7 @@ async def get_temporal_trend(axis: str, key: str, window: int = 30):
 
 
 @state_matrix_router.get("/temporal/anomalies")
-async def get_temporal_anomalies(axis: str, key: str, threshold: float = 2.0):
+async def get_temporal_anomalies(axis: str, key: str, threshold: float = 2.0) -> dict:
     """Get temporal anomalies for an axis key."""
     matrix = get_state_matrix()
     if hasattr(matrix, "temporal") and hasattr(matrix.temporal, "anomalies"):
@@ -199,7 +199,7 @@ async def get_temporal_anomalies(axis: str, key: str, threshold: float = 2.0):
 
 
 @state_matrix_router.post("/port/register")
-async def register_port(request: Dict[str, Any]):
+async def register_port(request: Dict[str, Any]) -> dict:
     """Register a port."""
     matrix = get_state_matrix()
     if hasattr(matrix, "register_port"):
@@ -209,7 +209,7 @@ async def register_port(request: Dict[str, Any]):
 
 
 @state_matrix_router.post("/port/unregister")
-async def unregister_port(name: str):
+async def unregister_port(name: str) -> dict:
     """Unregister a port."""
     matrix = get_state_matrix()
     if hasattr(matrix, "unregister_port"):
@@ -219,7 +219,7 @@ async def unregister_port(name: str):
 
 
 @state_matrix_router.get("/port/list")
-async def list_ports():
+async def list_ports() -> dict:
     """List registered ports."""
     matrix = get_state_matrix()
     if hasattr(matrix, "ports"):
@@ -228,7 +228,7 @@ async def list_ports():
 
 
 @state_matrix_router.post("/ripple")
-async def apply_ripple(request: RippleRequest):
+async def apply_ripple(request: RippleRequest) -> dict:
     """Apply ripple effect across axes."""
     matrix = get_state_matrix()
     if hasattr(matrix, "apply_ripple"):
@@ -238,7 +238,7 @@ async def apply_ripple(request: RippleRequest):
 
 
 @state_matrix_router.post("/allocation")
-async def allocation_decide(request: AllocationRequest):
+async def allocation_decide(request: AllocationRequest) -> dict:
     """Make allocation decision."""
     matrix = get_state_matrix()
     if hasattr(matrix, "allocation_decide"):
@@ -262,7 +262,7 @@ async def get_negativity():
 
 
 @state_matrix_router.post("/save")
-async def save_state(request: SaveStateRequest):
+async def save_state(request: SaveStateRequest) -> dict:
     """Save state to file."""
     matrix = get_state_matrix()
     filepath = request.filepath or "state_matrix_save.json"
@@ -288,7 +288,7 @@ async def save_state(request: SaveStateRequest):
 
 
 @state_matrix_router.post("/load")
-async def load_state(request: LoadStateRequest):
+async def load_state(request: LoadStateRequest) -> dict:
     """Load state from file."""
     matrix = get_state_matrix()
     filepath = request.filepath or "state_matrix_save.json"

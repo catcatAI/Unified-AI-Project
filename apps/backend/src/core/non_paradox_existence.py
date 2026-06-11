@@ -61,10 +61,10 @@ class CoexistenceField:
         self.variables = variables or []
         self.states: List[PossibilityState] = []
 
-    def add_variable(self, variable: GrayZoneVariable):
+    def add_variable(self, variable: GrayZoneVariable) -> None:
         self.variables.append(variable)
 
-    def add_state(self, state: PossibilityState):
+    def add_state(self, state: PossibilityState) -> None:
         self.states.append(state)
 
     def get_coherence(self) -> float:

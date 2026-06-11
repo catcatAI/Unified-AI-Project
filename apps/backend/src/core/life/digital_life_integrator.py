@@ -295,7 +295,7 @@ class DigitalLifeIntegrator:
             await self.biological_integrator.initialize()
             logger.info("  [Foundation] Biological systems online.")
         except Exception as e:
-            # broad exception acceptable: initialization should continue on optional component failure
+            # broad except acceptable: init must survive optional component failure
             logger.error(f"  [CRITICAL] Biological boot failure: {e}", exc_info=True)
 
         # 2. Action & Interaction Layer
@@ -304,7 +304,7 @@ class DigitalLifeIntegrator:
             await self.action_executor.initialize()
             logger.info("  [Sensory] Action executor online.")
         except Exception as e:
-            # broad exception acceptable: executor degradation is non-critical, graceful degradation
+            # broad except acceptable: executor degradation is non-critical, graceful degradation
             logger.warning(f"  [Sensory] Executor degraded: {e}", exc_info=True)
 
         # 3. High-Level Cognition (Optional/Graceful)
@@ -326,7 +326,7 @@ class DigitalLifeIntegrator:
             await self.llm_decision_loop.start()
             logger.info("  [Cognition] LLM Decision Loop active.")
         except Exception as e:
-            # broad exception acceptable: LLM failure is optional, graceful degradation
+            # broad except acceptable: LLM failure is optional, graceful degradation
             logger.error(f"  [Cognition] Brain boot failure: {e}. Angela will rely on GSI-4 local logic.", exc_info=True)
 
         # 4. Final Activation
@@ -380,7 +380,7 @@ class DigitalLifeIntegrator:
             try:
                 await self.dynamic_params.stop()
             except Exception as e:
-                # broad exception acceptable: dynamic params stop is cleanup, graceful degradation
+                # broad except acceptable: shutdown cleanup, must not raise
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Record final stats
@@ -427,7 +427,7 @@ class DigitalLifeIntegrator:
                 )
 
             except Exception as e:
-                # broad exception acceptable: introspection loop should not break on errors
+                # broad except acceptable: introspection loop must survive errors
                 logger.error(f"[DigitalLife] Introspection error: {e}", exc_info=True)
 
             await asyncio.sleep(self._update_interval)
@@ -485,7 +485,7 @@ class DigitalLifeIntegrator:
                 f" + {gamma_stability:.4f} + {delta_stability:.4f}) / 4"
             )
         except Exception:
-            # broad exception acceptable: spatial math fallback is resilient to parse errors
+            # broad except acceptable: spatial math parse errors must not break maturity calc
             maturity = (alpha_stability + beta_stability + gamma_stability + delta_stability) / 4
 
         return max(0.0, min(1.0, maturity))
@@ -516,7 +516,7 @@ class DigitalLifeIntegrator:
             try:
                 callback(old_state, new_state)
             except Exception as e:
-                # broad exception acceptable: callback errors should not break the loop
+                # broad except acceptable: callback errors must not break state transitions
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def _apply_state_behaviors(self, state: LifeCycleState) -> None:
@@ -578,7 +578,7 @@ class DigitalLifeIntegrator:
                     status_message="Healthy",
                 )
             except Exception as e:
-                # broad exception acceptable: health check must be resilient to subsystem errors
+                # broad except acceptable: health check must survive subsystem errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 self.systems_health[name] = SystemHealth(
                     system_name=name,
@@ -628,7 +628,7 @@ class DigitalLifeIntegrator:
 
                 self._last_params_log = datetime.now()
         except Exception as e:
-            # broad exception acceptable: dynamic params update is non-critical, graceful degradation
+            # broad except acceptable: dynamic params update is non-critical, graceful degradation
             logger.error(f"[DigitalLife] Error updating dynamic parameters: {e}", exc_info=True)
 
     def record_activity(self, activity_type: str) -> None:
@@ -703,7 +703,7 @@ class DigitalLifeIntegrator:
             try:
                 callback(event)
             except Exception as e:
-                # broad exception acceptable: callback errors should not break event handling
+                # broad except acceptable: callback errors must not break event handling
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     def get_age(self) -> timedelta:

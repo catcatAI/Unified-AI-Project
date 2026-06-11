@@ -772,7 +772,7 @@ class AngelaLLMService:
                     },
                 )
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, TypeError) as e:
             logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
         return None
 
@@ -957,23 +957,13 @@ class AngelaLLMService:
     # ========== 记忆增强系统 - 辅助方法 ==========
 
 
-    async def _generate_with_llm(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
-        """
-        使用 LLM 生成回應
-
-        Args:
-            user_message: 用户消息
-            context: 上下文
-
-        Returns:
-            LLMResponse: LLM 生成的回應
-        """
-        start_time = time.time()
-
+    async def _prepare_generation_context(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
         defaults = _get_llm_config("defaults", {})
-        timeout_seconds = getattr(self.active_backend, "timeout", defaults.get("timeout_default", 30.0))
-        temperature = defaults.get("temperature", 0.7)
-        max_tokens = defaults.get("max_tokens", 512)
+        self._gen_timeout = getattr(self.active_backend, "timeout", defaults.get("timeout_default", 30.0))
+        self._gen_temperature = defaults.get("temperature", 0.7)
+        self._gen_max_tokens = defaults.get("max_tokens", 512)
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:
@@ -991,7 +981,6 @@ class AngelaLLMService:
                     logger.info("[auto] 預算不足，使用 NeuroBlender 降級")
                     return await self._fallback_response(user_message, context)
 
-                # 如果需要切換後端
                 if auto_result.backend.value != (self.active_backend_type.value if self.active_backend_type else ""):
                     backend_map = {
                         "ollama": LLMBackend.OLLAMA,
@@ -1007,75 +996,84 @@ class AngelaLLMService:
                         self.active_backend_type = mapped
                         logger.info(f"[auto] 切換後端: {prev} → {mapped.value}")
 
-                # 使用動態參數
-                timeout_seconds = auto_result.time_budget_ms / 1000.0
-                temperature = auto_result.temperature
-                max_tokens = auto_result.max_tokens
+                self._gen_timeout = auto_result.time_budget_ms / 1000.0
+                self._gen_temperature = auto_result.temperature
+                self._gen_max_tokens = auto_result.max_tokens
             except Exception as e:
                 logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
 
+        return None
+
+    async def _call_llm_backend(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
+        messages = self._construct_angela_prompt(user_message, context)
+
         try:
-            # 建構提示詞
-            messages = self._construct_angela_prompt(user_message, context)
+            from core.waiting_scheduler import get_waiting_scheduler
+            scheduler = get_waiting_scheduler()
 
-            # [Phase 8 Activation] 使用 WaitingScheduler 調度 LLM 調用，防止阻塞主事件循環
-            try:
-                from core.waiting_scheduler import get_waiting_scheduler
-                scheduler = get_waiting_scheduler()
+            coro = self.active_backend.generate(
+                prompt=messages[-1]["content"],
+                messages=messages,
+                temperature=self._gen_temperature,
+                max_tokens=self._gen_max_tokens,
+            )
 
-                # 提交生成任務
-                coro = self.active_backend.generate(
+            response = await scheduler.submit(
+                coro,
+                timeout=self._gen_timeout,
+                label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
+            )
+
+            if response is None:
+                raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")
+
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
+            response = await asyncio.wait_for(
+                self.active_backend.generate(
                     prompt=messages[-1]["content"],
                     messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                )
+                    temperature=self._gen_temperature,
+                    max_tokens=self._gen_max_tokens,
+                ),
+                timeout=self._gen_timeout,
+            )
 
-                # 透過排程器執行（內建超時管理）
-                response = await scheduler.submit(
-                    coro,
-                    timeout=timeout_seconds,
-                    label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
-                )
+        return response
 
-                if response is None:
-                    # 排程器回傳 None 通常代表超時或內部失敗
-                    raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")
+    async def _post_process_response(
+        self, response: LLMResponse, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> LLMResponse:
+        if self.llm_mode == "auto" and self.auto_selector is not None:
+            elapsed = (time.time() - start_time) * 1000
+            self.auto_selector.record_result(
+                AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
+                actual_ms=elapsed,
+                success=not response.error,
+            )
 
-            except (ImportError, AttributeError) as e:
-                logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
-                # 降級：直接調用
-                response = await asyncio.wait_for(
-                    self.active_backend.generate(
-                        prompt=messages[-1]["content"],
-                        messages=messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                    ),
-                    timeout=timeout_seconds,
-                )
+        if response.error:
+            logger.warning(f"LLM 回應錯誤: {response.error}", exc_info=True)
+            if self._angela_fallback_chain:
+                return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
+            return await self._fallback_response(user_message, context)
 
-            # [auto] record result
-            if self.llm_mode == "auto" and self.auto_selector is not None:
-                elapsed = (time.time() - start_time) * 1000
-                self.auto_selector.record_result(
-                    AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
-                    actual_ms=elapsed,
-                    success=not response.error,
-                )
+        return response
 
-            if response.error:
-                logger.warning(f"LLM 回應錯誤: {response.error}", exc_info=True)
-                if self._angela_fallback_chain:
-                    return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
-                return await self._fallback_response(user_message, context)
+    async def _generate_with_llm(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
+        start_time = time.time()
 
-            return response
+        early = await self._prepare_generation_context(user_message, context)
+        if early is not None:
+            return early
+
+        try:
+            response = await self._call_llm_backend(user_message, context)
+            return await self._post_process_response(response, user_message, context, start_time)
 
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout", exc_info=True)
-            self._record_route_learning(context, "timeout", timeout_seconds * 1000)
-            # [auto] record timeout
+            self._record_route_learning(context, "timeout", self._gen_timeout * 1000)
             if self.llm_mode == "auto" and self.auto_selector is not None:
                 elapsed = (time.time() - start_time) * 1000
                 self.auto_selector.record_result(
@@ -1087,7 +1085,6 @@ class AngelaLLMService:
                 return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
             return await self._fallback_response(user_message, context)
         except Exception as e:
-            # broad exception acceptable: LLM generation must be resilient, fallback on any error
             logger.error(f"LLM generation error: {e}", exc_info=True)
             self._record_route_learning(context, "error", 0.0)
             if self._angela_fallback_chain:
@@ -1221,8 +1218,8 @@ class AngelaLLMService:
 
             logger.debug(f"Stored new template for query: '{user_message}'")
 
-        except Exception as e:
-            # broad exception acceptable: template storage is best-effort, non-critical
+        except (IOError, KeyError, AttributeError, ValueError) as e:
+            # template storage is best-effort, non-critical
             logger.warning(f"Failed to store response as template: {e}", exc_info=True)
 
     def _extract_keywords(self, text: str) -> List[str]:

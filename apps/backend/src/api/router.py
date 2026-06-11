@@ -31,3 +31,10 @@ try:
 except ImportError as e:
     logger.warning(f"ops_routes not available: {e}")
 
+try:
+    from api.v1.endpoints import include_endpoint_routers
+    include_endpoint_routers(router, prefix="/api/v1")
+    logger.debug("Included v1 endpoint routers")
+except ImportError as e:
+    logger.warning(f"v1 endpoint routers not available: {e}")
+

@@ -20,7 +20,14 @@ from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
 
-from core.system.config.magic_numbers import batch_value, llm_param
+from core.system.config.magic_numbers import (
+    batch_value,
+    behavior_threshold,
+    limit_value,
+    llm_param,
+    threshold_value,
+    timing_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -225,17 +232,17 @@ class BudgetScheduler:
             svc = self._get_resource_service()
             load_factor = svc.get_throttling_factor()
             self._load_factor = load_factor
-        except Exception:
+        except (ConnectionError, TimeoutError, ValueError):
             logger.warning("Failed to get resource throttling factor, using 1.0", exc_info=True)
             self._load_factor = 1.0
 
         budget = int(raw_budget * load_factor)
 
         # 8D energy correction
-        if energy < 0.3:
-            budget = int(budget * 0.6)
-        elif energy > 0.7:
-            budget = int(budget * 1.1)
+        if energy < threshold_value("ai.neuro_auto_selector.energy_low", 0.3):
+            budget = int(budget * behavior_threshold("ai.neuro_auto_selector.energy_low_factor", 0.6))
+        elif energy > threshold_value("ai.neuro_auto_selector.energy_high", 0.7):
+            budget = int(budget * behavior_threshold("ai.neuro_auto_selector.energy_high_factor", 1.1))
 
         # Clamp
         min_budget = self.config.get("min_time_budget_ms", 5000)
@@ -268,7 +275,7 @@ class StateInterpreter:
                 from core.engine.state_matrix import StateMatrix4D
 
                 self._state_matrix = StateMatrix4D()
-            except Exception:
+            except ImportError:
                 logger.warning("[StateInterpreter] StateMatrix4D not available", exc_info=True)
 
     def get_energy(self) -> float:
@@ -280,7 +287,7 @@ class StateInterpreter:
             state = self._state_matrix.get_state("alpha")
             if state and "energy" in state:
                 return float(state["energy"])
-        except Exception as e:
+        except (KeyError, TypeError, ValueError) as e:
             logger.warning(f"Failed to get alpha energy from state matrix: {e}", exc_info=True)
         return 0.5
 
@@ -319,9 +326,9 @@ class StateInterpreter:
                 full = self._state_matrix.export_for_llm()
                 eta_data = full.get("eta", {})
                 result["eta_success_rate"] = float(eta_data.get("success_rate", 0.85))
-            except Exception as e:
+            except (KeyError, TypeError, ValueError, AttributeError) as e:
                 logger.warning(f"Failed to get eta success_rate from export_for_llm: {e}", exc_info=True)
-        except Exception as e:
+        except (KeyError, TypeError, ValueError, AttributeError) as e:
             logger.warning(f"Failed to get state dict from state matrix: {e}", exc_info=True)
 
         # Fill defaults for missing keys
@@ -355,35 +362,35 @@ class StateInterpreter:
         success_rate = state.get("eta_success_rate", 0.85)
 
         # epsilon.precision high → force thinking, lower temperature
-        if precision > 0.7:
+        if precision > threshold_value("ai.neuro_auto_selector.precision_high", 0.7):
             decision.use_thinking = True
             decision.temperature = llm_param("neuro_precise_temp", 0.3)
 
         # delta.happiness low → shorter, comfort-oriented
-        if happiness < 0.35:
+        if happiness < threshold_value("ai.neuro_auto_selector.happiness_low", 0.35):
             decision.max_tokens = int(llm_param("neuro_precise_tokens", 256))
             decision.temperature = llm_param("neuro_comfort_temp", 0.8)
             decision.reason = "low_happiness_comfort_mode"
 
         # alpha.energy low → reduce resource consumption
-        if energy < 0.3:
-            decision.time_budget_ms = min(budget, 10000)
+        if energy < threshold_value("ai.neuro_auto_selector.energy_low", 0.3):
+            decision.time_budget_ms = min(budget, limit_value("ai.neuro_auto_selector.energy_low_budget", 10000))
             decision.use_thinking = False
             decision.reason = "low_energy_economy_mode"
 
         # theta.novelty high → prefer cloud strong model
-        if novelty > 0.7:
+        if novelty > threshold_value("ai.neuro_auto_selector.novelty_high", 0.7):
             decision.reason = "high_novelty_quality_mode"
 
         # theta.negativity high → careful, precise
-        if negativity > 0.6:
+        if negativity > threshold_value("ai.neuro_auto_selector.negativity_high", 0.6):
             decision.use_thinking = True
             decision.temperature = llm_param("neuro_careful_temp", 0.4)
 
         # eta.success_rate low → be conservative
-        if success_rate < 0.6:
-            decision.time_budget_ms = min(decision.time_budget_ms, 15000)
-            decision.max_tokens = min(decision.max_tokens, 256)
+        if success_rate < threshold_value("ai.neuro_auto_selector.success_rate_low", 0.6):
+            decision.time_budget_ms = min(decision.time_budget_ms, limit_value("ai.neuro_auto_selector.success_rate_budget", 15000))
+            decision.max_tokens = min(decision.max_tokens, limit_value("ai.neuro_auto_selector.success_rate_tokens", 256))
 
         return decision
 
@@ -407,7 +414,7 @@ class LearnRecorder:
                 from core.config_loader import get_angela_config
 
                 self._config_loader = get_angela_config()
-            except Exception as e:
+            except ImportError as e:
                 logger.warning(f"Failed to load config_loader: {e}", exc_info=True)
         return self._config_loader
 
@@ -428,7 +435,7 @@ class LearnRecorder:
         self._pending.append(record)
         logger.debug(f"[LearnRecorder] Recorded: {record['backend']}/{record['model']} success={success}")
 
-        if len(self._pending) >= 100:
+        if len(self._pending) >= batch_value("ai.neuro_auto_selector.flush_batch", 100):
             self._flush()
 
     def _flush(self) -> None:
@@ -441,7 +448,7 @@ class LearnRecorder:
                 cfg.learn("route_success" if record["success"] else "route_fail", record)
             logger.info(f"[LearnRecorder] Flushed {len(self._pending)} records")
             self._pending.clear()
-        except Exception:
+        except (IOError, KeyError, AttributeError):
             logger.warning("[LearnRecorder] Flush failed, will retry later", exc_info=True)
 
     def flush_sync(self) -> None:
@@ -542,7 +549,7 @@ class NeuroAutoSelector:
     def _get_hardware(self) -> Tuple[float, HardwareTier, Dict[str, Any]]:
         """Get hardware."""
         now = time.time()
-        if now - self._last_hw_time > 30.0:  # Refresh every 30s max
+        if now - self._last_hw_time > timing_value("ai.neuro_auto_selector.hardware_refresh", 30.0):
             score, tier, details = self.hardware.analyze()
             self._hw_score = score
             self._hw_tier = tier
@@ -570,16 +577,16 @@ class NeuroAutoSelector:
         intent_cost = intent_cost_map.get(intent, 0.4)
 
         # Message length cost
-        msg_len_cost = min(len(user_message) / 2000, 1.0) * 0.2
+        msg_len_cost = min(len(user_message) / limit_value("ai.neuro_auto_selector.msg_len_divisor", 2000), 1.0) * behavior_threshold("ai.neuro_auto_selector.msg_len_weight", 0.2)
 
         # Total demand score
-        demand = min(intent_cost + complexity * 0.3 + msg_len_cost, 1.0)
+        demand = min(intent_cost + complexity * behavior_threshold("ai.neuro_auto_selector.complexity_weight", 0.3) + msg_len_cost, 1.0)
 
         return TaskBudget(
             demand_score=demand,
-            needs_reasoning=demand > 0.6 or intent in ("math", "reasoning"),
-            min_quality=intent_cost > 0.4,
-            preferred_context_window=8192 if demand > 0.7 else 4096,
+            needs_reasoning=demand > threshold_value("ai.neuro_auto_selector.reasoning_threshold", 0.6) or intent in ("math", "reasoning"),
+            min_quality=intent_cost > threshold_value("ai.neuro_auto_selector.quality_threshold", 0.4),
+            preferred_context_window=batch_value("ai.neuro_auto_selector.high_demand_context", 8192) if demand > threshold_value("ai.neuro_auto_selector.high_demand_threshold", 0.7) else batch_value("ai.neuro_auto_selector.normal_context", 4096),
         )
 
     # ── Phase 5: Model Selection ────────────────────────────────────────────
@@ -618,7 +625,7 @@ class NeuroAutoSelector:
 
         # Priority 3: Check state-driven cloud preference
         novelty = state.get("theta_novelty", 0.3)
-        use_cloud = novelty > 0.7
+        use_cloud = novelty > threshold_value("ai.neuro_auto_selector.novelty_high", 0.7)
 
         # Priority 4: Check local capability
         local_capable = self._is_local_capable(hw_details)
@@ -664,7 +671,7 @@ class NeuroAutoSelector:
         ram = hw_details.get("ram_total_gb", 0)
         vram = hw_details.get("vram_mb", 0)
         accelerator = hw_details.get("accelerator_type", "none")
-        return ram >= 4 and (vram >= 2048 or accelerator != "none")
+        return ram >= limit_value("ai.neuro_auto_selector.local_ram_min", 4) and (vram >= limit_value("ai.neuro_auto_selector.local_vram_min", 2048) or accelerator != "none")
 
     def _select_local(
         self, decision: AutoDecision, hw_details: Dict[str, Any], task: TaskBudget
@@ -676,7 +683,7 @@ class NeuroAutoSelector:
         if task.needs_reasoning:
             # Try to use reasoning model
             ram = hw_details.get("ram_total_gb", 0)
-            if ram >= 16:
+            if ram >= limit_value("ai.neuro_auto_selector.reasoning_ram_min", 16):
                 decision.model = "deepseek-r1:latest"
             decision.reason = "local_reasoning"
         else:
@@ -745,10 +752,10 @@ class NeuroAutoSelector:
                             available.append(AutoBackendChoice(name))
                         except ValueError:
                             logger.warning("Invalid AutoBackendChoice name", exc_info=True)
-                except Exception:
+                except (ConnectionError, TimeoutError, OSError):
                     logger.warning("Failed to check backend health for %s", backend_type, exc_info=True)
                     continue
-        except Exception as e:
+        except (ImportError, ConnectionError, RuntimeError) as e:
             logger.warning(f"Failed to list available providers: {e}", exc_info=True)
         return available
 

@@ -9,7 +9,16 @@ import logging
 import re
 import threading
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
+from core.system.config.magic_numbers import (
+    behavior_threshold,
+    cache_value,
+    confidence_value,
+    learning_rate,
+    limit_value,
+    threshold_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +60,7 @@ class DictionaryLayer:
         self._growth_history: List[Dict[str, Any]] = []
         self._index_version: int = 0
         self._encode_cache: OrderedDict = OrderedDict()
-        self._encode_cache_max: int = 256
+        self._encode_cache_max: int = cache_value("ai.dictionary_layer.encode_cache_max", 256)
 
     def _assign_key(self, prefix: str = "c") -> str:
         key = f"{prefix}{self._next_key_id}"
@@ -71,7 +80,7 @@ class DictionaryLayer:
                 result[key] = None
                 continue
             if anchors and key not in anchor_keys:
-                confidence_boost = 0.1
+                confidence_boost = behavior_threshold("ai.dictionary_layer.confidence_boost", 0.1)
                 boosted = copy.copy(entry)
                 boosted.confidence = min(boosted.confidence + confidence_boost, 1.0)
                 result[key] = boosted
@@ -80,8 +89,8 @@ class DictionaryLayer:
         return result
 
     # Cap on encode results to prevent bigram explosion
-    MAX_ENCODE_KEYS: int = 5
-    MIN_ENCODE_SCORE: float = 0.25
+    MAX_ENCODE_KEYS: int = limit_value("ai.dictionary_layer.max_encode_keys", 5)
+    MIN_ENCODE_SCORE: float = threshold_value("ai.dictionary_layer.min_encode_score", 0.25)
 
     def encode(self, text: str, modality: str = "text") -> List[str]:
         raw: List[str]
@@ -100,8 +109,9 @@ class DictionaryLayer:
     def encode_soft(self, text: str) -> Dict[str, float]:
         if not text or not isinstance(text, str):
             return {}
-        if len(text) > 10000:
-            text = text[:10000]
+        max_text_len = limit_value("ai.dictionary_layer.max_text_len", 10000)
+        if len(text) > max_text_len:
+            text = text[:max_text_len]
         self._rebuild_index()
         text_lower = text.lower().strip()
         scores: Dict[str, float] = {}
@@ -117,10 +127,10 @@ class DictionaryLayer:
                     break
                 if sf_lower in text_lower:
                     ratio = len(sf_lower) / max_len
-                    best = max(best, ratio * 0.85)
+                    best = max(best, ratio * behavior_threshold("ai.dictionary_layer.encode_exact_weight", 0.85))
                 if text_lower in sf_lower:
                     ratio = len(text_lower) / max(len(sf_lower), 1)
-                    best = max(best, ratio * 0.6)
+                    best = max(best, ratio * behavior_threshold("ai.dictionary_layer.encode_substr_weight", 0.6))
             if best > 0:
                 scores[key] = round(best * entry.confidence, 4)
         return scores
@@ -128,8 +138,9 @@ class DictionaryLayer:
     def _encode_locked(self, text: str, modality: str = "text") -> List[str]:
         if not text or not isinstance(text, str):
             return []
-        if len(text) > 10000:
-            text = text[:10000]
+        max_text_len = limit_value("ai.dictionary_layer.max_text_len", 10000)
+        if len(text) > max_text_len:
+            text = text[:max_text_len]
         if modality != "text":
             logger.warning("Only 'text' modality is supported; falling back to text encoding.")
         self._rebuild_index()
@@ -224,7 +235,7 @@ class DictionaryLayer:
             "source_text": text,
             "confidence": confidence,
         })
-        if len(self._growth_history) > 5000:
+        if len(self._growth_history) > limit_value("ai.dictionary_layer.growth_history_max", 5000):
             self._growth_history.pop(0)
         logger.info("Grew new entry: %s -> %s (%s)", key, surface_form, text)
         return key
@@ -318,7 +329,7 @@ class DictionaryLayer:
             "growth_history_count": len(self._growth_history),
         }
 
-    def prune(self, min_confidence: float = 0.1, max_age_days: int = 365) -> int:
+    def prune(self, min_confidence: float = threshold_value("ai.dictionary_layer.prune_min_confidence", 0.1), max_age_days: int = limit_value("ai.dictionary_layer.prune_max_age_days", 365)) -> int:
         pruned = 0
         now = datetime.datetime.now()
         keys_to_delete = []
@@ -366,11 +377,11 @@ class DictionaryLayer:
             seen.add(token)
             is_chinese = bool(re.match(r"[\u4e00-\u9fff]", token))
             if is_chinese and len(token) >= 2:
-                confidence = 0.4 + min(len(token) * 0.05, 0.3)
+                confidence = confidence_value("ai.dictionary_layer.concept_base_conf", 0.4) + min(len(token) * learning_rate("ai.dictionary_layer.concept_len_factor", 0.05), confidence_value("ai.dictionary_layer.concept_max_bonus", 0.3))
             elif not is_chinese and len(token) >= 4:
-                confidence = 0.4 + min(len(token) * 0.03, 0.3)
+                confidence = confidence_value("ai.dictionary_layer.concept_base_conf", 0.4) + min(len(token) * learning_rate("ai.dictionary_layer.concept_len_factor_en", 0.03), confidence_value("ai.dictionary_layer.concept_max_bonus", 0.3))
             else:
-                confidence = 0.2
+                confidence = confidence_value("ai.dictionary_layer.concept_min_conf", 0.2)
             candidates.append({
                 "text": token,
                 "surface_form": token if is_chinese else f"en:{token}",
@@ -380,7 +391,7 @@ class DictionaryLayer:
         return candidates
 
     def learn_from_conversation(
-        self, utterances: List[str], min_confidence: float = 0.4
+        self, utterances: List[str], min_confidence: float = threshold_value("ai.dictionary_layer.learn_min_confidence", 0.4)
     ) -> List[str]:
         new_keys: List[str] = []
         all_text = " ".join(utterances)
@@ -487,7 +498,7 @@ class DictionaryLayer:
             self._index_version += 1
             self._encode_cache.clear()
 
-    def _build_presets(self) -> List[Dict[str, Any]]:
+    def _build_greeting_presets(self) -> List[Dict[str, Any]]:
         return [
             # ========== Greetings ==========
             {
@@ -532,6 +543,10 @@ class DictionaryLayer:
                 "relations": {"synonym": ["g1", "g5"]},
                 "confidence": 1.0,
             },
+        ]
+
+    def _build_farewell_presets(self) -> List[Dict[str, Any]]:
+        return [
             # ========== Farewells ==========
             {
                 "key": "f1",
@@ -547,6 +562,10 @@ class DictionaryLayer:
                 "relations": {"synonym": ["f1"], "mapping": ["g2"]},
                 "confidence": 1.0,
             },
+        ]
+
+    def _build_politeness_presets(self) -> List[Dict[str, Any]]:
+        return [
             # ========== Politeness ==========
             {
                 "key": "p1",
@@ -576,6 +595,10 @@ class DictionaryLayer:
                 "relations": {"synonym": [], "mapping": ["g1", "p1"]},
                 "confidence": 1.0,
             },
+        ]
+
+    def _build_common_presets(self) -> List[Dict[str, Any]]:
+        return [
             # ========== Common Patterns ==========
             {
                 "key": "c1",
@@ -612,6 +635,10 @@ class DictionaryLayer:
                 "relations": {"mapping": ["c1", "e5"]},
                 "confidence": 1.0,
             },
+        ]
+
+    def _build_emotion_presets(self) -> List[Dict[str, Any]]:
+        return [
             # ========== Emotional States ==========
             {
                 "key": "e1",
@@ -648,6 +675,10 @@ class DictionaryLayer:
                 "relations": {"synonym": ["e1"], "mapping": ["c2"]},
                 "confidence": 1.0,
             },
+        ]
+
+    def _build_response_presets(self) -> List[Dict[str, Any]]:
+        return [
             # ========== Responses ==========
             {
                 "key": "r1",
@@ -677,6 +708,10 @@ class DictionaryLayer:
                 "relations": {"synonym": ["r2"]},
                 "confidence": 1.0,
             },
+        ]
+
+    def _build_math_presets(self) -> List[Dict[str, Any]]:
+        return [
             # ========== Math: Numbers ==========
             {
                 "key": "m1",
@@ -784,6 +819,10 @@ class DictionaryLayer:
                 "relations": {},
                 "confidence": 1.0,
             },
+        ]
+
+    def _build_logic_presets(self) -> List[Dict[str, Any]]:
+        return [
             # ========== Boolean Logic ==========
             {
                 "key": "b1",
@@ -821,3 +860,15 @@ class DictionaryLayer:
                 "confidence": 1.0,
             },
         ]
+
+    def _build_presets(self) -> List[Dict[str, Any]]:
+        result = []
+        result.extend(self._build_greeting_presets())
+        result.extend(self._build_farewell_presets())
+        result.extend(self._build_politeness_presets())
+        result.extend(self._build_common_presets())
+        result.extend(self._build_emotion_presets())
+        result.extend(self._build_response_presets())
+        result.extend(self._build_math_presets())
+        result.extend(self._build_logic_presets())
+        return result

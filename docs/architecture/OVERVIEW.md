@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-11 — Added Phase 4 Priority 3: integration tests 59→106, orphan rate 73.0% (154/211), 5 files deleted
+> **Last Updated**: 2026-06-11 — Added Phase 4 Priority 4: C2 Live2D fixed, 84 new unit tests, 220 magic numbers, 31/35 API endpoints tested, code quality cleanup
 
 ## High-Level Architecture
 
@@ -101,9 +101,11 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | GARDEN Engine | ✅ 50/50 tests | 3 active routing paths, TF-IDF fallback |
 | Training Pipeline | ✅ 53,654 samples (13 sources) | SequenceTrainer + JointTrainer |
 | ModelBus | ✅ 34 tests | Registration, 7 routing paths, domain queries, timeout, edge cases |
-| Magic Numbers | ✅ Full | 84 values centralized across 6 files via magic_numbers.py |
-| Integration Testing | ✅ 106 e2e tests | 10 test classes (33 original + 26 edge/stress + 12 concurrency fuzzing + 12 fault injection + 8 resource limits + 10 NeuroVocabulary chaos + 7 edge cases); ED3NEngine + GARDENEngine + ModelBus + NeuroVocabulary pipeline |
-| Code Quality Metrics | ✅ ANGELA-MATRIX: 100% | All 157 annotated files complete; total 180+ tests across 3 test files |
+| Magic Numbers | ✅ Full | 220 values centralized (84 H4 + 136 Q3) across 13 files via magic_numbers.py |
+| Integration Testing | ✅ 116 e2e + 84 unit = 200 total this sprint | 116 integration (59 P3-2 + 33 API + 24 fault/concurrency/resource) + 84 new unit tests across 7 files (prompt_builder:10, emotion_analyzer:11, query_classifier:13, training_coordinator:10, ed3n_provider:10, garden_provider:9, learning_loop:21); ED3NEngine + GARDENEngine + ModelBus + NeuroVocabulary pipeline |
+| API Endpoint Tests | ✅ 31/35 endpoints | 33 tests covering 31 registered endpoints; 4 system endpoints fixed (router.py), 2 return type mismatches fixed; 4 endpoints untestable (no route registered) |
+| C2 Live2D State Broadcast | ✅ Fixed | 4 methods added (get_live2d_state, set_expression, get_all_parameters, register_live2d_state_callback); 9 tests pass; import chain verified |
+| Code Quality Metrics | ✅ ANGELA-MATRIX: 99.5% (210/211) | 10 unused imports removed, 7 print→logger, 30 except narrowed, 9 long functions→32 helpers; 220 magic numbers; total 210+ tests |
 | Orphan Modules | ✅ 73.0% orphan rate (154/211) | All 154 orphan files marked DEPRECATED; ai/optimization/ (2), ai/knowledge_graph/ (2), ai/dependency_manager.py (1) = 5 deleted; 31 subpackage __init__.py annotated |
 | Stubs | ✅ 36/37 strict stubs implemented | 3 true stubs remain (1 functional, 2 deprecated)
 | Docs | ✅ Updated | SERVICE_CATALOG.md + OVERVIEW.md current |

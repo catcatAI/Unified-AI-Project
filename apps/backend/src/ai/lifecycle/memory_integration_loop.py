@@ -16,7 +16,14 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 import json
 
-from core.system.config.magic_numbers import batch_value, cache_value, loop_sleep
+from core.system.config.magic_numbers import (
+    batch_value,
+    behavior_threshold,
+    cache_value,
+    limit_value,
+    loop_sleep,
+    threshold_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -167,9 +174,9 @@ class MemoryIntegrationLoop:
     def _calculate_interval(self) -> float:
         """動態計算循環間隔"""
         # 根據待整合記憶數量調整
-        if len(self.integration_queue) > 50:
+        if len(self.integration_queue) > batch_value("ai.memory_integration_loop.fast_queue_threshold", 50):
             return self.min_loop_interval
-        elif len(self.integration_queue) > 20:
+        elif len(self.integration_queue) > batch_value("ai.memory_integration_loop.normal_queue_threshold", 20):
             return self.loop_interval
         else:
             return self.max_loop_interval
@@ -239,20 +246,20 @@ class MemoryIntegrationLoop:
 
             # 提取高頻關鍵詞作為模式
             for keyword, freq in keyword_frequency.items():
-                if freq >= 3:  # 至少出現3次
+                if freq >= batch_value("ai.memory_integration_loop.pattern_freq_threshold", 3):
                     pattern_key = f"keyword_{keyword}"
 
                     if pattern_key in self.knowledge_patterns:
                         self.knowledge_patterns[pattern_key].frequency += freq
                         self.knowledge_patterns[pattern_key].confidence = min(
-                            1.0, self.knowledge_patterns[pattern_key].confidence + 0.1
+                            1.0, self.knowledge_patterns[pattern_key].confidence + behavior_threshold("ai.memory_integration_loop.confidence_increment", 0.1)
                         )
                         self.knowledge_patterns[pattern_key].last_seen = datetime.now()
                     else:
                         self.knowledge_patterns[pattern_key] = KnowledgePattern(
                             pattern=keyword,
                             frequency=freq,
-                            confidence=0.3,
+                            confidence=threshold_value("ai.memory_integration_loop.pattern_initial_confidence", 0.3),
                             last_seen=datetime.now(),
                             examples=[content for content in content_list if keyword in content][
                                 :3
@@ -265,7 +272,7 @@ class MemoryIntegrationLoop:
 
     async def _structure_memory(self) -> None:
         """結構化記憶"""
-        for info in self.integration_queue[:10]:  # 每次處理10個
+        for info in self.integration_queue[:batch_value("ai.memory_integration_loop.structure_batch", 10)]:
             if not info.structured:
                 try:
                     # 簡單的結構化：提取關鍵信息
@@ -292,7 +299,7 @@ class MemoryIntegrationLoop:
         return {
             "word_count": len(words),
             "sentence_count": len(sentences),
-            "keywords": words[:5],  # 前5個詞作為關鍵詞
+            "keywords": words[:limit_value("ai.memory_integration_loop.keyword_limit", 5)],
             "first_sentence": sentences[0] if sentences else "",
             "timestamp": datetime.now().isoformat(),
         }
@@ -325,14 +332,14 @@ class MemoryIntegrationLoop:
         """生成新模板"""
         try:
             # 基於模式生成模板
-            if len(self.knowledge_patterns) > 5:
+            if len(self.knowledge_patterns) > batch_value("ai.memory_integration_loop.template_min_patterns", 5):
                 # 選擇高置信度的模式
                 high_confidence_patterns = [
-                    p for p in self.knowledge_patterns.values() if p.confidence > 0.6
+                    p for p in self.knowledge_patterns.values() if p.confidence > threshold_value("ai.memory_integration_loop.high_confidence_threshold", 0.6)
                 ]
 
                 if high_confidence_patterns and hasattr(self.memory_manager, "generate_template"):
-                    for pattern in high_confidence_patterns[:3]:
+                    for pattern in high_confidence_patterns[:batch_value("ai.memory_integration_loop.template_batch", 3)]:
                         template = {
                             "pattern": pattern.pattern,
                             "examples": pattern.examples,

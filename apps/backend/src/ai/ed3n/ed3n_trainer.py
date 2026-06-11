@@ -197,7 +197,7 @@ class ED3NTrainer:
         import json, os
         from .training_types import TrainMetrics
 
-        def _serialize(m):
+        def _serialize(m) -> dict:
             if isinstance(m, TrainMetrics):
                 return {"phase": m.phase, "loss": m.loss, "accuracy": m.accuracy,
                         "learning_rate": m.learning_rate, "epoch": m.epoch,
@@ -291,7 +291,7 @@ class ED3NTrainer:
             "network_lr": self.network_lr,
         }
 
-    def _find_neuron(self, key: str):
+    def _find_neuron(self, key: str) -> Optional[Any]:
         for group in self.network.groups.values():
             neuron = group.neurons.get(key)
             if neuron is not None:

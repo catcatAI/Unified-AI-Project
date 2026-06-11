@@ -112,6 +112,19 @@ class HSPConnector:
         enable_fallback: bool = True,
         **kwargs,
     ) -> None:
+        self._load_config(ai_id, mock_mode, broker_address, broker_port, enable_fallback)
+        self._init_plugin_system()
+        self._init_protocols(ai_id, broker_address, broker_port, mock_mqtt_client, internal_bus, message_bridge)
+        self._register_default_hooks(**kwargs)
+
+    def _load_config(
+        self,
+        ai_id: str,
+        mock_mode: bool,
+        broker_address: str,
+        broker_port: int,
+        enable_fallback: bool,
+    ) -> None:
         self.ai_id = ai_id
         self.mock_mode = mock_mode
         self.broker_address = broker_address
@@ -120,69 +133,69 @@ class HSPConnector:
         self.fallback_manager = None
         self.fallback_initialized = False
         self.logger = logging.getLogger(__name__)
-        self.hsp_available = False  # Track HSP availability
-        self._is_connected = False  # Initialize instance variable
+        self.hsp_available = False
+        self._is_connected = False
 
-        # Bounded task tracking for backpressure
         self._task_semaphore = threading.Semaphore(100)
         self._max_concurrent_tasks = 100
 
-        # 性能优化参数
-        self.message_cache: Dict[str, Any] = {}  # 消息缓存
-        self.cache_ttl = cache_value("hsp_cache_ttl", 300)  # 缓存有效期(秒)
-        self.batch_send_enabled = True  # 批量发送
-        self.batch_size = 10  # 批量大小
-        self.message_batch: List[Dict[str, Any]] = []  # 消息批处理队列
-        self.last_batch_send = time.time()  # 上次批量发送时间
+    def _init_plugin_system(self) -> None:
+        self.message_cache: Dict[str, Any] = {}
+        self.cache_ttl = cache_value("hsp_cache_ttl", 300)
+        self.batch_send_enabled = True
+        self.batch_size = 10
+        self.message_batch: List[Dict[str, Any]] = []
+        self.last_batch_send = time.time()
 
-        # 性能优化器
         self.performance_optimizer = HSPPerformanceOptimizer()
         self.performance_enhancer = HSPPerformanceEnhancer(self.performance_optimizer)
 
-        # 安全管理器
         self.security_manager = HSPSecurityManager()
         self.security_context = HSPSecurityContext(self.security_manager)
 
-        # 高级性能优化器
         self.advanced_performance_optimizer = HSPAdvancedPerformanceOptimizer()
         self.advanced_performance_enhancer = HSPAdvancedPerformanceEnhancer(
             self.advanced_performance_optimizer
         )
 
-        # 扩展管理器
         self.extension_manager = HSPExtensionManager()
         self.message_registry = HSPMessageRegistry()
 
-        # 版本管理器
         self.version_manager = HSPVersionManager()
         self.version_converter = HSPVersionConverter(self.version_manager)
 
+    def _init_protocols(
+        self,
+        ai_id: str,
+        broker_address: str,
+        broker_port: int,
+        mock_mqtt_client: Optional[MagicMock],
+        internal_bus: Optional[InternalBus],
+        message_bridge: Optional[MessageBridge],
+    ) -> None:
         if self.mock_mode:
             self.logger.info("HSPConnector: Initializing in mock mode.")
-            self.logger.debug(f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}")
+            self.logger.debug(f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {self.mock_mode}")
             self.external_connector = MagicMock(spec=ExternalConnector)
-            self.external_connector.ai_id = ai_id  # Ensure mock has ai_id
+            self.external_connector.ai_id = ai_id
             self.external_connector.connect.return_value = True
             self.external_connector.disconnect.return_value = True
             self.external_connector.subscribe.return_value = True
-            self.external_connector.unsubscribe.return_value = True  # Corrected assignment
-            self.external_connector.publish = AsyncMock(
-                return_value=True
-            )  # Explicitly set return value for publish
-            # Explicitly mock mqtt_client and its publish method
+            self.external_connector.unsubscribe.return_value = True
+            self.external_connector.publish = AsyncMock(return_value=True)
             if mock_mqtt_client:
                 self.external_connector.mqtt_client = mock_mqtt_client
             else:
                 mock_mqtt_client_instance = MagicMock()
                 mock_mqtt_client_instance.publish = AsyncMock(return_value=True)
                 self.external_connector.mqtt_client = mock_mqtt_client_instance
-            self.is_connected = True  # Considered connected in mock mode
-            self.hsp_available = True  # Mock mode considers HSP available
+            self.is_connected = True
+            self.hsp_available = True
         else:
             self.external_connector = ExternalConnector(
                 ai_id=ai_id, broker_address=broker_address, broker_port=broker_port
             )
-            self.is_connected = False  # Actual connection status
+            self.is_connected = False
             self.hsp_available = False
 
         if internal_bus is None:
@@ -190,7 +203,7 @@ class HSPConnector:
         else:
             self.internal_bus = internal_bus
 
-        self.data_aligner = DataAligner()  # DataAligner can be unique per connector
+        self.data_aligner = DataAligner()
 
         if message_bridge is None:
             self.message_bridge = MessageBridge(
@@ -199,50 +212,39 @@ class HSPConnector:
         else:
             self.message_bridge = message_bridge
 
-        # Callbacks for different message types:
+    def _register_default_hooks(self, **kwargs) -> None:
         self._fact_callbacks = []
         self._capability_advertisement_callbacks = []
         self._task_request_callbacks = []
         self._task_result_callbacks = []
-        self._acknowledgement_callbacks = []  # New for incoming ACKs
+        self._acknowledgement_callbacks = []
         self._connect_callbacks = []
         self._disconnect_callbacks = []
 
-        self._pending_acks: Dict[str, asyncio.Future[Any]] = (
-            {}
-        )  # New To track messages awaiting ACK
-        self._message_retry_counts: Dict[str, int] = {}  # New To track retry counts for messages
-        self.ack_timeout_sec = kwargs.get("ack_timeout_sec", 3)  # Configurable ACK timeout
-        self.max_ack_retries = kwargs.get("max_ack_retries", 2)  # Configurable max retries
+        self._pending_acks: Dict[str, asyncio.Future[Any]] = {}
+        self._message_retry_counts: Dict[str, int] = {}
+        self.ack_timeout_sec = kwargs.get("ack_timeout_sec", 3)
+        self.max_ack_retries = kwargs.get("max_ack_retries", 2)
         self.retry_policy = RetryPolicy(
             max_attempts=self.max_ack_retries, backoff_factor=2
-        )  # Initialize retry policy
+        )
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=int(threshold_value("hsp_failure_threshold", 5)), recovery_timeout=timeout_value("hsp_recovery_timeout", 300.0)
-        )  # Initialize circuit breaker
+        )
 
-        # New Callback to get capabilities
         self._capability_provider_callback: Optional[
             Callable[[], List[HSPCapabilityAdvertisementPayload]]
         ] = None
 
-        # Initialize fallback protocols if enabled:
-        # Moved to connect method to ensure event loop is running
-
-        # Register internal message bridge handler for external messages:
-        # 先应用高级性能增强, 再应用基础性能增强
         enhanced_handler = self.advanced_performance_enhancer.enhance_receive(
             self.message_bridge.handle_external_message
         )
         callback = self.performance_enhancer.enhance_receive(enhanced_handler)
-        # 确保callback是正确的类型
         if callable(callback):
             self.external_connector.on_message_callback = cast(Callable, callback)
 
-        # Subscribe to internal bus messages that need to go external
         self.internal_bus.subscribe("hsp.internal.message", self._handle_internal_message)
 
-        # Subscribe to internal bus messages that are results from external
         self.internal_bus.subscribe("hsp.external.fact", self._dispatch_fact_to_callbacks_sync)
         self.internal_bus.subscribe(
             "hsp.external.capability_advertisement",
@@ -257,9 +259,9 @@ class HSPConnector:
         self.internal_bus.subscribe(
             "hsp.external.acknowledgement",
             self._dispatch_acknowledgement_to_callbacks_sync,
-        )  # New subscription
+        )
 
-    def _run_bounded_task(self, coro_factory):
+    def _run_bounded_task(self, coro_factory) -> None:
         """Run an async coroutine with bounded concurrency."""
         if not self._task_semaphore.acquire(blocking=False):
             self.logger.warning("Dropping task: too many pending HSP tasks (%s)", self._max_concurrent_tasks)

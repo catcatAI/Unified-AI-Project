@@ -2,7 +2,6 @@
 # ANGELA-MATRIX: [L3] [βγ] [B] [L2]
 # =============================================================================
 
-import copy
 import logging
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
 
@@ -10,6 +9,13 @@ if TYPE_CHECKING:
     from .dictionary_layer import DictionaryLayer
 
 from .relation_classifier import RelationClassifier, RelationType
+
+from core.system.config.magic_numbers import (
+    behavior_threshold,
+    learning_rate,
+    limit_value,
+    threshold_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +25,7 @@ class Neuron:
         self,
         key: str,
         activation: float = 0.0,
-        threshold: float = 0.3,
+        threshold: float = threshold_value("ai.core_network.neuron_threshold", 0.3),
         connections: Optional[Dict[str, float]] = None,
         group_type: str = "",
     ):
@@ -104,7 +110,7 @@ class CoreNetwork:
                 )
 
         propagated = self.compute_spike_propagation(
-            active_keys=input_keys, max_hops=3, decay=0.5
+            active_keys=input_keys, max_hops=limit_value("ai.core_network.propagation_hops", 3), decay=behavior_threshold("ai.core_network.propagation_decay", 0.5)
         )
         activations.update(propagated)
 
@@ -148,7 +154,7 @@ class CoreNetwork:
         old = group.neurons[source_key].connections.get(target_key, 0.0)
         group.neurons[source_key].connections[target_key] = min(1.0, old + weight)
         if old > 0:
-            group.neurons[target_key].connections[source_key] = max(0.0, old - 0.05)
+            group.neurons[target_key].connections[source_key] = max(0.0, old - behavior_threshold("ai.core_network.reverse_decay", 0.05))
 
     def get_activation(self, key: str) -> float:
         max_act = 0.0
@@ -166,8 +172,8 @@ class CoreNetwork:
     def compute_spike_propagation(
         self,
         active_keys: List[str],
-        max_hops: int = 3,
-        decay: float = 0.5,
+        max_hops: int = limit_value("ai.core_network.propagation_hops", 3),
+        decay: float = behavior_threshold("ai.core_network.propagation_decay", 0.5),
         groups_scope: Optional[Dict[str, "RelationGroup"]] = None,
     ) -> Dict[str, float]:
         propagations: Dict[str, float] = {}
@@ -191,7 +197,7 @@ class CoreNetwork:
                     if target_key in visited:
                         continue
                     new_strength = current_strength * weight * decay
-                    if new_strength < 0.05:
+                    if new_strength < threshold_value("ai.core_network.propagation_cutoff", 0.05):
                         continue
                     propagations[target_key] = max(
                         propagations.get(target_key, 0.0), new_strength
@@ -233,8 +239,8 @@ class CoreNetwork:
             error = expected_strength - actual
             total_loss += abs(error)
 
-            if (actual > 0.3 and expected_strength > 0.5) or (
-                actual <= 0.3 and expected_strength <= 0.5
+            if (actual > threshold_value("ai.core_network.train_actual_threshold", 0.3) and expected_strength > threshold_value("ai.core_network.train_expected_threshold", 0.5)) or (
+                actual <= threshold_value("ai.core_network.train_actual_threshold", 0.3) and expected_strength <= threshold_value("ai.core_network.train_expected_threshold", 0.5)
             ):
                 correct += 1
 
@@ -322,8 +328,8 @@ class CoreNetwork:
         pre_act = self.get_activation(key1)
         post_act = self.get_activation(key2)
         hebbian = pre_act * post_act
-        lr = 0.05
-        return lr * (expected_strength * hebbian - 0.01)
+        lr = learning_rate("ai.core_network.hebbian_lr", 0.05)
+        return lr * (expected_strength * hebbian - behavior_threshold("ai.core_network.hebbian_regularization", 0.01))
 
     def _group_for_type(self, rel_type: RelationType) -> Optional[RelationGroup]:
         mapping = {
@@ -337,6 +343,42 @@ class CoreNetwork:
         group_name = mapping.get(rel_type)
         return self.groups.get(group_name) if group_name else None
 
+    def _build_sequential_scope(self, path_type: str) -> Dict[str, "RelationGroup"]:
+        if path_type == "sequence":
+            return {k: g for k, g in self.groups.items() if k == "mapping"}
+        return self.groups
+
+    def _activate_visible_keys(
+        self, visible_keys: List[str], groups_scope: Dict[str, "RelationGroup"]
+    ) -> None:
+        for key in visible_keys:
+            for group in groups_scope.values():
+                if key in group.neurons:
+                    group.activate(key, 1.0)
+
+    def _apply_recency_bias(
+        self, visible_keys: List[str], groups_scope: Dict[str, "RelationGroup"]
+    ) -> None:
+        num_visible = len(visible_keys)
+        if num_visible > 0:
+            for pos, key in enumerate(visible_keys):
+                recency = 1.0 + behavior_threshold("ai.core_network.recency_factor", 0.15) * pos / max(num_visible, 1)
+                for group in groups_scope.values():
+                    neuron = group.neurons.get(key)
+                    if neuron is not None:
+                        neuron.activation = min(neuron.activation * recency, 1.0)
+
+    def _collect_threshold_activations(
+        self, groups_scope: Dict[str, "RelationGroup"], activations: Dict[str, float]
+    ) -> Dict[str, float]:
+        for group in groups_scope.values():
+            for n_key, neuron in group.neurons.items():
+                if neuron.activation > neuron.threshold:
+                    activations[n_key] = max(
+                        activations.get(n_key, 0.0), neuron.activation
+                    )
+        return activations
+
     def forward_sequential(
         self,
         input_keys: List[str],
@@ -346,45 +388,23 @@ class CoreNetwork:
         if not input_keys or current_position < 0:
             return {}
 
-        groups_scope = (
-            {k: g for k, g in self.groups.items() if k == "mapping"}
-            if path_type == "sequence"
-            else self.groups
-        )
+        groups_scope = self._build_sequential_scope(path_type)
 
         self.reset()
         activations: Dict[str, float] = {}
 
         visible_keys = input_keys[: current_position + 1]
 
-        for key in visible_keys:
-            for group in groups_scope.values():
-                if key in group.neurons:
-                    group.activate(key, 1.0)
-
-        num_visible = len(visible_keys)
-        if num_visible > 0:
-            for pos, key in enumerate(visible_keys):
-                recency = 1.0 + 0.15 * pos / max(num_visible, 1)
-                for group in groups_scope.values():
-                    neuron = group.neurons.get(key)
-                    if neuron is not None:
-                        neuron.activation = min(neuron.activation * recency, 1.0)
+        self._activate_visible_keys(visible_keys, groups_scope)
+        self._apply_recency_bias(visible_keys, groups_scope)
 
         propagated = self.compute_spike_propagation(
-            active_keys=visible_keys, max_hops=2, decay=0.3,
+            active_keys=visible_keys, max_hops=limit_value("ai.core_network.sequential_hops", 2), decay=behavior_threshold("ai.core_network.sequential_decay", 0.3),
             groups_scope=groups_scope if path_type == "sequence" else None,
         )
         activations.update(propagated)
 
-        for group in groups_scope.values():
-            for n_key, neuron in group.neurons.items():
-                if neuron.activation > neuron.threshold:
-                    activations[n_key] = max(
-                        activations.get(n_key, 0.0), neuron.activation
-                    )
-
-        return activations
+        return self._collect_threshold_activations(groups_scope, activations)
 
     def sync_from_dictionary(self, dictionary: "DictionaryLayer") -> int:
         count = 0
@@ -401,7 +421,7 @@ class CoreNetwork:
                     continue
                 for target in targets:
                     if target in dictionary.entries:
-                        self.add_relation(key, rel_type, target, weight=0.5)
+                        self.add_relation(key, rel_type, target, weight=behavior_threshold("ai.core_network.sync_weight", 0.5))
                         count += 1
         logger.info("Synced %d relations from dictionary to network", count)
         return count

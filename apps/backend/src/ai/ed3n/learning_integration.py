@@ -171,7 +171,7 @@ class ED3NLearningIntegration:
         logger.info("Synchronized %d ED3N entries to HAM memory.", synced_count)
         return {"synced": synced_count, "errors": errors}
 
-    def _get_ed3n_dictionary(self):
+    def _get_ed3n_dictionary(self) -> Optional[Any]:
         if self.engine is not None and hasattr(self.engine, "dictionary"):
             return self.engine.dictionary
         try:

@@ -376,7 +376,7 @@ class ProactiveInteractionSystem:
             logger.error(f"Error planning proactive action: {e}", exc_info=True)
             return None
 
-    def _get_ed3n_engine(self):
+    def _get_ed3n_engine(self) -> Any:
         if not hasattr(self.__class__, '_ed3n_engine'):
             from ai.ed3n.ed3n_engine import ED3NEngine
             engine = ED3NEngine()

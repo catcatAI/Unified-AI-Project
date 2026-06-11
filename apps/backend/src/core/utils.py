@@ -87,11 +87,11 @@ class Timer:
         self.start_time: float = 0.0
         self.elapsed: float = 0.0
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args) -> None:
         self.elapsed = time.perf_counter() - self.start_time
         if self.label:
             logger.debug(f"Timer [{self.label}]: {self.elapsed:.4f}s")

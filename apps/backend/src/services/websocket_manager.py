@@ -10,7 +10,7 @@ import logging
 import sys
 import uuid
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -169,43 +169,22 @@ async def broadcast_state_updates() -> None:
         await asyncio.sleep(0.2)
 
 
-async def websocket_handler(websocket: WebSocket) -> str:
-    """
-    WebSocket endpoint handler for real-time communication with desktop app.
-    Handles handshake, message routing, heartbeat, and chat.
-    """
-    await websocket.accept()
-
-    orig_receive = websocket._receive
-    async def debug_receive() -> str:
-        """Debug receive."""
-        msg = await orig_receive()
-        if msg.get('type') == 'websocket.receive':
-            text = msg.get('text')
-            bytes_d = msg.get('bytes')
-            if text:
-                sys.stderr.write(f"[DEBUG WS endpoint] text: {repr(text[:80])}\n")
-            if bytes_d:
-                sys.stderr.write(f"[DEBUG WS endpoint] bytes: {repr(bytes_d[:80])}\n")
-        return msg
-    websocket._receive = debug_receive
-
+async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:
     try:
         raw_data = await asyncio.wait_for(websocket.receive_text(), timeout=10)
         try:
             handshake = json.loads(raw_data)
         except json.JSONDecodeError:
             await websocket.close(code=4002, reason="Invalid handshake format")
-            return
+            return None
     except asyncio.TimeoutError:
         try:
             await websocket.close(code=4001, reason="Handshake timeout")
         except Exception as e:
             logger.warning(f"Failed to close websocket on handshake timeout: {e}", exc_info=True)
-        return
-
+        return None
     except WebSocketDisconnect:
-        return
+        return None
 
     session_id = handshake.get("session_id") or str(uuid.uuid4())
     client_type = handshake.get("client_type", "desktop")
@@ -226,6 +205,95 @@ async def websocket_handler(websocket: WebSocket) -> str:
         "timestamp": datetime.now().isoformat(),
         "server_version": "7.5.0-dev",
     })
+    return client_id, session_id
+
+
+async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str) -> None:
+    from api.routes.chat_routes import _handle_chat_request
+    user_message = data.get("data", {}).get("content", "")
+    message_id = data.get("data", {}).get("message_id", "")
+    user_name = data.get("data", {}).get("user_name", "朋友")
+
+    try:
+        chat_res = await _handle_chat_request(
+            user_message=user_message,
+            user_name=user_name,
+            history=[],
+            session_id=session_id,
+            origin="Human"
+        )
+        await manager.send_personal_message({
+            "type": "chat_response",
+            "data": {
+                "message_id": message_id,
+                "content": chat_res["response_text"],
+                "sender": "angela",
+                "emotion": chat_res.get("emotion", "happy"),
+                "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
+            },
+            "timestamp": datetime.now().isoformat(),
+        }, websocket)
+    except Exception as chat_err:
+        logger.error(f"[WebSocket] Chat error: {chat_err}", exc_info=True)
+        await manager.send_personal_message({
+            "type": "chat_response",
+            "data": {
+                "message_id": message_id,
+                "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
+                "sender": "angela",
+                "error": str(chat_err)
+            },
+            "timestamp": datetime.now().isoformat(),
+        }, websocket)
+
+
+async def _handle_tactile_event(websocket: WebSocket, data: dict) -> None:
+    from api.lifespan import get_tactile_service
+    tactile_data = data.get("data", {})
+    tactile_service = get_tactile_service()
+    if not tactile_service:
+        logger.warning("TactileService unavailable for tactile_event")
+        return
+    res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
+    await manager.send_personal_message({
+        "type": "biological_feedback",
+        "status": res.get("status"),
+        "reflex": res.get("reflex"),
+        "intensity": res.get("feedback", {}).get("intensity")
+    }, websocket)
+
+
+async def _handle_heartbeat(websocket: WebSocket, data: dict) -> None:
+    await websocket.send_json({
+        "type": "heartbeat_ack" if data.get("type") == "heartbeat" else "echo",
+        "timestamp": datetime.now().isoformat(),
+    })
+
+
+async def websocket_handler(websocket: WebSocket) -> str:
+    """
+    WebSocket endpoint handler for real-time communication with desktop app.
+    Handles handshake, message routing, heartbeat, and chat.
+    """
+    await websocket.accept()
+
+    orig_receive = websocket._receive
+    async def debug_receive() -> str:
+        msg = await orig_receive()
+        if msg.get('type') == 'websocket.receive':
+            text = msg.get('text')
+            bytes_d = msg.get('bytes')
+            if text:
+                sys.stderr.write(f"[DEBUG WS endpoint] text: {repr(text[:80])}\n")
+            if bytes_d:
+                sys.stderr.write(f"[DEBUG WS endpoint] bytes: {repr(bytes_d[:80])}\n")
+        return msg
+    websocket._receive = debug_receive
+
+    result = await _handle_handshake(websocket)
+    if result is None:
+        return
+    client_id, session_id = result
 
     while True:
         try:
@@ -235,71 +303,23 @@ async def websocket_handler(websocket: WebSocket) -> str:
 
             await manager._sm.update_heartbeat(client_id)
 
-            if data.get("type") in ["heartbeat", "ping"]:
-                await websocket.send_json({
-                    "type": "heartbeat_ack" if data.get("type") == "heartbeat" else "echo",
-                    "timestamp": datetime.now().isoformat(),
-                })
+            msg_type = data.get("type")
 
-            elif data.get("type") == "state_update":
+            if msg_type in ("heartbeat", "ping"):
+                await _handle_heartbeat(websocket, data)
+
+            elif msg_type == "state_update":
                 await manager.broadcast({
                     "type": "state_update",
                     "data": data.get("data", {}),
                     "timestamp": datetime.now().isoformat(),
                 })
 
-            elif data.get("type") == "tactile_event":
-                from api.lifespan import get_tactile_service
-                tactile_data = data.get("data", {})
-                tactile_service = get_tactile_service()
-                if not tactile_service:
-                    logger.warning("TactileService unavailable for tactile_event")
-                    continue
-                res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
-                await manager.send_personal_message({
-                    "type": "biological_feedback",
-                    "status": res.get("status"),
-                    "reflex": res.get("reflex"),
-                    "intensity": res.get("feedback", {}).get("intensity")
-                }, websocket)
+            elif msg_type == "tactile_event":
+                await _handle_tactile_event(websocket, data)
 
-            elif data.get("type") == "chat_message":
-                from api.routes.chat_routes import _handle_chat_request
-                user_message = data.get("data", {}).get("content", "")
-                message_id = data.get("data", {}).get("message_id", "")
-                user_name = data.get("data", {}).get("user_name", "朋友")
-
-                try:
-                    chat_res = await _handle_chat_request(
-                        user_message=user_message,
-                        user_name=user_name,
-                        history=[],
-                        session_id=session_id,
-                        origin="Human"
-                    )
-                    await manager.send_personal_message({
-                        "type": "chat_response",
-                        "data": {
-                            "message_id": message_id,
-                            "content": chat_res["response_text"],
-                            "sender": "angela",
-                            "emotion": chat_res.get("emotion", "happy"),
-                            "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
-                        },
-                        "timestamp": datetime.now().isoformat(),
-                    }, websocket)
-                except Exception as chat_err:
-                    logger.error(f"[WebSocket] Chat error: {chat_err}", exc_info=True)
-                    await manager.send_personal_message({
-                        "type": "chat_response",
-                        "data": {
-                            "message_id": message_id,
-                            "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
-                            "sender": "angela",
-                            "error": str(chat_err)
-                        },
-                        "timestamp": datetime.now().isoformat(),
-                    }, websocket)
+            elif msg_type == "chat_message":
+                await _handle_chat_message(websocket, data, session_id)
 
             else:
                 await websocket.send_json({

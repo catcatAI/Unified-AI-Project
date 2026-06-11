@@ -18,6 +18,15 @@ import json
 
 from .user_monitor import UserMonitor, UserState
 
+from core.system.config.magic_numbers import (
+    batch_value,
+    limit_value,
+    loop_sleep,
+    retry_value,
+    threshold_value,
+    timing_value,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -109,7 +118,7 @@ class LLMDecisionLoop:
 
         # 決策歷史
         self.decision_history: List[Decision] = []
-        self.max_history_size = 100
+        self.max_history_size = limit_value("ai.llm_decision_loop.max_history", 100)
 
         # 統計信息
         self.stats = {
@@ -164,7 +173,7 @@ class LLMDecisionLoop:
                 break
             except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in decision loop: {e}", exc_info=True)
-                await asyncio.sleep(1)  # 防止緊密循環
+                await asyncio.sleep(loop_sleep("ai.llm_decision_loop.error_sleep", 1.0))
 
     def _calculate_interval(self) -> float:
         """動態計算循環間隔"""
@@ -272,7 +281,7 @@ class LLMDecisionLoop:
         if not user_state.online:
             # 只有當有重要事件或長時間無活動時才決策
             idle_time = self.user_monitor.get_idle_time()
-            return idle_time > 600  # 10分鐘
+            return idle_time > timing_value("ai.llm_decision_loop.idle_decision_threshold", 600.0)
 
         return True
 
@@ -281,7 +290,7 @@ class LLMDecisionLoop:
         try:
             # 從 memory_manager 獲取最近的記憶
             if hasattr(self.memory_manager, "get_recent_memories"):
-                memories = await self.memory_manager.get_recent_memories(limit=5)
+                memories = await self.memory_manager.get_recent_memories(limit=batch_value("ai.llm_decision_loop.recent_memories", 5))
                 if memories:
                     return "\n".join([f"- {m}" for m in memories])
             return "無最近記憶"
@@ -302,7 +311,7 @@ class LLMDecisionLoop:
             try:
                 # 獲取當前主導情緒的記憶
                 emotional_memories = await self.memory_manager.retrieve_emotional_memories(
-                    emotion=dominant_emotion, min_intensity=0.5, limit=3
+                    emotion=dominant_emotion, min_intensity=threshold_value("ai.llm_decision_loop.emotion_min_intensity", 0.5), limit=batch_value("ai.llm_decision_loop.emotion_limit", 3)
                 )
 
                 if emotional_memories:
@@ -415,7 +424,7 @@ class LLMDecisionLoop:
                 "reason": "檢測到用戶返回",
                 "confidence": 0.9,
             }
-        elif idle_time > 60 and user_state.emotion in ["sad", "frustrated"]:
+        elif idle_time > timing_value("ai.llm_decision_loop.comfort_idle_threshold", 60.0) and user_state.emotion in ["sad", "frustrated"]:
             return {
                 "action": DecisionAction.COMFORT,
                 "message": "你看上去有點煩惱，需要我幫忙嗎？",
@@ -423,7 +432,7 @@ class LLMDecisionLoop:
                 "reason": "用戶情緒低落",
                 "confidence": 0.7,
             }
-        elif idle_time > 120:
+        elif idle_time > timing_value("ai.llm_decision_loop.greet_idle_threshold", 120.0):
             return {
                 "action": DecisionAction.GREET,
                 "message": "嘿，你在做什麼呢？",

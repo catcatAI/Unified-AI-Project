@@ -22,6 +22,13 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from core.system.config.magic_numbers import (
+    behavior_threshold,
+    confidence_value,
+    limit_value,
+    threshold_value,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,9 +82,9 @@ class HybridRouter:
 
     def __init__(
         self,
-        ed3n_threshold: float = 0.90,
-        garden_threshold: float = 0.60,
-        max_latency_ms: float = 1000.0,
+        ed3n_threshold: float = threshold_value("ai.hybrid_router.ed3n_threshold", 0.90),
+        garden_threshold: float = threshold_value("ai.hybrid_router.garden_threshold", 0.60),
+        max_latency_ms: float = limit_value("ai.hybrid_router.max_latency_ms", 1000),
         enable_adaptive_routing: bool = True,
     ):
         logger.warning(
@@ -283,7 +290,7 @@ class HybridRouter:
                 return TierResult(
                     tier="ed3n",
                     text=response,
-                    confidence=0.85,
+                    confidence=confidence_value("ai.hybrid_router.ed3n_response_conf", 0.85),
                     latency_ms=elapsed,
                 )
             return TierResult(tier="ed3n", text="", confidence=0.0, latency_ms=elapsed, error="Empty response")
@@ -307,7 +314,7 @@ class HybridRouter:
                 return TierResult(
                     tier="garden",
                     text=response,
-                    confidence=0.75,
+                    confidence=confidence_value("ai.hybrid_router.garden_response_conf", 0.75),
                     latency_ms=elapsed,
                 )
             return TierResult(tier="garden", text="", confidence=0.0, latency_ms=elapsed, error="Empty response")
@@ -327,7 +334,7 @@ class HybridRouter:
                 return TierResult(
                     tier="cloud",
                     text=response.text,
-                    confidence=0.90,
+                    confidence=confidence_value("ai.hybrid_router.cloud_response_conf", 0.90),
                     latency_ms=elapsed,
                 )
             return TierResult(tier="cloud", text="", confidence=0.0, latency_ms=elapsed, error="Empty response")
@@ -342,8 +349,8 @@ class HybridRouter:
     def _record(self, tier: str, result: TierResult) -> None:
         """Store result in history for adaptive threshold tuning."""
         self._history.setdefault(tier, []).append(result)
-        if len(self._history[tier]) > 100:
-            self._history[tier] = self._history[tier][-100:]
+        if len(self._history[tier]) > limit_value("ai.hybrid_router.history_max", 100):
+            self._history[tier] = self._history[tier][-limit_value("ai.hybrid_router.history_max", 100):]
 
     def get_average_latency(self, tier: str) -> float:
         """Get average latency for a tier over recent history."""
@@ -372,16 +379,16 @@ class HybridRouter:
         garden_success = self.get_success_rate("garden")
 
         # If ED3N is very reliable, raise threshold to catch more queries
-        if ed3n_success > 0.95:
-            self.ed3n_threshold = min(0.95, self.ed3n_threshold + 0.01)
-        elif ed3n_success < 0.70:
-            self.ed3n_threshold = max(0.60, self.ed3n_threshold - 0.02)
+        if ed3n_success > threshold_value("ai.hybrid_router.ed3n_reliable_threshold", 0.95):
+            self.ed3n_threshold = min(threshold_value("ai.hybrid_router.ed3n_max_threshold", 0.95), self.ed3n_threshold + behavior_threshold("ai.hybrid_router.ed3n_raise_step", 0.01))
+        elif ed3n_success < threshold_value("ai.hybrid_router.ed3n_unreliable_threshold", 0.70):
+            self.ed3n_threshold = max(threshold_value("ai.hybrid_router.ed3n_min_threshold", 0.60), self.ed3n_threshold - behavior_threshold("ai.hybrid_router.ed3n_lower_step", 0.02))
 
         # If GARDEN is very reliable, lower threshold to use it more
-        if garden_success > 0.90:
-            self.garden_threshold = max(0.40, self.garden_threshold - 0.01)
-        elif garden_success < 0.60:
-            self.garden_threshold = min(0.75, self.garden_threshold + 0.02)
+        if garden_success > threshold_value("ai.hybrid_router.garden_reliable_threshold", 0.90):
+            self.garden_threshold = max(threshold_value("ai.hybrid_router.garden_min_threshold", 0.40), self.garden_threshold - behavior_threshold("ai.hybrid_router.garden_lower_step", 0.01))
+        elif garden_success < threshold_value("ai.hybrid_router.garden_unreliable_threshold", 0.60):
+            self.garden_threshold = min(threshold_value("ai.hybrid_router.garden_max_threshold", 0.75), self.garden_threshold + behavior_threshold("ai.hybrid_router.garden_raise_step", 0.02))
 
         return {"ed3n": self.ed3n_threshold, "garden": self.garden_threshold}
 

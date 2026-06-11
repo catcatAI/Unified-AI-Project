@@ -111,7 +111,7 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
 
 
 @router.post("/chat")
-async def mobile_chat(data: Dict[str, Any] = Body(...)) -> str:
+async def mobile_chat(data: Dict[str, Any] = Body(...)) -> dict:
     """行動端聊天代理 (NGR v7.5.0-dev)"""
     from api.routes.chat_routes import _handle_chat_request
 

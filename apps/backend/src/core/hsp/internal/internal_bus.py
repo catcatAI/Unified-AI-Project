@@ -17,7 +17,7 @@ class InternalBus:
         self.subscriptions: Dict[str, List[Callable[[Any], None]]] = {}
         self._task_semaphore = threading.Semaphore(200)
 
-    def _run_task(self, callback, message):
+    def _run_task(self, callback, message) -> None:
         """Run an async callback with bounded concurrency."""
         if not self._task_semaphore.acquire(blocking=False):
             logger.warning("Dropping internal bus task: too many pending")

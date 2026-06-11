@@ -56,7 +56,7 @@ class TrainingCoordinator:
                 result = self.bus.get_training_assignment(domain)
                 if result is not None:
                     return result
-            except Exception:
+            except (AttributeError, TypeError, ValueError):
                 logger.warning("ModelBus.get_training_assignment failed for %s, falling back", domain)
         return DOMAIN_OWNERSHIP.get(domain)
 
@@ -131,7 +131,7 @@ class TrainingCoordinator:
                     target_patterns.add(p_text)
                     copied += 1
             logger.info("Synced %d reflex patterns from source to target", copied)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             logger.error("Failed to sync reflex patterns: %s", e)
         return copied
 

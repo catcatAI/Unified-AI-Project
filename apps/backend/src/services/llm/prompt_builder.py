@@ -16,7 +16,7 @@ def _get_llm_config(key: str, default: Any = None) -> Any:
 
         cfg = get_angela_config()
         return cfg.get("llm", {}).get(key, default)
-    except Exception:
+    except (ImportError, FileNotFoundError, KeyError):
         logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default
 
@@ -80,7 +80,7 @@ def get_biological_state() -> str:
             status_parts.append("你現在大腦運作非常活躍，充滿了自我進化的衝動。")
 
         return " ".join(status_parts)
-    except Exception as e:
+    except (FileNotFoundError, json.JSONDecodeError, KeyError, IOError) as e:
         logger.debug(f"Failed to read biological state: {e}")
         return ""
 
@@ -92,19 +92,19 @@ def get_formula_summaries() -> str:
         from core.hsm_formula_system import HSMFormulaSystem
 
         lines.append(f"HSM: {HSMFormulaSystem().calculate_hsm():.4f}")
-    except Exception as e:
+    except ImportError as e:
         logger.debug(f"HSM formula unavailable: {e}")
     try:
         from core.life_intensity_formula import LifeIntensityFormula
 
         lines.append(f"生命強度: {LifeIntensityFormula().calculate_life_intensity():.4f}")
-    except Exception as e:
+    except ImportError as e:
         logger.debug(f"LifeIntensity formula unavailable: {e}")
     try:
         from core.active_cognition_formula import ActiveCognitionFormula
 
         lines.append(f"活躍認知: {ActiveCognitionFormula().calculate_active_cognition():.4f}")
-    except Exception as e:
+    except ImportError as e:
         logger.debug(f"ActiveCognition formula unavailable: {e}")
     try:
         from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveInvestment, CognitiveActivity
@@ -113,7 +113,7 @@ def get_formula_summaries() -> str:
         inv = CognitiveInvestment(activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5)
         output = cdm.calculate_life_sense_output(inv)
         lines.append(f"CDM 產出: {output.output_amount:.2f} (品質: {output.quality_score:.2f})")
-    except Exception as e:
+    except ImportError as e:
         logger.debug(f"CDM formula unavailable: {e}")
     try:
         from core.non_paradox_existence import NonParadoxExistence
@@ -123,7 +123,7 @@ def get_formula_summaries() -> str:
             lines.append(f"非悖論共存: 相干性 {state.get('coherence', 0):.2f}")
         else:
             lines.append("非悖論共存: 未激活")
-    except Exception as e:
+    except ImportError as e:
         logger.debug(f"NonParadox formula unavailable: {e}")
     return "\n".join(lines) if lines else ""
 

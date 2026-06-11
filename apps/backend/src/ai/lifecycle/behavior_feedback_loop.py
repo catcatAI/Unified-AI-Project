@@ -90,14 +90,22 @@ class BehaviorFeedbackLoop:
         llm_service: Any,
         memory_manager: Any,
         learning_engine: Any,
-        loop_interval: float = 45.0,  # 反饋循環間隔（秒）
+        loop_interval: float = 45.0,
         min_loop_interval: float = 30.0,
         max_loop_interval: float = 60.0,
     ):
+        self._init_services(llm_service, memory_manager, learning_engine)
+        self._init_parameters(loop_interval, min_loop_interval, max_loop_interval)
+        logger.info("BehaviorFeedbackLoop initialized")
+
+    def _init_services(self, llm_service: Any, memory_manager: Any, learning_engine: Any) -> None:
         self.llm_service = llm_service
         self.memory_manager = memory_manager
         self.learning_engine = learning_engine
 
+    def _init_parameters(
+        self, loop_interval: float, min_loop_interval: float, max_loop_interval: float
+    ) -> None:
         self.loop_interval = loop_interval
         self.min_loop_interval = min_loop_interval
         self.max_loop_interval = max_loop_interval
@@ -105,22 +113,18 @@ class BehaviorFeedbackLoop:
         self.is_running = False
         self._feedback_task: Optional[asyncio.Task] = None
 
-        # 行為記錄
         self.behavior_records: List[BehaviorRecord] = []
         self.max_records = 500
 
-        # 行為模式
         self.behavior_patterns: Dict[str, BehaviorPattern] = {}
 
-        # 策略參數
         self.strategy_parameters: Dict[str, float] = {
-            "greet_threshold": 60.0,  # 問候閾值（秒）
-            "comfort_sensitivity": 0.7,  # 安慰敏感度
-            "interaction_frequency": 0.5,  # 交互頻率
-            "priority_weight": {"high": 1.0, "medium": 0.7, "low": 0.4},  # 優先級權重
+            "greet_threshold": 60.0,
+            "comfort_sensitivity": 0.7,
+            "interaction_frequency": 0.5,
+            "priority_weight": {"high": 1.0, "medium": 0.7, "low": 0.4},
         }
 
-        # 統計信息
         self.stats = {
             "total_behaviors": 0,
             "evaluated_behaviors": 0,
@@ -129,8 +133,6 @@ class BehaviorFeedbackLoop:
             "pattern_updates": 0,
             "strategy_updates": 0,
         }
-
-        logger.info("BehaviorFeedbackLoop initialized")
 
     async def start(self) -> None:
         """啟動反饋循環"""

@@ -19,6 +19,7 @@ def _load_config() -> Optional[Dict[str, Any]]:
         loader = TieredConfigLoader()
         _MAGIC_CACHE = loader.get_config() or {}
     except Exception:
+        # broad except intentional: config loading must never crash; silent fallback to defaults
         _MAGIC_CACHE = {}
     return _MAGIC_CACHE
 

@@ -236,7 +236,7 @@ async def list_files(
 
 
 @router.get("/files/{file_id}/metadata")
-async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> str:
+async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> dict:
     """獲取文件元數據"""
     try:
         metadata = svc.get_file_metadata(file_id)

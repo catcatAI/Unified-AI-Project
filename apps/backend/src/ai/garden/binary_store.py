@@ -166,12 +166,12 @@ class BinaryStore:
     def data(self) -> Optional[np.memmap]:
         return self._mmap
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Any:
         if self._mmap is None:
             raise RuntimeError("BinaryStore: mmap not initialized")
         return self._mmap[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         if self._mmap is None:
             raise RuntimeError("BinaryStore: mmap not initialized")
         self._mmap[key] = value

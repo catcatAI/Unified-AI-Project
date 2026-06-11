@@ -718,7 +718,7 @@ class MathRippleEngine:
             from core.security.secure_eval import safe_eval
             result = safe_eval(clean)
             return float(result.result) if result.success else 0.0
-        except Exception:
+        except (ValueError, TypeError, ZeroDivisionError):
             logger.warning(f"safe_eval failed for expression: {expr}", exc_info=True)
             return 0.0
 

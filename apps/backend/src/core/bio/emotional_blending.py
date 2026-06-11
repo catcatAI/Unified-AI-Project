@@ -1041,25 +1041,30 @@ if __name__ == "__main__":
         summary = eb_system.get_emotion_summary()
         logger.info(f"  主要情绪: {summary['dominant_emotion_cn']}")
         logger.info(f"  置信度: {summary['confidence']:.2f}")
-        print(
-            f"  PAD: P={summary['pad_state']['pleasure']:.2f}, "
-            f"A={summary['pad_state']['arousal']:.2f}, "
-            f"D={summary['pad_state']['dominance']:.2f}"
+        logger.info(
+            "  PAD: P=%.2f, A=%.2f, D=%.2f",
+            summary['pad_state']['pleasure'],
+            summary['pad_state']['arousal'],
+            summary['pad_state']['dominance'],
         )
 
         # Get expression
         logger.info("\n情绪表达 / Emotional expression:")
         expression = eb_system.get_emotional_expression()
-        print(
-            f"  面部表情: 微笑={expression.facial.smile:.2f}, "
-            f"挑眉={expression.facial.eyebrow_raise:.2f}"
+        logger.info(
+            "  面部表情: 微笑=%.2f, 挑眉=%.2f",
+            expression.facial.smile,
+            expression.facial.eyebrow_raise,
         )
-        print(
-            f"  语调: 音高={expression.vocal.pitch:.2f}, " f"温暖度={expression.vocal.warmth:.2f}"
+        logger.info(
+            "  语调: 音高=%.2f, 温暖度=%.2f",
+            expression.vocal.pitch,
+            expression.vocal.warmth,
         )
-        print(
-            f"  行为: 姿势={expression.behavioral.posture}, "
-            f"手势强度={expression.behavioral.gesture_intensity:.2f}"
+        logger.info(
+            "  行为: 姿势=%s, 手势强度=%.2f",
+            expression.behavioral.posture,
+            expression.behavioral.gesture_intensity,
         )
 
         # Apply influences
@@ -1069,9 +1074,10 @@ if __name__ == "__main__":
         await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
 
         summary = eb_system.get_emotion_summary()
-        print(
-            f"  更新后PAD: P={summary['pad_state']['pleasure']:.2f}, "
-            f"A={summary['pad_state']['arousal']:.2f}"
+        logger.info(
+            "  更新后PAD: P=%.2f, A=%.2f",
+            summary['pad_state']['pleasure'],
+            summary['pad_state']['arousal'],
         )
 
         # Blend emotions
@@ -1079,9 +1085,11 @@ if __name__ == "__main__":
         joy = PADEmotion.from_basic_emotion(BasicEmotion.JOY, 0.7)
         surprise = PADEmotion.from_basic_emotion(BasicEmotion.SURPRISE, 0.6)
         blended = eb_system.blend_emotions(joy, surprise, ratio=0.4)
-        print(
-            f"  喜悦 + 惊讶 (40%): P={blended.pleasure:.2f}, "
-            f"A={blended.arousal:.2f}, D={blended.dominance:.2f}"
+        logger.info(
+            "  喜悦 + 惊讶 (40%%): P=%.2f, A=%.2f, D=%.2f",
+            blended.pleasure,
+            blended.arousal,
+            blended.dominance,
         )
 
         await eb_system.shutdown()

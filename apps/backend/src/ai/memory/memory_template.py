@@ -260,7 +260,7 @@ class MemoryTemplate:
             from core.hsp.utils.fallback_config_loader import get_config_loader
             _cfg = get_config_loader()
             _w = _cfg.get_authority("angela_core", {}).get("template_matching", {}).get("score_weights", {})
-        except Exception:
+        except (ImportError, FileNotFoundError, KeyError):
             logger.warning("Failed to load score weights from config, using defaults", exc_info=True)
             _w = {}
         _kw_w = _w.get("content_similarity", 0.30)
@@ -301,7 +301,7 @@ class MemoryTemplate:
             if not diffs:
                 return 0.5
             return max(0.0, 1.0 - sum(diffs) / len(diffs))
-        except Exception:
+        except (TypeError, ValueError, KeyError, AttributeError):
             logger.warning("_calculate_state_similarity failed", exc_info=True)
             return 0.5
 
@@ -321,7 +321,7 @@ class MemoryTemplate:
             if not diffs:
                 return 0.5
             return max(0.0, 1.0 - sum(diffs) / len(diffs))
-        except Exception:
+        except (TypeError, ValueError, KeyError, AttributeError):
             logger.warning("_calculate_impression_similarity failed", exc_info=True)
             return 0.5
 

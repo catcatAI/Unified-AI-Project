@@ -36,13 +36,13 @@ def get_engine(path: str = "") -> ED3NEngine:
     return e
 
 
-def cmd_query(args):
+def cmd_query(args) -> None:
     e = get_engine(args.checkpoint)
     result = e.process(args.text, depth=args.depth)
     print(result)
 
 
-def cmd_train(args):
+def cmd_train(args) -> None:
     import csv
     e = get_engine(args.checkpoint)
 
@@ -136,13 +136,13 @@ def cmd_stats(args):
     print()
 
 
-def cmd_save(args):
+def cmd_save(args) -> None:
     e = get_engine(args.checkpoint)
     e.save(args.path)
     print(f"  Saved to {args.path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="ED3N Command Line Interface")
     parser.add_argument("--checkpoint", "-c", default="", help="Path to engine checkpoint")
     sub = parser.add_subparsers(dest="command")

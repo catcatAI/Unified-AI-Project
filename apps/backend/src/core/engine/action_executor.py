@@ -337,6 +337,103 @@ class ActionExecutor:
         async with self._semaphore:
             await self._execute_action(action)
 
+    async def _apply_biological_strain(self, action: Action) -> float:
+        strain_factor = 0.0
+        if self._dli:
+            bio = self._dli.biological_integrator.get_biological_state()
+            stress = bio.get("stress_level", 0.0)
+            arousal = bio.get("arousal", behavior_executor("arousal_default", 0.5))
+            strain_factor = (stress * behavior_executor("strain_stress_weight", 0.7)) + ((1.0 - arousal) * behavior_executor("strain_arousal_inverse_weight", 0.3))
+
+            thresh = behavior_executor("strain_factor_threshold", 0.6)
+            if strain_factor > thresh:
+                delay = strain_factor * behavior_executor("strain_delay_multiplier", 2.0)
+                logger.info(f"[ActionExecutor] Applying behavioral strain delay: {delay:.2f}s")
+                await asyncio.sleep(delay)
+
+        if self.kinetic_validator:
+            action.parameters = self.kinetic_validator.apply_biological_strain(
+                action.parameters, strain_factor
+            )
+        return strain_factor
+
+    async def _validate_or_fail(self, action: Action) -> bool:
+        is_valid, error_msg = await self._validate_action(action)
+        if not is_valid:
+            action.status = ActionStatus.FAILED
+            action.result = ActionResult(
+                success=False,
+                action_id=action.action_id,
+                error=error_msg or "Validation failed",
+                execution_time=0.0,
+            )
+            self.queue._failed.append(action)
+            del self.active_actions[action.action_id]
+            return False
+        return True
+
+    async def _run_and_record_result(self, action: Action) -> None:
+        action.status = ActionStatus.EXECUTING
+        self._notify_status_change(action)
+
+        start_time = asyncio.get_running_loop().time()
+
+        try:
+            success_rate = self._get_action_success_rate()
+
+            result = await asyncio.wait_for(
+                self._run_action_function(action), timeout=action.timeout
+            )
+
+            execution_time = asyncio.get_running_loop().time() - start_time
+
+            import random
+            actual_success = random.random() < success_rate
+
+            if actual_success:
+                action.status = ActionStatus.COMPLETED
+                action.result = ActionResult(
+                    success=True,
+                    action_id=action.action_id,
+                    output=result,
+                    execution_time=execution_time,
+                )
+                self.queue._completed.append(action)
+                self._update_stats(execution_time, success=True)
+                self._record_action_outcome(action, success=True)
+            else:
+                action.status = ActionStatus.FAILED
+                action.result = ActionResult(
+                    success=False,
+                    action_id=action.action_id,
+                    error="Action execution failed due to dynamic conditions",
+                    execution_time=execution_time,
+                )
+                self.queue._failed.append(action)
+                self._update_stats(execution_time, success=False)
+                self._record_action_outcome(action, success=False)
+
+                logger.warning(
+                    f"[ActionExecutor] Action {action.name} failed due to "
+                    f"dynamic success rate ({success_rate:.2%})"
+                    , exc_info=True
+                )
+
+        except asyncio.TimeoutError:
+            execution_time = asyncio.get_running_loop().time() - start_time
+            action.status = ActionStatus.FAILED
+            action.result = ActionResult(
+                success=False,
+                action_id=action.action_id,
+                error=f"Action timed out after {action.timeout}s",
+                execution_time=execution_time,
+            )
+            self.queue._failed.append(action)
+            self._update_stats(execution_time, success=False)
+            self._record_action_outcome(action, success=False)
+
+            action.completed_at = datetime.now()
+
     async def _execute_action(self, action: Action) -> None:
         """Execute a single action with full lifecycle"""
         action.status = ActionStatus.VALIDATING
@@ -344,121 +441,19 @@ class ActionExecutor:
         self.active_actions[action.action_id] = action
 
         try:
-            # Pre-execution callbacks
             for callback in self._pre_execution_callbacks:
                 try:
                     callback(action)
                 except Exception as e:  # broad exception acceptable: callback errors should not break action execution
                     logger.warning(f"Pre-execution callback failed: {e}", exc_info=True)
 
-            # Apply biological strain if possible
-            strain_factor = 0.0
-            if self._dli:
-                bio = self._dli.biological_integrator.get_biological_state()
-                stress = bio.get("stress_level", 0.0)
-                arousal = bio.get("arousal", behavior_executor("arousal_default", 0.5))
-                strain_factor = (stress * behavior_executor("strain_stress_weight", 0.7)) + ((1.0 - arousal) * behavior_executor("strain_arousal_inverse_weight", 0.3))
+            await self._apply_biological_strain(action)
 
-                thresh = behavior_executor("strain_factor_threshold", 0.6)
-                if strain_factor > thresh:
-                    delay = strain_factor * behavior_executor("strain_delay_multiplier", 2.0)
-                    logger.info(f"[ActionExecutor] Applying behavioral strain delay: {delay:.2f}s")
-                    await asyncio.sleep(delay)
-
-            if self.kinetic_validator:
-                action.parameters = self.kinetic_validator.apply_biological_strain(
-                    action.parameters, strain_factor
-                )
-
-            # Validate action
-            is_valid, error_msg = await self._validate_action(action)
-            if not is_valid:
-                action.status = ActionStatus.FAILED
-                action.result = ActionResult(
-                    success=False,
-                    action_id=action.action_id,
-                    error=error_msg or "Validation failed",
-                    execution_time=0.0,
-                )
-                self.queue._failed.append(action)
-                del self.active_actions[action.action_id]
+            if not await self._validate_or_fail(action):
                 return
 
-            # Execute action
-            action.status = ActionStatus.EXECUTING
-            self._notify_status_change(action)
+            await self._run_and_record_result(action)
 
-            start_time = asyncio.get_running_loop().time()
-
-            try:
-                # Get success rate from native spatial calculation
-                success_rate = self._get_action_success_rate()
-
-                # Execute with timeout
-                result = await asyncio.wait_for(
-                    self._run_action_function(action), timeout=action.timeout
-                )
-
-                execution_time = asyncio.get_running_loop().time() - start_time
-
-                # Bernoulli sampling based on spatial success rate (principled randomness)
-                import random
-                actual_success = random.random() < success_rate
-
-                if actual_success:
-                    action.status = ActionStatus.COMPLETED
-                    action.result = ActionResult(
-                        success=True,
-                        action_id=action.action_id,
-                        output=result,
-                        execution_time=execution_time,
-                    )
-                    self.queue._completed.append(action)
-
-                    # Update statistics
-                    self._update_stats(execution_time, success=True)
-
-                    # Record success to dynamic params
-                    self._record_action_outcome(action, success=True)
-                else:
-                    # Simulated failure due to dynamic success rate
-                    action.status = ActionStatus.FAILED
-                    action.result = ActionResult(
-                        success=False,
-                        action_id=action.action_id,
-                        error="Action execution failed due to dynamic conditions",
-                        execution_time=execution_time,
-                    )
-                    self.queue._failed.append(action)
-                    self._update_stats(execution_time, success=False)
-
-                    # Record failure to dynamic params
-                    self._record_action_outcome(action, success=False)
-
-                    logger.warning(
-                        f"[ActionExecutor] Action {action.name} failed due to "
-                        f"dynamic success rate ({success_rate:.2%})"
-                        , exc_info=True
-                    )
-
-            except asyncio.TimeoutError:
-                execution_time = asyncio.get_running_loop().time() - start_time
-                action.status = ActionStatus.FAILED
-                action.result = ActionResult(
-                    success=False,
-                    action_id=action.action_id,
-                    error=f"Action timed out after {action.timeout}s",
-                    execution_time=execution_time,
-                )
-                self.queue._failed.append(action)
-                self._update_stats(execution_time, success=False)
-
-                # Record failure to dynamic params
-                self._record_action_outcome(action, success=False)
-
-                action.completed_at = datetime.now()
-
-            # Post-execution callbacks
             for callback in self._post_execution_callbacks:
                 try:
                     callback(action, action.result)
@@ -474,7 +469,6 @@ class ActionExecutor:
             )
             self.queue._failed.append(action)
 
-            # Record failure to dynamic params
             self._record_action_outcome(action, success=False)
 
         finally:

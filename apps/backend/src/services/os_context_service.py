@@ -5,7 +5,12 @@ Zero imports anywhere (production + tests). No consumers.
 See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P8-2
 """
 
+import logging
+
 from integrations.os_bridge_adapter import OSBridgeAdapter
+
+logger = logging.getLogger(__name__)
+
 
 class OSContextService:
     def __init__(self):
@@ -35,4 +40,4 @@ class OSContextService:
 
 if __name__ == "__main__":
     service = OSContextService()
-    print(service.get_current_state_for_ai())
+    logger.info(service.get_current_state_for_ai())
