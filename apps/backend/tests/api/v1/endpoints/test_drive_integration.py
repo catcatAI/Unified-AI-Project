@@ -5,19 +5,14 @@ from pathlib import Path
 import os
 import json
 
-# Adjust the path to import correctly
-import sys
-from os.path import abspath, dirname, join
-sys.path.insert(0, abspath(join(dirname(__file__), "..", "..", "..", "..", "..")))
-
-from src.services.main_api_server import app
+from apps.backend.src.services.main_api_server import app
 client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def mock_dependencies():
     """Mocks external dependencies for Google Drive integration tests."""
     # Try both possible paths for patching
-    drive_module = "src.api.v1.endpoints.drive"
+    drive_module = "apps.backend.src.api.v1.endpoints.drive"
     main_module = "main"
     
     with patch(f"{main_module}.system_manager") as mock_system_manager, \
