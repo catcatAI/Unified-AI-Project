@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 class NLPProcessingAgent:
     """Agent for sentiment analysis, entity extraction, summarization, and text classification."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         logger.info(f"NLPProcessingAgent initialized with config: {self.config}")
 
     def analyze_sentiment(self, text: str) -> Dict[str, Any]:

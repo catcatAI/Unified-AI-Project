@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-11 — Phase 4 Priority 4 complete (79/79 items); added pre-existing known issues section
+> **Last Updated**: 2026-06-11 — Phase 5: 14 CI/infra/test fixes applied; remaining stubs documented
 
 ## High-Level Architecture
 
@@ -110,34 +110,35 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | Stubs | ✅ 36/37 strict stubs implemented | 3 true stubs remain (1 functional, 2 deprecated)
 | Docs | ✅ Updated | SERVICE_CATALOG.md + OVERVIEW.md current |
 
-## Pre-existing Issues (Not Addressed in Q4-P4)
+## Phase 5: Post-Q4-P4 Fixes Applied (2026-06-11)
+
+| # | Issue | Fix | Files Changed | Status |
+|---|-------|-----|---------------|--------|
+| 1 | **CI / js: ESLint v8.56.0 → v8.57.0** | Bump eslint for `eslint.config.mjs` flat config support | `package.json:35` | ✅ |
+| 2 | **CI / python: unquoted bracket in pip install** | Quote path to avoid bash glob expansion | `.github/workflows/ci.yml:64` | ✅ |
+| 3 | **CI / secrets_scan: outdated gitleaks-action** | Update to `gitleaks/gitleaks-action@v3` | `.github/workflows/ci.yml:80` | ✅ |
+| 4 | **Integration Tests: wrong pip target + Python 3.8/3.9** | Fix install path, drop unsupported Python versions, update actions | `.github/workflows/integration-tests.yml` (7 lines) | ✅ |
+| 5 | **Test Automation: 3 missing paths + Python 3.8/3.9** | Fix/remove wrong paths, update actions, drop unsupported Python | `.github/workflows/test-automation.yml` (9 lines) | ✅ |
+| 6 | **Root pyproject.toml: no [project] section** | Add `[build-system]` + `[project]` for editable install support | `pyproject.toml:1-8` | ✅ |
+| 7 | **11 Agent classes: don't accept `agent_id`** | Add `**kwargs` to `__init__` | 11 files in `ai/agents/specialized/` | ✅ |
+| 8 | **Axis: uses `axis_id` not `name`** | Accept `name` as alias via `**kwargs` | `core/state/axis.py` | ✅ |
+| 9 | **EconomyDB: missing `transfer()` alias** | Add delegating alias for `transfer_balance()` | `economy/economy_db.py` | ✅ |
+| 10 | **KeyGenerator: empty stub class** | Add minimal `KeyGenerator` class | `core/security/key_generator.py` | ✅ |
+| 11 | **WaitingScheduler: empty stub class** | Add minimal `WaitingScheduler` class | `core/waiting_scheduler.py` | ✅ |
+| 12 | **Integrations: missing `atlassian_bridge` import** | Add import + fix rovo_dev_connector import path | `integrations/__init__.py`, `atlassian_bridge.py` | ✅ |
+| 13 | **ResourceAwarenessService: psultur unimportable** | Move `import psutil` to module level with fallback | `services/resource_awareness_service.py` | ✅ |
+| 14 | **`.env.example`: missing 9 env vars** | Add ANTHROPIC_API_KEY, ANGELA_HOME, ROVO_API_KEY, etc. | `.env.example` (16 lines) | ✅ |
+
+### Remaining Pre-existing Issues (Stubs — Not Re-Implemented)
 
 | # | Issue | Impact | Details |
 |---|-------|--------|---------|
-| 1 | **Full pytest suite: ~30+ failures** | Pre-existing | 3498 tests collected; ~9 agent tests (E error, missing deps), ~20+ other failures. None caused by Q4-P4 changes. |
-| 2 | **Coverage 13.48%** (target 50%) | Low confidence | Only 5,718/42,797 lines covered. ~256 production functions untested. |
-| 3 | **~482 magic numbers remain** | Maintenance | 136 migrated in Q3, but hundreds still hardcoded across unreachable/orphan files (not covered by current scan paths). |
-| 4 | **Prod code calls nonexistent methods** | Latent crash | `HSMFormulaSystem().calculate_hsm()` (no such method), `FallbackConfigLoader.get_authority()` (no such method), `NonParadoxExistence().calculate_coexistence_state()` (no such method), `AngelaLLMService` referred to as `LLMRouter` in some imports — all pre-existing. Fixed via `except AttributeError` fallbacks. |
-| 5 | **Class name mismatches** | Import confusion | `websocket_manager.py` exports `ConnectionManager` not `WebSocketManager`; `router.py` exports `AngelaLLMService` not `LLMRouter`. Pre-existing. |
-| 6 | **Server startup not verified** | Unknown | Requires configured `.env` with valid API keys; not tested in this sprint. |
-| 7 | **OS-dependent paths** | Portability | Some paths assume specific directory structure; may break on different machines. |
-| 8 | **Orphan rate 73.0%** (154/211) | Dead code | Despite DEPRECATED marking, orphan files still consume ~22k LOC with no active consumers outside test/shim references. |
-
-### CI Pipeline Failures (All Pre-existing)
-
-All 7 CI failures are **infrastructure/config issues**, not code bugs:
-
-| Job | Failure Time | Root Cause |
-|-----|-------------|------------|
-| `CI / js` | 15s | No ESLint config (`.eslintrc` missing); `pnpm lint:js` fails immediately |
-| `CI / python (3.14)` | 22s | `pip install -e ./apps/backend[standard,testing]` fails because root `pyproject.toml` has no `[project]` section (only `[tool]`) — no package metadata for editable install |
-| `CI / python (3.11)` | Cancelled | Dependency of python matrix; 3.14 failure cascades |
-| `CI / secrets_scan` | 13s | `zricethezav/gitleaks-action@v2.3.2` may not exist or `--no-git` flag unsupported |
-| `Integration Tests / integration-tests (3.10, 3.11)` | 23-24s | `pip install -e ".[test]"` fails (same root cause — no `[project]` in root `pyproject.toml`); also `tests/integration/` dir exists but pytest cannot collect without deps |
-| `Integration Tests / integration-tests (3.8, 3.9)` | Cancelled | Cascaded from 3.10/3.11 failures |
-| `测试自动化流程 / test-suite (3.10)` | 12s | Wrong test paths: `tests/core_ai/memory/` does not exist (real: `tests/ai/memory/`); `tests/e2e/` does not exist; `scripts/test_coverage_monitor.py` does not exist |
-| `测试自动化流程 / test-suite (3.8, 3.9)` | Cancelled | Cascaded |
-| `测试自动化流程 / test-quality-gate` | 8s | `scripts/test_coverage_monitor.py` does not exist |
-| `测试自动化流程 / notification` | Skipped | Conditional on failure — skipped when quality-gate never ran properly |
-
-**To fix**: (a) Add `[project]` section to root `pyproject.toml` for editable installs, (b) Create ESLint config, (c) Fix CI test paths (`core_ai`→`ai/memory`, remove e2e), (d) Remove or fix broken gitleaks action + missing coverage script.
+| 1 | **Coverage 13.48%** (target 50%) | Low confidence | Only 5,718/42,797 lines covered. ~256 production functions untested. |
+| 2 | **~482 magic numbers remain** | Maintenance | 136 migrated in Q3, but hundreds still hardcoded across unreachable/orphan files. |
+| 3 | **Server startup not verified** | Unknown | Requires configured `.env` with valid API keys; not tested in this sprint. |
+| 4 | **OS-dependent paths** | Portability | Some paths assume specific directory structure; may break on different machines. |
+| 5 | **Orphan rate 73.0%** (154/211) | Dead code | ~22k LOC with no active consumers outside test/shim references. |
+| 6 | **27 agent tests fail** | Stub methods | Tests expect `handle_task_request`, `capabilities`, `_perform_*` — these methods are not implemented in stub agent classes. |
+| 7 | **21 Axis tests fail** | Stub methods | Tests expect `modify`, `update`, `snapshot`, `create_alpha`, `set_str`, `distance_to`, etc. — not implemented in stub. |
+| 8 | **HSMFormulaSystem / NonParadoxExistence / EnvDynamics** | Stub classes | Core formula systems are incomplete stubs. Gracefully degraded via `except (ImportError, AttributeError)` in `prompt_builder.py` and `emotion_analyzer.py`. |
+| 9 | **WebSocketManager / LLMRouter name mismatches** | Import confusion | `ConnectionManager` in `websocket_manager.py`, `AngelaLLMService` in `router.py` — no actual consumers of wrong names found. |

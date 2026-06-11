@@ -24,8 +24,9 @@ logger = logging.getLogger(__name__)
 class KnowledgeGraphAgent:
     """Agent for querying and managing a knowledge graph."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         self._entities: Dict[str, Dict[str, Any]] = {}
         self._relations: List[Dict[str, Any]] = []
         logger.info(f"KnowledgeGraphAgent initialized with config: {self.config}")

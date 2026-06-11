@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 class AudioProcessingAgent:
     """Agent for audio transcription, analysis, and language detection."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         logger.info(f"AudioProcessingAgent initialized with config: {self.config}")
 
     def is_available(self) -> bool:

@@ -61,7 +61,7 @@ jobs:
           grep -q "$EXPECTED" .github/workflows/ci.yml || { echo "❌ .github/workflows/ci.yml: self-check failed"; ERR=1; }
           if [ $ERR -eq 1 ]; then exit 1; else echo "✅ All 14 version locations consistent ($EXPECTED)"; fi
       - name: Install backend (editable with extras)
-        run: pip install -e ./apps/backend[standard,testing]
+        run: pip install -e "./apps/backend[standard,testing]"
       - name: Lint/Type (Python)
         run: |
           black --check apps/backend/src tests/
@@ -77,6 +77,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Gitleaks
-        uses: zricethezav/gitleaks-action@v2.3.2
+        uses: gitleaks/gitleaks-action@v3
         with:
           args: --no-git

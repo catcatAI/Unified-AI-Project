@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 class PlanningAgent:
     """Agent for creating, optimizing, and tracking plans."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         self._plans: Dict[str, Dict[str, Any]] = {}
         logger.info(f"PlanningAgent initialized with config: {self.config}")
 

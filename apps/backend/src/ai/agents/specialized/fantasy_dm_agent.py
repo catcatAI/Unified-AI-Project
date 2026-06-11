@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 class FantasyDMAgent:
     """Agent for generating RPG scenarios, creating characters, and resolving actions."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         logger.info(f"FantasyDMAgent initialized with config: {self.config}")
 
     def generate_scenario(self, setting: str, player_level: int = 1) -> Dict[str, Any]:

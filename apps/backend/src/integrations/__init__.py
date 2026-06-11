@@ -14,6 +14,10 @@ except ImportError:
     AtlassianBridge = None
 from .google_drive_service import GoogleDriveService
 from .os_bridge_adapter import OSBridgeAdapter
+try:
+    from . import atlassian_bridge
+except ImportError:
+    atlassian_bridge = None
 
 __all__ = [
     "RovoDevConnector",

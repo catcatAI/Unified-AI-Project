@@ -34,8 +34,9 @@ except ImportError:
 class VisionProcessingAgent:
     """Agent for image analysis, object detection, and text extraction."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         logger.info(f"VisionProcessingAgent initialized. OCR available: {PYTESSERACT_AVAILABLE}")
 
     def is_available(self) -> Dict[str, bool]:

@@ -24,8 +24,9 @@ logger = logging.getLogger(__name__)
 class CreativeWritingAgent:
     """Agent for story generation, poem generation, and content rewriting."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         logger.info(f"CreativeWritingAgent initialized with config: {self.config}")
 
     def is_available(self) -> bool:

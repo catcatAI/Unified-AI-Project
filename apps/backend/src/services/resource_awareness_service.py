@@ -6,6 +6,11 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 import logging
 
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,12 +54,7 @@ class ResourceAwarenessService:
     """
 
     def __init__(self, config_filepath: Optional[str] = None) -> None:
-        try:
-            import psutil
-
-            self.psutil = psutil
-        except ImportError:
-            self.psutil = None
+        self.psutil = psutil
 
         self.config_filepath = config_filepath or DEFAULT_CONFIG_PATH
         self.profile: Optional[SimulatedHardwareProfile] = None

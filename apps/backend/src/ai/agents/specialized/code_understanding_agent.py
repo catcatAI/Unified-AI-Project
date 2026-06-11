@@ -26,8 +26,9 @@ logger = logging.getLogger(__name__)
 class CodeUnderstandingAgent:
     """Agent for code analysis, review, and explanation."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         logger.info(f"CodeUnderstandingAgent initialized with config: {self.config}")
 
     def analyze_code(self, code: str, language: str) -> Dict[str, Any]:

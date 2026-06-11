@@ -1,3 +1,13 @@
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unified-ai-project-root"
+version = "7.5.0-dev"
+description = "Unified AI Project - root monorepo configuration"
+requires-python = ">=3.10"
+
 [tool.black]
 # Black - Python 代码格式化工具
 line-length = 100

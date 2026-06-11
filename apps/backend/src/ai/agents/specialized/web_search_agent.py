@@ -31,8 +31,9 @@ except ImportError:
 class WebSearchAgent:
     """Agent for web search, content fetching, and search trends."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
+        self.agent_id = kwargs.get("agent_id")
         self._search_history: List[Dict[str, Any]] = []
         self._session: Optional[requests.Session] = None
         if REQUESTS_AVAILABLE:

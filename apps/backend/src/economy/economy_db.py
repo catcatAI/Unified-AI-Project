@@ -67,6 +67,9 @@ class EconomyDB:
             return result[0] if result else 0.0
         return 0.0
 
+    def transfer(self, *args, **kwargs):
+        return self.transfer_balance(*args, **kwargs)
+
     def transfer_balance(self, from_user_id: str, to_user_id: str, amount: float) -> bool:
         """Transfers a balance from one user to another."""
         if amount <= 0:

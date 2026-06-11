@@ -39,15 +39,21 @@ class Axis:
     _fields: Dict[str, AxisField]
     values: Dict[str, float]
 
-    def __init__(self, axis_id: str, label: str = ""):
+    def __init__(self, axis_id: str = None, label: str = "", **kwargs):
+        name = kwargs.get("name")
+        if axis_id is None:
+            axis_id = name
         self.axis_id = axis_id
+        self.name = name or axis_id
         self.label = label
+        self.coordinate = kwargs.get("coordinate", (0.0, 0.0, 0.0))
+        self.weight = kwargs.get("weight", 1.0)
         self.values = {}
         self._fields = {}
 
     @classmethod
-    def from_config(cls, axis_id: str, label: str = "") -> "Axis":
-        return cls(axis_id, label=label)
+    def from_config(cls, axis_id: str = None, label: str = "", **kwargs) -> "Axis":
+        return cls(axis_id, label=label, **kwargs)
 
     def set(self, field_type: Type, value: float) -> None:
         pass
