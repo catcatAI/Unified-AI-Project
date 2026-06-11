@@ -27,7 +27,60 @@ class CreativeWritingAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
+        self.capabilities = [
+            {
+                "name": "generate_marketing_copy",
+                "capability_id": "generate_marketing_copy",
+                "description": "生成行銷文案",
+                "version": "1.0.0",
+            },
+            {
+                "name": "polish_text",
+                "capability_id": "polish_text",
+                "description": "潤飾和優化文字",
+                "version": "1.0.0",
+            },
+        ]
         logger.info(f"CreativeWritingAgent initialized with config: {self.config}")
+
+    async def handle_task_request(self, task_payload, sender_ai_id, envelope):
+        capability_id_filter = task_payload.get("capability_id_filter", "")
+        params = task_payload.get("parameters", {})
+        request_id = task_payload.get("request_id", "")
+        cap_name = capability_id_filter
+        if self.agent_id and cap_name.startswith(self.agent_id + "_"):
+            cap_name = cap_name[len(self.agent_id) + 1:]
+        if "_v" in cap_name:
+            cap_name = cap_name.rsplit("_v", 1)[0]
+        result_payload = {"request_id": request_id}
+        if cap_name == "generate_marketing_copy":
+            result = await self._generate_marketing_copy(params)
+            result_payload["status"] = "success"
+            result_payload["payload"] = result
+        elif cap_name == "polish_text":
+            result = await self._polish_text(params)
+            result_payload["status"] = "success"
+            result_payload["payload"] = result
+        else:
+            result_payload["status"] = "failure"
+            result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
+        await self.hsp_connector.send_task_result(result_payload)
+
+    async def _generate_marketing_copy(self, params: dict) -> str:
+        if hasattr(self, 'llm_interface') and self.llm_interface is not None:
+            response = await self.llm_interface.chat_completion(params)
+            if hasattr(response, 'content'):
+                return response.content
+            return str(response)
+        return ""
+
+    async def _polish_text(self, params: dict) -> str:
+        if hasattr(self, 'llm_interface') and self.llm_interface is not None:
+            response = await self.llm_interface.chat_completion(params)
+            if hasattr(response, 'content'):
+                return response.content
+            return str(response)
+        return ""
 
     def is_available(self) -> bool:
         """Check if LLM backend for creative writing is configured."""

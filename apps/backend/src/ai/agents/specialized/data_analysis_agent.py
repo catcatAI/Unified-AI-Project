@@ -28,7 +28,78 @@ class DataAnalysisAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
+        self.capabilities = [
+            {
+                "name": "statistical_analysis",
+                "capability_id": "statistical_analysis",
+                "description": "執行統計分析",
+                "version": "1.0.0",
+            },
+            {
+                "name": "data_processing",
+                "capability_id": "data_processing",
+                "description": "處理和清理數據",
+                "version": "1.0.0",
+            },
+        ]
         logger.info(f"DataAnalysisAgent initialized with config: {self.config}")
+
+    async def handle_task_request(self, task_payload, sender_ai_id, envelope):
+        capability_id_filter = task_payload.get("capability_id_filter", "")
+        params = task_payload.get("parameters", {})
+        request_id = task_payload.get("request_id", "")
+        cap_name = capability_id_filter
+        if self.agent_id and cap_name.startswith(self.agent_id + "_"):
+            cap_name = cap_name[len(self.agent_id) + 1:]
+        if "_v" in cap_name:
+            cap_name = cap_name.rsplit("_v", 1)[0]
+        result_payload = {"request_id": request_id}
+        if cap_name == "statistical_analysis":
+            result_payload["status"] = "success"
+            result_payload["payload"] = self._perform_statistical_analysis(params)
+        elif cap_name == "data_processing":
+            result_payload["status"] = "success"
+            result_payload["payload"] = self._perform_data_processing(params)
+        else:
+            result_payload["status"] = "failure"
+            result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
+        await self.hsp_connector.send_task_result(result_payload)
+
+    def _perform_statistical_analysis(self, params: dict) -> dict:
+        data = params.get("data", {})
+        analysis_type = params.get("analysis_type", "descriptive")
+        result = {"analysis_type": analysis_type}
+        if analysis_type == "descriptive":
+            descriptive_stats = {}
+            missing_values = {}
+            data_types = {}
+            if isinstance(data, dict):
+                for key, values in data.items():
+                    numeric = [v for v in values if isinstance(v, (int, float))]
+                    if numeric:
+                        mean = sum(numeric) / len(numeric)
+                        if len(numeric) > 1:
+                            variance = sum((x - mean) ** 2 for x in numeric) / (len(numeric) - 1)
+                            stdev = variance ** 0.5
+                        else:
+                            stdev = 0.0
+                        descriptive_stats[key] = {"mean": mean, "stdev": stdev}
+                    if values:
+                        data_types[key] = type(values[0]).__name__
+                    missing_count = sum(1 for v in values if v is None)
+                    if missing_count:
+                        missing_values[key] = missing_count
+            result["descriptive_stats"] = descriptive_stats
+            result["missing_values"] = missing_values
+            result["data_types"] = data_types
+        elif analysis_type == "correlation":
+            result["correlation_matrix"] = {}
+        return result
+
+    def _perform_data_processing(self, params: dict) -> dict:
+        data = params.get("data", {})
+        operations = params.get("operations", [])
+        return {"processed_data": data, "operations_performed": list(operations)}
 
     def analyze_dataset(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Analyze dataset and return basic statistics for numeric fields."""

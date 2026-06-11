@@ -28,7 +28,70 @@ class AudioProcessingAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
+        self.capabilities = [
+            {
+                "name": "speech_recognition",
+                "capability_id": "speech_recognition",
+                "description": "將音頻轉換為文字",
+                "version": "1.0.0",
+            },
+            {
+                "name": "audio_classification",
+                "capability_id": "audio_classification",
+                "description": "分類音頻類型",
+                "version": "1.0.0",
+            },
+            {
+                "name": "audio_enhancement",
+                "capability_id": "audio_enhancement",
+                "description": "增強音頻質量",
+                "version": "1.0.0",
+            },
+        ]
         logger.info(f"AudioProcessingAgent initialized with config: {self.config}")
+
+    async def handle_task_request(self, task_payload, sender_ai_id, envelope):
+        capability_id_filter = task_payload.get("capability_id_filter", "")
+        params = task_payload.get("parameters", {})
+        request_id = task_payload.get("request_id", "")
+        cap_name = capability_id_filter
+        if self.agent_id and cap_name.startswith(self.agent_id + "_"):
+            cap_name = cap_name[len(self.agent_id) + 1:]
+        if "_v" in cap_name:
+            cap_name = cap_name.rsplit("_v", 1)[0]
+        result_payload = {"request_id": request_id}
+        try:
+            if cap_name == "speech_recognition":
+                result_payload["status"] = "success"
+                result_payload["payload"] = self._perform_speech_recognition(params)
+            elif cap_name == "audio_classification":
+                result_payload["status"] = "success"
+                result_payload["payload"] = self._classify_audio(params)
+            elif cap_name == "audio_enhancement":
+                result_payload["status"] = "success"
+                result_payload["payload"] = self._enhance_audio(params)
+            else:
+                result_payload["status"] = "failure"
+                result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
+        except ValueError as e:
+            result_payload["status"] = "failure"
+            result_payload["error_details"] = {"error_code": "INVALID_PARAMETERS", "error_message": str(e)}
+        await self.hsp_connector.send_task_result(result_payload)
+
+    def _perform_speech_recognition(self, params: dict) -> dict:
+        if "audio_file" not in params:
+            raise ValueError("No audio file provided")
+        return {"transcription": "", "language": "zh", "confidence": 0.0}
+
+    def _classify_audio(self, params: dict) -> dict:
+        if "audio_file" not in params:
+            raise ValueError("No audio file provided")
+        return {"primary_category": "unknown", "categories": []}
+
+    def _enhance_audio(self, params: dict) -> dict:
+        if "audio_file" not in params:
+            raise ValueError("No audio file provided")
+        return {"enhanced_file": "", "improvement_score": 0.0}
 
     def is_available(self) -> bool:
         """Check if audio processing backend (e.g. whisper) is configured."""

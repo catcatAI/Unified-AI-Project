@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, Mock
 
 # Correct import path for CreativeWritingAgent
 from ai.agents.specialized.creative_writing_agent import CreativeWritingAgent

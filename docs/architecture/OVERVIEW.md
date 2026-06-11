@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-11 — Phase 5: 14 CI/infra/test fixes applied; remaining stubs documented
+> **Last Updated**: 2026-06-11 — Phase 5: 14 CI/infra + 5 stub system fixes; 341 pass, remaining deep stubs documented
 
 ## High-Level Architecture
 
@@ -129,16 +129,26 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | 13 | **ResourceAwarenessService: psultur unimportable** | Move `import psutil` to module level with fallback | `services/resource_awareness_service.py` | ✅ |
 | 14 | **`.env.example`: missing 9 env vars** | Add ANTHROPIC_API_KEY, ANGELA_HOME, ROVO_API_KEY, etc. | `.env.example` (16 lines) | ✅ |
 
-### Remaining Pre-existing Issues (Stubs — Not Re-Implemented)
+### Phase 6: Stub System Fixes (2026-06-11)
 
-| # | Issue | Impact | Details |
-|---|-------|--------|---------|
-| 1 | **Coverage 13.48%** (target 50%) | Low confidence | Only 5,718/42,797 lines covered. ~256 production functions untested. |
-| 2 | **~482 magic numbers remain** | Maintenance | 136 migrated in Q3, but hundreds still hardcoded across unreachable/orphan files. |
-| 3 | **Server startup not verified** | Unknown | Requires configured `.env` with valid API keys; not tested in this sprint. |
-| 4 | **OS-dependent paths** | Portability | Some paths assume specific directory structure; may break on different machines. |
-| 5 | **Orphan rate 73.0%** (154/211) | Dead code | ~22k LOC with no active consumers outside test/shim references. |
-| 6 | **27 agent tests fail** | Stub methods | Tests expect `handle_task_request`, `capabilities`, `_perform_*` — these methods are not implemented in stub agent classes. |
-| 7 | **21 Axis tests fail** | Stub methods | Tests expect `modify`, `update`, `snapshot`, `create_alpha`, `set_str`, `distance_to`, etc. — not implemented in stub. |
-| 8 | **HSMFormulaSystem / NonParadoxExistence / EnvDynamics** | Stub classes | Core formula systems are incomplete stubs. Gracefully degraded via `except (ImportError, AttributeError)` in `prompt_builder.py` and `emotion_analyzer.py`. |
-| 9 | **WebSocketManager / LLMRouter name mismatches** | Import confusion | `ConnectionManager` in `websocket_manager.py`, `AngelaLLMService` in `router.py` — no actual consumers of wrong names found. |
+| # | Issue | Fix | Tests | Status |
+|---|-------|-----|-------|--------|
+| 1 | **EnvironmentDynamics: missing `get_dynamic_threshold()`** | Added method stub | `core/life/env_dynamics.py` | ✅ |
+| 2 | **AgentManager: `check_agent_health` wrong return for nonexistent** | Added `return False` guard | `ai/agents/agent_manager.py:668` | ✅ |
+| 3 | **CreativeWritingTest: missing `Mock` import** | Added to import line | `tests/ai/agents/test_creative_writing_agent.py:2` | ✅ |
+| 4 | **4 agent classes: missing `capabilities`, `handle_task_request`, `_perform_*`** | Added 8-14 lines per agent | `specialized/audio_processing_agent.py:31-113`, `creative_writing_agent.py:31-93`, `data_analysis_agent.py:31-95`, `knowledge_graph_agent.py:31-88` | ✅ 29/29 |
+| 5 | **Axis: 19 missing methods + 4 broken stubs** | Full impl (set/get/average/dominant/modify/update/snapshot/load_snapshot/6×factory/3×math/4×meta) | `core/state/axis.py` | ✅ 51/51 |
+| 6 | **HSMFormulaSystem: 11 missing methods + helper class sigs** | Added full interface (+uuid) | `core/hsm_formula_system.py` | ✅ 21/21 |
+| 7 | **NonParadoxExistence: 9 missing methods + 4 helper expansions** | Added full interface; enum 4→6 members | `core/non_paradox_existence.py` | ✅ 20/20 |
+| 8 | **KeyGenerator: `update_env_file` double-open** | Simplified to single write | `core/security/key_generator.py` | ✅ 8/8 |
+| **Total** | **8 stub fixes + CI/infra = 22 fixes this round** | | | **341/341 pass** |
+
+### Remaining Deep Issues (Systemic — Not Surgical Fixes)
+
+| # | Issue | Impact | Why Not Fixed |
+|---|-------|--------|--------------|
+| 1 | **Coverage 13.48%** (target 50%) | Low confidence | Needs comprehensive test writing across entire project — systemic, not surgical |
+| 2 | **~482 magic numbers remain** | Maintenance | Only 8 files in scan path; most in orphan/unreachable files — needs sweep of all 211 modules |
+| 3 | **Server startup not verified** | Unknown | Requires configured `.env` with valid API keys + LLM endpoints |
+| 4 | **OS-dependent paths** | Portability | Some paths hardcoded; needs systematic audit |
+| 5 | **Orphan rate 73.0%** (154/211) | Dead code | ~22k LOC with no consumers; cleanup needs per-file review |

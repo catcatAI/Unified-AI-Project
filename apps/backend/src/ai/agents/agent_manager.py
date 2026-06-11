@@ -667,6 +667,9 @@ if __name__ == "__main__":
         """
         Checks if an agent is healthy and returns a structured health report.
         """
+        if agent_name not in self.agents:
+            return False
+
         agent = self.agents.get(agent_name)
         is_registered = agent_name in self.agents
         is_active = agent_name in self.active_agents and self.active_agents[agent_name].poll() is None

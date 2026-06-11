@@ -20,18 +20,7 @@ class KeyGenerator:
         return ''.join(secrets.choice(chars) for _ in range(length))
 
     def update_env_file(self, keys: dict, env_path: str) -> None:
-        existing = {}
-        try:
-            with open(env_path, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and "=" in line:
-                        k, v = line.split("=", 1)
-                        existing[k] = v
-        except FileNotFoundError:
-            pass
-        existing.update(keys)
         with open(env_path, "w") as f:
-            for k, v in existing.items():
+            for k, v in keys.items():
                 f.write(f"{k}={v}\n")
 

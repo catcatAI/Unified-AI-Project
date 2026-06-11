@@ -27,9 +27,56 @@ class KnowledgeGraphAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
+        self.capabilities = [
+            {
+                "name": "entity_linking",
+                "capability_id": "entity_linking",
+                "description": "將文本中的實體連接到知識圖譜",
+                "version": "1.0.0",
+            },
+            {
+                "name": "relationship_extraction",
+                "capability_id": "relationship_extraction",
+                "description": "從文本中提取實體關係",
+                "version": "1.0.0",
+            },
+            {
+                "name": "graph_query",
+                "capability_id": "graph_query",
+                "description": "查詢知識圖譜",
+                "version": "1.0.0",
+            },
+        ]
         self._entities: Dict[str, Dict[str, Any]] = {}
         self._relations: List[Dict[str, Any]] = []
         logger.info(f"KnowledgeGraphAgent initialized with config: {self.config}")
+
+    async def handle_task_request(self, task_payload, sender_ai_id, envelope):
+        capability_id_filter = task_payload.get("capability_id_filter", "")
+        params = task_payload.get("parameters", {})
+        request_id = task_payload.get("request_id", "")
+        callback_address = task_payload.get("callback_address", "")
+        cap_name = capability_id_filter
+        if self.agent_id and cap_name.startswith(self.agent_id + "_"):
+            cap_name = cap_name[len(self.agent_id) + 1:]
+        if "_v" in cap_name:
+            cap_name = cap_name.rsplit("_v", 1)[0]
+        result_payload = {"request_id": request_id}
+        if cap_name == "entity_linking":
+            result_payload["status"] = "success"
+            result_payload["payload"] = self._perform_entity_linking(params)
+        elif cap_name == "relationship_extraction":
+            result = self._extract_relationships(params.get("text", ""))
+            result_payload["status"] = "success"
+            result_payload["payload"] = {"relationships": result}
+        elif cap_name == "graph_query":
+            result = self._query_knowledge_graph(params.get("query", ""))
+            result_payload["status"] = "success"
+            result_payload["payload"] = {"result": result}
+        else:
+            result_payload["status"] = "failure"
+            result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
+        await self.hsp_connector.send_task_result(result_payload, callback_address)
 
     def query_graph(self, query: str) -> Dict[str, Any]:
         """Query the knowledge graph (in-memory lookup)."""
