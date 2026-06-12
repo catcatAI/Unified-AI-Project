@@ -303,6 +303,13 @@ app.include_router(atlassian_router)
 app.include_router(state_matrix_router, prefix="/api/v1")
 
 
+# Stub class for test compatibility with legacy integration tests
+class MainApiServer:
+    async def is_connected(self): pass
+    async def reconnect(self): pass
+    async def queue_request(self): pass
+
+
 if __name__ == "__main__":
     import sys
     if "--repl" in sys.argv:

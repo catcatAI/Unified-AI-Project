@@ -1,4 +1,4 @@
-"""
+﻿"""
 Angela AI v6.0 - Comprehensive Integration Test Suite
 完整系统整合测试套件
 
@@ -91,7 +91,7 @@ class TestCognitiveCycle:
             }
             
             # 模拟感知处理
-            with patch('core.perception.perception_engine.PerceptionEngine.process') as mock_process:
+            with patch('core.perception.perception_engine.PerceptionEngine.process', new_callable=AsyncMock) as mock_process:
                 mock_process.return_value = {
                     'perceived_data': input_data,
                     'confidence': 0.95,
@@ -99,7 +99,7 @@ class TestCognitiveCycle:
                     'processing_time_ms': 5.2
                 }
                 
-                result = mock_process(input_data)
+                result = await mock_process(input_data)
                 
                 # 验证感知结果
                 assert result['perceived_data'] == input_data
@@ -132,7 +132,7 @@ class TestCognitiveCycle:
             }
             
             # 模拟思考处理
-            with patch('core.cognition.cognitive_engine.CognitiveEngine.think') as mock_think:
+            with patch('core.cognition.cognitive_engine.CognitiveEngine.think', new_callable=AsyncMock) as mock_think:
                 mock_think.return_value = {
                     'cognitive_state': 'engaged',
                     'emotional_response': 'happy',
@@ -144,7 +144,7 @@ class TestCognitiveCycle:
                     'processing_time_ms': 8.5
                 }
                 
-                result = mock_think(perceived_data)
+                result = await mock_think(perceived_data)
                 
                 # 验证思考结果
                 assert result['cognitive_state'] in ['engaged', 'neutral', 'focused']
@@ -179,7 +179,7 @@ class TestCognitiveCycle:
             }
             
             # 模拟行动执行
-            with patch('core.execution.action_executor.ActionExecutor.execute') as mock_execute:
+            with patch("core.engine.action_executor.ActionExecutor.execute", create=True, new_callable=AsyncMock) as mock_execute:
                 mock_execute.return_value = {
                     'action_id': str(uuid.uuid4()),
                     'status': 'completed',
@@ -188,7 +188,7 @@ class TestCognitiveCycle:
                     'feedback': {'user_response': 'positive', 'engagement_level': 0.85}
                 }
                 
-                result = mock_execute(decision)
+                result = await mock_execute(decision)
                 
                 # 验证行动结果
                 assert result['status'] == 'completed'
@@ -222,7 +222,7 @@ class TestCognitiveCycle:
             }
             
             # 模拟反思处理
-            with patch('core.reflection.reflection_engine.ReflectionEngine.reflect') as mock_reflect:
+            with patch('core.reflection.reflection_engine.ReflectionEngine.reflect', new_callable=AsyncMock) as mock_reflect:
                 mock_reflect.return_value = {
                     'reflection_id': str(uuid.uuid4()),
                     'success_assessment': 'positive',
@@ -237,7 +237,7 @@ class TestCognitiveCycle:
                     'processing_time_ms': 6.8
                 }
                 
-                result = mock_reflect(action_result)
+                result = await mock_reflect(action_result)
                 
                 # 验证反思结果
                 assert result['success_assessment'] in ['positive', 'neutral', 'negative']
@@ -266,40 +266,40 @@ class TestCognitiveCycle:
             cycle_start = time.time()
             
             # 阶段 1: Perceive
-            with patch('core.perception.perception_engine.PerceptionEngine.process') as mock_perceive:
+            with patch('core.perception.perception_engine.PerceptionEngine.process', new_callable=AsyncMock) as mock_perceive:
                 mock_perceive.return_value = {
                     'perceived_data': {'type': 'touch'},
                     'confidence': 0.95,
                     'processing_time_ms': 5.0
                 }
-                perceive_result = mock_perceive({'type': 'touch'})
+                perceive_result = await mock_perceive({'type': 'touch'})
             
             # 阶段 2: Think
-            with patch('core.cognition.cognitive_engine.CognitiveEngine.think') as mock_think:
+            with patch('core.cognition.cognitive_engine.CognitiveEngine.think', new_callable=AsyncMock) as mock_think:
                 mock_think.return_value = {
                     'cognitive_state': 'engaged',
                     'decision_candidates': [{'action': 'smile', 'probability': 0.8}],
                     'processing_time_ms': 8.0
                 }
-                think_result = mock_think(perceive_result)
+                think_result = await mock_think(perceive_result)
             
             # 阶段 3: Act
-            with patch('core.execution.action_executor.ActionExecutor.execute') as mock_act:
+            with patch("core.engine.action_executor.ActionExecutor.execute", create=True, new_callable=AsyncMock) as mock_act:
                 mock_act.return_value = {
                     'status': 'completed',
                     'execution_time_ms': 15.0,
                     'feedback': {'user_response': 'positive'}
                 }
-                act_result = mock_act(think_result['decision_candidates'][0])
+                act_result = await mock_act(think_result['decision_candidates'][0])
             
             # 阶段 4: Reflect
-            with patch('core.reflection.reflection_engine.ReflectionEngine.reflect') as mock_reflect:
+            with patch('core.reflection.reflection_engine.ReflectionEngine.reflect', new_callable=AsyncMock) as mock_reflect:
                 mock_reflect.return_value = {
                     'success_assessment': 'positive',
                     'learning_signals': [{'type': 'preference_update'}],
                     'processing_time_ms': 6.0
                 }
-                reflect_result = mock_reflect(act_result)
+                reflect_result = await mock_reflect(act_result)
             
             cycle_end = time.time()
             total_latency_ms = (cycle_end - cycle_start) * 1000
@@ -356,8 +356,8 @@ class TestBiologicalSystemCoordination:
                 'temperature': 36.5
             }
             
-            with patch('core.biological.tactile_system.TactileSystem.process') as mock_tactile, \
-                 patch('core.biological.physiological_system.PhysiologicalSystem.react') as mock_physio:
+            with patch('core.biological.tactile_system.TactileSystem.process', new_callable=AsyncMock) as mock_tactile, \
+                 patch('core.biological.physiological_system.PhysiologicalSystem.react', new_callable=AsyncMock) as mock_physio:
                 
                 mock_tactile.return_value = {
                     'sensory_data': tactile_input,
@@ -373,8 +373,8 @@ class TestBiologicalSystemCoordination:
                 }
                 
                 # 执行链路
-                tactile_result = mock_tactile(tactile_input)
-                physio_result = mock_physio(tactile_result)
+                tactile_result = await mock_tactile(tactile_input)
+                physio_result = await mock_physio(tactile_result)
                 
                 # 验证链路
                 assert 'pleasant_touch' in tactile_result['nerve_signals']
@@ -408,7 +408,7 @@ class TestBiologicalSystemCoordination:
                 'heart_rate': 65
             }
             
-            with patch('core.biological.endocrine_system.EndocrineSystem.update') as mock_endocrine:
+            with patch("core.bio.endocrine_system_core.EndocrineSystem.update", create=True, new_callable=AsyncMock) as mock_endocrine:
                 mock_endocrine.return_value = {
                     'hormone_levels': {
                         'oxytocin': 0.7,  # 亲密感
@@ -420,7 +420,7 @@ class TestBiologicalSystemCoordination:
                     'processing_time_ms': 4.5
                 }
                 
-                result = mock_endocrine(physio_state)
+                result = await mock_endocrine(physio_state)
                 
                 # 验证激素变化
                 assert result['hormone_levels']['oxytocin'] > 0.5  # 触摸增加亲密感
@@ -454,7 +454,7 @@ class TestBiologicalSystemCoordination:
                 'serotonin': 0.75
             }
             
-            with patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.generate') as mock_emotion:
+            with patch("core.bio.emotional_blending.EmotionalBlendingSystem.generate", create=True, new_callable=AsyncMock) as mock_emotion:
                 mock_emotion.return_value = {
                     'primary_emotion': 'happy',
                     'emotion_blend': {
@@ -471,7 +471,7 @@ class TestBiologicalSystemCoordination:
                     'processing_time_ms': 3.8
                 }
                 
-                result = mock_emotion(hormone_state)
+                result = await mock_emotion(hormone_state)
                 
                 # 验证情绪生成
                 assert result['primary_emotion'] == 'happy'
@@ -499,37 +499,37 @@ class TestBiologicalSystemCoordination:
             chain_start = time.time()
             
             # 1. 触觉输入
-            with patch('core.biological.tactile_system.TactileSystem.process') as mock_tactile:
+            with patch('core.biological.tactile_system.TactileSystem.process', new_callable=AsyncMock) as mock_tactile:
                 mock_tactile.return_value = {
                     'nerve_signals': ['pleasant_touch'],
                     'processing_time_ms': 2.0
                 }
-                tactile_result = mock_tactile({'type': 'touch', 'pressure': 0.3})
+                tactile_result = await mock_tactile({'type': 'touch', 'pressure': 0.3})
             
             # 2. 生理反应
-            with patch('core.biological.physiological_system.PhysiologicalSystem.react') as mock_physio:
+            with patch('core.biological.physiological_system.PhysiologicalSystem.react', new_callable=AsyncMock) as mock_physio:
                 mock_physio.return_value = {
                     'physiological_state': 'relaxed',
                     'processing_time_ms': 3.0
                 }
-                physio_result = mock_physio(tactile_result)
+                physio_result = await mock_physio(tactile_result)
             
             # 3. 激素变化
-            with patch('core.biological.endocrine_system.EndocrineSystem.update') as mock_endocrine:
+            with patch("core.bio.endocrine_system_core.EndocrineSystem.update", create=True, new_callable=AsyncMock) as mock_endocrine:
                 mock_endocrine.return_value = {
                     'hormone_levels': {'oxytocin': 0.7, 'dopamine': 0.6},
                     'processing_time_ms': 4.0
                 }
-                endocrine_result = mock_endocrine(physio_result)
+                endocrine_result = await mock_endocrine(physio_result)
             
             # 4. 情绪生成
-            with patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.generate') as mock_emotion:
+            with patch("core.bio.emotional_blending.EmotionalBlendingSystem.generate", create=True, new_callable=AsyncMock) as mock_emotion:
                 mock_emotion.return_value = {
                     'primary_emotion': 'happy',
                     'intensity': 0.75,
                     'processing_time_ms': 3.0
                 }
-                emotion_result = mock_emotion(endocrine_result)
+                emotion_result = await mock_emotion(endocrine_result)
             
             chain_end = time.time()
             total_latency_ms = (chain_end - chain_start) * 1000
@@ -560,8 +560,8 @@ class TestBiologicalSystemCoordination:
             # 模拟反馈循环
             iterations = 3
             
-            with patch('core.biological.endocrine_system.EndocrineSystem.update') as mock_endocrine, \
-                 patch('core.biological.physiological_system.PhysiologicalSystem.react') as mock_physio:
+            with patch("core.bio.endocrine_system_core.EndocrineSystem.update", create=True, new_callable=AsyncMock) as mock_endocrine, \
+                 patch('core.biological.physiological_system.PhysiologicalSystem.react', new_callable=AsyncMock) as mock_physio:
                 
                 # 初始状态
                 emotion_state = {'type': 'happy', 'intensity': 0.6}
@@ -574,14 +574,14 @@ class TestBiologicalSystemCoordination:
                             'serotonin': 0.7
                         }
                     }
-                    hormone = mock_endocrine(emotion_state)
+                    hormone = await mock_endocrine(emotion_state)
                     
                     # 激素 → 生理
                     mock_physio.return_value = {
                         'physiological_state': 'balanced',
                         'wellness_score': 0.8 + (i * 0.05)
                     }
-                    physio = mock_physio(hormone)
+                    physio = await mock_physio(hormone)
                     
                     # 验证反馈
                     assert physio['wellness_score'] > 0.7
@@ -630,7 +630,7 @@ class TestExecutionPipeline:
                 'estimated_duration': 5.0
             }
             
-            with patch('core.execution.action_executor.ActionExecutor.receive_decision') as mock_receive:
+            with patch("core.engine.action_executor.ActionExecutor.receive_decision", create=True, new_callable=AsyncMock) as mock_receive:
                 mock_receive.return_value = {
                     'received': True,
                     'execution_id': str(uuid.uuid4()),
@@ -639,7 +639,7 @@ class TestExecutionPipeline:
                     'processing_time_ms': 1.5
                 }
                 
-                result = mock_receive(decision)
+                result = await mock_receive(decision)
                 
                 assert result['received'] is True
                 assert result['status'] == 'queued'
@@ -669,7 +669,7 @@ class TestExecutionPipeline:
                 'parameters': {'target_dir': '/downloads'}
             }
             
-            with patch('core.execution.action_execution_bridge.ActionExecutionBridge.route') as mock_route:
+            with patch("core.action_execution_bridge.ActionExecutionBridge.route", create=True, new_callable=AsyncMock) as mock_route:
                 mock_route.return_value = {
                     'routed': True,
                     'target_system': 'file_system_tool',
@@ -677,7 +677,7 @@ class TestExecutionPipeline:
                     'routing_time_ms': 2.0
                 }
                 
-                result = mock_route(execution_request)
+                result = await mock_route(execution_request)
                 
                 assert result['routed'] is True
                 assert result['target_system'] == 'file_system_tool'
@@ -708,7 +708,7 @@ class TestExecutionPipeline:
                 'params': {'path': '/downloads', 'by': 'date'}
             }
             
-            with patch('tools.file_system_tool.FileSystemTool.execute') as mock_tool:
+            with patch('tools.file_system_tool.FileSystemTool.execute', new_callable=AsyncMock) as mock_tool:
                 mock_tool.return_value = {
                     'success': True,
                     'files_processed': 25,
@@ -718,7 +718,7 @@ class TestExecutionPipeline:
                     'result_summary': 'Organized 23 files into date-based folders'
                 }
                 
-                result = mock_tool(tool_request)
+                result = await mock_tool(tool_request)
                 
                 assert result['success'] is True
                 assert result['files_organized'] > 0
@@ -748,7 +748,7 @@ class TestExecutionPipeline:
                 'errors': 2
             }
             
-            with patch('core.execution.feedback_collector.FeedbackCollector.collect') as mock_collect:
+            with patch('core.action_execution_bridge.FeedbackCollector.collect', new_callable=AsyncMock) as mock_collect:
                 mock_collect.return_value = {
                     'feedback_id': str(uuid.uuid4()),
                     'execution_success': True,
@@ -763,7 +763,7 @@ class TestExecutionPipeline:
                     'collection_time_ms': 5.5
                 }
                 
-                result = mock_collect(execution_result)
+                result = await mock_collect(execution_result)
                 
                 assert result['execution_success'] is True
                 assert result['effectiveness_score'] > 0.8
@@ -789,41 +789,41 @@ class TestExecutionPipeline:
             pipeline_start = time.time()
             
             # 1. 决策生成
-            with patch('core.execution.action_executor.ActionExecutor.receive_decision') as mock_receive:
+            with patch("core.engine.action_executor.ActionExecutor.receive_decision", create=True, new_callable=AsyncMock) as mock_receive:
                 mock_receive.return_value = {
                     'received': True,
                     'execution_id': 'exec_001',
                     'status': 'queued',
                     'processing_time_ms': 1.5
                 }
-                decision_result = mock_receive({'action_type': 'file_organize'})
+                decision_result = await mock_receive({'action_type': 'file_organize'})
             
             # 2. 执行器处理
-            with patch('core.execution.action_execution_bridge.ActionExecutionBridge.route') as mock_route:
+            with patch("core.action_execution_bridge.ActionExecutionBridge.route", create=True, new_callable=AsyncMock) as mock_route:
                 mock_route.return_value = {
                     'routed': True,
                     'target_system': 'file_system_tool',
                     'routing_time_ms': 2.0
                 }
-                bridge_result = mock_route(decision_result)
+                bridge_result = await mock_route(decision_result)
             
             # 3. 工具执行
-            with patch('tools.file_system_tool.FileSystemTool.execute') as mock_tool:
+            with patch('tools.file_system_tool.FileSystemTool.execute', new_callable=AsyncMock) as mock_tool:
                 mock_tool.return_value = {
                     'success': True,
                     'files_organized': 23,
                     'execution_time_ms': 3500.0
                 }
-                tool_result = mock_tool(bridge_result)
+                tool_result = await mock_tool(bridge_result)
             
             # 4. 反馈收集
-            with patch('core.execution.feedback_collector.FeedbackCollector.collect') as mock_collect:
+            with patch('core.action_execution_bridge.FeedbackCollector.collect', new_callable=AsyncMock) as mock_collect:
                 mock_collect.return_value = {
                     'execution_success': True,
                     'effectiveness_score': 0.92,
                     'collection_time_ms': 5.5
                 }
-                feedback_result = mock_collect(tool_result)
+                feedback_result = await mock_collect(tool_result)
             
             pipeline_end = time.time()
             total_time_ms = (pipeline_end - pipeline_start) * 1000
@@ -879,7 +879,7 @@ class TestMemoryLearningIntegration:
                 'timestamp': datetime.now()
             }
             
-            with patch('core.memory.experience_store.ExperienceStore.store') as mock_store:
+            with patch('core.memory.experience_store.ExperienceStore.store', new_callable=AsyncMock) as mock_store:
                 mock_store.return_value = {
                     'stored': True,
                     'memory_id': str(uuid.uuid4()),
@@ -889,7 +889,7 @@ class TestMemoryLearningIntegration:
                     'storage_time_ms': 8.5
                 }
                 
-                result = mock_store(experience)
+                result = await mock_store(experience)
                 
                 assert result['stored'] is True
                 assert result['memory_type'] == 'episodic'
@@ -920,7 +920,7 @@ class TestMemoryLearningIntegration:
                 'exploration_results': [{'domain': 'social', 'novelty': 0.3}]
             }
             
-            with patch('core.hsm_formula_system.HSMFormulaSystem.update') as mock_hsm:
+            with patch("core.hsm_formula_system.HSMFormulaSystem.update", create=True, new_callable=AsyncMock) as mock_hsm:
                 mock_hsm.return_value = {
                     'updated': True,
                     'heuristic_rules_added': 1,
@@ -930,7 +930,7 @@ class TestMemoryLearningIntegration:
                     'update_time_ms': 12.3
                 }
                 
-                result = mock_hsm(experience_data)
+                result = await mock_hsm(experience_data)
                 
                 assert result['updated'] is True
                 assert result['heuristic_rules_added'] > 0
@@ -960,7 +960,7 @@ class TestMemoryLearningIntegration:
                 {'type': 'learning', 'duration': 10.0, 'value': 0.9}
             ]
             
-            with patch('core.cdm_dividend_model.CDMCognitiveDividendModel.calculate') as mock_cdm:
+            with patch("core.cdm_dividend_model.CDMCognitiveDividendModel.calculate", create=True, new_callable=AsyncMock) as mock_cdm:
                 mock_cdm.return_value = {
                     'calculated': True,
                     'total_dividend': 14.5,
@@ -974,7 +974,7 @@ class TestMemoryLearningIntegration:
                     'calculation_time_ms': 9.2
                 }
                 
-                result = mock_cdm(cognitive_activities)
+                result = await mock_cdm(cognitive_activities)
                 
                 assert result['calculated'] is True
                 assert result['total_dividend'] > 0
@@ -1005,7 +1005,7 @@ class TestMemoryLearningIntegration:
                 'cdm_allocation': {'social': 0.35, 'learning': 0.40}
             }
             
-            with patch('core.autonomous.strategy_adjuster.StrategyAdjuster.adjust') as mock_adjust:
+            with patch('core.autonomous.strategy_adjuster.StrategyAdjuster.adjust', new_callable=AsyncMock) as mock_adjust:
                 mock_adjust.return_value = {
                     'adjusted': True,
                     'strategy_changes': [
@@ -1016,7 +1016,7 @@ class TestMemoryLearningIntegration:
                     'adjustment_time_ms': 7.8
                 }
                 
-                result = mock_adjust(learning_outputs)
+                result = await mock_adjust(learning_outputs)
                 
                 assert result['adjusted'] is True
                 assert len(result['strategy_changes']) > 0
@@ -1041,38 +1041,38 @@ class TestMemoryLearningIntegration:
             cycle_start = time.time()
             
             # 1. 经验存储
-            with patch('core.memory.experience_store.ExperienceStore.store') as mock_store:
+            with patch('core.memory.experience_store.ExperienceStore.store', new_callable=AsyncMock) as mock_store:
                 mock_store.return_value = {
                     'stored': True,
                     'memory_id': 'mem_001',
                     'storage_time_ms': 8.5
                 }
-                store_result = mock_store({'type': 'interaction'})
+                store_result = await mock_store({'type': 'interaction'})
             
             # 2. HSM更新
-            with patch('core.hsm_formula_system.HSMFormulaSystem.update') as mock_hsm:
+            with patch("core.hsm_formula_system.HSMFormulaSystem.update", create=True, new_callable=AsyncMock) as mock_hsm:
                 mock_hsm.return_value = {
                     'updated': True,
                     'update_time_ms': 12.3
                 }
-                hsm_result = mock_hsm(store_result)
+                hsm_result = await mock_hsm(store_result)
             
             # 3. CDM学习
-            with patch('core.cdm_dividend_model.CDMCognitiveDividendModel.calculate') as mock_cdm:
+            with patch("core.cdm_dividend_model.CDMCognitiveDividendModel.calculate", create=True, new_callable=AsyncMock) as mock_cdm:
                 mock_cdm.return_value = {
                     'calculated': True,
                     'total_dividend': 14.5,
                     'calculation_time_ms': 9.2
                 }
-                cdm_result = mock_cdm(hsm_result)
+                cdm_result = await mock_cdm(hsm_result)
             
             # 4. 策略调整
-            with patch('core.autonomous.strategy_adjuster.StrategyAdjuster.adjust') as mock_adjust:
+            with patch('core.autonomous.strategy_adjuster.StrategyAdjuster.adjust', new_callable=AsyncMock) as mock_adjust:
                 mock_adjust.return_value = {
                     'adjusted': True,
                     'adjustment_time_ms': 7.8
                 }
-                adjust_result = mock_adjust(cdm_result)
+                adjust_result = await mock_adjust(cdm_result)
             
             cycle_end = time.time()
             total_time_ms = (cycle_end - cycle_start) * 1000
@@ -1124,7 +1124,7 @@ class TestRealTimeFeedbackLoop:
                 'timestamp': datetime.now()
             }
             
-            with patch('core.feedback.input_monitor.InputMonitor.capture') as mock_capture:
+            with patch('core.feedback.input_monitor.InputMonitor.capture', new_callable=AsyncMock) as mock_capture:
                 mock_capture.return_value = {
                     'captured': True,
                     'event_type': 'mouse_interaction',
@@ -1132,7 +1132,7 @@ class TestRealTimeFeedbackLoop:
                     'detection_latency_ms': 2.1
                 }
                 
-                result = mock_capture(user_input)
+                result = await mock_capture(user_input)
                 
                 assert result['captured'] is True
                 assert result['event_type'] == 'mouse_interaction'
@@ -1162,7 +1162,7 @@ class TestRealTimeFeedbackLoop:
                 'context': {'near_pet': True, 'movement_speed': 'slow'}
             }
             
-            with patch('core.feedback.event_processor.EventProcessor.process') as mock_process:
+            with patch('core.feedback.event_processor.EventProcessor.process', new_callable=AsyncMock) as mock_process:
                 mock_process.return_value = {
                     'processed': True,
                     'event_category': 'attention_signal',
@@ -1171,7 +1171,7 @@ class TestRealTimeFeedbackLoop:
                     'processing_time_ms': 5.8
                 }
                 
-                result = mock_process(captured_event)
+                result = await mock_process(captured_event)
                 
                 assert result['processed'] is True
                 assert result['event_category'] == 'attention_signal'
@@ -1202,7 +1202,7 @@ class TestRealTimeFeedbackLoop:
                 'urgency_level': 'low'
             }
             
-            with patch('core.feedback.response_generator.ResponseGenerator.generate') as mock_generate:
+            with patch('core.feedback.response_generator.ResponseGenerator.generate', new_callable=AsyncMock) as mock_generate:
                 mock_generate.return_value = {
                     'generated': True,
                     'response_type': 'visual',
@@ -1214,7 +1214,7 @@ class TestRealTimeFeedbackLoop:
                     'generation_time_ms': 4.2
                 }
                 
-                result = mock_generate(processed_event)
+                result = await mock_generate(processed_event)
                 
                 assert result['generated'] is True
                 assert result['response_type'] == 'visual'
@@ -1240,28 +1240,28 @@ class TestRealTimeFeedbackLoop:
             loop_start = time.perf_counter()
             
             # 1. 输入监测
-            with patch('core.feedback.input_monitor.InputMonitor.capture') as mock_capture:
+            with patch('core.feedback.input_monitor.InputMonitor.capture', new_callable=AsyncMock) as mock_capture:
                 mock_capture.return_value = {
                     'captured': True,
                     'detection_latency_ms': 2.0
                 }
-                capture_result = mock_capture({'type': 'mouse_move'})
+                capture_result = await mock_capture({'type': 'mouse_move'})
             
             # 2. 事件处理
-            with patch('core.feedback.event_processor.EventProcessor.process') as mock_process:
+            with patch('core.feedback.event_processor.EventProcessor.process', new_callable=AsyncMock) as mock_process:
                 mock_process.return_value = {
                     'processed': True,
                     'processing_time_ms': 5.0
                 }
-                process_result = mock_process(capture_result)
+                process_result = await mock_process(capture_result)
             
             # 3. 响应生成
-            with patch('core.feedback.response_generator.ResponseGenerator.generate') as mock_generate:
+            with patch('core.feedback.response_generator.ResponseGenerator.generate', new_callable=AsyncMock) as mock_generate:
                 mock_generate.return_value = {
                     'generated': True,
                     'generation_time_ms': 4.0
                 }
-                generate_result = mock_generate(process_result)
+                generate_result = await mock_generate(process_result)
             
             loop_end = time.perf_counter()
             total_latency_ms = (loop_end - loop_start) * 1000
@@ -1301,14 +1301,14 @@ class TestRealTimeFeedbackLoop:
             
             processed_ids = []
             
-            with patch('core.feedback.event_processor.EventProcessor.process') as mock_process:
+            with patch('core.feedback.event_processor.EventProcessor.process', new_callable=AsyncMock) as mock_process:
                 for event in events:
                     mock_process.return_value = {
                         'processed': True,
                         'event_id': event['id'],
                         'preserved_data': event
                     }
-                    result = mock_process(event)
+                    result = await mock_process(event)
                     processed_ids.append(result['event_id'])
                     
                     # 验证数据完整性

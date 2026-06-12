@@ -1,4 +1,4 @@
-"""
+﻿"""
 Angela AI v6.0 - Error Recovery Tests
 错误恢复测试套件
 
@@ -98,8 +98,8 @@ class TestComponentFailureRecovery:
             # 模拟感知组件故障
             fault_injector.inject_fault('perception_engine', 'crash')
             
-            with patch('core.perception.perception_engine.PerceptionEngine.process') as mock_process, \
-                 patch('core.perception.fallback_perception.FallbackPerception.process') as mock_fallback:
+            with patch('core.perception.perception_engine.PerceptionEngine.process', new_callable=AsyncMock) as mock_process, \
+                 patch('core.perception.fallback_perception.FallbackPerception.process', new_callable=AsyncMock) as mock_fallback:
                 
                 # 主组件故障
                 mock_process.side_effect = Exception("Perception engine crashed")
@@ -116,7 +116,7 @@ class TestComponentFailureRecovery:
                 
                 # 尝试使用主组件（失败）
                 try:
-                    result = mock_process({'input': 'test'})
+                    result = await mock_process({'input': 'test'})
                 except Exception as e:
                     # 故障检测
                     detection_end = time.perf_counter()
@@ -124,7 +124,7 @@ class TestComponentFailureRecovery:
                     
                     # 切换到备用组件
                     recovery_start = time.perf_counter()
-                    result = mock_fallback({'input': 'test'})
+                    result = await mock_fallback({'input': 'test'})
                     recovery_end = time.perf_counter()
                     metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
                 
@@ -163,8 +163,8 @@ class TestComponentFailureRecovery:
         try:
             fault_injector.inject_fault('cognitive_engine', 'timeout')
             
-            with patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_cog, \
-                 patch('core.cognition.simple_cognition.SimpleCognition.process') as mock_simple:
+            with patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_cog, \
+                 patch('core.cognition.simple_cognition.SimpleCognition.process', new_callable=AsyncMock) as mock_simple:
                 
                 # 主认知组件超时
                 mock_cog.side_effect = asyncio.TimeoutError("Cognitive processing timeout")
@@ -190,7 +190,7 @@ class TestComponentFailureRecovery:
                     
                     # 切换到简化认知
                     recovery_start = time.perf_counter()
-                    result = mock_simple({'input': 'complex_query'})
+                    result = await mock_simple({'input': 'complex_query'})
                     recovery_end = time.perf_counter()
                     metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
                 
@@ -229,8 +229,8 @@ class TestComponentFailureRecovery:
         try:
             fault_injector.inject_fault('memory_system', 'connection_lost')
             
-            with patch('core.memory.memory_system.MemorySystem.retrieve') as mock_retrieve, \
-                 patch('core.memory.temporary_buffer.TemporaryBuffer.store') as mock_buffer:
+            with patch('core.memory.memory_system.MemorySystem.retrieve', new_callable=AsyncMock) as mock_retrieve, \
+                 patch('core.memory.temporary_buffer.TemporaryBuffer.store', new_callable=AsyncMock) as mock_buffer:
                 
                 # 记忆系统连接失败
                 mock_retrieve.side_effect = Exception("Database connection lost")
@@ -245,14 +245,14 @@ class TestComponentFailureRecovery:
                 detection_start = time.perf_counter()
                 
                 try:
-                    memories = mock_retrieve({'query': 'test'})
+                    memories = await mock_retrieve({'query': 'test'})
                 except Exception:
                     detection_end = time.perf_counter()
                     metrics.detection_time_ms = (detection_end - detection_start) * 1000
                     
                     # 使用临时缓冲
                     recovery_start = time.perf_counter()
-                    buffer_result = mock_buffer({'experience': 'current_interaction'})
+                    buffer_result = await mock_buffer({'experience': 'current_interaction'})
                     recovery_end = time.perf_counter()
                     metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
                 
@@ -290,7 +290,7 @@ class TestComponentFailureRecovery:
         try:
             fault_injector.inject_fault('emotional_blending', 'calculation_error')
             
-            with patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.blend') as mock_blend:
+            with patch("core.bio.emotional_blending.EmotionalBlendingSystem.blend", create=True, new_callable=AsyncMock) as mock_blend:
                 
                 # 情绪混合失败
                 mock_blend.side_effect = Exception("Emotional calculation error")
@@ -298,7 +298,7 @@ class TestComponentFailureRecovery:
                 detection_start = time.perf_counter()
                 
                 try:
-                    emotion = mock_blend({'input': 'test'})
+                    emotion = await mock_blend({'input': 'test'})
                 except Exception:
                     detection_end = time.perf_counter()
                     metrics.detection_time_ms = (detection_end - detection_start) * 1000
@@ -346,8 +346,8 @@ class TestComponentFailureRecovery:
         try:
             fault_injector.inject_fault('live2d_renderer', 'rendering_error')
             
-            with patch('core.live2d.live2d_renderer.Live2DRenderer.render') as mock_render, \
-                 patch('core.live2d.static_fallback.StaticFallback.render') as mock_static:
+            with patch('core.live2d.live2d_renderer.Live2DRenderer.render', new_callable=AsyncMock) as mock_render, \
+                 patch('core.live2d.static_fallback.StaticFallback.render', new_callable=AsyncMock) as mock_static:
                 
                 # Live2D渲染失败
                 mock_render.side_effect = Exception("Live2D rendering failed")
@@ -363,14 +363,14 @@ class TestComponentFailureRecovery:
                 detection_start = time.perf_counter()
                 
                 try:
-                    result = mock_render({'expression': 'happy'})
+                    result = await mock_render({'expression': 'happy'})
                 except Exception:
                     detection_end = time.perf_counter()
                     metrics.detection_time_ms = (detection_end - detection_start) * 1000
                     
                     # 切换到静态回退
                     recovery_start = time.perf_counter()
-                    result = mock_static({'expression': 'neutral'})
+                    result = await mock_static({'expression': 'neutral'})
                     recovery_end = time.perf_counter()
                     metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
                 
@@ -411,9 +411,9 @@ class TestNetworkInterruptionRecovery:
             failure_type="network_disconnect"
         )
         
-        with patch('services.main_api_server.MainApiServer.is_connected') as mock_connected, \
-             patch('services.main_api_server.MainApiServer.reconnect') as mock_reconnect, \
-             patch('services.main_api_server.MainApiServer.queue_request') as mock_queue:
+        with patch('services.main_api_server.MainApiServer.is_connected', create=True, new_callable=AsyncMock) as mock_connected, \
+             patch('services.main_api_server.MainApiServer.reconnect', create=True, new_callable=AsyncMock) as mock_reconnect, \
+             patch('services.main_api_server.MainApiServer.queue_request', create=True, new_callable=AsyncMock) as mock_queue:
             
             # 模拟连接断开
             mock_connected.return_value = False
@@ -423,7 +423,7 @@ class TestNetworkInterruptionRecovery:
             detection_start = time.perf_counter()
             
             # 检测断开
-            is_connected = mock_connected()
+            is_connected = await mock_connected()
             assert is_connected is False
             
             detection_end = time.perf_counter()
@@ -431,7 +431,7 @@ class TestNetworkInterruptionRecovery:
             
             # 重连
             recovery_start = time.perf_counter()
-            reconnect_result = mock_reconnect()
+            reconnect_result = await mock_reconnect()
             recovery_end = time.perf_counter()
             metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
             
@@ -459,9 +459,9 @@ class TestNetworkInterruptionRecovery:
             failure_type="cloud_unavailable"
         )
         
-        with patch('services.cloud_api.CloudApi.is_available') as mock_available, \
-             patch('core.local_processing.LocalProcessor.process') as mock_local, \
-             patch('services.sync_queue.SyncQueue.add') as mock_sync:
+        with patch('services.cloud_api.CloudApi.is_available', new_callable=AsyncMock) as mock_available, \
+             patch('core.local_processing.LocalProcessor.process', new_callable=AsyncMock) as mock_local, \
+             patch('services.sync_queue.SyncQueue.add', new_callable=AsyncMock) as mock_sync:
             
             # 云服务不可用
             mock_available.return_value = False
@@ -479,7 +479,7 @@ class TestNetworkInterruptionRecovery:
             detection_start = time.perf_counter()
             
             # 检测云服务不可用
-            cloud_available = mock_available()
+            cloud_available = await mock_available()
             assert cloud_available is False
             
             detection_end = time.perf_counter()
@@ -487,8 +487,8 @@ class TestNetworkInterruptionRecovery:
             
             # 切换到本地处理
             recovery_start = time.perf_counter()
-            result = mock_local({'request': 'test'})
-            sync_result = mock_sync({'data': 'pending_sync'})
+            result = await mock_local({'request': 'test'})
+            sync_result = await mock_sync({'data': 'pending_sync'})
             recovery_end = time.perf_counter()
             metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
             
@@ -517,7 +517,7 @@ class TestNetworkInterruptionRecovery:
             failure_type="api_timeout"
         )
         
-        with patch('services.external_api.ExternalApi.call_with_retry') as mock_call:
+        with patch('services.external_api.ExternalApi.call_with_retry', new_callable=AsyncMock) as mock_call:
             
             # 模拟超时后成功
             mock_call.return_value = {
@@ -528,7 +528,7 @@ class TestNetworkInterruptionRecovery:
             }
             
             start = time.perf_counter()
-            result = mock_call({'endpoint': 'test'}, max_retries=3, timeout=2000)
+            result = await mock_call({'endpoint': 'test'}, max_retries=3, timeout=2000)
             end = time.perf_counter()
             
             # 验证重试机制
@@ -563,8 +563,8 @@ class TestDataCorruptionRecovery:
             failure_type="data_corruption"
         )
         
-        with patch('core.memory.integrity_checker.IntegrityChecker.verify') as mock_verify, \
-             patch('core.memory.backup_system.BackupSystem.restore') as mock_restore:
+        with patch('core.memory.integrity_checker.IntegrityChecker.verify', new_callable=AsyncMock) as mock_verify, \
+             patch('core.memory.backup_system.BackupSystem.restore', new_callable=AsyncMock) as mock_restore:
             
             # 检测到损坏
             mock_verify.return_value = {
@@ -583,7 +583,7 @@ class TestDataCorruptionRecovery:
             detection_start = time.perf_counter()
             
             # 验证完整性
-            check_result = mock_verify()
+            check_result = await mock_verify()
             assert check_result['valid'] is False
             
             detection_end = time.perf_counter()
@@ -591,7 +591,7 @@ class TestDataCorruptionRecovery:
             
             # 从备份恢复
             recovery_start = time.perf_counter()
-            restore_result = mock_restore(corrupted_entries=check_result['corrupted_entries'])
+            restore_result = await mock_restore(corrupted_entries=check_result['corrupted_entries'])
             recovery_end = time.perf_counter()
             metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
             
@@ -620,8 +620,8 @@ class TestDataCorruptionRecovery:
             failure_type="config_corruption"
         )
         
-        with patch('core.config.config_manager.ConfigManager.validate') as mock_validate, \
-             patch('core.config.config_manager.ConfigManager.load_defaults') as mock_defaults:
+        with patch('core.config.config_manager.ConfigManager.validate', new_callable=AsyncMock) as mock_validate, \
+             patch('core.config.config_manager.ConfigManager.load_defaults', new_callable=AsyncMock) as mock_defaults:
             
             # 配置验证失败
             mock_validate.return_value = {
@@ -639,7 +639,7 @@ class TestDataCorruptionRecovery:
             detection_start = time.perf_counter()
             
             # 验证配置
-            validation = mock_validate()
+            validation = await mock_validate()
             assert validation['valid'] is False
             
             detection_end = time.perf_counter()
@@ -647,7 +647,7 @@ class TestDataCorruptionRecovery:
             
             # 加载默认配置
             recovery_start = time.perf_counter()
-            default_config = mock_defaults()
+            default_config = await mock_defaults()
             recovery_end = time.perf_counter()
             metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
             
@@ -675,8 +675,8 @@ class TestDataCorruptionRecovery:
             failure_type="experience_corruption"
         )
         
-        with patch('core.memory.experience_store.ExperienceStore.check_integrity') as mock_check, \
-             patch('core.memory.experience_store.ExperienceStore.isolate_corrupted') as mock_isolate:
+        with patch('core.memory.experience_store.ExperienceStore.check_integrity', new_callable=AsyncMock) as mock_check, \
+             patch('core.memory.experience_store.ExperienceStore.isolate_corrupted', new_callable=AsyncMock) as mock_isolate:
             
             # 检测到损坏的经验
             mock_check.return_value = {
@@ -695,11 +695,11 @@ class TestDataCorruptionRecovery:
             }
             
             # 检查完整性
-            check_result = mock_check()
+            check_result = await mock_check()
             assert check_result['integrity_score'] < 1.0
             
             # 隔离损坏数据
-            isolation = mock_isolate(corrupted=check_result['corrupted_count'])
+            isolation = await mock_isolate(corrupted=check_result['corrupted_count'])
             
             # 验证隔离
             assert isolation['isolated'] is True
@@ -731,9 +731,9 @@ class TestDegradedModeOperation:
         """
         print(f"\n✓ Testing core functionality in degraded mode:")
         
-        with patch('core.system_health.SystemHealth.get_status') as mock_health, \
-             patch('core.degraded_mode.DegradedModeProcessor.process_input') as mock_process, \
-             patch('core.degraded_mode.DegradedModeResponder.generate_response') as mock_respond:
+        with patch("core.life.digital_life_integrator.SystemHealth.get_status", create=True, new_callable=AsyncMock) as mock_health, \
+             patch('core.degraded_mode.DegradedModeProcessor.process_input', new_callable=AsyncMock) as mock_process, \
+             patch('core.degraded_mode.DegradedModeResponder.generate_response', new_callable=AsyncMock) as mock_respond:
             
             # 系统处于降级状态
             mock_health.return_value = {
@@ -758,15 +758,15 @@ class TestDegradedModeOperation:
             }
             
             # 验证系统状态
-            health = mock_health()
+            health = await mock_health()
             assert health['status'] == ComponentStatus.DEGRADED.value
             
             # 验证核心功能
-            process_result = mock_process({'input': 'hello'})
+            process_result = await mock_process({'input': 'hello'})
             assert process_result['processed'] is True
             assert process_result['mode'] == 'degraded'
             
-            response = mock_respond({'intent': 'greeting'})
+            response = await mock_respond({'intent': 'greeting'})
             assert response['response'] is not None
             assert len(response['response']) > 0
             
@@ -803,8 +803,8 @@ class TestDegradedModeOperation:
             }
         ]
         
-        with patch('core.feature_manager.FeatureManager.apply_degradation_stage') as mock_apply, \
-             patch('core.notification.user_notifier.UserNotifier.notify') as mock_notify:
+        with patch('core.feature_manager.FeatureManager.apply_degradation_stage', new_callable=AsyncMock) as mock_apply, \
+             patch('core.notification.user_notifier.UserNotifier.notify', new_callable=AsyncMock) as mock_notify:
             
             mock_notify.return_value = {'notified': True, 'message_shown': True}
             
@@ -816,8 +816,8 @@ class TestDegradedModeOperation:
                     'user_notified': True
                 }
                 
-                result = mock_apply(stage['stage'])
-                notification = mock_notify(f"Entered degradation stage {stage['stage']}")
+                result = await mock_apply(stage['stage'])
+                notification = await mock_notify(f"Entered degradation stage {stage['stage']}")
                 
                 assert result['stage_applied'] == stage['stage']
                 assert len(result['disabled']) == len(stage['disabled'])
@@ -840,8 +840,8 @@ class TestDegradedModeOperation:
             failure_type="auto_recovery"
         )
         
-        with patch('core.system_health.SystemHealth.check_component_recovery') as mock_check, \
-             patch('core.feature_manager.FeatureManager.restore_full_functionality') as mock_restore:
+        with patch("core.life.digital_life_integrator.SystemHealth.check_component_recovery", create=True, new_callable=AsyncMock) as mock_check, \
+             patch('core.feature_manager.FeatureManager.restore_full_functionality', new_callable=AsyncMock) as mock_restore:
             
             # 组件已恢复
             mock_check.return_value = {
@@ -859,11 +859,11 @@ class TestDegradedModeOperation:
             recovery_start = time.perf_counter()
             
             # 检查恢复
-            check = mock_check()
+            check = await mock_check()
             assert check['all_healthy'] is True
             
             # 恢复功能
-            restore = mock_restore()
+            restore = await mock_restore()
             
             recovery_end = time.perf_counter()
             metrics.recovery_time_ms = (recovery_end - recovery_start) * 1000
@@ -899,8 +899,8 @@ class TestSystemResilience:
         """
         print(f"\n✓ Testing cascading failure prevention:")
         
-        with patch('core.fault_isolation.FaultIsolation.isolate') as mock_isolate, \
-             patch('core.system_health.SystemHealth.get_overall_status') as mock_status:
+        with patch('core.fault_isolation.FaultIsolation.isolate', new_callable=AsyncMock) as mock_isolate, \
+             patch("core.life.digital_life_integrator.SystemHealth.get_overall_status", create=True, new_callable=AsyncMock) as mock_status:
             
             # 故障被隔离
             mock_isolate.return_value = {
@@ -918,14 +918,14 @@ class TestSystemResilience:
             }
             
             # 执行隔离
-            isolation = mock_isolate(component='advanced_analytics', fault_type='timeout')
+            isolation = await mock_isolate(component='advanced_analytics', fault_type='timeout')
             
             # 验证隔离有效
             assert isolation['isolated'] is True
             assert len(isolation['affected_components']) == 0  # 无级联影响
             
             # 验证系统整体健康
-            status = mock_status()
+            status = await mock_status()
             assert status['overall_status'] == 'healthy'
             assert status['healthy_components'] > status['degraded_components']
             
@@ -947,8 +947,8 @@ class TestSystemResilience:
             failure_type="state_preservation"
         )
         
-        with patch('core.state_manager.StateManager.save_checkpoint') as mock_save, \
-             patch('core.state_manager.StateManager.restore_from_checkpoint') as mock_restore:
+        with patch('core.state_manager.StateManager.save_checkpoint', new_callable=AsyncMock) as mock_save, \
+             patch('core.state_manager.StateManager.restore_from_checkpoint', new_callable=AsyncMock) as mock_restore:
             
             # 保存检查点
             mock_save.return_value = {
@@ -970,10 +970,10 @@ class TestSystemResilience:
             }
             
             # 模拟故障前保存
-            checkpoint = mock_save()
+            checkpoint = await mock_save()
             
             # 模拟故障后恢复
-            restoration = mock_restore(checkpoint_id=checkpoint['checkpoint_id'])
+            restoration = await mock_restore(checkpoint_id=checkpoint['checkpoint_id'])
             
             # 验证状态保持
             assert checkpoint['saved'] is True

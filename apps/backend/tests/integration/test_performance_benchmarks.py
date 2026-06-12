@@ -1,4 +1,4 @@
-"""
+﻿"""
 Angela AI v6.0 - Performance Benchmark Tests
 性能基准测试套件
 
@@ -76,6 +76,11 @@ class PerformanceMetrics:
     def max_latency_ms(self) -> float:
         """最大延迟"""
         return max(self.samples) if self.samples else 0.0
+    
+    @property
+    def sample_count(self) -> int:
+        """样本数量"""
+        return len(self.samples)
     
     @property
     def avg_latency_ms(self) -> float:
@@ -181,7 +186,7 @@ class TestResponseTimeBenchmarks:
         metrics = PerformanceMetrics("test_perception_response_time", time.time())
         sample_count = 100
         
-        with patch('core.perception.perception_engine.PerceptionEngine.process') as mock_process:
+        with patch('core.perception.perception_engine.PerceptionEngine.process', new_callable=AsyncMock) as mock_process:
             mock_process.return_value = {
                 'perceived_data': {'type': 'input'},
                 'confidence': 0.95
@@ -189,7 +194,7 @@ class TestResponseTimeBenchmarks:
             
             for i in range(sample_count):
                 start = time.perf_counter()
-                result = mock_process({'type': 'input'})
+                result = await mock_process({'type': 'input'})
                 end = time.perf_counter()
                 
                 latency_ms = (end - start) * 1000
@@ -221,7 +226,7 @@ class TestResponseTimeBenchmarks:
         metrics = PerformanceMetrics("test_cognitive_response_time", time.time())
         sample_count = 50
         
-        with patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_process:
+        with patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_process:
             mock_process.return_value = {
                 'intent': 'test',
                 'confidence': 0.9,
@@ -230,7 +235,7 @@ class TestResponseTimeBenchmarks:
             
             for i in range(sample_count):
                 start = time.perf_counter()
-                result = mock_process({'input': 'test'})
+                result = await mock_process({'input': 'test'})
                 end = time.perf_counter()
                 
                 latency_ms = (end - start) * 1000
@@ -259,7 +264,7 @@ class TestResponseTimeBenchmarks:
         metrics = PerformanceMetrics("test_emotional_response_time", time.time())
         sample_count = 100
         
-        with patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.blend') as mock_blend:
+        with patch("core.bio.emotional_blending.EmotionalBlendingSystem.blend", create=True, new_callable=AsyncMock) as mock_blend:
             mock_blend.return_value = {
                 'primary_emotion': 'happy',
                 'intensity': 0.7
@@ -267,7 +272,7 @@ class TestResponseTimeBenchmarks:
             
             for i in range(sample_count):
                 start = time.perf_counter()
-                result = mock_blend({'input': 'positive'})
+                result = await mock_blend({'input': 'positive'})
                 end = time.perf_counter()
                 
                 latency_ms = (end - start) * 1000
@@ -293,7 +298,7 @@ class TestResponseTimeBenchmarks:
         metrics = PerformanceMetrics("test_memory_retrieval_time", time.time())
         sample_count = 50
         
-        with patch('core.memory.memory_system.MemorySystem.retrieve') as mock_retrieve:
+        with patch('core.memory.memory_system.MemorySystem.retrieve', new_callable=AsyncMock) as mock_retrieve:
             mock_retrieve.return_value = {
                 'memories': [{'id': 1}, {'id': 2}],
                 'relevance_scores': [0.9, 0.8]
@@ -301,7 +306,7 @@ class TestResponseTimeBenchmarks:
             
             for i in range(sample_count):
                 start = time.perf_counter()
-                result = mock_retrieve({'query': 'test'})
+                result = await mock_retrieve({'query': 'test'})
                 end = time.perf_counter()
                 
                 latency_ms = (end - start) * 1000
@@ -328,7 +333,7 @@ class TestResponseTimeBenchmarks:
         metrics = PerformanceMetrics("test_response_generation_time", time.time())
         sample_count = 30
         
-        with patch('core.nlg.natural_language_generation.NLG.generate') as mock_generate:
+        with patch('core.nlg.natural_language_generation.NLG.generate', new_callable=AsyncMock) as mock_generate:
             mock_generate.return_value = {
                 'response_text': 'This is a test response.',
                 'personalization_score': 0.85
@@ -336,7 +341,7 @@ class TestResponseTimeBenchmarks:
             
             for i in range(sample_count):
                 start = time.perf_counter()
-                result = mock_generate({'context': 'test'})
+                result = await mock_generate({'context': 'test'})
                 end = time.perf_counter()
                 
                 latency_ms = (end - start) * 1000
@@ -364,12 +369,12 @@ class TestResponseTimeBenchmarks:
         metrics = PerformanceMetrics("test_live2d_rendering_time", time.time())
         sample_count = 120  # 2秒 @ 60fps
         
-        with patch('core.live2d.live2d_renderer.Live2DRenderer.render_frame') as mock_render:
+        with patch('core.live2d.live2d_renderer.Live2DRenderer.render_frame', new_callable=AsyncMock) as mock_render:
             mock_render.return_value = {'rendered': True, 'frame_time_ms': 16.67}
             
             for i in range(sample_count):
                 start = time.perf_counter()
-                result = mock_render({'expression': 'happy'})
+                result = await mock_render({'expression': 'happy'})
                 end = time.perf_counter()
                 
                 latency_ms = (end - start) * 1000
@@ -410,9 +415,9 @@ class TestConcurrencyBenchmarks:
             """处理单个请求"""
             start = time.perf_counter()
             try:
-                with patch('core.perception.perception_engine.PerceptionEngine.process') as mock_process:
+                with patch('core.perception.perception_engine.PerceptionEngine.process', new_callable=AsyncMock) as mock_process:
                     mock_process.return_value = {'perceived': True, 'id': request_id}
-                    result = mock_process({'id': request_id})
+                    result = await mock_process({'id': request_id})
                     
                 end = time.perf_counter()
                 latency_ms = (end - start) * 1000
@@ -458,9 +463,9 @@ class TestConcurrencyBenchmarks:
             """处理单个请求"""
             start = time.perf_counter()
             try:
-                with patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_process:
+                with patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_process:
                     mock_process.return_value = {'processed': True, 'id': request_id}
-                    result = mock_process({'id': request_id})
+                    result = await mock_process({'id': request_id})
                     
                 end = time.perf_counter()
                 latency_ms = (end - start) * 1000
@@ -503,17 +508,17 @@ class TestConcurrencyBenchmarks:
             """执行记忆操作"""
             start = time.perf_counter()
             try:
-                with patch('core.memory.memory_system.MemorySystem.store') as mock_store, \
-                     patch('core.memory.memory_system.MemorySystem.retrieve') as mock_retrieve:
+                with patch('core.memory.memory_system.MemorySystem.store', new_callable=AsyncMock) as mock_store, \
+                     patch('core.memory.memory_system.MemorySystem.retrieve', new_callable=AsyncMock) as mock_retrieve:
                     
                     mock_store.return_value = {'stored': True, 'id': op_id}
                     mock_retrieve.return_value = {'memories': [{'id': op_id}]}
                     
                     # 模拟读写混合
                     if op_id % 2 == 0:
-                        result = mock_store({'data': f'test_{op_id}'})
+                        result = await mock_store({'data': f'test_{op_id}'})
                     else:
-                        result = mock_retrieve({'query': f'test_{op_id}'})
+                        result = await mock_retrieve({'query': f'test_{op_id}'})
                     
                 end = time.perf_counter()
                 latency_ms = (end - start) * 1000
@@ -562,7 +567,7 @@ class TestConcurrencyBenchmarks:
                         mock.return_value = {'cognitive_state': 'active'}
                         result = mock({'input': workload_id})
                 elif workload_type == 'emotion':
-                    with patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.blend') as mock:
+                    with patch("core.bio.emotional_blending.EmotionalBlendingSystem.blend", create=True, new_callable=AsyncMock) as mock:
                         mock.return_value = {'emotion': 'happy'}
                         result = mock({'input': workload_id})
                 else:  # memory
@@ -642,11 +647,11 @@ class TestMemoryUsageBenchmarks:
         gc.collect()
         baseline_memory = memory_monitor()
         
-        with patch('core.perception.perception_engine.PerceptionEngine.process') as mock_process:
+        with patch('core.perception.perception_engine.PerceptionEngine.process', new_callable=AsyncMock) as mock_process:
             mock_process.return_value = {'processed': True, 'data': 'x' * 1000}
             
             for i in range(iterations):
-                result = mock_process({'input': i})
+                result = await mock_process({'input': i})
                 # 每100次强制GC
                 if i % 100 == 0:
                     gc.collect()
@@ -680,9 +685,9 @@ class TestMemoryUsageBenchmarks:
         baseline_memory = memory_monitor()
         
         # 模拟高负载
-        with patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_cog, \
-             patch('core.memory.memory_system.MemorySystem.retrieve') as mock_mem, \
-             patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.blend') as mock_emo:
+        with patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_cog, \
+             patch('core.memory.memory_system.MemorySystem.retrieve', new_callable=AsyncMock) as mock_mem, \
+             patch("core.bio.emotional_blending.EmotionalBlendingSystem.blend", create=True, new_callable=AsyncMock) as mock_emo:
             
             mock_cog.return_value = {'result': 'x' * 10000}
             mock_mem.return_value = {'memories': [{'data': 'x' * 5000} for _ in range(10)]}
@@ -719,7 +724,7 @@ class TestMemoryUsageBenchmarks:
         baseline_memory = memory_monitor()
         
         # 分配内存
-        with patch('core.memory.memory_system.MemorySystem.store') as mock_store:
+        with patch('core.memory.memory_system.MemorySystem.store', new_callable=AsyncMock) as mock_store:
             mock_store.return_value = {'stored': True}
             for i in range(100):
                 mock_store({'large_data': 'x' * 10000})
@@ -789,7 +794,7 @@ class TestCpuUsageBenchmarks:
         max_expected_cpu = 80.0  # %
         
         # 模拟负载
-        with patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_cog:
+        with patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_cog:
             mock_cog.return_value = {'result': 'processed'}
             
             cpu_samples = []
@@ -866,9 +871,9 @@ class TestLongRunningStability:
         start_time = time.time()
         end_time = start_time + (test_duration_minutes * 60)
         
-        with patch('core.perception.perception_engine.PerceptionEngine.process') as mock_perceive, \
-             patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_cog, \
-             patch('core.memory.memory_system.MemorySystem.retrieve') as mock_mem:
+        with patch('core.perception.perception_engine.PerceptionEngine.process', new_callable=AsyncMock) as mock_perceive, \
+             patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_cog, \
+             patch('core.memory.memory_system.MemorySystem.retrieve', new_callable=AsyncMock) as mock_mem:
             
             mock_perceive.return_value = {'perceived': True}
             mock_cog.return_value = {'processed': True}

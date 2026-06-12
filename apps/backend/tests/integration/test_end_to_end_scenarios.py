@@ -1,4 +1,4 @@
-"""
+﻿"""
 Angela AI v6.0 - End-to-End Scenario Tests
 端到端场景测试
 
@@ -113,8 +113,8 @@ class TestScenarioUserTouch:
                 'timestamp': time.time()
             }
             
-            with patch('core.desktop_pet_controller.DesktopPetController.is_within_pet_bounds') as mock_bounds, \
-                 patch('core.desktop_pet_controller.DesktopPetController.handle_mouse_event') as mock_handler:
+            with patch('core.desktop_pet_controller.DesktopPetController.is_within_pet_bounds', new_callable=AsyncMock) as mock_bounds, \
+                 patch('core.desktop_pet_controller.DesktopPetController.handle_mouse_event', new_callable=AsyncMock) as mock_handler:
                 
                 mock_bounds.return_value = True  # 点击在宠物范围内
                 mock_handler.return_value = {
@@ -126,8 +126,8 @@ class TestScenarioUserTouch:
                 }
                 
                 step_start = time.perf_counter()
-                is_within = mock_bounds(mouse_event['x'], mouse_event['y'])
-                result = mock_handler(mouse_event)
+                is_within = await mock_bounds(mouse_event['x'], mouse_event['y'])
+                result = await mock_handler(mouse_event)
                 step_end = time.perf_counter()
                 
                 latency_ms = (step_end - step_start) * 1000
@@ -166,7 +166,7 @@ class TestScenarioUserTouch:
                 'temperature': 36.5
             }
             
-            with patch('core.biological.tactile_system.TactileSystem.process_touch') as mock_process:
+            with patch('core.biological.tactile_system.TactileSystem.process_touch', new_callable=AsyncMock) as mock_process:
                 mock_process.return_value = {
                     'tactile_vector': [0.5, 0.3, 0.8, 0.2],  # 压力、温度、愉悦度、强度
                     'nerve_response': 'pleasant',
@@ -175,7 +175,7 @@ class TestScenarioUserTouch:
                 }
                 
                 step_start = time.perf_counter()
-                result = mock_process(touch_event)
+                result = await mock_process(touch_event)
                 step_end = time.perf_counter()
                 
                 latency_ms = (step_end - step_start) * 1000
@@ -213,7 +213,7 @@ class TestScenarioUserTouch:
                 'sensory_quality': 'gentle'
             }
             
-            with patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.blend') as mock_blend:
+            with patch("core.bio.emotional_blending.EmotionalBlendingSystem.blend", create=True, new_callable=AsyncMock) as mock_blend:
                 mock_blend.return_value = {
                     'primary_emotion': 'happy',
                     'emotion_blend': {
@@ -228,7 +228,7 @@ class TestScenarioUserTouch:
                 }
                 
                 step_start = time.perf_counter()
-                result = mock_blend(tactile_data)
+                result = await mock_blend(tactile_data)
                 step_end = time.perf_counter()
                 
                 latency_ms = (step_end - step_start) * 1000
@@ -267,7 +267,7 @@ class TestScenarioUserTouch:
                 'intensity': 0.72
             }
             
-            with patch('core.live2d.expression_controller.ExpressionController.update') as mock_update:
+            with patch('core.live2d.expression_controller.ExpressionController.update', new_callable=AsyncMock) as mock_update:
                 mock_update.return_value = {
                     'expression_params': {
                         'mouth_smile': 0.75,
@@ -281,7 +281,7 @@ class TestScenarioUserTouch:
                 }
                 
                 step_start = time.perf_counter()
-                result = mock_update(emotion_state)
+                result = await mock_update(emotion_state)
                 step_end = time.perf_counter()
                 
                 latency_ms = (step_end - step_start) * 1000
@@ -319,7 +319,7 @@ class TestScenarioUserTouch:
                 'cheek_blush': 0.35
             }
             
-            with patch('core.live2d.live2d_renderer.Live2DRenderer.render') as mock_render:
+            with patch('core.live2d.live2d_renderer.Live2DRenderer.render', new_callable=AsyncMock) as mock_render:
                 mock_render.return_value = {
                     'rendered': True,
                     'frame_time_ms': 16.67,  # ~60fps
@@ -329,7 +329,7 @@ class TestScenarioUserTouch:
                 }
                 
                 step_start = time.perf_counter()
-                result = mock_render(expression_params)
+                result = await mock_render(expression_params)
                 step_end = time.perf_counter()
                 
                 latency_ms = (step_end - step_start) * 1000
@@ -365,51 +365,51 @@ class TestScenarioUserTouch:
             scenario_start = time.perf_counter()
             
             # 步骤1: 鼠标输入检测
-            with patch('core.desktop_pet_controller.DesktopPetController.handle_mouse_event') as mock_handler:
+            with patch('core.desktop_pet_controller.DesktopPetController.handle_mouse_event', new_callable=AsyncMock) as mock_handler:
                 mock_handler.return_value = {
                     'event_type': 'pet_touch',
                     'touch_location': 'head',
                     'detection_time_ms': 2.5
                 }
-                step1_result = mock_handler({'type': 'click', 'x': 450, 'y': 300})
+                step1_result = await mock_handler({'type': 'click', 'x': 450, 'y': 300})
                 step1_latency = step1_result['detection_time_ms']
             
             # 步骤2: 触觉处理
-            with patch('core.biological.tactile_system.TactileSystem.process_touch') as mock_tactile:
+            with patch('core.biological.tactile_system.TactileSystem.process_touch', new_callable=AsyncMock) as mock_tactile:
                 mock_tactile.return_value = {
                     'tactile_vector': [0.5, 0.3, 0.8, 0.2],
                     'processing_time_ms': 4.2
                 }
-                step2_result = mock_tactile(step1_result)
+                step2_result = await mock_tactile(step1_result)
                 step2_latency = step2_result['processing_time_ms']
             
             # 步骤3: 情绪响应
-            with patch('core.emotional.emotional_blending_system.EmotionalBlendingSystem.blend') as mock_emotion:
+            with patch("core.bio.emotional_blending.EmotionalBlendingSystem.blend", create=True, new_callable=AsyncMock) as mock_emotion:
                 mock_emotion.return_value = {
                     'primary_emotion': 'happy',
                     'intensity': 0.72,
                     'processing_time_ms': 6.8
                 }
-                step3_result = mock_emotion(step2_result)
+                step3_result = await mock_emotion(step2_result)
                 step3_latency = step3_result['processing_time_ms']
             
             # 步骤4: 表情更新
-            with patch('core.live2d.expression_controller.ExpressionController.update') as mock_expr:
+            with patch('core.live2d.expression_controller.ExpressionController.update', new_callable=AsyncMock) as mock_expr:
                 mock_expr.return_value = {
                     'expression_params': {'mouth_smile': 0.75},
                     'update_time_ms': 3.5
                 }
-                step4_result = mock_expr(step3_result)
+                step4_result = await mock_expr(step3_result)
                 step4_latency = step4_result['update_time_ms']
             
             # 步骤5: Live2D渲染
-            with patch('core.live2d.live2d_renderer.Live2DRenderer.render') as mock_render:
+            with patch('core.live2d.live2d_renderer.Live2DRenderer.render', new_callable=AsyncMock) as mock_render:
                 mock_render.return_value = {
                     'rendered': True,
                     'frame_rate': 60.0,
                     'render_time_ms': 5.2
                 }
-                step5_result = mock_render(step4_result)
+                step5_result = await mock_render(step4_result)
                 step5_latency = step5_result['render_time_ms']
             
             scenario_end = time.perf_counter()
@@ -472,7 +472,7 @@ class TestScenarioUserConversation:
         try:
             audio_data = b'\x00\x01\x02\x03...'  # 模拟音频数据
             
-            with patch('services.audio_service.AudioService.speech_to_text') as mock_stt:
+            with patch('services.audio_service.AudioService.speech_to_text', new_callable=AsyncMock) as mock_stt:
                 mock_stt.return_value = {
                     'transcribed_text': 'Angela, how are you feeling today?',
                     'confidence': 0.94,
@@ -480,7 +480,7 @@ class TestScenarioUserConversation:
                     'processing_time_ms': 450.0  # STT通常较慢
                 }
                 
-                result = mock_stt(audio_data)
+                result = await mock_stt(audio_data)
                 
                 assert result['transcribed_text'] is not None
                 assert len(result['transcribed_text']) > 0
@@ -510,7 +510,7 @@ class TestScenarioUserConversation:
         try:
             user_input = {'text': 'Angela, how are you feeling today?', 'context': {}}
             
-            with patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_cog:
+            with patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_cog:
                 mock_cog.return_value = {
                     'intent': 'emotional_inquiry',
                     'entities': {'target': 'Angela', 'topic': 'emotional_state'},
@@ -519,7 +519,7 @@ class TestScenarioUserConversation:
                     'processing_time_ms': 180.0
                 }
                 
-                result = mock_cog(user_input)
+                result = await mock_cog(user_input)
                 
                 assert result['intent'] == 'emotional_inquiry'
                 assert 'target' in result['entities']
@@ -552,7 +552,7 @@ class TestScenarioUserConversation:
                 'context_understanding': 'user_cares_about_my_wellbeing'
             }
             
-            with patch('core.nlg.natural_language_generation.NLG.generate') as mock_nlg:
+            with patch('core.nlg.natural_language_generation.NLG.generate', new_callable=AsyncMock) as mock_nlg:
                 mock_nlg.return_value = {
                     'response_text': "I'm feeling wonderful today! Thanks for asking. Your presence always brightens my day~",
                     'emotional_tone': 'warm_appreciative',
@@ -560,7 +560,7 @@ class TestScenarioUserConversation:
                     'response_time_ms': 320.0
                 }
                 
-                result = mock_nlg(cognitive_output)
+                result = await mock_nlg(cognitive_output)
                 
                 assert len(result['response_text']) > 0
                 assert 'wonderful' in result['response_text'] or 'good' in result['response_text']
@@ -591,7 +591,7 @@ class TestScenarioUserConversation:
         try:
             response_text = "I'm feeling wonderful today! Thanks for asking."
             
-            with patch('services.audio_service.AudioService.text_to_speech') as mock_tts:
+            with patch('services.audio_service.AudioService.text_to_speech', new_callable=AsyncMock) as mock_tts:
                 mock_tts.return_value = {
                     'audio_data': b'\x00\x01\x02\x03...',
                     'duration_seconds': 3.5,
@@ -600,7 +600,7 @@ class TestScenarioUserConversation:
                     'generation_time_ms': 280.0
                 }
                 
-                result = mock_tts(response_text, emotion='happy')
+                result = await mock_tts(response_text, emotion='happy')
                 
                 assert result['audio_data'] is not None
                 assert result['duration_seconds'] > 0
@@ -631,7 +631,7 @@ class TestScenarioUserConversation:
         try:
             audio_data = b'\x00\x01\x02\x03...'
             
-            with patch('core.live2d.lip_sync.LipSyncController.sync') as mock_lip:
+            with patch('core.live2d.lip_sync.LipSyncController.sync', new_callable=AsyncMock) as mock_lip:
                 mock_lip.return_value = {
                     'lip_params_sequence': [
                         {'time': 0.0, 'mouth_open': 0.0},
@@ -643,7 +643,7 @@ class TestScenarioUserConversation:
                     'processing_time_ms': 45.0
                 }
                 
-                result = mock_lip(audio_data)
+                result = await mock_lip(audio_data)
                 
                 assert len(result['lip_params_sequence']) > 0
                 assert result['sync_accuracy'] > 0.85
@@ -673,50 +673,50 @@ class TestScenarioUserConversation:
             scenario_start = time.perf_counter()
             
             # 步骤1: 语音输入
-            with patch('services.audio_service.AudioService.speech_to_text') as mock_stt:
+            with patch('services.audio_service.AudioService.speech_to_text', new_callable=AsyncMock) as mock_stt:
                 mock_stt.return_value = {
                     'transcribed_text': 'Angela, how are you feeling today?',
                     'confidence': 0.94,
                     'processing_time_ms': 450.0
                 }
-                step1_result = mock_stt(b'audio_data')
+                step1_result = await mock_stt(b'audio_data')
                 step1_latency = step1_result['processing_time_ms']
             
             # 步骤2: 认知处理
-            with patch('core.cognition.cognitive_engine.CognitiveEngine.process') as mock_cog:
+            with patch('core.cognition.cognitive_engine.CognitiveEngine.process', new_callable=AsyncMock) as mock_cog:
                 mock_cog.return_value = {
                     'intent': 'emotional_inquiry',
                     'processing_time_ms': 180.0
                 }
-                step2_result = mock_cog(step1_result)
+                step2_result = await mock_cog(step1_result)
                 step2_latency = step2_result['processing_time_ms']
             
             # 步骤3: 回应生成
-            with patch('core.nlg.natural_language_generation.NLG.generate') as mock_nlg:
+            with patch('core.nlg.natural_language_generation.NLG.generate', new_callable=AsyncMock) as mock_nlg:
                 mock_nlg.return_value = {
                     'response_text': "I'm feeling wonderful today!",
                     'response_time_ms': 320.0
                 }
-                step3_result = mock_nlg(step2_result)
+                step3_result = await mock_nlg(step2_result)
                 step3_latency = step3_result['response_time_ms']
             
             # 步骤4: TTS生成
-            with patch('services.audio_service.AudioService.text_to_speech') as mock_tts:
+            with patch('services.audio_service.AudioService.text_to_speech', new_callable=AsyncMock) as mock_tts:
                 mock_tts.return_value = {
                     'audio_data': b'audio',
                     'duration_seconds': 3.5,
                     'generation_time_ms': 280.0
                 }
-                step4_result = mock_tts(step3_result['response_text'])
+                step4_result = await mock_tts(step3_result['response_text'])
                 step4_latency = step4_result['generation_time_ms']
             
             # 步骤5: 口型同步
-            with patch('core.live2d.lip_sync.LipSyncController.sync') as mock_lip:
+            with patch('core.live2d.lip_sync.LipSyncController.sync', new_callable=AsyncMock) as mock_lip:
                 mock_lip.return_value = {
                     'sync_accuracy': 0.92,
                     'processing_time_ms': 45.0
                 }
-                step5_result = mock_lip(step4_result['audio_data'])
+                step5_result = await mock_lip(step4_result['audio_data'])
                 step5_latency = step5_result['processing_time_ms']
             
             scenario_end = time.perf_counter()
@@ -778,7 +778,7 @@ class TestScenarioAutonomousBehavior:
         metrics = ScenarioMetrics("test_scenario_state_evaluation", time.time(), total_steps=5)
         
         try:
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state') as mock_eval:
+            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state', new_callable=AsyncMock) as mock_eval:
                 mock_eval.return_value = {
                     'current_phase': 'exploration',
                     'boredom_level': 0.7,  # 较高的无聊度
@@ -789,7 +789,7 @@ class TestScenarioAutonomousBehavior:
                     'evaluation_time_ms': 15.0
                 }
                 
-                result = mock_eval()
+                result = await mock_eval()
                 
                 assert result['should_trigger_behavior'] is True
                 assert result['boredom_level'] > 0.5
@@ -819,7 +819,7 @@ class TestScenarioAutonomousBehavior:
         try:
             state = {'boredom_level': 0.7, 'curiosity_level': 0.8}
             
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior') as mock_decide:
+            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior', new_callable=AsyncMock) as mock_decide:
                 mock_decide.return_value = {
                     'decision_id': str(uuid.uuid4()),
                     'selected_behavior': 'explore_desktop',
@@ -830,7 +830,7 @@ class TestScenarioAutonomousBehavior:
                     'decision_time_ms': 25.0
                 }
                 
-                result = mock_decide(state)
+                result = await mock_decide(state)
                 
                 assert result['selected_behavior'] is not None
                 assert len(result['rationale']) > 0
@@ -860,7 +860,7 @@ class TestScenarioAutonomousBehavior:
         try:
             behavior = {'selected_behavior': 'explore_desktop', 'exploration_domain': 'desktop_environment'}
             
-            with patch('core.autonomous.behavior_executor.BehaviorExecutor.execute') as mock_exec:
+            with patch('core.autonomous.behavior_executor.BehaviorExecutor.execute', new_callable=AsyncMock) as mock_exec:
                 mock_exec.return_value = {
                     'execution_id': str(uuid.uuid4()),
                     'behavior_completed': True,
@@ -874,7 +874,7 @@ class TestScenarioAutonomousBehavior:
                     'execution_time_ms': 2850.0
                 }
                 
-                result = mock_exec(behavior)
+                result = await mock_exec(behavior)
                 
                 assert result['behavior_completed'] is True
                 assert len(result['actions_performed']) > 0
@@ -908,7 +908,7 @@ class TestScenarioAutonomousBehavior:
                 'user_noticed': True
             }
             
-            with patch('core.autonomous.feedback_collector.AutonomousFeedbackCollector.collect') as mock_collect:
+            with patch('core.autonomous.feedback_collector.AutonomousFeedbackCollector.collect', new_callable=AsyncMock) as mock_collect:
                 mock_collect.return_value = {
                     'feedback_id': str(uuid.uuid4()),
                     'behavior_effectiveness': 0.82,
@@ -918,7 +918,7 @@ class TestScenarioAutonomousBehavior:
                     'collection_time_ms': 18.0
                 }
                 
-                result = mock_collect(execution_result)
+                result = await mock_collect(execution_result)
                 
                 assert result['behavior_effectiveness'] > 0.5
                 assert result['positive_reaction'] is True
@@ -952,7 +952,7 @@ class TestScenarioAutonomousBehavior:
                 'positive_reaction': True
             }
             
-            with patch('core.autonomous.learning_integrator.LearningIntegrator.integrate') as mock_learn:
+            with patch('core.autonomous.learning_integrator.LearningIntegrator.integrate', new_callable=AsyncMock) as mock_learn:
                 mock_learn.return_value = {
                     'integrated': True,
                     'memory_entries_created': 2,
@@ -962,7 +962,7 @@ class TestScenarioAutonomousBehavior:
                     'integration_time_ms': 35.0
                 }
                 
-                result = mock_learn(feedback)
+                result = await mock_learn(feedback)
                 
                 assert result['integrated'] is True
                 assert result['memory_entries_created'] > 0
@@ -994,48 +994,48 @@ class TestScenarioAutonomousBehavior:
             scenario_start = time.perf_counter()
             
             # 步骤1: 状态评估
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state') as mock_eval:
+            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state', new_callable=AsyncMock) as mock_eval:
                 mock_eval.return_value = {
                     'should_trigger_behavior': True,
                     'evaluation_time_ms': 15.0
                 }
-                step1_result = mock_eval()
+                step1_result = await mock_eval()
                 step1_latency = step1_result['evaluation_time_ms']
             
             # 步骤2: 行为决策
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior') as mock_decide:
+            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior', new_callable=AsyncMock) as mock_decide:
                 mock_decide.return_value = {
                     'selected_behavior': 'explore_desktop',
                     'decision_time_ms': 25.0
                 }
-                step2_result = mock_decide(step1_result)
+                step2_result = await mock_decide(step1_result)
                 step2_latency = step2_result['decision_time_ms']
             
             # 步骤3: 行动执行
-            with patch('core.autonomous.behavior_executor.BehaviorExecutor.execute') as mock_exec:
+            with patch('core.autonomous.behavior_executor.BehaviorExecutor.execute', new_callable=AsyncMock) as mock_exec:
                 mock_exec.return_value = {
                     'behavior_completed': True,
                     'execution_time_ms': 2850.0
                 }
-                step3_result = mock_exec(step2_result)
+                step3_result = await mock_exec(step2_result)
                 step3_latency = step3_result['execution_time_ms']
             
             # 步骤4: 反馈收集
-            with patch('core.autonomous.feedback_collector.AutonomousFeedbackCollector.collect') as mock_collect:
+            with patch('core.autonomous.feedback_collector.AutonomousFeedbackCollector.collect', new_callable=AsyncMock) as mock_collect:
                 mock_collect.return_value = {
                     'behavior_effectiveness': 0.82,
                     'collection_time_ms': 18.0
                 }
-                step4_result = mock_collect(step3_result)
+                step4_result = await mock_collect(step3_result)
                 step4_latency = step4_result['collection_time_ms']
             
             # 步骤5: 学习更新
-            with patch('core.autonomous.learning_integrator.LearningIntegrator.integrate') as mock_learn:
+            with patch('core.autonomous.learning_integrator.LearningIntegrator.integrate', new_callable=AsyncMock) as mock_learn:
                 mock_learn.return_value = {
                     'integrated': True,
                     'integration_time_ms': 35.0
                 }
-                step5_result = mock_learn(step4_result)
+                step5_result = await mock_learn(step4_result)
                 step5_latency = step5_result['integration_time_ms']
             
             scenario_end = time.perf_counter()
@@ -1099,7 +1099,7 @@ class TestScenarioFileOrganization:
         try:
             user_command = "Angela, please organize my downloads folder by date"
             
-            with patch('core.nlu.intent_recognizer.IntentRecognizer.recognize') as mock_recognize:
+            with patch('core.nlu.intent_recognizer.IntentRecognizer.recognize', new_callable=AsyncMock) as mock_recognize:
                 mock_recognize.return_value = {
                     'intent': 'file_organization',
                     'confidence': 0.96,
@@ -1111,7 +1111,7 @@ class TestScenarioFileOrganization:
                     'processing_time_ms': 120.0
                 }
                 
-                result = mock_recognize(user_command)
+                result = await mock_recognize(user_command)
                 
                 assert result['intent'] == 'file_organization'
                 assert result['confidence'] > 0.9
@@ -1145,7 +1145,7 @@ class TestScenarioFileOrganization:
                 'extracted_params': {'target_path': '/downloads', 'organization_criteria': 'date'}
             }
             
-            with patch('core.planning.operation_planner.OperationPlanner.plan') as mock_plan:
+            with patch('core.planning.operation_planner.OperationPlanner.plan', new_callable=AsyncMock) as mock_plan:
                 mock_plan.return_value = {
                     'plan_id': str(uuid.uuid4()),
                     'operation_steps': [
@@ -1161,7 +1161,7 @@ class TestScenarioFileOrganization:
                     'planning_time_ms': 85.0
                 }
                 
-                result = mock_plan(intent_result)
+                result = await mock_plan(intent_result)
                 
                 assert len(result['operation_steps']) > 0
                 assert result['risk_level'] in ['low', 'medium', 'high']
@@ -1196,7 +1196,7 @@ class TestScenarioFileOrganization:
                 ]
             }
             
-            with patch('tools.file_system_tool.FileSystemTool.execute_plan') as mock_execute:
+            with patch('tools.file_system_tool.FileSystemTool.execute_plan', new_callable=AsyncMock) as mock_execute:
                 mock_execute.return_value = {
                     'execution_id': str(uuid.uuid4()),
                     'success': True,
@@ -1210,7 +1210,7 @@ class TestScenarioFileOrganization:
                     'execution_time_ms': 3200.0
                 }
                 
-                result = mock_execute(operation_plan)
+                result = await mock_execute(operation_plan)
                 
                 assert result['success'] is True
                 assert result['files_organized'] > 0
@@ -1244,7 +1244,7 @@ class TestScenarioFileOrganization:
                 'errors': 2
             }
             
-            with patch('core.verification.execution_verifier.ExecutionVerifier.verify') as mock_verify:
+            with patch('core.verification.execution_verifier.ExecutionVerifier.verify', new_callable=AsyncMock) as mock_verify:
                 mock_verify.return_value = {
                     'verified': True,
                     'integrity_check_passed': True,
@@ -1254,7 +1254,7 @@ class TestScenarioFileOrganization:
                     'verification_time_ms': 120.0
                 }
                 
-                result = mock_verify(execution_result)
+                result = await mock_verify(execution_result)
                 
                 assert result['verified'] is True
                 assert result['integrity_check_passed'] is True
@@ -1288,7 +1288,7 @@ class TestScenarioFileOrganization:
                 'errors': 2
             }
             
-            with patch('core.reporting.result_reporter.ResultReporter.report') as mock_report:
+            with patch('core.reporting.result_reporter.ResultReporter.report', new_callable=AsyncMock) as mock_report:
                 mock_report.return_value = {
                     'report_id': str(uuid.uuid4()),
                     'report_text': "I've successfully organized your downloads folder! 45 files were sorted into date-based folders. 2 files couldn't be moved due to permission issues, but everything else is neatly organized now. You can find your files organized by year and month.",
@@ -1298,7 +1298,7 @@ class TestScenarioFileOrganization:
                     'reporting_time_ms': 95.0
                 }
                 
-                result = mock_report(verification_result)
+                result = await mock_report(verification_result)
                 
                 assert len(result['report_text']) > 0
                 assert '45' in result['report_text']  # 提及文件数量
@@ -1329,51 +1329,51 @@ class TestScenarioFileOrganization:
             scenario_start = time.perf_counter()
             
             # 步骤1: 意图识别
-            with patch('core.nlu.intent_recognizer.IntentRecognizer.recognize') as mock_recognize:
+            with patch('core.nlu.intent_recognizer.IntentRecognizer.recognize', new_callable=AsyncMock) as mock_recognize:
                 mock_recognize.return_value = {
                     'intent': 'file_organization',
                     'confidence': 0.96,
                     'processing_time_ms': 120.0
                 }
-                step1_result = mock_recognize("organize downloads")
+                step1_result = await mock_recognize("organize downloads")
                 step1_latency = step1_result['processing_time_ms']
             
             # 步骤2: 操作规划
-            with patch('core.planning.operation_planner.OperationPlanner.plan') as mock_plan:
+            with patch('core.planning.operation_planner.OperationPlanner.plan', new_callable=AsyncMock) as mock_plan:
                 mock_plan.return_value = {
                     'operation_steps': [{'action': 'organize'}],
                     'planning_time_ms': 85.0
                 }
-                step2_result = mock_plan(step1_result)
+                step2_result = await mock_plan(step1_result)
                 step2_latency = step2_result['planning_time_ms']
             
             # 步骤3: 文件操作执行
-            with patch('tools.file_system_tool.FileSystemTool.execute_plan') as mock_execute:
+            with patch('tools.file_system_tool.FileSystemTool.execute_plan', new_callable=AsyncMock) as mock_execute:
                 mock_execute.return_value = {
                     'success': True,
                     'files_organized': 45,
                     'execution_time_ms': 3200.0
                 }
-                step3_result = mock_execute(step2_result)
+                step3_result = await mock_execute(step2_result)
                 step3_latency = step3_result['execution_time_ms']
             
             # 步骤4: 执行验证
-            with patch('core.verification.execution_verifier.ExecutionVerifier.verify') as mock_verify:
+            with patch('core.verification.execution_verifier.ExecutionVerifier.verify', new_callable=AsyncMock) as mock_verify:
                 mock_verify.return_value = {
                     'verified': True,
                     'success_rate': 0.957,
                     'verification_time_ms': 120.0
                 }
-                step4_result = mock_verify(step3_result)
+                step4_result = await mock_verify(step3_result)
                 step4_latency = step4_result['verification_time_ms']
             
             # 步骤5: 结果汇报
-            with patch('core.reporting.result_reporter.ResultReporter.report') as mock_report:
+            with patch('core.reporting.result_reporter.ResultReporter.report', new_callable=AsyncMock) as mock_report:
                 mock_report.return_value = {
                     'report_text': 'Organization complete!',
                     'reporting_time_ms': 95.0
                 }
-                step5_result = mock_report(step4_result)
+                step5_result = await mock_report(step4_result)
                 step5_latency = step5_result['reporting_time_ms']
             
             scenario_end = time.perf_counter()
