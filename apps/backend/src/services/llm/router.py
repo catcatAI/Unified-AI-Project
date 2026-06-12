@@ -278,7 +278,7 @@ class AngelaLLMService:
                 self.template_library = get_template_library()
 
                 # 初始化任务生成器
-                self.task_generator = TaskGenerator(max_tasks=10)
+                self.task_generator = TaskGenerator(config={"max_tasks": 10})
 
                 logger.info("Memory enhancement system initialized")
             except Exception as e:
