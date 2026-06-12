@@ -106,7 +106,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | API Endpoint Tests | ✅ 31/35 endpoints | 33 tests covering 31 registered endpoints |
 | C2 Live2D State Broadcast | ✅ Fixed | 4 methods added; 9 tests pass |
 | Code Quality Metrics | ✅ ANGELA-MATRIX: 99.5% (210/211) | 10 unused imports removed, 7 print→logger, 30 except narrowed, 9 long functions→32 helpers |
-| Orphan Modules | ⚠️ Corrected: 59.2% (125/211), not 73.0% | See #2 in Deep Analysis below |
+| Deprecated Modules (刻意的, 非孤兒) | ⚠️ 29 子套件 DEPRECATED, 125 檔案; 僅 2 真正孤兒 (angela_types, ham_db_interface) | See #2 in Deep Analysis below |
 | Stubs | ✅ 8 Phase 6 stub fixes verified | — |
 | Docs | ⚠️ Needs update | MASTER_CONSOLIDATED_PLAN.md has 4/8 inaccurate claims; see below |
 
@@ -179,29 +179,43 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 
 ---
 
-### 2. Orphan/Deprecated — 高估 13.8%
+### 2. Orphan/Deprecated — 多層誤解
 
 | 原先聲稱 | 實際狀況 | 偏差原因 |
 |---------|---------|---------|
-| "154/211 orphan files = 73.0%" | **125/211 = 59.2%**（高估 29 個檔案） | A3 重構後部分檔案被誤算為孤兒 |
-| "31 subpackage __init__.py annotated" | **29**（差 2 個） | 計數錯誤 |
+| "154/211 orphan files = 73.0%" | **125 個檔案是刻意 DEPRECATED**（Phase 4 P2-1 標記，非孤兒） | 混淆「刻意廢棄」與「意外遺留」 |
+| "31 subpackage __init__.py annotated" | **29**（差 2 個已刪除 `optimization/`） | 正確—2 個已刪 |
 | "5 files deleted" | ✅ **全部確認已刪除** | 正確 |
 
-**實情**:
-- 621 個 `.py` 檔案在 `apps/backend/src/`
-- 43 個檔案包含 "DEPRECATED" 字串（42 個有意的 + 1 個誤報 `versioning.py`）
-- 29 個 `ai/*/__init__.py` 孤兒子套件 → 包含 125 個檔案
-- **已確認真正無 importers 的孤兒**: `angela_types.py`, `ham_db_interface.py`（僅 2 個）
-- 多個標記 DEPRECATED 的檔案仍有活躍 importers（如 `network_defaults.py` 有 7 個）
-- **無孤兒檢測工具**存在於 repo 中，原始 154 數字是一次性手動統計
+**實情 — DEPRECATED ≠ Orphan**:
+- 29 個 `ai/*/__init__.py` 被刻意標記 `# DEPRECATED: This subpackage has no production consumers.`（Phase 4 P2-1, 2026-06-10）
+- **真正孤兒檔案（零 importer — 任何來源）**：`angela_types.py`、`ham_db_interface.py`（僅 2 個）
+- 125 個檔案是**刻意保留的代碼參考**，不是被遺忘的孤兒
+- 43 個檔案含 "DEPRECATED" 字串（42 個有意 + 1 個誤報 `versioning.py`）
+
+**Production 替代品分析（真正存在的僅 3/29）**：
+
+| DEPRECATED 子套件 | 生產替代 | 狀態 |
+|---|---|---|
+| `service_discovery/` | `services/service_registry.py` + `ModuleManager` | ✅ 真實替代 |
+| `language_models/` | `services/llm/router.py`（完整 LLM provider 系統） | ✅ 真實替代 |
+| `multimodal/` | `ai/ed3n/multimodal/`（但原 `MultimodalProcessor` 只是 `pass`） | ⚠️ 部分替代 |
+| 其餘 26 個 | **無生產替代** | ❌ |
+
+**Test-to-production mapping**：
+- 所有 `tests/ai/*` 測試仍指向 DEPRECATED 代碼，無任何遷移
+- P3-1（降低孤兒率 73%→50%）**已 defer 等人工審查**（MASTER_CONSOLIDATED_PLAN.md L746）
+- **無遷移計畫存在** — 沒有任何文件描述 DEPRECATED → production 的遷移路徑
+
+**Found 建立**: `scripts/tools/find_orphans.py`（ast-based import graph 分析）
 
 **連鎖效應**: 孤兒率高估導致：浪費時間審查不存在的檔案、MASTER_PLAN 評分偏差、版本規劃基於錯誤數據
 
 **正確修復方案**:
-1. 更新文檔為 59.2% (125/211)
-2. 建立可重複的孤兒檢測腳本（用 `ast` 或 `importlib.metadata` 掃描 import graph）
-3. 審查 29 個孤兒子套件（125 個檔案）— 多數可以刪除
-4. 解決 DEPRECATED 標記矛盾：取消 network_defaults/system_config 的 DEPRECATED 或遷移其 importer
+1. 更新文檔：125 檔案是刻意 DEPRECATED，非孤兒；真正孤兒僅 2 個
+2. 建立可重複的孤兒檢測腳本（用 `ast` 或 `importlib.metadata` 掃描 import graph）— ✅ `find_orphans.py` 已建立
+3. 解決 DEPRECATED 標記矛盾：取消 network_defaults/system_config 的 DEPRECATED 或遷移其 importer — ✅ `network_defaults.py` 已改為 active fallback
+4. P3-1（降低孤兒率）仍 defer 等人類審查 — 見 MASTER_CONSOLIDATED_PLAN.md L746
 
 ---
 
@@ -321,7 +335,7 @@ Coverage fail-under=50%
 | **P1** | 修 7 個 MEDIUM Unix 路徑 | 30 分鐘 | 無 | 跨平台相容 |
 | **P2** | 取消 network_defaults.py 的 DEPRECATED 標記 | 5 分鐘 | 無 | 消除文檔矛盾 |
 | **P2** | 建立孤兒檢測腳本 | 2 小時 | 無 | 可重複審計 |
-| **P2** | 審查 29 孤兒子套件 (125 檔案) 刪除候選 | 4 小時 | 孤兒腳本 | 清理 ~20K LOC |
+| **P2** | 審查 29 DEPRECATED 子套件 (125 檔案) 刪除候選 | 4 小時 (deferred) | 人類審查 | 清理 ~20K LOC |
 | **P3** | 魔法數字遷移腳本 | 3-5 天 | 孤兒清理先 | 清理 ~1,900+ 數字 |
 | **P3** | 覆蓋率提升至 >5% | 長期 | 修復 test infrastructure | 品質信心 |
 
