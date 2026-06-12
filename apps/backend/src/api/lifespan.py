@@ -198,9 +198,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         stats["plugin_count"],
     )
 
+    # Initialize module manager (discovers and starts all 11 modules)
+    _module_manager = None
+    try:
+        from core.interfaces.service_registry import get_registry
+        from services.wiring import initialize_module_manager
+        _module_manager = await initialize_module_manager(get_registry())
+        logger.info("[ModuleManager] Module system initialized and started")
+    except Exception as e:
+        logger.error(f"[ModuleManager] Initialization failed, continuing without module system: {e}", exc_info=True)
+
     yield
 
     # --- Shutdown ---
+    if _module_manager is not None:
+        try:
+            await _module_manager.stop()
+            logger.info("[ModuleManager] Module system shut down cleanly")
+        except Exception as e:
+            logger.error(f"[ModuleManager] Shutdown error: {e}", exc_info=True)
     metric_data = metrics_handler.get_metrics()
     logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
 

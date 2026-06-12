@@ -161,7 +161,7 @@
 | **ThetaRouter** | ~350 | 5 | 80% | ModelBus | ✅ 已接線 | S8, S11 |
 | **ChatService** | ~320 | 21 | 90% | IntentRegistry | ✅ 已接線 | S12, S13 |
 | **IntentRegistry** | ~150 | 16 | 85% | — | ✅ 已接線 | S12 |
-| **ModuleManager** | ~800 | 100 | 95% | — | ✅ 已接線 | S12, S13 |
+| **ModuleManager** | ~800 | 99 | 95% | — | ✅ 已接線 (Phase 8: wired in lifespan.py) | S12, S13 |
 | **StatePersistence** | ~300 | 25 | 90% | — | ✅ 已接線 | S12 |
 | **AngelaLLMService** | 21 (shim) | 4 | 100% | providers | ✅ 已拆分 | S12 |
 | **5 公式系統** | ~600 | 0 | 100% | — | ✅ 注入 prompt (API 與測試不匹配 — 見異常報告) | S12 |

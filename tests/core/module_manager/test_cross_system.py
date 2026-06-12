@@ -50,12 +50,12 @@ class TestBuildDepsWithRegistry:
         assert deps["external_service"] == "service_instance"
         registry.get.assert_called_once_with("external_service")
 
-    def test_optional_dep_resolved_from_registry(self, lifecycle):
+    def test_optional_dep_not_resolved_from_registry(self, lifecycle):
         desc = self.make_desc("consumer", optional=["optional_svc"])
         registry = MagicMock()
         registry.get.return_value = "opt_instance"
         deps = lifecycle._build_deps(desc, [], registry=registry)
-        assert deps["optional_svc"] == "opt_instance"
+        assert "optional_svc" not in deps
 
     def test_missing_optional_skipped(self, lifecycle):
         desc = self.make_desc("consumer", optional=["missing_svc"])

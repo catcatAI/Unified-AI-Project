@@ -14,7 +14,7 @@ async def init(deps: dict = None) -> HotReloadService:
     return HotReloadService()
 
 
-async def start(instance: HotReloadService) -> None:
+async def start(instance: HotReloadService, deps: dict = None) -> None:
     logger.debug("HotReloadService start — deferred-init wrapper (no-op)")
 
 

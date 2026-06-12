@@ -14,7 +14,7 @@ async def init(deps: dict = None) -> MathVerifier:
     return MathVerifier()
 
 
-async def start(instance: MathVerifier) -> None:
+async def start(instance: MathVerifier, deps: dict = None) -> None:
     logger.debug("MathVerifier start — deferred-init wrapper (no-op)")
 
 

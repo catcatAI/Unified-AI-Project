@@ -39,7 +39,7 @@ class ModuleLifecycle:
         for desc in descriptors:
             t0 = time.monotonic()
             try:
-                inst = self._call_init(desc, deps_map.get(desc.name, {}))
+                inst = await self._call_init(desc, deps_map.get(desc.name, {}))
                 instance = ModuleInstance(
                     descriptor=desc,
                     instance=inst,
@@ -71,7 +71,7 @@ class ModuleLifecycle:
         for inst in instances:
             t0 = time.monotonic()
             try:
-                self._call_start(inst, deps_map.get(inst.name, {}))
+                await self._call_start(inst, deps_map.get(inst.name, {}))
                 inst.status = ModuleStatus.RUNNING
                 results.append(
                     StartResult(
@@ -98,7 +98,7 @@ class ModuleLifecycle:
         for inst in reversed(instances):
             t0 = time.monotonic()
             try:
-                self._call_stop(inst)
+                await self._call_stop(inst)
                 inst.status = ModuleStatus.STOPPED
                 results.append(
                     StartResult(
@@ -131,21 +131,30 @@ class ModuleLifecycle:
                 return None
         raise ValueError(f"module '{name}' not found")
 
-    def _call_init(self, desc, deps) -> Any:
+    async def _call_init(self, desc, deps) -> Any:
         fn = self._import_fn(desc.lifecycle.init)
-        return fn(deps=deps)
+        result = fn(deps=deps)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return result
 
-    def _call_start(self, inst, deps) -> Optional[Any]:
+    async def _call_start(self, inst, deps) -> Optional[Any]:
         if not inst.descriptor.lifecycle.start:
             return None
         fn = self._import_fn(inst.descriptor.lifecycle.start)
-        return fn(inst.instance, deps=deps)
+        result = fn(inst.instance, deps)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return result
 
-    def _call_stop(self, inst) -> Optional[Any]:
+    async def _call_stop(self, inst) -> Optional[Any]:
         if not inst.descriptor.lifecycle.stop:
             return None
         fn = self._import_fn(inst.descriptor.lifecycle.stop)
-        return fn(inst.instance)
+        result = fn(inst.instance)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return result
 
     @staticmethod
     def _import_fn(dotted_path) -> Any:

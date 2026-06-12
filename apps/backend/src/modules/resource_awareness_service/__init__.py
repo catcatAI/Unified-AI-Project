@@ -11,7 +11,7 @@ async def init(deps: dict = None) -> ResourceAwarenessService:
     return ResourceAwarenessService()
 
 
-async def start(instance: ResourceAwarenessService) -> None:
+async def start(instance: ResourceAwarenessService, deps: dict = None) -> None:
     logger.debug("ResourceAwarenessService start — deferred-init wrapper (no-op)")
 
 
