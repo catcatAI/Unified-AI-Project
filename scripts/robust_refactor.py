@@ -66,7 +66,7 @@ if "def get_metabolic_heartbeat()" not in "".join(final_lines):
         "def get_metabolic_heartbeat() -> MetabolicHeartbeat:\n",
         "    global _metabolic_heartbeat\n",
         "    if _metabolic_heartbeat is None:\n",
-        "        from core.autonomous.heartbeat import MetabolicHeartbeat\n",
+        "        from core.life.heartbeat import MetabolicHeartbeat\n",
         "        _metabolic_heartbeat = MetabolicHeartbeat(update_interval=30.0)\n",
         "    return _metabolic_heartbeat\n",
         "\n"

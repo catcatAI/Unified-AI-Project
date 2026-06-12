@@ -8,3 +8,4 @@ from core.engine.state_matrix import (
     StateMatrix4D,
     DimensionState,
 )
+from core.engine.state_matrix_types import AllocateDecision

@@ -124,9 +124,9 @@ class TestArtLearningSystem:
     async def test_tutorial_learning(self, art_system):
         """Test learning from tutorial"""
         try:
-            from apps.backend.src.core.autonomous.art_learning_system import TutorialContent
+            from core.engine.art_learning_system import TutorialContent
         except ImportError:
-            from core.autonomous.art_learning_system import TutorialContent
+            from apps.backend.src.core.engine.art_learning_system import TutorialContent
         
         tutorial = TutorialContent(
             tutorial_id="test_tut_1",

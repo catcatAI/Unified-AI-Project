@@ -1,4 +1,4 @@
-﻿# ANGELA-MATRIX: L3 [γ] [A] [L0-L11]
+# ANGELA-MATRIX: L3 [γ] [A] [L0-L11]
 """Angela LLM services — router, prompt builder, and backend providers"""
 
 from . import prompt_builder

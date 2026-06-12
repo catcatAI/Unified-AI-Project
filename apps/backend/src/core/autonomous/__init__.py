@@ -350,10 +350,10 @@ def get_system_info() -> dict:
         "modules": {
             "biological": [
                 "physiological_tactile", "endocrine_system", "autonomic_nervous_system",
-                "neuroplasticity", "emotional_blending", "state_matrix",
+                "neuroplasticity", "emotional_blending", "biological_integrator",
             ],
             "execution": [
-                "action_executor", "desktop_interaction", "browser_controller",
+                "state_matrix", "action_executor", "desktop_interaction", "browser_controller",
                 "audio_system", "desktop_presence", "live2d_integration",
             ],
             "integration": [
