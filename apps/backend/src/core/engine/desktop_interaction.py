@@ -352,7 +352,8 @@ class DesktopInteraction:
         self.organized_path = Path(
             self.config.get("organized_path", "~/Desktop/Organized")
         ).expanduser()
-        self.wallpaper_path = Path(self.config.get("wallpaper_path", "~/Wallpapers")).expanduser()
+        raw_wallpaper = self.config.get("wallpaper_path", None)
+        self.wallpaper_path = Path(raw_wallpaper).expanduser() if raw_wallpaper else Path.home() / "Pictures" / "Wallpapers"
 
         # State
         self.current_state: DesktopState = DesktopState()

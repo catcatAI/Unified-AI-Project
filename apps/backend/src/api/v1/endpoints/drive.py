@@ -252,7 +252,8 @@ async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> dic
 async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)) -> dict:
     """同步選定的文件到本地並存入記憶"""
     file_ids = request.get("file_ids", [])
-    folder_path = request.get("folder_path", "data/drive_downloads")
+    default_folder = str(Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads")
+    folder_path = request.get("folder_path", default_folder)
     store_memory = request.get("store_memory", True)
 
     logger.info(f"Syncing files: {file_ids} to {folder_path}")
@@ -302,11 +303,13 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
                     from ai.memory.ham_memory.ham_manager import HAMMemoryManager
                     ham = HAMMemoryManager()
                     content = parser.parse_document(str(dest_path))
-                    await ham.store_experience(
-                        raw_data=content[:5000] if content else f"[File: {dest_path.name}]",
-                        data_type="document",
-                        metadata=memory_metadata,
-                    )
+                    ham.store_conversation({
+                        "role": "system",
+                        "content": content[:5000] if content else f"[File: {dest_path.name}]",
+                        "type": "document",
+                        "metadata": memory_metadata,
+                        "timestamp": datetime.now().isoformat(),
+                    })
                     memorized_count += 1
                     synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": True})
                 except ImportError:
@@ -355,7 +358,8 @@ async def search_and_list(
 async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)) -> dict:
     """分析 Drive 文件並總結內容（需下載 + 解析）"""
     limit = request.get("limit", 5)
-    folder_path = request.get("folder_path", "data/drive_downloads")
+    default_folder = str(Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads")
+    folder_path = request.get("folder_path", default_folder)
 
     try:
         files = svc.list_files(page_size=limit)

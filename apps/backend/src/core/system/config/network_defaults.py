@@ -1,16 +1,10 @@
 """
-=============================================
-DEPRECATED
-=============================================
-These constants are duplicated in configs/system/llm.default.yaml
-(timing.default.yaml for timeouts). New code should read from
-tiered_loader.get_config(). This file kept as fallback until all
-consumers are migrated.
-See: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P3.3
+Fallback network defaults for hosts, ports, model names, and timeouts.
+These values are duplicated in configs/system/llm.default.yaml.
+New code should read from tiered_loader.get_config().
+This file is kept as an active fallback until all 7 consumers are migrated.
 
 ANGELA-MATRIX: [L3] [β] [B] [L0]
-Centralized network defaults for hosts, ports, model names, and timeouts.
-Replaces hardcoded values across the codebase.
 """
 
 from typing import Dict

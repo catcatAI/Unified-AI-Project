@@ -26,7 +26,7 @@ def get_biological_state() -> str:
     try:
         bio_cfg = _get_llm_config("biological_state", {})
 
-        status_file = Path("apps/backend/data/brain_status.json")
+        status_file = Path(__file__).parent.parent.parent.parent / "data" / "brain_status.json"
         if not status_file.exists():
             return ""
 

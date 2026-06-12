@@ -847,7 +847,7 @@ class ActionExecutor:
 
     async def save_execution_history(self, filepath: Optional[str] = None) -> None:
         """Save execution history to file"""
-        path = Path(filepath or "~/.angela/executor_history.json").expanduser()
+        path = Path(filepath).expanduser() if filepath else Path.home() / ".angela" / "executor_history.json"
         path.parent.mkdir(parents=True, exist_ok=True)
 
         history = []
@@ -876,7 +876,7 @@ class ActionExecutor:
 
     async def load_execution_history(self, filepath: Optional[str] = None) -> list:
         """Load execution history from file"""
-        path = Path(filepath or "~/.angela/executor_history.json").expanduser()
+        path = Path(filepath).expanduser() if filepath else Path.home() / ".angela" / "executor_history.json"
 
         if path.exists():
                 return await async_json_load(str(path))

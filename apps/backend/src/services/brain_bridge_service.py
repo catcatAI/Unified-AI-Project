@@ -69,7 +69,7 @@ class BrainBridgeService:
         full_status["life_intensity"] = brain_current.get("life_intensity", 0.0)
 
         # Update secondary JSON status for the API to consume
-        status_file = Path("apps/backend/data/brain_status.json")
+        status_file = Path(__file__).parent.parent.parent / "data" / "brain_status.json"
         status_file.parent.mkdir(parents=True, exist_ok=True)
         await async_json_dump(full_status, str(status_file), indent=4)
 

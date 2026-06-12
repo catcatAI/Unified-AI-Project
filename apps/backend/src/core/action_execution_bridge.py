@@ -263,9 +263,8 @@ class ActionExecutionBridge:
         self._execution_task: Optional[asyncio.Task] = None
 
         # History persistence
-        self._history_file = Path(
-            self.config.get("history_path", "~/.angela/action_history.json")
-        ).expanduser()
+        raw_path = self.config.get("history_path", None)
+        self._history_file = Path(raw_path).expanduser() if raw_path else Path.home() / ".angela" / "action_history.json"
         self._execution_history: list[dict[str, Any]] = []
         self._max_history_size = self.config.get("max_history_size", cache_value("execution_history", 1000))
 
