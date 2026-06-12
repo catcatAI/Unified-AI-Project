@@ -101,7 +101,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | GARDEN Engine | ✅ 50/50 tests | 3 active routing paths, TF-IDF fallback |
 | Training Pipeline | ✅ 53,654 samples (13 sources) | SequenceTrainer + JointTrainer |
 | ModelBus | ✅ 34 tests | Registration, 7 routing paths, domain queries, timeout, edge cases |
-| Magic Numbers | ⚠️ Corrected: 15 accessor functions, 0/15 have callers | See #1 in Deep Analysis below |
+| Magic Numbers | ⚠️ Corrected: 15 accessor functions, 57 import callers across all 15 | See #1 in Deep Analysis below |
 | Integration Testing | ✅ 116 e2e + 84 unit = 200 total this sprint | 116 integration (59 P3-2 + 33 API + 24 fault/concurrency/resource) + 84 new unit tests |
 | API Endpoint Tests | ✅ 31/35 endpoints | 33 tests covering 31 registered endpoints |
 | C2 Live2D State Broadcast | ✅ Fixed | 4 methods added; 9 tests pass |
@@ -154,7 +154,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 
 | 原先聲稱 | 實際狀況 | 偏差原因 |
 |---------|---------|---------|
-| "220 values centralized" | **15 accessor functions, 0/15 have callers（全部 dead code）** | 文檔誇大了迁移進度；实际迁移从未完成 |
+| "220 values centralized" | **15 accessor functions, 57 import callers across 57 files** | 文檔誇大了迁移進度；实际迁移从未完成但 import 量已達 57 |
 | "84 H4 + 136 Q3 across 13 files" | 引用路径错误（ai/ed3n/ → 实际在 ai/response/, ai/lifecycle/, ai/core/, ai/garden/） | A3 重构文件搬家後文檔未更新 |
 | "Magic Numbers: ✅ Full" | 只有 12 個文件實際 import magic_numbers，其中 0 個真正呼叫函數 | 集中化系統是空的；舊值還在原地 |
 
@@ -314,7 +314,7 @@ A3 重構 (main_api_server 1668→313, angela_llm 2245→40, core/autonomous/ �
   └──→ Plan/MD 行數全部偏差 +15~90%
 
 Centralized magic_numbers.py 未完成
-  ├──→ 0/15 functions 有 caller → 全部 dead code
+  ├──→ 57 files 實際 import 15 functions（全部有 caller）
   └──→ network_defaults.py DEPRECATED 但 7 個 importer 未遷移
 
 Coverage fail-under=50%

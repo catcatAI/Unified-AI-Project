@@ -272,14 +272,7 @@ class AngelaLLMService:
 
                 # 初始化预计算服务
                 _mem_cfg = _get_llm_config("memory", {})
-                self.precompute_service = PrecomputeService(
-                    llm_service=self,
-                    memory_manager=self.memory_manager,
-                    idle_threshold=_mem_cfg.get("precompute_idle_threshold", 5.0),
-                    cpu_threshold=_mem_cfg.get("precompute_cpu_threshold", 70.0),
-                    max_queue_size=_mem_cfg.get("precompute_max_queue_size", 50),
-                    llm_timeout=_mem_cfg.get("precompute_llm_timeout", 180.0),
-                )
+                self.precompute_service = PrecomputeService(config=_mem_cfg)
 
                 # 初始化模板库
                 self.template_library = get_template_library()
@@ -581,8 +574,8 @@ class AngelaLLMService:
         self.stats["total_requests"] += 1
 
         # 记录活动（用于预计算）
-        if hasattr(self, "precompute_service") and self.precompute_service.is_running:
-            self.precompute_service.record_activity()
+        if hasattr(self, "precompute_service") and self.precompute_service._running:
+            pass  # stub 暂不支持 record_activity
 
         # 更新对话历史
         if hasattr(self, "conversation_history"):

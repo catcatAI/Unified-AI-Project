@@ -70,7 +70,7 @@ class CardImportPipeline:
         stage_log.append({"stage": "detect", "conflicts": len(conflicts)})
         card.conflicts.extend(conflicts)
 
-        card = self.timeline_resolver.resolve(card)
+        card = self.timeline_resolver.resolve([card])
         stage_log.append({"stage": "resolve_timeline"})
 
         classification = self.parser.classify_confidence(confidences)

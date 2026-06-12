@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 async def init(deps: dict = None) -> MathVerifier:
+    if MathVerifier is None:
+        raise ImportError("MathVerifier class not available — module stubbed, not yet implemented")
     return MathVerifier()
 
 
