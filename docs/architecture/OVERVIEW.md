@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-11 — Phase 5: 14 CI/infra + 5 stub system fixes; 341 pass, remaining deep stubs documented
+> **Last Updated**: 2026-06-11 — Phase 5+6: 22 fixes (15 CI/infra/test + 8 stub); 341/341 pass; Comprehensive deep analysis with corrected metrics
 
 ## High-Level Architecture
 
@@ -87,7 +87,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 7. **ED3N → GARDEN** pipeline: dictionary layer (text→keys) → SNN (LIF neurons) → GARDENBackend (vector dict + TF-IDF/CharBag)
 8. **Training pipeline** expands 4→13 data sources (Alpaca, templates, knowledge bases, SEO, KG, etc.) with 53,654 total samples
 
-## Current Status (2026-06-10)
+## Current Status (2026-06-11) — Corrected
 
 | Layer | Status | Remaining Work |
 |-------|--------|----------------|
@@ -101,14 +101,14 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | GARDEN Engine | ✅ 50/50 tests | 3 active routing paths, TF-IDF fallback |
 | Training Pipeline | ✅ 53,654 samples (13 sources) | SequenceTrainer + JointTrainer |
 | ModelBus | ✅ 34 tests | Registration, 7 routing paths, domain queries, timeout, edge cases |
-| Magic Numbers | ✅ Full | 220 values centralized (84 H4 + 136 Q3) across 13 files via magic_numbers.py |
-| Integration Testing | ✅ 116 e2e + 84 unit = 200 total this sprint | 116 integration (59 P3-2 + 33 API + 24 fault/concurrency/resource) + 84 new unit tests across 7 files (prompt_builder:10, emotion_analyzer:11, query_classifier:13, training_coordinator:10, ed3n_provider:10, garden_provider:9, learning_loop:21); ED3NEngine + GARDENEngine + ModelBus + NeuroVocabulary pipeline |
-| API Endpoint Tests | ✅ 31/35 endpoints | 33 tests covering 31 registered endpoints; 4 system endpoints fixed (router.py), 2 return type mismatches fixed; 4 endpoints untestable (no route registered) |
-| C2 Live2D State Broadcast | ✅ Fixed | 4 methods added (get_live2d_state, set_expression, get_all_parameters, register_live2d_state_callback); 9 tests pass; import chain verified |
-| Code Quality Metrics | ✅ ANGELA-MATRIX: 99.5% (210/211) | 10 unused imports removed, 7 print→logger, 30 except narrowed, 9 long functions→32 helpers; 220 magic numbers; total 210+ tests |
-| Orphan Modules | ✅ 73.0% orphan rate (154/211) | All 154 orphan files marked DEPRECATED; ai/optimization/ (2), ai/knowledge_graph/ (2), ai/dependency_manager.py (1) = 5 deleted; 31 subpackage __init__.py annotated |
-| Stubs | ✅ 36/37 strict stubs implemented | 3 true stubs remain (1 functional, 2 deprecated)
-| Docs | ✅ Updated | SERVICE_CATALOG.md + OVERVIEW.md current |
+| Magic Numbers | ⚠️ Corrected: 15 accessor functions, 0/15 have callers | See #1 in Deep Analysis below |
+| Integration Testing | ✅ 116 e2e + 84 unit = 200 total this sprint | 116 integration (59 P3-2 + 33 API + 24 fault/concurrency/resource) + 84 new unit tests |
+| API Endpoint Tests | ✅ 31/35 endpoints | 33 tests covering 31 registered endpoints |
+| C2 Live2D State Broadcast | ✅ Fixed | 4 methods added; 9 tests pass |
+| Code Quality Metrics | ✅ ANGELA-MATRIX: 99.5% (210/211) | 10 unused imports removed, 7 print→logger, 30 except narrowed, 9 long functions→32 helpers |
+| Orphan Modules | ⚠️ Corrected: 59.2% (125/211), not 73.0% | See #2 in Deep Analysis below |
+| Stubs | ✅ 8 Phase 6 stub fixes verified | — |
+| Docs | ⚠️ Needs update | MASTER_CONSOLIDATED_PLAN.md has 4/8 inaccurate claims; see below |
 
 ## Phase 5: Post-Q4-P4 Fixes Applied (2026-06-11)
 
@@ -128,6 +128,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | 12 | **Integrations: missing `atlassian_bridge` import** | Add import + fix rovo_dev_connector import path | `integrations/__init__.py`, `atlassian_bridge.py` | ✅ |
 | 13 | **ResourceAwarenessService: psultur unimportable** | Move `import psutil` to module level with fallback | `services/resource_awareness_service.py` | ✅ |
 | 14 | **`.env.example`: missing 9 env vars** | Add ANTHROPIC_API_KEY, ANGELA_HOME, ROVO_API_KEY, etc. | `.env.example` (16 lines) | ✅ |
+| 15 | **`test_drive_integration.py`: wrong import path** | Fix `from src.` → `from apps.backend.src.` + fix mock patch target path | `apps/backend/tests/api/v1/endpoints/test_drive_integration.py` | ✅ (partial — mock targets still wrong; see analysis) |
 
 ### Phase 6: Stub System Fixes (2026-06-11)
 
@@ -143,12 +144,183 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | 8 | **KeyGenerator: `update_env_file` double-open** | Simplified to single write | `core/security/key_generator.py` | ✅ 8/8 |
 | **Total** | **8 stub fixes + CI/infra = 22 fixes this round** | | | **341/341 pass** |
 
-### Remaining Deep Issues (Systemic — Not Surgical Fixes)
+## Deep Analysis: Iteration-Induced Problems & Corrected Fix Plans
 
-| # | Issue | Impact | Why Not Fixed |
-|---|-------|--------|--------------|
-| 1 | **Coverage 13.48%** (target 50%) | Low confidence | Needs comprehensive test writing across entire project — systemic, not surgical |
-| 2 | **~482 magic numbers remain** | Maintenance | Only 8 files in scan path; most in orphan/unreachable files — needs sweep of all 211 modules |
-| 3 | **Server startup not verified** | Unknown | Requires configured `.env` with valid API keys + LLM endpoints |
-| 4 | **OS-dependent paths** | Portability | Some paths hardcoded; needs systematic audit |
-| 5 | **Orphan rate 73.0%** (154/211) | Dead code | ~22k LOC with no consumers; cleanup needs per-file review |
+> **分析方法**: 並行啟動 5 代理進行 Plans vs Code 審計、Magic Numbers 掃描、Orphan/Deprecated 審計、Unix Path 掃描 + test 分析、Coverage 分析。每項代理斷言皆經實際源碼交叉驗證。
+
+---
+
+### 1. Magic Numbers — 跨迭代偏差
+
+| 原先聲稱 | 實際狀況 | 偏差原因 |
+|---------|---------|---------|
+| "220 values centralized" | **15 accessor functions, 0/15 have callers（全部 dead code）** | 文檔誇大了迁移進度；实际迁移从未完成 |
+| "84 H4 + 136 Q3 across 13 files" | 引用路径错误（ai/ed3n/ → 实际在 ai/response/, ai/lifecycle/, ai/core/, ai/garden/） | A3 重构文件搬家後文檔未更新 |
+| "Magic Numbers: ✅ Full" | 只有 12 個文件實際 import magic_numbers，其中 0 個真正呼叫函數 | 集中化系統是空的；舊值還在原地 |
+
+**實情**:
+- `magic_numbers.py` 有 15 個 public getter functions，每個回傳 config 查找或默認值
+- **所有 15 個 function 在全專案中無任何呼叫者**（搜尋 `func_name()` + `from magic_numbers import func_name` 皆為 0）
+- `network_defaults.py`（標記 DEPRECATED）仍有 **7 個生產環境 importers**（agent_manager、router、5 個 LLM providers）— 標記與實際矛盾
+- 原始檔案中的裸數字常數：`core/bio/` ~1,194 個、`ai/` ~715 個、`core/engine/` 大量
+- 最差檔案：`endocrine_system_core.py` (87)、`desktop_demo.py` (77)、`biological_integrator.py` (50)
+
+**連鎖效應**: 孤兒檔案中的數字無法被掃描→覆蓋率更低→CI fail-under=50 永遠失敗
+
+**正確修復方案**:
+
+| 方案 | 工作量 | 效果 |
+|------|--------|------|
+| A) 刪除 magic_numbers.py（全部 dead code） | 1 小時 | 清理無用代碼，但保留 ~1,900+ 裸數字 |
+| B) 撰寫遷移腳本：掃描 621 檔案 → 提取數字 → 建立 config key → 取代 | 3-5 天 | 真正解決問題 |
+| C) 僅修 network_defaults.py：取消 DEPRECATED 或遷移 7 個 importer | 1-2 小時 | 消除文檔與代碼的矛盾 |
+
+**建議**: 選 B，但分階段進行。先修 network_defaults 的 DEPRECATED 標記，再逐步撰寫遷移腳本。
+
+---
+
+### 2. Orphan/Deprecated — 高估 13.8%
+
+| 原先聲稱 | 實際狀況 | 偏差原因 |
+|---------|---------|---------|
+| "154/211 orphan files = 73.0%" | **125/211 = 59.2%**（高估 29 個檔案） | A3 重構後部分檔案被誤算為孤兒 |
+| "31 subpackage __init__.py annotated" | **29**（差 2 個） | 計數錯誤 |
+| "5 files deleted" | ✅ **全部確認已刪除** | 正確 |
+
+**實情**:
+- 621 個 `.py` 檔案在 `apps/backend/src/`
+- 43 個檔案包含 "DEPRECATED" 字串（42 個有意的 + 1 個誤報 `versioning.py`）
+- 29 個 `ai/*/__init__.py` 孤兒子套件 → 包含 125 個檔案
+- **已確認真正無 importers 的孤兒**: `angela_types.py`, `ham_db_interface.py`（僅 2 個）
+- 多個標記 DEPRECATED 的檔案仍有活躍 importers（如 `network_defaults.py` 有 7 個）
+- **無孤兒檢測工具**存在於 repo 中，原始 154 數字是一次性手動統計
+
+**連鎖效應**: 孤兒率高估導致：浪費時間審查不存在的檔案、MASTER_PLAN 評分偏差、版本規劃基於錯誤數據
+
+**正確修復方案**:
+1. 更新文檔為 59.2% (125/211)
+2. 建立可重複的孤兒檢測腳本（用 `ast` 或 `importlib.metadata` 掃描 import graph）
+3. 審查 29 個孤兒子套件（125 個檔案）— 多數可以刪除
+4. 解決 DEPRECATED 標記矛盾：取消 network_defaults/system_config 的 DEPRECATED 或遷移其 importer
+
+---
+
+### 3. Plan/MD 漂移 — 4/8 斷言不準確
+
+| # | 聲稱 | 實際 | 差異 |
+|---|------|------|------|
+| 1 | main_api_server.py: 247 行 | **313 行** (+27%) | 後續修改 |
+| 2 | angela_llm_service.py: 21 行 (shim) | **40 行** (+90%) | 後續修改 |
+| 3 | router.py: 1650 行 | **1409 行** (-15%) | 後續修改 |
+| 4 | Magic numbers 路徑: ai/ed3n/ | 實際在 ai/response/, ai/lifecycle/, ai/core/, ai/garden/ | A3 重構後未更新 |
+| 5 | Orphan rate 73.0% | **59.2%** (-13.8%) | 計數錯誤 |
+| 6 | Versions 一致 | ✅ 確認 | 正確 |
+| 7 | LLM 目錄結構 | ✅ 確認 | 正確 |
+| 8 | core/autonomous/ 拆分 | ✅ 確認 | 正確 |
+
+**連鎖效應**: 文檔與實際代碼偏差導致：新開發者困惑、CI 檢查基於錯誤路徑、無法信任文檔數字
+
+**正確修復方案**: 更新 MASTER_CONSOLIDATED_PLAN.md 中的檔案路徑和行數。刪除「220 values centralized」等誤導性聲明。建立文檔審計 CI 步驟。
+
+---
+
+### 4. test_drive_integration.py — 4 個關鍵缺陷
+
+| 缺陷 | 嚴重度 | 說明 |
+|------|--------|------|
+| `drive.drive_service` mock 目標不存在 | 🔴 CRITICAL | 端點使用 FastAPI `Depends(get_drive_service)`，不是模塊級變數 |
+| `main.system_manager` 從未被 drive.py 使用 | 🔴 CRITICAL | 完全失效的 mock，且 SystemManager 無 google_drive_service 屬性 |
+| `drive.ham_memory_manager` 不存在於模塊層級 | 🔴 CRITICAL | 端點在函數內部建立局部變數 `ham = HAMMemoryManager()` |
+| `HAMMemoryManager` 無 `store_experience` 方法 | 🔴 CRITICAL | 端點 `drive.py:305` 會觸發 AttributeError—**運行時 bug** |
+
+**連鎖效應**: 這個測試從未真正測試過端點，但 CI 通過（因為 mock 打在錯誤目標上）。端點本身的 `ham.store_experience()` bug 從未被捕獲。
+
+**正確修復方案**:
+1. 使用 `app.dependency_overrides[get_drive_service]` 取代 `drive.drive_service` mock（FastAPI 標準模式）
+2. 移除 `main.system_manager` mock（完全不用）
+3. 將 `drive.ham_memory_manager` 改為 mock `drive.HAMMemoryManager` 建構函數
+4. 端點 `drive.py:305` 需要修復：要麼添加 `store_experience` 到 `HAMMemoryManager`，要麼改用 `store_conversation`
+
+---
+
+### 5. Unix 路徑 — 被高估
+
+原先列為「OS-dependent paths」深層問題，實際狀況：
+
+| 嚴重度 | 數量 | 說明 |
+|--------|------|------|
+| 🔴 HIGH（Windows 運行時崩潰） | **0** | 無 |
+| 🟡 MEDIUM（行為偏差） | **7 個位置** | `action_executor.py`、`action_execution_bridge.py`、`desktop_interaction.py` 中的 tilde 路徑；`brain_bridge_service.py` 和 `prompt_builder.py` 的 CWD 依賴路徑 |
+| 🟢 LOW（已防護或 dead code） | 30+ | shebangs（Windows 忽略）、guarded `/etc/os-release`、`/proc/cpuinfo` 等 |
+
+**正確狀態**: 這不是深層問題，是 **7 個小型修復**。全部可用 `pathlib.Path` 和 `PROJECT_ROOT` 常量解決。
+
+**連鎖效應**: 無（被高估為系統性問題而非小型修復）
+
+**正確修復方案**: 逐一修復 7 個位置（約 30 分鐘工作）
+
+---
+
+### 6. 覆蓋率與測試 — 多項誤報
+
+| 原先聲稱 | 實際狀況 | 判斷 |
+|---------|---------|------|
+| "45 failing tests" blocking 收集 | **誤報** — 45 是 ED3N 舊數字，實際不存在此清單 | ❌ **誤報** |
+| "15 個 apps/backend/tests/ 檔案 collection errors" | **誤報** — `tests/conftest.py` 先被載入（因為是 testpaths 第一項），sys.path 設定後所有檔案可正常 import | ❌ **誤報** |
+| "Coverage 13.48%" | 實際 **0.40%**（完整執行 677 tests，45 fail） | 數字混亂 |
+| "511 tests collected" | 實際 **3,525**（含 apps/backend/tests/、apps/backend/src/、scripts/） | 文檔數字指不同子集 |
+
+**實情**:
+- `tests/conftest.py` 加入 `apps/backend/src` 到 sys.path → 所有 testpath 的檔案都可正常 import
+- 唯一已知 collection error：`test_drive_integration.py`（已在 Phase 5 修復 import 路徑，但 mock 目標仍錯誤）
+- `scripts/` 中的 103 個 test 檔案多數是獨立腳本，不是 pytest 測試
+- `apps/backend/src/` 中的 5 個內嵌 test 檔案多數可以收集
+
+**真正阻塞覆蓋率的原因**:
+1. `--cov-fail-under=50` — 門檻過高（621 個源檔案 vs 數百測試）
+2. `test_drive_integration.py` 仍在收集時報錯（mock patch `main.*` 失敗）
+3. 其他測試執行時失敗（45+ 個），導致覆蓋率報告被截斷
+
+**正確修復方案**:
+1. 降低 `--cov-fail-under=50` 至 5% 或暫時移除（pyproject.toml L168）
+2. 修復 `test_drive_integration.py` 的 mock 目標（見 #4）
+3. 移除外 `scripts/` 的 testpaths 或標記其為非測試目錄
+4. 運行 `pytest tests/unit/ --cov` 得到有效覆蓋率
+
+---
+
+### 7. 跨問題關聯圖
+
+```
+A3 重構 (main_api_server 1668→313, angela_llm 2245→40, core/autonomous/ 拆分)
+  ├──→ Magic numbers: 參考路徑未更新 (ai/ed3n/ → 實際 ai/response/)
+  ├──→ Orphan rate: 重構後檔案被誤算為孤兒 (+29 檔案, 13.8%)
+  ├──→ test_drive_integration: mock 目標基於重構前結構
+  ├──→ 15 個「會出錯」測試檔案實為誤報 (conftest.py 路徑設定正常)
+  └──→ Plan/MD 行數全部偏差 +15~90%
+
+Centralized magic_numbers.py 未完成
+  ├──→ 0/15 functions 有 caller → 全部 dead code
+  └──→ network_defaults.py DEPRECATED 但 7 個 importer 未遷移
+
+Coverage fail-under=50%
+  ├──→ 永遠不可達成 (621 src files, ~數百 tests)
+  └──→ 無有效覆蓋率報告可用
+```
+
+---
+
+### 8. 優先級修復計畫
+
+| 優先級 | 項目 | 估計工時 | 依賴 | 影響 |
+|--------|------|---------|------|------|
+| **P0** | 修 `drive.py:305` (`ham.store_experience` → 改用存在的方法) | 30 分鐘 | 無 | 消除運行時 bug |
+| **P0** | 修 `test_drive_integration.py` mock 目標 | 1 小時 | 上項 | 正確捕獲端點行為 |
+| **P1** | 降低/移除 `--cov-fail-under=50` | 5 分鐘 | 無 | 讓 CI 可以通過 |
+| **P1** | 更新 MASTER_PLAN.md 檔案路徑 (ai/ed3n/* → 實際路徑) | 30 分鐘 | 無 | 文檔可信任 |
+| **P1** | 修 7 個 MEDIUM Unix 路徑 | 30 分鐘 | 無 | 跨平台相容 |
+| **P2** | 取消 network_defaults.py 的 DEPRECATED 標記 | 5 分鐘 | 無 | 消除文檔矛盾 |
+| **P2** | 建立孤兒檢測腳本 | 2 小時 | 無 | 可重複審計 |
+| **P2** | 審查 29 孤兒子套件 (125 檔案) 刪除候選 | 4 小時 | 孤兒腳本 | 清理 ~20K LOC |
+| **P3** | 魔法數字遷移腳本 | 3-5 天 | 孤兒清理先 | 清理 ~1,900+ 數字 |
+| **P3** | 覆蓋率提升至 >5% | 長期 | 修復 test infrastructure | 品質信心 |
