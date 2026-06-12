@@ -23,7 +23,7 @@ heartbeat_func = """
 def get_metabolic_heartbeat() -> MetabolicHeartbeat:
     global _metabolic_heartbeat
     if _metabolic_heartbeat is None:
-        from core.autonomous.heartbeat import MetabolicHeartbeat
+        from core.life.heartbeat import MetabolicHeartbeat
         _metabolic_heartbeat = MetabolicHeartbeat(update_interval=30.0)
     return _metabolic_heartbeat
 

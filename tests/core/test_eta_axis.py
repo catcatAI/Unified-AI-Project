@@ -9,7 +9,7 @@ Date: 2026-05-15
 import pytest
 from datetime import datetime
 try:
-    from core.autonomous.eta_axis import (
+    from core.engine.eta_axis import (
         sigmoid,
         AtomicModuleType,
         LogicGateType,

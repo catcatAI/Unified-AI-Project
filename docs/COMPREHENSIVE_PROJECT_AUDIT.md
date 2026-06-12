@@ -523,3 +523,68 @@ This is a **well-structured but partially implemented** AI companion system with
 11. **Update documentation** — correct file counts, completion percentages, feature claims
 12. **Fix test count** — update README from 511 to actual 3,506
 13. **Remove debug defaults** — `test_mode: true` and `debug_mode: true` should be `false`
+
+---
+
+## 9. FIXES APPLIED (2026-06-12)
+
+### 9.1 Phantom Imports Fixed (34 changes across 9 files)
+
+| File | Old Path | New Path | Changes |
+|------|----------|----------|---------|
+| `tests/test_v63_config_driven.py` | `core.autonomous.tickle_reflex_system` | `core.life.tickle_reflex_system` | 12 |
+| `tests/test_v63_config_driven.py` | `core.autonomous.anchor_learning` | `core.engine.anchor_learning` | 1 |
+| `tests/core/test_eta_axis.py` | `core.autonomous.eta_axis` | `core.engine.eta_axis` | 1 |
+| `tests/core/autonomous/test_eta_axis.py` | `core.autonomous.eta_axis` | `core.engine.eta_axis` | 14 |
+| `tests/core/test_theta_router.py` | `core.autonomous.axis_port_registry` | `core.engine.axis_port_registry` | 2 |
+| `tests/core/test_axis_port_registry.py` | `core.autonomous.axis_port_registry` | `core.engine.axis_port_registry` | 1 |
+| `tests/core/test_persistence.py` | `core.autonomous.state_persistence` | `core.engine.state_persistence` | 1 |
+| `apps/backend/verify_behavioral_impact.py` | `core.autonomous.digital_life_integrator` | `core.life.digital_life_integrator` | 1 |
+| `tests/integration/test_architecture_fix.py` | `core.autonomous.biological_integrator` | `core.bio.biological_integrator` | 1 |
+| `scripts/final_refactor.py` | `core.autonomous.heartbeat` | `core.life.heartbeat` | 1 |
+
+**Skipped (unfixable):** `tests/core/test_self_introspector_v2.py`, `tests/core/test_audit_comprehensive.py` — `SelfIntrospectorV2` doesn't exist anywhere.
+
+### 9.2 Orphaned Directories Removed (12 directories, ~32 files)
+
+Removed: `core/memory/`, `core/live2d/`, `core/biological/`, `core/cognition/`, `core/feedback/`, `core/nlg/`, `core/nlu/`, `core/planning/`, `core/reflection/`, `core/verification/`, `core/notification/`, `core/reporting/`
+
+All confirmed zero imports before removal.
+
+### 9.3 Circular Alias Fixed
+
+- **Before**: `art_learning_system.py` ↔ `art_learning_workflow.py` circular import (latent bug: `ArtLearningSystem` could be `None`)
+- **After**: `art_learning_system.py` defines `ArtLearningSystem` as a proper class. `art_learning_workflow.py` imports from it without circular dependency.
+- Both files parse and import correctly.
+
+### 9.4 Pre-commit Python Version Fixed
+
+- **Before**: `python3.8` (conflicts with `requires-python = ">=3.10"`)
+- **After**: `python3.10`
+
+### 9.5 README Corrected
+
+- File count: 616 → 680
+- Test count: 511 → 3,506
+- Mobile status: listed as implemented → marked as skeleton
+- Added audit report link
+
+### 9.6 Verification Results
+
+| Check | Result |
+|-------|--------|
+| Python syntax (core/engine) | ✅ 22 files, 0 errors |
+| Python syntax (tests) | ✅ 511 files, 0 errors |
+| art_learning import chain | ✅ No circular dependency |
+| Phantom imports remaining | ✅ 0 fixable (2 unfixable + 2 string literals) |
+| Orphaned directories | ✅ All 12 removed |
+
+### 9.7 Remaining Issues (Not Fixed)
+
+| Issue | Reason |
+|-------|--------|
+| 2 `self_introspector_v2` test files | Target class doesn't exist anywhere — needs implementation or test removal |
+| 32 stub files in `core/autonomous/` | Still `pass` — need implementation |
+| `services/audio_service.py` | Hardcoded dummy data — needs real implementation |
+| `services/vision_service.py` | `random.choice()` analysis — needs real implementation |
+| Mobile app skeleton | 3 files — needs full implementation |

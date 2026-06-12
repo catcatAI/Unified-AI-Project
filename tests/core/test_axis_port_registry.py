@@ -2,7 +2,7 @@
 
 
 try:
-    from core.autonomous.axis_port_registry import PortRegistry, PortDirection, Port
+    from core.engine.axis_port_registry import PortRegistry, PortDirection, Port
 except ImportError:
     import pytest; pytest.skip("axis_port_registry module not available", allow_module_level=True)
 

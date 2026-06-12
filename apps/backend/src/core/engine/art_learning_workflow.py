@@ -11,7 +11,6 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from dataclasses import dataclass, field
 import math
-from .art_learning_system import ArtLearningSystem
 from core.bio.biological_integrator import BiologicalIntegrator
 
 from core.interfaces.service_registry import get_registry
@@ -146,35 +145,51 @@ class ArtLearningWorkflow:
     Angela 的外觀演化協調器 (2030 Standard).
     負責將 L1 的生物脈動 轉化為 L4 的美學演化，最終在 L6 渲染層實體化。
     """
-    def __init__(self, bio_integrator: BiologicalIntegrator):
+    def __init__(self, bio_integrator=None, art_learning_system=None, avatar_generator=None,
+                 live2d_integration=None, physiological_tactile=None, cyber_identity=None):
         self.bio = bio_integrator
-        self.art_system = ArtLearningSystem()
+        self.art_system = art_learning_system
+        self.avatar_generator = avatar_generator
+        self.live2d_integration = live2d_integration
+        self.physiological_tactile = physiological_tactile
+        self.cyber_identity = cyber_identity
         self.current_overrides = {}
-        self.last_logged_emotion = None # 用於減少重複日誌
-
+        self.last_logged_emotion = None
 
     async def update_visual_state(self) -> Dict[str, Any]:
-        """
-        [L1 -> L4 Sync] 根據當前生物指標，計算最新的色彩覆蓋。
-        """
+        """[L1 -> L4 Sync] 根據當前生物指標，計算最新的色彩覆蓋。"""
+        if self.bio is None:
+            return {}
         bio_state = self.bio.get_biological_state()
-        self.current_overrides = self.art_system.get_color_overrides(bio_state)
-        
+        if self.art_system is not None:
+            self.current_overrides = self.art_system.get_color_overrides(bio_state)
+        else:
+            self.current_overrides = self._default_color_overrides(bio_state)
+
         emotion = bio_state.get("dominant_emotion", "neutral")
-        
-        # 僅在情緒發生變化時記錄日誌，避免刷屏
         if emotion != self.last_logged_emotion:
             logger.info(f"🎨 [L4-Workflow] Aesthetic shift based on '{emotion}'.")
             self.last_logged_emotion = emotion
 
-        
         return self.current_overrides
 
     def process_user_aesthetic_feedback(self, feedback_text: str) -> None:
-        """
-        [L4-Evolution] 根據用戶在對話中對外觀的評價進行學習。
-        """
-        self.art_system.learn_from_feedback(feedback_text, str(self.current_overrides))
+        """[L4-Evolution] 根據用戶在對話中對外觀的評價進行學習。"""
+        if self.art_system is not None:
+            self.art_system.learn_from_feedback(feedback_text, str(self.current_overrides))
+
+    @staticmethod
+    def _default_color_overrides(bio_state: Dict[str, Any]) -> Dict[str, Any]:
+        emotion = bio_state.get("dominant_emotion", "neutral")
+        energy = bio_state.get("energy_level", 0.5)
+        color_map = {
+            "happy": {"warmth": 0.8, "saturation": 0.7 + energy * 0.3},
+            "sad": {"warmth": 0.3, "saturation": 0.4},
+            "angry": {"warmth": 0.9, "saturation": 0.9, "hue_shift": 0.1},
+            "calm": {"warmth": 0.5, "saturation": 0.5, "brightness": 0.6 + energy * 0.4},
+            "neutral": {"warmth": 0.5, "saturation": 0.5},
+        }
+        return color_map.get(emotion, color_map["neutral"])
 
 # 單例模式初始化 (由 BiologicalIntegrator 驅動)
 _instance = None

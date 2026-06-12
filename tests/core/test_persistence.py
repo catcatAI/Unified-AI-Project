@@ -11,7 +11,7 @@ Author: Angela AI v6.2.1
 
 def test_persistence_basic():
     from core.engine.state_matrix_adapter import StateMatrixAdapter
-    from core.autonomous.state_persistence import StatePersistence, PersistenceConfig
+    from core.engine.state_persistence import StatePersistence, PersistenceConfig
 
     print("=" * 60)
     print("P9 — Persistence Layer Test")

@@ -104,9 +104,34 @@ class Live2DParameter:
     max_value: float = 1.0
 
 
-# Backward compatibility alias (2026-06-07)
-# Real implementation is ArtLearningWorkflow in art_learning_workflow.py
-try:
-    from .art_learning_workflow import ArtLearningWorkflow as ArtLearningSystem
-except ImportError:
-    ArtLearningSystem = None
+class ArtLearningSystem:
+    """Art learning system — tutorial search, image analysis, knowledge accumulation."""
+
+    def __init__(self, browser_controller=None, vision_service=None, neuroplasticity=None):
+        self.browser = browser_controller
+        self.vision = vision_service
+        self.neuroplasticity = neuroplasticity
+        self.knowledge: List[ArtKnowledge] = []
+        self.sessions: List[LearningSession] = []
+
+    def get_color_overrides(self, bio_state: Dict[str, Any]) -> Dict[str, Any]:
+        """Map biological state to visual color overrides."""
+        emotion = bio_state.get("dominant_emotion", "neutral")
+        energy = bio_state.get("energy_level", 0.5)
+        color_map = {
+            "happy": {"warmth": 0.8, "saturation": 0.7 + energy * 0.3},
+            "sad": {"warmth": 0.3, "saturation": 0.4},
+            "angry": {"warmth": 0.9, "saturation": 0.9, "hue_shift": 0.1},
+            "calm": {"warmth": 0.5, "saturation": 0.5, "brightness": 0.6 + energy * 0.4},
+            "neutral": {"warmth": 0.5, "saturation": 0.5},
+        }
+        return color_map.get(emotion, color_map["neutral"])
+
+    def learn_from_feedback(self, feedback_text: str, context: str) -> None:
+        """Learn from user aesthetic feedback."""
+        self.knowledge.append(ArtKnowledge(
+            domain=ArtDomain.CHARACTER_DESIGN,
+            content={"feedback": feedback_text, "context": context},
+            source="user_feedback",
+        ))
+

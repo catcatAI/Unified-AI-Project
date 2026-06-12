@@ -302,7 +302,7 @@ class TestTickleReflexSystem:
 
     def test_reflex_system_initializes(self):
         """TickleReflexSystem 正確初始化"""
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
         assert reflex._initialized is True
@@ -313,7 +313,7 @@ class TestTickleReflexSystem:
 
     def test_intensity_level_classification(self):
         """強度級別分類正確"""
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
         assert reflex.get_intensity_level(0.1) == "none"
@@ -324,7 +324,7 @@ class TestTickleReflexSystem:
 
     def test_body_parts_loaded_from_config(self):
         """身體部位從配置讀取"""
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
         parts = reflex.get_all_body_parts()
@@ -335,7 +335,7 @@ class TestTickleReflexSystem:
 
     def test_sensitive_parts_isolated(self):
         """敏感部位正確隔離"""
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
         sensitive = reflex.get_sensitive_parts()
@@ -344,7 +344,7 @@ class TestTickleReflexSystem:
     def test_trigger_returns_phase_structure(self):
         """trigger_tickles 返回 Phase1 + Phase2 結構"""
         import asyncio
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
 
@@ -369,7 +369,7 @@ class TestTickleReflexSystem:
     def test_sensitive_part_returns_comfort_seek(self):
         """敏感部位觸發時返回 comfort_seek"""
         import asyncio
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
 
@@ -389,7 +389,7 @@ class TestTickleReflexSystem:
     def test_sustained_stimulus_falls_back(self):
         """持續刺激（>5s）自動回退到 comfort_seek"""
         import asyncio
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
 
@@ -409,7 +409,7 @@ class TestTickleReflexSystem:
     def test_intense_mode_output_mode(self):
         """intense 模式（>=0.8）輸出模式為 scream"""
         import asyncio
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
 
@@ -429,7 +429,7 @@ class TestTickleReflexSystem:
     def test_gamma_invasion_on_sustained(self):
         """持續刺激時 γ軸 被入侵（恐懼+）"""
         import asyncio
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
         from core.autonomous.state_matrix import StateMatrix4D
 
         reflex = get_reflex_system()
@@ -451,7 +451,7 @@ class TestTickleReflexSystem:
     def test_gamma_invasion_on_sensitive(self):
         """敏感部位觸發時 γ軸 被入侵"""
         import asyncio
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
         from core.autonomous.state_matrix import StateMatrix4D
 
         reflex = get_reflex_system()
@@ -472,7 +472,7 @@ class TestTickleReflexSystem:
 
     def test_reflex_timeout_config(self):
         """反射超時配置"""
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
         assert reflex._reflex_timeout_ms > 0
@@ -485,7 +485,7 @@ class TestAnchorLearningSuggestConfig:
     def test_suggest_config_update_method_exists(self):
         """suggest_config_update 方法存在"""
         try:
-            from core.autonomous.anchor_learning import AnchorLearningEngine
+            from core.engine.anchor_learning import AnchorLearningEngine
             assert hasattr(AnchorLearningEngine, "suggest_config_update")
         except ImportError:
             pass
@@ -625,7 +625,7 @@ class TestTickleIntensityThresholdFix:
 
     def test_intense_level_classification(self):
         """intensity >= 0.60 應被分類為 intense"""
-        from core.autonomous.tickle_reflex_system import get_reflex_system
+        from core.life.tickle_reflex_system import get_reflex_system
         reflex = get_reflex_system()
         assert reflex.get_intensity_level(0.6) == "intense"
         assert reflex.get_intensity_level(0.65) == "intense"

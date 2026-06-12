@@ -22,7 +22,7 @@ sys.path.append(str((project_root / "src").absolute()))
 async def verify_behavioral_impact():
     logger.info("=== Starting AGI Behavioral Impact Verification ===")
     
-    from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
+    from core.life.digital_life_integrator import DigitalLifeIntegrator
     from services.brain_bridge_service import BrainBridgeService
     from services.angela_llm_service import AngelaLLMService
     from core.autonomous.action_executor import Action, ActionCategory, ActionPriority

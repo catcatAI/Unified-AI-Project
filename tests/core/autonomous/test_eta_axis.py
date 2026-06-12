@@ -16,7 +16,7 @@ import pytest
 @pytest.fixture
 def eta():
     """Fresh EtaAxisState for each test."""
-    from core.autonomous.eta_axis import EtaAxisState
+    from core.engine.eta_axis import EtaAxisState
 
     return EtaAxisState()
 
@@ -44,7 +44,7 @@ class TestModuleRegistration:
     """Register, unregister, activate, deactivate modules."""
 
     def test_register_adds_to_registry_and_active(self, eta):
-        from core.autonomous.eta_axis import (
+        from core.engine.eta_axis import (
             ModuleConfig,
             AtomicModuleType,
             LogicGateType,
@@ -61,7 +61,7 @@ class TestModuleRegistration:
         assert "test_and" in eta.active_modules
 
     def test_unregister_removes_from_both(self, eta):
-        from core.autonomous.eta_axis import (
+        from core.engine.eta_axis import (
             ModuleConfig,
             AtomicModuleType,
             LogicGateType,
@@ -79,7 +79,7 @@ class TestModuleRegistration:
         assert "test_and" not in eta.active_modules
 
     def test_activate_and_deactivate(self, eta):
-        from core.autonomous.eta_axis import (
+        from core.engine.eta_axis import (
             ModuleConfig,
             AtomicModuleType,
             LogicGateType,
@@ -102,7 +102,7 @@ class TestModuleExecution:
     """Execute atomic modules of each type."""
 
     def test_logic_gate_and(self, eta):
-        from core.autonomous.eta_axis import (
+        from core.engine.eta_axis import (
             ModuleConfig,
             AtomicModuleType,
             LogicGateType,
@@ -118,7 +118,7 @@ class TestModuleExecution:
         assert eta.execute("and_gate", {"values": [0, 1, 2]}) is False
 
     def test_arithmetic_add(self, eta):
-        from core.autonomous.eta_axis import (
+        from core.engine.eta_axis import (
             ModuleConfig,
             AtomicModuleType,
             ArithmeticOpType,
@@ -133,7 +133,7 @@ class TestModuleExecution:
         assert eta.execute("add_op", {"values": [1.0, 2.0, 3.0]}) == 6.0
 
     def test_aggregator_mean(self, eta):
-        from core.autonomous.eta_axis import (
+        from core.engine.eta_axis import (
             ModuleConfig,
             AtomicModuleType,
             AggregatorType,
@@ -148,7 +148,7 @@ class TestModuleExecution:
         assert eta.execute("mean_agg", {"values": [2.0, 4.0, 6.0]}) == 4.0
 
     def test_router_direct(self, eta):
-        from core.autonomous.eta_axis import (
+        from core.engine.eta_axis import (
             ModuleConfig,
             AtomicModuleType,
             RouterType,
@@ -167,7 +167,7 @@ class TestDefaultModules:
     """Factory function creates the standard module set."""
 
     def test_create_default_modules_returns_all_types(self):
-        from core.autonomous.eta_axis import create_default_modules, AtomicModuleType
+        from core.engine.eta_axis import create_default_modules, AtomicModuleType
 
         modules = create_default_modules()
         assert len(modules) > 0
@@ -181,7 +181,7 @@ class TestDefaultModules:
         assert AtomicModuleType.ROUTER in types_found
 
     def test_default_modules_can_be_registered(self, eta):
-        from core.autonomous.eta_axis import create_default_modules
+        from core.engine.eta_axis import create_default_modules
 
         for name, config in create_default_modules().items():
             eta.register_module(config)
@@ -193,21 +193,21 @@ class TestTriggerCurve:
     """Sigmoid-based trigger curve logic."""
 
     def test_compute_modules_basic(self):
-        from core.autonomous.eta_axis import TriggerCurve
+        from core.engine.eta_axis import TriggerCurve
 
         tc = TriggerCurve()
         count = tc.compute_modules(complexity=0.5, axis_count=6)
         assert 1 <= count <= 12
 
     def test_compute_delta_basic(self):
-        from core.autonomous.eta_axis import TriggerCurve
+        from core.engine.eta_axis import TriggerCurve
 
         tc = TriggerCurve()
         delta = tc.compute_delta(complexity=0.5)
         assert 0.0 <= delta <= 0.2
 
     def test_compute_trigger_threshold(self):
-        from core.autonomous.eta_axis import TriggerCurve
+        from core.engine.eta_axis import TriggerCurve
 
         tc = TriggerCurve()
         new_th = tc.compute_trigger_threshold(
@@ -220,7 +220,7 @@ class TestSerialization:
     """to_dict / from_dict round-trip."""
 
     def test_roundtrip_preserves_state(self, eta):
-        from core.autonomous.eta_axis import create_default_modules, EtaAxisState
+        from core.engine.eta_axis import create_default_modules, EtaAxisState
 
         for name, config in create_default_modules().items():
             eta.register_module(config)

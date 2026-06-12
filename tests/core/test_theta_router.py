@@ -71,8 +71,8 @@ def test_theta_router_cascade_no_registry():
 
 
 def test_theta_router_cascade_empty_outputs():
-    pytest.importorskip("core.autonomous.axis_port_registry")
-    from core.autonomous.axis_port_registry import PortRegistry, PortDirection
+    pytest.importorskip("core.engine.axis_port_registry")
+    from core.engine.axis_port_registry import PortRegistry, PortDirection
 
     registry = PortRegistry(state_adapter=None)
     registry.register(name="test", direction=PortDirection.IO, semantic_vector=make_vector())

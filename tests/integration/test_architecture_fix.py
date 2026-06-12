@@ -34,7 +34,7 @@ try:
     HAMMemoryManager = None
 
     # 導入生物整合器
-    from core.autonomous.biological_integrator import (
+    from core.bio.biological_integrator import (
         BiologicalIntegrator,
         BiologicalEvent,
         BiologicalEventPublisher,
