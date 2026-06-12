@@ -51,15 +51,16 @@
 [![Status](https://img.shields.io/badge/Status-Active%20Development-yellow.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
 
-**Angela AI** is a digital life system with biological simulation, self-evolution, and real execution capabilities.
+**Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 616 Python files in backend src, ~127K LOC. Two FastAPI servers, Electron + Live2D desktop companion, mobile stub. **511 tests collected, 0 collection errors.**  
-**Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · mobile `1.2.0-dev` · cli `1.1.0` · biology-core `1.0.0`.  
+**Quick facts**: 680 Python files in backend src (~15.5 MB). Electron + Live2D desktop companion (63 JS files). Mobile app is a skeleton (not yet implemented). **3,506 tests collected, 0 collection errors.**  
+**Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · mobile `0.1.0-skeleton` · cli `1.1.0` · biology-core `1.0.0`.  
 **Architecture consistency score**: **~62%** (per audit reports) — needs independent verification.  
-**Total project files**: ~2,950+ (616 Python in backend src · 140 JS/TS · 805+ docs · 577 config · 238+ test · ~190 other).  
+**Total project files**: ~2,950+ (680 Python in backend src · 140 JS/TS · 805+ docs · 577 config · 238+ test · ~190 other).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHANGELOG.md) for version history.
 
-> ✅ **STATUS (2026-06-08)**: All alias fixes applied. Server imports successfully. **511 tests collected, 0 collection errors.** See [Name Mappings](#name-mappings-test-expectation--actual-implementation) for resolved naming issues.
+> **STATUS (2026-06-12)**: All alias fixes applied. Server imports successfully. **3,506 tests collected, 0 collection errors.** See [Name Mappings](#name-mappings-test-expectation--actual-implementation) for resolved naming issues.  
+> **AUDIT**: See [docs/COMPREHENSIVE_PROJECT_AUDIT.md](docs/COMPREHENSIVE_PROJECT_AUDIT.md) for independent verification of what's real vs stub.
 
 ---
 
@@ -107,24 +108,40 @@ npm start
 
 ---
 
-### What Actually Works (Code-Verified 2026-06-07)
+### What Actually Works (Code-Verified 2026-06-12)
 
-- **Config system** — `config_loader.py:get_config()` correctly returns Config at L869 ✅
-- **Core AI systems** — All major systems implemented (see Name Mappings table) ✅
-- **Project structure** — 616 Python files in backend src, organized modules ✅
-- **Documentation** — Extensive docs in `docs/` directory ✅
-- **Desktop app** — Electron + Live2D structure exists, `npm install` works ✅
+- **Config system** — `config_loader.py:get_config()` correctly returns Config ✅
+- **LLM providers** — All 8 providers real: Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N, GARDEN ✅
 - **Chat pipeline** — `ChatService` + `AngelaLLMService` + `ModelBus` + `QueryClassifier` ✅
-- **Biological systems** — `NeuroplasticitySystem`, `EndocrineSystem`, `EmotionalBlendingSystem`, `PhysiologicalTactileSystem` ✅
-- **Execution systems** — `ActionExecutor`, `DesktopInteraction`, `BrowserController`, `AudioSystem` ✅
-- **Integration** — `DigitalLifeIntegrator`, `CyberIdentity`, `SelfGeneration`, `AutonomousLifeCycle` ✅
-- **Art/Live2D** — `ArtLearningWorkflow`, `Live2DAvatarGenerator`, `ArtLearningWorkflow` ✅
+- **Agent management** — `AgentManager` (32.9 KB), `BaseAgent` (12.6 KB) ✅
+- **State matrix** — 6D state matrix, 1439 lines, 61.8 KB ✅
+- **HSP connector** — 51 KB, full protocol with circuit breaker ✅
+- **Action execution** — 48 KB, priority queue, dependency resolution ✅
+- **ED3N engine** — SNN, reflex layers, cross-modal processing ✅
+- **GARDEN engine** — VectorDictionary, TensorSNNCore ✅
+- **Code inspection** — AST parsing, pattern matching ✅
+- **Biological systems** — 8 modules with real code (20-46 KB each) ✅
+- **Desktop app** — Electron + Live2D, 63 JS files, vendored Cubism SDK ✅
+- **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
+- **Gemini OS bridge** — pyautogui automation ✅
+- **CLI** — Unified CLI with HTTP client ✅
+- **Test suite** — 3,506 tests, ~80-85% substantive assertions ✅
+- **ChromaDB memory** — HAM memory with vector store ✅
 
-### What Does NOT Work (Resolved Issues)
+### What Does NOT Work / Is Stub
 
-- ~~Server startup~~ — ✅ **FIXED**: `ModelProvider` alias added to `core/interfaces/protocols.py`
-- ~~Test collection~~ — ✅ **FIXED**: 0 collection errors (was 21)
-- ~~run_angela.py~~ — ❌ File does not exist (use `apps/backend/start_server.py`)
+- **Mobile app** — Skeleton only (3 source files), not a real app ❌
+- **`core/memory/`** — 7 stub files (all `pass`) ❌
+- **`core/live2d/`** — 4 stub files (all `pass`) ❌
+- **`core/biological/`** — 3 stub files (all `pass`) ❌
+- **`core/cognition/`**, `core/feedback/`, `core/nlg/`, `core/nlu/`, etc. — 11 more stub files ❌
+- **`ai/multimodal/`**, `ai/security/`, `ai/token/`, `ai/trust/`, `ai/world_model/` — 5 stub modules ❌
+- **`services/audio_service.py`** — Returns hardcoded dummy data ❌
+- **`services/vision_service.py`** — Analysis returns `random.choice()` ❌
+- **`apps/training/`** — Empty directories (no training code) ❌
+- **`live2d_models/`** — Empty (no model files) ❌
+- **Server startup** — ✅ **FIXED**: `ModelProvider` alias added
+- **Test collection** — ✅ **FIXED**: 0 collection errors
 
 ### Name Mappings (Test Expectation → Actual Implementation)
 
