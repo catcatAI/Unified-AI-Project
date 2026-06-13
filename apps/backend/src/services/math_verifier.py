@@ -41,3 +41,12 @@ class MathVerifier:
     def __init__(self, state_matrix=None):
         self._ready = True
         self.state_matrix = state_matrix
+
+    def is_math_message(self, text: str) -> bool:
+        import re
+        math_patterns = [
+            r'\d+\s*[\+\-\*\/\%]\s*\d+',
+            r'(?:計算|求解|解方程|sum|calculate|compute)',
+            r'[\=\?]\s*\d+',
+        ]
+        return any(re.search(p, text) for p in math_patterns)

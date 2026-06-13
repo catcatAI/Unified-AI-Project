@@ -98,7 +98,12 @@ class MemoryIntegration:
             )
 
             if results and len(results) > 0:
-                best_template, score = results[0]
+                raw = results[0]
+                if isinstance(raw, dict):
+                    best_template = raw
+                    score = 0.8
+                else:
+                    best_template, score = raw[0], raw[1] if len(raw) > 1 else 0.8
                 best_template.record_usage(success=True)
                 await self._svc.memory_manager.update_template(best_template)
 
