@@ -44,3 +44,13 @@ class WaitingScheduler:
             return await asyncio.wait_for(coro, timeout=timeout)
         except asyncio.TimeoutError:
             return None
+
+
+_scheduler_instance: Optional[WaitingScheduler] = None
+
+
+def get_waiting_scheduler() -> WaitingScheduler:
+    global _scheduler_instance
+    if _scheduler_instance is None:
+        _scheduler_instance = WaitingScheduler()
+    return _scheduler_instance

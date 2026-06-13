@@ -263,6 +263,7 @@ class AngelaRenderer(QWidget):
             painter.drawImage(ax, ay, qimg)
         
         offset_y = 0
+        max_bubble_w = min(300, self.screen_w - 40)
         for bubble in reversed(self.bubble_stack):
             is_human = bubble["origin"] == "Human"
             bg_color = UIConfig.USER_BUBBLE_BG if is_human else UIConfig.ANGELA_BUBBLE_BG
@@ -271,11 +272,12 @@ class AngelaRenderer(QWidget):
             font.setUnderline(UIConfig.USER_UNDERLINE if is_human else UIConfig.ANGELA_UNDERLINE)
             painter.setFont(font)
             metrics = painter.fontMetrics()
-            text_rect = metrics.boundingRect(bubble["text"])
+            constrain_rect = QRect(0, 0, max_bubble_w, 1000)
+            text_rect = metrics.boundingRect(constrain_rect, Qt.TextFlag.TextWordWrap, bubble["text"])
             bw, bh = text_rect.width() + 24, text_rect.height() + 14
             bx, by = int(bubble["current_pos"].x() - (bw // 2)), int(bubble["current_pos"].y() - bh - offset_y)
             painter.setBrush(bg_color); painter.drawRoundedRect(QRect(bx, by, bw, bh), UIConfig.BUBBLE_CORNER_RADIUS, UIConfig.BUBBLE_CORNER_RADIUS)
-            painter.setPen(QColor(0, 0, 0)); painter.drawText(QRect(bx, by, bw, bh), Qt.AlignmentFlag.AlignCenter, bubble["text"])
+            painter.setPen(QColor(0, 0, 0)); painter.drawText(QRect(bx + 12, by + 7, bw - 24, bh - 14), Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, bubble["text"])
             offset_y += bh + 10
 
 if __name__ == "__main__":

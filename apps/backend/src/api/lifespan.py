@@ -144,10 +144,16 @@ def get_audio_service():
         return None
 
 
+_tactile_service_instance = None
+
 def get_tactile_service():
+    global _tactile_service_instance
+    if _tactile_service_instance is not None:
+        return _tactile_service_instance
     try:
         from services.tactile_service import TactileService
-        return TactileService()
+        _tactile_service_instance = TactileService()
+        return _tactile_service_instance
     except Exception as e:
         logger.warning(f"TactileService not available: {e}")
         return None
@@ -208,9 +214,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.error(f"[ModuleManager] Initialization failed, continuing without module system: {e}", exc_info=True)
 
+    # Start WebSocket state broadcast background task
+    _broadcast_task = None
+    try:
+        from services.websocket_manager import broadcast_state_updates
+        _broadcast_task = asyncio.create_task(broadcast_state_updates())
+        logger.info("[Broadcast] State update broadcast task started")
+    except Exception as e:
+        logger.warning(f"[Broadcast] Failed to start state broadcast: {e}")
+
     yield
 
     # --- Shutdown ---
+    if _broadcast_task is not None:
+        _broadcast_task.cancel()
+        try:
+            await _broadcast_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("[Broadcast] State broadcast task stopped")
     if _module_manager is not None:
         try:
             await _module_manager.stop()

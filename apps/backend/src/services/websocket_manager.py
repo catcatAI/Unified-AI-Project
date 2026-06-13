@@ -116,11 +116,18 @@ manager = ConnectionManager()
 
 async def broadcast_state_updates() -> None:
     """Periodically broadcast state updates (bio + Live2D) to all connected clients."""
+    _bio_integrator = None
     while True:
         try:
-            from api.lifespan import get_metabolic_heartbeat
-            heartbeat = get_metabolic_heartbeat()
-            bio_state = heartbeat.bio_integrator.get_biological_state()
+            if _bio_integrator is None:
+                try:
+                    from core.bio.biological_integrator import BiologicalIntegrator
+                    _bio_integrator = BiologicalIntegrator()
+                except Exception:
+                    await asyncio.sleep(5.0)
+                    continue
+
+            bio_state = _bio_integrator.get_biological_state()
 
             state_data = {
                 "alpha": {
@@ -140,9 +147,9 @@ async def broadcast_state_updates() -> None:
                     "intensity": bio_state.get("arousal", 50.0) / 100.0,
                 },
                 "spatial": {
-                    "x": heartbeat.x,
-                    "y": heartbeat.y,
-                    "posture": heartbeat.posture,
+                    "x": 200.0,
+                    "y": 0.0,
+                    "posture": {"theta_matrix": [0.0] * 9, "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5}},
                 },
                 "timestamp": datetime.now().isoformat(),
             }

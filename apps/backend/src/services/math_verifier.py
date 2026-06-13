@@ -38,5 +38,6 @@ class SpatialEngine:
 class MathVerifier:
     """MathVerifier — 比對器 + 觸發狀態更新（stub — not yet implemented）"""
 
-    def __init__(self):
+    def __init__(self, state_matrix=None):
         self._ready = True
+        self.state_matrix = state_matrix

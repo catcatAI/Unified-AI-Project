@@ -51,6 +51,14 @@ class AngelaConfig:
     def get(self, key: str, default: Any = None) -> Any:
         return self._data.get(key, default)
 
+    def learn(self, key: str, data: Dict[str, Any]) -> None:
+        """Record a runtime learning event under a key."""
+        if "learned" not in self._data:
+            self._data["learned"] = {}
+        if key not in self._data["learned"]:
+            self._data["learned"][key] = []
+        self._data["learned"][key].append(data)
+
 
 _global_config: Optional[AngelaConfig] = None
 

@@ -51,8 +51,33 @@ class HAMMemoryManager:
         })
         self._save()
 
-    async def retrieve_response_templates(self, query: str, top_k: int = 5) -> List[Any]:
-        return self._data["templates"][-top_k:]
+    async def retrieve_response_templates(
+        self,
+        query: str,
+        top_k: int = 5,
+        angela_state=None,
+        user_impression=None,
+        limit: int = 5,
+        min_score: float = 0.0,
+    ) -> List[Any]:
+        count = limit or top_k
+        return self._data["templates"][-count:]
+
+    async def store_experience(
+        self,
+        raw_data: Any,
+        data_type: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
+        """Store a raw experience entry into the memory store."""
+        entry = {
+            "content": str(raw_data),
+            "data_type": data_type,
+            "metadata": metadata or {},
+        }
+        self._data["templates"].append(entry)
+        self._save()
+        return f"exp_{len(self._data['templates'])}"
 
     def store_conversation(self, conversation: Dict[str, Any]) -> None:
         self._data["conversations"].append(conversation)
