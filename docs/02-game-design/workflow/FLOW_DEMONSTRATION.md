@@ -32,28 +32,22 @@
 
 ## 🛠️ 创建的工具
 
-### 1. hash_annotator.py - 哈希注释工具
+### 1. hash_annotator.py - 哈希注释工具 *(Deprecated: removed)*
 
-**位置**: `tools/hash_annotator.py`  
+> **Note**: `tools/hash_annotator.py` has been removed. Hash annotations must be added and maintained manually or via alternative tooling.
+
+**位置**: `tools/hash_annotator.py` *(no longer exists)*  
 **哈希**: T001ANNO
 
-**功能演示**:
+**功能演示** *(all commands no longer available)*:
 
 ```bash
-# 扫描项目文件
-python tools/hash_annotator.py scan
-
-# 为单个文件添加哈希注释
-python tools/hash_annotator.py annotate --file test_demo.py --purpose "测试文件"
-
-# 为整个目录添加注释
-python tools/hash_annotator.py annotate --dir apps/backend/src --recursive
-
-# 验证哈希唯一性
-python tools/hash_annotator.py validate
-
-# 更新修改后的文件哈希
-python tools/hash_annotator.py update --file path/to/file.py
+# (Deprecated: hash_annotator.py removed)
+# python tools/hash_annotator.py scan
+# python tools/hash_annotator.py annotate --file test_demo.py --purpose "测试文件"
+# python tools/hash_annotator.py annotate --dir apps/backend/src --recursive
+# python tools/hash_annotator.py validate
+# python tools/hash_annotator.py update --file path/to/file.py
 ```
 
 **实际效果**:
@@ -248,20 +242,20 @@ main.py [FE20AD61]
 # 1. 创建文件
 vim apps/backend/src/ai/new_service.py
 
-# 2. 添加哈希注释
-python tools/hash_annotator.py annotate \
-    --file apps/backend/src/ai/new_service.py \
-    --purpose "AI服务新功能" \
-    --version "6.2.1"
+# 2. 添加哈希注释 (Deprecated: hash_annotator.py removed — add manually)
+# python tools/hash_annotator.py annotate \
+#     --file apps/backend/src/ai/new_service.py \
+#     --purpose "AI服务新功能" \
+#     --version "6.2.1"
 
-# 3. 验证
-python tools/hash_annotator.py validate
+# 3. 验证 (Deprecated: hash_annotator.py removed)
+# python tools/hash_annotator.py validate
 
 # 4. 开发代码...
 
-# 5. 更新哈希（修改后）
-python tools/hash_annotator.py update \
-    --file apps/backend/src/ai/new_service.py
+# 5. 更新哈希（修改后）(Deprecated: hash_annotator.py removed)
+# python tools/hash_annotator.py update \
+#     --file apps/backend/src/ai/new_service.py
 ```
 
 ### 场景 2: 修改现有文件
@@ -272,16 +266,16 @@ python tools/dependency_analyzer.py impact \
     --hash 8DADEC46 \
     --depth 3
 
-# 2. 备份
-python tools/hash_annotator.py backup \
-    --hash 8DADEC46 \
-    --to archive/
+# 2. 备份 (Deprecated: hash_annotator.py removed — use git or manual backup)
+# python tools/hash_annotator.py backup \
+#     --hash 8DADEC46 \
+#     --to archive/
 
 # 3. 修改代码...
 
-# 4. 更新哈希
-python tools/hash_annotator.py update \
-    --file apps/backend/src/ai/context/manager_fixed.py
+# 4. 更新哈希 (Deprecated: hash_annotator.py removed — update hash comments manually)
+# python tools/hash_annotator.py update \
+#     --file apps/backend/src/ai/context/manager_fixed.py
 
 # 5. 验证
 python tools/workflow_validator.py full-check
@@ -360,7 +354,7 @@ python tools/call_tracker.py visualize \
    - 理解三个阶段流程
 
 2. **使用工具**
-   - 掌握 hash_annotator.py 基本用法
+   - ~~掌握 hash_annotator.py 基本用法~~ *(Deprecated: hash_annotator.py removed)*
    - 学会查看依赖关系
 
 3. **遵循规范**
@@ -394,13 +388,16 @@ python tools/call_tracker.py visualize \
 **Q: 如何知道文件是否有哈希注释？**
 
 ```bash
-python tools/hash_annotator.py scan | grep "missing_hash"
+# (Deprecated: hash_annotator.py removed — check files manually or use grep)
+# python tools/hash_annotator.py scan | grep "missing_hash"
+grep -r "FILE_HASH" apps/backend/src/
 ```
 
 **Q: 发现哈希碰撞怎么办？**
 
 ```bash
-python tools/hash_annotator.py validate
+# (Deprecated: hash_annotator.py removed — inspect manually)
+# python tools/hash_annotator.py validate
 # 如果有碰撞，会显示冲突文件
 # 手动修改其中一个文件的哈希（极少发生）
 ```
@@ -414,8 +411,9 @@ python tools/call_tracker.py callers --hash 8DADEC46
 **Q: 修改后忘记更新哈希怎么办？**
 
 ```bash
+# (Deprecated: hash_annotator.py removed — update hash comments manually)
 # 系统会自动检测到文件内容变化
-python tools/hash_annotator.py update --file path/to/file.py
+# python tools/hash_annotator.py update --file path/to/file.py
 ```
 
 ---
@@ -425,7 +423,7 @@ python tools/hash_annotator.py update --file path/to/file.py
 ### 立即行动
 
 1. ✅ 已建立标准流程 (本文档)
-2. ✅ 已创建工具 (hash_annotator.py)
+2. ~~✅ 已创建工具 (hash_annotator.py)~~ *(Deprecated: hash_annotator.py removed)*
 3. ✅ 已修复 Critical Issues
 
 ### 本周完成

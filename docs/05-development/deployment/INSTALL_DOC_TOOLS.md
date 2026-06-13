@@ -3,7 +3,7 @@
 ## 系統需求
 
 - Windows 操作系統
-- Python 3.6 或更高版本
+- Python 3.10+ 或更高版本
 - 管理員權限（用於創建桌面快捷方式）
 
 ## 快速安裝
@@ -33,7 +33,7 @@ tools\setup-doc-tools.bat
 
 如果您偏好手動安裝，請按照以下步驟操作：
 
-1. 確保已安裝Python 3.6或更高版本
+1. 確保已安裝Python 3.10+或更高版本
 2. 安裝必要的Python套件：
    ```
    pip install pyyaml colorama tqdm

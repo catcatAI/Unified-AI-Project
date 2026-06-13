@@ -23,10 +23,11 @@
 
 ```
 tools/
-├── hash_annotator.py          # 文件哈希注释器
 ├── dependency_analyzer.py     # 依赖分析器 (待创建)
 ├── call_tracker.py            # 调用追踪器 (待创建)
 └── workflow_validator.py      # 流程验证器 (待创建)
+
+> ⚠️ `hash_annotator.py` 已删除 (Deprecated: removed)
 ```
 
 ### 特点
@@ -36,37 +37,9 @@ tools/
 3. **标准规范**: 使用通用的软件工程概念
 4. **独立运行**: 不依赖Angela的配置或数据结构
 
-### 现有工具: hash_annotator.py
+### ~~现有工具: hash_annotator.py~~ (Deprecated: removed)
 
-**用途**: 为任何项目的文件添加标准化哈希注释
-
-**文件头格式** (通用):
-
-```python
-# =============================================================================
-# FILE_HASH: A1B2C3D4
-# FILE_PATH: path/to/file.py
-# FILE_TYPE: python
-# PURPOSE: 文件用途描述
-# VERSION: 1.0.0
-# STATUS: active
-# DEPENDENCIES: []
-# LAST_MODIFIED: 2026-02-19
-# =============================================================================
-```
-
-**使用场景**:
-
-- 新项目初始化，建立文件追踪系统
-- 分析任何Python/JavaScript项目的依赖关系
-- 通用的代码质量检查
-
-**示例**:
-
-```bash
-# 为任何项目添加哈希注释
-python tools/hash_annotator.py annotate --file /path/to/any/project/file.py
-```
+> ⚠️ **此工具已删除。** 通用哈希注释功能已不再维护。文件头注释可手动添加或通过 Angela 专用工具 (`angela_matrix_updater.py`) 管理。
 
 ---
 
@@ -196,21 +169,23 @@ python .angela/tools/angela_matrix_updater.py validate
 
 ## 🔍 详细对比
 
-### 1. hash_annotator.py vs angela_ham_tracker.py
+### 1. ~~hash_annotator.py~~ (Deprecated: removed) vs angela_ham_tracker.py
 
-| 对比项         | 通用工具 (hash_annotator)  | Angela专用工具 (angela_ham_tracker)     |
-| -------------- | -------------------------- | --------------------------------------- |
-| **目标**       | 任何文件                   | HAM记忆条目                             |
-| **路径**       | `tools/hash_annotator.py`  | `.angela/tools/angela_ham_tracker.py`   |
-| **哈希数据库** | `.hashes/file_hashes.json` | `.angela/hashes/ham_memory_hashes.json` |
-| **概念**       | 文件路径、大小、修改时间   | HAM memory_id, vector_hash, emotion_tag |
-| **层级**       | 不关心                     | 理解L1-L6架构                           |
-| **关联**       | 文件间import关系           | HAM记忆间的关联关系                     |
-| **使用对象**   | 任何项目                   | 仅限Angela                              |
+> ⚠️ `hash_annotator.py` 已删除。以下对比仅供参考。
+
+| 对比项         | ~~通用工具 (hash_annotator)~~ | Angela专用工具 (angela_ham_tracker)     |
+| -------------- | ----------------------------- | --------------------------------------- |
+| ~~**目标**~~   | ~~任何文件~~                  | HAM记忆条目                             |
+| ~~**路径**~~   | ~~`tools/hash_annotator.py`~~ | `.angela/tools/angela_ham_tracker.py`   |
+| ~~**哈希数据库**~~ | ~~`.hashes/file_hashes.json`~~ | `.angela/hashes/ham_memory_hashes.json` |
+| ~~**概念**~~   | ~~文件路径、大小、修改时间~~  | HAM memory_id, vector_hash, emotion_tag |
+| ~~**层级**~~   | ~~不关心~~                    | 理解L1-L6架构                           |
+| ~~**关联**~~   | ~~文件间import关系~~          | HAM记忆间的关联关系                     |
+| ~~**使用对象**~~ | ~~任何项目~~                | 仅限Angela                              |
 
 **代码对比**:
 
-通用工具追踪文件:
+~~通用工具追踪文件:~~ (已删除)
 
 ```python
 # FILE_HASH: A1B2C3D4
@@ -251,12 +226,9 @@ Angela专用工具 (.angela/tools/)
 
 ### 场景 1: 新项目或通用项目
 
-**使用**: 通用工具 (`tools/`)
+**使用**: 通用工具 (`tools/`) — ⚠️ `hash_annotator.py` 已删除
 
 ```bash
-# 为任何项目添加文件哈希
-python tools/hash_annotator.py annotate --dir /path/to/project
-
 # 分析任何项目的依赖
 python tools/dependency_analyzer.py analyze --dir /path/to/project
 ```
@@ -281,10 +253,7 @@ python .angela/tools/angela_matrix_updater.py update --all
 **先通用，后专用**:
 
 ```bash
-# 第1步: 通用工具 - 建立基础文件追踪
-python tools/hash_annotator.py annotate --dir apps/backend/src
-
-# 第2步: Angela工具 - 深度分析Angela特定组件
+# 第1步: Angela工具 - 深度分析Angela特定组件
 python .angela/tools/angela_ham_tracker.py scan
 python .angela/tools/angela_layer_validator.py validate
 ```
@@ -295,9 +264,10 @@ python .angela/tools/angela_layer_validator.py validate
 
 ### 通用工具命名
 
-- 格式: `<功能>_annotator.py`, `<功能>_analyzer.py`
-- 示例: `hash_annotator.py`, `dependency_analyzer.py`
+- 格式: `<功能>_analyzer.py`, `<功能>_validator.py`
+- 示例: `dependency_analyzer.py`, `workflow_validator.py`
 - 特点: 描述功能，不提及Angela
+- ⚠️ `hash_annotator.py` 已删除 (Deprecated: removed)
 
 ### Angela专用工具命名
 
@@ -314,8 +284,8 @@ python .angela/tools/angela_layer_validator.py validate
 **错误做法**:
 
 ```bash
-# 错误: 用通用工具分析Angela的HAM
-python tools/hash_annotator.py scan --dir apps/backend/src/ai/memory/ham_memory/
+# 错误: 用通用工具分析Angela的HAM (hash_annotator.py 已删除)
+# python tools/hash_annotator.py scan --dir apps/backend/src/ai/memory/ham_memory/
 # 结果: 只能看到文件，看不到HAM记忆条目和关联关系
 ```
 
@@ -332,8 +302,8 @@ python .angela/tools/angela_ham_tracker.py scan
 **错误期望**:
 
 ```python
-# 期望通用工具自动添加Angela Matrix标记
-python tools/hash_annotator.py annotate --file angela_file.py
+# 期望通用工具自动添加Angela Matrix标记 (hash_annotator.py 已删除)
+# python tools/hash_annotator.py annotate --file angela_file.py
 # 结果: 添加的是通用FILE_HASH，不是Angela Matrix
 ```
 
@@ -359,10 +329,9 @@ python /angela/project/.angela/tools/angela_ham_tracker.py scan
 **正确做法**:
 
 ```bash
-# 其他项目使用通用工具
+# 其他项目使用通用工具 (hash_annotator.py 已删除，请使用其他工具)
 cd /other/project
-python /angela/project/tools/hash_annotator.py scan
-# 结果: 正常工作
+# python /angela/project/tools/hash_annotator.py scan  # 已删除
 ```
 
 ---
@@ -392,7 +361,7 @@ Angela工具: 验证架构完整性
 ```
 开发新功能
     ↓
-通用工具: 为新文件添加FILE_HASH
+Angela工具: 为新文件添加FILE_HASH (hash_annotator.py 已删除)
     ↓
 (如果是HAM/LU等组件)
     ↓
@@ -411,10 +380,10 @@ Angela工具: angela_layer_validator.py 验证层级关系
 
 ### 通用工具 (已完成)
 
-| 工具                           | 状态      | 用途         |
-| ------------------------------ | --------- | ------------ |
-| `tools/hash_annotator.py`      | ✅ 已完成 | 文件哈希管理 |
-| `tools/dependency_analyzer.py` | ⏳ 待创建 | 通用依赖分析 |
+| 工具                           | 状态            | 用途         |
+| ------------------------------ | --------------- | ------------ |
+| ~~`tools/hash_annotator.py`~~  | ❌ 已删除       | ~~文件哈希管理~~ |
+| `tools/dependency_analyzer.py` | ⏳ 待创建       | 通用依赖分析 |
 | `tools/call_tracker.py`        | ⏳ 待创建 | 通用调用追踪 |
 | `tools/workflow_validator.py`  | ⏳ 待创建 | 通用流程验证 |
 
@@ -432,7 +401,7 @@ Angela工具: angela_layer_validator.py 验证层级关系
 
 ### 一句话区分
 
-- **通用工具**: "我能管理任何项目的文件"
+- **通用工具**: "我能管理任何项目的文件" (⚠️ hash_annotator.py 已删除)
 - **Angela专用工具**: "我深刻理解Angela的6层架构和HAM系统"
 
 ### 选择指南
@@ -458,6 +427,8 @@ Angela工具: angela_layer_validator.py 验证层级关系
     │ 管理文件基础信息      │ 管理Angela领域概念
     │                      │
     └── FILE_HASH          └── HAM_ENTRY_HASH, Matrix标记
+
+> ⚠️ `hash_annotator.py` (FILE_HASH 管理) 已删除
 ```
 
 **通用工具是基础，Angela专用工具是扩展。**

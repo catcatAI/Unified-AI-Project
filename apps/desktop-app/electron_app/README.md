@@ -5,7 +5,7 @@
 ### 前置需求
 
 - Node.js 18+ 和 npm
-- Python 3.9+ (for backend)
+- Python 3.10+ (for backend)
 - Git
 
 ### 安裝步驟

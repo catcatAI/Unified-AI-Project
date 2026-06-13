@@ -82,7 +82,7 @@ Based on recursive scan of 124 MD files:
 | `scripts/restart_backend.ps1` | Restarting Backend | **ACTIVE** | `start_backend.py` |
 | `scripts/trigger_sync.py` | Drive Syncing | **ACTIVE** | `test_drive_integration.py` |
 | `scripts/verify_drive_analyzer.py` | Analyzer Verification | **ACTIVE** | N/A |
-| `scripts/simple_health_check.py` | API Health | **ACTIVE** | `health_check.py` |
+| `scripts/simple_health_check.py` | API Health | **DELETED** | N/A — file was removed from the repository |
 | `verify_all_scenarios.py` | Full Test Suite | **ACTIVE** | `test_api.py` |
 
 ## Organization Plan (Cleanup)

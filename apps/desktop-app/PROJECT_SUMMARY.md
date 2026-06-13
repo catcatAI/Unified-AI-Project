@@ -142,7 +142,7 @@ apps/desktop-app/electron_app/
 - 驗收標準
 
 #### 3.2 快速開始指南 (electron_app/README.md)
-- 前置需求（Node.js 18+, Python 3.9+, Git）
+- 前置需求（Node.js 18+, Python 3.10+, Git）
 - 安裝步驟（依賴安裝、Electron 安裝）
 - 啟動應用（開發模式、調試模式）
 - 打包應用（Windows, macOS, Linux）

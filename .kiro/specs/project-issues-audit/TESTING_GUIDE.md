@@ -11,7 +11,7 @@
 ### System Requirements
 
 **Backend**:
-- Python 3.8+
+- Python 3.10+
 - pip package manager
 - Port 8000 available
 

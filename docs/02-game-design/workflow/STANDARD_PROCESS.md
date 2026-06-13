@@ -98,7 +98,6 @@ D:\Projects\Unified-AI-Project/
 │   ├── hash_rules.json               # 哈希规则
 │   └── validation_rules.json         # 验证规则
 ├── tools/                            # 开发工具
-│   ├── hash_annotator.py             # 哈希注释器
 │   ├── call_tracker.py               # 调用追踪器
 │   ├── dependency_analyzer.py        # 依赖分析器
 │   └── workflow_validator.py         # 流程验证器
@@ -120,7 +119,8 @@ D:\Projects\Unified-AI-Project/
 **执行**:
 
 ```bash
-python tools/hash_annotator.py scan --output .hashes/file_inventory.json
+# (Deprecated: hash_annotator.py removed — use manual file inventory or alternative tooling)
+# python tools/hash_annotator.py scan --output .hashes/file_inventory.json
 ```
 
 **输出**:
@@ -239,11 +239,11 @@ python tools/workflow_validator.py identify-issues
 **执行**:
 
 ```bash
-# 自动为缺失哈希的文件添加注释
-python tools/hash_annotator.py annotate --target apps/backend/src --recursive
+# (Deprecated: hash_annotator.py removed — hash annotations must be added manually or via alternative tooling)
+# python tools/hash_annotator.py annotate --target apps/backend/src --recursive
 
 # 验证哈希唯一性
-python tools/hash_annotator.py validate --check-collisions
+# python tools/hash_annotator.py validate --check-collisions
 ```
 
 **生成的注释示例**:
@@ -416,7 +416,8 @@ python tools/dependency_analyzer.py impact --target A1B2C3D4 --depth 3
 1. **备份原文件**:
 
 ```bash
-python tools/hash_annotator.py backup --hash A1B2C3D4 --to archive/
+# (Deprecated: hash_annotator.py removed — use git or manual backup)
+# python tools/hash_annotator.py backup --hash A1B2C3D4 --to archive/
 ```
 
 2. **实施修改** (带变更日志):
@@ -435,7 +436,8 @@ python tools/hash_annotator.py backup --hash A1B2C3D4 --to archive/
 3. **更新哈希映射**:
 
 ```bash
-python tools/hash_annotator.py update-hash --file service.py
+# (Deprecated: hash_annotator.py removed — update hash comments manually)
+# python tools/hash_annotator.py update-hash --file service.py
 ```
 
 ### 步骤 3.3: 验证测试
@@ -460,27 +462,21 @@ python tools/workflow_validator.py full-check --hash A1B2C3D4
 
 ## 🛠️ 工具使用指南
 
-### 1. hash_annotator.py - 哈希注释器
+### 1. hash_annotator.py - 哈希注释器 *(Deprecated: removed)*
+
+> **Note**: `tools/hash_annotator.py` has been removed. Hash annotations must be added and maintained manually or via alternative tooling.
 
 **功能**: 自动添加和验证哈希注释
 
-**常用命令**:
+**常用命令** *(all commands no longer available)*:
 
 ```bash
-# 扫描项目
-python tools/hash_annotator.py scan
-
-# 为缺失哈希的文件添加注释
-python tools/hash_annotator.py annotate --dir apps/backend/src
-
-# 验证哈希唯一性
-python tools/hash_annotator.py validate
-
-# 备份文件
-python tools/hash_annotator.py backup --hash A1B2C3D4
-
-# 更新文件哈希 (修改后)
-python tools/hash_annotator.py update --file path/to/file.py
+# (Deprecated: hash_annotator.py removed)
+# python tools/hash_annotator.py scan
+# python tools/hash_annotator.py annotate --dir apps/backend/src
+# python tools/hash_annotator.py validate
+# python tools/hash_annotator.py backup --hash A1B2C3D4
+# python tools/hash_annotator.py update --file path/to/file.py
 ```
 
 ### 2. call_tracker.py - 调用追踪器
@@ -632,11 +628,12 @@ class ClassName:
 **避免**:
 
 ```bash
+# (Deprecated: hash_annotator.py removed — use manual inspection or alternative tooling)
 # 验证前检查冲突
-python tools/hash_annotator.py validate --check-collisions
+# python tools/hash_annotator.py validate --check-collisions
 
 # 如果发现冲突，重新生成
-python tools/hash_annotator.py regenerate --file conflicting_file.py
+# python tools/hash_annotator.py regenerate --file conflicting_file.py
 ```
 
 ### 错误 2: 调用链断裂
@@ -657,8 +654,9 @@ python tools/call_tracker.py validate --check-dangling
 **避免**:
 
 ```bash
+# (Deprecated: hash_annotator.py removed — normalize paths manually)
 # 标准化所有路径
-python tools/hash_annotator.py normalize-paths
+# python tools/hash_annotator.py normalize-paths
 ```
 
 ### 错误 4: 版本号不一致
@@ -668,8 +666,9 @@ python tools/hash_annotator.py normalize-paths
 **避免**:
 
 ```bash
+# (Deprecated: hash_annotator.py removed — sync version numbers manually)
 # 同步版本号
-python tools/hash_annotator.py sync-version
+# python tools/hash_annotator.py sync-version
 ```
 
 ---

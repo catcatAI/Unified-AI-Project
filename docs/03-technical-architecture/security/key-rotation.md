@@ -22,13 +22,13 @@ Angela AI uses cryptographic keys (ANGELA_KEY_A, ANGELA_KEY_B, ANGELA_KEY_C) for
 
 ### 1. Generate New Keys
 
-Use the built-in key generator:
+Generate new Fernet keys using Python:
 
 ```bash
-python scripts/tools/generate_secure_keys.py --output new_keys.env
+python -c "from cryptography.fernet import Fernet; [print(Fernet.generate_key().decode()) for _ in range(3)]"
 ```
 
-This will generate three new secure keys and save them to `new_keys.env`.
+This will print three new secure keys. Save them to `new_keys.env` or directly into your `.env`.
 
 ### 2. Backup Current Configuration
 
@@ -151,7 +151,7 @@ If a key is suspected to be compromised:
 
 ## Additional Resources
 
-- Key Generator: `scripts/tools/generate_secure_keys.py`
+- Key Generation: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
 - Config Validator: `apps/backend/src/core/config_validator.py`
 - Security Documentation: `docs/security/`
 

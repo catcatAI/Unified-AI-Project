@@ -207,7 +207,7 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 - P3-1（降低孤兒率 73%→50%）**已 defer 等人工審查**（MASTER_CONSOLIDATED_PLAN.md L746）
 - **無遷移計畫存在** — 沒有任何文件描述 DEPRECATED → production 的遷移路徑
 
-**Found 建立**: `scripts/tools/find_orphans.py`（ast-based import graph 分析）
+**Orphan detection**: Ast-based import graph analysis was performed to identify orphan files (one-time analysis, script since removed).
 
 **連鎖效應**: 孤兒率高估導致：浪費時間審查不存在的檔案、MASTER_PLAN 評分偏差、版本規劃基於錯誤數據
 
@@ -350,7 +350,7 @@ Coverage fail-under=50%
 | 3 | **P1: `--cov-fail-under=50` unachievable** | Lowered to 5% | `pyproject.toml:126` | ✅ |
 | 4 | **P1: 7 MEDIUM Unix paths** | Fixed tilde paths (action_executor, action_execution_bridge, desktop_interaction) + CWD-dependent paths (brain_bridge_service, prompt_builder, drive.py) | 6 files | ✅ |
 | 5 | **P2: network_defaults.py DEPRECATED (has 7 importers)** | Removed DEPRECATED header, labeled as "active fallback" | `core/system/config/network_defaults.py:1-13` | ✅ |
-| 6 | **P2: orphan detection script** | Created `scripts/tools/find_orphans.py` with ast-based import graph analysis | `scripts/tools/find_orphans.py` (NEW) | ✅ |
+| 6 | **P2: orphan detection** | Ran ast-based import graph analysis to identify orphan files (one-time analysis) | — | ✅ |
 
 ## Phase 8: ModuleManager Wiring + Lifecycle Fixes (2026-06-12)
 

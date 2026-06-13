@@ -10,7 +10,7 @@
 ```
 项目根目录/
 ├── tools/                           # 🔧 通用工具 (适用于任何项目)
-│   ├── hash_annotator.py           # 文件哈希注释器
+│   ├── [hash_annotator.py 已删除 (Deprecated: removed)]
 │   └── [其他通用工具]
 │
 ├── .angela/                         # 🎯 Angela专用
@@ -42,18 +42,9 @@
 
 #### 🔹 管理文件哈希和依赖
 
-**使用**: `tools/hash_annotator.py` (通用)
+**使用**: `tools/hash_annotator.py` — ⚠️ **已删除 (Deprecated: removed)**
 
-```bash
-# 为文件添加哈希注释
-python tools/hash_annotator.py annotate --file path/to/file.py
-
-# 扫描整个项目
-python tools/hash_annotator.py scan
-
-# 验证哈希唯一性
-python tools/hash_annotator.py validate
-```
+文件哈希注释功能已不再维护。文件头注释可手动添加或通过 Angela 专用工具 (`angela_matrix_updater.py`) 管理。
 
 #### 🔹 分析Angela的HAM记忆系统
 
@@ -108,10 +99,10 @@ python .angela/tools/angela_matrix_updater.py report
 
 | 命令                                                              | 说明           |
 | ----------------------------------------------------------------- | -------------- |
-| `python tools/hash_annotator.py annotate --file <file>`           | 为文件添加哈希 |
-| `python tools/hash_annotator.py annotate --dir <dir> --recursive` | 为目录添加哈希 |
-| `python tools/hash_annotator.py validate`                         | 验证哈希       |
-| `python tools/hash_annotator.py scan --output <file>`             | 扫描项目       |
+| ~~`python tools/hash_annotator.py annotate --file <file>`~~       | ~~为文件添加哈希~~ (已删除) |
+| ~~`python tools/hash_annotator.py annotate --dir <dir> --recursive`~~ | ~~为目录添加哈希~~ (已删除) |
+| ~~`python tools/hash_annotator.py validate`~~                     | ~~验证哈希~~ (已删除)       |
+| ~~`python tools/hash_annotator.py scan --output <file>`~~         | ~~扫描项目~~ (已删除)       |
 
 ### Angela专用工具
 
@@ -146,7 +137,7 @@ python .angela/tools/angela_matrix_updater.py report
 
 ## 🎨 文件头注释对比
 
-### 通用格式 (hash_annotator)
+### 通用格式 (hash_annotator) — ⚠️ 已删除 (Deprecated: removed)
 
 ```python
 # =============================================================================
@@ -187,7 +178,7 @@ python .angela/tools/angela_matrix_updater.py report
 ### 错误 1: 权限不足
 
 ```bash
-chmod +x tools/hash_annotator.py
+# chmod +x tools/hash_annotator.py  # 已删除 (Deprecated: removed)
 chmod +x .angela/tools/*.py
 ```
 
@@ -196,14 +187,14 @@ chmod +x .angela/tools/*.py
 ```bash
 # 确保在正确的目录运行
 cd D:\Projects\Unified-AI-Project
-python tools/hash_annotator.py
+# python tools/hash_annotator.py  # 已删除 (Deprecated: removed)
 ```
 
 ### 错误 3: 误用工具
 
 ```bash
-# ❌ 错误: 用通用工具分析HAM
-python tools/hash_annotator.py scan --dir apps/backend/src/ai/memory/ham_memory/
+# ❌ 错误: 用通用工具分析HAM (hash_annotator.py 已删除)
+# python tools/hash_annotator.py scan --dir apps/backend/src/ai/memory/ham_memory/
 
 # ✅ 正确: 用Angela专用工具
 python .angela/tools/angela_ham_tracker.py scan
@@ -215,10 +206,10 @@ python .angela/tools/angela_ham_tracker.py scan
 
 ### 已完成 ✅
 
-| 工具                                      | 类型       | 状态 | 用途           |
-| ----------------------------------------- | ---------- | ---- | -------------- |
-| `tools/hash_annotator.py`                 | 通用       | ✅   | 文件哈希管理   |
-| `.angela/tools/angela_ham_tracker.py`     | Angela专用 | ✅   | HAM系统追踪    |
+| 工具                                      | 类型       | 状态          | 用途           |
+| ----------------------------------------- | ---------- | ------------- | -------------- |
+| ~~`tools/hash_annotator.py`~~             | 通用       | ❌ 已删除     | ~~文件哈希管理~~ |
+| `.angela/tools/angela_ham_tracker.py`     | Angela专用 | ✅            | HAM系统追踪    |
 | `.angela/tools/angela_layer_validator.py` | Angela专用 | ✅   | 6层架构验证    |
 | `.angela/tools/angela_matrix_updater.py`  | Angela专用 | ✅   | Matrix标记更新 |
 
@@ -256,14 +247,15 @@ python .angela/tools/angela_ham_tracker.py scan
 ### 第1步: 验证工具可用
 
 ```bash
-python tools/hash_annotator.py --help
+# python tools/hash_annotator.py --help  # 已删除 (Deprecated: removed)
 python .angela/tools/angela_ham_tracker.py --help
 ```
 
 ### 第2步: 扫描项目状态
 
 ```bash
-python tools/hash_annotator.py scan
+# python tools/hash_annotator.py scan  # 已删除 (Deprecated: removed)
+python .angela/tools/angela_matrix_updater.py validate
 ```
 
 ### 第3步: 验证Angela架构
@@ -296,7 +288,7 @@ python .angela/tools/angela_ham_tracker.py report
 
 4. **不要混用**
    - HAM相关问题用 angela_ham_tracker
-   - 通用文件问题用 hash_annotator
+   - 通用文件问题用 hash_annotator (⚠️ 已删除，改用 Angela 专用工具)
 
 ---
 
@@ -310,7 +302,7 @@ python .angela/tools/angela_ham_tracker.py report
 
 **记住口诀**:
 
-- 通用问题 → `tools/`
+- 通用问题 → `tools/` (⚠️ hash_annotator.py 已删除)
 - Angela问题 → `.angela/tools/`
 
 **现在就开始使用吧！** 🚀

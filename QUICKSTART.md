@@ -1,4 +1,4 @@
-# Angela AI v6.2.1 - Quick Start Guide
+# Angela AI v7.5.0-dev - Quick Start Guide
 
 ## 🚀 Quick Start (3 Steps)
 
@@ -42,7 +42,7 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 
 #### 方式一：统一启动脚本（推荐）
 ```bash
-# Windows: 双击 AngelaLauncher.bat
+# Windows: python scripts/run_angela.py
 # Linux/Mac:
 ./start_angela_complete.sh
 ```
@@ -233,7 +233,7 @@ make llama-server
 - **Add more memories**: Increase memory capacity in configuration
 - **Read full docs**: See `docs/` directory for detailed architecture
 - **View Live2D models**: Check `apps/desktop-app/electron_app/models/` directory
-- **Test Angela**: Run `python3 comprehensive_test.py` for comprehensive testing
+- **Test Angela**: Run `python3 -m pytest tests/` for comprehensive testing
 
 ## 🤝 Support
 
@@ -243,7 +243,7 @@ make llama-server
 
 ## 📊 Project Stats
 
-- **Version**: 6.2.1
+- **Version**: 7.5.0-dev
 - **Python Files**: 477
 - **JavaScript Modules**: 52
 - **Test Coverage**: 100% (9/9 tests passing)

@@ -98,7 +98,7 @@
 
 ### Windows环境设置
 
-1. 确保已安装Python 3.8+和pnpm
+1. 确保已安装Python 3.10+和pnpm
 2. 运行批处理脚本：
    ```
    setup_project.bat
@@ -108,7 +108,7 @@
 
 ### Linux/Mac环境设置
 
-1. 确保已安装Python 3.8+和pnpm
+1. 确保已安装Python 3.10+和pnpm
 2. 运行Shell脚本：
    ```
    ./setup_project.sh

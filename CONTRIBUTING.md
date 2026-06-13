@@ -22,7 +22,7 @@ This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participatin
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.10+
 - Node.js 16+
 - Git
 - Live2D Cubism SDK (for desktop pet features)
@@ -122,9 +122,6 @@ npm start
 
 3. **Test your changes**
    ```bash
-   # Run comprehensive test
-   python3 comprehensive_test.py
-   
    # Run pytest tests
    python3 -m pytest tests/
    
@@ -193,9 +190,6 @@ def process_user_input(
 ### Running Tests
 
 ```bash
-# Comprehensive test suite
-python3 comprehensive_test.py
-
 # pytest tests
 python3 -m pytest tests/
 
@@ -317,7 +311,7 @@ log management and filtering.
 ## 🔍 Pull Request Process
 
 1. **Before submitting:**
-   - All tests pass (`python3 comprehensive_test.py`)
+   - All tests pass (`python3 -m pytest tests/`)
    - Code follows style guidelines
    - Documentation updated
    - Commit messages follow convention

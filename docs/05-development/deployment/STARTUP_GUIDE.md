@@ -4,7 +4,7 @@
 
 ## 系统要求
 
-- Python 3.8 或更高版本
+- Python 3.10 或更高版本
 - Node.js 16 或更高版本
 - pnpm 包管理器
 - Windows、macOS 或 Linux 操作系统

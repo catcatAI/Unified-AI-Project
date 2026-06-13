@@ -723,4 +723,4 @@ Removed UTF-8 BOM (U+FEFF) from:
 | `services/audio_service.py` hardcoded | MEDIUM | Implement real STT/TTS |
 | `services/vision_service.py` simulated | MEDIUM | Implement real CV |
 | Mobile app skeleton | LOW | Full implementation needed |
-| 70+ broken `scripts/tests/` files | LOW | Legacy diagnostic scripts — not part of pytest suite |
+| `scripts/tests/` directory deleted | LOW | Removed — 115 legacy test files were deleted from the repository |

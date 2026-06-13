@@ -100,7 +100,7 @@ docker-compose up -d
 **这个安装程序会：**
 
 1. **系统检查**
-   - ✅ Python 3.9+ 版本检查
+   - ✅ Python 3.10+ 版本检查
    - ✅ pip 包管理器检查
    - ✅ Git 版本控制检查
    - ✅ 磁盘空间检查（需要2GB+）
@@ -217,7 +217,7 @@ pip install -r requirements.txt --upgrade
 ## 📊 系统要求
 
 ### 最低配置
-- **Python**: 3.9+
+- **Python**: 3.10+
 - **RAM**: 4GB
 - **磁盘**: 2GB 可用空间
 - **系统**: Windows 10/11, macOS 10.15+, Ubuntu 20.04+
@@ -279,6 +279,5 @@ pip install -r requirements.txt --upgrade
 
 ---
 
-*文档版本*: v6.0.0  
 *更新日期*: 2026-02-02  
 *作者*: CatCatAI Development Team
