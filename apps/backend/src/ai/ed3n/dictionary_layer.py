@@ -278,10 +278,14 @@ class DictionaryLayer:
 
     def load_preset_responses(self) -> None:
         presets = self._build_presets()
+        loaded = 0
         for preset in presets:
-            self.add_entry(**preset)
+            if preset["key"] not in self.entries:
+                self.add_entry(**preset)
+                loaded += 1
         self._rebuild_index()
-        logger.info("Loaded %d preset entries.", len(presets))
+        logger.info("Loaded %d preset entries (%d new, %d skipped).",
+                     len(presets), loaded, len(presets) - loaded)
 
     def load_preset_responses_from_dir(self, config_dir: Optional[str] = None) -> int:
         """Load dictionary entries + reflex from config JSON files."""
