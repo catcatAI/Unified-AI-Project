@@ -60,8 +60,8 @@ def test_drive_integration():
         print("\n✅ All integration tests passed!")
         return True
 
-    except requests.ConnectException:
-        print("❌ Cannot connect to backend. Start with: launch_angela.bat --repl")
+    except requests.exceptions.ConnectionError:
+        print("❌ Cannot connect to backend. Start with: run_angela.py")
         return False
     except Exception as e:
         print(f"❌ Test failed: {e}")

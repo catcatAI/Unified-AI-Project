@@ -2,7 +2,7 @@
 """Verify P0-1/P0-2/P0-3 Systems Implementation"""
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend'))
 
 print("="*60)
 print("P0 Systems Verification")

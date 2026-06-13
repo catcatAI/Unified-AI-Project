@@ -3,7 +3,10 @@ echo 正在启动Unified AI Project后端服务...
 echo 当前目录: %cd%
 echo.
 
-cd /d "d:\Projects\Unified-AI-Project\apps\backend"
+REM 使用相对路径，不硬编码
+set "PROJECT_ROOT=%~dp0.."
+
+cd /d "%PROJECT_ROOT%\apps\backend"
 echo 切换到后端目录: %cd%
 echo.
 

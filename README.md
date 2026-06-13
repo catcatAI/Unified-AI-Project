@@ -199,7 +199,7 @@ See: [COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREH
 | **P0** | Add `MemoryNeuroplasticityBridge = NeuroplasticitySystem` alias in `core/bio/memory_neuroplasticity_bridge.py` | ✅ **DONE** | 🔴 CRITICAL |
 | **P1** | Verify server starts, run test suite, measure coverage | ⏳ | 🔴 HIGH |
 | **P2** | Fix `AuditoryAttentionController` test references (use `AttentionController`) | ⏳ | 🟡 MEDIUM |
-| **P3** | Create `run_angela.py` or update docs | ⏳ | 🟡 MEDIUM |
+| **P3** | Create `run_angela.py` or update docs | ✅ **DONE** (`scripts/run_angela.py`) | 🟡 MEDIUM |
 | **P4** | Long file refactoring (H7) — 30+ files >500 lines | ⬜ | 🟡 MEDIUM |
 | **P5** | ED3N/GARDEN integration testing | ⬜ | 🟢 LOW |
 
@@ -274,10 +274,15 @@ cd apps/backend
 pip install -r requirements.txt
 cd ../..
 
-# python run_angela.py --api-only  # 檔案不存在
-python apps/backend/start_server.py  # 現已可啟動
+# 方式一：使用统一启动器（推荐）
+python scripts/run_angela.py              # 启动全部（后端 + 桌面）
+python scripts/run_angela.py --api-only   # 只启动后端
+python scripts/run_angela.py --health-check  # 健康检查
 
-# 桌面端（另開 terminal）
+# 方式二：直接启动后端
+python apps/backend/start_server.py
+
+# 桌面端（另开 terminal）
 cd apps/desktop-app/electron_app
 npm install
 npm start
@@ -308,7 +313,7 @@ npm start
 
 - ~~伺服器啟動~~ — ✅ **已修復**: `ModelProvider` alias 已加入 `core/interfaces/protocols.py`
 - ~~測試收集~~ — ✅ **已修復**: 0 收集錯誤 (原 21 個)
-- **run_angela.py** — ❌ 檔案不存在 (請用 `apps/backend/start_server.py`)
+- **run_angela.py** — ✅ **已存在**: `scripts/run_angela.py`（统一启动器）
 
 ### 名稱映射表 (測試/舊Shim期望 → 實際實作)
 
@@ -333,7 +338,7 @@ npm start
 | **Live2DIntegration 命名不匹配** | 測試/Shim 期望舊名，實際為 `Live2DAvatarGenerator` | `live2d_integration.py` 加 alias | ✅ **已修復** |
 | **MemoryNeuroplasticityBridge 命名不匹配** | 測試/Shim 期望舊名，實際為 `NeuroplasticitySystem` | `memory_neuroplasticity_bridge.py` 加 alias | ✅ **已修復** |
 | **AuditoryAttentionController 測試引用錯誤** | 測試用舊名，實際為 `AttentionController` | 測試改用正確類別名 | ⏳ **待修復測試** |
-| **run_angela.py 不存在** | 文檔引用不存在的啟動腳本 | 建立或更新文檔用 `start_server.py` | ⏳ **待處理** |
+| **run_angela.py 不存在** | 文檔引用不存在的啟動腳本 | ✅ **已修復**: `scripts/run_angela.py` 已存在且可用 | ✅ **已修復** |
 
 ### 其他已知問題 (文檔聲稱已修復但需驗證)
 
@@ -359,7 +364,7 @@ npm start
 | **P0** | `core/bio/memory_neuroplasticity_bridge.py`: 加入 `MemoryNeuroplasticityBridge = NeuroplasticitySystem` | ✅ **已完成** | 🔴 CRITICAL |
 | **P1** | 修復測試中的 `AuditoryAttentionController` → `AttentionController` | ⏳ | 🟡 MEDIUM |
 | **P2** | 驗證伺服器啟動、運行測試套件、測量覆蓋率 | ⏳ | 🔴 HIGH |
-| **P3** | 建立 `run_angela.py` 或更新文檔 | ⏳ | 🟡 MEDIUM |
+| **P3** | 建立 `run_angela.py` 或更新文檔 | ✅ **已完成** (`scripts/run_angela.py`) | 🟡 MEDIUM |
 | **P4** | 長檔案重構 (H7) — 30+ 檔案 >500 行 | ⬜ | 🟡 MEDIUM |
 | **P5** | ED3N/GARDEN 整合測試 | ⬜ | 🟢 LOW |
 

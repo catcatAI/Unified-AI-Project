@@ -44,7 +44,7 @@ python3 install_angela.py
 
 # 启动
 cd ~/AngelaAI
-python3 run_angela.py
+python scripts/run_angela.py
 ```
 
 ---
@@ -65,7 +65,7 @@ pip install -r requirements.txt --user
 python setup.py
 
 # 4. 启动
-python run_angela.py
+python scripts/run_angela.py
 ```
 
 ---
@@ -207,7 +207,7 @@ pip install -r requirements.txt --upgrade
 ```
 
 ### Q: 安装后找不到快捷方式
-**A:** 可以手动创建快捷方式指向：`python run_angela.py`
+**A:** 可以手动创建快捷方式指向：`python scripts/run_angela.py`
 
 ### Q: 提示缺少XXX.dll
 **A:** Windows需要安装Visual C++ Redistributable，下载：https://aka.ms/vs/17/release/vc_redist.x64.exe
@@ -248,7 +248,7 @@ pip install -r requirements.txt --upgrade
    # 方法1：双击桌面快捷方式
    # 方法2：终端运行
    cd ~/AngelaAI
-   python run_angela.py
+   python scripts/run_angela.py
    ```
 
 3. **等待初始化**

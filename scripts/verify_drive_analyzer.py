@@ -17,8 +17,8 @@ def verify_drive_status():
             print(f"User: {quota.get('user', 'N/A')}")
             print(f"Storage: {quota.get('used', 'N/A')} / {quota.get('total', 'N/A')}")
         return True
-    except requests.ConnectException:
-        print("❌ 無法連接後端。請先啟動 launch_angela.bat --repl")
+    except requests.exceptions.ConnectionError:
+        print("❌ 無法連接後端。請先啟動 run_angela.py")
         return False
     except Exception as e:
         print(f"❌ Status check failed: {e}")
@@ -46,7 +46,7 @@ def verify_drive_analyzer():
         else:
             print(f"❌ Verification Failed: {response.status_code} - {response.text}")
             return False
-    except requests.ConnectException:
+    except requests.exceptions.ConnectionError:
         print("❌ 無法連接後端")
         return False
     except Exception as e:

@@ -1,6 +1,7 @@
 
 import sys
 import os
+import traceback
 from pathlib import Path
 import logging
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ if project_root not in sys.path:
 def test_memory_init():
     print("Testing HAMMemoryManager Initialization...")
     try:
-        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.ai.memory.ham_memory.ham_manager import HAMMemoryManager
         manager = HAMMemoryManager()
         print("✅ HAMMemoryManager initialized successfully.")
         
@@ -22,7 +23,6 @@ def test_memory_init():
         
     except Exception as e:
         print(f"❌ Initialization Failed: {e}")
-        import traceback
         traceback.print_exc()
 
 if __name__ == "__main__":

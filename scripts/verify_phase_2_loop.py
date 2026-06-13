@@ -21,7 +21,7 @@ def test_phase_2_loop():
 
     # 2. Check Initial Balance
     print("\n[2/3] Checking Initial Balance...")
-    bal_res = requests.get(f"{BASE_URL}/economy/balance")
+    bal_res = requests.get(f"{BASE_URL}/economy/balance", timeout=10)
     initial_balance = bal_res.json().get("balance", 0)
     print(f"Initial Balance: {initial_balance}")
 
@@ -38,7 +38,7 @@ def test_phase_2_loop():
             "input_type": "message",
             "payload": {"text": msg}
         }
-        res = requests.post(f"{BASE_URL}/pet/interact", json=interact_payload)
+        res = requests.post(f"{BASE_URL}/pet/interact", json=interact_payload, timeout=30)
         
         if res.status_code == 200:
             data = res.json()

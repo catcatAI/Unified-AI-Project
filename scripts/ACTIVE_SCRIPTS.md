@@ -10,9 +10,11 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`start_all.bat`**: Start both backend and frontend concurrently
 
 ### Health & Monitoring
-- **`simple_health_check.py`**: Quick API health verification
-- **`check_system_health.py`**: Comprehensive system diagnostics
-- **`port_manager.js`**: Manage port allocations and conflicts
+- **`check_auth_status.py`**: Check authentication status
+- **`check_last_memories.py`**: Inspect recent HAM memory entries
+- **`check_vec_store.py`**: Verify vector store integrity
+- **`debug_memory.py`**: Debug memory system issues
+- **`check_ports.ps1`**: Check port availability
 
 ### Google Drive Integration
 - **`trigger_sync.py`**: Manually trigger Drive file synchronization
@@ -21,53 +23,45 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`exchange_drive_code.py`**: Exchange auth code for tokens
 - **`clear_drive_sync.py`**: Reset Drive sync state
 
-### Memory & Data
-- **`check_last_memories.py`**: Inspect recent HAM memory entries
-- **`check_vec_store.py`**: Verify vector store integrity
-- **`debug_memory.py`**: Debug memory system issues
-- **`wipe_memory.py`**: Clear all memory (use with caution)
+### Training & AI
+- **`train_ed3n.py`**: ED3N training
+- **`train_pipeline.py`**: Training pipeline
+- **`generate_training_data.py`**: Generate training data
 
 ### Development & Testing
 - **`verify_ice_loop.py`**: Verify ICE (Ingest-Cognition-Execution) loop
 - **`verify_phase_2_loop.py`**: Verify Phase 2 quality-based reward loop
 - **`test_drive_integration.py`**: Test Drive integration end-to-end
-- **`test_proactive_messaging.py`**: Test proactive messaging system
 
 ### Project Management
 - **`unified-ai.bat`**: Main project launcher (comprehensive)
 - **`unified-ai-cli.bat`**: CLI interface for project operations
-- **`start-unified-ai.bat`**: Quick start script
-- **`setup_project.bat`**: Initial project setup
-- **`update-docs.bat`**: Update documentation
-- **`update-docs.ps1`**: PowerShell version of doc updater
+- **`setup_project.bat`**: Initial project setup (Windows)
+- **`setup_project.sh`**: Initial project setup (Linux/Mac)
+- **`update-docs.bat`**: Update documentation (Windows)
+- **`update-docs.ps1`**: Update documentation (PowerShell)
 
 ### Utilities
-- **`check_ports.ps1`**: Check port availability
+- **`run_angela.py`**: Primary launcher
+- **`_run_phase1.bat`**: Phase 1 launcher
+- **`ai-runner.bat`**: AI runner
 - **`analyze_roadmap_from_logs.py`**: Extract roadmap from logs
 - **`ingest_my_activities.py`**: Ingest user activities into memory
+- **`filter_files.ps1`**: File filtering
 
-## Archived Scripts
+## scripts/utils/
 
-The following categories of scripts have been moved to `archive/legacy_scripts/`:
+- **`init_config.py`**: Configuration initialization
+- **`health_check.py`**: Comprehensive health check
+- **`check_resources.py`**: System resource monitor
+- **`verify_p0_systems.py`**: P0 systems verification
+- **`improve_live2d_loading.py`**: Live2D loading optimization
 
-### Cleanup & Recovery (Obsolete)
-- `cleanup_backup_dirs.ps1`
-- `cleanup_backup_modules.ps1`
-- `recover_all_deleted_files.ps1`
-- `restore_deleted_files.ps1` (and v2, v3, v4)
+## tools/
 
-### Testing (Replaced by pytest)
-- `run_check.bat`
-- `run_integration.bat`
-- `run_test.bat`
-- `move_scattered_tests.bat`
-
-### Legacy Architecture
-- `setup-wsl2.sh` (Ray distributed setup, no longer needed)
-
-### Root Directory (Migrated)
-- `test_import.py`, `test_import2.py` (moved to archive)
-- `test_curl.py`, `debug_math.py`, `patch_api.py` (moved to archive)
+### Legacy Scripts
+- **`install_angela.py`**: Full installer
+- **`AngelaLauncher.bat`**: Windows launcher with auto-repair
 
 ## Usage Guidelines
 
@@ -83,10 +77,13 @@ The following categories of scripts have been moved to `archive/legacy_scripts/`
 ### Health Check
 ```powershell
 # Quick check
-python scripts/simple_health_check.py
+python scripts/check_auth_status.py
 
 # Full diagnostics
-python scripts/check_system_health.py
+python scripts/utils/health_check.py
+
+# Port availability
+.\scripts\check_ports.ps1
 ```
 
 ### Drive Operations
@@ -101,6 +98,7 @@ python scripts/verify_drive_analyzer.py
 ## Maintenance Notes
 
 - **Active Scripts**: 30 scripts in `scripts/` directory
-- **Archived Scripts**: 14+ scripts in `archive/legacy_scripts/`
-- **Last Cleanup**: 2026-01-25 (Phase 7.3)
+- **Utilities**: 5 scripts in `scripts/utils/`
+- **Tools**: 2 scripts in `tools/`
+- **Last Cleanup**: 2026-06-13
 - **Recommendation**: Use `unified-ai.bat` for most operations

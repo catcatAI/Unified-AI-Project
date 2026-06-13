@@ -37,8 +37,8 @@ def sync_files():
             flag = "✅" if f.get("memorized") else ("⏭️" if f.get("skipped") else "❌")
             print(f"  {flag} {f.get('name')}")
 
-    except requests.ConnectException:
-        print("❌ 無法連接後端。請先啟動 launch_angela.bat --repl")
+    except requests.exceptions.ConnectionError:
+        print("❌ 無法連接後端。請先啟動 run_angela.py")
         sys.exit(1)
     except Exception as e:
         print(f"❌ Sync failed: {e}")

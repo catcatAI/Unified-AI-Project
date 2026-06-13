@@ -17,8 +17,8 @@ def exchange_code(code):
         else:
             print(f"❌ 認證失敗 ({response.status_code})：{response.text}")
             sys.exit(1)
-    except requests.ConnectException:
-        print("❌ 無法連接後端。請先啟動：launch_angela.bat --repl", file=sys.stderr)
+    except requests.exceptions.ConnectionError:
+        print("❌ 無法連接後端。請先啟動：run_angela.py", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"Error: {e}")

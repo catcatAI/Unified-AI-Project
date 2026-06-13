@@ -55,7 +55,9 @@ python3 -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000
 
 #### 方式三：Python 脚本
 ```bash
-python3 run_angela.py
+python scripts/run_angela.py              # 启动全部
+python scripts/run_angela.py --api-only   # 只启动后端
+python scripts/run_angela.py --health-check  # 健康检查
 ```
 
 ## 📊 Choose Your Mode

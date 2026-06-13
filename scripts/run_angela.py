@@ -18,6 +18,7 @@ import argparse
 import time
 import signal
 import json
+import traceback
 from pathlib import Path
 from typing import Optional, Tuple, List
 import logging
@@ -116,7 +117,6 @@ class ErrorRecovery:
             f.write(f"Component: {component}\n")
             f.write(f"Error: {error_entry['error_type']}: {error_entry['error_message']}\n")
             f.write(f"Context: {json.dumps(context, indent=2)}\n")
-            import traceback
             f.write(traceback.format_exc())
     
     def _load_errors(self) -> List[dict]:
@@ -147,8 +147,8 @@ class ErrorRecovery:
                 "尝试单独启动桌面: python run_angela.py --desktop-only",
             ],
             "dependencies": [
-                "运行: python install_angela.py",
-                "确保 Python 版本 >= 3.8",
+                "运行: pip install -r requirements.txt",
+                "确保 Python 版本 >= 3.10",
                 "检查虚拟环境是否激活",
             ],
             "port": [
@@ -222,7 +222,7 @@ def wait_for_server(port=8000, timeout=180, progress: Optional[ProgressDisplay] 
 
 class Launcher:
     def __init__(self):
-        self.project_root = Path(__file__).parent.resolve()
+        self.project_root = Path(__file__).parent.parent.resolve()
         self.backend_dir = self.project_root / "apps" / "backend"
         self.electron_dir = self.project_root / "apps" / "desktop-app" / "electron_app"
         self.mode = "user"  # Default mode
@@ -317,8 +317,8 @@ class Launcher:
     def check_python_version(self) -> bool:
         """检查 Python 版本"""
         version = sys.version_info
-        if version < (3, 8):
-            self.progress.error(f"Python 版本过低: {version.major}.{version.minor}, 需要 >= 3.8")
+        if version < (3, 10):
+            self.progress.error(f"Python 版本过低: {version.major}.{version.minor}, 需要 >= 3.10")
             return False
         return True
     
@@ -468,7 +468,7 @@ class Launcher:
             shell = Dispatch("WScript.Shell")
             sc = shell.CreateShortCut(shortcut_path)
             sc.Targetpath = sys.executable
-            sc.Arguments = f'"{self.project_root / "run_angela.py"}'
+            sc.Arguments = f'"{self.project_root / "scripts" / "run_angela.py"}'
             sc.WorkingDirectory = str(self.project_root)
             sc.Description = "Angela AI - 桌面数字生命"
             sc.save()
@@ -586,21 +586,21 @@ def main():
     deps_ok, missing = launcher.check_dependencies()
     if not deps_ok:
         print(f"\n⚠️  缺失依赖: {', '.join(missing)}")
-        print("请运行: python install_angela.py")
+        print("请运行: pip install -r requirements.txt")
         return 1
 
     # 安全检查: 验证密钥
     print("\n🔒 安全检查: 验证系统密钥...")
     try:
         # 添加 backend 和 src 到路径
-        backend_path = str(Path(__file__).parent / "apps" / "backend")
-        src_path = str(Path(__file__).parent / "apps" / "backend" / "src")
+        backend_path = str(launcher.project_root / "apps" / "backend")
+        src_path = str(launcher.project_root / "apps" / "backend" / "src")
         if backend_path not in sys.path:
             sys.path.insert(0, backend_path)
         if src_path not in sys.path:
             sys.path.insert(0, src_path)
             
-        from src.core.security.key_validator import validate_system_keys
+        from core.security.key_validator import validate_system_keys
 
         keys_valid, key_results = validate_system_keys()
         if not keys_valid:
@@ -608,7 +608,7 @@ def main():
             print("请确保:")
             print("1. 复制 .env.example 为 .env")
             print("2. 使用强随机生成器创建密钥")
-            print("3. 运行: python -m src.core.security.key_generator")
+            print("3. 运行: python -m core.security.key_generator")
             print("4. 不要使用占位符或默认值")
             print()
             print("详细报告:")

@@ -26,7 +26,7 @@ def test_ice_loop():
 
     # 1. Initialize Components
     print("Initializing components...")
-    res = requests.post(f"{BASE_URL}/api/v1/ai/init")
+    res = requests.post(f"{BASE_URL}/api/v1/ai/init", timeout=30)
     if res.status_code == 200:
         print(f"Init Result: {json.dumps(res.json(), indent=2)}")
     else:
@@ -44,7 +44,7 @@ def test_ice_loop():
     
     for msg in interactions:
         print(f"Sending input: '{msg}'")
-        res = requests.post(f"{BASE_URL}/api/v1/chat/mscu", json={"message": msg})
+        res = requests.post(f"{BASE_URL}/api/v1/chat/mscu", json={"message": msg}, timeout=30)
         if res.status_code == 200:
             print(f"Response: {res.json()['response'][:50]}...")
         else:
