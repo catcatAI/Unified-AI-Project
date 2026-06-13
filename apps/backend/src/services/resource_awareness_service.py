@@ -63,7 +63,7 @@ class ResourceAwarenessService:
     def _load_profile(self) -> None:
         """Load profile."""
         try:
-            backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
             full_path = os.path.join(backend_root, self.config_filepath)
             if not os.path.exists(full_path):
                 logger.warning("Simulated resources config not found: %s", full_path)
