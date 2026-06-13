@@ -75,20 +75,22 @@ class BackendWebSocketClient {
 
       this.ws.onopen = () => {
         console.log('WebSocket connected')
-        this.connected = true
-        this.reconnectAttempts = 0
 
-        // 開始心跳
-        this._startHeartbeat()
+        // 發送握手（後端要求 10 秒內）
+        const handshake = {
+          type: 'connect',
+          session_id: this._loadOrCreateSessionId(),
+          client_type: 'web-viewer',
+          client_version: '7.5.0-dev',
+          timestamp: new Date().toISOString()
+        }
+        this.ws.send(JSON.stringify(handshake))
+
+        // 不在此處設為 connected，等待後端 'connected' 回應
+        this.reconnectAttempts = 0
 
         // 启动待处理响应清理
         this._startPendingResponsesCleanup()
-
-        // 通知連接成功
-        this._fireEvent('connected', { url, timestamp: Date.now() })
-
-        // 发送离线队列中的消息
-        this._flushOfflineQueue()
       }
 
       this.ws.onmessage = (event) => this._handleMessage(event)
@@ -127,7 +129,10 @@ class BackendWebSocketClient {
     switch (type) {
       case 'connected':
         console.log('Backend confirmed connection:', message)
+        this.connected = true
+        this._startHeartbeat()
         this._fireEvent('connected', message)
+        this._flushOfflineQueue()
         break
       case 'state_update':
         this._handleStateUpdate(data)
@@ -156,6 +161,10 @@ class BackendWebSocketClient {
       case 'biological_event':
         this._handleBiologicalEvent(data)
         break
+      // 觸覺反饋
+      case 'biological_feedback':
+        this._handleBiologicalFeedback(data)
+        break
       default:
         // Log as debug instead of warning to reduce noise
         console.debug('Unknown message type:', type, message)
@@ -170,6 +179,14 @@ class BackendWebSocketClient {
 
     // 触发事件
     this._fireEvent('biologicalEvent', data)
+  }
+
+  /**
+   * 處理觸覺反饋
+   */
+  _handleBiologicalFeedback(data) {
+    console.log('Biological feedback received:', data)
+    this._fireEvent('biologicalFeedback', data)
   }
 
   _handleModuleStatusChanged(data) {

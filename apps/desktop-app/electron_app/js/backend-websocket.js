@@ -270,6 +270,9 @@ _routeMessage(message) {
       case 'biological_event':
         this._handleBiologicalEvent(data)
         break
+      case 'biological_feedback':
+        this._handleBiologicalFeedback(data)
+        break
       case 'angela_action':
         this._fireEvent('angela_action', data)
         break
@@ -301,6 +304,14 @@ _routeMessage(message) {
 
     // 触发事件
     this._fireEvent('biologicalEvent', data)
+  }
+
+  /**
+   * 處理觸覺反饋
+   */
+  _handleBiologicalFeedback(data) {
+    console.log('Biological feedback received:', data)
+    this._fireEvent('biologicalFeedback', data)
   }
 
   _handleModuleStatusChanged(data) {
