@@ -1,7 +1,7 @@
 # Plan: pixel-angela 更新 + Live2D 修復
 
 > Date: 2026-06-13
-> Status: Ready
+> Status: **Step 1-5 已完成，待測試**
 
 ---
 
@@ -105,11 +105,11 @@ if (hasCore) {
 
 Web 端已經只檢查 Core，確認無需修改。
 
-### Step 2: 為 Epsilon_free 製作 model3.json
+### Step 2: 為 Epsilon_free 製作 model3.json ✅ 已完成
 
 **文件**: `resources/models/Epsilon_free/runtime/Epsilon_free.model3.json`
 
-基於目錄中已有的 15 個 motion 文件和 8 個 expression 文件：
+基於目錄中已有的 16 個 motion 文件和 8 個 expression 文件（已驗證實際文件名）：
 
 ```json
 {
@@ -120,86 +120,78 @@ Web 端已經只檢查 Core，確認無需修改。
     "Physics": "Epsilon_free.physics3.json",
     "DisplayInfo": "Epsilon_free.cdi3.json",
     "Expressions": [
-      {"Name": "exp_01", "File": "expressions/exp_01.exp3.json"},
-      {"Name": "exp_02", "File": "expressions/exp_02.exp3.json"},
-      {"Name": "exp_03", "File": "expressions/exp_03.exp3.json"},
-      {"Name": "exp_04", "File": "expressions/exp_04.exp3.json"},
-      {"Name": "exp_05", "File": "expressions/exp_05.exp3.json"},
-      {"Name": "exp_06", "File": "expressions/exp_06.exp3.json"},
-      {"Name": "exp_07", "File": "expressions/exp_07.exp3.json"},
-      {"Name": "exp_08", "File": "expressions/exp_08.exp3.json"}
+      {"Name": "Angry", "File": "expressions/Angry.exp3.json"},
+      {"Name": "Blushing", "File": "expressions/Blushing.exp3.json"},
+      {"Name": "Normal", "File": "expressions/Normal.exp3.json"},
+      {"Name": "Sad", "File": "expressions/Sad.exp3.json"},
+      {"Name": "Smile", "File": "expressions/Smile.exp3.json"},
+      {"Name": "Surprised", "File": "expressions/Surprised.exp3.json"},
+      {"Name": "f01", "File": "expressions/f01.exp3.json"},
+      {"Name": "f02", "File": "expressions/f02.exp3.json"}
     ],
     "Motions": {
-      "Idle": [
-        {"File": "motion/pose_idle_01.motion3.json"},
-        {"File": "motion/pose_idle_02.motion3.json"},
-        {"File": "motion/pose_idle_03.motion3.json"}
-      ],
+      "Idle": [{"File": "motion/Epsilon_idle_01.motion3.json"}],
       "Tap": [
-        {"File": "motion/tap_head_01.motion3.json"},
-        {"File": "motion/tap_head_02.motion3.json"},
-        {"File": "motion/tap_head_03.motion3.json"}
+        {"File": "motion/Epsilon_m_01.motion3.json"},
+        {"File": "motion/Epsilon_m_02.motion3.json"},
+        {"File": "motion/Epsilon_m_03.motion3.json"},
+        {"File": "motion/Epsilon_m_04.motion3.json"},
+        {"File": "motion/Epsilon_m_05.motion3.json"},
+        {"File": "motion/Epsilon_m_06.motion3.json"},
+        {"File": "motion/Epsilon_m_07.motion3.json"},
+        {"File": "motion/Epsilon_m_08.motion3.json"}
       ],
       "Flic": [
-        {"File": "motion/flic_hand_01.motion3.json"},
-        {"File": "motion/flic_hand_02.motion3.json"},
-        {"File": "motion/flic_hand_03.motion3.json"}
-      ]
+        {"File": "motion/Epsilon_m_sp_01.motion3.json"},
+        {"File": "motion/Epsilon_m_sp_02.motion3.json"},
+        {"File": "motion/Epsilon_m_sp_03.motion3.json"},
+        {"File": "motion/Epsilon_m_sp_04.motion3.json"},
+        {"File": "motion/Epsilon_m_sp_05.motion3.json"}
+      ],
+      "Shake": [{"File": "motion/Epsilon_shake_01.motion3.json"}]
     },
     "Groups": [
       {"Target": "Parameter", "Name": "LipSync", "Ids": []},
-      {"Target": "Parameter", "Name": "EyeBL", "Ids": []},
-      {"Target": "Parameter", "Name": "EyeBR", "Ids": []}
+      {"Target": "Parameter", "Name": "EyeBlink", "Ids": []}
     ],
-    "HitAreas": [
-      {"Id": "Head", "Name": "Head"},
-      {"Id": "Body", "Name": "Body"}
-    ]
+    "HitAreas": []
   }
 }
 ```
 
-> ⚠️ motion 文件名稱需先驗證實際文件名（執行 `ls resources/models/Epsilon_free/runtime/motion/` 確認）
-
-### Step 3: 複製 Epsilon_free 模型到桌面端和 Web 端
+### Step 3: 複製 Epsilon_free 模型到桌面端和 Web 端 ✅ 已完成
 
 ```
 resources/models/Epsilon_free/runtime/ →
-  apps/desktop-app/electron_app/models/Epsilon_free/runtime/
-  apps/web-live2d-viewer/models/Epsilon_free/runtime/
+  apps/desktop-app/electron_app/models/Epsilon_free/runtime/ (28 files)
+  apps/web-live2d-viewer/models/Epsilon_free/runtime/ (28 files)
 ```
 
-### Step 4: 切換默認模型到 Epsilon_free
+### Step 4: 切換默認模型到 Epsilon_free ✅ 已完成
 
 **文件**: `apps/desktop-app/electron_app/js/angela-character-config.js`
 
 ```javascript
-// 修改前
-"model_path": "models/miara_pro_en/runtime/miara_pro_t03.model3.json"
-
-// 修改後
-"model_path": "models/Epsilon_free/runtime/Epsilon_free.model3.json"
+"model_path": "models/Epsilon_free/runtime/Epsilon_free.model3.json",
+"fallback_models": [
+  "models/Epsilon_free/runtime/Epsilon_free.model3.json",
+  "models/miara_pro_en/runtime/miara_pro_t03.model3.json"
+]
 ```
 
-**文件**: `apps/web-live2d-viewer/js/angela-character-config.js`
+**文件**: `apps/web-live2d-viewer/js/angela-character-config.js` — 同上。
 
-同上。
+**文件**: `apps/desktop-app/electron_app/js/live2d-manager.js:291` — fallback 路徑同步更新。
 
-### Step 5: 增加 SDK 超時時間
+### Step 5: 增加 SDK 超時時間 ✅ 已完成
 
 **文件**: `apps/desktop-app/electron_app/js/live2d-manager.js:194`
+**文件**: `apps/web-live2d-viewer/js/live2d-manager.js:202`
 
 ```javascript
-// 修改前
-_waitForSDKAndInitialize(maxWait = 5000, interval = 100)
-
 // 修改後：低配硬件 WebGL 初始化較慢
 _waitForSDKAndInitialize(maxWait = 10000, interval = 100)
 ```
-
-**文件**: `apps/web-live2d-viewer/js/live2d-manager.js:202`
-
-同上。
 
 ### Step 6（可選）: 補全 Web 端 Framework bundle
 
@@ -255,15 +247,16 @@ npm install && npm run build
 
 ## 建議執行順序
 
-| # | 步驟 | 預估時間 |
-|---|------|---------|
-| 1 | **Live2D Step 1**: 移除 Manager 多餘的 Framework 檢查 | 2 分鐘 |
-| 2 | **Live2D Step 2**: 驗證 Epsilon_free motion 文件名 + 製作 model3.json | 10 分鐘 |
-| 3 | **Live2D Step 3-4**: 複製模型 + 切換默認模型路徑 | 5 分鐘 |
-| 4 | **Live2D Step 5**: 增加 SDK 超時時間 | 2 分鐘 |
-| 5 | **測試驗證**: 啟動桌面端 + web 端，確認 Live2D 正常載入 | 10 分鐘 |
-| 6 | **pixel-angela P0-P1**: 修復硬編碼路徑 + requirements.txt | 15 分鐘 |
-| 7 | **pixel-angela P2-P3**: WebSocket 可配置 + 協議對齊 | 20 分鐘 |
+| # | 步驟 | 狀態 |
+|---|------|------|
+| 1 | **Live2D Step 1**: 移除 Manager 多餘的 Framework 檢查 | ✅ 完成 |
+| 2 | **Live2D Step 2**: 驗證 Epsilon_free motion 文件名 + 製作 model3.json | ✅ 完成 |
+| 3 | **Live2D Step 3-4**: 複製模型 + 切換默認模型路徑 | ✅ 完成 |
+| 4 | **Live2D Step 5**: 增加 SDK 超時時間 | ✅ 完成 |
+| 5 | **pixel-angela P0**: 修復硬編碼路徑 | ✅ 完成 |
+| 6 | **pixel-angela P1**: 添加 requirements.txt | ✅ 完成 |
+| 7 | **測試驗證**: 啟動桌面端 + web 端，確認 Live2D 正常載入 | ⏳ 待執行 |
+| 8 | **pixel-angela P2-P3**: WebSocket 可配置 + 協議對齊 | ⏳ 待執行 |
 
 ---
 

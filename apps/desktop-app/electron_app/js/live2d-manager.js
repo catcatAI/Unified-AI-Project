@@ -191,30 +191,25 @@ class Live2DManager {
         this._waitForSDKAndInitialize();
     }
     
-    _waitForSDKAndInitialize(maxWait = 5000, interval = 100) {
+    _waitForSDKAndInitialize(maxWait = 10000, interval = 100) {
         const startTime = Date.now();
         
         const checkAndInit = () => {
             const elapsed = Date.now() - startTime;
             
-            // Check for both Core SDK and Framework SDK
+            // Only Core SDK is needed (wrapper uses Live2DCubismCore API, not Framework)
             const hasCore = typeof window.Live2DCubismCore !== 'undefined';
-            const hasFramework = typeof window.Live2DCubismFramework !== 'undefined';
             
-            if (hasCore && hasFramework) {
-                console.log('[Live2DManager] Both Core and Framework detected after', elapsed, 'ms');
+            if (hasCore) {
+                console.log('[Live2DManager] Core SDK detected after', elapsed, 'ms');
                 this._initializeWithSDK(window.Live2DCubismCore);
             } else if (elapsed < maxWait) {
-                // If Core is loaded but Framework is missing, log specific status
-                if (hasCore && !hasFramework && elapsed % 500 === 0) {
-                    console.log('[Live2DManager] Core loaded, waiting for Framework...', elapsed, 'ms');
+                if (elapsed % 500 === 0) {
+                    console.log('[Live2DManager] Waiting for Core SDK...', elapsed, 'ms');
                 }
                 setTimeout(checkAndInit, interval);
             } else {
-                console.warn('[Live2DManager] SDK timeout after', elapsed, 'ms. Factors:', {
-                    core: hasCore,
-                    framework: hasFramework
-                });
+                console.warn('[Live2DManager] SDK timeout after', elapsed, 'ms. Core:', hasCore);
                 console.log('[Live2DManager] Using 2D fallback mode');
                 this._createFallbackManager();
             }
@@ -293,7 +288,7 @@ class Live2DManager {
 
         // 降級到默認路徑
         console.warn('[Live2DManager] 使用默認模型路徑（未在配置中找到）');
-        return 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
+        return 'models/Epsilon_free/runtime/Epsilon_free.model3.json';
     }
     
     /**

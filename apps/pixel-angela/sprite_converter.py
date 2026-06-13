@@ -36,6 +36,9 @@ class SpriteConverter:
 if __name__ == "__main__":
     converter = SpriteConverter()
     # Correct path to root directory
-    dna = converter.convert(r"D:\Projects\Unified-AI-Project\angela_01.jpg")
+    import os
+    _dir = os.path.dirname(os.path.abspath(__file__))
+    _img = os.path.join(_dir, "..", "..", "angela_01.jpg")
+    dna = converter.convert(_img)
     np.save("angela_dna_v1.npy", dna)
     print("Angela 已完成像素化轉換。")

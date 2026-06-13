@@ -199,7 +199,7 @@ class Live2DManager {
         this._waitForSDKAndInitialize();
     }
 
-    _waitForSDKAndInitialize(maxWait = 5000, interval = 100) {
+    _waitForSDKAndInitialize(maxWait = 10000, interval = 100) {
         const startTime = Date.now();
 
         const checkAndInit = () => {
@@ -290,7 +290,7 @@ class Live2DManager {
 
         // 降級到默認路徑
         console.warn('[Live2DManager] 使用默認模型路徑（未在配置中找到）');
-        return 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
+        return 'models/Epsilon_free/runtime/Epsilon_free.model3.json';
     }
 
     /**

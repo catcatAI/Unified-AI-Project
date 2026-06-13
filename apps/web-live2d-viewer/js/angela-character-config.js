@@ -9,10 +9,10 @@ const ANGELA_CHARACTER_CONFIG = {
   "live2d_config": {
     "enabled": true,
     "fallback_enabled": true,
-    "model_path": "models/miara_pro_en/runtime/miara_pro_t03.model3.json",
+    "model_path": "models/Epsilon_free/runtime/Epsilon_free.model3.json",
     "fallback_models": [
-      "models/miara_pro_en/runtime/miara_pro_t03.model3.json",
-      "models/miara_pro/runtime/miara_pro_t03.model3.json"
+      "models/Epsilon_free/runtime/Epsilon_free.model3.json",
+      "models/miara_pro_en/runtime/miara_pro_t03.model3.json"
     ],
     "auto_retry": true,
     "max_retries": 3
