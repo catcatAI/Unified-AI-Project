@@ -83,8 +83,8 @@ _LAZY_IMPORTS = {
     "generate_and_save_to_desktop": "core.art.desktop_demo",
     "AngelaRealCreator": "core.art.real_creator",
     "ComfyUIClient": "core.art.real_creator",
-    "AngelaRealVoice": "core.art.real_creator",
-    "AngelaRealBrowser": "core.art.real_creator",
+    "AngelaRealVoice": "core.art.real_edge_tts",
+    "AngelaRealBrowser": "core.art.real_playwright_browser",
     "AngelaRealPainter": "core.art.real_comfyui_api",
     # Metamorphosis
     "SoulCore": "core.metamorphosis.soul_core",
@@ -320,7 +320,6 @@ __all__ = [
     # Precision Management
     "PrecisionConfig",
     "PrecisionMatrix",
-    "PrecisionManager",
     "ConversionInfo",
     "convert_precision",
     "optimize_for_hardware",

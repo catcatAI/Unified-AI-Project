@@ -44,6 +44,8 @@ from pathlib import Path
 from typing import Dict, Any, List
 import logging
 
+logger = logging.getLogger(__name__)
+
 # 加载环境变量
 env_path = None
 try:
@@ -60,8 +62,6 @@ except ImportError:
 except Exception:
     # broad except acceptable: startup env loading is unpredictable; may fail for many reasons
     logger.warning("Failed to load .env file", exc_info=True)
-
-logger = logging.getLogger(__name__)
 
 
 def _ensure_src_in_path() -> None:
