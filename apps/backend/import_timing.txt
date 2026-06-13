@@ -565,7 +565,7 @@ import time:     27561 |      27561 |                 core.cdm_dividend_model
 import time:     40012 |      40012 |                 core.life_intensity_formula
 import time:     46345 |      46345 |                 core.active_cognition_formula
 import time:     48960 |      48960 |                 core.non_paradox_existence
-import time:     46940 |     236670 |               core.autonomous.autonomous_life_cycle
+import time:     46940 |     236670 |               core.life.autonomous_life_cycle
 import time:     33205 |      33205 |               core.autonomous.dynamic_parameters
 import time:     62084 |     349927 |             core.autonomous.digital_life_integrator
 import time:     61641 |      61641 |             core.autonomous.extended_behavior_library

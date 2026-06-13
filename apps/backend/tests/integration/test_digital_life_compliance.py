@@ -1,4 +1,4 @@
-﻿"""
+"""
 Angela AI v6.0 - Digital Life Compliance Tests
 数字生命合规测试套件
 
@@ -413,8 +413,8 @@ class TestAutonomousDecisionCompliance:
             threshold=0.7
         )
         
-        with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.should_act', new_callable=AsyncMock) as mock_should_act, \
-             patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.generate_behavior', new_callable=AsyncMock) as mock_generate:
+        with patch('core.life.autonomous_life_cycle.AutonomousLifeCycle.should_act', new_callable=AsyncMock) as mock_should_act, \
+             patch('core.life.autonomous_life_cycle.AutonomousLifeCycle.generate_behavior', new_callable=AsyncMock) as mock_generate:
             
             # 模拟多种内在状态
             states = [
@@ -463,7 +463,7 @@ class TestAutonomousDecisionCompliance:
             threshold=0.75
         )
         
-        with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.decide', new_callable=AsyncMock) as mock_decide:
+        with patch('core.life.autonomous_life_cycle.AutonomousLifeCycle.decide', new_callable=AsyncMock) as mock_decide:
             # 相同情境下的决策应一致或有合理变化
             context = {'location': 'desktop', 'user_present': True, 'time_of_day': 'afternoon'}
             

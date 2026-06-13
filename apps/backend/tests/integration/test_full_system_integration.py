@@ -1,4 +1,4 @@
-﻿"""
+"""
 Angela AI v6.0 - Comprehensive Integration Test Suite
 完整系统整合测试套件
 

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Angela AI v6.0 - End-to-End Scenario Tests
 端到端场景测试
 
@@ -778,7 +778,7 @@ class TestScenarioAutonomousBehavior:
         metrics = ScenarioMetrics("test_scenario_state_evaluation", time.time(), total_steps=5)
         
         try:
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state', new_callable=AsyncMock) as mock_eval:
+            with patch('core.life.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state', new_callable=AsyncMock) as mock_eval:
                 mock_eval.return_value = {
                     'current_phase': 'exploration',
                     'boredom_level': 0.7,  # 较高的无聊度
@@ -819,7 +819,7 @@ class TestScenarioAutonomousBehavior:
         try:
             state = {'boredom_level': 0.7, 'curiosity_level': 0.8}
             
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior', new_callable=AsyncMock) as mock_decide:
+            with patch('core.life.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior', new_callable=AsyncMock) as mock_decide:
                 mock_decide.return_value = {
                     'decision_id': str(uuid.uuid4()),
                     'selected_behavior': 'explore_desktop',
@@ -994,7 +994,7 @@ class TestScenarioAutonomousBehavior:
             scenario_start = time.perf_counter()
             
             # 步骤1: 状态评估
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state', new_callable=AsyncMock) as mock_eval:
+            with patch('core.life.autonomous_life_cycle.AutonomousLifeCycle.evaluate_state', new_callable=AsyncMock) as mock_eval:
                 mock_eval.return_value = {
                     'should_trigger_behavior': True,
                     'evaluation_time_ms': 15.0
@@ -1003,7 +1003,7 @@ class TestScenarioAutonomousBehavior:
                 step1_latency = step1_result['evaluation_time_ms']
             
             # 步骤2: 行为决策
-            with patch('core.autonomous.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior', new_callable=AsyncMock) as mock_decide:
+            with patch('core.life.autonomous_life_cycle.AutonomousLifeCycle.decide_behavior', new_callable=AsyncMock) as mock_decide:
                 mock_decide.return_value = {
                     'selected_behavior': 'explore_desktop',
                     'decision_time_ms': 25.0

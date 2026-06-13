@@ -1,4 +1,4 @@
-﻿"""
+"""
 Angela AI v6.0 - Performance Benchmark Tests
 性能基准测试套件
 

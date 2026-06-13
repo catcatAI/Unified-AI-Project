@@ -1,4 +1,4 @@
-﻿"""
+"""
 Angela AI v6.0 - Error Recovery Tests
 错误恢复测试套件
 
