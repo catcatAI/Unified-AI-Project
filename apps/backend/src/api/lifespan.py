@@ -71,8 +71,8 @@ async def _get_chat_service():
     global _chat_service_instance
     if _chat_service_instance is None:
         try:
-            from services.llm.router import AngelaLLMService
-            _chat_service_instance = AngelaLLMService()
+            from services.chat_service import ChatService
+            _chat_service_instance = ChatService()
             await _chat_service_instance.initialize()
         except Exception as e:
             logger.error(f"Failed to initialize chat service: {e}", exc_info=True)
