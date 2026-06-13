@@ -308,26 +308,6 @@ class AngelaLLMService:
             "_fallback_chain": ["ollama"],
         }
 
-        # 從環境變量加載 API 密鑰
-        for backend_name, backend_config in config.items():
-            if not isinstance(backend_config, dict):
-                continue
-            if "api_key_env" in backend_config:
-                env_var = backend_config["api_key_env"]
-                api_key = os.environ.get(env_var)
-                if api_key:
-                    backend_config["api_key"] = api_key
-                    logger.info(
-                        f"Loaded API key from environment variable {env_var} for {backend_name}"
-                    )
-                else:
-                    logger.debug(f"Environment variable {env_var} not set for {backend_name}")
-            elif "api_key" in backend_config and backend_config["api_key"] in ("", "YOUR_API_KEY"):
-                # 移除空或佔位符 API 密鑰
-                del backend_config["api_key"]
-
-        return config
-
     def reload_config(self, new_config: Optional[Dict[str, Any]] = None) -> None:
         """
         [Phase 6] 熱加載配置。
