@@ -91,7 +91,7 @@ class ProjectCoordinator:
 
     def _load_prompts(self) -> None:
         """Load prompts."""
-        prompts_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "configs", "prompts.yaml")
+        prompts_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "configs", "standard", "narrative", "prompts.default.yaml")
         try:
             with open(prompts_path, "r", encoding="utf-8") as f:
                 self.prompts = yaml.safe_load(f) or {}
