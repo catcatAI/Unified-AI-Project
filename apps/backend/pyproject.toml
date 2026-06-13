@@ -178,7 +178,6 @@ testing = [
   "scikit-learn",
   "spacy",
   "gmqtt",
-  "pygame",
   "amqtt",
   "fastapi",
   "httpx",
