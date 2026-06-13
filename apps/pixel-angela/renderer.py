@@ -155,7 +155,7 @@ class AngelaRenderer(QWidget):
         # 2. [Task N.9.3] 體素探針檢測 (Voxel Hit-Test)
         is_hit = False
         if 0 <= local_x < 128 and 0 <= local_y < 384:
-            stiffness = self.dna.get_stiffness_at(local_x, local_y) if self.dna else 0.0
+            stiffness = float(self.dna.get_stiffness_at(local_x, local_y)) if self.dna else 0.0
             if stiffness > 0:
                 is_hit = True
                 print(f"💖 [Tactile] Precision hit! Stiffness: {stiffness:.2f}")
