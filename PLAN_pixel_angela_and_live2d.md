@@ -1,7 +1,7 @@
 # Plan: pixel-angela 更新 + Live2D 修復
 
 > Date: 2026-06-13
-> Status: Draft
+> Status: Ready
 
 ---
 
@@ -16,42 +16,100 @@
 | 設備 | ASUS BR1100FKA（教育級輕薄筆電） |
 | 解析度 | 1366×768 |
 
-**結論：硬件是瓶頸之一，但不是唯一原因。** 代碼层面有更嚴重的問題導致 Live2D 完全無法載入。
+硬件是性能瓶頸（4096x 紋理跑不動），但**不是「無法載入」的原因**。代碼有 bug 導致 Live2D 完全無法初始化。
 
-### 根因分析（3 個平台各自的問題）
+### 根因分析
 
-#### 桌面端 (Electron) — 3 個致命問題
+#### 核心發現：Wrapper 只需要 Core SDK，不需要 Framework
 
-| # | 問題 | 文件 & 行 |
-|---|------|-----------|
-| 1 | **CSP `script-src 'self'` 阻止 CDN 載入和內聯腳本** | `electron_app/index.html:7` |
-| 2 | **SDK fallback 路徑錯誤**（`../libs/live2dcubismcore.min.js` 指向錯誤位置） | `js/live2d-cubism-wrapper.js:82` |
-| 3 | **5 秒超時被 CDN 嘗試耗盡**，本地 fallback 來不及載入 | `js/live2d-manager.js:194` |
+Wrapper（桌面和 web 共用同一套）使用的 API 全部來自 `Live2DCubismCore`：
 
-#### Web 端 — 2 個致命問題
+| Wrapper 調用 | 所屬 SDK |
+|-------------|---------|
+| `Live2DCubismCore.Moc.fromArrayBuffer()` | Core |
+| `Live2DCubismCore.Model.fromMoc()` | Core |
+| `Live2DCubismCore.MotionGroup` | Core |
+| `Live2DCubismCore.Viewport` | Core |
 
-| # | 問題 | 文件 & 行 |
-|---|------|-----------|
-| 1 | **缺少 Framework SDK bundle**（只有 Core，沒有 Framework） | `index.html:707-713` |
-| 2 | **Fallback 創建的 mock SDK 缺少 `Moc`、`Model` 等核心 API** | `libs/live2d-fallback.js:26-63` |
+**Wrapper 從未使用 `Live2DCubismFramework` 的任何 API。**
 
-#### 模型本身問題
+#### 真正的根因：Manager 多餘的 Framework 檢查
 
-| 模型 | 大小 | 紋理解析度 | 有 model3.json | 能否用於低配硬件 |
-|------|------|-----------|---------------|-----------------|
-| miara_pro_en | 13.5 MB | **4096x**（13 MB 紋理） | ✅ | ❌ 太大，1GB VRAM 跑不動 |
+**桌面端** `live2d-manager.js:200-204`：
+```javascript
+const hasCore = typeof window.Live2DCubismCore !== 'undefined';
+const hasFramework = typeof window.Live2DCubismFramework !== 'undefined';
+if (hasCore && hasFramework) {   // ← 多餘的 Framework 檢查！
+    this._initializeWithSDK(window.Live2DCubismCore);
+}
+```
+
+**Web 端** `live2d-manager.js:208`：
+```javascript
+if (typeof window.Live2DCubismCore !== 'undefined') {
+    // Web 端只检查 Core，但初始化後 wrapper 仍可能因其他原因失敗
+}
+```
+
+**流程：**
+1. `index.html` 透過 `<script src>` 載入 Core SDK → `window.Live2DCubismCore` 已設定 ✅
+2. Manager 輪詢等待 Core **和** Framework（5 秒超時）
+3. Core 已就緒，但 Framework 載入較慢或不存在
+4. 5 秒後超時 → 進入 `_createFallbackManager()`（2D sprite 模式）
+5. Wrapper 從未被創建，Live2D 模型從未被嘗試載入
+
+#### 各平台問題明細
+
+| 平台 | 問題 | 嚴重度 | 文件 & 行 |
+|------|------|--------|-----------|
+| 桌面端 | Manager 多餘的 `hasFramework` 檢查導致 5 秒超時 | 🔴 Critical | `js/live2d-manager.js:200-204` |
+| Web 端 | Framework bundle 不存在 + fallback mock 缺少 Core API | 🔴 Critical | `libs/live2d-fallback.js:26-63` |
+| 桌面端 | CSP `script-src 'self'` 阻止 CDN fallback（但不影響本地載入） | 🟢 Low | `index.html:7` |
+| 桌面端 | Wrapper fallback 路徑 `../libs/live2dcubismcore.min.js` 錯誤（但不影響，wrapper 短路返回） | 🟢 Low | `js/live2d-cubism-wrapper.js:82` |
+| 硬件 | 4096x 紋理（13 MB）對 Intel UHD 1GB VRAM 太重 | 🟡 Medium | — |
+
+#### 模型對比
+
+| 模型 | 大小 | 紋理解析度 | 有 model3.json | 低配硬件適合度 |
+|------|------|-----------|---------------|--------------|
+| miara_pro_en | 13.5 MB | **4096x**（13 MB 紋理） | ✅ | ❌ 太大 |
 | Epsilon_free | 2.8 MB | 2048x | ❌ **缺少** | ✅ 適合 |
 | Epsilon | 2.6 MB | 1024x（3 張） | ❌ **缺少** | ✅✅ 最適合 |
 
-**Epsilon 和 Epsilon_free 是合適的替代模型，但它們缺少 `.model3.json` 清單文件，SDK 無法載入。**
+---
 
-### Live2D 修復方案
+## 第二部分：Live2D 修復方案
 
-#### Step 1: 為 Epsilon_free 製作 model3.json（讓低配硬件能跑）
+### Step 1: 移除 Manager 多餘的 Framework 檢查（最关键）
 
-基於 `Epsilon_free`（2048x，2.8 MB），參考 miara_pro_en 的格式創建 `Epsilon_free.model3.json`。
+**文件**: `apps/desktop-app/electron_app/js/live2d-manager.js`
+
+```javascript
+// 修改前（line 200-204）
+const hasCore = typeof window.Live2DCubismCore !== 'undefined';
+const hasFramework = typeof window.Live2DCubismFramework !== 'undefined';
+if (hasCore && hasFramework) {
+    console.log('[Live2DManager] Both Core and Framework detected after', elapsed, 'ms');
+    this._initializeWithSDK(window.Live2DCubismCore);
+}
+
+// 修改後：只檢查 Core
+const hasCore = typeof window.Live2DCubismCore !== 'undefined';
+if (hasCore) {
+    console.log('[Live2DManager] Core SDK detected after', elapsed, 'ms');
+    this._initializeWithSDK(window.Live2DCubismCore);
+}
+```
+
+**文件**: `apps/web-live2d-viewer/js/live2d-manager.js:208`
+
+Web 端已經只檢查 Core，確認無需修改。
+
+### Step 2: 為 Epsilon_free 製作 model3.json
 
 **文件**: `resources/models/Epsilon_free/runtime/Epsilon_free.model3.json`
+
+基於目錄中已有的 15 個 motion 文件和 8 個 expression 文件：
 
 ```json
 {
@@ -61,103 +119,100 @@
     "Textures": ["Epsilon_free.2048/texture_00.png"],
     "Physics": "Epsilon_free.physics3.json",
     "DisplayInfo": "Epsilon_free.cdi3.json",
-    "Motions": {},
-    "Groups": [],
-    "HitAreas": []
-  }
-}
-```
-
-#### Step 2: 為 Epsilon 製作 model3.json
-
-**文件**: `resources/models/Epsilon/runtime/Epsilon.model3.json`
-
-```json
-{
-  "Version": 3,
-  "FileReferences": {
-    "Moc": "Epsilon.moc3",
-    "Textures": [
-      "Epsilon.1024/texture_00.png",
-      "Epsilon.1024/texture_01.png",
-      "Epsilon.1024/texture_02.png"
+    "Expressions": [
+      {"Name": "exp_01", "File": "expressions/exp_01.exp3.json"},
+      {"Name": "exp_02", "File": "expressions/exp_02.exp3.json"},
+      {"Name": "exp_03", "File": "expressions/exp_03.exp3.json"},
+      {"Name": "exp_04", "File": "expressions/exp_04.exp3.json"},
+      {"Name": "exp_05", "File": "expressions/exp_05.exp3.json"},
+      {"Name": "exp_06", "File": "expressions/exp_06.exp3.json"},
+      {"Name": "exp_07", "File": "expressions/exp_07.exp3.json"},
+      {"Name": "exp_08", "File": "expressions/exp_08.exp3.json"}
     ],
-    "Physics": "Epsilon.physics3.json",
-    "DisplayInfo": "Epsilon.cdi3.json",
-    "Motions": {},
-    "Groups": [],
-    "HitAreas": []
+    "Motions": {
+      "Idle": [
+        {"File": "motion/pose_idle_01.motion3.json"},
+        {"File": "motion/pose_idle_02.motion3.json"},
+        {"File": "motion/pose_idle_03.motion3.json"}
+      ],
+      "Tap": [
+        {"File": "motion/tap_head_01.motion3.json"},
+        {"File": "motion/tap_head_02.motion3.json"},
+        {"File": "motion/tap_head_03.motion3.json"}
+      ],
+      "Flic": [
+        {"File": "motion/flic_hand_01.motion3.json"},
+        {"File": "motion/flic_hand_02.motion3.json"},
+        {"File": "motion/flic_hand_03.motion3.json"}
+      ]
+    },
+    "Groups": [
+      {"Target": "Parameter", "Name": "LipSync", "Ids": []},
+      {"Target": "Parameter", "Name": "EyeBL", "Ids": []},
+      {"Target": "Parameter", "Name": "EyeBR", "Ids": []}
+    ],
+    "HitAreas": [
+      {"Id": "Head", "Name": "Head"},
+      {"Id": "Body", "Name": "Body"}
+    ]
   }
 }
 ```
 
-#### Step 3: 修復桌面端 CSP（解除 CDN 和內聯腳本阻擋）
+> ⚠️ motion 文件名稱需先驗證實際文件名（執行 `ls resources/models/Epsilon_free/runtime/motion/` 確認）
 
-**文件**: `apps/desktop-app/electron_app/index.html:7`
+### Step 3: 複製 Epsilon_free 模型到桌面端和 Web 端
 
-```html
-<!-- 修改前 -->
-<meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
-
-<!-- 修改後：允許 CDN 載入（作為 fallback）+ 內聯腳本 -->
-<meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; script-src 'self' https://cubism.live2d.com https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
+```
+resources/models/Epsilon_free/runtime/ →
+  apps/desktop-app/electron_app/models/Epsilon_free/runtime/
+  apps/web-live2d-viewer/models/Epsilon_free/runtime/
 ```
 
-#### Step 4: 修復桌面端 SDK fallback 路徑
-
-**文件**: `apps/desktop-app/electron_app/js/live2d-cubism-wrapper.js:82`
-
-```javascript
-// 修改前
-const localSdkUrl = '../libs/live2dcubismcore.min.js';
-// 修改後：指向正確的相對路徑
-const localSdkUrl = '../libs/cubism/Core/live2dcubismcore.min.js';
-```
-
-#### Step 5: 將默認模型切換為 Epsilon_free
+### Step 4: 切換默認模型到 Epsilon_free
 
 **文件**: `apps/desktop-app/electron_app/js/angela-character-config.js`
 
-將 `model_path` 從 miara_pro_t03 改為 Epsilon_free。
+```javascript
+// 修改前
+"model_path": "models/miara_pro_en/runtime/miara_pro_t03.model3.json"
+
+// 修改後
+"model_path": "models/Epsilon_free/runtime/Epsilon_free.model3.json"
+```
 
 **文件**: `apps/web-live2d-viewer/js/angela-character-config.js`
 
 同上。
 
-#### Step 6: 複製 Epsilon_free 模型到桌面端和 Web 端
+### Step 5: 增加 SDK 超時時間
 
-```
-apps/desktop-app/electron_app/models/Epsilon_free/runtime/...
-apps/web-live2d-viewer/models/Epsilon_free/runtime/...
-```
-
-#### Step 7: 補全 Web 端 Framework SDK
-
-**文件**: `apps/web-live2d-viewer/index.html`
-
-添加缺失的 framework bundle 引用：
-```html
-<script src="libs/live2dframework/dist/live2dcubismframework.bundle.js"></script>
-```
-
-如果 bundle 不存在，從桌面端複製或從 Cubism SDK 重新構建。
-
-#### Step 8: 增加 SDK 超時時間
-
-**文件**: `js/live2d-manager.js:194`
+**文件**: `apps/desktop-app/electron_app/js/live2d-manager.js:194`
 
 ```javascript
 // 修改前
-const maxWait = 5000;
-// 修改後：給予更多時間（特別是低配硬件）
-const maxWait = 10000;
+_waitForSDKAndInitialize(maxWait = 5000, interval = 100)
+
+// 修改後：低配硬件 WebGL 初始化較慢
+_waitForSDKAndInitialize(maxWait = 10000, interval = 100)
+```
+
+**文件**: `apps/web-live2d-viewer/js/live2d-manager.js:202`
+
+同上。
+
+### Step 6（可選）: 補全 Web 端 Framework bundle
+
+Web 端 `libs/live2dframework/dist/` 目錄不存在（只有原始碼，未構建）。但由於 wrapper 不需要 Framework，此步驟非必須。如果未來需要 Framework 功能（如物理模擬、表情系統），可以從 Cubism SDK 源碼構建：
+
+```bash
+cd apps/web-live2d-viewer/libs/live2dframework
+npm install && npm run build
 ```
 
 ---
 
-## 第二部分：pixel-angela 更新
+## 第三部分：pixel-angela 更新
 
 ### 現狀
 
@@ -165,7 +220,7 @@ const maxWait = 10000;
 - 純 PyQt6 桌面應用（無 web 入口）
 - 無 `package.json`、`requirements.txt`、`.env`
 - 硬編碼路徑：`D:\Projects\Unified-AI-Project\angela_01.jpg`、`ws://127.0.0.1:8000/ws`
-- 無 Live2D（`overlay_engine.py` 註釋明確表示「不受 Live2D 複雜引擎限制」）
+- 無 Live2D（`overlay_engine.py` 註釋：「不受 Live2D 複雜引擎限制」）
 - 核心類 `AngelaDNA` 在外部 `packages/biology-core/`
 
 ### 需要更新的項目
@@ -180,7 +235,6 @@ const maxWait = 10000;
 #### P1: 添加依賴管理
 
 - 創建 `requirements.txt`（PyQt6, websockets, numpy, Pillow, psutil）
-- 或 `pyproject.toml` 統一管理
 
 #### P2: WebSocket URL 可配置
 
@@ -196,19 +250,20 @@ const maxWait = 10000;
 
 - 無應用圖標
 - 無 PyInstaller / cx_Freeze 打包配置
-- 無自動更新機制
 
 ---
 
 ## 建議執行順序
 
-1. **Live2D Step 1-2**: 製作 Epsilon_free / Epsilon 的 model3.json（5 分鐘）
-2. **Live2D Step 3-4**: 修復桌面端 CSP + fallback 路徑（10 分鐘）
-3. **Live2D Step 5-6**: 切換默認模型 + 複製模型文件（5 分鐘）
-4. **Live2D Step 7-8**: 補全 Web Framework + 增加超時（10 分鐘）
-5. **pixel-angela P0-P1**: 修復硬編碼路徑 + 添加 requirements.txt（15 分鐘）
-6. **pixel-angela P2-P3**: WebSocket 可配置 + 協議對齊（20 分鐘）
-7. **測試驗證**: 啟動桌面端 + web 端，確認 Live2D 正常載入
+| # | 步驟 | 預估時間 |
+|---|------|---------|
+| 1 | **Live2D Step 1**: 移除 Manager 多餘的 Framework 檢查 | 2 分鐘 |
+| 2 | **Live2D Step 2**: 驗證 Epsilon_free motion 文件名 + 製作 model3.json | 10 分鐘 |
+| 3 | **Live2D Step 3-4**: 複製模型 + 切換默認模型路徑 | 5 分鐘 |
+| 4 | **Live2D Step 5**: 增加 SDK 超時時間 | 2 分鐘 |
+| 5 | **測試驗證**: 啟動桌面端 + web 端，確認 Live2D 正常載入 | 10 分鐘 |
+| 6 | **pixel-angela P0-P1**: 修復硬編碼路徑 + requirements.txt | 15 分鐘 |
+| 7 | **pixel-angela P2-P3**: WebSocket 可配置 + 協議對齊 | 20 分鐘 |
 
 ---
 
@@ -216,7 +271,7 @@ const maxWait = 10000;
 
 | 風險 | 影響 | 緩解 |
 |------|------|------|
-| Epsilon_free model3.json 格式不正確 | 模型仍無法載入 | 參考 Cubism SDK 文檔驗證 |
-| Intel UHD 仍跑不動 2048x 紋理 | 卡頓 | 降級到 Epsilon（1024x） |
-| CSP 修改引入安全風險 | XSS | 僅允許已知 CDN 域名 |
-| Framework bundle 需要構建 | Web 端延遲 | 先從桌面端複製 |
+| Epsilon_free motion 文件名與 model3.json 不匹配 | 動作無法播放 | 先執行 `ls` 驗證文件名 |
+| Intel UHD 跑 2048x 仍卡頓 | 性能差 | 降級到 Epsilon（1024x，但需另外製作 model3.json） |
+| Cubism Core SDK 版本不兼容 | 模型渲染異常 | 確認 SDK 版本（項目用 SDK 5-r.5） |
+| 移除 Framework 檢查後有其他副作用 | 未知 | 充分測試桌面端和 web 端 |
