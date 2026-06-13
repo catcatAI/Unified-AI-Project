@@ -43,7 +43,7 @@ class AngelaDNA:
             offsets[i+1] = current_x
         return offsets
 
-    def _build_volumetric_body(self, hair_offset=0.0, breath_phase=0.0, theta_matrix: List[float] = None, **kwargs):
+    def _build_volumetric_body(self, hair_offset=0.0, breath_phase=0.0, theta_matrix: List[float] = None, ear_twitch: float = 0, **kwargs):
         import math
         self.voxels.fill(0)
         
@@ -146,7 +146,7 @@ class AngelaDNA:
         self._build_part(3, (135, 155), (ux_r+4, ux_r+14), C_RIBBON, 0.6, 405)
 
         # --- Z=4: 手臂與五指 (IDs 200-399) ---
-        finger_data = kwargs.get("finger_matrix", {"left": [0.0]*5, "right": [0.0]*5})
+        finger_data = kwargs.get("finger_matrix") or {"left": [0.0]*5, "right": [0.0]*5}
         # 左手
         self._build_part(4, (130, 150), (bx-26, bx-12), C_SHIRT, 0.4, 201) # 短袖
         self._build_part(4, (150, 200), (bx-24, bx-16), C_SKIN, 0.4, 203) # 手臂
@@ -214,13 +214,14 @@ class AngelaDNA:
         # 靈魂呆毛 (Ahoge)
         self._build_part(5, (40, 55), (hx-2, hx+2), C_HAIR, 0.05, 23)
 
-    def apply_dynamics(self, phase, theta_matrix=None, finger_matrix=None):
+    def apply_dynamics(self, phase, theta_matrix=None, finger_matrix=None, ear_twitch=0):
         import math
         current_swing = math.sin(phase) * 2.0
         self._build_volumetric_body(
-            hair_offset=current_swing, 
+            hair_offset=current_swing,
             breath_phase=phase,
             theta_matrix=theta_matrix,
+            ear_twitch=ear_twitch,
             finger_matrix=finger_matrix
         )
 

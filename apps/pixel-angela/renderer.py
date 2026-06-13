@@ -5,6 +5,7 @@ import ctypes
 import json
 import asyncio
 import time
+import math
 from datetime import datetime
 from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QVBoxLayout, QMenu, QSystemTrayIcon
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QRect, QPoint, QPointF
@@ -41,8 +42,20 @@ class AngelaClient(QThread):
                 time.sleep(UIConfig.WS_RECONNECT_DELAY)
 
     async def _listen(self):
-        async with websockets.connect("ws://127.0.0.1:8000/ws", open_timeout=30) as ws:
-            print("🟢 [Network] Connection established.")
+        ws_url = os.environ.get("ANGELA_WS_URL", "ws://127.0.0.1:8000/ws")
+        async with websockets.connect(ws_url, open_timeout=30) as ws:
+            handshake = {
+                "session_id": "",
+                "client_type": "pixel-angela",
+                "client_version": "1.0.0"
+            }
+            await ws.send(json.dumps(handshake))
+            raw = await asyncio.wait_for(ws.recv(), timeout=10)
+            resp = json.loads(raw)
+            if resp.get("type") != "connected":
+                print(f"❌ [Network] Handshake rejected: {resp}")
+                return
+            print(f"🟢 [Network] Connected (session: {resp.get('session_id', '?')})")
             self.ws = ws
             asyncio.create_task(self._send_heartbeat())
             while self._running:
@@ -68,7 +81,11 @@ class AngelaRenderer(QWidget):
         super().__init__()
         self.state = {"stress": 0.0, "emotion": "neutral"}
         self.bubble_stack = []
-        self.dna = AngelaDNA()
+        try:
+            self.dna = AngelaDNA()
+        except Exception as e:
+            print(f"⚠️ [DNA] Failed to initialize AngelaDNA: {e}. Using placeholder.")
+            self.dna = None
         self.breath_phase = 0.0
         
         # 1. 系統幾何
@@ -138,7 +155,7 @@ class AngelaRenderer(QWidget):
         # 2. [Task N.9.3] 體素探針檢測 (Voxel Hit-Test)
         is_hit = False
         if 0 <= local_x < 128 and 0 <= local_y < 384:
-            stiffness = self.dna.get_stiffness_at(local_x, local_y)
+            stiffness = self.dna.get_stiffness_at(local_x, local_y) if self.dna else 0.0
             if stiffness > 0:
                 is_hit = True
                 print(f"💖 [Tactile] Precision hit! Stiffness: {stiffness:.2f}")
@@ -168,12 +185,20 @@ class AngelaRenderer(QWidget):
             data = new_state.get("data", {})
             if "gamma" in data: self.state["emotion"] = data["gamma"].get("dominant_emotion", "neutral")
             if "alpha" in data: self.state["stress"] = data["alpha"].get("stress", 0.0)
-            if "spatial" in data: 
+            if "spatial" in data:
                 spatial = data["spatial"]
                 self.target_pos.setX(float(spatial.get("x", self.angela_pos.x())))
-                # 2030 Standard: Dynamic Posture Sync
                 self.state["theta_matrix"] = spatial.get("posture", {}).get("theta_matrix")
                 self.state["finger_matrix"] = spatial.get("posture", {}).get("finger_matrix")
+        elif msg_type == "chat_response":
+            content = new_state.get("data", {}).get("content", "")
+            if content:
+                self.add_new_bubble(content, "Angela")
+        elif msg_type == "biological_feedback":
+            reflex = new_state.get("reflex", "")
+            intensity = new_state.get("intensity", 0.0)
+            if reflex:
+                print(f"🫀 [BioFeedback] Reflex: {reflex}, Intensity: {intensity:.2f}")
         self.update()
 
     def add_new_bubble(self, text, origin):
@@ -188,11 +213,13 @@ class AngelaRenderer(QWidget):
         self.angela_pos.setX(self.angela_pos.x() + dx)
         
         # [Task N.12.9/10] 驅動精細解剖動態 (脊椎與五指)
-        self.dna.apply_dynamics(
-            self.breath_phase, 
-            theta_matrix=self.state.get("theta_matrix"),
-            finger_matrix=self.state.get("finger_matrix")
-        )
+        if self.dna is not None:
+            self.dna.apply_dynamics(
+                self.breath_phase,
+                theta_matrix=self.state.get("theta_matrix"),
+                finger_matrix=self.state.get("finger_matrix"),
+                ear_twitch=math.sin(self.breath_phase * 2.0) * 2.0
+            )
         
         for bubble in self.bubble_stack:
             target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)
@@ -229,12 +256,11 @@ class AngelaRenderer(QWidget):
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
         
         ax, ay = int(self.angela_pos.x()), int(self.current_y)
-        pixel_data = self.dna.get_render_ready_matrix()
-        h, w, c = pixel_data.shape
-        # 新的 dna_body.py 支援透明描邊，回傳的陣列是 4 通道 (RGBA)
-        # 所以這裡必須使用 Format_RGBA8888 來避免渲染錯位
-        qimg = QImage(pixel_data.data, w, h, w * c, QImage.Format.Format_RGBA8888)
-        painter.drawImage(ax, ay, qimg)
+        if self.dna is not None:
+            pixel_data = self.dna.get_render_ready_matrix()
+            h, w, c = pixel_data.shape
+            qimg = QImage(pixel_data.data, w, h, w * c, QImage.Format.Format_RGBA8888)
+            painter.drawImage(ax, ay, qimg)
         
         offset_y = 0
         for bubble in reversed(self.bubble_stack):

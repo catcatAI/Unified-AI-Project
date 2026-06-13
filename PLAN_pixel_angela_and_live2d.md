@@ -1,7 +1,7 @@
 # Plan: pixel-angela 更新 + Live2D 修復
 
 > Date: 2026-06-13
-> Status: **Step 1-5 已完成，待測試**
+> Status: **全部代碼變更已完成，待整合測試**
 
 ---
 
@@ -245,6 +245,46 @@ npm install && npm run build
 
 ---
 
+## 第四部分：pixel-angela 關鍵 Bug 修復（已完成）
+
+### Bug 1: `dna_body.py:178` — 未定義變量 `ear_twitch`（致命崩潰）✅ 已修復
+
+- **文件**: `packages/biology-core/src/dna_body.py`
+- **問題**: `_build_volumetric_body()` 在 line 178 使用 `ear_twitch` 但從未定義
+- **修法**:
+  - Line 46: 添加 `ear_twitch: float = 0` 參數到 `_build_volumetric_body()`
+  - Line 217: 添加 `ear_twitch=0` 參數到 `apply_dynamics()` 並轉發
+  - Line 149: 修復 `finger_matrix` 默認值邏輯（`kwargs.get(...) or default`）
+- **驗證**: `AngelaDNA()` 可正常創建，`apply_dynamics()` 可正常調用
+
+### Bug 2: `skin_engine.py:17` — 缺少 typing 導入 ✅ 已修復
+
+- **文件**: `apps/pixel-angela/skin_engine.py`
+- **修法**: 添加 `from typing import Dict, Any`
+
+### Bug 3: WebSocket 協議不匹配（連接失敗）✅ 已修復
+
+- **文件**: `apps/pixel-angela/renderer.py:43-56`
+- **問題**: 客戶端連接後未發送握手 JSON，後端 10 秒超時斷開
+- **修法**: 連接後立即發送 `{"session_id": "", "client_type": "pixel-angela", "client_version": "1.0.0"}`，等待 `connected` 回應
+
+### Bug 4: 客戶端忽略 `chat_response` 和 `biological_feedback` 消息 ✅ 已修復
+
+- **文件**: `apps/pixel-angela/renderer.py:165-183`
+- **修法**: 在 `update_state()` 添加 `elif` 分支處理聊天回應（顯示氣泡）和觸覺反饋（日誌輸出）
+
+### Bug 5: 硬編碼 WebSocket URL ✅ 已修復
+
+- **文件**: `apps/pixel-angela/renderer.py:45`
+- **修法**: 從環境變量 `ANGELA_WS_URL` 讀取，默認 `ws://127.0.0.1:8000/ws`
+
+### Bug 6: DNA 初始化無錯誤邊界 ✅ 已修復
+
+- **文件**: `apps/pixel-angela/renderer.py:71-75`
+- **修法**: 包裹 try/except，失敗時 `self.dna = None`，渲染時 null guard
+
+---
+
 ## 建議執行順序
 
 | # | 步驟 | 狀態 |
@@ -255,8 +295,9 @@ npm install && npm run build
 | 4 | **Live2D Step 5**: 增加 SDK 超時時間 | ✅ 完成 |
 | 5 | **pixel-angela P0**: 修復硬編碼路徑 | ✅ 完成 |
 | 6 | **pixel-angela P1**: 添加 requirements.txt | ✅ 完成 |
-| 7 | **測試驗證**: 啟動桌面端 + web 端，確認 Live2D 正常載入 | ⏳ 待執行 |
-| 8 | **pixel-angela P2-P3**: WebSocket 可配置 + 協議對齊 | ⏳ 待執行 |
+| 7 | **pixel-angela Bug 1-6**: 修復致命崩潰 + WS 協議 + 錯誤邊界 | ✅ 完成 |
+| 8 | **pixel-angela P2-P3**: WebSocket 可配置 + 協議對齊 | ✅ 完成（包含在 Bug 3-5 中） |
+| 9 | **測試驗證**: 啟動後端 + 像素端，確認完整流程 | ⏳ 待執行 |
 
 ---
 
@@ -264,7 +305,9 @@ npm install && npm run build
 
 | 風險 | 影響 | 緩解 |
 |------|------|------|
-| Epsilon_free motion 文件名與 model3.json 不匹配 | 動作無法播放 | 先執行 `ls` 驗證文件名 |
+| Epsilon_free motion 文件名與 model3.json 不匹配 | 動作無法播放 | ✅ 已驗證實際文件名 |
 | Intel UHD 跑 2048x 仍卡頓 | 性能差 | 降級到 Epsilon（1024x，但需另外製作 model3.json） |
 | Cubism Core SDK 版本不兼容 | 模型渲染異常 | 確認 SDK 版本（項目用 SDK 5-r.5） |
+| pixel-angela DNA 初始化失敗 | 應用崩潰 | ✅ 已添加 try/except + placeholder |
+| WebSocket 握手失敗 | 無法連接後端 | ✅ 已對齊後端協議 |
 | 移除 Framework 檢查後有其他副作用 | 未知 | 充分測試桌面端和 web 端 |
