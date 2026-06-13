@@ -3,6 +3,10 @@ packages:
   - 'apps/*'
   - 'apps/*/electron_app'
 
+allowBuilds:
+  electron: true
+  electron-winstaller: true
+
 onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'

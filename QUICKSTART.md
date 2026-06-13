@@ -7,8 +7,19 @@
 git clone https://github.com/catcatAI/Unified-AI-Project.git
 cd Unified-AI-Project
 
-# Install Python dependencies
-pip install -r requirements.txt
+# (Recommended) Setup and activate Python virtual environment (.venv)
+python -m venv .venv
+# On Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install Python backend dependencies
+pip install -r apps/backend/requirements.txt
+
+# Install JS workspace dependencies (use npx if pnpm is not installed globally)
+npx pnpm install --no-frozen-lockfile
+npx pnpm approve-builds --all
 
 # For local models, install Ollama
 # Windows: https://ollama.com/download/windows

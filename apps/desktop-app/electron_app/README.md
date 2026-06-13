@@ -10,14 +10,17 @@
 
 ### 安裝步驟
 
-#### 1. 安裝依賴
+#### 1. 安裝依賴 (重要：專案使用 pnpm monorepo 工作區架構)
+
+請勿直接在 `electron_app` 目錄下執行 `npm install`，這會因為工作區設定衝突而報錯。請至專案根目錄使用 `pnpm` 進行安裝：
 
 ```bash
-# 進入桌面應用目錄
-cd apps/desktop-app/electron_app
+# 回到專案根目錄
+cd ../../..
 
-# 安裝 Node.js 依賴
-npm install
+# 安裝所有工作區的依賴 (若無全域 pnpm 可使用 npx pnpm)
+npx pnpm install --no-frozen-lockfile
+npx pnpm approve-builds --all
 ```
 
 #### 2. 安裝 Electron

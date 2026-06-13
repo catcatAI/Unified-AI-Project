@@ -88,18 +88,25 @@ See **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPRE
 git clone https://github.com/catcatAI/Unified-AI-Project.git
 cd Unified-AI-Project
 
-# Install backend
-cd apps/backend
-pip install -r requirements.txt
-cd ../..
+# (Recommended) Setup and activate Python virtual environment (.venv)
+python -m venv .venv
+# On Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install Python backend dependencies (pygame removed from testing for Python 3.12+/3.14+ compatibility)
+pip install -r apps/backend/requirements.txt
+
+# Install JS workspace dependencies using pnpm (use npx if pnpm is not installed globally)
+npx pnpm install --no-frozen-lockfile
+npx pnpm approve-builds --all
 
 # Start backend (port 8000) - NOW WORKS
 python apps/backend/start_server.py
 
 # Desktop app (separate terminal)
-cd apps/desktop-app/electron_app
-npm install
-npm start
+npx pnpm dev:desktop
 ```
 
 **Prerequisites**: Python 3.10+, Node.js 16+, Ollama (LLM backend, CPU ~120s/inference).
@@ -270,22 +277,34 @@ See dedicated docs for full diagrams:
 ### 快速啟動 (所有 Alias 修復已完成)
 
 ```bash
-cd apps/backend
-pip install -r requirements.txt
-cd ../..
+# 克隆專案
+git clone https://github.com/catcatAI/Unified-AI-Project.git
+cd Unified-AI-Project
 
-# 方式一：使用统一启动器（推荐）
-python scripts/run_angela.py              # 启动全部（后端 + 桌面）
-python scripts/run_angela.py --api-only   # 只启动后端
-python scripts/run_angela.py --health-check  # 健康检查
+# (推薦) 建立並啟用 Python 虛擬環境
+python -m venv .venv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# macOS/Linux:
+source .venv/bin/activate
 
-# 方式二：直接启动后端
+# 安裝後端 Python 依賴 (已移除 testing 中的 pygame 以相容 Python 3.12+/3.14+)
+pip install -r apps/backend/requirements.txt
+
+# 使用 pnpm 安裝工作區 JS 依賴 (若無全域 pnpm 可使用 npx pnpm)
+npx pnpm install --no-frozen-lockfile
+npx pnpm approve-builds --all
+
+# 方式一：使用統一啟動器（推薦）
+python scripts/run_angela.py              # 啟動全部（後端 + 桌面）
+python scripts/run_angela.py --api-only   # 只啟動後端
+python scripts/run_angela.py --health-check  # 健康檢查
+
+# 方式二：直接啟動後端
 python apps/backend/start_server.py
 
-# 桌面端（另开 terminal）
-cd apps/desktop-app/electron_app
-npm install
-npm start
+# 方式三：手動啟動桌面端 (另開終端機)
+npx pnpm dev:desktop
 ```
 
 **環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端，CPU 約 120 秒/次）
