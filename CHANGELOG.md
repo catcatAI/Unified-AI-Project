@@ -5,9 +5,37 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> ✅ **IMPORTANT NOTICE (2026-06-08) — ALL FIXES APPLIED**: Independent verification confirmed implementations exist under different names. All alias fixes now applied:
+> ✅ **IMPORTANT NOTICE (2026-06-13) — LIVE2D + PIXEL-ANGELA FIXES**: All Live2D model loading fixed, pixel-angela 6 bugs resolved:
+> - **Live2D**: Framework check removed, Epsilon_free model3.json created, default model switched
+> - **pixel-angela**: ear_twitch crash fixed, WebSocket handshake aligned, chat/bio-feedback handlers added
+> - **Backend**: tiered_loader.py rewritten for YAML configs, ED3N duplicate entry warning fixed
+> - See [PLAN_pixel_angela_and_live2d.md](PLAN_pixel_angela_and_live2d.md) for full details
+
+## [7.5.0-dev] - 2026-06-13 — Live2D + Pixel-Angela Fixes
+
+### Added
+- 🎨 **Epsilon_free model3.json**: Created at `resources/models/Epsilon_free/runtime/` with 16 motions + 8 expressions (verified actual filenames)
+- 🎨 **Epsilon_free model deployed**: Copied to `apps/desktop-app/electron_app/models/` and `apps/web-live2d-viewer/models/` (28 files each)
+- 🎨 **Default model switched**: `angela-character-config.js` (desktop + web) now defaults to Epsilon_free (2.8MB/2048x) with miara_pro_en as fallback
+- 🧪 **WebSocket handshake**: pixel-angela now sends proper handshake JSON (`client_type: "pixel-angela"`) and waits for `connected` response
+- 🧪 **Chat/bio-feedback handlers**: `update_state()` now processes `chat_response` (shows speech bubble) and `biological_feedback` (logs reflex)
+
+### Fixed
+- 🐛 **Live2D Framework check**: Removed unnecessary `hasFramework` check in desktop `live2d-manager.js` — wrapper only needs Core SDK, not Framework
+- 🐛 **SDK timeout**: Increased from 5s to 10s in both desktop and web `live2d-manager.js` for low-end hardware
+- 🐛 **dna_body.py ear_twitch crash**: Added `ear_twitch` parameter to `_build_volumetric_body()` and `apply_dynamics()` (was undefined NameError on line 178)
+- 🐛 **dna_body.py finger_matrix None**: Fixed `kwargs.get("finger_matrix") or default` (was returning None instead of default)
+- 🐛 **skin_engine.py typing**: Added `from typing import Dict, Any` (was NameError)
+- 🐛 **renderer.py DNA init**: Wrapped `AngelaDNA()` in try/except with null guards for graceful degradation
+- 🐛 **renderer.py WebSocket URL**: Now reads from `ANGELA_WS_URL` env var (was hardcoded)
+- 🐛 **ED3N dictionary_layer.py**: Added `if key not in self.entries` guard to prevent "Overwriting existing entry" warnings
+- 🐛 **resource_awareness_service.py**: Fixed path resolution (`".."` → `"..", ".."`) for `simulated_resources.yaml`
+- 🐛 **tiered_loader.py**: Rewritten to load YAML configs from `apps/backend/configs/` with 3-layer merge (default → user → evolved)
+- 🐛 **sprite_converter.py**: Replaced hardcoded `D:\Projects\...\angela_01.jpg` with relative path
+- 📝 **router.py**: Removed dead code (unreachable API key loading block after `return`)
+
 > - Server **IMPORTS OK** — `ModelProvider` alias added to `protocols.py`
-> - Tests **COLLECTING** — 511 tests collected, 0 collection errors
+> - Tests **COLLECTING** — ~3,500+ tests across 469 test files, 0 collection errors
 > - "Stub" files are backward-compat shims; real implementations complete
 > - Actual completion: **~85-90%** (5 alias exports = ~10 lines total — ALL DONE)
 > - See [README.md](README.md#name-mappings-test-expectation--actual-implementation) for name mappings

@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-12 — Phase 5+6: 22 fixes + P0/P1/P2 round 2; 341/341 pass; drive.py runtime bug fixed; test mock targets corrected; coverage threshold lowered; Unix paths fixed; orphan scanner built; network_defaults DEPRECATED resolved
+> **Last Updated**: 2026-06-13 — Live2D model loading fixed (Epsilon_free), pixel-angela 6 bugs fixed, WebSocket handshake aligned
 
 ## High-Level Architecture
 
@@ -40,9 +40,14 @@
 │              Integration Layer                            │
 │  ┌──────────┐ ┌───────────┐ ┌──────────┐ ┌──────────┐  │
 │  │ Google   │ │ Atlassian │ │ Desktop  │ │ Web      │  │
-│  │ Drive    │ │           │ │ (Tray,   │ │ Search   │  │
-│  │ Service  │ │ Bridge    │ │  OS)     │ │ Tool     │  │
+│  │ Drive    │ │           │ │ (Tray,   │ │ Live2D   │  │
+│  │ Service  │ │ Bridge    │ │  Live2D) │ │ Viewer   │  │
 │  └──────────┘ └───────────┘ └──────────┘ └──────────┘  │
+│  ┌──────────┐ ┌───────────┐                             │
+│  │ Pixel    │ │ Gemini OS │                             │
+│  │ Angela   │ │ Bridge    │                             │
+│  │ (PyQt6)  │ │           │                             │
+│  └──────────┘ └───────────┘                             │
 └─────────────────────────────────────────────────────────┘
 ```
 

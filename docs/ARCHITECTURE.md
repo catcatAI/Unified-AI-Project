@@ -1,7 +1,7 @@
 # Angela AI Architecture
 
 > **Source of Truth**: This document is the authoritative reference for Angela AI system architecture.
-> **Last Updated**: 2026-06-06
+> **Last Updated**: 2026-06-13
 > **Derived from**: `docs/FULL_ARCHITECTURE_ANALYSIS.md`
 
 ---
@@ -14,19 +14,19 @@
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  LAYER 6 — EXECUTION / PRESENTATION                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                       │
-│  │  Desktop App  │  │  Mobile App  │  │  CLI / REPL  │                       │
-│  │  (Electron)   │  │ (ReactNative)│  │  (Python)    │                       │
-│  │  Live2D + WS  │  │  QR + AES    │  │  HSP + HTTP  │                       │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                       │
-│         └─────────────────┼──────────────────┘                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │  Desktop App  │  │  Mobile App  │  │  CLI / REPL  │  │  Pixel Angela│     │
+│  │  (Electron)   │  │ (ReactNative)│  │  (Python)    │  │  (PyQt6)     │     │
+│  │  Live2D + WS  │  │  QR + AES    │  │  HSP + HTTP  │  │  Voxel + WS  │     │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
+│         └─────────────────┼──────────────────┼─────────────────┘             │
 │                    HTTP / WebSocket                                            │
 │                                                                              │
 │  LAYER 5 — API / TRANSPORT                                                   │
 │  FastAPI (uvicorn) — main_api_server.py                                      │
 │  Middleware: CORSMiddleware → SignedCommunicationMiddleware                   │
 │  Routes: /api/v1/* (health, status, chat, session, actions)                  │
-│  WebSocket: /ws/* (state sync, heartbeat, messaging)                         │
+│  WebSocket: /ws/* (state sync, heartbeat, messaging, handshake required)       │
 │  Session: TTLSessionManager (1h TTL, LRU, max 1000)                          │
 │                                                                              │
 │  LAYER 4 — APPLICATION SERVICES                                              │

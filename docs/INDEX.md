@@ -60,8 +60,19 @@
 
 - `apps/backend/` — Python FastAPI backend
 - `apps/desktop-app/` — Electron Live2D desktop app
+- `apps/web-live2d-viewer/` — Web-based Live2D model viewer
+- `apps/pixel-angela/` — PyQt6 pixel art rendering engine (AngelaDNA voxel body)
 - `apps/mobile-app/` — React Native bridge (scaffold only, missing android/ios)
+- `packages/biology-core/` — AngelaDNA core library (voxel body, dynamics)
 - `packages/cli/` — CLI tools
 
 ---
-_Last Updated: 2026-06-07_ | [README.md](../README.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Comprehensive Audit V3](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)
+
+## Recent Plans
+
+| 文件 | 說明 |
+|------|------|
+| **[PLAN_pixel_angela_and_live2d.md](../PLAN_pixel_angela_and_live2d.md)** | **像素端 + Live2D 修復計畫 (06-13)** — Live2D 模型載入修復, pixel-angela 6 bug 修復, 全部完成 |
+
+---
+_Last Updated: 2026-06-13_ | [README.md](../README.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Comprehensive Audit V3](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)
