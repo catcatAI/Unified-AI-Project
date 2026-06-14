@@ -1172,7 +1172,8 @@ class AngelaLLMService:
             )
 
             # 存储到记忆系统
-            await self.memory_manager.store_template(template)
+            if hasattr(self, 'memory_manager') and self.memory_manager is not None:
+                await self.memory_manager.store_template(template)
 
             # C1: 通过协调器记录认知投入（如果 CDM 可用）
             if hasattr(self, 'memory_coordinator') and self.memory_coordinator is not None:

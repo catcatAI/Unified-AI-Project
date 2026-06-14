@@ -86,13 +86,11 @@ class MemoryIntegration:
         from services.llm.router import LLMResponse
 
         try:
-            angela_state = AngelaState()
-            user_impression = UserImpression()
+            if not hasattr(self._svc, 'memory_manager') or self._svc.memory_manager is None:
+                return None
 
             results = await self._svc.memory_manager.retrieve_response_templates(
                 query=user_message,
-                angela_state=angela_state,
-                user_impression=user_impression,
                 limit=5,
                 min_score=0.7,
             )

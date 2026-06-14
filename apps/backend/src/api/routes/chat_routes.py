@@ -132,18 +132,18 @@ async def _handle_chat_request(
         except Exception as e:
             logger.debug(f"Emotion analysis unavailable: {e}")
 
-        # Process chat as biological stimulus
+        # Process chat as biological stimulus (fire-and-forget async)
         try:
             from core.bio.biological_integrator import BiologicalIntegrator
             _bio = BiologicalIntegrator()
-            _bio.process_auditory_stimulus(volume=0.6, content=user_message)
+            asyncio.create_task(_bio.process_auditory_stimulus(volume=0.6, content=user_message))
             if emotion_result:
                 emotion = emotion_result.get("emotion", "neutral")
                 intensity = emotion_result.get("intensity", 0.5)
                 if emotion in ("sad", "angry", "fear"):
-                    _bio.process_stress_event(intensity=intensity * 0.3)
+                    asyncio.create_task(_bio.process_stress_event(intensity=intensity * 0.3))
                 elif emotion in ("happy", "calm"):
-                    _bio.process_relaxation_event(intensity=intensity * 0.2)
+                    asyncio.create_task(_bio.process_relaxation_event(intensity=intensity * 0.2))
         except Exception as e:
             logger.debug(f"Biological state update from chat failed: {e}")
 
@@ -151,6 +151,8 @@ async def _handle_chat_request(
         context = {"user_name": user_name}
         if emotion_result:
             context["emotion"] = emotion_result
+        if history:
+            context["history"] = history
 
         # Get live biological state for LLM context
         try:
@@ -159,10 +161,11 @@ async def _handle_chat_request(
             context["bio_state"] = _bio.get_biological_state()
         except Exception:
             pass
-        response_text = await asyncio.wait_for(
-            _chat_svc.generate_response(user_message, user_name),
+        _llm_response = await asyncio.wait_for(
+            _chat_svc.generate_response(user_message, user_name, context=context),
             timeout=_http_timeout,
         )
+        response_text = _llm_response.text if hasattr(_llm_response, 'text') else str(_llm_response)
         _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
         _trunc_msg = _chat_cfg.get("truncation_message", "...\uff08\u622a\u65b7\uff09")
         _schema_ver = _chat_cfg.get("response_schema_version", "2.0")
