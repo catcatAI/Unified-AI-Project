@@ -94,6 +94,8 @@ async def _handle_chat_request(
     _max_len = _chat_cfg.get("max_message_length", 4000)
     _trunc_len = _chat_cfg.get("truncation_length", 1000)
     _http_timeout = _chat_cfg.get("http_timeout", 30.0)
+    _trunc_msg = _chat_cfg.get("truncation_message", "...\uff08\u622a\u65b7\uff09")
+    _schema_ver = _chat_cfg.get("response_schema_version", "2.0")
     if len(user_message) > _max_len:
         logger.warning(f"\U0001f6df [LIS] Intercepted oversized input ({len(user_message)} chars)", exc_info=True)
         user_message = user_message[:_trunc_len]
@@ -167,8 +169,6 @@ async def _handle_chat_request(
         )
         response_text = _llm_response.text if hasattr(_llm_response, 'text') else str(_llm_response)
         _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
-        _trunc_msg = _chat_cfg.get("truncation_message", "...\uff08\u622a\u65b7\uff09")
-        _schema_ver = _chat_cfg.get("response_schema_version", "2.0")
         return {
             "response_text": response_text,
             "source": _flow_source,

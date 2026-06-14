@@ -118,7 +118,7 @@ def _load_memory_modules() -> str:
     return _MEMORY_ENHANCED
 
 
-def is_memory_enhanced() -> str:
+def is_memory_enhanced():
     """Lazy check if memory enhancement is available"""
     if _MEMORY_ENHANCED is None:
         _load_memory_modules()
@@ -1341,7 +1341,7 @@ class AngelaLLMService:
             last_content = messages[-1].content if isinstance(messages[-1], ChatMessage) else (str(messages[-1]) if messages else "")
             text = self._ed3n_fallback_text(last_content)
             return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
-def _get_llm_config(key: str, default=None) -> str:
+def _get_llm_config(key: str, default=None):
     """Get llm config."""
     try:
         from core.config_loader import get_angela_config
