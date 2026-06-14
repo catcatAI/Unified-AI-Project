@@ -8,6 +8,9 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from utils.text_utils import char_bigrams as _char_bigrams_util
+from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
+
 logger = logging.getLogger(__name__)
 
 
@@ -78,13 +81,7 @@ class HAMMemoryManager:
                     best_score = max(best_score, 0.9)
                 else:
                     # Bigram Jaccard
-                    kw_bigrams = self._char_bigrams(kw_lower)
-                    query_bigrams = self._char_bigrams(query_lower)
-                    intersection = kw_bigrams & query_bigrams
-                    union = kw_bigrams | query_bigrams
-                    if union:
-                        jaccard = len(intersection) / len(union)
-                        best_score = max(best_score, min(0.95, jaccard * 1.2))
+                    best_score = max(best_score, _bigram_jaccard_util(kw_lower, query_lower))
             if best_score >= min_score:
                 scored.append((tpl, best_score))
 
@@ -94,9 +91,7 @@ class HAMMemoryManager:
     @staticmethod
     def _char_bigrams(text: str) -> set:
         """Generate character-level bigrams for Chinese text similarity."""
-        if len(text) < 2:
-            return {text} if text else set()
-        return {text[i:i+2] for i in range(len(text) - 1)}
+        return _char_bigrams_util(text)
 
     async def store_experience(
         self,

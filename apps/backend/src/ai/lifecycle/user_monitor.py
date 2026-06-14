@@ -18,6 +18,7 @@ from enum import Enum
 import json
 
 from core.system.config.magic_numbers import loop_sleep
+from core.emotion_constants import EMOTION_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -287,96 +288,19 @@ class UserMonitor:
             self.user_state.emotion_history = self.user_state.emotion_history[-50:]
 
     def _extract_emotion_keywords(self) -> Dict[UserEmotion, List[str]]:
+        """Extract emotion keywords from shared constants (deduplicated)."""
+        _map = {
+            "happy": UserEmotion.HAPPY,
+            "sad": UserEmotion.SAD,
+            "angry": UserEmotion.FRUSTRATED,
+            "fear": UserEmotion.ANXIOUS,
+            "surprise": UserEmotion.EXCITED,
+            "calm": UserEmotion.RELAXED,
+        }
         return {
-            UserEmotion.HAPPY: [
-                "开心",
-                "高兴",
-                "快乐",
-                "棒",
-                "好",
-                "哈哈",
-                "喜欢",
-                "爱",
-                "happy",
-                "great",
-                "awesome",
-                "good",
-                "love",
-                "like",
-            ],
-            UserEmotion.SAD: [
-                "难过",
-                "悲伤",
-                "难过",
-                "失望",
-                "不好",
-                "哭",
-                "痛苦",
-                "sad",
-                "bad",
-                "disappointed",
-                "cry",
-                "pain",
-            ],
-            UserEmotion.FRUSTRATED: [
-                "烦",
-                "生气",
-                "讨厌",
-                "糟糕",
-                "糟糕",
-                "失败",
-                "frustrated",
-                "annoyed",
-                "angry",
-                "hate",
-                "failed",
-            ],
-            UserEmotion.EXCITED: [
-                "激动",
-                "兴奋",
-                "期待",
-                "哇",
-                "天啊",
-                "excited",
-                "wow",
-                "amazing",
-                "amazing",
-            ],
-            UserEmotion.ANXIOUS: [
-                "担心",
-                "害怕",
-                "紧张",
-                "焦虑",
-                "害怕",
-                "worried",
-                "scared",
-                "nervous",
-                "anxious",
-                "afraid",
-            ],
-            UserEmotion.CONFUSED: [
-                "不懂",
-                "不明白",
-                "困惑",
-                "为什么",
-                "怎么回事",
-                "confused",
-                "don't understand",
-                "why",
-                "how",
-            ],
-            UserEmotion.RELAXED: [
-                "轻松",
-                "舒服",
-                "休息",
-                "平静",
-                "没事",
-                "relaxed",
-                "comfortable",
-                "rest",
-                "calm",
-                "okay",
-            ],
+            _map[k]: v
+            for k, v in EMOTION_KEYWORDS.items()
+            if k in _map
         }
 
     def _score_emotion_categories(self, text_lower: str) -> Dict[UserEmotion, int]:

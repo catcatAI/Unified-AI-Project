@@ -22,6 +22,10 @@ from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
+from utils.text_utils import char_bigrams as _char_bigrams_util
+from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
+from utils.text_utils import normalize_text as _normalize_text_util
+
 logger = logging.getLogger(__name__)
 
 
@@ -244,16 +248,7 @@ class TemplateMatcher:
 
     def _normalize_text(self, text: str) -> str:
         """文本归一化"""
-        text = text.lower()
-        text = text.replace(" ", "")
-        text = text.replace("?", "")
-        text = text.replace("!", "")
-        text = text.replace("。", "")
-        text = text.replace("？", "")
-        text = text.replace("！", "")
-        text = text.replace("，", "")
-        text = text.replace(",", "")
-        return text
+        return _normalize_text_util(text)
 
     def _extract_keywords(self, text: str) -> List[str]:
         """提取关键词"""
@@ -363,9 +358,7 @@ class TemplateMatcher:
     @staticmethod
     def _char_bigrams(text: str) -> set:
         """Generate character-level bigrams for Chinese text similarity."""
-        if len(text) < 2:
-            return {text} if text else set()
-        return {text[i:i+2] for i in range(len(text) - 1)}
+        return _char_bigrams_util(text)
 
     def _update_stats(self, match_level: MatchLevel, match_time: float) -> None:
         """更新统计信息"""

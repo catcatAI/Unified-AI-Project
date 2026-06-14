@@ -16,11 +16,7 @@ import paho.mqtt.client as mqtt
 logger = logging.getLogger(__name__)
 
 
-# Mock dependencies for syntax validation
-class ProjectError(Exception):
-    def __init__(self, message, code=500):
-        super().__init__(message)
-        self.code = code
+from shared.error import ProjectError
 
 
 def project_error_handler(error) -> None:

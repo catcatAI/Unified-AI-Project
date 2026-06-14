@@ -19,7 +19,6 @@ from apps.backend.src.ai.garden.snn_core import TensorSNNCore
 from apps.backend.src.ai.garden.garden_engine import GARDENEngine
 from apps.backend.src.ai.garden.binary_store import BinaryStore
 from apps.backend.src.ai.garden.kg_import import KGImporter
-from apps.backend.src.ai.garden.hybrid_router import HybridRouter
 
 
 @pytest.fixture(scope="function")
@@ -67,8 +66,3 @@ def kg_importer() -> KGImporter:
     """Empty KGImporter instance."""
     return KGImporter()
 
-
-@pytest.fixture(scope="function")
-def hybrid_router() -> HybridRouter:
-    """Empty HybridRouter instance."""
-    return HybridRouter()

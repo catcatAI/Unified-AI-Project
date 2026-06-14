@@ -24,7 +24,17 @@ from enum import Enum
 
 from core.system.config.magic_numbers import confidence_value, learning_rate, limit_value, threshold_value
 
-from ai.ed3n.ed3n_engine import ED3NEngine as _ED3NEngine
+from ai.ed3n.ed3n_engine import ED3NEngine as _ED3NEngine_cls
+
+# Module-level ED3N cache (avoids creating new instances on every fallback)
+_ed3n_engine = None
+
+def _get_ed3n():
+    global _ed3n_engine
+    if _ed3n_engine is None:
+        _ed3n_engine = _ED3NEngine_cls()
+        _ed3n_engine.load_presets()
+    return _ed3n_engine
 
 logger = logging.getLogger(__name__)
 
@@ -342,7 +352,7 @@ class FragmentComposer:
     def _assemble_fragments(self, fragments: List[Fragment], context: Dict[str, Any]) -> str:
         """组装片段为完整响应"""
         if not fragments:
-            return _ED3NEngine().process("compose_fallback", context=context or {}, depth="shallow")
+            return _get_ed3n().process("compose_fallback", context=context or {}, depth="shallow")
 
         parts = []
         for fragment in fragments:
@@ -900,7 +910,7 @@ class NeuroBlender:
         all_frags = self.vocabulary.all_fragments()
         if not all_frags:
             return ComposedResponse(
-                text=_ED3NEngine().process("empty_vocabulary", context={"user_name": user_name}, depth="shallow"),
+                text=_get_ed3n().process("empty_vocabulary", context={"user_name": user_name}, depth="shallow"),
                 fragments_used=[],
                 composition_time_ms=(time.time() - start_time) * 1000,
                 confidence=0.0,
@@ -1123,7 +1133,7 @@ class NeuroBlender:
     def _natural_assemble(self, fragments: List[NeuroFragment]) -> str:
         """自然语言组装：让片段像人话一样流畅"""
         if not fragments:
-            return _ED3NEngine().process("natural_assemble_empty", depth="reflex")
+            return _get_ed3n().process("natural_assemble_empty", depth="reflex")
 
         fragments.sort(key=lambda f: self.STRUCTURAL_ORDER.get(f.structural_type, 5))
 
@@ -1153,7 +1163,7 @@ class NeuroBlender:
             prev_type = stype
 
         if not parts:
-            return _ED3NEngine().process("natural_assemble_parts_empty", depth="reflex")
+            return _get_ed3n().process("natural_assemble_parts_empty", depth="reflex")
 
         response = "".join(parts)
 

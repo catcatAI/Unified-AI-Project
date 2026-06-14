@@ -257,8 +257,8 @@ class MemoryTemplate:
 
         # 从配置读取权重
         try:
-            from core.hsp.utils.fallback_config_loader import get_config_loader
-            _cfg = get_config_loader()
+            from core.config_loader import get_angela_config
+            _cfg = get_angela_config()
             _w = _cfg.get_authority("angela_core", {}).get("template_matching", {}).get("score_weights", {})
         except (ImportError, FileNotFoundError, KeyError):
             logger.warning("Failed to load score weights from config, using defaults", exc_info=True)

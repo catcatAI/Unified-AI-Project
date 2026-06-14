@@ -1223,8 +1223,12 @@ class AngelaLLMService:
     def _ed3n_fallback_text(self, text: str) -> str:
         """Fallback text generation via ED3N engine"""
         try:
-            from ai.ed3n.ed3n_engine import ED3NEngine
-            engine = ED3NEngine()
+            # Reuse the ED3N instance from ModelBus if available
+            engine = self.model_bus._registry.get("ed3n", (None,))[0]
+            if engine is None:
+                from ai.ed3n.ed3n_engine import ED3NEngine
+                engine = ED3NEngine()
+                engine.load_presets()
             result = engine.process(text, depth="shallow")
             return result if result else ""
         except Exception as e:
