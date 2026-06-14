@@ -88,7 +88,7 @@ async def _handle_chat_request(
     logger.info(f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
 
     if not user_message or not user_message.strip():
-        raise HTTPException(status_code=400, detail="\u8a0a\u865f\u905a\u5931\uff1a\u6d88\u606f\u4e0d\u80fd\u70ba\u7a7a")
+        raise ValueError("訊號遺失：消息不能為空")
 
     _chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
     _max_len = _chat_cfg.get("max_message_length", 4000)
@@ -202,6 +202,9 @@ async def _handle_chat_request(
             "emotion": emotion_result.get("emotion", "neutral") if emotion_result else "neutral",
             "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
             "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
+            "hit_score": getattr(_llm_response, 'hit_score', 0.0),
+            "hit_source": getattr(_llm_response, 'hit_source', 'none'),
+            "route": getattr(_llm_response, 'route', 'llm'),
             "session_id": session_id,
         }
 
@@ -235,7 +238,7 @@ async def _handle_chat_request(
         }
     except Exception as e:
         logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="internal server error")
+        raise RuntimeError(f"chat request failed: {e}")
 
 
 def _build_math_response(verification, matrix, user_message: str, session_id: str, schema_version: str = "2.0", truncation_message: str = "") -> Dict[str, Any]:

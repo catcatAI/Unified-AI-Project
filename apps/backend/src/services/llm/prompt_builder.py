@@ -202,8 +202,18 @@ def construct_angela_prompt(
         messages[0]["content"] += drive_block
 
     history = context.get("history", [])
-    for h in history[-2:]:
+    for h in history[-10:]:
         messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+
+    retrieved = context.get("retrieved_context")
+    if retrieved:
+        retrieved_block = "\n[相關上下文]\n"
+        for item in retrieved:
+            role = item.get("role", "user")
+            content = item.get("content", "")[:200]
+            score = item.get("relevance", 0)
+            retrieved_block += f"- [{role}] {content} (相關度: {score})\n"
+        messages.append({"role": "system", "content": retrieved_block})
 
     messages.append({"role": "user", "content": user_message})
 

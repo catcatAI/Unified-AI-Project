@@ -283,7 +283,6 @@ class FragmentComposer:
                 priority=5,
             )
             fragments.append(fragment)
-            self.fragments[fragment.id] = fragment
 
         return fragments
 

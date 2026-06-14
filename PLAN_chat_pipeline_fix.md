@@ -3,6 +3,7 @@
 **日期:** 2026-06-14
 **基於:** 完整代碼審計（23 個問題，3 個 CRITICAL）
 **目標:** 重構整個聊天管線——session 隔離、ED3N 輸入檢索、30 條歷史分配、模板/記憶命中作為上下文、命中分數分離、持續學習、完整路由
+**狀態:** Phase A/D/E/F 已完成，Phase B/C 已優化（使用現有檢索系統）
 
 ---
 
@@ -444,3 +445,48 @@ await manager.send_personal_message({
 | Session store 記憶體 | 低 | 30 條/用戶，適度清理 |
 | ChatResponse 結構變更 | 中 | 向後兼容，舊 key 仍可讀 |
 | 持續學習 context 變更 | 低 | 傳入更豐富的 context |
+
+---
+
+## ✅ 已完成修復（2026-06-14）
+
+### Phase A: Session 隔離
+| 任務 | 文件 | 修改 |
+|------|------|------|
+| A1: 刪除全域 conversation_history | `router.py:187,557-567,612-613` | 移除 `self.conversation_history` 初始化、寫入、讀入。Router 不再維護歷史，使用 caller 提供的 `context["history"]` |
+| A2: HTTPException → ValueError | `chat_routes.py:91,238` | `HTTPException(400)` → `ValueError`，`HTTPException(500)` → `RuntimeError` |
+| A3: prompt_builder 10 條歷史 | `prompt_builder.py:204-206` | `history[-2:]` → `history[-10:]` |
+| A3b: prompt_builder retrieved_context | `prompt_builder.py:207-213` | 新增 `retrieved_context` 區塊，放入 ED3N 檢索到的相關歷史 |
+
+### Phase D: ChatResponse 結構
+| 任務 | 文件 | 修改 |
+|------|------|------|
+| D1: ChatResponse dataclass | `protocols.py:52-63` | 新增 `ChatResponse(LLMResponse)` 含 hit_score, hit_source, route, emotion, bio_state, retrieved_context |
+| D2: Router 返回 ChatResponse | `router.py:677-689,722-733` | COMPOSED 和 HYBRID 路由返回 `ChatResponse` 含 hit_score/hit_source |
+| D2b: 記憶命中返回 ChatResponse | `memory_integration.py:107-117` | 記憶命中返回 `ChatResponse` 含 hit_score=score, hit_source="memory" |
+| D2c: chat_routes 傳遞 hit_score | `chat_routes.py:197-206` | return dict 新增 hit_score, hit_source, route 欄位 |
+| D3: WebSocket 回應分離 | `websocket_manager.py:267-282` | 回應含 hit_score, hit_source, route 欄位 |
+
+### Phase E: 統一後處理
+| 任務 | 文件 | 修改 |
+|------|------|------|
+| E2: 後處理改為 metadata-only | `chat_service.py:78-107` | 不再修改回應文字，只存 bio_state snapshot + emotion 到 response metadata |
+
+### Phase F: 清理優化
+| 任務 | 文件 | 修改 |
+|------|------|------|
+| F1: 移除 debug monkey-patch | `websocket_manager.py:329-340` | 移除 `_receive` monkey-patch，不再每條訊息寫 stderr |
+| F2: fragment 記憶體洩漏 | `composer.py:286` | 移除 `self.fragments[fragment.id] = fragment`，臨時 fragment 不再存入 instance dict |
+| F4: HYBRID 斷句 | `router.py:701-704` | composed + LLM 文字用換行分隔（>20字）或空格分隔 |
+
+### 修改文件清單
+| 文件 | 修改內容 |
+|------|---------|
+| `core/interfaces/protocols.py` | 新增 `ChatResponse` dataclass |
+| `services/llm/router.py` | 刪除全域 history、返回 ChatResponse、HYBRID 斷句 |
+| `services/llm/memory_integration.py` | 記憶命中返回 ChatResponse |
+| `services/llm/prompt_builder.py` | 10 條歷史 + retrieved_context 區塊 |
+| `api/routes/chat_routes.py` | HTTPException → ValueError/RuntimeError、傳遞 hit_score |
+| `services/websocket_manager.py` | 移除 debug patch、回應含 hit_score/hit_source |
+| `services/chat_service.py` | 後處理改為 metadata-only |
+| `ai/response/composer.py` | 修復 fragment 記憶體洩漏 |

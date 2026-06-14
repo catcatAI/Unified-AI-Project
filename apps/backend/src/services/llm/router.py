@@ -29,7 +29,7 @@ import logging
 from typing import Dict, Any, Optional, List
 
 from core.interfaces.service_registry import get_registry
-from core.interfaces.protocols import ChatMessage, LLMResponse
+from core.interfaces.protocols import ChatMessage, LLMResponse, ChatResponse
 
 # LLM provider backends
 from services.llm.providers.base import BaseLLMBackend
@@ -182,9 +182,6 @@ class AngelaLLMService:
 
         # ========== P0-2: Response Composition & Matching System ==========
         self._init_response_system()
-
-        # 对话历史（无条件初始化）
-        self.conversation_history: List[Dict[str, str]] = []
 
         # ========== 情感识别系统（委派到 EmotionAnalyzer）==========
         self.emotion_analyzer = EmotionAnalyzer()
@@ -554,17 +551,8 @@ class AngelaLLMService:
         if hasattr(self, "precompute_service") and self.precompute_service._running:
             pass  # stub 暂不支持 record_activity
 
-        # 更新对话历史
-        if hasattr(self, "conversation_history"):
-            self.conversation_history.append({"role": "user", "content": user_message})
-            # 限制历史长度
-            max_hist = _get_llm_config("defaults", {}).get("max_conversation_history", 50)
-            if len(self.conversation_history) > max_hist:
-                self.conversation_history = self.conversation_history[-max_hist:]
-
-        # 注入对話歷史到 context（排除當前 user message，prompt builder 取最後 2 條）
-        if hasattr(self, "conversation_history") and len(self.conversation_history) > 1:
-            context["history"] = self.conversation_history[:-1]
+        # 使用 caller 提供的 session 歷史（不覆蓋、不維護全域歷史）
+        # context["history"] 由 chat_routes / websocket_manager 設定
 
         # ========== P0-2: Template Matching & Routing ==========
         template_result = await self._try_template_match(user_message, context, start_time)
@@ -608,9 +596,7 @@ class AngelaLLMService:
         try:
             response = await self._generate_with_llm(user_message, context)
 
-            # 更新对话历史
-            if hasattr(self, "conversation_history"):
-                self.conversation_history.append({"role": "assistant", "content": response.text})
+            # 歷史由 caller 維護（websocket_manager / chat_routes），router 不再追加
 
             # 更新统计
             self.stats["llm_calls"] += 1
@@ -688,13 +674,16 @@ class AngelaLLMService:
                     f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}"
                 )
 
-                return LLMResponse(
+                return ChatResponse(
                     text=composed_response.text,
                     backend="composed-template",
                     model="template-based",
                     tokens_used=50,
                     response_time_ms=response_time,
                     confidence=composed_response.confidence,
+                    hit_score=match_score,
+                    hit_source="template",
+                    route="COMPOSED",
                     metadata={
                         "route": "COMPOSED",
                         "match_score": match_score,
@@ -710,7 +699,10 @@ class AngelaLLMService:
                 llm_response = await self._generate_with_llm(user_message, context)
 
                 if not llm_response.error:
-                    hybrid_text = f"{composed_response.text} {llm_response.text}"
+                    _comp = composed_response.text.rstrip()
+                    _llm = llm_response.text.lstrip()
+                    _sep = "\n" if len(_comp) > 20 else " "
+                    hybrid_text = f"{_comp}{_sep}{_llm}"
                 else:
                     hybrid_text = composed_response.text
 
@@ -733,13 +725,16 @@ class AngelaLLMService:
                     f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}"
                 )
 
-                return LLMResponse(
+                return ChatResponse(
                     text=hybrid_text,
                     backend="hybrid",
                     model="template+llm",
                     tokens_used=200,
                     response_time_ms=response_time,
                     confidence=0.85,
+                    hit_score=match_score,
+                    hit_source="template",
+                    route="HYBRID",
                     metadata={
                         "route": "HYBRID",
                         "match_score": match_score,

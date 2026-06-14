@@ -265,13 +265,18 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
         if len(_session_history[session_id]) > _MAX_HISTORY * 2:
             _session_history[session_id] = _session_history[session_id][-_MAX_HISTORY * 2:]
         _resp_preview = chat_res.get("response_text", "")[:80]
-        logger.info(f"[WebSocket] Chat response sent: {_resp_preview}...")
+        _hit = chat_res.get("hit_score", 0.0)
+        _src = chat_res.get("hit_source", "none")
+        logger.info(f"[WebSocket] Chat response sent ({_src}, score={_hit:.2f}): {_resp_preview}...")
         await manager.send_personal_message({
             "type": "chat_response",
             "data": {
                 "message_id": message_id,
                 "content": chat_res["response_text"],
                 "sender": "angela",
+                "hit_score": chat_res.get("hit_score", 0.0),
+                "hit_source": chat_res.get("hit_source", "none"),
+                "route": chat_res.get("route", "llm"),
                 "emotion": chat_res.get("emotion", "happy"),
                 "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
             },
@@ -320,19 +325,6 @@ async def websocket_handler(websocket: WebSocket) -> str:
     Handles handshake, message routing, heartbeat, and chat.
     """
     await websocket.accept()
-
-    orig_receive = websocket._receive
-    async def debug_receive() -> str:
-        msg = await orig_receive()
-        if msg.get('type') == 'websocket.receive':
-            text = msg.get('text')
-            bytes_d = msg.get('bytes')
-            if text:
-                sys.stderr.write(f"[DEBUG WS endpoint] text: {repr(text[:80])}\n")
-            if bytes_d:
-                sys.stderr.write(f"[DEBUG WS endpoint] bytes: {repr(bytes_d[:80])}\n")
-        return msg
-    websocket._receive = debug_receive
 
     result = await _handle_handshake(websocket)
     if result is None:

@@ -13,6 +13,7 @@ from typing import Dict, Any, Optional, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from services.llm.router import AngelaLLMService, LLMResponse
+    from core.interfaces.protocols import ChatResponse
 
 logger = logging.getLogger("angela_llm.memory")
 
@@ -83,7 +84,7 @@ class MemoryIntegration:
         Returns:
             Optional[LLMResponse]: Response if memory hit, None otherwise
         """
-        from services.llm.router import LLMResponse
+        from core.interfaces.protocols import ChatResponse
 
         try:
             if not hasattr(self._svc, 'memory_manager') or self._svc.memory_manager is None:
@@ -104,11 +105,14 @@ class MemoryIntegration:
                 if not template_content:
                     return None
 
-                return LLMResponse(
+                return ChatResponse(
                     text=template_content,
                     backend="memory-template",
                     model="template-based",
                     confidence=score,
+                    hit_score=score,
+                    hit_source="memory",
+                    route="MEMORY",
                     metadata={
                         "template_id": template_id,
                         "template_score": score,

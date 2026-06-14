@@ -48,6 +48,19 @@ class LLMResponse:
     def content(self, value: str) -> None:
         self.text = value
 
+
+@dataclass
+class ChatResponse(LLMResponse):
+    """Chat pipeline response — extends LLMResponse with hit scoring and routing."""
+    hit_score: float = 0.0
+    hit_source: str = "none"
+    route: str = "llm"
+    emotion: str = "neutral"
+    emotion_confidence: float = 0.5
+    emotion_intensity: float = 0.5
+    bio_state: Dict[str, Any] = field(default_factory=dict)
+    retrieved_context: List[Dict[str, Any]] = field(default_factory=list)
+
 @dataclass
 class L1Biological:
     """L1 - Biological / Sensory inputs"""
