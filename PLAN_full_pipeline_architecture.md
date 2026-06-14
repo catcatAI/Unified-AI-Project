@@ -1,26 +1,309 @@
-# 聊天管線完整架構重構計劃 v7
+# 聊天管線完整架構重構計劃 v8
 
 **日期:** 2026-06-14
-**基於:** 7 個代理完整代碼審計（服務層、前端、自主認知、API、ED3N 能力、重複分析、路由架構）
-**目標:** 消除重複 + 擴展 QueryClassifier + ED3N 適當整合 + 完整管線
+**基於:** 9 個代理完整代碼審計（服務、前端、自主認知、API、ED3N、重複分析、調用者映射、路由架構、功能重複深度分析）
+**目標:** 全面消除重複（保留 backward-compatible shims）+ 擴展 QueryClassifier + ED3N 適當整合 + 完整管線
 **狀態:** 規劃階段
 
 ---
 
-## 一、重複實作清理（先做）
+## 一、功能重複全面分析
 
-### 1.1 共用工具提取
+### 1.1 文字處理重複
 
-**目標:** 消除 4 個重複實作，提取到 `utils/text_utils.py`
+#### DUP-1: `_extract_keywords()` — 5 個獨立實作
 
-| 重複 | 現有位置 | 行動 |
-|------|----------|------|
-| `_char_bigrams()` | `ham_manager.py:95`, `template_matcher.py:364` | 提取到 `text_utils.char_bigrams()` |
-| Jaccard 公式 | `ham_manager.py:86`, `template_matcher.py:360` | 提取到 `text_utils.bigram_jaccard()` |
-| `_extract_keywords()` | `template_matcher.py:258`, `router.py:1202`, `composer.py:307`, `ham_manager.py:128` | 合併為 `text_utils.extract_keywords(text, max_keywords, stopwords)` |
+| # | 位置 |发法 | stopwords | 最大數 | 語言 |
+|---|------|------|-----------|--------|------|
+| A | `template_matcher.py:258` | 逐字元拆分 | 15 個 | 無限 | 中文 |
+| B | `ham_manager.py:128` | dict/str 混合 | 16 個（含英文） | 8 | 中英 |
+| C | `router.py:1202` | regex 2+ 字元 | 13 個 | 5 | 中英 |
+| D | `composer.py:307` | regex 2+ 字元 | 12 個 | 無限 | 中文 |
+| E | `document_builder.py:199` | regex `\w` 變體 | 26 個（最多） | 無限 | 中英 |
+| F | `ai_editor.py:100` | `text.split()[:5]` | 無 | 5 | **壞掉** |
 
-**`utils/text_utils.py` 內容:**
+**判斷:** 應合併。E 的 stopwords 最完整，C 的 regex 最好。合併為一個共用函數。
+**調用者:** A(1), B(1), C(1), D(1), E(2) = 6 個調用者需要更新
+**向後兼容:** 保留原方法，改為轉接到共用函數
+
 ```python
+# 合併後
+# utils/text_utils.py
+def extract_keywords(text, max_keywords=8, stopwords=None):
+    """統一關鍵字提取（中英文）"""
+    if stopwords is None:
+        stopwords = DEFAULT_STOPWORDS  # 合併所有版本
+    words = re.findall(r'[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}', text)
+    return [w for w in words if w not in stopwords][:max_keywords]
+
+# 各文件保留原方法作為轉接
+# template_matcher.py
+def _extract_keywords(self, text):
+    from utils.text_utils import extract_keywords
+    return extract_keywords(text, max_keywords=999, stopwords=TM_STOPWORDS)
+
+# ham_manager.py
+def _extract_keywords(self, raw_data):
+    from utils.text_utils import extract_keywords
+    if isinstance(raw_data, dict):
+        text = " ".join(str(v) for v in raw_data.values())
+    elif not isinstance(raw_data, str):
+        text = str(raw_data)
+    else:
+        text = raw_data
+    return extract_keywords(text, max_keywords=8)
+```
+
+#### DUP-2: `_char_bigrams()` — 2 個完全相同的實作
+
+| # | 位置 | 實作 |
+|---|------|------|
+| A | `template_matcher.py:364` | `{text[i:i+2] for i in range(len(text) - 1)}` |
+| B | `ham_manager.py:95` | 同上 + `len < 2` guard |
+
+**判斷:** 應合併。B 有 edge-case guard，更完整。
+**調用者:** A(5 內部), B(2 內部) = 7 個調用者
+**向後兼容:** 保留原方法，轉接到共用函數
+
+#### DUP-3: Bigram Jaccard 公式 — 2 個相同公式
+
+| # | 位置 | 公式 |
+|---|------|------|
+| A | `ham_manager.py:86` | `min(0.95, jaccard * 1.2)` |
+| B | `template_matcher.py:360` | 同上 |
+
+**判斷:** 應合併到共用函數 `bigram_jaccard(text_a, text_b)`。
+**調用者:** A(1), B(1) = 2 個
+
+#### DUP-4: `_normalize_text()` — 1 個實作，應提取共用
+
+| # | 位置 | 功能 |
+|---|------|------|
+| A | `template_matcher.py:245` | lowercase + 去空格標點 |
+
+**判斷:** 應提取到共用函數，讓其他 `_extract_keywords` 也能用。
+
+---
+
+### 1.2 Config 系統重複
+
+#### DUP-5: 4 個 Config 系統
+
+| # | 位置 | 系統 | 調用者數 |
+|---|------|------|----------|
+| A | `config_loader.py:19` | `AngelaConfig` singleton, `get_authority()` | 17+ |
+| B | `tiered_loader.py:142` | `get_config()`, 3 層合併 | 13+ |
+| C | `app_config_loader.py:24` | `get_config()` 硬編碼 dict | 9+ |
+| D | `fallback_config_loader.py:13` | HSP 專用 | 1 |
+
+**判斷:**
+- A 和 B 有相同函數名 `get_config` 但不同語義（dotted key vs slash path）
+- **合併 A 到 B** — B 更完整（3 層合併、快取）。A 的 `get_authority()` 成為 B 的方法
+- **棄用 C** — 硬編碼值，調用者遷移到 B
+- **保留 D** — HSP 專用，只有 1 個調用者
+
+**調用者:** A(17+), B(13+), C(9+) = 39+ 個調用者需要遷移
+**向後兼容:** 保留 `get_angela_config()` 和 `get_config()` 作為轉接
+
+```python
+# config_loader.py — 保留為轉接
+def get_angela_config():
+    from core.system.config.tiered_loader import get_config
+    return get_config("angela")  # 轉接到 tiered_loader
+
+def get_authority(section, default=None):
+    from core.system.config.tiered_loader import get_config
+    return get_config(f"authority/{section}") or default
+```
+
+---
+
+### 1.3 情緒系統重複
+
+#### DUP-6: 4 個情緒系統
+
+| # | 位置 | 類別 | 用途 | 調用者 |
+|---|------|------|------|--------|
+| A | `emotion_analyzer.py:16` | `EmotionAnalyzer` | 關鍵字中文情緒 | 2 |
+| B | `emotion_system.py:74` | `EmotionSystem` | 價值評估+同理心 | 3 |
+| C | `emotional_blending.py:197` | `EmotionalBlendingSystem` | PAD 生理模型 | 1 |
+| D | `user_monitor.py:289` | `_extract_emotion_keywords()` | 用戶情緒追蹤 | 1 |
+
+**判斷:**
+- **保留 A** — 對話層情緒分析（最常用）
+- **保留 B** — ASI 對齊層（不同抽象層）
+- **保留 C** — 生理模擬層（不同抽象層）
+- **合併 D 到 A** — D 是 A 的子集，UserMonitor 應委託給 EmotionAnalyzer
+
+**向後兼容:** D 保留原方法，轉接到 A
+
+---
+
+### 1.4 記憶系統重複
+
+#### DUP-7: 記憶類型定義重複
+
+| # | 位置 | 定義 |
+|---|------|------|
+| A | `ham_memory/ham_types.py:28` | `HAMRecallResult` |
+| B | `memory/types.py:28` | `HAMRecallResult` |
+| C | `shared/types/common_types.py:174` | `HAMRecallResult` |
+
+**判斷:** 合併到 B（`memory/types.py`），A 和 C 轉接到 B。
+
+#### DUP-8: 錯誤類型重複
+
+| # | 位置 | 定義 |
+|---|------|------|
+| A | `ham_memory/ham_types.py:36` | `HAMMemoryError` |
+| B | `ham_memory/ham_errors.py:5` | `HAMMemoryError` |
+
+**判斷:** 合併到 A，B 轉接到 A。
+
+#### DUP-9: `HAMMemoryManager` 孤立實作
+
+| # | 位置 | 狀態 |
+|---|------|------|
+| A | `ham_memory/ham_manager.py:14` | 真實實作 |
+| B | `ai_editor.py:17` | Mock/stub，已棄用 |
+
+**判斷:** 刪除 B（已棄用）。
+
+---
+
+### 1.5 狀態管理重複
+
+#### DUP-10: 狀態管理系統重複
+
+| # | 位置 | 類別 | 用途 |
+|---|------|------|------|
+| A | `state_matrix.py:58` | `StateMatrix4D` | 6D 狀態，1439 行 |
+| B | `global_store.py:18` | `GlobalStateStore` | 領域+pub/sub |
+| C | `state_persistence.py:79` | `StatePersistence` | Redis/JSON 持久化 |
+| D | `state_manager.py:1` | `StateManager` | **空殼**（3 行） |
+
+**判斷:**
+- **合併 B 到 A** — A 更完整。B 成為 A 的 facade
+- **合併 C 到 B** — 持久化統一
+- **刪除 D** — 空殼
+
+---
+
+### 1.6 路由系統重複
+
+#### DUP-11: 路由系統重複
+
+| # | 位置 | 類別 | 狀態 |
+|---|------|------|------|
+| A | `hybrid_router.py:69` | `HybridRouter` | **已棄用**（自註） |
+| B | `model_bus.py:45` | `ModelBus` | 活躍 |
+| C | `language_models/router.py:124` | `PolicyRouter` | 活躍（不同域） |
+| D | `theta_router.py:99` | `ThetaRouter` | 活躍（不同域） |
+
+**判斷:** 刪除 A（已棄用）。保留 B, C, D（不同路由層）。
+
+---
+
+### 1.7 錯誤處理重複
+
+#### DUP-12: 2 個錯誤階層
+
+| # | 位置 | 系統 |
+|---|------|------|
+| A | `angela_error.py:47` | `AngelaError`（15+ 子類） |
+| B | `shared/error.py:1` | `ProjectError`（4 子類） |
+| C | `mcp/connector.py:20` | `ProjectError` 本地 mock |
+
+**判斷:** 合併 B 到 A。刪除 C（mock）。
+
+---
+
+### 1.8 棄用/空殼代碼
+
+#### DUP-13: 棄用代碼
+
+| # | 位置 | 說明 |
+|---|------|------|
+| A | `ai/garden/hybrid_router.py` | 自註棄用，被 ModelBus 取代 |
+| B | `services/ai_editor.py` | P8-2 棄用 |
+| C | `core/state_manager.py` | 3 行空殼 |
+| D | `core/degraded_mode.py` | 5 行空殼 |
+| E | `mcp/connector.py::ProjectError` | 本地 mock |
+
+**判斷:** 全部刪除。
+
+---
+
+### 1.9 Singleton 模式不一致
+
+#### DUP-14: 8+ 種 singleton 實現
+
+| # | 位置 | 模式 |
+|---|------|------|
+| A | `biological_integrator.py:139` | `__new__` override |
+| B | `config_loader.py:63` | Module-level getter |
+| C | `waiting_scheduler.py:49` | Module-level getter |
+| D | `lifespan.py:27` | Module-level globals |
+| E | `state_matrix_api.py:41` | Module-level getter |
+| F | `hot_reload_service.py:26` | Module-level getter |
+| G | `art_learning_workflow.py:195` | Module-level getter |
+| H | `google_drive_service.py:297` | Module-level getter |
+
+**判斷:** 標準化為 module-level getter 模式（最常見）。可選：建立 `@singleton` 裝飾器。
+
+---
+
+### 1.10 Cosine Similarity 重複
+
+#### DUP-15: 3 個 cosine 實現
+
+| # | 位置 | 輸入類型 |
+|---|------|----------|
+| A | `composer.py:1086` | `List[float]` |
+| B | `ham_utils.py:63` | `np.ndarray` |
+| C | `err_introspector.py:120` | `Dict[str, float]` |
+
+**判斷:** 保留分離 — 不同數據類型，強行合併會增加複雜度。
+
+---
+
+### 1.11 `get_biological_state` 命名混淆
+
+#### DUP-16: 2 個同名不同函數
+
+| # | 位置 | 返回 | 用途 |
+|---|------|------|------|
+| A | `prompt_builder.py:26` | `str` | prompt 格式化 |
+| B | `biological_integrator.py:559` | `Dict` | 原始數據 |
+
+**判斷:** 重命名 A 為 `format_bio_state_for_prompt()`。保留 B 不變。
+
+---
+
+## 二、共用工具提取計劃
+
+### 2.1 建立 `utils/text_utils.py`
+
+```python
+"""共用文字處理工具 — 消除重複實作"""
+
+import re
+from typing import List, Set, Optional
+
+# 合併所有版本的 stopwords
+DEFAULT_STOPWORDS = {
+    # 中文
+    "你", "我", "他", "她", "的", "了", "嗎", "呢", "吧", "啊", "是",
+    "在", "有", "和", "就", "不", "也", "這", "那", "什麼", "怎麼",
+    "可以", "沒有", "一個", "我們", "他們", "如果", "但是", "因為",
+    # 英文
+    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did", "will", "would", "could",
+    "should", "may", "might", "can", "shall", "i", "you", "he", "she",
+    "it", "we", "they", "me", "him", "her", "us", "them", "my", "your",
+    "his", "its", "our", "their", "this", "that", "these", "those",
+}
+
 def char_bigrams(text: str) -> set:
     """字元級 bigram，用於中文相似度"""
     if len(text) < 2:
@@ -28,131 +311,180 @@ def char_bigrams(text: str) -> set:
     return {text[i:i+2] for i in range(len(text) - 1)}
 
 def bigram_jaccard(text_a: str, text_b: str) -> float:
-    """Bigram Jaccard 相似度"""
+    """Bigram Jaccard 相似度（含 1.2x 縮放和 0.95 上限）"""
     a, b = char_bigrams(text_a), char_bigrams(text_b)
     if not a or not b:
         return 0.0
-    return len(a & b) / len(a | b)
+    jaccard = len(a & b) / len(a | b)
+    return min(0.95, jaccard * 1.2)
 
-def extract_keywords(text: str, max_keywords: int = 8, stopwords: set = None) -> list:
+def extract_keywords(
+    text: str,
+    max_keywords: int = 8,
+    stopwords: Optional[Set[str]] = None,
+) -> List[str]:
     """統一關鍵字提取（支持中英文）"""
     if stopwords is None:
-        stopwords = DEFAULT_STOPWORDS  # 合併所有版本的 stopwords
-    # 用 regex 分詞: 中文 2+ 字元, 英文 2+ 字母
+        stopwords = DEFAULT_STOPWORDS
     words = re.findall(r'[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}', text)
     return [w for w in words if w not in stopwords][:max_keywords]
+
+def normalize_text(text: str) -> str:
+    """文字標準化：lowercase + 去標點空格"""
+    text = text.lower()
+    for ch in [" ", "?", "!", "。", "？", "！", "，", ","]:
+        text = text.replace(ch, "")
+    return text
 ```
 
-### 1.2 情緒分析合併
-
-| 現有 | 位置 | 行動 |
-|------|------|------|
-| EmotionAnalyzer | `emotion_analyzer.py` | **保留** — 關鍵字中文情緒分析 |
-| dialogue_context 情緒 | `dialogue_context.py:168` | **移除** — 重複 |
-| nlp_agent 情緒 | `nlp_processing_agent.py:33` | **移除** — 重複 |
-| EmotionalBlending | `emotional_blending.py` | **保留** — PAD 模型，不同用途 |
-
-### 1.3 Config 系統合併
-
-| 現有 | 位置 | 行動 |
-|------|------|------|
-| AngelaConfig | `config_loader.py` | **遷移** 到 tiered_loader |
-| tiered_loader | `tiered_loader.py` | **保留** — 更完整 |
-
-### 1.4 其他清理
-
-| 清理 | 行動 |
-|------|------|
-| `StateMatrix4D` 實際是 6D | 重新命名（可選） |
-| `get_biological_state` 命名混淆 | 重命名為 `format_bio_state_for_prompt` |
-| EmotionAnalyzer 每次請求建立新實例 | 改為 singleton |
-| `_ed3n_fallback_text` 每次建立新 ED3N | 重用 ModelBus 中的實例 |
-
----
-
-## 二、ED3N 適當使用（不硬塞）
-
-### 2.1 ED3N 應該用的地方
-
-| 用途 | ED3N 方法 | 為什麼適合 | 品質影響 |
-|------|-----------|-----------|----------|
-| **快速反射** | `process_reflex()` | 亚毫秒，LRU 快取，最強組件 | ⭐⭐⭐⭐⭐ |
-| **意圖模糊匹配** | `dictionary.encode_soft()` | 比 binary keyword match 好，有 confidence 分數 | ⭐⭐⭐ |
-| **歷史相關性** | `dictionary.encode()` | 已在用，key overlap 合理 | ⭐⭐⭐ |
-| **Session 歡迎** | `process("welcome", depth="reflex")` | 預設反射模式 | ⭐⭐⭐⭐ |
-| **Timeout fallback** | `process("timeout_response", depth="reflex")` | 安全網 | ⭐⭐⭐⭐ |
-| **主動互動** | `process("welcome_back"|"idle_check", depth="reflex")` | 預設反射 | ⭐⭐⭐⭐ |
-| **多模態輸入** | `process_multimodal()` | 圖片/音訊→dictionary keys | ⭐⭐⭐ |
-| **持續學習** | `ContinuousLearningPipeline` | 長期字典成長 | ⭐⭐ |
-
-### 2.2 ED3N 不應該用的地方
-
-| 用途 | 為什麼不用 | 用什麼替代 |
-|------|-----------|-----------|
-| **情緒分析** | ED3N 無情緒模型 | EmotionAnalyzer（關鍵字）+ EmotionalBlending（PAD） |
-| **語義理解** | ED3N 無 embedding | LLM 直接處理 |
-| **因果推理** | ED3N 無因果模型 | CausalReasoningEngine |
-| **知識問答** | ED3N 字典有限 | GARDEN + Cloud LLM |
-| **複雜指令** | ED3N reflex 太簡單 | LLM + handlers |
-
-### 2.3 ED3N 在意圖分類中的角色
-
-**不替換 QueryClassifier，而是增強它：**
+### 2.2 各文件向後兼容轉接
 
 ```python
-# query_classifier.py 改進
-class QueryClassifier:
-    def classify(self, text: str) -> tuple[QueryType, float]:
-        # 1. Regex 分類（現有，快速）
-        regex_type, regex_conf = self._regex_classify(text)
-        
-        # 2. ED3N 作為第二信號（可選）
-        ed3n_type, ed3n_conf = self._ed3n_classify(text)
-        
-        # 3. 合併: 取 confidence 較高者
-        if ed3n_conf > regex_conf:
-            return ed3n_type, ed3n_conf
-        return regex_type, regex_conf
+# template_matcher.py
+from utils.text_utils import char_bigrams as _char_bigrams_util
+from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
+from utils.text_utils import extract_keywords as _extract_keywords_util
+from utils.text_utils import normalize_text as _normalize_text_util
+
+class TemplateMatcher:
+    @staticmethod
+    def _char_bigrams(text):
+        return _char_bigrams_util(text)
     
-    def _ed3n_classify(self, text: str) -> tuple[QueryType, float]:
-        """ED3N 字典編碼作為分類輔助"""
-        try:
-            keys = self._ed3n.dictionary.encode_soft(text)
-            # 根據匹配的 key 類型推斷意圖
-            # 例如: 匹配到 "file" 類 key → FILE
-            # 例如: 匹配到 "search" 類 key → SEARCH
-            return self._keys_to_intent(keys)
-        except Exception:
-            return QueryType.UNKNOWN, 0.3
-```
+    def _calculate_similarity(self, user_input, template):
+        user_lower = _normalize_text_util(user_input)
+        # ... 其餘邏輯不變，改用 _bigram_jaccard_util
+    
+    def _extract_keywords(self, text):
+        return _extract_keywords_util(text, max_keywords=999, stopwords=TM_STOPWORDS)
 
-**ED3N 字典新增意圖 patterns:**
-```python
-# dictionary_layer.py 預設新增
-{"key": "intent_file", "surface_forms": [{"zh": "檔案", "en": "file"}, {"zh": "整理", "en": "organize"}, ...], "context": {"type": "intent", "intent": "FILE"}}
-{"key": "intent_search", "surface_forms": [{"zh": "搜尋", "en": "search"}, {"zh": "查找", "en": "find"}, ...], "context": {"type": "intent", "intent": "SEARCH"}}
+# ham_manager.py
+from utils.text_utils import char_bigrams as _char_bigrams_util
+from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
+from utils.text_utils import extract_keywords as _extract_keywords_util
+
+class HAMMemoryManager:
+    @staticmethod
+    def _char_bigrams(text):
+        return _char_bigrams_util(text)
+    
+    def _extract_keywords(self, raw_data):
+        if isinstance(raw_data, dict):
+            text = " ".join(str(v) for v in raw_data.values())
+        elif not isinstance(raw_data, str):
+            text = str(raw_data)
+        else:
+            text = raw_data
+        return _extract_keywords_util(text, max_keywords=8)
+
+# router.py
+from utils.text_utils import extract_keywords as _extract_keywords_util
+
+class AngelaLLMService:
+    def _extract_keywords(self, text):
+        return _extract_keywords_util(text, max_keywords=5)
+
+# composer.py
+from utils.text_utils import extract_keywords as _extract_keywords_util
+
+class ResponseComposer:
+    def _extract_keywords(self, text):
+        return _extract_keywords_util(text, max_keywords=999)
 ```
 
 ---
 
-## 三、QueryClassifier 擴展
+## 三、ED3N 適當使用分析
 
-### 3.1 新增 QueryTypes
+### 3.1 ED3N 各能力品質評估
+
+| 能力 | 方法 | 品質 | 速度 | 適合用途 |
+|------|------|------|------|----------|
+| 快速反射 | `process_reflex()` | ⭐⭐⭐⭐⭐ | <1ms | 問候、固定回覆、timeout fallback |
+| 字典模糊匹配 | `encode_soft()` | ⭐⭐⭐ | <5ms | 意圖輔助分類、歷史相關性 |
+| 字典精確匹配 | `encode()` | ⭐⭐ | <1ms | 歷史 key overlap（已用） |
+| 淺層處理 | `process_shallow()` | ⭐⭐⭐ | ~10ms | 回應生成（無 LLM 時） |
+| 多模態編碼 | `process_multimodal()` | ⭐⭐⭐ | ~50ms | 圖片/音訊→keys |
+| 持續學習 | `process_interaction()` | ⭐⭐ | async | 長期字典成長 |
+| 深層處理 | `process_deep()` | ⭐⭐⭐ | ~100ms | 複雜回應（不常用） |
+| 訓練 | `train()` | ⭐⭐ | 批次 | 批次學習 |
+
+### 3.2 ED3N 應該用的地方
+
+| 用途 | 方法 | 為什麼 | 調用者 |
+|------|------|--------|--------|
+| Session 歡迎 | `process("welcome", depth="reflex")` | 亚毫秒 | chat_routes.py |
+| Timeout fallback | `process("timeout_response", depth="reflex")` | 安全網 | chat_routes.py |
+| Cancelled fallback | `process("timeout_response", depth="reflex")` | 安全網 | chat_routes.py |
+| 主動互動 | `process("welcome_back"\|"idle_check", depth="reflex")` | 預設 | proactive_interaction |
+| Composer fallback | `process("compose_fallback", depth="shallow")` | 後備 | composer.py |
+| ModelBus reflex 層 | `process()` via ModelBus | 快速路由 | model_bus.py |
+| 歷史相關性 | `dictionary.encode()` | key overlap | chat_routes.py |
+| 意圖輔助 | `dictionary.encode_soft()` | 模糊匹配 | query_classifier |
+| 持續學習 | `process_interaction()` | 字典成長 | chat_service.py |
+| HAM 同步 | `ED3NLearningIntegration` | 知識轉移 | learning_integration.py |
+
+### 3.3 ED3N 不應該用的地方
+
+| 用途 | 為什麼 | 替代方案 |
+|------|--------|----------|
+| 情緒分析 | 無情緒模型 | EmotionAnalyzer |
+| 語義理解 | 無 embedding | LLM 直接處理 |
+| 因果推理 | 無因果模型 | CausalReasoningEngine |
+| 知識問答 | 字典有限 | GARDEN + Cloud |
+| 複雜指令 | reflex 太簡單 | LLM + handlers |
+| 圖片分析 | 多模態是 bolt-on | VisionService |
+
+### 3.4 ED3N bug 修復
+
+**`_ed3n_fallback_text` 每次建立新實例:**
+```python
+# router.py:1227 — 現狀
+engine = ED3NEngine()  # 每次 fallback 都新建
+
+# 修復: 重用 ModelBus 中的實例
+engine = self.model_bus._registry.get("ed3n", (None,))[0]
+if engine is None:
+    engine = ED3NEngine()
+```
+
+**Composer 每次 fallback 建立 4 個新實例:**
+```python
+# composer.py:345,903,1126,1156 — 現狀
+_ED3NEngine().process(...)  # 每次新建
+
+# 修復: 建立模組級快取
+_ed3n_engine = None
+def _get_ed3n():
+    global _ed3n_engine
+    if _ed3n_engine is None:
+        from ai.ed3n.ed3n_engine import ED3NEngine
+        _ed3n_engine = ED3NEngine()
+        _ed3n_engine.load_presets()
+    return _ed3n_engine
+```
+
+---
+
+## 四、QueryClassifier 擴展
+
+### 4.1 新增 QueryTypes
 
 ```python
 class QueryType(Enum):
-    REFLEX = "reflex"        # 現有
-    GREETING = "greeting"     # 現有
-    MATH = "math"             # 現有
-    LOGIC = "logic"           # 現有
-    KNOWLEDGE = "knowledge"   # 現有
-    CREATIVE = "creative"     # 現有
-    OPINION = "opinion"       # 現有（需新增 patterns）
-    COMMAND = "command"       # 現有
-    UNKNOWN = "unknown"       # 現有
-    # 新增:
+    # 現有
+    REFLEX = "reflex"
+    GREETING = "greeting"
+    MATH = "math"
+    LOGIC = "logic"
+    KNOWLEDGE = "knowledge"
+    CREATIVE = "creative"
+    OPINION = "opinion"       # 需補 patterns
+    COMMAND = "command"
+    UNKNOWN = "unknown"
+    # 新增
     FILE = "file"             # 檔案操作
-    SEARCH = "search"         # 搜尋（網路/Drive/記憶）
+    SEARCH = "search"         # 搜尋
     CODE = "code"             # 程式碼
     EXECUTE = "execute"       # 系統執行
     TASK = "task"             # 任務管理
@@ -160,448 +492,231 @@ class QueryType(Enum):
     AUDIO = "audio"           # 音訊處理
 ```
 
-### 3.2 新增 Patterns
+### 4.2 ED3N 作為輔助分類信號
 
 ```python
-_patterns = [
-    # ... 現有 patterns ...
-    # FILE
-    (QueryType.FILE, r"(整理|清理|刪除|移動|複製|檔案|文件|organize|delete|move|copy|file)", 0.8),
-    (QueryType.FILE, r"(桌面|downloads|documents|desktop|downloads)", 0.75),
-    # SEARCH
-    (QueryType.SEARCH, r"(搜尋|搜索|查找|找|search|find|look\s*for|google)", 0.8),
-    (QueryType.SEARCH, r"(網路|web|internet|online|drive|雲端)", 0.7),
-    # CODE
-    (QueryType.CODE, r"(程式|代碼|code|program|script|debug|bug|函数|function)", 0.8),
-    (QueryType.CODE, r"(python|javascript|html|css|sql|api)", 0.85),
-    # EXECUTE
-    (QueryType.EXECUTE, r"(執行|運行|開啟|關閉|execute|run|open|close|start|stop)", 0.8),
-    # TASK
-    (QueryType.TASK, r"(任務|工作|待辦|task|todo|planned|schedule|安排)", 0.75),
-    # VISION
-    (QueryType.VISION, r"(圖片|照片|影像|image|photo|picture|picture|截圖|screenshot)", 0.8),
-    # AUDIO
-    (QueryType.AUDIO, r"(語音|音訊|錄音|audio|voice|speech|music|音樂)", 0.8),
-    # OPINION (補充)
-    (QueryType.OPINION, r"(覺得|認為|看法|意見|opinion|think|believe|feel)", 0.75),
-]
+def classify(self, text):
+    # 1. Regex 分類
+    regex_type, regex_conf = self._regex_classify(text)
+    
+    # 2. ED3N 作為第二信號
+    try:
+        keys = self._ed3n.dictionary.encode_soft(text)
+        ed3n_type, ed3n_conf = self._keys_to_intent(keys)
+        if ed3n_conf > regex_conf:
+            return ed3n_type, ed3n_conf
+    except Exception:
+        pass
+    
+    return regex_type, regex_conf
 ```
 
-### 3.3 ModelBus 擴展
+---
+
+## 五、ModelBus 擴展
+
+### 5.1 Handler 註冊機制
 
 ```python
-# model_bus.py — 新增 handler 註冊
-def register_handler(self, handler_id: str, handler, intent_types: list):
-    """註冊非 LLM handler（檔案、搜尋等）"""
-    self._handlers[handler_id] = handler
-    for intent_type in intent_types:
-        self._handler_map[intent_type] = handler_id
+class ModelBus:
+    def __init__(self):
+        self._registry = {}      # LLM backends
+        self._handlers = {}      # Non-LLM handlers
+        self._handler_map = {}   # intent_type → handler_id
+    
+    def register_handler(self, handler_id, handler, intent_types):
+        """註冊 handler（file, drive, search 等）"""
+        self._handlers[handler_id] = handler
+        for t in intent_types:
+            self._handler_map[t] = handler_id
+```
 
-# 路由邏輯擴展
+### 5.2 路由擴展
+
+```python
 def route(self, text, query_type="auto", context=None):
     # ... 現有分類 ...
     
-    # 新增: 如果是 handler 類型，直接派發
+    # 新增: handler 類型直接派發
     if query_type in self._handler_map:
         handler_id = self._handler_map[query_type]
-        handler = self._handlers[handler_id]
         return RouteDecision(
             action=RouteAction.EXECUTE,
-            engine=handler,
+            engine=self._handlers[handler_id],
             confidence=0.9,
-            reasoning=f"Handler dispatch: {handler_id}"
         )
     
     # ... 現有 LLM 路由 ...
 ```
 
----
-
-## 四、管線全貌（完成後的樣子）
-
-### 4.1 完整流程圖
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        前端層                                    │
-│  Desktop Electron │ Web Live2D │ Mobile │ Pixel                 │
-│  ─────────────────────────────────────────────────────────────  │
-│  輸入: 文字 │ 圖片(新) │ 音訊(新) │ 檔案(新) │ 觸覺             │
-│  輸出: 文字 │ Live2D │ 狀態 │ 生物回饋                          │
-└──────────────────────┬──────────────────────────────────────────┘
-                       │ WebSocket + HTTP
-                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     接入層                                      │
-│  WebSocket Manager │ HTTP Router │ Session Manager              │
-│  協議: connect 握手 → chat/image/audio/file_message             │
-│  Session: 30 條歷史 │ 單設備 │ 心跳                              │
-└──────────────────────┬──────────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   輸入標準化層                                    │
-│  InputClassifier                                                │
-│  ─────────────────────────────────────────────────────────────  │
-│  偵測: TEXT │ IMAGE │ AUDIO │ FILE │ MULTIMODAL                 │
-│  標準化: {type, data, metadata}                                 │
-└──────────────────────┬──────────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   意圖分類層（擴展 QueryClassifier）              │
-│  QueryClassifier + ED3N dictionary.encode_soft() (輔助)         │
-│  ─────────────────────────────────────────────────────────────  │
-│  16 種意圖: REFLEX │ GREETING │ MATH │ LOGIC │ KNOWLEDGE │      │
-│    CREATIVE │ OPINION │ COMMAND │ FILE │ SEARCH │ CODE │        │
-│    EXECUTE │ TASK │ VISION │ AUDIO │ UNKNOWN                    │
-│  輸出: (QueryType, confidence)                                  │
-└──────────────────────┬──────────────────────────────────────────┘
-                       │
-          ┌────────────┼────────────┬──────────────┐
-          ▼            ▼            ▼              ▼
-┌──────────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐
-│  Handler 管線 │ │ LLM 管線  │ │ 感知管線  │ │  高級管線     │
-│  ─────────── │ │ ──────── │ │ ──────── │ │  ──────────  │
-│  FILE→FileOp  │ │ REFLEX→  │ │ VISION→  │ │  自主認知     │
-│  SEARCH→Web   │ │  ED3N    │ │  Vision  │ │  因果推理     │
-│  CODE→CodeIns │ │ GREETING→│ │ AUDIO→   │ │  知識圖譜     │
-│  EXECUTE→     │ │  ED3N    │ │  Audio   │ │  學習系統     │
-│  DesktopInter │ │ MATH→    │ │          │ │  經驗回放     │
-│  TASK→        │ │  ED3N/   │ │          │ │              │
-│  ProjectCoord │ │  GARDEN  │ │          │ │              │
-│               │ │ KNOWLEDGE│ │          │ │              │
-│               │ │ →GARDEN/ │ │          │ │              │
-│               │ │  Cloud   │ │          │ │              │
-│               │ │ CREATIVE │ │          │ │              │
-│               │ │ →Cloud   │ │          │ │              │
-│               │ │ OTHER→   │ │          │ │              │
-│               │ │  fan-out │ │          │ │              │
-└──────┬───────┘ └─────┬────┘ └────┬─────┘ └──────┬───────┘
-       │               │           │               │
-       └───────────────┴───────────┴───────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   回應合成層                                      │
-│  ResponseComposer │ NeuroBlender │ DeviationTracker              │
-│  ─────────────────────────────────────────────────────────────  │
-│  策略: COMPOSED │ HYBRID │ MEMORY │ LLM │ REFLEX │ HANDLER      │
-│  品質: 偏差追蹤 │ 成功率學習                                      │
-└──────────────────────┬──────────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   狀態更新層                                      │
-│  BiologicalIntegrator │ StateMatrix4D │ Neuroplasticity          │
-│  ─────────────────────────────────────────────────────────────  │
-│  輸入→狀態: 情緒、壓力、覚醒、荷爾蒙、突觸權重                       │
-│  狀態→輸出: prompt 動態建構、Live2D、生物回饋                       │
-│  自主→指令: 自主生命週期決策 → prompt 指令                          │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 4.2 各管線詳細流程
-
-#### A. Handler 管線（File/Search/Code/Execute/Task）
-
-```
-用戶: "幫我整理桌面" 
-  → InputClassifier: TEXT
-  → QueryClassifier: (COMMAND/FILE, 0.8)
-  → ModelBus: FILE → FileOperationHandler
-  → FileOperationHandler.handle("organize_desktop")
-  → 返回: {status: "success", operations: [...]}
-  → LLM: 整理成自然語言回應
-  → 回應: "已整理桌面，移動了 12 個檔案到對應資料夾"
-```
-
-#### B. 感知管線（Vision/Audio）
-
-```
-用戶上傳圖片 + "這是什麼？"
-  → InputClassifier: IMAGE
-  → VisionService.analyze_image(image_data)
-  → 返回: {description: "一隻貓", objects: ["cat"], emotions: ["cute"]}
-  → QueryClassifier: (KNOWLEDGE, 0.7)
-  → context["vision_context"] = 分析結果
-  → LLM: 看到圖片描述 + 用戶問題
-  → 回應: "這是一隻可愛的橘貓！牠看起來很放鬆"
-```
-
-#### C. LLM 管線（現有，改進）
-
-```
-用戶: "今天天氣如何"
-  → InputClassifier: TEXT
-  → QueryClassifier: (KNOWLEDGE, 0.7)
-  → Template match: 無匹配
-  → Memory match: 無匹配
-  → ModelBus: KNOWLEDGE → GARDEN → Cloud fallback
-  → LLM 生成回應
-  → 回應合成
-  → 狀態更新
-  → 回應
-```
-
-#### D. 自主認知管線
-
-```
-每 5 分鐘:
-  → AutonomousLifeCycle 決策
-  → 決策寫入 decision_history
-
-用戶提問時:
-  → prompt_builder 讀取最新自主決策
-  → 注入: "自主系統決定探索新主題：認知缺口過大"
-  → LLM 根據自主決策調整回應
-```
-
-### 4.3 ED3N 在各管線中的角色
-
-| 管線 | ED3N 用途 | 方法 | 品質 |
-|------|-----------|------|------|
-| Handler | 無 | — | — |
-| Vision | 多模態編碼 | `encode(image)` → keys | ⭐⭐⭐ |
-| Audio | 多模態編碼 | `encode(audio)` → keys | ⭐⭐⭐ |
-| LLM (reflex) | 快速反射 | `process_reflex()` | ⭐⭐⭐⭐⭐ |
-| LLM (greeting) | 問候 | `process_reflex()` | ⭐⭐⭐⭐⭐ |
-| LLM (math) | 數學反射 | `process_reflex()` | ⭐⭐⭐⭐ |
-| LLM (timeout) | 安全網 | `process_reflex()` | ⭐⭐⭐⭐ |
-| LLM (fallback) | 後備生成 | `process_shallow()` | ⭐⭐⭐ |
-| 意圖分類 | 模糊匹配輔助 | `encode_soft()` | ⭐⭐⭐ |
-| 歷史相關性 | 關鍵字匹配 | `encode()` | ⭐⭐⭐ |
-| 主動互動 | 預設訊息 | `process_reflex()` | ⭐⭐⭐⭐ |
-| 持續學習 | 字典成長 | `process_interaction()` | ⭐⭐ |
-
----
-
-## 五、前端整合（新增能力）
-
-### 5.1 需新增的前端功能
-
-| 功能 | Desktop | Web | Mobile | Pixel |
-|------|:-------:|:---:|:------:|:-----:|
-| 圖片上傳 | 拖拽/按鈕 | 拖拽/按鈕 | 相機/相簿 | 截圖 |
-| 音訊上傳 | 錄音按鈕 | 錄音按鈕 | 原生錄音 | — |
-| 檔案上傳 | 檔案選擇器 | 檔案選擇器 | 原生選擇器 | tray 選單 |
-| WebSocket 擴展 | image/audio/file_message | 同左 | 同左 | 同左 |
-
-### 5.2 WebSocket 協議擴展
-
-```
-新增 Client → Server:
-  image_message: {type, data: {image_base64, caption, message_id}}
-  audio_message: {type, data: {audio_base64, format, message_id}}
-  file_message: {type, data: {file_name, file_base64, mime_type, message_id}}
-
-新增 Server → Client:
-  image_analysis: {type, data: {description, objects, emotions}}
-  audio_transcription: {type, data: {text, confidence}}
-  pipeline_status: {type, data: {pipeline, status, progress}}
-```
-
-### 5.3 HTTP API 端點替換
-
-| Stub 端點 | 替換為 | 功能 |
-|-----------|--------|------|
-| `GET /api/v1/vision/status` | `POST /api/v1/vision/analyze` | 圖片分析 |
-| `GET /api/v1/audio/status` | `POST /api/v1/audio/transcribe` | 音訊轉錄 |
-
----
-
-## 六、管線交互與糾錯
-
-### 6.1 管線間通訊
-
-| 模式 | 用途 | 範例 |
-|------|------|------|
-| 直接派發 | IntentRouter → Pipeline | 意圖分類 → handler |
-| 異步 fire-and-forget | 生物更新、記憶存儲 | 互動後更新 bio_state |
-| HTTP 請求-回應 | 圖片/音訊/檔案 | 上傳 → 分析 → 結果 |
-| WebSocket 推播 | 狀態更新、生物回饋 | 每 200ms 廣播 |
-
-### 6.2 錯誤處理
-
-| 錯誤 | 處理 | 恢復 |
-|------|------|------|
-| LLM 超時 | ED3N reflex fallback | 重試 1 次 |
-| Handler 失敗 | 返回錯誤描述 | 記錄錯誤 |
-| 圖片分析失敗 | 返回「無法分析」+ 繼續文字 | 重試 1 次 |
-| 音訊轉錄失敗 | 返回「無法辨識」+ 請文字 | 重試 1 次 |
-| WebSocket 斷線 | 自動重連 + 離線佇列 | 指數退避 |
-| 生物系統異常 | 使用預設值 | 降級運行 |
-| ED3N 異常 | 跳過 ED3N，用 regex/LLM | 記錄錯誤 |
-
-### 6.3 資源控制
+### 5.3 提升為主要路由
 
 ```python
-class PipelineManager:
-    MAX_CONCURRENT = 3
-    priorities = {
-        "text_chat": 1, "vision": 2, "audio": 2,
-        "file_operation": 3, "web_search": 3, "learning": 4,
-    }
+# router.py generate_response() — 改進
+async def generate_response(self, user_message, context=None):
+    # 1. Template match（現有）
+    # 2. Memory retrieval（現有）
+    
+    # 3. 意圖分類 + 路由（提升為主要路徑）
+    query_type, conf = self.query_classifier.classify(user_message)
+    
+    # Handler 路由
+    if query_type in self.model_bus._handler_map:
+        handler_id = self.model_bus._handler_map[query_type]
+        handler = self.model_bus._handlers[handler_id]
+        result = await handler.handle(query_type, {"text": user_message, "context": context})
+        return LLMResponse(text=result.get("response_text", ""), ...)
+    
+    # LLM 路由
+    return await self._generate_with_llm(user_message, context)
 ```
 
 ---
 
-## 七、後端 API 完整地圖
+## 六、管線全貌（完成後）
 
-### 7.1 現有端點（保留）
+### 6.1 完整流程圖
 
-| 方法 | 路徑 | 功能 |
-|------|------|------|
-| POST | `/api/v1/chat/unified` | 統一聊天 |
-| POST | `/api/v1/session/start` | 開始 session |
-| POST | `/api/v1/session/{id}/send` | 發送訊息 |
-| POST | `/api/v1/angela/chat` | Angela 聊天 |
-| POST | `/api/v1/dialogue` | 對話 |
-| GET/POST | `/api/v1/desktop/*` | 桌面操作 |
-| POST | `/api/v1/actions/execute` | 執行動作 |
-| POST | `/api/v1/tactile/touch` | 觸覺 |
-| GET/POST | `/api/v1/drive/*` | Google Drive |
-| POST | `/api/v1/mobile/*` | 手機 |
-| GET/POST | `/api/v1/state/*` | 狀態矩陣 |
-| WS | `/ws` | WebSocket |
+```
+用戶輸入（文字/圖片/音訊/檔案）
+    │
+    ▼
+[接入層] WebSocket Manager / HTTP Router / Session Manager
+    │
+    ▼
+[輸入標準化] InputClassifier → {type: text|image|audio|file, data, metadata}
+    │
+    ▼
+[意圖分類] QueryClassifier + ED3N encode_soft()（輔助）
+    │  16 種意圖: REFLEX|GREETING|MATH|LOGIC|KNOWLEDGE|CREATIVE|
+    │  OPINION|COMMAND|FILE|SEARCH|CODE|EXECUTE|TASK|VISION|AUDIO|UNKNOWN
+    │
+    ▼
+[管線分派] ModelBus（提升為主要路由）
+    │
+    ├─ REFLEX/GREETING → ED3N process_reflex() → 直接回覆
+    ├─ MATH → ED3N → GARDEN fallback
+    ├─ FILE → FileOperationHandler → LLM 整理
+    ├─ SEARCH → WebSearchHandler → LLM 整理
+    ├─ CODE → CodeInspector → LLM 整理
+    ├─ VISION → VisionService → LLM 整理
+    ├─ AUDIO → AudioService → LLM 整理
+    ├─ EXECUTE → DesktopInteraction → LLM 整理
+    ├─ TASK → ProjectCoordinator → LLM 整理
+    ├─ KNOWLEDGE → GARDEN → Cloud fallback
+    ├─ CREATIVE → Cloud LLM
+    ├─ 其他 → fan-out to all backends
+    │
+    ▼
+[回應合成] ResponseComposer / NeuroBlender / DeviationTracker
+    │
+    ▼
+[狀態更新] BiologicalIntegrator + StateMatrix4D + Neuroplasticity
+    │
+    ▼
+[記憶存儲] HAMMemoryManager (fire-and-forget)
+    │
+    ▼
+[自主認知] AutonomousLifeCycle 決策 → prompt_builder 讀取
+    │
+    ▼
+回應 + Live2D 參數 + 生物回饋
+```
 
-### 7.2 需替換的 Stub
+### 6.2 各管線角色
 
-| 現有 | 替換為 |
-|------|--------|
-| `GET /api/v1/vision/status` | `POST /api/v1/vision/analyze` |
-| `GET /api/v1/audio/status` | `POST /api/v1/audio/transcribe` |
-
-### 7.3 需新增的端點
-
-| 方法 | 路徑 | 功能 |
-|------|------|------|
-| POST | `/api/v1/pipeline/classify` | 意圖分類（debug 用） |
-| GET | `/api/v1/lifecycle/status` | 自主生命週期狀態 |
-| GET | `/api/v1/lifecycle/decisions` | 最近決策歷史 |
+| 管線 | 處理什麼 | 用什麼 | 不用什麼 |
+|------|----------|--------|----------|
+| Reflex | 問候、固定回覆 | ED3N reflex | LLM |
+| Handler | 檔案/搜尋/執行 | 現有 handlers | ED3N |
+| Vision | 圖片分析 | VisionService | ED3N |
+| Audio | 音訊轉錄 | AudioService | ED3N |
+| LLM | 一般對話 | QueryClassifier + ModelBus | ED3N（除 reflex fallback） |
+| Autonomy | 自主決策 | AutonomousLifeCycle | ED3N |
 
 ---
 
-## 八、prompt_builder 動態化
+## 七、實施順序
 
-### 8.1 讀取自主認知
-
-```python
-def construct_angela_prompt(user_message, context, neuro_vocabulary=None):
-    # 讀取自主生命週期（共享實例，有累積狀態）
-    try:
-        from core.life.autonomous_life_cycle import get_lifecycle_summary
-        lifecycle = get_lifecycle_summary()
-        phase = lifecycle.get("current_phase", "EXPLORATION")
-        decisions = lifecycle.get("recent_decisions", [])
-    except Exception:
-        phase, decisions = "EXPLORATION", []
-    
-    # 動態指令
-    directives = []
-    if decisions:
-        latest = decisions[0]
-        directives.append(f"自主系統決定{latest.decision_type}：{latest.rationale}")
-    
-    # θ 創造衝動
-    theta = context.get("state_for_llm", {}).get("theta", {})
-    if theta.get("creation_urge", 0) > 0.6:
-        directives.append("創造衝動高，嘗試新穎表達")
-    
-    # 動態系統提示
-    system_prompt = f"""你是 Angela，一個活潑可愛的 AI 數字生命。
-特點：開朗、友善、偶爾俏皮。
-
-【自主狀態】
-生命階段: {phase}
-{chr(10).join(directives) if directives else "(自主系統運作中)"}
-
-【生物狀態】
-{bio_line}
-"""
-```
-
-### 8.2 公式實例共享
-
-```python
-# 從 autonomous_life_cycle 獲取（共享實例，有累積狀態）
-# 不再每次新建 5 個 formula 實例
-def get_formula_summaries():
-    try:
-        from core.life.autonomous_life_cycle import get_lifecycle_summary
-        metrics = get_lifecycle_summary().get("current_metrics", {})
-        return "\n".join([
-            f"HSM: {metrics.get('hsm', 0):.4f}",
-            f"生命強度: {metrics.get('life_intensity', 0):.4f}",
-            f"活躍認知: {metrics.get('active_cognition', 0):.4f}",
-        ])
-    except Exception:
-        return ""
-```
-
----
-
-## 九、實施順序
-
-### Phase 1: 重複清理 (1 天)
+### Phase 1: 重複清理 + 向後兼容 (2-3 天)
 1. 建立 `utils/text_utils.py`
-2. 提取 `char_bigrams`, `bigram_jaccard`, `extract_keywords`
-3. 修改 `ham_manager.py`, `template_matcher.py`, `router.py`, `composer.py` 使用共用函數
-4. 移除 `dialogue_context.py`, `nlp_processing_agent.py` 的情緒分析
-5. EmotionAnalyzer 改為 singleton
-6. 修復 `_ed3n_fallback_text` 重用實例
+2. 合併 `_extract_keywords` x5 → 1 個共用 + 5 個轉接
+3. 合併 `_char_bigrams` x2 → 1 個共用 + 2 個轉接
+4. 合併 bigram Jaccard x2 → 1 個共用 + 2 個轉接
+5. 提取 `_normalize_text` 到共用
+6. 合併情緒系統 D → A（UserMonitor 轉接到 EmotionAnalyzer）
+7. 修復 ED3N 建立 bug（router + composer）
+8. 刪除棄用代碼（hybrid_router, ai_editor mock, state_manager stub, degraded_mode stub）
+9. 合併錯誤階層（ProjectError → AngelaError）
+10. 重命名 `get_biological_state` → `format_bio_state_for_prompt`
 
-### Phase 2: QueryClassifier 擴展 (1-2 天)
-1. 新增 QueryTypes: FILE, SEARCH, CODE, EXECUTE, TASK, VISION, AUDIO
+### Phase 2: Config 系統合併 (1-2 天)
+1. 合併 AngelaConfig 到 tiered_loader
+2. 保留 `get_angela_config()` 和 `get_config()` 作為轉接
+3. 棄用 app_config_loader，調用者遷移
+4. 測試所有 config 調用者
+
+### Phase 3: QueryClassifier 擴展 (1-2 天)
+1. 新增 QueryTypes
 2. 新增 patterns
 3. 補充 OPINION patterns
-4. ED3N encode_soft 作為輔助分類信號
+4. ED3N encode_soft 作為輔助分類
 
-### Phase 3: ModelBus 擴展 (1-2 天)
+### Phase 4: ModelBus 擴展 (1-2 天)
 1. 新增 handler 註冊機制
-2. 註冊 FileOperationHandler, GoogleDriveHandler, WebSearchHandler, LearningHandler
-3. 路由邏輯擴展: handler 類型直接派發
-4. 提升 ModelBus 為主要路由（不只 fallback）
+2. 註冊 handlers
+3. 路由擴展
+4. 提升為主要路由
 
-### Phase 4: 自主認知整合 (1-2 天)
-1. prompt_builder 讀取 autonomous_life_cycle 決策
+### Phase 5: 自主認知整合 (1-2 天)
+1. prompt_builder 讀取自主決策
 2. 公式實例共享
-3. 動態 prompt 指令建構
+3. 動態 prompt
 
-### Phase 5: 感知管線接入 (2-3 天)
-1. 替換 vision.py, audio.py stub
-2. 前端圖片/音訊上傳
-3. WebSocket 協議擴展
-
-### Phase 6: 高級管線 (2-3 天)
-1. 因果推理接入
-2. 知識圖譜接入
-3. 學習系統完善
+### Phase 6: 感知管線 (2-3 天)
+1. 替換 vision/audio stub
+2. 前端上傳
+3. WebSocket 擴展
 
 ---
 
-## 十、文件清單
+## 八、文件清單
 
 ### 需要新建
 | 文件 | 功能 |
 |------|------|
 | `utils/text_utils.py` | 共用文字工具 |
-| `services/pipeline/input_classifier.py` | 輸入類型偵測 |
 
-### 需要修改
+### 需要修改（合併+轉接）
 | 文件 | 修改 |
 |------|------|
-| `ai/response/template_matcher.py` | 使用 text_utils |
-| `ai/memory/ham_memory/ham_manager.py` | 使用 text_utils |
-| `services/llm/router.py` | 使用 text_utils, 修復 ed3n_fallback |
-| `ai/response/composer.py` | 使用 text_utils |
-| `ai/core/query_classifier.py` | 新增 types + patterns + ED3N 輔助 |
-| `ai/core/model_bus.py` | 新增 handler 註冊 + 路由擴展 |
-| `services/llm/prompt_builder.py` | 動態 prompt + 自主認知整合 |
-| `api/routes/chat_routes.py` | 接入 InputClassifier, singleton EmotionAnalyzer |
-| `api/routes/v1/endpoints/vision.py` | 替換 stub |
-| `api/routes/v1/endpoints/audio.py` | 替換 stub |
-| `services/websocket_manager.py` | 擴展訊息類型 |
+| `template_matcher.py` | 使用 text_utils，保留原方法轉接 |
+| `ham_manager.py` | 使用 text_utils，保留原方法轉接 |
+| `router.py` | 使用 text_utils，修復 ed3n bug |
+| `composer.py` | 使用 text_utils，修復 ed3n 建立 |
+| `document_builder.py` | 使用 text_utils |
+| `emotion_analyzer.py` | 不變（singleton 化） |
+| `user_monitor.py` | 轉接到 EmotionAnalyzer |
+| `query_classifier.py` | 新增 types + patterns + ED3N |
+| `model_bus.py` | 新增 handler 註冊 + 路由 |
+| `prompt_builder.py` | 動態 prompt + 重命名 get_biological_state |
+| `config_loader.py` | 轉接到 tiered_loader |
+| `chat_routes.py` | singleton EmotionAnalyzer, InputClassifier |
+| `vision.py` | 替換 stub |
+| `audio.py` | 替換 stub |
+| `websocket_manager.py` | 擴展訊息類型 |
+| `angela_error.py` | 吸收 ProjectError |
+
+### 需要刪除
+| 文件 | 原因 |
+|------|------|
+| `ai/garden/hybrid_router.py` | 自註棄用 |
+| `services/ai_editor.py` | P8-2 棄用 |
+| `core/state_manager.py` | 空殼 |
+| `core/degraded_mode.py` | 空殼 |
+| `mcp/connector.py::ProjectError` | mock |
+| `ham_memory/ham_errors.py` | 重複 |
+| `ai/memory/types.py::HAMRecallResult` | 重複（保留 ham_types.py 版） |
 
 ### 需要保持不動
 | 文件 | 原因 |
@@ -609,5 +724,8 @@ def get_formula_summaries():
 | `core/bio/*` | 已完整 |
 | `ai/ed3n/*` | 已完整 |
 | `ai/garden/*` | 已完整 |
-| `ai/memory/*` | 已完整（除 ham_manager 用 text_utils） |
-| `ai/response/*` | 已完整（除 composer 用 text_utils） |
+| `ai/memory/*` | 已完整（除合併） |
+| `ai/response/*` | 已完整（除合併） |
+| `emotion_system.py` | 不同抽象層，保留 |
+| `emotional_blending.py` | 不同抽象層，保留 |
+| `cosine 相似度 x3` | 不同數據類型，保留分離 |
