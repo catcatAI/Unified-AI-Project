@@ -236,7 +236,7 @@ class FragmentComposer:
 
         fragments = self._split_template(template_content, context)
 
-        selected_fragments = self._select_fragments([f.id for f in fragments], context)
+        selected_fragments = fragments
 
         response_text = self._assemble_fragments(selected_fragments, context)
 

@@ -4,6 +4,7 @@
 import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -53,8 +54,16 @@ def get_biological_state(context=None) -> str:
     return "生物狀態：尚未初始化"
 
 
+_formula_cache = None
+_formula_cache_time = 0
+_FORMULA_CACHE_TTL = 60
+
 def get_formula_summaries() -> str:
     """Compute 5 theoretical formulas and return a formatted string."""
+    global _formula_cache, _formula_cache_time
+    if _formula_cache is not None and (time.time() - _formula_cache_time) < _FORMULA_CACHE_TTL:
+        return _formula_cache
+
     lines = []
     try:
         from core.hsm_formula_system import HSMFormulaSystem
@@ -93,7 +102,10 @@ def get_formula_summaries() -> str:
             lines.append("非悖論共存: 未激活")
     except (ImportError, AttributeError) as e:
         logger.debug(f"NonParadox formula unavailable: {e}")
-    return "\n".join(lines) if lines else ""
+    result = "\n".join(lines) if lines else ""
+    _formula_cache = result
+    _formula_cache_time = time.time()
+    return result
 
 
 def construct_angela_prompt(

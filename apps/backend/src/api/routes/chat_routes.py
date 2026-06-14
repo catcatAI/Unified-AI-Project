@@ -188,6 +188,25 @@ async def _handle_chat_request(
         except Exception:
             pass
 
+        retrieved_ctx = []
+        if history and len(history) > 0:
+            try:
+                ed3n = _get_ed3n_engine()
+                query_keys = set(ed3n.dictionary.encode(user_message))
+                for entry in history:
+                    content = entry.get("content", "")
+                    if not content:
+                        continue
+                    entry_keys = set(ed3n.dictionary.encode(content))
+                    overlap = len(query_keys & entry_keys)
+                    if overlap > 0:
+                        retrieved_ctx.append({**entry, "relevance": float(overlap)})
+                retrieved_ctx.sort(key=lambda x: x["relevance"], reverse=True)
+                retrieved_ctx = retrieved_ctx[:5]
+            except Exception:
+                pass
+        context["retrieved_context"] = retrieved_ctx
+
         _llm_response = await asyncio.wait_for(
             _chat_svc.generate_response(user_message, user_name, context=context),
             timeout=_http_timeout,

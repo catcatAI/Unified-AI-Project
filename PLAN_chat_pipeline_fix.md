@@ -3,7 +3,7 @@
 **日期:** 2026-06-14
 **基於:** 完整代碼審計（23 個問題，3 個 CRITICAL）
 **目標:** 重構整個聊天管線——session 隔離、ED3N 輸入檢索、30 條歷史分配、模板/記憶命中作為上下文、命中分數分離、持續學習、完整路由
-**狀態:** Phase A/D/E/F 已完成，Phase B/C 已優化（使用現有檢索系統）
+**狀態:** IMP-1~5 已完成
 
 ---
 
@@ -490,3 +490,152 @@ await manager.send_personal_message({
 | `services/websocket_manager.py` | 移除 debug patch、回應含 hit_score/hit_source |
 | `services/chat_service.py` | 後處理改為 metadata-only |
 | `ai/response/composer.py` | 修復 fragment 記憶體洩漏 |
+
+### Bug 修復（驗證後發現）
+| Bug | 文件 | 修復 |
+|-----|------|------|
+| AutoDecision/AutoBackendChoice 未導入 | `router.py:35-38,1016,1046` | 模組級導入 + None guard |
+| fragment compose 失敗 | `composer.py:239` | `_select_fragments` → 直接使用 `fragments` |
+
+---
+
+## 🔧 待改進項目（已完成）
+
+### IMP-1：填充 retrieved_context（中優先級）✅
+
+**現狀:** prompt_builder.py 有 `retrieved_context` 區塊（line 208-213），但沒有任何代碼填充它。
+
+**目標:** 用 ED3N 在 session 歷史中搜尋相關訊息，注入 prompt。
+
+**方案:** 在 `chat_routes.py` 的 `_handle_chat_request` 中：
+```python
+# 在 context 建構完成後、呼叫 generate_response 前：
+retrieved = []
+if history:
+    query_keys = ed3n.dictionary.encode(user_message)
+    for msg in history:
+        msg_keys = ed3n.dictionary.encode(msg.get("content", ""))
+        overlap = len(set(query_keys) & set(msg_keys))
+        if overlap > 0:
+            retrieved.append({**msg, "relevance": overlap})
+    retrieved.sort(key=lambda x: x["relevance"], reverse=True)
+    retrieved = retrieved[:5]
+context["retrieved_context"] = retrieved
+```
+
+**文件:** `chat_routes.py`
+**插入位置:** line ~165（state_for_llm 之後，generate_response 之前）
+**風險:** 低——ED3N dictionary.encode <10ms
+**依賴:** 需要 ED3N engine 單例（`_get_ed3n_engine()` 已存在於 chat_routes.py）
+
+---
+
+### IMP-2：Session 歷史擴展到 30 條（低優先級）✅
+
+**現狀:** `websocket_manager.py` 的 `_MAX_HISTORY = 10`，存 10 對 = 20 entries。
+
+**目標:** 擴展到 30 對 = 60 entries，讓 ED3N 檢索池更大。
+
+**方案:** 修改 `_MAX_HISTORY` 從 10 → 30。
+
+**文件:** `websocket_manager.py:23`
+**風險:** 低——每個 session 多佔 ~40 entries × ~100 bytes ≈ 4KB
+**注意:** prompt_builder 仍只取最後 10 條進 LLM，多出的 20 條只供 ED3N 檢索
+
+---
+
+### IMP-3：異步記憶存儲（低優先級）✅
+
+**現狀:** 每次對話後沒有自動存入 HAM 長期記憶。
+
+**目標:** 對話結束後 fire-and-forget 存入 HAM，讓未來的記憶檢索能找到更多歷史。
+
+**方案:** 在 `chat_service.py` 的 `generate_response` 中：
+```python
+# 回應生成後、return 前：
+if self._llm_service and hasattr(self._llm_service, 'memory_manager'):
+    try:
+        await self._llm_service.memory_manager.store_experience(
+            raw_data={"user": user_message, "assistant": response.text},
+            data_type="conversation",
+            keywords=[],  # 自動提取
+        )
+    except Exception:
+        pass  # best-effort
+```
+
+**文件:** `chat_service.py`
+**插入位置:** line ~74（continuous learning 之後，return 之前）
+**風險:** 低——best-effort，失敗不影響回應
+**注意:** 需要確認 `memory_manager` 在 `AngelaLLMService` 上可用
+
+---
+
+### IMP-4：模板 keywords 改進（中優先級）✅
+
+**現狀:** `angela_memory.json` 的 keywords 是完整問句（如 `"喵?"`），需要完全一樣才命中。
+
+**目標:** keywords 改為單個詞/短語，提高觸發率。
+
+**方案:** 
+1. 保留現有完整問句 keywords（向後兼容）
+2. 新增短語 keywords（如 `["喵", "貓", "cat"]`）
+3. 降低 template_matcher 的相似度閾值
+
+**文件:** `angela_memory.json`, `template_matcher.py`
+**風險:** 中——可能增加誤匹配
+
+---
+
+### IMP-5：prompt_builder formula summaries 緩存（低優先級）✅
+
+**現狀:** `get_formula_summaries()` 每次 prompt 建構都實例化 5 個 formula system。
+
+**目標:** 緩存結果，不每次重建。
+
+**方案:** 
+```python
+_formula_cache = None
+_formula_cache_time = 0
+
+def get_formula_summaries():
+    global _formula_cache, _formula_cache_time
+    if _formula_cache and (time.time() - _formula_cache_time) < 60:
+        return _formula_cache
+    # ... 原有邏輯 ...
+    _formula_cache = result
+    _formula_cache_time = time.time()
+    return result
+```
+
+**文件:** `prompt_builder.py:176`
+**風險:** 低——formula 系統狀態變化慢，60 秒緩存合理
+
+---
+
+## 📋 實施結果
+
+### IMP-1: retrieved_context 填充
+- **文件:** `chat_routes.py:191-208`
+- **改動:** 用 `_get_ed3n_engine()` 取 ED3N 單例，對 user_message + history 用 `dictionary.encode()` 做 keyword set intersection，取 top-5 相關歷史
+- **格式:** `context["retrieved_context"] = [{"role", "content", "relevance"}]`，符合 prompt_builder 的 `[相關上下文]` 區塊
+
+### IMP-2: Session 歷史 30 條
+- **文件:** `websocket_manager.py:23`
+- **改動:** `_MAX_HISTORY` 從 10 → 30
+- **效果:** ED3N 檢索池從 10 條擴展到 30 條，prompt 仍只取最後 10 條進 LLM
+
+### IMP-3: 異步記憶存儲
+- **文件:** `chat_service.py:76-82`
+- **改動:** 在 `generate_response` 的 continuous learning 之後，用 `getattr` guard + `await mm.store_experience()` fire-and-forget
+- **guard:** `getattr(self._llm_service, 'enable_memory_enhancement', False)` + `getattr(self._llm_service, 'memory_manager', None)`
+
+### IMP-4: 模板 keywords 改進
+- **文件:** `angela_memory.json`
+- **改動:** 每個模板的 keywords 從 1 個完整問句擴展到 3-5 個短語（如 `["喵", "貓", "cat"]`）
+- **效果:** template_matcher 的 substring matching 觸發率大幅提升
+
+### IMP-5: formula summaries 緩存
+- **文件:** `prompt_builder.py:56-107`
+- **改動:** 新增 `_formula_cache`/`_formula_cache_time` 模組級變數，60 秒 TTL 緩存
+- **效果:** 避免每次 prompt 建構實例化 5 個 formula system

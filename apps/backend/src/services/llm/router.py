@@ -31,6 +31,12 @@ from typing import Dict, Any, Optional, List
 from core.interfaces.service_registry import get_registry
 from core.interfaces.protocols import ChatMessage, LLMResponse, ChatResponse
 
+try:
+    from ai.response.neuro_auto_selector import AutoDecision, AutoBackendChoice
+except ImportError:
+    AutoDecision = None
+    AutoBackendChoice = None
+
 # LLM provider backends
 from services.llm.providers.base import BaseLLMBackend
 from services.llm.providers.registry import LLMBackend
@@ -1013,7 +1019,7 @@ class AngelaLLMService:
     async def _post_process_response(
         self, response: LLMResponse, user_message: str, context: Dict[str, Any], start_time: float
     ) -> LLMResponse:
-        if self.llm_mode == "auto" and self.auto_selector is not None:
+        if self.llm_mode == "auto" and self.auto_selector is not None and AutoDecision is not None:
             elapsed = (time.time() - start_time) * 1000
             self.auto_selector.record_result(
                 AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
@@ -1043,7 +1049,7 @@ class AngelaLLMService:
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout", exc_info=True)
             self._record_route_learning(context, "timeout", self._gen_timeout * 1000)
-            if self.llm_mode == "auto" and self.auto_selector is not None:
+            if self.llm_mode == "auto" and self.auto_selector is not None and AutoDecision is not None:
                 elapsed = (time.time() - start_time) * 1000
                 self.auto_selector.record_result(
                     AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),

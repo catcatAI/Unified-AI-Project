@@ -18,9 +18,9 @@ from services.connection_session import get_session_manager
 
 logger = logging.getLogger(__name__)
 
-# Per-session conversation history (max 10 messages per session)
+# Per-session conversation history (max 30 messages per session)
 _session_history = {}  # session_id -> list of {"role": str, "content": str}
-_MAX_HISTORY = 10
+_MAX_HISTORY = 30
 
 
 class ConnectionManager:

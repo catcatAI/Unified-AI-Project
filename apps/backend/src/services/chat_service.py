@@ -73,6 +73,17 @@ class ChatService:
             except Exception as e:
                 logger.warning("Continuous learning interaction failed: %s", e)
 
+        if getattr(self._llm_service, 'enable_memory_enhancement', False):
+            try:
+                mm = getattr(self._llm_service, 'memory_manager', None)
+                if mm:
+                    await mm.store_experience(
+                        raw_data={"user": user_message, "assistant": response.text},
+                        data_type="conversation",
+                    )
+            except Exception as e:
+                logger.debug("Memory store failed: %s", e)
+
         return response
 
     def _post_process_response(self, response, context: dict):
