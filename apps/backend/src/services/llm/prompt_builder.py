@@ -58,6 +58,54 @@ _formula_cache = None
 _formula_cache_time = 0
 _FORMULA_CACHE_TTL = 60
 
+# Module-level formula singletons (avoid creating fresh instances each time)
+_hsm_instance = None
+_life_intensity_instance = None
+_active_cognition_instance = None
+_cdm_instance = None
+_non_paradox_instance = None
+
+
+def _get_hsm():
+    global _hsm_instance
+    if _hsm_instance is None:
+        from core.hsm_formula_system import HSMFormulaSystem
+        _hsm_instance = HSMFormulaSystem()
+    return _hsm_instance
+
+
+def _get_life_intensity():
+    global _life_intensity_instance
+    if _life_intensity_instance is None:
+        from core.life_intensity_formula import LifeIntensityFormula
+        _life_intensity_instance = LifeIntensityFormula()
+    return _life_intensity_instance
+
+
+def _get_active_cognition():
+    global _active_cognition_instance
+    if _active_cognition_instance is None:
+        from core.active_cognition_formula import ActiveCognitionFormula
+        _active_cognition_instance = ActiveCognitionFormula()
+    return _active_cognition_instance
+
+
+def _get_cdm():
+    global _cdm_instance
+    if _cdm_instance is None:
+        from core.cdm_dividend_model import CDMCognitiveDividendModel
+        _cdm_instance = CDMCognitiveDividendModel()
+    return _cdm_instance
+
+
+def _get_non_paradox():
+    global _non_paradox_instance
+    if _non_paradox_instance is None:
+        from core.non_paradox_existence import NonParadoxExistence
+        _non_paradox_instance = NonParadoxExistence()
+    return _non_paradox_instance
+
+
 def get_formula_summaries() -> str:
     """Compute 5 theoretical formulas and return a formatted string."""
     global _formula_cache, _formula_cache_time
@@ -66,36 +114,27 @@ def get_formula_summaries() -> str:
 
     lines = []
     try:
-        from core.hsm_formula_system import HSMFormulaSystem
-
-        lines.append(f"HSM: {HSMFormulaSystem().calculate_hsm():.4f}")
+        lines.append(f"HSM: {_get_hsm().calculate_hsm():.4f}")
     except (ImportError, AttributeError) as e:
         logger.debug(f"HSM formula unavailable: {e}")
     try:
-        from core.life_intensity_formula import LifeIntensityFormula
-
-        lines.append(f"生命強度: {LifeIntensityFormula().calculate_life_intensity():.4f}")
+        lines.append(f"生命強度: {_get_life_intensity().calculate_life_intensity():.4f}")
     except (ImportError, AttributeError) as e:
         logger.debug(f"LifeIntensity formula unavailable: {e}")
     try:
-        from core.active_cognition_formula import ActiveCognitionFormula
-
-        lines.append(f"活躍認知: {ActiveCognitionFormula().calculate_active_cognition():.4f}")
+        lines.append(f"活躍認知: {_get_active_cognition().calculate_active_cognition():.4f}")
     except (ImportError, AttributeError) as e:
         logger.debug(f"ActiveCognition formula unavailable: {e}")
     try:
-        from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveInvestment, CognitiveActivity
-
-        cdm = CDMCognitiveDividendModel()
+        from core.cdm_dividend_model import CognitiveInvestment, CognitiveActivity
+        cdm = _get_cdm()
         inv = CognitiveInvestment(activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5)
         output = cdm.calculate_life_sense_output(inv)
         lines.append(f"CDM 產出: {output.output_amount:.2f} (品質: {output.quality_score:.2f})")
     except (ImportError, AttributeError) as e:
         logger.debug(f"CDM formula unavailable: {e}")
     try:
-        from core.non_paradox_existence import NonParadoxExistence
-
-        state = NonParadoxExistence().calculate_coexistence_state("angela_dialogue")
+        state = _get_non_paradox().calculate_coexistence_state("angela_dialogue")
         if state:
             lines.append(f"非悖論共存: 相干性 {state.get('coherence', 0):.2f}")
         else:
@@ -106,6 +145,58 @@ def get_formula_summaries() -> str:
     _formula_cache = result
     _formula_cache_time = time.time()
     return result
+
+
+def get_autonomous_decisions() -> str:
+    """Get recent autonomous lifecycle decisions for prompt context."""
+    try:
+        from core.life.autonomous_life_cycle import AutonomousLifeCycle
+        lifecycle = AutonomousLifeCycle()
+        summary = lifecycle.get_lifecycle_summary()
+
+        lines = []
+        current = summary.get("current_phase", {})
+        if current:
+            lines.append(f"當前階段: {current.get('cn_name', current.get('name', 'unknown'))}")
+
+        metrics = summary.get("current_metrics", {})
+        if metrics:
+            lines.append(f"HSM: {metrics.get('hsm_value', 0):.3f}")
+            lines.append(f"生命強度: {metrics.get('life_intensity', 0):.3f}")
+
+        decisions = summary.get("recent_decisions", [])
+        if decisions:
+            lines.append("最近決策:")
+            for d in decisions[:3]:
+                lines.append(f"  - {d.get('type', 'unknown')}: {d.get('triggered_by', 'unknown')} (信心: {d.get('confidence', 0):.2f})")
+
+        stats = summary.get("statistics", {})
+        if stats:
+            lines.append(f"探索次數: {stats.get('explorations_triggered', 0)}")
+
+        return "\n".join(lines) if lines else ""
+    except Exception as e:
+        logger.debug(f"Autonomous decisions unavailable: {e}")
+        return ""
+
+
+def get_theta_state() -> str:
+    """Get theta router state for prompt context."""
+    try:
+        from core.engine.theta_router import ThetaRouter
+        router = ThetaRouter()
+        report = router.get_routing_report()
+
+        lines = []
+        if report.get("creation_urge", 0) > 0.6:
+            lines.append(f"創造衝動高: {report.get('creation_urge', 0):.2f}（建議探索新話題）")
+        if report.get("theta_negativity", 0) > 0.3:
+            lines.append(f"錯配質疑: {report.get('theta_negativity', 0):.2f}（需要校正）")
+
+        return "\n".join(lines) if lines else ""
+    except Exception as e:
+        logger.debug(f"Theta state unavailable: {e}")
+        return ""
 
 
 def construct_angela_prompt(
@@ -192,6 +283,22 @@ def construct_angela_prompt(
 【理論公式指標】
 {formula_block}"""
 
+    # Autonomous cognition decisions
+    autonomous_block = get_autonomous_decisions()
+    if autonomous_block:
+        system_prompt += f"""
+
+【自主認知決策】
+{autonomous_block}"""
+
+    # Theta router state (only when significant)
+    theta_state = get_theta_state()
+    if theta_state:
+        system_prompt += f"""
+
+【θ 路由狀態】
+{theta_state}"""
+
     messages = [{"role": "system", "content": system_prompt.strip()}]
 
     user_profile = context.get("user_profile", {})
@@ -212,6 +319,22 @@ def construct_angela_prompt(
             content = f.get("content", f.get("snippet", ""))[:1500]
             drive_block += f"📄 {name}:\n{content}\n---\n"
         messages[0]["content"] += drive_block
+
+    image_analysis = context.get("image_analysis")
+    if image_analysis:
+        filename = image_analysis.get("filename", "unknown")
+        analysis = image_analysis.get("analysis", "")
+        if isinstance(analysis, dict):
+            analysis = json.dumps(analysis, ensure_ascii=False, indent=2)[:2000]
+        else:
+            analysis = str(analysis)[:2000]
+        image_block = f"""
+
+【圖片分析結果】
+檔案名稱: {filename}
+分析內容:
+{analysis}"""
+        messages[0]["content"] += image_block
 
     history = context.get("history", [])
     for h in history[-10:]:
@@ -236,5 +359,7 @@ __all__ = [
     "_get_llm_config",
     "get_biological_state",
     "get_formula_summaries",
+    "get_autonomous_decisions",
+    "get_theta_state",
     "construct_angela_prompt",
 ]

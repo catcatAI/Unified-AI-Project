@@ -216,6 +216,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.error(f"[ModuleManager] Initialization failed, continuing without module system: {e}", exc_info=True)
 
+    # Register handlers with ModelBus
+    try:
+        from ai.core.model_bus import ModelBus
+        bus = ModelBus()
+        from services.handlers.file_operation_handler import FileOperationHandler
+        from services.handlers.web_search_handler import WebSearchHandler
+        bus.register_handler("file_ops", FileOperationHandler(), ["file"])
+        bus.register_handler("web_search", WebSearchHandler(), ["search"])
+        logger.info("[ModelBus] Handlers registered: file_ops, web_search")
+    except Exception as e:
+        logger.warning(f"[ModelBus] Handler registration failed: {e}")
+
     # Initialize BiologicalIntegrator subsystems
     global _bio_integrator_instance
     try:

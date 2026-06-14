@@ -51,10 +51,13 @@ class ModelBus:
     - Fan-out to multiple models in parallel when domain overlaps
     - Track which domains each model owns (for training deconfliction)
     - Sync knowledge between models (high-signal patterns)
+    - Route to handlers for FILE/SEARCH/CODE/EXECUTE/TASK intents
     """
 
     def __init__(self, default_timeout: float = 30.0) -> None:
         self._registry: Dict[str, Tuple[Any, ModelCapability]] = {}
+        self._handlers: Dict[str, Any] = {}
+        self._handler_map: Dict[str, str] = {}
         self._query_classifier: Any = None
         self.default_timeout = timeout_value("ai.model_bus.default_timeout", default_timeout)
 
@@ -122,6 +125,53 @@ class ModelBus:
         )
         self.register("cloud", backend, cap)
 
+    def register_handler(self, handler_id: str, handler: Any, intent_types: List[str]) -> None:
+        """Register a handler for specific intent types.
+
+        The handler must expose an async ``process(query, context)`` method,
+        or an async ``handle(text, intent)`` method (auto-adapted).
+
+        Args:
+            handler_id: Unique identifier (e.g. "file_ops", "web_search").
+            handler: The handler instance.
+            intent_types: QueryType values this handler handles
+                         (e.g. ["file", "search"]).
+        """
+        adapted = self._adapt_handler(handler)
+        self._handlers[handler_id] = adapted
+        for intent in intent_types:
+            self._handler_map[intent] = handler_id
+        logger.info(
+            "Registered handler '%s' for intents: %s",
+            handler_id,
+            ", ".join(intent_types),
+        )
+
+    def _adapt_handler(self, handler: Any) -> Any:
+        """Wrap a handler to expose process(query, context) interface."""
+        if hasattr(handler, 'process'):
+            return handler
+
+        class _HandlerAdapter:
+            def __init__(self, h):
+                self._handler = h
+
+            async def process(self, query: str, context=None) -> str:
+                intent = (context or {}).get("query_type", "unknown")
+                if hasattr(self._handler, 'handle'):
+                    import inspect
+                    sig = inspect.signature(self._handler.handle)
+                    params = list(sig.parameters.keys())
+                    if len(params) >= 2:
+                        result = await self._handler.handle(query, intent)
+                    else:
+                        result = await self._handler.handle(query)
+                else:
+                    result = ""
+                return result if isinstance(result, str) else str(result)
+
+        return _HandlerAdapter(handler)
+
     # ------------------------------------------------------------------
     # Routing
     # ------------------------------------------------------------------
@@ -173,11 +223,35 @@ class ModelBus:
             results[r.model_id] = r
 
         elif query_type in ("file", "search", "code", "execute", "task"):
-            # Handler-based routing — try ED3N reflex first, then fan-out to candidates
-            r = await self._try_model("ed3n", query, context, query_type)
-            if r.confidence > 0.7:
-                results[r.model_id] = r
-            else:
+            # Handler-based routing — check registered handlers first
+            handler_id = self._handler_map.get(query_type)
+            if handler_id and handler_id in self._handlers:
+                handler = self._handlers[handler_id]
+                try:
+                    t0 = time.perf_counter()
+                    if asyncio.iscoroutinefunction(handler.process):
+                        raw = await asyncio.wait_for(
+                            handler.process(query, context or {"query_type": query_type}),
+                            timeout=self.default_timeout,
+                        )
+                    else:
+                        raw = await asyncio.wait_for(
+                            asyncio.to_thread(handler.process, query, context or {"query_type": query_type}),
+                            timeout=self.default_timeout,
+                        )
+                    elapsed = (time.perf_counter() - t0) * 1000
+                    if raw and isinstance(raw, str) and len(raw) > 0:
+                        results[handler_id] = ModelRouteResult(
+                            model_id=handler_id,
+                            text=raw,
+                            confidence=0.9,
+                            latency_ms=round(elapsed, 3),
+                            domain=query_type,
+                        )
+                except Exception as e:
+                    logger.warning("Handler '%s' failed: %s", handler_id, e)
+            # Fallback to model candidates if no handler result
+            if not results:
                 tasks = [
                     self._try_model(mid, query, context, query_type)
                     for mid in candidates
@@ -284,6 +358,8 @@ class ModelBus:
         """Return diagnostic information about the bus and all registered models."""
         return {
             "registered_models": list(self._registry.keys()),
+            "registered_handlers": list(self._handlers.keys()),
+            "handler_map": dict(self._handler_map),
             "capabilities": {
                 mid: {
                     "tier": cap.tier,
@@ -318,6 +394,13 @@ class ModelBus:
             "creative": ["cloud"],
             "opinion": ["cloud"],
             "command": ["ed3n", "garden"],
+            "file": ["ed3n", "garden", "cloud"],
+            "search": ["ed3n", "garden", "cloud"],
+            "code": ["ed3n", "garden", "cloud"],
+            "execute": ["ed3n", "garden", "cloud"],
+            "task": ["ed3n", "garden", "cloud"],
+            "vision": ["ed3n", "garden", "cloud"],
+            "audio": ["ed3n", "garden", "cloud"],
         }
         candidates = mapping.get(query_type, list(self._registry.keys()))
         return [mid for mid in candidates if mid in self._registry]

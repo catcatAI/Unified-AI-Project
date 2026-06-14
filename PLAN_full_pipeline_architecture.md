@@ -1,9 +1,9 @@
-# 聊天管線完整架構重構計劃 v9
+# 聊天管線完整架構重構計劃 v10
 
 **日期:** 2026-06-14
 **基於:** 12 個代理完整代碼審計（含深度差異分析）
 **目標:** 安全清理 + 擴展 QueryClassifier + ED3N 適當整合 + 完整管線
-**狀態:** 規劃階段
+**狀態:** Phase 1-6 全部完成
 
 ---
 
@@ -434,58 +434,64 @@ def route(self, text, query_type="auto", context=None):
 
 ## 七、實施順序
 
-### Phase 1: 安全清理 (1-2 天)
-1. 建立 `utils/text_utils.py`（char_bigrams, bigram_jaccard, normalize_text）
-2. template_matcher + ham_manager 轉接到共用函數
-3. 刪除棄用代碼（5 個文件）
-4. 修復 ED3N 建立 bug（router + composer）
-5. 修復 FallbackConfigLoader bug（memory_template.py）
-6. 提取共用情緒關鍵字常數 + user_monitor 去重
+### Phase 1: 安全清理 ✅ 完成
+1. ✅ 建立 `utils/text_utils.py`（char_bigrams, bigram_jaccard, normalize_text）
+2. ✅ template_matcher + ham_manager 轉接到共用函數
+3. ✅ 刪除棄用代碼（5 個文件）
+4. ✅ 修復 ED3N 建立 bug（router + composer）
+5. ✅ 修復 FallbackConfigLoader bug（memory_template.py）
+6. ✅ 提取共用情緒關鍵字常數 + user_monitor 去重
 
-### Phase 2: QueryClassifier 擴展 (1-2 天)
-1. 新增 7 個 QueryTypes
-2. 新增 patterns（含 OPINION 補充）
-3. ED3N encode_soft 作為輔助分類
+### Phase 2: QueryClassifier 擴展 ✅ 完成
+1. ✅ 新增 7 個 QueryTypes（FILE, SEARCH, CODE, EXECUTE, TASK, VISION, AUDIO）
+2. ✅ 新增 patterns（含 OPINION 補充）
+3. ✅ ED3N encode_soft 作為輔助分類
 
-### Phase 3: ModelBus 擴展 (1-2 天)
-1. Handler 註冊機制
-2. 註冊 handlers
-3. 路由擴展
-4. 提升為主要路由
+### Phase 3: ModelBus 擴展 ✅ 完成
+1. ✅ Handler 註冊機制（register_handler, _adapt_handler）
+2. ✅ 註冊 handlers（file_ops, web_search）
+3. ✅ 路由擴展（_resolve_candidates for 7 new types）
+4. ✅ 提升為主要路由（handler-first for FILE/SEARCH/CODE/EXECUTE/TASK）
 
-### Phase 4: 自主認知整合 (1-2 天)
-1. prompt_builder 讀取自主決策
-2. 公式實例共享
-3. 動態 prompt
+### Phase 4: 自主認知整合 ✅ 完成
+1. ✅ prompt_builder 讀取自主決策（get_autonomous_decisions）
+2. ✅ 公式實例共享（module-level singletons）
+3. ✅ 動態 prompt（θ 路由狀態 + 理論公式指標）
 
-### Phase 5: 感知管線 (2-3 天)
-1. 替換 vision/audio stub
-2. 前端上傳
-3. WebSocket 擴展
+### Phase 5: 感知管線 ✅ 完成（最小可行範圍）
+1. ✅ VisionService 整合（/vision/analyze endpoint）
+2. ✅ 圖片上下文整合到 prompt_builder（【圖片分析結果】section）
+3. ⏳ 前端上傳（Desktop/Web/Mobile/Pixel — 留待後續）
+4. ⏳ WebSocket 擴展（binary data — 留待後續）
+
+### Phase 6: Handler 註冊 ✅ 完成
+1. ✅ lifespan 中註冊 file_operation_handler + web_search_handler
+2. ✅ ModelBus handler_map 正確映射
 
 ---
 
 ## 八、文件清單
 
 ### 需要新建
-| 文件 | 功能 |
-|------|------|
-| `utils/text_utils.py` | 共用文字工具（char_bigrams, bigram_jaccard, normalize_text） |
-| `core/emotion_constants.py` | 共用情緒關鍵字常數 |
+| 文件 | 功能 | 狀態 |
+|------|------|------|
+| `utils/text_utils.py` | 共用文字工具（char_bigrams, bigram_jaccard, normalize_text） | ✅ 已建立 |
+| `core/emotion_constants.py` | 共用情緒關鍵字常數 | ✅ 已建立 |
 
 ### 需要修改（轉接，不改行為）
-| 文件 | 修改 |
-|------|------|
-| `template_matcher.py` | _char_bigrams + _normalize_text 轉接到 text_utils |
-| `ham_manager.py` | _char_bigrams 轉接到 text_utils |
-| `router.py` | 修復 _ed3n_fallback_text bug |
-| `composer.py` | ED3N 模組級快取 |
-| `memory_template.py` | 修復 FallbackConfigLoader bug |
-| `user_monitor.py` | 使用共用情緒常數 + 去重 |
-| `query_classifier.py` | 新增 types + patterns + ED3N |
-| `model_bus.py` | 新增 handler 註冊 + 路由 |
-| `prompt_builder.py` | 動態 prompt |
-| `chat_routes.py` | singleton EmotionAnalyzer |
+| 文件 | 修改 | 狀態 |
+|------|------|------|
+| `template_matcher.py` | _char_bigrams + _normalize_text 轉接到 text_utils | ✅ 已完成 |
+| `ham_manager.py` | _char_bigrams 轉接到 text_utils | ✅ 已完成 |
+| `router.py` | 修復 _ed3n_fallback_text bug | ✅ 已完成 |
+| `composer.py` | ED3N 模組級快取 | ✅ 已完成 |
+| `memory_template.py` | 修復 FallbackConfigLoader bug | ✅ 已完成 |
+| `user_monitor.py` | 使用共用情緒常數 + 去重 | ✅ 已完成 |
+| `query_classifier.py` | 新增 types + patterns + ED3N | ✅ 已完成 |
+| `model_bus.py` | 新增 handler 註冊 + 路由 | ✅ 已完成 |
+| `prompt_builder.py` | 動態 prompt + image context | ✅ 已完成 |
+| `chat_routes.py` | vision/analyze + chat/with-image endpoints | ✅ 已完成 |
+| `lifespan.py` | 註冊 handlers | ✅ 已完成 |
 
 ### 需要刪除
 | 文件 | 原因 |

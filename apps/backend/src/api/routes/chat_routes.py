@@ -9,7 +9,8 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
-from fastapi import APIRouter, HTTPException, Body, Request
+from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File, Form
+from fastapi.responses import JSONResponse
 
 from api.lifespan import (
     _angela_cfg,
@@ -394,3 +395,87 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "legacy /dialogue and /angela/chat remain temporarily supported."
     )
     return response
+
+
+@router.post("/vision/analyze")
+async def analyze_image(
+    file: UploadFile = File(...),
+    question: str = Form(default="這張圖片裡有什麼？"),
+    session_id: str = Form(default=""),
+) -> Dict[str, Any]:
+    """Analyze an uploaded image using VisionService.
+
+    Accepts image file upload + optional question, returns analysis result.
+    """
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are accepted")
+
+    try:
+        image_data = await file.read()
+        if len(image_data) > 10 * 1024 * 1024:  # 10MB limit
+            raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
+
+        from services.vision_service import VisionService
+        vision = VisionService()
+        result = await vision.process({
+            "image_data": image_data,
+            "filename": file.filename,
+            "question": question,
+        })
+
+        return {
+            "analysis": result,
+            "filename": file.filename,
+            "session_id": session_id,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Vision analysis failed: {e}", exc_info=True)
+        raise RuntimeError(f"Vision analysis failed: {e}")
+
+
+@router.post("/chat/with-image")
+async def chat_with_image(
+    message: str = Form(default=""),
+    file: UploadFile = File(default=None),
+    session_id: str = Form(default=""),
+    user_name: str = Form(default="朋友"),
+) -> Dict[str, Any]:
+    """Chat with optional image context.
+
+    Combines image analysis with chat message for multimodal conversation.
+    """
+    if not session_id:
+        session_id = f"img-{uuid.uuid4().hex[:8]}"
+
+    image_context = None
+    if file and file.content_type and file.content_type.startswith("image/"):
+        try:
+            image_data = await file.read()
+            from services.vision_service import VisionService
+            vision = VisionService()
+            analysis = await vision.process({
+                "image_data": image_data,
+                "filename": file.filename,
+                "question": message or "描述這張圖片",
+            })
+            image_context = {
+                "filename": file.filename,
+                "analysis": analysis,
+            }
+        except Exception as e:
+            logger.warning(f"Image analysis failed, continuing with text only: {e}")
+
+    history = []
+    context = {"user_name": user_name}
+    if image_context:
+        context["image_analysis"] = image_context
+
+    return await _handle_chat_request(
+        user_message=message or "我上傳了一張圖片",
+        user_name=user_name,
+        history=history,
+        session_id=session_id,
+        origin="Human",
+    )
