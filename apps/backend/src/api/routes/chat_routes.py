@@ -83,7 +83,8 @@ def _get_ed3n_engine():
 
 
 async def _handle_chat_request(
-    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human"
+    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human",
+    extra_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Handle chat request request."""
     logger.info(f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
@@ -152,6 +153,8 @@ async def _handle_chat_request(
 
         _chat_svc = await _get_chat_service()
         context = {"user_name": user_name}
+        if extra_context:
+            context.update(extra_context)
         if emotion_result:
             context["emotion"] = emotion_result
         if history:
@@ -478,4 +481,5 @@ async def chat_with_image(
         history=history,
         session_id=session_id,
         origin="Human",
+        extra_context=context if image_context else None,
     )

@@ -496,6 +496,16 @@ class AngelaLLMService:
                 if self.active_backend:
                     self.model_bus.register_cloud(self.active_backend)
 
+                # Register handlers for FILE/SEARCH intents
+                try:
+                    from services.handlers.file_operation_handler import FileOperationHandler
+                    from services.handlers.web_search_handler import WebSearchHandler
+                    self.model_bus.register_handler("file_ops", FileOperationHandler(), ["file"])
+                    self.model_bus.register_handler("web_search", WebSearchHandler(), ["search"])
+                    logger.info("Model Bus handlers registered: file_ops, web_search")
+                except Exception as e:
+                    logger.warning(f"Model Bus handler registration skipped: {e}")
+
                 logger.info("Model Bus initialized with %d models", len(self.model_bus._registry))
             except Exception as e:
                 logger.warning(f"Model Bus initialization skipped: {e}")

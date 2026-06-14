@@ -14,7 +14,17 @@ class FileOperationHandler:
     """Handles file operation intents (organize, move, delete, copy, rename, etc.)."""
 
     def __init__(self, desktop_interaction: Any = None):
-        self.desktop_interaction = desktop_interaction
+        self._desktop_interaction = desktop_interaction
+
+    @property
+    def desktop_interaction(self):
+        if self._desktop_interaction is None:
+            try:
+                from core.engine.desktop_interaction import DesktopInteraction
+                self._desktop_interaction = DesktopInteraction()
+            except Exception as e:
+                logger.warning(f"DesktopInteraction unavailable: {e}")
+        return self._desktop_interaction
 
     async def handle(self, intent: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         operation = params or {}
