@@ -264,6 +264,8 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
         # Trim to max size
         if len(_session_history[session_id]) > _MAX_HISTORY * 2:
             _session_history[session_id] = _session_history[session_id][-_MAX_HISTORY * 2:]
+        _resp_preview = chat_res.get("response_text", "")[:80]
+        logger.info(f"[WebSocket] Chat response sent: {_resp_preview}...")
         await manager.send_personal_message({
             "type": "chat_response",
             "data": {
