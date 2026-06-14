@@ -97,8 +97,6 @@ class MemoryIntegration:
 
             if results and len(results) > 0:
                 best_template, score = results[0]
-                if score < 0.3:
-                    return None
 
                 template_content = best_template.get("content", "")
                 template_id = best_template.get("id", "unknown")

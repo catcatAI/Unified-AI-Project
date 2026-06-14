@@ -65,7 +65,6 @@ class HAMMemoryManager:
             return []
 
         scored = []
-        query_chars = set(query)
         for tpl in candidates:
             keywords = tpl.get("keywords", [])
             if not keywords:

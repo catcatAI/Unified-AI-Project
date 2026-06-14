@@ -282,7 +282,7 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
 
 
 @router.post("/angela/chat")
-async def angela_chat(request: Dict[str, Any] = Body(...)) -> str:
+async def angela_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Execute the angela chat operation."""
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
@@ -293,7 +293,7 @@ async def angela_chat(request: Dict[str, Any] = Body(...)) -> str:
 
 
 @router.post("/dialogue")
-async def dialogue(request: Dict[str, Any] = Body(...)) -> str:
+async def dialogue(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Execute the dialogue operation."""
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
@@ -304,7 +304,7 @@ async def dialogue(request: Dict[str, Any] = Body(...)) -> str:
 
 
 @router.post("/chat/unified")
-async def unified_chat(request: Dict[str, Any] = Body(...)) -> str:
+async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Execute the unified chat operation."""
     user_message = request.get("message", request.get("text", ""))
     context = {

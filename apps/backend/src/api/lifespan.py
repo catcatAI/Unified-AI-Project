@@ -215,6 +215,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.error(f"[ModuleManager] Initialization failed, continuing without module system: {e}", exc_info=True)
 
+    # Initialize BiologicalIntegrator subsystems
+    try:
+        from core.bio.biological_integrator import BiologicalIntegrator
+        _bio = BiologicalIntegrator()
+        await _bio.initialize()
+        logger.info("[Bio] BiologicalIntegrator initialized and integration loop started")
+    except Exception as e:
+        logger.warning(f"[Bio] BiologicalIntegrator initialization failed: {e}")
+
     # Start WebSocket state broadcast background task
     _broadcast_task = None
     try:
