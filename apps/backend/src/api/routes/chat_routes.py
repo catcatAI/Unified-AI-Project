@@ -119,7 +119,7 @@ async def _handle_chat_request(
                 logger.info(f"\U0001f9ee [DualRail] Math task detected from {origin}")
                 verification = await verifier.verify(user_message, user_name)
                 if verification.response_text:
-                    return _build_math_response(verification, matrix, user_message, session_id)
+                    return _build_math_response(verification, matrix, user_message, session_id, _schema_ver, _trunc_msg)
                 is_math = False
         except Exception as math_err:
             logger.warning(f"\u26a0 [DualRail] Math verification failed: {math_err}", exc_info=True)
@@ -213,7 +213,7 @@ async def _handle_chat_request(
         raise HTTPException(status_code=500, detail="internal server error")
 
 
-def _build_math_response(verification, matrix, user_message: str, session_id: str) -> Dict[str, Any]:
+def _build_math_response(verification, matrix, user_message: str, session_id: str, schema_version: str = "2.0", truncation_message: str = "") -> Dict[str, Any]:
     """Build math response."""
     if verification.needs_clarification:
         emotion, emotion_confidence, emotion_intensity = "confused", 0.7, 0.6
@@ -238,6 +238,8 @@ def _build_math_response(verification, matrix, user_message: str, session_id: st
     return {
         "response_text": verification.response_text,
         "source": "dual_rail",
+        "schema_version": schema_version,
+        "truncation_message": truncation_message,
         "emotion": emotion,
         "emotion_confidence": emotion_confidence,
         "emotion_intensity": emotion_intensity,
