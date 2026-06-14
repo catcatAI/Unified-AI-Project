@@ -63,6 +63,8 @@ class ChatService:
 
         response = await self._llm_service.generate_response(user_message, merged_context)
 
+        response = self._post_process_response(response, merged_context)
+
         if self._continuous_learning:
             try:
                 await self._continuous_learning.process_interaction_async(
@@ -70,6 +72,61 @@ class ChatService:
                 )
             except Exception as e:
                 logger.warning("Continuous learning interaction failed: %s", e)
+
+        return response
+
+    def _post_process_response(self, response, context: dict):
+        """Enrich response with biological/emotional state context.
+
+        Ensures template-matched responses also carry emotional flavor
+        instead of being returned as raw template text.
+        """
+        if not response or not response.text:
+            return response
+
+        bio_state = context.get("bio_state")
+        emotion = context.get("emotion")
+        user_name = context.get("user_name", "")
+
+        if not bio_state and not emotion:
+            return response
+
+        mood = bio_state.get("mood", 0.5) if bio_state else 0.5
+        stress = bio_state.get("stress_level", 0.0) if bio_state else 0.0
+        dominant = bio_state.get("dominant_emotion", "calm") if bio_state else "calm"
+        emo = emotion.get("emotion", "neutral") if emotion else "neutral"
+
+        route = response.metadata.get("route", "") if response.metadata else ""
+
+        if route in ("COMPOSED", "HYBRID") and bio_state:
+            mood_hint = ""
+            if mood > 0.7:
+                mood_hint = "（心情很好）"
+            elif mood < 0.3:
+                mood_hint = "（心情有點低落）"
+
+            stress_hint = ""
+            if stress > 0.7:
+                stress_hint = "（壓力有點大）"
+
+            emo_map = {
+                "happy": "😊", "calm": "😌", "sad": "😔",
+                "angry": "😠", "fear": "😟", "surprise": "😲",
+            }
+            emo_suffix = emo_map.get(emo, "")
+
+            if mood_hint or stress_hint or emo_suffix:
+                suffix_parts = [s for s in [mood_hint, stress_hint, emo_suffix] if s]
+                new_text = response.text.rstrip() + " " + "".join(suffix_parts)
+                response = type(response)(
+                    text=new_text,
+                    backend=response.backend,
+                    model=response.model,
+                    tokens_used=response.tokens_used,
+                    response_time_ms=response.response_time_ms,
+                    confidence=response.confidence,
+                    metadata={**(response.metadata or {}), "bio_enriched": True},
+                )
 
         return response
 

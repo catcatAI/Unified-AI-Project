@@ -1,9 +1,8 @@
-# Chat Pipeline 完整修復計劃 v3
+# 聊天管線完整重構計劃 v4
 
 **日期:** 2026-06-14
-**基於:** 多輪完整代碼審計（11 個根因 + 硬編碼/預設值/未使用活躍值審計）
-**目標:** 修復聊天管線中所有中間層斷線、硬編碼值、預設卡死、活躍值未使用等問題
-**狀態:** Phase 1-12 已完成，全管線已打通
+**基於:** 完整代碼審計（23 個問題，3 個 CRITICAL）
+**目標:** 重構整個聊天管線——session 隔離、ED3N 輸入檢索、30 條歷史分配、模板/記憶命中作為上下文、命中分數分離、持續學習、完整路由
 
 ---
 
@@ -13,7 +12,7 @@
 > 1. 深入分析實際代碼，不要便宜行事
 > 2. 檢查整個路由、接線、中間層，看哪裡過於簡化、哪裡不符合設計意圖、哪裡漏接
 > 3. 對照所有前端（桌面端、Web 端、像素端），確認修復不破壞其他端
-> 4. 檢查硬編碼以及預設無法更新的數值（有預設但沒有活躍數值，卡在預設；或有活躍數值但沒用上）
+> 4. 檢查硬編碼以及預設無法更新的數值
 > 5. 該活起來的地方沒活起來的問題與異常
 > 6. 不要做出錯誤修復，覆蓋正確代碼
 > 7. 修復完畢也要檢查，確認沒問題
@@ -23,254 +22,378 @@
 
 ---
 
-## 已完成的修復（Phase 1-11）
+## 當前問題摘要（審計結果）
 
-| # | 根因 | 文件 | 狀態 |
-|---|------|------|------|
-| ROOT-1 | 模板從未載入 TemplateMatcher | `router.py` | ✅ |
-| ROOT-2 | ham_manager 不做匹配 | `ham_manager.py` | ✅ |
-| ROOT-10 | memory_integration 複雜判斷 | `memory_integration.py` | ✅ |
-| ROOT-3 | ChatService context 不足 | `chat_service.py` | ✅ |
-| ROOT-5 | prompt_builder 生物狀態用檔案 | `prompt_builder.py` | ✅ |
-| ROOT-4 | 情緒硬編碼 happy | `chat_routes.py` | ✅ |
-| ROOT-6 | 對話歷史為空 | `websocket_manager.py` | ✅ |
-| ROOT-7 | broadcast key 錯誤 | `websocket_manager.py` | ✅ |
-| ROOT-8 | BiologicalIntegrator 假 singleton | `biological_integrator.py` | ✅ |
-| ROOT-9 | TemplateMatcher 演算法缺陷 | `template_matcher.py` | ✅ |
-| ROOT-11 | 生物系統不接受聊天輸入 | `chat_routes.py` | ✅ |
+### CRITICAL
+| # | 位置 | 問題 |
+|---|------|------|
+| C1 | `router.py:558-567` | 全域 `conversation_history` 跨所有 session 共享——用戶 A 看到用戶 B 的對話 |
+| C2 | `router.py:566-567` | `context["history"]` 被覆蓋——WebSocket session 歷史被丟棄，永遠不進 prompt |
+| C3 | `chat_routes.py:91,238` | `HTTPException` 在 WebSocket 路徑中——空訊息從 WebSocket 進來會拋 HTTP 異常 |
+| C4 | `memory_integration.py:107-117` | 記憶命中 response 跳過所有後處理——沒有情緒/生物 enrichment，直接裸輸出 |
 
-**額外修復：** `_schema_ver` NameError、`_build_math_response` 缺 key、`CerebellumEngine.update_proprioception` 缺失、BiologicalIntegrator shutdown 清理、返回類型標註、`_load_templates_to_matcher` 無限遞迴拆分
+### HIGH
+| # | 位置 | 問題 |
+|---|------|------|
+| H1 | `chat_routes.py:111,131,139,161,170` | 每次請求新建 MathVerifier, EmotionAnalyzer, BiologicalIntegrator, StateMatrix4D |
+| H2 | `chat_routes.py:168-189` | `state_for_llm` 從新 `StateMatrix4D()` 取預設值，反映不了演化狀態 |
+| H3 | `chat_service.py:58-59` | 首次請求懶初始化可能卡 30+ 秒，不受 timeout 保護 |
+| H4 | `router.py:706-747` | HYBRID 路線簡單拼接 composed + LLM 文字，中文斷句破碎 |
+
+### MEDIUM
+| # | 位置 | 問題 |
+|---|------|------|
+| M1 | `websocket_manager.py:324-335` | Debug monkey-patch 每條訊息寫 stderr |
+| M2 | `composer.py:286` | `_split_template` 汙染 `self.fragments`，臨時 fragment 永不清理 |
+| M3 | `prompt_builder.py:176` | `get_formula_summaries()` 每次 prompt 建構實例化 5 個 formula system |
+| M4 | `prompt_builder.py:204-206` | 只取最後 2 條歷史，上下文窗口極短 |
+| M5 | `memory_integration.py:92-96` | `min_score=0.3` 閾值太低 |
 
 ---
 
-## Phase 12：硬編碼/預設值/未使用活躍值 — 正確修復方案
+## 完管線架構設計
 
-### 🔴 HIGH-1：`state_for_llm` 從未被任何 caller 填充
+### 整體數據流
 
-**根因:** `prompt_builder.py:107` 檢查 `context.get("state_for_llm")`，但從 `chat_routes.py` 到 `router.py` 沒有任何人將 `state_for_llm` 放入 context。整個 axes/theta/eta/guidance 區塊永遠被跳過。
+```
+用戶訊息輸入
+  │
+  ▼
+┌─────────────────────────────────────────────────────┐
+│  Phase 1: 前處理 (Preprocessing)                     │
+│  ├─ 數學檢測 (MathVerifier, 複用 singleton)          │
+│  ├─ 情緒分析 (EmotionAnalyzer, 複用 singleton)       │
+│  ├─ 生物狀態快照 (BiologicalIntegrator, singleton)   │
+│  └─ 狀態矩陣快照 (StateMatrix4D, 讀取演化狀態)       │
+└─────────────────────────────────────────────────────┘
+  │
+  ▼
+┌─────────────────────────────────────────────────────┐
+│  Phase 2: ED3N 輸入檢索 (Input Retrieval)            │
+│  ├─ dictionary.encode(user_message) → keys           │
+│  ├─ dictionary.encode_soft(user_message) → scores    │
+│  ├─ 在 session 歷史 (30 條) 中搜尋相關訊息           │
+│  ├─ 在模板庫中搜尋匹配模板                           │
+│  ├─ 在記憶系統中搜尋相關記憶                         │
+│  └─ 輸出: retrieved_context (相關歷史 + 匹配模板)    │
+└─────────────────────────────────────────────────────┘
+  │
+  ▼
+┌─────────────────────────────────────────────────────┐
+│  Phase 3: 路由決策 (Routing Decision)                 │
+│  ├─ 數學路由 → 數學回應                              │
+│  ├─ ED3N 直接匹配 (reflex) → 直接回應               │
+│  ├─ 模板高分命中 (>0.8) → COMPOSED 路由             │
+│  ├─ 模板中分命中 (>0.5) → HYBRID 路由               │
+│  ├─ 記憶命中 → 增強上下文 + LLM 路由                │
+│  └─ 無命中 → 純 LLM 路由                            │
+└─────────────────────────────────────────────────────┘
+  │
+  ▼
+┌─────────────────────────────────────────────────────┐
+│  Phase 4: Prompt 建構 (Prompt Construction)          │
+│  ├─ 系統提示 (人格 + 生物狀態 + 認知狀態)            │
+│  ├─ 對話歷史 (最後 10 條 from session)               │
+│  ├─ 檢索上下文 (ED3N 命中的相關歷史/模板)            │
+│  ├─ 用戶輸入                                        │
+│  └─ token 管理 (不超過模型限制)                      │
+└─────────────────────────────────────────────────────┘
+  │
+  ▼
+┌─────────────────────────────────────────────────────┐
+│  Phase 5: LLM 生成 (Generation)                      │
+│  ├─ 後端選擇 (google/ollama/ed3n)                    │
+│  ├─ 呼叫 LLM                                        │
+│  ├─ 命中分數附在 metadata                            │
+│  └─ 回應後處理 (生物/情緒 enrichment)                │
+└─────────────────────────────────────────────────────┘
+  │
+  ▼
+┌─────────────────────────────────────────────────────┐
+│  Phase 6: 後處理 & 分發 (Post-processing & Dispatch) │
+│  ├─ 命中分數與回應文字分離                           │
+│  ├─ 持續學習 (fire-and-forget)                       │
+│  ├─ 存入 session 歷史 (user + assistant)             │
+│  ├─ 異步存入長期記憶 (HAM)                           │
+│  └─ 發送回應到客戶端                                 │
+└─────────────────────────────────────────────────────┘
+```
 
-**架構分析:** 系統有兩個獨立的狀態來源：
-| 來源 | 提供 | 消費者 |
-|------|------|--------|
-| `BiologicalIntegrator` → `bio_state` | arousal, stress, mood, emotions | `prompt_builder.get_biological_state()` — 生物狀態行 |
-| `StateMatrix4D` → `state_for_llm` | axes (alpha-zeta), theta, guidance | `prompt_builder.construct_angela_prompt()` — 認知狀態區塊 |
+### 30 條歷史分配設計
 
-**修法:** 在 `chat_routes.py` 中構建 `state_for_llm` 注入 context：
+```
+Session History (30 條 total)
+  │
+  ├─ ED3N 檢索池 (全部 30 條)
+  │   └─ dictionary.encode_soft() 對每條訊息計算相似度
+  │   └─ 取 top-5 最相關的作為 retrieved_context
+  │
+  ├─ LLM 對話窗口 (最後 10 條)
+  │   └─ 直接放入 prompt 的 messages 歷史區塊
+  │   └─ 確保 LLM 有最近的對話流暢性
+  │
+  ├─ 記憶系統 (異步)
+  │   └─ 每次對話後 fire-and-forget 存入 HAM
+  │   └─ 長期記憶不受 30 條限制
+  │
+  └─ 統計/分析 (全部 30 條)
+      └─ 情緒趨勢、話題分佈等
+```
+
+### ED3N 輸入檢索機制
 
 ```python
-# chat_routes.py _handle_chat_request() 中，bio_state 之後：
-try:
-    from core.engine.state_matrix import StateMatrix4D
-    _sm = StateMatrix4D()
-    _axes = {}
-    for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
-        dim = _sm.dimensions.get(axis_name)
-        if dim:
-            _axes[axis_name] = {"values": dim.values.copy()}
-    _th = _sm.theta.values if hasattr(_sm, 'theta') else {}
-    context["state_for_llm"] = {
-        "axes": _axes,
-        "theta": {
-            "novelty": _th.get("novelty", 0.0),
-            "theta_negativity": _th.get("theta_negativity", 0.0),
-            "creation_urge": _th.get("creation_urge", 0.0),
-            "correction_urge": _th.get("correction_urge", 0.0),
-        },
-        "eta": {"module_count": 0, "success_rate": 0.0, "structural_drift": 0.0},
-        "guidance": [],  # 可從 bio_state 動態生成
+# 核心檢索流程
+async def ed3n_retrieve(user_message: str, session_history: list, context: dict) -> dict:
+    """
+    用 ED3N dictionary 對輸入編碼，在 session 歷史中搜尋相關訊息。
+    
+    Returns:
+        {
+            "relevant_history": [...],    # top-5 相關歷史訊息
+            "matched_templates": [...],   # 匹配的模板
+            "matched_memories": [...],    # 匹配的長期記憶
+            "ed3n_reflex": str|None,      # ED3N reflex 直接回應
+            "hit_score": float,           # 最高命中分數
+            "hit_source": str,            # 命中來源 (template/memory/reflex/none)
+        }
+    """
+    ed3n_engine = get_ed3n_singleton()
+    
+    # 1. ED3N reflex 匹配（最快）
+    reflex = ed3n_engine.process_reflex(user_message)
+    if reflex:
+        return {"ed3n_reflex": reflex, "hit_score": 1.0, "hit_source": "reflex"}
+    
+    # 2. Dictionary 編碼
+    keys = ed3n_engine.dictionary.encode(user_message)
+    soft_scores = ed3n_engine.dictionary.encode_soft(user_message)
+    
+    # 3. 在 session 歷史中搜尋相關訊息
+    relevant_history = []
+    for msg in session_history:
+        msg_keys = ed3n_engine.dictionary.encode(msg["content"])
+        # 計算 key 重疊度
+        overlap = len(set(keys) & set(msg_keys))
+        if overlap > 0:
+            relevant_history.append({**msg, "relevance": overlap})
+    relevant_history.sort(key=lambda x: x["relevance"], reverse=True)
+    relevant_history = relevant_history[:5]
+    
+    # 4. 模板匹配（使用 soft_scores）
+    # ... (existing template matching logic)
+    
+    # 5. 記憶檢索（使用 keys）
+    # ... (existing memory retrieval logic)
+    
+    return {
+        "relevant_history": relevant_history,
+        "matched_templates": templates,
+        "matched_memories": memories,
+        "ed3n_reflex": None,
+        "hit_score": max_score,
+        "hit_source": source,
     }
-except Exception:
-    pass
 ```
-
-**文件:** `chat_routes.py`
-**插入位置:** bio_state 之後，generate_response 之前（~line 165）
-**風險:** 低 — try/except 包裹，失敗時 context 無 state_for_llm，prompt builder fallback 到預設
 
 ---
 
-### 🔴 HIGH-2：`self.conversation_history` 維護但 prompt 從未使用
+## 修復任務清單
 
-**根因:** `router.py` 在 `generate_response` 中 append user/assistant 到 `self.conversation_history`，但 `_construct_angela_prompt` 讀取 `context.get("history", [])`（來自 client），不是 `self.conversation_history`。
+### Phase A: Session 隔離（解決 C1, C2, C3）
 
-**分析:**
-- `self.conversation_history` 格式：`[{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]`
-- `prompt_builder` 期望格式：相同，且只取 `history[-2:]`（最後 2 條）
-- 兩者格式一致，只需注入
-
-**修法:** 在 `router.py` 的 `generate_response` 中，append user message 之後注入：
-
-```python
-# router.py generate_response() 中，line ~563 之後：
-# 注入對話歷史到 context（排除當前 user message，避免重複）
-context["history"] = self.conversation_history[:-1]
-```
+#### A1: 移除全域 conversation_history，改用 session-based
 
 **文件:** `router.py`
-**插入位置:** line ~563（user message append 之後）
-**edge cases:**
-- 首條訊息：`[:-1]` = `[]`，prompt builder 無歷史 → 正確
-- 記憶/模板命中 early return：assistant 未 append → 下次呼叫缺少最後一輪 → 可接受（模板回應不影響 LLM 歷史）
-**風險:** 低 — 只是將已維護的數據注入到已有參數
+**修改:** 
+- 刪除 `self.conversation_history` (line 558-567)
+- `generate_response` 新增 `session_id` 參數
+- 用 `session_id` 從外部 session store 讀寫歷史
+- 不再覆蓋 `context["history"]`
 
----
-
-### 🔴 HIGH-3：`store_experience` 建的模板沒有 keywords
-
-**根因:** `ham_manager.py:94-108` 的 `store_experience()` 存儲 `{"content": ..., "data_type": ..., "metadata": ...}` — 無 `keywords`。`retrieve_response_templates()` 跳過所有 `keywords` 為空的模板。
-
-**分析 callers:**
-| Caller | raw_data 類型 | 現有 keywords 來源 |
-|--------|-------------|-------------------|
-| `learning_integration.py` | dict (fact dict) | key + surface_forms |
-| `memory_adapter.py` | dict (card) | qualified_id + core_trait + card_type |
-| `learning_manager.py` | str (text) | 無 |
-
-**修法:** 為 `store_experience` 新增可選 `keywords` 參數 + 自動提取 fallback：
-
+**新 API:**
 ```python
-async def store_experience(self, raw_data, data_type, metadata=None, keywords=None):
-    # 如果 caller 提供 keywords，直接用
-    if not keywords:
-        keywords = self._extract_keywords(raw_data)
-    entry = {
-        "content": str(raw_data),
-        "data_type": data_type,
-        "metadata": metadata or {},
-        "keywords": keywords,
-    }
-    self._data["templates"].append(entry)
-    self._save()
-    return f"exp_{len(self._data['templates'])}"
-
-def _extract_keywords(self, raw_data):
-    """從 raw_data 自動提取關鍵詞"""
-    import re
-    if raw_data is None:
-        return []
-    text = str(raw_data)
-    # 中文序列（≥2 字）
-    cn = re.findall(r'[\u4e00-\u9fff]{2,}', text)
-    # 英文單詞（≥2 字母）
-    en = re.findall(r'[a-zA-Z]{2,}', text)
-    # 去重，取前 5 個
-    seen = set()
-    result = []
-    for w in cn + en:
-        if w not in seen:
-            seen.add(w)
-            result.append(w)
-    return result[:5]
+async def generate_response(self, user_message: str, context: dict, session_id: str = "default"):
+    # 從 session store 讀歷史（不覆蓋 context["history"]）
+    session_history = _session_stores.get(session_id, [])
+    # ... 處理 ...
+    # 追加到 session store（不影響其他 session）
+    if session_id not in _session_stores:
+        _session_stores[session_id] = []
+    _session_stores[session_id].append({"role": "user", "content": user_message})
+    _session_stores[session_id].append({"role": "assistant", "content": response.text})
+    # 限制 30 條
+    if len(_session_stores[session_id]) > 60:  # 30 pairs = 60 entries
+        _session_stores[session_id] = _session_stores[session_id][-60:]
 ```
 
-**文件:** `ham_manager.py`
-**修改:** `store_experience` 方法 + 新增 `_extract_keywords` 方法
-**向後兼容:** `keywords` 參數預設 `None`，不影響現有 caller
-**風險:** 低
+#### A2: chat_routes.py 移除 HTTPException，改用 ValueError
 
----
+**文件:** `chat_routes.py`
+**修改:**
+- Line 91: `HTTPException(400)` → `ValueError("empty message")`
+- Line 238: `HTTPException(500)` → `RuntimeError(str(e))`
+- 在 WebSocket 路徑中捕獲 ValueError/RuntimeError
 
-### 🔴 HIGH-4：broadcast beta `learning_rate`/`cognitive_load` 硬編碼
-
-**根因:** `websocket_manager.py:143-144` 永遠是 `"learning_rate": 0.01, "cognitive_load": 0.0`。
-
-**分析可用數據:**
-| 數據 | 來源 | 可用性 |
-|------|------|--------|
-| `learning_rate` | `neuroplasticity_system.hebbian_rule.learning_rate` | ✅ 真實值（default 0.1） |
-| `cognitive_load` | 無直接來源 | ⚠️ 可從 `len(memory_traces)` 推導 |
-
-**修法:**
-
-```python
-# websocket_manager.py broadcast_state_updates() 中：
-learning_rate = 0.01
-cognitive_load = 0.0
-try:
-    np_sys = _bio_integrator.neuroplasticity_system
-    if np_sys and hasattr(np_sys, 'hebbian_rule'):
-        learning_rate = np_sys.hebbian_rule.learning_rate
-    if np_sys and hasattr(np_sys, 'memory_traces'):
-        cognitive_load = min(1.0, len(np_sys.memory_traces) / 50.0)
-except Exception:
-    pass
-
-"beta": {
-    "learning_rate": learning_rate,
-    "cognitive_load": cognitive_load,
-},
-```
+#### A3: websocket_manager 傳遞 session_id 到 generate_response
 
 **文件:** `websocket_manager.py`
-**風險:** 低 — fallback 到原硬編碼值
+**修改:**
+- `_handle_chat_message` 中將 `session_id` 傳入 `_handle_chat_request`
+- `_handle_chat_request` 將 `session_id` 傳入 `ChatService.generate_response`
+- `ChatService` 將 `session_id` 傳入 `AngelaLLMService.generate_response`
 
 ---
 
-### 🔴 HIGH-5：`spatial` 數據完全硬編碼
+### Phase B: ED3N 輸入檢索（解決 H1, H2, M4）
 
-**根因:** `websocket_manager.py:153-157` 永遠是 `"x": 200.0, "y": 0.0, posture zeros。
+#### B1: 建立 ED3N 檢索橋接層
 
-**分析:**
-- `cerebellum.get_posture()` 返回 `{"theta_matrix": [0.0]*9}` — 是 stub，但可用
-- 真正的姿勢追蹤在 `MetabolicHeartbeat`，但未註冊到 service registry
-- spatial x/y 需要 heartbeat 的位置數據，目前無法取得
+**新文件:** `services/llm/ed3n_retrieval.py`
+**職責:**
+- 封裝 ED3N 作為統一檢索系統
+- 在 session 歷史中搜尋相關訊息
+- 在模板庫中搜尋匹配
+- 在記憶系統中搜尋相關記憶
+- 返回結構化檢索結果
 
-**修法:** 先從 cerebellum 取 posture（比完全硬編碼好），x/y 維持 fallback：
+#### B2: 單例化所有前處理器
 
+**文件:** `chat_routes.py`
+**修改:**
+- MathVerifier, EmotionAnalyzer, BiologicalIntegrator, StateMatrix4D 改為 module-level singleton
+- 不再每次請求新建
+
+#### B3: StateMatrix4D 讀取演化狀態
+
+**文件:** `chat_routes.py`
+**修改:**
+- `state_for_llm` 從 `BiologicalIntegrator` 的內部 `StateMatrix4D` 讀取
+- 不再新建 `StateMatrix4D()`（永遠是預設值）
+
+---
+
+### Phase C: 歷史分配（解決 M4, C2）
+
+#### C1: 30 條歷史分配邏輯
+
+**文件:** `chat_service.py` + `router.py`
+**修改:**
+- Session store 保持 30 條（60 entries: user+assistant pairs）
+- ED3N 檢索池：全部 30 條
+- LLM 對話窗口：最後 10 條（放入 prompt messages）
+- 檢索上下文：ED3N top-5 相關訊息（放入 prompt 的 retrieved_context 區塊）
+
+#### C2: prompt_builder 新增 retrieved_context 區塊
+
+**文件:** `prompt_builder.py`
+**修改:**
+- `construct_angela_prompt` 新增 `retrieved_context` 參數
+- 在 prompt 中加入檢索到的相關歷史/模板
+- 格式：`[相關歷史] 用戶之前說過: ... / 匹配模板: ...`
+
+---
+
+### Phase D: 命中分數分離（解決 C4, H4）
+
+#### D1: 回應結構標準化
+
+**新文件:** `services/llm/response.py` (或修改 `LLMResponse`)
+**結構:**
 ```python
-posture_data = {"theta_matrix": [0.0] * 9, "finger_matrix": {"left": [0.0]*5, "right": [0.0]*5}}
-try:
-    cerebellum = _bio_integrator.cerebellum
-    if cerebellum and hasattr(cerebellum, 'get_posture'):
-        p = cerebellum.get_posture()
-        posture_data["theta_matrix"] = p.get("theta_matrix", [0.0] * 9)
-except Exception:
-    pass
-
-"spatial": {
-    "x": 200.0,  # 需要 heartbeat 數據，目前 fallback
-    "y": 0.0,
-    "posture": posture_data,
-},
+@dataclass
+class ChatResponse:
+    text: str                           # 回應文字
+    hit_score: float = 0.0              # 命中分數 (0-1)
+    hit_source: str = "none"            # 命中來源 (template/memory/reflex/llm/none)
+    route: str = "llm"                  # 路由 (COMPOSED/HYBRID/LLM/MATH/REFLEX)
+    emotion: str = "neutral"            # 情緒
+    emotion_confidence: float = 0.5     # 情緒信心
+    bio_state: dict = field(default_factory=dict)  # 生物狀態快照
+    metadata: dict = field(default_factory=dict)   # 其他元數據
 ```
 
+#### D2: 所有路由統一返回 ChatResponse
+
+**文件:** `router.py`, `chat_service.py`, `chat_routes.py`
+**修改:**
+- COMPOSED 路由：`hit_score=match_score, hit_source="template"`
+- HYBRID 路由：`hit_score=match_score, hit_source="template"`
+- 記憶命中：`hit_score=memory_score, hit_source="memory"`
+- LLM 路由：`hit_score=0.0, hit_source="llm"`
+- 數學路由：`hit_score=1.0, hit_source="math"`
+- Reflex 路由：`hit_score=1.0, hit_source="reflex"`
+
+#### D3: WebSocket 回應分離命中分數
+
 **文件:** `websocket_manager.py`
-**限制:** x/y 需要 MetabolicHeartbeat 整合才能動態化，本次先改 posture
-
----
-
-### 🔴 HIGH-6：模板 keywords 是完整句子
-
-**根因:** `angela_memory.json` 的 keywords 是完整問句（如 `"喵?"`），用戶需完全一樣才能匹配。
-
-**修法:** 降低 `min_score` 閾值 + 改進匹配：
-
-1. `memory_integration.py` 的 `min_score=0.7` 降至 `0.3`（讓 Jaccard 部分匹配通過）
-2. 現有模板不改（向後兼容），新模板用單個詞
-
-**文件:** `memory_integration.py:95`
-**修改:** `min_score=0.7` → `min_score=0.3`
-
----
-
-### 🟡 MED-1：`_session_history` 斷線時不清理
-
-**修法:**
-
+**修改:**
 ```python
-# websocket_manager.py disconnect 處理中：
-_session_history.pop(session_id, None)
+await manager.send_personal_message({
+    "type": "chat_response",
+    "data": {
+        "message_id": message_id,
+        "content": chat_res.text,           # 純回應文字
+        "sender": "angela",
+        "hit_score": chat_res.hit_score,     # 命中分數（分離）
+        "hit_source": chat_res.hit_source,   # 命中來源
+        "route": chat_res.route,             # 路由
+        "emotion": chat_res.emotion,
+        "emotion_confidence": chat_res.emotion_confidence,
+    },
+    "timestamp": datetime.now().isoformat(),
+}, websocket)
 ```
 
-**文件:** `websocket_manager.py`
+---
+
+### Phase E: 持續學習 & 後處理
+
+#### E1: 持續學習用正確 context
+
+**文件:** `chat_service.py`
+**修改:**
+- `process_interaction_async` 的 context 不再被 router 篡改
+- 傳入原始 context + 檢索結果 + 命中分數
+
+#### E2: 所有路由統一後處理
+
+**文件:** `chat_service.py`
+**修改:**
+- `_post_process_response` 不再只處理 COMPOSED/HYBRID
+- 所有路由都經過生物/情緒 enrichment
+- enrichment 作為 metadata 追加，不修改原始回應文字
+
+#### E3: 異步記憶存儲
+
+**文件:** `chat_service.py`
+**修改:**
+- 每次對話後 fire-and-forget 存入 HAM
+- 不阻塞回應
 
 ---
 
-### 🟡 MED-2：清除重複模板
+### Phase F: 清理 & 優化
 
-**修法:** 刪除 `angela_memory.json` 中無 `keywords` 的重複項（indices 7, 9, 11, 13, 15）。
+#### F1: 移除 debug monkey-patch
 
-**文件:** `angela_memory.json`
+**文件:** `websocket_manager.py:324-335`
+**修改:** 移除 `_orig_receive` monkey-patch
+
+#### F2: fragment 記憶體洩漏修復
+
+**文件:** `composer.py:286`
+**修改:** `_split_template` 使用局部 dict 而非 `self.fragments`
+
+#### F3: formula summaries 緩存
+
+**文件:** `prompt_builder.py:176`
+**修改:** `get_formula_summaries()` 結果緩存，不每次實例化
+
+#### F4: HYBRID 路線斷句修復
+
+**文件:** `router.py:706-747`
+**修改:** composed + LLM 文字用句號/換行分隔，不簡單拼接
 
 ---
 
@@ -278,16 +401,23 @@ _session_history.pop(session_id, None)
 
 | 階段 | 任務 | 依賴 | 預估 |
 |------|------|------|------|
-| 12.1 | HIGH-2：conversation_history 注入 prompt | 無 | 10 min |
-| 12.2 | HIGH-1：state_for_llm 填充 | 無 | 15 min |
-| 12.3 | HIGH-3：store_experience 加 keywords | 無 | 15 min |
-| 12.4 | HIGH-6：min_score 降低 | 無 | 5 min |
-| 12.5 | HIGH-4：broadcast beta 動態化 | 無 | 10 min |
-| 12.6 | HIGH-5：spatial posture 動態化 | 無 | 10 min |
-| 12.7 | MED-1：session_history 清理 | 無 | 5 min |
-| 12.8 | MED-2：清除重複模板 | 無 | 5 min |
+| A1 | Session 隔離 (router.py) | 無 | 30 min |
+| A2 | HTTPException → ValueError | 無 | 10 min |
+| A3 | session_id 傳遞鏈 | A1 | 15 min |
+| B1 | ED3N 檢索橋接層 | 無 | 45 min |
+| B2 | 單例化前處理器 | 無 | 15 min |
+| B3 | StateMatrix4D 讀演化狀態 | 無 | 15 min |
+| C1 | 30 條歷史分配邏輯 | A1 | 20 min |
+| C2 | prompt_builder retrieved_context | C1 | 20 min |
+| D1 | ChatResponse 結構 | 無 | 15 min |
+| D2 | 所有路由統一返回 ChatResponse | D1 | 30 min |
+| D3 | WebSocket 回應分離 | D2 | 10 min |
+| E1 | 持續學習 context 修正 | A1 | 10 min |
+| E2 | 統一後處理 | D2 | 15 min |
+| E3 | 異步記憶存儲 | 無 | 10 min |
+| F1-F4 | 清理優化 | 無 | 20 min |
 
-**總計:** ~1.5 小時
+**總計:** ~5 小時
 
 ---
 
@@ -295,13 +425,13 @@ _session_history.pop(session_id, None)
 
 | 測試案例 | 預期結果 | 驗證方式 |
 |----------|---------|---------|
-| 發送任意訊息 | prompt 包含 8 軸狀態 | 後端 debug log 或 LLM 輸入 |
-| 連續發送 3 條訊息 | prompt 包含前 2 條歷史 | 觀察 LLM 輸入 |
-| 透過 store_experience 存儲的經驗 | 可被 retrieve匹配 | 嘗試相關查詢 |
-| 發送 "喵?" | COMPOSED 或 HYBRID route | 觀察 log |
-| 桌面端觀察 beta 軸 | learning_rate 動態變化 | state_update |
-| 桌面端觀察 spatial | posture theta_matrix 非全零 | state_update |
-| 斷線後重連 | 舊 session history 不殘留 | 內存觀察 |
+| 兩個 WebSocket 同時聊天 | 歷史完全隔離 | 各自 prompt 只有各自歷史 |
+| 發送 "喵?" | ED3N reflex 命中，直接回應 | hit_source="reflex", hit_score=1.0 |
+| 發送模板相關訊息 | 模板命中，回應有生物 enrichment | hit_source="template", bio_enriched=true |
+| 發送一般訊息 | LLM 生成，prompt 含 10 條歷史 + 檢索上下文 | prompt 有 history + retrieved_context |
+| 發送空訊息 | 不崩潰，返回友好錯誤 | WebSocket 收到 error response |
+| 連續發送 5 條訊息 | prompt 歷史正確更新 | 第 5 條的 prompt 有前 4 條 |
+| 發送後觀察 hit_score | 分數與回應分離 | WebSocket 回應有獨立 hit_score 欄位 |
 
 ---
 
@@ -309,42 +439,8 @@ _session_history.pop(session_id, None)
 
 | 風險 | 影響 | 緩解 |
 |------|------|------|
-| HIGH-2 注入 history 增加 token | 中 | prompt_builder 只取最後 2 條 |
-| HIGH-3 store_experience 改動 | 低 | keywords 參數向後兼容 |
-| HIGH-4/HIGH-5 動態化 | 低 | try/except + fallback 到原值 |
-| HIGH-6 min_score 降低 | 中 | 可能增加誤匹配，但比完全不匹配好 |
-
----
-
-## ✅ 完成狀態（2026-06-14）
-
-### Phase 12 已完成
-
-| # | 任務 | 文件 | 狀態 |
-|---|------|------|------|
-| 12.1 | HIGH-2：conversation_history 注入 prompt | `router.py:565` | ✅ |
-| 12.2 | HIGH-1：state_for_llm 填充（StateMatrix4D） | `chat_routes.py:167-188` | ✅ |
-| 12.3 | HIGH-3：store_experience 加 keywords | `ham_manager.py`（已有） | ✅ |
-| 12.4 | HIGH-6：min_score 0.7→0.3 | `memory_integration.py:95` | ✅ |
-| 12.5 | HIGH-4：broadcast beta 動態化（neuroplasticity） | `websocket_manager.py:136-146` | ✅ |
-| 12.6 | HIGH-5：spatial posture 動態化（cerebellum） | `websocket_manager.py:148-156` | ✅ |
-| 12.7 | MED-1：session_history 清理 | `websocket_manager.py:384` | ✅ |
-| 12.8 | MED-2：清除 7 個重複模板 | `angela_memory.json`（12→12 全有 keywords） | ✅ |
-
-### 全管線修復完成（Phase 1-12）
-
-| 階段 | 修復數 | 狀態 |
-|------|--------|------|
-| Phase 1-11（根因修復） | 11 個根因 + 6 個額外修復 | ✅ |
-| Phase 12（硬編碼/預設值） | 8 個問題 | ✅ |
-| **合計** | **25 個修復** | ✅ |
-
-### 所有修改文件清單
-
-| 文件 | 修改內容 |
-|------|---------|
-| `router.py` | conversation_history 注入 context |
-| `chat_routes.py` | state_for_llm 填充（StateMatrix4D） |
-| `memory_integration.py` | min_score 0.7→0.3 |
-| `websocket_manager.py` | 動態 beta/spatial + session 清理 |
-| `angela_memory.json` | 移除 7 個重複模板 |
+| ED3N 檢索增加延遲 | 中 | ED3N dictionary.encode <10ms |
+| 30 條歷史增加 token | 中 | LLM 只取 10 條，檢索取 5 條 |
+| Session store 記憶體 | 低 | 30 條/用戶，適度清理 |
+| ChatResponse 結構變更 | 中 | 向後兼容，舊 key 仍可讀 |
+| 持續學習 context 變更 | 低 | 傳入更豐富的 context |
