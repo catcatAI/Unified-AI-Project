@@ -343,22 +343,29 @@ class TemplateMatcher:
                 kw_lower = self._normalize_text(keyword)
                 if kw_lower in user_lower or user_lower in kw_lower:
                     return 0.95
-                # Partial keyword overlap
-                kw_chars = set(kw_lower)
-                user_chars = set(user_lower)
-                intersection = kw_chars & user_chars
-                if len(intersection) >= len(kw_chars) * 0.7:
+                # Partial keyword overlap (bigram-based)
+                kw_bigrams = self._char_bigrams(kw_lower)
+                user_bigrams = self._char_bigrams(user_lower)
+                intersection = kw_bigrams & user_bigrams
+                if len(intersection) >= len(kw_bigrams) * 0.7:
                     return 0.8
 
-        # Method 2: Character-level Jaccard (fallback)
-        user_chars = set(user_lower)
-        template_chars = set(self._normalize_text(template.content))
-        intersection = user_chars & template_chars
-        union = user_chars | template_chars
+        # Method 2: Bigram Jaccard (fallback)
+        user_bigrams = self._char_bigrams(user_lower)
+        template_bigrams = self._char_bigrams(self._normalize_text(template.content))
+        intersection = user_bigrams & template_bigrams
+        union = user_bigrams | template_bigrams
         if not union:
             return 0.0
         jaccard = len(intersection) / len(union)
         return min(0.95, jaccard * 1.2)
+
+    @staticmethod
+    def _char_bigrams(text: str) -> set:
+        """Generate character-level bigrams for Chinese text similarity."""
+        if len(text) < 2:
+            return {text} if text else set()
+        return {text[i:i+2] for i in range(len(text) - 1)}
 
     def _update_stats(self, match_level: MatchLevel, match_time: float) -> None:
         """更新统计信息"""

@@ -58,7 +58,7 @@ class HAMMemoryManager:
         angela_state=None,
         user_impression=None,
         limit: int = 5,
-        min_score: float = 0.0,
+        min_score: float = 0.3,
     ) -> List[Any]:
         candidates = self._data.get("templates", [])
         if not candidates:
@@ -77,11 +77,11 @@ class HAMMemoryManager:
                 if kw_lower in query_lower:
                     best_score = max(best_score, 0.9)
                 else:
-                    # Character-level Jaccard
-                    kw_chars = set(kw_lower)
-                    query_chars_lower = set(query_lower)
-                    intersection = kw_chars & query_chars_lower
-                    union = kw_chars | query_chars_lower
+                    # Bigram Jaccard
+                    kw_bigrams = self._char_bigrams(kw_lower)
+                    query_bigrams = self._char_bigrams(query_lower)
+                    intersection = kw_bigrams & query_bigrams
+                    union = kw_bigrams | query_bigrams
                     if union:
                         jaccard = len(intersection) / len(union)
                         best_score = max(best_score, min(0.95, jaccard * 1.2))
@@ -90,6 +90,13 @@ class HAMMemoryManager:
 
         scored.sort(key=lambda x: x[1], reverse=True)
         return scored[:limit or top_k]
+
+    @staticmethod
+    def _char_bigrams(text: str) -> set:
+        """Generate character-level bigrams for Chinese text similarity."""
+        if len(text) < 2:
+            return {text} if text else set()
+        return {text[i:i+2] for i in range(len(text) - 1)}
 
     async def store_experience(
         self,

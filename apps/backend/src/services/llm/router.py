@@ -25,6 +25,7 @@ from core.system.config.network_defaults import (
 )
 import time
 import random
+import re
 import logging
 from typing import Dict, Any, Optional, List
 
@@ -1215,7 +1216,7 @@ class AngelaLLMService:
             "在",
             "有",
         }
-        words = text.split()
+        words = re.findall(r'[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}', text)
         keywords = [w for w in words if w not in stopwords and len(w) > 1]
         return keywords[:5]
 

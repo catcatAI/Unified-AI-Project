@@ -132,7 +132,7 @@ async def _handle_chat_request(
             emotion_result = _emotion_analyzer.analyze_emotion(user_message)
             logger.debug(f"Emotion analysis: {emotion_result}")
         except Exception as e:
-            logger.debug(f"Emotion analysis unavailable: {e}")
+            logger.info(f"Emotion analysis unavailable: {e}")
 
         # Process chat as biological stimulus (fire-and-forget async)
         try:
@@ -229,10 +229,14 @@ async def _handle_chat_request(
 
     except asyncio.TimeoutError:
         logger.warning(f"LLM response timeout for message: {user_message[:50]}...", exc_info=True)
-        return {
-            "response_text": _get_ed3n_engine().process(
+        try:
+            _timeout_text = _get_ed3n_engine().process(
                 "timeout_response", context={"fallback": True}, depth="reflex"
-            ),
+            )
+        except Exception:
+            _timeout_text = "抱歉，我目前無法回應，請稍後再試。"
+        return {
+            "response_text": _timeout_text,
             "source": "fallback-timeout",
             "schema_version": _schema_ver,
             "truncation_message": "",
@@ -243,10 +247,14 @@ async def _handle_chat_request(
         }
     except asyncio.CancelledError:
         logger.info("Client disconnected mid-response, cancelling")
-        return {
-            "response_text": _get_ed3n_engine().process(
+        try:
+            _cancel_text = _get_ed3n_engine().process(
                 "timeout_response", context={"fallback": True}, depth="reflex"
-            ),
+            )
+        except Exception:
+            _cancel_text = "抱歉，我目前無法回應，請稍後再試。"
+        return {
+            "response_text": _cancel_text,
             "source": "fallback-disconnect",
             "schema_version": _schema_ver,
             "truncation_message": "",
