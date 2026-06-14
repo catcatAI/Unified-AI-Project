@@ -208,8 +208,6 @@ class AngelaLLMService:
             self.deviation_tracker = DeviationTracker()
             self.ResponseRoute = ResponseRoute
 
-            self._load_templates_to_matcher()
-
             logger.info("P0-2 Response Composition & Matching System initialized")
         except ImportError as e:
             logger.warning(f"Failed to initialize P0-2 response system: {e}", exc_info=True)
@@ -276,6 +274,9 @@ class AngelaLLMService:
 
                 # 初始化模板库
                 self.template_library = get_template_library()
+
+                # 加载模板到匹配器（必须在 template_library 赋值之后）
+                self._load_templates_to_matcher()
 
                 # 初始化任务生成器
                 self.task_generator = TaskGenerator(config={"max_tasks": 10})

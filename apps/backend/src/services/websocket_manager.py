@@ -18,6 +18,10 @@ from services.connection_session import get_session_manager
 
 logger = logging.getLogger(__name__)
 
+# Per-session conversation history (max 10 messages per session)
+_session_history = {}  # session_id -> list of {"role": str, "content": str}
+_MAX_HISTORY = 10
+
 
 class ConnectionManager:
     """
@@ -131,9 +135,9 @@ async def broadcast_state_updates() -> None:
 
             state_data = {
                 "alpha": {
-                    "energy": (100.0 - bio_state.get("fatigue", 0.0)) / 100.0,
+                    "energy": (100.0 - bio_state.get("stress_level", 0.0)) / 100.0,
                     "stress": bio_state.get("stress_level", 0.0),
-                    "hormones": bio_state.get("hormones", {}),
+                    "hormones": bio_state.get("hormonal_effects", {}),
                 },
                 "beta": {
                     "learning_rate": 0.01,
@@ -222,13 +226,22 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
     user_name = data.get("data", {}).get("user_name", "朋友")
 
     try:
+        history = _session_history.get(session_id, [])[-_MAX_HISTORY:]
         chat_res = await _handle_chat_request(
             user_message=user_message,
             user_name=user_name,
-            history=[],
+            history=history,
             session_id=session_id,
             origin="Human"
         )
+        # Store both user message and assistant response in history
+        if session_id not in _session_history:
+            _session_history[session_id] = []
+        _session_history[session_id].append({"role": "user", "content": user_message})
+        _session_history[session_id].append({"role": "assistant", "content": chat_res.get("response_text", "")})
+        # Trim to max size
+        if len(_session_history[session_id]) > _MAX_HISTORY * 2:
+            _session_history[session_id] = _session_history[session_id][-_MAX_HISTORY * 2:]
         await manager.send_personal_message({
             "type": "chat_response",
             "data": {

@@ -98,22 +98,23 @@ class MemoryIntegration:
             )
 
             if results and len(results) > 0:
-                raw = results[0]
-                if isinstance(raw, dict):
-                    best_template = raw
-                    score = 0.8
-                else:
-                    best_template, score = raw[0], raw[1] if len(raw) > 1 else 0.8
-                best_template.record_usage(success=True)
-                await self._svc.memory_manager.update_template(best_template)
+                best_template, score = results[0]
+                if score < 0.3:
+                    return None
+
+                template_content = best_template.get("content", "")
+                template_id = best_template.get("id", "unknown")
+
+                if not template_content:
+                    return None
 
                 return LLMResponse(
-                    text=best_template.content,
+                    text=template_content,
                     backend="memory-template",
                     model="template-based",
                     confidence=score,
                     metadata={
-                        "template_id": best_template.id,
+                        "template_id": template_id,
                         "template_score": score,
                         "memory_hit": True,
                     },

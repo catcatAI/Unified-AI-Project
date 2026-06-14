@@ -60,8 +60,37 @@ class HAMMemoryManager:
         limit: int = 5,
         min_score: float = 0.0,
     ) -> List[Any]:
-        count = limit or top_k
-        return self._data["templates"][-count:]
+        candidates = self._data.get("templates", [])
+        if not candidates:
+            return []
+
+        scored = []
+        query_chars = set(query)
+        for tpl in candidates:
+            keywords = tpl.get("keywords", [])
+            if not keywords:
+                continue
+            best_score = 0.0
+            for kw in keywords:
+                kw_lower = kw.lower()
+                query_lower = query.lower()
+                # Exact substring match
+                if kw_lower in query_lower:
+                    best_score = max(best_score, 0.9)
+                else:
+                    # Character-level Jaccard
+                    kw_chars = set(kw_lower)
+                    query_chars_lower = set(query_lower)
+                    intersection = kw_chars & query_chars_lower
+                    union = kw_chars | query_chars_lower
+                    if union:
+                        jaccard = len(intersection) / len(union)
+                        best_score = max(best_score, min(0.95, jaccard * 1.2))
+            if best_score >= min_score:
+                scored.append((tpl, best_score))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return scored[:limit or top_k]
 
     async def store_experience(
         self,

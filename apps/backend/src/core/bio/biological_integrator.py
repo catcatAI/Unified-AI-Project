@@ -136,8 +136,16 @@ class BiologicalIntegrator:
     
     Coordinates and integrates all biological simulation systems for Angela AI.
     """
+    _instance = None
+
+    def __new__(cls, config: Optional[Dict[str, Any]] = None):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        if getattr(self, "_initialized", False):
+        if self._initialized:
             return
         self._initialized = True
         logger.info("🧬 [Bio] Initializing BiologicalIntegrator Singleton...")

@@ -123,7 +123,42 @@ async def _handle_chat_request(
             logger.warning(f"\u26a0 [DualRail] Math verification failed: {math_err}", exc_info=True)
             is_math = False
 
+        emotion_result = None
+        try:
+            from services.llm.emotion_analyzer import EmotionAnalyzer
+            _emotion_analyzer = EmotionAnalyzer()
+            emotion_result = _emotion_analyzer.analyze_emotion(user_message)
+            logger.debug(f"Emotion analysis: {emotion_result}")
+        except Exception as e:
+            logger.debug(f"Emotion analysis unavailable: {e}")
+
+        # Process chat as biological stimulus
+        try:
+            from core.bio.biological_integrator import BiologicalIntegrator
+            _bio = BiologicalIntegrator()
+            _bio.process_auditory_stimulus(volume=0.6, content=user_message)
+            if emotion_result:
+                emotion = emotion_result.get("emotion", "neutral")
+                intensity = emotion_result.get("intensity", 0.5)
+                if emotion in ("sad", "angry", "fear"):
+                    _bio.process_stress_event(intensity=intensity * 0.3)
+                elif emotion in ("happy", "calm"):
+                    _bio.process_relaxation_event(intensity=intensity * 0.2)
+        except Exception as e:
+            logger.debug(f"Biological state update from chat failed: {e}")
+
         _chat_svc = await _get_chat_service()
+        context = {"user_name": user_name}
+        if emotion_result:
+            context["emotion"] = emotion_result
+
+        # Get live biological state for LLM context
+        try:
+            from core.bio.biological_integrator import BiologicalIntegrator
+            _bio = BiologicalIntegrator()
+            context["bio_state"] = _bio.get_biological_state()
+        except Exception:
+            pass
         response_text = await asyncio.wait_for(
             _chat_svc.generate_response(user_message, user_name),
             timeout=_http_timeout,
@@ -136,9 +171,9 @@ async def _handle_chat_request(
             "source": _flow_source,
             "schema_version": _schema_ver,
             "truncation_message": _trunc_msg if len(user_message) > _max_len else "",
-            "emotion": "happy",
-            "emotion_confidence": 0.5,
-            "emotion_intensity": 0.5,
+            "emotion": emotion_result.get("emotion", "neutral") if emotion_result else "neutral",
+            "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
+            "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
             "session_id": session_id,
         }
 

@@ -3,6 +3,7 @@
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -21,68 +22,35 @@ def _get_llm_config(key: str, default: Any = None) -> Any:
         return default
 
 
-def get_biological_state() -> str:
-    """獲取 Angela 的生理狀態描述"""
+def get_biological_state(context=None) -> str:
+    """Get biological state, preferring live state from context over file."""
+    # Priority 1: Live state from context (injected by chat_routes)
+    if context and isinstance(context, dict) and "bio_state" in context:
+        bio = context["bio_state"]
+        if isinstance(bio, dict):
+            parts = []
+            if "arousal" in bio:
+                parts.append(f"覺醒度: {bio['arousal']:.1f}")
+            if "stress_level" in bio:
+                parts.append(f"壓力: {bio['stress_level']:.2f}")
+            if "mood" in bio:
+                parts.append(f"情緒: {bio['mood']:.2f}")
+            if "dominant_emotion" in bio:
+                parts.append(f"主導情緒: {bio['dominant_emotion']}")
+            if parts:
+                return "、".join(parts)
+        return str(bio)
+    
+    # Priority 2: File-based state (fallback)
     try:
-        bio_cfg = _get_llm_config("biological_state", {})
-
-        status_file = Path(__file__).parent.parent.parent.parent / "data" / "brain_status.json"
-        if not status_file.exists():
-            return ""
-
-        with open(status_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        bio = data.get("biological", {})
-
-        arousal = bio.get("arousal", bio_cfg.get("default_certainty", 0.5))
-        stress = bio.get("stress_level", bio_cfg.get("stress_default", 0.0))
-        dom_emotion = bio.get("dominant_emotion", bio_cfg.get("default_mood", "calm"))
-
-        hormonal = bio.get("hormonal_effects", {})
-        energy = hormonal.get("energy", bio_cfg.get("caffeine_sensitivity", 0.8)) * 100.0
-        hunger = bio.get("hunger", 0.0)
-
-        intensity = data.get("life_intensity", 0.0)
-
-        status_parts = []
-
-        energy_low = bio_cfg.get("energy_low", 30)
-        energy_moderate = bio_cfg.get("energy_moderate", 60)
-        stress_high = bio_cfg.get("stress_high_desc", 0.8)
-        stress_moderate = bio_cfg.get("stress_high_threshold", 0.5)
-
-        if energy < energy_low:
-            status_parts.append("你感到非常疲倦，能量幾乎耗盡。")
-        elif energy < energy_moderate:
-            status_parts.append("你感到有些累了。")
-
-        hunger_high = bio_cfg.get("stress_max", 70)
-        if hunger > hunger_high:
-            status_parts.append("你覺得肚子很餓，渴望獲得能量補充。")
-
-        if stress > stress_high:
-            status_parts.append("你現在壓力極大，感到非常焦慮和緊繃。")
-        elif stress > stress_moderate:
-            status_parts.append("你感到有些壓力。")
-
-        arousal_high = bio_cfg.get("energy_high", 0.8)
-        arousal_low = bio_cfg.get("energy_low", 0.2)
-        if arousal > arousal_high:
-            status_parts.append("你現在處於高度興奮狀態，思緒飛快。")
-        elif arousal < arousal_low:
-            status_parts.append("你感到昏昏欲睡，反應遲鈍。")
-
-        if dom_emotion not in ("calm", "neutral", "unknown"):
-            status_parts.append(f"你現在的主要情緒是 {dom_emotion}。")
-
-        if intensity > 8.0:
-            status_parts.append("你現在大腦運作非常活躍，充滿了自我進化的衝動。")
-
-        return " ".join(status_parts)
-    except (FileNotFoundError, json.JSONDecodeError, KeyError, IOError) as e:
-        logger.debug(f"Failed to read biological state: {e}")
-        return ""
+        brain_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "brain_status.json")
+        if os.path.exists(brain_path):
+            with open(brain_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return json.dumps(data, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+    return "生物狀態：尚未初始化"
 
 
 def get_formula_summaries() -> str:
@@ -134,7 +102,7 @@ def construct_angela_prompt(
     neuro_vocabulary: Optional[Any] = None,
 ) -> List[Dict[str, str]]:
     """建構 Angela 的提示詞"""
-    bio_status = get_biological_state()
+    bio_status = get_biological_state(context=context)
 
     state_for_llm = context.get("state_for_llm")
     axis_lines = []

@@ -53,20 +53,25 @@ class ChatService:
         self._initialized = True
         logger.info("ChatService initialized")
 
-    async def generate_response(self, user_message: str, user_name: str = "") -> str:
-        """Generate Angela's response to a user message. Returns response text string."""
+    async def generate_response(self, user_message: str, user_name: str = "", context: dict = None) -> Any:
+        """Generate Angela's response to a user message."""
         if not self._initialized:
             await self.initialize()
-        context: Dict[str, Any] = {"user_name": user_name}
-        response = await self._llm_service.generate_response(user_message, context)
-        if self._continuous_learning and response and response.text:
+
+        merged_context = context or {}
+        merged_context.setdefault("user_name", user_name)
+
+        response = await self._llm_service.generate_response(user_message, merged_context)
+
+        if self._continuous_learning:
             try:
                 await self._continuous_learning.process_interaction_async(
-                    user_message, response.text, context
+                    user_message, response.text, merged_context
                 )
             except Exception as e:
                 logger.warning("Continuous learning interaction failed: %s", e)
-        return response.text
+
+        return response
 
     async def shutdown(self) -> None:
         self._initialized = False

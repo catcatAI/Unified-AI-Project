@@ -333,19 +333,31 @@ class TemplateMatcher:
         scores.sort(key=lambda x: x[1], reverse=True)
         return scores[0]
 
-    def _calculate_similarity(self, text: str, template: Template) -> float:
-        """计算相似度"""
-        text_keywords = set(self._extract_keywords(text))
-        template_keywords = set(template.keywords)
+    def _calculate_similarity(self, user_input: str, template) -> float:
+        """Calculate similarity between user input and template."""
+        user_lower = self._normalize_text(user_input)
 
-        if not text_keywords or not template_keywords:
+        # Method 1: Keyword substring matching (highest signal)
+        if hasattr(template, 'keywords') and template.keywords:
+            for keyword in template.keywords:
+                kw_lower = self._normalize_text(keyword)
+                if kw_lower in user_lower or user_lower in kw_lower:
+                    return 0.95
+                # Partial keyword overlap
+                kw_chars = set(kw_lower)
+                user_chars = set(user_lower)
+                intersection = kw_chars & user_chars
+                if len(intersection) >= len(kw_chars) * 0.7:
+                    return 0.8
+
+        # Method 2: Character-level Jaccard (fallback)
+        user_chars = set(user_lower)
+        template_chars = set(self._normalize_text(template.content))
+        intersection = user_chars & template_chars
+        union = user_chars | template_chars
+        if not union:
             return 0.0
-
-        intersection = text_keywords.intersection(template_keywords)
-        union = text_keywords.union(template_keywords)
-
-        jaccard = len(intersection) / len(union) if union else 0.0
-
+        jaccard = len(intersection) / len(union)
         return min(0.95, jaccard * 1.2)
 
     def _update_stats(self, match_level: MatchLevel, match_time: float) -> None:
