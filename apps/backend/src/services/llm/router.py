@@ -233,60 +233,53 @@ class AngelaLLMService:
                     )
                 logger.info(f"Loaded {len(templates)} templates to matcher")
         except Exception as e:
-            # broad exception acceptable: template loading failure should not block initialization
             logger.warning(f"Failed to load templates to matcher: {e}", exc_info=True)
 
-        # ========== 记忆增强系统初始化 ==========
-        if is_memory_enhanced():
+    def _init_memory_enhancement(self) -> None:
+        """初始化记忆增强系统（HAM + LU + CDM + 预计算 + 模板库）"""
+        if not is_memory_enhanced():
+            self.enable_memory_enhancement = False
+            return
+
+        try:
+            self.memory_manager = HAMMemoryManager()
+            self.enable_memory_enhancement = True
+
             try:
-                # 初始化记忆管理器
-                self.memory_manager = HAMMemoryManager()
-                self.enable_memory_enhancement = True
-
-                # C1: 初始化统一记忆协调器（HAM + 可选 LU + 可选 CDM）
+                from ai.lifecycle.unified_memory_coordinator import UnifiedMemoryCoordinator
+                logic_unit = None
+                cdm_model = None
                 try:
-                    from ai.lifecycle.unified_memory_coordinator import UnifiedMemoryCoordinator
-                    logic_unit = None
-                    cdm_model = None
-                    try:
-                        from ai.memory.lu_logic.logic_unit import LogicUnit
-                        logic_unit = LogicUnit(max_rules=500)
-                    except Exception as e:
-                        logger.warning("Failed to import LogicUnit: %s", e, exc_info=True)
-                    try:
-                        from core.cdm_dividend_model import CDMCognitiveDividendModel
-                        cdm_model = CDMCognitiveDividendModel()
-                    except Exception as e:
-                        logger.warning("Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True)
-                    self.memory_coordinator = UnifiedMemoryCoordinator(
-                        memory_manager=self.memory_manager,
-                        logic_unit=logic_unit,
-                        cdm_model=cdm_model,
-                    )
-                    logger.info("[C1] UnifiedMemoryCoordinator initialized")
+                    from ai.memory.lu_logic.logic_unit import LogicUnit
+                    logic_unit = LogicUnit(max_rules=500)
                 except Exception as e:
-                    logger.warning(f"[C1] UnifiedMemoryCoordinator unavailable: {e}", exc_info=True)
-                    self.memory_coordinator = None
-
-                # 初始化预计算服务
-                _mem_cfg = _get_llm_config("memory", {})
-                self.precompute_service = PrecomputeService(config=_mem_cfg)
-
-                # 初始化模板库
-                self.template_library = get_template_library()
-
-                # 加载模板到匹配器（必须在 template_library 赋值之后）
-                self._load_templates_to_matcher()
-
-                # 初始化任务生成器
-                self.task_generator = TaskGenerator(config={"max_tasks": 10})
-
-                logger.info("Memory enhancement system initialized")
+                    logger.warning("Failed to import LogicUnit: %s", e, exc_info=True)
+                try:
+                    from core.cdm_dividend_model import CDMCognitiveDividendModel
+                    cdm_model = CDMCognitiveDividendModel()
+                except Exception as e:
+                    logger.warning("Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True)
+                self.memory_coordinator = UnifiedMemoryCoordinator(
+                    memory_manager=self.memory_manager,
+                    logic_unit=logic_unit,
+                    cdm_model=cdm_model,
+                )
+                logger.info("[C1] UnifiedMemoryCoordinator initialized")
             except Exception as e:
-                # broad exception acceptable: memory enhancement is optional, graceful degradation on failure
-                logger.warning(f"Failed to initialize memory enhancement: {e}", exc_info=True)
-                self.enable_memory_enhancement = False
-        else:
+                logger.warning(f"[C1] UnifiedMemoryCoordinator unavailable: {e}", exc_info=True)
+                self.memory_coordinator = None
+
+            _mem_cfg = _get_llm_config("memory", {})
+            self.precompute_service = PrecomputeService(config=_mem_cfg)
+
+            self.template_library = get_template_library()
+            self._load_templates_to_matcher()
+
+            self.task_generator = TaskGenerator(config={"max_tasks": 10})
+
+            logger.info("Memory enhancement system initialized")
+        except Exception as e:
+            logger.warning(f"Failed to initialize memory enhancement: {e}", exc_info=True)
             self.enable_memory_enhancement = False
 
 
@@ -407,6 +400,9 @@ class AngelaLLMService:
         返回: 是否至少有一個可用的後端
         """
         logger.info("正在初始化 Angela LLM 服務...")
+
+        # 初始化記憶增強系統
+        self._init_memory_enhancement()
 
         # [auto] mode: use NeuroAutoSelector for initial backend selection
         if self.llm_mode == "auto":

@@ -27,6 +27,7 @@ _STANDARD_HOOKS = [
 _chat_service_instance = None
 _digital_life_instance = None
 _abc_key_manager_instance = None
+_bio_integrator_instance = None
 
 # --- Config (lazy proxy) ---
 class _LazyAngelaConfig:
@@ -216,10 +217,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.error(f"[ModuleManager] Initialization failed, continuing without module system: {e}", exc_info=True)
 
     # Initialize BiologicalIntegrator subsystems
+    global _bio_integrator_instance
     try:
         from core.bio.biological_integrator import BiologicalIntegrator
-        _bio = BiologicalIntegrator()
-        await _bio.initialize()
+        _bio_integrator_instance = BiologicalIntegrator()
+        await _bio_integrator_instance.initialize()
         logger.info("[Bio] BiologicalIntegrator initialized and integration loop started")
     except Exception as e:
         logger.warning(f"[Bio] BiologicalIntegrator initialization failed: {e}")
@@ -236,6 +238,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     # --- Shutdown ---
+    if _bio_integrator_instance is not None:
+        try:
+            await _bio_integrator_instance.shutdown()
+            logger.info("[Bio] BiologicalIntegrator shut down")
+        except Exception as e:
+            logger.warning(f"[Bio] BiologicalIntegrator shutdown error: {e}")
     if _broadcast_task is not None:
         _broadcast_task.cancel()
         try:

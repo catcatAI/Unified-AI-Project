@@ -56,7 +56,7 @@ def _load_memory_modules() -> str:
     return _MEMORY_ENHANCED
 
 
-def is_memory_enhanced() -> str:
+def is_memory_enhanced():
     """Lazy check if memory enhancement is available."""
     if _MEMORY_ENHANCED is None:
         _load_memory_modules()

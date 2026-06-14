@@ -187,6 +187,8 @@ async def _handle_chat_request(
                 "timeout_response", context={"fallback": True}, depth="reflex"
             ),
             "source": "fallback-timeout",
+            "schema_version": _schema_ver,
+            "truncation_message": "",
             "emotion": "neutral",
             "emotion_confidence": 0.5,
             "emotion_intensity": 0.5,
@@ -199,6 +201,8 @@ async def _handle_chat_request(
                 "timeout_response", context={"fallback": True}, depth="reflex"
             ),
             "source": "fallback-disconnect",
+            "schema_version": _schema_ver,
+            "truncation_message": "",
             "emotion": "neutral",
             "emotion_confidence": 0.5,
             "emotion_intensity": 0.5,

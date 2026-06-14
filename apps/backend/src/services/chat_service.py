@@ -53,7 +53,7 @@ class ChatService:
         self._initialized = True
         logger.info("ChatService initialized")
 
-    async def generate_response(self, user_message: str, user_name: str = "", context: dict = None) -> Any:
+    async def generate_response(self, user_message: str, user_name: str = "", context: dict = None):
         """Generate Angela's response to a user message."""
         if not self._initialized:
             await self.initialize()

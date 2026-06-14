@@ -199,16 +199,13 @@ class BiologicalIntegrator:
         # Callbacks
         self._state_callbacks: List[Callable[[Dict[str, Any]], None]] = []
 
-    def register_event_callback(self, callback: Callable[[str, Dict[str, Any]], None]) -> str:
+    def register_event_callback(self, callback: Callable[[str, Dict[str, Any]], None]) -> None:
         """
         Register a callback for all biological events.
         Convenience method to bridge to external systems like WebSocket.
         """
         for event in BiologicalEvent:
-            # Define a closure to capture the callback and event name
-            def create_wrapper(target_callback, event_name) -> str:
-                # The publisher calls the callback with (event_enum, data)
-                """Create a wrapper."""
+            def create_wrapper(target_callback, event_name):
                 return lambda event_obj, data: target_callback(event_name, data)
 
             self.event_publisher.subscribe(event.value, create_wrapper(callback, event.value))
