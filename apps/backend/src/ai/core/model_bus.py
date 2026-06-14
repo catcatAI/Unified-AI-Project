@@ -172,6 +172,30 @@ class ModelBus:
             r = await self._try_model("cloud", query, context, "creative")
             results[r.model_id] = r
 
+        elif query_type in ("file", "search", "code", "execute", "task"):
+            # Handler-based routing — try ED3N reflex first, then fan-out to candidates
+            r = await self._try_model("ed3n", query, context, query_type)
+            if r.confidence > 0.7:
+                results[r.model_id] = r
+            else:
+                tasks = [
+                    self._try_model(mid, query, context, query_type)
+                    for mid in candidates
+                ]
+                for coro in asyncio.as_completed(tasks):
+                    r = await coro
+                    results[r.model_id] = r
+
+        elif query_type in ("vision", "audio"):
+            # Perception — try all eligible candidates
+            tasks = [
+                self._try_model(mid, query, context, query_type)
+                for mid in candidates
+            ]
+            for coro in asyncio.as_completed(tasks):
+                r = await coro
+                results[r.model_id] = r
+
         else:
             # general / unknown / opinion / command — try all eligible, pick best
             tasks = [
