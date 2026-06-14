@@ -92,7 +92,7 @@ class MemoryIntegration:
             results = await self._svc.memory_manager.retrieve_response_templates(
                 query=user_message,
                 limit=5,
-                min_score=0.7,
+                min_score=0.3,
             )
 
             if results and len(results) > 0:

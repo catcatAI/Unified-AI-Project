@@ -133,6 +133,28 @@ async def broadcast_state_updates() -> None:
 
             bio_state = _bio_integrator.get_biological_state()
 
+            # HIGH-4: dynamic beta from neuroplasticity system
+            _lr = 0.01
+            _cl = 0.0
+            try:
+                np_sys = _bio_integrator.neuroplasticity_system
+                if np_sys and hasattr(np_sys, "hebbian_rule"):
+                    _lr = np_sys.hebbian_rule.learning_rate
+                if np_sys and hasattr(np_sys, "memory_traces"):
+                    _cl = min(1.0, len(np_sys.memory_traces) / 50.0)
+            except Exception:
+                pass
+
+            # HIGH-5: dynamic spatial posture from cerebellum
+            _posture = {"theta_matrix": [0.0] * 9, "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5}}
+            try:
+                _cb = _bio_integrator.cerebellum
+                if _cb and hasattr(_cb, "get_posture"):
+                    _p = _cb.get_posture()
+                    _posture["theta_matrix"] = _p.get("theta_matrix", [0.0] * 9)
+            except Exception:
+                pass
+
             state_data = {
                 "alpha": {
                     "energy": (100.0 - bio_state.get("stress_level", 0.0)) / 100.0,
@@ -140,8 +162,8 @@ async def broadcast_state_updates() -> None:
                     "hormones": bio_state.get("hormonal_effects", {}),
                 },
                 "beta": {
-                    "learning_rate": 0.01,
-                    "cognitive_load": 0.0,
+                    "learning_rate": _lr,
+                    "cognitive_load": _cl,
                 },
                 "gamma": {
                     "happiness": bio_state.get("mood", 0.5),
@@ -153,7 +175,7 @@ async def broadcast_state_updates() -> None:
                 "spatial": {
                     "x": 200.0,
                     "y": 0.0,
-                    "posture": {"theta_matrix": [0.0] * 9, "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5}},
+                    "posture": _posture,
                 },
                 "timestamp": datetime.now().isoformat(),
             }
@@ -359,3 +381,4 @@ async def websocket_handler(websocket: WebSocket) -> str:
             continue
 
     asyncio.create_task(manager.unregister(client_id))
+    _session_history.pop(session_id, None)

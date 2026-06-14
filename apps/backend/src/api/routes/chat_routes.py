@@ -163,6 +163,31 @@ async def _handle_chat_request(
             context["bio_state"] = _bio.get_biological_state()
         except Exception:
             pass
+
+        # Fill state_for_llm for prompt builder cognitive state block
+        try:
+            from core.engine.state_matrix import StateMatrix4D
+            _sm = StateMatrix4D()
+            _axes = {}
+            for _ax_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
+                _dim = _sm.dimensions.get(_ax_name)
+                if _dim:
+                    _axes[_ax_name] = {"values": _dim.values.copy()}
+            _th = _sm.theta.values if hasattr(_sm, "theta") else {}
+            context["state_for_llm"] = {
+                "axes": _axes,
+                "theta": {
+                    "novelty": _th.get("novelty", 0.0),
+                    "theta_negativity": _th.get("theta_negativity", 0.0),
+                    "creation_urge": _th.get("creation_urge", 0.0),
+                    "correction_urge": _th.get("correction_urge", 0.0),
+                },
+                "eta": {"module_count": 0, "success_rate": 0.0, "structural_drift": 0.0},
+                "guidance": [],
+            }
+        except Exception:
+            pass
+
         _llm_response = await asyncio.wait_for(
             _chat_svc.generate_response(user_message, user_name, context=context),
             timeout=_http_timeout,

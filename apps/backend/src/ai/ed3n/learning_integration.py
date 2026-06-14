@@ -155,7 +155,11 @@ class ED3NLearningIntegration:
                     "contexts": entry.contexts,
                     "timestamp": datetime.now().isoformat(),
                 }
-                ham.store_experience(memory_entry)
+                ham.store_experience(
+                    memory_entry,
+                    data_type="ed3n_entry",
+                    keywords=[key] + (entry.surface_forms[:5] if entry.surface_forms else []),
+                )
                 synced_count += 1
             except Exception as e:
                 errors.append(f"Failed to sync entry {key}: {e}")

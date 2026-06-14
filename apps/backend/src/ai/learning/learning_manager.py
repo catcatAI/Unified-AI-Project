@@ -100,7 +100,15 @@ class LearningManager:
                     "user_id": user_id,
                     "timestamp": __import__("datetime").datetime.now().isoformat(),
                 }
-                stored_id = self.ham_memory.store_experience(store_data)
+                fact_keywords = [k for k in [
+                    fact.get("subject"),
+                    fact.get("predicate"),
+                    fact.get("object"),
+                    user_id,
+                ] if k]
+                stored_id = self.ham_memory.store_experience(
+                    store_data, data_type="learned_fact", keywords=fact_keywords,
+                )
                 stored_ids.append(stored_id)
                 if (
                     fact.get("confidence", 0) >= self.min_fact_confidence_to_share_via_hsp
@@ -142,8 +150,22 @@ class LearningManager:
             "trust_score": trust_score,
             "timestamp": __import__("datetime").datetime.now().isoformat(),
         }
-        stored_id = self.ham_memory.store_experience(store_data)
+        hsp_keywords = [k for k in [
+            sender_ai_id,
+            hsp_payload.get("type"),
+            hsp_payload.get("topic"),
+        ] if k]
+        stored_id = self.ham_memory.store_experience(
+            store_data, data_type="hsp_fact", keywords=hsp_keywords,
+        )
         return stored_id
 
     async def learn_from_project_case(self, project_case: Dict[str, Any]) -> None:
-        self.ham_memory.store_experience(project_case)
+        case_keywords = [k for k in [
+            project_case.get("name"),
+            project_case.get("type"),
+            project_case.get("category"),
+        ] if k]
+        self.ham_memory.store_experience(
+            project_case, data_type="project_case", keywords=case_keywords,
+        )

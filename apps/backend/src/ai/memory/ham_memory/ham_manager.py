@@ -96,16 +96,69 @@ class HAMMemoryManager:
         raw_data: Any,
         data_type: str,
         metadata: Optional[Dict[str, Any]] = None,
+        keywords: Optional[List[str]] = None,
     ) -> Optional[str]:
-        """Store a raw experience entry into the memory store."""
+        """Store a raw experience entry into the memory store.
+
+        Args:
+            raw_data: Content to store — str, dict, or any object.
+            data_type: Category label for the experience.
+            metadata: Optional metadata dict.
+            keywords: Optional explicit keywords. If not provided,
+                      keywords are auto-extracted from raw_data.
+        """
+        resolved_keywords = keywords if keywords is not None else self._extract_keywords(raw_data)
         entry = {
             "content": str(raw_data),
             "data_type": data_type,
             "metadata": metadata or {},
+            "keywords": resolved_keywords,
         }
         self._data["templates"].append(entry)
         self._save()
         return f"exp_{len(self._data['templates'])}"
+
+    def _extract_keywords(self, raw_data: Any, max_keywords: int = 8) -> List[str]:
+        """Auto-extract keywords from raw_data.
+
+        - dict: uses string values and keys as keywords.
+        - str: takes first N meaningful characters, filtering stopwords.
+        - other: converts to str then applies str logic.
+        """
+        _STOPWORDS = {
+            "你", "我", "他", "她", "的", "了", "吗", "呢", "吧",
+            "啊", "是", "在", "有", "和", "与", "the", "a", "an",
+            "is", "are", "was", "were", "it", "to", "of", "in",
+            "for", "on", "with", "at", "by", "from", "as", "this",
+            "that", "not", "be", "have", "has", "had", "do", "does",
+        }
+
+        if isinstance(raw_data, dict):
+            keywords: List[str] = []
+            for key, value in raw_data.items():
+                keywords.append(str(key))
+                if isinstance(value, str) and value:
+                    keywords.append(value[:30])
+                if len(keywords) >= max_keywords * 2:
+                    break
+            return keywords[:max_keywords]
+
+        text = str(raw_data) if raw_data is not None else ""
+        if not text:
+            return []
+
+        # For Chinese text: split on whitespace and punctuation boundaries,
+        # keep tokens >= 2 chars that aren't stopwords.
+        import re
+        # Match Chinese char sequences (1+ chars) and English word sequences
+        tokens = re.findall(r"[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}", text)
+        filtered = [t for t in tokens if t.lower() not in _STOPWORDS]
+        if filtered:
+            return filtered[:max_keywords]
+
+        # Fallback: first N non-stopword chars from text
+        return [text[i:i+2] for i in range(0, min(len(text), max_keywords * 2), 2)
+                if text[i:i+2].lower() not in _STOPWORDS][:max_keywords]
 
     def store_conversation(self, conversation: Dict[str, Any]) -> None:
         self._data["conversations"].append(conversation)

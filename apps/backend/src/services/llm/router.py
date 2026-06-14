@@ -562,6 +562,10 @@ class AngelaLLMService:
             if len(self.conversation_history) > max_hist:
                 self.conversation_history = self.conversation_history[-max_hist:]
 
+        # 注入对話歷史到 context（排除當前 user message，prompt builder 取最後 2 條）
+        if hasattr(self, "conversation_history") and len(self.conversation_history) > 1:
+            context["history"] = self.conversation_history[:-1]
+
         # ========== P0-2: Template Matching & Routing ==========
         template_result = await self._try_template_match(user_message, context, start_time)
         if template_result is not None:

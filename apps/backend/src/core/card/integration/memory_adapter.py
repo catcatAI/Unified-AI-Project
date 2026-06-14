@@ -41,10 +41,14 @@ class MemoryAdapter:
             "qualified_id": card.qualified_id,
             "source": "card_import_pipeline",
         }
+        card_keywords = [card.qualified_id, card.core_trait or ""]
+        if card.card_type:
+            card_keywords.append(card.card_type.name)
         memory_id = await self.ham.store_experience(
             raw_data=card_dict,
             data_type="character_card",
             metadata=metadata,
+            keywords=[k for k in card_keywords if k],
             is_strategic=is_strategic,
         )
         if memory_id:
