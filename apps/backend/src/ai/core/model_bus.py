@@ -218,8 +218,8 @@ class ModelBus:
         """
         if query_type == "auto":
             classifier = self._get_classifier()
-            qtype, _ = classifier.classify(query)
-            query_type = qtype.value
+            classify_result = classifier.classify(query)
+            query_type = classify_result.primary_type.value
 
         candidates = self._resolve_candidates(query_type)
         results: Dict[str, ModelRouteResult] = {}

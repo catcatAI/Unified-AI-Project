@@ -1034,8 +1034,9 @@ async def _handle_chat_request(user_message, user_name, history, session_id, ext
 |------|------|
 | `ai/core/query_classifier.py` | QueryResult dataclass, v2 classify(), _adjust_confidence, _calc_actionability, _infer_action_type, regex word boundary, FILE/TASK patterns enhanced |
 | `ai/core/execution_gate.py` | **新建**: ExecutionGate class, GateDecision dataclass, REVERSIBILITY scores |
-| `ai/core/model_bus.py` | 新增 execute_handler() 方法 |
+| `ai/core/model_bus.py` | 新增 execute_handler() 方法 + 修复 classify() 调用 (tuple→QueryResult) |
 | `api/routes/chat_routes.py` | _handle_chat_request 插入执行闸门流程 |
 | `services/llm/prompt_builder.py` | 执行结果注入 + 执行规则 prompt |
+| `services/llm/router.py` | 修复 classify() 调用 (tuple→QueryResult) |
 | `tests/ai/core/test_query_classifier_v2.py` | **新建**: 58 个测试 |
 | `tests/ai/core/test_execution_gate.py` | **新建**: 44 个测试 |

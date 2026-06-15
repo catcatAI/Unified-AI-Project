@@ -823,8 +823,8 @@ class AngelaLLMService:
         """Try Model Bus for capability-based routing, returns None if unavailable or fails"""
         if self.model_bus and self.query_classifier:
             try:
-                query_type, _ = self.query_classifier.classify(user_message)
-                decision = await self.model_bus.route(user_message, query_type.value, context)
+                classify_result = self.query_classifier.classify(user_message)
+                decision = await self.model_bus.route(user_message, classify_result.primary_type.value, context)
                 if decision.selected_model != "none":
                     result = decision.results[decision.selected_model]
                     return LLMResponse(
