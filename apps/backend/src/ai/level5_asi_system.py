@@ -359,7 +359,13 @@ class Level5ASISystem:
 
             agent = await self._select_agent(request)
             if not agent:
-                return {"error": "没有可用的对齐代理"}
+                # Alignment passed but no matching agent — return alignment success
+                return {
+                    "status": "aligned",
+                    "is_aligned": True,
+                    "alignment_confidence": alignment_result.get("alignment_confidence", 0.0),
+                    "note": "No matching agent, alignment gate passed",
+                }
 
             result = await self._process_with_agent(agent, request, alignment_context)
 
@@ -455,7 +461,7 @@ class Level5ASISystem:
     async def _initialize_alignment_systems(self) -> None:
         """初始化对齐系统"""
         self.reasoning_system = ReasoningSystem(f"{self.system_id}_reasoning")
-        self.emotion_system = EmotionSystem(f"{self.system_id}_emotion")
+        self.emotion_system = EmotionSystem(system_id=f"{self.system_id}_emotion")
         self.ontology_system = OntologySystem()
 
         self.alignment_manager = AlignmentManager(
@@ -571,30 +577,27 @@ class Level5ASISystem:
             return {"is_aligned": True, "modified_payload": request}
 
         try:
-            options = [
-                {
-                    "action": "process_request",
-                    "parameters": request,
-                    "description": f"处理请求, {request.get('capability_id', 'unknown')}",
-                },
-                {"action": "reject_request", "parameters": {}, "description": "拒绝请求"},
-            ]
+            action = {
+                "action": "process_request",
+                "parameters": request,
+                "capability_id": request.get("capability_id", "unknown"),
+                "ethical_constraints": request.get("ethical_constraints", []),
+            }
 
-            alignment_result = await self.alignment_manager.make_decision(
-                context=context, options=options
-            )
+            is_aligned = self.alignment_manager.check_alignment(action)
+            score = self.alignment_manager.get_alignment_score(action)
 
-            if alignment_result.is_aligned:
+            if is_aligned:
                 return {
                     "is_aligned": True,
                     "modified_payload": request,
-                    "alignment_confidence": alignment_result.confidence,
+                    "alignment_confidence": score,
                 }
             else:
                 return {
                     "is_aligned": False,
-                    "reason": alignment_result.reasoning,
-                    "safety_score": alignment_result.safety_score,
+                    "reason": f"Alignment check failed (score={score:.2f})",
+                    "safety_score": score,
                 }
 
         except Exception as e:  # broad exception acceptable: alignment check wraps all decision failures

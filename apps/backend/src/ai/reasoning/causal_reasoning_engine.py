@@ -15,6 +15,9 @@ class CausalReasoningEngine:
     to make predictions and explanations.
     """
 
+    _MAX_RELATIONSHIPS = 1000
+    _MAX_OBSERVATIONS = 500
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self._causality_threshold = self.config.get("causality_threshold", 0.5)
@@ -25,6 +28,11 @@ class CausalReasoningEngine:
         self._observations.append(observation)
         rels = self._infer_relationships(observation)
         self._relationships.extend(rels)
+        # Evict oldest when over cap
+        if len(self._relationships) > self._MAX_RELATIONSHIPS:
+            self._relationships = self._relationships[-self._MAX_RELATIONSHIPS:]
+        if len(self._observations) > self._MAX_OBSERVATIONS:
+            self._observations = self._observations[-self._MAX_OBSERVATIONS:]
 
     def _infer_relationships(self, observation: Dict[str, Any]) -> List[Dict[str, Any]]:
         variables = observation.get("variables", [])
