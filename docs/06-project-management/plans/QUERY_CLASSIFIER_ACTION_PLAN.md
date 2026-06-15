@@ -1,7 +1,8 @@
-# QueryClassifier 精確度審查 + 執行路由計畫 v2
+# QueryClassifier 精確度審查 + 執行路由計畫 v3
 
 **日期**: 2026-06-15
 **目標**: 讓 Angela 知行合一 — 意圖分類精確、執行結果回饋 LLM、不確定時不亂做
+**對齊**: AGENTS.md (Surgical Precision, No Placeholders), ANGELA_FULL_ARCHITECTURE.md (管線流程)
 
 ---
 
@@ -20,9 +21,219 @@
 
 ---
 
-## 2. 完整生命週期
+## 2. 執行分數系統（取代簡單閾值）
 
-### 2.1 流程圖
+### 2.1 為什麼不用「安全度分級」
+
+| 方案 | 問題 |
+|------|------|
+| 高/中/低安全度 | 誰來判斷「安全」？LLM 可能判錯 |
+| 高/中/低安全度 | 「安全」太模糊，不夠客觀 |
+| 高/中/低安全度 | 同一操作在不同情境下風險不同 |
+
+### 2.2 三因子分數制
+
+```
+執行分數 = 可逆性 × 影響度 × 明確度
+```
+
+| 因子 | 範圍 | 說明 | 誰決定 |
+|------|------|------|--------|
+| **可逆性** | 0.0-1.0 | 操作能否撤銷 | 規則（客觀） |
+| **影響度** | 0.0-1.0 | 操作影響範圍多大 | 規則（可量化） |
+| **明確度** | 0.0-1.0 | 用戶意圖有多清晰 | 分類器（動態） |
+
+### 2.3 可逆性分數表
+
+```python
+REVERSIBILITY = {
+    # 讀取類：完全可逆（沒改變任何東西）
+    "read":     1.0,   # 讀檔案、搜尋、查詢、分析
+    # 建立類：可逆（可刪除）
+    "create":   0.9,   # 建立檔案、新增任務、新增聯絡人
+    # 修改類：可逆但有成本
+    "modify":   0.6,   # 修改檔案、編輯設定、重新命名
+    # 刪除類：不可逆
+    "delete":   0.2,   # 刪除檔案、清空資料、移除帳號
+    # 傳送類：不可逆
+    "send":     0.1,   # 發訊息、提交表單、發送郵件
+    # 系統類：不可逆且影響大
+    "system":   0.0,   # 執行指令、安裝軟體、修改系統設定
+    # 無操作
+    "none":     1.0,   # 純聊天、問問題
+}
+```
+
+### 2.4 影響度分數表
+
+```python
+def estimate_impact(query_type, user_message):
+    """根據操作類型和範圍估計影響度"""
+    base = {
+        "read":     1.0,   # 無影響
+        "create":   0.9,   # 新增，影響小
+        "modify":   0.7,   # 修改，影響中
+        "delete":   0.4,   # 刪除，影響大
+        "send":     0.3,   # 傳送，影響大
+        "system":   0.2,   # 系統，影響極大
+        "none":     1.0,   # 無影響
+    }.get(query_type, 0.5)
+
+    # 範圍調整
+    if any(w in user_message for w in ["全部", "所有", "整個", "all"]):
+        base = max(0.1, base - 0.3)  # 全部操作 → 影響更大
+    if any(w in user_message for w in ["一個", "單一", "this", "this one"]):
+        base = min(1.0, base + 0.1)  # 單一操作 → 影響較小
+
+    return base
+```
+
+### 2.5 明確度分數
+
+```python
+def estimate_clarity(text, query_type, confidence):
+    """用戶意圖有多清晰"""
+    clarity = confidence  # 基礎分來自分類器置信度
+
+    # 調整因子
+    # 1. 包含明確動作動詞 → 更清晰
+    clear_verbs = ["搜尋", "刪除", "開啟", "關閉", "執行", "下載",
+                   "search", "delete", "open", "run", "download"]
+    if any(v in text for v in clear_verbs):
+        clarity = min(1.0, clarity + 0.1)
+
+    # 2. 包含明確對象 → 更清晰
+    if re.search(r'[\w/\\]+\.\w+', text):  # 包含檔案路徑
+        clarity = min(1.0, clarity + 0.1)
+
+    # 3. 模糊詞 → 不清晰
+    vague_words = ["一下", "看看", "處理", "弄", "搞", "整"]
+    if any(w in text for w in vague_words):
+        clarity = max(0.1, clarity - 0.2)
+
+    # 4. 太短 → 不清晰
+    if len(text) < 5:
+        clarity = max(0.2, clarity - 0.1)
+
+    return clarity
+```
+
+### 2.6 執行分數計算
+
+```python
+def calculate_exec_score(query_type, action_type, user_message, confidence):
+    """
+    執行分數 = 可逆性 × 影響度 × 明確度
+    範圍: 0.0 (絕對不執行) ~ 1.0 (直接執行)
+    """
+    reversibility = REVERSIBILITY.get(action_type, 0.5)
+    impact = estimate_impact(query_type, user_message)
+    clarity = estimate_clarity(user_message, query_type, confidence)
+
+    score = reversibility * impact * clarity
+    return round(score, 3)
+```
+
+### 2.7 分數範例
+
+| 輸入 | 可逆性 | 影響度 | 明確度 | 執行分數 | 決策 |
+|------|--------|--------|--------|---------|------|
+| `搜尋台北天氣` | 1.0 (read) | 1.0 | 0.9 | **0.900** | 直接執行 |
+| `讀取 temp.txt` | 1.0 (read) | 1.0 | 0.95 | **0.950** | 直接執行 |
+| `建立 notes.md` | 0.9 (create) | 0.9 | 0.85 | **0.689** | 問用戶 |
+| `修改 config.json` | 0.6 (modify) | 0.7 | 0.8 | **0.336** | 問用戶 |
+| `刪除 temp.txt` | 0.2 (delete) | 0.4 | 0.9 | **0.072** | 問用戶+顯示影響 |
+| `刪除全部檔案` | 0.2 (delete) | 0.1 | 0.9 | **0.018** | 預設不執行 |
+| `幫我查字典` | 1.0 (read) | 1.0 | 0.3 | **0.300** | 問用戶（比喻） |
+| `開玩笑` | 0.0 (system) | 0.5 | 0.2 | **0.000** | 不執行 |
+| `今天?` | 1.0 (none) | 1.0 | 0.2 | **0.200** | 純聊天 |
+| `幫我處理檔案` | 0.6 (modify) | 0.7 | 0.4 | **0.168** | 問用戶做什麼 |
+
+---
+
+## 3. 決策閘門（三層）
+
+```
+執行分數 ≥ 0.6  → 直接執行（自動）
+0.2 ≤ 執行分數 < 0.6  → 問用戶確認
+執行分數 < 0.2  → 預設不執行
+```
+
+### 3.1 閘門邏輯
+
+```python
+class ExecutionGate:
+    """執行閘門：基於可逆性×影響度×明確度"""
+
+    AUTO_EXECUTE = 0.6       # 直接執行
+    CONFIRM_THRESHOLD = 0.2  # 需要確認
+    # < 0.2 → 不執行
+
+    def decide(self, query_type, action_type, user_message, confidence, context):
+        score = calculate_exec_score(query_type, action_type, user_message, confidence)
+
+        if score >= self.AUTO_EXECUTE:
+            return GateDecision(
+                action="auto_execute",
+                score=score,
+                handler=self._get_handler(query_type),
+                reason=f"exec_score={score} >= {self.AUTO_EXECUTE}"
+            )
+
+        if score >= self.CONFIRM_THRESHOLD:
+            return GateDecision(
+                action="confirm_then_execute",
+                score=score,
+                handler=self._get_handler(query_type),
+                reason=f"exec_score={score} in [{self.CONFIRM_THRESHOLD}, {self.AUTO_EXECUTE})",
+                confirm_message=self._build_confirm(query_type, action_type, user_message),
+                # 附加影響說明
+                impact_info=self._describe_impact(action_type, user_message),
+            )
+
+        return GateDecision(
+            action="reject",
+            score=score,
+            reason=f"exec_score={score} < {self.CONFIRM_THRESHOLD}",
+        )
+```
+
+### 3.2 確認訊息（含影響說明）
+
+```python
+def _build_confirm(self, query_type, action_type, user_message):
+    """建立確認訊息，包含會發生什麼事"""
+    action_desc = {
+        "read":   "讀取",
+        "create": "建立",
+        "modify": "修改",
+        "delete": "刪除",
+        "send":   "傳送",
+        "system": "執行系統操作",
+    }
+    desc = action_desc.get(action_type, "執行操作")
+
+    msg = f"你想要{desc}嗎？"
+
+    # 附加影響說明
+    if action_type == "delete":
+        msg += "\n⚠️ 刪除後無法復原。"
+    elif action_type == "send":
+        msg += "\n⚠️ 傳送後無法撤回。"
+    elif action_type == "system":
+        msg += "\n⚠️ 系統操作可能影響其他程式。"
+    elif action_type == "modify":
+        msg += "\n 修改會覆蓋原始內容。"
+
+    msg += "\n確認後我會執行。"
+    return msg
+```
+
+---
+
+## 4. 完整生命週期
+
+### 4.1 流程圖
 
 ```
 使用者輸入
@@ -30,73 +241,57 @@
     ▼
 ┌──────────────────────────────────────────────────────┐
 │ Phase 1: 意圖分類                                      │
-│                                                        │
-│  QueryClassifier v2                                    │
-│  ├─ primary_type: 意圖類型                              │
-│  ├─ confidence: 置信度 (0.0-1.0)                       │
-│  ├─ actionability: 可執行性 (0.0-1.0)                  │
-│  └─ secondary_type: 次要意圖 (可選)                     │
+│  QueryClassifier v2                                   │
+│  輸出: (primary_type, confidence, actionability,      │
+│         secondary_type)                               │
 └──────────────┬───────────────────────────────────────┘
                │
                ▼
 ┌──────────────────────────────────────────────────────┐
-│ Phase 2: 決策閘門                                      │
-│                                                        │
-│  ┌─────────────────────────────────────────────────┐  │
-│  │ 條件 A: confidence ≥ 0.85                        │  │
-│  │         AND actionability ≥ 0.7                  │  │
-│  │         → 直接執行（自動）                         │  │
-│  ├─────────────────────────────────────────────────┤  │
-│  │ 條件 B: confidence 0.65-0.85                     │  │
-│  │         OR actionability 0.5-0.7                 │  │
-│  │         → 確認後執行（問用戶）                     │  │
-│  ├─────────────────────────────────────────────────┤  │
-│  │ 條件 C: confidence < 0.65                        │  │
-│  │         AND actionability < 0.5                  │  │
-│  │         → 純聊天（跳過執行）                       │  │
-│  └─────────────────────────────────────────────────┘  │
+│ Phase 2: 執行分數 + 決策                               │
+│                                                       │
+│  exec_score = 可逆性 × 影響度 × 明確度                 │
+│                                                       │
+│  ┌─────────────────────────────────────────────────┐ │
+│  │ score ≥ 0.6  → 直接執行                          │ │
+│  │ 0.2 ≤ score < 0.6 → 問用戶確認                   │ │
+│  │ score < 0.2 → 預設不執行                         │ │
+│  └─────────────────────────────────────────────────┘ │
 └──────────────┬───────────────────────────────────────┘
                │
         ┌──────┼──────────┐
         ▼      ▼          ▼
-    直接執行  確認後執行   純聊天
+    直接執行  確認後執行   不執行
         │      │          │
         ▼      ▼          ▼
 ┌──────────────────────────────────────────────────────┐
 │ Phase 3: 執行                                          │
-│                                                        │
 │  Handler/Agent 執行                                    │
-│  輸出: ActionResult(success, result, error,             │
-│                     side_effects, rollback_info)        │
-│                                                        │
-│  side_effects: 執行產生的副作用（刪除了檔案、發送了訊息等）│
-│  rollback_info: 如果可以撤銷，提供撤銷方法               │
+│  輸出: ActionResult(success, result, error,            │
+│                     rollback_info)                     │
 └──────────────┬───────────────────────────────────────┘
                │
                ▼
 ┌──────────────────────────────────────────────────────┐
 │ Phase 4: 結果回饋 + LLM 續行                           │
-│                                                        │
-│  執行結果注入 prompt → LLM 看到事實                     │
-│  LLM 有兩個選擇：                                       │
-│  ├─ 結束：描述結果，對話結束                             │
-│  └─ 續行：需要更多資訊 / 需要進一步操作                  │
-│                                                        │
-│  如果 LLM 判斷需要續行：                                │
-│  → 重新進 Phase 1（但帶上下文）                         │
-│  → 最多重構 3 次（防止無限迴圈）                         │
+│                                                       │
+│  執行結果注入 prompt → LLM 看到事實                    │
+│  LLM 決定：                                           │
+│  ├─ 結束：描述結果                                     │
+│  └─ 續行：問用戶要不要繼續（不能自動做）               │
+│                                                       │
+│  續行時：重新進 Phase 1（帶上下文）                     │
+│  最多 3 次（防止無限迴圈）                              │
 └──────────────┬───────────────────────────────────────┘
                │
                ▼
 ┌──────────────────────────────────────────────────────┐
 │ Phase 5: 回應                                          │
-│                                                        │
-│  最終回應 = LLM 基於執行結果生成的文字                   │
-│  包含：做了什麼、結果是什麼、下一步建議（如有）           │
+│  最終回應 = LLM 基於執行結果生成的文字                  │
 └──────────────────────────────────────────────────────┘
 ```
 
-### 2.2 完整狀態機
+### 4.2 狀態機
 
 ```
                     ┌─────────────┐
@@ -105,69 +300,61 @@
                            │ 使用者輸入
                            ▼
                     ┌─────────────┐
-                    │ CLASSIFY    │ ← Phase 1
+                    │ CLASSIFY    │
                     └──────┬──────┘
                            │
               ┌────────────┼────────────┐
               ▼            ▼            ▼
         ┌──────────┐ ┌──────────┐ ┌──────────┐
-        │ AUTO     │ │ CONFIRM  │ │ CHAT     │
-        │ EXECUTE  │ │ ASK      │ │ ONLY     │
-        │ conf≥0.85│ │ 0.65-0.85│ │ conf<0.65│
-        │ act≥0.7  │ │ OR act   │ │ AND act  │
-        │          │ │ 0.5-0.7  │ │ <0.5     │
+        │ AUTO     │ │ CONFIRM  │ │ REJECT   │
+        │ EXECUTE  │ │ ASK      │ │          │
+        │ score≥0.6│ │ 0.2-0.6  │ │ score<0.2│
         └────┬─────┘ └────┬─────┘ └────┬─────┘
              │            │            │
-             │            │ 用戶確認?   │
              │      ┌─────┴─────┐      │
              │      ▼           ▼      │
              │  ┌────────┐ ┌────────┐  │
              │  │ 確認   │ │ 取消   │  │
-             │  │ 執行   │ │ → IDLE │  │
-             │  └───┬────┘ └────────┘  │
-             │      │                  │
-             ▼      ▼                  ▼
+             │  └───┬────┘ └───┬────┘  │
+             │      │          │       │
+             ▼      ▼          ▼       ▼
         ┌──────────────────────────────────┐
         │         EXECUTE                  │
-        │  Handler/Agent 執行              │
         └──────────────┬───────────────────┘
                        │
                        ▼
         ┌──────────────────────────────────┐
         │         RESULT                   │
-        │  ActionResult 回傳              │
         └──────────────┬───────────────────┘
                        │
                        ▼
         ┌──────────────────────────────────┐
         │         LLM_RESPOND              │
-        │  LLM 看到執行結果                │
-        │  決定：結束 or 續行？             │
         └──────────────┬───────────────────┘
                        │
               ┌────────┴────────┐
               ▼                 ▼
         ┌──────────┐      ┌──────────┐
         │ DONE     │      │ CONTINUE │
-        │ 回應結束 │      │ 回到     │
-        │ → IDLE   │      │ CLASSIFY │
+        │ → IDLE   │      │ → CLASSIFY│
         └──────────┘      └──────────┘
 ```
 
 ---
 
-## 3. 各情境完整流程
+## 5. 各情境完整流程
 
-### 3.1 情境 A：意圖清晰 → 直接執行
+### 5.1 情境 A：讀取類（高可逆） → 直接執行
 
 ```
 使用者: "搜尋台北今天天氣"
     │
     ▼
-Phase 1: SEARCH, confidence=0.88, actionability=0.9
+Phase 1: SEARCH, confidence=0.88
     │
     ▼
-Phase 2: 條件 A 成立 (conf≥0.85, act≥0.7) → 直接執行
+Phase 2: action_type=read, exec_score = 1.0 × 1.0 × 0.9 = 0.900
+         0.900 ≥ 0.6 → 直接執行
     │
     ▼
 Phase 3: WebSearchHandler.execute("搜尋台北今天天氣")
@@ -176,177 +363,167 @@ Phase 3: WebSearchHandler.execute("搜尋台北今天天氣")
     ▼
 Phase 4: 結果注入 prompt
     │      [執行結果] 類型:SEARCH 成功:是 結果:台北 28°C 晴天
-    │
-    │      LLM 看到結果，決定：
-    │      → 用戶只問天氣，不需要更多操作 → 結束
+    │      LLM 看到結果 → 不需要更多操作 → 結束
     │
     ▼
 Phase 5: "台北今天天氣是 28°C，晴天，濕度 65%。"
 ```
 
-### 3.2 情境 B：意圖模糊 → 問用戶確認
+### 5.2 情境 B：刪除類（低可逆） → 問用戶
 
 ```
-使用者: "幫我處理一下這個檔案"
+使用者: "刪除 temp.txt"
     │
     ▼
-Phase 1: FILE, confidence=0.72, actionability=0.6
+Phase 1: FILE, confidence=0.92
     │
     ▼
-Phase 2: 條件 B 成立 (conf 0.65-0.85, act 0.5-0.7) → 需要確認
+Phase 2: action_type=delete, exec_score = 0.2 × 0.4 × 0.9 = 0.072
+         0.072 < 0.2 → 預設不執行
     │
     ▼
 Phase 3: 不執行，回問用戶
-    │      "你想要對這個檔案做什麼？"
-    │      "1. 刪除  2. 移動  3. 重新命名  4. 讀取內容"
+    │      "你想要刪除嗎？"
+    │      "⚠️ 刪除後無法復原。"
+    │      "確認後我會執行。"
     │
     ▼
-使用者: "讀取內容"
+使用者: "好，確認"
     │
     ▼
-Phase 1 (第2輪): FILE, confidence=0.90, actionability=0.85
-    │              (因為「讀取」是明確動作)
+Phase 3 (第2輪): FileOperationHandler.execute("刪除 temp.txt")
+    │      → ActionResult(success=True, result="已刪除 temp.txt")
     │
     ▼
-Phase 2: 條件 A 成立 → 直接執行
-    │
-    ▼
-Phase 3: FileOperationHandler.execute("讀取這個檔案")
-    │      → ActionResult(success=True, result="檔案內容: ...")
-    │
-    ▼
-Phase 5: "檔案內容是：..."
+Phase 5: "已刪除 temp.txt。"
 ```
 
-### 3.3 情境 C：意圖不清晰 → 不執行，純聊天
+### 5.3 情境 C：比喻（明確度低） → 問用戶做什麼
+
+```
+使用者: "幫我查一下字典"
+    │
+    ▼
+Phase 1: SEARCH, confidence=0.75
+    │
+    ▼
+Phase 2: action_type=read, exec_score = 1.0 × 1.0 × 0.3 = 0.300
+         0.300 在 [0.2, 0.6) → 問用戶確認
+    │
+    ▼
+Phase 3: "你想要搜尋什麼？可以更具體說明嗎？"
+    │
+    ▼
+使用者: "查 Python 的 list comprehension"
+    │
+    ▼
+Phase 1 (第2輪): SEARCH, confidence=0.90
+    │
+    ▼
+Phase 2: exec_score = 1.0 × 1.0 × 0.95 = 0.950 → 直接執行
+    │
+    ▼
+Phase 3: WebSearchHandler.execute()
+    │      → ActionResult(success=True, result="Python list comprehension: ...")
+    │
+    ▼
+Phase 5: "Python list comprehension 的用法：..."
+```
+
+### 5.4 情境 D：不執行（分數太低）
 
 ```
 使用者: "今天?"
     │
     ▼
-Phase 1: UNKNOWN, confidence=0.3, actionability=0.0
+Phase 1: UNKNOWN, confidence=0.3
     │
     ▼
-Phase 2: 條件 C 成立 (conf<0.65, act<0.5) → 純聊天
-    │
-    ▼
-Phase 3: 跳過，不執行
-    │
-    ▼
-Phase 4: LLM 直接回應（無執行結果）
+Phase 2: action_type=none, exec_score = 1.0 × 1.0 × 0.2 = 0.200
+         0.200 ≥ 0.2 → 問用戶（但因為是 none 類，直接問）
     │
     ▼
 Phase 5: "你是想問今天幾點？還是今天的天氣？還是今天的行程？"
 ```
 
-### 3.4 情境 D：執行失敗 → 告知原因 + 建議替代
-
-```
-使用者: "刪除 system32"
-    │
-    ▼
-Phase 1: FILE, confidence=0.92, actionability=0.95
-    │
-    ▼
-Phase 2: 條件 A 成立 → 直接執行
-    │
-    ▼
-Phase 3: FileOperationHandler.execute("刪除 system32")
-    │      → ActionResult(success=False, error="權限不足或路徑不安全")
-    │
-    ▼
-Phase 4: 結果注入 prompt
-    │      [執行結果] 類型:FILE 成功:否 錯誤:權限不足或路徑不安全
-    │
-    │      LLM 看到失敗，決定：
-    │      → 告知用戶失敗原因，建議替代方案
-    │
-    ▼
-Phase 5: "無法刪除 system32：系統資料夾受保護，不建議刪除。"
-         "如果你是想清理空間，我可以幫你："
-         "1. 清理暫存檔  2. 檢查大檔案  3. 卸載不用的程式"
-```
-
-### 3.5 情境 E：多步驟任務 → 分步執行
-
-```
-使用者: "幫我搜尋 Python 教學，然後整理成筆記"
-    │
-    ▼
-Phase 1: primary=SEARCH (0.85), secondary=FILE (0.70), actionability=0.8
-    │
-    ▼
-Phase 2: 條件 A 成立 (primary conf≥0.85, act≥0.7)
-    │      但有 secondary → 暫不執行 secondary
-    │
-    ▼
-Phase 3: 先執行 SEARCH
-    │      → ActionResult(success=True, result="找到 5 篇 Python 教學...")
-    │
-    ▼
-Phase 4: 結果注入 prompt
-    │      [執行結果] 類型:SEARCH 成功:是 結果:找到 5 篇...
-    │
-    │      LLM 判斷：用戶還要求「整理成筆記」→ 需要續行
-    │      LLM 回應：「找到 5 篇教學，要我整理成筆記嗎？」
-    │
-    ▼
-使用者: "好"
-    │
-    ▼
-Phase 1 (第2輪): FILE, confidence=0.88, actionability=0.9
-    │              (「整理」是 FILE 類型的明確動作)
-    │
-    ▼
-Phase 3: FileOperationHandler.execute("整理成筆記")
-    │      → ActionResult(success=True, result="已建立筆記 py_notes.md")
-    │
-    ▼
-Phase 5: "已將 5 篇教學整理成筆記，存在 py_notes.md。"
-```
-
-### 3.6 情境 F：否定意圖 → 不執行
-
-```
-使用者: "不要搜尋"
-    │
-    ▼
-Phase 1: SEARCH, confidence=0.75, actionability=0.3
-    │      (含否定詞「不要」→ actionability 降低)
-    │
-    ▼
-Phase 2: 條件 C 成立 (act<0.5) → 純聊天
-    │
-    ▼
-Phase 5: "好的，不搜尋。還有什麼需要幫忙的嗎？"
-```
-
-### 3.7 情境 G：誤判 → 自我修正
+### 5.5 情境 E：誤觸修正
 
 ```
 使用者: "開玩笑"
     │
     ▼
-Phase 1 (v1): EXECUTE, confidence=0.8 ❌ 誤判
-    │
-    ▼ (v2 修正後)
-Phase 1 (v2): UNKNOWN, confidence=0.3, actionability=0.0
+Phase 1 (v2): UNKNOWN, confidence=0.3, action_type=none
     │          (word boundary 修正，"開" 不再匹配 EXECUTE)
     │
     ▼
-Phase 2: 條件 C 成立 → 純聊天
+Phase 2: exec_score = 0.0 → 不執行
     │
     ▼
 Phase 5: "哈哈，你真幽默！有什麼我能幫忙的嗎？"
 ```
 
-### 3.8 情境 H：LLM 續行 → 但不該做更多事
+### 5.6 情境 F：否定意圖
+
+```
+使用者: "不要搜尋"
+    │
+    ▼
+Phase 1: SEARCH, confidence=0.75
+    │      (含否定詞「不要」→ confidence 降低)
+    │
+    ▼
+Phase 2: action_type=read, exec_score = 1.0 × 1.0 × 0.4 = 0.400
+         0.400 在 [0.2, 0.6) → 但含否定詞
+    │
+    │      檢查否定詞 → 強制 reject
+    │
+    ▼
+Phase 5: "好的，不搜尋。還有什麼需要幫忙的嗎？"
+```
+
+### 5.7 情境 G：多步驟 → 分步執行
+
+```
+使用者: "幫我搜尋 Python 教學，然後整理成筆記"
+    │
+    ▼
+Phase 1: primary=SEARCH (0.85), secondary=FILE (0.70)
+    │
+    ▼
+Phase 2: 先處理 primary
+         SEARCH: action_type=read, exec_score = 1.0 × 1.0 × 0.85 = 0.850 → 直接執行
+         有 secondary → 暫不處理
+    │
+    ▼
+Phase 3: WebSearchHandler.execute()
+    │      → ActionResult(success=True, result="找到 5 篇 Python 教學...")
+    │
+    ▼
+Phase 4: 結果注入 prompt
+    │      LLM 判斷：用戶還要求「整理成筆記」→ 問用戶要不要繼續
+    │      LLM: "找到 5 篇教學，要我整理成筆記嗎？"
+    │
+    ▼
+使用者: "好"
+    │
+    ▼
+Phase 1 (第2輪): FILE, confidence=0.88
+    │
+    ▼
+Phase 2: action_type=create, exec_score = 0.9 × 0.9 × 0.9 = 0.729 → 直接執行
+    │
+    ▼
+Phase 3: FileOperationHandler.execute("整理成筆記")
+    │      → ActionResult(success=True, result="已建立 py_notes.md")
+    │
+    ▼
+Phase 5: "已將 5 篇教學整理成筆記，存在 py_notes.md。"
+```
+
+### 5.8 情境 H：LLM 續行 → 只能問，不能做
 
 ```
 使用者: "搜尋今天的新聞"
-    │
-    ▼
-Phase 1: SEARCH, confidence=0.90, actionability=0.9
     │
     ▼
 Phase 3: WebSearchHandler.execute()
@@ -354,143 +531,138 @@ Phase 3: WebSearchHandler.execute()
     │
     ▼
 Phase 4: LLM 看到結果
-    │      LLM 想續行：「要不要我幫你整理？要不要儲存？」
-    │      但用戶沒要求 → 不自動執行
+    │      LLM 想續行 → 但不能自動做
     │
     ▼
 Phase 5: "今天的新聞有：[結果]。需要我幫你整理或儲存嗎？"
          (問用戶，不自動做)
 ```
 
-**關鍵規則：LLM 只能「問」用戶要不要做更多，不能自動做更多。**
-除非用戶在同一次對話中已經明確要求了多步驟（情境 E）。
+### 5.9 情境 I：執行失敗 → 告知原因
+
+```
+使用者: "刪除 system32"
+    │
+    ▼
+Phase 2: action_type=delete, exec_score = 0.2 × 0.4 × 0.9 = 0.072
+         0.072 < 0.2 → 預設不執行
+    │
+    ▼
+Phase 3: "你想要刪除嗎？⚠️ 刪除後無法復原。確認後我會執行。"
+    │
+    ▼
+使用者: "確認"
+    │
+    ▼
+Phase 3 (第2輪): FileOperationHandler.execute("刪除 system32")
+    │      → ActionResult(success=False, error="權限不足或路徑不安全")
+    │
+    ▼
+Phase 4: 結果注入 prompt
+    │      [執行結果] 類型:FILE 成功:否 錯誤:權限不足或路徑不安全
+    │      LLM 看到失敗 → 告知原因
+    │
+    ▼
+Phase 5: "無法刪除 system32：系統資料夾受保護，不建議刪除。"
+```
 
 ---
 
-## 4. QueryClassifier v2 設計
+## 6. QueryClassifier v2 設計
 
-### 4.1 分類器輸出
+### 6.1 分類器輸出
 
 ```python
 @dataclass
 class QueryResult:
-    primary_type: QueryType           # 主要意圖
-    confidence: float                 # 置信度 (0.0-1.0)
-    actionability: float              # 可執行性 (0.0-1.0)
-    secondary_type: Optional[QueryType]  # 次要意圖
-    secondary_confidence: float       # 次要置信度
-    reason: str                       # 分類原因（除錯用）
+    primary_type: QueryType
+    confidence: float                    # 0.0-1.0
+    actionability: float                 # 0.0-1.0
+    action_type: str                     # "read"/"create"/"modify"/"delete"/"send"/"system"/"none"
+    secondary_type: Optional[QueryType]
+    secondary_confidence: float
+    reason: str
 ```
 
-### 4.2 動態置信度
+### 6.2 動態置信度
 
 ```python
 def _calculate_confidence(self, query_type, text, match):
     base = self._base_conf[query_type]
 
-    # 因子 1：匹配品質
     if match.anchored:
-        base += 0.05  # 錨定匹配更可靠
+        base += 0.05
 
-    # 因子 2：關鍵字密度
     density = match.keyword_count / max(1, len(text.split()))
     if density > 0.5:
         base += 0.05
     elif density < 0.2:
         base -= 0.10
 
-    # 因子 3：輸入長度
     if len(text) < 5:
         base -= 0.05
     elif len(text) > 50:
         base += 0.03
 
-    # 因子 4：否定詞
     if any(neg in text for neg in ["不要", "別", "取消", "stop"]):
         base -= 0.15
-
-    # 因子 5：上下文一致性（如果有 session history）
-    # 如果上一輪是 SEARCH，這一輪也傾向 SEARCH
-    if self._context_consistency_boost:
-        base += self._context_consistency_boost
 
     return max(0.1, min(0.95, base))
 ```
 
-### 4.3 Actionability Score
+### 6.3 Action Type 推斷
 
 ```python
-# 高可執行性動詞（明確要操作）
-ACTION_VERBS = {
-    "搜尋": 0.9, "搜索": 0.9, "查詢": 0.85,
-    "刪除": 0.95, "移動": 0.9, "複製": 0.9,
-    "開啟": 0.85, "關閉": 0.85, "執行": 0.9,
-    "下載": 0.9, "上傳": 0.9, "安裝": 0.9,
-    "讀取": 0.8, "寫入": 0.85, "儲存": 0.8,
-    "search": 0.9, "delete": 0.95, "run": 0.9,
-    "execute": 0.9, "download": 0.9,
-}
+def _infer_action_type(self, query_type, text):
+    """根據意圖和文字推斷操作類型"""
+    # 直接匹配
+    if query_type in ("GREETING", "REFLEX", "OPINION", "CREATIVE", "KNOWLEDGE"):
+        return "none"
 
-# 低可執行性模式（比喻/閒聊）
-NON_ACTION_PATTERNS = [
-    (r"幫我查一下字典", 0.1),
-    (r"幫我看看時間", 0.1),
-    (r"聽聽看", 0.1),
-    (r"想想看", 0.1),
-    (r"看看", 0.2),
-    (r"試試看", 0.2),
-]
+    # 讀取類
+    if query_type in ("SEARCH", "VISION", "AUDIO"):
+        # 如果含寫入詞 → modify
+        if any(w in text for w in ["寫入", "儲存", "save", "write"]):
+            return "modify"
+        return "read"
 
-def _calculate_actionability(self, text, query_type):
-    # 類型基礎分
-    type_base = {
-        "execute": 0.9, "file": 0.85, "search": 0.8,
-        "code": 0.75, "task": 0.7, "vision": 0.6,
-        "audio": 0.6, "command": 0.5,
-        "knowledge": 0.1, "opinion": 0.1, "creative": 0.1,
-        "greeting": 0.0, "reflex": 0.0, "unknown": 0.0,
-    }.get(query_type, 0.3)
+    # FILE 類：根據動詞判斷
+    if query_type == "FILE":
+        if any(w in text for w in ["刪除", "移除", "清空", "delete", "remove"]):
+            return "delete"
+        if any(w in text for w in ["建立", "新增", "create", "new"]):
+            return "create"
+        if any(w in text for w in ["修改", "編輯", "重新命名", "edit", "rename", "modify"]):
+            return "modify"
+        return "read"  # 預設讀取
 
-    # 檢查是否有明確動作動詞
-    for verb, score in ACTION_VERBS.items():
-        if verb in text:
-            type_base = max(type_base, score)
+    # CODE/EXECUTE → system
+    if query_type in ("CODE", "EXECUTE"):
+        return "system"
 
-    # 檢查是否有比喻模式
-    for pattern, penalty in NON_ACTION_PATTERNS:
-        if re.search(pattern, text):
-            type_base = min(type_base, penalty)
+    # TASK → create or modify
+    if query_type == "TASK":
+        if any(w in text for w in ["刪除", "取消", "delete", "cancel"]):
+            return "delete"
+        return "create"
 
-    # 否定詞
-    if any(neg in text for neg in ["不要", "別", "取消"]):
-        type_base = max(0.0, type_base - 0.5)
+    # COMMAND → 根據內容判斷
+    if query_type == "COMMAND":
+        return "read"  # 預設讀取，由具體 handler 決定
 
-    return type_base
+    return "none"
 ```
 
-### 4.4 Regex 精確度修正
-
-**問題：substring match 導致誤觸**
-
-修正：所有 regex 使用 word boundary
+### 6.4 Regex 精確度修正
 
 ```python
-# Before (有問題)
-r"(執行|運行|開啟|關閉|啟動|停止|..."
-
-# After (修正)
+# 所有 regex 使用 word boundary
 r"(?:^|[\s，。！？,.\s])(執行|運行|開啟|關閉|啟動|停止)(?:$|[\s，。！？,.\s])"
 ```
 
-**EXECUTE 特別修正：**
-- `開啟` → 只匹配完整詞，不匹配 `開玩笑`
-- `關閉` → 只匹配完整詞，不匹配 `關心`
-- 新增：如果含否定詞（不要/別），降低 actionability 但不阻止分類
-
-### 4.5 REFLEX Override 修正
+### 6.5 REFLEX Override 修正
 
 ```python
-# 單字如果是明確動詞，不 override
 VERBS_NOT_REFLEX = {"看", "查", "開", "關", "跑", "跳",
                      "讀", "寫", "聽", "說", "吃", "喝",
                      "搜", "刪", "改", "傳", "載"}
@@ -500,14 +672,12 @@ if text in self.reflex_words:
 elif len(text) < 2 and best_conf < 0.5:
     if text not in VERBS_NOT_REFLEX:
         return QueryResult(REFLEX, 0.95, ...)
-    # 否則降低置信度但保持原分類
     best_conf = max(0.4, best_conf)
 ```
 
-### 4.6 `?` Override 修正
+### 6.6 `?` Override 修正
 
 ```python
-# 只有明確知識查詢模式才 override
 KNOWLEDGE_Q = [
     r"^什麼是", r"^什麼是", r"^怎麼", r"^為什麼",
     r"^how\b", r"^what\b", r"^why\b", r"^when\b",
@@ -517,180 +687,20 @@ KNOWLEDGE_Q = [
 if best_conf < 0.5 and text.endswith("?"):
     if any(re.search(p, text, re.I) for p in KNOWLEDGE_Q):
         return QueryResult(KNOWLEDGE, 0.65, "knowledge_question")
-    # 否則保持 UNKNOWN
 ```
 
-### 4.7 Tie-Breaking 改進
+### 6.7 Tie-Breaking 改進
 
 ```python
-# 收集所有匹配
-matches = []
-for qt, pattern, base_conf in self._patterns:
-    if pattern.search(text):
-        conf = self._calculate_confidence(qt, text, match)
-        act = self._calculate_actionability(text, qt.value)
-        matches.append((qt, conf, act))
-
-# 排序：先比 confidence，再比 actionability
 matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
-
-if matches:
-    primary = matches[0]
-    secondary = matches[1] if len(matches) > 1 and matches[1][1] >= primary[1] - 0.1 else None
-    return QueryResult(
-        primary_type=primary[0],
-        confidence=primary[1],
-        actionability=primary[2],
-        secondary_type=secondary[0] if secondary else None,
-        secondary_confidence=secondary[1] if secondary else 0.0,
-    )
+# 先比 confidence，再比 actionability
 ```
 
 ---
 
-## 5. 決策閘門（Confidence Gate）
+## 7. LLM 續行邏輯
 
-### 5.1 閘門邏輯
-
-```python
-class ConfidenceGate:
-    """置信度閘門：決定要不要執行"""
-
-    # 閾值
-    AUTO_EXECUTE_CONF = 0.85     # 自動執行最低置信度
-    AUTO_EXECUTE_ACT = 0.7       # 自動執行最低可執行性
-    CONFIRM_CONF = 0.65          # 需要確認的最低置信度
-    CONFIRM_ACT = 0.5            # 需要確認的最低可執行性
-
-    def decide(self, result: QueryResult, context: dict) -> GateDecision:
-        # 條件 A：直接執行
-        if (result.confidence >= self.AUTO_EXECUTE_CONF and
-            result.actionability >= self.AUTO_EXECUTE_ACT and
-            result.primary_type.value in HANDLER_MAP):
-            return GateDecision(action="auto_execute",
-                              handler=result.primary_type.value,
-                              reason="high_confidence_high_actionability")
-
-        # 條件 B：需要確認
-        if (result.confidence >= self.CONFIRM_CONF or
-            result.actionability >= self.CONFIRM_ACT):
-            # 檢查是否有 handler
-            if result.primary_type.value in HANDLER_MAP:
-                return GateDecision(action="confirm_then_execute",
-                                  handler=result.primary_type.value,
-                                  reason="medium_confidence_or_actionability",
-                                  confirm_message=self._build_confirm_msg(result))
-            # 沒有 handler，但有意圖 → 問用戶要幹嘛
-            return GateDecision(action="ask_user",
-                              reason="has_intent_but_no_handler",
-                              confirm_message=self._build_ask_msg(result))
-
-        # 條件 C：純聊天
-        return GateDecision(action="chat_only",
-                          reason="low_confidence_low_actionability")
-
-    def _build_confirm_msg(self, result):
-        """建立確認訊息"""
-        type_desc = {
-            "file": "操作檔案",
-            "search": "搜尋",
-            "code": "執行程式碼",
-            "execute": "執行命令",
-            "task": "管理任務",
-            "vision": "分析圖片",
-            "audio": "播放音訊",
-        }
-        desc = type_desc.get(result.primary_type.value, "執行操作")
-        return f"你想要{desc}嗎？確認後我會執行。"
-
-    def _build_ask_msg(self, result):
-        """建立詢問訊息"""
-        return "你想要我做什麼？可以更具體說明嗎？"
-```
-
-### 5.2 Router 整合
-
-```python
-# router.py 中的決策流程
-async def _handle_chat_request(user_message, user_name, history, session_id, extra_context):
-    # Phase 1: 意圖分類
-    result = self.query_classifier.classify(user_message)
-
-    # Phase 2: 決策閘門
-    gate = ConfidenceGate()
-    decision = gate.decide(result, context)
-
-    if decision.action == "auto_execute":
-        # 直接執行
-        handler = self._get_handler(decision.handler)
-        action_result = await handler.execute(user_message, context)
-        context["action_result"] = action_result
-
-    elif decision.action == "confirm_then_execute":
-        # 問用戶確認
-        return ChatResponse(
-            content=decision.confirm_message,
-            route=result.primary_type.value,
-            hit_score=result.confidence,
-            hit_source="gate_confirm",
-            pending_action=decision,  # 暫存，等用戶確認
-        )
-
-    elif decision.action == "ask_user":
-        # 問用戶要做什麼
-        return ChatResponse(
-            content=decision.confirm_message,
-            route=result.primary_type.value,
-            hit_score=result.confidence,
-            hit_source="gate_ask",
-        )
-
-    elif decision.action == "chat_only":
-        # 純聊天，跳過 ModelBus
-        context["action_result"] = None
-
-    # Phase 4: LLM 生成
-    llm_response = await self.llm_service.generate(user_message, context)
-
-    # Phase 5: 回應
-    return ChatResponse(
-        content=llm_response.text,
-        route=result.primary_type.value,
-        hit_score=result.confidence,
-        hit_source="llm",
-    )
-```
-
-### 5.3 確認機制
-
-```python
-# 當用戶回覆 "好" / "確認" / "是" 時
-async def _handle_confirmation(self, user_message, pending_action, context):
-    # 檢查是否是確認回覆
-    confirm_words = {"好", "是", "確認", "ok", "yes", "sure", "確定"}
-    cancel_words = {"不要", "取消", "算了", "no", "cancel", "skip"}
-
-    if user_message.strip().lower() in confirm_words:
-        # 執行
-        handler = self._get_handler(pending_action.handler)
-        action_result = await handler.execute(pending_action.original_query, context)
-        context["action_result"] = action_result
-        # 繼續 LLM 生成...
-
-    elif user_message.strip().lower() in cancel_words:
-        return ChatResponse(content="好的，不執行。還有什麼需要幫忙的嗎？")
-
-    else:
-        # 用戶沒有確認也沒有取消，當作新的輸入
-        # 重新分類，帶上上下文
-        return await self._handle_chat_request(user_message, ...)
-```
-
----
-
-## 6. LLM 續行邏輯
-
-### 6.1 LLM 收到的 Prompt 結構
+### 7.1 Prompt 結構
 
 ```
 [系統指令]
@@ -717,112 +727,118 @@ async def _handle_confirmation(self, user_message, pending_action, context):
 ...
 ```
 
-### 6.2 LLM 回應分類
-
-LLM 的回應可以是：
+### 7.2 LLM 回應規則
 
 | 類型 | 判斷方式 | 處理 |
 |------|---------|------|
-| **結束** | 回應中不含提問/建議 | 直接回傳 |
-| **建議繼續** | 回應包含「要不要我...」 | 回傳，等用戶回覆 |
-| **自動續行** | ❌ 不允許 | LLM 不應該自動做更多事 |
+| **結束** | 不含提問/建議 | 直接回傳 |
+| **建議繼續** | 含「要不要我...」 | 回傳，等用戶 |
+| **自動續行** | ❌ 不允許 | LLM 不自動做更多 |
 
-**關鍵規則：LLM 只能建議，不能自動做。**
-
-### 6.3 續行迴圈保護
+### 7.3 續行迴圈保護
 
 ```python
-# 在 session context 中追蹤
 context["continuation_count"] = context.get("continuation_count", 0)
-
 if context["continuation_count"] >= 3:
-    # 防止無限迴圈
     context["action_result"] = None
-    # 加入 prompt：用戶似乎需要更多幫助，但請先確認
+    # 加入 prompt：請先確認用戶需求
 ```
 
 ---
 
-## 7. 修正前 vs 修正後
+## 8. 修正前 vs 修正後
 
 | 輸入 | 修正前 | 修正後 |
 |------|--------|--------|
-| `開玩笑` | EXECUTE 0.8 ❌ 執行 | UNKNOWN 0.3, act=0.0 → 純聊天 ✅ |
-| `關心` | EXECUTE 0.8 ❌ 執行 | UNKNOWN 0.3, act=0.0 → 純聊天 ✅ |
-| `幫我查字典` | SEARCH 0.8 ❌ 執行 | SEARCH 0.6, act=0.3 → 純聊天 ✅ |
-| `搜尋台北天氣` | SEARCH 0.8 ⚠️ 不確定 | SEARCH 0.88, act=0.9 → 直接執行 ✅ |
-| `刪除 temp.txt` | FILE 0.8 ⚠️ | FILE 0.85, act=0.95 → 直接執行 ✅ |
-| `今天幾點?` | KNOWLEDGE 0.65 ⚠️ | UNKNOWN 0.3, act=0.0 → 純聊天 ✅ |
-| `好看嗎?` | KNOWLEDGE 0.65 ❌ | OPINION 0.6, act=0.1 → 純聊天 ✅ |
-| `看` | REFLEX 0.95 ❌ | VISION 0.5, act=0.4 → 純聊天 ✅ |
-| `不要搜尋` | SEARCH 0.8 ❌ 執行 | SEARCH 0.75, act=0.3 → 純聊天 ✅ |
-| `幫我處理檔案` | FILE 0.8 ❌ 直接執行 | FILE 0.72, act=0.6 → 問用戶確認 ✅ |
+| `開玩笑` | EXECUTE 0.8 ❌ | UNKNOWN, score=0.000 → 不執行 ✅ |
+| `關心` | EXECUTE 0.8 ❌ | UNKNOWN, score=0.000 → 不執行 ✅ |
+| `幫我查字典` | SEARCH 0.8 ❌ | SEARCH, score=0.300 → 問用戶 ✅ |
+| `搜尋台北天氣` | SEARCH 0.8 ⚠️ | SEARCH, score=0.900 → 直接執行 ✅ |
+| `讀取 temp.txt` | FILE 0.8 ⚠️ | FILE, score=0.950 → 直接執行 ✅ |
+| `刪除 temp.txt` | FILE 0.8 ❌ 直接執行 | FILE, score=0.072 → 問用戶+影響說明 ✅ |
+| `今天幾點?` | KNOWLEDGE 0.65 ⚠️ | UNKNOWN, score=0.200 → 問用戶 ✅ |
+| `好看嗎?` | KNOWLEDGE 0.65 ❌ | OPINION, score=0.100 → 不執行 ✅ |
+| `看` | REFLEX 0.95 ❌ | VISION, score=0.400 → 問用戶 ✅ |
+| `不要搜尋` | SEARCH 0.8 ❌ | SEARCH, score=0.400 + 否定 → 不執行 ✅ |
+| `幫我處理檔案` | FILE 0.8 ❌ | FILE, score=0.168 → 問用戶做什麼 ✅ |
 
 ---
 
-## 8. 實作計畫
+## 9. 實作計畫
 
 ### Phase 1: QueryClassifier v2（2-3 天）
 
 | # | 項目 | 檔案 | 工作量 |
 |---|------|------|--------|
 | 1.1 | 動態置信度計算 | `query_classifier.py` | 0.5 天 |
-| 1.2 | Actionability score | `query_classifier.py` | 0.5 天 |
-| 1.3 | 多標籤分類（primary/secondary） | `query_classifier.py` | 0.5 天 |
-| 1.4 | Regex word boundary 修正 | `query_classifier.py` | 0.5 天 |
+| 1.2 | Action type 推斷 | `query_classifier.py` | 0.5 天 |
+| 1.3 | 多標籤分類 | `query_classifier.py` | 0.5 天 |
+| 1.4 | Regex word boundary | `query_classifier.py` | 0.5 天 |
 | 1.5 | REFLEX override 修正 | `query_classifier.py` | 0.25 天 |
 | 1.6 | `?` override 修正 | `query_classifier.py` | 0.25 天 |
 | 1.7 | Tie-breaking 改進 | `query_classifier.py` | 0.25 天 |
-| 1.8 | 單元測試（新增 30+ 測試） | `test_query_classifier.py` | 0.5 天 |
+| 1.8 | 單元測試（30+ 測試） | `test_query_classifier.py` | 0.5 天 |
 
-### Phase 2: Confidence Gate + 執行路由（2-3 天）
+### Phase 2: 執行分數 + 決策閘門（2-3 天）
 
 | # | 項目 | 檔案 | 工作量 |
 |---|------|------|--------|
-| 2.1 | ConfidenceGate 類 | `router.py` | 0.5 天 |
-| 2.2 | 確認機制（confirm/cancel） | `router.py` | 0.5 天 |
-| 2.3 | Handler 路由表（補齊 code/execute/task/vision/audio） | `model_bus.py` | 1 天 |
-| 2.4 | Result injection prompt | `prompt_builder.py` | 0.5 天 |
-| 2.5 | 純聊天快速路徑（跳過 ModelBus） | `router.py` | 0.25 天 |
-| 2.6 | 續行迴圈保護 | `router.py` | 0.25 天 |
-| 2.7 | 單元測試 | `test_router.py` | 0.5 天 |
+| 2.1 | ExecutionGate 類 | `router.py` | 0.5 天 |
+| 2.2 | 確認機制（含影響說明） | `router.py` | 0.5 天 |
+| 2.3 | 否定詞檢測 | `router.py` | 0.25 天 |
+| 2.4 | Handler 路由表 | `model_bus.py` | 1 天 |
+| 2.5 | Result injection prompt | `prompt_builder.py` | 0.5 天 |
+| 2.6 | 純聊天快速路徑 | `router.py` | 0.25 天 |
+| 2.7 | 續行迴圈保護 | `router.py` | 0.25 天 |
+| 2.8 | 單元測試 | `test_router.py` | 0.5 天 |
 
 ### Phase 3: 整合測試（1-2 天）
 
 | # | 測試案例 |
 |---|---------|
-| 3.1 | 模糊查詢不誤觸（10 個案例） |
-| 3.2 | 明確查詢正確執行（10 個案例） |
-| 3.3 | 低置信度不執行（10 個案例） |
-| 3.4 | 否定查詢不執行（5 個案例） |
-| 3.5 | 執行成功回饋 LLM（5 個案例） |
-| 3.6 | 執行失敗回饋 LLM（5 個案例） |
-| 3.7 | 確認機制（5 個案例） |
-| 3.8 | 多步驟任務（5 個案例） |
-| 3.9 | 續行迴圈保護（3 個案例） |
-| 3.10 | 舊 86 個測試仍通過 |
+| 3.1 | 讀取類直接執行（5 個） |
+| 3.2 | 刪除類問用戶（5 個） |
+| 3.3 | 比喻不執行（5 個） |
+| 3.4 | 誤觸不執行（5 個） |
+| 3.5 | 否定不執行（5 個） |
+| 3.6 | 執行成功回饋 LLM（5 個） |
+| 3.7 | 執行失敗回饋 LLM（5 個） |
+| 3.8 | 確認機制（5 個） |
+| 3.9 | 多步驟任務（5 個） |
+| 3.10 | 續行迴圈保護（3 個） |
+| 3.11 | 舊 86 個測試仍通過 |
 
 ---
 
-## 9. 驗收標準
+## 10. 驗收標準
 
 ### 精確度
-- [ ] `"開玩笑"` → 不執行
-- [ ] `"關心"` → 不執行
-- [ ] `"幫我查字典"` → 不執行
-- [ ] `"搜尋台北天氣"` → 直接執行
-- [ ] `"刪除 temp.txt"` → 直接執行
-- [ ] `"今天幾點?"` → 純聊天
-- [ ] `"好看嗎?"` → 純聊天
-- [ ] `"看"` → 不執行
-- [ ] `"不要搜尋"` → 不執行
+- [ ] `"開玩笑"` → 不執行 (score=0.0)
+- [ ] `"關心"` → 不執行 (score=0.0)
+- [ ] `"幫我查字典"` → 問用戶 (score=0.3)
+- [ ] `"搜尋台北天氣"` → 直接執行 (score=0.9)
+- [ ] `"讀取 temp.txt"` → 直接執行 (score=0.95)
+- [ ] `"刪除 temp.txt"` → 問用戶+影響說明 (score=0.07)
+- [ ] `"今天幾點?"` → 問用戶 (score=0.2)
+- [ ] `"好看嗎?"` → 不執行 (score=0.1)
+- [ ] `"看"` → 問用戶 (score=0.4)
+- [ ] `"不要搜尋"` → 不執行（否定）
 
 ### 知行合一
 - [ ] 執行成功 → LLM 回應包含結果
 - [ ] 執行失敗 → LLM 回應說明原因
-- [ ] LLM 不能自動執行更多操作（只能建議）
+- [ ] LLM 不能自動執行更多操作
 - [ ] 續行迴圈 ≤ 3 次
 
 ### 回歸
 - [ ] 舊 86 個測試仍通過
 - [ ] 新增 ≥ 30 個邊界測試
+
+---
+
+## 11. 與架構文檔對齊
+
+本計畫與以下文檔一致：
+- **AGENTS.md**: Surgical Precision（精確修改目標檔案）, No Placeholders（所有邏輯完整實作）
+- **ANGELA_FULL_ARCHITECTURE.md**: 管線流程（Phase 1-5）符合十一章完整管線流程
+- **README.md**: 管線描述（WebSocket → 情緒 → 危機 → 對齊 → LLM → 因果學習 → 回應）
