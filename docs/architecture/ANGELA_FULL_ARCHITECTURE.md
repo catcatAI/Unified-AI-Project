@@ -28,8 +28,13 @@
   - [4.3 桌面操作 — DesktopInteraction](#43-桌面操作--desktopinteraction)
   - [4.4 繪圖 — ImageGenerationAgent](#44-繪圖--imagegenerationagent)
 - [五、記憶系統](#五記憶系統)
-  - [5.1 HAM — 短期/中期記憶](#51-ham--短期中期記憶)
-  - [5.2 ED3N — 反射與字典](#52-ed3n--反射與字典)
+  - [5.1 三層架構（權威定義）](#51-三層架構權威定義)
+  - [5.2 AttractorField — 梯度導航](#52-attractorfield--梯度導航)
+  - [5.3 HAMMemoryManager — 最小 JSON 存儲](#53-hammemorymanager--最小-json-存儲)
+  - [5.4 LogicUnit — 邏輯/規則記憶](#54-logicunit--邏輯規則記憶)
+  - [5.5 UnifiedMemoryCoordinator — 統一協調器](#55-unifiedmemorycoordinator--統一協調器)
+  - [5.6 記憶層級設計（文檔描述）](#56-記憶層級設計文檔描述)
+  - [5.7 ED3N — 反射與字典](#57-ed3n--反射與字典)
 - [六、完整管線流程](#六完整管線流程)
 - [七、系統成熟度總覽](#七系統成熟度總覽)
 
@@ -403,7 +408,46 @@ DesktopInteraction
 
 ## 五、記憶系統
 
-### 5.1 HAM — 短期/中期記憶
+### 5.1 三層架構（權威定義）
+
+**來源**: `FULL_ARCHITECTURE_ANALYSIS.md` §5.2
+
+```
+HAM 記憶層次:
+  L1 — Raw Memory (原始記憶):  sensor input, chat history
+  L2 — Abstract Memory (抽象記憶):  pattern, concept, relation
+  L3 — Symbolic Memory (符號記憶):  symbolic representation, formula
+```
+
+**5 種記憶類型** (`ai/memory/types.py`):
+
+| 類型 | 說明 |
+|------|------|
+| `core` | 核心記憶 (身份、關鍵事實) |
+| `episodic` | 事件記憶 (經驗、對話) |
+| `semantic` | 語義記憶 (概念、知識) |
+| `procedural` | 程序記憶 (技能、行為) |
+| `working` | 工作記憶 (當前上下文) |
+
+### 5.2 AttractorField — 梯度導航
+
+**檔案**: `ai/memory/attractor_field.py`
+
+```
+AttractorField 算法:
+  1. 每個記憶點在向量空間中有一個位置
+  2. Attractor (吸引子) 是穩定點，附近的記憶被"吸引"強化
+  3. Gradient descent 導航:
+     新記憶位置 = 舊位置 - learning_rate × gradient(fields)
+  4. 重要性評分:  relevance = cosine_similarity(query, memory) × importance_weight
+```
+
+**向量存儲**:
+- ChromaDB: 持久化向量存儲
+- FAISS: 快速相似性搜索
+- JSON: 本地文件備份
+
+### 5.3 HAMMemoryManager — 最小 JSON 存儲
 
 **檔案**: `ai/memory/ham_memory/ham_manager.py` (173 行)
 **狀態**: ✅ 真實實現 (薄)
@@ -411,7 +455,7 @@ DesktopInteraction
 ```
 HAMMemoryManager
     │
-    ├─→ 存儲: JSON 檔案 (angela_memory.json)
+    ├─→ 存儲: angela_memory.json
     │     ├─ templates: 模板 + 關鍵字
     │     ├─ conversations: 對話歷史
     │     └─ experiences: 經驗 + 自動提取關鍵字
@@ -423,7 +467,60 @@ HAMMemoryManager
     └─→ 統計: 模板數/對話數
 ```
 
-### 5.2 ED3N — 反射與字典
+### 5.4 LogicUnit — 邏輯/規則記憶
+
+**檔案**: `ai/memory/lu_logic/logic_unit.py` (496 行)
+**狀態**: ✅ 真實實現
+
+```
+LogicUnit (L2 邏輯層)
+    │
+    ├─→ 規則管理:
+    │     ├─ LogicRule: 條件 + 動作 + 優先級
+    │     ├─ RulePriority: LOW / NORMAL / HIGH / CRITICAL
+    │     └─ 規則匹配 + 執行
+    │
+    └─→ 用途: 管理和執行邏輯規則，支持條件判斷、規則匹配和推理
+```
+
+### 5.5 UnifiedMemoryCoordinator — 統一協調器
+
+**檔案**: `ai/lifecycle/unified_memory_coordinator.py`
+**狀態**: ✅ 真實實現
+
+```
+UnifiedMemoryCoordinator
+    │
+    ├─→ HAM: 分層關聯記憶 (存儲/檢索)
+    ├─→ LogicUnit: 邏輯規則記憶
+    ├─→ CDM: 認知紅利模型 (資源追蹤)
+    │
+    └─→ 統一介面:
+          ├─ query(): 跨系統查詢
+          └─ store(): 統一存儲
+```
+
+### 5.6 記憶層級設計（文檔描述）
+
+**來源**: `HAMEMORY_INTEGRATION_SUCCESS.md`
+
+```
+記憶層級架構 (文檔):
+├── working_memory (50 項位)    # 當前對話上下文
+├── short_term (200 項位)      # 幾小時到幾天
+├── long_term (500 項位)        # 幾週到幾月
+└── episodic (100 項位)         # 重要事件和經驗
+
+智能分類:
+  - episodic: 包含 "important", "critical", "remember"
+  - long_term: 長內容 (>500 字符)
+  - short_term: 問題類內容
+  - working_memory: 其他對話內容
+```
+
+**注意**: 此分類邏輯在文檔中描述，但 `HAMMemoryManager` 實際實現是平面 JSON 存儲，未實現分層。
+
+### 5.7 ED3N — 反射與字典
 
 **目錄**: `ai/ed3n/`
 
@@ -535,6 +632,7 @@ ED3NEngine
 |------|------|------|------|--------|
 | StateMatrix4D | `core/engine/state_matrix.py` | 1439 | ✅ 真實 | 極高 |
 | DesktopInteraction | `core/engine/desktop_interaction.py` | 1178 | ✅ 真實 | 高 |
+| LogicUnit | `ai/memory/lu_logic/logic_unit.py` | 496 | ✅ 真實 | 中 |
 | BiologicalIntegrator | `core/bio/biological_integrator.py` | 852 | ✅ 真實 | 高 |
 | VisionService | `services/vision_service.py` | 706 | ⚠️ 架構真/方法模擬 | 中 |
 | 5 個理論公式 | `core/*.py` | ~2419 | ✅ 真實 | 高 |
@@ -545,8 +643,8 @@ ED3NEngine
 | UserMonitor | `ai/lifecycle/user_monitor.py` | 407 | ✅ 真實 | 中 |
 | EmotionAnalyzer | `services/llm/emotion_analyzer.py` | 281 | ✅ 真實(簡單) | 低 |
 | RealEdgeTTS | `core/art/real_edge_tts.py` | 268 | ✅ 真實 | 中 |
-| Live2DIntegration | `core/engine/live2d_integration.py` | 116 | ✅ 真實 | 低 |
 | HAMMemoryManager | `ai/memory/ham_memory/ham_manager.py` | 173 | ✅ 真實(薄) | 低 |
+| Live2DIntegration | `core/engine/live2d_integration.py` | 116 | ✅ 真實 | 低 |
 | AudioService | `services/audio_service.py` | 41 | ❌ Stub | - |
 | TactileService | `services/tactile_service.py` | 66 | ❌ Stub | - |
 | ImageGeneration | `ai/agents/specialized/image_generation_agent.py` | 107 | ❌ Stub | - |
