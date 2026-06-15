@@ -172,6 +172,35 @@ class ModelBus:
 
         return _HandlerAdapter(handler)
 
+    async def execute_handler(self, handler_id: str, query: str, context: dict) -> dict:
+        """执行 handler 并返回结构化结果"""
+        handler = self._handlers.get(handler_id)
+        if not handler:
+            return {"type": "unknown", "success": False, "result": None,
+                    "error": f"handler {handler_id} not found"}
+
+        try:
+            if asyncio.iscoroutinefunction(handler.process):
+                result = await asyncio.wait_for(
+                    handler.process(query, context),
+                    timeout=30.0,
+                )
+            else:
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(handler.process, query, context),
+                    timeout=30.0,
+                )
+            return {
+                "type": handler_id,
+                "success": True,
+                "result": str(result),
+                "error": None,
+            }
+        except asyncio.TimeoutError:
+            return {"type": handler_id, "success": False, "result": None, "error": "timeout"}
+        except Exception as e:
+            return {"type": handler_id, "success": False, "result": None, "error": str(e)}
+
     # ------------------------------------------------------------------
     # Routing
     # ------------------------------------------------------------------

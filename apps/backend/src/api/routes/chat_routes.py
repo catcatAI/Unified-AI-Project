@@ -248,6 +248,109 @@ async def _handle_chat_request(
                 pass
         context["retrieved_context"] = retrieved_ctx
 
+        # === Execution Gate Flow (v2) ===
+        # Handle pending confirmation from previous turn
+        pending = context.get("pending_action")
+        if pending:
+            msg_lower = user_message.strip().lower()
+            confirm_words = {"好", "是", "确认", "ok", "yes", "sure", "确定", "对"}
+            cancel_words = {"不要", "取消", "算了", "no", "cancel", "skip", "不用"}
+
+            if msg_lower in confirm_words:
+                handler_id = pending.get("handler")
+                if handler_id:
+                    try:
+                        from ai.core.model_bus import ModelBus
+                        model_bus = ModelBus()
+                        action_result = await model_bus.execute_handler(
+                            handler_id, pending.get("original_query", user_message), context
+                        )
+                        context["last_action_result"] = action_result
+                        context["pending_action"] = None
+                        context["continuation_count"] = 0
+                    except Exception as e:
+                        logger.warning(f"Execution gate handler failed: {e}")
+                        context["pending_action"] = None
+                else:
+                    context["pending_action"] = None
+
+            elif msg_lower in cancel_words:
+                context["pending_action"] = None
+                return {
+                    "response_text": "好的，不执行。还有什么需要帮忙的吗？",
+                    "source": "gate_cancel",
+                    "schema_version": _schema_ver,
+                    "truncation_message": "",
+                    "emotion": "neutral",
+                    "emotion_confidence": 0.5,
+                    "emotion_intensity": 0.5,
+                    "session_id": session_id,
+                }
+            else:
+                # Not confirm or cancel → treat as new input, clear pending
+                context["pending_action"] = None
+
+        # Intent classification (QueryClassifier v2)
+        try:
+            from ai.core.query_classifier import QueryClassifier
+            classifier = QueryClassifier()
+            classify_result = classifier.classify(user_message)
+
+            # Execution gate decision
+            from ai.core.execution_gate import ExecutionGate
+            gate = ExecutionGate()
+            decision = gate.decide(
+                query_type=classify_result.primary_type.value,
+                action_type=classify_result.action_type,
+                user_message=user_message,
+                confidence=classify_result.confidence,
+                context=context,
+            )
+
+            if decision.action == "auto_execute":
+                if decision.handler:
+                    try:
+                        from ai.core.model_bus import ModelBus
+                        model_bus = ModelBus()
+                        action_result = await model_bus.execute_handler(
+                            decision.handler, user_message, context
+                        )
+                        context["last_action_result"] = action_result
+                        context["continuation_count"] = 0
+                    except Exception as e:
+                        logger.warning(f"Execution gate auto-execute failed: {e}")
+
+            elif decision.action == "confirm_then_execute":
+                context["pending_action"] = {
+                    "handler": decision.handler,
+                    "action_type": decision.action_type,
+                    "original_query": decision.original_query,
+                }
+                return {
+                    "response_text": decision.confirm_message,
+                    "source": "gate_confirm",
+                    "schema_version": _schema_ver,
+                    "truncation_message": "",
+                    "emotion": "neutral",
+                    "emotion_confidence": classify_result.confidence,
+                    "emotion_intensity": 0.5,
+                    "hit_score": classify_result.confidence,
+                    "hit_source": "gate_confirm",
+                    "route": classify_result.primary_type.value,
+                    "session_id": session_id,
+                }
+            else:
+                # reject
+                context["last_action_result"] = None
+
+            # Continuation loop protection
+            continuation = context.get("continuation_count", 0)
+            if continuation >= 3:
+                context["continuation_count"] = 0
+
+        except Exception as e:
+            logger.debug(f"Execution gate unavailable: {e}")
+
         _llm_response = await asyncio.wait_for(
             _chat_svc.generate_response(user_message, user_name, context=context),
             timeout=_http_timeout,

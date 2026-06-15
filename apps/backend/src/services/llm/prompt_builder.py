@@ -299,6 +299,40 @@ def construct_angela_prompt(
 【θ 路由狀態】
 {theta_state}"""
 
+    # Execution results from tool calls (injected into system prompt)
+    action_result = context.get("last_action_result")
+    if action_result:
+        result_type = action_result.get("type", "unknown")
+        success = action_result.get("success", False)
+        result_text = action_result.get("result", "") or ""
+        error_text = action_result.get("error", "") or ""
+        exec_block = f"""
+
+【执行结果】
+类型: {result_type}
+成功: {'是' if success else '否'}
+结果: {result_text[:500]}
+错误: {error_text}
+
+请基于以上执行结果回应使用者。
+如果执行失败，请说明原因并建议替代方案。"""
+        system_prompt += exec_block
+
+    # Execution rules for continuation safety
+    system_prompt += """
+
+【执行规则】
+- 如果收到执行结果，你必须基于事实回应
+- 如果执行成功，描述结果
+- 如果执行失败，说明原因并建议替代方案
+- 如果你判断使用者还需要更多操作，问他们要不要继续
+- 不要自动执行更多操作，除非使用者明确要求"""
+
+    # Continuation loop protection
+    continuation = context.get("continuation_count", 0)
+    if continuation >= 3:
+        system_prompt += "\n\n[警告] 已达最大续行次数，请直接回应使用者，不要再建议进一步操作。"
+
     messages = [{"role": "system", "content": system_prompt.strip()}]
 
     user_profile = context.get("user_profile", {})
