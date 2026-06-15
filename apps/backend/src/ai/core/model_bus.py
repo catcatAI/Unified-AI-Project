@@ -282,14 +282,25 @@ class ModelBus:
 
         elapsed = (time.perf_counter() - start) * 1000
         best = self._pick_best(results)
-
+        selected_model = best["model_id"]
+        confidence = best["confidence"]
+        
+        # ========== Hybrid Routing (Draft for Refinement) ==========
+        # If a local model (ED3N/GARDEN) has decent but not perfect confidence,
+        # and cloud LLM is available, we mark it for refinement.
+        if selected_model in ("ed3n", "garden") and 0.4 <= confidence < 0.8:
+            if "cloud" in self._registry:
+                logger.info(f"ModelBus: {selected_model} confidence ({confidence:.2f}) in refinement zone. Routing to cloud for polish.")
+                # We keep the local model as selected, but the service layer will see the confidence
+                # and decide whether to use it as a draft for the cloud model.
+        
         return RouteDecision(
             query=query,
             query_type=query_type,
-            selected_model=best["model_id"],
+            selected_model=selected_model,
             results=results,
             total_latency_ms=round(elapsed, 2),
-            confidence=best["confidence"],
+            confidence=confidence,
             reason=best["reason"],
         )
 

@@ -226,9 +226,9 @@ class ModelEnsemble:
             vote_score = model_weight * quality
             model_votes[resp.model] = vote_score
 
-            # Aggregate token usage
-            for key in token_usage:
-                token_usage[key] += resp.usage.get(key, 0)
+            # Aggregate token usage (LLMResponse has tokens_used: Optional[int])
+            tokens = resp.tokens_used or 0
+            token_usage["total_tokens"] += tokens
 
         # Fuse responses
         fused_content = self.fusion_engine.fuse(valid_responses, self.weights, fusion_strategy)

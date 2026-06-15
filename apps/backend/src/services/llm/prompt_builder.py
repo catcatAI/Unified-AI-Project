@@ -350,6 +350,18 @@ def construct_angela_prompt(
             retrieved_block += f"- [{role}] {content} (相關度: {score})\n"
         messages.append({"role": "user", "content": retrieved_block})
 
+    # ========== ED3N/GARDEN Draft Response (Refinement) ==========
+    draft_response = context.get("draft_response")
+    if draft_response:
+        refinement_block = f"""
+[模型初步想法]
+{draft_response}
+
+請基於上述想法，結合 Angela 的個性與當前狀態，進行潤色並生成最終回應。
+如果初步想法已經足夠好，請直接採納並優化語言風格。
+"""
+        messages.append({"role": "system", "content": refinement_block})
+
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
 
     return messages

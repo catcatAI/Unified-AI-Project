@@ -188,9 +188,11 @@ async def get_level5_asi():
             from ai.level5_asi_system import Level5ASISystem
             _level5_asi_instance = Level5ASISystem()
             await _level5_asi_instance.initialize()
-            logger.info("[Level5ASI] Lazy-initialized — alignment gate available")
+            await _level5_asi_instance.start()
+            logger.info("[Level5ASI] Lazy-initialized and started — alignment gate available")
         except Exception as e:
             logger.warning(f"[Level5ASI] Initialization failed: {e}")
+            _level5_asi_instance = None
     return _level5_asi_instance
 
 

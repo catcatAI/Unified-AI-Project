@@ -13,6 +13,7 @@ and coordinating with other support systems when necessary.
 """
 
 import logging
+import time
 from datetime import datetime
 from typing import Optional, Dict, Any
 import json
@@ -63,6 +64,8 @@ class CrisisSystem:
         self.negative_words = self.config.get("negative_words", [])
         self.default_crisis_level = self.config.get("default_crisis_level_on_keyword", 1)
         self.crisis_protocols = self.config.get("crisis_protocols", {})
+        self.crisis_timeout = self.config.get("crisis_timeout_seconds", 300)
+        self._crisis_last_detected: float = 0.0
 
         logger.info(f"CrisisSystem initialized. Keywords: {self.crisis_keywords}")
 
@@ -83,6 +86,13 @@ class CrisisSystem:
         """
         if context is None:
             context = {}
+
+        # Auto-reset if crisis timeout elapsed
+        if self.crisis_level > 0 and self._crisis_last_detected > 0:
+            elapsed = time.time() - self._crisis_last_detected
+            if elapsed > self.crisis_timeout:
+                logger.info(f"CrisisSystem: Auto-resetting crisis level {self.crisis_level} after {elapsed:.0f}s timeout")
+                self.crisis_level = 0
 
         text_input = input_data.get("text", "").lower()
 
@@ -120,6 +130,7 @@ class CrisisSystem:
                 )
 
             self.crisis_level = detected_level  # Set or maintain the detected crisis level
+            self._crisis_last_detected = time.time()
             self._trigger_protocol(
                 self.crisis_level, {"input_text": text_input, "context": context}
             )

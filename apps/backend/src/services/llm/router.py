@@ -680,7 +680,38 @@ class AngelaLLMService:
             return await self._fallback_response(user_message, context)
 
     async def _try_template_match(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
-        """Try template match."""
+        """Try template match or ModelBus fast-path/drafting."""
+        
+        # ========== P0: ModelBus Fast-Path & Drafting ==========
+        # Check ModelBus for reflex/knowledge hits or drafts for refinement
+        if hasattr(self, "model_bus") and self.model_bus:
+            try:
+                query_type = context.get("intent", "auto")
+                decision = await self.model_bus.route(user_message, query_type, context)
+                
+                if decision.selected_model != "none":
+                    result = decision.results.get(decision.selected_model)
+                    if result and result.text:
+                        # Case A: High confidence -> Direct return (Reflex)
+                        if decision.confidence >= 0.8:
+                            logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f})")
+                            return LLMResponse(
+                                text=result.text,
+                                confidence=decision.confidence,
+                                model=decision.selected_model,
+                                backend="model_bus",
+                                latency_ms=decision.total_latency_ms
+                            )
+                        
+                        # Case B: Medium confidence -> Draft for LLM refinement
+                        elif 0.4 <= decision.confidence < 0.8:
+                            logger.info(f"ModelBus draft provided: {decision.selected_model} (conf={decision.confidence:.2f}) for LLM refinement")
+                            context["draft_response"] = result.text
+                            context["draft_model"] = decision.selected_model
+            except Exception as e:
+                logger.warning(f"ModelBus pre-match failed: {e}", exc_info=True)
+
+        # ========== P1: Traditional Template Matching ==========
         if not hasattr(self, "template_matcher") or not self.template_matcher:
             return None
         try:

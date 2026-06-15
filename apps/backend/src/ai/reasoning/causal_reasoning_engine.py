@@ -29,7 +29,11 @@ class CausalReasoningEngine:
     def _infer_relationships(self, observation: Dict[str, Any]) -> List[Dict[str, Any]]:
         variables = observation.get("variables", [])
         existing = observation.get("relationships", [])
-        inferred = list(existing)
+        # If caller already specified relationships, trust them (no re-inference)
+        if existing:
+            return list(existing)
+        # Otherwise, infer pairwise relationships from variables
+        inferred = []
         if len(variables) >= 2:
             for i in range(len(variables)):
                 for j in range(i + 1, len(variables)):

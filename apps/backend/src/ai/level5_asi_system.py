@@ -308,9 +308,6 @@ class Level5ASISystem:
         try:
             logger.info(f"[{self.system_id}] 启动Level 5 ASI系统")
 
-            if self.autonomous_alignment:
-                await self.autonomous_alignment.start()
-
             for agent in self.aligned_agents.values():
                 await agent.start()
 
@@ -329,9 +326,6 @@ class Level5ASISystem:
 
             for agent in self.aligned_agents.values():
                 await agent.stop()
-
-            if self.autonomous_alignment:
-                await self.autonomous_alignment.stop()
 
             if self.distributed_coordinator:
                 await self.distributed_coordinator.shutdown()
@@ -462,27 +456,26 @@ class Level5ASISystem:
         """初始化对齐系统"""
         self.reasoning_system = ReasoningSystem(f"{self.system_id}_reasoning")
         self.emotion_system = EmotionSystem(f"{self.system_id}_emotion")
-        self.ontology_system = OntologySystem(f"{self.system_id}_ontology")
+        self.ontology_system = OntologySystem()
 
         self.alignment_manager = AlignmentManager(
-            reasoning_system=self.reasoning_system,
-            emotion_system=self.emotion_system,
-            ontology_system=self.ontology_system,
-            system_id=f"{self.system_id}_alignment_manager",
+            config={
+                "reasoning_system": self.reasoning_system,
+                "emotion_system": self.emotion_system,
+                "ontology_system": self.ontology_system,
+                "system_id": f"{self.system_id}_alignment_manager",
+            }
         )
-        await self.alignment_manager.initialize()
         logger.info(f"[{self.system_id}] 对齐系统初始化完成")
 
     async def _initialize_advanced_components(self) -> None:
         """初始化高级组件"""
-        self.decision_system = DecisionTheorySystem(system_id=f"{self.system_id}_decision_system")
-        await self.decision_system.initialize()
+        self.decision_system = DecisionTheorySystem(config={"system_id": f"{self.system_id}_decision_system"})
 
         if self.config.get("enable_adversarial_testing"):
             self.adversarial_system = AdversarialGenerationSystem(
-                system_id=f"{self.system_id}_adversarial_system"
+                config={"system_id": f"{self.system_id}_adversarial_system"}
             )
-            await self.adversarial_system.initialize()
 
         logger.info(f"[{self.system_id}] 高级组件初始化完成")
 
@@ -504,11 +497,12 @@ class Level5ASISystem:
         """初始化自主对齐系统"""
         self.autonomous_alignment = ASIAutonomousAlignment(
             system_id=f"{self.system_id}_autonomous_alignment",
-            reasoning_system=self.reasoning_system,
-            emotion_system=self.emotion_system,
-            ontology_system=self.ontology_system,
+            config={
+                "reasoning_system": self.reasoning_system,
+                "emotion_system": self.emotion_system,
+                "ontology_system": self.ontology_system,
+            },
         )
-        await self.autonomous_alignment.initialize()
         logger.info(f"[{self.system_id}] 自主对齐系统初始化完成")
 
     async def _create_aligned_agents(self) -> None:
