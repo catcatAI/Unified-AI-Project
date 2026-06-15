@@ -68,7 +68,7 @@ VERBS_NOT_REFLEX = {
 KNOWLEDGE_QUESTION_PATTERNS = [
     r"^什么是", r"^什么是", r"^怎么", r"^为什么", r"^為什么",
     r"^how\b", r"^what\b", r"^why\b", r"^when\b", r"^where\b", r"^who\b",
-    r"^多少", r"^几个", r"^谁",
+    r"^多少", r"^几个", r"^谁", r"^今天", r"^明天", r"^昨天",
 ]
 
 # 否定词
@@ -162,11 +162,11 @@ class QueryClassifier:
                 QueryType.FILE,
                 re.compile(
                     r"(?:^|[\s，。！？,.\s])"
-                    r"(整理|清理|删除|移动|复制|重命名|读取|写入|列出|"
+                    r"(整理|清理|删除|移动|复制|重命名|读取|写入|列出|建立|新建|修改|编辑|"
                     r"文件|文件夹|目录|路径|"
-                    r"整理|清理|刪除|移動|複製|重命名|讀取|寫入|列出|"
+                    r"整理|清理|刪除|移動|複製|重命名|讀取|寫入|列出|建立|新建|修改|編輯|"
                     r"檔案|文件|資料夾|目錄|路徑|"
-                    r"\b(organize|delete|move|copy|rename|read|write|list|"
+                    r"\b(organize|delete|move|copy|rename|read|write|list|create|edit|"
                     r"file|folder|directory|path)\b)",
                     re.IGNORECASE,
                 ),
@@ -212,8 +212,8 @@ class QueryClassifier:
                 QueryType.TASK,
                 re.compile(
                     r"(?:^|[\s，。！？,.\s])"
-                    r"(任务|工作|待办|行程|排程|提醒|"
-                    r"任務|工作|待辦|行程|排程|提醒|"
+                    r"(任务|工作|待办|行程|排程|提醒|建立任务|删除任务|"
+                    r"任務|工作|待辦|行程|排程|提醒|建立任務|刪除任務|"
                     r"\b(task|todo|schedule|reminder|plan|planned)\b)",
                     re.IGNORECASE,
                 ),

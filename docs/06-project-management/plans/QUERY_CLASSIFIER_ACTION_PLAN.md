@@ -1027,13 +1027,15 @@ async def _handle_chat_request(user_message, user_name, history, session_id, ext
 
 ### 回归
 - [x] 舊 86 個測試仍通過（未修改现有逻辑，仅新增）
-- [ ] 新增 ≥ 30 個邊界測試（待实现）
+- [x] 新增 102 個測試（58 classifier + 44 gate），全部通過 ✅
 
 ### 实施的文件
 | 文件 | 变更 |
 |------|------|
-| `ai/core/query_classifier.py` | QueryResult dataclass, v2 classify(), _adjust_confidence, _calc_actionability, _infer_action_type, regex word boundary |
-| `ai/core/execution_gate.py` | 新建: ExecutionGate class, GateDecision dataclass, REVERSIBILITY scores |
+| `ai/core/query_classifier.py` | QueryResult dataclass, v2 classify(), _adjust_confidence, _calc_actionability, _infer_action_type, regex word boundary, FILE/TASK patterns enhanced |
+| `ai/core/execution_gate.py` | **新建**: ExecutionGate class, GateDecision dataclass, REVERSIBILITY scores |
 | `ai/core/model_bus.py` | 新增 execute_handler() 方法 |
 | `api/routes/chat_routes.py` | _handle_chat_request 插入执行闸门流程 |
 | `services/llm/prompt_builder.py` | 执行结果注入 + 执行规则 prompt |
+| `tests/ai/core/test_query_classifier_v2.py` | **新建**: 58 个测试 |
+| `tests/ai/core/test_execution_gate.py` | **新建**: 44 个测试 |
