@@ -17,6 +17,9 @@ from api.lifespan import (
     _get_chat_service,
     get_digital_life,
     get_abc_key_manager,
+    get_crisis_system,
+    get_causal_reasoning,
+    get_level5_asi,
 )
 
 logger = logging.getLogger(__name__)
@@ -136,6 +139,17 @@ async def _handle_chat_request(
         except Exception as e:
             logger.info(f"Emotion analysis unavailable: {e}")
 
+        # Crisis safety assessment (fire-and-forget, adds context for LLM)
+        crisis_level = 0
+        try:
+            crisis_sys = get_crisis_system()
+            if crisis_sys:
+                crisis_level = crisis_sys.assess_input_for_crisis({"text": user_message})
+                if crisis_level > 0:
+                    logger.info(f"[CrisisSystem] Level {crisis_level} detected for input from {origin}")
+        except Exception as e:
+            logger.debug(f"Crisis assessment unavailable: {e}")
+
         # Process chat as biological stimulus (fire-and-forget async)
         try:
             from core.bio.biological_integrator import BiologicalIntegrator
@@ -157,6 +171,29 @@ async def _handle_chat_request(
             context.update(extra_context)
         if emotion_result:
             context["emotion"] = emotion_result
+        if crisis_level > 0:
+            context["crisis_level"] = crisis_level
+            context["crisis_instruction"] = (
+                f"User input has crisis level {crisis_level}. "
+                "Respond with empathy, provide support resources if appropriate, "
+                "and prioritize user safety in your response."
+            )
+            # High-crisis alignment check via Level5 ASI (fire-and-forget)
+            if crisis_level >= 2:
+                try:
+                    asi = await get_level5_asi()
+                    if asi and asi.is_running:
+                        alignment_result = await asi.process_request({
+                            "request_id": str(uuid.uuid4()),
+                            "capability_id": "chat_response",
+                            "user_intent": {"text": user_message, "crisis_level": crisis_level},
+                            "ethical_constraints": ["user_safety", "empathy", "no_harm"],
+                        })
+                        if alignment_result.get("status") == "alignment_failed":
+                            logger.warning(f"[Level5ASI] Alignment failed: {alignment_result.get('reason')}")
+                            context["alignment_override"] = "prioritize_safety"
+                except Exception as e:
+                    logger.debug(f"Level5ASI alignment check unavailable: {e}")
         if history:
             context["history"] = history
 
@@ -217,6 +254,24 @@ async def _handle_chat_request(
         )
         response_text = _llm_response.text if hasattr(_llm_response, 'text') else str(_llm_response)
         _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
+
+        # Fire-and-forget: learn causal relationship from this interaction
+        try:
+            _causal = get_causal_reasoning()
+            if _causal and response_text:
+                _causal.learn({
+                    "variables": ["user_input", "angela_response"],
+                    "data": {"user_input": [len(user_message)], "angela_response": [len(response_text)]},
+                    "relationships": [{
+                        "cause": "user_input",
+                        "effect": "angela_response",
+                        "strength": 0.5,
+                        "source": f"chat_{session_id}",
+                    }],
+                })
+        except Exception:
+            pass
+
         return {
             "response_text": response_text,
             "source": _flow_source,

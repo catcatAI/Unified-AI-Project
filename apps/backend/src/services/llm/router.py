@@ -576,6 +576,32 @@ class AngelaLLMService:
         if template_result is not None:
             return template_result
 
+        # ========== Ensemble Mode (multi-model voting) ==========
+        if context and context.get("use_ensemble"):
+            try:
+                from ai.ensemble import ModelEnsemble, ModelWeight
+                ensemble = ModelEnsemble(self)
+                weights = context.get("ensemble_weights", [
+                    ModelWeight("gpt-4o", 0.4),
+                    ModelWeight("claude-3-opus", 0.4),
+                    ModelWeight("mixtral-local", 0.2),
+                ])
+                ensemble.configure_ensemble(weights)
+                result = await ensemble.ensemble_generate(
+                    user_message,
+                    fusion_strategy=context.get("fusion_strategy", "best_single"),
+                )
+                from core.interfaces.protocols import LLMResponse
+                return LLMResponse(
+                    content=result.content,
+                    model="ensemble",
+                    latency=result.latency,
+                    tokens_used=result.token_usage.get("total_tokens", 0),
+                    metadata={"ensemble_votes": result.model_votes, "confidence": result.confidence},
+                )
+            except Exception as e:
+                logger.warning(f"Ensemble generation failed, falling back to single model: {e}")
+
         # ========== 记忆检索（如果启用）==========
         if self.enable_memory_enhancement:
             try:

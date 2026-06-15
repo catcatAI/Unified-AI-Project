@@ -28,6 +28,10 @@ _chat_service_instance = None
 _digital_life_instance = None
 _abc_key_manager_instance = None
 _bio_integrator_instance = None
+_agent_manager_instance = None
+_crisis_system_instance = None
+_causal_reasoning_instance = None
+_level5_asi_instance = None
 
 # --- Config (lazy proxy) ---
 class _LazyAngelaConfig:
@@ -161,6 +165,35 @@ def get_tactile_service():
         return None
 
 
+def get_agent_manager():
+    """Get the AgentManager singleton (initialized during lifespan startup)."""
+    return _agent_manager_instance
+
+
+def get_crisis_system():
+    """Get the CrisisSystem singleton (initialized during lifespan startup)."""
+    return _crisis_system_instance
+
+
+def get_causal_reasoning():
+    """Get the CausalReasoningEngine singleton (initialized during lifespan startup)."""
+    return _causal_reasoning_instance
+
+
+async def get_level5_asi():
+    """Get or create the Level5ASISystem singleton (lazy initialization — heavy system)."""
+    global _level5_asi_instance
+    if _level5_asi_instance is None:
+        try:
+            from ai.level5_asi_system import Level5ASISystem
+            _level5_asi_instance = Level5ASISystem()
+            await _level5_asi_instance.initialize()
+            logger.info("[Level5ASI] Lazy-initialized — alignment gate available")
+        except Exception as e:
+            logger.warning(f"[Level5ASI] Initialization failed: {e}")
+    return _level5_asi_instance
+
+
 def get_economy_manager():
     try:
         from core.economy.economy_manager import EconomyManager
@@ -226,6 +259,35 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning(f"[Bio] BiologicalIntegrator initialization failed: {e}")
 
+    # Initialize AgentManager and register specialized agents
+    global _agent_manager_instance
+    try:
+        from ai.agents.agent_manager import AgentManager
+        from ai.agents.agent_adapter import register_specialized_agents
+        _agent_manager_instance = AgentManager(enable_router=False)
+        count = register_specialized_agents(_agent_manager_instance)
+        logger.info(f"[AgentManager] Initialized with {count} specialized agents")
+    except Exception as e:
+        logger.warning(f"[AgentManager] Initialization failed: {e}")
+
+    # Initialize CrisisSystem for user safety
+    global _crisis_system_instance
+    try:
+        from ai.crisis.crisis_system import CrisisSystem
+        _crisis_system_instance = CrisisSystem()
+        logger.info("[CrisisSystem] Initialized — monitoring for crisis indicators")
+    except Exception as e:
+        logger.warning(f"[CrisisSystem] Initialization failed: {e}")
+
+    # Initialize CausalReasoningEngine for learning from interactions
+    global _causal_reasoning_instance
+    try:
+        from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+        _causal_reasoning_instance = CausalReasoningEngine()
+        logger.info("[CausalReasoning] Initialized — learning causal relationships from interactions")
+    except Exception as e:
+        logger.warning(f"[CausalReasoning] Initialization failed: {e}")
+
     # Start WebSocket state broadcast background task
     _broadcast_task = None
     try:
@@ -238,6 +300,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     # --- Shutdown ---
+    if _agent_manager_instance is not None:
+        try:
+            _agent_manager_instance.shutdown_all_agents()
+            logger.info("[AgentManager] Shut down")
+        except Exception as e:
+            logger.warning(f"[AgentManager] Shutdown error: {e}")
     if _bio_integrator_instance is not None:
         try:
             await _bio_integrator_instance.shutdown()

@@ -195,7 +195,7 @@ class CrisisSystem:
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             config_path = os.path.join(
-                current_dir, "..", "..", "configs", "crisis_system_config.json"
+                current_dir, "..", "..", "..", "configs", "crisis_system_config.json"
             )
             with open(config_path, "r", encoding="utf-8") as f:
                 self.config = json.load(f)

@@ -1172,6 +1172,63 @@ AngelaLLMService (核心 LLM 路由)
 
 ---
 
+## 十三、孤兒系統接線狀態
+
+### 已接線（本次 work session）
+
+| 系統 | 接線方式 | 位置 |
+|------|----------|------|
+| 11 個 Specialized Agents | AgentAdapter 包裝 → AgentManager 註冊 | `lifespan.py` → `agent_adapter.py` |
+| CrisisSystem | 安全閘道 → chat pipeline 情緒分析後 | `chat_routes.py:148-158` |
+| CausalReasoningEngine | 回饋學習 → chat response 後 fire-and-forget | `chat_routes.py:253-267` |
+| Level5ASISystem | 對齊閘道 → 高危機等級時觸發（lazy init） | `chat_routes.py:170-185` |
+| ModelEnsemble | 多模型投票 → router template match 後 | `router.py:582-607` |
+
+### 已删除（16 個 stub/duplicate）
+
+| 文件 | 原因 |
+|------|------|
+| `services/ai_editor_config.py` | 自宣告 DEPRECATED，7 行 |
+| `services/ai_virtual_input_service.py` | 13 行 deprecated stub |
+| `services/angela_types.py` | 7 行，`__all__ = []` |
+| `services/cloud_api.py` | 2 行 stub |
+| `services/external_api.py` | 2 行 stub |
+| `services/os_context_service.py` | 自宣告 DEPRECATED |
+| `services/sync_queue.py` | 2 行 stub |
+| `core/feature_manager.py` | 3 行 stub |
+| `core/fault_isolation.py` | 2 行 stub |
+| `core/desktop_pet_controller.py` | 3 行 stub |
+| `core/demo_feedback_loop.py` | 132 行 demo script |
+| `core/feedback_processor.py` | 21 行空文件 |
+| `ai/security/ego_guard.py` | 6 行空 class |
+| `ai/context/verify_context_system.py` | 47 行 verification script |
+| `ai/reasoning/real_causal_reasoning_engine.py` | 與已接線 module 重複 |
+| `ai/deep_mapper/` (整個 package) | 自宣告 DEPRECATED |
+
+### 保留但未接線（18 個 — 未來整合）
+
+| 系統 | 行數 | 用途 |
+|------|------|------|
+| `services/brain_bridge_service.py` | 93 | DigitalLifeIntegrator → metrics 橋接 |
+| `core/config_validator.py` | 88 | 環境/配置驗證 |
+| `core/real_time_monitor.py` | 1009 | 滑鼠 FS 追蹤、活動識別 |
+| `core/event_loop_system.py` | 796 | 異步事件循環 + 優先級佇列 |
+| `ai/language_models/daily_language_model.py` | 181 | 日常對話 LM |
+| `ai/language_models/router.py` | 195 | 策略型 LLM 路由 |
+| `ai/language_models/registry.py` | 104 | 模型註冊/profile 管理 |
+| `ai/translation/simultaneous_translation.py` | 108 | 即時翻譯 (GoogleTranslator) |
+| `ai/rag/rag_manager.py` | 63 | RAG + FAISS embeddings |
+| `ai/execution/execution_manager.py` | 646 | 執行監控/管理 |
+| `ai/evaluation/evaluation_db.py` | 128 | SQLite 評估資料庫 |
+| `ai/meta/learning_orchestrator.py` | 72 | execute-evaluate-adapt 迴圈 |
+| `ai/meta/learning_log_db.py` | 105 | SQLite 學習日誌 |
+| `ai/integration/local_cluster_manager.py` | 48 | 本機集群模擬 |
+| `ai/service_discovery/service_discovery_module.py` | 64 | 能力廣告處理 |
+| `ai/context/demo_context_system.py` | 43 | demo context 邏輯 |
+| `ai/context/manager_fixed.py` | 307 | context manager + storage |
+
+---
+
 ## 相關文件
 
 | 文件 | 內容 |
