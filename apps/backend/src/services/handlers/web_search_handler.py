@@ -39,7 +39,7 @@ class WebSearchHandler:
         if not tool:
             return "（網路搜尋）搜尋工具尚未就緒。"
         try:
-            results = tool.search(query, num_results=5)
+            results = tool.search(query)
             if not results:
                 return f"（網路搜尋）沒有找到「{query}」的相關結果。"
             if isinstance(results[0], dict) and "error" in results[0]:

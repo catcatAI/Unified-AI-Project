@@ -13,7 +13,43 @@ try:
 except ImportError:
     GoogleDriveHandler = None
 
+try:
+    from services.handlers.web_search_handler import WebSearchHandler
+except ImportError:
+    WebSearchHandler = None
+
+try:
+    from services.handlers.code_execution_handler import CodeExecutionHandler
+except ImportError:
+    CodeExecutionHandler = None
+
+try:
+    from services.handlers.system_command_handler import SystemCommandHandler
+except ImportError:
+    SystemCommandHandler = None
+
+try:
+    from services.handlers.task_manager_handler import TaskManagerHandler
+except ImportError:
+    TaskManagerHandler = None
+
+try:
+    from services.handlers.vision_handler import VisionHandler
+except ImportError:
+    VisionHandler = None
+
+try:
+    from services.handlers.learning_handler import LearningHandler
+except ImportError:
+    LearningHandler = None
+
 __all__ = [
     "FileOperationHandler",
     "GoogleDriveHandler",
+    "WebSearchHandler",
+    "CodeExecutionHandler",
+    "SystemCommandHandler",
+    "TaskManagerHandler",
+    "VisionHandler",
+    "LearningHandler",
 ]

@@ -1,0 +1,107 @@
+"""
+ANGELA-MATRIX: [L3-L4] [β] [B] [L2]
+CodeExecutionHandler — executes Python code in a restricted sandbox.
+"""
+
+import asyncio
+import io
+import logging
+import sys
+import threading
+import traceback
+from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
+_MAX_OUTPUT = 4000
+_TIMEOUT = 10
+_BUILTINS_WHITELIST = {
+    "abs", "all", "any", "bool", "chr", "dict", "dir", "enumerate",
+    "filter", "float", "format", "frozenset", "getattr", "hasattr",
+    "hash", "hex", "id", "int", "isinstance", "issubclass", "iter",
+    "len", "list", "map", "max", "min", "next", "oct", "ord", "pow",
+    "print", "range", "repr", "reversed", "round", "set", "setattr",
+    "slice", "sorted", "str", "sum", "tuple", "type", "zip",
+}
+
+
+class CodeExecutionHandler:
+    """Executes Python code snippets in a restricted environment."""
+
+    async def handle(self, text: str, intent: str = "code") -> str:
+        code = self._extract_code(text)
+        if not code:
+            return "（程式碼執行）請提供要執行的 Python 程式碼。"
+        if len(code) > 10000:
+            return "（程式碼執行）程式碼過長（限制 10000 字元）。"
+        return await self._execute(code)
+
+    def _extract_code(self, text: str) -> str:
+        import re
+        m = re.search(r"```(?:python)?\s*\n(.*?)```", text, re.DOTALL)
+        if m:
+            return m.group(1).strip()
+        m = re.search(r"`([^`]+)`", text)
+        if m:
+            return m.group(1).strip()
+        lines = text.strip().splitlines()
+        code_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith(("import ", "from ", "def ", "class ", "if ", "for ",
+                                   "while ", "try:", "with ", "return ", "print(",
+                                   "#", "raise ", "assert ", "yield ")) or "=" in stripped or "(" in stripped:
+                code_lines.append(line)
+            elif code_lines:
+                break
+        return "\n".join(code_lines).strip() if code_lines else text.strip()
+
+    async def _execute(self, code: str) -> str:
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        captured_out = io.StringIO()
+        captured_err = io.StringIO()
+        restricted_globals: Dict[str, Any] = {"__builtins__": {}}
+        for name in _BUILTINS_WHITELIST:
+            restricted_globals["__builtins__"][name] = (
+                __builtins__[name] if isinstance(__builtins__, dict)
+                else getattr(__builtins__, name)
+            )
+
+        def _run_exec():
+            exec(code, restricted_globals)
+
+        timeout_triggered = threading.Event()
+        timer = threading.Timer(_TIMEOUT, timeout_triggered.set)
+        try:
+            sys.stdout = captured_out
+            sys.stderr = captured_err
+            loop = asyncio.get_event_loop()
+            await asyncio.wait_for(
+                asyncio.to_thread(_run_exec),
+                timeout=_TIMEOUT,
+            )
+            stdout_val = captured_out.getvalue()[:_MAX_OUTPUT]
+            stderr_val = captured_err.getvalue()[:_MAX_OUTPUT]
+            parts = []
+            if stdout_val:
+                parts.append(f"輸出：\n{stdout_val}")
+            if stderr_val:
+                parts.append(f"錯誤：\n{stderr_val}")
+            if not parts:
+                return "（程式碼執行）執行完成（無輸出）。"
+            return "（程式碼執行）\n" + "\n".join(parts)
+        except asyncio.TimeoutError:
+            return f"（程式碼執行）執行超時（{_TIMEOUT}秒限制）。"
+        except Exception as e:
+            tb = traceback.format_exc()
+            if len(tb) > _MAX_OUTPUT:
+                tb = tb[:_MAX_OUTPUT] + "\n... (已截斷)"
+            return f"（程式碼執行）執行錯誤：\n{tb}"
+        finally:
+            timer.cancel()
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
+
+__all__ = ["CodeExecutionHandler"]

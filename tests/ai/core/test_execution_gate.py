@@ -206,14 +206,20 @@ class TestExecutionGateHandlerMap:
     def test_search_maps_to_web_search(self):
         assert ExecutionGate.HANDLER_MAP["search"] == "web_search"
 
-    def test_code_not_mapped(self):
-        assert "code" not in ExecutionGate.HANDLER_MAP
+    def test_code_maps_to_code_exec(self):
+        assert ExecutionGate.HANDLER_MAP["code"] == "code_exec"
 
-    def test_execute_not_mapped(self):
-        assert "execute" not in ExecutionGate.HANDLER_MAP
+    def test_execute_maps_to_code_exec(self):
+        assert ExecutionGate.HANDLER_MAP["execute"] == "code_exec"
 
-    def test_task_not_mapped(self):
-        assert "task" not in ExecutionGate.HANDLER_MAP
+    def test_task_maps_to_task_mgr(self):
+        assert ExecutionGate.HANDLER_MAP["task"] == "task_mgr"
+
+    def test_system_maps_to_system_cmd(self):
+        assert ExecutionGate.HANDLER_MAP["system"] == "system_cmd"
+
+    def test_vision_maps_to_vision(self):
+        assert ExecutionGate.HANDLER_MAP["vision"] == "vision"
 
 
 class TestExecutionGateThresholds:
@@ -260,8 +266,8 @@ class TestExecutionGateIntegration:
     def test_vision_confirm(self):
         r = self.clf.classify("看")
         d = self.gate.decide(r.primary_type.value, r.action_type, "看", r.confidence, {})
-        # No VISION handler mapped, so should be confirm or reject
-        assert d.action in ("confirm_then_execute", "reject")
+        # VISION handler is mapped, so auto_execute or confirm
+        assert d.action in ("auto_execute", "confirm_then_execute")
 
     def test_knowledge_question_confirm(self):
         r = self.clf.classify("什么是Python?")

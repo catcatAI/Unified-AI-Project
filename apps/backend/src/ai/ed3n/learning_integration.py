@@ -158,7 +158,7 @@ class ED3NLearningIntegration:
                 ham.store_experience(
                     memory_entry,
                     data_type="ed3n_entry",
-                    keywords=[key] + (entry.surface_forms[:5] if entry.surface_forms else []),
+                    keywords=[key] + list(entry.surface_forms.values())[:5] if entry.surface_forms else [],
                 )
                 synced_count += 1
             except Exception as e:

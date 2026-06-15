@@ -82,7 +82,8 @@ _WORD_BOUNDARY_END = r"(?:[\s，。！？,.\s]|$)"
 class QueryClassifier:
     """Pattern-based query classifier v2 for Model Bus routing."""
 
-    def __init__(self):
+    def __init__(self, ed3n_engine=None):
+        self._ed3n = ed3n_engine
         self._reflex_words: set = {
             "hi", "ok", "okay", "hey", "yo", "oh", "ah",
             "嗯", "好", "是", "不", "啊", "哦", "喂", "嗨", "噢",

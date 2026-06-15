@@ -50,9 +50,11 @@ class ExecutionGate:
     HANDLER_MAP = {
         "file": "file_ops",
         "search": "web_search",
-        # "code": "code_execution",     # 未来实作
-        # "execute": "system_command",  # 未来实作
-        # "task": "task_manager",       # 未来实作
+        "code": "code_exec",
+        "execute": "code_exec",
+        "system": "system_cmd",
+        "task": "task_mgr",
+        "vision": "vision",
     }
 
     def __init__(self, model_bus=None):

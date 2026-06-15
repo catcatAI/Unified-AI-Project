@@ -251,7 +251,7 @@ class ModelBus:
             r = await self._try_model("cloud", query, context, "creative")
             results[r.model_id] = r
 
-        elif query_type in ("file", "search", "code", "execute", "task"):
+        elif query_type in ("file", "search", "code", "execute", "task", "system", "vision"):
             # Handler-based routing — check registered handlers first
             handler_id = self._handler_map.get(query_type)
             if handler_id and handler_id in self._handlers:

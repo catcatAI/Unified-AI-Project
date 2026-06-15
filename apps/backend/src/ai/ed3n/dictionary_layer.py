@@ -165,6 +165,16 @@ class DictionaryLayer:
             if k not in seen:
                 seen.add(k)
                 unique_keys.append(k)
+
+        expanded_keys: List[str] = []
+        for k in list(unique_keys):
+            syns = self.get_synonyms(k)
+            for s in syns:
+                if s not in seen and s in self.entries:
+                    seen.add(s)
+                    expanded_keys.append(s)
+        unique_keys.extend(expanded_keys)
+
         if len(self._encode_cache) > self._encode_cache_max:
             self._encode_cache.popitem(last=False)
         self._encode_cache[cache_key] = unique_keys

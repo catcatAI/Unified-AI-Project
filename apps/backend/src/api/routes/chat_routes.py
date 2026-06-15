@@ -291,7 +291,7 @@ async def _handle_chat_request(
         # Intent classification (QueryClassifier v2)
         try:
             from ai.core.query_classifier import QueryClassifier
-            classifier = QueryClassifier()
+            classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
             classify_result = classifier.classify(user_message)
 
             # Execution gate decision

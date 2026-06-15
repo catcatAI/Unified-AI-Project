@@ -71,13 +71,14 @@
 ### Handler 狀態
 | Handler | 檔案 | 註冊 | 狀態 |
 |---|---|---|---|
-| file_ops | `services/handlers/file_operation_handler.py` | ✅ | ⚠️ 38行，功能有限 |
-| web_search | `services/handlers/web_search_handler.py` | ✅ | ⚠️ 63行，未串 API |
+| file_ops | `services/handlers/file_operation_handler.py` | ✅ | ✅ 184行，12種操作 |
+| web_search | `services/handlers/web_search_handler.py` | ✅ | ✅ DDG+Wikipedia |
+| code_execution | `services/handlers/code_execution_handler.py` | ✅ | ✅ 沙箱執行 |
+| system_command | `services/handlers/system_command_handler.py` | ✅ | ✅ 白名單+安全 |
+| task_manager | `services/handlers/task_manager_handler.py` | ✅ | ✅ JSON CRUD |
+| vision | `services/handlers/vision_handler.py` | ✅ | ✅ 圖片分析 |
 | learning_handler | `services/handlers/learning_handler.py` | ❌ | 存在但未註冊 |
 | google_drive | `services/handlers/google_drive_handler.py` | ❌ | 存在但未註冊 |
-| code_execution | — | ❌ | 無 |
-| system_command | — | ❌ | 無 |
-| task_manager | — | ❌ | 無 |
 | vision | — | ❌ | 無 |
 | audio | — | ❌ | 無 |
 
@@ -97,8 +98,9 @@
 
 **目標**: 讓 ED3N 獨立時也能處理 80% 的日常對話
 **核心思路**: 擴充字典 + 同義詞 + 反射 + 啟用已有但休眠的功能
+**狀態**: 🔴 進行中（3.2-3.7 完成，3.1 待做）
 
-### 3.1 擴充 ED3N 字典 preset（+200 條）
+### 3.1 擴充 ED3N 字典 preset（+200 條） ⏳ 待做
 
 **檔案**: `ai/ed3n/config/presets.json`
 
@@ -127,7 +129,7 @@
 
 **驗收**: `ED3NEngine.process("建立新文件")` 回傳非 fallback 回應
 
-### 3.2 啟用 ED3N 分類輔助（修復休眠路徑）
+### 3.2 啟用 ED3N 分類輔助（修復休眠路徑） ✅ 完成
 
 **問題**: `query_classifier.py:85` 的 `__init__` 沒接收 ed3n_engine，導致 `_ed3n` 永遠不存在
 
@@ -160,7 +162,7 @@ self._ed3n_engine = _get_ed3n_engine()
 
 **驗收**: 分類測試中 `hasattr(classifier, '_ed3n')` 為 True
 
-### 3.3 ED3N 同義詞展開（不需向量的語意理解）
+### 3.3 ED3N 同義詞展開（不需向量的語意理解） ✅ 完成
 
 **檔案**: `ai/ed3n/dictionary_layer.py`
 
@@ -201,7 +203,7 @@ def _expand_synonyms(self, text: str) -> str:
 
 **驗收**: `"幫我查找天氣"` 和 `"搜尋天氣"` 產生相同 keys
 
-### 3.4 ED3N 反射層擴充（+50 條）
+### 3.4 ED3N 反射層擴充（+50 條） ✅ 完成
 
 **檔案**: `ai/ed3n/ed3n_engine.py`
 
@@ -244,7 +246,7 @@ def _expand_synonyms(self, text: str) -> str:
 
 **驗收**: `"你是誰"` 產生有意義的自我介紹（不是 fallback）
 
-### 3.5 ED3N 數學擴充（多位數運算）
+### 3.5 ED3N 數學擴充（多位數運算） ✅ 完成
 
 **檔案**: `ai/ed3n/config/math_presets.json`
 
@@ -275,7 +277,7 @@ def _math_eval(self, text: str) -> Optional[str]:
 
 **驗收**: `"123 + 456"` 回傳 `"579"`
 
-### 3.6 基礎 Handler 實作（6 個）
+### 3.6 基礎 Handler 實作（6 個） ✅ 完成
 
 #### 3.6.1 完善 file_ops handler
 
@@ -496,7 +498,7 @@ HANDLER_MAP = {
 }
 ```
 
-### 3.7 Phase 3 測試
+### 3.7 Phase 3 測試 ✅ 完成
 
 **檔案**: `tests/ai/ed3n/test_ed3n_enhanced.py`（新建，~120 行）
 

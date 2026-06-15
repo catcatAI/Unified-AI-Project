@@ -496,13 +496,21 @@ class AngelaLLMService:
                 if self.active_backend:
                     self.model_bus.register_cloud(self.active_backend)
 
-                # Register handlers for FILE/SEARCH intents
+                # Register handlers for FILE/SEARCH/CODE/TASK/VISION intents
                 try:
                     from services.handlers.file_operation_handler import FileOperationHandler
                     from services.handlers.web_search_handler import WebSearchHandler
+                    from services.handlers.code_execution_handler import CodeExecutionHandler
+                    from services.handlers.system_command_handler import SystemCommandHandler
+                    from services.handlers.task_manager_handler import TaskManagerHandler
+                    from services.handlers.vision_handler import VisionHandler
                     self.model_bus.register_handler("file_ops", FileOperationHandler(), ["file"])
                     self.model_bus.register_handler("web_search", WebSearchHandler(), ["search"])
-                    logger.info("Model Bus handlers registered: file_ops, web_search")
+                    self.model_bus.register_handler("code_exec", CodeExecutionHandler(), ["code", "execute"])
+                    self.model_bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
+                    self.model_bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
+                    self.model_bus.register_handler("vision", VisionHandler(), ["vision"])
+                    logger.info("Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision")
                 except Exception as e:
                     logger.warning(f"Model Bus handler registration skipped: {e}")
 

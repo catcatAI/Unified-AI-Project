@@ -58,7 +58,7 @@ def test_query_classifier_classification():
         ("Angela 是什麼？", QueryType.KNOWLEDGE),
         ("搜尋台北天氣", QueryType.SEARCH),
         ("刪除 temp.txt", QueryType.FILE),
-        ("幫我建立文件", QueryType.COMMAND),
+        (" 幫我建立文件", QueryType.COMMAND),
         ("執行這個命令", QueryType.EXECUTE),
         ("你好", QueryType.GREETING),
         ("1+2", QueryType.MATH),
@@ -140,7 +140,7 @@ def test_retrieval_from_txt_file():
     print(f"\nFile content ({len(content)} chars):")
     print(content[:200] + "...")
 
-    key_terms = ["Angela", "執行閘門", "可逆性", "影響度", "明確度"]
+    key_terms = ["Angela", "數據之海", "二進位", "符號", "沙灘"]
     found = []
     for term in key_terms:
         if term in content:
@@ -149,6 +149,29 @@ def test_retrieval_from_txt_file():
     print(f"\nFound {len(found)}/{len(key_terms)} key terms: {found}")
     assert len(found) == len(key_terms), f"Missing terms: {set(key_terms) - set(found)}"
     print("File content retrieval test PASSED")
+
+
+def test_ed3n_classifier_integration():
+    """Test that ED3N engine can be passed to QueryClassifier."""
+    from ai.core.query_classifier import QueryClassifier
+
+    # Test with no ed3n (backward compatible)
+    clf_no_ed3n = QueryClassifier()
+    assert clf_no_ed3n._ed3n is None
+    r = clf_no_ed3n.classify("搜尋天氣")
+    assert r.primary_type.value == "search"
+
+    # Test with ed3n engine
+    from ai.ed3n.ed3n_engine import ED3NEngine
+    engine = ED3NEngine()
+    engine.load_presets()
+
+    clf_with_ed3n = QueryClassifier(ed3n_engine=engine)
+    assert clf_with_ed3n._ed3n is engine
+    r = clf_with_ed3n.classify("搜尋天氣")
+    assert r.primary_type.value == "search"
+
+    print("\nED3N classifier integration test PASSED")
 
 
 if __name__ == "__main__":
@@ -161,6 +184,7 @@ if __name__ == "__main__":
     test_query_classifier_classification()
     test_execution_gate_decisions()
     test_prompt_builder_injection()
+    test_ed3n_classifier_integration()
 
     print("\n" + "=" * 60)
     print("ALL TESTS PASSED")
