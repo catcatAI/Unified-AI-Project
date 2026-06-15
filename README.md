@@ -435,6 +435,7 @@ npx pnpm dev:desktop
 | [專案憲章](docs/00-overview/PROJECT_CHARTER.md) | 專案使命、範圍、原則 |
 | [詞彙表](docs/00-overview/GLOSSARY.md) | 完整名詞解釋 |
 | [統一文件索引](docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md) | 所有文件導覽 |
+| [完整架構圖](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Angela 感知・認知・執行完整架構** — 如何視、聽、觸、說、畫、移、思考、感受、自主 |
 | [技術架構概覽](docs/03-technical-architecture/README.md) | HSP、HAM、NGR、8D Matrix、多模態代理、通訊層、安全性 |
 | [ARCHITECTURE_MAP](docs/03-technical-architecture/analysis/ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照 |
 | [全量架構分析](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本溯源、六層一致性評分 |

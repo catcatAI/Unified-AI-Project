@@ -4,6 +4,7 @@
 **基於:** 12 個代理完整代碼審計（含深度差異分析）
 **目標:** 安全清理 + 擴展 QueryClassifier + ED3N 適當整合 + 完整管線
 **狀態:** Phase 1-6 全部完成
+**架構文件:** [完整架構圖](docs/architecture/ANGELA_FULL_ARCHITECTURE.md)
 
 ---
 

@@ -1,8 +1,9 @@
 # Angela AI Architecture
 
 > **Source of Truth**: This document is the authoritative reference for Angela AI system architecture.
-> **Last Updated**: 2026-06-13
+> **Last Updated**: 2026-06-15
 > **Derived from**: `docs/FULL_ARCHITECTURE_ANALYSIS.md`
+> **完整感知・認知・執行架構**: [ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)
 
 ---
 

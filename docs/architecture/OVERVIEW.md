@@ -1,6 +1,7 @@
 # System Architecture Overview
 
-> **Last Updated**: 2026-06-13 — Live2D model loading fixed (Epsilon_free), pixel-angela 6 bugs fixed, WebSocket handshake aligned
+> **Last Updated**: 2026-06-15 — Full pipeline architecture documented
+> **完整感知・認知・執行架構**: [ANGELA_FULL_ARCHITECTURE.md](ANGELA_FULL_ARCHITECTURE.md)
 
 ## High-Level Architecture
 
