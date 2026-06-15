@@ -19,6 +19,8 @@ class ChatService:
         self._llm_service = llm_service
         self._initialized = False
         self._continuous_learning = None
+        self._garden_engine = None
+        self._garden_learn_count = 0
         self._cl_state_dir = os.path.join(
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
@@ -57,6 +59,14 @@ class ChatService:
                 )
         except Exception as e:
             logger.warning("Continuous learning init skipped: %s", e)
+        # Initialize GARDEN engine for continuous learning (Phase 4.5)
+        try:
+            from ai.garden.garden_engine import GARDENEngine
+            self._garden_engine = GARDENEngine()
+            self._garden_engine.load_presets()
+            logger.info("GARDEN engine initialized for continuous learning")
+        except Exception as e:
+            logger.warning("GARDEN engine init skipped: %s", e)
         self._initialized = True
         logger.info("ChatService initialized")
 
@@ -79,6 +89,20 @@ class ChatService:
                 )
             except Exception as e:
                 logger.warning("Continuous learning interaction failed: %s", e)
+
+        # GARDEN continuous learning (Phase 4.5)
+        if self._garden_engine:
+            try:
+                self._garden_engine.learn_from_interaction(user_message, response.text)
+                self._garden_learn_count += 1
+                # Auto-save every 100 interactions
+                if self._garden_learn_count % 100 == 0:
+                    garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
+                    os.makedirs(garden_state_dir, exist_ok=True)
+                    self._garden_engine.save(garden_state_dir)
+                    logger.info("GARDEN engine saved after %d interactions", self._garden_learn_count)
+            except Exception as e:
+                logger.debug("GARDEN learning failed: %s", e)
 
         if getattr(self._llm_service, 'enable_memory_enhancement', False):
             try:
@@ -131,5 +155,14 @@ class ChatService:
                 self._continuous_learning.save(self._cl_state_dir)
             except Exception as e:
                 logger.warning("Failed to save CL state: %s", e)
+        # Save GARDEN engine state
+        if self._garden_engine:
+            try:
+                garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
+                os.makedirs(garden_state_dir, exist_ok=True)
+                self._garden_engine.save(garden_state_dir)
+                logger.info("GARDEN engine saved on shutdown")
+            except Exception as e:
+                logger.warning("Failed to save GARDEN state: %s", e)
         logger.info("ChatService shutdown")
 

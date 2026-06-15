@@ -34,10 +34,11 @@ class TestVectorDictionaryInit:
         d = VectorDictionary()
         assert d._encoder is not None
 
-    def test_encoder_is_char_bag_fallback(self):
-        """Without sentence-transformers, encoder should be char-bag."""
+    def test_encoder_is_fallback(self):
+        """Without sentence-transformers, encoder should be ChromaDB, TF-IDF, or CharBag."""
         d = VectorDictionary()
-        assert "CharBag" in type(d._encoder).__name__ or "STEncoder" in type(d._encoder).__name__
+        encoder_name = type(d._encoder).__name__
+        assert any(name in encoder_name for name in ("Chroma", "Tfidf", "CharBag", "STEncoder"))
 
 
 class TestVectorDictionaryEntryManagement:
@@ -268,6 +269,7 @@ class TestVectorDictionaryEmpty:
 
     def test_stats_with_presets(self, dictionary: VectorDictionary):
         d = dictionary
+        d.encode("hello")  # Trigger index build
         s = d.get_stats()
         assert s["entry_count"] > 0
         assert s["embedding_dim"] > 0

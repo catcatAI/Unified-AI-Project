@@ -7,9 +7,11 @@ GARDEN VectorDictionary — Semantic encoding layer using PyTorch tensor embeddi
 Replaces ED3N's character-exact matching (Trie/regex) with dense vector nearest-neighbour
 search. Any text input is mapped to abstract Concept Keys via cosine similarity.
 
-If sentence-transformers is available, uses MiniLM-L6-v2 for ~80M-param semantic encoding.
-Otherwise falls back to a lightweight TF-IDF-style bag-of-chars representation so the
-module is always usable even in a CPU-only environment with no internet.
+Encoder fallback chain:
+  1. SentenceTransformer (if available) — best quality semantic encoding
+  2. ChromaDB (if available) — good quality with built-in HNSW index
+  3. TF-IDF (always available) — lightweight, no external dependencies
+  4. CharBag (always available) — deterministic fallback for empty vocabularies
 """
 
 from __future__ import annotations
@@ -203,6 +205,100 @@ class _STEncoder:
         return embeddings.cpu()
 
 
+class _ChromaEncoder:
+    """
+    ChromaDB-based semantic encoder for GARDEN.
+
+    Uses ChromaDB's built-in embedding function (default: all-MiniLM-L6-v2)
+    to encode text into dense vectors. Falls back gracefully if ChromaDB is
+    unavailable or fails to initialize.
+
+    The encoder maintains an in-memory ChromaDB collection. On encode(), texts
+    are added to the collection and queried to retrieve embeddings. This allows
+    the encoder to work with dynamic concept entries without requiring a fit()
+    step.
+    """
+
+    def __init__(self):
+        import chromadb
+        import uuid
+        self._client = chromadb.Client()
+        self._collection = self._client.get_or_create_collection(
+            name=f"garden_concepts_{uuid.uuid4().hex[:8]}",
+            metadata={"hnsw:space": "cosine"},
+        )
+        self._id_counter = 0
+        self._text_to_id: Dict[str, str] = {}
+        logger.info("GARDEN: ChromaDB encoder initialized (collection=%s)", self._collection.name)
+
+    def fit(self, texts: List[str]) -> None:
+        """No-op: ChromaDB indexes documents automatically on add()."""
+        pass
+
+    def encode(self, texts: List[str]) -> torch.Tensor:
+        torch, _ = _lazy_torch()
+        if not texts:
+            return torch.zeros(0, 384)
+
+        # Add texts to collection (deduplicate by text content)
+        ids_to_add = []
+        docs_to_add = []
+        for text in texts:
+            if text not in self._text_to_id:
+                doc_id = f"doc_{self._id_counter}"
+                self._id_counter += 1
+                self._text_to_id[text] = doc_id
+                ids_to_add.append(doc_id)
+                docs_to_add.append(text)
+
+        if ids_to_add:
+            self._collection.add(documents=docs_to_add, ids=ids_to_add)
+
+        # Query each text to get its embedding from ChromaDB
+        embeddings = []
+        for text in texts:
+            doc_id = self._text_to_id.get(text)
+            if doc_id:
+                try:
+                    result = self._collection.get(
+                        ids=[doc_id],
+                        include=["embeddings"],
+                    )
+                    if result and result.get("embeddings") and len(result["embeddings"]) > 0:
+                        emb = result["embeddings"][0]
+                        if emb is not None and len(emb) > 0:
+                            embeddings.append(emb)
+                        else:
+                            embeddings.append([0.0] * 384)
+                    else:
+                        embeddings.append([0.0] * 384)
+                except Exception:
+                    embeddings.append([0.0] * 384)
+            else:
+                embeddings.append([0.0] * 384)
+
+        if not embeddings:
+            return torch.zeros(0, 384)
+
+        return torch.tensor(embeddings, dtype=torch.float32)
+
+    def query_embedding(self, text: str) -> Optional[List[float]]:
+        """Get the embedding for a single text without adding it to the collection."""
+        try:
+            result = self._collection.query(
+                query_texts=[text],
+                n_results=1,
+                include=["embeddings"],
+            )
+            if result and result.get("embeddings"):
+                embs = result["embeddings"]
+                if len(embs) > 0 and len(embs[0]) > 0:
+                    return embs[0][0].tolist() if hasattr(embs[0][0], 'tolist') else list(embs[0][0])
+        except Exception as e:
+            logger.debug("GARDEN: ChromaDB query_embedding failed: %s", e)
+        return None
+
+
 # ---------------------------------------------------------------------------
 # VectorDictionary
 # ---------------------------------------------------------------------------
@@ -257,8 +353,14 @@ class VectorDictionary:
             logger.info("GARDEN: using SentenceTransformer encoder (semantic mode)")
             return enc
         except Exception as e:
-            logger.warning("GARDEN: SentenceTransformer not available (%s); using TF-IDF fallback", e)
-            return _TfidfEncoder()
+            logger.warning("GARDEN: SentenceTransformer not available (%s); trying ChromaDB", e)
+        try:
+            enc = _ChromaEncoder()
+            logger.info("GARDEN: using ChromaDB encoder (semantic mode)")
+            return enc
+        except Exception as e:
+            logger.warning("GARDEN: ChromaDB not available (%s); using TF-IDF fallback", e)
+        return _TfidfEncoder()
 
     # ------------------------------------------------------------------
     # Entry management

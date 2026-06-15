@@ -201,3 +201,35 @@ class TestKGImporterWikidata:
         """Should handle missing file gracefully."""
         with pytest.raises(FileNotFoundError):
             kg_importer.parse_wikidata("/nonexistent/wikidata.jsonl")
+
+
+class TestKGImporterGARDENIntegration:
+    """Phase 4.2: Tests for KGImporter integration with GARDENEngine."""
+
+    def test_engine_process_after_bulk_load(self, engine):
+        """GARDENEngine should process queries after loading knowledge graph."""
+        kg = KGImporter()
+        kg.generate_synthetic(num_entities=200)
+        kg.bulk_load(engine)
+        # Engine should not crash after loading KG
+        result = engine.process("hello")
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_engine_stats_after_bulk_load(self, engine):
+        """Engine stats should reflect loaded knowledge graph."""
+        kg = KGImporter()
+        kg.generate_synthetic(num_entities=100)
+        kg.bulk_load(engine)
+        stats = engine.stats()
+        assert stats["dictionary"]["entry_count"] >= 100
+        assert stats["presets_loaded"] is True
+
+    def test_engine_encode_after_bulk_load(self, engine):
+        """Engine dictionary should encode text using loaded KG entries."""
+        kg = KGImporter()
+        kg.generate_synthetic(num_entities=200)
+        kg.bulk_load(engine)
+        # Encode should return some keys
+        keys = engine.dictionary.encode("dog")
+        assert isinstance(keys, list)

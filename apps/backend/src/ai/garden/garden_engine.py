@@ -244,19 +244,27 @@ class GARDENEngine:
     def process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Full GARDEN inference pipeline:
-          reflex → vector encode → SNN forward → anchored decode
+          emotion detect → reflex → multi-step check → vector encode → SNN forward → anchored decode
         """
         if not text or not isinstance(text, str):
             return ""
 
         self._query_count += 1
 
+        # Stage 0: Emotion detection + hormonal modulation
+        emotion = self._detect_emotion(text)
+        self._adjust_hormones(emotion)
+
         # Stage 1: Reflex (fast pattern match)
         reflex_hit = self.reflex.match(text)
         if reflex_hit is not None:
             return reflex_hit
 
-        # Stage 2: Vector encode
+        # Stage 2: Multi-step detection
+        if self._is_multi_step(text):
+            return self._process_multi_step(text, context)
+
+        # Stage 3: Vector encode
         if not self._presets_loaded:
             self.load_presets()
 
@@ -265,10 +273,10 @@ class GARDENEngine:
         if not input_keys:
             return "抱歉，我暂时无法理解你的意思。"
 
-        # Stage 3: SNN forward
+        # Stage 4: SNN forward
         network_output = self.snn.forward(input_keys, context=context)
 
-        # Stage 4: Anchored decode
+        # Stage 5: Anchored decode
         response = _anchored_decode(network_output, input_keys, self.dictionary)
 
         if not response:
@@ -279,6 +287,89 @@ class GARDENEngine:
             return "抱歉，我暂时无法理解你的意思。"
 
         return response
+
+    # ------------------------------------------------------------------
+    # Multi-step reasoning (Phase 4.3)
+    # ------------------------------------------------------------------
+
+    _MULTI_STEP_MARKERS = ["然后", "然後", "接著", "接着", "之後", "之后", "再", "and then", "after that"]
+
+    def _is_multi_step(self, text: str) -> bool:
+        """Detect if the input contains multiple sequential steps."""
+        lower = text.lower()
+        return any(m in lower for m in self._MULTI_STEP_MARKERS)
+
+    def _process_multi_step(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
+        """Split multi-step input and process each step sequentially."""
+        import re
+        pattern = "|".join(re.escape(m) for m in self._MULTI_STEP_MARKERS)
+        steps = re.split(pattern, text, flags=re.IGNORECASE)
+        results = []
+        for step in steps:
+            step = step.strip()
+            if not step:
+                continue
+            # Process each step through the single-step pipeline
+            result = self._single_step_process(step, context)
+            if result:
+                results.append(result)
+        return "\n".join(results) if results else "抱歉，我无法理解这些步骤。"
+
+    def _single_step_process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
+        """Process a single step through the GARDEN pipeline."""
+        # Reflex check
+        reflex_hit = self.reflex.match(text)
+        if reflex_hit is not None:
+            return reflex_hit
+
+        # Vector encode + SNN + decode
+        if not self._presets_loaded:
+            self.load_presets()
+
+        input_keys = self.dictionary.encode(text)
+        if not input_keys:
+            return ""
+
+        network_output = self.snn.forward(input_keys, context=context)
+        response = _anchored_decode(network_output, input_keys, self.dictionary)
+
+        if not response:
+            response = self.dictionary.decode(input_keys[:limit_value("ai.garden.engine.fallback_decode_keys", 4)])
+
+        return response or ""
+
+    # ------------------------------------------------------------------
+    # Emotion detection + hormonal modulation (Phase 4.4)
+    # ------------------------------------------------------------------
+
+    _EMOTION_KEYWORDS: Dict[str, List[str]] = {
+        "happy": ["开心", "高兴", "太好了", "happy", "great", "好开心", "好高兴"],
+        "sad": ["难过", "伤心", "糟糕", "sad", "bad", "好难过", "好伤心"],
+        "angry": ["生气", "气死", "烦", "angry", "mad", "好生气"],
+        "anxious": ["担心", "紧张", "害怕", "worried", "anxious", "好担心"],
+    }
+
+    _HORMONE_ADJUSTMENTS: Dict[str, Dict[str, float]] = {
+        "happy": {"serotonin": 0.8, "dopamine": 0.7},
+        "sad": {"serotonin": 0.3, "cortisol": 0.6},
+        "angry": {"cortisol": 0.8, "adrenaline": 0.7},
+        "anxious": {"cortisol": 0.7, "adrenaline": 0.6},
+        "neutral": {"serotonin": 0.5, "cortisol": 0.3},
+    }
+
+    def _detect_emotion(self, text: str) -> str:
+        """Detect the dominant emotion in user input."""
+        lower = text.lower()
+        for emotion, keywords in self._EMOTION_KEYWORDS.items():
+            if any(k in lower for k in keywords):
+                return emotion
+        return "neutral"
+
+    def _adjust_hormones(self, emotion: str) -> None:
+        """Adjust hormone levels based on detected emotion."""
+        adjustments = self._HORMONE_ADJUSTMENTS.get(emotion, {})
+        for hormone, level in adjustments.items():
+            self.set_hormone(hormone, level)
 
     # ------------------------------------------------------------------
     # VectorDecoder (iterative generation)
