@@ -593,9 +593,9 @@ class AngelaLLMService:
                 )
                 from core.interfaces.protocols import LLMResponse
                 return LLMResponse(
-                    content=result.content,
+                    text=result.content,
                     model="ensemble",
-                    latency=result.latency,
+                    response_time_ms=result.latency * 1000,
                     tokens_used=result.token_usage.get("total_tokens", 0),
                     metadata={"ensemble_votes": result.model_votes, "confidence": result.confidence},
                 )

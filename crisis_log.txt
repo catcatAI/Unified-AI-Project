@@ -1,1 +1,3 @@
 [2026-06-15 11:27:56.198719] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i need emergency help', 'context': {}}
+[2026-06-15 11:41:07.000574] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i need emergency help', 'context': {}}
+[2026-06-15 11:50:31.077678] CRISIS_LOG: Level 1 event. Details: {'input_text': 'emergency help', 'context': {}}

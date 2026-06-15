@@ -10,6 +10,7 @@ wraps any specialized agent and routes task dicts to the correct method.
 # ANGELA-MATRIX: [L6] [βδ] [A] [L4]
 # =============================================================================
 
+import inspect
 import logging
 from typing import Any, Dict, Optional
 
@@ -22,44 +23,90 @@ class AgentAdapter:
 
     Task dict format:
         {"method": "analyze_code", "args": {...}}  — calls agent.analyze_code(**args)
-        {"method": "search", "args": {"query": "..."}}  — calls agent.search(query="...")
-        {"method": "handle_task_request", "args": {...}}
-        {} or {"method": "auto"} — auto-detects the primary method
+        {"args": {"query": "..."}}  — auto-detects method, maps args
+        {} — uses primary method with empty args
     """
 
-    # Map agent class name patterns → primary method name
-    _METHOD_MAP: Dict[str, str] = {
-        "CreativeWriting": "generate_creative_content",
-        "ImageGeneration": "generate_image",
-        "WebSearch": "search",
-        "CodeUnderstanding": "analyze_code",
-        "DataAnalysis": "analyze_data",
-        "VisionProcessing": "analyze_image",
-        "AudioProcessing": "process_audio",
-        "KnowledgeGraph": "add_knowledge",
-        "NLPProcessing": "analyze_sentiment",
-        "Planning": "create_plan",
-        "FantasyDM": "generate_scenario",
+    # Map agent class name patterns → (primary method, fallback method)
+    _METHOD_MAP: Dict[str, tuple] = {
+        "CreativeWriting": ("generate_story", "generate_poem"),
+        "ImageGeneration": ("generate_image", None),
+        "WebSearch": ("search", None),
+        "CodeUnderstanding": ("analyze_code", "explain_code"),
+        "DataAnalysis": ("analyze_dataset", "generate_report"),
+        "VisionProcessing": ("analyze_image", "detect_objects"),
+        "AudioProcessing": ("transcribe_audio", "analyze_audio"),
+        "KnowledgeGraph": ("query_graph", "add_entity"),
+        "NLPProcessing": ("analyze_sentiment", "summarize_text"),
+        "Planning": ("create_plan", None),
+        "FantasyDM": ("generate_scenario", "create_character"),
     }
 
     def __init__(self, agent: Any, agent_id: Optional[str] = None):
         self.agent = agent
         self.agent_id = agent_id or getattr(agent, "agent_id", agent.__class__.__name__)
         self.agent_name = getattr(agent, "agent_name", self.agent_id)
-        self._primary_method = self._detect_primary_method()
+        self._primary_method, self._fallback_method = self._detect_methods()
 
-    def _detect_primary_method(self) -> Optional[str]:
-        """Detect the primary method based on agent class name."""
+    def _detect_methods(self) -> tuple:
+        """Detect primary and fallback methods based on agent class name."""
         class_name = self.agent.__class__.__name__
-        for pattern, method_name in self._METHOD_MAP.items():
+        for pattern, (primary, fallback) in self._METHOD_MAP.items():
             if pattern in class_name:
-                if hasattr(self.agent, method_name):
-                    return method_name
+                has_primary = hasattr(self.agent, primary) if primary else False
+                has_fallback = hasattr(self.agent, fallback) if fallback else False
+                if has_primary:
+                    return primary, fallback
+                if has_fallback:
+                    return fallback, None
         # Fallback: try common method names
-        for fallback in ("execute", "process", "handle_task_request", "run"):
-            if hasattr(self.agent, fallback):
-                return fallback
-        return None
+        for name in ("execute", "process", "run"):
+            if hasattr(self.agent, name):
+                return name, None
+        return None, None
+
+    def _fill_defaults(self, method, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Inspect method signature and fill defaults for missing required params."""
+        try:
+            sig = inspect.signature(method)
+        except (ValueError, TypeError):
+            return args
+
+        filled = dict(args)
+        for param_name, param in sig.parameters.items():
+            if param_name == "self":
+                continue
+            if param_name not in filled:
+                if param.default is not inspect.Parameter.empty:
+                    continue  # Has default, skip
+                # Fill required params with sensible defaults
+                if "sender_ai_id" in param_name:
+                    filled[param_name] = "adapter"
+                elif "envelope" in param_name:
+                    filled[param_name] = None
+                elif "language" in param_name:
+                    filled[param_name] = "python"
+                elif "text" in param_name:
+                    filled[param_name] = ""
+                elif "query" in param_name:
+                    filled[param_name] = ""
+                elif "data" in param_name:
+                    filled[param_name] = []
+                elif "prompt" in param_name:
+                    filled[param_name] = ""
+                elif "theme" in param_name:
+                    filled[param_name] = "general"
+                elif "goal" in param_name:
+                    filled[param_name] = "unknown"
+                elif "entity" in param_name:
+                    filled[param_name] = ""
+                elif "audio_path" in param_name or "image_path" in param_name:
+                    filled[param_name] = ""
+                elif "content" in param_name:
+                    filled[param_name] = ""
+                else:
+                    filled[param_name] = None
+        return filled
 
     async def execute(self, task: Dict[str, Any]) -> Any:
         """
@@ -79,25 +126,25 @@ class AgentAdapter:
             return {"status": "error", "error": "No method specified and no primary method detected"}
 
         if not hasattr(self.agent, method_name):
-            logger.warning(f"[AgentAdapter] Agent {self.agent_id} has no method '{method_name}'")
-            return {"status": "error", "error": f"Method '{method_name}' not found on agent"}
+            # Try fallback
+            if self._fallback_method and hasattr(self.agent, self._fallback_method):
+                method_name = self._fallback_method
+            else:
+                logger.warning(f"[AgentAdapter] Agent {self.agent_id} has no method '{method_name}'")
+                return {"status": "error", "error": f"Method '{method_name}' not found on agent"}
+
+        method = getattr(self.agent, method_name)
+        filled_args = self._fill_defaults(method, args)
 
         try:
-            method = getattr(self.agent, method_name)
-            import inspect
             if inspect.iscoroutinefunction(method):
-                result = await method(**args) if args else await method()
+                result = await method(**filled_args) if filled_args else await method()
             else:
-                result = method(**args) if args else method()
+                result = method(**filled_args) if filled_args else method()
             return result
         except TypeError as e:
-            # If method signature doesn't match, try passing task directly
-            logger.debug(f"[AgentAdapter] Args mismatch for {method_name}, trying positional: {e}")
-            try:
-                return await method(task) if inspect.iscoroutinefunction(method) else method(task)
-            except Exception as e2:
-                logger.error(f"[AgentAdapter] Failed to execute {method_name}: {e2}", exc_info=True)
-                return {"status": "error", "error": str(e2)}
+            logger.debug(f"[AgentAdapter] Args mismatch for {method_name}: {e}")
+            return {"status": "error", "error": f"Method signature mismatch: {e}"}
         except Exception as e:
             logger.error(f"[AgentAdapter] Failed to execute {method_name}: {e}", exc_info=True)
             return {"status": "error", "error": str(e)}
