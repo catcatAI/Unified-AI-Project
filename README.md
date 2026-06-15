@@ -55,9 +55,9 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 680+ Python files in backend src (~15.5 MB). Electron + Live2D desktop companion (63 JS files). Pixel art engine (PyQt6 renderer). Mobile app is a skeleton (not yet implemented). **~3,500+ tests across 469 test files.**  
+**Quick facts**: 680+ Python files in backend src (~127K lines). Electron + Live2D desktop companion (63 JS files). Pixel art engine (PyQt6 renderer). Mobile app is a skeleton. **~3,500+ tests across 469 test files.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · mobile `0.1.0-skeleton` · cli `1.1.0` · biology-core `1.0.0`.  
-**Architecture consistency score**: **~85-90%** (per audit reports + all alias fixes applied).  
+**Architecture consistency score**: **~85-90%** (implementations complete, all aliases applied).  
 **Total project files**: ~2,950+ (680+ Python in backend src · 140 JS/TS · 805+ docs · 577 config · 238+ test · ~190 other).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHANGELOG.md) for version history.
 
@@ -162,7 +162,7 @@ npx pnpm dev:desktop
 - **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → LLM → causal learning → response ✅
 - **Session history** — 30-message rolling window, ED3N retrieval pool ✅
 - **Emotion analysis** — 6-category emotion keywords, emotion-aware prompt injection ✅
-- **Crisis system** — Safety gate auto-reset timeout (300s), config loaded from `configs/crisisis_system_config.json` ✅
+- **Crisis system** — Safety gate auto-reset timeout (300s), config loaded from `apps/backend/configs/crisis_system_config.json` ✅
 - **Level5ASI alignment** — Triggered at crisis_level ≥ 2, lazy-initialized ✅
 - **CausalReasoning** — Fire-and-forget learning after every response, FIFO cap (500 obs / 1000 rels) ✅
 - **ModelEnsemble** — Multi-model voting via `context["use_ensemble"] = True` ✅
@@ -188,6 +188,7 @@ npx pnpm dev:desktop
 - **Desktop app** — Electron + Live2D, 63 JS files, Epsilon_free model ✅
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
+- **Gemini OS bridge** — pyautogui automation ✅
 - **Test suite** — 86/86 integration tests + 34/34 pipeline tests ✅
 
 ### What Does NOT Work / Is Stub
@@ -198,6 +199,7 @@ npx pnpm dev:desktop
 - **ImageGeneration** — Agent exists but needs Stable Diffusion API key ❌
 - **Frontend multimodal** — Desktop/Web/Mobile/Pixel all text-only, no image/audio upload ❌
 - **Agent auto-routing** — Agents registered but no pipeline auto-calls them ❌
+- **`services/wiring.py`** — `initialize_all_services()` is dead code, never called ❌
 - **`core/memory/`** — 7 stub files ❌
 - **`core/live2d/`** — 4 stub files ❌
 - **`core/biological/`** — 3 stub files ❌
@@ -249,9 +251,12 @@ See dedicated docs for full diagrams:
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
 | [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
 | [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
+| [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | Placeholder cleanup, unittest→pytest migration |
+| [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | Test layer architecture, conftest layering, CI integration |
 | [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **Audit V1 (05-31)**: Plans, docs, code, tests, config, apps — original completion audit |
 | [COMPREHENSIVE_AUDIT_REPORT_V2](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **Audit V2 (06-06)**: H5 post-sprint full scan — 3 true stubs, 20 intentional excepts, 132 long files |
 | [COMPREHENSIVE_AUDIT_V3](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | **Audit V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫 |
+| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **Phase Review 1 (06-02)**: First 3-agent parallel audit, 10-dimension assessment |
 | [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite |
 | [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
 | [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
@@ -400,6 +405,7 @@ npx pnpm dev:desktop
 - **ImageGeneration** — 代理存在但需要 API key ❌
 - **前端多模態** — 全部僅支援文字，無圖片/音訊上傳 ❌
 - **代理自動路由** — 代理已註冊但管線不會自動呼叫 ❌
+- **`services/wiring.py`** — `initialize_all_services()` 是死代碼，從未被呼叫 ❌
 
 ### 孤兒系統狀態
 
@@ -454,19 +460,23 @@ npx pnpm dev:desktop
 | [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
 | [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：53 項、S/A/B/C 分級、53/53 完成 |
 | [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動 |
-| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組 (card_pipeline, intent_registry, vision, audio, tactile, drive) |
+| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組 |
 | [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
-| [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移, Stub 清理 |
-| [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError, docs, tests |
-| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告 V1**: 計畫、文檔、代碼、測試、配置、應用 |
-| [COMPREHENSIVE_AUDIT_V3](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | **全面審計報告 V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫 |
-| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
-| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數 |
-| [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定，23+殘留問題 |
+| [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移 |
+| [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError |
 | [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
 | [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
-| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N 架構計畫 (06-06, NEW)**: 外部字典解耦神經網路 — LLM + SNN 設計、訓練管線、4 階段路線圖、與 30+ 現有組件對應 |
-| [GARDEN_MODEL_PLAN](docs/06-project-management/plans/GARDEN_MODEL_PLAN.md) | **GARDEN 擴展計畫 (06-06, NEW)**: 1GB 輕量級本地模型與五級擴展架構實作計畫 |
+| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告 V1**: 計畫、文檔、代碼、測試、配置、應用 |
+| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **全面審計報告 V2**: H5 後冲刺全面扫描 — 3 個真 stub、20 個有意義 except |
+| [COMPREHENSIVE_AUDIT_V3](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | **全面審計報告 V3**: ED3N/GARDEN/Model Bus/Router 深度審計 |
+| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
+| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數 |
+| [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定 |
+| [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **階段審查 4 (06-05)**: H5 stub 冲刺，36/37 stubs 完成 |
+| [PHASE_REVIEW5](docs/06-project-management/plans/PHASE_REVIEW5.md) | **階段審查 5 (06-06)**: H5 sprint final，2837 測試，0 HIGH 漏洞 |
+| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N 架構計畫**: 外部字典解耦神經網路 — LLM + SNN 設計、訓練管線、4 階段路線圖 |
+| [GARDEN_MODEL_PLAN](docs/06-project-management/plans/GARDEN_MODEL_PLAN.md) | **GARDEN 擴展計畫**: 1GB 輕量級本地模型與五級擴展架構 |
+| [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md) | **ED3N 訓練指南**: 訓練、評估、部署 ED3N |
 
 ---
 
