@@ -409,17 +409,68 @@ def _infer_action_type(self, query_type: QueryType, text: str) -> str:
 
 ### 3.7 Regex word boundary 修正
 
-替換所有使用 `re.search` 的 pattern，改用 word boundary：
+**問題：** 現有 pattern 使用 `re.search()` 做 substring match，`"開玩笑"` 會匹配到 `"開"` 進入 EXECUTE。
+
+**修正方式：** 所有 pattern 加上前后邊界，確保匹配完整詞。
 
 ```python
-# 原本 (有問題)
-r"(執行|運行|開啟|關閉|啟動|停止|..."
+# 修正前 (query_classifier.py 現有)
+r"(執行|運行|開啟|關閉|啟動|停止|..."  # substring match
 
-# 修正後 (word boundary)
-r"(?:^|[\s，。！？,.\s])(執行|運行|開啟|關閉|啟動|停止)(?:$|[\s，。！？,.\s])"
+# 修正後：中文用前後空白/標點做邊界
+# 因為 Python \b 不支援中文，所以手動加邊界
+WORD_BOUNDARY = r"(?:^|[\s，。！？,.\s])"
+WORD_BOUNDARY_END = r"(?:[\s，。！？,.\s]|$)"
 
-# 或更簡潔：用 \b（但中文不支援 \b，所以用前後空白/標點）
-# 建議：對中文使用 (?:^|[\s，。])keyword(?:[\s，。]|$)
+# EXECUTE pattern 修正
+r"(?:^|[\s，。！？,.\s])(執行|運行|開啟|關閉|啟動|停止|)(?:[\s，。！？,.\s]|$)"
+# 測試: "開玩笑" → 不匹配（"開" 不在完整詞列表中）
+# 測試: "開啟檔案" → 匹配 "開啟"
+# 測試: "請執行這個" → 匹配 "執行"
+
+# FILE pattern 修正
+r"(?:^|[\s，。！？,.\s])(整理|刪除|文件|文件夾|目錄|file|folder|directory)(?:[\s，。！？,.\s]|$)"
+
+# SEARCH pattern 修正
+r"(?:^|[\s，。！？,.\s])(搜尋|搜索|找|查|search|find|lookup)(?:[\s，。！？,.\s]|$)"
+
+# CODE pattern 修正
+r"(?:^|[\s，。！？,.\s])(程序|代碼|函數|debug|refactor|code|function)(?:[\s，。！？,.\s]|$)"
+
+# COMMAND pattern (已錨定到開頭，不需改)
+r"^(幫我|請|打開|關閉|開始|停止|can you|please)"
+```
+
+**需要修正的 pattern 清單（query_classifier.py:48-198）：**
+
+| Pattern | 修正前 | 修正後 |
+|---------|--------|--------|
+| EXECUTE | `r"(執行\|運行\|..."` | 加 WORD_BOUNDARY |
+| FILE | `r"(整理\|刪除\|..."` | 加 WORD_BOUNDARY |
+| SEARCH | `r"(搜尋\|搜索\|..."` | 加 WORD_BOUNDARY |
+| CODE | `r"(程序\|代碼\|..."` | 加 WORD_BOUNDARY |
+| TASK | `r"(任務\|工作\|..."` | 加 WORD_BOUNDARY |
+| VISION | `r"(圖片\|照片\|..."` | 加 WORD_BOUNDARY |
+| AUDIO | `r"(語音\|音訊\|..."` | 加 WORD_BOUNDARY |
+| COMMAND | `r"^(幫我\|..."` | 已錨定，不改 |
+| MATH | `r"(\d+\s*[+\-*/]\s*\d+)"` | 不改（已有數字邊界） |
+| LOGIC | `r"(true\|false\|..."` | 加 WORD_BOUNDARY |
+| KNOWLEDGE | `r"(什麼是\|how\|..."` | 加 WORD_BOUNDARY |
+| CREATIVE | `r"(寫\|作\|..."` | 加 WORD_BOUNDARY |
+| OPINION | `r"(覺得\|認為\|..."` | 加 WORD_BOUNDARY |
+| GREETING | `r"(你好\|hello\|..."` | 加 WORD_BOUNDARY |
+
+**驗證方法：**
+```python
+# 測試用例
+test_cases = [
+    ("開玩笑", None),           # 不應匹配 EXECUTE
+    ("關心你", None),           # 不應匹配 EXECUTE
+    ("幫我搜尋天氣", "SEARCH"),  # 應匹配 SEARCH
+    ("刪除 temp.txt", "FILE"),  # 應匹配 FILE
+    ("執行這個命令", "EXECUTE"), # 應匹配 EXECUTE
+    ("幫我看看", "VISION"),     # 應匹配 VISION（不是 EXECUTE）
+]
 ```
 
 ### 3.8 REFLEX Override 修正
