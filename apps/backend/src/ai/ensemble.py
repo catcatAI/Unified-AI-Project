@@ -80,7 +80,7 @@ class ResponseFusionEngine:
 
         # Return highest scoring response
         scored.sort(key=lambda x: x[0], reverse=True)
-        return scored[0][1].content
+        return scored[0][1].text
 
     def _fuse_weighted_average(
         self, responses: List[LLMResponse], weights: Dict[str, float]
@@ -108,7 +108,7 @@ class ResponseFusionEngine:
         scores = []
 
         # Length appropriateness (not too short, not too long)
-        content_len = len(response.content)
+        content_len = len(response.text or "")
         if 50 < content_len < 2000:
             scores.append(1.0)
         elif content_len > 0:
@@ -118,16 +118,17 @@ class ResponseFusionEngine:
 
         # Coherence markers (presence of good structure)
         coherence_markers = [".", "!", "?", "\n", ","]
-        marker_count = sum(response.content.count(m) for m in coherence_markers)
+        marker_count = sum((response.text or "").count(m) for m in coherence_markers)
         if marker_count > 5:
             scores.append(1.0)
         else:
             scores.append(0.7)
 
-        # Latency penalty (faster is better)
-        if response.latency < 1.0:
+        # Latency penalty (faster is better) — response_time_ms is in milliseconds
+        latency_sec = (response.response_time_ms or 0) / 1000
+        if latency_sec < 1.0:
             scores.append(1.0)
-        elif response.latency < 3.0:
+        elif latency_sec < 3.0:
             scores.append(0.8)
         else:
             scores.append(0.6)

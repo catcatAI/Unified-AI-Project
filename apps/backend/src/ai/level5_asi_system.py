@@ -650,14 +650,10 @@ class Level5ASISystem:
 
     async def _update_alignment_score(self) -> None:
         """更新对齐分数"""
-        if self.autonomous_alignment:
-            status = await self.autonomous_alignment.get_alignment_status()
-            self.performance_metrics["alignment_score"] = status.get("alignment_score", 0.0)
-        else:
-            success_rate = self.performance_metrics["successful_requests"] / max(
-                1, self.performance_metrics["total_requests"]
-            )
-            self.performance_metrics["alignment_score"] = success_rate
+        success_rate = self.performance_metrics["successful_requests"] / max(
+            1, self.performance_metrics["total_requests"]
+        )
+        self.performance_metrics["alignment_score"] = success_rate
 
     async def _test_alignment_system(self) -> dict[str, Any]:
         """测试对齐系统"""
