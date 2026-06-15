@@ -51,12 +51,12 @@ class QueryResult:
 
 
 # 操作类型推断用的关键字
-_CREATE_VERBS = {"建立", "新增", "创建", "新增", "create", "new", "add"}
-_MODIFY_VERBS = {"修改", "编辑", "重新命名", "edit", "rename", "modify", "update"}
-_DELETE_VERBS = {"删除", "移除", "清空", "delete", "remove", "clear"}
-_WRITE_VERBS = {"写入", "储存", "write", "save"}
-_READ_PREFIXES = {"搜寻", "搜索", "查询", "查看", "读取", "找", "search", "find", "lookup"}
-_SEND_VERBS = {"发送", "传送", "提交", "send", "submit", "post"}
+_CREATE_VERBS = {"建立", "新增", "创建", "新增", "建立", "create", "new", "add"}
+_MODIFY_VERBS = {"修改", "编辑", "重新命名", "修改", "編輯", "重新命名", "edit", "rename", "modify", "update"}
+_DELETE_VERBS = {"删除", "移除", "清空", "刪除", "移除", "清除", "delete", "remove", "clear"}
+_WRITE_VERBS = {"写入", "储存", "寫入", "儲存", "write", "save"}
+_READ_PREFIXES = {"搜寻", "搜索", "查询", "查看", "读取", "找", "搜尋", "搜索", "查詢", "查看", "讀取", "找", "search", "find", "lookup"}
+_SEND_VERBS = {"发送", "传送", "提交", "發送", "傳送", "提交", "send", "submit", "post"}
 
 # REFLEX 不覆盖的动词（这些是有意义的单字动词）
 VERBS_NOT_REFLEX = {
@@ -66,9 +66,9 @@ VERBS_NOT_REFLEX = {
 
 # 明确知识查询模式（用于 `?` override 修正）
 KNOWLEDGE_QUESTION_PATTERNS = [
-    r"^什么是", r"^什么是", r"^怎么", r"^为什么", r"^為什么",
+    r"^什么是", r"^是什么", r"^是什麼", r"^怎麼", r"^怎么", r"^为什么", r"^為什麼", r"^為什么",
     r"^how\b", r"^what\b", r"^why\b", r"^when\b", r"^where\b", r"^who\b",
-    r"^多少", r"^几个", r"^谁", r"^今天", r"^明天", r"^昨天",
+    r"^多少", r"^幾個", r"^几个", r"^谁", r"^誰", r"^今天", r"^明天", r"^昨天",
 ]
 
 # 否定词
@@ -124,10 +124,10 @@ class QueryClassifier:
                 QueryType.KNOWLEDGE,
                 re.compile(
                     r"(?:^|[\s，。！？,.\s])"
-                    r"(什么是|是什么|what\s+is|how\s+(does|do|can|to)|"
+                    r"(什么是|是什么|是什麼|what\s+is|how\s+(does|do|can|to)|"
                     r"why\s+(is|does|do|can)|"
                     r"\b(define|explain)\b|"
-                    r"怎么回|多少|how\s+many|what\s+are)",
+                    r"怎麼回|怎么回|多少|how\s+many|what\s+are)",
                     re.IGNORECASE,
                 ),
                 0.7,

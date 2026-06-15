@@ -23,6 +23,13 @@ class ChatService:
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
 
+    @property
+    def model_bus(self):
+        """Return the ModelBus from the underlying LLM router, if available."""
+        if self._llm_service and hasattr(self._llm_service, 'model_bus'):
+            return self._llm_service.model_bus
+        return None
+
     async def initialize(self) -> None:
         if self._initialized:
             return

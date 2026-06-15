@@ -258,11 +258,9 @@ async def _handle_chat_request(
 
             if msg_lower in confirm_words:
                 handler_id = pending.get("handler")
-                if handler_id:
+                if handler_id and _chat_svc and _chat_svc.model_bus:
                     try:
-                        from ai.core.model_bus import ModelBus
-                        model_bus = ModelBus()
-                        action_result = await model_bus.execute_handler(
+                        action_result = await _chat_svc.model_bus.execute_handler(
                             handler_id, pending.get("original_query", user_message), context
                         )
                         context["last_action_result"] = action_result
@@ -298,7 +296,7 @@ async def _handle_chat_request(
 
             # Execution gate decision
             from ai.core.execution_gate import ExecutionGate
-            gate = ExecutionGate()
+            gate = ExecutionGate(model_bus=_chat_svc.model_bus if _chat_svc else None)
             decision = gate.decide(
                 query_type=classify_result.primary_type.value,
                 action_type=classify_result.action_type,
@@ -308,11 +306,9 @@ async def _handle_chat_request(
             )
 
             if decision.action == "auto_execute":
-                if decision.handler:
+                if decision.handler and _chat_svc and _chat_svc.model_bus:
                     try:
-                        from ai.core.model_bus import ModelBus
-                        model_bus = ModelBus()
-                        action_result = await model_bus.execute_handler(
+                        action_result = await _chat_svc.model_bus.execute_handler(
                             decision.handler, user_message, context
                         )
                         context["last_action_result"] = action_result
@@ -343,11 +339,6 @@ async def _handle_chat_request(
                 # reject
                 context["last_action_result"] = None
 
-            # Continuation loop protection
-            continuation = context.get("continuation_count", 0)
-            if continuation >= 3:
-                context["continuation_count"] = 0
-
         except Exception as e:
             logger.debug(f"Execution gate unavailable: {e}")
 
@@ -357,6 +348,9 @@ async def _handle_chat_request(
         )
         response_text = _llm_response.text if hasattr(_llm_response, 'text') else str(_llm_response)
         _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
+
+        # Increment continuation count for loop protection
+        context["continuation_count"] = context.get("continuation_count", 0) + 1
 
         # Fire-and-forget: learn causal relationship from this interaction
         try:
