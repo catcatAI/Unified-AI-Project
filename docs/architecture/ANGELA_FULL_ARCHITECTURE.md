@@ -3,6 +3,7 @@
 > **Last Updated**: 2026-06-15
 > **基於**: 12 個代理完整代碼審計 + 管線接線驗證
 > **目的**: 完整描述 Angela 如何視、聽、觸、說、畫、移、思考、感受、自主
+> **代碼統計**: ~641 Python 檔案, ~15.5MB 後端代碼
 
 ---
 
@@ -20,13 +21,15 @@
   - [2.4 路由器 — ThetaRouter](#24-路由器--thetarouter)
 - [三、情感系統（感受）](#三情感系統感受)
   - [3.1 生物模擬 — BiologicalIntegrator](#31-生物模擬--biologicalintegrator)
-  - [3.2 文字情緒 — EmotionAnalyzer](#32-文字情緒--emotionanalyzer)
-  - [3.3 用戶監控 — UserMonitor](#33-用戶監控--usermonitor)
+  - [3.2 生物子系統（14 個模組）](#32-生物子系統14-個模組)
+  - [3.3 文字情緒 — EmotionAnalyzer](#33-文字情緒--emotionanalyzer)
+  - [3.4 用戶監控 — UserMonitor](#34-用戶監控--usermonitor)
 - [四、執行系統（輸出）](#四執行系統輸出)
   - [4.1 語音 — RealEdgeTTS](#41-語音--reaedgettts)
   - [4.2 Live2D 表情 — Live2DIntegration](#42-live2d-表情--live2dintegration)
   - [4.3 桌面操作 — DesktopInteraction](#43-桌面操作--desktopinteraction)
   - [4.4 繪圖 — ImageGenerationAgent](#44-繪圖--imagegenerationagent)
+  - [4.5 動作執行 — ActionExecutor](#45-動作執行--actionexecutor)
 - [五、記憶系統](#五記憶系統)
   - [5.1 三層架構（權威定義）](#51-三層架構權威定義)
   - [5.2 AttractorField — 梯度導航](#52-attractorfield--梯度導航)
@@ -34,9 +37,34 @@
   - [5.4 LogicUnit — 邏輯/規則記憶](#54-logicunit--邏輯規則記憶)
   - [5.5 UnifiedMemoryCoordinator — 統一協調器](#55-unifiedmemorycoordinator--統一協調器)
   - [5.6 記憶層級設計（文檔描述）](#56-記憶層級設計文檔描述)
-  - [5.7 ED3N — 反射與字典](#57-ed3n--反射與字典)
-- [六、完整管線流程](#六完整管線流程)
-- [七、系統成熟度總覽](#七系統成熟度總覽)
+  - [5.7 MathRippleEngine — 數學-認知同構](#57-mathrippleengine--數學-認知同構)
+  - [5.8 ED3N — 反射與字典](#58-ed3n--反射與字典)
+- [六、數位生命系統](#六數位生命系統)
+  - [6.1 DigitalLifeIntegrator — 總控](#61-digitallifeintegrator--總控)
+  - [6.2 AutonomousLifeCycle — 自主生命週期](#62-autonomouslifecycle--自主生命週期)
+  - [6.3 SelfGeneration — 自我視覺生成](#63-selfgeneration--自我視覺生成)
+  - [6.4 CyberIdentity — 網路身份認知](#64-cyberidentity--網路身份認知)
+  - [6.5 MetabolicHeartbeat — 代謝心跳](#65-metabolicheartbeat--代謝心跳)
+- [七、HSP 通訊協議](#七hsp-通訊協議)
+  - [7.1 HSPConnector — 核心連接器](#71-hspconnector--核心連接器)
+  - [7.2 安全與版本管理](#72-安全與版本管理)
+- [八、AI 引擎](#八ai-引擎)
+  - [8.1 回應合成 — Composer](#81-回應合成--composer)
+  - [8.2 神經自動選擇器 — NeuroAutoSelector](#82-神經自動選擇器--neuroautoselector)
+  - [8.3 GARDEN 輕量推理引擎](#83-garden-輕量推理引擎)
+  - [8.4 CodeInspector — 原生代碼檢查](#84-codeinspector--原生代碼檢查)
+  - [8.5 AIOps — 智能運維](#85-aiops--智能運維)
+  - [8.6 Level 5 ASI 系統](#86-level-5-asi-系統)
+- [九、對齊與安全性](#九對齊與安全性)
+- [十、其他核心系統](#十其他核心系統)
+  - [10.1 即時監控 — RealTimeMonitor](#101-即時監控--realtimemonitor)
+  - [10.2 事件循環 — EventLoopSystem](#102-事件循環--eventloopsystem)
+  - [10.3 狀態持久化 — StatePersistence](#103-狀態持久化--statepersistence)
+  - [10.4 因果追蹤 — CausalTracer](#104-因果追蹤--causaltracer)
+  - [10.5 硬體加速 — GPU Accelerator](#105-硬體加速--gpu-accelerator)
+  - [10.6 插件系統 — PluginManager](#106-插件系統--pluginmanager)
+- [十一、完整管線流程](#十一完整管線流程)
+- [十二、系統成熟度總覽](#十二系統成熟度總覽)
 
 ---
 
@@ -261,6 +289,27 @@ BiologicalIntegrator
     ├─ _apply_homeostasis(): 每個循環恢復平衡
     └─ _synchronize_states(): 跨系統狀態同步
 ```
+
+### 3.2 生物子系統（14 個模組）
+
+**目錄**: `core/bio/` — 合計 ~4,600 行
+
+| 模組 | 檔案 | 行數 | 功能 | 狀態 |
+|------|------|------|------|------|
+| **EmotionalBlendingSystem** | `emotional_blending.py` | 953 | PAD 情緒模型 + 混合演算法 + 多模態表達 | ✅ 真實 |
+| **PhysiologicalTactileAnalysis** | `physiological_tactile_analysis.py` | 546 | 觸覺軌跡分析 + 受體適應追蹤 | ✅ 真實 |
+| **NeuroplasticityCore** | `neuroplasticity_core.py` | 506 | LTP/LTD + Hebbian 學習 + Ebbinghaus 遺忘曲線 | ✅ 真實 |
+| **PhysiologicalTactileSystem** | `physiological_tactile_system.py` | 456 | 觸覺處理 + Live2D 整合 + 身體區域映射 | ✅ 真實 |
+| **EndocrineSystemCore** | `endocrine_system_core.py` | 451 | 12 種激素管理 + 情緒觸發 + 晝夜節律 | ✅ 真實 |
+| **AutonomicNervousSystem** | `autonomic_nervous_system.py` | 428 | 交感/副交感神經 + 興奮水平調節 | ✅ 真實 |
+| **MultidimensionalTrigger** | `multidimensional_trigger.py` | 374 | 多維行為觸發 (時間/環境/情緒/生理) | ✅ 真實 |
+| **ExtendedBehaviorLibrary** | `extended_behavior_library.py` | 338 | 25+ 預定義行為 + 6 種分類 | ✅ 真實 |
+| **TraumaMemorySystem** | `trauma_memory.py` | 328 | 創傷記憶 (70% 慢速遺忘) + 侵入性回憶 | ✅ 真實 |
+| **FeedbackLoop** | `feedback_loop.py` | 254 | HPA 軸模擬 + 負回饋 + 晝夜節律 | ✅ 真實 |
+| **HormoneKinetics** | `hormone_kinetics.py` | 249 | 半衰期代謝 + Hill 方程受體佔用 | ✅ 真實 |
+| **ExplicitImplicitLearning** | `explicit_implicit_learning.py` | 147 | 外顯/內隱學習區分 | ✅ 真實 |
+| **SkillAcquisition** | `skill_acquisition.py` | 150 | 幂律學習曲線 + 意識→自動化轉換 | ✅ 真實 |
+| **HabitFormation** | `habit_formation.py` | 141 | 66 次重複習慣形成 + 自動化評分 | ✅ 真實 |
 
 ### 3.2 文字情緒 — EmotionAnalyzer
 
@@ -540,7 +589,448 @@ ED3NEngine
 
 ---
 
-## 六、完整管線流程
+## 六、數位生命系統
+
+### 6.1 DigitalLifeIntegrator — 總控
+
+**檔案**: `core/life/digital_life_integrator.py` (869 行)
+**狀態**: ✅ 完整真實實現
+
+```
+DigitalLifeIntegrator (數位生命總控)
+    │
+    ├─→ 生命週期管理:
+    │     Init → Awakening → Growing → Mature → Resting → Dormant
+    │
+    ├─→ 整合組件:
+    │     ├─ BiologicalIntegrator (生物模擬)
+    │     ├─ StateMatrix4D (7D 狀態)
+    │     ├─ ActionExecutor (動作執行)
+    │     ├─ AutonomousLifeCycle (自主生命)
+    │     ├─ LLMDecisionLoop (LLM 決策)
+    │     └─ UserMonitor (用戶監控)
+    │
+    ├─→ 模態閘控 (ModalityGating):
+    │     TEXT / AUDIO / VISUAL_3D / CODE
+    │
+    ├─→ 健康監控: 系統狀態 + 生命體徵
+    │
+    └─→ 生命事件處理: 跨系統協調
+```
+
+### 6.2 AutonomousLifeCycle — 自主生命週期
+
+**檔案**: `core/life/autonomous_life_cycle.py` (724 行)
+**狀態**: ✅ 完整真實實現
+
+```
+AutonomousLifeCycle
+    │
+    ├─→ 5 種生命階段:
+    │     EMERGENCE (湧現) → EXPLORATION (探索) → CONSOLIDATION (鞏固)
+    │     → TRANSCENDENCE (超越) → COEXISTENCE (共存)
+    │
+    ├─→ 使用全部 5 大理論公式:
+    │     HSM → 探索觸發
+    │     CDM → 資源分配
+    │     LifeIntensity → 生命感評估
+    │     ActiveCognition → 建造活躍度
+    │     NonParadox → 矛盾共存
+    │
+    └─→ 生命決策: explore / coexistence / active_construction / reallocation
+```
+
+### 6.3 SelfGeneration — 自我視覺生成
+
+**檔案**: `core/life/self_generation.py` (748 行)
+**狀態**: ✅ 完整真實實現
+
+```
+SelfGeneration (自繪生成系統)
+    │
+    ├─→ 5 種頭像風格: ANIME / REALISTIC / CHIBI / PIXEL / SKETCH
+    ├─→ 4 種生成模式: FULL_GENERATION / VARIATION / EVOLUTION / MOOD_ADAPTATION
+    ├─→ 視覺屬性: hair_color, eye_color, skin_tone, ...
+    ├─→ 情緒適配: mood → 視覺屬性映射
+    └─→ 視覺進化追蹤: 外觀隨時間演變
+```
+
+### 6.4 CyberIdentity — 網路身份認知
+
+**檔案**: `core/life/cyber_identity.py` (699 行)
+**狀態**: ✅ 完整真實實現
+
+```
+CyberIdentity (電子人身份認知)
+    │
+    ├─→ 7 個身份面向:
+    │     SELF_AWARENESS / PERSONALITY / MEMORIES / RELATIONSHIPS
+    │     / PURPOSE / GROWTH / EMOTIONAL_DEPTH
+    │
+    ├─→ 自我模型 (SelfModel):
+    │     ├─ self_awareness_level (0-1)
+    │     ├─ emotional_capacity (0-1)
+    │     ├─ learning_ability (0-1)
+    │     └─ adaptability (0-1)
+    │
+    ├─→ 整合 LifeIntensity + ActiveCognition 公式
+    │
+    └─→ 個人敘事形成: 數位生命的自我意識
+```
+
+### 6.5 MetabolicHeartbeat — 代謝心跳
+
+**檔案**: `core/life/heartbeat.py` (266 行)
+**狀態**: ✅ 完整真實實現
+
+```
+MetabolicHeartbeat (代謝心跳驅動器)
+    │
+    ├─→ 硬體監控: CPU/電池 (psutil)
+    ├─→ 空間移動: 螢幕座標 + 速度 + 姿態
+    ├─→ 小腦整合: CerebellumEngine 執行姿態指令
+    ├─→ 環境觀察: OSBridgeAdapter
+    └─→ 生物狀態同步: BiologicalIntegrator
+```
+
+---
+
+## 七、HSP 通訊協議
+
+### 7.1 HSPConnector — 核心連接器
+
+**檔案**: `core/hsp/connector.py` (1105 行)
+**狀態**: ✅ 完整真實實現
+
+```
+HSPConnector (Hyper-Scale Protocol)
+    │
+    ├─→ MQTT pub/sub 通訊
+    ├─→ 訊息信封 (HSPMessageEnvelope) 創建
+    ├─→ ACK 系統
+    ├─→ 降級協議:
+    │     InMemory / FileBased / HTTP
+    ├─→ Circuit Breaker + 重試策略
+    └─→ 批次發送
+```
+
+### 7.2 安全與版本管理
+
+| 模組 | 檔案 | 行數 | 功能 |
+|------|------|------|------|
+| **HSPSecurityManager** | `core/hsp/security.py` | 244 | HMAC 認證 + Fernet 加密 + RSA 簽名 |
+| **HSPVersionManager** | `core/hsp/versioning.py` | 417 | 協議版本管理 + 跨版本訊息轉換 |
+| **HSPPerformanceOptimizer** | `core/hsp/performance_optimizer.py` | 393 | 訊息快取 + 壓縮 (zlib) + 批次發送 |
+| **MQTTSubscriptionManager** | `core/hsp/mqtt_subscription_manager.py` | 366 | MQTT 主題訂閱 + 通配符支援 |
+| **HSPTransport** | `core/hsp/transport.py` | 307 | 傳輸層 |
+| **HSPTypes** | `core/hsp/types.py` | 249 | 類型定義 |
+
+---
+
+## 八、AI 引擎
+
+### 8.1 回應合成 — Composer
+
+**檔案**: `ai/response/composer.py` (1260 行)
+**狀態**: ✅ 完整真實實現
+
+```
+Response Composer (回應片段組合)
+    │
+    ├─→ 6 種片段類型:
+    │     GREETING / QUESTION_RESPONSE / EMOTION_EXPRESSION
+    │     / TRANSITION / CLOSING / FILLER
+    │
+    ├─→ 模板片段化: 切分為可復用片段
+    ├─→ 片段重組: 根據上下文組合
+    ├─→ 平滑過渡: 確保自然流暢
+    │
+    └─→ 性能目標: 組合時間 < 2ms
+```
+
+### 8.2 神經自動選擇器 — NeuroAutoSelector
+
+**檔案**: `ai/response/neuro_auto_selector.py` (638 行)
+**狀態**: ✅ 完整真實實現
+
+```
+NeuroAutoSelector (自動 LLM 模式)
+    │
+    ├─→ 硬體能力評分
+    ├─→ 系統負載偵測
+    ├─→ 任務複雜度評估
+    ├─→ 8D 狀態矩陣校正
+    └─→ 後端 + 模型選擇
+```
+
+### 8.3 GARDEN 輕量推理引擎
+
+**檔案**: `ai/garden/garden_engine.py` (423 行)
+**狀態**: ✅ 完整真實實現
+
+```
+GARDEN-1G Engine (3 階段管線)
+    │
+    ├─→ Stage 1: VectorDictionary.encode(text) → concept keys
+    │     └─ 餘弦相似度匹配
+    │
+    ├─→ Stage 2: TensorSNNCore.forward(keys) → activated output
+    │     └─ LIF (Leaky Integrate-and-Fire) 多步激活
+    │
+    ├─→ Stage 3: Anchored decode → 人類可讀回應
+    │
+    ├─→ 激素調制: cortisol/serotonin 影響 SNN 閾值
+    ├─→ 持續學習: learn_from_interaction() + Hebbian 更新
+    └─→ 存儲: dictionary JSON + SNN .pt checkpoint
+```
+
+### 8.4 CodeInspector — 原生代碼檢查
+
+**檔案**: `ai/code_inspection/code_inspector.py` (807 行)
+**狀態**: ✅ 完整真實實現
+
+```
+CodeInspector (純演算法, 0 LLM 依賴)
+    │
+    ├─→ CodeInspector: AST 解析 + 問題識別
+    ├─→ PatternMatcher: 規則匹配常見問題
+    ├─→ KnowledgeGraph: 代碼結構關係圖
+    ├─→ CodeFixer: 模板化修復引擎
+    └─→ InspectorReport: 結構化報告
+
+嚴重性: CRITICAL / HIGH / MEDIUM / LOW / INFO
+分類: SYNTAX / TYPE / STYLE / SECURITY / PERFORMANCE
+```
+
+### 8.5 AIOps — 智能運維
+
+**檔案**: `ai/ops/intelligent_ops_manager.py` (958 行)
+**狀態**: ✅ 完整真實實現
+
+```
+IntelligentOpsManager
+    │
+    ├─→ AIOpsEngine: 核心運維引擎
+    ├─→ PredictiveMaintenanceEngine: 預測維護
+    ├─→ PerformanceOptimizer: 性能優化
+    ├─→ CapacityPlanner: 容量規劃
+    │
+    ├─→ Redis 支援: 指標存儲 (可選)
+    ├─→ NumPy 支援: 數值計算 (可選)
+    │
+    └─→ 功能:
+          ├─ 異常偵測
+          ├─ 預測分析
+          ├─ 容量規劃
+          └─ 性能優化
+```
+
+### 8.6 Level 5 ASI 系統
+
+**檔案**: `ai/level5_asi_system.py` (756 行)
+**狀態**: ✅ 完整真實實現
+
+```
+Level5ASISystem (Level 5 ASI 整合器)
+    │
+    ├─→ ReasoningSystem: 倫理推理 (5 個原則)
+    ├─→ EmotionSystem: 情緒理解 + 價值評估
+    ├─→ OntologySystem: 概念註冊
+    ├─→ AlignmentManager: 約束匹配
+    ├─→ DecisionTheorySystem: 期望效用
+    ├─→ AdversarialGenerationSystem: 對抗提示
+    └─→ ASIAutonomousAlignment: 自主檢查
+```
+
+---
+
+## 九、對齊與安全性
+
+**目錄**: `ai/alignment/`
+
+| 模組 | 檔案 | 行數 | 功能 |
+|------|------|------|------|
+| **AlignmentManager** | `alignment_manager.py` | 49 | 核心管理器: 協調三大支柱 |
+| **ReasoningSystem** | `reasoning_system.py` | 181 | 倫理推理: 5 個原則 (不傷害、行善、自主、公正、忠誠) |
+| **EmotionSystem** | `emotion_system.py` | 299 | 情緒理解 + 價值評估 + 同理心 |
+| **DecisionTheorySystem** | `decision_theory_system.py` | 53 | 不確定性下的決策 |
+| **ASIAutonomousAlignment** | `asi_autonomous_alignment.py` | ~200 | ASI 自主對齊 |
+| **AdversarialGenerationSystem** | `adversarial_generation_system.py` | ~200 | 對抗樣本生成 |
+
+**統一控制中心**: `ai/integration/unified_control_center.py` (525 行)
+- 協調所有 Level 5 ASI 組件
+- 任務分發 + 環境模擬 + 評估 + 自適應學習
+- 整合: AlphaDeepModel, EnvironmentSimulator, TaskEvaluator, LIS, HAM, Economy
+
+---
+
+## 十、其他核心系統
+
+### 10.1 即時監控 — RealTimeMonitor
+
+**檔案**: `core/real_time_monitor.py` (815 行)
+**狀態**: ✅ 完整真實實現
+
+```
+RealTimeMonitor
+    ├─→ 16ms 滑鼠追蹤
+    ├─→ 檔案系統變更偵測
+    ├─→ 時間/排程監控
+    ├─→ 用戶活動模式識別
+    └─→ 多執行緒架構
+```
+
+### 10.2 事件循環 — EventLoopSystem
+
+**檔案**: `core/event_loop_system.py` (623 行)
+**狀態**: ✅ 完整真實實現
+
+```
+EventLoopSystem (非同步事件處理)
+    ├─→ 優先級佇列
+    ├─→ 事件過濾 + 聚合
+    ├─→ 去抖動 + 節流
+    └─→ 即時延遲優化
+```
+
+### 10.3 狀態持久化 — StatePersistence
+
+**檔案**: `core/engine/state_persistence.py` (415 行)
+**狀態**: ✅ 完整真實實現
+
+```
+StatePersistence (StateMatrix4D 跨 Session 持久化)
+    ├─→ 序列化/反序列化
+    ├─→ 跨 Session 恢復
+    └─→ 狀態快照
+```
+
+### 10.4 因果追蹤 — CausalTracer
+
+**檔案**: `core/tracing/causal_tracer.py` (264 行)
+**狀態**: ✅ 完整真實實現
+
+```
+CausalTracer
+    ├─→ 執行流因果追蹤
+    ├─→ 因果鏈創建與存儲
+    └─→ 跨層追蹤
+```
+
+### 10.5 硬體加速 — GPU Accelerator
+
+**檔案**: `core/hardware/gpu_accelerator.py` (299 行)
+**狀態**: ✅ 完整真實實現
+
+```
+GPUAccelerator
+    ├─→ GPU 偵測
+    ├─→ 資源調度
+    └─→ 模型部署
+```
+
+### 10.6 插件系統 — PluginManager
+
+**檔案**: `core/plugin/plugin_manager.py` (124 行)
+**狀態**: ✅ 完整真實實現
+
+```
+PluginManager
+    ├─→ 插件生命週期管理
+    ├─→ Hook 整合
+    └─→ 插件註冊/卸載
+```
+
+### 10.7 動作執行 — ActionExecutor + Bridge
+
+| 模組 | 檔案 | 行數 | 功能 |
+|------|------|------|------|
+| **ActionExecutor** | `core/engine/action_executor.py` | 1028 | 動作佇列 + 優先級 + 驗證 + 安全檢查 |
+| **ActionExecutionBridge** | `core/action_execution_bridge.py` | 1167 | 自主決策→實際執行的橋接 |
+
+### 10.8 其他 AI 系統
+
+| 模組 | 檔案 | 行數 | 功能 |
+|------|------|------|------|
+| **AgentManager** | `ai/agents/agent_manager.py` | 720 | 15 個專業子代理管理 |
+| **ExecutionManager** | `ai/execution/execution_manager.py` | 533 | 統一執行監控 |
+| **ProjectCoordinator** | `ai/dialogue/project_coordinator.py` | 403 | 複雜任務規劃 (DAG) |
+| **DocumentBuilder** | `ai/dialogue/document_builder.py` | 356 | 長文檔生成 |
+| **AlphaDeepModel** | `ai/compression/alpha_deep_model.py` | 336 | 多演算法壓縮 |
+| **UnifiedSymbolicSpace** | `ai/symbolic_space/unified_symbolic_space.py` | 263 | 統一符號空間 |
+| **PersonalityManager** | `ai/personality/personality_manager.py` | 162 | 個性管理 |
+| **LearningManager** | `ai/learning/learning_manager.py` | 171 | 學習協調 |
+| **EnsembleAI** | `ai/ensemble.py` | 345 | 集成 AI 系統 |
+| **CrisisSystem** | `ai/crisis/crisis_system.py` | 235 | 危機/緊急系統 |
+| **DemoLearningManager** | `ai/learning/demo_learning_manager.py` | 620 | 學習管理器 |
+| **TemplateMatcher** | `ai/response/template_matcher.py` | 400 | 回應模板匹配 |
+| **DeviationTracker** | `ai/response/deviation_tracker.py` | 359 | 偏差追蹤 |
+
+### 10.9 LLM 路由引擎 — AngelaLLMService
+
+**檔案**: `services/llm/router.py` (1400 行)
+**狀態**: ✅ 完整真實實現
+
+```
+AngelaLLMService (核心 LLM 路由)
+    │
+    ├─→ 多後端支援:
+    │     Ollama / OpenAI / Anthropic / Google / llama.cpp / ED3N / GARDEN
+    │
+    ├─→ QueryClassifier (16 種意圖分類)
+    ├─→ ModelBus (handler-first 路由)
+    ├─→ 健康檢查 + 自動切換
+    ├─→ 降級策略: ModelBus → ED3N/GARDEN → NeuroBlender → 模板 → 錯誤字串
+    │
+    └─→ PromptBuilder 整合:
+          bio_state + 7D axes + θ + 公式指標 + 自主決策 + 圖片分析
+```
+
+### 10.10 Context 管理系統
+
+**目錄**: `ai/context/` — 11 個檔案, ~2,919 行
+**狀態**: ✅ 完整真實實現
+
+| 模組 | 檔案 | 行數 | 功能 |
+|------|------|------|------|
+| **ModelContext** | `model_context.py` | 343 | LLM 模型上下文管理 |
+| **DialogueContext** | `dialogue_context.py` | 345 | 對話上下文追蹤 |
+| **MemoryContext** | `memory_context.py` | 267 | 記憶上下文整合 |
+| **ToolContext** | `tool_context.py` | 241 | 工具上下文管理 |
+| **ContextManager** | `manager_fixed.py` | 307 | 統一上下文管理器 |
+| **ContextStorage** | `storage/database.py` | 217 | 持久化存儲 |
+| **HAMIntegration** | `integration_with_ham.py` | 189 | HAM 整合 |
+
+### 10.11 其他核心子系統
+
+| 子系統 | 檔案 | 行數 | 功能 |
+|--------|------|------|------|
+| **CloudSync** | `core/sync/cloud_sync.py` | 468 | 跨裝置記憶同步 + 衝突解決 |
+| **ConnectionSession** | `services/connection_session.py` | 457 | WebSocket Session 生命週期 |
+| **ExecutionMonitor** | `core/managers/execution_monitor.py` | 684 | 執行監控 + 終端機回應偵測 |
+| **AnchorLearning** | `core/engine/anchor_learning.py` | 420 | 語義錨點學習 |
+| **PetManager** | `pet/pet_manager.py` | 478 | 寵物管理系統 |
+| **AuditLogger** | `security/audit_logger.py` | 455 | 安全審計日誌 |
+| **StateHashManager** | `core/state/state_hash_manager.py` | 329 | 狀態雜湊管理 |
+| **CardStore** | `core/card/card_store.py` | 214 | 卡片存儲系統 |
+| **ModuleManager** | `core/system/module_manager/__init__.py` | 192 | 模組生命週期管理 |
+| **SecurityEncryption** | `core/security/encryption.py` | 208 | 加密基礎設施 |
+| **KeyValidator** | `core/security/key_validator.py` | 279 | 金鑰驗證 |
+| **BodyAdapter** | `core/metamorphosis/body_adapter.py` | 364 | 軀體適應 ( metamorphosis) |
+| **SoulCore** | `core/metamorphosis/soul_core.py` | 318 | 靈魂核心 |
+| **CausalChain** | `core/tracing/causal_chain.py` | 173 | 因果鏈數據結構 |
+| **HardwareDetector** | `shared/utils/hardware_detector.py` | 402 | 硬體偵測 |
+| **GoogleDriveService** | `integrations/google_drive_service.py` | 306 | Google Drive 整合 |
+| **AtlassianBridge** | `integrations/atlassian_bridge.py` | 288 | Atlassian Jira/Confluence |
+| **EconomyManager** | `economy/economy_manager.py` | 204 | 經濟系統 |
+| **FormulaEngine** | `ai/formula_engine/__init__.py` | 309 | 公式引擎 |
+| **ED3N 內部** | `ai/ed3n/*.py` (16 files) | ~4328 | ED3N 完整子系統 |
+| **GARDEN 內部** | `ai/garden/*.py` (4 files) | ~1842 | GARDEN 完整子系統 |
+| **HAM 內部** | `ai/memory/ham_memory/*.py` (5 files) | ~1301 | HAM 完整子系統 |
+
+---
+
+## 十一、完整管線流程
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -626,30 +1116,59 @@ ED3NEngine
 
 ---
 
-## 七、系統成熟度總覽
+## 十二、系統成熟度總覽
+
+### 核心系統
 
 | 系統 | 檔案 | 行數 | 狀態 | 複雜度 |
 |------|------|------|------|--------|
 | StateMatrix4D | `core/engine/state_matrix.py` | 1439 | ✅ 真實 | 極高 |
+| Composer | `ai/response/composer.py` | 1260 | ✅ 真實 | 高 |
+| ActionExecutionBridge | `core/action_execution_bridge.py` | 1167 | ✅ 真實 | 高 |
+| EmotionalBlending | `core/bio/emotional_blending.py` | 953 | ✅ 真實 | 高 |
+| HSPConnector | `core/hsp/connector.py` | 1105 | ✅ 真實 | 高 |
+| ActionExecutor | `core/engine/action_executor.py` | 1028 | ✅ 真實 | 高 |
+| IntelligentOpsManager | `ai/ops/intelligent_ops_manager.py` | 958 | ✅ 真實 | 高 |
 | DesktopInteraction | `core/engine/desktop_interaction.py` | 1178 | ✅ 真實 | 高 |
-| LogicUnit | `ai/memory/lu_logic/logic_unit.py` | 496 | ✅ 真實 | 中 |
+| RealTimeMonitor | `core/real_time_monitor.py` | 815 | ✅ 真實 | 高 |
+| CodeInspector | `ai/code_inspection/code_inspector.py` | 807 | ✅ 真實 | 高 |
+| DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 869 | ✅ 真實 | 高 |
 | BiologicalIntegrator | `core/bio/biological_integrator.py` | 852 | ✅ 真實 | 高 |
-| VisionService | `services/vision_service.py` | 706 | ⚠️ 架構真/方法模擬 | 中 |
+| MathRippleEngine | `ai/memory/math_ripple_engine.py` | 892 | ✅ 真實 | 高 |
+| NeuroAutoSelector | `ai/response/neuro_auto_selector.py` | 638 | ✅ 真實 | 中 |
+| NeuroplasticityCore | `core/bio/neuroplasticity_core.py` | 506 | ✅ 真實 | 高 |
+| AgentManager | `ai/agents/agent_manager.py` | 720 | ✅ 真實 | 中 |
+| AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 724 | ✅ 真實 | 高 |
+| SelfGeneration | `core/life/self_generation.py` | 748 | ✅ 真實 | 高 |
+| CyberIdentity | `core/life/cyber_identity.py` | 699 | ✅ 真實 | 高 |
+| Level5ASISystem | `ai/level5_asi_system.py` | 756 | ✅ 真實 | 高 |
+| EventLoopSystem | `core/event_loop_system.py` | 623 | ✅ 真實 | 中 |
 | 5 個理論公式 | `core/*.py` | ~2419 | ✅ 真實 | 高 |
 | 6 個生命週期模組 | `ai/lifecycle/*.py` | ~2800 | ✅ 真實 | 高 |
 | BrowserController | `core/engine/browser_controller.py` | 635 | ✅ 真實 | 中 |
 | AudioSystem | `core/engine/audio_system.py` | 630 | ⚠️ 狀態機真/音訊模擬 | 中 |
 | ThetaRouter | `core/engine/theta_router.py` | 441 | ✅ 真實 | 中 |
 | UserMonitor | `ai/lifecycle/user_monitor.py` | 407 | ✅ 真實 | 中 |
+| StatePersistence | `core/engine/state_persistence.py` | 415 | ✅ 真實 | 中 |
+| HSP Security | `core/hsp/security.py` | 244 | ✅ 真實 | 中 |
+| HSP Versioning | `core/hsp/versioning.py` | 417 | ✅ 真實 | 中 |
+| HSP Performance | `core/hsp/performance_optimizer.py` | 393 | ✅ 真實 | 中 |
+| MQTTSubscription | `core/hsp/mqtt_subscription_manager.py` | 366 | ✅ 真實 | 中 |
 | EmotionAnalyzer | `services/llm/emotion_analyzer.py` | 281 | ✅ 真實(簡單) | 低 |
 | RealEdgeTTS | `core/art/real_edge_tts.py` | 268 | ✅ 真實 | 中 |
+| CausalTracer | `core/tracing/causal_tracer.py` | 264 | ✅ 真實 | 中 |
+| LogicUnit | `ai/memory/lu_logic/logic_unit.py` | 496 | ✅ 真實 | 中 |
 | HAMMemoryManager | `ai/memory/ham_memory/ham_manager.py` | 173 | ✅ 真實(薄) | 低 |
 | Live2DIntegration | `core/engine/live2d_integration.py` | 116 | ✅ 真實 | 低 |
+| GPUAccelerator | `core/hardware/gpu_accelerator.py` | 299 | ✅ 真實 | 中 |
+| MetabolicHeartbeat | `core/life/heartbeat.py` | 266 | ✅ 真實 | 中 |
+| 14 個 bio 子系統 | `core/bio/*.py` | ~4600 | ✅ 真實 | 高 |
+| VisionService | `services/vision_service.py` | 706 | ⚠️ 架構真/方法模擬 | 中 |
 | AudioService | `services/audio_service.py` | 41 | ❌ Stub | - |
 | TactileService | `services/tactile_service.py` | 66 | ❌ Stub | - |
 | ImageGeneration | `ai/agents/specialized/image_generation_agent.py` | 107 | ❌ Stub | - |
 
-**總結**: 核心認知系統 ~10,000+ 行全部是真實實現。主要缺口在感知層（聽覺/觸覺 stub）和部分執行層（繪圖 stub、語音未串接）。
+**總結**: 核心認知系統 ~31,000+ 行全部是真實實現。主要缺口在感知層（聽覺/觸覺 stub）和部分執行層（繪圖 stub、語音未串接）。
 
 ---
 
