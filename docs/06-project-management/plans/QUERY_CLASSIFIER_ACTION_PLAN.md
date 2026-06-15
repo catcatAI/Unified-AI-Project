@@ -226,15 +226,42 @@ def classify(self, text: str) -> QueryResult:
 
             matches.append((qt, conf, act, atype))
 
-    # Step 3: ED3N 輔助分類
+    # Step 3: ED3N 輔助分類（可選，失敗不影響）
     try:
-        ed3n_type, ed3n_conf = self._ed3n_classify(text)
-        if ed3n_conf > 0.5:
-            atype = self._infer_action_type(ed3n_type, text)
-            act = self._calc_actionability(ed3n_type, text, ed3n_conf)
-            matches.append((ed3n_type, ed3n_conf, act, atype))
+        if hasattr(self, '_ed3n') and self._ed3n:
+            ed3n_type, ed3n_conf = self._ed3n_classify(text)
+            if ed3n_conf > 0.5:
+                atype = self._infer_action_type(ed3n_type, text)
+                act = self._calc_actionability(ed3n_type, text, ed3n_conf)
+                matches.append((ed3n_type, ed3n_conf, act, atype))
     except Exception:
         pass  # ED3N 不可用時忽略
+
+    # _ed3n_classify 輔助方法（如果 ED3N 可用）
+    def _ed3n_classify(self, text: str):
+        """ED3N 輔助分類。返回 (QueryType, confidence)"""
+        # 使用 ED3N 的 encode_soft 做模糊匹配
+        keys = text.lower().split()
+        if len(keys) < 2:
+            return QueryType.UNKNOWN, 0.0
+        # 匹配 ED3N dictionary 中的 key
+        # 如果有 ≥2 個 key 匹配，計算置信度
+        # 否則返回 UNKNOWN 0.0
+        try:
+            encoded = self._ed3n.dictionary.encode_soft(keys)
+            if hasattr(encoded, 'intent') and encoded.confidence > 0.5:
+                intent_map = {
+                    "file": QueryType.FILE,
+                    "search": QueryType.SEARCH,
+                    "code": QueryType.CODE,
+                    "execute": QueryType.EXECUTE,
+                    "task": QueryType.TASK,
+                }
+                qt = intent_map.get(encoded.intent, QueryType.UNKNOWN)
+                return qt, min(0.85, 0.5 + len(keys) * 0.1)
+        except Exception:
+            pass
+        return QueryType.UNKNOWN, 0.0
 
     # Step 4: 排序（先比 confidence，再比 actionability）
     matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
