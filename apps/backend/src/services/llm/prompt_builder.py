@@ -384,6 +384,33 @@ def construct_angela_prompt(
             retrieved_block += f"- [{role}] {content} (相關度: {score})\n"
         messages.append({"role": "user", "content": retrieved_block})
 
+    # ========== Dialogue Context (Cross-turn) ==========
+    dialogue_ctx = context.get("dialogue_context")
+    if dialogue_ctx:
+        summary = dialogue_ctx.get("summary", {})
+        key_points = summary.get("key_points", [])
+        if key_points:
+            points_str = "\n".join(f"- {p}" for p in key_points[:5])
+            messages.append({"role": "system", "content": f"[對話摘要]\n{points_str}"})
+        recent_msgs = dialogue_ctx.get("messages", [])
+        if recent_msgs:
+            ctx_block = "\n[近期對話]\n"
+            for m in recent_msgs[-5:]:
+                role = m.get("role", "user")
+                content = m.get("content", "")[:150]
+                ctx_block += f"- [{role}] {content}\n"
+            messages.append({"role": "user", "content": ctx_block})
+
+    # ========== Recent Memories ==========
+    recent_memories = context.get("recent_memories")
+    if recent_memories:
+        mem_block = "\n[相關記憶]\n"
+        for mem in recent_memories[:3]:
+            content = mem.get("content", "")[:150]
+            mem_type = mem.get("memory_type", "unknown")
+            mem_block += f"- [{mem_type}] {content}\n"
+        messages.append({"role": "user", "content": mem_block})
+
     # ========== ED3N/GARDEN Draft Response (Refinement) ==========
     draft_response = context.get("draft_response")
     if draft_response:

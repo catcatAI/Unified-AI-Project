@@ -294,7 +294,27 @@ class GARDENEngine:
         if not response:
             return "抱歉，我暂时无法理解你的意思。"
 
-        return response
+        # Stage 6: Cycling — iterative refinement if response is weak
+        MAX_CYCLES = 3
+        MIN_RESPONSE_LEN = 5
+        current_output = response
+
+        for cycle in range(MAX_CYCLES):
+            if len(current_output) >= MIN_RESPONSE_LEN:
+                break
+
+            # Re-run with previous output as context
+            cycle_context = dict(context) if context else {}
+            cycle_context["previous_output"] = current_output
+            cycle_context["cycle"] = cycle + 1
+
+            cycle_network = self.snn.forward(input_keys, context=cycle_context)
+            cycle_response = _anchored_decode(cycle_network, input_keys, self.dictionary)
+
+            if cycle_response and len(cycle_response) > len(current_output):
+                current_output = cycle_response
+
+        return current_output
 
     # ------------------------------------------------------------------
     # Multi-step reasoning (Phase 4.3)

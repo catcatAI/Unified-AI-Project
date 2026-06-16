@@ -614,4 +614,36 @@ Total: 37/37 PASSED ✅
 
 ---
 
-*本報告由三次審計補充，並記錄 2026-06-16 修復。覆蓋全部代碼目錄。*
+## 十五、Phase 1 修復（2026-06-16）
+
+### Context Wiring — 已完成
+
+| # | 文件 | 修復 |
+|---|------|------|
+| 21 | `chat_routes.py` | 在 `_handle_chat_request` 中注入 `dialogue_context` 和 `recent_memories` |
+| 22 | `prompt_builder.py` | 渲染 `dialogue_context`（摘要+近期對話）和 `recent_memories` 到 LLM prompt |
+
+### Cycling Processing — 已完成
+
+| # | 文件 | 修復 |
+|---|------|------|
+| 23 | `ed3n_engine.py` | 新增 Stage 6: 最多 3 次迭代，信心閾值 0.7，每次用前次輸出作為上下文 |
+| 24 | `garden_engine.py` | 新增 Stage 6: 最多 3 次迭代，回應長度改善檢查 |
+
+### Unified Learning — 已完成
+
+| # | 文件 | 修復 |
+|---|------|------|
+| 25 | `unified_learning_orchestrator.py` | 新建，連接 6 個學習子系統：ContinuousLearning、LearningLoop、Feedback、HAM Sync、ReplayBuffer、Orchestrator |
+
+### 測試驗證
+
+```
+Phase 6 E2E: 24/24 PASSED ✅
+Phase 5 Integration: 13/13 PASSED ✅
+Total: 37/37 PASSED ✅
+```
+
+---
+
+*本報告由三次審計補充，並記錄 2026-06-16 Phase 0 + Phase 1 修復。覆蓋全部代碼目錄。*

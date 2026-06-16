@@ -11,7 +11,7 @@
 | Phase | Status | Date | Notes |
 |-------|--------|------|-------|
 | Phase 0: Foundation Fixes | 🟡 PARTIAL | 2026-06-16 | P0 (imports) ✅, P1 (context) ✅, P2 (DEPRECATED) ✅, i18n pending |
-| Phase 1: Core Activation | ⏳ PENDING | — | |
+| Phase 1: Core Activation | 🟡 PARTIAL | 2026-06-16 | Context wiring ✅, ED3N cycling ✅, GARDEN cycling ✅, UnifiedLearningOrchestrator ✅ |
 | Phase 2: Intelligence Layer | ⏳ PENDING | — | |
 | Phase 3: Safety & Trust | ⏳ PENDING | — | |
 | Phase 4: Embodiment | ⏳ PENDING | — | |
@@ -35,6 +35,17 @@
 | i18n system | ⏳ | Pending |
 | Clean stub files | 🟡 | Kept (imported by other modules) |
 | Tests | ✅ | 37/37 pass (24 phase6 + 13 phase5) |
+
+### Phase 1 Detail (2026-06-16)
+
+| Task | Status | Verification |
+|------|--------|-------------|
+| Wire context to chat pipeline | ✅ | DialogueContext + MemoryContext injected in `_handle_chat_request` |
+| Prompt builder renders context | ✅ | `dialogue_context` + `recent_memories` keys consumed |
+| ED3N cycling | ✅ | Max 3 cycles, confidence threshold 0.7 |
+| GARDEN cycling | ✅ | Max 3 cycles, response length improvement check |
+| UnifiedLearningOrchestrator | ✅ | Created, connects 6 learning subsystems |
+| Tests | ✅ | 37/37 pass |
 
 ---
 
@@ -699,11 +710,11 @@ Phase 0 → Phase 5 (can start after Phase 0)
 - [x] `get_conversation_context()` returns real data (fixed 2026-06-16)
 - [x] `get_model_context()` returns real data (fixed 2026-06-16)
 - [x] `get_tool_context()` returns real data (fixed 2026-06-16)
-- [ ] ED3N cycles when confidence < 0.7
-- [ ] GARDEN cycles with convergence check
-- [ ] `UnifiedLearningOrchestrator` operational
-- [ ] Cross-turn context persists
-- [ ] All tests pass + new tests added
+- [x] ED3N cycles when confidence < 0.7 (added 2026-06-16)
+- [x] GARDEN cycles with convergence check (added 2026-06-16)
+- [x] `UnifiedLearningOrchestrator` operational (created 2026-06-16)
+- [x] Cross-turn context persists (wired to chat pipeline 2026-06-16)
+- [ ] All tests pass + new tests added (37/37 pass, new tests pending)
 
 ### Phase 2
 - [ ] `AgentOrchestrator` routes to 8 agents

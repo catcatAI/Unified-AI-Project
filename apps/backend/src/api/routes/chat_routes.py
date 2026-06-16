@@ -248,6 +248,27 @@ async def _handle_chat_request(
                 pass
         context["retrieved_context"] = retrieved_ctx
 
+        # === Context Subsystem Injection ===
+        # Wire dialogue, model, tool, and memory context into the pipeline
+        try:
+            from ai.context.dialogue_context import DialogueContextManager
+            _dialogue_ctx = DialogueContextManager()
+            if session_id:
+                conv_ctx = _dialogue_ctx.get_conversation_context(session_id)
+                if conv_ctx:
+                    context["dialogue_context"] = conv_ctx
+        except Exception:
+            pass
+
+        try:
+            from ai.context.memory_context import MemoryContextManager
+            _memory_ctx = MemoryContextManager()
+            recent_memories = _memory_ctx.get_memories_by_type("short_term", limit=5)
+            if recent_memories:
+                context["recent_memories"] = recent_memories
+        except Exception:
+            pass
+
         # === Execution Gate Flow (v2) ===
         # Handle pending confirmation from previous turn
         pending = context.get("pending_action")

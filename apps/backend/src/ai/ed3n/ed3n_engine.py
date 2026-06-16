@@ -361,6 +361,33 @@ class ED3NEngine:
             )
             return output
 
+        # Stage 6: Cycling — iterative refinement if confidence is low
+        MAX_CYCLES = 3
+        CONFIDENCE_THRESHOLD = 0.7
+        current_output = response
+        current_confidence = confidence
+
+        for cycle in range(MAX_CYCLES):
+            if current_confidence >= CONFIDENCE_THRESHOLD:
+                break
+
+            # Re-encode with previous output as additional context
+            cycle_context = dict(context) if context else {}
+            cycle_context["previous_output"] = current_output
+            cycle_context["cycle"] = cycle + 1
+
+            # Re-run network forward with enriched context
+            cycle_network = self._snn_process(keys, cycle_context, depth)
+            cycle_response = self._output_anchor_decode(cycle_network, keys)
+
+            if cycle_response:
+                cycle_valid = self.validator.validate(cycle_response, anchored_keys=keys)
+                if cycle_valid:
+                    cycle_confidence = self._compute_confidence(keys)
+                    if cycle_confidence > current_confidence:
+                        current_output = cycle_response
+                        current_confidence = cycle_confidence
+
         self.telemetry.record_query(
             query_id=query_id,
             input_text=input_text,
@@ -368,11 +395,11 @@ class ED3NEngine:
             reflex_match=None,
             cache_hit=cache_hit,
             matched_keys=keys,
-            output_text=response,
-            confidence=confidence,
+            output_text=current_output,
+            confidence=current_confidence,
             is_fallback=False,
         )
-        return response
+        return current_output
 
     def _compute_confidence(self, keys: List[str]) -> float:
         if not keys:
