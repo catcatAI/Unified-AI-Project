@@ -5,6 +5,7 @@
 # 管理 Angela 的對話邏輯、意圖識別與回應合成。
 # =============================================================================
 
+import asyncio
 import logging
 import os
 from typing import Dict, Any, Optional
@@ -21,6 +22,9 @@ class ChatService:
         self._continuous_learning = None
         self._garden_engine = None
         self._garden_learn_count = 0
+        self._ed3n_learning_integration = None
+        self._ham_sync_task: Optional[asyncio.Task] = None
+        self._ham_sync_interval: int = 3600
         self._cl_state_dir = os.path.join(
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
@@ -31,6 +35,24 @@ class ChatService:
         if self._llm_service and hasattr(self._llm_service, 'model_bus'):
             return self._llm_service.model_bus
         return None
+
+    async def _ham_sync_loop(self) -> None:
+        """Background task: sync ED3N dictionary to HAM memory periodically."""
+        while True:
+            try:
+                await asyncio.sleep(self._ham_sync_interval)
+                if self._ed3n_learning_integration:
+                    result = self._ed3n_learning_integration.synchronize_knowledge()
+                    synced = result.get("synced", 0)
+                    errors = result.get("errors", [])
+                    if synced > 0:
+                        logger.info("HAM sync: %d ED3N entries synchronized", synced)
+                    if errors:
+                        logger.warning("HAM sync errors: %s", errors[:3])
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.debug("HAM sync loop error: %s", e)
 
     async def initialize(self) -> None:
         if self._initialized:
@@ -62,13 +84,24 @@ class ChatService:
         # Initialize GARDEN engine for continuous learning (Phase 4.5)
         try:
             from ai.garden.garden_engine import GARDENEngine
-            self._garden_engine = GARDENEngine()
+            self._garden_engine = GARDENEngine(compatibility_mode=True)
             self._garden_engine.load_presets()
             logger.info("GARDEN engine initialized for continuous learning")
         except Exception as e:
             logger.warning("GARDEN engine init skipped: %s", e)
+        # Initialize ED3N learning integration for HAM sync (Phase 5.2)
+        try:
+            from ai.ed3n.learning_integration import ED3NLearningIntegration
+            cl_engine = self._continuous_learning.engine if self._continuous_learning else None
+            self._ed3n_learning_integration = ED3NLearningIntegration(engine=cl_engine)
+            logger.info("ED3N learning integration initialized")
+        except Exception as e:
+            logger.warning("ED3N learning integration init skipped: %s", e)
         self._initialized = True
         logger.info("ChatService initialized")
+        # Start periodic HAM sync background task (Phase 5.2)
+        if self._ed3n_learning_integration:
+            self._ham_sync_task = asyncio.create_task(self._ham_sync_loop())
 
     async def generate_response(self, user_message: str, user_name: str = "", context: dict = None):
         """Generate Angela's response to a user message."""
@@ -148,6 +181,20 @@ class ChatService:
 
     async def shutdown(self) -> None:
         self._initialized = False
+        # Stop HAM sync background task (Phase 5.2)
+        if self._ham_sync_task:
+            self._ham_sync_task.cancel()
+            try:
+                await self._ham_sync_task
+            except asyncio.CancelledError:
+                pass
+        # Final HAM sync on shutdown
+        if self._ed3n_learning_integration:
+            try:
+                result = self._ed3n_learning_integration.synchronize_knowledge()
+                logger.info("Final HAM sync on shutdown: %d entries", result.get("synced", 0))
+            except Exception as e:
+                logger.debug("Final HAM sync failed: %s", e)
         if self._continuous_learning:
             report = self._continuous_learning.get_learning_report()
             logger.info("Continuous learning final report:\n%s", report)

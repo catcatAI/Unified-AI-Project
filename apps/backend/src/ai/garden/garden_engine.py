@@ -195,7 +195,6 @@ class GARDENEngine:
         # Also load from config JSON files
         config_dir = os.path.join(os.path.dirname(__file__), "config")
         if os.path.isdir(config_dir):
-            import json
             loaded_from_config = 0
             for fname in sorted(os.listdir(config_dir)):
                 if not fname.endswith(".json"):

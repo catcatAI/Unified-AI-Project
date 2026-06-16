@@ -6,14 +6,11 @@
 
 # Angela Matrix: [L2:MEM] [L4:CTX] Memory context subsystem
 
+import json
 import logging
-
-# (removed incomplete import: from tests.tools.test_tool_dispatcher_logging import)
+import os
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
-
-# (removed incomplete import: from .manager import)
-# (removed incomplete import: from .storage.base import)
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +37,10 @@ class Memory:
 class MemoryContextManager:
     """记忆上下文管理器"""
 
-    def __init__(self, context_manager) -> None:
+    def __init__(self, context_manager=None, session_dir: str = "sessions") -> None:
         self.context_manager = context_manager
         self.memories: Dict[str, Memory] = {}
+        self._session_dir = session_dir
 
     def create_memory(
         self,
@@ -265,3 +263,108 @@ class MemoryContextManager:
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to transfer memory {source_memory_id}: {e}", exc_info=True)
             return None
+
+    def save_session(self, session_id: str) -> str:
+        """Save session memories to disk for cross-session persistence (Phase 5.4)."""
+        try:
+            os.makedirs(self._session_dir, exist_ok=True)
+            memories_data = {}
+            for mem_id, memory in self.memories.items():
+                memories_data[mem_id] = {
+                    "content": memory.content,
+                    "memory_type": memory.memory_type,
+                    "created_at": memory.created_at.isoformat(),
+                    "last_accessed": memory.last_accessed.isoformat(),
+                    "access_count": memory.access_count,
+                    "embedding": memory.embedding,
+                    "metadata": memory.metadata,
+                }
+            session_data = {
+                "session_id": session_id,
+                "saved_at": datetime.now().isoformat(),
+                "memory_count": len(memories_data),
+                "memories": memories_data,
+            }
+            path = os.path.join(self._session_dir, f"{session_id}.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(session_data, f, ensure_ascii=False, indent=2)
+            logger.info("Session %s saved: %d memories to %s", session_id, len(memories_data), path)
+            return path
+        except Exception as e:
+            logger.error("Failed to save session %s: %s", session_id, e, exc_info=True)
+            return ""
+
+    def load_session(self, session_id: str) -> bool:
+        """Load session memories from disk (Phase 5.4)."""
+        try:
+            path = os.path.join(self._session_dir, f"{session_id}.json")
+            if not os.path.exists(path):
+                logger.debug("Session file not found: %s", path)
+                return False
+            with open(path, "r", encoding="utf-8") as f:
+                session_data = json.load(f)
+            memories_data = session_data.get("memories", {})
+            loaded_count = 0
+            for mem_id, mem_dict in memories_data.items():
+                memory = Memory(
+                    content=mem_dict["content"],
+                    memory_type=mem_dict.get("memory_type", "short_term"),
+                )
+                memory.memory_id = mem_id
+                try:
+                    memory.created_at = datetime.fromisoformat(mem_dict["created_at"])
+                    memory.last_accessed = datetime.fromisoformat(mem_dict["last_accessed"])
+                except (KeyError, ValueError):
+                    pass
+                memory.access_count = mem_dict.get("access_count", 0)
+                memory.embedding = mem_dict.get("embedding")
+                memory.metadata = mem_dict.get("metadata", {})
+                self.memories[mem_id] = memory
+                loaded_count += 1
+            logger.info("Session %s loaded: %d memories", session_id, loaded_count)
+            return True
+        except Exception as e:
+            logger.error("Failed to load session %s: %s", session_id, e, exc_info=True)
+            return False
+
+    def get_memory_count(self) -> int:
+        """Return total number of stored memories."""
+        return len(self.memories)
+
+    def search_by_embedding(self, query_embedding: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+        """Search memories by embedding similarity (Phase 5.4)."""
+        try:
+            if not query_embedding:
+                return []
+            scored = []
+            for memory in self.memories.values():
+                if memory.embedding is None:
+                    continue
+                similarity = self._cosine_similarity(query_embedding, memory.embedding)
+                scored.append((similarity, memory))
+            scored.sort(key=lambda x: x[0], reverse=True)
+            results = []
+            for sim, memory in scored[:top_k]:
+                results.append({
+                    "memory_id": memory.memory_id,
+                    "content": memory.content,
+                    "memory_type": memory.memory_type,
+                    "similarity": sim,
+                    "access_count": memory.access_count,
+                })
+            return results
+        except Exception as e:
+            logger.debug("Embedding search failed: %s", e)
+            return []
+
+    @staticmethod
+    def _cosine_similarity(a: List[float], b: List[float]) -> float:
+        """Compute cosine similarity between two vectors."""
+        if len(a) != len(b) or not a:
+            return 0.0
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = sum(x * x for x in a) ** 0.5
+        norm_b = sum(x * x for x in b) ** 0.5
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        return dot / (norm_a * norm_b)

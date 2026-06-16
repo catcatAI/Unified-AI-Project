@@ -18,7 +18,7 @@ class TestVectorDictionaryInit:
     """Tests for VectorDictionary construction and basic properties."""
 
     def test_init_defaults(self):
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         assert d.top_k == 8
         assert d.similarity_threshold == 0.30
         assert d.growth_threshold == 0.6
@@ -31,12 +31,12 @@ class TestVectorDictionaryInit:
         assert d.similarity_threshold == 0.5
 
     def test_encoder_created(self):
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         assert d._encoder is not None
 
     def test_encoder_is_fallback(self):
         """Without sentence-transformers, encoder should be ChromaDB, TF-IDF, or CharBag."""
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         encoder_name = type(d._encoder).__name__
         assert any(name in encoder_name for name in ("Chroma", "Tfidf", "CharBag", "STEncoder"))
 
@@ -211,7 +211,7 @@ class TestVectorDictionaryPersistence:
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "dict.json")
             d.export_to_json(path)
-            d2 = VectorDictionary()
+            d2 = VectorDictionary(compatibility_mode=True)
             count = d2.import_from_json(path)
         assert count == len(d.entries)
         assert "g1" in d2.entries
@@ -221,7 +221,7 @@ class TestVectorDictionaryPersistence:
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "dict.json")
             d.export_to_json(path)
-            d2 = VectorDictionary()
+            d2 = VectorDictionary(compatibility_mode=True)
             d2.import_from_json(path)
         assert d2.entries["g1"].relations.get("synonym", []) == ["g2", "g3", "g5"]
 
@@ -235,7 +235,7 @@ class TestVectorDictionaryPersistence:
         assert count == 0  # All already exist
 
     def test_load_presets(self):
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         d.load_presets()
         assert len(d.entries) >= 50
         assert "g1" in d.entries
@@ -245,7 +245,7 @@ class TestVectorDictionaryPersistence:
         assert "q2" in d.entries
 
     def test_load_presets_dirty_flag(self):
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         d.load_presets()
         assert d._dirty is True
 
@@ -254,15 +254,15 @@ class TestVectorDictionaryEmpty:
     """Tests for edge cases with empty dictionary."""
 
     def test_encode_empty_dict(self):
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         assert d.encode("hello") == []
 
     def test_decode_empty_dict(self):
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         assert d.decode(["key1"]) == ""
 
     def test_stats_empty(self):
-        d = VectorDictionary()
+        d = VectorDictionary(compatibility_mode=True)
         s = d.get_stats()
         assert s["entry_count"] == 0
         assert s["embedding_dim"] == 0

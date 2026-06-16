@@ -62,6 +62,8 @@ class LearningLoop:
     1. Extract fragments from high-quality LLM responses
     2. Adjust NeuroVocabulary weights based on user feedback signals
     3. Optionally persist novel fragments to learned config
+    4. Grow ED3N dictionary with novel phrases (Phase 5.5)
+    5. Adjust GARDEN weights based on user feedback (Phase 5.5)
     """
 
     def __init__(self, neuro_vocabulary=None):
@@ -69,14 +71,27 @@ class LearningLoop:
         self._neuro_vocabulary = neuro_vocabulary
         self.extraction_count = 0
         self.learning_rate = 0.05
+        self._ed3n_engine = None
+        self._garden_engine = None
 
     def bind_vocabulary(self, neuro_vocabulary) -> None:
         """Execute the bind vocabulary operation."""
         self._neuro_vocabulary = neuro_vocabulary
 
+    def bind_ed3n_engine(self, engine) -> None:
+        """Bind ED3N engine for dictionary growth (Phase 5.5)."""
+        self._ed3n_engine = engine
+        logger.info("LearningLoop bound to ED3N engine")
+
+    def bind_garden_engine(self, engine) -> None:
+        """Bind GARDEN engine for weight adjustment (Phase 5.5)."""
+        self._garden_engine = engine
+        logger.info("LearningLoop bound to GARDEN engine")
+
     def process_llm_response(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> int:
         """
         Analyze an LLM response and extract novel linguistic elements.
+        Grows ED3N dictionary with novel phrases (Phase 5.5).
 
         Returns number of novel items extracted.
         """
@@ -84,6 +99,8 @@ class LearningLoop:
             return 0
 
         count = 0
+        novel_phrases: List[str] = []
+
         sentences = self.extractor.extract_sentences(text)
         for sentence in sentences:
             if self.extractor.is_novel(sentence):
@@ -100,13 +117,59 @@ class LearningLoop:
         for phrase in phrases:
             if self.extractor.is_novel(phrase):
                 logger.debug(f"[LearningLoop] Novel phrase: {phrase}")
+                novel_phrases.append(phrase)
                 count += 1
+
+        # Phase 5.5: Grow ED3N dictionary with novel phrases
+        if self._ed3n_engine is not None and novel_phrases:
+            self._grow_ed3n_dictionary(text, novel_phrases)
 
         self.extraction_count += count
         if count > 0:
             logger.info(f"[LearningLoop] Extracted {count} novel items from LLM response")
 
         return count
+
+    def _grow_ed3n_dictionary(self, text: str, novel_phrases: List[str]) -> None:
+        """Grow ED3N dictionary with novel phrases (Phase 5.5)."""
+        try:
+            dictionary = getattr(self._ed3n_engine, 'dictionary', None)
+            if dictionary is None:
+                return
+            for phrase in novel_phrases:
+                if hasattr(dictionary, 'grow'):
+                    new_key = dictionary.grow(
+                        text=text,
+                        surface_form=phrase,
+                        confidence=0.5,
+                    )
+                    if new_key:
+                        logger.debug("[LearningLoop] Grew ED3N dictionary: %s -> %s", phrase, new_key)
+        except Exception as e:
+            logger.debug("[LearningLoop] ED3N dictionary growth failed: %s", e)
+
+    def process_user_feedback(
+        self,
+        user_message: str,
+        response: str,
+        positive: bool,
+        user_feedback: float = 0.0,
+    ) -> None:
+        """
+        Process user feedback to adjust GARDEN weights (Phase 5.5).
+        positive=True reinforces the response, negative weakens it.
+        """
+        if self._garden_engine is not None:
+            try:
+                if hasattr(self._garden_engine, 'learn_from_interaction'):
+                    self._garden_engine.learn_from_interaction(
+                        user_message, response
+                    )
+                    logger.debug("[LearningLoop] GARDEN weights updated from feedback")
+            except Exception as e:
+                logger.debug("[LearningLoop] GARDEN feedback processing failed: %s", e)
+
+        self.record_user_engagement(positive)
 
     def record_user_engagement(self, positive: bool) -> None:
         """Adjust learning rate based on user engagement signal."""

@@ -139,8 +139,6 @@ def main() -> None:
     p_save = sub.add_parser("save", help="Save engine state")
     p_save.add_argument("directory", help="Directory to save into")
 
-    sub.add_parser("load", help="Alias for --checkpoint; loads engine state from directory")
-
     # Add 'learn' subcommand for interactive learning
     p_learn = sub.add_parser("learn", help="Learn from an interaction")
     p_learn.add_argument("user_text", help="User input text")

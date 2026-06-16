@@ -114,6 +114,9 @@ class MemoryIntegrationLoop:
         # 整合隊列
         self.integration_queue: List[MemoryInfo] = []
 
+        # 神經可塑性系統 (Phase 5.3)
+        self._neuroplasticity: Optional[Any] = None
+
         # 統計信息
         self.stats = {
             "total_memories": 0,
@@ -122,6 +125,9 @@ class MemoryIntegrationLoop:
             "patterns_found": 0,
             "templates_generated": 0,
             "knowledge_base_updates": 0,
+            "neuroplasticity_encodings": 0,
+            "promotions_to_long_term": 0,
+            "importance_boosts": 0,
         }
 
         logger.info("MemoryIntegrationLoop initialized")
@@ -151,6 +157,11 @@ class MemoryIntegrationLoop:
                 pass
 
         logger.info("MemoryIntegrationLoop stopped")
+
+    def connect_neuroplasticity(self, neuroplasticity_system: Any) -> None:
+        """Connect a neuroplasticity system for memory encoding (Phase 5.3)."""
+        self._neuroplasticity = neuroplasticity_system
+        logger.info("Neuroplasticity system connected to MemoryIntegrationLoop")
 
     async def _integration_loop(self) -> None:
         """整合循環"""
@@ -190,7 +201,7 @@ class MemoryIntegrationLoop:
             # 2. 分析模式
             await self._analyze_patterns()
 
-            # 3. 結構化記憶
+            # 3. 結構化記憶 (with neuroplasticity integration)
             await self._structure_memory()
 
             # 4. 更新知識庫
@@ -199,7 +210,10 @@ class MemoryIntegrationLoop:
             # 5. 生成新模板
             await self._generate_templates()
 
-        except Exception as e:  # broad exception acceptable: integration process should not crash the loop
+            # 6. Promote frequently accessed memories (Phase 5.3)
+            await self._promote_memories()
+
+        except Exception as e:
             logger.error(f"Error processing integration: {e}", exc_info=True)
 
     async def _collect_new_info(self) -> None:
@@ -271,12 +285,36 @@ class MemoryIntegrationLoop:
             logger.warning(f"Error analyzing patterns: {e}", exc_info=True)
 
     async def _structure_memory(self) -> None:
-        """結構化記憶"""
+        """結構化記憶 with neuroplasticity integration (Phase 5.3)."""
         for info in self.integration_queue[:batch_value("ai.memory_integration_loop.structure_batch", 10)]:
             if not info.structured:
                 try:
                     # 簡單的結構化：提取關鍵信息
                     structured_data = self._simple_structure(info.content)
+
+                    # Phase 5.3: Neuroplasticity encoding
+                    if self._neuroplasticity is not None:
+                        try:
+                            if hasattr(self._neuroplasticity, 'encode'):
+                                self._neuroplasticity.encode(info.content)
+                                self.stats["neuroplasticity_encodings"] += 1
+                            if hasattr(self._neuroplasticity, 'consolidate'):
+                                self._neuroplasticity.consolidate()
+                        except Exception as e:
+                            logger.debug("Neuroplasticity encoding failed: %s", e)
+
+                    # Phase 5.3: Importance boosting based on access count
+                    if info.importance < 1.0 and info.integrated:
+                        boost = 0.0
+                        if hasattr(info, '_access_count') and info._access_count > 5:
+                            boost = 0.2
+                        elif hasattr(self.memory_manager, 'get_access_count'):
+                            count = await self.memory_manager.get_access_count(info.content)
+                            if count > 5:
+                                boost = 0.2
+                        if boost > 0:
+                            info.importance = min(1.0, info.importance + boost)
+                            self.stats["importance_boosts"] += 1
 
                     # 存儲結構化數據
                     if hasattr(self.memory_manager, "store_structured_memory"):
@@ -287,7 +325,7 @@ class MemoryIntegrationLoop:
                     info.structured = True
                     self.stats["structured_memories"] += 1
 
-                except Exception as e:  # broad exception acceptable: memory structuring failures should not crash the loop
+                except Exception as e:
                     logger.warning(f"Error structuring memory: {e}", exc_info=True)
 
     def _simple_structure(self, content: str) -> Dict[str, Any]:
@@ -350,8 +388,33 @@ class MemoryIntegrationLoop:
                         await self.memory_manager.generate_template(template)
                         self.stats["templates_generated"] += 1
 
-        except Exception as e:  # broad exception acceptable: template generation failures should not crash the loop
+        except Exception as e:
             logger.warning(f"Error generating templates: {e}", exc_info=True)
+
+    async def _promote_memories(self) -> None:
+        """Promote frequently accessed short-term memories to long-term (Phase 5.3)."""
+        try:
+            if not hasattr(self.memory_manager, 'promote_to_long_term'):
+                return
+
+            for info in self.memory_infos:
+                if info.type != "short_term":
+                    continue
+                access_count = 0
+                if hasattr(info, '_access_count'):
+                    access_count = info._access_count
+                elif hasattr(self.memory_manager, 'get_access_count'):
+                    access_count = await self.memory_manager.get_access_count(info.content)
+
+                if access_count > 10:
+                    success = await self.memory_manager.promote_to_long_term(info.content)
+                    if success:
+                        info.type = "long_term"
+                        self.stats["promotions_to_long_term"] += 1
+                        logger.debug("Promoted memory to long-term: %s", info.content[:50])
+
+        except Exception as e:
+            logger.debug("Memory promotion failed: %s", e)
 
     def add_memory(self, content: str, memory_type: str = "general", importance: float = 0.5) -> None:
         """添加記憶"""
@@ -388,8 +451,12 @@ class MemoryIntegrationLoop:
             "patterns_found": self.stats["patterns_found"],
             "templates_generated": self.stats["templates_generated"],
             "knowledge_base_updates": self.stats["knowledge_base_updates"],
+            "neuroplasticity_encodings": self.stats["neuroplasticity_encodings"],
+            "promotions_to_long_term": self.stats["promotions_to_long_term"],
+            "importance_boosts": self.stats["importance_boosts"],
             "pending_integrations": len(self.integration_queue),
             "patterns_count": len(self.knowledge_patterns),
+            "neuroplasticity_connected": self._neuroplasticity is not None,
         }
 
 

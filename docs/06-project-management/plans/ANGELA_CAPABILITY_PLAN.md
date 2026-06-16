@@ -983,15 +983,15 @@ class LearningLoop:
 | 4.3 | 多步驟推理 | 1 天 | | | ✅ |
 | 4.4 | 情緒理解增強 | 0.5 天 | | | ✅ |
 | 4.5 | GARDEN 持續學習 | 1 天 | | | ✅ |
-| **Phase 5** | 持續學習整合 | 3-4 天 | 🟡 高 | Phase 3 |
-| 5.1 | 啟用 ED3N 持續學習 | 0.5 天 | | |
-| 5.2 | ED3N → HAM 同步 | 1 天 | | |
-| 5.3 | 神經可塑性整合 | 1 天 | | |
-| 5.4 | 跨 Session 記憶 | 1 天 | | |
-| 5.5 | 學習回饋循環 | 0.5 天 | | |
-| **Phase 6** | 端到端測試 | 2-3 天 | 🟢 中 | Phase 3-5 |
-| 6.1 | 14 條整合測試 | 2 天 | | |
-| 6.2 | 效能基準 | 1 天 | | |
+| **Phase 5** | 持續學習整合 | 3-4 天 | 🟡 高 | Phase 3 | ✅ 完成 |
+| 5.1 | 啟用 ED3N 持續學習 | 0.5 天 | | | ✅ |
+| 5.2 | ED3N → HAM 同步 | 1 天 | | | ✅ |
+| 5.3 | 神經可塑性整合 | 1 天 | | | ✅ |
+| 5.4 | 跨 Session 記憶 | 1 天 | | | ✅ |
+| 5.5 | 學習回饋循環 | 0.5 天 | | | ✅ |
+| **Phase 6** | 端到端測試 | 2-3 天 | 🟢 中 | Phase 3-5 | ✅ 完成 |
+| 6.1 | 14 條整合測試 | 2 天 | | | ✅ |
+| 6.2 | 效能基準 | 1 天 | | | ✅ |
 | **總計** | | **13-19 天** | | |
 
 ---
@@ -999,7 +999,7 @@ class LearningLoop:
 ## 驗收標準
 
 ### ED3N 獨立（不依賴 GARDEN）
-- [ ] 字典 preset >= 250 條 — dictionary.py ~55 + operation_presets.json 120 + daily_presets.json 105 = 280 total
+- [ ] 字典 preset >= 250 條 — dictionary.py ~53 + operation_presets.json 120 + daily_presets.json 105 = ~278 total
 - [ ] 反射規則 >= 50 條 — _ReflexTable 18 + presets.json 82 = 100 total
 - [ ] 日常對話覆蓋率 >= 80%（不 fallback）— pending verification
 - [x] 同義詞展開正常運作 — dictionary_layer.py _encode_locked() with get_synonyms()
@@ -1011,19 +1011,19 @@ class LearningLoop:
 ### GARDEN 加持
 - [x] 語意檢索相似度 > 0.7（同義查詢）— ChromaDB encoder + fallback chain
 - [ ] 知識圖譜導入 >= 100K 條 — synthetic generation tested, real ConceptNet pending
-- [x] 多步驟推理正確 — 9 markers, regex split sorted longest-first, sequential processing
+- [x] 多步驟推理正確 — 10 markers, regex split sorted longest-first, sequential processing
 - [x] 情緒調整回應正常 — 4 emotions + hormonal modulation + traditional Chinese keywords
 - [ ] GARDEN 回應品質 > ED3N — pending benchmark
 
 ### 持續學習
-- [ ] ED3N 學習管線啟用
-- [ ] ED3N → HAM 同步正常
-- [ ] 神經可塑性整合 HAM
-- [ ] 跨 session 記憶持久化
-- [ ] 學習回饋循環正常
-- [ ] 重啟後記憶不丟失
+- [x] ED3N 學習管線啟用 — ContinuousLearningPipeline in chat_service.py
+- [x] ED3N → HAM 同步正常 — ED3NLearningIntegration with periodic background task
+- [x] 神經可塑性整合 HAM — MemoryIntegrationLoop with neuroplasticity encoding + importance boost + promotion
+- [x] 跨 session 記憶持久化 — MemoryContextManager.save_session()/load_session() with JSON persistence
+- [x] 學習回饋循環正常 — LearningLoop.bind_ed3n_engine()/bind_garden_engine()/process_user_feedback()
+- [x] 重啟後記憶不丟失 — save_session/load_session verified in tests
 
 ### 整體
-- [ ] 14 條端到端測試通過
-- [ ] 效能基準達標
-- [ ] 無 regression（現有功能不受影響）
+- [x] 14 條端到端測試通過 — 24 tests in test_phase6_e2e.py
+- [x] 效能基準達標 — reflex <5ms, classify <10ms, GARDEN <100ms, gate <5ms, handler <200ms
+- [x] 無 regression（現有功能不受影響）— 125 garden + 13 phase5 + 24 phase6 = 162 tests passing
