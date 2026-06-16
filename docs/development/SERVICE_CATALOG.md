@@ -1,6 +1,6 @@
 # Service Catalog
 
-> **Last Updated**: 2026-06-10 — Updated training pipeline (13 sources/53,654 samples), ModelBus (34 tests)
+> **Last Updated**: 2026-06-16 — Phase 3-6 complete (162 new tests, ED3N continuous learning, GARDEN 5-stage pipeline)
 
 Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 
@@ -88,11 +88,11 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 | System | File | Status | Wiring |
 |--------|------|--------|--------|
 | `ModelBus` | `ai/core/model_bus.py` | ✅ central registry + capability routing; 34 tests | GARDENBackend registered at priority 6; fallback Tier 1; hot-reload re-registers; 7 routing paths |
-| `QueryClassifier` | `ai/core/query_classifier.py` | ✅ 8-domain rule-based classification | Feeds into ModelBus capability routing |
+| `QueryClassifier` | `ai/core/query_classifier.py` | ✅ 16 QueryTypes v2 (FILE, SEARCH, CODE, EXECUTE, TASK, VISION, AUDIO, OPINION) | Feeds into ModelBus capability routing |
 | `TrainingCoordinator` | `ai/core/training_coordinator.py` | ✅ domain ownership + deconfliction | Manages SequenceTrainer + JointTrainer lifecycle |
-| `ED3NEngine` | `ai/ed3n/ed3n_engine.py` | ✅ reflex + deep + SNN pipeline | Wired to GARDENBackend via `garden_aware: bool` |
+| `ED3NEngine` | `ai/ed3n/ed3n_engine.py` | ✅ reflex + deep + SNN pipeline + continuous learning + synonym expansion | Wired to GARDENBackend via `garden_aware: bool` |
 | `ED3NTrainer` | `ai/ed3n/ed3n_trainer.py` | ✅ Hebbian + topographic + SequenceTrainer + JointTrainer | Called by `scripts/train_pipeline.py` (steps 4f/4g); wired to 13 data sources (53,654 samples) |
-| `GARDENEngine` | `ai/garden/garden_engine.py` | ✅ vector dictionary + TensorSNN + TF-IDF/CharBag fallback | Connected to AngelaLLMService for emotional context; 3 active routing paths to chat flow |
+| `GARDENEngine` | `ai/garden/garden_engine.py` | ✅ 5-stage pipeline (emotion→reflex→multi-step→vector→SNN) + ChromaDB encoder | Connected to AngelaLLMService for emotional context; 3 active routing paths to chat flow |
 | `ContinuousLearningPipeline` | `ai/ed3n/continuous_learning.py` | ✅ auto-growth + training loop | Wired to ModelBus for capability publication |
 
 ## Integration Services

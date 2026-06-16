@@ -38,12 +38,13 @@
 | **[CARD_INTEGRATION_PLAN_REVIEW.md](06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md)** | 事前審計：執行前發現 25 問題 |
 | **[PHASE_REVIEW3.md](06-project-management/plans/PHASE_REVIEW3.md)** | **階段審查 3 (2026-06-05)** — P0-P2 全部清除後狀態, 10維度判定 |
 | **[PHASE_REVIEW4.md](06-project-management/plans/PHASE_REVIEW4.md)** | **階段審查 4 (2026-06-05, v5)** — H5 stub 衝刺, 36/37 stub 實作, 24 空 except 修復, ~62% |
-| **[PHASE_REVIEW5.md](06-project-management/plans/PHASE_REVIEW5.md)** | **階段審查 5 (2026-06-06, 新)** — H5 衝刺完成版, 2837 測試, 0 HIGH 漏洞, 下一階段 H7 路線 |
+| **[PHASE_REVIEW5.md](06-project-management/plans/PHASE_REVIEW5.md)** | **階段審查 5 (2026-06-06, 新)** — H5 衝刺完成版, 2837+ tests (Phase 3-6 added 162), 0 HIGH 漏洞, 下一階段 H7 路線 |
 | **[PLAN_REVIEW.md](06-project-management/plans/PLAN_REVIEW.md)** | **計畫審查** — 跨計畫一致性與完整性審查 |
 | **[ANGELA_TRANSLATION_LEARNING_PLAN.md](06-project-management/plans/ANGELA_TRANSLATION_LEARNING_PLAN.md)** | **Angela 翻譯學習計畫** — 多語言翻譯能力建置 |
-| **[ED3N_MATURITY_PLAN.md](06-project-management/plans/ED3N_MATURITY_PLAN.md)** | **ED3N 成熟度計畫 (06-06)** — 4階段路線圖, Model Bus, Query Classifier, Training Coordinator |
+| **[ED3N_MATURITY_PLAN.md](06-project-management/plans/ED3N_MATURITY_PLAN.md)** | **ED3N 成熟度計畫 (06-06)** — 4階段路線圖, Model Bus, Query Classifier v2 (16 QueryTypes), Training Coordinator |
 | **[GARDEN_MODEL_PLAN.md](06-project-management/plans/GARDEN_MODEL_PLAN.md)** | **GARDEN 擴展計畫 (06-06)** — 1GB 輕量級本地模型與五級擴展架構 |
 | **[ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md](06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md)** | **ED3N + SNN 架構計畫** — 30+ 現有組件對應 |
+| **[ANGELA_CAPABILITY_PLAN.md](06-project-management/plans/ANGELA_CAPABILITY_PLAN.md)** | **Angela 能力補全計畫 v2** — Phase 3-6 完成 (162 new tests, ED3N continuous learning, GARDEN 5-stage pipeline) |
 | **[COMPREHENSIVE_AUDIT_V3.md](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md)** | **全面審計 V3 (06-07)** — ED3N/GARDEN/Model Bus/Router 深度審計, 16 HIGH + 16 MEDIUM 問題, P0-P4 修復計畫 |
 
 ### Architecture & Design

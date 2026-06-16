@@ -41,7 +41,7 @@
 │                                                                              │
 │  LAYER 2 — AI ENGINE                                                         │
 │  10+ Agents (CreativeWriting, CodeUnderstanding, DataAnalysis, etc.)         │
-│  Alignment | Learning (Experience Replay) | Reasoning (Causal) | LIS (Immune)│
+│  Alignment | Learning (Experience Replay) | Reasoning (Causal-Lightweight)   │
 │  RAG Manager | Personality Manager | Response Generator                      │
 │  Formula Engine (HSM, CDM, LifeIntensity, ActiveCognition, NonParadox)       │
 │                                                                              │

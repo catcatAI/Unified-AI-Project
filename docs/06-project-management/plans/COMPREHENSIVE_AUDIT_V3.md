@@ -114,7 +114,7 @@
 
 ## 5. 測試覆蓋率分析
 
-### ED3N 測試: 45 tests, 全部通過
+### ED3N 測試: 86+ tests, 全部通過 (Phase 3 added 69 integration tests)
 
 | 邊界案例 | 已測試? | 說明 |
 |---------|---------|------|
@@ -136,7 +136,7 @@
 
 ```
 core/                   → 0% (model_bus.py, query_classifier.py, training_coordinator.py 完全無測試)
-garden/                 → 0% (179 tests exist but all env-limited, 127 pass in right env)
+garden/                 → 0% (212+ tests exist but all env-limited, 127 pass in right env)
 router.py               → 0%
 chat_service.py         → 0%
 services/llm/providers/ → 0% (ed3n.py, garden.py)

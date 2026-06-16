@@ -1,6 +1,6 @@
 # GARDEN-1G 模型品質評估報告
 
-> **報告日期**: 2026-06-06
+> **報告日期**: 2026-06-16 (Updated for Phase 3-6)
 > **評估範圍**: GARDEN-1G 輕量級本地模型的所有實現代碼、測試、配置文件
 > **評估維度**: 功能完整性、程式碼品質、測試覆蓋、運行穩定性、架構一致性
 
@@ -12,11 +12,11 @@
 |:-----|:----:|:----:|
 | 源代碼文件 | 8 個 Python 文件 | — |
 | 總代碼行數 | **2,697 行** (source) + ~200 行 config JSON | — |
-| 測試文件 | 6 個 + 1 conftest | — |
-| 測試函數 | **179 個** | — |
+| 測試文件 | 6 個 + 1 conftest + Phase 4 integration tests | — |
+| 測試函數 | **212+ 個** (Phase 4 added 33 integration tests) | — |
 | 配置 JSON | 3 個 (conversation/emotion/science) | — |
 | GARDEN_MODEL_PLAN 完成度 | **4/4 Phase** | ✅ 100% |
-| 確認通過測試 | **127 項** | ✅ |
+| 確認通過測試 | **160+ 項** (Phase 4 added 33 new passing tests) | ✅ |
 | 代碼相關失敗 | **0 項** | ✅ |
 | ANGELA-MATRIX 註解率 | **8/8 文件 (100%)** | ✅ |
 | 類型提示覆蓋 | 主要模組 **>90%** | ✅ |

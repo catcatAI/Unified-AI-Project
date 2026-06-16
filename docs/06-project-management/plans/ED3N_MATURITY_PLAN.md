@@ -5,7 +5,7 @@
 | Metric | Value |
 |--------|-------|
 | Modules | 25+ files (includes core/, snn/, multimodal/, config/), ~4,000+ lines |
-| Tests | **45 tests** ✅ (83s) |
+| Tests | **86+ tests** ✅ (Phase 3 added 69 integration tests) |
 | Edge cases | **19 guard clauses** across 6 files ✅ |
 | CLI | `python -m ai.ed3n query/train/serve/stats/save` ✅ |
 | Config | `presets.json` + `math_presets.json` ✅ |
@@ -13,7 +13,8 @@
 | Checkpoint size | ~500 KB (ED3N) + ~2MB (GARDEN) ✅ |
 | Training time | 7 min for 12.7K samples ✅ |
 | Training accuracy | 77.69% ED3N (math/logic) + 550 knowledge samples (GARDEN) |
-| Reflex patterns | 12,204 (word-boundary matching + min len + sync'd to GARDEN) ✅ |
+| Reflex patterns | 100 reflex patterns (presets.json 82 + _ReflexTable 18) ✅ |
+| Dictionary presets | 278 presets (50→278 expansion in Phase 3) ✅ |
 | Pipeline wiring | **Model Bus** replaces sequential fallback — capability-based routing ✅ |
 | Continuous learning | Wired into ChatService.generate_response() + **save/load persistence** ✅ |
 | Multimodal | Auto-enabled in ED3NEngine.__init__() ✅ |
@@ -25,9 +26,12 @@
 | I/O telemetry | **TelemetryCollector** + **IOAnalyzer** wired into ED3NEngine.process() ✅ |
 | CL persistence | **save()/load()** on ContinuousLearningPipeline, auto-save in ChatService.shutdown() ✅ |
 | GARDEN compat mode | Lazy torch import + `compatibility_mode=True` skips sentence-transformers ✅ |
-| Query Classifier | 22 rules → 8 domains (REFLEX/GREETING/MATH/LOGIC/KNOWLEDGE/CREATIVE/COMMAND/UNKNOWN) ✅ |
+| Query Classifier | **16 QueryTypes** (v2 with extended types: FILE, SEARCH, CODE, EXECUTE, TASK, VISION, AUDIO, OPINION) ✅ |
 | Training Coordinator | Domain ownership map, deconfliction, reflex pattern sync ✅ |
 | Model Bus | Central routing: greeting→ED3N, math→ED3N, knowledge→GARDEN, creative→cloud ✅ |
+| Synonym expansion | DictionaryLayer synonym expansion in `_encode_locked()` ✅ |
+| Math evaluation | Chinese math evaluation (三加五, 十乘二) ✅ |
+| Traditional Chinese | 繁體中文 support in patterns and verbs ✅ |
 
 ## Maturity Tiers
 

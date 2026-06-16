@@ -103,12 +103,12 @@ ChatService ──┬── ModuleManager ──┬── intent_registry
 | Module System | ✅ Dynamic discovery (wired in lifespan) | 11 modules, 10/11 start success |
 | Plugin System | ✅ 5 hooks | — |
 | Handlers | ✅ 4 handlers | — |
-| ED3N Engine | ✅ 86/86 tests | Reflex → Deep → SNN pipeline |
-| GARDEN Engine | ✅ 50/50 tests | 3 active routing paths, TF-IDF fallback |
+| ED3N Engine | ✅ 86+ tests | Reflex → Deep → SNN pipeline + continuous learning |
+| GARDEN Engine | ✅ 125+ tests | 5-stage pipeline (emotion→reflex→multi-step→vector→SNN) |
 | Training Pipeline | ✅ 53,654 samples (13 sources) | SequenceTrainer + JointTrainer |
 | ModelBus | ✅ 34 tests | Registration, 7 routing paths, domain queries, timeout, edge cases |
 | Magic Numbers | ⚠️ Corrected: 15 accessor functions, 57 import callers across all 15 | See #1 in Deep Analysis below |
-| Integration Testing | ✅ 116 e2e + 84 unit = 200 total this sprint | 116 integration (59 P3-2 + 33 API + 24 fault/concurrency/resource) + 84 new unit tests |
+| Integration Testing | ✅ 153 e2e + 84 unit = 237 total | Phase 3-6 added 162 new tests (125 garden + 13 phase5 + 24 phase6) |
 | API Endpoint Tests | ✅ 31/35 endpoints | 33 tests covering 31 registered endpoints |
 | C2 Live2D State Broadcast | ✅ Fixed | 4 methods added; 9 tests pass |
 | Code Quality Metrics | ✅ ANGELA-MATRIX: 99.5% (210/211) | 10 unused imports removed, 7 print→logger, 30 except narrowed, 9 long functions→32 helpers |

@@ -44,7 +44,7 @@ git_head_at_audit: "5bd48c2f9 (branch: main)"
 | 15 | `docs/06-project-management/plans/PHASE_REVIEW3.md` | B | **50** | Same | **MERGE** |
 | 16 | `docs/06-project-management/plans/PHASE_REVIEW4.md` | B | **55** | Self-flags "version 3.9+ / 3.10+ / 3.8+" triple contradiction | **KEEP** as historical snapshot |
 | 17 | `docs/06-project-management/plans/PHASE_REVIEW5.md` | B | **60** | "2837 tests / 36/37 stubs done / 1611 (state_matrix.py) longest" — `state_matrix.py` is **1,224 lines** today | **UPDATE** numbers |
-| 18 | `docs/06-project-management/plans/ED3N_MATURITY_PLAN.md` | B | **30** | "**45 tests**" → real **57**; "**22 rules**" → real **30 reflex patterns**; "**77.69 % accuracy**" unmeasured; "**7-min training**" unverified | **REWRITE** with current numbers |
+| 18 | `docs/06-project-management/plans/ED3N_MATURITY_PLAN.md` | B | **30** | "**45 tests**" → real **86+**; "**22 rules**" → real **16 QueryTypes v2**; "**77.69 % accuracy**" unmeasured; "**7-min training**" unverified | **REWRITE** with current numbers |
 | 19 | `docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md` | B | **65** | Plan refers to file `ed3n_architecture_v2.py` that doesn't exist; only `ed3n_engine.py` does | **FIX** filename references |
 | 20 | `docs/06-project-management/plans/GARDEN_MODEL_PLAN.md` | B | **35** | "**100M-150M parameters**" → actual MiniLM-L6 is **22M params**; line counts off by 10-80 % | **REWRITE** model-spec section |
 | 21 | `docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md` | B | **60** | "**0 remaining tasks**" claim is false — see critical findings F-1, F-2 below | **RESTORE** the missing task list |

@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > - Server **IMPORTS OK** — `ModelProvider` alias added to `protocols.py`
 > - Tests **COLLECTING** — ~3,500+ tests across 469 test files, 0 collection errors
+> - Phase 3-6 added **162 new tests** (125 garden + 13 phase5 + 24 phase6)
 > - "Stub" files are backward-compat shims; real implementations complete
 > - Actual completion: **~85-90%** (5 alias exports = ~10 lines total — ALL DONE)
 > - See [README.md](README.md#name-mappings-test-expectation--actual-implementation) for name mappings

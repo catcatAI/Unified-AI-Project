@@ -3,6 +3,7 @@
 > **編寫日期**: 2026-06-10  
 > **交叉驗證基準**: 所有 11 MD 文件 vs 實際代碼/文件/配置  
 > **測試基線**: 200 tests passing (86 ED3N + 50 GARDEN core + 30 C6 + 34 ModelBus, 2 pre-existing GARDEN failures)  
+> **Phase 3-6 新增**: 162 tests (125 garden + 13 phase5 + 24 phase6)  
 > **Python**: 3.14.4 (sentence-transformers 永久掛起, TF-IDF/CharBag only)  
 > **版本**: 7.5.0-dev  
 > **執行進度**: 2026-06-10 — Phase 0 ✅, Phase 1 ✅ (13/13 data sources), Phase 2 ✅, Phase 3 ✅, Phase 4 ✅ (spike encoding closed, C6 30 tests, ModelBus 34 tests), Phase 5 ✅ (docs + version sync)  
