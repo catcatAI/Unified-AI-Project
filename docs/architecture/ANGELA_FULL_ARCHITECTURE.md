@@ -549,6 +549,34 @@ UnifiedMemoryCoordinator
           └─ store(): 統一存儲
 ```
 
+### 5.5.1 MemoryContextManager — 跨 Session 記憶 (Phase 5.4)
+
+**檔案**: `ai/context/memory_context.py` (370行)
+**狀態**: ✅ 真實實現
+
+```
+MemoryContextManager
+    │
+    ├─→ 記憶管理:
+    │     ├─ create_memory(): 創建記憶 (short_term/long_term)
+    │     ├─ access_memory(): 訪問記錄 + 計數
+    │     ├─ update_memory_embedding(): 向量更新
+    │     └─ transfer_memory(): 短期→長期轉移
+    │
+    ├─→ 跨 Session 持久化 (Phase 5.4):
+    │     ├─ save_session(session_id): JSON 序列化到磁碟
+    │     ├─ load_session(session_id): 從磁碟還原記憶
+    │     └─ _session_dir: 可配置存儲目錄
+    │
+    ├─→ 向量檢索 (Phase 5.4):
+    │     ├─ search_by_embedding(): 餘弦相似度搜索
+    │     └─ _cosine_similarity(): 向量相似度計算
+    │
+    └─→ 維護:
+          ├─ cleanup_old_memories(): 清理過期記憶
+          └─ get_memory_count(): 記憶統計
+```
+
 ### 5.6 記憶層級設計（文檔描述）
 
 **來源**: `HAMEMORY_INTEGRATION_SUCCESS.md`
@@ -572,20 +600,50 @@ UnifiedMemoryCoordinator
 ### 5.7 ED3N — 反射與字典
 
 **目錄**: `ai/ed3n/`
+**狀態**: ✅ 完整真實實現 (Phase 3-6 更新)
 
 ```
 ED3NEngine
     │
-    ├─→ ReflexLayer: 亞毫秒反射
-    │     ├─ load_presets(): 載入預設反射
-    │     └─ process(): LRU 快取，極速回應
+    ├─→ ReflexLayer: 亞毫秒反射 (100 條規則)
+    │     ├─ load_presets(): 載入預設反射 (presets.json 82 條 + _ReflexTable 18 條)
+    │     ├─ process(): LRU 快取，極速回應
+    │     └─ Traditional Chinese: 繁體中文支持
     │
-    ├─→ DictionaryLayer:
-    │     ├─ encode(text): 精確匹配
-    │     └─ encode_soft(text): 模糊匹配
+    ├─→ DictionaryLayer: 向量字典 (~278 preset)
+    │     ├─ encode(text): 精確匹配 + 同義詞展開
+    │     ├─ encode_soft(text): 模糊匹配
+    │     ├─ grow(): 動態字典成長
+    │     └─ get_synonyms(): 同義詞查詢
     │
-    └─→ ContinuousLearning: 持續學習 (慢)
+    ├─→ CoreNetwork: 激活傳播網路
+    │     ├─ forward(): 前向傳播
+    │     └─ adjust_connection(): Hebbian 學習
+    │
+    ├─→ MathEvaluation: 中文數學運算
+    │     └─ _try_math_eval(): 支持多位數 + 中文數字 (三加五)
+    │
+    ├─→ ContinuousLearningPipeline: 持續學習 (Phase 5.1)
+    │     ├─ process_interaction(): 記錄互動
+    │     ├─ train_step(): 訓練步驟
+    │     └─ save()/load(): 狀態持久化
+    │
+    ├─→ ED3NLearningIntegration: HAM 同步 (Phase 5.2)
+    │     ├─ synchronize_knowledge(): 字典→HAM 同步
+    │     └─ extract_concepts_from_interaction(): 概念提取
+    │
+    └─→ Telemetry: 遙測記錄
 ```
+
+**關鍵文件**:
+- `ai/ed3n/ed3n_engine.py` (720行): 主引擎
+- `ai/ed3n/dictionary_layer.py`: 字典層
+- `ai/ed3n/core_network.py`: 核心網路
+- `ai/ed3n/continuous_learning.py` (371行): 持續學習管線
+- `ai/ed3n/learning_integration.py` (201行): HAM 整合
+- `ai/ed3n/config/presets.json`: 82 條反射規則
+- `ai/ed3n/config/operation_presets.json`: 120 條操作預設
+- `ai/ed3n/config/daily_presets.json`: 105 條日常對話預設
 
 ---
 
@@ -765,24 +823,57 @@ NeuroAutoSelector (自動 LLM 模式)
 
 ### 8.3 GARDEN 輕量推理引擎
 
-**檔案**: `ai/garden/garden_engine.py` (423 行)
-**狀態**: ✅ 完整真實實現
+**目錄**: `ai/garden/`
+**狀態**: ✅ 完整真實實現 (Phase 4-6 更新)
 
 ```
-GARDEN-1G Engine (3 階段管線)
+GARDEN-1G Engine (5 階段管線)
     │
-    ├─→ Stage 1: VectorDictionary.encode(text) → concept keys
+    ├─→ Stage 0: 情緒偵測 + 激素調制 (Phase 4.4)
+    │     ├─ _detect_emotion(): 4 種情緒 (happy/sad/angry/neutral)
+    │     ├─ Traditional Chinese: 繁體中文關鍵字支持
+    │     └─ _adjust_hormones(): cortisol/serotonin 影響 SNN 閾值
+    │
+    ├─→ Stage 1: Reflex (快速模式匹配)
+    │     └─ _ReflexTable: 18 條預設 + LRU 快取
+    │
+    ├─→ Stage 2: Multi-step Detection (Phase 4.3)
+    │     ├─ _is_multi_step(): 偵測多步驟輸入
+    │     └─ _process_multi_step(): 10 個標記詞 (然後/接著/之後...)
+    │
+    ├─→ Stage 3: VectorDictionary.encode(text) → concept keys
+    │     ├─ Encoder fallback chain:
+    │     │   1. SentenceTransformer (最佳品質)
+    │     │   2. ChromaDB (Phase 4.1, 內建 HNSW 索引)
+    │     │   3. TF-IDF (輕量級)
+    │     │   4. CharBag (確定性後備)
     │     └─ 餘弦相似度匹配
     │
-    ├─→ Stage 2: TensorSNNCore.forward(keys) → activated output
+    ├─→ Stage 4: TensorSNNCore.forward(keys) → activated output
     │     └─ LIF (Leaky Integrate-and-Fire) 多步激活
     │
-    ├─→ Stage 3: Anchored decode → 人類可讀回應
+    ├─→ Stage 5: Anchored decode → 人類可讀回應
     │
-    ├─→ 激素調制: cortisol/serotonin 影響 SNN 閾值
     ├─→ 持續學習: learn_from_interaction() + Hebbian 更新
+    │     ├─ _learning_enabled: 學習開關
+    │     ├─ Dictionary growth: 動態字典成長
+    │     └─ Auto-save: 每 100 次互動自動存儲
+    │
+    ├─→ 知識圖譜導入 (Phase 4.2)
+    │     ├─ KGImporter: synthetic/ConceptNet/Wikidata
+    │     └─ bulk_load(): 批量導入
+    │
     └─→ 存儲: dictionary JSON + SNN .pt checkpoint
 ```
+
+**關鍵文件**:
+- `ai/garden/garden_engine.py` (222行): 主引擎
+- `ai/garden/dictionary.py` (328行): 向量字典 + 4 層 encoder
+- `ai/garden/snn_core.py` (157行): 張量 SNN
+- `ai/garden/kg_import.py` (264行): 知識圖譜導入
+- `ai/garden/binary_store.py` (116行): 二進位存儲
+- `ai/garden/vector_decoder.py` (64行): 向量解碼器
+- `ai/garden/__main__.py` (112行): CLI 介面
 
 ### 8.4 CodeInspector — 原生代碼檢查
 

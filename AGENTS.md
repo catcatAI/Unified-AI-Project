@@ -83,6 +83,13 @@ pre-commit run --all-files
 > 
 > All 5 alias exports applied (~10 lines total). No re-implementation needed.
 
+> ✅ **NOTE (Updated 2026-06-16)**: Phase 3-6 implementation complete. New test files added:
+> - `tests/ai/garden/test_phase4_integration.py` (33 tests): ChromaDB, KG, multi-step, emotion, learning
+> - `tests/ai/test_phase5_integration.py` (13 tests): Continuous learning, session persistence, memory importance, learning loop
+> - `tests/ai/test_phase6_e2e.py` (24 tests): E2E pipeline, performance benchmarks
+> 
+> **Total: 162 new tests** (125 garden + 13 phase5 + 24 phase6)
+
 ### JavaScript/TypeScript
 
 ```bash
@@ -198,12 +205,18 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 ```
 apps/
   backend/           # Python FastAPI + AI systems
-    ai/ed3n/         # ED3N 外部字典解耦神經網路 (Phase 1)
+    ai/ed3n/         # ED3N 外部字典解耦神經網路 (Phase 1-6)
+    ai/garden/       # GARDEN 輕量推理引擎 (Phase 4-6)
+    ai/context/      # 跨 Session 記憶管理 (Phase 5.4)
+    ai/lifecycle/    # 記憶整合循環 (Phase 5.3)
+    ai/response/     # 學習循環 (Phase 5.5)
   desktop-app/       # Electron + Live2D
   mobile-app/        # React Native bridge
 packages/
   cli/               # CLI tools
 tests/               # Test suite
+  ai/garden/         # GARDEN 測試 (125 tests)
+  ai/                # ED3N/Lifecycle 測試 (37 tests)
 ```
 
 ## Technology Stack
