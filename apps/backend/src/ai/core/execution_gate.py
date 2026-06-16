@@ -76,6 +76,14 @@ class ExecutionGate:
         # 检查是否有 handler
         handler_id = self.HANDLER_MAP.get(query_type)
 
+        # For knowledge/creative/greeting queries, skip confirmation and let LLM handle
+        if query_type in ("knowledge", "creative", "greeting", "opinion"):
+            return GateDecision(
+                action="reject", score=score,
+                reason=f"non_actionable_query_type_{query_type}",
+                original_query=user_message,
+            )
+
         if score >= self.AUTO_EXECUTE and handler_id:
             return GateDecision(
                 action="auto_execute", score=score,

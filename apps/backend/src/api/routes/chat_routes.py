@@ -150,6 +150,26 @@ async def _handle_chat_request(
         except Exception as e:
             logger.debug(f"Crisis assessment unavailable: {e}")
 
+        # === Reflex Check (before ExecutionGate) ===
+        # Check if ED3N reflex patterns match the input
+        try:
+            ed3n_engine = _get_ed3n_engine()
+            reflex_response = ed3n_engine.process_reflex(user_message)
+            if reflex_response:
+                logger.info(f"[Reflex] Matched pattern for input from {origin}")
+                return {
+                    "response_text": reflex_response,
+                    "source": "reflex",
+                    "schema_version": _schema_ver,
+                    "truncation_message": "",
+                    "emotion": "neutral",
+                    "emotion_confidence": 0.9,
+                    "emotion_intensity": 0.5,
+                    "session_id": session_id,
+                }
+        except Exception as reflex_err:
+            logger.debug(f"Reflex check unavailable: {reflex_err}")
+
         # Process chat as biological stimulus (fire-and-forget async)
         try:
             from core.bio.biological_integrator import BiologicalIntegrator

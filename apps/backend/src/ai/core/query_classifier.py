@@ -128,10 +128,25 @@ class QueryClassifier:
                     r"(什么是|是什么|是什麼|what\s+is|how\s+(does|do|can|to)|"
                     r"why\s+(is|does|do|can)|"
                     r"\b(define|explain)\b|"
-                    r"怎麼回|怎么回|多少|how\s+many|what\s+are)",
+                    r"怎麼回|怎么回|多少|how\s+many|what\s+are)|"
+                    r"(能做|可以做|可以幫|能幫|可以帮|能幫我|可以幫我|"
+                    r"你的能力|你的功能|你會什麼|你会什么|你能做|你可以做|"
+                    r"介紹你的|介绍你的|能做什麼|能做什么|可以做什么|可以做什麼|"
+                    r"能做啥|能幹嘛|能幹什麼|能干什么|可以幹嘛|可以干什么)",
                     re.IGNORECASE,
                 ),
                 0.7,
+            ),
+            (
+                QueryType.GREETING,
+                re.compile(
+                    r"(?:^|[\s，。！？,.\s])"
+                    r"(自我介紹|自我介绍|介紹自己|介绍自己|"
+                    r"你是誰|你是谁|你叫什麼|你叫什么|你的名字)|"
+                    r"\b(introduce\s+yourself|who\s+are\s+you|what's\s+your\s+name)\b",
+                    re.IGNORECASE,
+                ),
+                0.85,
             ),
             (
                 QueryType.CREATIVE,

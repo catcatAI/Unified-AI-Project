@@ -41,9 +41,7 @@ class ED3NLearningIntegration:
     def _get_learning_manager(self):
         if self._learning_manager is None:
             try:
-                from apps.backend.src.ai.learning.learning_manager import (
-                    LearningManager,
-                )
+                from ai.learning.learning_manager import LearningManager
 
                 self._learning_manager = LearningManager(ai_id="ed3n")
                 self._connected_systems["learning_manager"] = True
@@ -54,9 +52,7 @@ class ED3NLearningIntegration:
     def _get_replay_buffer(self):
         if self._replay_buffer is None:
             try:
-                from apps.backend.src.ai.learning.experience_replay import (
-                    ExperienceReplayBuffer,
-                )
+                from ai.learning.experience_replay import ExperienceReplayBuffer
 
                 self._replay_buffer = ExperienceReplayBuffer()
                 self._connected_systems["replay_buffer"] = True
@@ -67,22 +63,12 @@ class ED3NLearningIntegration:
     def _get_memory_learning(self):
         if self._memory_learning is None:
             try:
-                from apps.backend.src.ai.learning.memory_learning_engine import (
-                    MemoryLearningEngine,
-                )
+                from ai.learning.memory_learning_engine import MemoryLearningEngine
 
                 self._memory_learning = MemoryLearningEngine()
                 self._connected_systems["memory_learning"] = True
             except ImportError:
-                try:
-                    from ai.learning.memory_learning_engine import (
-                        MemoryLearningEngine,
-                    )
-
-                    self._memory_learning = MemoryLearningEngine()
-                    self._connected_systems["memory_learning"] = True
-                except ImportError:
-                    logger.warning("MemoryLearningEngine not available.")
+                logger.warning("MemoryLearningEngine not available.")
         return self._memory_learning
 
     def extract_concepts_from_interaction(self, text: str) -> List[Dict]:
