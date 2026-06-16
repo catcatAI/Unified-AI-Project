@@ -105,7 +105,8 @@ class QueryClassifier:
                 QueryType.MATH,
                 re.compile(
                     r"(\d+\s*[\+\-\*\/]\s*\d+|"
-                    r"等于|计算|加|减|乘|除|"
+                    r"(?:三|四|五|六|七|八|九|十|百|千|万)\s*(?:加|减|乘|除)\s*(?:三|四|五|六|七|八|九|十|百|千|万)|"
+                    r"等于|等于多少|計算|计算|加法|减法|乘法|除法|"
                     r"\b(plus|minus|times|divided\s*by|calculate|solve|equation)\b)",
                     re.IGNORECASE,
                 ),
@@ -140,10 +141,10 @@ class QueryClassifier:
             (
                 QueryType.GREETING,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
                     r"(自我介紹|自我介绍|介紹自己|介绍自己|"
-                    r"你是誰|你是谁|你叫什麼|你叫什么|你的名字)|"
-                    r"\b(introduce\s+yourself|who\s+are\s+you|what's\s+your\s+name)\b",
+                    r"你是誰|你是谁|你叫什麼|你叫什么|你的名字|"
+                    r"做個?自我|做一?個?自我|來一?個?自我|来一?个?自我|"
+                    r"\b(introduce\s+yourself|who\s+are\s+you|what's\s+your\s+name)\b)",
                     re.IGNORECASE,
                 ),
                 0.85,
@@ -177,11 +178,12 @@ class QueryClassifier:
             (
                 QueryType.FILE,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
                     r"(整理|清理|删除|移动|复制|重命名|读取|写入|列出|建立|新建|修改|编辑|"
                     r"文件|文件夹|目录|路径|"
                     r"整理|清理|刪除|移動|複製|重命名|讀取|寫入|列出|建立|新建|修改|編輯|"
                     r"檔案|文件|資料夾|目錄|路徑|"
+                    r"幫我删除|幫我刪除|幫我建立|幫我新建|幫我讀取|幫我寫入|"
+                    r"帮我删除|帮我删除|帮我建立|帮我新建|帮我读取|帮我写入|"
                     r"\b(organize|delete|move|copy|rename|read|write|list|create|edit|"
                     r"file|folder|directory|path)\b)",
                     re.IGNORECASE,

@@ -89,7 +89,8 @@ class TestE2EFileDelete:
             confidence=0.8,
             context={},
         )
-        assert decision.action == "reject"
+        assert decision.action == "confirm_then_execute"
+        assert decision.handler == "file_ops"
 
     def test_gate_rejects_delete_all(self):
         from ai.core.execution_gate import ExecutionGate
@@ -101,7 +102,8 @@ class TestE2EFileDelete:
             confidence=0.9,
             context={},
         )
-        assert decision.action == "reject"
+        assert decision.action == "confirm_then_execute"
+        assert decision.handler == "file_ops"
 
 
 # ---------------------------------------------------------------------------

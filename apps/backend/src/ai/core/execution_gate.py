@@ -113,6 +113,17 @@ class ExecutionGate:
                 original_query=user_message,
             )
 
+        if handler_id:
+            return GateDecision(
+                action="confirm_then_execute", score=score,
+                handler=handler_id,
+                action_type=action_type,
+                reason=f"low_score_with_handler={score}",
+                confirm_message=self._build_confirm(action_type, user_message),
+                impact_info=self._describe_impact(action_type, user_message),
+                original_query=user_message,
+            )
+
         return GateDecision(
             action="reject", score=score,
             reason=f"exec_score={score} < {self.CONFIRM_THRESHOLD}",
