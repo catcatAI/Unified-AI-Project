@@ -12,7 +12,7 @@
 |-------|--------|------|-------|
 | Phase 0: Foundation Fixes | 🟡 PARTIAL | 2026-06-16 | P0 (imports) ✅, P1 (context) ✅, P2 (DEPRECATED) ✅, i18n pending |
 | Phase 1: Core Activation | 🟡 PARTIAL | 2026-06-16 | Context wiring ✅, ED3N cycling ✅, GARDEN cycling ✅, UnifiedLearningOrchestrator ✅ |
-| Phase 2: Intelligence Layer | ⏳ PENDING | — | |
+| Phase 2: Intelligence Layer | 🟡 PARTIAL | 2026-06-16 | AgentOrchestrator ✅, PlanningEngine ✅, ReasoningEngines ✅ |
 | Phase 3: Safety & Trust | ⏳ PENDING | — | |
 | Phase 4: Embodiment | ⏳ PENDING | — | |
 | Phase 5: Infrastructure | ⏳ PENDING | — | |
@@ -46,6 +46,17 @@
 | GARDEN cycling | ✅ | Max 3 cycles, response length improvement check |
 | UnifiedLearningOrchestrator | ✅ | Created, connects 6 learning subsystems |
 | Tests | ✅ | 37/37 pass |
+
+### Phase 2 Detail (2026-06-16)
+
+| Task | Status | Verification |
+|------|--------|-------------|
+| AgentOrchestrator | ✅ | Intent classification, agent selection, task decomposition |
+| PlanningEngine | ✅ | Goal decomposition, dependency tracking, progress monitoring |
+| ChainOfThoughtReasoner | ✅ | Step-by-step logical reasoning |
+| AnalogicalReasoner | ✅ | Cross-domain pattern matching |
+| AbductiveReasoner | ✅ | Hypothesis generation and evaluation |
+| Tests | ✅ | 37/37 pass (no regressions) |
 
 ---
 
