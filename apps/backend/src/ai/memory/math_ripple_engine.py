@@ -455,12 +455,33 @@ class MathRippleEngine:
     支持雙深度系統：
       - 演算法深度 (AlgorithmDepth): LIGHT → ULTRA
       - 漣漪深度 (RippleDepth): D3 → D7
+
+    支持中文輸入：三加五 → 3 + 5
     """
 
     ARITHMETIC_THRESHOLD = 0.001
     OVERLOAD_THRESHOLD_MAGNITUDE = 2000.0
     OVERLOAD_THRESHOLD_CHAIN = 3
     FEAR_DIVISOR_NEAR_ZERO = 0.0002
+
+    # Chinese number mapping
+    ZH_NUM = {
+        "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
+        "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
+        "十": 10, "百": 100, "千": 1000, "万": 10000,
+        "两": 2, "〇": 0, "壹": 1, "贰": 2, "叁": 3,
+        "肆": 4, "伍": 5, "陆": 6, "柒": 7, "捌": 8, "玖": 9,
+    }
+
+    # Chinese operator mapping
+    ZH_OPS = {
+        "加": "+", "加上": "+", "减": "-", "减去": "-",
+        "乘": "*", "乘以": "*", "乘上": "*", "times": "*",
+        "除": "/", "除以": "/", "divided": "/",
+        "的和": "+", "的差": "-", "的积": "*", "的商": "/",
+        "等于": "=", "是多少": "=", "等于几": "=", "结果": "=",
+        "plus": "+", "minus": "-",
+    }
 
     def __init__(
         self,
@@ -539,6 +560,60 @@ class MathRippleEngine:
             i += 2
         return i, current
 
+    def convert_chinese_math(self, text: str) -> Optional[str]:
+        """
+        Convert Chinese math expression to Arabic.
+        Example: "三加五" → "3 + 5", "十乘以二" → "10 * 2"
+        Returns None if not a math expression.
+        """
+        import re
+        cleaned = text.strip().rstrip("？?！!。.")
+
+        # Replace Chinese operators with Arabic (longest first)
+        for zh_op, en_op in sorted(self.ZH_OPS.items(), key=lambda x: -len(x[0])):
+            cleaned = cleaned.replace(zh_op, f" {en_op} ")
+
+        # Convert Chinese numbers to Arabic (handle positional multipliers)
+        cleaned = self._convert_chinese_numbers(cleaned)
+
+        # Check if we have a valid math expression
+        if re.search(r'\d+\s*[+\-*/]\s*\d+', cleaned):
+            return cleaned
+        return None
+
+    def _convert_chinese_numbers(self, text: str) -> str:
+        """Convert Chinese numbers to Arabic, handling positional multipliers."""
+        import re
+
+        def convert_number(s: str) -> str:
+            """Convert a Chinese number string to Arabic."""
+            result = 0
+            current = 0
+            for ch in s:
+                if ch in self.ZH_NUM:
+                    val = self.ZH_NUM[ch]
+                    if val >= 10:
+                        # Positional multiplier
+                        if current == 0:
+                            current = 1
+                        result += current * val
+                        current = 0
+                    else:
+                        current = current * 10 + val
+                else:
+                    # Non-number character, return as-is
+                    return s
+            return str(result + current)
+
+        # Find Chinese number sequences and convert them
+        # Pattern: sequences of Chinese number characters
+        zh_num_pattern = re.compile(r'[零一二两三四五六七八九十百千万〇壹贰叁肆伍陆柒捌玖]+')
+
+        def replace_match(m):
+            return convert_number(m.group(0))
+
+        return zh_num_pattern.sub(replace_match, text)
+
     def compute(
         self,
         expr: str,
@@ -550,15 +625,19 @@ class MathRippleEngine:
         計算表達式並產生所有中間漣漪
 
         Args:
-            expr: 數學表達式
+            expr: 數學表達式 (支持中文: "三加五" 或阿拉伯: "3 + 5")
             auto_detect: 是否自動檢測深度（預設 True）
             force_depth: 強制指定漣漪深度
             force_algo: 強制指定演算法深度
 
         例子：100 * 3 → 300 (ε.AMPLIFY)
-              300 * 2 → 600 (ε.AMPLIFY, 漣漪累積)
-              600 * 5 → 3000 (ε.OVERLOAD, 觸發認知過載)
+              三加五 → 8 (中文輸入)
         """
+        # Convert Chinese math to Arabic if needed
+        converted = self.convert_chinese_math(expr)
+        if converted:
+            expr = converted
+
         self._configure_depth(expr, auto_detect, force_depth, force_algo)
 
         ripples = []

@@ -296,7 +296,29 @@ class QueryClassifier:
                 reason="long_text_heuristic"
             )
 
-        # Step 2: 多模式匹配（收集所有匹配）
+        # Step 2: ED3N Dictionary classification (primary path)
+        try:
+            from ai.core.dictionary_classifier import get_dictionary_classifier
+            dc = get_dictionary_classifier()
+            dict_type, dict_action, dict_conf = dc.classify(text)
+            if dict_conf >= 0.3 and dict_type != "unknown":
+                try:
+                    qt = QueryType(dict_type)
+                except ValueError:
+                    qt = QueryType.UNKNOWN
+                conf = self._adjust_confidence(qt, text, dict_conf, False, has_negation)
+                act = self._calc_actionability(qt, text, conf)
+                return QueryResult(
+                    primary_type=qt,
+                    confidence=conf,
+                    actionability=act,
+                    action_type=dict_action,
+                    reason="dictionary_match"
+                )
+        except Exception:
+            pass  # Dictionary not available, fall through to regex
+
+        # Step 3: Regex pattern matching (fallback)
         matches = []
         for qt, pattern, base_conf in self._patterns:
             m = pattern.search(text)
@@ -306,17 +328,6 @@ class QueryClassifier:
                 act = self._calc_actionability(qt, text, conf)
                 atype = self._infer_action_type(qt, text)
                 matches.append((qt, conf, act, atype))
-
-        # Step 3: ED3N 辅助分类（可选，失败不影响）
-        try:
-            if hasattr(self, '_ed3n') and self._ed3n:
-                ed3n_type, ed3n_conf = self._ed3n_classify(text)
-                if ed3n_conf > 0.5:
-                    atype = self._infer_action_type(ed3n_type, text)
-                    act = self._calc_actionability(ed3n_type, text, ed3n_conf)
-                    matches.append((ed3n_type, ed3n_conf, act, atype))
-        except Exception:
-            pass  # ED3N 不可用时忽略
 
         # Step 4: 排序（先比 confidence，再比 actionability）
         matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
@@ -335,7 +346,7 @@ class QueryClassifier:
                 action_type=primary[3],
                 secondary_type=secondary[0] if secondary else None,
                 secondary_confidence=secondary[1] if secondary else 0.0,
-                reason="pattern_match"
+                reason="regex_pattern_match"
             )
 
         # Step 6: REFLEX override（单字 + 低置信度）
@@ -366,27 +377,6 @@ class QueryClassifier:
             QueryType.UNKNOWN, 0.3, 0.0, "none",
             reason="no_match_fallback"
         )
-
-    def _ed3n_classify(self, text: str) -> Tuple[QueryType, float]:
-        """ED3N 辅助分类。返回 (QueryType, confidence)"""
-        try:
-            keys = text.lower().split()
-            if len(keys) < 2:
-                return QueryType.UNKNOWN, 0.0
-            encoded = self._ed3n.dictionary.encode_soft(keys)
-            if hasattr(encoded, 'intent') and encoded.confidence > 0.5:
-                intent_map = {
-                    "file": QueryType.FILE,
-                    "search": QueryType.SEARCH,
-                    "code": QueryType.CODE,
-                    "execute": QueryType.EXECUTE,
-                    "task": QueryType.TASK,
-                }
-                qt = intent_map.get(encoded.intent, QueryType.UNKNOWN)
-                return qt, min(0.85, 0.5 + len(keys) * 0.1)
-        except Exception:
-            pass
-        return QueryType.UNKNOWN, 0.0
 
     def _adjust_confidence(self, query_type: QueryType, text: str,
                            base_conf: float, anchored: bool, has_negation: bool) -> float:

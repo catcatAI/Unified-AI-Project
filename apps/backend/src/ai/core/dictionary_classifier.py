@@ -1,0 +1,275 @@
+# =============================================================================
+# ANGELA-MATRIX: [L3] [αδ] [B] [L2]
+# =============================================================================
+
+"""
+Dictionary-backed classifier that replaces hardcoded regex patterns.
+Maps ED3N dictionary context_id to QueryType.
+"""
+
+import json
+import logging
+import os
+from typing import Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
+
+# Map ED3N context_id to QueryType
+CONTEXT_TO_QUERY_TYPE: Dict[str, str] = {
+    "file": "file",
+    "search": "search",
+    "code": "code",
+    "execute": "execute",
+    "task": "task",
+    "vision": "vision",
+    "audio": "audio",
+    "math": "math",
+    "system": "system",
+    "greeting": "greeting",
+    "knowledge": "knowledge",
+    "creative": "creative",
+    "opinion": "opinion",
+    "negation": "negation",
+}
+
+# Map context_id + type to action_type
+CONTEXT_TYPE_TO_ACTION: Dict[Tuple[str, str], str] = {
+    ("file", "action"): "modify",
+    ("file", "object"): "read",
+    ("search", "action"): "search",
+    ("code", "action"): "modify",
+    ("code", "object"): "read",
+    ("execute", "action"): "execute",
+    ("task", "action"): "modify",
+    ("task", "object"): "read",
+    ("vision", "action"): "read",
+    ("vision", "object"): "read",
+    ("audio", "action"): "read",
+    ("audio", "object"): "read",
+    ("math", "action"): "calculate",
+    ("math", "operator"): "calculate",
+    ("math", "query"): "calculate",
+    ("system", "action"): "send",
+    ("greeting", "greeting"): "none",
+    ("greeting", "farewell"): "none",
+    ("knowledge", "query"): "read",
+    ("knowledge", "capability"): "read",
+    ("creative", "action"): "modify",
+    ("creative", "object"): "read",
+    ("opinion", "query"): "read",
+    ("negation", "modifier"): "none",
+}
+
+# Negation keywords that should reject
+NEGATION_KEYWORDS = {"不要", "取消", "停止"}
+
+
+class DictionaryClassifier:
+    """Uses ED3N dictionary for intent classification instead of hardcoded regex."""
+
+    def __init__(self):
+        self._dictionary = None
+        self._training_data = {}
+        self._loaded = False
+        self._keyword_index: Dict[str, List[str]] = {}  # keyword -> list of entry keys
+        self._cache: Dict[str, Tuple[str, str, float]] = {}  # text -> (type, action, conf)
+
+    def _ensure_loaded(self):
+        if self._loaded:
+            return
+        self._loaded = True
+        try:
+            from ai.ed3n.dictionary_layer import DictionaryLayer
+            self._dictionary = DictionaryLayer()
+            self._dictionary.load_preset_responses_from_dir()
+            self._load_training_data()
+            self._build_keyword_index()
+            logger.info(
+                "DictionaryClassifier loaded: %d dictionary entries, %d training entries, %d keywords",
+                len(self._dictionary.entries),
+                len(self._training_data),
+                len(self._keyword_index),
+            )
+        except Exception as e:
+            logger.warning("DictionaryClassifier init failed: %s", e)
+            self._dictionary = None
+
+    def _build_keyword_index(self):
+        """Build inverted index from keywords to entry keys for fast lookup."""
+        if not self._dictionary:
+            return
+        for key, entry in self._dictionary.entries.items():
+            for sf in entry.surface_forms.values():
+                sf_lower = sf.lower().strip()
+                if sf_lower:
+                    if sf_lower not in self._keyword_index:
+                        self._keyword_index[sf_lower] = []
+                    self._keyword_index[sf_lower].append(key)
+
+    def _load_training_data(self):
+        """Load classifier training data and merge into dictionary."""
+        training_path = os.path.join(
+            os.path.dirname(__file__), "..", "ed3n", "config", "classifier_training.json"
+        )
+        if not os.path.exists(training_path):
+            logger.warning("Training data not found: %s", training_path)
+            return
+
+        with open(training_path, encoding="utf-8") as f:
+            data = json.load(f)
+
+        entries = data.get("dictionary_entries", [])
+        for entry_data in entries:
+            key = entry_data["key"]
+            from ai.ed3n.dictionary_layer import DictionaryEntry
+
+            entry = DictionaryEntry(
+                key=key,
+                surface_forms=entry_data["surface_forms"],
+                contexts=entry_data.get("contexts", []),
+                relations=entry_data.get("relations", {}),
+                confidence=entry_data.get("confidence", 1.0),
+            )
+            self._dictionary.entries[key] = entry
+            self._training_data[key] = entry_data
+
+    def classify(self, text: str) -> Tuple[str, str, float]:
+        """
+        Classify text using ED3N dictionary.
+        Returns (query_type, action_type, confidence).
+        """
+        self._ensure_loaded()
+
+        if not self._dictionary:
+            return ("unknown", "none", 0.0)
+
+        # Check cache
+        if text in self._cache:
+            return self._cache[text]
+
+        # Check negation first
+        if any(neg in text for neg in NEGATION_KEYWORDS):
+            result = ("unknown", "none", 0.9)
+            self._cache[text] = result
+            return result
+
+        # Fast lookup using keyword index
+        text_lower = text.lower().strip()
+        best_key = None
+        best_score = 0.0
+
+        # Try exact match first
+        if text_lower in self._keyword_index:
+            keys = self._keyword_index[text_lower]
+            if keys:
+                best_key = keys[0]
+                best_score = 1.0
+
+        # Try substring match
+        if best_score < 0.5:
+            for keyword, keys in self._keyword_index.items():
+                if keyword in text_lower:
+                    # Calculate score based on keyword position and length
+                    pos = text_lower.find(keyword)
+                    len_ratio = len(keyword) / max(len(text_lower), 1)
+                    # Boost score if keyword appears at start or is significant portion
+                    position_boost = 1.3 if pos == 0 else 1.0
+                    # Minimum score for any keyword match
+                    min_score = 0.6 if len(keyword) >= 2 else 0.4
+                    score = max(min_score, min(1.0, len_ratio * position_boost * 2.0))
+                    if score > best_score:
+                        best_score = score
+                        best_key = keys[0] if keys else None
+
+        if best_score < 0.15 or not best_key:
+            result = ("unknown", "none", 0.0)
+            self._cache[text] = result
+            return result
+
+        # Get the entry and determine query_type
+        entry = self._dictionary.entries.get(best_key)
+        if not entry or not entry.contexts:
+            result = ("unknown", "none", 0.0)
+            self._cache[text] = result
+            return result
+
+        # Get primary context
+        primary_ctx = entry.contexts[0]
+        context_id = primary_ctx.get("context_id", "")
+        ctx_type = primary_ctx.get("type", "")
+
+        query_type = CONTEXT_TO_QUERY_TYPE.get(context_id, "unknown")
+        action_type = CONTEXT_TYPE_TO_ACTION.get((context_id, ctx_type), "none")
+
+        # Special handling for file operations with action verbs
+        if context_id == "file" and ctx_type == "action":
+            action_map = {
+                "删除": "delete", "刪除": "delete",
+                "创建": "create", "建立": "create", "新增": "create",
+                "读取": "read", "讀取": "read",
+                "写入": "write", "寫入": "write",
+                "移动": "move", "移動": "move",
+                "复制": "copy", "複製": "copy",
+                "重命名": "rename",
+                "整理": "organize",
+                "清理": "clean",
+                "编辑": "modify", "編輯": "modify",
+                "修改": "modify",
+                "列出": "list",
+            }
+            zh = entry.surface_forms.get("zh", "")
+            action_type = action_map.get(zh, action_type)
+
+        # Special handling for execute operations
+        if context_id == "execute" and ctx_type == "action":
+            action_map = {
+                "执行": "execute", "執行": "execute",
+                "运行": "execute", "運行": "execute",
+                "开启": "open", "開啟": "open",
+                "关闭": "close", "關閉": "close",
+                "启动": "start", "啟動": "start",
+                "停止": "stop",
+                "暂停": "pause", "暫停": "pause",
+                "下载": "download", "下載": "download",
+                "上传": "upload", "上傳": "upload",
+            }
+            zh = entry.surface_forms.get("zh", "")
+            action_type = action_map.get(zh, action_type)
+
+        result = (query_type, action_type, round(best_score, 3))
+        self._cache[text] = result
+        return result
+
+    def get_all_matches(self, text: str, threshold: float = 0.15) -> List[Dict]:
+        """Get all matching entries above threshold."""
+        self._ensure_loaded()
+        if not self._dictionary:
+            return []
+
+        scores = self._dictionary.encode_soft(text)
+        results = []
+        for key, score in scores.items():
+            if score < threshold:
+                continue
+            entry = self._dictionary.entries.get(key)
+            if not entry:
+                continue
+            results.append({
+                "key": key,
+                "score": score,
+                "surface_forms": entry.surface_forms,
+                "contexts": entry.contexts,
+            })
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results
+
+
+# Singleton instance
+_classifier = None
+
+
+def get_dictionary_classifier() -> DictionaryClassifier:
+    global _classifier
+    if _classifier is None:
+        _classifier = DictionaryClassifier()
+    return _classifier

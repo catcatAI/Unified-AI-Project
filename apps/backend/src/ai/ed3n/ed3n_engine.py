@@ -169,51 +169,23 @@ class ED3NEngine:
     def _reflex_match(self, input_text: str) -> Optional[str]:
         return self.process_reflex(input_text)
 
-    _ZH_NUM = {
-        "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
-        "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
-        "十": 10, "百": 100, "千": 1000, "万": 10000,
-        "两": 2, "〇": 0, "壹": 1, "贰": 2, "叁": 3,
-        "肆": 4, "伍": 5, "陆": 6, "柒": 7, "捌": 8, "玖": 9,
-    }
-
-    _ZH_OPS = {
-        "加": "+", "加上": "+", "减": "-", "减去": "-",
-        "乘": "*", "乘以": "*", "乘上": "*", "times": "*",
-        "除": "/", "除以": "/", "divided": "/",
-        "的和": "+", "的差": "-", "的积": "*", "的商": "/",
-        "等于": "=", "是多少": "=", "等于几": "=", "结果": "=",
-        "plus": "+", "minus": "-",
-    }
-
     def _try_math_eval(self, text: str) -> Optional[str]:
-        import re
-        cleaned = text.strip().rstrip("？?！!。.")
-        for zh_op, en_op in sorted(self._ZH_OPS.items(), key=lambda x: -len(x[0])):
-            cleaned = cleaned.replace(zh_op, f" {en_op} ")
-        for zh_d, digit in self._ZH_NUM.items():
-            if zh_d in "十百千万":
-                continue
-            cleaned = cleaned.replace(zh_d, str(digit))
-        m = re.search(r'(\d+)\s*([+\-*/])\s*(\d+)', cleaned)
-        if not m:
-            return None
-        a, op, b = int(m.group(1)), m.group(2), int(m.group(3))
-        if op == "+":
-            result = a + b
-        elif op == "-":
-            result = a - b
-        elif op == "*":
-            result = a * b
-        elif op == "/":
-            if b == 0:
-                return "除数不能为零。"
-            result = a / b
+        """Evaluate math expression using MathRippleEngine."""
+        try:
+            from ai.memory.math_ripple_engine import MathRippleEngine
+            engine = MathRippleEngine()
+            converted = engine.convert_chinese_math(text)
+            if not converted:
+                return None
+            result, ripples = engine.compute(text)
+            if result is None:
+                return None
+            # Format result
             if result == int(result):
-                result = int(result)
-        else:
+                return f"{text.rstrip('？?！!。.')} = {int(result)}"
+            return f"{text.rstrip('？?！!。.')} = {result:.2f}"
+        except Exception:
             return None
-        return f"{a} {op} {b} = {result}"
 
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:
         _cache_key = (input_text.lower().strip(), self.dictionary._index_version)

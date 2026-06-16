@@ -59,6 +59,28 @@ class ExecutionGate:
 
     def __init__(self, model_bus=None):
         self._model_bus = model_bus
+        self._config = self._load_config()
+
+    def _load_config(self):
+        """Load execution gate config from JSON file."""
+        import json
+        import os
+        config_path = os.path.join(os.path.dirname(__file__), "execution_gate_config.json")
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {
+                "scope_words": {"max_impact": ["全部", "所有", "整个", "all"], "min_impact": ["一个", "单一", "this"]},
+                "clarity": {
+                    "clear_verbs": ["search", "delete", "open", "run", "read", "write", "create", "edit"],
+                    "vague_words": ["一下", "看看", "处理", "弄", "搞", "整", "试试"],
+                },
+                "confirm_messages": {"read": "读取", "create": "建立", "modify": "修改", "delete": "删除", "send": "传送", "system": "执行系统操作", "default": "执行操作"},
+                "warnings": {"delete": "\n⚠️ 删除后无法复原。", "send": "\n⚠️ 传送后无法撤回。", "system": "\n⚠️ 系统操作可能影响其他程序。", "modify": "\n 修改会覆盖原始内容。"},
+                "confirm_suffix": "\n确认后我会执行。",
+                "no_handler_message": "你想要我做什么？可以更具體說明嗎？",
+            }
 
     def decide(self, query_type: str, action_type: str, user_message: str,
                confidence: float, context: dict) -> GateDecision:
@@ -109,7 +131,7 @@ class ExecutionGate:
                 action="confirm_then_execute", score=score,
                 action_type=action_type,
                 reason="has_score_but_no_handler",
-                confirm_message="你想要我做什么？可以更具體說明嗎？",
+                confirm_message=self._config.get("no_handler_message", "你想要我做什么？"),
                 original_query=user_message,
             )
 
@@ -145,11 +167,12 @@ class ExecutionGate:
             "delete": 0.4, "send": 0.3, "system": 0.2, "none": 1.0,
         }.get(action_type, 0.5)
 
+        scope = self._config.get("scope_words", {})
         # 全部/所有 → 影响更大
-        if any(w in user_message for w in ["全部", "所有", "整个", "all", "全部的"]):
+        if any(w in user_message for w in scope.get("max_impact", [])):
             base = max(0.1, base - 0.3)
         # 单一/一个 → 影响较小
-        if any(w in user_message for w in ["一个", "单一", "this", "this one", "就好"]):
+        if any(w in user_message for w in scope.get("min_impact", [])):
             base = min(1.0, base + 0.1)
 
         return base
@@ -158,13 +181,9 @@ class ExecutionGate:
         """用户意图有多清晰。范围 0.0(模糊) ~ 1.0(明确)"""
         clarity = confidence
 
+        clarity_cfg = self._config.get("clarity", {})
         # 包含明确动作动词 → 更清晰
-        clear_verbs = [
-            "搜寻", "搜索", "删除", "开启", "关闭", "执行", "下载", "上传",
-            "读取", "写入", "储存", "建立", "修改", "编辑", "重新命名",
-            "search", "delete", "open", "run", "download", "upload",
-            "read", "write", "save", "create", "edit", "rename",
-        ]
+        clear_verbs = clarity_cfg.get("clear_verbs", [])
         if any(v in text for v in clear_verbs):
             clarity = min(1.0, clarity + 0.1)
 
@@ -175,7 +194,7 @@ class ExecutionGate:
             clarity = min(1.0, clarity + 0.1)
 
         # 模糊词 → 不清晰
-        vague_words = ["一下", "看看", "处理", "弄", "搞", "整", "试试"]
+        vague_words = clarity_cfg.get("vague_words", [])
         if any(w in text for w in vague_words):
             clarity = max(0.1, clarity - 0.2)
 
@@ -187,26 +206,20 @@ class ExecutionGate:
 
     def _build_confirm(self, action_type: str, user_message: str) -> str:
         """构建确认讯息"""
-        desc = {
-            "read": "读取", "create": "建立", "modify": "修改",
-            "delete": "删除", "send": "传送", "system": "执行系统操作",
-        }.get(action_type, "执行操作")
+        confirm_msgs = self._config.get("confirm_messages", {})
+        desc = confirm_msgs.get(action_type, confirm_msgs.get("default", "执行操作"))
         msg = f"你想要{desc}吗？"
-        if action_type == "delete":
-            msg += "\n⚠️ 删除后无法复原。"
-        elif action_type == "send":
-            msg += "\n⚠️ 传送后无法撤回。"
-        elif action_type == "system":
-            msg += "\n⚠️ 系统操作可能影响其他程序。"
-        elif action_type == "modify":
-            msg += "\n 修改会覆盖原始内容。"
-        msg += "\n确认后我会执行。"
+        warnings = self._config.get("warnings", {})
+        if action_type in warnings:
+            msg += warnings[action_type]
+        msg += self._config.get("confirm_suffix", "\n确认后我会执行。")
         return msg
 
     def _describe_impact(self, action_type: str, user_message: str) -> str:
         """描述影响范围"""
         parts = []
-        if "全部" in user_message or "所有" in user_message:
+        scope = self._config.get("scope_words", {})
+        if any(w in user_message for w in scope.get("max_impact", [])):
             parts.append("⚠️ 这会影响所有项目")
         if action_type == "delete":
             parts.append("此操作无法撤销")

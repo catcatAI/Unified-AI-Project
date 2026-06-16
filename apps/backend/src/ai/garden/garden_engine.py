@@ -263,6 +263,11 @@ class GARDENEngine:
         if reflex_hit is not None:
             return reflex_hit
 
+        # Stage 1.5: Math evaluation (using MathRippleEngine)
+        math_result = self._try_math_eval(text)
+        if math_result is not None:
+            return math_result
+
         # Stage 2: Multi-step detection
         if self._is_multi_step(text):
             return self._process_multi_step(text, context)
@@ -377,6 +382,24 @@ class GARDENEngine:
         adjustments = self._HORMONE_ADJUSTMENTS.get(emotion, {})
         for hormone, level in adjustments.items():
             self.set_hormone(hormone, level)
+
+    def _try_math_eval(self, text: str) -> Optional[str]:
+        """Evaluate math expression using MathRippleEngine."""
+        try:
+            from ai.memory.math_ripple_engine import MathRippleEngine
+            engine = MathRippleEngine()
+            converted = engine.convert_chinese_math(text)
+            if not converted:
+                return None
+            result, ripples = engine.compute(text)
+            if result is None:
+                return None
+            # Format result
+            if result == int(result):
+                return f"{text.rstrip('？?！!。.')} = {int(result)}"
+            return f"{text.rstrip('？?！!。.')} = {result:.2f}"
+        except Exception:
+            return None
 
     # ------------------------------------------------------------------
     # VectorDecoder (iterative generation)
