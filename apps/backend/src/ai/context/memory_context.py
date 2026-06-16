@@ -141,16 +141,19 @@ class MemoryContextManager:
                 logger.error(f"Memory {memory_id} not found", exc_info=True)
                 return None
 
-            self.memories[memory_id]
-
-            # 搜索相关的上下文
-            # contexts = self.context_manager.search_contexts(memory_id, [ContextType.MEMORY])  # Commented - needs proper import
-
-            # if not contexts:
-            #     logger.debug(f"No context found for memory {memory_id}")
-            #     return None
-
-            return None
+            mem = self.memories[memory_id]
+            mem.access()
+            result: Dict[str, Any] = {
+                "memory_id": mem.memory_id,
+                "content": mem.content,
+                "memory_type": mem.memory_type,
+                "created_at": mem.created_at.isoformat(),
+                "last_accessed": mem.last_accessed.isoformat(),
+                "access_count": mem.access_count,
+                "has_embedding": mem.embedding is not None,
+                "metadata": mem.metadata,
+            }
+            return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for memory {memory_id}: {e}", exc_info=True)
             return None

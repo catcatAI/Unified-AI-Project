@@ -27,7 +27,7 @@ from loguru import logger
 
 from core.system.config.magic_numbers import batch_value, cache_value, retry_value, threshold_value, timeout_value
 
-from .execution_monitor import (
+from core.managers.execution_monitor import (
     ExecutionMonitor,
     ExecutionConfig,
     ExecutionResult,

@@ -200,14 +200,17 @@ class ToolContextManager:
                 logger.error(f"Tool {tool_id} not found", exc_info=True)
                 return None
 
-            # 搜索相关的上下文
-            # contexts = self.context_manager.search_contexts(tool_id, [ContextType.TOOL])  # Commented - needs proper import
-
-            # if not contexts:
-            #     logger.debug(f"No context found for tool {tool_id}")
-            #     return None
-
-            return None
+            tool = self.tools[tool_id]
+            result: Dict[str, Any] = {
+                "tool_id": tool.tool_id,
+                "name": tool.name,
+                "description": tool.description,
+                "category_id": tool.category_id,
+                "total_calls": tool.total_calls,
+                "success_rate": tool.success_rate,
+                "average_duration": tool.average_duration,
+            }
+            return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for tool {tool_id}: {e}", exc_info=True)
             return None

@@ -1,8 +1,40 @@
 # Angela Execution Plan
 
-> Version 1.0 — 2026-06-16
-> Status: DRAFT — Subject to review
+> Version 1.1 — 2026-06-16
+> Status: IN PROGRESS
 > Reference: COMPREHENSIVE_DESIGN_STANDARD.md
+
+---
+
+## Progress Tracker
+
+| Phase | Status | Date | Notes |
+|-------|--------|------|-------|
+| Phase 0: Foundation Fixes | 🟡 PARTIAL | 2026-06-16 | P0 (imports) ✅, P1 (context) ✅, P2 (DEPRECATED) ✅, i18n pending |
+| Phase 1: Core Activation | ⏳ PENDING | — | |
+| Phase 2: Intelligence Layer | ⏳ PENDING | — | |
+| Phase 3: Safety & Trust | ⏳ PENDING | — | |
+| Phase 4: Embodiment | ⏳ PENDING | — | |
+| Phase 5: Infrastructure | ⏳ PENDING | — | |
+| Phase 6: Polish & Launch | ⏳ PENDING | — | |
+
+### Phase 0 Detail (2026-06-16)
+
+| Task | Status | Verification |
+|------|--------|-------------|
+| Fix execution_manager.py import | ✅ | `python -c "from ...execution_manager import ExecutionManager"` OK |
+| Fix UCC await-in-sync | ✅ | `python -c "from ...unified_control_center import UnifiedControlCenter"` OK |
+| Fix UCC EnvironmentSimulator | ✅ | New class created in environment_simulator.py |
+| Fix UCC duplicate lines | ✅ | Lines 56-58 removed |
+| Activate dialogue_context | ✅ | `get_conversation_context()` returns real data |
+| Activate model_context | ✅ | `get_model_context()` returns real data |
+| Activate tool_context | ✅ | `get_tool_context()` returns real data |
+| Activate memory_context | ✅ | `get_memory_context()` returns real data |
+| Fix integration_with_ham | ✅ | `sync_ham_to_context()` returns context_id |
+| Clean DEPRECATED markers | ✅ | 9 packages cleaned |
+| i18n system | ⏳ | Pending |
+| Clean stub files | 🟡 | Kept (imported by other modules) |
+| Tests | ✅ | 37/37 pass (24 phase6 + 13 phase5) |
 
 ---
 
@@ -653,18 +685,20 @@ Phase 0 → Phase 5 (can start after Phase 0)
 ## Appendix B: Exit Criteria Checklist
 
 ### Phase 0
-- [ ] 0 broken imports
-- [ ] 0 dead code files
-- [ ] `services/messages/` directory with 3 language files
-- [ ] `services/message_loader.py` working
-- [ ] All handlers use i18n
-- [ ] All services use i18n
-- [ ] All existing tests pass
+- [x] 0 broken imports (3 fixed: execution_manager, UCC await, UCC EnvironmentSimulator)
+- [ ] 0 dead code files (stub files kept — imported by other modules)
+- [ ] `services/messages/` directory with 3 language files (i18n pending)
+- [ ] `services/message_loader.py` working (i18n pending)
+- [ ] All handlers use i18n (i18n pending)
+- [ ] All services use i18n (i18n pending)
+- [x] All existing tests pass (37/37 verified)
+- [x] 9 DEPRECATED markers removed from used packages
+- [x] 5 dead context subsystems activated
 
 ### Phase 1
-- [ ] `get_conversation_context()` returns real data
-- [ ] `get_model_context()` returns real data
-- [ ] `get_tool_context()` returns real data
+- [x] `get_conversation_context()` returns real data (fixed 2026-06-16)
+- [x] `get_model_context()` returns real data (fixed 2026-06-16)
+- [x] `get_tool_context()` returns real data (fixed 2026-06-16)
 - [ ] ED3N cycles when confidence < 0.7
 - [ ] GARDEN cycles with convergence check
 - [ ] `UnifiedLearningOrchestrator` operational

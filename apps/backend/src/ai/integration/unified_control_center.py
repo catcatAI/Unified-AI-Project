@@ -53,9 +53,6 @@ class UnifiedControlCenter:
         self.task_queue = asyncio.Queue()
         self.workers: List[asyncio.Task] = []
         self.max_workers = self.config.get("max_workers", 4)
-        self.task_queue = asyncio.Queue()
-        self.workers: List[asyncio.Task] = []
-        self.max_workers = self.config.get("max_workers", 4)
         self.pending_futures: Dict[str, asyncio.Future] = {}
 
         # Concurrency Limits (Phase 14)
@@ -117,12 +114,8 @@ class UnifiedControlCenter:
             self.components["hsp_connector"] = HSPConnector(self.system_id, **hsp_config)
 
             # 10. LLM Service (Phase 15)
-            # 使用 angela_llm_service 而非 multi_llm_adapter
-            from services.angela_llm_service import get_llm_service
-            async def init_llm() -> str:
-                """Initialize llm."""
-                return await get_llm_service()
-            self.components["llm_service"] = await init_llm()
+            # Initialized asynchronously in initialize_async()
+            self.components["llm_service"] = None
 
             # 11. Emotion System (Phase 12)
             self.components["emotion_system"] = EmotionSystem(f"{self.system_id}_emotion")
@@ -138,7 +131,14 @@ class UnifiedControlCenter:
 
         # 初始化 LLM 服務
         llm_service = self.components.get("llm_service")
-        if llm_service and hasattr(llm_service, "initialize"):
+        if llm_service is None:
+            try:
+                from services.angela_llm_service import get_llm_service
+                self.components["llm_service"] = await get_llm_service()
+                logger.info("LLM Service initialized")
+            except Exception as e:
+                logger.warning(f"LLM Service init failed: {e}", exc_info=True)
+        elif hasattr(llm_service, "initialize"):
             await llm_service.initialize()
             logger.info(f"LLM Service initialized with {len(llm_service.backends)} backends")
 

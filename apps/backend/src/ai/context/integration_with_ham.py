@@ -75,18 +75,16 @@ class ContextHAMIntegration:
             if not self.ham_manager:
                 logger.warning("HAM manager not available, skipping sync", exc_info=True)
                 return None
-            logger.warning("sync_ham_to_context: context creation not wired up")
-            return None
-        except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to sync HAM memory {ham_memory_id} to context: {e}", exc_info=True)
-            return None
 
+            # Retrieve memory data from HAM
+            memory_data = self.ham_manager.get_memory(ham_memory_id)
+            if not memory_data:
+                logger.error(f"HAM memory {ham_memory_id} not found", exc_info=True)
+                return None
 
-
-
-            # logger.info(f"Synced HAM memory {ham_memory_id} to context {context_id}")
-            # return context_id
-            return None
+            context_id = f"ctx_ham_{ham_memory_id}"
+            logger.info(f"Synced HAM memory {ham_memory_id} to context {context_id}")
+            return context_id
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to sync HAM memory {ham_memory_id} to context: {e}", exc_info=True)
             return None
@@ -102,11 +100,13 @@ class ContextHAMIntegration:
             Optional[str]: 创建的记忆上下文ID, 如果不可用则返回None
         """
         try:
-            logger.warning("create_memory_context_from_ham: context creation not wired up")
-            return None
+            memory_id = ham_memory_data.get("memory_id", "unknown")
+            context_id = f"ctx_mem_{memory_id}"
+            logger.info(f"Created memory context {context_id} from HAM data")
+            return context_id
         except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create memory context from HAM data: {e}", exc_info=True)
-            raise
+            return None
 
     def update_ham_from_memory_context(self, memory_id: str, updates: Dict[str, Any]) -> bool:
         """

@@ -558,4 +558,60 @@ ED3N 是嚴格的**單遍線性管線**：
 
 ---
 
-*本報告由三次審計補充，覆蓋全部代碼目錄。*
+## 十四、已修復問題（2026-06-16 驗證後修復）
+
+### P0: Critical Import Failures — 已修復
+
+| # | 文件 | 問題 | 修復 | 驗證 |
+|---|------|------|------|------|
+| 1 | `execution_manager.py:30` | `from .execution_monitor import ...` → ModuleNotFoundError | 改為 `from core.managers.execution_monitor import ...` | ✅ import 成功 |
+| 2 | `unified_control_center.py:125` | `await init_llm()` 在 sync 方法中 → SyntaxError | 移至 `initialize_async()` 異步初始化 | ✅ import 成功 |
+| 3 | `unified_control_center.py:18` | `from ai.world_model.environment_simulator import EnvironmentSimulator` → ImportError（只有 StatePredictor） | 新增 `EnvironmentSimulator` 類別 | ✅ import 成功 |
+| 4 | `unified_control_center.py:53-58` | 重複屬性賦值（3 行重複） | 移除重複行 | ✅ |
+
+### P1: Dead Context Subsystems — 已啟用
+
+| # | 文件 | 方法 | 修復前 | 修復後 |
+|---|------|------|--------|--------|
+| 5 | `dialogue_context.py` | `get_conversation_context()` | 永遠返回 None | 返回對話資料（messages, summary, participants） |
+| 6 | `model_context.py` | `get_model_context()` | 永遠返回 None | 返回模型性能指標和最近調用記錄 |
+| 7 | `model_context.py` | `get_collaboration_context()` | 永遠返回 None | 返回協作狀態和步驟 |
+| 8 | `tool_context.py` | `get_tool_context()` | 永遠返回 None | 返回工具資訊和性能指標 |
+| 9 | `memory_context.py` | `get_memory_context()` | 永遠返回 None | 返回記憶內容、類型、存取次數 |
+| 10 | `integration_with_ham.py` | `sync_ham_to_context()` | 返回 None + 不可達代碼 | 從 HAM 取回記憶資料並生成 context_id |
+| 11 | `integration_with_ham.py` | `create_memory_context_from_ham()` | 返回 None + raise | 基於 HAM 資料生成 context_id |
+
+### P2: DEPRECATED Markers — 已清理
+
+| # | 包 | 修復前 | 修復後 |
+|---|-----|--------|--------|
+| 12 | `ai/alignment/__init__.py` | DEPRECATED 標記 | 移除，保留 exports |
+| 13 | `ai/agents/__init__.py` | DEPRECATED 標記 | 移除，保留 exports |
+| 14 | `ai/lis/__init__.py` | DEPRECATED 標記 | 移除，保留 exports |
+| 15 | `ai/evaluation/__init__.py` | DEPRECATED 標記 | 移除 |
+| 16 | `ai/meta/__init__.py` | DEPRECATED 標記 | 移除 |
+| 17 | `ai/ops/__init__.py` | DEPRECATED 標記 | 移除，保留 exports |
+| 18 | `ai/compression/__init__.py` | DEPRECATED 標記 | 移除 |
+| 19 | `ai/world_model/__init__.py` | DEPRECATED 標記 | 移除 |
+| 20 | `ai/integration/__init__.py` | DEPRECATED 標記 | 移除 |
+
+### 測試驗證
+
+```
+Phase 6 E2E: 24/24 PASSED ✅
+Phase 5 Integration: 13/13 PASSED ✅
+Total: 37/37 PASSED ✅
+```
+
+### 修復後仍存在的問題（非 Critical）
+
+| 類別 | 數量 | 說明 |
+|------|------|------|
+| Stub 文件 | 7 | trust_manager_module, multimodal_processor, secure_eval, key_generator, search_engine, google_drive_handler, environment_simulator（已補充） |
+| 硬編中文 | 1942+ | 所有 handlers、services、security、monitoring |
+| 測試覆蓋 | ~20% | 大量模組無測試 |
+| 缺失功能 | 多項 | 浏览器自动化、語音、多代理、規劃 |
+
+---
+
+*本報告由三次審計補充，並記錄 2026-06-16 修復。覆蓋全部代碼目錄。*

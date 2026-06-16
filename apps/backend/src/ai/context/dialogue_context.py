@@ -251,16 +251,26 @@ class DialogueContextManager:
                 logger.error(f"Conversation {conversation_id} not found", exc_info=True)
                 return None
 
-            self.conversations[conversation_id]
-
-            # 搜索相关的上下文
-            # contexts = self.context_manager.search_contexts(conversation_id, [ContextType.DIALOGUE])  # Commented - needs proper import
-
-            # if not contexts:
-            #     logger.debug(f"No context found for conversation {conversation_id}")
-            #     return None
-
-            return None
+            conv = self.conversations[conversation_id]
+            result: Dict[str, Any] = {
+                "conversation_id": conv.conversation_id,
+                "participants": conv.participants,
+                "start_time": conv.start_time.isoformat(),
+                "message_count": len(conv.messages),
+            }
+            if conv.end_time:
+                result["end_time"] = conv.end_time.isoformat()
+            if conv.context_summary:
+                result["summary"] = {
+                    "key_points": conv.context_summary.key_points,
+                    "entities": conv.context_summary.entities,
+                    "sentiment": conv.context_summary.sentiment,
+                }
+            result["messages"] = [
+                {"role": m.role, "content": m.content, "timestamp": m.timestamp.isoformat()}
+                for m in conv.messages[-10:]
+            ]
+            return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for conversation {conversation_id}: {e}", exc_info=True)
             return None

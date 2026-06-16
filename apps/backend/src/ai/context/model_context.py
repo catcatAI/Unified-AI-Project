@@ -172,14 +172,28 @@ class ModelContextManager:
     def get_model_context(self, model_id: str) -> Optional[Dict[str, Any]]:
         """获取模型上下文"""
         try:
-            # 搜索相关的上下文
-            # contexts = self.context_manager.search_contexts(model_id, [ContextType.MODEL])  # Commented - needs proper import
+            metrics = self.model_metrics.get(model_id)
+            recent_calls = [
+                {
+                    "record_id": c.record_id,
+                    "caller": c.caller_model_id,
+                    "callee": c.callee_model_id,
+                    "timestamp": c.timestamp.isoformat(),
+                    "success": c.success,
+                    "duration": c.duration,
+                }
+                for c in self.call_records
+                if c.caller_model_id == model_id or c.callee_model_id == model_id
+            ][-10:]
 
-            # if not contexts:
-            #     logger.debug(f"No context found for model {model_id}")
-            #     return None
-
-            return None
+            result: Dict[str, Any] = {
+                "model_id": model_id,
+                "total_calls": metrics.total_calls if metrics else 0,
+                "success_rate": metrics.success_rate if metrics else 0.0,
+                "average_duration": metrics.average_duration if metrics else 0.0,
+                "recent_calls": recent_calls,
+            }
+            return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for model {model_id}: {e}", exc_info=True)
             return None
@@ -328,16 +342,24 @@ class AgentContextManager:
                 logger.error(f"Collaboration {collaboration_id} not found", exc_info=True)
                 return None
 
-            self.collaborations[collaboration_id]
-
-            # 搜索相关的上下文
-            # contexts = self.context_manager.search_contexts(collaboration_id, [ContextType.MODEL])  # Commented - needs proper import
-
-            # if not contexts:
-            #     logger.debug(f"No context found for collaboration {collaboration_id}")
-            #     return None
-
-            return None
+            collab = self.collaborations[collaboration_id]
+            result: Dict[str, Any] = {
+                "collaboration_id": collab.collaboration_id,
+                "status": collab.status,
+                "start_time": collab.start_time.isoformat(),
+                "steps": [
+                    {
+                        "step_id": s.step_id,
+                        "agent_id": s.agent_id,
+                        "action": s.action,
+                        "timestamp": s.timestamp.isoformat(),
+                    }
+                    for s in collab.collaboration_steps
+                ],
+            }
+            if collab.end_time:
+                result["end_time"] = collab.end_time.isoformat()
+            return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}", exc_info=True)
             return None
