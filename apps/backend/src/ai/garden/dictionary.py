@@ -219,6 +219,8 @@ class _ChromaEncoder:
     step.
     """
 
+    EMBEDDING_DIM: int = 384
+
     def __init__(self):
         import chromadb
         import uuid
@@ -238,7 +240,7 @@ class _ChromaEncoder:
     def encode(self, texts: List[str]) -> torch.Tensor:
         torch, _ = _lazy_torch()
         if not texts:
-            return torch.zeros(0, 384)
+            return torch.zeros(0, self.EMBEDDING_DIM)
 
         # Add texts to collection (deduplicate by text content)
         ids_to_add = []
@@ -269,16 +271,20 @@ class _ChromaEncoder:
                         if emb is not None and len(emb) > 0:
                             embeddings.append(emb)
                         else:
-                            embeddings.append([0.0] * 384)
+                            logger.warning("GARDEN: ChromaDB returned empty embedding for text '%s'", text[:50])
+                            embeddings.append([0.0] * self.EMBEDDING_DIM)
                     else:
-                        embeddings.append([0.0] * 384)
-                except Exception:
-                    embeddings.append([0.0] * 384)
+                        logger.warning("GARDEN: ChromaDB get() returned no embeddings for text '%s'", text[:50])
+                        embeddings.append([0.0] * self.EMBEDDING_DIM)
+                except Exception as e:
+                    logger.warning("GARDEN: ChromaDB get() failed for text '%s': %s", text[:50], e)
+                    embeddings.append([0.0] * self.EMBEDDING_DIM)
             else:
-                embeddings.append([0.0] * 384)
+                logger.warning("GARDEN: text '%s' not found in ChromaDB text_to_id map", text[:50])
+                embeddings.append([0.0] * self.EMBEDDING_DIM)
 
         if not embeddings:
-            return torch.zeros(0, 384)
+            return torch.zeros(0, self.EMBEDDING_DIM)
 
         return torch.tensor(embeddings, dtype=torch.float32)
 
@@ -324,7 +330,7 @@ class VectorDictionary:
         top_k: int = 8,
         similarity_threshold: Optional[float] = None,
         device: str = "cpu",
-        compatibility_mode: bool = True,
+        compatibility_mode: bool = False,
     ):
         similarity_threshold = similarity_threshold if similarity_threshold is not None else threshold_value("ai.garden.dictionary.similarity_threshold", 0.30)
         self.model_name = model_name

@@ -97,7 +97,7 @@ class TestGARDENEngineInit:
     """Tests for engine construction."""
 
     def test_init_defaults(self):
-        engine = GARDENEngine()
+        engine = GARDENEngine(compatibility_mode=True)
         assert engine.reflex is not None
         assert engine.dictionary is not None
         assert engine.snn is not None
@@ -105,7 +105,7 @@ class TestGARDENEngineInit:
         assert engine._query_count == 0
 
     def test_init_custom(self):
-        engine = GARDENEngine(top_k=4, similarity_threshold=0.5, snn_timesteps=3)
+        engine = GARDENEngine(top_k=4, similarity_threshold=0.5, snn_timesteps=3, compatibility_mode=True)
         assert engine.dictionary.top_k == 4
         assert engine.dictionary.similarity_threshold == 0.5
         assert engine.snn.timesteps == 3

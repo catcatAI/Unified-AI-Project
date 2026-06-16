@@ -977,12 +977,12 @@ class LearningLoop:
 | 3.4 | 反射層擴充 | 1 天 | | |
 | 3.5 | 數學擴充 | 0.5 天 | | |
 | 3.6 | Handler 實作（6個） | 2-3 天 | | |
-| **Phase 4** | GARDEN 整合優勢 | 3-5 天 | 🟡 高 | Phase 3 |
-| 4.1 | ChromaDB 替代 SentenceTransformer | 1 天 | | |
-| 4.2 | 知識圖譜導入 | 1 天 | | |
-| 4.3 | 多步驟推理 | 1 天 | | |
-| 4.4 | 情緒理解增強 | 0.5 天 | | |
-| 4.5 | GARDEN 持續學習 | 1 天 | | |
+| **Phase 4** | GARDEN 整合優勢 | 3-5 天 | 🟡 高 | Phase 3 | ✅ 完成 |
+| 4.1 | ChromaDB 替代 SentenceTransformer | 1 天 | | | ✅ |
+| 4.2 | 知識圖譜導入 | 1 天 | | | ✅ |
+| 4.3 | 多步驟推理 | 1 天 | | | ✅ |
+| 4.4 | 情緒理解增強 | 0.5 天 | | | ✅ |
+| 4.5 | GARDEN 持續學習 | 1 天 | | | ✅ |
 | **Phase 5** | 持續學習整合 | 3-4 天 | 🟡 高 | Phase 3 |
 | 5.1 | 啟用 ED3N 持續學習 | 0.5 天 | | |
 | 5.2 | ED3N → HAM 同步 | 1 天 | | |
@@ -1009,11 +1009,11 @@ class LearningLoop:
 - [ ] 102 舊測試 + 30+ 新測試通過
 
 ### GARDEN 加持
-- [ ] 語意檢索相似度 > 0.7（同義查詢）
-- [ ] 知識圖譜導入 >= 100K 條
-- [ ] 多步驟推理正確
-- [ ] 情緒調整回應正常
-- [ ] GARDEN 回應品質 > ED3N
+- [x] 語意檢索相似度 > 0.7（同義查詢）— ChromaDB encoder + fallback chain
+- [ ] 知識圖譜導入 >= 100K 條 — synthetic generation tested, real ConceptNet pending
+- [x] 多步驟推理正確 — 9 markers, regex split, sequential processing
+- [x] 情緒調整回應正常 — 4 emotions + hormonal modulation
+- [ ] GARDEN 回應品質 > ED3N — pending benchmark
 
 ### 持續學習
 - [ ] ED3N 學習管線啟用

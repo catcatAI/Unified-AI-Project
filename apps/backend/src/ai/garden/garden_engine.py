@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from core.system.config.magic_numbers import (
@@ -152,7 +153,7 @@ class GARDENEngine:
         similarity_threshold: Optional[float] = None,
         snn_timesteps: Optional[int] = None,
         device: str = "cpu",
-        compatibility_mode: bool = True,
+        compatibility_mode: bool = False,
     ):
         top_k = top_k if top_k is not None else limit_value("ai.garden.engine.top_k", 8)
         similarity_threshold = similarity_threshold if similarity_threshold is not None else threshold_value("ai.garden.engine.similarity_threshold", 0.30)
@@ -173,6 +174,7 @@ class GARDENEngine:
         self._presets_loaded = False
         self._query_count = 0
         self._learn_count = 0
+        self._learning_enabled = True
 
     # ------------------------------------------------------------------
     # Preset / init
@@ -292,7 +294,7 @@ class GARDENEngine:
     # Multi-step reasoning (Phase 4.3)
     # ------------------------------------------------------------------
 
-    _MULTI_STEP_MARKERS = ["然后", "然後", "接著", "接着", "之後", "之后", "再", "and then", "after that"]
+    _MULTI_STEP_MARKERS = ["然后", "然後", "接著", "接着", "之後", "之后", "然后再", "然後再", "and then", "after that"]
 
     def _is_multi_step(self, text: str) -> bool:
         """Detect if the input contains multiple sequential steps."""
@@ -301,7 +303,6 @@ class GARDENEngine:
 
     def _process_multi_step(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """Split multi-step input and process each step sequentially."""
-        import re
         pattern = "|".join(re.escape(m) for m in self._MULTI_STEP_MARKERS)
         steps = re.split(pattern, text, flags=re.IGNORECASE)
         results = []
@@ -406,20 +407,28 @@ class GARDENEngine:
     ) -> Dict[str, Any]:
         """
         Online learning from a single interaction.
-        1. Detect and grow new concepts in the dictionary
+        1. Detect and grow new concepts in the dictionary (from both user and response text)
         2. Run Hebbian weight update in SNN between input and response keys
         Returns a summary dict.
         """
+        if not self._learning_enabled:
+            return {"interaction": self._learn_count, "new_concepts": [], "input_keys": [], "output_keys": [], "hebbian_delta": 0.0}
+
         confidence = confidence if confidence is not None else confidence_value("ai.garden.engine.learn_confidence", 0.7)
         if not self._presets_loaded:
             self.load_presets()
 
         self._learn_count += 1
 
-        # Grow dictionary with any novel concepts from user text
         new_keys: List[str] = []
-        tokens = [t for t in user_text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
-        for token in tokens:
+
+        # Grow dictionary with novel concepts from user text
+        all_tokens = []
+        for text in [user_text, response_text]:
+            tokens = [t for t in text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
+            all_tokens.extend(tokens)
+
+        for token in all_tokens:
             existing = self.dictionary._find_similar_key(token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90))
             if not existing and confidence >= self.dictionary.growth_threshold:
                 new_key = self.dictionary.grow(token, token, confidence=confidence)

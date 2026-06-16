@@ -48,8 +48,8 @@ def snn_core() -> TensorSNNCore:
 
 @pytest.fixture(scope="function")
 def engine() -> GARDENEngine:
-    """GARDENEngine with presets loaded."""
-    e = GARDENEngine()
+    """GARDENEngine with presets loaded (compatibility mode for fast tests)."""
+    e = GARDENEngine(compatibility_mode=True)
     e.load_presets()
     return e
 
