@@ -899,7 +899,7 @@ No other system combines:
 |----------|------|-----------|-------------------|-------|
 | AI Core | 30 | 0 | 0 | 30 |
 | Learning | 12 | 3 | 4 | 19 |
-| Safety | 8 | 1 | 0 | 9 |
+| Safety | 11 | 1 | 0 | 12 |
 | Context | 1 | 4 | 0 | 5 |
 | Memory | 12 | 0 | 0 | 12 |
 | Services | 15 | 2 | 0 | 17 |
@@ -909,9 +909,9 @@ No other system combines:
 | Economy | 2 | 0 | 0 | 2 |
 | Pet | 1 | 0 | 0 | 1 |
 | Monitoring | 2 | 0 | 0 | 2 |
-| Security | 5 | 2 | 0 | 7 |
+| Security | 7 | 2 | 0 | 9 |
 | Integration | 0 | 0 | 3 | 3 |
-| **Total** | **103** | **13** | **7** | **123** |
+| **Total** | **108** | **13** | **7** | **128** |
 
 ### 7.2 Target Module Count (After Implementation)
 
