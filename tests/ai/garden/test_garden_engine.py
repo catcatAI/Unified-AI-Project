@@ -103,6 +103,8 @@ class TestGARDENEngineInit:
         assert engine.snn is not None
         assert engine._presets_loaded is False
         assert engine._query_count == 0
+        assert engine._learning_enabled is True
+        assert engine._learn_count == 0
 
     def test_init_custom(self):
         engine = GARDENEngine(top_k=4, similarity_threshold=0.5, snn_timesteps=3, compatibility_mode=True)
@@ -249,7 +251,7 @@ class TestGARDENEnginePersistence:
         engine.process("hello")
         with tempfile.TemporaryDirectory() as tmp:
             engine.save(tmp)
-            engine2 = GARDENEngine()
+            engine2 = GARDENEngine(compatibility_mode=True)
             engine2.load(tmp)
         assert engine2._presets_loaded is True
         # Should have all the concept entries
@@ -261,7 +263,7 @@ class TestGARDENEnginePersistence:
     def test_save_load_preserves_snn_weights(self, engine: GARDENEngine):
         with tempfile.TemporaryDirectory() as tmp:
             engine.save(tmp)
-            engine2 = GARDENEngine()
+            engine2 = GARDENEngine(compatibility_mode=True)
             engine2.load(tmp)
         # Check a known relation was preserved
         i = engine.snn._key_to_idx.get("g1")

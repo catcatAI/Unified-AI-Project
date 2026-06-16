@@ -188,6 +188,8 @@ class GARDENEngine:
           2. Config JSON files from the config/ directory (if they exist)
           3. Wire all dictionary relations into the SNN weight matrix
         """
+        if self._presets_loaded:
+            return
         self.dictionary.load_presets()
 
         # Also load from config JSON files
@@ -303,7 +305,8 @@ class GARDENEngine:
 
     def _process_multi_step(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """Split multi-step input and process each step sequentially."""
-        pattern = "|".join(re.escape(m) for m in self._MULTI_STEP_MARKERS)
+        sorted_markers = sorted(self._MULTI_STEP_MARKERS, key=len, reverse=True)
+        pattern = "|".join(re.escape(m) for m in sorted_markers)
         steps = re.split(pattern, text, flags=re.IGNORECASE)
         results = []
         for step in steps:
@@ -344,10 +347,14 @@ class GARDENEngine:
     # ------------------------------------------------------------------
 
     _EMOTION_KEYWORDS: Dict[str, List[str]] = {
-        "happy": ["开心", "高兴", "太好了", "happy", "great", "好开心", "好高兴"],
-        "sad": ["难过", "伤心", "糟糕", "sad", "bad", "好难过", "好伤心"],
-        "angry": ["生气", "气死", "烦", "angry", "mad", "好生气"],
-        "anxious": ["担心", "紧张", "害怕", "worried", "anxious", "好担心"],
+        "happy": ["开心", "高兴", "太好了", "happy", "great", "好开心", "好高兴",
+                  "開心", "高興", "好開心", "好高興"],
+        "sad": ["难过", "伤心", "糟糕", "sad", "bad", "好难过", "好伤心",
+                "難過", "傷心", "好難過", "好傷心"],
+        "angry": ["生气", "气死", "烦", "angry", "mad", "好生气",
+                  "生氣", "氣死", "好生氣"],
+        "anxious": ["担心", "紧张", "害怕", "worried", "anxious", "好担心",
+                    "擔心", "緊張", "害怕", "好擔心"],
     }
 
     _HORMONE_ADJUSTMENTS: Dict[str, Dict[str, float]] = {

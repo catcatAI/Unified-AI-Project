@@ -286,7 +286,7 @@ class _ChromaEncoder:
         if not embeddings:
             return torch.zeros(0, self.EMBEDDING_DIM)
 
-        return torch.tensor(embeddings, dtype=torch.float32)
+        return torch.tensor(embeddings, dtype=torch.float32).cpu()
 
     def query_embedding(self, text: str) -> Optional[List[float]]:
         """Get the embedding for a single text without adding it to the collection."""
@@ -344,6 +344,7 @@ class VectorDictionary:
         self._matrix: Optional[torch.Tensor] = None   # shape [N, D]
         self._key_order: List[str] = []               # maps row index -> key
         self._dirty = True                             # re-index flag
+        self._presets_loaded = False
         self.growth_threshold = threshold_value("ai.garden.dictionary.growth_threshold", 0.6)
 
     # ------------------------------------------------------------------
@@ -555,9 +556,12 @@ class VectorDictionary:
 
     def load_presets(self) -> None:
         """Load built-in concept presets covering greetings, emotions, logic, math."""
+        if self._presets_loaded:
+            return
         for p in self._build_presets():
             self.add_entry(**p)
         self._dirty = True
+        self._presets_loaded = True
         logger.info("GARDEN: loaded %d preset entries", len(self.entries))
 
     def _build_presets(self) -> List[Dict[str, Any]]:

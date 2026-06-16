@@ -23,8 +23,8 @@ from apps.backend.src.ai.garden.kg_import import KGImporter
 
 @pytest.fixture(scope="function")
 def dictionary() -> VectorDictionary:
-    """VectorDictionary with presets loaded."""
-    d = VectorDictionary()
+    """VectorDictionary with presets loaded (compatibility mode for fast tests)."""
+    d = VectorDictionary(compatibility_mode=True)
     d.load_presets()
     return d
 

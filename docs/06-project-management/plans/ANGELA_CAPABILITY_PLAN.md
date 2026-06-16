@@ -999,20 +999,20 @@ class LearningLoop:
 ## 驗收標準
 
 ### ED3N 獨立（不依賴 GARDEN）
-- [ ] 字典 preset >= 250 條
-- [ ] 反射規則 >= 50 條
-- [ ] 日常對話覆蓋率 >= 80%（不 fallback）
-- [ ] 同義詞展開正常運作
-- [ ] 多位數數學運算正確
-- [ ] 6 個 handler 全部可用
-- [ ] ED3N 分類輔助路徑啟用
-- [ ] 102 舊測試 + 30+ 新測試通過
+- [ ] 字典 preset >= 250 條 — dictionary.py ~55 + operation_presets.json 120 + daily_presets.json 105 = 280 total
+- [ ] 反射規則 >= 50 條 — _ReflexTable 18 + presets.json 82 = 100 total
+- [ ] 日常對話覆蓋率 >= 80%（不 fallback）— pending verification
+- [x] 同義詞展開正常運作 — dictionary_layer.py _encode_locked() with get_synonyms()
+- [x] 多位數數學運算正確 — ed3n_engine.py _try_math_eval() with Chinese numerals
+- [x] 6 個 handler 全部可用 — 7 handlers registered in router.py lines 499-510
+- [x] ED3N 分類輔助路徑啟用 — query_classifier.py v2 with QueryResult
+- [ ] 102 舊測試 + 30+ 新測試通過 — 374 tests passing (need to verify count)
 
 ### GARDEN 加持
 - [x] 語意檢索相似度 > 0.7（同義查詢）— ChromaDB encoder + fallback chain
 - [ ] 知識圖譜導入 >= 100K 條 — synthetic generation tested, real ConceptNet pending
-- [x] 多步驟推理正確 — 9 markers, regex split, sequential processing
-- [x] 情緒調整回應正常 — 4 emotions + hormonal modulation
+- [x] 多步驟推理正確 — 9 markers, regex split sorted longest-first, sequential processing
+- [x] 情緒調整回應正常 — 4 emotions + hormonal modulation + traditional Chinese keywords
 - [ ] GARDEN 回應品質 > ED3N — pending benchmark
 
 ### 持續學習
