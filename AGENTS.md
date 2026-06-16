@@ -205,18 +205,28 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 ```
 apps/
   backend/           # Python FastAPI + AI systems
-    ai/ed3n/         # ED3N 外部字典解耦神經網路 (Phase 1-6)
-    ai/garden/       # GARDEN 輕量推理引擎 (Phase 4-6)
-    ai/context/      # 跨 Session 記憶管理 (Phase 5.4)
-    ai/lifecycle/    # 記憶整合循環 (Phase 5.3)
-    ai/response/     # 學習循環 (Phase 5.5)
+    ai/core/         # 分類器、執行閘門、ModelBus
+    ai/ed3n/         # ED3N 外部字典解耦神經網路
+    ai/garden/       # GARDEN 輕量推理引擎
+    ai/context/      # 上下文管理（部分 stub）
+    ai/lifecycle/    # 記憶整合循環、主動互動
+    ai/response/     # 回應組合、學習循環
+    ai/learning/     # 學習管理器、經驗回放
+    ai/meta/         # 元學習、自適應控制
+    ai/reasoning/    # 因果推理
+    ai/ops/          # 智能運維、預測維護
+    ai/alignment/    # 情緒系統、本體系統
+    ai/memory/       # HAM 記憶、數學漣漪引擎
+    ai/agents/       # 動態代理註冊
+    services/        # LLM 路由、聊天服務、處理器
+    api/routes/      # FastAPI 路由
   desktop-app/       # Electron + Live2D
   mobile-app/        # React Native bridge
 packages/
   cli/               # CLI tools
-tests/               # Test suite
+tests/
   ai/garden/         # GARDEN 測試 (125 tests)
-  ai/                # ED3N/Lifecycle 測試 (37 tests)
+  ai/                # ED3N/Lifecycle/Meta 測試 (37+ tests)
 ```
 
 ## Technology Stack
