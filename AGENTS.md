@@ -88,7 +88,10 @@ pre-commit run --all-files
 > - `tests/ai/test_phase5_integration.py` (13 tests): Continuous learning, session persistence, memory importance, learning loop
 > - `tests/ai/test_phase6_e2e.py` (24 tests): E2E pipeline, performance benchmarks
 > 
-> **Total: 162 new tests** (125 garden + 13 phase5 + 24 phase6)
+> **Total new tests: 70** (33 + 13 + 24)
+> 
+> Existing garden tests: ~92 (test_dictionary.py, test_garden_engine.py, etc.)
+> **Grand total garden tests: ~125**
 
 ### JavaScript/TypeScript
 

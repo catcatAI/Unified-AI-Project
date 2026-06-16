@@ -313,4 +313,135 @@ ED3N 是嚴格的**單遍線性管線**：
 
 ---
 
-*本報告由全面審計產生，基於代碼實際狀態而非文檔聲稱。*
+---
+
+## 十二、遺漏補充（二次審計）
+
+### 遺漏統計
+
+| 類別 | 報告聲稱 | 實際 | 遺漏 |
+|------|---------|------|------|
+| 學習系統 | 5+ | **18+** | 13+ |
+| Stub/死代碼 | 3 | **13+** | 10+ |
+| 硬編值 | 7 | **15+** | 8+ |
+| 流程缺口 | 6 | **14+** | 8+ |
+| 測試數量 | 162 | **70**（已驗證） | 虛增 92 |
+| 需更新 MD | 7 | **20+** | 13+ |
+| ai/ 子目錄 | ~8 | **25+** | 17+ |
+
+### 遺漏的模組（完整列表）
+
+| 模組 | 路徑 | 狀態 |
+|------|------|------|
+| `ai/crisis/` | `crisis_system.py` | 完整實現，未審計 |
+| `ai/dialogue/` | `document_builder.py`, `project_coordinator.py` | 完整實現，未審計 |
+| `ai/execution/` | `execution_manager.py` | ⚠️ 匯入 broken（`execution_monitor` 不存在） |
+| `ai/audio/` | `audio_processing.py` | VAD 處理，未審計 |
+| `ai/compression/` | `alpha_deep_model.py` | DNADataChain 壓縮，未審計 |
+| `ai/formula_engine/` | `__init__.py`, `types.py` | 標記 DEPRECATED |
+| `ai/evaluation/` | `task_evaluator.py` | 未審計 |
+| `ai/language_models/` | `daily_language_model.py` | 日常對話模型，未整合 |
+| `ai/lis/` | `lis_manager.py` | 生命強度系統，未審計 |
+| `ai/integration/` | `unified_control_center.py` | 未審計 |
+| `ai/symbolic_space/` | `unified_symbolic_space.py` | 未審計 |
+| `ai/world_model/` | `environment_simulator.py` | ⚠️ 6行 stub：`class StatePredictor: pass` |
+| `ai/trust/` | `trust_manager_module.py` | ⚠️ 6行 stub：`class TrustManager: pass` |
+| `ai/service_discovery/` | `service_discovery_module.py` | 未審計 |
+| `ai/ensemble.py` | `ResponseFusionEngine` | 多模型融合，從未整合 |
+| `ai/level5_asi_system.py` | 749行 ASI 系統 | 包含 inline stub，從未整合 |
+| `ai/core/training_coordinator.py` | 訓練協調器 | 未審計 |
+
+### 遺漏的 Stub/死代碼
+
+| 文件 | 問題 |
+|------|------|
+| `context/memory_context.py` | `get_memory_context()` 返回 `None`，`create_context` 註解掉 |
+| `context/integration_with_ham.py` | `sync_ham_to_context()` 返回 `None` |
+| `context/demo_context_system.py` | Demo 腳本 |
+| `world_model/environment_simulator.py` | 6行空 stub |
+| `trust/trust_manager_module.py` | 6行空 stub |
+| `multimodal/multimodal_processor.py` | 10行空 stub |
+| `formula_engine/__init__.py` | 自標 DEPRECATED |
+| `alignment/__init__.py` | 自標 DEPRECATED，含 placeholder stub |
+| `level5_asi_system.py` (inline stubs) | 4 個 inline stub 類 |
+| `execution/execution_manager.py` | ⚠️ 匯入 broken |
+
+### 遺漏的學習系統
+
+| 文件 | 學習類型 |
+|------|---------|
+| `ed3n/continuous_learning.py` | 字典增長 + 訓練 |
+| `ed3n/learning_integration.py` | ED3N 連接 ExperienceReplay |
+| `ed3n/ed3n_trainer.py` | Hebbian 訓練 |
+| `ed3n/snn/hormonal_modulator.py` | 荷爾蒙調製（適應性學習） |
+| `memory/memory_learning.py` | 記憶存取模式學習 |
+| `learning/fact_extractor_module.py` | LLM 事實提取 |
+| `learning/content_analyzer_module.py` | SpaCy NLP 內容分析 |
+| `learning/demo_learning_manager.py` | 620行 Demo 學習系統 |
+| `learning/knowledge_distillation.py` | 知識蒸餾 |
+| `core/training_coordinator.py` | 跨 ED3N/GARDEN 訓練協調 |
+| `language_models/daily_language_model.py` | 日常對話模式學習 |
+
+### 遺漏的硬編值
+
+| 文件 | 硬編值 |
+|------|--------|
+| `emotion_analyzer.py` | ~40 個中文情緒關鍵字 |
+| `query_classifier.py` | 6 個動詞集 + 12 個知識模式 + 8 個否定詞 |
+| `garden_engine.py` | 情緒關鍵字 ~20 個 |
+| `composer.py` | 7 個預設片段 + 關鍵字匹配 |
+| `dialogue_context.py` | 13 個英文情緒詞（無中文） |
+| `llm_decision_loop.py` | ~50 行決策提示模板 |
+| `action_execution_bridge.py` | 硬編中文回應變體 |
+| `emotion_constants.py` | 硬編中文情緒詞 |
+
+### 遺漏的流程缺口
+
+| 缺口 | 嚴重度 |
+|------|--------|
+| `execution_monitor` 匯入 broken | 🔴 CRITICAL |
+| `ResponseFusionEngine` 從未整合 | 🔴 HIGH |
+| `Level5ASISystem` 從未整合 | 🔴 HIGH |
+| Context storage 子系統存在但 `create_context()` 全部註解掉 | 🔴 HIGH |
+| `DocumentBuilder` 從未整合到路由 | 🟡 MEDIUM |
+| `DailyLanguageModel` 從未整合到聊天流程 | 🟡 MEDIUM |
+| 4 個情緒系統重複（alignment/emotion_system, alignment/__init__, emotion_analyzer, emotion_constants） | 🟡 MEDIUM |
+| HAM 查詢引擎重複（2 個 `HAMQueryEngine`） | 🟡 MEDIUM |
+| ReflexLayer 實現已分歧（ED3N 有 LRU cache，GARDEN 無） | 🟡 MEDIUM |
+
+### 測試數量修正
+
+```
+報告聲稱：162 新測試（125 garden + 13 phase5 + 24 phase6）
+實際驗證：
+  - test_phase4_integration.py: 33 tests ✅
+  - test_phase5_integration.py: 13 tests ✅
+  - test_phase6_e2e.py: 24 tests ✅
+  - 總計：70 tests（非 162）
+
+差異原因：125 garden tests 包含 test_dictionary.py、test_garden_engine.py 等
+          已有測試，非 Phase 3-6 新增。
+```
+
+### 需更新的 MD（完整列表）
+
+| 文件 | 問題 |
+|------|------|
+| `AGENTS.md` | 項目結構不完整 |
+| `docs/ARCHITECTURE.md` | 模組依賴圖不完整 |
+| `docs/development/STUB_TRACKING.md` | 應追蹤所有 stub |
+| `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` | 需驗證 |
+| `docs/architecture/OVERVIEW.md` | 未提及 |
+| `docs/development/SERVICE_CATALOG.md` | 可能過時 |
+| `docs/INDEX.md` | 文件索引需更新 |
+| `docs/QUICK_START.md` | 未提及 |
+| `CHANGELOG.md` | 可能含虛構版本 |
+| `README.md` | 可能過時 |
+| `tests/README.md` | 測試文檔 |
+| `docs/06-project-management/` | ~50+ 個計畫文件 |
+| `reports/` | ~20+ 個報告文件 |
+| 根目錄 PLAN 文件 | 4 個計畫文件 |
+
+---
+
+*本報告由二次審計補充，基於代碼全面掃描。*
