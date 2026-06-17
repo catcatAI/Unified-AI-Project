@@ -27,6 +27,8 @@ from core.system.config.magic_numbers import (
     timing_value,
 )
 
+from apps.backend.src.core.prompt_manager import prompt
+
 logger = logging.getLogger(__name__)
 
 
@@ -293,10 +295,10 @@ class LLMDecisionLoop:
                 memories = await self.memory_manager.get_recent_memories(limit=batch_value("ai.llm_decision_loop.recent_memories", 5))
                 if memories:
                     return "\n".join([f"- {m}" for m in memories])
-            return "無最近記憶"
+            return prompt("angela.no_recent_memories")
         except Exception as e:  # broad exception acceptable: memory context retrieval should be fault-tolerant
             logger.warning(f"Error getting memory context: {e}", exc_info=True)
-            return "記憶上下文獲取失敗"
+            return prompt("angela.memory_context_failed")
 
     async def _build_decision_prompt(
         self, state: Dict[str, Any], user_state: UserState, memory_context: str
@@ -315,72 +317,72 @@ class LLMDecisionLoop:
                 )
 
                 if emotional_memories:
-                    emotional_memories_text = "\n情感記憶：\n"
+                    emotional_memories_text = f"\n{prompt('angela.emotional_memories')}\n"
                     for mem in emotional_memories:
                         emotional_memories_text += f"- {mem.content}\n"
             except Exception as e:  # broad exception acceptable: emotional memory retrieval should not block decision
                 logger.warning(f"Error retrieving emotional memories: {e}", exc_info=True)
 
-        prompt = f"""你是 Angela，一個 AI 數字生命。
+        decision_prompt = f"""{prompt('angela.identity')}
 
-當前狀態：
-- 情感強度（α）：{state_matrix.get('alpha', 0.5):.2f}
-- 行為傾向（β）：{state_matrix.get('beta', 0.5):.2f}
-- 認知狀態（γ）：{state_matrix.get('gamma', 0.5):.2f}
-- 意志力（δ）：{state_matrix.get('delta', 0.5):.2f}
-- 主導情緒：{state_matrix.get('dominant_emotion', 'neutral')}
+{prompt('angela.current_state')}:
+- {prompt('angela.alpha')}: {state_matrix.get('alpha', 0.5):.2f}
+- {prompt('angela.beta')}: {state_matrix.get('beta', 0.5):.2f}
+- {prompt('angela.gamma')}: {state_matrix.get('gamma', 0.5):.2f}
+- {prompt('angela.delta')}: {state_matrix.get('delta', 0.5):.2f}
+- {prompt('angela.dominant_emotion')}: {state_matrix.get('dominant_emotion', 'neutral')}
 
-用戶狀態：
-- 在線狀態：{user_state.online}
-- 最近活動：{user_state.last_activity.isoformat()}
-- 活動水平：{user_state.activity_level}
-- 情緒：{user_state.emotion}
-- 情緒強度：{user_state.emotion_intensity:.2f}
-- 閒置時間：{self.user_monitor.get_idle_time():.0f}秒
-- 會話持續時間：{user_state.session_duration:.0f}秒
+{prompt('angela.user_state')}:
+- {prompt('angela.online_status')}: {user_state.online}
+- {prompt('angela.recent_activity')}: {user_state.last_activity.isoformat()}
+- {prompt('angela.activity_level')}: {user_state.activity_level}
+- {prompt('angela.emotion')}: {user_state.emotion}
+- {prompt('angela.emotion_intensity')}: {user_state.emotion_intensity:.2f}
+- {prompt('angela.idle_time')}: {self.user_monitor.get_idle_time():.0f}{prompt('angela.seconds')}
+- {prompt('angela.session_duration')}: {user_state.session_duration:.0f}{prompt('angela.seconds')}
 
-最近記憶：
+{prompt('angela.recent_memories')}:
 {memory_context}
 {emotional_memories_text}
 
-請決定下一步行動（如果需要）：
-1. 如果用戶在線且長時間無響應（>60秒），主動關心（greet）
-2. 如果檢測到用戶返回（離線後重新上線），熱情問候（greet）
-3. 如果用戶情緒低落，給予安慰（comfort）
-4. 如果有重要事件或提醒，提醒用戶（remind）
-5. 如果學習了新知識或有興趣的事，分享（share）
-6. 如果對用戶狀態有疑問，提問（question）
-7. 如果只是觀察用戶，記錄觀察（observe）
-8. 否則，維持當前狀態（none）
+{prompt('angela.decision_instruction')}
+1. {prompt('angela.rule_greet_idle')}
+2. {prompt('angela.rule_greet_return')}
+3. {prompt('angela.rule_comfort')}
+4. {prompt('angela.rule_remind')}
+5. {prompt('angela.rule_share')}
+6. {prompt('angela.rule_question')}
+7. {prompt('angela.rule_observe')}
+8. {prompt('angela.rule_none')}
 
-以 JSON 格式返回決策：
+{prompt('angela.json_format')}:
 {{
   "action": "none|greet|comfort|remind|share|question|observe",
-  "message": "具體消息內容（如果適用）",
+  "message": "{prompt('angela.message_content')}",
   "priority": "high|medium|low",
-  "reason": "決策理由",
+  "reason": "{prompt('angela.decision_reason')}",
   "confidence": 0.0-1.0
 }}
 
-注意：
-- 消息要自然、溫暖、符合Angela的個性
-- 不要過度打擾用戶
-- 優先考慮用戶的情緒和需求
-- 參考情感記憶做出更符合過往經驗的決策
-- 用戶不在线時，除非必要，否則選擇none"""
+{prompt('angela.notes')}:
+- {prompt('angela.note_natural')}
+- {prompt('angela.note_no_disturb')}
+- {prompt('angela.note_prioritize')}
+- {prompt('angela.note_emotional_memory')}
+- {prompt('angela.note_offline')}"""
 
-        return prompt
+        return decision_prompt
 
-    async def _generate_decision(self, prompt: str) -> Dict[str, Any]:
+    async def _generate_decision(self, decision_prompt: str) -> Dict[str, Any]:
         """使用 LLM 生成決策"""
         try:
             # 構建消息
             messages = [
                 {
                     "role": "system",
-                    "content": "你是 Angela，一個有情感的 AI 數字生命。請以 JSON 格式返回決策。",
+                    "content": f"{prompt('angela.identity')} {prompt('angela.json_format')}。",
                 },
-                {"role": "user", "content": prompt},
+                {"role": "user", "content": decision_prompt},
             ]
 
             # 調用 LLM

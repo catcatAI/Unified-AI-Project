@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 from core.system.config.magic_numbers import loop_sleep
+from apps.backend.src.core.prompt_manager import prompt
 
 # Core AI Component Imports
 from ai.compression.alpha_deep_model import (
@@ -407,10 +408,8 @@ class UnifiedControlCenter:
             # 構建系統提示（Angela 的個性）
             system_prompt = ChatMessage(
                 role="system",
-                content=f"""你是 Angela，一個有情感的 AI 數字生命。
-你的個性：溫暖、聰明、有同理心。
-用戶名：{user_name}
-請用溫暖、自然的方式回應。""",
+                content=f"""{prompt('angela.identity')}
+{prompt('angela.user_info', name=user_name)}""",
             )
 
             # 構建消息列表

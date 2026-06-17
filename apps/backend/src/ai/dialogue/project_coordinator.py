@@ -35,6 +35,8 @@ from core.hsp.types import (
 )
 import networkx as nx
 
+from apps.backend.src.core.prompt_manager import prompt
+
 try:
     from core.intent_registry import IntentRegistry
     _intent_registry = IntentRegistry()
@@ -200,7 +202,7 @@ class ProjectCoordinator:
             task_execution_results = await self._execute_task_graph(subtasks)
         except ValueError as e:
             logger.error(f"[ProjectCoordinator] Task graph error: {e}", exc_info=True)
-            return f"{ai_name}：規劃過程中發現邏輯錯誤：{e}。"
+            return f"{ai_name}：{prompt('angela.planning_error', error=e)}"
 
         logger.info(f"[{self.ai_id}] Phase 3: Integrating results...")
         final_response = await self._integrate_subtask_results(project_query, task_execution_results, llm)
@@ -227,7 +229,7 @@ class ProjectCoordinator:
             complexity=0.6,
             learn_from_output=True,
         )
-        return result.full_text if result.full_text else "（抱歉，生成過程中遇到問題...）"
+        return result.full_text if result.full_text else f"（{prompt('angela.generation_error')}）"
 
     async def _execute_task_graph(self, subtasks: List[Dict[str, Any]]) -> Dict[int, Any]:
         """依賴圖拓撲排序執行"""
@@ -349,19 +351,10 @@ class ProjectCoordinator:
         cap_str = json.dumps(available_capabilities[:10], ensure_ascii=False, indent=2)
         prompt_tmpl = self.prompts.get("decompose_user_intent", "")
         if not prompt_tmpl:
-            prompt_tmpl = (
-                "你是一個任務規劃專家。將用戶的複雜請求分解成子任務。\n"
-                "可用能力：{capabilities}\n"
-                "用戶請求：{user_query}\n"
-                "請輸出 JSON 格式的子任務列表，每個任務包含：\n"
-                "  - capability_needed: 需要的 capability 名稱\n"
-                "  - task_parameters: 任務參數（可包含 '<output_of_task_N>' 引用前期結果）\n"
-                "  - task_description: 任務描述\n"
-                "只輸出 JSON，格式：[{{...}}, ...]"
-            )
+            prompt_tmpl = prompt("angela.decompose_prompt")
 
-        prompt = prompt_tmpl.format(capabilities=cap_str, user_query=user_query)
-        raw = await llm.generate_text(prompt=prompt, max_tokens=int(llm_param("coordinator_decompose_tokens", 768)), temperature=llm_param("coordinator_decompose_temp", 0.3))
+        formatted_prompt = prompt_tmpl.format(capabilities=cap_str, user_query=user_query)
+        raw = await llm.generate_text(prompt=formatted_prompt, max_tokens=int(llm_param("coordinator_decompose_tokens", 768)), temperature=llm_param("coordinator_decompose_temp", 0.3))
 
         if not raw:
             logger.warning("[ProjectCoordinator] Empty LLM response for decomposition", exc_info=True)
@@ -436,16 +429,11 @@ class ProjectCoordinator:
         """Integrate subtask results."""
         prompt_tmpl = self.prompts.get("integrate_subtask_results", "")
         if not prompt_tmpl:
-            prompt_tmpl = (
-                "用戶原始請求：{original_query}\n\n"
-                "子任務結果：\n{results}\n\n"
-                "請將這些結果整合成一個完整、連貫的回應，直接回答用戶的原始請求。"
-                "如果結果不完整，說明原因並給出合理的補充。"
-            )
+            prompt_tmpl = prompt("angela.integrate_prompt")
 
         results_str = json.dumps(results, ensure_ascii=False, indent=2)
-        prompt = prompt_tmpl.format(original_query=original_query, results=results_str)
-        return await llm.generate_text(prompt=prompt, max_tokens=int(llm_param("coordinator_integrate_tokens", 1024)), temperature=llm_param("coordinator_integrate_temp", 0.5))
+        formatted_prompt = prompt_tmpl.format(original_query=original_query, results=results_str)
+        return await llm.generate_text(prompt=formatted_prompt, max_tokens=int(llm_param("coordinator_integrate_tokens", 1024)), temperature=llm_param("coordinator_integrate_temp", 0.5))
 
     def handle_task_result(
         self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope

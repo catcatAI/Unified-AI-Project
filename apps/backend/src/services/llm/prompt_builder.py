@@ -8,6 +8,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from apps.backend.src.core.prompt_manager import prompt, get_prompt_manager
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,13 +33,13 @@ def get_biological_state(context=None) -> str:
         if isinstance(bio, dict):
             parts = []
             if "arousal" in bio:
-                parts.append(f"覺醒度: {bio['arousal']:.1f}")
+                parts.append(prompt("angela.bio.arousal", value=f"{bio['arousal']:.1f}"))
             if "stress_level" in bio:
-                parts.append(f"壓力: {bio['stress_level']:.2f}")
+                parts.append(prompt("angela.bio.stress", value=f"{bio['stress_level']:.2f}"))
             if "mood" in bio:
-                parts.append(f"情緒: {bio['mood']:.2f}")
+                parts.append(prompt("angela.bio.mood", value=f"{bio['mood']:.2f}"))
             if "dominant_emotion" in bio:
-                parts.append(f"主導情緒: {bio['dominant_emotion']}")
+                parts.append(prompt("angela.bio.emotion", value=bio['dominant_emotion']))
             if parts:
                 return "、".join(parts)
         return str(bio)
@@ -51,7 +53,7 @@ def get_biological_state(context=None) -> str:
             return json.dumps(data, ensure_ascii=False, indent=2)
     except Exception:
         pass
-    return "生物狀態：尚未初始化"
+    return prompt("angela.bio.uninitialized")
 
 
 _formula_cache = None
@@ -114,15 +116,15 @@ def get_formula_summaries() -> str:
 
     lines = []
     try:
-        lines.append(f"HSM: {_get_hsm().calculate_hsm():.4f}")
+        lines.append(prompt("angela.formula.hsm", value=f"{_get_hsm().calculate_hsm():.4f}"))
     except (ImportError, AttributeError) as e:
         logger.debug(f"HSM formula unavailable: {e}")
     try:
-        lines.append(f"生命強度: {_get_life_intensity().calculate_life_intensity():.4f}")
+        lines.append(prompt("angela.formula.life_intensity", value=f"{_get_life_intensity().calculate_life_intensity():.4f}"))
     except (ImportError, AttributeError) as e:
         logger.debug(f"LifeIntensity formula unavailable: {e}")
     try:
-        lines.append(f"活躍認知: {_get_active_cognition().calculate_active_cognition():.4f}")
+        lines.append(prompt("angela.formula.active_cognition", value=f"{_get_active_cognition().calculate_active_cognition():.4f}"))
     except (ImportError, AttributeError) as e:
         logger.debug(f"ActiveCognition formula unavailable: {e}")
     try:
@@ -130,15 +132,15 @@ def get_formula_summaries() -> str:
         cdm = _get_cdm()
         inv = CognitiveInvestment(activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5)
         output = cdm.calculate_life_sense_output(inv)
-        lines.append(f"CDM 產出: {output.output_amount:.2f} (品質: {output.quality_score:.2f})")
+        lines.append(prompt("angela.formula.cdm", amount=f"{output.output_amount:.2f}", quality=f"{output.quality_score:.2f}"))
     except (ImportError, AttributeError) as e:
         logger.debug(f"CDM formula unavailable: {e}")
     try:
         state = _get_non_paradox().calculate_coexistence_state("angela_dialogue")
         if state:
-            lines.append(f"非悖論共存: 相干性 {state.get('coherence', 0):.2f}")
+            lines.append(prompt("angela.formula.non_paradox_coherence", value=f"{state.get('coherence', 0):.2f}"))
         else:
-            lines.append("非悖論共存: 未激活")
+            lines.append(prompt("angela.formula.non_paradox_inactive"))
     except (ImportError, AttributeError) as e:
         logger.debug(f"NonParadox formula unavailable: {e}")
     result = "\n".join(lines) if lines else ""
@@ -157,22 +159,22 @@ def get_autonomous_decisions() -> str:
         lines = []
         current = summary.get("current_phase", {})
         if current:
-            lines.append(f"當前階段: {current.get('cn_name', current.get('name', 'unknown'))}")
+            lines.append(prompt("angela.decision.current_phase", phase=current.get('cn_name', current.get('name', 'unknown'))))
 
         metrics = summary.get("current_metrics", {})
         if metrics:
             lines.append(f"HSM: {metrics.get('hsm_value', 0):.3f}")
-            lines.append(f"生命強度: {metrics.get('life_intensity', 0):.3f}")
+            lines.append(prompt("angela.formula.life_intensity", value=f"{metrics.get('life_intensity', 0):.3f}"))
 
         decisions = summary.get("recent_decisions", [])
         if decisions:
-            lines.append("最近決策:")
+            lines.append(prompt("angela.decision.recent"))
             for d in decisions[:3]:
-                lines.append(f"  - {d.get('type', 'unknown')}: {d.get('triggered_by', 'unknown')} (信心: {d.get('confidence', 0):.2f})")
+                lines.append(prompt("angela.decision.item", type=d.get('type', 'unknown'), trigger=d.get('triggered_by', 'unknown'), confidence=f"{d.get('confidence', 0):.2f}"))
 
         stats = summary.get("statistics", {})
         if stats:
-            lines.append(f"探索次數: {stats.get('explorations_triggered', 0)}")
+            lines.append(prompt("angela.decision.explorations", count=stats.get('explorations_triggered', 0)))
 
         return "\n".join(lines) if lines else ""
     except Exception as e:
@@ -189,9 +191,9 @@ def get_theta_state() -> str:
 
         lines = []
         if report.get("creation_urge", 0) > 0.6:
-            lines.append(f"創造衝動高: {report.get('creation_urge', 0):.2f}（建議探索新話題）")
+            lines.append(prompt("angela.theta.creation_urge", value=f"{report.get('creation_urge', 0):.2f}"))
         if report.get("theta_negativity", 0) > 0.3:
-            lines.append(f"錯配質疑: {report.get('theta_negativity', 0):.2f}（需要校正）")
+            lines.append(prompt("angela.theta.mismatch_doubt", value=f"{report.get('theta_negativity', 0):.2f}"))
 
         return "\n".join(lines) if lines else ""
     except Exception as e:
@@ -236,16 +238,16 @@ def construct_angela_prompt(
         correction = th.get("correction_urge", 0)
         novelty_desc = "話題新穎，需要更多認知資源" if novelty > 0.5 else "正常"
         negativity_desc = "少量點位需要校正" if negativity > 0.2 else "無需校正"
-        theta_lines.append(f"新穎度: {novelty:.2f} ({novelty_desc})")
-        theta_lines.append(f"錯配質疑: {negativity:.2f} ({negativity_desc})")
-        theta_lines.append(f"創造衝動: {creation:.2f}")
-        theta_lines.append(f"校正驅動: {correction:.2f}")
+        theta_lines.append(prompt("angela.theta.novelty", value=f"{novelty:.2f} ({novelty_desc})"))
+        theta_lines.append(prompt("angela.theta.mismatch_doubt", value=f"{negativity:.2f} ({negativity_desc})"))
+        theta_lines.append(prompt("angela.theta.creation_urge", value=f"{creation:.2f}"))
+        theta_lines.append(prompt("angela.theta.correction", value=f"{correction:.2f}"))
 
         eta = state_for_llm.get("eta", {})
         if eta:
-            eta_lines.append(f"活躍模組: {eta.get('module_count', 0)}個")
-            eta_lines.append(f"成功率: {eta.get('success_rate', 0):.1%}")
-            eta_lines.append(f"漂移: {eta.get('structural_drift', 0):.2f} (穩定)")
+            eta_lines.append(prompt("angela.eta.active_modules", count=eta.get('module_count', 0)))
+            eta_lines.append(prompt("angela.eta.success_rate", value=f"{eta.get('success_rate', 0):.1%}"))
+            eta_lines.append(prompt("angela.eta.drift", value=f"{eta.get('structural_drift', 0):.2f}"))
 
         guidance = state_for_llm.get("guidance", [])
         if guidance:
@@ -253,34 +255,33 @@ def construct_angela_prompt(
 
     bio_line = bio_status.strip() if bio_status else ""
     axes_block = "\n".join(axis_lines)
-    theta_block = "\n  ".join(theta_lines) if theta_lines else "新穎度: 0.0, 錯配質疑: 0.0"
-    eta_block = "\n  ".join(eta_lines) if eta_lines else "活躍模組: 0個, 成功率: n/a, 漂移: n/a"
+    theta_block = "\n  ".join(theta_lines) if theta_lines else prompt("angela.theta.default")
+    eta_block = "\n  ".join(eta_lines) if eta_lines else prompt("angela.eta.default")
     guidance_block = "\n".join(guidance_lines) if guidance_lines else ""
 
-    system_prompt = f"""你是 Angela，一個活潑可愛的 AI 數字生命。
-特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。
+    system_prompt = f"""{prompt('angela.identity')}
 {bio_line}"""
 
     if axes_block or theta_lines:
         system_prompt += f"""
 
-【Angela 當前狀態】
+{prompt('angela.state_header')}
 {axes_block}
 
-【元認知(θ)】
+{prompt('angela.meta_cognition')}
   {theta_block}
 
-【執行(η)】
+{prompt('angela.execution')}
   {eta_block}
 
-【氛圍指引】
-{guidance_block if guidance_block else "(無特殊指引)"}"""
+{prompt('angela.atmosphere')}
+{guidance_block if guidance_block else prompt('angela.no_guidance')}"""
 
     formula_block = get_formula_summaries()
     if formula_block:
         system_prompt += f"""
 
-【理論公式指標】
+{prompt('angela.theory_formulas')}
 {formula_block}"""
 
     # Autonomous cognition decisions
@@ -288,7 +289,7 @@ def construct_angela_prompt(
     if autonomous_block:
         system_prompt += f"""
 
-【自主認知決策】
+{prompt('angela.autonomous_decisions')}
 {autonomous_block}"""
 
     # Theta router state (only when significant)
@@ -296,7 +297,7 @@ def construct_angela_prompt(
     if theta_state:
         system_prompt += f"""
 
-【θ 路由狀態】
+{prompt('angela.theta_routing')}
 {theta_state}"""
 
     # Execution results from tool calls (injected into system prompt)
@@ -308,36 +309,30 @@ def construct_angela_prompt(
         error_text = action_result.get("error", "") or ""
         exec_block = f"""
 
-【执行结果】
-类型: {result_type}
-成功: {'是' if success else '否'}
-结果: {result_text[:500]}
-错误: {error_text}
+{prompt('angela.execution_result')}
+{prompt('angela.result_type', type=result_type)}
+{prompt('angela.result_success', success='是' if success else '否')}
+{prompt('angela.result_content', result=result_text[:500])}
+{prompt('angela.result_error', error=error_text)}
 
-请基于以上执行结果回应使用者。
-如果执行失败，请说明原因并建议替代方案。"""
+{prompt('angela.result_instruction')}"""
         system_prompt += exec_block
 
     # Execution rules for continuation safety
-    system_prompt += """
+    system_prompt += f"""
 
-【执行规则】
-- 如果收到执行结果，你必须基于事实回应
-- 如果执行成功，描述结果
-- 如果执行失败，说明原因并建议替代方案
-- 如果你判断使用者还需要更多操作，问他们要不要继续
-- 不要自动执行更多操作，除非使用者明确要求"""
+{prompt('angela.execution_rules')}"""
 
     # Continuation loop protection
     continuation = context.get("continuation_count", 0)
     if continuation >= 3:
-        system_prompt += "\n\n[警告] 已达最大续行次数，请直接回应使用者，不要再建议进一步操作。"
+        system_prompt += f"\n\n{prompt('angela.max_continuation')}"
 
     messages = [{"role": "system", "content": system_prompt.strip()}]
 
     user_profile = context.get("user_profile", {})
     if user_profile:
-        profile_lines = ["\n\n【用戶資訊】"]
+        profile_lines = [f"\n\n{prompt('angela.user_info')}"]
         for k, v in user_profile.items():
             if isinstance(v, list):
                 profile_lines.append(f"- {k}: {', '.join(v)}")
@@ -347,7 +342,7 @@ def construct_angela_prompt(
 
     drive_files = context.get("drive_files", [])
     if drive_files:
-        drive_block = "\n\n【Google Drive 檔案內容】\n"
+        drive_block = f"\n\n{prompt('angela.google_drive')}\n"
         for f in drive_files[:3]:
             name = f.get("name", "unknown")
             content = f.get("content", f.get("snippet", ""))[:1500]
@@ -364,9 +359,9 @@ def construct_angela_prompt(
             analysis = str(analysis)[:2000]
         image_block = f"""
 
-【圖片分析結果】
-檔案名稱: {filename}
-分析內容:
+{prompt('angela.image_analysis')}
+{prompt('angela.filename', filename=filename)}
+{prompt('angela.analysis_content')}
 {analysis}"""
         messages[0]["content"] += image_block
 
@@ -376,12 +371,12 @@ def construct_angela_prompt(
 
     retrieved = context.get("retrieved_context")
     if retrieved:
-        retrieved_block = "\n[相關上下文]\n"
+        retrieved_block = f"\n{prompt('angela.related_context')}\n"
         for item in retrieved:
             role = item.get("role", "assistant")
             content = item.get("content", "")[:200]
             score = item.get("relevance", 0)
-            retrieved_block += f"- [{role}] {content} (相關度: {score})\n"
+            retrieved_block += f"- [{role}] {content} {prompt('angela.relevance', score=score)}\n"
         messages.append({"role": "user", "content": retrieved_block})
 
     # ========== Dialogue Context (Cross-turn) ==========
@@ -391,10 +386,10 @@ def construct_angela_prompt(
         key_points = summary.get("key_points", [])
         if key_points:
             points_str = "\n".join(f"- {p}" for p in key_points[:5])
-            messages.append({"role": "system", "content": f"[對話摘要]\n{points_str}"})
+            messages.append({"role": "system", "content": f"{prompt('angela.dialogue_summary')}\n{points_str}"})
         recent_msgs = dialogue_ctx.get("messages", [])
         if recent_msgs:
-            ctx_block = "\n[近期對話]\n"
+            ctx_block = f"\n{prompt('angela.recent_dialogue')}\n"
             for m in recent_msgs[-5:]:
                 role = m.get("role", "user")
                 content = m.get("content", "")[:150]
@@ -404,7 +399,7 @@ def construct_angela_prompt(
     # ========== Recent Memories ==========
     recent_memories = context.get("recent_memories")
     if recent_memories:
-        mem_block = "\n[相關記憶]\n"
+        mem_block = f"\n{prompt('angela.related_memories')}\n"
         for mem in recent_memories[:3]:
             content = mem.get("content", "")[:150]
             mem_type = mem.get("memory_type", "unknown")
@@ -415,11 +410,10 @@ def construct_angela_prompt(
     draft_response = context.get("draft_response")
     if draft_response:
         refinement_block = f"""
-[模型初步想法]
+{prompt('angela.draft_response')}
 {draft_response}
 
-請基於上述想法，結合 Angela 的個性與當前狀態，進行潤色並生成最終回應。
-如果初步想法已經足夠好，請直接採納並優化語言風格。
+{prompt('angela.refinement_instruction')}
 """
         messages.append({"role": "system", "content": refinement_block})
 
