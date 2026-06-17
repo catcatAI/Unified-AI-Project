@@ -17,6 +17,7 @@ class LlamaCppBackend(BaseLLMBackend):
     """llama.cpp 後端"""
 
     def __init__(self, base_url: str = LLAMACPP_HOST, model: str = None, timeout: float = LLM_REQUEST_TIMEOUT):
+        super().__init__()
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
@@ -24,14 +25,14 @@ class LlamaCppBackend(BaseLLMBackend):
     async def check_health(self) -> bool:
         """Check health."""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=5)
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        self.model = data.get("model_name", self.model)
-                        return True
+            session = self._get_session()
+            async with session.get(
+                f"{self.base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.model = data.get("model_name", self.model)
+                    return True
         except Exception as e:
             logger.debug(f"llama.cpp health check failed: {e}")
         return False
@@ -47,27 +48,27 @@ class LlamaCppBackend(BaseLLMBackend):
             "stream": False,
         }
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/v1/chat/completions",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.timeout),
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        text = data["choices"][0]["message"]["content"]
-                        tokens = data.get("usage", {}).get("total_tokens", 0)
-                        return LLMResponse(
-                            text=text, backend="llama.cpp", model=self.model or "unknown",
-                            tokens_used=tokens, response_time_ms=(time.time() - start_time) * 1000,
-                            confidence=0.9,
-                        )
-                    else:
-                        text = await response.text()
-                        return LLMResponse(
-                            text="", backend="llama.cpp", model=self.model,
-                            error=f"HTTP {response.status}: {text[:200]}",
-                        )
+            session = self._get_session()
+            async with session.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    text = data["choices"][0]["message"]["content"]
+                    tokens = data.get("usage", {}).get("total_tokens", 0)
+                    return LLMResponse(
+                        text=text, backend="llama.cpp", model=self.model or "unknown",
+                        tokens_used=tokens, response_time_ms=(time.time() - start_time) * 1000,
+                        confidence=0.9,
+                    )
+                else:
+                    text = await response.text()
+                    return LLMResponse(
+                        text="", backend="llama.cpp", model=self.model,
+                        error=f"HTTP {response.status}: {text[:200]}",
+                    )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(text="", backend="llama.cpp", model=self.model, error=str(e))

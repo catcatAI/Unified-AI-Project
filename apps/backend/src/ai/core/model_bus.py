@@ -12,6 +12,13 @@ from core.system.config.magic_numbers import confidence_value, latency_value, ti
 
 logger = logging.getLogger(__name__)
 
+# Strings returned by engines when they cannot process input — treated as failed responses
+_ENGINE_FALLBACK_STRINGS = frozenset({
+    "抱歉，我没理解你的意思。",
+    "抱歉，我沒理解你的意思。",
+    "",
+})
+
 
 @dataclass
 class ModelCapability:
@@ -226,9 +233,13 @@ class ModelBus:
         start = time.perf_counter()
 
         if query_type in ("reflex", "greeting"):
-            # ED3N only — fastest path
+            # ED3N first — fastest path
             r = await self._try_model("ed3n", query, context, "reflex")
             results[r.model_id] = r
+            # If ED3N can't handle it, fall back to cloud LLM
+            if r.confidence < 0.5 and "cloud" in self._registry:
+                r2 = await self._try_model("cloud", query, context, query_type)
+                results[r2.model_id] = r2
 
         elif query_type == "math":
             # ED3N first (trained 77.7%), GARDEN fallback
@@ -490,7 +501,7 @@ class ModelBus:
 
         elapsed = (time.perf_counter() - t0) * 1000
 
-        if raw is not None and isinstance(raw, str) and len(raw) > 0:
+        if raw is not None and isinstance(raw, str) and raw not in _ENGINE_FALLBACK_STRINGS:
             confidence = cap.min_confidence
         else:
             confidence = 0.0

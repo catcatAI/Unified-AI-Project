@@ -27,7 +27,7 @@ import time
 import random
 import re
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, NamedTuple
 
 from core.interfaces.service_registry import get_registry
 from core.interfaces.protocols import ChatMessage, LLMResponse, ChatResponse
@@ -64,6 +64,20 @@ from services.llm.prompt_builder import (
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("angela_llm")
+
+# Known fallback/error strings from engines — never return these as direct hits
+_KNOWN_FALLBACK_RESPONSES = frozenset({
+    "抱歉，我没理解你的意思。",
+    "抱歉，我沒理解你的意思。",
+})
+
+
+class GenerationParams(NamedTuple):
+    """Immutable per-request generation parameters — avoids self._gen_* race condition."""
+    timeout: float = 30.0
+    temperature: float = 0.7
+    max_tokens: int = 512
+
 
 # Lazy import for memory enhancement system - deferred until first use
 _memory_modules_loaded = False
@@ -132,8 +146,10 @@ def is_memory_enhanced():
     return _MEMORY_ENHANCED
 
 
-# For backward compatibility with code that checks MEMORY_ENHANCED
-MEMORY_ENHANCED = lambda: is_memory_enhanced()
+# For backward compatibility — callable, NOT a bool. Use is_memory_enhanced() for bool checks.
+def MEMORY_ENHANCED():
+    """Check if memory enhancement modules are available. Must be called: MEMORY_ENHANCED(), not if MEMORY_ENHANCED."""
+    return is_memory_enhanced()
 class AngelaLLMService:
     """
     Angela 的 LLM 服務 - 核心大腦
@@ -473,13 +489,11 @@ class AngelaLLMService:
                 # Register ED3N if available
                 if LLMBackend.ED3N in self.backends:
                     ed3n_backend = self.backends[LLMBackend.ED3N]
-                    from ai.ed3n.ed3n_engine import ED3NEngine
                     if hasattr(ed3n_backend, '_engine') and ed3n_backend._engine:
                         self.model_bus.register_ed3n(ed3n_backend._engine)
                     else:
-                        engine = ED3NEngine()
-                        engine.load_presets()
-                        self.model_bus.register_ed3n(engine)
+                        from ai.ed3n.ed3n_engine import ED3NEngine
+                        self.model_bus.register_ed3n(ED3NEngine.get_shared())
 
                 # Register GARDEN if available
                 if LLMBackend.GARDEN in self.backends:
@@ -528,6 +542,16 @@ class AngelaLLMService:
             self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
             self.is_available = False
             return False
+
+    async def shutdown(self) -> None:
+        """Close all backend HTTP sessions during app shutdown."""
+        for backend_type, backend in self.backends.items():
+            try:
+                if hasattr(backend, 'close'):
+                    await backend.close()
+            except Exception as e:
+                logger.debug(f"Backend {backend_type.value} close error: {e}")
+        self.backends.clear()
 
     def _get_biological_state(self) -> str:
         """Wrapper — delegates to standalone function for A3 split compatibility"""
@@ -699,7 +723,7 @@ class AngelaLLMService:
                 
                 if decision.selected_model != "none":
                     result = decision.results.get(decision.selected_model)
-                    if result and result.text:
+                    if result and result.text and result.text not in _KNOWN_FALLBACK_RESPONSES:
                         # Case A: High confidence -> Direct return (Reflex)
                         if decision.confidence >= 0.8:
                             logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f})")
@@ -832,7 +856,8 @@ class AngelaLLMService:
         if self.model_bus and self.query_classifier:
             try:
                 classify_result = self.query_classifier.classify(user_message)
-                decision = await self.model_bus.route(user_message, classify_result.primary_type.value, context)
+                query_type = classify_result.primary_type.value
+                decision = await self.model_bus.route(user_message, query_type, context)
                 if decision.selected_model != "none":
                     result = decision.results[decision.selected_model]
                     return LLMResponse(
@@ -842,7 +867,7 @@ class AngelaLLMService:
                         tokens_used=0,
                         response_time_ms=result.latency_ms,
                         confidence=result.confidence,
-                        metadata={"bus_route": True, "query_type": query_type.value, "route_reason": decision.reason},
+                        metadata={"bus_route": True, "query_type": query_type, "route_reason": decision.reason},
                     )
             except Exception as e:
                 logger.warning(f"Model Bus route failed: {e}", exc_info=True)
@@ -1010,11 +1035,11 @@ class AngelaLLMService:
 
     async def _prepare_generation_context(
         self, user_message: str, context: Dict[str, Any]
-    ) -> Optional[LLMResponse]:
+    ) -> tuple:
         defaults = _get_llm_config("defaults", {})
-        self._gen_timeout = getattr(self.active_backend, "timeout", defaults.get("timeout_default", 30.0))
-        self._gen_temperature = defaults.get("temperature", 0.7)
-        self._gen_max_tokens = defaults.get("max_tokens", 512)
+        gen_timeout = getattr(self.active_backend, "timeout", defaults.get("timeout_default", 30.0))
+        gen_temperature = defaults.get("temperature", 0.7)
+        gen_max_tokens = defaults.get("max_tokens", 512)
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:
@@ -1030,7 +1055,8 @@ class AngelaLLMService:
 
                 if auto_result.backend.value == "neuroblender":
                     logger.info("[auto] 預算不足，使用 NeuroBlender 降級")
-                    return await self._fallback_response(user_message, context)
+                    params = GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
+                    return await self._fallback_response(user_message, context), params
 
                 if auto_result.backend.value != (self.active_backend_type.value if self.active_backend_type else ""):
                     backend_map = {
@@ -1047,15 +1073,15 @@ class AngelaLLMService:
                         self.active_backend_type = mapped
                         logger.info(f"[auto] 切換後端: {prev} → {mapped.value}")
 
-                self._gen_timeout = auto_result.time_budget_ms / 1000.0
-                self._gen_temperature = auto_result.temperature
-                self._gen_max_tokens = auto_result.max_tokens
+                gen_timeout = auto_result.time_budget_ms / 1000.0
+                gen_temperature = auto_result.temperature
+                gen_max_tokens = auto_result.max_tokens
             except Exception as e:
                 logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
 
-        return None
+        return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
-    async def _call_llm_backend(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
+    async def _call_llm_backend(self, user_message: str, context: Dict[str, Any], params: GenerationParams) -> LLMResponse:
         messages = self._construct_angela_prompt(user_message, context)
 
         try:
@@ -1065,13 +1091,13 @@ class AngelaLLMService:
             coro = self.active_backend.generate(
                 prompt=messages[-1]["content"],
                 messages=messages,
-                temperature=self._gen_temperature,
-                max_tokens=self._gen_max_tokens,
+                temperature=params.temperature,
+                max_tokens=params.max_tokens,
             )
 
             response = await scheduler.submit(
                 coro,
-                timeout=self._gen_timeout,
+                timeout=params.timeout,
                 label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
             )
 
@@ -1084,10 +1110,10 @@ class AngelaLLMService:
                 self.active_backend.generate(
                     prompt=messages[-1]["content"],
                     messages=messages,
-                    temperature=self._gen_temperature,
-                    max_tokens=self._gen_max_tokens,
+                    temperature=params.temperature,
+                    max_tokens=params.max_tokens,
                 ),
-                timeout=self._gen_timeout,
+                timeout=params.timeout,
             )
 
         return response
@@ -1114,17 +1140,17 @@ class AngelaLLMService:
     async def _generate_with_llm(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
         start_time = time.time()
 
-        early = await self._prepare_generation_context(user_message, context)
+        early, gen_params = await self._prepare_generation_context(user_message, context)
         if early is not None:
             return early
 
         try:
-            response = await self._call_llm_backend(user_message, context)
+            response = await self._call_llm_backend(user_message, context, gen_params)
             return await self._post_process_response(response, user_message, context, start_time)
 
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout", exc_info=True)
-            self._record_route_learning(context, "timeout", self._gen_timeout * 1000)
+            self._record_route_learning(context, "timeout", gen_params.timeout * 1000)
             if self.llm_mode == "auto" and self.auto_selector is not None and AutoDecision is not None:
                 elapsed = (time.time() - start_time) * 1000
                 self.auto_selector.record_result(
@@ -1437,14 +1463,21 @@ def _get_llm_config(key: str, default=None):
 
 # 全局實例
 _llm_service: Optional[AngelaLLMService] = None
+_llm_service_lock: Optional[asyncio.Lock] = None
+
+
 async def get_llm_service(force_reload: bool = False) -> AngelaLLMService:
     """獲取全局 LLM 服務實例"""
-    global _llm_service
+    global _llm_service, _llm_service_lock
 
-    if _llm_service is None or force_reload:
-        _llm_service = AngelaLLMService()
-        await _llm_service.initialize()
-        get_registry().register("angela_llm_service", _llm_service)
+    if _llm_service_lock is None:
+        _llm_service_lock = asyncio.Lock()
+
+    async with _llm_service_lock:
+        if _llm_service is None or force_reload:
+            _llm_service = AngelaLLMService()
+            await _llm_service.initialize()
+            get_registry().register("angela_llm_service", _llm_service)
 
     return _llm_service
 async def angela_llm_response(

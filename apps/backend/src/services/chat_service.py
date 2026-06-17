@@ -58,14 +58,12 @@ class ChatService:
         if self._initialized:
             return
         if self._llm_service is None:
-            from services.llm.router import AngelaLLMService
-            self._llm_service = AngelaLLMService()
-            await self._llm_service.initialize()
+            from services.llm.router import get_llm_service
+            self._llm_service = await get_llm_service()
         try:
             from ai.ed3n.continuous_learning import ContinuousLearningPipeline
             from ai.ed3n.ed3n_engine import ED3NEngine
-            engine = ED3NEngine()
-            engine.load_presets()
+            engine = ED3NEngine.get_shared()
             state_path = os.path.join(self._cl_state_dir, "cl_state.json")
             if os.path.exists(state_path):
                 self._continuous_learning = ContinuousLearningPipeline.load(

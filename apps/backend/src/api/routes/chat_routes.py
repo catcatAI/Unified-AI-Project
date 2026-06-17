@@ -79,10 +79,41 @@ def _get_ed3n_engine():
     global _ed3n_engine
     if _ed3n_engine is None:
         from ai.ed3n.ed3n_engine import ED3NEngine
-        engine = ED3NEngine()
-        engine.reflex.load_presets()
-        _ed3n_engine = engine
+        _ed3n_engine = ED3NEngine.get_shared()
     return _ed3n_engine
+
+
+_dialogue_ctx_mgr = None
+
+
+def _get_dialogue_ctx():
+    global _dialogue_ctx_mgr
+    if _dialogue_ctx_mgr is None:
+        from ai.context.dialogue_context import DialogueContextManager
+        _dialogue_ctx_mgr = DialogueContextManager()
+    return _dialogue_ctx_mgr
+
+
+_emotion_analyzer = None
+
+
+def _get_emotion_analyzer():
+    global _emotion_analyzer
+    if _emotion_analyzer is None:
+        from services.llm.emotion_analyzer import EmotionAnalyzer
+        _emotion_analyzer = EmotionAnalyzer()
+    return _emotion_analyzer
+
+
+_state_matrix = None
+
+
+def _get_state_matrix():
+    global _state_matrix
+    if _state_matrix is None:
+        from core.engine.state_matrix import StateMatrix4D
+        _state_matrix = StateMatrix4D()
+    return _state_matrix
 
 
 async def _handle_chat_request(
@@ -132,9 +163,7 @@ async def _handle_chat_request(
 
         emotion_result = None
         try:
-            from services.llm.emotion_analyzer import EmotionAnalyzer
-            _emotion_analyzer = EmotionAnalyzer()
-            emotion_result = _emotion_analyzer.analyze_emotion(user_message)
+            emotion_result = _get_emotion_analyzer().analyze_emotion(user_message)
             logger.debug(f"Emotion analysis: {emotion_result}")
         except Exception as e:
             logger.info(f"Emotion analysis unavailable: {e}")
@@ -202,13 +231,12 @@ async def _handle_chat_request(
             from core.bio.biological_integrator import BiologicalIntegrator
             _bio = BiologicalIntegrator()
             context["bio_state"] = _bio.get_biological_state()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Biological state retrieval failed: {e}")
 
         # Fill state_for_llm for prompt builder cognitive state block
         try:
-            from core.engine.state_matrix import StateMatrix4D
-            _sm = StateMatrix4D()
+            _sm = _get_state_matrix()
             _axes = {}
             for _ax_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
                 _dim = _sm.dimensions.get(_ax_name)
@@ -226,8 +254,8 @@ async def _handle_chat_request(
                 "eta": {"module_count": 0, "success_rate": 0.0, "structural_drift": 0.0},
                 "guidance": [],
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"StateMatrix4D unavailable: {e}")
 
         retrieved_ctx = []
         if history and len(history) > 0:
@@ -244,21 +272,21 @@ async def _handle_chat_request(
                         retrieved_ctx.append({**entry, "relevance": float(overlap)})
                 retrieved_ctx.sort(key=lambda x: x["relevance"], reverse=True)
                 retrieved_ctx = retrieved_ctx[:5]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"ED3N context retrieval failed: {e}")
         context["retrieved_context"] = retrieved_ctx
 
         # === Context Subsystem Injection ===
         # Wire dialogue, model, tool, and memory context into the pipeline
         try:
-            from ai.context.dialogue_context import DialogueContextManager
-            _dialogue_ctx = DialogueContextManager()
+            _dialogue_ctx = _get_dialogue_ctx()
             if session_id:
+                _dialogue_ctx.add_message(session_id, origin, user_message)
                 conv_ctx = _dialogue_ctx.get_conversation_context(session_id)
                 if conv_ctx:
                     context["dialogue_context"] = conv_ctx
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Dialogue context unavailable: {e}")
 
         try:
             from ai.context.memory_context import MemoryContextManager
@@ -266,8 +294,8 @@ async def _handle_chat_request(
             recent_memories = _memory_ctx.get_memories_by_type("short_term", limit=5)
             if recent_memories:
                 context["recent_memories"] = recent_memories
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Memory context unavailable: {e}")
 
         # === Execution Gate Flow (v2) ===
         # Handle pending confirmation from previous turn
@@ -387,8 +415,8 @@ async def _handle_chat_request(
                         "source": f"chat_{session_id}",
                     }],
                 })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Causal learning failed: {e}")
 
         return {
             "response_text": response_text,

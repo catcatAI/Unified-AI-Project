@@ -302,6 +302,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     # --- Shutdown ---
+    try:
+        from services.llm.router import _llm_service as _llm
+        if _llm is not None:
+            await _llm.shutdown()
+            logger.info("[LLM] Backend HTTP sessions closed")
+    except Exception as e:
+        logger.debug(f"[LLM] Shutdown skipped: {e}")
     if _agent_manager_instance is not None:
         try:
             _agent_manager_instance.shutdown_all_agents()

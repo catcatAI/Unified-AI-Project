@@ -8,11 +8,15 @@
 
 import logging
 import re
+from collections import OrderedDict
 
 # (removed incomplete import: from tests.tools.test_tool_dispatcher_logging import)
 # (removed incomplete import: from tests.core_ai import)
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+_MAX_CONVERSATIONS = 100
+_MAX_MESSAGES_PER_CONVERSATION = 200
 
 # (removed incomplete import: from .manager import)
 # (removed incomplete import: from .storage.base import)
@@ -46,6 +50,8 @@ class Conversation:
     def add_message(self, message: Message) -> None:
         """添加消息"""
         self.messages.append(message)
+        if len(self.messages) > _MAX_MESSAGES_PER_CONVERSATION:
+            self.messages = self.messages[-_MAX_MESSAGES_PER_CONVERSATION:]
 
     def complete(self) -> None:
         """完成对话"""
@@ -66,27 +72,18 @@ class ContextSummary:
 class DialogueContextManager:
     """对话上下文管理器"""
 
-    def __init__(self, context_manager) -> None:
+    def __init__(self, context_manager=None) -> None:
         self.context_manager = context_manager
-        self.conversations: Dict[str, Conversation] = {}
+        self.conversations: OrderedDict[str, Conversation] = OrderedDict()
 
     def start_conversation(self, conversation_id: str, participants: List[str]) -> bool:
         """开始对话"""
         try:
+            while len(self.conversations) >= _MAX_CONVERSATIONS:
+                self.conversations.popitem(last=False)
             conversation = Conversation(conversation_id, participants)
             self.conversations[conversation_id] = conversation
 
-            # 创建对应的上下文
-            {
-                "conversation": {
-                    "conversation_id": conversation_id,
-                    "participants": participants,
-                    "start_time": conversation.start_time.isoformat(),
-                    "status": "active",
-                }
-            }
-
-            # context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)  # Commented - needs proper import
             logger.info(f"Started conversation {conversation_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
@@ -99,26 +96,20 @@ class DialogueContextManager:
         """添加消息"""
         try:
             if conversation_id not in self.conversations:
-                logger.error(f"Conversation {conversation_id} not found", exc_info=True)
-                return False
+                while len(self.conversations) >= _MAX_CONVERSATIONS:
+                    self.conversations.popitem(last=False)
+                self.conversations[conversation_id] = Conversation(
+                    conversation_id, participants=[sender]
+                )
+            else:
+                self.conversations.move_to_end(conversation_id)
 
             conversation = self.conversations[conversation_id]
+            if sender not in conversation.participants:
+                conversation.participants.append(sender)
             message = Message(sender, content, message_type)
             conversation.add_message(message)
 
-            # 创建对应的上下文
-            {
-                "message": {
-                    "message_id": message.message_id,
-                    "conversation_id": conversation_id,
-                    "sender": sender,
-                    "content": content,
-                    "timestamp": message.timestamp.isoformat(),
-                    "message_type": message_type,
-                }
-            }
-
-            # context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)  # Commented - needs proper import
             logger.info(f"Added message to conversation {conversation_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
@@ -267,7 +258,7 @@ class DialogueContextManager:
                     "sentiment": conv.context_summary.sentiment,
                 }
             result["messages"] = [
-                {"role": m.role, "content": m.content, "timestamp": m.timestamp.isoformat()}
+                {"role": m.sender, "content": m.content, "timestamp": m.timestamp.isoformat()}
                 for m in conv.messages[-10:]
             ]
             return result

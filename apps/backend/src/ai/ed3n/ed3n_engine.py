@@ -154,6 +154,18 @@ class ED3NEngine:
         if auto_load_presets:
             self.load_presets()
 
+    _shared_instance: Optional["ED3NEngine"] = None
+    _shared_lock = threading.Lock()
+
+    @classmethod
+    def get_shared(cls) -> "ED3NEngine":
+        """Get the process-wide shared ED3NEngine instance with presets loaded."""
+        if cls._shared_instance is None:
+            with cls._shared_lock:
+                if cls._shared_instance is None:
+                    cls._shared_instance = cls()
+        return cls._shared_instance
+
     @property
     def validator(self) -> ResponseAnchorValidator:
         if self._validator is None:

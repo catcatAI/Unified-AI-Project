@@ -91,11 +91,14 @@ class TestDialogueContextManager:
         assert len(mgr.conversations['conv1'].messages) == 1
         assert mgr.conversations['conv1'].messages[0].content == 'Hello!'
 
-    def test_add_message_conversation_not_found(self):
+    def test_add_message_auto_creates_conversation(self):
         mock_cm = MagicMock()
         mgr = DialogueContextManager(mock_cm)
         result = mgr.add_message('nonexistent', 'alice', 'Hi')
-        assert result is False
+        assert result is True
+        assert 'nonexistent' in mgr.conversations
+        assert 'alice' in mgr.conversations['nonexistent'].participants
+        assert len(mgr.conversations['nonexistent'].messages) == 1
 
     def test_extract_key_points(self):
         mock_cm = MagicMock()
