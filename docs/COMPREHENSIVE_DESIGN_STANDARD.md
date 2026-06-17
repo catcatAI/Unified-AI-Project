@@ -908,10 +908,10 @@ No other system combines:
 | Frontend | 4 | 0 | 0 | 4 |
 | Economy | 2 | 0 | 0 | 2 |
 | Pet | 1 | 0 | 0 | 1 |
-| Monitoring | 5 | 0 | 0 | 5 |
+| Monitoring | 8 | 0 | 0 | 8 |
 | Security | 7 | 2 | 0 | 9 |
 | Integration | 0 | 0 | 3 | 3 |
-| **Total** | **112** | **13** | **7** | **132** |
+| **Total** | **115** | **13** | **7** | **135** |
 
 ### 7.2 Target Module Count (After Implementation)
 

@@ -16,7 +16,7 @@
 | Phase 3: Safety & Trust | 🟡 PARTIAL | 2026-06-16 | TrustManager ✅, ContentFilter ✅, SafetyAudit ✅ |
 | Phase 4: Embodiment | 🟡 PARTIAL | 2026-06-16 | Web Dashboard ✅, Voice Output ✅, Pet AI ✅ |
 | Phase 5: Infrastructure | 🟡 PARTIAL | 2026-06-16 | Dockerfile ✅, docker-compose ✅, Prometheus ✅, Deploy workflow ✅ |
-| Phase 6: Polish & Launch | ⏳ PENDING | — | |
+| Phase 6: Polish & Launch | 🟡 PARTIAL | 2026-06-16 | OpenAPI ✅, Profiler ✅, Benchmarks ✅, Docs ✅ |
 
 ### Phase 0 Detail (2026-06-16)
 
@@ -87,6 +87,16 @@
 | Nginx config | ✅ | Reverse proxy, SSL, rate limiting |
 | Deploy workflow | ✅ | GitHub Actions with staging/production |
 | Integration Tests | ✅ | 24/24 pass (infrastructure tests) |
+
+### Phase 6 Detail (2026-06-16)
+
+| Task | Status | Verification |
+|------|--------|-------------|
+| OpenAPI spec export | ✅ | Script created for static spec export |
+| Profiling entry point | ✅ | Unified profiler with imports/memory modes |
+| Benchmark baseline | ✅ | ED3N, GARDEN, Classifier benchmarks |
+| Deployment guide | ✅ | Complete Docker Compose deployment docs |
+| Integration Tests | ✅ | 15/15 pass (documentation tests) |
 
 ---
 

@@ -734,4 +734,28 @@ Total: 61/61 PASSED ✅
 
 ---
 
-*本報告由三次審計補充，並記錄 2026-06-16 Phase 0 + Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5 修復。覆蓋全部代碼目錄。*
+## 二十、Phase 6 修復（2026-06-16）
+
+### Polish & Launch — 已完成
+
+| # | 文件 | 修復 |
+|---|------|------|
+| 44 | `apps/backend/scripts/export_openapi.py` | 新建：OpenAPI 規範匯出腳本 |
+| 45 | `apps/backend/scripts/profiler.py` | 新建：統一性能分析入口（imports/memory 模式） |
+| 46 | `apps/backend/scripts/benchmark_baseline.py` | 新建：ED3N、GARDEN、Classifier 基準測試 |
+| 47 | `docs/DEPLOYMENT.md` | 新建：完整 Docker Compose 部署文檔 |
+| 48 | `tests/ai/test_phase6_docs.py` | 新建：15 個文檔和結構測試 |
+
+### 測試驗證
+
+```
+Phase 6 E2E: 24/24 PASSED ✅
+Phase 5 Integration: 13/13 PASSED ✅
+Phase 5 Infrastructure: 24/24 PASSED ✅
+Phase 6 Documentation: 15/15 PASSED ✅
+Total: 76/76 PASSED ✅
+```
+
+---
+
+*本報告記錄 2026-06-16 Phase 0-6 全部修復。覆蓋全部代碼目錄。*
