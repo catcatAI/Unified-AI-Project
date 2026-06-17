@@ -282,12 +282,247 @@ class PromptManager:
             tags=["response"],
         ))
 
-        # Biological state
+        # Biological state (legacy key)
         self.register(PromptTemplate(
             key="angela.bio_state",
             templates={
                 "en": "Biological state: not yet initialized",
                 "zh": "生物狀態：尚未初始化",
+            },
+            tags=["system"],
+        ))
+
+        # ── Bio axis sub-fields ──────────────────────────────────────────
+        self.register(PromptTemplate(
+            key="angela.bio.arousal",
+            templates={"en": "Arousal={value}", "zh": "喚醒度={value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.bio.stress",
+            templates={"en": "Stress={value}", "zh": "壓力={value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.bio.mood",
+            templates={"en": "Mood={value}", "zh": "情緒={value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.bio.emotion",
+            templates={"en": "Dominant emotion={value}", "zh": "主導情緒={value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.bio.uninitialized",
+            templates={"en": "Bio state not yet initialized", "zh": "生物狀態尚未初始化"},
+            tags=["system"],
+        ))
+
+        # ── Theta (meta-cognition) axis fields ───────────────────────────
+        self.register(PromptTemplate(
+            key="angela.theta.novelty",
+            templates={"en": "Novelty: {value}", "zh": "新奇度: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.theta.mismatch_doubt",
+            templates={"en": "Mismatch/Doubt: {value}", "zh": "失配懷疑: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.theta.creation_urge",
+            templates={"en": "Creation urge: {value}", "zh": "創作衝動: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.theta.correction",
+            templates={"en": "Correction urge: {value}", "zh": "糾正衝動: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.theta.default",
+            templates={"en": "(Meta-cognition data unavailable)", "zh": "(元認知數據不可用)"},
+            tags=["system"],
+        ))
+
+        # ── Eta (execution) axis fields ──────────────────────────────────
+        self.register(PromptTemplate(
+            key="angela.eta.active_modules",
+            templates={"en": "Active modules: {count}", "zh": "活躍模組: {count}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.eta.success_rate",
+            templates={"en": "Success rate: {value}", "zh": "成功率: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.eta.drift",
+            templates={"en": "Structural drift: {value}", "zh": "結構漂移: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.eta.default",
+            templates={"en": "(Execution data unavailable)", "zh": "(執行數據不可用)"},
+            tags=["system"],
+        ))
+
+        # ── Theory formula summaries ─────────────────────────────────────
+        self.register(PromptTemplate(
+            key="angela.theory_formulas",
+            templates={"en": "[Theory Formula Summary]", "zh": "【理論公式摘要】"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.formula.hsm",
+            templates={"en": "HSM index: {value}", "zh": "HSM 指數: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.formula.life_intensity",
+            templates={"en": "Life intensity: {value}", "zh": "生命強度: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.formula.active_cognition",
+            templates={"en": "Active cognition: {value}", "zh": "主動認知: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.formula.cdm",
+            templates={"en": "CDM output: {amount} (quality={quality})", "zh": "CDM 輸出: {amount}（品質={quality}）"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.formula.non_paradox_coherence",
+            templates={"en": "Non-paradox coherence: {value}", "zh": "非矛盾一致性: {value}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.formula.non_paradox_inactive",
+            templates={"en": "Non-paradox system: inactive", "zh": "非矛盾系統：未激活"},
+            tags=["system"],
+        ))
+
+        # ── Autonomous decisions ─────────────────────────────────────────
+        self.register(PromptTemplate(
+            key="angela.autonomous_decisions",
+            templates={"en": "[Autonomous Cognition Decisions]", "zh": "【自主認知決策】"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.decision.current_phase",
+            templates={"en": "Current phase: {phase}", "zh": "當前階段: {phase}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.decision.recent",
+            templates={"en": "Recent decisions:", "zh": "近期決策:"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.decision.item",
+            templates={
+                "en": "  [{type}] trigger={trigger} conf={confidence}",
+                "zh": "  [{type}] 觸發={trigger} 信心={confidence}",
+            },
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.decision.explorations",
+            templates={"en": "Explorations triggered: {count}", "zh": "探索次數: {count}"},
+            tags=["system"],
+        ))
+
+        # ── Theta routing ────────────────────────────────────────────────
+        self.register(PromptTemplate(
+            key="angela.theta_routing",
+            templates={"en": "[Theta Router State]", "zh": "【Theta 路由狀態】"},
+            tags=["system"],
+        ))
+
+        # ── Execution rules ──────────────────────────────────────────────
+        self.register(PromptTemplate(
+            key="angela.execution_rules",
+            templates={
+                "en": (
+                    "[Rules] Reply as Angela only. Do NOT repeat system context. "
+                    "Stay in character, be concise and natural."
+                ),
+                "zh": (
+                    "【規則】僅以 Angela 身份回覆。不要重複系統上下文。"
+                    "保持角色，簡潔自然。"
+                ),
+            },
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.result_instruction",
+            templates={
+                "en": "Use the above execution result to craft your reply naturally.",
+                "zh": "根據以上執行結果自然地組織你的回覆。",
+            },
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.max_continuation",
+            templates={
+                "en": "[WARNING] Maximum continuation depth reached. Please conclude your response now.",
+                "zh": "【警告】已達最大續寫深度，請立即結束回覆。",
+            },
+            tags=["system"],
+        ))
+
+        # ── Google Drive / image / context blocks ────────────────────────
+        self.register(PromptTemplate(
+            key="angela.google_drive",
+            templates={"en": "[Google Drive Files]", "zh": "【Google 雲端文件】"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.image_analysis",
+            templates={"en": "[Image Analysis]", "zh": "【圖像分析】"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.filename",
+            templates={"en": "Filename: {filename}", "zh": "文件名: {filename}"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.analysis_content",
+            templates={"en": "Analysis:", "zh": "分析內容:"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.related_context",
+            templates={"en": "[Related Context]", "zh": "【相關上下文】"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.relevance",
+            templates={"en": "(relevance={score:.2f})", "zh": "(相關度={score:.2f})"},
+            tags=["system"],
+        ))
+
+        # ── Draft / refinement ───────────────────────────────────────────
+        self.register(PromptTemplate(
+            key="angela.draft_response",
+            templates={"en": "[Draft Response for Refinement]", "zh": "【待優化草稿回覆】"},
+            tags=["system"],
+        ))
+        self.register(PromptTemplate(
+            key="angela.refinement_instruction",
+            templates={
+                "en": (
+                    "The above is a draft. Refine it to sound more natural and in-character as Angela. "
+                    "Preserve the core meaning but improve tone and flow."
+                ),
+                "zh": (
+                    "以上是草稿，請以 Angela 的風格潤色使其更自然。"
+                    "保留核心含義，改善語氣和流暢度。"
+                ),
             },
             tags=["system"],
         ))

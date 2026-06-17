@@ -708,7 +708,7 @@ class AngelaLLMService:
                                 confidence=decision.confidence,
                                 model=decision.selected_model,
                                 backend="model_bus",
-                                latency_ms=decision.total_latency_ms
+                                response_time_ms=decision.total_latency_ms
                             )
                         
                         # Case B: Medium confidence -> Draft for LLM refinement
