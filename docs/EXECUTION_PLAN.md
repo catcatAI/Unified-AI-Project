@@ -33,7 +33,7 @@
 | Activate memory_context | ✅ | `get_memory_context()` returns real data |
 | Fix integration_with_ham | ✅ | `sync_ham_to_context()` returns context_id |
 | Clean DEPRECATED markers | ✅ | 9 packages cleaned |
-| i18n system | ⏳ | Pending |
+| i18n system | ✅ | Phase 7 complete (I18nManager, PromptManager, handlers, locale files) |
 | Clean stub files | 🟡 | Kept (imported by other modules) |
 | Tests | ✅ | 37/37 pass (24 phase6 + 13 phase5) |
 
@@ -907,23 +907,23 @@ LLM 提示模板與 UI 字串不同：
 
 ### 9.5 Phase 7 Deliverables
 
-- [ ] `load_from_json()` 方法可用
-- [ ] `load_from_locale_dir()` 方法可用
-- [ ] 啟動時自動載入 locale JSON
-- [ ] desktop-app zh-CN bug 修復
-- [ ] Handler 回應字串使用 `t()`
-- [ ] 引擎輸出字串使用 `t()`
-- [ ] locale JSON 包含所有 Handler 響應字串
-- [ ] `PromptManager` 創建完成
-- [ ] 提示模板按語言分組
-- [ ] `prompt_builder.py` 使用 `PromptManager`
-- [ ] `unified_control_center.py` 使用 `PromptManager`
-- [ ] `llm_decision_loop.py` 使用 `PromptManager`
-- [ ] `project_coordinator.py` 使用 `PromptManager`
-- [ ] 配置文件外部化到 YAML
-- [ ] ED3N 風格 `encode()`/`decode()` 可用
-- [ ] `sync_from_ed3n_dictionary()` 可用
-- [ ] 測試通過
+- [x] `load_from_json()` 方法可用
+- [x] `load_from_locale_dir()` 方法可用
+- [x] 啟動時自動載入 locale JSON
+- [x] desktop-app zh-CN bug 修復
+- [x] Handler 回應字串使用 `t()`
+- [x] 引擎輸出字串使用 `t()`
+- [x] locale JSON 包含所有 Handler 響應字串
+- [x] `PromptManager` 創建完成
+- [x] 提示模板按語言分組
+- [x] `prompt_builder.py` 使用 `PromptManager`
+- [x] `unified_control_center.py` 使用 `PromptManager`
+- [x] `llm_decision_loop.py` 使用 `PromptManager`
+- [x] `project_coordinator.py` 使用 `PromptManager`
+- [x] 配置文件外部化到 YAML
+- [x] ED3N 風格 `encode()`/`decode()` 可用
+- [x] `sync_from_ed3n_dictionary()` 可用
+- [x] 測試通過
 
 ### 9.6 總工作量
 
