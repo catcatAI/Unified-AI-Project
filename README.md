@@ -61,13 +61,13 @@
 **Total project files**: ~2,950+ (680+ Python in backend src · 140 JS/TS · 805+ docs · 577 config · 238+ test · ~190 other).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHANGELOG.md) for version history.
 
-> **STATUS (2026-06-15)**: Chat pipeline fully wired. Orphaned systems integrated. 15 bugs fixed. Architecture doc created.  
+> **STATUS (2026-06-16)**: Chat pipeline fully wired. Orphaned systems integrated. 15 bugs fixed. Architecture doc created. Phase 0-7 complete (i18n internationalization).  
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → LLM → causal learning → response. 11 specialized agents registered.  
 > **See**: [docs/architecture/ANGELA_FULL_ARCHITECTURE.md](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) for full system architecture.
 
 ---
 
-### Current Status (code-verified as of 2026-06-15)
+### Current Status (code-verified as of 2026-06-16)
 
 | Area | Status | Key evidence |
 |------|--------|-------------|
@@ -83,7 +83,8 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **Autonomous Cognition** | ✅ INTEGRATED | AutonomousLifeCycle + θ Router + 5 formula metrics injected into prompts |
 | **Vision Endpoints** | ✅ IMPLEMENTED | `/vision/analyze` + `/chat/with-image` endpoints |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | 86/86 deep integration tests + 34/34 end-to-end pipeline tests passed |
+| **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests passing |
+| **Tests** | ✅ PASSING | 86/86 deep integration tests + 34/34 end-to-end pipeline tests + 45 Phase 7 tests passed |
 | **Architecture Doc** | ✅ CREATED | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB |
 
 See **[ANGELA_FULL_ARCHITECTURE.md](docs/architecture/ANGELA_FULL_ARCHITECTURE.md)** (full architecture), **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (audit V2), **[AGENTS.md](AGENTS.md)** (dev guidelines).
@@ -156,7 +157,7 @@ npx pnpm dev:desktop
 
 ---
 
-### What Actually Works (Code-Verified 2026-06-15)
+### What Actually Works (Code-Verified 2026-06-16)
 
 **Chat Pipeline (fully wired):**
 - **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → LLM → causal learning → response ✅
@@ -178,6 +179,15 @@ npx pnpm dev:desktop
 - **ED3N engine** — SNN, reflex layers, cross-modal processing ✅
 - **GARDEN engine** — VectorDictionary, TensorSNNCore ✅
 
+**i18n (Internationalization) System:**
+- **I18nManager** — Multi-language translation management, JSON locale file loading ✅
+- **PromptManager** — LLM prompt template management, language-aware selection ✅
+- **Handler i18n** — 4 handlers completed (file_operation, task_manager, system_command, code_execution) ✅
+- **Prompt Builder i18n** — 60+ prompt strings replaced with `prompt()` calls ✅
+- **LLM Decision Loop i18n** — 40+ prompt strings replaced ✅
+- **Locale files** — en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json ✅
+- **Desktop App i18n** — zh-CN bug fixed, case-insensitive locale matching ✅
+
 **Core Infrastructure:**
 - **Config system** — `config_loader.py:get_config()` ✅
 - **State matrix** — 6D state matrix, 1439 lines, 61.8 KB ✅
@@ -189,7 +199,7 @@ npx pnpm dev:desktop
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 86/86 integration tests + 34/34 pipeline tests ✅
+- **Test suite** — 86/86 integration tests + 34/34 pipeline tests + 45 Phase 7 tests ✅
 
 ### What Does NOT Work / Is Stub
 
@@ -220,6 +230,8 @@ npx pnpm dev:desktop
 | **Orphaned Systems** | Wire 6 systems, delete 16 stubs, retain 18 for future | ✅ **DONE** | 🔴 CRITICAL |
 | **Bug Fixes** | 15 bugs fixed across ensemble, causal, crisis, level5, adapter | ✅ **DONE** | 🔴 CRITICAL |
 | **Architecture Doc** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB | ✅ **DONE** | 🟡 MEDIUM |
+| **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **DONE** | 🔴 CRITICAL |
+| **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM |
 | **Agent Auto-Routing** | QueryClassifier/ModelBus auto-call specialized agents | ⬜ | 🔴 HIGH |
 | **Frontend Multimodal** | Image/audio upload in Desktop/Web/Mobile | ⬜ | 🔴 HIGH |
 | **WebSocket Binary** | Extend protocol for image/audio data | ⬜ | 🟡 MEDIUM |
@@ -366,7 +378,7 @@ npx pnpm dev:desktop
 
 ---
 
-### 什麼能跑（2026-06-15 驗證）
+### 什麼能跑（2026-06-16 驗證）
 
 **聊天管線（完整接線）：**
 - **完整管線** — WebSocket → 情緒分析 → 危機閘門 → 生物刺激 → 對齊閘門 → LLM → 因果學習 → 回應 ✅
@@ -386,6 +398,15 @@ npx pnpm dev:desktop
 - **11 個專業代理** — 透過 AgentAdapter 註冊 ✅
 - **ED3N 引擎** — SNN、反射層、跨模態處理 ✅
 - **GARDEN 引擎** — VectorDictionary、TensorSNNCore ✅
+
+**國際化（i18n）系統：**
+- **I18nManager** — 多語言翻譯管理，支援 JSON locale 檔案載入 ✅
+- **PromptManager** — LLM 提示模板管理，語言動態選擇 ✅
+- **Handler i18n** — 4 個 handler 已完成硬編字串替換（file_operation, task_manager, system_command, code_execution）✅
+- **Prompt Builder i18n** — 60+ 提示字串已替換為 `prompt()` 呼叫 ✅
+- **LLM Decision Loop i18n** — 40+ 提示字串已替換 ✅
+- **Locale 檔案** — en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json ✅
+- **Desktop App i18n** — zh-CN bug 修復，大小寫不敏感 locale 匹配 ✅
 
 **核心基礎設施：**
 - **配置系統** — `config_loader.py:get_config()` ✅
@@ -425,6 +446,8 @@ npx pnpm dev:desktop
 | **孤兒系統** | 接入 6 系統、刪除 16 個 stub、保留 18 個 | ✅ **已完成** | 🔴 CRITICAL |
 | **Bug 修復** | 15 個 bug 修復 | ✅ **已完成** | 🔴 CRITICAL |
 | **架構文檔** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 行 | ✅ **已完成** | 🟡 MEDIUM |
+| **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **已完成** | 🔴 CRITICAL |
+| **i18n 國際化** | I18nManager, PromptManager, Handler/Prompt 替換, Locale 檔案 | ✅ **已完成** | 🟡 MEDIUM |
 | **代理自動路由** | QueryClassifier/ModelBus 自動呼叫專業代理 | ⬜ | 🔴 HIGH |
 | **前端多模態** | Desktop/Web/Mobile 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
 | **WebSocket Binary** | 延伸協議支援圖片/音訊 | ⬜ | 🟡 MEDIUM |

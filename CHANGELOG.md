@@ -5,11 +5,41 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> ✅ **IMPORTANT NOTICE (2026-06-16) — PHASE 7 i18n COMPLETE**: Internationalization system fully implemented:
+> - **I18nManager**: `load_from_json()`, `load_from_locale_dir()`, `encode()`, `decode()` methods added
+> - **PromptManager**: Centralized LLM prompt template management with language-aware selection
+> - **Handler i18n**: 4 handlers completed (file_operation, task_manager, system_command, code_execution)
+> - **LLM Prompt i18n**: prompt_builder.py, unified_control_center.py, llm_decision_loop.py, project_coordinator.py updated
+> - **Locale files**: en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json created/updated
+> - **Tests**: 45 tests passing (8 i18n + 13 prompt_manager + 24 E2E)
+> - See [EXECUTION_PLAN.md](docs/EXECUTION_PLAN.md#9-phase-7-i18n-internationalization) for full details
+
 > ✅ **IMPORTANT NOTICE (2026-06-13) — LIVE2D + PIXEL-ANGELA FIXES**: All Live2D model loading fixed, pixel-angela 6 bugs resolved:
 > - **Live2D**: Framework check removed, Epsilon_free model3.json created, default model switched
 > - **pixel-angela**: ear_twitch crash fixed, WebSocket handshake aligned, chat/bio-feedback handlers added
 > - **Backend**: tiered_loader.py rewritten for YAML configs, ED3N duplicate entry warning fixed
 > - See [PLAN_pixel_angela_and_live2d.md](PLAN_pixel_angela_and_live2d.md) for full details
+
+## [7.5.0-dev] - 2026-06-16 — Phase 7 i18n Internationalization
+
+### Added
+- 🌐 **I18nManager enhancements**: Added `load_from_json()`, `load_from_locale_dir()`, `encode()`, `decode()` methods
+- 🌐 **PromptManager**: New centralized prompt template management with language-aware selection
+- 🌐 **Locale files**: Created `prompts.en-US.json` and `prompts.zh-CN.json` with 80+ prompt templates
+- 🌐 **Desktop i18n fix**: Fixed zh-CN locale detection bug with case-insensitive matching
+
+### Changed
+- 🌐 **Handler i18n**: Replaced hardcoded Chinese strings in `file_operation_handler.py` (35 strings), `task_manager_handler.py` (15 strings), `system_command_handler.py` (9 strings), `code_execution_handler.py` (9 strings)
+- 🌐 **Prompt Builder i18n**: Replaced 60+ hardcoded strings in `prompt_builder.py` with `prompt()` calls
+- 🌐 **UCC i18n**: Updated `unified_control_center.py` system prompts to use `prompt()` calls
+- 🌐 **LLM Decision Loop i18n**: Replaced 40+ strings in `llm_decision_loop.py` with `prompt()` calls
+- 🌐 **Project Coordinator i18n**: Updated prompt templates in `project_coordinator.py`
+- 🌐 **Locale updates**: Added `file_ops`, `task_ops`, `sys_cmd`, `code_exec` sections to en-US.json and zh-CN.json
+
+### Tests
+- 🧪 **i18n tests**: 8 new tests in `test_i18n_enhanced.py`
+- 🧪 **PromptManager tests**: 13 new tests in `test_prompt_manager.py`
+- 🧪 **Total**: 45 tests passing across all Phase 7 test files
 
 ## [7.5.0-dev] - 2026-06-13 — Live2D + Pixel-Angela Fixes
 
