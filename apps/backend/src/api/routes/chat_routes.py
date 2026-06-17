@@ -26,6 +26,25 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_background_tasks: set = set()
+
+
+def _spawn_background_task(coro, description: str = "") -> asyncio.Task:
+    """Create a tracked background task with error logging."""
+    task = asyncio.create_task(coro)
+    _background_tasks.add(task)
+
+    def _on_done(t: asyncio.Task) -> None:
+        _background_tasks.discard(t)
+        if t.cancelled():
+            return
+        exc = t.exception()
+        if exc:
+            logger.warning(f"Background task '{description}' failed: {exc}")
+
+    task.add_done_callback(_on_done)
+    return task
+
 
 class TTLSessionManager:
     def __init__(self):
@@ -81,6 +100,17 @@ def _get_ed3n_engine():
         from ai.ed3n.ed3n_engine import ED3NEngine
         _ed3n_engine = ED3NEngine.get_shared()
     return _ed3n_engine
+
+
+_bio_integrator = None
+
+
+def _get_bio_integrator():
+    global _bio_integrator
+    if _bio_integrator is None:
+        from core.bio.biological_integrator import BiologicalIntegrator
+        _bio_integrator = BiologicalIntegrator()
+    return _bio_integrator
 
 
 _dialogue_ctx_mgr = None
@@ -181,16 +211,15 @@ async def _handle_chat_request(
 
         # Process chat as biological stimulus (fire-and-forget async)
         try:
-            from core.bio.biological_integrator import BiologicalIntegrator
-            _bio = BiologicalIntegrator()
-            asyncio.create_task(_bio.process_auditory_stimulus(volume=0.6, content=user_message))
+            _bio = _get_bio_integrator()
+            _spawn_background_task(_bio.process_auditory_stimulus(volume=0.6, content=user_message), "auditory_stimulus")
             if emotion_result:
                 emotion = emotion_result.get("emotion", "neutral")
                 intensity = emotion_result.get("intensity", 0.5)
                 if emotion in ("sad", "angry", "fear"):
-                    asyncio.create_task(_bio.process_stress_event(intensity=intensity * 0.3))
+                    _spawn_background_task(_bio.process_stress_event(intensity=intensity * 0.3), "stress_event")
                 elif emotion in ("happy", "calm"):
-                    asyncio.create_task(_bio.process_relaxation_event(intensity=intensity * 0.2))
+                    _spawn_background_task(_bio.process_relaxation_event(intensity=intensity * 0.2), "relaxation_event")
         except Exception as e:
             logger.debug(f"Biological state update from chat failed: {e}")
 
@@ -228,8 +257,7 @@ async def _handle_chat_request(
 
         # Get live biological state for LLM context
         try:
-            from core.bio.biological_integrator import BiologicalIntegrator
-            _bio = BiologicalIntegrator()
+            _bio = _get_bio_integrator()
             context["bio_state"] = _bio.get_biological_state()
         except Exception as e:
             logger.debug(f"Biological state retrieval failed: {e}")

@@ -418,7 +418,8 @@ class GARDENEngine:
             if result == int(result):
                 return f"{text.rstrip('？?！!。.')} = {int(result)}"
             return f"{text.rstrip('？?！!。.')} = {result:.2f}"
-        except Exception:
+        except Exception as e:
+            logger.debug("GARDEN: math eval failed for %r: %s", text, e)
             return None
 
     # ------------------------------------------------------------------

@@ -10,12 +10,15 @@
 #
 # =============================================================================
 
+import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Pattern, Tuple
 
 from core.system.config.magic_numbers import limit_value
+
+logger = logging.getLogger(__name__)
 
 
 class QueryType(Enum):
@@ -315,8 +318,8 @@ class QueryClassifier:
                     action_type=dict_action,
                     reason="dictionary_match"
                 )
-        except Exception:
-            pass  # Dictionary not available, fall through to regex
+        except Exception as e:
+            logger.debug(f"Dictionary lookup failed: {e}")
 
         # Step 3: Regex pattern matching (fallback)
         matches = []

@@ -133,6 +133,8 @@ class ExecutionManager:
         # Issue tracking
         self.issues_log: List[Dict[str, Any]] = []
         self.recovery_actions: List[Dict[str, Any]] = []
+        self._MAX_ISSUES_LOG = 1000
+        self._MAX_RECOVERY_ACTIONS = 500
 
         # Status monitoring
         self._monitoring_active = False
@@ -314,6 +316,8 @@ class ExecutionManager:
         }
 
         self.issues_log.append(issue)
+        if len(self.issues_log) > self._MAX_ISSUES_LOG:
+            self.issues_log = self.issues_log[-self._MAX_ISSUES_LOG:]
 
         if severity == "critical":
             logger.error(f"Critical {resource_type} usage: {value}%", exc_info=True)
@@ -355,6 +359,8 @@ class ExecutionManager:
             logger.error(f"Recovery action failed for {resource_type}: {e}", exc_info=True)
 
         self.recovery_actions.append(recovery_action)
+        if len(self.recovery_actions) > self._MAX_RECOVERY_ACTIONS:
+            self.recovery_actions = self.recovery_actions[-self._MAX_RECOVERY_ACTIONS:]
 
     def execute_command(
         self,

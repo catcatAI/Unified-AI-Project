@@ -97,6 +97,7 @@ class TestContextManager:
 
     def test_search_contexts(self):
         mgr = ContextManager()
+        mgr.disk_storage.list_contexts = MagicMock(return_value=[])
         ctx_id = mgr.create_context(ContextType.TOOL, {'name': 'calculator'})
         mgr.create_context(ContextType.MEMORY, {'name': 'memories'})
         results = mgr.search_contexts('calculator')
@@ -105,6 +106,7 @@ class TestContextManager:
 
     def test_search_contexts_by_type(self):
         mgr = ContextManager()
+        mgr.disk_storage.list_contexts = MagicMock(return_value=[])
         mgr.create_context(ContextType.TOOL, {'name': 'hammer'})
         mgr.create_context(ContextType.MEMORY, {'name': 'hammer'})
         results = mgr.search_contexts('hammer', context_types=[ContextType.TOOL])

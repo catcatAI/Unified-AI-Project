@@ -379,9 +379,7 @@ class ProactiveInteractionSystem:
     def _get_ed3n_engine(self) -> Any:
         if not hasattr(self.__class__, '_ed3n_engine'):
             from ai.ed3n.ed3n_engine import ED3NEngine
-            engine = ED3NEngine()
-            engine.reflex.load_presets()
-            self.__class__._ed3n_engine = engine
+            self.__class__._ed3n_engine = ED3NEngine.get_shared()
         return self.__class__._ed3n_engine
 
     async def _generate_return_message(self, opportunity: Dict[str, Any]) -> str:

@@ -119,7 +119,11 @@ class TestModelContextManager:
     def test_get_model_context(self):
         mock_cm = MagicMock()
         mgr = ModelContextManager(mock_cm)
-        assert mgr.get_model_context('model_a') is None
+        result = mgr.get_model_context('model_a')
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result['model_id'] == 'model_a'
+        assert result['total_calls'] == 0
 
     def test_get_model_call_history(self):
         mock_cm = MagicMock()
@@ -181,4 +185,7 @@ class TestAgentContextManager:
         mock_cm = MagicMock()
         mgr = AgentContextManager(mock_cm)
         collab_id = mgr.start_collaboration('task1', ['agent_a'])
-        assert mgr.get_collaboration_context(collab_id) is None
+        result = mgr.get_collaboration_context(collab_id)
+        assert result is not None
+        assert isinstance(result, dict)
+        assert result['status'] == 'active'

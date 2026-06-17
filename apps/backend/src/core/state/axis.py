@@ -31,8 +31,11 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
+import logging
 from typing import Any, Dict, List, Optional, Type
 from core.state.axis_field import AxisField
+
+logger = logging.getLogger(__name__)
 
 
 class Axis:
@@ -54,8 +57,8 @@ class Axis:
                 from core.state.axis_field import AxisFieldRegistry
                 for field in AxisFieldRegistry().fields_for(self.name):
                     self.values.setdefault(field.name, field.default)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"AxisFieldRegistry lookup failed for {self.name}: {e}")
         initial = kwargs.get("initial_values") or kwargs.get("_values")
         if initial:
             self.values.update(initial)

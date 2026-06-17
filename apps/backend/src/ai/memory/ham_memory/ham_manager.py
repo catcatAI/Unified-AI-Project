@@ -3,6 +3,7 @@ ANGELA-MATRIX: [L4] [αβγδ] [A] [L3]
 HAM (Hierarchical Associative Memory) Manager — minimal JSON-backed implementation.
 """
 
+import asyncio
 import json
 import logging
 from pathlib import Path
@@ -52,7 +53,7 @@ class HAMMemoryManager:
             "id": getattr(template, "id", None),
             "keywords": getattr(template, "keywords", []),
         })
-        self._save()
+        await asyncio.to_thread(self._save)
 
     async def retrieve_response_templates(
         self,
@@ -117,7 +118,7 @@ class HAMMemoryManager:
             "keywords": resolved_keywords,
         }
         self._data["templates"].append(entry)
-        self._save()
+        await asyncio.to_thread(self._save)
         return f"exp_{len(self._data['templates'])}"
 
     def _extract_keywords(self, raw_data: Any, max_keywords: int = 8) -> List[str]:

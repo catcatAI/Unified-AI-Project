@@ -16,6 +16,8 @@ from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
 
+_MAX_PROCESSING_HISTORY = 500
+
 
 class VisionService:
     """查看服務：提供圖像理解、物體檢測、OCR等多模態處理能力"""
@@ -169,6 +171,8 @@ class VisionService:
                     "success": True,
                 }
             )
+            if len(self.processing_history) > _MAX_PROCESSING_HISTORY:
+                self.processing_history = self.processing_history[-_MAX_PROCESSING_HISTORY:]
 
             return analysis_results
 
@@ -189,6 +193,8 @@ class VisionService:
                     "error": str(e),
                 }
             )
+            if len(self.processing_history) > _MAX_PROCESSING_HISTORY:
+                self.processing_history = self.processing_history[-_MAX_PROCESSING_HISTORY:]
 
             return error_result
 

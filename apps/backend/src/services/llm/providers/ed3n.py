@@ -37,7 +37,7 @@ class ED3NBackend(BaseLLMBackend):
             if self._engine is None:
                 from ai.ed3n.ed3n_engine import ED3NEngine
 
-                self._engine = ED3NEngine()
+                self._engine = ED3NEngine.get_shared()
 
             if depth == "reflex":
                 text = self._engine.process_reflex(prompt)
@@ -65,7 +65,7 @@ class ED3NBackend(BaseLLMBackend):
             if self._engine is None:
                 from ai.ed3n.ed3n_engine import ED3NEngine
 
-                self._engine = ED3NEngine()
+                self._engine = ED3NEngine.get_shared()
             return self._engine is not None
         except Exception as e:
             logger.debug(f"ED3N health check failed: {e}")

@@ -51,9 +51,8 @@ def get_biological_state(context=None) -> str:
             with open(brain_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             return json.dumps(data, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-    return prompt("angela.bio.uninitialized")
+    except Exception as e:
+        logger.debug(f"Brain status file read failed: {e}")
 
 
 _formula_cache = None

@@ -324,7 +324,7 @@ def _handle_drive_command(args: str) -> str:
         return None
 
     op = resolve_op(subcmd)
-    base = "http://127.0.0.1:8000/api/v1/drive"
+    base = os.getenv("ANGELA_DRIVE_API_URL", "http://127.0.0.1:8000/api/v1/drive")
 
     try:
         if op == "status" or subcmd in ("status", "s"):

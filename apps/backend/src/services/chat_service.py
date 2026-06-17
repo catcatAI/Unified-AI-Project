@@ -65,7 +65,7 @@ class ChatService:
             from ai.ed3n.ed3n_engine import ED3NEngine
             engine = ED3NEngine.get_shared()
             state_path = os.path.join(self._cl_state_dir, "cl_state.json")
-            if os.path.exists(state_path):
+            if await asyncio.to_thread(os.path.exists, state_path):
                 self._continuous_learning = ContinuousLearningPipeline.load(
                     self._cl_state_dir, engine=engine
                 )
@@ -129,8 +129,8 @@ class ChatService:
                 # Auto-save every 100 interactions
                 if self._garden_learn_count % 100 == 0:
                     garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
-                    os.makedirs(garden_state_dir, exist_ok=True)
-                    self._garden_engine.save(garden_state_dir)
+                    await asyncio.to_thread(os.makedirs, garden_state_dir, exist_ok=True)
+                    await asyncio.to_thread(self._garden_engine.save, garden_state_dir)
                     logger.info("GARDEN engine saved after %d interactions", self._garden_learn_count)
             except Exception as e:
                 logger.debug("GARDEN learning failed: %s", e)
@@ -197,15 +197,15 @@ class ChatService:
             report = self._continuous_learning.get_learning_report()
             logger.info("Continuous learning final report:\n%s", report)
             try:
-                self._continuous_learning.save(self._cl_state_dir)
+                await asyncio.to_thread(self._continuous_learning.save, self._cl_state_dir)
             except Exception as e:
                 logger.warning("Failed to save CL state: %s", e)
         # Save GARDEN engine state
         if self._garden_engine:
             try:
                 garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
-                os.makedirs(garden_state_dir, exist_ok=True)
-                self._garden_engine.save(garden_state_dir)
+                await asyncio.to_thread(os.makedirs, garden_state_dir, exist_ok=True)
+                await asyncio.to_thread(self._garden_engine.save, garden_state_dir)
                 logger.info("GARDEN engine saved on shutdown")
             except Exception as e:
                 logger.warning("Failed to save GARDEN state: %s", e)

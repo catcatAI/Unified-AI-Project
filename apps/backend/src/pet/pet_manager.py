@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from typing import Dict, Any, List, Optional
@@ -30,6 +31,7 @@ class PetManager:
         self.biological_integrator = biological_integrator
         self.broadcast_callback = broadcast_callback
         self.economy_manager = None  # To be set via setter or during init
+        self._state_lock = asyncio.Lock()
 
         # ========== 修复：改进的初始状态 ==========
         self.state: Dict[str, Any] = {
@@ -221,75 +223,76 @@ class PetManager:
         - 使用状态验证和限制
         - 记录状态变更历史
         """
-        interaction_type = interaction_data.get("type")
-        logger.debug(f"Handling interaction: '{interaction_type}' for pet '{self.pet_id}'")
+        async with self._state_lock:
+            interaction_type = interaction_data.get("type")
+            logger.debug(f"Handling interaction: '{interaction_type}' for pet '{self.pet_id}'")
 
-        # ========== 修复：改进的状态更新逻辑 ==========
-        if interaction_type == "pet":
-            # 摸头：增加快乐，但受饥饿和精力影响
-            if (
-                self.state["hunger"] < self.thresholds["warning"]
-                and self.state["energy"] > self.thresholds["warning"]
-            ):
-                self.state["happiness"] += 12  # 饱腹和精力充沛时更快乐
-            else:
-                self.state["happiness"] += 6  # 饿或累时快乐增加较少
+            # ========== 修复：改进的状态更新逻辑 ==========
+            if interaction_type == "pet":
+                # 摸头：增加快乐，但受饥饿和精力影响
+                if (
+                    self.state["hunger"] < self.thresholds["warning"]
+                    and self.state["energy"] > self.thresholds["warning"]
+                ):
+                    self.state["happiness"] += 12  # 饱腹和精力充沛时更快乐
+                else:
+                    self.state["happiness"] += 6  # 饿或累时快乐增加较少
 
-            self.state["current_expression"] = "happy"
-            self.state["current_animation"] = "respond_to_pet"
+                self.state["current_expression"] = "happy"
+                self.state["current_animation"] = "respond_to_pet"
 
-        elif interaction_type == "feed":
-            # 喂食：减少饥饿，增加快乐和健康
-            self.state["hunger"] -= 25
-            self.state["happiness"] += 8
-            self.state["health"] += 3
-            self.state["current_expression"] = "joy"
-            self.state["current_animation"] = "eat"
+            elif interaction_type == "feed":
+                # 喂食：减少饥饿，增加快乐和健康
+                self.state["hunger"] -= 25
+                self.state["happiness"] += 8
+                self.state["health"] += 3
+                self.state["current_expression"] = "joy"
+                self.state["current_animation"] = "eat"
 
-        elif interaction_type == "play":
-            # 玩耍：消耗精力，增加快乐，增加饥饿
-            if self.state["energy"] > self.thresholds["warning"]:
-                self.state["energy"] -= 15
-                self.state["happiness"] += 18  # 玩耍带来的快乐更多
-                self.state["hunger"] += 5
-                self.state["current_animation"] = "dance"
-            else:
-                # 太累了，无法玩耍
-                self.state["happiness"] -= 5  # 失望
-                self.state["current_expression"] = "tired"
-                self.state["current_animation"] = "refuse_play"
+            elif interaction_type == "play":
+                # 玩耍：消耗精力，增加快乐，增加饥饿
+                if self.state["energy"] > self.thresholds["warning"]:
+                    self.state["energy"] -= 15
+                    self.state["happiness"] += 18  # 玩耍带来的快乐更多
+                    self.state["hunger"] += 5
+                    self.state["current_animation"] = "dance"
+                else:
+                    # 太累了，无法玩耍
+                    self.state["happiness"] -= 5  # 失望
+                    self.state["current_expression"] = "tired"
+                    self.state["current_animation"] = "refuse_play"
 
-        elif interaction_type == "rest":
-            # 休息：恢复精力，减少饥饿
-            self.state["energy"] += 25
-            self.state["happiness"] += 5  # 休息也带来快乐
-            self.state["hunger"] += 3
-            self.state["current_expression"] = "relaxed"
-            self.state["current_animation"] = "sleep"
+            elif interaction_type == "rest":
+                # 休息：恢复精力，减少饥饿
+                self.state["energy"] += 25
+                self.state["happiness"] += 5  # 休息也带来快乐
+                self.state["hunger"] += 3
+                self.state["current_expression"] = "relaxed"
+                self.state["current_animation"] = "sleep"
 
-        elif interaction_type == "heal":
-            # 治疗：恢复健康
-            self.state["health"] += 20
-            self.state["happiness"] += 5
-            self.state["current_expression"] = "relieved"
-            self.state["current_animation"] = "heal"
+            elif interaction_type == "heal":
+                # 治疗：恢复健康
+                self.state["health"] += 20
+                self.state["happiness"] += 5
+                self.state["current_expression"] = "relieved"
+                self.state["current_animation"] = "heal"
 
-        # ========== 修复：验证状态值 ==========
-        self._validate_state()
+            # ========== 修复：验证状态值 ==========
+            self._validate_state()
 
-        # ========== 修复：记录状态变更 ==========
-        self._record_state_change(f"interaction_{interaction_type}")
+            # ========== 修复：记录状态变更 ==========
+            self._record_state_change(f"interaction_{interaction_type}")
 
-        logger.info(
-            f"Pet '{self.pet_id}' handled interaction '{interaction_type}'. Current state: {self.state}"
-        )
-        # Notify immediately on interaction
-        await self._notify_state_change(f"interaction_{interaction_type}")
-        return {
-            "status": "success",
-            "new_state": self.state,
-            "wellbeing": self.calculate_overall_wellbeing(),
-        }
+            logger.info(
+                f"Pet '{self.pet_id}' handled interaction '{interaction_type}'. Current state: {self.state}"
+            )
+            # Notify immediately on interaction
+            await self._notify_state_change(f"interaction_{interaction_type}")
+            return {
+                "status": "success",
+                "new_state": self.state,
+                "wellbeing": self.calculate_overall_wellbeing(),
+            }
 
     def get_current_state(self) -> Dict[str, Any]:
         """Returns the current state of the pet."""
@@ -322,70 +325,71 @@ class PetManager:
         Simulates the passage of time on pet needs (Hunger, Energy, Happiness, Health).
 
         """
-        # Calculate real time delta
-        now = datetime.now()
-        time_delta = (now - self._last_decay_time).total_seconds()
-        self._last_decay_time = now
+        async with self._state_lock:
+            # Calculate real time delta
+            now = datetime.now()
+            time_delta = (now - self._last_decay_time).total_seconds()
+            self._last_decay_time = now
 
-        # Convert to hours for rate calculation
-        # If delta_time_factor is provided, it acts as a speed multiplier (e.g. 2.0 = 2x speed), not a raw value
-        hours_passed = (time_delta / 3600.0) * delta_time_factor
+            # Convert to hours for rate calculation
+            # If delta_time_factor is provided, it acts as a speed multiplier (e.g. 2.0 = 2x speed), not a raw value
+            hours_passed = (time_delta / 3600.0) * delta_time_factor
 
-        # Prevent massive jumps if system slept/paused (cap at 1 hour)
-        if hours_passed > 1.0:
-            hours_passed = 1.0
+            # Prevent massive jumps if system slept/paused (cap at 1 hour)
+            if hours_passed > 1.0:
+                hours_passed = 1.0
 
-        # ========== 修复：改进的衰减逻辑 ==========
-        # 饥饿增加
-        self.state["hunger"] += self.decay_rates["hunger"] * hours_passed
+            # ========== 修复：改进的衰减逻辑 ==========
+            # 饥饿增加
+            self.state["hunger"] += self.decay_rates["hunger"] * hours_passed
 
-        # 精力减少（受饥饿影响：饿的时候精力下降更快）
-        hunger_factor = 1.0 + (self.state["hunger"] / 200.0)  # 饥饿越高，精力下降越快
-        self.state["energy"] -= self.decay_rates["energy"] * hours_passed * hunger_factor
+            # 精力减少（受饥饿影响：饿的时候精力下降更快）
+            hunger_factor = 1.0 + (self.state["hunger"] / 200.0)  # 饥饿越高，精力下降越快
+            self.state["energy"] -= self.decay_rates["energy"] * hours_passed * hunger_factor
 
-        # 快乐减少（受饥饿和精力影响）
-        if (
-            self.state["hunger"] > self.thresholds["warning"]
-            or self.state["energy"] < self.thresholds["warning"]
-        ):
-            # 不好状态：快乐下降更快
-            self.state["happiness"] -= self.decay_rates["happiness"] * hours_passed * 1.5
-        else:
-            # 良好状态：快乐下降正常
-            self.state["happiness"] -= self.decay_rates["happiness"] * hours_passed
+            # 快乐减少（受饥饿和精力影响）
+            if (
+                self.state["hunger"] > self.thresholds["warning"]
+                or self.state["energy"] < self.thresholds["warning"]
+            ):
+                # 不好状态：快乐下降更快
+                self.state["happiness"] -= self.decay_rates["happiness"] * hours_passed * 1.5
+            else:
+                # 良好状态：快乐下降正常
+                self.state["happiness"] -= self.decay_rates["happiness"] * hours_passed
 
-        # 健康减少（受饥饿、精力、快乐的综合影响）
-        if (
-            self.state["hunger"] > self.thresholds["critical"]
-            or self.state["energy"] < self.thresholds["critical"]
-            or self.state["happiness"] < self.thresholds["critical"]
-        ):
-            # 临界状态：健康下降更快
-            self.state["health"] -= self.decay_rates["health"] * hours_passed * 3.0
-        elif (
-            self.state["hunger"] > self.thresholds["warning"]
-            or self.state["energy"] < self.thresholds["warning"]
-            or self.state["happiness"] < self.thresholds["warning"]
-        ):
-            # 警告状态：健康下降正常
-            self.state["health"] -= self.decay_rates["health"] * hours_passed * 1.5
-        else:
-            # 良好状态：健康下降缓慢
-            self.state["health"] -= self.decay_rates["health"] * hours_passed
+            # 健康减少（受饥饿、精力、快乐的综合影响）
+            if (
+                self.state["hunger"] > self.thresholds["critical"]
+                or self.state["energy"] < self.thresholds["critical"]
+                or self.state["happiness"] < self.thresholds["critical"]
+            ):
+                # 临界状态：健康下降更快
+                self.state["health"] -= self.decay_rates["health"] * hours_passed * 3.0
+            elif (
+                self.state["hunger"] > self.thresholds["warning"]
+                or self.state["energy"] < self.thresholds["warning"]
+                or self.state["happiness"] < self.thresholds["warning"]
+            ):
+                # 警告状态：健康下降正常
+                self.state["health"] -= self.decay_rates["health"] * hours_passed * 1.5
+            else:
+                # 良好状态：健康下降缓慢
+                self.state["health"] -= self.decay_rates["health"] * hours_passed
 
-        # ========== 修复：验证状态值 ==========
-        self._validate_state()
+            # ========== 修复：验证状态值 ==========
+            self._validate_state()
 
-        # ========== 修复：记录状态变更 ==========
-        self._record_state_change("decay")
+            # ========== 修复：记录状态变更 ==========
+            self._record_state_change("decay")
 
-        logger.debug(
-            f"Applied decay to pet '{self.pet_id}'. Current: H:{self.state['hunger']}, E:{self.state['energy']}, Hap:{self.state['happiness']}, He:{self.state['health']}"
-        )
+            logger.debug(
+                f"Applied decay to pet '{self.pet_id}'. Current: H:{self.state['hunger']}, E:{self.state['energy']}, Hap:{self.state['happiness']}, He:{self.state['health']}"
+            )
 
-        # Check if pet needs to take action
-        await self.check_survival_needs()
-        await self._notify_state_change("decay")
+            # Check if pet needs to take action
+            await self.check_survival_needs()
+            await self._notify_state_change("decay")
 
     async def check_survival_needs(self) -> None:
         """
@@ -396,67 +400,68 @@ class PetManager:
         - 优先级排序（健康 > 饥饿 > 精力）
         - 记录状态变更
         """
-        if not self.economy_manager:
-            logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!")
-            return
+        async with self._state_lock:
+            if not self.economy_manager:
+                logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!")
+                return
 
-        logger.info(
-            f"DEBUG: Pet '{self.pet_id}' checking survival needs. Hunger: {self.state['hunger']}, Energy: {self.state['energy']}, Health: {self.state['health']}"
-        )
-
-        # ========== 修复：改进的生存需求检查（优先级排序）==========
-
-        # 1. Health Check (Highest Priority)
-        if self.state["health"] < self.thresholds["critical"]:
             logger.info(
-                f"Pet '{self.pet_id}' is critically ill ({self.state['health']}). Attempting to heal."
+                f"DEBUG: Pet '{self.pet_id}' checking survival needs. Hunger: {self.state['hunger']}, Energy: {self.state['energy']}, Health: {self.state['health']}"
             )
-            result = self.economy_manager.purchase_item(self.pet_id, "medical_kit")
-            if result["success"]:
-                self.state["health"] += result["effects"].get("health", 30)
-                self.add_action("heal_autonomous", {"item": "medical_kit"})
-                await self._notify_state_change("autonomous_purchase_health")
-            self._validate_state()
 
-        # 2. Hunger Check (High Priority)
-        elif self.state["hunger"] > (100 - self.thresholds["critical"]):
-            logger.info(
-                f"Pet '{self.pet_id}' is critically hungry ({self.state['hunger']}). Attempting purchase."
-            )
-            result = self.economy_manager.purchase_item(self.pet_id, "premium_bio_pellets")
-            if result["success"]:
-                self.state["hunger"] -= result["effects"].get("hunger", 30)
-                self.state["happiness"] += result["effects"].get("happiness", 10)
-                self.add_action("eat_autonomous", {"item": "premium_bio_pellets"})
-                await self._notify_state_change("autonomous_purchase_food")
-            self._validate_state()
+            # ========== 修复：改进的生存需求检查（优先级排序）==========
 
-        # 3. Energy Check (Medium Priority)
-        elif self.state["energy"] < self.thresholds["critical"]:
-            logger.info(
-                f"Pet '{self.pet_id}' is critically tired ({self.state['energy']}). Attempting purchase."
-            )
-            result = self.economy_manager.purchase_item(self.pet_id, "digital_energy_drink")
-            if result["success"]:
-                self.state["energy"] += result["effects"].get("energy", 30)
-                self.add_action("drink_autonomous", {"item": "digital_energy_drink"})
-                await self._notify_state_change("autonomous_purchase_energy")
-            self._validate_state()
+            # 1. Health Check (Highest Priority)
+            if self.state["health"] < self.thresholds["critical"]:
+                logger.info(
+                    f"Pet '{self.pet_id}' is critically ill ({self.state['health']}). Attempting to heal."
+                )
+                result = self.economy_manager.purchase_item(self.pet_id, "medical_kit")
+                if result["success"]:
+                    self.state["health"] += result["effects"].get("health", 30)
+                    self.add_action("heal_autonomous", {"item": "medical_kit"})
+                    await self._notify_state_change("autonomous_purchase_health")
+                self._validate_state()
 
-        # 4. Happiness Check (Low Priority)
-        elif self.state["happiness"] < self.thresholds["critical"]:
-            logger.info(
-                f"Pet '{self.pet_id}' is critically sad ({self.state['happiness']}). Attempting to cheer up."
-            )
-            result = self.economy_manager.purchase_item(self.pet_id, "toy")
-            if result["success"]:
-                self.state["happiness"] += result["effects"].get("happiness", 20)
-                self.add_action("play_autonomous", {"item": "toy"})
-                await self._notify_state_change("autonomous_purchase_happiness")
-            self._validate_state()
+            # 2. Hunger Check (High Priority)
+            elif self.state["hunger"] > (100 - self.thresholds["critical"]):
+                logger.info(
+                    f"Pet '{self.pet_id}' is critically hungry ({self.state['hunger']}). Attempting purchase."
+                )
+                result = self.economy_manager.purchase_item(self.pet_id, "premium_bio_pellets")
+                if result["success"]:
+                    self.state["hunger"] -= result["effects"].get("hunger", 30)
+                    self.state["happiness"] += result["effects"].get("happiness", 10)
+                    self.add_action("eat_autonomous", {"item": "premium_bio_pellets"})
+                    await self._notify_state_change("autonomous_purchase_food")
+                self._validate_state()
 
-        # ========== 修复：记录状态变更 ==========
-        self._record_state_change("survival_check")
+            # 3. Energy Check (Medium Priority)
+            elif self.state["energy"] < self.thresholds["critical"]:
+                logger.info(
+                    f"Pet '{self.pet_id}' is critically tired ({self.state['energy']}). Attempting purchase."
+                )
+                result = self.economy_manager.purchase_item(self.pet_id, "digital_energy_drink")
+                if result["success"]:
+                    self.state["energy"] += result["effects"].get("energy", 30)
+                    self.add_action("drink_autonomous", {"item": "digital_energy_drink"})
+                    await self._notify_state_change("autonomous_purchase_energy")
+                self._validate_state()
+
+            # 4. Happiness Check (Low Priority)
+            elif self.state["happiness"] < self.thresholds["critical"]:
+                logger.info(
+                    f"Pet '{self.pet_id}' is critically sad ({self.state['happiness']}). Attempting to cheer up."
+                )
+                result = self.economy_manager.purchase_item(self.pet_id, "toy")
+                if result["success"]:
+                    self.state["happiness"] += result["effects"].get("happiness", 20)
+                    self.add_action("play_autonomous", {"item": "toy"})
+                    await self._notify_state_change("autonomous_purchase_happiness")
+                self._validate_state()
+
+            # ========== 修复：记录状态变更 ==========
+            self._record_state_change("survival_check")
 
     def set_economy_manager(self, eco_manager) -> None:
         """Link the economy manager for autonomous spending."""

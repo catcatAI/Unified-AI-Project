@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Per-session conversation history (max 30 messages per session)
 _session_history = {}  # session_id -> list of {"role": str, "content": str}
 _MAX_HISTORY = 30
+_session_history_lock = asyncio.Lock()
 
 
 class ConnectionManager:
@@ -72,7 +73,8 @@ class ConnectionManager:
         """Close connection."""
         for client_id, session in list(self._sm._sessions.items()):
             if session.websocket == websocket:
-                asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
+                task = asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
+                task.add_done_callback(lambda t: logger.debug(f"Unregister failed: {t.exception()}") if not t.cancelled() and t.exception() else None)
                 break
 
     async def broadcast(self, message: dict) -> str:
@@ -142,8 +144,8 @@ async def broadcast_state_updates() -> None:
                     _lr = np_sys.hebbian_rule.learning_rate
                 if np_sys and hasattr(np_sys, "memory_traces"):
                     _cl = min(1.0, len(np_sys.memory_traces) / 50.0)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Neuroplasticity state read failed: {e}")
 
             # HIGH-5: dynamic spatial posture from cerebellum
             _posture = {"theta_matrix": [0.0] * 9, "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5}}
@@ -152,8 +154,8 @@ async def broadcast_state_updates() -> None:
                 if _cb and hasattr(_cb, "get_posture"):
                     _p = _cb.get_posture()
                     _posture["theta_matrix"] = _p.get("theta_matrix", [0.0] * 9)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Cerebellum posture read failed: {e}")
 
             state_data = {
                 "alpha": {
@@ -248,7 +250,8 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
     user_name = data.get("data", {}).get("user_name", "朋友")
 
     try:
-        history = _session_history.get(session_id, [])[-_MAX_HISTORY:]
+        async with _session_history_lock:
+            history = _session_history.get(session_id, [])[-_MAX_HISTORY:]
         chat_res = await _handle_chat_request(
             user_message=user_message,
             user_name=user_name,
@@ -257,13 +260,14 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
             origin="Human"
         )
         # Store both user message and assistant response in history
-        if session_id not in _session_history:
-            _session_history[session_id] = []
-        _session_history[session_id].append({"role": "user", "content": user_message})
-        _session_history[session_id].append({"role": "assistant", "content": chat_res.get("response_text", "")})
-        # Trim to max size
-        if len(_session_history[session_id]) > _MAX_HISTORY * 2:
-            _session_history[session_id] = _session_history[session_id][-_MAX_HISTORY * 2:]
+        async with _session_history_lock:
+            if session_id not in _session_history:
+                _session_history[session_id] = []
+            _session_history[session_id].append({"role": "user", "content": user_message})
+            _session_history[session_id].append({"role": "assistant", "content": chat_res.get("response_text", "")})
+            # Trim to max size
+            if len(_session_history[session_id]) > _MAX_HISTORY * 2:
+                _session_history[session_id] = _session_history[session_id][-_MAX_HISTORY * 2:]
         _resp_preview = chat_res.get("response_text", "")[:80]
         _hit = chat_res.get("hit_score", 0.0)
         _src = chat_res.get("hit_source", "none")
@@ -374,5 +378,7 @@ async def websocket_handler(websocket: WebSocket) -> str:
             logger.error(f"[WebSocket] Error for {client_id}: {e}", exc_info=True)
             continue
 
-    asyncio.create_task(manager.unregister(client_id))
-    _session_history.pop(session_id, None)
+    task = asyncio.create_task(manager.unregister(client_id))
+    task.add_done_callback(lambda t: logger.debug(f"Final unregister failed: {t.exception()}") if not t.cancelled() and t.exception() else None)
+    async with _session_history_lock:
+        _session_history.pop(session_id, None)

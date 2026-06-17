@@ -1328,8 +1328,7 @@ class AngelaLLMService:
             engine = self.model_bus._registry.get("ed3n", (None,))[0]
             if engine is None:
                 from ai.ed3n.ed3n_engine import ED3NEngine
-                engine = ED3NEngine()
-                engine.load_presets()
+                engine = ED3NEngine.get_shared()
             result = engine.process(text, depth="shallow")
             return result if result else ""
         except Exception as e:
