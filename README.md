@@ -55,13 +55,13 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 680+ Python files in backend src (~127K lines). Electron + Live2D desktop companion (63 JS files). Pixel art engine (PyQt6 renderer). Mobile app is a skeleton. **~3,500+ tests across 469 test files.**  
+**Quick facts**: 638 Python files in backend src (~127K lines). Electron + Live2D desktop companion (63 JS files). Pixel art engine (PyQt6 renderer). Mobile app is a skeleton. **~3,800+ tests across 481 test files.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · mobile `0.1.0-skeleton` · cli `1.1.0` · biology-core `1.0.0`.  
 **Architecture consistency score**: **~85-90%** (implementations complete, all aliases applied).  
-**Total project files**: ~2,950+ (680+ Python in backend src · 140 JS/TS · 805+ docs · 577 config · 238+ test · ~190 other).  
+**Total project files**: ~3,000+ (638 Python in backend src · 140 JS/TS · 805+ docs · 577 config · 481 test · ~190 other).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHANGELOG.md) for version history.
 
-> **STATUS (2026-06-16)**: Chat pipeline fully wired. Orphaned systems integrated. 15 bugs fixed. Architecture doc created. Phase 0-7 complete (i18n internationalization).  
+> **STATUS (2026-06-16)**: Phase 0-7 ALL COMPLETE. Chat pipeline fully wired. Orphaned systems integrated. 15 bugs fixed. Architecture doc created. i18n internationalization implemented. AgentOrchestrator, PlanningEngine, ReasoningEngines, TrustManager, ContentFilter, SafetyAudit, Web Dashboard, Docker/CI/CD, OpenTelemetry all operational.  
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → LLM → causal learning → response. 11 specialized agents registered.  
 > **See**: [docs/architecture/ANGELA_FULL_ARCHITECTURE.md](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) for full system architecture.
 
@@ -82,8 +82,18 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **ModelBus** | ✅ EXTENDED | Handler registration + handler-first routing for FILE/SEARCH/CODE/EXECUTE/TASK |
 | **Autonomous Cognition** | ✅ INTEGRATED | AutonomousLifeCycle + θ Router + 5 formula metrics injected into prompts |
 | **Vision Endpoints** | ✅ IMPLEMENTED | `/vision/analyze` + `/chat/with-image` endpoints |
+| **AgentOrchestrator** | ✅ COMPLETE | Intent classification, agent selection, task decomposition (Phase 2) |
+| **PlanningEngine** | ✅ COMPLETE | Goal decomposition, dependency tracking, progress monitoring (Phase 2) |
+| **ReasoningEngines** | ✅ COMPLETE | ChainOfThought, Analogical, Abductive reasoning (Phase 2) |
+| **TrustManager** | ✅ COMPLETE | User trust scoring, permission control, violation tracking (Phase 3) |
+| **ContentFilter** | ✅ COMPLETE | Toxicity detection, PII filtering, safety classification (Phase 3) |
+| **SafetyAudit** | ✅ COMPLETE | Audit trail, compliance checks, alert system (Phase 3) |
+| **Web Dashboard** | ✅ COMPLETE | Next.js: ChatPanel, PetPanel, SystemMonitor, EconomyPanel, LearningDashboard (Phase 4) |
+| **Docker/CI/CD** | ✅ COMPLETE | Dockerfile, docker-compose, Prometheus, Grafana, Nginx, GitHub Actions deploy (Phase 5) |
+| **OpenTelemetry** | ✅ COMPLETE | Tracing middleware (Phase 5) |
+| **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
+| **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests passing |
 | **Tests** | ✅ PASSING | 86/86 deep integration tests + 34/34 end-to-end pipeline tests + 45 Phase 7 tests passed |
 | **Architecture Doc** | ✅ CREATED | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB |
 
@@ -188,6 +198,43 @@ npx pnpm dev:desktop
 - **Locale files** — en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json ✅
 - **Desktop App i18n** — zh-CN bug fixed, case-insensitive locale matching ✅
 
+**Phase 0 — Foundation Fixes:**
+- **Import fixes** — execution_manager.py, UCC await-in-sync, EnvironmentSimulator, duplicate lines ✅
+- **Context subsystems activated** — dialogue_context, model_context, tool_context, memory_context, integration_with_ham ✅
+- **DEPRECATED markers cleaned** — 9 packages cleaned ✅
+
+**Phase 1 — Core Activation:**
+- **Context wiring** — DialogueContext + MemoryContext injected in chat pipeline ✅
+- **ED3N cycling** — Max 3 cycles, confidence threshold 0.7 ✅
+- **GARDEN cycling** — Max 3 cycles, response length improvement check ✅
+- **UnifiedLearningOrchestrator** — Connects 6 learning subsystems ✅
+
+**Phase 2 — Intelligence Layer:**
+- **AgentOrchestrator** — Intent classification, agent selection, task decomposition ✅
+- **PlanningEngine** — Goal decomposition, dependency tracking, progress monitoring ✅
+- **ReasoningEngines** — ChainOfThought, Analogical, Abductive reasoning ✅
+
+**Phase 3 — Safety & Trust:**
+- **TrustManager** — User trust scoring, permission control, violation tracking ✅
+- **ContentFilter** — Toxicity detection, PII filtering, safety classification ✅
+- **SafetyAudit** — Audit trail, compliance checks, alert system ✅
+
+**Phase 4 — Embodiment:**
+- **Web Dashboard** — Next.js: ChatPanel, PetPanel, SystemMonitor, EconomyPanel, LearningDashboard, MemoryViewer ✅
+
+**Phase 5 — Infrastructure:**
+- **Docker** — Multi-stage Dockerfile, docker-compose with Redis, PostgreSQL, Prometheus, Grafana, Nginx ✅
+- **CI/CD** — GitHub Actions with staging/production deployment ✅
+- **Monitoring** — Prometheus metrics, Grafana dashboards, alert rules ✅
+- **OpenTelemetry** — Distributed tracing middleware ✅
+- **API Versioning** — Version routing middleware ✅
+
+**Phase 6 — Polish & Launch:**
+- **Benchmarks** — ED3N, GARDEN, Classifier baselines ✅
+- **Profiling** — Unified profiler with imports/memory modes ✅
+- **OpenAPI** — Static spec export script ✅
+- **Documentation** — Deployment guide, User guide ✅
+
 **Core Infrastructure:**
 - **Config system** — `config_loader.py:get_config()` ✅
 - **State matrix** — 6D state matrix, 1439 lines, 61.8 KB ✅
@@ -285,8 +332,8 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、LLM 整合與完整聊天管線。
 
-**Quick facts**：680+ 個 Python 檔案 (backend src)、~127K 行。Electron + Live2D 桌面端、手機 stub。  
-**實際狀態**: 聊天管線完整接線、孤兒系統整合、15 個 bug 修復、架構文檔完成。  
+**Quick facts**：638 個 Python 檔案 (backend src)、~127K 行。Electron + Live2D 桌面端、手機 stub。  
+**實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、15 個 bug 修復、架構文檔完成、i18n 國際化實作完成。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。  
 **管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → LLM → 因果學習 → 回應。
 
 ---
@@ -305,7 +352,18 @@ See dedicated docs for full diagrams:
 | **ModelBus** | ✅ 已擴展 | Handler 註冊 + Handler-first 路由 |
 | **自主認知** | ✅ 已整合 | AutonomousLifeCycle + θ Router + 5 個公式指標 |
 | **視覺端點** | ✅ 已實作 | `/vision/analyze` + `/chat/with-image` |
-| **測試** | ✅ 通過 | 86/86 整合測試 + 34/34 管線測試 |
+| **AgentOrchestrator** | ✅ 已完成 | 意圖分類、代理選擇、任務分解（Phase 2） |
+| **PlanningEngine** | ✅ 已完成 | 目標分解、依賴追蹤、進度監控（Phase 2） |
+| **ReasoningEngines** | ✅ 已完成 | ChainOfThought、Analogical、Abductive 推理（Phase 2） |
+| **TrustManager** | ✅ 已完成 | 信任評分、權限控制、違規追蹤（Phase 3） |
+| **ContentFilter** | ✅ 已完成 | 毒性偵測、PII 過濾、安全分類（Phase 3） |
+| **SafetyAudit** | ✅ 已完成 | 審計追蹤、合規檢查、警報系統（Phase 3） |
+| **Web Dashboard** | ✅ 已完成 | Next.js: ChatPanel、PetPanel、SystemMonitor、EconomyPanel、LearningDashboard（Phase 4） |
+| **Docker/CI/CD** | ✅ 已完成 | Dockerfile、docker-compose、Prometheus、Grafana、Nginx、GitHub Actions 部署（Phase 5） |
+| **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
+| **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
+| **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
+| **測試** | ✅ 通過 | 86/86 整合測試 + 34/34 管線測試 + 45 Phase 7 測試 |
 | **架構文檔** | ✅ 已建立 | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` |
 
 ---
@@ -408,6 +466,43 @@ npx pnpm dev:desktop
 - **Locale 檔案** — en-US.json, zh-CN.json, prompts.en-US.json, prompts.zh-CN.json ✅
 - **Desktop App i18n** — zh-CN bug 修復，大小寫不敏感 locale 匹配 ✅
 
+**Phase 0 — 基礎修復：**
+- **Import 修復** — execution_manager.py、UCC await-in-sync、EnvironmentSimulator、重複行 ✅
+- **Context 子系統啟用** — dialogue_context、model_context、tool_context、memory_context、integration_with_ham ✅
+- **DEPRECATED 標記清理** — 9 個 package 清理 ✅
+
+**Phase 1 — 核心啟動：**
+- **Context 接線** — DialogueContext + MemoryContext 注入聊天管線 ✅
+- **ED3N 循環** — 最多 3 次迭代，信心閾值 0.7 ✅
+- **GARDEN 循環** — 最多 3 次迭代，回應長度改善檢查 ✅
+- **UnifiedLearningOrchestrator** — 連接 6 個學習子系統 ✅
+
+**Phase 2 — 智能層：**
+- **AgentOrchestrator** — 意圖分類、代理選擇、任務分解 ✅
+- **PlanningEngine** — 目標分解、依賴追蹤、進度監控 ✅
+- **ReasoningEngines** — ChainOfThought、Analogical、Abductive 推理 ✅
+
+**Phase 3 — 安全信任：**
+- **TrustManager** — 信任評分、權限控制、違規追蹤 ✅
+- **ContentFilter** — 毒性偵測、PII 過濾、安全分類 ✅
+- **SafetyAudit** — 審計追蹤、合規檢查、警報系統 ✅
+
+**Phase 4 — 具現化：**
+- **Web Dashboard** — Next.js: ChatPanel、PetPanel、SystemMonitor、EconomyPanel、LearningDashboard、MemoryViewer ✅
+
+**Phase 5 — 基礎設施：**
+- **Docker** — 多階段 Dockerfile、docker-compose 含 Redis、PostgreSQL、Prometheus、Grafana、Nginx ✅
+- **CI/CD** — GitHub Actions staging/production 部署 ✅
+- **監控** — Prometheus 指標、Grafana 儀表板、警報規則 ✅
+- **OpenTelemetry** — 分散式追蹤中間件 ✅
+- **API Versioning** — 版本路由中間件 ✅
+
+**Phase 6 — 文件與優化：**
+- **基準測試** — ED3N、GARDEN、Classifier 基線 ✅
+- **效能分析** — 統一分析器（imports/memory 模式）✅
+- **OpenAPI** — 靜態規格匯出腳本 ✅
+- **文件** — 部署指南、使用者指南 ✅
+
 **核心基礎設施：**
 - **配置系統** — `config_loader.py:get_config()` ✅
 - **State Matrix** — 6D 狀態矩陣，1439 行 ✅
@@ -503,4 +598,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 680+ Python files, ~127K lines | **Pipeline Tests**: 86/86 + 34/34 | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 638 Python files, ~127K lines | **Pipeline Tests**: 86/86 + 34/34 + 45 | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Changelog](CHANGELOG.md)
