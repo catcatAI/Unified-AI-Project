@@ -10,6 +10,8 @@ import platform
 import shutil
 from typing import Optional
 
+from apps.backend.src.core.i18n.i18n_manager import t
+
 logger = logging.getLogger(__name__)
 
 _TIMEOUT = 15
@@ -30,11 +32,11 @@ class SystemCommandHandler:
     async def handle(self, text: str, intent: str = "system") -> str:
         cmd = self._extract_command(text)
         if not cmd:
-            return "（系統命令）請提供要執行的命令。"
+            return t("sys_cmd.specify_command")
         parts = cmd.split()
         base_cmd = parts[0].lower() if parts else ""
         if base_cmd not in _SAFE_COMMANDS:
-            return f"（系統命令）不安全的命令：{base_cmd}。允許的命令：{', '.join(sorted(_SAFE_COMMANDS))}"
+            return t("sys_cmd.unsafe_command", cmd=base_cmd, allowed=", ".join(sorted(_SAFE_COMMANDS)))
         return await self._run(base_cmd, parts)
 
     def _extract_command(self, text: str) -> Optional[str]:
@@ -64,22 +66,22 @@ class SystemCommandHandler:
             stderr_str = stderr.decode("utf-8", errors="replace")[:_MAX_OUTPUT]
             result_parts = []
             if proc.returncode != 0:
-                result_parts.append(f"退出碼：{proc.returncode}")
+                result_parts.append(t("sys_cmd.exit_code", code=proc.returncode))
             if stdout_str:
-                result_parts.append(f"輸出：\n{stdout_str}")
+                result_parts.append(t("sys_cmd.output", output=stdout_str))
             if stderr_str:
-                result_parts.append(f"錯誤：\n{stderr_str}")
+                result_parts.append(t("sys_cmd.error", error=stderr_str))
             if not result_parts:
-                return "（系統命令）執行完成（無輸出）。"
-            return "（系統命令）\n" + "\n".join(result_parts)
+                return t("sys_cmd.complete_no_output")
+            return t("sys_cmd.header") + "\n" + "\n".join(result_parts)
         except asyncio.TimeoutError:
             if proc and proc.returncode is None:
                 proc.kill()
                 await proc.wait()
-            return f"（系統命令）命令超時（{_TIMEOUT}秒限制），已終止。"
+            return t("sys_cmd.timeout", seconds=_TIMEOUT)
         except Exception as e:
             logger.error(f"SystemCommandHandler error: {e}", exc_info=True)
-            return f"（系統命令）執行失敗：{e}"
+            return t("sys_cmd.failed", error=str(e))
 
 
 __all__ = ["SystemCommandHandler"]

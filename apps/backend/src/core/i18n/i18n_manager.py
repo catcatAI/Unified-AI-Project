@@ -139,6 +139,97 @@ class I18nManager:
             locale=self._current_locale,
         )
 
+    def load_from_json(self, filepath: str, language: Language) -> int:
+        """Load translations from a locale JSON file."""
+        import json
+        import os
+
+        if not os.path.exists(filepath):
+            logger.warning(f"Locale file not found: {filepath}")
+            return 0
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        count = 0
+
+        def flatten(obj, prefix=""):
+            nonlocal count
+            for k, v in obj.items():
+                full_key = f"{prefix}.{k}" if prefix else k
+                if isinstance(v, dict):
+                    flatten(v, full_key)
+                else:
+                    self.add_translation(full_key, str(v), language)
+                    count += 1
+
+        # Skip metadata keys
+        skip = {"language", "language_code", "direction", "date_format", "time_format"}
+        for key, value in data.items():
+            if key not in skip:
+                flatten(value, key)
+
+        logger.info(f"Loaded {count} translations from {filepath} for {language.value}")
+        return count
+
+    def load_from_locale_dir(self, locale_dir: str) -> int:
+        """Load all locale JSON files from a directory."""
+        import os
+
+        if not os.path.isdir(locale_dir):
+            logger.warning(f"Locale directory not found: {locale_dir}")
+            return 0
+
+        lang_map = {
+            "en-US": Language.ENGLISH,
+            "zh-CN": Language.CHINESE,
+            "ja-JP": Language.JAPANESE,
+            "ko-KR": Language.KOREAN,
+            "fr-FR": Language.FRENCH,
+            "de-DE": Language.GERMAN,
+            "es-ES": Language.SPANISH,
+            "pt-BR": Language.PORTUGUESE,
+            "ru-RU": Language.RUSSIAN,
+            "ar-SA": Language.ARABIC,
+        }
+
+        total = 0
+        for fname in os.listdir(locale_dir):
+            if not fname.endswith(".json"):
+                continue
+            code = fname.replace(".json", "")
+            if code in lang_map:
+                filepath = os.path.join(locale_dir, fname)
+                count = self.load_from_json(filepath, lang_map[code])
+                total += count
+
+        logger.info(f"Loaded {total} total translations from {locale_dir}")
+        return total
+
+    def encode(self, text: str) -> List[str]:
+        """Find translation keys matching input text (any language)."""
+        text_lower = text.lower().strip()
+        matched = []
+        for key, entry in self._translations.items():
+            for lang_text in entry.translations.values():
+                if lang_text.lower().strip() == text_lower:
+                    matched.append(key)
+                    break
+        return matched
+
+    def decode(self, keys: List[str], language: Optional[Language] = None) -> str:
+        """Reconstruct localized string from keys, preferring current language."""
+        lang = language or self._current_language
+        parts = []
+        for key in keys:
+            entry = self._translations.get(key)
+            if entry:
+                text = entry.translations.get(lang.value) or entry.translations.get(
+                    self.config.fallback_language.value, key
+                )
+                parts.append(text)
+        return " ".join(parts)
+
 
 _default_manager = I18nManager()
 

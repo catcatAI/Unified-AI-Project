@@ -11,6 +11,8 @@ import threading
 import traceback
 from typing import Any, Dict, Optional
 
+from apps.backend.src.core.i18n.i18n_manager import t
+
 logger = logging.getLogger(__name__)
 
 _MAX_OUTPUT = 4000
@@ -31,9 +33,9 @@ class CodeExecutionHandler:
     async def handle(self, text: str, intent: str = "code") -> str:
         code = self._extract_code(text)
         if not code:
-            return "（程式碼執行）請提供要執行的 Python 程式碼。"
+            return t("code_exec.specify_code")
         if len(code) > 10000:
-            return "（程式碼執行）程式碼過長（限制 10000 字元）。"
+            return t("code_exec.code_too_long")
         return await self._execute(code)
 
     def _extract_code(self, text: str) -> str:
@@ -85,19 +87,19 @@ class CodeExecutionHandler:
             stderr_val = captured_err.getvalue()[:_MAX_OUTPUT]
             parts = []
             if stdout_val:
-                parts.append(f"輸出：\n{stdout_val}")
+                parts.append(t("code_exec.output", output=stdout_val))
             if stderr_val:
-                parts.append(f"錯誤：\n{stderr_val}")
+                parts.append(t("code_exec.error", error=stderr_val))
             if not parts:
-                return "（程式碼執行）執行完成（無輸出）。"
-            return "（程式碼執行）\n" + "\n".join(parts)
+                return t("code_exec.complete_no_output")
+            return t("code_exec.header") + "\n" + "\n".join(parts)
         except asyncio.TimeoutError:
-            return f"（程式碼執行）執行超時（{_TIMEOUT}秒限制）。"
+            return t("code_exec.timeout", seconds=_TIMEOUT)
         except Exception as e:
             tb = traceback.format_exc()
             if len(tb) > _MAX_OUTPUT:
                 tb = tb[:_MAX_OUTPUT] + "\n... (已截斷)"
-            return f"（程式碼執行）執行錯誤：\n{tb}"
+            return t("code_exec.execution_error", traceback=tb)
         finally:
             timer.cancel()
             sys.stdout = old_stdout

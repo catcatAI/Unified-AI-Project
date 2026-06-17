@@ -36,6 +36,15 @@ from core.logging.setup import setup_logging
 setup_logging(level=logging.INFO, log_file="backend_main.log")
 logger = logging.getLogger(__name__)
 
+# [Phase 7 P0] 載入 i18n locale 檔案
+try:
+    from src.core.i18n.i18n_manager import _default_manager as i18n_manager
+    locale_dir = str(Path(__file__).parent / "src" / "core" / "i18n" / "locales")
+    i18n_count = i18n_manager.load_from_locale_dir(locale_dir)
+    logger.info(f"✅ i18n 載入完成: {i18n_count} 筆翻譯")
+except Exception as e:
+    logger.warning(f"i18n 載入失敗（非致命）: {e}")
+
 # 初始化密鑰管理器與中間件
 from src.system.security_monitor import ABCKeyManager
 from src.shared.security_middleware import SignedCommunicationMiddleware

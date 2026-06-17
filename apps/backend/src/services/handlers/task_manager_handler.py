@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from apps.backend.src.core.i18n.i18n_manager import t
+
 logger = logging.getLogger(__name__)
 
 _TASKS_DIR = Path.home() / ".angela" / "tasks"
@@ -61,7 +63,7 @@ class TaskManagerHandler:
         elif action == "update":
             return self._update(payload)
         else:
-            return "（任務管理）可用操作：建立任務、任務列表、完成任務、刪除任務。"
+            return t("task_ops.available_ops")
 
     def _parse(self, text: str) -> tuple:
         import re
@@ -88,7 +90,7 @@ class TaskManagerHandler:
     def _create(self, payload: Dict[str, Any]) -> str:
         title = payload.get("title", "").strip()
         if not title:
-            return "（任務管理）請提供任務標題。"
+            return t("task_ops.specify_title")
         tasks = _load_tasks()
         task_id = max((t.get("id", 0) for t in tasks), default=0) + 1
         tasks.append({
@@ -98,21 +100,21 @@ class TaskManagerHandler:
             "created_at": time.time(),
         })
         _save_tasks(tasks)
-        return f"（任務管理）已建立任務 #{task_id}：{title}"
+        return t("task_ops.task_created", id=task_id, title=title)
 
     def _list(self) -> str:
         tasks = _load_tasks()
         pending = [t for t in tasks if t.get("status") == "pending"]
         done = [t for t in tasks if t.get("status") == "completed"]
         if not tasks:
-            return "（任務管理）目前沒有任何任務。"
-        lines = ["（任務管理）任務列表："]
+            return t("task_ops.no_tasks")
+        lines = [t("task_ops.task_list")]
         if pending:
-            lines.append("  待完成：")
+            lines.append("  " + t("task_ops.pending"))
             for t in pending[:20]:
                 lines.append(f"    #{t['id']} {t['title']}")
         if done:
-            lines.append("  已完成：")
+            lines.append("  " + t("task_ops.completed"))
             for t in done[-5:]:
                 lines.append(f"    #{t['id']} {t['title']} ✓")
         return "\n".join(lines)
@@ -125,12 +127,12 @@ class TaskManagerHandler:
             if task_id and t.get("id") == task_id:
                 t["status"] = "completed"
                 _save_tasks(tasks)
-                return f"（任務管理）已標記任務 #{task_id} 為完成：{t['title']}"
+                return t("task_ops.task_completed", id=task_id, title=t['title'])
             if title and t.get("title") == title and t.get("status") == "pending":
                 t["status"] = "completed"
                 _save_tasks(tasks)
-                return f"（任務管理）已標記任務 #{t['id']} 為完成：{title}"
-        return f"（任務管理）找不到對應的任務。"
+                return t("task_ops.task_completed", id=t['id'], title=title)
+        return t("task_ops.task_not_found")
 
     def _delete(self, payload: Dict[str, Any]) -> str:
         tasks = _load_tasks()
@@ -139,9 +141,9 @@ class TaskManagerHandler:
         original_len = len(tasks)
         tasks = [t for t in tasks if not (task_id and t.get("id") == task_id) and not (title and t.get("title") == title)]
         if len(tasks) == original_len:
-            return f"（任務管理）找不到對應的任務。"
+            return t("task_ops.task_not_found")
         _save_tasks(tasks)
-        return f"（任務管理）已刪除任務。"
+        return t("task_ops.task_deleted")
 
     def _update(self, payload: Dict[str, Any]) -> str:
         tasks = _load_tasks()
@@ -152,13 +154,13 @@ class TaskManagerHandler:
                 old_title = t["title"]
                 t["title"] = new_title
                 _save_tasks(tasks)
-                return f"（任務管理）已更新任務 #{task_id}：{old_title} → {new_title}"
+                return t("task_ops.task_updated", id=task_id, old=old_title, new=new_title)
             if new_title and t.get("title") != new_title and t.get("status") == "pending":
                 old_title = t["title"]
                 t["title"] = new_title
                 _save_tasks(tasks)
-                return f"（任務管理）已更新任務 #{t['id']}：{old_title} → {new_title}"
-        return f"（任務管理）找不到對應的任務。"
+                return t("task_ops.task_updated", id=t['id'], old=old_title, new=new_title)
+        return t("task_ops.task_not_found")
 
 
 __all__ = ["TaskManagerHandler"]

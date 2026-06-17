@@ -42,7 +42,11 @@ class I18nManager {
     }
     
     _normalizeLocale(locale) {
-        return locale.replace('_', '-');
+        const normalized = locale.replace('_', '-');
+        const match = this.config.availableLocales.find(
+            available => available.toLowerCase() === normalized.toLowerCase()
+        );
+        return match || normalized;
     }
     
     _loadDefaultTranslations() {
