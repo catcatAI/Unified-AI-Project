@@ -1309,7 +1309,6 @@ No other system combines:
 | Dead context subsystems (3) | No cross-turn memory | 1 week | P0 |
 | Single-pass processing | No iterative refinement | 2 weeks | P0 |
 | Missing tests (430+ needed) | No quality guarantee | Ongoing | P0 |
-| 1942 hardcoded strings | i18n impossible | 1 week | P1 |
 
 ### 14.2 Important Gaps (Should Fix)
 
@@ -1319,9 +1318,23 @@ No other system combines:
 | No web dashboard | No visual interface | 2 weeks | P1 |
 | No browser automation | Limited web interaction | 1 week | P1 |
 | No multi-agent | Single-agent bottleneck | 3 weeks | P2 |
-| No i18n system | Chinese-only | 1 week | P1 |
+| i18n 接線未完成 | 硬編字串無法本地化 | 6-10 天 | P1 |
 
-### 14.3 Nice-to-Have Gaps
+### 14.3 i18n 分析 (Phase 7)
+
+| 類別 | 數量 | 能否用 i18n | 說明 |
+|------|------|-------------|------|
+| 硬編回應字串 | ~100+ | ✅ 可以 | Handler 回應、引擎輸出 |
+| NLP/意圖關鍵字 | ~400+ | ❌ 不行 | 輸入處理邏輯 |
+| 數學運算符 | ~20+ | ❌ 不行 | 領域特定 NLP 解析 |
+| LLM 提示模板 | ~50+ | ❌ 不行 | 提示工程 |
+| 日誌訊息 | 58 | ❌ 不行 | 開發者導向 |
+| 測試資料 | 2,573 | ❌ 不行 | 測試輸入/預期值 |
+| 註解/文件字串 | ~3,357 | ❌ 不行 | 不是使用者導向 |
+
+**結論**: 約 20,000+ 行中文，但只有 ~150+ 行需要 i18n 處理。
+
+### 14.4 Nice-to-Have Gaps
 
 | Gap | Impact | Effort | Priority |
 |-----|--------|--------|----------|

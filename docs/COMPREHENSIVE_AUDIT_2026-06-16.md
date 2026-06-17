@@ -774,9 +774,24 @@ All 6 phases are now **COMPLETE**:
 | Phase 4: Embodiment | ✅ COMPLETE | Web Dashboard, Voice, Pet |
 | Phase 5: Infrastructure | ✅ COMPLETE | 24/24 |
 | Phase 6: Polish & Launch | ✅ COMPLETE | 15/15 |
+| Phase 7: i18n Internationalization | 🟡 PENDING | See EXECUTION_PLAN.md Section 9 |
+
+### i18n 分析結果
+
+| 類別 | 數量 | 能否用 i18n | 說明 |
+|------|------|-------------|------|
+| 硬編回應字串 | ~100+ | ✅ 可以 | Handler 回應、引擎輸出 |
+| NLP/意圖關鍵字 | ~400+ | ❌ 不行 | 輸入處理邏輯 |
+| 數學運算符 | ~20+ | ❌ 不行 | 領域特定 NLP 解析 |
+| LLM 提示模板 | ~50+ | ❌ 不行 | 提示工程 |
+| 日誌訊息 | 58 | ❌ 不行 | 開發者導向 |
+| 測試資料 | 2,573 | ❌ 不行 | 測試輸入/預期值 |
+| 註解/文件字串 | ~3,357 | ❌ 不行 | 不是使用者導向 |
+
+**結論**: 約 20,000+ 行中文，但只有 ~150+ 行需要 i18n 處理。
 
 ### Remaining Work (Deferred)
-- i18n system (1942 hardcoded strings)
+- Phase 7: i18n Internationalization (6-10 天)
 - Load testing
 - Archive cleanup
 

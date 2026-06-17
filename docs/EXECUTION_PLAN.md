@@ -17,6 +17,7 @@
 | Phase 4: Embodiment | 🟢 COMPLETE | 2026-06-16 | Web Dashboard ✅, Voice Output ✅, Pet AI ✅, Tests ✅ |
 | Phase 5: Infrastructure | 🟢 COMPLETE | 2026-06-16 | Dockerfile ✅, docker-compose ✅, Prometheus ✅, Deploy workflow ✅, OpenTelemetry ✅, API Versioning ✅, Tests ✅ |
 | Phase 6: Polish & Launch | 🟢 COMPLETE | 2026-06-16 | OpenAPI ✅, Profiler ✅, Benchmarks ✅, Docs ✅, User Guide ✅, Tests ✅ |
+| Phase 7: i18n Internationalization | 🟡 PENDING | — | See Section 9 |
 
 ### Phase 0 Detail (2026-06-16)
 
@@ -802,6 +803,137 @@ Phase 0 → Phase 5 (can start after Phase 0)
 - [ ] Complete documentation
 - [ ] Performance benchmarks met
 - [ ] Load test passed
+
+---
+
+## 9. Phase 7: i18n Internationalization
+
+> **Goal**: Replace all hardcoded Chinese strings with i18n system calls, including LLM prompt templates.
+> **Exit Criteria**: All user-facing strings and LLM prompts use `t()` calls, locale files loaded at startup.
+
+### 9.1 Problem Analysis
+
+| 類別 | 數量 | 能否用 i18n | 說明 |
+|------|------|-------------|------|
+| 硬編回應字串 | ~100+ | ✅ 可以 | Handler 回應、引擎輸出 |
+| LLM 提示模板 | ~50+ | ✅ 可以 | 需要按目標語言動態選擇 |
+| NLP/意圖關鍵字 | ~400+ | ❌ 不行 | 輸入處理邏輯，不是 UI 字串 |
+| 數學運算符 | ~20+ | ❌ 不行 | 領域特定 NLP 解析規則 |
+| 日誌訊息 | 58 | ❌ 不行 | 開發者導向，應保留英文 |
+| 測試資料 | 2,573 | ❌ 不行 | 測試輸入/預期值，不應翻譯 |
+| 註解/文件字串 | ~3,357 | ❌ 不行 | 不是使用者導向 |
+
+**結論**: 約 20,000+ 行中文，約 ~200+ 行需要 i18n 處理。
+
+### 9.2 ED3N 翻譯模式應用
+
+ED3N DictionaryLayer 的 `surface_forms: {"zh": "...", "en": "..."}` 模式可直接應用於 i18n：
+
+| ED3N Dictionary | i18n System |
+|-----------------|-------------|
+| `DictionaryEntry(key, surface_forms{"zh": "你好", "en": "hello"})` | `TranslationEntry(key, translations{"zh": "...", "en": "..."})` |
+| `encode(text)` → 內部 keys | `t(key, lang)` → 本地化字串 |
+| `decode(keys)` → 中文優先輸出 | 已有但未接線 |
+
+### 9.3 LLM 提示模板特殊處理
+
+LLM 提示模板與 UI 字串不同：
+
+| UI 字串 | LLM 提示模板 |
+|---------|-------------|
+| 顯示給使用者看 | 送給 LLM 處理 |
+| 需要本地化 | 取決於目標語言 |
+| `t("key")` | 需要動態選擇語言 |
+
+**正確做法**：提示模板應該根據**目標語言**動態選擇。
+
+#### LLM 提示模板分類
+
+| 類別 | 文件 | 語言 | 處理方式 |
+|------|------|------|----------|
+| Angela 身份提示 | `prompt_builder.py`, `unified_control_center.py`, `llm_decision_loop.py` | 中文 | 需要多語言版本 |
+| 任務規劃提示 | `project_coordinator.py`, `document_builder.py` | 中文 | 需要多語言版本 |
+| 工具路由提示 | `daily_language_model.py`, `fact_extractor_module.py` | 英文 | 已是英文，不需處理 |
+| 配置文件 | `prompts.default.yaml`, `llm_providers.yaml`, personality JSONs | 中文 | 需要多語言版本 |
+
+### 9.4 執行步驟
+
+#### P0: 接線 (1-2 天)
+
+| 步驟 | 工作 | 文件 | 時間 |
+|------|------|------|------|
+| 1 | `I18nManager` 添加 `load_from_json()` | `core/i18n/i18n_manager.py` | 2 小時 |
+| 2 | `I18nManager` 添加 `load_from_locale_dir()` | `core/i18n/i18n_manager.py` | 1 小時 |
+| 3 | 在啟動時載入 `locales/*.json` | `main.py` or `__init__.py` | 1 小時 |
+| 4 | 修復 desktop-app i18n.js zh-CN bug | `desktop-app/electron_app/js/i18n.js` | 5 分鐘 |
+
+#### P1: 替換硬編字串 (3-5 天)
+
+| 步驟 | 工作 | 文件 | 時間 |
+|------|------|------|------|
+| 5 | Handler 回應字串替換為 `t()` | `file_operation_handler.py`, `task_manager_handler.py` 等 | 1-2 天 |
+| 6 | 引擎輸出字串替換為 `t()` | `ed3n_engine.py`, `garden_engine.py` | 1-2 天 |
+| 7 | 所有 Handler 響應字串加入 locale JSON | `locales/en-US.json`, `zh-CN.json` | 1 天 |
+
+#### P2: LLM 提示模板 i18n (3-5 天)
+
+| 步驟 | 工作 | 文件 | 時間 |
+|------|------|------|------|
+| 8 | 創建 `PromptManager` | `core/prompt_manager.py` | 1 天 |
+| 9 | 提示模板按語言分組 | `locales/prompts.en-US.json`, `zh-CN.json` | 1 天 |
+| 10 | `prompt_builder.py` 使用 `PromptManager` | `services/llm/prompt_builder.py` | 1 天 |
+| 11 | `unified_control_center.py` 使用 `PromptManager` | `ai/integration/unified_control_center.py` | 0.5 天 |
+| 12 | `llm_decision_loop.py` 使用 `PromptManager` | `ai/lifecycle/llm_decision_loop.py` | 0.5 天 |
+| 13 | `project_coordinator.py` 使用 `PromptManager` | `ai/dialogue/project_coordinator.py` | 0.5 天 |
+| 14 | 配置文件外部化到 YAML | `configs/prompts/` | 1 天 |
+
+#### P3: 進階功能 (2-3 天)
+
+| 步驟 | 工作 | 文件 | 時間 |
+|------|------|------|------|
+| 15 | 添加 ED3N 風格的 `encode(text)` | `core/i18n/i18n_manager.py` | 1 天 |
+| 16 | 添加 ED3N 風格的 `decode(keys)` | `core/i18n/i18n_manager.py` | 1 天 |
+| 17 | 創建 `sync_from_ed3n_dictionary()` | `core/i18n/i18n_manager.py` | 1 天 |
+
+#### P4: 不處理 (保留原狀)
+
+| 類別 | 原因 |
+|------|------|
+| NLP/意圖關鍵字 | 輸入處理邏輯，不是 UI 字串 |
+| 數學運算符 | 領域特定 NLP 解析規則 |
+| 日誌訊息 | 開發者導向，應保留英文 |
+| 測試資料 | 測試輸入/預期值，不應翻譯 |
+| 註解/文件字串 | 不是使用者導向 |
+
+### 9.5 Phase 7 Deliverables
+
+- [ ] `load_from_json()` 方法可用
+- [ ] `load_from_locale_dir()` 方法可用
+- [ ] 啟動時自動載入 locale JSON
+- [ ] desktop-app zh-CN bug 修復
+- [ ] Handler 回應字串使用 `t()`
+- [ ] 引擎輸出字串使用 `t()`
+- [ ] locale JSON 包含所有 Handler 響應字串
+- [ ] `PromptManager` 創建完成
+- [ ] 提示模板按語言分組
+- [ ] `prompt_builder.py` 使用 `PromptManager`
+- [ ] `unified_control_center.py` 使用 `PromptManager`
+- [ ] `llm_decision_loop.py` 使用 `PromptManager`
+- [ ] `project_coordinator.py` 使用 `PromptManager`
+- [ ] 配置文件外部化到 YAML
+- [ ] ED3N 風格 `encode()`/`decode()` 可用
+- [ ] `sync_from_ed3n_dictionary()` 可用
+- [ ] 測試通過
+
+### 9.6 總工作量
+
+| 階段 | 時間 |
+|------|------|
+| P0: 接線 | 1-2 天 |
+| P1: 替換硬編字串 | 3-5 天 |
+| P2: LLM 提示模板 i18n | 3-5 天 |
+| P3: 進階功能 | 2-3 天 |
+| **Total** | **9-15 天** |
 
 ---
 
