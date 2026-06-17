@@ -15,7 +15,7 @@
 | Phase 2: Intelligence Layer | 🟡 PARTIAL | 2026-06-16 | AgentOrchestrator ✅, PlanningEngine ✅, ReasoningEngines ✅ |
 | Phase 3: Safety & Trust | 🟡 PARTIAL | 2026-06-16 | TrustManager ✅, ContentFilter ✅, SafetyAudit ✅ |
 | Phase 4: Embodiment | 🟡 PARTIAL | 2026-06-16 | Web Dashboard ✅, Voice Output ✅, Pet AI ✅ |
-| Phase 5: Infrastructure | ⏳ PENDING | — | |
+| Phase 5: Infrastructure | 🟡 PARTIAL | 2026-06-16 | Dockerfile ✅, docker-compose ✅, Prometheus ✅, Deploy workflow ✅ |
 | Phase 6: Polish & Launch | ⏳ PENDING | — | |
 
 ### Phase 0 Detail (2026-06-16)
@@ -75,6 +75,18 @@
 | Voice Output | ✅ | Edge TTS integration already exists (268 lines) |
 | Pet AI | ✅ | PetManager already exists (478 lines) |
 | Integration Tests | ✅ | 31/31 pass (new tests for Phase 2-4 modules) |
+
+### Phase 5 Detail (2026-06-16)
+
+| Task | Status | Verification |
+|------|--------|-------------|
+| Root Dockerfile | ✅ | Multi-stage build, non-root user, health check |
+| docker-compose.yml | ✅ | Backend, Redis, PostgreSQL, Prometheus, Grafana, Nginx |
+| Prometheus config | ✅ | Scrape configs, alert rules |
+| Grafana config | ✅ | Datasources, dashboard provisioning |
+| Nginx config | ✅ | Reverse proxy, SSL, rate limiting |
+| Deploy workflow | ✅ | GitHub Actions with staging/production |
+| Integration Tests | ✅ | 24/24 pass (infrastructure tests) |
 
 ---
 

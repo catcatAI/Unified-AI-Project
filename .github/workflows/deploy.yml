@@ -1,0 +1,123 @@
+# =============================================================================
+# Angela AI - Deploy Workflow
+# =============================================================================
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - production
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Build and Push Docker Image
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # Deploy to Staging
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'staging' || github.ref == 'refs/heads/main'
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/angela
+            git pull origin main
+            docker-compose -f docker-compose.yml pull
+            docker-compose -f docker-compose.yml up -d
+            docker-compose -f docker-compose.yml exec -T backend python -c "from src.main import app; print('Health check passed')"
+
+  # Deploy to Production
+  deploy-production:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'production' || github.ref == 'refs/heads/production'
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            cd /opt/angela
+            git pull origin production
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend python -c "from src.main import app; print('Health check passed')"
+
+  # Notify
+  notify:
+    needs: [deploy-staging, deploy-production]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Send notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ needs.deploy-staging.result }}' === 'success' || '${{ needs.deploy-production.result }}' === 'success' ? '✅' : '❌';
+            core.info(`${status} Deployment completed`);

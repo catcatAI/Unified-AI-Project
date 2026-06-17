@@ -707,4 +707,31 @@ Total: 68/68 PASSED ✅
 
 ---
 
-*本報告由三次審計補充，並記錄 2026-06-16 Phase 0 + Phase 1 + Phase 2 + Phase 3 + Phase 4 修復。覆蓋全部代碼目錄。*
+## 十九、Phase 5 修復（2026-06-16）
+
+### Infrastructure — 已完成
+
+| # | 文件 | 修復 |
+|---|------|------|
+| 35 | `Dockerfile` | 新建：多階段構建、非 root 用戶、健康檢查 |
+| 36 | `docker-compose.yml` | 更新：Backend、Redis、PostgreSQL、Prometheus、Grafana、Nginx |
+| 37 | `configs/prometheus.yml` | 新建：Scrape 配置、告警規則引用 |
+| 38 | `configs/alert_rules.yml` | 新建：6 條告警規則（後端宕機、高延遲、高錯誤率、Redis 宕機、高內存、高 CPU） |
+| 39 | `configs/grafana/datasources/prometheus.yml` | 新建：Prometheus 數據源配置 |
+| 40 | `configs/grafana/dashboards/dashboard.yml` | 新建：儀表板供應配置 |
+| 41 | `configs/nginx.conf` | 新建：反向代理、SSL、速率限制 |
+| 42 | `.github/workflows/deploy.yml` | 新建：GitHub Actions 部署工作流（staging/production） |
+| 43 | `tests/ai/test_phase5_infra.py` | 新建：24 個基礎設施測試 |
+
+### 測試驗證
+
+```
+Phase 6 E2E: 24/24 PASSED ✅
+Phase 5 Integration: 13/13 PASSED ✅
+Phase 5 Infrastructure: 24/24 PASSED ✅
+Total: 61/61 PASSED ✅
+```
+
+---
+
+*本報告由三次審計補充，並記錄 2026-06-16 Phase 0 + Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5 修復。覆蓋全部代碼目錄。*

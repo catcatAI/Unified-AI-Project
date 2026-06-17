@@ -1,11 +1,45 @@
-# Unified AI Project - Docker Compose Configuration
-# Standalone Redis service for memory functions
+# =============================================================================
+# Angela AI - Docker Compose Configuration
+# Full stack: Backend, Redis, PostgreSQL, Prometheus, Grafana, Nginx
+# =============================================================================
 
 services:
+  # Backend API Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: angela-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://angela:angela@postgres:5432/angela
+      - REDIS_URL=redis://redis:6379/0
+      - PROMETHEUS_ENABLED=true
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ops/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    networks:
+      - angela-network
+    restart: unless-stopped
+
   # Redis for caching and pub/sub
   redis:
     image: redis:7-alpine
-    container_name: unified-ai-redis
+    container_name: angela-redis
     ports:
       - "6379:6379"
     volumes:
@@ -17,13 +51,95 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - unified-ai-network
+      - angela-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: angela-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: angela
+      POSTGRES_USER: angela
+      POSTGRES_PASSWORD: angela
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U angela -d angela"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - angela-network
+    restart: unless-stopped
+
+  # Prometheus Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: angela-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - angela-network
+    restart: unless-stopped
+
+  # Grafana Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: angela-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=angela
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./configs/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./configs/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - angela-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: angela-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./configs/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - grafana
+    networks:
+      - angela-network
     restart: unless-stopped
 
 volumes:
   redis_data:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+  app_data:
+  app_logs:
 
 networks:
-  unified-ai-network:
+  angela-network:
     driver: bridge
-
