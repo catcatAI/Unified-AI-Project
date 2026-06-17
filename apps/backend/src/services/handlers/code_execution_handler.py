@@ -11,7 +11,7 @@ import threading
 import traceback
 from typing import Any, Dict, Optional
 
-from apps.backend.src.core.i18n.i18n_manager import t
+from core.i18n.i18n_manager import t
 
 logger = logging.getLogger(__name__)
 

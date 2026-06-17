@@ -25,7 +25,7 @@ class AudioEncoder:
         if self._audio_system is not None:
             return self._audio_system
         try:
-            from apps.backend.src.core.engine.audio_system import AudioSystem
+            from core.engine.audio_system import AudioSystem
             self._audio_system = AudioSystem()
         except ImportError:
             try:
@@ -44,7 +44,7 @@ class AudioEncoder:
         if self._audio_processing is not None:
             return self._audio_processing
         try:
-            from apps.backend.src.ai.audio.audio_processing import AudioProcessing
+            from ai.audio.audio_processing import AudioProcessing
             self._audio_processing = AudioProcessing()
         except ImportError:
             try:
@@ -63,7 +63,7 @@ class AudioEncoder:
         if self._real_voice is not None:
             return self._real_voice
         try:
-            from apps.backend.src.core.art.real_edge_tts import AngelaRealVoice
+            from core.art.real_edge_tts import AngelaRealVoice
             self._real_voice = AngelaRealVoice()
         except ImportError:
             try:

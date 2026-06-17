@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 from core.system.config.magic_numbers import loop_sleep
-from apps.backend.src.core.prompt_manager import prompt
+from core.prompt_manager import prompt
 
 # Core AI Component Imports
 from ai.compression.alpha_deep_model import (

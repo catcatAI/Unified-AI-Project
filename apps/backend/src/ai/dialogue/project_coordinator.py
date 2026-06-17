@@ -35,7 +35,7 @@ from core.hsp.types import (
 )
 import networkx as nx
 
-from apps.backend.src.core.prompt_manager import prompt
+from core.prompt_manager import prompt
 
 try:
     from core.intent_registry import IntentRegistry

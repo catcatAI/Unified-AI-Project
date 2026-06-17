@@ -28,7 +28,7 @@ sys.path.insert(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", ".."),
 )
 
-from apps.backend.src.ai.garden.garden_engine import GARDENEngine
+from ai.garden.garden_engine import GARDENEngine
 
 
 def _make_engine(checkpoint: str = "") -> GARDENEngine:

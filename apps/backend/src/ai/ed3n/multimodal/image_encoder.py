@@ -23,7 +23,7 @@ class ImageEncoder:
         if self._vision_service is not None:
             return self._vision_service
         try:
-            from apps.backend.src.services.vision_service import VisionService
+            from services.vision_service import VisionService
             self._vision_service = VisionService()
         except ImportError:
             try:

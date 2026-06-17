@@ -27,7 +27,7 @@ from core.system.config.magic_numbers import (
     timing_value,
 )
 
-from apps.backend.src.core.prompt_manager import prompt
+from core.prompt_manager import prompt
 
 logger = logging.getLogger(__name__)
 

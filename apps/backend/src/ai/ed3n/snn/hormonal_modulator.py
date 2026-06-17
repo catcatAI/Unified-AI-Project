@@ -45,7 +45,7 @@ class HormonalModulator:
         if self._endocrine_system is None:
             return
         try:
-            from apps.backend.src.core.bio.endocrine_types import HormoneType
+            from core.bio.endocrine_types import HormoneType
 
             hormone_map = {
                 "cortisol": HormoneType.CORTISOL,
