@@ -187,7 +187,7 @@ def _load_env_file(env_file: Path) -> None:
             logger.error(f"Error loading .env file: {e}")
 
 
-def wait_for_server(port=8000, timeout=180, progress: Optional[ProgressDisplay] = None, proc: Optional[subprocess.Popen] = None) -> bool:
+def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] = None, proc: Optional[subprocess.Popen] = None) -> bool:
     """等待服务器启动, 若进程提前崩溃则立刻返回"""
     import socket
 
