@@ -57,6 +57,7 @@ class DictionaryLayer:
         self._keyword_index: Dict[str, List[str]] = {}
         self._bigram_index: Dict[str, List[str]] = {}
         self._rebuilt_index: bool = False
+        self._dirty: bool = True
         self._lock = threading.RLock()
         self._growth_history: List[Dict[str, Any]] = []
         self._index_version: int = 0
@@ -118,7 +119,22 @@ class DictionaryLayer:
         text_lower = text.lower().strip()
         scores: Dict[str, float] = {}
         max_len = max(len(text_lower), 1)
-        for key, entry in self.entries.items():
+
+        # Collect candidate keys from keyword/bigram index
+        candidates: set = set()
+        for kw, keys in self._keyword_index.items():
+            if kw in text_lower:
+                candidates.update(keys)
+        for bigram, keys in self._bigram_index.items():
+            if bigram in text_lower:
+                candidates.update(keys)
+        if not candidates:
+            candidates = set(self.entries.keys())
+
+        for key in candidates:
+            entry = self.entries.get(key)
+            if entry is None:
+                continue
             best = 0.0
             for sf in entry.surface_forms.values():
                 sf_lower = normalize_text(sf).lower().strip()
@@ -217,7 +233,7 @@ class DictionaryLayer:
             confidence=confidence,
         )
         self.entries[key] = entry
-        self._rebuild_index()
+        self._dirty = True
         return entry
 
     def bulk_add_entries(
@@ -238,7 +254,7 @@ class DictionaryLayer:
                 confidence=data.get("confidence", 1.0),
             )
             count += 1
-        self._rebuild_index()
+        self._dirty = True
         return count
 
     def grow(
@@ -261,7 +277,7 @@ class DictionaryLayer:
             confidence=confidence,
         )
         self.entries[key] = entry
-        self._rebuild_index()
+        self._dirty = True
         self._growth_history.append({
             "timestamp": datetime.datetime.now().isoformat(),
             "key": key,
@@ -449,7 +465,7 @@ class DictionaryLayer:
                 self.entries[k1].relations.setdefault("mapping", []).append(k2)
                 self.entries[k2].relations.setdefault("mapping", []).append(k1)
         if batch_new:
-            self._rebuild_index()
+            self._dirty = True
         return new_keys
 
     def merge_entries(self, source_key: str, target_key: str) -> bool:
@@ -475,7 +491,7 @@ class DictionaryLayer:
                 if source_key in rels:
                     rels[rels.index(source_key)] = target_key
         del self.entries[source_key]
-        self._rebuild_index()
+        self._dirty = True
         logger.info("Merged %s -> %s", source_key, target_key)
         return True
 
@@ -517,6 +533,8 @@ class DictionaryLayer:
         return count
 
     def _rebuild_index(self) -> None:
+        if not self._dirty and self._rebuilt_index:
+            return
         with self._lock:
             self._keyword_index.clear()
             self._bigram_index.clear()
@@ -534,6 +552,7 @@ class DictionaryLayer:
                             if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
                                 self._bigram_index.setdefault(bigram, []).append(key)
             self._rebuilt_index = True
+            self._dirty = False
             self._index_version += 1
             self._encode_cache.clear()
 

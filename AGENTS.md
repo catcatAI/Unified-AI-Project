@@ -83,14 +83,15 @@ pre-commit run --all-files
 > 
 > All 5 alias exports applied (~10 lines total). No re-implementation needed.
 
-> ✅ **NOTE (Updated 2026-06-18)**: Phase 3A-C complete.
-> - **Phase 3A**: Import timeout protection (5 files, 7 import sites, 60s)
-> - **Phase 3B**: `unicode_utils.py` + `input_enricher.py` + `EnrichedInput` pipeline integration
-> - **Phase 3C**: `anchored_decode()` now accepts `EnrichedInput` for variant-based key discovery
-> - **New files**: `ai/core/unicode_utils.py` (359 lines), `ai/ed3n/input_enricher.py` (292 lines)
-> - **New tests**: `tests/ai/ed3n/test_input_enricher.py` (28 tests)
-> - **ED3N total**: 114 tests (86 base + 28 input_enricher) — all pass
-> - **Non-ML total**: 231 tests — all pass
+> ✅ **NOTE (Updated 2026-06-19)**: Phase A complete — dictionary data pipeline.
+> - **Phase A1-A4**: External dictionary download + convert + import pipeline
+> - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
+> - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
+> - **Data volume**: 132MB JSON (35.8+57.7+38.8MB) — 110MB → 242MB total growth
+> - **Performance fix**: `_dirty` flag in `dictionary_layer.py` prevents redundant index rebuilds; `encode_soft` uses keyword/bigram index for candidate filtering instead of full O(n) scan — query speed improved 60-1000x
+> - **DictionaryLayer**: `bulk_add_entries()` method, `max_entries` default increased to 500000
+> - **ED3N total**: 114 tests — all pass (5.29s, was 14.20s)
+> - **Non-ML total**: 315 tests — all pass (5:00, was 8:48)
 > - **Zero new external dependencies** — everything uses stdlib + existing project modules
 
 ### JavaScript/TypeScript

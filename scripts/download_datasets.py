@@ -8,7 +8,7 @@ Usage:
 Datasets:
     cedict       CC-CEDICT (Chinese-English, ~5MB, ~120K entries)
     jmdict       JMdict (Japanese-English, ~15MB, ~200K entries)
-    wordnet      WordNet 3.1 (English, ~12MB, ~155K synsets)
+    wordnet      WordNet 3.0 (English, ~11MB, ~155K synsets)
     all          Download all datasets (default)
 
 Output: data/dictionaries/{dataset}.json
@@ -170,7 +170,7 @@ def process_cedict() -> Path:
 # JMdict (Japanese-English)
 # ---------------------------------------------------------------------------
 
-JMDICT_URL = "https://ftp.monash.edu/pub/nihongo/JMdict_e.gz"
+JMDICT_URL = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz"
 JMDICT_GZ = OUT_DIR / "JMdict_e.gz"
 
 
@@ -256,9 +256,9 @@ def process_jmdict() -> Path:
 # WordNet 3.1
 # ---------------------------------------------------------------------------
 
-WN_URL = "https://wordnetcode.princeton.edu/wn3.1/WordNet-3.1.tar.gz"
-WN_TGZ = OUT_DIR / "WordNet-3.1.tar.gz"
-WN_DIR = OUT_DIR / "WordNet-3.1"
+WN_URL = "https://wordnetcode.princeton.edu/3.0/WordNet-3.0.tar.gz"
+WN_TGZ = OUT_DIR / "WordNet-3.0.tar.gz"
+WN_DIR = OUT_DIR / "WordNet-3.0"
 
 
 def download_wordnet() -> Path:
@@ -299,16 +299,21 @@ def _parse_wn_line(line: str) -> dict | None:
 
 
 def convert_wordnet(tgz_path: Path) -> Path:
-    """Extract and parse WordNet 3.1 data files; write ED3N JSON."""
+    """Extract and parse WordNet 3.0 data files; write ED3N JSON."""
     import tarfile
 
-    logger.info("Extracting WordNet-3.1 …")
+    logger.info("Extracting WordNet-3.0 …")
     with tarfile.open(tgz_path, "r:gz") as tar:
         tar.extractall(path=OUT_DIR)
 
     data_dir = WN_DIR / "dict"
     if not data_dir.exists():
-        logger.error("WordNet dict/ directory not found in %s", WN_DIR)
+        # WordNet 3.0 tarball has dict/ inside a WordNet-3.0/ subdirectory
+        inner = WN_DIR / "WordNet-3.0" / "dict"
+        if inner.exists():
+            data_dir = inner
+        else:
+            logger.error("WordNet dict/ directory not found in %s", WN_DIR)
         return OUT_DIR / "wordnet.json"
 
     entries: list[dict] = []
@@ -365,7 +370,7 @@ def convert_wordnet(tgz_path: Path) -> Path:
                 entries.append(entry)
 
     out_path = OUT_DIR / "wordnet.json"
-    data = {"version": "2.0", "source": "WordNet-3.1", "entries": entries}
+    data = {"version": "2.0", "source": "WordNet-3.0", "entries": entries}
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
     logger.info("WordNet: %d entries written to %s (%.1fMB)",
