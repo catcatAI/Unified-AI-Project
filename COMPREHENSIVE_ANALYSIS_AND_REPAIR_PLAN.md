@@ -417,31 +417,128 @@ except ImportError as e:
 - 開發指南
 - 當前階段的計畫
 
-### Phase 5: 智能提升方案（長期，預計數月）
+### Phase 5: 模型資料增長 — 把 ED3N/GARDEN 從框架變真實模型
 
-#### 5.1 建立真實的持續學習循環
+**當前現實**：
 
-- 實作 `continuous_learning.py` 的排程邏輯
-- 加入經驗回放緩衝區（已有檔案但未串接）
-- 建立驗證/測試分離
+| 組件 | 框架代碼 | 實際模型資料 | 等同 |
+|------|---------|-------------|------|
+| ED3N 字典 | 893L 查詢邏輯 | **3 條**硬編碼條目 | 圖書館蓋好了但書架空的 |
+| GARDEN SNN | 370L 網路實作 | ~60 神經元, 3.3MB ckpt | 引擎造好了但只接60個感知器 |
+| 向量記憶 | 60L store 邏輯 | 105MB JSON（未使用） | 硬碟有資料但沒索引 |
+| 訓練管線 | 166L coordinator stub | 無真正訓練循環 | 有訓練場但沒運動員 |
 
-#### 5.2 向量記憶整合
+**目標**: 1.5GB+ 真實模型資料，零垃圾/零 padding。框架不增長，資料全來自真實語料庫。
 
-- 將 HAM JSON 記憶遷移至 ChromaDB
-- 為 VectorMemoryStore 設置真實持久化
-- 統一記憶檢索接口
+#### 5.1 字典資料來源（Phase A — 可行動）
 
-#### 5.3 SNN 規模擴展
+將 ED3N 從硬編碼切換為資料驅動查詢引擎。框架不變，內容從檔案載入。
 
-- 當前 GARDEN 詞彙量 ~60，目標至少 ~1000+
-- 加入真正的反向傳播訓練管線
-- 支援模型 checkpoint 保存/加載
+| 來源 | 語言 | 許可證 | 條目數 | 下載大小 | 轉換後大小 |
+|------|------|--------|--------|---------|-----------|
+| WordNet (NLTK) | en | MIT | ~155K | ~12MB | ~50MB LMDB |
+| CC-CEDICT | zh→en | CC-BY-SA 3.0 | ~120K | ~5MB | ~20MB LMDB |
+| JMDict | ja→en | CC-BY-SA | ~200K | ~15MB | ~60MB LMDB |
+| Open Chinese WordNet | zh | CC-BY-SA | ~50K | ~3MB | ~15MB LMDB |
+| ConceptNet 5.7 (子集) | 多語 | CC-BY-SA | ~8M 邊 | ~350MB | ~500MB LMDB |
 
-#### 5.4 LLM 整合
+**實作要點**:
+- `dictionary_layer.py` 保持當前查詢 API 介面不變
+- 資料存於 `data/dictionaries/` 目錄，LMDB mmap 讀取
+- 啟動時檢測，不存在則提示下載（而非自動下載）
+- 下載腳本 `scripts/download_datasets.py`，支援斷點續傳
+- **筆電友善**: 每個來源可分開下載，每次 1-5min
 
-- 配置至少一個穩定運行的 LLM 後端（Ollama 推薦）
-- 實作 LLM 回應的結構化提取（當前 `process_llm_response` 是 stub）
-- 建立 LLM 快取層減少 API 呼叫
+#### 5.2 CoreNetwork 真實訓練（Phase B — 可行動）
+
+當前 network 是 BFS 3 跳 0.5 衰減的硬編碼。
+
+**改為資料驅動**:
+
+1. 用現有 `apps/backend/data/raw_datasets/` 下的 Alpaca（22MB）+ 算術 + 邏輯資料集
+2. 從對話提取共現概念對 → 統計頻率 → 正規化為連接權重
+3. 加入 Oja 規則 Hebbian 更新（已實作但未串接資料）
+
+```
+訓練腳本: python scripts/train_ed3n_network.py
+預估時間（CPU only，筆電）: 5-30min（取決於 corpus 大小）
+輸入: data/raw_datasets/ + data/dictionaries/
+輸出: data/networks/ed3n_core_weights.json
+```
+
+#### 5.3 GARDEN 神經元擴展（Phase C — 需繞過 torch 限制）
+
+**當前**: Python 3.14 無 torch → SNN 訓練不能用  
+**三選一路線**:
+
+| 選項 | 做法 | 優點 | 缺點 |
+|------|------|------|------|
+| **C1: numpy-only SNN** | 重寫 SNN 用 numpy 運算 | 當前環境可跑 | 慢 5-10x |
+| **C2: Python 3.11 降級** | 安裝 Python 3.11 + torch | 全速訓練 | 需切換環境 |
+| **C3: ONNX Runtime** | 用 ONNX 取代 torch | 跨版本支援 | 需轉換 SNN 圖 |
+
+**建議**: C2 + C3 並行。平時開發用 C1（numpy，可測試），訓練用 C2。
+
+**目標規模**:
+```
+當前:    ~60 神經元,  3.3MB checkpoint
+Phase 5:  ~1K 神經元,  ~40MB (稀疏 CSR)
+Phase 6: ~10K 神經元, ~400MB (稀疏 CSR + GPU offload)
+```
+
+#### 5.4 持久化記憶訓練（Phase D）
+
+**當前**: `continuous_learning.py` 是 stub（50L），向量儲存有 105MB JSON 但沒用上
+
+**實作**:
+1. 建立經驗回放緩衝區（ring buffer，mmap-backed，限制 1M 條）
+2. 將現有 105MB JSON 記憶轉為 HDF5/LMDB 格式
+3. 每次 ED3N process() 後自動追加到緩衝區
+4. 背景執行緒週期性用緩衝區資料更新 CoreNetwork 權重
+
+#### 5.5 資料集下載腳本設計
+
+```
+scripts/download_datasets.py
+├── download_wordnet()      ~12MB, 30s
+├── download_cc_cedict()    ~5MB,  15s
+├── download_jmdict()       ~15MB, 45s
+├── download_conceptnet()   ~350MB, 5min (可選, 最大)
+└── download_all()          全部, ~400MB, 8min
+
+腳本特點:
+- requests + tqdm 進度條（無外部依賴用 urllib）
+- 斷點續傳（If-None-Match / Range）
+- 自動解壓 .tar.gz / .zip
+- 轉換為 ED3N JSON 格式，存 data/dictionaries/
+```
+
+#### 5.6 體積增長路線圖
+
+```
+Phase 5 完成時 (預計 2-3 週):
+  ED3N 字典  → ~500K entries  → ~150MB LMDB
+  CoreNetwork → ~10K nodes     → ~5MB
+  GARDEN SNN  → 1K neurons     → ~40MB
+  向量記憶     → indexed         → ~50MB
+  --------------------------------
+  總計                          ~245MB
+
+Phase 6 完成時 (預計 1-2 月):
+  ED3N 字典  → ~5M entries     → ~500MB LMDB (+ConceptNet)
+  CoreNetwork → ~50K nodes     → ~25MB
+  GARDEN SNN  → 10K neurons    → ~400MB
+  向量記憶     → 1M vectors      → ~300MB (PQ)
+  音聲模型     → Piper/Whisper   → ~300MB
+  --------------------------------
+  總計                          ~1.5GB
+```
+
+**關鍵約束**:
+- ED3N 字典查詢維持 **stdlib only**（LMDB 是 C 庫但有 Python binding，不在 stdlib → 可換 SQLite mmap）
+- 如果 LMDB 不可用，自動降級為 JSON + `mmap`（stdlib only，慢 2x 但跨平台）
+- GARDEN SNN numpy-only 模式維持測試可執行
+- **無任何生成式 padding** — 每 MB 模型資料都來自真實語料庫或訓練結果
 
 ---
 
@@ -495,33 +592,52 @@ jobs:
 - 強制 Conventional Commits 規範
 - 自動生成 CHANGELOG
 
-### 7.5 長期智慧化路線
+### 7.5 模型增長路線圖
 
 ```
-Phase 1 (1-2月): 基礎修復 + LLM 整合
-  ├── 環境修復 (Python 3.10/3.11 降級)
-  ├── Ollama 本地部署
-  ├── 向量記憶持久化
-  └── 測試架構清理
+Phase A (1-3天): 字典填充
+  ├── 下載腳本 scripts/download_datasets.py
+  ├── WordNet/CC-CEDICT/JMDict → ED3N JSON
+  ├── LMDB 化查詢層（保持框架 API 不變）
+  └── 目標: 500K 真實條目
 
-Phase 2 (3-4月): 學習能力建立
-  ├── 真實經驗回放
-  ├── SNN 反傳播訓練
-  ├── 模型 checkpoint
-  └── 持續學習排程器
+Phase B (3-7天): CoreNetwork 訓練
+  ├── Alpaca + 邏輯 + 算術資料集 → 共現權重
+  ├── 取代硬編碼 BFS 衰減
+  ├── 筆電 CPU 訓練驗證
+  └── 目標: 10K 節點, 資料驅動權重
 
-Phase 3 (5-6月): 推理與自主
-  ├── 因果推理鏈
-  ├── 多步驟狀態追蹤
-  ├── 任務自主排程
-  └── 元學習調參
+Phase C (1-2週): GARDEN 擴展
+  ├── 選路線 (numpy-only / Python 3.11 / ONNX)
+  ├── SNN 詞彙量 60→1K→10K
+  ├── 稀疏 CSR 權重矩陣
+  └── 目標: 400MB SNN 模型
 
-Phase 4 (7-12月): AGI 探索
-  ├── 跨模態學習 (vision + audio)
-  ├── 世界模型建構
-  ├── 自我對戰訓練
-  └── 安全對齊框架
+Phase D (持續): 持久化記憶訓練
+  ├── 經驗回放 ring buffer
+  ├── 向量記憶索引化
+  ├── 背景訓練執行緒
+  └── 目標: 1M+ 記憶條目
+
+Phase E (長期): 多模態擴展
+  ├── Piper TTS (~100MB)
+  ├── Whisper tiny STT (~150MB)
+  ├── 本地嵌入模型 BGE-Small (~300MB)
+  └── 目標: 總體 3GB+
 ```
+
+**體積追蹤**:
+
+| Phase | ED3N 字典 | CoreNetwork | GARDEN SNN | 向量記憶 | 總計 |
+|-------|-----------|-------------|------------|---------|------|
+| 當前 | 3 條 | 硬編碼 | 60 神經元 | 105MB raw | ~110MB |
+| A | 500K→150MB | 硬編碼 | 60 神經元 | 105MB raw | ~260MB |
+| B | 500K→150MB | 10K→5MB | 60 神經元 | 105MB raw | ~265MB |
+| C | 500K→150MB | 10K→5MB | 1K→40MB | 105MB raw | ~300MB |
+| D | 500K→150MB | 50K→25MB | 10K→400MB | 1M→300MB | ~900MB |
+| E | 5M→500MB | 50K→25MB | 10K→400MB | 5M→500MB | ~1.5GB |
+
+**指導原則**: 不壓縮空氣、不 padding、每 byte 來自真實語料或訓練。框架代碼上限 ~10MB。
 
 ---
 
