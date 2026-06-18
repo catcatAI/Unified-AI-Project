@@ -122,6 +122,10 @@ apps/backend/test_results/
 
 test_results/
 
+test_models/
+
+apps\backend\angela_memory.json
+
 # Windows temp files
 "我的活動/"
 "更新 文件 (2).txt"
