@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import normalize_text
 
+from .input_enricher import InputEnricher
 from .telemetry import TelemetryCollector
 
 from core.system.config.magic_numbers import (
@@ -140,6 +141,7 @@ class ED3NEngine:
     ):
         self.reflex = reflex or ReflexLayer()
         self.telemetry = telemetry or TelemetryCollector()
+        self.input_enricher = InputEnricher()
         self.dictionary = dictionary or DictionaryLayer()
         self.classifier = classifier or RelationClassifier(dictionary=self.dictionary)
         self.network = network or CoreNetwork(classifier=self.classifier)
@@ -308,6 +310,11 @@ class ED3NEngine:
             )
             return FALLBACK_STR
 
+        # Stage 2.5: Enrichment — algorithmic scoring of matched keys
+        t_enr = time.perf_counter()
+        enriched = self.input_enricher.enrich(input_text, keys, self.dictionary)
+        stages["enrichment"] = (time.perf_counter() - t_enr) * 1000
+
         confidence = self._compute_confidence(keys)
 
         if depth == "shallow" or (depth == "auto" and not context):
@@ -334,6 +341,9 @@ class ED3NEngine:
         network_output = self._snn_process(keys, context, depth)
         stages["network_forward"] = (time.perf_counter() - t3) * 1000
 
+        # Override confidence with enriched score for deep path decisions
+        enriched_conf = enriched.confidence
+
         # Stage 4: Decode (anchored)
         t4 = time.perf_counter()
         response = self._output_anchor_decode(network_output, keys)
@@ -349,7 +359,7 @@ class ED3NEngine:
                 cache_hit=cache_hit,
                 matched_keys=keys,
                 output_text=fallback,
-                confidence=confidence,
+                confidence=enriched_conf,
                 is_fallback=True,
             )
             return fallback
@@ -370,7 +380,7 @@ class ED3NEngine:
                 cache_hit=cache_hit,
                 matched_keys=keys,
                 output_text=output,
-                confidence=confidence,
+                confidence=enriched_conf,
                 is_fallback=True,
             )
             return output
@@ -379,7 +389,7 @@ class ED3NEngine:
         MAX_CYCLES = 3
         CONFIDENCE_THRESHOLD = 0.7
         current_output = response
-        current_confidence = confidence
+        current_confidence = enriched_conf
 
         for cycle in range(MAX_CYCLES):
             if current_confidence >= CONFIDENCE_THRESHOLD:
@@ -397,10 +407,11 @@ class ED3NEngine:
             if cycle_response:
                 cycle_valid = self.validator.validate(cycle_response, anchored_keys=keys)
                 if cycle_valid:
-                    cycle_confidence = self._compute_confidence(keys)
-                    if cycle_confidence > current_confidence:
+                    cycle_enriched = self.input_enricher.enrich(input_text, keys, self.dictionary)
+                    cycle_conf = cycle_enriched.confidence
+                    if cycle_conf > current_confidence:
                         current_output = cycle_response
-                        current_confidence = cycle_confidence
+                        current_confidence = cycle_conf
 
         self.telemetry.record_query(
             query_id=query_id,
