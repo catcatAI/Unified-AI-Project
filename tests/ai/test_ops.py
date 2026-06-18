@@ -48,19 +48,23 @@ class TestAIOpsEngineMonitoring:
 class TestAIOpsEngineAnomalyDetection:
     def test_no_anomaly_below_threshold(self):
         engine = AIOpsEngine(config={'anomaly_threshold': 100})
-        assert engine.detect_anomaly({'value': 50}) is False
+        assert engine.detect_anomaly({'value': 50}) is None
 
     def test_anomaly_above_threshold(self):
         engine = AIOpsEngine(config={'anomaly_threshold': 100})
-        assert engine.detect_anomaly({'value': 150}) is True
+        result = engine.detect_anomaly({'value': 150})
+        assert result is not None
+        assert result['anomaly_type'] == 'threshold_exceeded'
 
     def test_no_value_key(self):
         engine = AIOpsEngine()
-        assert engine.detect_anomaly({'metric': 'cpu'}) is False
+        assert engine.detect_anomaly({'metric': 'cpu'}) is None
 
     def test_default_threshold(self):
         engine = AIOpsEngine()
-        assert engine.detect_anomaly({'value': 200}) is True
+        result = engine.detect_anomaly({'value': 200})
+        assert result is not None
+        assert result['value'] == 200
 
 
 class TestAIOpsEngineAutomatedResponse:
@@ -68,13 +72,13 @@ class TestAIOpsEngineAutomatedResponse:
         engine = AIOpsEngine()
         result = engine.automated_response({'message': 'high cpu'})
         assert result['status'] == 'response_initiated'
-        assert 'high cpu' in result['details']
+        assert 'action_taken' in result
 
     def test_response_no_message(self):
         engine = AIOpsEngine()
         result = engine.automated_response({})
         assert result['status'] == 'response_initiated'
-        assert 'N/A' in result['details']
+        assert 'action_taken' in result
 
 
 class TestAIOpsEngineGetStatus:

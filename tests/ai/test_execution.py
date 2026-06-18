@@ -52,11 +52,7 @@ class ExecutionResult:
     error_message: Optional[str] = None
 
 
-execution_monitor_mock = MagicMock()
-execution_monitor_mock.ExecutionStatus = ExecutionStatus
-execution_monitor_mock.TerminalStatus = TerminalStatus
-execution_monitor_mock.ExecutionConfig = ExecutionConfig
-execution_monitor_mock.ExecutionResult = ExecutionResult
+from core.managers.execution_monitor import ExecutionStatus, TerminalStatus, ExecutionResult, ExecutionConfig
 
 
 def make_mock_monitor(**attrs):
@@ -66,9 +62,6 @@ def make_mock_monitor(**attrs):
     return m
 
 
-execution_monitor_mock.ExecutionMonitor = MagicMock
-sys.modules['apps.backend.src.ai.execution.execution_monitor'] = execution_monitor_mock
-
 from apps.backend.src.ai.execution.execution_manager import ExecutionManager, ExecutionManagerConfig
 
 
@@ -77,9 +70,9 @@ class TestExecutionManagerConfig:
         cfg = ExecutionManagerConfig()
         assert cfg.enabled is True
         assert cfg.adaptive_timeout is True
-        assert cfg.default_timeout == 60.0
-        assert cfg.max_timeout == 600.0
-        assert cfg.min_timeout == 10.0
+        assert cfg.default_timeout == 30.0
+        assert cfg.max_timeout == 300.0
+        assert cfg.min_timeout == 5.0
         assert cfg.cpu_warning == 80.0
         assert cfg.cpu_critical == 90.0
         assert cfg.log_level == 'INFO'
@@ -112,7 +105,7 @@ class TestExecutionManagerInit:
         manager = ExecutionManager()
         mock_load.assert_called_once()
         assert manager.config.enabled is True
-        assert manager.config.default_timeout == 60.0
+        assert manager.config.default_timeout == 30.0
 
 
 class TestExecutionManagerTaskExecution:

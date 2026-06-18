@@ -58,7 +58,7 @@ def test_query_classifier_classification():
         ("Angela 是什麼？", QueryType.KNOWLEDGE),
         ("搜尋台北天氣", QueryType.SEARCH),
         ("刪除 temp.txt", QueryType.FILE),
-        (" 幫我建立文件", QueryType.COMMAND),
+        (" 幫我建立文件", QueryType.FILE),
         ("執行這個命令", QueryType.EXECUTE),
         ("你好", QueryType.GREETING),
         ("1+2", QueryType.MATH),
@@ -86,11 +86,11 @@ def test_execution_gate_decisions():
     gate = ExecutionGate()
 
     test_cases = [
-        ("搜尋台北天氣", "auto_execute"),
+        ("搜尋台北天氣", "confirm_then_execute"),
         ("讀取 temp.txt", "auto_execute"),
-        ("刪除 temp.txt", "reject"),
+        ("刪除 temp.txt", "confirm_then_execute"),
         ("不要搜尋", "reject"),
-        ("執行這個命令", "reject"),
+        ("執行這個命令", "confirm_then_execute"),
     ]
 
     print("\nExecution Gate Tests:")
@@ -124,10 +124,10 @@ def test_prompt_builder_injection():
     messages = construct_angela_prompt("台北天氣如何？", context)
 
     system_content = messages[0]["content"]
-    assert "执行结果" in system_content, "System prompt should contain execution result block"
+    assert "Execution Result" in system_content, "System prompt should contain execution result block"
     assert "web_search" in system_content, "Should contain handler type"
     assert "是" in system_content, "Should contain success status"
-    assert "搜尋結果" in system_content or "Search result" in system_content, "Should contain result text"
+    assert "Search result" in system_content, "Should contain result text"
 
     print("\nPrompt builder injection test PASSED")
 

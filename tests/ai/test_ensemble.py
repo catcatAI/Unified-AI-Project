@@ -89,6 +89,10 @@ class FakeLLMResponse:
     """Minimal LLMResponse-compatible object for testing."""
     def __init__(self, model, content, latency, usage):
         self.model = model
-        self.content = content
-        self.latency = latency
+        self.text = content
+        self.response_time_ms = latency * 1000  # convert seconds to ms
         self.usage = usage
+
+    @property
+    def content(self):
+        return self.text
