@@ -42,12 +42,26 @@ logger = logging.getLogger(__name__)
 
 _torch = None
 
+
 def _lazy_torch():
     global _torch
     if _torch is None:
-        import torch
-        import torch.nn.functional as F
-        _torch = (torch, F)
+        try:
+            from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+            def _import():
+                import torch
+                import torch.nn.functional as F
+                return (torch, F)
+
+            with ThreadPoolExecutor(max_workers=1) as ex:
+                _torch = ex.submit(_import).result(timeout=60)
+        except TimeoutError:
+            logger.warning("torch import timed out (30s); SNN degraded, will not retry")
+            _torch = (None, None)
+        except ImportError:
+            logger.warning("torch not installed; SNN degraded")
+            _torch = (None, None)
     return _torch
 
 # ---------------------------------------------------------------------------

@@ -42,6 +42,26 @@ VERSION = 1
 HEADER_SIZE = 28             # bytes (matches HEADER_FORMAT: 4+4+4+16=28)
 HEADER_FORMAT = "<I2I16s"     # magic (4B) + version (4B) + V (4B) + pad (16B)
 
+_torch = None
+
+
+def _lazy_torch():
+    global _torch
+    if _torch is None:
+        try:
+            from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+            def _import():
+                import torch
+                return torch
+
+            with ThreadPoolExecutor(max_workers=1) as ex:
+                _torch = ex.submit(_import).result(timeout=60)
+        except (TimeoutError, ImportError):
+            logger.warning("torch import timed out; binary_store torch ops disabled")
+            _torch = False
+    return _torch if _torch else None
+
 
 class BinaryStore:
     """
@@ -208,10 +228,11 @@ class BinaryStore:
 
         Note: only the submatrix up to min(tensor.shape[0], V) is copied.
         """
-        import torch
-
         if self._mmap is None:
             raise RuntimeError("BinaryStore: mmap not initialized")
+        torch = _lazy_torch()
+        if torch is None:
+            raise RuntimeError("BinaryStore: torch unavailable (import timed out)")
         n = min(tensor.shape[0], self.V)
         self._mmap[:n, :n] = tensor[:n, :n].cpu().numpy()
         self.flush()
@@ -222,10 +243,11 @@ class BinaryStore:
         Read the full mmap into a PyTorch tensor (CPU).
         Warning: for V=100K this creates a 40GB tensor.
         """
-        import torch
-
         if self._mmap is None:
             raise RuntimeError("BinaryStore: mmap not initialized")
+        torch = _lazy_torch()
+        if torch is None:
+            raise RuntimeError("BinaryStore: torch unavailable (import timed out)")
         return torch.from_numpy(np.array(self._mmap))
 
     # ------------------------------------------------------------------

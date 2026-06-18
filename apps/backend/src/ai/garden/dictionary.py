@@ -34,12 +34,26 @@ logger = logging.getLogger(__name__)
 
 _torch = None
 
+
 def _lazy_torch():
     global _torch
     if _torch is None:
-        import torch
-        import torch.nn.functional as F
-        _torch = (torch, F)
+        try:
+            from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+            def _import():
+                import torch
+                import torch.nn.functional as F
+                return (torch, F)
+
+            with ThreadPoolExecutor(max_workers=1) as ex:
+                _torch = ex.submit(_import).result(timeout=60)
+        except TimeoutError:
+            logger.warning("torch import timed out (30s); torch features degraded")
+            _torch = (None, None)
+        except ImportError:
+            logger.warning("torch not installed; torch features degraded")
+            _torch = (None, None)
     return _torch
 
 # ---------------------------------------------------------------------------
@@ -195,8 +209,18 @@ class _STEncoder:
     """Wraps sentence-transformers SentenceTransformer for semantic encoding."""
 
     def __init__(self, model_name: str):
-        from sentence_transformers import SentenceTransformer
-        self._model = SentenceTransformer(model_name)
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+        def _import():
+            from sentence_transformers import SentenceTransformer
+            return SentenceTransformer
+
+        with ThreadPoolExecutor(max_workers=1) as ex:
+            try:
+                ST = ex.submit(_import).result(timeout=60)
+                self._model = ST(model_name)
+            except (TimeoutError, ImportError) as e:
+                raise ImportError(f"sentence_transformers not available: {e}")
         logger.info("GARDEN: loaded SentenceTransformer model '%s'", model_name)
 
     def encode(self, texts: List[str]) -> torch.Tensor:
@@ -221,8 +245,18 @@ class _ChromaEncoder:
     EMBEDDING_DIM: int = 384
 
     def __init__(self):
-        import chromadb
         import uuid
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+        def _import():
+            import chromadb
+            return chromadb
+
+        with ThreadPoolExecutor(max_workers=1) as ex:
+            try:
+                chromadb = ex.submit(_import).result(timeout=60)
+            except (TimeoutError, ImportError) as e:
+                raise ImportError(f"chromadb not available: {e}")
         self._client = chromadb.Client()
         self._collection = self._client.get_or_create_collection(
             name=f"garden_concepts_{uuid.uuid4().hex[:8]}",

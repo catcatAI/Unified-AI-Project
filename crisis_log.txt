@@ -17,3 +17,5 @@
 [2026-06-18 19:36:34.407784] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
 [2026-06-18 19:48:28.059582] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
 [2026-06-18 20:14:17.215592] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
+[2026-06-18 21:36:38.114479] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
+[2026-06-18 21:42:51.231589] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
