@@ -83,15 +83,15 @@ pre-commit run --all-files
 > 
 > All 5 alias exports applied (~10 lines total). No re-implementation needed.
 
-> ✅ **NOTE (Updated 2026-06-16)**: Phase 3-6 implementation complete. New test files added:
-> - `tests/ai/garden/test_phase4_integration.py` (33 tests): ChromaDB, KG, multi-step, emotion, learning
-> - `tests/ai/test_phase5_integration.py` (13 tests): Continuous learning, session persistence, memory importance, learning loop
-> - `tests/ai/test_phase6_e2e.py` (24 tests): E2E pipeline, performance benchmarks
-> 
-> **Total new tests: 70** (33 + 13 + 24)
-> 
-> Existing garden tests: ~92 (test_dictionary.py, test_garden_engine.py, etc.)
-> **Grand total garden tests: ~125**
+> ✅ **NOTE (Updated 2026-06-18)**: Phase 3A-C complete.
+> - **Phase 3A**: Import timeout protection (5 files, 7 import sites, 60s)
+> - **Phase 3B**: `unicode_utils.py` + `input_enricher.py` + `EnrichedInput` pipeline integration
+> - **Phase 3C**: `anchored_decode()` now accepts `EnrichedInput` for variant-based key discovery
+> - **New files**: `ai/core/unicode_utils.py` (359 lines), `ai/ed3n/input_enricher.py` (292 lines)
+> - **New tests**: `tests/ai/ed3n/test_input_enricher.py` (28 tests)
+> - **ED3N total**: 114 tests (86 base + 28 input_enricher) — all pass
+> - **Non-ML total**: 231 tests — all pass
+> - **Zero new external dependencies** — everything uses stdlib + existing project modules
 
 ### JavaScript/TypeScript
 
@@ -208,8 +208,8 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 ```
 apps/
   backend/           # Python FastAPI + AI systems
-    ai/core/         # 分類器、執行閘門、ModelBus
-    ai/ed3n/         # ED3N 外部字典解耦神經網路
+    ai/core/         # 分類器、執行閘門、ModelBus、unicode_utils
+    ai/ed3n/         # ED3N 外部字典解耦神經網路 (含 input_enricher)
     ai/garden/       # GARDEN 輕量推理引擎
     ai/context/      # 上下文管理（部分 stub）
     ai/lifecycle/    # 記憶整合循環、主動互動

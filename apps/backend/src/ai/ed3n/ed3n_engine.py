@@ -221,13 +221,14 @@ class ED3NEngine:
             network_output = self.network.forward(keys, context=context)
         return network_output
 
-    def _output_anchor_decode(self, network_output: object, keys: List[str]) -> str:
+    def _output_anchor_decode(self, network_output: object, keys: List[str], enriched=None) -> str:
         return anchored_decode(
             network_output=network_output,
             original_input_keys=keys,
             dictionary=self.dictionary,
             top_k_anchors=batch_value("ai.ed3n_engine.top_k_anchors", 3),
             top_k_network=batch_value("ai.ed3n_engine.top_k_network", 5),
+            enriched=enriched,
         )
 
     def _process_unlocked(
@@ -346,7 +347,7 @@ class ED3NEngine:
 
         # Stage 4: Decode (anchored)
         t4 = time.perf_counter()
-        response = self._output_anchor_decode(network_output, keys)
+        response = self._output_anchor_decode(network_output, keys, enriched=enriched)
         stages["decode"] = (time.perf_counter() - t4) * 1000
 
         if not response:
@@ -402,7 +403,7 @@ class ED3NEngine:
 
             # Re-run network forward with enriched context
             cycle_network = self._snn_process(keys, cycle_context, depth)
-            cycle_response = self._output_anchor_decode(cycle_network, keys)
+            cycle_response = self._output_anchor_decode(cycle_network, keys, enriched=enriched)
 
             if cycle_response:
                 cycle_valid = self.validator.validate(cycle_response, anchored_keys=keys)

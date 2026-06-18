@@ -7,8 +7,11 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from .dictionary_layer import DictionaryEntry, DictionaryLayer
+from .input_enricher import EnrichedInput
 
 logger = logging.getLogger(__name__)
+
+KEY_WEIGHT_VARIANT = 0.6   # weight for keys discovered via text variant
 
 
 def anchored_decode(
@@ -17,6 +20,7 @@ def anchored_decode(
     dictionary: DictionaryLayer,
     top_k_anchors: int = 3,
     top_k_network: int = 5,
+    enriched: Optional[EnrichedInput] = None,
 ) -> str:
     if not network_output:
         network_output = {}
@@ -35,6 +39,24 @@ def anchored_decode(
         anchor_pool.append(
             {"key": key, "entry": entry, "weight": 1.0, "source": "anchor"}
         )
+
+    # Stage 1b: Variant-based key discovery — encode each text variant to find
+    # additional dictionary keys that primary encoding may have missed
+    # (e.g. fullwidth input → NFKC'd variant → matches pinyin surface form)
+    if enriched is not None:
+        for variant in enriched.text_variants[1:]:
+            if variant.lower().strip() == enriched.raw_text.lower().strip():
+                continue
+            for vkey in dictionary.encode(variant):
+                if vkey in seen_keys:
+                    continue
+                seen_keys.add(vkey)
+                ventry = dictionary.entries.get(vkey)
+                if ventry is None:
+                    continue
+                anchor_pool.append(
+                    {"key": vkey, "entry": ventry, "weight": KEY_WEIGHT_VARIANT, "source": "variant"}
+                )
 
     sorted_network = sorted(
         network_output.items(), key=lambda x: x[1], reverse=True
