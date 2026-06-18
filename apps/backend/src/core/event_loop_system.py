@@ -281,6 +281,9 @@ class DebounceThrottleManager:
         self.throttle_last_emit: Dict[str, float] = {}
         self.throttle_pending: Dict[str, Event] = {}
 
+        # Timer task tracking
+        self._timer_tasks: set = set()
+
     def register_debounce(self, config: DebounceConfig) -> None:
         """Register debounce configuration"""
         self.debounce_configs[config.event_type] = config
@@ -360,7 +363,15 @@ class DebounceThrottleManager:
 
                 # Schedule emission
                 delay = config.interval_ms - (current_time - last_emit)
-                asyncio.create_task(self._throttle_emit_timer(event.event_type, delay))
+                task = asyncio.create_task(self._throttle_emit_timer(event.event_type, delay))
+                self._timer_tasks.add(task)
+                task.add_done_callback(
+                    lambda t: (
+                        self._timer_tasks.discard(t),
+                        logger.warning("Throttle timer task failed: %s", t.exception())
+                        if not t.cancelled() and t.exception() else None
+                    )
+                )
 
             return None
 

@@ -34,6 +34,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bound for unbounded operation history collection
+# =============================================================================
+_MAX_OPERATION_HISTORY = 1000
+
 
 class FileOperationType(Enum):
     """文件操作类型 / File operation types"""
@@ -141,7 +147,12 @@ class DesktopBrowserIntegration:
             logger.info("Angela浏览器已在桌面背景打开: %s", url)
 
             # 启动webview（非阻塞）
-            asyncio.create_task(self._run_browser())
+            task = asyncio.create_task(self._run_browser())
+            self._browser_task = task
+            task.add_done_callback(
+                lambda t: logger.warning("Task _run_browser failed: %s", t.exception())
+                if not t.cancelled() and t.exception() else None
+            )
 
         except ImportError:
             logger.warning("webview未安装，使用系统浏览器", exc_info=True)
@@ -533,6 +544,8 @@ class DesktopInteraction:
                     operation.status = "completed"
                     operations.append(operation)
                     self.operation_history.append(operation)
+                    if len(self.operation_history) > _MAX_OPERATION_HISTORY:
+                        self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
                 except Exception as e:
                     operation = FileOperation(
                         operation_id=f"org_{datetime.now().timestamp()}",
@@ -618,6 +631,8 @@ class DesktopInteraction:
                 status="completed",
             )
             self.operation_history.append(operation)
+            if len(self.operation_history) > _MAX_OPERATION_HISTORY:
+                self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
 
             return file_path
 
@@ -638,6 +653,8 @@ class DesktopInteraction:
                     status="completed",
                 )
                 self.operation_history.append(operation)
+                if len(self.operation_history) > _MAX_OPERATION_HISTORY:
+                    self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
 
                 return True
         except Exception as e:  # broad exception acceptable: file deletion errors should be logged
@@ -967,6 +984,8 @@ class DesktopInteraction:
             }
 
             self.operation_history.append(operation)
+            if len(self.operation_history) > _MAX_OPERATION_HISTORY:
+                self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
             results["log_entry"] = log_entry
 
             self._notify_operation_callbacks(operation)
@@ -1073,6 +1092,8 @@ class DesktopInteraction:
 
                 # Add to history
                 self.operation_history.append(operation)
+                if len(self.operation_history) > _MAX_OPERATION_HISTORY:
+                    self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
 
                 # Notify success
                 self._notify_operation_callbacks(operation)

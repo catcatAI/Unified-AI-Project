@@ -169,7 +169,11 @@ class MetabolicHeartbeat:
                 from .bio_reflex_manager import BiogenicReflexManager
                 reflex_mgr = BiogenicReflexManager(self.bio_integrator)
                 damage = mov_conf.get("collision_damage", 0.7)
-                asyncio.create_task(reflex_mgr.trigger_physical_trauma("leg", damage))
+                task = asyncio.create_task(reflex_mgr.trigger_physical_trauma("leg", damage))
+                task.add_done_callback(
+                    lambda t: logger.warning("Task trigger_physical_trauma failed: %s", t.exception())
+                    if not t.cancelled() and t.exception() else None
+                )
                 self.target_x = self.x
 
     def _check_collision(self, next_x) -> bool:

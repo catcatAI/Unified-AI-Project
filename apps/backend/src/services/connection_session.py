@@ -265,7 +265,7 @@ class SessionManager:
                         await session.websocket.close(code=4002, reason="Heartbeat timeout")
                     except Exception as e:
                         logger.warning(f"Failed to close timed-out websocket {session.client_id}: {e}", exc_info=True)
-                    await self._unregister_internal(session.client_id, "Heartbeat timeout")
+                    await self.unregister(session.client_id, "Heartbeat timeout")
                     break
                     
             except asyncio.CancelledError:

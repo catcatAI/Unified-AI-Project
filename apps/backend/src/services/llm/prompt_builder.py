@@ -12,6 +12,27 @@ from core.prompt_manager import prompt, get_prompt_manager
 
 logger = logging.getLogger(__name__)
 
+_autonomous_lifecycle = None
+_theta_router = None
+
+
+def _get_autonomous_lifecycle():
+    """Return a cached AutonomousLifeCycle singleton."""
+    global _autonomous_lifecycle
+    if _autonomous_lifecycle is None:
+        from core.life.autonomous_life_cycle import AutonomousLifeCycle
+        _autonomous_lifecycle = AutonomousLifeCycle()
+    return _autonomous_lifecycle
+
+
+def _get_theta_router():
+    """Return a cached ThetaRouter singleton."""
+    global _theta_router
+    if _theta_router is None:
+        from core.engine.theta_router import ThetaRouter
+        _theta_router = ThetaRouter()
+    return _theta_router
+
 
 def _get_llm_config(key: str, default: Any = None) -> Any:
     """Read a config value from the llm section of angela config."""
@@ -151,8 +172,7 @@ def get_formula_summaries() -> str:
 def get_autonomous_decisions() -> str:
     """Get recent autonomous lifecycle decisions for prompt context."""
     try:
-        from core.life.autonomous_life_cycle import AutonomousLifeCycle
-        lifecycle = AutonomousLifeCycle()
+        lifecycle = _get_autonomous_lifecycle()
         summary = lifecycle.get_lifecycle_summary()
 
         lines = []
@@ -184,8 +204,7 @@ def get_autonomous_decisions() -> str:
 def get_theta_state() -> str:
     """Get theta router state for prompt context."""
     try:
-        from core.engine.theta_router import ThetaRouter
-        router = ThetaRouter()
+        router = _get_theta_router()
         report = router.get_routing_report()
 
         lines = []

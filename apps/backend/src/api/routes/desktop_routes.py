@@ -7,7 +7,7 @@ Extracted from main_api_server.py (A3 god module split).
 import logging
 from typing import Dict, Any
 
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, HTTPException
 
 from api.lifespan import (
     get_desktop_interaction,
@@ -39,9 +39,13 @@ async def desktop_state(
 
 
 @router.post("/desktop/organize")
-async def desktop_organize() -> dict:
+async def desktop_organize(
+    interaction: DesktopInteraction = Depends(get_desktop_interaction),
+) -> dict:
     """Execute the desktop organize operation."""
-    ops = await get_desktop_interaction().organize_desktop()
+    if interaction is None:
+        raise HTTPException(503, "DesktopInteraction not available")
+    ops = await interaction.organize_desktop()
     return {"success": True, "operations": [{
         "source": str(op.source) if hasattr(op, "source") else "",
         "destination": str(op.destination) if hasattr(op, "destination") else "",
@@ -50,9 +54,14 @@ async def desktop_organize() -> dict:
 
 
 @router.post("/desktop/cleanup")
-async def desktop_cleanup(days_old: int = 30) -> dict:
+async def desktop_cleanup(
+    days_old: int = 30,
+    interaction: DesktopInteraction = Depends(get_desktop_interaction),
+) -> dict:
     """Execute the desktop cleanup operation."""
-    ops = await get_desktop_interaction().cleanup_desktop(days_old=days_old)
+    if interaction is None:
+        raise HTTPException(503, "DesktopInteraction not available")
+    ops = await interaction.cleanup_desktop(days_old=days_old)
     return {"success": True, "operations": [{
         "source": str(op.source) if hasattr(op, "source") else "",
         "category": op.category if hasattr(op, "category") else "",
@@ -69,12 +78,17 @@ async def actions_status(
 
 
 @router.post("/actions/execute")
-async def actions_execute(action_data: Dict[str, Any] = Body(...)) -> dict:
+async def actions_execute(
+    action_data: Dict[str, Any] = Body(...),
+    executor: ActionExecutor = Depends(get_action_executor),
+) -> dict:
     """Execute the actions execute operation."""
+    if executor is None:
+        raise HTTPException(503, "ActionExecutor not available")
     action_type = action_data.get("type", "general")
     parameters = action_data.get("parameters", {})
     priority = action_data.get("priority", "normal")
-    result = await get_action_executor().handle_autonomous_action(action_type, parameters, priority)
+    result = await executor.handle_autonomous_action(action_type, parameters, priority)
     return {"success": True, "result": result}
 
 

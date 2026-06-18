@@ -28,6 +28,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bound for unbounded conflicts collection
+# =============================================================================
+_MAX_CONFLICTS = 200
+
 
 class SyncStatus(Enum):
     """同步状态 / Sync status"""
@@ -247,6 +253,8 @@ class CloudSyncManager:
                 )
                 conflicts.append(conflict)
                 self.conflicts.append(conflict)
+                if len(self.conflicts) > _MAX_CONFLICTS:
+                    self.conflicts = self.conflicts[-_MAX_CONFLICTS:]
 
         return items_to_sync, conflicts
 

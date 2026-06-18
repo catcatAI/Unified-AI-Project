@@ -288,7 +288,7 @@ class ProjectCoordinator:
             return {"error": "WebSearchTool not available"}
         query = params.get("query", params.get("search_query", ""))
         num = params.get("num_results", 5)
-        results = web.search(query, num_results=num)
+        results = await asyncio.to_thread(web.search, query, num_results=num)
         return {"query": query, "results": results, "count": len(results)}
 
     async def _execute_document_task(self, params: Dict[str, Any], task_type: str) -> Dict[str, Any]:

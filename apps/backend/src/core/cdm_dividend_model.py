@@ -26,6 +26,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_MAX_INVESTMENTS = 500
+_MAX_OUTPUTS = 500
+
 
 class CognitiveActivity(Enum):
     """认知活动类型 / Cognitive activity types"""
@@ -225,6 +228,8 @@ class CDMCognitiveDividendModel:
 
         # Store investment
         self.investments.append(investment)
+        if len(self.investments) > _MAX_INVESTMENTS:
+            self.investments = self.investments[-_MAX_INVESTMENTS:]
         self.total_invested += consumption
 
         # Notify callbacks
@@ -336,6 +341,8 @@ class CDMCognitiveDividendModel:
         )
 
         self.outputs.append(output)
+        if len(self.outputs) > _MAX_OUTPUTS:
+            self.outputs = self.outputs[-_MAX_OUTPUTS:]
         self.total_output += output_amount
         self.conversion_history.append(conversion_rate)
 

@@ -16,6 +16,13 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bounds for unbounded message/metrics collections
+# =============================================================================
+_MAX_MESSAGE_QUEUE = 2000
+_MAX_METRICS = 500
+
 
 @dataclass
 class MessageMetrics:
@@ -117,6 +124,8 @@ class HSPPerformanceOptimizer:
         """将消息添加到批处理队列"""
         if self.batch_send_enabled:
             self.message_queue.append(message_data)
+            if len(self.message_queue) > _MAX_MESSAGE_QUEUE:
+                self.message_queue = self.message_queue[-_MAX_MESSAGE_QUEUE:]
             logger.debug(f"消息已添加到批处理队列, 当前队列大小: {len(self.message_queue)}")
         else:
             logger.warning("批处理已禁用, 消息未添加到队列", exc_info=True)
@@ -161,6 +170,8 @@ class HSPPerformanceOptimizer:
     def record_message_metrics(self, metrics: MessageMetrics) -> None:
         """记录消息指标"""
         self.message_metrics.append(metrics)
+        if len(self.message_metrics) > _MAX_METRICS:
+            self.message_metrics = self.message_metrics[-_MAX_METRICS:]
         logger.debug(f"记录消息指标: {metrics.message_id}")
 
     def get_performance_stats(self) -> Dict[str, Any]:

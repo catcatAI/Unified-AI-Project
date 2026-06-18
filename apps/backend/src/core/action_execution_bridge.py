@@ -36,6 +36,7 @@ _DEFAULT_EXPRESSION_INTENSITY = 0.8
 _DEFAULT_SEARCH_RESULTS = 5
 _DEFAULT_MEDIUM_LIMIT = 10
 _DEFAULT_DEEP_LIMIT = 20
+_MAX_FEEDBACK_HISTORY = 500
 
 # Type imports to avoid circular dependencies
 if TYPE_CHECKING:
@@ -153,6 +154,8 @@ class FeedbackCollector:
             "context": result.feedback_for_learning,
         }
         self.feedback_history.append(feedback)
+        if len(self.feedback_history) > _MAX_FEEDBACK_HISTORY:
+            self.feedback_history = self.feedback_history[-_MAX_FEEDBACK_HISTORY:]
 
         # Update patterns
         pattern_key = f"{result.action_type.value}:{result.success}"
@@ -255,6 +258,9 @@ class ActionExecutionBridge:
 
         # Feedback system
         self.feedback_collector = FeedbackCollector()
+
+        # Background task tracking
+        self._background_tasks: set = set()
 
         # Execution control
         self._running = False
@@ -404,7 +410,15 @@ class ActionExecutionBridge:
                 self._priority_queue.remove(executable)
 
                 # Execute with semaphore
-                asyncio.create_task(self._execute_with_semaphore(action_id, item))
+                task = asyncio.create_task(self._execute_with_semaphore(action_id, item))
+                self._background_tasks.add(task)
+                task.add_done_callback(
+                    lambda t: (
+                        self._background_tasks.discard(t),
+                        logger.warning("Background action task failed: %s", t.exception())
+                        if not t.cancelled() and t.exception() else None
+                    )
+                )
             else:
                 # No executable actions, wait a bit
                 await asyncio.sleep(loop_sleep("bridge_poll", 0.1))

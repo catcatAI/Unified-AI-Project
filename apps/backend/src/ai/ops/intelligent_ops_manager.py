@@ -137,6 +137,10 @@ class IntelligentOpsManager:
         self.monitoring_interval = self.config.get("monitoring_interval", loop_sleep("ops_monitor", 300.0))  # 秒
         self.auto_action_threshold = self.config.get("auto_action_threshold", 0.8)
 
+        # Background task references (prevent GC and enable exception logging)
+        self._analysis_task: Optional[asyncio.Task] = None
+        self._cleanup_task: Optional[asyncio.Task] = None
+
         logger.info("智能运维管理器初始化完成")
 
     async def initialize(self) -> None:
@@ -163,10 +167,22 @@ class IntelligentOpsManager:
             await self._initialize_components()
 
             # 启动综合分析任务
-            asyncio.create_task(self._periodic_comprehensive_analysis())
+            task = asyncio.create_task(self._periodic_comprehensive_analysis())
+            self._analysis_task = task
+            task.add_done_callback(
+                lambda t: logger.warning("Periodic analysis task failed: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
 
             # 启动洞察清理任务
-            asyncio.create_task(self._periodic_insight_cleanup())
+            task = asyncio.create_task(self._periodic_insight_cleanup())
+            self._cleanup_task = task
+            task.add_done_callback(
+                lambda t: logger.warning("Periodic cleanup task failed: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
 
             logger.info("智能运维管理器启动完成")
         except Exception as e:  # broad exception acceptable: initialization failures should propagate for proper error handling

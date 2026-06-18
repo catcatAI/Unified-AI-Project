@@ -17,6 +17,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+_MAX_EMOTION_HISTORY = 500
+_MAX_CHECK_HISTORY = 200
+
 
 # Placeholders for other systems to satisfy the package structure
 class EmotionSystem:
@@ -38,6 +41,8 @@ class EmotionSystem:
         self.emotion_state["arousal"] = max(0.0, min(1.0, arousal))
         self.emotion_state["dominance"] = max(0.0, min(1.0, dominance))
         self.history.append(dict(self.emotion_state))
+        if len(self.history) > _MAX_EMOTION_HISTORY:
+            self.history = self.history[-_MAX_EMOTION_HISTORY:]
 
     def get_emotional_context(self):
         if not self.history:
@@ -111,6 +116,8 @@ class ASIAutonomousAlignment:
         score = 1.0 - risk * (1.0 - self.autonomy_level)
         passed = score >= 0.5
         self.check_history.append({"action": action, "score": score, "passed": passed})
+        if len(self.check_history) > _MAX_CHECK_HISTORY:
+            self.check_history = self.check_history[-_MAX_CHECK_HISTORY:]
         return {"action": action, "score": score, "passed": passed}
 
     def get_autonomy_level(self):

@@ -51,7 +51,12 @@ class VisionService:
         # 註冊同步事件監聽
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(self._init_sync_listener())
+            task = loop.create_task(self._init_sync_listener())
+            self._init_task = task
+            task.add_done_callback(
+                lambda t: logger.warning("Task _init_sync_listener failed: %s", t.exception())
+                if not t.cancelled() and t.exception() else None
+            )
         except RuntimeError:
             # No running event loop, this is fine during import or sync tests
             logger.debug(

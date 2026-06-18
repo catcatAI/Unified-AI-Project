@@ -9,6 +9,12 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bound for unbounded alerts collection
+# =============================================================================
+_MAX_ALERTS = 500
+
 
 class EnterpriseMonitor:
     """Enterprise-grade system monitoring and alerting."""
@@ -43,6 +49,8 @@ class EnterpriseMonitor:
     def raise_alert(self, severity: str, message: str, source: str = "") -> None:
         alert = {"severity": severity, "message": message, "source": source, "timestamp": __import__("time").time()}
         self._alerts.append(alert)
+        if len(self._alerts) > _MAX_ALERTS:
+            self._alerts = self._alerts[-_MAX_ALERTS:]
         logger.warning(f"ALERT [{severity}]: {message} (source={source})")
 
     def get_alerts(self, severity: Optional[str] = None) -> List[Dict[str, Any]]:

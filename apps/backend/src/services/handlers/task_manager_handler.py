@@ -3,6 +3,7 @@ ANGELA-MATRIX: [L3-L4] [β] [B] [L2]
 TaskManagerHandler — manages a simple JSON-backed task list.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -51,15 +52,15 @@ class TaskManagerHandler:
     async def handle(self, text: str, intent: str = "task") -> str:
         action, payload = self._parse(text)
         if action == "create":
-            return self._create(payload)
+            return await asyncio.to_thread(self._create, payload)
         elif action == "list":
-            return self._list()
+            return await asyncio.to_thread(self._list)
         elif action == "complete":
-            return self._complete(payload)
+            return await asyncio.to_thread(self._complete, payload)
         elif action == "delete":
-            return self._delete(payload)
+            return await asyncio.to_thread(self._delete, payload)
         elif action == "update":
-            return self._update(payload)
+            return await asyncio.to_thread(self._update, payload)
         else:
             return t("task_ops.available_ops")
 

@@ -4,6 +4,7 @@ FileOperationHandler — processes file_op intents from ChatService dispatch.
 Supports: create, read, write, delete, list, rename, copy, exists, size, append.
 """
 
+import asyncio
 import logging
 import os
 import shutil
@@ -27,7 +28,8 @@ _ALLOWED_ROOTS = [
 def _is_safe_path(target: Path) -> bool:
     try:
         resolved = target.resolve()
-    except Exception:
+    except Exception as e:
+        logger.debug("Path resolution failed: %s", e)
         return False
     for root in _ALLOWED_ROOTS:
         try:
@@ -78,7 +80,7 @@ class FileOperationHandler:
             return t("file_ops.unsupported_action", action=action, actions=", ".join(handlers.keys()))
 
         try:
-            return handler_fn(target, content=content, new_name=new_name)
+            return await asyncio.to_thread(handler_fn, target, content=content, new_name=new_name)
         except PermissionError:
             return t("file_ops.permission_denied", path=path_str)
         except Exception as e:

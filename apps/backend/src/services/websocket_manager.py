@@ -129,7 +129,8 @@ async def broadcast_state_updates() -> None:
                 try:
                     from core.bio.biological_integrator import BiologicalIntegrator
                     _bio_integrator = BiologicalIntegrator()
-                except Exception:
+                except Exception as e:
+                    logger.debug("BiologicalIntegrator broadcast failed: %s", e)
                     await asyncio.sleep(5.0)
                     continue
 
@@ -219,6 +220,7 @@ async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:
             logger.warning(f"Failed to close websocket on handshake timeout: {e}", exc_info=True)
         return None
     except WebSocketDisconnect:
+        logger.debug("WebSocket disconnected during handshake")
         return None
 
     session_id = handshake.get("session_id") or str(uuid.uuid4())

@@ -15,6 +15,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_MAX_PROCESSING_HISTORY = 300
+
 
 @dataclass
 class TraumaMemory:
@@ -394,3 +396,5 @@ class TraumaMemorySystem:
         if not hasattr(self, "_processing_history"):
             self._processing_history = []
         self._processing_history.append(processing_record)
+        if len(self._processing_history) > _MAX_PROCESSING_HISTORY:
+            self._processing_history = self._processing_history[-_MAX_PROCESSING_HISTORY:]

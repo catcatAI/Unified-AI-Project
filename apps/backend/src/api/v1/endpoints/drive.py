@@ -16,6 +16,25 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/drive", tags=["Google Drive"])
 
+_DRIVE_DATA_ROOT = Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads"
+
+
+def _safe_drive_dest(folder_path: str, file_name: str) -> Path:
+    """Resolve a safe destination path under the drive downloads root.
+
+    Rejects folder_path that escapes the data root and strips
+    directory components from file_name to prevent traversal.
+    """
+    base = Path(folder_path).resolve()
+    root = _DRIVE_DATA_ROOT.resolve()
+    if not str(base).startswith(str(root)):
+        base = root
+    safe_name = Path(file_name).name or "unnamed_file"
+    dest = (base / safe_name).resolve()
+    if not str(dest).startswith(str(base)):
+        raise HTTPException(status_code=400, detail="Invalid file name")
+    return dest
+
 
 class DriveDeduplication:
     """根據 content_hash 避免重複下載"""
@@ -274,7 +293,7 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
             synced_files.append({"id": fid, "name": f"file_{fid}", "memorized": False, "error": str(e)})
             continue
 
-        dest_path = Path(folder_path) / metadata.get("name", f"file_{fid}")
+        dest_path = _safe_drive_dest(folder_path, metadata.get("name", f"file_{fid}"))
         content_hash = ""
 
         if not deduplicator.should_download(metadata):
@@ -367,7 +386,7 @@ async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_dri
 
         summaries = []
         for f in files:
-            dest = Path(folder_path) / f.get("name", f"file_{f['id']}")
+            dest = _safe_drive_dest(folder_path, f.get("name", f"file_{f['id']}"))
             if svc.download_file(f["id"], str(dest)):
                 content = parser.parse_document(str(dest))
                 summaries.append({

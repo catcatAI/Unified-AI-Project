@@ -6,6 +6,7 @@ Angela AI v7.5.0-dev - Mobile Endpoints
 from fastapi import APIRouter, Body
 from typing import Dict, Any
 from datetime import datetime
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,8 @@ async def get_mobile_status_get() -> dict:
         import psutil
         from system.cluster_manager import cluster_manager
 
-        cpu_usage = psutil.cpu_percent()
-        memory = psutil.virtual_memory()
+        cpu_usage = await asyncio.to_thread(psutil.cpu_percent)
+        memory = await asyncio.to_thread(psutil.virtual_memory)
         cluster_status = cluster_manager.get_cluster_status()
 
         return {
@@ -40,7 +41,7 @@ async def get_mobile_status_get() -> dict:
             "metrics": {
                 "cpu": f"{cpu_usage}%",
                 "mem": f"{memory.percent}%",
-                "nodes": cluster_status["cluster"]["active_nodes"],
+                "nodes": cluster_status.get("node_count", 0),
             },
             "backend_version": "7.5.0-dev",
             "server_time": datetime.now().isoformat(),
@@ -63,8 +64,8 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)) -> dict:
         import psutil
         from system.cluster_manager import cluster_manager
 
-        cpu_usage = psutil.cpu_percent()
-        memory = psutil.virtual_memory()
+        cpu_usage = await asyncio.to_thread(psutil.cpu_percent)
+        memory = await asyncio.to_thread(psutil.virtual_memory)
         cluster_status = cluster_manager.get_cluster_status()
 
         return {
@@ -72,7 +73,7 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)) -> dict:
             "metrics": {
                 "cpu": f"{cpu_usage}%",
                 "mem": f"{memory.percent}%",
-                "nodes": cluster_status["cluster"]["active_nodes"],
+                "nodes": cluster_status.get("node_count", 0),
             },
             "backend_version": "7.5.0-dev",
             "server_time": datetime.now().isoformat(),

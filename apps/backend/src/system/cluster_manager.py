@@ -26,6 +26,7 @@ class ClusterManager:
 
     def __init__(self):
         self.nodes: Dict[str, Dict[str, Any]] = {}
+        self._lock = asyncio.Lock()
 
     def register_node(self, node_id: str, node_info: Dict[str, Any]) -> bool:
         """
@@ -73,24 +74,24 @@ class ClusterManager:
         """
         task_id = str(uuid.uuid4())
 
-        if not self.nodes:
-            logger.warning("No nodes registered; task queued but not dispatched.", exc_info=True)
-            return task_id
+        async with self._lock:
+            if not self.nodes:
+                logger.warning("No nodes registered; task queued but not dispatched.", exc_info=True)
+                return task_id
 
-        # Pick a node: prefer one whose capabilities suit the task_type
-        target_node = None
-        for nid, info in self.nodes.items():
-            if info.get("status") == "idle" or task_type in info.get("capabilities", []):
-                target_node = nid
-                break
+            target_node = None
+            for nid, info in self.nodes.items():
+                if info.get("status") == "idle" or task_type in info.get("capabilities", []):
+                    target_node = nid
+                    break
 
-        if target_node is None:
-            target_node = next(iter(self.nodes))
+            if target_node is None:
+                target_node = next(iter(self.nodes))
 
-        self.nodes[target_node]["status"] = "busy"
-        logger.debug(f"Distributing task {task_id} ({task_type}) -> node '{target_node}'")
-        await asyncio.sleep(0.01)  # Simulate network latency
-        self.nodes[target_node]["status"] = "idle"
+            self.nodes[target_node]["status"] = "busy"
+            logger.debug(f"Distributing task {task_id} ({task_type}) -> node '{target_node}'")
+            await asyncio.sleep(0.01)  # Simulate network latency
+            self.nodes[target_node]["status"] = "idle"
 
         return task_id
 

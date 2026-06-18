@@ -29,6 +29,7 @@ Author: Angela AI v7.5
 """
 
 from __future__ import annotations
+import asyncio
 from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -95,6 +96,19 @@ class SaveStateRequest(BaseModel):
 class LoadStateRequest(BaseModel):
     """Request model for loading state."""
     filepath: Optional[str] = None
+
+
+# Sync helpers for file I/O (called via asyncio.to_thread to avoid blocking the event loop)
+def _write_state_sync(filepath: str, state: dict) -> None:
+    import json
+    with open(filepath, "w") as f:
+        json.dump(state, f)
+
+
+def _read_state_sync(filepath: str) -> dict:
+    import json
+    with open(filepath, "r") as f:
+        return json.load(f)
 
 
 # Create router
@@ -271,7 +285,6 @@ async def save_state(request: SaveStateRequest) -> dict:
             matrix.save_state(filepath)
         else:
             # Fallback: serialize manually
-            import json
             state = {
                 "alpha": matrix.alpha,
                 "beta": matrix.beta,
@@ -280,8 +293,7 @@ async def save_state(request: SaveStateRequest) -> dict:
                 "epsilon": matrix.epsilon,
                 "theta": matrix.theta,
             }
-            with open(filepath, "w") as f:
-                json.dump(state, f)
+            await asyncio.to_thread(_write_state_sync, filepath, state)
         return {"status": "saved", "filepath": filepath}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -297,9 +309,7 @@ async def load_state(request: LoadStateRequest) -> dict:
             matrix.load_state(filepath)
         else:
             # Fallback: deserialize manually
-            import json
-            with open(filepath, "r") as f:
-                state = json.load(f)
+            state = await asyncio.to_thread(_read_state_sync, filepath)
             matrix.alpha.update(state.get("alpha", {}))
             matrix.beta.update(state.get("beta", {}))
             matrix.gamma.update(state.get("gamma", {}))

@@ -85,6 +85,12 @@ logger = logging.getLogger(__name__)
 # Define the base path for schemas, ensuring cross-platform compatibility
 SCHEMA_BASE_PATH = Path(__file__).resolve().parent.parent.parent / "schemas"
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bound for unbounded message batch collection
+# =============================================================================
+_MAX_MESSAGE_BATCH = 1000
+
 
 def get_schema_uri(schema_name: str) -> str:
     """Constructs a file URI for a given schema name."""
@@ -138,6 +144,7 @@ class HSPConnector:
 
         self._task_semaphore = threading.Semaphore(100)
         self._max_concurrent_tasks = 100
+        self._pending_tasks: set = set()
 
     def _init_plugin_system(self) -> None:
         self.message_cache: Dict[str, Any] = {}
@@ -271,7 +278,15 @@ class HSPConnector:
                 await coro_factory()
             finally:
                 self._task_semaphore.release()
-        asyncio.create_task(_run())
+        task = asyncio.create_task(_run())
+        self._pending_tasks.add(task)
+        task.add_done_callback(
+            lambda t: (
+                self._pending_tasks.discard(t),
+                self.logger.warning("HSP bounded task failed: %s", t.exception())
+                if not t.cancelled() and t.exception() else None
+            )
+        )
 
     def _handle_internal_message(self, message: Any) -> None:
         """处理内部消息的同步包装器"""
@@ -996,6 +1011,8 @@ class HSPConnector:
         if self.batch_send_enabled and not requires_ack:
             # 将消息添加到批处理队列
             self.message_batch.append({"topic": topic, "envelope": envelope, "qos": qos})
+            if len(self.message_batch) > _MAX_MESSAGE_BATCH:
+                self.message_batch = self.message_batch[-_MAX_MESSAGE_BATCH:]
             # 尝试批量发送
             await self._batch_send_messages()
             # 缓存结果

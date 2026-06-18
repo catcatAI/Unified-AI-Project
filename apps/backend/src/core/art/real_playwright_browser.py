@@ -50,6 +50,7 @@ class AngelaRealBrowser:
             headless: 是否无头模式运行
         """
         self.headless = headless
+        self.playwright = None
         self.browser = None
         self.context = None
         self.page = None
@@ -60,6 +61,7 @@ class AngelaRealBrowser:
             from playwright.async_api import async_playwright
 
             playwright = await async_playwright().start()
+            self.playwright = playwright
 
             if self.headless:
                 self.browser = await playwright.chromium.launch(headless=True)
@@ -84,7 +86,14 @@ class AngelaRealBrowser:
         """关闭浏览器"""
         if self.browser:
             await self.browser.close()
-            logger.info("✅ 浏览器已关闭")
+        if self.context:
+            await self.context.close()
+        if self.playwright:
+            await self.playwright.stop()
+        self.browser = None
+        self.context = None
+        self.playwright = None
+        logger.info("✅ 浏览器已关闭")
 
     async def browse_tutorial(self, url: str) -> Optional[Tutorial]:
         """

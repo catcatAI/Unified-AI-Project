@@ -25,6 +25,8 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
+_MAX_EXPLORATION_HISTORY = 500
+
 
 class HSMFormulaSystem:
     """Heuristic Spontaneity Mechanism = C_Gap × E_M2"""
@@ -69,6 +71,8 @@ class HSMFormulaSystem:
         if gap_id and gap_id in self.cognitive_gaps:
             self.cognitive_gaps[gap_id].exploration_attempts += 1
         self.exploration_history.append(event)
+        if len(self.exploration_history) > _MAX_EXPLORATION_HISTORY:
+            self.exploration_history = self.exploration_history[-_MAX_EXPLORATION_HISTORY:]
         return event
 
     def update_cognitive_gap(self, gap_id: str, **kwargs):

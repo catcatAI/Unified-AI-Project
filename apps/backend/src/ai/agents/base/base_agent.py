@@ -76,6 +76,8 @@ class BaseAgent:
         self._initialized = False
         self.alignment_enabled = alignment_enabled
         self.alignment_system: Optional[Any] = None
+        # Background task reference (prevent GC and enable exception logging)
+        self._queue_worker_task: Optional[asyncio.Task] = None
         self.initialize_basic()
 
     def initialize_basic(self) -> None:
@@ -191,7 +193,13 @@ class BaseAgent:
                 f"[{self.agent_id}] Task {queued_task.task_id} added to queue with priority {queued_task.priority.name}"
             )
 
-        asyncio.create_task(self._process_task_queue())
+        task = asyncio.create_task(self._process_task_queue())
+        self._queue_worker_task = task
+        task.add_done_callback(
+            lambda t: logger.warning("Queue worker task failed: %s", t.exception())
+            if not t.cancelled() and t.exception()
+            else None
+        )
 
     async def _process_task_queue(self) -> None:
         """Processes tasks from the queue one by one."""

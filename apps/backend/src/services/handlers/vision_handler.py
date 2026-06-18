@@ -3,6 +3,7 @@ ANGELA-MATRIX: [L3-L4] [β] [B] [L2]
 VisionHandler — processes image analysis intents.
 """
 
+import asyncio
 import base64
 import logging
 import mimetypes
@@ -25,15 +26,15 @@ class VisionHandler:
         if not image_path:
             return "（視覺分析）請提供圖片路徑或附帶圖片。"
         target = Path(image_path)
-        if not target.exists():
+        if not await asyncio.to_thread(target.exists):
             return f"（視覺分析）圖片不存在：{image_path}"
-        if not target.is_file():
+        if not await asyncio.to_thread(target.is_file):
             return f"（視覺分析）不是檔案：{image_path}"
         mime_type = mimetypes.guess_type(str(target))[0]
         if not mime_type or not mime_type.startswith("image/"):
             return f"（視覺分析）不支援的圖片格式：{mime_type}"
         try:
-            image_data = target.read_bytes()
+            image_data = await asyncio.to_thread(target.read_bytes)
             b64 = base64.b64encode(image_data).decode()
             if self._model_bus and hasattr(self._model_bus, "execute_handler"):
                 result = await self._model_bus.execute_handler(

@@ -11,6 +11,8 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+_background_tasks: set = set()
+
 
 def initialize_all_services(manager) -> tuple:
     """Initialize services and link components during startup."""
@@ -96,10 +98,18 @@ def initialize_all_services(manager) -> tuple:
                 """Plugin aware callback."""
                 try:
                     import asyncio as _aio
-                    _aio.create_task(
+                    task = _aio.create_task(
                         plugin_manager.execute_hook("on_bio_event", {
                             "event": event_name, "data": event_data
                         })
+                    )
+                    _background_tasks.add(task)
+                    task.add_done_callback(
+                        lambda t: (
+                            _background_tasks.discard(t),
+                            logger.warning("Plugin hook task failed: %s", t.exception())
+                            if not t.cancelled() and t.exception() else None
+                        )
                     )
                 except Exception as e:
                     logger.warning(f"Plugin bio event callback failed for {event_name}: {e}", exc_info=True)

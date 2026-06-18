@@ -31,6 +31,13 @@ from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bounds for unbounded reflection/growth collections
+# =============================================================================
+_MAX_REFLECTIONS = 200
+_MAX_GROWTH_HISTORY = 500
+
 
 class IdentityAspect(Enum):
     """身份方面 / Identity aspects"""
@@ -243,6 +250,8 @@ class CyberIdentity:
         }
 
         self.self_reflections.append(reflection)
+        if len(self.self_reflections) > _MAX_REFLECTIONS:
+            self.self_reflections = self.self_reflections[-_MAX_REFLECTIONS:]
 
         # Update narrative periodically
         if len(self.self_reflections) % 24 == 0:  # Daily
@@ -368,6 +377,8 @@ class CyberIdentity:
                     "milestone": milestone,
                 }
             )
+            if len(self.growth_history) > _MAX_GROWTH_HISTORY:
+                self.growth_history = self.growth_history[-_MAX_GROWTH_HISTORY:]
 
             # Notify callbacks
             if aspect in self._growth_callbacks:

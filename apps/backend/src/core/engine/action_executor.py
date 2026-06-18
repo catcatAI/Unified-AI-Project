@@ -268,6 +268,7 @@ class ActionExecutor:
         self._running = False
         self._executor_task: Optional[asyncio.Task] = None
         self._semaphore = asyncio.Semaphore(self.max_concurrent)
+        self._background_tasks: set = set()
 
         # Kinetic Validation
         self.kinetic_validator = KineticValidator(self.config.get("kinetic", {}))
@@ -327,7 +328,15 @@ class ActionExecutor:
 
             if action:
                 # Execute with semaphore for concurrency control
-                asyncio.create_task(self._execute_with_semaphore(action))
+                task = asyncio.create_task(self._execute_with_semaphore(action))
+                self._background_tasks.add(task)
+                task.add_done_callback(
+                    lambda t: (
+                        self._background_tasks.discard(t),
+                        logger.warning("Background executor task failed: %s", t.exception())
+                        if not t.cancelled() and t.exception() else None
+                    )
+                )
             else:
                 # No actions available, wait a bit
                 await asyncio.sleep(loop_sleep("sleep_short", 0.1))

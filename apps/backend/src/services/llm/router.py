@@ -1177,8 +1177,6 @@ class AngelaLLMService:
                 bname_str = btype.name.lower()
                 if backend_name.lower() in bname_str or bname_str in backend_name.lower():
                     try:
-                        prev = self.active_backend
-                        self.active_backend = bobj
                         full_prompt = self._construct_angela_prompt(user_message, context)
                         response = await asyncio.wait_for(
                             bobj.generate(
@@ -1188,7 +1186,8 @@ class AngelaLLMService:
                             ),
                             timeout=30.0,
                         )
-                        logger.info(f"[Fallback] Switched from {prev} to {btype.name}")
+                        self.active_backend = bobj
+                        logger.info(f"[Fallback] Switched to {btype.name}")
                         return response
                     except Exception:
                         logger.warning(

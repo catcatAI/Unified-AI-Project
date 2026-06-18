@@ -5,6 +5,7 @@ Chat & session API routes extracted from main_api_server.py (A3 god module split
 
 import asyncio
 import logging
+import threading
 import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
@@ -49,6 +50,7 @@ def _spawn_background_task(coro, description: str = "") -> asyncio.Task:
 class TTLSessionManager:
     def __init__(self):
         self._sessions: Dict[str, Dict[str, Any]] = {}
+        self._lock = threading.Lock()
         self._config = _angela_cfg.get_authority("angela_core", {}).get("session_manager", {}) if _angela_cfg else {}
         self._ttl = self._config.get("ttl_seconds", 3600)
         self._max_sessions = self._config.get("max_sessions", 1000)
@@ -67,26 +69,30 @@ class TTLSessionManager:
 
     def get(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Execute the get operation."""
-        self._purge_expired()
-        return self._sessions.get(session_id)
+        with self._lock:
+            self._purge_expired()
+            return self._sessions.get(session_id)
 
     def set(self, session_id: str, data: Dict[str, Any]) -> None:
         """Execute the set operation."""
-        self._purge_expired()
-        if len(self._sessions) >= self._max_sessions:
-            oldest = min(self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", ""))
-            del self._sessions[oldest]
-        self._sessions[session_id] = data
+        with self._lock:
+            self._purge_expired()
+            if len(self._sessions) >= self._max_sessions:
+                oldest = min(self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", ""))
+                del self._sessions[oldest]
+            self._sessions[session_id] = data
 
     def __contains__(self, session_id: str) -> bool:
         """Execute the   contains   operation."""
-        self._purge_expired()
-        return session_id in self._sessions
+        with self._lock:
+            self._purge_expired()
+            return session_id in self._sessions
 
     def items(self) -> str:
         """Execute the items operation."""
-        self._purge_expired()
-        return self._sessions.items()
+        with self._lock:
+            self._purge_expired()
+            return list(self._sessions.items())
 
 
 sessions = TTLSessionManager()
@@ -466,7 +472,8 @@ async def _handle_chat_request(
             _timeout_text = _get_ed3n_engine().process(
                 "timeout_response", context={"fallback": True}, depth="reflex"
             )
-        except Exception:
+        except Exception as e:
+            logger.debug(f"ED3N fallback failed in timeout handler: {e}")
             _timeout_text = "抱歉，我目前無法回應，請稍後再試。"
         return {
             "response_text": _timeout_text,
@@ -484,7 +491,8 @@ async def _handle_chat_request(
             _cancel_text = _get_ed3n_engine().process(
                 "timeout_response", context={"fallback": True}, depth="reflex"
             )
-        except Exception:
+        except Exception as e:
+            logger.debug(f"ED3N fallback failed in cancel handler: {e}")
             _cancel_text = "抱歉，我目前無法回應，請稍後再試。"
         return {
             "response_text": _cancel_text,

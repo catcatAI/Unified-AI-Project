@@ -38,6 +38,13 @@ from ai.lifecycle.user_monitor import UserMonitor
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bounds for unbounded event collections
+# =============================================================================
+_MAX_SIGNIFICANT_EVENTS = 500
+_MAX_LIFE_EVENTS = 500
+
 if TYPE_CHECKING:
     from ai.integration.unified_control_center import UnifiedControlCenter
 
@@ -672,6 +679,8 @@ class DigitalLifeIntegrator:
         # Store significant events separately
         if significance >= 0.7:
             self._significant_events.append(event)
+            if len(self._significant_events) > _MAX_SIGNIFICANT_EVENTS:
+                self._significant_events = self._significant_events[-_MAX_SIGNIFICANT_EVENTS:]
 
     def get_awareness_injection(self) -> str:
         """
@@ -697,6 +706,8 @@ class DigitalLifeIntegrator:
     def _record_event(self, event: LifeEvent) -> None:
         """Internal method to record an event"""
         self.life_events.append(event)
+        if len(self.life_events) > _MAX_LIFE_EVENTS:
+            self.life_events = self.life_events[-_MAX_LIFE_EVENTS:]
 
         # Notify callbacks
         for callback in self._event_callbacks:

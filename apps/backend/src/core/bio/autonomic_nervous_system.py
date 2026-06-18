@@ -28,6 +28,8 @@ from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
+_MAX_STIMULUS_HISTORY = 500
+
 
 class NerveType(Enum):
     """神经类型 / Nerve types"""
@@ -306,6 +308,8 @@ class AutonomicNervousSystem:
         )
         self.active_stimuli.append(stimulus)
         self.stimulus_history.append(stimulus)
+        if len(self.stimulus_history) > _MAX_STIMULUS_HISTORY:
+            self.stimulus_history = self.stimulus_history[-_MAX_STIMULUS_HISTORY:]
 
         # Immediate effect on arousal
         if nerve_type == NerveType.SYMPATHETIC:

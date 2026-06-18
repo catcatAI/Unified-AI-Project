@@ -66,6 +66,10 @@ class DemoLearningManager:
         self.HSPConnector = HSPConnector
         self.model_trainer: Optional[Any] = None  # 添加类型注解
 
+        # Background task references (prevent GC and enable exception logging)
+        self._learning_monitor_task: Optional[asyncio.Task] = None
+        self._cleanup_monitor_task: Optional[asyncio.Task] = None
+
     async def start_learning(self, model_id: str, config: Dict[str, Any]) -> Any:
         """開始學習"""
         # 如果有model_trainer, 使用它進行訓練
@@ -114,6 +118,11 @@ class DemoLearningManager:
         except Exception as e:  # broad exception acceptable: config load failure falls back to empty dict
             logger.error(f"加載配置文件失敗: {e}", exc_info=True)
             return {}
+
+    def _write_json_sync(self, path, data):
+        """Sync helper for writing JSON (called via asyncio.to_thread)."""
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
     def detect_demo_credentials(self, credentials: Dict[str, Any]) -> bool:
         """檢測是否為演示金鑰
@@ -180,16 +189,15 @@ class DemoLearningManager:
 
         # 創建演示模式標記文件
         demo_flag = self.storage_path / "demo_mode.flag"
-        with open(demo_flag, "w") as f:
-            json.dump(
-                {
-                    "enabled": True,
-                    "activated_at": datetime.now().isoformat(),
-                    "config": self.config.get("demo_credentials", {}).get("demo_mode", {}),
-                },
-                f,
-                indent=2,
-            )
+        await asyncio.to_thread(
+            self._write_json_sync,
+            demo_flag,
+            {
+                "enabled": True,
+                "activated_at": datetime.now().isoformat(),
+                "config": self.config.get("demo_credentials", {}).get("demo_mode", {}),
+            },
+        )
 
     async def _initialize_learning(self) -> None:
         """初始化學習系統"""
@@ -212,7 +220,13 @@ class DemoLearningManager:
         await self._save_learning_data()
 
         # 啟動學習監控
-        asyncio.create_task(self._learning_monitor_loop())
+        task = asyncio.create_task(self._learning_monitor_loop())
+        self._learning_monitor_task = task
+        task.add_done_callback(
+            lambda t: logger.warning("Learning monitor task failed: %s", t.exception())
+            if not t.cancelled() and t.exception()
+            else None
+        )
 
         logger.info("學習系統初始化完成")
 
@@ -226,8 +240,7 @@ class DemoLearningManager:
 
         # 創建模擬服務配置文件
         mock_config_file = self.storage_path / "mock_services.json"
-        with open(mock_config_file, "w") as f:
-            json.dump(mock_config, f, indent=2)
+        await asyncio.to_thread(self._write_json_sync, mock_config_file, mock_config)
 
         logger.info("模擬服務設置完成")
 
@@ -240,7 +253,13 @@ class DemoLearningManager:
             return
 
         # 啟動清除監控
-        asyncio.create_task(self._cleanup_monitor_loop())
+        task = asyncio.create_task(self._cleanup_monitor_loop())
+        self._cleanup_monitor_task = task
+        task.add_done_callback(
+            lambda t: logger.warning("Cleanup monitor task failed: %s", t.exception())
+            if not t.cancelled() and t.exception()
+            else None
+        )
 
         logger.info("自動清除配置完成")
 
@@ -374,8 +393,7 @@ class DemoLearningManager:
         """保存學習數據"""
         try:
             learning_file = self.storage_path / "learning_data.json"
-            with open(learning_file, "w", encoding="utf-8") as f:
-                json.dump(self.learning_data, f, indent=2, ensure_ascii=False)
+            await asyncio.to_thread(self._write_json_sync, learning_file, self.learning_data)
         except Exception as e:  # broad exception acceptable: save errors should not crash learning
             logger.error(f"保存學習數據失敗: {e}", exc_info=True)
 
@@ -609,8 +627,7 @@ class DemoLearningManager:
                 self.storage_path
                 / f"learning_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             )
-            with open(report_file, "w", encoding="utf-8") as f:
-                json.dump(insights, f, indent=2, ensure_ascii=False)
+            await asyncio.to_thread(self._write_json_sync, report_file, insights)
 
             self.demo_mode = False
             logger.info("演示學習管理器已關閉")

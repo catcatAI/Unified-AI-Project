@@ -6,6 +6,8 @@ from typing import Dict, List, Callable, Any
 
 logger = logging.getLogger(__name__)
 
+_pending_tasks: set = set()
+
 
 class InternalBus:
     """
@@ -27,7 +29,15 @@ class InternalBus:
                 await callback(message)
             finally:
                 self._task_semaphore.release()
-        asyncio.create_task(_wrapped())
+        task = asyncio.create_task(_wrapped())
+        _pending_tasks.add(task)
+        task.add_done_callback(
+            lambda t: (
+                _pending_tasks.discard(t),
+                logger.warning("InternalBus task failed: %s", t.exception())
+                if not t.cancelled() and t.exception() else None
+            )
+        )
 
     def publish(self, channel: str, message: Any) -> None:
         """Publish a message to a channel."""

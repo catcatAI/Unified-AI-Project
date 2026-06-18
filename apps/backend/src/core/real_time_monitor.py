@@ -35,6 +35,13 @@ from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# ANGELA-MATRIX: [L4] [δ] [A] [L6+]
+# Max-size bounds for unbounded history collections
+# =============================================================================
+_MAX_STATE_HISTORY = 500
+_MAX_INPUT_EVENTS = 1000
+
 
 class MonitorType(Enum):
     """监测器类型 / Monitor types"""
@@ -537,6 +544,8 @@ class SystemStateMonitor:
                 state = await self._collect_system_state()
                 self.current_state = state
                 self._state_history.append(state)
+                if len(self._state_history) > _MAX_STATE_HISTORY:
+                    self._state_history = self._state_history[-_MAX_STATE_HISTORY:]
 
                 # Notify callbacks
                 for callback in self._callbacks:
@@ -730,6 +739,8 @@ class UserActivityMonitor:
         """Record an input event (keyboard, mouse)"""
         self._last_input_time = datetime.now()
         self._input_events.append(datetime.now())
+        if len(self._input_events) > _MAX_INPUT_EVENTS:
+            self._input_events = self._input_events[-_MAX_INPUT_EVENTS:]
 
     def register_callback(self, callback: Callable[[UserActivityData], None]) -> None:
         """Register activity change callback"""
