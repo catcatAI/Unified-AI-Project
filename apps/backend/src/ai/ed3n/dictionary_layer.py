@@ -48,7 +48,7 @@ class DictionaryEntry:
 
 
 class DictionaryLayer:
-    def __init__(self, growth_threshold: float = 0.5, max_entries: int = 50000):
+    def __init__(self, growth_threshold: float = 0.5, max_entries: int = 500000):
         self.entries: Dict[str, DictionaryEntry] = {}
         self.modality_encoders: Dict[str, Any] = {"text": None, "image": None, "audio": None}
         self.growth_threshold = growth_threshold
@@ -219,6 +219,27 @@ class DictionaryLayer:
         self.entries[key] = entry
         self._rebuild_index()
         return entry
+
+    def bulk_add_entries(
+        self,
+        entries_data: List[Dict[str, Any]],
+    ) -> int:
+        """Add many entries at once, rebuilding the index only once."""
+        count = 0
+        for data in entries_data:
+            key = data.get("key", "")
+            if not key or key in self.entries:
+                continue
+            self.entries[key] = DictionaryEntry(
+                key=key,
+                surface_forms=data.get("surface_forms", {}),
+                contexts=data.get("contexts"),
+                relations=data.get("relations", {}),
+                confidence=data.get("confidence", 1.0),
+            )
+            count += 1
+        self._rebuild_index()
+        return count
 
     def grow(
         self, text: str, surface_form: str, confidence: float = 0.5
