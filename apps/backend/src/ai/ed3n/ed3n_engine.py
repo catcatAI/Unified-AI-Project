@@ -8,6 +8,8 @@ import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
+from ai.core.unicode_utils import normalize_text
+
 from .telemetry import TelemetryCollector
 
 from core.system.config.magic_numbers import (
@@ -41,7 +43,7 @@ class ReflexLayer:
 
     def process(self, input_text: str) -> Optional[str]:
         with self._lock:
-            normalized = input_text.strip().lower()
+            normalized = normalize_text(input_text).lower()
 
             if normalized in self.lru_cache:
                 result = self.lru_cache.pop(normalized)
@@ -72,7 +74,7 @@ class ReflexLayer:
 
     def add_pattern(self, pattern: str, response: str) -> None:
         with self._lock:
-            self.patterns[pattern.lower().strip()] = response
+            self.patterns[normalize_text(pattern).lower().strip()] = response
 
     def load_presets(self) -> None:
         presets = self._build_presets()

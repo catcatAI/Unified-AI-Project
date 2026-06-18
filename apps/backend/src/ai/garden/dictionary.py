@@ -24,6 +24,7 @@ import zlib
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from ai.core.unicode_utils import normalize_text
 from core.system.config.magic_numbers import confidence_value, threshold_value
 
 logger = logging.getLogger(__name__)
@@ -96,7 +97,7 @@ class _TfidfEncoder:
 
     def _tokenize(self, text: str) -> List[str]:
         tokens: List[str] = []
-        lower = text.lower().strip()
+        lower = normalize_text(text).lower()
         if not lower:
             return tokens
         # English words (split on whitespace)
@@ -190,7 +191,7 @@ class _CharBagEncoder:
         vecs = []
         for text in texts:
             v = torch.zeros(self.DIM)
-            lower = text.lower()
+            lower = normalize_text(text).lower()
             for i, ch in enumerate(lower):
                 idx = (ord(ch) * 31 + i) % self.DIM
                 v[idx] += 1.0

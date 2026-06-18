@@ -11,6 +11,7 @@ import threading
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
+from ai.core.unicode_utils import normalize_text, to_romaji, is_cjk
 from core.system.config.magic_numbers import (
     behavior_threshold,
     cache_value,
@@ -112,6 +113,7 @@ class DictionaryLayer:
         max_text_len = limit_value("ai.dictionary_layer.max_text_len", 10000)
         if len(text) > max_text_len:
             text = text[:max_text_len]
+        text = normalize_text(text)
         self._rebuild_index()
         text_lower = text.lower().strip()
         scores: Dict[str, float] = {}
@@ -119,7 +121,7 @@ class DictionaryLayer:
         for key, entry in self.entries.items():
             best = 0.0
             for sf in entry.surface_forms.values():
-                sf_lower = sf.lower().strip()
+                sf_lower = normalize_text(sf).lower().strip()
                 if not sf_lower:
                     continue
                 if sf_lower == text_lower:
@@ -141,6 +143,7 @@ class DictionaryLayer:
         max_text_len = limit_value("ai.dictionary_layer.max_text_len", 10000)
         if len(text) > max_text_len:
             text = text[:max_text_len]
+        text = normalize_text(text)
         if modality != "text":
             logger.warning("Only 'text' modality is supported; falling back to text encoding.")
         self._rebuild_index()
@@ -372,15 +375,16 @@ class DictionaryLayer:
         return pruned
 
     def detect_new_concepts(self, text: str, known_keys: List[str]) -> List[Dict[str, Any]]:
+        text = normalize_text(text)
         known_surfaces: set = set()
         for k in known_keys:
             entry = self.entries.get(k)
             if entry:
                 for s in entry.surface_forms.values():
-                    known_surfaces.add(s.lower().strip())
+                    known_surfaces.add(normalize_text(s).lower().strip())
         for e in self.entries.values():
             for s in e.surface_forms.values():
-                known_surfaces.add(s.lower().strip())
+                known_surfaces.add(normalize_text(s).lower().strip())
         text_lower = text.lower().strip()
         candidates: List[Dict[str, Any]] = []
         tokens = re.findall(r"[\w\u4e00-\u9fff]{2,}", text_lower)
@@ -497,7 +501,7 @@ class DictionaryLayer:
             self._bigram_index.clear()
             for key, entry in self.entries.items():
                 for lang, surface in entry.surface_forms.items():
-                    surface_lower = surface.lower().strip()
+                    surface_lower = normalize_text(surface).lower().strip()
 
                     tokens = re.findall(r"[\w]+", surface_lower)
                     for token in tokens:
