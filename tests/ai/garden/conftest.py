@@ -11,14 +11,11 @@ import tempfile
 
 import pytest
 
-# Add project root to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-from apps.backend.src.ai.garden.dictionary import VectorDictionary
-from apps.backend.src.ai.garden.snn_core import TensorSNNCore
-from apps.backend.src.ai.garden.garden_engine import GARDENEngine
-from apps.backend.src.ai.garden.binary_store import BinaryStore
-from apps.backend.src.ai.garden.kg_import import KGImporter
+from ai.garden.dictionary import VectorDictionary
+from ai.garden.snn_core import TensorSNNCore
+from ai.garden.garden_engine import GARDENEngine
+from ai.garden.binary_store import BinaryStore
+from ai.garden.kg_import import KGImporter
 
 
 @pytest.fixture(scope="function")

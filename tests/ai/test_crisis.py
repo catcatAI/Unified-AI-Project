@@ -1,14 +1,15 @@
-"""Tests for apps.backend.src.ai.crisis.crisis_system"""
+"""Tests for ai.crisis.crisis_system"""
 import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from apps.backend.src.ai.crisis.crisis_system import CrisisSystem
+from ai.crisis.crisis_system import CrisisSystem
 
 
 class TestCrisisSystemInit:
-    def test_default_config(self):
+    @patch.object(CrisisSystem, '_load_config_from_file')
+    def test_default_config(self, mock_load):
         system = CrisisSystem()
         assert system.config == {}
         assert system.crisis_level == 0
@@ -145,7 +146,7 @@ class TestCrisisSystemResolve:
 
 
 class TestCrisisSystemProtocol:
-    @patch('apps.backend.src.ai.crisis.crisis_system.logging')
+    @patch('ai.crisis.crisis_system.logging')
     def test_trigger_protocol_log_only(self, mock_logging):
         config = {
             'crisis_keywords': ['help'],
@@ -159,7 +160,7 @@ class TestCrisisSystemProtocol:
             'CRISIS_INFO: Level 1 event logged. Details: {\'input_text\': \'help\', \'context\': {}}'
         )
 
-    @patch('apps.backend.src.ai.crisis.crisis_system.logging')
+    @patch('ai.crisis.crisis_system.logging')
     def test_trigger_protocol_notify_human(self, mock_logging):
         config = {
             'crisis_keywords': ['help'],
@@ -171,7 +172,7 @@ class TestCrisisSystemProtocol:
         system._trigger_protocol(1, {'input_text': 'help', 'context': {}})
         mock_logging.critical.assert_called_once()
 
-    @patch('apps.backend.src.ai.crisis.crisis_system.logging')
+    @patch('ai.crisis.crisis_system.logging')
     def test_trigger_protocol_unknown_still_logs(self, mock_logging):
         config = {
             'crisis_keywords': ['help'],
@@ -186,7 +187,7 @@ class TestCrisisSystemProtocol:
 
 class TestCrisisSystemLoadConfig:
     @patch('builtins.open', side_effect=FileNotFoundError)
-    @patch('apps.backend.src.ai.crisis.crisis_system.logging')
+    @patch('ai.crisis.crisis_system.logging')
     def test_load_config_file_not_found(self, mock_logging, mock_open):
         system = CrisisSystem.__new__(CrisisSystem)
         system._load_config_from_file()
@@ -194,7 +195,7 @@ class TestCrisisSystemLoadConfig:
 
     @patch('builtins.open')
     @patch('json.load')
-    @patch('apps.backend.src.ai.crisis.crisis_system.logging')
+    @patch('ai.crisis.crisis_system.logging')
     def test_load_config_success(self, mock_logging, mock_json_load, mock_open):
         mock_json_load.return_value = {'crisis_keywords': ['help']}
         system = CrisisSystem.__new__(CrisisSystem)

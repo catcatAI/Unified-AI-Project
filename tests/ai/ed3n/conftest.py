@@ -1,11 +1,6 @@
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
 import pytest
 
-from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
+from ai.ed3n.ed3n_engine import ED3NEngine
 
 
 @pytest.fixture(scope="function")
@@ -19,8 +14,8 @@ def engine():
 def trained_engine():
     e = ED3NEngine()
     e.load_presets()
-    from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
-    from apps.backend.src.ai.ed3n.training_types import TrainingBatch, TrainingExample
+    from ai.ed3n.ed3n_trainer import ED3NTrainer
+    from ai.ed3n.training_types import TrainingBatch, TrainingExample
 
     trainer = ED3NTrainer(e)
     examples = [

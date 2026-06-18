@@ -120,10 +120,10 @@ addopts = [
     '--strict-markers',
     '--strict-config',
     '--tb=short',
-    '--cov=apps/backend/src',
-    '--cov-report=term-missing',
-    '--cov-report=html',
-    '--cov-fail-under=5',
+    # '--cov=apps/backend/src',    # 啟用方式: pytest --cov (Python 3.14 相容性問題)
+    # '--cov-report=term-missing', # pytest-cov 7.1.0 + coverage 7.13.5 in py3.14 hangs
+    # '--cov-report=html',         # 請在 Python 3.10/3.11 環境下啟用
+    # '--cov-fail-under=5',        # CI/CD 中使用: pytest --cov-fail-under=5 --cov
     '--disable-warnings',
     '--ignore=tests_backup',
     '--ignore=../../tests_backup',
