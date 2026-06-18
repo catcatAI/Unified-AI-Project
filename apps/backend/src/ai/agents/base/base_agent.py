@@ -12,6 +12,7 @@ lifecycle management.
 import asyncio
 import logging
 import uuid
+from datetime import datetime
 from typing import Any, Callable, Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -20,6 +21,47 @@ from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload, HSPTaskRes
 from core.system.config.magic_numbers import cache_value, loop_sleep, retry_value
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# ANGELA-MATRIX: [L1] [αβγδ] [A] L0
+# =============================================================================
+#
+# 职责: 标准化错误处理和异常分类
+# 维度: 涉及所有维度，提供统一的错误处理框架
+# 安全: 使用 Key A (后端控制) 进行安全错误分类
+# 成熟度: L1 等级可以理解错误处理的基础概念
+# =============================================================================
+
+class AgentError(Exception):
+    """Base exception for all agent-related errors."""
+    
+    def __init__(self, message: str, agent_id: str = None, error_type: str = None):
+        super().__init__(message)
+        self.agent_id = agent_id
+        self.error_type = error_type
+        self.timestamp = datetime.now().isoformat()
+        self.correlation_id = str(uuid.uuid4())
+
+
+class TaskProcessingError(AgentError):
+    """Error during task processing."""
+    pass
+
+
+class ConnectionError(AgentError):
+    """Error in HSP connection."""
+    pass
+
+
+class InitializationError(AgentError):
+    """Error during agent initialization."""
+    pass
+
+
+class ConfigurationError(AgentError):
+    """Error during configuration loading."""
+    pass
 
 
 class TaskPriority(Enum):
@@ -107,8 +149,20 @@ class BaseAgent:
             # self.agent_registry = DynamicAgentRegistry(self.hsp_connector)
             self._initialized = True
             logger.info(f"[{self.agent_id}] BaseAgent full initialization complete.")
-        except Exception as e:  # broad exception acceptable: full initialization wraps all HSP connector failures
-            logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}", exc_info=True)
+        except Exception as e:
+            # Use standardized error hierarchy
+            init_error = InitializationError(
+                f"[{self.agent_id}] Full initialization failed: {e}",
+                agent_id=self.agent_id,
+                error_type="initialization_failure"
+            )
+            logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}", 
+                         exc_info=True, extra={
+                             "agent_id": self.agent_id,
+                             "error_type": "initialization_failure",
+                             "correlation_id": init_error.correlation_id,
+                             "timestamp": init_error.timestamp
+                         })
             self.initialize_basic()
 
     async def start(self) -> None:
@@ -195,11 +249,23 @@ class BaseAgent:
 
         task = asyncio.create_task(self._process_task_queue())
         self._queue_worker_task = task
-        task.add_done_callback(
-            lambda t: logger.warning("Queue worker task failed: %s", t.exception())
-            if not t.cancelled() and t.exception()
-            else None
-        )
+        
+        def _handle_task_completion(completed_task: asyncio.Task):
+            """Handle task completion with proper error handling and cleanup."""
+            try:
+                completed_task.result()
+            except asyncio.CancelledError:
+                logger.info(f"[{self.agent_id}] Task queue worker cancelled")
+            except Exception as e:
+                logger.error(f"[{self.agent_id}] Queue worker task failed: {e}", exc_info=True)
+                # Trigger system error handling
+                asyncio.create_task(self._handle_critical_error(e))
+            finally:
+                # Clear reference to prevent memory leaks
+                if self._queue_worker_task == completed_task:
+                    self._queue_worker_task = None
+        
+        task.add_done_callback(_handle_task_completion)
 
     async def _process_task_queue(self) -> None:
         """Processes tasks from the queue one by one."""
@@ -218,7 +284,6 @@ class BaseAgent:
         logger.info(
             f"[{self.agent_id}] Processing task {task.task_id} with priority {task.priority.name}"
         )
-        asyncio.get_running_loop().time()
         self._task_counter += 1
 
         try:
@@ -237,8 +302,23 @@ class BaseAgent:
                     result_payload, task.payload["callback_address"], task.task_id
                 )
 
-        except Exception as e:  # broad exception acceptable: task processing wraps all handler failures
-            logger.error(f"[{self.agent_id}] Error processing task {task.task_id}: {e}", exc_info=True)
+        except Exception as e:
+            # Use standardized error hierarchy for task processing
+            task_error = TaskProcessingError(
+                f"[{self.agent_id}] Error processing task {task.task_id}: {e}",
+                agent_id=self.agent_id,
+                error_type="task_processing_error"
+            )
+            
+            logger.error(f"[{self.agent_id}] Error processing task {task.task_id}: {e}", 
+                        exc_info=True, extra={
+                            "agent_id": self.agent_id,
+                            "task_id": task.task_id,
+                            "error_type": "task_processing_error",
+                            "correlation_id": task_error.correlation_id,
+                            "timestamp": task_error.timestamp
+                        })
+            
             if task.retry_count < self.max_retries:
                 logger.info(
                     f"[{self.agent_id}] Retrying task {task.task_id} ({task.retry_count + 1} / {self.max_retries})"
@@ -250,7 +330,13 @@ class BaseAgent:
             else:
                 logger.error(
                     f"[{self.agent_id}] Task {task.task_id} failed after {self.max_retries} retries."
-                    , exc_info=True
+                    , exc_info=True, extra={
+                        "agent_id": self.agent_id,
+                        "task_id": task.task_id,
+                        "error_type": "task_processing_error",
+                        "correlation_id": task_error.correlation_id,
+                        "timestamp": task_error.timestamp
+                    }
                 )
                 if task.payload.get("callback_address") and self.hsp_connector:
                     await self._send_task_failure(
@@ -310,3 +396,124 @@ class BaseAgent:
         """Register a specific handler for a capability."""
         self.task_handlers[capability_id] = handler
         logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_id}'")
+
+    async def _handle_critical_error(self, error: Exception) -> None:
+        """Handle critical errors that could impact system stability."""
+        critical_error = AgentError(
+            f"[{self.agent_id}] Critical error detected: {error}",
+            agent_id=self.agent_id,
+            error_type="critical_error"
+        )
+        
+        logger.error(f"[{self.agent_id}] Critical error detected: {error}", 
+                    exc_info=True, extra={
+                        "agent_id": self.agent_id,
+                        "error_type": "critical_error",
+                        "correlation_id": critical_error.correlation_id,
+                        "timestamp": critical_error.timestamp
+                    })
+        
+        # Attempt to recover from critical error
+        try:
+            if self.is_running and self.hsp_connector:
+                await self.hsp_connector.reconnect()
+                logger.info(f"[{self.agent_id}] Successfully reconnected after critical error", extra={
+                    "agent_id": self.agent_id,
+                    "error_type": "recovery_success",
+                    "correlation_id": critical_error.correlation_id,
+                    "timestamp": datetime.now().isoformat()
+                })
+        except Exception as reconnect_error:
+            # Use standardized error hierarchy for reconnection errors
+            reconnect_error_obj = ConnectionError(
+                f"[{self.agent_id}] Failed to recover from critical error: {reconnect_error}",
+                agent_id=self.agent_id,
+                error_type="reconnection_failure"
+            )
+            logger.error(f"[{self.agent_id}] Failed to recover from critical error: {reconnect_error}", 
+                        exc_info=True, extra={
+                            "agent_id": self.agent_id,
+                            "error_type": "reconnection_failure",
+                            "correlation_id": reconnect_error_obj.correlation_id,
+                            "timestamp": reconnect_error_obj.timestamp
+                        })
+            # System may be in degraded state
+            await self._handle_system_degraded()
+
+    async def _handle_system_degraded(self) -> None:
+        """Handle system degraded state."""
+        logger.warning(f"[{self.agent_id}] System is in degraded state")
+        
+        # Attempt to cleanup and restart if possible
+        try:
+            await self.stop()
+            # Wait a moment before attempting restart
+            await asyncio.sleep(5)
+            await self.start()
+            logger.info(f"[{self.agent_id}] System restarted from degraded state")
+        except Exception as restart_error:
+            # Use standardized error hierarchy for restart errors
+            restart_error_obj = InitializationError(
+                f"[{self.agent_id}] Failed to restart system: {restart_error}",
+                agent_id=self.agent_id,
+                error_type="restart_failure"
+            )
+            logger.error(f"[{self.agent_id}] Failed to restart system: {restart_error}", 
+                        exc_info=True, extra={
+                            "agent_id": self.agent_id,
+                            "error_type": "restart_failure",
+                            "correlation_id": restart_error_obj.correlation_id,
+                            "timestamp": restart_error_obj.timestamp
+                        })
+
+    async def cleanup_resources(self) -> None:
+        """Properly clean up all resources to prevent memory leaks."""
+        logger.info(f"[{self.agent_id}] Starting resource cleanup")
+        
+        # Cancel and cleanup queue worker task
+        if self._queue_worker_task and not self._queue_worker_task.done():
+            self._queue_worker_task.cancel()
+            try:
+                await self._queue_worker_task
+            except asyncio.CancelledError:
+                logger.info(f"[{self.agent_id}] Queue worker task cancelled during cleanup")
+            except Exception as e:
+                logger.error(f"[{self.agent_id}] Error during queue worker cleanup: {e}", exc_info=True)
+            finally:
+                self._queue_worker_task = None
+        
+        # Clear task queue
+        async with self.task_queue_lock:
+            self.task_queue.clear()
+        
+        # Cleanup HSP connector
+        if self.hsp_connector:
+            try:
+                await self.hsp_connector.disconnect()
+                logger.info(f"[{self.agent_id}] HSP connector disconnected")
+            except Exception as e:
+                logger.error(f"[{self.agent_id}] Error disconnecting HSP connector: {e}", exc_info=True)
+            finally:
+                self.hsp_connector = None
+        
+        # Reset agent state
+        self.is_running = False
+        self._initialized = False
+        self._task_counter = 0
+        self._start_time = None
+        
+        logger.info(f"[{self.agent_id}] Resource cleanup completed")
+
+    def __del__(self):
+        """Ensure proper cleanup when agent is destroyed."""
+        try:
+            # Schedule async cleanup in event loop if possible
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # Schedule cleanup task
+                asyncio.create_task(self.cleanup_resources())
+            else:
+                # Log that cleanup wasn't possible
+                logger.warning(f"[{self.agent_id}] Agent destroyed without proper cleanup (event loop not running)")
+        except Exception:
+            pass  # Ignore cleanup errors in destructor

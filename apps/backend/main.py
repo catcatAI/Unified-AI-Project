@@ -26,6 +26,11 @@ from typing import List, Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Body
 from fastapi.middleware.cors import CORSMiddleware
 
+# Security error handling
+class SecurityError(Exception):
+    """Security-related errors."""
+    pass
+
 # 添加项目路径
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
@@ -49,6 +54,20 @@ except Exception as e:
 from src.system.security_monitor import ABCKeyManager
 from src.shared.security_middleware import SignedCommunicationMiddleware
 
+def validate_security_configuration():
+    """Validate security configuration before startup."""
+    try:
+        # Check if key manager is properly configured
+        km = ABCKeyManager()
+        if not km.has_key("KeyA") or not km.has_key("KeyB"):
+            raise SecurityError("Required security keys (KeyA, KeyB) are not configured")
+        return True
+    except Exception as e:
+        logger.error(f"Security configuration validation failed: {e}")
+        raise
+
+# Initialize key manager only after validation
+validate_security_configuration()
 km = ABCKeyManager()
 
 
@@ -234,7 +253,15 @@ def create_app() -> FastAPI:
     )
 
     # 加密通訊中間件 (使用 Key B)
-    app.add_middleware(SignedCommunicationMiddleware, key_b=km.get_key("KeyB"))
+    try:
+        key_b = km.get_key("KeyB")
+        if not key_b:
+            raise SecurityError("Key B is not configured for signed communication middleware")
+        app.add_middleware(SignedCommunicationMiddleware, key_b=key_b)
+        logger.info("Signed communication middleware initialized with Key B")
+    except Exception as e:
+        logger.error(f"Failed to initialize signed communication middleware: {e}")
+        raise
 
     # CORS配置
     app.add_middleware(

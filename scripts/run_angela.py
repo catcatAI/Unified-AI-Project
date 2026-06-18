@@ -19,10 +19,16 @@ import time
 import signal
 import json
 import traceback
+import re
 from pathlib import Path
 from typing import Optional, Tuple, List
 import logging
 logger = logging.getLogger(__name__)
+
+
+class SecurityError(Exception):
+    """Security-related errors."""
+    pass
 
 
 # ============================================
@@ -165,26 +171,82 @@ class ErrorRecovery:
 # ============================================
 
 def _load_env_file(env_file: Path) -> None:
-    """加载 .env 文件"""
-    if env_file.exists():
-        try:
-            with open(env_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        parts = line.split('=', 1)
-                        if len(parts) == 2:
-                            key, value = parts
-                            # 处理注释
-                            if '#' in value:
-                                value = value.split('#', 1)[0]
-                            val = value.strip()
-                            # 处理引号
-                            if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
-                                val = val[1:-1]
-                            os.environ[key.strip()] = val
-        except Exception as e:
-            logger.error(f"Error loading .env file: {e}")
+    """安全地加载 .env 文件"""
+    if not env_file.exists():
+        logger.warning(f"Environment file not found: {env_file}")
+        return
+    
+    try:
+        # Validate file path to prevent directory traversal
+        project_root = env_file.parent.parent
+        if not _validate_env_file_path(env_file, project_root):
+            raise SecurityError(f"Invalid environment file path: {env_file}")
+        
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                
+                if '=' not in line:
+                    logger.warning(f"Skipping invalid line {line_num} in {env_file}: no '=' found")
+                    continue
+                
+                parts = line.split('=', 1)
+                if len(parts) != 2:
+                    logger.warning(f"Skipping invalid line {line_num} in {env_file}: malformed key-value pair")
+                    continue
+                
+                key, value = parts
+                key = key.strip()
+                value = value.strip()
+                
+                # Validate key
+                if not _validate_env_key(key):
+                    logger.warning(f"Skipping invalid key '{key}' in line {line_num} of {env_file}")
+                    continue
+                
+                # Remove inline comments safely
+                if '#' in value:
+                    value = value.split('#', 1)[0].strip()
+                
+                # Remove quotes safely
+                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+                    value = value[1:-1]
+                
+                # Set environment variable
+                os.environ[key] = value
+                logger.debug(f"Loaded environment variable: {key}")
+                
+    except SecurityError:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading environment file {env_file}: {e}")
+        raise SecurityError(f"Failed to load environment file: {e}")
+
+
+def _validate_env_file_path(env_file: Path, project_root: Path) -> bool:
+    """Validate environment file path to prevent directory traversal attacks."""
+    try:
+        # Resolve path and ensure it's within project directory
+        resolved_path = env_file.resolve()
+        return project_root in resolved_path.parents or resolved_path == project_root
+    except Exception:
+        return False
+
+
+def _validate_env_key(key: str) -> bool:
+    """Validate environment variable key."""
+    if not key or len(key) > 100:
+        return False
+    
+    # Allow only alphanumeric, underscore, and hyphen
+    return bool(re.match(r'^[a-zA-Z0-9_-]+$', key))
+
+
+class SecurityError(Exception):
+    """Security-related errors."""
+    pass
 
 
 def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] = None, proc: Optional[subprocess.Popen] = None) -> bool:
@@ -604,33 +666,31 @@ def main():
 
         keys_valid, key_results = validate_system_keys()
         if not keys_valid:
-            print("\n⚠️  密钥安全检查失败！")
-            print("请确保:")
-            print("1. 复制 .env.example 为 .env")
-            print("2. 使用强随机生成器创建密钥")
-            print("3. 运行: python -m core.security.key_generator")
-            print("4. 不要使用占位符或默认值")
-            print()
-            print("详细报告:")
+            print("\n❌ 密钥安全检查失败！")
+            print("系统无法继续启动。安全验证失败已记录并报告安全团队。")
+            print("\n详细报告:")
             for result in key_results:
                 if not result.is_valid:
                     for issue in result.issues:
                         print(f"  - {issue}")
-            print("\n是否继续启动? (不推荐 - 安全风险) [y/N]: ", end="")
-            try:
-                response = input().strip().lower()
-                if response != 'y':
-                    print("启动已取消。")
-                    return 1
-                print("⚠️  警告: 使用不安全的密钥启动系统！")
-            except (EOFError, KeyboardInterrupt):
-                print("\n启动已取消。")
-                return 1
+            print("\n⚠️  安全风险: 由于密钥验证失败，系统已强制关闭。")
+            print("请联系系统管理员以获取安全的密钥配置。")
+            print("启动已安全终止。")
+            return 1
         else:
             print("✅ 密钥安全检查通过")
+    except SecurityError as e:
+        print(f"\n❌ 安全验证失败: {e}")
+        print("由于安全验证失败，系统已强制关闭。")
+        print("请联系系统管理员以获取安全的密钥配置。")
+        print("启动已安全终止。")
+        return 1
     except Exception as e:
-        print(f"⚠️  密钥验证模块加载失败: {e}")
-        print("将跳过密钥验证继续启动（不推荐）")
+        print(f"❌ 密钥验证错误: {e}")
+        print("由于密钥验证失败，系统已强制关闭。")
+        print("请检查日志文件获取更多信息并联系系统管理员。")
+        print("启动已安全终止。")
+        return 1
 
     backend_proc = None
     desktop_proc = None
