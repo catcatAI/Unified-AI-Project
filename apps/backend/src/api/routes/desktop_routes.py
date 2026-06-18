@@ -29,6 +29,8 @@ async def desktop_state(
     interaction: DesktopInteraction = Depends(get_desktop_interaction),
 ) -> dict:
     """Execute the desktop state operation."""
+    if interaction is None:
+        raise HTTPException(503, "DesktopInteraction not available")
     state = interaction.get_desktop_state()
     return {"success": True, "state": {
         "total_files": getattr(state, "total_files", 0),
@@ -73,6 +75,8 @@ async def actions_status(
     executor: ActionExecutor = Depends(get_action_executor),
 ) -> dict:
     """Execute the actions status operation."""
+    if executor is None:
+        raise HTTPException(503, "ActionExecutor not available")
     stats = executor.get_execution_stats()
     return {"success": True, "stats": stats}
 

@@ -353,7 +353,7 @@ class StatePersistence:
         """從 JSON 文件加载最新快照"""
         try:
             index_file = self._get_json_path() / "checkpoint_index.json"
-            index = self._load_json_index(index_file)
+            index = await self._load_json_index(index_file)
             last = index.get("last_checkpoint")
             if last:
                 return await self._load_from_json(last["id"])
@@ -371,7 +371,7 @@ class StatePersistence:
                     return snap
         else:
             index_file = self._get_json_path() / "checkpoint_index.json"
-            index = self._load_json_index(index_file)
+            index = await self._load_json_index(index_file)
             for entry in index.get("checkpoints", []):
                 if entry.get("tag") == tag:
                     return await self._load_from_json(entry["id"])

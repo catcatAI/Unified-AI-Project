@@ -122,15 +122,15 @@ class TaskManagerHandler:
         tasks = _load_tasks()
         task_id = payload.get("id")
         title = payload.get("title", "")
-        for t in tasks:
-            if task_id and t.get("id") == task_id:
-                t["status"] = "completed"
+        for task in tasks:
+            if task_id and task.get("id") == task_id:
+                task["status"] = "completed"
                 _save_tasks(tasks)
-                return t("task_ops.task_completed", id=task_id, title=t['title'])
-            if title and t.get("title") == title and t.get("status") == "pending":
-                t["status"] = "completed"
+                return t("task_ops.task_completed", id=task_id, title=task['title'])
+            if title and task.get("title") == title and task.get("status") == "pending":
+                task["status"] = "completed"
                 _save_tasks(tasks)
-                return t("task_ops.task_completed", id=t['id'], title=title)
+                return t("task_ops.task_completed", id=task['id'], title=title)
         return t("task_ops.task_not_found")
 
     def _delete(self, payload: Dict[str, Any]) -> str:
@@ -148,17 +148,17 @@ class TaskManagerHandler:
         tasks = _load_tasks()
         task_id = payload.get("id")
         new_title = payload.get("title", "")
-        for t in tasks:
-            if task_id and t.get("id") == task_id:
-                old_title = t["title"]
-                t["title"] = new_title
+        for task in tasks:
+            if task_id and task.get("id") == task_id:
+                old_title = task["title"]
+                task["title"] = new_title
                 _save_tasks(tasks)
                 return t("task_ops.task_updated", id=task_id, old=old_title, new=new_title)
-            if new_title and t.get("title") != new_title and t.get("status") == "pending":
-                old_title = t["title"]
-                t["title"] = new_title
+            if new_title and task.get("title") != new_title and task.get("status") == "pending":
+                old_title = task["title"]
+                task["title"] = new_title
                 _save_tasks(tasks)
-                return t("task_ops.task_updated", id=t['id'], old=old_title, new=new_title)
+                return t("task_ops.task_updated", id=task['id'], old=old_title, new=new_title)
         return t("task_ops.task_not_found")
 
 

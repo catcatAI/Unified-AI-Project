@@ -25,16 +25,6 @@ from core.system.config.magic_numbers import loop_sleep
 logger = logging.getLogger(__name__)
 
 
-def get_dynamic_level5_status() -> Dict[str, Any]:
-    """获取动态Level 5状态"""
-    return {"status": "active", "level": 5, "timestamp": datetime.now().isoformat()}
-
-
-def get_dynamic_metacognition_status() -> Dict[str, Any]:
-    """获取动态元认知状态"""
-    return {"status": "active", "metacognition_level": 5, "timestamp": datetime.now().isoformat()}
-
-
 def get_static_level5_capabilities() -> Dict[str, Any]:
     """获取静态Level 5能力"""
     return {
@@ -48,12 +38,6 @@ def get_static_level5_capabilities() -> Dict[str, Any]:
         ],
         "level": 5,
     }
-
-
-def system_monitor() -> Dict[str, Any]:
-    """系统监控"""
-    # Simplified version - actual implementation would use psutil
-    return {"cpu_usage": 23.5, "memory_usage": 45.7, "timestamp": datetime.now().isoformat()}
 
 
 @dataclass

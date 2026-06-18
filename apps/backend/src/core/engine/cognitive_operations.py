@@ -40,15 +40,6 @@ class CognitiveOp(Enum):
 # Can be overridden per operation via state_matrix config
 SPATIAL_RATIO: Tuple[float, float, float] = (1.0, 0.3, 0.15)
 
-def _get_spatial_config(key: str, default) -> str:
-    """Get spatial config."""
-    try:
-        from core.config_loader import get_angela_config
-        return get_angela_config().get_authority("angela_core", {}).get("spatial_math", {}).get(key, default)
-    except Exception:
-        logger.warning(f"_get_spatial_config({key}) failed, using default", exc_info=True)
-        return default
-
 
 def compute_spatial_influence_factor(
     dimensions: Dict[str, Any], source: str, target: str

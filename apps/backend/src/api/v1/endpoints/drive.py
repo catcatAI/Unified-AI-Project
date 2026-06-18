@@ -27,11 +27,11 @@ def _safe_drive_dest(folder_path: str, file_name: str) -> Path:
     """
     base = Path(folder_path).resolve()
     root = _DRIVE_DATA_ROOT.resolve()
-    if not str(base).startswith(str(root)):
+    if not (base == root or base.is_relative_to(root)):
         base = root
     safe_name = Path(file_name).name or "unnamed_file"
     dest = (base / safe_name).resolve()
-    if not str(dest).startswith(str(base)):
+    if not (dest == base or dest.is_relative_to(base)):
         raise HTTPException(status_code=400, detail="Invalid file name")
     return dest
 
@@ -138,14 +138,17 @@ class DocumentParser:
             try:
                 import openpyxl
                 wb = openpyxl.load_workbook(path, read_only=True)
-                lines = []
-                for sheet in wb.sheetnames:
-                    ws = wb[sheet]
-                    for row in ws.iter_rows(values_only=True):
-                        line = " | ".join(str(c) if c is not None else "" for c in row)
-                        if line.strip():
-                            lines.append(line)
-                return "\n".join(lines)
+                try:
+                    lines = []
+                    for sheet in wb.sheetnames:
+                        ws = wb[sheet]
+                        for row in ws.iter_rows(values_only=True):
+                            line = " | ".join(str(c) if c is not None else "" for c in row)
+                            if line.strip():
+                                lines.append(line)
+                    return "\n".join(lines)
+                finally:
+                    wb.close()
             except ImportError:
                 return f"[Spreadsheet: {path.name}]"
             except Exception:

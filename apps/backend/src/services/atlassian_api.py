@@ -129,7 +129,7 @@ async def get_atlassian_status() -> dict:
     return atlassian_bridge.get_status()
 
 @atlassian_router.get("/confluence/spaces")
-async def get_spaces() -> str:
+async def get_spaces() -> dict:
     """Get spaces."""
     result = await atlassian_bridge.get_confluence_spaces()
     if not result["success"]:
@@ -137,7 +137,7 @@ async def get_spaces() -> str:
     return result
 
 @atlassian_router.get("/jira/projects")
-async def get_projects() -> str:
+async def get_projects() -> dict:
     """Get projects."""
     result = await atlassian_bridge.get_jira_projects()
     if not result["success"]:
@@ -145,7 +145,7 @@ async def get_projects() -> str:
     return result
 
 @atlassian_router.post("/jira/issues")
-async def create_issue(issue: JiraIssueCreate) -> str:
+async def create_issue(issue: JiraIssueCreate) -> dict:
     """Create issue."""
     result = await atlassian_bridge.create_jira_issue(
         issue.project_key, 

@@ -399,7 +399,7 @@ class AnchorLearningEngine:
             kw = self.get_top_keywords(axis, top_n=5)
             if kw:
                 strong_kw = [(w, s) for w, s in kw if s > 0.15]
-                if strong_kw and len(self._update_counts.get(axis, 0)) > 0:
+                if strong_kw and self._update_counts.get(axis, 0) > 0:
                     suggestions.append({
                         "type": "intent_keyword",
                         "axis": axis,

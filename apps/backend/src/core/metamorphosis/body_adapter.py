@@ -284,9 +284,6 @@ class BodyAdapter:
         if source_major == target_major:
             return CompatibilityLevel.FULL
 
-        if source_major == "6" and target_major == "6":
-            return CompatibilityLevel.PARTIAL
-
         if int(target_major) > int(source_major):
             return CompatibilityLevel.LIMITED
 

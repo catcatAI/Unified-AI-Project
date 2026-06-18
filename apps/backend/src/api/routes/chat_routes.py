@@ -88,7 +88,7 @@ class TTLSessionManager:
             self._purge_expired()
             return session_id in self._sessions
 
-    def items(self) -> str:
+    def items(self) -> list:
         """Execute the items operation."""
         with self._lock:
             self._purge_expired()
@@ -487,23 +487,7 @@ async def _handle_chat_request(
         }
     except asyncio.CancelledError:
         logger.info("Client disconnected mid-response, cancelling")
-        try:
-            _cancel_text = _get_ed3n_engine().process(
-                "timeout_response", context={"fallback": True}, depth="reflex"
-            )
-        except Exception as e:
-            logger.debug(f"ED3N fallback failed in cancel handler: {e}")
-            _cancel_text = "抱歉，我目前無法回應，請稍後再試。"
-        return {
-            "response_text": _cancel_text,
-            "source": "fallback-disconnect",
-            "schema_version": _schema_ver,
-            "truncation_message": "",
-            "emotion": "neutral",
-            "emotion_confidence": 0.5,
-            "emotion_intensity": 0.5,
-            "session_id": session_id,
-        }
+        raise
     except Exception as e:
         logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
         raise RuntimeError(f"chat request failed: {e}")

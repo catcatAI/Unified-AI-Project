@@ -34,7 +34,7 @@ class AudioService:
         if not isinstance(input_data, dict):
             return {"error": "Invalid input format for audio processing"}
         if input_data.get("scan_and_identify"):
-            return await self.speech_to_text(input_data.get("audio_data", b""))
+            return await self.scan_and_identify(input_data.get("audio_data", b""))
         return {"error": "Invalid input format for audio processing"}
 
     def set_peer_services(self, services: dict) -> None:

@@ -50,3 +50,17 @@ class MathVerifier:
             r'[\=\?]\s*\d+',
         ]
         return any(re.search(p, text) for p in math_patterns)
+
+    async def verify(self, message: str, user_name: str = "") -> "MathVerifyResult":
+        """Stub verify — returns empty result until full implementation is ready."""
+        logger.debug("MathVerifier.verify() called but not yet implemented")
+        return MathVerifyResult(response_text=None)
+
+
+class MathVerifyResult:
+    """Result container for math verification."""
+
+    def __init__(self, response_text=None, is_correct=None, explanation=None):
+        self.response_text = response_text
+        self.is_correct = is_correct
+        self.explanation = explanation

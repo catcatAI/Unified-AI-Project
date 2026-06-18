@@ -102,7 +102,7 @@ def _handle_repl_command(text: str, service: Any, history: list[str]) -> tuple[s
     if cmd in ("tickle", "tkl"):
         return ("system", _handle_tickle_command(args))
 
-    if cmd in ("model", "m") and args:
+    if cmd in ("model",) and args:
         return ("system", _handle_model_command(args, service))
 
     if cmd in ("drive", "gd", "cloud"):

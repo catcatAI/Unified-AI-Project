@@ -79,12 +79,6 @@ class ConflictDetector:
             core_traits = set()
             if card.core_trait:
                 core_traits.add(card.core_trait)
-            if len(core_traits) > 1:
-                conflicts.append(Conflict(
-                    type=ConflictType.NARRATIVE_DEVICE,
-                    dimension="tone",
-                    description=f"Multiple core traits across sources: {core_traits}",
-                ))
         return conflicts
 
 

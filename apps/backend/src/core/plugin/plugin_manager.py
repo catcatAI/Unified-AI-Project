@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, field
 
-from core.plugin.hook_registry import HookRegistry, hook_registry as _default_registry
+from core.plugin.hook_registry import HookRegistry, HookResult, hook_registry as _default_registry
 
 logger = logging.getLogger(__name__)
 

@@ -362,7 +362,7 @@ class SessionManager:
                 except Exception as e:
                     logger.warning(f"[SessionManager] Broadcast to {session.client_id} failed: {e}", exc_info=True)
                     self._stats.failed_messages += 1
-                    await self._unregister_internal(session.client_id, f"Broadcast failed: {e}")
+                    await self.unregister(session.client_id, f"Broadcast failed: {e}")
         
         return sent_count
     

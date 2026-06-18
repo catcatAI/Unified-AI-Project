@@ -40,9 +40,15 @@ def initialize_all_services(manager) -> tuple:
     from api.v1.endpoints._deps import set_economy_manager as _set_econ
 
     pet_manager = pet.get_pet_manager()
-    digital_life.broadcast_callback = manager.broadcast
-    pet.set_biological_integrator(digital_life.biological_integrator)
-    pet.set_economy_manager(economy_manager)
+    if digital_life is not None:
+        digital_life.broadcast_callback = manager.broadcast
+    if pet_manager is not None:
+        pet.set_biological_integrator(
+            digital_life.biological_integrator if digital_life else None
+        )
+        pet.set_economy_manager(economy_manager)
+    else:
+        logger.warning("[Wiring] PetManager not available, skipping pet wiring")
     _set_econ(economy_manager)
 
     try:
@@ -63,7 +69,8 @@ def initialize_all_services(manager) -> tuple:
             }
         )
 
-    pet_manager.broadcast_callback = pet_broadcast_wrapper
+    if pet_manager is not None:
+        pet_manager.broadcast_callback = pet_broadcast_wrapper
 
     def bio_event_callback(event_name, event_data) -> None:
         """Bio event callback."""

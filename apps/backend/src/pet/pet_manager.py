@@ -393,7 +393,7 @@ class PetManager:
             )
 
             # Check if pet needs to take action
-            await self.check_survival_needs()
+            await self._check_survival_needs_inner()
             await self._notify_state_change("decay")
 
     async def check_survival_needs(self) -> None:
@@ -406,67 +406,71 @@ class PetManager:
         - 记录状态变更
         """
         async with self._state_lock:
-            if not self.economy_manager:
-                logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!")
-                return
+            await self._check_survival_needs_inner()
 
+    async def _check_survival_needs_inner(self) -> None:
+        """Inner survival check implementation (must be called with _state_lock held)."""
+        if not self.economy_manager:
+            logger.error(f"DEBUG: Pet '{self.pet_id}' has NO linked economy_manager!")
+            return
+
+        logger.info(
+            f"DEBUG: Pet '{self.pet_id}' checking survival needs. Hunger: {self.state['hunger']}, Energy: {self.state['energy']}, Health: {self.state['health']}"
+        )
+
+        # ========== 修复：改进的生存需求检查（优先级排序）==========
+
+        # 1. Health Check (Highest Priority)
+        if self.state["health"] < self.thresholds["critical"]:
             logger.info(
-                f"DEBUG: Pet '{self.pet_id}' checking survival needs. Hunger: {self.state['hunger']}, Energy: {self.state['energy']}, Health: {self.state['health']}"
+                f"Pet '{self.pet_id}' is critically ill ({self.state['health']}). Attempting to heal."
             )
+            result = self.economy_manager.purchase_item(self.pet_id, "medical_kit")
+            if result["success"]:
+                self.state["health"] += result["effects"].get("health", 30)
+                self.add_action("heal_autonomous", {"item": "medical_kit"})
+                await self._notify_state_change("autonomous_purchase_health")
+            self._validate_state()
 
-            # ========== 修复：改进的生存需求检查（优先级排序）==========
+        # 2. Hunger Check (High Priority)
+        elif self.state["hunger"] > (100 - self.thresholds["critical"]):
+            logger.info(
+                f"Pet '{self.pet_id}' is critically hungry ({self.state['hunger']}). Attempting purchase."
+            )
+            result = self.economy_manager.purchase_item(self.pet_id, "premium_bio_pellets")
+            if result["success"]:
+                self.state["hunger"] -= result["effects"].get("hunger", 30)
+                self.state["happiness"] += result["effects"].get("happiness", 10)
+                self.add_action("eat_autonomous", {"item": "premium_bio_pellets"})
+                await self._notify_state_change("autonomous_purchase_food")
+            self._validate_state()
 
-            # 1. Health Check (Highest Priority)
-            if self.state["health"] < self.thresholds["critical"]:
-                logger.info(
-                    f"Pet '{self.pet_id}' is critically ill ({self.state['health']}). Attempting to heal."
-                )
-                result = self.economy_manager.purchase_item(self.pet_id, "medical_kit")
-                if result["success"]:
-                    self.state["health"] += result["effects"].get("health", 30)
-                    self.add_action("heal_autonomous", {"item": "medical_kit"})
-                    await self._notify_state_change("autonomous_purchase_health")
-                self._validate_state()
+        # 3. Energy Check (Medium Priority)
+        elif self.state["energy"] < self.thresholds["critical"]:
+            logger.info(
+                f"Pet '{self.pet_id}' is critically tired ({self.state['energy']}). Attempting purchase."
+            )
+            result = self.economy_manager.purchase_item(self.pet_id, "digital_energy_drink")
+            if result["success"]:
+                self.state["energy"] += result["effects"].get("energy", 30)
+                self.add_action("drink_autonomous", {"item": "digital_energy_drink"})
+                await self._notify_state_change("autonomous_purchase_energy")
+            self._validate_state()
 
-            # 2. Hunger Check (High Priority)
-            elif self.state["hunger"] > (100 - self.thresholds["critical"]):
-                logger.info(
-                    f"Pet '{self.pet_id}' is critically hungry ({self.state['hunger']}). Attempting purchase."
-                )
-                result = self.economy_manager.purchase_item(self.pet_id, "premium_bio_pellets")
-                if result["success"]:
-                    self.state["hunger"] -= result["effects"].get("hunger", 30)
-                    self.state["happiness"] += result["effects"].get("happiness", 10)
-                    self.add_action("eat_autonomous", {"item": "premium_bio_pellets"})
-                    await self._notify_state_change("autonomous_purchase_food")
-                self._validate_state()
+        # 4. Happiness Check (Low Priority)
+        elif self.state["happiness"] < self.thresholds["critical"]:
+            logger.info(
+                f"Pet '{self.pet_id}' is critically sad ({self.state['happiness']}). Attempting to cheer up."
+            )
+            result = self.economy_manager.purchase_item(self.pet_id, "toy")
+            if result["success"]:
+                self.state["happiness"] += result["effects"].get("happiness", 20)
+                self.add_action("play_autonomous", {"item": "toy"})
+                await self._notify_state_change("autonomous_purchase_happiness")
+            self._validate_state()
 
-            # 3. Energy Check (Medium Priority)
-            elif self.state["energy"] < self.thresholds["critical"]:
-                logger.info(
-                    f"Pet '{self.pet_id}' is critically tired ({self.state['energy']}). Attempting purchase."
-                )
-                result = self.economy_manager.purchase_item(self.pet_id, "digital_energy_drink")
-                if result["success"]:
-                    self.state["energy"] += result["effects"].get("energy", 30)
-                    self.add_action("drink_autonomous", {"item": "digital_energy_drink"})
-                    await self._notify_state_change("autonomous_purchase_energy")
-                self._validate_state()
-
-            # 4. Happiness Check (Low Priority)
-            elif self.state["happiness"] < self.thresholds["critical"]:
-                logger.info(
-                    f"Pet '{self.pet_id}' is critically sad ({self.state['happiness']}). Attempting to cheer up."
-                )
-                result = self.economy_manager.purchase_item(self.pet_id, "toy")
-                if result["success"]:
-                    self.state["happiness"] += result["effects"].get("happiness", 20)
-                    self.add_action("play_autonomous", {"item": "toy"})
-                    await self._notify_state_change("autonomous_purchase_happiness")
-                self._validate_state()
-
-            # ========== 修复：记录状态变更 ==========
-            self._record_state_change("survival_check")
+        # ========== 修复：记录状态变更 ==========
+        self._record_state_change("survival_check")
 
     def set_economy_manager(self, eco_manager) -> None:
         """Link the economy manager for autonomous spending."""
