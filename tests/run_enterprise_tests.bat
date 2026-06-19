@@ -1,6 +1,6 @@
 @echo off
 echo 🚀 启动企业级测试套件...
-cd /d "D:\Projects\Unified-AI-Project"
+cd /d "%~dp0.."
 
 REM 激活虚拟环境（如果存在）
 if exist "venv\Scripts\activate.bat" (

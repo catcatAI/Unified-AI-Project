@@ -138,6 +138,7 @@ class ED3NEngine:
         snn_mode: bool = False,
         auto_load_presets: bool = True,
         telemetry: Optional[TelemetryCollector] = None,
+        continuous_learning: Optional[Any] = None,
     ):
         self.reflex = reflex or ReflexLayer()
         self.telemetry = telemetry or TelemetryCollector()
@@ -154,6 +155,7 @@ class ED3NEngine:
         self.image_encoder: Optional[ImageEncoder] = None
         self.audio_encoder: Optional[AudioEncoder] = None
         self.cross_modal_trainer: Optional[CrossModalTrainer] = None
+        self._continuous_learning = continuous_learning
         self.enable_multimodal()
         if auto_load_presets:
             self.load_presets()
@@ -180,7 +182,13 @@ class ED3NEngine:
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
         with self._process_lock:
-            return self._process_unlocked(input_text, context, depth)
+            output = self._process_unlocked(input_text, context, depth)
+        self._maybe_learn(input_text, output, context or {})
+        return output
+
+    def _maybe_learn(self, input_text: str, output_text: str, context: Dict[str, Any]) -> None:
+        if self._continuous_learning is not None and output_text:
+            self._continuous_learning.process_interaction(input_text, output_text, context)
 
     def _reflex_match(self, input_text: str) -> Optional[str]:
         return self.process_reflex(input_text)
@@ -623,6 +631,9 @@ class ED3NEngine:
                     decoder.max_length = old
             return decoder.generate_text(input_text, temperature)
 
+    def learn_reflex(self, pattern: str, response: str) -> None:
+        self.reflex.add_pattern(pattern, response)
+
     def save(self, path: str) -> None:
         """Save full ED3N engine state."""
         import json
@@ -638,6 +649,9 @@ class ED3NEngine:
             json.dump(state, f, ensure_ascii=False, indent=2)
         dict_path = path.replace(".json", "_dictionary.json")
         self.dictionary.export_to_json(dict_path)
+        if self._continuous_learning is not None:
+            cl_path = path.replace(".json", "_continuous_learning.json")
+            self._continuous_learning.save(cl_path)
         logger.info("ED3NEngine saved to %s", path)
 
     def load(self, path: str) -> None:
@@ -663,6 +677,12 @@ class ED3NEngine:
         dict_path = path.replace(".json", "_dictionary.json")
         if os.path.exists(dict_path):
             self.dictionary.import_from_json(dict_path)
+        if self._continuous_learning is not None:
+            cl_path = path.replace(".json", "_continuous_learning.json")
+            if os.path.exists(cl_path):
+                self._continuous_learning = type(self._continuous_learning).load(
+                    cl_path, self, None
+                )
         logger.info("ED3NEngine loaded from %s", path)
 
     def train(

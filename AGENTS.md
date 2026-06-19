@@ -83,15 +83,18 @@ pre-commit run --all-files
 > 
 > All 5 alias exports applied (~10 lines total). No re-implementation needed.
 
-> ✅ **NOTE (Updated 2026-06-19)**: Phase A complete — dictionary data pipeline.
+> ✅ **NOTE (Updated 2026-06-19)**: Phases A-D complete.
 > - **Phase A1-A4**: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
 > - **Data volume**: 132MB JSON (35.8+57.7+38.8MB) — 110MB → 242MB total growth
 > - **Performance fix**: `_dirty` flag in `dictionary_layer.py` prevents redundant index rebuilds; `encode_soft` uses keyword/bigram index for candidate filtering instead of full O(n) scan — query speed improved 60-1000x
 > - **DictionaryLayer**: `bulk_add_entries()` method, `max_entries` default increased to 500000
+> - **Phase C (GARDEN numpy backend)**: SNN dual backend (torch or numpy) — no hard torch dependency. Cross-platform: CPU/GPU, Win/Linux/macOS. 201 GARDEN tests pass.
+> - **Phase D (ED3N Engine强化)**: `ContinuousLearningPipeline` wired into `ED3NEngine` (optional), `learn_reflex()` method, save/load CL state, `__init__.py` exports.
+> - **Cross-platform fixes**: `image_encoder.py` ImportError handler, `execution_monitor.py` SIGALRM→`_thread.interrupt_main()` on Windows, hardcoded paths fixed, `state_matrix_api.py` encoding.
 > - **ED3N total**: 114 tests — all pass (5.29s, was 14.20s)
-> - **Non-ML total**: 315 tests — all pass (5:00, was 8:48)
+> - **Non-ML total**: 315 tests — all pass (4:13, was 5:00/8:48)
 > - **Zero new external dependencies** — everything uses stdlib + existing project modules
 
 ### JavaScript/TypeScript

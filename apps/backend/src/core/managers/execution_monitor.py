@@ -417,27 +417,28 @@ class ExecutionMonitor:
             timeout: 超時時間(秒)
         """
 
-        def timeout_handler(signum=None, frame=None) -> None:
-            """Execute the timeout handler operation."""
-            raise TimeoutError(f"Operation timed out after {timeout} seconds")
-
-        # 設置信號處理器(僅在Unix系統上)
+        # 設置信號處理器(Unix)或thread中斷(Windows)
         if hasattr(signal, "SIGALRM"):
-            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+            def _unix_handler(signum=None, frame=None) -> None:
+                raise TimeoutError(f"Operation timed out after {timeout} seconds")
+            old_handler = signal.signal(signal.SIGALRM, _unix_handler)
             signal.alarm(int(timeout))
-        else:
-            # Windows fallback using threading.Timer
-            timer = threading.Timer(timeout, timeout_handler)
-            timer.daemon = True
-            timer.start()
-
-        try:
-            yield
-        finally:
-            if hasattr(signal, "SIGALRM"):
+            try:
+                yield
+            finally:
                 signal.alarm(0)
                 signal.signal(signal.SIGALRM, old_handler)
-            else:
+        else:
+            # Windows: use _thread.interrupt_main() to raise in main thread
+            import _thread
+            timer = threading.Timer(timeout, lambda: _thread.interrupt_main())
+            timer.daemon = True
+            timer.start()
+            try:
+                yield
+            except KeyboardInterrupt:
+                raise TimeoutError(f"Operation timed out after {timeout} seconds")
+            finally:
                 timer.cancel()
 
     async def execute_async_command(

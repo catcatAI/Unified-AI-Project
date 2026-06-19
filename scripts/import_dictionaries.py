@@ -30,6 +30,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "apps" / "backend" / "src"))
 
 from ai.ed3n.dictionary_layer import DictionaryLayer
+from core.system.config.magic_numbers import limit_value
 
 
 def import_json(dictionary: DictionaryLayer, path: Path) -> int:
@@ -81,6 +82,7 @@ def main():
     parser = argparse.ArgumentParser(description="Import dictionaries into ED3N")
     parser.add_argument("files", nargs="*", help="JSON files to import")
     parser.add_argument("--engine", action="store_true", help="Create ED3NEngine after import")
+    parser.add_argument("--train", action="store_true", help="Train CoreNetwork on dictionary relations (implies --engine)")
     parser.add_argument("--test", action="store_true", help="Run sample queries after import")
     parser.add_argument(
         "--test-queries",
@@ -89,6 +91,8 @@ def main():
         help="Sample queries for --test",
     )
     args = parser.parse_args()
+    if args.train:
+        args.engine = True
 
     # Determine which files to import
     dict_dir = ROOT / "data" / "dictionaries"
@@ -126,9 +130,55 @@ def main():
     if args.engine:
         logger.info("Creating ED3NEngine …")
         from ai.ed3n.ed3n_engine import ED3NEngine
+        from ai.ed3n.ed3n_trainer import ED3NTrainer
+        from ai.ed3n.training_types import TrainingExample
 
         engine = ED3NEngine(dictionary=dictionary)
         logger.info("ED3NEngine ready with %d dictionary entries", len(dictionary.entries))
+
+        if args.train:
+            logger.info("Starting relation-based co-occurrence training …")
+            trainer = ED3NTrainer(engine)
+            max_examples = limit_value("train.relation.max_examples", 2000)
+            examples: list = []
+            processed = 0
+            t0 = time.perf_counter()
+            for key, entry in dictionary.entries.items():
+                if not entry.relations:
+                    continue
+                text = entry.surface_forms.get("en") or next(iter(entry.surface_forms.values()), key)
+                for rel_type, targets in entry.relations.items():
+                    for tgt_key in targets:
+                        if tgt_key not in dictionary.entries:
+                            continue
+                        tgt_entry = dictionary.entries[tgt_key]
+                        tgt_text = tgt_entry.surface_forms.get("en") or next(iter(tgt_entry.surface_forms.values()), tgt_key)
+                        examples.append(TrainingExample(
+                            input_text=text,
+                            expected_output=tgt_text,
+                            input_keys=[key],
+                            output_keys=[tgt_key],
+                            relation_pairs=[(key, rel_type, tgt_key)],
+                            confidence=entry.confidence * 0.8,
+                        ))
+                        processed += 1
+                        if processed % 500 == 0:
+                            logger.info("  ... built %d training examples", processed)
+                        if processed >= max_examples:
+                            break
+                    if processed >= max_examples:
+                        break
+                if processed >= max_examples:
+                    break
+            build_elapsed = time.perf_counter() - t0
+            if examples:
+                t1 = time.perf_counter()
+                metrics = trainer.train_network_phase(examples)
+                train_elapsed = time.perf_counter() - t1
+                logger.info("Trained on %d relation examples in %.1fs (build=%.1fs, train=%.1fs, loss=%.4f, acc=%.4f)",
+                            len(examples), build_elapsed + train_elapsed, build_elapsed, train_elapsed, metrics.loss, metrics.accuracy)
+            else:
+                logger.warning("No relation examples found for training")
 
         if args.test:
             print()

@@ -20,6 +20,7 @@ from .training_types import (
     make_synthetic_seq_batch,
 )
 from .ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
+from .continuous_learning import ContinuousLearningPipeline
 
 from .step_decoder import StepDecoder
 

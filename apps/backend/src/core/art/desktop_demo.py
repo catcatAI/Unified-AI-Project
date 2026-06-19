@@ -171,7 +171,7 @@ def _create_showcase_file(desktop: Path, timestamp: str, artworks: list) -> Path
 # 3. 安装浏览器: playwright install chromium
 # 4. 运行完整版
 
-cd D:\\Projects\\Unified-AI-Project
+cd path/to/Unified-AI-Project
 python apps/backend/src/core/art/angela_real_creator.py
 ```
 

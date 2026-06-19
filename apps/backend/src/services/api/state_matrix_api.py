@@ -101,13 +101,13 @@ class LoadStateRequest(BaseModel):
 # Sync helpers for file I/O (called via asyncio.to_thread to avoid blocking the event loop)
 def _write_state_sync(filepath: str, state: dict) -> None:
     import json
-    with open(filepath, "w") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         json.dump(state, f)
 
 
 def _read_state_sync(filepath: str) -> dict:
     import json
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         return json.load(f)
 
 

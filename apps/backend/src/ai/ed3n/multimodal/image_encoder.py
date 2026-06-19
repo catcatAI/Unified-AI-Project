@@ -149,7 +149,7 @@ class ImageEncoder:
                             keys.append(self._key_for_concept(f"rgb_{r}_{g}_{b}", "color"))
                 except (ValueError, OSError, TypeError):
                     logger.debug("PIL color quantization failed")
-        except (IOError, ValueError, TypeError, AttributeError) as e:
+        except (IOError, ValueError, TypeError, AttributeError, ImportError) as e:
             logger.debug("PIL fallback failed: %s", e)
             keys.append(self._key_for_concept("unrecognized", "format"))
         return keys
