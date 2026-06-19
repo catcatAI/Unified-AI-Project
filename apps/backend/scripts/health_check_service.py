@@ -86,24 +86,24 @@ def full_health_check():
         _ = MultiLLMService()  # 使用下划线忽略未使用变量警告
         print("✅ 多LLM服务初始化完成")
         
-        # 检查ChromaDB连接
+        # 检查向量存儲連接（自動檢測後端）
         try:
             from apps.backend.src.ai.memory.vector_store import VectorMemoryStore
             vector_store = VectorMemoryStore()
-            # 检查客户端是否已初始化并且不是None
             if vector_store.client is not None:
-                # 使用明确的类型注解避免Any类型
                 client: Any = vector_store.client
                 if hasattr(client, 'heartbeat'):
                     _ = client.heartbeat()
-                    # 忽略返回值,只检查方法是否能正常调用
-                    print("✅ ChromaDB连接正常")
+                    print("✅ ChromaDB向量存儲連接正常")
                 else:
-                    print("⚠️ ChromaDB客户端缺少heartbeat方法")
+                    print("⚠️ ChromaDB客戶端缺少heartbeat方法")
+            elif vector_store._numpy_backend is not None:
+                count = len(vector_store._numpy_backend)
+                print(f"✅ Numpy向量存儲運行中（{count} 條向量，位於 {vector_store.persist_directory}）")
             else:
-                print("⚠️ ChromaDB客户端未初始化")
+                print("⚠️ 向量存儲未初始化")
         except Exception as e:
-            print(f"⚠️ ChromaDB连接检查失败: {e}")
+            print(f"⚠️ 向量存儲檢查失敗: {e}")
         
         return True
     except Exception as e:

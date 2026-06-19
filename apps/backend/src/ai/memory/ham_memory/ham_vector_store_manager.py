@@ -4,9 +4,11 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
-from ai.memory.vector_store import VectorMemoryStore  # Assuming vector_store is one level up
+import numpy as np
+
+from ai.memory.vector_store import VectorMemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,63 @@ class HAMVectorStoreManager:
                 )
         except Exception as e:  # broad exception acceptable: storage failure should be logged gracefully
             logger.error(f"Error storing semantic vector for {memory_id}: {e}", exc_info=True)
+
+    async def embed_text(self, text: str) -> Optional[np.ndarray]:
+        """Generate an embedding vector for text using the numpy hashing trick.
+
+        Falls back to the same algorithm used by ``_NumpyBackend._embed``.
+        Returns ``None`` if the vector store is not available.
+        """
+        if self.vector_store and self.vector_store._numpy_backend is not None:
+            from ai.memory.vector_store import _NumpyBackend
+            return _NumpyBackend._embed(text)
+        if self.chroma_collection is not None:
+            from ai.memory.ham_utils import generate_embedding
+            return generate_embedding(text)
+        return None
+
+    async def query_similar(
+        self, query_embedding: np.ndarray, n_results: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Query similar vectors by embedding.
+
+        Returns a list of dicts with keys ``id``, ``document``, ``distance``.
+        Returns an empty list when the store is unavailable.
+        """
+        if self.vector_store and self.vector_store._numpy_backend is not None:
+            backend = self.vector_store._numpy_backend
+            n = len(backend)
+            if n == 0:
+                return []
+            sims = backend.vectors @ query_embedding
+            topk = min(n_results, n)
+            indices = np.argpartition(-sims, topk - 1)[:topk]
+            sorted_idx = indices[np.argsort(-sims[indices])]
+            return [
+                {
+                    "id": backend.ids[i],
+                    "document": backend.documents[i],
+                    "distance": float(1.0 - sims[i]),
+                }
+                for i in sorted_idx
+            ]
+        if self.chroma_collection is not None:
+            try:
+                raw = self.chroma_collection.query(
+                    query_embeddings=[query_embedding.tolist()], n_results=n_results
+                )
+                results = []
+                for i in range(len(raw.get("ids", [[]])[0])):
+                    results.append({
+                        "id": raw["ids"][0][i],
+                        "document": raw["documents"][0][i] if raw.get("documents") else "",
+                        "distance": raw["distances"][0][i] if raw.get("distances") else 0.0,
+                    })
+                return results
+            except Exception as e:
+                logger.warning("ChromaDB query_similar failed: %s", e)
+                return []
+        return []
 
     def close(self) -> None:
         """Close and release resources."""

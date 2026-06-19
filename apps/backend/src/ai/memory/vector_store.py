@@ -270,7 +270,11 @@ class VectorMemoryStore:
         if self._numpy_backend is not None:
             self._numpy_backend.persist()
 
-    def __len__(self) -> int:
+    @property
+    def vector_count(self) -> int:
         if self._numpy_backend is not None:
             return len(self._numpy_backend)
         return 0
+
+    def __bool__(self) -> bool:
+        return True

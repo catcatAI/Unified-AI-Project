@@ -136,12 +136,12 @@ class TestVectorMemoryStoreNumpyBackend:
     @pytest.mark.asyncio
     async def test_add_memory_success(self, store):
         await store.add_memory("mem1", "hello world", {"key": "val"})
-        assert len(store) == 1
+        assert len(store._numpy_backend) == 1
 
     @pytest.mark.asyncio
     async def test_add_memory_no_metadata(self, store):
         await store.add_memory("mem2", "content")
-        assert len(store) == 1
+        assert len(store._numpy_backend) == 1
 
     @pytest.mark.asyncio
     async def test_add_memory_not_initialized(self):
@@ -186,7 +186,7 @@ class TestVectorMemoryStoreNumpyBackend:
 
         with patch("ai.memory.vector_store._lazy_chromadb", return_value=None):
             store2 = VectorMemoryStore(persist_directory=persist_dir)
-            assert len(store2) == 1
+            assert len(store2._numpy_backend) == 1
             results = await store2.semantic_search("hello", limit=5)
             assert "persist1" in results["ids"][0]
 
@@ -198,7 +198,7 @@ class TestVectorMemoryStoreNumpyBackend:
                 f.write("not json")
             with patch("ai.memory.vector_store._lazy_chromadb", return_value=None):
                 store = VectorMemoryStore(persist_directory=tmpdir)
-                assert len(store) == 0
+                assert len(store._numpy_backend) == 0
 
 
 class TestVectorMemoryStoreChromadbBackend:
@@ -231,7 +231,7 @@ async def test_backward_compatible_add_memory():
         with tempfile.TemporaryDirectory() as tmpdir:
             store = VectorMemoryStore(persist_directory=tmpdir)
             await store.add_memory("mem1", "hello world", {"key": "val"})
-            assert len(store) == 1
+            assert len(store._numpy_backend) == 1
 
 
 import numpy as np

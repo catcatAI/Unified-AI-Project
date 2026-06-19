@@ -96,6 +96,8 @@ pre-commit run --all-files
 > - **ED3N total**: 114 tests — all pass (5.29s, was 14.20s)
 > - **Non-ML total**: 315 tests — all pass (4:13, was 5:00/8:48)
 > - **Zero new external dependencies** — everything uses stdlib + existing project modules
+> - **Phase 3.3 (Vector store persistence)**: Dual-backend (chromadb/numpy+JSON) `VectorMemoryStore`. Auto-detects chromadb; falls back to pure numpy + JSON for cross-platform zero-dep persistence. `VECTOR_STORE_PATH` env var controls storage dir (default `data/vector_store/`). 25 tests pass. `ham_utils.py` stubs → real implementations (cosine similarity, embedding, uuid, timestamp).
+> - **HAM wiring fix**: `ham_vector_store_manager.py` now has `embed_text()` / `query_similar()` methods (were missing → semantic search was dead code). End-to-end numpy backend: embed → store → search → persist → reload verified.
 
 ### JavaScript/TypeScript
 

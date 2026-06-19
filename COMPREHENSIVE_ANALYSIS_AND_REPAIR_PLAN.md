@@ -85,7 +85,7 @@ Response（混合響應）
 1. **非神經網絡**: ED3N 的 CoreNetwork 是基於字典的圖，不是神經網絡。唯一真實的 NN 是 GARDEN 的 TensorSNNCore，但詞彙量僅 ~60，權重矩陣僅 14KB。
 2. **無真正學習**: Hebbian 更新只是共現加權，沒有反向傳播、優化器、驗證集、測試集。`continuous_learning.py` 已從 50L stub 強化為完整實現（~370L）— ring buffer 經驗回放、記憶合併、排程訓練，並可選注入 ED3NEngine。
 3. **無真正推理**: 多步驟處理只是字符串按 "然後" 拆分後獨立處理再拼接，步驟間無狀態共享。
-4. **向量存儲未持久化** (⚠️ Phase 3.3 待辦): ChromaDB 默認無 `persist_directory`，重啟後資料丟失。
+4. **向量存儲未持久化** (Phase 3.3 ✅ 已解決): `VectorMemoryStore` 雙後端（chromadb/numpy+JSON），`VECTOR_STORE_PATH` 環境變數控制持久化目錄，重啟後資料保留。
 5. **LLM API 密鑰未配置**: OpenAI 密鑰是佔位符 `your_openai_api_key_here`，Anthropic 無密鑰，僅 Google Gemini 有真實密鑰但需要配置啟用。
 
 ### 2.5 工程亮點
@@ -353,18 +353,19 @@ addopts = [
 - 等待 PyTorch 官方支援 Python 3.14 後，torch 後端自動生效
 - 或在 CI 中使用 Python 3.11 矩陣運行 ML 測試
 
-#### 3.3 完善向量存儲持久化（❌ 未處理 — Phase 3.3 待辦）
+#### 3.3 完善向量存儲持久化（Phase 3.3 — 已完成 ✅）
 
-```python
-# 當前 (vector_store.py):
-# persist_directory 默認 None → 重啟後資料遺失
+**方案**: 雙後端自動切換（chromadb / numpy+JSON），統一 API。
 
-# 修復方案：
-# 設置默認持久化路徑
-# 在 .env 添加 VECTOR_STORE_PATH 並預設 apps/backend/chroma_db
-```
-
-**狀態**: 尚未處理。由於 chromadb 在 Python 3.14 上也導入掛起，目前優先級低於其他任務。
+**實作** (`apps/backend/src/ai/memory/vector_store.py`):
+- `_ChromadbBackend`: 使用 `PersistentClient(path=persist_directory)`，持久化到指定目錄
+- `_NumpyBackend`: 字符 bigram hashing embedding (512-dim) + `.npy`/`metadata.json` 持久化，stdlib-only，跨平台
+- `VectorMemoryStore` 自動檢測：chromadb 可導入 → 使用 chromadb；否則使用 numpy
+- 支援 `VECTOR_STORE_PATH` 環境變數（默認 `data/vector_store/`）
+- `ham_utils.py` stub → 實作：`calculate_cosine_similarity()`, `generate_embedding()`, `get_current_utc_timestamp()`, `is_valid_uuid()`
+- `ham_vector_store_manager.py` 補齊 `embed_text()` / `query_similar()` 方法（原為 dead code）
+- `health_check_service.py` 向量存儲檢查支援雙後端
+- **25 測試全部通過**（numpy 後端 17 + chromadb 模擬 6 + 初始化/降級 3）
 
 #### 3.4 Unicode 正規化層（Phase 3B — 已完成 ✅）
 
@@ -448,7 +449,7 @@ except ImportError as e:
 |------|---------|-------------|------|
 | ED3N 字典 | 893L 查詢邏輯 | **460,281 條**真實條目（125K CC-CEDICT + 217K JMdict + 117K WordNet 3.0） | 圖書館的書架塞滿了 |
 | GARDEN SNN | 430L 網路實作 | ~60 神經元, numpy/torch 雙後端, 201 測試通過 | 引擎可跨平台運轉 |
-| 向量記憶 | 60L store 邏輯 | 105MB JSON（未使用，因 chromadb 導入掛起） | 硬碟有資料但沒索引 |
+| 向量記憶 | 雙後端 store（chromadb/numpy+JSON） | 105MB JSON + numpy 持久化（雙後端自動切換） | 硬碟有資料且持久化了 |
 | 訓練管線 | ContinuousLearningPipeline ~370L | ring buffer + 回放 + 可選注入 ED3NEngine | 有訓練場且有運動員 |
 
 **Phase A-D 總計增長**: 132MB JSON（35.8+57.7+38.8MB）— 110MB → 242MB 總體增長。零 padding，全來自真實語料庫。
@@ -672,7 +673,8 @@ Phase F (長期): 多模態擴展
 
 | Phase | ED3N 字典 | CoreNetwork | GARDEN SNN | 向量記憶 | 總計 |
 |-------|-----------|-------------|------------|---------|------|
-| Phase 1-3 | 3 條硬編碼 | 硬編碼 | 60 神經元 (torch) | 105MB raw | ~110MB |
+| Phase 1-3 | 3 條硬編碼 | 硬編碼 | 60 神經元 (torch) | 105MB raw (無持久化) | ~110MB |
+| **3.3** ✅ | 同上 | 同上 | 同上 | **持久化 (numpy+JSON/chromadb)** | ~110MB |
 | **A** ✅ | **460K→132MB** | 硬編碼 | 60 神經元 | 105MB raw | **~242MB** |
 | **B** ✅ | **460K→132MB** | **22.6K 關係→~2MB** | 60 神經元 | 105MB raw | **~244MB** |
 | **C** ✅ | **460K→132MB** | **22.6K 關係→~2MB** | **60 神經元 (numpy/torch)** | 105MB raw | **~244MB** |
