@@ -1,7 +1,7 @@
 # Angela AI 專案全面分析與修復計畫
 
 > **生成日期**: 2026-06-18  
-> **最後更新**: 2026-06-19  
+> **最後更新**: 2026-06-19 (階段性審查)  
 > **分析範圍**: 架構、測試、程式碼品質、智能程度、修復方案  
 > **專案版本**: 7.5.0-dev
 
@@ -16,6 +16,7 @@
 5. [問題優先級矩陣](#5-問題優先級矩陣)
 6. [修復計畫](#6-修復計畫)
 7. [改善方案](#7-改善方案)
+8. [階段性審查](#8-階段性審查-2026-06-19)
 
 ---
 
@@ -714,6 +715,159 @@ Phase F (長期): 多模態擴展
 
 ---
 
+## 8. 階段性審查 (2026-06-19)
+
+> 基於實際測試運行、代碼走讀、運行時驗證的跨階段審查。
+> 比對初始計畫 (2026-06-18) 的宣稱 vs 審查日 (2026-06-19) 的實際狀態。
+
+### 8.1 計畫宣稱 vs 實際狀態對照表
+
+| 計畫宣稱 | 實際驗證結果 | 差異判定 |
+|---------|-------------|---------|
+| "315 非 ML 測試全部通過" | ✅ `tests/ai/` + `tests/ai/ed3n/` + `tests/ai/garden/` 各子集確實全部通過。但 `tests/core/`、`tests/ai/memory/` 有大量未列入計數的預先存在失敗。 | **部分正確** — 計數方式是自選子集，非全專案總數 |
+| "GARDEN 201 測試全部通過" | ❌ `test_phase4_integration.py`（67 tests）因 chromadb 導入掛起**無法執行**。實際可執行並通過：`test_binary_store 15` + `test_dictionary 42` + `test_kg_import 26/27` + `test_garden_engine 50` + `test_snn_core 34` = **167/168 通過**，1個超時。 | **高估** — 含無法執行的測試 |
+| "ED3N 114 測試全部通過 (5.29s)" | ✅ **通過** — 114/114 在 12.41s 通過（時間稍長但可接受） | **符合** |
+| "測試架構清理 ✅ conftest 導入路徑修正" | ⚠️ 僅修正 2 個 `conftest.py`。`test_phase4_integration.py` 等文件仍使用 `apps.backend.src.ai.garden.*` 絕對路徑（11 處） | **範圍不足** — 僅修了 fixtures，未修正式測試文件 |
+| "Phase 3A: 導入超時保護(5文件) ✅" | ✅ 5 個文件皆有 timeout 保護。但 `garden_engine.py` 導入 `TensorSNNCore` 時 torch 警告未阻擋，實際仍會觸發 pynvml 警告。 | **符合** |
+| "向量存儲持久化 (Phase 3.3) ✅" | ✅ VectorMemoryStore 雙後端正常運作。runtime 測試確認 numpy/chromadb 後端自動選擇正確。25 測試通過。 | **符合** |
+| "460K 條目匯入 ✅" | ✅ 資料存在 `data/dictionaries/*.json`。但 `ED3NEngine.get_shared()` 啟動時僅載入 **46 條硬編碼 presets**，460K 條目未載入。 | **數據管道完成，運行時接線缺失** |
+| "CrisisSystem 19/19 通過 ✅" | ✅ 通過 | **符合** |
+| "conftest 導入路徑修正 ✅" | ⚠️ 僅修了 2 個檔案，尚有 11+ 個檔案使用舊路徑 | **範圍不足** |
+| "跨平台修復 ✅" | ✅ 3 個檔案皆確認有正確的跨平台處理。但路徑在 AGENTS.md 中原先寫錯，已修正。 | **已修正** |
+| "Non-ML total: 315 tests all pass (4:13)" | ⏱️ 實際運行非 ML subset 花費時間更長，且 `tests/core/` 有 149 failed + 73 errors 未計入 | **範圍定義不清** |
+
+### 8.2 實際測試全景（全量）
+
+| 測試域 | 收集 | 通過 | 失敗 | 錯誤 | 跳過 | 備註 |
+|-------|------|------|------|------|------|------|
+| `tests/ai/` (主 AI) | 134 | 134 | 0 | 0 | 0 | ✅ |
+| `tests/ai/ed3n/` | 114 | 114 | 0 | 0 | 0 | ✅ 12.41s |
+| `tests/ai/garden/` (實際可執行) | 168 | 167 | 0 | 0 | 1 | ⚠️ `test_generate_synthetic_large` 超時 (O(n²)) |
+| `tests/ai/garden/` (phase4) | 67 | 0 | 0 | 67 | 0 | ❌ 全數因 chromadb 導入掛起無法執行 |
+| `tests/ai/memory/` | 248 | 188 | 45 | 15 | 2 | ❌ StateMatrix4D + AllocationPolicy + safe_eval 問題 |
+| `tests/core/` | 858 | 608 | 149 | 73 | 28 | ❌ 大量導入/API 不匹配 |
+| **全專案總計** | **~1589** | **~1211** | **~194** | **~155** | **~31** | **通過率 ~76%** |
+
+### 8.3 真實失敗根因分類
+
+#### 類別 A: StateMatrix4D 缺少屬性 (36 failures, 記憶體測試)
+
+- **檔案**: `apps/backend/src/core/engine/state_matrix.py`
+- **現象**: `StateMatrix4D` 無 `theta` / `alpha` 屬性
+- **根因**: `__init__` 未初始化 `self.theta` 和 `self.alpha`（可能是重構時遺漏）
+- **影響範圍**: 36 個記憶體測試失敗 + 可能影響執行時 θ 軸分配功能
+- **智能衝擊**: ⬇️ 下限 — 若 `theta` 軸不可用，元分配決策退化為隨機
+
+#### 類別 B: ImportError — AllocationPolicy (22 failures, 記憶+核心測試)
+
+- **檔案**: `apps/backend/src/core/engine/state_matrix.py:340`
+- **現象**: `from core.allocation.policy import AllocationPolicy` → ImportError
+- **根因**: `apps/backend/src/core/allocation/policy.py` 存在但不導出 `AllocationPolicy`
+- **影響範圍**: `meta_allocate()`/`execute_decision()` 功能完全中斷
+- **智能衝擊**: ⬇️ 上限/下限 — 元分配是 L3→L4 的關鍵橋樑，中斷後系統無法依據語義向量分配新軸
+
+#### 類別 C: ImportError — safe_eval (4 failures, 數學引擎測試)
+
+- **檔案**: `apps/backend/src/ai/memory/math_ripple_engine.py:797`
+- **現象**: `from core.security.secure_eval import safe_eval` → ImportError
+- **根因**: `core/security/secure_eval.py` 可能已被重構或不存在
+- **影響範圍**: `_eval_simple_safe()` 回退路徑中斷 → `compute()` 無法計算進階表達式
+- **智能衝擊**: ⬇️ 上限 — 數學運算退回到最簡單的 eval，失去安全沙箱
+
+#### 類別 D: 核心測試大規模導入/API 不匹配 (149 failed + 73 errors)
+
+- **主要模式**:
+  - `ImportError: cannot import name 'StateMatrixAdapter' from 'core.engine.state_matrix'` (30)
+  - `NameError: name 'src' is not defined` (21) — 測試文件中使用了未定義變量
+  - `TypeError: IntentPattern.__init__() got multiple values for argument 'priority'` (15) — API 簽名變更
+  - `AttributeError: type object 'MaturityLevel' has no attribute 'from_memory'` (9) — API 變更
+  - `AttributeError: 'ChainValidator' object has no attribute 'validate_chain'` (7) — API 變更
+  - `NameError: name 'CAPABILITIES' is not defined` (4)
+  - `AttributeError: 'GoogleDriveHandler' object has no attribute '_fmt_size'` (4)
+  - `AttributeError: 'ExperienceTracker' object has no attribute 'get_status'` (4)
+  - `AttributeError: 'MaturityManager' object has no attribute 'interact'` (4)
+  - `TypeError: ServiceRegistry.get() got unexpected keyword argument 'expected_type'` (3)
+  - `ImportError: cannot import name 'TriggerCurve' from 'core.engine.eta_axis'` (3)
+  - `ImportError: cannot import name 'behavior_feedback' from 'core.system.config.magic_numbers'` (3)
+  - `AttributeError: 'IntentRegistry' object has no attribute 'detect'` (3)
+- **根因**: 生產代碼被重構（類重命名、API 簽名變更、模塊拆分），但測試文件未同步更新
+- **影響範圍**: 核心引擎 (~858 tests) 通過率僅 ~71%
+- **智能衝擊**: ⬇️ 上下限 — 測試保護失效，無法確認核心引擎行為正確
+
+#### 類別 E: test_generate_synthetic_large 超時 (1 failure)
+
+- **檔案**: `tests/ai/garden/test_kg_import.py:40`
+- **現象**: `kg_importer.generate_synthetic(num_entities=5000)` 超時 >120s
+- **根因**: `kg_import.py:175` O(n²) 算法 — `other_cats = [k for k in self.entities if ...]` 對 5000 entities 嵌套遍歷
+- **影響範圍**: 僅測試，生產不受影響
+- **智能衝擊**: 無
+
+#### 類別 F: test_record_usage_success 時區感知 (1 failure)
+
+- **檔案**: `tests/ai/memory/test_memory_template.py:185`
+- **現象**: `datetime.utcnow()` 返回 naive datetime，而 `last_used` 是 aware datetime
+- **根因**: Python 3.14 行為變更或代碼中 datetime 使用混用
+- **影響範圍**: 僅測試
+
+### 8.4 智能重新評估
+
+#### 實際執行驗證的上限
+
+| 層級 | 計畫宣稱 | 實際驗證 | 變化 |
+|------|---------|---------|------|
+| L0 反射 | ED3N 123 條反射 | 實際僅載入 **46 條硬編碼** + **30 反射規則**。460K 字典未接入。 | ⬇️ 低於預期 |
+| L1 模式匹配 | 20 種意圖 | ✅ 通過 runtime 驗證 | 符合 |
+| L2 向量檢索 | Bigram Jaccard | ✅ VectorMemoryStore 正常運作（numpy/chromadb） | 符合 |
+| L3 關聯圖 | CoreNetwork 3 跳衰減 | 可初始化但未載入訓練權重（W2） | ⬇️ 實際衰退至 random |
+| L4 學習 | Hebbian 權重調整 | CL pipeline 存在但未收到真實資料 | ⬇️ 未運作 |
+| L5 推理 | 多步驟拼接 | 存在但從未在測試或 runtime 中驗證 | 未驗證 |
+| L6 自主 | TaskGenerator | 休眠狀態 | 未驗證 |
+
+#### 真實運行時結果
+
+```
+$ python -c "from ai.ed3n.ed3n_engine import ED3NEngine; print(ED3NEngine.get_shared().process('hello'))"
+→ "Hello! Nice to meet you!"  (46 entries, 30 reflexes)
+
+$ python -c "from ai.garden.garden_engine import GARDENEngine; e=GARDENEngine(compatibility_mode=True); e.load_presets(); print(e.process('hello'))"
+→ "Hello! Nice to meet you!"  (torch backend, 60 neurons)
+
+$ python -c "from ai.memory.vector_store import VectorMemoryStore; s=VectorMemoryStore(); print(s.vector_count)"
+→ 0  (chromadb backend, ready but empty)
+```
+
+**結論**: 兩大引擎 (ED3N/GARDEN) 基本對話正常，但均未接入外部字典資料。系統實際智能 ≈ 早期 ELIZA 水準（模式匹配 + 模板響應），而非計畫宣稱的「Jabberwacky 2003 水準」（因 460K 字典未接入導致實際語料庫僅 46 條）。
+
+### 8.5 修復方案優先級
+
+| 優先級 | 問題 | 修復方案 | 估計工作量 | 智能影響 |
+|-------|------|---------|-----------|---------|
+| **P0** | StateMatrix4D 無 theta/alpha | 在 `__init__` 中初始化 `self.theta = StateTheta()` 和 `self.alpha = StateAlpha()` | 2 文件, ~10 行 | ⬆️ 恢復 L3 元分配 |
+| **P0** | AllocationPolicy 導入失敗 | 在 `core/allocation/policy.py` 中導出 `AllocationPolicy`，或將實現移到 `state_matrix.py` | 2 文件, ~20 行 | ⬆️ 恢復 L3 決策 |
+| **P0** | safe_eval 導入失敗 | 在 `core/security/secure_eval.py` 中導出 `safe_eval` 或實作回退 | 1 文件, ~15 行 | ⬆️ 恢復數學安全計算 |
+| **P1** | 核心測試大規模失敗 | 批量修復 10 個常見 API 不匹配模式（導入路徑、類名變更、參數簽名） | ~15 文件, ~50 行 | ⬆️ 恢復測試保護 |
+| **P1** | `tests/ai/garden/` 絕對導入路徑 | 將 `apps.backend.src.ai.garden` → `ai.garden`（test_phase4_integration.py 等） | 3 文件, ~15 行 | ⬆️ 解鎖 67 測試 |
+| **P2** | 460K 字典未載入 (W1) | `ED3NEngine.get_shared()` 偵測 `data/dictionaries/` 並自動 `import_from_json()` | 2 文件, ~30 行 | ⬆️ L0 46→460K |
+| **P2** | CoreNetwork 權重未持久化 (W2) | `ED3NEngine.save()`/`load()` 串接到 `ChatService.initialize()` | 2 文件, ~15 行 | ⬆️ L4 恢復 |
+| **P3** | test_generate_synthetic_large O(n²) | 加入 early break 或限制 iterations | 1 文件, ~5 行 | 無 |
+| **P3** | test_record_usage_success 時區 | 使用 `timezone.utc` 替代 `utcnow()` | 1 文件, ~2 行 | 無 |
+
+### 8.6 計畫與現實差異總結
+
+1. **測試計數有偏**: 初始計畫的「315/315 全過」是自選有利子集，排除 `tests/core/`（858 tests, 71% 通過率）和 `tests/ai/memory/`（188/248 通過）。全專案實際通過率 ~76%。
+
+2. **GARDEN 201 高估**: 包含 67 個因 chromadb 掛起無法執行的測試。
+
+3. **StateMatrix4D 核心引擎缺陷未被記錄**: 這是最嚴重的遺漏 — `theta`/`alpha` 屬性缺失 + `AllocationPolicy` 導入中斷，直接影響 L3 智能層。
+
+4. **460K 字典 vs 46 條 presets 差距未被揭露**: 初始計畫將 Phase A 標為完成，但運行時等效於「資料已下載但未使用」。
+
+5. **死代碼已被修復**: `ingest_my_activities.py` 和 `diagnose_components.py` 已在此次審查期間修復。
+
+6. **接線缺口已被記錄**: W1-W4 已補入計畫。
+
+---
+
 ## 附錄 A：關鍵代碼位置參考
 
 | 組件 | 檔案路徑 | 行數 | 狀態 |
@@ -727,7 +881,7 @@ Phase F (長期): 多模態擴展
 | GARDEN SNN | `apps/backend/src/ai/garden/snn_core.py` | ~430 | ✅ 完整實作（torch/numpy 雙後端） |
 | GARDEN Dictionary | `apps/backend/src/ai/garden/dictionary.py` | ~400 | ✅ 完整實作 |
 | HAM Memory | `apps/backend/src/ai/memory/ham_memory/ham_manager.py` | 174 | ✅ JSON 存儲 |
-| Vector Store | `apps/backend/src/ai/memory/vector_store.py` | 60 | ⚠️ 未持久化（chromadb 導入掛起） |
+| Vector Store | `apps/backend/src/ai/memory/vector_store.py` | 280 | ✅ 雙後端持久化（numpy+JSON / chromadb） |
 | HSP Connector | `apps/backend/src/core/hsp/connector.py` | 1122 | ✅ 完整實作 |
 | HSP Types | `apps/backend/src/core/hsp/types.py` | ~200 | ✅ 完整實作 |
 | Crisis System | `apps/backend/src/ai/crisis/crisis_system.py` | ~200 | ✅ 測試通過（19/19） |
