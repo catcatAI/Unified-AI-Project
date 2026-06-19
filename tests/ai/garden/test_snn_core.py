@@ -10,7 +10,7 @@ import tempfile
 
 import pytest
 
-from apps.backend.src.ai.garden.snn_core import (
+from ai.garden.snn_core import (
     DEFAULT_DECAY,
     DEFAULT_LEAK,
     DEFAULT_THRESHOLD,

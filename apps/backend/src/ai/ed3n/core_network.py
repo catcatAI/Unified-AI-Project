@@ -38,6 +38,25 @@ class Neuron:
     def __repr__(self) -> str:
         return f"Neuron(key={self.key!r}, activation={self.activation:.2f}, group={self.group_type!r})"
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "key": self.key,
+            "activation": self.activation,
+            "threshold": self.threshold,
+            "connections": dict(self.connections),
+            "group_type": self.group_type,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Neuron":
+        return cls(
+            key=data["key"],
+            activation=data.get("activation", 0.0),
+            threshold=data.get("threshold", 0.3),
+            connections=data.get("connections", {}),
+            group_type=data.get("group_type", ""),
+        )
+
 
 class RelationGroup:
     def __init__(
@@ -49,6 +68,19 @@ class RelationGroup:
         self.group_type = group_type
         self.neurons = neurons or {}
         self.activation_pattern = activation_pattern or self._default_activation_pattern
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "group_type": self.group_type,
+            "neurons": {k: n.to_dict() for k, n in self.neurons.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "RelationGroup":
+        neurons = {}
+        for k, nd in data.get("neurons", {}).items():
+            neurons[k] = Neuron.from_dict(nd)
+        return cls(group_type=data["group_type"], neurons=neurons)
 
     def _default_activation_pattern(self, source_key: str, strength: float) -> None:
         neuron = self.neurons.get(source_key)
@@ -425,3 +457,15 @@ class CoreNetwork:
                         count += 1
         logger.info("Synced %d relations from dictionary to network", count)
         return count
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "groups": {name: g.to_dict() for name, g in self.groups.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any], classifier: Optional[RelationClassifier] = None) -> "CoreNetwork":
+        net = cls(classifier=classifier)
+        for name, gd in data.get("groups", {}).items():
+            net.groups[name] = RelationGroup.from_dict(gd)
+        return net

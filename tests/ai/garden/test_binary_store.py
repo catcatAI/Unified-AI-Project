@@ -10,7 +10,7 @@ import tempfile
 
 import pytest
 
-from apps.backend.src.ai.garden.binary_store import (
+from ai.garden.binary_store import (
     HEADER_SIZE,
     MAGIC,
     VERSION,

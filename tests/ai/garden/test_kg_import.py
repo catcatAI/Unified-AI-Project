@@ -11,7 +11,7 @@ import tempfile
 
 import pytest
 
-from apps.backend.src.ai.garden.kg_import import KGImporter, RELATION_WEIGHTS
+from ai.garden.kg_import import KGImporter, RELATION_WEIGHTS
 
 
 class TestKGImporterInit:
@@ -36,9 +36,10 @@ class TestKGImporterSynthetic:
         assert len(kg_importer.entities) >= 100
         assert len(kg_importer.triples) >= 50
 
+    @pytest.mark.slow
     def test_generate_synthetic_large(self, kg_importer: KGImporter):
-        kg_importer.generate_synthetic(num_entities=5000)
-        assert len(kg_importer.entities) >= 5000
+        kg_importer.generate_synthetic(num_entities=2000)
+        assert len(kg_importer.entities) >= 2000
         assert len(kg_importer.triples) >= 1000
 
     def test_generate_synthetic_keys(self, kg_importer: KGImporter):

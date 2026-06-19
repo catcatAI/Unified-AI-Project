@@ -10,7 +10,7 @@ import tempfile
 
 import pytest
 
-from apps.backend.src.ai.garden.garden_engine import (
+from ai.garden.garden_engine import (
     GARDENEngine,
     _ReflexTable,
     _anchored_decode,
@@ -306,7 +306,7 @@ class TestVectorDecoderInit:
         assert vd.temperature == 0.3
 
     def test_init_custom_construction(self, engine: GARDENEngine):
-        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+        from ai.garden.vector_decoder import VectorDecoder
 
         vd = VectorDecoder(
             dictionary=engine.dictionary,
@@ -353,7 +353,7 @@ class TestVectorDecoderGenerate:
 
 class TestVectorDecoderSampling:
     def test_sample_deterministic_at_zero_temp(self, engine: GARDENEngine):
-        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+        from ai.garden.vector_decoder import VectorDecoder
 
         vd = VectorDecoder(
             dictionary=engine.dictionary,
@@ -365,7 +365,7 @@ class TestVectorDecoderSampling:
         assert result == "a"
 
     def test_sample_single_candidate(self, engine: GARDENEngine):
-        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+        from ai.garden.vector_decoder import VectorDecoder
 
         vd = VectorDecoder(
             dictionary=engine.dictionary,
@@ -375,7 +375,7 @@ class TestVectorDecoderSampling:
         assert result == "only_key"
 
     def test_sample_empty_candidates(self, engine: GARDENEngine):
-        from apps.backend.src.ai.garden.vector_decoder import VectorDecoder
+        from ai.garden.vector_decoder import VectorDecoder
 
         vd = VectorDecoder(
             dictionary=engine.dictionary,

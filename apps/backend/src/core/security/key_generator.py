@@ -20,7 +20,17 @@ class KeyGenerator:
         return ''.join(secrets.choice(chars) for _ in range(length))
 
     def update_env_file(self, keys: dict, env_path: str) -> None:
-        with open(env_path, "w") as f:
-            for k, v in keys.items():
+        import os
+        existing = {}
+        if os.path.exists(env_path):
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if "=" in line and not line.startswith("#"):
+                        k, v = line.split("=", 1)
+                        existing[k.strip()] = v.strip()
+        existing.update(keys)
+        with open(env_path, "w", encoding="utf-8") as f:
+            for k, v in existing.items():
                 f.write(f"{k}={v}\n")
 

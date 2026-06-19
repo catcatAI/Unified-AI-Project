@@ -137,6 +137,7 @@ class ED3NEngine:
         modulator: Optional[HormonalModulator] = None,
         snn_mode: bool = False,
         auto_load_presets: bool = True,
+        auto_load_dictionaries: bool = False,
         telemetry: Optional[TelemetryCollector] = None,
         continuous_learning: Optional[Any] = None,
     ):
@@ -159,6 +160,8 @@ class ED3NEngine:
         self.enable_multimodal()
         if auto_load_presets:
             self.load_presets()
+        if auto_load_dictionaries:
+            self.load_external_dictionaries()
 
     _shared_instance: Optional["ED3NEngine"] = None
     _shared_lock = threading.Lock()
@@ -643,6 +646,7 @@ class ED3NEngine:
             "snn_mode": self.snn_mode,
             "reflex_threshold": self.reflex.threshold,
             "reflex_patterns": list(self.reflex.patterns.items()),
+            "network": self.network.to_dict(),
         }
         os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
@@ -674,6 +678,10 @@ class ED3NEngine:
             for pattern, response in state["reflex_patterns"]:
                 self.reflex.patterns[pattern] = response
             logger.info("Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"]))
+        if "network" in state:
+            from ai.ed3n.core_network import CoreNetwork
+            self.network = CoreNetwork.from_dict(state["network"], classifier=self.classifier)
+            logger.info("Loaded CoreNetwork from checkpoint.")
         dict_path = path.replace(".json", "_dictionary.json")
         if os.path.exists(dict_path):
             self.dictionary.import_from_json(dict_path)
@@ -753,6 +761,35 @@ class ED3NEngine:
         loaded = self.dictionary.load_preset_responses_from_dir(config_dir)
         logger.info("ED3NEngine loaded %d entries and %d reflex patterns from config dir: %s",
                     loaded, len(self.reflex.patterns), config_dir)
+
+    def load_external_dictionaries(self, dict_dir: Optional[str] = None) -> int:
+        """Load external dictionary entries (CEDICT/JMdict/WordNet) into DictionaryLayer.
+
+        Args:
+            dict_dir: Path to directory containing dictionary JSON files.
+                      Defaults to ``data/dictionaries/`` relative to project root.
+
+        Returns:
+            Total number of imported entries.
+        """
+        import os
+        if dict_dir is None:
+            base = os.environ.get("PROJECT_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            dict_dir = os.path.join(base, "data", "dictionaries")
+        total = 0
+        for fname in ("cedict.json", "jmdict.json", "wordnet.json"):
+            fpath = os.path.join(dict_dir, fname)
+            if os.path.exists(fpath):
+                try:
+                    count = self.dictionary.import_from_json(fpath)
+                    total += count
+                    logger.info("Loaded %d entries from %s", count, fpath)
+                except Exception as e:
+                    logger.warning("Failed to load %s: %s", fpath, e)
+        if total > 0:
+            self.network.sync_from_dictionary(self.dictionary)
+        logger.info("ED3NEngine loaded %d external dictionary entries total.", total)
+        return total
 
     def get_snn_stats(self) -> Dict[str, Any]:
         if self._snn_network is None:

@@ -7,9 +7,9 @@ Phase 4 Integration Tests — GARDEN Integration (ChromaDB, KG, Multi-step, Emot
 
 import pytest
 
-from apps.backend.src.ai.garden.dictionary import VectorDictionary, _ChromaEncoder, _TfidfEncoder
-from apps.backend.src.ai.garden.garden_engine import GARDENEngine
-from apps.backend.src.ai.garden.kg_import import KGImporter
+from ai.garden.dictionary import VectorDictionary, _ChromaEncoder, _TfidfEncoder
+from ai.garden.garden_engine import GARDENEngine
+from ai.garden.kg_import import KGImporter
 
 
 # ---------------------------------------------------------------------------

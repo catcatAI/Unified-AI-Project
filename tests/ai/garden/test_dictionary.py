@@ -11,7 +11,7 @@ import tempfile
 
 import pytest
 
-from apps.backend.src.ai.garden.dictionary import VectorDictionary
+from ai.garden.dictionary import VectorDictionary
 
 
 class TestVectorDictionaryInit:

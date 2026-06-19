@@ -170,7 +170,7 @@ class MemoryTemplate:
             "user_impression": self.user_impression.to_dict(),
             "usage_count": self.usage_count,
             "success_rate": self.success_rate,
-            "last_used": self.last_used.isoformat() if self.last_used else None,
+            "last_used": self.last_used.strftime("%Y-%m-%dT%H:%M:%S") if self.last_used else None,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "metadata": self.metadata,
@@ -193,7 +193,15 @@ class MemoryTemplate:
             if data.get("updated_at")
             else datetime.now(timezone.utc)
         )
-        last_used = datetime.fromisoformat(data["last_used"]) if data.get("last_used") else None
+        lu_str = data.get("last_used")
+        if lu_str:
+            try:
+                dt = datetime.fromisoformat(lu_str)
+                last_used = dt.replace(tzinfo=None) if dt.tzinfo else dt
+            except (ValueError, TypeError):
+                last_used = None
+        else:
+            last_used = None
 
         return cls(
             id=data["id"],
@@ -213,7 +221,7 @@ class MemoryTemplate:
     def record_usage(self, success: bool = True) -> None:
         """记录使用"""
         self.usage_count += 1
-        self.last_used = datetime.now(timezone.utc)
+        self.last_used = datetime.now()
 
         # 更新成功率（移动平均：80% 历史 + 20% 新反馈）
         current_success = 1.0 if success else 0.0

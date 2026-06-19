@@ -4,7 +4,7 @@ IntentRegistry — 統一意圖檢測系統（B12）
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 class IntentPattern:
     name: str
     keywords: List[str] = field(default_factory=list)
+    category: str = "general"
     priority: int = 5
     handler: str = ""
-    category: str = "general"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -39,12 +39,14 @@ class IntentRegistry:
 
     def __init__(self, patterns_config: Optional[List[Dict[str, Any]]] = None):
         self.patterns: List[IntentPattern] = []
+        self._keyword_to_patterns: Dict[str, List[IntentPattern]] = {}
+        self._initialized = False
         self._load_patterns(patterns_config)
 
     def _load_patterns(self, patterns_config: Optional[List[Dict[str, Any]]] = None) -> None:
         source = patterns_config if patterns_config else _DEFAULT_PATTERNS
         for item in source:
-            self.patterns.append(IntentPattern(
+            self._add_pattern(IntentPattern(
                 name=item["name"],
                 keywords=item.get("keywords", []),
                 priority=item.get("priority", 5),
@@ -52,41 +54,94 @@ class IntentRegistry:
                 category=item.get("category", "general"),
                 metadata=item.get("metadata", {}),
             ))
+        self._initialized = True
 
-    def register(self, name: str, keywords: List[str], priority: int = 5, handler: str = "", category: str = "general") -> None:
-        existing = next((p for p in self.patterns if p.name == name), None)
-        if existing:
-            existing.keywords = keywords
-            existing.priority = priority
-            existing.handler = handler
-            existing.category = category
+    def _add_pattern(self, pattern: IntentPattern) -> None:
+        self.patterns.append(pattern)
+        for kw in pattern.keywords:
+            self._keyword_to_patterns.setdefault(kw, []).append(pattern)
+
+    def _rebuild_keyword_index(self) -> None:
+        self._keyword_to_patterns = {}
+        for p in self.patterns:
+            for kw in p.keywords:
+                self._keyword_to_patterns.setdefault(kw, []).append(p)
+
+    def register(self, pattern_or_name: Any, keywords: Optional[List[str]] = None,
+                 priority: int = 5, handler: str = "", category: str = "general") -> None:
+        if isinstance(pattern_or_name, IntentPattern):
+            pattern = pattern_or_name
+            self.patterns.append(pattern)
+            for kw in pattern.keywords:
+                self._keyword_to_patterns.setdefault(kw, []).append(pattern)
         else:
-            self.patterns.append(IntentPattern(
-                name=name, keywords=keywords, priority=priority,
-                handler=handler, category=category,
-            ))
+            name = pattern_or_name
+            existing = next((p for p in self.patterns if p.name == name), None)
+            if existing:
+                for kw in list(existing.keywords):
+                    self._keyword_to_patterns.get(kw, []).remove(existing)
+                existing.keywords = keywords or []
+                existing.priority = priority
+                existing.handler = handler
+                existing.category = category
+                for kw in existing.keywords:
+                    self._keyword_to_patterns.setdefault(kw, []).append(existing)
+            else:
+                pattern = IntentPattern(
+                    name=name, keywords=keywords or [], priority=priority,
+                    handler=handler, category=category,
+                )
+                self.patterns.append(pattern)
+                for kw in pattern.keywords:
+                    self._keyword_to_patterns.setdefault(kw, []).append(pattern)
 
     def unregister(self, name: str) -> bool:
         before = len(self.patterns)
         self.patterns = [p for p in self.patterns if p.name != name]
+        self._rebuild_keyword_index()
         return len(self.patterns) < before
 
-    def lookup(self, query: str) -> Optional[IntentPattern]:
+    def detect(self, query: str, category: Optional[str] = None) -> Tuple[Optional[str], float]:
+        if not query:
+            return None, 0.0
         best: Optional[IntentPattern] = None
         best_score = 0
         for p in self.patterns:
+            if category and p.category != category:
+                continue
             score = sum(1 for kw in p.keywords if kw in query)
-            if score > best_score or (score == best_score and p.priority < getattr(best, "priority", 999)):
+            if score > best_score or (score == best_score and score > 0 and p.priority < getattr(best, "priority", 999)):
                 best_score = score
                 best = p
-        return best if best_score > 0 else None
+        if best is None or best_score == 0:
+            return None, 0.0
+        total_kw = max(len(best.keywords), 1)
+        confidence = best_score / total_kw
+        return best.name, confidence
+
+    def detect_task_intent(self, query: str) -> Optional[str]:
+        name, conf = self.detect(query)
+        return name if conf > 0.3 else None
 
     def detect_complex_task(self, query: str) -> bool:
-        return bool(self.lookup(query))
+        name, conf = self.detect(query)
+        if len(query) > 50:
+            return True
+        return conf > 0.5
 
     def detect_task_type(self, query: str) -> str:
-        match = self.lookup(query)
-        return match.name if match else "general"
+        name, conf = self.detect(query)
+        return name if name else "general"
+
+    def get_keywords(self, name: str) -> List[str]:
+        pattern = next((p for p in self.patterns if p.name == name), None)
+        return list(pattern.keywords) if pattern else []
+
+    def lookup(self, query: str) -> Optional[IntentPattern]:
+        name, _ = self.detect(query)
+        if name is None:
+            return None
+        return next((p for p in self.patterns if p.name == name), None)
 
     def get_pattern(self, name: str) -> Optional[IntentPattern]:
         return next((p for p in self.patterns if p.name == name), None)

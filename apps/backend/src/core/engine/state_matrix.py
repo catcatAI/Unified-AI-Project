@@ -135,10 +135,21 @@ class StateMatrix4D:
         from app_config_loader import get_formula_config
         matrix_conf = get_formula_config("matrix")
         dim_defs = matrix_conf.get("dimensions", {})
+
+        # 默認維度定義（當配置中無定義時使用）
+        DEFAULT_DIMENSIONS = {
+            "alpha": {"cn_name": "生理", "initial_values": {"energy": 0.5, "comfort": 0.5, "arousal": 0.5, "rest_need": 0.5}},
+            "beta": {"cn_name": "認知", "initial_values": {"curiosity": 0.5, "focus": 0.5, "confusion": 0.0, "learning": 0.5}},
+            "gamma": {"cn_name": "情感", "initial_values": {"happiness": 0.5, "sadness": 0.0, "anger": 0.0, "fear": 0.0, "disgust": 0.0, "surprise": 0.0, "trust": 0.5, "anticipation": 0.5}},
+            "delta": {"cn_name": "社交", "initial_values": {"attention": 0.5, "bond": 0.5, "trust": 0.5, "presence": 0.5}},
+            "epsilon": {"cn_name": "數理", "initial_values": {"logic": 0.5, "precision": 0.5, "abstraction": 0.5, "certainty": 0.5, "complexity": 0.5, "fatigue": 0.0}},
+            "theta": {"cn_name": "元認知", "initial_values": {"novelty": 0.5, "complexity": 0.5, "ambiguity": 0.5, "dimension_fit": 0.5, "creation_urge": 0.0, "theta_negativity": 0.0, "correction_urge": 0.0, "audit_intensity": 0.0}},
+        }
         
         # 動態初始化所有定義在配置中的維度
         self.dimensions = {}
-        for name, d_cfg in dim_defs.items():
+        source = dim_defs if dim_defs else DEFAULT_DIMENSIONS
+        for name, d_cfg in source.items():
             state = DimensionState(
                 name=name,
                 cn_name=d_cfg.get("cn_name", name),
@@ -169,6 +180,16 @@ class StateMatrix4D:
             "influence_matrix", 
             spatial_conf.get("influence_matrix", {})
         )
+        if not self.influence_matrix:
+            self.influence_matrix = {
+                "alpha": {"beta": 0.3, "gamma": 0.2, "theta": 0.1},
+                "beta": {"alpha": 0.3, "gamma": 0.4, "theta": 0.3},
+                "gamma": {"alpha": 0.4, "beta": 0.3, "delta": 0.5, "theta": 0.2},
+                "delta": {"gamma": 0.5, "beta": 0.2, "theta": 0.3},
+                "epsilon": {"beta": 0.4, "theta": 0.3},
+                "theta": {"alpha": 0.3, "beta": 0.4, "gamma": 0.3, "delta": 0.2, "epsilon": 0.4},
+                "zeta": {"theta": 0.3, "delta": 0.2},
+            }
         
         self.semantic_anchors = {}
         self._init_semantic_anchors()
