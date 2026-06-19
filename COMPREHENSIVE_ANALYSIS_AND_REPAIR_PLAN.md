@@ -34,7 +34,7 @@ Angela AI 是一個自稱為「完整 AGI 系統」的專案，實際代碼約 *
 - **Phase C (GARDEN numpy 後端)** ✅: `snn_core.py` 雙後端（torch/numpy）— 201 GARDEN 測試全部通過（原因 torch 導入超時無法執行），零外部依賴，跨平台
 - **Phase D (ED3N Engine強化)** ✅: `ContinuousLearningPipeline` 可選注入 ED3NEngine、`learn_reflex()` 方法、save/load CL 狀態 — 114 ED3N 測試全部通過（5.29s，原 14.20s）
 - **非 ML 總計**: 315 測試全部通過（4:13，原 5:00/8:48）
-- **跨平台修復**: `image_encoder.py` ImportError、`execution_monitor.py` Windows SIGALRM→`_thread.interrupt_main()`、硬編碼路徑、`state_matrix_api.py` 編碼
+- **跨平台修復**: `apps/backend/src/ai/ed3n/multimodal/image_encoder.py` ImportError、`apps/backend/src/core/managers/execution_monitor.py` Windows SIGALRM→`_thread.interrupt_main()`、硬編碼路徑、`apps/backend/src/services/api/state_matrix_api.py` 編碼
 
 ---
 
@@ -683,6 +683,34 @@ Phase F (長期): 多模態擴展
 | F (長期) | 5M→500MB | 50K→25MB | 10K→400MB | 1M→300MB | ~1.5GB |
 
 **指導原則**: 不壓縮空氣、不 padding、每 byte 來自真實語料或訓練。框架代碼上限 ~10MB。
+
+---
+
+## 接線缺口記錄
+
+以下為已完成階段中待修復的接線（wiring）缺口。並非新功能需求，而是已存在代碼未正確連接的問題。
+
+### W1: 460K 字典條目未在引擎啟動時自動載入
+- **現象**: `ED3NEngine.get_shared()` 由 `ChatService.initialize()` 調用時，僅載入內建 presets (~100 條硬編碼條目)。`data/dictionaries/*.json`（CC-CEDICT/JMdict/WordNet）雖有 460K 條目但**從未在運行時加載**。
+- **根源**: `import_dictionaries.py --engine` 會將資料載入引擎，但沒有 save/load 機制串接到啟動流程。`ED3NEngine.save()`/`load()` 已實作但未被任何生產代碼調用。
+- **影響**: 字典查詢僅限於硬編碼條目，460K 匯入條目在運行時不可見。
+- **建議修復**: 將 `ED3NEngine.save()`/`load()` 串接至 `ChatService.initialize()`，或讓 `get_shared()` 在偵測到 `data/dictionaries/` 有資料時自動載入。
+
+### W2: CoreNetwork 訓練權重未持久化
+- **現象**: `import_dictionaries.py --train` 成功訓練（loss=0.2998），但權重僅在記憶體中。重啟後訓練結果丟失。
+- **根源**: `CoreNetwork.save_connections()`/`load_connections()` 已實作（JSON 格式）但未被任何生產代碼調用。
+- **影響**: 每次啟動需重新訓練（耗時 30s+），或使用未訓練的 CoreNetwork。
+- **建議修復**: 將 CoreNetwork save/load 串接至 `ED3NEngine.save()`/`load()` 流程中，或加入 `ChatService.initialize()` 的自動載入。
+
+### W3: 死代碼 — ingest_my_activities.py
+- **檔案**: `scripts/ingest_my_activities.py`
+- **問題**: 導入不存在的 `VectorStore`（已重命名為 `VectorMemoryStore`），調用不存在的 `add_memories()` 和 `_save_to_disk()`。依賴不存在的 `HybridBrain`。
+- **狀態**: ✅ **本次已修復** — 改用 `VectorMemoryStore` 的 `add_memory()`（逐條） + `persist()`，移除 `HybridBrain` 依賴。
+
+### W4: 死代碼 — diagnose_components.py
+- **檔案**: `apps/backend/debug/diagnose_components.py`
+- **問題**: 大量語法錯誤（`class ...,` `def ...,` `try,` → 應為 `:`）、錯誤導入路徑（`core_ai` → `ai`）、錯誤的 VectorMemoryStore API。
+- **狀態**: ✅ **本次已修復** — 語法修正、導入路徑更新、API 調用同步。
 
 ---
 

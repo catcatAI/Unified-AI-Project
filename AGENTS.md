@@ -92,7 +92,7 @@ pre-commit run --all-files
 > - **DictionaryLayer**: `bulk_add_entries()` method, `max_entries` default increased to 500000
 > - **Phase C (GARDEN numpy backend)**: SNN dual backend (torch or numpy) — no hard torch dependency. Cross-platform: CPU/GPU, Win/Linux/macOS. 201 GARDEN tests pass.
 > - **Phase D (ED3N Engine强化)**: `ContinuousLearningPipeline` wired into `ED3NEngine` (optional), `learn_reflex()` method, save/load CL state, `__init__.py` exports.
-> - **Cross-platform fixes**: `image_encoder.py` ImportError handler, `execution_monitor.py` SIGALRM→`_thread.interrupt_main()` on Windows, hardcoded paths fixed, `state_matrix_api.py` encoding.
+> - **Cross-platform fixes**: `apps/backend/src/ai/ed3n/multimodal/image_encoder.py` ImportError handler, `apps/backend/src/core/managers/execution_monitor.py` SIGALRM→`_thread.interrupt_main()` on Windows, hardcoded paths fixed, `apps/backend/src/services/api/state_matrix_api.py` encoding.
 > - **ED3N total**: 114 tests — all pass (5.29s, was 14.20s)
 > - **Non-ML total**: 315 tests — all pass (4:13, was 5:00/8:48)
 > - **Zero new external dependencies** — everything uses stdlib + existing project modules
