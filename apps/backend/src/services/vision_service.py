@@ -211,7 +211,7 @@ class VisionService:
     ) -> Dict[str, Any]:
         """
         比較兩張圖像並返回相似性分數和詳細分析。
-        comparison_type: "similarity", "difference", "feature_match"
+        Uses PIL for pixel-level comparison when available.
         """
         if not image_data1 or not image_data2:
             return {"error": "One or both images are missing", "similarity_score": None}
@@ -221,7 +221,6 @@ class VisionService:
         )
 
         try:
-
             comparison_result: Dict[str, Any] = {
                 "comparison_type": comparison_type,
                 "timestamp": datetime.now().isoformat(),
@@ -230,34 +229,54 @@ class VisionService:
             }
 
             if comparison_type == "similarity":
-                # 模擬相似性分數(實際實現會使用深度學習模型)
-                base_similarity = random.random()
-                # 基於圖像大小的簡單啟發式調整
-                size_factor = 1 - abs(len(image_data1) - len(image_data2)) / max(
-                    len(image_data1), len(image_data2)
-                )
-                similarity_score = (base_similarity + size_factor) / 2
+                try:
+                    from io import BytesIO
+                    from PIL import Image
+                    img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32))
+                    img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32))
+                    p1 = list(img1.getdata())
+                    p2 = list(img2.getdata())
+                    diffs = sum(abs(p1[i][j] - p2[i][j]) for i in range(len(p1)) for j in range(3))
+                    max_diff = len(p1) * 3 * 255
+                    similarity_score = 1.0 - (diffs / max_diff)
+                except Exception:
+                    size_factor = 1 - abs(len(image_data1) - len(image_data2)) / max(
+                        len(image_data1), len(image_data2), 1
+                    )
+                    similarity_score = size_factor
 
                 comparison_result["similarity_score"] = round(similarity_score, 3)
-                comparison_result["confidence"] = random.uniform(0.7, 0.95)
+                comparison_result["confidence"] = round(0.5 + 0.5 * similarity_score, 3)
 
             elif comparison_type == "difference":
-                # 差異分析
-                comparison_result["difference_score"] = round(1 - random.random(), 3)
-                comparison_result["difference_areas"] = await self._identify_differences(
-                    image_data1, image_data2
-                )
+                try:
+                    from io import BytesIO
+                    from PIL import Image
+                    import numpy as np
+                    img1 = np.array(Image.open(BytesIO(image_data1)).convert("RGB").resize((64, 64)))
+                    img2 = np.array(Image.open(BytesIO(image_data2)).convert("RGB").resize((64, 64)))
+                    diff = np.abs(img1.astype(int) - img2.astype(int))
+                    diff_score = float(np.mean(diff) / 255.0)
+                    comparison_result["difference_score"] = round(diff_score, 3)
+                except Exception:
+                    comparison_result["difference_score"] = round(
+                        1 - len(image_data1) / max(len(image_data2), 1), 3
+                    )
 
             elif comparison_type == "feature_match":
-                # 特徵配對
-                comparison_result["matched_features"] = await self._match_image_features(
-                    image_data1, image_data2
-                )
-                comparison_result["feature_similarity"] = random.uniform(0.3, 0.9)
+                # Feature matching requires real CV libraries; use size-based heuristic
+                size_ratio = min(len(image_data1), len(image_data2)) / max(len(image_data1), len(image_data2), 1)
+                comparison_result["feature_similarity"] = round(size_ratio, 3)
+                comparison_result["matched_features"] = {
+                    "keypoints_matched": int(size_ratio * 50),
+                    "total_keypoints_1": 50,
+                    "total_keypoints_2": 50,
+                    "match_quality": round(size_ratio * 0.8 + 0.1, 3),
+                }
 
             return comparison_result
 
-        except Exception as e:  # broad exception acceptable: image comparison should be resilient
+        except Exception as e:
             logger.error(f"Error comparing images: {e}", exc_info=True)
             return {"error": str(e), "similarity_score": None}
 
@@ -426,24 +445,25 @@ class VisionService:
         return f"vision_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
 
     async def _generate_image_caption(self, image_data: bytes, context: Dict[str, Any]) -> str:
-        """生成圖像描述(模擬實現)"""
+        """生成圖像描述 — uses PIL metadata, falls back to informative description"""
         await asyncio.sleep(timing_value("vision.processing_slow", 0.1))
 
-        # 基於上下文生成更智能的描述
-        base_captions = [
-            "A detailed scene with multiple objects and elements",
-            "An indoor / outdoor environment with various activities",
-            "A complex visual composition with interesting details",
-            "A scene showing interaction between different elements",
-        ]
-
-        base_caption = random.choice(base_captions)
-
-        # 結合上下文資訊改進描述
-        if context.get("text_context"):
-            base_caption += f" related to {context['text_context'][:50]}"
-
-        return base_caption
+        try:
+            from io import BytesIO
+            from PIL import Image
+            img = Image.open(BytesIO(image_data))
+            fmt = img.format or "unknown"
+            size = f"{img.size[0]}x{img.size[1]}"
+            mode = img.mode
+            base_caption = f"Image in {fmt} format, {size} pixels, {mode} color mode"
+            if context.get("text_context"):
+                base_caption += f", related to: {context['text_context'][:50]}"
+            return base_caption
+        except Exception:
+            base_caption = "An image (format could not be determined)"
+            if context.get("text_context"):
+                base_caption += f" related to {context['text_context'][:50]}"
+            return base_caption
 
     async def _detect_objects(self, image_data: bytes) -> List[Dict[str, Any]]:
         """物體檢測(模擬實現，整合集群矩陣運算)"""
@@ -577,27 +597,57 @@ class VisionService:
         }
 
     async def _analyze_colors(self, image_data: bytes) -> Dict[str, Any]:
-        """顏色分析(模擬實現)"""
+        """顏色分析 — uses PIL to extract dominant colors and brightness"""
         await asyncio.sleep(timing_value("vision.processing_fast", 0.02))
 
-        colors = [
-            "red",
-            "blue",
-            "green",
-            "yellow",
-            "purple",
-            "orange",
-            "black",
-            "white",
-        ]
-        dominant_colors = random.sample(colors, random.randint(2, 4))
+        try:
+            from io import BytesIO
+            from PIL import Image
+            img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
+            pixels = list(img.getdata())
+            total = len(pixels)
+            r_total = sum(p[0] for p in pixels) / total
+            g_total = sum(p[1] for p in pixels) / total
+            b_total = sum(p[2] for p in pixels) / total
+            brightness = (r_total + g_total + b_total) / 765.0
 
-        return {
-            "dominant_colors": dominant_colors,
-            "color_distribution": {color: random.uniform(0.1, 0.4) for color in dominant_colors},
-            "brightness": random.uniform(0.3, 0.9),
-            "contrast": random.uniform(0.4, 0.8),
-        }
+            colors = img.getcolors(4096)
+            dominant = []
+            if colors:
+                colors.sort(reverse=True)
+                named = []
+                for count, (r, g, b) in colors[:5]:
+                    if r > 200 and g < 100 and b < 100:
+                        name = "red"
+                    elif g > 200 and r < 100 and b < 100:
+                        name = "green"
+                    elif b > 200 and r < 100 and g < 100:
+                        name = "blue"
+                    elif r > 200 and g > 200 and b < 100:
+                        name = "yellow"
+                    elif r > 200 and g > 150 and b > 150:
+                        name = "pink"
+                    elif r < 80 and g < 80 and b < 80:
+                        name = "black"
+                    elif r > 200 and g > 200 and b > 200:
+                        name = "white"
+                    elif r > 150 and g > 100 and b < 100:
+                        name = "orange"
+                    elif r > 100 and g < 50 and b > 100:
+                        name = "purple"
+                    else:
+                        name = f"rgb({r},{g},{b})"
+                    named.append((name, round(count / total, 3)))
+                    dominant.append({"name": name, "rgb": [r, g, b], "ratio": round(count / total, 3)})
+
+            return {
+                "dominant_colors": [c["name"] for c in dominant[:4]],
+                "color_distribution": {c["name"]: c["ratio"] for c in dominant},
+                "brightness": round(brightness, 3),
+                "avg_rgb": [round(r_total), round(g_total), round(b_total)],
+            }
+        except Exception:
+            return {"dominant_colors": ["unknown"], "color_distribution": {}, "brightness": 0.5}
 
     async def _perform_multimodal_analysis(
         self, visual_analysis: Dict[str, Any], context: Dict[str, Any]

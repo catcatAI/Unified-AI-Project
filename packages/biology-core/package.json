@@ -1,6 +1,6 @@
 {
   "name": "@angela/biology-core",
-  "version": "1.0.0",
+  "version": "7.5.0-dev",
   "description": "Unified Voxel DNA and Biological Physics for Angela AI",
   "main": "src/dna_body.py"
 }

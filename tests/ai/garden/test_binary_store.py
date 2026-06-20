@@ -17,6 +17,12 @@ from ai.garden.binary_store import (
     BinaryStore,
 )
 
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
 
 class TestBinaryStoreInit:
     """Tests for BinaryStore construction and creation."""
@@ -167,6 +173,7 @@ class TestBinaryStoreHelpers:
 class TestBinaryStoreImportExport:
     """Tests for PyTorch import/export."""
 
+    @pytest.mark.skipif(not TORCH_AVAILABLE, reason="torch not available")
     def test_import_from_torch(self):
         import torch
         with tempfile.TemporaryDirectory() as tmp:
@@ -181,6 +188,7 @@ class TestBinaryStoreImportExport:
             assert store[3, 4] == 0.6
             store.close()
 
+    @pytest.mark.skipif(not TORCH_AVAILABLE, reason="torch not available")
     def test_export_to_torch(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "test_export.bin")

@@ -45,6 +45,8 @@ class ContinuousLearningPipeline:
         train_interval: int = 50,
         min_examples_for_train: int = 20,
         auto_grow: bool = True,
+        max_buffer_size: int = 500,
+        max_history_size: int = 1000,
     ):
         self.engine = engine
         self.trainer = trainer
@@ -52,6 +54,8 @@ class ContinuousLearningPipeline:
         self.train_interval = train_interval
         self.min_examples_for_train = min_examples_for_train
         self.auto_grow = auto_grow
+        self.max_buffer_size = max_buffer_size
+        self.max_history_size = max_history_size
 
         self._lock = threading.RLock()
         self._interaction_count: int = 0
@@ -110,7 +114,7 @@ class ContinuousLearningPipeline:
                 "new_concepts": new_concepts,
             }
         )
-        if len(self._history) > 1000:
+        if len(self._history) > self.max_history_size:
             self._history.pop(0)
 
         return result
@@ -162,6 +166,8 @@ class ContinuousLearningPipeline:
             timestamp=datetime.now().isoformat(),
         )
         self._training_buffer.append(example)
+        if len(self._training_buffer) > self.max_buffer_size:
+            self._training_buffer.pop(0)
         self._stats["buffer_size"] = len(self._training_buffer)
 
     def _should_train(self) -> bool:
@@ -364,6 +370,8 @@ class ContinuousLearningPipeline:
             f"Growth interval:         {self.growth_interval}",
             f"Train interval:          {self.train_interval}",
             f"Min examples for train:  {self.min_examples_for_train}",
+            f"Max buffer size:         {self.max_buffer_size}",
+            f"Max history size:        {self.max_history_size}",
             f"Engine available:        {self.engine is not None}",
             f"Trainer available:       {self.trainer is not None}",
             "=" * 50,

@@ -25,15 +25,8 @@ class ImageEncoder:
         try:
             from services.vision_service import VisionService
             self._vision_service = VisionService()
-        except ImportError:
-            try:
-                from services.vision_service import VisionService
-                self._vision_service = VisionService()
-            except ImportError:
-                logger.warning("VisionService not available")
-                self._vision_service = None
         except (ImportError, RuntimeError, AttributeError) as e:
-            logger.warning("VisionService error: %s", e)
+            logger.warning("VisionService not available: %s", e)
             self._vision_service = None
         return self._vision_service
 

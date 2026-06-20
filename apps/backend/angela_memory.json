@@ -247,6 +247,17 @@
         "assistant",
         "一"
       ]
+    },
+    {
+      "content": "{'user': 'hello', 'assistant': 'Hello! Nice to meet you!'}",
+      "data_type": "conversation",
+      "metadata": {},
+      "keywords": [
+        "user",
+        "hello",
+        "assistant",
+        "Hello! Nice to meet you!"
+      ]
     }
   ],
   "conversations": [],
