@@ -1,78 +1,55 @@
 """
 Start backend server and test health/chat endpoints.
-Run: python scripts/start_backend_test.py
+Uses :mod:`scripts._server_helper` for robust server lifecycle management.
+
+Usage::
+
+    python scripts/start_backend_test.py
 """
 
-import subprocess
 import sys
 import os
-import time
-import urllib.request
-import json
 
-# Add src to path
-SRC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
-sys.path.insert(0, SRC_PATH)
+# Add project root to sys.path so we can import _server_helper
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
-# Start server process
-proc = subprocess.Popen(
-    [sys.executable, "-u", "-c", """
-import sys
-sys.path.insert(0, "apps/backend/src")
-from services.main_api_server import app
-import uvicorn
-uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
-"""],
-    cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
-    stdout=subprocess.PIPE,
-    stderr=subprocess.STDOUT,
-    text=True,
-    bufsize=1
-)
+from scripts._server_helper import start_server, stop_server, wait_for_server, test_health, test_chat
 
-print(f"Server PID: {proc.pid}")
+WAIT_SECONDS = 10.0
 
-# Wait for startup
-time.sleep(5)
 
-# Check if process is still running
-poll = proc.poll()
-if poll is not None:
-    print(f"Server exited early with code {poll}")
-    output = proc.stdout.read()
-    print(f"Output:\n{output[-2000:]}")
-    sys.exit(1)
+def main():
+    print("=== Backend Server Test ===")
+    print(f"Starting server (wait {WAIT_SECONDS}s for readiness)...")
 
-print("Server is running")
+    proc = start_server(wait_seconds=WAIT_SECONDS)
+    print(f"Server PID: {proc.pid}")
 
-# Test health endpoint
-try:
-    req = urllib.request.Request("http://127.0.0.1:8000/api/v1/ops/health")
-    resp = urllib.request.urlopen(req, timeout=5)
-    print(f"Health: {resp.status}")
-    print(resp.read().decode()[:500])
-except Exception as e:
-    print(f"Health failed: {e}")
+    # Wait for server to accept connections
+    ready = wait_for_server(timeout=WAIT_SECONDS)
+    if not ready:
+        print("❌ Server did not become ready within timeout.")
+        stop_server(proc)
+        sys.exit(1)
 
-# Test chat endpoint
-try:
-    data = json.dumps({"message": "hello"}).encode()
-    req = urllib.request.Request(
-        "http://127.0.0.1:8000/api/v1/angela/chat",
-        data=data,
-        headers={"Content-Type": "application/json"}
-    )
-    resp = urllib.request.urlopen(req, timeout=15)
-    print(f"Chat: {resp.status}")
-    print(resp.read().decode()[:1000])
-except Exception as e:
-    print(f"Chat failed: {e}")
+    print("✅ Server is accepting connections.\n")
 
-# Stop server
-proc.terminate()
-try:
-    proc.wait(timeout=5)
-    print("Server stopped cleanly")
-except:
-    proc.kill()
-    print("Server killed")
+    # Health check
+    print("--- Health Check ---")
+    ok, data = test_health()
+    print(f"{'✅' if ok else '❌'} {data}\n")
+
+    # Chat test
+    print("--- Chat Test ---")
+    ok, data = test_chat("hello")
+    print(f"{'✅' if ok else '❌'} {str(data)[:500]}\n")
+
+    # Stop
+    stop_server(proc)
+    print("✅ Server stopped cleanly")
+
+
+if __name__ == "__main__":
+    main()

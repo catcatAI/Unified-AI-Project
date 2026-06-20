@@ -1,72 +1,70 @@
 """
-Start the backend server and capture ALL startup output.
-This helps diagnose why the server starts but endpoints aren't accessible.
+Start backend server and capture ALL startup output.
+Uses :mod:`scripts._server_helper` for robust server lifecycle.
+
+Usage::
+
+    python scripts/capture_server_logs.py
 """
-import subprocess
+
 import sys
 import os
-import time
 
-SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
-PROJECT = os.path.dirname(SRC)
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
-# Start server and capture output
+from scripts._server_helper import get_project_root, get_src_path, _read_output_until
+import subprocess
+
+BACKEND_DIR = get_project_root() / "apps" / "backend"
+SRC = get_src_path()
+
+print("=== Capturing Server Startup Logs ===\n")
+
+cmd = [
+    sys.executable,
+    "-m", "uvicorn",
+    "src.services.main_api_server:app",
+    "--host", "127.0.0.1",
+    "--port", "8000",
+    "--log-level", "info",
+]
+
 proc = subprocess.Popen(
-    [sys.executable, "-u", "-c", """
-import sys
-sys.path.insert(0, "apps/backend/src")
-print("=== SERVER STARTING ===", flush=True)
-from services.main_api_server import app
-print(f"App created: {len(app.routes)} routes", flush=True)
-import uvicorn
-print("Starting uvicorn...", flush=True)
-uvicorn.run(app, host="127.0.0.1", port=8000, log_level="debug")
-"""],
-    cwd=PROJECT,
+    cmd,
+    cwd=str(BACKEND_DIR),
     stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT,
     text=True,
-    bufsize=1
+    bufsize=1,
 )
 
 print(f"Server PID: {proc.pid}")
-print("Waiting for startup output...", flush=True)
+print("Capturing startup output (8s)...\n")
 
-# Read output line by line for 10 seconds
-start = time.time()
-lines = []
-while time.time() - start < 10:
-    ret = proc.poll()
-    if ret is not None:
-        remaining = proc.stdout.read()
-        lines.append(f"[EXIT code {ret}] {remaining}")
-        break
-    try:
-        line = proc.stdout.readline()
-        if line:
-            lines.append(line.rstrip())
-            print(f"  > {line.rstrip()}")
-    except:
-        break
+output = _read_output_until(proc, "", timeout=8.0)
+print(output)
 
-# Print full log
-print(f"\n=== Full log ({len(lines)} lines) ===")
-for line in lines:
-    print(line)
-
-# Check if still running
+# Check status
 if proc.poll() is None:
-    print("\nServer still running - testing endpoints...")
+    print("\nServer still running. Testing endpoints...")
+    import time
+    time.sleep(1)  # let uvicorn finish binding
+
     import urllib.request
     try:
         req = urllib.request.Request("http://127.0.0.1:8000/api/v1/ops/health")
-        resp = urllib.request.urlopen(req, timeout=5)
-        print(f"HEALTH OK: {resp.status}")
+        resp = urllib.request.urlopen(req, timeout=3)
+        print(f"HEALTH: {resp.status}")
         print(resp.read().decode()[:500])
     except Exception as e:
         print(f"HEALTH FAILED: {e}")
+
     proc.terminate()
     proc.wait()
-    print("Server stopped")
+    print("Server stopped.")
+else:
+    print(f"\nServer exited with code {proc.poll()}")
 
 print("\n=== Done ===")
