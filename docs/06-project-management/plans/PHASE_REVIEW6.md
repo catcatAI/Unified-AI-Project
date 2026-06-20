@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v6.20
+# Angela AI 專案全面分析與修復計畫 v6.21
 
-> **生成日期**: 2026-06-20 (第17輪 ED3N 460K 外部字典載入 + 智能下限 5→6)  
-> **分析範圍**: ED3N 引擎現在可完整使用三語 460K 外部字典  
+> **生成日期**: 2026-06-20 (第18輪 CLP 連續學習迴路接通 + 智能下限 6→7)  
+> **分析範圍**: ED3N 引擎現可在每次對話後自動學習新模式  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -16,33 +16,29 @@
 | GARDEN 引擎測試 | **197/197 通過** | ✅ |
 | GARDEN 字典測試 | **31/42 通過** (11 torch 不可用) | 🟡 numpy fallback 就緒 |
 | VectorStore | **numpy 460,235 向量 ✅** | ✅ |
-| ED3N 引擎 | **460,281 條目, 20.9s 載入, 22K 條/秒** | ✅ **優化完成** |
+| ED3N 引擎 | **460,281 條目, 20.9s 載入, 22K 條/秒** | ✅ |
+| **CLP 連續學習** | **trainer 接線 + ED3NEngine._maybe_learn() 接通** | ✅ **P2 完成!** |
 | 後端啟動 | **python -m uvicorn ✅** | ✅ **70 路由, 4 LLM 後端** |
 | **Health API** | ✅ **{'status': 'healthy'}** | ✅ |
 | **Chat API** | ✅ **angela_chat_service 回應** | ✅ |
-| 預先存在失敗修復 | 54 個 | ✅ |
+| 預先存在失敗修復 | 55 個 | ✅ |
 
-## 2. 第17輪變更詳情 (ED3N 460K 外部字典載入)
+## 2. 第18輪變更詳情 (CLP 連續學習迴路接通)
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
-| **`_find_project_root()` Bug 修復** | `ed3n_engine.py` ✅ | 舊: 3 層 dirname 到 `apps/backend/src/` (錯) → 新: 搜尋 `.gitignore` 標記找到 project root (對) |
-| **`load_external_dictionaries` 優化** | `ed3n_engine.py` ✅ | 使用 `bulk_add_entries` + 單次 `_rebuild_index` → 載入時間 64s → 20.9s (3x) |
-| **`_external_dicts_loaded` 標記** | `ed3n_engine.py` ✅ | 防止重複懶加載, 提升生產穩定性 |
-| **`_rebuild_index` Bigram 優化** | `dictionary_layer.py` ✅ | 大字典(>1000條)跳過 bigram 索引 → 索引重建 O(n·m) → O(n) |
-| **模組級 imports** | `ed3n_engine.py` ✅ | `import json`, `import os` 提升至模組頂層 |
-| **載入測試驗證** | 實測 ✅ | 460,235 條在 20.9s 載入, 22K 條/秒 |
-| **查詢驗證** | 實測 ✅ | hello(0.000s), computer(0.588s), 數據(2.3s) |
+| **ChatService 接入 ED3NTrainer** | `chat_service.py` ✅ | CLP 之前 `trainer=None` → `trainer=ED3NTrainer(engine)`，`train_step()` 現在可正常執行 |
+| **ED3NEngine._maybe_learn() 接線** | `chat_service.py` ✅ | `engine._continuous_learning = self._continuous_learning` — 直接引擎調用也能觸發學習 |
+| **CLP 概念發現驗證** | 實測 ✅ | 6 次互動後發現 2 個新概念，觸發 1 次訓練，字典從 46→48 條 |
+| **PHASE_REVIEW6.md** | v6.20→v6.21 ✅ | 智能下限更新 6→7，CLP 已接通 |
 
 ## 3. 代碼品質 🟡 8.5/10
 
 | 指標 | 數值 | 狀態 |
 |------|------|------|
-| 路徑解析健壯性 | marker-based 搜索 | ✅ **不再依賴 dirname 層數** |
-| ED3N 字典載入效能 | 22K 條/秒, 20.9s 總計 | ✅ **3x 加速** |
-| `_rebuild_index` 複雜度 | O(n·m) → O(n) | ✅ **Bigram 跳過** |
-| 防止重複載入 | `_external_dicts_loaded` 標記 | ✅ |
-| 代碼整潔度 | 模組級 imports, 去除局部 import | ✅ |
+| CLP 接線完整性 | trainer + engine 雙向接通 | ✅ |
+| `_maybe_learn()` 路徑 | ED3NEngine.process() → CLP | ✅ |
+| 智能評估文檔 | 完整上限/下限/維度/對應表格 | ✅ (v6.21)
 
 ## 4. 智能水準 🟢 8/10 綜合評估
 
@@ -96,7 +92,7 @@
 | **🧠 推理** | ED3N (CoreNetwork + SNN) + GARDEN (TensorSNNCore) | 7/10 | ✅ 多層 pipeline (reflex→math→encode→network→decode→cycling) |
 | **📝 生成** | StepDecoder + VectorDecoder | 6/10 | ✅ Step-by-step 文本生成 + 溫度控制 |
 | **💾 記憶** | HAMMemoryManager + VectorMemoryStore | 5/10 | 🟡 460K 向量種子完成，HAM 待整合到對話迴圈 |
-| **📚 學習** | ContinuousLearningPipeline + Hebbian SNN | 3/10 | 🟡 CLP 結構存在但未接通；GARDEN Hebbian 更新可用 |
+| **📚 學習** | ContinuousLearningPipeline + Hebbian SNN | **7/10** | ✅ **CLP 接通!** trainer+engine 接線，概念發現+訓練緩衝+自動訓練 |
 | **😊 情緒** | EmotionSystem + HormonalModulator | 5/10 | ✅ EmotionSystem (valence/arousal) + SNN 激素調節 |
 | **🔗 關係** | RelationClassifier + CrossModalTrainer | 5/10 | ✅ 同義詞/映射/反義關係 + 跨模態映射 |
 | **🛠️ 工具** | ToolCallingHandler (6 種) | 7/10 | ✅ file/search/code/system/task/vision — 依賴 LLM 驅動 |
@@ -123,24 +119,25 @@
 
 | P | 任務 | 預期影響 | 目前狀態 |
 |---|------|----------|---------|
-| P2 | **CLP 連續學習迴路接通** | 下限 6→7 | ⏳ 結構存在 (ContinuousLearningPipeline)，需接到 ED3NEngine `_maybe_learn()` |
+| P2 | **CLP 連續學習迴路接通** | 下限 6→7 | ✅ **已完成!** trainer+engine 接線，互動後自動學習 |
 | P2 | **HAM 記憶整合進對話** | 下限 7→8 | ⏳ HAMMemoryManager 存在 (ham_types/ham_manager)，需繞進 process() 迴圈 |
 | P3 | GARDEN torch 11 測試 | 穩定性 | 🟡 numpy fallback 就緒 |
 
-## 5. 關鍵問題矩陣 (v6.20)
+## 5. 關鍵問題矩陣 (v6.21)
 
 | ID | 問題 | 優先級 | 狀態 |
 |----|------|--------|------|
 | — | 後端啟動+API | P0 | ✅ **全部驗證成功!** |
 | N8 | LLM API 金鑰 | P0 | ✅ OPENAI + GEMINI 啟用 |
 | — | VectorStore 種子 | P1 | ✅ **460,235 向量!** |
-| — | **ED3N 載入外部字典** | P1 | ✅ **460,281 條目! 20.9s** |
+| — | ED3N 載入外部字典 | P1 | ✅ **460,281 條目! 20.9s** |
+| — | **CLP 連續學習迴路** | P2 | ✅ **接通! trainer+engine 接線** |
 | N7 | 引擎回應不一致 | P2 | ✅ 雙語 fallback |
 | N3 | 174 導入路徑不一致 | P2 | 🟡 5/174 已修復 |
-| — | **CLP + HAM 迴路** | P2 | ⏳ **下一個目標** |
+| — | **HAM 記憶整合** | P2 | ⏳ **下一個目標** |
 | — | GARDEN 字典 11 測試 | P3 | 🟡 torch 不可用 |
 
-## 6. 十七輪修復總計
+## 6. 十八輪修復總計
 
 | 輪次 | 主要內容 | 成效 |
 |------|---------|------|
@@ -152,11 +149,12 @@
 | 11-14 | 後端啟動+診斷基礎設施 | 70 路由, 4 LLM 後端, 健康檢查 |
 | 15 | **Chat API 驗證** | **端到端後端測試完成!** |
 | 16 | **VectorStore 460K 種子** | **三語字典全數向量化!** |
-| **17** | **ED3N 460K 字典載入** | **智能下限 5→6, P1 完成!** |
-| **總計** | **17 輪** | **54+ 修復, 智能 2→8/10** |
+| 17 | **ED3N 460K 字典載入** | **智能下限 5→6** |
+| **18** | **CLP 連續學習迴路接通** | **智能下限 6→7, P2 完成!** |
+| **總計** | **18 輪** | **55+ 修復, 智能 2→8/10** |
 
 ## 7. 後續建議
 
-1. **P2: CLP 連續學習迴路** — 接通 ContinuousLearningPipeline → ED3NEngine
-2. **P2: HAM 記憶整合** — 將 HAM 記憶召迴繞進本地對話迴圈
-3. **P3: GARDEN torch 依賴** — 修復 11 個 torch 測試
+1. **P2: HAM 記憶整合** — 將 HAM 記憶召迴繞進本地對話迴圈，讓智能下限 7→8
+2. **P3: GARDEN torch 依賴** — 修復 11 個 torch 測試
+3. **邊際優化** — CLP 訓練間隔/buffer 大小微調

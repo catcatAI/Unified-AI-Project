@@ -64,19 +64,25 @@ class ChatService:
             from ai.ed3n.continuous_learning import ContinuousLearningPipeline
             from ai.ed3n.ed3n_engine import ED3NEngine
             engine = ED3NEngine.get_shared()
+            from ai.ed3n.ed3n_trainer import ED3NTrainer
+            trainer = ED3NTrainer(engine)
             state_path = os.path.join(self._cl_state_dir, "cl_state.json")
             if await asyncio.to_thread(os.path.exists, state_path):
                 self._continuous_learning = ContinuousLearningPipeline.load(
-                    self._cl_state_dir, engine=engine
+                    self._cl_state_dir, engine=engine, trainer=trainer
                 )
                 logger.info("Loaded CL state from %s", state_path)
             else:
                 self._continuous_learning = ContinuousLearningPipeline(
                     engine=engine,
+                    trainer=trainer,
                     growth_interval=15,
                     train_interval=50,
                     min_examples_for_train=30,
                 )
+            # Wire CLP back into ED3NEngine so _maybe_learn() works for direct engine calls
+            engine._continuous_learning = self._continuous_learning
+            logger.info("CLP wired into ED3NEngine for _maybe_learn()")
         except Exception as e:
             logger.warning("Continuous learning init skipped: %s", e)
         # Initialize GARDEN engine for continuous learning (Phase 4.5)
