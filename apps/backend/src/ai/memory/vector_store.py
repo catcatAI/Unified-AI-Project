@@ -274,6 +274,11 @@ class VectorMemoryStore:
     def vector_count(self) -> int:
         if self._numpy_backend is not None:
             return len(self._numpy_backend)
+        if self.collection is not None:
+            try:
+                return self.collection.count()
+            except Exception:
+                return 0
         return 0
 
     @property
