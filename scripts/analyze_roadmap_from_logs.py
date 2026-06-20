@@ -8,10 +8,13 @@ logger = logging.getLogger(__name__)
 
 # Add project root to sys.path
 PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+SRC_PATH = PROJECT_ROOT / "apps" / "backend" / "src"
+sys.path.insert(0, str(SRC_PATH))
 
-from apps.backend.src.core.llm.hybrid_brain import HybridBrain
-from apps.backend.src.ai.memory.vector_store import VectorStore
+# Note: HybridBrain class does not exist in the current codebase.
+# The script's LLM analysis functionality requires re-implementation.
+from ai.memory.vector_store import VectorMemoryStore as VectorStore
+
 
 async def main():
     print("[INFO] Initializing Brain and Memory...")

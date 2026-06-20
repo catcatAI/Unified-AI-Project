@@ -39,20 +39,20 @@ for n in ("ed3n_engine", "garden_engine", "dictionary_layer", "VectorDictionary"
           "TensorSNNCore", "CoreNetwork", "ModelBus", "TrainingCoordinator"):
     logging.getLogger(n).setLevel(logging.WARNING)
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
 
-from apps.backend.src.core.system.config.magic_numbers import confidence_value, learning_rate, limit_value
+from core.system.config.magic_numbers import confidence_value, learning_rate, limit_value
 
-from apps.backend.src.ai.core.model_bus import ModelBus, ModelCapability
-from apps.backend.src.ai.core.query_classifier import QueryClassifier, QueryType
-from apps.backend.src.ai.core.training_coordinator import TrainingCoordinator
-from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
-from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
-from apps.backend.src.ai.ed3n.training_types import (
+from ai.core.model_bus import ModelBus, ModelCapability
+from ai.core.query_classifier import QueryClassifier, QueryType
+from ai.core.training_coordinator import TrainingCoordinator
+from ai.ed3n.ed3n_engine import ED3NEngine
+from ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
+from ai.ed3n.training_types import (
     TrainingExample, TrainingBatch, SeqBatch,
     make_synthetic_seq_batch,
 )
-from apps.backend.src.ai.garden.garden_engine import GARDENEngine
+from ai.garden.garden_engine import GARDENEngine
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(ROOT, "apps/backend/data/raw_datasets")

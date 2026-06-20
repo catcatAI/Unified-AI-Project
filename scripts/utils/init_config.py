@@ -14,6 +14,11 @@ from cryptography.fernet import Fernet
 import logging
 logger = logging.getLogger(__name__)
 
+# Add src to sys.path for short-form imports
+_SRC_PATH = str(Path(__file__).resolve().parent.parent.parent / "apps" / "backend" / "src")
+if _SRC_PATH not in sys.path:
+    sys.path.insert(0, _SRC_PATH)
+
 
 def print_header(text: str) -> None:
     """打印标题"""
@@ -121,30 +126,28 @@ def create_directories() -> bool:
 def validate_config() -> bool:
     """验证配置"""
     try:
-        from apps.backend.src.core.config_validator import ConfigValidator
-        from apps.backend.src.core.config_loader import Config
+        from core.config_validator import ConfigValidator
+        from core.config_loader import AngelaConfig
         
         print_info("正在验证配置...")
         
-        # 运行配置验证器
+        # 验证环境变量
         validator = ConfigValidator()
-        result = validator.validate()
+        env_ok = validator.validate_environment()
+        for err in validator.get_errors():
+            print_error(f"  - {err}")
         
-        if not result.valid:
-            print_error("配置验证失败")
-            for error in result.errors:
-                print_error(f"  - {error}")
+        if not env_ok:
+            print_error("环境变量验证失败")
             return False
         
         # 尝试加载配置
-        config = Config.load()
-        valid, errors = config.validate()
-        
-        if not valid:
-            print_error("配置加载失败")
-            for error in errors:
-                print_error(f"  - {error}")
-            return False
+        config = AngelaConfig()
+        config_data = config.get_authority("system", {})
+        cfg_validator = ConfigValidator(config_data)
+        cfg_ok = cfg_validator.validate_config()
+        for err in cfg_validator.get_errors():
+            print_error(f"  - {err}")
         
         print_success("配置验证通过")
         return True

@@ -3,10 +3,10 @@
 import sys, os, json, re, csv, time, logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
-from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
-from apps.backend.src.ai.ed3n.training_types import TrainingExample, TrainingBatch
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
+from ai.ed3n.ed3n_engine import ED3NEngine
+from ai.ed3n.ed3n_trainer import ED3NTrainer
+from ai.ed3n.training_types import TrainingExample, TrainingBatch
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 

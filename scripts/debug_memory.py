@@ -7,14 +7,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Setup path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 def test_memory_init():
     print("Testing HAMMemoryManager Initialization...")
     try:
-        from apps.backend.src.ai.memory.ham_memory.ham_manager import HAMMemoryManager
+        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
         manager = HAMMemoryManager()
         print("✅ HAMMemoryManager initialized successfully.")
         
