@@ -25,6 +25,8 @@ class ChatService:
         self._ed3n_learning_integration = None
         self._ham_sync_task: Optional[asyncio.Task] = None
         self._ham_sync_interval: int = 3600
+        self._vector_store = None
+        self._ham_memory = None
         self._cl_state_dir = os.path.join(
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
@@ -101,6 +103,22 @@ class ChatService:
             logger.info("ED3N learning integration initialized")
         except Exception as e:
             logger.warning("ED3N learning integration init skipped: %s", e)
+        # Initialize VectorMemoryStore for semantic memory retrieval (Phase 5.3)
+        try:
+            from ai.memory.vector_store import VectorMemoryStore
+            self._vector_store = VectorMemoryStore()
+            logger.info("VectorStore initialized with %d vectors", self._vector_store.vector_count)
+        except Exception as e:
+            logger.warning("VectorStore init skipped: %s", e)
+        # Initialize HAM memory for template-based retrieval (Phase 5.3)
+        try:
+            from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+            self._ham_memory = HAMMemoryManager("angela_memory.json")
+            stats = self._ham_memory.get_stats()
+            logger.info("HAM memory initialized: %d templates, %d conversations",
+                        stats.get("template_count", 0), stats.get("conversation_count", 0))
+        except Exception as e:
+            logger.warning("HAM memory init skipped: %s", e)
         self._initialized = True
         logger.info("ChatService initialized")
         # Start periodic HAM sync background task (Phase 5.2)
@@ -114,6 +132,35 @@ class ChatService:
 
         merged_context = context or {}
         merged_context.setdefault("user_name", user_name)
+
+        # Memory context injection: retrieve relevant past knowledge and conversations
+        if self._vector_store is not None:
+            try:
+                vs_results = await asyncio.to_thread(self._vector_store.semantic_search, user_message, 3)
+                docs = vs_results.get("documents", [[]])[0]
+                knowledge = [str(d)[:200] for d in docs if d and isinstance(d, str)]
+                if knowledge:
+                    merged_context["dictionary_context"] = knowledge
+            except Exception as e:
+                logger.debug("VectorStore query failed: %s", e)
+        if self._ham_memory is not None:
+            try:
+                ham_results = await self._ham_memory.retrieve_response_templates(
+                    user_message, top_k=3, min_score=0.3
+                )
+                memories = []
+                for tpl, score in ham_results:
+                    content = tpl.get("content", "")
+                    if content:
+                        memories.append(f"[past:{score:.2f}] {str(content)[:200]}")
+                if memories:
+                    merged_context["conversation_memory"] = memories
+            except Exception as e:
+                logger.debug("HAM memory query failed: %s", e)
+        if "dictionary_context" in merged_context or "conversation_memory" in merged_context:
+            logger.debug("Memory context injected: dict=%d, conv=%d",
+                         len(merged_context.get("dictionary_context", [])),
+                         len(merged_context.get("conversation_memory", [])))
 
         response = await self._llm_service.generate_response(user_message, merged_context)
 
