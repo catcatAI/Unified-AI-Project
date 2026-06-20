@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import normalize_text
 from core.system.config.magic_numbers import confidence_value, threshold_value
+from ._import_utils import subprocess_check
 
 logger = logging.getLogger(__name__)
 
@@ -39,21 +40,16 @@ _torch = None
 def _lazy_torch():
     global _torch
     if _torch is None:
-        try:
-            from concurrent.futures import ThreadPoolExecutor, TimeoutError
-
-            def _import():
+        if subprocess_check("torch", timeout=15):
+            try:
                 import torch
                 import torch.nn.functional as F
-                return (torch, F)
-
-            with ThreadPoolExecutor(max_workers=1) as ex:
-                _torch = ex.submit(_import).result(timeout=60)
-        except TimeoutError:
-            logger.warning("torch import timed out (30s); torch features degraded")
-            _torch = (None, None)
-        except ImportError:
-            logger.warning("torch not installed; torch features degraded")
+                _torch = (torch, F)
+            except ImportError:
+                logger.warning("torch not installed; torch features degraded")
+                _torch = (None, None)
+        else:
+            logger.warning("torch unavailable; torch features degraded")
             _torch = (None, None)
     return _torch
 
@@ -210,18 +206,14 @@ class _STEncoder:
     """Wraps sentence-transformers SentenceTransformer for semantic encoding."""
 
     def __init__(self, model_name: str):
-        from concurrent.futures import ThreadPoolExecutor, TimeoutError
-
-        def _import():
+        from ._import_utils import subprocess_check
+        if not subprocess_check("sentence_transformers", timeout=15):
+            raise ImportError("sentence_transformers not available (import check failed)")
+        try:
             from sentence_transformers import SentenceTransformer
-            return SentenceTransformer
-
-        with ThreadPoolExecutor(max_workers=1) as ex:
-            try:
-                ST = ex.submit(_import).result(timeout=60)
-                self._model = ST(model_name)
-            except (TimeoutError, ImportError) as e:
-                raise ImportError(f"sentence_transformers not available: {e}")
+            self._model = SentenceTransformer(model_name)
+        except (ImportError, Exception) as e:
+            raise ImportError(f"sentence_transformers not available: {e}")
         logger.info("GARDEN: loaded SentenceTransformer model '%s'", model_name)
 
     def encode(self, texts: List[str]) -> torch.Tensor:
@@ -232,32 +224,19 @@ class _STEncoder:
 class _ChromaEncoder:
     """
     ChromaDB-based semantic encoder for GARDEN.
-
-    Uses ChromaDB's built-in embedding function (default: all-MiniLM-L6-v2)
-    to encode text into dense vectors. Falls back gracefully if ChromaDB is
-    unavailable or fails to initialize.
-
-    The encoder maintains an in-memory ChromaDB collection. On encode(), texts
-    are added to the collection and queried to retrieve embeddings. This allows
-    the encoder to work with dynamic concept entries without requiring a fit()
-    step.
     """
 
     EMBEDDING_DIM: int = 384
 
     def __init__(self):
         import uuid
-        from concurrent.futures import ThreadPoolExecutor, TimeoutError
-
-        def _import():
+        from ._import_utils import subprocess_check
+        if not subprocess_check("chromadb", timeout=15):
+            raise ImportError("chromadb not available (import check failed)")
+        try:
             import chromadb
-            return chromadb
-
-        with ThreadPoolExecutor(max_workers=1) as ex:
-            try:
-                chromadb = ex.submit(_import).result(timeout=60)
-            except (TimeoutError, ImportError) as e:
-                raise ImportError(f"chromadb not available: {e}")
+        except ImportError as e:
+            raise ImportError(f"chromadb not available: {e}")
         self._client = chromadb.Client()
         self._collection = self._client.get_or_create_collection(
             name=f"garden_concepts_{uuid.uuid4().hex[:8]}",

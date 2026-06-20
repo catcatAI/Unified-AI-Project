@@ -5,7 +5,7 @@ All values loaded from TieredConfigLoader with inline fallback defaults.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 _MAGIC_CACHE: Dict[str, Any] = {}
 
@@ -62,77 +62,80 @@ def _get(key: str, default: Any = None) -> Any:
     return val if val is not None else default
 
 
+def _safe_float(value: Any, default: Any = None) -> Any:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default if default is not None else value
+
+
+def _safe_int(value: Any, default: Any = None) -> Any:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default if default is not None else value
+
+
 def loop_sleep(key: str, default: float = 1.0) -> float:
-    """Return a sleep interval (seconds) for the given loop key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def timeout_value(key: str, default: float = 30.0) -> float:
-    """Return a timeout value (seconds) for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def cache_value(key: str, default: int = 100) -> int:
-    """Return a cache configuration value for the given key."""
-    return int(_get(key, default))
+    return _safe_int(_get(key, default), default)
 
 
 def batch_value(key: str, default: int = 10) -> int:
-    """Return a batch size for the given key."""
-    return int(_get(key, default))
+    return _safe_int(_get(key, default), default)
 
 
 def llm_param(key: str, default: float = 0.7) -> float:
-    """Return an LLM parameter value for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def retry_value(key: str, default: int = 3) -> int:
-    """Return a retry count for the given key."""
-    return int(_get(key, default))
+    return _safe_int(_get(key, default), default)
 
 
 def threshold_value(key: str, default: float = 0.8) -> float:
-    """Return a threshold value for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def behavior_threshold(key: str, default: float = 0.5) -> float:
-    """Return a behavior threshold for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
+
+
+def behavior_feedback(key: str, default: float = 0.5) -> float:
+    return _safe_float(_get(key, default), default)
 
 
 def behavior_executor(key: str, default: float = 0.5) -> float:
-    """Return a behavior executor configuration value for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def heartbeat_value(key: str, default: float = 1.0) -> float:
-    """Return a heartbeat interval (seconds) for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def timing_value(key: str, default: float = 0.1) -> float:
-    """Return a timing value (seconds) for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def confidence_value(key: str, default: float = 0.7) -> float:
-    """Return a confidence threshold for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def learning_rate(key: str, default: float = 0.05) -> float:
-    """Return a learning rate for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def latency_value(key: str, default: float = 10.0) -> float:
-    """Return a latency value (ms) for the given key."""
-    return float(_get(key, default))
+    return _safe_float(_get(key, default), default)
 
 
 def limit_value(key: str, default: int = 100) -> int:
-    """Return a maximum limit/cap for the given key."""
-    return int(_get(key, default))
+    return _safe_int(_get(key, default), default)
 

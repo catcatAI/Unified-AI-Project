@@ -190,13 +190,13 @@ class AllocationPolicy:
 
     def _build_default_stages(self) -> List[BaseStage]:
         stages: List[BaseStage] = []
-        if self.config.get("enable_assign", True):
-            stages.append(AssignStage(threshold=self.config.get("assign_threshold", 0.5)))
         if self.config.get("enable_composite", True):
             stages.append(CompositeStage(
                 threshold=self.config.get("composite_threshold", 0.3),
                 min_axes=self.config.get("composite_min_axes", 2),
             ))
+        if self.config.get("enable_assign", True):
+            stages.append(AssignStage(threshold=self.config.get("assign_threshold", 0.5)))
         if self.config.get("enable_create", True):
             stages.append(CreateStage(
                 novelty_threshold=self.config.get("create_novelty_threshold", 0.8),

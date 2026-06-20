@@ -47,27 +47,41 @@ _xp: Any = None          # array module reference (torch or numpy)
 _is_torch: bool = False  # True if using torch
 
 
+def _check_torch_subprocess() -> bool:
+    """Check if torch can be imported by spawning a subprocess with a strict timeout.
+    
+    On Windows/Python 3.14, torch import hangs indefinitely in-process,
+    so we probe in a short-lived subprocess that can be killed cleanly.
+    """
+    import subprocess
+    import sys
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", "import torch; print('ok')"],
+            capture_output=True,
+            timeout=10,
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, Exception):
+        return False
+
+
 def _get_backend():
     """Return (module, is_torch) — prefers torch, falls back to numpy."""
     global _xp, _is_torch
     if _xp is None:
-        try:
-            from concurrent.futures import ThreadPoolExecutor, TimeoutError
-
-            def _import_torch():
+        if _check_torch_subprocess():
+            try:
                 import torch
-                return torch
-
-            with ThreadPoolExecutor(max_workers=1) as ex:
-                _xp = ex.submit(_import_torch).result(timeout=60)
-            _is_torch = True
-            logger.debug("SNN using torch backend")
-        except TimeoutError:
-            logger.info("torch import timed out (60s); SNN using numpy backend")
-            _xp = np
-            _is_torch = False
-        except ImportError:
-            logger.info("torch not installed; SNN using numpy backend")
+                _xp = torch
+                _is_torch = True
+                logger.debug("SNN using torch backend")
+            except ImportError:
+                logger.info("torch not installed; SNN using numpy backend")
+                _xp = np
+                _is_torch = False
+        else:
+            logger.info("torch unavailable (subprocess check failed); SNN using numpy backend")
             _xp = np
             _is_torch = False
     return _xp, _is_torch

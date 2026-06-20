@@ -20,6 +20,16 @@ WaitingScheduler — 統一把等待線程
 from __future__ import annotations
 from typing import Any, Optional
 import asyncio
+from dataclasses import dataclass
+
+
+@dataclass
+class ScheduledTask:
+    deadline: float = 0.0
+    submit_time: float = 0.0
+    label: str = ""
+    timeout: float = 8.0
+    coro: Any = None
 
 
 class WaitingScheduler:

@@ -48,17 +48,14 @@ _torch = None
 def _lazy_torch():
     global _torch
     if _torch is None:
-        try:
-            from concurrent.futures import ThreadPoolExecutor, TimeoutError
-
-            def _import():
+        from ._import_utils import subprocess_check
+        if subprocess_check("torch", timeout=15):
+            try:
                 import torch
-                return torch
-
-            with ThreadPoolExecutor(max_workers=1) as ex:
-                _torch = ex.submit(_import).result(timeout=60)
-        except (TimeoutError, ImportError):
-            logger.warning("torch import timed out; binary_store torch ops disabled")
+                _torch = torch
+            except ImportError:
+                _torch = False
+        else:
             _torch = False
     return _torch if _torch else None
 

@@ -11,6 +11,7 @@ from datetime import datetime
 try:
     from core.engine.eta_axis import (
         sigmoid,
+        TriggerCurve,
         AtomicModuleType,
         LogicGateType,
         ArithmeticOpType,
@@ -25,6 +26,8 @@ try:
         hotplug_manager,
         eta_axis_runner,
         main,
+        EtaAxisState,
+        create_default_modules,
     )
 except ImportError:
     import pytest; pytest.skip("eta_axis module not available", allow_module_level=True)

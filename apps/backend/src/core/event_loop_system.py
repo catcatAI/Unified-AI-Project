@@ -48,6 +48,18 @@ class EventPriority(Enum):
         self.description = description
 
 
+class EventCategory(Enum):
+    """事件类别 / Event categories for routing and filtering"""
+
+    SYSTEM = "system"
+    USER = "user"
+    AI = "ai"
+    NETWORK = "network"
+    MONITOR = "monitor"
+    INTERNAL = "internal"
+    USER_INTERACTION = "user_interaction"
+
+
 class EventStatus(Enum):
     """事件状态 / Event processing status"""
 

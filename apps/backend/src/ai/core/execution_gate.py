@@ -18,11 +18,13 @@ from ai.core.query_classifier import _NEGATION_WORDS
 # 可逆性分数表
 REVERSIBILITY = {
     "read":     1.0,   # 读取类：完全可逆（没改变任何东西）
+    "search":   1.0,   # 搜索类：完全可逆
     "create":   0.9,   # 建立类：可逆（可删除）
     "modify":   0.6,   # 修改类：可逆但有成本
     "delete":   0.2,   # 删除类：不可逆
     "send":     0.1,   # 传送类：不可逆
     "system":   0.0,   # 系统类：不可逆且影响大
+    "execute":  0.0,   # 执行类：不可逆
     "none":     1.0,   # 无操作
 }
 
@@ -135,17 +137,6 @@ class ExecutionGate:
                 original_query=user_message,
             )
 
-        if handler_id:
-            return GateDecision(
-                action="confirm_then_execute", score=score,
-                handler=handler_id,
-                action_type=action_type,
-                reason=f"low_score_with_handler={score}",
-                confirm_message=self._build_confirm(action_type, user_message),
-                impact_info=self._describe_impact(action_type, user_message),
-                original_query=user_message,
-            )
-
         return GateDecision(
             action="reject", score=score,
             reason=f"exec_score={score} < {self.CONFIRM_THRESHOLD}",
@@ -163,8 +154,8 @@ class ExecutionGate:
     def _estimate_impact(self, action_type: str, user_message: str) -> float:
         """根据操作类型和范围估计影响度。范围 0.0(影响大) ~ 1.0(无影响)"""
         base = {
-            "read": 1.0, "create": 0.9, "modify": 0.7,
-            "delete": 0.4, "send": 0.3, "system": 0.2, "none": 1.0,
+            "read": 1.0, "search": 1.0, "create": 0.9, "modify": 0.7,
+            "delete": 0.4, "send": 0.3, "system": 0.2, "execute": 0.2, "none": 1.0,
         }.get(action_type, 0.5)
 
         scope = self._config.get("scope_words", {})

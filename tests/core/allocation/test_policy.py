@@ -145,7 +145,7 @@ class TestAllocationPolicy:
     def test_default_stages_in_order(self):
         policy = AllocationPolicy()
         names = [s.name for s in policy.stages]
-        assert names == ["AssignStage", "CompositeStage", "CreateStage", "DeferStage"]
+        assert names == ["CompositeStage", "AssignStage", "CreateStage", "DeferStage"]
 
     def test_default_stages_no_create(self):
         policy = AllocationPolicy(enable_create=False)
