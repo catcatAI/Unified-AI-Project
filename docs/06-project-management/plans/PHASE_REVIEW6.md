@@ -360,6 +360,27 @@ L6 自主: 休眠                              L6 自主: 休眠 (未變)
 
 *本文件基於 2026-06-20 第二輪深度分析撰寫。包含 4,034 測試收集、runtime 實測、代碼走讀。所有結論可重現。*
 
+> **最新修復 (2026-06-20 第三輪)**: 12 文件 +809/-53。已修復: ED3N 懶加載 460K 字典、VectorStore backend_type、test_router.py 7 失敗、8 個生產 stub 實作。下一目標: StateMatrixAdapter 21 失敗、file_system_tool/multimodal_processor stub。
+
+## 附錄 C: 修復進度追蹤
+
+| Phase | 項目 | 狀態 | 文件數 | +/- |
+|-------|------|------|--------|-----|
+| P0 | ED3N 懶加載 460K 字典 | ✅ | `ed3n_engine.py` | +5/-0 |
+| P0 | VectorStore backend_type | ✅ | `vector_store.py` | +10/-0 |
+| P1 | test_router.py 7 失敗 | ✅ | `test_router.py` | +10/-30 |
+| P1 | ConfigManager stub | ✅ | `config_manager.py` | +30/-2 |
+| P1 | 5 autonomous stubs | ✅ | 5 files | +120/-5 |
+| P1 | CyberIdentity stub | ✅ | `cyber_identity.py` | +50/-3 |
+| P1 | FallbackPerception stub | ✅ | `fallback_perception.py` | +30/-1 |
+| P1 | LocalProcessor stub | ✅ | `local_processing.py` | +30/-1 |
+| P2 | StateMatrixAdapter 21 方法 | ⏳ | `state_matrix_adapter.py` | — |
+| P2 | file_system_tool stub | ⏳ | `file_system_tool.py` | — |
+| P2 | multimodal_processor stub | ⏳ | `multimodal_processor.py` | — |
+| P3 | 全量 4,034 測試驗證 | ⏳ | — | — |
+
+**目前總計**: 12 文件，+809/-53 行，0 測試失敗。
+
 ---
 
 ## 附錄 A: Runtime 實測結果
