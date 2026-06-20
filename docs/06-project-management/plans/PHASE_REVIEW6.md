@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v6.14
+# Angela AI 專案全面分析與修復計畫 v6.15
 
-> **生成日期**: 2026-06-20 (第11輪 後端正確啟動驗證)  
-> **分析範圍**: 後端伺服器正確啟動 + 端點驗證 + 診斷腳本  
+> **生成日期**: 2026-06-20 (第12輪 _server_helper 模組建立 + bug 修復)  
+> **分析範圍**: 診斷腳本基礎設施重構  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -15,53 +15,49 @@
 | GARDEN SNN Core | **34/34 通過** | ✅ |
 | GARDEN 引擎測試 | **197/197 通過** | ✅ |
 | GARDEN 字典測試 | **31/42 通過** (11 torch 不可用) | 🟡 numpy fallback 就緒 |
-| VectorStore | **chromadb 1515 向量, 搜索 ✅** | ✅ **語義搜索啟用** |
-| **後端啟動** | **python -m uvicorn ✅** | ✅ **所有 LLM 後端註冊, 70 路由就緒** |
-| 預先存在失敗修復 | 53 個 (無新增) | ✅ |
+| VectorStore | **chromadb 1515 向量, 搜索 ✅** | ✅ |
+| 後端啟動 | **python -m uvicorn ✅** | ✅ **70 路由, 4 LLM 後端** |
+| 預先存在失敗修復 | 53 個 | ✅ |
 
-## 2. 第11輪變更詳情 (後端啟動驗證)
+## 2. 第12輪變更詳情 (_server_helper 模組)
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
-| **後端啟動診斷腳本** | `scripts/start_backend_test.py` ✅ | Python+uvicorn 啟動 + 端點測試 |
-| **後端正確啟動驗證** | `scripts/check_backend_startup.py` ✅ | 模組導入 + 連接埠 + 服務註冊檢查 |
-| **伺服器日誌捕獲** | `scripts/capture_server_logs.py` ✅ | 完整 uvicorn 啟動輸出捕獲 |
+| **建立 _server_helper 模組** | `scripts/_server_helper.py` ✅ | 取代內聯子進程代碼，提供共享伺服器生命週期管理 |
+| **重寫 start_backend_test.py** | `scripts/start_backend_test.py` ✅ | 改用 helper, 更簡潔 |
+| **重寫 check_backend_startup.py** | `scripts/check_backend_startup.py` ✅ | 改用 helper, 更簡潔 |
+| **重寫 capture_server_logs.py** | `scripts/capture_server_logs.py` ✅ | 改用 helper, 更簡潔 |
+| **修復: 空 marker 中斷** | `_server_helper.py` ✅ | 捕獲模式 (空 marker) 不檢查 marker |
+| **修復: 進程死亡未檢測** | `_server_helper.py` ✅ | startup 時檢查 proc.poll() 並拋出 RuntimeError |
+| **修復: 繁忙迴圈** | `_server_helper.py` ✅ | idle 時 sleep 0.05s 避免 CPU 100% |
 
-## 3. 代碼品質 🟡 8/10 (+0.5 → 8.5)
+## 3. 代碼品質 🟡 8.5/10
 
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | 重複代碼消除 | 2 處 → 1 共用 | ✅ |
 | Python 3.14 相容性 | numpy fallback 就緒 | ✅ |
-| VectorStore chromadb | 完整 read/write/query 支援 | ✅ |
+| VectorStore chromadb | 完整 read/write/query | ✅ |
 | N3 導入路徑 (腳本) | 5/5 已修復 | ✅ |
-| **後端啟動** | **✅ 首次驗證成功** | ✅ **70 路由, 4 LLM 後端** |
+| 診斷腳本品質 | 內聯子進程 → 共享模組 | ✅ **大幅提升** |
 
-## 4. 智能水準 🟡 4/10 → 🟢 6/10 🎉
+## 4. 智能水準 🟢 6/10
 
-**重大提升！** 後端伺服器正確啟動且所有 LLM 後端註冊成功：
-- ✅ Ollama (qwen3.5)
-- ✅ OpenAI (gpt-4)
-- ✅ Google Gemini (gemini-3.1-flash-lite)
-- ✅ ED3N (本地字典引擎)
-- ✅ GARDEN (numpy fallback, 無 torch)
-- ✅ Angela LLM Service (以 Google 為主要後端)
-- ✅ Model Bus 註冊: file, search, code, system, task, vision handlers
-- ✅ UnifiedMemoryCoordinator
+與 v6.14 相同。後端啟動成功，診斷腳本基礎設施重構完成。
 
-## 5. 關鍵問題矩陣 (v6.14)
+## 5. 關鍵問題矩陣 (v6.15)
 
 | ID | 問題 | 優先級 | 狀態 |
 |----|------|--------|------|
-| — | **後端啟動** | **P0** | ✅ **首次驗證成功! 4 LLM 後端** |
+| — | 後端啟動 | P0 | ✅ 70 路由, 4 LLM 後端 |
 | N8 | LLM API 金鑰 | P0 | ✅ OPENAI + GEMINI 啟用 |
 | — | VectorStore 種子 | P1 | ✅ 1515 向量就緒 |
+| — | **API 端點訪問** | **P1** | 🟡 **port 拒絕 (uvicorn bind 問題)** |
 | N7 | 引擎回應不一致 | P2 | ✅ 雙語 fallback |
 | N3 | 174 導入路徑不一致 | P2 | 🟡 5/174 已修復 |
-| — | **API 端點測試** | **P1** | 🟡 **待執行 (port 拒絕)** |
-| — | GARDEN 字典 11 測試 | P3 | 🟡 torch 不可用時遺留 |
+| — | GARDEN 字典 11 測試 | P3 | 🟡 torch 不可用 |
 
-## 6. 十一輪修復總計
+## 6. 十二輪修復總計
 
 | 輪次 | 主要內容 | 成效 |
 |------|---------|------|
@@ -70,11 +66,12 @@
 | 8 | 去重 + Python 3.14 相容 | SNN 34/34, GARDEN numpy fallback |
 | 9 | VectorStore 種子 + 語義搜索 | chromadb 1515 向量, 搜索驗證 |
 | 10 | N3-A: 腳本導入路徑統一 | 5/5 腳本, 2 預先存在 bug 修復 |
-| **11** | **後端啟動驗證** | **首次成功啟動, 4 LLM 後端, 70 路由** |
-| **總計** | **11 輪, 10 commits** | **53+ 修復, 智能 2→6/10** |
+| 11 | 後端啟動驗證 | 首次成功啟動, 70 路由, 4 LLM 後端 |
+| **12** | **_server_helper 模組** | **共享模組取代內聯代碼, 3 bug 修復** |
+| **總計** | **12 輪, 11 commits** | **53+ 修復, 智能 2→6/10** |
 
 ## 7. 後續建議
 
-1. 測試 API 端點 (port 拒絕問題需排查)
-2. 完整種子所有字典 (分批執行避開 chromadb 瓶頸)
-3. 啟動後端進行端到端聊天測試
+1. 排查 API port 拒絕 (uvicorn bind 問題)
+2. 完整種子所有字典
+3. 端到端聊天測試驗證後端可用性

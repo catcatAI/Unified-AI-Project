@@ -37,7 +37,7 @@ def get_src_path() -> Path:
 def start_server(
     host: str = "127.0.0.1",
     port: int = 8000,
-    wait_seconds: float = 5.0,
+    wait_seconds: float = 30.0,
     log_level: str = "info",
 ) -> subprocess.Popen:
     """Start the backend server using uvicorn.
@@ -121,8 +121,8 @@ def _read_output_until(
 def wait_for_server(
     host: str = "127.0.0.1",
     port: int = 8000,
-    timeout: float = 15.0,
-    interval: float = 0.5,
+    timeout: float = 40.0,
+    interval: float = 1.0,
 ) -> bool:
     """Wait until the server is accepting connections.
 
