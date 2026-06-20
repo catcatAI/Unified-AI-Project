@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v6.21
+# Angela AI 專案全面分析與修復計畫 v6.22
 
-> **生成日期**: 2026-06-20 (第18輪 CLP 連續學習迴路接通 + 智能下限 6→7)  
-> **分析範圍**: ED3N 引擎現可在每次對話後自動學習新模式  
+> **生成日期**: 2026-06-20 (第18輪 CLP + 智能維度全面分析)  
+> **分析範圍**: 自主性、感知、行動等所有智能維度評估  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -122,6 +122,94 @@
 | P2 | **CLP 連續學習迴路接通** | 下限 6→7 | ✅ **已完成!** trainer+engine 接線，互動後自動學習 |
 | P2 | **HAM 記憶整合進對話** | 下限 7→8 | ⏳ HAMMemoryManager 存在 (ham_types/ham_manager)，需繞進 process() 迴圈 |
 | P3 | GARDEN torch 11 測試 | 穩定性 | 🟡 numpy fallback 就緒 |
+
+### 4.7 智能維度：自主性、感知、行動與其他
+
+#### 4.7.1 自主性（Autonomy / 主動性）
+
+| 能力 | 模組 | 智能度 | 狀態 | 詳情 |
+|------|------|--------|------|------|
+| **主動交互** | ProactiveInteractionSystem | **5/10** | ✅ 完整實作 | asyncio 後臺循環 (15s/次)，8 種交互機會 (用戶返回/長時間閒置/情緒變化/時間基/記憶觸發/學習分享/天氣/事件)，優先級佇列，WebSocket 廣播 |
+| **用戶監控** | UserMonitor | **4/10** | ✅ 完整實作 | 用戶在線/離線/活動等級檢測，空閒時間追蹤，會話管理 |
+| **主動認知** | ActiveCognitionFormula | **4/10** | ✅ 完整實作 | A_c 主動認知計算公式：偏離原生秩序度量，建構意義模型 |
+| **自主生命週期** | AutonomousLifeCycle | **3/10** | 🟡 結構存在 | 自主行為排程，但未完全接入主迴圈 |
+| **動態代理註冊** | DynamicAgentRegistry + AgentOrchestrator | **5/10** | ✅ 完整實作 | HSP 協定代理發現，能力廣播，多種特化代理 (視覺/音頻/代碼/規劃等 10+ 種) |
+
+**自主性整體評估：4/10** — 完整架構存在但實際主動行為較少，主要是系統內部排程，尚未達到真正的「自主決策」。
+
+#### 4.7.2 聽覺與語音（Audio / Speech / 聽）
+
+| 能力 | 模組 | 智能度 | 狀態 | 詳情 |
+|------|------|--------|------|------|
+| **語音合成 TTS** | AudioSystem + AngelaRealVoice (edge-tts) | **6/10** | ✅ 可用 | 多引擎支援 (System/Edge/Azure)，中文語音合成，歌詞同步，情感語音 |
+| **語音辨識 STT** | AudioService + AudioProcessingAgent + speech_recognition | **3/10** | 🟡 部分可用 | AudioService 有 speech_to_text stub (回傳 demo 資料)，AudioProcessingAgent 有 _perform_speech_recognition 但依賴外部 API/Kaldi |
+| **音頻編碼** | AudioEncoder (ED3N multimodal) | **4/10** | 🟡 已接線 | VAD 檢測 (energy/peak)，語音情緒分析 (excited/happy/calm/angry)，錄音時長偵測 |
+| **音頻處理** | AudioProcessing | **3/10** | 🟡 結構存在 | 音頻特徵提取，VAD 語音活動檢測 |
+| **聽覺取樣** | AuditorySampler | **2/10** | 🟡 初始 | 音頻類型分類 (SPEECH/MUSIC/NOISE/SILENCE) |
+| **音樂播放** | AudioSystem (play_music) | **3/10** | 🟡 可用 | 音樂播放 + 歌詞同步 |
+
+**聽覺整體評估：3.5/10** — TTS 較成熟（edge-tts 高品質），但 STT 仍為 stub/依賴外部 API，音頻理解能力有限。
+
+#### 4.7.3 視覺與圖像（Vision / Image / 視）
+
+| 能力 | 模組 | 智能度 | 狀態 | 詳情 |
+|------|------|--------|------|------|
+| **圖像編碼** | ImageEncoder (ED3N multimodal) | **4/10** | 🟡 已接線 | VisionService 物件檢測/場景分析/OCR；PIL fallback 格式/尺寸/顏色分析；將結果編碼為字典鍵 |
+| **視覺服務** | VisionService | **4/10** | 🟡 可用 | 物件檢測、場景分析、OCR、多模態分析，整合 cluster manager |
+| **視覺處理代理** | VisionProcessingAgent | **4/10** | 🟡 已註冊 | 特化代理：圖像分析、物件檢測、文字提取 |
+| **圖像生成** | ImageGenerationAgent | **2/10** | 🟡 已註冊 | Agent 結構存在，純依賴外部 API (如 DALL-E/StableDiffusion) |
+| **Live2D 角色** | Live2DIntegration / Live2DAvatarGenerator | **3/10** | 🟡 初始 | 虛擬角色渲染，口型同步與語音配合 |
+
+**視覺整體評估：3.5/10** — VisionService 有基本能力但非深度整合；ImageEncoder 可將視覺結果映射到字典；Live2D 提供視覺呈現。
+
+#### 4.7.4 觸覺與體感（Tactile / Touch / 觸）
+
+| 能力 | 模組 | 智能度 | 狀態 | 詳情 |
+|------|------|--------|------|------|
+| **觸覺服務** | TactileService | **3/10** | 🟡 結構存在 | 測試涵蓋模型物件/模擬觸碰/處理/反饋；實際系統中為副功能 |
+| **搔癢反射** | TickleReflexSystem | **2/10** | 🟡 初始 | 專案中有測試存在 (test_tickle_reflex_system.py)，基礎反應模式 |
+| **生理觸覺** | PhysiologicalTactile | **2/10** | 🟡 初始 | 測試存在 (test_physiological_tactile.py) |
+| **體感整合** | TactileEndpoint (API) | **2/10** | 🟡 已註冊 | API 端點存在，測試 cover |
+
+**觸覺整體評估：2/10** — 主要為概念驗證/測試層級，無實際硬體或深度模擬整合。
+
+#### 4.7.5 行動與執行的能力（Action / Execution / 做）
+
+| 能力 | 模組 | 智能度 | 狀態 | 詳情 |
+|------|------|--------|------|------|
+| **行動執行橋樑** | ActionExecutionBridge | **5/10** | ✅ 完整實作 | 行動類型 (initiate_conversation/respond/execute_tool/等)，呼叫 orchestration 生成主動訊息 |
+| **工具調用** | ToolCallingHandler (6 種) | **7/10** | ✅ 可用 | file/search/code/system/task/vision — 需 LLM 驅動 |
+| **代理協作** | AgentCollaborationManager + AgentOrchestrator | **4/10** | 🟡 結構存在 | 多代理協作、任務分配、結果匯總 |
+| **任務生成/執行** | TaskGenerator + TaskExecutionEvaluator | **4/10** | 🟡 結構存在 | 任務生成與執行評估 |
+| **桌面互動** | DesktopInteraction / DesktopPresence | **3/10** | 🟡 初始 | 桌面存在感與互動 |
+| **寵物管理** | PetManager | **3/10** | 🟡 初始 | 虛擬寵物系統，主動檢查生存值 |
+
+**行動整體評估：4.5/10** — 工具調用較強 (7/10)，執行橋樑完整，但實際對外部世界的操作有限。
+
+#### 4.7.6 其他感知能力
+
+| 能力 | 模組 | 智能度 | 狀態 | 詳情 |
+|------|------|--------|------|------|
+| **情緒感知** | EmotionSystem (valence/arousal) | **5/10** | ✅ 可用 | 情緒維度 + SNN 激素調節 (serotonin/dopamine/cortisol) |
+| **信任評估** | TrustManager / TrustEngine | **4/10** | 🟡 結構存在 | 信任分數評估，影響交互決策 |
+| **倫理管理** | EthicsManager | **3/10** | 🟡 初始 | 倫理邊界檢查，防止有害輸出 |
+| **風險評估** | CrisisMonitor / execution_monitor | **3/10** | 🟡 初始 | 危機等級事件記錄，系統自我保護 |
+| **時間感知** | TimeSystem / 排程 | **3/10** | 🟡 初始 | 時間感知與事件排程 |
+| **天氣感知** | ProactiveInteractionSystem (weather) | **1/10** | 🟡 僅定義 | 天氣變化作為交互機會類型定義，但無實際取得天氣資料 |
+
+### 4.8 智能維度總表
+
+| 類別 | 子維度 | 智能度 | 狀態 |
+|------|--------|--------|------|
+| 🧠 **認知** | 推理 / 生成 / 記憶 / 學習 / 元認知 / 多語言 | **6/10** | ✅ |
+| 🗣️ **語言** | 對話 / 知識 / 創造 / 工具調用 | **7/10** | ✅ |
+| 🤖 **自主性** | 主動交互 / 用戶監控 / 代理 / 生命週期 | **4/10** | 🟡 |
+| 👁️ **視覺** | 圖像編碼 / 視覺服務 / Live2D | **3.5/10** | 🟡 |
+| 👂 **聽覺** | TTS / STT / 音頻編碼 / 音樂 | **3.5/10** | 🟡 |
+| ✋ **觸覺** | 觸覺服務 / 體感 / 反射 | **2/10** | 🔴 |
+| 🏃 **行動** | 執行橋樑 / 代理協作 / 桌面互動 | **4.5/10** | 🟡 |
+| ❤️ **情感** | 情緒 / 信任 / 倫理 | **4/10** | 🟡 |
+| 🌍 **環境** | 時間 / 天氣 / 寵物 | **2.5/10** | 🔴 |
 
 ## 5. 關鍵問題矩陣 (v6.21)
 
