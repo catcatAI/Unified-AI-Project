@@ -1,4 +1,4 @@
-"""Tests for GoogleDriveHandler"""
+"""Tests for GoogleDriveHandler — matches actual API"""
 import pytest
 
 
@@ -13,26 +13,21 @@ class TestGoogleDriveHandler:
         from services.handlers.google_drive_handler import GoogleDriveHandler
         instance = GoogleDriveHandler()
         assert instance is not None
-        assert instance._drive_service is None
+        assert instance.drive_service is None  # no underscore prefix
 
-    def test_handle_list_intent(self):
+    def test_handle_with_params_dict(self):
         from services.handlers.google_drive_handler import GoogleDriveHandler
         import asyncio
         instance = GoogleDriveHandler()
-        result = asyncio.run(instance.handle("列出文件", "google_drive"))
+        # handle() expects params as dict and returns dict, not string
+        result = asyncio.run(instance.handle("google_drive_list", {"action": "list"}))
         assert result is not None
-        assert isinstance(result, str)
+        assert isinstance(result, dict)
 
-    def test_handle_status_intent(self):
+    def test_handle_default_returns_dict(self):
         from services.handlers.google_drive_handler import GoogleDriveHandler
         import asyncio
         instance = GoogleDriveHandler()
-        result = asyncio.run(instance.handle("狀態如何", "google_drive"))
-        assert result is not None
-
-    def test_handle_unknown_intent(self):
-        from services.handlers.google_drive_handler import GoogleDriveHandler
-        import asyncio
-        instance = GoogleDriveHandler()
-        result = asyncio.run(instance.handle("做點別的", "google_drive"))
-        assert result is not None
+        result = asyncio.run(instance.handle("google_drive_status", {"action": "status"}))
+        assert isinstance(result, dict)
+        assert "status" in result

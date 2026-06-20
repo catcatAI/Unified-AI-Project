@@ -34,7 +34,8 @@ class TestMaturityLevel:
         try:
             from core.maturity.maturity_system import MaturityLevel
             assert MaturityLevel is not None
-            assert len(MaturityLevel.LEVELS) == 12
+            # MaturityLevel is an Enum with L0-L11 (12 members)
+            assert len(MaturityLevel) == 12
         except ImportError as e:
             pytest.skip(f"MaturityLevel not available: {e}")
 

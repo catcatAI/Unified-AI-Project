@@ -14,10 +14,12 @@ class TestIntentRegistry:
         assert hasattr(IntentRegistry, 'detect_complex_task')
         assert hasattr(IntentRegistry, 'detect_task_type')
         assert hasattr(IntentRegistry, 'get_keywords')
-        assert hasattr(IntentPattern, 'name')
-        assert hasattr(IntentPattern, 'keywords')
-        assert hasattr(IntentPattern, 'category')
-        assert hasattr(IntentPattern, 'priority')
+        # IntentPattern is a dataclass — attributes are instance-level, not class-level
+        pattern = IntentPattern(name="test", keywords=["test"])
+        assert hasattr(pattern, 'name')
+        assert hasattr(pattern, 'keywords')
+        assert hasattr(pattern, 'category')
+        assert hasattr(pattern, 'priority')
 
     def test_instantiation(self):
         """Verify no-arg instantiation"""

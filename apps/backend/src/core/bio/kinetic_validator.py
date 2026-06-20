@@ -12,8 +12,8 @@ class KineticValidator:
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
         # 根據「四肢實體約束矩陣」定義的物理極限
-        self.max_velocity = 500.0 # px/s
-        self.max_acceleration = 200.0 # px/s^2
+        self.max_velocity = self.config.get('max_velocity', 500.0)  # px/s, overridable via config
+        self.max_acceleration = self.config.get('max_acceleration', 200.0)  # px/s^2
         self.last_pos = None
         self.last_time = None
 
