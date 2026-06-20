@@ -43,8 +43,8 @@ class TestKeyValidator:
         instance = KeyValidator()
         env = {
             "ANGELA_KEY_A": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
-            "ANGELA_KEY_B": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p67",
-            "ANGELA_KEY_C": "c3d4e5f6g7h8i9j0k1l2m3n4o5p678",
+            "ANGELA_KEY_B": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6789",
+            "ANGELA_KEY_C": "c3d4e5f6g7h8i9j0k1l2m3n4o5p67890",
         }
         results = instance.validate_all_keys(env)
         assert len(results) == 3
