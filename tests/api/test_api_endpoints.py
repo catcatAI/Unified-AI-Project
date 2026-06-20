@@ -273,7 +273,8 @@ class TestMobileAPI:
     @patch("system.cluster_manager.cluster_manager")
     async def test_mobile_status_get(self, mock_cluster, client):
         mock_cluster.get_cluster_status.return_value = {
-            "cluster": {"active_nodes": 3, "healthy": True},
+            "node_count": 3,
+            "healthy": True,
         }
         resp = await client.get("/api/v1/mobile/status")
         assert resp.status_code == 200

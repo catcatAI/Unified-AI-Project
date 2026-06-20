@@ -27,3 +27,18 @@ class StateMatrixAdapter(JsonFileStateStore):
 
     def compute_influences(self) -> Dict[str, Any]:
         return {}
+
+    def export_to_dict(self) -> Dict[str, Any]:
+        """Export current state as a dictionary."""
+        return {
+            "state": dict(self._state),
+            "dimensions": {},
+        }
+
+    def import_from_dict(self, data: Dict[str, Any]) -> None:
+        """Import state from a dictionary."""
+        state = data.get("state", {})
+        if isinstance(state, dict):
+            self._state.update(state)
+        else:
+            logger.warning("import_from_dict: 'state' is not a dict, got %s", type(state).__name__)

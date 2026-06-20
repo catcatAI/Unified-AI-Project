@@ -5,7 +5,7 @@ Replaces implicit singleton patterns across the system.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 class ServiceRegistry:
     def __init__(self):
         self._services: Dict[str, Any] = {}
+
+    @property
+    def service_names(self) -> List[str]:
+        return list(self._services.keys())
 
     def register(self, name: str, service: Any) -> None:
         self._services[name] = service

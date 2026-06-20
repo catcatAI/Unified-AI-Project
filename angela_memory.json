@@ -23,17 +23,6 @@
       ]
     },
     {
-      "content": "{'user': 'hello', 'assistant': 'Hello! Nice to meet you!'}",
-      "data_type": "conversation",
-      "metadata": {},
-      "keywords": [
-        "user",
-        "hello",
-        "assistant",
-        "Hello! Nice to meet you!"
-      ]
-    },
-    {
       "content": "{'user': '切換模型 gpt-4', 'assistant': '四'}",
       "data_type": "conversation",
       "metadata": {},

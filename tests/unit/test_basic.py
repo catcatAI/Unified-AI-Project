@@ -27,7 +27,8 @@ def test_basic_imports():
 def test_project_structure():
     """测试项目结构"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_dir = os.path.dirname(current_dir)
+    # tests/unit/ 往上兩層才到專案根目錄
+    project_dir = os.path.dirname(os.path.dirname(current_dir))
 
     # 检查关键目录是否存在
     assert os.path.exists(os.path.join(project_dir, "apps")), "apps 目录应该存在"
