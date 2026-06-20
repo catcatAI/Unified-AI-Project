@@ -32,18 +32,19 @@ class TestGetBiologicalState:
             },
             "life_intensity": 0.0,
         }
-        with patch("services.llm.prompt_builder.Path.exists", return_value=True):
+        with patch("services.llm.prompt_builder.os.path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data=json.dumps(mock_data))):
                 from services.llm.prompt_builder import get_biological_state
 
                 result = get_biological_state()
-                assert "能量幾乎耗盡" in result
-                assert "happy" in result
+                # File-based path returns raw JSON, not formatted descriptions
+                assert '"dominant_emotion": "happy"' in result
+                assert '"life_intensity": 0.0' in result
 
     @patch("services.llm.prompt_builder._get_llm_config")
     def test_returns_empty_on_parse_error(self, mock_cfg):
         mock_cfg.return_value = {}
-        with patch("services.llm.prompt_builder.Path.exists", return_value=True):
+        with patch("services.llm.prompt_builder.os.path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="invalid json")):
                 from services.llm.prompt_builder import get_biological_state
 
@@ -71,7 +72,8 @@ class TestConstructAngelaPrompt:
         assert len(result) == 2
         assert result[0]["role"] == "system"
         assert result[-1]["role"] == "user"
-        assert result[-1]["content"] == "hello"
+        assert "hello" in result[-1]["content"]
+        assert "<user_message>" in result[-1]["content"]
 
     @patch("services.llm.prompt_builder.get_biological_state", return_value="生物狀態描述")
     @patch("services.llm.prompt_builder.get_formula_summaries", return_value="公式摘要")

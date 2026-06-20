@@ -74,6 +74,7 @@ def get_biological_state(context=None) -> str:
             return json.dumps(data, ensure_ascii=False, indent=2)
     except Exception as e:
         logger.debug(f"Brain status file read failed: {e}")
+    return ""
 
 
 _formula_cache = None

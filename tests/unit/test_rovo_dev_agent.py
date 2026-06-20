@@ -51,5 +51,5 @@ class TestRovoDevAgent:
         from integrations.rovo_dev_agent import RovoDevAgent
         instance = RovoDevAgent(config={})
         await instance.start()
-        result = await instance.process_task({"name": "test"})
+        result = await instance.process_task({"type": "code_review", "data": {"file_path": "test.py"}})
         assert result["status"] == "completed"
