@@ -2,7 +2,9 @@
 # ANGELA-MATRIX: [L3] [γδ] [C] [L2]
 # =============================================================================
 
+import json
 import logging
+import os
 import threading
 import time
 from collections import OrderedDict
@@ -157,11 +159,13 @@ class ED3NEngine:
         self.audio_encoder: Optional[AudioEncoder] = None
         self.cross_modal_trainer: Optional[CrossModalTrainer] = None
         self._continuous_learning = continuous_learning
+        self._external_dicts_loaded = False
         self.enable_multimodal()
         if auto_load_presets:
             self.load_presets()
         if auto_load_dictionaries:
             self.load_external_dictionaries()
+            self._external_dicts_loaded = True
 
     _shared_instance: Optional["ED3NEngine"] = None
     _shared_lock = threading.Lock()
@@ -184,11 +188,12 @@ class ED3NEngine:
     def process(
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
-        # Lazy-load external dictionaries if presets only are loaded
-        if self.dictionary is not None and len(self.dictionary.entries) < 100:
+        # Lazy-load external dictionaries on first query if not already loaded
+        if not self._external_dicts_loaded and self.dictionary is not None and len(self.dictionary.entries) < 100:
             try:
                 count = self.load_external_dictionaries()
                 if count > 0:
+                    self._external_dicts_loaded = True
                     logger.info("Lazy-loaded %d external dictionary entries on first query", count)
             except Exception as e:
                 logger.debug("Lazy dictionary load failed (non-critical): %s", e)
@@ -778,8 +783,34 @@ class ED3NEngine:
         logger.info("ED3NEngine loaded %d entries and %d reflex patterns from config dir: %s",
                     loaded, len(self.reflex.patterns), config_dir)
 
+    @staticmethod
+    def _find_project_root() -> str:
+        """Find project root by walking up until a unique marker file is found."""
+        current = os.path.dirname(os.path.abspath(__file__))
+        for _ in range(10):
+            # .gitignore is the most reliable marker (unique to project root)
+            if os.path.exists(os.path.join(current, ".gitignore")):
+                return current
+            parent = os.path.dirname(current)
+            if parent == current:
+                break
+            current = parent
+        # Fallback: look for pyproject.toml
+        current = os.path.dirname(os.path.abspath(__file__))
+        for _ in range(10):
+            if os.path.exists(os.path.join(current, "pyproject.toml")):
+                return current
+            parent = os.path.dirname(current)
+            if parent == current:
+                break
+            current = parent
+        return os.getcwd()
+
     def load_external_dictionaries(self, dict_dir: Optional[str] = None) -> int:
         """Load external dictionary entries (CEDICT/JMdict/WordNet) into DictionaryLayer.
+
+        Uses ``bulk_add_entries`` for performance and calls
+        ``_rebuild_index`` only once after all files are loaded.
 
         Args:
             dict_dir: Path to directory containing dictionary JSON files.
@@ -788,22 +819,27 @@ class ED3NEngine:
         Returns:
             Total number of imported entries.
         """
-        import os
         if dict_dir is None:
-            base = os.environ.get("PROJECT_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            base = os.environ.get("PROJECT_ROOT", self._find_project_root())
             dict_dir = os.path.join(base, "data", "dictionaries")
         total = 0
         for fname in ("cedict.json", "jmdict.json", "wordnet.json"):
             fpath = os.path.join(dict_dir, fname)
-            if os.path.exists(fpath):
-                try:
-                    count = self.dictionary.import_from_json(fpath)
-                    total += count
-                    logger.info("Loaded %d entries from %s", count, fpath)
-                except Exception as e:
-                    logger.warning("Failed to load %s: %s", fpath, e)
+            if not os.path.exists(fpath):
+                continue
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                entries_data = data.get("entries", [])
+                count = self.dictionary.bulk_add_entries(entries_data)
+                total += count
+                logger.info("Loaded %d entries from %s", count, fpath)
+            except Exception as e:
+                logger.warning("Failed to load %s: %s", fpath, e)
         if total > 0:
+            self.dictionary._rebuild_index()
             self.network.sync_from_dictionary(self.dictionary)
+            self._external_dicts_loaded = True
         logger.info("ED3NEngine loaded %d external dictionary entries total.", total)
         return total
 

@@ -538,6 +538,7 @@ class DictionaryLayer:
         with self._lock:
             self._keyword_index.clear()
             self._bigram_index.clear()
+            large_dict = len(self.entries) > 1000
             for key, entry in self.entries.items():
                 for lang, surface in entry.surface_forms.items():
                     surface_lower = normalize_text(surface).lower().strip()
@@ -546,7 +547,11 @@ class DictionaryLayer:
                     for token in tokens:
                         self._keyword_index.setdefault(token, []).append(key)
 
-                    if len(surface_lower) >= 4:
+                    # Skip bigram index for large dictionaries (>1000 entries)
+                    # to avoid O(n * m) performance cost.
+                    # Bigram index is only used as a fallback in encode_soft()
+                    # when keyword search finds no candidates.
+                    if not large_dict and len(surface_lower) >= 4:
                         for i in range(len(surface_lower) - 1):
                             bigram = surface_lower[i : i + 2]
                             if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
