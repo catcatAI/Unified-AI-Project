@@ -31,7 +31,7 @@
     "model_name": "gpt-4",
     "api_key_env": "OPENAI_API_KEY",
     "timeout": 120,
-    "enabled": false,
+    "enabled": true,
     "note": "從環境變量 OPENAI_API_KEY 讀取 API 密鑰"
   },
   "anthropic-claude": {

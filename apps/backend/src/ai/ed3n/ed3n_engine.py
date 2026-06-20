@@ -312,7 +312,7 @@ class ED3NEngine:
             return math_result
 
         # Stage 2: Encode
-        FALLBACK_STR = "抱歉，我没理解你的意思。"
+        FALLBACK_STR = self._fallback_str(input_text)
         t1 = time.perf_counter()
         keys, cache_hit = self._perform_encode(input_text)
         stages["encode"] = (time.perf_counter() - t1) * 1000
@@ -447,6 +447,25 @@ class ED3NEngine:
         )
         return current_output
 
+    @staticmethod
+    def _is_english_input(text: str) -> bool:
+        """Detect if input is primarily English (ASCII) or Chinese."""
+        if not text:
+            return True
+        cjk_count = sum(1 for c in text if '\u4e00' <= c <= '\u9fff' or '\u3000' <= c <= '\u303f')
+        ascii_alpha = sum(1 for c in text if c.isascii() and c.isalpha())
+        total_alpha = cjk_count + ascii_alpha
+        if total_alpha == 0:
+            return True
+        return ascii_alpha / total_alpha > 0.5
+
+    @staticmethod
+    def _fallback_str(text: str) -> str:
+        """Return language-appropriate fallback message."""
+        if ED3NEngine._is_english_input(text):
+            return "Sorry, I didn't understand what you meant."
+        return "抱歉，我没理解你的意思。"
+
     def _compute_confidence(self, keys: List[str]) -> float:
         if not keys:
             return 0.0
@@ -466,12 +485,12 @@ class ED3NEngine:
         self, input_text: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
         if not input_text:
-            return "抱歉，我没理解你的意思。"
+            return self._fallback_str(input_text)
         keys = self.dictionary.encode(input_text)
         if not keys:
-            return "抱歉，我没理解你的意思。"
+            return self._fallback_str(input_text)
         decoded = self.dictionary.decode(keys, context)
-        return decoded if decoded else "抱歉，我没理解你的意思。"
+        return decoded if decoded else self._fallback_str(input_text)
 
     @property
     def snn_network(self) -> SNNCore:
@@ -484,10 +503,10 @@ class ED3NEngine:
         self, input_text: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
         if not input_text:
-            return "抱歉，我没理解你的意思。"
+            return self._fallback_str(input_text)
         keys = self.dictionary.encode(input_text)
         if not keys:
-            return "抱歉，我没理解你的意思。"
+            return self._fallback_str(input_text)
 
         if self.snn_mode:
             network_output = self.snn_network.forward(keys, context=context)
@@ -576,7 +595,7 @@ class ED3NEngine:
         combined_keys = list(set(text_keys + image_keys + audio_keys))
 
         if not combined_keys:
-            return "抱歉，我没理解你的意思。"
+            return self._fallback_str(text or "")
 
         if self.cross_modal_trainer:
             for tk in text_keys or [""]:
@@ -587,7 +606,7 @@ class ED3NEngine:
 
         if depth == "shallow" or (depth == "auto" and not context and not text):
             decoded = self.dictionary.decode(combined_keys, context)
-            return decoded or "抱歉，我没理解你的意思。"
+            return decoded or self._fallback_str(text or "")
 
         if self.snn_mode:
             network_output = self.snn_network.forward(combined_keys, context=context)

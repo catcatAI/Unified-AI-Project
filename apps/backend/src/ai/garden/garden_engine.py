@@ -279,7 +279,7 @@ class GARDENEngine:
         input_keys = self.dictionary.encode(text)
 
         if not input_keys:
-            return "抱歉，我暂时无法理解你的意思。"
+            return self._fallback_str(text)
 
         # Stage 4: SNN forward
         network_output = self.snn.forward(input_keys, context=context)
@@ -292,7 +292,7 @@ class GARDENEngine:
             response = self.dictionary.decode(input_keys[:limit_value("ai.garden.engine.fallback_decode_keys", 4)])
 
         if not response:
-            return "抱歉，我暂时无法理解你的意思。"
+            return self._fallback_str(text)
 
         # Stage 6: Cycling — iterative refinement if response is weak
         MAX_CYCLES = 3
@@ -341,7 +341,7 @@ class GARDENEngine:
             result = self._single_step_process(step, context)
             if result:
                 results.append(result)
-        return "\n".join(results) if results else "抱歉，我无法理解这些步骤。"
+        return "\n".join(results) if results else self._fallback_str(text)
 
     def _single_step_process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """Process a single step through the GARDEN pipeline."""
@@ -425,6 +425,25 @@ class GARDENEngine:
     # ------------------------------------------------------------------
     # VectorDecoder (iterative generation)
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _is_english_input(text: str) -> bool:
+        """Detect if input is primarily English or Chinese."""
+        if not text:
+            return True
+        cjk_count = sum(1 for c in text if '\u4e00' <= c <= '\u9fff' or '\u3000' <= c <= '\u303f')
+        ascii_alpha = sum(1 for c in text if c.isascii() and c.isalpha())
+        total_alpha = cjk_count + ascii_alpha
+        if total_alpha == 0:
+            return True
+        return ascii_alpha / total_alpha > 0.5
+
+    @staticmethod
+    def _fallback_str(text: str) -> str:
+        """Return language-appropriate fallback message."""
+        if GARDENEngine._is_english_input(text):
+            return "Sorry, I couldn't understand what you meant."
+        return "抱歉，我暂时无法理解你的意思。"
 
     @property
     def vector_decoder(self) -> VectorDecoder:
