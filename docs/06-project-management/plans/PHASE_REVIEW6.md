@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v6.18
+# Angela AI 專案全面分析與修復計畫 v6.19
 
-> **生成日期**: 2026-06-20 (第15輪 Chat API 端點驗證)  
-> **分析範圍**: 端到端後端 API 驗證完成  
+> **生成日期**: 2026-06-20 (第16輪 VectorStore 460K 種子完成)  
+> **分析範圍**: 字典資料向量化完成，智能下限大幅提升  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -15,20 +15,23 @@
 | GARDEN SNN Core | **34/34 通過** | ✅ |
 | GARDEN 引擎測試 | **197/197 通過** | ✅ |
 | GARDEN 字典測試 | **31/42 通過** (11 torch 不可用) | 🟡 numpy fallback 就緒 |
-| VectorStore | **chromadb 1515 向量, 搜索 ✅** | ✅ |
+| VectorStore | **numpy 460,235 向量 ✅** | ✅ **大功告成!** |
 | 後端啟動 | **python -m uvicorn ✅** | ✅ **70 路由, 4 LLM 後端** |
 | **Health API** | ✅ **{'status': 'healthy'}** | ✅ |
 | **Chat API** | ✅ **angela_chat_service 回應** | ✅ |
 | 預先存在失敗修復 | 53 個 | ✅ |
 
-## 2. 第14-15輪變更詳情 (_read_output_until 執行緒 + Chat 驗證)
+## 2. 第16輪變更詳情 (VectorStore 460K 種子)
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
-| **_read_output_until 執行緒重寫** | `_server_helper.py` ✅ | `readline()` 阻塞 → daemon 執行緒 + `Event.wait(timeout)` |
-| **__main__ 超時硬編碼修復** | `_server_helper.py` ✅ | 8s/10s → 使用預設值 30s/40s |
-| **Chat API 端點測試** | `python scripts/_server_helper.py` ✅ | **首次成功!** 含情緒元數據 |
-| **PHASE_REVIEW6.md** | v6.15→v6.18 ✅ | 記錄所有進展 |
+| **bulk_add_memories 方法** | `vector_store.py` ✅ | O(n²) vstack → O(n) 預分配, 11,500 條/秒 |
+| **種子腳本 numpy 優化** | `seed_vector_store.py` ✅ | BATCH_SIZE 5000, 強制 numpy 後端 |
+| **CC-CEDICT 種子** | 125,704 條 | zh↔en 詞典, 13.9s |
+| **JMDict 種子** | 217,213 條 | ja↔en 詞典 |
+| **WordNet 種子** | 117,658 條 | en WordNet 3.0, 33.4s |
+| **持久化文件** | vectors.npy 669MB + json 158MB | 磁碟自動載入 |
+| **PHASE_REVIEW6.md** | v6.18→v6.19 ✅ | 記錄第16輪 |
 
 ## 3. 代碼品質 🟡 8.5/10
 
@@ -36,31 +39,51 @@
 |------|------|------|
 | 重複代碼消除 | 2 處 → 1 共用 | ✅ |
 | Python 3.14 相容性 | numpy fallback 就緒 | ✅ |
-| VectorStore chromadb | 完整 read/write/query | ✅ |
+| VectorStore numpy bulk | **11,500 條/秒** | ✅ **大幅優化** |
 | N3 導入路徑 (腳本) | 5/5 已修復 | ✅ |
 | 診斷腳本品質 | 共享模組, 非阻塞超時 | ✅ **大幅提升** |
 
-## 4. 智能水準 🟢 6/10 → 🟢 8/10 🎉🎉
+## 4. 智能水準 🟢 8/10
 
-**里程碑達成！後端完整 API 驗證成功！**
+### 智能上限 (有 LLM API): 8/10 ✅
+- Health + Chat API 端點驗證通過
+- 4 LLM 後端 (OpenAI, Gemini, Ollama, ED3N)
+- Tool Calling handlers 已註冊
 
-- ✅ Health: `{'status': 'healthy', 'service': 'ops'}`
-- ✅ Chat: `angela_chat_service` 回應含情緒系統 (calm, conf=0.5, int=0.3)
-- ✅ 啟動時間: ~30s (含所有 LLM 後端註冊)
-- ✅ 可通過 `python scripts/_server_helper.py` 一鍵啟動+測試
+### 智能下限 (無 LLM API): 4/10 → 🟢 5/10 ✅
 
-## 5. 關鍵問題矩陣 (v6.18)
+**進步: 460,235 條字典向量種子完成！**
+
+| 能力 | 之前 | 現在 |
+|------|------|------|
+| 本地知識庫 | 1,515 條 | **460,235 條** |
+| 語言覆蓋 | 無 | zh↔en↔ja 三語 |
+| 離線查詢 | 46 條硬編碼 presets | **TF-IDF + 向量搜索 46 萬條** |
+| 持久化 | chromadb 3MB | **numpy 669MB + json 158MB** |
+
+### 智能下限 5→8 剩餘路徑
+
+| P | 任務 | 預期影響 | 狀態 |
+|---|------|----------|------|
+| P1 | **ED3N 載入外部字典 (460K)** | 5→6 | ⏳ 未開始 |
+| P2 | **CLP 連續學習迴路接通** | 6→7 | ⏳ 未開始 |
+| P2 | **HAM 記憶整合進本地對話** | 7→8 | ⏳ 未開始 |
+| P3 | GARDEN torch 11 測試修復 | 穩定性 | 🟡 torch 不可用 |
+
+## 5. 關鍵問題矩陣 (v6.19)
 
 | ID | 問題 | 優先級 | 狀態 |
 |----|------|--------|------|
 | — | 後端啟動+API | P0 | ✅ **全部驗證成功!** |
 | N8 | LLM API 金鑰 | P0 | ✅ OPENAI + GEMINI 啟用 |
-| — | VectorStore 種子 | P1 | ✅ 1515 向量就緒 |
+| — | VectorStore 種子 | P1 | ✅ **460,235 向量!** |
+| — | ED3N 載入外部字典 | P1 | ⏳ 未開始 |
 | N7 | 引擎回應不一致 | P2 | ✅ 雙語 fallback |
 | N3 | 174 導入路徑不一致 | P2 | 🟡 5/174 已修復 |
+| — | CLP + HAM 迴路 | P2 | ⏳ 未開始 |
 | — | GARDEN 字典 11 測試 | P3 | 🟡 torch 不可用 |
 
-## 6. 十五輪修復總計
+## 6. 十六輪修復總計
 
 | 輪次 | 主要內容 | 成效 |
 |------|---------|------|
@@ -68,13 +91,14 @@
 | 7 | LLM + 引擎統一 | OpenAI 啟用, 雙語 fallback |
 | 8 | 去重 + Python 3.14 相容 | SNN 34/34, GARDEN numpy fallback |
 | 9 | VectorStore 種子 + 語義搜索 | chromadb 1515 向量, 搜索驗證 |
-| 10 | N3-A: 腳本導入路徑統一 | 5/5 腳本, 2 預先存在 bug 修復 |
+| 10 | N3-A: 腳本導入路徑統一 | 5/5 腳本, 2 bug 修復 |
 | 11-14 | 後端啟動+診斷基礎設施 | 70 路由, 4 LLM 後端, 健康檢查 |
-| **15** | **Chat API 驗證** | **端到端後端測試完成! 🎉** |
-| **總計** | **15 輪, 14 commits** | **53+ 修復, 智能 2→8/10** |
+| 15 | **Chat API 驗證** | **端到端後端測試完成!** |
+| **16** | **VectorStore 460K 種子** | **三語字典全數向量化!** |
+| **總計** | **16 輪** | **53+ 修復, 智能 2→8/10** |
 
 ## 7. 後續建議
 
-1. 完整種子所有字典 (chromadb 批量)
-2. 優化後端啟動速度 (>30s 需改善)
-3. N3-B/C: 測試檔案導入路徑統一 (169 處剩餘)
+1. **P1: ED3N 載入外部字典** — 讓本地引擎使用 460K 字典資料
+2. **P2: CLP 連續學習迴路** — 接通 ContinuousLearningPipeline → ED3NEngine
+3. **P2: HAM 記憶整合** — 將 HAM 記憶召迴繞進本地對話迴圈

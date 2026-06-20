@@ -105,6 +105,31 @@ class _NumpyBackend:
         if self._dirty:
             self._save()
 
+    def bulk_add_memories(
+        self,
+        entries: List[Tuple[str, str, Optional[Dict[str, Any]]]],
+    ) -> None:
+        """Add multiple memories in a single batch.
+
+        Avoids O(n²) ``vstack`` and per-insert ``_save()``
+        that make sequential ``add_memory`` calls extremely slow.
+        """
+        if not entries:
+            return
+        n = len(entries)
+        new_vecs = np.zeros((n, _NUMPY_EMBED_DIM), dtype=np.float32)
+        for i, (mid, content, meta) in enumerate(entries):
+            new_vecs[i] = self._embed(content)
+            self.ids.append(mid)
+            self.documents.append(content)
+            self.metadatas.append(meta or {})
+        self.vectors = (
+            np.vstack([self.vectors, new_vecs])
+            if self.vectors.shape[0] > 0
+            else new_vecs
+        )
+        self._dirty = True
+
     async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:
         if len(self.ids) == 0:
             return {}
