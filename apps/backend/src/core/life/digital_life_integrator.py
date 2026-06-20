@@ -336,6 +336,16 @@ class DigitalLifeIntegrator:
             # broad except acceptable: LLM failure is optional, graceful degradation
             logger.error(f"  [Cognition] Brain boot failure: {e}. Angela will rely on GSI-4 local logic.", exc_info=True)
 
+        # 3.5 Autonomous Life Cycle (Formula-driven decision system)
+        if self._formula_integration_enabled:
+            try:
+                self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
+                await self.autonomous_lifecycle.initialize()
+                self.autonomous_lifecycle.register_phase_callback(self._on_formula_decision)
+                logger.info("  [Autonomy] Autonomous Life Cycle active.")
+            except Exception as e:
+                logger.warning(f"  [Autonomy] Life cycle degraded: {e}")
+
         # 4. Final Activation
         self.is_initialized = True
         await self._transition_state(LifeCycleState.AWAKENING)

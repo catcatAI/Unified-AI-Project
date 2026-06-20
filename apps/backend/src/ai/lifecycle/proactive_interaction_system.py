@@ -19,6 +19,7 @@ import json
 
 from .user_monitor import UserMonitor
 from core.system.config.magic_numbers import cache_value, loop_sleep
+from services.weather_service import WeatherService
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +110,11 @@ class ProactiveInteractionSystem:
             "executed_actions": 0,
             "opportunity_counts": {},
         }
+
+        # 天氣服務
+        self.weather_service = WeatherService()
+        self._last_weather_check: Optional[datetime] = None
+        self._last_weather_desc: Optional[str] = None
 
         # 時間相關的配置
         self.last_interaction_time: Optional[datetime] = None
@@ -266,6 +272,9 @@ class ProactiveInteractionSystem:
         # 5. 記憶觸發
         await self._check_memory_triggers(opportunities)
 
+        # 6. 天氣變化
+        await self._check_weather_opportunities(opportunities)
+
         # 更新統計
         for opp in opportunities:
             opp_type = opp["type"]
@@ -330,6 +339,44 @@ class ProactiveInteractionSystem:
         except Exception as e:  # broad exception acceptable: memory trigger checks should be fault-tolerant
             logger.warning(f"Error checking memory triggers: {e}", exc_info=True)
 
+    async def _check_weather_opportunities(self, opportunities: List[Dict[str, Any]]) -> None:
+        """檢查天氣變化機會"""
+        if not self.weather_service.is_enabled():
+            return
+        try:
+            weather = await self.weather_service.get_weather()
+            desc = weather.get("description", "unknown")
+            if desc == "unknown" or desc is None:
+                return
+            now = datetime.now()
+            # First check: log initial weather
+            if self._last_weather_desc is None:
+                self._last_weather_desc = desc
+                self._last_weather_check = now
+                return
+            # Subsequent checks: detect significant changes
+            significant_change = (
+                desc != self._last_weather_desc
+                and self._last_weather_check is not None
+                and (now - self._last_weather_check).total_seconds() > 3600
+            )
+            if significant_change:
+                opportunities.append({
+                    "type": InteractionOpportunity.WEATHER_CHANGE.value,
+                    "priority": "low",
+                    "data": {
+                        "previous": self._last_weather_desc,
+                        "current": desc,
+                        "temperature": weather.get("temperature_c"),
+                        "location": weather.get("location"),
+                    },
+                })
+                self.stats["total_opportunities"] += 1
+                self._last_weather_desc = desc
+            self._last_weather_check = now
+        except Exception as e:
+            logger.debug("Weather check skipped: %s", e)
+
     async def _plan_proactive_action(
         self, opportunity: Dict[str, Any], user_state: Dict[str, Any]
     ) -> Optional[InteractionPlan]:
@@ -358,6 +405,8 @@ class ProactiveInteractionSystem:
                 message = await self._generate_time_based_message(opportunity)
             elif opp_type == InteractionOpportunity.MEMORY_TRIGGER.value:
                 message = await self._generate_memory_message(opportunity)
+            elif opp_type == InteractionOpportunity.WEATHER_CHANGE.value:
+                message = await self._generate_weather_message(opportunity)
             else:
                 engine = self._get_ed3n_engine()
                 message = engine.process("unknown_opportunity", context={"opp_type": opp_type}, depth="reflex")
@@ -410,6 +459,18 @@ class ProactiveInteractionSystem:
         events = opportunity.get("data", {}).get("events", [])
         engine = self._get_ed3n_engine()
         return engine.process("memory_trigger", context={"events": events}, depth="reflex")
+
+    async def _generate_weather_message(self, opportunity: Dict[str, Any]) -> str:
+        """生成天氣消息"""
+        data = opportunity.get("data", {})
+        desc = data.get("current", "unknown")
+        temp = data.get("temperature")
+        location = data.get("location", "your area")
+        parts = [f"The weather in {location} has changed to {desc}"]
+        if temp is not None:
+            parts.append(f" ({temp}°C)")
+        engine = self._get_ed3n_engine()
+        return engine.process("weather_change", context={"message": "".join(parts)}, depth="reflex")
 
     async def _execute_planned_actions(self) -> None:
         """執行計劃的行動"""
