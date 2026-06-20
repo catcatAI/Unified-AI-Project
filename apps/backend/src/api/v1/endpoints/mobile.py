@@ -30,7 +30,7 @@ async def get_mobile_status_get() -> dict:
     """獲取移動端狀態 (GET 方法支持)"""
     try:
         import psutil
-        from system.cluster_manager import cluster_manager
+        from core.system.cluster_manager import cluster_manager
 
         cpu_usage = await asyncio.to_thread(psutil.cpu_percent)
         memory = await asyncio.to_thread(psutil.virtual_memory)
@@ -62,7 +62,7 @@ async def get_mobile_status(data: Dict[str, Any] = Body(...)) -> dict:
     """獲取實時系統狀態 (CPU, Memory, Cluster)"""
     try:
         import psutil
-        from system.cluster_manager import cluster_manager
+        from core.system.cluster_manager import cluster_manager
 
         cpu_usage = await asyncio.to_thread(psutil.cpu_percent)
         memory = await asyncio.to_thread(psutil.virtual_memory)

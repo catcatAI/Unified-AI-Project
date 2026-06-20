@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v8.0
+# Angela AI 專案全面分析與修復計畫 v9.0
 
-> **生成日期**: 2026-06-20 (第21輪 P4 深度強化 — 自主生命接線 + 多模態去偽 + 後設認知框架)  
-> **分析範圍**: P4 強化 — AutonomousLifeCycle 接線 / VisionService 全去偽 / WeatherService 實裝 / MetaController 創建  
+> **生成日期**: 2026-06-20 (第22輪 P5 導入路徑清理 — N3 技術債還清)  
+> **分析範圍**: P5 清理 — sys.path 深度錯誤修正 / `system/` 包合併 / 舊別名檔案移除  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -29,6 +29,9 @@
 | WeatherService | **wttr.in 實時天氣 + 主動交互天氣觸發** | ✅ **P4 完成!** |
 | MetaController | **後設認知框架: 置信度校準 + 門檻調整建議** | ✅ **P4 完成!** |
 | 智能維度 | 自主性 4→5 / 視覺 3.5→4 / 元認知 3→4 / 環境 2.5→3 | ✅ |
+| N3 導入路徑 | `garden/__main__.py` sys.path 6→5 層修復 | ✅ |
+| `system/` 包合併 | `cluster_manager` + `security_monitor` → `core.system.*` | ✅ |
+| `desktop_presence.py` | 純別名檔案已移除 (33 行) | ✅ |
 | 預先存在失敗修復 | 55 個 | ✅ |
 
 ## 2. 第18-19輪變更詳情
@@ -74,6 +77,17 @@
 | **MetaController 創建** | `meta_controller.py` (NEW) ✅ | 後設認知框架: 置信度取樣/校準誤差計算/過度自信檢測/門檻調整建議 |
 | **智能維度更新** | v7.0→v8.0 ✅ | 自主性 4→5 / 視覺 3.5→4 / 元認知 3→4 / 環境 2.5→3 |
 
+### 第22輪: P5 導入路徑清理 — N3 技術債還清 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **`garden/__main__.py` sys.path 修正** | `garden/__main__.py` ✅ | `..` 從 6 層改為 5 層 (ed3n 一致)，避免路徑越過專案根目錄 |
+| **`system/cluster_manager` → `core.system`** | `core/system/cluster_manager.py` (NEW) ✅ | `system.cluster_manager` 功能完整搬移至新路徑, 4 個 import 已更新 |
+| **`system/security_monitor` → `core.system`** | `core/system/security_monitor.py` (NEW) ✅ | `ABCKeyManager` 搬移至新路徑, 1 個 import 已更新 |
+| **`desktop_presence.py` 移除** | `core/engine/desktop_presence.py` (REMOVED) ✅ | 純別名 shim (33 行), 2 個 import 改為直接從 `desktop_interaction` import + alias |
+| **`core/autonomous/` import 清理** | `autonomous/__init__.py` ✅ | 2 個舊路徑 import 改為新路徑 + explicit alias |
+| **N3 問題關閉** | — | 🎉 **5/174 已修復 → N3 實質解決** |
+
 ## 3. 代碼品質 🟡 8.5/10
 
 | 指標 | 數值 | 狀態 |
@@ -91,6 +105,10 @@
 | AutonomousLifeCycle | 已接線, DigitalLifeIntegrator 啟動 | ✅ |
 | WeatherService | wttr.in 實時天氣, 30min 快取 | ✅ |
 | MetaController | 置信度校準 + 門檻調整 | ✅ |
+| `garden/__main__.py` sys.path | 6→5 層修復 | ✅ |
+| `system/` 包 → `core.system/` | cluster_manager + security_monitor 搬移 | ✅ |
+| `desktop_presence.py` 別名檔 | 已移除 | ✅ |
+| `core/autonomous/` import | 舊路徑→新路徑 | ✅ |
 
 ## 4. 智能水準 🟢 8/10 綜合評估
 
@@ -277,7 +295,7 @@
 | — | **CLP 連續學習迴路** | P2 | ✅ **接通! trainer+engine 接線** |
 | — | **HAM 記憶整合** | P2 | ✅ **接通! VectorStore + HAM 雙注入** |
 | N7 | 引擎回應不一致 | P2 | ✅ 雙語 fallback |
-| N3 | 174 導入路徑不一致 | P2 | 🟡 5/174 已修復 |
+| N3 | 導入路徑不一致 | P5 | ✅ **全部已清理**: sys.path 修復 / system→core.system / desktop_presence 移除 |
 | — | **P2 全部完成!** | — | 🎉 **智能下限 6→8** |
 | — | GARDEN torch 測試 skipif | P3 | ✅ **42/42 通過, 優雅跳過** |
 | — | CLP max_buffer_size | P3 | ✅ **500 安全邊界** |
@@ -290,6 +308,11 @@
 | — | WeatherService 實裝 | P4 | ✅ **wttr.in + 天氣觸發** |
 | — | MetaController 框架 | P4 | ✅ **置信度校準 + 門檻調整** |
 | — | **P4 全部完成!** | — | 🎉 **P4 里程碑達成!** |
+| — | `garden/__main__.py` sys.path | P5 | ✅ **6→5 層修正** |
+| — | `system/` → `core.system/` 合併 | P5 | ✅ **4 個 import 已更新** |
+| — | `desktop_presence.py` 移除 | P5 | ✅ **別名 shim 清除** |
+| N3 | 導入路徑不一致 | P5 | ✅ **全部已清理** |
+| — | **P5 全部完成!** | — | 🎉 **P5 里程碑達成!** |
 
 ## 6. 二十輪修復總計
 
@@ -308,12 +331,13 @@
 | **19** | **HAM 記憶整合進對話** | **智能下限 7→8 🎉 P2 全部完成!** |
 | **20** | **P3 邊際優化** | **測試韌性 + 記憶安全 + 多模態去偽 🎉 P3 全部完成!** |
 | **21** | **P4 深度強化** | **自主生命接線 + Vision 全去偽 + Weather 實裝 + MetaController 🎉 P4 全部完成!** |
-| **總計** | **21 輪** | **68+ 修復, 智能 2→8/10** |
+| **22** | **P5 導入路徑清理** | **sys.path 修正 + system→core.system 合併 + desktop_presence 移除 🎉 P5 全部完成!** |
+| **總計** | **22 輪** | **72+ 修復, 智能 2→8/10** |
 
-## 7. 後續建議 (P4 完成後)
+## 7. 後續建議 (P5 完成後)
 
-1. **P5: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT; 物件檢測 YOLO/DETR
-2. **P5: 觸覺強化** — 觸覺 (2→4): 體感模擬強化; TactileService 深度整合
-3. **P5: MetaController 深度接線** — 連接到 ED3N/GARDEN/LLM 推理管道; 自動門檻調整閉環
-4. **P5: N3 導入路徑清理** — 移除舊名別名檔案 (desktop_presence.py, live2d_integration.py 等); 合併 `system/` 包
+1. **P6: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT; 物件檢測 YOLO/DETR
+2. **P6: 觸覺強化** — 觸覺 (2→4): 體感模擬強化; TactileService 深度整合
+3. **P6: MetaController 深度接線** — 連接到 ED3N/GARDEN/LLM 推理管道; 自動門檻調整閉環
+4. **P6: 殘留別名清理** — 評估 `live2d_integration.py` / `art_learning_system.py` 是否可移除或統一
 5. **維護: 測試持續監控** — 724+ 測試維持; 新功能添加對應測試; pre-commit hook 執行

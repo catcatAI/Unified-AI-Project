@@ -189,9 +189,10 @@ except ImportError as e:
     LyricsSync = None
 
 try:
-    from core.engine.desktop_presence import DesktopPresence, MouseTracker
+    from core.engine.desktop_interaction import DesktopInteraction as DesktopPresence
+    MouseTracker = DesktopPresence
 except ImportError as e:
-    logger.warning(f"Failed to import desktop_presence: {e}", exc_info=True)
+    logger.warning(f"Failed to import DesktopPresence (from desktop_interaction): {e}", exc_info=True)
     DesktopPresence = None
     MouseTracker = None
 
@@ -395,7 +396,7 @@ async def initialize_all_systems() -> dict:
     from core.engine.desktop_interaction import DesktopInteraction
     from core.engine.browser_controller import BrowserController
     from core.engine.audio_system import AudioSystem
-    from core.engine.desktop_presence import DesktopPresence
+    from core.engine.desktop_interaction import DesktopInteraction as DesktopPresence
     from core.engine.live2d_integration import Live2DIntegration
     from core.bio.biological_integrator import BiologicalIntegrator
     from core.life.digital_life_integrator import DigitalLifeIntegrator

@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 
 sys.path.insert(
     0,
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", ".."),
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."),
 )
 
 from ai.garden.garden_engine import GARDENEngine

@@ -91,7 +91,7 @@ def get_abc_key_manager():
     global _abc_key_manager_instance
     if _abc_key_manager_instance is None:
         try:
-            from system.security_monitor import ABCKeyManager
+            from core.system.security_monitor import ABCKeyManager
             _abc_key_manager_instance = ABCKeyManager()
         except Exception as e:
             logger.warning(f"ABCKeyManager not available: {e}", exc_info=True)

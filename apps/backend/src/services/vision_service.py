@@ -11,7 +11,7 @@ from core.perception.visual_sampler import VisualSampler, SamplingDistribution
 from core.perception.perceptual_memory import PerceptualMemory
 from core.perception.attention_controller import AttentionController
 from core.sync.realtime_sync import sync_manager, SyncEvent
-from system.cluster_manager import cluster_manager
+from core.system.cluster_manager import cluster_manager
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
