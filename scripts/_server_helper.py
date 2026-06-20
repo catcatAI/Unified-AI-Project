@@ -14,10 +14,11 @@ import sys
 import time
 import json
 import subprocess
+import threading
 import urllib.request
 import urllib.error
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 
 
 # ---- Path resolution ----
@@ -94,27 +95,33 @@ def _read_output_until(
     marker: str,
     timeout: float = 10.0,
 ) -> str:
-    """Read server output until a marker appears or timeout."""
-    output = []
-    start = time.time()
-    while time.time() - start < timeout:
-        if proc.poll() is not None:
-            # Process exited
-            remaining = proc.stdout.read()
-            output.append(remaining)
-            break
+    """Read server output until a marker appears or timeout.
+
+    Uses a background thread to avoid blocking on ``readline()``.
+    """
+    output: List[str] = []
+    done_event = threading.Event()
+
+    def _reader():
         try:
-            line = proc.stdout.readline()
-            if line:
-                output.append(line.rstrip())
-                # Only check marker if it's non-empty
+            for raw_line in iter(proc.stdout.readline, ""):
+                line = raw_line.rstrip()
+                output.append(line)
                 if marker and marker in line:
-                    break
-            elif time.time() - start < timeout:
-                # Stream idle — brief sleep to avoid busy loop
-                time.sleep(0.05)
+                    done_event.set()
+                    return
         except (ValueError, OSError):
-            break
+            pass
+        finally:
+            done_event.set()
+
+    reader = threading.Thread(target=_reader, daemon=True)
+    reader.start()
+
+    # Wait for either completion or timeout
+    done_event.wait(timeout=timeout)
+
+    # Don't terminate the thread — it'll exit when the pipe closes
     return "\n".join(output)
 
 
@@ -197,13 +204,13 @@ if __name__ == "__main__":
     print(f"Project root: {get_project_root()}")
     print(f"Src path: {get_src_path()}")
 
-    # Start server
-    print("\nStarting server...")
-    proc = start_server(wait_seconds=8.0)
+    # Start server (default 30s startup wait)
+    print("\nStarting server (30s init timeout)...")
+    proc = start_server()
     print(f"Server PID: {proc.pid}")
 
-    # Wait for it to be ready
-    ready = wait_for_server(timeout=10.0)
+    # Wait for it to be ready (default 40s poll timeout)
+    ready = wait_for_server()
     if ready:
         print("Server is accepting connections.")
 
