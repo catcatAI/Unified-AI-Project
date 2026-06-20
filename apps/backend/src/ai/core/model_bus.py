@@ -523,6 +523,10 @@ class ModelBus:
 
         if raw is not None and isinstance(raw, str) and raw not in _ENGINE_FALLBACK_STRINGS:
             confidence = cap.min_confidence
+            if hasattr(engine, '_last_confidence') and isinstance(getattr(engine, '_last_confidence', None), (int, float)):
+                engine_conf = engine._last_confidence
+                if engine_conf > 0:
+                    confidence = max(confidence, engine_conf)
         else:
             confidence = 0.0
 

@@ -80,9 +80,10 @@ class TactileService:
         )
 
     async def model_object_tactile(self, visual_data: Dict[str, Any]) -> Dict[str, Any]:
+        object_id = visual_data.get("object_id", visual_data.get("id", "unknown_obj"))
         return {
-            "object_id": "unknown_obj",
-            "tactile_properties": visual_data,
+            "object_id": object_id,
+            "tactile_properties": visual_data.get("features", visual_data),
         }
 
     async def simulate_touch(
@@ -154,16 +155,25 @@ class TactileService:
         }
 
     async def model_tactile_feedback(self, visual_data: Dict[str, Any]) -> Dict[str, Any]:
-        return {
-            "object_id": "unknown_obj",
-            "tactile_properties": visual_data,
-        }
+        return await self.model_object_tactile(visual_data)
 
     async def trigger_physical_feedback(
         self, device_id: str, intensity: float, pattern: str,
     ) -> Dict[str, Any]:
         if not self.enabled:
             return {"status": "disabled"}
+        if self._physio is not None:
+            try:
+                from core.bio.physiological_tactile_types import BodyPart, TactileType, TactileStimulus
+                stimulus = TactileStimulus(
+                    tactile_type=TactileType.VIBRATION,
+                    intensity=min(10.0, intensity * 10.0),
+                    location=BodyPart.HANDS,
+                    duration=min(5.0, len(pattern) * 0.5),
+                )
+                await self._physio.process_stimulus(stimulus)
+            except Exception as e:
+                logger.warning("Physio feedback failed: %s", e)
         return {
             "status": "success",
             "device_id": device_id,

@@ -160,6 +160,7 @@ class ED3NEngine:
         self.cross_modal_trainer: Optional[CrossModalTrainer] = None
         self._continuous_learning = continuous_learning
         self._external_dicts_loaded = False
+        self._last_confidence = 0.0
         self.enable_multimodal()
         if auto_load_presets:
             self.load_presets()
@@ -260,6 +261,7 @@ class ED3NEngine:
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
         if not input_text or not isinstance(input_text, str):
+            self._last_confidence = 0.0
             return ""
 
         query_id = f"{id(input_text)}_{time.time_ns()}"
@@ -282,6 +284,7 @@ class ED3NEngine:
                 confidence=1.0,
                 is_fallback=False,
             )
+            self._last_confidence = 1.0
             return reflex_result
 
         if depth == "reflex":
@@ -296,6 +299,7 @@ class ED3NEngine:
                 confidence=0.0,
                 is_fallback=False,
             )
+            self._last_confidence = 0.0
             return ""
 
         # Stage 1.5: Math evaluation
@@ -314,6 +318,7 @@ class ED3NEngine:
                 confidence=1.0,
                 is_fallback=False,
             )
+            self._last_confidence = 1.0
             return math_result
 
         # Stage 2: Encode
@@ -334,6 +339,7 @@ class ED3NEngine:
                 confidence=0.0,
                 is_fallback=True,
             )
+            self._last_confidence = 0.0
             return FALLBACK_STR
 
         # Stage 2.5: Enrichment — algorithmic scoring of matched keys
@@ -360,6 +366,7 @@ class ED3NEngine:
                 confidence=confidence,
                 is_fallback=(not decoded),
             )
+            self._last_confidence = confidence
             return output
 
         # Stage 3: Network forward
@@ -388,6 +395,7 @@ class ED3NEngine:
                 confidence=enriched_conf,
                 is_fallback=True,
             )
+            self._last_confidence = enriched_conf
             return fallback
 
         # Stage 5: Validate
@@ -409,6 +417,7 @@ class ED3NEngine:
                 confidence=enriched_conf,
                 is_fallback=True,
             )
+            self._last_confidence = enriched_conf
             return output
 
         # Stage 6: Cycling — iterative refinement if confidence is low
@@ -450,6 +459,7 @@ class ED3NEngine:
             confidence=current_confidence,
             is_fallback=False,
         )
+        self._last_confidence = current_confidence
         return current_output
 
     @staticmethod
