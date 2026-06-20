@@ -276,5 +276,14 @@ class VectorMemoryStore:
             return len(self._numpy_backend)
         return 0
 
+    @property
+    def backend_type(self) -> str:
+        """Return the active backend type: 'chromadb', 'numpy', or 'none'."""
+        if self.client is not None and self.collection is not None:
+            return "chromadb"
+        if self._numpy_backend is not None:
+            return "numpy"
+        return "none"
+
     def __bool__(self) -> bool:
         return True

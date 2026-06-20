@@ -184,6 +184,15 @@ class ED3NEngine:
     def process(
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
+        # Lazy-load external dictionaries if presets only are loaded
+        if self.dictionary is not None and len(self.dictionary.entries) < 100:
+            try:
+                count = self.load_external_dictionaries()
+                if count > 0:
+                    logger.info("Lazy-loaded %d external dictionary entries on first query", count)
+            except Exception as e:
+                logger.debug("Lazy dictionary load failed (non-critical): %s", e)
+
         with self._process_lock:
             output = self._process_unlocked(input_text, context, depth)
         self._maybe_learn(input_text, output, context or {})
