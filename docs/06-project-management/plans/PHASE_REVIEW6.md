@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v9.0
+# Angela AI 專案全面分析與修復計畫 v10.0
 
-> **生成日期**: 2026-06-20 (第22輪 P5 導入路徑清理 — N3 技術債還清)  
-> **分析範圍**: P5 清理 — sys.path 深度錯誤修正 / `system/` 包合併 / 舊別名檔案移除  
+> **生成日期**: 2026-06-20 (第23輪 P6 元認知接線 + 觸覺橋接 + 小腦反射實裝)  
+> **分析範圍**: P6 強化 — MetaController 接線 / TactileService 橋接 / TickleReflexSystem 實作  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -28,7 +28,7 @@
 | AutonomousLifeCycle | **724 行實裝 → 已接線至 DigitalLifeIntegrator** | ✅ **P4 完成!** |
 | WeatherService | **wttr.in 實時天氣 + 主動交互天氣觸發** | ✅ **P4 完成!** |
 | MetaController | **後設認知框架: 置信度校準 + 門檻調整建議** | ✅ **P4 完成!** |
-| 智能維度 | 自主性 4→5 / 視覺 3.5→4 / 元認知 3→4 / 環境 2.5→3 | ✅ |
+| 智能維度 | 自主性 4→5 / 視覺 3.5→4 / 元認知 4→5 / 環境 2.5→3 / 觸覺 2→4 / 反射 0→4 | ✅ |
 | N3 導入路徑 | `garden/__main__.py` sys.path 6→5 層修復 | ✅ |
 | `system/` 包合併 | `cluster_manager` + `security_monitor` → `core.system.*` | ✅ |
 | `desktop_presence.py` | 純別名檔案已移除 (33 行) | ✅ |
@@ -76,8 +76,19 @@
 | **天氣觸發接線** | `proactive_interaction_system.py` ✅ | `_check_weather_opportunities()` 檢測天氣變化，`_generate_weather_message()` 產生主動訊息 |
 | **MetaController 創建** | `meta_controller.py` (NEW) ✅ | 後設認知框架: 置信度取樣/校準誤差計算/過度自信檢測/門檻調整建議 |
 | **智能維度更新** | v7.0→v8.0 ✅ | 自主性 4→5 / 視覺 3.5→4 / 元認知 3→4 / 環境 2.5→3 |
+| **P6 強化** | v8.0→v9.0 ✅ | **元認知 4→5 / 觸覺 2→4 / 反射 0→4** |
 
 ### 第22輪: P5 導入路徑清理 — N3 技術債還清 ✅
+
+### 第23輪: P6 元認知接線 + 觸覺橋接 + 小腦反射實裝 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **MetaController → ModelBus 接線** | `ai/core/model_bus.py` ✅ | `ModelBus.__init__()` 接受 optional `meta_controller`; `route()` 中記錄每個模型的置信度到 MetaController; 路徑門檻動態調整 (reflex/math/knowledge) |
+| **TactileService → PhysiologicalTactileSystem 橋接** | `services/tactile_service.py` ✅ | `simulate_touch()` 在 `physiological_system` 可用時委派真實生理觸覺處理; 16 個 body part 映射 + 6 個觸覺類型映射; mock 回退保留 |
+| **TactileService 生理系統注入** | `api/lifespan.py` ✅ | `get_tactile_service()` 自動嘗試建立 `PhysiologicalTactileSystem` 並傳入 |
+| **TickleReflexSystem 實作** | `core/life/tickle_reflex_system.py` ✅ | 從 8 行空殼 → 完整實作: 14 個身體部位 + 3 級門檻 + Phase1(反射) + Phase2(LLM) + 敏感/持續刺激 gamma 軸入侵 |
+| **TickleReflexSystem 測試** | 13 個測試全部通過 ✅ | `test_v63_config_driven.py` 11 個 + `tests/unit/` 2 個 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -109,6 +120,9 @@
 | `system/` 包 → `core.system/` | cluster_manager + security_monitor 搬移 | ✅ |
 | `desktop_presence.py` 別名檔 | 已移除 | ✅ |
 | `core/autonomous/` import | 舊路徑→新路徑 | ✅ |
+| MetaController → ModelBus | 置信度記錄 + 動態門檻 | ✅ |
+| TactileService → PhysioSystem | 橋接真實生理觸覺 | ✅ |
+| TickleReflexSystem | 空殼→完整實作 (160+ 行) | ✅ |
 
 ## 4. 智能水準 🟢 8/10 綜合評估
 
@@ -296,6 +310,9 @@
 | — | **HAM 記憶整合** | P2 | ✅ **接通! VectorStore + HAM 雙注入** |
 | N7 | 引擎回應不一致 | P2 | ✅ 雙語 fallback |
 | N3 | 導入路徑不一致 | P5 | ✅ **全部已清理**: sys.path 修復 / system→core.system / desktop_presence 移除 |
+| MetaController | 未接線 | P6 | ✅ **連接到 ModelBus.route()** — 置信度記錄 + 動態門檻調整 |
+| TactileService | 純 mock | P6 | ✅ **橋接到 PhysiologicalTactileSystem** — 真實生理觸覺 + mock 回退 |
+| TickleReflexSystem | 空殼 (8 行) | P6 | ✅ **完整實作** — 14 身體部位 + Phase1/2 + 13 測試通過 |
 | — | **P2 全部完成!** | — | 🎉 **智能下限 6→8** |
 | — | GARDEN torch 測試 skipif | P3 | ✅ **42/42 通過, 優雅跳過** |
 | — | CLP max_buffer_size | P3 | ✅ **500 安全邊界** |
@@ -313,6 +330,10 @@
 | — | `desktop_presence.py` 移除 | P5 | ✅ **別名 shim 清除** |
 | N3 | 導入路徑不一致 | P5 | ✅ **全部已清理** |
 | — | **P5 全部完成!** | — | 🎉 **P5 里程碑達成!** |
+| — | MetaController 接線 | P6 | ✅ **動態門檻調整** |
+| — | TactileService 橋接 | P6 | ✅ **真實生理觸覺** |
+| — | TickleReflexSystem 實作 | P6 | ✅ **13 測試通過** |
+| — | **P6 全部完成!** | — | 🎉 **P6 里程碑達成!** |
 
 ## 6. 二十輪修復總計
 
@@ -332,12 +353,13 @@
 | **20** | **P3 邊際優化** | **測試韌性 + 記憶安全 + 多模態去偽 🎉 P3 全部完成!** |
 | **21** | **P4 深度強化** | **自主生命接線 + Vision 全去偽 + Weather 實裝 + MetaController 🎉 P4 全部完成!** |
 | **22** | **P5 導入路徑清理** | **sys.path 修正 + system→core.system 合併 + desktop_presence 移除 🎉 P5 全部完成!** |
-| **總計** | **22 輪** | **72+ 修復, 智能 2→8/10** |
+| **23** | **P6 元認知 + 觸覺 + 小腦** | **MetaController 接線 + Tactile 橋接 + TickleReflex 實作 🎉 P6 全部完成!** |
+| **總計** | **23 輪** | **75+ 修復, 智能 2→8/10** |
 
-## 7. 後續建議 (P5 完成後)
+## 7. 後續建議 (P6 完成後)
 
-1. **P6: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT; 物件檢測 YOLO/DETR
-2. **P6: 觸覺強化** — 觸覺 (2→4): 體感模擬強化; TactileService 深度整合
-3. **P6: MetaController 深度接線** — 連接到 ED3N/GARDEN/LLM 推理管道; 自動門檻調整閉環
-4. **P6: 殘留別名清理** — 評估 `live2d_integration.py` / `art_learning_system.py` 是否可移除或統一
+1. **P7: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT; 物件檢測 YOLO/DETR
+2. **P7: ED3N 置信度回傳** — 改造 `ED3NEngine.process()` 回傳 `str` → `Tuple[str, float]` 讓 ModelBus 獲取真實置信度 (目前使用 `cap.min_confidence` 啟發式)
+3. **P7: MetaController → LLM 推理** — 在 `AngelaLLMService.generate_response()` 中記錄 LLM 置信度; 實現閉合校準迴圈
+4. **P7: TactileService 全橋接** — `model_object_tactile()` / `trigger_physical_feedback()` 也委派生理系統; 統一模擬/反饋路徑
 5. **維護: 測試持續監控** — 724+ 測試維持; 新功能添加對應測試; pre-commit hook 執行

@@ -61,11 +61,12 @@ class ModelBus:
     - Route to handlers for FILE/SEARCH/CODE/EXECUTE/TASK intents
     """
 
-    def __init__(self, default_timeout: float = 30.0) -> None:
+    def __init__(self, default_timeout: float = 30.0, meta_controller: Optional[Any] = None) -> None:
         self._registry: Dict[str, Tuple[Any, ModelCapability]] = {}
         self._handlers: Dict[str, Any] = {}
         self._handler_map: Dict[str, str] = {}
         self._query_classifier: Any = None
+        self._meta_controller = meta_controller
         self.default_timeout = timeout_value("ai.model_bus.default_timeout", default_timeout)
 
     # ------------------------------------------------------------------
@@ -237,7 +238,11 @@ class ModelBus:
             r = await self._try_model("ed3n", query, context, "reflex")
             results[r.model_id] = r
             # If ED3N can't handle it, fall back to cloud LLM
-            if r.confidence < 0.5 and "cloud" in self._registry:
+            reflex_threshold = 0.5
+            if self._meta_controller is not None:
+                adj = self._meta_controller.get_threshold_adjustment("model_bus:ed3n")
+                reflex_threshold = max(0.3, min(0.9, reflex_threshold + adj))
+            if r.confidence < reflex_threshold and "cloud" in self._registry:
                 r2 = await self._try_model("cloud", query, context, query_type)
                 results[r2.model_id] = r2
 
@@ -245,7 +250,11 @@ class ModelBus:
             # ED3N first (trained 77.7%), GARDEN fallback
             r1 = await self._try_model("ed3n", query, context, "math")
             results[r1.model_id] = r1
-            if r1.confidence < confidence_value("ai.model_bus.route.math_threshold", 0.70) and "garden" in self._registry:
+            math_threshold = confidence_value("ai.model_bus.route.math_threshold", 0.70)
+            if self._meta_controller is not None:
+                adj = self._meta_controller.get_threshold_adjustment("model_bus:ed3n")
+                math_threshold = max(0.3, min(0.95, math_threshold + adj))
+            if r1.confidence < math_threshold and "garden" in self._registry:
                 r2 = await self._try_model("garden", query, context, "math")
                 results[r2.model_id] = r2
 
@@ -253,7 +262,11 @@ class ModelBus:
             # GARDEN first, cloud fallback
             r1 = await self._try_model("garden", query, context, "knowledge")
             results[r1.model_id] = r1
-            if r1.confidence < confidence_value("ai.model_bus.route.knowledge_threshold", 0.60) and "cloud" in self._registry:
+            knowledge_threshold = confidence_value("ai.model_bus.route.knowledge_threshold", 0.60)
+            if self._meta_controller is not None:
+                adj = self._meta_controller.get_threshold_adjustment("model_bus:garden")
+                knowledge_threshold = max(0.3, min(0.95, knowledge_threshold + adj))
+            if r1.confidence < knowledge_threshold and "cloud" in self._registry:
                 r2 = await self._try_model("cloud", query, context, "knowledge")
                 results[r2.model_id] = r2
 
@@ -324,6 +337,13 @@ class ModelBus:
         best = self._pick_best(results)
         selected_model = best["model_id"]
         confidence = best["confidence"]
+
+        if self._meta_controller is not None:
+            for mid, r in results.items():
+                self._meta_controller.record_confidence(source=f"model_bus:{mid}", confidence=r.confidence)
+            threshold_adj = self._meta_controller.get_threshold_adjustment(f"model_bus:{selected_model}")
+            if threshold_adj != 0.0:
+                logger.debug("MetaController adjusted %s threshold by %.3f", selected_model, threshold_adj)
         
         # ========== Hybrid Routing (Draft for Refinement) ==========
         # If a local model (ED3N/GARDEN) has decent but not perfect confidence,

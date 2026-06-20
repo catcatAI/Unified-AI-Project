@@ -158,7 +158,13 @@ def get_tactile_service():
         return _tactile_service_instance
     try:
         from services.tactile_service import TactileService
-        _tactile_service_instance = TactileService()
+        physio = None
+        try:
+            from core.bio.physiological_tactile_system import PhysiologicalTactileSystem
+            physio = PhysiologicalTactileSystem()
+        except Exception:
+            pass
+        _tactile_service_instance = TactileService(physiological_system=physio)
         return _tactile_service_instance
     except Exception as e:
         logger.warning(f"TactileService not available: {e}")
