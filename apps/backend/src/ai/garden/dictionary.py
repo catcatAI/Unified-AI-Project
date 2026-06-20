@@ -74,7 +74,7 @@ class ConceptEntry:
 
 class _TfidfEncoder:
     """
-    Pure-Python TF-IDF encoder with zero external dependencies.
+    Pure-Python TF-IDF encoder with dual backend (torch or numpy).
     Tokenizes English words + Chinese unigrams/bigrams into a sparse vocab,
     then produces dense TF-IDF vectors normalized to unit length.
 
@@ -83,7 +83,7 @@ class _TfidfEncoder:
 
     def __init__(self):
         self.vocab: Dict[str, int] = {}
-        self.idf: Optional[torch.Tensor] = None
+        self.idf: Optional[Any] = None
         self.N: int = 0
         self._fitted = False
 
@@ -117,7 +117,7 @@ class _TfidfEncoder:
     # ------------------------------------------------------------------
 
     def fit(self, texts: List[str]) -> None:
-        torch, _ = _lazy_torch()
+        xp = self._get_xp()
         # Build vocabulary from corpus
         vocab_set: set = set()
         doc_freq: Dict[str, int] = {}
@@ -137,27 +137,35 @@ class _TfidfEncoder:
         for token, idx in self.vocab.items():
             df = doc_freq.get(token, 1)
             idf_list[idx] = math.log(self.N / df) + 1.0 if self.N > 0 else 1.0
-        self.idf = torch.tensor(idf_list, dtype=torch.float32)
+        self.idf = xp.array(idf_list, dtype=xp.float32)
         self._fitted = True
         logger.info(
             "GARDEN TF-IDF: fitted on %d documents, vocab=%d",
             self.N, V,
         )
 
+    @staticmethod
+    def _get_xp():
+        """Return array module (torch if available, else numpy)."""
+        torch_module, _ = _lazy_torch()
+        if torch_module is not None:
+            return torch_module
+        return np
+
     # ------------------------------------------------------------------
     # Encode
     # ------------------------------------------------------------------
 
-    def encode(self, texts: List[str]) -> torch.Tensor:
-        torch, _ = _lazy_torch()
+    def encode(self, texts: List[str]) -> Any:
+        xp = self._get_xp()
         if not self._fitted:
             self.fit(texts)
         V = len(self.vocab)
         if V == 0:
-            return torch.zeros(len(texts), 1)
+            return xp.zeros((len(texts), 1), dtype=xp.float32)
         N = len(texts)
         # Build TF-IDF matrix [N, V]
-        matrix = torch.zeros(N, V, dtype=torch.float32)
+        matrix = xp.zeros((N, V), dtype=xp.float32)
         for i, text in enumerate(texts):
             toks = self._tokenize(text)
             for t in toks:
@@ -168,7 +176,7 @@ class _TfidfEncoder:
             if self.idf is not None:
                 matrix[i] *= self.idf
         # L2 normalize
-        norms = matrix.norm(dim=1, keepdim=True)
+        norms = xp.linalg.norm(matrix, axis=1, keepdims=True)
         norms[norms == 0] = 1.0
         matrix = matrix / norms
         return matrix
@@ -176,17 +184,15 @@ class _TfidfEncoder:
 
 class _CharBagEncoder:
     """
-    CPU-only fallback encoder that produces a deterministic dense vector from text
-    using character n-gram hashing into a fixed-dim space.  No internet required.
-    Kept as fallback when TF-IDF vocabulary is empty.
+    CPU-only fallback encoder using numpy (no torch dependency).
+    Produces deterministic dense vectors from character n-gram hashing.
     """
     DIM = 256
 
-    def encode(self, texts: List[str]) -> torch.Tensor:
-        torch, _ = _lazy_torch()
+    def encode(self, texts: List[str]) -> Any:
         vecs = []
         for text in texts:
-            v = torch.zeros(self.DIM)
+            v = np.zeros(self.DIM, dtype=np.float32)
             lower = normalize_text(text).lower()
             for i, ch in enumerate(lower):
                 idx = (ord(ch) * 31 + i) % self.DIM
@@ -195,11 +201,11 @@ class _CharBagEncoder:
                 bigram = lower[i:i+2]
                 idx = (zlib.adler32(bigram.encode()) & 0x7FFFFFFF) % self.DIM
                 v[idx] += 0.5
-            norm = v.norm()
+            norm = np.linalg.norm(v)
             if norm > 0:
                 v = v / norm
             vecs.append(v)
-        return torch.stack(vecs) if vecs else torch.zeros(0, self.DIM)
+        return np.stack(vecs) if vecs else np.zeros((0, self.DIM), dtype=np.float32)
 
 
 class _STEncoder:
@@ -430,8 +436,16 @@ class VectorDictionary:
     # Index building (lazy)
     # ------------------------------------------------------------------
 
+    def _normalize(self, arr: Any, dim: int = -1) -> Any:
+        """L2-normalize along a dimension. Works with both torch and numpy."""
+        if hasattr(arr, 'norm'):  # torch tensor
+            return arr / arr.norm(dim=dim, keepdim=True).clamp(min=1e-8)
+        # numpy array
+        norms = np.linalg.norm(arr, axis=dim if dim == -1 else dim, keepdims=True)
+        norms[norms == 0] = 1.0
+        return arr / norms
+
     def _rebuild_index(self) -> None:
-        _, F = _lazy_torch()
         if not self.entries:
             self._matrix = None
             self._key_order = []
@@ -449,10 +463,8 @@ class VectorDictionary:
             self._encoder.fit(texts)
         embeddings = self._encoder.encode(texts)  # [N, D]
 
-        for i, key in enumerate(self._key_order):
-            self.entries[key].embedding = embeddings[i]
+        self._matrix = self._normalize(embeddings, dim=-1)
 
-        self._matrix = F.normalize(embeddings, dim=-1)  # [N, D]
         self._dirty = False
         logger.debug("GARDEN: index rebuilt with %d entries, dim=%d", len(self._key_order), self._matrix.shape[1])
 
@@ -469,13 +481,20 @@ class VectorDictionary:
         if self._matrix is None or len(self._key_order) == 0:
             return []
 
-        _, F = _lazy_torch()
         query_vec = self._encoder.encode([text])          # [1, D]
-        query_vec = F.normalize(query_vec, dim=-1)        # [1, D]
-        scores = (self._matrix @ query_vec.T).squeeze(-1) # [N]
+        query_vec = self._normalize(query_vec, dim=-1)    # [1, D]
+        scores = (self._matrix @ query_vec.T)             # [N, 1] or [N]
+        if hasattr(scores, 'ndim') and scores.ndim > 1:
+            scores = scores.squeeze(-1)
 
         k = min(self.top_k, scores.shape[0])
-        top_scores, top_indices = scores.topk(k)
+        if hasattr(scores, 'topk'):
+            # torch backend
+            top_scores, top_indices = scores.topk(k)
+        else:
+            # numpy fallback
+            top_indices = np.argsort(-scores)[:k]
+            top_scores = scores[top_indices]
 
         results = []
         for score, idx in zip(top_scores.tolist(), top_indices.tolist()):

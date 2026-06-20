@@ -21,6 +21,7 @@ __all__ = [
     "to_romaji",
     "is_cjk",
     "is_japanese",
+    "is_english_dominant",
 ]
 
 # ---------------------------------------------------------------------------
@@ -199,6 +200,24 @@ def is_cjk(ch: str) -> bool:
 def is_japanese(ch: str) -> bool:
     """Return True if *ch* is hiragana or katakana."""
     return ("\u3040" <= ch <= "\u309f") or ("\u30a0" <= ch <= "\u30ff")
+
+
+def is_english_dominant(text: str) -> bool:
+    """Detect if input is primarily English (ASCII alpha) or CJK.
+
+    Returns ``True`` when ASCII alphabetic characters outnumber CJK
+    characters, or when the text contains no CJK at all.
+    Used by ED3N and GARDEN engines to select language-appropriate
+    fallback messages.
+    """
+    if not text:
+        return True
+    cjk_count = sum(1 for c in text if "\u4e00" <= c <= "\u9fff" or "\u3000" <= c <= "\u303f")
+    ascii_alpha = sum(1 for c in text if c.isascii() and c.isalpha())
+    total_alpha = cjk_count + ascii_alpha
+    if total_alpha == 0:
+        return True
+    return ascii_alpha / total_alpha > 0.5
 
 
 def cjk_radical(char: str) -> str:

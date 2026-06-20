@@ -8,7 +8,7 @@ import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
-from ai.core.unicode_utils import normalize_text
+from ai.core.unicode_utils import normalize_text, is_english_dominant
 
 from .input_enricher import InputEnricher
 from .telemetry import TelemetryCollector
@@ -448,21 +448,9 @@ class ED3NEngine:
         return current_output
 
     @staticmethod
-    def _is_english_input(text: str) -> bool:
-        """Detect if input is primarily English (ASCII) or Chinese."""
-        if not text:
-            return True
-        cjk_count = sum(1 for c in text if '\u4e00' <= c <= '\u9fff' or '\u3000' <= c <= '\u303f')
-        ascii_alpha = sum(1 for c in text if c.isascii() and c.isalpha())
-        total_alpha = cjk_count + ascii_alpha
-        if total_alpha == 0:
-            return True
-        return ascii_alpha / total_alpha > 0.5
-
-    @staticmethod
     def _fallback_str(text: str) -> str:
         """Return language-appropriate fallback message."""
-        if ED3NEngine._is_english_input(text):
+        if is_english_dominant(text):
             return "Sorry, I didn't understand what you meant."
         return "抱歉，我没理解你的意思。"
 

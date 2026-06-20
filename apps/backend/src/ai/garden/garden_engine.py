@@ -24,6 +24,8 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
+from ai.core.unicode_utils import is_english_dominant
+
 from core.system.config.magic_numbers import (
     cache_value,
     confidence_value,
@@ -427,21 +429,9 @@ class GARDENEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _is_english_input(text: str) -> bool:
-        """Detect if input is primarily English or Chinese."""
-        if not text:
-            return True
-        cjk_count = sum(1 for c in text if '\u4e00' <= c <= '\u9fff' or '\u3000' <= c <= '\u303f')
-        ascii_alpha = sum(1 for c in text if c.isascii() and c.isalpha())
-        total_alpha = cjk_count + ascii_alpha
-        if total_alpha == 0:
-            return True
-        return ascii_alpha / total_alpha > 0.5
-
-    @staticmethod
     def _fallback_str(text: str) -> str:
         """Return language-appropriate fallback message."""
-        if GARDENEngine._is_english_input(text):
+        if is_english_dominant(text):
             return "Sorry, I couldn't understand what you meant."
         return "抱歉，我暂时无法理解你的意思。"
 

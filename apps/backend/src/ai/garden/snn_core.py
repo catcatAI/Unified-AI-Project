@@ -104,8 +104,13 @@ def _float(arr):
 
 
 def _nonzero_indices(arr):
-    """Return 1-D indices of nonzero elements."""
-    if hasattr(arr, 'nonzero'):
+    """Return 1-D indices of nonzero elements.
+
+    Uses ``_get_backend()`` to distinguish torch (which supports
+    ``as_tuple``) from numpy (which does not in newer versions).
+    """
+    xp, is_torch = _get_backend()
+    if is_torch:
         return arr.nonzero(as_tuple=False).squeeze(-1)
     return np.nonzero(arr)[0]
 
