@@ -2,12 +2,12 @@ import asyncio
 import logging
 import sys
 
-from services.audio_service import AudioService, WHISPER_AVAILABLE, EDGE_TTS_AVAILABLE
+from services.audio_service import AudioService, FASTER_WHISPER_AVAILABLE, EDGE_TTS_AVAILABLE
 
 
 async def test() -> None:
     """Run test."""
-    print(f"WHISPER_AVAILABLE: {WHISPER_AVAILABLE}")
+    print(f"FASTER_WHISPER_AVAILABLE: {FASTER_WHISPER_AVAILABLE}")
     print(f"EDGE_TTS_AVAILABLE: {EDGE_TTS_AVAILABLE}")
 
     a = AudioService()

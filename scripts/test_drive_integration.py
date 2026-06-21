@@ -1,11 +1,17 @@
-import requests
 import sys
 import logging
+try:
+    import requests
+except ImportError:
+    requests = None
 logger = logging.getLogger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000/api/v1/drive"
 
 def test_drive_integration():
+    if requests is None:
+        print("❌ requests module not available")
+        return False
     print("=== Google Drive Integration Test ===\n")
 
     try:

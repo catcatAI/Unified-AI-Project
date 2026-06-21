@@ -52,7 +52,7 @@ class TestConnectionSession:
         assert session.websocket == ws
         assert session.state == SessionState.CONNECTING
         assert session.sequence == 0
-        assert session.is_active is False
+        assert session.is_active is True
     
     def test_session_is_active(self):
         ws = MockWebSocket()

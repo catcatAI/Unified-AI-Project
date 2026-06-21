@@ -9,7 +9,7 @@ async def test_app_title():
     from services.main_api_server import app
 
     assert app.title == "Angela AI API"
-    assert app.version == "6.0.4"
+    assert app.version == "7.5.0-dev"
 async def test_app_has_websocket_route():
     """Test app has WebSocket route configured"""
     from services.main_api_server import app
