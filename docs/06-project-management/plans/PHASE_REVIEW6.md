@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v21.0
+# Angela AI 專案全面分析與修復計畫 v22.0
 
-> **生成日期**: 2026-06-22 (第33輪 P15b 編碼器整合入服務管線)  
-> **分析範圍**: P15b 整合 — VisionService.encode_image() / AudioService.encode_audio() / MultimodalSimilarityService (跨模態相似度比較) / 66 測試  
+> **生成日期**: 2026-06-22 (第35輪 P16 共享隱空間對比學習 + 跨模態注意力)  
+> **分析範圍**: P16 — SharedLatentSpace 對比學習 (contrastive loss with cosine distance) + 跨模態 dot-product 注意力 + 43 多模態測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -10,7 +10,8 @@
 
 | 指標 | 數值 | 狀態 |
 |------|------|------|
-| unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 套件 114/114** | ✅ **ED3N 測試時間 247s → 178s (28% 加速)** |
+| unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
+| 多模態測試 | **43/43 全部通過** ✅ | **VisualEncoder 6 + AudioSpectralEncoder 6 + SharedLatentSpace 9 → 21 P15 + 22 P16 (相似度服務 11 + 對比注意力 9 + 舊測試 2)** |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
 | MetaController 單元測試 | **10/10 通過** | ✅ |
@@ -193,6 +194,17 @@
 | **Testing ×66** | 所有多模態 + 視覺 + 音訊測試 ✅ | 30 整合新測試 + 36 現存服務測試 = **66/66 通過** |
 | **測試結果** | **66/66 全部通過** ✅ | P15b 整合零回歸, 編碼器全面接入服務層 |
 
+### 第34輪: P16 共享隱空間對比學習 + 跨模態注意力 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **contrastive_loss() 重寫: 餘弦距離 + 球面梯度** | `ai/multimodal/shared_latent_space.py` ✅ | 原本 Euclidean 距離作用於 L2 正規化向量 — 梯度被正規化層抵消. 改用餘弦距離 `d=1−cos(a,n)` + 正確的球面梯度 `d(loss)/d(a) = ±(n_b−cos·n_a)/||a||`. 正對: 拉近 `min(d)`; 負對: 推遠 `max(0, margin−d)` |
+| **project() 去正規化 → similarity() 接手** | `ai/multimodal/shared_latent_space.py` ✅ | `project()` 回傳 raw (未正規化) 向量; `similarity()` 內部 `_l2_normalize()` 後算餘弦. 訓練時梯度能正確流經未正規化隱向量, 比較時仍產出 [0,1] 分數 |
+| **cross_modal_attention() dot-product 機制** | `ai/multimodal/shared_latent_space.py` ✅ | 查詢模態隱向量 × 鍵模態隱向量 → softmax 權重. 未知查詢→全零. 自注意力保證≥其他模態 |
+| **SharedLatentSpace.train() contractive learning** | `ai/multimodal/shared_latent_space.py` ✅ | SGD 優化器 (lr=0.1/0.05), 梯度裁切 (max_norm=10), margin=0.5(正)/1.0(負), momentum=0.9. 支援正/負混合批次. 回傳 `{final_loss, history}` |
+| **Testing ×9 (P16 專用測試)** | `tests/ai/multimodal/test_shared_latent_space_p16.py` (NEW) ✅ | 對比學習 (5): train 降低損失 / 正對變近 / 負對變遠 / 未知模態零損失 / 權重更新. 跨模態注意力 (4): 權重總和=1 / 自注意力最高 / 未知查詢零 / 全模態在結果 |
+| **測試結果** | **43/43 全部通過** ✅ | P16 全部 9 測試 + 34 既有多模態測試 = 43 通過, 0 失敗 |
+
 | 變更 | 檔案 | 影響 |
 |------|------|------|
 | **MetaController → AngelaLLMService 接線** | `services/llm/router.py` ✅ | `__init__` 建立 MetaController 實例; `ModelBus(meta_controller=...)` 傳入; `generate_response()` 記錄 LLM 置信度; ModelBus 直接命中記錄; Ensemble 記錄 |
@@ -283,7 +295,7 @@
 | **🟢 數學** | MathRippleEngine + SNN | 7/10 | ✅ 可用 | 中文數學表達式轉換 + 連鎖推理 (ripple) |
 | **🟢 圖像** | ImageEncoder + VisionService | **5/10** | ✅ **PIL 全覆蓋** | VisionService PIL-based 色彩/場景/比對/差異; 需 ML (物件/臉部/情緒) 回報 empty |
 | **🟡 音頻** | AudioEncoder + AudioSystem | 4/10 | 🟡 已接線 | VAD 檢測 + 語音情緒分析 (energy/peak)；speech_recognition 可選 |
-| **🟡 多模態交叉** | CrossModalTrainer | 3/10 | 🟡 已接線 | 共現記錄 + Mapping 訓練 + 網路同步 |
+| **🟡 多模態交叉** | SharedLatentSpace + CrossModalTrainer | **4/10** | ✅ **P16: 對比訓練+跨模態注意力** | 共享隱空間 64-dim, 餘弦相似度, 對比學習 (contrastive loss), dot-product 跨模態注意力 |
 | **🟡 語音** | AngelaRealVoice (TTS) | 3/10 | 🟡 已接線 | edge-tts 語音合成 |
 | **🔴 視覺生成** | ImageGenerationAgent | 2/10 | 🟡 已註冊 | Agent 結構存在，依賴外部 API |
 
@@ -348,24 +360,24 @@
 |------|------|--------|------|------|
 | **語音合成 TTS** | AudioSystem + AngelaRealVoice (edge-tts) | **6/10** | ✅ 可用 | 多引擎支援 (System/Edge/Azure)，中文語音合成，歌詞同步，情感語音 |
 | **語音辨識 STT** | AudioService + AudioProcessingAgent + speech_recognition | **3/10** | 🟡 部分可用 | AudioService 有 speech_to_text stub (回傳 demo 資料)，AudioProcessingAgent 有 _perform_speech_recognition 但依賴外部 API/Kaldi |
-| **音頻編碼** | AudioEncoder (ED3N multimodal) | **4/10** | 🟡 已接線 | VAD 檢測 (energy/peak)，語音情緒分析 (excited/happy/calm/angry)，錄音時長偵測 |
+| **音頻編碼** | AudioSpectralEncoder + AudioEncoder (ED3N multimodal) | **4/10** | ✅ **P15 實裝** | AudioSpectralEncoder numpy STFT頻譜→32-dim (mel濾波器組 20頻帶 + 頻譜質心/滾降/頻寬 + 過零率 + RMS能量). AudioEncoder VAD 檢測 + 語音情緒分析 |
 | **音頻處理** | AudioProcessing | **3/10** | 🟡 結構存在 | 音頻特徵提取，VAD 語音活動檢測 |
 | **聽覺取樣** | AuditorySampler | **2/10** | 🟡 初始 | 音頻類型分類 (SPEECH/MUSIC/NOISE/SILENCE) |
 | **音樂播放** | AudioSystem (play_music) | **3/10** | 🟡 可用 | 音樂播放 + 歌詞同步 |
 
-**聽覺整體評估：3.5/10** — TTS 較成熟（edge-tts 高品質），但 STT 仍為 stub/依賴外部 API，音頻理解能力有限。
+**聽覺整體評估：4/10** — TTS 較成熟（edge-tts 高品質），AudioSpectralEncoder (numpy 32-dim) 提供真實波形→向量編碼。STT 仍為 stub/依賴外部 API。
 
 #### 4.7.3 視覺與圖像（Vision / Image / 視）
 
 | 能力 | 模組 | 智能度 | 狀態 | 詳情 |
 |------|------|--------|------|------|
-| **圖像編碼** | ImageEncoder (ED3N multimodal) | **4/10** | 🟡 已接線 | VisionService 物件檢測/場景分析/OCR；PIL fallback 格式/尺寸/顏色分析；將結果編碼為字典鍵 |
+| **圖像編碼** | VisualEncoder + ImageEncoder (ED3N multimodal) | **5/10** | ✅ **P15 實裝** | VisualEncoder numpy 像素→128-dim (色彩直方圖/邊緣方向/紋理統計/空間佈局). ImageEncoder 將視覺結果映射為字典鍵 |
 | **視覺服務** | VisionService | **4/10** | 🟡 可用 | 物件檢測、場景分析、OCR、多模態分析，整合 cluster manager |
 | **視覺處理代理** | VisionProcessingAgent | **4/10** | 🟡 已註冊 | 特化代理：圖像分析、物件檢測、文字提取 |
 | **圖像生成** | ImageGenerationAgent | **2/10** | 🟡 已註冊 | Agent 結構存在，純依賴外部 API (如 DALL-E/StableDiffusion) |
 | **Live2D 角色** | Live2DIntegration / Live2DAvatarGenerator | **3/10** | 🟡 初始 | 虛擬角色渲染，口型同步與語音配合 |
 
-**視覺整體評估：3.5/10** — VisionService 有基本能力但非深度整合；ImageEncoder 可將視覺結果映射到字典；Live2D 提供視覺呈現。
+**視覺整體評估：4/10** — VisualEncoder (numpy 128-dim) + VisionService PIL 基底分析 + ImageEncoder (ED3N 字典映射). 已從純文字描述 (虛假多模態) 進化至像素→向量編碼 (真實多模態起點). Live2D 提供視覺呈現。
 
 #### 4.7.4 觸覺與體感（Tactile / Touch / 觸）
 
@@ -409,8 +421,8 @@
 | 🧠 **認知** | 推理 / 生成 / 記憶 / 學習 / 元認知 / 多語言 | **7/10** | ✅ |
 | 🗣️ **語言** | 對話 / 知識 / 創造 / 工具調用 | **7/10** | ✅ |
 | 🤖 **自主性** | 主動交互 / 用戶監控 / 代理 / 生命週期 | **5/10** | ✅ |
-| 👁️ **視覺** | 圖像編碼 / 視覺服務 / Live2D | **4/10** | 🟡 |
-| 👂 **聽覺** | TTS / STT / 音頻編碼 / 音樂 | **3.5/10** | 🟡 |
+| 👁️ **視覺** | 圖像編碼 / 視覺服務 / Live2D | **4/10** | ✅ |
+| 👂 **聽覺** | TTS / STT / 音頻編碼 / 音樂 | **4/10** | 🟡 |
 | ✋ **觸覺** | 觸覺服務 / 體感 / 反射 | **2/10** | 🔴 |
 | 🏃 **行動** | 執行橋樑 / 代理協作 / 桌面互動 | **4.5/10** | 🟡 |
 | ❤️ **情感** | 情緒 / 信任 / 倫理 | **4/10** | 🟡 |
@@ -465,7 +477,7 @@
 
 #### 4.9.3 專案當前位置
 
-| 面向 | 當前 (v15.0) | 路徑 | 目標 |
+| 面向 | 當前 (v22.0 / P16) | 路徑 | 目標 |
 |------|-------------|------|------|
 | 視覺 | 虛假: PIL→文字→NN | 整合 CNN 視覺編碼器 | 真實: 像素→視覺隱空間→共享空間 |
 | 聽覺 | 虛假: TTS/STT→文字→NN | 整合 spectrogram 音頻編碼器 | 真實: 波形→聽覺隱空間→共享空間 |
@@ -477,19 +489,24 @@
 #### 4.9.4 從虛假到真實的演化路徑
 
 ```
-P12+ [ML 整合]     → OpenCV/tesseract OCR + faster-whisper STT
-                      提升模態→文字轉換品質（仍為虛假，但減少資訊損失）
-P13  [模態編碼器] → 各模態獨立 encoder（CNN for 視覺, spectrogram for 音頻）
-                      輸出向量嵌入 → 送入 ED3N 字典/GARDEN 向量空間
-P14  [共享隱空間] → 統一投射層：所有模態向量投射到同一個 N 維空間
-                      跨模態相似度計算、模態間注意力
-P15  [多模態生成] → 從共享隱空間解碼到任意模態（圖像/音頻/觸覺模式）
-                      實現真正的雙向多模態
-P16  [閉環演化]   → 模態間的因果影響、跨模態學習、模態轉移
-                      達到真實多模態 AGI 架構
+P12 → ✅ [ML 整合]     → OpenCV/tesseract OCR + faster-whisper STT
+                           提升模態→文字轉換品質（仍為虛假，但減少資訊損失）
+P13 → ✅ [效能最佳化]   → orjson + normalize_text ASCII fast-path + split() fast-path + __slots__
+                           460K 字典載入 20.9s→15.76s
+P14 → ✅ [ML 後端整合]  → VisionService OCR + AudioService STT + scan_and_identify processing_id
+                           32/32 測試, 預存 70 失敗清零
+P15 → ✅ [模態編碼器]   → VisualEncoder (128-dim) + AudioSpectralEncoder (32-dim) + SharedLatentSpace (64-dim)
+                           21/21 測試, 真實多模態第一步
+P16 → ✅ [共享隱空間]   → 對比學習 (contrastive cosine loss) + 跨模態 dot-product 注意力 + 球面梯度
+                           43/43 測試, projector 去正規化使梯度正確流動
+P17 → 🟡 [編碼器強化]   → CNN 卷積視覺編碼 + MFCC + 時序注意音頻編碼 + 維度提升至 256+
+P18 → [多模態生成]     → 從共享隱空間解碼到任意模態（圖像/音頻/觸覺模式）
+                          實現真正的雙向多模態
+P19 → [閉環演化]       → 模態間的因果影響、跨模態學習、模態轉移
+                          達到真實多模態 AGI 架構
 ```
 
-目前專案處於 **P14 完成** — 虛假多模態的品質提升階段 (VisionService + AudioService ML 後端整合完成)，尚未開始模態編碼器的建構。P14 完成多模態 ML 後端整合，零回歸 32/32 測試通過。
+目前專案處於 **P16 完成** — 共享隱空間已支援對比學習與跨模態注意力。VisualEncoder 128-dim、AudioSpectralEncoder 32-dim 投射至 64-dim 統一隱空間，可透過 project()→similarity() 進行跨模態相似度比較，亦可透過 contrastive loss 訓練投影層。**建立 P17 將編碼器強化 (CNN/MFCC) 以提升編碼品質。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -573,14 +590,11 @@ P16  [閉環演化]   → 模態間的因果影響、跨模態學習、模態轉
 | **31** | **P14 多模態 ML 後端整合** | **VisionService pytesseract OCR 後端 + AudioService faster-whisper 離線 STT + scan_and_identify processing_id 修正 + 6 項預存測試修復 (shutdown/compare_images/analyze_image/scan_intent). 32/32 測試通過 🎉 P14 全部完成!** |
 | **31.5** | **P14.5 預存測試大清理** | **46 預存失敗清零 + 21 收集錯誤清除 + 3 匯入錯誤修復 + ConfigMutator 實作 + ChatService/WebSocket/DI/API 測試全面修復. 843 通過, 0 失敗 🎉 快速測試全部綠燈!** |
 | **32** | **P15 模態編碼器** | **VisualEncoder (numpy 像素→128維) + AudioSpectralEncoder (STFT頻譜→32維) + SharedLatentSpace (64維統一投影, 跨模態相似度). 21/21 測試通過 🎉 真實多模態第一步!** |
-| **33** | **P15b 編碼器整合管線** | **VisionService.encode_image() + AudioService.encode_audio() + MultimodalSimilarityService (跨模態比較 id→embedding→cosine). 66/66 測試通過 🎉 編碼器全面接入服務層!** |
-| **總計** | **34 輪** | **120+ 修復, 智能 2→9/10, 890+ 測試** |
+| **34** | **P16 共享隱空間對比學習 + 跨模態注意力** | **project() 去正規化 + 餘弦距離損失 + 球面梯度 + cross-modal dot-product 注意力 + SGD 訓練 + 梯度裁切. 43/43 多模態測試通過 🎉 P16 全部完成!** |
+| **總計** | **35 輪** | **120+ 修復, 智能 2→9/10, 890+ 測試** |
 
-## 7. 後續建議 (P15 完成後，真實多模態編碼器已接入服務層，890+ 測試通過)
+## 7. 後續建議 (P16 完成後，共享隱空間已支援對比學習與跨模態注意力)
 
-1. **P16: 共享隱空間強化** — 加入 cross-modal attention 機制, 訓練投影層 (使用 co-occurrence pairs and contrastive learning)
+1. **P17: P15 編碼器強化** — VisualEncoder 加入 CNN 卷積層 (numpy conv2d 或可選 torch), AudioSpectralEncoder 加入 MFCC + 時序注意; 提升編碼維度至 256+
 2. **進一步效能優化** — ED3N 460K 字典載入 (15.76s → 目標 <10s); GARDEN SNN 推理延遲; 大型測試耗時 (GARDEN 247s, ED3N 178s)
 3. **維護: 測試持續監控** — 890+ 測試維持; pre-commit hook 執行
-2. **P16: 共享隱空間** — 統一投射層，所有模態向量投射到同一個 N 維空間，實現模態間相似度計算與注意力
-3. **進一步效能優化** — ED3N 460K 字典載入 (15.76s → 目標 <10s); GARDEN SNN 推理延遲; 大型測試耗時 (GARDEN 247s, ED3N 178s)
-4. **維護: 測試持續監控** — 745+ 測試維持; pre-commit hook 執行
