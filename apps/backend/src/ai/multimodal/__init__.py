@@ -35,6 +35,9 @@ from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
 from ai.multimodal.quality_metrics import ssim, psnr, snr, quality_report
 from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning, CMLExample
 from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+from ai.multimodal.semantic_visual import SemanticVisualEncoder
+from ai.multimodal.semantic_audio import SemanticAudioEncoder
+from ai.multimodal.dual_encoder_router import DualEncoderRouter
 
 __all__ = [
     "VisualEncoder",
@@ -57,4 +60,7 @@ __all__ = [
     "ContinuousMultimodalLearning",
     "CMLExample",
     "MultimodalMemoryStore",
+    "SemanticVisualEncoder",
+    "SemanticAudioEncoder",
+    "DualEncoderRouter",
 ]

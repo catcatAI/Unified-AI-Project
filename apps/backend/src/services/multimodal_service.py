@@ -66,6 +66,8 @@ class MultimodalService:
         self._error_recovery = None
         self._state_persistence = None
         self._mm_quality_monitor = None
+        # P42: Dual encoder router (structural + semantic)
+        self._dual_encoder = None
 
     # --- Lazy initialization ---
 
@@ -165,6 +167,42 @@ class MultimodalService:
                 max_entries=5000,
             )
         return self._memory_store
+
+    # --- P42: Dual encoder router ---
+
+    def _get_dual_encoder(self):
+        """Get or create the DualEncoderRouter (P42)."""
+        if self._dual_encoder is None:
+            from ai.multimodal.dual_encoder_router import DualEncoderRouter
+            self._dual_encoder = DualEncoderRouter()
+        return self._dual_encoder
+
+    async def encode_semantic(self, data: bytes, modality: str) -> Dict[str, Any]:
+        """Encode using dual (structural + semantic) encoders (P42).
+
+        Uses DualEncoderRouter to:
+        1. Always encode with structural encoder (numpy, always available)
+        2. Attempt semantic encoding (torch/CLIP/Whisper, may be unavailable)
+        3. Combine into unified latent
+
+        Returns dict with structural, semantic, latent, modalities_used.
+        """
+        router = self._get_dual_encoder()
+        try:
+            if modality == "vision":
+                return await asyncio.to_thread(router.encode_vision, data)
+            elif modality == "audio":
+                return await asyncio.to_thread(router.encode_audio, data)
+            else:
+                return {"error": f"Unknown modality: {modality}"}
+        except Exception as e:
+            logger.error("encode_semantic failed: %s", e)
+            return {"error": str(e)}
+
+    async def semantic_availability(self) -> Dict[str, bool]:
+        """Check availability of semantic encoder backends."""
+        router = self._get_dual_encoder()
+        return router.availability_report()
 
     # --- CML-integrated encode ---
 
