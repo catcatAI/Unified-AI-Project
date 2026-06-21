@@ -495,6 +495,24 @@ class PromptManager:
             templates={"en": "Analysis:", "zh": "分析內容:"},
             tags=["system"],
         ))
+        # P41: Semantic caption from LLM Vision API
+        self.register(PromptTemplate(
+            key="angela.image_caption",
+            templates={
+                "en": "[Semantic Image Caption (LLM Vision API)]",
+                "zh": "【語意圖像描述(LLM Vision API)】",
+            },
+            tags=["system"],
+        ))
+        # P41: Semantic caption from LLM Audio API
+        self.register(PromptTemplate(
+            key="angela.audio_caption",
+            templates={
+                "en": "[Semantic Audio Caption (LLM Audio API)]",
+                "zh": "【語意音頻描述(LLM Audio API)】",
+            },
+            tags=["system"],
+        ))
         self.register(PromptTemplate(
             key="angela.related_context",
             templates={"en": "[Related Context]", "zh": "【相關上下文】"},

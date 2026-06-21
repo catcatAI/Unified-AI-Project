@@ -32,6 +32,9 @@ class ChatService:
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
         self._cultural_context = None
+        # P41: DI hooks for semantic caption services (injectable for testing)
+        self._vision_caption_service = None
+        self._audio_caption_service = None
 
     @property
     def model_bus(self):
@@ -181,7 +184,11 @@ class ChatService:
                          len(merged_context.get("dictionary_context", [])),
                          len(merged_context.get("conversation_memory", [])))
 
-        # Multimodal context injection: retrieve related entries from image/audio query
+        # P41: Semantic caption injection for image and audio
+        # Generate LLM-based captions using VisionCaptionService / AudioCaptionService
+        # and inject into original context (not merged_context, which may be
+        # reassigned by inject_into_context returning a new dict).
+        _caption_ctx = context or {}  # always write to original
         image_analysis = merged_context.get("image_analysis")
         mm_adapter = None
         if image_analysis and isinstance(image_analysis, dict):
@@ -203,6 +210,46 @@ class ChatService:
                     )
                 except Exception as e:
                     logger.debug("Multimodal retrieval failed (non-critical): %s", e)
+
+                # P41: Generate semantic caption for image (inside if image_data)
+                try:
+                    # DI hook: allow test injection via self._vision_caption_service
+                    if self._vision_caption_service is not None:
+                        vcs = self._vision_caption_service
+                    else:
+                        from services.vision_caption_service import get_vision_caption_service
+                        vcs = await get_vision_caption_service()
+                    if vcs.is_available:
+                        caption = await vcs.caption(image_data, language=merged_context.get("language", "zh"))
+                        if caption:
+                            _caption_ctx["image_caption"] = caption
+                            logger.debug("Vision caption injected: %.80s", caption[:80])
+                except Exception as e:
+                    logger.debug("Vision caption generation failed (non-critical): %s", e)
+
+        # P41: Audio caption injection
+        audio_analysis = merged_context.get("audio_analysis")
+        if audio_analysis and isinstance(audio_analysis, dict):
+            audio_data = audio_analysis.get("audio_data")
+            if audio_data:
+                try:
+                    # DI hook: allow test injection via self._audio_caption_service
+                    if self._audio_caption_service is not None:
+                        acs = self._audio_caption_service
+                    else:
+                        from services.audio_caption_service import get_audio_caption_service
+                        acs = await get_audio_caption_service()
+                    if acs.is_available:
+                        caption = await acs.caption(
+                            audio_data,
+                            language=merged_context.get("language", "zh"),
+                            mode="auto",
+                        )
+                        if caption:
+                            _caption_ctx["audio_caption"] = caption
+                            logger.debug("Audio caption injected: %.80s", caption[:80])
+                except Exception as e:
+                    logger.debug("Audio caption generation failed (non-critical): %s", e)
 
         response = await self._llm_service.generate_response(user_message, merged_context)
 
