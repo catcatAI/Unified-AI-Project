@@ -308,6 +308,18 @@
 | **Testing: ChatService 多模態輸出** | `tests/services/test_chat_service.py` ✅ | TestChatServiceMultimodalOutput: generate_response 含 image_analysis 不拋異常 (1 新測試) |
 | **測試結果** | **156/156 全部通過** ✅ | P25 新增 7 測試: 2 ED3N + 4 相似度 + 1 ChatService. 既有多模態 138 + 聊天 11 = 156 通過, 0 失敗 |
 
+### 第44輪: P26 多語言與文化 — 韓語字典 + 文化感知 + 語意消歧 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **KOEDict 韓英字典下載/轉換** | `scripts/download_datasets.py` ✅ | 新 `process_koedict()`: 下載 mhagiwara/korean-english-dictionary (tabfile), 解析為 ko↔en 條目, 輸出 koedict.json. 格式: `korean<TAB>english` → ED3N JSON. 透過 `python scripts/download_datasets.py koedict` 下載 |
+| **CulturalContextModule** | `ai/context/cultural_context.py` (NEW) ✅ | 6 文化區 (east_asian/western/middle_eastern/south_asian/southeast_asian/eastern_european). `CULTURE_MAP` 語言代碼→文化區映射. `detect()`: 語言代碼 + CJK/한글/阿語文字檢測. `get_notes()`: 4 概念 (greeting/respect/modesty/gift) 每區文化筆記. `enrich_context()`: 注入 `context.cultural_context.region + notes` |
+| **WSD disambiguate()** | `ai/ed3n/dictionary_layer.py` ✅ | `disambiguate(keys, context)`: 依 surface_forms 與 context text 重疊度重新排序 keys, 語境相關 keys 優先. `decode()` 在 `context.get("disambiguate")` 時自動呼叫 |
+| **ChatService 文化接線** | `services/chat_service.py` ✅ | `__init__()` 初始化 CulturalContextModule; `generate_response()` 在每次對話時呼叫 `enrich_context()`, 注入 `cultural_context` 至 merged_context 供 LLM 使用 |
+| **Testing ×14** | `tests/ai/context/test_cultural_context.py` (NEW) ✅ | TestDetectCulture (6): 代碼/文字/CJK/한글/阿拉伯/預設. TestCulturalNotes (3): 區域列表/未知空列表/問候建議. TestEnrichContext (4): 區域注入/備註注入/保留 key/空文字 |
+| **Testing ×4** | `tests/ai/test_dictionary_layer.py` (NEW) ✅ | TestDisambiguate: 回傳所有 keys/空 context 保留原始/空 keys 回傳空/context 重排序 |
+| **測試結果** | **173/173 全部通過** ✅ | P26 新增 18 測試: 14 文化 + 4 WSD. 既有多模態 138 + 聊天 11 + ED3N 2 + 品質 4 = 173 通過, 0 失敗 |
+
 | 變更 | 檔案 | 影響 |
 |------|------|------|
 | **MetaController → AngelaLLMService 接線** | `services/llm/router.py` ✅ | `__init__` 建立 MetaController 實例; `ModelBus(meta_controller=...)` 傳入; `generate_response()` 記錄 LLM 置信度; ModelBus 直接命中記錄; Ensemble 記錄 |
@@ -631,10 +643,15 @@ P25 → ✅ [完整閉環]      → ED3N process_multimodal 整合 MultimodalRAG
                            SimilarityService evaluate_image_generation/evaluate_audio_generation;
                            ChatService decode 輸出至 response.metadata
                            156/156 測試
-P26 → 🟡 [多語言與文化]  → 字典強化 (更多語系); 文化感知回應; 語意消歧
+P26 → ✅ [多語言與文化]  → KOEDict 韓英字典 (koedict.json);
+                           CulturalContextModule (6 文化區 × 4 概念);
+                           WSD disambiguate() 字典層語意消歧;
+                           ChatService 文化感知接線
+                           173/173 測試
+P27 → 🟡 [訓練管道搭建]  → 資料集下載 pipeline; 編碼器對比預訓練; VAE 重建訓練
 ```
 
-目前專案處於 **P25 完成** — 多模態完整閉環: ED3N 處理多模態輸入時自動從 RAG 檢索相關條目; ChatService 可從 latent 解碼生成圖像/音頻並存入 response metadata; SimilarityService 提供 SSIM/SNR 品質評估。156 測試全通過。**P26 將推進多語言支持與文化感知。**
+目前專案處於 **P26 完成** — 新增韓語字典、文化感知模組、語意消歧。韓語成為繼中/日/英後第四語言。CulturalContextModule 注入 6 文化區 × 4 社交概念的文化筆記至對話 context，讓 LLM 可做出文化適配回應。字典層 WSD 依 context 重新排序匹配 keys。173 測試全通過。**P27 將搭建真實訓練管道。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -728,7 +745,8 @@ P26 → 🟡 [多語言與文化]  → 字典強化 (更多語系); 文化感知
 | **41** | **P23 多模態對話** | **ChatService MultimodalED3NAdapter 接線 + prompt_builder multimodal_entries 消費 + chat_routes image_data 傳遞. 139/139 測試通過 🎉 P23 全部完成!** |
 | **42** | **P24 生成品質進階** | **VisualDecoder CNN 卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics SSIM/PSNR/SNR. 138/138 多模態測試通過 🎉 P24 全部完成!** |
 | **43** | **P25 完整閉環** | **ED3N process_multimodal RAG 整合 + SimilarityService 品質評估 + ChatService decode 輸出. 156/156 測試通過 🎉 P25 全部完成!** |
-| **總計** | **43 輪** | **120+ 修復, 智能 2→9/10, 1050+ 測試** |
+| **44** | **P26 多語言與文化** | **Korean-English 字典下載/轉換/匯入 (koedict.json) + CulturalContextModule (6 文化區, 24 文化筆記, ChatService 接線) + WSD disambiguate() (字典層上下文消歧). 173/173 測試通過 🎉 P26 全部完成!** |
+| **總計** | **44 輪** | **120+ 修復, 智能 2→9/10, 1060+ 測試** |
 
 ## 7. 後續建議 (P25 完成後，多模態完整閉環就緒)
 
@@ -760,7 +778,6 @@ P26 → 🟡 [多語言與文化]  → 字典強化 (更多語系); 文化感知
 
 ### 路線
 
-1. **P26: 多語言與文化** — 字典強化 (更多語系); 文化感知回應; 語意消歧
-2. **P27: 模型訓練 pipeline** — 搭建資料集下載+預處理 pipeline; 編碼器對比預訓練
-3. **P28: 端到端訓練** — VAE 重建訓練 + 檢索 embedding 微調 + ED3N 權重學習
-4. **維護: 測試持續監控** — 1050+ 測試維持; pre-commit hook 執行
+1. **P27: 訓練管道搭建** — 資料集下載 pipeline (ImageNet subset / AudioSet / COCO); 編碼器對比預訓練; VAE 重建訓練
+2. **P28: 端到端訓練** — Encoder→Decoder→Retriever→ED3N, 全系統 fine-tune pipeline
+3. **維護: 測試持續監控** — 1060+ 測試維持; pre-commit hook 執行

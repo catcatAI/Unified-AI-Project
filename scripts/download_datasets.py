@@ -384,6 +384,87 @@ def process_wordnet() -> Path:
 
 
 # ---------------------------------------------------------------------------
+# Korean-English Dictionary (KOEDict)
+# ---------------------------------------------------------------------------
+
+KOEDICT_URL = (
+    "https://raw.githubusercontent.com/mhagiwara/korean-english-dictionary/"
+    "master/data/korean_english_dictionary.txt"
+)
+KOEDICT_TXT = OUT_DIR / "korean_english_dictionary.txt"
+
+
+def download_koedict() -> Path:
+    """Download Korean-English dictionary tabfile; return path."""
+    if KOEDICT_TXT.exists() and KOEDICT_TXT.stat().st_size > 100_000:
+        logger.info("KOEDict already downloaded (%s)", KOEDICT_TXT)
+        return KOEDICT_TXT
+    _urlretrieve(KOEDICT_URL, KOEDICT_TXT, desc="KOEDict")
+    return KOEDICT_TXT
+
+
+def convert_koedict(txt_path: Path) -> Path:
+    """Parse Korean-English tabfile and write ED3N JSON.
+
+    Format per line:  korean<TAB>english
+    """
+    entries: list[dict] = []
+    key_counts: dict[str, int] = {}
+    seen_pairs: set[tuple[str, str]] = set()
+
+    logger.info("Parsing KOEDict …")
+    with open(txt_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split("\t", 1)
+            if len(parts) != 2:
+                continue
+            ko, en = parts[0].strip(), parts[1].strip()
+            if not ko or not en:
+                continue
+            # Deduplicate identical ko↔en pairs
+            pair = (ko, en)
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+
+            sf: dict[str, str] = {"ko": ko, "en": en}
+
+            en_key = re.sub(r"[^a-zA-Z0-9_]", "_", en.lower().strip())
+            en_key = re.sub(r"_+", "_", en_key).strip("_")
+            if not en_key or len(en_key) < 2:
+                en_key = f"koedict_{hash(ko) % 10**6}"
+
+            key_counts[en_key] = key_counts.get(en_key, 0) + 1
+            cnt = key_counts[en_key]
+            dedup_key = f"{en_key}_{cnt}" if cnt > 1 else en_key
+
+            entry = {
+                "key": f"koedict_{dedup_key}",
+                "surface_forms": sf,
+                "contexts": [{"context_id": "koedict"}],
+                "relations": {},
+                "confidence": 1.0,
+            }
+            entries.append(entry)
+
+    out_path = OUT_DIR / "koedict.json"
+    data = {"version": "2.0", "source": "KOEDict", "entries": entries}
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+    logger.info("KOEDict: %d entries written to %s (%.1fMB)",
+                len(entries), out_path, out_path.stat().st_size / (1024 * 1024))
+    return out_path
+
+
+def process_koedict() -> Path:
+    txt = download_koedict()
+    return convert_koedict(txt)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -415,6 +496,8 @@ def main():
         results["jmdict"] = process_jmdict()
     if "all" in datasets or "wordnet" in datasets:
         results["wordnet"] = process_wordnet()
+    if "all" in datasets or "koedict" in datasets:
+        results["koedict"] = process_koedict()
 
     print()
     logger.info("=== Summary ===")

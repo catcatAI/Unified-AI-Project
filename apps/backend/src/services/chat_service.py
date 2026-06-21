@@ -31,6 +31,7 @@ class ChatService:
         self._cl_state_dir = os.path.join(
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
+        self._cultural_context = None
 
     @property
     def model_bus(self):
@@ -120,6 +121,13 @@ class ChatService:
                         stats.get("template_count", 0), stats.get("conversation_count", 0))
         except Exception as e:
             logger.warning("HAM memory init skipped: %s", e)
+        # Initialize CulturalContextModule
+        try:
+            from ai.context.cultural_context import CulturalContextModule
+            self._cultural_context = CulturalContextModule()
+            logger.info("CulturalContextModule initialized")
+        except Exception as e:
+            logger.debug("CulturalContextModule init skipped: %s", e)
         self._initialized = True
         logger.info("ChatService initialized")
         # Start periodic HAM sync background task (Phase 5.2)
@@ -133,6 +141,16 @@ class ChatService:
 
         merged_context = context or {}
         merged_context.setdefault("user_name", user_name)
+
+        # Cultural context injection: detect user culture and add awareness notes
+        if self._cultural_context is not None:
+            try:
+                lang = merged_context.get("language", "")
+                merged_context = self._cultural_context.enrich_context(
+                    merged_context, user_message, language_code=lang
+                )
+            except Exception as e:
+                logger.debug("Cultural context enrichment skipped: %s", e)
 
         # Memory context injection: retrieve relevant past knowledge and conversations
         if self._vector_store is not None:

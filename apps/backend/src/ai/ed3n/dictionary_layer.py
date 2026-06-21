@@ -155,6 +155,36 @@ class DictionaryLayer:
                 scores[key] = round(best * entry.confidence, 4)
         return scores
 
+    def disambiguate(self, keys: List[str], context: Dict[str, Any]) -> List[str]:
+        """Word sense disambiguation: reorder keys by contextual relevance.
+
+        Scores each key by surface-form overlap with context text.
+        Unmatched keys are deprioritised (moved to end).
+        """
+        if not keys or not context:
+            return keys
+        context_text = " ".join(
+            str(v) for v in context.values()
+            if isinstance(v, (str, list)) and v
+        )
+        if not context_text:
+            return keys
+        context_lower = normalize_text(context_text).lower()
+        scored: List[Tuple[str, int]] = []
+        for key in keys:
+            entry = self.entries.get(key)
+            if entry is None:
+                scored.append((key, 0))
+                continue
+            overlap = 0
+            for sf in entry.surface_forms.values():
+                sf_lower = normalize_text(sf).lower()
+                if sf_lower and sf_lower in context_lower:
+                    overlap += len(sf_lower)
+            scored.append((key, overlap))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [k for k, _ in scored]
+
     def _encode_locked(self, text: str, modality: str = "text") -> List[str]:
         if not text or not isinstance(text, str):
             return []
@@ -204,6 +234,8 @@ class DictionaryLayer:
     def decode(self, keys: List[str], context: Optional[Dict[str, Any]] = None) -> str:
         if not keys:
             return ""
+        if context and context.get("disambiguate"):
+            keys = self.disambiguate(keys, context)
         parts: List[str] = []
         for key in keys:
             entry = self.entries.get(key)
