@@ -190,6 +190,9 @@ class AngelaLLMService:
         self.model_bus: Optional[ModelBus] = None
         self.query_classifier: Optional[QueryClassifier] = None
 
+        # MetaController for confidence calibration
+        self.meta_controller: Optional[Any] = None
+
         # 初始化各後端
         self._init_backends()
 
@@ -486,9 +489,16 @@ class AngelaLLMService:
                     self.active_backend_type = backend_type
                     break
 
+            # Initialize MetaController
+            try:
+                from ai.meta.meta_controller import MetaController
+                self.meta_controller = MetaController()
+            except Exception as e:
+                logger.warning(f"MetaController not available: {e}")
+
             # Initialize Model Bus
             try:
-                self.model_bus = ModelBus()
+                self.model_bus = ModelBus(meta_controller=self.meta_controller)
                 self.query_classifier = QueryClassifier()
 
                 # Register ED3N if available
@@ -629,6 +639,8 @@ class AngelaLLMService:
                     fusion_strategy=context.get("fusion_strategy", "best_single"),
                 )
                 from core.interfaces.protocols import LLMResponse
+                if self.meta_controller is not None:
+                    self.meta_controller.record_confidence("llm:ensemble", result.confidence)
                 return LLMResponse(
                     text=result.content,
                     model="ensemble",
@@ -706,6 +718,8 @@ class AngelaLLMService:
 
             logger.info(f"Angela 回應生成完成 (LLM_FULL) ({response_time:.0f}ms)")
             self._record_route_learning(context, "success", response_time)
+            if self.meta_controller is not None:
+                self.meta_controller.record_confidence("llm:full", response.confidence if hasattr(response, 'confidence') else 0.0)
             return response
 
         except Exception as e:
@@ -732,6 +746,8 @@ class AngelaLLMService:
                         # Case A: High confidence -> Direct return (Reflex)
                         if decision.confidence >= 0.8:
                             logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f})")
+                            if self.meta_controller is not None:
+                                self.meta_controller.record_confidence(f"model_bus:{decision.selected_model}", decision.confidence)
                             return LLMResponse(
                                 text=result.text,
                                 confidence=decision.confidence,

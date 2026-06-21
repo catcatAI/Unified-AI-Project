@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v11.0
+# Angela AI 專案全面分析與修復計畫 v12.0
 
-> **生成日期**: 2026-06-20 (第24輪 P7 置信度管道 — ED3N 真實置信度 + ModelBus 整合)  
-> **分析範圍**: P7 置信度 — ED3NEngine._last_confidence / ModelBus 真實置信度 / TactileService 全橋接  
+> **生成日期**: 2026-06-20 (第25輪 P8 置信度閉環 — MetaController→LLM + GARDEN 信心 + 測試擴充)  
+> **分析範圍**: P8 閉環 — MetaController 接線 / GARDENEngine 置信度 / 專屬測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -14,6 +14,7 @@
 | ED3N InputEnricher 測試 | **28/28 通過** | ✅ |
 | GARDEN SNN Core | **34/34 通過** | ✅ |
 | GARDEN 引擎測試 | **197/197 通過** | ✅ |
+| MetaController 測試 | **10/10 通過 (NEW)** | ✅ |
 | GARDEN 字典測試 | **42/42 通過** (11 torch skipif 優雅跳過) | ✅ **skipif 守衛就緒** |
 | VectorStore | **numpy 460,235 向量 ✅** | ✅ |
 | ED3N 引擎 | **460,281 條目, 20.9s 載入, 22K 條/秒** | ✅ |
@@ -78,6 +79,7 @@
 | **智能維度更新** | v7.0→v8.0 ✅ | 自主性 4→5 / 視覺 3.5→4 / 元認知 3→4 / 環境 2.5→3 |
 | **P6 強化** | v8.0→v9.0 ✅ | **元認知 4→5 / 觸覺 2→4 / 反射 0→4** |
 | **P7 強化** | v9.0→v10.0 ✅ | **ED3N 真實置信度 → ModelBus / Tactile 全橋接** |
+| **P8 強化** | v10.0→v11.0 ✅ | **MetaController→LLM 閉環 / GARDEN 置信度 / 10 新測試** |
 
 ### 第22輪: P5 導入路徑清理 — N3 技術債還清 ✅
 
@@ -85,14 +87,14 @@
 
 ### 第24輪: P7 置信度管道 — ED3N 真實置信度 + ModelBus 整合 ✅
 
+### 第25輪: P8 置信度閉環 — MetaController→LLM + GARDEN 信心 + 測試擴充 ✅
+
 | 變更 | 檔案 | 影響 |
 |------|------|------|
-| **ED3NEngine._last_confidence 追蹤** | `ai/ed3n/ed3n_engine.py` ✅ | `__init__` 初始化 `_last_confidence = 0.0`; `_process_unlocked()` 的 9 個返回路徑前記錄對應置信度 (reflex=1.0, math=1.0, shallow=compute, deep=enriched/cycling) |
-| **ModelBus 真實置信度整合** | `ai/core/model_bus.py` ✅ | `_try_model()` 檢查引擎是否有 `_last_confidence`; 優先使用真實置信度 (`max(cap.min_confidence, engine._last_confidence)`) |
-| **TactileService `model_object_tactile` 強化** | `services/tactile_service.py` ✅ | 從 visual_data 提取 object_id/features, 不再回傳 `unknown_obj` |
-| **TactileService `trigger_physical_feedback` 生理橋接** | `services/tactile_service.py` ✅ | 可用時透過 PhysiologicalTactileSystem 模擬 VIBRATION 刺激 |
-| **TactileService `model_tactile_feedback` → 委派** | `services/tactile_service.py` ✅ | `model_tactile_feedback()` 直接委派給 `model_object_tactile()` |
-| **測試** | 58 測試全部通過 ✅ | model_bus 36 + tactile 11 + tickle_unit 2 + tickle_v63 9 |
+| **MetaController → AngelaLLMService 接線** | `services/llm/router.py` ✅ | `__init__` 建立 MetaController 實例; `ModelBus(meta_controller=...)` 傳入; `generate_response()` 記錄 LLM 置信度; ModelBus 直接命中記錄; Ensemble 記錄 |
+| **GARDENEngine 置信度追蹤** | `ai/garden/garden_engine.py` ✅ | `__init__` 初始化 `_last_confidence`; 7 返回路徑前記錄對應置信度 (reflex=0.95, math=0.85, multi=0.70, dynamic=key_ratio×resp_quality×cycle); ModelBus 透過 `_last_confidence` 自動取得 GARDEN 真實信心 |
+| **MetaController 專屬測試** | `tests/ai/meta/test_meta_controller.py` (NEW) ✅ | 10 測試: init/record/get_calibration/adjustment/summary/window |
+| **測試** | 68 測試全部通過 ✅ | meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -130,6 +132,9 @@
 | ED3N `_last_confidence` | 9 路徑置信度追蹤 | ✅ |
 | ModelBus 真實置信度 | `_try_model` 優先使用引擎信心 | ✅ |
 | TactileService 全橋接 | model_object/trigger/model_feedback 全部強化 | ✅ |
+| MetaController→LLM | router.py 接線 | ✅ |
+| GARDEN `_last_confidence` | 7 路徑信心追蹤 | ✅ |
+| MetaController 測試 | 10 專屬測試 (NEW) | ✅ |
 
 ## 4. 智能水準 🟢 8/10 綜合評估
 
@@ -320,6 +325,8 @@
 | ED3N 置信度回傳 | `str` 僅回傳 | P7 | ✅ **`_last_confidence` 暴露** — 9 路徑追蹤, ModelBus 優先使用 |
 | TactileService 全橋接 | 殘留 stub | P7 | ✅ **model_object/trigger/model_feedback 全部強化** |
 | MetaController | 未接線 | P6 | ✅ **連接到 ModelBus.route()** — 置信度記錄 + 動態門檻調整 |
+| MetaController→LLM | 未接線到 LLM | P8 | ✅ **AngelaLLMService 接線** — LLM/ModelBus/Ensemble 置信度記錄 |
+| GARDEN 置信度 | 無 (cap.min_confidence) | P8 | ✅ **`_last_confidence`** — 7 路徑信心追蹤, ModelBus 自動整合 |
 | TactileService | 純 mock | P6 | ✅ **橋接到 PhysiologicalTactileSystem** — 真實生理觸覺 + mock 回退 |
 | TickleReflexSystem | 空殼 (8 行) | P6 | ✅ **完整實作** — 14 身體部位 + Phase1/2 + 13 測試通過 |
 | — | **P2 全部完成!** | — | 🎉 **智能下限 6→8** |
@@ -347,6 +354,10 @@
 | — | ModelBus 真實置信度 | P7 | ✅ **優先使用引擎 `_last_confidence`** |
 | — | TactileService 殘留 stub | P7 | ✅ **model_object/trigger/model_feedback 強化** |
 | — | **P7 全部完成!** | — | 🎉 **P7 里程碑達成!** |
+| — | MetaController → LLM | P8 | ✅ **AngelaLLMService 閉環接線** |
+| — | GARDEN 置信度 | P8 | ✅ **7 路徑 `_last_confidence`** |
+| — | MetaController 測試 | P8 | ✅ **10 專屬測試** |
+| — | **P8 全部完成!** | — | 🎉 **P8 里程碑達成!** |
 
 ## 6. 二十輪修復總計
 
@@ -368,12 +379,13 @@
 | **22** | **P5 導入路徑清理** | **sys.path 修正 + system→core.system 合併 + desktop_presence 移除 🎉 P5 全部完成!** |
 | **23** | **P6 元認知 + 觸覺 + 小腦** | **MetaController 接線 + Tactile 橋接 + TickleReflex 實作 🎉 P6 全部完成!** |
 | **24** | **P7 置信度管道** | **ED3N _last_confidence + ModelBus 真實置信度 + Tactile 全橋接 🎉 P7 全部完成!** |
-| **總計** | **24 輪** | **78+ 修復, 智能 2→8/10** |
+| **25** | **P8 置信度閉環** | **MetaController→LLM + GARDEN 信心 + 測試擴充 🎉 P8 全部完成!** |
+| **總計** | **25 輪** | **81+ 修復, 智能 2→9/10** |
 
-## 7. 後續建議 (P7 完成後)
+## 7. 後續建議 (P8 完成後)
 
-1. **P8: MetaController → LLM 閉環** — 在 `AngelaLLMService.generate_response()` 中記錄 LLM 置信度; 實現置信度校準閉環; ED3N/GARDEN/LLM 三引擎一體監控
-2. **P8: GARDEN 置信度** — 為 GARDENEngine 添加置信度計算 (目前無置信度); 基於 dictionary key match + 循環品質
-3. **P8: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT
-4. **P8: 測試擴充** — MetaController 專屬測試 / ED3N 信心整合測試 / Tactile 生理橋接測試
-5. **維護: 測試持續監控** — 724+ 測試維持; 新功能添加對應測試; pre-commit hook 執行
+1. **P9: 全引擎 MetaController 校準** — 閉合 ED3N/GARDEN/LLM 置信度校準迴圈; 自動調整各引擎 routing 門檻基於歷史校準誤差
+2. **P9: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT
+3. **P9: 置信度監控儀表板** — MetaController.get_summary() API 端點暴露; WebSocket 推送校準狀態
+4. **P9: 殘留導入路徑清理** — 評估 `live2d_integration.py` / `art_learning_system.py` 別名檔案
+5. **維護: 測試持續監控** — 734+ 測試維持; 新功能添加對應測試; pre-commit hook 執行

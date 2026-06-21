@@ -177,6 +177,7 @@ class GARDENEngine:
         self._query_count = 0
         self._learn_count = 0
         self._learning_enabled = True
+        self._last_confidence = 0.0
 
     # ------------------------------------------------------------------
     # Preset / init
@@ -252,6 +253,7 @@ class GARDENEngine:
           emotion detect → reflex → multi-step check → vector encode → SNN forward → anchored decode
         """
         if not text or not isinstance(text, str):
+            self._last_confidence = 0.0
             return ""
 
         self._query_count += 1
@@ -263,15 +265,18 @@ class GARDENEngine:
         # Stage 1: Reflex (fast pattern match)
         reflex_hit = self.reflex.match(text)
         if reflex_hit is not None:
+            self._last_confidence = 0.95
             return reflex_hit
 
         # Stage 1.5: Math evaluation (using MathRippleEngine)
         math_result = self._try_math_eval(text)
         if math_result is not None:
+            self._last_confidence = 0.85
             return math_result
 
         # Stage 2: Multi-step detection
         if self._is_multi_step(text):
+            self._last_confidence = 0.70
             return self._process_multi_step(text, context)
 
         # Stage 3: Vector encode
@@ -281,6 +286,7 @@ class GARDENEngine:
         input_keys = self.dictionary.encode(text)
 
         if not input_keys:
+            self._last_confidence = 0.0
             return self._fallback_str(text)
 
         # Stage 4: SNN forward
@@ -294,16 +300,19 @@ class GARDENEngine:
             response = self.dictionary.decode(input_keys[:limit_value("ai.garden.engine.fallback_decode_keys", 4)])
 
         if not response:
+            self._last_confidence = 0.0
             return self._fallback_str(text)
 
         # Stage 6: Cycling — iterative refinement if response is weak
         MAX_CYCLES = 3
         MIN_RESPONSE_LEN = 5
         current_output = response
+        cycles_used = 0
 
         for cycle in range(MAX_CYCLES):
             if len(current_output) >= MIN_RESPONSE_LEN:
                 break
+            cycles_used += 1
 
             # Re-run with previous output as context
             cycle_context = dict(context) if context else {}
@@ -315,6 +324,12 @@ class GARDENEngine:
 
             if cycle_response and len(cycle_response) > len(current_output):
                 current_output = cycle_response
+
+        # Compute confidence: key coverage × response quality × cycle penalty
+        key_ratio = min(1.0, len(input_keys) / limit_value("ai.garden.engine.top_k", 8))
+        resp_quality = min(1.0, len(current_output) / 50.0)
+        cycle_penalty = 1.0 - (cycles_used * 0.1)
+        self._last_confidence = round(max(0.0, key_ratio * 0.5 + resp_quality * 0.3 + 0.2 * cycle_penalty), 3)
 
         return current_output
 
