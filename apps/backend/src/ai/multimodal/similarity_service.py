@@ -1,7 +1,9 @@
 """Cross-modal similarity service — orchestrates encoding/decoding and latent-space comparison."""
 
+import io
 import logging
-from typing import Dict, List, Optional
+import wave
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from PIL import Image
@@ -11,6 +13,9 @@ from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.shared_latent_space import SharedLatentSpace
 from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
+from ai.multimodal.quality_metrics import quality_report, ssim, snr
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -113,3 +118,66 @@ class MultimodalSimilarityService:
     def reset(self) -> None:
         self._latent_space.reset()
         self._items.clear()
+
+    def evaluate_image_generation(self, image_data: bytes, item_id: str) -> Optional[Dict[str, float]]:
+        """Encode → decode → evaluate SSIM for a registered image.
+
+        Returns {'ssim': float} or None if item not found.
+        """
+        modality = self._items.get(item_id)
+        if modality != "vision":
+            return None
+        latent = self._latent_space.get_embedding("vision")
+        if latent is None:
+            return None
+        decoded_pil = self._visual_decoder.decode_to_pil(latent)
+        if decoded_pil is None:
+            return None
+        original_pil = Image.open(io.BytesIO(image_data)).convert("RGB")
+        ssim_val = ssim(np.array(original_pil), np.array(decoded_pil))
+        return {"ssim": ssim_val}
+
+    def evaluate_audio_generation(self, audio_data: bytes, item_id: str) -> Optional[Dict[str, float]]:
+        """Encode → decode → evaluate SNR for a registered audio.
+
+        Returns {'snr': float} or None if item not found.
+        """
+        modality = self._items.get(item_id)
+        if modality != "audio":
+            return None
+        latent = self._latent_space.get_embedding("audio")
+        if latent is None:
+            return None
+        wav = self._audio_decoder.decode(latent)
+        if wav is None or len(wav) == 0:
+            return None
+        try:
+            with wave.open(io.BytesIO(audio_data), "rb") as wf:
+                raw = wf.readframes(wf.getnframes())
+                arr = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
+        except Exception:
+            arr = np.frombuffer(audio_data, dtype=np.float32).flatten()
+        if len(arr) == 0:
+            return None
+        min_len = min(len(arr), len(wav))
+        snr_val = snr(arr[:min_len], wav[:min_len])
+        return {"snr": snr_val}
+
+    def full_quality_report(self, image_data: Optional[bytes] = None,
+                            audio_data: Optional[bytes] = None,
+                            image_item: str = "",
+                            audio_item: str = "") -> Dict[str, Any]:
+        """Comprehensive quality report for both image and audio.
+
+        Evaluates SSIM for image and SNR for audio.
+        """
+        report: Dict[str, Any] = {}
+        if image_data and image_item:
+            img_report = self.evaluate_image_generation(image_data, image_item)
+            if img_report:
+                report["image"] = img_report
+        if audio_data and audio_item:
+            aud_report = self.evaluate_audio_generation(audio_data, audio_item)
+            if aud_report:
+                report["audio"] = aud_report
+        return report

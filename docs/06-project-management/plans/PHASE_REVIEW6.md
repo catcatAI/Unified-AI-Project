@@ -294,6 +294,20 @@
 | **Testing ×10** | `tests/ai/multimodal/test_quality_metrics.py` (NEW) ✅ | SSIM (4): 相同→1.0 / 不同<1.0 / 形狀不符→0 / 範圍[0,1]. PSNR (2): 相同高分 / 不同低分. SNR (2): 相同高分 / 零信號→0. Report (2): 包含所有 key / 相同資料完美分數 |
 | **測試結果** | **138/138 全部通過** ✅ | P24 全部 10 新測試 + 128 既有多模態 = 138 通過, 0 失敗 |
 
+### 第43輪: P25 完整閉環 — ED3N process_multimodal 整合 RAG + ChatService decode 輸出 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **ED3NEngine.multimodal_adapter + process_multimodal RAG 檢索** | `ai/ed3n/ed3n_engine.py` ✅ | `multimodal_adapter` 屬性; `set_multimodal_adapter()` 方法; `process_multimodal()` 在組合 keys 前呼叫 `adapter.retrieve_multimodal()` 注入相關條目 keys, 非關鍵失敗僅 debug log |
+| **SimilarityService.evaluate_image_generation()** | `ai/multimodal/similarity_service.py` ✅ | 編碼→解碼→SSIM 評估: decode_to_pil(latent) vs PIL open(image_data); 返回 `{ssim: float}`; 未知 item 返回 None |
+| **SimilarityService.evaluate_audio_generation()** | `ai/multimodal/similarity_service.py` ✅ | WAV 解析 PCM int16→float32; decode(latent) 波形比較; 返回 `{snr: float}` (可使用負值—損失重建); 未知 item 返回 None |
+| **SimilarityService.full_quality_report()** | `ai/multimodal/similarity_service.py` ✅ | 圖片和音訊品質的綜合報告, 包裝 evaluate_image_generation + evaluate_audio_generation, 返回 `{image:{ssim}, audio:{snr}}` |
+| **ChatService decode 輸出至 response.metadata** | `services/chat_service.py` ✅ | `generate_response()` 在 LLM 回應後, 若有多模態 entries, 解碼 top_entry latent 為 image(PNG hex) + audio(16kHz samples) 存入 metadata.generated_image / generated_audio |
+| **Testing: ED3N 接線** | `tests/ai/multimodal/test_multimodal_ed3n_adapter.py` ✅ | TestED3NEngineAdapterWiring: set_multimodal_adapter 設定 + process_multimodal 不崩潰 (2 新測試) |
+| **Testing: 品質評估** | `tests/ai/multimodal/test_similarity_service.py` ✅ | TestMultimodalSimilarityServiceQuality: evaluate_image_generation 返回 ssim + evaluate_audio_generation 返回 snr + 未知 item 返回 None + full_quality_report 包含雙模態 (4 新測試) |
+| **Testing: ChatService 多模態輸出** | `tests/services/test_chat_service.py` ✅ | TestChatServiceMultimodalOutput: generate_response 含 image_analysis 不拋異常 (1 新測試) |
+| **測試結果** | **156/156 全部通過** ✅ | P25 新增 7 測試: 2 ED3N + 4 相似度 + 1 ChatService. 既有多模態 138 + 聊天 11 = 156 通過, 0 失敗 |
+
 | 變更 | 檔案 | 影響 |
 |------|------|------|
 | **MetaController → AngelaLLMService 接線** | `services/llm/router.py` ✅ | `__init__` 建立 MetaController 實例; `ModelBus(meta_controller=...)` 傳入; `generate_response()` 記錄 LLM 置信度; ModelBus 直接命中記錄; Ensemble 記錄 |
@@ -613,11 +627,14 @@ P24 → ✅ [生成品質進階]  → VisualDecoder CNN 轉置卷積紋理 (4×4
                            AudioWaveformDecoder 波表合成 (256-sample wavetable per band)
                            quality_metrics: ssim/psnr/snr/quality_report
                            138/138 測試
-P25 → 🟡 [完整閉環]      → ED3N process_multimodal 整合 MultimodalRAGEngine 輸出;
-                           decode_to_image/audio 回饋至對話響應 (不僅是文字描述)
+P25 → ✅ [完整閉環]      → ED3N process_multimodal 整合 MultimodalRAGEngine 輸出;
+                           SimilarityService evaluate_image_generation/evaluate_audio_generation;
+                           ChatService decode 輸出至 response.metadata
+                           156/156 測試
+P26 → 🟡 [多語言與文化]  → 字典強化 (更多語系); 文化感知回應; 語意消歧
 ```
 
-目前專案處於 **P24 完成** — Decoder 生成品質大幅提升: VisualDecoder 使用 CNN 卷積產生空間結構紋理 (取代純噪聲), AudioWaveformDecoder 使用波表合成 (256-sample 每頻段). 新增 quality_metrics 提供 SSIM/PSNR/SNR 評估. 138 多模態測試全通過。**P25 將完成 ED3N 完整閉環 — process_multimodal 接收 retriever 輸出 + decode_to_image/audio 回饋。**
+目前專案處於 **P25 完成** — 多模態完整閉環: ED3N 處理多模態輸入時自動從 RAG 檢索相關條目; ChatService 可從 latent 解碼生成圖像/音頻並存入 response metadata; SimilarityService 提供 SSIM/SNR 品質評估。156 測試全通過。**P26 將推進多語言支持與文化感知。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -710,10 +727,11 @@ P25 → 🟡 [完整閉環]      → ED3N process_multimodal 整合 MultimodalRA
 | **40** | **P22 生成品質+雙向接線** | **VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段噪聲 + MultimodalED3NAdapter ED3N 接線. 128/128 多模態測試通過 🎉 P22 全部完成!** |
 | **41** | **P23 多模態對話** | **ChatService MultimodalED3NAdapter 接線 + prompt_builder multimodal_entries 消費 + chat_routes image_data 傳遞. 139/139 測試通過 🎉 P23 全部完成!** |
 | **42** | **P24 生成品質進階** | **VisualDecoder CNN 卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics SSIM/PSNR/SNR. 138/138 多模態測試通過 🎉 P24 全部完成!** |
-| **總計** | **42 輪** | **120+ 修復, 智能 2→9/10, 1040+ 測試** |
+| **43** | **P25 完整閉環** | **ED3N process_multimodal RAG 整合 + SimilarityService 品質評估 + ChatService decode 輸出. 156/156 測試通過 🎉 P25 全部完成!** |
+| **總計** | **43 輪** | **120+ 修復, 智能 2→9/10, 1050+ 測試** |
 
-## 7. 後續建議 (P24 完成後，decoder 品質大幅提升 + quality_metrics 就緒)
+## 7. 後續建議 (P25 完成後，多模態完整閉環就緒)
 
-1. **P25: 完整閉環** — ED3N process_multimodal 整合 MultimodalRAGEngine 輸出; decode_to_image/audio 回饋至對話響應 (不僅是文字描述); 端到端品質評估整合進相似度服務
-2. **P26: 多語言與文化** — 字典強化 (更多語系); 文化感知回應; 語意消歧
-3. **維護: 測試持續監控** — 1040+ 測試維持; pre-commit hook 執行
+1. **P26: 多語言與文化** — 字典強化 (更多語系); 文化感知回應; 語意消歧
+2. **P27: 效能優化** — ED3N 字典載入 <10s; 檢索延遲優化; 記憶體使用量降低
+3. **維護: 測試持續監控** — 1050+ 測試維持; pre-commit hook 執行

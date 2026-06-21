@@ -158,6 +158,7 @@ class ED3NEngine:
         self.image_encoder: Optional[ImageEncoder] = None
         self.audio_encoder: Optional[AudioEncoder] = None
         self.cross_modal_trainer: Optional[CrossModalTrainer] = None
+        self.multimodal_adapter: Optional[Any] = None
         self._continuous_learning = continuous_learning
         self._external_dicts_loaded = False
         self._last_confidence = 0.0
@@ -589,6 +590,10 @@ class ED3NEngine:
             return []
         return self.audio_encoder.encode(audio_data)
 
+    def set_multimodal_adapter(self, adapter: Any) -> None:
+        self.multimodal_adapter = adapter
+        logger.info("MultimodalED3NAdapter set on ED3NEngine")
+
     def is_multimodal_available(self) -> bool:
         return self.image_encoder is not None or self.audio_encoder is not None
 
@@ -614,6 +619,25 @@ class ED3NEngine:
             audio_keys = self._process_audio_input(audio_data)
 
         combined_keys = list(set(text_keys + image_keys + audio_keys))
+
+        # Multimodal RAG: retrieve related entries via MultimodalED3NAdapter
+        if self.multimodal_adapter is not None:
+            try:
+                rag_entries = []
+                if image_data:
+                    rag_entries = self.multimodal_adapter.retrieve_multimodal(
+                        image_data=image_data, top_k=3
+                    )
+                elif audio_data:
+                    rag_entries = self.multimodal_adapter.retrieve_multimodal(
+                        audio_data=audio_data, top_k=3
+                    )
+                for entry in rag_entries:
+                    key = entry.get("key", "")
+                    if key and key not in combined_keys:
+                        combined_keys.insert(0, key)
+            except Exception as e:
+                logger.debug("Multimodal RAG retrieval failed (non-critical): %s", e)
 
         if not combined_keys:
             return self._fallback_str(text or "")

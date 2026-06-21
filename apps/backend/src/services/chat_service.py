@@ -6,6 +6,7 @@
 # =============================================================================
 
 import asyncio
+import io
 import logging
 import os
 from typing import Dict, Any, Optional
@@ -164,6 +165,7 @@ class ChatService:
 
         # Multimodal context injection: retrieve related entries from image/audio query
         image_analysis = merged_context.get("image_analysis")
+        mm_adapter = None
         if image_analysis and isinstance(image_analysis, dict):
             image_data = image_analysis.get("image_data")
             if image_data:
@@ -187,6 +189,25 @@ class ChatService:
         response = await self._llm_service.generate_response(user_message, merged_context)
 
         response = self._post_process_response(response, merged_context)
+
+        # Multimodal output decoding: generate image/audio from retrieved entries
+        if mm_adapter is not None and merged_context.get("multimodal_entries"):
+            try:
+                top_entry = merged_context["multimodal_entries"][0]
+                latent = top_entry.get("vector")
+                if latent and len(latent) >= 64:
+                    from ai.multimodal.multimodal_bridge import MultimodalBridge
+                    bridge = MultimodalBridge()
+                    decoded_img = bridge.decode_latent_to_image(latent[:64])
+                    if decoded_img is not None:
+                        buf = io.BytesIO()
+                        decoded_img.save(buf, format="PNG")
+                        response.metadata["generated_image"] = buf.getvalue().hex()
+                    decoded_wav = bridge.decode_latent_to_waveform(latent[:64])
+                    if decoded_wav is not None:
+                        response.metadata["generated_audio"] = decoded_wav[:16000]
+            except Exception as e:
+                logger.debug("Multimodal decode output failed (non-critical): %s", e)
 
         if self._continuous_learning:
             try:

@@ -80,3 +80,23 @@ class TestMultimodalED3NAdapter:
             assert isinstance(e["contexts"], list)
             assert "confidence" in e
             assert 0.0 <= e["confidence"] <= 1.0
+
+
+class TestED3NEngineAdapterWiring:
+
+    def test_set_multimodal_adapter(self):
+        from ai.ed3n.ed3n_engine import ED3NEngine
+        from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
+        engine = ED3NEngine(auto_load_presets=False, auto_load_dictionaries=False)
+        adapter = MultimodalED3NAdapter()
+        engine.set_multimodal_adapter(adapter)
+        assert engine.multimodal_adapter is adapter
+
+    def test_process_multimodal_with_adapter_no_crash(self):
+        from ai.ed3n.ed3n_engine import ED3NEngine
+        from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
+        engine = ED3NEngine(auto_load_presets=False, auto_load_dictionaries=False)
+        engine.set_multimodal_adapter(MultimodalED3NAdapter())
+        result = engine.process_multimodal(text="hello", image_data=b"test_img")
+        assert isinstance(result, str)
+        assert len(result) > 0

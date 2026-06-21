@@ -121,3 +121,45 @@ class TestMultimodalSimilarityService:
     async def test_encode_invalid_vision_returns_none(self, sim_service):
         result = await sim_service.encode_vision(b"", "bad_img")
         assert result is None
+
+
+class TestMultimodalSimilarityServiceQuality:
+
+    @pytest.fixture
+    def sim_service(self):
+        from ai.multimodal.similarity_service import MultimodalSimilarityService
+        return MultimodalSimilarityService()
+
+    async def test_evaluate_image_generation_returns_ssim(self, sim_service):
+        img_bytes = _sample_image_bytes()
+        await sim_service.encode_vision(img_bytes, "quality_img")
+        report = sim_service.evaluate_image_generation(img_bytes, "quality_img")
+        assert report is not None
+        assert "ssim" in report
+        assert 0.0 <= report["ssim"] <= 1.0
+
+    async def test_evaluate_audio_generation_returns_snr(self, sim_service):
+        aud_bytes = _sample_audio_wav()
+        await sim_service.encode_audio(aud_bytes, "quality_aud")
+        report = sim_service.evaluate_audio_generation(aud_bytes, "quality_aud")
+        assert report is not None
+        assert "snr" in report
+        assert not np.isnan(report["snr"])
+
+    async def test_evaluate_unknown_item_returns_none(self, sim_service):
+        assert sim_service.evaluate_image_generation(b"", "unknown") is None
+        assert sim_service.evaluate_audio_generation(b"", "unknown") is None
+
+    async def test_full_quality_report_contains_modalities(self, sim_service):
+        img_bytes = _sample_image_bytes()
+        aud_bytes = _sample_audio_wav()
+        await sim_service.encode_vision(img_bytes, "full_img")
+        await sim_service.encode_audio(aud_bytes, "full_aud")
+        report = sim_service.full_quality_report(
+            image_data=img_bytes, audio_data=aud_bytes,
+            image_item="full_img", audio_item="full_aud"
+        )
+        assert "image" in report
+        assert "audio" in report
+        assert "ssim" in report["image"]
+        assert "snr" in report["audio"]
