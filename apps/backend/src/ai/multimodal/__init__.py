@@ -8,6 +8,8 @@ P15: VisualEncoder (pixel→vector), AudioSpectralEncoder (waveform→vector),
      SharedLatentSpace (unified embedding space with cross-modal similarity).
 P17: CNN conv2d Gabor filter bank (visual), MFCC + temporal attention (audio).
 P18: VisualDecoder (latent→image), AudioWaveformDecoder (latent→waveform).
+P19: ReconstructionCycle (autoencoder feature-level training),
+     CrossModalSynthesizer (latent blending + cross-modal generation).
 """
 
 from ai.multimodal.visual_encoder import VisualEncoder
@@ -17,6 +19,7 @@ from ai.multimodal.similarity_service import MultimodalSimilarityService
 from ai.multimodal.multimodal_processor import MultimodalProcessor
 from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
+from ai.multimodal.reconstruction_cycle import ReconstructionCycle, CrossModalSynthesizer
 
 __all__ = [
     "VisualEncoder",
@@ -26,4 +29,6 @@ __all__ = [
     "MultimodalProcessor",
     "VisualDecoder",
     "AudioWaveformDecoder",
+    "ReconstructionCycle",
+    "CrossModalSynthesizer",
 ]
