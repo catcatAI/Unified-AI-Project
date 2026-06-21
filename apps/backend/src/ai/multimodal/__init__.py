@@ -12,6 +12,8 @@ P19: ReconstructionCycle (autoencoder feature-level training),
      CrossModalSynthesizer (latent blending + cross-modal generation).
 P20: Vectorized conv2d (10-100x faster), decoders in SimilarityService,
      MultimodalBridge for ED3N integration.
+P21: MultimodalRetriever (vector index + cosine search),
+     MultimodalRAGEngine (cross-modal retrieval → ED3N entries).
 """
 
 from ai.multimodal.visual_encoder import VisualEncoder
@@ -23,6 +25,8 @@ from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.reconstruction_cycle import ReconstructionCycle, CrossModalSynthesizer
 from ai.multimodal.multimodal_bridge import MultimodalBridge
+from ai.multimodal.multimodal_retriever import MultimodalRetriever
+from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
 
 __all__ = [
     "VisualEncoder",
@@ -35,4 +39,6 @@ __all__ = [
     "ReconstructionCycle",
     "CrossModalSynthesizer",
     "MultimodalBridge",
+    "MultimodalRetriever",
+    "MultimodalRAGEngine",
 ]

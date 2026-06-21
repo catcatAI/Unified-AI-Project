@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v26.0
+# Angela AI 專案全面分析與修復計畫 v27.0
 
-> **生成日期**: 2026-06-22 (第38輪 P20 效能+整合 — conv2d 向量化 + decoder 服務整合 + MultimodalBridge)  
-> **分析範圍**: P20 — VisualEncoder conv2d 矩陣加速 (batch matmul 替代 nested loops) + MultimodalSimilarityService decode_to_image/audio + MultimodalBridge ED3N 整合 + 95 多模態測試  
+> **生成日期**: 2026-06-22 (第39輪 P21 跨模態 RAG — MultimodalRetriever 向量索引 + MultimodalRAGEngine ED3N 檢索)  
+> **分析範圍**: P21 — MultimodalRetriever (numpy cosine brute-force index) + MultimodalRAGEngine (encode→index→query→ED3N entries) + 116 多模態測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,7 +11,7 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **95/95 全部通過** ✅ | **P15 21 + P16 9 + P17 13 + P18 16 + P19 15 + P20 21** (conv2d 驗證 2 + decoder 服務 6 + MultimodalBridge 13) |
+| 多模態測試 | **116/116 全部通過** ✅ | **P15–P20 95 + P21 21** (MultimodalRetriever 11 + MultimodalRAGEngine 10) |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
 | MetaController 單元測試 | **10/10 通過** | ✅ |
@@ -248,6 +248,17 @@
 | **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalBridge 加入 __all__. 模組文檔更新至 P20 |
 | **Testing ×21** | `tests/ai/multimodal/test_p20_integration.py` (NEW) ✅ | ServiceDecode (6): image 解碼/未知/錯誤模態 + audio 解碼/未知/錯誤模態. Conv2d (2): 向量化與手動一致 + CNN shape. MultimodalBridge (13): 編碼圖像/音頻/隱向量/解碼/相似度/跨模態/ED3N entry |
 | **測試結果** | **95/95 全部通過** ✅ | P20 全部 21 測試 + 74 既有多模態 = 95 通過, 0 失敗 |
+
+### 第39輪: P21 跨模態 RAG — MultimodalRetriever 向量索引 + MultimodalRAGEngine ED3N 檢索 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **MultimodalRetriever (向量索引)** | `ai/multimodal/multimodal_retriever.py` (NEW) ✅ | numpy brute-force 餘弦索引. `add(key, latent, modality, metadata)` 索引; `search(query_latent, top_k)` → top-k `{key, score, modality, metadata}`; `search_by_modality()` 過濾模態; `save/load` (npy+JSON) 持久化. 64-dim 隱向量, O(n) 掃描 |
+| **MultimodalRAGEngine (RAG 編排)** | `ai/multimodal/multimodal_rag_engine.py` (NEW) ✅ | 全管線: `index_image()`/`index_audio()` (編碼→索引) + `query_by_image()`/`query_by_audio()`/`query_by_latent()` (編碼→檢索) + `to_ed3n_entries()` (轉換為 DictionaryLayer 相容條目 `{key, surface_forms, contexts, confidence}`) + `retrieve_entries()` 統一入口 + `save/load_index()` |
+| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalRetriever + MultimodalRAGEngine 加入 __all__ |
+| **ED3N 整合路徑** | 系統架構 ✅ | `MultimodalRAGEngine.retrieve_entries(image_data)` → `to_ed3n_entries()` → ED3N `DictionaryLayer.bulk_add_entries()`. 現有 `modality_encoders` hook 可直接接受 retriever 輸出 |
+| **Testing ×21** | `tests/ai/multimodal/test_multimodal_rag.py` (NEW) ✅ | Retriever (11): add/count/wrong dim/search top-k/empty/wrong dim/modality filter/list/clear/save+load/empty. RAGEngine (10): index image/audio/invalid/query image/query audio/cross-modal/to_ed3n/retrieve entries/no input/persistence |
+| **測試結果** | **116/116 全部通過** ✅ | P21 全部 21 測試 + 95 既有多模態 = 116 通過, 0 失敗 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -554,11 +565,15 @@ P20 → ✅ [效能 + 整合]  → conv2d vectorized (sliding_window_view + batc
                            SimilarityService: decode_to_image/audio
                            MultimodalBridge: ED3N-compatible entry generation, cross_similarity
                            95/95 測試
-P21 → 🟡 [跨模態 RAG]   → Cross-modal retrieval: image query → latent → retrieve audio/text.
-                           Multimodal memory index. Generation quality improvement.
+P21 → ✅ [跨模態 RAG]   → MultimodalRetriever (numpy vector index, cosine brute-force)
+                           MultimodalRAGEngine (index_image/audio, query_by_image/audio,
+                           to_ed3n_entries, retrieve_entries unified API)
+                           116/116 測試
+P22 → 🟡 [生成品質提升]  → Decoder 非線性投影 (tanh hidden layer); 視覺生成更豐富紋理;
+                           音頻生成多頻段合成; ED3N 完整雙向接線
 ```
 
-目前專案處於 **P20 完成** — conv2d 向量化加速 (~61ms 編碼), decoder 正式接入 MultimodalSimilarityService (decode_to_image/audio), MultimodalBridge 提供 ED3N 相容字典條目生成。95 多模態測試全通過。**P21 將打造跨模態 RAG — 用圖像檢索音頻、多模態記憶索引。**
+目前專案處於 **P21 完成** — 跨模態 RAG 管線完整: encode→index→query→ED3N entries. 支援 image/audio 查詢檢索任意模態. 持久化 save/load. 116 多模態測試全通過。**P22 將提升 decoder 生成品質並完成 ED3N 雙向接線。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -647,10 +662,11 @@ P21 → 🟡 [跨模態 RAG]   → Cross-modal retrieval: image query → latent
 | **36** | **P18 多模態生成** | **VisualDecoder (latent→128×128 RGB) + AudioWaveformDecoder (latent→16kHz PCM). 59/59 多模態測試通過 🎉 P18 全部完成! — 雙向多模態實現!** |
 | **37** | **P19 閉環演化** | **ReconstructionCycle (feature-level autoencoder) + CrossModalSynthesizer (latent blend + cross-generation). 74/74 多模態測試通過 🎉 P19 全部完成!** |
 | **38** | **P20 效能+整合** | **conv2d sliding_window_view 矩陣加速 + SimilarityService decode API + MultimodalBridge ED3N 整合. 95/95 多模態測試通過 🎉 P20 全部完成!** |
-| **總計** | **38 輪** | **120+ 修復, 智能 2→9/10, 990+ 測試** |
+| **39** | **P21 跨模態 RAG** | **MultimodalRetriever (numpy vector index) + MultimodalRAGEngine (encode→query→ED3N entries). 116/116 多模態測試通過 🎉 P21 全部完成!** |
+| **總計** | **39 輪** | **120+ 修復, 智能 2→9/10, 1010+ 測試** |
 
-## 7. 後續建議 (P20 完成後，conv2d 向量化 + 服務層整合 + MultimodalBridge 就緒)
+## 7. 後續建議 (P21 完成後，跨模態 RAG 管線完整 — encode→index→query→ED3N entries)
 
-1. **P21: 跨模態 RAG** — MultimodalBridge 接入 ED3N 檢索管線: image query → VisualEncoder → latent → ED3N dictionary → retrieve related entries. 多模態記憶索引建構
-2. **P22: 生成品質提升** — Decoder 非線性投影 (tanh/sigmoid hidden layer); 視覺生成更豐富紋理; 音頻生成多頻段合成
-3. **維護: 測試持續監控** — 990+ 測試維持; pre-commit hook 執行
+1. **P22: 生成品質提升** — Decoder 非線性投影 (tanh hidden layer); VisualDecoder 紋理豐富化 (noise injection + CNN detail); AudioWaveformDecoder 多頻段合成; ED3N 完整雙向接線 (engine.process_multimodal 接收 retriever 輸出)
+2. **P23: 多模態對話** — MultimodalRAGEngine 接入 ChatService 對話上下文; image/audio query 作爲自然語言輸入觸發檢索; decode_to_image/audio 回饋至對話
+3. **維護: 測試持續監控** — 1010+ 測試維持; pre-commit hook 執行
