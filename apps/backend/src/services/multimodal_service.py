@@ -53,6 +53,8 @@ class MultimodalService:
         self._bridge = None
         self._rag_engine = None
         self._pipeline = None
+        self._vision_pipeline = None
+        self._quality_monitor = None
         self._registered_items: Dict[str, Dict[str, Any]] = {}
         self._items_lock = asyncio.Lock()
 
@@ -101,6 +103,20 @@ class MultimodalService:
             from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
             self._rag_engine = MultimodalRAGEngine()
         return self._rag_engine
+
+    def _get_vision_pipeline(self):
+        """Get or create the VisionPipeline (P31)."""
+        if self._vision_pipeline is None:
+            from ai.vision.vision_pipeline import VisionPipeline
+            self._vision_pipeline = VisionPipeline()
+        return self._vision_pipeline
+
+    def _get_quality_monitor(self):
+        """Get or create the VisionQualityMonitor (P31)."""
+        if self._quality_monitor is None:
+            from ai.vision.quality_monitor import VisionQualityMonitor
+            self._quality_monitor = VisionQualityMonitor()
+        return self._quality_monitor
 
     def _get_pipeline(self):
         if self._pipeline is None:

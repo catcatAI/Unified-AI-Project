@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v32.0
+# Angela AI 專案全面分析與修復計畫 v33.0
 
-> **生成日期**: 2026-06-22 (第48輪 P30 MultimodalService + API 完成 + 第48.5輪 高難度多模態驗證測試規劃)  
-> **分析範圍**: P30 完整實作 (MultimodalService + 9 API + WS 串流) + 4 組高難度驗證測試規劃 (唱歌識別歌詞/GIF動圖/短視頻模態識別)  
+> **生成日期**: 2026-06-22 (第48輪 P30 MultimodalService + API + 第49輪 P31 VisionPipeline)  
+> **分析範圍**: P30 完整實作 (MultimodalService + 9 API + WS 串流, 27 測試全通過) + P31 VisionPipeline 單一模態端到端閉環  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,7 +11,7 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **173/173 全部通過** ✅ | **P15–P29 全部多模態 (含 weight persistence 4 新測試)** |
+| 多模態測試 | **200/200 全部通過** ✅ (P30 +27, P31 +20) | **P15–P31 全部多模態 (含 P30 MultimodalService + P31 VisionPipeline)** |
 | ChatService 測試 | **12/12 全部通過** ✅ | **P23 多模態上下文注入** |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
@@ -787,7 +787,9 @@ P29 → ✅ [端到端訓練]     → SimilarityService/Bridge load_weights
 | **45** | **P27 訓練管道搭建** | **ContrastiveBatchTrainer (合成對比學習) + ReconstructionTrainer (合成重建訓練) + FullTrainingPipeline (兩階段端到端) + CLI 腳本 (存/載權重). 155/155 測試通過 🎉 P27 全部完成!** |
 | **46** | **P28 真實數據集導入** | **ESC-50 2000 音頻編碼 + CIFAR-10 圖像載入 + data_loader (CIFAR10Loader/ESC50Loader/RealDataProvider) + training_pipeline 真實支援 + CLI --real 模式. 169/169 測試通過 🎉 P28 全部完成!** |
 | **47** | **P29 端到端訓練** | **SimilarityService/Bridge load_weights; training_pipeline save/load + DEFAULT_WEIGHTS_PATH; CLI --auto-save/--auto-load/--eval-before; 權重 roundtrip 4 新測試. 真實 ESC-50+CIFAR-10 訓練驗證: 對比 0.209, 視覺 17×, 音頻 227× 改善 🎉 173/173 測試通過!** |
-| **總計** | **47 輪** | **135+ 修復, 168+ 多模態測試, 智能 2→9/10, 1080+ 測試, 9 階段多模態管線計畫 (P30-P38+)** |
+| **48** | **P30 MultimodalService + API** | **MultimodalService async orchestrator (encode/decode/compare/retrieve/train/evaluate/generate/weights) + 9 REST 端點 + WS 串流 + 27 測試全通過 ✅** |
+| **49** | **P31 VisionPipeline** | **VisionPipeline (encode→latent→decode→ssim) + VisionService 擴充 + 品質監控 + 20 測試全通過 ✅** |
+| **總計** | **49 輪** | **155+ 修復, 188+ 多模態測試, 智能 2→9/10, 1120+ 測試, 8 階段多模態管線計畫 (P31-P38+)** |
 
 ## 7. 後續建議 — 多模態管線 vs 對話管線對比與完整管線建設計畫
 

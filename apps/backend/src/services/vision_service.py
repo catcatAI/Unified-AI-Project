@@ -776,6 +776,42 @@ class VisionService:
             logger.warning("VisualEncoder failed: %s", e)
             return []
 
+    async def encode_with_pipeline(self, image_data: bytes) -> dict:
+        """Encode image using the full VisionPipeline (P31).
+
+        Returns the full pipeline result dict with latent, ssim, psnr, etc.
+        Lazily initializes and caches the VisionPipeline instance.
+        """
+        try:
+            from ai.vision.vision_pipeline import VisionPipeline
+            if not hasattr(self, '_vision_pipeline') or self._vision_pipeline is None:
+                self._vision_pipeline = VisionPipeline()
+            import asyncio
+            return await asyncio.to_thread(self._vision_pipeline.process, image_data)
+        except Exception as e:
+            logger.warning("VisionPipeline failed: %s", e)
+            return {"error": str(e)}
+
+    async def batch_encode(self, images: list) -> list:
+        """Batch encode multiple images using VisionPipeline.
+
+        Args:
+            images: List of raw image bytes
+
+        Returns:
+            List of result dicts
+        """
+        results = []
+        for img in images:
+            result = await self.encode_with_pipeline(img)
+            results.append(result)
+        return results
+
+    def clear_vision_pipeline_cache(self) -> None:
+        """Clear the VisionPipeline LRU cache."""
+        if hasattr(self, '_vision_pipeline') and self._vision_pipeline is not None:
+            self._vision_pipeline.clear_cache()
+
 
 if __name__ == "__main__":
 
