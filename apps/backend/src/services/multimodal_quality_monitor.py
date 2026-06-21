@@ -13,41 +13,15 @@ ANGELA-MATRIX: [L5] [βγδ] [B] [L4]
 """
 
 import asyncio
-import json
 import logging
 import os
 import time
 from collections import deque
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.crisis_log import write_crisis_log as _write_crisis_log, append_quality_log as _append_quality_log
+
 logger = logging.getLogger(__name__)
-
-CRISIS_LOG_PATH = "crisis_log.txt"
-QUALITY_LOG_PATH = os.path.join("logs", "multimodal_quality.jsonl")
-
-
-def _write_crisis_log(level: int, details: Dict[str, Any]) -> None:
-    """Write an entry to the crisis log file."""
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        line = f"[{timestamp}] CRISIS_LOG: Level {level} event. Details: {details}\n"
-        with open(CRISIS_LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(line)
-    except Exception:
-        pass
-
-
-def _append_quality_log(entry: Dict[str, Any]) -> None:
-    """Append a quality sample to the JSONL log file."""
-    try:
-        log_dir = os.path.dirname(QUALITY_LOG_PATH)
-        if log_dir:
-            os.makedirs(log_dir, exist_ok=True)
-        with open(QUALITY_LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, default=str) + "\n")
-    except Exception:
-        pass
 
 
 class MultimodalQualityMonitor:

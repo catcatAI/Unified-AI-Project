@@ -73,11 +73,13 @@ def detect_culture(language_code: str = "", text: str = "") -> str:
         if code in CULTURE_MAP:
             return CULTURE_MAP[code]
     if text:
-        import re
         cjk_count = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
         hangul_count = sum(1 for c in text if "\uac00" <= c <= "\ud7af")
+        hiragana_count = sum(1 for c in text if "\u3040" <= c <= "\u309f")
+        katakana_count = sum(1 for c in text if "\u30a0" <= c <= "\u30ff")
         arabic_count = sum(1 for c in text if "\u0600" <= c <= "\u06ff")
-        if hangul_count > len(text) * 0.3:
+        # Japanese: Hiragana or Katakana presence indicates Japanese
+        if hiragana_count > 0 or katakana_count > 0 or hangul_count > len(text) * 0.3:
             return "east_asian"
         if cjk_count > len(text) * 0.3:
             return "east_asian"

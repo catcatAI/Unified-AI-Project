@@ -16,24 +16,12 @@ import asyncio
 import logging
 import os
 import time
-from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Crisis log path
-CRISIS_LOG_PATH = "crisis_log.txt"
-
-
-def _write_crisis_log(level: int, details: Dict[str, Any]) -> None:
-    """Write an entry to the crisis log file."""
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        line = f"[{timestamp}] CRISIS_LOG: Level {level} event. Details: {details}\n"
-        with open(CRISIS_LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(line)
-    except Exception:
-        pass  # Never crash on logging
+# Crisis log — use shared utility
+from core.crisis_log import write_crisis_log as _write_crisis_log
 
 
 class MultimodalErrorRecovery:
