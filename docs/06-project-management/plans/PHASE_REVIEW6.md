@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v30.0
+# Angela AI 專案全面分析與修復計畫 v31.0
 
-> **生成日期**: 2026-06-21 (第47輪 P29 端到端訓練完成 — 權重持久化, SimilarityService/Bridge 載入, 真實 ESC-50 + CIFAR-10 完整訓練)  
-> **分析範圍**: P29 — similarity_service + multimodal_bridge load_weights; training_pipeline save_weights/load_weights DEFAULT_WEIGHTS_PATH; train_multimodal.py --auto-save/--auto-load/--eval-before; test_training_pipeline.py 4 新測試  
+> **生成日期**: 2026-06-21 (第47輪 P29 端到端訓練完成 + 完整 P30-P38+ 多模態管線建設計畫)  
+> **分析範圍**: P29 端到端訓練 + P30-P38+ 完整管線建設計畫 — 類比對話管線建立多模態管線: MultimodalService/API/視覺管線/音頻管線/跨模態管線/前端 UI/連續學習+記憶/生產強化  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -787,40 +787,427 @@ P29 → ✅ [端到端訓練]     → SimilarityService/Bridge load_weights
 | **45** | **P27 訓練管道搭建** | **ContrastiveBatchTrainer (合成對比學習) + ReconstructionTrainer (合成重建訓練) + FullTrainingPipeline (兩階段端到端) + CLI 腳本 (存/載權重). 155/155 測試通過 🎉 P27 全部完成!** |
 | **46** | **P28 真實數據集導入** | **ESC-50 2000 音頻編碼 + CIFAR-10 圖像載入 + data_loader (CIFAR10Loader/ESC50Loader/RealDataProvider) + training_pipeline 真實支援 + CLI --real 模式. 169/169 測試通過 🎉 P28 全部完成!** |
 | **47** | **P29 端到端訓練** | **SimilarityService/Bridge load_weights; training_pipeline save/load + DEFAULT_WEIGHTS_PATH; CLI --auto-save/--auto-load/--eval-before; 權重 roundtrip 4 新測試. 真實 ESC-50+CIFAR-10 訓練驗證: 對比 0.209, 視覺 17×, 音頻 227× 改善 🎉 173/173 測試通過!** |
-| **總計** | **47 輪** | **135+ 修復, 168+ 多模態測試, 智能 2→9/10, 1080+ 測試** |
+| **總計** | **47 輪** | **135+ 修復, 168+ 多模態測試, 智能 2→9/10, 1080+ 測試, 9 階段多模態管線計畫 (P30-P38+)** |
 
-## 7. 後續建議 (P25 完成後，多模態完整閉環就緒)
+## 7. 後續建議 — 多模態管線 vs 對話管線對比與完整管線建設計畫
 
-### 🚨 根本瓶頸：全系統零訓練
+### 🔍 當前管線對比分析
 
-整個多模態 pipeline 目前是 **zero training** — encoder 是手造濾波器 (Gabor/MFCC)，decoder 權重隨機初始化，檢索是 brute-force cosine。**沒有任何資料集參與過學習。** encoder 看到的事物沒有語義錨點，decoder 從未見過真實影像/音頻分布，RAG 相似度分數沒有經過校準。
+透過深入分析整個專案架構，發現**多模態管線僅存在於模型層 (AI backend modules)**，缺乏與對話管線平行的完整端到端管線。以下為詳細對比：
 
-#### 缺失數據集
+#### 7.1 ✅ 對話管線 (Chat Pipeline) — 完整端到端
 
-| 缺失 | 用途 | 候選數據集 |
-|------|------|-----------|
-| 單模態影像分類 | VisualEncoder 學習識別物體（不只是邊緣） | ImageNet-1k (1.2M, 1000 classes) |
-| 單模態音頻事件 | AudioEncoder 學習識別聲音事件 | AudioSet (2M clips, 527 classes) / ESC-50 |
-| 多模態圖文對齊 | SharedLatentSpace 學習「圖中有雞」↔「雞」 | COCO Captions (330k images) / CC-12M |
-| 音文對齊 | 音頻 encoder 學習「公雞叫」↔「公雞」 | AudioCaps (50k audio-caption) / Clotho |
-| 生成對訓練 | Decoder 學習真實分布 | ImageNet (image gen) / LibriSpeech (audio gen) |
-| 跨模態檢索 | Retriever embedding 空間語義距離調校 | MS-COCO / Flickr30k eval |
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  對話管線 (Chat Pipeline) — 完整 ✅                                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  FRONTEND (3 platforms)                                                     │
+│  ├─ Desktop App (Electron)  ─── app.js, dialogue-ui.js, api-client.js       │
+│  ├─ Web Dashboard (React)    ─── ChatPanel.tsx, api-client.ts               │
+│  └─ Mobile App (React Native) ─── ChatScreen.tsx, api-client.ts             │
+│         │                                                                    │
+│         ▼ HTTP/WebSocket                                                    │
+│  API ROUTES (4 endpoints)                                                   │
+│  ├─ POST /angela/chat         → 全功能對話                                  │
+│  ├─ POST /dialogue            → 對話 (別名)                                 │
+│  ├─ POST /chat/unified        → 多租戶隔離                                  │
+│  └─ POST /session/{id}/send   → 輕量會話                                    │
+│         │                                                                    │
+│         ▼                                                                    │
+│  SERVICE LAYER (Orchestration)                                              │
+│  ├─ ChatService.generate_response() — 上下文注入 + 記憶 + 文化 + 多模態    │
+│  │   ├─ CulturalContextModule  (6 文化區 × 4 概念)                          │
+│  │   ├─ VectorMemoryStore      (460K 向量語義搜索)                           │
+│  │   ├─ HAMMemoryManager       (對話模板檢索)                               │
+│  │   ├─ MultimodalED3NAdapter  (多模態檢索注入)                             │
+│  │   └─ ContinuousLearningPipeline (自動學習)                               │
+│  ├─ ModelBus                    (能力路由 + MetaController 置信度)           │
+│  └─ Response post-processing   (情緒/生物狀態裝飾)                           │
+│         │                                                                    │
+│         ▼                                                                    │
+│  LLM ROUTER — AngelaLLMService                                              │
+│  ├─ PromptBuilder              (state/biology/memory/culture 模板注入)       │
+│  ├─ LLM Providers              (OpenAI / Gemini / Ollama / LlamaCpp)        │
+│  ├─ MetaController              (置信度校準 + 動態門檻)                      │
+│  ├─ Memory Enhancement          (經驗存儲)                                   │
+│  └─ Fallback Chain              (ED3N → GARDEN → reflex)                     │
+│         │                                                                    │
+│         ▼                                                                    │
+│  CORE ENGINES                                                               │
+│  ├─ ED3N Engine                (460K 字典編碼/解碼 + CLP 學習迴路)          │
+│  ├─ GARDEN Engine              (SNN 推理 + 置信度 7 路徑)                    │
+│  └─ LLM Backends               (真實 LLM 推理)                               │
+│                                                                              │
+│  ✅ 3 前端平台 │ 4 API 端點 │ 1 服務協調器 │ 1 路由 │ 4 Provider │ 2 引擎   │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
 
-#### 缺失訓練
+#### 7.2 🟡 多模態管線 (Multimodal Pipeline) — 僅模型層存在
 
-| 訓練 | 要訓練什麼 | 當前狀態 → 目標 |
-|------|-----------|----------------|
-| VisualEncoder | CNN backbone supervised fine-tune | Gabor 256-dim (手造) → learned 1024-dim |
-| AudioEncoder | AST/Wav2Vec 2.0 自監督 | MFCC 128-dim (手造) → learned 512-dim |
-| SharedLatentSpace | CLIP-style 對比學習 (image-caption pairs) | 合成 pair → 真數據 batch 訓練 |
-| Autoencoder (decoder) | VQ-VAE 端到端重建 | 隨機權重 → learned 重建 |
-| Retriever embedding | Dense retriever fine-tune (DPR/ColBERT) | 原始 cosine → fine-tuned 語義空間 |
-| ED3N network | 從 dictionary 學習關聯權重 | symbolic 加權 → learned 關聯 |
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  多模態管線 (Multimodal Pipeline) — 僅模型層 🟡                            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  FRONTEND (3 platforms) — ❌ 幾乎不存在                                      │
+│  ├─ Desktop App ─── vision/audio 開關 (main.js), 無專用多模態 UI             │
+│  ├─ Web Dashboard ─── 無多模態面板 (只有 ChatPanel)                          │
+│  └─ Mobile App   ─── 無多模態功能                                            │
+│         │                                                                    │
+│         ▼ HTTP (僅 2 端點, 無專屬多模態路由)                                │
+│  API ROUTES — ❌ 無專屬多模態路由                                             │
+│  ├─ POST /vision/analyze   → 圖像分析 (VisionService.analyze_image)         │
+│  ├─ POST /chat/with-image  → 聊天+圖片 (ChatService 內觸發多模態)           │
+│  └─ ❌ 缺失: /multimodal/encode, /decode, /compare, /retrieve, /train,       │
+│           /evaluate, /generate, /cross-generate                              │
+│         │                                                                    │
+│         ▼                                                                    │
+│  SERVICE LAYER — ❌ 無專屬多模態服務協調器                                    │
+│  ├─ VisionService.analyze_image() — 圖像分析 (PIL-based, 非編碼器)            │
+│  ├─ VisionService.encode_image()  — VisualEncoder 封裝 (僅 1 方法)           │
+│  ├─ AudioService.speech_to_text() — STT 服務                                  │
+│  ├─ AudioService.encode_audio()   — AudioSpectralEncoder 封裝 (僅 1 方法)    │
+│  └─ ❌ 缺失: MultimodalService 整合 Encoder/Decoder/LatentSpace/RAG/Training │
+│         │                                                                    │
+│         ▼                                                                    │
+│  AI MODULE LAYER (Multimodal Backend) — ✅ 完整                             │
+│  ├─ ENCODERS                                                                │
+│  │   ├─ VisualEncoder (256-dim CNN Gabor + handcrafted)                     │
+│  │   └─ AudioSpectralEncoder (128-dim MFCC + spectral + temporal)           │
+│  ├─ LATENT SPACE                                                            │
+│  │   ├─ SharedLatentSpace (64-dim, contrastive loss, cross-modal attention) │
+│  │   └─ train() / similarity() / cross_modal_attention()                    │
+│  ├─ DECODERS                                                               │
+│  │   ├─ VisualDecoder (latent→128×128 RGB, CNN texture, tanh non-linear)    │
+│  │   └─ AudioWaveformDecoder (latent→16kHz PCM, 3-band wavetable synthesi) │
+│  ├─ RAG & BRIDGE                                                            │
+│  │   ├─ MultimodalBridge (encode/decode/ED3N entry generation)              │
+│  │   ├─ MultimodalRetriever (numpy cosine brute-force index)                │
+│  │   ├─ MultimodalRAGEngine (encode→retrieve→ED3N entries)                  │
+│  │   └─ MultimodalED3NAdapter (ChatService context injection)               │
+│  ├─ QUALITY & RECONSTRUCTION                                                │
+│  │   ├─ ReconstructionCycle (feature-level autoencoder, MSE train)          │
+│  │   ├─ CrossModalSynthesizer (latent blending, cross-generation)           │
+│  │   └─ quality_metrics (SSIM/PSNR/SNR)                                     │
+│  ├─ DATA & TRAINING                                                         │
+│  │   ├─ CIFAR10Loader / ESC50Loader / RealDataProvider                      │
+│  │   ├─ ContrastiveBatchTrainer / ReconstructionTrainer                    │
+│  │   ├─ FullTrainingPipeline (2-stage: contrastive→reconstruction)          │
+│  │   └─ scripts/train_multimodal.py (CLI --real --auto-save/load/eval)      │
+│  └─ SIMILARITY                                                              │
+│      └─ MultimodalSimilarityService (encode/decode/compare/evaluate)        │
+│                                                                              │
+│  🟡 0 前端平台 │ 2 間接端點 │ 0 專屬服務 │ 0 路由 │ 15+ 模組 (僅 backend) │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
 
-### 路線
+#### 7.3 關鍵差距總結
 
-1. **P27: 訓練管道搭建** — ✅ **已完成!** ContrastiveBatchTrainer + ReconstructionTrainer + FullTrainingPipeline + CLI 腳本. 155/155 測試
-2. **P28: 真實數據集導入** — ✅ **已完成!** CIFAR-10 + ESC-50 下載/編碼/配對; data_loader.py; training_pipeline 真實支援; CLI --real. 169/169 測試
-3. **P29: 端到端訓練** — ✅ **已完成!** SimilarityService/Bridge load_weights; pipeline save/load DEFAULT_WEIGHTS_PATH; CLI --auto-save/--auto-load/--eval-before; 真實數據 17×/227× 改善驗證. 173/173 測試 ✅ **P29 全部完成!**
-4. **P30: 高品質橋接與生成穩定化** — ED3N 整合訓練後權重; MultimodalRAGEngine 使用校準後 encoder/latent; CrossModalSynthesizer 品質增強; 更多數據集 (AudioSet/ImageNet)
-5. **維護: 測試持續監控** — 1080+ 測試維持; pre-commit hook 執行
+| 面向 | 對話管線 (Chat) | 多模態管線 (Multimodal) | 差距 |
+|------|:--------------:|:----------------------:|:----:|
+| **前端平台** | 3/3 (Desktop/Web/Mobile) | **0/3** | ❌ 完全缺失 |
+| **專屬 API 路由** | 4 端點 | **0 端點** (僅 2 間接) | ❌ 完全缺失 |
+| **專屬服務協調器** | ChatService (完整) | **無** (僅散落方法) | ❌ 完全缺失 |
+| **WebSocket 串流** | 有 (ConnectionManager) | **無** | ❌ 完全缺失 |
+| **單一模態管線 (僅視覺)** | — | **無獨立視覺管線** | ❌ 完全缺失 |
+| **單一模態管線 (僅音頻)** | — | **無獨立音頻管線** | ❌ 完全缺失 |
+| **模型層 (AI Backend)** | ED3N/GARDEN/LLM | VisualEncoder/AudioEncoder/Decoder/LatentSpace | ✅ 完整 |
+| **訓練管道** | CLP (對話學習) | FullTrainingPipeline (真實數據) | ✅ 完整 |
+| **連續學習** | CLP 接通 + HAM 同步 | **無** | ❌ 完全缺失 |
+| **記憶整合** | VectorStore + HAM 雙注入 | **無多模態記憶** | ❌ 完全缺失 |
+| **標準化數據格式** | ChatMessage/LLMResponse | **無統一多模態數據格式** | ❌ 完全缺失 |
+| **品質評估** | — | SSIM/PSNR/SNR (backend) | 🟡 僅後端 |
+| **端到端測試** | 12 ChatService 測試 | **173 測試但僅 backend** | ❌ 無整合測試 |
+
+### 🎯 完整多模態管線架構 (目標)
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  完整多模態管線 (Multimodal Pipeline) — 目標 ✅                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  FRONTEND (3 platforms) ●●●                                                 │
+│  ├─ Desktop App ─── MultimodalPanel: 編碼/解碼視覺化 + 訓練儀表板            │
+│  ├─ Web Dashboard ─── MultimodalDashboard: 即時瀏覽器 + 品質報告             │
+│  └─ Mobile App   ─── Image/Audio Capture + 即時編碼/檢索                     │
+│         │                                                                    │
+│         ▼ HTTP/WebSocket                                                    │
+│  API ROUTES ●●●                                                             │
+│  ├─ POST /multimodal/encode    → 編碼 image/audio → feature vector           │
+│  ├─ POST /multimodal/decode    → 解碼 latent → image/audio                   │
+│  ├─ POST /multimodal/compare   → 跨模態比對 (image↔audio similarity)         │
+│  ├─ POST /multimodal/retrieve  → 跨模態 RAG 檢索                            │
+│  ├─ POST /multimodal/train     → 觸發訓練 pipeline                          │
+│  ├─ POST /multimodal/evaluate  → 生成品質評估 (SSIM/PSNR/SNR)                │
+│  ├─ POST /multimodal/generate  → 跨模態生成 (image→audio, audio→image)       │
+│  ├─ WS   /multimodal/stream    → 即時編碼/解碼/訓練串流                      │
+│  └─ POST /multimodal/visualize → 隱空間視覺化                                │
+│         │                                                                    │
+│         ▼                                                                    │
+│  SERVICE LAYER — MultimodalService ●●●                                      │
+│  ├─ encode() / decode() / compare()  → 委託 AI 層                           │
+│  ├─ retrieve() / index() / search()  → 委託 RAG 層                          │
+│  ├─ train() / evaluate() / generate() → 委託訓練層                          │
+│  ├─ ContinuousMultimodalLearning      → 多模態連續學習 (類比 CLP)           │
+│  ├─ MultimodalMemory                  → 影像/音頻記憶檢索 (類比 HAM)        │
+│  ├─ QualityMonitor                    → 即時品質監控儀表板                  │
+│  └─ CrossModalRouter                  → 跨模態路由 (類比 ModelBus)          │
+│         │                                                                    │
+│         ▼                                                                    │
+│  SINGLE-MODALITY PIPELINES ●●●                                             │
+│                                                                              │
+│  ┌─ 視覺管線 (Vision Pipeline) ──────────────────────────────────┐          │
+│  │  Upload → resize → VisualEncoder (256-dim)                    │          │
+│  │  → SharedLatentSpace.project("vision") → 64-dim latent        │          │
+│  │  → VisualDecoder.decode() → 128×128 RGB (autoencoder loop)    │          │
+│  │  → quality_metrics.ssim() / psnr()                            │          │
+│  │  → VisionService (analyze / OCR / scene / color)              │          │
+│  └───────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  ┌─ 音頻管線 (Audio Pipeline) ──────────────────────────────────┐          │
+│  │  Record/Upload → AudioSpectralEncoder (128-dim MFCC)         │          │
+│  │  → SharedLatentSpace.project("audio") → 64-dim latent        │          │
+│  │  → AudioWaveformDecoder.decode() → 16kHz PCM                 │          │
+│  │  → quality_metrics.snr()                                     │          │
+│  │  → AudioService (STT / TTS / scan)                           │          │
+│  └───────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  ┌─ 跨模態管線 (Cross-Modal Pipeline) ──────────────────────────┐          │
+│  │  Vision features → SharedLatentSpace                              │          │
+│  │  Audio features  → SharedLatentSpace                              │          │
+│  │  → cross_modal_attention() → blended latent                        │          │
+│  │  → MultimodalRetriever.search() → cross-modal results              │          │
+│  │  → CrossModalSynthesizer.cross_generate() → vision↔audio          │          │
+│  │  → MultimodalRAGEngine.to_ed3n_entries() → ED3N context           │          │
+│  └───────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  ┌─ 訓練管線 (Training Pipeline) ──────────────────────────────┐          │
+│  │  RealDataProvider (CIFAR10Loader + ESC50Loader)                    │          │
+│  │  → ContrastiveBatchTrainer.train_on_real_pairs()                    │          │
+│  │  → ReconstructionTrainer.train_on_real_features()                  │          │
+│  │  → FullTrainingPipeline.run_on_real() (2-stage)                    │          │
+│  │  → save_weights() → load_weights() → evaluate()                    │          │
+│  └───────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  CORE AI MODULE LAYER — ✅ 已存在                                          │
+│  ├─ Encoders: VisualEncoder (256) + AudioSpectralEncoder (128)              │
+│  ├─ Latent: SharedLatentSpace (64) + contrastive loss + cross-attention     │
+│  ├─ Decoders: VisualDecoder (128×128) + AudioWaveformDecoder (16kHz)        │
+│  ├─ Quality: ssim / psnr / snr / quality_report                            │
+│  └─ Training: FullTrainingPipeline (contrastive→reconstruction)             │
+│                                                                              │
+│  ✅ 3 前端平台 │ 9 API 端點+WS │ 1 專屬服務 │ 4 子管線 │ 15+ 模組           │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 📋 優先級管線建設計畫 (P30+)
+
+#### 管線建設計畫總覽
+
+以下為類比對話管線的完整多模態管線建設計畫，分 8 階段 (P30-P38) 共 100+ 測試增量：
+
+| 階段 | 名稱 | 核心目標 | 類比對話管線 | 測試增量 |
+|------|------|---------|-------------|:-------:|
+| **P30** | 🏗️ **MultimodalService 服務層 + API 路由** | 建立多模態專屬協調服務 + 9 端點 REST/WS API | ChatService + chat_routes | +25 測試 |
+| **P31** | 🏗️ **視覺管線 (Vision Pipeline) 單一模態端到端** | 上傳→編碼→隱空間→解碼→品質評估 完整閉環 | (新維度) | +20 測試 |
+| **P32** | 🏗️ **音頻管線 (Audio Pipeline) 單一模態端到端** | 錄音/上傳→編碼→隱空間→解碼→品質評估 完整閉環 | (新維度) | +20 測試 |
+| **P33** | 🔗 **跨模態管線 API + 整合** | 多模態融合路由 + 跨模態推理 + 品質儀表板 + ED3N deep 整合 | ModelBus + MetaController | +25 測試 |
+| **P34** | 🖥️ **前端多模態 UI — Desktop + Web Dashboard** | Electron + React 多模態面板、即時編碼/解碼視覺化 | frontend/chat,js | +15 測試 |
+| **P35** | 📱 **前端多模態 UI — Mobile App** | React Native 圖像/音頻捕獲 + 即時檢索 | mobile/chat | +10 測試 |
+| **P36** | 🔄 **多模態連續學習 + 記憶** | 多模態 CLP (比對對話 CLP) + 多模態記憶檢索 (比對 HAM) | CLP + HAM | +20 測試 |
+| **P37** | 🛡️ **生產強化** | 錯誤恢復 + 超時處理 + 效能基準 + 品質監控儀表板 | error_recovery + state_persistence | +15 測試 |
+| **P38+** | 🧪 **維護與測試擴充** | 端到端整合測試 + 壓力測試 + 多語言多模態 + 文件 | maintenance | +10 測試 |
+
+---
+
+#### P30: MultimodalService 服務層 + API 路由 🏗️
+
+**類比**: ChatService + chat_routes (對話管線的服務協調層)
+
+**目標**: 建立 MultimodalService 作為多模態管線的專屬協調器，和 ChatService 平行，並提供 9 個 REST + 1 個 WebSocket 端點。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 | 測試 |
+|:-:|------|------|------|:---:|
+| 1 | **MultimodalService class** | `services/multimodal_service.py` (NEW) | 協調器：封裝 VisualEncoder/AudioEncoder/SharedLatentSpace/Decoders/RAG/Training Pipeline，提供統一的 `encode()`/`decode()`/`compare()`/`retrieve()`/`train()`/`evaluate()`/`generate()` 方法。非阻塞 async 版本，每個方法都有 try/except fallback。必須處理錯誤、超時、無效輸入 | ✅ 3 |
+| 2 | **POST /multimodal/encode** | `api/routes/multimodal_routes.py` (NEW) | 接收 image/audio 二進位 + 可選 item_id → 回傳 `{item_id, modality, latent, feature_vector, dim, time_ms}`。支援同時編碼多模態 (multipart request) | ✅ 3 |
+| 3 | **POST /multimodal/decode** | `api/routes/multimodal_routes.py` | 接收 `{item_id, modality, format}` → 回傳解碼後的 image (PNG base64) 或 audio (WAV base64) + 元數據 | ✅ 2 |
+| 4 | **POST /multimodal/compare** | `api/routes/multimodal_routes.py` | 接收 `{item_a_id, item_b_id}` → 回傳 `{similarity, modality_a, modality_b, cross_modal_attention_weights}` | ✅ 2 |
+| 5 | **POST /multimodal/retrieve** | `api/routes/multimodal_routes.py` | 接收 `{query_id, top_k, modality_filter}` → 回傳 top-k 檢索結果 `[{key, score, modality, metadata}]` | ✅ 2 |
+| 6 | **POST /multimodal/train** | `api/routes/multimodal_routes.py` | 接收 `{mode: "contrastive"|"recon"|"full", epochs, lr, use_real}` → 觸發訓練，回傳 `{status, final_loss, history}`。非同步執行（立即回傳 202 + task_id），可選 WebSocket 推播進度 | ✅ 3 |
+| 7 | **POST /multimodal/evaluate** | `api/routes/multimodal_routes.py` | 接收 `{item_id}` 或 `{modality, n_samples}` → 回傳 `{ssim, psnr, snr, quality_report}`。若提供 item_id 則評估該項目；若不提供則用合成樣本 | ✅ 2 |
+| 8 | **POST /multimodal/generate** | `api/routes/multimodal_routes.py` | 接收 `{source_item_id, target_modality}` → 跨模態生成 (vision→audio 或 audio→vision)，回傳生成結果 base64 + 品質分數 | ✅ 2 |
+| 9 | **POST /multimodal/visualize** | `api/routes/multimodal_routes.py` | 接收 `{item_ids[]}` 或 `{n_latents}` → 回傳隱空間 2D t-SNE/UMAP 投影座標 + 各點標籤，供前端視覺化 | ✅ 2 |
+| 10 | **WS /multimodal/stream** | `services/websocket_manager.py` (擴充) | WebSocket 串流：即時推播訓練進度、編碼/解碼結果、品質變化通知、連續學習事件。與 ConnectionManager 共用 | ✅ 2 |
+| 11 | **Router 註冊** | `api/router.py` (擴充) | multimodal_routes 以 `/api/v1` 前綴註冊，try/except ImportError 模式，與現有 routes 一致 | ✅ 1 |
+| 12 | **錯誤處理 & 超時** | `services/multimodal_service.py` | 每個方法包裝 asyncio.wait_for(timeout=30)，TimeoutError → 503 + 日誌。所有編碼/解碼異常 → 優雅降級 (回傳 None 或空結果) | ✅ 1 |
+
+**測試總數**: P30 新增 **25 測試** (單元 15 + 整合 10)
+
+---
+
+#### P31: 視覺管線 (Vision Pipeline) 單一模態端到端 🏗️
+
+**目標**: 建立完整的**單一模態視覺管線** — 從前端上傳到後端編碼、隱空間投影、解碼、品質評估的完整閉環，類似於對話管線的「輸入→處理→輸出」流程。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 | 測試 |
+|:-:|------|------|------|:---:|
+| 1 | **VisionPipeline class** | `ai/vision/vision_pipeline.py` (NEW) | 視覺專用管線：`process(image_data) → {latent, decoded_image, ssim, features}`。整合 VisualEncoder.encode() → SharedLatentSpace.project("vision") → VisualDecoder.decode() → ssim()。緩存最後 10 個結果 | ✅ 3 |
+| 2 | **VisionService 擴充 — 完整編碼方法** | `services/vision_service.py` | 新增 `encode_with_pipeline()` 方法：調用 VisionPipeline.process()，回傳完整結果。與現有 `encode_image()` 相容 | ✅ 2 |
+| 3 | **VisionService 擴充 — 批量編碼** | `services/vision_service.py` | 新增 `batch_encode(images: List[bytes]) → List[dict]`，批次處理多張圖片，共用 VisualEncoder 實例 | ✅ 2 |
+| 4 | **POST /vision/pipeline** | `api/routes/vision_routes.py` (擴充) | 單一端點執行完整視覺管線：上傳→編碼→隱空間→解碼→品質評估。回傳完整結果 JSON | ✅ 2 |
+| 5 | **POST /vision/batch-encode** | `api/routes/vision_routes.py` (擴充) | 批量編碼端點：接收多個 image files → 回傳 `[{item_id, latent, ssim}]` | ✅ 2 |
+| 6 | **POST /vision/generate** | `api/routes/vision_routes.py` (擴充) | 給定 latent 向量或文字提示 → 生成圖像。使用 VisualDecoder.decode() → 回傳 PNG base64 | ✅ 2 |
+| 7 | **WS /vision/stream** | `services/websocket_manager.py` (擴充) | 即時串流視覺處理結果：編碼進度、解碼完成通知、品質分數推送 | ✅ 1 |
+| 8 | **VisionService 快取層** | `services/vision_service.py` | LRU 快取 (maxsize=50)：對相同 image_data 重複請求提供快取結果，減少編碼/解碼開銷 | ✅ 1 |
+| 9 | **VisionPipeline 連續整合到 MultimodalService** | `services/multimodal_service.py` (擴充) | MultimodalService.vision_pipeline 屬性，`encode_image()` 單一入口委託 VisionPipeline | ✅ 1 |
+| 10 | **視覺品質監控** | `ai/vision/quality_monitor.py` (NEW) | 記錄每次管線調用的 SSIM/PSNR、處理時間、圖像大小。`report()` 回傳統計摘要 `{avg_ssim, avg_psnr, p95_time, total_calls}`。可選寫入 logs/vision_quality.jsonl | ✅ 4 |
+
+**測試總數**: P31 新增 **20 測試**
+
+---
+
+#### P32: 音頻管線 (Audio Pipeline) 單一模態端到端 🏗️
+
+**目標**: 建立完整的**單一模態音頻管線** — 錄音/上傳→編碼→隱空間投影→解碼→品質評估的完整閉環。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 | 測試 |
+|:-:|------|------|------|:---:|
+| 1 | **AudioPipeline class** | `ai/audio/audio_pipeline.py` (NEW) | 音頻專用管線：`process(audio_data) → {latent, decoded_waveform, snr, features}`。整合 AudioSpectralEncoder.encode() → SharedLatentSpace.project("audio") → AudioWaveformDecoder.decode() → snr()。支援 WAV/PCM 輸入 | ✅ 3 |
+| 2 | **AudioService 擴充 — 完整編碼方法** | `services/audio_service.py` | 新增 `encode_with_pipeline()` 方法：調用 AudioPipeline.process()，回傳完整結果。與現有 `encode_audio()` 相容 | ✅ 2 |
+| 3 | **AudioService 擴充 — 批次編碼** | `services/audio_service.py` | 新增 `batch_encode(audios: List[bytes]) → List[dict]`，批次處理多段音頻 | ✅ 2 |
+| 4 | **POST /audio/pipeline** | `api/routes/audio_routes.py` (擴充) | 單一端點執行完整音頻管線：上傳→編碼→隱空間→解碼→品質評估 | ✅ 2 |
+| 5 | **POST /audio/batch-encode** | `api/routes/audio_routes.py` (擴充) | 批量編碼端點 | ✅ 2 |
+| 6 | **POST /audio/generate** | `api/routes/audio_routes.py` (擴充) | 給定 latent 向量 → 生成音頻 WAV base64。使用 AudioWaveformDecoder.decode() | ✅ 2 |
+| 7 | **WS /audio/stream** | `services/websocket_manager.py` (擴充) | 即時串流音頻處理結果 | ✅ 1 |
+| 8 | **AudioService 快取層** | `services/audio_service.py` | LRU 快取 (maxsize=50)：減少重複編碼/解碼開銷 | ✅ 1 |
+| 9 | **AudioPipeline 連續整合到 MultimodalService** | `services/multimodal_service.py` (擴充) | MultimodalService.audio_pipeline 屬性，`encode_audio()` 單一入口委託 AudioPipeline | ✅ 1 |
+| 10 | **音頻品質監控** | `ai/audio/quality_monitor.py` (NEW) | 記錄每次管線調用的 SNR、處理時間、時長。`report()` 回傳統計摘要 `{avg_snr, p95_time, total_calls}`。可選寫入 logs/audio_quality.jsonl | ✅ 4 |
+
+**測試總數**: P32 新增 **20 測試**
+
+---
+
+#### P33: 跨模態管線 API + 整合 🔗
+
+**目標**: 建立跨模態融合層，類比於對話管線的 ModelBus + MetaController，實現模態間路由、品質儀表板、推理、ED3N deep 整合。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 | 測試 |
+|:-:|------|------|------|:---:|
+| 1 | **CrossModalRouter class** | `services/cross_modal_router.py` (NEW) | 類比 ModelBus：依據輸入模態 + 查詢類型自動路由到正確的管線 (vision/audio/cross)。`route(modality, data, mode) → {result, pipeline, confidence, time_ms}`。支援 fallback chain：cross-modal → vision+audio parallel → unimodal | ✅ 4 |
+| 2 | **CrossModalQualityDashboard** | `services/cross_modal_quality.py` (NEW) | 整合 VisionQualityMonitor + AudioQualityMonitor。`dashboard() → {vision_summary, audio_summary, cross_modal_summary, overall_health}`。提供 API 端點查詢 | ✅ 3 |
+| 3 | **ED3N deep 整合：multimodal_encoder hook** | `ai/ed3n/ed3n_engine.py` (擴充) | 在 `_encode_input()` 或 `process()` 中，當輸入包含 image/audio 二進位時，自動通過 MultimodalBridge encode → inject 進 dictionary context。目前僅支援文字輸入，需擴充為真正的多模態編碼層 | ✅ 2 |
+| 4 | **POST /multimodal/cross-infer** | `api/routes/multimodal_routes.py` (擴充) | 跨模態推理：接收 `{source_modality, source_data, query_text}` → 使用 CrossModalRouter 執行多步推理，回傳 `{result, confidence, reasoning_path}` | ✅ 2 |
+| 5 | **POST /multimodal/quality/dashboard** | `api/routes/multimodal_routes.py` (擴充) | 品質儀表板端點：回傳 `{vision, audio, cross_modal, overall}` 品質摘要 | ✅ 2 |
+| 6 | **CrossModalRouter 異常處理** | `services/cross_modal_router.py` | 每個路由路徑有獨立 try/except。未知模態 → 回傳 400。管線崩潰 → fallback 到文字 LLM + 日誌警告。Timeout → 503 | ✅ 2 |
+| 7 | **CrossModalRouter 快取 + 速率限制** | `services/cross_modal_router.py` | LRU 快取結果 (相同 data hash → 直接回傳)。速率限制 (每分鐘 N 次跨模態請求，防止 O(n²) 計算) | ✅ 2 |
+| 8 | **整合測試：完整跨模態流程** | `tests/services/test_cross_modal_integration.py` (NEW) | 端到端測試：encode vision → encode audio → compare → retrieve → cross-generate → evaluate。驗證多步驟管線正確性 | ✅ 8 |
+
+**測試總數**: P33 新增 **25 測試**
+
+---
+
+#### P34: 前端多模態 UI — Desktop + Web Dashboard 🖥️
+
+**目標**: 在前端加入與對話 UI 平行的多模態面板，使用戶可以上傳/捕獲圖像和音頻、即時查看編碼/解碼結果、訓練進度、品質報告。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 |
+|:-:|------|------|------|
+| 1 | **Electron: MultimodalPanel component** | `apps/desktop-app/js/components/MultimodalPanel.js` (NEW) | 與現有對話面板平行的多模態標籤頁。包含：圖像上傳/拖放區域、音頻錄製/上傳按鈕、編碼/解碼結果顯示 (圖像預覽 + 波形可視化)、品質分數卡片 (SSIM/PSNR/SNR) |
+| 2 | **Electron: 即時隱空間視覺化** | `apps/desktop-app/js/components/LatentSpaceVisualizer.js` (NEW) | 2D 散點圖顯示隱空間投影 (從 `/multimodal/visualize` API 獲取 t-SNE 座標)。支援縮放、懸浮顯示 item_id/modality、顏色區分模態 |
+| 3 | **Electron: 訓練儀表板** | `apps/desktop-app/js/components/TrainingDashboard.js` (NEW) | 訓練進度條、損失曲線圖 (Chart.js 或 Canvas)、epoch 計數器、`--auto-save`/`--auto-load` 狀態、當前訓練模式指示器 |
+| 4 | **Electron: 跨模態生成預覽** | `apps/desktop-app/js/components/CrossModalPreview.js` (NEW) | 顯示「vision→audio」或「audio→vision」生成結果。源側預覽 + 目標側播放器/圖像預覽 + 品質分數 + 信心指示 |
+| 5 | **Electron: 多模態 RAG 檢索結果面板** | `apps/desktop-app/js/components/RetrievalPanel.js` (NEW) | 顯示 multi-modal RAG 檢索結果：縮圖/波形預覽 + 相似度分數 + 模態標籤 + metadata。支援按模態過濾 |
+| 6 | **Electron: MainMenu 整合** | `apps/desktop-app/electron_app/main.js` (擴充) | 選單新增「Multimodal」條目：View → Multimodal Panel。與現有 Vision/Audio 開關整合 |
+| 7 | **Electron: API Client 擴充** | `apps/desktop-app/js/api-client.js` (擴充) | 新增 `multimodalEncode()`, `multimodalDecode()`, `multimodalCompare()`, `multimodalRetrieve()`, `multimodalTrain()`, `multimodalEvaluate()`, `multimodalGenerate()`, `multimodalVisualize()` 方法 |
+| 8 | **Web Dashboard: MultimodalDashboard 頁面** | `apps/web-dashboard/src/pages/MultimodalDashboard.tsx` (NEW) | React 頁面：包含 ImagePanel、AudioPanel、TrainingPanel、QualityPanel 子組件。與 Desktop 版功能平行 |
+| 9 | **Web Dashboard: 圖像/音頻 API client** | `apps/web-dashboard/src/api/multimodal-client.ts` (NEW) | 完整的 TypeScript API client，封裝所有 /multimodal/* 端點 |
+| 10 | **Web Dashboard: 路由整合** | `apps/web-dashboard/src/App.tsx` (擴充) | 新增 `/multimodal` 路由指向 MultimodalDashboard |
+
+**測試**: 前端測試 15 (Jest/React Testing Library)
+
+---
+
+#### P35: 前端多模態 UI — Mobile App 📱
+
+**目標**: 在 React Native 行動應用程式中加入多模態功能，使行動用戶可以直接用手機拍攝/錄音進行多模態處理。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 |
+|:-:|------|------|------|
+| 1 | **Mobile: MultimodalScreen** | `apps/mobile-app/src/screens/MultimodalScreen.tsx` (NEW) | 多模態專用頁面：相機按鈕 (react-native-camera) → 拍攝後自動編碼; 麥克風按鈕 (react-native-audio-recorder) → 錄製後自動編碼; 結果列表顯示檢索結果 |
+| 2 | **Mobile: Image Capture + 編碼流程** | `apps/mobile-app/src/components/ImageCapture.tsx` (NEW) | 相機預覽 → 拍照 → resize → base64 → POST /multimodal/encode → 顯示 256-dim 特徵 + 解碼預覽 |
+| 3 | **Mobile: Audio Capture + 編碼流程** | `apps/mobile-app/src/components/AudioCapture.tsx` (NEW) | 錄音按鈕 → 錄製 → WAV → POST /multimodal/encode → 顯示 128-dim 特徵 + 波形可視化 |
+| 4 | **Mobile: 跨模態檢索結果** | `apps/mobile-app/src/components/RetrievalResults.tsx` (NEW) | 顯示 RAG 檢索結果列表：縮圖/波形、相似度分數、模態標籤。點擊可查看詳情或下載 |
+| 5 | **Mobile: 品質報告卡** | `apps/mobile-app/src/components/QualityCard.tsx` (NEW) | 簡潔品質報告卡片：SSIM → 色條、SNR → 色條、整體評級 (A/B/C/D/F) |
+| 6 | **Mobile: API Client 擴充** | `apps/mobile-app/src/api/multimodal-client.ts` (NEW) | TypeScript client 封裝所有多模態 API 端點 + 圖片/音頻上傳處理 |
+| 7 | **Mobile: 路由整合** | `apps/mobile-app/src/navigation/AppNavigator.tsx` (擴充) | 新增 MultimodalTab，置於底部導航欄 |
+
+**測試**: 前端測試 10 (Jest/React Native Testing Library)
+
+---
+
+#### P36: 多模態連續學習 + 記憶 🔄
+
+**目標**: 類比對話管線的 CLP (ContinuousLearningPipeline) + HAM (Human Analog Memory)，建立多模態版本的連續學習與記憶系統，使多模態模型能在使用中持續改進。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 | 測試 |
+|:-:|------|------|------|:---:|
+| 1 | **ContinuousMultimodalLearning class** | `ai/multimodal/continuous_multimodal_learning.py` (NEW) | 類比 CLP：緩衝最近 N 次編碼/解碼請求的 `(modality, features, reconstructed, quality)`，當緩衝區 ≥ 32 條時自動觸發 micro-training (3 epoch contrastive + 2 epoch recon)。`train_step()` 使用現有 FullTrainingPipeline，`state_dict()` / `load_state_dict()` 持久化 | ✅ 5 |
+| 2 | **MultimodalMemoryStore class** | `ai/multimodal/multimodal_memory.py` (NEW) | 類比 HAMMemoryManager：存儲影像/音頻編碼結果 + 元數據。`store(modality, latent, metadata) → id`，`search(query_latent, top_k, modality_filter) → [{id, score, metadata}]`，`recall_by_time(window_hours)`。持久化到 `data/multimodal/memory/` | ✅ 5 |
+| 3 | **MultimodalService CML 接線** | `services/multimodal_service.py` (擴充) | `encode()` 完成後自動將結果注入 CML 緩衝區。`train()` 方法可觸發 CML.micro_train()。定期 (每 100 次 encode) 自動調用 micro_train | ✅ 2 |
+| 4 | **MultimodalService 記憶接線** | `services/multimodal_service.py` (擴充) | `encode()` 完成後自動 `memory_store.store()`。`retrieve()` 使用記憶搜索 boost RAG 結果。`recall()` 端點支援時間視窗查詢 | ✅ 2 |
+| 5 | **POST /multimodal/recall** | `api/routes/multimodal_routes.py` (擴充) | 記憶查詢：`{modality, hours, top_k}` → 回傳最近記憶 `[{id, latent, metadata, timestamp}]` | ✅ 2 |
+| 6 | **CML 品質監控** | `ai/multimodal/continuous_multimodal_learning.py` | 追蹤每次 micro-training 前後的品質改善 (`delta_ssim`, `delta_snr`)，當改善超過 threshold 時觸發完整訓練。`quality_trend()` 回傳 `{improvements, degradation, stable}` | ✅ 2 |
+| 7 | **記憶定期清理** | `ai/multimodal/multimodal_memory.py` | TTL 策略：超過 7 天的記憶自動壓縮 (只保留 latent + 摘要 metadata)，超過 30 天自動刪除。`compact()` / `cleanup()` 方法 | ✅ 2 |
+
+**測試總數**: P36 新增 **20 測試**
+
+---
+
+#### P37: 生產強化 🛡️
+
+**目標**: 類比對話管線的 error_recovery + state_persistence，為多模態管線添加錯誤恢復、超時處理、效能基準測試、品質監控儀表板。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 | 測試 |
+|:-:|------|------|------|:---:|
+| 1 | **MultimodalErrorRecovery class** | `services/multimodal_error_recovery.py` (NEW) | 封裝所有多模態管線的錯誤恢復邏輯：`encode_with_retry()` (3 次重試)、`decode_with_fallback()` (decoder failure → 回傳文字描述)、`train_with_checkpoint()` (訓練中斷可從 checkpoint 恢復)。記錄所有失敗到 crisis_log | ✅ 4 |
+| 2 | **MultimodalStatePersistence class** | `services/multimodal_state_persistence.py` (NEW) | 類比 state_persistence：定期保存多模態系統狀態 (latent projections, decoder weights, CML buffer, memory index)。`save_checkpoint(label)` / `load_checkpoint(id)` / `list_checkpoints()`。儲存到 `data/multimodal/checkpoints/` | ✅ 4 |
+| 3 | **效能基準測試** | `tests/benchmarks/test_multimodal_benchmarks.py` (NEW) | 基準測試套件：編碼延遲 (encode latency)、解碼延遲 (decode latency)、檢索吞吐量 (retrieve QPS)、訓練時間 (train time vs epoch)。每個測試執行 10 次取 P50/P95。`benchmark.json` 輸出 | ✅ 3 |
+| 4 | **品質監控後台循環** | `services/multimodal_quality_monitor.py` (NEW) | 類比 ProactiveInteractionSystem 的後台循環：每 60s 取樣當前編碼器/解碼器品質 (合成數據評估)，記錄到日誌，當品質下降超過 10% 時觸發警報。`quality_alert()` → crisis_log | ✅ 2 |
+| 5 | **POST /multimodal/health** | `api/routes/multimodal_routes.py` (擴充) | 健康檢查端點：`{status, encoders: {vision: ✓/✗, audio: ✓/✗}, decoders: {...}, retriever: ✓/✗, training: idle/running, last_quality: {...}}` | ✅ 2 |
+
+**測試總數**: P37 新增 **15 測試**
+
+---
+
+#### P38+: 維護與測試擴充 🧪
+
+**目標**: 持續維護、端到端整合測試、壓力測試、多語言多模態、文件補全。
+
+**詳細任務**:
+
+| # | 任務 | 檔案 | 說明 | 測試 |
+|:-:|------|------|------|:---:|
+| 1 | **端到端整合測試** | `tests/services/test_multimodal_integration.py` (NEW) | 完整多步驟測試：encode vision → encode audio → compare → retrieve → cross-generate → evaluate。100+ 步驟驗證每個管線的正確性 | ✅ 5 |
+| 2 | **壓力測試** | `tests/benchmarks/test_multimodal_stress.py` (NEW) | 並發請求測試：100 並發 encode + 100 並發 decode + 50 並發 retrieve。驗證無 crash、無 memory leak、P95 延遲 < 5s | ✅ 3 |
+| 3 | **多語言多模態測試** | `tests/ai/multimodal/test_multilingual_multimodal.py` (NEW) | 中/英/日/韓文字 + 圖像混合輸入測試。驗證 CulturalContextModule 與 MultimodalService 協作正確性 | ✅ 2 |
+| 4 | **文件補全** | `docs/multimodal/MULTIMODAL_PIPELINE.md` (NEW) | 多模態管線開發者指南：架構圖、API 參考、前端整合指南、部署配置、疑難排解 | — |
+| 5 | **PHASE_REVIEW6.md v31 最終版** | `docs/06-project-management/plans/PHASE_REVIEW6.md` | 全 8 階段完成後更新：測試總數 1200+、總結 55+ 輪、完全多模態管線里程碑 🎉 | — |
+
+**測試總數**: P38 新增 **10 測試**
