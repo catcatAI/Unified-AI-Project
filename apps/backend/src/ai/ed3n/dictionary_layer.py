@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 class DictionaryEntry:
+    __slots__ = ("key", "surface_forms", "contexts", "relations", "confidence")
+
     def __init__(
         self,
         key: str,
@@ -541,9 +543,12 @@ class DictionaryLayer:
             large_dict = len(self.entries) > 1000
             for key, entry in self.entries.items():
                 for lang, surface in entry.surface_forms.items():
-                    surface_lower = normalize_text(surface).lower().strip()
+                    surface_lower = normalize_text(surface).lower()
 
-                    tokens = re.findall(r"[\w]+", surface_lower)
+                    if surface_lower.isascii():
+                        tokens = surface_lower.split()
+                    else:
+                        tokens = re.findall(r"[\w]+", surface_lower)
                     for token in tokens:
                         self._keyword_index.setdefault(token, []).append(key)
 

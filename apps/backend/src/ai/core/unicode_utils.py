@@ -156,6 +156,9 @@ def normalize_text(text: str) -> str:
     3. Zero-width characters stripped (ZWSP, BOM, ZWNJ, ZWJ, etc.)
     4. Whitespace stripped
 
+    Performance: includes an ASCII fast-path that skips NFKC and fullwidth
+    translation for pure ASCII text (~70% of dictionary surface forms).
+
     NFKC alone handles:
     - Fullwidth ASCII (Ａ → A, １ → 1)
     - Compatibility ideographs (敏 → 敏, 髙 → 高)
@@ -163,6 +166,8 @@ def normalize_text(text: str) -> str:
     - CJK compatibility (ﬁ → fi, K → K)
     - Kana compatibility (㌃ → ヘクタールなど)
     """
+    if text.isascii():
+        return text.strip()
     text = unicodedata.normalize("NFKC", text)
     text = text.translate(_FULLWIDTH_TO_HALFWIDTH)
     for zc in ("\u200b", "\u200c", "\u200d", "\ufeff", "\u00ad"):

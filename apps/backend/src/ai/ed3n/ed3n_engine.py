@@ -851,13 +851,22 @@ class ED3NEngine:
             base = os.environ.get("PROJECT_ROOT", self._find_project_root())
             dict_dir = os.path.join(base, "data", "dictionaries")
         total = 0
+        # Use orjson for ~3-5x faster JSON parsing when available
+        try:
+            import orjson as _fast_json
+            def _load_json(fpath):
+                with open(fpath, "rb") as f:
+                    return _fast_json.loads(f.read())
+        except ImportError:
+            def _load_json(fpath):
+                with open(fpath, "r", encoding="utf-8") as f:
+                    return json.load(f)
         for fname in ("cedict.json", "jmdict.json", "wordnet.json"):
             fpath = os.path.join(dict_dir, fname)
             if not os.path.exists(fpath):
                 continue
             try:
-                with open(fpath, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                data = _load_json(fpath)
                 entries_data = data.get("entries", [])
                 count = self.dictionary.bulk_add_entries(entries_data)
                 total += count
