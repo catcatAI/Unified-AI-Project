@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v31.0
+# Angela AI 專案全面分析與修復計畫 v32.0
 
-> **生成日期**: 2026-06-21 (第47輪 P29 端到端訓練完成 + 完整 P30-P38+ 多模態管線建設計畫)  
-> **分析範圍**: P29 端到端訓練 + P30-P38+ 完整管線建設計畫 — 類比對話管線建立多模態管線: MultimodalService/API/視覺管線/音頻管線/跨模態管線/前端 UI/連續學習+記憶/生產強化  
+> **生成日期**: 2026-06-22 (第48輪 P30 MultimodalService + API 完成 + 第48.5輪 高難度多模態驗證測試規劃)  
+> **分析範圍**: P30 完整實作 (MultimodalService + 9 API + WS 串流) + 4 組高難度驗證測試規劃 (唱歌識別歌詞/GIF動圖/短視頻模態識別)  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -1211,3 +1211,236 @@ P29 → ✅ [端到端訓練]     → SimilarityService/Bridge load_weights
 | 5 | **PHASE_REVIEW6.md v31 最終版** | `docs/06-project-management/plans/PHASE_REVIEW6.md` | 全 8 階段完成後更新：測試總數 1200+、總結 55+ 輪、完全多模態管線里程碑 🎉 | — |
 
 **測試總數**: P38 新增 **10 測試**
+
+---
+
+### 🐤 7.5 多模態管線驗證標準：小雞吃米圖測試
+
+> **來源**: 2026-06-21 使用者提出的診斷測試，作為 P30-P38+ 是否完成的終極驗證標準。
+
+#### 測試設計
+
+| 步驟 | 操作 | 期望結果 (P38+ 完成後) | 目前狀態 (P29) |
+|:----:|------|:---------------------:|:--------------:|
+| **Step 1** | 使用者說：「畫一張小雞吃米圖」 | Angela 生成一張 128×128 (或更高解析度) 的圖像，**可辨識為小雞在啄米的場景** | ❌ VisualDecoder 只能生成抽象色塊，無 text-to-image 能力 |
+| **Step 2** | 將該圖像餵回給 Angela：「你看到了什麼？」 | Angela 回答：「我看到一隻小雞在低頭吃米。」或「這是一張小雞吃米的圖。」 | ❌ VisionService 只能分析顏色/亮度/對比度，無法語意理解「小雞」與「吃米」 |
+
+#### 通過條件
+
+1. **✅ Step 1 通過**: 文字 prompt → 圖像生成，圖像內容與 prompt 語意一致。需要 text-to-image (Stable Diffusion / DALL-E API 整合，或 ImageGenerationAgent 真後端)
+2. **✅ Step 2 通過**: 圖像分析 → 文字描述，描述準確反映圖像內容。需要 image captioning (LLM Vision API 或 BLIP/CLIP 本地模型)
+
+#### 為什麼這個測試有效
+
+這個測試看似簡單（5 歲小孩都能完成），但精準揭示了整個多模態管線的全部缺口：
+
+| 缺口 | 對應 P 階段 | 失敗原因 |
+|------|:----------:|---------|
+| ❌ 無 text-to-image 生成 | **P31+P34** | VisualDecoder 只能從 latent 解碼抽象紋理，無法從文字 prompt 生成語意圖像 |
+| ❌ 無物件辨識/語意理解 | **P31+P33** | VisualEncoder 256-dim CNN 只編碼像素統計，無 CLIP/YOLO 等級的物件檢測 |
+| ❌ 無 image→text captioning | **P30+P33** | VisionService 回傳 PIL metadata (格式/解析度/色彩)，非語意描述 |
+| ❌ 無跨模態路由 | **P33** | 「畫圖→看圖→回答」這個閉環需要 CrossModalRouter 將各步驟串聯 |
+| ❌ 無前端介面 | **P34+P35** | Desktop/Web/Mobile 沒有任何多模態面板讓使用者上傳/查看/互動 |
+| ❌ 無端到端整合測試 | **P38** | 173 測試僅測試 backend 單元，無多步驟端到端流程驗證 |
+
+#### 驗證時機
+
+```
+P29 完成時: ❌❌ 兩個步驟都會失敗
+P30 (MultimodalService + API): 🔴 Step 2 可透過 LLM Vision API 達到「虛假通過」— 但需手動傳圖
+P31 (視覺管線): 🔴 Step 2 基礎色彩/亮度分析，仍無法回答「小雞」
+P33 (跨模態整合 + ED3N deep): 🟡 Step 1 可透過 ImageGenerationAgent 調用 Stable Diffusion 達成
+P34 (前端 UI): 🟡 使用者可以上傳圖片、查看編碼結果，但 Angela 仍看不懂
+P36 (多模態連續學習): 🟡 CML 開始從使用者反饋中學習，但尚無語意理解
+P38+ (端到端完成): ✅✅ 兩個步驟都通過 — 完整多模態管線里程碑 🎉
+```
+
+> **核心洞察**: 這個測試是專屬的「圖靈測試」— 當 Angela 能回答「我看到一隻小雞在吃米」時，代表從 text→image→latent→analysis→text 的完整閉環真正接通了。
+
+---
+
+### 🎵 7.6 高難度多模態驗證測試
+
+> **來源**: 2026-06-21 使用者提出的進階診斷測試，作為 P30-P38+ 完成後的延伸高難度驗證標準。
+
+這組測試比「小雞吃米圖測試」更難，因為它們涉及**時間維度**（音頻/影片時序、動畫幀序列），需要多模態管線不僅處理空間靜態資料，還能理解與生成動態序列。
+
+---
+
+#### 🎶 測試一：唱首歌 + 識別歌詞
+
+##### 測試設計
+
+| 步驟 | 操作 | 期望結果 (完整完成後) | 目前狀態 (P30) |
+|:----:|------|:---------------------:|:--------------:|
+| **Step 1** | 使用者說：「Angela 唱一首生日快樂歌」或「唱一首歌，歌詞是『春天來了花兒開』」 | Angela 生成一段音頻檔案 (WAV/MP3)，包含可辨識的人聲旋律與歌詞 | ❌ AudioWaveformDecoder 只能從 latent 解碼抽象頻譜，無法生成含語意歌詞的人聲 |
+| **Step 2** | 將生成音頻餵回：「你剛才唱了什麼？寫出歌詞」 | Angela 回答：「我唱的是：春天來了花兒開，蝴蝶翩翩飛過來...」並正確轉錄歌詞 | ❌ AudioService.speech_to_text() 僅 STT stub，無法轉錄歌詞；AudioWaveformDecoder 生成的波形不含語言內容 |
+| **Step 3** | 「這首歌是什麼調/風格？」 | Angela 回答：「這是 C 大調，4/4 拍，活潑輕快的風格」 | ❌ 目前無音樂理論分析能力 |
+
+##### 通過條件
+
+1. **✅ Step 1**: 文字 → 音頻生成，生成的音頻是**含可辨識歌詞的人聲**，而非抽象噪音或純音樂。需要 text-to-speech (edge-tts 已可用) + vocal synthesis + melody generation
+2. **✅ Step 2**: 音頻 → 文字，正確轉錄歌詞（單字正確率 > 80%）。需要 Speech-to-Text (faster-whisper/gemini vision) + music-aware ASR
+3. **✅ Step 3**: 音頻 → 音樂理論分析（調性、節奏、風格）。需要 music information retrieval (MIR) 能力
+
+##### 所需元件
+
+| 能力 | 缺失元件 | 依賴 P 階段 |
+|------|---------|:----------:|
+| 🗣️ TTS 歌唱 | edge-tts 已有**朗讀**能力，但無**唱歌**（旋律+節奏+音符持續時間） | **P32 擴充**: AudioService 歌唱模式 |
+| 🎵 旋律生成 | 缺少從文字/樂譜→頻譜參數的 melody generator | **P33**: CrossModalRouter text→music |
+| 📝 歌詞轉錄 | AudioService.speech_to_text() 對歌詞準確率極低（無語言模型適應） | **P32**: AudioPipeline + faster-whisper |
+| 🎼 音樂分析 | 缺少 tempo detection / key estimation / chord recognition | **P33**: MIR 模組 (new) `ai/audio/music_analyzer.py` |
+| 🔄 閉環檢查 | encode(唱的歌) → decode(轉錄文字) → compare(原始歌詞 vs 轉錄) | **P38**: 端到端測試 |
+
+##### 目前依賴鏈
+
+```
+文字歌詞 ──[TTS 無旋律]──→ edge-tts 朗讀音頻 (非唱歌)
+                         └──→ AudioSpectralEncoder (128-dim MFCC) ──→ 可編碼但無語意
+                         └──→ AudioService.speech_to_text() (STT stub → 無法轉錄)
+```
+
+**關鍵差距**: 當前 AudioWaveformDecoder 從 latent 解碼的是**抽象頻譜**（正弦波+多頻段+噪聲），不是**人聲**。要生成可辨識歌詞的人聲，需要 vocoder（如 WaveNet/LPCNet）或 concatenative TTS 歌唱合成。
+
+##### 驗證時機
+
+```
+P30 (MultimodalService): ❌❌❌ 三個步驟都無法進行
+P32 (音頻管線): 🟡 Step 1 可透過 edge-tts 朗讀歌詞（非歌唱）；Step 2 faster-whisper 轉錄朗讀
+P33 (跨模態+ED3N deep): 🟡 Step 2 若用 LLM Vision API 聽音頻→轉錄（虛假通過）
+P36 (多模態連續學習): 🟡 CML 開始從使用者反饋中學習歌詞-旋律對應
+P38+ (端到端完成後延伸): ✅✅ 三個步驟全部通過
+```
+
+---
+
+#### 🎬 測試二：畫 GIF 動圖 + 描述內容
+
+##### 測試設計
+
+| 步驟 | 操作 | 期望結果 (完整完成後) | 目前狀態 (P30) |
+|:----:|------|:---------------------:|:--------------:|
+| **Step 1** | 使用者說：「畫一張小雞吃米的 GIF 動圖，小雞在重複啄米」 | Angela 生成一段 128×128 動畫 GIF，包含 4-8 幀，顯示小雞低頭→啄米→抬頭的循環動作 | ❌ VisualDecoder 只能生成單幀靜態抽象色塊；無時間維度概念 |
+| **Step 2** | 「這個 GIF 在做什麼？」 | Angela 回答：「這是一隻小雞在重複啄米的動作，牠的頭部在上下移動，地上有米粒」 | ❌ VisionService 無時間維度分析 |
+| **Step 3** | 「每幀之間有什麼變化？動作流暢嗎？」 | Angela 回答：「幀 1→2 頭部下降，幀 2→3 啄到米，幀 3→4 頭部抬起。動作基本流暢但可以增加更多中間幀」 | ❌ 無幀序列分析/對比能力 |
+
+##### 通過條件
+
+1. **✅ Step 1**: 文字 prompt → 多幀圖像序列 → 合成為動畫 GIF，幀間動作連貫。需要 text-to-image sequence + frame interpolation + GIF encoding
+2. **✅ Step 2**: 多幀序列分析 → 文字描述，識別出**動作**（不僅是物件）。需要 video understanding / optical flow
+3. **✅ Step 3**: 幀間差異分析 + 流暢度評估。需要 frame difference metric + temporal consistency score
+
+##### 所需元件
+
+| 能力 | 缺失元件 | 依賴 P 階段 |
+|------|---------|:----------:|
+| 🖼️ text→image 序列 | 從文字 prompt 生成多個語意相關的圖像 | **P31+P34**: VisionPipeline + ImageGenerationAgent |
+| 🔄 幀間插值 | 在關鍵幀之間生成中間幀使動畫流暢 | **P33 擴充**: FrameInterpolator (new) |
+| 🎞️ GIF 編碼 | 將多幀 PNG 序列合成為動畫 GIF | **P34**: frontend/backend GIF encoder |
+| 👁️ 動作識別 | 從多幀視覺特徵序列推斷動作類別 | **P33 擴充**: TemporalMotionAnalyzer (new) |
+| 📊 流暢度評估 | 幀間 L1/L2 差異 + optical flow consistency | **P33 擴充**: motion_smoothness metrics |
+
+##### 目前依賴鏈
+
+```
+文字「小雞吃米」 ──[無 text-to-image]──→ VisualDecoder (抽象色塊) ❌
+                              └──→ 靜態單幀，無法生成多幀序列 ❌
+```
+
+**關鍵差距**: 當前 VisualDecoder 生成的是**隨機投影解碼的抽象紋理**，缺乏:
+1. **語意控制**: 無法從文字 prompt 控制生成內容（無 text encoder / diffusion / cross-attention）
+2. **時間維度**: 所有模態都是單幀/單段，無序列生成/理解
+3. **物體一致性**: 跨幀的物體位置/形狀沒有記憶（無 temporal embedding）
+
+##### 驗證時機
+
+```
+P30 (MultimodalService): ❌❌❌ 三個步驟都無法進行
+P31 (視覺管線): 🔴 Step 2 基礎色彩/亮度分析，無法識別「動作」
+P33 (跨模態+ED3N deep): 🟡 Step 1 文字→單幀抽象圖（非 GAN/diffusion 等級）；Step 2 同 P31
+P34 (前端 UI): 🟡 可以顯示 GIF，但後端無生成能力
+P36 (多模態連續學習): 🟡 CML 學習單幀重建改善，但仍無時間維度
+P38+ (端到端完成後延伸): ✅✅✅ 三個步驟通過
+```
+
+---
+
+#### 🎥 測試三：生成短視頻 + 識別各模態內容
+
+##### 測試設計
+
+| 步驟 | 操作 | 期望結果 (完整完成後) | 目前狀態 (P30) |
+|:----:|------|:---------------------:|:--------------:|
+| **Step 1** | 使用者說：「生成一段 5 秒短視頻：畫面是一隻貓在鋼琴上走過，同時有輕快的鋼琴聲」 | Angela 生成一段短視頻（5-10 幀 + 對應音頻），視覺有貓+鋼琴，聽覺有鋼琴旋律 | ❌ 無視頻生成；視覺與聽覺無時間同步 |
+| **Step 2** | 「影片中有哪些視覺內容？」 | Angela 回答：**「有一隻貓（視覺模態）在鋼琴鍵盤上走（動作模態），鋼琴蓋是黑色的（顏色模態）」** — 正確識別多個模態內容 | ❌ VisionService 無時間序列分析，無多模態內容分割 |
+| **Step 3** | 「影片中有哪些聽覺內容？與視覺同步嗎？」 | Angela 回答：**「有鋼琴聲（聽覺模態），喵叫聲（語音模態）。當貓踩到琴鍵時聲音變大，視覺與聽覺大致同步（延遲約 0.1s）」** — 正確識別聽覺內容並評估跨模態同步 | ❌ AudioService 無事件檢測；無視聽同步分析 |
+| **Step 4** | 「總結這部影片的所有模態內容」 | Angela 回答：**「這是一段 5 秒短視頻，包含 3 個模態：① 視覺 — 貓在鋼琴上行走；② 聽覺 — 鋼琴旋律 + 貓叫；③ 時間 — 動作序列。跨模態同步率 92%。建議增加背景節拍增強節奏感。」** | ❌ 無多模態內容摘要能力 |
+
+##### 通過條件
+
+1. **✅ Step 1**: 文字 prompt → 多模態短視頻（同步的視覺幀序列 + 音頻波形）。需要 video generation = visual frame sequence + synchronized audio track
+2. **✅ Step 2**: 視頻 → 多模態內容分類（視覺物體、顏色、動作、場景）。需要 video object detection + scene understanding
+3. **✅ Step 3**: 視頻 → 音頻事件檢測 + 視聽同步分析。需要 audio event detection + audio-visual synchronization scoring
+4. **✅ Step 4**: 多模態內容摘要 + 品質報告。需要 cross-modal summary generator + quality_report 擴充
+
+##### 所需元件
+
+| 能力 | 缺失元件 | 依賴 P 階段 |
+|------|---------|:----------:|
+| 🎬 video generation | 同步生成視覺幀序列 + 音頻軌道 | **P31+P32+P33 整合**: VisionPipeline + AudioPipeline → VideoComposer (new) |
+| 🐱 物件偵測 | 影片中物體分類與位置追蹤 | **P33 擴充**: YOLO/CLIP 整合 (new) `ai/vision/object_detector.py` |
+| 🔊 音頻事件檢測 | 從音頻中識別「鋼琴聲」「貓叫聲」等事件 | **P33 擴充**: AudioEventDetector (new) `ai/audio/event_detector.py` |
+| 🔗 視聽同步分析 | 計算視覺事件（貓踩琴鍵）與聽覺事件（鋼琴聲）的時間偏移 | **P33 擴充**: AVSyncAnalyzer (new) `services/av_sync_analyzer.py` |
+| 📝 多模態摘要 | 整合視覺/聽覺/時間分析 → 自然語言摘要 | **P33**: CrossModalRouter final aggregation |
+| 🧪 端到端測試 | encode video frames → extract audio → classify content → compare timestamps | **P38**: 端到端整合測試 |
+
+##### 為什麼這是最難的測試
+
+這個測試的難度遠超前兩個，因為它需要 **5 個獨立管線同時運作並同步**：
+
+```
+                           ┌──→ VisualFrameEncoder (256-dim/幀)
+                           │         ↓
+文字 prompt ──→ ┌──────┐   ├──→ FrameInterpolator (時間維度) ──→ SharedLatentSpace ──→ TemporalAnalyzer
+                │Video │   │         ↓                                        ↓
+                │Compo-│───┤──→ AudioEventDetector ──→ AudioSpectralEncoder ──→ SharedLatentSpace ──→ AVSyncAnalyzer
+                │ser   │   │         ↓
+                └──────┘   └──→ AVSyncAnalyzer ──→ CrossModalRouter ──→ 多模態摘要
+```
+
+每個環節都必須正確，任何一個失敗都會導致該步驟失敗。這也是為什麼它是**終極驗證測試**。
+
+##### 驗證時機
+
+```
+P30 (MultimodalService): ❌❌❌❌ 四個步驟全部無法進行
+P31 (視覺管線): 🔴 只有視覺編碼/解碼，無時間序列
+P32 (音頻管線): 🔴 只有音頻編碼/解碼，無視頻同步
+P33 (跨模態+ED3N deep): 🟡 CrossModalRouter 開始整合視覺+聽覺，但無時間維度
+P34 (前端 UI): 🟡 可以播放視頻框架，但後端無生成/分析內容
+P36 (多模態連續學習): 🟡 CML 改善單模態但跨模態同步尚無
+P38+ (端到端完成後延伸): ✅✅✅✅ 四個步驟全部通過 — 完整多模態 AGI 里程碑 🏆
+```
+
+---
+
+### 📊 7.7 多模態驗證測試總表
+
+| 測試 | 難度 | Step 數 | 涉及模態 | 關鍵缺口 | 通過所需 P |
+|:----:|:----:|:-------:|:--------:|---------|:----------:|
+| 🐤 **小雞吃米圖** | 🟡 中等 | 2 | 文字↔圖像 | text-to-image 生成 + image-to-text captioning | **P31+P33+P34** |
+| 🎶 **唱歌+識別歌詞** | 🔴 高難度 | 3 | 文字↔音頻↔音樂理論 | TTS 歌唱合成 + 歌詞轉錄 + 音樂分析 | **P32+P33+擴充** |
+| 🎬 **GIF 動圖+描述** | 🔴🔴 極高難度 | 3 | 文字↔多幀圖像↔時間 | 多幀生成 + 幀間插值 + 動作識別 | **P31+P33+P34+擴充** |
+| 🎥 **短視頻+模態識別** | 🔴🔴🔴 終極難度 | 4 | 文字↔影片↔音頻↔時間↔跨模態同步 | 視頻生成 + 物件偵測 + 音頻事件 + 視聽同步 + 多模態摘要 | **P31+P32+P33+P34+P38+擴充** |
+
+#### 難度說明
+
+| 難度 | 所需新元件數 | 需要時間維度 | 跨模態同步 | 預估完成輪次 |
+|:----:|:-----------:|:-----------:|:---------:|:-----------:|
+| 🟡 中等 | 3-5 元件 | ❌ | ❌ | P33-P34 (2-3 輪) |
+| 🔴 高難度 | 5-8 元件 | ✅ 音頻時序 | ❌ | P35-P36 (3-4 輪) |
+| 🔴🔴 極高難度 | 8-12 元件 | ✅ 多幀序列 | 🟡 部分 | P36-P37 (4-5 輪) |
+| 🔴🔴🔴 終極難度 | 12+ 元件 | ✅ 影音同步 | ✅ 完整視聽同步 | P38+ (6-8 輪) |
+
+> **核心洞察**: 這四組測試構成了一個階梯式的多模態驗證金字塔。從最簡單的「小雞吃米圖」到最困難的「短視頻模態識別」，每個測試都在前一個測試的基礎上增加一個或多個維度的複雜度。當 Angela 能全部通過時，代表專案已達成**完整的多模態 AGI 能力** 🏆
