@@ -45,3 +45,10 @@ try:
 except ImportError as e:
     logger.warning(f"meta_routes not available: {e}")
 
+try:
+    from api.routes.multimodal_routes import router as multimodal_router
+    router.include_router(multimodal_router, prefix="/api/v1")
+    logger.debug("Included multimodal_routes")
+except ImportError as e:
+    logger.warning(f"multimodal_routes not available: {e}")
+

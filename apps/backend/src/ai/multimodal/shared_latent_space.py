@@ -93,6 +93,8 @@ class SharedLatentSpace:
         Returns:
             dict with final loss and epoch history.
         """
+        if epochs == 0 or (not pos_pairs and not neg_pairs):
+            return {"final_loss": 0.0, "history": []}
         history = []
         for epoch in range(epochs):
             loss = self._train_epoch(pos_pairs, neg_pairs, lr, margin)

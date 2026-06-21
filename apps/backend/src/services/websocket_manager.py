@@ -325,6 +325,80 @@ async def _handle_heartbeat(websocket: WebSocket, data: dict) -> None:
     })
 
 
+async def _handle_multimodal_encode(websocket: WebSocket, data: dict) -> None:
+    """Handle multimodal encode request from WebSocket.
+
+    Expects data: {
+        "data": {
+            "modality": "vision" | "audio",
+            "item_id": "optional_id",
+            "content": "base64_encoded_file_content",
+        }
+    }
+    """
+    import base64
+    try:
+        msg_data = data.get("data", {})
+        modality = msg_data.get("modality", "vision")
+        item_id = msg_data.get("item_id")
+        content_b64 = msg_data.get("content", "")
+        if not content_b64:
+            raise ValueError("No content provided")
+        raw = base64.b64decode(content_b64)
+
+        from services.multimodal_service import MultimodalService
+        svc = MultimodalService()
+        result = await svc.encode(raw, modality, item_id)
+        await manager.send_personal_message({
+            "type": "multimodal_encode_result",
+            "data": result,
+            "timestamp": datetime.now().isoformat(),
+        }, websocket)
+    except Exception as e:
+        logger.error("Multimodal encode WS error: %s", e, exc_info=True)
+        await manager.send_personal_message({
+            "type": "multimodal_encode_result",
+            "data": {"error": str(e)},
+            "timestamp": datetime.now().isoformat(),
+        }, websocket)
+
+
+async def _handle_multimodal_decode(websocket: WebSocket, data: dict) -> None:
+    """Handle multimodal decode request from WebSocket.
+
+    Expects data: {
+        "data": {
+            "item_id": "id_to_decode",
+            "modality": "vision" | "audio",
+            "output_format": "base64" (default),
+        }
+    }
+    """
+    try:
+        msg_data = data.get("data", {})
+        item_id = msg_data.get("item_id", "")
+        modality = msg_data.get("modality", "vision")
+        output_format = msg_data.get("output_format", "base64")
+        if not item_id:
+            raise ValueError("No item_id provided")
+
+        from services.multimodal_service import MultimodalService
+        svc = MultimodalService()
+        result = await svc.decode(item_id, modality, output_format)
+        await manager.send_personal_message({
+            "type": "multimodal_decode_result",
+            "data": result,
+            "timestamp": datetime.now().isoformat(),
+        }, websocket)
+    except Exception as e:
+        logger.error("Multimodal decode WS error: %s", e, exc_info=True)
+        await manager.send_personal_message({
+            "type": "multimodal_decode_result",
+            "data": {"error": str(e)},
+            "timestamp": datetime.now().isoformat(),
+        }, websocket)
+
+
 async def websocket_handler(websocket: WebSocket) -> str:
     """
     WebSocket endpoint handler for real-time communication with desktop app.
@@ -362,6 +436,12 @@ async def websocket_handler(websocket: WebSocket) -> str:
 
             elif msg_type == "chat_message":
                 await _handle_chat_message(websocket, data, session_id)
+
+            elif msg_type == "multimodal_encode":
+                await _handle_multimodal_encode(websocket, data)
+
+            elif msg_type == "multimodal_decode":
+                await _handle_multimodal_decode(websocket, data)
 
             else:
                 await websocket.send_json({
