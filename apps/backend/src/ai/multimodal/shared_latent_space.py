@@ -1,7 +1,7 @@
 """Shared latent space — projects modality vectors to a unified embedding space + contrastive learning."""
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -74,6 +74,95 @@ class SharedLatentSpace:
 
     def reset(self) -> None:
         self._embedding_cache.clear()
+
+    # ------------------------------------------------------------------
+    # P43: Semantic modality support
+    # ------------------------------------------------------------------
+
+    def register_semantic_modality(self, base_name: str, input_dim: int) -> None:
+        """Register a semantic variant of an existing modality.
+
+        Creates a modality named ``{base_name}_semantic`` that can be used
+        alongside the structural ``{base_name}`` modality.  Both remain
+        addressable independently for similarity / attention queries.
+
+        Example::
+
+            ls.register_modality("vision", 256)          # structural
+            ls.register_semantic_modality("vision", 512)  # semantic
+        """
+        self.register_modality(f"{base_name}_semantic", input_dim)
+
+    def semantic_consistency(self, modality: str,
+                             features_list: Sequence[np.ndarray]) -> float:
+        """Measure how consistently a set of semantic features cluster in
+        latent space.
+
+        Projects every feature through the ``{modality}_semantic`` projection,
+        then computes the average pairwise cosine similarity between the
+        resulting latent vectors.  A high score means the features form a
+        tight cluster (e.g. different views of the same object).
+
+        The raw cosine similarity (range [-1, 1]) is mapped linearly to
+        [0, 1] via ``(cos + 1) / 2``, so:
+
+        * **1.0** = identical direction (perfectly clustered)
+        * **0.5** ≈ orthogonal / random relationship
+        * **0.0** = exactly opposite direction
+
+        Returns
+        -------
+        float
+            Score in [0, 1].  Returns 0 when fewer than 2 features are
+            provided or the semantic modality is not registered.
+        """
+        semantic_name = f"{modality}_semantic"
+        if semantic_name not in self._projections:
+            logger.warning("Semantic modality '%s' not registered", semantic_name)
+            return 0.0
+
+        if len(features_list) < 2:
+            return 0.0
+
+        latents = [self._l2_normalize(self.project(semantic_name, f))
+                   for f in features_list]
+
+        total_sim = 0.0
+        count = 0
+        for i in range(len(latents)):
+            for j in range(i + 1, len(latents)):
+                total_sim += float(np.dot(latents[i], latents[j]))
+                count += 1
+
+        avg_sim = total_sim / max(count, 1)
+        # Map from [-1, 1] to [0, 1]
+        return max(0.0, (avg_sim + 1.0) / 2.0)
+
+    def semantic_contrastive_train(self,
+                                   pos_pairs: List[Tuple[np.ndarray, np.ndarray]],
+                                   neg_pairs: List[Tuple[np.ndarray, np.ndarray]],
+                                   modality: str = "vision_semantic",
+                                   epochs: int = 10,
+                                   lr: float = 0.01,
+                                   margin: float = 0.5) -> Dict[str, Any]:
+        """Train *semantic* projection weights with contrastive learning.
+
+        Contrasts features projected through the ``{modality}`` projection
+        matrix.  Each pair is ``(feat_a, feat_b)`` from the same modality.
+        This is a convenience wrapper around :meth:`train`.
+
+        Returns
+        -------
+        dict
+            ``{"final_loss": …, "history": […]}``
+        """
+        if not pos_pairs and not neg_pairs:
+            return {"final_loss": 0.0, "history": []}
+
+        formatted_pos = [(modality, a, modality, b) for a, b in pos_pairs]
+        formatted_neg = [(modality, a, modality, b) for a, b in neg_pairs]
+        return self.train(formatted_pos, formatted_neg,
+                          epochs=epochs, lr=lr, margin=margin)
 
     # ------------------------------------------------------------------
     # P16: Contrastive learning

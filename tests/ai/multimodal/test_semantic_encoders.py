@@ -318,32 +318,41 @@ class TestDualEncoderRouter:
         assert report["structural_audio"] is True  # Always True
 
     def test_combine_latents_both(self):
-        """R6: _combine_latents with both structural and semantic."""
+        """R6: _combine_latents with both structural and semantic (P43 SharedLatentSpace)."""
         router = DualEncoderRouter()
         structural = np.ones(256, dtype=np.float32)
         semantic = np.ones(512, dtype=np.float32)
-        latent = router._combine_latents(structural, semantic)
-        assert latent is not None
-        assert latent.shape == (64,)
-        # L2 normalized
-        norm = np.linalg.norm(latent)
+        struct_lat, sem_lat, combined = router._combine_latents("vision", structural, semantic)
+        assert struct_lat is not None
+        assert struct_lat.shape == (64,)
+        assert sem_lat is not None
+        assert sem_lat.shape == (64,)
+        assert combined is not None
+        assert combined.shape == (64,)
+        # Combined is L2 normalized
+        norm = np.linalg.norm(combined)
         assert abs(norm - 1.0) < 1e-5
 
     def test_combine_latents_structural_only(self):
-        """R7: _combine_latents with structural only."""
+        """R7: _combine_latents with structural only (P43)."""
         router = DualEncoderRouter()
         structural = np.ones(256, dtype=np.float32)
-        latent = router._combine_latents(structural, None)
-        assert latent is not None
-        assert latent.shape == (64,)
-        norm = np.linalg.norm(latent)
+        struct_lat, sem_lat, combined = router._combine_latents("vision", structural, None)
+        assert struct_lat is not None
+        assert struct_lat.shape == (64,)
+        assert sem_lat is None
+        assert combined is not None
+        assert combined.shape == (64,)
+        norm = np.linalg.norm(combined)
         assert abs(norm - 1.0) < 1e-5
 
     def test_combine_latents_none(self):
-        """R8: _combine_latents with None returns None."""
+        """R8: _combine_latents with None returns Nones (P43)."""
         router = DualEncoderRouter()
-        latent = router._combine_latents(None, None)
-        assert latent is None
+        struct_lat, sem_lat, combined = router._combine_latents("vision", None, None)
+        assert struct_lat is None
+        assert sem_lat is None
+        assert combined is None
 
     def test_encode_empty_vision(self):
         """R9: encode_vision handles empty bytes gracefully."""

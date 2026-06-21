@@ -26,12 +26,12 @@ class DualEncoderRouter:
     """Routes encoding requests to structural and/or semantic encoders.
 
     NOTE on latent space compatibility:
-    The combined latent from _combine_latents() uses random projection
-    (seed=42) into 64-dim, NOT the existing SharedLatentSpace. This means
-    the combined latent lives in a DIFFERENT latent space than all P15-P38
-    operations (cross-modal attention, similarity search, RAG retrieval).
-    P44 will add an explicit alignment layer between the dual-encoder
-    latent and SharedLatentSpace.
+    The combined latent from _combine_latents() now projects through
+    SharedLatentSpace (P43), so it lives in the SAME 64-dim space as all
+    P15-P38 operations: cross-modal attention, similarity search, RAG
+    retrieval. Structural features project through "vision"/"audio"
+    modalities; semantic features through "vision_semantic"/"audio_semantic".
+    The combined latent is a weighted average (0.6 semantic + 0.4 structural).
 
     Provides a unified API that:
     - Always returns structural features (numpy-based, always available)
@@ -44,6 +44,62 @@ class DualEncoderRouter:
         self._audio_encoder = None
         self._semantic_visual = None
         self._semantic_audio = None
+        self._latent_space = None
+
+    # --- SharedLatentSpace integration (P43) ---
+
+    def _get_latent_space(self):
+        """Get or create the SharedLatentSpace with structural + semantic modalities.
+
+        Registers:
+        - vision (256-dim) + vision_semantic (512-dim)
+        - audio (128-dim) + audio_semantic (384-dim)
+
+        The semantic modalities enable `semantic_consistency()` queries,
+        cross-modal similarity between structural and semantic projections,
+        and contrastive training on semantic pairs.
+        """
+        if self._latent_space is None:
+            from ai.multimodal.shared_latent_space import SharedLatentSpace
+            ls = SharedLatentSpace(latent_dim=64)
+            # Structural modalities (P15)
+            ls.register_modality("vision", 256)
+            ls.register_modality("audio", 128)
+            # Semantic modalities (P43)
+            ls.register_semantic_modality("vision", 512)
+            ls.register_semantic_modality("audio", 384)
+            self._latent_space = ls
+        return self._latent_space
+
+    def semantic_consistency_report(self, vision_features: Optional[List[np.ndarray]] = None,
+                                    audio_features: Optional[List[np.ndarray]] = None) -> Dict[str, Any]:
+        """Evaluate semantic consistency of encoder outputs.
+
+        Projects feature lists through SharedLatentSpace and measures
+        how tightly each cluster of semantic features is grouped.
+
+        Args:
+            vision_features: List of 512-dim CLIP vectors for same-class items.
+            audio_features: List of 384-dim Whisper vectors for same-class items.
+
+        Returns:
+            Dict with consistency scores per modality and overall.
+        """
+        ls = self._get_latent_space()
+        report: Dict[str, Any] = {"overall": 0.0}
+        scores = []
+
+        if vision_features and len(vision_features) >= 2:
+            report["vision_semantic"] = ls.semantic_consistency("vision", vision_features)
+            scores.append(report["vision_semantic"])
+
+        if audio_features and len(audio_features) >= 2:
+            report["audio_semantic"] = ls.semantic_consistency("audio", audio_features)
+            scores.append(report["audio_semantic"])
+
+        if scores:
+            report["overall"] = float(np.mean(scores))
+        return report
 
     # --- Lazy init ---
 
@@ -118,13 +174,17 @@ class DualEncoderRouter:
             Dict with keys:
             - structural: 256-dim numpy array (or None)
             - semantic: 512-dim numpy array (or None)
-            - latent: projected 64-dim combined vector (or structural-only)
+            - structural_latent: 64-dim SharedLatentSpace projection of structural (P43)
+            - semantic_latent: 64-dim SharedLatentSpace projection of semantic (P43)
+            - latent: projected 64-dim combined vector (weighted average)
             - modalities_used: list of encoder types used
             - error: error message if any
         """
         result: Dict[str, Any] = {
             "structural": None,
             "semantic": None,
+            "structural_latent": None,
+            "semantic_latent": None,
             "latent": None,
             "modalities_used": [],
             "error": None,
@@ -146,11 +206,15 @@ class DualEncoderRouter:
                     if semantic is not None:
                         result["modalities_used"].append("semantic_vision")
 
-            # Produce combined latent
-            result["latent"] = self._combine_latents(
+            # Produce combined latent through SharedLatentSpace (P43)
+            struct_lat, sem_lat, combined = self._combine_latents(
+                "vision",
                 result.get("structural"),
-                result.get("semantic")
+                result.get("semantic"),
             )
+            result["structural_latent"] = struct_lat
+            result["semantic_latent"] = sem_lat
+            result["latent"] = combined
         except Exception as e:
             logger.error("DualEncoderRouter.encode_vision failed: %s", e)
             result["error"] = str(e)
@@ -170,13 +234,17 @@ class DualEncoderRouter:
             Dict with keys:
             - structural: 128-dim numpy array (or None)
             - semantic: 384-dim numpy array (or None)
-            - latent: projected combined vector
+            - structural_latent: 64-dim projection of structural features
+            - semantic_latent: 64-dim projection of semantic features
+            - latent: projected combined vector (64-dim, SharedLatentSpace)
             - modalities_used: list of encoder types used
             - error: error message if any
         """
         result: Dict[str, Any] = {
             "structural": None,
             "semantic": None,
+            "structural_latent": None,
+            "semantic_latent": None,
             "latent": None,
             "modalities_used": [],
             "error": None,
@@ -196,10 +264,15 @@ class DualEncoderRouter:
                     if semantic is not None:
                         result["modalities_used"].append("semantic_audio")
 
-            result["latent"] = self._combine_latents(
+            # Produce combined latent through SharedLatentSpace (P43)
+            struct_lat, sem_lat, combined = self._combine_latents(
+                "audio",
                 result.get("structural"),
-                result.get("semantic")
+                result.get("semantic"),
             )
+            result["structural_latent"] = struct_lat
+            result["semantic_latent"] = sem_lat
+            result["latent"] = combined
         except Exception as e:
             logger.error("DualEncoderRouter.encode_audio failed: %s", e)
             result["error"] = str(e)
@@ -208,42 +281,50 @@ class DualEncoderRouter:
     # --- Latent combination ---
 
     def _combine_latents(self,
+                         modality: str,
                          structural: Optional[np.ndarray],
-                         semantic: Optional[np.ndarray]) -> Optional[np.ndarray]:
-        """Combine structural and semantic vectors into a unified latent.
+                         semantic: Optional[np.ndarray]) -> Tuple[Optional[np.ndarray],
+                                                                   Optional[np.ndarray],
+                                                                   Optional[np.ndarray]]:
+        """Combine structural and semantic vectors through SharedLatentSpace.
 
-        Strategy:
-        - If both available: concatenate and project to 64-dim via random projection
-        - If only structural: project structural to 64-dim
-        - If only semantic: project semantic to 64-dim
-        - If neither: return None
+        Unlike P42's random projection, this method:
+        1. Projects structural features through SharedLatentSpace ``{modality}``
+        2. Projects semantic features through ``{modality}_semantic``
+        3. Combines via weighted average (semantic dominant, structural grounding)
+
+        This ensures the output latent lives in the SAME 64-dim space as all
+        P15-P38 operations: cross-modal attention, similarity search, RAG.
+
+        Returns
+        -------
+        tuple (structural_latent, semantic_latent, combined_latent)
+            Each is 64-dim or None. Combined is weighted-average + L2 normalized.
         """
-        vectors = []
+        ls = self._get_latent_space()
+
+        structural_latent = None
         if structural is not None and hasattr(structural, 'size') and structural.size > 0:
-            vectors.append(structural.flatten())
+            structural_latent = ls.project(modality, structural.flatten().astype(np.float32))
+
+        semantic_latent = None
         if semantic is not None and hasattr(semantic, 'size') and semantic.size > 0:
-            vectors.append(semantic.flatten())
+            semantic_name = f"{modality}_semantic"
+            semantic_latent = ls.project(semantic_name, semantic.flatten().astype(np.float32))
 
-        if not vectors:
-            return None
+        # Weighted average: semantic dominant, structural as grounding
+        combined = None
+        if structural_latent is not None and semantic_latent is not None:
+            combined = 0.6 * semantic_latent + 0.4 * structural_latent
+        elif structural_latent is not None:
+            combined = structural_latent.copy()
+        elif semantic_latent is not None:
+            combined = semantic_latent.copy()
 
-        combined = np.concatenate(vectors).astype(np.float32)
-        target_dim = 64
+        # Always L2 normalize the combined latent
+        if combined is not None:
+            norm = np.linalg.norm(combined)
+            if norm > 0:
+                combined = combined / norm
 
-        if len(combined) == target_dim:
-            return combined
-        if len(combined) < target_dim:
-            padded = np.zeros(target_dim, dtype=np.float32)
-            padded[:len(combined)] = combined
-            return padded
-
-        # Project down: random projection
-        rng = np.random.default_rng(42)
-        proj = rng.normal(0, 1.0 / np.sqrt(len(combined)),
-                          (target_dim, len(combined))).astype(np.float32)
-        latent = proj @ combined
-        # L2 normalize
-        norm = np.linalg.norm(latent)
-        if norm > 0:
-            latent = latent / norm
-        return latent
+        return structural_latent, semantic_latent, combined
