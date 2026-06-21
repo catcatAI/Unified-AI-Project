@@ -763,6 +763,19 @@ class VisionService:
 
         return {"error": "Invalid input format for vision processing"}
 
+    async def encode_image(self, image_data: bytes) -> list:
+        """Encode image into a feature vector using VisualEncoder (P15)."""
+        if not image_data:
+            return []
+        try:
+            from ai.multimodal.visual_encoder import VisualEncoder
+            encoder = VisualEncoder()
+            vec = encoder.encode(image_data)
+            return vec.tolist()
+        except Exception as e:
+            logger.warning("VisualEncoder failed: %s", e)
+            return []
+
 
 if __name__ == "__main__":
 

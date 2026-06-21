@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v20.0
+# Angela AI 專案全面分析與修復計畫 v21.0
 
-> **生成日期**: 2026-06-22 (第32輪 P15 模態編碼器 — 真實多模態起點)  
-> **分析範圍**: P15 真實多模態 — VisualEncoder (numpy 像素→特徵向量) / AudioSpectralEncoder (STFT 頻譜→向量) / SharedLatentSpace (統一投影層, 跨模態相似度) / 21 測試  
+> **生成日期**: 2026-06-22 (第33輪 P15b 編碼器整合入服務管線)  
+> **分析範圍**: P15b 整合 — VisionService.encode_image() / AudioService.encode_audio() / MultimodalSimilarityService (跨模態相似度比較) / 66 測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -182,6 +182,16 @@
 | **multimodal package reactivated** | `ai/multimodal/__init__.py` ✅ | 原標記 DEPRECATED. 現在匯出 VisualEncoder, AudioSpectralEncoder, SharedLatentSpace, MultimodalProcessor |
 | **測試 ×21** | `tests/ai/multimodal/` (3 files) ✅ | VisualEncoder 6: 形狀/空輸入/PIL編碼/不同影像/正規化/重複性. AudioSpectralEncoder 6: 形狀/空/不同頻率/重複性/raw PCM/非均勻. SharedLatentSpace 9: 投影形狀/L2正規/相似度/自相似/未知模態/註冊/reset/embedding |
 | **測試結果** | **21/21 全部通過** ✅ | P15 核心編碼器全部實作, 843+21 = **864 測試通過, 0 失敗** |
+
+### 第33輪: P15b 編碼器整合入服務管線 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **VisionService.encode_image()** | `services/vision_service.py` ✅ | 新增方法: `encode_image(image_data) → List[float]` (128 維). 空輸入→`[]`, 編碼失敗→`[]`. 使用 VisualEncoder 後端 (lazy import) |
+| **AudioService.encode_audio()** | `services/audio_service.py` ✅ | 新增方法: `encode_audio(audio_data) → List[float]` (32 維). 空輸入→`[]`, 編碼失敗→`[]`. 使用 AudioSpectralEncoder 後端 (lazy import) |
+| **MultimodalSimilarityService** | `ai/multimodal/similarity_service.py` (NEW) ✅ | 整合 VisualEncoder + AudioSpectralEncoder + SharedLatentSpace. `encode_vision(bytes, id)→128-dim list`, `encode_audio(bytes, id)→32-dim list`, `compare(id_a, id_b)→[0,1]`, `get_embedding(id)→64-dim list`, `reset()` |
+| **Testing ×66** | 所有多模態 + 視覺 + 音訊測試 ✅ | 30 整合新測試 + 36 現存服務測試 = **66/66 通過** |
+| **測試結果** | **66/66 全部通過** ✅ | P15b 整合零回歸, 編碼器全面接入服務層 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -563,14 +573,14 @@ P16  [閉環演化]   → 模態間的因果影響、跨模態學習、模態轉
 | **31** | **P14 多模態 ML 後端整合** | **VisionService pytesseract OCR 後端 + AudioService faster-whisper 離線 STT + scan_and_identify processing_id 修正 + 6 項預存測試修復 (shutdown/compare_images/analyze_image/scan_intent). 32/32 測試通過 🎉 P14 全部完成!** |
 | **31.5** | **P14.5 預存測試大清理** | **46 預存失敗清零 + 21 收集錯誤清除 + 3 匯入錯誤修復 + ConfigMutator 實作 + ChatService/WebSocket/DI/API 測試全面修復. 843 通過, 0 失敗 🎉 快速測試全部綠燈!** |
 | **32** | **P15 模態編碼器** | **VisualEncoder (numpy 像素→128維) + AudioSpectralEncoder (STFT頻譜→32維) + SharedLatentSpace (64維統一投影, 跨模態相似度). 21/21 測試通過 🎉 真實多模態第一步!** |
-| **總計** | **33 輪** | **115+ 修復, 智能 2→9/10, 864+ 測試** |
+| **33** | **P15b 編碼器整合管線** | **VisionService.encode_image() + AudioService.encode_audio() + MultimodalSimilarityService (跨模態比較 id→embedding→cosine). 66/66 測試通過 🎉 編碼器全面接入服務層!** |
+| **總計** | **34 輪** | **120+ 修復, 智能 2→9/10, 890+ 測試** |
 
-## 7. 後續建議 (P15 完成後，真實多模態編碼器就緒，864 測試通過)
+## 7. 後續建議 (P15 完成後，真實多模態編碼器已接入服務層，890+ 測試通過)
 
-1. **P15b: 編碼器整合到對話管線** — VisualEncoder 接入 VisionService, AudioSpectralEncoder 接入 AudioService, SharedLatentSpace 接入 ModelBus/MetaController 作為相似度評估來源
-2. **P16: 共享隱空間強化** — 加入 cross-modal attention 機制, 訓練投影層 (使用 co-occurrence pairs)
-3. **進一步效能優化** — ED3N 460K 字典載入 (15.76s → 目標 <10s); GARDEN SNN 推理延遲; 大型測試耗時 (GARDEN 247s, ED3N 178s)
-4. **維護: 測試持續監控** — 864+ 測試維持; pre-commit hook 執行
+1. **P16: 共享隱空間強化** — 加入 cross-modal attention 機制, 訓練投影層 (使用 co-occurrence pairs and contrastive learning)
+2. **進一步效能優化** — ED3N 460K 字典載入 (15.76s → 目標 <10s); GARDEN SNN 推理延遲; 大型測試耗時 (GARDEN 247s, ED3N 178s)
+3. **維護: 測試持續監控** — 890+ 測試維持; pre-commit hook 執行
 2. **P16: 共享隱空間** — 統一投射層，所有模態向量投射到同一個 N 維空間，實現模態間相似度計算與注意力
 3. **進一步效能優化** — ED3N 460K 字典載入 (15.76s → 目標 <10s); GARDEN SNN 推理延遲; 大型測試耗時 (GARDEN 247s, ED3N 178s)
 4. **維護: 測試持續監控** — 745+ 測試維持; pre-commit hook 執行

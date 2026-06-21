@@ -11,11 +11,13 @@ P15: VisualEncoder (pixel→vector), AudioSpectralEncoder (waveform→vector),
 from ai.multimodal.visual_encoder import VisualEncoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.similarity_service import MultimodalSimilarityService
 from ai.multimodal.multimodal_processor import MultimodalProcessor
 
 __all__ = [
     "VisualEncoder",
     "AudioSpectralEncoder",
     "SharedLatentSpace",
+    "MultimodalSimilarityService",
     "MultimodalProcessor",
 ]

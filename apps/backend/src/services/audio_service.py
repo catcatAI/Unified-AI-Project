@@ -154,5 +154,18 @@ class AudioService:
             return {"audio_data": result} if result else {"error": "TTS failed"}
         return {"error": "Invalid input format for audio processing"}
 
+    async def encode_audio(self, audio_data: bytes) -> list:
+        """Encode audio into a feature vector using AudioSpectralEncoder (P15)."""
+        if not audio_data:
+            return []
+        try:
+            from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+            encoder = AudioSpectralEncoder()
+            vec = encoder.encode(audio_data)
+            return vec.tolist()
+        except Exception as e:
+            logger.warning("AudioSpectralEncoder failed: %s", e)
+            return []
+
     def set_peer_services(self, services: dict) -> None:
         self.peer_services = services
