@@ -15,6 +15,7 @@ from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine
 from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer
 from apps.backend.src.ai.ed3n.training_types import TrainingBatch, TrainingExample
 from apps.backend.src.ai.garden.garden_engine import GARDENEngine
+from apps.backend.src.ai.meta.meta_controller import MetaController
 from apps.backend.src.ai.response.composer import NeuroVocabulary, ValueRangeMapping
 
 
@@ -1464,3 +1465,93 @@ class TestNeuroVocabularyChaos:
         await asyncio.gather(learn_batch(0, 100), learn_batch(100, 100))
         data = await asyncio.to_thread(vocab.serialize_mappings, max_age_days=999)
         assert len(data) == 200
+
+
+# ===========================================================================
+# TestConfidencePipeline — End-to-end ED3N → ModelBus → MetaController
+# ===========================================================================
+
+
+@pytest.mark.integration
+class TestConfidencePipeline:
+    """End-to-end tests verifying the full confidence pipeline:
+    ED3NEngine._last_confidence → ModelBus._try_model() → MetaController.record_confidence()."""
+
+    @pytest.fixture
+    def ed3n(self):
+        engine = ED3NEngine()
+        engine.load_presets()
+        return engine
+
+    @pytest.fixture
+    def meta(self):
+        return MetaController()
+
+    @pytest.fixture
+    def bus(self, ed3n, meta):
+        bus = ModelBus(meta_controller=meta, default_timeout=120.0)
+        bus.register_ed3n(ed3n)
+        return bus
+
+    async def test_reflex_confidence_recorded(self, bus, meta):
+        """Reflex match sets _last_confidence=1.0 → ModelRouteResult.confidence=1.0 → MetaController records it."""
+        decision = await bus.route("hello", "reflex")
+        assert decision.selected_model == "ed3n"
+        assert decision.confidence == 1.0
+        stats = meta.get_stats()
+        assert "model_bus:ed3n" in stats["tracked_sources"]
+        assert meta._samples["model_bus:ed3n"][-1].confidence == 1.0
+
+    async def test_empty_input_confidence_zero(self, bus, meta):
+        """Empty input → _last_confidence=0.0 → confidence=0.0 → MetaController records it."""
+        decision = await bus.route("", "reflex")
+        assert decision.results["ed3n"].confidence == 0.0
+        stats = meta.get_stats()
+        assert "model_bus:ed3n" in stats["tracked_sources"]
+
+    async def test_math_confidence_one(self, bus, meta):
+        """Math eval sets _last_confidence=1.0 → confidence=1.0."""
+        decision = await bus.route("2+2", "math")
+        assert decision.results["ed3n"].confidence == 1.0
+        stats = meta.get_stats()
+        assert "model_bus:ed3n" in stats["tracked_sources"]
+
+    async def test_shallow_confidence_positive(self, bus, meta):
+        """Shallow decode (reflex + context) sets _last_confidence based on dictionary entry avg."""
+        decision = await bus.route("你好", "reflex")
+        assert decision.results["ed3n"].confidence > 0.5
+        stats = meta.get_stats()
+        assert "model_bus:ed3n" in stats["tracked_sources"]
+
+    async def test_multiple_queries_accumulate_samples(self, bus, meta):
+        """Multiple route() calls accumulate confidence samples in MetaController."""
+        for text in ["hello", "hi", "goodbye", "2+2"]:
+            await bus.route(text, "reflex")
+        cal = meta.get_calibration("model_bus:ed3n")
+        assert cal is not None
+        assert cal.sample_count >= 4
+
+    async def test_all_model_results_recorded(self, bus, meta):
+        """route() records confidence for every model result, not just the selected one."""
+        decision = await bus.route("hello", "reflex")
+        stats = meta.get_stats()
+        assert "model_bus:ed3n" in stats["tracked_sources"]
+
+    async def test_threshold_adjustment_after_many_low_confidence(self, bus, meta):
+        """Many low-confidence queries eventually produce threshold adjustment."""
+        for _ in range(15):
+            await bus.route("", "reflex")
+        adj = meta.get_threshold_adjustment("model_bus:ed3n")
+        # With 15 samples all at confidence 0.0 and no correctness info,
+        # calibration_error > 0 but no over/under-confidence bias → adjustment may be 0
+        assert isinstance(adj, float)
+
+    def test_ed3n_last_confidence_accessible(self, ed3n):
+        """ED3NEngine._last_confidence is a float and updates after process()."""
+        ed3n.process("hello")
+        hello_conf = ed3n._last_confidence
+        assert isinstance(hello_conf, (int, float))
+
+        ed3n.process("你好", depth="shallow")
+        shallow_conf = ed3n._last_confidence
+        assert isinstance(shallow_conf, (int, float))

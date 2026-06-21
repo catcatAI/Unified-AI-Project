@@ -293,7 +293,7 @@ class TestGARDENEnginePersistence:
         with tempfile.TemporaryDirectory() as tmp:
             engine.save(tmp)
             assert os.path.exists(os.path.join(tmp, "dictionary.json"))
-            assert os.path.exists(os.path.join(tmp, "snn.pt"))
+            assert os.path.exists(os.path.join(tmp, "snn.pt")) or os.path.exists(os.path.join(tmp, "snn.pt.npy"))
             assert os.path.exists(os.path.join(tmp, "engine_meta.json"))
 
     def test_save_meta(self, engine: GARDENEngine):

@@ -586,7 +586,7 @@ class GARDENEngine:
 
         if os.path.exists(dict_path):
             self.dictionary.import_from_json(dict_path)
-        if os.path.exists(snn_path):
+        if os.path.exists(snn_path) or os.path.exists(snn_path + ".npy"):
             self.snn.load(snn_path)
         if os.path.exists(meta_path):
             with open(meta_path, "r", encoding="utf-8") as f:
