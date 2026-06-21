@@ -62,6 +62,10 @@ class MultimodalService:
         # P36: Continuous multimodal learning + memory
         self._cml = None
         self._memory_store = None
+        # P37: Production hardening
+        self._error_recovery = None
+        self._state_persistence = None
+        self._mm_quality_monitor = None
 
     # --- Lazy initialization ---
 
@@ -719,6 +723,107 @@ class MultimodalService:
             logger.error("Load weights failed: %s", e)
             return {"status": "failed", "error": str(e)}
 
+    # --- P37: Error recovery ---
+
+    def _get_error_recovery(self):
+        """Get or create the MultimodalErrorRecovery instance."""
+        if self._error_recovery is None:
+            from services.multimodal_error_recovery import MultimodalErrorRecovery
+            self._error_recovery = MultimodalErrorRecovery(self)
+        return self._error_recovery
+
+    def _get_state_persistence(self):
+        """Get or create the MultimodalStatePersistence instance."""
+        if self._state_persistence is None:
+            from services.multimodal_state_persistence import MultimodalStatePersistence
+            self._state_persistence = MultimodalStatePersistence(self)
+        return self._state_persistence
+
+    def _get_multimodal_quality_monitor(self):
+        """Get or create the MultimodalQualityMonitor instance (P37).
+
+        NOTE: Different from _get_quality_monitor() (P31, VisionQualityMonitor).
+        This is the background quality sampling monitor, not the per-pipeline monitor.
+        """
+        if self._mm_quality_monitor is None:
+            from services.multimodal_quality_monitor import MultimodalQualityMonitor
+            self._mm_quality_monitor = MultimodalQualityMonitor(self)
+        return self._mm_quality_monitor
+
+    # --- P37: Error recovery operations ---
+
+    async def encode_with_retry(self, data: bytes, modality: str,
+                                item_id: Optional[str] = None) -> Dict[str, Any]:
+        """Encode with automatic retry on failure."""
+        return await self._get_error_recovery().encode_with_retry(data, modality, item_id)
+
+    async def decode_with_fallback(self, item_id: str, modality: str,
+                                   output_format: str = "base64") -> Dict[str, Any]:
+        """Decode with text fallback on failure."""
+        return await self._get_error_recovery().decode_with_fallback(
+            item_id, modality, output_format
+        )
+
+    async def train_with_checkpoint(self, mode: str = "full", epochs: int = 5,
+                                    lr: float = 0.01, use_real: bool = False,
+                                    checkpoint_label: Optional[str] = None) -> Dict[str, Any]:
+        """Train with pre-training checkpoint for resumability."""
+        return await self._get_error_recovery().train_with_checkpoint(
+            mode, epochs, lr, use_real, checkpoint_label
+        )
+
+    async def get_recovery_state(self) -> Dict[str, Any]:
+        """Get error recovery state summary."""
+        return self._get_error_recovery().get_recovery_state()
+
+    async def reset_recovery_counters(self) -> None:
+        """Reset error recovery counters."""
+        self._get_error_recovery().reset_counters()
+
+    # --- P37: State persistence ---
+
+    async def save_checkpoint(self, label: Optional[str] = None) -> Dict[str, Any]:
+        """Save a checkpoint of multimodal state."""
+        return await self._get_state_persistence().save_checkpoint(label)
+
+    async def load_checkpoint(self, label: str) -> Dict[str, Any]:
+        """Load a checkpoint by label."""
+        return await self._get_state_persistence().load_checkpoint(label)
+
+    async def list_checkpoints(self) -> Dict[str, Any]:
+        """List all available checkpoints."""
+        return await self._get_state_persistence().list_checkpoints()
+
+    async def prune_checkpoints(self, keep: int = 10) -> int:
+        """Remove old checkpoints keeping only N most recent."""
+        return await self._get_state_persistence().prune_checkpoints(keep)
+
+    # --- P37: Quality monitoring ---
+
+    async def start_quality_monitor(self) -> None:
+        """Start background quality monitoring."""
+        await self._get_multimodal_quality_monitor().start()
+
+    async def stop_quality_monitor(self) -> None:
+        """Stop background quality monitoring."""
+        await self._get_multimodal_quality_monitor().stop()
+
+    @property
+    def is_quality_monitor_running(self) -> bool:
+        return self._get_multimodal_quality_monitor().is_running
+
+    async def quality_report(self) -> Dict[str, Any]:
+        """Get quality report from the monitor."""
+        return self._get_multimodal_quality_monitor().report()
+
+    async def quality_trend(self) -> Dict[str, Any]:
+        """Get quality trend analysis."""
+        return self._get_multimodal_quality_monitor().quality_trend()
+
+    async def quality_latest_sample(self) -> Dict[str, Any]:
+        """Get the most recent quality sample."""
+        return self._get_multimodal_quality_monitor().get_latest_sample()
+
     # --- Health ---
 
     async def health(self) -> Dict[str, Any]:
@@ -758,4 +863,21 @@ class MultimodalService:
                 status["registered_items"] = len(self._registered_items)
         except Exception:
             status["registered_items"] = 0
+        # P37: Add production hardening health info
+        try:
+            if self._error_recovery is not None:
+                status["recovery_state"] = self._error_recovery.get_recovery_state()
+        except Exception:
+            pass
+        try:
+            if self._state_persistence is not None:
+                cp_list = await self._state_persistence.list_checkpoints()
+                status["checkpoints"] = cp_list
+        except Exception:
+            pass
+        try:
+            if self._mm_quality_monitor is not None:
+                status["quality_monitor"] = self._mm_quality_monitor.report()
+        except Exception:
+            pass
         return status

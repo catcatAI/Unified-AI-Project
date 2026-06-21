@@ -419,15 +419,172 @@ async def clear_items_endpoint():
     return {"success": True, **result}
 
 
-# --- Health ---
+# --- Health (P37 enhanced) ---
 
 @router.get("/multimodal/health")
 async def multimodal_health():
-    """Health check for all multimodal components.
-    Returns status of encoders, decoders, latent space, and registered items.
+    """Enhanced health check for all multimodal components (P37).
+
+    Returns status of encoders, decoders, latent space, registered items,
+    recovery state, checkpoints, and quality monitor.
     """
     svc = _get_service()
     if svc is None:
         return {"success": False, "status": "unavailable", "error": "MultimodalService not loaded"}
     health = await svc.health()
     return {"success": True, **health}
+
+
+# --- P37: Error recovery ---
+
+@router.get("/multimodal/recovery/state")
+async def recovery_state_endpoint():
+    """Get error recovery state (retry counts, crisis levels, last success timestamps)."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    state = await svc.get_recovery_state()
+    return {"success": True, **state}
+
+
+@router.post("/multimodal/recovery/reset")
+async def recovery_reset_endpoint():
+    """Reset all error recovery counters."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    await svc.reset_recovery_counters()
+    return {"success": True, "status": "reset"}
+
+
+@router.post("/multimodal/encode-with-retry")
+async def encode_with_retry_endpoint(
+    file: UploadFile = File(...),
+    modality: str = Form("vision"),
+    item_id: Optional[str] = Form(None),
+):
+    """Encode with automatic retry on failure (P37)."""
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file data")
+    result = await svc.encode_with_retry(data, modality, item_id)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return {"success": True, **result}
+
+
+@router.post("/multimodal/decode-with-fallback")
+async def decode_with_fallback_endpoint(
+    item_id: str = Form(...),
+    modality: str = Form("vision"),
+    output_format: str = Form("base64"),
+):
+    """Decode with text fallback on failure (P37)."""
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    result = await svc.decode_with_fallback(item_id, modality, output_format)
+    return {"success": True, **result}
+
+
+@router.post("/multimodal/train-with-checkpoint")
+async def train_with_checkpoint_endpoint(
+    mode: str = Form("full"),
+    epochs: int = Form(5),
+    lr: float = Form(0.01),
+    use_real: bool = Form(False),
+    checkpoint_label: Optional[str] = Form(None),
+):
+    """Train with automatic pre-training checkpoint (P37)."""
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    result = await svc.train_with_checkpoint(mode, epochs, lr, use_real, checkpoint_label)
+    return {"success": result.get("status") == "completed", **result}
+
+
+# --- P37: State persistence ---
+
+@router.post("/multimodal/checkpoint/save")
+async def checkpoint_save_endpoint(label: Optional[str] = Form(None)):
+    """Save a checkpoint of multimodal state."""
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    result = await svc.save_checkpoint(label)
+    return {"success": result.get("status") == "saved", **result}
+
+
+@router.post("/multimodal/checkpoint/load")
+async def checkpoint_load_endpoint(label: str = Form(...)):
+    """Load a checkpoint by label."""
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    result = await svc.load_checkpoint(label)
+    return {"success": result.get("status") == "loaded", **result}
+
+
+@router.get("/multimodal/checkpoints")
+async def checkpoints_list_endpoint():
+    """List all available checkpoints."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "checkpoints": [], "count": 0}
+    result = await svc.list_checkpoints()
+    return {"success": True, **result}
+
+
+# --- P37: Quality monitoring ---
+
+@router.get("/multimodal/quality/report")
+async def quality_report_endpoint():
+    """Get quality report from the background monitor (P37)."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    report = await svc.quality_report()
+    return {"success": True, **report}
+
+
+@router.get("/multimodal/quality/trend")
+async def quality_trend_endpoint():
+    """Get quality trend analysis (P37)."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    trend = await svc.quality_trend()
+    return {"success": True, **trend}
+
+
+@router.get("/multimodal/quality/latest")
+async def quality_latest_endpoint():
+    """Get the most recent quality sample (P37)."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    sample = await svc.quality_latest_sample()
+    return {"success": True, **sample}
+
+
+@router.post("/multimodal/quality/start")
+async def quality_start_endpoint():
+    """Start background quality monitoring (P37)."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    await svc.start_quality_monitor()
+    return {"success": True, "status": "started"}
+
+
+@router.post("/multimodal/quality/stop")
+async def quality_stop_endpoint():
+    """Stop background quality monitoring (P37)."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    await svc.stop_quality_monitor()
+    return {"success": True, "status": "stopped"}
