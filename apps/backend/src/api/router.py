@@ -38,3 +38,10 @@ try:
 except ImportError as e:
     logger.warning(f"v1 endpoint routers not available: {e}")
 
+try:
+    from api.routes.meta_routes import router as meta_router
+    router.include_router(meta_router, prefix="/api/v1")
+    logger.debug("Included meta_routes")
+except ImportError as e:
+    logger.warning(f"meta_routes not available: {e}")
+

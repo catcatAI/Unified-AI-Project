@@ -197,12 +197,10 @@ except ImportError as e:
     MouseTracker = None
 
 try:
-    from core.engine.live2d_integration import Live2DIntegration, Live2DExpression, Live2DAction
+    from core.engine.live2d_integration import Live2DIntegration
 except ImportError as e:
     logger.warning(f"Failed to import live2d_integration: {e}", exc_info=True)
     Live2DIntegration = None
-    Live2DExpression = None
-    Live2DAction = None
 
 # =============================================================================
 # Integration Systems → core/life/ + core/bio/
@@ -325,7 +323,7 @@ __all__ = [
     "BrowserController", "SearchResult", "BrowserState",
     "AudioSystem", "TTSConfig", "LyricsSync",
     "DesktopPresence", "MouseTracker",
-    "Live2DIntegration", "Live2DExpression", "Live2DAction",
+    "Live2DIntegration",
     "BiologicalIntegrator", "SystemInteraction",
     "DigitalLifeIntegrator", "LifeCycleState",
     "MemoryNeuroplasticityBridge", "MemoryConsolidation",

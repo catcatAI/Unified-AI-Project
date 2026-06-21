@@ -744,7 +744,13 @@ class AngelaLLMService:
                     result = decision.results.get(decision.selected_model)
                     if result and result.text and result.text not in _KNOWN_FALLBACK_RESPONSES:
                         # Case A: High confidence -> Direct return (Reflex)
-                        if decision.confidence >= 0.8:
+                        direct_threshold = 0.8
+                        draft_low = 0.4
+                        if self.meta_controller is not None:
+                            adj = self.meta_controller.get_threshold_adjustment(f"model_bus:{decision.selected_model}")
+                            direct_threshold = max(0.5, min(0.95, direct_threshold + adj))
+                            draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
+                        if decision.confidence >= direct_threshold:
                             logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f})")
                             if self.meta_controller is not None:
                                 self.meta_controller.record_confidence(f"model_bus:{decision.selected_model}", decision.confidence)
@@ -757,7 +763,7 @@ class AngelaLLMService:
                             )
                         
                         # Case B: Medium confidence -> Draft for LLM refinement
-                        elif 0.4 <= decision.confidence < 0.8:
+                        elif draft_low <= decision.confidence < direct_threshold:
                             logger.info(f"ModelBus draft provided: {decision.selected_model} (conf={decision.confidence:.2f}) for LLM refinement")
                             context["draft_response"] = result.text
                             context["draft_model"] = decision.selected_model

@@ -109,8 +109,3 @@ class Live2DIntegration:
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).error(f"State callback error: {e}", exc_info=True)
-
-
-# Backward compatibility aliases
-Live2DExpression = Live2DIntegration
-Live2DAction = Live2DIntegration
