@@ -361,6 +361,55 @@ class TestSystemAPI:
         assert resp.json() == {"key_available": True}
 
 
+class TestMetaControllerEndpoints:
+    """Tests for MetaController confidence API endpoints."""
+
+    async def test_confidence_summary(self, client):
+        from api.routes.meta_routes import set_meta_controller
+        from ai.meta.meta_controller import MetaController
+        mc = MetaController()
+        mc.record_confidence("test:ed3n", 0.85)
+        mc.record_confidence("test:garden", 0.72)
+        set_meta_controller(mc)
+        try:
+            resp = await client.get("/api/v1/meta/confidence/summary")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["success"] is True
+            assert "summary" in data
+            assert "stats" in data
+        finally:
+            set_meta_controller(None)
+
+    async def test_confidence_calibration_known_source(self, client):
+        from api.routes.meta_routes import set_meta_controller
+        from ai.meta.meta_controller import MetaController
+        mc = MetaController()
+        for i in range(5):
+            mc.record_confidence("test:ed3n", 0.85)
+        set_meta_controller(mc)
+        try:
+            resp = await client.get("/api/v1/meta/confidence/calibration/test:ed3n")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["source"] == "test:ed3n"
+        finally:
+            set_meta_controller(None)
+
+    async def test_confidence_calibration_unknown_source(self, client):
+        from api.routes.meta_routes import set_meta_controller
+        from ai.meta.meta_controller import MetaController
+        mc = MetaController()
+        set_meta_controller(mc)
+        try:
+            resp = await client.get("/api/v1/meta/confidence/calibration/unknown")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["calibration"] is None
+        finally:
+            set_meta_controller(None)
+
+
 # =============================================================================
 # Untestable endpoints note
 # =============================================================================

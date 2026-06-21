@@ -305,6 +305,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning(f"[Broadcast] Failed to start state broadcast: {e}")
 
+    # Pre-warm ED3N external dictionaries to avoid cold-start latency on first query
+    try:
+        from ai.ed3n.ed3n_engine import ED3NEngine
+        count = ED3NEngine.get_shared().warm_up()
+        if count > 0:
+            logger.info("[ED3N] Pre-warmed %d external dictionary entries", count)
+    except Exception as e:
+        logger.debug(f"[ED3N] Warm-up skipped (non-critical): {e}")
+
     yield
 
     # --- Shutdown ---

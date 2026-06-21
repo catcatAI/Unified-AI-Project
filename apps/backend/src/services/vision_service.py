@@ -499,6 +499,7 @@ class VisionService:
 
     async def shutdown(self) -> bool:
         logger.info("[Vision] Powered down.")
+        return True
 
     async def _extract_text_ocr(self, image_data: bytes) -> Dict[str, Any]:
         """Real OCR using OS Bridge."""

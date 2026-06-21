@@ -24,6 +24,7 @@ import zlib
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 from ai.core.unicode_utils import normalize_text
 from core.system.config.magic_numbers import confidence_value, threshold_value
 from ._import_utils import subprocess_check
@@ -146,10 +147,7 @@ class _TfidfEncoder:
 
     @staticmethod
     def _get_xp():
-        """Return array module (torch if available, else numpy)."""
-        torch_module, _ = _lazy_torch()
-        if torch_module is not None:
-            return torch_module
+        """Return array module (always numpy for array ops)."""
         return np
 
     # ------------------------------------------------------------------

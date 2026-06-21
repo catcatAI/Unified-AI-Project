@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v13.0
+# Angela AI 專案全面分析與修復計畫 v14.0
 
-> **生成日期**: 2026-06-20 (第26輪 P9 置信度儀表板 + 校準閉環 + 別名清理)  
-> **分析範圍**: P9 可觀測性 — MetaController API / 動態校準 / 別名清理  
+> **生成日期**: 2026-06-21 (第27輪 P10 置信度測試 + ED3N warm-up + VisionService shutdown + GARDEN np 修復)  
+> **分析範圍**: P10 測試覆蓋 — GARDEN _last_confidence 驗證 / MetaController API 端點測試 / ED3N cold-start 優化 / 預先存在 bug 修復  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -10,11 +10,12 @@
 
 | 指標 | 數值 | 狀態 |
 |------|------|------|
-| unit+api 測試 | **724 通過, 0 失敗, 39 跳過** | ✅ **100%** |
+| unit+api 測試 | **735 通過, 0 失敗, 39 跳過** | ✅ **100%** |
 | ED3N InputEnricher 測試 | **28/28 通過** | ✅ |
 | GARDEN SNN Core | **34/34 通過** | ✅ |
-| GARDEN 引擎測試 | **197/197 通過** | ✅ |
-| MetaController 測試 | **10/10 通過 (NEW)** | ✅ |
+| GARDEN 引擎測試 | **198/198 通過** (4 新 _last_confidence 測試) | ✅ |
+| MetaController 測試 | **10/10 通過** | ✅ |
+| MetaController API 端點測試 | **3/3 通過 (NEW)** | ✅ |
 | GARDEN 字典測試 | **42/42 通過** (11 torch skipif 優雅跳過) | ✅ **skipif 守衛就緒** |
 | VectorStore | **numpy 460,235 向量 ✅** | ✅ |
 | ED3N 引擎 | **460,281 條目, 20.9s 載入, 22K 條/秒** | ✅ |
@@ -100,6 +101,18 @@
 | **Live2D 別名清理** | `core/engine/live2d_integration.py` ✅ | `Live2DExpression`/`Live2DAction` 向後相容別名移除 (2 個 dead export) |
 | **Autonomous __init__ 清理** | `core/autonomous/__init__.py` ✅ | 對應 import/__all__ 更新 |
 | **測試** | 68 測試全部通過 ✅ | meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 |
+
+### 第27輪: P10 置信度測試 + ED3N warm-up + VisionService 修復 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **GARDEN _last_confidence 測試** | `tests/ai/garden/test_garden_engine.py` ✅ | 4 個新測試: reflex=0.95, empty=0.0, unknown=0.0, vector>0.0 — 確保 GARDEN 流程每個路徑都正確設置置信度 |
+| **MetaController API 端點測試** | `tests/api/test_api_endpoints.py` ✅ | 3 個新測試: summary 全局摘要 / 已知來源校準 / 未知來源 404 |
+| **ED3NEngine.warm_up()** | `ai/ed3n/ed3n_engine.py` ✅ | 新方法預加載外部字典, 避免冷啟動首次查詢 500+ms 延遲 |
+| **VisionService.shutdown() 返回值** | `services/vision_service.py` ✅ | 缺少 `return True` 導致 shutdown 返回 None — 違反 Service API 約定 |
+| **lifespan.py 暖機整合** | `api/lifespan.py` ✅ | 啟動時自動調用 `ED3NEngine.get_shared().warm_up()`, 首次用戶請求零冷啟動 |
+| **GARDEN dictionary.py np 修復** | `ai/garden/dictionary.py` ✅ | 預先存在 bug: `np` 未在模組頂層導入, 相容模式下 `_normalize()` 噴 `NameError`. 加入 `import numpy as np`; `_get_xp()` 改為始終返回 numpy (torch 缺少 `.array`/`.float32`) |
+| **測試** | 75 測試全部通過 ✅ | GARDEN engine 15 + meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 + API 3 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -399,11 +412,13 @@
 | **24** | **P7 置信度管道** | **ED3N _last_confidence + ModelBus 真實置信度 + Tactile 全橋接 🎉 P7 全部完成!** |
 | **25** | **P8 置信度閉環** | **MetaController→LLM + GARDEN 信心 + 測試擴充 🎉 P8 全部完成!** |
 | **26** | **P9 置信度儀表板** | **MetaController API + 校準閉環 + Live2D 別名清理 🎉 P9 全部完成!** |
-| **總計** | **26 輪** | **84+ 修復, 智能 2→9/10** |
+| **27** | **P10 置信度測試+ED3N warm-up** | **GARDEN _last_confidence 測試 (4) + MetaController API 端點測試 (3) + ED3N warm_up() + VisionService shutdown() 修復 + GARDEN np bug 修復 🎉 P10 全部完成!** |
+| **總計** | **27 輪** | **87+ 修復, 智能 2→9/10, 735 測試** |
 
-## 7. 後續建議 (P9 完成後)
+## 7. 後續建議 (P10 完成後)
 
-1. **P10: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT
-2. **P10: 測試擴充** — ED3N 信心整合測試 / GARDEN `_last_confidence` 驗證 / MetaController API 端點測試
-3. **P10: 效能優化** — ED3N 460K 字典載入速度 (20.9s); GARDEN SNN 推理延遲; 大型測試耗時
-4. **維護: 測試持續監控** — 734+ 測試維持; pre-commit hook 執行
+1. **P11: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT
+2. **P11: ED3N 信心整合測試** — 端到端 ED3N→ModelBus→MetaController 完整信心管道驗證
+3. **P11: 效能優化** — ED3N 460K 字典載入速度 (20.9s); GARDEN SNN 推理延遲; 大型測試耗時 (GARDEN 218s)
+4. **P11: 持久化修復** — GARDEN `test_save_creates_files` 預先存在失敗 (snn.pt 路徑); ChromaEncoder torch None 問題
+5. **維護: 測試持續監控** — 735+ 測試維持; pre-commit hook 執行

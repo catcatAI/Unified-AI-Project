@@ -32,6 +32,50 @@
         "assistant",
         "四"
       ]
+    },
+    {
+      "content": "{'user': 'hello', 'assistant': 'Hello! Nice to meet you!'}",
+      "data_type": "conversation",
+      "metadata": {},
+      "keywords": [
+        "user",
+        "hello",
+        "assistant",
+        "Hello! Nice to meet you!"
+      ]
+    },
+    {
+      "content": "{'user': 'bad stuff', 'assistant': 'stuff stuff stuff stuff stuff'}",
+      "data_type": "conversation",
+      "metadata": {},
+      "keywords": [
+        "user",
+        "bad stuff",
+        "assistant",
+        "stuff stuff stuff stuff stuff"
+      ]
+    },
+    {
+      "content": "{'user': 'hello', 'assistant': 'Hello! Nice to meet you!'}",
+      "data_type": "conversation",
+      "metadata": {},
+      "keywords": [
+        "user",
+        "hello",
+        "assistant",
+        "Hello! Nice to meet you!"
+      ]
+    },
+    {
+      "content": "{'user': '切換模型 gpt-4', 'assistant': 'glutamic-pyruvic transaminase'}",
+      "data_type": "conversation",
+      "metadata": {},
+      "keywords": [
+        "user",
+        "切換模型 gpt-4",
+        "assistant",
+        "glutamic-pyruvic transaminase"
+      ]
     }
   ],
   "conversations": [],

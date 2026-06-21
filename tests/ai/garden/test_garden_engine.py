@@ -182,6 +182,22 @@ class TestGARDENEngineProcess:
         # Same query should produce same result (reflex is deterministic)
         assert r1 == r2
 
+    def test_last_confidence_after_reflex(self, engine: GARDENEngine):
+        engine.process("你好")
+        assert engine._last_confidence == 0.95
+
+    def test_last_confidence_after_empty(self, engine: GARDENEngine):
+        engine.process("")
+        assert engine._last_confidence == 0.0
+
+    def test_last_confidence_after_unknown(self, engine: GARDENEngine):
+        engine.process("zxvqwybpqxz")
+        assert engine._last_confidence == 0.0
+
+    def test_last_confidence_after_vector(self, engine: GARDENEngine):
+        engine.process("good morning")
+        assert engine._last_confidence > 0.0
+
 
 class TestGARDENEngineLearning:
     """Tests for online learning."""

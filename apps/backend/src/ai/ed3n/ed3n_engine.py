@@ -204,6 +204,24 @@ class ED3NEngine:
         self._maybe_learn(input_text, output, context or {})
         return output
 
+    def warm_up(self) -> int:
+        """Pre-load external dictionaries to avoid cold-start latency on first query.
+
+        Can be called at application startup (e.g. lifespan, background task).
+        Returns the number of entries loaded.
+        """
+        if self._external_dicts_loaded:
+            return 0
+        count = 0
+        try:
+            count = self.load_external_dictionaries()
+            if count > 0:
+                self._external_dicts_loaded = True
+                logger.info("Warm-up: loaded %d external dictionary entries", count)
+        except Exception as e:
+            logger.debug("Warm-up dictionary load failed (non-critical): %s", e)
+        return count
+
     def _maybe_learn(self, input_text: str, output_text: str, context: Dict[str, Any]) -> None:
         if self._continuous_learning is not None and output_text:
             self._continuous_learning.process_interaction(input_text, output_text, context)
