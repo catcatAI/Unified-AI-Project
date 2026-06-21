@@ -404,6 +404,63 @@ async def memory_stats_endpoint():
     return {"success": True, **stats}
 
 
+# --- P39: Vision caption ---
+
+@router.post("/multimodal/caption")
+async def caption_endpoint(
+    file: UploadFile = File(...),
+    prompt: Optional[str] = Form(None),
+    language: str = Form("zh"),
+    preferred_backend: Optional[str] = Form(None),
+):
+    """Generate a semantic caption for an uploaded image using LLM Vision API (P39).
+
+    Uses Gemini Pro Vision or GPT-4 Vision to describe the image content.
+    Returns semantic description (not just pixel stats).
+    """
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file data")
+    result = await svc.caption(data, prompt, language, preferred_backend)
+    if result.get("error"):
+        return {"success": False, **result}
+    return {"success": True, **result}
+
+
+@router.post("/multimodal/caption-pipeline")
+async def caption_pipeline_endpoint(
+    file: UploadFile = File(...),
+    prompt: Optional[str] = Form(None),
+    language: str = Form("zh"),
+):
+    """Run full vision pipeline with semantic caption (P39).
+
+    Combines pixel-level features (VisualEncoder -> latent -> decode -> SSIM)
+    with LLM Vision semantic description. One endpoint for the complete pipeline.
+    """
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file data")
+    result = await svc.caption_pipeline(data, prompt, language)
+    return {"success": True, **result}
+
+
+@router.get("/multimodal/caption/status")
+async def caption_status_endpoint():
+    """Check VisionCaptionService availability and configured backends."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "available": False, "backends": []}
+    status = await svc.caption_status()
+    return {"success": True, **status}
+
+
 # --- Clear items ---
 
 @router.post("/multimodal/clear")
